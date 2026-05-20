@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>镜像人生 | 虚拟社会游戏</title>
+    <link rel="stylesheet" href="game.css" />
+  </head>
+  <body>
+    <div id="gameShell">
+      <!-- Full-screen game canvas -->
+      <canvas id="gameCanvas"></canvas>
+
+      <!-- Top HUD bar -->
+      <div class="hud-top">
+        <div class="hud-brand">
+          <span class="hud-logo">镜</span>
+          <span class="hud-title">镜像人生</span>
+        </div>
+        <div class="hud-stats">
+          <div class="hud-stat"><span class="hud-stat-label">回合</span><span class="hud-stat-value" id="hudTurn">0</span></div>
+          <div class="hud-stat"><span class="hud-stat-label">时间</span><span class="hud-stat-value" id="hudClock">06:00</span></div>
+          <div class="hud-stat"><span class="hud-stat-label">阶段</span><span class="hud-stat-value" id="hudPhase">--</span></div>
+          <div class="hud-stat"><span class="hud-stat-label">活体</span><span class="hud-stat-value" id="hudAlive">0</span></div>
+        </div>
+        <div class="hud-scores">
+          <div class="hud-score" title="自由">
+            <span class="score-icon">◈</span>
+            <div class="score-bar"><div class="score-fill" id="scoreFreedom" style="width:84%"></div></div>
+            <span class="score-num" id="scoreFreedomNum">84</span>
+          </div>
+          <div class="hud-score" title="平等">
+            <span class="score-icon">◆</span>
+            <div class="score-bar"><div class="score-fill" id="scoreEquality" style="width:84%"></div></div>
+            <span class="score-num" id="scoreEqualityNum">84</span>
+          </div>
+          <div class="hud-score" title="开放">
+            <span class="score-icon">◇</span>
+            <div class="score-bar"><div class="score-fill" id="scoreOpenness" style="width:84%"></div></div>
+            <span class="score-num" id="scoreOpennessNum">84</span>
+          </div>
+        </div>
+        <div class="hud-controls">
+          <button class="hud-btn" id="hudPause" title="暂停/启动">▶</button>
+          <button class="hud-btn" id="hudStep" title="推进1步">⏭</button>
+          <button class="hud-btn" id="hudReset" title="重置社会">↻</button>
+          <div class="speed-control">
+            <label for="hudSpeed">速度</label>
+            <input type="range" id="hudSpeed" min="0.5" max="3" step="0.5" value="1" />
+            <span id="hudSpeedVal">1x</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom HUD bar -->
+      <div class="hud-bottom">
+        <div class="hud-actions">
+          <button class="action-btn" data-soc-action="propose"><span class="action-icon">📢</span>发起提案</button>
+          <button class="action-btn" data-soc-action="cooperate"><span class="action-icon">🤝</span>协作行动</button>
+          <button class="action-btn" data-soc-action="support"><span class="action-icon">💛</span>安抚支持</button>
+          <button class="action-btn" data-soc-action="listen"><span class="action-icon">👂</span>倾听回应</button>
+          <button class="action-btn" data-soc-action="meditate"><span class="action-icon">☮</span>调停修复</button>
+        </div>
+      </div>
+
+      <!-- Left game menu -->
+      <div class="game-menu">
+        <button class="menu-btn" data-modal="mirror" title="镜像舱">◐</button>
+        <button class="menu-btn" data-modal="script" title="人生剧本">▦</button>
+        <button class="menu-btn" data-modal="exchange" title="交换人生">⇄</button>
+        <button class="menu-btn" data-modal="bottle" title="漂流回声">✦</button>
+        <button class="menu-btn" data-modal="robot" title="回家模式">⌂</button>
+        <button class="menu-btn" data-modal="echoes" title="回声档案">☰</button>
+        <button class="menu-btn" data-modal="missions" title="社会任务">★</button>
+        <button class="menu-btn" data-modal="citizens" title="市民看板">◉</button>
+        <button class="menu-btn" data-modal="safety" title="安全治理">🛡</button>
+      </div>
+
+      <!-- Event toast area -->
+      <div class="event-toasts" id="eventToasts"></div>
+
+      <!-- Scenario input bar -->
+      <div class="scenario-bar" id="scenarioBar">
+        <input type="text" id="scenarioInput" placeholder="用一句话设定剧情场景..." />
+        <button class="scenario-btn" id="scenarioSubmit">生成</button>
+        <div class="scene-presets">
+          <button class="preset-chip" data-scene="open-square">开放广场</button>
+          <button class="preset-chip" data-scene="study-hub">共学市集</button>
+          <button class="preset-chip" data-scene="respite">修复之夜</button>
+          <button class="preset-chip" data-scene="homefront">家庭庭院</button>
+        </div>
+      </div>
+
+      <!-- Detail panel (for clicked zone/citizen) -->
+      <div class="detail-panel" id="detailPanel">
+        <button class="detail-close" id="detailClose">×</button>
+        <div class="detail-content" id="detailContent"></div>
+      </div>
+
+      <!-- Modal overlay for features -->
+      <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-panel" id="modalPanel">
+          <button class="modal-close" id="modalClose">×</button>
+          <div class="modal-content" id="modalContent"></div>
+        </div>
+      </div>
+
+      <!-- Avatar creation / splash screen -->
+      <div class="splash-screen" id="splashScreen">
+        <div class="splash-inner">
+          <div class="splash-logo">镜</div>
+          <h1>镜像人生</h1>
+          <p>创建你的分身，进入虚拟社会</p>
+          <canvas id="avatarPreviewCanvas" width="120" height="120" class="avatar-preview-canvas"></canvas>
+          <div class="avatar-form">
+            <label class="avatar-label" for="avatarName">姓名</label>
+            <input type="text" id="avatarName" class="avatar-input" placeholder="给你的分身取个名字" maxlength="12" />
+            <label class="avatar-label" for="avatarAge">年龄: <span id="avatarAgeVal">24</span></label>
+            <input type="range" id="avatarAge" class="avatar-range" min="5" max="80" value="24" />
+            <label class="avatar-label" for="avatarProfession">职业</label>
+            <select id="avatarProfession" class="avatar-profession-select"></select>
+            <label class="avatar-label">外观颜色</label>
+            <div class="avatar-color-grid" id="avatarColorGrid"></div>
+            <label class="avatar-label" for="avatarBio">一句话自我介绍</label>
+            <input type="text" id="avatarBio" class="avatar-input" placeholder="描述你分身的性格或目标" maxlength="40" />
+          </div>
+          <button class="splash-enter" id="splashEnter">创建分身并进入</button>
+        </div>
+      </div>
+    </div>
+
+    <script>window.__errs = []; window.addEventListener('error', e => window.__errs.push(e.message + ' @ ' + e.filename + ':' + e.lineno));</script>
+    <script src="engine.js"></script>
+    <script src="game.js"></script>
+  </body>
+</html>
