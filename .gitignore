@@ -1,7 +1,9 @@
 node_modules/
+dist/
 .DS_Store
 .env
 .env.local
 .claude/
 .gstack/
 *.log
+.vercel

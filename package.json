@@ -1,0 +1,23 @@
+{
+  "name": "mirror-life",
+  "version": "0.4.0",
+  "description": "镜像人生 — 开放世界式虚拟社会游戏",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "virtual-society",
+    "simulation",
+    "game",
+    "ai"
+  ],
+  "license": "MIT",
+  "author": "",
+  "repository": {},
+  "devDependencies": {
+    "vite": "^8.0.13"
+  }
+}
