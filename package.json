@@ -1,10 +1,12 @@
 {
   "name": "mirror-life",
   "version": "0.4.0",
-  "description": "镜像人生 — 开放世界式虚拟社会游戏",
+  "description": "镜像人生 / MirrorLife — 个人叙事实验型社会模拟游戏",
   "type": "module",
   "scripts": {
     "dev": "vite",
+    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/game.js",
+    "test": "npm run check",
     "build": "vite build",
     "preview": "vite preview"
   },

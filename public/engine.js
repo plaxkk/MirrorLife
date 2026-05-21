@@ -75,7 +75,7 @@ const HIGH_RISK_KEYWORDS = [
 
 const DEFAULT_CITIZEN_LIBRARY = [
   { id: "a", name: "洛言", role: "城市提议人", color: "#296c68", x: 0.2, y: 0.33, purpose: "协商共建", age: 39, professionId: "architect", zoneId: "office-district" },
-  { id: "b", name: "澜", role: "情绪守门人", color: "#7a4462", x: 0.56, y: 0.27, purpose: "心理照护", age: 28, professionId: "nurse", zoneId: "maternity-hospital" },
+  { id: "b", name: "澜", role: "城市守望者", color: "#7a4462", x: 0.56, y: 0.27, purpose: "照护协作", age: 28, professionId: "nurse", zoneId: "maternity-hospital" },
   { id: "c", name: "木子", role: "课程策划", color: "#b45f45", x: 0.34, y: 0.62, purpose: "共学组织", age: 33, professionId: "teacher", zoneId: "primary-school" },
   { id: "d", name: "景深", role: "安静观察者", color: "#8a9b74", x: 0.72, y: 0.46, purpose: "协作观察", age: 16, professionId: "student", zoneId: "middle-school" },
   { id: "e", name: "白槐", role: "关系重建者", color: "#c18b3d", x: 0.63, y: 0.74, purpose: "修复关系", age: 45, professionId: "lawyer", zoneId: "legal-court" },
@@ -1051,6 +1051,7 @@ function loadState() {
     profile: {},
     echoes: [],
     bottle: "",
+    continuation: null,
     society: buildBaseSociety()
   };
 
@@ -1065,6 +1066,7 @@ function loadState() {
       profile: { ...defaults.profile, ...(saved.profile || {}) },
       echoes: Array.isArray(saved.echoes) ? saved.echoes : defaults.echoes,
       bottle: typeof saved.bottle === "string" ? saved.bottle : "",
+      continuation: saved.continuation && typeof saved.continuation === "object" ? saved.continuation : null,
       society: normalizeSocietyState(loadedSociety)
     };
   } catch {
@@ -1079,6 +1081,7 @@ function persist() {
       profile: state.profile,
       echoes: state.echoes,
       bottle: state.bottle || "",
+      continuation: state.continuation || null,
       society: state.society
     })
   );
@@ -1844,6 +1847,28 @@ function classifyLifeEventAction(text) {
   return source.includes("焦虑") || source.includes("紧张") || source.includes("害怕") ? "support" : "listen";
 }
 
+function captureNarrativeState(society, actor, target) {
+  return {
+    mood: Math.round(actor?.mood || 0),
+    energy: Math.round(actor?.energy || 0),
+    trust: Math.round(actor?.trust || 0),
+    targetMood: target ? Math.round(target.mood || 0) : null,
+    targetTrust: target ? Math.round(target.trust || 0) : null,
+    harmony: Math.round(society?.harmony || 0),
+    tension: Math.round(society?.tension || 0)
+  };
+}
+
+function diffNarrativeState(before, after) {
+  const delta = {};
+  Object.keys(after || {}).forEach((key) => {
+    if (typeof after[key] === "number" && typeof before?.[key] === "number") {
+      delta[key] = after[key] - before[key];
+    }
+  });
+  return delta;
+}
+
 function applySocietyActionResult(result, eventSuffix = "") {
   const society = state.society;
   if (!result) {
@@ -1897,12 +1922,15 @@ function injectLifeEventToSociety(eventText, modeHint = "") {
 
   const actionType = modeHint || classifyLifeEventAction(eventText);
   const actorContext = getCitizenAgentContext(state.society, actor);
+  const target = randomCitizen(actor.id) || null;
+  const before = captureNarrativeState(state.society, actor, target);
   const result = resolveAction({
     actorId: actor.id,
     type: actionType,
-    targetId: randomCitizen(actor.id)?.id || null
+    targetId: target?.id || null
   });
   applySocietyActionResult(result, "，这一轮由现实输入触发。");
+  const after = captureNarrativeState(state.society, actor, target);
   recordAgentOutbox(state.society, actor, result, actorContext);
   recordAgentMemory(
     state.society,
@@ -1918,6 +1946,23 @@ function injectLifeEventToSociety(eventText, modeHint = "") {
   persist();
   if (typeof renderSocietyViews === "function") renderSocietyViews();
   if (typeof renderSocietyEcho === "function") renderSocietyEcho();
+  return {
+    result,
+    context: {
+      turn: state.society.turn,
+      phase: getWorldTimeState(state.society)?.phase?.name || "当前阶段",
+      actorName: actor.name,
+      actorId: actor.id,
+      targetName: target?.name || "",
+      targetId: target?.id || null,
+      actionType: result?.type || actionType,
+      requestedActionType: actionType,
+      inputHint: eventText.length > 48 ? `${eventText.slice(0, 48)}...` : eventText,
+      before,
+      after,
+      delta: diffNarrativeState(before, after)
+    }
+  };
 }
 
 function runPlayerSocietyAction(actionType) {
@@ -2400,10 +2445,12 @@ function resolveAction(action) {
   const targetLabel = target ? `“${target.name}”` : "公共广场";
   let result = {
     actorId: actor.id,
+    targetId: target?.id || null,
     type: finalType,
     score: 0,
     text: "",
     actor: actor.name,
+    target: target?.name || "",
     conflict: false,
     governance: governanceOverride,
     zone: zone?.name || "开放区"
@@ -2758,7 +2805,7 @@ function stepSociety() {
   if (typeof renderSocietyViews === "function") renderSocietyViews();
   if (typeof renderSocietyEcho === "function") renderSocietyEcho();
   if (society.turn % 4 === 0) {
-    addEcho(`社会回声：第 ${society.turn} 回合 ${society.scene} 维持 ${state.society.metrics.freedom}% 自由指数。`);
+    addEcho(`社会余波：第 ${society.turn} 回合 ${society.scene} 维持 ${state.society.metrics.freedom}% 自由指数。`);
   }
   persist();
 }

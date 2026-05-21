@@ -14,6 +14,7 @@ let citizenAnimations = {};
 let walkingCitizens = {};
 let speechBubbles = {};
 let particles = [];
+let realityActionFocus = null;
 
 const AVATAR_COLORS = [
   "#296c68", "#7a4462", "#b45f45", "#4e5c8d",
@@ -40,6 +41,15 @@ const ACTION_COLORS = {
   conflict: "rgba(255,107,107,0.9)"
 };
 
+const SOCIAL_STANCES = {
+  propose: ["跟进了这个提案", "提出了一个边界条件", "暂时保持观望"],
+  cooperate: ["愿意继续协作", "担心责任再次集中", "建议把目标拆小"],
+  support: ["关系张力开始降温", "仍需要一次澄清", "选择先靠近一点"],
+  listen: ["表达变得更清楚", "补充了一个未说完的担心", "愿意再听一次"],
+  meditate: ["同意先暂停争执", "把分歧放回可讨论范围", "提出了一个修复步骤"],
+  rest: ["放慢了节奏", "给这次行动留出恢复时间", "提醒先观察下一轮"]
+};
+
 // ── Scene Presets (needed by features) ──
 // scenePresets, exchangeStories, bottleEchoes, robotReplies - all defined in engine.js
 
@@ -62,6 +72,200 @@ function saveScript() {
   showToast("剧本已保存并同步到你的分身", "support");
 }
 
+function buildWorldNarrativeFallback(feedback) {
+  const ctx = feedback?.context || {};
+  const actionLabel = ACTION_LABELS[ctx.actionType] || "行动";
+  const actorName = ctx.actorName || "你的分身";
+  const delta = ctx.delta || {};
+  const changes = [
+    typeof delta.mood === "number" && Math.abs(delta.mood) >= 1 ? `心情${delta.mood > 0 ? "+" : ""}${delta.mood}` : "",
+    typeof delta.trust === "number" && Math.abs(delta.trust) >= 1 ? `信任${delta.trust > 0 ? "+" : ""}${delta.trust}` : "",
+    typeof delta.energy === "number" && Math.abs(delta.energy) >= 1 ? `能量${delta.energy > 0 ? "+" : ""}${delta.energy}` : "",
+  ].filter(Boolean).join("、");
+
+  return `${actorName}把现实片段转成了一次${actionLabel}。${changes ? `状态变化：${changes}。` : "状态变化很轻，但世界已经记录了这次选择。"}`;
+}
+
+function writeWorldNarrativeFeedback(feedback) {
+  if (!feedback?.context) return;
+  const commitNarrative = (narrative) => {
+    const text = (narrative || buildWorldNarrativeFallback(feedback)).trim();
+    if (!text) return;
+    triggerRealityActionFocus(feedback);
+    addEventLogEntry("现实投影", text, feedback.context.actionType || "support", true);
+    addEcho(`现实投影：${text}`);
+    recordTomorrowContinuation(feedback, text);
+    addNamedSocialAftermath(feedback);
+    renderTomorrowContinue();
+    showToast("现实投影已写入事件流和档案", "support");
+  };
+
+  if (typeof generateEventNarrative === "function") {
+    generateEventNarrative(feedback.result, feedback.context)
+      .then(commitNarrative)
+      .catch(() => commitNarrative(buildWorldNarrativeFallback(feedback)));
+    return;
+  }
+
+  commitNarrative(buildWorldNarrativeFallback(feedback));
+}
+
+function formatDeltaSummary(delta = {}) {
+  return [
+    typeof delta.mood === "number" && Math.abs(delta.mood) >= 1 ? `心情${delta.mood > 0 ? "+" : ""}${delta.mood}` : "",
+    typeof delta.trust === "number" && Math.abs(delta.trust) >= 1 ? `信任${delta.trust > 0 ? "+" : ""}${delta.trust}` : "",
+    typeof delta.energy === "number" && Math.abs(delta.energy) >= 1 ? `能量${delta.energy > 0 ? "+" : ""}${delta.energy}` : "",
+    typeof delta.targetMood === "number" && Math.abs(delta.targetMood) >= 1 ? `对方心情${delta.targetMood > 0 ? "+" : ""}${delta.targetMood}` : "",
+    typeof delta.targetTrust === "number" && Math.abs(delta.targetTrust) >= 1 ? `对方信任${delta.targetTrust > 0 ? "+" : ""}${delta.targetTrust}` : ""
+  ].filter(Boolean).slice(0, 3).join(" / ");
+}
+
+function triggerRealityActionFocus(feedback) {
+  const ctx = feedback?.context || {};
+  const actorId = ctx.actorId || feedback?.result?.actorId || "avatar";
+  const targetId = ctx.targetId || feedback?.result?.targetId || null;
+  const actionType = ctx.actionType || feedback?.result?.type || "listen";
+  const actorName = ctx.actorName || feedback?.result?.actor || "你的分身";
+  const targetName = ctx.targetName || feedback?.result?.target || "公共广场";
+  const deltaText = formatDeltaSummary(ctx.delta || {});
+
+  realityActionFocus = {
+    actorId,
+    targetId,
+    actionType,
+    actorName,
+    targetName,
+    deltaText,
+    until: performance.now() + 3600
+  };
+  addSpeechBubble(actorId, ACTION_LABELS[actionType] || "行动", actionType);
+  if (targetId) addSpeechBubble(targetId, deltaText || "被影响", actionType);
+}
+
+function buildContinuationDetails(ctx = {}) {
+  const target = ctx.targetName || "这段关系";
+  const actionType = ctx.actionType || "listen";
+  const input = ctx.inputHint || "这次现实投影";
+  const base = input ? `围绕“${input}”` : "围绕这次现实投影";
+  const map = {
+    support: {
+      question: `${target} 会靠近、回避，还是需要二次澄清？`,
+      conditionHint: "下一次回来时，先看关系张力有没有继续降温。"
+    },
+    cooperate: {
+      question: `${target} 会继续跟上这个协作，还是把责任又推回给你？`,
+      conditionHint: "下一次回来时，先看协作对象的信任和行动是否延续。"
+    },
+    propose: {
+      question: `${target} 会支持、犹豫，还是给这个提案加一个限制条件？`,
+      conditionHint: "下一次回来时，先看提案有没有扩散成公共行动。"
+    },
+    listen: {
+      question: `${target} 的表达会变清楚，还是继续停在未说完的位置？`,
+      conditionHint: "下一次回来时，先看对方是否愿意补充一句真实想法。"
+    },
+    meditate: {
+      question: `${target} 会接受协调，还是把分歧留到下一轮？`,
+      conditionHint: "下一次回来时，先看修复动作有没有形成新的共识。"
+    },
+    rest: {
+      question: "分身恢复之后，会重新行动，还是需要继续观察？",
+      conditionHint: "下一次回来时，先看能量是否足够支撑下一步。"
+    }
+  };
+  const detail = map[actionType] || map.listen;
+  return {
+    question: detail.question,
+    conditionHint: `${base}，${detail.conditionHint}`
+  };
+}
+
+function addNamedSocialAftermath(feedback) {
+  const ctx = feedback?.context || {};
+  const actionType = ctx.actionType || "listen";
+  const actorName = ctx.actorName || "你的分身";
+  const targetName = ctx.targetName || "";
+  const citizens = getAliveCitizens(state.society)
+    .filter(c => c.id !== (ctx.actorId || "avatar"))
+    .slice(0, 5);
+  const primary = citizens.find(c => c.id === ctx.targetId) || citizens[0];
+  const secondary = citizens.find(c => c.id !== primary?.id) || citizens[1];
+  const stances = SOCIAL_STANCES[actionType] || SOCIAL_STANCES.listen;
+  const reactions = [];
+  if (primary) reactions.push(`${primary.name}${targetName && primary.name === targetName ? "" : ""}${stances[0]}`);
+  if (secondary) reactions.push(`${secondary.name}${stances[1]}`);
+  if (!reactions.length) reactions.push(`${actorName} 的行动在公共广场留下了一个待观察的回声`);
+
+  const text = `社会余波：${reactions.join("；")}。下一步观察这次${ACTION_LABELS[actionType] || "行动"}会不会继续扩散。`;
+  addEcho(text);
+  addEventLogEntry("社会余波", text, actionType, true);
+}
+
+function buildContinuationPrompt(actionType, delta = {}) {
+  const actionLabel = ACTION_LABELS[actionType] || "这次行动";
+  if (actionType === "support") {
+    return "明天回来时，先看看这次安抚有没有让张力继续下降，或者有没有新的关系需要被接住。";
+  }
+  if (actionType === "cooperate") {
+    return "明天回来时，可以从这次协作的小目标继续观察：谁愿意跟上，谁还停在原地。";
+  }
+  if (actionType === "propose") {
+    return "明天回来时，先看这个提案有没有变成公共行动，或者是否需要你再补一句更清晰的表达。";
+  }
+  if (actionType === "listen") {
+    return "明天回来时，先看这次倾听有没有让表达变得更清楚，再决定是否需要行动。";
+  }
+  if (Math.abs(delta.tension || 0) >= 2) {
+    return "明天回来时，先看张力有没有回落，再决定是否继续干预。";
+  }
+  return `明天回来时，可以从${actionLabel}留下的回声继续观察这个世界。`;
+}
+
+function recordTomorrowContinuation(feedback, narrative) {
+  const ctx = feedback?.context || {};
+  const detail = buildContinuationDetails(ctx);
+  state.continuation = {
+    at: new Date().toLocaleString("zh-CN", {
+      month: "2-digit",
+      day: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit"
+    }),
+    actionType: ctx.actionType || "listen",
+    inputHint: ctx.inputHint || "",
+    targetName: ctx.targetName || "",
+    question: detail.question,
+    conditionHint: detail.conditionHint,
+    narrative,
+    prompt: buildContinuationPrompt(ctx.actionType, ctx.delta || {})
+  };
+  persist();
+}
+
+function buildTomorrowContinuationHTML() {
+  const item = state.continuation;
+  if (!item) {
+    return "";
+  }
+  return `
+    <p class="reply-kicker">未完回声</p>
+    <p>${escapeHtml(item.question || item.prompt)}</p>
+    ${item.conditionHint ? `<p class="tomorrow-track">${escapeHtml(item.conditionHint)}</p>` : ""}
+    <p class="tomorrow-source">${escapeHtml(item.narrative)}</p>
+    <div class="tomorrow-actions">
+      <button class="modal-btn ghost compact" id="openEchoArchive">回声档案</button>
+      <button class="modal-btn primary compact" id="openTomorrowPlan">明日小事</button>
+    </div>`;
+}
+
+function renderTomorrowContinue() {
+  const card = document.querySelector(".modal-content #modalTomorrowContinue");
+  if (!card) return;
+  const html = buildTomorrowContinuationHTML();
+  card.innerHTML = html;
+  card.hidden = !html;
+}
+
 function askMirror() {
   const input = document.querySelector(".modal-content #modalLifeEvent");
   const reply = document.querySelector(".modal-content #modalMirrorReply");
@@ -78,7 +282,7 @@ function askMirror() {
     reply.innerHTML = '<p class="reply-kicker">高风险提示</p><p>我注意到你现在可能非常痛苦。请先把今天最危险的想法放下10分钟，去开一盏灯，并尝试联系一个可以信任的人。</p>';
     addEcho("高风险片段已识别，进入安全提醒路径。");
     addEventLogEntry("你的现实片段", text, "user-input", true);
-    injectLifeEventToSociety(text, "support");
+    writeWorldNarrativeFeedback(injectLifeEventToSociety(text, "support"));
     showToast("安全提醒已触发", "coral");
     return;
   }
@@ -106,7 +310,7 @@ function askMirror() {
     addEcho(stripTags(response));
   }
   addEventLogEntry("你的现实片段", text, "user-input", true);
-  injectLifeEventToSociety(text);
+  writeWorldNarrativeFeedback(injectLifeEventToSociety(text));
   showToast("镜像回声已生成，世界正在反应...", "support");
 }
 
@@ -174,11 +378,19 @@ function receiveBottle() {
   persist();
 }
 
+function buildRobotReply(mode) {
+  const base = robotReplies[mode] || robotReplies.quiet;
+  if (mode === "action" && state.continuation) {
+    return `${base}\n\n上一次现实投影：${state.continuation.narrative}\n\n${state.continuation.prompt}`;
+  }
+  return base;
+}
+
 function setRobotMode(mode) {
   activeRobotMode = mode;
   const reply = document.querySelector(".modal-content #modalRobotReply");
   if (reply) {
-    reply.innerHTML = `<p class="reply-kicker">现实陪伴</p><p>${escapeHtml(robotReplies[mode])}</p>`;
+    reply.innerHTML = `<p class="reply-kicker">现实陪伴</p><p>${escapeHtml(buildRobotReply(mode)).replaceAll("\n", "<br>")}</p>`;
   }
   document.querySelectorAll(".modal-content .modal-chip[data-robot]").forEach(b => b.classList.toggle("active", b.dataset.robot === mode));
 }
@@ -190,6 +402,7 @@ function clearAllData() {
   state.profile = {};
   state.echoes = [];
   state.bottle = "";
+  state.continuation = null;
   state.society = buildSocietyFromInput(scenePresets["open-square"]);
   lastBottleCheckAt = 0;
   persist();
@@ -657,6 +870,8 @@ function openModal(type) {
     content.querySelectorAll("input[data-field]").forEach((inp, i) => { if (values[i]) inp.value = values[i]; });
   }
   if (type === "exchange") selectExchange("career", false);
+  if (type === "mirror") renderTomorrowContinue();
+  if (type === "robot") setRobotMode(activeRobotMode);
 }
 
 function closeModal() {
@@ -669,7 +884,7 @@ function buildModalHTML(type) {
   switch(type) {
     case "mirror": return `
       <p class="eyebrow">镜像舱</p>
-      <h2>把今天无法说出口的部分，先交给你的分身。</h2>
+      <h2>把今天的一段现实，投进一座会回应你的社会。</h2>
       <div class="modal-chips">
         <button class="modal-chip ${activeMode==="mirror"?"active":""}" data-mode="mirror">镜子</button>
         <button class="modal-chip ${activeMode==="observer"?"active":""}" data-mode="observer">旁观</button>
@@ -678,7 +893,8 @@ function buildModalHTML(type) {
       <label>此刻发生了什么</label>
       <textarea id="modalLifeEvent" rows="5" placeholder="例如：我今天又想离职，但我不确定这是勇敢还是逃避。"></textarea>
       <button class="modal-btn primary" id="modalAskMirror">交给分身</button>
-      <div class="reply-box" id="modalMirrorReply"><p class="reply-kicker">镜像回声</p><p>你的分身会在这里回应你。</p></div>`;
+      <div class="reply-box" id="modalMirrorReply"><p class="reply-kicker">镜像回声</p><p>你的分身会在这里回应你。</p></div>
+      <div class="tomorrow-card" id="modalTomorrowContinue" hidden></div>`;
 
     case "script": return `
       <p class="eyebrow">人生剧本</p>
@@ -729,7 +945,8 @@ function buildModalHTML(type) {
 
     case "echoes": return `
       <p class="eyebrow">回声档案</p>
-      <h2>最近的镜像片段</h2>
+      <h2>现实投影与社会余波</h2>
+      ${state.continuation ? `<div class="tomorrow-card archive">${buildTomorrowContinuationHTML()}</div>` : ""}
       <div class="echo-list">${state.echoes.length ? state.echoes.map(e => `<div class="echo-item"><time>${h(e.at)}</time><p>${h(e.text)}</p></div>`).join("") : '<p>完成一次交互后，这里会保留最近的镜像片段。</p>'}</div>`;
 
     case "missions": return `
@@ -761,23 +978,16 @@ function buildModalHTML(type) {
       <button class="modal-btn ghost" id="modalClearData" style="margin-top:16px;color:var(--accent-coral);border-color:var(--accent-coral);">清空本地数据</button>`;
 
     case "narrative-settings": {
-      const savedConfig = JSON.parse(localStorage.getItem("mirror-life-narrative") || "{}");
-      const isConfigured = !!savedConfig.apiKey;
       return `
       <p class="eyebrow">叙事引擎</p>
-      <h2>AI 叙事配置</h2>
+      <h2>叙事引擎配置</h2>
       <p style="color:var(--hud-muted);font-size:13px;margin-bottom:12px;">
-        ${isConfigured ? "当前已配置 API Key，分身回应由 AI 生成。" : "未配置 API Key，分身回应使用模板。填入 Key 后即可启用 AI 叙事。"}
+        Phase 1 公开 demo 使用本地模板叙事，真实 API 后续只通过后端代理接入。公开页面不提供浏览器端密钥输入，避免误导用户暴露生产密钥。
       </p>
-      <label style="display:block;margin-bottom:4px;font-size:12px;color:var(--hud-muted);">API 提供商</label>
-      <select id="narrativeProvider" style="width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid var(--hud-border);border-radius:8px;color:var(--hud-text);margin-bottom:8px;">
-        <option value="anthropic" ${savedConfig.apiProvider !== "openai" ? "selected" : ""}>Anthropic (Claude)</option>
-        <option value="openai" ${savedConfig.apiProvider === "openai" ? "selected" : ""}>OpenAI (GPT)</option>
-      </select>
-      <label style="display:block;margin-bottom:4px;font-size:12px;color:var(--hud-muted);">API Key</label>
-      <input type="password" id="narrativeApiKey" placeholder="sk-..." value="${h(savedConfig.apiKey || "")}" style="width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid var(--hud-border);border-radius:8px;color:var(--hud-text);margin-bottom:12px;" />
-      <button class="modal-btn primary" id="saveNarrativeConfig">保存配置</button>
-      ${isConfigured ? `<button class="modal-btn ghost" id="clearNarrativeConfig" style="margin-top:8px;color:var(--accent-coral);border-color:var(--accent-coral);">清除配置</button>` : ""}`;
+      <div class="reply-box">
+        <p class="reply-kicker">当前模式</p>
+        <p>本地模板 fallback 已启用；事件状态仍会生成现实投影和未完回声。</p>
+      </div>`;
     }
 
     default: return `<p>未知面板</p>`;
@@ -1218,6 +1428,8 @@ function drawGameWorld() {
     }
   });
 
+  drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens);
+
   // ── Relationship lines between citizens in same zone ──
   const zoneGroups = {};
   aliveCitizens.forEach(c => {
@@ -1459,6 +1671,85 @@ function getZoneGameRect(zone, W, H, groundY) {
   const w = Math.max(50, zone.w * mapW);
   const h = Math.max(40, zone.h * mapH);
   return { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
+}
+
+function getCitizenCanvasPosition(citizen, aliveCitizens, W, H, groundY) {
+  if (!citizen) return null;
+  const zone = getCitizenZone(state.society, citizen);
+  if (!zone) return null;
+  const zr = getZoneGameRect(zone, W, H, groundY);
+  const idx = Math.max(0, aliveCitizens.indexOf(citizen));
+  const anim = citizenAnimations[citizen.id] || {};
+  return {
+    x: anim.x || zr.x + 12 + ((idx * 37) % Math.max(1, zr.w - 24)),
+    y: anim.y || zr.y + zr.h - 8
+  };
+}
+
+function drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens) {
+  if (!realityActionFocus) return;
+  const now = performance.now();
+  if (now > realityActionFocus.until) {
+    realityActionFocus = null;
+    return;
+  }
+
+  const actor = state.society.citizens.find(c => c.id === realityActionFocus.actorId);
+  const target = realityActionFocus.targetId
+    ? state.society.citizens.find(c => c.id === realityActionFocus.targetId)
+    : null;
+  const actorPos = getCitizenCanvasPosition(actor, aliveCitizens, W, H, groundY);
+  if (!actorPos) return;
+
+  const progress = clamp((realityActionFocus.until - now) / 3600, 0, 1);
+  const alpha = Math.min(1, progress * 1.5);
+  const color = ACTION_COLORS[realityActionFocus.actionType] || "rgba(255,255,255,0.9)";
+
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 3;
+  ctx.setLineDash([6, 5]);
+  ctx.beginPath();
+  ctx.arc(actorPos.x, actorPos.y + 4, 26 + Math.sin(now / 120) * 3, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  if (target) {
+    const targetPos = getCitizenCanvasPosition(target, aliveCitizens, W, H, groundY);
+    if (targetPos) {
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.moveTo(actorPos.x, actorPos.y);
+      ctx.lineTo(targetPos.x, targetPos.y);
+      ctx.stroke();
+
+      ctx.beginPath();
+      ctx.arc(targetPos.x, targetPos.y + 4, 22 + Math.sin(now / 140) * 2, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+  }
+
+  const label = `${realityActionFocus.actorName} -> ${ACTION_LABELS[realityActionFocus.actionType] || "行动"}${realityActionFocus.targetName ? `：${realityActionFocus.targetName}` : ""}`;
+  const delta = realityActionFocus.deltaText || "状态已变化";
+  ctx.font = "bold 12px Arial";
+  const width = Math.max(ctx.measureText(label).width, ctx.measureText(delta).width) + 18;
+  const x = clamp(actorPos.x - width / 2, 16, W - width - 16);
+  const y = Math.max(76, actorPos.y - 64);
+  ctx.fillStyle = "rgba(15,22,36,0.9)";
+  roundRect(ctx, x, y, width, 42, 8);
+  ctx.fill();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1;
+  roundRect(ctx, x, y, width, 42, 8);
+  ctx.stroke();
+  ctx.fillStyle = "#fff";
+  ctx.fillText(label, x + 9, y + 17);
+  ctx.fillStyle = "rgba(232,224,212,0.86)";
+  ctx.font = "11px Arial";
+  ctx.fillText(delta, x + 9, y + 34);
+  ctx.restore();
 }
 
 // ── Drawing Helpers ──
@@ -1788,27 +2079,10 @@ function bindGameEvents() {
       if (target.id === "modalSendBottle") { sendBottle(); return; }
       if (target.id === "modalReceiveBottle") { receiveBottle(); return; }
       if (target.id === "modalClearData") { clearAllData(); closeModal(); return; }
-
-      // Narrative settings
-      if (target.id === "saveNarrativeConfig") {
-        const apiKey = document.getElementById("narrativeApiKey")?.value?.trim();
-        const provider = document.getElementById("narrativeProvider")?.value || "anthropic";
-        if (apiKey && typeof configureNarrative === "function") {
-          const config = { apiKey, apiProvider: provider };
-          localStorage.setItem("mirror-life-narrative", JSON.stringify(config));
-          configureNarrative(config);
-          showToast("AI 叙事已启用", "support");
-          closeModal();
-        } else if (!apiKey) {
-          showToast("请输入 API Key", "coral");
-        }
-        return;
-      }
-      if (target.id === "clearNarrativeConfig") {
-        localStorage.removeItem("mirror-life-narrative");
-        if (typeof configureNarrative === "function") configureNarrative({ apiKey: "" });
-        showToast("AI 叙事已关闭，使用模板回应", "support");
-        closeModal();
+      if (target.id === "openEchoArchive") { openModal("echoes"); return; }
+      if (target.id === "openTomorrowPlan") {
+        openModal("robot");
+        setRobotMode("action");
         return;
       }
 
@@ -1861,13 +2135,8 @@ function gameInit() {
     state.society.scenarioText = scenePresets["open-square"];
   }
 
-  // Initialize narrative engine from localStorage config
-  if (typeof configureNarrative === "function") {
-    const savedConfig = JSON.parse(localStorage.getItem("mirror-life-narrative") || "{}");
-    if (savedConfig.apiKey) {
-      configureNarrative(savedConfig);
-    }
-  }
+  // Phase 1 public demo intentionally keeps browser-side narrative API disabled.
+  localStorage.removeItem("mirror-life-narrative");
 
   // If user already has avatar profile, skip splash and go straight to game
   const hasExistingAvatar = state.profile?.avatarColor && state.society?.citizens?.some(c => c.id === "avatar");

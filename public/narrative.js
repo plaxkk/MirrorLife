@@ -1,5 +1,5 @@
 /**
- * MirrorLife Narrative Engine
+ * MirrorLife / Echo City Narrative Engine
  *
  * Generates readable narrative text from society engine state changes.
  * Uses LLM API when available, falls back to template narratives.
@@ -81,6 +81,10 @@ async function generateMirrorNarrative(userText, mode, profile) {
 // ── Template Fallbacks ──
 
 function generateTemplateNarrative(result, ctx) {
+  if (ctx?.delta) {
+    return generateStateAwareNarrative(result, ctx);
+  }
+
   const templates = {
     propose: [
       `${ctx.actorName}在${ctx.phase}中提出了一项新提案，引起了周围人的注意。`,
@@ -112,6 +116,54 @@ function generateTemplateNarrative(result, ctx) {
   return pool[Math.floor(Math.random() * pool.length)];
 }
 
+function describeDelta(label, value, upWord = "上升", downWord = "下降") {
+  if (typeof value !== "number" || Math.abs(value) < 1) {
+    return "";
+  }
+  return `${label}${value > 0 ? upWord : downWord}${Math.abs(Math.round(value))}点`;
+}
+
+function generateStateAwareNarrative(result, ctx) {
+  const actionLabels = {
+    propose: "提出提案",
+    cooperate: "协作",
+    support: "安抚支持",
+    listen: "倾听",
+    meditate: "调停修复",
+    rest: "休息",
+  };
+  const delta = ctx.delta || {};
+  const changes = [
+    describeDelta("心情", delta.mood),
+    describeDelta("信任", delta.trust),
+    describeDelta("能量", delta.energy),
+    describeDelta("对方心情", delta.targetMood),
+    describeDelta("对方信任", delta.targetTrust),
+    describeDelta("和谐值", delta.harmony),
+    describeDelta("张力", delta.tension, "升高", "降低"),
+  ].filter(Boolean);
+  const actorName = ctx.actorName || "你的分身";
+  const targetText = ctx.targetName ? `和${ctx.targetName}` : "和周围的人";
+  const actionText = actionLabels[ctx.actionType] || ctx.actionType || "行动";
+  const stateText = changes.length
+    ? `你能在状态里看到${changes.slice(0, 3).join("、")}。`
+    : "状态没有剧烈波动，但事件流已经留下了这次选择的痕迹。";
+
+  if (ctx.actionType === "support") {
+    return `${actorName}把现实片段转成了一次安抚，${targetText}之间的紧绷被稍微放松。${stateText}`;
+  }
+  if (ctx.actionType === "cooperate") {
+    return `${actorName}把这段输入推进成一次协作，${targetText}开始共同处理同一个小目标。${stateText}`;
+  }
+  if (ctx.actionType === "propose") {
+    return `${actorName}把现实里的想法变成公开提案，世界因此多了一个可讨论的方向。${stateText}`;
+  }
+  if (ctx.actionType === "listen") {
+    return `${actorName}选择先倾听，${targetText}的表达被整理成更清晰的版本。${stateText}`;
+  }
+  return `${actorName}完成了一次${actionText}，世界根据这次行动更新了状态。${stateText}`;
+}
+
 function generateTemplateMirrorResponse(userText, mode, profile) {
   const identity = profile.identity || "此刻的你";
   const pattern = profile.pattern || "那些反复出现、还没有被好好命名的感受";
@@ -129,6 +181,9 @@ function generateTemplateMirrorResponse(userText, mode, profile) {
 // ── LLM Integration ──
 
 function buildEventPrompt(result, ctx) {
+  const deltaText = ctx.delta
+    ? `状态变化：心情 ${ctx.delta.mood || 0}，信任 ${ctx.delta.trust || 0}，能量 ${ctx.delta.energy || 0}，对方心情 ${ctx.delta.targetMood || 0}，对方信任 ${ctx.delta.targetTrust || 0}，和谐 ${ctx.delta.harmony || 0}，张力 ${ctx.delta.tension || 0}`
+    : "状态变化：无摘要";
   return `你是一个虚拟社会游戏的叙事者。根据以下事件信息，用1-2句温暖简洁的中文描述发生了什么。不要用引号，不要加标题，只输出叙事文本。
 
 角色：${ctx.actorName}
@@ -136,13 +191,14 @@ function buildEventPrompt(result, ctx) {
 目标：${ctx.targetName || "无特定目标"}
 世界阶段：${ctx.phase}
 回合：${ctx.turn}
+${deltaText}
 
 叙事：`;
 }
 
 function buildMirrorPrompt(userText, mode, profile) {
   const modeDesc = mode === "mirror" ? "像镜子一样如实映射" : mode === "observer" ? "以旁观者角度温和分析" : "以陪伴者角度温暖接纳";
-  return `你是镜像人生游戏中的AI分身，正在${modeDesc}用户输入的现实片段。
+  return `你是“镜像人生 / MirrorLife”中的分身，正在${modeDesc}用户输入的现实片段。
 
 用户身份：${profile.identity || "匿名"}
 反复模式：${profile.pattern || "未知"}

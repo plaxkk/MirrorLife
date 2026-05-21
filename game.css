@@ -362,6 +362,7 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 .modal-btn.primary:hover { background: #3fc5bc; }
 .modal-btn.ghost { background: rgba(255,255,255,0.06); border: 1px solid var(--hud-border); }
 .modal-btn.ghost:hover { background: rgba(255,255,255,0.12); }
+.modal-btn.compact { padding: 7px 12px; font-size: 12px; }
 
 .modal-chips { display: flex; gap: 6px; flex-wrap: wrap; margin: 8px 0; }
 .modal-chip {
@@ -386,6 +387,30 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   color: var(--hud-muted);
 }
 .reply-box .reply-kicker { font-size: 11px; color: var(--accent-teal); font-weight: 700; margin-bottom: 6px; }
+
+.tomorrow-card {
+  margin-top: 12px;
+  padding: 14px;
+  border: 1px solid rgba(78,205,196,0.32);
+  border-radius: var(--radius-sm);
+  background: rgba(78,205,196,0.08);
+  color: var(--hud-text);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.tomorrow-card[hidden] { display: none; }
+.tomorrow-card.archive { margin-bottom: 12px; }
+.tomorrow-card .reply-kicker {
+  font-size: 11px;
+  color: var(--accent-teal);
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.tomorrow-source {
+  margin-top: 8px;
+  color: var(--hud-muted);
+}
+.tomorrow-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 
 .life-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 12px 0; }
 .life-card {
@@ -413,6 +438,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 }
 .echo-item time { font-size: 11px; color: var(--hud-muted); display: block; margin-bottom: 4px; }
 .echo-item p { font-size: 13px; color: var(--hud-text); line-height: 1.6; }
+.tomorrow-track {
+  margin-top: 8px;
+  color: var(--accent-sky);
+  font-size: 13px;
+  line-height: 1.5;
+}
 
 .mission-item {
   padding: 10px 14px;
