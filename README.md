@@ -1,23 +1,33 @@
-# 镜像人生 MVP 网站
+# 镜像人生（MirrorLife）
 
-纯前端版本（单文件可运行），并支持开放世界地图式动态演化渲染，无需服务端。
+开放世界式虚拟社会游戏 — 输入现实片段，观察你的分身在虚拟社会中如何反应与成长。
 
-## 运行方式
-
-可直接本地打开：
-
-```text
-file:///Users/kk/repos/MirrorLife/index.html
-```
-
-也可本地启动静态服务（推荐）：
+## 快速开始
 
 ```bash
-cd /Users/kk/repos/MirrorLife
-python3 -m http.server 4173
+# 安装依赖
+npm install
+
+# 启动开发服务器
+npm run dev
 ```
 
-然后在浏览器访问 `http://127.0.0.1:4173/index.html`。
+浏览器会自动打开 `http://localhost:4173/game.html`。
+
+```bash
+# 生产构建
+npm run build
+
+# 预览构建结果
+npm run preview
+```
+
+## 技术栈
+
+- 纯前端 Canvas 渲染（HTML5 Canvas 2D）
+- 回合制社会模拟引擎
+- Vite 构建工具
+- MIT 开源协议
 
 ## 当前运行模型
 
