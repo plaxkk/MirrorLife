@@ -93,8 +93,9 @@ function askMirror() {
 
   reply.innerHTML = `<p class="reply-kicker">镜像回声 · ${{mirror:"镜子",observer:"旁观",companion:"陪伴"}[activeMode]}模式</p><p>${response}</p>`;
   addEcho(stripTags(response));
+  addEventLogEntry("你的现实片段", text, "user-input", true);
   injectLifeEventToSociety(text);
-  showToast("镜像回声已生成", "support");
+  showToast("镜像回声已生成，世界正在反应...", "support");
 }
 
 function selectExchange(lifeKey, shouldRecord = true) {
@@ -551,8 +552,30 @@ function renderSocietyViews() {
   renderSocietyEcho();
 }
 
+// ── Event Log System ──
+
+function addEventLogEntry(source, text, type = "society", highlight = false) {
+  const body = document.getElementById("eventLogBody");
+  if (!body) return;
+  const entry = document.createElement("div");
+  entry.className = `event-entry ${type}${highlight ? " highlight" : ""}`;
+  entry.innerHTML = `<div class="event-source">${source}</div><div class="event-text">${escapeHtml(text)}</div>`;
+  body.insertBefore(entry, body.firstChild);
+  while (body.children.length > 50) body.removeChild(body.lastChild);
+}
+
 function renderSocietyEcho() {
-  // Events are shown as toasts via the game canvas
+  const events = state.society.events;
+  if (!events || !events.length) return;
+  const body = document.getElementById("eventLogBody");
+  if (!body) return;
+  const rendered = body.children.length;
+  const newEvents = events.slice(rendered).reverse();
+  for (const evt of newEvents) {
+    const type = evt.source === "user-input" ? "user-input" : "society";
+    const source = evt.source === "user-input" ? "你的现实片段" : "社会事件";
+    addEventLogEntry(source, evt.text, type);
+  }
 }
 
 function renderEchoes() {
@@ -1488,6 +1511,16 @@ function hitTestCitizen(mx, my) {
 
 function bindGameEvents() {
   const canvas = document.getElementById("gameCanvas");
+
+  // ── Event log toggle ──
+  const logToggle = document.getElementById("eventLogToggle");
+  const eventLog = document.getElementById("eventLog");
+  if (logToggle && eventLog) {
+    logToggle.addEventListener("click", () => {
+      eventLog.classList.toggle("collapsed");
+      logToggle.textContent = eventLog.classList.contains("collapsed") ? "▶" : "◀";
+    });
+  }
 
   // ── Canvas click ──
   if (canvas) {
