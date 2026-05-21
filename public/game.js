@@ -77,22 +77,34 @@ function askMirror() {
   if (isHighRiskText(text)) {
     reply.innerHTML = '<p class="reply-kicker">高风险提示</p><p>我注意到你现在可能非常痛苦。请先把今天最危险的想法放下10分钟，去开一盏灯，并尝试联系一个可以信任的人。</p>';
     addEcho("高风险片段已识别，进入安全提醒路径。");
+    addEventLogEntry("你的现实片段", text, "user-input", true);
     injectLifeEventToSociety(text, "support");
+    showToast("安全提醒已触发", "coral");
     return;
   }
 
-  const shortened = text.length > 52 ? `${text.slice(0, 52)}...` : text;
-  let response;
-  if (activeMode === "observer") {
-    response = `<strong>${escapeHtml(identity)}</strong>，我看到你把"${escapeHtml(shortened)}"放到了这里。它是一次旧模式被激活：${escapeHtml(pattern)}。今天先不急着判断对错，先分清事实、解释与真实痛点。`;
-  } else if (activeMode === "companion") {
-    response = `我先陪你停一会儿。"${escapeHtml(shortened)}"听起来像在替很久以来的自己撑场景。你不用立即变得聪明，你先允许这个人性化的疲惫被看见。`;
-  } else {
-    response = `我像镜子一样把它还给你：你说"${escapeHtml(shortened)}"。里面有压力，也有一个正在成熟的需要。真正关键的不在速度，而在你是否允许自己从这件事里学习。`;
-  }
+  // Generate response via narrative engine (LLM or template fallback)
+  const modeLabel = { mirror: "镜子", observer: "旁观", companion: "陪伴" }[activeMode];
+  reply.innerHTML = `<p class="reply-kicker">镜像回声 · ${modeLabel}模式</p><p class="reply-loading">分身正在思考...</p>`;
 
-  reply.innerHTML = `<p class="reply-kicker">镜像回声 · ${{mirror:"镜子",observer:"旁观",companion:"陪伴"}[activeMode]}模式</p><p>${response}</p>`;
-  addEcho(stripTags(response));
+  if (typeof generateMirrorNarrative === "function") {
+    generateMirrorNarrative(text, activeMode, { identity, pattern }).then(response => {
+      reply.innerHTML = `<p class="reply-kicker">镜像回声 · ${modeLabel}模式</p><p>${response}</p>`;
+      addEcho(response.replace(/<[^>]*>/g, ""));
+    });
+  } else {
+    const shortened = text.length > 52 ? `${text.slice(0, 52)}...` : text;
+    let response;
+    if (activeMode === "observer") {
+      response = `<strong>${escapeHtml(identity)}</strong>，我看到你把"${escapeHtml(shortened)}"放到了这里。它是一次旧模式被激活：${escapeHtml(pattern)}。今天先不急着判断对错，先分清事实、解释与真实痛点。`;
+    } else if (activeMode === "companion") {
+      response = `我先陪你停一会儿。"${escapeHtml(shortened)}"听起来像在替很久以来的自己撑场景。你不用立即变得聪明，你先允许这个人性化的疲惫被看见。`;
+    } else {
+      response = `我像镜子一样把它还给你：你说"${escapeHtml(shortened)}"。里面有压力，也有一个正在成熟的需要。真正关键的不在速度，而在你是否允许自己从这件事里学习。`;
+    }
+    reply.innerHTML = `<p class="reply-kicker">镜像回声 · ${modeLabel}模式</p><p>${response}</p>`;
+    addEcho(stripTags(response));
+  }
   addEventLogEntry("你的现实片段", text, "user-input", true);
   injectLifeEventToSociety(text);
   showToast("镜像回声已生成，世界正在反应...", "support");
@@ -747,6 +759,26 @@ function buildModalHTML(type) {
       <h2>安全边界</h2>
       <p>所有输入默认只保存在本地浏览器。交换与漂流内容均为匿名模拟。</p>
       <button class="modal-btn ghost" id="modalClearData" style="margin-top:16px;color:var(--accent-coral);border-color:var(--accent-coral);">清空本地数据</button>`;
+
+    case "narrative-settings": {
+      const savedConfig = JSON.parse(localStorage.getItem("mirror-life-narrative") || "{}");
+      const isConfigured = !!savedConfig.apiKey;
+      return `
+      <p class="eyebrow">叙事引擎</p>
+      <h2>AI 叙事配置</h2>
+      <p style="color:var(--hud-muted);font-size:13px;margin-bottom:12px;">
+        ${isConfigured ? "当前已配置 API Key，分身回应由 AI 生成。" : "未配置 API Key，分身回应使用模板。填入 Key 后即可启用 AI 叙事。"}
+      </p>
+      <label style="display:block;margin-bottom:4px;font-size:12px;color:var(--hud-muted);">API 提供商</label>
+      <select id="narrativeProvider" style="width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid var(--hud-border);border-radius:8px;color:var(--hud-text);margin-bottom:8px;">
+        <option value="anthropic" ${savedConfig.apiProvider !== "openai" ? "selected" : ""}>Anthropic (Claude)</option>
+        <option value="openai" ${savedConfig.apiProvider === "openai" ? "selected" : ""}>OpenAI (GPT)</option>
+      </select>
+      <label style="display:block;margin-bottom:4px;font-size:12px;color:var(--hud-muted);">API Key</label>
+      <input type="password" id="narrativeApiKey" placeholder="sk-..." value="${h(savedConfig.apiKey || "")}" style="width:100%;padding:8px;background:rgba(255,255,255,0.05);border:1px solid var(--hud-border);border-radius:8px;color:var(--hud-text);margin-bottom:12px;" />
+      <button class="modal-btn primary" id="saveNarrativeConfig">保存配置</button>
+      ${isConfigured ? `<button class="modal-btn ghost" id="clearNarrativeConfig" style="margin-top:8px;color:var(--accent-coral);border-color:var(--accent-coral);">清除配置</button>` : ""}`;
+    }
 
     default: return `<p>未知面板</p>`;
   }
@@ -1757,6 +1789,29 @@ function bindGameEvents() {
       if (target.id === "modalReceiveBottle") { receiveBottle(); return; }
       if (target.id === "modalClearData") { clearAllData(); closeModal(); return; }
 
+      // Narrative settings
+      if (target.id === "saveNarrativeConfig") {
+        const apiKey = document.getElementById("narrativeApiKey")?.value?.trim();
+        const provider = document.getElementById("narrativeProvider")?.value || "anthropic";
+        if (apiKey && typeof configureNarrative === "function") {
+          const config = { apiKey, apiProvider: provider };
+          localStorage.setItem("mirror-life-narrative", JSON.stringify(config));
+          configureNarrative(config);
+          showToast("AI 叙事已启用", "support");
+          closeModal();
+        } else if (!apiKey) {
+          showToast("请输入 API Key", "coral");
+        }
+        return;
+      }
+      if (target.id === "clearNarrativeConfig") {
+        localStorage.removeItem("mirror-life-narrative");
+        if (typeof configureNarrative === "function") configureNarrative({ apiKey: "" });
+        showToast("AI 叙事已关闭，使用模板回应", "support");
+        closeModal();
+        return;
+      }
+
       // Citizen click in citizens modal
       const citizenItem = target.closest(".citizen-item[data-citizen-id]");
       if (citizenItem) {
@@ -1804,6 +1859,14 @@ function gameInit() {
   // Ensure society exists
   if (!state.society.scenarioText) {
     state.society.scenarioText = scenePresets["open-square"];
+  }
+
+  // Initialize narrative engine from localStorage config
+  if (typeof configureNarrative === "function") {
+    const savedConfig = JSON.parse(localStorage.getItem("mirror-life-narrative") || "{}");
+    if (savedConfig.apiKey) {
+      configureNarrative(savedConfig);
+    }
   }
 
   // If user already has avatar profile, skip splash and go straight to game
