@@ -684,9 +684,10 @@ function closeTutorial() {
   if (overlay) overlay.classList.remove("active");
   tutorialStep = 0;
 
-  // Start simulation now that tutorial is done
-  state.society.speed = 0.5;
+  // Mark tutorial as seen and start simulation
+  state.hasSeenTutorial = true;
   state.isFirstVisit = false;
+  state.society.speed = 0.5;
   persist();
   startSocietyRun();
   updateHUD();
@@ -2311,8 +2312,18 @@ function gameInit() {
     // Start rendering
     drawGameWorld();
 
-    // Start simulation
-    if (state.society.autoEvolution) {
+    // Start simulation (but pause if user hasn't seen tutorial yet)
+    const shouldShowTutorial = !state.hasSeenTutorial;
+    if (shouldShowTutorial) {
+      pauseSocietyRun();
+      state.society.speed = 0.5;
+      const slider = document.getElementById("hudSpeed");
+      const sliderVal = document.getElementById("hudSpeedVal");
+      if (slider) slider.value = "0.5";
+      if (sliderVal) sliderVal.textContent = "0.5x";
+    }
+
+    if (state.society.autoEvolution && !shouldShowTutorial) {
       startSocietyRun();
     }
     // Restore saved speed to slider
@@ -2323,6 +2334,11 @@ function gameInit() {
     if (sliderVal) sliderVal.textContent = `${savedSpeed.toFixed(1)}x`;
     updateHUD();
     persist();
+
+    // Show tutorial for returning users who haven't seen it
+    if (shouldShowTutorial) {
+      setTimeout(() => showTutorial(), 600);
+    }
   } else {
     // Show splash / avatar creation
     hydrateSocietyState();
