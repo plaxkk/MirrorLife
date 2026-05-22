@@ -46,8 +46,8 @@
           <button class="hud-btn" id="hudReset" title="重置社会">↻</button>
           <div class="speed-control">
             <label for="hudSpeed">速度</label>
-            <input type="range" id="hudSpeed" min="0.5" max="3" step="0.5" value="1" />
-            <span id="hudSpeedVal">1x</span>
+            <input type="range" id="hudSpeed" min="0.5" max="3" step="0.5" value="0.5" />
+            <span id="hudSpeedVal">0.5x</span>
           </div>
         </div>
       </div>
@@ -111,6 +111,21 @@
         <div class="modal-panel" id="modalPanel">
           <button class="modal-close" id="modalClose">×</button>
           <div class="modal-content" id="modalContent"></div>
+        </div>
+      </div>
+
+      <!-- Tutorial overlay for new users -->
+      <div class="tutorial-overlay" id="tutorialOverlay">
+        <div class="tutorial-backdrop"></div>
+        <div class="tutorial-spotlight" id="tutorialSpotlight"></div>
+        <div class="tutorial-card" id="tutorialCard">
+          <div class="tutorial-step-dots" id="tutorialDots"></div>
+          <h2 class="tutorial-title" id="tutorialTitle"></h2>
+          <p class="tutorial-desc" id="tutorialDesc"></p>
+          <div class="tutorial-actions">
+            <button class="tutorial-skip" id="tutorialSkip">跳过引导</button>
+            <button class="tutorial-next" id="tutorialNext">下一步</button>
+          </div>
         </div>
       </div>
 

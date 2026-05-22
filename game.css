@@ -612,6 +612,85 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 }
 
 /* ── World Banner ── */
+
+/* ── Tutorial Overlay ── */
+.tutorial-overlay {
+  position: absolute; inset: 0;
+  z-index: 90;
+  display: none;
+  pointer-events: none;
+}
+.tutorial-overlay.active { display: block; pointer-events: auto; }
+
+.tutorial-backdrop {
+  position: absolute; inset: 0;
+  background: rgba(0, 0, 0, 0.55);
+  transition: opacity 0.4s ease;
+}
+
+.tutorial-spotlight {
+  position: absolute;
+  border-radius: 12px;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.55);
+  border: 2px solid var(--accent-gold);
+  transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+  pointer-events: none;
+  z-index: 1;
+}
+
+.tutorial-card {
+  position: absolute;
+  z-index: 2;
+  width: 380px;
+  max-width: 90vw;
+  padding: 28px;
+  background: var(--card-bg);
+  border: 1px solid var(--accent-gold);
+  border-radius: var(--radius);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 40px rgba(255,217,61,0.1);
+  animation: tutorialIn 0.4s ease;
+  pointer-events: auto;
+}
+@keyframes tutorialIn { from { opacity: 0; transform: translateY(16px) scale(0.96); } to { opacity: 1; transform: none; } }
+
+.tutorial-step-dots {
+  display: flex; gap: 8px; justify-content: center; margin-bottom: 18px;
+}
+.tutorial-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  background: rgba(255,255,255,0.15);
+  transition: all 0.3s;
+}
+.tutorial-dot.active { background: var(--accent-gold); transform: scale(1.3); }
+.tutorial-dot.done { background: var(--accent-teal); }
+
+.tutorial-title {
+  font-size: 20px; font-weight: 800; color: var(--accent-gold);
+  margin-bottom: 10px; text-align: center;
+}
+.tutorial-desc {
+  font-size: 14px; line-height: 1.8; color: var(--hud-muted);
+  text-align: center; margin-bottom: 20px;
+}
+
+.tutorial-actions {
+  display: flex; justify-content: space-between; align-items: center;
+}
+.tutorial-skip {
+  padding: 8px 16px; border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.06); border: 1px solid var(--hud-border);
+  font-size: 13px; color: var(--hud-muted); cursor: pointer;
+  transition: all 0.2s;
+}
+.tutorial-skip:hover { background: rgba(255,255,255,0.1); color: var(--hud-text); }
+.tutorial-next {
+  padding: 10px 24px; border-radius: var(--radius-sm);
+  background: var(--accent-gold); color: #1a1a1a;
+  font-size: 14px; font-weight: 700; cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 16px rgba(255,217,61,0.25);
+}
+.tutorial-next:hover { background: #ffe566; transform: translateY(-1px); box-shadow: 0 6px 20px rgba(255,217,61,0.35); }
 .world-banner {
   position: absolute;
   top: 28%;

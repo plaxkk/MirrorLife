@@ -571,10 +571,125 @@ function createAndEnterWorld(profileData) {
     setTimeout(() => splash.style.display = "none", 600);
   }
 
-  // Start
+  // New user: set slow speed and show tutorial
+  const slider = document.getElementById("hudSpeed");
+  if (slider) { slider.value = "0.5"; }
+  state.society.speed = 0.5;
+  state.society.running = false;
+  updateHUD();
+
+  // Mark as first-time user
+  state.isFirstVisit = true;
+  persist();
+
+  showToast(`${name} 已进入镜像世界`, "support");
+
+  // Show tutorial after splash fades
+  setTimeout(() => showTutorial(), 800);
+}
+
+// ── Tutorial System ──
+
+let tutorialStep = 0;
+const TUTORIAL_STEPS = [
+  {
+    title: "这是你的分身",
+    desc: "带金色光圈的小人就是你在回声之城里的分身。它会根据你输入的真实事件，在社会中做出反应。",
+    spotlight: "avatar"
+  },
+  {
+    title: "这是回声之城",
+    desc: "这是一个持续运转的虚拟社会。小人们在不同的区域生活、协作、对话。你可以观察他们，也可以主动干预。"
+  },
+  {
+    title: "试试输入一件事",
+    desc: '在上方输入栏写下一件今天发生的事，比如「今天上班迟到了」或「和朋友吵了一架」，看看你的分身会怎么反应。',
+    spotlight: "scenarioBar"
+  }
+];
+
+function showTutorial() {
+  const overlay = document.getElementById("tutorialOverlay");
+  if (!overlay) return;
+  tutorialStep = 0;
+  overlay.classList.add("active");
+  renderTutorialStep();
+}
+
+function renderTutorialStep() {
+  const overlay = document.getElementById("tutorialOverlay");
+  if (!overlay || tutorialStep >= TUTORIAL_STEPS.length) {
+    closeTutorial();
+    return;
+  }
+
+  const step = TUTORIAL_STEPS[tutorialStep];
+  const titleEl = document.getElementById("tutorialTitle");
+  const descEl = document.getElementById("tutorialDesc");
+  const dotsEl = document.getElementById("tutorialDots");
+  const nextBtn = document.getElementById("tutorialNext");
+  const spotlight = document.getElementById("tutorialSpotlight");
+  const card = document.getElementById("tutorialCard");
+
+  if (!titleEl || !descEl || !dotsEl || !nextBtn) return;
+
+  titleEl.textContent = step.title;
+  descEl.textContent = step.desc;
+
+  // Render dots
+  dotsEl.innerHTML = TUTORIAL_STEPS.map((_, i) => {
+    const cls = i < tutorialStep ? "tutorial-dot done" : i === tutorialStep ? "tutorial-dot active" : "tutorial-dot";
+    return `<div class="${cls}"></div>`;
+  }).join("");
+
+  // Update button text
+  nextBtn.textContent = tutorialStep === TUTORIAL_STEPS.length - 1 ? "开始体验" : "下一步";
+
+  // Position spotlight
+  if (spotlight) {
+    if (step.spotlight === "scenarioBar") {
+      const el = document.getElementById("scenarioBar");
+      if (el) {
+        const r = el.getBoundingClientRect();
+        spotlight.style.display = "block";
+        spotlight.style.left = (r.left - 8) + "px";
+        spotlight.style.top = (r.top - 8) + "px";
+        spotlight.style.width = (r.width + 16) + "px";
+        spotlight.style.height = (r.height + 16) + "px";
+      }
+    } else {
+      spotlight.style.display = "none";
+    }
+  }
+
+  // Position card
+  if (card) {
+    card.style.left = "50%";
+    card.style.top = step.spotlight === "scenarioBar" ? "180px" : "50%";
+    card.style.transform = "translateX(-50%)" + (step.spotlight !== "scenarioBar" ? " translateY(-50%)" : "");
+  }
+}
+
+function tutorialNext() {
+  tutorialStep++;
+  if (tutorialStep >= TUTORIAL_STEPS.length) {
+    closeTutorial();
+  } else {
+    renderTutorialStep();
+  }
+}
+
+function closeTutorial() {
+  const overlay = document.getElementById("tutorialOverlay");
+  if (overlay) overlay.classList.remove("active");
+  tutorialStep = 0;
+
+  // Start simulation now that tutorial is done
+  state.society.speed = 0.5;
+  state.isFirstVisit = false;
+  persist();
   startSocietyRun();
   updateHUD();
-  showToast(`${name} 已进入镜像世界`, "support");
 }
 
 // ── Speech Bubbles ──
@@ -1287,7 +1402,8 @@ function drawGameWorld() {
     const baseY = zr.y + zr.h - 8;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
     const isHover = hoveredCitizen === citizen.id;
-    const size = isHover ? 18 : 14;
+    const isAvatar = citizen.id === "avatar";
+    const size = isAvatar ? (isHover ? 26 : 22) : (isHover ? 18 : 14);
 
     // Walking animation between zones
     if (!anim.x || Math.random() < 0.01) {
@@ -1366,11 +1482,13 @@ function drawGameWorld() {
     ctx.arc(cx + size * 0.45, cy - size * 0.35, 3, 0, Math.PI * 2);
     ctx.fill();
 
-    // Name tag
-    ctx.fillStyle = isHover ? "#fff" : "rgba(255,255,255,0.85)";
-    ctx.font = `${isHover ? 10 : 8}px "Noto Sans SC", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.fillText(citizen.name, cx, cy + size + 12);
+    // Name tag (skip for avatar — rendered separately with gold highlight)
+    if (!isAvatar) {
+      ctx.fillStyle = isHover ? "#fff" : "rgba(255,255,255,0.85)";
+      ctx.font = `${isHover ? 10 : 8}px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(citizen.name, cx, cy + size + 12);
+    }
 
     // Speech bubble
     const bubble = getActiveSpeechBubble(citizen.id);
@@ -1415,16 +1533,30 @@ function drawGameWorld() {
 
     // Avatar marker (player's avatar)
     if (citizen.id === "avatar") {
+      // Outer glow
+      ctx.save();
       ctx.strokeStyle = "#ffd93d";
       ctx.lineWidth = 2;
-      ctx.setLineDash([3, 3]);
+      ctx.shadowColor = "rgba(255,217,61,0.6)";
+      ctx.shadowBlur = 12;
+      ctx.setLineDash([4, 3]);
       ctx.beginPath();
-      ctx.arc(cx, cy + size * 0.2, size * 0.7, 0, Math.PI * 2);
+      ctx.arc(cx, cy + size * 0.15, size * 0.85, 0, Math.PI * 2);
       ctx.stroke();
       ctx.setLineDash([]);
+      ctx.restore();
+
+      // Star badge
       ctx.fillStyle = "#ffd93d";
-      ctx.font = "bold 9px Arial";
-      ctx.fillText("★", cx + size * 0.55, cy - size * 0.35);
+      ctx.font = `bold ${isHover ? 13 : 11}px Arial`;
+      ctx.textAlign = "center";
+      ctx.fillText("\u2605", cx + size * 0.6, cy - size * 0.45);
+
+      // Larger name tag for avatar
+      ctx.fillStyle = "#ffd93d";
+      ctx.font = `bold 11px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.fillText(citizen.name, cx, cy + size + 15);
     }
   });
 
@@ -1990,13 +2122,26 @@ function bindGameEvents() {
   const hudSpeed = document.getElementById("hudSpeed");
   if (hudSpeed) hudSpeed.addEventListener("input", setSocietySpeed);
 
+  // ── Tutorial buttons ──
+  const tutorialNextBtn = document.getElementById("tutorialNext");
+  if (tutorialNextBtn) tutorialNextBtn.addEventListener("click", tutorialNext);
+  const tutorialSkipBtn = document.getElementById("tutorialSkip");
+  if (tutorialSkipBtn) tutorialSkipBtn.addEventListener("click", closeTutorial);
+
   // ── Action buttons ──
   document.querySelectorAll(".action-btn[data-soc-action]").forEach(btn => {
     btn.addEventListener("click", () => {
       if (!state.society.citizens.length) launchSocietyFromInput();
+      // Auto-pause for 3 seconds so player can see the result
+      const wasRunning = state.society.running;
+      pauseSocietyRun();
       runPlayerSocietyAction(btn.dataset.socAction);
       updateHUD();
       showToast(`执行了 ${btn.textContent.trim().replace(/.*\s/,"")}`, "propose");
+      // Auto-resume after 3 seconds
+      if (wasRunning) {
+        setTimeout(() => { if (!state.society.running) startSocietyRun(); }, 3000);
+      }
     });
   });
 
@@ -2170,6 +2315,12 @@ function gameInit() {
     if (state.society.autoEvolution) {
       startSocietyRun();
     }
+    // Restore saved speed to slider
+    const slider = document.getElementById("hudSpeed");
+    const sliderVal = document.getElementById("hudSpeedVal");
+    const savedSpeed = state.society.speed || 1;
+    if (slider) slider.value = savedSpeed;
+    if (sliderVal) sliderVal.textContent = `${savedSpeed.toFixed(1)}x`;
     updateHUD();
     persist();
   } else {
