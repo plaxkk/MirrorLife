@@ -1052,6 +1052,9 @@ function loadState() {
     echoes: [],
     bottle: "",
     continuation: null,
+    firstLoop: null,
+    hasSeenTutorial: false,
+    isFirstVisit: false,
     society: buildBaseSociety()
   };
 
@@ -1067,6 +1070,9 @@ function loadState() {
       echoes: Array.isArray(saved.echoes) ? saved.echoes : defaults.echoes,
       bottle: typeof saved.bottle === "string" ? saved.bottle : "",
       continuation: saved.continuation && typeof saved.continuation === "object" ? saved.continuation : null,
+      firstLoop: saved.firstLoop && typeof saved.firstLoop === "object" ? saved.firstLoop : null,
+      hasSeenTutorial: !!saved.hasSeenTutorial,
+      isFirstVisit: !!saved.isFirstVisit,
       society: normalizeSocietyState(loadedSociety)
     };
   } catch {
@@ -1082,6 +1088,9 @@ function persist() {
       echoes: state.echoes,
       bottle: state.bottle || "",
       continuation: state.continuation || null,
+      firstLoop: state.firstLoop || null,
+      hasSeenTutorial: !!state.hasSeenTutorial,
+      isFirstVisit: !!state.isFirstVisit,
       society: state.society
     })
   );

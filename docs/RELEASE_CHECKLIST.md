@@ -35,6 +35,16 @@
 - [ ] A cooperation input and a conflict/anxiety input produce clearly different narrative feedback
 - [ ] High-risk text triggers the local safety path
 
+## Phase 2 Visual Redesign Gate
+
+- [ ] task #13 provides the first-minute `core operation -> feedback -> consequence attribution` loop
+- [ ] [STITCH_VISUAL_REDESIGN_PREP.md](STITCH_VISUAL_REDESIGN_PREP.md) is updated with the task #13 loop before generating final Stitch variants
+- [ ] [STITCH_FINAL_VISUAL_DRAFT.md](STITCH_FINAL_VISUAL_DRAFT.md) is reviewed before engineering implementation
+- [ ] Google Stitch outputs are judged by first-minute causal understanding, not visual richness
+- [ ] Selected visual direction keeps one obvious primary operation entry
+- [ ] Selected visual direction shows immediate feedback, time progression, consequence attribution, and next choice
+- [ ] Project lead validates the selected direction before engineering implementation
+
 ## Known Phase 1 Boundaries
 
 - No production LLM API from browser

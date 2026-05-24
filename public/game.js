@@ -50,6 +50,24 @@ const SOCIAL_STANCES = {
   rest: ["放慢了节奏", "给这次行动留出恢复时间", "提醒先观察下一轮"]
 };
 
+const FIRST_LOOP_ACTIONS = {
+  listen: {
+    label: "先听懂",
+    intent: "把分歧里的真实担心听清楚",
+    next: "可以继续追问一句，或换成协作把问题拆小。"
+  },
+  cooperate: {
+    label: "一起做小事",
+    intent: "把压力拆成一个可完成的小协作",
+    next: "观察谁愿意跟上，再决定是否扩大行动。"
+  },
+  support: {
+    label: "先安抚",
+    intent: "先让关系张力降下来",
+    next: "看对方是否愿意靠近，或是否需要一次更清楚的表达。"
+  }
+};
+
 // ── Scene Presets (needed by features) ──
 // scenePresets, exchangeStories, bottleEchoes, robotReplies - all defined in engine.js
 
@@ -118,6 +136,137 @@ function formatDeltaSummary(delta = {}) {
     typeof delta.targetMood === "number" && Math.abs(delta.targetMood) >= 1 ? `对方心情${delta.targetMood > 0 ? "+" : ""}${delta.targetMood}` : "",
     typeof delta.targetTrust === "number" && Math.abs(delta.targetTrust) >= 1 ? `对方信任${delta.targetTrust > 0 ? "+" : ""}${delta.targetTrust}` : ""
   ].filter(Boolean).slice(0, 3).join(" / ");
+}
+
+function ensureFirstLoopState() {
+  if (!state.firstLoop || typeof state.firstLoop !== "object") {
+    state.firstLoop = {
+      input: "",
+      actionType: "",
+      completed: false,
+      resultText: "",
+      nextText: ""
+    };
+  }
+  return state.firstLoop;
+}
+
+function setFirstLoopStep(activeStep) {
+  document.querySelectorAll(".loop-step[data-loop-step]").forEach(step => {
+    const key = step.dataset.loopStep;
+    step.classList.toggle("active", key === activeStep);
+    step.classList.toggle(
+      "done",
+      (activeStep === "action" && key === "input") ||
+      (activeStep === "result" && (key === "input" || key === "action"))
+    );
+  });
+}
+
+function renderFirstLoopPanel() {
+  const panel = document.getElementById("firstLoopPanel");
+  if (!panel || !state) return;
+  const loop = ensureFirstLoopState();
+  const input = document.getElementById("firstLoopInput");
+  const result = document.getElementById("firstLoopResult");
+
+  if (input && document.activeElement !== input) {
+    input.value = loop.input || input.value || "";
+  }
+
+  document.querySelectorAll(".loop-action[data-loop-action]").forEach(btn => {
+    btn.classList.toggle("active", btn.dataset.loopAction === loop.actionType);
+  });
+
+  if (!loop.input) {
+    setFirstLoopStep("input");
+  } else if (!loop.completed) {
+    setFirstLoopStep("action");
+  } else {
+    setFirstLoopStep("result");
+  }
+
+  if (!result) return;
+  if (loop.completed && loop.resultText) {
+    result.innerHTML = `
+      <p class="loop-kicker">城市已经变化</p>
+      <p>${escapeHtml(loop.resultText)}</p>
+      <p><strong>下一步：</strong>${escapeHtml(loop.nextText || "继续观察这次行动有没有扩散。")}</p>
+      <div class="loop-next-actions">
+        <button data-loop-next="step">观察一回合</button>
+        <button data-loop-next="again">再做一次</button>
+      </div>`;
+    return;
+  }
+
+  result.innerHTML = `
+    <p class="loop-kicker">${loop.input ? "选择分身行动" : "等待一次行动"}</p>
+    <p>${loop.input ? "现在选一个行动，城市会立刻给出因果反馈。" : "写下一件小事，再选一个分身行动。城市会立刻告诉你：谁被影响、状态怎么变、下一步还能影响什么。"}</p>`;
+}
+
+function buildFirstLoopResult(feedback, actionType) {
+  const ctx = feedback?.context || {};
+  const action = FIRST_LOOP_ACTIONS[actionType] || FIRST_LOOP_ACTIONS.listen;
+  const delta = formatDeltaSummary(ctx.delta || {}) || "状态已记录";
+  const target = ctx.targetName || "城市";
+  const actor = ctx.actorName || "你的分身";
+  return {
+    resultText: `${actor}选择“${action.label}”：${action.intent}。${target}被影响，${delta}。`,
+    nextText: action.next
+  };
+}
+
+function runFirstLoopAction(actionType) {
+  const input = document.getElementById("firstLoopInput");
+  const text = (input?.value || "").trim();
+  const loop = ensureFirstLoopState();
+
+  if (!text) {
+    loop.input = "";
+    loop.completed = false;
+    renderFirstLoopPanel();
+    showToast("先写下一件刚发生的小事", "propose");
+    input?.focus();
+    return;
+  }
+
+  if (isHighRiskText(text)) {
+    openModal("mirror");
+    const modalInput = document.querySelector(".modal-content #modalLifeEvent");
+    if (modalInput) modalInput.value = text;
+    showToast("这段内容先进入安全提醒路径", "conflict");
+    return;
+  }
+
+  pauseSocietyRun();
+  const feedback = injectLifeEventToSociety(text, actionType);
+  if (!feedback) return;
+  writeWorldNarrativeFeedback(feedback);
+  triggerRealityActionFocus(feedback);
+
+  const built = buildFirstLoopResult(feedback, actionType);
+  loop.input = text;
+  loop.actionType = actionType;
+  loop.completed = true;
+  loop.resultText = built.resultText;
+  loop.nextText = built.nextText;
+  state.society.speed = 0.5;
+  persist();
+  updateHUD();
+  renderFirstLoopPanel();
+  showToast("因果结果已生成：行动、变化、下一步都写入面板", "support");
+}
+
+function resetFirstLoopForNextAction(keepInput = true) {
+  const input = document.getElementById("firstLoopInput");
+  const loop = ensureFirstLoopState();
+  loop.input = keepInput ? (input?.value || loop.input || "") : "";
+  loop.actionType = "";
+  loop.completed = false;
+  loop.resultText = "";
+  loop.nextText = "";
+  persist();
+  renderFirstLoopPanel();
 }
 
 function triggerRealityActionFocus(feedback) {
@@ -577,6 +726,7 @@ function createAndEnterWorld(profileData) {
   state.society.speed = 0.5;
   state.society.running = false;
   updateHUD();
+  renderFirstLoopPanel();
 
   // Mark as first-time user
   state.isFirstVisit = true;
@@ -602,9 +752,9 @@ const TUTORIAL_STEPS = [
     desc: "这是一个持续运转的虚拟社会。小人们在不同的区域生活、协作、对话。你可以观察他们，也可以主动干预。"
   },
   {
-    title: "试试输入一件事",
-    desc: '在上方输入栏写下一件今天发生的事，比如「今天上班迟到了」或「和朋友吵了一架」，看看你的分身会怎么反应。',
-    spotlight: "scenarioBar"
+    title: "完成一次因果循环",
+    desc: "在第一分钟面板写一件刚发生的小事，选择一个分身行动，然后看城市给出的变化和下一步。",
+    spotlight: "firstLoopPanel"
   }
 ];
 
@@ -647,8 +797,8 @@ function renderTutorialStep() {
 
   // Position spotlight
   if (spotlight) {
-    if (step.spotlight === "scenarioBar") {
-      const el = document.getElementById("scenarioBar");
+    if (step.spotlight === "firstLoopPanel") {
+      const el = document.getElementById("firstLoopPanel");
       if (el) {
         const r = el.getBoundingClientRect();
         spotlight.style.display = "block";
@@ -665,8 +815,8 @@ function renderTutorialStep() {
   // Position card
   if (card) {
     card.style.left = "50%";
-    card.style.top = step.spotlight === "scenarioBar" ? "180px" : "50%";
-    card.style.transform = "translateX(-50%)" + (step.spotlight !== "scenarioBar" ? " translateY(-50%)" : "");
+    card.style.top = step.spotlight === "firstLoopPanel" ? "48%" : "50%";
+    card.style.transform = "translateX(-50%) translateY(-50%)";
   }
 }
 
@@ -689,8 +839,13 @@ function closeTutorial() {
   state.isFirstVisit = false;
   state.society.speed = 0.5;
   persist();
-  startSocietyRun();
+  if (state.firstLoop?.completed) {
+    startSocietyRun();
+  } else {
+    pauseSocietyRun();
+  }
   updateHUD();
+  renderFirstLoopPanel();
 }
 
 // ── Speech Bubbles ──
@@ -1564,43 +1719,46 @@ function drawGameWorld() {
   drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens);
 
   // ── Relationship lines between citizens in same zone ──
-  const zoneGroups = {};
-  aliveCitizens.forEach(c => {
-    if (!zoneGroups[c.zoneId]) zoneGroups[c.zoneId] = [];
-    zoneGroups[c.zoneId].push(c);
-  });
-  Object.values(zoneGroups).forEach(group => {
-    for (let i = 0; i < group.length; i++) {
-      for (let j = i + 1; j < group.length; j++) {
-        const a = group[i], b = group[j];
-        const animA = citizenAnimations[a.id] || {};
-        const animB = citizenAnimations[b.id] || {};
-        const zone = getCitizenZone(society, a);
-        if (!zone) continue;
-        const zr = getZoneGameRect(zone, W, H, groundY);
-        const idxA = aliveCitizens.indexOf(a);
-        const idxB = aliveCitizens.indexOf(b);
-        const ax = animA.x || zr.x + 12 + ((idxA * 37) % Math.max(1, zr.w - 24));
-        const ay = animA.y || zr.y + zr.h - 8;
-        const bx = animB.x || zr.x + 12 + ((idxB * 37) % Math.max(1, zr.w - 24));
-        const by = animB.y || zr.y + zr.h - 8;
+  const firstLoopComplete = !!state?.firstLoop?.completed;
+  if (firstLoopComplete) {
+    const zoneGroups = {};
+    aliveCitizens.forEach(c => {
+      if (!zoneGroups[c.zoneId]) zoneGroups[c.zoneId] = [];
+      zoneGroups[c.zoneId].push(c);
+    });
+    Object.values(zoneGroups).forEach(group => {
+      for (let i = 0; i < group.length; i++) {
+        for (let j = i + 1; j < group.length; j++) {
+          const a = group[i], b = group[j];
+          const animA = citizenAnimations[a.id] || {};
+          const animB = citizenAnimations[b.id] || {};
+          const zone = getCitizenZone(society, a);
+          if (!zone) continue;
+          const zr = getZoneGameRect(zone, W, H, groundY);
+          const idxA = aliveCitizens.indexOf(a);
+          const idxB = aliveCitizens.indexOf(b);
+          const ax = animA.x || zr.x + 12 + ((idxA * 37) % Math.max(1, zr.w - 24));
+          const ay = animA.y || zr.y + zr.h - 8;
+          const bx = animB.x || zr.x + 12 + ((idxB * 37) % Math.max(1, zr.w - 24));
+          const by = animB.y || zr.y + zr.h - 8;
 
-        const avgTrust = ((a.trust + b.trust) / 2);
-        const alpha = clamp(avgTrust / 200, 0.05, 0.35);
-        ctx.strokeStyle = `rgba(167,139,250,${alpha})`;
-        ctx.lineWidth = 1;
-        ctx.setLineDash([4, 4]);
-        ctx.beginPath();
-        ctx.moveTo(ax, ay);
-        ctx.lineTo(bx, by);
-        ctx.stroke();
-        ctx.setLineDash([]);
+          const avgTrust = ((a.trust + b.trust) / 2);
+          const alpha = clamp(avgTrust / 200, 0.05, 0.35);
+          ctx.strokeStyle = `rgba(167,139,250,${alpha})`;
+          ctx.lineWidth = 1;
+          ctx.setLineDash([4, 4]);
+          ctx.beginPath();
+          ctx.moveTo(ax, ay);
+          ctx.lineTo(bx, by);
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
       }
-    }
-  });
+    });
+  }
 
   // ── Draw world entities (animals) ──
-  const entities = society.entities || [];
+  const entities = firstLoopComplete ? (society.entities || []) : [];
   entities.forEach((entity) => {
     const zone = zones.find(z => z.id === entity.zoneId);
     if (!zone) return;
@@ -2129,6 +2287,42 @@ function bindGameEvents() {
   const tutorialSkipBtn = document.getElementById("tutorialSkip");
   if (tutorialSkipBtn) tutorialSkipBtn.addEventListener("click", closeTutorial);
 
+  // ── First-minute loop ──
+  const firstLoopInput = document.getElementById("firstLoopInput");
+  if (firstLoopInput) {
+    firstLoopInput.addEventListener("input", () => {
+      const loop = ensureFirstLoopState();
+      loop.input = firstLoopInput.value.trim();
+      loop.completed = false;
+      loop.actionType = "";
+      loop.resultText = "";
+      loop.nextText = "";
+      renderFirstLoopPanel();
+    });
+  }
+
+  document.querySelectorAll(".loop-action[data-loop-action]").forEach(btn => {
+    btn.addEventListener("click", () => runFirstLoopAction(btn.dataset.loopAction));
+  });
+
+  const firstLoopPanel = document.getElementById("firstLoopPanel");
+  if (firstLoopPanel) {
+    firstLoopPanel.addEventListener("click", (e) => {
+      const next = e.target.closest("[data-loop-next]");
+      if (!next) return;
+      if (next.dataset.loopNext === "step") {
+        pauseSocietyRun();
+        stepSociety();
+        updateHUD();
+        showToast("城市向前推进了一回合，观察谁接住了余波", "support");
+        return;
+      }
+      if (next.dataset.loopNext === "again") {
+        resetFirstLoopForNextAction(true);
+      }
+    });
+  }
+
   // ── Action buttons ──
   document.querySelectorAll(".action-btn[data-soc-action]").forEach(btn => {
     btn.addEventListener("click", () => {
@@ -2314,7 +2508,8 @@ function gameInit() {
 
     // Start simulation (but pause if user hasn't seen tutorial yet)
     const shouldShowTutorial = !state.hasSeenTutorial;
-    if (shouldShowTutorial) {
+    const shouldHoldForFirstLoop = !state.firstLoop?.completed;
+    if (shouldShowTutorial || shouldHoldForFirstLoop) {
       pauseSocietyRun();
       state.society.speed = 0.5;
       const slider = document.getElementById("hudSpeed");
@@ -2323,7 +2518,7 @@ function gameInit() {
       if (sliderVal) sliderVal.textContent = "0.5x";
     }
 
-    if (state.society.autoEvolution && !shouldShowTutorial) {
+    if (state.society.autoEvolution && !shouldShowTutorial && !shouldHoldForFirstLoop) {
       startSocietyRun();
     }
     // Restore saved speed to slider
@@ -2333,6 +2528,7 @@ function gameInit() {
     if (slider) slider.value = savedSpeed;
     if (sliderVal) sliderVal.textContent = `${savedSpeed.toFixed(1)}x`;
     updateHUD();
+    renderFirstLoopPanel();
     persist();
 
     // Show tutorial for returning users who haven't seen it
@@ -2349,6 +2545,7 @@ function gameInit() {
     bindGameEvents();
     drawGameWorld();
     updateHUD();
+    renderFirstLoopPanel();
   }
 }
 
