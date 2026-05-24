@@ -15,6 +15,12 @@ let walkingCitizens = {};
 let speechBubbles = {};
 let particles = [];
 let realityActionFocus = null;
+let renderCache = { canvas: null, ctx: null, cssW: 0, cssH: 0, dpr: 0, lastFrameAt: 0 };
+let hoverCheckAt = 0;
+
+const TARGET_FRAME_MS = 14;
+const MAX_RENDER_DPR = 2;
+const MAX_PARTICLES = 120;
 
 const AVATAR_COLORS = [
   "#296c68", "#7a4462", "#b45f45", "#4e5c8d",
@@ -893,6 +899,9 @@ function spawnParticles(x, y, type, count) {
       color
     });
   }
+  if (particles.length > MAX_PARTICLES) {
+    particles.splice(0, particles.length - MAX_PARTICLES);
+  }
 }
 
 function updateParticles() {
@@ -1350,22 +1359,61 @@ const ZONE_ICONS = {
   "night-market": "🎪", "quiet-nook": "🧘", "repair-station": "🔧", "cemetery": "🕊"
 };
 
-function drawGameWorld() {
+function getCanvasFrame() {
   const canvas = document.getElementById("gameCanvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const dpr = window.devicePixelRatio || 1;
-  const rect = canvas.getBoundingClientRect();
-  canvas.width = Math.floor(rect.width * dpr);
-  canvas.height = Math.floor(rect.height * dpr);
-  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  if (!canvas) return null;
+  const ctx = renderCache.canvas === canvas && renderCache.ctx
+    ? renderCache.ctx
+    : canvas.getContext("2d");
+  if (!ctx) return null;
 
-  const W = rect.width;
-  const H = rect.height;
-  const t = performance.now() * 0.001;
+  const rect = canvas.getBoundingClientRect();
+  const cssW = Math.max(1, Math.round(rect.width));
+  const cssH = Math.max(1, Math.round(rect.height));
+  const dpr = Math.min(window.devicePixelRatio || 1, MAX_RENDER_DPR);
+
+  if (
+    renderCache.canvas !== canvas ||
+    renderCache.cssW !== cssW ||
+    renderCache.cssH !== cssH ||
+    renderCache.dpr !== dpr
+  ) {
+    canvas.width = Math.floor(cssW * dpr);
+    canvas.height = Math.floor(cssH * dpr);
+    renderCache = { ...renderCache, canvas, ctx, cssW, cssH, dpr };
+  }
+
+  ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+  return { canvas, ctx, W: cssW, H: cssH };
+}
+
+function drawGameWorld() {
+  const now = performance.now();
+  if (renderCache.lastFrameAt && now - renderCache.lastFrameAt < TARGET_FRAME_MS) {
+    gameFrame = requestAnimationFrame(drawGameWorld);
+    return;
+  }
+  renderCache.lastFrameAt = now;
+
+  const frame = getCanvasFrame();
+  if (!frame) return;
+  const { ctx, W, H } = frame;
+  const t = now * 0.001;
   const society = state.society;
   const ts = getWorldTimeState(society);
   const isNight = ts.isNight;
+  const groundY = H * 0.35;
+  const zones = getOpenWorldZoneList(society);
+  const zoneRects = new Map(zones.map(zone => [zone.id, getZoneGameRect(zone, W, H, groundY)]));
+  const aliveCitizens = getAliveCitizens(society);
+  const zoneOccupancy = new Map();
+  const citizenIndex = new Map();
+  aliveCitizens.forEach((citizen, idx) => {
+    citizenIndex.set(citizen.id, idx);
+  });
+  aliveCitizens.forEach(citizen => {
+    zoneOccupancy.set(citizen.zoneId, (zoneOccupancy.get(citizen.zoneId) || 0) + 1);
+  });
 
   // ── Sky ──
   const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
@@ -1416,7 +1464,6 @@ function drawGameWorld() {
   }
 
   // ── Ground ──
-  const groundY = H * 0.35;
   const groundGrad = ctx.createLinearGradient(0, groundY, 0, H);
   if (isNight) {
     groundGrad.addColorStop(0, "#1a2a1a");
@@ -1449,14 +1496,15 @@ function drawGameWorld() {
   ctx.translate(-W / 2, -H / 2);
 
   // ── Paths (roads between zones) ──
-  const zones = getOpenWorldZoneList(society);
   ctx.strokeStyle = isNight ? "rgba(80,70,50,0.25)" : "rgba(180,160,120,0.3)";
   ctx.lineWidth = 4;
   ctx.setLineDash([8, 6]);
   zones.forEach((zone, i) => {
-    const zr = getZoneGameRect(zone, W, H, groundY);
+    const zr = zoneRects.get(zone.id);
+    if (!zr) return;
     if (i < zones.length - 1) {
-      const nr = getZoneGameRect(zones[i + 1], W, H, groundY);
+      const nr = zoneRects.get(zones[i + 1].id);
+      if (!nr) return;
       ctx.beginPath();
       ctx.moveTo(zr.cx, zr.cy + zr.h / 2);
       ctx.bezierCurveTo(zr.cx, zr.cy + zr.h / 2 + 20, nr.cx, nr.cy + nr.h / 2 - 20, nr.cx, nr.cy + nr.h / 2);
@@ -1467,7 +1515,8 @@ function drawGameWorld() {
 
   // ── Draw Zones as cute buildings ──
   zones.forEach((zone, idx) => {
-    const r = getZoneGameRect(zone, W, H, groundY);
+    const r = zoneRects.get(zone.id);
+    if (!r) return;
     const color = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#a0a0a0";
     const isHovered = hoveredZone === zone.id;
 
@@ -1523,7 +1572,7 @@ function drawGameWorld() {
     ctx.fillText(zone.name, r.cx, r.y + r.h - 5);
 
     // Occupancy badge
-    const count = getAliveCitizens(society).filter(c => c.zoneId === zone.id).length;
+    const count = zoneOccupancy.get(zone.id) || 0;
     if (count > 0) {
       const bx = r.x + r.w - 10;
       const by = r.y + 10;
@@ -1546,14 +1595,13 @@ function drawGameWorld() {
   });
 
   // ── Draw Citizens as chibi characters ──
-  const aliveCitizens = getAliveCitizens(society);
   aliveCitizens.forEach((citizen, idx) => {
     const zone = getCitizenZone(society, citizen);
     if (!zone) return;
-    const zr = getZoneGameRect(zone, W, H, groundY);
+    const zr = zoneRects.get(zone.id);
+    if (!zr) return;
 
     // Position within zone
-    const anim = citizenAnimations[citizen.id] || {};
     const baseX = zr.x + 12 + ((idx * 37) % Math.max(1, zr.w - 24));
     const baseY = zr.y + zr.h - 8;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
@@ -1562,19 +1610,21 @@ function drawGameWorld() {
     const size = isAvatar ? (isHover ? 26 : 22) : (isHover ? 18 : 14);
 
     // Walking animation between zones
-    if (!anim.x || Math.random() < 0.01) {
-      citizenAnimations[citizen.id] = {
-        x: zr.x + 12 + Math.random() * Math.max(1, zr.w - 24),
-        y: zr.y + zr.h / 2 + Math.random() * (zr.h / 2 - 10)
-      };
+    const anim = citizenAnimations[citizen.id] || {
+      x: baseX,
+      y: baseY,
+      targetX: baseX,
+      targetY: baseY,
+      nextTargetAt: 0
+    };
+    if (now > (anim.nextTargetAt || 0)) {
+      anim.targetX = zr.x + 12 + Math.random() * Math.max(1, zr.w - 24);
+      anim.targetY = zr.y + zr.h / 2 + Math.random() * Math.max(1, zr.h / 2 - 10);
+      anim.nextTargetAt = now + 2500 + Math.random() * 3500;
     }
-    // Slow drift toward target position
-    if (anim.x) {
-      const dx = (citizenAnimations[citizen.id].x || baseX) - (anim.x || baseX);
-      const dy = (citizenAnimations[citizen.id].y || baseY) - (anim.y || baseY);
-      anim.x = (anim.x || baseX) + dx * 0.02;
-      anim.y = (anim.y || baseY) + dy * 0.02;
-    }
+    anim.x += ((anim.targetX || baseX) - (anim.x || baseX)) * 0.025;
+    anim.y += ((anim.targetY || baseY) - (anim.y || baseY)) * 0.025;
+    citizenAnimations[citizen.id] = anim;
 
     const cx = anim.x || baseX;
     const cy = (anim.y || baseY) + bobY;
@@ -1626,8 +1676,9 @@ function drawGameWorld() {
     }
     ctx.stroke();
 
-    // Mood sparkle for high mood
-    if (mood > 80 && Math.random() < 0.02) {
+    // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
+    if (mood > 80 && now > (anim.nextSparkleAt || 0)) {
+      anim.nextSparkleAt = now + 1800 + Math.random() * 2200;
       spawnParticles(cx, cy - size * 0.5, "propose", 2);
     }
 
@@ -1734,9 +1785,10 @@ function drawGameWorld() {
           const animB = citizenAnimations[b.id] || {};
           const zone = getCitizenZone(society, a);
           if (!zone) continue;
-          const zr = getZoneGameRect(zone, W, H, groundY);
-          const idxA = aliveCitizens.indexOf(a);
-          const idxB = aliveCitizens.indexOf(b);
+          const zr = zoneRects.get(zone.id);
+          if (!zr) continue;
+          const idxA = citizenIndex.get(a.id) || 0;
+          const idxB = citizenIndex.get(b.id) || 0;
           const ax = animA.x || zr.x + 12 + ((idxA * 37) % Math.max(1, zr.w - 24));
           const ay = animA.y || zr.y + zr.h - 8;
           const bx = animB.x || zr.x + 12 + ((idxB * 37) % Math.max(1, zr.w - 24));
@@ -1762,7 +1814,8 @@ function drawGameWorld() {
   entities.forEach((entity) => {
     const zone = zones.find(z => z.id === entity.zoneId);
     if (!zone) return;
-    const zr = getZoneGameRect(zone, W, H, groundY);
+    const zr = zoneRects.get(zone.id);
+    if (!zr) return;
     const ex = zr.x + entity.x * zr.w;
     const ey = zr.y + entity.y * zr.h;
     const floatY = Math.sin(entity.phase) * 2;
@@ -1811,15 +1864,17 @@ function drawGameWorld() {
   // ── Building details: factory smoke ──
   const factoryZone = zones.find(z => z.id === "factory");
   if (factoryZone) {
-    const fr = getZoneGameRect(factoryZone, W, H, groundY);
-    for (let s = 0; s < 3; s++) {
-      const smokeX = fr.x + 15 + s * 18;
-      const smokeY = fr.y - 5 - s * 8 - Math.sin(t + s) * 3;
-      const smokeAlpha = 0.2 + Math.sin(t * 0.5 + s) * 0.1;
-      ctx.fillStyle = `rgba(180,180,180,${smokeAlpha})`;
-      ctx.beginPath();
-      ctx.arc(smokeX, smokeY, 6 + s * 2, 0, Math.PI * 2);
-      ctx.fill();
+    const fr = zoneRects.get(factoryZone.id);
+    if (fr) {
+      for (let s = 0; s < 3; s++) {
+        const smokeX = fr.x + 15 + s * 18;
+        const smokeY = fr.y - 5 - s * 8 - Math.sin(t + s) * 3;
+        const smokeAlpha = 0.2 + Math.sin(t * 0.5 + s) * 0.1;
+        ctx.fillStyle = `rgba(180,180,180,${smokeAlpha})`;
+        ctx.beginPath();
+        ctx.arc(smokeX, smokeY, 6 + s * 2, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   }
 
@@ -1827,7 +1882,8 @@ function drawGameWorld() {
   ["park", "botanical-garden"].forEach(zoneId => {
     const parkZone = zones.find(z => z.id === zoneId);
     if (!parkZone) return;
-    const pr = getZoneGameRect(parkZone, W, H, groundY);
+    const pr = zoneRects.get(parkZone.id);
+    if (!pr) return;
     const flowerColors = ["#ff6b9d", "#ffd93d", "#67e8f9", "#a78bfa", "#86efac"];
     for (let f = 0; f < 5; f++) {
       const fx = pr.x + 8 + f * (pr.w - 16) / 5;
@@ -1844,21 +1900,23 @@ function drawGameWorld() {
   // ── Water surface in park ──
   const parkZone = zones.find(z => z.id === "park");
   if (parkZone) {
-    const pr = getZoneGameRect(parkZone, W, H, groundY);
-    const waterX = pr.x + pr.w * 0.6;
-    const waterY = pr.y + pr.h * 0.3;
-    ctx.fillStyle = isNight ? "rgba(30,60,100,0.4)" : "rgba(103,232,249,0.3)";
-    ctx.beginPath();
-    ctx.ellipse(waterX, waterY, 16, 10, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Ripples
-    ctx.strokeStyle = isNight ? "rgba(103,232,249,0.2)" : "rgba(103,232,249,0.4)";
-    ctx.lineWidth = 0.5;
-    for (let r = 0; r < 3; r++) {
-      const rr = 5 + r * 4 + Math.sin(t * 2 + r) * 2;
+    const pr = zoneRects.get(parkZone.id);
+    if (pr) {
+      const waterX = pr.x + pr.w * 0.6;
+      const waterY = pr.y + pr.h * 0.3;
+      ctx.fillStyle = isNight ? "rgba(30,60,100,0.4)" : "rgba(103,232,249,0.3)";
       ctx.beginPath();
-      ctx.ellipse(waterX, waterY, rr, rr * 0.6, 0, 0, Math.PI * 2);
-      ctx.stroke();
+      ctx.ellipse(waterX, waterY, 16, 10, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Ripples
+      ctx.strokeStyle = isNight ? "rgba(103,232,249,0.2)" : "rgba(103,232,249,0.4)";
+      ctx.lineWidth = 0.5;
+      for (let r = 0; r < 3; r++) {
+        const rr = 5 + r * 4 + Math.sin(t * 2 + r) * 2;
+        ctx.beginPath();
+        ctx.ellipse(waterX, waterY, rr, rr * 0.6, 0, 0, Math.PI * 2);
+        ctx.stroke();
+      }
     }
   }
 
@@ -1945,7 +2003,8 @@ function drawGameWorld() {
   const scaleX = mmW / W;
   const scaleY = mmH / H;
   zones.forEach(zone => {
-    const r = getZoneGameRect(zone, W, H, groundY);
+    const r = zoneRects.get(zone.id);
+    if (!r) return;
     ctx.fillStyle = hexWithAlpha(ZONE_COLORS[zone.role] || "#888", 0.6);
     ctx.fillRect(mmX + r.x * scaleX, mmY + r.y * scaleY, Math.max(2, r.w * scaleX), Math.max(2, r.h * scaleY));
   });
@@ -2158,6 +2217,9 @@ function bindGameEvents() {
 
     // ── Canvas hover ──
     canvas.addEventListener("mousemove", (e) => {
+      const now = performance.now();
+      if (now - hoverCheckAt < 33) return;
+      hoverCheckAt = now;
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
