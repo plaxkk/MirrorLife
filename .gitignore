@@ -7,3 +7,4 @@ dist/
 .gstack/
 *.log
 .vercel
+docs/private/FUTURE_AGENT_TECH_ROADMAP.md
