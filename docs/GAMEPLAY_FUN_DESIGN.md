@@ -1,6 +1,6 @@
 # MirrorLife Multi-Agent Gameplay Fun Design
 
-> Purpose: convert the future multi-agent social simulation direction into concrete play value. This document references the internal research notes in `docs/private/REFERENCE.md` but keeps the playable design framed around MirrorLife's current first-minute causal loop.
+> Purpose: convert the future multi-agent social simulation direction into concrete play value. This document draws on internal research notes kept locally under `docs/private/` (not tracked in git) but keeps the playable design framed around MirrorLife's current first-minute causal loop.
 
 ## 1. Product Fun Positioning
 
