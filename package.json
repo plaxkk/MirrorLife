@@ -21,5 +21,8 @@
   "repository": {},
   "devDependencies": {
     "vite": "^8.0.13"
+  },
+  "dependencies": {
+    "@vercel/analytics": "^2.0.1"
   }
 }
