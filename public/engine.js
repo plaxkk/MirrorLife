@@ -1053,6 +1053,7 @@ function loadState() {
     bottle: "",
     continuation: null,
     firstLoop: null,
+    causalGraph: null,
     hasSeenTutorial: false,
     isFirstVisit: false,
     society: buildBaseSociety()
@@ -1071,6 +1072,7 @@ function loadState() {
       bottle: typeof saved.bottle === "string" ? saved.bottle : "",
       continuation: saved.continuation && typeof saved.continuation === "object" ? saved.continuation : null,
       firstLoop: saved.firstLoop && typeof saved.firstLoop === "object" ? saved.firstLoop : null,
+      causalGraph: saved.causalGraph && typeof saved.causalGraph === "object" ? saved.causalGraph : null,
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
       society: normalizeSocietyState(loadedSociety)
@@ -1089,6 +1091,7 @@ function persist() {
       bottle: state.bottle || "",
       continuation: state.continuation || null,
       firstLoop: state.firstLoop || null,
+      causalGraph: state.causalGraph || null,
       hasSeenTutorial: !!state.hasSeenTutorial,
       isFirstVisit: !!state.isFirstVisit,
       society: state.society

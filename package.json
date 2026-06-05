@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/game.js",
+    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/causal-graph.js && node --check public/game.js",
     "test": "npm run check",
     "build": "vite build",
     "preview": "vite preview"

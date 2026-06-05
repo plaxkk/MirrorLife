@@ -17,6 +17,7 @@ let particles = [];
 let realityActionFocus = null;
 let renderCache = { canvas: null, ctx: null, cssW: 0, cssH: 0, dpr: 0, lastFrameAt: 0 };
 let hoverCheckAt = 0;
+let graphDebugVisible = false;
 
 const TARGET_FRAME_MS = 14;
 const MAX_RENDER_DPR = 2;
@@ -151,10 +152,29 @@ function ensureFirstLoopState() {
       actionType: "",
       completed: false,
       resultText: "",
-      nextText: ""
+      nextText: "",
+      becauseLine: "",
+      graphRecordId: "",
+      evidenceEdgeIds: []
     };
   }
   return state.firstLoop;
+}
+
+function shouldShowGraphDebug() {
+  return graphDebugVisible || new URLSearchParams(window.location.search).get("debugGraph") === "1";
+}
+
+function buildGraphDebugMarkup() {
+  if (!shouldShowGraphDebug() || !window.CausalGraphMemory) return "";
+  const graph = window.CausalGraphMemory.normalizeGraph(state.causalGraph);
+  const latest = window.CausalGraphMemory.latestRecord(graph);
+  return `
+    <details class="loop-graph-debug">
+      <summary>因果图调试</summary>
+      <p>${graph.nodes.length} nodes / ${graph.edges.length} edges${latest ? ` / latest ${escapeHtml(latest.id)}` : ""}</p>
+      <button data-loop-graph-export>复制 JSON</button>
+    </details>`;
 }
 
 function setFirstLoopStep(activeStep) {
@@ -197,11 +217,13 @@ function renderFirstLoopPanel() {
     result.innerHTML = `
       <p class="loop-kicker">城市已经变化</p>
       <p>${escapeHtml(loop.resultText)}</p>
+      ${loop.becauseLine ? `<p class="loop-because"><strong>因果依据：</strong>${escapeHtml(loop.becauseLine)}</p>` : ""}
       <p><strong>下一步：</strong>${escapeHtml(loop.nextText || "继续观察这次行动有没有扩散。")}</p>
       <div class="loop-next-actions">
         <button data-loop-next="step">观察一回合</button>
         <button data-loop-next="again">再做一次</button>
-      </div>`;
+      </div>
+      ${buildGraphDebugMarkup()}`;
     return;
   }
 
@@ -220,6 +242,29 @@ function buildFirstLoopResult(feedback, actionType) {
     resultText: `${actor}选择“${action.label}”：${action.intent}。${target}被影响，${delta}。`,
     nextText: action.next
   };
+}
+
+function recordFirstLoopCausalGraph(feedback, actionType, built) {
+  if (!window.CausalGraphMemory) return null;
+  const ctx = feedback?.context || {};
+  const action = FIRST_LOOP_ACTIONS[actionType] || FIRST_LOOP_ACTIONS.listen;
+  const payload = {
+    input: ctx.inputHint || ensureFirstLoopState().input || "",
+    actionType,
+    actionLabel: action.label,
+    actionIntent: action.intent,
+    actorId: ctx.actorId || feedback?.result?.actorId || "avatar",
+    actorName: ctx.actorName || feedback?.result?.actor || "你的分身",
+    targetId: ctx.targetId || feedback?.result?.targetId || "",
+    targetName: ctx.targetName || feedback?.result?.target || "城市",
+    deltaSummary: formatDeltaSummary(ctx.delta || {}) || "状态变化已被记录",
+    resultText: built.resultText,
+    nextText: built.nextText,
+    turn: state?.society?.turn || 0
+  };
+  const recorded = window.CausalGraphMemory.recordFirstLoop(state.causalGraph, payload);
+  state.causalGraph = recorded.graph;
+  return recorded.record;
 }
 
 function runFirstLoopAction(actionType) {
@@ -251,11 +296,15 @@ function runFirstLoopAction(actionType) {
   triggerRealityActionFocus(feedback);
 
   const built = buildFirstLoopResult(feedback, actionType);
+  const graphRecord = recordFirstLoopCausalGraph(feedback, actionType, built);
   loop.input = text;
   loop.actionType = actionType;
   loop.completed = true;
   loop.resultText = built.resultText;
   loop.nextText = built.nextText;
+  loop.becauseLine = graphRecord?.becauseLine || "";
+  loop.graphRecordId = graphRecord?.id || "";
+  loop.evidenceEdgeIds = graphRecord?.evidenceEdgeIds || [];
   state.society.speed = 0.5;
   persist();
   updateHUD();
@@ -271,6 +320,9 @@ function resetFirstLoopForNextAction(keepInput = true) {
   loop.completed = false;
   loop.resultText = "";
   loop.nextText = "";
+  loop.becauseLine = "";
+  loop.graphRecordId = "";
+  loop.evidenceEdgeIds = [];
   persist();
   renderFirstLoopPanel();
 }
@@ -2195,6 +2247,13 @@ function bindGameEvents() {
     });
   }
 
+  document.addEventListener("keydown", (e) => {
+    if (e.key.toLowerCase() !== "g" || e.metaKey || e.ctrlKey || e.altKey) return;
+    graphDebugVisible = !graphDebugVisible;
+    renderFirstLoopPanel();
+    showToast(graphDebugVisible ? "因果图调试已显示" : "因果图调试已隐藏", "support");
+  });
+
   // ── Canvas click ──
   if (canvas) {
     canvas.addEventListener("click", (e) => {
@@ -2359,6 +2418,9 @@ function bindGameEvents() {
       loop.actionType = "";
       loop.resultText = "";
       loop.nextText = "";
+      loop.becauseLine = "";
+      loop.graphRecordId = "";
+      loop.evidenceEdgeIds = [];
       renderFirstLoopPanel();
     });
   }
@@ -2370,6 +2432,15 @@ function bindGameEvents() {
   const firstLoopPanel = document.getElementById("firstLoopPanel");
   if (firstLoopPanel) {
     firstLoopPanel.addEventListener("click", (e) => {
+      const graphExport = e.target.closest("[data-loop-graph-export]");
+      if (graphExport) {
+        const json = window.CausalGraphMemory?.exportGraph(state.causalGraph) || "{}";
+        navigator.clipboard?.writeText(json).then(
+          () => showToast("因果图 JSON 已复制", "support"),
+          () => showToast("无法复制，请从控制台读取 state.causalGraph", "conflict")
+        );
+        return;
+      }
       const next = e.target.closest("[data-loop-next]");
       if (!next) return;
       if (next.dataset.loopNext === "step") {

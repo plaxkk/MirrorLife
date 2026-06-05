@@ -388,6 +388,12 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   line-height: 1.6;
 }
 .loop-result strong { color: var(--hud-text); }
+.loop-because {
+  margin-top: 7px;
+  padding-top: 7px;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  color: var(--hud-text);
+}
 .loop-kicker {
   color: var(--accent-gold);
   font-size: 11px;
@@ -412,6 +418,27 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 .loop-next-actions button:hover {
   border-color: var(--accent-teal);
   background: rgba(78,205,196,0.12);
+}
+.loop-graph-debug {
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px dashed rgba(255,255,255,0.14);
+  color: var(--hud-muted);
+  font-size: 11px;
+}
+.loop-graph-debug summary {
+  cursor: pointer;
+  color: var(--accent-teal);
+  font-weight: 800;
+}
+.loop-graph-debug button {
+  margin-top: 5px;
+  padding: 5px 8px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--hud-border);
+  background: rgba(255,255,255,0.05);
+  color: var(--hud-text);
+  font-size: 11px;
 }
 .game-menu,
 .hud-bottom {
