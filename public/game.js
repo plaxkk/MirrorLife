@@ -59,21 +59,40 @@ const SOCIAL_STANCES = {
 
 const FIRST_LOOP_ACTIONS = {
   listen: {
-    label: "先听懂",
-    intent: "把分歧里的真实担心听清楚",
-    next: "可以继续追问一句，或换成协作把问题拆小。"
+    label: "换个视角",
+    intent: "先用另一个身份看懂这段人生",
+    next: "可以进入人生胶囊做一次关键选择，或让机器人接住这条回声。"
   },
   cooperate: {
-    label: "一起做小事",
-    intent: "把压力拆成一个可完成的小协作",
-    next: "观察谁愿意跟上，再决定是否扩大行动。"
+    label: "做一次选择",
+    intent: "让这条人生线向前发生一次改变",
+    next: "观察城市里谁被影响，再决定是否继续试活这段人生。"
   },
   support: {
-    label: "先安抚",
-    intent: "先让关系张力降下来",
-    next: "看对方是否愿意靠近，或是否需要一次更清楚的表达。"
+    label: "接住回声",
+    intent: "让另一个世界里的你把感受传回现实侧",
+    next: "打开情感机器人，听听这次体验在现实里的余波。"
   }
 };
+
+const FIRST_SESSION_STAGES = [
+  "opening",
+  "choose_capsule",
+  "perspective_scene",
+  "world_echo",
+  "robot_signal",
+  "drift_bottle",
+  "unlocked_world"
+];
+
+const QUEST_STEP_LABELS = [
+  { stage: "choose_capsule", label: "试活" },
+  { stage: "perspective_scene", label: "选择" },
+  { stage: "world_echo", label: "回声" },
+  { stage: "robot_signal", label: "信号" },
+  { stage: "drift_bottle", label: "漂流" },
+  { stage: "unlocked_world", label: "探索" }
+];
 
 // ── Scene Presets (needed by features) ──
 // scenePresets, exchangeStories, bottleEchoes, robotReplies - all defined in engine.js
@@ -189,47 +208,221 @@ function setFirstLoopStep(activeStep) {
   });
 }
 
+function ensureFirstSessionQuest() {
+  if (!state.firstSessionQuest || typeof state.firstSessionQuest !== "object") {
+    state.firstSessionQuest = {
+      selectedCapsuleId: "",
+      choice: "",
+      echo: "",
+      worldResult: "",
+      robotMessage: "",
+      driftMoment: "turning_point",
+      driftText: "",
+      driftCasted: false,
+      safetyRouted: false
+    };
+  }
+  return state.firstSessionQuest;
+}
+
+function hasAvatarProfile() {
+  return !!state?.profile?.avatarColor;
+}
+
+function hasCompletedFirstSession() {
+  return state?.firstSessionStage === "unlocked_world" ||
+    !!state?.firstSessionQuest?.driftCasted ||
+    !!state?.firstLoop?.completed ||
+    !!state?.driftBottles?.length;
+}
+
+function getFirstSessionStage() {
+  if (!state) return "opening";
+  const stage = FIRST_SESSION_STAGES.includes(state.firstSessionStage) ? state.firstSessionStage : "";
+  if (stage) return stage;
+  if (!hasAvatarProfile()) return "opening";
+  if (hasCompletedFirstSession()) return "unlocked_world";
+  return "choose_capsule";
+}
+
+function setFirstSessionStage(stage, shouldRender = true) {
+  state.firstSessionStage = FIRST_SESSION_STAGES.includes(stage) ? stage : "choose_capsule";
+  applyFirstSessionChrome();
+  persist();
+  if (shouldRender) renderFirstLoopPanel();
+}
+
+function applyFirstSessionChrome() {
+  if (!state || !document.body) return;
+  const stage = getFirstSessionStage();
+  const locked = stage !== "unlocked_world";
+  document.body.dataset.questStage = stage;
+  document.body.classList.toggle("quest-locked", locked);
+  document.body.classList.toggle("quest-unlocked", !locked);
+}
+
+function renderQuestProgress(activeStage) {
+  const activeIndex = QUEST_STEP_LABELS.findIndex((step) => step.stage === activeStage);
+  return `
+    <div class="quest-progress" aria-label="首轮旅程进度">
+      ${QUEST_STEP_LABELS.map((step, index) => {
+        const cls = index < activeIndex ? "done" : index === activeIndex ? "active" : "locked";
+        return `<span class="${cls}"><b>${index + 1}</b>${escapeHtml(step.label)}</span>`;
+      }).join("")}
+    </div>`;
+}
+
+function renderQuestHeader(kicker, title, desc, stage) {
+  return `
+    <div class="quest-head">
+      <div>
+        <p class="quest-kicker">${escapeHtml(kicker)}</p>
+        <h2>${escapeHtml(title)}</h2>
+      </div>
+      <button class="quest-help" data-quest-action="show-help" title="重看引导">?</button>
+    </div>
+    <p class="quest-desc">${escapeHtml(desc)}</p>
+    ${renderQuestProgress(stage)}`;
+}
+
+function renderOpeningQuest() {
+  return `
+    ${renderQuestHeader("MirrorLife", "你想活出怎样的人生", "先进入一段匿名人生，做一次选择，再让另一个世界把回声传回来。", "choose_capsule")}
+    <div class="quest-opening">
+      <div class="locked-discovery active"><span>换一种身份</span><small>进入人生胶囊</small></div>
+      <div class="locked-discovery"><span>收到信号</span><small>情感机器人会亮起</small></div>
+      <div class="locked-discovery"><span>偶遇同频</span><small>漂流瓶仍在海上</small></div>
+    </div>
+    <button class="quest-primary" data-quest-action="start-trial">开始试活</button>`;
+}
+
+function renderCapsuleDeck() {
+  const quest = ensureFirstSessionQuest();
+  const capsules = getLifeCapsules().slice(0, 3);
+  return capsules.map((capsule) => {
+    const selected = quest.selectedCapsuleId === capsule.id;
+    const themes = (capsule.themes || []).slice(0, 2).map((theme) =>
+      `<span>${escapeHtml(LIFE_SCOPE_LABELS[theme] || theme)}</span>`
+    ).join("");
+    return `
+      <button class="life-card quest-capsule-card ${selected ? "selected" : ""}" data-quest-select-capsule="${escapeHtml(capsule.id)}">
+        <p class="eyebrow">${escapeHtml(capsule.lifeStage)}</p>
+        <h3>${escapeHtml(capsule.title)}</h3>
+        <p>${escapeHtml(capsule.perspectiveRole)}</p>
+        <small>${escapeHtml(capsule.anonymizedScenario)}</small>
+        <div class="quest-tags">${themes}</div>
+      </button>`;
+  }).join("");
+}
+
+function renderChooseCapsuleQuest() {
+  const quest = ensureFirstSessionQuest();
+  return `
+    ${renderQuestHeader("01 / 选择人生胶囊", "今晚先活成谁？", "选一段匿名重构的人生。你只会看到处境、身份和选择，不会看到原始身份。", "choose_capsule")}
+    <div class="capsule-deck">${renderCapsuleDeck()}</div>
+    ${quest.selectedCapsuleId
+      ? `<button class="quest-primary" data-quest-action="enter-capsule">进入这段人生</button>`
+      : `<div class="quest-nudge">点亮一张人生胶囊，入口才会出现。</div>`}
+    <button class="quest-secondary" data-modal="exchange">查看完整胶囊池</button>`;
+}
+
+function renderPerspectiveQuest() {
+  const quest = ensureFirstSessionQuest();
+  const capsule = getLifeCapsules().find((item) => item.id === quest.selectedCapsuleId) || getActiveLifeCapsule();
+  if (!capsule) return renderChooseCapsuleQuest();
+  const choices = (capsule.keyChoiceSet || []).slice(0, 4);
+  return `
+    ${renderQuestHeader("02 / 视角切换中", `此刻我是：${capsule.perspectiveRole}`, capsule.anonymizedScenario, "perspective_scene")}
+    <div class="perspective-stage">
+      <p class="stage-label">${escapeHtml(capsule.lifeStage)}</p>
+      <h3>今晚，我要怎样往前走？</h3>
+      <div class="choice-stone-grid">
+        ${choices.map((choice) => `<button class="choice-stone" data-quest-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}
+      </div>
+      <p class="quest-boundary">${(capsule.boundaries || []).slice(0, 2).map(escapeHtml).join(" · ")}</p>
+    </div>
+    <button class="quest-secondary" data-quest-action="back-to-capsules">换一段人生</button>`;
+}
+
+function renderWorldEchoQuest() {
+  const quest = ensureFirstSessionQuest();
+  return `
+    ${renderQuestHeader("03 / 世界回声", "这个选择已经发生", "这不是评分，也不是对错。它只是让你看见：如果活在这个身份里，世界会怎样回应。", "world_echo")}
+    <div class="world-echo-card">
+      <p class="echo-title">如果我活在这个身份里，我看见了...</p>
+      <p>${escapeHtml(quest.echo || "选择不是答案本身，而是一条会改变关系和自我位置的岔路。")}</p>
+      ${quest.worldResult ? `<small>${escapeHtml(quest.worldResult)}</small>` : ""}
+    </div>
+    <button class="quest-primary" data-quest-action="open-robot-signal">听听另一个我的信号</button>
+    <button class="quest-secondary" data-quest-action="back-to-perspective">再试一次选择</button>`;
+}
+
+function renderRobotSignalQuest() {
+  const quest = ensureFirstSessionQuest();
+  const signal = (state.robotSignals || []).find((item) => item.message === quest.robotMessage) || (state.robotSignals || [])[0];
+  const message = signal?.message || "机器人处于静默陪伴。另一个世界还没有传来新的回声。";
+  return `
+    ${renderQuestHeader("04 / 情感机器人", "现实侧有一盏灯亮了一下", "它不是助手，也不是通知中心。它只是把另一个世界里的你轻轻带回来。", "robot_signal")}
+    <div class="robot-object ${signal?.intensity || "quiet"}">
+      <div class="robot-figure"><div class="robot-head-inner"><div class="robot-eye"></div><div class="robot-eye"></div></div></div>
+      <p>${escapeHtml(message)}</p>
+    </div>
+    <button class="quest-primary" data-quest-action="open-drift-bottle">把这一刻投进海里</button>
+    <button class="quest-secondary" data-quest-action="unlock-world">先进入城市探索</button>`;
+}
+
+function renderDriftBottleQuest() {
+  const quest = ensureFirstSessionQuest();
+  const moment = quest.driftMoment || "turning_point";
+  const momentButtons = Object.entries(LIFE_SCOPE_LABELS).map(([key, label]) =>
+    `<button class="choice-stone ${key === moment ? "active" : ""}" data-quest-moment="${key}">${escapeHtml(label)}</button>`
+  ).join("");
+  if (quest.driftCasted || quest.safetyRouted) {
+    return `
+      ${renderQuestHeader("05 / 灵魂漂流瓶", quest.safetyRouted ? "这只瓶子先被保护起来" : "这只瓶子还在海上", quest.safetyRouted ? "高风险内容不会进入普通匹配池。系统会先保护现实中的你。" : "它不会立刻变成聊天匹配。等某个同频的人经过，机器人会轻轻告诉你。", "drift_bottle")}
+      <div class="drift-ritual casted">
+        <p>${escapeHtml(quest.driftText || "此刻的人生瞬间已经离岸。")}</p>
+        <span>${escapeHtml(LIFE_SCOPE_LABELS[moment] || "人生转折")}</span>
+      </div>
+      <button class="quest-primary" data-quest-action="unlock-world">进入城市探索</button>`;
+  }
+  return `
+    ${renderQuestHeader("05 / 灵魂漂流瓶", "把此刻投向海上", "写一句此刻的人生瞬间。它会先漂着，不会马上把你推向陌生人。", "drift_bottle")}
+    <div class="drift-ritual">
+      <textarea id="questDriftText" rows="4" maxlength="140" placeholder="例如：我站在一个转折点，不知道该继续忍耐，还是承认自己想换一种人生。">${escapeHtml(quest.driftText || "")}</textarea>
+      <div class="choice-stone-grid compact">${momentButtons}</div>
+    </div>
+    <button class="quest-primary" data-quest-action="cast-drift-bottle">投向海上</button>`;
+}
+
+function renderUnlockedWorldQuest() {
+  return `
+    ${renderQuestHeader("城市探索已解锁", "现在可以自由靠近这座社会", "你已经完成第一轮试活。菜单、回声档案、机器人、漂流瓶和社会行动都已开放。", "unlocked_world")}
+    <div class="unlocked-actions">
+      <button class="quest-secondary" data-modal="exchange">继续试活</button>
+      <button class="quest-secondary" data-modal="robot">听机器人</button>
+      <button class="quest-secondary" data-modal="echoes">看回声</button>
+    </div>`;
+}
+
 function renderFirstLoopPanel() {
   const panel = document.getElementById("firstLoopPanel");
-  if (!panel || !state) return;
-  const loop = ensureFirstLoopState();
-  const input = document.getElementById("firstLoopInput");
-  const result = document.getElementById("firstLoopResult");
-
-  if (input && document.activeElement !== input) {
-    input.value = loop.input || input.value || "";
-  }
-
-  document.querySelectorAll(".loop-action[data-loop-action]").forEach(btn => {
-    btn.classList.toggle("active", btn.dataset.loopAction === loop.actionType);
-  });
-
-  if (!loop.input) {
-    setFirstLoopStep("input");
-  } else if (!loop.completed) {
-    setFirstLoopStep("action");
-  } else {
-    setFirstLoopStep("result");
-  }
-
-  if (!result) return;
-  if (loop.completed && loop.resultText) {
-    result.innerHTML = `
-      <p class="loop-kicker">城市已经变化</p>
-      <p>${escapeHtml(loop.resultText)}</p>
-      ${loop.becauseLine ? `<p class="loop-because"><strong>因果依据：</strong>${escapeHtml(loop.becauseLine)}</p>` : ""}
-      <p><strong>下一步：</strong>${escapeHtml(loop.nextText || "继续观察这次行动有没有扩散。")}</p>
-      <div class="loop-next-actions">
-        <button data-loop-next="step">观察一回合</button>
-        <button data-loop-next="again">再做一次</button>
-      </div>
-      ${buildGraphDebugMarkup()}`;
-    return;
-  }
-
-  result.innerHTML = `
-    <p class="loop-kicker">${loop.input ? "选择分身行动" : "等待一次行动"}</p>
-    <p>${loop.input ? "现在选一个行动，城市会立刻给出因果反馈。" : "写下一件小事，再选一个分身行动。城市会立刻告诉你：谁被影响、状态怎么变、下一步还能影响什么。"}</p>`;
+  const content = document.getElementById("questStageContent");
+  if (!panel || !content || !state) return;
+  ensureFirstSessionQuest();
+  const stage = getFirstSessionStage();
+  state.firstSessionStage = stage;
+  applyFirstSessionChrome();
+  const renderers = {
+    opening: renderOpeningQuest,
+    choose_capsule: renderChooseCapsuleQuest,
+    perspective_scene: renderPerspectiveQuest,
+    world_echo: renderWorldEchoQuest,
+    robot_signal: renderRobotSignalQuest,
+    drift_bottle: renderDriftBottleQuest,
+    unlocked_world: renderUnlockedWorldQuest
+  };
+  content.innerHTML = (renderers[stage] || renderChooseCapsuleQuest)();
 }
 
 function buildFirstLoopResult(feedback, actionType) {
@@ -276,7 +469,7 @@ function runFirstLoopAction(actionType) {
     loop.input = "";
     loop.completed = false;
     renderFirstLoopPanel();
-    showToast("先写下一件刚发生的小事", "propose");
+    showToast("先写下一段人生种子", "propose");
     input?.focus();
     return;
   }
@@ -521,20 +714,364 @@ function askMirror() {
   showToast("镜像回声已生成，世界正在反应...", "support");
 }
 
-function selectExchange(lifeKey, shouldRecord = true) {
-  const story = exchangeStories[lifeKey];
-  if (!story) return;
+function makeLocalId(prefix) {
+  return `${prefix}-${Date.now().toString(36)}-${Math.floor(Math.random() * 1000).toString(36)}`;
+}
+
+function nowLabel() {
+  return new Date().toLocaleString("zh-CN", {
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit"
+  });
+}
+
+function getLifeCapsules() {
+  if (!Array.isArray(state.lifeCapsules) || !state.lifeCapsules.length) {
+    state.lifeCapsules = DEFAULT_LIFE_CAPSULES.slice();
+  }
+  return state.lifeCapsules.filter((capsule) => {
+    const source = state.lifeFragments?.find((fragment) => fragment.id === capsule.sourceFragmentId);
+    return !source || source.status !== "revoked";
+  });
+}
+
+function getActiveLifeCapsule() {
+  const capsules = getLifeCapsules();
+  return capsules.find((capsule) => capsule.id === state.activeLifeCapsuleId) || capsules[0];
+}
+
+function inferLifeScopeFromText(text) {
+  if (/工作|职业|离职|公司|同事|老板|项目|创业/.test(text)) return "career";
+  if (/伴侣|喜欢|亲密|分手|恋爱|爱|沉默/.test(text)) return "relationship";
+  if (/转折|搬家|毕业|离开|重来|选择|人生/.test(text)) return "turning_point";
+  return "emotion";
+}
+
+function anonymizeLifeText(text) {
+  return String(text || "")
+    .replace(/[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}/g, "某个联系方式")
+    .replace(/1[3-9]\d{9}/g, "某个联系方式")
+    .replace(/[A-Z][a-z]+(?:\s[A-Z][a-z]+)+/g, "某个人")
+    .replace(/(北京|上海|广州|深圳|杭州|成都|南京|武汉|西安|重庆|天津|苏州)/g, "某座城市")
+    .slice(0, 180);
+}
+
+function buildLifeCapsuleFromFragment(fragment) {
+  const scopeLabel = LIFE_SCOPE_LABELS[fragment.consentScope] || "人生片段";
+  const clean = anonymizeLifeText(fragment.rawText);
+  const choiceMap = {
+    emotion: ["先承认这份感受", "找一个人说实话", "把今天先安全度过", "换一个身份重新看"],
+    career: ["谈一次边界", "提交离开的决定", "寻找同盟", "先完成一次小验证"],
+    relationship: ["说出害怕", "请求十分钟", "保持距离", "写下一封不会发出的信"],
+    turning_point: ["跨过去", "再等一晚", "请别人同行", "回头整理旧线索"]
+  };
+  return {
+    id: makeLocalId("capsule"),
+    sourceFragmentId: fragment.id,
+    title: `${scopeLabel}：匿名人生胶囊`,
+    perspectiveRole: `正在经历${scopeLabel}的人`,
+    lifeStage: `${scopeLabel} · 授权重构`,
+    themes: [fragment.consentScope, "authorized", "anonymous"],
+    anonymizedScenario: clean || "这个人生片段已经被严格脱敏，只留下可以被体验的处境与选择。",
+    keyChoiceSet: choiceMap[fragment.consentScope] || choiceMap.emotion,
+    boundaries: ["不展示原始身份", "不暴露原文细节", "不开放直接联系", "授权者可随时撤回"]
+  };
+}
+
+function pushRobotSignal(source, intensity, message, relatedWorldEventId = "") {
+  const signal = {
+    id: makeLocalId("signal"),
+    source,
+    intensity,
+    message,
+    relatedWorldEventId,
+    createdAt: nowLabel()
+  };
+  state.robotSignals = [signal, ...(state.robotSignals || [])].slice(0, 12);
+  persist();
+  return signal;
+}
+
+function renderLifeCapsuleCards() {
+  return getLifeCapsules().map((capsule) => `
+    <div class="life-card ${capsule.id === state.activeLifeCapsuleId ? "selected" : ""}" data-life-capsule="${escapeHtml(capsule.id)}">
+      <p class="eyebrow">${escapeHtml(capsule.lifeStage)}</p>
+      <h3>${escapeHtml(capsule.title)}</h3>
+      <p>${escapeHtml(capsule.perspectiveRole)}</p>
+    </div>`).join("");
+}
+
+function renderActiveCapsuleStage(capsule = getActiveLifeCapsule()) {
+  if (!capsule) return '<div class="reply-box"><p>还没有可体验的人生胶囊。</p></div>';
+  return `
+    <div class="capsule-stage">
+      <p class="eyebrow">视角切换中</p>
+      <h3>${escapeHtml(capsule.perspectiveRole)}</h3>
+      <p>${escapeHtml(capsule.anonymizedScenario)}</p>
+      <ul>${(capsule.boundaries || []).map((item) => `<li>${escapeHtml(item)}</li>`).join("")}</ul>
+      <div class="choice-grid">
+        ${(capsule.keyChoiceSet || []).map((choice) => `<button class="choice-btn" data-life-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}
+      </div>
+    </div>`;
+}
+
+function renderLifeExchangePanel() {
+  const exp = document.querySelector(".modal-content #modalExchangeExp");
+  if (exp) {
+    exp.innerHTML = renderActiveCapsuleStage();
+  }
+}
+
+function selectLifeCapsule(capsuleId, shouldRecord = true) {
+  const capsule = getLifeCapsules().find((item) => item.id === capsuleId);
+  if (!capsule) return;
+  state.activeLifeCapsuleId = capsule.id;
+  persist();
+  document.querySelectorAll(".modal-content .life-card[data-life-capsule]").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.lifeCapsule === capsule.id);
+  });
+  renderLifeExchangePanel();
+  if (shouldRecord) showToast(`已进入：${capsule.title}`, "support");
+}
+
+function authorizeLifeFragment() {
+  const textEl = document.querySelector(".modal-content #lifeFragmentInput");
+  const activeScope = document.querySelector(".modal-content .scope-chip.active")?.dataset.scope || "emotion";
+  const text = (textEl?.value || "").trim();
+  const reply = document.querySelector(".modal-content #lifeAuthorizeReply");
+  if (!text) {
+    if (reply) reply.innerHTML = '<p class="reply-kicker">授权人生片段</p><p>先写下一段愿意被匿名重构的人生经历。</p>';
+    return;
+  }
+  if (isHighRiskText(text)) {
+    if (reply) reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>这段内容不进入体验池。系统会先保护你，不做漂流或交换。</p>';
+    pushRobotSignal("system", "soft", "有一段人生片段被安全分流了。现实中的你先被保护，虚拟世界会放慢。");
+    showToast("高风险片段已安全分流", "conflict");
+    return;
+  }
+  const fragment = {
+    id: makeLocalId("fragment"),
+    ownerId: "local-player",
+    rawText: text,
+    consentScope: activeScope,
+    redactionLevel: "strict",
+    status: "authorized",
+    createdAt: nowLabel()
+  };
+  const capsule = buildLifeCapsuleFromFragment(fragment);
+  state.lifeFragments = [fragment, ...(state.lifeFragments || [])].slice(0, 12);
+  state.lifeCapsules = [capsule, ...getLifeCapsules()].slice(0, 16);
+  state.activeLifeCapsuleId = capsule.id;
+  pushRobotSignal("life_capsule", "soft", `一个新的匿名人生胶囊已经进入虚拟社会：${capsule.title}`);
+  addEcho(`授权人生片段已重构为胶囊：${capsule.title}`);
+  persist();
+  if (reply) reply.innerHTML = `<p class="reply-kicker">授权完成</p><p>这段经历已严格脱敏，并生成可体验人生胶囊。体验者只会看见重构视角，不会看到原文身份。</p>`;
+  openModal("exchange");
+}
+
+function revokeLifeFragment(fragmentId) {
+  const fragment = state.lifeFragments?.find((item) => item.id === fragmentId);
+  if (!fragment) return;
+  fragment.status = "revoked";
+  state.lifeCapsules = getLifeCapsules().filter((capsule) => capsule.sourceFragmentId !== fragmentId);
+  if (state.activeLifeCapsuleId && !getLifeCapsules().some((capsule) => capsule.id === state.activeLifeCapsuleId)) {
+    state.activeLifeCapsuleId = getLifeCapsules()[0]?.id || "";
+  }
+  addEcho("一个授权人生片段已撤回，对应胶囊不再被体验。");
+  persist();
+  openModal("exchange");
+}
+
+function playLifeChoice(choice) {
+  const capsule = getActiveLifeCapsule();
+  if (!capsule || !choice) return;
+  pauseSocietyRun();
+  const eventText = `我正在体验“${capsule.title}”。作为${capsule.perspectiveRole}，我选择：${choice}。处境是：${capsule.anonymizedScenario}`;
+  const actionType = /求助|同盟|同行|说|谈|承认|请求/.test(choice) ? "listen" : /离开|跨|提交/.test(choice) ? "propose" : "support";
+  const feedback = injectLifeEventToSociety(eventText, actionType);
+  const echo = `如果我活在“${capsule.perspectiveRole}”里，我看见了：${choice}不是答案本身，而是一条会改变关系和自我位置的岔路。`;
+  addEcho(`试活人生：${echo}`);
+  addEventLogEntry("试活人生", echo, actionType, true);
+  pushRobotSignal("life_capsule", "summon", `另一个世界里的你刚体验了“${capsule.title}”：${choice}。${echo}`);
+  if (feedback) {
+    triggerRealityActionFocus(feedback);
+    recordTomorrowContinuation(feedback, echo);
+  }
   const exp = document.querySelector(".modal-content #modalExchangeExp");
   if (exp) {
     exp.innerHTML = `
-      <p class="eyebrow">匿名人生片段</p>
-      <h3>${escapeHtml(story.title)}</h3>
-      <p>${escapeHtml(story.body)}</p>
-      <p><strong>交换后的回声：</strong>${escapeHtml(story.echo)}</p>
-      <div class="experience-meta">${story.tags.map(t => `<span>${escapeHtml(t)}</span>`).join("")}</div>`;
+      ${renderActiveCapsuleStage(capsule)}
+      <div class="reply-box">
+        <p class="reply-kicker">人生回声</p>
+        <p>${escapeHtml(echo)}</p>
+        <p>这段体验已经通过情感机器人传回现实侧。</p>
+      </div>`;
   }
-  document.querySelectorAll(".modal-content .life-card").forEach(c => c.classList.toggle("selected", c.dataset.life === lifeKey));
-  if (shouldRecord) addEcho(story.echo);
+  showToast("人生选择已发生，城市正在记录后果", "support");
+  updateHUD();
+  renderFirstLoopPanel();
+}
+
+function startTrialLife() {
+  ensureFirstSessionQuest();
+  setFirstSessionStage("choose_capsule");
+  pauseSocietyRun();
+  showToast("先选一段人生胶囊", "support");
+}
+
+function previewCapsuleForQuest(capsuleId) {
+  const capsule = getLifeCapsules().find((item) => item.id === capsuleId);
+  if (!capsule) return;
+  const quest = ensureFirstSessionQuest();
+  quest.selectedCapsuleId = capsule.id;
+  state.activeLifeCapsuleId = capsule.id;
+  persist();
+  renderFirstLoopPanel();
+}
+
+function selectCapsuleForQuest(capsuleId) {
+  const quest = ensureFirstSessionQuest();
+  const capsule = getLifeCapsules().find((item) => item.id === (capsuleId || quest.selectedCapsuleId));
+  if (!capsule) return;
+  quest.selectedCapsuleId = capsule.id;
+  quest.choice = "";
+  quest.echo = "";
+  quest.worldResult = "";
+  quest.robotMessage = "";
+  quest.driftText = "";
+  quest.driftCasted = false;
+  quest.safetyRouted = false;
+  state.activeLifeCapsuleId = capsule.id;
+  pauseSocietyRun();
+  setFirstSessionStage("perspective_scene", false);
+  persist();
+  renderFirstLoopPanel();
+  showToast(`已进入：${capsule.title}`, "support");
+}
+
+function commitLifeChoice(choice) {
+  const quest = ensureFirstSessionQuest();
+  const capsule = getLifeCapsules().find((item) => item.id === quest.selectedCapsuleId) || getActiveLifeCapsule();
+  if (!capsule || !choice) return;
+  pauseSocietyRun();
+  const eventText = `我正在体验“${capsule.title}”。作为${capsule.perspectiveRole}，我选择：${choice}。处境是：${capsule.anonymizedScenario}`;
+  const actionType = /求助|同盟|同行|说|谈|承认|请求|表达/.test(choice)
+    ? "listen"
+    : /离开|跨|提交|走/.test(choice)
+      ? "propose"
+      : "support";
+  const feedback = injectLifeEventToSociety(eventText, actionType);
+  const built = feedback
+    ? buildFirstLoopResult(feedback, actionType)
+    : { resultText: "世界记录了这次选择。", nextText: "听听另一个我的信号。" };
+  const echo = `如果我活在“${capsule.perspectiveRole}”里，我看见了：${choice}不是答案本身，而是一条会改变关系和自我位置的岔路。`;
+  quest.choice = choice;
+  quest.echo = echo;
+  quest.worldResult = built.resultText;
+  quest.robotMessage = `另一个世界里的你刚刚选择了“${choice}”。有些关系没有立刻变好，但它开始回应你了。`;
+  const loop = ensureFirstLoopState();
+  loop.input = eventText;
+  loop.actionType = actionType;
+  loop.completed = true;
+  loop.resultText = built.resultText;
+  loop.nextText = "情感机器人已经收到这次人生回声。";
+  loop.becauseLine = "";
+  addEcho(`试活人生：${echo}`);
+  addEventLogEntry("试活人生", echo, actionType, true);
+  pushRobotSignal("life_capsule", "summon", quest.robotMessage);
+  if (feedback) {
+    triggerRealityActionFocus(feedback);
+    recordTomorrowContinuation(feedback, echo);
+  }
+  state.society.speed = 0.5;
+  setFirstSessionStage("world_echo", false);
+  persist();
+  updateHUD();
+  renderFirstLoopPanel();
+  showToast("人生选择已发生，世界给出了回声", "support");
+}
+
+function openRobotSignalQuest() {
+  setFirstSessionStage("robot_signal");
+}
+
+function openDriftBottleQuest() {
+  const quest = ensureFirstSessionQuest();
+  quest.driftMoment = quest.driftMoment || inferLifeScopeFromText(quest.echo || quest.worldResult || "") || "turning_point";
+  setFirstSessionStage("drift_bottle");
+}
+
+function setQuestDriftMoment(moment) {
+  const quest = ensureFirstSessionQuest();
+  if (LIFE_SCOPE_LABELS[moment]) {
+    quest.driftMoment = moment;
+    persist();
+  }
+  document.querySelectorAll("[data-quest-moment]").forEach((btn) => {
+    btn.classList.toggle("active", btn.dataset.questMoment === quest.driftMoment);
+  });
+}
+
+function castDriftBottleQuest() {
+  const quest = ensureFirstSessionQuest();
+  const input = document.getElementById("questDriftText");
+  const text = (input?.value || "").trim();
+  const moment = quest.driftMoment || "turning_point";
+  if (!text) {
+    input?.focus();
+    showToast("先留下一句人生瞬间", "propose");
+    return;
+  }
+  const bottle = {
+    id: makeLocalId("bottle"),
+    ownerId: "local-player",
+    text,
+    resonanceTags: inferResonanceTags(text, moment),
+    lifeMoment: moment,
+    status: isHighRiskText(text) ? "safety_routed" : "floating"
+  };
+  state.driftBottles = [bottle, ...(state.driftBottles || [])].slice(0, 12);
+  state.bottle = bottle.status === "floating" ? text : state.bottle || "";
+  quest.driftText = text;
+  quest.driftCasted = bottle.status === "floating";
+  quest.safetyRouted = bottle.status === "safety_routed";
+  if (bottle.status === "safety_routed") {
+    addEcho("漂流瓶内容被标记为高风险，先走安全分流。");
+    pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先保护投放者。");
+    injectLifeEventToSociety(text, "support");
+    showToast("这只瓶子先被安全分流", "conflict");
+  } else {
+    addEcho(`灵魂漂流瓶已投放：${text.slice(0, 34)}${text.length > 34 ? "..." : ""}`);
+    pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同频的时刻。");
+    injectLifeEventToSociety(text, "support");
+    showToast("这只瓶子还在海上", "support");
+  }
+  persist();
+  renderFirstLoopPanel();
+}
+
+function unlockWorldExploration() {
+  setFirstSessionStage("unlocked_world", false);
+  state.hasSeenTutorial = true;
+  state.isFirstVisit = false;
+  if (state.society.autoEvolution) {
+    startSocietyRun();
+  }
+  persist();
+  updateHUD();
+  renderFirstLoopPanel();
+  showToast("城市探索已解锁", "support");
+}
+
+function inferResonanceTags(text, moment) {
+  const tags = [moment];
+  if (/离职|工作|职业|公司|项目|老板|同事/.test(text)) tags.push("career");
+  if (/喜欢|伴侣|关系|分手|家人|朋友|爱/.test(text)) tags.push("relationship");
+  if (/转折|选择|离开|重来|人生|突然/.test(text)) tags.push("turning_point");
+  if (/累|焦虑|害怕|孤独|难过|撑/.test(text)) tags.push("emotion");
+  return [...new Set(tags)].slice(0, 5);
 }
 
 function sendBottle() {
@@ -542,22 +1079,47 @@ function sendBottle() {
   const reply = document.querySelector(".modal-content #modalBottleReply");
   if (!input || !reply) return;
   const text = input.value.trim();
+  const moment = document.querySelector(".modal-content .scope-chip.active")?.dataset.scope || inferLifeScopeFromText(text);
   if (!text) {
     reply.innerHTML = '<p class="reply-kicker">漂流状态</p><p>你可以只写一句话。</p>';
     return;
   }
   if (isHighRiskText(text)) {
-    reply.innerHTML = '<p class="reply-kicker">漂流状态</p><p>你这段内容比较高风险，先走安全分流。先放松呼吸60秒。</p>';
+    const bottle = {
+      id: makeLocalId("bottle"),
+      ownerId: "local-player",
+      text,
+      resonanceTags: inferResonanceTags(text, moment),
+      lifeMoment: moment,
+      status: "safety_routed"
+    };
+    state.driftBottles = [bottle, ...(state.driftBottles || [])].slice(0, 12);
+    reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>你这段内容比较高风险，不进入普通漂流池。先让现实中的你安全下来。</p>';
     addEcho("漂流瓶内容被标记为高风险，先走安全分流。");
+    pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先保护投放者。");
     injectLifeEventToSociety(text, "support");
+    persist();
     return;
   }
+  const bottle = {
+    id: makeLocalId("bottle"),
+    ownerId: "local-player",
+    text,
+    resonanceTags: inferResonanceTags(text, moment),
+    lifeMoment: moment,
+    status: "floating"
+  };
   state.bottle = text;
+  state.driftBottles = [bottle, ...(state.driftBottles || [])].slice(0, 12);
   persist();
   injectLifeEventToSociety(text, "support");
-  reply.innerHTML = '<p class="reply-kicker">漂流状态</p><p>漂流瓶已进入沙箱。它不会被立即推送，只会等待一个足够相近的精神时刻。</p>';
-  addEcho(`漂流瓶已放入沙箱：${text.slice(0, 34)}${text.length > 34 ? "..." : ""}`);
-  showToast("漂流瓶已放入沙箱", "support");
+  reply.innerHTML = `
+    <p class="reply-kicker">这只瓶子还在海上</p>
+    <p>它不会立刻变成聊天匹配。系统会等待一个足够相近的人生时刻，再让两个回声轻轻碰到。</p>
+    <div class="bottle-status-row">${bottle.resonanceTags.map((tag) => `<span class="status-pill">${escapeHtml(LIFE_SCOPE_LABELS[tag] || tag)}</span>`).join("")}</div>`;
+  addEcho(`灵魂漂流瓶已投放：${text.slice(0, 34)}${text.length > 34 ? "..." : ""}`);
+  pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同频的时刻。");
+  showToast("灵魂漂流瓶正在海上", "support");
 }
 
 function receiveBottle() {
@@ -569,35 +1131,82 @@ function receiveBottle() {
     return;
   }
   lastBottleCheckAt = now;
-  if (!state.bottle) {
-    reply.innerHTML = '<p class="reply-kicker">漂流回声</p><p>先发一只漂流瓶，再等待匹配。</p>';
+  const floating = (state.driftBottles || []).find((item) => item.status === "floating");
+  if (!floating) {
+    reply.innerHTML = '<p class="reply-kicker">漂流回声</p><p>先发一只灵魂漂流瓶，再等待一个同频时刻。</p>';
     return;
   }
   if (Math.random() < 0.35) {
-    reply.innerHTML = '<p class="reply-kicker">漂流回声</p><p>当前未匹配到合适时刻，漂流仍在继续。</p>';
+    reply.innerHTML = '<p class="reply-kicker">这只瓶子还在海上</p><p>当前没有足够相近的人生时刻。它仍在等待，不会被推给不合适的人。</p>';
     return;
   }
-  const echo = bottleEchoes[Math.floor(Math.random() * bottleEchoes.length)];
-  reply.innerHTML = `<p class="reply-kicker">漂流回声</p><p>${escapeHtml(echo)}</p>`;
-  addEcho(echo);
+  const echo = `有人也在${LIFE_SCOPE_LABELS[floating.lifeMoment] || "某个人生时刻"}里看见了相似的门。你们不需要立刻认识彼此，但这一刻的同频已经成立。`;
+  const match = {
+    id: makeLocalId("match"),
+    bottleA: floating.id,
+    bottleB: "anonymous-resonance",
+    matchReason: echo,
+    consentState: "echo_only",
+    createdAt: nowLabel()
+  };
+  floating.status = "matched";
+  state.soulMatches = [match, ...(state.soulMatches || [])].slice(0, 8);
+  reply.innerHTML = `
+    <p class="reply-kicker">命运感回声</p>
+    <p>${escapeHtml(echo)}</p>
+    <div class="soul-match-card">
+      <time>${escapeHtml(match.createdAt)}</time>
+      <p>当前只交换回声，不开放聊天。只有双方都愿意，才会继续连接。</p>
+      <button class="modal-btn primary compact" data-open-soul-match="${escapeHtml(match.id)}">我愿意继续</button>
+      <button class="modal-btn ghost compact" data-decline-soul-match="${escapeHtml(match.id)}">让它停在这里</button>
+    </div>`;
+  addEcho(`灵魂漂流瓶命中：${echo}`);
+  pushRobotSignal("drift_bottle", "summon", `一只漂流瓶在海上碰到了同频的人：${echo}`);
   injectLifeEventToSociety(echo, "listen");
   state.bottle = "";
   persist();
 }
 
 function buildRobotReply(mode) {
-  const base = robotReplies[mode] || robotReplies.quiet;
-  if (mode === "action" && state.continuation) {
-    return `${base}\n\n上一次现实投影：${state.continuation.narrative}\n\n${state.continuation.prompt}`;
+  const signals = state.robotSignals || [];
+  const latest = signals[0];
+  if (mode === "quiet") {
+    return latest
+      ? `我在现实这侧安静亮着。另一个世界刚传来一条${latest.intensity === "summon" ? "召唤" : "轻声"}信号：\n${latest.message}`
+      : robotReplies.quiet;
   }
-  return base;
+  if (mode === "reflect") {
+    const capsule = getActiveLifeCapsule();
+    return latest
+      ? `这不是通知，是另一个世界的回声。\n\n${latest.message}\n\n当前人生视角：${capsule?.perspectiveRole || "尚未进入胶囊"}。`
+      : robotReplies.reflect;
+  }
+  if (mode === "action" && state.continuation) {
+    return `${robotReplies.action}\n\n上一次体验回声：${state.continuation.narrative}\n\n${state.continuation.prompt}`;
+  }
+  return robotReplies[mode] || robotReplies.quiet;
+}
+
+function renderRobotSignals() {
+  const signals = state.robotSignals || [];
+  if (!signals.length) {
+    return '<div class="robot-signal quiet"><p>机器人处于静默陪伴。另一个世界还没有传来新的回声。</p></div>';
+  }
+  return signals.slice(0, 5).map((signal) => `
+    <div class="robot-signal ${escapeHtml(signal.intensity)}">
+      <time>${escapeHtml(signal.createdAt)} · ${escapeHtml(signal.source)}</time>
+      <p>${escapeHtml(signal.message)}</p>
+    </div>`).join("");
 }
 
 function setRobotMode(mode) {
   activeRobotMode = mode;
   const reply = document.querySelector(".modal-content #modalRobotReply");
   if (reply) {
-    reply.innerHTML = `<p class="reply-kicker">现实陪伴</p><p>${escapeHtml(buildRobotReply(mode)).replaceAll("\n", "<br>")}</p>`;
+    reply.innerHTML = `
+      <p class="reply-kicker">现实信使 · ${mode === "quiet" ? "静默陪伴" : mode === "reflect" ? "轻声提醒" : "召唤时刻"}</p>
+      <p>${escapeHtml(buildRobotReply(mode)).replaceAll("\n", "<br>")}</p>
+      ${renderRobotSignals()}`;
   }
   document.querySelectorAll(".modal-content .modal-chip[data-robot]").forEach(b => b.classList.toggle("active", b.dataset.robot === mode));
 }
@@ -609,6 +1218,16 @@ function clearAllData() {
   state.profile = {};
   state.echoes = [];
   state.bottle = "";
+  state.lifeFragments = [];
+  state.lifeCapsules = DEFAULT_LIFE_CAPSULES.slice();
+  state.activeLifeCapsuleId = "capsule-career-river";
+  state.robotSignals = [];
+  state.driftBottles = [];
+  state.soulMatches = [];
+  state.firstSessionStage = "";
+  state.firstSessionQuest = null;
+  state.firstLoop = null;
+  state.causalGraph = null;
   state.continuation = null;
   state.society = buildSocietyFromInput(scenePresets["open-square"]);
   lastBottleCheckAt = 0;
@@ -711,6 +1330,8 @@ function renderAvatarPreview() {
 
   // Name tag
   const name = document.getElementById("avatarName")?.value || "你的分身";
+  const tagName = document.getElementById("mirrorTagName");
+  if (tagName) tagName.textContent = name.trim() || "你的分身";
   ctx.fillStyle = "rgba(255,255,255,0.9)";
   ctx.font = 'bold 11px "Noto Sans SC", sans-serif';
   ctx.textAlign = "center";
@@ -766,6 +1387,7 @@ function createAndEnterWorld(profileData) {
 
   // Spawn entities
   if (typeof spawnWorldEntities === "function") spawnWorldEntities(state.society);
+  pushRobotSignal("avatar", "quiet", `${name} 已经进入虚拟社会。现实中的你可以通过情感机器人，感知另一个世界里的自己。`);
 
   updateSocietyMetricsFromEvents();
   recordSocietyMetricsHistory();
@@ -783,6 +1405,19 @@ function createAndEnterWorld(profileData) {
   if (slider) { slider.value = "0.5"; }
   state.society.speed = 0.5;
   state.society.running = false;
+  state.firstSessionStage = "choose_capsule";
+  state.firstSessionQuest = {
+    selectedCapsuleId: "",
+    choice: "",
+    echo: "",
+    worldResult: "",
+    robotMessage: "",
+    driftMoment: "turning_point",
+    driftText: "",
+    driftCasted: false,
+    safetyRouted: false
+  };
+  state.hasSeenTutorial = true;
   updateHUD();
   renderFirstLoopPanel();
 
@@ -791,9 +1426,6 @@ function createAndEnterWorld(profileData) {
   persist();
 
   showToast(`${name} 已进入镜像世界`, "support");
-
-  // Show tutorial after splash fades
-  setTimeout(() => showTutorial(), 800);
 }
 
 // ── Tutorial System ──
@@ -802,16 +1434,16 @@ let tutorialStep = 0;
 const TUTORIAL_STEPS = [
   {
     title: "这是你的分身",
-    desc: "带金色光圈的小人就是你在回声之城里的分身。它会根据你输入的真实事件，在社会中做出反应。",
+    desc: "带金色光圈的小人是另一个世界里的你。它会替你进入人生胶囊，做选择，并把回声传回现实侧。",
     spotlight: "avatar"
   },
   {
-    title: "这是回声之城",
-    desc: "这是一个持续运转的虚拟社会。小人们在不同的区域生活、协作、对话。你可以观察他们，也可以主动干预。"
+    title: "先试活一段人生",
+    desc: "点击“体验一种人生”，进入匿名重构的人生片段。你会以另一个身份做一次关键选择。"
   },
   {
-    title: "完成一次因果循环",
-    desc: "在第一分钟面板写一件刚发生的小事，选择一个分身行动，然后看城市给出的变化和下一步。",
+    title: "再听见现实回声",
+    desc: "选择发生后，情感机器人会成为现实信使。漂流瓶则会等待一次同频的偶遇。",
     spotlight: "firstLoopPanel"
   }
 ];
@@ -1170,6 +1802,48 @@ function updateHUD() {
 
   const pauseBtn = el("hudPause");
   if (pauseBtn) pauseBtn.textContent = s.running ? "⏸" : "▶";
+
+  renderWorldPulseSummary();
+}
+
+function renderWorldPulseSummary() {
+  const panel = document.getElementById("worldPulseSummary");
+  if (!panel || !state?.society) return;
+  const s = state.society;
+  const phase = getWorldPhaseByTurn(s.turn);
+  const alive = getAliveCitizens(s);
+  const calmCount = alive.filter((citizen) => citizen.mood >= 65).length;
+  const tenseCount = alive.filter((citizen) => citizen.mood <= 35).length;
+  const driftSignals = (state.robotSignals || []).slice(0, 2).map((item) => item.message);
+  const hotZones = (s.zones || [])
+    .map((zone) => ({
+      zone,
+      count: alive.filter((citizen) => citizen.zoneId === zone.id).length
+    }))
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 3)
+    .filter((item) => item.count > 0);
+  panel.innerHTML = `
+    <div class="pulse-card">
+      <b>SELF-EVOLVING PHASE</b>
+      <p>${escapeHtml(phase?.name || "镜像市域")} · ${escapeHtml(phase?.narrative || "这座社会仍在继续运转，等待新的关系波动。")}</p>
+      <div class="pulse-tags">
+        <span>平静 ${calmCount}</span>
+        <span>紧绷 ${tenseCount}</span>
+        <span>张力 ${Math.round(s.tension || 0)}</span>
+      </div>
+    </div>
+    <div class="pulse-card">
+      <b>SOCIAL MAPPING</b>
+      <p>${hotZones.length ? hotZones.map((item) => `${item.zone.name} ${item.count}`).join(" · ") : "城市还在等待新的聚集点。"} </p>
+      <div class="pulse-tags">
+        ${hotZones.length ? hotZones.map((item) => `<span>${escapeHtml(item.zone.archetype || item.zone.role || item.zone.name)}</span>`).join("") : "<span>关系尚未成形</span>"}
+      </div>
+    </div>
+    <div class="pulse-card">
+      <b>WORLD SIGNAL</b>
+      <p>${escapeHtml(driftSignals[0] || "另一个世界暂时安静。下一次演化会从关系、张力或漂流瓶里发光。")}</p>
+    </div>`;
 }
 
 // ── Toast System ──
@@ -1201,7 +1875,7 @@ function openModal(type) {
     const values = [state.profile.identity, state.profile.relations, state.profile.pattern, state.profile.boundary];
     content.querySelectorAll("input[data-field]").forEach((inp, i) => { if (values[i]) inp.value = values[i]; });
   }
-  if (type === "exchange") selectExchange("career", false);
+  if (type === "exchange") renderLifeExchangePanel();
   if (type === "mirror") renderTomorrowContinue();
   if (type === "robot") setRobotMode(activeRobotMode);
 }
@@ -1246,32 +1920,45 @@ function buildModalHTML(type) {
       </div>`;
 
     case "exchange": return `
-      <p class="eyebrow">交换人生</p>
-      <h2>进入一个匿名重构的人生片段，从另一个视角陪伴自己。</h2>
+      <p class="eyebrow">试活人生</p>
+      <h2>进入一个匿名重构的人生片段，短暂活成另一个人。</h2>
+      <p>每个胶囊都来自授权或预置人生片段。体验者只能看到脱敏后的处境、身份和选择。</p>
       <div class="life-cards">
-        <div class="life-card selected" data-life="career"><p class="eyebrow">职业岔路</p><h3>她选择留下，但重新谈边界。</h3><p>适合正在分辨"坚持"和"消耗"的时刻。</p></div>
-        <div class="life-card" data-life="relationship"><p class="eyebrow">亲密沉默</p><h3>他没有立刻解释，而是先承认害怕。</h3><p>适合关系里反复退缩、敏感或自责的人。</p></div>
-        <div class="life-card" data-life="family"><p class="eyebrow">家庭回声</p><h3>她第一次把"我需要空间"说完整。</h3><p>适合在家庭期待与自我边界之间摇摆的人。</p></div>
+        ${renderLifeCapsuleCards()}
       </div>
-      <div class="reply-box" id="modalExchangeExp"></div>`;
+      <div id="modalExchangeExp"></div>
+      <div class="consent-panel">
+        <p class="reply-kicker">授权一个人生片段</p>
+        <p>写下你愿意贡献给世界的一段经历。系统会严格脱敏并重构成可体验胶囊，体验者不能看到原文身份。</p>
+        <div class="scope-grid">
+          ${Object.entries(LIFE_SCOPE_LABELS).map(([key, label], index) => `<button class="scope-chip ${index === 0 ? "active" : ""}" data-scope="${key}">${label}</button>`).join("")}
+        </div>
+        <textarea id="lifeFragmentInput" rows="4" placeholder="例如：我曾经在一个很稳定的生活里，突然意识到自己想换一种人生。"></textarea>
+        <button class="modal-btn primary" id="modalAuthorizeLife">授权并生成胶囊</button>
+        <div class="reply-box" id="lifeAuthorizeReply"><p class="reply-kicker">严格匿名</p><p>授权后仍可在安全治理里撤回。本地 demo 只保存在浏览器。</p></div>
+      </div>`;
 
     case "bottle": return `
-      <p class="eyebrow">精神漂流瓶</p>
-      <h2>把一个瞬间放入沙箱，让它自然遇见共鸣。</h2>
-      <label>未说出口的话</label>
-      <textarea id="modalBottleInput" rows="5" placeholder="例如：我希望有人知道，我已经很努力地在生活了。"></textarea>
-      <button class="modal-btn primary" id="modalSendBottle">放入沙箱</button>
-      <button class="modal-btn ghost" id="modalReceiveBottle">等待回声</button>
-      <div class="reply-box" id="modalBottleReply"><p class="reply-kicker">漂流状态</p><p>漂流瓶不会强制匹配。它会在某个合适的精神时刻，被另一个匿名回声轻轻接住。</p></div>`;
+      <p class="eyebrow">灵魂漂流瓶</p>
+      <h2>把一个人生瞬间放上海面，等待同频的人在某刻碰到你。</h2>
+      <div class="scope-grid">
+        ${Object.entries(LIFE_SCOPE_LABELS).map(([key, label], index) => `<button class="scope-chip ${index === 0 ? "active" : ""}" data-scope="${key}">${label}</button>`).join("")}
+      </div>
+      <label>这一刻的人生频率</label>
+      <textarea id="modalBottleInput" rows="5" placeholder="例如：我站在一个转折点，不知道该继续忍耐，还是承认自己想换一种人生。"></textarea>
+      <button class="modal-btn primary" id="modalSendBottle">投放漂流瓶</button>
+      <button class="modal-btn ghost" id="modalReceiveBottle">等待同频偶遇</button>
+      <div class="reply-box" id="modalBottleReply"><p class="reply-kicker">这只瓶子还没有离岸</p><p>它不会变成立即聊天。命中前，它只是在海上等待一个足够相似的人生时刻。</p></div>
+      ${(state.soulMatches || []).slice(0, 3).map(match => `<div class="soul-match-card"><time>${h(match.createdAt || "")}</time><p>${h(match.matchReason)}</p><p>状态：${h(match.consentState)}</p></div>`).join("")}`;
 
     case "robot": return `
-      <p class="eyebrow">回家模式</p>
-      <h2>让现实中的陪伴设备，接住你在虚拟世界里的余波。</h2>
+      <p class="eyebrow">情感机器人 · 软件拟真</p>
+      <h2>现实中的你，通过这个信使感知另一个世界里的自己。</h2>
       <div class="robot-figure"><div class="robot-head-inner"><div class="robot-eye"></div><div class="robot-eye"></div></div></div>
       <div class="modal-chips">
-        <button class="modal-chip ${activeRobotMode==="quiet"?"active":""}" data-robot="quiet">安静陪伴</button>
-        <button class="modal-chip ${activeRobotMode==="reflect"?"active":""}" data-robot="reflect">温柔复盘</button>
-        <button class="modal-chip ${activeRobotMode==="action"?"active":""}" data-robot="action">明日小事</button>
+        <button class="modal-chip ${activeRobotMode==="quiet"?"active":""}" data-robot="quiet">静默陪伴</button>
+        <button class="modal-chip ${activeRobotMode==="reflect"?"active":""}" data-robot="reflect">轻声提醒</button>
+        <button class="modal-chip ${activeRobotMode==="action"?"active":""}" data-robot="action">召唤时刻</button>
       </div>
       <div class="reply-box" id="modalRobotReply"></div>`;
 
@@ -1306,7 +1993,13 @@ function buildModalHTML(type) {
     case "safety": return `
       <p class="eyebrow">安全治理</p>
       <h2>安全边界</h2>
-      <p>所有输入默认只保存在本地浏览器。交换与漂流内容均为匿名模拟。</p>
+      <p>所有输入默认只保存在本地浏览器。授权人生片段会严格脱敏，漂流瓶在双方同意前只交换回声。</p>
+      ${(state.lifeFragments || []).filter(f => f.status === "authorized").map(f => `
+        <div class="mission-item">
+          <p class="mission-title">${h(LIFE_SCOPE_LABELS[f.consentScope] || f.consentScope)} · ${h(f.createdAt)}</p>
+          <p>${h(anonymizeLifeText(f.rawText).slice(0, 60))}${f.rawText.length > 60 ? "..." : ""}</p>
+          <button class="modal-btn ghost compact" data-revoke-fragment="${h(f.id)}">撤回授权</button>
+        </div>`).join("") || '<div class="reply-box"><p>当前没有已授权的人生片段。</p></div>'}
       <button class="modal-btn ghost" id="modalClearData" style="margin-top:16px;color:var(--accent-coral);border-color:var(--accent-coral);">清空本地数据</button>`;
 
     case "narrative-settings": {
@@ -1393,14 +2086,14 @@ function showCitizenDetail(citizen) {
 }
 
 // ═══════════════════════════════════════════════════════════════
-// GAME RENDERER - Cartoon-style world
+// GAME RENDERER - Virtual society stage
 // ═══════════════════════════════════════════════════════════════
 
 const ZONE_COLORS = {
-  public: "#4ecdc4", cooperate: "#67e8f9", heal: "#86efac",
-  support: "#a78bfa", meditate: "#c4b5fd", rest: "#fbbf24",
-  justice: "#f97316", life: "#86efac", commerce: "#fbbf24",
-  green: "#86efac", entertainment: "#f472b6", education: "#67e8f9", work: "#fbbf24"
+  public: "#79ddd4", cooperate: "#84d8ee", heal: "#86d0b4",
+  support: "#b0a4ef", meditate: "#d2c8ff", rest: "#d9be7a",
+  justice: "#f2a66f", life: "#90d8b4", commerce: "#d5ba76",
+  green: "#8dd2b0", entertainment: "#d39ec4", education: "#8ccfe7", work: "#d8c28a"
 };
 
 const ZONE_ICONS = {
@@ -1470,16 +2163,22 @@ function drawGameWorld() {
   // ── Sky ──
   const skyGrad = ctx.createLinearGradient(0, 0, 0, H);
   if (isNight) {
-    skyGrad.addColorStop(0, "#0a0f1a");
-    skyGrad.addColorStop(0.4, "#131b2e");
-    skyGrad.addColorStop(1, "#1a2540");
+    skyGrad.addColorStop(0, "#08111d");
+    skyGrad.addColorStop(0.4, "#15283d");
+    skyGrad.addColorStop(1, "#284760");
   } else {
-    skyGrad.addColorStop(0, "#87ceeb");
-    skyGrad.addColorStop(0.5, "#b8e0f0");
-    skyGrad.addColorStop(1, "#90c8a0");
+    skyGrad.addColorStop(0, "#102338");
+    skyGrad.addColorStop(0.5, "#4b7891");
+    skyGrad.addColorStop(1, "#a7cad6");
   }
   ctx.fillStyle = skyGrad;
   ctx.fillRect(0, 0, W, H);
+
+  const hazeGrad = ctx.createRadialGradient(W * 0.7, groundY * 0.15, 0, W * 0.7, groundY * 0.15, W * 0.48);
+  hazeGrad.addColorStop(0, isNight ? "rgba(103,232,249,0.08)" : "rgba(255,244,212,0.12)");
+  hazeGrad.addColorStop(1, "rgba(0,0,0,0)");
+  ctx.fillStyle = hazeGrad;
+  ctx.fillRect(0, 0, W, groundY + 40);
 
   // Stars at night
   if (isNight) {
@@ -1518,11 +2217,11 @@ function drawGameWorld() {
   // ── Ground ──
   const groundGrad = ctx.createLinearGradient(0, groundY, 0, H);
   if (isNight) {
-    groundGrad.addColorStop(0, "#1a2a1a");
-    groundGrad.addColorStop(1, "#0f1a0f");
+    groundGrad.addColorStop(0, "#162635");
+    groundGrad.addColorStop(1, "#0f1721");
   } else {
-    groundGrad.addColorStop(0, "#7ec88b");
-    groundGrad.addColorStop(1, "#5aaa6a");
+    groundGrad.addColorStop(0, "#4e8e84");
+    groundGrad.addColorStop(1, "#2a4c4d");
   }
   ctx.fillStyle = groundGrad;
   ctx.fillRect(0, groundY, W, H - groundY);
@@ -1548,8 +2247,8 @@ function drawGameWorld() {
   ctx.translate(-W / 2, -H / 2);
 
   // ── Paths (roads between zones) ──
-  ctx.strokeStyle = isNight ? "rgba(80,70,50,0.25)" : "rgba(180,160,120,0.3)";
-  ctx.lineWidth = 4;
+  ctx.strokeStyle = isNight ? "rgba(103,232,249,0.12)" : "rgba(213,190,122,0.16)";
+  ctx.lineWidth = 2.5;
   ctx.setLineDash([8, 6]);
   zones.forEach((zone, i) => {
     const zr = zoneRects.get(zone.id);
@@ -1565,83 +2264,84 @@ function drawGameWorld() {
   });
   ctx.setLineDash([]);
 
-  // ── Draw Zones as cute buildings ──
+  // ── Draw Zones as floating society districts ──
   zones.forEach((zone, idx) => {
     const r = zoneRects.get(zone.id);
     if (!r) return;
     const color = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#a0a0a0";
     const isHovered = hoveredZone === zone.id;
 
-    // Shadow
-    ctx.fillStyle = "rgba(0,0,0,0.12)";
-    roundRect(ctx, r.x + 3, r.y + 5, r.w, r.h, 10);
+    // Soft shadow
+    ctx.fillStyle = "rgba(3, 8, 16, 0.24)";
+    roundRect(ctx, r.x + 4, r.y + 8, r.w, r.h, 16);
     ctx.fill();
 
-    // Building body
-    const alpha = isHovered ? 0.95 : (isNight ? 0.55 : 0.82);
-    ctx.fillStyle = hexWithAlpha(color, alpha);
-    roundRect(ctx, r.x, r.y, r.w, r.h, 10);
-    ctx.fill();
-
-    // Roof
-    ctx.fillStyle = hexWithAlpha(darken(color, 30), alpha);
-    ctx.beginPath();
-    ctx.moveTo(r.x - 4, r.y + 8);
-    ctx.lineTo(r.cx, r.y - 10);
-    ctx.lineTo(r.x + r.w + 4, r.y + 8);
-    ctx.closePath();
+    // Main district slab
+    const slabGrad = ctx.createLinearGradient(r.x, r.y, r.x, r.y + r.h);
+    slabGrad.addColorStop(0, hexWithAlpha(color, isNight ? 0.28 : 0.24));
+    slabGrad.addColorStop(0.22, "rgba(255,255,255,0.08)");
+    slabGrad.addColorStop(1, isNight ? "rgba(10,18,28,0.72)" : "rgba(17,34,42,0.48)");
+    ctx.fillStyle = slabGrad;
+    roundRect(ctx, r.x, r.y, r.w, r.h, 16);
     ctx.fill();
 
     // Border
-    ctx.strokeStyle = isHovered ? "#fff" : hexWithAlpha(color, 0.5);
-    ctx.lineWidth = isHovered ? 2.5 : 1.5;
-    roundRect(ctx, r.x, r.y, r.w, r.h, 10);
+    ctx.strokeStyle = isHovered ? "rgba(255,255,255,0.72)" : hexWithAlpha(color, 0.46);
+    ctx.lineWidth = isHovered ? 2.2 : 1.2;
+    roundRect(ctx, r.x, r.y, r.w, r.h, 16);
     ctx.stroke();
 
-    // Windows
-    const winColor = isNight ? "rgba(255,200,80,0.85)" : "rgba(255,255,255,0.5)";
-    const winSize = 5;
-    const cols = Math.max(1, Math.floor((r.w - 16) / 14));
-    const rows = Math.max(1, Math.floor((r.h - 28) / 14));
+    // Top seam
+    ctx.fillStyle = hexWithAlpha(color, isNight ? 0.28 : 0.2);
+    roundRect(ctx, r.x + 10, r.y + 10, r.w - 20, 8, 5);
+    ctx.fill();
+
+    // District matrix
+    const winColor = isNight ? "rgba(180,245,255,0.52)" : "rgba(220,247,255,0.42)";
+    const winSize = 4;
+    const cols = Math.max(1, Math.floor((r.w - 20) / 14));
+    const rows = Math.max(1, Math.floor((r.h - 34) / 14));
     for (let wy = 0; wy < rows; wy++) {
       for (let wx = 0; wx < cols; wx++) {
-        const winX = r.x + 10 + wx * 14 + (isNight ? Math.sin(t * 2 + wx + wy) * 0.5 : 0);
-        const winY = r.y + 16 + wy * 14;
+        const winX = r.x + 12 + wx * 14 + (isNight ? Math.sin(t * 2 + wx + wy) * 0.4 : 0);
+        const winY = r.y + 18 + wy * 14;
         ctx.fillStyle = winColor;
         ctx.fillRect(winX, winY, winSize, winSize);
       }
     }
 
-    // Icon
+    // District glyph
     const icon = ZONE_ICONS[zone.id] || "⬟";
-    ctx.font = `${isHovered ? 20 : 16}px Arial`;
-    ctx.textAlign = "center";
-    ctx.fillText(icon, r.cx, r.y - 14);
+    ctx.font = `${isHovered ? 17 : 14}px Arial`;
+    ctx.textAlign = "left";
+    ctx.fillStyle = isNight ? "rgba(240,248,255,0.9)" : "rgba(232,245,252,0.8)";
+    ctx.fillText(icon, r.x + 10, r.y - 8);
 
     // Label
-    ctx.fillStyle = isNight ? "rgba(220,220,220,0.9)" : "rgba(30,40,30,0.85)";
-    ctx.font = `bold ${isHovered ? 12 : 10}px "Noto Sans SC", sans-serif`;
-    ctx.fillText(zone.name, r.cx, r.y + r.h - 5);
+    ctx.fillStyle = isNight ? "rgba(235,244,250,0.92)" : "rgba(241,249,252,0.86)";
+    ctx.font = `bold ${isHovered ? 12 : 11}px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "left";
+    ctx.fillText(zone.name, r.x + 12, r.y + r.h - 9);
 
     // Occupancy badge
     const count = zoneOccupancy.get(zone.id) || 0;
     if (count > 0) {
-      const bx = r.x + r.w - 10;
-      const by = r.y + 10;
-      ctx.fillStyle = isNight ? "rgba(255,180,60,0.9)" : "rgba(255,107,107,0.9)";
+      const bx = r.x + r.w - 14;
+      const by = r.y + 14;
+      ctx.fillStyle = isNight ? "rgba(245,221,139,0.9)" : "rgba(95,209,196,0.9)";
       ctx.beginPath();
-      ctx.arc(bx, by, 9, 0, Math.PI * 2);
+      ctx.arc(bx, by, 10, 0, Math.PI * 2);
       ctx.fill();
-      ctx.fillStyle = "#fff";
+      ctx.fillStyle = "#09131f";
       ctx.font = "bold 10px Arial";
       ctx.fillText(String(count), bx, by + 3.5);
     }
 
     // Hover glow
     if (isHovered) {
-      ctx.strokeStyle = hexWithAlpha(color, 0.4);
-      ctx.lineWidth = 3;
-      roundRect(ctx, r.x - 4, r.y - 4, r.w + 8, r.h + 8, 14);
+      ctx.strokeStyle = hexWithAlpha(color, 0.36);
+      ctx.lineWidth = 4;
+      roundRect(ctx, r.x - 5, r.y - 5, r.w + 10, r.h + 10, 20);
       ctx.stroke();
     }
   });
@@ -1688,14 +2388,14 @@ function drawGameWorld() {
     ctx.fill();
 
     // Body
-    ctx.fillStyle = hexWithAlpha(citizen.color, 0.9);
-    roundRect(ctx, cx - size * 0.4, cy + size * 0.1, size * 0.8, size * 0.7, 4);
+    ctx.fillStyle = hexWithAlpha(citizen.color, 0.82);
+    roundRect(ctx, cx - size * 0.32, cy + size * 0.12, size * 0.64, size * 0.9, 8);
     ctx.fill();
 
     // Head
-    ctx.fillStyle = citizen.color;
+    ctx.fillStyle = hexWithAlpha(citizen.color, 0.95);
     ctx.beginPath();
-    ctx.arc(cx, cy - size * 0.15, size * 0.45, 0, Math.PI * 2);
+    ctx.arc(cx, cy - size * 0.14, size * 0.36, 0, Math.PI * 2);
     ctx.fill();
 
     // Face - eyes
@@ -1760,7 +2460,7 @@ function drawGameWorld() {
       const bAlpha = bubble.alpha;
 
       // Bubble background
-      ctx.fillStyle = ACTION_COLORS[bubble.type] || "rgba(0,0,0,0.75)";
+      ctx.fillStyle = ACTION_COLORS[bubble.type] || "rgba(6,12,20,0.82)";
       ctx.globalAlpha = bAlpha;
       roundRect(ctx, bx, by, tw, 16, 6);
       ctx.fill();
@@ -2408,30 +3108,44 @@ function bindGameEvents() {
   const tutorialSkipBtn = document.getElementById("tutorialSkip");
   if (tutorialSkipBtn) tutorialSkipBtn.addEventListener("click", closeTutorial);
 
-  // ── First-minute loop ──
-  const firstLoopInput = document.getElementById("firstLoopInput");
-  if (firstLoopInput) {
-    firstLoopInput.addEventListener("input", () => {
-      const loop = ensureFirstLoopState();
-      loop.input = firstLoopInput.value.trim();
-      loop.completed = false;
-      loop.actionType = "";
-      loop.resultText = "";
-      loop.nextText = "";
-      loop.becauseLine = "";
-      loop.graphRecordId = "";
-      loop.evidenceEdgeIds = [];
-      renderFirstLoopPanel();
-    });
-  }
-
-  document.querySelectorAll(".loop-action[data-loop-action]").forEach(btn => {
-    btn.addEventListener("click", () => runFirstLoopAction(btn.dataset.loopAction));
-  });
-
+  // ── First-session quest stage ──
   const firstLoopPanel = document.getElementById("firstLoopPanel");
   if (firstLoopPanel) {
     firstLoopPanel.addEventListener("click", (e) => {
+      const modalBtn = e.target.closest("[data-modal]");
+      if (modalBtn) {
+        openModal(modalBtn.dataset.modal);
+        return;
+      }
+      const capsuleBtn = e.target.closest("[data-quest-select-capsule]");
+      if (capsuleBtn) {
+        previewCapsuleForQuest(capsuleBtn.dataset.questSelectCapsule);
+        return;
+      }
+      const choiceBtn = e.target.closest("[data-quest-choice]");
+      if (choiceBtn) {
+        commitLifeChoice(choiceBtn.dataset.questChoice);
+        return;
+      }
+      const momentBtn = e.target.closest("[data-quest-moment]");
+      if (momentBtn) {
+        setQuestDriftMoment(momentBtn.dataset.questMoment);
+        return;
+      }
+      const questAction = e.target.closest("[data-quest-action]");
+      if (questAction) {
+        const action = questAction.dataset.questAction;
+        if (action === "show-help") { showTutorial(); return; }
+        if (action === "start-trial") { startTrialLife(); return; }
+        if (action === "enter-capsule") { selectCapsuleForQuest(); return; }
+        if (action === "back-to-capsules") { setFirstSessionStage("choose_capsule"); return; }
+        if (action === "back-to-perspective") { setFirstSessionStage("perspective_scene"); return; }
+        if (action === "open-robot-signal") { openRobotSignalQuest(); return; }
+        if (action === "open-drift-bottle") { openDriftBottleQuest(); return; }
+        if (action === "cast-drift-bottle") { castDriftBottleQuest(); return; }
+        if (action === "unlock-world") { unlockWorldExploration(); return; }
+      }
+
       const graphExport = e.target.closest("[data-loop-graph-export]");
       if (graphExport) {
         const json = window.CausalGraphMemory?.exportGraph(state.causalGraph) || "{}";
@@ -2542,13 +3256,54 @@ function bindGameEvents() {
       const robotChip = target.closest(".modal-chip[data-robot]");
       if (robotChip) { setRobotMode(robotChip.dataset.robot); return; }
 
+      // Scope chips
+      const scopeChip = target.closest(".scope-chip[data-scope]");
+      if (scopeChip) {
+        const group = scopeChip.parentElement;
+        group?.querySelectorAll(".scope-chip[data-scope]").forEach(c => c.classList.remove("active"));
+        scopeChip.classList.add("active");
+        return;
+      }
+
       // Life cards
-      const lifeCard = target.closest(".life-card[data-life]");
-      if (lifeCard) { selectExchange(lifeCard.dataset.life); return; }
+      const lifeCard = target.closest(".life-card[data-life-capsule]");
+      if (lifeCard) { selectLifeCapsule(lifeCard.dataset.lifeCapsule); return; }
+
+      const lifeChoice = target.closest("[data-life-choice]");
+      if (lifeChoice) { playLifeChoice(lifeChoice.dataset.lifeChoice); return; }
+
+      const revokeBtn = target.closest("[data-revoke-fragment]");
+      if (revokeBtn) { revokeLifeFragment(revokeBtn.dataset.revokeFragment); return; }
+
+      const openSoul = target.closest("[data-open-soul-match]");
+      if (openSoul) {
+        const match = (state.soulMatches || []).find(item => item.id === openSoul.dataset.openSoulMatch);
+        if (match) {
+          match.consentState = "mutual_opened";
+          pushRobotSignal("drift_bottle", "soft", "你愿意继续这次同频偶遇。对方也同意前，系统仍只保留回声层连接。");
+          persist();
+          showToast("已保留这次同频连接", "support");
+          openModal("bottle");
+        }
+        return;
+      }
+
+      const declineSoul = target.closest("[data-decline-soul-match]");
+      if (declineSoul) {
+        const match = (state.soulMatches || []).find(item => item.id === declineSoul.dataset.declineSoulMatch);
+        if (match) {
+          match.consentState = "declined";
+          persist();
+          showToast("这次偶遇会停在回声里", "support");
+          openModal("bottle");
+        }
+        return;
+      }
 
       // Action buttons
       if (target.id === "modalAskMirror") { askMirror(); return; }
       if (target.id === "modalSaveScript") { saveScript(); return; }
+      if (target.id === "modalAuthorizeLife") { authorizeLifeFragment(); return; }
       if (target.id === "modalSendBottle") { sendBottle(); return; }
       if (target.id === "modalReceiveBottle") { receiveBottle(); return; }
       if (target.id === "modalClearData") { clearAllData(); closeModal(); return; }
@@ -2639,10 +3394,9 @@ function gameInit() {
     // Start rendering
     drawGameWorld();
 
-    // Start simulation (but pause if user hasn't seen tutorial yet)
-    const shouldShowTutorial = !state.hasSeenTutorial;
-    const shouldHoldForFirstLoop = !state.firstLoop?.completed;
-    if (shouldShowTutorial || shouldHoldForFirstLoop) {
+    // Start simulation only after the first playable quest has unlocked the world.
+    const shouldHoldForFirstLoop = getFirstSessionStage() !== "unlocked_world";
+    if (shouldHoldForFirstLoop) {
       pauseSocietyRun();
       state.society.speed = 0.5;
       const slider = document.getElementById("hudSpeed");
@@ -2651,7 +3405,7 @@ function gameInit() {
       if (sliderVal) sliderVal.textContent = "0.5x";
     }
 
-    if (state.society.autoEvolution && !shouldShowTutorial && !shouldHoldForFirstLoop) {
+    if (state.society.autoEvolution && !shouldHoldForFirstLoop) {
       startSocietyRun();
     }
     // Restore saved speed to slider
@@ -2663,11 +3417,6 @@ function gameInit() {
     updateHUD();
     renderFirstLoopPanel();
     persist();
-
-    // Show tutorial for returning users who haven't seen it
-    if (shouldShowTutorial) {
-      setTimeout(() => showTutorial(), 600);
-    }
   } else {
     // Show splash / avatar creation
     hydrateSocietyState();

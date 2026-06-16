@@ -35,6 +35,49 @@ const exchangeStories = {
   }
 };
 
+const LIFE_SCOPE_LABELS = {
+  emotion: "情感瞬间",
+  career: "职业岔路",
+  relationship: "关系片段",
+  turning_point: "人生转折"
+};
+
+const DEFAULT_LIFE_CAPSULES = [
+  {
+    id: "capsule-career-river",
+    sourceFragmentId: "seed-career-river",
+    title: "河岸边的转职者",
+    perspectiveRole: "准备离开稳定工作的城市白领",
+    lifeStage: "29岁 · 职业岔路",
+    themes: ["career", "boundary", "turning_point"],
+    anonymizedScenario: "你连续三年接住了团队里最难收尾的工作。今天，新的项目又默认落到你身上。你看见自己想离开，但也害怕这只是一次逃跑。",
+    keyChoiceSet: ["留下并谈边界", "立刻离开", "向可信同事求助", "先沉默观察一晚"],
+    boundaries: ["不暴露原始公司、姓名、城市", "体验者只能看到重构后的处境"]
+  },
+  {
+    id: "capsule-family-window",
+    sourceFragmentId: "seed-family-window",
+    title: "窗边说出空间的人",
+    perspectiveRole: "第一次想对家人说清边界的人",
+    lifeStage: "32岁 · 家庭关系",
+    themes: ["relationship", "family", "emotion"],
+    anonymizedScenario: "你一直被家人的担心包围。每次解释都会变成争执，所以你习惯先答应。今天你突然意识到，如果再不说出需要空间，爱会继续以亏欠的形式存在。",
+    keyChoiceSet: ["慢慢说出需要空间", "继续顺从", "写信而不是当面说", "请第三个人陪同"],
+    boundaries: ["不呈现真实家庭成员身份", "不鼓励体验者联系原作者"]
+  },
+  {
+    id: "capsule-love-silence",
+    sourceFragmentId: "seed-love-silence",
+    title: "沉默前的那句话",
+    perspectiveRole: "在亲密关系里害怕开口的人",
+    lifeStage: "26岁 · 亲密关系",
+    themes: ["relationship", "vulnerability", "emotion"],
+    anonymizedScenario: "你不是不在乎，只是每次要解释时都像站在很窄的桥上。对方问你为什么又沉默，你知道如果这次继续退回去，关系会更远。",
+    keyChoiceSet: ["承认自己害怕", "解释所有细节", "先离开现场", "请对方给十分钟"],
+    boundaries: ["不显示原始关系细节", "体验结果只返回洞见和回声"]
+  }
+];
+
 const bottleEchoes = [
   "有个匿名的人接住了这句话：我也有过这种累，不是因为你不够坚强，而是你撑得太久了。",
   "一段回声漂了回来：我不知道你的全貌，但我相信此刻的你值得被轻一点对待。",
@@ -1046,11 +1089,29 @@ function updateWeather(society) {
   }
 }
 
+function mergeLifeCapsules(savedCapsules) {
+  const byId = new Map(DEFAULT_LIFE_CAPSULES.map((capsule) => [capsule.id, capsule]));
+  savedCapsules.forEach((capsule) => {
+    if (capsule?.id) {
+      byId.set(capsule.id, capsule);
+    }
+  });
+  return [...byId.values()].slice(0, 16);
+}
+
 function loadState() {
   const defaults = {
     profile: {},
     echoes: [],
     bottle: "",
+    lifeFragments: [],
+    lifeCapsules: DEFAULT_LIFE_CAPSULES,
+    activeLifeCapsuleId: "capsule-career-river",
+    robotSignals: [],
+    driftBottles: [],
+    soulMatches: [],
+    firstSessionStage: "",
+    firstSessionQuest: null,
     continuation: null,
     firstLoop: null,
     causalGraph: null,
@@ -1070,6 +1131,18 @@ function loadState() {
       profile: { ...defaults.profile, ...(saved.profile || {}) },
       echoes: Array.isArray(saved.echoes) ? saved.echoes : defaults.echoes,
       bottle: typeof saved.bottle === "string" ? saved.bottle : "",
+      lifeFragments: Array.isArray(saved.lifeFragments) ? saved.lifeFragments : defaults.lifeFragments,
+      lifeCapsules: Array.isArray(saved.lifeCapsules) && saved.lifeCapsules.length
+        ? mergeLifeCapsules(saved.lifeCapsules)
+        : defaults.lifeCapsules,
+      activeLifeCapsuleId: typeof saved.activeLifeCapsuleId === "string"
+        ? saved.activeLifeCapsuleId
+        : defaults.activeLifeCapsuleId,
+      robotSignals: Array.isArray(saved.robotSignals) ? saved.robotSignals.slice(0, 12) : defaults.robotSignals,
+      driftBottles: Array.isArray(saved.driftBottles) ? saved.driftBottles.slice(0, 12) : defaults.driftBottles,
+      soulMatches: Array.isArray(saved.soulMatches) ? saved.soulMatches.slice(0, 8) : defaults.soulMatches,
+      firstSessionStage: typeof saved.firstSessionStage === "string" ? saved.firstSessionStage : "",
+      firstSessionQuest: saved.firstSessionQuest && typeof saved.firstSessionQuest === "object" ? saved.firstSessionQuest : null,
       continuation: saved.continuation && typeof saved.continuation === "object" ? saved.continuation : null,
       firstLoop: saved.firstLoop && typeof saved.firstLoop === "object" ? saved.firstLoop : null,
       causalGraph: saved.causalGraph && typeof saved.causalGraph === "object" ? saved.causalGraph : null,
@@ -1089,6 +1162,14 @@ function persist() {
       profile: state.profile,
       echoes: state.echoes,
       bottle: state.bottle || "",
+      lifeFragments: state.lifeFragments || [],
+      lifeCapsules: state.lifeCapsules || DEFAULT_LIFE_CAPSULES,
+      activeLifeCapsuleId: state.activeLifeCapsuleId || "",
+      robotSignals: state.robotSignals || [],
+      driftBottles: state.driftBottles || [],
+      soulMatches: state.soulMatches || [],
+      firstSessionStage: state.firstSessionStage || "",
+      firstSessionQuest: state.firstSessionQuest || null,
       continuation: state.continuation || null,
       firstLoop: state.firstLoop || null,
       causalGraph: state.causalGraph || null,

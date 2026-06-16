@@ -91,36 +91,18 @@
         </div>
       </div>
 
-      <!-- First-minute causal loop -->
-      <section class="first-loop-panel" id="firstLoopPanel" aria-label="第一分钟因果循环">
-        <div class="first-loop-head">
-          <span>第一分钟</span>
-          <strong>做一件事，看见世界怎么变</strong>
-        </div>
-        <div class="loop-steps" id="firstLoopSteps">
-          <div class="loop-step active" data-loop-step="input"><b>1</b><span>现实片段</span></div>
-          <div class="loop-step" data-loop-step="action"><b>2</b><span>分身行动</span></div>
-          <div class="loop-step" data-loop-step="result"><b>3</b><span>城市结果</span></div>
-        </div>
-        <label class="loop-label" for="firstLoopInput">刚刚发生了什么</label>
-        <textarea id="firstLoopInput" class="first-loop-input" rows="3" maxlength="90" placeholder="例如：今天和同事卡在一个分歧里，我不想再吵。"></textarea>
-        <div class="loop-actions" id="firstLoopActions">
-          <button class="loop-action" data-loop-action="listen"><span>先听懂</span><small>让表达变清楚</small></button>
-          <button class="loop-action" data-loop-action="cooperate"><span>一起做小事</span><small>让协作动起来</small></button>
-          <button class="loop-action" data-loop-action="support"><span>先安抚</span><small>让张力降下来</small></button>
-        </div>
-        <div class="loop-result" id="firstLoopResult" aria-live="polite">
-          <p class="loop-kicker">等待一次行动</p>
-          <p>写下一件小事，再选一个分身行动。城市会立刻告诉你：谁被影响、状态怎么变、下一步还能影响什么。</p>
-        </div>
+      <!-- First-session quest stage -->
+      <section class="first-loop-panel quest-stage" id="firstLoopPanel" aria-label="MirrorLife 首轮任务">
+        <div id="questStageContent" aria-live="polite"></div>
       </section>
 
       <!-- Event log sidebar -->
       <div class="event-log" id="eventLog">
         <div class="event-log-header">
-          <span class="event-log-title">事件流</span>
+          <span class="event-log-title">世界脉冲</span>
           <button class="event-log-toggle" id="eventLogToggle" title="收起">◀</button>
         </div>
+        <div class="event-log-summary" id="worldPulseSummary"></div>
         <div class="event-log-body" id="eventLogBody"></div>
       </div>
 
@@ -156,29 +138,67 @@
       <!-- Avatar creation / splash screen -->
       <div class="splash-screen" id="splashScreen">
         <div class="splash-inner">
-          <div class="splash-logo">镜</div>
-          <h1>镜像人生</h1>
-          <p>你想活出怎样的人生</p>
-          <canvas id="avatarPreviewCanvas" width="120" height="120" class="avatar-preview-canvas"></canvas>
-          <div class="avatar-form">
-            <label class="avatar-label" for="avatarName">姓名</label>
-            <input type="text" id="avatarName" class="avatar-input" placeholder="给你的分身取个名字" maxlength="12" />
-            <label class="avatar-label" for="avatarAge">年龄: <span id="avatarAgeVal">24</span></label>
-            <input type="range" id="avatarAge" class="avatar-range" min="5" max="80" value="24" />
-            <label class="avatar-label" for="avatarProfession">职业</label>
-            <select id="avatarProfession" class="avatar-profession-select"></select>
-            <label class="avatar-label">外观颜色</label>
-            <div class="avatar-color-grid" id="avatarColorGrid"></div>
-            <label class="avatar-label" for="avatarBio">一句话自我介绍</label>
-            <input type="text" id="avatarBio" class="avatar-input" placeholder="描述你分身的性格或目标" maxlength="40" />
-          </div>
-          <button class="splash-enter" id="splashEnter">创建分身并进入</button>
+          <section class="splash-story">
+            <div class="splash-logo">镜</div>
+            <p class="splash-kicker">MirrorLife / 镜像人生</p>
+            <h1>你想活出怎样的人生</h1>
+            <p class="splash-lead">进入一段匿名重构的人生，做一次关键选择，让另一个世界把回声轻轻传回来。</p>
+            <div class="journey-preview" aria-label="核心玩法">
+              <div class="journey-step">
+                <b>1</b>
+                <span>试活人生</span>
+                <small>切换身份，体验匿名重构的人生岔路。</small>
+              </div>
+              <div class="journey-step">
+                <b>2</b>
+                <span>情感机器人</span>
+                <small>现实中的信使接住虚拟社会的回声。</small>
+              </div>
+              <div class="journey-step">
+                <b>3</b>
+                <span>灵魂漂流瓶</span>
+                <small>在某个转折点，遇见同频的人。</small>
+              </div>
+            </div>
+            <div class="splash-world-strip" aria-hidden="true">
+              <span>现实中的你</span>
+              <i></i>
+              <span>情感机器人</span>
+              <i></i>
+              <span>虚拟社会分身</span>
+            </div>
+          </section>
+          <section class="splash-creator" aria-label="镜像身份牌">
+            <canvas id="avatarPreviewCanvas" width="120" height="120" class="avatar-preview-canvas"></canvas>
+            <div class="mirror-tag-card">
+              <p>镜像身份牌</p>
+              <strong id="mirrorTagName">你的分身</strong>
+              <span>用于进入第一段人生胶囊，稍后可以继续调整。</span>
+            </div>
+            <details class="avatar-details">
+              <summary>调整身份牌</summary>
+              <div class="avatar-form">
+                <label class="avatar-label" for="avatarName">姓名</label>
+                <input type="text" id="avatarName" class="avatar-input" placeholder="给你的分身取个名字" maxlength="12" />
+                <label class="avatar-label" for="avatarAge">年龄: <span id="avatarAgeVal">24</span></label>
+                <input type="range" id="avatarAge" class="avatar-range" min="5" max="80" value="24" />
+                <label class="avatar-label" for="avatarProfession">职业</label>
+                <select id="avatarProfession" class="avatar-profession-select"></select>
+                <label class="avatar-label">外观颜色</label>
+                <div class="avatar-color-grid" id="avatarColorGrid"></div>
+                <label class="avatar-label" for="avatarBio">一句话自我介绍</label>
+                <input type="text" id="avatarBio" class="avatar-input" placeholder="例如：想试着活得更勇敢" maxlength="40" />
+              </div>
+            </details>
+            <button class="splash-enter" id="splashEnter">开始试活</button>
+            <p class="splash-footnote">先进入一段人生，做一次选择，再听见另一个我的信号。</p>
+          </section>
         </div>
       </div>
     </div>
 
     <script>window.__errs = []; window.addEventListener('error', e => window.__errs.push(e.message + ' @ ' + e.filename + ':' + e.lineno));</script>
-    <script type="module" src="/public/analytics.js"></script>
+    <script type="module" src="./analytics-entry.js"></script>
     <script src="engine.js"></script>
     <script src="narrative.js"></script>
     <script src="causal-graph.js"></script>
