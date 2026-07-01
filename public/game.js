@@ -16,8 +16,10 @@ let speechBubbles = {};
 let particles = [];
 let realityActionFocus = null;
 let renderCache = { canvas: null, ctx: null, cssW: 0, cssH: 0, dpr: 0, lastFrameAt: 0, lastPruneAt: 0 };
+let transparentSpriteCache = new WeakMap();
 let hoverCheckAt = 0;
 let graphDebugVisible = false;
+let questPanelCollapsed = false;
 let renderActivityUntil = 0;
 let resumeSocietyAfterVisibilityPause = false;
 let lifecycleBound = false;
@@ -33,13 +35,66 @@ const AVATAR_COLORS = [
   "#c18b3d", "#6b7f5f", "#af5f3a", "#7f5c7a"
 ];
 
+const AVATAR_SPRITE_SRC = "/assets/mirrorlife-avatar-sprite.png";
+const AVATAR_SPRITE_COLUMNS = 3;
+const AVATAR_SPRITE_ROWS = 2;
+const AVATAR_FRAME_COUNT = AVATAR_SPRITE_COLUMNS * AVATAR_SPRITE_ROWS;
+const avatarSpriteImage = new Image();
+avatarSpriteImage.decoding = "async";
+avatarSpriteImage.src = AVATAR_SPRITE_SRC;
+
+const BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-sprite.png";
+const BUILDING_SPRITE_COLUMNS = 4;
+const BUILDING_SPRITE_ROWS = 3;
+const BUILDING_FRAME_COUNT = BUILDING_SPRITE_COLUMNS * BUILDING_SPRITE_ROWS;
+const buildingSpriteImage = new Image();
+buildingSpriteImage.decoding = "async";
+buildingSpriteImage.src = BUILDING_SPRITE_SRC;
+
+const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.png";
+const CITIZEN_SPRITE_COLUMNS = 4;
+const CITIZEN_SPRITE_ROWS = 2;
+const CITIZEN_FRAME_COUNT = CITIZEN_SPRITE_COLUMNS * CITIZEN_SPRITE_ROWS;
+const citizenSpriteImage = new Image();
+citizenSpriteImage.decoding = "async";
+citizenSpriteImage.src = CITIZEN_SPRITE_SRC;
+
+const ZONE_BUILDING_FRAMES = {
+  "story-archive": 0,
+  "public-plaza": 0,
+  "commercial-zone": 0,
+  "commons-workshop": 1,
+  "creative-studio": 1,
+  "repair-station": 1,
+  "rest-courtyard": 2,
+  "park": 2,
+  "farm": 2,
+  "kindergarten": 3,
+  "university": 4,
+  "mentor-hall": 4,
+  "primary-school": 5,
+  "middle-school": 5,
+  "legal-court": 6,
+  "cemetery": 6,
+  "botanical-garden": 7,
+  "zoo": 7,
+  "office-district": 8,
+  "factory": 9,
+  "resource-kitchen": 10,
+  "night-market": 10,
+  "maternity-hospital": 10,
+  "empathy-lab": 10,
+  "residential": 11,
+  "quiet-nook": 11
+};
+
 const DEFAULT_AVATAR_PRESETS = [
-  { id: "brave-spark", name: "勇气星火", color: "#e63946", age: 24, professionId: "designer", bio: "想试着活得更勇敢", hair: "#1a1a2e", skin: "#ffd6b5", accessory: "spark" },
-  { id: "blue-maker", name: "蓝图建造者", color: "#4ea8de", age: 29, professionId: "engineer", bio: "把混乱变成可以行动的路", hair: "#17446b", skin: "#f7cfae", accessory: "tool" },
-  { id: "green-healer", name: "绿洲照料者", color: "#2ecc71", age: 32, professionId: "caretaker", bio: "练习温柔但有边界地靠近", hair: "#315c3d", skin: "#f5c7a9", accessory: "leaf" },
-  { id: "sunny-student", name: "向阳学习者", color: "#f1c40f", age: 19, professionId: "student", bio: "想重新选择一次成长的方向", hair: "#6b4a1e", skin: "#ffd9a6", accessory: "book" },
-  { id: "night-reporter", name: "街角记录者", color: "#7f5c7a", age: 27, professionId: "reporter", bio: "去看见别人没有说出口的事", hair: "#312437", skin: "#e7bfa8", accessory: "note" },
-  { id: "free-drifter", name: "自由漂流者", color: "#ff8fab", age: 26, professionId: "freelancer", bio: "带着好奇进入另一种人生", hair: "#82415d", skin: "#f8c9bd", accessory: "wave" }
+  { id: "brave-spark", name: "勇气星火", color: "#e63946", age: 24, professionId: "designer", bio: "想试着活得更勇敢", avatarFrame: 0 },
+  { id: "blue-maker", name: "蓝图建造者", color: "#4ea8de", age: 29, professionId: "engineer", bio: "把混乱变成可以行动的路", avatarFrame: 1 },
+  { id: "green-healer", name: "绿洲照料者", color: "#2ecc71", age: 32, professionId: "caretaker", bio: "练习温柔但有边界地靠近", avatarFrame: 2 },
+  { id: "sunny-student", name: "向阳学习者", color: "#f1c40f", age: 19, professionId: "student", bio: "想重新选择一次成长的方向", avatarFrame: 3 },
+  { id: "night-reporter", name: "街角记录者", color: "#7f5c7a", age: 27, professionId: "reporter", bio: "去看见别人没有说出口的事", avatarFrame: 4 },
+  { id: "free-drifter", name: "自由漂流者", color: "#ff8fab", age: 26, professionId: "freelancer", bio: "带着好奇进入另一种人生", avatarFrame: 5 }
 ];
 
 const CUSTOM_AVATAR_PRESET = {
@@ -49,9 +104,7 @@ const CUSTOM_AVATAR_PRESET = {
   age: 24,
   professionId: "freelancer",
   bio: "想试着活出自己的版本",
-  hair: "#2d2546",
-  skin: "#ffd6b5",
-  accessory: "plus",
+  avatarFrame: 0,
   custom: true
 };
 
@@ -306,7 +359,10 @@ function renderQuestHeader(kicker, title, desc, stage) {
         <p class="quest-kicker">${escapeHtml(kicker)}</p>
         <h2>${escapeHtml(title)}</h2>
       </div>
-      <button class="quest-help" data-quest-action="show-help" title="重看引导">?</button>
+      <div class="quest-head-actions">
+        <button class="quest-help" data-quest-action="toggle-quest-panel" title="收起/展开任务面板">${questPanelCollapsed ? "+" : "−"}</button>
+        <button class="quest-help" data-quest-action="show-help" title="重看引导">?</button>
+      </div>
     </div>
     <p class="quest-desc">${escapeHtml(desc)}</p>
     ${renderQuestProgress(stage)}`;
@@ -645,6 +701,7 @@ function renderFirstLoopPanel() {
   const stage = getFirstSessionStage();
   state.firstSessionStage = stage;
   applyFirstSessionChrome();
+  panel.classList.toggle("collapsed", questPanelCollapsed);
   const renderers = {
     opening: renderOpeningQuest,
     choose_capsule: renderChooseCapsuleQuest,
@@ -1565,7 +1622,7 @@ function renderDefaultAvatarGrid() {
   const avatarOptions = [...DEFAULT_AVATAR_PRESETS, CUSTOM_AVATAR_PRESET];
   grid.innerHTML = avatarOptions.map((preset, index) => `
     <button type="button" class="default-avatar-card ${index === 0 ? "selected" : ""}" data-avatar-preset="${preset.id}" aria-label="选择${preset.name}">
-      <span class="default-avatar-face" style="--avatar-color:${preset.color}; --avatar-hair:${preset.hair}; --avatar-skin:${preset.skin}">
+      <span class="default-avatar-face">
         ${buildAvatarMarkup(preset, true)}
       </span>
       <b>${preset.name}</b>
@@ -1617,28 +1674,36 @@ function applyAvatarPreset(preset, options = {}) {
 }
 
 function markAvatarCustom() {
+  const avatarFrame = normalizeAvatarFrame(selectedAvatarPreset?.avatarFrame);
   selectedAvatarPreset = {
     ...CUSTOM_AVATAR_PRESET,
-    color: selectedAvatarColor
+    color: selectedAvatarColor,
+    avatarFrame
   };
   document.querySelectorAll(".default-avatar-card").forEach((card) => {
     card.classList.toggle("selected", card.dataset.avatarPreset === "custom");
   });
+  syncCustomAvatarCardFrame(avatarFrame);
+}
+
+function normalizeAvatarFrame(frame) {
+  const parsed = Number(frame);
+  if (!Number.isFinite(parsed)) return 0;
+  return Math.max(0, Math.min(AVATAR_FRAME_COUNT - 1, Math.round(parsed)));
+}
+
+function syncCustomAvatarCardFrame(frame) {
+  const sprite = document.querySelector('[data-avatar-preset="custom"] .avatar-sprite');
+  if (!sprite) return;
+  sprite.className = `avatar-sprite avatar-frame-${normalizeAvatarFrame(frame)}`;
 }
 
 function buildAvatarMarkup(preset, mini = false) {
-  const accessoryClass = `avatar-accessory ${preset.accessory || "spark"}`;
+  const frame = normalizeAvatarFrame(preset?.avatarFrame);
+  const customMark = preset?.custom && mini ? '<span class="avatar-custom-mark">+</span>' : "";
   return `
-    <span class="avatar-bg"></span>
-    <span class="avatar-hair"></span>
-    <span class="avatar-face">
-      <span class="avatar-eye left"></span>
-      <span class="avatar-eye right"></span>
-      <span class="avatar-smile"></span>
-    </span>
-    <span class="avatar-body"></span>
-    <span class="${accessoryClass}"></span>
-    ${mini ? "" : '<span class="avatar-sparkle one"></span><span class="avatar-sparkle two"></span>'}
+    <span class="avatar-sprite avatar-frame-${frame}" aria-hidden="true"></span>
+    ${customMark}
   `;
 }
 
@@ -1653,9 +1718,6 @@ function renderAvatarPreview() {
   const portrait = document.getElementById("avatarPortrait");
   if (!portrait) return;
   const preset = selectedAvatarPreset || DEFAULT_AVATAR_PRESETS[0];
-  portrait.style.setProperty("--avatar-color", selectedAvatarColor);
-  portrait.style.setProperty("--avatar-hair", preset.hair || CUSTOM_AVATAR_PRESET.hair);
-  portrait.style.setProperty("--avatar-skin", preset.skin || CUSTOM_AVATAR_PRESET.skin);
   portrait.innerHTML = buildAvatarMarkup(preset, false);
 
   const name = document.getElementById("avatarName")?.value || "你的分身";
@@ -1669,6 +1731,7 @@ function createAndEnterWorld(profileData) {
   const color = profileData.color || AVATAR_COLORS[0];
   const professionId = profileData.professionId || "white-collar";
   const professionNameOverride = (profileData.professionName || "").trim();
+  const avatarFrame = normalizeAvatarFrame(profileData.avatarFrame ?? selectedAvatarPreset?.avatarFrame);
   const bio = profileData.bio || "";
 
   // Create or rebuild society
@@ -1684,6 +1747,8 @@ function createAndEnterWorld(profileData) {
     avatar.name = name;
     avatar.age = clamp(age, 5, 80);
     avatar.color = color;
+    avatar.avatarFrame = avatarFrame;
+    avatar.avatarSpriteSrc = AVATAR_SPRITE_SRC;
     avatar.professionId = professionId;
     avatar.profession = professionNameOverride || (WORLD_PROFESSIONS.find(p => p.id === professionId) || WORLD_PROFESSIONS[0]).name;
     avatar.lifeStage = getLifeStage(avatar.age).id;
@@ -1709,6 +1774,8 @@ function createAndEnterWorld(profileData) {
     avatarAge: age,
     avatarProfession: professionId,
     avatarProfessionName: professionNameOverride || "",
+    avatarFrame,
+    avatarSpriteSrc: AVATAR_SPRITE_SRC,
     avatarBio: bio,
     avatarPresetId: selectedAvatarPreset?.id || "custom"
   };
@@ -2660,17 +2727,24 @@ function drawGameWorld() {
   ctx.fillStyle = isNight ? "#2ecc71" : "#9bffcb";
   ctx.fillRect(0, groundY, W, H - groundY);
 
-  // Manga hatch texture
-  ctx.strokeStyle = "#1a1a2e";
+  // Street-block paving: soft city-grid base instead of scattered hatch marks.
+  ctx.save();
+  ctx.strokeStyle = isNight ? "rgba(26,26,46,0.14)" : "rgba(26,26,46,0.11)";
   ctx.lineWidth = 2;
-  for (let i = 0; i < 60; i++) {
-    const gx = (i * 47) % W;
-    const gy = groundY + 20 + ((i * 31) % (H - groundY - 40));
+  const gridStep = 42;
+  for (let gx = -H; gx < W + H; gx += gridStep) {
     ctx.beginPath();
-    ctx.moveTo(gx, gy);
-    ctx.lineTo(gx - 2, gy - 6 - Math.sin(t + i) * 2);
+    ctx.moveTo(gx, groundY);
+    ctx.lineTo(gx + H - groundY, H);
     ctx.stroke();
   }
+  for (let gx = 0; gx < W + H; gx += gridStep) {
+    ctx.beginPath();
+    ctx.moveTo(gx, groundY);
+    ctx.lineTo(gx - (H - groundY), H);
+    ctx.stroke();
+  }
+  ctx.restore();
 
   // ── Camera transform ──
   ctx.save();
@@ -2680,10 +2754,11 @@ function drawGameWorld() {
   ctx.scale(camera.zoom, camera.zoom);
   ctx.translate(-W / 2, -H / 2);
 
-  // ── Paths (roads between zones) ──
+  // ── Street network between zones ──
   ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 3;
-  ctx.setLineDash([8, 6]);
+  ctx.lineWidth = 8;
+  ctx.setLineDash([]);
+  ctx.lineCap = "round";
   zones.forEach((zone, i) => {
     const zr = zoneRects.get(zone.id);
     if (!zr) return;
@@ -2696,7 +2771,21 @@ function drawGameWorld() {
       ctx.stroke();
     }
   });
+  ctx.strokeStyle = "#fafaf5";
+  ctx.lineWidth = 2;
+  ctx.setLineDash([10, 12]);
+  zones.forEach((zone, i) => {
+    const zr = zoneRects.get(zone.id);
+    if (!zr || i >= zones.length - 1) return;
+    const nr = zoneRects.get(zones[i + 1].id);
+    if (!nr) return;
+    ctx.beginPath();
+    ctx.moveTo(zr.cx, zr.cy + zr.h / 2);
+    ctx.bezierCurveTo(zr.cx, zr.cy + zr.h / 2 + 20, nr.cx, nr.cy + nr.h / 2 - 20, nr.cx, nr.cy + nr.h / 2);
+    ctx.stroke();
+  });
   ctx.setLineDash([]);
+  ctx.lineCap = "butt";
 
   // ── Draw Zones as floating society districts ──
   zones.forEach((zone, idx) => {
@@ -2721,37 +2810,20 @@ function drawGameWorld() {
     roundRect(ctx, r.x, r.y, r.w, r.h, 8);
     ctx.stroke();
 
-    // Top cel highlight
-    ctx.fillStyle = "#fafaf5";
-    roundRect(ctx, r.x + 10, r.y + 10, r.w - 20, 8, 4);
-    ctx.fill();
-
-    // District matrix
-    const winColor = "#fafaf5";
-    const winSize = 4;
-    const cols = Math.max(1, Math.floor((r.w - 20) / 14));
-    const rows = Math.max(1, Math.floor((r.h - 34) / 14));
-    for (let wy = 0; wy < rows; wy++) {
-      for (let wx = 0; wx < cols; wx++) {
-        const winX = r.x + 12 + wx * 14 + (isNight ? Math.sin(t * 2 + wx + wy) * 0.4 : 0);
-        const winY = r.y + 18 + wy * 14;
-        ctx.fillStyle = winColor;
-        ctx.fillRect(winX, winY, winSize, winSize);
-      }
-    }
-
-    // District glyph
-    const icon = ZONE_ICONS[zone.id] || "⬟";
-    ctx.font = `${isHovered ? 17 : 14}px Arial`;
-    ctx.textAlign = "left";
-    ctx.fillStyle = "#1a1a2e";
-    ctx.fillText(icon, r.x + 10, r.y - 8);
+    drawZoneBuildingSprite(ctx, zone, r, isHovered);
 
     // Label
+    ctx.fillStyle = "#fafaf5";
+    roundRect(ctx, r.x + 8, r.y + r.h - 22, Math.min(r.w - 16, Math.max(54, zone.name.length * 13 + 18)), 18, 6);
+    ctx.fill();
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2;
+    roundRect(ctx, r.x + 8, r.y + r.h - 22, Math.min(r.w - 16, Math.max(54, zone.name.length * 13 + 18)), 18, 6);
+    ctx.stroke();
     ctx.fillStyle = "#1a1a2e";
-    ctx.font = `bold ${isHovered ? 12 : 11}px "Noto Sans SC", sans-serif`;
+    ctx.font = `bold ${isHovered ? 12 : 10}px "Noto Sans SC", sans-serif`;
     ctx.textAlign = "left";
-    ctx.fillText(zone.name, r.x + 12, r.y + r.h - 9);
+    ctx.fillText(zone.name, r.x + 15, r.y + r.h - 9);
 
     // Occupancy badge
     const count = zoneOccupancy.get(zone.id) || 0;
@@ -2795,6 +2867,7 @@ function drawGameWorld() {
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
     const size = (isAvatar ? (isHover ? 26 : 22) : (isHover ? 18 : 14)) + sizeBoost;
+    const mood = citizen.mood;
 
     // Walking animation between zones
     const anim = citizenAnimations[citizen.id] || {
@@ -2822,7 +2895,10 @@ function drawGameWorld() {
     ctx.ellipse(cx, cy + size + 2, size * 0.6, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover);
+
     // Body: MBTI-inspired archetypes get distinct silhouettes.
+    if (!usedCitizenSprite) {
     ctx.fillStyle = citizen.color || "#4ea8de";
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2.5;
@@ -2895,7 +2971,6 @@ function drawGameWorld() {
     ctx.strokeStyle = "#333";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    const mood = citizen.mood;
     if (mood > 65) {
       // Smile
       ctx.arc(cx, cy - size * 0.05, size * 0.12, 0.1, Math.PI - 0.1);
@@ -2908,6 +2983,11 @@ function drawGameWorld() {
       ctx.arc(cx, cy + size * 0.05, size * 0.12, Math.PI + 0.1, -0.1);
     }
     ctx.stroke();
+
+    if (isAvatar) {
+      drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover);
+    }
+    }
 
     // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
     if (mood > 80 && now > (anim.nextSparkleAt || 0)) {
@@ -3223,25 +3303,6 @@ function drawGameWorld() {
     }
   }
 
-  // ── Minimap ──
-  const mmW = 120, mmH = 80, mmX = W - mmW - 14, mmY = H - mmH - 80;
-  ctx.fillStyle = "rgba(10,20,35,0.7)";
-  roundRect(ctx, mmX, mmY, mmW, mmH, 6);
-  ctx.fill();
-  ctx.strokeStyle = "rgba(255,255,255,0.15)";
-  ctx.lineWidth = 1;
-  roundRect(ctx, mmX, mmY, mmW, mmH, 6);
-  ctx.stroke();
-
-  const scaleX = mmW / W;
-  const scaleY = mmH / H;
-  zones.forEach(zone => {
-    const r = zoneRects.get(zone.id);
-    if (!r) return;
-    ctx.fillStyle = hexWithAlpha(ZONE_COLORS[zone.role] || "#888", 0.6);
-    ctx.fillRect(mmX + r.x * scaleX, mmY + r.y * scaleY, Math.max(2, r.w * scaleX), Math.max(2, r.h * scaleY));
-  });
-
   ensureGameRenderLoop();
 }
 
@@ -3350,6 +3411,149 @@ function roundRect(ctx, x, y, w, h, r) {
   ctx.lineTo(x, y + r);
   ctx.quadraticCurveTo(x, y, x + r, y);
   ctx.closePath();
+}
+
+function getSpriteFrameRect(image, columns, rows, frame) {
+  if (!image.complete || !image.naturalWidth || !image.naturalHeight) return null;
+  const safeFrame = Math.max(0, Math.min(columns * rows - 1, Math.round(Number(frame) || 0)));
+  const cellW = image.naturalWidth / columns;
+  const cellH = image.naturalHeight / rows;
+  return {
+    sx: (safeFrame % columns) * cellW,
+    sy: Math.floor(safeFrame / columns) * cellH,
+    sw: cellW,
+    sh: cellH
+  };
+}
+
+function getTransparentSpriteSource(image) {
+  if (!image.complete || !image.naturalWidth || !image.naturalHeight || typeof document === "undefined") {
+    return image;
+  }
+  if (transparentSpriteCache.has(image)) {
+    return transparentSpriteCache.get(image);
+  }
+  const canvas = document.createElement("canvas");
+  canvas.width = image.naturalWidth;
+  canvas.height = image.naturalHeight;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) return image;
+  ctx.drawImage(image, 0, 0);
+  try {
+    const data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = data.data;
+    for (let i = 0; i < pixels.length; i += 4) {
+      const r = pixels[i];
+      const g = pixels[i + 1];
+      const b = pixels[i + 2];
+      const min = Math.min(r, g, b);
+      const max = Math.max(r, g, b);
+      if (min > 246 && max - min < 14) {
+        pixels[i + 3] = 0;
+      } else if (min > 232 && max - min < 18) {
+        pixels[i + 3] = Math.min(pixels[i + 3], 80);
+      }
+    }
+    ctx.putImageData(data, 0, 0);
+    transparentSpriteCache.set(image, canvas);
+    return canvas;
+  } catch {
+    return image;
+  }
+}
+
+function getZoneBuildingFrame(zone) {
+  if (!zone) return 0;
+  if (Object.prototype.hasOwnProperty.call(ZONE_BUILDING_FRAMES, zone.id)) {
+    return ZONE_BUILDING_FRAMES[zone.id];
+  }
+  if (zone.archetype === "education") return 5;
+  if (zone.archetype === "work") return 8;
+  if (zone.archetype === "green") return 7;
+  if (zone.archetype === "life") return 10;
+  if (zone.archetype === "daily") return 11;
+  if (zone.role === "heal") return 2;
+  if (zone.role === "public") return 0;
+  if (zone.role === "cooperate") return 1;
+  return 0;
+}
+
+function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
+  const frame = getZoneBuildingFrame(zone);
+  const sprite = getSpriteFrameRect(buildingSpriteImage, BUILDING_SPRITE_COLUMNS, BUILDING_SPRITE_ROWS, frame);
+  if (!sprite) return false;
+  const spriteSource = getTransparentSpriteSource(buildingSpriteImage);
+  const drawW = Math.min(r.w * 1.02, 126);
+  const drawH = Math.min(r.h * 1.7, 104);
+  const dx = r.cx - drawW / 2;
+  const dy = r.y - drawH * 0.38;
+
+  ctx.save();
+  ctx.globalAlpha = isHovered ? 1 : 0.96;
+  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, dx, dy, drawW, drawH);
+  ctx.restore();
+  return true;
+}
+
+function getCitizenSpriteFrame(citizen) {
+  const professionId = citizen?.professionId || "";
+  const role = `${citizen?.role || ""} ${citizen?.profession || ""} ${citizen?.personaLabel || ""}`;
+  if (["designer", "artist"].includes(professionId) || /设计|艺术|策展|故事/.test(role)) return 0;
+  if (["engineer", "worker", "architect", "programmer"].includes(professionId) || /工坊|工程|建设|程序|建筑/.test(role)) return 1;
+  if (["doctor", "nurse", "caretaker"].includes(professionId) || /照料|修复|护士|医生|共情/.test(role)) return 2;
+  if (["student", "teacher", "researcher"].includes(professionId) || /学生|教师|学习|课程|导师/.test(role)) return 3;
+  if (["reporter", "driver"].includes(professionId) || /观察|记者|探索|守望/.test(role)) return 4;
+  if (["farmer", "freelancer", "retiree"].includes(professionId) || /自由|漂流|农场|园艺|夜猫/.test(role)) return 5;
+  if (["chef"].includes(professionId) || /厨房|资源|厨/.test(role)) return 6;
+  if (["lawyer", "judge"].includes(professionId) || /法治|调停|顾问|关系|提议/.test(role)) return 7;
+  return Math.abs(String(citizen?.id || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0)) % CITIZEN_FRAME_COUNT;
+}
+
+function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover) {
+  const frame = getCitizenSpriteFrame(citizen);
+  const sprite = getSpriteFrameRect(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
+  if (!sprite) return false;
+  const spriteSource = getTransparentSpriteSource(citizenSpriteImage);
+  const drawH = size * (isHover ? 3.7 : 3.1);
+  const drawW = drawH * (sprite.sw / sprite.sh);
+  const dx = cx - drawW / 2;
+  const dy = cy - drawH * 0.8;
+
+  ctx.save();
+  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, dx, dy, drawW, drawH);
+  ctx.restore();
+  return true;
+}
+
+function drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover) {
+  if (!avatarSpriteImage.complete || !avatarSpriteImage.naturalWidth) {
+    return false;
+  }
+  const frame = normalizeAvatarFrame(citizen?.avatarFrame ?? state.profile?.avatarFrame);
+  const cellW = avatarSpriteImage.naturalWidth / AVATAR_SPRITE_COLUMNS;
+  const cellH = avatarSpriteImage.naturalHeight / AVATAR_SPRITE_ROWS;
+  const sx = (frame % AVATAR_SPRITE_COLUMNS) * cellW;
+  const sy = Math.floor(frame / AVATAR_SPRITE_COLUMNS) * cellH;
+  const drawSize = size * (isHover ? 2.65 : 2.35);
+  const dx = cx - drawSize / 2;
+  const dy = cy - drawSize * 0.82;
+  const radius = drawSize / 2;
+
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, dy + radius, radius * 0.96, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.drawImage(avatarSpriteImage, sx, sy, cellW, cellH, dx, dy, drawSize, drawSize);
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = isHover ? 3 : 2.5;
+  ctx.beginPath();
+  ctx.arc(cx, dy + radius, radius * 0.96, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  return true;
 }
 
 function hexWithAlpha(hex, alpha) {
@@ -3669,6 +3873,12 @@ function bindGameEvents() {
       if (questAction) {
         const action = questAction.dataset.questAction;
         if (action === "show-help") { showTutorial(); return; }
+        if (action === "toggle-quest-panel") {
+          questPanelCollapsed = !questPanelCollapsed;
+          renderFirstLoopPanel();
+          markRenderActive();
+          return;
+        }
         if (action === "start-trial") { startTrialLife(); return; }
         if (action === "enter-capsule") { selectCapsuleForQuest(); return; }
         if (action === "back-to-capsules") { setFirstSessionStage("choose_capsule"); return; }
@@ -3875,8 +4085,9 @@ function bindGameEvents() {
       const age = document.getElementById("avatarAge")?.value || 24;
       const professionId = document.getElementById("avatarProfession")?.value || "white-collar";
       const professionName = getChosenProfessionName();
+      const avatarFrame = normalizeAvatarFrame(selectedAvatarPreset?.avatarFrame);
       const bio = document.getElementById("avatarBio")?.value.trim() || "";
-      createAndEnterWorld({ name, age, color: selectedAvatarColor, professionId, professionName, bio });
+      createAndEnterWorld({ name, age, color: selectedAvatarColor, professionId, professionName, avatarFrame, bio });
     });
   }
 

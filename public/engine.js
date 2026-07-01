@@ -2617,6 +2617,8 @@ function buildMissions(plan) {
 
 function syncAvatarInSociety() {
   const avatarName = state.profile.identity || "你的分身";
+  const profileFrame = Number(state.profile.avatarFrame);
+  const avatarFrame = Number.isFinite(profileFrame) ? Math.max(0, Math.min(5, Math.round(profileFrame))) : 0;
   if (!state.society.citizens || !state.society.citizens.length) {
     return;
   }
@@ -2627,9 +2629,12 @@ function syncAvatarInSociety() {
     avatar.zoneId = avatar.zoneId || defaultZone;
     setCitizenZonePosition(avatar, getCitizenZone(state.society, avatar));
     avatar.age = clamp(Number(avatar.age) || 22, 0, 120);
+    avatar.color = state.profile.avatarColor || avatar.color;
+    avatar.avatarFrame = Number.isFinite(Number(avatar.avatarFrame)) ? Math.max(0, Math.min(5, Math.round(Number(avatar.avatarFrame)))) : avatarFrame;
+    avatar.avatarSpriteSrc = "/assets/mirrorlife-avatar-sprite.png";
     avatar.professionId = avatar.professionId || "white-collar";
     avatar.lifeStage = getLifeStage(avatar.age).id;
-    avatar.profession = (WORLD_PROFESSIONS.find((profession) => profession.id === avatar.professionId) || WORLD_PROFESSIONS[0]).name;
+    avatar.profession = state.profile.avatarProfessionName || (WORLD_PROFESSIONS.find((profession) => profession.id === avatar.professionId) || WORLD_PROFESSIONS[0]).name;
     avatar.lifeStageLabel = getLifeStage(avatar.age).label;
   } else if (state.society.citizens.length < 10) {
     state.society.citizens.unshift(
@@ -2637,7 +2642,9 @@ function syncAvatarInSociety() {
         id: "avatar",
         name: avatarName,
         role: "你的分身",
-        color: "#174743",
+        color: state.profile.avatarColor || "#174743",
+        avatarFrame,
+        avatarSpriteSrc: "/assets/mirrorlife-avatar-sprite.png",
         x: 0.6,
         y: 0.58,
         purpose: "从真实生活带入选择与体验",
@@ -2664,6 +2671,8 @@ function getSafeAvatarZone() {
 
 function syncAvatarForSociety(society) {
   const avatarName = state.profile.identity || "你的分身";
+  const profileFrame = Number(state.profile.avatarFrame);
+  const avatarFrame = Number.isFinite(profileFrame) ? Math.max(0, Math.min(5, Math.round(profileFrame))) : 0;
   const defaultZone = getSafeAvatarZoneForSociety(society);
   const avatar = society.citizens.find((citizen) => citizen.id === "avatar");
   if (avatar) {
@@ -2671,8 +2680,11 @@ function syncAvatarForSociety(society) {
     avatar.zoneId = avatar.zoneId || defaultZone;
     setCitizenZonePosition(avatar, getCitizenZone(society, avatar));
     avatar.age = clamp(Number(avatar.age) || 26, 0, 120);
+    avatar.color = state.profile.avatarColor || avatar.color;
+    avatar.avatarFrame = Number.isFinite(Number(avatar.avatarFrame)) ? Math.max(0, Math.min(5, Math.round(Number(avatar.avatarFrame)))) : avatarFrame;
+    avatar.avatarSpriteSrc = "/assets/mirrorlife-avatar-sprite.png";
     avatar.professionId = avatar.professionId || "white-collar";
-    avatar.profession = (WORLD_PROFESSIONS.find((profession) => profession.id === avatar.professionId) || WORLD_PROFESSIONS[0]).name;
+    avatar.profession = state.profile.avatarProfessionName || (WORLD_PROFESSIONS.find((profession) => profession.id === avatar.professionId) || WORLD_PROFESSIONS[0]).name;
     avatar.lifeStage = getLifeStage(avatar.age).id;
     avatar.lifeStageLabel = getLifeStage(avatar.age).label;
     return;
@@ -2682,7 +2694,9 @@ function syncAvatarForSociety(society) {
       id: "avatar",
       name: avatarName,
       role: "你的分身",
-      color: "#174743",
+      color: state.profile.avatarColor || "#174743",
+      avatarFrame,
+      avatarSpriteSrc: "/assets/mirrorlife-avatar-sprite.png",
       x: 0.6,
       y: 0.58,
         purpose: "从真实生活带入选择与体验",
