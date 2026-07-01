@@ -170,10 +170,7 @@
           </section>
           <section class="splash-creator" aria-label="镜像身份牌">
             <div class="avatar-preview-stage" aria-label="默认头像预览">
-              <canvas id="avatarPreviewCanvas" width="132" height="132" class="avatar-preview-canvas"></canvas>
-              <div class="avatar-preview-badge" id="avatarPreviewBadge" aria-hidden="true">
-                <span id="avatarPreviewInitial">我</span>
-              </div>
+              <div id="avatarPortrait" class="avatar-portrait" aria-hidden="true"></div>
             </div>
             <div class="mirror-tag-card">
               <p>镜像身份牌</p>
@@ -192,6 +189,8 @@
                 <input type="range" id="avatarAge" class="avatar-range" min="5" max="80" value="24" />
                 <label class="avatar-label" for="avatarProfession">职业</label>
                 <select id="avatarProfession" class="avatar-profession-select"></select>
+                <label class="avatar-label" for="avatarCustomProfession">自定义职业 / 身份</label>
+                <input type="text" id="avatarCustomProfession" class="avatar-input" placeholder="例如：海边书店主理人、独立游戏作者" maxlength="16" />
                 <label class="avatar-label">外观颜色</label>
                 <div class="avatar-color-grid" id="avatarColorGrid"></div>
                 <label class="avatar-label" for="avatarBio">一句话自我介绍</label>

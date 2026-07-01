@@ -34,13 +34,26 @@ const AVATAR_COLORS = [
 ];
 
 const DEFAULT_AVATAR_PRESETS = [
-  { id: "brave-spark", name: "勇气星火", initial: "勇", color: "#e63946", age: 24, professionId: "designer", bio: "想试着活得更勇敢" },
-  { id: "blue-maker", name: "蓝图建造者", initial: "造", color: "#4ea8de", age: 29, professionId: "engineer", bio: "把混乱变成可以行动的路" },
-  { id: "green-healer", name: "绿洲照料者", initial: "疗", color: "#2ecc71", age: 32, professionId: "caretaker", bio: "练习温柔但有边界地靠近" },
-  { id: "sunny-student", name: "向阳学习者", initial: "学", color: "#f1c40f", age: 19, professionId: "student", bio: "想重新选择一次成长的方向" },
-  { id: "night-reporter", name: "街角记录者", initial: "记", color: "#7f5c7a", age: 27, professionId: "reporter", bio: "去看见别人没有说出口的事" },
-  { id: "free-drifter", name: "自由漂流者", initial: "漂", color: "#ff8fab", age: 26, professionId: "freelancer", bio: "带着好奇进入另一种人生" }
+  { id: "brave-spark", name: "勇气星火", color: "#e63946", age: 24, professionId: "designer", bio: "想试着活得更勇敢", hair: "#1a1a2e", skin: "#ffd6b5", accessory: "spark" },
+  { id: "blue-maker", name: "蓝图建造者", color: "#4ea8de", age: 29, professionId: "engineer", bio: "把混乱变成可以行动的路", hair: "#17446b", skin: "#f7cfae", accessory: "tool" },
+  { id: "green-healer", name: "绿洲照料者", color: "#2ecc71", age: 32, professionId: "caretaker", bio: "练习温柔但有边界地靠近", hair: "#315c3d", skin: "#f5c7a9", accessory: "leaf" },
+  { id: "sunny-student", name: "向阳学习者", color: "#f1c40f", age: 19, professionId: "student", bio: "想重新选择一次成长的方向", hair: "#6b4a1e", skin: "#ffd9a6", accessory: "book" },
+  { id: "night-reporter", name: "街角记录者", color: "#7f5c7a", age: 27, professionId: "reporter", bio: "去看见别人没有说出口的事", hair: "#312437", skin: "#e7bfa8", accessory: "note" },
+  { id: "free-drifter", name: "自由漂流者", color: "#ff8fab", age: 26, professionId: "freelancer", bio: "带着好奇进入另一种人生", hair: "#82415d", skin: "#f8c9bd", accessory: "wave" }
 ];
+
+const CUSTOM_AVATAR_PRESET = {
+  id: "custom",
+  name: "自定义身份",
+  color: "#9b5de5",
+  age: 24,
+  professionId: "freelancer",
+  bio: "想试着活出自己的版本",
+  hair: "#2d2546",
+  skin: "#ffd6b5",
+  accessory: "plus",
+  custom: true
+};
 
 const ACTION_LABELS = {
   propose: "提案",
@@ -1487,7 +1500,10 @@ function initAvatarForm() {
   const professions = typeof getAvailableProfessions === "function" ? getAvailableProfessions() : WORLD_PROFESSIONS;
   select.innerHTML = professions.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
   select.value = selectedAvatarPreset.professionId;
-  select.addEventListener("change", renderAvatarPreview);
+  select.addEventListener("change", () => {
+    markAvatarCustom();
+    renderAvatarPreview();
+  });
 
   renderDefaultAvatarGrid();
   applyAvatarPreset(selectedAvatarPreset, { silent: true });
@@ -1518,15 +1534,27 @@ function initAvatarForm() {
   if (ageSlider && ageVal) {
     ageSlider.addEventListener("input", () => {
       ageVal.textContent = ageSlider.value;
+      markAvatarCustom();
       renderAvatarPreview();
     });
   }
 
   // Name input triggers preview update
   const nameInput = document.getElementById("avatarName");
-  if (nameInput) nameInput.addEventListener("input", renderAvatarPreview);
+  if (nameInput) nameInput.addEventListener("input", () => {
+    markAvatarCustom();
+    renderAvatarPreview();
+  });
+  const customProfessionInput = document.getElementById("avatarCustomProfession");
+  if (customProfessionInput) customProfessionInput.addEventListener("input", () => {
+    markAvatarCustom();
+    renderAvatarPreview();
+  });
   const bioInput = document.getElementById("avatarBio");
-  if (bioInput) bioInput.addEventListener("input", renderAvatarPreview);
+  if (bioInput) bioInput.addEventListener("input", () => {
+    markAvatarCustom();
+    renderAvatarPreview();
+  });
 
   renderAvatarPreview();
 }
@@ -1534,16 +1562,19 @@ function initAvatarForm() {
 function renderDefaultAvatarGrid() {
   const grid = document.getElementById("defaultAvatarGrid");
   if (!grid) return;
-  grid.innerHTML = DEFAULT_AVATAR_PRESETS.map((preset, index) => `
+  const avatarOptions = [...DEFAULT_AVATAR_PRESETS, CUSTOM_AVATAR_PRESET];
+  grid.innerHTML = avatarOptions.map((preset, index) => `
     <button type="button" class="default-avatar-card ${index === 0 ? "selected" : ""}" data-avatar-preset="${preset.id}" aria-label="选择${preset.name}">
-      <span class="default-avatar-face" style="--avatar-color:${preset.color}">${preset.initial}</span>
+      <span class="default-avatar-face" style="--avatar-color:${preset.color}; --avatar-hair:${preset.hair}; --avatar-skin:${preset.skin}">
+        ${buildAvatarMarkup(preset, true)}
+      </span>
       <b>${preset.name}</b>
     </button>
   `).join("");
   grid.addEventListener("click", (event) => {
     const card = event.target.closest(".default-avatar-card");
     if (!card) return;
-    const preset = DEFAULT_AVATAR_PRESETS.find((item) => item.id === card.dataset.avatarPreset);
+    const preset = avatarOptions.find((item) => item.id === card.dataset.avatarPreset);
     if (!preset) return;
     applyAvatarPreset(preset);
   });
@@ -1557,12 +1588,14 @@ function applyAvatarPreset(preset, options = {}) {
   const ageSlider = document.getElementById("avatarAge");
   const ageVal = document.getElementById("avatarAgeVal");
   const select = document.getElementById("avatarProfession");
+  const customProfessionInput = document.getElementById("avatarCustomProfession");
   const bioInput = document.getElementById("avatarBio");
 
   if (nameInput) nameInput.value = preset.name;
   if (ageSlider) ageSlider.value = preset.age;
   if (ageVal) ageVal.textContent = preset.age;
   if (select) select.value = preset.professionId;
+  if (customProfessionInput) customProfessionInput.value = preset.custom ? "" : "";
   if (bioInput) bioInput.value = preset.bio;
 
   document.querySelectorAll(".default-avatar-card").forEach((card) => {
@@ -1574,86 +1607,60 @@ function applyAvatarPreset(preset, options = {}) {
 
   if (!options.silent) {
     renderAvatarPreview();
+    if (preset.custom) {
+      const details = document.querySelector(".avatar-details");
+      if (details) details.open = true;
+      nameInput?.focus();
+      nameInput?.select?.();
+    }
   }
 }
 
-function renderAvatarPreview() {
-  const canvas = document.getElementById("avatarPreviewCanvas");
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const size = canvas.width || 132;
-  ctx.clearRect(0, 0, size, size);
+function markAvatarCustom() {
+  selectedAvatarPreset = {
+    ...CUSTOM_AVATAR_PRESET,
+    color: selectedAvatarColor
+  };
+  document.querySelectorAll(".default-avatar-card").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.avatarPreset === "custom");
+  });
+}
 
-  const cx = size / 2;
-  const cy = size / 2 + 8;
-  const color = selectedAvatarColor;
-  const ink = "#1a1a2e";
+function buildAvatarMarkup(preset, mini = false) {
+  const accessoryClass = `avatar-accessory ${preset.accessory || "spark"}`;
+  return `
+    <span class="avatar-bg"></span>
+    <span class="avatar-hair"></span>
+    <span class="avatar-face">
+      <span class="avatar-eye left"></span>
+      <span class="avatar-eye right"></span>
+      <span class="avatar-smile"></span>
+    </span>
+    <span class="avatar-body"></span>
+    <span class="${accessoryClass}"></span>
+    ${mini ? "" : '<span class="avatar-sparkle one"></span><span class="avatar-sparkle two"></span>'}
+  `;
+}
 
-  ctx.fillStyle = "#fafaf5";
-  ctx.beginPath();
-  ctx.arc(cx, cx, 58, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  ctx.fillStyle = hexWithAlpha(color, 0.24);
-  ctx.beginPath();
-  ctx.arc(cx + 10, cx - 8, 36, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Body
-  ctx.fillStyle = "#fff";
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 4;
-  roundRect(ctx, cx - 24, cy + 10, 48, 30, 8);
-  ctx.fill();
-  ctx.stroke();
-
-  // Head
-  ctx.fillStyle = color;
-  ctx.beginPath();
-  ctx.arc(cx, cy - 8, 24, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 4;
-  ctx.stroke();
-
-  // Eyes
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(cx - 8, cy - 12, 5, 0, Math.PI * 2);
-  ctx.arc(cx + 8, cy - 12, 5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = ink;
-  ctx.beginPath();
-  ctx.arc(cx - 7, cy - 11, 2.6, 0, Math.PI * 2);
-  ctx.arc(cx + 9, cy - 11, 2.6, 0, Math.PI * 2);
-  ctx.fill();
-
-  // Smile
-  ctx.strokeStyle = ink;
-  ctx.lineWidth = 2.2;
-  ctx.beginPath();
-  ctx.arc(cx, cy - 4, 7, 0.15, Math.PI - 0.15);
-  ctx.stroke();
-
-  // Name tag
-  const name = document.getElementById("avatarName")?.value || "你的分身";
+function getChosenProfessionName() {
+  const custom = document.getElementById("avatarCustomProfession")?.value.trim();
+  if (custom) return custom;
   const professionSelect = document.getElementById("avatarProfession");
-  const professionName = professionSelect?.selectedOptions?.[0]?.textContent || "未选择职业";
+  return professionSelect?.selectedOptions?.[0]?.textContent || "未选择职业";
+}
+
+function renderAvatarPreview() {
+  const portrait = document.getElementById("avatarPortrait");
+  if (!portrait) return;
+  const preset = selectedAvatarPreset || DEFAULT_AVATAR_PRESETS[0];
+  portrait.style.setProperty("--avatar-color", selectedAvatarColor);
+  portrait.style.setProperty("--avatar-hair", preset.hair || CUSTOM_AVATAR_PRESET.hair);
+  portrait.style.setProperty("--avatar-skin", preset.skin || CUSTOM_AVATAR_PRESET.skin);
+  portrait.innerHTML = buildAvatarMarkup(preset, false);
+
+  const name = document.getElementById("avatarName")?.value || "你的分身";
   const tagName = document.getElementById("mirrorTagName");
   if (tagName) tagName.textContent = name.trim() || "你的分身";
-
-  const badge = document.getElementById("avatarPreviewBadge");
-  const initial = document.getElementById("avatarPreviewInitial");
-  if (badge) badge.style.setProperty("--avatar-color", color);
-  if (initial) initial.textContent = (name.trim() || selectedAvatarPreset.initial || "我").slice(0, 1);
-
-  ctx.fillStyle = ink;
-  ctx.font = 'bold 11px "Noto Sans SC", sans-serif';
-  ctx.textAlign = "center";
-  ctx.fillText(professionName.slice(0, 8), cx, cy + 48);
 }
 
 function createAndEnterWorld(profileData) {
@@ -1661,6 +1668,7 @@ function createAndEnterWorld(profileData) {
   const age = Number(profileData.age) || 24;
   const color = profileData.color || AVATAR_COLORS[0];
   const professionId = profileData.professionId || "white-collar";
+  const professionNameOverride = (profileData.professionName || "").trim();
   const bio = profileData.bio || "";
 
   // Create or rebuild society
@@ -1677,7 +1685,7 @@ function createAndEnterWorld(profileData) {
     avatar.age = clamp(age, 5, 80);
     avatar.color = color;
     avatar.professionId = professionId;
-    avatar.profession = (WORLD_PROFESSIONS.find(p => p.id === professionId) || WORLD_PROFESSIONS[0]).name;
+    avatar.profession = professionNameOverride || (WORLD_PROFESSIONS.find(p => p.id === professionId) || WORLD_PROFESSIONS[0]).name;
     avatar.lifeStage = getLifeStage(avatar.age).id;
     avatar.lifeStageLabel = getLifeStage(avatar.age).label;
     avatar.purpose = bio || "从真实生活带入选择与体验";
@@ -1700,6 +1708,7 @@ function createAndEnterWorld(profileData) {
     avatarColor: color,
     avatarAge: age,
     avatarProfession: professionId,
+    avatarProfessionName: professionNameOverride || "",
     avatarBio: bio,
     avatarPresetId: selectedAvatarPreset?.id || "custom"
   };
@@ -3865,8 +3874,9 @@ function bindGameEvents() {
       const name = document.getElementById("avatarName")?.value.trim() || "你的分身";
       const age = document.getElementById("avatarAge")?.value || 24;
       const professionId = document.getElementById("avatarProfession")?.value || "white-collar";
+      const professionName = getChosenProfessionName();
       const bio = document.getElementById("avatarBio")?.value.trim() || "";
-      createAndEnterWorld({ name, age, color: selectedAvatarColor, professionId, bio });
+      createAndEnterWorld({ name, age, color: selectedAvatarColor, professionId, professionName, bio });
     });
   }
 
