@@ -33,6 +33,15 @@ const AVATAR_COLORS = [
   "#c18b3d", "#6b7f5f", "#af5f3a", "#7f5c7a"
 ];
 
+const DEFAULT_AVATAR_PRESETS = [
+  { id: "brave-spark", name: "勇气星火", initial: "勇", color: "#e63946", age: 24, professionId: "designer", bio: "想试着活得更勇敢" },
+  { id: "blue-maker", name: "蓝图建造者", initial: "造", color: "#4ea8de", age: 29, professionId: "engineer", bio: "把混乱变成可以行动的路" },
+  { id: "green-healer", name: "绿洲照料者", initial: "疗", color: "#2ecc71", age: 32, professionId: "caretaker", bio: "练习温柔但有边界地靠近" },
+  { id: "sunny-student", name: "向阳学习者", initial: "学", color: "#f1c40f", age: 19, professionId: "student", bio: "想重新选择一次成长的方向" },
+  { id: "night-reporter", name: "街角记录者", initial: "记", color: "#7f5c7a", age: 27, professionId: "reporter", bio: "去看见别人没有说出口的事" },
+  { id: "free-drifter", name: "自由漂流者", initial: "漂", color: "#ff8fab", age: 26, professionId: "freelancer", bio: "带着好奇进入另一种人生" }
+];
+
 const ACTION_LABELS = {
   propose: "提案",
   cooperate: "协作",
@@ -635,14 +644,15 @@ function renderFirstLoopPanel() {
   content.innerHTML = (renderers[stage] || renderChooseCapsuleQuest)();
 }
 
-function buildFirstLoopResult(feedback, actionType) {
+function buildFirstLoopResult(feedback, actionType, visibleChoice = "") {
   const ctx = feedback?.context || {};
   const action = FIRST_LOOP_ACTIONS[actionType] || FIRST_LOOP_ACTIONS.listen;
   const delta = formatDeltaSummary(ctx.delta || {}) || "状态已记录";
   const target = ctx.targetName || "城市";
   const actor = ctx.actorName || "你的分身";
+  const choiceText = visibleChoice || action.label;
   return {
-    resultText: `${actor}选择“${action.label}”：${action.intent}。${target}被影响，${delta}。`,
+    resultText: `${actor}选择“${choiceText}”：${action.intent}。${target}被影响，${delta}。`,
     nextText: action.next
   };
 }
@@ -1174,7 +1184,7 @@ function commitLifeChoice(choice) {
       : "support";
   const feedback = injectLifeEventToSociety(eventText, actionType);
   const built = feedback
-    ? buildFirstLoopResult(feedback, actionType)
+    ? buildFirstLoopResult(feedback, actionType, choice)
     : { resultText: "世界记录了这次选择。", nextText: "听听另一个我的信号。" };
   const echo = `如果我活在“${capsule.perspectiveRole}”里，我看见了：${choice}不是答案本身，而是一条会改变关系和自我位置的岔路。`;
   quest.choice = choice;
@@ -1468,6 +1478,7 @@ function hydrateSocietyState() {
 // ── Avatar Creation ──
 
 let selectedAvatarColor = AVATAR_COLORS[0];
+let selectedAvatarPreset = DEFAULT_AVATAR_PRESETS[0];
 
 function initAvatarForm() {
   // Populate profession select
@@ -1475,17 +1486,26 @@ function initAvatarForm() {
   if (!select) return;
   const professions = typeof getAvailableProfessions === "function" ? getAvailableProfessions() : WORLD_PROFESSIONS;
   select.innerHTML = professions.map(p => `<option value="${p.id}">${p.name}</option>`).join("");
+  select.value = selectedAvatarPreset.professionId;
+  select.addEventListener("change", renderAvatarPreview);
+
+  renderDefaultAvatarGrid();
+  applyAvatarPreset(selectedAvatarPreset, { silent: true });
 
   // Color grid
   const grid = document.getElementById("avatarColorGrid");
   if (grid) {
     grid.innerHTML = AVATAR_COLORS.map((c, i) =>
-      `<div class="avatar-color-swatch ${i === 0 ? 'selected' : ''}" data-color="${c}" style="background:${c}"></div>`
+      `<button type="button" class="avatar-color-swatch ${c === selectedAvatarColor ? 'selected' : ''}" data-color="${c}" style="background:${c}" aria-label="选择头像颜色"></button>`
     ).join("");
     grid.addEventListener("click", (e) => {
       const swatch = e.target.closest(".avatar-color-swatch");
       if (!swatch) return;
       selectedAvatarColor = swatch.dataset.color;
+      selectedAvatarPreset = {
+        ...selectedAvatarPreset,
+        color: selectedAvatarColor
+      };
       grid.querySelectorAll(".avatar-color-swatch").forEach(s => s.classList.remove("selected"));
       swatch.classList.add("selected");
       renderAvatarPreview();
@@ -1505,59 +1525,135 @@ function initAvatarForm() {
   // Name input triggers preview update
   const nameInput = document.getElementById("avatarName");
   if (nameInput) nameInput.addEventListener("input", renderAvatarPreview);
+  const bioInput = document.getElementById("avatarBio");
+  if (bioInput) bioInput.addEventListener("input", renderAvatarPreview);
 
   renderAvatarPreview();
+}
+
+function renderDefaultAvatarGrid() {
+  const grid = document.getElementById("defaultAvatarGrid");
+  if (!grid) return;
+  grid.innerHTML = DEFAULT_AVATAR_PRESETS.map((preset, index) => `
+    <button type="button" class="default-avatar-card ${index === 0 ? "selected" : ""}" data-avatar-preset="${preset.id}" aria-label="选择${preset.name}">
+      <span class="default-avatar-face" style="--avatar-color:${preset.color}">${preset.initial}</span>
+      <b>${preset.name}</b>
+    </button>
+  `).join("");
+  grid.addEventListener("click", (event) => {
+    const card = event.target.closest(".default-avatar-card");
+    if (!card) return;
+    const preset = DEFAULT_AVATAR_PRESETS.find((item) => item.id === card.dataset.avatarPreset);
+    if (!preset) return;
+    applyAvatarPreset(preset);
+  });
+}
+
+function applyAvatarPreset(preset, options = {}) {
+  selectedAvatarPreset = preset;
+  selectedAvatarColor = preset.color;
+
+  const nameInput = document.getElementById("avatarName");
+  const ageSlider = document.getElementById("avatarAge");
+  const ageVal = document.getElementById("avatarAgeVal");
+  const select = document.getElementById("avatarProfession");
+  const bioInput = document.getElementById("avatarBio");
+
+  if (nameInput) nameInput.value = preset.name;
+  if (ageSlider) ageSlider.value = preset.age;
+  if (ageVal) ageVal.textContent = preset.age;
+  if (select) select.value = preset.professionId;
+  if (bioInput) bioInput.value = preset.bio;
+
+  document.querySelectorAll(".default-avatar-card").forEach((card) => {
+    card.classList.toggle("selected", card.dataset.avatarPreset === preset.id);
+  });
+  document.querySelectorAll(".avatar-color-swatch").forEach((swatch) => {
+    swatch.classList.toggle("selected", swatch.dataset.color === preset.color);
+  });
+
+  if (!options.silent) {
+    renderAvatarPreview();
+  }
 }
 
 function renderAvatarPreview() {
   const canvas = document.getElementById("avatarPreviewCanvas");
   if (!canvas) return;
   const ctx = canvas.getContext("2d");
-  const size = 120;
+  const size = canvas.width || 132;
   ctx.clearRect(0, 0, size, size);
 
   const cx = size / 2;
   const cy = size / 2 + 8;
   const color = selectedAvatarColor;
+  const ink = "#1a1a2e";
+
+  ctx.fillStyle = "#fafaf5";
+  ctx.beginPath();
+  ctx.arc(cx, cx, 58, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 4;
+  ctx.stroke();
+
+  ctx.fillStyle = hexWithAlpha(color, 0.24);
+  ctx.beginPath();
+  ctx.arc(cx + 10, cx - 8, 36, 0, Math.PI * 2);
+  ctx.fill();
 
   // Body
-  ctx.fillStyle = hexWithAlpha(color, 0.9);
-  roundRect(ctx, cx - 18, cy + 6, 36, 28, 6);
+  ctx.fillStyle = "#fff";
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 4;
+  roundRect(ctx, cx - 24, cy + 10, 48, 30, 8);
   ctx.fill();
+  ctx.stroke();
 
   // Head
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.arc(cx, cy - 6, 22, 0, Math.PI * 2);
+  ctx.arc(cx, cy - 8, 24, 0, Math.PI * 2);
   ctx.fill();
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 4;
+  ctx.stroke();
 
   // Eyes
   ctx.fillStyle = "#fff";
   ctx.beginPath();
-  ctx.arc(cx - 7, cy - 10, 5, 0, Math.PI * 2);
-  ctx.arc(cx + 7, cy - 10, 5, 0, Math.PI * 2);
+  ctx.arc(cx - 8, cy - 12, 5, 0, Math.PI * 2);
+  ctx.arc(cx + 8, cy - 12, 5, 0, Math.PI * 2);
   ctx.fill();
-  ctx.fillStyle = "#222";
+  ctx.fillStyle = ink;
   ctx.beginPath();
-  ctx.arc(cx - 6, cy - 9, 2.5, 0, Math.PI * 2);
-  ctx.arc(cx + 6, cy - 9, 2.5, 0, Math.PI * 2);
+  ctx.arc(cx - 7, cy - 11, 2.6, 0, Math.PI * 2);
+  ctx.arc(cx + 9, cy - 11, 2.6, 0, Math.PI * 2);
   ctx.fill();
 
   // Smile
-  ctx.strokeStyle = "#333";
-  ctx.lineWidth = 1.5;
+  ctx.strokeStyle = ink;
+  ctx.lineWidth = 2.2;
   ctx.beginPath();
-  ctx.arc(cx, cy - 1, 6, 0.1, Math.PI - 0.1);
+  ctx.arc(cx, cy - 4, 7, 0.15, Math.PI - 0.15);
   ctx.stroke();
 
   // Name tag
   const name = document.getElementById("avatarName")?.value || "你的分身";
+  const professionSelect = document.getElementById("avatarProfession");
+  const professionName = professionSelect?.selectedOptions?.[0]?.textContent || "未选择职业";
   const tagName = document.getElementById("mirrorTagName");
   if (tagName) tagName.textContent = name.trim() || "你的分身";
-  ctx.fillStyle = "rgba(255,255,255,0.9)";
+
+  const badge = document.getElementById("avatarPreviewBadge");
+  const initial = document.getElementById("avatarPreviewInitial");
+  if (badge) badge.style.setProperty("--avatar-color", color);
+  if (initial) initial.textContent = (name.trim() || selectedAvatarPreset.initial || "我").slice(0, 1);
+
+  ctx.fillStyle = ink;
   ctx.font = 'bold 11px "Noto Sans SC", sans-serif';
   ctx.textAlign = "center";
-  ctx.fillText(name.slice(0, 8), cx, cy + 44);
+  ctx.fillText(professionName.slice(0, 8), cx, cy + 48);
 }
 
 function createAndEnterWorld(profileData) {
@@ -1604,7 +1700,8 @@ function createAndEnterWorld(profileData) {
     avatarColor: color,
     avatarAge: age,
     avatarProfession: professionId,
-    avatarBio: bio
+    avatarBio: bio,
+    avatarPresetId: selectedAvatarPreset?.id || "custom"
   };
 
   // Spawn entities
@@ -1621,6 +1718,7 @@ function createAndEnterWorld(profileData) {
     splash.classList.add("hidden");
     setTimeout(() => splash.style.display = "none", 600);
   }
+  document.body?.classList.remove("splash-active");
 
   // New user: set slow speed and show tutorial
   const slider = document.getElementById("hudSpeed");
@@ -3803,6 +3901,7 @@ function gameInit() {
 
   // If user already has avatar profile, skip splash and go straight to game
   const hasExistingAvatar = state.profile?.avatarColor && state.society?.citizens?.some(c => c.id === "avatar");
+  document.body?.classList.toggle("splash-active", !hasExistingAvatar);
 
   if (hasExistingAvatar) {
     hydrateSocietyState();

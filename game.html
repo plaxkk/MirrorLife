@@ -169,13 +169,21 @@
             </div>
           </section>
           <section class="splash-creator" aria-label="镜像身份牌">
-            <canvas id="avatarPreviewCanvas" width="120" height="120" class="avatar-preview-canvas"></canvas>
+            <div class="avatar-preview-stage" aria-label="默认头像预览">
+              <canvas id="avatarPreviewCanvas" width="132" height="132" class="avatar-preview-canvas"></canvas>
+              <div class="avatar-preview-badge" id="avatarPreviewBadge" aria-hidden="true">
+                <span id="avatarPreviewInitial">我</span>
+              </div>
+            </div>
             <div class="mirror-tag-card">
               <p>镜像身份牌</p>
               <strong id="mirrorTagName">你的分身</strong>
               <span>用于进入第一段人生胶囊，稍后可以继续调整。</span>
             </div>
-            <details class="avatar-details">
+            <div class="default-avatar-grid" id="defaultAvatarGrid" aria-label="选择默认头像"></div>
+            <button class="splash-enter" id="splashEnter">开始试活</button>
+            <p class="splash-footnote">先进入一段人生，做一次选择，再听见另一个我的信号。</p>
+            <details class="avatar-details" open>
               <summary>调整身份牌</summary>
               <div class="avatar-form">
                 <label class="avatar-label" for="avatarName">姓名</label>
@@ -190,8 +198,6 @@
                 <input type="text" id="avatarBio" class="avatar-input" placeholder="例如：想试着活得更勇敢" maxlength="40" />
               </div>
             </details>
-            <button class="splash-enter" id="splashEnter">开始试活</button>
-            <p class="splash-footnote">先进入一段人生，做一次选择，再听见另一个我的信号。</p>
           </section>
         </div>
       </div>
