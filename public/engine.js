@@ -7,6 +7,9 @@ let mirrorFrame = null;
 let societyFrame = null;
 let societyTimer = null;
 let lastBottleCheckAt = 0;
+let persistHandle = null;
+let persistHandleType = "";
+let lastPersistSnapshot = "";
 
 const MAX_SOCIETY_EVENTS = 18;
 const APP_VIEWS = ["mirror", "script", "exchange", "society", "bottle", "robot"];
@@ -243,6 +246,42 @@ const AGENT_RUNTIME_VERSION = 1;
 const AGENT_MEMORY_LIMIT = 24;
 const AGENT_REFLECTION_LIMIT = 16;
 const AGENT_AUDIT_LIMIT = 18;
+const LIFE_WEEK_MEMORY_LIMIT = 8;
+const LIFE_WEEK_DIARY_LIMIT = 12;
+const LIFE_WEEK_LOG_LIMIT = 32;
+
+const LIFE_WEEK_STAGES = [
+  {
+    id: "plan",
+    label: "Plan",
+    title: "本周想成为谁",
+    description: "分身整理本周方向，把人生胶囊里的身份愿望写成行动意图。"
+  },
+  {
+    id: "contact",
+    label: "Contact",
+    title: "寻找同频灵魂",
+    description: "分身向社区角色、人生胶囊或漂流瓶发起一次低压弱连接。"
+  },
+  {
+    id: "activity",
+    label: "Activity",
+    title: "发生关键行动",
+    description: "虚拟社会执行一段行动，关系、情绪和世界张力随之改变。"
+  },
+  {
+    id: "review",
+    label: "Review",
+    title: "写下世界回声",
+    description: "系统生成本周人生回声、分身反思和轻量人生奖励。"
+  },
+  {
+    id: "settle",
+    label: "Settle",
+    title: "沉淀记忆",
+    description: "周记、关系笔记和机器人信号被写入，下一周重新开始。"
+  }
+];
 
 const OPEN_WORLD_ZONES = [
   { id: "public-plaza", name: "公开广场", openness: 0.93, tolerance: 0.84, mobility: 0.72, role: "public", x: 0.12, y: 0.14, w: 0.25, h: 0.2, archetype: "social" },
@@ -266,6 +305,111 @@ const OPEN_WORLD_ZONES = [
   { id: "repair-station", name: "修复站", openness: 0.66, tolerance: 0.98, mobility: 0.5, role: "meditate", x: 0.6, y: 0.62, w: 0.14, h: 0.1, archetype: "support" },
   { id: "cemetery", name: "安宁公地", openness: 0.48, tolerance: 0.99, mobility: 0.26, role: "rest", x: 0.86, y: 0.06, w: 0.1, h: 0.1, archetype: "rest" }
 ];
+
+const ZONE_MODEL_BLUEPRINTS = {
+  "public-plaza": { model: "civic-forum", layer: "public", gameplay: "公开提案、共识投票、弱势保护", provides: ["openness", "voice"], buildVerb: "召集" },
+  "maternity-hospital": { model: "care-cradle", layer: "life", gameplay: "出生、照护、情绪稳定", provides: ["care", "safety"], buildVerb: "照护" },
+  residential: { model: "home-cluster", layer: "daily", gameplay: "回家复盘、低频陪伴、恢复能量", provides: ["rest", "belonging"], buildVerb: "安顿" },
+  kindergarten: { model: "play-school", layer: "learning", gameplay: "低压学习、模仿、基础协作", provides: ["learning", "play"], buildVerb: "启蒙" },
+  "primary-school": { model: "skill-classroom", layer: "learning", gameplay: "技能练习、平等轮换、同伴互助", provides: ["learning", "fairness"], buildVerb: "练习" },
+  "middle-school": { model: "identity-campus", layer: "learning", gameplay: "身份探索、同伴关系、边界表达", provides: ["identity", "peer"], buildVerb: "探索" },
+  university: { model: "open-campus", layer: "learning", gameplay: "研究、社团、职业雏形", provides: ["research", "career"], buildVerb: "研究" },
+  "office-district": { model: "work-tower", layer: "work", gameplay: "协作项目、边界谈判、职业成长", provides: ["career", "organization"], buildVerb: "组织" },
+  factory: { model: "maker-floor", layer: "work", gameplay: "制造、维护、基础设施升级", provides: ["production", "tools"], buildVerb: "制造" },
+  "legal-court": { model: "fairness-court", layer: "governance", gameplay: "冲突调停、规则审计、申诉", provides: ["justice", "fairness"], buildVerb: "裁决" },
+  "creative-studio": { model: "idea-studio", layer: "creation", gameplay: "设计新物件、叙事资产、技能沉淀", provides: ["creativity", "prototype"], buildVerb: "创造" },
+  "commercial-zone": { model: "market-street", layer: "exchange", gameplay: "资源交换、需求发现、职业机会", provides: ["exchange", "resources"], buildVerb: "交换" },
+  farm: { model: "living-farm", layer: "ecology", gameplay: "食物生产、生态照护、稳定供给", provides: ["food", "ecology"], buildVerb: "培育" },
+  park: { model: "breathing-park", layer: "healing", gameplay: "恢复、散步、轻度社交", provides: ["rest", "nature"], buildVerb: "舒缓" },
+  zoo: { model: "empathy-zoo", layer: "ecology", gameplay: "照护训练、尊重差异、非语言陪伴", provides: ["empathy", "ecology"], buildVerb: "照看" },
+  "botanical-garden": { model: "botanical-dome", layer: "ecology", gameplay: "植物培育、慢变量观察、情绪修复", provides: ["ecology", "healing"], buildVerb: "栽培" },
+  "night-market": { model: "festival-street", layer: "play", gameplay: "娱乐、偶遇、短期快乐", provides: ["joy", "encounter"], buildVerb: "点亮" },
+  "quiet-nook": { model: "silence-nook", layer: "healing", gameplay: "独处、低刺激恢复、暂退权", provides: ["safety", "privacy"], buildVerb: "庇护" },
+  "repair-station": { model: "repair-hub", layer: "governance", gameplay: "误会修复、关系复盘、调停技能", provides: ["repair", "mediation"], buildVerb: "修复" },
+  cemetery: { model: "memory-garden", layer: "memory", gameplay: "纪念、生命回顾、代际传承", provides: ["memory", "continuity"], buildVerb: "纪念" }
+};
+
+const EVOLVABLE_SCENE_BLUEPRINTS = [
+  { id: "empathy-lab", name: "共情调停屋", role: "meditate", archetype: "support", model: "empathy-lab", trigger: "high_tension", provides: ["repair", "empathy"], profession: "empathy-mediator", professionName: "共情调停师", x: 0.18, y: 0.86, w: 0.17, h: 0.11 },
+  { id: "story-archive", name: "开放故事馆", role: "public", archetype: "social", model: "story-archive", trigger: "low_openness", provides: ["voice", "memory"], profession: "story-curator", professionName: "故事策展人", x: 0.08, y: 0.28, w: 0.18, h: 0.12 },
+  { id: "commons-workshop", name: "共识工坊", role: "cooperate", archetype: "work", model: "commons-workshop", trigger: "low_equality", provides: ["fairness", "tools"], profession: "commons-builder", professionName: "公共建设师", x: 0.3, y: 0.66, w: 0.17, h: 0.12 },
+  { id: "rest-courtyard", name: "慢生活庭院", role: "rest", archetype: "daily", model: "rest-courtyard", trigger: "low_energy", provides: ["rest", "belonging"], profession: "rest-designer", professionName: "恢复设计师", x: 0.66, y: 0.84, w: 0.17, h: 0.1 },
+  { id: "mentor-hall", name: "学徒导师厅", role: "cooperate", archetype: "education", model: "mentor-hall", trigger: "learning_need", provides: ["learning", "career"], profession: "mentor", professionName: "人生导师", x: 0.66, y: 0.08, w: 0.16, h: 0.12 },
+  { id: "resource-kitchen", name: "资源厨房", role: "heal", archetype: "life", model: "resource-kitchen", trigger: "low_stability", provides: ["food", "care"], profession: "resource-cook", professionName: "资源厨师", x: 0.28, y: 0.48, w: 0.15, h: 0.11 }
+];
+
+const MBTI_ARCHETYPES = [
+  { type: "INTJ", label: "战略建筑师", color: "#4e5c8d", body: "angular", socialBias: { propose: 0.18, cooperate: 0.08, listen: -0.04 }, need: "mastery", relationPreference: "market_pricing" },
+  { type: "INTP", label: "逻辑发明家", color: "#6d70b8", body: "thin", socialBias: { propose: 0.08, listen: 0.12, rest: 0.06 }, need: "clarity", relationPreference: "equality_matching" },
+  { type: "ENTJ", label: "组织指挥者", color: "#e63946", body: "bold", socialBias: { propose: 0.2, cooperate: 0.08, support: -0.03 }, need: "agency", relationPreference: "authority_ranking" },
+  { type: "ENTP", label: "可能性辩手", color: "#f1c40f", body: "spark", socialBias: { propose: 0.16, listen: 0.08, cooperate: 0.06 }, need: "novelty", relationPreference: "equality_matching" },
+  { type: "INFJ", label: "洞察守望者", color: "#9b5de5", body: "soft", socialBias: { listen: 0.2, support: 0.12, meditate: 0.08 }, need: "meaning", relationPreference: "communal_sharing" },
+  { type: "INFP", label: "理想疗愈者", color: "#ff8fab", body: "soft", socialBias: { support: 0.18, rest: 0.08, listen: 0.1 }, need: "authenticity", relationPreference: "communal_sharing" },
+  { type: "ENFJ", label: "社群点灯人", color: "#2ecc71", body: "open", socialBias: { support: 0.16, cooperate: 0.12, propose: 0.08 }, need: "belonging", relationPreference: "communal_sharing" },
+  { type: "ENFP", label: "灵感漫游者", color: "#ffb703", body: "spark", socialBias: { propose: 0.1, listen: 0.12, cooperate: 0.1 }, need: "freedom", relationPreference: "equality_matching" },
+  { type: "ISTJ", label: "秩序守护者", color: "#5f6f52", body: "square", socialBias: { cooperate: 0.14, rest: 0.05, propose: -0.02 }, need: "stability", relationPreference: "authority_ranking" },
+  { type: "ISFJ", label: "日常照护者", color: "#86efac", body: "round", socialBias: { support: 0.2, cooperate: 0.08, listen: 0.08 }, need: "security", relationPreference: "communal_sharing" },
+  { type: "ESTJ", label: "公共执行官", color: "#b45f45", body: "square", socialBias: { propose: 0.14, cooperate: 0.14, meditate: 0.04 }, need: "order", relationPreference: "authority_ranking" },
+  { type: "ESFJ", label: "关系织网者", color: "#fb7185", body: "round", socialBias: { support: 0.16, cooperate: 0.12, listen: 0.08 }, need: "harmony", relationPreference: "communal_sharing" },
+  { type: "ISTP", label: "现场修理师", color: "#64748b", body: "compact", socialBias: { cooperate: 0.12, rest: 0.06, meditate: 0.06 }, need: "autonomy", relationPreference: "market_pricing" },
+  { type: "ISFP", label: "感官造景师", color: "#a3e635", body: "soft", socialBias: { support: 0.1, rest: 0.08, cooperate: 0.08 }, need: "beauty", relationPreference: "communal_sharing" },
+  { type: "ESTP", label: "行动冒险家", color: "#f97316", body: "bold", socialBias: { propose: 0.12, cooperate: 0.12, conflict: 0.03 }, need: "momentum", relationPreference: "market_pricing" },
+  { type: "ESFP", label: "快乐连接者", color: "#4ea8de", body: "open", socialBias: { support: 0.1, listen: 0.1, cooperate: 0.12 }, need: "joy", relationPreference: "equality_matching" }
+];
+
+const SOCIAL_RELATION_MODELS = {
+  communal_sharing: { label: "共同体照护", actions: ["support", "listen", "rest"], trustDelta: 5, reciprocityDelta: 1, disclosureDelta: 5, strainDelta: -4 },
+  authority_ranking: { label: "责任排序", actions: ["propose", "meditate"], trustDelta: 2, reciprocityDelta: -1, disclosureDelta: 1, strainDelta: 1 },
+  equality_matching: { label: "平等互惠", actions: ["cooperate", "listen", "meditate"], trustDelta: 4, reciprocityDelta: 5, disclosureDelta: 3, strainDelta: -2 },
+  market_pricing: { label: "资源交换", actions: ["cooperate", "propose"], trustDelta: 2, reciprocityDelta: 3, disclosureDelta: 0, strainDelta: 0 }
+};
+
+const BIG_FIVE_BY_MBTI = {
+  INTJ: { openness: 0.82, conscientiousness: 0.78, extraversion: 0.28, agreeableness: 0.46, neuroticism: 0.38 },
+  INTP: { openness: 0.88, conscientiousness: 0.48, extraversion: 0.24, agreeableness: 0.52, neuroticism: 0.42 },
+  ENTJ: { openness: 0.72, conscientiousness: 0.82, extraversion: 0.76, agreeableness: 0.38, neuroticism: 0.32 },
+  ENTP: { openness: 0.9, conscientiousness: 0.46, extraversion: 0.76, agreeableness: 0.5, neuroticism: 0.36 },
+  INFJ: { openness: 0.84, conscientiousness: 0.68, extraversion: 0.34, agreeableness: 0.78, neuroticism: 0.48 },
+  INFP: { openness: 0.9, conscientiousness: 0.44, extraversion: 0.3, agreeableness: 0.74, neuroticism: 0.56 },
+  ENFJ: { openness: 0.76, conscientiousness: 0.66, extraversion: 0.78, agreeableness: 0.82, neuroticism: 0.38 },
+  ENFP: { openness: 0.92, conscientiousness: 0.42, extraversion: 0.74, agreeableness: 0.72, neuroticism: 0.44 },
+  ISTJ: { openness: 0.34, conscientiousness: 0.86, extraversion: 0.34, agreeableness: 0.56, neuroticism: 0.34 },
+  ISFJ: { openness: 0.4, conscientiousness: 0.78, extraversion: 0.36, agreeableness: 0.84, neuroticism: 0.44 },
+  ESTJ: { openness: 0.42, conscientiousness: 0.84, extraversion: 0.72, agreeableness: 0.48, neuroticism: 0.3 },
+  ESFJ: { openness: 0.44, conscientiousness: 0.72, extraversion: 0.72, agreeableness: 0.86, neuroticism: 0.42 },
+  ISTP: { openness: 0.62, conscientiousness: 0.52, extraversion: 0.32, agreeableness: 0.42, neuroticism: 0.3 },
+  ISFP: { openness: 0.74, conscientiousness: 0.42, extraversion: 0.34, agreeableness: 0.72, neuroticism: 0.46 },
+  ESTP: { openness: 0.62, conscientiousness: 0.42, extraversion: 0.82, agreeableness: 0.44, neuroticism: 0.28 },
+  ESFP: { openness: 0.68, conscientiousness: 0.38, extraversion: 0.84, agreeableness: 0.76, neuroticism: 0.34 }
+};
+
+const SCHWARTZ_VALUES_BY_NEED = {
+  mastery: ["achievement", "self_direction"],
+  clarity: ["self_direction", "universalism"],
+  agency: ["power", "achievement"],
+  novelty: ["stimulation", "self_direction"],
+  meaning: ["benevolence", "universalism"],
+  authenticity: ["self_direction", "benevolence"],
+  belonging: ["benevolence", "conformity"],
+  freedom: ["self_direction", "stimulation"],
+  stability: ["security", "tradition"],
+  security: ["security", "benevolence"],
+  order: ["conformity", "security"],
+  harmony: ["benevolence", "conformity"],
+  autonomy: ["self_direction", "achievement"],
+  beauty: ["hedonism", "universalism"],
+  momentum: ["stimulation", "achievement"],
+  joy: ["hedonism", "benevolence"]
+};
+
+const UTILITY_ACTION_PROFILES = {
+  propose: { physiological: -0.1, safety: 0.05, belonging: 0.06, esteem: 0.28, selfActualization: 0.24, autonomy: 0.22, competence: 0.2, relatedness: 0.05, arousal: 0.15, dominance: 0.24, warmth: 0.02, extraversion: 0.18, conscientiousness: 0.08, agreeableness: -0.04, openness: 0.12, neuroticism: -0.1, values: ["achievement", "power", "self_direction"] },
+  cooperate: { physiological: -0.08, safety: 0.12, belonging: 0.26, esteem: 0.18, selfActualization: 0.16, autonomy: 0.08, competence: 0.22, relatedness: 0.24, arousal: 0.08, dominance: 0.08, warmth: 0.16, extraversion: 0.08, conscientiousness: 0.12, agreeableness: 0.16, openness: 0.04, neuroticism: -0.08, values: ["benevolence", "achievement", "universalism"] },
+  support: { physiological: 0.02, safety: 0.22, belonging: 0.28, esteem: 0.08, selfActualization: 0.08, autonomy: 0.02, competence: 0.08, relatedness: 0.3, arousal: -0.04, dominance: -0.08, warmth: 0.28, extraversion: 0.02, conscientiousness: 0.06, agreeableness: 0.28, openness: 0.02, neuroticism: 0.02, values: ["benevolence", "security", "universalism"] },
+  listen: { physiological: 0.02, safety: 0.2, belonging: 0.24, esteem: 0.06, selfActualization: 0.14, autonomy: 0.06, competence: 0.08, relatedness: 0.26, arousal: -0.08, dominance: -0.18, warmth: 0.24, extraversion: -0.06, conscientiousness: 0.04, agreeableness: 0.24, openness: 0.12, neuroticism: 0.0, values: ["benevolence", "universalism", "tradition"] },
+  meditate: { physiological: 0.04, safety: 0.28, belonging: 0.18, esteem: 0.12, selfActualization: 0.12, autonomy: 0.08, competence: 0.18, relatedness: 0.18, arousal: -0.12, dominance: 0.08, warmth: 0.16, extraversion: 0.02, conscientiousness: 0.16, agreeableness: 0.2, openness: 0.06, neuroticism: -0.12, values: ["security", "benevolence", "conformity"] },
+  rest: { physiological: 0.34, safety: 0.24, belonging: 0.02, esteem: -0.04, selfActualization: 0.04, autonomy: 0.14, competence: -0.02, relatedness: 0.0, arousal: -0.22, dominance: -0.08, warmth: 0.02, extraversion: -0.16, conscientiousness: -0.06, agreeableness: 0.02, openness: 0.04, neuroticism: 0.1, values: ["security", "hedonism", "self_direction"] }
+};
 
 const WORLD_CLOCK = {
   startHour: 6,
@@ -452,6 +596,234 @@ function randomFrom(list) {
   return list[randomInt(0, list.length - 1)];
 }
 
+function hashString(value) {
+  return String(value || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0);
+}
+
+function getMbtiArchetype(seed = {}) {
+  const explicit = seed.mbtiType || seed.personalityType;
+  if (explicit) {
+    const found = MBTI_ARCHETYPES.find((item) => item.type === explicit);
+    if (found) return found;
+  }
+  return MBTI_ARCHETYPES[hashString(seed.id || seed.name || seed.role) % MBTI_ARCHETYPES.length];
+}
+
+function buildBigFiveProfile(seed = {}, persona = getMbtiArchetype(seed)) {
+  const base = BIG_FIVE_BY_MBTI[persona.type] || BIG_FIVE_BY_MBTI.INFP;
+  const source = seed.bigFive || {};
+  return {
+    openness: clamp(Number(source.openness ?? base.openness), 0, 1),
+    conscientiousness: clamp(Number(source.conscientiousness ?? base.conscientiousness), 0, 1),
+    extraversion: clamp(Number(source.extraversion ?? base.extraversion), 0, 1),
+    agreeableness: clamp(Number(source.agreeableness ?? base.agreeableness), 0, 1),
+    neuroticism: clamp(Number(source.neuroticism ?? base.neuroticism), 0, 1)
+  };
+}
+
+function buildMaslowNeeds(seed = {}) {
+  const source = seed.needs || {};
+  return {
+    physiological: clamp(Number(source.physiological ?? (seed.energy ?? 66) / 100), 0, 1),
+    safety: clamp(Number(source.safety ?? (seed.trust ?? 62) / 100), 0, 1),
+    belonging: clamp(Number(source.belonging ?? 0.56), 0, 1),
+    esteem: clamp(Number(source.esteem ?? 0.5), 0, 1),
+    selfActualization: clamp(Number(source.selfActualization ?? 0.48), 0, 1),
+    autonomy: clamp(Number(source.autonomy ?? 0.55), 0, 1),
+    competence: clamp(Number(source.competence ?? 0.52), 0, 1),
+    relatedness: clamp(Number(source.relatedness ?? 0.55), 0, 1)
+  };
+}
+
+function buildPadEmotion(seed = {}) {
+  const source = seed.pad || {};
+  return {
+    pleasure: clamp(Number(source.pleasure ?? ((seed.mood ?? 58) - 50) / 50), -1, 1),
+    arousal: clamp(Number(source.arousal ?? ((seed.energy ?? 64) - 50) / 50), -1, 1),
+    dominance: clamp(Number(source.dominance ?? ((seed.trust ?? 58) - 50) / 50), -1, 1)
+  };
+}
+
+function buildValueProfile(seed = {}, persona = getMbtiArchetype(seed)) {
+  const preferred = SCHWARTZ_VALUES_BY_NEED[persona.need] || ["self_direction", "benevolence"];
+  const values = {
+    power: 0.2,
+    achievement: 0.25,
+    hedonism: 0.22,
+    stimulation: 0.22,
+    self_direction: 0.28,
+    universalism: 0.24,
+    benevolence: 0.28,
+    tradition: 0.18,
+    conformity: 0.18,
+    security: 0.25,
+    ...(seed.values || {})
+  };
+  preferred.forEach((key, index) => {
+    values[key] = clamp(Math.max(Number(values[key]) || 0, index === 0 ? 0.78 : 0.64), 0, 1);
+  });
+  Object.keys(values).forEach((key) => {
+    values[key] = clamp(Number(values[key]) || 0, 0, 1);
+  });
+  return values;
+}
+
+function buildAttachmentStyle(seed = {}, bigFive = buildBigFiveProfile(seed)) {
+  if (seed.attachmentStyle) return seed.attachmentStyle;
+  if (bigFive.neuroticism > 0.62 && bigFive.agreeableness > 0.58) return "anxious";
+  if (bigFive.neuroticism > 0.58 && bigFive.agreeableness < 0.48) return "avoidant";
+  if (bigFive.neuroticism > 0.68 && bigFive.conscientiousness < 0.45) return "disorganized";
+  return "secure";
+}
+
+function buildInterpersonalStyle(seed = {}, bigFive = buildBigFiveProfile(seed)) {
+  const source = seed.interpersonal || {};
+  return {
+    warmth: clamp(Number(source.warmth ?? bigFive.agreeableness), 0, 1),
+    dominance: clamp(Number(source.dominance ?? (bigFive.extraversion * 0.7 + bigFive.conscientiousness * 0.3)), 0, 1)
+  };
+}
+
+function getZoneModel(zoneId) {
+  return ZONE_MODEL_BLUEPRINTS[zoneId] || {
+    model: "open-tile",
+    layer: "emergent",
+    gameplay: "自演化社会空间",
+    provides: ["adaptation"],
+    buildVerb: "生成"
+  };
+}
+
+function buildGrowthState(source = {}) {
+  return {
+    deficits: source.deficits || {},
+    unlockedScenes: Array.isArray(source.unlockedScenes) ? source.unlockedScenes.slice(0, 6) : [],
+    emergentProfessions: Array.isArray(source.emergentProfessions) ? source.emergentProfessions.slice(0, 12) : [],
+    constructionQueue: Array.isArray(source.constructionQueue) ? source.constructionQueue.slice(0, 8) : [],
+    lastGrowthTurn: Number(source.lastGrowthTurn) || 0
+  };
+}
+
+function getAvailableProfessions(society = state?.society) {
+  const emergent = society?.growth?.emergentProfessions || [];
+  const byId = new Map(WORLD_PROFESSIONS.map((profession) => [profession.id, profession]));
+  emergent.forEach((profession) => {
+    if (profession?.id) byId.set(profession.id, profession);
+  });
+  return [...byId.values()];
+}
+
+function getLifeWeekStageInfo(stageId) {
+  return LIFE_WEEK_STAGES.find((stage) => stage.id === stageId) || LIFE_WEEK_STAGES[0];
+}
+
+function buildDefaultLifeReward(reason = "世界还在等待第一段人生回声。") {
+  return {
+    socialResonance: 50,
+    selfFulfillment: 50,
+    lifeStability: 50,
+    total: 50,
+    reason
+  };
+}
+
+function buildLifeWeekSystem() {
+  return {
+    week: 1,
+    stage: "plan",
+    stageTurn: 0,
+    currentReward: buildDefaultLifeReward(),
+    rewardHistory: [],
+    observableLog: [],
+    schedulerLog: []
+  };
+}
+
+function normalizeLifeReward(reward) {
+  if (!reward || typeof reward !== "object") {
+    return buildDefaultLifeReward();
+  }
+  return {
+    socialResonance: clamp(Math.round(Number(reward.socialResonance) || 50), 0, 100),
+    selfFulfillment: clamp(Math.round(Number(reward.selfFulfillment) || 50), 0, 100),
+    lifeStability: clamp(Math.round(Number(reward.lifeStability) || 50), 0, 100),
+    total: clamp(Math.round(Number(reward.total) || 50), 0, 100),
+    reason: typeof reward.reason === "string" ? reward.reason : "本周人生回声已经生成。"
+  };
+}
+
+function normalizeLifeWeekSystem(source) {
+  const base = buildLifeWeekSystem();
+  const stage = LIFE_WEEK_STAGES.some((item) => item.id === source?.stage) ? source.stage : base.stage;
+  return {
+    ...base,
+    ...(source || {}),
+    week: Math.max(1, Number(source?.week) || 1),
+    stage,
+    stageTurn: Math.max(0, Number(source?.stageTurn) || 0),
+    currentReward: normalizeLifeReward(source?.currentReward),
+    rewardHistory: Array.isArray(source?.rewardHistory)
+      ? source.rewardHistory.map(normalizeLifeReward).slice(-LIFE_WEEK_DIARY_LIMIT)
+      : [],
+    observableLog: Array.isArray(source?.observableLog) ? source.observableLog.slice(0, LIFE_WEEK_LOG_LIMIT) : [],
+    schedulerLog: Array.isArray(source?.schedulerLog) ? source.schedulerLog.slice(0, LIFE_WEEK_LOG_LIMIT) : []
+  };
+}
+
+function buildAgentMemoryFile(ownerId) {
+  return {
+    ownerId,
+    general: [],
+    relationships: {},
+    lifeCapsules: {},
+    weeklyDiary: []
+  };
+}
+
+function normalizeMemoryItems(items, limit = LIFE_WEEK_MEMORY_LIMIT) {
+  if (!Array.isArray(items)) return [];
+  return items
+    .filter((item) => item && typeof item.text === "string")
+    .map((item) => ({
+      id: item.id || `mem-${randomInt(1000, 9999)}`,
+      ownerId: item.ownerId || "",
+      kind: item.kind || "event",
+      text: item.text,
+      importance: clamp(Number(item.importance) || 1, 1, 10),
+      createdAtTurn: Number(item.createdAtTurn) || 0,
+      references: Array.isArray(item.references) ? item.references.slice(0, 4) : []
+    }))
+    .slice(0, limit);
+}
+
+function normalizeMemoryFileMap(sourceMap, citizens) {
+  const result = {};
+  citizens.forEach((citizen) => {
+    if (!citizen?.id) return;
+    const source = sourceMap?.[citizen.id] || {};
+    const file = buildAgentMemoryFile(citizen.id);
+    file.general = normalizeMemoryItems(source.general);
+    file.weeklyDiary = normalizeMemoryItems(source.weeklyDiary, LIFE_WEEK_DIARY_LIMIT);
+
+    const relationshipEntries = source.relationships && typeof source.relationships === "object"
+      ? Object.entries(source.relationships)
+      : [];
+    relationshipEntries.forEach(([key, items]) => {
+      file.relationships[key] = normalizeMemoryItems(items);
+    });
+
+    const capsuleEntries = source.lifeCapsules && typeof source.lifeCapsules === "object"
+      ? Object.entries(source.lifeCapsules)
+      : [];
+    capsuleEntries.forEach(([key, items]) => {
+      file.lifeCapsules[key] = normalizeMemoryItems(items);
+    });
+
+    result[citizen.id] = file;
+  });
+  return result;
+}
+
 function buildBaseSociety() {
   return {
     running: false,
@@ -486,6 +858,9 @@ function buildBaseSociety() {
     actionHistory: [],
     missions: [],
     log: [],
+    lifeWeek: buildLifeWeekSystem(),
+    relationships: {},
+    growth: buildGrowthState(),
     actorActionHistory: [],
     engine: {
       version: WORLD_ENGINE_VERSION,
@@ -528,12 +903,12 @@ function getLifeStage(ageYears) {
 
 function resolveProfession(seed) {
   if (seed.professionId) {
-    const direct = WORLD_PROFESSIONS.find((profession) => profession.id === seed.professionId);
+    const direct = getAvailableProfessions().find((profession) => profession.id === seed.professionId);
     if (direct) {
       return direct;
     }
   }
-  const options = WORLD_PROFESSIONS.slice();
+  const options = getAvailableProfessions().slice();
   if (typeof seed.age === "number") {
     const age = Math.max(0, seed.age);
     const stageOptions = options.filter(
@@ -574,15 +949,35 @@ function normalizeLifeCoordinates(seed) {
 function normalizeCitizen(seed) {
   const zone = seed.zoneId || OPEN_WORLD_ZONES[0].id;
   const life = normalizeLifeCoordinates(seed);
+  const persona = getMbtiArchetype(seed);
+  const bigFive = buildBigFiveProfile(seed, persona);
+  const needs = buildMaslowNeeds(seed);
+  const pad = buildPadEmotion(seed);
+  const values = buildValueProfile(seed, persona);
+  const interpersonal = buildInterpersonalStyle(seed, bigFive);
   return {
     id: seed.id || `c-${Date.now().toString(36)}-${randomInt(1000, 9999)}`,
     name: seed.name || "分身",
     role: seed.role || "参与者",
-    color: seed.color || "#296c68",
+    color: seed.color || persona.color || "#296c68",
     mood: clamp(Math.round(seed.mood ?? randomInt(34, 88)), 0, 100),
     energy: clamp(Math.round(seed.energy ?? randomInt(42, 96)), 0, 100),
     trust: clamp(Math.round(seed.trust ?? randomInt(35, 92)), 0, 100),
     purpose: seed.purpose || "共同生活",
+    mbtiType: persona.type,
+    personaLabel: persona.label,
+    personaNeed: persona.need,
+    relationPreference: persona.relationPreference,
+    avatarShape: persona.body,
+    socialBias: { ...(persona.socialBias || {}), ...(seed.socialBias || {}) },
+    bigFive,
+    needs,
+    pad,
+    values,
+    attachmentStyle: buildAttachmentStyle(seed, bigFive),
+    interpersonal,
+    intention: seed.intention || "",
+    decisionTrace: Array.isArray(seed.decisionTrace) ? seed.decisionTrace.slice(0, 6) : [],
     x: clamp(seed.x ?? Math.random() * 0.8 + 0.1, 0.05, 0.95),
     y: clamp(seed.y ?? Math.random() * 0.8 + 0.1, 0.05, 0.95),
     vx: seed.vx || 0,
@@ -675,13 +1070,14 @@ function mergeMissions(missions) {
 }
 
 function buildOpenWorldZones() {
-  return OPEN_WORLD_ZONES.map((zone) => ({ ...zone }));
+  return OPEN_WORLD_ZONES.map((zone) => ({ ...zone, zoneModel: getZoneModel(zone.id) }));
 }
 
 function buildAgentRuntime(citizens = []) {
   const memoryStore = {};
   const reflectionStore = {};
   const skillStore = {};
+  const memoryFiles = {};
   citizens.forEach((citizen) => {
     if (!citizen?.id) {
       return;
@@ -689,6 +1085,7 @@ function buildAgentRuntime(citizens = []) {
     memoryStore[citizen.id] = [];
     reflectionStore[citizen.id] = [];
     skillStore[citizen.id] = [];
+    memoryFiles[citizen.id] = buildAgentMemoryFile(citizen.id);
   });
 
   return {
@@ -705,6 +1102,7 @@ function buildAgentRuntime(citizens = []) {
     memoryStore,
     reflectionStore,
     skillStore,
+    memoryFiles,
     auditLog: []
   };
 }
@@ -742,7 +1140,8 @@ function normalizeAgentRuntime(runtime, citizens) {
     auditLog: Array.isArray(source.auditLog) ? source.auditLog.slice(0, AGENT_AUDIT_LIMIT) : [],
     memoryStore: normalizeAgentMap(source.memoryStore || {}, citizens, AGENT_MEMORY_LIMIT),
     reflectionStore: normalizeAgentMap(source.reflectionStore || {}, citizens, AGENT_REFLECTION_LIMIT),
-    skillStore: normalizeAgentMap(source.skillStore || {}, citizens, AGENT_REFLECTION_LIMIT)
+    skillStore: normalizeAgentMap(source.skillStore || {}, citizens, AGENT_REFLECTION_LIMIT),
+    memoryFiles: normalizeMemoryFileMap(source.memoryFiles || {}, citizens)
   };
 
   return merged;
@@ -963,7 +1362,20 @@ function runAgentRuntimeTick(society) {
 
 function normalizeSocietyState(society) {
   const base = buildBaseSociety();
-  const zones = buildOpenWorldZones();
+  const baseZones = buildOpenWorldZones();
+  const zoneMap = new Map(baseZones.map((zone) => [zone.id, zone]));
+  if (Array.isArray(society.zones)) {
+    society.zones.forEach((zone) => {
+      if (!zone?.id) return;
+      const baseZone = zoneMap.get(zone.id) || {};
+      zoneMap.set(zone.id, {
+        ...baseZone,
+        ...zone,
+        zoneModel: zone.zoneModel || baseZone.zoneModel || getZoneModel(zone.id)
+      });
+    });
+  }
+  const zones = Array.from(zoneMap.values());
   const zoneIds = zones.map((zone) => zone.id);
   const normalizedCitizens = mergeCitizens(society.citizens || []).map((citizen) => ({
     ...citizen,
@@ -991,6 +1403,9 @@ function normalizeSocietyState(society) {
     zones,
     missions: mergeMissions(society.missions || []),
     log: Array.isArray(society.log) ? society.log.slice(0, MAX_SOCIETY_EVENTS) : [],
+    lifeWeek: normalizeLifeWeekSystem(society.lifeWeek),
+    relationships: society.relationships && typeof society.relationships === "object" ? society.relationships : {},
+    growth: buildGrowthState(society.growth),
     actorActionHistory: Array.isArray(society.actorActionHistory) ? society.actorActionHistory.slice(0, MAX_SOCIETY_EVENTS) : [],
     actionHistory: Array.isArray(society.actionHistory)
       ? society.actionHistory
@@ -1002,7 +1417,11 @@ function normalizeSocietyState(society) {
     weatherTimer: society.weatherTimer || 0
   };
 
-  merged.zones = merged.zones.filter((zone) => zone && zone.id).map((zone) => ({ ...base.zones.find((source) => source.id === zone.id), ...zone }));
+  merged.zones = merged.zones.filter((zone) => zone && zone.id).map((zone) => ({
+    ...base.zones.find((source) => source.id === zone.id),
+    ...zone,
+    zoneModel: zone.zoneModel || getZoneModel(zone.id)
+  }));
   if (!merged.zones.length) {
     merged.zones = buildOpenWorldZones();
   }
@@ -1155,29 +1574,68 @@ function loadState() {
   }
 }
 
-function persist() {
-  localStorage.setItem(
-    STORAGE_KEY,
-    JSON.stringify({
-      profile: state.profile,
-      echoes: state.echoes,
-      bottle: state.bottle || "",
-      lifeFragments: state.lifeFragments || [],
-      lifeCapsules: state.lifeCapsules || DEFAULT_LIFE_CAPSULES,
-      activeLifeCapsuleId: state.activeLifeCapsuleId || "",
-      robotSignals: state.robotSignals || [],
-      driftBottles: state.driftBottles || [],
-      soulMatches: state.soulMatches || [],
-      firstSessionStage: state.firstSessionStage || "",
-      firstSessionQuest: state.firstSessionQuest || null,
-      continuation: state.continuation || null,
-      firstLoop: state.firstLoop || null,
-      causalGraph: state.causalGraph || null,
-      hasSeenTutorial: !!state.hasSeenTutorial,
-      isFirstVisit: !!state.isFirstVisit,
-      society: state.society
-    })
-  );
+function buildPersistSnapshot() {
+  return JSON.stringify({
+    profile: state.profile,
+    echoes: state.echoes,
+    bottle: state.bottle || "",
+    lifeFragments: state.lifeFragments || [],
+    lifeCapsules: state.lifeCapsules || DEFAULT_LIFE_CAPSULES,
+    activeLifeCapsuleId: state.activeLifeCapsuleId || "",
+    robotSignals: state.robotSignals || [],
+    driftBottles: state.driftBottles || [],
+    soulMatches: state.soulMatches || [],
+    firstSessionStage: state.firstSessionStage || "",
+    firstSessionQuest: state.firstSessionQuest || null,
+    continuation: state.continuation || null,
+    firstLoop: state.firstLoop || null,
+    causalGraph: state.causalGraph || null,
+    hasSeenTutorial: !!state.hasSeenTutorial,
+    isFirstVisit: !!state.isFirstVisit,
+    society: state.society
+  });
+}
+
+function clearPersistHandle() {
+  if (!persistHandle) return;
+  if (persistHandleType === "idle" && typeof cancelIdleCallback === "function") {
+    cancelIdleCallback(persistHandle);
+  } else {
+    clearTimeout(persistHandle);
+  }
+  persistHandle = null;
+  persistHandleType = "";
+}
+
+function flushPersist() {
+  clearPersistHandle();
+  const snapshot = buildPersistSnapshot();
+  if (snapshot === lastPersistSnapshot) return;
+  localStorage.setItem(STORAGE_KEY, snapshot);
+  lastPersistSnapshot = snapshot;
+}
+
+function persist(immediate = false) {
+  if (immediate) {
+    flushPersist();
+    return;
+  }
+  if (persistHandle) return;
+  if (typeof requestIdleCallback === "function") {
+    persistHandleType = "idle";
+    persistHandle = requestIdleCallback(() => {
+      persistHandle = null;
+      persistHandleType = "";
+      flushPersist();
+    }, { timeout: 800 });
+    return;
+  }
+  persistHandleType = "timeout";
+  persistHandle = setTimeout(() => {
+    persistHandle = null;
+    persistHandleType = "";
+    flushPersist();
+  }, 250);
 }
 
 function addEcho(text) {
@@ -1987,15 +2445,22 @@ function applySocietyActionResult(result, eventSuffix = "") {
   }
 
   applyMissionProgress(result.type);
+  const actor = society.citizens.find(c => c.id === result.actorId);
+  const target = result.targetId ? society.citizens.find(c => c.id === result.targetId) : null;
+  const relation = updateRelationshipModel(society, actor, target, result);
+  const relationModel = relation
+    ? SOCIAL_RELATION_MODELS[relation.model]
+    : null;
+  updateCitizenPsychState(actor, society);
+  if (target) updateCitizenPsychState(target, society);
   addSocietyEvent(
-    `${text}${eventSuffix ? ` ${eventSuffix}` : ""}`,
+    `${text}${relation ? ` 关系模型：${relationModel?.label || relation.model}。` : ""}${eventSuffix ? ` ${eventSuffix}` : ""}`,
     result.type === "conflict" ? "conflict" : "support"
   );
   updateSocietyMetricsFromEvents();
 
   // Speech bubble hook (called from game.js)
   if (typeof addSpeechBubble === "function") {
-    const actor = society.citizens.find(c => c.id === result.actorId);
     if (actor) {
       addSpeechBubble(result.actorId, ACTION_LABELS_MAP[result.type] || result.type, result.type);
     }
@@ -2333,6 +2798,532 @@ function addSocietyEvent(text, type = "neutral") {
   }
 }
 
+function getRelationshipKey(aId, bId) {
+  return [aId, bId].filter(Boolean).sort().join("__");
+}
+
+function inferRelationModel(actor, target, result) {
+  const actionType = result?.type || "listen";
+  const zone = getCitizenZone(state.society, actor);
+  if (actionType === "support" || actionType === "listen" || isActorVulnerable(actor) || isActorVulnerable(target || {})) {
+    return "communal_sharing";
+  }
+  if (actionType === "meditate" || actionType === "cooperate") {
+    return "equality_matching";
+  }
+  if (actionType === "propose" && ["teacher", "judge", "lawyer", "caretaker"].includes(actor?.professionId)) {
+    return "authority_ranking";
+  }
+  if (zone?.archetype === "commerce" || zone?.archetype === "work" || ["worker", "engineer", "programmer", "architect"].includes(actor?.professionId)) {
+    return "market_pricing";
+  }
+  return actor?.relationPreference || "equality_matching";
+}
+
+function updateRelationshipModel(society, actor, target, result) {
+  if (!society || !actor || !target || actor.id === target.id) return null;
+  if (!society.relationships || typeof society.relationships !== "object") {
+    society.relationships = {};
+  }
+  const modelId = inferRelationModel(actor, target, result);
+  const model = SOCIAL_RELATION_MODELS[modelId] || SOCIAL_RELATION_MODELS.equality_matching;
+  const key = getRelationshipKey(actor.id, target.id);
+  const current = society.relationships[key] || {
+    id: key,
+    a: actor.id,
+    b: target.id,
+    model: modelId,
+    familiarity: 0.08,
+    trust: Math.round((actor.trust + target.trust) / 2),
+    trustAB: clamp(Math.round(actor.trust - 50), -100, 100),
+    trustBA: clamp(Math.round(target.trust - 50), -100, 100),
+    affection: 0,
+    powerBalance: Math.round(((actor.interpersonal?.dominance || 0.5) - (target.interpersonal?.dominance || 0.5)) * 100),
+    reciprocity: 50,
+    disclosureDepth: 8,
+    mutuality: 50,
+    strain: Math.max(0, Math.round(society.tension * 0.35)),
+    eventLog: [],
+    history: []
+  };
+  const benefit = clamp((result.score || 0) * 7 + model.trustDelta, -12, 18);
+  const cost = result.type === "conflict" ? 12 : result.type === "propose" ? 5 : result.type === "cooperate" ? 4 : 2;
+  const warmthA = actor.interpersonal?.warmth ?? actor.bigFive?.agreeableness ?? 0.5;
+  const warmthB = target.interpersonal?.warmth ?? target.bigFive?.agreeableness ?? 0.5;
+  const dominanceA = actor.interpersonal?.dominance ?? actor.bigFive?.extraversion ?? 0.5;
+  const dominanceB = target.interpersonal?.dominance ?? target.bigFive?.extraversion ?? 0.5;
+  const warmthMatch = 1 - Math.abs(warmthA - warmthB);
+  const dominanceComplementarity = Math.abs(dominanceA - dominanceB);
+  const compatibility = Math.round((warmthMatch * 0.62 + dominanceComplementarity * 0.38) * 20 - 10);
+  const attachmentMod =
+    actor.attachmentStyle === "secure" ? 2 :
+      actor.attachmentStyle === "anxious" ? (result.type === "support" ? 3 : -1) :
+        actor.attachmentStyle === "avoidant" ? (result.type === "listen" ? 1 : -2) : -2;
+  const interdependenceOutcome = benefit - cost + compatibility + attachmentMod + Math.round((current.mutuality - 50) / 12);
+
+  current.model = modelId;
+  current.familiarity = clamp(Number(current.familiarity || 0) + 0.035 + (result.type === "listen" ? 0.025 : 0), 0, 1);
+  current.trust = clamp(Math.round(current.trust + model.trustDelta + interdependenceOutcome * 0.25), 0, 100);
+  current.trustAB = clamp(Math.round((current.trustAB || 0) + interdependenceOutcome * 0.45), -100, 100);
+  current.trustBA = clamp(Math.round((current.trustBA || 0) + interdependenceOutcome * 0.28), -100, 100);
+  current.affection = clamp(Number(current.affection || 0) + interdependenceOutcome / 120, -1, 1);
+  current.powerBalance = clamp(Math.round(((dominanceA - dominanceB) * 72) + (result.type === "propose" ? 8 : 0)), -100, 100);
+  current.reciprocity = clamp(Math.round(current.reciprocity + model.reciprocityDelta + (result.type === "cooperate" ? 4 : 0)), 0, 100);
+  current.disclosureDepth = clamp(Math.round(current.disclosureDepth + model.disclosureDelta + (result.type === "listen" ? 3 : 0)), 0, 100);
+  current.mutuality = clamp(Math.round((current.trust + current.reciprocity + current.disclosureDepth) / 3), 0, 100);
+  current.strain = clamp(Math.round(current.strain + model.strainDelta - (result.score || 0)), 0, 100);
+  current.tension = clamp(current.strain / 100, 0, 1);
+  current.lastAction = result.type;
+  current.updatedTurn = society.turn;
+  const event = {
+    turn: society.turn,
+    model: modelId,
+    action: result.type,
+    outcome: interdependenceOutcome,
+    compatibility,
+    depth: current.familiarity < 0.28 ? "surface" : current.familiarity < 0.62 ? "personal" : "core",
+    text: `${actor.name} 与 ${target.name} 形成“${model.label}”互动。`
+  };
+  current.eventLog = [event, ...(current.eventLog || [])].slice(0, 16);
+  current.history = [
+    {
+      ...event
+    },
+    ...(current.history || [])
+  ].slice(0, 8);
+  society.relationships[key] = current;
+  result.relationshipModel = model.label;
+  result.relationshipOutcome = interdependenceOutcome;
+  return current;
+}
+
+function ensureLifeWeekSystem(society = state?.society) {
+  if (!society) return null;
+  society.lifeWeek = normalizeLifeWeekSystem(society.lifeWeek);
+  const citizens = Array.isArray(society.citizens) ? society.citizens : [];
+  const runtime = ensureAgentRuntime(society);
+  runtime.memoryFiles = normalizeMemoryFileMap(runtime.memoryFiles || {}, citizens);
+  return society.lifeWeek;
+}
+
+function addLifeWeekLog(kind, text, meta = {}) {
+  const lifeWeek = ensureLifeWeekSystem();
+  if (!lifeWeek || !text) return null;
+  const entry = {
+    id: `lw-${state.society.turn}-${randomInt(100, 999)}`,
+    kind,
+    text,
+    week: lifeWeek.week,
+    stage: lifeWeek.stage,
+    turn: state.society.turn,
+    at: new Date().toLocaleTimeString("zh-CN", { hour: "2-digit", minute: "2-digit" }),
+    meta
+  };
+  lifeWeek.observableLog = [entry, ...(lifeWeek.observableLog || [])].slice(0, LIFE_WEEK_LOG_LIMIT);
+  lifeWeek.schedulerLog = [
+    {
+      ...entry,
+      text: `${getLifeWeekStageInfo(lifeWeek.stage).label}：${text}`
+    },
+    ...(lifeWeek.schedulerLog || [])
+  ].slice(0, LIFE_WEEK_LOG_LIMIT);
+  return entry;
+}
+
+function getAverageCitizenValue(society, key, fallback = 50) {
+  const alive = getAliveCitizens(society);
+  if (!alive.length) return fallback;
+  return Math.round(alive.reduce((sum, citizen) => sum + (Number(citizen[key]) || fallback), 0) / alive.length);
+}
+
+function calculateLifeReward(society) {
+  const avgTrust = getAverageCitizenValue(society, "trust");
+  const avgMood = getAverageCitizenValue(society, "mood");
+  const avgEnergy = getAverageCitizenValue(society, "energy");
+  const socialResonance = clamp(Math.round((avgTrust * 0.45) + (society.harmony * 0.35) + (society.metrics.openness * 0.2)), 0, 100);
+  const selfFulfillment = clamp(Math.round((avgMood * 0.48) + (avgEnergy * 0.22) + (society.metrics.freedom * 0.3)), 0, 100);
+  const lifeStability = clamp(Math.round(((100 - society.tension) * 0.44) + (society.metrics.equality * 0.34) + (society.principleHealth.openness * 0.22)), 0, 100);
+  const total = clamp(Math.round((socialResonance + selfFulfillment + lifeStability) / 3), 0, 100);
+  const reason = total >= 72
+    ? "本周的社会关系比较亮，分身既被看见，也能把选择转成稳定行动。"
+    : total >= 54
+      ? "本周仍有张力，但世界给出了可继续尝试的关系回声。"
+      : "本周人生回声偏紧，系统会把下一轮优先交给安抚、倾听和修复。";
+  return { socialResonance, selfFulfillment, lifeStability, total, reason };
+}
+
+function pushMemoryItem(list, item, limit = LIFE_WEEK_MEMORY_LIMIT) {
+  list.unshift(item);
+  if (list.length > limit) list.length = limit;
+}
+
+function recordAgentMemoryFileItem(society, ownerId, bucket, text, options = {}) {
+  const runtime = ensureAgentRuntime(society);
+  const citizen = (society.citizens || []).find((item) => item.id === ownerId);
+  if (!runtime || !citizen || !text) return null;
+  runtime.memoryFiles = normalizeMemoryFileMap(runtime.memoryFiles || {}, society.citizens || []);
+  const file = runtime.memoryFiles[ownerId] || buildAgentMemoryFile(ownerId);
+  runtime.memoryFiles[ownerId] = file;
+  const item = {
+    id: `life-mem-${society.turn}-${randomInt(100, 999)}`,
+    ownerId,
+    kind: options.kind || bucket || "event",
+    text,
+    importance: clamp(Number(options.importance) || 5, 1, 10),
+    createdAtTurn: society.turn,
+    references: Array.isArray(options.references) ? options.references.slice(0, 4) : []
+  };
+
+  if (bucket === "weeklyDiary") {
+    pushMemoryItem(file.weeklyDiary, item, LIFE_WEEK_DIARY_LIMIT);
+  } else if (bucket === "relationships") {
+    const key = options.key || options.targetId || "community";
+    if (!file.relationships[key]) file.relationships[key] = [];
+    pushMemoryItem(file.relationships[key], item);
+  } else if (bucket === "lifeCapsules") {
+    const key = options.key || state.activeLifeCapsuleId || "capsule";
+    if (!file.lifeCapsules[key]) file.lifeCapsules[key] = [];
+    pushMemoryItem(file.lifeCapsules[key], item);
+  } else {
+    pushMemoryItem(file.general, item);
+  }
+  return item;
+}
+
+function recordLifeWeekMemorySnapshot(society, reward) {
+  const lifeWeek = ensureLifeWeekSystem(society);
+  const alive = getAliveCitizens(society).slice(0, 8);
+  const capsuleTitle = (state.lifeCapsules || DEFAULT_LIFE_CAPSULES)
+    .find((capsule) => capsule.id === state.activeLifeCapsuleId)?.title || "当前人生胶囊";
+  alive.forEach((citizen, index) => {
+    const diaryText = `第 ${lifeWeek.week} 周，${citizen.name}在${society.scene}经历了 ${getLifeWeekStageInfo("review").title}：${reward.reason}`;
+    recordAgentMemoryFileItem(society, citizen.id, "weeklyDiary", diaryText, {
+      kind: "weekly_diary",
+      importance: Math.max(4, Math.round(reward.total / 14)),
+      references: [`week-${lifeWeek.week}`, "life-reward"]
+    });
+    recordAgentMemoryFileItem(society, citizen.id, "lifeCapsules", `围绕“${capsuleTitle}”，我看见了：${reward.reason}`, {
+      kind: "life_capsule",
+      key: state.activeLifeCapsuleId || "default",
+      importance: 6,
+      references: [`week-${lifeWeek.week}`]
+    });
+    if (index < 4) {
+      const target = alive[(index + 1) % alive.length];
+      if (target && target.id !== citizen.id) {
+        recordAgentMemoryFileItem(society, citizen.id, "relationships", `${target.name}与我在本周产生了一次同频线索：关系不是胜负，而是能否继续靠近。`, {
+          kind: "relationship",
+          key: target.id,
+          targetId: target.id,
+          importance: 5,
+          references: [`week-${lifeWeek.week}`]
+        });
+      }
+    }
+  });
+}
+
+function evaluateSocietyDeficits(society) {
+  const alive = getAliveCitizens(society);
+  const avgEnergy = getAverageCitizenValue(society, "energy");
+  const avgMood = getAverageCitizenValue(society, "mood");
+  const youngCount = alive.filter((citizen) => ["child", "teen", "young"].includes(citizen.lifeStage)).length;
+  const conflictEvents = (society.log || []).filter((event) => event.type === "conflict").length;
+  return {
+    high_tension: society.tension > 62 || conflictEvents >= 2,
+    low_openness: (society.metrics?.openness || 0) < 72,
+    low_equality: (society.metrics?.equality || 0) < 72 || (society.fairnessPenalty || 0) >= 5,
+    low_energy: avgEnergy < 48 || avgMood < 44,
+    learning_need: youngCount >= 4,
+    low_stability: calculateLifeReward(society).lifeStability < 56
+  };
+}
+
+function createEvolvedSceneFromBlueprint(blueprint, index = 0) {
+  const offset = index * 0.025;
+  return {
+    id: blueprint.id,
+    name: blueprint.name,
+    openness: 0.78,
+    tolerance: 0.9,
+    mobility: 0.62,
+    role: blueprint.role,
+    x: clamp(blueprint.x + offset, 0.04, 0.9),
+    y: clamp(blueprint.y + offset, 0.04, 0.86),
+    w: blueprint.w,
+    h: blueprint.h,
+    archetype: blueprint.archetype,
+    evolved: true,
+    trigger: blueprint.trigger,
+    zoneModel: {
+      model: blueprint.model,
+      layer: "evolved",
+      gameplay: `社会缺口触发的新场景：${blueprint.name}`,
+      provides: blueprint.provides,
+      buildVerb: "生长"
+    }
+  };
+}
+
+function createEmergentProfessionFromBlueprint(blueprint) {
+  return {
+    id: blueprint.profession,
+    name: blueprint.professionName,
+    zoneIds: [blueprint.id],
+    minLifeAge: 18,
+    maxLifeAge: 88,
+    tone: blueprint.trigger.replace("_", "-"),
+    evolved: true
+  };
+}
+
+function evolveSocietyGrowth(society, reason = "life_week") {
+  if (!society) return null;
+  society.growth = buildGrowthState(society.growth);
+  const previousDeficits = society.growth.deficits || {};
+  const evaluatedDeficits = evaluateSocietyDeficits(society);
+  society.growth.deficits = { ...evaluatedDeficits };
+  Object.entries(previousDeficits).forEach(([key, value]) => {
+    society.growth.deficits[key] = Math.max(Number(value) || 0, Number(evaluatedDeficits[key]) || 0);
+  });
+  if (society.growth.unlockedScenes.length >= 6) return null;
+  const playerDrivenGrowth = OPEN_WORLD_ACTIONS.some((action) => action.id === reason);
+  if (!playerDrivenGrowth && society.turn - (society.growth.lastGrowthTurn || 0) < 4 && society.growth.unlockedScenes.length > 0) {
+    return null;
+  }
+
+  const blueprint = EVOLVABLE_SCENE_BLUEPRINTS.find((candidate) =>
+    society.growth.deficits[candidate.trigger] &&
+    !society.growth.unlockedScenes.includes(candidate.id) &&
+    !(society.zones || []).some((zone) => zone.id === candidate.id)
+  );
+  if (!blueprint) return null;
+
+  const zone = createEvolvedSceneFromBlueprint(blueprint, society.growth.unlockedScenes.length);
+  const profession = createEmergentProfessionFromBlueprint(blueprint);
+  society.zones = [...(society.zones || []), zone];
+  society.growth.unlockedScenes = [...society.growth.unlockedScenes, zone.id].slice(0, 6);
+  society.growth.emergentProfessions = [
+    profession,
+    ...(society.growth.emergentProfessions || []).filter((item) => item.id !== profession.id)
+  ].slice(0, 12);
+  society.growth.constructionQueue = [
+    {
+      id: `build-${zone.id}-${society.turn}`,
+      sceneId: zone.id,
+      professionId: profession.id,
+      reason,
+      trigger: blueprint.trigger,
+      text: `社会缺口“${blueprint.trigger}”生成了${zone.name}与新职业${profession.name}。`
+    },
+    ...(society.growth.constructionQueue || [])
+  ].slice(0, 8);
+  society.growth.lastGrowthTurn = society.turn;
+
+  const candidates = getAliveCitizens(society)
+    .filter((citizen) => citizen.alive !== false && citizen.id !== "avatar")
+    .sort((a, b) => (b.energy + b.trust) - (a.energy + a.trust));
+  const builder = candidates[0];
+  if (builder) {
+    builder.professionId = profession.id;
+    builder.profession = profession.name;
+    builder.zoneAffinity = [zone.id, ...(builder.zoneAffinity || [])].slice(0, 4);
+    builder.zoneId = zone.id;
+    builder.role = `${builder.personaLabel || "分身"}-${profession.name}`;
+    setCitizenZonePosition(builder, zone);
+    recordAgentMemoryFileItem(society, builder.id, "general", `我因为社会缺口成为了${profession.name}，开始建设${zone.name}。`, {
+      kind: "growth",
+      importance: 8,
+      references: [zone.id, profession.id]
+    });
+  }
+
+  addLifeWeekLog("growth", `社会自动生长出 ${zone.name}，新职业：${profession.name}。`, { sceneId: zone.id, professionId: profession.id });
+  addSocietyEvent(`社会自动生长：${zone.name} 已出现，${profession.name} 开始承担新的公共任务。`, "support");
+  return { zone, profession, builder };
+}
+
+const OPEN_WORLD_ACTIONS = [
+  {
+    id: "survey-deficits",
+    label: "走访社区缺口",
+    verb: "走访",
+    actionType: "listen",
+    metricDelta: { openness: 2 },
+    tensionDelta: -2,
+    growthBias: { learning_need: 18, low_openness: 12 },
+    log: "你和分身走访城市边缘，把还没有被看见的需求写进调度日志。"
+  },
+  {
+    id: "host-commons",
+    label: "发起公共共建",
+    verb: "共建",
+    actionType: "cooperate",
+    metricDelta: { equality: 3, openness: 1 },
+    tensionDelta: -1,
+    growthBias: { low_equality: 20, low_stability: 10 },
+    log: "一场小型公共共建开始了，几位分身把资源、时间和责任摊开协商。"
+  },
+  {
+    id: "mediate-relation",
+    label: "调停紧张关系",
+    verb: "调停",
+    actionType: "support",
+    metricDelta: { freedom: 1, equality: 1 },
+    tensionDelta: -5,
+    growthBias: { high_tension: 24 },
+    log: "你没有直接判定谁对谁错，而是让两个分身先说出各自真正害怕的事。"
+  },
+  {
+    id: "night-watch",
+    label: "夜间观察世界",
+    verb: "观察",
+    actionType: "meditate",
+    metricDelta: { freedom: 1 },
+    tensionDelta: -3,
+    growthBias: { low_energy: 22, low_stability: 8 },
+    log: "夜间观察让城市慢下来，系统捕捉到几个白天看不见的恢复需求。"
+  }
+];
+
+function getOpenWorldActions() {
+  return OPEN_WORLD_ACTIONS.slice();
+}
+
+function getEvolutionRoadmap(society = state?.society) {
+  const unlocked = new Set(society?.growth?.unlockedScenes || []);
+  return EVOLVABLE_SCENE_BLUEPRINTS.map((blueprint) => ({
+    id: blueprint.id,
+    name: blueprint.name,
+    trigger: blueprint.trigger,
+    professionName: blueprint.professionName,
+    provides: blueprint.provides,
+    unlocked: unlocked.has(blueprint.id),
+    suggestedAction: OPEN_WORLD_ACTIONS.find((action) => action.growthBias?.[blueprint.trigger])?.id || ""
+  }));
+}
+
+function getNextEvolutionHint(society = state?.society) {
+  const roadmap = getEvolutionRoadmap(society);
+  const next = roadmap.find((item) => !item.unlocked);
+  if (!next) {
+    return "6 个自演化场景都已经出现，城市会继续通过周记、关系和职业成长扩写。";
+  }
+  const action = OPEN_WORLD_ACTIONS.find((item) => item.id === next.suggestedAction);
+  return `下一座可能生长的场景：${next.name}。建议行动：${action?.label || "继续观察世界"}。`;
+}
+
+function applyGrowthBias(society, bias = {}) {
+  society.growth = buildGrowthState(society.growth);
+  society.growth.deficits = {
+    ...evaluateSocietyDeficits(society),
+    ...(society.growth.deficits || {})
+  };
+  Object.entries(bias).forEach(([key, amount]) => {
+    society.growth.deficits[key] = clamp((Number(society.growth.deficits[key]) || 0) + Number(amount || 0), 0, 100);
+  });
+}
+
+function runOpenWorldAction(actionId) {
+  const society = state?.society;
+  if (!society) return null;
+  const action = OPEN_WORLD_ACTIONS.find((item) => item.id === actionId);
+  if (!action) return null;
+  if (!society.citizens?.length && typeof launchSocietyFromInput === "function") {
+    launchSocietyFromInput();
+  }
+
+  society.turn = (Number(society.turn) || 0) + 1;
+  society.metrics = {
+    freedom: clamp((society.metrics?.freedom || 60) + (action.metricDelta.freedom || 0), 0, 100),
+    equality: clamp((society.metrics?.equality || 60) + (action.metricDelta.equality || 0), 0, 100),
+    openness: clamp((society.metrics?.openness || 60) + (action.metricDelta.openness || 0), 0, 100)
+  };
+  society.tension = clamp((society.tension || 0) + action.tensionDelta, 0, 100);
+  society.harmony = clamp((society.harmony || 0) + 3, 0, 100);
+  applyMissionProgress(action.actionType);
+  applyGrowthBias(society, action.growthBias);
+
+  const actor = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || getAliveCitizens(society)[0];
+  if (actor) {
+    recordAgentMemoryFileItem(society, actor.id, "general", `我参与了开放世界行动：${action.label}。`, {
+      kind: "open_world_action",
+      importance: 6,
+      references: [action.id]
+    });
+  }
+
+  addLifeWeekLog("open-world", action.log, { actionId: action.id, bias: action.growthBias });
+  addSocietyEvent(`${action.log} 城市缺口被重新计算，可能长出新的场景。`, "support");
+  const growth = evolveSocietyGrowth(society, action.id);
+  if (growth && typeof pushRobotSignal === "function") {
+    pushRobotSignal("system", "summon", `城市回应了你的${action.verb}：${growth.zone.name} 开始生长。`);
+  } else if (typeof pushRobotSignal === "function") {
+    pushRobotSignal("system", "soft", `城市记录了你的${action.verb}，新的场景还在酝酿。`);
+  }
+
+  return { action, growth };
+}
+
+function advanceLifeWeekStage(trigger = "auto") {
+  const society = state?.society;
+  const lifeWeek = ensureLifeWeekSystem(society);
+  if (!society || !lifeWeek) return null;
+  const currentStage = getLifeWeekStageInfo(lifeWeek.stage);
+  const alive = getAliveCitizens(society);
+  const avatar = alive.find((citizen) => citizen.id === "avatar") || alive[0];
+
+  if (lifeWeek.stage === "plan") {
+    addLifeWeekLog("plan", `${avatar?.name || "分身"}把本周目标写成：先用另一种身份理解自己。`, { trigger });
+    if (avatar) {
+      recordAgentMemoryFileItem(society, avatar.id, "general", "本周计划：先体验一段人生，再观察关系如何回应。", {
+        kind: "plan",
+        importance: 5,
+        references: [`week-${lifeWeek.week}`]
+      });
+    }
+  } else if (lifeWeek.stage === "contact") {
+    const target = randomFrom(alive.filter((citizen) => citizen.id !== avatar?.id)) || alive[0];
+    addLifeWeekLog("contact", `${avatar?.name || "分身"}向${target?.name || "同频灵魂"}发出弱连接，等待对方是否靠近。`, { trigger, targetId: target?.id || "" });
+    if (avatar && target) {
+      recordAgentMemoryFileItem(society, avatar.id, "relationships", `我向${target.name}发出了一次低压联系，系统只交换回声，不强迫聊天。`, {
+        kind: "relationship",
+        key: target.id,
+        targetId: target.id,
+        importance: 5,
+        references: [`week-${lifeWeek.week}`]
+      });
+    }
+  } else if (lifeWeek.stage === "activity") {
+    const recent = society.log?.[0]?.text || "城市完成了一次关键行动，关系和情绪开始移动。";
+    addLifeWeekLog("activity", recent, { trigger });
+  } else if (lifeWeek.stage === "review") {
+    const reward = calculateLifeReward(society);
+    lifeWeek.currentReward = reward;
+    lifeWeek.rewardHistory = [reward, ...(lifeWeek.rewardHistory || [])].slice(0, LIFE_WEEK_DIARY_LIMIT);
+    addLifeWeekLog("review", `本周人生回声：${reward.reason}`, { trigger, reward });
+    recordLifeWeekMemorySnapshot(society, reward);
+    addEcho(`本周人生回声：同频度 ${reward.socialResonance}，满足感 ${reward.selfFulfillment}，稳定感 ${reward.lifeStability}。${reward.reason}`);
+    if (typeof pushRobotSignal === "function") {
+      pushRobotSignal("avatar", reward.total >= 70 ? "soft" : "summon", `第 ${lifeWeek.week} 周的另一个我传来回声：${reward.reason}`);
+    }
+  } else if (lifeWeek.stage === "settle") {
+    addLifeWeekLog("settle", `第 ${lifeWeek.week} 周已沉淀进周记，下一周会从新的计划开始。`, { trigger });
+    evolveSocietyGrowth(society, trigger);
+  }
+
+  const activeLifeWeek = society.lifeWeek || lifeWeek;
+  const currentIndex = LIFE_WEEK_STAGES.findIndex((stage) => stage.id === activeLifeWeek.stage);
+  const nextIndex = (currentIndex + 1) % LIFE_WEEK_STAGES.length;
+  const wrapped = nextIndex === 0;
+  activeLifeWeek.stage = LIFE_WEEK_STAGES[nextIndex].id;
+  activeLifeWeek.stageTurn = society.turn;
+  if (wrapped) {
+    activeLifeWeek.week += 1;
+  }
+  return { previous: currentStage, current: getLifeWeekStageInfo(activeLifeWeek.stage), wrapped };
+}
+
 function randomCitizen(excludeId) {
   const candidates = getAliveCitizens(state.society).filter((citizen) => citizen.id !== excludeId);
   return randomFrom(candidates);
@@ -2360,6 +3351,116 @@ function pickMostConflicted() {
   }, null);
 }
 
+function updateCitizenPsychState(citizen, society = state.society) {
+  if (!citizen) return;
+  citizen.needs = buildMaslowNeeds({
+    ...citizen,
+    needs: {
+      ...(citizen.needs || {}),
+      physiological: clamp((citizen.energy || 0) / 100, 0, 1),
+      safety: clamp(((citizen.trust || 0) / 100) - (society.tension || 0) / 240, 0, 1),
+      belonging: clamp(((citizen.trust || 0) + (citizen.mood || 0)) / 220, 0, 1),
+      esteem: clamp(((citizen.trust || 0) + (citizen.actionCount || 0) * 2) / 140, 0, 1),
+      selfActualization: clamp(((citizen.mood || 0) + (citizen.energy || 0)) / 220 + (citizen.values?.self_direction || 0) * 0.18, 0, 1),
+      autonomy: clamp((citizen.values?.self_direction || 0.5) * 0.55 + (citizen.energy || 0) / 220, 0, 1),
+      competence: clamp((citizen.bigFive?.conscientiousness || 0.5) * 0.55 + (citizen.trust || 0) / 220, 0, 1),
+      relatedness: clamp((citizen.interpersonal?.warmth || 0.5) * 0.5 + (citizen.trust || 0) / 220, 0, 1)
+    }
+  });
+  citizen.pad = buildPadEmotion({
+    ...citizen,
+    pad: {
+      pleasure: ((citizen.mood || 50) - 50) / 50,
+      arousal: ((citizen.energy || 50) - 50) / 50,
+      dominance: ((citizen.trust || 50) - 50) / 50
+    }
+  });
+}
+
+function getRelationshipBetween(society, aId, bId) {
+  if (!society?.relationships || !aId || !bId) return null;
+  return society.relationships[getRelationshipKey(aId, bId)] || null;
+}
+
+function scoreValueMatch(citizen, values = []) {
+  return values.reduce((sum, key) => sum + (Number(citizen.values?.[key]) || 0), 0) / Math.max(values.length, 1);
+}
+
+function scoreRelationshipOpportunity(society, citizen, actionType) {
+  if (actionType === "rest") return { target: null, score: 0 };
+  const candidates = getAliveCitizens(society).filter((item) => item.id !== citizen.id);
+  if (!candidates.length) return { target: null, score: -0.2 };
+  const ranked = candidates.map((target) => {
+    const rel = getRelationshipBetween(society, citizen.id, target.id);
+    const needsHelp = (target.mood || 50) < 45 || (target.energy || 50) < 40;
+    const trust = rel ? (rel.trust - 50) / 100 : 0;
+    const tension = rel ? (rel.strain || 0) / 100 : (society.tension || 0) / 160;
+    const score =
+      (actionType === "support" || actionType === "listen" ? (needsHelp ? 0.28 : 0.08) : 0) +
+      (actionType === "meditate" ? tension * 0.35 : 0) +
+      (actionType === "cooperate" ? trust * 0.18 + 0.08 : 0) +
+      (actionType === "propose" ? ((citizen.interpersonal?.dominance || 0.5) - tension) * 0.16 : 0) +
+      Math.random() * 0.04;
+    return { target, score };
+  }).sort((a, b) => b.score - a.score);
+  return ranked[0] || { target: candidates[0], score: 0 };
+}
+
+function calculateActionUtility(citizen, actionType, context) {
+  const profile = UTILITY_ACTION_PROFILES[actionType] || UTILITY_ACTION_PROFILES.listen;
+  const needs = citizen.needs || buildMaslowNeeds(citizen);
+  const bigFive = citizen.bigFive || buildBigFiveProfile(citizen);
+  const pad = citizen.pad || buildPadEmotion(citizen);
+  const zoneRole = context.zone?.role || "";
+  const needScore =
+    Object.entries(needs).reduce((sum, [key, value]) => {
+      const urgency = key === "physiological" || key === "safety" ? 1 - value : 0.55 + (1 - value) * 0.45;
+      return sum + urgency * (profile[key] || 0);
+    }, 0);
+  const traitScore =
+    (bigFive.openness || 0) * (profile.openness || 0) +
+    (bigFive.conscientiousness || 0) * (profile.conscientiousness || 0) +
+    (bigFive.extraversion || 0) * (profile.extraversion || 0) +
+    (bigFive.agreeableness || 0) * (profile.agreeableness || 0) +
+    (bigFive.neuroticism || 0) * (profile.neuroticism || 0);
+  const emotionScore =
+    (pad.pleasure || 0) * 0.1 +
+    (pad.arousal || 0) * (profile.arousal || 0) +
+    (pad.dominance || 0) * (profile.dominance || 0);
+  const styleScore =
+    (citizen.interpersonal?.warmth || 0.5) * (profile.warmth || 0) +
+    (citizen.interpersonal?.dominance || 0.5) * (profile.dominance || 0);
+  const valueScore = scoreValueMatch(citizen, profile.values || []) * 0.28;
+  const phaseScore = context.phaseBias.has(actionType) ? 0.22 : 0;
+  const scheduleScore = context.routineAction === actionType ? 0.26 : 0;
+  const zoneScore =
+    (zoneRole === "public" && actionType === "propose" ? 0.18 : 0) +
+    (zoneRole === "cooperate" && actionType === "cooperate" ? 0.18 : 0) +
+    (zoneRole === "heal" && (actionType === "support" || actionType === "rest") ? 0.2 : 0) +
+    (zoneRole === "meditate" && actionType === "meditate" ? 0.22 : 0);
+  const tensionScore =
+    actionType === "meditate" ? (context.society.tension || 0) / 180 :
+      actionType === "support" || actionType === "listen" ? (context.society.tension || 0) / 260 : 0;
+  const socialBias = Number(citizen.socialBias?.[actionType] || 0);
+  return needScore + traitScore + emotionScore + styleScore + valueScore + phaseScore + scheduleScore + zoneScore + tensionScore + socialBias + Math.random() * 0.05;
+}
+
+function chooseUtilityAction(citizen, context) {
+  const actionTypes = ["propose", "cooperate", "support", "listen", "meditate", "rest"];
+  const scored = actionTypes.map((type) => {
+    const relation = scoreRelationshipOpportunity(context.society, citizen, type);
+    return {
+      type,
+      target: relation.target,
+      score: calculateActionUtility(citizen, type, context) + relation.score
+    };
+  }).sort((a, b) => b.score - a.score);
+  const picked = scored[0] || { type: "rest", target: null, score: 0 };
+  citizen.intention = `${picked.type}:${Math.round(picked.score * 100)}`;
+  citizen.decisionTrace = scored.slice(0, 3).map((item) => `${item.type}:${Math.round(item.score * 100)}`);
+  return { actorId: citizen.id, type: picked.type, targetId: picked.target?.id || null };
+}
+
 function decideAction(citizen) {
   if (!citizen.alive) {
     return { actorId: citizen.id, type: "rest", targetId: null };
@@ -2370,6 +3471,7 @@ function decideAction(citizen) {
   const zone = getCitizenZone(society, citizen);
   const routineAction = getCitizenScheduleAction(society, citizen);
   const routine = pickRoutineZone(society, citizen);
+  updateCitizenPsychState(citizen, society);
 
   if (peerCount <= 1 || citizen.energy <= 24) {
     return { actorId: citizen.id, type: "rest", targetId: null };
@@ -2379,107 +3481,25 @@ function decideAction(citizen) {
     citizen.zoneId = routine.id;
   }
 
-  if (routineAction) {
-    const scheduleBias =
-      routineAction === "rest"
-        ? { proposeRate: 0.08, cooperateRate: 0.25, supportRate: 0.58, listenRate: 0.7, meditateRate: 0.2 }
-        : routineAction === "propose"
-          ? { proposeRate: 0.58, cooperateRate: 0.5, supportRate: 0.25, listenRate: 0.35, meditateRate: 0.1 }
-          : routineAction === "cooperate"
-            ? { proposeRate: 0.12, cooperateRate: 0.72, supportRate: 0.48, listenRate: 0.75, meditateRate: 0.18 }
-            : routineAction === "listen"
-              ? { proposeRate: 0.12, cooperateRate: 0.32, supportRate: 0.52, listenRate: 0.85, meditateRate: 0.28 }
-              : { proposeRate: 0.18, cooperateRate: 0.38, supportRate: 0.44, listenRate: 0.62, meditateRate: 0.2 };
-
-    if (Math.random() < scheduleBias.supportRate && citizen.mood < 45) {
-      const target = pickNeediestCitizen(citizen.id);
-      return { actorId: citizen.id, type: "support", targetId: target?.id || null };
-    }
-    if (Math.random() < scheduleBias.proposeRate && routineAction === "propose") {
-      return { actorId: citizen.id, type: "propose", targetId: randomCitizen(citizen.id)?.id || null };
-    }
-    if (Math.random() < scheduleBias.cooperateRate && routineAction === "cooperate") {
-      return { actorId: citizen.id, type: "cooperate", targetId: randomCitizen(citizen.id)?.id || null };
-    }
-    if (Math.random() < scheduleBias.listenRate && routineAction === "listen") {
-      return { actorId: citizen.id, type: "listen", targetId: randomCitizen(citizen.id)?.id || null };
-    }
-    if (routineAction === "rest" && Math.random() < 0.75) {
-      return { actorId: citizen.id, type: "rest", targetId: null };
-    }
-  }
-
   const lowMood = pickNeediestCitizen(citizen.id);
   const lowTrust = pickMostConflicted();
   const conflictMode = society.tension > 64;
-  const rand = Math.random();
   const phaseBias = new Set(activePhase?.missionBias || []);
+  const rand = Math.random();
 
-  const openBias = {
-    proposeRate: phaseBias.has("propose") ? 0.38 : 0.32,
-    cooperateRate: phaseBias.has("cooperate") ? 0.72 : 0.62,
-    supportRate: phaseBias.has("support") ? 0.64 : 0.44,
-    listenRate: phaseBias.has("listen") ? 0.92 : 0.84,
-    meditateRate: 0.24
-  };
-
-  if (zone?.role === "heal" || isActorVulnerable(citizen)) {
-    openBias.cooperateRate -= 0.24;
-    openBias.proposeRate -= 0.18;
-  }
-  if (zone?.role === "public") {
-    openBias.proposeRate += 0.16;
-    openBias.listenRate -= 0.18;
-  }
-  if (zone?.role === "cooperate") {
-    openBias.cooperateRate += 0.12;
-    openBias.mediateRate = 0.28;
-    openBias.supportRate += 0.09;
-  }
-  if (zone?.role === "support") {
-    openBias.supportRate += 0.18;
-    openBias.proposeRate -= 0.06;
-  }
-  if (zone?.role === "meditate") {
-    openBias.mediateRate = 0.34;
-    openBias.supportRate += 0.06;
-  }
-
-  openBias.proposeRate = clamp(openBias.proposeRate, 0.05, 0.95);
-  openBias.cooperateRate = clamp(openBias.cooperateRate, 0.1, 0.92);
-  openBias.supportRate = clamp(openBias.supportRate, 0.1, 0.92);
-  openBias.listenRate = clamp(openBias.listenRate, 0.1, 0.98);
-  openBias.meditateRate = clamp(openBias.meditateRate, 0.05, 0.55);
-
-  if (citizen.mood < 28 && lowMood && rand < 0.58) {
+  if (citizen.mood < 28 && lowMood && rand < 0.48 + (citizen.bigFive?.agreeableness || 0.5) * 0.18) {
     return { actorId: citizen.id, type: "support", targetId: lowMood.id };
   }
 
-  if (conflictMode && rand < 0.28) {
+  if (conflictMode && rand < 0.18 + (citizen.bigFive?.conscientiousness || 0.5) * 0.18) {
     return { actorId: citizen.id, type: "meditate", targetId: randomCitizen(citizen.id)?.id || null };
   }
 
-  if (citizen.mood > 70 && rand < openBias.proposeRate) {
-    return { actorId: citizen.id, type: "propose", targetId: randomCitizen(citizen.id)?.id || null };
-  }
-
-  if (citizen.mood < 40 && rand < openBias.supportRate) {
-    return { actorId: citizen.id, type: "support", targetId: randomCitizen(citizen.id)?.id || null };
-  }
-
-  if (rand < (openBias.meditateRate + (phaseBias.has("meditate") ? 0.12 : 0)) && lowTrust && lowTrust.id !== citizen.id && (lowTrust.trust < 45 || lowTrust.mood < 35)) {
+  if (lowTrust && lowTrust.id !== citizen.id && (lowTrust.trust < 45 || lowTrust.mood < 35) && rand < 0.24 + (phaseBias.has("meditate") ? 0.12 : 0)) {
     return { actorId: citizen.id, type: "meditate", targetId: lowTrust.id };
   }
 
-  if (rand < openBias.cooperateRate) {
-    return { actorId: citizen.id, type: "cooperate", targetId: randomCitizen(citizen.id)?.id || null };
-  }
-
-  if (rand < openBias.listenRate) {
-    return { actorId: citizen.id, type: "listen", targetId: randomCitizen(citizen.id)?.id || null };
-  }
-
-  return { actorId: citizen.id, type: "rest", targetId: null };
+  return chooseUtilityAction(citizen, { society, zone, routineAction, phaseBias });
 }
 
 function resolveAction(action) {
@@ -2579,7 +3599,6 @@ function resolveAction(action) {
     actor.trust = clamp(actor.trust + 3, 0, 100);
     if (target) {
       target.mood = clamp(target.mood + 6, 0, 100);
-      target.trust = clamp(target.trust + 4, 0, 100);
       target.trust = clamp(target.trust + 4, 0, 100);
       pushMotion(-10, (target.x - actor.x) * 0.02, (target.y - actor.y) * 0.02);
       result.text = `${actorAnchor} 与 ${targetLabel} 完成一次协作任务。`;
@@ -2895,6 +3914,7 @@ function stepSociety() {
   applyCityDrift();
   applySocietyHomeostasis();
   recordSocietyMetricsHistory();
+  advanceLifeWeekStage("society_step");
   if (typeof renderSocietyViews === "function") renderSocietyViews();
   if (typeof renderSocietyEcho === "function") renderSocietyEcho();
   if (society.turn % 4 === 0) {

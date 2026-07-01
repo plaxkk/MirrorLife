@@ -559,6 +559,11 @@ body.quest-unlocked .hud-bottom {
   opacity: 0.72;
 }
 
+body.quest-locked .hud-bottom,
+body.quest-unlocked .hud-bottom {
+  display: none;
+}
+
 .first-loop-panel.quest-stage {
   width: min(600px, calc(100vw - 96px));
   min-width: 360px;
@@ -1895,4 +1900,778 @@ body.quest-unlocked .hud-bottom {
   .detail-panel { width: 300px; }
   .life-cards { grid-template-columns: 1fr; }
   .event-log { width: 220px; }
+}
+
+/* ── Agentopia Dopamine Cel-Shading Pass ── */
+:root {
+  --game-bg: #fafaf5;
+  --ink: #1a1a2e;
+  --paper: #fafaf5;
+  --anime-red: #e63946;
+  --sky-blue: #4ea8de;
+  --vivid-green: #2ecc71;
+  --sun-yellow: #f1c40f;
+  --panel-pink: #ff8fab;
+  --panel-mint: #9bffcb;
+  --panel-blue: #88d8ff;
+  --panel-yellow: #ffe66d;
+  --hud-bg: #fafaf5;
+  --hud-border: var(--ink);
+  --hud-text: var(--ink);
+  --hud-muted: #4b4b63;
+  --accent-teal: var(--sky-blue);
+  --accent-gold: var(--sun-yellow);
+  --accent-coral: var(--anime-red);
+  --accent-lavender: #9b5de5;
+  --accent-sage: var(--vivid-green);
+  --accent-sky: var(--sky-blue);
+  --card-bg: #ffffff;
+  --card-border: var(--ink);
+  --radius: 8px;
+  --radius-sm: 8px;
+  --shadow: 4px 4px 0 var(--ink);
+  color-scheme: light;
+}
+
+html,
+body {
+  background: var(--paper);
+  color: var(--ink);
+}
+
+body::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 1;
+  background:
+    repeating-linear-gradient(45deg, transparent 0 18px, rgba(26,26,46,0.04) 18px 21px),
+    repeating-linear-gradient(-45deg, transparent 0 36px, rgba(230,57,70,0.05) 36px 39px);
+}
+
+#gameCanvas {
+  background: var(--paper);
+}
+
+.hud-top,
+.hud-bottom,
+.game-menu,
+.event-log,
+.first-loop-panel,
+.first-loop-panel.quest-stage,
+.detail-panel,
+.modal-panel,
+.tutorial-card,
+.splash-story,
+.splash-creator,
+.scenario-bar {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  backdrop-filter: none;
+}
+
+.hud-top {
+  top: 12px;
+  padding: 8px;
+}
+
+.hud-brand,
+.hud-stats,
+.hud-scores,
+.hud-controls,
+.speed-control,
+.detail-section,
+.locked-discovery,
+.perspective-stage,
+.world-echo-card,
+.robot-object,
+.drift-ritual,
+.pulse-card,
+.life-week-board,
+.life-reward-card,
+.memory-ledger,
+.scheduler-log,
+.social-graph-snapshot {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.hud-brand {
+  background: var(--panel-yellow);
+}
+
+.hud-logo {
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--anime-red);
+  color: #fff;
+}
+
+.hud-stat-value,
+.hud-title,
+.event-log-title,
+.quest-head h2,
+.life-portal-copy h2,
+.detail-content h3,
+.modal-content h2,
+.splash-story h1 {
+  color: var(--ink);
+  font-family: var(--font);
+  font-weight: 1000;
+  letter-spacing: 0;
+  text-shadow: 2px 2px 0 #fff;
+}
+
+.hud-stat-label,
+.quest-kicker,
+.event-source,
+.section-mini-title,
+.pulse-card b,
+.stage-label,
+.echo-title,
+.modal-content .eyebrow {
+  color: var(--anime-red);
+  font-weight: 1000;
+}
+
+.score-bar,
+.stat-bar,
+.reward-row i {
+  height: 10px;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 0;
+}
+
+.score-fill,
+.stat-fill,
+.reward-row em {
+  display: block;
+  height: 100%;
+  background: var(--vivid-green);
+  border-radius: 0;
+}
+
+button,
+.quest-primary,
+.quest-secondary,
+.portal-action,
+.choice-stone,
+.action-btn,
+.menu-btn,
+.hud-btn,
+.scenario-btn,
+.preset-chip,
+.loop-next-actions button {
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  background: var(--sun-yellow);
+  color: var(--ink);
+  font-weight: 1000;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+button:hover,
+.quest-primary:hover,
+.quest-secondary:hover,
+.portal-action:hover,
+.choice-stone:hover,
+.action-btn:hover,
+.menu-btn:hover,
+.hud-btn:hover,
+.scenario-btn:hover,
+.preset-chip:hover {
+  transform: translate(-1px, -1px);
+  box-shadow: 5px 5px 0 var(--ink);
+  background: var(--panel-blue);
+  color: var(--ink);
+}
+
+button:active,
+.quest-primary:active,
+.quest-secondary:active,
+.portal-action:active,
+.choice-stone:active,
+.action-btn:active,
+.menu-btn:active,
+.hud-btn:active,
+.scenario-btn:active,
+.preset-chip:active {
+  transform: translate(3px, 3px);
+  box-shadow: none;
+}
+
+.quest-primary,
+.splash-enter {
+  background: var(--anime-red);
+  color: #fff;
+}
+
+.quest-secondary {
+  background: var(--paper);
+}
+
+.action-btn:nth-child(2),
+.menu-btn:nth-child(2),
+.locked-discovery:nth-child(2) {
+  background: var(--panel-blue);
+}
+
+.action-btn:nth-child(3),
+.menu-btn:nth-child(3),
+.locked-discovery:nth-child(3) {
+  background: var(--panel-mint);
+}
+
+.action-btn:nth-child(4),
+.menu-btn:nth-child(4) {
+  background: var(--panel-pink);
+}
+
+.action-btn:nth-child(5),
+.menu-btn:nth-child(5) {
+  background: var(--sun-yellow);
+}
+
+.first-loop-panel.quest-stage {
+  left: 76px;
+  top: 84px;
+  width: min(640px, calc(100vw - 520px));
+  color: var(--ink);
+}
+
+.quest-head {
+  border-bottom: 3px solid var(--ink);
+  padding-bottom: 12px;
+}
+
+.quest-desc,
+.pulse-card p,
+.world-echo-card p:not(.echo-title),
+.robot-object p,
+.drift-ritual p,
+.detail-content p,
+.modal-content p,
+.splash-lead,
+.locked-discovery small,
+.quest-boundary,
+.memory-ledger-row span,
+.scheduler-log-row span {
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.quest-progress span,
+.life-week-steps div,
+.quest-tags span,
+.drift-ritual span,
+.pulse-tags span {
+  background: var(--paper);
+  color: var(--ink);
+  border: 2px solid var(--ink);
+  border-radius: 8px;
+  font-weight: 1000;
+}
+
+.quest-progress .active,
+.life-week-steps .active {
+  background: var(--anime-red);
+  color: #fff;
+}
+
+.quest-progress .done,
+.life-week-steps .done {
+  background: var(--vivid-green);
+  color: var(--ink);
+}
+
+.capsule-deck {
+  gap: 12px;
+}
+
+.life-card,
+.quest-capsule-card,
+.journey-step,
+.mirror-tag-card,
+.event-entry {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+}
+
+.quest-capsule-card:nth-child(1),
+.journey-step:nth-child(1) {
+  background: var(--panel-yellow);
+}
+
+.quest-capsule-card:nth-child(2),
+.journey-step:nth-child(2) {
+  background: var(--panel-blue);
+}
+
+.quest-capsule-card:nth-child(3),
+.journey-step:nth-child(3) {
+  background: var(--panel-mint);
+}
+
+.life-card.selected,
+.quest-capsule-card.selected,
+.choice-stone.active {
+  outline: 4px solid var(--anime-red);
+  outline-offset: 3px;
+}
+
+.life-week-board,
+.life-reward-card,
+.memory-ledger,
+.scheduler-log,
+.social-graph-snapshot {
+  padding: 12px;
+  margin-top: 12px;
+}
+
+.life-week-title,
+.life-reward-score {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.life-week-title span,
+.life-reward-score span,
+.section-mini-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0;
+  font-weight: 1000;
+}
+
+.life-week-title strong,
+.life-reward-score strong {
+  display: inline-grid;
+  min-width: 44px;
+  min-height: 36px;
+  place-items: center;
+  background: var(--sun-yellow);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-size: 20px;
+}
+
+.life-week-steps {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.life-week-steps div {
+  display: grid;
+  min-height: 48px;
+  place-items: center;
+  padding: 6px;
+  text-align: center;
+  font-size: 11px;
+}
+
+.life-week-steps b {
+  font-size: 12px;
+}
+
+.life-reward-bars {
+  display: grid;
+  gap: 8px;
+}
+
+.reward-row {
+  display: grid;
+  grid-template-columns: 56px 1fr 32px;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.reward-row.red em { background: var(--anime-red); }
+.reward-row.blue em { background: var(--sky-blue); }
+.reward-row.green em { background: var(--vivid-green); }
+
+.memory-ledger-row,
+.scheduler-log-row {
+  display: grid;
+  gap: 4px;
+  padding: 8px 0;
+  border-bottom: 2px solid var(--ink);
+}
+
+.memory-ledger-row:last-child,
+.scheduler-log-row:last-child {
+  border-bottom: 0;
+}
+
+.memory-ledger-row b {
+  color: var(--ink);
+  text-decoration: underline;
+  text-decoration-color: var(--ink, #1a1a2e);
+  text-decoration-thickness: 3px;
+}
+
+.memory-ledger-row small,
+.scheduler-log-row b {
+  color: var(--anime-red);
+  font-weight: 1000;
+}
+
+.graph-avatar-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(5, minmax(44px, 1fr));
+  gap: 8px;
+  padding-top: 10px;
+}
+
+.graph-avatar {
+  transform: translateY(var(--lift));
+  display: grid;
+  place-items: center;
+  gap: 4px;
+}
+
+.graph-avatar b {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  background: var(--avatar);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  color: #fff;
+}
+
+.graph-avatar span {
+  font-size: 11px;
+  font-weight: 1000;
+}
+
+.growth-panel,
+.social-graph-snapshot,
+.memory-ledger,
+.scheduler-log {
+  background: #fff;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 12px;
+}
+
+.growth-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.evolution-roadmap {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.evolution-slot {
+  min-height: 70px;
+  background: var(--sun-yellow);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 8px;
+}
+
+.evolution-slot.unlocked {
+  background: var(--vivid-green);
+}
+
+.evolution-slot b,
+.evolution-slot span,
+.evolution-slot small {
+  display: block;
+  color: var(--ink);
+}
+
+.evolution-slot b {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.evolution-slot span {
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.evolution-slot small {
+  margin-top: 3px;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.evolution-hint {
+  margin: 0 0 10px;
+  padding: 8px;
+  background: #fff;
+  border: 2px dashed var(--ink);
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.growth-card,
+.relation-edge {
+  background: var(--paper);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  padding: 8px;
+}
+
+.growth-card b,
+.relation-edge b {
+  display: block;
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.growth-card p,
+.relation-edge small,
+.relation-edge span {
+  display: block;
+  margin-top: 4px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.growth-card:nth-child(1) {
+  background: var(--panel-yellow);
+}
+
+.growth-card:nth-child(2) {
+  background: var(--panel-blue);
+}
+
+.growth-card:nth-child(3) {
+  background: var(--panel-green);
+}
+
+.relation-edge-list {
+  display: grid;
+  gap: 8px;
+}
+
+.relation-edge {
+  background: #fff;
+  box-shadow: 2px 2px 0 var(--ink);
+}
+
+.relation-edge span {
+  color: var(--anime-red);
+}
+
+.open-world-action-deck {
+  background: var(--panel-pink);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 4px 4px 0 var(--ink);
+  padding: 12px;
+}
+
+.world-action-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.world-action-card {
+  min-height: 96px;
+  text-align: left;
+  background: #fff;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  padding: 10px;
+  cursor: pointer;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.world-action-card:active {
+  transform: translate(2px, 2px);
+  box-shadow: 0 0 0 var(--ink);
+}
+
+.world-action-card b,
+.world-action-card span,
+.world-action-card small {
+  display: block;
+}
+
+.world-action-card b {
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.world-action-card span {
+  width: max-content;
+  margin: 6px 0;
+  padding: 2px 6px;
+  background: var(--sun-yellow);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 1000;
+}
+
+.world-action-card small {
+  font-size: 11px;
+  line-height: 1.35;
+}
+
+.construction-feed {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.construction-feed p {
+  margin: 0;
+  padding: 7px 8px;
+  background: var(--sun-yellow);
+  border: 2px solid var(--ink);
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.mini-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 8px 0;
+}
+
+.mini-chip-row span {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 7px;
+  background: var(--sun-yellow);
+  border: 2px solid var(--ink);
+  border-radius: 999px;
+  box-shadow: 2px 2px 0 var(--ink);
+  font-size: 11px;
+  font-weight: 1000;
+}
+
+.event-log {
+  background: var(--panel-yellow);
+}
+
+.event-log-summary {
+  padding: 10px;
+}
+
+.event-entry {
+  border-left: 3px solid var(--ink);
+  color: var(--ink);
+}
+
+.event-entry.user-input,
+.event-entry.society,
+.event-entry.action {
+  background: #fff;
+}
+
+.modal-overlay {
+  background: rgba(26, 26, 46, 0.55);
+  backdrop-filter: none;
+}
+
+.splash-screen {
+  background: var(--paper);
+}
+
+.splash-story {
+  background: var(--sun-yellow);
+}
+
+.splash-creator {
+  background: var(--panel-blue);
+}
+
+.splash-logo {
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--anime-red);
+  color: #fff;
+  box-shadow: 4px 4px 0 var(--ink);
+}
+
+.splash-story::before,
+.splash-story::after {
+  display: none;
+}
+
+input,
+textarea,
+select,
+.modal-content textarea,
+.modal-content input[type="text"],
+#scenarioInput,
+.first-loop-input,
+.drift-ritual textarea {
+  background: #fff;
+  color: var(--ink);
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  box-shadow: 3px 3px 0 var(--ink);
+  font-weight: 800;
+}
+
+@media (max-width: 900px) {
+  .first-loop-panel.quest-stage {
+    left: 12px;
+    right: 12px;
+    top: 174px;
+    width: auto;
+  }
+  body.quest-unlocked .game-menu,
+  body.quest-locked .game-menu {
+    display: none;
+  }
+  .life-week-steps {
+    grid-template-columns: repeat(5, minmax(50px, 1fr));
+    overflow-x: auto;
+  }
+  .unlocked-actions {
+    grid-template-columns: 1fr;
+  }
+  .world-action-grid {
+    grid-template-columns: 1fr;
+  }
+  .evolution-roadmap {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
