@@ -2440,49 +2440,80 @@ function buildModalHTML(type) {
 
 // ── Detail Panel (click zone/citizen) ──
 
+function getZoneInteraction(zoneId) {
+  const map = {
+    "public-plaza": { modal: "mirror", label: "在广场照见自己", hint: "适合观察分身和城市的第一层关系。" },
+    "maternity-hospital": { modal: "mirror", label: "照看一个新开始", hint: "适合回到身份与成长的原点。" },
+    "residential": { modal: "robot", label: "回到现实信使", hint: "适合听听另一个世界传回来的轻声信号。" },
+    "legal-court": { modal: "safety", label: "确认安全边界", hint: "适合查看授权、撤回和保护规则。" },
+    "creative-studio": { modal: "script", label: "改写人生剧本", hint: "适合调整分身想成为怎样的人。" },
+    "commercial-zone": { modal: "exchange", label: "进入人生胶囊", hint: "适合换一个身份继续试活。" },
+    "park": { modal: "bottle", label: "把回声投向海上", hint: "适合低频等待一次同频偶遇。" },
+    "repair-station": { modal: "bottle", label: "投放修复后的片段", hint: "适合把一次关系修复变成漂流瓶。" },
+    "quiet-nook": { modal: "bottle", label: "悄悄投一个瓶子", hint: "适合把还没说出口的瞬间放进海里。" }
+  };
+  return map[zoneId] || null;
+}
+
+function resetGameShellScroll() {
+  const shell = document.getElementById("gameShell");
+  if (!shell) return;
+  shell.scrollTop = 0;
+  shell.scrollLeft = 0;
+}
+
 function showDetail(html) {
   const panel = document.getElementById("detailPanel");
   const content = document.getElementById("detailContent");
   if (!panel || !content) return;
+  resetGameShellScroll();
   content.innerHTML = html;
   panel.classList.add("open");
+  document.body.classList.add("detail-open");
+  resetGameShellScroll();
 }
 
 function hideDetail() {
   const panel = document.getElementById("detailPanel");
   if (panel) panel.classList.remove("open");
+  document.body.classList.remove("detail-open");
+  resetGameShellScroll();
 }
 
 function showZoneDetail(zone) {
   const citizens = getAliveCitizens(state.society).filter(c => c.zoneId === zone.id);
   const ts = getWorldTimeState(state.society);
   const model = zone.zoneModel || (typeof getZoneModel === "function" ? getZoneModel(zone.id) : null);
-  const zoneModalMap = {
-    "public-plaza": "mirror", "maternity-hospital": "mirror", "residential": "robot",
-    "legal-court": "safety", "creative-studio": "script", "commercial-zone": "exchange",
-    "park": "bottle", "repair-station": "bottle", "quiet-nook": "bottle"
-  };
-  const enterBtn = zoneModalMap[zone.id] ? `<button class="interaction-btn" data-enter-zone="${zone.id}" style="margin-top:8px">进入区域</button>` : "";
+  const interaction = getZoneInteraction(zone.id);
+  const enterBtn = interaction ? `
+    <div class="detail-section detail-next-step">
+      <div class="detail-section-title">在这里继续</div>
+      <p>${escapeHtml(interaction.hint)}</p>
+      <button class="interaction-btn detail-action" data-enter-zone="${escapeHtml(zone.id)}">${escapeHtml(interaction.label)}</button>
+    </div>` : "";
   showDetail(`
+    <p class="detail-kicker">你靠近了一处地点</p>
     <h3>${escapeHtml(zone.name)}</h3>
+    <p class="detail-lead">${escapeHtml(model?.gameplay || "分身会在这里根据关系、情绪和人生阶段自发行动。")}</p>
     <div class="detail-section">
-      <div class="detail-section-title">区域属性</div>
-      <div class="stat-row"><span class="stat-label">开放</span><div class="stat-bar"><div class="stat-fill mood" style="width:${Math.round(zone.openness*100)}%"></div></div><span class="stat-val">${Math.round(zone.openness*100)}%</span></div>
-      <div class="stat-row"><span class="stat-label">包容</span><div class="stat-bar"><div class="stat-fill energy" style="width:${Math.round(zone.tolerance*100)}%"></div></div><span class="stat-val">${Math.round(zone.tolerance*100)}%</span></div>
-      <div class="stat-row"><span class="stat-label">流动</span><div class="stat-bar"><div class="stat-fill trust" style="width:${Math.round(zone.mobility*100)}%"></div></div><span class="stat-val">${Math.round(zone.mobility*100)}%</span></div>
+      <div class="detail-section-title">这里的氛围</div>
+      <div class="stat-row"><span class="stat-label">接纳感</span><div class="stat-bar"><div class="stat-fill mood" style="width:${Math.round(zone.openness*100)}%"></div></div><span class="stat-val">${Math.round(zone.openness*100)}%</span></div>
+      <div class="stat-row"><span class="stat-label">安全感</span><div class="stat-bar"><div class="stat-fill energy" style="width:${Math.round(zone.tolerance*100)}%"></div></div><span class="stat-val">${Math.round(zone.tolerance*100)}%</span></div>
+      <div class="stat-row"><span class="stat-label">流动感</span><div class="stat-bar"><div class="stat-fill trust" style="width:${Math.round(zone.mobility*100)}%"></div></div><span class="stat-val">${Math.round(zone.mobility*100)}%</span></div>
     </div>
     <div class="detail-section">
-      <div class="detail-section-title">玩法模型</div>
+      <div class="detail-section-title">这里会发生什么</div>
       <p><strong>${escapeHtml(model?.model || "开放社会节点")}</strong></p>
-      <p>${escapeHtml(model?.gameplay || "分身会在这里根据关系、情绪和人生阶段自发行动。")}</p>
-      <p>产出：${escapeHtml((model?.provides || []).join(" / ") || "关系回声")}</p>
+      <p>可能带来：${escapeHtml((model?.provides || []).join(" / ") || "关系回声")}</p>
       ${zone.evolved ? `<p>自演化：${escapeHtml(zone.trigger || "社会缺口")} 触发，${escapeHtml(model?.buildVerb || "建成")}。</p>` : ""}
     </div>
     <div class="detail-section">
-      <div class="detail-section-title">当前居民 (${citizens.length})</div>
-      ${citizens.map(c => `<p><strong style="color:${c.color}">${escapeHtml(c.name)}</strong> · ${escapeHtml(c.personaLabel || c.profession)} · 心情 ${Math.round(c.mood)}</p>`).join("")}
+      <div class="detail-section-title">现在在这里的人 (${citizens.length})</div>
+      ${citizens.length
+        ? citizens.map(c => `<p><strong style="color:${c.color}">${escapeHtml(c.name)}</strong> · ${escapeHtml(c.personaLabel || c.profession)} · 心情 ${Math.round(c.mood)}</p>`).join("")
+        : "<p>暂时没有人停留。你可以继续观察，或换一处地点。</p>"}
     </div>
-    <p>角色：${escapeHtml(zone.role)} · 原型：${escapeHtml(zone.archetype)}</p>
+    <p class="detail-footnote">系统线索：这是一处 ${escapeHtml(zone.archetype || zone.role || "社会")} 型地点，会影响分身接下来的关系和行动。</p>
     ${enterBtn}
   `);
 }
@@ -2574,6 +2605,22 @@ const ZONE_ICONS = {
   "rest-courtyard": "🌿", "mentor-hall": "🧭", "resource-kitchen": "🍲"
 };
 
+const CITY_ROAD_PATHS = [
+  ["residential", "commercial-zone", "public-plaza", "legal-court", "creative-studio", "office-district", "factory", "park", "repair-station", "residential"],
+  ["maternity-hospital", "kindergarten", "primary-school", "middle-school", "university", "botanical-garden", "cemetery"],
+  ["farm", "commercial-zone", "park", "botanical-garden", "zoo"],
+  ["residential", "quiet-nook", "repair-station", "park"]
+];
+
+const EVOLVABLE_ROAD_ANCHORS = {
+  "empathy-lab": "repair-station",
+  "story-archive": "public-plaza",
+  "commons-workshop": "creative-studio",
+  "rest-courtyard": "residential",
+  "mentor-hall": "university",
+  "resource-kitchen": "farm"
+};
+
 function getCanvasFrame() {
   const canvas = document.getElementById("gameCanvas");
   if (!canvas) return null;
@@ -2641,6 +2688,54 @@ function stopGameRenderLoop() {
 function ensureGameRenderLoop() {
   if (gameFrame || document.hidden) return;
   gameFrame = requestAnimationFrame(drawGameWorld);
+}
+
+function getRoadEndpoint(rect, toward) {
+  const dx = toward.cx - rect.cx;
+  const dy = toward.cy - rect.cy;
+  const horizontal = Math.abs(dx) > Math.abs(dy);
+  return {
+    x: rect.cx + (horizontal ? Math.sign(dx) * rect.w * 0.42 : 0),
+    y: rect.cy + (!horizontal ? Math.sign(dy) * rect.h * 0.42 : 0)
+  };
+}
+
+function drawRoadSegment(ctx, fromRect, toRect) {
+  const start = getRoadEndpoint(fromRect, toRect);
+  const end = getRoadEndpoint(toRect, fromRect);
+  const midY = (start.y + end.y) / 2;
+  ctx.beginPath();
+  ctx.moveTo(start.x, start.y);
+  ctx.bezierCurveTo(start.x, midY, end.x, midY, end.x, end.y);
+  ctx.stroke();
+}
+
+function drawCityRoadNetwork(ctx, zones, zoneRects) {
+  const zoneIds = new Set(zones.map((zone) => zone.id));
+  CITY_ROAD_PATHS.forEach((path) => {
+    for (let i = 0; i < path.length - 1; i += 1) {
+      const fromRect = zoneRects.get(path[i]);
+      const toRect = zoneRects.get(path[i + 1]);
+      if (!fromRect || !toRect) continue;
+      drawRoadSegment(ctx, fromRect, toRect);
+    }
+  });
+
+  Object.entries(EVOLVABLE_ROAD_ANCHORS).forEach(([sceneId, anchorId]) => {
+    if (!zoneIds.has(sceneId)) return;
+    const fromRect = zoneRects.get(sceneId);
+    const toRect = zoneRects.get(anchorId);
+    if (!fromRect || !toRect) return;
+    drawRoadSegment(ctx, fromRect, toRect);
+  });
+}
+
+function getFittedCanvasFontSize(ctx, text, maxWidth, preferredSize, minimumSize = 7) {
+  for (let size = preferredSize; size >= minimumSize; size -= 1) {
+    ctx.font = `bold ${size}px "Noto Sans SC", sans-serif`;
+    if (ctx.measureText(text).width <= maxWidth) return size;
+  }
+  return minimumSize;
 }
 
 function drawGameWorld() {
@@ -2754,36 +2849,16 @@ function drawGameWorld() {
   ctx.scale(camera.zoom, camera.zoom);
   ctx.translate(-W / 2, -H / 2);
 
-  // ── Street network between zones ──
+  // ── Street network between planned community districts ──
   ctx.strokeStyle = "#1a1a2e";
   ctx.lineWidth = 8;
   ctx.setLineDash([]);
   ctx.lineCap = "round";
-  zones.forEach((zone, i) => {
-    const zr = zoneRects.get(zone.id);
-    if (!zr) return;
-    if (i < zones.length - 1) {
-      const nr = zoneRects.get(zones[i + 1].id);
-      if (!nr) return;
-      ctx.beginPath();
-      ctx.moveTo(zr.cx, zr.cy + zr.h / 2);
-      ctx.bezierCurveTo(zr.cx, zr.cy + zr.h / 2 + 20, nr.cx, nr.cy + nr.h / 2 - 20, nr.cx, nr.cy + nr.h / 2);
-      ctx.stroke();
-    }
-  });
+  drawCityRoadNetwork(ctx, zones, zoneRects);
   ctx.strokeStyle = "#fafaf5";
   ctx.lineWidth = 2;
   ctx.setLineDash([10, 12]);
-  zones.forEach((zone, i) => {
-    const zr = zoneRects.get(zone.id);
-    if (!zr || i >= zones.length - 1) return;
-    const nr = zoneRects.get(zones[i + 1].id);
-    if (!nr) return;
-    ctx.beginPath();
-    ctx.moveTo(zr.cx, zr.cy + zr.h / 2);
-    ctx.bezierCurveTo(zr.cx, zr.cy + zr.h / 2 + 20, nr.cx, nr.cy + nr.h / 2 - 20, nr.cx, nr.cy + nr.h / 2);
-    ctx.stroke();
-  });
+  drawCityRoadNetwork(ctx, zones, zoneRects);
   ctx.setLineDash([]);
   ctx.lineCap = "butt";
 
@@ -2813,17 +2888,20 @@ function drawGameWorld() {
     drawZoneBuildingSprite(ctx, zone, r, isHovered);
 
     // Label
+    const labelW = Math.min(r.w - 16, Math.max(54, zone.name.length * 13 + 18));
+    const labelTextW = Math.max(24, labelW - 14);
     ctx.fillStyle = "#fafaf5";
-    roundRect(ctx, r.x + 8, r.y + r.h - 22, Math.min(r.w - 16, Math.max(54, zone.name.length * 13 + 18)), 18, 6);
+    roundRect(ctx, r.x + 8, r.y + r.h - 22, labelW, 18, 6);
     ctx.fill();
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
-    roundRect(ctx, r.x + 8, r.y + r.h - 22, Math.min(r.w - 16, Math.max(54, zone.name.length * 13 + 18)), 18, 6);
+    roundRect(ctx, r.x + 8, r.y + r.h - 22, labelW, 18, 6);
     ctx.stroke();
     ctx.fillStyle = "#1a1a2e";
-    ctx.font = `bold ${isHovered ? 12 : 10}px "Noto Sans SC", sans-serif`;
+    const labelFontSize = getFittedCanvasFontSize(ctx, zone.name, labelTextW, isHovered ? 12 : 10);
+    ctx.font = `bold ${labelFontSize}px "Noto Sans SC", sans-serif`;
     ctx.textAlign = "left";
-    ctx.fillText(zone.name, r.x + 15, r.y + r.h - 9);
+    ctx.fillText(zone.name, r.x + 15, r.y + r.h - 9, labelTextW);
 
     // Occupancy badge
     const count = zoneOccupancy.get(zone.id) || 0;
@@ -2867,7 +2945,7 @@ function drawGameWorld() {
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
     const size = (isAvatar ? (isHover ? 26 : 22) : (isHover ? 18 : 14)) + sizeBoost;
-    const mood = citizen.mood;
+    const safeMood = Number.isFinite(Number(citizen.mood)) ? Number(citizen.mood) : 50;
 
     // Walking animation between zones
     const anim = citizenAnimations[citizen.id] || {
@@ -2971,10 +3049,10 @@ function drawGameWorld() {
     ctx.strokeStyle = "#333";
     ctx.lineWidth = 1;
     ctx.beginPath();
-    if (mood > 65) {
+    if (safeMood > 65) {
       // Smile
       ctx.arc(cx, cy - size * 0.05, size * 0.12, 0.1, Math.PI - 0.1);
-    } else if (mood > 35) {
+    } else if (safeMood > 35) {
       // Neutral
       ctx.moveTo(cx - size * 0.1, cy - size * 0.05);
       ctx.lineTo(cx + size * 0.1, cy - size * 0.05);
@@ -2990,13 +3068,13 @@ function drawGameWorld() {
     }
 
     // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
-    if (mood > 80 && now > (anim.nextSparkleAt || 0)) {
+    if (safeMood > 80 && now > (anim.nextSparkleAt || 0)) {
       anim.nextSparkleAt = now + 1800 + Math.random() * 2200;
       spawnParticles(cx, cy - size * 0.5, "propose", 2);
     }
 
     // Mood indicator (small colored dot)
-    const moodColor = citizen.mood > 60 ? "#86efac" : citizen.mood > 35 ? "#ffd93d" : "#ff6b6b";
+    const moodColor = safeMood > 60 ? "#86efac" : safeMood > 35 ? "#ffd93d" : "#ff6b6b";
     ctx.fillStyle = moodColor;
     ctx.beginPath();
     ctx.arc(cx + size * 0.45, cy - size * 0.35, 3, 0, Math.PI * 2);
@@ -3308,12 +3386,16 @@ function drawGameWorld() {
 
 function getZoneGameRect(zone, W, H, groundY) {
   const margin = 20;
-  const mapW = W - margin * 2;
+  const visibleMapW = W - margin * 2;
+  const mapW = W < 520 ? Math.max(760, visibleMapW) : visibleMapW;
   const mapH = H - groundY - 60;
-  const x = margin + zone.x * mapW;
+  const mobileFocusOffset = W < 520 ? (mapW - visibleMapW) * 0.45 : 0;
+  const x = margin + zone.x * mapW - mobileFocusOffset;
   const y = groundY + 10 + zone.y * mapH;
-  const w = Math.max(50, zone.w * mapW);
-  const h = Math.max(40, zone.h * mapH);
+  const minW = W < 520 ? 36 : 50;
+  const minH = W < 520 ? 30 : 40;
+  const w = Math.max(minW, zone.w * mapW);
+  const h = Math.max(minH, zone.h * mapH);
   return { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
 }
 
@@ -3576,6 +3658,15 @@ function darken(hex, amount) {
 
 // ── Hit Detection ──
 
+function screenToWorldPoint(mx, my, W, H) {
+  const cx = W / 2 + camera.x;
+  const cy = H / 2 + camera.y + 40;
+  return {
+    x: (mx - cx) / camera.zoom + W / 2,
+    y: (my - cy) / camera.zoom + H / 2
+  };
+}
+
 function hitTestZone(mx, my) {
   const canvas = document.getElementById("gameCanvas");
   if (!canvas) return null;
@@ -3583,10 +3674,11 @@ function hitTestZone(mx, my) {
   const W = rect.width;
   const H = rect.height;
   const groundY = H * 0.35;
+  const point = screenToWorldPoint(mx, my, W, H);
   const zones = getOpenWorldZoneList(state.society);
   for (const zone of zones) {
     const r = getZoneGameRect(zone, W, H, groundY);
-    if (mx >= r.x && mx <= r.x + r.w && my >= r.y && my <= r.y + r.h) {
+    if (point.x >= r.x && point.x <= r.x + r.w && point.y >= r.y && point.y <= r.y + r.h) {
       return zone;
     }
   }
@@ -3600,6 +3692,7 @@ function hitTestCitizen(mx, my) {
   const W = rect.width;
   const H = rect.height;
   const groundY = H * 0.35;
+  const point = screenToWorldPoint(mx, my, W, H);
   const aliveCitizens = getAliveCitizens(state.society);
   for (let i = aliveCitizens.length - 1; i >= 0; i--) {
     const citizen = aliveCitizens[i];
@@ -3609,7 +3702,7 @@ function hitTestCitizen(mx, my) {
     const anim = citizenAnimations[citizen.id] || {};
     const cx = anim.x || zr.x + 12 + ((i * 37) % Math.max(1, zr.w - 24));
     const cy = anim.y || zr.y + zr.h - 8;
-    const dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
+    const dist = Math.sqrt((point.x - cx) ** 2 + (point.y - cy) ** 2);
     if (dist < 18) return citizen;
   }
   return null;
@@ -3940,8 +4033,33 @@ function bindGameEvents() {
   });
 
   // ── Game menu (left side) ──
-  document.querySelectorAll(".menu-btn[data-modal]").forEach(btn => {
-    btn.addEventListener("click", () => openModal(btn.dataset.modal));
+  const gameMenu = document.getElementById("gameMenu");
+  const gameMenuTrigger = document.getElementById("gameMenuTrigger");
+  if (gameMenu && gameMenuTrigger) {
+    const setGameMenuOpen = (open) => {
+      resetGameShellScroll();
+      gameMenu.classList.toggle("open", open);
+      gameMenuTrigger.setAttribute("aria-expanded", open ? "true" : "false");
+      resetGameShellScroll();
+    };
+    gameMenuTrigger.addEventListener("click", (e) => {
+      e.stopPropagation();
+      setGameMenuOpen(!gameMenu.classList.contains("open"));
+      markRenderActive();
+    });
+    document.addEventListener("click", (e) => {
+      if (!gameMenu.contains(e.target)) setGameMenuOpen(false);
+    });
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") setGameMenuOpen(false);
+    });
+  }
+  document.querySelectorAll(".game-menu [data-modal]").forEach(btn => {
+    btn.addEventListener("click", () => {
+      if (gameMenu) gameMenu.classList.remove("open");
+      if (gameMenuTrigger) gameMenuTrigger.setAttribute("aria-expanded", "false");
+      openModal(btn.dataset.modal);
+    });
   });
 
   // ── Scenario bar ──
@@ -3969,12 +4087,7 @@ function bindGameEvents() {
       }
       const enterBtn = e.target.closest("[data-enter-zone]");
       if (enterBtn) {
-        const zoneModalMap = {
-          "public-plaza": "mirror", "maternity-hospital": "mirror", "residential": "robot",
-          "legal-court": "safety", "creative-studio": "script", "commercial-zone": "exchange",
-          "park": "bottle", "repair-station": "bottle", "quiet-nook": "bottle"
-        };
-        const modal = zoneModalMap[enterBtn.dataset.enterZone];
+        const modal = getZoneInteraction(enterBtn.dataset.enterZone)?.modal;
         if (modal) { hideDetail(); openModal(modal); }
         return;
       }

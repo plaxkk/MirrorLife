@@ -63,17 +63,44 @@
         </div>
       </div>
 
-      <!-- Left game menu -->
-      <div class="game-menu">
-        <button class="menu-btn" data-modal="mirror" title="镜像舱">◐</button>
-        <button class="menu-btn" data-modal="script" title="人生剧本">▦</button>
-        <button class="menu-btn" data-modal="exchange" title="交换人生">⇄</button>
-        <button class="menu-btn" data-modal="bottle" title="漂流回声">✦</button>
-        <button class="menu-btn" data-modal="robot" title="回家模式">⌂</button>
-        <button class="menu-btn" data-modal="echoes" title="回声档案">☰</button>
-        <button class="menu-btn" data-modal="missions" title="社会任务">★</button>
-        <button class="menu-btn" data-modal="citizens" title="市民看板">◉</button>
-        <button class="menu-btn" data-modal="safety" title="安全治理">🛡</button>
+      <!-- Left world pocket -->
+      <div class="game-menu" id="gameMenu">
+        <button class="menu-trigger" id="gameMenuTrigger" aria-expanded="false" aria-controls="gameMenuPanel">
+          <span class="menu-trigger-icon">☰</span>
+          <span class="menu-trigger-copy">
+            <b>世界口袋</b>
+            <small>点建筑看故事，需要时再打开</small>
+          </span>
+        </button>
+        <div class="menu-panel" id="gameMenuPanel" aria-label="MirrorLife 世界入口">
+          <p class="menu-kicker">下一步可以这样玩</p>
+          <button class="menu-story-btn" data-modal="exchange">
+            <b>继续试活一段人生</b>
+            <small>选人生胶囊，换身份做一次选择。</small>
+          </button>
+          <button class="menu-story-btn" data-modal="robot">
+            <b>听现实信使</b>
+            <small>看看另一个世界里的你传回了什么。</small>
+          </button>
+          <button class="menu-story-btn" data-modal="bottle">
+            <b>投一个漂流瓶</b>
+            <small>把此刻的人生瞬间交给同频偶遇。</small>
+          </button>
+          <button class="menu-story-btn" data-modal="echoes">
+            <b>翻看本周回声</b>
+            <small>复盘世界为什么这样回应你。</small>
+          </button>
+          <details class="menu-more">
+            <summary>更多系统</summary>
+            <div class="menu-more-grid">
+              <button class="menu-mini-btn" data-modal="mirror">镜像身份</button>
+              <button class="menu-mini-btn" data-modal="script">人生剧本</button>
+              <button class="menu-mini-btn" data-modal="missions">社会任务</button>
+              <button class="menu-mini-btn" data-modal="citizens">居民观察</button>
+              <button class="menu-mini-btn" data-modal="safety">安全边界</button>
+            </div>
+          </details>
+        </div>
       </div>
 
       <!-- Event toast area -->

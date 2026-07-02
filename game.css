@@ -3504,3 +3504,284 @@ select,
     line-height: 1.35;
   }
 }
+
+/* ── Interaction Simplification Pass ── */
+body:not(.splash-active) .game-menu {
+  left: 22px;
+  top: auto;
+  bottom: 22px;
+  width: min(300px, calc(100vw - 44px));
+  transform: none;
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  opacity: 1;
+  z-index: 34;
+}
+
+body.quest-unlocked .game-menu {
+  opacity: 1;
+  visibility: visible;
+}
+
+.menu-trigger {
+  width: 100%;
+  min-height: 62px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 11px;
+  text-align: left;
+  background: var(--panel-yellow);
+}
+
+.menu-trigger-icon {
+  width: 38px;
+  height: 38px;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--anime-red);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+}
+
+.menu-trigger-copy {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.menu-trigger-copy b {
+  font-size: 15px;
+  line-height: 1.15;
+}
+
+.menu-trigger-copy small {
+  color: var(--hud-muted);
+  font-size: 11px;
+  line-height: 1.35;
+  font-weight: 800;
+}
+
+.menu-panel {
+  position: fixed;
+  left: 336px;
+  bottom: 22px;
+  width: min(330px, calc(100vw - 44px));
+  max-height: calc(100vh - 128px);
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: #fff;
+  box-shadow: 4px 4px 0 var(--ink);
+  opacity: 0;
+  transform: translateY(10px) scale(0.98);
+  transform-origin: left bottom;
+  overflow-y: auto;
+  pointer-events: none;
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.game-menu.open .menu-panel {
+  opacity: 1;
+  transform: translateY(0) scale(1);
+  pointer-events: auto;
+}
+
+.menu-kicker {
+  color: var(--anime-red);
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 0.02em;
+}
+
+.menu-story-btn {
+  width: 100%;
+  min-height: 64px;
+  display: grid;
+  gap: 4px;
+  padding: 10px 12px;
+  text-align: left;
+  background: var(--paper);
+}
+
+.menu-story-btn:nth-of-type(2) {
+  background: var(--panel-blue);
+}
+
+.menu-story-btn:nth-of-type(3) {
+  background: var(--panel-mint);
+}
+
+.menu-story-btn:nth-of-type(4) {
+  background: var(--panel-pink);
+}
+
+.menu-story-btn b {
+  font-size: 15px;
+  line-height: 1.2;
+}
+
+.menu-story-btn small {
+  color: var(--hud-muted);
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 800;
+}
+
+.menu-more {
+  border: 3px solid var(--ink);
+  border-radius: 8px;
+  background: var(--panel-yellow);
+  box-shadow: 3px 3px 0 var(--ink);
+  overflow: hidden;
+}
+
+.menu-more summary {
+  min-height: 38px;
+  display: flex;
+  align-items: center;
+  padding: 8px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 1000;
+}
+
+.menu-more-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  padding: 0 8px 8px;
+}
+
+.menu-mini-btn {
+  min-height: 36px;
+  padding: 6px 8px;
+  background: #fff;
+  font-size: 12px;
+}
+
+body:not(.splash-active) .detail-panel {
+  position: fixed;
+  top: 112px;
+  right: 22px;
+  bottom: auto;
+  width: min(360px, calc(100vw - 44px));
+  max-height: calc(100vh - 140px);
+  padding: 18px;
+  border-radius: 8px;
+  overflow-y: auto;
+  z-index: 36;
+  transform: translateX(calc(100% + 44px));
+  transition: transform 180ms ease, opacity 180ms ease;
+  opacity: 0;
+}
+
+body:not(.splash-active) .detail-panel.open {
+  right: 22px;
+  transform: translateX(0);
+  opacity: 1;
+}
+
+body.detail-open .event-log {
+  transform: translateX(calc(100% + 42px));
+  opacity: 0.12;
+  pointer-events: none;
+}
+
+body.detail-open .event-log:hover,
+body.detail-open .event-log:focus-within {
+  transform: translateX(calc(100% + 42px));
+}
+
+.detail-kicker {
+  margin: 0 36px 4px 0;
+  color: var(--anime-red);
+  font-size: 12px;
+  font-weight: 1000;
+}
+
+.detail-lead {
+  margin-right: 34px;
+  padding-bottom: 10px;
+  border-bottom: 3px solid var(--ink);
+  color: var(--ink);
+  font-weight: 800;
+}
+
+.detail-panel .detail-section {
+  margin-bottom: 10px;
+  padding: 11px;
+}
+
+.detail-panel .detail-section-title {
+  color: var(--anime-red);
+  letter-spacing: 0;
+}
+
+.detail-panel .stat-label {
+  width: 58px;
+  color: var(--ink);
+  font-weight: 1000;
+}
+
+.detail-footnote {
+  padding: 9px 10px;
+  border: 2px dashed var(--ink);
+  border-radius: 8px;
+  background: var(--paper);
+}
+
+.detail-next-step {
+  background: var(--panel-mint);
+}
+
+.interaction-btn.detail-action {
+  width: 100%;
+  min-height: 42px;
+  justify-content: center;
+  margin: 4px 0 0;
+  background: var(--anime-red);
+  color: #fff;
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  body.quest-unlocked .game-menu {
+    display: block;
+  }
+
+  body:not(.splash-active) .game-menu {
+    left: 12px;
+    right: 12px;
+    bottom: 12px;
+    width: auto;
+  }
+
+  .menu-panel {
+    left: 12px;
+    right: 12px;
+    bottom: 84px;
+    width: auto;
+    max-height: min(70vh, 520px);
+    overflow-y: auto;
+  }
+
+  body:not(.splash-active) .detail-panel,
+  body:not(.splash-active) .detail-panel.open {
+    left: 12px;
+    right: 12px;
+    top: 92px;
+    bottom: auto;
+    width: auto;
+    max-height: calc(100vh - 184px);
+  }
+}
