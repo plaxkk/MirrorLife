@@ -2366,14 +2366,7 @@ body {
 }
 
 body::before {
-  content: "";
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 1;
-  background:
-    repeating-linear-gradient(45deg, transparent 0 18px, rgba(26,26,46,0.04) 18px 21px),
-    repeating-linear-gradient(-45deg, transparent 0 36px, rgba(230,57,70,0.05) 36px 39px);
+  content: none;
 }
 
 #gameCanvas {

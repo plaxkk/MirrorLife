@@ -2595,6 +2595,64 @@ const ZONE_COLORS = {
   green: "#2ecc71", entertainment: "#ff8fab", education: "#88d8ff", work: "#ffe66d"
 };
 
+const CITY_ZONE_LAYOUT = {
+  "maternity-hospital": { x: 0.25, y: 0.28, w: 0.075, h: 0.11 },
+  "kindergarten": { x: 0.35, y: 0.19, w: 0.07, h: 0.105 },
+  "primary-school": { x: 0.45, y: 0.22, w: 0.07, h: 0.105 },
+  "middle-school": { x: 0.55, y: 0.2, w: 0.07, h: 0.105 },
+  "university": { x: 0.66, y: 0.2, w: 0.082, h: 0.115 },
+  "botanical-garden": { x: 0.76, y: 0.3, w: 0.075, h: 0.105 },
+  "cemetery": { x: 0.83, y: 0.14, w: 0.064, h: 0.092 },
+  "farm": { x: 0.27, y: 0.61, w: 0.082, h: 0.12 },
+  "residential": { x: 0.36, y: 0.52, w: 0.094, h: 0.13 },
+  "commercial-zone": { x: 0.42, y: 0.45, w: 0.086, h: 0.11 },
+  "public-plaza": { x: 0.5, y: 0.35, w: 0.082, h: 0.11 },
+  "night-market": { x: 0.52, y: 0.56, w: 0.082, h: 0.105 },
+  "legal-court": { x: 0.58, y: 0.44, w: 0.072, h: 0.104 },
+  "creative-studio": { x: 0.65, y: 0.52, w: 0.076, h: 0.104 },
+  "office-district": { x: 0.74, y: 0.58, w: 0.082, h: 0.112 },
+  "factory": { x: 0.78, y: 0.7, w: 0.078, h: 0.105 },
+  "park": { x: 0.62, y: 0.63, w: 0.086, h: 0.12 },
+  "zoo": { x: 0.82, y: 0.44, w: 0.066, h: 0.096 },
+  "repair-station": { x: 0.54, y: 0.71, w: 0.074, h: 0.102 },
+  "quiet-nook": { x: 0.66, y: 0.74, w: 0.068, h: 0.094 },
+  "empathy-lab": { x: 0.49, y: 0.74, w: 0.074, h: 0.1 },
+  "story-archive": { x: 0.48, y: 0.27, w: 0.074, h: 0.1 },
+  "commons-workshop": { x: 0.62, y: 0.58, w: 0.076, h: 0.102 },
+  "rest-courtyard": { x: 0.43, y: 0.66, w: 0.074, h: 0.1 },
+  "mentor-hall": { x: 0.72, y: 0.38, w: 0.072, h: 0.1 },
+  "resource-kitchen": { x: 0.34, y: 0.7, w: 0.074, h: 0.1 }
+};
+
+const CITY_ZONE_FALLBACK_META = {
+  "public-plaza": { name: "公开广场", role: "public", archetype: "social" },
+  "maternity-hospital": { name: "接生医院", role: "heal", archetype: "life" },
+  "residential": { name: "住宅区", role: "rest", archetype: "daily" },
+  "kindergarten": { name: "幼儿园", role: "cooperate", archetype: "education" },
+  "primary-school": { name: "小学", role: "cooperate", archetype: "education" },
+  "middle-school": { name: "中学", role: "cooperate", archetype: "education" },
+  "university": { name: "大学", role: "cooperate", archetype: "education" },
+  "office-district": { name: "办公楼群", role: "cooperate", archetype: "work" },
+  "factory": { name: "工厂", role: "cooperate", archetype: "work" },
+  "legal-court": { name: "法院", role: "support", archetype: "justice" },
+  "creative-studio": { name: "设计工作室", role: "cooperate", archetype: "work" },
+  "commercial-zone": { name: "商业区", role: "public", archetype: "commerce" },
+  "farm": { name: "农场", role: "heal", archetype: "life" },
+  "park": { name: "公园", role: "heal", archetype: "green" },
+  "zoo": { name: "动物园", role: "heal", archetype: "green" },
+  "botanical-garden": { name: "植物园", role: "heal", archetype: "green" },
+  "night-market": { name: "夜市", role: "public", archetype: "entertainment" },
+  "quiet-nook": { name: "静默角落", role: "heal", archetype: "support" },
+  "repair-station": { name: "修复站", role: "meditate", archetype: "support" },
+  "cemetery": { name: "安宁公地", role: "rest", archetype: "rest" },
+  "empathy-lab": { name: "共情调停屋", role: "heal", archetype: "support" },
+  "story-archive": { name: "开放故事馆", role: "public", archetype: "social" },
+  "commons-workshop": { name: "共识工坊", role: "cooperate", archetype: "work" },
+  "rest-courtyard": { name: "慢生活庭院", role: "rest", archetype: "daily" },
+  "mentor-hall": { name: "学徒导师厅", role: "cooperate", archetype: "education" },
+  "resource-kitchen": { name: "资源厨房", role: "public", archetype: "commerce" }
+};
+
 const ZONE_ICONS = {
   "public-plaza": "🏛", "maternity-hospital": "🏥", "residential": "🏠", "kindergarten": "🏫",
   "primary-school": "📚", "middle-school": "📖", "university": "🎓", "office-district": "🏢",
@@ -2620,6 +2678,28 @@ const EVOLVABLE_ROAD_ANCHORS = {
   "mentor-hall": "university",
   "resource-kitchen": "farm"
 };
+
+function getZoneVisualLayout(zone) {
+  return CITY_ZONE_LAYOUT[zone?.id] || zone || {};
+}
+
+function getRenderableZoneList(society) {
+  const sourceZones = typeof getOpenWorldZoneList === "function" ? getOpenWorldZoneList(society) : [];
+  const sourceById = new Map(sourceZones.map((zone) => [zone.id, zone]));
+  const orderedIds = [
+    ...Object.keys(CITY_ZONE_LAYOUT),
+    ...sourceZones.map((zone) => zone.id).filter((id) => !CITY_ZONE_LAYOUT[id])
+  ];
+  return orderedIds.map((id) => ({
+    id,
+    ...(CITY_ZONE_FALLBACK_META[id] || { name: id, role: "public", archetype: "social" }),
+    ...(sourceById.get(id) || {})
+  }));
+}
+
+function getWorldGroundY(H) {
+  return H * 0.32;
+}
 
 function getCanvasFrame() {
   const canvas = document.getElementById("gameCanvas");
@@ -2693,41 +2773,207 @@ function ensureGameRenderLoop() {
 function getRoadEndpoint(rect, toward) {
   const dx = toward.cx - rect.cx;
   const dy = toward.cy - rect.cy;
-  const horizontal = Math.abs(dx) > Math.abs(dy);
   return {
-    x: rect.cx + (horizontal ? Math.sign(dx) * rect.w * 0.42 : 0),
-    y: rect.cy + (!horizontal ? Math.sign(dy) * rect.h * 0.42 : 0)
+    x: rect.cx + Math.sign(dx || 1) * Math.min(rect.w * 0.24, 28),
+    y: rect.cy + Math.sign(dy || 1) * Math.min(rect.h * 0.18, 18) + rect.h * 0.18
   };
 }
 
-function drawRoadSegment(ctx, fromRect, toRect) {
+function traceRoadSegment(ctx, fromRect, toRect) {
   const start = getRoadEndpoint(fromRect, toRect);
   const end = getRoadEndpoint(toRect, fromRect);
-  const midY = (start.y + end.y) / 2;
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
   ctx.beginPath();
   ctx.moveTo(start.x, start.y);
-  ctx.bezierCurveTo(start.x, midY, end.x, midY, end.x, end.y);
-  ctx.stroke();
+  if (Math.abs(dx) > Math.abs(dy)) {
+    ctx.bezierCurveTo(start.x + dx * 0.42, start.y, end.x - dx * 0.42, end.y, end.x, end.y);
+  } else {
+    ctx.bezierCurveTo(start.x, start.y + dy * 0.42, end.x, end.y - dy * 0.42, end.x, end.y);
+  }
 }
 
-function drawCityRoadNetwork(ctx, zones, zoneRects) {
+function getCityRoadPairs(zones, zoneRects) {
   const zoneIds = new Set(zones.map((zone) => zone.id));
+  const pairs = [];
+  const seen = new Set();
+  const addPair = (fromId, toId) => {
+    const fromRect = zoneRects.get(fromId);
+    const toRect = zoneRects.get(toId);
+    if (!fromRect || !toRect) return;
+    const key = [fromId, toId].sort().join("::");
+    if (seen.has(key)) return;
+    seen.add(key);
+    pairs.push([fromRect, toRect]);
+  };
+
   CITY_ROAD_PATHS.forEach((path) => {
     for (let i = 0; i < path.length - 1; i += 1) {
-      const fromRect = zoneRects.get(path[i]);
-      const toRect = zoneRects.get(path[i + 1]);
-      if (!fromRect || !toRect) continue;
-      drawRoadSegment(ctx, fromRect, toRect);
+      addPair(path[i], path[i + 1]);
     }
   });
 
   Object.entries(EVOLVABLE_ROAD_ANCHORS).forEach(([sceneId, anchorId]) => {
     if (!zoneIds.has(sceneId)) return;
-    const fromRect = zoneRects.get(sceneId);
-    const toRect = zoneRects.get(anchorId);
-    if (!fromRect || !toRect) return;
-    drawRoadSegment(ctx, fromRect, toRect);
+    addPair(sceneId, anchorId);
   });
+
+  return pairs;
+}
+
+function drawCityRoadNetwork(ctx, zones, zoneRects) {
+  const pairs = getCityRoadPairs(zones, zoneRects);
+  if (!pairs.length) return;
+
+  const layers = [
+    { color: "#1a1a2e", width: 18 },
+    { color: "#f6d75d", width: 13 },
+    { color: "#fff4b8", width: 8 },
+    { color: "rgba(26, 26, 46, 0.24)", width: 1.5, dash: [10, 18] }
+  ];
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  layers.forEach((layer) => {
+    ctx.strokeStyle = layer.color;
+    ctx.lineWidth = layer.width;
+    ctx.setLineDash(layer.dash || []);
+    pairs.forEach(([fromRect, toRect]) => {
+      traceRoadSegment(ctx, fromRect, toRect);
+      ctx.stroke();
+    });
+  });
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = "#fff4b8";
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  pairs.forEach(([fromRect, toRect]) => {
+    [fromRect, toRect].forEach((rect) => {
+      ctx.beginPath();
+      ctx.arc(rect.cx, rect.cy + rect.h * 0.18, 4.5, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+  });
+  ctx.restore();
+}
+
+function drawRoleDot(ctx, x, y, color) {
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+}
+
+function drawZoneFootprint(ctx, zone, r, color, isHovered) {
+  ctx.save();
+  ctx.fillStyle = "rgba(26, 26, 46, 0.13)";
+  ctx.beginPath();
+  ctx.ellipse(r.cx + 5, r.cy + r.h * 0.34, r.w * 0.36, Math.max(7, r.h * 0.11), 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.globalAlpha = isHovered ? 0.22 : 0.12;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.ellipse(r.cx, r.cy + r.h * 0.3, r.w * 0.42, Math.max(10, r.h * 0.15), 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  if (isHovered) {
+    ctx.strokeStyle = "#e63946";
+    ctx.lineWidth = 3;
+    ctx.setLineDash([8, 6]);
+    ctx.beginPath();
+    ctx.ellipse(r.cx, r.cy + r.h * 0.02, r.w * 0.52, r.h * 0.58, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  ctx.restore();
+}
+
+function drawZoneNameTag(ctx, zone, r, color, isHovered) {
+  const labelW = Math.min(112, Math.max(48, zone.name.length * 11 + 24));
+  const labelH = isHovered ? 20 : 18;
+  const labelX = r.cx - labelW / 2;
+  const labelY = r.cy + r.h * 0.42;
+  ctx.save();
+  ctx.fillStyle = "rgba(250, 250, 245, 0.94)";
+  roundRect(ctx, labelX, labelY, labelW, labelH, 9);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = isHovered ? 2.5 : 2;
+  roundRect(ctx, labelX, labelY, labelW, labelH, 9);
+  ctx.stroke();
+  drawRoleDot(ctx, labelX + 10, labelY + labelH / 2, color);
+  ctx.fillStyle = "#1a1a2e";
+  const labelFontSize = getFittedCanvasFontSize(ctx, zone.name, labelW - 26, isHovered ? 11 : 10, 8);
+  ctx.font = `bold ${labelFontSize}px "Noto Sans SC", sans-serif`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.fillText(zone.name, labelX + 18, labelY + labelH / 2, labelW - 24);
+  ctx.restore();
+}
+
+function drawZoneOccupancyBadge(ctx, r, count) {
+  if (count <= 0) return;
+  const bx = r.cx + Math.min(42, r.w * 0.34);
+  const by = r.cy - Math.min(42, r.h * 0.42);
+  ctx.save();
+  ctx.fillStyle = "#f1c40f";
+  ctx.beginPath();
+  ctx.arc(bx, by, 10, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+  ctx.fillStyle = "#1a1a2e";
+  ctx.font = "bold 10px Arial";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(String(count), bx, by + 0.5);
+  ctx.restore();
+}
+
+function drawFallbackZoneBuilding(ctx, zone, r, color, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.56, 42), isHovered ? 82 : 72);
+  const h = w * 0.62;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.76;
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  roundRect(ctx, x, y + h * 0.24, w, h * 0.76, 5);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#fafaf5";
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y + h * 0.28);
+  ctx.lineTo(r.cx, y - h * 0.12);
+  ctx.lineTo(x + w + 4, y + h * 0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#fafaf5";
+  ctx.font = `bold ${Math.max(14, w * 0.26)}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(ZONE_ICONS[zone.id] || "◇", r.cx, y + h * 0.58);
+  ctx.restore();
+}
+
+function drawZonePlace(ctx, zone, r, color, count, isHovered) {
+  drawZoneFootprint(ctx, zone, r, color, isHovered);
+  if (!drawZoneBuildingSprite(ctx, zone, r, isHovered)) {
+    drawFallbackZoneBuilding(ctx, zone, r, color, isHovered);
+  }
+  drawZoneNameTag(ctx, zone, r, color, isHovered);
+  drawZoneOccupancyBadge(ctx, r, count);
 }
 
 function getFittedCanvasFontSize(ctx, text, maxWidth, preferredSize, minimumSize = 7) {
@@ -2739,41 +2985,19 @@ function getFittedCanvasFontSize(ctx, text, maxWidth, preferredSize, minimumSize
 }
 
 const PLAYFIELD_PALETTE = {
-  daySkyTop: "#c9f2ff",
-  daySkyBottom: "#e6fbf6",
-  dayGroundTop: "#d8ffef",
-  dayGroundBottom: "#f5fff8",
-  dayHorizon: "rgba(250, 250, 245, 0.78)",
-  nightSkyTop: "#8fdcff",
-  nightSkyBottom: "#b9f4ee",
-  nightGroundTop: "#bdf8db",
-  nightGroundBottom: "#e9fff0",
-  nightHorizon: "rgba(250, 250, 245, 0.36)",
-  gridInk: "rgba(26, 26, 46, 0.052)",
-  gridBlue: "rgba(78, 168, 222, 0.055)",
+  daySkyTop: "#e5f8ff",
+  daySkyBottom: "#f1fffb",
+  dayGroundTop: "#ecfff3",
+  dayGroundBottom: "#f8fff6",
+  dayHorizon: "rgba(250, 250, 245, 0.9)",
+  nightSkyTop: "#b8ecff",
+  nightSkyBottom: "#d9fbf4",
+  nightGroundTop: "#d9ffe9",
+  nightGroundBottom: "#f3fff4",
+  nightHorizon: "rgba(250, 250, 245, 0.56)",
   horizonInk: "rgba(26, 26, 46, 0.12)",
   highlight: "rgba(250, 250, 245, 0.64)"
 };
-
-function drawPlayfieldGrid(ctx, W, yStart, yEnd, color, step = 56) {
-  ctx.save();
-  ctx.strokeStyle = color;
-  ctx.lineWidth = 1.5;
-  const span = yEnd - yStart;
-  for (let gx = -span; gx < W + span; gx += step) {
-    ctx.beginPath();
-    ctx.moveTo(gx, yStart);
-    ctx.lineTo(gx + span, yEnd);
-    ctx.stroke();
-  }
-  for (let gx = 0; gx < W + span; gx += step) {
-    ctx.beginPath();
-    ctx.moveTo(gx, yStart);
-    ctx.lineTo(gx - span, yEnd);
-    ctx.stroke();
-  }
-  ctx.restore();
-}
 
 function drawPlayfieldBackdrop(ctx, W, H, groundY, isNight) {
   const p = PLAYFIELD_PALETTE;
@@ -2792,9 +3016,6 @@ function drawPlayfieldBackdrop(ctx, W, H, groundY, isNight) {
 
   ctx.fillStyle = isNight ? p.nightHorizon : p.dayHorizon;
   ctx.fillRect(0, groundY - 18, W, 54);
-
-  drawPlayfieldGrid(ctx, W, 0, groundY + 44, p.gridBlue, 64);
-  drawPlayfieldGrid(ctx, W, groundY - 20, H, p.gridInk, 56);
 
   ctx.save();
   ctx.strokeStyle = p.highlight;
@@ -2829,8 +3050,8 @@ function drawGameWorld() {
   const society = state.society;
   const ts = getWorldTimeState(society);
   const isNight = ts.isNight;
-  const groundY = H * 0.35;
-  const zones = getOpenWorldZoneList(society);
+  const groundY = getWorldGroundY(H);
+  const zones = getRenderableZoneList(society);
   const zoneRects = new Map(zones.map(zone => [zone.id, getZoneGameRect(zone, W, H, groundY)]));
   const aliveCitizens = getAliveCitizens(society);
   if (!renderCache.lastPruneAt || now - renderCache.lastPruneAt > 2000) {
@@ -2893,83 +3114,26 @@ function drawGameWorld() {
   ctx.scale(camera.zoom, camera.zoom);
   ctx.translate(-W / 2, -H / 2);
 
-  // ── Street network between planned community districts ──
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 8;
-  ctx.setLineDash([]);
-  ctx.lineCap = "round";
-  drawCityRoadNetwork(ctx, zones, zoneRects);
-  ctx.strokeStyle = "#fafaf5";
-  ctx.lineWidth = 2;
-  ctx.setLineDash([10, 12]);
-  drawCityRoadNetwork(ctx, zones, zoneRects);
-  ctx.setLineDash([]);
-  ctx.lineCap = "butt";
+  // ── Cartoon neighborhood map: roads, then places ──
+  try {
+    drawCityRoadNetwork(ctx, zones, zoneRects);
+  } catch (error) {
+    console.warn("Road layer skipped", error);
+  }
 
-  // ── Draw Zones as floating society districts ──
-  zones.forEach((zone, idx) => {
-    const r = zoneRects.get(zone.id);
-    if (!r) return;
+  const drawableZones = zones
+    .map((zone) => ({ zone, rect: zoneRects.get(zone.id) }))
+    .filter((item) => item.rect)
+    .sort((a, b) => a.rect.cy - b.rect.cy);
+
+  drawableZones.forEach(({ zone, rect: r }) => {
     const color = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#a0a0a0";
     const isHovered = hoveredZone === zone.id;
-
-    // Hard offset comic shadow
-    ctx.fillStyle = "#1a1a2e";
-    roundRect(ctx, r.x + 6, r.y + 6, r.w, r.h, 8);
-    ctx.fill();
-
-    // Main district slab
-    ctx.fillStyle = color;
-    roundRect(ctx, r.x, r.y, r.w, r.h, 8);
-    ctx.fill();
-
-    // Border
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = isHovered ? 5 : 3;
-    roundRect(ctx, r.x, r.y, r.w, r.h, 8);
-    ctx.stroke();
-
-    drawZoneBuildingSprite(ctx, zone, r, isHovered);
-
-    // Label
-    const labelW = Math.min(r.w - 16, Math.max(54, zone.name.length * 13 + 18));
-    const labelTextW = Math.max(24, labelW - 14);
-    ctx.fillStyle = "#fafaf5";
-    roundRect(ctx, r.x + 8, r.y + r.h - 22, labelW, 18, 6);
-    ctx.fill();
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2;
-    roundRect(ctx, r.x + 8, r.y + r.h - 22, labelW, 18, 6);
-    ctx.stroke();
-    ctx.fillStyle = "#1a1a2e";
-    const labelFontSize = getFittedCanvasFontSize(ctx, zone.name, labelTextW, isHovered ? 12 : 10);
-    ctx.font = `bold ${labelFontSize}px "Noto Sans SC", sans-serif`;
-    ctx.textAlign = "left";
-    ctx.fillText(zone.name, r.x + 15, r.y + r.h - 9, labelTextW);
-
-    // Occupancy badge
     const count = zoneOccupancy.get(zone.id) || 0;
-    if (count > 0) {
-      const bx = r.x + r.w - 14;
-      const by = r.y + 14;
-      ctx.fillStyle = "#f1c40f";
-      ctx.beginPath();
-      ctx.arc(bx, by, 10, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#1a1a2e";
-      ctx.lineWidth = 3;
-      ctx.stroke();
-      ctx.fillStyle = "#1a1a2e";
-      ctx.font = "bold 10px Arial";
-      ctx.fillText(String(count), bx, by + 3.5);
-    }
-
-    // Hover glow
-    if (isHovered) {
-      ctx.strokeStyle = "#e63946";
-      ctx.lineWidth = 5;
-      roundRect(ctx, r.x - 5, r.y - 5, r.w + 10, r.h + 10, 10);
-      ctx.stroke();
+    try {
+      drawZonePlace(ctx, zone, r, color, count, isHovered);
+    } catch (error) {
+      console.warn("Zone layer skipped", zone.id, error);
     }
   });
 
@@ -3267,35 +3431,6 @@ function drawGameWorld() {
     ctx.fillText(entity.emoji, ex, ey + floatY);
   });
 
-  // ── Decorations: trees ──
-  const treePositions = [
-    [0.03, 0.7], [0.96, 0.5], [0.05, 0.45], [0.93, 0.85],
-    [0.5, 0.92], [0.25, 0.88], [0.75, 0.92], [0.4, 0.38],
-    [0.65, 0.35], [0.15, 0.55]
-  ];
-  treePositions.forEach(([tx, ty], i) => {
-    const treeX = tx * W;
-    const treeY = groundY + ty * (H - groundY);
-    const treeH = 18 + (i % 3) * 6;
-    const sway = Math.sin(t * 0.8 + i) * 2;
-
-    // Trunk
-    ctx.fillStyle = isNight ? "#3d2b1f" : "#8B6914";
-    ctx.fillRect(treeX - 2, treeY, 4, treeH * 0.4);
-
-    // Crown
-    ctx.fillStyle = isNight ? "#1a4a2a" : `hsl(${110 + i * 15}, 55%, ${40 + (i % 3) * 8}%)`;
-    ctx.beginPath();
-    ctx.arc(treeX + sway, treeY - treeH * 0.15, treeH * 0.4, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(treeX + sway - 5, treeY, treeH * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.beginPath();
-    ctx.arc(treeX + sway + 5, treeY, treeH * 0.3, 0, Math.PI * 2);
-    ctx.fill();
-  });
-
   // ── Building details: factory smoke ──
   const factoryZone = zones.find(z => z.id === "factory");
   if (factoryZone) {
@@ -3411,35 +3546,22 @@ function drawGameWorld() {
       ctx.fill();
     }
   }
-  if (weather === "sunny") {
-    // Light clouds drifting
-    ctx.fillStyle = "rgba(255,255,255,0.12)";
-    for (let c = 0; c < 3; c++) {
-      const cloudX = ((c * 250 + t * 5) % (W + 200)) - 100;
-      const cloudY = 40 + c * 30;
-      ctx.beginPath();
-      ctx.arc(cloudX, cloudY, 22, 0, Math.PI * 2);
-      ctx.arc(cloudX + 15, cloudY - 4, 18, 0, Math.PI * 2);
-      ctx.arc(cloudX + 30, cloudY, 20, 0, Math.PI * 2);
-      ctx.fill();
-    }
-  }
-
   ensureGameRenderLoop();
 }
 
 function getZoneGameRect(zone, W, H, groundY) {
+  const layout = getZoneVisualLayout(zone);
   const margin = 20;
   const visibleMapW = W - margin * 2;
   const mapW = W < 520 ? Math.max(760, visibleMapW) : visibleMapW;
   const mapH = H - groundY - 60;
   const mobileFocusOffset = W < 520 ? (mapW - visibleMapW) * 0.45 : 0;
-  const x = margin + zone.x * mapW - mobileFocusOffset;
-  const y = groundY + 10 + zone.y * mapH;
-  const minW = W < 520 ? 36 : 50;
-  const minH = W < 520 ? 30 : 40;
-  const w = Math.max(minW, zone.w * mapW);
-  const h = Math.max(minH, zone.h * mapH);
+  const x = margin + (Number(layout.x) || 0) * mapW - mobileFocusOffset;
+  const y = groundY + 10 + (Number(layout.y) || 0) * mapH;
+  const minW = W < 520 ? 44 : 68;
+  const minH = W < 520 ? 38 : 52;
+  const w = Math.max(minW, (Number(layout.w) || 0.07) * mapW);
+  const h = Math.max(minH, (Number(layout.h) || 0.1) * mapH);
   return { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
 }
 
@@ -3717,9 +3839,9 @@ function hitTestZone(mx, my) {
   const rect = canvas.getBoundingClientRect();
   const W = rect.width;
   const H = rect.height;
-  const groundY = H * 0.35;
+  const groundY = getWorldGroundY(H);
   const point = screenToWorldPoint(mx, my, W, H);
-  const zones = getOpenWorldZoneList(state.society);
+  const zones = getRenderableZoneList(state.society);
   for (const zone of zones) {
     const r = getZoneGameRect(zone, W, H, groundY);
     if (point.x >= r.x && point.x <= r.x + r.w && point.y >= r.y && point.y <= r.y + r.h) {
@@ -3735,7 +3857,7 @@ function hitTestCitizen(mx, my) {
   const rect = canvas.getBoundingClientRect();
   const W = rect.width;
   const H = rect.height;
-  const groundY = H * 0.35;
+  const groundY = getWorldGroundY(H);
   const point = screenToWorldPoint(mx, my, W, H);
   const aliveCitizens = getAliveCitizens(state.society);
   for (let i = aliveCitizens.length - 1; i >= 0; i--) {
