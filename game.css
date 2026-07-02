@@ -3334,7 +3334,7 @@ select,
 }
 
 @media (max-width: 900px) {
-  body.quest-locked:not(.splash-active) .hud-top {
+body.quest-locked:not(.splash-active) .hud-top {
     display: none;
   }
 
@@ -3385,6 +3385,25 @@ select,
   .unlocked-actions {
     gap: 8px;
   }
+}
+
+/* Keep the onboarding HUD compact. The empty full-width white bar was stealing
+   attention from the city stage without adding any playable information. */
+body.quest-locked:not(.splash-active) .hud-top {
+  right: auto;
+  width: max-content;
+  max-width: calc(100vw - 36px);
+  align-items: stretch;
+}
+
+body.quest-locked:not(.splash-active) .hud-brand,
+body.quest-locked:not(.splash-active) .hud-stats {
+  width: auto;
+  flex: 0 0 auto;
+}
+
+body.quest-locked:not(.splash-active) .hud-stats {
+  display: flex;
 }
 
 @media (max-width: 720px) {

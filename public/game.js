@@ -2985,52 +2985,25 @@ function getFittedCanvasFontSize(ctx, text, maxWidth, preferredSize, minimumSize
 }
 
 const PLAYFIELD_PALETTE = {
-  daySkyTop: "#e5f8ff",
-  daySkyBottom: "#f1fffb",
-  dayGroundTop: "#ecfff3",
-  dayGroundBottom: "#f8fff6",
-  dayHorizon: "rgba(250, 250, 245, 0.9)",
-  nightSkyTop: "#b8ecff",
-  nightSkyBottom: "#d9fbf4",
-  nightGroundTop: "#d9ffe9",
-  nightGroundBottom: "#f3fff4",
-  nightHorizon: "rgba(250, 250, 245, 0.56)",
-  horizonInk: "rgba(26, 26, 46, 0.12)",
-  highlight: "rgba(250, 250, 245, 0.64)"
+  daySkyTop: "#e8f8ff",
+  daySkyBottom: "#e9fbf8",
+  dayGroundTop: "#e9fbf0",
+  dayGroundBottom: "#f6fff5",
+  nightSkyTop: "#c8f0ff",
+  nightSkyBottom: "#ddfaf6",
+  nightGroundTop: "#dff8e9",
+  nightGroundBottom: "#f1fff4"
 };
 
 function drawPlayfieldBackdrop(ctx, W, H, groundY, isNight) {
   const p = PLAYFIELD_PALETTE;
-
-  const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY + 48);
-  skyGradient.addColorStop(0, isNight ? p.nightSkyTop : p.daySkyTop);
-  skyGradient.addColorStop(1, isNight ? p.nightSkyBottom : p.daySkyBottom);
-  ctx.fillStyle = skyGradient;
-  ctx.fillRect(0, 0, W, groundY + 56);
-
-  const groundGradient = ctx.createLinearGradient(0, groundY - 24, 0, H);
-  groundGradient.addColorStop(0, isNight ? p.nightGroundTop : p.dayGroundTop);
-  groundGradient.addColorStop(1, isNight ? p.nightGroundBottom : p.dayGroundBottom);
-  ctx.fillStyle = groundGradient;
-  ctx.fillRect(0, groundY - 24, W, H - groundY + 24);
-
-  ctx.fillStyle = isNight ? p.nightHorizon : p.dayHorizon;
-  ctx.fillRect(0, groundY - 18, W, 54);
-
-  ctx.save();
-  ctx.strokeStyle = p.highlight;
-  ctx.lineWidth = 5;
-  ctx.beginPath();
-  ctx.moveTo(0, groundY + 2);
-  ctx.lineTo(W, groundY + 2);
-  ctx.stroke();
-  ctx.strokeStyle = p.horizonInk;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.moveTo(0, groundY + 6);
-  ctx.lineTo(W, groundY + 6);
-  ctx.stroke();
-  ctx.restore();
+  const backdrop = ctx.createLinearGradient(0, 0, 0, H);
+  backdrop.addColorStop(0, isNight ? p.nightSkyTop : p.daySkyTop);
+  backdrop.addColorStop(0.42, isNight ? p.nightSkyBottom : p.daySkyBottom);
+  backdrop.addColorStop(0.72, isNight ? p.nightGroundTop : p.dayGroundTop);
+  backdrop.addColorStop(1, isNight ? p.nightGroundBottom : p.dayGroundBottom);
+  ctx.fillStyle = backdrop;
+  ctx.fillRect(0, 0, W, H);
 }
 
 function drawGameWorld() {
