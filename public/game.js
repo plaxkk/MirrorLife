@@ -2738,6 +2738,80 @@ function getFittedCanvasFontSize(ctx, text, maxWidth, preferredSize, minimumSize
   return minimumSize;
 }
 
+const PLAYFIELD_PALETTE = {
+  daySkyTop: "#c9f2ff",
+  daySkyBottom: "#e6fbf6",
+  dayGroundTop: "#d8ffef",
+  dayGroundBottom: "#f5fff8",
+  dayHorizon: "rgba(250, 250, 245, 0.78)",
+  nightSkyTop: "#8fdcff",
+  nightSkyBottom: "#b9f4ee",
+  nightGroundTop: "#bdf8db",
+  nightGroundBottom: "#e9fff0",
+  nightHorizon: "rgba(250, 250, 245, 0.36)",
+  gridInk: "rgba(26, 26, 46, 0.052)",
+  gridBlue: "rgba(78, 168, 222, 0.055)",
+  horizonInk: "rgba(26, 26, 46, 0.12)",
+  highlight: "rgba(250, 250, 245, 0.64)"
+};
+
+function drawPlayfieldGrid(ctx, W, yStart, yEnd, color, step = 56) {
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  const span = yEnd - yStart;
+  for (let gx = -span; gx < W + span; gx += step) {
+    ctx.beginPath();
+    ctx.moveTo(gx, yStart);
+    ctx.lineTo(gx + span, yEnd);
+    ctx.stroke();
+  }
+  for (let gx = 0; gx < W + span; gx += step) {
+    ctx.beginPath();
+    ctx.moveTo(gx, yStart);
+    ctx.lineTo(gx - span, yEnd);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawPlayfieldBackdrop(ctx, W, H, groundY, isNight) {
+  const p = PLAYFIELD_PALETTE;
+
+  const skyGradient = ctx.createLinearGradient(0, 0, 0, groundY + 48);
+  skyGradient.addColorStop(0, isNight ? p.nightSkyTop : p.daySkyTop);
+  skyGradient.addColorStop(1, isNight ? p.nightSkyBottom : p.daySkyBottom);
+  ctx.fillStyle = skyGradient;
+  ctx.fillRect(0, 0, W, groundY + 56);
+
+  const groundGradient = ctx.createLinearGradient(0, groundY - 24, 0, H);
+  groundGradient.addColorStop(0, isNight ? p.nightGroundTop : p.dayGroundTop);
+  groundGradient.addColorStop(1, isNight ? p.nightGroundBottom : p.dayGroundBottom);
+  ctx.fillStyle = groundGradient;
+  ctx.fillRect(0, groundY - 24, W, H - groundY + 24);
+
+  ctx.fillStyle = isNight ? p.nightHorizon : p.dayHorizon;
+  ctx.fillRect(0, groundY - 18, W, 54);
+
+  drawPlayfieldGrid(ctx, W, 0, groundY + 44, p.gridBlue, 64);
+  drawPlayfieldGrid(ctx, W, groundY - 20, H, p.gridInk, 56);
+
+  ctx.save();
+  ctx.strokeStyle = p.highlight;
+  ctx.lineWidth = 5;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY + 2);
+  ctx.lineTo(W, groundY + 2);
+  ctx.stroke();
+  ctx.strokeStyle = p.horizonInk;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, groundY + 6);
+  ctx.lineTo(W, groundY + 6);
+  ctx.stroke();
+  ctx.restore();
+}
+
 function drawGameWorld() {
   gameFrame = null;
   if (document.hidden) return;
@@ -2772,15 +2846,8 @@ function drawGameWorld() {
     zoneOccupancy.set(citizen.zoneId, (zoneOccupancy.get(citizen.zoneId) || 0) + 1);
   });
 
-  // ── Cel-shaded sky ──
-  ctx.fillStyle = isNight ? "#4ea8de" : "#88d8ff";
-  ctx.fillRect(0, 0, W, H);
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(0, groundY);
-  ctx.lineTo(W, groundY);
-  ctx.stroke();
+  // ── Cel-shaded city playfield ──
+  drawPlayfieldBackdrop(ctx, W, H, groundY, isNight);
 
   // Stars at night
   if (isNight) {
@@ -2817,29 +2884,6 @@ function drawGameWorld() {
     ctx.lineWidth = 4;
     ctx.stroke();
   }
-
-  // ── Ground ──
-  ctx.fillStyle = isNight ? "#2ecc71" : "#9bffcb";
-  ctx.fillRect(0, groundY, W, H - groundY);
-
-  // Street-block paving: soft city-grid base instead of scattered hatch marks.
-  ctx.save();
-  ctx.strokeStyle = isNight ? "rgba(26,26,46,0.14)" : "rgba(26,26,46,0.11)";
-  ctx.lineWidth = 2;
-  const gridStep = 42;
-  for (let gx = -H; gx < W + H; gx += gridStep) {
-    ctx.beginPath();
-    ctx.moveTo(gx, groundY);
-    ctx.lineTo(gx + H - groundY, H);
-    ctx.stroke();
-  }
-  for (let gx = 0; gx < W + H; gx += gridStep) {
-    ctx.beginPath();
-    ctx.moveTo(gx, groundY);
-    ctx.lineTo(gx - (H - groundY), H);
-    ctx.stroke();
-  }
-  ctx.restore();
 
   // ── Camera transform ──
   ctx.save();
