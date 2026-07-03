@@ -15,6 +15,9 @@ let walkingCitizens = {};
 let speechBubbles = {};
 let particles = [];
 let realityActionFocus = null;
+let interactionVisuals = [];
+let recentInteractionEvents = [];
+let interactionVisualSeq = 0;
 let renderCache = { canvas: null, ctx: null, cssW: 0, cssH: 0, dpr: 0, lastFrameAt: 0, lastPruneAt: 0 };
 let transparentSpriteCache = new WeakMap();
 let hoverCheckAt = 0;
@@ -30,6 +33,9 @@ const IDLE_FRAME_MS = 90;
 const INTERACTION_BOOST_MS = 2200;
 const MAX_RENDER_DPR = 2;
 const MAX_PARTICLES = 120;
+const MAX_INTERACTION_VISUALS = 7;
+const MAX_RECENT_INTERACTIONS = 8;
+const INTERACTION_VISUAL_DURATION = 4400;
 
 const AVATAR_COLORS = [
   "#296c68", "#7a4462", "#b45f45", "#4e5c8d",
@@ -127,6 +133,16 @@ const ACTION_COLORS = {
   meditate: "rgba(196,181,253,0.9)",
   rest: "rgba(251,191,36,0.9)",
   conflict: "rgba(255,107,107,0.9)"
+};
+
+const ACTION_SYMBOLS = {
+  propose: "!",
+  cooperate: "+",
+  support: "♥",
+  listen: "耳",
+  meditate: "≈",
+  rest: "…",
+  conflict: "!"
 };
 
 const SOCIAL_STANCES = {
@@ -1958,6 +1974,86 @@ function getActiveSpeechBubble(citizenId) {
   return { ...bubble, alpha: 1 - (elapsed / bubble.duration) * 0.3 };
 }
 
+function getActionVisualMeta(type) {
+  return {
+    label: ACTION_LABELS[type] || type || "互动",
+    color: ACTION_COLORS[type] || ACTION_COLORS.support,
+    symbol: ACTION_SYMBOLS[type] || "•"
+  };
+}
+
+function summarizeInteractionOutcome(item) {
+  const bits = [];
+  if (Number.isFinite(Number(item.score)) && Number(item.score) !== 0) {
+    bits.push(`和谐 ${Number(item.score) > 0 ? "+" : ""}${Math.round(Number(item.score))}`);
+  }
+  if (Number.isFinite(Number(item.relationshipOutcome))) {
+    const value = Math.round(Number(item.relationshipOutcome));
+    if (Math.abs(value) >= 2) bits.push(`关系 ${value > 0 ? "+" : ""}${value}`);
+  }
+  if (item.relationshipLabel) bits.push(item.relationshipLabel);
+  return bits.join(" · ") || "关系已记录";
+}
+
+function queueInteractionVisual(result, options = {}) {
+  if (!result || !result.actorId) return;
+  const type = result.type || "listen";
+  const meta = getActionVisualMeta(type);
+  const now = performance.now();
+  const visibleDelay = Math.min(interactionVisuals.length, 5) * 180;
+  const item = {
+    id: `interaction-${++interactionVisualSeq}`,
+    type,
+    label: meta.label,
+    color: meta.color,
+    symbol: meta.symbol,
+    actorId: result.actorId,
+    targetId: result.targetId || null,
+    actorName: result.actorName || result.actor || getCitizenNameById(result.actorId),
+    targetName: result.targetName || result.target || (result.targetId ? getCitizenNameById(result.targetId) : ""),
+    zone: result.zone || "",
+    source: options.source || "社会自演",
+    score: Number(result.score || 0),
+    relationshipLabel: result.relationshipLabel || result.relationshipModel || "",
+    relationshipOutcome: result.relationshipOutcome,
+    text: result.text || "",
+    createdAt: now,
+    startAt: now + visibleDelay,
+    until: now + visibleDelay + INTERACTION_VISUAL_DURATION
+  };
+
+  interactionVisuals.push(item);
+  interactionVisuals = interactionVisuals
+    .filter((entry) => entry.until > now)
+    .slice(-MAX_INTERACTION_VISUALS);
+
+  recentInteractionEvents = [item, ...recentInteractionEvents].slice(0, MAX_RECENT_INTERACTIONS);
+  markRenderActive(INTERACTION_VISUAL_DURATION + visibleDelay);
+}
+
+function renderRecentInteractionFeed() {
+  const items = recentInteractionEvents.slice(0, 5);
+  if (!items.length) {
+    return `
+      <section class="interaction-feed">
+        <div class="section-mini-title">近期互动</div>
+        <div class="interaction-feed-empty">还没有形成清晰互动。推进一回合或点一个人试试。</div>
+      </section>`;
+  }
+  return `
+    <section class="interaction-feed">
+      <div class="section-mini-title">近期互动</div>
+      ${items.map((item) => `
+        <div class="interaction-feed-row ${escapeHtml(item.type)}">
+          <span class="interaction-feed-symbol">${escapeHtml(item.symbol)}</span>
+          <div>
+            <b>${escapeHtml(item.actorName || "分身")} ${escapeHtml(item.label)}${item.targetName ? ` ${escapeHtml(item.targetName)}` : ""}</b>
+            <small>${escapeHtml(summarizeInteractionOutcome(item))}</small>
+          </div>
+        </div>`).join("")}
+    </section>`;
+}
+
 // ── Particles ──
 
 function spawnParticles(x, y, type, count) {
@@ -2269,6 +2365,7 @@ function renderWorldPulseSummary() {
       <b>WORLD SIGNAL</b>
       <p>${escapeHtml(driftSignals[0] || "另一个世界暂时安静。下一次演化会从关系、张力或漂流瓶里发光。")}</p>
     </div>
+    ${renderRecentInteractionFeed()}
     ${renderGrowthPanel()}
     ${renderSocialGraphSnapshot()}
     ${renderAgentMemoryLedger()}
@@ -3700,6 +3797,8 @@ function drawGameWorld() {
     });
   }
 
+  drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens);
+
   // ── Draw world entities (animals) ──
   const entities = firstLoopComplete ? (society.entities || []) : [];
   entities.forEach((entity) => {
@@ -3862,6 +3961,143 @@ function getCitizenCanvasPosition(citizen, aliveCitizens, W, H, groundY) {
     x: anim.x || zr.x + 12 + ((idx * 37) % Math.max(1, zr.w - 24)),
     y: anim.y || zr.y + zr.h - 8
   };
+}
+
+function actionColorWithAlpha(type, alpha) {
+  const color = ACTION_COLORS[type] || ACTION_COLORS.support;
+  return color.replace(/rgba\(([^,]+),([^,]+),([^,]+),[^)]+\)/, `rgba($1,$2,$3,${alpha})`);
+}
+
+function fitCanvasText(ctx, text, maxWidth) {
+  const source = String(text || "");
+  if (ctx.measureText(source).width <= maxWidth) return source;
+  let output = source;
+  while (output.length > 1 && ctx.measureText(`${output}…`).width > maxWidth) {
+    output = output.slice(0, -1);
+  }
+  return `${output}…`;
+}
+
+function drawInteractionCard(ctx, item, x, y, alpha, viewportW, maxW = 230) {
+  const title = `${item.actorName || "分身"} ${item.label}${item.targetName ? ` ${item.targetName}` : ""}`;
+  const summary = summarizeInteractionOutcome(item);
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = "900 12px Arial";
+  const titleW = ctx.measureText(title).width;
+  ctx.font = "700 10px Arial";
+  const summaryW = ctx.measureText(summary).width;
+  const width = clamp(Math.max(titleW, summaryW) + 54, 142, maxW);
+  const height = 46;
+  const left = clamp(x - width / 2, 12, Math.max(12, viewportW - width - 12));
+  const top = Math.max(74, y - height - 18);
+
+  ctx.fillStyle = "rgba(250, 250, 245, 0.96)";
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, left, top, width, height, 8);
+  ctx.fill();
+  roundRect(ctx, left, top, width, height, 8);
+  ctx.stroke();
+
+  ctx.fillStyle = actionColorWithAlpha(item.type, 0.95);
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.arc(left + 21, top + 23, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+
+  ctx.fillStyle = "#1a1a2e";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.font = "900 12px Arial";
+  ctx.fillText(item.symbol || "•", left + 21, top + 23);
+
+  ctx.textAlign = "left";
+  ctx.textBaseline = "alphabetic";
+  ctx.font = "900 12px Arial";
+  ctx.fillText(fitCanvasText(ctx, title, width - 48), left + 40, top + 20);
+  ctx.fillStyle = "#4b4b63";
+  ctx.font = "700 10px Arial";
+  ctx.fillText(fitCanvasText(ctx, summary, width - 48), left + 40, top + 35);
+  ctx.restore();
+}
+
+function drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens) {
+  const now = performance.now();
+  interactionVisuals = interactionVisuals.filter((item) => item.until > now);
+  if (!interactionVisuals.length) return;
+
+  interactionVisuals.forEach((item, index) => {
+    if (now < item.startAt) return;
+    const actor = state.society.citizens.find((citizen) => citizen.id === item.actorId);
+    const target = item.targetId
+      ? state.society.citizens.find((citizen) => citizen.id === item.targetId)
+      : null;
+    const actorPos = getCitizenCanvasPosition(actor, aliveCitizens, W, H, groundY);
+    if (!actorPos) return;
+    const targetPos = target ? getCitizenCanvasPosition(target, aliveCitizens, W, H, groundY) : null;
+    const elapsed = now - item.startAt;
+    const progress = clamp(elapsed / INTERACTION_VISUAL_DURATION, 0, 1);
+    const alpha = Math.min(clamp(elapsed / 360, 0, 1), clamp((item.until - now) / 900, 0, 1));
+    const pulse = Math.sin(now / 140 + index) * 0.5 + 0.5;
+    const color = actionColorWithAlpha(item.type, 0.26 + alpha * 0.56);
+    const lineEnd = targetPos || {
+      x: actorPos.x + Math.cos(index * 1.7) * 58,
+      y: actorPos.y - 38 + Math.sin(index * 1.4) * 26
+    };
+    const midX = actorPos.x + (lineEnd.x - actorPos.x) * 0.5;
+    const midY = actorPos.y + (lineEnd.y - actorPos.y) * 0.5 - 12;
+
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = item.source === "玩家互动" ? 4 : 2.5;
+    ctx.setLineDash(item.source === "玩家互动" ? [] : [8, 7]);
+    ctx.beginPath();
+    ctx.moveTo(actorPos.x, actorPos.y);
+    ctx.quadraticCurveTo(midX, midY - 24, lineEnd.x, lineEnd.y);
+    ctx.stroke();
+    ctx.setLineDash([]);
+
+    const beadT = clamp(progress * 1.25, 0, 1);
+    const beadX = actorPos.x + (lineEnd.x - actorPos.x) * beadT;
+    const beadY = actorPos.y + (lineEnd.y - actorPos.y) * beadT - Math.sin(beadT * Math.PI) * 24;
+    ctx.fillStyle = actionColorWithAlpha(item.type, 0.88);
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(beadX, beadY, 5.5 + pulse * 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+
+    [actorPos, targetPos].filter(Boolean).forEach((pos, ringIndex) => {
+      ctx.strokeStyle = actionColorWithAlpha(item.type, 0.34 + alpha * 0.42);
+      ctx.lineWidth = ringIndex === 0 && item.source === "玩家互动" ? 3 : 2;
+      ctx.beginPath();
+      ctx.arc(pos.x, pos.y + 4, 20 + pulse * 8 + ringIndex * 5, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+
+    ctx.fillStyle = actionColorWithAlpha(item.type, 0.94);
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.arc(midX, midY - 20, 16, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#1a1a2e";
+    ctx.font = "900 13px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(item.symbol || "•", midX, midY - 20);
+    ctx.restore();
+
+    if (index >= interactionVisuals.length - 4) {
+      drawInteractionCard(ctx, item, midX, midY - 32 - index * 8, alpha, W);
+    }
+  });
 }
 
 function drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens) {

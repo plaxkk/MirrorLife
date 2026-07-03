@@ -2465,6 +2465,20 @@ function applySocietyActionResult(result, eventSuffix = "") {
       addSpeechBubble(result.actorId, ACTION_LABELS_MAP[result.type] || result.type, result.type);
     }
   }
+  if (typeof queueInteractionVisual === "function") {
+    queueInteractionVisual(
+      {
+        ...result,
+        relationshipLabel: relationModel?.label || result.relationshipModel || "",
+        relationshipOutcome: result.relationshipOutcome,
+        actorName: actor?.name || result.actor,
+        targetName: target?.name || result.target || ""
+      },
+      {
+        source: eventSuffix.includes("玩家") ? "玩家互动" : "社会自演"
+      }
+    );
+  }
 }
 
 function injectLifeEventToSociety(eventText, modeHint = "") {
