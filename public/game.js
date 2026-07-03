@@ -23,6 +23,7 @@ let questPanelCollapsed = false;
 let renderActivityUntil = 0;
 let resumeSocietyAfterVisibilityPause = false;
 let lifecycleBound = false;
+let streamedCommunityStats = { activeChunkCount: 0, activeZoneCount: 0, syntax: null };
 
 const ACTIVE_FRAME_MS = 34;
 const IDLE_FRAME_MS = 90;
@@ -2256,6 +2257,15 @@ function renderWorldPulseSummary() {
       </div>
     </div>
     <div class="pulse-card">
+      <b>INFINITE COMMUNITY STREAM</b>
+      <p>活跃社区 ${streamedCommunityStats.activeChunkCount || 0} 块 · 生成节点 ${streamedCommunityStats.activeZoneCount || 0} 个</p>
+      <div class="pulse-tags">
+        <span>连通 ${Math.round(streamedCommunityStats.syntax?.averageConnectivity || 0)}</span>
+        <span>整合 ${Math.round((streamedCommunityStats.syntax?.averageIntegration || 0) * 100)}</span>
+        <span>Seed ${COMMUNITY_WORLD_SEED}</span>
+      </div>
+    </div>
+    <div class="pulse-card">
       <b>WORLD SIGNAL</b>
       <p>${escapeHtml(driftSignals[0] || "另一个世界暂时安静。下一次演化会从关系、张力或漂流瓶里发光。")}</p>
     </div>
@@ -2483,8 +2493,16 @@ function hideDetail() {
 function showZoneDetail(zone) {
   const citizens = getAliveCitizens(state.society).filter(c => c.zoneId === zone.id);
   const ts = getWorldTimeState(state.society);
-  const model = zone.zoneModel || (typeof getZoneModel === "function" ? getZoneModel(zone.id) : null);
-  const interaction = getZoneInteraction(zone.id);
+  const modelId = zone.baseZoneId || zone.sourceType || zone.id;
+  const model = zone.zoneModel || (typeof getZoneModel === "function" ? getZoneModel(modelId) : null);
+  const interaction = getZoneInteraction(modelId);
+  const syntax = zone.spaceSyntax;
+  const syntaxSection = syntax ? `
+    <div class="detail-section">
+      <div class="detail-section-title">空间句法</div>
+      <p>连通 ${Math.round(syntax.connectivity)} · 整合 ${Math.round(syntax.integration * 100)} · 隐私 ${Math.round(syntax.privacy * 100)}</p>
+      <p>${zone.streamGenerated ? "这是无限流生成的社区节点，会随镜头靠近而进入活跃模拟窗口。" : "这是核心社区节点，负责稳定承接主要社会循环。"}</p>
+    </div>` : "";
   const enterBtn = interaction ? `
     <div class="detail-section detail-next-step">
       <div class="detail-section-title">在这里继续</div>
@@ -2507,6 +2525,7 @@ function showZoneDetail(zone) {
       <p>可能带来：${escapeHtml((model?.provides || []).join(" / ") || "关系回声")}</p>
       ${zone.evolved ? `<p>自演化：${escapeHtml(zone.trigger || "社会缺口")} 触发，${escapeHtml(model?.buildVerb || "建成")}。</p>` : ""}
     </div>
+    ${syntaxSection}
     <div class="detail-section">
       <div class="detail-section-title">现在在这里的人 (${citizens.length})</div>
       ${citizens.length
@@ -2594,6 +2613,71 @@ const ZONE_COLORS = {
   justice: "#e63946", life: "#9bffcb", commerce: "#f1c40f",
   green: "#2ecc71", entertainment: "#ff8fab", education: "#88d8ff", work: "#ffe66d"
 };
+
+const COMMUNITY_CHUNK_SIZE = 1;
+const COMMUNITY_CHUNK_RADIUS = 1;
+const COMMUNITY_WORLD_SEED = 137;
+
+const COMMUNITY_CHUNK_TEMPLATES = [
+  {
+    key: "life",
+    title: "生活组团",
+    anchor: { type: "residential", name: "回声住区", role: "rest", archetype: "daily" },
+    places: [
+      { type: "park", name: "口袋公园", role: "heal", archetype: "green", dx: 0.18, dy: 0.22 },
+      { type: "repair-station", name: "邻里修复站", role: "meditate", archetype: "support", dx: -0.2, dy: 0.2 },
+      { type: "commercial-zone", name: "街角小店", role: "public", archetype: "commerce", dx: 0.08, dy: -0.24 }
+    ]
+  },
+  {
+    key: "learning",
+    title: "学习组团",
+    anchor: { type: "primary-school", name: "共学庭院", role: "cooperate", archetype: "education" },
+    places: [
+      { type: "story-archive", name: "故事阅览室", role: "public", archetype: "social", dx: -0.18, dy: -0.2 },
+      { type: "mentor-hall", name: "导师小厅", role: "cooperate", archetype: "education", dx: 0.2, dy: 0.18 },
+      { type: "quiet-nook", name: "安静自习角", role: "heal", archetype: "support", dx: -0.18, dy: 0.24 }
+    ]
+  },
+  {
+    key: "care",
+    title: "照护组团",
+    anchor: { type: "maternity-hospital", name: "照护中心", role: "heal", archetype: "life" },
+    places: [
+      { type: "empathy-lab", name: "共情小屋", role: "meditate", archetype: "support", dx: 0.22, dy: 0.12 },
+      { type: "resource-kitchen", name: "共享厨房", role: "public", archetype: "commerce", dx: -0.16, dy: 0.22 },
+      { type: "park", name: "慢行花园", role: "heal", archetype: "green", dx: 0.12, dy: -0.24 }
+    ]
+  },
+  {
+    key: "work",
+    title: "创造组团",
+    anchor: { type: "creative-studio", name: "创造工坊", role: "cooperate", archetype: "work" },
+    places: [
+      { type: "office-district", name: "协作楼", role: "cooperate", archetype: "work", dx: 0.2, dy: -0.16 },
+      { type: "commons-workshop", name: "共识车间", role: "cooperate", archetype: "work", dx: -0.2, dy: 0.18 },
+      { type: "night-market", name: "夜间补给街", role: "public", archetype: "entertainment", dx: 0.1, dy: 0.26 }
+    ]
+  },
+  {
+    key: "ecology",
+    title: "生态组团",
+    anchor: { type: "farm", name: "社区农圃", role: "heal", archetype: "life" },
+    places: [
+      { type: "botanical-garden", name: "植物温室", role: "heal", archetype: "green", dx: 0.22, dy: -0.18 },
+      { type: "zoo", name: "动物照护园", role: "heal", archetype: "green", dx: 0.18, dy: 0.22 },
+      { type: "quiet-nook", name: "林下静默角", role: "heal", archetype: "support", dx: -0.2, dy: 0.18 }
+    ]
+  }
+];
+
+const COMMUNITY_CHUNK_ROAD_PATHS = [
+  ["anchor", "a"],
+  ["anchor", "b"],
+  ["anchor", "c"],
+  ["a", "b"],
+  ["b", "c"]
+];
 
 const CITY_ZONE_LAYOUT = {
   "maternity-hospital": { x: 0.25, y: 0.28, w: 0.075, h: 0.11 },
@@ -2683,18 +2767,234 @@ function getZoneVisualLayout(zone) {
   return CITY_ZONE_LAYOUT[zone?.id] || zone || {};
 }
 
-function getRenderableZoneList(society) {
+function hashCommunitySeed(...parts) {
+  const text = parts.join("|");
+  let hash = COMMUNITY_WORLD_SEED;
+  for (let i = 0; i < text.length; i += 1) {
+    hash = Math.imul(hash ^ text.charCodeAt(i), 16777619);
+  }
+  return Math.abs(hash >>> 0);
+}
+
+function seededCommunityValue(seed, salt = 0) {
+  let x = Math.imul(seed + salt * 374761393, 668265263);
+  x = (x ^ (x >>> 13)) >>> 0;
+  x = Math.imul(x, 1274126177) >>> 0;
+  return ((x ^ (x >>> 16)) >>> 0) / 4294967295;
+}
+
+function getZoneMapMetrics(W, H, groundY) {
+  const margin = 20;
+  const visibleMapW = W - margin * 2;
+  const mapW = W < 520 ? Math.max(760, visibleMapW) : visibleMapW;
+  const mapH = H - groundY - 60;
+  const mobileFocusOffset = W < 520 ? (mapW - visibleMapW) * 0.45 : 0;
+  const minW = W < 520 ? 44 : 68;
+  const minH = W < 520 ? 38 : 52;
+  return { margin, visibleMapW, mapW, mapH, mobileFocusOffset, minW, minH };
+}
+
+function normalizedPointFromScreen(mx, my, W, H, groundY) {
+  const metrics = getZoneMapMetrics(W, H, groundY);
+  const world = screenToWorldPoint(mx, my, W, H);
+  return {
+    x: (world.x - metrics.margin + metrics.mobileFocusOffset) / metrics.mapW,
+    y: (world.y - groundY - 10) / metrics.mapH
+  };
+}
+
+function getVisibleCommunityChunkKeys(W, H, groundY) {
+  const corners = [
+    normalizedPointFromScreen(0, 0, W, H, groundY),
+    normalizedPointFromScreen(W, 0, W, H, groundY),
+    normalizedPointFromScreen(0, H, W, H, groundY),
+    normalizedPointFromScreen(W, H, W, H, groundY)
+  ];
+  const minX = Math.floor(Math.min(...corners.map((p) => p.x)) / COMMUNITY_CHUNK_SIZE) - COMMUNITY_CHUNK_RADIUS;
+  const maxX = Math.floor(Math.max(...corners.map((p) => p.x)) / COMMUNITY_CHUNK_SIZE) + COMMUNITY_CHUNK_RADIUS;
+  const minY = Math.floor(Math.min(...corners.map((p) => p.y)) / COMMUNITY_CHUNK_SIZE) - COMMUNITY_CHUNK_RADIUS;
+  const maxY = Math.floor(Math.max(...corners.map((p) => p.y)) / COMMUNITY_CHUNK_SIZE) + COMMUNITY_CHUNK_RADIUS;
+  const keys = [];
+  for (let cy = minY; cy <= maxY; cy += 1) {
+    for (let cx = minX; cx <= maxX; cx += 1) {
+      keys.push(`${cx},${cy}`);
+    }
+  }
+  return keys;
+}
+
+function makeCommunityZone(chunkX, chunkY, slot, spec, localX, localY, template) {
+  const id = `chunk-${chunkX}-${chunkY}-${slot}`;
+  const jitterSeed = hashCommunitySeed(chunkX, chunkY, slot, spec.type);
+  const jitterX = (seededCommunityValue(jitterSeed, 1) - 0.5) * 0.035;
+  const jitterY = (seededCommunityValue(jitterSeed, 2) - 0.5) * 0.035;
+  return {
+    id,
+    sourceType: spec.type,
+    baseZoneId: spec.type,
+    name: spec.name,
+    role: spec.role,
+    archetype: spec.archetype,
+    chunkKey: `${chunkX},${chunkY}`,
+    chunkTemplate: template.key,
+    streamGenerated: true,
+    spaceSyntax: null,
+    x: chunkX + clamp(localX + jitterX, 0.08, 0.88),
+    y: chunkY + clamp(localY + jitterY, 0.1, 0.86),
+    w: spec.w || 0.07,
+    h: spec.h || 0.095,
+    openness: spec.role === "public" ? 0.84 : spec.role === "heal" ? 0.78 : 0.72,
+    tolerance: spec.role === "heal" || spec.archetype === "support" ? 0.92 : 0.78,
+    mobility: spec.archetype === "daily" ? 0.68 : spec.role === "public" ? 0.82 : 0.66
+  };
+}
+
+function generateCommunityChunk(chunkX, chunkY) {
+  if (chunkX === 0 && chunkY === 0) return { zones: [], roadPaths: [] };
+  const seed = hashCommunitySeed("community-chunk", chunkX, chunkY);
+  const template = COMMUNITY_CHUNK_TEMPLATES[seed % COMMUNITY_CHUNK_TEMPLATES.length];
+  const centerX = 0.46 + (seededCommunityValue(seed, 3) - 0.5) * 0.12;
+  const centerY = 0.45 + (seededCommunityValue(seed, 4) - 0.5) * 0.12;
+  const zones = [
+    makeCommunityZone(chunkX, chunkY, "anchor", template.anchor, centerX, centerY, template),
+    ...template.places.map((place, index) => makeCommunityZone(
+      chunkX,
+      chunkY,
+      String.fromCharCode(97 + index),
+      place,
+      centerX + place.dx,
+      centerY + place.dy,
+      template
+    ))
+  ];
+  const bySlot = new Map(zones.map((zone) => [zone.id.split("-").at(-1), zone.id]));
+  return {
+    zones,
+    roadPaths: COMMUNITY_CHUNK_ROAD_PATHS
+      .map(([from, to]) => [bySlot.get(from), bySlot.get(to)])
+      .filter(([from, to]) => from && to)
+  };
+}
+
+function getActiveCommunityChunks(W, H, groundY) {
+  const keys = getVisibleCommunityChunkKeys(W, H, groundY);
+  return keys.map((key) => {
+    const [chunkX, chunkY] = key.split(",").map(Number);
+    return { key, chunkX, chunkY, ...generateCommunityChunk(chunkX, chunkY) };
+  });
+}
+
+function analyzeCommunitySpaceSyntax(zones, roadPairs) {
+  const ids = zones.map((zone) => zone.id);
+  const adjacency = new Map(ids.map((id) => [id, new Set()]));
+  roadPairs.forEach(([fromId, toId]) => {
+    if (!adjacency.has(fromId) || !adjacency.has(toId)) return;
+    adjacency.get(fromId).add(toId);
+    adjacency.get(toId).add(fromId);
+  });
+  const metrics = new Map();
+  ids.forEach((id) => {
+    const dist = new Map([[id, 0]]);
+    const queue = [id];
+    while (queue.length) {
+      const current = queue.shift();
+      const nextDistance = dist.get(current) + 1;
+      (adjacency.get(current) || []).forEach((next) => {
+        if (dist.has(next)) return;
+        dist.set(next, nextDistance);
+        queue.push(next);
+      });
+    }
+    const distances = [...dist.values()].filter((value) => value > 0);
+    const meanDepth = distances.length ? distances.reduce((sum, value) => sum + value, 0) / distances.length : 0;
+    const connectivity = adjacency.get(id)?.size || 0;
+    const integration = meanDepth ? 1 / meanDepth : 0;
+    const privacy = 1 / (1 + connectivity + integration * 2);
+    metrics.set(id, { connectivity, integration, privacy });
+  });
+  return metrics;
+}
+
+function getCityRoadIdPairs(zones) {
+  const zoneById = new Map(zones.map((zone) => [zone.id, zone]));
+  const pairs = [];
+  const seen = new Set();
+  const addPair = (fromId, toId) => {
+    if (!zoneById.has(fromId) || !zoneById.has(toId)) return;
+    const key = [fromId, toId].sort().join("::");
+    if (seen.has(key)) return;
+    seen.add(key);
+    pairs.push([fromId, toId]);
+  };
+
+  CITY_ROAD_PATHS.forEach((path) => {
+    for (let i = 0; i < path.length - 1; i += 1) {
+      addPair(path[i], path[i + 1]);
+    }
+  });
+
+  Object.entries(EVOLVABLE_ROAD_ANCHORS).forEach(([sceneId, anchorId]) => {
+    addPair(sceneId, anchorId);
+  });
+
+  const generatedByChunk = new Map();
+  zones.filter((zone) => zone.streamGenerated && zone.chunkKey).forEach((zone) => {
+    if (!generatedByChunk.has(zone.chunkKey)) generatedByChunk.set(zone.chunkKey, []);
+    generatedByChunk.get(zone.chunkKey).push(zone);
+  });
+  generatedByChunk.forEach((chunkZones) => {
+    const bySlot = new Map(chunkZones.map((zone) => [zone.id.split("-").at(-1), zone.id]));
+    COMMUNITY_CHUNK_ROAD_PATHS.forEach(([fromSlot, toSlot]) => {
+      addPair(bySlot.get(fromSlot), bySlot.get(toSlot));
+    });
+  });
+
+  const generatedAnchors = zones.filter((zone) => zone.streamGenerated && zone.id.endsWith("-anchor"));
+  generatedAnchors.forEach((anchor) => {
+    const nearestCore = zones
+      .filter((zone) => !zone.streamGenerated)
+      .map((zone) => ({
+        zone,
+        distance: Math.hypot((zone.x || 0) - (anchor.x || 0), (zone.y || 0) - (anchor.y || 0))
+      }))
+      .sort((a, b) => a.distance - b.distance)[0]?.zone;
+    if (nearestCore) addPair(anchor.id, nearestCore.id);
+  });
+
+  return pairs;
+}
+
+function getRenderableZoneList(society, W, H, groundY) {
   const sourceZones = typeof getOpenWorldZoneList === "function" ? getOpenWorldZoneList(society) : [];
   const sourceById = new Map(sourceZones.map((zone) => [zone.id, zone]));
   const orderedIds = [
     ...Object.keys(CITY_ZONE_LAYOUT),
     ...sourceZones.map((zone) => zone.id).filter((id) => !CITY_ZONE_LAYOUT[id])
   ];
-  return orderedIds.map((id) => ({
+  const coreZones = orderedIds.map((id) => ({
     id,
     ...(CITY_ZONE_FALLBACK_META[id] || { name: id, role: "public", archetype: "social" }),
     ...(sourceById.get(id) || {})
   }));
+  if (!W || !H || !groundY) return coreZones;
+
+  const chunks = getActiveCommunityChunks(W, H, groundY);
+  const streamZones = chunks.flatMap((chunk) => chunk.zones);
+  const allZones = [...coreZones, ...streamZones];
+  const roadPairs = getCityRoadIdPairs(allZones);
+  const syntax = analyzeCommunitySpaceSyntax(allZones, roadPairs);
+  allZones.forEach((zone) => {
+    zone.spaceSyntax = syntax.get(zone.id) || null;
+  });
+  streamedCommunityStats = {
+    activeChunkCount: chunks.filter((chunk) => chunk.zones.length).length,
+    activeZoneCount: streamZones.length,
+    syntax: {
+      averageConnectivity: syntax.size ? [...syntax.values()].reduce((sum, item) => sum + item.connectivity, 0) / syntax.size : 0,
+      averageIntegration: syntax.size ? [...syntax.values()].reduce((sum, item) => sum + item.integration, 0) / syntax.size : 0
+    }
+  };
+  return allZones;
 }
 
 function getWorldGroundY(H) {
@@ -2794,35 +3094,17 @@ function traceRoadSegment(ctx, fromRect, toRect) {
 }
 
 function getCityRoadPairs(zones, zoneRects) {
-  const zoneIds = new Set(zones.map((zone) => zone.id));
-  const pairs = [];
-  const seen = new Set();
-  const addPair = (fromId, toId) => {
+  const pairs = getCityRoadIdPairs(zones)
+    .map(([fromId, toId]) => {
     const fromRect = zoneRects.get(fromId);
     const toRect = zoneRects.get(toId);
-    if (!fromRect || !toRect) return;
-    const key = [fromId, toId].sort().join("::");
-    if (seen.has(key)) return;
-    seen.add(key);
-    pairs.push([fromRect, toRect]);
-  };
-
-  CITY_ROAD_PATHS.forEach((path) => {
-    for (let i = 0; i < path.length - 1; i += 1) {
-      addPair(path[i], path[i + 1]);
-    }
-  });
-
-  Object.entries(EVOLVABLE_ROAD_ANCHORS).forEach(([sceneId, anchorId]) => {
-    if (!zoneIds.has(sceneId)) return;
-    addPair(sceneId, anchorId);
-  });
-
+      return fromRect && toRect ? [fromRect, toRect] : null;
+    })
+    .filter(Boolean);
   return pairs;
 }
 
-function drawCityRoadNetwork(ctx, zones, zoneRects) {
-  const pairs = getCityRoadPairs(zones, zoneRects);
+function drawCityRoadNetwork(ctx, zones, zoneRects, pairs = getCityRoadPairs(zones, zoneRects)) {
   if (!pairs.length) return;
 
   const layers = [
@@ -2858,6 +3140,33 @@ function drawCityRoadNetwork(ctx, zones, zoneRects) {
     });
   });
   ctx.restore();
+}
+
+function getCitizenRoadWalkTarget(citizen, zoneRect, roadPairs, now, index) {
+  const options = roadPairs.filter(([fromRect, toRect]) => fromRect === zoneRect || toRect === zoneRect);
+  if (!options.length) {
+    return {
+      x: zoneRect.cx + Math.sin(now * 0.001 + index) * zoneRect.w * 0.22,
+      y: zoneRect.cy + zoneRect.h * 0.32 + Math.cos(now * 0.001 + index) * zoneRect.h * 0.12
+    };
+  }
+  const seed = hashCommunitySeed(citizen.id || citizen.name || "citizen", index, Math.floor(now / 6000));
+  const pair = options[seed % options.length];
+  const nextRect = pair[0] === zoneRect ? pair[1] : pair[0];
+  const zoneGate = getRoadEndpoint(zoneRect, nextRect);
+  const nextGate = getRoadEndpoint(nextRect, zoneRect);
+  const routeBias = seededCommunityValue(seed, 5);
+  if (routeBias < 0.38) return zoneGate;
+  if (routeBias < 0.72) {
+    return {
+      x: zoneGate.x + (nextGate.x - zoneGate.x) * 0.42,
+      y: zoneGate.y + (nextGate.y - zoneGate.y) * 0.42
+    };
+  }
+  return {
+    x: zoneGate.x + (nextGate.x - zoneGate.x) * 0.72,
+    y: zoneGate.y + (nextGate.y - zoneGate.y) * 0.72
+  };
 }
 
 function drawRoleDot(ctx, x, y, color) {
@@ -3024,7 +3333,7 @@ function drawGameWorld() {
   const ts = getWorldTimeState(society);
   const isNight = ts.isNight;
   const groundY = getWorldGroundY(H);
-  const zones = getRenderableZoneList(society);
+  const zones = getRenderableZoneList(society, W, H, groundY);
   const zoneRects = new Map(zones.map(zone => [zone.id, getZoneGameRect(zone, W, H, groundY)]));
   const aliveCitizens = getAliveCitizens(society);
   if (!renderCache.lastPruneAt || now - renderCache.lastPruneAt > 2000) {
@@ -3088,8 +3397,9 @@ function drawGameWorld() {
   ctx.translate(-W / 2, -H / 2);
 
   // ── Cartoon neighborhood map: roads, then places ──
+  const roadPairs = getCityRoadPairs(zones, zoneRects);
   try {
-    drawCityRoadNetwork(ctx, zones, zoneRects);
+    drawCityRoadNetwork(ctx, zones, zoneRects, roadPairs);
   } catch (error) {
     console.warn("Road layer skipped", error);
   }
@@ -3117,9 +3427,9 @@ function drawGameWorld() {
     const zr = zoneRects.get(zone.id);
     if (!zr) return;
 
-    // Position within zone
-    const baseX = zr.x + 12 + ((idx * 37) % Math.max(1, zr.w - 24));
-    const baseY = zr.y + zr.h - 8;
+    // Position on the nearby street network, not inside the building footprint.
+    const baseX = zr.cx;
+    const baseY = zr.cy + zr.h * 0.36;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
     const isHover = hoveredCitizen === citizen.id;
     const isAvatar = citizen.id === "avatar";
@@ -3136,17 +3446,26 @@ function drawGameWorld() {
       targetY: baseY,
       nextTargetAt: 0
     };
-    if (now > (anim.nextTargetAt || 0)) {
-      anim.targetX = zr.x + 12 + Math.random() * Math.max(1, zr.w - 24);
-      anim.targetY = zr.y + zr.h / 2 + Math.random() * Math.max(1, zr.h / 2 - 10);
-      anim.nextTargetAt = now + 2500 + Math.random() * 3500;
+    const distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
+    if (now > (anim.nextTargetAt || 0) || distanceToTarget < 4) {
+      const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
+      anim.targetX = target.x;
+      anim.targetY = target.y;
+      anim.nextTargetAt = now + 1800 + seededCommunityValue(hashCommunitySeed(citizen.id || idx, now), 7) * 3000;
     }
-    anim.x += ((anim.targetX || baseX) - (anim.x || baseX)) * 0.025;
-    anim.y += ((anim.targetY || baseY) - (anim.y || baseY)) * 0.025;
+    const targetDx = (anim.targetX || baseX) - (anim.x || baseX);
+    const targetDy = (anim.targetY || baseY) - (anim.y || baseY);
+    const targetDist = Math.max(0.001, Math.hypot(targetDx, targetDy));
+    const walkSpeed = (isAvatar ? 0.72 : 0.48 + (idx % 4) * 0.08) * (safeMood > 70 ? 1.12 : safeMood < 35 ? 0.78 : 1);
+    anim.x = (anim.x || baseX) + (targetDx / targetDist) * Math.min(walkSpeed, targetDist);
+    anim.y = (anim.y || baseY) + (targetDy / targetDist) * Math.min(walkSpeed, targetDist);
+    anim.facing = targetDx >= 0 ? 1 : -1;
+    anim.walkPhase = (anim.walkPhase || 0) + walkSpeed * 0.16;
     citizenAnimations[citizen.id] = anim;
 
     const cx = anim.x || baseX;
-    const cy = (anim.y || baseY) + bobY;
+    const stepBob = Math.sin(anim.walkPhase || 0) * Math.min(3, Math.max(1.2, targetDist / 28));
+    const cy = (anim.y || baseY) + bobY + stepBob;
 
     // Shadow
     ctx.fillStyle = "#1a1a2e";
@@ -3154,7 +3473,7 @@ function drawGameWorld() {
     ctx.ellipse(cx, cy + size + 2, size * 0.6, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover);
+    const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
 
     // Body: MBTI-inspired archetypes get distinct silhouettes.
     if (!usedCitizenSprite) {
@@ -3244,7 +3563,7 @@ function drawGameWorld() {
     ctx.stroke();
 
     if (isAvatar) {
-      drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover);
+      drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
     }
     }
 
@@ -3524,15 +3843,9 @@ function drawGameWorld() {
 
 function getZoneGameRect(zone, W, H, groundY) {
   const layout = getZoneVisualLayout(zone);
-  const margin = 20;
-  const visibleMapW = W - margin * 2;
-  const mapW = W < 520 ? Math.max(760, visibleMapW) : visibleMapW;
-  const mapH = H - groundY - 60;
-  const mobileFocusOffset = W < 520 ? (mapW - visibleMapW) * 0.45 : 0;
+  const { margin, mapW, mapH, mobileFocusOffset, minW, minH } = getZoneMapMetrics(W, H, groundY);
   const x = margin + (Number(layout.x) || 0) * mapW - mobileFocusOffset;
   const y = groundY + 10 + (Number(layout.y) || 0) * mapH;
-  const minW = W < 520 ? 44 : 68;
-  const minH = W < 520 ? 38 : 52;
   const w = Math.max(minW, (Number(layout.w) || 0.07) * mapW);
   const h = Math.max(minH, (Number(layout.h) || 0.1) * mapH);
   return { x, y, w, h, cx: x + w / 2, cy: y + h / 2 };
@@ -3719,34 +4032,41 @@ function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
 function getCitizenSpriteFrame(citizen) {
   const professionId = citizen?.professionId || "";
   const role = `${citizen?.role || ""} ${citizen?.profession || ""} ${citizen?.personaLabel || ""}`;
+  const age = Number(citizen?.age || 30);
+  if (age < 13 || /幼儿|童年|学生/.test(role)) return 3;
+  if (age > 58 || ["retiree"].includes(professionId) || /退休|长者|顾问/.test(role)) return 5;
   if (["designer", "artist"].includes(professionId) || /设计|艺术|策展|故事/.test(role)) return 0;
   if (["engineer", "worker", "architect", "programmer"].includes(professionId) || /工坊|工程|建设|程序|建筑/.test(role)) return 1;
   if (["doctor", "nurse", "caretaker"].includes(professionId) || /照料|修复|护士|医生|共情/.test(role)) return 2;
-  if (["student", "teacher", "researcher"].includes(professionId) || /学生|教师|学习|课程|导师/.test(role)) return 3;
+  if (["student", "teacher", "researcher"].includes(professionId) || /教师|学习|课程|导师/.test(role)) return 3;
   if (["reporter", "driver"].includes(professionId) || /观察|记者|探索|守望/.test(role)) return 4;
-  if (["farmer", "freelancer", "retiree"].includes(professionId) || /自由|漂流|农场|园艺|夜猫/.test(role)) return 5;
+  if (["farmer", "freelancer"].includes(professionId) || /自由|漂流|农场|园艺|夜猫/.test(role)) return 5;
   if (["chef"].includes(professionId) || /厨房|资源|厨/.test(role)) return 6;
   if (["lawyer", "judge"].includes(professionId) || /法治|调停|顾问|关系|提议/.test(role)) return 7;
   return Math.abs(String(citizen?.id || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0)) % CITIZEN_FRAME_COUNT;
 }
 
-function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover) {
+function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}) {
   const frame = getCitizenSpriteFrame(citizen);
   const sprite = getSpriteFrameRect(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
   if (!sprite) return false;
   const spriteSource = getTransparentSpriteSource(citizenSpriteImage);
   const drawH = size * (isHover ? 3.7 : 3.1);
   const drawW = drawH * (sprite.sw / sprite.sh);
-  const dx = cx - drawW / 2;
-  const dy = cy - drawH * 0.8;
+  const gait = Math.sin(anim.walkPhase || 0);
+  const facing = anim.facing || 1;
+  const tilt = gait * 0.035;
 
   ctx.save();
-  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, dx, dy, drawW, drawH);
+  ctx.translate(cx, cy - drawH * 0.3);
+  ctx.rotate(tilt);
+  ctx.scale(facing, 1);
+  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, -drawW / 2, -drawH * 0.5, drawW, drawH);
   ctx.restore();
   return true;
 }
 
-function drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover) {
+function drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}) {
   if (!avatarSpriteImage.complete || !avatarSpriteImage.naturalWidth) {
     return false;
   }
@@ -3759,19 +4079,27 @@ function drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover) {
   const dx = cx - drawSize / 2;
   const dy = cy - drawSize * 0.82;
   const radius = drawSize / 2;
+  const gait = Math.sin(anim.walkPhase || 0);
+  const facing = anim.facing || 1;
 
   ctx.save();
+  ctx.translate(cx, dy + radius);
+  ctx.rotate(gait * 0.025);
+  ctx.scale(facing, 1);
   ctx.beginPath();
-  ctx.arc(cx, dy + radius, radius * 0.96, 0, Math.PI * 2);
+  ctx.arc(0, 0, radius * 0.96, 0, Math.PI * 2);
   ctx.clip();
-  ctx.drawImage(avatarSpriteImage, sx, sy, cellW, cellH, dx, dy, drawSize, drawSize);
+  ctx.drawImage(avatarSpriteImage, sx, sy, cellW, cellH, -drawSize / 2, -radius, drawSize, drawSize);
   ctx.restore();
 
   ctx.save();
+  ctx.translate(cx, dy + radius);
+  ctx.rotate(gait * 0.025);
+  ctx.scale(facing, 1);
   ctx.strokeStyle = "#1a1a2e";
   ctx.lineWidth = isHover ? 3 : 2.5;
   ctx.beginPath();
-  ctx.arc(cx, dy + radius, radius * 0.96, 0, Math.PI * 2);
+  ctx.arc(0, 0, radius * 0.96, 0, Math.PI * 2);
   ctx.stroke();
   ctx.restore();
   return true;
@@ -3814,7 +4142,7 @@ function hitTestZone(mx, my) {
   const H = rect.height;
   const groundY = getWorldGroundY(H);
   const point = screenToWorldPoint(mx, my, W, H);
-  const zones = getRenderableZoneList(state.society);
+  const zones = getRenderableZoneList(state.society, W, H, groundY);
   for (const zone of zones) {
     const r = getZoneGameRect(zone, W, H, groundY);
     if (point.x >= r.x && point.x <= r.x + r.w && point.y >= r.y && point.y <= r.y + r.h) {

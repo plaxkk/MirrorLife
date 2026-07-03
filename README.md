@@ -147,5 +147,6 @@ npm run build
 - [Figma interaction redesign](docs/FIGMA_INTERACTION_REDESIGN.md) is the latest board-level interaction plan for a lower-button, quest-led, game-like first session.
 - [GraphRAG + MiroFish game research](docs/GRAPHRAG_MIRRORFISH_GAME_RESEARCH.md) translates MiroFish's graph-and-swarm simulation workflow into a MirrorLife implementation plan.
 - [Multi-agent gameplay fun design](docs/GAMEPLAY_FUN_DESIGN.md) converts the future multi-agent direction into concrete play value.
+- [Infinite streaming open community tech research](docs/OPEN_WORLD_STREAMING_TECH_RESEARCH.md) records the current technical decision: Canvas runtime, chunk streaming, space syntax, road-graph walking, and where tldraw / gen-city / PixiJS fit later.
 - [Google Stitch visual redesign prep](docs/STITCH_VISUAL_REDESIGN_PREP.md) records the Phase 2 preparation layer. It is intentionally gated on the Phase 1 first-minute causal loop before any final UI direction is accepted.
 - [Google Stitch final visual interaction draft](docs/STITCH_FINAL_VISUAL_DRAFT.md) records the Phase 2 formal visual direction based on the accepted first-minute causal loop.
