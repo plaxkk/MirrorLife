@@ -41,9 +41,11 @@ const IDLE_FRAME_MS = 90;
 const INTERACTION_BOOST_MS = 2200;
 const MAX_RENDER_DPR = 2;
 const MAX_PARTICLES = 120;
-const MAX_INTERACTION_VISUALS = 7;
+const MAX_INTERACTION_VISUALS = 5;
 const MAX_RECENT_INTERACTIONS = 8;
 const INTERACTION_VISUAL_DURATION = 4400;
+const MINOR_INTERACTION_VISUAL_DURATION = 2400;
+const MAX_CONCURRENT_SPEECH_BUBBLES = 4;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -160,13 +162,13 @@ const ACTION_COLORS = {
 };
 
 const ACTION_SYMBOLS = {
-  propose: "!",
-  cooperate: "+",
-  support: "♥",
-  listen: "耳",
-  meditate: "≈",
-  rest: "…",
-  conflict: "!"
+  propose: "📢",
+  cooperate: "🤝",
+  support: "💛",
+  listen: "👂",
+  meditate: "🧘",
+  rest: "😴",
+  conflict: "⚡"
 };
 
 const SOCIAL_STANCES = {
@@ -2120,12 +2122,21 @@ function closeTutorial() {
 
 // ── Speech Bubbles ──
 
-function addSpeechBubble(citizenId, text, type) {
+function addSpeechBubble(citizenId, text, type, options = {}) {
+  const now = performance.now();
+  // Keep the screen readable: cap concurrent bubbles, but never drop
+  // the player avatar, the followed citizen, or an update to an existing bubble.
+  const priority = options.priority || citizenId === "avatar" || citizenId === followedCitizenId;
+  if (!priority && !speechBubbles[citizenId]) {
+    const activeCount = Object.values(speechBubbles)
+      .filter((bubble) => now - bubble.time < bubble.duration).length;
+    if (activeCount >= MAX_CONCURRENT_SPEECH_BUBBLES) return;
+  }
   speechBubbles[citizenId] = {
     text,
     type: type || "support",
-    time: performance.now(),
-    duration: 4000
+    time: now,
+    duration: options.duration || 4000
   };
   markRenderActive(2200);
 }
@@ -2167,10 +2178,18 @@ function queueInteractionVisual(result, options = {}) {
   const type = result.type || "listen";
   const meta = getActionVisualMeta(type);
   const now = performance.now();
+  const source = options.source || "社会自演";
+  // Ambient society-simulation events render as a subtle whisper; only
+  // player-triggered (or followed-citizen) interactions get the full card.
+  const involvesFollowed = !!followedCitizenId &&
+    (result.actorId === followedCitizenId || result.targetId === followedCitizenId);
+  const minor = source !== "玩家互动" && !involvesFollowed;
+  const duration = minor ? MINOR_INTERACTION_VISUAL_DURATION : INTERACTION_VISUAL_DURATION;
   const visibleDelay = Math.min(interactionVisuals.length, 5) * 180;
   const item = {
     id: `interaction-${++interactionVisualSeq}`,
     type,
+    minor,
     label: meta.label,
     color: meta.color,
     symbol: meta.symbol,
@@ -2179,14 +2198,14 @@ function queueInteractionVisual(result, options = {}) {
     actorName: result.actorName || result.actor || getCitizenNameById(result.actorId),
     targetName: result.targetName || result.target || (result.targetId ? getCitizenNameById(result.targetId) : ""),
     zone: result.zone || "",
-    source: options.source || "社会自演",
+    source,
     score: Number(result.score || 0),
     relationshipLabel: result.relationshipLabel || result.relationshipModel || "",
     relationshipOutcome: result.relationshipOutcome,
     text: result.text || "",
     createdAt: now,
     startAt: now + visibleDelay,
-    until: now + visibleDelay + INTERACTION_VISUAL_DURATION
+    until: now + visibleDelay + duration
   };
 
   interactionVisuals.push(item);
@@ -2196,11 +2215,11 @@ function queueInteractionVisual(result, options = {}) {
 
   // Animate the participants on canvas: a supportive wave or a face-to-face chat.
   const gestureType = type === "support" ? "wave" : "talk";
-  triggerCitizenGesture(item.actorId, gestureType, item.targetId);
-  if (item.targetId) triggerCitizenGesture(item.targetId, gestureType, item.actorId);
+  triggerCitizenGesture(item.actorId, gestureType, item.targetId, 0, { ambient: true });
+  if (item.targetId) triggerCitizenGesture(item.targetId, gestureType, item.actorId, 0, { ambient: true });
 
   recentInteractionEvents = [item, ...recentInteractionEvents].slice(0, MAX_RECENT_INTERACTIONS);
-  markRenderActive(INTERACTION_VISUAL_DURATION + visibleDelay);
+  markRenderActive(duration + visibleDelay);
 }
 
 function renderRecentInteractionFeed() {
@@ -3472,15 +3491,250 @@ function getActiveGesture(anim, now) {
   return anim.gesture;
 }
 
-function triggerCitizenGesture(citizenId, type, partnerId = null, duration = 0) {
+function triggerCitizenGesture(citizenId, type, partnerId = null, duration = 0, options = {}) {
   if (!citizenId) return;
+  const now = performance.now();
   const anim = citizenAnimations[citizenId] = citizenAnimations[citizenId] || {};
+  const behavior = getActiveBehavior(anim, now);
+  if (behavior) {
+    // Ambient society chatter never interrupts someone absorbed in an
+    // activity, and nothing short of the player wakes a sleeper.
+    if (options.ambient || behavior.pose === "lie") return;
+    finishCitizenBehavior(getCitizenById(citizenId), anim, now, true);
+  }
   anim.gesture = {
     type,
     partnerId,
-    until: performance.now() + (duration || GESTURE_DURATIONS[type] || 1600)
+    until: now + (duration || GESTURE_DURATIONS[type] || 1600)
   };
   markRenderActive(1800);
+}
+
+function getCitizenById(citizenId) {
+  return state?.society?.citizens?.find((citizen) => citizen.id === citizenId) || null;
+}
+
+// ═══════════════════════════════════════════════════════════════
+// HUMANLIKE BEHAVIOR LIBRARY
+// Citizens don't just wander — they eat, nap, play ball, jog, read,
+// tinker, type and sip tea. Each behavior has a body pose, an animated
+// prop, time-of-day / place affinity, and personality- & need-driven
+// weighting. Completing one feeds back into mood/energy so daily life
+// and the social simulation co-evolve.
+// ═══════════════════════════════════════════════════════════════
+
+function behaviorNum(value, fallback) {
+  const n = Number(value);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+const BEHAVIOR_LIBRARY = [
+  {
+    id: "eat", label: "吃饭", prop: "🍜", pose: "sit",
+    minMs: 6500, maxMs: 11000,
+    zoneHint: /commerc|market|night|kitchen|slow|farm|residential|plaza|courtyard/,
+    requireZone: true,
+    effects: { energy: 8, mood: 2 },
+    doneLine: "吃饱啦",
+    score(citizen, ts) {
+      const mealTime = (ts.hour >= 7 && ts.hour <= 9) || (ts.hour >= 11 && ts.hour <= 13) || (ts.hour >= 17 && ts.hour <= 20);
+      if (!mealTime) return -1;
+      return 26 + (100 - behaviorNum(citizen.energy, 50)) * 0.3;
+    }
+  },
+  {
+    id: "sleep", label: "睡觉", prop: "💤", pose: "lie",
+    minMs: 9000, maxMs: 16000,
+    zoneHint: /residential|rest|quiet|cemetery|heal/,
+    requireZone: false,
+    effects: { energy: 14, mood: 3 },
+    doneLine: "睡醒了,精神多了",
+    score(citizen, ts, zoneOk) {
+      const energy = behaviorNum(citizen.energy, 50);
+      if (ts.isNight) return 34 + (100 - energy) * 0.4 + (zoneOk ? 10 : 0);
+      // Daytime nap only when exhausted, and only somewhere restful.
+      if (energy < 26 && zoneOk) return 30 + (26 - energy);
+      return -1;
+    }
+  },
+  {
+    id: "run", label: "跑步", prop: "💨", pose: "move",
+    minMs: 7000, maxMs: 12000,
+    zoneHint: /park|green|plaza|farm/,
+    requireZone: false,
+    effects: { mood: 6, energy: -5 },
+    doneLine: "跑完一圈,舒服",
+    score(citizen, ts) {
+      if (ts.isNight) return -1;
+      if (behaviorNum(citizen.energy, 50) < 35) return -1;
+      const window = (ts.hour >= 6 && ts.hour <= 9) || (ts.hour >= 16 && ts.hour <= 20);
+      const vitality = behaviorNum(citizen.bigFive?.extraversion, 0.5) * 16 + (behaviorNum(citizen.age, 30) < 50 ? 8 : 0);
+      return (window ? 20 : 6) + vitality;
+    }
+  },
+  {
+    id: "ball", label: "打球", prop: "⚽", pose: "bounce",
+    minMs: 7000, maxMs: 12000,
+    zoneHint: /park|school|kinder|university|plaza|entertainment|green/,
+    requireZone: true,
+    effects: { mood: 8, energy: -5 },
+    doneLine: "这球打得痛快",
+    score(citizen, ts) {
+      if (ts.hour < 8 || ts.hour > 19) return -1;
+      if (behaviorNum(citizen.energy, 50) < 32) return -1;
+      return 16 + behaviorNum(citizen.bigFive?.extraversion, 0.5) * 22 + (behaviorNum(citizen.age, 30) < 45 ? 8 : -6);
+    }
+  },
+  {
+    id: "read", label: "看书", prop: "📖", pose: "sit",
+    minMs: 8000, maxMs: 14000,
+    zoneHint: /archive|story|school|university|quiet|park|green|residential/,
+    requireZone: false,
+    effects: { mood: 5 },
+    doneLine: "这一章真不错",
+    score(citizen, ts) {
+      if (ts.hour < 8 || ts.hour > 22) return -1;
+      return 10 + behaviorNum(citizen.bigFive?.openness, 0.5) * 20;
+    }
+  },
+  {
+    id: "work", label: "干活", prop: "🔧", pose: "rock",
+    minMs: 8000, maxMs: 14000,
+    zoneHint: /factory|repair|workshop|commons|farm|work/,
+    requireZone: true,
+    effects: { energy: -4, mood: 3 },
+    doneLine: "活儿干完了",
+    score(citizen, ts) {
+      if (ts.hour < 8 || ts.hour > 18) return -1;
+      if (behaviorNum(citizen.energy, 50) < 30) return -1;
+      return 22 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 20;
+    }
+  },
+  {
+    id: "type", label: "敲电脑", prop: "💻", pose: "sit",
+    minMs: 8000, maxMs: 14000,
+    zoneHint: /office|creative|studio|commerc|archive|university/,
+    requireZone: true,
+    effects: { energy: -3, mood: 2 },
+    doneLine: "又写完一段",
+    score(citizen, ts) {
+      if (ts.hour < 9 || ts.hour > 22) return -1;
+      if (behaviorNum(citizen.energy, 50) < 28) return -1;
+      return 20 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 12 + behaviorNum(citizen.bigFive?.openness, 0.5) * 8;
+    }
+  },
+  {
+    id: "garden", label: "侍弄花草", prop: "🪴", pose: "rock",
+    minMs: 7000, maxMs: 12000,
+    zoneHint: /park|farm|botan|green|garden/,
+    requireZone: true,
+    effects: { mood: 6, energy: -2 },
+    doneLine: "花草都精神了",
+    score(citizen, ts) {
+      if (ts.isNight) return -1;
+      return 14 + behaviorNum(citizen.bigFive?.agreeableness, 0.5) * 14;
+    }
+  },
+  {
+    id: "stretch", label: "拉伸锻炼", prop: "🤸", pose: "bounce",
+    minMs: 5000, maxMs: 8000,
+    zoneHint: /park|plaza|green|residential/,
+    requireZone: false,
+    effects: { mood: 4, energy: -2 },
+    doneLine: "筋骨活动开了",
+    score(citizen, ts) {
+      if (ts.isNight) return -1;
+      const window = (ts.hour >= 6 && ts.hour <= 9) || (ts.hour >= 17 && ts.hour <= 19);
+      return window ? 14 : 4;
+    }
+  },
+  {
+    id: "tea", label: "喝茶歇脚", prop: "☕", pose: "sit",
+    minMs: 5000, maxMs: 9000,
+    zoneHint: /./,
+    requireZone: false,
+    effects: { mood: 3, energy: 3 },
+    doneLine: "歇好了",
+    score(citizen, ts) {
+      if (ts.hour >= 0 && ts.hour < 6) return -1;
+      return 8; // the everyday fallback
+    }
+  }
+];
+
+const BEHAVIOR_BY_ID = new Map(BEHAVIOR_LIBRARY.map((behavior) => [behavior.id, behavior]));
+const INDOOR_BEHAVIOR_IDS = new Set(["eat", "sleep", "read", "work", "type", "tea"]);
+
+function getZoneBehaviorHint(zone) {
+  return `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""}`;
+}
+
+function getActiveBehavior(anim, now) {
+  if (!anim?.behavior) return null;
+  if (now >= anim.behavior.until) return null;
+  return anim.behavior;
+}
+
+function pickCitizenBehavior(citizen, zone, now, salt = 0, indoorOnly = false) {
+  const ts = getWorldTimeState(state.society);
+  const hint = getZoneBehaviorHint(zone);
+  const seed = hashCommunitySeed(citizen.id || "citizen", Math.floor(now / 800), salt);
+  // Sometimes people just stand and watch the street — that's humanlike too.
+  if (seededCommunityValue(seed, 19) < 0.3) return null;
+  let best = null;
+  let bestWeight = 0;
+  BEHAVIOR_LIBRARY.forEach((behavior, index) => {
+    if (indoorOnly && !INDOOR_BEHAVIOR_IDS.has(behavior.id)) return;
+    const zoneOk = behavior.zoneHint.test(hint);
+    if (behavior.requireZone && !zoneOk) return;
+    let weight = behavior.score(citizen, ts, zoneOk);
+    if (!Number.isFinite(weight) || weight <= 0) return;
+    if (zoneOk) weight += 16;
+    weight += seededCommunityValue(seed, index + 1) * 24;
+    if (weight > bestWeight) {
+      bestWeight = weight;
+      best = behavior;
+    }
+  });
+  return best;
+}
+
+function startCitizenBehavior(citizen, anim, behavior, now) {
+  const seed = hashCommunitySeed(citizen.id || "citizen", behavior.id, Math.floor(now / 500));
+  const duration = behavior.minMs + seededCommunityValue(seed, 2) * (behavior.maxMs - behavior.minMs);
+  anim.behavior = {
+    id: behavior.id,
+    label: behavior.label,
+    prop: behavior.prop,
+    pose: behavior.pose,
+    startedAt: now,
+    until: now + duration,
+    seed: seededCommunityValue(seed, 4) * Math.PI * 2
+  };
+  anim.state = "doing";
+  if (behavior.pose === "move") {
+    anim.nextTargetAt = 0; // jogging picks fresh road targets continuously
+  } else {
+    anim.nextTargetAt = now + duration + 400;
+  }
+  markRenderActive(1600);
+}
+
+function finishCitizenBehavior(citizen, anim, now, aborted = false) {
+  const behavior = anim?.behavior;
+  if (!behavior) return;
+  anim.behavior = null;
+  anim.nextBehaviorAt = now + 3600 + seededCommunityValue(hashCommunitySeed(behavior.id, Math.floor(now / 100)), 6) * 6000;
+  if (aborted) return;
+  const def = BEHAVIOR_BY_ID.get(behavior.id);
+  if (!def || !citizen) return;
+  // Behaviors feed back into the simulation: daily life shapes mood and energy.
+  if (def.effects?.mood) citizen.mood = clamp(behaviorNum(citizen.mood, 50) + def.effects.mood, 0, 100);
+  if (def.effects?.energy) citizen.energy = clamp(behaviorNum(citizen.energy, 50) + def.effects.energy, 0, 100);
+  citizen.lastAction = def.label;
+  if (def.doneLine && seededCommunityValue(hashCommunitySeed(citizen.id, Math.floor(now / 300)), 3) < 0.2) {
+    addSpeechBubble(citizen.id, def.doneLine, "rest", { duration: 2600 });
+  }
 }
 
 function pickSeededLine(pool, seed, salt, zoneName = "") {
@@ -3515,6 +3769,8 @@ function maybeStartEncounters(entries, now) {
       const animA = citizenAnimations[A.citizen.id];
       const animB = citizenAnimations[B.citizen.id];
       if (getActiveGesture(animA, now) || getActiveGesture(animB, now)) continue;
+      // Busy people (eating, napping, working …) don't stop to chat.
+      if (getActiveBehavior(A.moveAnim, now) || getActiveBehavior(B.moveAnim, now)) continue;
 
       const seed = hashCommunitySeed(key, Math.floor(now / 1000));
       const roll = seededCommunityValue(seed, 3);
@@ -3643,13 +3899,20 @@ function leaveBuilding(citizen, anim, now) {
 
 function getCitizenBehaviorLabel(citizen, anim, now) {
   if (!anim) return "在城市里活动";
-  if (anim.indoor) return `正在「${anim.indoor.zoneName || "建筑"}」里参观`;
+  if (anim.indoor) {
+    const ia = interiorAnimations[citizen.id];
+    const indoorBehavior = ia ? getActiveBehavior(ia, now) : null;
+    if (indoorBehavior) return `正在「${anim.indoor.zoneName || "建筑"}」里${indoorBehavior.label}`;
+    return `正在「${anim.indoor.zoneName || "建筑"}」里参观`;
+  }
   const gesture = getActiveGesture(anim, now);
   if (gesture) {
     const partnerName = gesture.partnerId ? (getCitizenNameById(gesture.partnerId) || "路人") : "";
     if (gesture.type === "wave") return partnerName ? `正在和${partnerName}打招呼` : "正在打招呼";
     return partnerName ? `正在和${partnerName}聊天` : "正在聊天";
   }
+  const behavior = getActiveBehavior(anim, now);
+  if (behavior) return `正在${behavior.label}`;
   if (anim.pendingEnterZone) return `正走向「${anim.pendingEnterZoneName || "建筑"}」门口`;
   if (anim.state === "walking") return "正在街上散步";
   return "在原地歇脚发呆";
@@ -3864,6 +4127,15 @@ function handleInteriorDeparture(citizen, anim, now) {
 function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, now, idx) {
   const gesture = getActiveGesture(canonicalAnim, now);
   ia.gesture = canonicalAnim.gesture; // shared so the figure renderer can draw the overlay
+  if (ia.behavior && now >= ia.behavior.until) {
+    finishCitizenBehavior(citizen, ia, now);
+  }
+  const behavior = getActiveBehavior(ia, now);
+  if (!gesture && behavior) {
+    // Absorbed in an indoor activity: reading, typing, sipping tea …
+    ia.state = "doing";
+    return;
+  }
   if (!gesture) {
     if (now > (ia.nextTargetAt || 0)) {
       const seed = hashCommunitySeed(citizen.id, Math.floor(now / 700), idx);
@@ -3882,9 +4154,19 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, now, idx) {
       ia.walkPhase = (ia.walkPhase || 0) + 0.1;
       ia.state = "walking";
     } else {
-      ia.state = "idle";
+      // Arrived at a spot indoors: maybe settle into an activity.
+      if (now > (ia.nextBehaviorAt || 0)) {
+        const pick = pickCitizenBehavior(citizen, interiorView?.zone, now, idx + 40, true);
+        if (pick) {
+          startCitizenBehavior(citizen, ia, pick, now);
+        } else {
+          ia.nextBehaviorAt = now + 2600;
+        }
+      }
+      if (!ia.behavior) ia.state = "idle";
     }
   } else {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
     ia.state = gesture.type === "wave" ? "waving" : "talking";
     const partnerIa = gesture.partnerId ? interiorAnimations[gesture.partnerId] : null;
     if (partnerIa && Number.isFinite(partnerIa.x)) {
@@ -4151,6 +4433,51 @@ function drawCitizenGestureOverlay(ctx, anim, x, y, size, now, hasBubble) {
   }
 }
 
+function drawBehaviorPropOverlay(ctx, anim, x, y, size, now) {
+  const behavior = getActiveBehavior(anim, now);
+  if (!behavior) return;
+  const facing = anim.facing || 1;
+  const seed = behavior.seed || 0;
+  ctx.save();
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+
+  if (behavior.pose === "lie") {
+    // Sleeping: 💤 drifting up from the head, looping.
+    for (let i = 0; i < 2; i++) {
+      const drift = ((now * 0.00055 + i * 0.5 + seed) % 1);
+      ctx.globalAlpha = (1 - drift) * 0.9;
+      ctx.font = `${Math.round(size * (0.42 + drift * 0.36))}px Arial`;
+      ctx.fillText("💤", x + facing * size * 0.5 + drift * 6, y - size * 0.35 - drift * size * 1.25);
+    }
+  } else if (behavior.id === "ball") {
+    // Dribbling: the ball bounces on its own arc beside the player.
+    const bounce = Math.abs(Math.sin(now * 0.008 + seed));
+    ctx.font = `${Math.round(size * 0.72)}px Arial`;
+    ctx.fillText("⚽", x + facing * size * 0.95, y + size * 0.92 - bounce * size * 1.35);
+  } else if (behavior.pose === "move") {
+    // Jogging: little puffs trailing behind.
+    ctx.globalAlpha = 0.45 + Math.sin(now * 0.02 + seed) * 0.25;
+    ctx.font = `${Math.round(size * 0.55)}px Arial`;
+    ctx.fillText("💨", x - facing * size * 0.95, y + size * 0.4);
+  } else if (behavior.pose === "rock") {
+    // Working / gardening: the tool swings with the body rhythm.
+    ctx.translate(x + facing * size * 0.72, y + size * 0.22);
+    ctx.rotate(Math.sin(now * 0.012 + seed) * 0.65 * facing);
+    ctx.font = `${Math.round(size * 0.66)}px Arial`;
+    ctx.fillText(behavior.prop, 0, 0);
+  } else {
+    // Seated props (bowl / book / laptop / tea) resting in front of the figure.
+    const bob = Math.sin(now * 0.006 + seed) * 1.4;
+    const jitter = behavior.id === "type" ? Math.sin(now * 0.03 + seed) * 0.9 : 0;
+    ctx.font = `${Math.round(size * 0.68)}px Arial`;
+    ctx.fillText(behavior.prop, x + facing * size * 0.58 + jitter, y + size * 0.46 + bob);
+  }
+
+  ctx.restore();
+  ctx.globalAlpha = 1;
+}
+
 function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t) {
   const isAvatar = citizen.id === "avatar";
   const shape = citizen.avatarShape || "soft";
@@ -4161,6 +4488,34 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t) {
   ctx.beginPath();
   ctx.ellipse(cx, cy + size + 2, size * 0.6, 3, 0, 0, Math.PI * 2);
   ctx.fill();
+
+  // Humanlike behavior pose: sit / lie / bounce / rock applied to the body only.
+  const behavior = getActiveBehavior(anim, now);
+  const pose = behavior?.pose || null;
+  let poseRot = 0;
+  let poseScaleY = 1;
+  let poseDy = 0;
+  if (pose === "lie") {
+    poseRot = (anim.facing || 1) * 1.32;
+    poseDy = size * 0.34;
+  } else if (pose === "sit") {
+    poseScaleY = 0.84;
+    poseDy = size * 0.1;
+  } else if (pose === "rock") {
+    poseRot = Math.sin(now * 0.012 + (behavior.seed || 0)) * 0.1;
+  } else if (pose === "bounce") {
+    poseDy = -Math.abs(Math.sin(now * 0.008 + (behavior.seed || 0))) * size * 0.32;
+  }
+  const hasPose = poseRot !== 0 || poseScaleY !== 1 || poseDy !== 0;
+  if (hasPose) {
+    ctx.save();
+    const pivotX = cx;
+    const pivotY = cy + size;
+    ctx.translate(pivotX, pivotY + poseDy);
+    ctx.rotate(poseRot);
+    ctx.scale(1, poseScaleY);
+    ctx.translate(-pivotX, -pivotY);
+  }
 
   const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
 
@@ -4256,6 +4611,8 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t) {
   }
   }
 
+  if (hasPose) ctx.restore();
+
   // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
   if (safeMood > 80 && now > (anim.nextSparkleAt || 0)) {
     anim.nextSparkleAt = now + 1800 + Math.random() * 2200;
@@ -4321,6 +4678,9 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t) {
 
   // Gesture overlays (wave / chat dots)
   drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
+
+  // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
+  drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
 
   // Last action bubble (on hover only, if no speech bubble)
   if (!bubble && citizen.lastAction && isHover) {
@@ -4666,40 +5026,67 @@ function drawGameWorld() {
     const gesture = getActiveGesture(anim, now);
     let distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
     if (!gesture) {
+      if (anim.behavior && now >= anim.behavior.until) {
+        finishCitizenBehavior(citizen, anim, now);
+      }
+      const activeBehavior = getActiveBehavior(anim, now);
       if (now > (anim.nextTargetAt || 0)) {
-        // Pick a new destination — occasionally head for the building door instead of the road.
-        const enterRoll = seededCommunityValue(hashCommunitySeed(citizen.id || idx, Math.floor(now / 900)), 11);
-        if (!isAvatar && now > (anim.noEnterUntil || 0) && enterRoll < INDOOR_ENTER_CHANCE) {
-          anim.targetX = zr.cx;
-          anim.targetY = zr.cy + zr.h * 0.18;
-          anim.pendingEnterZone = zone.id;
-          anim.pendingEnterZoneName = zone.name;
-        } else {
+        if (activeBehavior?.pose === "move") {
+          // Jogging: chain road targets at a brisk pace until the run ends.
           const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
           anim.targetX = target.x;
           anim.targetY = target.y;
           anim.pendingEnterZone = null;
           anim.pendingEnterZoneName = null;
+          anim.nextTargetAt = now + 1100;
+        } else {
+          // Pick a new destination — occasionally head for the building door instead of the road.
+          const enterRoll = seededCommunityValue(hashCommunitySeed(citizen.id || idx, Math.floor(now / 900)), 11);
+          if (!isAvatar && now > (anim.noEnterUntil || 0) && enterRoll < INDOOR_ENTER_CHANCE) {
+            anim.targetX = zr.cx;
+            anim.targetY = zr.cy + zr.h * 0.18;
+            anim.pendingEnterZone = zone.id;
+            anim.pendingEnterZoneName = zone.name;
+          } else {
+            const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
+            anim.targetX = target.x;
+            anim.targetY = target.y;
+            anim.pendingEnterZone = null;
+            anim.pendingEnterZoneName = null;
+          }
+          anim.nextTargetAt = now + 1800 + seededCommunityValue(hashCommunitySeed(citizen.id || idx, now), 7) * 3000;
         }
-        anim.nextTargetAt = now + 1800 + seededCommunityValue(hashCommunitySeed(citizen.id || idx, now), 7) * 3000;
         distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
       }
-      if (distanceToTarget > 3.2) {
+      const stationaryBehavior = activeBehavior && activeBehavior.pose !== "move" ? activeBehavior : null;
+      if (!stationaryBehavior && distanceToTarget > 3.2) {
         const targetDx = (anim.targetX || baseX) - (anim.x || baseX);
         const targetDy = (anim.targetY || baseY) - (anim.y || baseY);
         const targetDist = Math.max(0.001, Math.hypot(targetDx, targetDy));
-        const walkSpeed = (isAvatar ? 0.72 : 0.48 + (idx % 4) * 0.08) * (safeMood > 70 ? 1.12 : safeMood < 35 ? 0.78 : 1);
+        const runBoost = activeBehavior?.pose === "move" ? 2.1 : 1;
+        const walkSpeed = (isAvatar ? 0.72 : 0.48 + (idx % 4) * 0.08) * (safeMood > 70 ? 1.12 : safeMood < 35 ? 0.78 : 1) * runBoost;
         anim.x = (anim.x || baseX) + (targetDx / targetDist) * Math.min(walkSpeed, targetDist);
         anim.y = (anim.y || baseY) + (targetDy / targetDist) * Math.min(walkSpeed, targetDist);
         anim.facing = targetDx >= 0 ? 1 : -1;
         anim.walkPhase = (anim.walkPhase || 0) + walkSpeed * 0.16;
         anim.state = "walking";
-      } else if (anim.pendingEnterZone) {
+      } else if (!stationaryBehavior && anim.pendingEnterZone) {
         enterBuilding(citizen, anim, zone, now);
         return; // now indoors — skip street drawing this frame
+      } else if (stationaryBehavior) {
+        // Absorbed in a humanlike activity: eating, reading, napping …
+        anim.state = "doing";
       } else {
-        // Arrived: linger in place until the next destination is due.
-        anim.state = "idle";
+        // Arrived: consider starting a humanlike activity, or just linger.
+        if (!isAvatar && now > (anim.nextBehaviorAt || 0)) {
+          const pick = pickCitizenBehavior(citizen, zone, now, idx);
+          if (pick) {
+            startCitizenBehavior(citizen, anim, pick, now);
+          } else {
+            anim.nextBehaviorAt = now + 2800;
+          }
+        }
+        if (!anim.behavior) anim.state = "idle";
       }
     } else {
       // Gesturing (wave / talk): stand still and face the partner.
@@ -5011,8 +5398,10 @@ function drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens) {
     if (!actorPos) return;
     const targetPos = target ? getCitizenCanvasPosition(target, aliveCitizens, W, H, groundY) : null;
     const elapsed = now - item.startAt;
-    const progress = clamp(elapsed / INTERACTION_VISUAL_DURATION, 0, 1);
-    const alpha = Math.min(clamp(elapsed / 360, 0, 1), clamp((item.until - now) / 900, 0, 1));
+    const lifespan = item.minor ? MINOR_INTERACTION_VISUAL_DURATION : INTERACTION_VISUAL_DURATION;
+    const progress = clamp(elapsed / lifespan, 0, 1);
+    const fadeAlpha = Math.min(clamp(elapsed / 360, 0, 1), clamp((item.until - now) / 900, 0, 1));
+    const alpha = item.minor ? fadeAlpha * 0.45 : fadeAlpha;
     const pulse = Math.sin(now / 140 + index) * 0.5 + 0.5;
     const color = actionColorWithAlpha(item.type, 0.26 + alpha * 0.56);
     const lineEnd = targetPos || {
@@ -5025,8 +5414,8 @@ function drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens) {
     ctx.save();
     ctx.globalAlpha = alpha;
     ctx.strokeStyle = color;
-    ctx.lineWidth = item.source === "玩家互动" ? 4 : 2.5;
-    ctx.setLineDash(item.source === "玩家互动" ? [] : [8, 7]);
+    ctx.lineWidth = item.minor ? 1.5 : 4;
+    ctx.setLineDash(item.minor ? [6, 8] : []);
     ctx.beginPath();
     ctx.moveTo(actorPos.x, actorPos.y);
     ctx.quadraticCurveTo(midX, midY - 24, lineEnd.x, lineEnd.y);
@@ -5038,11 +5427,17 @@ function drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens) {
     const beadY = actorPos.y + (lineEnd.y - actorPos.y) * beadT - Math.sin(beadT * Math.PI) * 24;
     ctx.fillStyle = actionColorWithAlpha(item.type, 0.88);
     ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2;
+    ctx.lineWidth = item.minor ? 1 : 2;
     ctx.beginPath();
-    ctx.arc(beadX, beadY, 5.5 + pulse * 2, 0, Math.PI * 2);
+    ctx.arc(beadX, beadY, item.minor ? 3 : 5.5 + pulse * 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+
+    // Ambient society events stop here — no rings, symbol badge, or card.
+    if (item.minor) {
+      ctx.restore();
+      return;
+    }
 
     [actorPos, targetPos].filter(Boolean).forEach((pos, ringIndex) => {
       ctx.strokeStyle = actionColorWithAlpha(item.type, 0.34 + alpha * 0.42);
@@ -5066,9 +5461,7 @@ function drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens) {
     ctx.fillText(item.symbol || "•", midX, midY - 20);
     ctx.restore();
 
-    if (index >= interactionVisuals.length - 4) {
-      drawInteractionCard(ctx, item, midX, midY - 32 - index * 8, alpha, W);
-    }
+    drawInteractionCard(ctx, item, midX, midY - 32 - index * 8, alpha, W);
   });
 }
 
