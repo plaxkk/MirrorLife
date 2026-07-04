@@ -6684,6 +6684,11 @@ function bindGameEvents() {
   }
 
   document.addEventListener("keydown", (e) => {
+    const target = e.target;
+    const isTyping = target?.tagName === "INPUT" ||
+      target?.tagName === "TEXTAREA" ||
+      target?.isContentEditable;
+    if (isTyping) return;
     if (e.key === "Escape") {
       if (interiorView) {
         const wasFollow = interiorView.source === "follow";
