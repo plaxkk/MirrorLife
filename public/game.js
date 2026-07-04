@@ -27,6 +27,14 @@ let renderActivityUntil = 0;
 let resumeSocietyAfterVisibilityPause = false;
 let lifecycleBound = false;
 let streamedCommunityStats = { activeChunkCount: 0, activeZoneCount: 0, syntax: null };
+let followedCitizenId = null;
+let followZoomUntil = 0;
+let lastFollowBannerAt = 0;
+let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
+let interiorAnimations = {};
+let activeEncounters = [];
+let encounterCooldowns = {};
+let lastEncounterCheckAt = 0;
 
 const ACTIVE_FRAME_MS = 34;
 const IDLE_FRAME_MS = 90;
@@ -36,6 +44,22 @@ const MAX_PARTICLES = 120;
 const MAX_INTERACTION_VISUALS = 7;
 const MAX_RECENT_INTERACTIONS = 8;
 const INTERACTION_VISUAL_DURATION = 4400;
+
+// ── Citizen behavior / encounter tuning ──
+const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
+const ENCOUNTER_RADIUS = 30;
+const ENCOUNTER_COOLDOWN_MS = 26000;
+const INDOOR_ENTER_CHANCE = 0.14;
+const MAX_INTERIOR_OCCUPANTS = 4;
+
+const ENCOUNTER_GREETINGS = ["你好呀", "嗨,好久不见", "今天过得怎么样?", "又见面啦", "早啊"];
+const ENCOUNTER_CHAT_LINES = {
+  happy: ["今天心情特别好", "刚在{zone}待了会儿,很舒服", "最近一切都挺顺的", "想到个好主意,回头细说"],
+  neutral: ["最近还行吧", "在{zone}那边转了转", "今天天气还可以", "就随便走走,透透气"],
+  low: ["有点累了", "最近事情不太顺", "想找个安静地方待会儿", "唉,一言难尽"]
+};
+const ENCOUNTER_CLOSERS = ["那回头见", "我先走啦", "改天再聊", "保重呀"];
+const INTERIOR_DEPART_LINES = ["我先走啦", "出去转转", "回头见"];
 
 const AVATAR_COLORS = [
   "#296c68", "#7a4462", "#b45f45", "#4e5c8d",
@@ -490,6 +514,26 @@ function getRelationModelLabel(modelId) {
 
 function getCitizenNameById(citizenId) {
   return state?.society?.citizens?.find((citizen) => citizen.id === citizenId)?.name || citizenId;
+}
+
+// Detail-panel lines for player-authored persona tags (hobby / dislike / unique / values).
+function renderPersonaTagLines(citizen) {
+  const p = citizen?.persona;
+  if (!p) return "";
+  const valueLabels = {
+    self_direction: "自主", stimulation: "刺激", hedonism: "享乐", achievement: "成就",
+    power: "权力", security: "安全", conformity: "秩序", tradition: "传统",
+    benevolence: "关怀", universalism: "博爱"
+  };
+  const lines = [];
+  if (Array.isArray(p.valueTags) && p.valueTags.length) {
+    lines.push(`看重：${p.valueTags.map((k) => valueLabels[k] || k).join(" / ")}`);
+  }
+  if (p.hobby) lines.push(`爱好：${p.hobby}`);
+  if (p.dislike) lines.push(`讨厌：${p.dislike}`);
+  if (p.unique) lines.push(`独特：${p.unique}`);
+  if (!lines.length) return "";
+  return lines.map((line) => `<p>${escapeHtml(line)}</p>`).join("");
 }
 
 function renderSocialGraphSnapshot() {
@@ -1566,6 +1610,21 @@ function hydrateSocietyState() {
 
 let selectedAvatarColor = AVATAR_COLORS[0];
 let selectedAvatarPreset = DEFAULT_AVATAR_PRESETS[0];
+let selectedMbtiType = "";        // empty = let engine infer
+let selectedValueTags = [];       // Schwartz value keys, max 2
+
+const VALUE_TAG_LABELS = {
+  self_direction: "自主",
+  stimulation: "刺激",
+  hedonism: "享乐",
+  achievement: "成就",
+  power: "权力",
+  security: "安全",
+  conformity: "秩序",
+  tradition: "传统",
+  benevolence: "关怀",
+  universalism: "博爱"
+};
 
 function initAvatarForm() {
   // Populate profession select
@@ -1630,7 +1689,70 @@ function initAvatarForm() {
     renderAvatarPreview();
   });
 
+  // Persona: MBTI grid + value chips + free-text tags
+  initMbtiPicker();
+  initValueTagPicker();
+  ["avatarHobby", "avatarDislike", "avatarUnique"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (el) el.addEventListener("input", () => {
+      markAvatarCustom();
+      renderAvatarPreview();
+    });
+  });
+
   renderAvatarPreview();
+}
+
+function initMbtiPicker() {
+  const grid = document.getElementById("avatarMbtiGrid");
+  if (!grid || typeof MBTI_ARCHETYPES === "undefined") return;
+  grid.innerHTML = MBTI_ARCHETYPES.map((a) => `
+    <button type="button" class="mbti-card" data-mbti="${a.type}" style="--mbti-color:${a.color}" role="option" aria-selected="false">
+      <b>${a.type}</b>
+      <small>${a.label}</small>
+    </button>
+  `).join("");
+  grid.addEventListener("click", (event) => {
+    const card = event.target.closest(".mbti-card");
+    if (!card) return;
+    const type = card.dataset.mbti;
+    // Toggle: clicking the selected one clears it (back to inferred)
+    selectedMbtiType = selectedMbtiType === type ? "" : type;
+    grid.querySelectorAll(".mbti-card").forEach((c) => {
+      const on = c.dataset.mbti === selectedMbtiType;
+      c.classList.toggle("selected", on);
+      c.setAttribute("aria-selected", on ? "true" : "false");
+    });
+    markAvatarCustom();
+    renderAvatarPreview();
+  });
+}
+
+function initValueTagPicker() {
+  const row = document.getElementById("avatarValuesRow");
+  if (!row) return;
+  row.innerHTML = Object.entries(VALUE_TAG_LABELS).map(([key, label]) =>
+    `<button type="button" class="tag-chip" data-value="${key}">${label}</button>`
+  ).join("");
+  row.addEventListener("click", (event) => {
+    const chip = event.target.closest(".tag-chip");
+    if (!chip) return;
+    const key = chip.dataset.value;
+    const idx = selectedValueTags.indexOf(key);
+    if (idx >= 0) {
+      selectedValueTags.splice(idx, 1);
+    } else {
+      if (selectedValueTags.length >= 2) return; // max 2
+      selectedValueTags.push(key);
+    }
+    row.querySelectorAll(".tag-chip").forEach((c) => {
+      const on = selectedValueTags.includes(c.dataset.value);
+      c.classList.toggle("active", on);
+      c.classList.toggle("disabled", !on && selectedValueTags.length >= 2);
+    });
+    markAvatarCustom();
+    renderAvatarPreview();
+  });
 }
 
 function renderDefaultAvatarGrid() {
@@ -1740,6 +1862,44 @@ function renderAvatarPreview() {
   const name = document.getElementById("avatarName")?.value || "你的分身";
   const tagName = document.getElementById("mirrorTagName");
   if (tagName) tagName.textContent = name.trim() || "你的分身";
+
+  const personaEl = document.getElementById("mirrorTagPersona");
+  if (personaEl) {
+    const parts = [];
+    if (selectedMbtiType && typeof MBTI_ARCHETYPES !== "undefined") {
+      const arc = MBTI_ARCHETYPES.find((a) => a.type === selectedMbtiType);
+      parts.push(arc ? `${arc.type} · ${arc.label}` : selectedMbtiType);
+    }
+    if (selectedValueTags.length) {
+      parts.push(selectedValueTags.map((k) => VALUE_TAG_LABELS[k] || k).join("/"));
+    }
+    personaEl.textContent = parts.join(" · ");
+    personaEl.style.display = parts.length ? "" : "none";
+  }
+}
+
+function collectPersonaFromForm() {
+  return {
+    mbtiType: selectedMbtiType || "",
+    valueTags: [...selectedValueTags],
+    hobby: document.getElementById("avatarHobby")?.value.trim() || "",
+    dislike: document.getElementById("avatarDislike")?.value.trim() || "",
+    unique: document.getElementById("avatarUnique")?.value.trim() || ""
+  };
+}
+
+// Normalize persona coming from profileData (may be partial / from an old save).
+function normalizePersonaInput(source = {}) {
+  const valueTags = Array.isArray(source.valueTags)
+    ? source.valueTags.filter((k) => VALUE_TAG_LABELS[k]).slice(0, 2)
+    : [];
+  return {
+    mbtiType: typeof source.mbtiType === "string" ? source.mbtiType : "",
+    valueTags,
+    hobby: source.hobby || "",
+    dislike: source.dislike || "",
+    unique: source.unique || ""
+  };
 }
 
 function createAndEnterWorld(profileData) {
@@ -1750,6 +1910,7 @@ function createAndEnterWorld(profileData) {
   const professionNameOverride = (profileData.professionName || "").trim();
   const avatarFrame = normalizeAvatarFrame(profileData.avatarFrame ?? selectedAvatarPreset?.avatarFrame);
   const bio = profileData.bio || "";
+  const persona = normalizePersonaInput(profileData);
 
   // Create or rebuild society
   state.society = buildSocietyFromInput(scenePresets["open-square"]);
@@ -1771,6 +1932,11 @@ function createAndEnterWorld(profileData) {
     avatar.lifeStage = getLifeStage(avatar.age).id;
     avatar.lifeStageLabel = getLifeStage(avatar.age).label;
     avatar.purpose = bio || "从真实生活带入选择与体验";
+
+    // Apply chosen personality (MBTI + value tags + free-text tags).
+    if (typeof applyPersonaToCitizen === "function") {
+      applyPersonaToCitizen(avatar, persona);
+    }
 
     // Place in profession zone
     const prof = WORLD_PROFESSIONS.find(p => p.id === professionId);
@@ -1794,7 +1960,8 @@ function createAndEnterWorld(profileData) {
     avatarFrame,
     avatarSpriteSrc: AVATAR_SPRITE_SRC,
     avatarBio: bio,
-    avatarPresetId: selectedAvatarPreset?.id || "custom"
+    avatarPresetId: selectedAvatarPreset?.id || "custom",
+    persona
   };
 
   // Spawn entities
@@ -2027,6 +2194,11 @@ function queueInteractionVisual(result, options = {}) {
     .filter((entry) => entry.until > now)
     .slice(-MAX_INTERACTION_VISUALS);
 
+  // Animate the participants on canvas: a supportive wave or a face-to-face chat.
+  const gestureType = type === "support" ? "wave" : "talk";
+  triggerCitizenGesture(item.actorId, gestureType, item.targetId);
+  if (item.targetId) triggerCitizenGesture(item.targetId, gestureType, item.actorId);
+
   recentInteractionEvents = [item, ...recentInteractionEvents].slice(0, MAX_RECENT_INTERACTIONS);
   markRenderActive(INTERACTION_VISUAL_DURATION + visibleDelay);
 }
@@ -2107,6 +2279,13 @@ function showCitizenInteraction(citizen) {
       <div class="stat-row"><span class="stat-label">心情</span><div class="stat-bar"><div class="stat-fill mood" style="width:${Math.round(citizen.mood)}%"></div></div><span class="stat-val">${Math.round(citizen.mood)}</span></div>
       <div class="stat-row"><span class="stat-label">能量</span><div class="stat-bar"><div class="stat-fill energy" style="width:${Math.round(citizen.energy)}%"></div></div><span class="stat-val">${Math.round(citizen.energy)}</span></div>
       <div class="stat-row"><span class="stat-label">信任</span><div class="stat-bar"><div class="stat-fill trust" style="width:${Math.round(citizen.trust)}%"></div></div><span class="stat-val">${Math.round(citizen.trust)}</span></div>
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">观察</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <button class="interaction-btn" data-follow="${citizen.id}">👁 跟随TA的视角</button>
+        <button class="interaction-btn" data-gesture="wave" data-target="${citizen.id}">👋 打招呼</button>
+      </div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">互动</div>
@@ -2630,6 +2809,11 @@ function showZoneDetail(zone) {
         : "<p>暂时没有人停留。你可以继续观察，或换一处地点。</p>"}
     </div>
     <p class="detail-footnote">系统线索：这是一处 ${escapeHtml(zone.archetype || zone.role || "社会")} 型地点，会影响分身接下来的关系和行动。</p>
+    <div class="detail-section detail-next-step">
+      <div class="detail-section-title">走进去看看</div>
+      <p>推门进去，观察大家在室内的活动，也可以直接和他们互动。</p>
+      <button class="interaction-btn detail-action" data-enter-interior="${escapeHtml(zone.id)}">🚪 进入室内</button>
+    </div>
     ${enterBtn}
   `);
 }
@@ -2679,6 +2863,7 @@ function showCitizenDetail(citizen) {
       <p>核心需求：${escapeHtml(citizen.personaNeed || "被理解")}</p>
       <p>关系偏好：${escapeHtml(getRelationModelLabel(citizen.relationPreference))}</p>
       <p>依恋风格：${escapeHtml(citizen.attachmentStyle || "secure")} · 当前意图：${escapeHtml(citizen.intention || "观察")}</p>
+      ${renderPersonaTagLines(citizen)}
       <div class="mini-chip-row">
         ${topTraits.map(([label, value]) => `<span>${escapeHtml(label)} ${Math.round(Number(value || 0) * 100)}</span>`).join("")}
         ${needItems.map(([label, value]) => `<span>${escapeHtml(label)}缺口 ${Math.round((1 - Number(value || 0)) * 100)}</span>`).join("")}
@@ -3138,6 +3323,9 @@ function shouldRenderAtActiveRate(now) {
       camera.drag ||
       particles.length > 0 ||
       !!realityActionFocus ||
+      !!followedCitizenId ||
+      !!interiorView ||
+      activeEncounters.length > 0 ||
       Object.keys(speechBubbles).length > 0 ||
       now < renderActivityUntil
     );
@@ -3149,11 +3337,16 @@ function getRenderFrameBudget(now) {
 
 function pruneRenderState(aliveCitizens) {
   const aliveIds = new Set(aliveCitizens.map((citizen) => citizen.id));
-  [citizenAnimations, walkingCitizens, speechBubbles].forEach((bucket) => {
+  [citizenAnimations, walkingCitizens, speechBubbles, interiorAnimations].forEach((bucket) => {
     Object.keys(bucket).forEach((id) => {
       if (!aliveIds.has(id)) delete bucket[id];
     });
   });
+  activeEncounters = activeEncounters.filter((e) => e.lines.every((line) => aliveIds.has(line.id)));
+  if (Object.keys(encounterCooldowns).length > 400) encounterCooldowns = {};
+  if (followedCitizenId && !aliveIds.has(followedCitizenId)) {
+    stopFollowCitizen("跟随的分身已离开这个世界");
+  }
 }
 
 function stopGameRenderLoop() {
@@ -3264,6 +3457,899 @@ function getCitizenRoadWalkTarget(citizen, zoneRect, roadPairs, now, index) {
     x: zoneGate.x + (nextGate.x - zoneGate.x) * 0.72,
     y: zoneGate.y + (nextGate.y - zoneGate.y) * 0.72
   };
+}
+
+// ═══════════════════════════════════════════════════════════════
+// CITIZEN BEHAVIOR: gestures, encounters, follow mode, interiors
+// ═══════════════════════════════════════════════════════════════
+
+function getActiveGesture(anim, now) {
+  if (!anim || !anim.gesture) return null;
+  if (now >= anim.gesture.until) {
+    anim.gesture = null;
+    return null;
+  }
+  return anim.gesture;
+}
+
+function triggerCitizenGesture(citizenId, type, partnerId = null, duration = 0) {
+  if (!citizenId) return;
+  const anim = citizenAnimations[citizenId] = citizenAnimations[citizenId] || {};
+  anim.gesture = {
+    type,
+    partnerId,
+    until: performance.now() + (duration || GESTURE_DURATIONS[type] || 1600)
+  };
+  markRenderActive(1800);
+}
+
+function pickSeededLine(pool, seed, salt, zoneName = "") {
+  if (!Array.isArray(pool) || !pool.length) return "";
+  const idx = Math.floor(seededCommunityValue(seed, salt) * pool.length) % pool.length;
+  return String(pool[idx]).replace("{zone}", zoneName || "附近");
+}
+
+function pairEncounterKey(aId, bId) {
+  return aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
+}
+
+function haltEntryMovement(entry, now, duration) {
+  const anim = entry.moveAnim;
+  if (!anim) return;
+  anim.targetX = anim.x;
+  anim.targetY = anim.y;
+  anim.nextTargetAt = now + duration + 500;
+}
+
+// Ambient citizen-to-citizen encounters: wave hello, stop for a chat, or just pass by.
+function maybeStartEncounters(entries, now) {
+  if (now - lastEncounterCheckAt < 900) return;
+  lastEncounterCheckAt = now;
+  for (let i = 0; i < entries.length; i++) {
+    for (let j = i + 1; j < entries.length; j++) {
+      const A = entries[i];
+      const B = entries[j];
+      if (Math.hypot(A.x - B.x, A.y - B.y) > ENCOUNTER_RADIUS) continue;
+      const key = pairEncounterKey(A.citizen.id, B.citizen.id);
+      if ((encounterCooldowns[key] || 0) > now) continue;
+      const animA = citizenAnimations[A.citizen.id];
+      const animB = citizenAnimations[B.citizen.id];
+      if (getActiveGesture(animA, now) || getActiveGesture(animB, now)) continue;
+
+      const seed = hashCommunitySeed(key, Math.floor(now / 1000));
+      const roll = seededCommunityValue(seed, 3);
+      const social = ((Number(A.citizen.bigFive?.extraversion) || 0.5) + (Number(B.citizen.bigFive?.extraversion) || 0.5)) / 2;
+      const chatChance = 0.16 + social * 0.3;
+      const waveChance = chatChance + 0.28;
+      if (roll < chatChance) {
+        startChatEncounter(A, B, now, seed);
+        encounterCooldowns[key] = now + ENCOUNTER_COOLDOWN_MS + seededCommunityValue(seed, 9) * 20000;
+      } else if (roll < waveChance) {
+        startWaveEncounter(A, B, now, seed);
+        encounterCooldowns[key] = now + ENCOUNTER_COOLDOWN_MS * 0.6;
+      } else {
+        // They pass each other without interacting — that's a valid outcome too.
+        encounterCooldowns[key] = now + 12000;
+      }
+    }
+  }
+}
+
+function startWaveEncounter(A, B, now, seed) {
+  triggerCitizenGesture(A.citizen.id, "wave", B.citizen.id);
+  triggerCitizenGesture(B.citizen.id, "wave", A.citizen.id);
+  haltEntryMovement(A, now, GESTURE_DURATIONS.wave);
+  haltEntryMovement(B, now, GESTURE_DURATIONS.wave);
+  activeEncounters.push({
+    lines: [
+      { id: A.citizen.id, text: `👋 ${pickSeededLine(ENCOUNTER_GREETINGS, seed, 1)}` },
+      { id: B.citizen.id, text: `👋 ${pickSeededLine(ENCOUNTER_GREETINGS, seed, 2)}` }
+    ],
+    lineIdx: 0,
+    nextLineAt: now + 150,
+    gap: 900,
+    until: now + GESTURE_DURATIONS.wave + 800
+  });
+}
+
+function startChatEncounter(A, B, now, seed) {
+  const lines = buildChatLines(A.citizen, B.citizen, seed);
+  const duration = lines.length * 1600 + 900;
+  triggerCitizenGesture(A.citizen.id, "talk", B.citizen.id, duration);
+  triggerCitizenGesture(B.citizen.id, "talk", A.citizen.id, duration);
+  haltEntryMovement(A, now, duration);
+  haltEntryMovement(B, now, duration);
+  activeEncounters.push({
+    lines,
+    lineIdx: 0,
+    nextLineAt: now + 250,
+    gap: 1600,
+    until: now + duration
+  });
+  if (followedCitizenId === A.citizen.id || followedCitizenId === B.citizen.id) {
+    markRenderActive(duration);
+  }
+}
+
+function buildChatLines(a, b, seed) {
+  const zoneName = getCitizenZone(state.society, a)?.name || "附近";
+  const moodTier = (c) => {
+    const mood = Number(c.mood) || 50;
+    return mood > 65 ? "happy" : mood > 35 ? "neutral" : "low";
+  };
+  const closerId = seededCommunityValue(seed, 5) > 0.5 ? a.id : b.id;
+  return [
+    { id: a.id, text: pickSeededLine(ENCOUNTER_GREETINGS, seed, 1, zoneName) },
+    { id: b.id, text: pickSeededLine(ENCOUNTER_GREETINGS, seed, 2, zoneName) },
+    { id: a.id, text: pickSeededLine(ENCOUNTER_CHAT_LINES[moodTier(a)], seed, 3, zoneName) },
+    { id: b.id, text: pickSeededLine(ENCOUNTER_CHAT_LINES[moodTier(b)], seed, 4, zoneName) },
+    { id: closerId, text: pickSeededLine(ENCOUNTER_CLOSERS, seed, 6, zoneName) }
+  ];
+}
+
+function updateEncounterLines(now) {
+  if (!activeEncounters.length) return;
+  activeEncounters = activeEncounters.filter(e => now < e.until + 2000);
+  activeEncounters.forEach(e => {
+    if (e.lineIdx >= e.lines.length || now < e.nextLineAt) return;
+    const line = e.lines[e.lineIdx++];
+    addSpeechBubble(line.id, line.text, "listen");
+    e.nextLineAt = now + (e.gap || 1500);
+  });
+}
+
+// Player-triggered friendly wave from the avatar toward a citizen.
+function greetCitizen(targetId) {
+  const target = state.society.citizens.find(c => c.id === targetId);
+  if (!target) return;
+  const now = performance.now();
+  const seed = hashCommunitySeed("greet", targetId, Math.floor(now / 500));
+  triggerCitizenGesture("avatar", "wave", targetId);
+  triggerCitizenGesture(targetId, "wave", "avatar");
+  addSpeechBubble("avatar", `👋 ${pickSeededLine(ENCOUNTER_GREETINGS, seed, 1)}`, "support");
+  activeEncounters.push({
+    lines: [{ id: targetId, text: `👋 ${pickSeededLine(ENCOUNTER_GREETINGS, seed, 2)}` }],
+    lineIdx: 0,
+    nextLineAt: now + 900,
+    gap: 900,
+    until: now + 2600
+  });
+  showToast(`你向 ${target.name} 挥了挥手`, "support");
+  markRenderActive(2600);
+}
+
+// ── Building enter / leave (street level) ──
+
+function enterBuilding(citizen, anim, zone, now) {
+  anim.pendingEnterZone = null;
+  anim.pendingEnterZoneName = null;
+  const stayFor = 7000 + seededCommunityValue(hashCommunitySeed(citizen.id, Math.floor(now / 500)), 3) * 9000;
+  anim.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + stayFor };
+  anim.state = "indoor";
+  delete interiorAnimations[citizen.id];
+  if (followedCitizenId === citizen.id) {
+    enterInteriorView(zone, "follow");
+  }
+  markRenderActive(1400);
+}
+
+function leaveBuilding(citizen, anim, now) {
+  anim.indoor = null;
+  delete interiorAnimations[citizen.id];
+  anim.nextTargetAt = 0; // pick a fresh street target right away
+  anim.state = "idle";
+}
+
+function getCitizenBehaviorLabel(citizen, anim, now) {
+  if (!anim) return "在城市里活动";
+  if (anim.indoor) return `正在「${anim.indoor.zoneName || "建筑"}」里参观`;
+  const gesture = getActiveGesture(anim, now);
+  if (gesture) {
+    const partnerName = gesture.partnerId ? (getCitizenNameById(gesture.partnerId) || "路人") : "";
+    if (gesture.type === "wave") return partnerName ? `正在和${partnerName}打招呼` : "正在打招呼";
+    return partnerName ? `正在和${partnerName}聊天` : "正在聊天";
+  }
+  if (anim.pendingEnterZone) return `正走向「${anim.pendingEnterZoneName || "建筑"}」门口`;
+  if (anim.state === "walking") return "正在街上散步";
+  return "在原地歇脚发呆";
+}
+
+// ── Follow mode: watch the world from one citizen's point of view ──
+
+function startFollowCitizen(citizenId) {
+  const citizen = state.society.citizens.find(c => c.id === citizenId);
+  if (!citizen) return;
+  followedCitizenId = citizenId;
+  followZoomUntil = performance.now() + 1600;
+  hideDetail();
+  ensureFollowBanner();
+  updateFollowBanner(citizen, "开始跟随观察…", true);
+  const anim = citizenAnimations[citizenId];
+  if (anim?.indoor) {
+    const zone = findRenderZoneById(anim.indoor.zoneId);
+    if (zone) enterInteriorView(zone, "follow");
+  }
+  showToast(`正在以 ${citizen.name} 的视角观察(拖动镜头或按 Esc 退出)`, "support");
+  markRenderActive(4000);
+}
+
+function stopFollowCitizen(message) {
+  if (!followedCitizenId) return;
+  followedCitizenId = null;
+  followZoomUntil = 0;
+  document.getElementById("followBanner")?.remove();
+  if (interiorView?.source === "follow") exitInteriorView();
+  if (message !== false) showToast(message || "已退出跟随视角", "listen");
+  markRenderActive(1600);
+}
+
+function ensureFollowBanner() {
+  let el = document.getElementById("followBanner");
+  if (el) return el;
+  el = document.createElement("div");
+  el.id = "followBanner";
+  el.innerHTML = `
+    <span class="follow-eye">👁</span>
+    <div class="follow-meta">
+      <strong id="followName"></strong>
+      <span id="followStatus"></span>
+    </div>
+    <button id="followExit" type="button">退出跟随</button>`;
+  document.getElementById("gameShell")?.appendChild(el);
+  el.querySelector("#followExit")?.addEventListener("click", () => stopFollowCitizen());
+  return el;
+}
+
+function updateFollowBanner(citizen, statusText, force = false) {
+  const now = performance.now();
+  if (!force && now - lastFollowBannerAt < 350) return;
+  lastFollowBannerAt = now;
+  const nameEl = document.getElementById("followName");
+  const statusEl = document.getElementById("followStatus");
+  if (nameEl) nameEl.textContent = citizen?.name || "";
+  if (statusEl) statusEl.textContent = statusText || "";
+}
+
+function updateFollowCamera(W, H, now) {
+  if (!followedCitizenId || interiorView) return;
+  const anim = citizenAnimations[followedCitizenId];
+  if (!anim || anim.indoor || !Number.isFinite(anim.x) || !Number.isFinite(anim.y)) return;
+  const targetX = -((anim.x - W / 2) * camera.zoom);
+  const targetY = -((anim.y - H / 2) * camera.zoom) - 40;
+  camera.x += (targetX - camera.x) * 0.09;
+  camera.y += (targetY - camera.y) * 0.09;
+  if (now < followZoomUntil) {
+    camera.zoom += (1.85 - camera.zoom) * 0.08;
+  }
+  markRenderActive(400);
+}
+
+// ── Interior scenes: step inside a building and look around ──
+
+const INTERIOR_FURNITURE_SETS = {
+  craft: ["🔧", "🧰", "📦", "⚙️", "🪑"],
+  creative: ["🎨", "🖼️", "🎭", "📚", "🎶"],
+  learning: ["📖", "📚", "🖊️", "🪑", "🌍"],
+  care: ["🛏️", "🌡️", "🧸", "🪴", "💊"],
+  nature: ["🌿", "🪴", "🍃", "🌸", "🪵"],
+  market: ["🧺", "🏷️", "📦", "☕", "🧾"],
+  default: ["🪑", "🛋️", "🪴", "📚", "☕", "🖼️"]
+};
+
+function getInteriorFurniturePool(zone) {
+  const hint = `${zone.role || ""} ${zone.archetype || ""} ${zone.id || ""}`;
+  if (/work|repair|factory|craft|build/.test(hint)) return INTERIOR_FURNITURE_SETS.craft;
+  if (/creative|studio|art|story|archive/.test(hint)) return INTERIOR_FURNITURE_SETS.creative;
+  if (/school|university|kinder|learn|library/.test(hint)) return INTERIOR_FURNITURE_SETS.learning;
+  if (/hospital|care|clinic|rest|maternity/.test(hint)) return INTERIOR_FURNITURE_SETS.care;
+  if (/park|garden|farm|eco|nature/.test(hint)) return INTERIOR_FURNITURE_SETS.nature;
+  if (/commercial|market|shop|exchange/.test(hint)) return INTERIOR_FURNITURE_SETS.market;
+  return INTERIOR_FURNITURE_SETS.default;
+}
+
+function getInteriorLayout(W, H) {
+  const wallTop = H * 0.14;
+  const floorTop = H * 0.42;
+  const floorBottom = H * 0.92;
+  const left = W * 0.07;
+  const right = W * 0.93;
+  const doorW = 66;
+  const doorH = 92;
+  return {
+    wallTop, floorTop, floorBottom, left, right,
+    door: { x: W / 2 - doorW / 2, y: floorTop - doorH, w: doorW, h: doorH }
+  };
+}
+
+function findRenderZoneById(zoneId) {
+  if (!zoneId) return null;
+  const canvas = document.getElementById("gameCanvas");
+  const rect = canvas?.getBoundingClientRect();
+  const W = rect?.width || 800;
+  const H = rect?.height || 600;
+  const zones = getRenderableZoneList(state.society, W, H, getWorldGroundY(H));
+  return zones.find(z => z.id === zoneId)
+    || (state.society.zones || []).find(z => z.id === zoneId)
+    || null;
+}
+
+function enterInteriorView(zone, source = "manual") {
+  if (!zone) return;
+  interiorView = { zone, source, enteredAt: performance.now(), nextArrivalCheckAt: 0 };
+  hideDetail();
+  ensureInteriorChip(zone);
+  if (source === "manual") seedInteriorOccupants(zone);
+  markRenderActive(3200);
+}
+
+function exitInteriorView() {
+  if (!interiorView) return;
+  interiorView = null;
+  document.getElementById("interiorChip")?.remove();
+  markRenderActive(2200);
+}
+
+function ensureInteriorChip(zone) {
+  document.getElementById("interiorChip")?.remove();
+  const el = document.createElement("button");
+  el.id = "interiorChip";
+  el.type = "button";
+  el.textContent = `← 离开${zone.name}`;
+  el.addEventListener("click", () => {
+    const wasFollow = interiorView?.source === "follow";
+    exitInteriorView();
+    if (wasFollow) stopFollowCitizen(false);
+  });
+  document.getElementById("gameShell")?.appendChild(el);
+}
+
+// When the player walks in on their own, a couple of zone citizens are "already inside".
+function seedInteriorOccupants(zone) {
+  const now = performance.now();
+  const candidates = getAliveCitizens(state.society)
+    .filter(c => c.id !== "avatar" && c.zoneId === zone.id && !citizenAnimations[c.id]?.indoor);
+  candidates.slice(0, 2).forEach((citizen, i) => {
+    const anim = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+    anim.indoor = {
+      zoneId: zone.id,
+      zoneName: zone.name,
+      until: now + 9000 + i * 5000 + seededCommunityValue(hashCommunitySeed(citizen.id, i), 2) * 8000,
+      spawnInside: true
+    };
+    delete interiorAnimations[citizen.id];
+  });
+}
+
+function manageInteriorArrivals(society, zone, indoorCount, now) {
+  if (!interiorView || now < (interiorView.nextArrivalCheckAt || 0)) return;
+  interiorView.nextArrivalCheckAt = now + 4200;
+  if (indoorCount >= MAX_INTERIOR_OCCUPANTS) return;
+  const candidates = getAliveCitizens(society)
+    .filter(c => c.id !== "avatar" && c.zoneId === zone.id && !citizenAnimations[c.id]?.indoor);
+  if (!candidates.length) return;
+  const seed = hashCommunitySeed(zone.id, Math.floor(now / 4200));
+  if (seededCommunityValue(seed, 2) > 0.5) return;
+  const pick = candidates[seed % candidates.length];
+  const anim = citizenAnimations[pick.id] = citizenAnimations[pick.id] || {};
+  anim.indoor = {
+    zoneId: zone.id,
+    zoneName: zone.name,
+    until: now + 8000 + seededCommunityValue(seed, 4) * 10000
+  };
+  delete interiorAnimations[pick.id];
+}
+
+function handleInteriorDeparture(citizen, anim, now) {
+  const seed = hashCommunitySeed(citizen.id, Math.floor(now / 1000));
+  if (seededCommunityValue(seed, 1) < 0.4) {
+    addSpeechBubble(citizen.id, pickSeededLine(INTERIOR_DEPART_LINES, seed, 2), "listen");
+  }
+  const wasFollowed = followedCitizenId === citizen.id;
+  leaveBuilding(citizen, anim, now);
+  if (wasFollowed && interiorView?.source === "follow") {
+    exitInteriorView();
+  }
+}
+
+function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, now, idx) {
+  const gesture = getActiveGesture(canonicalAnim, now);
+  ia.gesture = canonicalAnim.gesture; // shared so the figure renderer can draw the overlay
+  if (!gesture) {
+    if (now > (ia.nextTargetAt || 0)) {
+      const seed = hashCommunitySeed(citizen.id, Math.floor(now / 700), idx);
+      ia.targetX = layout.left + 30 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 60);
+      ia.targetY = layout.floorTop + 34 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 60);
+      ia.nextTargetAt = now + 2200 + seededCommunityValue(seed, 3) * 3200;
+    }
+    const dx = (ia.targetX || ia.x) - ia.x;
+    const dy = (ia.targetY || ia.y) - ia.y;
+    const dist = Math.max(0.001, Math.hypot(dx, dy));
+    if (dist > 3) {
+      const speed = 0.55;
+      ia.x += (dx / dist) * Math.min(speed, dist);
+      ia.y += (dy / dist) * Math.min(speed, dist);
+      ia.facing = dx >= 0 ? 1 : -1;
+      ia.walkPhase = (ia.walkPhase || 0) + 0.1;
+      ia.state = "walking";
+    } else {
+      ia.state = "idle";
+    }
+  } else {
+    ia.state = gesture.type === "wave" ? "waving" : "talking";
+    const partnerIa = gesture.partnerId ? interiorAnimations[gesture.partnerId] : null;
+    if (partnerIa && Number.isFinite(partnerIa.x)) {
+      ia.facing = partnerIa.x >= ia.x ? 1 : -1;
+    }
+  }
+}
+
+function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
+  const zone = interiorView.zone;
+  const layout = getInteriorLayout(W, H);
+  const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
+
+  // Back wall
+  ctx.fillStyle = isNight ? "#3b3a52" : "#f0e8d8";
+  ctx.fillRect(0, 0, W, layout.floorTop);
+  ctx.fillStyle = hexWithAlpha(zoneColor, isNight ? 0.28 : 0.2);
+  ctx.fillRect(0, 0, W, layout.floorTop);
+  // Wainscot band
+  ctx.fillStyle = hexWithAlpha(darken(zoneColor, 30), 0.35);
+  ctx.fillRect(0, layout.floorTop - 26, W, 26);
+
+  // Floor with plank lines
+  ctx.fillStyle = isNight ? "#4a4139" : "#e6d5b8";
+  ctx.fillRect(0, layout.floorTop, W, H - layout.floorTop);
+  ctx.strokeStyle = isNight ? "rgba(30,25,20,0.4)" : "rgba(140,110,70,0.28)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 7; i++) {
+    const y = layout.floorTop + (H - layout.floorTop) * (i / 7);
+    ctx.beginPath();
+    ctx.moveTo(0, y);
+    ctx.lineTo(W, y);
+    ctx.stroke();
+  }
+
+  // Windows looking out to the sky
+  [W * 0.2, W * 0.8].forEach((wx) => {
+    const winW = Math.min(110, W * 0.16);
+    const winH = 78;
+    const winX = wx - winW / 2;
+    const winY = layout.wallTop + 14;
+    ctx.fillStyle = isNight ? "#1c2541" : "#bfe3f2";
+    roundRect(ctx, winX, winY, winW, winH, 6);
+    ctx.fill();
+    if (isNight) {
+      ctx.fillStyle = "#f7f4e9";
+      for (let s = 0; s < 5; s++) {
+        ctx.beginPath();
+        ctx.arc(winX + 12 + (s * 37) % (winW - 20), winY + 10 + (s * 23) % (winH - 20), 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = "#f6e27a";
+      ctx.beginPath();
+      ctx.arc(winX + winW * 0.72, winY + winH * 0.3, 11, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 3;
+    roundRect(ctx, winX, winY, winW, winH, 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(winX + winW / 2, winY);
+    ctx.lineTo(winX + winW / 2, winY + winH);
+    ctx.moveTo(winX, winY + winH / 2);
+    ctx.lineTo(winX + winW, winY + winH / 2);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
+
+  // Exit door on the back wall
+  const door = layout.door;
+  ctx.fillStyle = darken(zoneColor, 40);
+  roundRect(ctx, door.x, door.y, door.w, door.h, 5);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  roundRect(ctx, door.x, door.y, door.w, door.h, 5);
+  ctx.stroke();
+  ctx.fillStyle = "#f1c40f";
+  ctx.beginPath();
+  ctx.arc(door.x + door.w - 12, door.y + door.h * 0.52, 3.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "rgba(250,250,245,0.92)";
+  ctx.font = `bold 11px "Noto Sans SC", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillText("出口", door.x + door.w / 2, door.y - 8);
+  // Doormat
+  ctx.fillStyle = hexWithAlpha(darken(zoneColor, 20), 0.5);
+  ctx.beginPath();
+  ctx.ellipse(door.x + door.w / 2, layout.floorTop + 12, door.w * 0.7, 9, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Rug
+  ctx.fillStyle = hexWithAlpha(zoneColor, isNight ? 0.24 : 0.3);
+  ctx.beginPath();
+  ctx.ellipse(W / 2, (layout.floorTop + layout.floorBottom) / 2 + 14, W * 0.2, 34, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = hexWithAlpha(darken(zoneColor, 40), 0.5);
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Furniture, deterministic per zone
+  const pool = getInteriorFurniturePool(zone);
+  const furnitureCount = 6;
+  for (let i = 0; i < furnitureCount; i++) {
+    const seed = hashCommunitySeed(zone.id, "furniture", i);
+    const emoji = pool[i % pool.length];
+    const alongWall = i < 3;
+    const fx = layout.left + 26 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 52);
+    const fy = alongWall
+      ? layout.floorTop + 12 + seededCommunityValue(seed, 2) * 16
+      : layout.floorTop + 60 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 90);
+    // Keep the door approach clear
+    if (Math.abs(fx - W / 2) < 55 && fy < layout.floorTop + 40) continue;
+    const fsize = alongWall ? 30 : 26;
+    ctx.fillStyle = "rgba(26,26,46,0.12)";
+    ctx.beginPath();
+    ctx.ellipse(fx, fy + 4, fsize * 0.45, 4, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.font = `${fsize}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText(emoji, fx, fy);
+  }
+
+  // Header
+  ctx.fillStyle = "rgba(250,250,245,0.94)";
+  const headerText = `${ZONE_ICONS?.[zone.id] || "🏠"} ${zone.name} · 室内`;
+  ctx.font = `bold 15px "Noto Sans SC", sans-serif`;
+  const headerW = ctx.measureText(headerText).width + 34;
+  roundRect(ctx, W / 2 - headerW / 2, 14, headerW, 30, 15);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2;
+  roundRect(ctx, W / 2 - headerW / 2, 14, headerW, 30, 15);
+  ctx.stroke();
+  ctx.fillStyle = "#1a1a2e";
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(headerText, W / 2, 29 + 1);
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `11px "Noto Sans SC", sans-serif`;
+  ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
+  ctx.fillText("点击大门或按 Esc 回到街道 · 点击人物可以互动", W / 2, 58);
+
+  // Occupants
+  const aliveCitizens = getAliveCitizens(society);
+  const indoorCitizens = aliveCitizens.filter(c => citizenAnimations[c.id]?.indoor?.zoneId === zone.id);
+  manageInteriorArrivals(society, zone, indoorCitizens.length, now);
+
+  const entries = [];
+  indoorCitizens.forEach((citizen, idx) => {
+    const canonicalAnim = citizenAnimations[citizen.id];
+    if (now > canonicalAnim.indoor.until) {
+      handleInteriorDeparture(citizen, canonicalAnim, now);
+      return;
+    }
+    let ia = interiorAnimations[citizen.id];
+    if (!ia) {
+      const spawnInside = !!canonicalAnim.indoor.spawnInside;
+      const seed = hashCommunitySeed(citizen.id, "interior-spawn");
+      const sx = spawnInside
+        ? layout.left + 40 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 80)
+        : door.x + door.w / 2;
+      const sy = spawnInside
+        ? layout.floorTop + 50 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 80)
+        : layout.floorTop + 20;
+      ia = interiorAnimations[citizen.id] = {
+        x: sx, y: sy, targetX: sx, targetY: sy, nextTargetAt: 0, walkPhase: 0, facing: 1
+      };
+    }
+    updateInteriorCitizen(citizen, ia, canonicalAnim, layout, now, idx);
+    entries.push({ citizen, moveAnim: ia, x: ia.x, y: ia.y, idx });
+  });
+
+  entries.sort((a, b) => a.y - b.y);
+  entries.forEach(({ citizen, moveAnim, idx }) => {
+    const isHover = hoveredCitizen === citizen.id;
+    const shape = citizen.avatarShape || "soft";
+    const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
+    const size = (isHover ? 20 : 16) + sizeBoost;
+    const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
+    const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
+    drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
+    if (citizen.id === followedCitizenId) {
+      updateFollowBanner(citizen, getCitizenBehaviorLabel(citizen, citizenAnimations[citizen.id], now));
+    }
+  });
+
+  maybeStartEncounters(entries, now);
+
+  if (entries.length === 0) {
+    ctx.fillStyle = isNight ? "rgba(250,250,245,0.6)" : "rgba(26,26,46,0.45)";
+    ctx.font = `12px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText("这里暂时空无一人,也许等会儿有人会进来。", W / 2, (layout.floorTop + layout.floorBottom) / 2);
+  }
+
+  // Night dim
+  if (isNight) {
+    ctx.fillStyle = "rgba(5,10,25,0.18)";
+    ctx.fillRect(0, 0, W, H);
+  }
+}
+
+function hitTestInteriorCitizen(mx, my) {
+  if (!interiorView) return null;
+  const zoneId = interiorView.zone?.id;
+  const aliveCitizens = getAliveCitizens(state.society);
+  for (let i = aliveCitizens.length - 1; i >= 0; i--) {
+    const citizen = aliveCitizens[i];
+    if (citizenAnimations[citizen.id]?.indoor?.zoneId !== zoneId) continue;
+    const ia = interiorAnimations[citizen.id];
+    if (!ia) continue;
+    if (Math.hypot(mx - ia.x, my - ia.y) < 22) return citizen;
+  }
+  return null;
+}
+
+function isInteriorDoorHit(mx, my) {
+  const canvas = document.getElementById("gameCanvas");
+  if (!canvas) return false;
+  const rect = canvas.getBoundingClientRect();
+  const layout = getInteriorLayout(rect.width, rect.height);
+  const d = layout.door;
+  return mx >= d.x - 6 && mx <= d.x + d.w + 6 && my >= d.y - 20 && my <= d.y + d.h + 24;
+}
+
+// ── Shared chibi figure renderer (street + interior) ──
+
+function drawCitizenGestureOverlay(ctx, anim, x, y, size, now, hasBubble) {
+  const gesture = anim?.gesture;
+  if (!gesture || now >= gesture.until) return;
+  if (gesture.type === "wave") {
+    const swing = Math.sin(now * 0.018) * 0.5;
+    ctx.save();
+    ctx.translate(x + (anim.facing || 1) * size * 0.74, y - size * 0.52);
+    ctx.rotate(swing);
+    ctx.font = `${Math.max(11, Math.round(size * 0.95))}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("👋", 0, 0);
+    ctx.restore();
+  } else if (gesture.type === "talk" && !hasBubble) {
+    // Pulsing "..." indicator while chatting, between spoken lines
+    const pulse = Math.floor(now / 380) % 3;
+    const bx = x + size * 0.45;
+    const by = y - size * 1.12;
+    ctx.save();
+    ctx.fillStyle = "rgba(250,250,245,0.92)";
+    roundRect(ctx, bx, by, 27, 14, 7);
+    ctx.fill();
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, bx, by, 27, 14, 7);
+    ctx.stroke();
+    ctx.fillStyle = "#1a1a2e";
+    for (let i = 0; i <= pulse; i++) {
+      ctx.beginPath();
+      ctx.arc(bx + 6.5 + i * 7, by + 7, 1.8, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+  }
+}
+
+function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t) {
+  const isAvatar = citizen.id === "avatar";
+  const shape = citizen.avatarShape || "soft";
+  const safeMood = Number.isFinite(Number(citizen.mood)) ? Number(citizen.mood) : 50;
+
+  // Shadow
+  ctx.fillStyle = "#1a1a2e";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + size + 2, size * 0.6, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
+
+  // Body: MBTI-inspired archetypes get distinct silhouettes.
+  if (!usedCitizenSprite) {
+  ctx.fillStyle = citizen.color || "#4ea8de";
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2.5;
+  if (shape === "square") {
+    roundRect(ctx, cx - size * 0.38, cy + size * 0.1, size * 0.76, size * 0.88, 2);
+    ctx.fill();
+    roundRect(ctx, cx - size * 0.38, cy + size * 0.1, size * 0.76, size * 0.88, 2);
+    ctx.stroke();
+  } else if (shape === "spark") {
+    ctx.beginPath();
+    ctx.moveTo(cx, cy + size * 0.06);
+    ctx.lineTo(cx + size * 0.42, cy + size * 0.44);
+    ctx.lineTo(cx + size * 0.22, cy + size * 1.0);
+    ctx.lineTo(cx - size * 0.22, cy + size * 1.0);
+    ctx.lineTo(cx - size * 0.42, cy + size * 0.44);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  } else {
+    roundRect(ctx, cx - size * 0.32, cy + size * 0.12, size * 0.64, size * 0.9, shape === "compact" ? 4 : 7);
+    ctx.fill();
+    roundRect(ctx, cx - size * 0.32, cy + size * 0.12, size * 0.64, size * 0.9, shape === "compact" ? 4 : 7);
+    ctx.stroke();
+  }
+
+  // Head
+  ctx.fillStyle = citizen.color || "#4ea8de";
+  if (shape === "square") {
+    roundRect(ctx, cx - size * 0.34, cy - size * 0.48, size * 0.68, size * 0.62, 3);
+    ctx.fill();
+    roundRect(ctx, cx - size * 0.34, cy - size * 0.48, size * 0.68, size * 0.62, 3);
+    ctx.stroke();
+  } else {
+    ctx.beginPath();
+    ctx.arc(cx, cy - size * 0.14, size * 0.36, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+  }
+  if (shape === "spark") {
+    ctx.fillStyle = "#f1c40f";
+    ctx.beginPath();
+    ctx.moveTo(cx + size * 0.36, cy - size * 0.56);
+    ctx.lineTo(cx + size * 0.44, cy - size * 0.38);
+    ctx.lineTo(cx + size * 0.62, cy - size * 0.34);
+    ctx.lineTo(cx + size * 0.45, cy - size * 0.25);
+    ctx.lineTo(cx + size * 0.39, cy - size * 0.08);
+    ctx.lineTo(cx + size * 0.3, cy - size * 0.26);
+    ctx.lineTo(cx + size * 0.12, cy - size * 0.31);
+    ctx.lineTo(cx + size * 0.29, cy - size * 0.39);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+  }
+
+  // Face - eyes
+  ctx.fillStyle = "#fff";
+  ctx.beginPath();
+  ctx.arc(cx - size * 0.14, cy - size * 0.2, size * 0.12, 0, Math.PI * 2);
+  ctx.arc(cx + size * 0.14, cy - size * 0.2, size * 0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#222";
+  ctx.beginPath();
+  ctx.arc(cx - size * 0.12, cy - size * 0.18, size * 0.06, 0, Math.PI * 2);
+  ctx.arc(cx + size * 0.12, cy - size * 0.18, size * 0.06, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mouth - mood driven expression
+  ctx.strokeStyle = "#333";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  if (safeMood > 65) {
+    // Smile
+    ctx.arc(cx, cy - size * 0.05, size * 0.12, 0.1, Math.PI - 0.1);
+  } else if (safeMood > 35) {
+    // Neutral
+    ctx.moveTo(cx - size * 0.1, cy - size * 0.05);
+    ctx.lineTo(cx + size * 0.1, cy - size * 0.05);
+  } else {
+    // Frown
+    ctx.arc(cx, cy + size * 0.05, size * 0.12, Math.PI + 0.1, -0.1);
+  }
+  ctx.stroke();
+
+  if (isAvatar) {
+    drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
+  }
+  }
+
+  // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
+  if (safeMood > 80 && now > (anim.nextSparkleAt || 0)) {
+    anim.nextSparkleAt = now + 1800 + Math.random() * 2200;
+    spawnParticles(cx, cy - size * 0.5, "propose", 2);
+  }
+
+  // Mood indicator (small colored dot)
+  const moodColor = safeMood > 60 ? "#86efac" : safeMood > 35 ? "#ffd93d" : "#ff6b6b";
+  ctx.fillStyle = moodColor;
+  ctx.beginPath();
+  ctx.arc(cx + size * 0.45, cy - size * 0.35, 3, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Followed-citizen highlight ring
+  if (citizen.id === followedCitizenId) {
+    ctx.save();
+    ctx.strokeStyle = "#67e8f9";
+    ctx.lineWidth = 2;
+    ctx.setLineDash([5, 4]);
+    ctx.beginPath();
+    ctx.arc(cx, cy + size * 0.15, size * 1.1, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+  }
+
+  // Name tag (skip for avatar — rendered separately with gold highlight)
+  if (!isAvatar) {
+    ctx.fillStyle = isHover ? "#fff" : "rgba(255,255,255,0.85)";
+    ctx.font = `${isHover ? 10 : 8}px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(citizen.name, cx, cy + size + 12);
+  }
+
+  // Speech bubble
+  const bubble = getActiveSpeechBubble(citizen.id);
+  if (bubble) {
+    const bubbleText = bubble.text;
+    ctx.font = "bold 9px Arial";
+    const tw = ctx.measureText(bubbleText).width + 10;
+    const bx = cx - tw / 2;
+    const by = cy - size * 0.7 - 20;
+    const bAlpha = bubble.alpha;
+
+    // Bubble background
+    ctx.fillStyle = ACTION_COLORS[bubble.type] || "rgba(6,12,20,0.82)";
+    ctx.globalAlpha = bAlpha;
+    roundRect(ctx, bx, by, tw, 16, 6);
+    ctx.fill();
+
+    // Tail
+    ctx.beginPath();
+    ctx.moveTo(cx - 3, by + 16);
+    ctx.lineTo(cx, by + 22);
+    ctx.lineTo(cx + 3, by + 16);
+    ctx.fill();
+
+    // Text
+    ctx.fillStyle = "#fff";
+    ctx.fillText(bubbleText, cx, by + 12);
+    ctx.globalAlpha = 1;
+  }
+
+  // Gesture overlays (wave / chat dots)
+  drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
+
+  // Last action bubble (on hover only, if no speech bubble)
+  if (!bubble && citizen.lastAction && isHover) {
+    const bubbleText = citizen.lastAction;
+    ctx.font = "9px Arial";
+    const tw = ctx.measureText(bubbleText).width + 8;
+    ctx.fillStyle = "rgba(0,0,0,0.75)";
+    roundRect(ctx, cx - tw / 2, cy - size * 0.7 - 16, tw, 14, 6);
+    ctx.fill();
+    ctx.fillStyle = "#fff";
+    ctx.fillText(bubbleText, cx, cy - size * 0.7 - 6);
+  }
+
+  // Avatar marker (player's avatar)
+  if (citizen.id === "avatar") {
+    // Outer glow
+    ctx.save();
+    ctx.strokeStyle = "#ffd93d";
+    ctx.lineWidth = 2;
+    ctx.shadowColor = "rgba(255,217,61,0.6)";
+    ctx.shadowBlur = 12;
+    ctx.setLineDash([4, 3]);
+    ctx.beginPath();
+    ctx.arc(cx, cy + size * 0.15, size * 0.85, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.restore();
+
+    // Star badge
+    ctx.fillStyle = "#ffd93d";
+    ctx.font = `bold ${isHover ? 13 : 11}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("★", cx + size * 0.6, cy - size * 0.45);
+
+    // Larger name tag for avatar
+    ctx.fillStyle = "#ffd93d";
+    ctx.font = `bold 11px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillText(citizen.name, cx, cy + size + 15);
+  }
 }
 
 function drawRoleDot(ctx, x, y, color) {
@@ -3437,6 +4523,17 @@ function drawGameWorld() {
     pruneRenderState(aliveCitizens);
     renderCache.lastPruneAt = now;
   }
+
+  // Advance queued encounter dialogue lines (works for street and interior)
+  updateEncounterLines(now);
+
+  // ── Interior scene replaces the street view while inside a building ──
+  if (interiorView) {
+    drawInteriorScene(ctx, W, H, now, t, society, isNight);
+    ensureGameRenderLoop();
+    return;
+  }
+
   const zoneOccupancy = new Map();
   const citizenIndex = new Map();
   aliveCitizens.forEach((citizen, idx) => {
@@ -3486,6 +4583,7 @@ function drawGameWorld() {
   }
 
   // ── Camera transform ──
+  updateFollowCamera(W, H, now);
   ctx.save();
   const cx = W / 2 + camera.x;
   const cy = H / 2 + camera.y + 40;
@@ -3518,6 +4616,7 @@ function drawGameWorld() {
   });
 
   // ── Draw Citizens as chibi characters ──
+  const streetEntries = [];
   aliveCitizens.forEach((citizen, idx) => {
     const zone = getCitizenZone(society, citizen);
     if (!zone) return;
@@ -3527,7 +4626,6 @@ function drawGameWorld() {
     // Position on the nearby street network, not inside the building footprint.
     const baseX = zr.cx;
     const baseY = zr.cy + zr.h * 0.36;
-    const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
     const isHover = hoveredCitizen === citizen.id;
     const isAvatar = citizen.id === "avatar";
     const shape = citizen.avatarShape || "soft";
@@ -3543,217 +4641,79 @@ function drawGameWorld() {
       targetY: baseY,
       nextTargetAt: 0
     };
-    const distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
-    if (now > (anim.nextTargetAt || 0) || distanceToTarget < 4) {
-      const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
-      anim.targetX = target.x;
-      anim.targetY = target.y;
-      anim.nextTargetAt = now + 1800 + seededCommunityValue(hashCommunitySeed(citizen.id || idx, now), 7) * 3000;
-    }
-    const targetDx = (anim.targetX || baseX) - (anim.x || baseX);
-    const targetDy = (anim.targetY || baseY) - (anim.y || baseY);
-    const targetDist = Math.max(0.001, Math.hypot(targetDx, targetDy));
-    const walkSpeed = (isAvatar ? 0.72 : 0.48 + (idx % 4) * 0.08) * (safeMood > 70 ? 1.12 : safeMood < 35 ? 0.78 : 1);
-    anim.x = (anim.x || baseX) + (targetDx / targetDist) * Math.min(walkSpeed, targetDist);
-    anim.y = (anim.y || baseY) + (targetDy / targetDist) * Math.min(walkSpeed, targetDist);
-    anim.facing = targetDx >= 0 ? 1 : -1;
-    anim.walkPhase = (anim.walkPhase || 0) + walkSpeed * 0.16;
     citizenAnimations[citizen.id] = anim;
 
+    // Citizens currently inside a building are drawn by the interior scene instead.
+    if (anim.indoor) {
+      if (now > anim.indoor.until) {
+        leaveBuilding(citizen, anim, now);
+      } else {
+        return;
+      }
+    }
+
+    const gesture = getActiveGesture(anim, now);
+    let distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
+    if (!gesture) {
+      if (now > (anim.nextTargetAt || 0)) {
+        // Pick a new destination — occasionally head for the building door instead of the road.
+        const enterRoll = seededCommunityValue(hashCommunitySeed(citizen.id || idx, Math.floor(now / 900)), 11);
+        if (!isAvatar && enterRoll < INDOOR_ENTER_CHANCE) {
+          anim.targetX = zr.cx;
+          anim.targetY = zr.cy + zr.h * 0.18;
+          anim.pendingEnterZone = zone.id;
+          anim.pendingEnterZoneName = zone.name;
+        } else {
+          const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
+          anim.targetX = target.x;
+          anim.targetY = target.y;
+          anim.pendingEnterZone = null;
+          anim.pendingEnterZoneName = null;
+        }
+        anim.nextTargetAt = now + 1800 + seededCommunityValue(hashCommunitySeed(citizen.id || idx, now), 7) * 3000;
+        distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
+      }
+      if (distanceToTarget > 3.2) {
+        const targetDx = (anim.targetX || baseX) - (anim.x || baseX);
+        const targetDy = (anim.targetY || baseY) - (anim.y || baseY);
+        const targetDist = Math.max(0.001, Math.hypot(targetDx, targetDy));
+        const walkSpeed = (isAvatar ? 0.72 : 0.48 + (idx % 4) * 0.08) * (safeMood > 70 ? 1.12 : safeMood < 35 ? 0.78 : 1);
+        anim.x = (anim.x || baseX) + (targetDx / targetDist) * Math.min(walkSpeed, targetDist);
+        anim.y = (anim.y || baseY) + (targetDy / targetDist) * Math.min(walkSpeed, targetDist);
+        anim.facing = targetDx >= 0 ? 1 : -1;
+        anim.walkPhase = (anim.walkPhase || 0) + walkSpeed * 0.16;
+        anim.state = "walking";
+      } else if (anim.pendingEnterZone) {
+        enterBuilding(citizen, anim, zone, now);
+        return; // now indoors — skip street drawing this frame
+      } else {
+        // Arrived: linger in place until the next destination is due.
+        anim.state = "idle";
+      }
+    } else {
+      // Gesturing (wave / talk): stand still and face the partner.
+      anim.state = gesture.type === "wave" ? "waving" : "talking";
+      const partnerAnim = gesture.partnerId ? citizenAnimations[gesture.partnerId] : null;
+      if (partnerAnim && Number.isFinite(partnerAnim.x)) {
+        anim.facing = partnerAnim.x >= (anim.x || baseX) ? 1 : -1;
+      }
+    }
+
     const cx = anim.x || baseX;
-    const stepBob = Math.sin(anim.walkPhase || 0) * Math.min(3, Math.max(1.2, targetDist / 28));
+    const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
+    const stepBob = anim.state === "walking"
+      ? Math.sin(anim.walkPhase || 0) * Math.min(3, Math.max(1.2, distanceToTarget / 28))
+      : 0;
     const cy = (anim.y || baseY) + bobY + stepBob;
 
-    // Shadow
-    ctx.fillStyle = "#1a1a2e";
-    ctx.beginPath();
-    ctx.ellipse(cx, cy + size + 2, size * 0.6, 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-
-    const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
-
-    // Body: MBTI-inspired archetypes get distinct silhouettes.
-    if (!usedCitizenSprite) {
-    ctx.fillStyle = citizen.color || "#4ea8de";
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2.5;
-    if (shape === "square") {
-      roundRect(ctx, cx - size * 0.38, cy + size * 0.1, size * 0.76, size * 0.88, 2);
-      ctx.fill();
-      roundRect(ctx, cx - size * 0.38, cy + size * 0.1, size * 0.76, size * 0.88, 2);
-      ctx.stroke();
-    } else if (shape === "spark") {
-      ctx.beginPath();
-      ctx.moveTo(cx, cy + size * 0.06);
-      ctx.lineTo(cx + size * 0.42, cy + size * 0.44);
-      ctx.lineTo(cx + size * 0.22, cy + size * 1.0);
-      ctx.lineTo(cx - size * 0.22, cy + size * 1.0);
-      ctx.lineTo(cx - size * 0.42, cy + size * 0.44);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    } else {
-      roundRect(ctx, cx - size * 0.32, cy + size * 0.12, size * 0.64, size * 0.9, shape === "compact" ? 4 : 7);
-      ctx.fill();
-      roundRect(ctx, cx - size * 0.32, cy + size * 0.12, size * 0.64, size * 0.9, shape === "compact" ? 4 : 7);
-      ctx.stroke();
-    }
-
-    // Head
-    ctx.fillStyle = citizen.color || "#4ea8de";
-    if (shape === "square") {
-      roundRect(ctx, cx - size * 0.34, cy - size * 0.48, size * 0.68, size * 0.62, 3);
-      ctx.fill();
-      roundRect(ctx, cx - size * 0.34, cy - size * 0.48, size * 0.68, size * 0.62, 3);
-      ctx.stroke();
-    } else {
-      ctx.beginPath();
-      ctx.arc(cx, cy - size * 0.14, size * 0.36, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "#1a1a2e";
-      ctx.lineWidth = 2.5;
-      ctx.stroke();
-    }
-    if (shape === "spark") {
-      ctx.fillStyle = "#f1c40f";
-      ctx.beginPath();
-      ctx.moveTo(cx + size * 0.36, cy - size * 0.56);
-      ctx.lineTo(cx + size * 0.44, cy - size * 0.38);
-      ctx.lineTo(cx + size * 0.62, cy - size * 0.34);
-      ctx.lineTo(cx + size * 0.45, cy - size * 0.25);
-      ctx.lineTo(cx + size * 0.39, cy - size * 0.08);
-      ctx.lineTo(cx + size * 0.3, cy - size * 0.26);
-      ctx.lineTo(cx + size * 0.12, cy - size * 0.31);
-      ctx.lineTo(cx + size * 0.29, cy - size * 0.39);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-    }
-
-    // Face - eyes
-    ctx.fillStyle = "#fff";
-    ctx.beginPath();
-    ctx.arc(cx - size * 0.14, cy - size * 0.2, size * 0.12, 0, Math.PI * 2);
-    ctx.arc(cx + size * 0.14, cy - size * 0.2, size * 0.12, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = "#222";
-    ctx.beginPath();
-    ctx.arc(cx - size * 0.12, cy - size * 0.18, size * 0.06, 0, Math.PI * 2);
-    ctx.arc(cx + size * 0.12, cy - size * 0.18, size * 0.06, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Mouth - mood driven expression
-    ctx.strokeStyle = "#333";
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    if (safeMood > 65) {
-      // Smile
-      ctx.arc(cx, cy - size * 0.05, size * 0.12, 0.1, Math.PI - 0.1);
-    } else if (safeMood > 35) {
-      // Neutral
-      ctx.moveTo(cx - size * 0.1, cy - size * 0.05);
-      ctx.lineTo(cx + size * 0.1, cy - size * 0.05);
-    } else {
-      // Frown
-      ctx.arc(cx, cy + size * 0.05, size * 0.12, Math.PI + 0.1, -0.1);
-    }
-    ctx.stroke();
-
-    if (isAvatar) {
-      drawAvatarSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
-    }
-    }
-
-    // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
-    if (safeMood > 80 && now > (anim.nextSparkleAt || 0)) {
-      anim.nextSparkleAt = now + 1800 + Math.random() * 2200;
-      spawnParticles(cx, cy - size * 0.5, "propose", 2);
-    }
-
-    // Mood indicator (small colored dot)
-    const moodColor = safeMood > 60 ? "#86efac" : safeMood > 35 ? "#ffd93d" : "#ff6b6b";
-    ctx.fillStyle = moodColor;
-    ctx.beginPath();
-    ctx.arc(cx + size * 0.45, cy - size * 0.35, 3, 0, Math.PI * 2);
-    ctx.fill();
-
-    // Name tag (skip for avatar — rendered separately with gold highlight)
-    if (!isAvatar) {
-      ctx.fillStyle = isHover ? "#fff" : "rgba(255,255,255,0.85)";
-      ctx.font = `${isHover ? 10 : 8}px "Noto Sans SC", sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText(citizen.name, cx, cy + size + 12);
-    }
-
-    // Speech bubble
-    const bubble = getActiveSpeechBubble(citizen.id);
-    if (bubble) {
-      const bubbleText = bubble.text;
-      ctx.font = "bold 9px Arial";
-      const tw = ctx.measureText(bubbleText).width + 10;
-      const bx = cx - tw / 2;
-      const by = cy - size * 0.7 - 20;
-      const bAlpha = bubble.alpha;
-
-      // Bubble background
-      ctx.fillStyle = ACTION_COLORS[bubble.type] || "rgba(6,12,20,0.82)";
-      ctx.globalAlpha = bAlpha;
-      roundRect(ctx, bx, by, tw, 16, 6);
-      ctx.fill();
-
-      // Tail
-      ctx.beginPath();
-      ctx.moveTo(cx - 3, by + 16);
-      ctx.lineTo(cx, by + 22);
-      ctx.lineTo(cx + 3, by + 16);
-      ctx.fill();
-
-      // Text
-      ctx.fillStyle = "#fff";
-      ctx.fillText(bubbleText, cx, by + 12);
-      ctx.globalAlpha = 1;
-    }
-
-    // Last action bubble (on hover only, if no speech bubble)
-    if (!bubble && citizen.lastAction && isHover) {
-      const bubbleText = citizen.lastAction;
-      ctx.font = "9px Arial";
-      const tw = ctx.measureText(bubbleText).width + 8;
-      ctx.fillStyle = "rgba(0,0,0,0.75)";
-      roundRect(ctx, cx - tw / 2, cy - size * 0.7 - 16, tw, 14, 6);
-      ctx.fill();
-      ctx.fillStyle = "#fff";
-      ctx.fillText(bubbleText, cx, cy - size * 0.7 - 6);
-    }
-
-    // Avatar marker (player's avatar)
-    if (citizen.id === "avatar") {
-      // Outer glow
-      ctx.save();
-      ctx.strokeStyle = "#ffd93d";
-      ctx.lineWidth = 2;
-      ctx.shadowColor = "rgba(255,217,61,0.6)";
-      ctx.shadowBlur = 12;
-      ctx.setLineDash([4, 3]);
-      ctx.beginPath();
-      ctx.arc(cx, cy + size * 0.15, size * 0.85, 0, Math.PI * 2);
-      ctx.stroke();
-      ctx.setLineDash([]);
-      ctx.restore();
-
-      // Star badge
-      ctx.fillStyle = "#ffd93d";
-      ctx.font = `bold ${isHover ? 13 : 11}px Arial`;
-      ctx.textAlign = "center";
-      ctx.fillText("\u2605", cx + size * 0.6, cy - size * 0.45);
-
-      // Larger name tag for avatar
-      ctx.fillStyle = "#ffd93d";
-      ctx.font = `bold 11px "Noto Sans SC", sans-serif`;
-      ctx.textAlign = "center";
-      ctx.fillText(citizen.name, cx, cy + size + 15);
+    streetEntries.push({ citizen, moveAnim: anim, x: cx, y: cy });
+    drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t);
+    if (citizen.id === followedCitizenId) {
+      updateFollowBanner(citizen, getCitizenBehaviorLabel(citizen, anim, now));
     }
   });
+
+  maybeStartEncounters(streetEntries, now);
 
   drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens);
 
@@ -3771,6 +4731,7 @@ function drawGameWorld() {
           const a = group[i], b = group[j];
           const animA = citizenAnimations[a.id] || {};
           const animB = citizenAnimations[b.id] || {};
+          if (animA.indoor || animB.indoor) continue;
           const zone = getCitizenZone(society, a);
           if (!zone) continue;
           const zr = zoneRects.get(zone.id);
@@ -4399,6 +5360,7 @@ function hitTestCitizen(mx, my) {
   const aliveCitizens = getAliveCitizens(state.society);
   for (let i = aliveCitizens.length - 1; i >= 0; i--) {
     const citizen = aliveCitizens[i];
+    if (citizenAnimations[citizen.id]?.indoor) continue; // inside a building, not clickable from the street
     const zone = getCitizenZone(state.society, citizen);
     if (!zone) continue;
     const zr = getZoneGameRect(zone, W, H, groundY);
@@ -4429,6 +5391,18 @@ function bindGameEvents() {
   }
 
   document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (interiorView) {
+        const wasFollow = interiorView.source === "follow";
+        exitInteriorView();
+        if (wasFollow) stopFollowCitizen(false);
+        return;
+      }
+      if (followedCitizenId) {
+        stopFollowCitizen();
+      }
+      return;
+    }
     if (e.key.toLowerCase() !== "g" || e.metaKey || e.ctrlKey || e.altKey) return;
     graphDebugVisible = !graphDebugVisible;
     renderFirstLoopPanel();
@@ -4442,6 +5416,23 @@ function bindGameEvents() {
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
+
+      // Interior view: click citizens to interact, click the door to leave.
+      if (interiorView) {
+        const indoorCitizen = hitTestInteriorCitizen(mx, my);
+        if (indoorCitizen) {
+          showCitizenInteraction(indoorCitizen);
+          return;
+        }
+        if (isInteriorDoorHit(mx, my)) {
+          const wasFollow = interiorView.source === "follow";
+          exitInteriorView();
+          if (wasFollow) stopFollowCitizen(false);
+          return;
+        }
+        hideDetail();
+        return;
+      }
 
       const citizen = hitTestCitizen(mx, my);
       if (citizen) {
@@ -4465,6 +5456,18 @@ function bindGameEvents() {
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
+
+      if (interiorView) {
+        const indoorCitizen = hitTestInteriorCitizen(mx, my);
+        if (indoorCitizen) {
+          hoveredCitizen = indoorCitizen.id;
+          canvas.style.cursor = "pointer";
+          return;
+        }
+        hoveredCitizen = null;
+        canvas.style.cursor = isInteriorDoorHit(mx, my) ? "pointer" : "default";
+        return;
+      }
 
       const citizen = hitTestCitizen(mx, my);
       if (citizen) {
@@ -4490,6 +5493,7 @@ function bindGameEvents() {
       if (e.button === 0) {
         markRenderActive();
         camera.drag = true;
+        camera.dragTravel = 0;
         camera.lastX = e.clientX;
         camera.lastY = e.clientY;
       }
@@ -4497,8 +5501,15 @@ function bindGameEvents() {
     window.addEventListener("mousemove", (e) => {
       if (!camera.drag) return;
       markRenderActive();
-      camera.x += e.clientX - camera.lastX;
-      camera.y += e.clientY - camera.lastY;
+      const dx = e.clientX - camera.lastX;
+      const dy = e.clientY - camera.lastY;
+      camera.x += dx;
+      camera.y += dy;
+      camera.dragTravel = (camera.dragTravel || 0) + Math.abs(dx) + Math.abs(dy);
+      // Manually panning the camera means the player wants free view again.
+      if (followedCitizenId && !interiorView && camera.dragTravel > 14) {
+        stopFollowCitizen("已切回自由镜头");
+      }
       camera.lastX = e.clientX;
       camera.lastY = e.clientY;
     });
@@ -4564,6 +5575,20 @@ function bindGameEvents() {
         const rect = canvas.getBoundingClientRect();
         const mx = e.changedTouches[0].clientX - rect.left;
         const my = e.changedTouches[0].clientY - rect.top;
+        if (interiorView) {
+          const indoorCitizen = hitTestInteriorCitizen(mx, my);
+          if (indoorCitizen) {
+            showCitizenInteraction(indoorCitizen);
+          } else if (isInteriorDoorHit(mx, my)) {
+            const wasFollow = interiorView.source === "follow";
+            exitInteriorView();
+            if (wasFollow) stopFollowCitizen(false);
+          } else {
+            hideDetail();
+          }
+          camera.drag = false;
+          return;
+        }
         const citizen = hitTestCitizen(mx, my);
         if (citizen) {
           showCitizenInteraction(citizen);
@@ -4788,6 +5813,22 @@ function bindGameEvents() {
         interactWithCitizen(interactBtn.dataset.interact, interactBtn.dataset.target);
         return;
       }
+      const followBtn = e.target.closest("[data-follow]");
+      if (followBtn) {
+        startFollowCitizen(followBtn.dataset.follow);
+        return;
+      }
+      const gestureBtn = e.target.closest("[data-gesture]");
+      if (gestureBtn) {
+        greetCitizen(gestureBtn.dataset.target);
+        return;
+      }
+      const interiorBtn = e.target.closest("[data-enter-interior]");
+      if (interiorBtn) {
+        const zone = findRenderZoneById(interiorBtn.dataset.enterInterior);
+        if (zone) enterInteriorView(zone, "manual");
+        return;
+      }
       const enterBtn = e.target.closest("[data-enter-zone]");
       if (enterBtn) {
         const modal = getZoneInteraction(enterBtn.dataset.enterZone)?.modal;
@@ -4903,7 +5944,8 @@ function bindGameEvents() {
       const professionName = getChosenProfessionName();
       const avatarFrame = normalizeAvatarFrame(selectedAvatarPreset?.avatarFrame);
       const bio = document.getElementById("avatarBio")?.value.trim() || "";
-      createAndEnterWorld({ name, age, color: selectedAvatarColor, professionId, professionName, avatarFrame, bio });
+      const persona = collectPersonaFromForm();
+      createAndEnterWorld({ name, age, color: selectedAvatarColor, professionId, professionName, avatarFrame, bio, ...persona });
     });
   }
 

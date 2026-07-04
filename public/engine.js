@@ -684,6 +684,80 @@ function buildInterpersonalStyle(seed = {}, bigFive = buildBigFiveProfile(seed))
   };
 }
 
+// Keyword-based simulation nudges for the "dislike" persona tag.
+// Each rule: matched keywords -> deltas applied to socialBias and/or needs.
+const DISLIKE_BIAS_RULES = [
+  { keywords: ["冲突", "吵架", "争吵", "对抗", "争执"], socialBias: { conflict: -0.06, propose: -0.05, support: 0.05, listen: 0.05 } },
+  { keywords: ["孤独", "冷漠", "被忽视", "疏离"], socialBias: { support: 0.06, cooperate: 0.05 }, needs: { belonging: 0.12, relatedness: 0.1 } },
+  { keywords: ["被催", "催促", "压迫", "被逼", "deadline", "加班"], socialBias: { rest: 0.06, propose: -0.04 }, needs: { autonomy: 0.1, safety: 0.06 } },
+  { keywords: ["虚伪", "谎言", "欺骗", "作假"], socialBias: { listen: 0.05, propose: 0.04 }, needs: { esteem: 0.06 } },
+  { keywords: ["无聊", "重复", "一成不变", "枯燥"], socialBias: { propose: 0.06, cooperate: 0.04 }, needs: { selfActualization: 0.08 } },
+  { keywords: ["混乱", "无序", "脏乱"], socialBias: { meditate: 0.05, cooperate: 0.05 }, needs: { safety: 0.08 } },
+  { keywords: ["不公", "不公平", "歧视", "偏见"], socialBias: { propose: 0.05, support: 0.05 }, needs: { esteem: 0.06 } }
+];
+
+// Apply a player-chosen persona onto an already-normalized citizen (the avatar).
+// Rebuilds MBTI-derived fields when a type is chosen, weights value tags,
+// nudges the sim from the dislike tag, and stores free-text tags for narrative.
+function applyPersonaToCitizen(citizen, persona = {}) {
+  if (!citizen) return citizen;
+  const valueTags = Array.isArray(persona.valueTags) ? persona.valueTags.slice(0, 2) : [];
+
+  if (persona.mbtiType) {
+    const seed = { id: citizen.id, mbtiType: persona.mbtiType };
+    const arc = getMbtiArchetype(seed);
+    if (arc) {
+      citizen.mbtiType = arc.type;
+      citizen.personaLabel = arc.label;
+      citizen.personaNeed = arc.need;
+      citizen.relationPreference = arc.relationPreference;
+      citizen.avatarShape = arc.body;
+      citizen.socialBias = { ...(arc.socialBias || {}) };
+      citizen.bigFive = buildBigFiveProfile(seed, arc);
+      citizen.attachmentStyle = buildAttachmentStyle(seed, citizen.bigFive);
+      citizen.interpersonal = buildInterpersonalStyle(seed, citizen.bigFive);
+      citizen.values = buildValueProfile(seed, arc);
+    }
+  }
+
+  // Value tags: lift the chosen Schwartz values so they dominate decisions.
+  if (valueTags.length) {
+    citizen.values = citizen.values || {};
+    valueTags.forEach((key, index) => {
+      if (!(key in citizen.values)) return;
+      const target = index === 0 ? 0.85 : 0.72;
+      citizen.values[key] = clamp(Math.max(Number(citizen.values[key]) || 0, target), 0, 1);
+    });
+  }
+
+  // Dislike tag: keyword-driven nudges to social bias and needs.
+  const dislike = String(persona.dislike || "");
+  if (dislike) {
+    const rule = DISLIKE_BIAS_RULES.find((r) => r.keywords.some((kw) => dislike.includes(kw)));
+    if (rule) {
+      citizen.socialBias = citizen.socialBias || {};
+      Object.entries(rule.socialBias || {}).forEach(([action, delta]) => {
+        citizen.socialBias[action] = (Number(citizen.socialBias[action]) || 0) + delta;
+      });
+      if (rule.needs) {
+        citizen.needs = citizen.needs || {};
+        Object.entries(rule.needs).forEach(([need, delta]) => {
+          citizen.needs[need] = clamp((Number(citizen.needs[need]) || 0) + delta, 0, 1);
+        });
+      }
+    }
+  }
+
+  // Store free-text persona tags for display + narrative seeding.
+  citizen.persona = {
+    hobby: persona.hobby || "",
+    dislike: persona.dislike || "",
+    unique: persona.unique || "",
+    valueTags
+  };
+  return citizen;
+}
+
 function getZoneModel(zoneId) {
   return ZONE_MODEL_BLUEPRINTS[zoneId] || {
     model: "open-tile",

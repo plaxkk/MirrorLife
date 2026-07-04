@@ -202,6 +202,7 @@
             <div class="mirror-tag-card">
               <p>镜像身份牌</p>
               <strong id="mirrorTagName">你的分身</strong>
+              <span id="mirrorTagPersona" class="mirror-tag-persona"></span>
               <span>用于进入第一段人生胶囊，稍后可以继续调整。</span>
             </div>
             <div class="default-avatar-grid" id="defaultAvatarGrid" aria-label="选择默认头像"></div>
@@ -222,6 +223,24 @@
                 <div class="avatar-color-grid" id="avatarColorGrid"></div>
                 <label class="avatar-label" for="avatarBio">一句话自我介绍</label>
                 <input type="text" id="avatarBio" class="avatar-input" placeholder="例如：想试着活得更勇敢" maxlength="40" />
+
+                <div class="persona-block" aria-label="人格标签">
+                  <label class="avatar-label">人格（MBTI）</label>
+                  <p class="persona-hint">点选一个最像你的原型，稍后仍可调整。留空则由系统推断。</p>
+                  <div class="mbti-grid" id="avatarMbtiGrid" role="listbox" aria-label="选择 MBTI 人格"></div>
+
+                  <label class="avatar-label">价值观（最多选 2）</label>
+                  <div class="tag-chip-row" id="avatarValuesRow" aria-label="选择价值观"></div>
+
+                  <label class="avatar-label" for="avatarHobby">爱好</label>
+                  <input type="text" id="avatarHobby" class="avatar-input" placeholder="例如：徒步、写字、看展" maxlength="16" />
+
+                  <label class="avatar-label" for="avatarDislike">最讨厌什么</label>
+                  <input type="text" id="avatarDislike" class="avatar-input" placeholder="例如：无意义的冲突、被催促" maxlength="16" />
+
+                  <label class="avatar-label" for="avatarUnique">你身上最独特的点</label>
+                  <input type="text" id="avatarUnique" class="avatar-input" placeholder="例如：总能接住别人的情绪" maxlength="24" />
+                </div>
               </div>
             </details>
           </section>

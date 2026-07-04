@@ -1544,6 +1544,13 @@ body.splash-active .detail-panel {
   font-size: 20px;
   line-height: 1.25;
 }
+.mirror-tag-card span.mirror-tag-persona {
+  margin-top: 6px;
+  color: var(--accent-teal);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3px;
+}
 .mirror-tag-card span {
   display: block;
   margin-top: 6px;
@@ -1628,6 +1635,75 @@ body.splash-active .detail-panel {
 }
 .avatar-color-swatch:hover { transform: scale(1.15); }
 .avatar-color-swatch.selected { border-color: #fff; box-shadow: 0 0 12px rgba(255,255,255,0.3); transform: scale(1.15); }
+
+/* ── Persona: MBTI grid + tag chips ── */
+.persona-block {
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--hud-border);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.persona-hint {
+  margin: 0 0 2px;
+  font-size: 11px;
+  color: var(--hud-muted, rgba(232,224,212,0.55));
+  line-height: 1.4;
+}
+.mbti-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.mbti-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px;
+  border: 1px solid var(--hud-border);
+  border-left: 3px solid var(--mbti-color, var(--accent-teal));
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.04);
+  color: var(--hud-text);
+  cursor: pointer;
+  transition: all 0.18s;
+  text-align: center;
+}
+.mbti-card:hover { background: rgba(255,255,255,0.09); transform: translateY(-1px); }
+.mbti-card b { font-size: 12px; letter-spacing: 0.5px; }
+.mbti-card small { font-size: 9px; color: var(--hud-muted, rgba(232,224,212,0.6)); line-height: 1.1; }
+.mbti-card.selected {
+  background: rgba(78,205,196,0.16);
+  border-color: var(--accent-teal);
+  box-shadow: 0 0 0 2px rgba(78,205,196,0.22);
+}
+.tag-chip-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 2px 0 4px;
+}
+.tag-chip {
+  padding: 4px 10px;
+  border: 1px solid var(--hud-border);
+  border-radius: 999px;
+  background: rgba(255,255,255,0.05);
+  color: var(--hud-text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.16s;
+}
+.tag-chip:hover { background: rgba(255,255,255,0.1); }
+.tag-chip.active {
+  background: rgba(78,205,196,0.2);
+  border-color: var(--accent-teal);
+  color: #fff;
+}
+.tag-chip.disabled { opacity: 0.4; cursor: not-allowed; }
+
 .avatar-preview-stage {
   position: relative;
   width: 148px;
@@ -3879,4 +3955,80 @@ body.detail-open .event-log:focus-within {
     width: auto;
     max-height: calc(100vh - 184px);
   }
+}
+
+/* ── Follow Mode Banner ── */
+#followBanner {
+  position: absolute;
+  top: 84px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(18, 24, 38, 0.9);
+  border: 2px solid #67e8f9;
+  color: #fafaf5;
+  padding: 7px 10px 7px 14px;
+  border-radius: 999px;
+  z-index: 60;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  font-size: 13px;
+  pointer-events: auto;
+}
+#followBanner .follow-eye {
+  font-size: 16px;
+}
+#followBanner .follow-meta {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  max-width: 220px;
+}
+#followBanner #followName {
+  font-size: 13px;
+  font-weight: 800;
+}
+#followBanner #followStatus {
+  font-size: 11px;
+  color: #9adbe8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+#followBanner #followExit {
+  background: #67e8f9;
+  border: none;
+  color: #12222a;
+  font-weight: 800;
+  border-radius: 999px;
+  padding: 5px 11px;
+  cursor: pointer;
+  font-size: 12px;
+  font-family: inherit;
+}
+#followBanner #followExit:hover {
+  background: #98f0ff;
+}
+
+/* ── Interior View Exit Chip ── */
+#interiorChip {
+  position: absolute;
+  top: 84px;
+  left: 16px;
+  z-index: 60;
+  background: rgba(250, 250, 245, 0.95);
+  border: 2px solid #1a1a2e;
+  color: #1a1a2e;
+  border-radius: 999px;
+  padding: 7px 15px;
+  font-weight: 800;
+  font-size: 13px;
+  cursor: pointer;
+  font-family: inherit;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+}
+#interiorChip:hover {
+  background: #fff;
+  transform: translateY(-1px);
 }

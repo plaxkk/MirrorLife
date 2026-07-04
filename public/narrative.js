@@ -168,14 +168,33 @@ function generateTemplateMirrorResponse(userText, mode, profile) {
   const identity = profile.identity || "此刻的你";
   const pattern = profile.pattern || "那些反复出现、还没有被好好命名的感受";
   const shortened = userText.length > 52 ? userText.slice(0, 52) + "..." : userText;
+  const seed = buildPersonaSeed(profile, userText);
 
   if (mode === "observer") {
-    return `${identity}，我看到你把"${shortened}"放到了这里。它是一次旧模式被激活：${pattern}。今天先不急着判断对错，先分清事实、解释与真实痛点。`;
+    return `${identity}，我看到你把"${shortened}"放到了这里。它是一次旧模式被激活：${pattern}。今天先不急着判断对错，先分清事实、解释与真实痛点。${seed}`;
   } else if (mode === "companion") {
-    return `我先陪你停一会儿。"${shortened}"听起来像在替很久以来的自己撑场景。你不用立即变得聪明，你先允许这个人性化的疲惫被看见。`;
+    return `我先陪你停一会儿。"${shortened}"听起来像在替很久以来的自己撑场景。你不用立即变得聪明，你先允许这个人性化的疲惫被看见。${seed}`;
   } else {
-    return `我像镜子一样把它还给你：你说"${shortened}"。里面有压力，也有一个正在成熟的需要。真正关键的不在速度，而在你是否允许自己从这件事里学习。`;
+    return `我像镜子一样把它还给你：你说"${shortened}"。里面有压力，也有一个正在成熟的需要。真正关键的不在速度，而在你是否允许自己从这件事里学习。${seed}`;
   }
+}
+
+// Persona seed: turn player-authored tags into a short, human clause appended to narrative.
+function buildPersonaSeed(profile, userText = "") {
+  const persona = profile && profile.persona;
+  if (!persona) return "";
+  const text = String(userText || "");
+  // If the input echoes what they said they dislike, name it gently.
+  if (persona.dislike && text && text.includes(persona.dislike)) {
+    return `我记得你说过最讨厌${persona.dislike}，这次它又出现了。`;
+  }
+  if (persona.hobby) {
+    return `如果需要喘口气，回到你喜欢的${persona.hobby}里，也是一种整理。`;
+  }
+  if (persona.unique) {
+    return `别忘了你身上那份"${persona.unique}"，它此刻仍然在。`;
+  }
+  return "";
 }
 
 // ── LLM Integration ──
