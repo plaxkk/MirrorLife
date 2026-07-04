@@ -88,6 +88,18 @@ const ENCOUNTER_CHAT_LINES = {
 };
 const ENCOUNTER_CLOSERS = ["那回头见", "我先走啦", "改天再聊", "保重呀"];
 const INTERIOR_DEPART_LINES = ["我先走啦", "出去转转", "回头见"];
+const WORKDAY_THOUGHT_LINES = {
+  commute: ["今天别迟到", "路上先把消息过一遍", "希望早高峰别太挤", "到了先接水"],
+  focus: ["先把最难的那块拆小", "这件事到底卡在哪里", "我需要一个不被打断的小时", "先交一个能跑的版本"],
+  meeting: ["这句话要不要现在说", "大家真正担心的是进度", "我先听完再补充", "别把会开成情绪互耗"],
+  lunch: ["吃完再回消息", "中午至少离开屏幕一会儿", "下午要留点电", "这顿饭救我一命"],
+  overtime: ["今天又晚了", "先收一个尾再走", "我需要知道什么时候算完成", "别把疲惫误认为失败"],
+  decompress: ["回家路上先放空", "今晚别再硬撑", "把今天的事慢慢放下", "我只是需要一点安静"],
+  chores: ["洗完这点就能躺下", "生活也在排队等我", "先把明天要用的东西放好", "房间乱的时候心也乱"],
+  weekend: ["今天不追进度", "把自己还给自己一点", "见不见人都可以", "慢一点也算恢复"],
+  solitude: ["我到底想靠近谁", "这件小事为什么一直在心里", "也许我只是累了", "我需要一句没人催的答案"],
+  intersect: ["原来不止我这样", "TA 的处境有点像我", "也许可以问一句", "这件事可以被一起看见"]
+};
 
 const AVATAR_COLORS = [
   "#296c68", "#7a4462", "#b45f45", "#4e5c8d",
@@ -174,6 +186,7 @@ const ACTION_LABELS = {
   listen: "倾听",
   meditate: "调停",
   rest: "休息",
+  thought: "思考",
   conflict: "冲突"
 };
 
@@ -184,6 +197,7 @@ const ACTION_COLORS = {
   listen: "rgba(167,139,250,0.9)",
   meditate: "rgba(196,181,253,0.9)",
   rest: "rgba(251,191,36,0.9)",
+  thought: "rgba(52,64,84,0.82)",
   conflict: "rgba(255,107,107,0.9)"
 };
 
@@ -1061,7 +1075,9 @@ function askMirror() {
     reply.innerHTML = '<p class="reply-kicker">高风险提示</p><p>我注意到你现在可能非常痛苦。请先把今天最危险的想法放下10分钟，去开一盏灯，并尝试联系一个可以信任的人。</p>';
     addEcho("高风险片段已识别，进入安全提醒路径。");
     addEventLogEntry("你的现实片段", text, "user-input", true);
-    writeWorldNarrativeFeedback(injectLifeEventToSociety(text, "support"));
+    const feedback = injectLifeEventToSociety(text, "support");
+    writeWorldNarrativeFeedback(feedback);
+    seedLifeFragmentResonance(feedback, text);
     showToast("安全提醒已触发", "coral");
     return;
   }
@@ -1089,7 +1105,9 @@ function askMirror() {
     addEcho(stripTags(response));
   }
   addEventLogEntry("你的现实片段", text, "user-input", true);
-  writeWorldNarrativeFeedback(injectLifeEventToSociety(text));
+  const feedback = injectLifeEventToSociety(text);
+  writeWorldNarrativeFeedback(feedback);
+  seedLifeFragmentResonance(feedback, text);
   showToast("镜像回声已生成，世界正在反应...", "support");
 }
 
@@ -2178,6 +2196,15 @@ function getActiveSpeechBubble(citizenId) {
   return { ...bubble, alpha: 1 - (elapsed / bubble.duration) * 0.3 };
 }
 
+function addThoughtBubble(citizenId, text, options = {}) {
+  if (!citizenId || !text) return;
+  const line = String(text).replace(/^💭\s*/, "");
+  addSpeechBubble(citizenId, `💭 ${line}`, "thought", {
+    duration: options.duration || 5200,
+    priority: options.priority || citizenId === followedCitizenId
+  });
+}
+
 function getActionVisualMeta(type) {
   return {
     label: ACTION_LABELS[type] || type || "互动",
@@ -2922,12 +2949,18 @@ function buildModalHTML(type) {
     case "citizens": return `
       <p class="eyebrow">市民看板</p>
       <h2>所有市民</h2>
+      <div class="reply-box">
+        <p class="reply-kicker">人海捞人</p>
+        <p>按人格、当下状态、最近现实片段和生活节奏，捞一个此刻值得围观的人。</p>
+        <button class="modal-btn primary compact" data-match-observe>捞一个观察对象</button>
+      </div>
       ${getAliveCitizens(state.society).map(c => {
         const zone = getCitizenZone(state.society, c);
         return `<div class="citizen-item" data-citizen-id="${c.id}">
           <p><span class="citizen-name" style="color:${c.color}">${h(c.name)}</span> · ${h(c.role)}</p>
           <p>${h(c.profession)} · ${h(zone?.name || "未知")} · ${h(c.lifeStageLabel || "")}</p>
           <p>心情 ${Math.round(c.mood)} / 能量 ${Math.round(c.energy)} / 信任 ${Math.round(c.trust)} · 最近 ${h(c.lastAction || "观察")}</p>
+          <button class="modal-btn ghost compact" data-follow-from-modal="${h(c.id)}">围观 TA</button>
         </div>`;
       }).join("")}`;
 
@@ -3106,6 +3139,14 @@ function showCitizenDetail(citizen) {
       </div>
       <p>PAD：愉悦 ${Math.round(Number(pad.pleasure || 0) * 100)} / 唤醒 ${Math.round(Number(pad.arousal || 0) * 100)} / 掌控 ${Math.round(Number(pad.dominance || 0) * 100)}</p>
       ${citizen.decisionTrace?.length ? `<p>Utility Top3：${escapeHtml(citizen.decisionTrace.join(" · "))}</p>` : ""}
+    </div>
+    <div class="detail-section">
+      <div class="detail-section-title">围观视角</div>
+      <p>${escapeHtml(getObservationMatchReason(citizen))}</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        <button class="interaction-btn" data-follow="${escapeHtml(citizen.id)}">进入 TA 的视角</button>
+        <button class="interaction-btn" data-gesture="wave" data-target="${escapeHtml(citizen.id)}">轻轻打招呼</button>
+      </div>
     </div>
     <div class="detail-section">
       <div class="detail-section-title">关系模型</div>
@@ -3942,11 +3983,100 @@ const BEHAVIOR_LIBRARY = [
       if (ts.hour >= 0 && ts.hour < 6) return -1;
       return 8; // the everyday fallback
     }
+  },
+  {
+    id: "commute", label: "通勤赶路", prop: "🚇", pose: "move",
+    minMs: 6000, maxMs: 12000,
+    zoneHint: /residential|office|factory|commercial|plaza|work|market/,
+    requireZone: false,
+    effects: { energy: -3, mood: -1 },
+    doneLine: "到了,先缓一口气",
+    score(citizen, ts) {
+      const morning = ts.hour >= 7 && ts.hour <= 9;
+      const evening = ts.hour >= 17 && ts.hour <= 20;
+      if (!morning && !evening) return -1;
+      return 24 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 12;
+    }
+  },
+  {
+    id: "meeting", label: "开会对齐", prop: "📋", pose: "sit",
+    minMs: 7000, maxMs: 13000,
+    zoneHint: /office|creative|commons|court|plaza|work|university/,
+    requireZone: true,
+    effects: { energy: -4, mood: -1 },
+    doneLine: "会先记到这里",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 9 || ts.hour > 17) return -1;
+      return 16 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 12;
+    }
+  },
+  {
+    id: "lunch-break", label: "午饭放空", prop: "🍱", pose: "sit",
+    minMs: 6000, maxMs: 11000,
+    zoneHint: /commercial|market|kitchen|office|park|plaza|residential/,
+    requireZone: false,
+    effects: { energy: 7, mood: 3 },
+    doneLine: "下午继续",
+    score(citizen, ts) {
+      if (ts.hour < 11 || ts.hour > 13) return -1;
+      return 30 + (100 - behaviorNum(citizen.energy, 50)) * 0.25;
+    }
+  },
+  {
+    id: "overtime", label: "加班收尾", prop: "🌙", pose: "sit",
+    minMs: 8000, maxMs: 15000,
+    zoneHint: /office|factory|creative|studio|work|repair/,
+    requireZone: true,
+    effects: { energy: -9, mood: -3 },
+    doneLine: "今天先到这儿",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 18 || ts.hour > 23) return -1;
+      if (behaviorNum(citizen.energy, 50) < 24) return -1;
+      return 12 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 22;
+    }
+  },
+  {
+    id: "chores", label: "处理生活杂事", prop: "🧺", pose: "rock",
+    minMs: 6000, maxMs: 11000,
+    zoneHint: /residential|commercial|market|kitchen|daily/,
+    requireZone: false,
+    effects: { energy: -3, mood: 2 },
+    doneLine: "总算清爽一点",
+    score(citizen, ts) {
+      const window = (ts.hour >= 6 && ts.hour <= 8) || (ts.hour >= 19 && ts.hour <= 22);
+      return window ? 16 : -1;
+    }
+  },
+  {
+    id: "night-reflect", label: "睡前复盘", prop: "💭", pose: "sit",
+    minMs: 7000, maxMs: 12000,
+    zoneHint: /residential|quiet|rest|park|cemetery|courtyard/,
+    requireZone: false,
+    effects: { mood: 2 },
+    doneLine: "明天再说吧",
+    score(citizen, ts) {
+      if (ts.hour < 21 && ts.hour > 4) return -1;
+      return 18 + behaviorNum(citizen.bigFive?.openness, 0.5) * 16 + behaviorNum(citizen.bigFive?.neuroticism, 0.5) * 10;
+    }
+  },
+  {
+    id: "weekend-reset", label: "周末恢复", prop: "🧘", pose: "sit",
+    minMs: 8000, maxMs: 15000,
+    zoneHint: /park|residential|quiet|commercial|market|garden|green/,
+    requireZone: false,
+    effects: { energy: 8, mood: 6 },
+    doneLine: "慢下来也不错",
+    score(citizen, ts) {
+      const day = state.society?.clock?.day || 1;
+      const weekend = day % 7 === 0 || day % 7 === 6;
+      if (!weekend || ts.hour < 9 || ts.hour > 21) return -1;
+      return 24 + (100 - behaviorNum(citizen.energy, 50)) * 0.18;
+    }
   }
 ];
 
 const BEHAVIOR_BY_ID = new Map(BEHAVIOR_LIBRARY.map((behavior) => [behavior.id, behavior]));
-const INDOOR_BEHAVIOR_IDS = new Set(["eat", "sleep", "read", "work", "type", "tea", "garden", "stretch"]);
+const INDOOR_BEHAVIOR_IDS = new Set(["eat", "sleep", "read", "work", "type", "tea", "garden", "stretch", "meeting", "lunch-break", "overtime", "chores", "night-reflect", "weekend-reset"]);
 
 function getZoneBehaviorHint(zone) {
   return `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""}`;
@@ -4049,6 +4179,157 @@ function pickSeededLine(pool, seed, salt, zoneName = "") {
   return String(pool[idx]).replace("{zone}", zoneName || "附近");
 }
 
+function getThoughtBucket(citizen, behavior, ts) {
+  const id = behavior?.id || "";
+  if (id === "commute") return "commute";
+  if (id === "meeting") return "meeting";
+  if (id === "lunch-break" || id === "eat") return "lunch";
+  if (id === "overtime") return "overtime";
+  if (id === "chores") return "chores";
+  if (id === "night-reflect" || id === "read") return "solitude";
+  if (id === "weekend-reset" || (ts?.day && (ts.day % 7 === 0 || ts.day % 7 === 6))) return "weekend";
+  if (id === "work" || id === "type") return "focus";
+  if (ts?.hour >= 17 && ts.hour <= 21) return "decompress";
+  if (Number(citizen?.energy || 50) < 34) return "decompress";
+  return "solitude";
+}
+
+function pickWorkdayThoughtLine(citizen, behavior, now, zone) {
+  if (!citizen) return "";
+  const ts = getWorldTimeState(state.society);
+  const bucket = getThoughtBucket(citizen, behavior, ts);
+  const trait = citizen.bigFive || {};
+  const seed = hashCommunitySeed(citizen.id || "citizen", behavior?.id || "idle", state.society?.turn || 0, Math.floor(now / 5000));
+  const traitLines = [];
+  if ((behavior?.id === "work" || behavior?.id === "meeting" || behavior?.id === "type") && Number(trait.conscientiousness || 0) > 0.66) {
+    traitLines.push("先把优先级排清楚");
+  }
+  if ((behavior?.id === "work" || behavior?.id === "overtime") && Number(trait.neuroticism || 0) > 0.64) {
+    traitLines.push("这件事别又拖到晚上");
+  }
+  if ((behavior?.id === "read" || behavior?.id === "night-reflect") && Number(trait.openness || 0) > 0.62) {
+    traitLines.push("也许还有另一种做法");
+  }
+  if (traitLines.length && seededCommunityValue(seed, 11) < 0.45) {
+    return pickSeededLine(traitLines, seed, 12, zone?.name);
+  }
+  return pickSeededLine(WORKDAY_THOUGHT_LINES[bucket], seed, 13, zone?.name);
+}
+
+function maybeShowCitizenThought(citizen, anim, zone, now) {
+  if (!citizen || !anim) return;
+  if (getActiveSpeechBubble(citizen.id)) return;
+  const followed = citizen.id === followedCitizenId;
+  const avatar = citizen.id === "avatar";
+  const activeBehavior = getActiveBehavior(anim, now);
+  if (citizen.pendingThoughtLine) {
+    const line = citizen.pendingThoughtLine;
+    citizen.pendingThoughtLine = "";
+    addThoughtBubble(citizen.id, line, { priority: followed || avatar, duration: 6200 });
+    anim.nextThoughtAt = now + 12000;
+    return;
+  }
+  if (now < (anim.nextThoughtAt || 0)) return;
+  const seed = hashCommunitySeed(citizen.id || "citizen", Math.floor(now / 6000), state.society?.turn || 0);
+  const lowMood = Number(citizen.mood || 50) < 38;
+  const baseChance = followed ? 0.62 : avatar ? 0.28 : activeBehavior ? 0.12 : 0.045;
+  const moodBoost = lowMood ? 0.12 : 0;
+  if (seededCommunityValue(seed, 17) > baseChance + moodBoost) {
+    anim.nextThoughtAt = now + 10000 + seededCommunityValue(seed, 18) * 16000;
+    return;
+  }
+  const line = pickWorkdayThoughtLine(citizen, activeBehavior, now, zone);
+  if (line) addThoughtBubble(citizen.id, line, { priority: followed || avatar });
+  anim.nextThoughtAt = now + 14000 + seededCommunityValue(seed, 19) * 18000;
+}
+
+function scoreObservationCandidate(citizen, query = "") {
+  if (!citizen || citizen.id === "avatar" || citizen.alive === false) return -Infinity;
+  const text = `${citizen.name || ""} ${citizen.role || ""} ${citizen.profession || ""} ${citizen.personaLabel || ""} ${citizen.lastAction || ""}`;
+  let score = 0;
+  score += Math.abs(Number(citizen.mood || 50) - 50) * 0.35;
+  score += (100 - Number(citizen.energy || 50)) * 0.18;
+  score += Number(citizen.trust || 50) * 0.08;
+  score += Number(citizen.bigFive?.openness || 0.5) * 12;
+  score += citizen.pendingThoughtLine ? 18 : 0;
+  if (citizen.zoneId === state.society?.citizens?.find(c => c.id === "avatar")?.zoneId) score += 8;
+  if (query && [...new Set(query.match(/[\u4e00-\u9fa5]{2,}|[A-Za-z]+/g) || [])].some(word => text.includes(word))) score += 20;
+  const seed = hashCommunitySeed(citizen.id, state.society?.turn || 0, query || "observe");
+  return score + seededCommunityValue(seed, 23) * 9;
+}
+
+function getObservationMatchReason(citizen) {
+  if (!citizen) return "这个人此刻有一条值得跟随的生活线。";
+  if (citizen.lastObservationReason) return citizen.lastObservationReason;
+  if (citizen.pendingThoughtLine) return citizen.pendingThoughtLine;
+  if (Number(citizen.energy || 50) < 35) return "TA 看起来正在经历一个疲惫但真实的工作日尾声。";
+  if (Number(citizen.mood || 50) < 38) return "TA 的情绪有点低，适合从第一视角观察而不是打扰。";
+  if (Number(citizen.bigFive?.openness || 0.5) > 0.65) return "TA 对新的关系和场所更敏感，容易看见城市里的微小变化。";
+  return "TA 今天的行动轨迹和社区节奏产生了一个清晰交点。";
+}
+
+function pickObservationMatch(query = "") {
+  const candidates = getAliveCitizens(state.society)
+    .filter(citizen => citizen.id !== "avatar")
+    .sort((a, b) => scoreObservationCandidate(b, query) - scoreObservationCandidate(a, query));
+  const citizen = candidates[0] || getAliveCitizens(state.society).find(c => c.id !== "avatar") || null;
+  return citizen ? { citizen, reason: getObservationMatchReason(citizen) } : null;
+}
+
+function observeMatchedCitizen(query = "") {
+  const match = pickObservationMatch(query);
+  if (!match?.citizen) {
+    showToast("暂时没有可围观对象", "conflict");
+    return;
+  }
+  const { citizen, reason } = match;
+  closeModal();
+  startFollowCitizen(citizen.id);
+  showCitizenInteraction(citizen);
+  addThoughtBubble(citizen.id, reason, { priority: true, duration: 6500 });
+  addEventLogEntry("人海捞人", `系统捞到了 ${citizen.name}: ${reason}`, "listen", true);
+  showToast(`已进入 ${citizen.name} 的观察视角`, "listen");
+}
+
+function seedLifeFragmentResonance(feedback, rawText) {
+  if (!feedback || !state.society?.citizens?.length) return;
+  const ctx = feedback.context || {};
+  const actor = state.society.citizens.find(c => c.id === (ctx.actorId || "avatar")) || state.society.citizens.find(c => c.id === "avatar");
+  const query = String(rawText || "");
+  let target = state.society.citizens.find(c => c.id === ctx.targetId && c.id !== actor?.id);
+  if (!target) target = pickObservationMatch(query)?.citizen;
+  const excerpt = query.length > 18 ? `${query.slice(0, 18)}...` : query;
+  if (actor) {
+    const actorThought = `我把“${excerpt || "今天这一段"}”带进来了`;
+    actor.lastObservationReason = actorThought;
+    addThoughtBubble(actor.id, actorThought, { priority: true, duration: 6200 });
+  }
+  if (!target || target.id === actor?.id) return;
+  const seed = hashCommunitySeed(target.id, query, state.society.turn || 0);
+  const targetThought = pickSeededLine(WORKDAY_THOUGHT_LINES.intersect, seed, 2);
+  target.lastObservationReason = targetThought;
+  if (actor?.zoneId && target.zoneId !== actor.zoneId) {
+    target.zoneId = actor.zoneId;
+    target.zoneLock = { zoneId: actor.zoneId, untilTurn: (state.society.turn || 0) + 2 };
+    if (citizenAnimations[target.id]) citizenAnimations[target.id].nextTargetAt = 0;
+    delete interiorAnimations[target.id];
+  }
+  queueInteractionVisual({
+    actorId: actor?.id || "avatar",
+    targetId: target.id,
+    actorName: actor?.name || "你的分身",
+    targetName: target.name,
+    type: "listen",
+    text: "现实片段产生同频交集",
+    score: 1,
+    relationshipLabel: "同频交集"
+  }, { source: "现实片段" });
+  addThoughtBubble(target.id, targetThought, { priority: target.id === followedCitizenId, duration: 6200 });
+  addEventLogEntry("同频交集", `${target.name} 对这段现实片段产生了共鸣，可以围观 TA 的后续。`, "listen", true);
+  persist();
+  updateHUD();
+}
+
 function pairEncounterKey(aId, bId) {
   return aId < bId ? `${aId}|${bId}` : `${bId}|${aId}`;
 }
@@ -4081,14 +4362,19 @@ function maybeStartEncounters(entries, now) {
       const seed = hashCommunitySeed(key, Math.floor(now / 1000));
       const roll = seededCommunityValue(seed, 3);
       const social = ((Number(A.citizen.bigFive?.extraversion) || 0.5) + (Number(B.citizen.bigFive?.extraversion) || 0.5)) / 2;
-      const chatChance = 0.16 + social * 0.3;
-      const waveChance = chatChance + 0.28;
+      const observed = followedCitizenId === A.citizen.id || followedCitizenId === B.citizen.id;
+      const chatChance = (observed ? 0.1 : 0.045) + social * (observed ? 0.18 : 0.12);
+      const waveChance = chatChance + (observed ? 0.14 : 0.08);
       if (roll < chatChance) {
         startChatEncounter(A, B, now, seed);
         encounterCooldowns[key] = now + ENCOUNTER_COOLDOWN_MS + seededCommunityValue(seed, 9) * 20000;
       } else if (roll < waveChance) {
         startWaveEncounter(A, B, now, seed);
         encounterCooldowns[key] = now + ENCOUNTER_COOLDOWN_MS * 0.6;
+      } else if (observed && roll < waveChance + 0.18) {
+        const thinker = seededCommunityValue(seed, 7) > 0.5 ? A : B;
+        addThoughtBubble(thinker.citizen.id, pickSeededLine(WORKDAY_THOUGHT_LINES.intersect, seed, 8), { priority: true });
+        encounterCooldowns[key] = now + ENCOUNTER_COOLDOWN_MS * 0.55;
       } else {
         // They pass each other without interacting — that's a valid outcome too.
         encounterCooldowns[key] = now + 12000;
@@ -4601,6 +4887,7 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
   if (!gesture && behavior) {
     // Absorbed in an indoor activity: reading, typing, sipping tea …
     ia.state = "doing";
+    maybeShowCitizenThought(citizen, ia, interiorView?.zone, now);
     return;
   }
   if (!gesture) {
@@ -4651,6 +4938,7 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
       ia.facing = partnerIa.x >= ia.x ? 1 : -1;
     }
   }
+  maybeShowCitizenThought(citizen, ia, interiorView?.zone, now);
 }
 
 function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
@@ -5132,22 +5420,36 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
     const bx = cx - tw / 2;
     const by = cy - size * 0.7 - 20;
     const bAlpha = bubble.alpha;
+    const isThought = bubble.type === "thought";
 
     // Bubble background
-    ctx.fillStyle = ACTION_COLORS[bubble.type] || "rgba(6,12,20,0.82)";
+    ctx.fillStyle = isThought ? "rgba(250,250,245,0.94)" : (ACTION_COLORS[bubble.type] || "rgba(6,12,20,0.82)");
     ctx.globalAlpha = bAlpha;
     roundRect(ctx, bx, by, tw, 16, 6);
     ctx.fill();
+    if (isThought) {
+      ctx.strokeStyle = "rgba(26,26,46,0.32)";
+      ctx.lineWidth = 1;
+      roundRect(ctx, bx, by, tw, 16, 6);
+      ctx.stroke();
+    }
 
     // Tail
-    ctx.beginPath();
-    ctx.moveTo(cx - 3, by + 16);
-    ctx.lineTo(cx, by + 22);
-    ctx.lineTo(cx + 3, by + 16);
-    ctx.fill();
+    if (isThought) {
+      ctx.beginPath();
+      ctx.arc(cx - 4, by + 19, 2.1, 0, Math.PI * 2);
+      ctx.arc(cx + 2, by + 23, 1.4, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.beginPath();
+      ctx.moveTo(cx - 3, by + 16);
+      ctx.lineTo(cx, by + 22);
+      ctx.lineTo(cx + 3, by + 16);
+      ctx.fill();
+    }
 
     // Text
-    ctx.fillStyle = "#fff";
+    ctx.fillStyle = isThought ? "#1a1a2e" : "#fff";
     ctx.fillText(bubbleText, cx, by + 12);
     ctx.globalAlpha = 1;
   }
@@ -5630,6 +5932,8 @@ function drawGameWorld() {
         anim.facing = partnerAnim.x >= (anim.x || baseX) ? 1 : -1;
       }
     }
+
+    maybeShowCitizenThought(citizen, anim, zone, now);
 
     const cx = anim.x || baseX;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
@@ -6920,6 +7224,24 @@ function bindGameEvents() {
       if (target.id === "openTomorrowPlan") {
         openModal("robot");
         setRobotMode("action");
+        return;
+      }
+
+      const matchObserve = target.closest("[data-match-observe]");
+      if (matchObserve) {
+        observeMatchedCitizen();
+        return;
+      }
+
+      const followFromModal = target.closest("[data-follow-from-modal]");
+      if (followFromModal) {
+        const citizen = state.society.citizens.find(c => c.id === followFromModal.dataset.followFromModal);
+        if (citizen) {
+          closeModal();
+          startFollowCitizen(citizen.id);
+          showCitizenInteraction(citizen);
+          addThoughtBubble(citizen.id, getObservationMatchReason(citizen), { priority: true, duration: 6200 });
+        }
         return;
       }
 
