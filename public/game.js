@@ -513,13 +513,39 @@ function renderLifeRewardCard() {
     </section>`;
 }
 
+function getHumanizedDiaryText(citizen, rawText) {
+  const text = String(rawText || "");
+  if (!/经历了\s*写下世界回声|可继续尝试的关系回声|人生回声偏紧/.test(text)) {
+    return text;
+  }
+  const lifeWeek = getLifeWeekState();
+  const reward = lifeWeek?.currentReward || {};
+  const zone = getCitizenZone(state.society, citizen);
+  const relationRows = Object.values(state?.society?.relationships || {})
+    .filter((edge) => edge.a === citizen.id || edge.b === citizen.id)
+    .sort((a, b) => Number(b.updatedTurn || b.updatedAtTurn || 0) - Number(a.updatedTurn || a.updatedAtTurn || 0));
+  const edge = relationRows[0];
+  const otherId = edge ? (edge.a === citizen.id ? edge.b : edge.a) : "";
+  const other = otherId ? state.society.citizens.find((item) => item.id === otherId) : null;
+  const actionLabel = ACTION_LABELS[edge?.lastAction] || ACTION_LABELS[citizen.lastAction] || citizen.lastAction || "观察";
+  const weekMatch = text.match(/第\s*(\d+)\s*周/);
+  const weekLabel = weekMatch?.[1] || lifeWeek?.week || "";
+  const relationLine = other
+    ? `TA和${other.name}在${zone?.name || "社区"}完成了一次${actionLabel}：没有把关系推成结果，而是先确认彼此还能怎样靠近。`
+    : `TA在${zone?.name || "社区"}把一段独处时间留给自己，整理疲惫、犹豫和还没说出口的愿望。`;
+  const reflection = Number(reward.total || 0) >= 64
+    ? "这一周的意义，是把想法落成了一次具体行动。"
+    : "这一周还不轻松，但它至少让混乱有了可以继续看的形状。";
+  return `第 ${weekLabel} 周，${citizen.name}不只是写下回声。${relationLine}${reflection}`;
+}
+
 function renderAgentMemoryLedger() {
   const runtime = state?.society?.agents;
   const files = runtime?.memoryFiles || {};
   const alive = getAliveCitizens(state.society).slice(0, 4);
   const rows = alive.map((citizen) => {
     const file = files[citizen.id] || {};
-    const diary = file.weeklyDiary?.[0]?.text || file.general?.[0]?.text || "这位分身还在等待第一条周记。";
+    const diary = getHumanizedDiaryText(citizen, file.weeklyDiary?.[0]?.text || file.general?.[0]?.text || "这位分身还在等待第一条周记。");
     const relationshipCount = Object.values(file.relationships || {}).reduce((sum, list) => sum + (Array.isArray(list) ? list.length : 0), 0);
     return `
       <div class="memory-ledger-row">

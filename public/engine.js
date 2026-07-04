@@ -3448,10 +3448,10 @@ function calculateLifeReward(society) {
   const lifeStability = clamp(Math.round(((100 - society.tension) * 0.44) + (society.metrics.equality * 0.34) + (society.principleHealth.openness * 0.22)), 0, 100);
   const total = clamp(Math.round((socialResonance + selfFulfillment + lifeStability) / 3), 0, 100);
   const reason = total >= 72
-    ? "本周的社会关系比较亮，分身既被看见，也能把选择转成稳定行动。"
+    ? "本周有人把想法说出口，也有人真的接住了；关系没有变成胜负，而是变成了可以继续生活的办法。"
     : total >= 54
-      ? "本周仍有张力，但世界给出了可继续尝试的关系回声。"
-      : "本周人生回声偏紧，系统会把下一轮优先交给安抚、倾听和修复。";
+      ? "本周仍有张力，但它不再只是一团情绪；至少有几次靠近、等待和修复，让人知道下一步还能怎么试。"
+      : "本周过得偏紧，许多话还没有被好好说完；下一轮会把优先级交给休息、倾听和低压修复。";
   return { socialResonance, selfFulfillment, lifeStability, total, reason };
 }
 
@@ -3493,13 +3493,73 @@ function recordAgentMemoryFileItem(society, ownerId, bucket, text, options = {})
   return item;
 }
 
+function getLifeWeekActionLabel(action) {
+  return ACTION_LABELS_MAP[action] || action || "观察";
+}
+
+function findRecentRelationshipForCitizen(society, citizen) {
+  return Object.values(society.relationships || {})
+    .filter((edge) => edge.a === citizen.id || edge.b === citizen.id)
+    .sort((a, b) => Number(b.updatedTurn || b.updatedAtTurn || 0) - Number(a.updatedTurn || a.updatedAtTurn || 0))[0] || null;
+}
+
+function getRelationshipOtherCitizen(society, edge, citizen) {
+  if (!edge || !citizen) return null;
+  const otherId = edge.a === citizen.id ? edge.b : edge.a;
+  return (society.citizens || []).find((item) => item.id === otherId) || null;
+}
+
+function getConcreteLifeWeekAction(society, citizen, zone, edge) {
+  const action = edge?.lastAction || citizen.lastAction || getCitizenScheduleAction(society, citizen);
+  const label = getLifeWeekActionLabel(action);
+  const zoneName = zone?.name || "社区里";
+  const map = {
+    listen: `在${zoneName}停下来听完了一段没有被催促的心里话`,
+    support: `在${zoneName}给出了一次安抚，让对方先把气喘匀`,
+    cooperate: `在${zoneName}和别人一起把一件小事做完`,
+    propose: `在${zoneName}提出了一个小提议，把模糊的不满变成可讨论的下一步`,
+    meditate: `在${zoneName}把一段紧绷关系往回拉了一点`,
+    rest: `在${zoneName}没有硬撑，给自己留出恢复时间`,
+    conflict: `在${zoneName}碰到了一次冲突，也看见了关系的边界`
+  };
+  return map[action] || `在${zoneName}完成了一次${label}，让今天不只是从身边滑过去`;
+}
+
+function buildConcreteLifeWeekDiary(society, lifeWeek, citizen, index, reward, alive) {
+  const zone = getCitizenZone(society, citizen);
+  const edge = findRecentRelationshipForCitizen(society, citizen);
+  const target = getRelationshipOtherCitizen(society, edge, citizen) ||
+    alive.find((item, offset) => item.id !== citizen.id && offset >= index) ||
+    alive.find((item) => item.id !== citizen.id);
+  const actionText = getConcreteLifeWeekAction(society, citizen, zone, edge);
+  const relationText = target
+    ? `后来，${target.name}成了这条线索里最清楚的另一个人：不是立刻亲近，而是多了一次可以安全靠近或后退的余地。`
+    : "这一周更多是在独处里发生：TA把疲惫、犹豫和一点点愿望分开放好。";
+  const reflection = reward.total >= 72
+    ? "这一周的意义不在于变完美，而在于有人真的把行动落在了关系里。"
+    : reward.total >= 54
+      ? "事情没有完全变轻，但混乱开始有了形状，人也就能继续选择。"
+      : "这不是顺利的一周，却提醒 TA：先活下来、先被听见，本身也是行动。";
+  return `第 ${lifeWeek.week} 周，${citizen.name}${actionText}。${relationText}${reflection}`;
+}
+
+function buildConcreteRelationshipMemory(society, citizen, target, reward) {
+  const zone = getCitizenZone(society, citizen);
+  const edge = target ? findRecentRelationshipForCitizen(society, citizen) : null;
+  const action = getLifeWeekActionLabel(edge?.lastAction || "listen");
+  const outcome = reward.total >= 64
+    ? "这次连接让关系多了一点可重复的信任。"
+    : "这次连接还很轻，但它没有把任何人推向必须回应的位置。";
+  return `${target.name}和我在${zone?.name || "社区"}留下了一次${action}记录：${outcome}`;
+}
+
 function recordLifeWeekMemorySnapshot(society, reward) {
   const lifeWeek = ensureLifeWeekSystem(society);
   const alive = getAliveCitizens(society).slice(0, 8);
   const capsuleTitle = (state.lifeCapsules || DEFAULT_LIFE_CAPSULES)
     .find((capsule) => capsule.id === state.activeLifeCapsuleId)?.title || "当前人生胶囊";
   alive.forEach((citizen, index) => {
-    const diaryText = `第 ${lifeWeek.week} 周，${citizen.name}在${society.scene}经历了 ${getLifeWeekStageInfo("review").title}：${reward.reason}`;
+    const diaryText = buildConcreteLifeWeekDiary(society, lifeWeek, citizen, index, reward, alive);
     recordAgentMemoryFileItem(society, citizen.id, "weeklyDiary", diaryText, {
       kind: "weekly_diary",
       importance: Math.max(4, Math.round(reward.total / 14)),
@@ -3514,7 +3574,7 @@ function recordLifeWeekMemorySnapshot(society, reward) {
     if (index < 4) {
       const target = alive[(index + 1) % alive.length];
       if (target && target.id !== citizen.id) {
-        recordAgentMemoryFileItem(society, citizen.id, "relationships", `${target.name}与我在本周产生了一次同频线索：关系不是胜负，而是能否继续靠近。`, {
+        recordAgentMemoryFileItem(society, citizen.id, "relationships", buildConcreteRelationshipMemory(society, citizen, target, reward), {
           kind: "relationship",
           key: target.id,
           targetId: target.id,
