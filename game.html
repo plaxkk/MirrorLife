@@ -44,6 +44,8 @@
           <button class="hud-btn" id="hudPause" title="暂停/启动">▶</button>
           <button class="hud-btn" id="hudStep" title="推进1步">⏭</button>
           <button class="hud-btn" id="hudReset" title="重置社会">↻</button>
+          <button class="hud-btn" id="hudSaves" title="存档与记忆">💾</button>
+          <button class="hud-btn" id="hudStory" title="剧情志">📖</button>
           <div class="speed-control">
             <label for="hudSpeed">速度</label>
             <input type="range" id="hudSpeed" min="0.5" max="3" step="0.5" value="0.5" />
@@ -250,7 +252,10 @@
 
     <script>window.__errs = []; window.addEventListener('error', e => window.__errs.push(e.message + ' @ ' + e.filename + ':' + e.lineno));</script>
     <script type="module" src="./analytics-entry.js"></script>
+    <script src="storage.js"></script>
+    <script src="memory-hub.js"></script>
     <script src="engine.js"></script>
+    <script src="story-engine.js"></script>
     <script src="narrative.js"></script>
     <script src="causal-graph.js"></script>
     <script src="game.js"></script>

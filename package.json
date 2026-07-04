@@ -5,9 +5,10 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/causal-graph.js && node --check public/game.js",
+    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/causal-graph.js && node --check public/game.js && node --check public/storage.js && node --check public/memory-hub.js && node --check public/story-engine.js && node --check server/memory-proxy.mjs",
     "test": "npm run check",
     "test:evolution": "node scripts/verify-evolution.mjs",
+    "memory-proxy": "node server/memory-proxy.mjs",
     "build": "vite build",
     "preview": "vite preview"
   },

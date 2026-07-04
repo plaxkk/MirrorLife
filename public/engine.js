@@ -1300,6 +1300,10 @@ function recordAgentMemory(society, citizenId, text, kind = "event", importance 
     references
   };
   pushAgentRecord(getAgentBucket(runtime.memoryStore, citizenId), item, AGENT_MEMORY_LIMIT);
+  // 记忆中枢:本地 IndexedDB 必写,火山 Mem0 出站队列可选(memory-hub.js)
+  if (typeof memoryHubCapture === "function") {
+    try { memoryHubCapture(society, citizenId, item); } catch { /* 记忆上行失败不阻塞模拟 */ }
+  }
   return item;
 }
 
@@ -1651,6 +1655,7 @@ function loadState() {
     causalGraph: null,
     hasSeenTutorial: false,
     isFirstVisit: false,
+    story: null,
     society: buildBaseSociety()
   };
 
@@ -1682,6 +1687,7 @@ function loadState() {
       causalGraph: saved.causalGraph && typeof saved.causalGraph === "object" ? saved.causalGraph : null,
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
+      story: saved.story && typeof saved.story === "object" ? saved.story : null,
       society: normalizeSocietyState(loadedSociety)
     };
   } catch {
@@ -1707,6 +1713,7 @@ function buildPersistSnapshot() {
     causalGraph: state.causalGraph || null,
     hasSeenTutorial: !!state.hasSeenTutorial,
     isFirstVisit: !!state.isFirstVisit,
+    story: state.story || null,
     society: state.society
   });
 }
@@ -1728,6 +1735,10 @@ function flushPersist() {
   if (snapshot === lastPersistSnapshot) return;
   localStorage.setItem(STORAGE_KEY, snapshot);
   lastPersistSnapshot = snapshot;
+  // 档案层:防抖写入 IndexedDB 自动存档槽(storage.js)
+  if (typeof storageAutoSave === "function") {
+    try { storageAutoSave(snapshot); } catch { /* IndexedDB 不可用时静默降级 */ }
+  }
 }
 
 function persist(immediate = false) {
@@ -4407,6 +4418,11 @@ function stepSociety() {
   refreshDominanceWindow();
 
   evolveFromTurn();
+
+  // 自演化剧情:由模拟信号孕育剧情弧光并逐幕推进(story-engine.js)
+  if (typeof storyEngineOnTurn === "function") {
+    try { storyEngineOnTurn(society); } catch (error) { console.warn("story engine skipped", error); }
+  }
 
   // Update entities and weather
   if (typeof updateEntityPositions === "function") updateEntityPositions(society);

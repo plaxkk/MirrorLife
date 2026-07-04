@@ -63,6 +63,9 @@ Phase 1 先验证叙事吸引力和回访理由，不让真实 LLM API、登录�
 - 未完回声：镜像舱完成后给出明日继续入口，并在回声档案/回家模式承接。
 - 本地因果图记忆：首分钟闭环会把现实片段、分身行动、影响对象、城市结果和下一步选择写成本地 property graph，并在结果卡显示可解释的“因果依据”。
 - 心理连锁反应框架：现实事件经认知评估(Lazarus)冲击需求与情绪,按应对风格(问题聚焦/支持寻求/回避)逐回合展开「应对行为 → 场所寻求 → 社会互动 → 情绪涟漪」连锁;含情绪感染、恢复性环境、人-环境匹配、场所依恋等机制,详见 [docs/PSYCHOLOGY_FRAMEWORK.md](docs/PSYCHOLOGY_FRAMEWORK.md)。
+- 自演化剧情引擎：剧情不写死脚本——关系裂痕/深交、心理连锁、城市张力、出生离世等模拟信号自发孕育剧情弧光,按「起承转合」推进,每一幕走向由推进时刻的真实模拟状态分支,结局反哺信任/情绪/场所依恋;HUD 📖 剧情志可回看。
+- 分层存档系统：localStorage 热态快照 + IndexedDB 多槽存档(手动/自动/导出/导入 JSON),HUD 💾 面板管理;选型调研见 [docs/STORAGE_RESEARCH.md](docs/STORAGE_RESEARCH.md)。
+- 记忆中枢：分身记忆与剧情节拍写入本地 IndexedDB 记忆库(关键词检索),可选接入火山引擎记忆库 Mem0(经后端代理,`npm run memory-proxy`),实现跨会话语义记忆与「记忆回响」;未配置时完整可玩。
 - 回合制社会模拟：市民行动、区域、关系、情绪、信任、能量、张力、治理指标。
 - 安全治理：高风险文本触发本地安全提示和保护路径。
 - 模板叙事 fallback：未配置外部 API 时仍可完整运行。
@@ -87,7 +90,12 @@ Phase 1 先验证叙事吸引力和回访理由，不让真实 LLM API、登录�
 │   ├── narrative.js       # 叙事生成层和 fallback
 │   ├── causal-graph.js    # 首分钟本地因果图记忆
 │   ├── game.js            # Canvas/UI/交互层（行为动作库、跟随视角、室内场景）
+│   ├── storage.js         # IndexedDB 存档层(多槽/自动存档/导入导出)
+│   ├── memory-hub.js      # 记忆中枢(本地底座 + 火山 Mem0 出站队列)
+│   ├── story-engine.js    # 自演化剧情引擎(起承转合弧光)
 │   └── assets/            # 头像/市民/建筑精灵图
+├── server/
+│   └── memory-proxy.mjs   # 火山引擎记忆库 Mem0 后端代理(API Key 不进前端)
 ├── scripts/
 │   └── verify-evolution.mjs  # 社会演化冒烟验证
 ├── PRODUCT_DESIGN.md      # 产品设计文档
@@ -110,6 +118,14 @@ Phase 1 先验证叙事吸引力和回访理由，不让真实 LLM API、登录�
 当前 demo 无需环境变量即可运行。
 
 真实 LLM API 后续只允许通过后端代理接入，不应在前端暴露生产 API key。`.env.example` 仅保留后端代理和未来 Supabase 接入占位。
+
+可选:火山引擎记忆库 Mem0(跨会话语义记忆)。在控制台创建记忆项目与 API Key 后:
+
+```bash
+VOLC_MEM0_BASE_URL=<项目连接地址> VOLC_MEM0_API_KEY=<API Key> npm run memory-proxy
+```
+
+然后在游戏 HUD 💾「存档与记忆」面板填入 `http://localhost:8787/api/memory`。未配置时记忆自动降级为本地 IndexedDB,游戏完整可玩。
 
 ## Validation
 

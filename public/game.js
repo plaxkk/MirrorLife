@@ -2365,6 +2365,161 @@ function interactWithCitizen(actionType, targetId) {
   if (updated) showCitizenInteraction(updated);
 }
 
+// ── 存档与记忆面板 / 剧情志面板(复用右侧 detail panel) ──
+
+function formatSaveTime(ts) {
+  if (!ts) return "--";
+  const d = new Date(ts);
+  return `${d.getMonth() + 1}/${d.getDate()} ${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`;
+}
+
+async function showSavePanel() {
+  let saves = [];
+  try { saves = await listGameSaves(); } catch { /* IndexedDB 不可用 */ }
+  const h = escapeHtml;
+  const memory = typeof memoryHubStatus === "function" ? memoryHubStatus() : { enabled: false };
+  const rows = saves.length ? saves.map((slot) => `
+    <div class="detail-section" style="padding:8px 10px">
+      <p><strong>${h(slot.name)}</strong>${slot.id === "autosave" ? " <span style='opacity:0.6'>(自动)</span>" : ""}</p>
+      <p style="opacity:0.75">第${slot.day}天 · 回合${slot.turn} · ${h(slot.avatarName || "分身")} · ${formatSaveTime(slot.updatedAt)}</p>
+      ${slot.storySummary ? `<p style="opacity:0.75">剧情:${h(slot.storySummary)}</p>` : ""}
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+        <button class="interaction-btn" data-save-load="${h(slot.id)}">▶ 读取</button>
+        ${slot.id !== "autosave" ? `<button class="interaction-btn" data-save-over="${h(slot.id)}">💾 覆盖</button>` : ""}
+        <button class="interaction-btn" data-save-export="${h(slot.id)}">⬇ 导出</button>
+        ${slot.id !== "autosave" ? `<button class="interaction-btn" data-save-del="${h(slot.id)}">🗑 删除</button>` : ""}
+      </div>
+    </div>`).join("") : "<p>还没有存档。城市会自动记录一份「自动存档」,你也可以手动保存当前人生。</p>";
+  showDetail(`
+    <h3>💾 存档与记忆</h3>
+    <div class="detail-section">
+      <div class="detail-section-title">当前人生</div>
+      <p>回合 ${Math.round(state.society.turn || 0)} · 第${state.society.clock?.day || 1}天</p>
+      <div style="display:flex;flex-wrap:wrap;gap:4px;margin-top:4px">
+        <button class="interaction-btn detail-action" data-save-new>📌 保存新存档</button>
+        <button class="interaction-btn" data-save-import>📂 导入存档文件</button>
+      </div>
+      <input type="file" id="saveImportFile" accept="application/json" style="display:none" />
+    </div>
+    ${rows}
+    <div class="detail-section">
+      <div class="detail-section-title">火山引擎记忆(可选)</div>
+      <p style="opacity:0.8">${memory.enabled
+        ? `已连接代理 · 已同步 ${memory.synced} 条 · 待同步 ${memory.pending} 条${memory.lastError ? ` · ⚠ ${h(memory.lastError)}` : ""}`
+        : "未配置。记忆当前存储在本地(IndexedDB);填入后端代理地址即可同步到火山记忆库 Mem0。"}</p>
+      <input type="text" id="memoryProxyInput" placeholder="http://localhost:8787/api/memory"
+        value="${h(typeof getMemoryProxyUrl === "function" ? getMemoryProxyUrl() : "")}"
+        style="width:100%;box-sizing:border-box;padding:6px 8px;border:2px solid #1a1a2e;border-radius:8px;font-size:12px;margin:4px 0" />
+      <div style="display:flex;gap:4px">
+        <button class="interaction-btn" data-memory-save-proxy>保存配置</button>
+        <button class="interaction-btn" data-memory-test-proxy>测试检索</button>
+      </div>
+      <p style="opacity:0.6;font-size:11px;margin-top:4px">配置方法见 docs/STORAGE_RESEARCH.md · API Key 只存在后端代理,不进浏览器。</p>
+    </div>
+  `);
+}
+
+async function showStoryPanel() {
+  const h = escapeHtml;
+  const story = state.story || { arcs: [], log: [] };
+  const active = (story.arcs || []).filter((arc) => arc.status === "active");
+  const closed = (story.arcs || []).filter((arc) => arc.status === "closed").slice(-4).reverse();
+  const stageDots = (arc) => ["起", "承", "转", "合"].map((label, i) =>
+    `<span style="opacity:${i <= arc.stage ? 1 : 0.25};font-weight:${i <= arc.stage ? 800 : 400}">${label}</span>`
+  ).join(" → ");
+  const arcBlock = (arc) => `
+    <div class="detail-section" style="padding:8px 10px">
+      <p><strong>${h(arc.emoji || "📖")} ${h(arc.title)}</strong>${arc.outcome ? ` · <span style="opacity:0.75">${h(arc.outcome)}</span>` : ""}</p>
+      <p style="opacity:0.8">${stageDots(arc)}</p>
+      ${(story.log || []).filter((entry) => entry.arcId === arc.id).slice(0, 4).reverse()
+        .map((entry) => `<p style="opacity:0.85">「${h(entry.stage)}」${h(entry.text)}</p>`).join("")}
+    </div>`;
+  showDetail(`
+    <h3>📖 剧情志</h3>
+    <p class="detail-lead">剧情不由脚本写死——关系张力、心理连锁、城市脉动和生命事件会自己长出故事,并按「起承转合」推进。</p>
+    <div class="detail-section">
+      <div class="detail-section-title">进行中 (${active.length})</div>
+      ${active.length ? "" : "<p>暂时风平浪静。让社会继续运转,故事会自己找上门。</p>"}
+    </div>
+    ${active.map(arcBlock).join("")}
+    ${closed.length ? `<div class="detail-section"><div class="detail-section-title">已完结</div></div>${closed.map(arcBlock).join("")}` : ""}
+  `);
+}
+
+async function handleSavePanelClick(target) {
+  const loadBtn = target.closest("[data-save-load]");
+  if (loadBtn) {
+    if (confirm("读取该存档将替换当前进度(当前进度已在自动存档中),继续?")) {
+      try { await loadGameSave(loadBtn.dataset.saveLoad); } catch (e) { showToast(`读取失败:${e.message}`, "conflict"); }
+    }
+    return true;
+  }
+  const overBtn = target.closest("[data-save-over]");
+  if (overBtn) {
+    await saveGameToSlot(null, overBtn.dataset.saveOver);
+    showToast("已覆盖存档", "support");
+    showSavePanel();
+    return true;
+  }
+  const delBtn = target.closest("[data-save-del]");
+  if (delBtn) {
+    await deleteGameSave(delBtn.dataset.saveDel);
+    showToast("存档已删除", "listen");
+    showSavePanel();
+    return true;
+  }
+  const exportBtn = target.closest("[data-save-export]");
+  if (exportBtn) {
+    try { await exportGameSave(exportBtn.dataset.saveExport); } catch (e) { showToast(`导出失败:${e.message}`, "conflict"); }
+    return true;
+  }
+  if (target.closest("[data-save-new]")) {
+    const name = prompt("给这份存档起个名字:", `第${state.society.clock?.day || 1}天的人生`);
+    if (name !== null) {
+      await saveGameToSlot(name || "");
+      showToast("已保存新存档", "support");
+      showSavePanel();
+    }
+    return true;
+  }
+  if (target.closest("[data-save-import]")) {
+    const input = document.getElementById("saveImportFile");
+    if (input) {
+      input.onchange = async () => {
+        const file = input.files?.[0];
+        if (!file) return;
+        try {
+          await importGameSaveFile(file);
+          showToast("存档已导入", "support");
+          showSavePanel();
+        } catch (e) {
+          showToast(`导入失败:${e.message}`, "conflict");
+        }
+      };
+      input.click();
+    }
+    return true;
+  }
+  if (target.closest("[data-memory-save-proxy]")) {
+    const value = document.getElementById("memoryProxyInput")?.value || "";
+    setMemoryProxyUrl(value);
+    showToast(value.trim() ? "记忆代理已配置,记忆将开始同步" : "已改回纯本地记忆", "support");
+    showSavePanel();
+    return true;
+  }
+  if (target.closest("[data-memory-test-proxy]")) {
+    showToast("正在测试记忆检索…", "listen");
+    try {
+      const rows = await searchLifeMemories("记忆", { limit: 3 });
+      showToast(rows.length ? `检索成功,取回 ${rows.length} 条记忆` : "检索通了,但还没有记忆", "support");
+    } catch (e) {
+      showToast(`检索失败:${e.message}`, "conflict");
+    }
+    return true;
+  }
+  return false;
+}
+
 // ── World Banner ──
 
 function showWorldBanner(text) {
@@ -6090,6 +6245,12 @@ function bindGameEvents() {
   const hudReset = document.getElementById("hudReset");
   if (hudReset) hudReset.addEventListener("click", () => launchSocietyFromInput());
 
+  // ── 存档与剧情志 ──
+  const hudSaves = document.getElementById("hudSaves");
+  if (hudSaves) hudSaves.addEventListener("click", () => { showSavePanel(); });
+  const hudStory = document.getElementById("hudStory");
+  if (hudStory) hudStory.addEventListener("click", () => { showStoryPanel(); });
+
   const hudSpeed = document.getElementById("hudSpeed");
   if (hudSpeed) hudSpeed.addEventListener("input", setSocietySpeed);
 
@@ -6256,6 +6417,11 @@ function bindGameEvents() {
   const detailContent = document.getElementById("detailContent");
   if (detailContent) {
     detailContent.addEventListener("click", (e) => {
+      // 存档/记忆面板的异步操作
+      if (e.target.closest("[data-save-load],[data-save-over],[data-save-del],[data-save-export],[data-save-new],[data-save-import],[data-memory-save-proxy],[data-memory-test-proxy]")) {
+        handleSavePanelClick(e.target).catch((err) => showToast(`操作失败:${err.message}`, "conflict"));
+        return;
+      }
       const interactBtn = e.target.closest("[data-interact]");
       if (interactBtn) {
         interactWithCitizen(interactBtn.dataset.interact, interactBtn.dataset.target);
