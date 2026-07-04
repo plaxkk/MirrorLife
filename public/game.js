@@ -57,6 +57,7 @@ let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
 
 const ACTIVE_FRAME_MS = 34;
+const DRAG_FRAME_MS = 16;
 const IDLE_FRAME_MS = 90;
 const INTERACTION_BOOST_MS = 2200;
 const MAX_RENDER_DPR = 2;
@@ -3675,6 +3676,7 @@ function shouldRenderAtActiveRate(now) {
 }
 
 function getRenderFrameBudget(now) {
+  if (camera.drag) return DRAG_FRAME_MS;
   return shouldRenderAtActiveRate(now) ? ACTIVE_FRAME_MS : IDLE_FRAME_MS;
 }
 
@@ -5234,6 +5236,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   // 但去掉名牌/气泡/表情/道具等一切信息量,避免干扰第一视角。
   const muted = !!opts.muted && !isAvatar;
   const hideTags = !!opts.hideTags;
+  const lowDetail = !!opts.lowDetail;
   if (muted) {
     ctx.save();
     ctx.globalAlpha = 0.32;
@@ -5376,7 +5379,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   }
 
   // Keep high-mood sparkle occasional; spawning particles every frame causes visible hitches.
-  if (safeMood > 80 && now > (anim.nextSparkleAt || 0)) {
+  if (!lowDetail && safeMood > 80 && now > (anim.nextSparkleAt || 0)) {
     anim.nextSparkleAt = now + 1800 + Math.random() * 2200;
     spawnParticles(cx, cy - size * 0.5, "propose", 2);
   }
@@ -5412,7 +5415,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   }
 
   // Speech bubble
-  const bubble = getActiveSpeechBubble(citizen.id);
+  const bubble = lowDetail ? null : getActiveSpeechBubble(citizen.id);
   if (bubble) {
     const bubbleText = bubble.text;
     ctx.font = "bold 9px Arial";
@@ -5455,10 +5458,10 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   }
 
   // Gesture overlays (wave / chat dots)
-  drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
+  if (!lowDetail) drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
 
   // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
-  drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
+  if (!lowDetail) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
 
   // Last action bubble (on hover only, if no speech bubble)
   if (!bubble && citizen.lastAction && isHover) {
@@ -5608,13 +5611,15 @@ function drawFallbackZoneBuilding(ctx, zone, r, color, isHovered) {
   ctx.restore();
 }
 
-function drawZonePlace(ctx, zone, r, color, count, isHovered) {
+function drawZonePlace(ctx, zone, r, color, count, isHovered, options = {}) {
   drawZoneFootprint(ctx, zone, r, color, isHovered);
   if (!drawZoneBuildingSprite(ctx, zone, r, isHovered)) {
     drawFallbackZoneBuilding(ctx, zone, r, color, isHovered);
   }
-  drawZoneNameTag(ctx, zone, r, color, isHovered);
-  drawZoneOccupancyBadge(ctx, r, count);
+  if (!options.lowDetail || isHovered) {
+    drawZoneNameTag(ctx, zone, r, color, isHovered);
+    drawZoneOccupancyBadge(ctx, r, count);
+  }
 }
 
 function getFittedCanvasFontSize(ctx, text, maxWidth, preferredSize, minimumSize = 7) {
@@ -5683,6 +5688,7 @@ function getCitizenAttentionScore(entry, context) {
 }
 
 function getFullCitizenBudget(W) {
+  if (camera.drag) return W < 720 ? 4 : 7;
   const base = W < 720 ? MAX_FULL_CITIZENS_MOBILE : MAX_FULL_CITIZENS_DESKTOP;
   if (followedCitizenId) return Math.max(5, Math.floor(base * 0.62));
   if (camera.zoom < 0.85) return Math.max(6, Math.floor(base * 0.7));
@@ -5690,7 +5696,7 @@ function getFullCitizenBudget(W) {
 }
 
 function shouldRenderWeatherDetail(W) {
-  return W >= 720 && camera.zoom >= 0.8 && !followedCitizenId;
+  return W >= 720 && camera.zoom >= 0.8 && !followedCitizenId && !camera.drag;
 }
 
 function drawGameWorld() {
@@ -5706,6 +5712,7 @@ function drawGameWorld() {
   const frame = getCanvasFrame();
   if (!frame) return;
   const { ctx, W, H } = frame;
+  const dragRenderMode = camera.drag && !interiorView;
   const t = now * 0.001;
   const society = state.society;
   const ts = getWorldTimeState(society);
@@ -5804,7 +5811,7 @@ function drawGameWorld() {
       // 沉浸模式:非焦点区域的建筑与标签整体淡化,让视线落在焦点身边
       const dimmed = followedCitizenId && zone.id !== focusZoneIdForDim;
       if (dimmed) { ctx.save(); ctx.globalAlpha = 0.55; }
-      drawZonePlace(ctx, zone, r, color, dimmed ? 0 : count, isHovered);
+      drawZonePlace(ctx, zone, r, color, dragRenderMode || dimmed ? 0 : count, isHovered, { lowDetail: dragRenderMode });
       if (dimmed) ctx.restore();
     } catch (error) {
       console.warn("Zone layer skipped", zone.id, error);
@@ -5933,7 +5940,7 @@ function drawGameWorld() {
       }
     }
 
-    maybeShowCitizenThought(citizen, anim, zone, now);
+    if (!dragRenderMode) maybeShowCitizenThought(citizen, anim, zone, now);
 
     const cx = anim.x || baseX;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 2;
@@ -5961,8 +5968,12 @@ function drawGameWorld() {
       ? Math.hypot(x - focusAnim.x, y - focusAnim.y) > IMMERSION_NEAR_RADIUS
       : false;
     const muted = !isAvatar && (!fullCitizenIds.has(citizen.id) || farFromFollow);
-    const hideTags = !isAvatar && citizen.id !== followedCitizenId && !isHover;
-    drawCitizenFigure(ctx, citizen, moveAnim, x, y, size, isHover, now, t, { muted, hideTags });
+    const hideTags = dragRenderMode || (!isAvatar && citizen.id !== followedCitizenId && !isHover);
+    drawCitizenFigure(ctx, citizen, moveAnim, x, y, size, isHover, now, t, {
+      muted,
+      hideTags,
+      lowDetail: dragRenderMode
+    });
     entry.muted = muted;
     if (citizen.id === followedCitizenId) {
       updateFollowBanner(citizen, getCitizenBehaviorLabel(citizen, moveAnim, now));
@@ -5971,13 +5982,15 @@ function drawGameWorld() {
 
   lastWorldFrame = { W, H, groundY, zones, zoneRects, roadPairs, citizenEntries: streetEntries };
 
-  maybeStartEncounters(streetEntries.filter((entry) => !entry.muted).slice(0, fullBudget + 4), now);
+  if (!dragRenderMode) {
+    maybeStartEncounters(streetEntries.filter((entry) => !entry.muted).slice(0, fullBudget + 4), now);
+  }
 
-  drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens);
+  if (!dragRenderMode) drawRealityActionFocus(ctx, W, H, groundY, aliveCitizens);
 
   // ── Relationship lines between citizens in same zone ──
   const firstLoopComplete = !!state?.firstLoop?.completed;
-  if (firstLoopComplete && !followedCitizenId && camera.zoom >= 0.95) {
+  if (!dragRenderMode && firstLoopComplete && !followedCitizenId && camera.zoom >= 0.95) {
     const zoneGroups = {};
     aliveCitizens.forEach(c => {
       if (!zoneGroups[c.zoneId]) zoneGroups[c.zoneId] = [];
@@ -6024,10 +6037,10 @@ function drawGameWorld() {
     });
   }
 
-  drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens);
+  if (!dragRenderMode) drawInteractionVisualLayer(ctx, W, H, groundY, aliveCitizens);
 
   // ── Draw world entities (animals) ──
-  const entities = firstLoopComplete ? (society.entities || []) : [];
+  const entities = firstLoopComplete && !dragRenderMode ? (society.entities || []) : [];
   entities.forEach((entity) => {
     const zone = zones.find(z => z.id === entity.zoneId);
     if (!zone) return;
@@ -6050,7 +6063,7 @@ function drawGameWorld() {
   });
 
   // ── Building details: factory smoke ──
-  const factoryZone = zones.find(z => z.id === "factory");
+  const factoryZone = !dragRenderMode ? zones.find(z => z.id === "factory") : null;
   if (factoryZone) {
     const fr = zoneRects.get(factoryZone.id);
     if (fr) {
@@ -6067,7 +6080,7 @@ function drawGameWorld() {
   }
 
   // ── Building details: park/botanical flowers ──
-  ["park", "botanical-garden"].forEach(zoneId => {
+  if (!dragRenderMode) ["park", "botanical-garden"].forEach(zoneId => {
     const parkZone = zones.find(z => z.id === zoneId);
     if (!parkZone) return;
     const pr = zoneRects.get(parkZone.id);
@@ -6086,7 +6099,7 @@ function drawGameWorld() {
   });
 
   // ── Water surface in park ──
-  const parkZone = zones.find(z => z.id === "park");
+  const parkZone = !dragRenderMode ? zones.find(z => z.id === "park") : null;
   if (parkZone) {
     const pr = zoneRects.get(parkZone.id);
     if (pr) {
@@ -6109,16 +6122,20 @@ function drawGameWorld() {
   }
 
   // ── Draw particles ──
-  updateParticles();
-  const particleLimit = W < 720 ? MAX_MOBILE_PARTICLES : MAX_PARTICLES;
-  if (particles.length > particleLimit) particles.splice(0, particles.length - particleLimit);
-  particles.forEach(p => {
-    ctx.globalAlpha = p.life;
-    ctx.fillStyle = p.color;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-    ctx.fill();
-  });
+  if (dragRenderMode) {
+    particles = particles.filter((p) => p.life > 0.35).slice(-24);
+  } else {
+    updateParticles();
+    const particleLimit = W < 720 ? MAX_MOBILE_PARTICLES : MAX_PARTICLES;
+    if (particles.length > particleLimit) particles.splice(0, particles.length - particleLimit);
+    particles.forEach(p => {
+      ctx.globalAlpha = p.life;
+      ctx.fillStyle = p.color;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  }
   ctx.globalAlpha = 1;
 
   ctx.restore(); // end camera transform
@@ -6747,6 +6764,12 @@ function bindGameEvents() {
 
     // ── Canvas hover ──
     canvas.addEventListener("mousemove", (e) => {
+      if (camera.drag) {
+        hoveredCitizen = null;
+        hoveredZone = null;
+        canvas.style.cursor = "grabbing";
+        return;
+      }
       const now = performance.now();
       if (now - hoverCheckAt < 33) return;
       hoverCheckAt = now;
@@ -6794,6 +6817,9 @@ function bindGameEvents() {
         camera.dragTravel = 0;
         camera.lastX = e.clientX;
         camera.lastY = e.clientY;
+        hoveredCitizen = null;
+        hoveredZone = null;
+        canvas.style.cursor = "grabbing";
       }
     });
     window.addEventListener("mousemove", (e) => {
@@ -6814,6 +6840,7 @@ function bindGameEvents() {
     window.addEventListener("mouseup", () => {
       if (camera.drag) markRenderActive(1200);
       camera.drag = false;
+      if (canvas) canvas.style.cursor = "grab";
     });
 
     // ── Zoom ──
