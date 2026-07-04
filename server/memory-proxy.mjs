@@ -2,9 +2,7 @@
    MirrorLife - 火山引擎 记忆库 Mem0 后端代理
    浏览器永远不接触 API Key:前端 memory-hub.js 只跟本代理通信。
 
-   启动:
-     VOLC_MEM0_BASE_URL=<控制台的项目连接地址> \
-     VOLC_MEM0_API_KEY=<控制台创建的 API Key> \
+   启动(自动读取项目根目录 .env,或直接传环境变量):
      npm run memory-proxy
    然后在游戏「存档与记忆」面板填入 http://localhost:8787/api/memory
 
@@ -13,14 +11,31 @@
      POST { op:"search", userId, agentId?, query, limit }
        → { results:[{ memory|text, score?, ts? }] }
 
-   火山侧对接点:下方 forwardAdd / forwardSearch 两个函数。
-   记忆库 Mem0 公测中,数据面路径请按控制台生成的连接地址与
-   官方文档(https://www.volcengine.com/docs/86722/2163641)核对;
-   本文件按开源 Mem0 REST 语义(/v1/memories、/v1/memories/search)
-   实现,如火山正式路径不同,只需要调整这两个函数。
+   火山 Mem0 实测接口形态(2026-07 公测版,已验证跑通):
+     认证   Authorization: <API Key>(裸 key,无 Bearer 前缀)
+     写入   POST {BASE}/v1/memories/        → 异步抽取,返回 PENDING+event_id
+     检索   POST {BASE}/v1/memories/search/ → {results:[{memory,score,created_at,…}]}
+   如后续正式版路径调整,只需要改 forwardAdd / forwardSearch 两个函数。
    ═══════════════════════════════════════════════════════════════ */
 
 import http from "node:http";
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
+// 轻量 .env 加载(零依赖):已有的环境变量优先,不覆盖。
+(() => {
+  try {
+    const envPath = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..", ".env");
+    if (!fs.existsSync(envPath)) return;
+    fs.readFileSync(envPath, "utf8").split("\n").forEach((line) => {
+      const match = line.match(/^\s*([A-Z0-9_]+)\s*=\s*(.*)\s*$/);
+      if (match && !(match[1] in process.env)) {
+        process.env[match[1]] = match[2].replace(/^["']|["']$/g, "");
+      }
+    });
+  } catch { /* .env 读取失败则仅用进程环境变量 */ }
+})();
 
 const PORT = Number(process.env.MEMORY_PROXY_PORT || 8787);
 const BASE_URL = (process.env.VOLC_MEM0_BASE_URL || "").replace(/\/$/, "");
@@ -29,15 +44,17 @@ const API_KEY = process.env.VOLC_MEM0_API_KEY || "";
 function volcHeaders() {
   return {
     "Content-Type": "application/json",
-    Authorization: `Bearer ${API_KEY}`
+    // 火山 Mem0 实测认证形态:Authorization 直接放 API Key(无 Bearer 前缀)
+    Authorization: API_KEY
   };
 }
 
 async function forwardAdd(payload) {
-  // 每条游戏记忆 → 一条 Mem0 记忆(messages 语义,带 agent/metadata)
+  // 每条游戏记忆 → 一条 Mem0 记忆(messages 语义,带 agent/metadata)。
+  // 火山侧为异步抽取:返回 PENDING + event_id,约 3 分钟内完成入库。
   const outcomes = [];
   for (const record of payload.records || []) {
-    const response = await fetch(`${BASE_URL}/v1/memories`, {
+    const response = await fetch(`${BASE_URL}/v1/memories/`, {
       method: "POST",
       headers: volcHeaders(),
       body: JSON.stringify({
@@ -63,7 +80,7 @@ async function forwardAdd(payload) {
 }
 
 async function forwardSearch(payload) {
-  const response = await fetch(`${BASE_URL}/v1/memories/search`, {
+  const response = await fetch(`${BASE_URL}/v1/memories/search/`, {
     method: "POST",
     headers: volcHeaders(),
     body: JSON.stringify({
@@ -79,8 +96,9 @@ async function forwardSearch(payload) {
   }
   const data = await response.json();
   const rows = Array.isArray(data?.results) ? data.results : Array.isArray(data) ? data : [];
+  // 实测火山侧会忽略 limit 参数返回全量,代理侧强制截断兜底。
   return {
-    results: rows.map((row) => ({
+    results: rows.slice(0, Math.max(1, Number(payload.limit) || 6)).map((row) => ({
       memory: row.memory || row.text || "",
       score: row.score,
       ts: row.created_at || row.ts || 0,

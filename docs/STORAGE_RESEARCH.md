@@ -55,13 +55,19 @@ localStorage 不删除:仍作为当前活跃会话的同步快照(启动时同�
 
 ```text
 浏览器(memory-hub.js) ──POST /api/memory──▶ 后端代理(server/memory-proxy.mjs)
-                                                │  VOLC_MEM0_BASE_URL + VOLC_MEM0_API_KEY(仅服务端)
+                                                │  VOLC_MEM0_BASE_URL + VOLC_MEM0_API_KEY(仅服务端,.env 已 gitignore)
                                                 ▼
                                       火山引擎 记忆库 Mem0(项目 endpoint)
 ```
 
+**实测接口形态(2026-07 公测版,已跑通)**:
+- 认证:`Authorization: <API Key>`(裸 key,无 `Bearer` 前缀;Bearer/X-Api-Key 等形态均返回 401)
+- 写入:`POST {BASE}/v1/memories/`(注意尾斜杠,否则 307)——**异步 LLM 抽取**,返回 `{status:"PENDING", event_id}`,约 3 分钟内完成入库;入库后的记忆是抽取改写过的语义化文本,不是原文
+- 检索:`POST {BASE}/v1/memories/search/` → `{results:[{memory, score, created_at, metadata, user_id, agent_id}]}`;实测服务端忽略 `limit` 参数返回全量,代理侧已做强制截断兜底
+- 成本控制:前端只上行关键记忆(kind ∈ story/input/psych/reflection 或 importance≥3),环境噪音记忆留在本地 IndexedDB
+
 - 前端合同固定为 `{op:"add"|"search", records|query, userId, agentId, limit}`,火山侧接口若调整只改代理。
-- 启用方式:游戏内「存档与记忆」面板填入代理地址(存 localStorage),或 `.env` 配置后启动 `npm run memory-proxy`。
+- 启用方式:游戏内「存档与记忆」面板填入代理地址(存 localStorage),`.env` 配置后启动 `npm run memory-proxy`(代理自带零依赖 .env 加载)。
 - 未配置时游戏完整可玩(本地记忆底座生效)——不破坏 Phase 1"无环境变量可运行"。
 
 ## 四、存档设计

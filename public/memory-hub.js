@@ -11,6 +11,10 @@ const MEMORY_PROXY_STORAGE_KEY = "mirror-life-memory-proxy";
 const MEMORY_FLUSH_INTERVAL_MS = 8000;
 const MEMORY_FLUSH_BATCH = 20;
 const MEMORY_MAX_RETRY = 3;
+// 云端上行过滤:只有关键记忆值得走火山 LLM 抽取(成本控制),
+// 其余记忆保留在本地 IndexedDB,检索时依然可命中。
+const MEMORY_CLOUD_KINDS = new Set(["story", "input", "psych", "reflection"]);
+const MEMORY_CLOUD_MIN_IMPORTANCE = 3;
 
 let memoryHub = {
   outbox: [],
@@ -64,7 +68,8 @@ function memoryHubCapture(society, citizenId, item) {
   if (typeof idbAppendMemories === "function") {
     idbAppendMemories([record]).catch(() => {});
   }
-  if (memoryHubEnabled()) {
+  const cloudWorthy = MEMORY_CLOUD_KINDS.has(record.kind) || record.importance >= MEMORY_CLOUD_MIN_IMPORTANCE;
+  if (memoryHubEnabled() && cloudWorthy) {
     memoryHub.outbox.push(record);
     scheduleMemoryFlush();
   }
@@ -133,7 +138,7 @@ async function searchLifeMemories(query, options = {}) {
       if (response.ok) {
         const data = await response.json();
         if (Array.isArray(data?.results)) {
-          return data.results.map((row) => ({
+          return data.results.slice(0, options.limit || 6).map((row) => ({
             text: row.memory || row.text || "",
             kind: row.kind || "remote",
             score: row.score,
