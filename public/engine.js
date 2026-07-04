@@ -684,6 +684,41 @@ function buildInterpersonalStyle(seed = {}, bigFive = buildBigFiveProfile(seed))
   };
 }
 
+// ── Coping profile (Lazarus & Folkman 应对方式 + 依恋理论) ──
+// Three coping tendencies derived from Big Five and attachment style:
+// problemFocused  问题聚焦：直接处理压力源（尽责+开放的人倾向）
+// socialSeeking   社会支持寻求：找信任的人倾诉/求助（外向+宜人+焦虑型依恋）
+// avoidant        回避/情绪缓冲：独处、休息、转移注意（神经质+内向+回避型依恋）
+function deriveCopingProfile(seed = {}, bigFive = buildBigFiveProfile(seed), attachmentStyle = "secure") {
+  const source = seed.coping || {};
+  let problemFocused = Number(source.problemFocused);
+  let socialSeeking = Number(source.socialSeeking);
+  let avoidant = Number(source.avoidant);
+  if (![problemFocused, socialSeeking, avoidant].every(Number.isFinite)) {
+    problemFocused = bigFive.conscientiousness * 0.5 + bigFive.openness * 0.3 + (1 - bigFive.neuroticism) * 0.2;
+    socialSeeking = bigFive.extraversion * 0.45 + bigFive.agreeableness * 0.35 +
+      (attachmentStyle === "secure" ? 0.12 : attachmentStyle === "anxious" ? 0.22 : 0);
+    avoidant = bigFive.neuroticism * 0.35 + (1 - bigFive.extraversion) * 0.3 +
+      (attachmentStyle === "avoidant" ? 0.3 : attachmentStyle === "disorganized" ? 0.18 : 0);
+  }
+  const total = Math.max(0.001, problemFocused + socialSeeking + avoidant);
+  return {
+    problemFocused: clamp(problemFocused / total, 0, 1),
+    socialSeeking: clamp(socialSeeking / total, 0, 1),
+    avoidant: clamp(avoidant / total, 0, 1)
+  };
+}
+
+function getDominantCopingStyle(citizen) {
+  const coping = citizen?.coping || {};
+  const entries = [
+    ["problemFocused", Number(coping.problemFocused) || 0],
+    ["socialSeeking", Number(coping.socialSeeking) || 0],
+    ["avoidant", Number(coping.avoidant) || 0]
+  ].sort((a, b) => b[1] - a[1]);
+  return entries[0][0];
+}
+
 // Keyword-based simulation nudges for the "dislike" persona tag.
 // Each rule: matched keywords -> deltas applied to socialBias and/or needs.
 const DISLIKE_BIAS_RULES = [
@@ -1029,6 +1064,7 @@ function normalizeCitizen(seed) {
   const pad = buildPadEmotion(seed);
   const values = buildValueProfile(seed, persona);
   const interpersonal = buildInterpersonalStyle(seed, bigFive);
+  const attachmentStyle = buildAttachmentStyle(seed, bigFive);
   return {
     id: seed.id || `c-${Date.now().toString(36)}-${randomInt(1000, 9999)}`,
     name: seed.name || "分身",
@@ -1048,8 +1084,13 @@ function normalizeCitizen(seed) {
     needs,
     pad,
     values,
-    attachmentStyle: buildAttachmentStyle(seed, bigFive),
+    attachmentStyle,
     interpersonal,
+    coping: deriveCopingProfile(seed, bigFive, attachmentStyle),
+    placeAffinity: seed.placeAffinity && typeof seed.placeAffinity === "object" ? { ...seed.placeAffinity } : {},
+    needsShock: seed.needsShock && typeof seed.needsShock === "object" ? { ...seed.needsShock } : null,
+    pendingBehaviorHint: null,
+    zoneLock: seed.zoneLock || null,
     intention: seed.intention || "",
     decisionTrace: Array.isArray(seed.decisionTrace) ? seed.decisionTrace.slice(0, 6) : [],
     x: clamp(seed.x ?? Math.random() * 0.8 + 0.1, 0.05, 0.95),
@@ -2089,6 +2130,13 @@ function applyOpenWorldMobility(society) {
   const zones = society.zones;
   getAliveCitizens(society).forEach((citizen) => {
     const zone = getCitizenZone(society, citizen);
+    // 心理连锁的场所锁:锁定期内不参与日程/需求迁徙
+    if (citizen.zoneLock && society.turn < Number(citizen.zoneLock.untilTurn || 0)) {
+      if (citizen.zoneId !== citizen.zoneLock.zoneId) {
+        citizen.zoneId = citizen.zoneLock.zoneId;
+      }
+      return;
+    }
     const driftChance = (0.16 + Math.min(0.45, Math.abs(60 - society.tension) / 200)) * zone.mobility;
     if (Math.random() >= driftChance) {
       return;
@@ -2285,7 +2333,7 @@ function runLifeClockAdvance(society) {
       return;
     }
     const lifeZone = getLifeStageZoneCandidate(society, citizen);
-    if (lifeZone) {
+    if (lifeZone && !(citizen.zoneLock && society.turn < Number(citizen.zoneLock.untilTurn || 0))) {
       citizen.zoneId = lifeZone.id;
       if (Math.random() < 0.18) {
         setCitizenZonePosition(citizen, lifeZone);
@@ -2527,6 +2575,8 @@ function applySocietyActionResult(result, eventSuffix = "") {
     : null;
   updateCitizenPsychState(actor, society);
   if (target) updateCitizenPsychState(target, society);
+  // 情绪感染:互动的情绪可能波及目标的亲近关系(二级涟漪)
+  if (target) propagateSecondaryContagion(society, actor, target, result);
   addSocietyEvent(
     `${text}${relation ? ` 关系模型：${relationModel?.label || relation.model}。` : ""}${eventSuffix ? ` ${eventSuffix}` : ""}`,
     result.type === "conflict" ? "conflict" : "support"
@@ -2555,6 +2605,333 @@ function applySocietyActionResult(result, eventSuffix = "") {
   }
 }
 
+// ═══════════════════════════════════════════════════════════════
+// PSYCH RIPPLE FRAMEWORK 心理连锁反应框架
+// 现实事件 → 认知评估(Lazarus) → 需求/情绪冲击 → 应对行为(coping)
+// → 场所寻求(需求缺口×场所供给+恢复性环境+场所依恋)
+// → 社会互动(支持寻求/积极资本化) → 情绪感染(Hatfield) → 二级涟漪
+// ═══════════════════════════════════════════════════════════════
+
+const APPRAISAL_LEXICON = {
+  negative: ["吵架", "冲突", "争执", "误解", "被忽视", "孤独", "焦虑", "紧张", "害怕", "压力", "加班", "失败", "失眠", "生病", "难过", "委屈", "被拒", "裁员", "批评", "崩溃", "疲惫"],
+  positive: ["合作", "完成", "成功", "表扬", "开心", "顺利", "旅行", "升职", "夸奖", "感谢", "帮助", "突破", "庆祝", "惊喜", "放松"],
+  domains: {
+    relation: ["朋友", "同事", "家人", "伴侣", "吵架", "误解", "孤独", "被忽视", "分手", "聚会"],
+    work: ["工作", "项目", "加班", "deadline", "上司", "裁员", "升职", "汇报", "计划"],
+    health: ["生病", "失眠", "疲惫", "头疼", "锻炼", "体检"],
+    self: ["学习", "目标", "成长", "爱好", "创作", "思考"]
+  }
+};
+
+// 需求缺口 → 场所供给标签(马斯洛 × ZONE_MODEL provides)
+const NEED_PROVIDES_MAP = {
+  physiological: ["rest", "food"],
+  safety: ["safety", "privacy", "care", "repair"],
+  belonging: ["belonging", "rest", "encounter", "empathy", "peer"],
+  esteem: ["voice", "fairness", "career", "justice", "identity"],
+  selfActualization: ["creativity", "learning", "research", "memory", "nature"]
+};
+
+// 认知评估(Lazarus & Folkman):把现实片段解析成效价/强度/领域/需求冲击。
+function appraiseLifeEvent(text) {
+  const source = String(text || "").toLowerCase();
+  let negHits = 0;
+  let posHits = 0;
+  APPRAISAL_LEXICON.negative.forEach((word) => { if (source.includes(word)) negHits += 1; });
+  APPRAISAL_LEXICON.positive.forEach((word) => { if (source.includes(word)) posHits += 1; });
+  const valence = clamp((posHits - negHits) / Math.max(1, posHits + negHits), -1, 1) || (negHits ? -0.5 : posHits ? 0.5 : 0);
+  const intensity = clamp((posHits + negHits) / 3, 0.25, 1);
+  let domain = "self";
+  let domainHits = 0;
+  Object.entries(APPRAISAL_LEXICON.domains).forEach(([key, words]) => {
+    const hits = words.filter((word) => source.includes(word)).length;
+    if (hits > domainHits) { domainHits = hits; domain = key; }
+  });
+
+  // 领域 × 效价 → 需求冲击(负事件挖需求缺口,正事件填补)
+  const sign = valence < 0 ? -1 : 1;
+  const magnitude = 0.1 + intensity * 0.15;
+  const needsDelta = {};
+  if (domain === "relation") {
+    needsDelta.belonging = sign * magnitude;
+    needsDelta.safety = sign * magnitude * 0.4;
+  } else if (domain === "work") {
+    needsDelta.esteem = sign * magnitude;
+    needsDelta.autonomy = sign * magnitude * 0.6;
+  } else if (domain === "health") {
+    needsDelta.physiological = sign * magnitude;
+    needsDelta.safety = sign * magnitude * 0.5;
+  } else {
+    needsDelta.selfActualization = sign * magnitude;
+    needsDelta.esteem = sign * magnitude * 0.4;
+  }
+
+  const domainLabels = { relation: "人际关系", work: "工作压力", health: "身心状态", self: "自我成长" };
+  return {
+    valence,
+    intensity,
+    domain,
+    domainLabel: domainLabels[domain] || "日常",
+    needsDelta,
+    summary: `${domainLabels[domain] || "日常"} · ${valence < -0.15 ? "威胁评估" : valence > 0.15 ? "获益评估" : "中性评估"} · 强度${Math.round(intensity * 100)}%`
+  };
+}
+
+function applyAppraisalToCitizen(citizen, appraisal) {
+  if (!citizen || !appraisal) return;
+  citizen.mood = clamp((citizen.mood || 50) + appraisal.valence * appraisal.intensity * 14, 0, 100);
+  citizen.energy = clamp((citizen.energy || 50) + (appraisal.valence < 0 ? -appraisal.intensity * 6 : appraisal.intensity * 3), 0, 100);
+  citizen.needsShock = citizen.needsShock && typeof citizen.needsShock === "object" ? citizen.needsShock : {};
+  Object.entries(appraisal.needsDelta || {}).forEach(([key, value]) => {
+    citizen.needsShock[key] = clamp((Number(citizen.needsShock[key]) || 0) + value, -0.4, 0.4);
+  });
+  updateCitizenPsychState(citizen);
+}
+
+function getZoneProvidesList(zone) {
+  if (!zone) return [];
+  if (Array.isArray(zone.provides) && zone.provides.length) return zone.provides;
+  const blueprint = ZONE_MODEL_BLUEPRINTS[zone.baseZoneId || zone.id];
+  return blueprint?.provides || [];
+}
+
+// 场所寻求:需求缺口 × 场所供给 + 恢复性环境偏好(负性高唤醒→疗愈层) + 场所依恋。
+function pickZoneForNeeds(society, citizen, appraisal = null) {
+  const zones = getOpenWorldZoneList(society);
+  if (!zones.length) return null;
+  const needs = citizen.needs || {};
+  const deficits = Object.entries(NEED_PROVIDES_MAP)
+    .map(([need, provides]) => ({ need, provides, deficit: 1 - (Number(needs[need]) || 0.5) }))
+    .sort((a, b) => b.deficit - a.deficit);
+  const primary = deficits[0];
+  const stressed = appraisal ? appraisal.valence < -0.15 : (citizen.mood || 50) < 40;
+  let best = null;
+  let bestScore = -1;
+  zones.forEach((zone) => {
+    if (zone.id === citizen.zoneId) return;
+    const provides = getZoneProvidesList(zone);
+    if (!provides.length) return;
+    let score = 0;
+    deficits.slice(0, 3).forEach(({ provides: wanted, deficit }, rank) => {
+      const matched = provides.some((tag) => wanted.includes(tag));
+      if (matched) score += deficit * (rank === 0 ? 1 : rank === 1 ? 0.55 : 0.3);
+    });
+    // 恢复性环境理论:应激状态偏好低刺激疗愈型场所
+    const blueprint = ZONE_MODEL_BLUEPRINTS[zone.baseZoneId || zone.id];
+    if (stressed && (blueprint?.layer === "healing" || blueprint?.layer === "ecology")) score += 0.35;
+    // 场所依恋:去过且体验好的地方权重更高
+    score += clamp(Number(citizen.placeAffinity?.[zone.id]) || 0, 0, 1) * 0.3;
+    if (score > bestScore) { bestScore = score; best = zone; }
+  });
+  return best ? { zone: best, need: primary.need, score: bestScore } : null;
+}
+
+const COPING_BEHAVIOR_HINTS = {
+  problemFocused: { negative: ["work", "type", "run"], positive: ["type", "work", "read"] },
+  socialSeeking: { negative: ["tea", "read"], positive: ["ball", "tea"] },
+  avoidant: { negative: ["sleep", "tea", "read"], positive: ["read", "garden"] }
+};
+
+const NEED_LABELS = {
+  physiological: "身体恢复", safety: "安全感", belonging: "归属感",
+  esteem: "被认可", selfActualization: "自我实现", autonomy: "自主", competence: "胜任", relatedness: "联结"
+};
+
+// 构建心理连锁计划:事件评估后,后续数回合逐步展开的行为/场所/社交反应。
+function buildPsychRipple(society, actor, appraisal) {
+  const coping = actor.coping || deriveCopingProfile(actor, actor.bigFive || {}, actor.attachmentStyle);
+  const style = getDominantCopingStyle({ coping });
+  const negative = appraisal.valence < -0.15;
+  const positive = appraisal.valence > 0.15;
+  const styleLabels = { problemFocused: "问题聚焦", socialSeeking: "社会支持寻求", avoidant: "回避缓冲" };
+  const steps = [];
+  const baseTurn = society.turn;
+
+  // 第一步:自我应对行为(个体心理学:应对方式决定第一反应)
+  const hintPool = COPING_BEHAVIOR_HINTS[style][negative ? "negative" : "positive"];
+  steps.push({
+    due: baseTurn + 1,
+    kind: "cope",
+    actorId: actor.id,
+    behaviorId: hintPool[randomInt(0, hintPool.length - 1)],
+    reason: `${appraisal.domainLabel}事件触发「${styleLabels[style]}」应对`
+  });
+
+  // 第二步:场所寻求(环境心理学:需求缺口驱动空间选择)
+  const placePick = pickZoneForNeeds(society, actor, appraisal);
+  if (placePick) {
+    steps.push({
+      due: baseTurn + 2,
+      kind: "seek-place",
+      actorId: actor.id,
+      zoneId: placePick.zone.id,
+      zoneName: placePick.zone.name,
+      reason: `${NEED_LABELS[placePick.need] || placePick.need}需求缺口,想去「${placePick.zone.name}」${negative ? "恢复" : "延续状态"}`
+    });
+  }
+
+  // 第三步:社会互动(负事件→支持寻求;正事件→积极资本化 Gable)
+  if (style !== "avoidant" || positive) {
+    steps.push({
+      due: baseTurn + 3,
+      kind: "outreach",
+      actorId: actor.id,
+      actionType: negative ? (style === "socialSeeking" ? "listen" : "support") : (positive ? "propose" : "cooperate"),
+      reason: negative
+        ? "向信任的人寻求支持(社会支持理论)"
+        : "分享好消息放大积极情绪(资本化效应)"
+    });
+  } else {
+    steps.push({
+      due: baseTurn + 3,
+      kind: "withdraw",
+      actorId: actor.id,
+      reason: "回避型应对:先独处休整,而不是社交"
+    });
+  }
+
+  // 第四步:二级涟漪(情绪感染的关系网传导)
+  steps.push({
+    due: baseTurn + 4,
+    kind: "echo",
+    actorId: actor.id,
+    valence: appraisal.valence,
+    intensity: appraisal.intensity,
+    reason: "情绪沿关系网继续传导(情绪感染)"
+  });
+
+  return {
+    steps,
+    cursor: 0,
+    sourceText: String(appraisal.sourceText || "").slice(0, 60),
+    createdTurn: baseTurn,
+    appraisal: { valence: appraisal.valence, intensity: appraisal.intensity, domainLabel: appraisal.domainLabel, summary: appraisal.summary },
+    copingStyle: styleLabels[style]
+  };
+}
+
+function recordPsychChain(society, entry) {
+  if (!Array.isArray(society.psychChain)) society.psychChain = [];
+  society.psychChain.push({ turn: society.turn, ...entry });
+  if (society.psychChain.length > 14) society.psychChain = society.psychChain.slice(-14);
+}
+
+function pickTopTrustRelation(society, citizen, excludeIds = []) {
+  const skip = new Set([citizen.id, ...excludeIds]);
+  const edges = Object.values(society.relationships || {})
+    .filter((edge) => edge.a === citizen.id || edge.b === citizen.id)
+    .sort((a, b) => (Number(b.closeness) || Number(b.strength) || 0) - (Number(a.closeness) || Number(a.strength) || 0));
+  for (const edge of edges) {
+    const otherId = edge.a === citizen.id ? edge.b : edge.a;
+    if (skip.has(otherId)) continue;
+    const other = society.citizens.find((item) => item.id === otherId && item.alive !== false);
+    if (other) return other;
+  }
+  const alive = getAliveCitizens(society).filter((item) => !skip.has(item.id));
+  return alive.sort((a, b) => (b.trust || 0) - (a.trust || 0))[0] || null;
+}
+
+// 逐回合推进心理连锁:每个 stepSociety tick 执行到期步骤。
+function advancePsychRipple(society) {
+  const ripple = society.psychRipple;
+  if (!ripple || !Array.isArray(ripple.steps)) return;
+  while (ripple.cursor < ripple.steps.length && ripple.steps[ripple.cursor].due <= society.turn) {
+    const step = ripple.steps[ripple.cursor];
+    ripple.cursor += 1;
+    const actor = society.citizens.find((item) => item.id === step.actorId);
+    if (!actor || actor.alive === false) continue;
+
+    if (step.kind === "cope") {
+      actor.pendingBehaviorHint = { behaviorId: step.behaviorId, reason: step.reason, setTurn: society.turn };
+      addSocietyEvent(`心理连锁:${actor.name} ${step.reason}。`, "support");
+      recordPsychChain(society, { kind: "应对行为", text: step.reason, actorName: actor.name });
+    } else if (step.kind === "seek-place") {
+      const zone = getOpenWorldZoneList(society).find((item) => item.id === step.zoneId);
+      if (zone) {
+        actor.zoneId = zone.id;
+        actor.zoneLock = { zoneId: zone.id, untilTurn: society.turn + 4 };
+        addSocietyEvent(`心理连锁:${actor.name} ${step.reason}。`, "support");
+        recordPsychChain(society, { kind: "场所寻求", text: step.reason, actorName: actor.name });
+      }
+    } else if (step.kind === "outreach") {
+      const partner = pickTopTrustRelation(society, actor);
+      if (partner) {
+        const result = resolveAction({ actorId: actor.id, type: step.actionType, targetId: partner.id });
+        if (result) {
+          applySocietyActionResult(result, `，${step.reason}。`);
+          recordAgentMemory(society, actor.id, `心理连锁:${step.reason},对象 ${partner.name}。`, "psych", result.score + 1, [step.actionType]);
+          recordPsychChain(society, { kind: "社会互动", text: `${step.reason} → ${partner.name}`, actorName: actor.name });
+        }
+      }
+    } else if (step.kind === "withdraw") {
+      const result = resolveAction({ actorId: actor.id, type: "rest", targetId: null });
+      if (result) applySocietyActionResult(result, `，${step.reason}。`);
+      recordPsychChain(society, { kind: "独处休整", text: step.reason, actorName: actor.name });
+    } else if (step.kind === "echo") {
+      const partner = pickTopTrustRelation(society, actor);
+      if (partner) {
+        const contagion = propagateSecondaryContagion(society, actor, partner, {
+          score: step.valence * step.intensity * 6
+        }, true);
+        if (contagion) {
+          recordPsychChain(society, { kind: "情绪涟漪", text: `${partner.name} 的情绪被带动,又传给了 ${contagion.name}`, actorName: actor.name });
+        }
+      }
+    }
+  }
+  if (ripple.cursor >= ripple.steps.length) {
+    society.psychRipple = null;
+  }
+}
+
+// 情绪感染(Hatfield):互动的情绪波及目标的其他亲近关系,宜人性放大共情,神经质放大负性。
+function propagateSecondaryContagion(society, actor, target, result, forced = false) {
+  if (!actor || !target || !result) return null;
+  const score = Number(result.score) || 0;
+  if (!forced && Math.abs(score) < 2) return null;
+  if (!forced && Math.random() > 0.5) return null;
+  const relay = pickTopTrustRelation(society, target, [actor.id]);
+  if (!relay || relay.id === actor.id || relay.id === target.id) return null;
+  const agreeableness = Number(relay.bigFive?.agreeableness) || 0.5;
+  const neuroticism = Number(relay.bigFive?.neuroticism) || 0.5;
+  const empathyFactor = 0.25 + agreeableness * 0.4;
+  const negativeAmplify = score < 0 ? 0.8 + neuroticism * 0.5 : 1;
+  const delta = clamp(score, -6, 6) * empathyFactor * negativeAmplify * 0.4;
+  if (Math.abs(delta) < 0.4) return null;
+  relay.mood = clamp((relay.mood || 50) + delta, 0, 100);
+  return relay;
+}
+
+// 环境心理漂移:场所氛围按 人-环境匹配(P-E fit) 与 恢复性环境理论 影响居民。
+function applyZoneAmbiencePsych(society) {
+  if ((society.turn || 0) % 2 !== 0) return; // 每两回合一次,保持温和
+  getAliveCitizens(society).forEach((citizen) => {
+    const zone = getCitizenZone(society, citizen);
+    if (!zone) return;
+    const blueprint = ZONE_MODEL_BLUEPRINTS[zone.baseZoneId || zone.id];
+    const layer = blueprint?.layer || "";
+    const bigFive = citizen.bigFive || {};
+    let moodDelta = 0;
+    let energyDelta = 0;
+    if (layer === "healing" || layer === "ecology" || layer === "memory") {
+      moodDelta += 0.8;
+      energyDelta += 0.8;
+    } else if (layer === "work" || layer === "governance") {
+      energyDelta -= 0.6;
+      moodDelta += (Number(bigFive.conscientiousness) || 0.5) > 0.6 ? 0.5 : -0.4;
+    } else if (layer === "play" || layer === "exchange") {
+      moodDelta += (Number(bigFive.extraversion) || 0.5) > 0.55 ? 0.9 : -0.3;
+    }
+    if (moodDelta !== 0) citizen.mood = clamp((citizen.mood || 50) + moodDelta, 0, 100);
+    if (energyDelta !== 0) citizen.energy = clamp((citizen.energy || 50) + energyDelta, 0, 100);
+    // 场所依恋:正体验累积对该场所的偏好
+    if (moodDelta > 0) {
+      citizen.placeAffinity = citizen.placeAffinity && typeof citizen.placeAffinity === "object" ? citizen.placeAffinity : {};
+      citizen.placeAffinity[zone.id] = clamp((Number(citizen.placeAffinity[zone.id]) || 0) + 0.02, 0, 1);
+    }
+  });
+}
+
 function injectLifeEventToSociety(eventText, modeHint = "") {
   if (!state.society.citizens.length) {
     state.society = buildSocietyFromInput(eventText || scenePresets["open-square"]);
@@ -2570,6 +2947,19 @@ function injectLifeEventToSociety(eventText, modeHint = "") {
   const actorContext = getCitizenAgentContext(state.society, actor);
   const target = randomCitizen(actor.id) || null;
   const before = captureNarrativeState(state.society, actor, target);
+
+  // 心理连锁:先做认知评估,冲击需求/情绪,再排布后续数回合的连锁反应。
+  const appraisal = appraiseLifeEvent(eventText);
+  appraisal.sourceText = eventText;
+  applyAppraisalToCitizen(actor, appraisal);
+  state.society.psychRipple = buildPsychRipple(state.society, actor, appraisal);
+  recordPsychChain(state.society, {
+    kind: "认知评估",
+    text: `${appraisal.summary};应对风格:${state.society.psychRipple.copingStyle}`,
+    actorName: actor.name
+  });
+  addSocietyEvent(`心理连锁启动:${actor.name} 对现实事件完成${appraisal.summary},后续反应将逐回合展开。`, "support");
+
   const result = resolveAction({
     actorId: actor.id,
     type: actionType,
@@ -3469,6 +3859,23 @@ function updateCitizenPsychState(citizen, society = state.society) {
       relatedness: clamp((citizen.interpersonal?.warmth || 0.5) * 0.5 + (citizen.trust || 0) / 220, 0, 1)
     }
   });
+  // Event-driven need shocks (认知评估的残留效应): decay ~10% per tick.
+  if (citizen.needsShock && typeof citizen.needsShock === "object") {
+    let remaining = 0;
+    Object.entries(citizen.needsShock).forEach(([key, value]) => {
+      const shock = Number(value) || 0;
+      if (Math.abs(shock) < 0.015) {
+        delete citizen.needsShock[key];
+        return;
+      }
+      if (key in citizen.needs) {
+        citizen.needs[key] = clamp(citizen.needs[key] + shock, 0, 1);
+      }
+      citizen.needsShock[key] = shock * 0.9;
+      remaining += 1;
+    });
+    if (!remaining) citizen.needsShock = null;
+  }
   citizen.pad = buildPadEmotion({
     ...citizen,
     pad: {
@@ -3580,7 +3987,13 @@ function decideAction(citizen) {
   }
 
   if (routine && routine.id) {
-    citizen.zoneId = routine.id;
+    // 场所锁:心理连锁指定的目的地在锁定期内不被日程覆盖
+    const locked = citizen.zoneLock && society.turn < Number(citizen.zoneLock.untilTurn || 0);
+    if (!locked) {
+      citizen.zoneId = routine.id;
+    } else if (citizen.zoneLock.zoneId) {
+      citizen.zoneId = citizen.zoneLock.zoneId;
+    }
   }
 
   const lowMood = pickNeediestCitizen(citizen.id);
@@ -3965,6 +4378,10 @@ function stepSociety() {
   society.turn += 1;
   advanceWorldClock(society);
   runLifeClockAdvance(society);
+
+  // 心理连锁推进 + 环境心理漂移
+  advancePsychRipple(society);
+  applyZoneAmbiencePsych(society);
 
   const ordered = shuffle([...getAliveCitizens(society)]);
 

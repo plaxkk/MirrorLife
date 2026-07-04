@@ -62,6 +62,7 @@ Phase 1 先验证叙事吸引力和回访理由，不让真实 LLM API、登录�
 - 回声档案：保存现实投影、交换人生、漂流回声和社会余波。交换人生和漂流回声当前都是本地匿名模拟，不是真实社区匹配。
 - 未完回声：镜像舱完成后给出明日继续入口，并在回声档案/回家模式承接。
 - 本地因果图记忆：首分钟闭环会把现实片段、分身行动、影响对象、城市结果和下一步选择写成本地 property graph，并在结果卡显示可解释的“因果依据”。
+- 心理连锁反应框架：现实事件经认知评估(Lazarus)冲击需求与情绪,按应对风格(问题聚焦/支持寻求/回避)逐回合展开「应对行为 → 场所寻求 → 社会互动 → 情绪涟漪」连锁;含情绪感染、恢复性环境、人-环境匹配、场所依恋等机制,详见 [docs/PSYCHOLOGY_FRAMEWORK.md](docs/PSYCHOLOGY_FRAMEWORK.md)。
 - 回合制社会模拟：市民行动、区域、关系、情绪、信任、能量、张力、治理指标。
 - 安全治理：高风险文本触发本地安全提示和保护路径。
 - 模板叙事 fallback：未配置外部 API 时仍可完整运行。
@@ -165,6 +166,7 @@ npm run test:evolution   # 社会演化冒烟验证
 
 ## Design Prep
 
+- [Psychology framework](docs/PSYCHOLOGY_FRAMEWORK.md) documents the psych ripple system: theory-to-mechanic mapping (Big Five, Maslow, PAD, coping, contagion, restorative environments, place attachment) and its execution pipeline.
 - [Life experience gameplay roadmap](docs/LIFE_EXPERIENCE_GAMEPLAY_ROADMAP.md) is the current product/gameplay guide for the corrected direction: try-on lives, emotional robot messenger, and soul drift encounters.
 - [Figma interaction redesign](docs/FIGMA_INTERACTION_REDESIGN.md) is the latest board-level interaction plan for a lower-button, quest-led, game-like first session.
 - [GraphRAG + MiroFish game research](docs/GRAPHRAG_MIRRORFISH_GAME_RESEARCH.md) translates MiroFish's graph-and-swarm simulation workflow into a MirrorLife implementation plan.

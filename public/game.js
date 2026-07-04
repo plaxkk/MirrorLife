@@ -2290,6 +2290,17 @@ function updateParticles() {
 function showCitizenInteraction(citizen) {
   const zone = getCitizenZone(state.society, citizen);
   const h = escapeHtml;
+  // 心理动线:展示该分身最近的心理连锁步骤(评估→应对→场所→社交→涟漪)
+  const chainEntries = (state.society.psychChain || [])
+    .filter((entry) => !entry.actorName || entry.actorName === citizen.name)
+    .slice(-5);
+  const ripple = state.society.psychRipple;
+  const chainSection = chainEntries.length ? `
+    <div class="detail-section">
+      <div class="detail-section-title">心理动线</div>
+      ${ripple && citizen.id === "avatar" ? `<p style="opacity:0.75">进行中:${h(ripple.appraisal?.summary || "")} · ${h(ripple.copingStyle || "")}</p>` : ""}
+      ${chainEntries.map((entry) => `<p><strong>${h(entry.kind)}</strong> · ${h(entry.text)}</p>`).join("")}
+    </div>` : "";
   showDetail(`
     <h3 style="color:${citizen.color}">${h(citizen.name)}</h3>
     <p>${h(citizen.role)} · ${h(citizen.profession)}</p>
@@ -2320,6 +2331,7 @@ function showCitizenInteraction(citizen) {
       <p>年龄：${Math.round(citizen.age * 10) / 10} · 阶段：${h(citizen.lifeStageLabel || "")}</p>
       <p>位置：${h(zone?.name || "未知")} · 最近：${h(citizen.lastAction || "观察")}</p>
     </div>
+    ${chainSection}
   `);
 }
 
@@ -3675,6 +3687,28 @@ function getActiveBehavior(anim, now) {
   return anim.behavior;
 }
 
+// PAD 情绪状态对行为选择的偏置(个体心理学:应激下的应对分化)
+// 低愉悦+高唤醒(应激):外向者倾向运动宣泄,内向者倾向静态缓冲
+// 低唤醒(倦怠):偏好安静恢复类行为
+function behaviorPsychBonus(behavior, citizen) {
+  const pad = citizen.pad || {};
+  const pleasure = Number(pad.pleasure) || 0;
+  const arousal = Number(pad.arousal) || 0;
+  const extraversion = Number(citizen.bigFive?.extraversion) || 0.5;
+  const stressed = pleasure < -0.15 && arousal > 0.05;
+  const drained = arousal < -0.25;
+  let bonus = 0;
+  const active = behavior.id === "run" || behavior.id === "ball" || behavior.id === "stretch";
+  const calm = behavior.id === "tea" || behavior.id === "read" || behavior.id === "sleep" || behavior.id === "garden";
+  if (stressed) {
+    if (active && extraversion > 0.55) bonus += 12;
+    if (calm && extraversion <= 0.55) bonus += 12;
+  }
+  if (drained && (behavior.id === "sleep" || behavior.id === "tea")) bonus += 10;
+  if (pleasure > 0.25 && active) bonus += 6; // 高愉悦时更愿意动起来
+  return bonus;
+}
+
 function pickCitizenBehavior(citizen, zone, now, salt = 0, indoorOnly = false) {
   const ts = getWorldTimeState(state.society);
   const hint = getZoneBehaviorHint(zone);
@@ -3690,6 +3724,7 @@ function pickCitizenBehavior(citizen, zone, now, salt = 0, indoorOnly = false) {
     let weight = behavior.score(citizen, ts, zoneOk);
     if (!Number.isFinite(weight) || weight <= 0) return;
     if (zoneOk) weight += 16;
+    weight += behaviorPsychBonus(behavior, citizen);
     weight += seededCommunityValue(seed, index + 1) * 24;
     if (weight > bestWeight) {
       bestWeight = weight;
@@ -5078,7 +5113,16 @@ function drawGameWorld() {
         anim.state = "doing";
       } else {
         // Arrived: consider starting a humanlike activity, or just linger.
-        if (!isAvatar && now > (anim.nextBehaviorAt || 0)) {
+        // Psych-ripple hints (from the engine's chain reaction) take priority.
+        const hint = citizen.pendingBehaviorHint;
+        if (hint && !anim.behavior) {
+          citizen.pendingBehaviorHint = null;
+          const def = BEHAVIOR_BY_ID.get(hint.behaviorId);
+          if (def) {
+            startCitizenBehavior(citizen, anim, def, now);
+            if (hint.reason) addSpeechBubble(citizen.id, `${def.prop} ${hint.reason}`, "listen", { priority: true, duration: 4600 });
+          }
+        } else if (now > (anim.nextBehaviorAt || 0)) {
           const pick = pickCitizenBehavior(citizen, zone, now, idx);
           if (pick) {
             startCitizenBehavior(citizen, anim, pick, now);
