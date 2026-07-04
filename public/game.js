@@ -49,7 +49,7 @@ const INTERACTION_VISUAL_DURATION = 4400;
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
 const ENCOUNTER_RADIUS = 30;
 const ENCOUNTER_COOLDOWN_MS = 26000;
-const INDOOR_ENTER_CHANCE = 0.14;
+const INDOOR_ENTER_CHANCE = 0.09;
 const MAX_INTERIOR_OCCUPANTS = 4;
 
 const ENCOUNTER_GREETINGS = ["你好呀", "嗨,好久不见", "今天过得怎么样?", "又见面啦", "早啊"];
@@ -3637,6 +3637,7 @@ function leaveBuilding(citizen, anim, now) {
   anim.indoor = null;
   delete interiorAnimations[citizen.id];
   anim.nextTargetAt = 0; // pick a fresh street target right away
+  anim.noEnterUntil = now + 15000; // don't walk right back in
   anim.state = "idle";
 }
 
@@ -3803,11 +3804,17 @@ function ensureInteriorChip(zone) {
   document.getElementById("gameShell")?.appendChild(el);
 }
 
-// When the player walks in on their own, a couple of zone citizens are "already inside".
+// When the player walks in on their own, a couple of citizens are "already inside".
 function seedInteriorOccupants(zone) {
   const now = performance.now();
-  const candidates = getAliveCitizens(state.society)
-    .filter(c => c.id !== "avatar" && c.zoneId === zone.id && !citizenAnimations[c.id]?.indoor);
+  const alive = getAliveCitizens(state.society)
+    .filter(c => c.id !== "avatar" && !citizenAnimations[c.id]?.indoor);
+  let candidates = alive.filter(c => c.zoneId === zone.id);
+  // Nobody claims this zone right now — a couple of passers-by wandered in earlier.
+  if (!candidates.length) {
+    const seed = hashCommunitySeed(zone.id, "seed-occupants");
+    candidates = alive.filter((_, i) => (i + seed) % 3 === 0).slice(0, 2);
+  }
   candidates.slice(0, 2).forEach((citizen, i) => {
     const anim = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
     anim.indoor = {
@@ -3824,11 +3831,14 @@ function manageInteriorArrivals(society, zone, indoorCount, now) {
   if (!interiorView || now < (interiorView.nextArrivalCheckAt || 0)) return;
   interiorView.nextArrivalCheckAt = now + 4200;
   if (indoorCount >= MAX_INTERIOR_OCCUPANTS) return;
-  const candidates = getAliveCitizens(society)
-    .filter(c => c.id !== "avatar" && c.zoneId === zone.id && !citizenAnimations[c.id]?.indoor);
+  const alive = getAliveCitizens(society)
+    .filter(c => c.id !== "avatar" && !citizenAnimations[c.id]?.indoor);
+  const inZone = alive.filter(c => c.zoneId === zone.id);
+  const candidates = inZone.length ? inZone : alive;
   if (!candidates.length) return;
   const seed = hashCommunitySeed(zone.id, Math.floor(now / 4200));
-  if (seededCommunityValue(seed, 2) > 0.5) return;
+  // Passers-by from other zones drop in less often than locals.
+  if (seededCommunityValue(seed, 2) > (inZone.length ? 0.5 : 0.3)) return;
   const pick = candidates[seed % candidates.length];
   const anim = citizenAnimations[pick.id] = citizenAnimations[pick.id] || {};
   anim.indoor = {
@@ -3995,6 +4005,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     ctx.beginPath();
     ctx.ellipse(fx, fy + 4, fsize * 0.45, 4, 0, 0, Math.PI * 2);
     ctx.fill();
+    ctx.fillStyle = "#1a1a2e";
     ctx.font = `${fsize}px Arial`;
     ctx.textAlign = "center";
     ctx.fillText(emoji, fx, fy);
@@ -4658,7 +4669,7 @@ function drawGameWorld() {
       if (now > (anim.nextTargetAt || 0)) {
         // Pick a new destination — occasionally head for the building door instead of the road.
         const enterRoll = seededCommunityValue(hashCommunitySeed(citizen.id || idx, Math.floor(now / 900)), 11);
-        if (!isAvatar && enterRoll < INDOOR_ENTER_CHANCE) {
+        if (!isAvatar && now > (anim.noEnterUntil || 0) && enterRoll < INDOOR_ENTER_CHANCE) {
           anim.targetX = zr.cx;
           anim.targetY = zr.cy + zr.h * 0.18;
           anim.pendingEnterZone = zone.id;
