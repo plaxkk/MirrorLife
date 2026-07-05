@@ -284,26 +284,26 @@ const LIFE_WEEK_STAGES = [
 ];
 
 const OPEN_WORLD_ZONES = [
-  { id: "public-plaza", name: "公开广场", openness: 0.93, tolerance: 0.84, mobility: 0.72, role: "public", x: 0.5, y: 0.35, w: 0.082, h: 0.11, archetype: "social" },
-  { id: "maternity-hospital", name: "接生医院", openness: 0.62, tolerance: 0.96, mobility: 0.46, role: "heal", x: 0.25, y: 0.28, w: 0.075, h: 0.11, archetype: "life" },
-  { id: "residential", name: "住宅区", openness: 0.76, tolerance: 0.9, mobility: 0.78, role: "rest", x: 0.36, y: 0.52, w: 0.094, h: 0.13, archetype: "daily" },
-  { id: "kindergarten", name: "幼儿园", openness: 0.72, tolerance: 0.84, mobility: 0.64, role: "cooperate", x: 0.35, y: 0.19, w: 0.07, h: 0.105, archetype: "education" },
-  { id: "primary-school", name: "小学", openness: 0.78, tolerance: 0.82, mobility: 0.66, role: "cooperate", x: 0.45, y: 0.22, w: 0.07, h: 0.105, archetype: "education" },
-  { id: "middle-school", name: "中学", openness: 0.74, tolerance: 0.76, mobility: 0.67, role: "cooperate", x: 0.55, y: 0.2, w: 0.07, h: 0.105, archetype: "education" },
-  { id: "university", name: "大学", openness: 0.86, tolerance: 0.79, mobility: 0.74, role: "cooperate", x: 0.66, y: 0.2, w: 0.082, h: 0.115, archetype: "education" },
-  { id: "office-district", name: "办公楼群", openness: 0.81, tolerance: 0.71, mobility: 0.76, role: "cooperate", x: 0.74, y: 0.58, w: 0.082, h: 0.112, archetype: "work" },
-  { id: "factory", name: "工厂", openness: 0.7, tolerance: 0.68, mobility: 0.64, role: "cooperate", x: 0.78, y: 0.7, w: 0.078, h: 0.105, archetype: "work" },
-  { id: "legal-court", name: "法院", openness: 0.62, tolerance: 0.75, mobility: 0.58, role: "support", x: 0.58, y: 0.44, w: 0.072, h: 0.104, archetype: "justice" },
-  { id: "creative-studio", name: "设计工作室", openness: 0.8, tolerance: 0.83, mobility: 0.7, role: "cooperate", x: 0.65, y: 0.52, w: 0.076, h: 0.104, archetype: "work" },
-  { id: "commercial-zone", name: "商业区", openness: 0.84, tolerance: 0.78, mobility: 0.8, role: "public", x: 0.42, y: 0.45, w: 0.086, h: 0.11, archetype: "commerce" },
-  { id: "farm", name: "农场", openness: 0.68, tolerance: 0.9, mobility: 0.63, role: "heal", x: 0.27, y: 0.61, w: 0.082, h: 0.12, archetype: "life" },
-  { id: "park", name: "公园", openness: 0.95, tolerance: 0.93, mobility: 0.7, role: "heal", x: 0.62, y: 0.63, w: 0.086, h: 0.12, archetype: "green" },
-  { id: "zoo", name: "动物园", openness: 0.9, tolerance: 0.88, mobility: 0.6, role: "heal", x: 0.82, y: 0.44, w: 0.066, h: 0.096, archetype: "green" },
-  { id: "botanical-garden", name: "植物园", openness: 0.9, tolerance: 0.94, mobility: 0.58, role: "heal", x: 0.76, y: 0.3, w: 0.075, h: 0.105, archetype: "green" },
-  { id: "night-market", name: "夜市/娱乐街区", openness: 0.84, tolerance: 0.73, mobility: 0.76, role: "public", x: 0.52, y: 0.56, w: 0.082, h: 0.105, archetype: "entertainment" },
-  { id: "quiet-nook", name: "静默角落", openness: 0.55, tolerance: 0.96, mobility: 0.55, role: "heal", x: 0.66, y: 0.74, w: 0.068, h: 0.094, archetype: "support" },
-  { id: "repair-station", name: "修复站", openness: 0.66, tolerance: 0.98, mobility: 0.5, role: "meditate", x: 0.54, y: 0.71, w: 0.074, h: 0.102, archetype: "support" },
-  { id: "cemetery", name: "安宁公地", openness: 0.48, tolerance: 0.99, mobility: 0.26, role: "rest", x: 0.83, y: 0.14, w: 0.064, h: 0.092, archetype: "rest" }
+  { id: "public-plaza", name: "公开广场", openness: 0.93, tolerance: 0.84, mobility: 0.72, role: "public", x: 0.48, y: 0.42, w: 0.088, h: 0.112, archetype: "social" },
+  { id: "maternity-hospital", name: "接生医院", openness: 0.62, tolerance: 0.96, mobility: 0.46, role: "heal", x: 0.16, y: 0.24, w: 0.076, h: 0.106, archetype: "life" },
+  { id: "residential", name: "住宅区", openness: 0.76, tolerance: 0.9, mobility: 0.78, role: "rest", x: 0.28, y: 0.64, w: 0.104, h: 0.13, archetype: "daily" },
+  { id: "kindergarten", name: "幼儿园", openness: 0.72, tolerance: 0.84, mobility: 0.64, role: "cooperate", x: 0.28, y: 0.2, w: 0.068, h: 0.102, archetype: "education" },
+  { id: "primary-school", name: "小学", openness: 0.78, tolerance: 0.82, mobility: 0.66, role: "cooperate", x: 0.39, y: 0.19, w: 0.068, h: 0.102, archetype: "education" },
+  { id: "middle-school", name: "中学", openness: 0.74, tolerance: 0.76, mobility: 0.67, role: "cooperate", x: 0.5, y: 0.19, w: 0.068, h: 0.102, archetype: "education" },
+  { id: "university", name: "大学", openness: 0.86, tolerance: 0.79, mobility: 0.74, role: "cooperate", x: 0.62, y: 0.2, w: 0.084, h: 0.114, archetype: "education" },
+  { id: "office-district", name: "办公楼群", openness: 0.81, tolerance: 0.71, mobility: 0.76, role: "cooperate", x: 0.76, y: 0.55, w: 0.086, h: 0.11, archetype: "work" },
+  { id: "factory", name: "工厂", openness: 0.7, tolerance: 0.68, mobility: 0.64, role: "cooperate", x: 0.8, y: 0.71, w: 0.08, h: 0.104, archetype: "work" },
+  { id: "legal-court", name: "法院", openness: 0.62, tolerance: 0.75, mobility: 0.58, role: "support", x: 0.58, y: 0.36, w: 0.074, h: 0.102, archetype: "justice" },
+  { id: "creative-studio", name: "设计工作室", openness: 0.8, tolerance: 0.83, mobility: 0.7, role: "cooperate", x: 0.66, y: 0.47, w: 0.078, h: 0.104, archetype: "work" },
+  { id: "commercial-zone", name: "商业区", openness: 0.84, tolerance: 0.78, mobility: 0.8, role: "public", x: 0.42, y: 0.55, w: 0.092, h: 0.112, archetype: "commerce" },
+  { id: "farm", name: "农场", openness: 0.68, tolerance: 0.9, mobility: 0.63, role: "heal", x: 0.12, y: 0.54, w: 0.088, h: 0.12, archetype: "life" },
+  { id: "park", name: "公园", openness: 0.95, tolerance: 0.93, mobility: 0.7, role: "heal", x: 0.62, y: 0.68, w: 0.092, h: 0.122, archetype: "green" },
+  { id: "zoo", name: "动物园", openness: 0.9, tolerance: 0.88, mobility: 0.6, role: "heal", x: 0.84, y: 0.38, w: 0.066, h: 0.096, archetype: "green" },
+  { id: "botanical-garden", name: "植物园", openness: 0.9, tolerance: 0.94, mobility: 0.58, role: "heal", x: 0.75, y: 0.3, w: 0.078, h: 0.104, archetype: "green" },
+  { id: "night-market", name: "夜市/娱乐街区", openness: 0.84, tolerance: 0.73, mobility: 0.76, role: "public", x: 0.53, y: 0.56, w: 0.084, h: 0.104, archetype: "entertainment" },
+  { id: "quiet-nook", name: "静默角落", openness: 0.55, tolerance: 0.96, mobility: 0.55, role: "heal", x: 0.2, y: 0.79, w: 0.068, h: 0.092, archetype: "support" },
+  { id: "repair-station", name: "修复站", openness: 0.66, tolerance: 0.98, mobility: 0.5, role: "meditate", x: 0.4, y: 0.75, w: 0.076, h: 0.1, archetype: "support" },
+  { id: "cemetery", name: "安宁公地", openness: 0.48, tolerance: 0.99, mobility: 0.26, role: "rest", x: 0.88, y: 0.14, w: 0.064, h: 0.09, archetype: "rest" }
 ];
 
 const ZONE_MODEL_BLUEPRINTS = {
@@ -330,12 +330,12 @@ const ZONE_MODEL_BLUEPRINTS = {
 };
 
 const EVOLVABLE_SCENE_BLUEPRINTS = [
-  { id: "empathy-lab", name: "共情调停屋", role: "meditate", archetype: "support", model: "empathy-lab", trigger: "high_tension", provides: ["repair", "empathy"], profession: "empathy-mediator", professionName: "共情调停师", x: 0.48, y: 0.78, w: 0.15, h: 0.1 },
-  { id: "story-archive", name: "开放故事馆", role: "public", archetype: "social", model: "story-archive", trigger: "low_openness", provides: ["voice", "memory"], profession: "story-curator", professionName: "故事策展人", x: 0.34, y: 0.28, w: 0.16, h: 0.11 },
-  { id: "commons-workshop", name: "共识工坊", role: "cooperate", archetype: "work", model: "commons-workshop", trigger: "low_equality", provides: ["fairness", "tools"], profession: "commons-builder", professionName: "公共建设师", x: 0.68, y: 0.58, w: 0.15, h: 0.1 },
-  { id: "rest-courtyard", name: "慢生活庭院", role: "rest", archetype: "daily", model: "rest-courtyard", trigger: "low_energy", provides: ["rest", "belonging"], profession: "rest-designer", professionName: "恢复设计师", x: 0.18, y: 0.84, w: 0.16, h: 0.1 },
-  { id: "mentor-hall", name: "学徒导师厅", role: "cooperate", archetype: "education", model: "mentor-hall", trigger: "learning_need", provides: ["learning", "career"], profession: "mentor", professionName: "人生导师", x: 0.76, y: 0.02, w: 0.16, h: 0.1 },
-  { id: "resource-kitchen", name: "资源厨房", role: "heal", archetype: "life", model: "resource-kitchen", trigger: "low_stability", provides: ["food", "care"], profession: "resource-cook", professionName: "资源厨师", x: 0.16, y: 0.42, w: 0.15, h: 0.1 }
+  { id: "empathy-lab", name: "共情调停屋", role: "meditate", archetype: "support", model: "empathy-lab", trigger: "high_tension", provides: ["repair", "empathy"], profession: "empathy-mediator", professionName: "共情调停师", x: 0.52, y: 0.82, w: 0.15, h: 0.1 },
+  { id: "story-archive", name: "开放故事馆", role: "public", archetype: "social", model: "story-archive", trigger: "low_openness", provides: ["voice", "memory"], profession: "story-curator", professionName: "故事策展人", x: 0.36, y: 0.38, w: 0.16, h: 0.11 },
+  { id: "commons-workshop", name: "共识工坊", role: "cooperate", archetype: "work", model: "commons-workshop", trigger: "low_equality", provides: ["fairness", "tools"], profession: "commons-builder", professionName: "公共建设师", x: 0.86, y: 0.58, w: 0.15, h: 0.1 },
+  { id: "rest-courtyard", name: "慢生活庭院", role: "rest", archetype: "daily", model: "rest-courtyard", trigger: "low_energy", provides: ["rest", "belonging"], profession: "rest-designer", professionName: "恢复设计师", x: 0.3, y: 0.82, w: 0.16, h: 0.1 },
+  { id: "mentor-hall", name: "学徒导师厅", role: "cooperate", archetype: "education", model: "mentor-hall", trigger: "learning_need", provides: ["learning", "career"], profession: "mentor", professionName: "人生导师", x: 0.66, y: 0.09, w: 0.16, h: 0.1 },
+  { id: "resource-kitchen", name: "资源厨房", role: "heal", archetype: "life", model: "resource-kitchen", trigger: "low_stability", provides: ["food", "care"], profession: "resource-cook", professionName: "资源厨师", x: 0.26, y: 0.5, w: 0.15, h: 0.1 }
 ];
 
 const MBTI_ARCHETYPES = [

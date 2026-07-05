@@ -3266,32 +3266,32 @@ const COMMUNITY_CHUNK_ROAD_PATHS = [
 ];
 
 const CITY_ZONE_LAYOUT = {
-  "maternity-hospital": { x: 0.25, y: 0.28, w: 0.075, h: 0.11 },
-  "kindergarten": { x: 0.35, y: 0.19, w: 0.07, h: 0.105 },
-  "primary-school": { x: 0.45, y: 0.22, w: 0.07, h: 0.105 },
-  "middle-school": { x: 0.55, y: 0.2, w: 0.07, h: 0.105 },
-  "university": { x: 0.66, y: 0.2, w: 0.082, h: 0.115 },
-  "botanical-garden": { x: 0.76, y: 0.3, w: 0.075, h: 0.105 },
-  "cemetery": { x: 0.83, y: 0.14, w: 0.064, h: 0.092 },
-  "farm": { x: 0.27, y: 0.61, w: 0.082, h: 0.12 },
-  "residential": { x: 0.36, y: 0.52, w: 0.094, h: 0.13 },
-  "commercial-zone": { x: 0.42, y: 0.45, w: 0.086, h: 0.11 },
-  "public-plaza": { x: 0.5, y: 0.35, w: 0.082, h: 0.11 },
-  "night-market": { x: 0.52, y: 0.56, w: 0.082, h: 0.105 },
-  "legal-court": { x: 0.58, y: 0.44, w: 0.072, h: 0.104 },
-  "creative-studio": { x: 0.65, y: 0.52, w: 0.076, h: 0.104 },
-  "office-district": { x: 0.74, y: 0.58, w: 0.082, h: 0.112 },
-  "factory": { x: 0.78, y: 0.7, w: 0.078, h: 0.105 },
-  "park": { x: 0.62, y: 0.63, w: 0.086, h: 0.12 },
-  "zoo": { x: 0.82, y: 0.44, w: 0.066, h: 0.096 },
-  "repair-station": { x: 0.54, y: 0.71, w: 0.074, h: 0.102 },
-  "quiet-nook": { x: 0.66, y: 0.74, w: 0.068, h: 0.094 },
-  "empathy-lab": { x: 0.49, y: 0.74, w: 0.074, h: 0.1 },
-  "story-archive": { x: 0.48, y: 0.27, w: 0.074, h: 0.1 },
-  "commons-workshop": { x: 0.62, y: 0.58, w: 0.076, h: 0.102 },
-  "rest-courtyard": { x: 0.43, y: 0.66, w: 0.074, h: 0.1 },
-  "mentor-hall": { x: 0.72, y: 0.38, w: 0.072, h: 0.1 },
-  "resource-kitchen": { x: 0.34, y: 0.7, w: 0.074, h: 0.1 }
+  "maternity-hospital": { x: 0.16, y: 0.24, w: 0.076, h: 0.106 },
+  "kindergarten": { x: 0.28, y: 0.2, w: 0.068, h: 0.102 },
+  "primary-school": { x: 0.39, y: 0.19, w: 0.068, h: 0.102 },
+  "middle-school": { x: 0.5, y: 0.19, w: 0.068, h: 0.102 },
+  "university": { x: 0.62, y: 0.2, w: 0.084, h: 0.114 },
+  "botanical-garden": { x: 0.75, y: 0.3, w: 0.078, h: 0.104 },
+  "cemetery": { x: 0.88, y: 0.14, w: 0.064, h: 0.09 },
+  "farm": { x: 0.12, y: 0.54, w: 0.088, h: 0.12 },
+  "residential": { x: 0.28, y: 0.64, w: 0.104, h: 0.13 },
+  "commercial-zone": { x: 0.42, y: 0.55, w: 0.092, h: 0.112 },
+  "public-plaza": { x: 0.48, y: 0.42, w: 0.088, h: 0.112 },
+  "night-market": { x: 0.53, y: 0.56, w: 0.084, h: 0.104 },
+  "legal-court": { x: 0.58, y: 0.36, w: 0.074, h: 0.102 },
+  "creative-studio": { x: 0.66, y: 0.47, w: 0.078, h: 0.104 },
+  "office-district": { x: 0.76, y: 0.55, w: 0.086, h: 0.11 },
+  "factory": { x: 0.8, y: 0.71, w: 0.08, h: 0.104 },
+  "park": { x: 0.62, y: 0.68, w: 0.092, h: 0.122 },
+  "zoo": { x: 0.84, y: 0.38, w: 0.066, h: 0.096 },
+  "repair-station": { x: 0.4, y: 0.75, w: 0.076, h: 0.1 },
+  "quiet-nook": { x: 0.2, y: 0.79, w: 0.068, h: 0.092 },
+  "empathy-lab": { x: 0.52, y: 0.82, w: 0.074, h: 0.1 },
+  "story-archive": { x: 0.36, y: 0.38, w: 0.074, h: 0.1 },
+  "commons-workshop": { x: 0.86, y: 0.58, w: 0.076, h: 0.102 },
+  "rest-courtyard": { x: 0.3, y: 0.82, w: 0.074, h: 0.1 },
+  "mentor-hall": { x: 0.66, y: 0.09, w: 0.072, h: 0.1 },
+  "resource-kitchen": { x: 0.26, y: 0.5, w: 0.074, h: 0.1 }
 };
 
 const CITY_ZONE_FALLBACK_META = {
@@ -3334,10 +3334,14 @@ const ZONE_ICONS = {
 };
 
 const CITY_ROAD_PATHS = [
-  ["residential", "commercial-zone", "public-plaza", "legal-court", "creative-studio", "office-district", "factory", "park", "repair-station", "residential"],
+  ["public-plaza", "commercial-zone", "residential", "repair-station", "park", "factory", "office-district", "creative-studio", "legal-court", "public-plaza"],
   ["maternity-hospital", "kindergarten", "primary-school", "middle-school", "university", "botanical-garden", "cemetery"],
-  ["farm", "commercial-zone", "park", "botanical-garden", "zoo"],
-  ["residential", "quiet-nook", "repair-station", "park"]
+  ["farm", "commercial-zone", "night-market", "park", "botanical-garden", "zoo"],
+  ["farm", "resource-kitchen", "commercial-zone"],
+  ["residential", "quiet-nook", "repair-station", "rest-courtyard", "park"],
+  ["creative-studio", "commons-workshop", "office-district", "factory", "park"],
+  ["public-plaza", "story-archive", "university"],
+  ["legal-court", "empathy-lab", "repair-station"]
 ];
 
 const EVOLVABLE_ROAD_ANCHORS = {
