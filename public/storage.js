@@ -178,6 +178,19 @@ function storageAutoSave(snapshot) {
   }, ML_AUTOSAVE_DEBOUNCE_MS);
 }
 
+async function clearMirrorLifeLocalArchive({ clearSaves = true, clearMemories = true } = {}) {
+  if (mlAutoSaveTimer) {
+    clearTimeout(mlAutoSaveTimer);
+    mlAutoSaveTimer = null;
+  }
+  mlPendingAutoSnapshot = null;
+
+  const tasks = [];
+  if (clearSaves) tasks.push(mlTx("saves", "readwrite", (store) => store.clear()));
+  if (clearMemories) tasks.push(mlTx("memories", "readwrite", (store) => store.clear()));
+  await Promise.all(tasks);
+}
+
 // ── 本地记忆底座(memory-hub 的必写层 + 离线检索降级) ──
 
 async function idbAppendMemories(records) {

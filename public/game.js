@@ -43,6 +43,7 @@ let worldPulseSummarySignature = "";
 let hoverCheckAt = 0;
 let graphDebugVisible = false;
 let questPanelCollapsed = false;
+let demoResetInProgress = false;
 let renderActivityUntil = 0;
 let resumeSocietyAfterVisibilityPause = false;
 let lifecycleBound = false;
@@ -1663,9 +1664,15 @@ function setRobotMode(mode) {
   document.querySelectorAll(".modal-content .modal-chip[data-robot]").forEach(b => b.classList.toggle("active", b.dataset.robot === mode));
 }
 
-function clearAllData() {
-  if (!window.confirm("将清空本地保存的个人画像、回声与社会状态，确定继续吗？")) return;
-  localStorage.removeItem(STORAGE_KEY);
+function getDemoResetReloadUrl({ keepDemoButton = false } = {}) {
+  const url = new URL(window.location.href);
+  const keepDemo = keepDemoButton && url.searchParams.get("demo") === "1";
+  url.search = keepDemo ? "?demo=1" : "";
+  url.hash = "";
+  return `${url.pathname}${url.search}`;
+}
+
+function resetInMemoryGameState() {
   if (societyTimer) { clearInterval(societyTimer); societyTimer = null; }
   state.profile = {};
   state.echoes = [];
@@ -1683,8 +1690,91 @@ function clearAllData() {
   state.continuation = null;
   state.society = buildSocietyFromInput(scenePresets["open-square"]);
   lastBottleCheckAt = 0;
+  speechBubbles = {};
+  interactionVisuals = [];
+  recentInteractionEvents = [];
+  particles = [];
+}
+
+async function resetLocalGameState({ confirm = true, reload = true, keepDemoButton = false, source = "manual" } = {}) {
+  const message = source === "url"
+    ? "将清空本机的 MirrorLife 演示进度、自动存档、手动存档和本地记忆，然后重新进入游戏。确定继续吗？"
+    : "将清空本机的 MirrorLife 进度、自动存档、手动存档和本地记忆，重新开始一遍。确定继续吗？";
+  if (confirm && !window.confirm(message)) return false;
+
+  demoResetInProgress = true;
+  stopGameRenderLoop();
+  if (societyTimer) { clearInterval(societyTimer); societyTimer = null; }
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.removeItem("mirror-life-narrative");
+
+  try {
+    if (typeof clearMirrorLifeLocalArchive === "function") {
+      await clearMirrorLifeLocalArchive({ clearSaves: true, clearMemories: true });
+    }
+  } catch (error) {
+    console.warn("demo reset archive clear failed", error);
+  }
+
+  resetInMemoryGameState();
+
+  if (reload) {
+    window.location.replace(getDemoResetReloadUrl({ keepDemoButton }));
+    return true;
+  }
+
+  demoResetInProgress = false;
   persist();
-  showToast("所有数据已清空", "conflict");
+  showToast("已清空本地状态，可以重新开始", "conflict");
+  return true;
+}
+
+function clearAllData() {
+  resetLocalGameState({ confirm: true, reload: true, source: "settings" });
+}
+
+function consumeDemoResetUrlParam() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("demoReset") !== "1" && params.get("resetDemo") !== "1") return false;
+  if (!window.confirm("将清空本机 MirrorLife 演示状态并重新进入游戏。确定继续吗？")) {
+    params.delete("demoReset");
+    params.delete("resetDemo");
+    const cleanSearch = params.toString();
+    window.history.replaceState(null, "", `${window.location.pathname}${cleanSearch ? `?${cleanSearch}` : ""}${window.location.hash}`);
+    return false;
+  }
+  resetLocalGameState({ confirm: false, reload: true, source: "url" });
+  return true;
+}
+
+function mountDemoResetButton() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.get("demo") !== "1") return;
+  if (document.getElementById("demoResetButton")) return;
+
+  const button = document.createElement("button");
+  button.id = "demoResetButton";
+  button.type = "button";
+  button.textContent = "演示重置";
+  button.title = "清空本机进度、存档和本地记忆，重新开始演示";
+  button.style.cssText = [
+    "position:fixed",
+    "right:18px",
+    "bottom:18px",
+    "z-index:9999",
+    "padding:10px 14px",
+    "border:3px solid #202033",
+    "border-radius:999px",
+    "background:#fff5a8",
+    "color:#202033",
+    "font:800 14px system-ui,-apple-system,BlinkMacSystemFont,sans-serif",
+    "box-shadow:0 5px 0 #202033,0 10px 24px rgba(32,32,51,.18)",
+    "cursor:pointer"
+  ].join(";");
+  button.addEventListener("click", () => {
+    resetLocalGameState({ confirm: true, reload: true, keepDemoButton: true, source: "demo-button" });
+  });
+  document.body.appendChild(button);
 }
 
 function hydrateSocietyState() {
@@ -7217,6 +7307,7 @@ function bindGameEvents() {
   if (!lifecycleBound) {
     lifecycleBound = true;
     document.addEventListener("visibilitychange", () => {
+      if (demoResetInProgress) return;
       if (document.hidden) {
         resumeSocietyAfterVisibilityPause = !!state?.society?.running;
         pauseSocietyRun();
@@ -7232,11 +7323,11 @@ function bindGameEvents() {
       }
     });
     window.addEventListener("pagehide", () => {
-      persist(true);
+      if (!demoResetInProgress) persist(true);
       stopGameRenderLoop();
     });
     window.addEventListener("beforeunload", () => {
-      persist(true);
+      if (!demoResetInProgress) persist(true);
     });
   }
 
@@ -7595,6 +7686,11 @@ function bindGameEvents() {
 
   // ── Keyboard shortcuts ──
   window.addEventListener("keydown", (e) => {
+    if (e.altKey && e.shiftKey && e.key.toLowerCase() === "r") {
+      e.preventDefault();
+      resetLocalGameState({ confirm: true, reload: true, source: "shortcut" });
+      return;
+    }
     if (e.target.tagName === "INPUT" || e.target.tagName === "TEXTAREA") return;
     if (e.key === " ") { e.preventDefault(); toggleSocietyRun(); }
     if (e.key === "Escape") { closeModal(); hideDetail(); }
@@ -7609,7 +7705,10 @@ function bindGameEvents() {
 // ═══════════════════════════════════════════════════════════════
 
 function gameInit() {
+  if (consumeDemoResetUrlParam()) return;
+
   initEngineState();
+  mountDemoResetButton();
 
   // Ensure society exists
   if (!state.society.scenarioText) {
