@@ -3211,7 +3211,7 @@ const COMMUNITY_CHUNK_TEMPLATES = [
     anchor: { type: "residential", name: "回声住区", role: "rest", archetype: "daily" },
     places: [
       { type: "park", name: "口袋公园", role: "heal", archetype: "green", dx: 0.18, dy: 0.22 },
-      { type: "repair-station", name: "邻里修复站", role: "meditate", archetype: "support", dx: -0.2, dy: 0.2 },
+      { type: "repair-station", name: "邻里和解站", role: "meditate", archetype: "support", dx: -0.2, dy: 0.2 },
       { type: "commercial-zone", name: "街角小店", role: "public", archetype: "commerce", dx: 0.08, dy: -0.24 }
     ]
   },
@@ -3295,32 +3295,32 @@ const CITY_ZONE_LAYOUT = {
 };
 
 const CITY_ZONE_FALLBACK_META = {
-  "public-plaza": { name: "公开广场", role: "public", archetype: "social" },
-  "maternity-hospital": { name: "接生医院", role: "heal", archetype: "life" },
-  "residential": { name: "住宅区", role: "rest", archetype: "daily" },
-  "kindergarten": { name: "幼儿园", role: "cooperate", archetype: "education" },
-  "primary-school": { name: "小学", role: "cooperate", archetype: "education" },
-  "middle-school": { name: "中学", role: "cooperate", archetype: "education" },
-  "university": { name: "大学", role: "cooperate", archetype: "education" },
-  "office-district": { name: "办公楼群", role: "cooperate", archetype: "work" },
-  "factory": { name: "工厂", role: "cooperate", archetype: "work" },
-  "legal-court": { name: "法院", role: "support", archetype: "justice" },
-  "creative-studio": { name: "设计工作室", role: "cooperate", archetype: "work" },
-  "commercial-zone": { name: "商业区", role: "public", archetype: "commerce" },
-  "farm": { name: "农场", role: "heal", archetype: "life" },
-  "park": { name: "公园", role: "heal", archetype: "green" },
-  "zoo": { name: "动物园", role: "heal", archetype: "green" },
-  "botanical-garden": { name: "植物园", role: "heal", archetype: "green" },
-  "night-market": { name: "夜市", role: "public", archetype: "entertainment" },
-  "quiet-nook": { name: "静默角落", role: "heal", archetype: "support" },
-  "repair-station": { name: "修复站", role: "meditate", archetype: "support" },
-  "cemetery": { name: "安宁公地", role: "rest", archetype: "rest" },
-  "empathy-lab": { name: "共情调停屋", role: "heal", archetype: "support" },
-  "story-archive": { name: "开放故事馆", role: "public", archetype: "social" },
-  "commons-workshop": { name: "共识工坊", role: "cooperate", archetype: "work" },
-  "rest-courtyard": { name: "慢生活庭院", role: "rest", archetype: "daily" },
-  "mentor-hall": { name: "学徒导师厅", role: "cooperate", archetype: "education" },
-  "resource-kitchen": { name: "资源厨房", role: "public", archetype: "commerce" }
+  "public-plaza": { name: "邻里广场", role: "public", archetype: "social" },
+  "maternity-hospital": { name: "新生照护院", role: "heal", archetype: "life" },
+  "residential": { name: "生活巷", role: "rest", archetype: "daily" },
+  "kindergarten": { name: "童年园", role: "cooperate", archetype: "education" },
+  "primary-school": { name: "初学堂", role: "cooperate", archetype: "education" },
+  "middle-school": { name: "少年学堂", role: "cooperate", archetype: "education" },
+  "university": { name: "开放书院", role: "cooperate", archetype: "education" },
+  "office-district": { name: "共事楼", role: "cooperate", archetype: "work" },
+  "factory": { name: "匠造坊", role: "cooperate", archetype: "work" },
+  "legal-court": { name: "公议庭", role: "support", archetype: "justice" },
+  "creative-studio": { name: "创作工坊", role: "cooperate", archetype: "work" },
+  "commercial-zone": { name: "街市", role: "public", archetype: "commerce" },
+  "farm": { name: "社区农圃", role: "heal", archetype: "life" },
+  "park": { name: "邻里公园", role: "heal", archetype: "green" },
+  "zoo": { name: "动物照护园", role: "heal", archetype: "green" },
+  "botanical-garden": { name: "草木园", role: "heal", archetype: "green" },
+  "night-market": { name: "灯火夜市", role: "public", archetype: "entertainment" },
+  "quiet-nook": { name: "静心角", role: "heal", archetype: "support" },
+  "repair-station": { name: "和解小站", role: "meditate", archetype: "support" },
+  "cemetery": { name: "记忆花园", role: "rest", archetype: "rest" },
+  "empathy-lab": { name: "谈心和解屋", role: "heal", archetype: "support" },
+  "story-archive": { name: "街坊故事馆", role: "public", archetype: "social" },
+  "commons-workshop": { name: "共议工坊", role: "cooperate", archetype: "work" },
+  "rest-courtyard": { name: "慢歇院", role: "rest", archetype: "daily" },
+  "mentor-hall": { name: "师友学堂", role: "cooperate", archetype: "education" },
+  "resource-kitchen": { name: "邻里食堂", role: "public", archetype: "commerce" }
 };
 
 const ZONE_ICONS = {

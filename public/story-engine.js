@@ -184,7 +184,7 @@ function scanStoryTriggers(society) {
         kind: "lifeline", title: `告别${departed.name}`, emoji: "🕯",
         participants: [departed.id], participantNames: [departed.name],
         context: { mode: "farewell" },
-        opening: `${departed.name} 的故事走到了安宁公地,城市开始用自己的方式告别。`
+        opening: `${departed.name} 的故事走到了记忆花园,城市开始用自己的方式告别。`
       });
       return;
     }
@@ -199,7 +199,7 @@ function scanStoryTriggers(society) {
         kind: "lifeline", title: `迎接${newborn.name}`, emoji: "🎈",
         participants: [newborn.id], participantNames: [newborn.name],
         context: { mode: "welcome" },
-        opening: `接生医院传来了新的哭声,${newborn.name} 来到了这座城市。`
+        opening: `新生照护院传来了新的哭声,${newborn.name} 来到了这座城市。`
       });
     }
   } else if (markers.seenBirths === undefined) {
@@ -251,7 +251,7 @@ function buildStoryBeat(society, arc, stage) {
     const strain = Number(edge?.strain) || 0;
     return {
       text: strain > 60
-        ? `修复站的灯亮了:${a?.name} 和 ${b?.name} 被约到同一张桌前,话说得艰难但没有人离席。`
+        ? `和解小站的灯亮了:${a?.name} 和 ${b?.name} 被约到同一张桌前,话说得艰难但没有人离席。`
         : `${a?.name} 先开了口,${b?.name} 愣了一下,气氛松动了。`,
       effect: () => {
         if (a && b) {
@@ -297,7 +297,7 @@ function buildStoryBeat(society, arc, stage) {
       return { text: `议论在街角发酵,${a?.name} 开始挨个听大家真正的担心。` };
     }
     return {
-      text: `公开广场亮起了长桌,一场把话说开的集会开始了。`,
+      text: `邻里广场摆开了长桌,一场把话说开的集会开始了。`,
       effect: () => {
         society.tension = clamp((society.tension || 50) - 8, 22, 90);
         if (a) {
@@ -311,10 +311,10 @@ function buildStoryBeat(society, arc, stage) {
   if (arc.kind === "lifeline") {
     const farewell = arc.context.mode === "farewell";
     if (stage === 1) {
-      return { text: farewell ? `人们陆续去安宁公地放下一枝花。` : `邻居们排着队来看新生命,${a?.name} 收到了第一份礼物。` };
+      return { text: farewell ? `人们陆续去记忆花园放下一枝花。` : `邻居们排着队来看新生命,${a?.name} 收到了第一份礼物。` };
     }
     return {
-      text: farewell ? `${a?.name} 的故事被整理进开放故事馆,成为城市记忆的一部分。` : `${a?.name} 第一次被带到公开广场,城市多了一个新的注视角度。`,
+      text: farewell ? `${a?.name} 的故事被整理进街坊故事馆,成为城市记忆的一部分。` : `${a?.name} 第一次被带到邻里广场,城市多了一个新的注视角度。`,
       effect: () => {
         getAliveCitizens(society).slice(0, 5).forEach((citizen) => {
           citizen.mood = clamp((citizen.mood || 50) + (farewell ? -1 : 2), 0, 100);
