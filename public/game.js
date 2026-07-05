@@ -123,6 +123,13 @@ const buildingSpriteImage = new Image();
 buildingSpriteImage.decoding = "async";
 buildingSpriteImage.src = BUILDING_SPRITE_SRC;
 
+const SEMANTIC_BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-semantic-sprite.png";
+const SEMANTIC_BUILDING_SPRITE_COLUMNS = 3;
+const SEMANTIC_BUILDING_SPRITE_ROWS = 2;
+const semanticBuildingSpriteImage = new Image();
+semanticBuildingSpriteImage.decoding = "async";
+semanticBuildingSpriteImage.src = SEMANTIC_BUILDING_SPRITE_SRC;
+
 const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.png";
 const CITIZEN_SPRITE_COLUMNS = 4;
 const CITIZEN_SPRITE_ROWS = 2;
@@ -158,6 +165,16 @@ const ZONE_BUILDING_FRAMES = {
   "empathy-lab": 1,
   "residential": 11,
   "quiet-nook": 2
+};
+
+const SEMANTIC_ZONE_BUILDING_FRAMES = {
+  "maternity-hospital": 0,
+  "public-plaza": 1,
+  "cemetery": 2,
+  "quiet-nook": 3,
+  "repair-station": 4,
+  "empathy-lab": 4,
+  "zoo": 5
 };
 
 const DEFAULT_AVATAR_PRESETS = [
@@ -5864,31 +5881,21 @@ function drawSemanticAnimalCare(ctx, r, isHovered) {
 }
 
 function drawSemanticZoneBuilding(ctx, zone, r, isHovered) {
-  if (zone.id === "public-plaza") {
-    drawSemanticPublicPlaza(ctx, r, isHovered);
-    return true;
-  }
-  if (zone.id === "maternity-hospital") {
-    drawSemanticHospital(ctx, r, isHovered);
-    return true;
-  }
-  if (zone.id === "cemetery") {
-    drawSemanticMemoryGarden(ctx, r, isHovered);
-    return true;
-  }
-  if (zone.id === "quiet-nook") {
-    drawSemanticQuietNook(ctx, r, isHovered);
-    return true;
-  }
-  if (zone.id === "repair-station" || zone.id === "empathy-lab") {
-    drawSemanticMediationHouse(ctx, r, isHovered);
-    return true;
-  }
-  if (zone.id === "zoo") {
-    drawSemanticAnimalCare(ctx, r, isHovered);
-    return true;
-  }
-  return false;
+  if (!zone || !Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zone.id)) return false;
+  const frame = SEMANTIC_ZONE_BUILDING_FRAMES[zone.id];
+  const sprite = getSpriteFrameRect(semanticBuildingSpriteImage, SEMANTIC_BUILDING_SPRITE_COLUMNS, SEMANTIC_BUILDING_SPRITE_ROWS, frame);
+  if (!sprite) return false;
+  const spriteSource = getTransparentSpriteSource(semanticBuildingSpriteImage);
+  const drawW = Math.min(r.w * 1.12, 132);
+  const drawH = Math.min(r.h * 1.78, 110);
+  const dx = r.cx - drawW / 2;
+  const dy = r.y - drawH * 0.42;
+
+  ctx.save();
+  ctx.globalAlpha = isHovered ? 1 : 0.97;
+  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, dx, dy, drawW, drawH);
+  ctx.restore();
+  return true;
 }
 
 function drawZonePlace(ctx, zone, r, color, count, isHovered, options = {}) {
