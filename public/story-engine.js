@@ -199,7 +199,7 @@ function scanStoryTriggers(society) {
         kind: "lifeline", title: `迎接${newborn.name}`, emoji: "🎈",
         participants: [newborn.id], participantNames: [newborn.name],
         context: { mode: "welcome" },
-        opening: `新生照护院传来了新的哭声,${newborn.name} 来到了这座城市。`
+        opening: `妇幼医院传来了新的哭声,${newborn.name} 来到了这座城市。`
       });
     }
   } else if (markers.seenBirths === undefined) {

@@ -3296,7 +3296,7 @@ const CITY_ZONE_LAYOUT = {
 
 const CITY_ZONE_FALLBACK_META = {
   "public-plaza": { name: "邻里广场", role: "public", archetype: "social" },
-  "maternity-hospital": { name: "新生照护院", role: "heal", archetype: "life" },
+  "maternity-hospital": { name: "妇幼医院", role: "heal", archetype: "life" },
   "residential": { name: "生活巷", role: "rest", archetype: "daily" },
   "kindergarten": { name: "童年园", role: "cooperate", archetype: "education" },
   "primary-school": { name: "初学堂", role: "cooperate", archetype: "education" },

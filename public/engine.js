@@ -285,7 +285,7 @@ const LIFE_WEEK_STAGES = [
 
 const OPEN_WORLD_ZONES = [
   { id: "public-plaza", name: "邻里广场", openness: 0.93, tolerance: 0.84, mobility: 0.72, role: "public", x: 0.48, y: 0.42, w: 0.088, h: 0.112, archetype: "social" },
-  { id: "maternity-hospital", name: "新生照护院", openness: 0.62, tolerance: 0.96, mobility: 0.46, role: "heal", x: 0.16, y: 0.24, w: 0.076, h: 0.106, archetype: "life" },
+  { id: "maternity-hospital", name: "妇幼医院", openness: 0.62, tolerance: 0.96, mobility: 0.46, role: "heal", x: 0.16, y: 0.24, w: 0.076, h: 0.106, archetype: "life" },
   { id: "residential", name: "生活巷", openness: 0.76, tolerance: 0.9, mobility: 0.78, role: "rest", x: 0.28, y: 0.64, w: 0.104, h: 0.13, archetype: "daily" },
   { id: "kindergarten", name: "童年园", openness: 0.72, tolerance: 0.84, mobility: 0.64, role: "cooperate", x: 0.28, y: 0.2, w: 0.068, h: 0.102, archetype: "education" },
   { id: "primary-school", name: "初学堂", openness: 0.78, tolerance: 0.82, mobility: 0.66, role: "cooperate", x: 0.39, y: 0.19, w: 0.068, h: 0.102, archetype: "education" },
@@ -446,7 +446,7 @@ const WORLD_CATALOG = {
     "农民", "园艺师", "动物管理员", "商家", "店主", "设计师", "研究员", "自由职业者", "消防员", "警员", "翻译"
   ],
   objects: [
-    "新生照护院", "童年园", "初学堂", "少年学堂", "开放书院", "生活巷", "共事楼", "街市", "社区农圃", "公议庭", "邻里公园", "动物照护园", "草木园", "灯火夜市", "和解小站", "静心角"
+    "妇幼医院", "童年园", "初学堂", "少年学堂", "开放书院", "生活巷", "共事楼", "街市", "社区农圃", "公议庭", "邻里公园", "动物照护园", "草木园", "灯火夜市", "和解小站", "静心角"
   ],
   life: [
     "树木", "草坪", "花卉", "家畜（羊驼、马、牛）", "犬猫", "城市鸟类", "小型昆虫群", "溪流鱼群"
