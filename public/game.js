@@ -133,7 +133,7 @@ citizenSpriteImage.src = CITIZEN_SPRITE_SRC;
 
 const ZONE_BUILDING_FRAMES = {
   "story-archive": 0,
-  "public-plaza": 0,
+  "public-plaza": 4,
   "commercial-zone": 0,
   "commons-workshop": 1,
   "creative-studio": 1,
@@ -142,22 +142,22 @@ const ZONE_BUILDING_FRAMES = {
   "park": 2,
   "farm": 2,
   "kindergarten": 3,
-  "university": 4,
-  "mentor-hall": 4,
+  "university": 0,
+  "mentor-hall": 0,
   "primary-school": 5,
   "middle-school": 5,
-  "legal-court": 6,
-  "cemetery": 6,
+  "legal-court": 4,
+  "cemetery": 2,
   "botanical-garden": 7,
-  "zoo": 7,
+  "zoo": 2,
   "office-district": 8,
   "factory": 9,
   "resource-kitchen": 10,
   "night-market": 10,
-  "maternity-hospital": 10,
-  "empathy-lab": 10,
+  "maternity-hospital": 5,
+  "empathy-lab": 1,
   "residential": 11,
-  "quiet-nook": 11
+  "quiet-nook": 2
 };
 
 const DEFAULT_AVATAR_PRESETS = [
@@ -3592,11 +3592,13 @@ function getRenderableZoneList(society, W, H, groundY) {
     ...Object.keys(CITY_ZONE_LAYOUT),
     ...sourceZones.map((zone) => zone.id).filter((id) => !CITY_ZONE_LAYOUT[id])
   ];
-  const coreZones = orderedIds.map((id) => ({
-    id,
-    ...(CITY_ZONE_FALLBACK_META[id] || { name: id, role: "public", archetype: "social" }),
-    ...(sourceById.get(id) || {})
-  }));
+  const coreZones = orderedIds.map((id) => {
+    const fallback = CITY_ZONE_FALLBACK_META[id] || { name: id, role: "public", archetype: "social" };
+    const source = sourceById.get(id) || {};
+    const zone = { id, ...fallback, ...source };
+    if (CITY_ZONE_FALLBACK_META[id]?.name) zone.name = CITY_ZONE_FALLBACK_META[id].name;
+    return zone;
+  });
   if (!W || !H || !groundY) return coreZones;
 
   const chunks = chunkKeys.map((key) => {
@@ -5641,9 +5643,257 @@ function drawFallbackZoneBuilding(ctx, zone, r, color, isHovered) {
   ctx.restore();
 }
 
+function drawSemanticHospital(ctx, r, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.68, 58), isHovered ? 92 : 82);
+  const h = w * 0.68;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.92;
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.fillStyle = "#fff7f1";
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  roundRect(ctx, x, y + h * 0.22, w, h * 0.78, 6);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f35b6a";
+  ctx.beginPath();
+  ctx.moveTo(x - 5, y + h * 0.25);
+  ctx.lineTo(r.cx, y - h * 0.06);
+  ctx.lineTo(x + w + 5, y + h * 0.25);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#e63946";
+  roundRect(ctx, r.cx - w * 0.08, y + h * 0.34, w * 0.16, h * 0.32, 2);
+  ctx.fill();
+  roundRect(ctx, r.cx - w * 0.18, y + h * 0.44, w * 0.36, h * 0.12, 2);
+  ctx.fill();
+  ctx.fillStyle = "#9adbe8";
+  [[0.24, 0.52], [0.76, 0.52], [0.24, 0.78], [0.76, 0.78]].forEach(([px, py]) => {
+    roundRect(ctx, x + w * px - 5, y + h * py - 5, 10, 10, 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.fillStyle = "#ffe7ec";
+  ctx.beginPath();
+  ctx.arc(x + w * 0.8, y + h * 0.18, 8, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSemanticPublicPlaza(ctx, r, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.74, 58), isHovered ? 92 : 84);
+  const h = w * 0.5;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.72;
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#f5edd5";
+  ctx.beginPath();
+  ctx.ellipse(r.cx, y + h * 0.72, w * 0.5, h * 0.34, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f1c40f";
+  ctx.beginPath();
+  ctx.arc(r.cx, y + h * 0.36, h * 0.22, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.strokeStyle = "#8a6a45";
+  ctx.beginPath();
+  ctx.moveTo(r.cx, y + h * 0.58);
+  ctx.lineTo(r.cx, y + h * 0.92);
+  ctx.stroke();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.fillStyle = "#fff9e6";
+  roundRect(ctx, x + w * 0.18, y + h * 0.55, w * 0.64, h * 0.18, 7);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#78d6c6";
+  [-0.32, 0.32].forEach((offset) => {
+    roundRect(ctx, r.cx + w * offset - 10, y + h * 0.32, 20, 14, 5);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawSemanticMemoryGarden(ctx, r, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.7, 54), isHovered ? 86 : 78);
+  const h = w * 0.58;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.8;
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#dff4dd";
+  roundRect(ctx, x, y + h * 0.35, w, h * 0.62, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f7f1df";
+  roundRect(ctx, r.cx - w * 0.11, y + h * 0.08, w * 0.22, h * 0.58, 5);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(r.cx, y + h * 0.08, w * 0.11, Math.PI, 0);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#75c76b";
+  [-0.28, 0.28].forEach((offset) => {
+    ctx.beginPath();
+    ctx.arc(r.cx + w * offset, y + h * 0.5, 9, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.fillStyle = "#f35b6a";
+  [-0.18, 0.18].forEach((offset) => {
+    ctx.beginPath();
+    ctx.arc(r.cx + w * offset, y + h * 0.76, 4, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+function drawSemanticQuietNook(ctx, r, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.68, 48), isHovered ? 78 : 70);
+  const h = w * 0.52;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.78;
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#dff4dd";
+  ctx.beginPath();
+  ctx.ellipse(r.cx, y + h * 0.72, w * 0.48, h * 0.3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#8bd18b";
+  ctx.beginPath();
+  ctx.arc(x + w * 0.22, y + h * 0.38, 13, 0, Math.PI * 2);
+  ctx.arc(x + w * 0.34, y + h * 0.28, 12, 0, Math.PI * 2);
+  ctx.arc(x + w * 0.46, y + h * 0.38, 13, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f7f1df";
+  roundRect(ctx, x + w * 0.38, y + h * 0.52, w * 0.42, h * 0.18, 5);
+  ctx.fill();
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(x + w * 0.46, y + h * 0.52);
+  ctx.lineTo(x + w * 0.46, y + h * 0.78);
+  ctx.moveTo(x + w * 0.72, y + h * 0.52);
+  ctx.lineTo(x + w * 0.72, y + h * 0.78);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSemanticMediationHouse(ctx, r, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.66, 54), isHovered ? 86 : 76);
+  const h = w * 0.6;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.85;
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#fff9e6";
+  roundRect(ctx, x, y + h * 0.25, w, h * 0.72, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#78d6c6";
+  ctx.beginPath();
+  ctx.moveTo(x - 4, y + h * 0.28);
+  ctx.lineTo(r.cx, y);
+  ctx.lineTo(x + w + 4, y + h * 0.28);
+  ctx.closePath();
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f1c40f";
+  ctx.beginPath();
+  ctx.ellipse(r.cx, y + h * 0.58, w * 0.22, h * 0.12, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f35b6a";
+  [-0.22, 0.22].forEach((offset) => {
+    ctx.beginPath();
+    ctx.arc(r.cx + w * offset, y + h * 0.6, 5, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.fillStyle = "#fafaf5";
+  roundRect(ctx, x + w * 0.16, y + h * 0.15, w * 0.24, h * 0.18, 8);
+  ctx.fill();
+  ctx.stroke();
+  roundRect(ctx, x + w * 0.58, y + h * 0.12, w * 0.24, h * 0.18, 8);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawSemanticAnimalCare(ctx, r, isHovered) {
+  const w = Math.min(Math.max(r.w * 0.7, 54), isHovered ? 84 : 76);
+  const h = w * 0.54;
+  const x = r.cx - w / 2;
+  const y = r.cy - h * 0.82;
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.fillStyle = "#dff4dd";
+  roundRect(ctx, x, y + h * 0.34, w, h * 0.62, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#f7f1df";
+  roundRect(ctx, x + w * 0.18, y + h * 0.18, w * 0.64, h * 0.28, 10);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = "#1a1a2e";
+  ctx.font = `bold ${Math.max(14, w * 0.22)}px Arial`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("爪", r.cx, y + h * 0.32);
+  ctx.strokeStyle = "#8a6a45";
+  for (let i = 0; i < 5; i += 1) {
+    const px = x + w * (0.16 + i * 0.17);
+    ctx.beginPath();
+    ctx.moveTo(px, y + h * 0.52);
+    ctx.lineTo(px, y + h * 0.88);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawSemanticZoneBuilding(ctx, zone, r, isHovered) {
+  if (zone.id === "public-plaza") {
+    drawSemanticPublicPlaza(ctx, r, isHovered);
+    return true;
+  }
+  if (zone.id === "maternity-hospital") {
+    drawSemanticHospital(ctx, r, isHovered);
+    return true;
+  }
+  if (zone.id === "cemetery") {
+    drawSemanticMemoryGarden(ctx, r, isHovered);
+    return true;
+  }
+  if (zone.id === "quiet-nook") {
+    drawSemanticQuietNook(ctx, r, isHovered);
+    return true;
+  }
+  if (zone.id === "repair-station" || zone.id === "empathy-lab") {
+    drawSemanticMediationHouse(ctx, r, isHovered);
+    return true;
+  }
+  if (zone.id === "zoo") {
+    drawSemanticAnimalCare(ctx, r, isHovered);
+    return true;
+  }
+  return false;
+}
+
 function drawZonePlace(ctx, zone, r, color, count, isHovered, options = {}) {
   drawZoneFootprint(ctx, zone, r, color, isHovered);
-  if (!drawZoneBuildingSprite(ctx, zone, r, isHovered)) {
+  if (!drawSemanticZoneBuilding(ctx, zone, r, isHovered) && !drawZoneBuildingSprite(ctx, zone, r, isHovered)) {
     drawFallbackZoneBuilding(ctx, zone, r, color, isHovered);
   }
   if (!options.lowDetail || isHovered) {
