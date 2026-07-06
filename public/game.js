@@ -132,124 +132,6 @@ const semanticBuildingSpriteImage = new Image();
 semanticBuildingSpriteImage.decoding = "async";
 semanticBuildingSpriteImage.src = SEMANTIC_BUILDING_SPRITE_SRC;
 
-const INTERIOR_PROP_BOARD_SRC = "/assets/mirrorlife-interior-prop-design-board.png";
-const interiorPropSpriteCache = new Map();
-const interiorPropBoardImage = new Image();
-interiorPropBoardImage.decoding = "async";
-interiorPropBoardImage.src = INTERIOR_PROP_BOARD_SRC;
-interiorPropBoardImage.onload = () => {
-  interiorPropSpriteCache.clear();
-  try { markRenderActive(1800); } catch (_) {}
-};
-const INTERIOR_PROP_ATLAS = {
-  hospitalBed: { x: 14, y: 26, w: 170, h: 120 },
-  nurseCounter: { x: 208, y: 42, w: 190, h: 115 },
-  medicineCabinet: { x: 488, y: 18, w: 130, h: 158 },
-  stroller: { x: 652, y: 42, w: 128, h: 120 },
-  teddyCorner: { x: 805, y: 48, w: 128, h: 112 },
-  bedroomSet: { x: 1000, y: 20, w: 315, h: 180 },
-  blackboard: { x: 14, y: 202, w: 188, h: 120 },
-  carePodium: { x: 224, y: 218, w: 118, h: 112 },
-  schoolDesk: { x: 372, y: 212, w: 130, h: 120 },
-  readingChair: { x: 528, y: 205, w: 150, h: 132 },
-  bookshelf: { x: 698, y: 196, w: 140, h: 145 },
-  libraryRoom: { x: 930, y: 182, w: 326, h: 190 },
-  noticeBoard: { x: 28, y: 392, w: 110, h: 105 },
-  bench: { x: 158, y: 410, w: 128, h: 80 },
-  fountain: { x: 314, y: 386, w: 145, h: 105 },
-  flowerBox: { x: 488, y: 398, w: 150, h: 95 },
-  plazaGarden: { x: 668, y: 362, w: 240, h: 160 },
-  marketStall: { x: 936, y: 384, w: 128, h: 124 },
-  marketShelf: { x: 1080, y: 394, w: 118, h: 112 },
-  hotFoodStand: { x: 1212, y: 390, w: 122, h: 116 },
-  fruitBasket: { x: 1325, y: 420, w: 95, h: 82 },
-  marketRoom: { x: 1260, y: 356, w: 260, h: 178 },
-  sofa: { x: 18, y: 590, w: 130, h: 92 },
-  diningSet: { x: 166, y: 592, w: 142, h: 104 },
-  bedGreen: { x: 332, y: 586, w: 126, h: 108 },
-  washstand: { x: 492, y: 580, w: 115, h: 124 },
-  homeRoom: { x: 622, y: 558, w: 260, h: 170 },
-  roundTable: { x: 922, y: 588, w: 160, h: 105 },
-  archiveCabinet: { x: 1095, y: 582, w: 95, h: 122 },
-  loungeCorner: { x: 1210, y: 590, w: 146, h: 118 },
-  mediationRoom: { x: 1320, y: 548, w: 205, h: 175 },
-  easel: { x: 16, y: 770, w: 92, h: 118 },
-  paintCart: { x: 122, y: 778, w: 112, h: 102 },
-  galleryFrames: { x: 242, y: 760, w: 112, h: 92 },
-  cushionPlant: { x: 376, y: 780, w: 115, h: 88 },
-  workbench: { x: 528, y: 750, w: 145, h: 118 },
-  laptopDesk: { x: 696, y: 760, w: 145, h: 100 },
-  toolCart: { x: 860, y: 742, w: 94, h: 125 },
-  machine: { x: 984, y: 752, w: 86, h: 112 },
-  greenhouse: { x: 1102, y: 734, w: 135, h: 128 },
-  plantRack: { x: 1258, y: 728, w: 128, h: 120 },
-  gardenBed: { x: 1402, y: 736, w: 126, h: 110 },
-  cherryTree: { x: 16, y: 906, w: 130, h: 105 },
-  stoneLantern: { x: 150, y: 918, w: 95, h: 90 },
-  memorialStone: { x: 282, y: 902, w: 108, h: 100 },
-  quietBench: { x: 424, y: 916, w: 128, h: 78 },
-  candleAltar: { x: 584, y: 890, w: 155, h: 105 },
-  vaseFlower: { x: 758, y: 910, w: 78, h: 88 },
-  memoryFlowerBox: { x: 868, y: 910, w: 112, h: 82 },
-  smallFountain: { x: 1002, y: 905, w: 88, h: 83 },
-  lantern: { x: 1116, y: 908, w: 72, h: 85 },
-  memoryGarden: { x: 1246, y: 862, w: 270, h: 150 }
-};
-const INTERIOR_PROP_DRAW_WIDTHS = {
-  hospitalBed: 104,
-  nurseCounter: 126,
-  medicineCabinet: 76,
-  stroller: 72,
-  teddyCorner: 74,
-  bedroomSet: 190,
-  blackboard: 138,
-  carePodium: 78,
-  schoolDesk: 74,
-  readingChair: 86,
-  bookshelf: 82,
-  libraryRoom: 190,
-  noticeBoard: 66,
-  bench: 72,
-  fountain: 82,
-  flowerBox: 78,
-  plazaGarden: 150,
-  marketStall: 92,
-  marketShelf: 78,
-  hotFoodStand: 86,
-  fruitBasket: 60,
-  marketRoom: 170,
-  sofa: 82,
-  diningSet: 86,
-  bedGreen: 82,
-  washstand: 72,
-  homeRoom: 180,
-  roundTable: 96,
-  archiveCabinet: 62,
-  loungeCorner: 100,
-  mediationRoom: 150,
-  easel: 62,
-  paintCart: 70,
-  galleryFrames: 78,
-  cushionPlant: 74,
-  workbench: 92,
-  laptopDesk: 88,
-  toolCart: 62,
-  machine: 64,
-  greenhouse: 96,
-  plantRack: 82,
-  gardenBed: 82,
-  cherryTree: 88,
-  stoneLantern: 58,
-  memorialStone: 64,
-  quietBench: 84,
-  candleAltar: 86,
-  vaseFlower: 46,
-  memoryFlowerBox: 70,
-  smallFountain: 58,
-  lantern: 42,
-  memoryGarden: 170
-};
-
 const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.png";
 const CITIZEN_SPRITE_COLUMNS = 4;
 const CITIZEN_SPRITE_ROWS = 2;
@@ -5345,8 +5227,8 @@ function getInteriorBlueprint(zone) {
   if (/commercial|market|shop|exchange|kitchen|resource/.test(hint)) return INTERIOR_BLUEPRINTS.commerce;
   if (/public|plaza|forum|civic/.test(hint)) return INTERIOR_BLUEPRINTS.public;
   if (/legal|court|justice|mediat/.test(hint)) return INTERIOR_BLUEPRINTS.justice;
-  if (/work|office|factory|craft|build|commons/.test(hint)) return INTERIOR_BLUEPRINTS.work;
   if (/creative|studio|art|story|archive/.test(hint)) return INTERIOR_BLUEPRINTS.creative;
+  if (/work|office|factory|craft|build|commons/.test(hint)) return INTERIOR_BLUEPRINTS.work;
   if (/park|garden|farm|eco|nature|zoo|green|botanical/.test(hint)) return INTERIOR_BLUEPRINTS.nature;
   if (/cemetery|memory|quiet/.test(hint)) return INTERIOR_BLUEPRINTS.memory;
   return INTERIOR_BLUEPRINTS.home;
@@ -5429,192 +5311,6 @@ function getInteriorAnchors(blueprint, layout) {
     behaviors: prop.behaviors || ["tea"],
     index
   }));
-}
-
-function isInteriorBoardReady() {
-  return interiorPropBoardImage.complete && interiorPropBoardImage.naturalWidth > 0;
-}
-
-function getInteriorBoardSprite(key) {
-  if (!isInteriorBoardReady()) return null;
-  const frame = INTERIOR_PROP_ATLAS[key];
-  if (!frame) return null;
-  const cacheKey = `${key}:${frame.x},${frame.y},${frame.w},${frame.h}`;
-  if (interiorPropSpriteCache.has(cacheKey)) return interiorPropSpriteCache.get(cacheKey);
-  const canvas = document.createElement("canvas");
-  canvas.width = frame.w;
-  canvas.height = frame.h;
-  const sctx = canvas.getContext("2d", { willReadFrequently: true });
-  if (!sctx) return null;
-  sctx.drawImage(interiorPropBoardImage, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
-  const image = sctx.getImageData(0, 0, frame.w, frame.h);
-  const data = image.data;
-  const visited = new Uint8Array(frame.w * frame.h);
-  const stack = [];
-  const isBackground = (idx) => {
-    const i = idx * 4;
-    const r = data[i];
-    const g = data[i + 1];
-    const b = data[i + 2];
-    const max = Math.max(r, g, b);
-    const min = Math.min(r, g, b);
-    return max > 232 && max - min < 34;
-  };
-  const push = (x, y) => {
-    if (x < 0 || y < 0 || x >= frame.w || y >= frame.h) return;
-    const idx = y * frame.w + x;
-    if (visited[idx] || !isBackground(idx)) return;
-    visited[idx] = 1;
-    stack.push(idx);
-  };
-  for (let x = 0; x < frame.w; x++) {
-    push(x, 0);
-    push(x, frame.h - 1);
-  }
-  for (let y = 0; y < frame.h; y++) {
-    push(0, y);
-    push(frame.w - 1, y);
-  }
-  while (stack.length) {
-    const idx = stack.pop();
-    const x = idx % frame.w;
-    const y = Math.floor(idx / frame.w);
-    data[idx * 4 + 3] = 0;
-    push(x + 1, y);
-    push(x - 1, y);
-    push(x, y + 1);
-    push(x, y - 1);
-  }
-  sctx.putImageData(image, 0, 0);
-
-  let minX = frame.w;
-  let minY = frame.h;
-  let maxX = -1;
-  let maxY = -1;
-  for (let y = 0; y < frame.h; y++) {
-    for (let x = 0; x < frame.w; x++) {
-      if (data[(y * frame.w + x) * 4 + 3] > 8) {
-        minX = Math.min(minX, x);
-        minY = Math.min(minY, y);
-        maxX = Math.max(maxX, x);
-        maxY = Math.max(maxY, y);
-      }
-    }
-  }
-  if (maxX >= minX && maxY >= minY) {
-    const pad = 4;
-    const sx = Math.max(0, minX - pad);
-    const sy = Math.max(0, minY - pad);
-    const sw = Math.min(frame.w - sx, maxX - minX + pad * 2);
-    const sh = Math.min(frame.h - sy, maxY - minY + pad * 2);
-    const trimmed = document.createElement("canvas");
-    trimmed.width = sw;
-    trimmed.height = sh;
-    const tctx = trimmed.getContext("2d");
-    if (tctx) {
-      tctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
-      interiorPropSpriteCache.set(cacheKey, trimmed);
-      return trimmed;
-    }
-  }
-  interiorPropSpriteCache.set(cacheKey, canvas);
-  return canvas;
-}
-
-function drawInteriorBoardSprite(ctx, key, x, y, targetW, options = {}) {
-  const sprite = getInteriorBoardSprite(key);
-  if (!sprite) return false;
-  const scale = targetW / sprite.width;
-  const targetH = sprite.height * scale;
-  const anchorX = options.anchorX ?? 0.5;
-  const anchorY = options.anchorY ?? 0.92;
-  ctx.save();
-  ctx.globalAlpha = options.alpha ?? 1;
-  ctx.drawImage(sprite, x - targetW * anchorX, y - targetH * anchorY, targetW, targetH);
-  ctx.restore();
-  return true;
-}
-
-function interiorPropSpriteKey(prop, blueprint, model) {
-  const title = blueprint?.title || "";
-  const label = prop?.label || "";
-  if (/休息床/.test(label)) return "hospitalBed";
-  if (/卧榻/.test(label)) return "bedGreen";
-  if (/护理站/.test(label)) return "nurseCounter";
-  if (/柜台|热食台/.test(label) && /交易/.test(title)) return null;
-  if (/提案台/.test(label)) return "noticeBoard";
-  if (/药品柜/.test(label)) return "medicineCabinet";
-  if (/档案柜/.test(label)) return "archiveCabinet";
-  if (/书架|货架/.test(label)) return /交易/.test(title) ? "marketShelf" : "bookshelf";
-  if (/补给箱/.test(label)) return null;
-  if (/安抚角/.test(label)) return null;
-  if (/复原植物|阳台植物|缓冲角/.test(label)) return null;
-  if (/照料区|低声花园/.test(label)) return /安宁/.test(title) ? "memoryFlowerBox" : "gardenBed";
-  if (/育苗架|温室台/.test(label)) return /温室/.test(label) ? "greenhouse" : "plantRack";
-  if (/阅读角/.test(label)) return "readingChair";
-  if (/讲台/.test(label)) return null;
-  if (/课桌|练习桌/.test(label)) return "schoolDesk";
-  if (/探索墙|公告板|协作板|交换板/.test(label)) return null;
-  if (/旁听席|等候椅/.test(label)) return "bench";
-  if (/小坐区|沙发/.test(label)) return "sofa";
-  if (/餐桌/.test(label)) return "diningSet";
-  if (/洗漱台/.test(label)) return "washstand";
-  if (/共识圆桌|圆桌|会议桌/.test(label)) return "roundTable";
-  if (/调停席/.test(label)) return "roundTable";
-  if (/记录桌|记录席/.test(label)) return "schoolDesk";
-  if (/工位/.test(label)) return "laptopDesk";
-  if (/工具台/.test(label)) return "workbench";
-  if (/设备区/.test(label)) return "machine";
-  if (/画架/.test(label)) return "easel";
-  if (/作品墙/.test(label)) return "galleryFrames";
-  if (/排练角|声音角/.test(label)) return "cushionPlant";
-  if (/故事桌/.test(label)) return "laptopDesk";
-  if (/纪念台/.test(label)) return "candleAltar";
-  if (/静坐席|冷静角/.test(label)) return "quietBench";
-  if (/记忆册/.test(label)) return "memorialStone";
-  if (model === "plant-zone") return null;
-  return null;
-}
-
-function interiorDecorSpriteKey(type) {
-  return {
-    plant: null,
-    "flowerbox": null,
-    "floor-lamp": "lantern",
-    "reading-lamp": "lantern",
-    "iv-stand": null,
-    "privacy-screen": null,
-    "medicine-cart": "toolCart",
-    stroller: null,
-    teddy: null,
-    "book-pile": null,
-    backpack: null,
-    "floor-cushions": "cushionPlant",
-    "hanging-lights": null,
-    basket: null,
-    "fruit-crates": null,
-    "menu-board": null,
-    "notice-cards": null,
-    lantern: "lantern",
-    bench: "bench",
-    "quiet-bench": "quietBench",
-    "fountain-mini": null,
-    "tool-cart": "toolCart",
-    machine: "machine",
-    "cable-rug": null,
-    "coffee-mug": null,
-    "file-stack": null,
-    "paint-cart": "paintCart",
-    "gallery-frames": "galleryFrames",
-    greenhouse: "greenhouse",
-    "plant-rack": "plantRack",
-    "watering-can": null,
-    "garden-stones": "stoneLantern",
-    candles: "candleAltar",
-    "memorial-frame": "memorialStone",
-    "coffee-table": null,
-    "picture-frames": "galleryFrames"
-  }[type] || null;
 }
 
 function interiorPropModel(prop, blueprint) {
@@ -5757,12 +5453,128 @@ function drawInteriorChair(ctx, x, y, scale, colors) {
   ctx.save();
   ctx.strokeStyle = "#1a1a2e";
   ctx.lineWidth = 2;
-  ctx.fillStyle = colors.top;
-  roundRect(ctx, x - 12 * scale, y - 28 * scale, 24 * scale, 20 * scale, 5 * scale);
+  drawInteriorIsoBox(ctx, x, y, 30 * scale, 18 * scale, 10 * scale, colors);
+  drawInteriorIsoBox(ctx, x, y - 18 * scale, 32 * scale, 9 * scale, 24 * scale, {
+    ...colors,
+    top: colors.top || "#bde0fe",
+    left: colors.left || "#7fb3d5",
+    right: colors.right || "#4f83cc"
+  });
+  [-11, 11].forEach(dx => {
+    ctx.beginPath();
+    ctx.moveTo(x + dx * scale, y - 2 * scale);
+    ctx.lineTo(x + dx * scale, y + 14 * scale);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawInteriorIsoCylinder(ctx, x, y, rx, ry, h, colors = {}) {
+  const stroke = colors.stroke || "#1a1a2e";
+  const top = colors.top || "#fff7dc";
+  const side = colors.side || colors.left || "#d6a86b";
+  const shade = colors.shade || colors.right || "#a66a3f";
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2;
+  ctx.fillStyle = side;
+  ctx.beginPath();
+  ctx.moveTo(x - rx, y - h);
+  ctx.bezierCurveTo(x - rx, y - h + ry, x + rx, y - h + ry, x + rx, y - h);
+  ctx.lineTo(x + rx, y);
+  ctx.bezierCurveTo(x + rx, y + ry, x - rx, y + ry, x - rx, y);
+  ctx.closePath();
   ctx.fill();
   ctx.stroke();
-  drawInteriorIsoBox(ctx, x, y, 30 * scale, 18 * scale, 10 * scale, colors);
+  ctx.fillStyle = shade;
+  ctx.beginPath();
+  ctx.moveTo(x, y - h + ry * 0.2);
+  ctx.bezierCurveTo(x + rx, y - h + ry, x + rx, y + ry, x, y + ry * 0.75);
+  ctx.lineTo(x, y - h + ry * 0.2);
+  ctx.fill();
+  ctx.fillStyle = top;
+  ctx.beginPath();
+  ctx.ellipse(x, y - h, rx, ry, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
   ctx.restore();
+}
+
+function drawInterior3DHandle(ctx, x, y, scale = 1, color = "#ffd166") {
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 1.4;
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.arc(x, y, 3.5 * scale, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawInteriorShelfGoods(ctx, x, y, scale = 1, palette = ["#ef476f", "#4f83cc", "#06d6a0", "#ffd166"]) {
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 1.2;
+  palette.forEach((c, i) => {
+    const px = x + (i - 1.5) * 13 * scale;
+    const py = y + (i % 2) * 4 * scale;
+    ctx.fillStyle = c;
+    roundRect(ctx, px - 4 * scale, py - 15 * scale, 8 * scale, 16 * scale, 2 * scale);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawInterior3DBasket(ctx, x, y, scale = 1) {
+  const colors = { stroke: "#1a1a2e", top: "#d6a86b", left: "#b77946", right: "#8a5933" };
+  drawInteriorIsoBox(ctx, x, y, 38 * scale, 25 * scale, 10 * scale, colors);
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 1.4;
+  for (let i = -1; i <= 1; i++) {
+    ctx.beginPath();
+    ctx.moveTo(x - 16 * scale, y - 9 * scale + i * 5 * scale);
+    ctx.lineTo(x + 16 * scale, y - 3 * scale + i * 5 * scale);
+    ctx.stroke();
+  }
+  ["#ef476f", "#ffd166", "#86efac", "#ff9aa2"].forEach((c, i) => {
+    ctx.fillStyle = c;
+    ctx.beginPath();
+    ctx.arc(x - 12 * scale + i * 8 * scale, y - 18 * scale - (i % 2) * 3 * scale, 5 * scale, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawInterior3DPillow(ctx, x, y, w, h, scale, color) {
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 1.7;
+  ctx.beginPath();
+  ctx.ellipse(x, y, w * scale, h * scale, -0.12, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawInterior3DMonitor(ctx, x, y, scale, accent = "#4f83cc") {
+  drawInteriorIsoBox(ctx, x, y, 30 * scale, 7 * scale, 24 * scale, {
+    stroke: "#1a1a2e",
+    top: "#dbeafe",
+    left: accent,
+    right: darken(accent, 18)
+  });
+  drawInteriorIsoBox(ctx, x, y + 10 * scale, 14 * scale, 10 * scale, 7 * scale, {
+    stroke: "#1a1a2e",
+    top: "#d8dee9",
+    left: "#7f8c9a",
+    right: "#596674"
+  });
 }
 
 function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, blueprint) {
@@ -5780,15 +5592,6 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
     right: isNight ? darken(trim, 30) : hexWithAlpha(trim, 0.58)
   };
   const model = interiorPropModel(prop, blueprint);
-  const spriteKey = interiorPropSpriteKey(prop, blueprint, model);
-
-  if (spriteKey) {
-    const spriteW = (INTERIOR_PROP_DRAW_WIDTHS[spriteKey] || 74) * clamp(s, 0.9, 1.36);
-    drawInteriorShadow(ctx, x, y + 8 * s, spriteW * 0.58, isNight ? 0.18 : 0.1);
-    if (drawInteriorBoardSprite(ctx, spriteKey, x, y + 8 * s, spriteW, { anchorY: 0.94 })) {
-      return;
-    }
-  }
 
   drawInteriorShadow(ctx, x, y, 58 * s, isNight ? 0.22 : 0.14);
   ctx.save();
@@ -5796,72 +5599,105 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
   ctx.lineCap = "round";
 
   if (model === "bed") {
-    drawInteriorIsoBox(ctx, x, y, 72 * s, 42 * s, 18 * s, { ...colors, top: "#f8f2e5", left: "#8ecae6", right: "#4f83cc" });
-    drawInteriorIsoBox(ctx, x - 15 * s, y - 13 * s, 28 * s, 18 * s, 7 * s, { ...colors, top: "#ffffff", left: "#e8edf4", right: "#cfd8e4" });
-    drawInteriorIsoBox(ctx, x + 16 * s, y - 2 * s, 36 * s, 30 * s, 7 * s, { ...colors, top: "#f4978e", left: "#df5b3f", right: "#b43d2d" });
+    const careBed = /休息床/.test(prop.label || "");
+    drawInteriorIsoBox(ctx, x, y, 78 * s, 44 * s, 16 * s, { ...colors, top: careBed ? "#f8f2e5" : "#eef7df", left: careBed ? "#8ecae6" : "#90be6d", right: careBed ? "#4f83cc" : "#5d9b58" });
+    drawInteriorIsoBox(ctx, x - 19 * s, y - 16 * s, 30 * s, 18 * s, 8 * s, { ...colors, top: "#ffffff", left: "#e8edf4", right: "#cfd8e4" });
+    drawInteriorIsoBox(ctx, x + 17 * s, y - 3 * s, 38 * s, 29 * s, 7 * s, { ...colors, top: careBed ? "#f4978e" : "#cfe6a8", left: careBed ? "#df5b3f" : "#90be6d", right: careBed ? "#b43d2d" : "#5d9b58" });
+    if (careBed) {
+      [-39, 39].forEach(dx => {
+        ctx.strokeStyle = "#1a1a2e";
+        ctx.lineWidth = 2.2;
+        ctx.beginPath();
+        ctx.moveTo(x + dx * s, y - 18 * s);
+        ctx.lineTo(x + dx * s, y + 6 * s);
+        ctx.moveTo(x + dx * s, y - 10 * s);
+        ctx.lineTo(x + (dx > 0 ? 24 : -24) * s, y - 4 * s);
+        ctx.stroke();
+      });
+      drawInterior3DMonitor(ctx, x + 50 * s, y - 8 * s, 0.55 * s, "#52b6a8");
+    } else {
+      drawInterior3DPillow(ctx, x - 4 * s, y - 21 * s, 13, 7, s, "#fff8e7");
+      drawInteriorPlant(ctx, x + 50 * s, y - 6 * s, 0.46 * s, accent);
+    }
   } else if (model === "counter") {
-    drawInteriorIsoBox(ctx, x, y, 78 * s, 34 * s, 26 * s, { ...colors, top: "#fff7dc" });
+    const commerceCounter = /交易|补给|热食|柜台/.test(`${blueprint?.title || ""} ${prop.label || ""}`);
+    const careCounter = /照护|护理/.test(`${blueprint?.title || ""} ${prop.label || ""}`);
+    drawInteriorIsoBox(ctx, x, y, commerceCounter ? 86 * s : 78 * s, 36 * s, 28 * s, { ...colors, top: "#fff7dc" });
+    drawInteriorIsoBox(ctx, x, y - 26 * s, commerceCounter ? 74 * s : 58 * s, 12 * s, 9 * s, { ...colors, top: commerceCounter ? "#ffd166" : "#eaf7f3", left: commerceCounter ? "#df5b3f" : "#52b6a8", right: commerceCounter ? "#9f3b2b" : "#317d73" });
     if (/交易|补给|热食|柜台/.test(`${blueprint?.title || ""} ${prop.label || ""}`)) {
-      for (let i = -2; i <= 2; i++) {
+      for (let i = -3; i <= 3; i++) {
         ctx.fillStyle = i % 2 ? "#fff8e7" : "#ef476f";
         ctx.strokeStyle = "#1a1a2e";
         ctx.lineWidth = 1.5;
-        roundRect(ctx, x + i * 12 * s - 5 * s, y - 47 * s, 10 * s, 18 * s, 2 * s);
+        roundRect(ctx, x + i * 11 * s - 5 * s, y - 57 * s, 10 * s, 22 * s, 2 * s);
         ctx.fill();
         ctx.stroke();
       }
+      drawInterior3DBasket(ctx, x - 28 * s, y - 30 * s, 0.48 * s);
+      drawInterior3DBasket(ctx, x + 28 * s, y - 27 * s, 0.45 * s);
     } else if (/照护|护理/.test(`${blueprint?.title || ""} ${prop.label || ""}`)) {
       ctx.fillStyle = "#ef476f";
       roundRect(ctx, x - 5 * s, y - 53 * s, 10 * s, 28 * s, 2 * s);
       ctx.fill();
       roundRect(ctx, x - 16 * s, y - 44 * s, 32 * s, 10 * s, 2 * s);
       ctx.fill();
+      drawInterior3DMonitor(ctx, x + 30 * s, y - 28 * s, 0.42 * s, "#52b6a8");
     } else {
       drawInteriorBookStack(ctx, x - 12 * s, y - 31 * s, s);
+      drawInterior3DHandle(ctx, x + 24 * s, y - 18 * s, s, "#7b6fd6");
     }
   } else if (model === "seating") {
-    drawInteriorChair(ctx, x - 18 * s, y + 4 * s, s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
-    drawInteriorChair(ctx, x + 18 * s, y + 4 * s, s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
     if (/沙发|小坐/.test(prop.label || "")) {
-      drawInteriorIsoBox(ctx, x, y + 14 * s, 82 * s, 28 * s, 18 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
+      drawInteriorIsoBox(ctx, x, y + 12 * s, 88 * s, 30 * s, 16 * s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
+      drawInteriorIsoBox(ctx, x, y - 10 * s, 88 * s, 12 * s, 28 * s, { ...colors, top: "#cde7f0", left: "#7fb3d5", right: "#4f83cc" });
+      drawInterior3DPillow(ctx, x - 22 * s, y - 23 * s, 11, 7, s, "#ffd166");
+      drawInterior3DPillow(ctx, x + 18 * s, y - 20 * s, 11, 7, s, "#ff9aa2");
+      drawInteriorIsoBox(ctx, x + 5 * s, y + 34 * s, 38 * s, 20 * s, 10 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
+    } else {
+      drawInteriorChair(ctx, x - 18 * s, y + 4 * s, s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
+      drawInteriorChair(ctx, x + 18 * s, y + 4 * s, s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
     }
   } else if (model === "shelf") {
-    drawInteriorIsoBox(ctx, x, y, 58 * s, 24 * s, 62 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
+    const medical = /药品/.test(prop.label || "");
+    const archive = /档案/.test(prop.label || "");
+    drawInteriorIsoBox(ctx, x, y, 62 * s, 26 * s, 66 * s, { ...colors, top: medical ? "#eef7f3" : "#d6a86b", left: medical ? "#9ed8cf" : "#b77946", right: medical ? "#52b6a8" : "#8a5933" });
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 1.6;
     for (let r = 0; r < 3; r++) {
       const yy = y - 48 * s + r * 17 * s;
       ctx.beginPath();
-      ctx.moveTo(x - 23 * s, yy);
-      ctx.lineTo(x + 23 * s, yy + 3 * s);
+      ctx.moveTo(x - 25 * s, yy);
+      ctx.lineTo(x + 25 * s, yy + 3 * s);
       ctx.stroke();
     }
-    for (let i = 0; i < 5; i++) {
-      ctx.fillStyle = ["#ef476f", "#4f83cc", "#06d6a0", "#ffd166", "#8d99ae"][i % 5];
-      roundRect(ctx, x - 24 * s + i * 10 * s, y - 55 * s + (i % 2) * 15 * s, 7 * s, 18 * s, 2 * s);
-      ctx.fill();
-      ctx.stroke();
-    }
+    drawInteriorShelfGoods(ctx, x, y - 50 * s, 0.78 * s, medical ? ["#ef476f", "#52b6a8", "#bde0fe", "#fff3bf"] : archive ? ["#8d99ae", "#d6a86b", "#4f83cc", "#8d99ae"] : undefined);
+    drawInteriorShelfGoods(ctx, x + 2 * s, y - 28 * s, 0.7 * s);
+    [-13, 13].forEach(dx => drawInterior3DHandle(ctx, x + dx * s, y - 9 * s, 0.7 * s, "#ffd166"));
   } else if (model === "toy-corner") {
-    drawInteriorIsoBox(ctx, x, y, 66 * s, 38 * s, 10 * s, { ...colors, top: "#ffe8a3", left: "#ffd166", right: "#e9b949" });
+    drawInteriorIsoBox(ctx, x, y, 70 * s, 40 * s, 9 * s, { ...colors, top: "#ffe8a3", left: "#ffd166", right: "#e9b949" });
+    drawInterior3DPillow(ctx, x, y - 24 * s, 18, 13, s, "#c97b4b");
+    drawInterior3DPillow(ctx, x - 14 * s, y - 41 * s, 7, 6, s, "#c97b4b");
+    drawInterior3DPillow(ctx, x + 14 * s, y - 41 * s, 7, 6, s, "#c97b4b");
     ["#ef476f", "#06d6a0", "#4f83cc"].forEach((c, i) => {
       ctx.fillStyle = c;
       ctx.strokeStyle = "#1a1a2e";
       ctx.lineWidth = 1.8;
-      ctx.beginPath();
-      ctx.arc(x - 18 * s + i * 18 * s, y - 20 * s - (i % 2) * 6 * s, 8 * s, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      drawInteriorIsoBox(ctx, x - 25 * s + i * 19 * s, y - 5 * s - (i % 2) * 4 * s, 14 * s, 12 * s, 10 * s, { ...colors, top: c, left: c, right: darken(c, 18) });
     });
   } else if (model === "plant-zone") {
-    drawInteriorIsoBox(ctx, x, y + 8 * s, 78 * s, 36 * s, 9 * s, { ...colors, top: "#d7f0c1", left: "#8dc56c", right: "#5d9b58" });
-    [-24, 0, 24].forEach((dx, i) => drawInteriorPlant(ctx, x + dx * s, y - (i % 2) * 5 * s, 0.78 * s, accent));
+    drawInteriorIsoBox(ctx, x, y + 8 * s, 82 * s, 38 * s, 10 * s, { ...colors, top: "#d7f0c1", left: "#8dc56c", right: "#5d9b58" });
+    [-28, 0, 28].forEach((dx, i) => {
+      drawInteriorIsoCylinder(ctx, x + dx * s, y - (i % 2) * 4 * s, 9 * s, 5 * s, 13 * s, { ...colors, top: "#c97b4b", side: "#b77946", shade: "#8a5933" });
+      drawInteriorPlant(ctx, x + dx * s, y - 15 * s - (i % 2) * 4 * s, 0.62 * s, accent);
+    });
   } else if (model === "reading") {
-    drawInteriorChair(ctx, x - 20 * s, y + 8 * s, 0.92 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
-    drawInteriorIsoBox(ctx, x + 18 * s, y + 7 * s, 38 * s, 24 * s, 12 * s, colors);
-    drawInteriorBookStack(ctx, x + 13 * s, y - 10 * s, 0.9 * s);
+    drawInteriorChair(ctx, x - 22 * s, y + 8 * s, 0.92 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
+    drawInteriorIsoBox(ctx, x + 18 * s, y + 7 * s, 42 * s, 24 * s, 13 * s, colors);
+    drawInteriorBookStack(ctx, x + 13 * s, y - 11 * s, 0.9 * s);
+    drawInteriorPlant(ctx, x + 45 * s, y - 5 * s, 0.42 * s, accent);
   } else if (model === "podium") {
-    drawInteriorIsoBox(ctx, x, y, 52 * s, 32 * s, 36 * s, { ...colors, top: "#fff7dc", left: "#d6a86b", right: "#a66a3f" });
+    drawInteriorIsoBox(ctx, x, y, 56 * s, 34 * s, 38 * s, { ...colors, top: "#fff7dc", left: "#d6a86b", right: "#a66a3f" });
+    drawInteriorIsoBox(ctx, x, y - 32 * s, 48 * s, 12 * s, 10 * s, { ...colors, top: "#fff1bf", left: "#e9c37d", right: "#b77946" });
     ctx.fillStyle = accent;
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
@@ -5869,16 +5705,23 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
     ctx.arc(x, y - 55 * s, 13 * s, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + 14 * s, y - 48 * s);
+    ctx.lineTo(x + 30 * s, y - 62 * s);
+    ctx.stroke();
   } else if (model === "desk") {
-    drawInteriorIsoBox(ctx, x, y, 64 * s, 34 * s, 18 * s, colors);
+    drawInteriorIsoBox(ctx, x, y, 66 * s, 36 * s, 18 * s, colors);
     drawInteriorLegs(ctx, x, y + 8 * s, 46 * s, 20 * s, 20 * s, trim);
     if (/工位/.test(prop.label || "")) {
-      drawInteriorIsoBox(ctx, x - 8 * s, y - 25 * s, 28 * s, 8 * s, 24 * s, { ...colors, top: "#cde7f0", left: "#4f83cc", right: "#265b84" });
+      drawInterior3DMonitor(ctx, x - 8 * s, y - 23 * s, s, "#4f83cc");
+      drawInteriorIsoBox(ctx, x + 20 * s, y - 16 * s, 22 * s, 14 * s, 5 * s, { ...colors, top: "#293241", left: "#4f83cc", right: "#265b84" });
     } else {
       drawInteriorBookStack(ctx, x - 8 * s, y - 20 * s, 0.75 * s);
+      drawInteriorIsoBox(ctx, x + 17 * s, y - 15 * s, 20 * s, 12 * s, 5 * s, { ...colors, top: "#fff8e7", left: "#e8edf4", right: "#cfd8e4" });
     }
   } else if (model === "wall-board") {
-    drawInteriorIsoBox(ctx, x, y, 70 * s, 14 * s, 48 * s, { ...colors, top: "#eaf7f3", left: "#b7d9cc", right: "#7da89a" });
+    drawInteriorIsoBox(ctx, x, y, 76 * s, 15 * s, 50 * s, { ...colors, top: "#eaf7f3", left: "#b7d9cc", right: "#7da89a" });
+    [-32, 32].forEach(dx => drawInteriorIsoBox(ctx, x + dx * s, y + 8 * s, 7 * s, 7 * s, 44 * s, { ...colors, top: trim, left: trim, right: darken(trim, 18) }));
     ctx.strokeStyle = trim;
     ctx.lineWidth = 1.7;
     for (let i = 0; i < 3; i++) {
@@ -5888,17 +5731,13 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
       ctx.stroke();
     }
   } else if (model === "round-table") {
-    ctx.fillStyle = "#fff1bf";
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2.5;
-    ctx.beginPath();
-    ctx.ellipse(x, y - 20 * s, 34 * s, 15 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    drawInteriorIsoCylinder(ctx, x, y + 4 * s, 34 * s, 15 * s, 15 * s, { ...colors, top: "#fff1bf", side: "#d6a86b", shade: "#a66a3f" });
+    drawInterior3DHandle(ctx, x, y - 19 * s, 1.1 * s, accent);
     drawInteriorLegs(ctx, x, y + 2 * s, 44 * s, 18 * s, 26 * s, trim);
     [-44, 44].forEach(dx => drawInteriorChair(ctx, x + dx * s, y + 8 * s, 0.72 * s, colors));
   } else if (model === "workbench") {
-    drawInteriorIsoBox(ctx, x, y, 82 * s, 36 * s, 20 * s, { ...colors, top: "#d8dee9", left: "#7f8c9a", right: "#596674" });
+    drawInteriorIsoBox(ctx, x, y, 86 * s, 38 * s, 21 * s, { ...colors, top: "#d8dee9", left: "#7f8c9a", right: "#596674" });
+    drawInteriorIsoBox(ctx, x - 28 * s, y - 24 * s, 28 * s, 12 * s, 16 * s, { ...colors, top: "#f1c40f", left: "#c9931d", right: "#8a6d1d" });
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 3;
     [["#f1c40f", -22], ["#ef476f", 0], ["#4f83cc", 22]].forEach(([c, dx]) => {
@@ -5908,6 +5747,7 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
       ctx.fill();
       ctx.stroke();
     });
+    if (/设备/.test(prop.label || "")) drawInteriorIsoCylinder(ctx, x + 28 * s, y - 11 * s, 11 * s, 6 * s, 22 * s, { ...colors, top: "#06d6a0", side: "#7f8c9a", shade: "#596674" });
   } else if (model === "easel") {
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 3;
@@ -5918,6 +5758,7 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
     ctx.lineTo(x + 24 * s, y + 4 * s);
     ctx.stroke();
     drawInteriorIsoBox(ctx, x, y - 22 * s, 46 * s, 10 * s, 34 * s, { ...colors, top: "#f8f2e5", left: "#f7e8f1", right: "#d7588a" });
+    drawInteriorIsoBox(ctx, x + 30 * s, y + 3 * s, 28 * s, 16 * s, 8 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
   } else if (model === "stage") {
     drawInteriorIsoBox(ctx, x, y + 10 * s, 88 * s, 42 * s, 12 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
     ctx.fillStyle = "#ef476f";
@@ -5926,14 +5767,16 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
       ctx.fill();
       ctx.stroke();
     });
+    drawInteriorIsoBox(ctx, x, y - 5 * s, 42 * s, 16 * s, 12 * s, { ...colors, top: "#fff1bf", left: "#e9c37d", right: "#c9931d" });
   } else if (model === "music") {
     drawInteriorIsoBox(ctx, x, y, 54 * s, 34 * s, 20 * s, { ...colors, top: "#f7e8f1", left: "#d7588a", right: "#8e3158" });
+    drawInteriorIsoBox(ctx, x - 28 * s, y - 4 * s, 20 * s, 12 * s, 28 * s, { ...colors, top: "#293241", left: "#4f83cc", right: "#1d3557" });
     ctx.fillStyle = "#1a1a2e";
     ctx.font = `${Math.round(28 * s)}px Arial`;
     ctx.textAlign = "center";
     ctx.fillText("♪", x + 2 * s, y - 31 * s);
   } else if (model === "altar") {
-    drawInteriorIsoBox(ctx, x, y, 66 * s, 34 * s, 22 * s, { ...colors, top: "#f8f2e5", left: "#d4ccdf", right: "#8371ad" });
+    drawInteriorIsoBox(ctx, x, y, 70 * s, 36 * s, 24 * s, { ...colors, top: "#f8f2e5", left: "#d4ccdf", right: "#8371ad" });
     ["#ffd166", "#fff3bf", "#ffd166"].forEach((c, i) => {
       ctx.fillStyle = c;
       ctx.strokeStyle = "#1a1a2e";
@@ -5941,8 +5784,10 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
       ctx.fill();
       ctx.stroke();
     });
+    drawInterior3DPillow(ctx, x + 28 * s, y - 35 * s, 6, 10, s, "#ff9aa2");
   } else if (model === "sink") {
-    drawInteriorIsoBox(ctx, x, y, 58 * s, 30 * s, 24 * s, { ...colors, top: "#eaf7f3", left: "#9ec5cf", right: "#6a9aaa" });
+    drawInteriorIsoBox(ctx, x, y, 60 * s, 31 * s, 24 * s, { ...colors, top: "#eaf7f3", left: "#9ec5cf", right: "#6a9aaa" });
+    drawInteriorIsoBox(ctx, x, y - 36 * s, 48 * s, 8 * s, 38 * s, { ...colors, top: "#eaf7f3", left: "#bde0fe", right: "#8ecae6" });
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -6101,19 +5946,10 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
   ctx.lineJoin = "round";
   drawInteriorShadow(ctx, x, y + 3 * s, 42 * s, isNight ? 0.18 : 0.11);
 
-  const spriteKey = interiorDecorSpriteKey(item.type);
-  if (spriteKey) {
-    const spriteW = (INTERIOR_PROP_DRAW_WIDTHS[spriteKey] || 62) * clamp(s, 0.75, 1.35);
-    if (drawInteriorBoardSprite(ctx, spriteKey, x, y + 6 * s, spriteW, { anchorY: 0.94, alpha: isNight ? 0.92 : 1 })) {
-      ctx.restore();
-      return;
-    }
-  }
-
   if (item.type === "plant") {
     drawInteriorPlant(ctx, x, y, s, style.accent);
   } else if (item.type === "flowerbox") {
-    drawInteriorIsoBox(ctx, x, y + 8 * s, 62 * s, 24 * s, 8 * s, { ...colors, top: "#d7f0c1", left: "#8dc56c", right: "#5d9b58" });
+    drawInteriorIsoBox(ctx, x, y + 8 * s, 66 * s, 25 * s, 10 * s, { ...colors, top: "#d7f0c1", left: "#8dc56c", right: "#5d9b58" });
     [-20, 0, 20].forEach((dx, i) => {
       ctx.fillStyle = ["#ff9aa2", "#ffd166", "#86efac"][i];
       ctx.strokeStyle = "#1a1a2e";
@@ -6121,6 +5957,11 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
       ctx.beginPath();
       ctx.arc(x + dx * s, y - 6 * s, 6 * s, 0, Math.PI * 2);
       ctx.fill();
+      ctx.stroke();
+      ctx.strokeStyle = style.trim;
+      ctx.beginPath();
+      ctx.moveTo(x + dx * s, y + 2 * s);
+      ctx.lineTo(x + dx * s, y - 11 * s);
       ctx.stroke();
     });
   } else if (item.type === "floor-lamp" || item.type === "reading-lamp") {
@@ -6135,7 +5976,7 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
     ctx.ellipse(x, y - 55 * s, 16 * s, 11 * s, 0, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
-    drawInteriorIsoBox(ctx, x, y + 4 * s, 26 * s, 16 * s, 5 * s, colors);
+    drawInteriorIsoCylinder(ctx, x, y + 4 * s, 14 * s, 7 * s, 5 * s, { ...colors, top: "#fff1bf", side: "#d6a86b", shade: "#8a5933" });
   } else if (item.type === "iv-stand") {
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
@@ -6169,8 +6010,10 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
       ctx.fill();
       ctx.stroke();
     });
+    [-18, 18].forEach(dx => drawInteriorIsoCylinder(ctx, x + dx * s, y + 13 * s, 4 * s, 2.5 * s, 3 * s, { ...colors, top: "#293241", side: "#596674", shade: "#293241" }));
   } else if (item.type === "stroller") {
-    drawInteriorIsoBox(ctx, x, y - 3 * s, 45 * s, 26 * s, 16 * s, { ...colors, top: "#f4978e", left: "#ef476f", right: "#b43d2d" });
+    drawInteriorIsoBox(ctx, x, y - 3 * s, 46 * s, 27 * s, 16 * s, { ...colors, top: "#f4978e", left: "#ef476f", right: "#b43d2d" });
+    drawInteriorIsoCylinder(ctx, x, y - 22 * s, 22 * s, 8 * s, 10 * s, { ...colors, top: "#ffd6e0", side: "#ef476f", shade: "#b43d2d" });
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
     ctx.beginPath();
@@ -6190,6 +6033,8 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
     ctx.fill();
     ctx.stroke();
     drawInteriorIsoBox(ctx, x, y + 2 * s, 44 * s, 26 * s, 5 * s, { ...colors, top: "#ffd6e0", left: "#ff9aa2", right: "#ef476f" });
+    drawInterior3DHandle(ctx, x - 5 * s, y - 27 * s, 0.6 * s, "#293241");
+    drawInterior3DHandle(ctx, x + 5 * s, y - 27 * s, 0.6 * s, "#293241");
   } else if (item.type === "book-pile" || item.type === "file-stack") {
     drawInteriorBookStack(ctx, x - 12 * s, y - 8 * s, 0.85 * s);
     drawInteriorBookStack(ctx, x + 10 * s, y - 1 * s, 0.72 * s);
@@ -6206,13 +6051,7 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
     ctx.stroke();
   } else if (item.type === "floor-cushions") {
     [["#ffd166", -18, -5], ["#ef476f", 8, -2], ["#86efac", 0, 14]].forEach(([c, dx, dy]) => {
-      ctx.fillStyle = c;
-      ctx.strokeStyle = "#1a1a2e";
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.ellipse(x + dx * s, y + dy * s, 18 * s, 10 * s, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
+      drawInterior3DPillow(ctx, x + dx * s, y + dy * s, 18, 10, s, c);
     });
   } else if (item.type === "hanging-lights") {
     [-52, -18, 18, 52].forEach((dx) => {
@@ -6232,13 +6071,7 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
     const count = item.type === "fruit-crates" ? 3 : 1;
     for (let box = 0; box < count; box++) {
       const bx = x + (box - 1) * 34 * s;
-      drawInteriorIsoBox(ctx, bx, y + (box % 2) * 6 * s, 34 * s, 24 * s, 10 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
-      ["#ef476f", "#ffd166", "#86efac"].forEach((c, i) => {
-        ctx.fillStyle = c;
-        ctx.beginPath();
-        ctx.arc(bx - 9 * s + i * 9 * s, y - 8 * s, 4.5 * s, 0, Math.PI * 2);
-        ctx.fill();
-      });
+      drawInterior3DBasket(ctx, bx, y + (box % 2) * 6 * s, 0.92 * s);
     }
   } else if (item.type === "menu-board" || item.type === "notice-cards") {
     drawInteriorIsoBox(ctx, x, y, 56 * s, 16 * s, 46 * s, { ...colors, top: "#fff4d6", left: "#d6a86b", right: "#8a5933" });
@@ -6251,28 +6084,28 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
       ctx.stroke();
     }
   } else if (item.type === "lantern") {
-    drawInteriorIsoBox(ctx, x, y, 26 * s, 20 * s, 10 * s, { ...colors, top: "#f8f2e5", left: "#d6a86b", right: "#8a5933" });
-    ctx.fillStyle = "#ffd166";
+    drawInteriorIsoCylinder(ctx, x, y, 14 * s, 7 * s, 9 * s, { ...colors, top: "#f8f2e5", side: "#d6a86b", shade: "#8a5933" });
+    drawInteriorIsoCylinder(ctx, x, y - 20 * s, 10 * s, 6 * s, 25 * s, { ...colors, top: "#fff3bf", side: "#ffd166", shade: "#c9931d" });
     ctx.strokeStyle = "#1a1a2e";
-    roundRect(ctx, x - 9 * s, y - 42 * s, 18 * s, 32 * s, 6 * s);
-    ctx.fill();
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.arc(x, y - 47 * s, 9 * s, Math.PI, Math.PI * 2);
     ctx.stroke();
   } else if (item.type === "bench" || item.type === "quiet-bench") {
     drawInteriorIsoBox(ctx, x, y, 76 * s, 24 * s, 13 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
     drawInteriorIsoBox(ctx, x, y - 25 * s, 72 * s, 12 * s, 18 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
+    [-24, 24].forEach(dx => drawInteriorIsoBox(ctx, x + dx * s, y + 8 * s, 7 * s, 7 * s, 18 * s, { ...colors, top: "#8a5933", left: "#8a5933", right: "#60472d" }));
   } else if (item.type === "fountain-mini") {
-    ctx.fillStyle = "#bde0fe";
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2.2;
-    ctx.beginPath();
-    ctx.ellipse(x, y, 36 * s, 17 * s, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#4f83cc";
-    ctx.beginPath();
-    ctx.arc(x, y - 24 * s, 11 * s, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
+    drawInteriorIsoCylinder(ctx, x, y, 36 * s, 17 * s, 10 * s, { ...colors, top: "#bde0fe", side: "#8ecae6", shade: "#4f83cc" });
+    drawInteriorIsoCylinder(ctx, x, y - 18 * s, 12 * s, 7 * s, 22 * s, { ...colors, top: "#dbeafe", side: "#8ecae6", shade: "#4f83cc" });
+    ctx.strokeStyle = "#4f83cc";
+    ctx.lineWidth = 1.6;
+    [-10, 0, 10].forEach(dx => {
+      ctx.beginPath();
+      ctx.moveTo(x, y - 42 * s);
+      ctx.quadraticCurveTo(x + dx * s, y - 54 * s, x + dx * 1.5 * s, y - 31 * s);
+      ctx.stroke();
+    });
   } else if (item.type === "machine") {
     drawInteriorIsoBox(ctx, x, y, 64 * s, 38 * s, 42 * s, { ...colors, top: "#d8dee9", left: "#7f8c9a", right: "#596674" });
     ctx.fillStyle = "#06d6a0";
@@ -6281,6 +6114,7 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
     ctx.arc(x + 17 * s, y - 46 * s, 8 * s, 0, Math.PI * 2);
     ctx.fill();
     ctx.stroke();
+    drawInteriorIsoCylinder(ctx, x - 16 * s, y - 16 * s, 8 * s, 4 * s, 18 * s, { ...colors, top: "#f1c40f", side: "#7f8c9a", shade: "#596674" });
   } else if (item.type === "cable-rug") {
     ctx.strokeStyle = "#1a1a2e";
     ctx.lineWidth = 2;
@@ -6308,6 +6142,14 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
     });
   } else if (item.type === "greenhouse") {
     drawInteriorIsoBox(ctx, x, y, 70 * s, 42 * s, 34 * s, { ...colors, top: "#dff3f6", left: "#8ecae6", right: "#5b9dbd" });
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 1.4;
+    [-20, 0, 20].forEach(dx => {
+      ctx.beginPath();
+      ctx.moveTo(x + dx * s, y - 45 * s);
+      ctx.lineTo(x + dx * s, y - 8 * s);
+      ctx.stroke();
+    });
     drawInteriorPlant(ctx, x - 17 * s, y - 12 * s, 0.55 * s, style.accent);
     drawInteriorPlant(ctx, x + 17 * s, y - 10 * s, 0.55 * s, style.accent);
   } else if (item.type === "plant-rack") {
