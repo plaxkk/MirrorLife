@@ -5258,33 +5258,33 @@ function getInteriorLayout(W, H) {
 function getInteriorMaterialStyle(zone, blueprint) {
   const hint = `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""} ${blueprint?.title || ""}`;
   if (/照护|hospital|maternity|care|repair/.test(hint)) {
-    return { wall: "#eaf7f3", floor: "#d7eee6", accent: "#52b6a8", trim: "#317d73", roof: "#e84d5b", base: "#f7fbf8", window: "#bfe3f2", motif: "cross" };
+    return { wall: "#eaf7f3", floor: "#d7eee6", accent: "#52b6a8", trim: "#317d73", motif: "cross" };
   }
   if (/学习|school|university|kinder|learn|mentor/.test(hint)) {
-    return { wall: "#f5eedc", floor: "#e8d8ad", accent: "#4f83cc", trim: "#2f5d90", roof: "#2f8f68", base: "#fff7dc", window: "#bde0fe", motif: "books" };
+    return { wall: "#f5eedc", floor: "#e8d8ad", accent: "#4f83cc", trim: "#2f5d90", motif: "books" };
   }
   if (/交易|commercial|market|shop|kitchen|resource/.test(hint)) {
-    return { wall: "#fff0d1", floor: "#e9c37d", accent: "#df5b3f", trim: "#9f3b2b", roof: "#ef476f", base: "#fff4d6", window: "#bde0fe", motif: "awning" };
+    return { wall: "#fff0d1", floor: "#e9c37d", accent: "#df5b3f", trim: "#9f3b2b", motif: "awning" };
   }
   if (/公共|plaza|forum|civic/.test(hint)) {
-    return { wall: "#eef1ff", floor: "#d8ddf0", accent: "#7b6fd6", trim: "#4b44a2", roof: "#2f7cc0", base: "#f7f8ff", window: "#c9e8f7", motif: "circle" };
+    return { wall: "#eef1ff", floor: "#d8ddf0", accent: "#7b6fd6", trim: "#4b44a2", motif: "circle" };
   }
   if (/调停|legal|court|justice/.test(hint)) {
-    return { wall: "#f1eadc", floor: "#d0bea0", accent: "#8b6b3e", trim: "#60472d", roof: "#2f7cc0", base: "#f8f2e5", window: "#c9e8f7", motif: "columns" };
+    return { wall: "#f1eadc", floor: "#d0bea0", accent: "#8b6b3e", trim: "#60472d", motif: "columns" };
   }
   if (/协作|work|office|factory|craft|commons/.test(hint)) {
-    return { wall: "#eaf0f4", floor: "#c7d1d9", accent: "#3f88c5", trim: "#265b84", roof: "#f1c40f", base: "#eef3f7", window: "#8ecae6", motif: "grid" };
+    return { wall: "#eaf0f4", floor: "#c7d1d9", accent: "#3f88c5", trim: "#265b84", motif: "grid" };
   }
   if (/表达|creative|studio|story|archive/.test(hint)) {
-    return { wall: "#f7e8f1", floor: "#e1c4d4", accent: "#d7588a", trim: "#8e3158", roof: "#d7588a", base: "#fff1bf", window: "#dbeafe", motif: "frames" };
+    return { wall: "#f7e8f1", floor: "#e1c4d4", accent: "#d7588a", trim: "#8e3158", motif: "frames" };
   }
   if (/生态|park|garden|farm|nature|zoo|botanical/.test(hint)) {
-    return { wall: "#eaf6df", floor: "#c9ddb5", accent: "#5d9b58", trim: "#386a35", roof: "#2f8f68", base: "#eaf6df", window: "#bde0fe", motif: "leaf" };
+    return { wall: "#eaf6df", floor: "#c9ddb5", accent: "#5d9b58", trim: "#386a35", motif: "leaf" };
   }
   if (/安宁|memory|cemetery|quiet/.test(hint)) {
-    return { wall: "#ece8f4", floor: "#d4ccdf", accent: "#8371ad", trim: "#4d4368", roof: "#8371ad", base: "#f7f1e6", window: "#c9e8f7", motif: "candle" };
+    return { wall: "#ece8f4", floor: "#d4ccdf", accent: "#8371ad", trim: "#4d4368", motif: "candle" };
   }
-  return { wall: "#f0e8d8", floor: "#e6d5b8", accent: zone?.color || "#8d99ae", trim: "#4a3f35", roof: "#e85d4f", base: "#fff7dc", window: "#bfe3f2", motif: "home" };
+  return { wall: "#f0e8d8", floor: "#e6d5b8", accent: zone?.color || "#8d99ae", trim: "#4a3f35", motif: "home" };
 }
 
 function projectInteriorPoint(layout, nx, nz, height = 0) {
@@ -5311,61 +5311,6 @@ function getInteriorAnchors(blueprint, layout) {
     behaviors: prop.behaviors || ["tea"],
     index
   }));
-}
-
-function drawInteriorOrbitBackdrop(ctx, W, H, layout, style, isNight) {
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, isNight ? "#101827" : "#dff3f6");
-  bg.addColorStop(0.54, isNight ? "#1d2a3f" : "#ecfbf4");
-  bg.addColorStop(1, isNight ? "#253047" : "#eef8f2");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
-
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-  const horizonY = layout.floorTop + layout.roomD * 0.34;
-  ctx.strokeStyle = isNight ? "rgba(250,250,245,0.08)" : "rgba(26,26,46,0.08)";
-  ctx.lineWidth = 2;
-  for (let i = 0; i < 3; i++) {
-    const y = horizonY + i * 56;
-    ctx.beginPath();
-    ctx.moveTo(-40, y + layout.yaw * 28);
-    ctx.bezierCurveTo(W * 0.25, y - 36, W * 0.55, y + 44, W + 40, y - 12);
-    ctx.stroke();
-  }
-
-  const drawDistantBlock = (x, y, w, h, roof) => {
-    ctx.fillStyle = isNight ? "rgba(250,250,245,0.07)" : "rgba(255,255,255,0.48)";
-    ctx.strokeStyle = isNight ? "rgba(250,250,245,0.1)" : "rgba(26,26,46,0.11)";
-    ctx.lineWidth = 1.5;
-    roundRect(ctx, x, y, w, h, 6);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = hexWithAlpha(roof, isNight ? 0.22 : 0.48);
-    ctx.beginPath();
-    ctx.moveTo(x - 4, y + 7);
-    ctx.lineTo(x + w * 0.5, y - 14);
-    ctx.lineTo(x + w + 4, y + 7);
-    ctx.closePath();
-    ctx.fill();
-  };
-  const seedOffset = Math.round(layout.yaw * 48);
-  [
-    [W * 0.08 + seedOffset, H * 0.2, 86, 54],
-    [W * 0.77 + seedOffset * 0.4, H * 0.22, 96, 58],
-    [W * 0.58 - seedOffset * 0.2, H * 0.16, 70, 44]
-  ].forEach(([x, y, w, h], i) => drawDistantBlock(x, y, w, h, i % 2 ? style.roof : style.accent));
-
-  ctx.fillStyle = isNight ? "rgba(93,155,88,0.18)" : "rgba(93,155,88,0.32)";
-  for (let i = 0; i < 9; i++) {
-    const x = (i * 173 + 47 + seedOffset * 2) % (W + 120) - 60;
-    const y = H * 0.62 + (i % 3) * 28;
-    ctx.beginPath();
-    ctx.ellipse(x, y, 28 + (i % 2) * 8, 11, -0.1, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.restore();
 }
 
 function interiorPropModel(prop, blueprint) {
@@ -6366,32 +6311,6 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   const frontRight = projectInteriorPoint(layout, 1.02, 1.05, 0);
   const backTopLeft = { x: backLeft.x + layout.yaw * 38, y: layout.wallTop };
   const backTopRight = { x: backRight.x + layout.yaw * 38, y: layout.wallTop };
-  const baseDrop = 30;
-
-  // Thick floating base, matching the outdoor building sprites.
-  ctx.save();
-  ctx.fillStyle = isNight ? darken(style.base || style.floor, 45) : (style.base || "#fff7dc");
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 3;
-  ctx.beginPath();
-  ctx.moveTo(backLeft.x, backLeft.y);
-  ctx.lineTo(backRight.x, backRight.y);
-  ctx.lineTo(frontRight.x, frontRight.y);
-  ctx.lineTo(frontRight.x - 18, frontRight.y + baseDrop);
-  ctx.lineTo(frontLeft.x + 18, frontLeft.y + baseDrop);
-  ctx.lineTo(frontLeft.x, frontLeft.y);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.22 : 0.16);
-  ctx.beginPath();
-  ctx.moveTo(frontLeft.x, frontLeft.y);
-  ctx.lineTo(frontRight.x, frontRight.y);
-  ctx.lineTo(frontRight.x - 18, frontRight.y + baseDrop);
-  ctx.lineTo(frontLeft.x + 18, frontLeft.y + baseDrop);
-  ctx.closePath();
-  ctx.fill();
-  ctx.restore();
 
   ctx.fillStyle = isNight ? darken(style.wall, 42) : style.wall;
   ctx.beginPath();
@@ -6408,31 +6327,23 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   ctx.lineWidth = 3;
   ctx.stroke();
 
-  // Thick roof cut and wall beams echo the exterior building sprites.
+  // Thick trim and cutaway beams echo the exterior building sprites.
   ctx.save();
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 18;
-  ctx.beginPath();
-  ctx.moveTo(backTopLeft.x - 8, backTopLeft.y + 3);
-  ctx.lineTo(backTopRight.x + 8, backTopRight.y + 3);
-  ctx.stroke();
-  ctx.strokeStyle = isNight ? darken(style.roof || style.trim, 24) : (style.roof || style.trim);
-  ctx.lineWidth = 13;
-  ctx.beginPath();
-  ctx.moveTo(backTopLeft.x - 7, backTopLeft.y + 2);
-  ctx.lineTo(backTopRight.x + 7, backTopRight.y + 2);
-  ctx.stroke();
   ctx.strokeStyle = style.trim;
-  ctx.lineWidth = 7;
+  ctx.lineWidth = 9;
   ctx.beginPath();
+  ctx.moveTo(backTopLeft.x, backTopLeft.y + 2);
+  ctx.lineTo(backTopRight.x, backTopRight.y + 2);
   ctx.moveTo(backLeft.x, backLeft.y - 3);
   ctx.lineTo(backRight.x, backRight.y - 3);
   ctx.stroke();
   ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 2.5;
+  ctx.lineWidth = 3;
   ctx.beginPath();
+  ctx.moveTo(backTopLeft.x, backTopLeft.y + 2);
+  ctx.lineTo(backTopRight.x, backTopRight.y + 2);
   ctx.moveTo(backLeft.x, backLeft.y - 3);
   ctx.lineTo(backRight.x, backRight.y - 3);
   ctx.stroke();
@@ -6453,19 +6364,13 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
     ctx.fill();
     ctx.stroke();
   }
-  ctx.strokeStyle = hexWithAlpha(style.trim, isNight ? 0.45 : 0.34);
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.moveTo(backLeft.x + 10, layout.floorTop - 42);
-  ctx.lineTo(backRight.x - 10, layout.floorTop - 42);
-  ctx.stroke();
   ctx.restore();
 
   // Side walls shift subtly with yaw, creating an orbiting room-box feel.
   const showLeft = layout.yaw > -0.5;
   const showRight = layout.yaw < 0.5;
   if (showLeft) {
-    ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.24 : 0.12);
+    ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.24 : 0.14);
     ctx.beginPath();
     ctx.moveTo(backTopLeft.x, backTopLeft.y);
     ctx.lineTo(backLeft.x, backLeft.y);
@@ -6476,14 +6381,6 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
     ctx.strokeStyle = "rgba(26,26,46,0.4)";
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = hexWithAlpha(style.roof || style.trim, isNight ? 0.22 : 0.18);
-    ctx.beginPath();
-    ctx.moveTo(backTopLeft.x, backTopLeft.y + 8);
-    ctx.lineTo(backLeft.x, backLeft.y);
-    ctx.lineTo(backLeft.x + 24, backLeft.y + 5);
-    ctx.lineTo(backTopLeft.x + 20, backTopLeft.y + 14);
-    ctx.closePath();
-    ctx.fill();
   }
   if (showRight) {
     ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.22 : 0.12);
@@ -6497,14 +6394,6 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
     ctx.strokeStyle = "rgba(26,26,46,0.38)";
     ctx.lineWidth = 2;
     ctx.stroke();
-    ctx.fillStyle = hexWithAlpha(style.roof || style.trim, isNight ? 0.2 : 0.16);
-    ctx.beginPath();
-    ctx.moveTo(backTopRight.x, backTopRight.y + 8);
-    ctx.lineTo(backRight.x, backRight.y);
-    ctx.lineTo(backRight.x - 24, backRight.y + 5);
-    ctx.lineTo(backTopRight.x - 20, backTopRight.y + 14);
-    ctx.closePath();
-    ctx.fill();
   }
 
   // Floor plane
@@ -6736,64 +6625,6 @@ function drawInteriorWallInstallations(ctx, W, H, layout, style, blueprint, isNi
   ctx.restore();
 }
 
-function drawInteriorRoomWindows(ctx, W, H, layout, style, isNight) {
-  const windows = [W * 0.2 + layout.yaw * 30, W * 0.8 + layout.yaw * 30];
-  windows.forEach((wx, index) => {
-    const winW = Math.min(118, W * 0.16);
-    const winH = 82;
-    const winX = wx - winW / 2;
-    const winY = layout.wallTop + 14;
-    ctx.save();
-    ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.28 : 0.16);
-    roundRect(ctx, winX - 7, winY + 8, winW + 14, winH + 12, 8);
-    ctx.fill();
-    ctx.fillStyle = isNight ? "#1c2541" : (style.window || "#bfe3f2");
-    roundRect(ctx, winX, winY, winW, winH, 7);
-    ctx.fill();
-    if (isNight) {
-      ctx.fillStyle = "#f7f4e9";
-      for (let s = 0; s < 5; s++) {
-        ctx.beginPath();
-        ctx.arc(winX + 12 + (s * 37) % (winW - 20), winY + 10 + (s * 23) % (winH - 20), 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else {
-      ctx.fillStyle = "#f6e27a";
-      ctx.beginPath();
-      ctx.arc(winX + winW * 0.72, winY + winH * 0.3, 11, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.strokeStyle = "rgba(255,255,255,0.72)";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(winX + 13, winY + 15);
-      ctx.lineTo(winX + winW - 18, winY + winH - 15);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 3;
-    roundRect(ctx, winX, winY, winW, winH, 7);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(winX + winW / 2, winY);
-    ctx.lineTo(winX + winW / 2, winY + winH);
-    ctx.moveTo(winX, winY + winH / 2);
-    ctx.lineTo(winX + winW, winY + winH / 2);
-    ctx.lineWidth = 2;
-    ctx.stroke();
-    drawInteriorIsoBox(ctx, winX + winW / 2, winY + winH + 18, winW * 0.62, 18, 7, {
-      stroke: "#1a1a2e",
-      top: style.base || "#fff7dc",
-      left: hexWithAlpha(style.accent, 0.62),
-      right: hexWithAlpha(style.trim, 0.62)
-    });
-    if (!isNight || index === 0) {
-      drawInteriorPlant(ctx, winX + winW / 2 - 18, winY + winH + 5, 0.52, style.accent);
-      drawInteriorPlant(ctx, winX + winW / 2 + 18, winY + winH + 7, 0.46, style.accent);
-    }
-    ctx.restore();
-  });
-}
-
 function pickInteriorAnchorBehavior(citizen, zone, anchor, now, idx) {
   const ids = Array.isArray(anchor?.behaviors) ? anchor.behaviors : [];
   if (!ids.length) return null;
@@ -6985,13 +6816,50 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
   const interiorAnchors = getInteriorAnchors(blueprint, layout);
 
-  drawInteriorOrbitBackdrop(ctx, W, H, layout, roomStyle, isNight);
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, isNight ? "#101827" : "#dff3f6");
+  bg.addColorStop(1, isNight ? "#253047" : "#eef8f2");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
   drawInteriorRoomShell(ctx, W, H, layout, roomStyle, isNight);
   drawInteriorWallInstallations(ctx, W, H, layout, roomStyle, blueprint, isNight);
   drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back");
 
-  drawInteriorRoomWindows(ctx, W, H, layout, roomStyle, isNight);
+  // Windows looking out to the sky
+  [W * 0.2 + layout.yaw * 30, W * 0.8 + layout.yaw * 30].forEach((wx) => {
+    const winW = Math.min(110, W * 0.16);
+    const winH = 78;
+    const winX = wx - winW / 2;
+    const winY = layout.wallTop + 14;
+    ctx.fillStyle = isNight ? "#1c2541" : "#bfe3f2";
+    roundRect(ctx, winX, winY, winW, winH, 6);
+    ctx.fill();
+    if (isNight) {
+      ctx.fillStyle = "#f7f4e9";
+      for (let s = 0; s < 5; s++) {
+        ctx.beginPath();
+        ctx.arc(winX + 12 + (s * 37) % (winW - 20), winY + 10 + (s * 23) % (winH - 20), 1.4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+    } else {
+      ctx.fillStyle = "#f6e27a";
+      ctx.beginPath();
+      ctx.arc(winX + winW * 0.72, winY + winH * 0.3, 11, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 3;
+    roundRect(ctx, winX, winY, winW, winH, 6);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(winX + winW / 2, winY);
+    ctx.lineTo(winX + winW / 2, winY + winH);
+    ctx.moveTo(winX, winY + winH / 2);
+    ctx.lineTo(winX + winW, winY + winH / 2);
+    ctx.lineWidth = 2;
+    ctx.stroke();
+  });
 
   // Exit door on the back wall
   const door = layout.door;
@@ -7174,240 +7042,7 @@ function drawCitizenGestureOverlay(ctx, anim, x, y, size, now, hasBubble) {
   }
 }
 
-const BONE_AI_VERSION = "mirrorlife-bone-ai-v1";
-
-function makeBonePoint(x, y) {
-  return { x, y };
-}
-
-function getCitizenBoneIntent(citizen, anim, now) {
-  const behavior = getActiveBehavior(anim, now);
-  const gesture = getActiveGesture(anim, now);
-  const walking = anim?.state === "walking";
-  const mood = Number.isFinite(Number(citizen?.mood)) ? Number(citizen.mood) : 50;
-  const energy = Number.isFinite(Number(citizen?.energy)) ? Number(citizen.energy) : 50;
-  let intent = behavior?.pose || "idle";
-  if (gesture?.type === "wave") intent = "wave";
-  else if (gesture?.type === "talk") intent = "talk";
-  else if (walking || behavior?.pose === "move") intent = behavior?.id === "run" ? "run" : "walk";
-  return {
-    behavior,
-    gesture,
-    intent,
-    mood,
-    energy,
-    expressive: !!behavior || !!gesture || walking
-  };
-}
-
-function buildCitizenBonePose(citizen, anim, x, y, size, now) {
-  const intent = getCitizenBoneIntent(citizen, anim, now);
-  if (!intent.expressive || intent.intent === "lie") return null;
-  const facing = anim?.facing || 1;
-  const seed = intent.behavior?.seed || hashCommunitySeed(citizen?.id || "citizen", intent.intent);
-  const phase = now * 0.012 + seed;
-  const beat = Math.sin(phase);
-  const alt = Math.cos(phase);
-  const moodLift = clamp((intent.mood - 50) / 50, -1, 1);
-  const energyLift = clamp((intent.energy - 50) / 50, -1, 1);
-  const lean = size * 0.08 * moodLift;
-  const bounce = intent.intent === "dance" || intent.intent === "run"
-    ? -Math.abs(Math.sin(now * 0.016 + seed)) * size * 0.2
-    : intent.intent === "stomp"
-      ? -Math.abs(beat) * size * 0.08
-      : 0;
-
-  const chest = makeBonePoint(x + facing * lean, y + size * 0.12 + bounce);
-  const pelvis = makeBonePoint(x - facing * lean * 0.35, y + size * 0.76 + bounce * 0.45);
-  const neck = makeBonePoint(chest.x, y - size * 0.12 + bounce);
-  const head = makeBonePoint(neck.x + facing * lean * 0.24, y - size * 0.33 + bounce);
-  const shoulderSpread = size * 0.28;
-  const hipSpread = size * 0.18;
-  const leftShoulder = makeBonePoint(chest.x - facing * shoulderSpread, chest.y + size * 0.03);
-  const rightShoulder = makeBonePoint(chest.x + facing * shoulderSpread, chest.y);
-  const leftHip = makeBonePoint(pelvis.x - facing * hipSpread, pelvis.y);
-  const rightHip = makeBonePoint(pelvis.x + facing * hipSpread, pelvis.y);
-
-  let leftElbow = makeBonePoint(leftShoulder.x - facing * size * 0.2, leftShoulder.y + size * 0.34);
-  let leftHand = makeBonePoint(leftShoulder.x - facing * size * 0.36, leftShoulder.y + size * 0.58);
-  let rightElbow = makeBonePoint(rightShoulder.x + facing * size * 0.2, rightShoulder.y + size * 0.32);
-  let rightHand = makeBonePoint(rightShoulder.x + facing * size * 0.38, rightShoulder.y + size * 0.52);
-  let leftKnee = makeBonePoint(leftHip.x - facing * size * 0.1, y + size * 0.98);
-  let leftFoot = makeBonePoint(leftHip.x - facing * size * 0.24, y + size * 1.16);
-  let rightKnee = makeBonePoint(rightHip.x + facing * size * 0.1, y + size * 0.98);
-  let rightFoot = makeBonePoint(rightHip.x + facing * size * 0.24, y + size * 1.16);
-
-  const setReach = (side = "right", high = false) => {
-    const hand = makeBonePoint(x + facing * size * 0.82, y + size * (high ? -0.28 : 0.08) + bounce);
-    const elbow = makeBonePoint(x + facing * size * 0.5, y + size * (high ? -0.08 : 0.22) + bounce);
-    if (side === "right") {
-      rightElbow = elbow; rightHand = hand;
-    } else {
-      leftElbow = elbow; leftHand = hand;
-    }
-  };
-
-  if (intent.intent === "walk" || intent.intent === "run") {
-    const stride = intent.intent === "run" ? 0.42 : 0.28;
-    const lift = intent.intent === "run" ? 0.18 : 0.09;
-    rightElbow = makeBonePoint(rightShoulder.x + facing * size * (0.18 - beat * 0.18), rightShoulder.y + size * (0.28 + alt * 0.12));
-    rightHand = makeBonePoint(rightShoulder.x + facing * size * (0.36 - beat * 0.28), rightShoulder.y + size * (0.52 + alt * 0.15));
-    leftElbow = makeBonePoint(leftShoulder.x - facing * size * (0.18 + beat * 0.18), leftShoulder.y + size * (0.28 - alt * 0.12));
-    leftHand = makeBonePoint(leftShoulder.x - facing * size * (0.36 + beat * 0.28), leftShoulder.y + size * (0.52 - alt * 0.15));
-    rightKnee = makeBonePoint(rightHip.x + facing * size * (0.1 + beat * 0.18), y + size * (0.98 - Math.max(0, beat) * size * 0.002));
-    rightFoot = makeBonePoint(rightHip.x + facing * size * (0.24 + beat * stride), y + size * (1.15 - Math.max(0, beat) * lift));
-    leftKnee = makeBonePoint(leftHip.x - facing * size * (0.1 - beat * 0.18), y + size * (0.98 + Math.min(0, beat) * size * 0.002));
-    leftFoot = makeBonePoint(leftHip.x - facing * size * (0.24 - beat * stride), y + size * (1.15 + Math.min(0, beat) * lift));
-  } else if (intent.intent === "wave") {
-    setReach("right", true);
-    rightHand.y += Math.sin(now * 0.024 + seed) * size * 0.18;
-    leftHand = makeBonePoint(leftShoulder.x - facing * size * 0.32, y + size * 0.4);
-  } else if (intent.intent === "talk") {
-    rightHand = makeBonePoint(x + facing * size * (0.56 + beat * 0.14), y + size * (0.16 + alt * 0.08));
-    rightElbow = makeBonePoint(x + facing * size * 0.34, y + size * 0.25);
-    leftHand = makeBonePoint(x - facing * size * (0.3 + alt * 0.06), y + size * 0.38);
-  } else if (intent.intent === "reach" || ["handoff", "comfort", "care", "shop", "gather", "teach"].includes(intent.behavior?.id)) {
-    setReach("right", intent.behavior?.id === "comfort");
-    leftHand = makeBonePoint(x - facing * size * 0.24, y + size * 0.3);
-  } else if (intent.intent === "wash") {
-    rightHand = makeBonePoint(x + facing * size * (0.22 + beat * 0.1), y - size * 0.12 + alt * size * 0.04);
-    rightElbow = makeBonePoint(x + facing * size * 0.18, y + size * 0.08);
-    leftHand = makeBonePoint(x - facing * size * (0.18 + beat * 0.08), y - size * 0.08 - alt * size * 0.04);
-  } else if (intent.intent === "rock" || ["repair", "cook", "clean", "garden", "work"].includes(intent.behavior?.id)) {
-    rightHand = makeBonePoint(x + facing * size * (0.7 + beat * 0.18), y + size * (0.28 + alt * 0.18));
-    rightElbow = makeBonePoint(x + facing * size * 0.44, y + size * 0.22);
-    leftHand = makeBonePoint(x + facing * size * (0.34 - beat * 0.1), y + size * (0.48 - alt * 0.1));
-  } else if (intent.intent === "dance" || intent.behavior?.id === "stretch") {
-    rightHand = makeBonePoint(x + facing * size * (0.64 + beat * 0.16), y - size * (0.5 + alt * 0.08));
-    rightElbow = makeBonePoint(x + facing * size * 0.36, y - size * 0.22);
-    leftHand = makeBonePoint(x - facing * size * (0.56 - beat * 0.12), y - size * (0.38 - alt * 0.1));
-    leftElbow = makeBonePoint(x - facing * size * 0.34, y - size * 0.16);
-    rightFoot = makeBonePoint(rightHip.x + facing * size * (0.45 + beat * 0.08), y + size * (1.08 - Math.abs(alt) * 0.12));
-    leftFoot = makeBonePoint(leftHip.x - facing * size * (0.44 - beat * 0.08), y + size * (1.1 - Math.abs(beat) * 0.1));
-  } else if (intent.intent === "stomp") {
-    rightHand = makeBonePoint(x + facing * size * 0.52, y + size * 0.42);
-    leftHand = makeBonePoint(x - facing * size * 0.38, y + size * 0.34);
-    rightFoot = makeBonePoint(rightHip.x + facing * size * 0.38, y + size * (1.08 + Math.abs(beat) * 0.08));
-  } else if (intent.intent === "sob" || intent.behavior?.id === "cry") {
-    rightHand = makeBonePoint(x + facing * size * 0.24, y - size * 0.08);
-    leftHand = makeBonePoint(x - facing * size * 0.18, y + size * 0.12);
-  } else if (intent.intent === "lean" || intent.behavior?.id === "think") {
-    rightHand = makeBonePoint(x + facing * size * 0.24, y - size * 0.12);
-    leftHand = makeBonePoint(x - facing * size * 0.32, y + size * 0.44);
-  } else if (["sit"].includes(intent.intent) || ["type", "write", "phone", "eat", "drink", "read", "meeting", "overtime"].includes(intent.behavior?.id)) {
-    rightHand = makeBonePoint(x + facing * size * (0.5 + beat * 0.03), y + size * 0.42);
-    rightElbow = makeBonePoint(x + facing * size * 0.32, y + size * 0.34);
-    leftHand = makeBonePoint(x - facing * size * 0.32, y + size * 0.44);
-    leftKnee = makeBonePoint(leftHip.x - facing * size * 0.36, y + size * 0.96);
-    leftFoot = makeBonePoint(leftHip.x - facing * size * 0.56, y + size * 1.05);
-    rightKnee = makeBonePoint(rightHip.x + facing * size * 0.36, y + size * 0.96);
-    rightFoot = makeBonePoint(rightHip.x + facing * size * 0.56, y + size * 1.05);
-  } else {
-    rightHand.y += Math.sin(now * 0.004 + seed) * size * (0.04 + Math.max(0, energyLift) * 0.02);
-    leftHand.y -= Math.sin(now * 0.004 + seed) * size * 0.04;
-  }
-
-  return {
-    version: BONE_AI_VERSION,
-    intent: intent.intent,
-    behaviorId: intent.behavior?.id || "",
-    facing,
-    color: citizen?.color || "#4ea8de",
-    alpha: intent.behavior || intent.gesture ? 0.92 : 0.7,
-    points: {
-      head, neck, chest, pelvis,
-      leftShoulder, leftElbow, leftHand,
-      rightShoulder, rightElbow, rightHand,
-      leftHip, leftKnee, leftFoot,
-      rightHip, rightKnee, rightFoot
-    }
-  };
-}
-
-function drawCitizenBonePose(ctx, pose, size) {
-  if (!pose?.points) return;
-  const p = pose.points;
-  const limbColor = hexWithAlpha(pose.color, pose.alpha);
-  const outline = "rgba(26,26,46,0.9)";
-  const skin = "#ffd4a3";
-
-  const drawLimb = (a, b, c, width, color) => {
-    ctx.strokeStyle = color;
-    ctx.lineWidth = width;
-    ctx.beginPath();
-    ctx.moveTo(a.x, a.y);
-    ctx.quadraticCurveTo(b.x, b.y, c.x, c.y);
-    ctx.stroke();
-  };
-  const drawJoint = (point, r, color = skin) => {
-    ctx.fillStyle = color;
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = Math.max(1, size * 0.045);
-    ctx.beginPath();
-    ctx.arc(point.x, point.y, r, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  };
-  const drawFoot = (point, dir) => {
-    ctx.fillStyle = outline;
-    ctx.beginPath();
-    ctx.ellipse(point.x, point.y, size * 0.18, size * 0.075, dir * 0.15, 0, Math.PI * 2);
-    ctx.fill();
-  };
-
-  ctx.save();
-  ctx.lineCap = "round";
-  ctx.lineJoin = "round";
-
-  drawLimb(p.leftHip, p.leftKnee, p.leftFoot, Math.max(3.6, size * 0.2), outline);
-  drawLimb(p.rightHip, p.rightKnee, p.rightFoot, Math.max(3.6, size * 0.2), outline);
-  drawLimb(p.leftHip, p.leftKnee, p.leftFoot, Math.max(2.5, size * 0.15), limbColor);
-  drawLimb(p.rightHip, p.rightKnee, p.rightFoot, Math.max(2.5, size * 0.15), limbColor);
-
-  ctx.strokeStyle = outline;
-  ctx.lineWidth = Math.max(3.2, size * 0.18);
-  ctx.beginPath();
-  ctx.moveTo(p.pelvis.x, p.pelvis.y);
-  ctx.quadraticCurveTo(
-    (p.pelvis.x + p.chest.x) / 2,
-    (p.pelvis.y + p.chest.y) / 2 - size * 0.06,
-    p.chest.x,
-    p.chest.y
-  );
-  ctx.stroke();
-  ctx.strokeStyle = limbColor;
-  ctx.lineWidth = Math.max(2.2, size * 0.13);
-  ctx.stroke();
-
-  drawLimb(p.leftShoulder, p.leftElbow, p.leftHand, Math.max(3.3, size * 0.18), outline);
-  drawLimb(p.rightShoulder, p.rightElbow, p.rightHand, Math.max(3.3, size * 0.18), outline);
-  drawLimb(p.leftShoulder, p.leftElbow, p.leftHand, Math.max(2.2, size * 0.13), limbColor);
-  drawLimb(p.rightShoulder, p.rightElbow, p.rightHand, Math.max(2.2, size * 0.13), limbColor);
-
-  drawFoot(p.leftFoot, -pose.facing);
-  drawFoot(p.rightFoot, pose.facing);
-  drawJoint(p.leftHand, size * 0.105);
-  drawJoint(p.rightHand, size * 0.105);
-
-  if (pose.intent === "talk" || pose.intent === "wave") {
-    ctx.fillStyle = "rgba(255,255,255,0.72)";
-    ctx.strokeStyle = outline;
-    ctx.lineWidth = 1.2;
-    ctx.beginPath();
-    ctx.arc(p.head.x + pose.facing * size * 0.18, p.head.y - size * 0.05, size * 0.07, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-
-  ctx.restore();
-}
-
 function drawBehaviorBodyOverlay(ctx, citizen, anim, x, y, size, now) {
-  const generatedPose = buildCitizenBonePose(citizen, anim, x, y, size, now);
-  if (generatedPose) {
-    drawCitizenBonePose(ctx, generatedPose, size);
-    return;
-  }
   const behavior = getActiveBehavior(anim, now);
   if (!behavior || behavior.pose === "lie") return;
   const facing = anim.facing || 1;
