@@ -4070,11 +4070,12 @@ function getCitizenById(citizenId) {
 
 // ═══════════════════════════════════════════════════════════════
 // HUMANLIKE BEHAVIOR LIBRARY
-// Citizens don't just wander — they eat, nap, play ball, jog, read,
-// tinker, type and sip tea. Each behavior has a body pose, an animated
-// prop, time-of-day / place affinity, and personality- & need-driven
-// weighting. Completing one feeds back into mood/energy so daily life
-// and the social simulation co-evolve.
+// Citizens don't just wander. The action library is organized around
+// everyday life: domestic routines, social expression, work / study and
+// leisure. Each behavior has a body pose, an animated prop, time/place
+// affinity, and personality- & need-driven weighting. Completing one
+// feeds back into mood/energy so daily life and the social simulation
+// co-evolve.
 // ═══════════════════════════════════════════════════════════════
 
 function behaviorNum(value, fallback) {
@@ -4084,7 +4085,7 @@ function behaviorNum(value, fallback) {
 
 const BEHAVIOR_LIBRARY = [
   {
-    id: "eat", label: "吃饭", prop: "🍜", pose: "sit",
+    id: "eat", label: "吃饭", category: "domestic", prop: "🍜", pose: "sit",
     minMs: 6500, maxMs: 11000,
     zoneHint: /commerc|market|night|kitchen|slow|farm|residential|plaza|courtyard/,
     requireZone: true,
@@ -4097,7 +4098,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "sleep", label: "睡觉", prop: "💤", pose: "lie",
+    id: "sleep", label: "睡觉", category: "domestic", prop: "💤", pose: "lie",
     minMs: 9000, maxMs: 16000,
     zoneHint: /residential|rest|quiet|cemetery|heal/,
     requireZone: false,
@@ -4112,7 +4113,45 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "run", label: "跑步", prop: "💨", pose: "move",
+    id: "drink", label: "喝水", category: "domestic", prop: "🥤", pose: "sit",
+    minMs: 4200, maxMs: 7600,
+    zoneHint: /./,
+    requireZone: false,
+    effects: { energy: 2, mood: 2 },
+    doneLine: "喝口水再继续",
+    score(citizen, ts) {
+      if (ts.hour >= 1 && ts.hour < 6) return -1;
+      return 7 + (100 - behaviorNum(citizen.energy, 50)) * 0.08;
+    }
+  },
+  {
+    id: "wash", label: "洗漱", category: "domestic", prop: "💧", pose: "wash",
+    minMs: 4800, maxMs: 8200,
+    zoneHint: /residential|home|care|hospital|commercial|plaza/,
+    requireZone: false,
+    effects: { mood: 2 },
+    doneLine: "清爽一点了",
+    score(citizen, ts, zoneOk) {
+      const morning = ts.hour >= 6 && ts.hour <= 9;
+      const night = ts.hour >= 20 && ts.hour <= 23;
+      return (morning || night) ? 18 + (zoneOk ? 8 : 0) : -1;
+    }
+  },
+  {
+    id: "phone", label: "刷手机", category: "leisure", prop: "📱", pose: "sit",
+    minMs: 5200, maxMs: 10000,
+    zoneHint: /residential|commercial|market|park|plaza|office|station|quiet/,
+    requireZone: false,
+    effects: { mood: 1, energy: -1 },
+    doneLine: "先不刷了",
+    score(citizen, ts) {
+      if (ts.hour < 7 || ts.hour > 23) return -1;
+      const tired = 100 - behaviorNum(citizen.energy, 50);
+      return 8 + tired * 0.14 + behaviorNum(citizen.bigFive?.neuroticism, 0.5) * 6;
+    }
+  },
+  {
+    id: "run", label: "跑步", category: "leisure", prop: "💨", pose: "move",
     minMs: 7000, maxMs: 12000,
     zoneHint: /park|green|plaza|farm/,
     requireZone: false,
@@ -4127,7 +4166,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "ball", label: "打球", prop: "⚽", pose: "bounce",
+    id: "ball", label: "打球", category: "leisure", prop: "⚽", pose: "bounce",
     minMs: 7000, maxMs: 12000,
     zoneHint: /park|school|kinder|university|plaza|entertainment|green/,
     requireZone: true,
@@ -4140,7 +4179,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "read", label: "看书", prop: "📖", pose: "sit",
+    id: "read", label: "看书", category: "work", prop: "📖", pose: "sit",
     minMs: 8000, maxMs: 14000,
     zoneHint: /archive|story|school|university|quiet|park|green|residential/,
     requireZone: false,
@@ -4152,7 +4191,31 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "work", label: "干活", prop: "🔧", pose: "rock",
+    id: "write", label: "写字记录", category: "work", prop: "✍️", pose: "sit",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /school|university|office|creative|story|archive|court|public|plaza|quiet|residential/,
+    requireZone: false,
+    effects: { mood: 3, energy: -2 },
+    doneLine: "记下来了",
+    score(citizen, ts) {
+      if (ts.hour < 7 || ts.hour > 23) return -1;
+      return 11 + behaviorNum(citizen.bigFive?.openness, 0.5) * 16 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 8;
+    }
+  },
+  {
+    id: "teach", label: "讲解", category: "work", prop: "🧑‍🏫", pose: "reach",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /school|university|kinder|mentor|learning|public|plaza|story/,
+    requireZone: true,
+    effects: { mood: 4, energy: -3 },
+    doneLine: "讲到这里",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 8 || ts.hour > 18) return -1;
+      return 18 + behaviorNum(citizen.bigFive?.extraversion, 0.5) * 10 + behaviorNum(citizen.bigFive?.agreeableness, 0.5) * 8;
+    }
+  },
+  {
+    id: "work", label: "干活", category: "work", prop: "🔧", pose: "rock",
     minMs: 8000, maxMs: 14000,
     zoneHint: /factory|repair|workshop|commons|farm|work/,
     requireZone: true,
@@ -4165,7 +4228,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "type", label: "敲电脑", prop: "💻", pose: "sit",
+    id: "type", label: "敲电脑", category: "work", prop: "💻", pose: "sit",
     minMs: 8000, maxMs: 14000,
     zoneHint: /office|creative|studio|commerc|archive|university/,
     requireZone: true,
@@ -4178,7 +4241,56 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "garden", label: "侍弄花草", prop: "🪴", pose: "rock",
+    id: "repair", label: "修理", category: "work", prop: "🔨", pose: "rock",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /repair|factory|workshop|commons|office|residential|tool|device/,
+    requireZone: true,
+    effects: { mood: 3, energy: -5 },
+    doneLine: "修好了",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 8 || ts.hour > 20) return -1;
+      return 20 + behaviorNum(citizen.bigFive?.conscientiousness, 0.5) * 16;
+    }
+  },
+  {
+    id: "cook", label: "做饭", category: "domestic", prop: "🍳", pose: "rock",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /kitchen|commercial|market|resource|residential|home|farm/,
+    requireZone: true,
+    effects: { energy: -3, mood: 4 },
+    doneLine: "饭快好了",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk) return -1;
+      const mealTime = (ts.hour >= 6 && ts.hour <= 8) || (ts.hour >= 10 && ts.hour <= 13) || (ts.hour >= 16 && ts.hour <= 20);
+      return mealTime ? 24 : -1;
+    }
+  },
+  {
+    id: "shop", label: "买东西", category: "domestic", prop: "🛍️", pose: "reach",
+    minMs: 5200, maxMs: 9600,
+    zoneHint: /commercial|market|shop|exchange|resource|night/,
+    requireZone: true,
+    effects: { energy: -2, mood: 2 },
+    doneLine: "买好了",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 8 || ts.hour > 22) return -1;
+      return 18 + seededCommunityValue(hashCommunitySeed(citizen.id || "shop", ts.hour), 3) * 12;
+    }
+  },
+  {
+    id: "gather", label: "采集", category: "work", prop: "🧺", pose: "reach",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /farm|garden|park|botan|green|nature|zoo/,
+    requireZone: true,
+    effects: { mood: 4, energy: -4 },
+    doneLine: "收了一小篮",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.isNight) return -1;
+      return 18 + behaviorNum(citizen.bigFive?.agreeableness, 0.5) * 8;
+    }
+  },
+  {
+    id: "garden", label: "侍弄花草", category: "work", prop: "🪴", pose: "rock",
     minMs: 7000, maxMs: 12000,
     zoneHint: /park|farm|botan|green|garden/,
     requireZone: true,
@@ -4190,7 +4302,83 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "stretch", label: "拉伸锻炼", prop: "🤸", pose: "bounce",
+    id: "care", label: "照护", category: "social", prop: "🩺", pose: "reach",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /care|hospital|maternity|repair|empathy|residential|zoo|animal/,
+    requireZone: true,
+    effects: { mood: 5, energy: -3 },
+    doneLine: "先照看到这里",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 7 || ts.hour > 22) return -1;
+      return 20 + behaviorNum(citizen.bigFive?.agreeableness, 0.5) * 20;
+    }
+  },
+  {
+    id: "handoff", label: "递交物品", category: "social", prop: "🤲", pose: "reach",
+    minMs: 4200, maxMs: 7600,
+    zoneHint: /commercial|market|office|factory|school|public|plaza|residential|court/,
+    requireZone: false,
+    effects: { mood: 2, energy: -1 },
+    doneLine: "给你",
+    score(citizen, ts) {
+      if (ts.hour < 8 || ts.hour > 21) return -1;
+      return 8 + behaviorNum(citizen.bigFive?.agreeableness, 0.5) * 14;
+    }
+  },
+  {
+    id: "comfort", label: "安慰", category: "social", prop: "🤗", pose: "reach",
+    minMs: 5200, maxMs: 9200,
+    zoneHint: /repair|quiet|residential|plaza|care|hospital|park|court/,
+    requireZone: false,
+    effects: { mood: 5, energy: -2 },
+    doneLine: "慢慢来",
+    score(citizen, ts) {
+      if (ts.hour < 8 || ts.hour > 22) return -1;
+      const agree = behaviorNum(citizen.bigFive?.agreeableness, 0.5);
+      return 6 + agree * 18 + (behaviorNum(citizen.mood, 50) < 45 ? 10 : 0);
+    }
+  },
+  {
+    id: "think", label: "托腮思考", category: "emotion", prop: "💭", pose: "lean",
+    minMs: 6500, maxMs: 12000,
+    zoneHint: /quiet|park|plaza|office|school|residential|cemetery|memory|story/,
+    requireZone: false,
+    effects: { mood: 1 },
+    doneLine: "先想明白一点",
+    score(citizen, ts) {
+      if (ts.hour < 6) return -1;
+      return 8 + behaviorNum(citizen.bigFive?.openness, 0.5) * 16 + behaviorNum(citizen.bigFive?.neuroticism, 0.5) * 8;
+    }
+  },
+  {
+    id: "cry", label: "低落发呆", category: "emotion", prop: "💧", pose: "sob",
+    minMs: 5200, maxMs: 9000,
+    zoneHint: /quiet|residential|park|care|hospital|memory|cemetery|repair/,
+    requireZone: false,
+    effects: { mood: 2 },
+    doneLine: "缓过来一点",
+    score(citizen, ts) {
+      const mood = behaviorNum(citizen.mood, 50);
+      if (mood > 38) return -1;
+      return 24 + (38 - mood) * 0.8 + (ts.isNight ? 8 : 0);
+    }
+  },
+  {
+    id: "stomp", label: "生气跺脚", category: "emotion", prop: "💢", pose: "stomp",
+    minMs: 3600, maxMs: 6800,
+    zoneHint: /plaza|court|office|school|residential|commercial/,
+    requireZone: false,
+    effects: { energy: -2, mood: 1 },
+    doneLine: "先别急着吵",
+    score(citizen, ts) {
+      const mood = behaviorNum(citizen.mood, 50);
+      const arousal = behaviorNum(citizen.pad?.arousal, 0);
+      if (mood > 45 && arousal < 0.18) return -1;
+      return 10 + Math.max(0, 45 - mood) * 0.7 + Math.max(0, arousal) * 22;
+    }
+  },
+  {
+    id: "stretch", label: "拉伸锻炼", category: "leisure", prop: "🤸", pose: "bounce",
     minMs: 5000, maxMs: 8000,
     zoneHint: /park|plaza|green|residential/,
     requireZone: false,
@@ -4203,7 +4391,32 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "tea", label: "喝茶歇脚", prop: "☕", pose: "sit",
+    id: "dance", label: "跳舞", category: "leisure", prop: "🎵", pose: "dance",
+    minMs: 5200, maxMs: 9200,
+    zoneHint: /park|plaza|night|commercial|creative|studio|school|entertainment/,
+    requireZone: true,
+    effects: { mood: 8, energy: -4 },
+    doneLine: "跳完心情亮一点",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.hour < 12 || ts.hour > 23) return -1;
+      if (behaviorNum(citizen.energy, 50) < 32) return -1;
+      return 14 + behaviorNum(citizen.bigFive?.extraversion, 0.5) * 22;
+    }
+  },
+  {
+    id: "fish", label: "钓鱼", category: "leisure", prop: "🎣", pose: "sit",
+    minMs: 8000, maxMs: 15000,
+    zoneHint: /park|farm|green|garden|quiet|zoo|nature/,
+    requireZone: true,
+    effects: { mood: 5, energy: -2 },
+    doneLine: "等到一阵风",
+    score(citizen, ts, zoneOk) {
+      if (!zoneOk || ts.isNight || ts.hour < 7 || ts.hour > 18) return -1;
+      return 10 + behaviorNum(citizen.bigFive?.openness, 0.5) * 10;
+    }
+  },
+  {
+    id: "tea", label: "喝茶歇脚", category: "domestic", prop: "☕", pose: "sit",
     minMs: 5000, maxMs: 9000,
     zoneHint: /./,
     requireZone: false,
@@ -4215,7 +4428,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "commute", label: "通勤赶路", prop: "🚇", pose: "move",
+    id: "commute", label: "通勤赶路", category: "domestic", prop: "🚇", pose: "move",
     minMs: 6000, maxMs: 12000,
     zoneHint: /residential|office|factory|commercial|plaza|work|market/,
     requireZone: false,
@@ -4229,7 +4442,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "meeting", label: "开会对齐", prop: "📋", pose: "sit",
+    id: "meeting", label: "开会对齐", category: "work", prop: "📋", pose: "sit",
     minMs: 7000, maxMs: 13000,
     zoneHint: /office|creative|commons|court|plaza|work|university/,
     requireZone: true,
@@ -4241,7 +4454,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "lunch-break", label: "午饭放空", prop: "🍱", pose: "sit",
+    id: "lunch-break", label: "午饭放空", category: "domestic", prop: "🍱", pose: "sit",
     minMs: 6000, maxMs: 11000,
     zoneHint: /commercial|market|kitchen|office|park|plaza|residential/,
     requireZone: false,
@@ -4253,7 +4466,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "overtime", label: "加班收尾", prop: "🌙", pose: "sit",
+    id: "overtime", label: "加班收尾", category: "work", prop: "🌙", pose: "sit",
     minMs: 8000, maxMs: 15000,
     zoneHint: /office|factory|creative|studio|work|repair/,
     requireZone: true,
@@ -4266,7 +4479,19 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "chores", label: "处理生活杂事", prop: "🧺", pose: "rock",
+    id: "clean", label: "打扫", category: "domestic", prop: "🧹", pose: "rock",
+    minMs: 5600, maxMs: 9800,
+    zoneHint: /residential|home|office|school|commercial|public|plaza|care/,
+    requireZone: false,
+    effects: { energy: -3, mood: 3 },
+    doneLine: "扫干净了",
+    score(citizen, ts, zoneOk) {
+      const window = (ts.hour >= 7 && ts.hour <= 10) || (ts.hour >= 18 && ts.hour <= 21);
+      return window ? 12 + (zoneOk ? 6 : 0) : -1;
+    }
+  },
+  {
+    id: "chores", label: "处理生活杂事", category: "domestic", prop: "🧺", pose: "rock",
     minMs: 6000, maxMs: 11000,
     zoneHint: /residential|commercial|market|kitchen|daily/,
     requireZone: false,
@@ -4278,7 +4503,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "night-reflect", label: "睡前复盘", prop: "💭", pose: "sit",
+    id: "night-reflect", label: "睡前复盘", category: "emotion", prop: "💭", pose: "sit",
     minMs: 7000, maxMs: 12000,
     zoneHint: /residential|quiet|rest|park|cemetery|courtyard/,
     requireZone: false,
@@ -4290,7 +4515,7 @@ const BEHAVIOR_LIBRARY = [
     }
   },
   {
-    id: "weekend-reset", label: "周末恢复", prop: "🧘", pose: "sit",
+    id: "weekend-reset", label: "周末恢复", category: "leisure", prop: "🧘", pose: "sit",
     minMs: 8000, maxMs: 15000,
     zoneHint: /park|residential|quiet|commercial|market|garden|green/,
     requireZone: false,
@@ -4306,7 +4531,13 @@ const BEHAVIOR_LIBRARY = [
 ];
 
 const BEHAVIOR_BY_ID = new Map(BEHAVIOR_LIBRARY.map((behavior) => [behavior.id, behavior]));
-const INDOOR_BEHAVIOR_IDS = new Set(["eat", "sleep", "read", "work", "type", "tea", "garden", "stretch", "meeting", "lunch-break", "overtime", "chores", "night-reflect", "weekend-reset"]);
+const INDOOR_BEHAVIOR_IDS = new Set([
+  "eat", "sleep", "drink", "wash", "phone", "read", "write", "teach",
+  "work", "type", "repair", "cook", "shop", "gather", "garden", "care",
+  "handoff", "comfort", "think", "cry", "stomp", "stretch", "dance",
+  "tea", "meeting", "lunch-break", "overtime", "clean", "chores",
+  "night-reflect", "weekend-reset"
+]);
 
 function getZoneBehaviorHint(zone) {
   return `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""}`;
@@ -4329,13 +4560,13 @@ function behaviorPsychBonus(behavior, citizen) {
   const stressed = pleasure < -0.15 && arousal > 0.05;
   const drained = arousal < -0.25;
   let bonus = 0;
-  const active = behavior.id === "run" || behavior.id === "ball" || behavior.id === "stretch";
-  const calm = behavior.id === "tea" || behavior.id === "read" || behavior.id === "sleep" || behavior.id === "garden";
+  const active = ["run", "ball", "stretch", "dance", "stomp"].includes(behavior.id);
+  const calm = ["tea", "drink", "read", "write", "think", "sleep", "garden", "phone", "fish"].includes(behavior.id);
   if (stressed) {
     if (active && extraversion > 0.55) bonus += 12;
     if (calm && extraversion <= 0.55) bonus += 12;
   }
-  if (drained && (behavior.id === "sleep" || behavior.id === "tea")) bonus += 10;
+  if (drained && (behavior.id === "sleep" || behavior.id === "tea" || behavior.id === "drink" || behavior.id === "weekend-reset")) bonus += 10;
   if (pleasure > 0.25 && active) bonus += 6; // 高愉悦时更愿意动起来
   return bonus;
 }
@@ -4344,8 +4575,10 @@ function pickCitizenBehavior(citizen, zone, now, salt = 0, indoorOnly = false) {
   const ts = getWorldTimeState(state.society);
   const hint = getZoneBehaviorHint(zone);
   const seed = hashCommunitySeed(citizen.id || "citizen", Math.floor(now / 800), salt);
-  // Sometimes people just stand and watch the street — that's humanlike too.
-  if (seededCommunityValue(seed, 19) < 0.3) return null;
+  // Sometimes people just stand and watch the street. Followed citizens get
+  // a denser action rhythm so first-person observation feels alive.
+  const idleChance = citizen.id === followedCitizenId ? 0.08 : 0.18;
+  if (seededCommunityValue(seed, 19) < idleChance) return null;
   let best = null;
   let bestWeight = 0;
   BEHAVIOR_LIBRARY.forEach((behavior, index) => {
@@ -4383,7 +4616,7 @@ function startCitizenBehavior(citizen, anim, behavior, now) {
   } else {
     anim.nextTargetAt = now + duration + 400;
   }
-  markRenderActive(1600);
+  markRenderActive(Math.min(duration + 600, 17000));
 }
 
 function finishCitizenBehavior(citizen, anim, now, aborted = false) {
@@ -4413,12 +4646,13 @@ function getThoughtBucket(citizen, behavior, ts) {
   const id = behavior?.id || "";
   if (id === "commute") return "commute";
   if (id === "meeting") return "meeting";
-  if (id === "lunch-break" || id === "eat") return "lunch";
+  if (id === "lunch-break" || id === "eat" || id === "cook") return "lunch";
   if (id === "overtime") return "overtime";
-  if (id === "chores") return "chores";
-  if (id === "night-reflect" || id === "read") return "solitude";
-  if (id === "weekend-reset" || (ts?.day && (ts.day % 7 === 0 || ts.day % 7 === 6))) return "weekend";
-  if (id === "work" || id === "type") return "focus";
+  if (id === "chores" || id === "clean" || id === "wash" || id === "shop") return "chores";
+  if (id === "night-reflect" || id === "read" || id === "write" || id === "think" || id === "phone" || id === "cry") return "solitude";
+  if (id === "comfort" || id === "handoff" || id === "care") return "intersect";
+  if (id === "weekend-reset" || id === "dance" || id === "fish" || (ts?.day && (ts.day % 7 === 0 || ts.day % 7 === 6))) return "weekend";
+  if (id === "work" || id === "type" || id === "repair" || id === "teach" || id === "gather") return "focus";
   if (ts?.hour >= 17 && ts.hour <= 21) return "decompress";
   if (Number(citizen?.energy || 50) < 34) return "decompress";
   return "solitude";
@@ -4431,13 +4665,13 @@ function pickWorkdayThoughtLine(citizen, behavior, now, zone) {
   const trait = citizen.bigFive || {};
   const seed = hashCommunitySeed(citizen.id || "citizen", behavior?.id || "idle", state.society?.turn || 0, Math.floor(now / 5000));
   const traitLines = [];
-  if ((behavior?.id === "work" || behavior?.id === "meeting" || behavior?.id === "type") && Number(trait.conscientiousness || 0) > 0.66) {
+  if ((behavior?.id === "work" || behavior?.id === "meeting" || behavior?.id === "type" || behavior?.id === "write" || behavior?.id === "repair") && Number(trait.conscientiousness || 0) > 0.66) {
     traitLines.push("先把优先级排清楚");
   }
-  if ((behavior?.id === "work" || behavior?.id === "overtime") && Number(trait.neuroticism || 0) > 0.64) {
+  if ((behavior?.id === "work" || behavior?.id === "overtime" || behavior?.id === "phone") && Number(trait.neuroticism || 0) > 0.64) {
     traitLines.push("这件事别又拖到晚上");
   }
-  if ((behavior?.id === "read" || behavior?.id === "night-reflect") && Number(trait.openness || 0) > 0.62) {
+  if ((behavior?.id === "read" || behavior?.id === "write" || behavior?.id === "think" || behavior?.id === "night-reflect") && Number(trait.openness || 0) > 0.62) {
     traitLines.push("也许还有另一种做法");
   }
   if (traitLines.length && seededCommunityValue(seed, 11) < 0.45) {
@@ -4882,104 +5116,105 @@ const INTERIOR_BLUEPRINTS = {
   care: {
     title: "照护与恢复",
     props: [
-      { emoji: "🛏️", label: "休息床", x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "tea"] },
-      { emoji: "🌡️", label: "护理站", x: 0.44, y: 0.2, size: 30, behaviors: ["work", "tea"] },
-      { emoji: "🪑", label: "等候椅", x: 0.68, y: 0.32, size: 28, behaviors: ["read", "tea"] },
-      { emoji: "💊", label: "药品柜", x: 0.82, y: 0.2, size: 28, behaviors: ["work"] },
-      { emoji: "🧸", label: "安抚角", x: 0.34, y: 0.66, size: 30, behaviors: ["tea", "sleep"] },
-      { emoji: "🪴", label: "复原植物", x: 0.72, y: 0.66, size: 29, behaviors: ["garden", "tea"] }
+      { emoji: "🛏️", label: "休息床", x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
+      { emoji: "🌡️", label: "护理站", x: 0.44, y: 0.2, size: 30, behaviors: ["care", "write", "work"] },
+      { emoji: "🪑", label: "等候椅", x: 0.68, y: 0.32, size: 28, behaviors: ["phone", "read", "think", "tea"] },
+      { emoji: "💊", label: "药品柜", x: 0.82, y: 0.2, size: 28, behaviors: ["care", "handoff", "work"] },
+      { emoji: "🧸", label: "安抚角", x: 0.34, y: 0.66, size: 30, behaviors: ["comfort", "cry", "tea"] },
+      { emoji: "🪴", label: "复原植物", x: 0.72, y: 0.66, size: 29, behaviors: ["garden", "drink", "think"] }
     ]
   },
   learning: {
     title: "学习与成长",
     props: [
-      { emoji: "📚", label: "阅读角", x: 0.18, y: 0.26, size: 32, behaviors: ["read"] },
-      { emoji: "🧑‍🏫", label: "讲台", x: 0.5, y: 0.18, size: 31, behaviors: ["read", "work"] },
-      { emoji: "🪑", label: "课桌", x: 0.34, y: 0.48, size: 28, behaviors: ["read", "type"] },
-      { emoji: "🖊️", label: "练习桌", x: 0.58, y: 0.5, size: 28, behaviors: ["work", "read"] },
-      { emoji: "🌍", label: "探索墙", x: 0.78, y: 0.28, size: 30, behaviors: ["read"] },
-      { emoji: "☕", label: "课间角", x: 0.74, y: 0.72, size: 26, behaviors: ["tea"] }
+      { emoji: "📚", label: "阅读角", x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
+      { emoji: "🧑‍🏫", label: "讲台", x: 0.5, y: 0.18, size: 31, behaviors: ["teach", "write"] },
+      { emoji: "🪑", label: "课桌", x: 0.34, y: 0.48, size: 28, behaviors: ["write", "read", "type"] },
+      { emoji: "🖊️", label: "练习桌", x: 0.58, y: 0.5, size: 28, behaviors: ["write", "read"] },
+      { emoji: "🌍", label: "探索墙", x: 0.78, y: 0.28, size: 30, behaviors: ["teach", "read", "think"] },
+      { emoji: "☕", label: "课间角", x: 0.74, y: 0.72, size: 26, behaviors: ["drink", "phone", "handoff"] }
     ]
   },
   commerce: {
     title: "交易与补给",
     props: [
-      { emoji: "🏷️", label: "柜台", x: 0.22, y: 0.24, size: 30, behaviors: ["work"] },
-      { emoji: "🧺", label: "货架", x: 0.42, y: 0.22, size: 32, behaviors: ["work"] },
-      { emoji: "📦", label: "补给箱", x: 0.72, y: 0.22, size: 30, behaviors: ["work"] },
-      { emoji: "☕", label: "小坐区", x: 0.26, y: 0.68, size: 30, behaviors: ["tea", "eat"] },
-      { emoji: "🍜", label: "热食台", x: 0.52, y: 0.62, size: 32, behaviors: ["eat"] },
-      { emoji: "🧾", label: "交换板", x: 0.78, y: 0.62, size: 28, behaviors: ["read"] }
+      { emoji: "🏷️", label: "柜台", x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
+      { emoji: "🧺", label: "货架", x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
+      { emoji: "📦", label: "补给箱", x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
+      { emoji: "☕", label: "小坐区", x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
+      { emoji: "🍜", label: "热食台", x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
+      { emoji: "🧾", label: "交换板", x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
     ]
   },
   public: {
     title: "公共讨论与共识",
     props: [
-      { emoji: "📢", label: "提案台", x: 0.22, y: 0.24, size: 31, behaviors: ["work", "read"] },
-      { emoji: "🪧", label: "公告板", x: 0.46, y: 0.2, size: 31, behaviors: ["read"] },
-      { emoji: "🪑", label: "旁听席", x: 0.72, y: 0.28, size: 29, behaviors: ["tea", "read"] },
-      { emoji: "📝", label: "记录桌", x: 0.34, y: 0.62, size: 30, behaviors: ["work", "read"] },
-      { emoji: "🤝", label: "共识圆桌", x: 0.62, y: 0.62, size: 31, behaviors: ["tea", "read"] },
-      { emoji: "🌿", label: "缓冲角", x: 0.82, y: 0.68, size: 29, behaviors: ["tea"] }
+      { emoji: "📢", label: "提案台", x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
+      { emoji: "🪧", label: "公告板", x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
+      { emoji: "🪑", label: "旁听席", x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
+      { emoji: "📝", label: "记录桌", x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🤝", label: "共识圆桌", x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
+      { emoji: "🌿", label: "缓冲角", x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
     ]
   },
   work: {
     title: "协作与生产",
     props: [
-      { emoji: "💻", label: "工位", x: 0.2, y: 0.28, size: 31, behaviors: ["type", "work"] },
-      { emoji: "🧰", label: "工具台", x: 0.44, y: 0.25, size: 31, behaviors: ["work"] },
-      { emoji: "📋", label: "协作板", x: 0.68, y: 0.22, size: 29, behaviors: ["read", "work"] },
-      { emoji: "🪑", label: "会议桌", x: 0.42, y: 0.62, size: 30, behaviors: ["tea", "read"] },
-      { emoji: "⚙️", label: "设备区", x: 0.76, y: 0.62, size: 31, behaviors: ["work"] }
+      { emoji: "💻", label: "工位", x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
+      { emoji: "🧰", label: "工具台", x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
+      { emoji: "📋", label: "协作板", x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
+      { emoji: "🪑", label: "会议桌", x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
+      { emoji: "⚙️", label: "设备区", x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
     ]
   },
   justice: {
     title: "调停与记录",
     props: [
-      { emoji: "⚖️", label: "调停席", x: 0.5, y: 0.24, size: 34, behaviors: ["read", "work"] },
-      { emoji: "🪑", label: "圆桌", x: 0.34, y: 0.58, size: 31, behaviors: ["tea", "read"] },
-      { emoji: "📝", label: "记录席", x: 0.66, y: 0.58, size: 30, behaviors: ["work", "read"] },
-      { emoji: "🗄️", label: "档案柜", x: 0.82, y: 0.24, size: 29, behaviors: ["read"] },
-      { emoji: "🕊️", label: "冷静角", x: 0.18, y: 0.68, size: 29, behaviors: ["tea"] }
+      { emoji: "⚖️", label: "调停席", x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
+      { emoji: "🪑", label: "圆桌", x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
+      { emoji: "📝", label: "记录席", x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🗄️", label: "档案柜", x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🕊️", label: "冷静角", x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
     ]
   },
   home: {
     title: "生活与休息",
     props: [
-      { emoji: "🛋️", label: "沙发", x: 0.22, y: 0.34, size: 34, behaviors: ["tea", "sleep"] },
-      { emoji: "🍽️", label: "餐桌", x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "tea"] },
+      { emoji: "🛋️", label: "沙发", x: 0.22, y: 0.34, size: 34, behaviors: ["phone", "drink", "sleep", "think"] },
+      { emoji: "🍽️", label: "餐桌", x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
       { emoji: "🛏️", label: "卧榻", x: 0.78, y: 0.32, size: 33, behaviors: ["sleep"] },
-      { emoji: "📚", label: "书架", x: 0.32, y: 0.7, size: 29, behaviors: ["read"] },
-      { emoji: "🪴", label: "阳台植物", x: 0.68, y: 0.7, size: 30, behaviors: ["garden", "tea"] }
+      { emoji: "🪞", label: "洗漱台", x: 0.32, y: 0.7, size: 29, behaviors: ["wash", "clean"] },
+      { emoji: "📚", label: "书架", x: 0.5, y: 0.72, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🪴", label: "阳台植物", x: 0.72, y: 0.7, size: 30, behaviors: ["garden", "drink", "think"] }
     ]
   },
   nature: {
     title: "生态与照料",
     props: [
-      { emoji: "🌿", label: "育苗架", x: 0.2, y: 0.28, size: 32, behaviors: ["garden"] },
-      { emoji: "🪴", label: "温室台", x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "work"] },
-      { emoji: "🪵", label: "工具棚", x: 0.72, y: 0.26, size: 30, behaviors: ["work"] },
-      { emoji: "🪑", label: "休息椅", x: 0.26, y: 0.68, size: 29, behaviors: ["tea", "read"] },
-      { emoji: "🌸", label: "照料区", x: 0.62, y: 0.68, size: 31, behaviors: ["garden"] }
+      { emoji: "🌿", label: "育苗架", x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
+      { emoji: "🪴", label: "温室台", x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
+      { emoji: "🪵", label: "工具棚", x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
+      { emoji: "🪑", label: "休息椅", x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
+      { emoji: "🌸", label: "照料区", x: 0.62, y: 0.68, size: 31, behaviors: ["garden", "care", "gather"] }
     ]
   },
   creative: {
     title: "表达与创作",
     props: [
-      { emoji: "🎨", label: "画架", x: 0.22, y: 0.28, size: 33, behaviors: ["work"] },
-      { emoji: "🖼️", label: "作品墙", x: 0.48, y: 0.2, size: 31, behaviors: ["read"] },
-      { emoji: "🎭", label: "排练角", x: 0.74, y: 0.3, size: 31, behaviors: ["stretch"] },
-      { emoji: "📚", label: "故事桌", x: 0.34, y: 0.68, size: 30, behaviors: ["read"] },
-      { emoji: "🎶", label: "声音角", x: 0.66, y: 0.68, size: 30, behaviors: ["tea"] }
+      { emoji: "🎨", label: "画架", x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
+      { emoji: "🖼️", label: "作品墙", x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
+      { emoji: "🎭", label: "排练角", x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
+      { emoji: "📚", label: "故事桌", x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🎶", label: "声音角", x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
     ]
   },
   memory: {
     title: "安宁与记忆",
     props: [
-      { emoji: "🕯️", label: "纪念台", x: 0.28, y: 0.3, size: 31, behaviors: ["tea"] },
-      { emoji: "🕊️", label: "静坐席", x: 0.52, y: 0.45, size: 30, behaviors: ["tea", "read"] },
-      { emoji: "📖", label: "记忆册", x: 0.74, y: 0.28, size: 30, behaviors: ["read"] },
-      { emoji: "🌿", label: "低声花园", x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "tea"] }
+      { emoji: "🕯️", label: "纪念台", x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
+      { emoji: "🕊️", label: "静坐席", x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
+      { emoji: "📖", label: "记忆册", x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🌿", label: "低声花园", x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
     ]
   }
 };
@@ -5477,6 +5712,55 @@ function drawCitizenGestureOverlay(ctx, anim, x, y, size, now, hasBubble) {
   }
 }
 
+function drawBehaviorBodyOverlay(ctx, anim, x, y, size, now) {
+  const behavior = getActiveBehavior(anim, now);
+  if (!behavior || behavior.pose === "lie") return;
+  const facing = anim.facing || 1;
+  const seed = behavior.seed || 0;
+  const beat = Math.sin(now * 0.014 + seed);
+  ctx.save();
+  ctx.strokeStyle = "rgba(26,26,46,0.82)";
+  ctx.lineWidth = Math.max(1.4, size * 0.1);
+  ctx.lineCap = "round";
+
+  const shoulderY = y + size * 0.12;
+  const hipY = y + size * 0.86;
+  const armBaseX = x + facing * size * 0.22;
+  const armEndX = x + facing * size * 0.72;
+  const armEndY = y + size * (behavior.pose === "reach" ? 0.02 : behavior.pose === "wash" ? -0.08 : 0.34);
+
+  if (["reach", "wash", "rock", "stomp", "dance"].includes(behavior.pose) || ["type", "write", "phone", "eat", "drink"].includes(behavior.id)) {
+    ctx.beginPath();
+    ctx.moveTo(armBaseX, shoulderY);
+    ctx.quadraticCurveTo(
+      x + facing * size * (0.5 + beat * 0.08),
+      y + size * (behavior.pose === "rock" ? 0.22 + beat * 0.18 : 0.18),
+      armEndX,
+      armEndY + beat * size * 0.06
+    );
+    ctx.stroke();
+  }
+
+  if (behavior.pose === "dance" || behavior.pose === "stomp" || behavior.pose === "bounce") {
+    ctx.beginPath();
+    ctx.moveTo(x - facing * size * 0.16, hipY);
+    ctx.lineTo(x - facing * size * (0.52 + beat * 0.08), y + size * 1.14);
+    ctx.moveTo(x + facing * size * 0.16, hipY);
+    ctx.lineTo(x + facing * size * (0.46 - beat * 0.08), y + size * 1.12);
+    ctx.stroke();
+  }
+
+  if (behavior.pose === "sob" || behavior.pose === "lean") {
+    ctx.globalAlpha = 0.55;
+    ctx.beginPath();
+    ctx.moveTo(x - facing * size * 0.16, y - size * 0.08);
+    ctx.lineTo(x + facing * size * 0.34, y + size * 0.18);
+    ctx.stroke();
+  }
+
+  ctx.restore();
+}
+
 function drawBehaviorPropOverlay(ctx, anim, x, y, size, now) {
   const behavior = getActiveBehavior(anim, now);
   if (!behavior) return;
@@ -5494,16 +5778,48 @@ function drawBehaviorPropOverlay(ctx, anim, x, y, size, now) {
       ctx.font = `${Math.round(size * (0.42 + drift * 0.36))}px Arial`;
       ctx.fillText("💤", x + facing * size * 0.5 + drift * 6, y - size * 0.35 - drift * size * 1.25);
     }
+  } else if (behavior.pose === "wash") {
+    const scrub = Math.sin(now * 0.018 + seed);
+    ctx.font = `${Math.round(size * 0.54)}px Arial`;
+    ctx.globalAlpha = 0.78;
+    ctx.fillText("💧", x + facing * size * (0.58 + scrub * 0.08), y + size * 0.08);
+    ctx.fillText("🫧", x + facing * size * 0.86, y - size * 0.22 + scrub * 4);
+  } else if (behavior.id === "cry") {
+    ctx.font = `${Math.round(size * 0.42)}px Arial`;
+    ctx.globalAlpha = 0.78;
+    ctx.fillText("💧", x + facing * size * 0.42, y - size * 0.16 + Math.sin(now * 0.01 + seed) * 3);
+  } else if (behavior.id === "stomp") {
+    const burst = Math.abs(Math.sin(now * 0.018 + seed));
+    ctx.font = `${Math.round(size * (0.5 + burst * 0.12))}px Arial`;
+    ctx.fillText("💢", x + facing * size * 0.68, y - size * 0.52);
   } else if (behavior.id === "ball") {
     // Dribbling: the ball bounces on its own arc beside the player.
     const bounce = Math.abs(Math.sin(now * 0.008 + seed));
     ctx.font = `${Math.round(size * 0.72)}px Arial`;
     ctx.fillText("⚽", x + facing * size * 0.95, y + size * 0.92 - bounce * size * 1.35);
+  } else if (behavior.id === "fish") {
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 1.6;
+    ctx.beginPath();
+    ctx.moveTo(x + facing * size * 0.35, y + size * 0.18);
+    ctx.quadraticCurveTo(x + facing * size * 1.2, y - size * 0.48, x + facing * size * 1.55, y + size * 0.04);
+    ctx.stroke();
+    ctx.font = `${Math.round(size * 0.5)}px Arial`;
+    ctx.fillText("🎣", x + facing * size * 1.02, y - size * 0.08);
   } else if (behavior.pose === "move") {
     // Jogging: little puffs trailing behind.
     ctx.globalAlpha = 0.45 + Math.sin(now * 0.02 + seed) * 0.25;
     ctx.font = `${Math.round(size * 0.55)}px Arial`;
     ctx.fillText("💨", x - facing * size * 0.95, y + size * 0.4);
+  } else if (behavior.pose === "reach") {
+    const reach = Math.sin(now * 0.012 + seed) * 0.15;
+    ctx.font = `${Math.round(size * 0.64)}px Arial`;
+    ctx.fillText(behavior.prop, x + facing * size * (0.74 + reach), y + size * 0.05);
+  } else if (behavior.pose === "dance") {
+    const beat = Math.sin(now * 0.018 + seed);
+    ctx.font = `${Math.round(size * 0.55)}px Arial`;
+    ctx.fillText("🎵", x + facing * size * (0.72 + beat * 0.12), y - size * 0.58 + Math.cos(now * 0.016 + seed) * 5);
+    ctx.fillText("✨", x - facing * size * 0.62, y - size * 0.1);
   } else if (behavior.pose === "rock") {
     // Working / gardening: the tool swings with the body rhythm.
     ctx.translate(x + facing * size * 0.72, y + size * 0.22);
@@ -5513,7 +5829,7 @@ function drawBehaviorPropOverlay(ctx, anim, x, y, size, now) {
   } else {
     // Seated props (bowl / book / laptop / tea) resting in front of the figure.
     const bob = Math.sin(now * 0.006 + seed) * 1.4;
-    const jitter = behavior.id === "type" ? Math.sin(now * 0.03 + seed) * 0.9 : 0;
+    const jitter = behavior.id === "type" || behavior.id === "write" ? Math.sin(now * 0.03 + seed) * 0.9 : 0;
     ctx.font = `${Math.round(size * 0.68)}px Arial`;
     ctx.fillText(behavior.prop, x + facing * size * 0.58 + jitter, y + size * 0.46 + bob);
   }
@@ -5547,7 +5863,9 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   const pose = behavior?.pose || null;
   let poseRot = 0;
   let poseScaleY = 1;
+  let poseScaleX = 1;
   let poseDy = 0;
+  let poseDx = 0;
   if (pose === "lie") {
     poseRot = (anim.facing || 1) * 1.32;
     poseDy = size * 0.34;
@@ -5556,17 +5874,38 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
     poseDy = size * 0.1;
   } else if (pose === "rock") {
     poseRot = Math.sin(now * 0.012 + (behavior.seed || 0)) * 0.1;
+  } else if (pose === "reach") {
+    poseRot = (anim.facing || 1) * Math.sin(now * 0.01 + (behavior.seed || 0)) * 0.07;
+    poseDx = (anim.facing || 1) * size * 0.05;
+  } else if (pose === "wash") {
+    poseRot = Math.sin(now * 0.018 + (behavior.seed || 0)) * 0.05;
+    poseScaleY = 0.9;
+  } else if (pose === "lean") {
+    poseRot = (anim.facing || 1) * 0.12;
+    poseScaleY = 0.9;
+    poseDy = size * 0.04;
+  } else if (pose === "sob") {
+    poseRot = Math.sin(now * 0.014 + (behavior.seed || 0)) * 0.04;
+    poseScaleY = 0.82;
+    poseDy = size * 0.12;
+  } else if (pose === "stomp") {
+    poseRot = Math.sin(now * 0.018 + (behavior.seed || 0)) * 0.09;
+    poseDy = -Math.abs(Math.sin(now * 0.018 + (behavior.seed || 0))) * size * 0.1;
   } else if (pose === "bounce") {
     poseDy = -Math.abs(Math.sin(now * 0.008 + (behavior.seed || 0))) * size * 0.32;
+  } else if (pose === "dance") {
+    poseRot = Math.sin(now * 0.018 + (behavior.seed || 0)) * 0.16;
+    poseDy = -Math.abs(Math.sin(now * 0.016 + (behavior.seed || 0))) * size * 0.2;
+    poseScaleX = 1 + Math.sin(now * 0.016 + (behavior.seed || 0)) * 0.05;
   }
-  const hasPose = poseRot !== 0 || poseScaleY !== 1 || poseDy !== 0;
+  const hasPose = poseRot !== 0 || poseScaleY !== 1 || poseScaleX !== 1 || poseDy !== 0 || poseDx !== 0;
   if (hasPose) {
     ctx.save();
     const pivotX = cx;
     const pivotY = cy + size;
-    ctx.translate(pivotX, pivotY + poseDy);
+    ctx.translate(pivotX + poseDx, pivotY + poseDy);
     ctx.rotate(poseRot);
-    ctx.scale(1, poseScaleY);
+    ctx.scale(poseScaleX, poseScaleY);
     ctx.translate(-pivotX, -pivotY);
   }
 
@@ -5753,6 +6092,10 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
 
   // Gesture overlays (wave / chat dots)
   if (!lowDetail) drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
+
+  // Modular body overlay (arms / legs) makes activity readable even when
+  // the citizen is rendered from a static sprite sheet frame.
+  if (!lowDetail) drawBehaviorBodyOverlay(ctx, anim, cx, cy, size, now);
 
   // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
   if (!lowDetail) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
