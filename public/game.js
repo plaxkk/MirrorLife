@@ -715,13 +715,62 @@ function renderOpenWorldActionDeck() {
     </section>`;
 }
 
+function renderFeaturedCitizenPanel() {
+  const match = pickObservationMatch();
+  if (!match?.citizen) return "";
+  const citizen = match.citizen;
+  const hook = getCitizenLifeHook(citizen);
+  return `
+    <section class="featured-citizen-card">
+      <div class="featured-citizen-head">
+        <span class="featured-kicker">此刻值得围观的人</span>
+        <strong style="--ink:${escapeHtml(citizen.color || "#95e4de")}">${escapeHtml(citizen.name)}</strong>
+      </div>
+      <p class="featured-status">${escapeHtml(hook.status)} · ${escapeHtml(hook.zoneName)}</p>
+      <p class="featured-thought">“${escapeHtml(hook.thought)}”</p>
+      <div class="featured-hooks">
+        <span>${escapeHtml(hook.relation)}</span>
+        <span>${escapeHtml(match.reason)}</span>
+      </div>
+      <button class="quest-primary" data-quest-action="observe-recommended">围观 TA 的一天</button>
+    </section>`;
+}
+
+function renderCitizenObserveCard(citizen) {
+  const hook = getCitizenLifeHook(citizen);
+  const mood = Math.round(Number(citizen.mood || 0));
+  const energy = Math.round(Number(citizen.energy || 0));
+  return `
+    <div class="citizen-item citizen-observe-card" data-citizen-id="${escapeHtml(citizen.id)}">
+      <div class="citizen-card-head">
+        <span class="citizen-name" style="color:${escapeHtml(citizen.color || "#f5dd8b")}">${escapeHtml(citizen.name)}</span>
+        <small>${escapeHtml(citizen.profession || citizen.role || "社区居民")}</small>
+      </div>
+      <p class="citizen-life-line">${escapeHtml(hook.status)} · ${escapeHtml(hook.zoneName)}</p>
+      <p class="citizen-thought">“${escapeHtml(hook.thought)}”</p>
+      <div class="citizen-card-foot">
+        <span>心情 ${mood}</span>
+        <span>能量 ${energy}</span>
+        <button class="modal-btn ghost compact" data-follow-from-modal="${escapeHtml(citizen.id)}">围观 TA</button>
+      </div>
+    </div>`;
+}
+
+function renderCitizenObservationList() {
+  return getAliveCitizens(state.society)
+    .filter(citizen => citizen.id !== "avatar")
+    .sort((a, b) => scoreObservationCandidate(b) - scoreObservationCandidate(a))
+    .map(renderCitizenObserveCard)
+    .join("");
+}
+
 function renderOpeningQuest() {
   return `
-    ${renderQuestHeader("MirrorLife", "你想活出怎样的人生", "先进入一段匿名人生，做一次选择，再让另一个世界把回声传回来。", "choose_capsule")}
+    ${renderQuestHeader("MirrorLife", "你想活出怎样的人生", "先带着自己的分身进入一段匿名人生，做一次选择，再看这座社区怎样牵动另一个人。", "choose_capsule")}
     <div class="quest-opening">
-      <div class="locked-discovery active"><span>换一种身份</span><small>进入人生胶囊</small></div>
-      <div class="locked-discovery"><span>收到信号</span><small>情感机器人会亮起</small></div>
-      <div class="locked-discovery"><span>偶遇同频</span><small>漂流瓶仍在海上</small></div>
+      <div class="locked-discovery active"><span>进入人生</span><small>用自己的分身试一段岔路</small></div>
+      <div class="locked-discovery"><span>城市回应</span><small>看选择影响谁的生活</small></div>
+      <div class="locked-discovery"><span>围观一个人</span><small>跟随 TA 的一天</small></div>
     </div>
     <button class="quest-primary" data-quest-action="start-trial">开始试活</button>`;
 }
@@ -748,7 +797,7 @@ function renderCapsuleDeck() {
 function renderChooseCapsuleQuest() {
   const quest = ensureFirstSessionQuest();
   return `
-    ${renderQuestHeader("01 / 选择人生胶囊", "今晚先活成谁？", "选一段匿名重构的人生。你只会看到处境、身份和选择，不会看到原始身份。", "choose_capsule")}
+    ${renderQuestHeader("01 / 选择人生胶囊", "今晚先站进哪段人生？", "你的分身会进入一段匿名重构的处境。你只会看到身份、压力和选择，不会看到原始身份。", "choose_capsule")}
     <div class="capsule-deck">${renderCapsuleDeck()}</div>
     ${quest.selectedCapsuleId
       ? `<button class="quest-primary" data-quest-action="enter-capsule">进入这段人生</button>`
@@ -827,7 +876,8 @@ function renderDriftBottleQuest() {
 
 function renderUnlockedWorldQuest() {
   return `
-    ${renderQuestHeader("城市探索已解锁", "现在可以自由靠近这座社会", "你已经完成第一轮试活。菜单、回声档案、机器人、漂流瓶和社会行动都已开放。", "unlocked_world")}
+    ${renderQuestHeader("城市探索已解锁", "先围观一个人的一天", "你已经完成第一轮试活。现在别急着看所有系统，先跟着一个被世界牵动的人走一小段。", "unlocked_world")}
+    ${renderFeaturedCitizenPanel()}
     ${renderLifeWeekBoard()}
     ${renderLifeRewardCard()}
     ${renderOpenWorldActionDeck()}
@@ -2477,6 +2527,7 @@ function updateParticles() {
 function showCitizenInteraction(citizen) {
   const zone = getCitizenZone(state.society, citizen);
   const h = escapeHtml;
+  const hook = getCitizenLifeHook(citizen);
   // 心理动线:展示该分身最近的心理连锁步骤(评估→应对→场所→社交→涟漪)
   const chainEntries = (state.society.psychChain || [])
     .filter((entry) => !entry.actorName || entry.actorName === citizen.name)
@@ -2491,6 +2542,12 @@ function showCitizenInteraction(citizen) {
   showDetail(`
     <h3 style="color:${citizen.color}">${h(citizen.name)}</h3>
     <p>${h(citizen.role)} · ${h(citizen.profession)}</p>
+    <div class="detail-section">
+      <div class="detail-section-title">今天的生活线</div>
+      <p><strong>${h(hook.status)}</strong> · ${h(hook.zoneName)}</p>
+      <p>“${h(hook.thought)}”</p>
+      <p>${h(hook.relation)}</p>
+    </div>
     <div class="detail-section">
       <div class="detail-section-title">状态</div>
       <div class="stat-row"><span class="stat-label">心情</span><div class="stat-bar"><div class="stat-fill mood" style="width:${Math.round(citizen.mood)}%"></div></div><span class="stat-val">${Math.round(citizen.mood)}</span></div>
@@ -3082,21 +3139,13 @@ function buildModalHTML(type) {
 
     case "citizens": return `
       <p class="eyebrow">市民看板</p>
-      <h2>所有市民</h2>
+      <h2>今天可以围观谁</h2>
       <div class="reply-box">
         <p class="reply-kicker">人海捞人</p>
-        <p>按人格、当下状态、最近现实片段和生活节奏，捞一个此刻值得围观的人。</p>
+        <p>按人格、当下状态、关系线和生活节奏，捞一个此刻值得跟随的人。</p>
         <button class="modal-btn primary compact" data-match-observe>捞一个观察对象</button>
       </div>
-      ${getAliveCitizens(state.society).map(c => {
-        const zone = getCitizenZone(state.society, c);
-        return `<div class="citizen-item" data-citizen-id="${c.id}">
-          <p><span class="citizen-name" style="color:${c.color}">${h(c.name)}</span> · ${h(c.role)}</p>
-          <p>${h(c.profession)} · ${h(zone?.name || "未知")} · ${h(c.lifeStageLabel || "")}</p>
-          <p>心情 ${Math.round(c.mood)} / 能量 ${Math.round(c.energy)} / 信任 ${Math.round(c.trust)} · 最近 ${h(c.lastAction || "观察")}</p>
-          <button class="modal-btn ghost compact" data-follow-from-modal="${h(c.id)}">围观 TA</button>
-        </div>`;
-      }).join("")}`;
+      ${renderCitizenObservationList() || '<div class="reply-box"><p>社区里暂时没有可围观的人。</p></div>'}`;
 
     case "safety": return `
       <p class="eyebrow">安全治理</p>
@@ -4409,6 +4458,69 @@ function getObservationMatchReason(citizen) {
   return "TA 今天的行动轨迹和社区节奏产生了一个清晰交点。";
 }
 
+function getCitizenLifeStatus(citizen) {
+  if (!citizen) return "正在社区里生活";
+  const anim = citizenAnimations[citizen.id];
+  const now = performance.now();
+  return getCitizenBehaviorLabel(citizen, anim, now);
+}
+
+function getCitizenCurrentThought(citizen) {
+  if (!citizen) return "今天先跟着生活走一小段。";
+  if (citizen.pendingThoughtLine) return citizen.pendingThoughtLine;
+  if (citizen.lastObservationReason) return citizen.lastObservationReason;
+  const zone = getCitizenZone(state.society, citizen);
+  const seed = hashCommunitySeed(citizen.id, state.society?.turn || 0, citizen.zoneId || "life");
+  const relationRows = Object.values(state?.society?.relationships || {})
+    .filter((edge) => edge.a === citizen.id || edge.b === citizen.id)
+    .sort((a, b) => Number(b.updatedAtTurn || 0) - Number(a.updatedAtTurn || 0));
+  if (relationRows.length) {
+    const edge = relationRows[0];
+    const otherId = edge.a === citizen.id ? edge.b : edge.a;
+    const otherName = getCitizenNameById(otherId);
+    if (Number(edge.strain || 0) > 42) return `我和${otherName}之间好像还有一句话没说完。`;
+    if (Number(edge.mutuality || 0) > 55) return `今天也许可以和${otherName}一起把一件小事做完。`;
+  }
+  const lowEnergy = Number(citizen.energy || 50) < 38;
+  const lowMood = Number(citizen.mood || 50) < 40;
+  if (lowEnergy) return `我想在${zone?.name || "社区"}先缓一口气。`;
+  if (lowMood) return "今天不太想证明什么，只想把自己放回生活里。";
+  const lines = [
+    `我想看看${zone?.name || "这座社区"}今天会把我带去哪里。`,
+    "如果不用急着给答案，也许事情会露出另一面。",
+    "今天先做一件小事，看它会不会牵出一个人。",
+    "我有点想靠近人群，又想保留一点自己的安静。"
+  ];
+  return lines[Math.floor(seededCommunityValue(seed, 31) * lines.length)] || lines[0];
+}
+
+function getCitizenRelationshipHook(citizen) {
+  const rows = Object.values(state?.society?.relationships || {})
+    .filter((edge) => edge.a === citizen.id || edge.b === citizen.id)
+    .sort((a, b) => Number(b.updatedAtTurn || 0) - Number(a.updatedAtTurn || 0));
+  if (!rows.length) return "还没有稳定关系，今天适合看 TA 怎样靠近或保持距离。";
+  const edge = rows[0];
+  const otherId = edge.a === citizen.id ? edge.b : edge.a;
+  const otherName = getCitizenNameById(otherId);
+  const model = getRelationModelLabel(edge.model);
+  if (Number(edge.strain || 0) > 42) return `和${otherName}有一点张力，关系像一段还没修好的路。`;
+  if (Number(edge.disclosure || 0) > 0.45) return `和${otherName}正在从表层话题走向更真实的表达。`;
+  return `和${otherName}保持着${model}，今天可能会有一次轻交集。`;
+}
+
+function getCitizenLifeHook(citizen) {
+  const zone = getCitizenZone(state.society, citizen);
+  const status = getCitizenLifeStatus(citizen);
+  const reason = getObservationMatchReason(citizen);
+  return {
+    status,
+    zoneName: zone?.name || "社区",
+    thought: getCitizenCurrentThought(citizen),
+    relation: getCitizenRelationshipHook(citizen),
+    reason
+  };
+}
+
 function pickObservationMatch(query = "") {
   const candidates = getAliveCitizens(state.society)
     .filter(citizen => citizen.id !== "avatar")
@@ -4690,6 +4802,7 @@ function ensureFollowBanner() {
     <div class="follow-meta">
       <strong id="followName"></strong>
       <span id="followStatus"></span>
+      <em id="followThought"></em>
     </div>
     <button id="followExit" type="button">退出跟随</button>`;
   document.getElementById("gameShell")?.appendChild(el);
@@ -4703,8 +4816,10 @@ function updateFollowBanner(citizen, statusText, force = false) {
   lastFollowBannerAt = now;
   const nameEl = document.getElementById("followName");
   const statusEl = document.getElementById("followStatus");
+  const thoughtEl = document.getElementById("followThought");
   if (nameEl) nameEl.textContent = citizen?.name || "";
   if (statusEl) statusEl.textContent = statusText || "";
+  if (thoughtEl) thoughtEl.textContent = citizen ? `“${getCitizenCurrentThought(citizen)}”` : "";
 }
 
 function updateFollowCamera(W, H, now) {
@@ -7417,6 +7532,7 @@ function bindGameEvents() {
         if (action === "open-drift-bottle") { openDriftBottleQuest(); return; }
         if (action === "cast-drift-bottle") { castDriftBottleQuest(); return; }
         if (action === "unlock-world") { unlockWorldExploration(); return; }
+        if (action === "observe-recommended") { observeMatchedCitizen(); return; }
         if (action === "advance-life-week") {
           if (!state.society.citizens.length) launchSocietyFromInput();
           const advanced = typeof advanceLifeWeekStage === "function" ? advanceLifeWeekStage("player") : null;

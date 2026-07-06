@@ -898,6 +898,54 @@ body.splash-active .detail-panel {
   font-size: 13px;
   text-align: center;
 }
+.featured-citizen-card {
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid rgba(149, 228, 222, 0.3);
+  border-radius: 18px;
+  background:
+    linear-gradient(135deg, rgba(149,228,222,0.13), rgba(255,217,61,0.07)),
+    rgba(255,255,255,0.035);
+}
+.featured-citizen-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: baseline;
+}
+.featured-kicker {
+  color: var(--accent-teal);
+  font-size: 11px;
+  font-weight: 900;
+}
+.featured-citizen-head strong {
+  color: var(--ink, var(--hud-text));
+  font-size: 20px;
+  font-weight: 950;
+}
+.featured-status,
+.featured-thought {
+  margin-top: 8px;
+  color: var(--hud-text);
+  font-size: 14px;
+  line-height: 1.55;
+}
+.featured-thought {
+  color: #fff4b8;
+}
+.featured-hooks {
+  display: grid;
+  gap: 6px;
+  margin-top: 10px;
+}
+.featured-hooks span {
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(255,255,255,0.055);
+  color: var(--hud-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
 .perspective-stage,
 .world-echo-card,
 .robot-object,
@@ -1327,6 +1375,46 @@ body.splash-active .detail-panel {
 .citizen-item:hover { border-color: var(--accent-teal); background: rgba(78,205,196,0.06); }
 .citizen-item p { font-size: 13px; color: var(--hud-muted); }
 .citizen-item .citizen-name { font-weight: 700; color: var(--hud-text); }
+.citizen-observe-card {
+  display: grid;
+  gap: 8px;
+}
+.citizen-card-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+}
+.citizen-card-head small {
+  color: var(--hud-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.citizen-item .citizen-life-line {
+  color: var(--hud-text);
+  font-weight: 800;
+}
+.citizen-item .citizen-thought {
+  color: #fff4b8;
+  line-height: 1.55;
+}
+.citizen-card-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.citizen-card-foot span {
+  padding: 4px 7px;
+  border-radius: var(--radius-sm);
+  background: rgba(255,255,255,0.06);
+  color: var(--hud-muted);
+  font-size: 11px;
+  font-weight: 800;
+}
+.citizen-card-foot .modal-btn {
+  margin-left: auto;
+}
 
 .robot-figure {
   display: flex; justify-content: center; align-items: center;
@@ -3970,11 +4058,12 @@ body.detail-open .event-log:focus-within {
   border: 2px solid #67e8f9;
   color: #fafaf5;
   padding: 7px 10px 7px 14px;
-  border-radius: 999px;
+  border-radius: 18px;
   z-index: 60;
   box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   font-size: 13px;
   pointer-events: auto;
+  max-width: min(520px, calc(100vw - 28px));
 }
 #followBanner .follow-eye {
   font-size: 16px;
@@ -3983,7 +4072,8 @@ body.detail-open .event-log:focus-within {
   display: flex;
   flex-direction: column;
   line-height: 1.3;
-  max-width: 220px;
+  max-width: 360px;
+  min-width: 0;
 }
 #followBanner #followName {
   font-size: 13px;
@@ -3995,6 +4085,17 @@ body.detail-open .event-log:focus-within {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+#followBanner #followThought {
+  margin-top: 2px;
+  color: #fff4b8;
+  font-style: normal;
+  font-size: 11px;
+  line-height: 1.35;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
 }
 #followBanner #followExit {
   background: #67e8f9;
