@@ -95,7 +95,7 @@ const WORKDAY_THOUGHT_LINES = {
   focus: ["先把最难的那块拆小", "这件事到底卡在哪里", "我需要一个不被打断的小时", "先交一个能跑的版本"],
   meeting: ["这句话要不要现在说", "大家真正担心的是进度", "我先听完再补充", "别把会开成情绪互耗"],
   lunch: ["吃完再回消息", "中午至少离开屏幕一会儿", "下午要留点电", "这顿饭救我一命"],
-  overtime: ["今天又晚了", "先收一个尾再走", "我需要知道什么时候算完成", "别把疲惫误认为失败"],
+  overtime: ["今天又晚了", "先收一个尾再走", "我需要知道什么时候算完成", "疲惫不等于退场"],
   decompress: ["回家路上先放空", "今晚别再硬撑", "把今天的事慢慢放下", "我只是需要一点安静"],
   chores: ["洗完这点就能躺下", "生活也在排队等我", "先把明天要用的东西放好", "房间乱的时候心也乱"],
   weekend: ["今天不追进度", "把自己还给自己一点", "见不见人都可以", "慢一点也算恢复"],
@@ -242,17 +242,17 @@ const SOCIAL_STANCES = {
 const FIRST_LOOP_ACTIONS = {
   listen: {
     label: "换个视角",
-    intent: "先用另一个身份看懂这段人生",
-    next: "可以进入人生胶囊做一次关键选择，或让现实信使接住这条回声。"
+    intent: "先用另一个身份看见自己正在被什么驱赶",
+    next: "可以进入人生胶囊做一次价值选择，或让现实信使接住这条回声。"
   },
   cooperate: {
     label: "做一次选择",
-    intent: "让这条人生线向前发生一次改变",
-    next: "观察城市里谁被影响，再决定是否继续试活这段人生。"
+    intent: "让这条人生线向更真实的方向移动一步",
+    next: "观察城市里谁被照亮，再决定是否继续试活这段人生。"
   },
   support: {
     label: "接住回声",
-    intent: "让另一个世界里的你把感受传回现实侧",
+    intent: "让另一个世界里更清醒的你把信号传回现实侧",
     next: "打开现实信使，听听这次体验在现实里的余波。"
   }
 };
@@ -786,13 +786,13 @@ function renderCitizenObservationList() {
 
 function renderOpeningQuest() {
   return `
-    ${renderQuestHeader("MirrorLife", "你想活出怎样的人生", "先带着自己的分身进入一段匿名人生，做一次选择，再看这座社区怎样牵动另一个人。", "choose_capsule")}
+    ${renderQuestHeader("MirrorLife", "在选择里成为自己", "带着分身进入一段人生岔路。不是为了逃离现实，而是看见：当旧身份松动时，你仍愿意选择怎样的光。", "choose_capsule")}
     <div class="quest-opening">
-      <div class="locked-discovery active"><span>进入人生</span><small>用自己的分身试一段岔路</small></div>
-      <div class="locked-discovery"><span>城市回应</span><small>看选择影响谁的生活</small></div>
-      <div class="locked-discovery"><span>围观一个人</span><small>跟随 TA 的一天</small></div>
+      <div class="locked-discovery active"><span>进入岔路</span><small>用分身试一次价值选择</small></div>
+      <div class="locked-discovery"><span>城市回应</span><small>看选择如何照亮关系</small></div>
+      <div class="locked-discovery"><span>围观一个人</span><small>跟随 TA 如何重建生活</small></div>
     </div>
-    <button class="quest-primary" data-quest-action="start-trial">开始试活</button>`;
+    <button class="quest-primary" data-quest-action="start-trial">进入第一段岔路</button>`;
 }
 
 function renderCapsuleDeck() {
@@ -817,7 +817,7 @@ function renderCapsuleDeck() {
 function renderChooseCapsuleQuest() {
   const quest = ensureFirstSessionQuest();
   return `
-    ${renderQuestHeader("01 / 选择人生胶囊", "今晚先站进哪段人生？", "你的分身会进入一段匿名重构的处境。你只会看到身份、压力和选择，不会看到原始身份。", "choose_capsule")}
+    ${renderQuestHeader("01 / 选择人生胶囊", "今晚先站进哪段岔路？", "每段人生都是一面镜子。你不会看到原始身份，只会看到一个人如何在现实缝隙里重新选择自己。", "choose_capsule")}
     <div class="capsule-deck">${renderCapsuleDeck()}</div>
     ${quest.selectedCapsuleId
       ? `<button class="quest-primary" data-quest-action="enter-capsule">进入这段人生</button>`
@@ -834,7 +834,7 @@ function renderPerspectiveQuest() {
     ${renderQuestHeader("02 / 视角切换中", `此刻我是：${capsule.perspectiveRole}`, capsule.anonymizedScenario, "perspective_scene")}
     <div class="perspective-stage">
       <p class="stage-label">${escapeHtml(capsule.lifeStage)}</p>
-      <h3>今晚，我要怎样往前走？</h3>
+      <h3>在这个路口，我要把自己带向哪里？</h3>
       <div class="choice-stone-grid">
         ${choices.map((choice) => `<button class="choice-stone" data-quest-choice="${escapeHtml(choice)}">${escapeHtml(choice)}</button>`).join("")}
       </div>
@@ -846,13 +846,13 @@ function renderPerspectiveQuest() {
 function renderWorldEchoQuest() {
   const quest = ensureFirstSessionQuest();
   return `
-    ${renderQuestHeader("03 / 世界回声", "这个选择已经发生", "这不是评分，也不是对错。它只是让你看见：如果活在这个身份里，世界会怎样回应。", "world_echo")}
+    ${renderQuestHeader("03 / 世界回声", "这个选择已经发生", "这不是评分，也不是对错。它只是在照亮：你刚刚选择成为什么样的人。", "world_echo")}
     <div class="world-echo-card">
-      <p class="echo-title">如果我活在这个身份里，我看见了...</p>
-      <p>${escapeHtml(quest.echo || "选择不是答案本身，而是一条会改变关系和自我位置的岔路。")}</p>
+      <p class="echo-title">这次选择带来的回声</p>
+      <p>${escapeHtml(quest.echo || "城市看见了：一个人开始重新选择自己时，生活就已经偏向了新的方向。")}</p>
       ${quest.worldResult ? `<small>${escapeHtml(quest.worldResult)}</small>` : ""}
     </div>
-    <button class="quest-primary" data-quest-action="open-robot-signal">听听另一个我的信号</button>
+    <button class="quest-primary" data-quest-action="open-robot-signal">听现实信使怎么说</button>
     <button class="quest-secondary" data-quest-action="back-to-perspective">再试一次选择</button>`;
 }
 
@@ -861,12 +861,12 @@ function renderRobotSignalQuest() {
   const signal = (state.robotSignals || []).find((item) => item.message === quest.robotMessage) || (state.robotSignals || [])[0];
   const message = signal?.message || "现实信使正在静默陪伴。另一个世界还没有传来新的回声。";
   return `
-    ${renderQuestHeader("04 / 现实信使", "现实侧有一盏灯亮了一下", "它不是助手，也不是通知中心。它只是把另一个世界里的你轻轻带回来。", "robot_signal")}
+    ${renderQuestHeader("04 / 现实信使", "现实侧有一盏灯亮了一下", "它不是助手，也不是通知中心。它只是把另一个世界里更清醒的你轻轻带回来。", "robot_signal")}
     <div class="robot-object ${signal?.intensity || "quiet"}">
       <div class="robot-figure"><div class="robot-head-inner"><div class="robot-eye"></div><div class="robot-eye"></div></div></div>
       <p>${escapeHtml(message)}</p>
     </div>
-    <button class="quest-primary" data-quest-action="open-drift-bottle">把这一刻投进海里</button>
+    <button class="quest-primary" data-quest-action="open-drift-bottle">把这束光投进海里</button>
     <button class="quest-secondary" data-quest-action="unlock-world">先进入城市探索</button>`;
 }
 
@@ -878,7 +878,7 @@ function renderDriftBottleQuest() {
   ).join("");
   if (quest.driftCasted || quest.safetyRouted) {
     return `
-      ${renderQuestHeader("05 / 灵魂漂流瓶", quest.safetyRouted ? "这只瓶子先被保护起来" : "这只瓶子还在海上", quest.safetyRouted ? "这段内容不会进入普通匹配池。这里会先保护现实中的你。" : "它不会立刻变成聊天匹配。等某个同频的人经过，现实信使会轻轻告诉你。", "drift_bottle")}
+      ${renderQuestHeader("05 / 灵魂漂流瓶", quest.safetyRouted ? "这只瓶子先被保护起来" : "这只瓶子还在海上", quest.safetyRouted ? "这段内容不会进入普通匹配池。这里会先守住现实中的你。" : "它不会立刻变成聊天匹配。等某个同样向光的人经过，现实信使会轻轻告诉你。", "drift_bottle")}
       <div class="drift-ritual casted">
         <p>${escapeHtml(quest.driftText || "此刻的人生瞬间已经离岸。")}</p>
         <span>${escapeHtml(LIFE_SCOPE_LABELS[moment] || "人生转折")}</span>
@@ -886,9 +886,9 @@ function renderDriftBottleQuest() {
       <button class="quest-primary" data-quest-action="unlock-world">进入城市探索</button>`;
   }
   return `
-    ${renderQuestHeader("05 / 灵魂漂流瓶", "把此刻投向海上", "写一句此刻的人生瞬间。它会先漂着，不会马上把你推向陌生人。", "drift_bottle")}
+    ${renderQuestHeader("05 / 灵魂漂流瓶", "把此刻投向海上", "写一句你愿意守住的东西。它会先漂着，不会马上把你推向陌生人。", "drift_bottle")}
     <div class="drift-ritual">
-      <textarea id="questDriftText" rows="4" maxlength="140" placeholder="例如：我站在一个转折点，不知道该继续忍耐，还是承认自己想换一种人生。">${escapeHtml(quest.driftText || "")}</textarea>
+      <textarea id="questDriftText" rows="4" maxlength="140" placeholder="例如：我站在一个转折点，想重新选择一种更真诚、更有光的生活。">${escapeHtml(quest.driftText || "")}</textarea>
       <div class="choice-stone-grid compact">${momentButtons}</div>
     </div>
     <button class="quest-primary" data-quest-action="cast-drift-bottle">投向海上</button>`;
@@ -896,7 +896,7 @@ function renderDriftBottleQuest() {
 
 function renderUnlockedWorldQuest() {
   return `
-    ${renderQuestHeader("城市探索已解锁", "先围观一个人的一天", "你已经完成第一轮试活。现在别急着看所有入口，先跟着一个被世界牵动的人走一小段。", "unlocked_world")}
+    ${renderQuestHeader("城市探索已解锁", "先围观一个人的一天", "你已经完成第一轮试活。现在别急着看所有入口，先跟着一个正在重建生活的人走一小段。", "unlocked_world")}
     ${renderFeaturedCitizenPanel()}
     ${renderLifeWeekBoard()}
     ${renderLifeRewardCard()}
@@ -940,9 +940,29 @@ function buildFirstLoopResult(feedback, actionType, visibleChoice = "") {
   const actor = ctx.actorName || "你的分身";
   const choiceText = visibleChoice || action.label;
   return {
-    resultText: `${actor}选择“${choiceText}”：${action.intent}。${target}被影响，${delta}。`,
+    resultText: `${actor}选择“${choiceText}”：${action.intent}。${target}被这一步照亮，${delta}。`,
     nextText: action.next
   };
+}
+
+function buildAwakeningChoiceEcho(capsule, choice, feedback = null) {
+  const role = capsule?.perspectiveRole || "这段人生";
+  const delta = feedback?.context?.delta ? formatDeltaSummary(feedback.context.delta) : "";
+  const normalized = choice || "继续往前走";
+  let meaning = "你没有急着判断输赢，而是在现实的缝隙里，重新看见自己想成为什么样的人。";
+  if (/边界|守住|空间/.test(normalized)) {
+    meaning = "你选择守住边界。边界不是把世界推远，而是让热爱不再以消耗自己的方式存在。";
+  } else if (/离开|重新选择|旧路|走/.test(normalized)) {
+    meaning = "你选择离开旧路。表面上你放下的是一个熟悉位置，更深处你放下的是那个总用忍耐换安全感的自己。";
+  } else if (/求助|同行|同路|可信|邀请/.test(normalized)) {
+    meaning = "你选择向同路人靠近。真正的强大不是独自扛住一切，而是在清醒之后仍愿意与人建立真实连接。";
+  } else if (/静|观察|听内心|十分钟|落地/.test(normalized)) {
+    meaning = "你选择先安静下来。这不是退缩，而是不把自己交给噪音，让内心真正的声音重新浮上来。";
+  } else if (/真|感受|说出|表达|信/.test(normalized)) {
+    meaning = "你选择说出真实。真诚不是示弱，而是你不愿再背叛自己内心那一点清澈的光。";
+  }
+  const consequence = delta ? `这一步也让城市发生了细小变化：${delta}。` : "城市把这一步记了下来，等待它在关系里慢慢显影。";
+  return `如果我活在“${role}”里，我看见了：${meaning} ${consequence}`;
 }
 
 function recordFirstLoopCausalGraph(feedback, actionType, built) {
@@ -1183,7 +1203,7 @@ function askMirror() {
   const pattern = state.profile.pattern || "那些反复出现、还没有被好好命名的感受";
 
   if (!text) {
-    reply.innerHTML = '<p class="reply-kicker">镜像回声</p><p>先写下一件真实发生的小事就可以。它不需要完整，也不需要漂亮。</p>';
+    reply.innerHTML = '<p class="reply-kicker">镜像回声</p><p>先写下一个让你停住的瞬间就可以。它不需要完整，也不需要漂亮。</p>';
     return;
   }
   if (isHighRiskText(text)) {
@@ -1210,11 +1230,11 @@ function askMirror() {
     const shortened = text.length > 52 ? `${text.slice(0, 52)}...` : text;
     let response;
     if (activeMode === "observer") {
-      response = `<strong>${escapeHtml(identity)}</strong>，我看到你把"${escapeHtml(shortened)}"放到了这里。它是一次旧模式被激活：${escapeHtml(pattern)}。今天先不急着判断对错，先分清事实、解释与真实痛点。`;
+      response = `<strong>${escapeHtml(identity)}</strong>，我看到你把"${escapeHtml(shortened)}"放到了这里。它不只是一个问题，也是一面镜子：${escapeHtml(pattern)}。今天先不急着判断对错，先看清你正在被什么驱赶，又真正想靠近什么。`;
     } else if (activeMode === "companion") {
-      response = `我先陪你停一会儿。"${escapeHtml(shortened)}"听起来像在替很久以来的自己撑场景。你不用立即变得聪明，你先允许这个人性化的疲惫被看见。`;
+      response = `我先陪你停一会儿。"${escapeHtml(shortened)}"听起来像一个路口。你不用立刻变得强大，只要先不要背叛那个还想真诚、善良、热爱生活的自己。`;
     } else {
-      response = `我像镜子一样把它还给你：你说"${escapeHtml(shortened)}"。里面有压力，也有一个正在成熟的需要。真正关键的不在速度，而在你是否允许自己从这件事里学习。`;
+      response = `我像镜子一样把它还给你：你说"${escapeHtml(shortened)}"。里面有现实的重量，也有一个正在醒来的自己。真正关键的不在速度，而在你是否愿意从这一步开始，把自己带回更清澈的地方。`;
     }
     reply.innerHTML = `<p class="reply-kicker">镜像回声 · ${modeLabel}模式</p><p>${response}</p>`;
     addEcho(stripTags(response));
@@ -1223,7 +1243,7 @@ function askMirror() {
   const feedback = injectLifeEventToSociety(text);
   writeWorldNarrativeFeedback(feedback);
   seedLifeFragmentResonance(feedback, text);
-  showToast("镜像回声已生成，世界正在反应...", "support");
+  showToast("镜像回声已生成，城市正在回应这一步", "support");
 }
 
 function makeLocalId(prefix) {
@@ -1274,10 +1294,10 @@ function buildLifeCapsuleFromFragment(fragment) {
   const scopeLabel = LIFE_SCOPE_LABELS[fragment.consentScope] || "人生片段";
   const clean = anonymizeLifeText(fragment.rawText);
   const choiceMap = {
-    emotion: ["先承认这份感受", "找一个人说实话", "把今天先安全度过", "换一个身份重新看"],
-    career: ["谈一次边界", "提交离开的决定", "寻找同盟", "先完成一次小验证"],
-    relationship: ["说出害怕", "请求十分钟", "保持距离", "写下一封不会发出的信"],
-    turning_point: ["跨过去", "再等一晚", "请别人同行", "回头整理旧线索"]
+    emotion: ["先承认这份感受", "找一个人说真话", "把今天稳稳度过", "换一个身份重新看"],
+    career: ["谈一次边界", "提交新的选择", "寻找同路人", "先完成一次小验证"],
+    relationship: ["说出真实感受", "请求十分钟", "保持清醒距离", "写下一封不会发出的信"],
+    turning_point: ["向前走一步", "再听内心一晚", "请别人同行", "回头整理旧线索"]
   };
   return {
     id: makeLocalId("capsule"),
@@ -1401,12 +1421,12 @@ function playLifeChoice(choice) {
   if (!capsule || !choice) return;
   pauseSocietyRun();
   const eventText = `我正在体验“${capsule.title}”。作为${capsule.perspectiveRole}，我选择：${choice}。处境是：${capsule.anonymizedScenario}`;
-  const actionType = /求助|同盟|同行|说|谈|承认|请求/.test(choice) ? "listen" : /离开|跨|提交/.test(choice) ? "propose" : "support";
+  const actionType = /求助|同盟|同行|说|谈|承认|请求|表达|邀请/.test(choice) ? "listen" : /离开|跨|提交|旧路|重新选择/.test(choice) ? "propose" : "support";
   const feedback = injectLifeEventToSociety(eventText, actionType);
-  const echo = `如果我活在“${capsule.perspectiveRole}”里，我看见了：${choice}不是答案本身，而是一条会改变关系和自我位置的岔路。`;
+  const echo = buildAwakeningChoiceEcho(capsule, choice, feedback);
   addEcho(`试活人生：${echo}`);
   addEventLogEntry("试活人生", echo, actionType, true);
-  pushRobotSignal("life_capsule", "summon", `另一个世界里的你刚体验了“${capsule.title}”：${choice}。${echo}`);
+  pushRobotSignal("life_capsule", "summon", `另一个世界里的你刚体验了“${capsule.title}”：${choice}。这一步不是输赢，而是一次内在秩序的重建。`);
   if (feedback) {
     triggerRealityActionFocus(feedback);
     recordTomorrowContinuation(feedback, echo);
@@ -1471,24 +1491,24 @@ function commitLifeChoice(choice) {
   const eventText = `我正在体验“${capsule.title}”。作为${capsule.perspectiveRole}，我选择：${choice}。处境是：${capsule.anonymizedScenario}`;
   const actionType = /求助|同盟|同行|说|谈|承认|请求|表达/.test(choice)
     ? "listen"
-    : /离开|跨|提交|走/.test(choice)
+    : /离开|跨|提交|走|旧路|重新选择/.test(choice)
       ? "propose"
       : "support";
   const feedback = injectLifeEventToSociety(eventText, actionType);
   const built = feedback
     ? buildFirstLoopResult(feedback, actionType, choice)
     : { resultText: "世界记录了这次选择。", nextText: "听听另一个我的信号。" };
-  const echo = `如果我活在“${capsule.perspectiveRole}”里，我看见了：${choice}不是答案本身，而是一条会改变关系和自我位置的岔路。`;
+  const echo = buildAwakeningChoiceEcho(capsule, choice, feedback);
   quest.choice = choice;
   quest.echo = echo;
   quest.worldResult = built.resultText;
-  quest.robotMessage = `另一个世界里的你刚刚选择了“${choice}”。有些关系没有立刻变好，但它开始回应你了。`;
+  quest.robotMessage = `另一个世界里的你刚刚选择了“${choice}”。城市看见的不是成败，而是你在岔路口仍愿意靠近真诚、自由与光。`;
   const loop = ensureFirstLoopState();
   loop.input = eventText;
   loop.actionType = actionType;
   loop.completed = true;
   loop.resultText = built.resultText;
-  loop.nextText = "现实信使已经收到这次人生回声。";
+  loop.nextText = "现实信使已经收到这次选择的光。";
   loop.becauseLine = "";
   addEcho(`试活人生：${echo}`);
   addEventLogEntry("试活人生", echo, actionType, true);
@@ -1513,7 +1533,7 @@ function commitLifeChoice(choice) {
   persist();
   updateHUD();
   renderFirstLoopPanel();
-  showToast("人生选择已发生，世界给出了回声", "support");
+  showToast("人生选择已发生，城市记住了这束光", "support");
 }
 
 function openRobotSignalQuest() {
@@ -1562,12 +1582,12 @@ function castDriftBottleQuest() {
   quest.safetyRouted = bottle.status === "safety_routed";
   if (bottle.status === "safety_routed") {
     addEcho("漂流瓶内容先走安全分流。");
-    pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先保护投放者。");
+    pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先守住投放者。");
     injectLifeEventToSociety(text, "support");
     showToast("这只瓶子先被安全分流", "conflict");
   } else {
     addEcho(`灵魂漂流瓶已投放：${text.slice(0, 34)}${text.length > 34 ? "..." : ""}`);
-    pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同频的时刻。");
+    pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同样向光的时刻。");
     injectLifeEventToSociety(text, "support");
     showToast("这只瓶子还在海上", "support");
   }
@@ -1593,7 +1613,7 @@ function inferResonanceTags(text, moment) {
   if (/离职|工作|职业|公司|项目|老板|同事/.test(text)) tags.push("career");
   if (/喜欢|伴侣|关系|分手|家人|朋友|爱/.test(text)) tags.push("relationship");
   if (/转折|选择|离开|重来|人生|突然/.test(text)) tags.push("turning_point");
-  if (/累|焦虑|害怕|孤独|难过|撑/.test(text)) tags.push("emotion");
+  if (/累|焦虑|害怕|孤独|难过|撑|清醒|热爱|光|真实|真诚/.test(text)) tags.push("emotion");
   return [...new Set(tags)].slice(0, 5);
 }
 
@@ -1619,7 +1639,7 @@ function sendBottle() {
     state.driftBottles = [bottle, ...(state.driftBottles || [])].slice(0, 12);
     reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>这段内容先不进入普通漂流池。先让现实中的你安全下来。</p>';
     addEcho("漂流瓶内容先走安全分流。");
-    pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先保护投放者。");
+    pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先守住投放者。");
     injectLifeEventToSociety(text, "support");
     persist();
     return;
@@ -1638,10 +1658,10 @@ function sendBottle() {
   injectLifeEventToSociety(text, "support");
   reply.innerHTML = `
     <p class="reply-kicker">这只瓶子还在海上</p>
-    <p>它不会立刻变成聊天匹配。世界会等待一个足够相近的人生时刻，再让两个回声轻轻碰到。</p>
+    <p>它不会立刻变成聊天匹配。世界会等待一个足够相近的人生时刻，再让两束光轻轻碰到。</p>
     <div class="bottle-status-row">${bottle.resonanceTags.map((tag) => `<span class="status-pill">${escapeHtml(LIFE_SCOPE_LABELS[tag] || tag)}</span>`).join("")}</div>`;
   addEcho(`灵魂漂流瓶已投放：${text.slice(0, 34)}${text.length > 34 ? "..." : ""}`);
-  pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同频的时刻。");
+  pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同样向光的时刻。");
   showToast("灵魂漂流瓶正在海上", "support");
 }
 
@@ -1663,7 +1683,7 @@ function receiveBottle() {
     reply.innerHTML = '<p class="reply-kicker">这只瓶子还在海上</p><p>当前没有足够相近的人生时刻。它仍在等待，不会被推给不合适的人。</p>';
     return;
   }
-  const echo = `有人也在${LIFE_SCOPE_LABELS[floating.lifeMoment] || "某个人生时刻"}里看见了相似的门。你们不需要立刻认识彼此，但这一刻的同频已经成立。`;
+  const echo = `有人也在${LIFE_SCOPE_LABELS[floating.lifeMoment] || "某个人生时刻"}里看见了相似的门。你们不需要立刻认识彼此，但这一刻，你们都没有放弃把自己带回光里。`;
   const match = {
     id: makeLocalId("match"),
     bottleA: floating.id,
@@ -1684,7 +1704,7 @@ function receiveBottle() {
       <button class="modal-btn ghost compact" data-decline-soul-match="${escapeHtml(match.id)}">让它停在这里</button>
     </div>`;
   addEcho(`灵魂漂流瓶命中：${echo}`);
-  pushRobotSignal("drift_bottle", "summon", `一只漂流瓶在海上碰到了同频的人：${echo}`);
+  pushRobotSignal("drift_bottle", "summon", `一只漂流瓶在海上碰到了同样向光的人：${echo}`);
   injectLifeEventToSociety(echo, "listen");
   state.bottle = "";
   persist();
@@ -1701,7 +1721,7 @@ function buildRobotReply(mode) {
   if (mode === "reflect") {
     const capsule = getActiveLifeCapsule();
     return latest
-      ? `这不是通知，是另一个世界的回声。\n\n${latest.message}\n\n当前人生视角：${capsule?.perspectiveRole || "尚未进入胶囊"}。`
+      ? `这不是通知，是另一个世界的回声。\n\n${latest.message}\n\n当前人生视角：${capsule?.perspectiveRole || "尚未进入胶囊"}。\n\n你可以问自己：这一步让我更靠近怎样的自己？`
       : robotReplies.reflect;
   }
   if (mode === "action" && state.continuation) {
@@ -3069,25 +3089,25 @@ function buildModalHTML(type) {
   switch(type) {
     case "mirror": return `
       <p class="eyebrow">投进一段生活</p>
-      <h2>把今天发生的一件事，交给这座城市回应。</h2>
+      <h2>把今天照见你的一个瞬间，交给这座城市回应。</h2>
       <div class="modal-chips">
         <button class="modal-chip ${activeMode==="mirror"?"active":""}" data-mode="mirror">镜子</button>
         <button class="modal-chip ${activeMode==="observer"?"active":""}" data-mode="observer">旁观</button>
         <button class="modal-chip ${activeMode==="companion"?"active":""}" data-mode="companion">陪伴</button>
       </div>
       <label>此刻发生了什么</label>
-      <textarea id="modalLifeEvent" rows="5" placeholder="例如：我今天又想离职，但我不确定这是勇敢还是逃避。"></textarea>
+      <textarea id="modalLifeEvent" rows="5" placeholder="例如：我站在一个路口，想知道自己是在顺着惯性走，还是终于听见了内心真正的召唤。"></textarea>
       <button class="modal-btn primary" id="modalAskMirror">交给我的分身</button>
-      <div class="reply-box" id="modalMirrorReply"><p class="reply-kicker">镜像回声</p><p>你的分身会在这里回应你。</p></div>
+      <div class="reply-box" id="modalMirrorReply"><p class="reply-kicker">镜像回声</p><p>你的分身会在这里照见这一步选择。</p></div>
       <div class="tomorrow-card" id="modalTomorrowContinue" hidden></div>`;
 
     case "script": return `
       <p class="eyebrow">现实线索</p>
-      <h2>让分身更懂你最近的生活处境。</h2>
+      <h2>让分身更懂你正在经历的内在转向。</h2>
       <div class="form-grid">
-        <div><label>现在的你</label><input type="text" data-field="identity" placeholder="例如：独居的产品经理" /></div>
-        <div><label>重要关系</label><input type="text" data-field="relations" placeholder="例如：母亲、前任、同事A" /></div>
-        <div><label>反复出现的模式</label><input type="text" data-field="pattern" placeholder="例如：越在意越沉默" /></div>
+        <div><label>现在的你</label><input type="text" data-field="identity" placeholder="例如：正在重新选择生活方向的人" /></div>
+        <div><label>重要关系</label><input type="text" data-field="relations" placeholder="例如：家人、朋友、同行者" /></div>
+        <div><label>反复出现的模式</label><input type="text" data-field="pattern" placeholder="例如：越想证明自己，越听不见内心" /></div>
         <div><label>不要写进世界的内容</label><input type="text" data-field="boundary" placeholder="例如：真实姓名、具体住址" /></div>
       </div>
       <button class="modal-btn primary" id="modalSaveScript">保存线索</button>
@@ -3100,39 +3120,39 @@ function buildModalHTML(type) {
 
     case "exchange": return `
       <p class="eyebrow">试活人生</p>
-      <h2>进入一个匿名重构的人生片段，短暂活成另一个人。</h2>
-      <p>每段人生都会被改写和遮去真实身份。你看到的是处境、身份和选择，不是某个人的原文。</p>
+      <h2>进入一段匿名人生岔路，练习一次清醒的选择。</h2>
+      <p>每段人生都会被改写和遮去真实身份。你看到的是处境、身份和价值选择，不是某个人的原文。</p>
       <div class="life-cards">
         ${renderLifeCapsuleCards()}
       </div>
       <div id="modalExchangeExp"></div>
       <div class="consent-panel">
         <p class="reply-kicker">授权一个人生片段</p>
-        <p>写下你愿意交给世界的一段经历。它会先被改写和遮去身份，再变成别人可以试活的人生片段。</p>
+        <p>写下你愿意交给世界的一段经历。它会先被改写和遮去身份，再变成别人可以照见自己的岔路。</p>
         <div class="scope-grid">
           ${Object.entries(LIFE_SCOPE_LABELS).map(([key, label], index) => `<button class="scope-chip ${index === 0 ? "active" : ""}" data-scope="${key}">${label}</button>`).join("")}
         </div>
-        <textarea id="lifeFragmentInput" rows="4" placeholder="例如：我曾经在一个很稳定的生活里，突然意识到自己想换一种人生。"></textarea>
+        <textarea id="lifeFragmentInput" rows="4" placeholder="例如：我曾经在一个很稳定的生活里，突然听见自己想成为另一个更真实的人。"></textarea>
         <button class="modal-btn primary" id="modalAuthorizeLife">生成匿名人生片段</button>
         <div class="reply-box" id="lifeAuthorizeReply"><p class="reply-kicker">匿名保护</p><p>生成后仍可在安全边界里撤回。当前版本只保存在这台设备上。</p></div>
       </div>`;
 
     case "bottle": return `
       <p class="eyebrow">灵魂漂流瓶</p>
-      <h2>把一个人生瞬间放上海面，等待同频的人在某刻碰到你。</h2>
+      <h2>把一束还没有熄灭的光放上海面，等待同频的人在某刻碰到你。</h2>
       <div class="scope-grid">
         ${Object.entries(LIFE_SCOPE_LABELS).map(([key, label], index) => `<button class="scope-chip ${index === 0 ? "active" : ""}" data-scope="${key}">${label}</button>`).join("")}
       </div>
-      <label>这一刻的人生频率</label>
-      <textarea id="modalBottleInput" rows="5" placeholder="例如：我站在一个转折点，不知道该继续忍耐，还是承认自己想换一种人生。"></textarea>
+      <label>这一刻你想守住什么</label>
+      <textarea id="modalBottleInput" rows="5" placeholder="例如：我想在看清现实以后，仍然选择真诚、善意和热爱生活。"></textarea>
       <button class="modal-btn primary" id="modalSendBottle">投放漂流瓶</button>
       <button class="modal-btn ghost" id="modalReceiveBottle">等待同频偶遇</button>
-      <div class="reply-box" id="modalBottleReply"><p class="reply-kicker">这只瓶子还没有离岸</p><p>它不会变成立即聊天。命中前，它只是在海上等待一个足够相似的人生时刻。</p></div>
+      <div class="reply-box" id="modalBottleReply"><p class="reply-kicker">这只瓶子还没有离岸</p><p>它不会变成立即聊天。命中前，它只是在海上等待一个同样向光的人生时刻。</p></div>
       ${(state.soulMatches || []).slice(0, 3).map(match => `<div class="soul-match-card"><time>${h(match.createdAt || "")}</time><p>${h(match.matchReason)}</p><p>状态：${h(match.consentState)}</p></div>`).join("")}`;
 
     case "robot": return `
       <p class="eyebrow">现实信使</p>
-      <h2>它把另一个世界里的轻微信号，带回现实中的你。</h2>
+      <h2>它把另一个世界里更清醒的你，轻轻带回现实。</h2>
       <div class="robot-figure"><div class="robot-head-inner"><div class="robot-eye"></div><div class="robot-eye"></div></div></div>
       <div class="modal-chips">
         <button class="modal-chip ${activeRobotMode==="quiet"?"active":""}" data-robot="quiet">静默陪伴</button>
@@ -3143,7 +3163,7 @@ function buildModalHTML(type) {
 
     case "echoes": return `
       <p class="eyebrow">回声档案</p>
-      <h2>现实投影与社会余波</h2>
+      <h2>选择留下的光与余波</h2>
       ${state.continuation ? `<div class="tomorrow-card archive">${buildTomorrowContinuationHTML()}</div>` : ""}
       <div class="echo-list">${state.echoes.length ? state.echoes.map(e => `<div class="echo-item"><time>${h(e.at)}</time><p>${h(e.text)}</p></div>`).join("") : '<p>完成一次交互后，这里会保留最近的镜像片段。</p>'}</div>`;
 
@@ -3182,13 +3202,13 @@ function buildModalHTML(type) {
     case "narrative-settings": {
       return `
       <p class="eyebrow">叙事设置</p>
-      <h2>世界怎样写下回声</h2>
+      <h2>世界怎样照见一次选择</h2>
       <p style="color:var(--hud-muted);font-size:13px;margin-bottom:12px;">
         当前版本会在本机生成叙事回声，不需要登录，也不会把密钥放进浏览器页面。
       </p>
       <div class="reply-box">
         <p class="reply-kicker">当前方式</p>
-        <p>世界会根据人物状态、关系变化和你的选择，写下现实投影和未完回声。</p>
+        <p>世界会根据人物状态、关系变化和你的选择，写下现实投影、价值回声和未完的下一步。</p>
       </div>`;
     }
 
