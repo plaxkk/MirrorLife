@@ -132,6 +132,124 @@ const semanticBuildingSpriteImage = new Image();
 semanticBuildingSpriteImage.decoding = "async";
 semanticBuildingSpriteImage.src = SEMANTIC_BUILDING_SPRITE_SRC;
 
+const INTERIOR_PROP_BOARD_SRC = "/assets/mirrorlife-interior-prop-design-board.png";
+const interiorPropSpriteCache = new Map();
+const interiorPropBoardImage = new Image();
+interiorPropBoardImage.decoding = "async";
+interiorPropBoardImage.src = INTERIOR_PROP_BOARD_SRC;
+interiorPropBoardImage.onload = () => {
+  interiorPropSpriteCache.clear();
+  try { markRenderActive(1800); } catch (_) {}
+};
+const INTERIOR_PROP_ATLAS = {
+  hospitalBed: { x: 14, y: 26, w: 170, h: 120 },
+  nurseCounter: { x: 208, y: 42, w: 190, h: 115 },
+  medicineCabinet: { x: 488, y: 18, w: 130, h: 158 },
+  stroller: { x: 652, y: 42, w: 128, h: 120 },
+  teddyCorner: { x: 805, y: 48, w: 128, h: 112 },
+  bedroomSet: { x: 1000, y: 20, w: 315, h: 180 },
+  blackboard: { x: 14, y: 202, w: 188, h: 120 },
+  carePodium: { x: 224, y: 218, w: 118, h: 112 },
+  schoolDesk: { x: 372, y: 212, w: 130, h: 120 },
+  readingChair: { x: 528, y: 205, w: 150, h: 132 },
+  bookshelf: { x: 698, y: 196, w: 140, h: 145 },
+  libraryRoom: { x: 930, y: 182, w: 326, h: 190 },
+  noticeBoard: { x: 28, y: 392, w: 110, h: 105 },
+  bench: { x: 158, y: 410, w: 128, h: 80 },
+  fountain: { x: 314, y: 386, w: 145, h: 105 },
+  flowerBox: { x: 488, y: 398, w: 150, h: 95 },
+  plazaGarden: { x: 668, y: 362, w: 240, h: 160 },
+  marketStall: { x: 936, y: 384, w: 128, h: 124 },
+  marketShelf: { x: 1080, y: 394, w: 118, h: 112 },
+  hotFoodStand: { x: 1212, y: 390, w: 122, h: 116 },
+  fruitBasket: { x: 1325, y: 420, w: 95, h: 82 },
+  marketRoom: { x: 1260, y: 356, w: 260, h: 178 },
+  sofa: { x: 18, y: 590, w: 130, h: 92 },
+  diningSet: { x: 166, y: 592, w: 142, h: 104 },
+  bedGreen: { x: 332, y: 586, w: 126, h: 108 },
+  washstand: { x: 492, y: 580, w: 115, h: 124 },
+  homeRoom: { x: 622, y: 558, w: 260, h: 170 },
+  roundTable: { x: 922, y: 588, w: 160, h: 105 },
+  archiveCabinet: { x: 1095, y: 582, w: 95, h: 122 },
+  loungeCorner: { x: 1210, y: 590, w: 146, h: 118 },
+  mediationRoom: { x: 1320, y: 548, w: 205, h: 175 },
+  easel: { x: 16, y: 770, w: 92, h: 118 },
+  paintCart: { x: 122, y: 778, w: 112, h: 102 },
+  galleryFrames: { x: 242, y: 760, w: 112, h: 92 },
+  cushionPlant: { x: 376, y: 780, w: 115, h: 88 },
+  workbench: { x: 528, y: 750, w: 145, h: 118 },
+  laptopDesk: { x: 696, y: 760, w: 145, h: 100 },
+  toolCart: { x: 860, y: 742, w: 94, h: 125 },
+  machine: { x: 984, y: 752, w: 86, h: 112 },
+  greenhouse: { x: 1102, y: 734, w: 135, h: 128 },
+  plantRack: { x: 1258, y: 728, w: 128, h: 120 },
+  gardenBed: { x: 1402, y: 736, w: 126, h: 110 },
+  cherryTree: { x: 16, y: 906, w: 130, h: 105 },
+  stoneLantern: { x: 150, y: 918, w: 95, h: 90 },
+  memorialStone: { x: 282, y: 902, w: 108, h: 100 },
+  quietBench: { x: 424, y: 916, w: 128, h: 78 },
+  candleAltar: { x: 584, y: 890, w: 155, h: 105 },
+  vaseFlower: { x: 758, y: 910, w: 78, h: 88 },
+  memoryFlowerBox: { x: 868, y: 910, w: 112, h: 82 },
+  smallFountain: { x: 1002, y: 905, w: 88, h: 83 },
+  lantern: { x: 1116, y: 908, w: 72, h: 85 },
+  memoryGarden: { x: 1246, y: 862, w: 270, h: 150 }
+};
+const INTERIOR_PROP_DRAW_WIDTHS = {
+  hospitalBed: 104,
+  nurseCounter: 126,
+  medicineCabinet: 76,
+  stroller: 72,
+  teddyCorner: 74,
+  bedroomSet: 190,
+  blackboard: 138,
+  carePodium: 78,
+  schoolDesk: 74,
+  readingChair: 86,
+  bookshelf: 82,
+  libraryRoom: 190,
+  noticeBoard: 66,
+  bench: 72,
+  fountain: 82,
+  flowerBox: 78,
+  plazaGarden: 150,
+  marketStall: 92,
+  marketShelf: 78,
+  hotFoodStand: 86,
+  fruitBasket: 60,
+  marketRoom: 170,
+  sofa: 82,
+  diningSet: 86,
+  bedGreen: 82,
+  washstand: 72,
+  homeRoom: 180,
+  roundTable: 96,
+  archiveCabinet: 62,
+  loungeCorner: 100,
+  mediationRoom: 150,
+  easel: 62,
+  paintCart: 70,
+  galleryFrames: 78,
+  cushionPlant: 74,
+  workbench: 92,
+  laptopDesk: 88,
+  toolCart: 62,
+  machine: 64,
+  greenhouse: 96,
+  plantRack: 82,
+  gardenBed: 82,
+  cherryTree: 88,
+  stoneLantern: 58,
+  memorialStone: 64,
+  quietBench: 84,
+  candleAltar: 86,
+  vaseFlower: 46,
+  memoryFlowerBox: 70,
+  smallFountain: 58,
+  lantern: 42,
+  memoryGarden: 170
+};
+
 const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.png";
 const CITIZEN_SPRITE_COLUMNS = 4;
 const CITIZEN_SPRITE_ROWS = 2;
@@ -5313,6 +5431,192 @@ function getInteriorAnchors(blueprint, layout) {
   }));
 }
 
+function isInteriorBoardReady() {
+  return interiorPropBoardImage.complete && interiorPropBoardImage.naturalWidth > 0;
+}
+
+function getInteriorBoardSprite(key) {
+  if (!isInteriorBoardReady()) return null;
+  const frame = INTERIOR_PROP_ATLAS[key];
+  if (!frame) return null;
+  const cacheKey = `${key}:${frame.x},${frame.y},${frame.w},${frame.h}`;
+  if (interiorPropSpriteCache.has(cacheKey)) return interiorPropSpriteCache.get(cacheKey);
+  const canvas = document.createElement("canvas");
+  canvas.width = frame.w;
+  canvas.height = frame.h;
+  const sctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!sctx) return null;
+  sctx.drawImage(interiorPropBoardImage, frame.x, frame.y, frame.w, frame.h, 0, 0, frame.w, frame.h);
+  const image = sctx.getImageData(0, 0, frame.w, frame.h);
+  const data = image.data;
+  const visited = new Uint8Array(frame.w * frame.h);
+  const stack = [];
+  const isBackground = (idx) => {
+    const i = idx * 4;
+    const r = data[i];
+    const g = data[i + 1];
+    const b = data[i + 2];
+    const max = Math.max(r, g, b);
+    const min = Math.min(r, g, b);
+    return max > 232 && max - min < 34;
+  };
+  const push = (x, y) => {
+    if (x < 0 || y < 0 || x >= frame.w || y >= frame.h) return;
+    const idx = y * frame.w + x;
+    if (visited[idx] || !isBackground(idx)) return;
+    visited[idx] = 1;
+    stack.push(idx);
+  };
+  for (let x = 0; x < frame.w; x++) {
+    push(x, 0);
+    push(x, frame.h - 1);
+  }
+  for (let y = 0; y < frame.h; y++) {
+    push(0, y);
+    push(frame.w - 1, y);
+  }
+  while (stack.length) {
+    const idx = stack.pop();
+    const x = idx % frame.w;
+    const y = Math.floor(idx / frame.w);
+    data[idx * 4 + 3] = 0;
+    push(x + 1, y);
+    push(x - 1, y);
+    push(x, y + 1);
+    push(x, y - 1);
+  }
+  sctx.putImageData(image, 0, 0);
+
+  let minX = frame.w;
+  let minY = frame.h;
+  let maxX = -1;
+  let maxY = -1;
+  for (let y = 0; y < frame.h; y++) {
+    for (let x = 0; x < frame.w; x++) {
+      if (data[(y * frame.w + x) * 4 + 3] > 8) {
+        minX = Math.min(minX, x);
+        minY = Math.min(minY, y);
+        maxX = Math.max(maxX, x);
+        maxY = Math.max(maxY, y);
+      }
+    }
+  }
+  if (maxX >= minX && maxY >= minY) {
+    const pad = 4;
+    const sx = Math.max(0, minX - pad);
+    const sy = Math.max(0, minY - pad);
+    const sw = Math.min(frame.w - sx, maxX - minX + pad * 2);
+    const sh = Math.min(frame.h - sy, maxY - minY + pad * 2);
+    const trimmed = document.createElement("canvas");
+    trimmed.width = sw;
+    trimmed.height = sh;
+    const tctx = trimmed.getContext("2d");
+    if (tctx) {
+      tctx.drawImage(canvas, sx, sy, sw, sh, 0, 0, sw, sh);
+      interiorPropSpriteCache.set(cacheKey, trimmed);
+      return trimmed;
+    }
+  }
+  interiorPropSpriteCache.set(cacheKey, canvas);
+  return canvas;
+}
+
+function drawInteriorBoardSprite(ctx, key, x, y, targetW, options = {}) {
+  const sprite = getInteriorBoardSprite(key);
+  if (!sprite) return false;
+  const scale = targetW / sprite.width;
+  const targetH = sprite.height * scale;
+  const anchorX = options.anchorX ?? 0.5;
+  const anchorY = options.anchorY ?? 0.92;
+  ctx.save();
+  ctx.globalAlpha = options.alpha ?? 1;
+  ctx.drawImage(sprite, x - targetW * anchorX, y - targetH * anchorY, targetW, targetH);
+  ctx.restore();
+  return true;
+}
+
+function interiorPropSpriteKey(prop, blueprint, model) {
+  const title = blueprint?.title || "";
+  const label = prop?.label || "";
+  if (/休息床/.test(label)) return "hospitalBed";
+  if (/卧榻/.test(label)) return "bedGreen";
+  if (/护理站/.test(label)) return "nurseCounter";
+  if (/柜台|热食台/.test(label) && /交易/.test(title)) return null;
+  if (/提案台/.test(label)) return "noticeBoard";
+  if (/药品柜/.test(label)) return "medicineCabinet";
+  if (/档案柜/.test(label)) return "archiveCabinet";
+  if (/书架|货架/.test(label)) return /交易/.test(title) ? "marketShelf" : "bookshelf";
+  if (/补给箱/.test(label)) return null;
+  if (/安抚角/.test(label)) return null;
+  if (/复原植物|阳台植物|缓冲角/.test(label)) return null;
+  if (/照料区|低声花园/.test(label)) return /安宁/.test(title) ? "memoryFlowerBox" : "gardenBed";
+  if (/育苗架|温室台/.test(label)) return /温室/.test(label) ? "greenhouse" : "plantRack";
+  if (/阅读角/.test(label)) return "readingChair";
+  if (/讲台/.test(label)) return null;
+  if (/课桌|练习桌/.test(label)) return "schoolDesk";
+  if (/探索墙|公告板|协作板|交换板/.test(label)) return null;
+  if (/旁听席|等候椅/.test(label)) return "bench";
+  if (/小坐区|沙发/.test(label)) return "sofa";
+  if (/餐桌/.test(label)) return "diningSet";
+  if (/洗漱台/.test(label)) return "washstand";
+  if (/共识圆桌|圆桌|会议桌/.test(label)) return "roundTable";
+  if (/调停席/.test(label)) return "roundTable";
+  if (/记录桌|记录席/.test(label)) return "schoolDesk";
+  if (/工位/.test(label)) return "laptopDesk";
+  if (/工具台/.test(label)) return "workbench";
+  if (/设备区/.test(label)) return "machine";
+  if (/画架/.test(label)) return "easel";
+  if (/作品墙/.test(label)) return "galleryFrames";
+  if (/排练角|声音角/.test(label)) return "cushionPlant";
+  if (/故事桌/.test(label)) return "laptopDesk";
+  if (/纪念台/.test(label)) return "candleAltar";
+  if (/静坐席|冷静角/.test(label)) return "quietBench";
+  if (/记忆册/.test(label)) return "memorialStone";
+  if (model === "plant-zone") return null;
+  return null;
+}
+
+function interiorDecorSpriteKey(type) {
+  return {
+    plant: null,
+    "flowerbox": null,
+    "floor-lamp": "lantern",
+    "reading-lamp": "lantern",
+    "iv-stand": null,
+    "privacy-screen": null,
+    "medicine-cart": "toolCart",
+    stroller: null,
+    teddy: null,
+    "book-pile": null,
+    backpack: null,
+    "floor-cushions": "cushionPlant",
+    "hanging-lights": null,
+    basket: null,
+    "fruit-crates": null,
+    "menu-board": null,
+    "notice-cards": null,
+    lantern: "lantern",
+    bench: "bench",
+    "quiet-bench": "quietBench",
+    "fountain-mini": null,
+    "tool-cart": "toolCart",
+    machine: "machine",
+    "cable-rug": null,
+    "coffee-mug": null,
+    "file-stack": null,
+    "paint-cart": "paintCart",
+    "gallery-frames": "galleryFrames",
+    greenhouse: "greenhouse",
+    "plant-rack": "plantRack",
+    "watering-can": null,
+    "garden-stones": "stoneLantern",
+    candles: "candleAltar",
+    "memorial-frame": "memorialStone",
+    "coffee-table": null,
+    "picture-frames": "galleryFrames"
+  }[type] || null;
+}
+
 function interiorPropModel(prop, blueprint) {
   const text = `${blueprint?.title || ""} ${prop?.label || ""} ${prop?.emoji || ""}`;
   if (/休息床|卧榻|睡/.test(text)) return "bed";
@@ -5476,6 +5780,15 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
     right: isNight ? darken(trim, 30) : hexWithAlpha(trim, 0.58)
   };
   const model = interiorPropModel(prop, blueprint);
+  const spriteKey = interiorPropSpriteKey(prop, blueprint, model);
+
+  if (spriteKey) {
+    const spriteW = (INTERIOR_PROP_DRAW_WIDTHS[spriteKey] || 74) * clamp(s, 0.9, 1.36);
+    drawInteriorShadow(ctx, x, y + 8 * s, spriteW * 0.58, isNight ? 0.18 : 0.1);
+    if (drawInteriorBoardSprite(ctx, spriteKey, x, y + 8 * s, spriteW, { anchorY: 0.94 })) {
+      return;
+    }
+  }
 
   drawInteriorShadow(ctx, x, y, 58 * s, isNight ? 0.22 : 0.14);
   ctx.save();
@@ -5659,28 +5972,35 @@ function getInteriorDecorPlan(blueprint) {
       { type: "iv-stand", x: 0.12, y: 0.34, s: 0.9, layer: "back" },
       { type: "privacy-screen", x: 0.28, y: 0.36, s: 1.0, layer: "back" },
       { type: "medicine-cart", x: 0.75, y: 0.38, s: 0.9, layer: "mid" },
+      { type: "reading-lamp", x: 0.62, y: 0.42, s: 0.76, layer: "mid" },
       { type: "stroller", x: 0.18, y: 0.76, s: 0.95, layer: "front" },
       { type: "teddy", x: 0.37, y: 0.78, s: 0.9, layer: "front" },
-      { type: "plant", x: 0.85, y: 0.75, s: 0.92, layer: "front" }
+      { type: "quiet-bench", x: 0.62, y: 0.8, s: 0.82, layer: "front" },
+      { type: "plant", x: 0.85, y: 0.75, s: 0.92, layer: "front" },
+      { type: "flowerbox", x: 0.9, y: 0.36, s: 0.78, layer: "back" }
     ];
   }
   if (/学习/.test(title)) {
     return [
       { type: "book-pile", x: 0.16, y: 0.33, s: 0.86, layer: "back" },
+      { type: "notice-cards", x: 0.42, y: 0.3, s: 0.78, layer: "back" },
       { type: "backpack", x: 0.29, y: 0.71, s: 0.9, layer: "front" },
       { type: "reading-lamp", x: 0.21, y: 0.61, s: 0.85, layer: "mid" },
       { type: "plant", x: 0.83, y: 0.34, s: 0.92, layer: "back" },
       { type: "book-pile", x: 0.72, y: 0.74, s: 0.78, layer: "front" },
-      { type: "floor-cushions", x: 0.18, y: 0.78, s: 0.9, layer: "front" }
+      { type: "floor-cushions", x: 0.18, y: 0.78, s: 0.9, layer: "front" },
+      { type: "coffee-mug", x: 0.82, y: 0.68, s: 0.72, layer: "front" }
     ];
   }
   if (/交易/.test(title)) {
     return [
       { type: "hanging-lights", x: 0.5, y: 0.24, s: 1.0, layer: "back" },
       { type: "basket", x: 0.18, y: 0.45, s: 0.9, layer: "mid" },
+      { type: "basket", x: 0.62, y: 0.42, s: 0.8, layer: "mid" },
       { type: "fruit-crates", x: 0.38, y: 0.72, s: 1.0, layer: "front" },
       { type: "menu-board", x: 0.78, y: 0.35, s: 0.92, layer: "back" },
       { type: "lantern", x: 0.82, y: 0.72, s: 0.8, layer: "front" },
+      { type: "coffee-table", x: 0.58, y: 0.78, s: 0.78, layer: "front" },
       { type: "plant", x: 0.1, y: 0.82, s: 0.8, layer: "front" }
     ];
   }
@@ -5690,7 +6010,8 @@ function getInteriorDecorPlan(blueprint) {
       { type: "notice-cards", x: 0.29, y: 0.26, s: 0.9, layer: "back" },
       { type: "fountain-mini", x: 0.5, y: 0.74, s: 0.9, layer: "front" },
       { type: "plant", x: 0.83, y: 0.36, s: 0.9, layer: "back" },
-      { type: "floor-cushions", x: 0.74, y: 0.75, s: 0.88, layer: "front" }
+      { type: "floor-cushions", x: 0.74, y: 0.75, s: 0.88, layer: "front" },
+      { type: "lantern", x: 0.88, y: 0.68, s: 0.74, layer: "front" }
     ];
   }
   if (/协作/.test(title)) {
@@ -5700,6 +6021,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "cable-rug", x: 0.52, y: 0.78, s: 1.0, layer: "front" },
       { type: "coffee-mug", x: 0.36, y: 0.64, s: 0.78, layer: "front" },
       { type: "file-stack", x: 0.66, y: 0.28, s: 0.78, layer: "back" },
+      { type: "notice-cards", x: 0.52, y: 0.32, s: 0.78, layer: "back" },
       { type: "plant", x: 0.88, y: 0.78, s: 0.78, layer: "front" }
     ];
   }
@@ -5709,6 +6031,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "gallery-frames", x: 0.47, y: 0.24, s: 1.0, layer: "back" },
       { type: "floor-cushions", x: 0.34, y: 0.76, s: 0.9, layer: "front" },
       { type: "reading-lamp", x: 0.68, y: 0.7, s: 0.82, layer: "front" },
+      { type: "coffee-table", x: 0.56, y: 0.78, s: 0.78, layer: "front" },
       { type: "plant", x: 0.86, y: 0.45, s: 0.86, layer: "mid" }
     ];
   }
@@ -5718,7 +6041,8 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant-rack", x: 0.47, y: 0.28, s: 1.0, layer: "back" },
       { type: "watering-can", x: 0.72, y: 0.74, s: 0.85, layer: "front" },
       { type: "flowerbox", x: 0.36, y: 0.78, s: 1.0, layer: "front" },
-      { type: "garden-stones", x: 0.82, y: 0.42, s: 0.9, layer: "mid" }
+      { type: "garden-stones", x: 0.82, y: 0.42, s: 0.9, layer: "mid" },
+      { type: "quiet-bench", x: 0.74, y: 0.82, s: 0.78, layer: "front" }
     ];
   }
   if (/安宁/.test(title)) {
@@ -5727,7 +6051,8 @@ function getInteriorDecorPlan(blueprint) {
       { type: "memorial-frame", x: 0.5, y: 0.28, s: 0.95, layer: "back" },
       { type: "flowerbox", x: 0.2, y: 0.78, s: 0.9, layer: "front" },
       { type: "quiet-bench", x: 0.74, y: 0.74, s: 0.95, layer: "front" },
-      { type: "lantern", x: 0.86, y: 0.44, s: 0.85, layer: "mid" }
+      { type: "lantern", x: 0.86, y: 0.44, s: 0.85, layer: "mid" },
+      { type: "garden-stones", x: 0.58, y: 0.76, s: 0.75, layer: "front" }
     ];
   }
   return [
@@ -5775,6 +6100,15 @@ function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
   ctx.lineCap = "round";
   ctx.lineJoin = "round";
   drawInteriorShadow(ctx, x, y + 3 * s, 42 * s, isNight ? 0.18 : 0.11);
+
+  const spriteKey = interiorDecorSpriteKey(item.type);
+  if (spriteKey) {
+    const spriteW = (INTERIOR_PROP_DRAW_WIDTHS[spriteKey] || 62) * clamp(s, 0.75, 1.35);
+    if (drawInteriorBoardSprite(ctx, spriteKey, x, y + 6 * s, spriteW, { anchorY: 0.94, alpha: isNight ? 0.92 : 1 })) {
+      ctx.restore();
+      return;
+    }
+  }
 
   if (item.type === "plant") {
     drawInteriorPlant(ctx, x, y, s, style.accent);
