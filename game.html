@@ -20,8 +20,8 @@
         <div class="hud-stats">
           <div class="hud-stat"><span class="hud-stat-label">回合</span><span class="hud-stat-value" id="hudTurn">0</span></div>
           <div class="hud-stat"><span class="hud-stat-label">时间</span><span class="hud-stat-value" id="hudClock">06:00</span></div>
-          <div class="hud-stat"><span class="hud-stat-label">人生周</span><span class="hud-stat-value" id="hudPhase">--</span></div>
-          <div class="hud-stat"><span class="hud-stat-label">活跃</span><span class="hud-stat-value" id="hudAlive">0</span></div>
+          <div class="hud-stat"><span class="hud-stat-label">本周生活</span><span class="hud-stat-value" id="hudPhase">--</span></div>
+          <div class="hud-stat"><span class="hud-stat-label">居民</span><span class="hud-stat-value" id="hudAlive">0</span></div>
         </div>
         <div class="hud-scores">
           <div class="hud-score" title="自由">
@@ -70,7 +70,7 @@
         <button class="menu-trigger" id="gameMenuTrigger" aria-expanded="false" aria-controls="gameMenuPanel">
           <span class="menu-trigger-icon">☰</span>
           <span class="menu-trigger-copy">
-            <b>世界口袋</b>
+            <b>城市口袋</b>
             <small>点建筑看故事，需要时再打开</small>
           </span>
         </button>
@@ -93,11 +93,11 @@
             <small>复盘世界为什么这样回应你。</small>
           </button>
           <details class="menu-more">
-            <summary>更多系统</summary>
+            <summary>更多入口</summary>
             <div class="menu-more-grid">
-              <button class="menu-mini-btn" data-modal="mirror">镜像身份</button>
-              <button class="menu-mini-btn" data-modal="script">人生剧本</button>
-              <button class="menu-mini-btn" data-modal="missions">社会任务</button>
+              <button class="menu-mini-btn" data-modal="mirror">投进一段生活</button>
+              <button class="menu-mini-btn" data-modal="script">现实线索</button>
+              <button class="menu-mini-btn" data-modal="missions">城市小事</button>
               <button class="menu-mini-btn" data-modal="citizens">居民观察</button>
               <button class="menu-mini-btn" data-modal="safety">安全边界</button>
             </div>
@@ -128,7 +128,7 @@
       <!-- Event log sidebar -->
       <div class="event-log" id="eventLog">
         <div class="event-log-header">
-          <span class="event-log-title">世界脉冲</span>
+          <span class="event-log-title">城市近况</span>
           <button class="event-log-toggle" id="eventLogToggle" title="收起">◀</button>
         </div>
         <div class="event-log-summary" id="worldPulseSummary"></div>
@@ -180,7 +180,7 @@
               </div>
               <div class="journey-step">
                 <b>2</b>
-                <span>情感机器人</span>
+                <span>现实信使</span>
                 <small>把城市里发生的变化轻轻带回现实侧。</small>
               </div>
               <div class="journey-step">
@@ -192,7 +192,7 @@
             <div class="splash-world-strip" aria-hidden="true">
               <span>现实中的你</span>
               <i></i>
-              <span>情感机器人</span>
+              <span>现实信使</span>
               <i></i>
               <span>虚拟社会分身</span>
             </div>
@@ -227,9 +227,9 @@
                 <input type="text" id="avatarBio" class="avatar-input" placeholder="例如：想试着活得更勇敢" maxlength="40" />
 
                 <div class="persona-block" aria-label="人格标签">
-                  <label class="avatar-label">人格（MBTI）</label>
-                  <p class="persona-hint">点选一个最像你的原型，稍后仍可调整。留空则由系统推断。</p>
-                  <div class="mbti-grid" id="avatarMbtiGrid" role="listbox" aria-label="选择 MBTI 人格"></div>
+                  <label class="avatar-label">人格原型</label>
+                  <p class="persona-hint">点选一个最像你的原型，稍后仍可调整。不选也可以，世界会先替你留白。</p>
+                  <div class="mbti-grid" id="avatarMbtiGrid" role="listbox" aria-label="选择人格原型"></div>
 
                   <label class="avatar-label">价值观（最多选 2）</label>
                   <div class="tag-chip-row" id="avatarValuesRow" aria-label="选择价值观"></div>

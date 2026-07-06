@@ -126,7 +126,7 @@ const DEFAULT_CITIZEN_LIBRARY = [
   { id: "d", name: "景深", role: "安静观察者", color: "#8a9b74", x: 0.72, y: 0.46, purpose: "协作观察", age: 16, professionId: "student", zoneId: "middle-school" },
   { id: "e", name: "白槐", role: "关系重建者", color: "#c18b3d", x: 0.63, y: 0.74, purpose: "修复关系", age: 45, professionId: "lawyer", zoneId: "legal-court" },
   { id: "f", name: "明月", role: "农圃看护者", color: "#6b7f5f", x: 0.11, y: 0.58, purpose: "照料农作", age: 56, professionId: "farmer", zoneId: "farm" },
-  { id: "g", name: "星辰", role: "程序工坊", color: "#4e5c8d", x: 0.8, y: 0.32, purpose: "搭建系统", age: 29, professionId: "programmer", zoneId: "creative-studio" },
+  { id: "g", name: "星辰", role: "程序工坊", color: "#4e5c8d", x: 0.8, y: 0.32, purpose: "搭建工具", age: 29, professionId: "programmer", zoneId: "creative-studio" },
   { id: "h", name: "晓雨", role: "法治协同者", color: "#7a4462", x: 0.51, y: 0.84, purpose: "维护秩序", age: 52, professionId: "judge", zoneId: "legal-court" },
   { id: "i", name: "木叶", role: "幼儿探索者", color: "#8f6a5f", x: 0.33, y: 0.12, purpose: "童年学习", age: 7, professionId: "student", zoneId: "kindergarten" },
   { id: "j", name: "珞南", role: "设计与建设", color: "#af5f3a", x: 0.77, y: 0.58, purpose: "落地设计", age: 31, professionId: "designer", zoneId: "creative-studio" },
@@ -218,7 +218,7 @@ const WORLD_PHASES = [
     tensionDelta: 2.5,
     harmonyDelta: -3,
     fairnessDelta: 1,
-    narrative: "意见分歧上升，系统更容易触发安抚与调停机制。",
+    narrative: "意见分歧上升，城市更容易出现安抚与调停。",
     missionBias: ["support", "meditate"]
   },
   {
@@ -229,7 +229,7 @@ const WORLD_PHASES = [
     tensionDelta: -2.8,
     harmonyDelta: 4,
     fairnessDelta: -2,
-    narrative: "系统默认放大修复路径，情绪修复与公开复盘更容易发生。",
+    narrative: "城市会更偏向修复路径，情绪修复与公开复盘更容易发生。",
     missionBias: ["support", "listen", "propose"]
   }
 ];
@@ -253,33 +253,33 @@ const LIFE_WEEK_LOG_LIMIT = 32;
 const LIFE_WEEK_STAGES = [
   {
     id: "plan",
-    label: "Plan",
+    label: "准备",
     title: "本周想成为谁",
     description: "分身整理本周方向，把人生胶囊里的身份愿望写成行动意图。"
   },
   {
     id: "contact",
-    label: "Contact",
+    label: "联系",
     title: "寻找同频灵魂",
     description: "分身向社区角色、人生胶囊或漂流瓶发起一次低压弱连接。"
   },
   {
     id: "activity",
-    label: "Activity",
+    label: "行动",
     title: "发生关键行动",
     description: "虚拟社会执行一段行动，关系、情绪和世界张力随之改变。"
   },
   {
     id: "review",
-    label: "Review",
+    label: "回看",
     title: "写下世界回声",
-    description: "系统生成本周人生回声、分身反思和轻量人生奖励。"
+    description: "城市写下本周人生回声、分身反思和轻量生活奖励。"
   },
   {
     id: "settle",
-    label: "Settle",
+    label: "沉淀",
     title: "沉淀记忆",
-    description: "周记、关系笔记和机器人信号被写入，下一周重新开始。"
+    description: "周记、关系笔记和现实信使的信号被写入，下一周重新开始。"
   }
 ];
 
@@ -2229,7 +2229,7 @@ function applyAmbientEvent(effectType) {
     if (target) {
       target.trust = clamp(target.trust - 6, 0, 100);
       addSocietyEvent(
-        `环境事件：阶段性分歧波及 ${escapeHtml(target.name)}，触发系统更高频的安抚建议。`,
+        `环境事件：阶段性分歧波及 ${escapeHtml(target.name)}，城市开始出现更多安抚建议。`,
         "conflict"
       );
     }
@@ -2339,7 +2339,7 @@ function runLifeClockAdvance(society) {
       citizen.role = "已离世";
       citizen.zoneId = "cemetery";
       society.lifecycle.totalDeaths = (society.lifecycle.totalDeaths || 0) + 1;
-      addSocietyEvent(`生命里程：${escapeHtml(citizen.name)} 达到寿终时点，系统将其送入记忆花园并保留记忆。`, "support");
+      addSocietyEvent(`生命里程：${escapeHtml(citizen.name)} 走到生命终点，被送入记忆花园，留下回忆。`, "support");
       setCitizenZonePosition(citizen, getOpenWorldZoneList(society).find((zone) => zone.id === "cemetery"));
       return;
     }
@@ -2558,7 +2558,7 @@ function applySocietyActionResult(result, eventSuffix = "") {
   if (!result) {
     return;
   }
-  const text = result.governance ? `${result.text}（治理说明：${result.governance}）` : result.text;
+  const text = result.governance ? `${result.text}（城市说明：${result.governance}）` : result.text;
 
   society.harmony = clamp(society.harmony + result.score, 0, 100);
   if (!Array.isArray(society.actionHistory)) {
@@ -2589,7 +2589,7 @@ function applySocietyActionResult(result, eventSuffix = "") {
   // 情绪感染:互动的情绪可能波及目标的亲近关系(二级涟漪)
   if (target) propagateSecondaryContagion(society, actor, target, result);
   addSocietyEvent(
-    `${text}${relation ? ` 关系模型：${relationModel?.label || relation.model}。` : ""}${eventSuffix ? ` ${eventSuffix}` : ""}`,
+    `${text}${relation ? ` 关系线：${relationModel?.label || relation.model}。` : ""}${eventSuffix ? ` ${eventSuffix}` : ""}`,
     result.type === "conflict" ? "conflict" : "support"
   );
   updateSocietyMetricsFromEvents();
@@ -3621,7 +3621,7 @@ function createEvolvedSceneFromBlueprint(blueprint, index = 0) {
     zoneModel: {
       model: blueprint.model,
       layer: "evolved",
-      gameplay: `社会缺口触发的新场景：${blueprint.name}`,
+      gameplay: `城市需要照顾的新场景：${blueprint.name}`,
       provides: blueprint.provides,
       buildVerb: "生长"
     }
@@ -3677,7 +3677,7 @@ function evolveSocietyGrowth(society, reason = "life_week") {
       professionId: profession.id,
       reason,
       trigger: blueprint.trigger,
-      text: `社会缺口“${blueprint.trigger}”生成了${zone.name}与新职业${profession.name}。`
+      text: `城市需要新的照顾方式，于是长出了${zone.name}和新职业${profession.name}。`
     },
     ...(society.growth.constructionQueue || [])
   ].slice(0, 8);
@@ -3694,15 +3694,15 @@ function evolveSocietyGrowth(society, reason = "life_week") {
     builder.zoneId = zone.id;
     builder.role = `${builder.personaLabel || "分身"}-${profession.name}`;
     setCitizenZonePosition(builder, zone);
-    recordAgentMemoryFileItem(society, builder.id, "general", `我因为社会缺口成为了${profession.name}，开始建设${zone.name}。`, {
+    recordAgentMemoryFileItem(society, builder.id, "general", `我因为社区有了新的需要，成为了${profession.name}，开始建设${zone.name}。`, {
       kind: "growth",
       importance: 8,
       references: [zone.id, profession.id]
     });
   }
 
-  addLifeWeekLog("growth", `社会自动生长出 ${zone.name}，新职业：${profession.name}。`, { sceneId: zone.id, professionId: profession.id });
-  addSocietyEvent(`社会自动生长：${zone.name} 已出现，${profession.name} 开始承担新的公共任务。`, "support");
+  addLifeWeekLog("growth", `城市自然长出 ${zone.name}，新职业：${profession.name}。`, { sceneId: zone.id, professionId: profession.id });
+  addSocietyEvent(`城市自然长出：${zone.name} 已出现，${profession.name} 开始承担新的公共任务。`, "support");
   return { zone, profession, builder };
 }
 
@@ -3745,7 +3745,7 @@ const OPEN_WORLD_ACTIONS = [
     metricDelta: { freedom: 1 },
     tensionDelta: -3,
     growthBias: { low_energy: 22, low_stability: 8 },
-    log: "夜间观察让城市慢下来，系统捕捉到几个白天看不见的恢复需求。"
+    log: "夜间观察让城市慢下来，也照见几个白天看不见的恢复需求。"
   }
 ];
 
@@ -3809,7 +3809,7 @@ function runOpenWorldAction(actionId) {
 
   const actor = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || getAliveCitizens(society)[0];
   if (actor) {
-    recordAgentMemoryFileItem(society, actor.id, "general", `我参与了开放世界行动：${action.label}。`, {
+    recordAgentMemoryFileItem(society, actor.id, "general", `我参与了一件社区小事：${action.label}。`, {
       kind: "open_world_action",
       importance: 6,
       references: [action.id]
@@ -3817,7 +3817,7 @@ function runOpenWorldAction(actionId) {
   }
 
   addLifeWeekLog("open-world", action.log, { actionId: action.id, bias: action.growthBias });
-  addSocietyEvent(`${action.log} 城市缺口被重新计算，可能长出新的场景。`, "support");
+  addSocietyEvent(`${action.log} 城市重新看见了新的需要，可能长出新的场景。`, "support");
   const growth = evolveSocietyGrowth(society, action.id);
   if (growth && typeof pushRobotSignal === "function") {
     pushRobotSignal("system", "summon", `城市回应了你的${action.verb}：${growth.zone.name} 开始生长。`);
@@ -3849,7 +3849,7 @@ function advanceLifeWeekStage(trigger = "auto") {
     const target = randomFrom(alive.filter((citizen) => citizen.id !== avatar?.id)) || alive[0];
     addLifeWeekLog("contact", `${avatar?.name || "分身"}向${target?.name || "同频灵魂"}发出弱连接，等待对方是否靠近。`, { trigger, targetId: target?.id || "" });
     if (avatar && target) {
-      recordAgentMemoryFileItem(society, avatar.id, "relationships", `我向${target.name}发出了一次低压联系，系统只交换回声，不强迫聊天。`, {
+      recordAgentMemoryFileItem(society, avatar.id, "relationships", `我向${target.name}发出了一次低压联系，这里只交换回声，不强迫聊天。`, {
         kind: "relationship",
         key: target.id,
         targetId: target.id,
@@ -4112,8 +4112,8 @@ function resolveAction(action) {
   if (isActorVulnerable(actor)) {
     finalType = pickAlternativeActionForVulnerable(action.type);
     if (finalType !== action.type) {
-      governanceOverride = ` ${actor.name} 处于弱势窗口，按“允许脆弱”规则优先安全互动。`;
-      recordGovernanceSignal("safety", `准则执行：${actor.name} 从“${action.type}”被重定向为“${finalType}”。`, actor.name);
+      governanceOverride = ` ${actor.name} 处在脆弱时刻，城市优先安排更安全的互动。`;
+      recordGovernanceSignal("safety", `安全边界：${actor.name} 暂时改为更柔和的行动。`, actor.name);
       recordAgentAudit(society, actor.name, "redirected", governanceOverride);
       actor.actionCount = actor.actionCount || 0;
       actor.actionStreak = actor.actionStreak || 0;
@@ -4121,16 +4121,16 @@ function resolveAction(action) {
     }
   } else if (isActorDominating(society, actor) && action.type === "propose") {
     finalType = zone?.role === "public" && actor.mood > 60 ? "support" : "listen";
-    governanceOverride = `社会准则对“发言垄断”进行治理：${actor.name} 先做支持行为。`;
+    governanceOverride = `为了照顾安静的人，${actor.name} 先把发言让成支持。`;
     recordGovernanceSignal(
       "conflict",
-      `准则执行：${actor.name} 的高频公开行为已被降频，改为 ${finalType} 以守住平等。`,
+      `对话降噪：${actor.name} 的高频公开发言放慢了，先改为 ${finalType}。`,
       actor.name
     );
     recordAgentAudit(society, actor.name, "fairness-redirect", governanceOverride);
   } else if (zone?.role === "heal" && action.type === "propose" && actor.mood > 30) {
     finalType = pickAlternativeActionForVulnerable(action.type);
-    governanceOverride = `地区约束：静心角优先协作修复，不直接形成公开提案。`;
+    governanceOverride = `静心角更适合修复和陪伴，暂时不展开公开提案。`;
     recordAgentAudit(society, actor.name, "zone-redirect", governanceOverride);
   }
 
@@ -4277,7 +4277,7 @@ function evaluateConflicts() {
   const lowConfidence = population.filter((citizen) => citizen.mood < 35).length;
   if (lowConfidence >= Math.ceil(population.length * 0.55)) {
     society.tension = clamp(society.tension + 6, 20, 90);
-    addSocietyEvent("场域压力升高：超过半数分身出现低气场，系统发起安抚机制。", "conflict");
+    addSocietyEvent("场域压力升高：超过半数分身有些低落，城市开始优先安抚。", "conflict");
     return;
   }
 }
@@ -4329,7 +4329,7 @@ function applyMissionProgress(eventType) {
       mission.progress += 1;
       if (mission.progress >= mission.target) {
         mission.done = true;
-        addSocietyEvent(`任务达成：${mission.label}，社会治理评分 +6。`, "support");
+        addSocietyEvent(`任务达成：${mission.label}，城市状态变好了。`, "support");
         state.society.score += 6;
       }
     }
@@ -4492,7 +4492,7 @@ function stepSociety() {
   if (conflictRatio >= 2) {
     society.fairnessPenalty += 2;
     society.tension = clamp(society.tension + 4, 22, 90);
-    addSocietyEvent("连锁冲突被检测到，系统将下一轮优先调节对话公平。", "conflict");
+    addSocietyEvent("连锁冲突浮现，下一轮会优先照顾对话公平。", "conflict");
   }
 
   evaluateConflicts();

@@ -243,7 +243,7 @@ const FIRST_LOOP_ACTIONS = {
   listen: {
     label: "换个视角",
     intent: "先用另一个身份看懂这段人生",
-    next: "可以进入人生胶囊做一次关键选择，或让机器人接住这条回声。"
+    next: "可以进入人生胶囊做一次关键选择，或让现实信使接住这条回声。"
   },
   cooperate: {
     label: "做一次选择",
@@ -253,7 +253,7 @@ const FIRST_LOOP_ACTIONS = {
   support: {
     label: "接住回声",
     intent: "让另一个世界里的你把感受传回现实侧",
-    next: "打开情感机器人，听听这次体验在现实里的余波。"
+    next: "打开现实信使，听听这次体验在现实里的余波。"
   }
 };
 
@@ -294,8 +294,8 @@ function saveScript() {
   if (!state.profile) return;
   persist();
   syncAvatarInSociety();
-  addEcho(`人生剧本已更新：${state.profile.identity || "一个新的镜像轮廓正在形成"}`);
-  showToast("剧本已保存并同步到你的分身", "support");
+  addEcho(`现实线索已更新：${state.profile.identity || "一个新的镜像轮廓正在形成"}`);
+  showToast("现实线索已保存并同步到你的分身", "support");
 }
 
 function buildWorldNarrativeFallback(feedback) {
@@ -490,9 +490,9 @@ function renderLifeWeekBoard() {
   const stages = typeof LIFE_WEEK_STAGES !== "undefined" ? LIFE_WEEK_STAGES : [];
   const activeIndex = stages.findIndex((stage) => stage.id === lifeWeek.stage);
   return `
-    <section class="life-week-board" aria-label="Agentopia 人生周循环">
+    <section class="life-week-board" aria-label="本周生活循环">
       <div class="life-week-title">
-        <span>Life Week ${lifeWeek.week}</span>
+        <span>第 ${lifeWeek.week} 周生活</span>
         <strong>${escapeHtml(getLifeWeekStageLabel(lifeWeek.stage))}</strong>
       </div>
       <div class="life-week-steps">
@@ -501,7 +501,7 @@ function renderLifeWeekBoard() {
           return `<div class="${cls}"><b>${index + 1}</b><span>${escapeHtml(stage.label)}</span></div>`;
         }).join("")}
       </div>
-      <p>${escapeHtml((typeof getLifeWeekStageInfo === "function" ? getLifeWeekStageInfo(lifeWeek.stage).description : "") || "分身社会正在推进下一段人生周循环。")}</p>
+      <p>${escapeHtml((typeof getLifeWeekStageInfo === "function" ? getLifeWeekStageInfo(lifeWeek.stage).description : "") || "这座社区正在推进下一段生活节奏。")}</p>
     </section>`;
 }
 
@@ -599,6 +599,15 @@ function getRelationModelLabel(modelId) {
   return model?.label || modelId || "弱连接";
 }
 
+function getAttachmentStyleLabel(style) {
+  return {
+    secure: "稳定型",
+    anxious: "敏感型",
+    avoidant: "回避型",
+    disorganized: "摇摆型"
+  }[style] || "稳定型";
+}
+
 function getCitizenNameById(citizenId) {
   return state?.society?.citizens?.find((citizen) => citizen.id === citizenId)?.name || citizenId;
 }
@@ -651,6 +660,17 @@ function renderSocialGraphSnapshot() {
     </section>`;
 }
 
+function getGrowthNeedLabel(key) {
+  return {
+    high_tension: "关系有点紧",
+    low_openness: "有人没被听见",
+    low_equality: "发言不太均衡",
+    low_energy: "大家需要休息",
+    learning_need: "年轻人需要成长",
+    low_stability: "生活需要托底"
+  }[key] || key;
+}
+
 function renderGrowthPanel() {
   const growth = state?.society?.growth || {};
   const roadmap = typeof getEvolutionRoadmap === "function" ? getEvolutionRoadmap(state.society) : [];
@@ -673,14 +693,14 @@ function renderGrowthPanel() {
             <div class="evolution-slot ${item.unlocked ? "unlocked" : ""}">
               <b>${index + 1}</b>
               <span>${escapeHtml(item.name)}</span>
-              <small>${item.unlocked ? escapeHtml(item.professionName) : escapeHtml(item.trigger)}</small>
+              <small>${item.unlocked ? escapeHtml(item.professionName) : escapeHtml(getGrowthNeedLabel(item.trigger))}</small>
             </div>`).join("")}
         </div>
         <p class="evolution-hint">${escapeHtml(nextHint)}</p>` : ""}
       <div class="growth-grid">
         <div class="growth-card">
           <b>长出的场景</b>
-          <p>${scenes.length ? scenes.map((scene) => escapeHtml(scene.name)).join(" · ") : "社会还在观察缺口，等待第一座新场景出现。"}</p>
+          <p>${scenes.length ? scenes.map((scene) => escapeHtml(scene.name)).join(" · ") : "城市还在观察大家需要什么，等待第一座新场景出现。"}</p>
         </div>
         <div class="growth-card">
           <b>新职业</b>
@@ -688,12 +708,12 @@ function renderGrowthPanel() {
         </div>
         <div class="growth-card">
           <b>当前缺口</b>
-          <p>${deficits.length ? deficits.slice(0, 3).map(([key, value]) => `${escapeHtml(key)} ${Math.round(value)}`).join(" · ") : "没有明显社会缺口。"}</p>
+          <p>${deficits.length ? deficits.slice(0, 3).map(([key, value]) => `${escapeHtml(getGrowthNeedLabel(key))} ${Math.round(value)}`).join(" · ") : "暂时没有特别需要补上的地方。"}</p>
         </div>
       </div>
       ${queue.length ? `
         <div class="construction-feed">
-          ${queue.map((item) => `<p>${escapeHtml(item.text || "新的城市模型正在建设。")}</p>`).join("")}
+          ${queue.map((item) => `<p>${escapeHtml(item.text || "新的城市空间正在长出来。")}</p>`).join("")}
         </div>` : ""}
     </section>`;
 }
@@ -703,7 +723,7 @@ function renderOpenWorldActionDeck() {
   if (!actions.length) return "";
   return `
     <section class="open-world-action-deck">
-      <div class="section-mini-title">开放世界行动</div>
+      <div class="section-mini-title">社区里的小行动</div>
       <div class="world-action-grid">
         ${actions.map((action) => `
           <button class="world-action-card" data-world-action="${escapeHtml(action.id)}">
@@ -839,9 +859,9 @@ function renderWorldEchoQuest() {
 function renderRobotSignalQuest() {
   const quest = ensureFirstSessionQuest();
   const signal = (state.robotSignals || []).find((item) => item.message === quest.robotMessage) || (state.robotSignals || [])[0];
-  const message = signal?.message || "机器人处于静默陪伴。另一个世界还没有传来新的回声。";
+  const message = signal?.message || "现实信使正在静默陪伴。另一个世界还没有传来新的回声。";
   return `
-    ${renderQuestHeader("04 / 情感机器人", "现实侧有一盏灯亮了一下", "它不是助手，也不是通知中心。它只是把另一个世界里的你轻轻带回来。", "robot_signal")}
+    ${renderQuestHeader("04 / 现实信使", "现实侧有一盏灯亮了一下", "它不是助手，也不是通知中心。它只是把另一个世界里的你轻轻带回来。", "robot_signal")}
     <div class="robot-object ${signal?.intensity || "quiet"}">
       <div class="robot-figure"><div class="robot-head-inner"><div class="robot-eye"></div><div class="robot-eye"></div></div></div>
       <p>${escapeHtml(message)}</p>
@@ -858,7 +878,7 @@ function renderDriftBottleQuest() {
   ).join("");
   if (quest.driftCasted || quest.safetyRouted) {
     return `
-      ${renderQuestHeader("05 / 灵魂漂流瓶", quest.safetyRouted ? "这只瓶子先被保护起来" : "这只瓶子还在海上", quest.safetyRouted ? "高风险内容不会进入普通匹配池。系统会先保护现实中的你。" : "它不会立刻变成聊天匹配。等某个同频的人经过，机器人会轻轻告诉你。", "drift_bottle")}
+      ${renderQuestHeader("05 / 灵魂漂流瓶", quest.safetyRouted ? "这只瓶子先被保护起来" : "这只瓶子还在海上", quest.safetyRouted ? "这段内容不会进入普通匹配池。这里会先保护现实中的你。" : "它不会立刻变成聊天匹配。等某个同频的人经过，现实信使会轻轻告诉你。", "drift_bottle")}
       <div class="drift-ritual casted">
         <p>${escapeHtml(quest.driftText || "此刻的人生瞬间已经离岸。")}</p>
         <span>${escapeHtml(LIFE_SCOPE_LABELS[moment] || "人生转折")}</span>
@@ -876,15 +896,15 @@ function renderDriftBottleQuest() {
 
 function renderUnlockedWorldQuest() {
   return `
-    ${renderQuestHeader("城市探索已解锁", "先围观一个人的一天", "你已经完成第一轮试活。现在别急着看所有系统，先跟着一个被世界牵动的人走一小段。", "unlocked_world")}
+    ${renderQuestHeader("城市探索已解锁", "先围观一个人的一天", "你已经完成第一轮试活。现在别急着看所有入口，先跟着一个被世界牵动的人走一小段。", "unlocked_world")}
     ${renderFeaturedCitizenPanel()}
     ${renderLifeWeekBoard()}
     ${renderLifeRewardCard()}
     ${renderOpenWorldActionDeck()}
     <div class="unlocked-actions">
-      <button class="quest-primary" data-quest-action="advance-life-week">推进人生周</button>
+      <button class="quest-primary" data-quest-action="advance-life-week">推进本周生活</button>
       <button class="quest-secondary" data-modal="exchange">继续试活</button>
-      <button class="quest-secondary" data-modal="robot">听机器人</button>
+      <button class="quest-secondary" data-modal="robot">听现实信使</button>
       <button class="quest-secondary" data-modal="echoes">看回声</button>
     </div>
     ${renderAgentMemoryLedger()}
@@ -1167,8 +1187,8 @@ function askMirror() {
     return;
   }
   if (isHighRiskText(text)) {
-    reply.innerHTML = '<p class="reply-kicker">高风险提示</p><p>我注意到你现在可能非常痛苦。请先把今天最危险的想法放下10分钟，去开一盏灯，并尝试联系一个可以信任的人。</p>';
-    addEcho("高风险片段已识别，进入安全提醒路径。");
+    reply.innerHTML = '<p class="reply-kicker">安全提醒</p><p>我注意到你现在可能非常痛苦。请先把今天最危险的想法放下10分钟，去开一盏灯，并尝试联系一个可以信任的人。</p>';
+    addEcho("这段内容已进入安全提醒路径。");
     addEventLogEntry("你的现实片段", text, "user-input", true);
     const feedback = injectLifeEventToSociety(text, "support");
     writeWorldNarrativeFeedback(feedback);
@@ -1338,9 +1358,9 @@ function authorizeLifeFragment() {
     return;
   }
   if (isHighRiskText(text)) {
-    if (reply) reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>这段内容不进入体验池。系统会先保护你，不做漂流或交换。</p>';
+    if (reply) reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>这段内容不进入体验池。这里会先保护你，不做漂流或交换。</p>';
     pushRobotSignal("system", "soft", "有一段人生片段被安全分流了。现实中的你先被保护，虚拟世界会放慢。");
-    showToast("高风险片段已安全分流", "conflict");
+    showToast("这段内容已先走安全分流", "conflict");
     return;
   }
   const fragment = {
@@ -1398,7 +1418,7 @@ function playLifeChoice(choice) {
       <div class="reply-box">
         <p class="reply-kicker">人生回声</p>
         <p>${escapeHtml(echo)}</p>
-        <p>这段体验已经通过情感机器人传回现实侧。</p>
+        <p>这段体验已经通过现实信使传回现实侧。</p>
       </div>`;
   }
   showToast("人生选择已发生，城市正在记录后果", "support");
@@ -1468,7 +1488,7 @@ function commitLifeChoice(choice) {
   loop.actionType = actionType;
   loop.completed = true;
   loop.resultText = built.resultText;
-  loop.nextText = "情感机器人已经收到这次人生回声。";
+  loop.nextText = "现实信使已经收到这次人生回声。";
   loop.becauseLine = "";
   addEcho(`试活人生：${echo}`);
   addEventLogEntry("试活人生", echo, actionType, true);
@@ -1541,7 +1561,7 @@ function castDriftBottleQuest() {
   quest.driftCasted = bottle.status === "floating";
   quest.safetyRouted = bottle.status === "safety_routed";
   if (bottle.status === "safety_routed") {
-    addEcho("漂流瓶内容被标记为高风险，先走安全分流。");
+    addEcho("漂流瓶内容先走安全分流。");
     pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先保护投放者。");
     injectLifeEventToSociety(text, "support");
     showToast("这只瓶子先被安全分流", "conflict");
@@ -1597,8 +1617,8 @@ function sendBottle() {
       status: "safety_routed"
     };
     state.driftBottles = [bottle, ...(state.driftBottles || [])].slice(0, 12);
-    reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>你这段内容比较高风险，不进入普通漂流池。先让现实中的你安全下来。</p>';
-    addEcho("漂流瓶内容被标记为高风险，先走安全分流。");
+    reply.innerHTML = '<p class="reply-kicker">安全分流</p><p>这段内容先不进入普通漂流池。先让现实中的你安全下来。</p>';
+    addEcho("漂流瓶内容先走安全分流。");
     pushRobotSignal("system", "soft", "有一只灵魂漂流瓶被安全分流了。它不会匹配陌生人，会先保护投放者。");
     injectLifeEventToSociety(text, "support");
     persist();
@@ -1618,7 +1638,7 @@ function sendBottle() {
   injectLifeEventToSociety(text, "support");
   reply.innerHTML = `
     <p class="reply-kicker">这只瓶子还在海上</p>
-    <p>它不会立刻变成聊天匹配。系统会等待一个足够相近的人生时刻，再让两个回声轻轻碰到。</p>
+    <p>它不会立刻变成聊天匹配。世界会等待一个足够相近的人生时刻，再让两个回声轻轻碰到。</p>
     <div class="bottle-status-row">${bottle.resonanceTags.map((tag) => `<span class="status-pill">${escapeHtml(LIFE_SCOPE_LABELS[tag] || tag)}</span>`).join("")}</div>`;
   addEcho(`灵魂漂流瓶已投放：${text.slice(0, 34)}${text.length > 34 ? "..." : ""}`);
   pushRobotSignal("drift_bottle", "quiet", "一只灵魂漂流瓶已经离岸。另一个世界会替你等待同频的时刻。");
@@ -1693,7 +1713,7 @@ function buildRobotReply(mode) {
 function renderRobotSignals() {
   const signals = state.robotSignals || [];
   if (!signals.length) {
-    return '<div class="robot-signal quiet"><p>机器人处于静默陪伴。另一个世界还没有传来新的回声。</p></div>';
+    return '<div class="robot-signal quiet"><p>现实信使正在静默陪伴。另一个世界还没有传来新的回声。</p></div>';
   }
   return signals.slice(0, 5).map((signal) => `
     <div class="robot-signal ${escapeHtml(signal.intensity)}">
@@ -2196,7 +2216,7 @@ function createAndEnterWorld(profileData) {
 
   // Spawn entities
   if (typeof spawnWorldEntities === "function") spawnWorldEntities(state.society);
-  pushRobotSignal("avatar", "quiet", `${name} 已经进入虚拟社会。现实中的你可以通过情感机器人，感知另一个世界里的自己。`);
+  pushRobotSignal("avatar", "quiet", `${name} 已经进入虚拟社会。现实中的你可以通过现实信使，感知另一个世界里的自己。`);
 
   updateSocietyMetricsFromEvents();
   recordSocietyMetricsHistory();
@@ -2253,7 +2273,7 @@ const TUTORIAL_STEPS = [
   },
   {
     title: "再听见现实回声",
-    desc: "选择发生后，情感机器人会成为现实信使。漂流瓶则会等待一次同频的偶遇。",
+    desc: "选择发生后，现实信使会把回声带回来。漂流瓶则会等待一次同频的偶遇。",
     spotlight: "firstLoopPanel"
   }
 ];
@@ -2647,18 +2667,18 @@ async function showSavePanel() {
     </div>
     ${rows}
     <div class="detail-section">
-      <div class="detail-section-title">火山引擎记忆(可选)</div>
+      <div class="detail-section-title">云端记忆(可选)</div>
       <p style="opacity:0.8">${memory.enabled
         ? `已连接代理 · 已同步 ${memory.synced} 条 · 待同步 ${memory.pending} 条${memory.lastError ? ` · ⚠ ${h(memory.lastError)}` : ""}`
-        : "未配置。记忆当前存储在本地(IndexedDB);填入后端代理地址即可同步到火山记忆库 Mem0。"}</p>
+        : "未配置。记忆当前只保存在这台设备上；填入代理地址后，可以同步到你自己的云端记忆库。"}</p>
       <input type="text" id="memoryProxyInput" placeholder="http://localhost:8787/api/memory"
         value="${h(typeof getMemoryProxyUrl === "function" ? getMemoryProxyUrl() : "")}"
         style="width:100%;box-sizing:border-box;padding:6px 8px;border:2px solid #1a1a2e;border-radius:8px;font-size:12px;margin:4px 0" />
       <div style="display:flex;gap:4px">
         <button class="interaction-btn" data-memory-save-proxy>保存配置</button>
-        <button class="interaction-btn" data-memory-test-proxy>测试检索</button>
+        <button class="interaction-btn" data-memory-test-proxy>试着读取记忆</button>
       </div>
-      <p style="opacity:0.6;font-size:11px;margin-top:4px">配置方法见 docs/STORAGE_RESEARCH.md · API Key 只存在后端代理,不进浏览器。</p>
+      <p style="opacity:0.6;font-size:11px;margin-top:4px">高级设置：密钥只保存在后端代理里，不会写进浏览器页面。</p>
     </div>
   `);
 }
@@ -2906,7 +2926,7 @@ function updateHUD() {
 
   setText("hudTurn", s.turn);
   setText("hudClock", `${String(ts.hour).padStart(2,"0")}:${String(ts.minutes).padStart(2,"0")}`);
-  setText("hudPhase", lifeWeek ? `W${lifeWeek.week} ${getLifeWeekStageLabel(lifeWeek.stage)}` : (phase?.name || "--"));
+  setText("hudPhase", lifeWeek ? `第${lifeWeek.week}周 · ${getLifeWeekStageLabel(lifeWeek.stage)}` : (phase?.name || "--"));
   setText("hudAlive", `${alive.length}`);
 
   const m = s.metrics;
@@ -2969,7 +2989,7 @@ function renderWorldPulseSummary() {
     ${renderLifeWeekBoard()}
     ${renderLifeRewardCard()}
     <div class="pulse-card">
-      <b>SELF-EVOLVING PHASE</b>
+      <b>城市节奏</b>
       <p>${escapeHtml(phase?.name || "镜像市域")} · ${escapeHtml(phase?.narrative || "这座社会仍在继续运转，等待新的关系波动。")}</p>
       <div class="pulse-tags">
         <span>第 ${lifeWeek?.week || 1} 周</span>
@@ -2979,23 +2999,23 @@ function renderWorldPulseSummary() {
       </div>
     </div>
     <div class="pulse-card">
-      <b>SOCIAL MAPPING</b>
+      <b>人群分布</b>
       <p>${hotZones.length ? hotZones.map((item) => `${item.zone.name} ${item.count}`).join(" · ") : "城市还在等待新的聚集点。"} </p>
       <div class="pulse-tags">
         ${hotZones.length ? hotZones.map((item) => `<span>${escapeHtml(item.zone.archetype || item.zone.role || item.zone.name)}</span>`).join("") : "<span>关系尚未成形</span>"}
       </div>
     </div>
     <div class="pulse-card">
-      <b>INFINITE COMMUNITY STREAM</b>
-      <p>活跃社区 ${streamedCommunityStats.activeChunkCount || 0} 块 · 生成节点 ${streamedCommunityStats.activeZoneCount || 0} 个</p>
+      <b>远方社区</b>
+      <p>镜头边缘有 ${streamedCommunityStats.activeChunkCount || 0} 片街区正在延展，出现 ${streamedCommunityStats.activeZoneCount || 0} 个可探索地点。</p>
       <div class="pulse-tags">
         <span>连通 ${Math.round(streamedCommunityStats.syntax?.averageConnectivity || 0)}</span>
-        <span>整合 ${Math.round((streamedCommunityStats.syntax?.averageIntegration || 0) * 100)}</span>
-        <span>Seed ${COMMUNITY_WORLD_SEED}</span>
+        <span>聚合 ${Math.round((streamedCommunityStats.syntax?.averageIntegration || 0) * 100)}</span>
+        <span>地图编号 ${COMMUNITY_WORLD_SEED}</span>
       </div>
     </div>
     <div class="pulse-card">
-      <b>WORLD SIGNAL</b>
+      <b>城市信号</b>
       <p>${escapeHtml(driftSignals[0] || "另一个世界暂时安静。下一次演化会从关系、张力或漂流瓶里发光。")}</p>
     </div>
     ${renderRecentInteractionFeed()}
@@ -3048,8 +3068,8 @@ function buildModalHTML(type) {
   const h = (s) => escapeHtml(s || "");
   switch(type) {
     case "mirror": return `
-      <p class="eyebrow">镜像舱</p>
-      <h2>把今天的一段现实，投进一座会回应你的社会。</h2>
+      <p class="eyebrow">投进一段生活</p>
+      <h2>把今天发生的一件事，交给这座城市回应。</h2>
       <div class="modal-chips">
         <button class="modal-chip ${activeMode==="mirror"?"active":""}" data-mode="mirror">镜子</button>
         <button class="modal-chip ${activeMode==="observer"?"active":""}" data-mode="observer">旁观</button>
@@ -3057,21 +3077,21 @@ function buildModalHTML(type) {
       </div>
       <label>此刻发生了什么</label>
       <textarea id="modalLifeEvent" rows="5" placeholder="例如：我今天又想离职，但我不确定这是勇敢还是逃避。"></textarea>
-      <button class="modal-btn primary" id="modalAskMirror">交给分身</button>
+      <button class="modal-btn primary" id="modalAskMirror">交给我的分身</button>
       <div class="reply-box" id="modalMirrorReply"><p class="reply-kicker">镜像回声</p><p>你的分身会在这里回应你。</p></div>
       <div class="tomorrow-card" id="modalTomorrowContinue" hidden></div>`;
 
     case "script": return `
-      <p class="eyebrow">人生剧本</p>
-      <h2>把现实生活映射成可被理解的社会沙箱。</h2>
+      <p class="eyebrow">现实线索</p>
+      <h2>让分身更懂你最近的生活处境。</h2>
       <div class="form-grid">
         <div><label>现在的你</label><input type="text" data-field="identity" placeholder="例如：独居的产品经理" /></div>
         <div><label>重要关系</label><input type="text" data-field="relations" placeholder="例如：母亲、前任、同事A" /></div>
         <div><label>反复出现的模式</label><input type="text" data-field="pattern" placeholder="例如：越在意越沉默" /></div>
-        <div><label>分身禁区</label><input type="text" data-field="boundary" placeholder="例如：真实姓名、具体住址" /></div>
+        <div><label>不要写进世界的内容</label><input type="text" data-field="boundary" placeholder="例如：真实姓名、具体住址" /></div>
       </div>
-      <button class="modal-btn primary" id="modalSaveScript">保存剧本</button>
-      <div class="reply-box"><p class="reply-kicker">你的镜像档案</p>
+      <button class="modal-btn primary" id="modalSaveScript">保存线索</button>
+      <div class="reply-box"><p class="reply-kicker">你的现实线索</p>
         <p>身份：${h(state.profile.identity || "尚未填写")}</p>
         <p>关系：${h(state.profile.relations || "尚未填写")}</p>
         <p>模式：${h(state.profile.pattern || "尚未填写")}</p>
@@ -3081,20 +3101,20 @@ function buildModalHTML(type) {
     case "exchange": return `
       <p class="eyebrow">试活人生</p>
       <h2>进入一个匿名重构的人生片段，短暂活成另一个人。</h2>
-      <p>每个胶囊都来自授权或预置人生片段。体验者只能看到脱敏后的处境、身份和选择。</p>
+      <p>每段人生都会被改写和遮去真实身份。你看到的是处境、身份和选择，不是某个人的原文。</p>
       <div class="life-cards">
         ${renderLifeCapsuleCards()}
       </div>
       <div id="modalExchangeExp"></div>
       <div class="consent-panel">
         <p class="reply-kicker">授权一个人生片段</p>
-        <p>写下你愿意贡献给世界的一段经历。系统会严格脱敏并重构成可体验胶囊，体验者不能看到原文身份。</p>
+        <p>写下你愿意交给世界的一段经历。它会先被改写和遮去身份，再变成别人可以试活的人生片段。</p>
         <div class="scope-grid">
           ${Object.entries(LIFE_SCOPE_LABELS).map(([key, label], index) => `<button class="scope-chip ${index === 0 ? "active" : ""}" data-scope="${key}">${label}</button>`).join("")}
         </div>
         <textarea id="lifeFragmentInput" rows="4" placeholder="例如：我曾经在一个很稳定的生活里，突然意识到自己想换一种人生。"></textarea>
-        <button class="modal-btn primary" id="modalAuthorizeLife">授权并生成胶囊</button>
-        <div class="reply-box" id="lifeAuthorizeReply"><p class="reply-kicker">严格匿名</p><p>授权后仍可在安全治理里撤回。本地 demo 只保存在浏览器。</p></div>
+        <button class="modal-btn primary" id="modalAuthorizeLife">生成匿名人生片段</button>
+        <div class="reply-box" id="lifeAuthorizeReply"><p class="reply-kicker">匿名保护</p><p>生成后仍可在安全边界里撤回。当前版本只保存在这台设备上。</p></div>
       </div>`;
 
     case "bottle": return `
@@ -3111,8 +3131,8 @@ function buildModalHTML(type) {
       ${(state.soulMatches || []).slice(0, 3).map(match => `<div class="soul-match-card"><time>${h(match.createdAt || "")}</time><p>${h(match.matchReason)}</p><p>状态：${h(match.consentState)}</p></div>`).join("")}`;
 
     case "robot": return `
-      <p class="eyebrow">情感机器人 · 软件拟真</p>
-      <h2>现实中的你，通过这个信使感知另一个世界里的自己。</h2>
+      <p class="eyebrow">现实信使</p>
+      <h2>它把另一个世界里的轻微信号，带回现实中的你。</h2>
       <div class="robot-figure"><div class="robot-head-inner"><div class="robot-eye"></div><div class="robot-eye"></div></div></div>
       <div class="modal-chips">
         <button class="modal-chip ${activeRobotMode==="quiet"?"active":""}" data-robot="quiet">静默陪伴</button>
@@ -3128,13 +3148,13 @@ function buildModalHTML(type) {
       <div class="echo-list">${state.echoes.length ? state.echoes.map(e => `<div class="echo-item"><time>${h(e.at)}</time><p>${h(e.text)}</p></div>`).join("") : '<p>完成一次交互后，这里会保留最近的镜像片段。</p>'}</div>`;
 
     case "missions": return `
-      <p class="eyebrow">社会任务</p>
-      <h2>当前任务目标</h2>
+      <p class="eyebrow">城市小事</p>
+      <h2>今天可以顺手做点什么</h2>
       ${state.society.missions.map(m => `<div class="mission-item"><p class="mission-title">${h(m.label)}</p><p class="mission-progress">${m.progress}/${m.target} ${m.done ? "✓ 完成" : ""}</p></div>`).join("")}
       <div class="reply-box" style="margin-top:16px">
-        <p class="reply-kicker">治理分数</p>
-        <p>和谐值 ${state.society.harmony} / 治理分 ${state.society.score} / 张力 ${state.society.tension}</p>
-        <p>公平惩罚 ${state.society.fairnessPenalty} / 自动演化 ${state.society.autoEvolution ? "开" : "关"}</p>
+        <p class="reply-kicker">城市状态</p>
+        <p>安定 ${state.society.harmony} / 活力 ${state.society.score} / 紧绷 ${state.society.tension}</p>
+        <p>照顾安静的人 ${state.society.fairnessPenalty} / 城市自发生长 ${state.society.autoEvolution ? "开" : "关"}</p>
       </div>`;
 
     case "citizens": return `
@@ -3148,7 +3168,7 @@ function buildModalHTML(type) {
       ${renderCitizenObservationList() || '<div class="reply-box"><p>社区里暂时没有可围观的人。</p></div>'}`;
 
     case "safety": return `
-      <p class="eyebrow">安全治理</p>
+      <p class="eyebrow">安全边界</p>
       <h2>安全边界</h2>
       <p>所有输入默认只保存在本地浏览器。授权人生片段会严格脱敏，漂流瓶在双方同意前只交换回声。</p>
       ${(state.lifeFragments || []).filter(f => f.status === "authorized").map(f => `
@@ -3161,14 +3181,14 @@ function buildModalHTML(type) {
 
     case "narrative-settings": {
       return `
-      <p class="eyebrow">叙事引擎</p>
-      <h2>叙事引擎配置</h2>
+      <p class="eyebrow">叙事设置</p>
+      <h2>世界怎样写下回声</h2>
       <p style="color:var(--hud-muted);font-size:13px;margin-bottom:12px;">
-        Phase 1 公开 demo 使用本地模板叙事，真实 API 后续只通过后端代理接入。公开页面不提供浏览器端密钥输入，避免误导用户暴露生产密钥。
+        当前版本会在本机生成叙事回声，不需要登录，也不会把密钥放进浏览器页面。
       </p>
       <div class="reply-box">
-        <p class="reply-kicker">当前模式</p>
-        <p>本地模板 fallback 已启用；事件状态仍会生成现实投影和未完回声。</p>
+        <p class="reply-kicker">当前方式</p>
+        <p>世界会根据人物状态、关系变化和你的选择，写下现实投影和未完回声。</p>
       </div>`;
     }
 
@@ -3184,7 +3204,7 @@ function getZoneInteraction(zoneId) {
     "maternity-hospital": { modal: "mirror", label: "照看一个新开始", hint: "适合回到身份与成长的原点。" },
     "residential": { modal: "robot", label: "回到现实信使", hint: "适合听听另一个世界传回来的轻声信号。" },
     "legal-court": { modal: "safety", label: "确认安全边界", hint: "适合查看授权、撤回和保护规则。" },
-    "creative-studio": { modal: "script", label: "改写人生剧本", hint: "适合调整分身想成为怎样的人。" },
+    "creative-studio": { modal: "script", label: "整理现实线索", hint: "适合调整分身想成为怎样的人。" },
     "commercial-zone": { modal: "exchange", label: "进入人生胶囊", hint: "适合换一个身份继续试活。" },
     "park": { modal: "bottle", label: "把回声投向海上", hint: "适合低频等待一次同频偶遇。" },
     "repair-station": { modal: "bottle", label: "投放修复后的片段", hint: "适合把一次关系修复变成漂流瓶。" },
@@ -3227,9 +3247,9 @@ function showZoneDetail(zone) {
   const syntax = zone.spaceSyntax;
   const syntaxSection = syntax ? `
     <div class="detail-section">
-      <div class="detail-section-title">空间句法</div>
-      <p>连通 ${Math.round(syntax.connectivity)} · 整合 ${Math.round(syntax.integration * 100)} · 隐私 ${Math.round(syntax.privacy * 100)}</p>
-      <p>${zone.streamGenerated ? "这是无限流生成的社区节点，会随镜头靠近而进入活跃模拟窗口。" : "这是核心社区节点，负责稳定承接主要社会循环。"}</p>
+      <div class="detail-section-title">空间线索</div>
+      <p>好到达 ${Math.round(syntax.connectivity)} · 容易聚集 ${Math.round(syntax.integration * 100)} · 安静程度 ${Math.round(syntax.privacy * 100)}</p>
+      <p>${zone.streamGenerated ? "这是远方街区里刚被镜头照亮的地点，靠近后会慢慢热闹起来。" : "这是社区里的固定地点，会稳定承接居民的日常行动。"}</p>
     </div>` : "";
   const enterBtn = interaction ? `
     <div class="detail-section detail-next-step">
@@ -3249,9 +3269,9 @@ function showZoneDetail(zone) {
     </div>
     <div class="detail-section">
       <div class="detail-section-title">这里会发生什么</div>
-      <p><strong>${escapeHtml(model?.model || "开放社会节点")}</strong></p>
+      <p><strong>${escapeHtml(model?.model || "开放地点")}</strong></p>
       <p>可能带来：${escapeHtml((model?.provides || []).join(" / ") || "关系回声")}</p>
-      ${zone.evolved ? `<p>自演化：${escapeHtml(zone.trigger || "社会缺口")} 触发，${escapeHtml(model?.buildVerb || "建成")}。</p>` : ""}
+      ${zone.evolved ? `<p>自然长出：因为 ${escapeHtml(zone.trigger || "城市需要")}，这里${escapeHtml(model?.buildVerb || "建成")}。</p>` : ""}
     </div>
     ${syntaxSection}
     <div class="detail-section">
@@ -3260,7 +3280,7 @@ function showZoneDetail(zone) {
         ? citizens.map(c => `<p><strong style="color:${c.color}">${escapeHtml(c.name)}</strong> · ${escapeHtml(c.personaLabel || c.profession)} · 心情 ${Math.round(c.mood)}</p>`).join("")
         : "<p>暂时没有人停留。你可以继续观察，或换一处地点。</p>"}
     </div>
-    <p class="detail-footnote">系统线索：这是一处 ${escapeHtml(zone.archetype || zone.role || "社会")} 型地点，会影响分身接下来的关系和行动。</p>
+    <p class="detail-footnote">城市线索：这是一处 ${escapeHtml(zone.archetype || zone.role || "社会")} 型地点，会影响分身接下来的关系和行动。</p>
     <div class="detail-section detail-next-step">
       <div class="detail-section-title">走进去看看</div>
       <p>推门进去，观察大家在室内的活动，也可以直接和他们互动。</p>
@@ -3295,7 +3315,7 @@ function showCitizenDetail(citizen) {
     .slice(0, 3);
   showDetail(`
     <h3 style="color:${citizen.color}">${escapeHtml(citizen.name)}</h3>
-    <p>${escapeHtml(citizen.role)} · ${escapeHtml(citizen.profession)} · ${escapeHtml(citizen.mbtiType || "MIR")}</p>
+    <p>${escapeHtml(citizen.role)} · ${escapeHtml(citizen.profession)} · ${escapeHtml(citizen.personaLabel || "镜像参与者")}</p>
     <div class="detail-section">
       <div class="detail-section-title">状态</div>
       <div class="stat-row"><span class="stat-label">心情</span><div class="stat-bar"><div class="stat-fill mood" style="width:${Math.round(citizen.mood)}%"></div></div><span class="stat-val">${Math.round(citizen.mood)}</span></div>
@@ -3314,14 +3334,14 @@ function showCitizenDetail(citizen) {
       <p>${escapeHtml(citizen.personaLabel || "镜像参与者")} · 身形 ${escapeHtml(citizen.avatarShape || "soft")}</p>
       <p>核心需求：${escapeHtml(citizen.personaNeed || "被理解")}</p>
       <p>关系偏好：${escapeHtml(getRelationModelLabel(citizen.relationPreference))}</p>
-      <p>依恋风格：${escapeHtml(citizen.attachmentStyle || "secure")} · 当前意图：${escapeHtml(citizen.intention || "观察")}</p>
+      <p>亲近方式：${escapeHtml(getAttachmentStyleLabel(citizen.attachmentStyle))} · 当前想做：${escapeHtml(citizen.intention || "观察")}</p>
       ${renderPersonaTagLines(citizen)}
       <div class="mini-chip-row">
         ${topTraits.map(([label, value]) => `<span>${escapeHtml(label)} ${Math.round(Number(value || 0) * 100)}</span>`).join("")}
         ${needItems.map(([label, value]) => `<span>${escapeHtml(label)}缺口 ${Math.round((1 - Number(value || 0)) * 100)}</span>`).join("")}
       </div>
-      <p>PAD：愉悦 ${Math.round(Number(pad.pleasure || 0) * 100)} / 唤醒 ${Math.round(Number(pad.arousal || 0) * 100)} / 掌控 ${Math.round(Number(pad.dominance || 0) * 100)}</p>
-      ${citizen.decisionTrace?.length ? `<p>Utility Top3：${escapeHtml(citizen.decisionTrace.join(" · "))}</p>` : ""}
+      <p>情绪底色：愉悦 ${Math.round(Number(pad.pleasure || 0) * 100)} / 紧绷 ${Math.round(Number(pad.arousal || 0) * 100)} / 掌控 ${Math.round(Number(pad.dominance || 0) * 100)}</p>
+      ${citizen.decisionTrace?.length ? `<p>行动理由：${escapeHtml(citizen.decisionTrace.join(" · "))}</p>` : ""}
     </div>
     <div class="detail-section">
       <div class="detail-section-title">围观视角</div>
@@ -3332,7 +3352,7 @@ function showCitizenDetail(citizen) {
       </div>
     </div>
     <div class="detail-section">
-      <div class="detail-section-title">关系模型</div>
+      <div class="detail-section-title">关系线</div>
       ${relationRows.length ? relationRows.map((edge) => {
         const otherId = edge.a === citizen.id ? edge.b : edge.a;
         return `<p>${escapeHtml(getCitizenNameById(otherId))} · ${escapeHtml(getRelationModelLabel(edge.model))} · 熟悉 ${Math.round(Number(edge.familiarity || 0) * 100)} / 好感 ${Math.round(Number(edge.affection || 0) * 100)} / 张力 ${Math.round(edge.strain || 0)}</p>`;
@@ -4540,7 +4560,7 @@ function observeMatchedCitizen(query = "") {
   startFollowCitizen(citizen.id);
   showCitizenInteraction(citizen);
   addThoughtBubble(citizen.id, reason, { priority: true, duration: 6500 });
-  addEventLogEntry("人海捞人", `系统捞到了 ${citizen.name}: ${reason}`, "listen", true);
+  addEventLogEntry("人海捞人", `为你捞到了 ${citizen.name}: ${reason}`, "listen", true);
   showToast(`已进入 ${citizen.name} 的观察视角`, "listen");
 }
 
@@ -7539,7 +7559,7 @@ function bindGameEvents() {
           updateHUD();
           renderFirstLoopPanel();
           persist();
-          showToast(advanced ? `人生周推进到 ${advanced.current.label}` : "人生周已推进", "support");
+          showToast(advanced ? `本周生活推进到 ${advanced.current.label}` : "本周生活已推进", "support");
           return;
         }
       }
@@ -7719,7 +7739,7 @@ function bindGameEvents() {
         const match = (state.soulMatches || []).find(item => item.id === openSoul.dataset.openSoulMatch);
         if (match) {
           match.consentState = "mutual_opened";
-          pushRobotSignal("drift_bottle", "soft", "你愿意继续这次同频偶遇。对方也同意前，系统仍只保留回声层连接。");
+          pushRobotSignal("drift_bottle", "soft", "你愿意继续这次同频偶遇。对方也同意前，这里仍只保留回声层连接。");
           persist();
           showToast("已保留这次同频连接", "support");
           openModal("bottle");
