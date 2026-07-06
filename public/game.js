@@ -53,6 +53,7 @@ let followZoomUntil = 0;
 let lastFollowBannerAt = 0;
 let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
 let interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+let interiorExitRect = null;
 let interiorAnimations = {};
 let activeEncounters = [];
 let encounterCooldowns = {};
@@ -74,6 +75,8 @@ const MAX_FULL_CITIZENS_DESKTOP = 14;
 const MAX_FULL_CITIZENS_MOBILE = 8;
 const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
+const INTERIOR_PANORAMA_FOV = Math.PI * 0.92;
+const INTERIOR_PANORAMA_TAU = Math.PI * 2;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -5255,6 +5258,179 @@ function getInteriorLayout(W, H) {
   };
 }
 
+function wrapInteriorAngle(angle) {
+  const wrapped = (Number(angle || 0) + Math.PI) % INTERIOR_PANORAMA_TAU;
+  return (wrapped < 0 ? wrapped + INTERIOR_PANORAMA_TAU : wrapped) - Math.PI;
+}
+
+function interiorAngleDelta(angle, yaw) {
+  return Math.atan2(Math.sin(angle - yaw), Math.cos(angle - yaw));
+}
+
+function projectInteriorPanoramaPoint(W, H, angle, distance = 0.66, height = 0) {
+  const yaw = Number(interiorOrbit?.yaw || 0);
+  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const delta = interiorAngleDelta(angle, yaw);
+  const halfFov = INTERIOR_PANORAMA_FOV / 2;
+  const visible = Math.abs(delta) <= halfFov * 1.12;
+  const dist = clamp(distance, 0.28, 1.18);
+  const side = delta / halfFov;
+  const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
+  const floorDepth = clamp((dist - 0.28) / 0.9, 0, 1);
+  const x = W / 2 + side * W * 0.46;
+  const y = horizon + H * (0.24 + floorDepth * 0.34) - height;
+  const sideFalloff = 1 - Math.min(0.28, Math.abs(side) * 0.14);
+  const scale = clamp((1.18 - floorDepth * 0.42) * sideFalloff, 0.62, 1.16);
+  return {
+    x,
+    y,
+    depth: 0.9 - floorDepth - Math.abs(side) * 0.08,
+    scale,
+    visible,
+    angle,
+    distance: dist,
+    delta
+  };
+}
+
+function getInteriorPanoramaAngle(unit, index = 0, count = 1) {
+  const base = Number.isFinite(unit) ? unit : (index + 0.5) / Math.max(1, count);
+  return wrapInteriorAngle((base - 0.5) * INTERIOR_PANORAMA_TAU + index * 0.11);
+}
+
+function getInteriorPanoramaAnchors(blueprint, W, H) {
+  const props = blueprint.props || [];
+  return props.map((prop, index) => {
+    const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
+    const distance = 0.42 + clamp(Number(prop.y || 0.5), 0, 1) * 0.58;
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance);
+    return {
+      ...point,
+      x: clamp(point.x, W * 0.06, W * 0.94),
+      y: clamp(point.y, H * 0.42, H * 0.86),
+      label: prop.label,
+      behaviors: prop.behaviors || ["tea"],
+      index,
+      prop
+    };
+  });
+}
+
+function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
+  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
+  const ceiling = ctx.createLinearGradient(0, 0, 0, horizon);
+  ceiling.addColorStop(0, isNight ? "#111827" : "#dff3f6");
+  ceiling.addColorStop(0.55, isNight ? darken(style.wall, 48) : style.wall);
+  ceiling.addColorStop(1, isNight ? darken(style.wall, 35) : hexWithAlpha(style.wall, 0.94));
+  ctx.fillStyle = ceiling;
+  ctx.fillRect(0, 0, W, horizon + 4);
+
+  const floor = ctx.createLinearGradient(0, horizon, 0, H);
+  floor.addColorStop(0, isNight ? darken(style.floor, 45) : style.floor);
+  floor.addColorStop(1, isNight ? "#182033" : "#f4ecd5");
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, horizon, W, H - horizon);
+
+  ctx.save();
+  ctx.strokeStyle = isNight ? "rgba(250,250,245,0.13)" : "rgba(26,26,46,0.13)";
+  ctx.lineWidth = 1.4;
+  for (let i = -4; i <= 4; i++) {
+    const y = horizon + H * (0.1 + i * 0.085);
+    if (y <= horizon || y >= H) continue;
+    ctx.beginPath();
+    ctx.ellipse(W / 2, y, W * (0.32 + i * 0.08), H * 0.035, 0, Math.PI, Math.PI * 2);
+    ctx.stroke();
+  }
+  for (let i = -9; i <= 9; i++) {
+    const angle = wrapInteriorAngle(Number(interiorOrbit?.yaw || 0) + i * 0.22);
+    const delta = interiorAngleDelta(angle, Number(interiorOrbit?.yaw || 0));
+    const x = W / 2 + (delta / (INTERIOR_PANORAMA_FOV / 2)) * W * 0.46;
+    ctx.beginPath();
+    ctx.moveTo(x, horizon + 8);
+    ctx.lineTo(W / 2 + (x - W / 2) * 1.9, H);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  const panelCount = 14;
+  for (let i = 0; i < panelCount; i++) {
+    const angle = getInteriorPanoramaAngle((i + 0.5) / panelCount, i, panelCount);
+    const point = projectInteriorPanoramaPoint(W, H, angle, 0.32, H * 0.2);
+    if (!point.visible) continue;
+    const w = W * 0.1 * point.scale;
+    const h = H * 0.18 * point.scale;
+    const x = point.x - w / 2;
+    const y = horizon * 0.42 + Math.sin(i * 1.7) * 7;
+    const isWindow = i % 3 === 0;
+    ctx.fillStyle = isWindow
+      ? (isNight ? "#1c2541" : "#bfe3f2")
+      : hexWithAlpha(style.accent, isNight ? 0.16 : 0.12);
+    ctx.strokeStyle = hexWithAlpha(style.trim, 0.5);
+    ctx.lineWidth = 2.2 * point.scale;
+    roundRect(ctx, x, y, w, h, 7 * point.scale);
+    ctx.fill();
+    ctx.stroke();
+    if (isWindow) {
+      ctx.beginPath();
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x + w / 2, y + h);
+      ctx.moveTo(x, y + h / 2);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.stroke();
+      ctx.fillStyle = isNight ? "#f7f4e9" : "#f6e27a";
+      ctx.beginPath();
+      ctx.arc(x + w * 0.72, y + h * 0.32, 8 * point.scale, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = hexWithAlpha(style.trim, 0.25);
+      if (style.motif === "books") {
+        for (let b = 0; b < 4; b++) {
+          roundRect(ctx, x + 12 * point.scale + b * 12 * point.scale, y + h - 28 * point.scale, 7 * point.scale, 24 * point.scale, 2 * point.scale);
+          ctx.fill();
+        }
+      } else if (style.motif === "cross") {
+        roundRect(ctx, x + w / 2 - 5 * point.scale, y + h / 2 - 19 * point.scale, 10 * point.scale, 38 * point.scale, 2 * point.scale);
+        ctx.fill();
+        roundRect(ctx, x + w / 2 - 19 * point.scale, y + h / 2 - 5 * point.scale, 38 * point.scale, 10 * point.scale, 2 * point.scale);
+        ctx.fill();
+      } else if (style.motif === "leaf") {
+        for (let l = 0; l < 3; l++) {
+          ctx.beginPath();
+          ctx.ellipse(x + w * (0.34 + l * 0.16), y + h * 0.56, 12 * point.scale, 6 * point.scale, -0.7 + l * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.beginPath();
+        ctx.arc(x + w / 2, y + h / 2, 18 * point.scale, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = hexWithAlpha(style.trim, isNight ? 0.28 : 0.38);
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, horizon);
+  ctx.quadraticCurveTo(W / 2, horizon + 22, W, horizon);
+  ctx.stroke();
+  ctx.restore();
+
+  const rug = projectInteriorPanoramaPoint(W, H, Number(interiorOrbit?.yaw || 0), 0.72);
+  ctx.save();
+  ctx.fillStyle = hexWithAlpha(style.accent, isNight ? 0.16 : 0.22);
+  ctx.strokeStyle = hexWithAlpha(style.trim, 0.42);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(rug.x, rug.y + 28, W * 0.22, H * 0.045, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
 function getInteriorMaterialStyle(zone, blueprint) {
   const hint = `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""} ${blueprint?.title || ""}`;
   if (/照护|hospital|maternity|care|repair/.test(hint)) {
@@ -5930,7 +6106,7 @@ function drawTinyCandle(ctx, x, y, scale = 1) {
 }
 
 function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
-  const point = getInteriorDecorPoint(item, layout);
+  const point = item._point || getInteriorDecorPoint(item, layout);
   const depthScale = clamp(1 + point.depth * 0.08, 0.86, 1.12);
   const s = (item.s || 1) * depthScale * 1.12;
   const x = point.x;
@@ -6304,6 +6480,64 @@ function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight)
   });
 }
 
+function drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, style, isNight, layer, W, H) {
+  const plan = getInteriorDecorPlan(blueprint).filter(item => item.layer === layer);
+  plan.forEach((item, index) => {
+    const angle = getInteriorPanoramaAngle(item.x, index, plan.length);
+    const distance = 0.36 + clamp(Number(item.y || 0.5), 0, 1) * 0.62;
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance, layer === "back" ? H * 0.03 : 0);
+    if (!point.visible) return;
+    drawInteriorDecorItem(ctx, { ...item, _point: point, s: (item.s || 1) * point.scale }, layout, style, isNight);
+  });
+}
+
+function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, isNight, W, H) {
+  const props = blueprint.props || [];
+  const points = props.map((prop, index) => {
+    const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
+    const distance = 0.42 + clamp(Number(prop.y || 0.5), 0, 1) * 0.58;
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance);
+    return { prop, point, index };
+  }).filter(item => item.point.visible)
+    .sort((a, b) => a.point.depth - b.point.depth);
+
+  points.forEach(({ prop, point, index }) => {
+    const panelW = Math.max(54, Math.min(92, String(prop.label || "").length * 9 + 20)) * point.scale;
+    const panelH = 24 * point.scale;
+    const seed = hashCommunitySeed(prop.label || "prop", index);
+    const wobble = (seededCommunityValue(seed, 1) - 0.5) * 3;
+
+    ctx.save();
+    ctx.fillStyle = isNight ? "rgba(18,18,34,0.24)" : "rgba(26,26,46,0.1)";
+    ctx.beginPath();
+    ctx.ellipse(point.x, point.y + 8 * point.scale, (prop.size || 28) * 0.66 * point.scale, 6 * point.scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawInteriorPropModel(
+      ctx,
+      { ...prop, size: (prop.size || 30) * point.scale },
+      { ...point, x: point.x + wobble },
+      layout,
+      { accent: zoneColor, trim: darken(zoneColor, 30) },
+      isNight,
+      index,
+      blueprint
+    );
+
+    ctx.fillStyle = isNight ? "rgba(18,18,34,0.66)" : "rgba(250,250,245,0.88)";
+    ctx.strokeStyle = "rgba(26,26,46,0.72)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, point.x - panelW / 2, point.y + 30 * point.scale, panelW, panelH, 7 * point.scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = `700 ${Math.max(9, 10 * point.scale)}px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = isNight ? "rgba(250,250,245,0.88)" : "rgba(26,26,46,0.82)";
+    ctx.fillText(prop.label || "", point.x, point.y + 46 * point.scale);
+    ctx.restore();
+  });
+}
+
 function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   const backLeft = projectInteriorPoint(layout, -0.92, -0.78, 0);
   const backRight = projectInteriorPoint(layout, 0.92, -0.78, 0);
@@ -6652,7 +6886,8 @@ function findRenderZoneById(zoneId) {
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
   interiorView = { zone, source, enteredAt: performance.now(), nextArrivalCheckAt: 0 };
-  interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+  interiorOrbit = { yaw: 0, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+  interiorExitRect = null;
   hideDetail();
   document.body.classList.add("interior-active");
   if (!questPanelCollapsed) {
@@ -6668,6 +6903,7 @@ function exitInteriorView() {
   if (!interiorView) return;
   interiorView = null;
   interiorOrbit.drag = false;
+  interiorExitRect = null;
   document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
   markRenderActive(2200);
@@ -6678,7 +6914,7 @@ function ensureInteriorChip(zone) {
   const el = document.createElement("button");
   el.id = "interiorChip";
   el.type = "button";
-  el.textContent = `← 离开${zone.name} · 拖动环绕`;
+  el.textContent = `← 离开${zone.name} · 拖动 360° 环视`;
   el.addEventListener("click", () => {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
@@ -6814,91 +7050,31 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
   const blueprint = getInteriorBlueprint(zone);
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
-  const interiorAnchors = getInteriorAnchors(blueprint, layout);
+  const panoramaAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
+  const interiorAnchors = panoramaAnchors.filter(anchor => anchor.visible);
 
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, isNight ? "#101827" : "#dff3f6");
-  bg.addColorStop(1, isNight ? "#253047" : "#eef8f2");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
+  drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
+  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H);
+  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H);
+  drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H);
+  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H);
 
-  drawInteriorRoomShell(ctx, W, H, layout, roomStyle, isNight);
-  drawInteriorWallInstallations(ctx, W, H, layout, roomStyle, blueprint, isNight);
-  drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back");
-
-  // Windows looking out to the sky
-  [W * 0.2 + layout.yaw * 30, W * 0.8 + layout.yaw * 30].forEach((wx) => {
-    const winW = Math.min(110, W * 0.16);
-    const winH = 78;
-    const winX = wx - winW / 2;
-    const winY = layout.wallTop + 14;
-    ctx.fillStyle = isNight ? "#1c2541" : "#bfe3f2";
-    roundRect(ctx, winX, winY, winW, winH, 6);
-    ctx.fill();
-    if (isNight) {
-      ctx.fillStyle = "#f7f4e9";
-      for (let s = 0; s < 5; s++) {
-        ctx.beginPath();
-        ctx.arc(winX + 12 + (s * 37) % (winW - 20), winY + 10 + (s * 23) % (winH - 20), 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else {
-      ctx.fillStyle = "#f6e27a";
-      ctx.beginPath();
-      ctx.arc(winX + winW * 0.72, winY + winH * 0.3, 11, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 3;
-    roundRect(ctx, winX, winY, winW, winH, 6);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(winX + winW / 2, winY);
-    ctx.lineTo(winX + winW / 2, winY + winH);
-    ctx.moveTo(winX, winY + winH / 2);
-    ctx.lineTo(winX + winW, winY + winH / 2);
-    ctx.lineWidth = 2;
-    ctx.stroke();
-  });
-
-  // Exit door on the back wall
-  const door = layout.door;
-  ctx.fillStyle = darken(roomStyle.trim, 20);
-  roundRect(ctx, door.x, door.y, door.w, door.h, 5);
-  ctx.fill();
+  const exitW = Math.min(150, Math.max(110, W * 0.14));
+  const exitH = 34;
+  interiorExitRect = { x: W - exitW - 24, y: H - exitH - 24, w: exitW, h: exitH };
+  ctx.save();
+  ctx.fillStyle = isNight ? "rgba(18,18,34,0.86)" : "rgba(250,250,245,0.92)";
   ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 3;
-  roundRect(ctx, door.x, door.y, door.w, door.h, 5);
-  ctx.stroke();
-  ctx.fillStyle = "#f1c40f";
-  ctx.beginPath();
-  ctx.arc(door.x + door.w - 12, door.y + door.h * 0.52, 3.5, 0, Math.PI * 2);
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, interiorExitRect.x, interiorExitRect.y, interiorExitRect.w, interiorExitRect.h, 10);
   ctx.fill();
-  ctx.fillStyle = "rgba(250,250,245,0.92)";
-  ctx.font = `bold 11px "Noto Sans SC", sans-serif`;
+  ctx.stroke();
+  ctx.fillStyle = "#1a1a2e";
+  ctx.font = `bold 13px "Noto Sans SC", sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText("出口", door.x + door.w / 2, door.y - 8);
-  // Doormat
-  ctx.fillStyle = hexWithAlpha(roomStyle.trim, 0.5);
-  ctx.beginPath();
-  ctx.ellipse(door.x + door.w / 2, layout.floorTop + 12, door.w * 0.7, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  drawInteriorFloorComposition(ctx, blueprint, layout, roomStyle, isNight);
-
-  // Rug, projected as a flattened ellipse on the room plane.
-  const rug = projectInteriorPoint(layout, 0, 0.18, 0);
-  ctx.fillStyle = hexWithAlpha(roomStyle.accent, isNight ? 0.12 : 0.16);
-  ctx.beginPath();
-  ctx.ellipse(rug.x, rug.y + 14, W * 0.18 * (1 - Math.abs(layout.yaw) * 0.12), 30 * layout.pitch, layout.yaw * 0.35, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = hexWithAlpha(roomStyle.trim, 0.5);
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid");
-  drawInteriorFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight);
-  drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front");
+  ctx.textBaseline = "middle";
+  ctx.fillText("回到街道", interiorExitRect.x + interiorExitRect.w / 2, interiorExitRect.y + interiorExitRect.h / 2 + 1);
+  ctx.restore();
 
   // Header
   ctx.fillStyle = "rgba(250,250,245,0.94)";
@@ -6918,7 +7094,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.textBaseline = "alphabetic";
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  ctx.fillText(`${blueprint.title} · 拖动可环绕视角 · 点击大门或按 Esc 回到街道`, W / 2, 58);
+  ctx.fillText(`${blueprint.title} · 拖动 360° 环视 · 按 Esc 或点右下角回到街道`, W / 2, 58);
 
   // Occupants
   const aliveCitizens = getAliveCitizens(society);
@@ -6997,6 +7173,10 @@ function hitTestInteriorCitizen(mx, my) {
 }
 
 function isInteriorDoorHit(mx, my) {
+  if (interiorExitRect) {
+    const d = interiorExitRect;
+    return mx >= d.x - 8 && mx <= d.x + d.w + 8 && my >= d.y - 8 && my <= d.y + d.h + 8;
+  }
   const canvas = document.getElementById("gameCanvas");
   if (!canvas) return false;
   const rect = canvas.getBoundingClientRect();
@@ -7305,7 +7485,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
     ctx.translate(-pivotX, -pivotY);
   }
 
-  const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
+  const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim, now);
 
   // Body: MBTI-inspired archetypes get distinct silhouettes.
   if (!usedCitizenSprite) {
@@ -7489,9 +7669,9 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   // Gesture overlays (wave / chat dots)
   if (!lowDetail) drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
 
-  // Modular body overlay (arms / legs) makes activity readable even when
-  // the citizen is rendered from a static sprite sheet frame.
-  if (!lowDetail) drawBehaviorBodyOverlay(ctx, citizen, anim, cx, cy, size, now);
+  // Vector limbs are only a fallback for non-sprite citizens. Sprite citizens
+  // are animated by cutting their own image into rigged body parts above.
+  if (!lowDetail && !usedCitizenSprite) drawBehaviorBodyOverlay(ctx, citizen, anim, cx, cy, size, now);
 
   // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
   if (!lowDetail) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
@@ -8812,7 +8992,145 @@ function getCitizenSpriteFrame(citizen) {
   return Math.abs(String(citizen?.id || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0)) % CITIZEN_FRAME_COUNT;
 }
 
-function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}) {
+const CITIZEN_RIG_PARTS = {
+  backArm: { x: 0.04, y: 0.24, w: 0.33, h: 0.46, px: 0.76, py: 0.18 },
+  backLeg: { x: 0.23, y: 0.56, w: 0.28, h: 0.38, px: 0.58, py: 0.12 },
+  frontLeg: { x: 0.48, y: 0.56, w: 0.29, h: 0.38, px: 0.43, py: 0.12 },
+  torso: { x: 0.23, y: 0.29, w: 0.54, h: 0.42, px: 0.5, py: 0.18 },
+  frontArm: { x: 0.62, y: 0.24, w: 0.34, h: 0.47, px: 0.23, py: 0.18 },
+  head: { x: 0.16, y: 0.01, w: 0.68, h: 0.38, px: 0.5, py: 0.76 }
+};
+
+const CITIZEN_RIG_DRAW_ORDER = ["backArm", "backLeg", "frontLeg", "torso", "frontArm", "head"];
+
+function getCitizenRigIntent(anim, now) {
+  const behavior = getActiveBehavior(anim, now);
+  const gesture = getActiveGesture(anim, now);
+  if (behavior?.pose === "lie") return { active: false, behavior, gesture, kind: "lie" };
+  if (gesture?.type === "wave") return { active: true, behavior, gesture, kind: "wave" };
+  if (gesture?.type === "talk") return { active: true, behavior, gesture, kind: "talk" };
+  if (anim?.state === "walking" || behavior?.pose === "move") {
+    return { active: true, behavior, gesture, kind: behavior?.id === "run" ? "run" : "walk" };
+  }
+  if (behavior) return { active: true, behavior, gesture, kind: behavior.pose || behavior.id || "act" };
+  return { active: false, behavior, gesture, kind: "idle" };
+}
+
+function getCitizenRigTransforms(anim, now) {
+  const intent = getCitizenRigIntent(anim, now);
+  const seed = intent.behavior?.seed || 0;
+  const beat = Math.sin(now * 0.014 + seed);
+  const alt = Math.cos(now * 0.014 + seed);
+  const transforms = {
+    backArm: { r: 0, x: 0, y: 0 },
+    frontArm: { r: 0, x: 0, y: 0 },
+    backLeg: { r: 0, x: 0, y: 0 },
+    frontLeg: { r: 0, x: 0, y: 0 },
+    torso: { r: 0, x: 0, y: 0 },
+    head: { r: 0, x: 0, y: 0 }
+  };
+  if (!intent.active) return { intent, transforms };
+
+  const setArms = (front, back) => {
+    transforms.frontArm.r = front;
+    transforms.backArm.r = back;
+  };
+  const setLegs = (front, back) => {
+    transforms.frontLeg.r = front;
+    transforms.backLeg.r = back;
+  };
+
+  if (intent.kind === "walk" || intent.kind === "run") {
+    const amp = intent.kind === "run" ? 0.42 : 0.26;
+    setArms(-beat * amp * 0.9, beat * amp * 0.78);
+    setLegs(beat * amp, -beat * amp);
+    transforms.torso.r = beat * 0.025;
+    transforms.head.y = -Math.abs(alt) * (intent.kind === "run" ? 2.4 : 1.2);
+  } else if (intent.kind === "wave") {
+    transforms.frontArm.r = -0.86 + Math.sin(now * 0.024 + seed) * 0.32;
+    transforms.frontArm.y = -4;
+    transforms.backArm.r = 0.08;
+    transforms.head.r = Math.sin(now * 0.006 + seed) * 0.04;
+  } else if (intent.kind === "talk") {
+    transforms.frontArm.r = -0.24 + beat * 0.18;
+    transforms.backArm.r = 0.12 - alt * 0.08;
+    transforms.head.r = beat * 0.035;
+  } else if (intent.kind === "reach" || ["handoff", "comfort", "care", "shop", "gather", "teach"].includes(intent.behavior?.id)) {
+    transforms.frontArm.r = -0.52 + beat * 0.12;
+    transforms.frontArm.x = 4;
+    transforms.torso.r = 0.05 + beat * 0.025;
+    transforms.head.r = 0.03;
+  } else if (intent.kind === "rock" || ["repair", "cook", "clean", "garden", "work"].includes(intent.behavior?.id)) {
+    setArms(-0.36 + beat * 0.34, 0.18 - beat * 0.22);
+    transforms.torso.r = beat * 0.09;
+    transforms.head.r = beat * 0.035;
+  } else if (intent.kind === "dance" || intent.behavior?.id === "stretch") {
+    setArms(-0.88 + beat * 0.22, 0.62 - alt * 0.24);
+    setLegs(0.2 + beat * 0.18, -0.18 + alt * 0.16);
+    transforms.torso.r = beat * 0.14;
+    transforms.torso.y = -Math.abs(alt) * 4;
+    transforms.head.y = transforms.torso.y;
+  } else if (intent.kind === "bounce" || intent.behavior?.id === "ball") {
+    setArms(-0.18 + beat * 0.16, 0.12 - beat * 0.12);
+    setLegs(0.14 + beat * 0.12, -0.1 - beat * 0.1);
+    transforms.torso.y = -Math.abs(beat) * 5;
+    transforms.head.y = transforms.torso.y;
+  } else if (intent.kind === "wash") {
+    setArms(-0.62 + beat * 0.18, -0.4 - beat * 0.12);
+    transforms.head.r = beat * 0.025;
+  } else if (intent.kind === "lean" || intent.behavior?.id === "think") {
+    transforms.frontArm.r = -0.5;
+    transforms.torso.r = 0.1;
+    transforms.head.r = 0.08;
+  } else if (intent.kind === "sob" || intent.behavior?.id === "cry") {
+    setArms(-0.48, -0.32);
+    transforms.torso.r = 0.06 + beat * 0.025;
+    transforms.head.y = 2;
+  } else if (intent.kind === "stomp") {
+    transforms.frontLeg.r = 0.2 + Math.abs(beat) * 0.18;
+    transforms.frontLeg.y = Math.abs(beat) * 4;
+    transforms.frontArm.r = 0.24;
+    transforms.backArm.r = -0.12;
+    transforms.torso.r = beat * 0.08;
+  } else if (intent.kind === "sit" || ["type", "write", "phone", "eat", "drink", "read", "meeting", "overtime"].includes(intent.behavior?.id)) {
+    setArms(-0.18 + beat * 0.05, -0.08 - beat * 0.04);
+    setLegs(0.28, -0.22);
+    transforms.torso.y = 2;
+    transforms.head.r = beat * 0.025;
+  } else {
+    setArms(beat * 0.08, -beat * 0.06);
+    transforms.head.y = alt * 0.8;
+  }
+
+  return { intent, transforms };
+}
+
+function drawCitizenRigPart(ctx, spriteSource, sprite, drawW, drawH, part, transform = {}) {
+  const sx = sprite.sx + part.x * sprite.sw;
+  const sy = sprite.sy + part.y * sprite.sh;
+  const sw = part.w * sprite.sw;
+  const sh = part.h * sprite.sh;
+  const dw = part.w * drawW;
+  const dh = part.h * drawH;
+  const dx = part.x * drawW - drawW / 2;
+  const dy = part.y * drawH - drawH / 2;
+  const pivotX = dx + part.px * dw;
+  const pivotY = dy + part.py * dh;
+
+  ctx.save();
+  ctx.translate(pivotX + (transform.x || 0), pivotY + (transform.y || 0));
+  ctx.rotate(transform.r || 0);
+  ctx.drawImage(spriteSource, sx, sy, sw, sh, -part.px * dw, -part.py * dh, dw, dh);
+  ctx.restore();
+}
+
+function drawRiggedCitizenSprite(ctx, spriteSource, sprite, drawW, drawH, transforms) {
+  CITIZEN_RIG_DRAW_ORDER.forEach((key) => {
+    drawCitizenRigPart(ctx, spriteSource, sprite, drawW, drawH, CITIZEN_RIG_PARTS[key], transforms[key]);
+  });
+}
+
+function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}, now = performance.now()) {
   const frame = getCitizenSpriteFrame(citizen);
   const sprite = getSpriteFrameRect(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
   if (!sprite) return false;
@@ -8822,13 +9140,20 @@ function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {
   const gait = Math.sin(anim.walkPhase || 0);
   const facing = anim.facing || 1;
   const tilt = gait * 0.035;
+  const { intent, transforms } = getCitizenRigTransforms(anim, now);
+  const useRig = intent.active;
 
   ctx.save();
   ctx.translate(cx, cy - drawH * 0.3);
-  ctx.rotate(tilt);
+  ctx.rotate(useRig ? 0 : tilt);
   ctx.scale(facing, 1);
-  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, -drawW / 2, -drawH * 0.5, drawW, drawH);
+  if (useRig) {
+    drawRiggedCitizenSprite(ctx, spriteSource, sprite, drawW, drawH, transforms);
+  } else {
+    ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, -drawW / 2, -drawH * 0.5, drawW, drawH);
+  }
   ctx.restore();
+  anim.spriteBodyRenderedThisFrame = true;
   return true;
 }
 
@@ -9104,8 +9429,8 @@ function bindGameEvents() {
       const dx = e.clientX - camera.lastX;
       const dy = e.clientY - camera.lastY;
       if (interiorView && interiorOrbit.drag) {
-        interiorOrbit.yaw = clamp(interiorOrbit.yaw + dx * 0.006, -0.72, 0.72);
-        interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.44, 0.72);
+        interiorOrbit.yaw = wrapInteriorAngle(interiorOrbit.yaw + dx * 0.006);
+        interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.36, 0.76);
       } else {
         camera.x += dx;
         camera.y += dy;
@@ -9130,7 +9455,7 @@ function bindGameEvents() {
       e.preventDefault();
       markRenderActive();
       if (interiorView) {
-        interiorOrbit.pitch = clamp(interiorOrbit.pitch + (e.deltaY > 0 ? -0.025 : 0.025), 0.44, 0.72);
+        interiorOrbit.pitch = clamp(interiorOrbit.pitch + (e.deltaY > 0 ? -0.025 : 0.025), 0.36, 0.76);
         return;
       }
       const delta = e.deltaY > 0 ? -0.08 : 0.08;
@@ -9168,8 +9493,8 @@ function bindGameEvents() {
         const dx = e.touches[0].clientX - camera.lastX;
         const dy = e.touches[0].clientY - camera.lastY;
         if (interiorView && interiorOrbit.drag) {
-          interiorOrbit.yaw = clamp(interiorOrbit.yaw + dx * 0.006, -0.72, 0.72);
-          interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.44, 0.72);
+          interiorOrbit.yaw = wrapInteriorAngle(interiorOrbit.yaw + dx * 0.006);
+          interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.36, 0.76);
         } else {
           camera.x += dx;
           camera.y += dy;
