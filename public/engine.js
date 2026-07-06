@@ -16,24 +16,24 @@ const APP_VIEWS = ["mirror", "script", "exchange", "society", "bottle", "robot"]
 
 const exchangeStories = {
   career: {
-    title: "旧路松动：他先重新立住自己",
+    title: "旧路尽头：他重新站稳",
     body:
-      "这个片段里，他没有急着证明自己仍然有用。一个旧身份正在松动，他先把真正想守住的东西写下来：清醒、自由、创造、以及不把生命交给惯性的勇气。后来他仍然做了改变，但那不是逃离，而是一次更清楚的自我选择。",
-    echo: "也许此刻要分辨的不是走或留，而是你愿意把自己交给怎样的生活。",
-    tags: ["职业觉醒", "边界", "内在秩序"]
+      "这个片段里，他没有急着证明自己仍然有用。他只是发现，原来那条路走到这里，已经不再适合自己。于是他把最想守住的东西写下来：清醒、自由、创造，以及不再被惯性推着走的勇气。后来他仍然做了改变，但那不是逃离，而是一次更清楚的选择。",
+    echo: "也许此刻要分辨的不是走或留，而是你想把时间和热情交给怎样的生活。",
+    tags: ["职业觉醒", "边界", "重新选择"]
   },
   relationship: {
-    title: "亲密沉默：他先选择真诚",
+    title: "沉默之前：他选择说真话",
     body:
-      "这个片段里，他原本想继续用沉默保护自己。可在开口之前，他忽然看见：真正的强大不是把心封起来，而是在可能被误解的时候，仍然愿意诚实。对方没有立刻理解，但关系从猜测里退出来，第一次站到了真实面前。",
-    echo: "真诚不是示弱。它是一个人不愿再背叛自己内心的光。",
+      "这个片段里，他原本想继续用沉默保护自己。可在开口之前，他忽然看见：真正的强大不是把心封起来，而是在可能被误解的时候，仍然愿意诚实。对方没有立刻理解，但关系从猜测里退出来，第一次把话说到了真实处。",
+    echo: "真诚不是示弱。它是一个人不愿再用沉默替自己过完这一生。",
     tags: ["亲密关系", "表达", "真诚"]
   },
   family: {
-    title: "家庭回声：她把爱从亏欠里解放",
+    title: "家庭回声：她让爱不再变成亏欠",
     body:
       "这个片段里，她没有再用顺从换取平静，也没有把爱变成对抗。她只是慢慢说：我理解你们的担心，也想为自己保留一部分生活。那一天没有立刻圆满，但她第一次没有把真实说成歉意。",
-    echo: "边界不是把爱推开，而是让爱可以不再以亏欠的方式存在。",
+    echo: "边界不是把爱推开，而是让爱不再靠委屈自己来维持。",
     tags: ["家庭", "空间", "真实"]
   }
 };
@@ -55,30 +55,30 @@ const DEFAULT_LIFE_CAPSULES = [
   {
     id: "capsule-career-river",
     sourceFragmentId: "seed-career-river",
-    title: "旧身份松动的清晨",
-    perspectiveRole: "正在重新定义工作的醒梦人",
+    title: "站在旧路尽头的清晨",
+    perspectiveRole: "重新思考工作意义的人",
     lifeStage: "29岁 · 职业觉醒",
     themes: ["career", "clarity", "turning_point"],
-    anonymizedScenario: "一个稳定身份正在松动。许多可复制的能力被流程接走，你第一次认真问自己：如果不再只被职位定义，我愿意把生命交给怎样的创造、关系和生活？",
-    keyChoiceSet: ["守住边界继续前行", "离开旧路重新选择", "找同路人照亮盲点", "静下来听内心一晚"],
+    anonymizedScenario: "你一直以为稳定就是答案。可最近，很多靠经验完成的事被流程和工具接了过去。你第一次认真问自己：如果不再只靠职位证明自己，我想把时间和热情交给怎样的工作、关系和生活？",
+    keyChoiceSet: ["守住边界继续前行", "离开旧路重新选择", "找同路人聊一聊", "安静一晚，听听内心"],
     boundaries: ["不暴露原始公司、姓名、城市", "体验者只能看到重构后的处境"]
   },
   {
     id: "capsule-family-window",
     sourceFragmentId: "seed-family-window",
-    title: "窗边练习真实的人",
-    perspectiveRole: "想把爱从亏欠里解放的人",
+    title: "在窗边说真话的人",
+    perspectiveRole: "想让爱不再变成亏欠的人",
     lifeStage: "32岁 · 家庭关系",
     themes: ["relationship", "family", "truth"],
-    anonymizedScenario: "你一直珍惜家人的爱，也越来越清楚：如果爱只能以顺从证明，它会慢慢失去光。今天你想试着不对抗，也不消失，把真实说完整。",
-    keyChoiceSet: ["温柔说出自己的边界", "继续保持表面平静", "写一封诚实的信", "邀请可信的人同行"],
+    anonymizedScenario: "你一直珍惜家人的爱，也越来越清楚：如果爱总要靠顺从来证明，它迟早会让人喘不过气。今天你想试着不对抗，也不消失，把真实说完整。",
+    keyChoiceSet: ["慢慢说出自己的边界", "继续保持表面平静", "写一封诚实的信", "邀请可信的人同行"],
     boundaries: ["不呈现真实家庭成员身份", "不鼓励体验者联系原作者"]
   },
   {
     id: "capsule-love-silence",
     sourceFragmentId: "seed-love-silence",
-    title: "沉默前选择真诚的人",
-    perspectiveRole: "在亲密关系里练习清醒表达的人",
+    title: "沉默之前，说出真话的人",
+    perspectiveRole: "在亲密关系里练习开口的人",
     lifeStage: "26岁 · 亲密关系",
     themes: ["relationship", "vulnerability", "clarity"],
     anonymizedScenario: "你不是不在乎，只是习惯在重要时刻退回沉默。对方问你为什么又停住，你忽然意识到：继续沉默也许安全，却会让真实的自己越来越远。",
@@ -88,19 +88,19 @@ const DEFAULT_LIFE_CAPSULES = [
 ];
 
 const bottleEchoes = [
-  "有个匿名的人接住了这句话：我也曾站在路口。后来我明白，清醒地选择热爱生活，本身就是一种强大。",
+  "有个匿名的人接住了这句话：我也曾站在路口。后来我明白，看清现实以后仍然认真生活，本身就是一种强大。",
   "一段回声漂了回来：我不知道你的全貌，但我相信那个还愿意追寻真善美的你，值得被认真守护。",
-  "海面上有人停留了一会儿：白日梦不是逃避现实，它是人在现实里保留下来的光。",
+  "海面上有人停留了一会儿：白日梦不是逃避现实，它是人在现实里保留下来的一点热爱。",
   "另一段人生给你的回应是：你说不出口的部分，并不因此就不存在。它也许正在等你用更温柔坚定的方式说出来。"
 ];
 
 const robotReplies = {
   quiet:
-    "我会在这里安静亮着。你不必急着证明自己，只需要听见那个还想认真生活、仍愿意选择光的自己。",
+    "我会安静地在这里。你不必急着证明自己，只需要听见那个还想认真生活、仍愿意往明亮处走的自己。",
   reflect:
     "我们只回看一个问题：今天哪个瞬间，你没有顺着惯性走，而是重新选择了真诚、善意或自由？",
   action:
-    "明天只做一件能把自己带回光里的小事：说一句真话，守住一个边界，或给生活留出十分钟清澈的空间。"
+    "明天只做一件能让自己更踏实的小事：说一句真话，守住一个边界，或给生活留出十分钟安静时间。"
 };
 
 const scenePresets = {
@@ -266,7 +266,7 @@ const LIFE_WEEK_STAGES = [
   {
     id: "contact",
     label: "联系",
-    title: "寻找同频灵魂",
+    title: "寻找相似的人",
     description: "分身向社区角色、人生胶囊或漂流瓶发起一次低压弱连接。"
   },
   {
@@ -1827,15 +1827,15 @@ function buildMirrorResponse(input, identity, pattern) {
   if (activeMode === "observer") {
     return `<strong>${escapeHtml(identity)}</strong>，我看到你把“${escapeHtml(
       shortened
-    )}”放到了这里。它是一次旧模式被激活：${escapeHtml(
+    )}”放到了这里。它像是一次熟悉反应又出现了：${escapeHtml(
       pattern
-    )}。今天先不急着判断对错，先分清事实、解释与真实痛点。`;
+    )}。今天先不急着判断对错，先分清发生了什么、你怎么理解它、真正让你在意的是什么。`;
   }
 
   if (activeMode === "companion") {
     return `我先陪你停一会儿。“${escapeHtml(
       shortened
-    )}”听起来像在替很久以来的自己撑场景。你不用立即变得聪明，你先允许这个人性化的疲惫被看见。`;
+    )}”听起来像是你替自己撑了很久。你不用立刻变得更聪明，先允许这份疲惫被看见。`;
   }
 
   return `我像镜子一样把它还给你：你说“${escapeHtml(
@@ -3751,7 +3751,7 @@ const OPEN_WORLD_ACTIONS = [
     metricDelta: { freedom: 1 },
     tensionDelta: -3,
     growthBias: { low_energy: 22, low_stability: 8 },
-    log: "夜间观察让城市慢下来，也照见几个白天看不见的恢复需求。"
+    log: "夜间观察让城市慢下来，也看见几个白天容易被忽略的休息需求。"
   }
 ];
 
@@ -3853,7 +3853,7 @@ function advanceLifeWeekStage(trigger = "auto") {
     }
   } else if (lifeWeek.stage === "contact") {
     const target = randomFrom(alive.filter((citizen) => citizen.id !== avatar?.id)) || alive[0];
-    addLifeWeekLog("contact", `${avatar?.name || "分身"}向${target?.name || "同频灵魂"}发出弱连接，等待对方是否靠近。`, { trigger, targetId: target?.id || "" });
+    addLifeWeekLog("contact", `${avatar?.name || "分身"}向${target?.name || "相似处境的人"}发出低压联系，等待对方是否靠近。`, { trigger, targetId: target?.id || "" });
     if (avatar && target) {
       recordAgentMemoryFileItem(society, avatar.id, "relationships", `我向${target.name}发出了一次低压联系，这里只交换回声，不强迫聊天。`, {
         kind: "relationship",
