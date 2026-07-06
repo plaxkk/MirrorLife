@@ -116,6 +116,10 @@ body:not(.splash-active) .quest-secondary {
   display: none;
 }
 
+body.interior-active .first-loop-panel.quest-stage {
+  display: none;
+}
+
 @media (max-width: 720px) {
   body:not(.splash-active) .first-loop-panel.quest-stage {
     left: 10px;

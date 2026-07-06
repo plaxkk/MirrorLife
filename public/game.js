@@ -5313,6 +5313,339 @@ function getInteriorAnchors(blueprint, layout) {
   }));
 }
 
+function interiorPropModel(prop, blueprint) {
+  const text = `${blueprint?.title || ""} ${prop?.label || ""} ${prop?.emoji || ""}`;
+  if (/休息床|卧榻|睡/.test(text)) return "bed";
+  if (/护理站|柜台|热食台|提案台/.test(text)) return "counter";
+  if (/等候椅|旁听席|静坐席|休息椅|沙发|小坐区|冷静角/.test(text)) return "seating";
+  if (/药品柜|档案柜|书架|货架|补给箱|工具棚/.test(text)) return "shelf";
+  if (/安抚角/.test(text)) return "toy-corner";
+  if (/复原植物|阳台植物|育苗架|温室台|照料区|低声花园|缓冲角/.test(text)) return "plant-zone";
+  if (/阅读角|记忆册|故事桌/.test(text)) return "reading";
+  if (/讲台|调停席/.test(text)) return "podium";
+  if (/课桌|练习桌|记录桌|记录席|工位/.test(text)) return "desk";
+  if (/探索墙|公告板|协作板|作品墙|交换板/.test(text)) return "wall-board";
+  if (/圆桌|共识圆桌|会议桌|餐桌/.test(text)) return "round-table";
+  if (/工具台|设备区/.test(text)) return "workbench";
+  if (/画架/.test(text)) return "easel";
+  if (/排练角/.test(text)) return "stage";
+  if (/声音角/.test(text)) return "music";
+  if (/纪念台/.test(text)) return "altar";
+  if (/洗漱台/.test(text)) return "sink";
+  return "table";
+}
+
+function drawInteriorShadow(ctx, x, y, w, alpha = 0.14) {
+  ctx.fillStyle = `rgba(26,26,46,${alpha})`;
+  ctx.beginPath();
+  ctx.ellipse(x, y + 9, w * 0.58, Math.max(5, w * 0.12), 0, 0, Math.PI * 2);
+  ctx.fill();
+}
+
+function drawInteriorPoly(ctx, points) {
+  ctx.beginPath();
+  points.forEach((p, i) => {
+    if (i === 0) ctx.moveTo(p.x, p.y);
+    else ctx.lineTo(p.x, p.y);
+  });
+  ctx.closePath();
+}
+
+function drawInteriorIsoBox(ctx, x, y, w, d, h, colors = {}) {
+  const stroke = colors.stroke || "#1a1a2e";
+  const top = colors.top || "#fff7dc";
+  const left = colors.left || "#e3c98d";
+  const right = colors.right || "#d4b16e";
+  const topY = y - h;
+  const pTop = [
+    { x, y: topY - d * 0.34 },
+    { x: x + w * 0.5, y: topY },
+    { x, y: topY + d * 0.34 },
+    { x: x - w * 0.5, y: topY }
+  ];
+  const pLeft = [
+    pTop[3],
+    pTop[2],
+    { x, y: y + d * 0.34 },
+    { x: x - w * 0.5, y }
+  ];
+  const pRight = [
+    pTop[2],
+    pTop[1],
+    { x: x + w * 0.5, y },
+    { x, y: y + d * 0.34 }
+  ];
+
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = stroke;
+  ctx.lineWidth = 2.5;
+  ctx.fillStyle = left;
+  drawInteriorPoly(ctx, pLeft);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = right;
+  drawInteriorPoly(ctx, pRight);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = top;
+  drawInteriorPoly(ctx, pTop);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawInteriorLegs(ctx, x, y, w, d, h, color) {
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2.2;
+  ctx.fillStyle = color;
+  [-0.32, 0.32].forEach((sx) => {
+    [-0.18, 0.18].forEach((sy) => {
+      const lx = x + w * sx;
+      const ly = y + d * sy;
+      roundRect(ctx, lx - 3, ly - h * 0.25, 6, h * 0.5, 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+  });
+  ctx.restore();
+}
+
+function drawInteriorBookStack(ctx, x, y, scale = 1) {
+  const books = [
+    ["#4f83cc", -9, 0],
+    ["#ef476f", -3, -5],
+    ["#f1c40f", 4, -10]
+  ];
+  ctx.save();
+  books.forEach(([color, dx, dy]) => {
+    ctx.fillStyle = color;
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 1.4;
+    roundRect(ctx, x + dx * scale, y + dy * scale, 22 * scale, 6 * scale, 2);
+    ctx.fill();
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+function drawInteriorPlant(ctx, x, y, scale = 1, accent = "#5d9b58") {
+  ctx.save();
+  ctx.fillStyle = "#c97b4b";
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2;
+  roundRect(ctx, x - 8 * scale, y - 3 * scale, 16 * scale, 14 * scale, 4 * scale);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = accent;
+  for (let i = 0; i < 5; i++) {
+    const a = -1.6 + i * 0.8;
+    ctx.beginPath();
+    ctx.ellipse(x + Math.cos(a) * 10 * scale, y - 12 * scale + Math.sin(a) * 5 * scale, 9 * scale, 5 * scale, a, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+function drawInteriorChair(ctx, x, y, scale, colors) {
+  ctx.save();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2;
+  ctx.fillStyle = colors.top;
+  roundRect(ctx, x - 12 * scale, y - 28 * scale, 24 * scale, 20 * scale, 5 * scale);
+  ctx.fill();
+  ctx.stroke();
+  drawInteriorIsoBox(ctx, x, y, 30 * scale, 18 * scale, 10 * scale, colors);
+  ctx.restore();
+}
+
+function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, blueprint) {
+  const depthScale = clamp(1 + point.depth * 0.08, 0.88, 1.12);
+  const s = ((prop.size || 30) / 30) * depthScale * 1.18;
+  const x = point.x;
+  const y = point.y;
+  const accent = style.accent;
+  const trim = style.trim;
+  const warmTop = isNight ? darken("#fff1bf", 26) : "#fff1bf";
+  const colors = {
+    stroke: "#1a1a2e",
+    top: warmTop,
+    left: isNight ? darken(accent, 42) : hexWithAlpha(accent, 0.72),
+    right: isNight ? darken(trim, 30) : hexWithAlpha(trim, 0.58)
+  };
+  const model = interiorPropModel(prop, blueprint);
+
+  drawInteriorShadow(ctx, x, y, 58 * s, isNight ? 0.22 : 0.14);
+  ctx.save();
+  ctx.lineJoin = "round";
+  ctx.lineCap = "round";
+
+  if (model === "bed") {
+    drawInteriorIsoBox(ctx, x, y, 72 * s, 42 * s, 18 * s, { ...colors, top: "#f8f2e5", left: "#8ecae6", right: "#4f83cc" });
+    drawInteriorIsoBox(ctx, x - 15 * s, y - 13 * s, 28 * s, 18 * s, 7 * s, { ...colors, top: "#ffffff", left: "#e8edf4", right: "#cfd8e4" });
+    drawInteriorIsoBox(ctx, x + 16 * s, y - 2 * s, 36 * s, 30 * s, 7 * s, { ...colors, top: "#f4978e", left: "#df5b3f", right: "#b43d2d" });
+  } else if (model === "counter") {
+    drawInteriorIsoBox(ctx, x, y, 78 * s, 34 * s, 26 * s, { ...colors, top: "#fff7dc" });
+    if (/交易|补给|热食|柜台/.test(`${blueprint?.title || ""} ${prop.label || ""}`)) {
+      for (let i = -2; i <= 2; i++) {
+        ctx.fillStyle = i % 2 ? "#fff8e7" : "#ef476f";
+        ctx.strokeStyle = "#1a1a2e";
+        ctx.lineWidth = 1.5;
+        roundRect(ctx, x + i * 12 * s - 5 * s, y - 47 * s, 10 * s, 18 * s, 2 * s);
+        ctx.fill();
+        ctx.stroke();
+      }
+    } else if (/照护|护理/.test(`${blueprint?.title || ""} ${prop.label || ""}`)) {
+      ctx.fillStyle = "#ef476f";
+      roundRect(ctx, x - 5 * s, y - 53 * s, 10 * s, 28 * s, 2 * s);
+      ctx.fill();
+      roundRect(ctx, x - 16 * s, y - 44 * s, 32 * s, 10 * s, 2 * s);
+      ctx.fill();
+    } else {
+      drawInteriorBookStack(ctx, x - 12 * s, y - 31 * s, s);
+    }
+  } else if (model === "seating") {
+    drawInteriorChair(ctx, x - 18 * s, y + 4 * s, s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
+    drawInteriorChair(ctx, x + 18 * s, y + 4 * s, s, { ...colors, top: "#bde0fe", left: "#7fb3d5", right: "#4f83cc" });
+    if (/沙发|小坐/.test(prop.label || "")) {
+      drawInteriorIsoBox(ctx, x, y + 14 * s, 82 * s, 28 * s, 18 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
+    }
+  } else if (model === "shelf") {
+    drawInteriorIsoBox(ctx, x, y, 58 * s, 24 * s, 62 * s, { ...colors, top: "#d6a86b", left: "#b77946", right: "#8a5933" });
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 1.6;
+    for (let r = 0; r < 3; r++) {
+      const yy = y - 48 * s + r * 17 * s;
+      ctx.beginPath();
+      ctx.moveTo(x - 23 * s, yy);
+      ctx.lineTo(x + 23 * s, yy + 3 * s);
+      ctx.stroke();
+    }
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = ["#ef476f", "#4f83cc", "#06d6a0", "#ffd166", "#8d99ae"][i % 5];
+      roundRect(ctx, x - 24 * s + i * 10 * s, y - 55 * s + (i % 2) * 15 * s, 7 * s, 18 * s, 2 * s);
+      ctx.fill();
+      ctx.stroke();
+    }
+  } else if (model === "toy-corner") {
+    drawInteriorIsoBox(ctx, x, y, 66 * s, 38 * s, 10 * s, { ...colors, top: "#ffe8a3", left: "#ffd166", right: "#e9b949" });
+    ["#ef476f", "#06d6a0", "#4f83cc"].forEach((c, i) => {
+      ctx.fillStyle = c;
+      ctx.strokeStyle = "#1a1a2e";
+      ctx.lineWidth = 1.8;
+      ctx.beginPath();
+      ctx.arc(x - 18 * s + i * 18 * s, y - 20 * s - (i % 2) * 6 * s, 8 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+  } else if (model === "plant-zone") {
+    drawInteriorIsoBox(ctx, x, y + 8 * s, 78 * s, 36 * s, 9 * s, { ...colors, top: "#d7f0c1", left: "#8dc56c", right: "#5d9b58" });
+    [-24, 0, 24].forEach((dx, i) => drawInteriorPlant(ctx, x + dx * s, y - (i % 2) * 5 * s, 0.78 * s, accent));
+  } else if (model === "reading") {
+    drawInteriorChair(ctx, x - 20 * s, y + 8 * s, 0.92 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
+    drawInteriorIsoBox(ctx, x + 18 * s, y + 7 * s, 38 * s, 24 * s, 12 * s, colors);
+    drawInteriorBookStack(ctx, x + 13 * s, y - 10 * s, 0.9 * s);
+  } else if (model === "podium") {
+    drawInteriorIsoBox(ctx, x, y, 52 * s, 32 * s, 36 * s, { ...colors, top: "#fff7dc", left: "#d6a86b", right: "#a66a3f" });
+    ctx.fillStyle = accent;
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y - 55 * s, 13 * s, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  } else if (model === "desk") {
+    drawInteriorIsoBox(ctx, x, y, 64 * s, 34 * s, 18 * s, colors);
+    drawInteriorLegs(ctx, x, y + 8 * s, 46 * s, 20 * s, 20 * s, trim);
+    if (/工位/.test(prop.label || "")) {
+      drawInteriorIsoBox(ctx, x - 8 * s, y - 25 * s, 28 * s, 8 * s, 24 * s, { ...colors, top: "#cde7f0", left: "#4f83cc", right: "#265b84" });
+    } else {
+      drawInteriorBookStack(ctx, x - 8 * s, y - 20 * s, 0.75 * s);
+    }
+  } else if (model === "wall-board") {
+    drawInteriorIsoBox(ctx, x, y, 70 * s, 14 * s, 48 * s, { ...colors, top: "#eaf7f3", left: "#b7d9cc", right: "#7da89a" });
+    ctx.strokeStyle = trim;
+    ctx.lineWidth = 1.7;
+    for (let i = 0; i < 3; i++) {
+      ctx.beginPath();
+      ctx.moveTo(x - 23 * s, y - 55 * s + i * 13 * s);
+      ctx.lineTo(x + 22 * s, y - 51 * s + i * 13 * s);
+      ctx.stroke();
+    }
+  } else if (model === "round-table") {
+    ctx.fillStyle = "#fff1bf";
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2.5;
+    ctx.beginPath();
+    ctx.ellipse(x, y - 20 * s, 34 * s, 15 * s, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    drawInteriorLegs(ctx, x, y + 2 * s, 44 * s, 18 * s, 26 * s, trim);
+    [-44, 44].forEach(dx => drawInteriorChair(ctx, x + dx * s, y + 8 * s, 0.72 * s, colors));
+  } else if (model === "workbench") {
+    drawInteriorIsoBox(ctx, x, y, 82 * s, 36 * s, 20 * s, { ...colors, top: "#d8dee9", left: "#7f8c9a", right: "#596674" });
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 3;
+    [["#f1c40f", -22], ["#ef476f", 0], ["#4f83cc", 22]].forEach(([c, dx]) => {
+      ctx.fillStyle = c;
+      ctx.beginPath();
+      ctx.arc(x + dx * s, y - 28 * s, 7 * s, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+    });
+  } else if (model === "easel") {
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 3;
+    ctx.beginPath();
+    ctx.moveTo(x, y - 55 * s);
+    ctx.lineTo(x - 24 * s, y + 4 * s);
+    ctx.moveTo(x, y - 55 * s);
+    ctx.lineTo(x + 24 * s, y + 4 * s);
+    ctx.stroke();
+    drawInteriorIsoBox(ctx, x, y - 22 * s, 46 * s, 10 * s, 34 * s, { ...colors, top: "#f8f2e5", left: "#f7e8f1", right: "#d7588a" });
+  } else if (model === "stage") {
+    drawInteriorIsoBox(ctx, x, y + 10 * s, 88 * s, 42 * s, 12 * s, { ...colors, top: "#ffd166", left: "#e9b949", right: "#c9931d" });
+    ctx.fillStyle = "#ef476f";
+    [-22, 22].forEach(dx => {
+      roundRect(ctx, x + dx * s - 8 * s, y - 46 * s, 16 * s, 46 * s, 5 * s);
+      ctx.fill();
+      ctx.stroke();
+    });
+  } else if (model === "music") {
+    drawInteriorIsoBox(ctx, x, y, 54 * s, 34 * s, 20 * s, { ...colors, top: "#f7e8f1", left: "#d7588a", right: "#8e3158" });
+    ctx.fillStyle = "#1a1a2e";
+    ctx.font = `${Math.round(28 * s)}px Arial`;
+    ctx.textAlign = "center";
+    ctx.fillText("♪", x + 2 * s, y - 31 * s);
+  } else if (model === "altar") {
+    drawInteriorIsoBox(ctx, x, y, 66 * s, 34 * s, 22 * s, { ...colors, top: "#f8f2e5", left: "#d4ccdf", right: "#8371ad" });
+    ["#ffd166", "#fff3bf", "#ffd166"].forEach((c, i) => {
+      ctx.fillStyle = c;
+      ctx.strokeStyle = "#1a1a2e";
+      roundRect(ctx, x - 20 * s + i * 20 * s, y - 44 * s, 8 * s, 20 * s, 3 * s);
+      ctx.fill();
+      ctx.stroke();
+    });
+  } else if (model === "sink") {
+    drawInteriorIsoBox(ctx, x, y, 58 * s, 30 * s, 24 * s, { ...colors, top: "#eaf7f3", left: "#9ec5cf", right: "#6a9aaa" });
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.arc(x, y - 31 * s, 13 * s, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(x + 12 * s, y - 44 * s);
+    ctx.quadraticCurveTo(x + 22 * s, y - 52 * s, x + 18 * s, y - 33 * s);
+    ctx.stroke();
+  } else {
+    drawInteriorIsoBox(ctx, x, y, 54 * s, 30 * s, 18 * s, colors);
+  }
+
+  ctx.restore();
+}
+
 function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight) {
   const props = blueprint.props || [];
   [...props].sort((a, b) => getInteriorPropPoint(a, layout).depth - getInteriorPropPoint(b, layout).depth).forEach((prop, index) => {
@@ -5328,21 +5661,18 @@ function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight)
     ctx.ellipse(point.x, point.y + 8, (prop.size || 28) * 0.58, 6, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    ctx.fillStyle = hexWithAlpha(zoneColor, isNight ? 0.18 : 0.14);
-    ctx.strokeStyle = "rgba(26,26,46,0.48)";
+    drawInteriorPropModel(ctx, prop, { ...point, x: point.x + wobble }, layout, { accent: zoneColor, trim: darken(zoneColor, 30) }, isNight, index, blueprint);
+
+    ctx.fillStyle = isNight ? "rgba(18,18,34,0.62)" : "rgba(250,250,245,0.86)";
+    ctx.strokeStyle = "rgba(26,26,46,0.7)";
     ctx.lineWidth = 1.5;
-    roundRect(ctx, point.x - panelW / 2, point.y + 13, panelW, panelH, 7);
+    roundRect(ctx, point.x - panelW / 2, point.y + 30, panelW, panelH, 7);
     ctx.fill();
     ctx.stroke();
-
-    ctx.fillStyle = "#1a1a2e";
-    ctx.font = `${prop.size || 29}px Arial`;
-    ctx.textAlign = "center";
-    ctx.fillText(prop.emoji || "•", point.x + wobble, point.y);
-
     ctx.font = `700 10px "Noto Sans SC", sans-serif`;
-    ctx.fillStyle = isNight ? "rgba(250,250,245,0.78)" : "rgba(26,26,46,0.72)";
-    ctx.fillText(prop.label || "", point.x, point.y + 29);
+    ctx.textAlign = "center";
+    ctx.fillStyle = isNight ? "rgba(250,250,245,0.88)" : "rgba(26,26,46,0.82)";
+    ctx.fillText(prop.label || "", point.x, point.y + 46);
     ctx.restore();
   });
 }
@@ -5370,6 +5700,45 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   ctx.lineWidth = 3;
   ctx.stroke();
 
+  // Thick trim and cutaway beams echo the exterior building sprites.
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+  ctx.strokeStyle = style.trim;
+  ctx.lineWidth = 9;
+  ctx.beginPath();
+  ctx.moveTo(backTopLeft.x, backTopLeft.y + 2);
+  ctx.lineTo(backTopRight.x, backTopRight.y + 2);
+  ctx.moveTo(backLeft.x, backLeft.y - 3);
+  ctx.lineTo(backRight.x, backRight.y - 3);
+  ctx.stroke();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(backTopLeft.x, backTopLeft.y + 2);
+  ctx.lineTo(backTopRight.x, backTopRight.y + 2);
+  ctx.moveTo(backLeft.x, backLeft.y - 3);
+  ctx.lineTo(backRight.x, backRight.y - 3);
+  ctx.stroke();
+
+  // Subtle wall panels stop large interiors from feeling like blank grey boxes.
+  const panelCount = 4;
+  for (let i = 0; i < panelCount; i++) {
+    const a = i / panelCount;
+    const b = (i + 1) / panelCount;
+    const x1 = backTopLeft.x + (backTopRight.x - backTopLeft.x) * a + 18;
+    const x2 = backTopLeft.x + (backTopRight.x - backTopLeft.x) * b - 18;
+    const y1 = layout.wallTop + 28;
+    const y2 = backLeft.y - 34;
+    ctx.fillStyle = isNight ? "rgba(250,250,245,0.035)" : "rgba(255,255,255,0.18)";
+    ctx.strokeStyle = isNight ? "rgba(250,250,245,0.08)" : "rgba(26,26,46,0.08)";
+    ctx.lineWidth = 1.4;
+    roundRect(ctx, x1, y1, Math.max(30, x2 - x1), Math.max(26, y2 - y1), 8);
+    ctx.fill();
+    ctx.stroke();
+  }
+  ctx.restore();
+
   // Side walls shift subtly with yaw, creating an orbiting room-box feel.
   const showLeft = layout.yaw > -0.5;
   const showRight = layout.yaw < 0.5;
@@ -5382,6 +5751,9 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
     ctx.lineTo(layout.left - 40, layout.floorTop + 80);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = "rgba(26,26,46,0.4)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
   if (showRight) {
     ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.22 : 0.12);
@@ -5392,6 +5764,9 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
     ctx.lineTo(layout.right + 40, layout.floorTop + 80);
     ctx.closePath();
     ctx.fill();
+    ctx.strokeStyle = "rgba(26,26,46,0.38)";
+    ctx.lineWidth = 2;
+    ctx.stroke();
   }
 
   // Floor plane
@@ -5405,6 +5780,20 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   ctx.fill();
   ctx.strokeStyle = "rgba(26,26,46,0.42)";
   ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // A warm border makes the floor read like the same floating base as outdoor buildings.
+  ctx.strokeStyle = isNight ? hexWithAlpha(style.accent, 0.45) : hexWithAlpha(style.trim, 0.42);
+  ctx.lineWidth = 6;
+  ctx.beginPath();
+  ctx.moveTo(frontLeft.x, frontLeft.y);
+  ctx.lineTo(frontRight.x, frontRight.y);
+  ctx.stroke();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 2.5;
+  ctx.beginPath();
+  ctx.moveTo(frontLeft.x, frontLeft.y);
+  ctx.lineTo(frontRight.x, frontRight.y);
   ctx.stroke();
 
   // Perspective grid
@@ -5473,6 +5862,142 @@ function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   ctx.restore();
 }
 
+function drawInteriorWallInstallations(ctx, W, H, layout, style, blueprint, isNight) {
+  const title = blueprint?.title || "";
+  const wallMidY = layout.wallTop + (layout.floorTop - layout.wallTop) * 0.48;
+  const usableH = Math.max(74, layout.floorTop - layout.wallTop - 84);
+  const leftWall = projectInteriorPoint(layout, -0.72, -0.78, 0).x;
+  const rightWall = projectInteriorPoint(layout, 0.72, -0.78, 0).x;
+  const centerX = layout.centerX + layout.yaw * 52;
+  const stroke = "#1a1a2e";
+
+  const panel = (x, y, w, h, fill, border = stroke) => {
+    ctx.fillStyle = fill;
+    ctx.strokeStyle = border;
+    ctx.lineWidth = 3;
+    roundRect(ctx, x, y, w, h, 8);
+    ctx.fill();
+    ctx.stroke();
+  };
+  const smallLine = (x1, y1, x2, y2, color = style.trim, width = 2) => {
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(x1, y1);
+    ctx.lineTo(x2, y2);
+    ctx.stroke();
+  };
+
+  ctx.save();
+  ctx.lineCap = "round";
+  ctx.lineJoin = "round";
+
+  if (/学习/.test(title)) {
+    panel(centerX - 190, wallMidY - 56, 260, 94, isNight ? "#1f4f46" : "#2f7d63");
+    ctx.strokeStyle = isNight ? "rgba(250,250,245,0.42)" : "rgba(255,255,255,0.72)";
+    ctx.lineWidth = 2;
+    for (let i = 0; i < 4; i++) {
+      smallLine(centerX - 164, wallMidY - 33 + i * 18, centerX + 34, wallMidY - 24 + i * 18, ctx.strokeStyle, 2);
+    }
+    drawInteriorIsoBox(ctx, centerX + 154, layout.floorTop - 8, 72, 22, usableH * 0.56, { top: "#d6a86b", left: "#b77946", right: "#8a5933" });
+    for (let i = 0; i < 6; i++) drawInteriorBookStack(ctx, centerX + 130 + (i % 3) * 18, wallMidY - 38 + Math.floor(i / 3) * 35, 0.58);
+  } else if (/照护/.test(title)) {
+    panel(centerX - 150, wallMidY - 52, 210, 86, isNight ? "#234b52" : "#eaf7f3", style.trim);
+    ctx.fillStyle = "#ef476f";
+    roundRect(ctx, centerX - 56, wallMidY - 31, 20, 62, 4);
+    ctx.fill();
+    roundRect(ctx, centerX - 77, wallMidY - 10, 62, 20, 4);
+    ctx.fill();
+    ctx.strokeStyle = stroke;
+    ctx.lineWidth = 2;
+    ctx.stroke();
+    [-190, 112].forEach((dx) => {
+      ctx.strokeStyle = style.trim;
+      ctx.lineWidth = 4;
+      smallLine(centerX + dx, wallMidY - 60, centerX + dx, layout.floorTop - 18, style.trim, 4);
+      ctx.fillStyle = hexWithAlpha(style.accent, isNight ? 0.36 : 0.22);
+      roundRect(ctx, centerX + dx - 18, wallMidY - 52, 36, usableH * 0.52, 8);
+      ctx.fill();
+    });
+  } else if (/交易/.test(title)) {
+    for (let i = -5; i <= 5; i++) {
+      ctx.fillStyle = i % 2 ? "#fff8e7" : "#ef476f";
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.5;
+      roundRect(ctx, centerX + i * 25 - 12, wallMidY - 66, 24, 42, 5);
+      ctx.fill();
+      ctx.stroke();
+    }
+    panel(centerX - 210, wallMidY - 16, 160, 70, "#8a5933");
+    panel(centerX + 74, wallMidY - 16, 150, 70, isNight ? "#293241" : "#fff4d6");
+    for (let i = 0; i < 5; i++) drawInteriorBookStack(ctx, centerX - 190 + i * 28, wallMidY + 28, 0.55);
+  } else if (/公共|调停/.test(title)) {
+    panel(centerX - 205, wallMidY - 55, 150, 95, isNight ? "#263043" : "#f5e7bd", style.trim);
+    panel(centerX + 62, wallMidY - 55, 150, 95, isNight ? "#293241" : "#eef1ff", style.trim);
+    ctx.fillStyle = style.accent;
+    for (let i = 0; i < 6; i++) {
+      roundRect(ctx, centerX - 186 + (i % 2) * 58, wallMidY - 34 + Math.floor(i / 2) * 24, 38, 13, 3);
+      ctx.fill();
+    }
+    ctx.beginPath();
+    ctx.arc(centerX + 136, wallMidY - 8, 34, 0, Math.PI * 2);
+    ctx.strokeStyle = style.trim;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  } else if (/协作/.test(title)) {
+    panel(centerX - 210, wallMidY - 52, 180, 96, isNight ? "#1d3557" : "#dbeafe", style.trim);
+    for (let i = 0; i < 9; i++) {
+      ctx.fillStyle = ["#ffd166", "#4f83cc", "#06d6a0"][i % 3];
+      roundRect(ctx, centerX - 190 + (i % 3) * 48, wallMidY - 34 + Math.floor(i / 3) * 24, 34, 14, 3);
+      ctx.fill();
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.2;
+      ctx.stroke();
+    }
+    [centerX + 60, centerX + 118, centerX + 176].forEach((gx, i) => {
+      ctx.fillStyle = i % 2 ? "#4f83cc" : "#d8dee9";
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 2.2;
+      ctx.beginPath();
+      ctx.arc(gx, wallMidY - 20 + i * 18, 18, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.stroke();
+      smallLine(gx, wallMidY - 20 + i * 18, gx + 20, wallMidY - 8 + i * 12, style.trim, 3);
+    });
+  } else if (/表达/.test(title)) {
+    [-180, -80, 30, 140].forEach((dx, i) => {
+      panel(centerX + dx, wallMidY - 58 + (i % 2) * 10, 66, 78, ["#f7e8f1", "#fff1bf", "#dbeafe", "#eaf6df"][i], style.trim);
+      ctx.fillStyle = ["#d7588a", "#4f83cc", "#ffd166", "#5d9b58"][i];
+      ctx.beginPath();
+      ctx.arc(centerX + dx + 33, wallMidY - 18 + (i % 2) * 10, 14, 0, Math.PI * 2);
+      ctx.fill();
+    });
+  } else if (/生态/.test(title)) {
+    ctx.strokeStyle = style.trim;
+    ctx.lineWidth = 4;
+    for (let i = 0; i < 5; i++) {
+      smallLine(leftWall + 80 + i * 76, wallMidY - 68, leftWall + 112 + i * 76, wallMidY + 48, style.trim, 3);
+    }
+    panel(centerX - 192, wallMidY + 2, 360, 40, isNight ? "#24442f" : "#d7f0c1", style.trim);
+    for (let i = 0; i < 8; i++) drawInteriorPlant(ctx, centerX - 168 + i * 46, wallMidY + 24, 0.58, style.accent);
+  } else if (/安宁/.test(title)) {
+    panel(centerX - 135, wallMidY - 58, 260, 106, isNight ? "#2d2a3e" : "#ece8f4", style.trim);
+    for (let i = 0; i < 5; i++) {
+      ctx.fillStyle = i === 2 ? "#ffd166" : "#fff3bf";
+      ctx.strokeStyle = stroke;
+      ctx.lineWidth = 1.8;
+      roundRect(ctx, centerX - 82 + i * 40, wallMidY - 20, 12, 38, 4);
+      ctx.fill();
+      ctx.stroke();
+    }
+  } else {
+    panel(centerX - 170, wallMidY - 52, 120, 82, "#fff4d6", style.trim);
+    panel(centerX + 60, wallMidY - 52, 120, 82, "#eaf7f3", style.trim);
+    drawInteriorPlant(ctx, centerX + 190, wallMidY + 50, 0.9, style.accent);
+  }
+  ctx.restore();
+}
+
 function pickInteriorAnchorBehavior(citizen, zone, anchor, now, idx) {
   const ids = Array.isArray(anchor?.behaviors) ? anchor.behaviors : [];
   if (!ids.length) return null;
@@ -5502,6 +6027,7 @@ function enterInteriorView(zone, source = "manual") {
   interiorView = { zone, source, enteredAt: performance.now(), nextArrivalCheckAt: 0 };
   interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
   hideDetail();
+  document.body.classList.add("interior-active");
   if (!questPanelCollapsed) {
     questPanelCollapsed = true;
     renderFirstLoopPanel();
@@ -5515,6 +6041,7 @@ function exitInteriorView() {
   if (!interiorView) return;
   interiorView = null;
   interiorOrbit.drag = false;
+  document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
   markRenderActive(2200);
 }
@@ -5669,6 +6196,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.fillRect(0, 0, W, H);
 
   drawInteriorRoomShell(ctx, W, H, layout, roomStyle, isNight);
+  drawInteriorWallInstallations(ctx, W, H, layout, roomStyle, blueprint, isNight);
 
   // Windows looking out to the sky
   [W * 0.2 + layout.yaw * 30, W * 0.8 + layout.yaw * 30].forEach((wx) => {
