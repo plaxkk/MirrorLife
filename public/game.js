@@ -52,6 +52,7 @@ let followedCitizenId = null;
 let followZoomUntil = 0;
 let lastFollowBannerAt = 0;
 let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
+let interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
 let interiorAnimations = {};
 let activeEncounters = [];
 let encounterCooldowns = {};
@@ -5241,17 +5242,66 @@ function getInteriorLayout(W, H) {
   const right = W * 0.93;
   const doorW = 66;
   const doorH = 92;
+  const yaw = Number(interiorOrbit?.yaw || 0);
+  const pitch = Number(interiorOrbit?.pitch || 0.58);
   return {
     wallTop, floorTop, floorBottom, left, right,
-    door: { x: W / 2 - doorW / 2, y: floorTop - doorH, w: doorW, h: doorH }
+    centerX: W / 2,
+    yaw,
+    pitch,
+    roomW: Math.max(360, right - left),
+    roomD: Math.max(260, floorBottom - floorTop),
+    door: { x: W / 2 - doorW / 2 + yaw * 38, y: floorTop - doorH + Math.abs(yaw) * 8, w: doorW, h: doorH }
   };
 }
 
+function getInteriorMaterialStyle(zone, blueprint) {
+  const hint = `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""} ${blueprint?.title || ""}`;
+  if (/照护|hospital|maternity|care|repair/.test(hint)) {
+    return { wall: "#eaf7f3", floor: "#d7eee6", accent: "#52b6a8", trim: "#317d73", motif: "cross" };
+  }
+  if (/学习|school|university|kinder|learn|mentor/.test(hint)) {
+    return { wall: "#f5eedc", floor: "#e8d8ad", accent: "#4f83cc", trim: "#2f5d90", motif: "books" };
+  }
+  if (/交易|commercial|market|shop|kitchen|resource/.test(hint)) {
+    return { wall: "#fff0d1", floor: "#e9c37d", accent: "#df5b3f", trim: "#9f3b2b", motif: "awning" };
+  }
+  if (/公共|plaza|forum|civic/.test(hint)) {
+    return { wall: "#eef1ff", floor: "#d8ddf0", accent: "#7b6fd6", trim: "#4b44a2", motif: "circle" };
+  }
+  if (/调停|legal|court|justice/.test(hint)) {
+    return { wall: "#f1eadc", floor: "#d0bea0", accent: "#8b6b3e", trim: "#60472d", motif: "columns" };
+  }
+  if (/协作|work|office|factory|craft|commons/.test(hint)) {
+    return { wall: "#eaf0f4", floor: "#c7d1d9", accent: "#3f88c5", trim: "#265b84", motif: "grid" };
+  }
+  if (/表达|creative|studio|story|archive/.test(hint)) {
+    return { wall: "#f7e8f1", floor: "#e1c4d4", accent: "#d7588a", trim: "#8e3158", motif: "frames" };
+  }
+  if (/生态|park|garden|farm|nature|zoo|botanical/.test(hint)) {
+    return { wall: "#eaf6df", floor: "#c9ddb5", accent: "#5d9b58", trim: "#386a35", motif: "leaf" };
+  }
+  if (/安宁|memory|cemetery|quiet/.test(hint)) {
+    return { wall: "#ece8f4", floor: "#d4ccdf", accent: "#8371ad", trim: "#4d4368", motif: "candle" };
+  }
+  return { wall: "#f0e8d8", floor: "#e6d5b8", accent: zone?.color || "#8d99ae", trim: "#4a3f35", motif: "home" };
+}
+
+function projectInteriorPoint(layout, nx, nz, height = 0) {
+  const cos = Math.cos(layout.yaw);
+  const sin = Math.sin(layout.yaw);
+  const rx = nx * cos - nz * sin;
+  const rz = nx * sin + nz * cos;
+  const depthScale = 1 - rz * 0.08;
+  const x = layout.centerX + rx * layout.roomW * 0.42 * depthScale;
+  const y = layout.floorTop + (rz + 1) * 0.5 * layout.roomD * layout.pitch - height;
+  return { x, y, depth: rz };
+}
+
 function getInteriorPropPoint(prop, layout) {
-  return {
-    x: layout.left + prop.x * (layout.right - layout.left),
-    y: layout.floorTop + prop.y * (layout.floorBottom - layout.floorTop)
-  };
+  const nx = (prop.x - 0.5) * 1.7;
+  const nz = (prop.y - 0.5) * 1.55;
+  return projectInteriorPoint(layout, nx, nz, 0);
 }
 
 function getInteriorAnchors(blueprint, layout) {
@@ -5265,7 +5315,7 @@ function getInteriorAnchors(blueprint, layout) {
 
 function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight) {
   const props = blueprint.props || [];
-  props.forEach((prop, index) => {
+  [...props].sort((a, b) => getInteriorPropPoint(a, layout).depth - getInteriorPropPoint(b, layout).depth).forEach((prop, index) => {
     const point = getInteriorPropPoint(prop, layout);
     const panelW = Math.max(54, Math.min(92, String(prop.label || "").length * 9 + 20));
     const panelH = 24;
@@ -5297,6 +5347,132 @@ function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight)
   });
 }
 
+function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
+  const backLeft = projectInteriorPoint(layout, -0.92, -0.78, 0);
+  const backRight = projectInteriorPoint(layout, 0.92, -0.78, 0);
+  const frontLeft = projectInteriorPoint(layout, -1.02, 1.05, 0);
+  const frontRight = projectInteriorPoint(layout, 1.02, 1.05, 0);
+  const backTopLeft = { x: backLeft.x + layout.yaw * 38, y: layout.wallTop };
+  const backTopRight = { x: backRight.x + layout.yaw * 38, y: layout.wallTop };
+
+  ctx.fillStyle = isNight ? darken(style.wall, 42) : style.wall;
+  ctx.beginPath();
+  ctx.moveTo(backTopLeft.x, backTopLeft.y);
+  ctx.lineTo(backTopRight.x, backTopRight.y);
+  ctx.lineTo(backRight.x, backRight.y);
+  ctx.lineTo(backLeft.x, backLeft.y);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = hexWithAlpha(style.accent, isNight ? 0.22 : 0.14);
+  ctx.fill();
+  ctx.strokeStyle = "#1a1a2e";
+  ctx.lineWidth = 3;
+  ctx.stroke();
+
+  // Side walls shift subtly with yaw, creating an orbiting room-box feel.
+  const showLeft = layout.yaw > -0.5;
+  const showRight = layout.yaw < 0.5;
+  if (showLeft) {
+    ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.24 : 0.14);
+    ctx.beginPath();
+    ctx.moveTo(backTopLeft.x, backTopLeft.y);
+    ctx.lineTo(backLeft.x, backLeft.y);
+    ctx.lineTo(frontLeft.x, frontLeft.y);
+    ctx.lineTo(layout.left - 40, layout.floorTop + 80);
+    ctx.closePath();
+    ctx.fill();
+  }
+  if (showRight) {
+    ctx.fillStyle = hexWithAlpha(style.trim, isNight ? 0.22 : 0.12);
+    ctx.beginPath();
+    ctx.moveTo(backTopRight.x, backTopRight.y);
+    ctx.lineTo(backRight.x, backRight.y);
+    ctx.lineTo(frontRight.x, frontRight.y);
+    ctx.lineTo(layout.right + 40, layout.floorTop + 80);
+    ctx.closePath();
+    ctx.fill();
+  }
+
+  // Floor plane
+  ctx.fillStyle = isNight ? darken(style.floor, 38) : style.floor;
+  ctx.beginPath();
+  ctx.moveTo(backLeft.x, backLeft.y);
+  ctx.lineTo(backRight.x, backRight.y);
+  ctx.lineTo(frontRight.x, frontRight.y);
+  ctx.lineTo(frontLeft.x, frontLeft.y);
+  ctx.closePath();
+  ctx.fill();
+  ctx.strokeStyle = "rgba(26,26,46,0.42)";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+
+  // Perspective grid
+  ctx.strokeStyle = isNight ? "rgba(250,250,245,0.12)" : "rgba(26,26,46,0.16)";
+  ctx.lineWidth = 1;
+  for (let i = 1; i < 6; i++) {
+    const z = -0.78 + i * (1.83 / 6);
+    const a = projectInteriorPoint(layout, -1.0, z, 0);
+    const b = projectInteriorPoint(layout, 1.0, z, 0);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+  for (let i = 1; i < 6; i++) {
+    const x = -1 + i * (2 / 6);
+    const a = projectInteriorPoint(layout, x, -0.78, 0);
+    const b = projectInteriorPoint(layout, x, 1.05, 0);
+    ctx.beginPath();
+    ctx.moveTo(a.x, a.y);
+    ctx.lineTo(b.x, b.y);
+    ctx.stroke();
+  }
+
+  // Room-specific motif on back wall.
+  ctx.save();
+  ctx.globalAlpha = isNight ? 0.32 : 0.55;
+  ctx.fillStyle = style.accent;
+  ctx.strokeStyle = style.trim;
+  ctx.lineWidth = 3;
+  const motifX = layout.centerX + layout.yaw * 60;
+  const motifY = layout.wallTop + 58;
+  if (style.motif === "cross") {
+    roundRect(ctx, motifX - 9, motifY - 28, 18, 56, 4); ctx.fill();
+    roundRect(ctx, motifX - 28, motifY - 9, 56, 18, 4); ctx.fill();
+  } else if (style.motif === "awning") {
+    for (let i = -3; i <= 3; i++) {
+      ctx.fillStyle = i % 2 ? "#fff4e6" : style.accent;
+      roundRect(ctx, motifX + i * 20 - 9, motifY - 24, 18, 44, 4);
+      ctx.fill();
+    }
+  } else if (style.motif === "columns") {
+    [-42, 42].forEach((dx) => {
+      roundRect(ctx, motifX + dx - 9, motifY - 34, 18, 68, 4);
+      ctx.stroke();
+    });
+  } else if (style.motif === "leaf") {
+    ctx.beginPath();
+    ctx.ellipse(motifX - 16, motifY, 24, 11, -0.6, 0, Math.PI * 2);
+    ctx.ellipse(motifX + 16, motifY, 24, 11, 0.6, 0, Math.PI * 2);
+    ctx.fill();
+  } else if (style.motif === "grid") {
+    for (let i = 0; i < 4; i++) {
+      ctx.strokeRect(motifX - 44 + i * 24, motifY - 24, 18, 18);
+      ctx.strokeRect(motifX - 44 + i * 24, motifY + 4, 18, 18);
+    }
+  } else if (style.motif === "frames") {
+    [-32, 0, 32].forEach((dx) => {
+      ctx.strokeRect(motifX + dx - 13, motifY - 20, 26, 36);
+    });
+  } else {
+    ctx.beginPath();
+    ctx.arc(motifX, motifY, 30, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
 function pickInteriorAnchorBehavior(citizen, zone, anchor, now, idx) {
   const ids = Array.isArray(anchor?.behaviors) ? anchor.behaviors : [];
   if (!ids.length) return null;
@@ -5324,7 +5500,12 @@ function findRenderZoneById(zoneId) {
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
   interiorView = { zone, source, enteredAt: performance.now(), nextArrivalCheckAt: 0 };
+  interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
   hideDetail();
+  if (!questPanelCollapsed) {
+    questPanelCollapsed = true;
+    renderFirstLoopPanel();
+  }
   ensureInteriorChip(zone);
   if (source === "manual") seedInteriorOccupants(zone);
   markRenderActive(3200);
@@ -5333,6 +5514,7 @@ function enterInteriorView(zone, source = "manual") {
 function exitInteriorView() {
   if (!interiorView) return;
   interiorView = null;
+  interiorOrbit.drag = false;
   document.getElementById("interiorChip")?.remove();
   markRenderActive(2200);
 }
@@ -5342,7 +5524,7 @@ function ensureInteriorChip(zone) {
   const el = document.createElement("button");
   el.id = "interiorChip";
   el.type = "button";
-  el.textContent = `← 离开${zone.name}`;
+  el.textContent = `← 离开${zone.name} · 拖动环绕`;
   el.addEventListener("click", () => {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
@@ -5477,32 +5659,19 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const layout = getInteriorLayout(W, H);
   const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
   const blueprint = getInteriorBlueprint(zone);
+  const roomStyle = getInteriorMaterialStyle(zone, blueprint);
   const interiorAnchors = getInteriorAnchors(blueprint, layout);
 
-  // Back wall
-  ctx.fillStyle = isNight ? "#3b3a52" : "#f0e8d8";
-  ctx.fillRect(0, 0, W, layout.floorTop);
-  ctx.fillStyle = hexWithAlpha(zoneColor, isNight ? 0.28 : 0.2);
-  ctx.fillRect(0, 0, W, layout.floorTop);
-  // Wainscot band
-  ctx.fillStyle = hexWithAlpha(darken(zoneColor, 30), 0.35);
-  ctx.fillRect(0, layout.floorTop - 26, W, 26);
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, isNight ? "#101827" : "#dff3f6");
+  bg.addColorStop(1, isNight ? "#253047" : "#eef8f2");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
 
-  // Floor with plank lines
-  ctx.fillStyle = isNight ? "#4a4139" : "#e6d5b8";
-  ctx.fillRect(0, layout.floorTop, W, H - layout.floorTop);
-  ctx.strokeStyle = isNight ? "rgba(30,25,20,0.4)" : "rgba(140,110,70,0.28)";
-  ctx.lineWidth = 1;
-  for (let i = 1; i < 7; i++) {
-    const y = layout.floorTop + (H - layout.floorTop) * (i / 7);
-    ctx.beginPath();
-    ctx.moveTo(0, y);
-    ctx.lineTo(W, y);
-    ctx.stroke();
-  }
+  drawInteriorRoomShell(ctx, W, H, layout, roomStyle, isNight);
 
   // Windows looking out to the sky
-  [W * 0.2, W * 0.8].forEach((wx) => {
+  [W * 0.2 + layout.yaw * 30, W * 0.8 + layout.yaw * 30].forEach((wx) => {
     const winW = Math.min(110, W * 0.16);
     const winH = 78;
     const winX = wx - winW / 2;
@@ -5538,7 +5707,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
 
   // Exit door on the back wall
   const door = layout.door;
-  ctx.fillStyle = darken(zoneColor, 40);
+  ctx.fillStyle = darken(roomStyle.trim, 20);
   roundRect(ctx, door.x, door.y, door.w, door.h, 5);
   ctx.fill();
   ctx.strokeStyle = "#1a1a2e";
@@ -5554,21 +5723,22 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.textAlign = "center";
   ctx.fillText("出口", door.x + door.w / 2, door.y - 8);
   // Doormat
-  ctx.fillStyle = hexWithAlpha(darken(zoneColor, 20), 0.5);
+  ctx.fillStyle = hexWithAlpha(roomStyle.trim, 0.5);
   ctx.beginPath();
   ctx.ellipse(door.x + door.w / 2, layout.floorTop + 12, door.w * 0.7, 9, 0, 0, Math.PI * 2);
   ctx.fill();
 
-  // Rug
-  ctx.fillStyle = hexWithAlpha(zoneColor, isNight ? 0.24 : 0.3);
+  // Rug, projected as a flattened ellipse on the room plane.
+  const rug = projectInteriorPoint(layout, 0, 0.18, 0);
+  ctx.fillStyle = hexWithAlpha(roomStyle.accent, isNight ? 0.24 : 0.32);
   ctx.beginPath();
-  ctx.ellipse(W / 2, (layout.floorTop + layout.floorBottom) / 2 + 14, W * 0.2, 34, 0, 0, Math.PI * 2);
+  ctx.ellipse(rug.x, rug.y + 14, W * 0.18 * (1 - Math.abs(layout.yaw) * 0.12), 30 * layout.pitch, layout.yaw * 0.35, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = hexWithAlpha(darken(zoneColor, 40), 0.5);
+  ctx.strokeStyle = hexWithAlpha(roomStyle.trim, 0.5);
   ctx.lineWidth = 2;
   ctx.stroke();
 
-  drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight);
+  drawInteriorFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight);
 
   // Header
   ctx.fillStyle = "rgba(250,250,245,0.94)";
@@ -5588,7 +5758,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.textBaseline = "alphabetic";
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  ctx.fillText(`${blueprint.title} · 点击大门或按 Esc 回到街道`, W / 2, 58);
+  ctx.fillText(`${blueprint.title} · 拖动可环绕视角 · 点击大门或按 Esc 回到街道`, W / 2, 58);
 
   // Occupants
   const aliveCitizens = getAliveCitizens(society);
@@ -5712,51 +5882,117 @@ function drawCitizenGestureOverlay(ctx, anim, x, y, size, now, hasBubble) {
   }
 }
 
-function drawBehaviorBodyOverlay(ctx, anim, x, y, size, now) {
+function drawBehaviorBodyOverlay(ctx, citizen, anim, x, y, size, now) {
   const behavior = getActiveBehavior(anim, now);
   if (!behavior || behavior.pose === "lie") return;
   const facing = anim.facing || 1;
   const seed = behavior.seed || 0;
   const beat = Math.sin(now * 0.014 + seed);
+  const alt = Math.cos(now * 0.014 + seed);
+  const limbColor = hexWithAlpha(citizen?.color || "#4ea8de", 0.92);
+  const darkLimb = "rgba(26,26,46,0.88)";
+  const skin = "#ffd4a3";
+
+  const drawCurve = (points, color, width) => {
+    if (points.length < 2) return;
+    ctx.strokeStyle = color;
+    ctx.lineWidth = width;
+    ctx.beginPath();
+    ctx.moveTo(points[0].x, points[0].y);
+    for (let i = 1; i < points.length - 1; i++) {
+      const midX = (points[i].x + points[i + 1].x) / 2;
+      const midY = (points[i].y + points[i + 1].y) / 2;
+      ctx.quadraticCurveTo(points[i].x, points[i].y, midX, midY);
+    }
+    ctx.lineTo(points[points.length - 1].x, points[points.length - 1].y);
+    ctx.stroke();
+  };
+  const drawHand = (px, py, r = size * 0.13) => {
+    ctx.fillStyle = skin;
+    ctx.strokeStyle = darkLimb;
+    ctx.lineWidth = Math.max(1, size * 0.055);
+    ctx.beginPath();
+    ctx.arc(px, py, r, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+  };
+  const drawFoot = (px, py, dir = 1) => {
+    ctx.fillStyle = darkLimb;
+    ctx.beginPath();
+    ctx.ellipse(px, py, size * 0.18, size * 0.08, dir * 0.12, 0, Math.PI * 2);
+    ctx.fill();
+  };
+
   ctx.save();
-  ctx.strokeStyle = "rgba(26,26,46,0.82)";
-  ctx.lineWidth = Math.max(1.4, size * 0.1);
   ctx.lineCap = "round";
+  ctx.lineJoin = "round";
 
-  const shoulderY = y + size * 0.12;
+  const shoulderY = y + size * 0.08;
   const hipY = y + size * 0.86;
-  const armBaseX = x + facing * size * 0.22;
-  const armEndX = x + facing * size * 0.72;
-  const armEndY = y + size * (behavior.pose === "reach" ? 0.02 : behavior.pose === "wash" ? -0.08 : 0.34);
+  const nearShoulder = { x: x + facing * size * 0.18, y: shoulderY };
+  const farShoulder = { x: x - facing * size * 0.18, y: shoulderY + size * 0.03 };
+  const nearHip = { x: x + facing * size * 0.13, y: hipY };
+  const farHip = { x: x - facing * size * 0.13, y: hipY };
+  let nearHand = { x: x + facing * size * 0.62, y: y + size * 0.35 };
+  let farHand = { x: x - facing * size * 0.42, y: y + size * 0.38 };
+  let nearFoot = { x: x + facing * size * 0.34, y: y + size * 1.12 };
+  let farFoot = { x: x - facing * size * 0.28, y: y + size * 1.1 };
 
-  if (["reach", "wash", "rock", "stomp", "dance"].includes(behavior.pose) || ["type", "write", "phone", "eat", "drink"].includes(behavior.id)) {
-    ctx.beginPath();
-    ctx.moveTo(armBaseX, shoulderY);
-    ctx.quadraticCurveTo(
-      x + facing * size * (0.5 + beat * 0.08),
-      y + size * (behavior.pose === "rock" ? 0.22 + beat * 0.18 : 0.18),
-      armEndX,
-      armEndY + beat * size * 0.06
-    );
-    ctx.stroke();
+  if (behavior.pose === "reach" || ["handoff", "comfort", "care", "shop", "gather", "teach"].includes(behavior.id)) {
+    nearHand = { x: x + facing * size * (0.86 + beat * 0.08), y: y + size * (behavior.id === "comfort" ? -0.02 : 0.13 + beat * 0.04) };
+    farHand = { x: x - facing * size * 0.24, y: y + size * 0.3 };
+  } else if (behavior.pose === "wash") {
+    nearHand = { x: x + facing * size * (0.32 + beat * 0.08), y: y - size * 0.16 + alt * size * 0.04 };
+    farHand = { x: x - facing * size * (0.18 + beat * 0.06), y: y - size * 0.1 - alt * size * 0.04 };
+  } else if (behavior.pose === "rock" || ["repair", "cook", "clean", "garden", "work"].includes(behavior.id)) {
+    nearHand = { x: x + facing * size * (0.72 + beat * 0.18), y: y + size * (0.28 + alt * 0.18) };
+    farHand = { x: x + facing * size * (0.42 - beat * 0.12), y: y + size * (0.48 - alt * 0.12) };
+  } else if (behavior.pose === "dance" || behavior.id === "stretch") {
+    nearHand = { x: x + facing * size * (0.62 + beat * 0.16), y: y - size * (0.54 + alt * 0.08) };
+    farHand = { x: x - facing * size * (0.58 - beat * 0.12), y: y - size * (0.4 - alt * 0.1) };
+    nearFoot = { x: x + facing * size * (0.48 + beat * 0.1), y: y + size * (1.1 - Math.abs(alt) * 0.12) };
+    farFoot = { x: x - facing * size * (0.44 - beat * 0.08), y: y + size * (1.12 - Math.abs(beat) * 0.1) };
+  } else if (behavior.pose === "stomp") {
+    nearHand = { x: x + facing * size * 0.5, y: y + size * 0.42 };
+    farHand = { x: x - facing * size * 0.38, y: y + size * 0.34 };
+    nearFoot = { x: x + facing * size * 0.42, y: y + size * (1.08 + Math.abs(beat) * 0.08) };
+  } else if (behavior.pose === "sob" || behavior.id === "cry") {
+    nearHand = { x: x + facing * size * 0.28, y: y - size * 0.1 };
+    farHand = { x: x - facing * size * 0.2, y: y + size * 0.15 };
+  } else if (behavior.pose === "lean" || behavior.id === "think") {
+    nearHand = { x: x + facing * size * 0.28, y: y - size * 0.14 };
+    farHand = { x: x - facing * size * 0.28, y: y + size * 0.44 };
+  } else if (behavior.pose === "move" || behavior.id === "run") {
+    nearHand = { x: x + facing * size * (0.42 + beat * 0.16), y: y + size * (0.22 - alt * 0.18) };
+    farHand = { x: x - facing * size * (0.42 - beat * 0.16), y: y + size * (0.28 + alt * 0.18) };
+    nearFoot = { x: x + facing * size * (0.42 - beat * 0.24), y: y + size * 1.12 };
+    farFoot = { x: x - facing * size * (0.38 + beat * 0.22), y: y + size * 1.1 };
+  } else if (["type", "write", "phone", "eat", "drink", "read"].includes(behavior.id)) {
+    nearHand = { x: x + facing * size * (0.54 + beat * 0.03), y: y + size * 0.42 };
+    farHand = { x: x - facing * size * 0.3, y: y + size * 0.44 };
   }
 
-  if (behavior.pose === "dance" || behavior.pose === "stomp" || behavior.pose === "bounce") {
-    ctx.beginPath();
-    ctx.moveTo(x - facing * size * 0.16, hipY);
-    ctx.lineTo(x - facing * size * (0.52 + beat * 0.08), y + size * 1.14);
-    ctx.moveTo(x + facing * size * 0.16, hipY);
-    ctx.lineTo(x + facing * size * (0.46 - beat * 0.08), y + size * 1.12);
-    ctx.stroke();
+  const armWidth = Math.max(2.4, size * 0.16);
+  const legWidth = Math.max(2.6, size * 0.18);
+  drawCurve([farShoulder, { x: (farShoulder.x + farHand.x) / 2, y: (farShoulder.y + farHand.y) / 2 + size * 0.08 }, farHand], darkLimb, armWidth + 1.4);
+  drawCurve([nearShoulder, { x: (nearShoulder.x + nearHand.x) / 2, y: (nearShoulder.y + nearHand.y) / 2 + size * 0.06 }, nearHand], darkLimb, armWidth + 1.4);
+  drawCurve([farShoulder, { x: (farShoulder.x + farHand.x) / 2, y: (farShoulder.y + farHand.y) / 2 + size * 0.08 }, farHand], limbColor, armWidth);
+  drawCurve([nearShoulder, { x: (nearShoulder.x + nearHand.x) / 2, y: (nearShoulder.y + nearHand.y) / 2 + size * 0.06 }, nearHand], limbColor, armWidth);
+
+  if (!["sit", "wash", "lean", "sob"].includes(behavior.pose)) {
+    drawCurve([farHip, { x: (farHip.x + farFoot.x) / 2, y: y + size * 1.02 }, farFoot], darkLimb, legWidth + 1.2);
+    drawCurve([nearHip, { x: (nearHip.x + nearFoot.x) / 2, y: y + size * 1.0 }, nearFoot], darkLimb, legWidth + 1.2);
+    drawCurve([farHip, { x: (farHip.x + farFoot.x) / 2, y: y + size * 1.02 }, farFoot], limbColor, legWidth);
+    drawCurve([nearHip, { x: (nearHip.x + nearFoot.x) / 2, y: y + size * 1.0 }, nearFoot], limbColor, legWidth);
+    drawFoot(farFoot.x, farFoot.y, -facing);
+    drawFoot(nearFoot.x, nearFoot.y, facing);
+  } else if (behavior.pose === "sit") {
+    drawCurve([farHip, { x: x - facing * size * 0.38, y: y + size * 0.98 }, { x: x - facing * size * 0.52, y: y + size * 1.04 }], limbColor, legWidth);
+    drawCurve([nearHip, { x: x + facing * size * 0.36, y: y + size * 0.98 }, { x: x + facing * size * 0.56, y: y + size * 1.04 }], limbColor, legWidth);
   }
 
-  if (behavior.pose === "sob" || behavior.pose === "lean") {
-    ctx.globalAlpha = 0.55;
-    ctx.beginPath();
-    ctx.moveTo(x - facing * size * 0.16, y - size * 0.08);
-    ctx.lineTo(x + facing * size * 0.34, y + size * 0.18);
-    ctx.stroke();
-  }
+  drawHand(farHand.x, farHand.y);
+  drawHand(nearHand.x, nearHand.y);
 
   ctx.restore();
 }
@@ -6095,7 +6331,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
 
   // Modular body overlay (arms / legs) makes activity readable even when
   // the citizen is rendered from a static sprite sheet frame.
-  if (!lowDetail) drawBehaviorBodyOverlay(ctx, anim, cx, cy, size, now);
+  if (!lowDetail) drawBehaviorBodyOverlay(ctx, citizen, anim, cx, cy, size, now);
 
   // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
   if (!lowDetail) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
@@ -7603,6 +7839,7 @@ function bindGameEvents() {
   if (canvas) {
     canvas.addEventListener("click", (e) => {
       markRenderActive();
+      if ((camera.dragTravel || 0) > 10) return;
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -7631,7 +7868,8 @@ function bindGameEvents() {
       }
       const zone = hitTestZone(mx, my);
       if (zone) {
-        showZoneDetail(zone);
+        if (e.shiftKey || e.altKey) showZoneDetail(zone);
+        else enterInteriorView(zone, "manual");
         return;
       }
       hideDetail();
@@ -7692,6 +7930,9 @@ function bindGameEvents() {
         camera.dragTravel = 0;
         camera.lastX = e.clientX;
         camera.lastY = e.clientY;
+        interiorOrbit.drag = !!interiorView;
+        interiorOrbit.lastX = e.clientX;
+        interiorOrbit.lastY = e.clientY;
         hoveredCitizen = null;
         hoveredZone = null;
         canvas.style.cursor = "grabbing";
@@ -7702,8 +7943,13 @@ function bindGameEvents() {
       markRenderActive();
       const dx = e.clientX - camera.lastX;
       const dy = e.clientY - camera.lastY;
-      camera.x += dx;
-      camera.y += dy;
+      if (interiorView && interiorOrbit.drag) {
+        interiorOrbit.yaw = clamp(interiorOrbit.yaw + dx * 0.006, -0.72, 0.72);
+        interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.44, 0.72);
+      } else {
+        camera.x += dx;
+        camera.y += dy;
+      }
       camera.dragTravel = (camera.dragTravel || 0) + Math.abs(dx) + Math.abs(dy);
       // Manually panning the camera means the player wants free view again.
       if (followedCitizenId && !interiorView && camera.dragTravel > 14) {
@@ -7715,6 +7961,7 @@ function bindGameEvents() {
     window.addEventListener("mouseup", () => {
       if (camera.drag) markRenderActive(1200);
       camera.drag = false;
+      interiorOrbit.drag = false;
       if (canvas) canvas.style.cursor = "grab";
     });
 
@@ -7722,6 +7969,10 @@ function bindGameEvents() {
     canvas.addEventListener("wheel", (e) => {
       e.preventDefault();
       markRenderActive();
+      if (interiorView) {
+        interiorOrbit.pitch = clamp(interiorOrbit.pitch + (e.deltaY > 0 ? -0.025 : 0.025), 0.44, 0.72);
+        return;
+      }
       const delta = e.deltaY > 0 ? -0.08 : 0.08;
       camera.zoom = clamp(camera.zoom + delta, 0.5, 2.5);
     }, { passive: false });
@@ -7737,6 +7988,8 @@ function bindGameEvents() {
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
         camera.drag = true;
+        camera.dragTravel = 0;
+        interiorOrbit.drag = !!interiorView;
         camera.lastX = e.touches[0].clientX;
         camera.lastY = e.touches[0].clientY;
       } else if (e.touches.length === 2) {
@@ -7752,8 +8005,16 @@ function bindGameEvents() {
     canvas.addEventListener("touchmove", (e) => {
       markRenderActive();
       if (e.touches.length === 1 && camera.drag) {
-        camera.x += e.touches[0].clientX - camera.lastX;
-        camera.y += e.touches[0].clientY - camera.lastY;
+        const dx = e.touches[0].clientX - camera.lastX;
+        const dy = e.touches[0].clientY - camera.lastY;
+        if (interiorView && interiorOrbit.drag) {
+          interiorOrbit.yaw = clamp(interiorOrbit.yaw + dx * 0.006, -0.72, 0.72);
+          interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.44, 0.72);
+        } else {
+          camera.x += dx;
+          camera.y += dy;
+        }
+        camera.dragTravel = (camera.dragTravel || 0) + Math.abs(dx) + Math.abs(dy);
         camera.lastX = e.touches[0].clientX;
         camera.lastY = e.touches[0].clientY;
       } else if (e.touches.length === 2) {
@@ -7770,7 +8031,7 @@ function bindGameEvents() {
     canvas.addEventListener("touchend", (e) => {
       markRenderActive(1200);
       const elapsed = Date.now() - touchStartTime;
-      if (elapsed < 250 && e.changedTouches.length === 1) {
+      if (elapsed < 250 && e.changedTouches.length === 1 && (camera.dragTravel || 0) < 10) {
         // Short tap = click detection
         const rect = canvas.getBoundingClientRect();
         const mx = e.changedTouches[0].clientX - rect.left;
@@ -7794,11 +8055,12 @@ function bindGameEvents() {
           showCitizenInteraction(citizen);
         } else {
           const zone = hitTestZone(mx, my);
-          if (zone) showZoneDetail(zone);
+          if (zone) enterInteriorView(zone, "manual");
           else hideDetail();
         }
       }
       camera.drag = false;
+      interiorOrbit.drag = false;
     });
   }
 
