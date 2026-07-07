@@ -75,7 +75,7 @@ const MAX_FULL_CITIZENS_DESKTOP = 14;
 const MAX_FULL_CITIZENS_MOBILE = 8;
 const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
-const INTERIOR_PANORAMA_FOV = Math.PI * 0.92;
+const INTERIOR_PANORAMA_FOV = Math.PI * 0.68;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
 
 // ── Citizen behavior / encounter tuning ──
@@ -5272,37 +5272,50 @@ function projectInteriorPanoramaPoint(W, H, angle, distance = 0.66, height = 0) 
   const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
   const delta = interiorAngleDelta(angle, yaw);
   const halfFov = INTERIOR_PANORAMA_FOV / 2;
-  const visible = Math.abs(delta) <= halfFov * 1.12;
-  const dist = clamp(distance, 0.28, 1.18);
-  const side = delta / halfFov;
+  const visible = Math.abs(delta) <= halfFov * 1.08;
+  const radius = clamp(distance, 0.34, 0.98);
+  const side = Math.sin(delta) / Math.sin(halfFov);
+  const forward = radius * Math.cos(delta);
   const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
-  const floorDepth = clamp((dist - 0.28) / 0.9, 0, 1);
-  const x = W / 2 + side * W * 0.46;
-  const y = horizon + H * (0.24 + floorDepth * 0.34) - height;
-  const sideFalloff = 1 - Math.min(0.28, Math.abs(side) * 0.14);
-  const scale = clamp((1.18 - floorDepth * 0.42) * sideFalloff, 0.62, 1.16);
+  const floorDepth = clamp(1 - (forward + 0.04) / 1.04, 0, 1);
+  const sideFalloff = 1 - Math.min(0.3, Math.abs(side) * 0.16);
+  const x = W / 2 + side * W * (0.38 + floorDepth * 0.12);
+  const y = horizon + H * (0.12 + floorDepth * 0.5) - height;
+  const scale = clamp((0.7 + floorDepth * 0.52) * sideFalloff, 0.48, 1.22);
   return {
     x,
     y,
-    depth: 0.9 - floorDepth - Math.abs(side) * 0.08,
+    depth: floorDepth + Math.abs(side) * 0.04,
     scale,
     visible,
     angle,
-    distance: dist,
+    distance: radius,
     delta
   };
 }
 
 function getInteriorPanoramaAngle(unit, index = 0, count = 1) {
   const base = Number.isFinite(unit) ? unit : (index + 0.5) / Math.max(1, count);
-  return wrapInteriorAngle((base - 0.5) * INTERIOR_PANORAMA_TAU + index * 0.11);
+  return wrapInteriorAngle((base - 0.5) * INTERIOR_PANORAMA_TAU);
+}
+
+function getInteriorPropRadius(prop) {
+  const y = clamp(Number(prop?.y ?? 0.5), 0, 1);
+  return clamp(0.98 - y * 0.5, 0.42, 0.96);
+}
+
+function getInteriorDecorRadius(item) {
+  const y = clamp(Number(item?.y ?? 0.5), 0, 1);
+  if (item?.layer === "back") return clamp(0.96 - y * 0.08, 0.86, 0.98);
+  if (item?.layer === "front") return clamp(0.62 - y * 0.18, 0.38, 0.58);
+  return clamp(0.82 - y * 0.22, 0.56, 0.78);
 }
 
 function getInteriorPanoramaAnchors(blueprint, W, H) {
   const props = blueprint.props || [];
   return props.map((prop, index) => {
     const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
-    const distance = 0.42 + clamp(Number(prop.y || 0.5), 0, 1) * 0.58;
+    const distance = getInteriorPropRadius(prop);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return {
       ...point,
@@ -5343,9 +5356,11 @@ function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
     ctx.stroke();
   }
   for (let i = -9; i <= 9; i++) {
-    const angle = wrapInteriorAngle(Number(interiorOrbit?.yaw || 0) + i * 0.22);
+    const angle = wrapInteriorAngle(i * (Math.PI / 12));
     const delta = interiorAngleDelta(angle, Number(interiorOrbit?.yaw || 0));
-    const x = W / 2 + (delta / (INTERIOR_PANORAMA_FOV / 2)) * W * 0.46;
+    if (Math.abs(delta) > INTERIOR_PANORAMA_FOV / 2 * 1.1) continue;
+    const side = Math.sin(delta) / Math.sin(INTERIOR_PANORAMA_FOV / 2);
+    const x = W / 2 + side * W * 0.42;
     ctx.beginPath();
     ctx.moveTo(x, horizon + 8);
     ctx.lineTo(W / 2 + (x - W / 2) * 1.9, H);
@@ -5357,7 +5372,7 @@ function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
   const panelCount = 14;
   for (let i = 0; i < panelCount; i++) {
     const angle = getInteriorPanoramaAngle((i + 0.5) / panelCount, i, panelCount);
-    const point = projectInteriorPanoramaPoint(W, H, angle, 0.32, H * 0.2);
+    const point = projectInteriorPanoramaPoint(W, H, angle, 0.96, H * 0.2);
     if (!point.visible) continue;
     const w = W * 0.1 * point.scale;
     const h = H * 0.18 * point.scale;
@@ -5419,7 +5434,7 @@ function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
   ctx.stroke();
   ctx.restore();
 
-  const rug = projectInteriorPanoramaPoint(W, H, Number(interiorOrbit?.yaw || 0), 0.72);
+  const rug = projectInteriorPanoramaPoint(W, H, Number(interiorOrbit?.yaw || 0), 0.42);
   ctx.save();
   ctx.fillStyle = hexWithAlpha(style.accent, isNight ? 0.16 : 0.22);
   ctx.strokeStyle = hexWithAlpha(style.trim, 0.42);
@@ -5428,6 +5443,22 @@ function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
   ctx.ellipse(rug.x, rug.y + 28, W * 0.22, H * 0.045, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  const yaw = Number(interiorOrbit?.yaw || 0);
+  const chip = `环视 · ${Math.round(((wrapInteriorAngle(yaw) + Math.PI) / INTERIOR_PANORAMA_TAU) * 360)}°`;
+  ctx.fillStyle = isNight ? "rgba(18,18,34,0.78)" : "rgba(250,250,245,0.88)";
+  ctx.strokeStyle = hexWithAlpha(style.trim, 0.58);
+  ctx.lineWidth = 2;
+  roundRect(ctx, W / 2 - 64, horizon + 14, 128, 28, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = isNight ? "#f8f2e5" : "#1a1a2e";
+  ctx.font = `700 12px "Noto Sans SC", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(chip, W / 2, horizon + 28);
   ctx.restore();
 }
 
@@ -6535,7 +6566,7 @@ function drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, style, isNight, 
   const plan = getInteriorDecorPlan(blueprint).filter(item => item.layer === layer);
   plan.forEach((item, index) => {
     const angle = getInteriorPanoramaAngle(item.x, index, plan.length);
-    const distance = 0.36 + clamp(Number(item.y || 0.5), 0, 1) * 0.62;
+    const distance = getInteriorDecorRadius(item);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance, layer === "back" ? H * 0.03 : 0);
     if (!point.visible) return;
     if (useThreeModels) return;
@@ -6547,7 +6578,7 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
   const props = blueprint.props || [];
   const points = props.map((prop, index) => {
     const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
-    const distance = 0.42 + clamp(Number(prop.y || 0.5), 0, 1) * 0.58;
+    const distance = getInteriorPropRadius(prop);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return { prop, point, index };
   }).filter(item => item.point.visible)
@@ -6578,6 +6609,12 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
       );
     }
 
+    const showLabel = W > 520 || (point.x > W * 0.2 && point.x < W * 0.8 && Math.abs(point.delta) < INTERIOR_PANORAMA_FOV * 0.28);
+    if (!showLabel) {
+      ctx.restore();
+      return;
+    }
+
     ctx.fillStyle = isNight ? "rgba(18,18,34,0.66)" : "rgba(250,250,245,0.88)";
     ctx.strokeStyle = "rgba(26,26,46,0.72)";
     ctx.lineWidth = 1.5;
@@ -6595,7 +6632,7 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
 function getInteriorThreeItems(blueprint, W, H) {
   const propItems = (blueprint.props || []).map((prop, index, props) => {
     const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
-    const distance = 0.42 + clamp(Number(prop.y || 0.5), 0, 1) * 0.58;
+    const distance = getInteriorPropRadius(prop);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     const seed = hashCommunitySeed(prop.label || "prop", index);
     const wobble = (seededCommunityValue(seed, 1) - 0.5) * 3;
@@ -6616,7 +6653,7 @@ function getInteriorThreeItems(blueprint, W, H) {
   const decorPlan = getInteriorDecorPlan(blueprint);
   const decorItems = decorPlan.map((item, index, items) => {
     const angle = getInteriorPanoramaAngle(item.x, index, items.length);
-    const distance = 0.36 + clamp(Number(item.y || 0.5), 0, 1) * 0.62;
+    const distance = getInteriorDecorRadius(item);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance, item.layer === "back" ? H * 0.03 : 0);
     return {
       model: interiorDecorModel(item.type),
