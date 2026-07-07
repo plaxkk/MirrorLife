@@ -9,6 +9,7 @@
     "check:copy": "node scripts/review-copy.mjs",
     "test": "npm run check",
     "test:evolution": "node scripts/verify-evolution.mjs",
+    "generate:interior-glb": "node scripts/generate-interior-glbs.mjs",
     "memory-proxy": "node server/memory-proxy.mjs",
     "build": "vite build",
     "preview": "vite preview"
@@ -26,6 +27,7 @@
     "vite": "^8.0.13"
   },
   "dependencies": {
-    "@vercel/analytics": "^2.0.1"
+    "@vercel/analytics": "^2.0.1",
+    "three": "^0.185.1"
   }
 }

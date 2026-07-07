@@ -5511,6 +5511,57 @@ function interiorPropModel(prop, blueprint) {
   return "table";
 }
 
+function interiorDecorModel(type) {
+  const aliases = {
+    "floor-lamp": "altar",
+    "reading-lamp": "altar",
+    "iv-stand": "counter",
+    "privacy-screen": "shelf",
+    "medicine-cart": "shelf",
+    "tool-cart": "workbench",
+    "paint-cart": "easel",
+    "book-pile": "desk",
+    "file-stack": "shelf",
+    "notice-cards": "wall-board",
+    "menu-board": "wall-board",
+    "quiet-bench": "bench",
+    "fountain-mini": "fountain",
+    "coffee-table": "table",
+    "coffee-mug": "table",
+    "gallery-frames": "wall-board",
+    "picture-frames": "wall-board",
+    "plant-rack": "plant-zone",
+    "watering-can": "plant-zone",
+    "garden-stones": "plant-zone",
+    "memorial-frame": "altar",
+    "plant": "plant-zone",
+    "flowerbox": "plant-zone",
+    "greenhouse": "plant-zone",
+    "basket": "market-stall",
+    "fruit-crates": "market-stall",
+    "hanging-lights": "market-stall",
+    "stroller": "toy-corner",
+    "teddy": "toy-corner",
+    "floor-cushions": "seating",
+    "lantern": "altar",
+    "candles": "altar",
+    "machine": "workbench",
+    "cable-rug": "workbench",
+    "backpack": "desk"
+  };
+  return aliases[type] || type || "table";
+}
+
+function interiorThreeModel(type) {
+  const aliases = {
+    reading: "desk",
+    podium: "counter",
+    stage: "market-stall",
+    music: "table"
+  };
+  return aliases[type] || type || "table";
+}
+
 function drawInteriorShadow(ctx, x, y, w, alpha = 0.14) {
   ctx.fillStyle = `rgba(26,26,46,${alpha})`;
   ctx.beginPath();
@@ -6480,18 +6531,19 @@ function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight)
   });
 }
 
-function drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, style, isNight, layer, W, H) {
+function drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, style, isNight, layer, W, H, useThreeModels = false) {
   const plan = getInteriorDecorPlan(blueprint).filter(item => item.layer === layer);
   plan.forEach((item, index) => {
     const angle = getInteriorPanoramaAngle(item.x, index, plan.length);
     const distance = 0.36 + clamp(Number(item.y || 0.5), 0, 1) * 0.62;
     const point = projectInteriorPanoramaPoint(W, H, angle, distance, layer === "back" ? H * 0.03 : 0);
     if (!point.visible) return;
+    if (useThreeModels) return;
     drawInteriorDecorItem(ctx, { ...item, _point: point, s: (item.s || 1) * point.scale }, layout, style, isNight);
   });
 }
 
-function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, isNight, W, H) {
+function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, isNight, W, H, useThreeModels = false) {
   const props = blueprint.props || [];
   const points = props.map((prop, index) => {
     const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
@@ -6513,16 +6565,18 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
     ctx.ellipse(point.x, point.y + 8 * point.scale, (prop.size || 28) * 0.66 * point.scale, 6 * point.scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    drawInteriorPropModel(
-      ctx,
-      { ...prop, size: (prop.size || 30) * point.scale },
-      { ...point, x: point.x + wobble },
-      layout,
-      { accent: zoneColor, trim: darken(zoneColor, 30) },
-      isNight,
-      index,
-      blueprint
-    );
+    if (!useThreeModels) {
+      drawInteriorPropModel(
+        ctx,
+        { ...prop, size: (prop.size || 30) * point.scale },
+        { ...point, x: point.x + wobble },
+        layout,
+        { accent: zoneColor, trim: darken(zoneColor, 30) },
+        isNight,
+        index,
+        blueprint
+      );
+    }
 
     ctx.fillStyle = isNight ? "rgba(18,18,34,0.66)" : "rgba(250,250,245,0.88)";
     ctx.strokeStyle = "rgba(26,26,46,0.72)";
@@ -6535,6 +6589,68 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
     ctx.fillStyle = isNight ? "rgba(250,250,245,0.88)" : "rgba(26,26,46,0.82)";
     ctx.fillText(prop.label || "", point.x, point.y + 46 * point.scale);
     ctx.restore();
+  });
+}
+
+function getInteriorThreeItems(blueprint, W, H) {
+  const propItems = (blueprint.props || []).map((prop, index, props) => {
+    const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
+    const distance = 0.42 + clamp(Number(prop.y || 0.5), 0, 1) * 0.58;
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance);
+    const seed = hashCommunitySeed(prop.label || "prop", index);
+    const wobble = (seededCommunityValue(seed, 1) - 0.5) * 3;
+    return {
+      model: interiorThreeModel(interiorPropModel(prop, blueprint)),
+      label: prop.label || "",
+      kind: "prop",
+      x: point.x + wobble,
+      y: point.y,
+      scale: point.scale,
+      depth: point.depth,
+      angle,
+      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25),
+      visible: point.visible
+    };
+  });
+
+  const decorPlan = getInteriorDecorPlan(blueprint);
+  const decorItems = decorPlan.map((item, index, items) => {
+    const angle = getInteriorPanoramaAngle(item.x, index, items.length);
+    const distance = 0.36 + clamp(Number(item.y || 0.5), 0, 1) * 0.62;
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance, item.layer === "back" ? H * 0.03 : 0);
+    return {
+      model: interiorDecorModel(item.type),
+      label: item.type,
+      kind: "decor",
+      x: point.x,
+      y: point.y,
+      scale: point.scale,
+      depth: point.depth - 0.04,
+      angle,
+      modelScale: clamp(item.s || 1, 0.68, 1.22) * 0.82,
+      visible: point.visible
+    };
+  });
+
+  return [...decorItems, ...propItems].filter(item => item.visible);
+}
+
+function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
+  const api = window.MirrorLifeInterior3D;
+  if (!api?.update) return false;
+  const items = getInteriorThreeItems(blueprint, W, H);
+  return api.update({
+    visible: true,
+    width: W,
+    height: H,
+    yaw: Number(interiorOrbit?.yaw || 0),
+    pitch: Number(interiorOrbit?.pitch || 0.58),
+    theme: {
+      accent: roomStyle.accent,
+      trim: roomStyle.trim,
+      night: !!isNight
+    },
+    items
   });
 }
 
@@ -7052,12 +7168,13 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
   const panoramaAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
   const interiorAnchors = panoramaAnchors.filter(anchor => anchor.visible);
+  const useThreeModels = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight);
 
   drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
-  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H);
-  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H);
-  drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H);
-  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H);
+  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H, useThreeModels);
+  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H, useThreeModels);
+  drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, useThreeModels);
+  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, useThreeModels);
 
   const exitW = Math.min(150, Math.max(110, W * 0.14));
   const exitH = 34;
@@ -7114,12 +7231,14 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     if (!ia) {
       const spawnInside = !!canonicalAnim.indoor.spawnInside;
       const seed = hashCommunitySeed(citizen.id, "interior-spawn");
+      const entryX = interiorExitRect ? interiorExitRect.x + interiorExitRect.w / 2 : W * 0.86;
+      const entryY = interiorExitRect ? interiorExitRect.y - 12 : layout.floorBottom - 32;
       const sx = spawnInside
         ? layout.left + 40 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 80)
-        : door.x + door.w / 2;
+        : entryX;
       const sy = spawnInside
         ? layout.floorTop + 50 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 80)
-        : layout.floorTop + 20;
+        : entryY;
       ia = interiorAnimations[citizen.id] = {
         x: sx, y: sy, targetX: sx, targetY: sy, nextTargetAt: 0, walkPhase: 0, facing: 1
       };
@@ -8186,6 +8305,7 @@ function drawGameWorld() {
     ensureGameRenderLoop();
     return;
   }
+  window.MirrorLifeInterior3D?.hide?.();
 
   const zoneOccupancy = new Map();
   const citizenIndex = new Map();
