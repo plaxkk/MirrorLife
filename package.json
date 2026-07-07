@@ -10,6 +10,7 @@
     "test": "npm run check",
     "test:evolution": "node scripts/verify-evolution.mjs",
     "generate:interior-glb": "node scripts/generate-interior-glbs.mjs",
+    "generate:interior-props-image2": "node scripts/generate-interior-props-image2.mjs",
     "memory-proxy": "node server/memory-proxy.mjs",
     "build": "vite build",
     "preview": "vite preview"
