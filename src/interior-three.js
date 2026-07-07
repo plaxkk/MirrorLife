@@ -133,7 +133,7 @@ function clearRoot() {
 
 function addShadow(item) {
   const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
-  const base = item.kind === "prop" ? 54 : 42;
+  const base = item.kind === "prop" ? 72 : 54;
   const s = Math.max(24, base * (item.scale || 1) * (item.modelScale || 1));
   shadow.position.set(item.x, item.y + 16 * (item.scale || 1), -12 + (item.depth || 0) * 10);
   shadow.scale.set(s * 1.22, s * 0.34, 1);
@@ -145,9 +145,9 @@ function addItem(item, payload) {
   if (!model) return;
   addShadow(item);
 
-  const base = item.kind === "prop" ? 54 : 42;
+  const base = item.kind === "prop" ? 72 : 54;
   const scale = base * (item.scale || 1) * (item.modelScale || 1);
-  model.position.set(item.x, item.y - scale * 0.22, (item.depth || 0) * 80);
+  model.position.set(item.x, item.y - scale * 0.24, (item.depth || 0) * 80);
   model.scale.setScalar(scale);
   model.rotation.y += (payload.yaw || 0) * 0.1 + (item.angle || 0) * 0.035;
   model.rotation.x += (0.58 - (payload.pitch || 0.58)) * 0.26;
