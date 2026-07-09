@@ -77,6 +77,19 @@ dist/interior-3d-work/tripo/generated-glb/counter.glb
 dist/interior-3d-work/tripo/generated-glb/shelf.glb
 ```
 
+If the web app downloads a generic filename such as `model.glb`, place it safely with:
+
+```bash
+npm run place:interior-3d -- --slot bed --file ~/Downloads/model.glb
+npm run place:interior-3d -- --slot counter --file ~/Downloads/model.glb
+```
+
+Add `--import-now` to immediately copy all currently generated Tripo models into the runtime folder:
+
+```bash
+npm run place:interior-3d -- --slot bed --file ~/Downloads/model.glb --import-now
+```
+
 Import the generated models:
 
 ```bash
