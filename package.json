@@ -38,6 +38,7 @@
   },
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
+    "pngjs": "^7.0.0",
     "three": "^0.185.1"
   }
 }

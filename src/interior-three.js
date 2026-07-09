@@ -111,8 +111,9 @@ function loadModel(type) {
         resolve(gltf.scene);
       },
       undefined,
-      () => {
+      (error) => {
         loading.delete(type);
+        console.warn(`MirrorLife interior model failed: ${type}.glb`, error);
         resolve(null);
       }
     );

@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 import { spawnSync } from "node:child_process";
 import os from "node:os";
+import { PNG } from "pngjs";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
 
@@ -87,6 +88,12 @@ function align4(buffer) {
   return Buffer.concat([buffer, Buffer.alloc(pad)]);
 }
 
+function alignJsonChunk(buffer) {
+  const pad = (4 - (buffer.length % 4)) % 4;
+  if (!pad) return buffer;
+  return Buffer.concat([buffer, Buffer.alloc(pad, 0x20)]);
+}
+
 function pngSize(buffer) {
   const signature = buffer.slice(0, 8).toString("hex");
   if (signature !== "89504e470d0a1a0a") {
@@ -96,6 +103,63 @@ function pngSize(buffer) {
     width: buffer.readUInt32BE(16),
     height: buffer.readUInt32BE(20)
   };
+}
+
+function isNearWhite(r, g, b, alpha) {
+  if (alpha < 8) return true;
+  const max = Math.max(r, g, b);
+  const min = Math.min(r, g, b);
+  return r > 242 && g > 242 && b > 238 && max - min < 20;
+}
+
+function alphaTrimPng(buffer, padding = 16) {
+  const source = PNG.sync.read(buffer);
+  let minX = source.width;
+  let minY = source.height;
+  let maxX = -1;
+  let maxY = -1;
+
+  for (let y = 0; y < source.height; y += 1) {
+    for (let x = 0; x < source.width; x += 1) {
+      const idx = (source.width * y + x) << 2;
+      const r = source.data[idx];
+      const g = source.data[idx + 1];
+      const b = source.data[idx + 2];
+      const a = source.data[idx + 3];
+      if (isNearWhite(r, g, b, a)) {
+        source.data[idx + 3] = 0;
+        continue;
+      }
+      minX = Math.min(minX, x);
+      minY = Math.min(minY, y);
+      maxX = Math.max(maxX, x);
+      maxY = Math.max(maxY, y);
+    }
+  }
+
+  if (maxX < minX || maxY < minY) return buffer;
+
+  minX = Math.max(0, minX - padding);
+  minY = Math.max(0, minY - padding);
+  maxX = Math.min(source.width - 1, maxX + padding);
+  maxY = Math.min(source.height - 1, maxY + padding);
+
+  const width = maxX - minX + 1;
+  const height = maxY - minY + 1;
+  const output = new PNG({ width, height, colorType: 6 });
+
+  for (let y = 0; y < height; y += 1) {
+    for (let x = 0; x < width; x += 1) {
+      const srcIdx = (source.width * (minY + y) + (minX + x)) << 2;
+      const dstIdx = (width * y + x) << 2;
+      output.data[dstIdx] = source.data[srcIdx];
+      output.data[dstIdx + 1] = source.data[srcIdx + 1];
+      output.data[dstIdx + 2] = source.data[srcIdx + 2];
+      output.data[dstIdx + 3] = source.data[srcIdx + 3];
+    }
+  }
+
+  return PNG.sync.write(output);
 }
 
 function bufferView(json, binaryParts, buffer, target) {
@@ -204,7 +268,7 @@ function makeSpriteCardGlb({ pngBuffer, slot }) {
   const binChunk = Buffer.concat(binaryParts);
   json.buffers[0].byteLength = binChunk.length;
 
-  const jsonChunkData = align4(Buffer.from(JSON.stringify(json), "utf8"));
+  const jsonChunkData = alignJsonChunk(Buffer.from(JSON.stringify(json), "utf8"));
   const totalLength = 12 + 8 + jsonChunkData.length + 8 + binChunk.length;
   const header = Buffer.alloc(12);
   header.write("glTF", 0, 4, "ascii");
@@ -251,7 +315,7 @@ async function main() {
   const generated = [];
   for (const slot of [...config.slots].sort((a, b) => a.priority - b.priority)) {
     const source = await loadSourcePng(config, slot.primaryImage);
-    const pngBuffer = await maybeResizePng(source.imagePath, args.textureSize);
+    const pngBuffer = alphaTrimPng(await maybeResizePng(source.imagePath, args.textureSize));
     const glb = makeSpriteCardGlb({ pngBuffer, slot: slot.slot });
     const outputPath = path.join(outputDir, `${slot.slot}.glb`);
     await fs.writeFile(outputPath, glb);
