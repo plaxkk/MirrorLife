@@ -27,8 +27,8 @@ function parseArgs(argv) {
     }
   }
 
-  if (!["tripo", "hunyuan", "manual"].includes(args.provider)) {
-    throw new Error("--provider must be tripo, hunyuan, or manual.");
+  if (!["tripo", "hunyuan", "manual", "sprite-card"].includes(args.provider)) {
+    throw new Error("--provider must be tripo, hunyuan, manual, or sprite-card.");
   }
 
   return args;
@@ -64,7 +64,8 @@ async function exists(filePath) {
 }
 
 function normalizeRel(filePath) {
-  return filePath.split(path.sep).join("/");
+  const normalized = path.isAbsolute(filePath) ? path.relative(process.cwd(), filePath) : filePath;
+  return normalized.split(path.sep).join("/");
 }
 
 async function findSourceGlb(sourceDir, slot) {

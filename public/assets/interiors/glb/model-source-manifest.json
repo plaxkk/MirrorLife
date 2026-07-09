@@ -1,0 +1,162 @@
+{
+  "updatedAt": "2026-07-09T12:48:30.652Z",
+  "provider": "sprite-card",
+  "sourceDir": "dist/interior-3d-work/sprite-card/generated-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-09T12-48-30-572Z",
+  "imported": [
+    {
+      "slot": "bed",
+      "label": "休息床",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/bed.glb",
+      "target": "public/assets/interiors/glb/bed.glb",
+      "bytes": 351288,
+      "importedAt": "2026-07-09T12:48:30.617Z"
+    },
+    {
+      "slot": "counter",
+      "label": "柜台 / 护理站",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/counter.glb",
+      "target": "public/assets/interiors/glb/counter.glb",
+      "bytes": 99308,
+      "importedAt": "2026-07-09T12:48:30.623Z"
+    },
+    {
+      "slot": "shelf",
+      "label": "货架 / 药品柜 / 书架",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/shelf.glb",
+      "target": "public/assets/interiors/glb/shelf.glb",
+      "bytes": 328352,
+      "importedAt": "2026-07-09T12:48:30.625Z"
+    },
+    {
+      "slot": "seating",
+      "label": "座椅 / 沙发",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/seating.glb",
+      "target": "public/assets/interiors/glb/seating.glb",
+      "bytes": 252016,
+      "importedAt": "2026-07-09T12:48:30.626Z"
+    },
+    {
+      "slot": "wall-board",
+      "label": "公告板 / 黑板 / 作品墙",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/wall-board.glb",
+      "target": "public/assets/interiors/glb/wall-board.glb",
+      "bytes": 321576,
+      "importedAt": "2026-07-09T12:48:30.628Z"
+    },
+    {
+      "slot": "desk",
+      "label": "课桌 / 工位 / 记录桌",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/desk.glb",
+      "target": "public/assets/interiors/glb/desk.glb",
+      "bytes": 182928,
+      "importedAt": "2026-07-09T12:48:30.629Z"
+    },
+    {
+      "slot": "round-table",
+      "label": "圆桌 / 共识桌",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/round-table.glb",
+      "target": "public/assets/interiors/glb/round-table.glb",
+      "bytes": 206072,
+      "importedAt": "2026-07-09T12:48:30.631Z"
+    },
+    {
+      "slot": "table",
+      "label": "小桌 / 通用桌",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/table.glb",
+      "target": "public/assets/interiors/glb/table.glb",
+      "bytes": 229076,
+      "importedAt": "2026-07-09T12:48:30.634Z"
+    },
+    {
+      "slot": "market-stall",
+      "label": "市场摊位",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/market-stall.glb",
+      "target": "public/assets/interiors/glb/market-stall.glb",
+      "bytes": 268636,
+      "importedAt": "2026-07-09T12:48:30.636Z"
+    },
+    {
+      "slot": "plant-zone",
+      "label": "植物照料区",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/plant-zone.glb",
+      "target": "public/assets/interiors/glb/plant-zone.glb",
+      "bytes": 366292,
+      "importedAt": "2026-07-09T12:48:30.638Z"
+    },
+    {
+      "slot": "workbench",
+      "label": "工具台",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/workbench.glb",
+      "target": "public/assets/interiors/glb/workbench.glb",
+      "bytes": 348480,
+      "importedAt": "2026-07-09T12:48:30.640Z"
+    },
+    {
+      "slot": "easel",
+      "label": "画架",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/easel.glb",
+      "target": "public/assets/interiors/glb/easel.glb",
+      "bytes": 176384,
+      "importedAt": "2026-07-09T12:48:30.641Z"
+    },
+    {
+      "slot": "sink",
+      "label": "洗漱台",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/sink.glb",
+      "target": "public/assets/interiors/glb/sink.glb",
+      "bytes": 313284,
+      "importedAt": "2026-07-09T12:48:30.643Z"
+    },
+    {
+      "slot": "altar",
+      "label": "纪念台",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/altar.glb",
+      "target": "public/assets/interiors/glb/altar.glb",
+      "bytes": 247196,
+      "importedAt": "2026-07-09T12:48:30.644Z"
+    },
+    {
+      "slot": "fountain",
+      "label": "喷泉",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/fountain.glb",
+      "target": "public/assets/interiors/glb/fountain.glb",
+      "bytes": 368496,
+      "importedAt": "2026-07-09T12:48:30.646Z"
+    },
+    {
+      "slot": "bench",
+      "label": "长椅",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/bench.glb",
+      "target": "public/assets/interiors/glb/bench.glb",
+      "bytes": 186716,
+      "importedAt": "2026-07-09T12:48:30.648Z"
+    },
+    {
+      "slot": "toy-corner",
+      "label": "安抚角",
+      "provider": "sprite-card",
+      "source": "dist/interior-3d-work/sprite-card/generated-glb/toy-corner.glb",
+      "target": "public/assets/interiors/glb/toy-corner.glb",
+      "bytes": 375424,
+      "importedAt": "2026-07-09T12:48:30.652Z"
+    }
+  ],
+  "missing": []
+}

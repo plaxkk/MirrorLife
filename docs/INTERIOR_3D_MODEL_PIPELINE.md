@@ -197,6 +197,27 @@ npm run import:interior-3d -- --provider hunyuan
 
 Use `--require-all` only when the whole 17-slot set is ready.
 
+## Local No-GPU Fallback
+
+If TripoAI/Hunyuan web generation is not available yet, generate local sprite-card GLB fallbacks:
+
+```bash
+npm run generate:interior-sprite-card-glb -- --import-now
+npm run verify:interior-3d
+```
+
+This creates lightweight `.glb` files from the new PNG prop sprites and imports them into:
+
+```text
+public/assets/interiors/glb/
+```
+
+This is a 2.5D browser-game fallback, not the final AI mesh quality target. It is useful for replacing the old procedural prop style immediately while waiting for TripoAI/Hunyuan GLBs. Later, any downloaded TripoAI or Hunyuan model can overwrite the same slot via:
+
+```bash
+npm run place:interior-3d -- --slot bed --file ~/Downloads/model.glb --import-now
+```
+
 ## Current Source Images
 
 The source images are generated game sprites in:
