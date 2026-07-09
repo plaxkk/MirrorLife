@@ -49,6 +49,20 @@ This creates:
 - `dist/interior-3d-work/tripo/tasks.json`
 - `dist/interior-3d-work/tripo/tripo-upload-queue.md`
 
+For a smaller first pass, package only the next 5 pending high-priority slots:
+
+```bash
+npm run package:interior-3d-web -- --provider tripo --limit 5
+```
+
+This creates:
+
+- `dist/interior-3d-work/tripo/web-upload-batch-05/images/`
+- `dist/interior-3d-work/tripo/web-upload-batch-05/PROMPTS.md`
+- `dist/interior-3d-work/tripo/web-upload-batch-05/manifest.json`
+
+Use this small batch when the browser automation plugin cannot control Chrome or when you want to spend free credits cautiously.
+
 Workflow:
 
 1. Open `dist/interior-3d-work/tripo/tripo-upload-queue.md`.
