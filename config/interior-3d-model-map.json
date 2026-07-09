@@ -1,0 +1,147 @@
+{
+  "version": 1,
+  "goal": "Replace the current procedural interior GLB props with AI-generated 2D-to-3D models made from MirrorLife's isolated interior prop sprites.",
+  "sourceImageRoot": "dist/assets/interior-props-image2",
+  "remoteManifest": "dist/assets/interior-props-image2/remote-manifest.json",
+  "targetGlbRoot": "public/assets/interiors/glb",
+  "workRoot": "dist/interior-3d-work",
+  "stylePrompt": "Convert this isolated MirrorLife prop sprite into a clean game-ready low-poly GLB model. Preserve the warm dopamine cel-shading cartoon style, thick rounded silhouette, toy-like isometric mobile-game feeling, soft humanistic colors, clear readable shape, and transparent-background object identity. Generate only the object, no text, no labels, no extra scene, no people. Keep it lightweight for a browser Three.js game.",
+  "slots": [
+    {
+      "slot": "bed",
+      "label": "休息床",
+      "priority": 1,
+      "primaryImage": "hospital/hospital_bed_monitor_iv.png",
+      "fallbackImages": ["residence/single_bed_nightstand.png", "residence/bedroom_suite_interior.png"],
+      "notes": "Hospital and home interiors both use this for sleeping/care anchors."
+    },
+    {
+      "slot": "counter",
+      "label": "柜台 / 护理站",
+      "priority": 2,
+      "primaryImage": "hospital/reception_counter.png",
+      "fallbackImages": ["hospital/medical_supply_podium.png", "market_cafe/hot_food_counter.png"],
+      "notes": "Used for care desks, proposal desks, podiums and service counters."
+    },
+    {
+      "slot": "shelf",
+      "label": "货架 / 药品柜 / 书架",
+      "priority": 3,
+      "primaryImage": "hospital/medicine_cabinet.png",
+      "fallbackImages": ["school_library/bookcase.png", "market_cafe/pantry_shelf.png"],
+      "notes": "Tall storage silhouette should read well from distance."
+    },
+    {
+      "slot": "seating",
+      "label": "座椅 / 沙发",
+      "priority": 4,
+      "primaryImage": "residence/sofa_coffee_table.png",
+      "fallbackImages": ["school_library/reading_armchair_lamp.png", "market_cafe/cafe_table_corner.png"],
+      "notes": "A soft resting corner for home, care, public and nature spaces."
+    },
+    {
+      "slot": "wall-board",
+      "label": "公告板 / 黑板 / 作品墙",
+      "priority": 5,
+      "primaryImage": "school_library/chalkboard.png",
+      "fallbackImages": ["park_plaza/notice_board.png", "studio_workshop/gallery_frames.png"],
+      "notes": "Keep it upright and readable; avoid thin geometry that disappears."
+    },
+    {
+      "slot": "desk",
+      "label": "课桌 / 工位 / 记录桌",
+      "priority": 6,
+      "primaryImage": "school_library/student_desk.png",
+      "fallbackImages": ["studio_workshop/writing_desk.png", "residence/vanity_dresser.png"],
+      "notes": "Must have a clear tabletop and chair silhouette."
+    },
+    {
+      "slot": "round-table",
+      "label": "圆桌 / 共识桌",
+      "priority": 7,
+      "primaryImage": "residence/round_dining_table.png",
+      "fallbackImages": ["residence/dining_table_set.png", "market_cafe/cafe_table_corner.png"],
+      "notes": "Used for meetings and social interactions."
+    },
+    {
+      "slot": "table",
+      "label": "小桌 / 通用桌",
+      "priority": 8,
+      "primaryImage": "residence/dining_table_set.png",
+      "fallbackImages": ["market_cafe/cafe_table_corner.png", "memorial_cemetery/low_memorial_table.png"],
+      "notes": "Generic fallback model for props without a specialized slot."
+    },
+    {
+      "slot": "market-stall",
+      "label": "市场摊位",
+      "priority": 9,
+      "primaryImage": "market_cafe/produce_stall.png",
+      "fallbackImages": ["market_cafe/market_hall_interior.png", "market_cafe/fruit_baskets.png"],
+      "notes": "Should feel like a lively miniature stall, but remain a single object."
+    },
+    {
+      "slot": "plant-zone",
+      "label": "植物照料区",
+      "priority": 10,
+      "primaryImage": "greenhouse_garden/plant_shelf.png",
+      "fallbackImages": ["greenhouse_garden/glass_greenhouse.png", "greenhouse_garden/flower_bed_watering_can.png"],
+      "notes": "Used heavily in nature, recovery and buffer corners."
+    },
+    {
+      "slot": "workbench",
+      "label": "工具台",
+      "priority": 11,
+      "primaryImage": "studio_workshop/maker_workbench.png",
+      "fallbackImages": ["studio_workshop/tool_chest.png", "studio_workshop/drill_press.png"],
+      "notes": "Make the tool surface and craft identity obvious."
+    },
+    {
+      "slot": "easel",
+      "label": "画架",
+      "priority": 12,
+      "primaryImage": "studio_workshop/painting_easel.png",
+      "fallbackImages": ["studio_workshop/art_supply_cart.png", "studio_workshop/gallery_frames.png"],
+      "notes": "Creative identity marker; keep easel legs stable and simple."
+    },
+    {
+      "slot": "sink",
+      "label": "洗漱台",
+      "priority": 13,
+      "primaryImage": "residence/sink_vanity.png",
+      "fallbackImages": ["residence/vanity_dresser.png"],
+      "notes": "Used for wash/clean actions."
+    },
+    {
+      "slot": "altar",
+      "label": "纪念台",
+      "priority": 14,
+      "primaryImage": "memorial_cemetery/long_memorial_altar.png",
+      "fallbackImages": ["memorial_cemetery/low_memorial_table.png", "memorial_cemetery/tombstone_memorial.png"],
+      "notes": "Needs a calm memorial feeling without becoming too realistic or somber."
+    },
+    {
+      "slot": "fountain",
+      "label": "喷泉",
+      "priority": 15,
+      "primaryImage": "park_plaza/flower_fountain.png",
+      "fallbackImages": ["memorial_cemetery/small_fountain.png"],
+      "notes": "Useful as a visual anchor in public and memory spaces."
+    },
+    {
+      "slot": "bench",
+      "label": "长椅",
+      "priority": 16,
+      "primaryImage": "park_plaza/wooden_bench.png",
+      "fallbackImages": ["memorial_cemetery/memorial_bench.png"],
+      "notes": "Simple low-cost model; a good candidate for Hunyuan fallback."
+    },
+    {
+      "slot": "toy-corner",
+      "label": "安抚角",
+      "priority": 17,
+      "primaryImage": "kindergarten/teddy_play_rug.png",
+      "fallbackImages": ["kindergarten/playroom_interior.png", "kindergarten/baby_stroller.png"],
+      "notes": "A cozy toy corner, not a character."
+    }
+  ]
+}
