@@ -7,12 +7,14 @@ function parseArgs(argv) {
   const args = {
     config: CONFIG_PATH,
     requireSourceManifest: false,
+    releaseQuality: false,
   };
 
   for (let i = 0; i < argv.length; i += 1) {
     const arg = argv[i];
     if (arg === "--config") args.config = argv[++i];
     else if (arg === "--require-source-manifest") args.requireSourceManifest = true;
+    else if (arg === "--release-quality") args.releaseQuality = true;
     else if (arg === "--help" || arg === "-h") {
       printHelp();
       process.exit(0);
@@ -33,6 +35,7 @@ Usage:
 Options:
   --config <path>               Model slot mapping. Default: ${CONFIG_PATH}
   --require-source-manifest     Require model-source-manifest.json to exist.
+  --release-quality             Reject placeholder providers and enforce the Web GLB budget.
   -h, --help                    Show help.
 `);
 }
@@ -93,6 +96,50 @@ async function main() {
   const sourceManifestPath = path.resolve(config.targetGlbRoot, "model-source-manifest.json");
   if (args.requireSourceManifest && !await exists(sourceManifestPath)) {
     failures.push(`missing model source manifest: ${sourceManifestPath}`);
+  }
+
+  if (args.releaseQuality) {
+    if (!await exists(sourceManifestPath)) {
+      failures.push(`release validation requires model source manifest: ${sourceManifestPath}`);
+    } else {
+      const sourceManifest = await readJson(sourceManifestPath);
+      const imported = new Map((sourceManifest.imported || []).map((item) => [item.slot, item]));
+      const policy = config.qualityPolicy || {};
+      const releaseProviders = new Set(policy.releaseProviders || []);
+      const placeholderProviders = new Set(policy.placeholderProviders || ["procedural-threejs", "sprite-card"]);
+      const fileBudget = Number(policy.webFileBudgetBytes || 8 * 1024 * 1024);
+      const requiredViews = policy.requiredReferenceViews || ["front", "back", "left", "right"];
+      const minimumReferenceViews = Number(policy.minimumReferenceViews || requiredViews.length);
+
+      for (const slot of config.slots) {
+        const source = imported.get(slot.slot);
+        if (!source) {
+          failures.push(`${slot.slot}: missing provenance entry in model-source-manifest.json`);
+          continue;
+        }
+        if (placeholderProviders.has(source.provider)) {
+          failures.push(`${slot.slot}: ${source.provider} is a development placeholder, not a release-quality reconstruction`);
+        } else if (releaseProviders.size && !releaseProviders.has(source.provider)) {
+          failures.push(`${slot.slot}: provider ${source.provider} is not approved by qualityPolicy.releaseProviders`);
+        }
+        if (source.qualityTier !== "release-candidate") {
+          failures.push(`${slot.slot}: qualityTier must be release-candidate, got ${source.qualityTier || "missing"}`);
+        }
+        const views = new Set(source.referenceViews || []);
+        if (views.size < minimumReferenceViews) {
+          failures.push(`${slot.slot}: ${views.size} reference views recorded; at least ${minimumReferenceViews} are required`);
+        }
+        const missingViews = requiredViews.filter((view) => !views.has(view));
+        if (missingViews.length) {
+          failures.push(`${slot.slot}: missing required reference views: ${missingViews.join(", ")}`);
+        }
+
+        const result = results.find((item) => item.slot === slot.slot);
+        if (result && result.bytes > fileBudget) {
+          failures.push(`${slot.slot}: ${(result.bytes / 1024 / 1024).toFixed(2)} MB exceeds the ${(fileBudget / 1024 / 1024).toFixed(2)} MB Web GLB budget`);
+        }
+      }
+    }
   }
 
   if (failures.length) {

@@ -120,6 +120,14 @@ body.interior-active .first-loop-panel.quest-stage {
   display: none;
 }
 
+body.interior-active .game-menu,
+body.interior-active .event-log,
+body.interior-active .hud-bottom,
+body.interior-active .scenario-bar,
+body.interior-active .detail-panel {
+  display: none !important;
+}
+
 @media (max-width: 720px) {
   body:not(.splash-active) .first-loop-panel.quest-stage {
     left: 10px;
@@ -4145,4 +4153,151 @@ body.detail-open .event-log:focus-within {
 #interiorChip:hover {
   background: #fff;
   transform: translateY(-1px);
+}
+
+#interiorHotspotLayer {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  pointer-events: none;
+}
+
+.interior-hotspot {
+  --hotspot-scale: 1;
+  position: absolute;
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  transform: translate(-50%, -50%) scale(var(--hotspot-scale));
+  border: 2px solid #1a1a2e;
+  border-radius: 50%;
+  background: #f1c40f;
+  color: #1a1a2e;
+  box-shadow: 3px 3px 0 #1a1a2e;
+  pointer-events: auto;
+  transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  animation: interior-hotspot-pulse 1.8s ease-in-out infinite;
+}
+
+.interior-hotspot:hover,
+.interior-hotspot:focus-visible {
+  z-index: 2;
+  transform: translate(-50%, -52%) scale(calc(var(--hotspot-scale) * 1.08));
+  background: #ffdd57;
+  outline: 3px solid rgba(255, 255, 255, 0.92);
+}
+
+.interior-hotspot:active {
+  transform: translate(calc(-50% + 2px), calc(-50% + 2px)) scale(var(--hotspot-scale));
+  box-shadow: none;
+}
+
+.interior-hotspot.discovered {
+  background: #8ce8b5;
+  animation: none;
+  opacity: 0.78;
+}
+
+.interior-hotspot-mark {
+  font-size: 18px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.interior-hotspot-label {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 9px);
+  width: max-content;
+  max-width: 190px;
+  padding: 5px 8px;
+  transform: translateX(-50%) translateY(4px);
+  border: 2px solid #1a1a2e;
+  border-radius: 6px;
+  background: rgba(250, 250, 245, 0.97);
+  color: #1a1a2e;
+  box-shadow: 2px 2px 0 #1a1a2e;
+  font-size: 12px;
+  font-weight: 800;
+  line-height: 1.25;
+  letter-spacing: 0;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 120ms ease, transform 120ms ease;
+}
+
+.interior-hotspot:hover .interior-hotspot-label,
+.interior-hotspot:focus-visible .interior-hotspot-label {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+}
+
+#interiorDiscoveryCard {
+  position: absolute;
+  left: 24px;
+  bottom: 24px;
+  z-index: 12;
+  width: min(390px, calc(100vw - 48px));
+  padding: 14px 16px 15px;
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  background: rgba(250, 250, 245, 0.97);
+  color: #1a1a2e;
+  box-shadow: 5px 5px 0 #1a1a2e;
+  pointer-events: none;
+  animation: interior-discovery-in 220ms ease-out;
+}
+
+#interiorDiscoveryCard span {
+  display: block;
+  margin-bottom: 4px;
+  color: #e63946;
+  font-size: 11px;
+  font-weight: 900;
+}
+
+#interiorDiscoveryCard strong {
+  display: block;
+  margin-bottom: 5px;
+  font-size: 16px;
+  line-height: 1.25;
+}
+
+#interiorDiscoveryCard p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+@keyframes interior-hotspot-pulse {
+  0%, 100% { box-shadow: 3px 3px 0 #1a1a2e, 0 0 0 0 rgba(241, 196, 15, 0.35); }
+  50% { box-shadow: 3px 3px 0 #1a1a2e, 0 0 0 9px rgba(241, 196, 15, 0); }
+}
+
+@keyframes interior-discovery-in {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@media (max-width: 720px) {
+  #interiorChip {
+    top: 74px;
+    max-width: calc(100vw - 32px);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .interior-hotspot {
+    width: 38px;
+    height: 38px;
+  }
+
+  #interiorDiscoveryCard {
+    left: 12px;
+    bottom: 58px;
+    width: calc(100vw - 24px);
+    padding: 12px 14px;
+  }
 }

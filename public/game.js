@@ -55,6 +55,7 @@ let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, next
 let interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
 let interiorExitRect = null;
 let interiorAnimations = {};
+let interiorHotspots = [];
 let activeEncounters = [];
 let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
@@ -5223,18 +5224,201 @@ const INTERIOR_BLUEPRINTS = {
   }
 };
 
+const INTERIOR_ZONE_PROFILES = {
+  "public-plaza": {
+    blueprint: "public", title: "邻里议事客厅", intro: "这里没有高台，重要的事围着一张桌子慢慢说。",
+    labels: ["居民提案台", "今日公告板", "开放旁听席", "公共记录桌", "邻里共识圆桌", "情绪缓冲角"],
+    clues: ["一张提案只写了半句：希望夜班的人也能被城市看见。", "公告板背面留着不同笔迹的补充，没有人急着署名。", "圆桌边多放了一把椅子，像是在等一个还没准备好开口的人。"],
+    completion: "你发现，公共生活不是所有人意见一致，而是每个人都有留下痕迹的位置。"
+  },
+  "maternity-hospital": {
+    blueprint: "care", title: "新生与守夜病房", intro: "这里同时容纳第一次呼吸、漫长等待和照护者的疲惫。",
+    labels: ["晨光休息床", "值班护理站", "家属等候椅", "新生药品柜", "亲子安抚角", "复原植物窗"],
+    clues: ["床边卡片记录的不是病情，而是一个家庭第一次学会彼此照顾的时间。", "护理站抽屉里压着一张没送出去的感谢便签。", "安抚角的玩偶被缝补过很多次，每一道针脚都来自不同的人。"],
+    completion: "你听见这栋建筑真正守护的，不只是生命，也包括照护者不被遗忘的疲惫。"
+  },
+  residential: {
+    blueprint: "home", title: "生活巷共享起居室", intro: "普通日子在这里堆叠：吃饭、发呆、收拾和等待一个人回家。",
+    labels: ["窗边旧沙发", "四季餐桌", "晚归卧榻", "清晨洗漱台", "邻里借阅书架", "阳台植物角"],
+    clues: ["沙发缝里夹着一张旧车票，它没有目的地，只有回家的日期。", "餐桌上多摆的一只碗，属于一个偶尔回来吃饭的人。", "书架的借阅卡上，同一本书被两位从未见面的人反复续借。"],
+    completion: "你看见，所谓归属感往往不是宏大承诺，而是有人替你保留一个位置。"
+  },
+  kindergarten: {
+    blueprint: "learning", title: "童年园游戏教室", intro: "规则被画成颜色，问题被允许用游戏回答。",
+    labels: ["绘本阅读角", "故事讲台", "积木课桌", "涂鸦练习桌", "好奇探索墙", "软垫课间角"],
+    clues: ["一本绘本的最后一页被孩子重新画过，坏人最后学会了道歉。", "积木城少了一扇门，因为建造它的人说：所有人都可以直接进来。", "探索墙上最受欢迎的问题是：大人为什么总说以后？"],
+    completion: "你想起，成长不是更快得到答案，而是还能保护自己提问的勇气。"
+  },
+  "primary-school": {
+    blueprint: "learning", title: "初学堂共学教室", intro: "第一次合作、第一次失败和第一次被认真倾听都发生在这里。",
+    labels: ["晨读阅读角", "共学讲台", "同桌课桌", "错题练习桌", "问题探索墙", "课间分享角"],
+    clues: ["错题本旁写着：这次不是不会，只是我太害怕举手。", "同桌把两张不同答案粘在一起，竟然拼出第三条路。", "讲台下面藏着一封写给未来老师的信：请不要只叫最快的人回答。"],
+    completion: "你发现，被允许慢一点，也是一种教育资源。"
+  },
+  "middle-school": {
+    blueprint: "learning", title: "少年学堂选择教室", intro: "这里的人开始追问：我是谁，以及我是否只能成为别人期待的样子。",
+    labels: ["匿名阅读角", "生涯讲台", "靠窗课桌", "选择练习桌", "未来探索墙", "放空课间角"],
+    clues: ["未来墙上最小的一张纸写着：我还不知道，这也可以吗？", "靠窗课桌刻着两个相反的志愿，后来都被轻轻划掉。", "匿名书页里有人回答：你不需要现在就决定一辈子。"],
+    completion: "你感到，青春期真正需要的不是标准答案，而是一段可以试错的缓冲带。"
+  },
+  university: {
+    blueprint: "learning", title: "开放书院跨界教室", intro: "知识在这里不是终点，而是通向陌生人的桥。",
+    labels: ["跨学科阅读角", "开放讲台", "研究课桌", "原型练习桌", "议题探索墙", "夜谈课间角"],
+    clues: ["一份被退回三次的研究计划，第四版把“对象”改成了“共同作者”。", "探索墙上两门互不相关的课程，共用着同一个社会问题。", "夜谈角的杯底压着一句话：我来这里不是为了证明聪明。"],
+    completion: "你发现，真正的开放不是知道更多，而是愿意让自己的观点被他人改变。"
+  },
+  "office-district": {
+    blueprint: "work", title: "共事楼项目现场", intro: "目标、边界和人的精力在同一张进度表上彼此拉扯。",
+    labels: ["靠窗工位", "共享工具台", "进度协作板", "项目会议桌", "原型设备区"],
+    clues: ["工位便签把“必须完成”改成了“今天能推进什么”。", "协作板角落留着一列不计入绩效的互助记录。", "会议桌下有一根充电线，标签写着：给快没电的人。"],
+    completion: "你看见，一份可持续的工作不仅交付结果，也保护做事的人。"
+  },
+  factory: {
+    blueprint: "work", title: "匠造坊安全车间", intro: "机器有节拍，人的经验则藏在每一次停机和交接里。",
+    labels: ["巡检工位", "精密工具台", "安全协作板", "交班会议桌", "生产设备区"],
+    clues: ["工具台上最旧的扳手刻着三个人的名字，它比任何说明书都熟悉这台机器。", "安全板记录了一次主动停线，没有人因此被责备。", "交班桌上每条异常后面都写着下一班可以求助的人。"],
+    completion: "你发现，可靠的生产不是从不出错，而是错误能够被诚实地传递。"
+  },
+  "legal-court": {
+    blueprint: "justice", title: "公议庭修复室", intro: "人们来这里不是赢下一场争论，而是让破裂的关系重新拥有边界。",
+    labels: ["平等调停席", "修复圆桌", "事实记录席", "公共档案柜", "呼吸冷静角"],
+    clues: ["调停席的桌面没有主位，所有椅子的高度完全相同。", "记录里保留了双方都不同意的部分，没有把复杂删成结论。", "冷静角的沙漏允许任何人暂停对话，而不被视为逃避。"],
+    completion: "你理解，正义有时不是惩罚更重，而是让受伤的人重新获得选择权。"
+  },
+  "creative-studio": {
+    blueprint: "creative", title: "创作工坊未完成现场", intro: "作品被允许停在半路，灵感也可以由不同的人接力。",
+    labels: ["共同画架", "未完成作品墙", "身体排练角", "故事草稿桌", "声音采样角"],
+    clues: ["画架上的颜色来自三个人，没人能说清哪一笔才是开始。", "作品墙专门留了一格给失败版本，下面的评论比成品更多。", "故事桌上有一个没有主角的开头，等待路过的人把自己写进去。"],
+    completion: "你发现，表达不是展示一个完整的自己，而是允许别人看见你正在形成。"
+  },
+  "commercial-zone": {
+    blueprint: "commerce", title: "街市交换大厅", intro: "货物在流动，消息、信任和人情也在流动。",
+    labels: ["邻里服务柜台", "共享货架", "互助补给箱", "街坊小坐区", "当日热食台", "需求交换板"],
+    clues: ["补给箱里最常被取走的不是食物，而是写着“可以陪你去”的纸条。", "交换板上一份过期需求仍有人回复：现在还需要吗？", "热食台每天留一份不标价格的餐，只有一句“先吃饭”。"],
+    completion: "你看见，市场不只计算价格，也在悄悄衡量一座城市愿意如何互相托住。"
+  },
+  farm: {
+    blueprint: "nature", title: "社区农圃四季棚", intro: "土地不会立刻回答，但每一次照料都被它记住。",
+    labels: ["春季育苗架", "共享温室台", "农具工具棚", "田边休息椅", "轮值照料区"],
+    clues: ["育苗标签除了日期，还写着种下它的人当时的愿望。", "工具棚里最干净的工具属于一位已经搬走的居民。", "照料区有一行歪斜的新芽，旁边写着：第一次种，别笑。"],
+    completion: "你感到，自演化不是自动生长，而是许多微小照料被时间放大。"
+  },
+  park: {
+    blueprint: "nature", title: "邻里公园呼吸站", intro: "这里不要求产出，人们只是重新学会感受身体和天气。",
+    labels: ["树荫育苗架", "季节温室台", "维护工具棚", "湖边休息椅", "公共花圃照料区"],
+    clues: ["长椅扶手被磨得发亮，像是很多人曾在这里犹豫要不要回家。", "花圃里混种着互相保护的植物，没有一株独占整片阳光。", "维护记录写着：保留落叶，让冬天也有声音。"],
+    completion: "你发现，公共空间最珍贵的功能，是允许一个人暂时什么都不成为。"
+  },
+  zoo: {
+    blueprint: "nature", title: "动物照护园观察室", intro: "照护从观察开始，而不是把所有生命都变得听话。",
+    labels: ["幼体育苗架", "生态温室台", "饲养工具棚", "静默休息椅", "动物照料区"],
+    clues: ["观察记录里写得最多的是“今天没有靠近”，这也被视为进展。", "工具棚把清洁用品和玩具放在同等重要的位置。", "照料区门口提醒：先让动物看见你，再决定是否进入。"],
+    completion: "你理解，尊重另一种生命，就是接受关系不会完全由你控制。"
+  },
+  "botanical-garden": {
+    blueprint: "nature", title: "草木园共生温室", intro: "不同速度、不同高度的生命共享同一片光。",
+    labels: ["种子育苗架", "雨林温室台", "园艺工具棚", "苔藓休息椅", "共生照料区"],
+    clues: ["育苗架按需要的光线排列，而不是按植物的价格。", "一株生病的植物没有被移走，周围为它留出了恢复空间。", "温室记录把枯萎也算作季节的一部分。"],
+    completion: "你发现，好的系统不是让所有生命一样强壮，而是为不同状态保留位置。"
+  },
+  "night-market": {
+    blueprint: "commerce", title: "灯火夜市深夜补给站", intro: "当白天结束，另一群人的生活才刚刚亮灯。",
+    labels: ["夜航柜台", "流动货架", "应急补给箱", "深夜小坐区", "暖汤热食台", "匿名交换板"],
+    clues: ["夜航柜台为凌晨下班的人保留着当天第一句问候。", "匿名交换板上有人只写：今晚不想一个人吃饭。", "暖汤台的锅边贴着不同语言写成的“小心烫”。"],
+    completion: "你看见，一座城市是否温柔，要看它怎样对待不在标准作息里的人。"
+  },
+  "quiet-nook": {
+    blueprint: "memory", title: "静心角低声房间", intro: "这里不追问原因，只给情绪一段不会被催促的时间。",
+    labels: ["无名纪念台", "独处静坐席", "情绪记忆册", "低声花园"],
+    clues: ["记忆册允许只画一条线，不要求把感受解释清楚。", "静坐席之间留着足够距离，也留着可以靠近的方向。", "低声花园里有一块牌子：今天不开花也没关系。"],
+    completion: "你感到，被允许沉默，本身就是一种被理解。"
+  },
+  "repair-station": {
+    blueprint: "care", title: "和解小站关系修复室", intro: "关系不会被强行缝合，但每个人可以重新决定靠近的距离。",
+    labels: ["缓冲休息床", "关系护理站", "双向等候椅", "边界档案柜", "情绪安抚角", "复原植物窗"],
+    clues: ["档案柜只保存双方同意留下的内容，其余在对话结束后销毁。", "等候椅不是并排摆放，而是允许两个人慢慢调整角度。", "护理站有一张卡片：修复不等于回到原样。"],
+    completion: "你理解，和解不是取消受伤，而是让未来的选择不再被过去绑架。"
+  },
+  cemetery: {
+    blueprint: "memory", title: "记忆花园告别厅", intro: "离开的人以故事留下，活着的人在这里学习继续生活。",
+    labels: ["长明纪念台", "陪伴静坐席", "共同记忆册", "四季低声花园"],
+    clues: ["纪念台没有照片的一角，留给那些无法被公开说出的关系。", "记忆册里有人每年只写同一句：我过得还可以。", "花园按逝者喜欢的季节种植，所以一年四季总有一处盛开。"],
+    completion: "你发现，告别不是把一个人放下，而是为这段关系找到新的存在方式。"
+  },
+  "empathy-lab": {
+    blueprint: "care", title: "谈心和解屋共情室", intro: "在这里，理解不代表同意，但每句话都会被完整听完。",
+    labels: ["安全休息床", "倾听护理站", "平行等候椅", "匿名档案柜", "情绪安抚角", "复原植物窗"],
+    clues: ["倾听台上有两只计时器，确保沉默也属于对话的一部分。", "匿名档案只记录需求，不保存对人的判断。", "安抚角准备了不同重量的毯子，让身体先于语言找到安全。"],
+    completion: "你看见，共情不是猜中别人，而是持续确认自己有没有听错。"
+  },
+  "story-archive": {
+    blueprint: "creative", title: "街坊故事馆口述室", intro: "城市的历史不只属于大事件，也属于普通人没来得及说完的一天。",
+    labels: ["记忆画架", "街坊作品墙", "口述排练角", "故事索引桌", "声音档案角"],
+    clues: ["故事墙按情绪而不是年份排列，相隔几十年的人因此成为邻居。", "索引桌保留“我记不清了”这样的句子，没有替讲述者补全。", "声音角能听见背景里的锅碗、风声和停顿，它们也被当作历史。"],
+    completion: "你发现，一座城市真正的档案，是人们愿意把不完整的自己交给彼此。"
+  },
+  "commons-workshop": {
+    blueprint: "work", title: "共议工坊公共建造间", intro: "决定和工具放在同一个房间里，提出问题的人也能参与建造。",
+    labels: ["开放设计工位", "公共工具台", "共议协作板", "决策会议桌", "社区原型区"],
+    clues: ["协作板每个方案旁都标着受影响但尚未到场的人。", "工具台没有专属抽屉，所有工具都附着归还和修复记录。", "原型区允许失败方案保留一周，让反对意见也能被看见。"],
+    completion: "你看见，公共参与不是投完票就离开，而是一起承担决定长成的样子。"
+  },
+  "rest-courtyard": {
+    blueprint: "home", title: "慢歇院恢复客厅", intro: "这里把休息当成生活基础，而不是完成任务后的奖励。",
+    labels: ["午后旧沙发", "共享餐桌", "安静卧榻", "温水洗漱台", "慢读书架", "庭院植物角"],
+    clues: ["卧榻旁没有时钟，只有一张写着“醒来再决定”的卡片。", "餐桌上的菜单按身体感受分类，而不是按效率分类。", "书架专门收集读到一半的书，允许兴趣没有结局。"],
+    completion: "你发现，恢复不是停止人生，而是让人生重新有余地。"
+  },
+  "mentor-hall": {
+    blueprint: "learning", title: "师友学堂人生实验室", intro: "导师不替人选择，只帮助每条可能的路变得可见。",
+    labels: ["人生阅读角", "经验讲台", "同行课桌", "小步练习桌", "可能性探索墙", "复盘课间角"],
+    clues: ["探索墙不写成功案例，只记录每次选择放弃了什么。", "练习桌把一个五年目标拆成了今天能完成的十分钟。", "讲台旁的空椅提醒导师：你不是答案本身。"],
+    completion: "你理解，好的指引不会让路变窄，而是让选择变得更诚实。"
+  },
+  "resource-kitchen": {
+    blueprint: "commerce", title: "邻里食堂共享厨房", intro: "一顿饭把陌生人的时间、劳动和照顾放进同一张桌子。",
+    labels: ["互助取餐柜台", "共享食材架", "应急补给箱", "拼桌小坐区", "今日热食台", "余量交换板"],
+    clues: ["食材架按保质期而不是归属排列，先到期的会成为今天的菜单。", "交换板记录的不只是剩余食物，还有谁愿意教一道家乡菜。", "热食台给独自吃饭的人准备了可以选择加入的长桌。"],
+    completion: "你看见，食物最强的社会功能，是让照顾变成可以共同完成的日常。"
+  }
+};
+
+const INTERIOR_BLUEPRINT_CACHE = new Map();
+
+function inferInteriorBlueprintKey(zone) {
+  const hint = `${zone?.role || ""} ${zone?.archetype || ""} ${zone?.id || ""}`;
+  if (/hospital|care|clinic|maternity|empathy|repair/.test(hint)) return "care";
+  if (/school|university|kinder|learn|mentor|library/.test(hint)) return "learning";
+  if (/commercial|market|shop|exchange|kitchen|resource/.test(hint)) return "commerce";
+  if (/public|plaza|forum|civic/.test(hint)) return "public";
+  if (/legal|court|justice|mediat/.test(hint)) return "justice";
+  if (/creative|studio|art|story|archive/.test(hint)) return "creative";
+  if (/work|office|factory|craft|build|commons/.test(hint)) return "work";
+  if (/park|garden|farm|eco|nature|zoo|green|botanical/.test(hint)) return "nature";
+  if (/cemetery|memory|quiet/.test(hint)) return "memory";
+  return "home";
+}
+
 function getInteriorBlueprint(zone) {
-  const hint = `${zone.role || ""} ${zone.archetype || ""} ${zone.id || ""}`;
-  if (/hospital|care|clinic|maternity|empathy|repair/.test(hint)) return INTERIOR_BLUEPRINTS.care;
-  if (/school|university|kinder|learn|mentor|library/.test(hint)) return INTERIOR_BLUEPRINTS.learning;
-  if (/commercial|market|shop|exchange|kitchen|resource/.test(hint)) return INTERIOR_BLUEPRINTS.commerce;
-  if (/public|plaza|forum|civic/.test(hint)) return INTERIOR_BLUEPRINTS.public;
-  if (/legal|court|justice|mediat/.test(hint)) return INTERIOR_BLUEPRINTS.justice;
-  if (/creative|studio|art|story|archive/.test(hint)) return INTERIOR_BLUEPRINTS.creative;
-  if (/work|office|factory|craft|build|commons/.test(hint)) return INTERIOR_BLUEPRINTS.work;
-  if (/park|garden|farm|eco|nature|zoo|green|botanical/.test(hint)) return INTERIOR_BLUEPRINTS.nature;
-  if (/cemetery|memory|quiet/.test(hint)) return INTERIOR_BLUEPRINTS.memory;
-  return INTERIOR_BLUEPRINTS.home;
+  const cacheKey = zone?.id || `${zone?.role || ""}:${zone?.archetype || ""}`;
+  if (INTERIOR_BLUEPRINT_CACHE.has(cacheKey)) return INTERIOR_BLUEPRINT_CACHE.get(cacheKey);
+  const profile = INTERIOR_ZONE_PROFILES[zone?.id] || null;
+  const key = profile?.blueprint || inferInteriorBlueprintKey(zone);
+  const base = INTERIOR_BLUEPRINTS[key] || INTERIOR_BLUEPRINTS.home;
+  const labels = profile?.labels || [];
+  const blueprint = {
+    ...base,
+    key,
+    title: profile?.title || base.title,
+    profile,
+    props: (base.props || []).map((prop, index) => ({
+      ...prop,
+      label: labels[index] || prop.label,
+      storyIndex: index % Math.max(1, profile?.clues?.length || 1)
+    }))
+  };
+  INTERIOR_BLUEPRINT_CACHE.set(cacheKey, blueprint);
+  return blueprint;
 }
 
 function getInteriorLayout(W, H) {
@@ -5327,6 +5511,156 @@ function getInteriorPanoramaAnchors(blueprint, W, H) {
       prop
     };
   });
+}
+
+function getInteriorExplorationRecord(zoneId) {
+  state.interiorExploration = state.interiorExploration || {};
+  state.interiorExploration[zoneId] = state.interiorExploration[zoneId] || { found: [], completed: false };
+  return state.interiorExploration[zoneId];
+}
+
+function ensureInteriorHotspotLayer() {
+  let layer = document.getElementById("interiorHotspotLayer");
+  if (layer) return layer;
+  layer = document.createElement("div");
+  layer.id = "interiorHotspotLayer";
+  layer.setAttribute("aria-label", "室内可探索陈设");
+  layer.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-interior-hotspot]");
+    if (!button || !interiorView) return;
+    event.stopPropagation();
+    exploreInteriorHotspot(Number(button.dataset.interiorHotspot));
+  });
+  document.getElementById("gameShell")?.appendChild(layer);
+  return layer;
+}
+
+function syncInteriorHotspotLayer(anchors, blueprint) {
+  if (!interiorView) return;
+  interiorHotspots = (anchors || []).filter((anchor) => anchor.visible);
+  const layer = ensureInteriorHotspotLayer();
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
+  if (layer.dataset.signature !== signature) {
+    layer.dataset.signature = signature;
+    layer.innerHTML = interiorHotspots.map((anchor) => {
+      const found = record.found.includes(anchor.label);
+      return `<button class="interior-hotspot${found ? " discovered" : ""}" type="button" data-interior-hotspot="${anchor.index}" aria-label="探索${escapeHtml(anchor.label)}" title="探索${escapeHtml(anchor.label)}"><span class="interior-hotspot-mark" aria-hidden="true">✦</span><span class="interior-hotspot-label">${escapeHtml(anchor.label)}</span></button>`;
+    }).join("");
+  }
+  const buttons = [...layer.querySelectorAll("[data-interior-hotspot]")];
+  buttons.forEach((button) => {
+    const index = Number(button.dataset.interiorHotspot);
+    const anchor = interiorHotspots.find((item) => item.index === index);
+    if (!anchor) {
+      button.hidden = true;
+      return;
+    }
+    button.hidden = false;
+    button.style.left = `${anchor.x}px`;
+    button.style.top = `${anchor.y - 52 * anchor.scale}px`;
+    button.style.setProperty("--hotspot-scale", String(clamp(anchor.scale, 0.72, 1.12)));
+    button.classList.toggle("discovered", record.found.includes(anchor.label));
+  });
+  layer.setAttribute("aria-label", `${blueprint?.title || "室内"}可探索陈设`);
+}
+
+function syncInteriorDiscoveryCard(now) {
+  const existing = document.getElementById("interiorDiscoveryCard");
+  const discovery = interiorView?.discovery;
+  if (!discovery || now > discovery.until) {
+    existing?.remove();
+    return;
+  }
+  let card = existing;
+  if (!card) {
+    card = document.createElement("aside");
+    card.id = "interiorDiscoveryCard";
+    card.setAttribute("aria-live", "polite");
+    document.getElementById("gameShell")?.appendChild(card);
+  }
+  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}`;
+  if (card.dataset.signature !== signature) {
+    card.dataset.signature = signature;
+    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>`;
+  }
+}
+
+function getInteriorReactionLine(behaviorId, zoneName) {
+  if (["care", "comfort", "drink", "sleep"].includes(behaviorId)) return `这里让人愿意慢一点。`;
+  if (["read", "write", "teach", "think"].includes(behaviorId)) return `原来${zoneName}还留着这样的故事。`;
+  if (["work", "type", "repair", "meeting"].includes(behaviorId)) return "这处细节也许会改变接下来的做法。";
+  if (["garden", "gather", "clean"].includes(behaviorId)) return "有人照料过的痕迹还在。";
+  return "我也刚刚注意到这里。";
+}
+
+function exploreInteriorHotspot(propIndex) {
+  if (!interiorView) return;
+  const zone = interiorView.zone;
+  const blueprint = getInteriorBlueprint(zone);
+  const prop = blueprint.props?.[propIndex];
+  if (!prop) return;
+  const profile = blueprint.profile;
+  const record = getInteriorExplorationRecord(zone.id);
+  const alreadyFound = record.found.includes(prop.label);
+  const clue = profile?.clues?.[prop.storyIndex]
+    || `${prop.label}留下了被使用和照料的痕迹，让${zone.name}不只是一间空房。`;
+  if (!alreadyFound) record.found.push(prop.label);
+
+  const goal = Math.min(3, blueprint.props?.length || 3);
+  const progressCount = Math.min(record.found.length, goal);
+  interiorView.discovery = {
+    title: prop.label,
+    text: alreadyFound ? `你再次看见这处细节：${clue}` : clue,
+    progress: `${progressCount}/${goal}`,
+    until: performance.now() + 7200
+  };
+
+  if (!alreadyFound) {
+    const primaryBehavior = prop.behaviors?.[0] || "think";
+    const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+    if (avatar) {
+      const restoring = ["sleep", "drink", "comfort", "think", "read", "garden"].includes(primaryBehavior);
+      avatar.mood = clamp(Number(avatar.mood || 50) + (restoring ? 2 : 1), 0, 100);
+      avatar.energy = clamp(Number(avatar.energy || 50) + (restoring ? 1 : -1), 0, 100);
+      avatar.lastAction = `探索${prop.label}`;
+    }
+    addEventLogEntry(`室内发现 · ${zone.name}`, clue, primaryBehavior, true, `interior-${zone.id}-${propIndex}`);
+
+    const observer = getAliveCitizens(state.society)
+      .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
+    if (observer) {
+      addSpeechBubble(observer.id, getInteriorReactionLine(primaryBehavior, zone.name), "listen", { duration: 3800 });
+      const ia = interiorAnimations[observer.id];
+      const anchor = interiorHotspots.find((item) => item.index === propIndex);
+      const behavior = BEHAVIOR_BY_ID.get(primaryBehavior);
+      if (ia && anchor) {
+        ia.targetX = anchor.x;
+        ia.targetY = anchor.y + 16;
+        ia.targetAnchor = anchor;
+        ia.nextTargetAt = performance.now() + 3800;
+        if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) startCitizenBehavior(observer, ia, behavior, performance.now());
+      }
+    }
+  }
+
+  if (!record.completed && record.found.length >= goal) {
+    record.completed = true;
+    const completion = profile?.completion || `你读懂了${zone.name}的一小段生活。`;
+    interiorView.discovery = {
+      title: `${zone.name} · 场所回声`,
+      text: completion,
+      progress: "已读懂",
+      until: performance.now() + 9000
+    };
+    addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
+    pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
+  } else {
+    persist();
+  }
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(7600);
+  updateHUD();
 }
 
 function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
@@ -6064,13 +6398,14 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
 
 function getInteriorDecorPlan(blueprint) {
   const title = blueprint?.title || "";
+  const key = blueprint?.key || "";
   const base = [
     { type: "plant", x: 0.08, y: 0.2, s: 0.9, layer: "back" },
     { type: "floor-lamp", x: 0.9, y: 0.22, s: 0.85, layer: "back" },
     { type: "flowerbox", x: 0.12, y: 0.86, s: 0.82, layer: "front" },
     { type: "flowerbox", x: 0.88, y: 0.86, s: 0.82, layer: "front" }
   ];
-  if (/照护/.test(title)) {
+  if (key === "care" || /照护/.test(title)) {
     return [
       { type: "iv-stand", x: 0.12, y: 0.34, s: 0.9, layer: "back" },
       { type: "privacy-screen", x: 0.28, y: 0.36, s: 1.0, layer: "back" },
@@ -6083,7 +6418,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "flowerbox", x: 0.9, y: 0.36, s: 0.78, layer: "back" }
     ];
   }
-  if (/学习/.test(title)) {
+  if (key === "learning" || /学习/.test(title)) {
     return [
       { type: "book-pile", x: 0.16, y: 0.33, s: 0.86, layer: "back" },
       { type: "notice-cards", x: 0.42, y: 0.3, s: 0.78, layer: "back" },
@@ -6095,7 +6430,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "coffee-mug", x: 0.82, y: 0.68, s: 0.72, layer: "front" }
     ];
   }
-  if (/交易/.test(title)) {
+  if (key === "commerce" || /交易/.test(title)) {
     return [
       { type: "hanging-lights", x: 0.5, y: 0.24, s: 1.0, layer: "back" },
       { type: "basket", x: 0.18, y: 0.45, s: 0.9, layer: "mid" },
@@ -6107,7 +6442,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant", x: 0.1, y: 0.82, s: 0.8, layer: "front" }
     ];
   }
-  if (/公共|调停/.test(title)) {
+  if (["public", "justice"].includes(key) || /公共|调停/.test(title)) {
     return [
       { type: "bench", x: 0.16, y: 0.42, s: 0.95, layer: "mid" },
       { type: "notice-cards", x: 0.29, y: 0.26, s: 0.9, layer: "back" },
@@ -6117,7 +6452,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "lantern", x: 0.88, y: 0.68, s: 0.74, layer: "front" }
     ];
   }
-  if (/协作/.test(title)) {
+  if (key === "work" || /协作/.test(title)) {
     return [
       { type: "tool-cart", x: 0.18, y: 0.46, s: 0.9, layer: "mid" },
       { type: "machine", x: 0.79, y: 0.45, s: 0.95, layer: "mid" },
@@ -6128,7 +6463,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant", x: 0.88, y: 0.78, s: 0.78, layer: "front" }
     ];
   }
-  if (/表达/.test(title)) {
+  if (key === "creative" || /表达/.test(title)) {
     return [
       { type: "paint-cart", x: 0.18, y: 0.52, s: 0.9, layer: "mid" },
       { type: "gallery-frames", x: 0.47, y: 0.24, s: 1.0, layer: "back" },
@@ -6138,7 +6473,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant", x: 0.86, y: 0.45, s: 0.86, layer: "mid" }
     ];
   }
-  if (/生态/.test(title)) {
+  if (key === "nature" || /生态/.test(title)) {
     return [
       { type: "greenhouse", x: 0.2, y: 0.42, s: 1.0, layer: "mid" },
       { type: "plant-rack", x: 0.47, y: 0.28, s: 1.0, layer: "back" },
@@ -6148,7 +6483,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "quiet-bench", x: 0.74, y: 0.82, s: 0.78, layer: "front" }
     ];
   }
-  if (/安宁/.test(title)) {
+  if (key === "memory" || /安宁/.test(title)) {
     return [
       { type: "candles", x: 0.32, y: 0.5, s: 1.0, layer: "mid" },
       { type: "memorial-frame", x: 0.5, y: 0.28, s: 0.95, layer: "back" },
@@ -7038,7 +7373,20 @@ function findRenderZoneById(zoneId) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
-  interiorView = { zone, source, enteredAt: performance.now(), nextArrivalCheckAt: 0 };
+  const blueprint = getInteriorBlueprint(zone);
+  const enteredAt = performance.now();
+  interiorView = {
+    zone,
+    source,
+    enteredAt,
+    nextArrivalCheckAt: 0,
+    discovery: {
+      title: blueprint.title,
+      text: blueprint.profile?.intro || "拖动环视房间，靠近发光的陈设会看见这里发生过的生活。",
+      progress: "点击 ✦ 探索",
+      until: enteredAt + 7200
+    }
+  };
   interiorOrbit = { yaw: 0, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
   interiorExitRect = null;
   hideDetail();
@@ -7057,8 +7405,11 @@ function exitInteriorView() {
   interiorView = null;
   interiorOrbit.drag = false;
   interiorExitRect = null;
+  interiorHotspots = [];
   document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
+  document.getElementById("interiorHotspotLayer")?.remove();
+  document.getElementById("interiorDiscoveryCard")?.remove();
   markRenderActive(2200);
 }
 
@@ -7067,7 +7418,7 @@ function ensureInteriorChip(zone) {
   const el = document.createElement("button");
   el.id = "interiorChip";
   el.type = "button";
-  el.textContent = `← 离开${zone.name} · 拖动 360° 环视`;
+  el.textContent = `← 离开${zone.name} · 环视并点击 ✦ 探索`;
   el.addEventListener("click", () => {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
@@ -7212,6 +7563,8 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H, useThreeModels);
   drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, useThreeModels);
   drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, useThreeModels);
+  syncInteriorHotspotLayer(panoramaAnchors, blueprint);
+  syncInteriorDiscoveryCard(now);
 
   const exitW = Math.min(150, Math.max(110, W * 0.14));
   const exitH = 34;
@@ -7248,7 +7601,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.textBaseline = "alphabetic";
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  ctx.fillText(`${blueprint.title} · 拖动 360° 环视 · 按 Esc 或点右下角回到街道`, W / 2, 58);
+  ctx.fillText(`${blueprint.title} · 拖动 360° 环视 · 点击 ✦ 发现故事 · Esc 回到街道`, W / 2, 58);
 
   // Occupants
   const aliveCitizens = getAliveCitizens(society);

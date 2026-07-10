@@ -20,6 +20,8 @@
     "optimize:interior-3d": "node scripts/optimize-interior-3d-models.mjs",
     "generate:interior-3d-hunyuan": "node scripts/run-hunyuan-interior-jobs.mjs",
     "verify:interior-3d": "node scripts/verify-interior-3d-models.mjs",
+    "verify:interior-3d:release": "node scripts/verify-interior-3d-models.mjs --require-source-manifest --release-quality",
+    "verify:interior-world": "node scripts/verify-interior-world.mjs",
     "upload:picgo-assets": "node scripts/upload-picgo-assets.mjs",
     "verify:interior-props-image2": "node scripts/verify-interior-props-image2.mjs",
     "memory-proxy": "node server/memory-proxy.mjs",

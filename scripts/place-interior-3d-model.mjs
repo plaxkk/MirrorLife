@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const PROVIDERS = ["tripo", "hunyuan", "tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"];
 
 function parseArgs(argv) {
   const args = {
@@ -9,6 +10,9 @@ function parseArgs(argv) {
     config: CONFIG_PATH,
     slot: "",
     file: "",
+    referenceViews: [],
+    referenceFiles: [],
+    qualityTier: "development",
     importNow: false,
   };
 
@@ -18,6 +22,9 @@ function parseArgs(argv) {
     else if (arg === "--config") args.config = argv[++i];
     else if (arg === "--slot") args.slot = argv[++i];
     else if (arg === "--file") args.file = argv[++i];
+    else if (arg === "--reference-views") args.referenceViews = argv[++i].split(",").map((item) => item.trim()).filter(Boolean);
+    else if (arg === "--reference-files") args.referenceFiles = argv[++i].split(",").map((item) => item.trim()).filter(Boolean);
+    else if (arg === "--quality-tier") args.qualityTier = argv[++i];
     else if (arg === "--import-now") args.importNow = true;
     else if (arg === "--help" || arg === "-h") {
       printHelp();
@@ -29,8 +36,11 @@ function parseArgs(argv) {
 
   if (!args.slot) throw new Error("Missing --slot, for example --slot bed.");
   if (!args.file) throw new Error("Missing --file, for example --file ~/Downloads/model.glb.");
-  if (!["tripo", "hunyuan", "manual"].includes(args.provider)) {
-    throw new Error("--provider must be tripo, hunyuan, or manual.");
+  if (!PROVIDERS.includes(args.provider)) {
+    throw new Error(`--provider must be one of: ${PROVIDERS.join(", ")}.`);
+  }
+  if (!new Set(["development", "release-candidate"]).has(args.qualityTier)) {
+    throw new Error("--quality-tier must be development or release-candidate.");
   }
 
   return args;
@@ -47,10 +57,13 @@ Examples:
   npm run place:interior-3d -- --slot counter --file ~/Downloads/tripo.glb --import-now
 
 Options:
-  --provider <name>  tripo, hunyuan, or manual. Default: tripo
+  --provider <name>  Source provider. Use tripo-multiview, hunyuan-multiview, or blender-manual for release assets.
   --config <path>    Model slot mapping. Default: ${CONFIG_PATH}
   --slot <slot>      Runtime slot name, such as bed, counter, shelf.
   --file <path>      Downloaded GLB file.
+  --reference-views <csv>  Views used to reconstruct the asset, for example front,back,left,right,isometric.
+  --reference-files <csv>  Reference image paths corresponding to the supplied views.
+  --quality-tier <tier>    development or release-candidate. Default: development
   --import-now       Also copy this provider's generated GLBs into public runtime assets.
   -h, --help         Show help.
 `);
@@ -106,10 +119,16 @@ async function main() {
     label: slot.label,
     source,
     target,
-    bytes
+    bytes,
+    qualityTier: args.qualityTier,
+    referenceViews: args.referenceViews,
+    referenceFiles: args.referenceFiles
   };
   const receipt = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.receipt.json`);
   await fs.writeFile(receipt, `${JSON.stringify(placed, null, 2)}\n`);
+  const provenance = path.resolve(config.workRoot, args.provider, "asset-provenance", `${slot.slot}.json`);
+  await fs.mkdir(path.dirname(provenance), { recursive: true });
+  await fs.writeFile(provenance, `${JSON.stringify(placed, null, 2)}\n`);
   console.log(`Placed ${slot.slot}: ${target}`);
 
   if (args.importNow) {

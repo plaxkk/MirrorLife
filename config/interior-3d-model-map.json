@@ -1,11 +1,24 @@
 {
   "version": 1,
-  "goal": "Replace the current procedural interior GLB props with AI-generated 2D-to-3D models made from MirrorLife's isolated interior prop sprites.",
+  "goal": "Reconstruct every MirrorLife interior prop as a high-fidelity, fully modeled 360-degree asset. Procedural Three.js geometry and sprite cards are development placeholders only and must never pass release validation.",
   "sourceImageRoot": "dist/assets/interior-props-image2",
   "remoteManifest": "dist/assets/interior-props-image2/remote-manifest.json",
   "targetGlbRoot": "public/assets/interiors/glb",
   "workRoot": "dist/interior-3d-work",
-  "stylePrompt": "Convert this isolated MirrorLife prop sprite into a clean game-ready low-poly GLB model. Preserve the warm dopamine cel-shading cartoon style, thick rounded silhouette, toy-like isometric mobile-game feeling, soft humanistic colors, clear readable shape, and transparent-background object identity. Generate only the object, no text, no labels, no extra scene, no people. Keep it lightweight for a browser Three.js game.",
+  "stylePrompt": "Reconstruct this isolated MirrorLife prop as a complete 360-degree 3D asset. Match the reference silhouette, proportions, color blocking, rounded bevels, visible construction details and warm dopamine cel-shading art direction. Model coherent back, side, top and underside surfaces rather than extruding the visible image. Generate only the object, no text, no labels, no extra scene and no people. Preserve a high-fidelity master before creating a browser-optimized GLB LOD.",
+  "qualityPolicy": {
+    "releaseProviders": ["tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"],
+    "placeholderProviders": ["procedural-threejs", "sprite-card"],
+    "minimumReferenceViews": 4,
+    "requiredReferenceViews": ["front", "back", "left", "right"],
+    "preferredReferenceViews": ["front", "back", "left", "right", "top", "isometric"],
+    "masterTextureSize": 2048,
+    "webTextureSize": 1024,
+    "webTriangleBudget": 40000,
+    "webFileBudgetBytes": 8388608,
+    "canonicalViewSilhouetteIou": 0.9,
+    "canonicalViewColorSimilarity": 0.85
+  },
   "slots": [
     {
       "slot": "bed",

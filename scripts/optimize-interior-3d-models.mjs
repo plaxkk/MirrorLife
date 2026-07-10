@@ -3,6 +3,7 @@ import path from "node:path";
 import { spawnSync } from "node:child_process";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const PROVIDERS = ["tripo", "hunyuan", "tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"];
 
 function parseArgs(argv) {
   const args = {
@@ -36,8 +37,8 @@ function parseArgs(argv) {
     }
   }
 
-  if (!["tripo", "hunyuan", "manual"].includes(args.provider)) {
-    throw new Error("--provider must be tripo, hunyuan, or manual.");
+  if (!PROVIDERS.includes(args.provider)) {
+    throw new Error(`--provider must be one of: ${PROVIDERS.join(", ")}.`);
   }
 
   return args;
@@ -54,7 +55,7 @@ Examples:
   npm run optimize:interior-3d -- --source dist/raw.glb --output dist/bed_web.glb
 
 Options:
-  --provider <name>          tripo, hunyuan, or manual. Default: tripo
+  --provider <name>          Source provider. Multiview and manual providers are release-capable.
   --slot <slot>              Optimize one slot from dist/interior-3d-work/<provider>/generated-glb/<slot>.glb.
   --source <path>            Optimize one explicit GLB file.
   --output <path>            Output file for --source mode.

@@ -2,6 +2,16 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const PROVIDERS = [
+  "tripo",
+  "hunyuan",
+  "tripo-multiview",
+  "hunyuan-multiview",
+  "blender-manual",
+  "manual",
+  "sprite-card",
+  "procedural-threejs"
+];
 
 function parseArgs(argv) {
   const args = {
@@ -27,8 +37,8 @@ function parseArgs(argv) {
     }
   }
 
-  if (!["tripo", "hunyuan", "manual", "sprite-card", "procedural-threejs"].includes(args.provider)) {
-    throw new Error("--provider must be tripo, hunyuan, manual, sprite-card, or procedural-threejs.");
+  if (!PROVIDERS.includes(args.provider)) {
+    throw new Error(`--provider must be one of: ${PROVIDERS.join(", ")}.`);
   }
 
   return args;
@@ -41,7 +51,7 @@ Usage:
   node scripts/import-interior-3d-models.mjs [options]
 
 Options:
-  --provider <name>    tripo, hunyuan, manual, sprite-card, or procedural-threejs. Default: tripo
+  --provider <name>    Asset source provider. Use *-multiview or blender-manual for release assets.
   --source <path>      Folder containing generated GLBs. Default: dist/interior-3d-work/<provider>/generated-glb
   --config <path>      Model slot mapping. Default: ${CONFIG_PATH}
   --require-all        Fail if any required slot GLB is missing.
@@ -162,6 +172,8 @@ async function main() {
     const target = path.join(targetDir, `${item.slot.slot}.glb`);
     const bytes = await assertGlb(item.source);
     await fs.copyFile(item.source, target);
+    const provenancePath = path.resolve(config.workRoot, args.provider, "asset-provenance", `${item.slot.slot}.json`);
+    const provenance = await readJsonIfExists(provenancePath, {});
     imported.push({
       slot: item.slot.slot,
       label: item.slot.label,
@@ -169,6 +181,9 @@ async function main() {
       source: normalizeRel(item.source),
       target: normalizeRel(target),
       bytes,
+      qualityTier: provenance.qualityTier || "development",
+      referenceViews: provenance.referenceViews || [],
+      referenceFiles: provenance.referenceFiles || [],
       importedAt: new Date().toISOString()
     });
     console.log(`Imported ${item.slot.slot}: ${normalizeRel(item.source)} -> ${normalizeRel(target)}`);

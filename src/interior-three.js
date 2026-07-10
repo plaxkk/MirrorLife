@@ -1,5 +1,7 @@
 const ASSET_BASE = "/assets/interiors/glb/";
 const MAX_DPR = 1.6;
+const PROP_PIXEL_BASE = 88;
+const DECOR_PIXEL_BASE = 60;
 const cache = new Map();
 const loading = new Map();
 
@@ -134,7 +136,7 @@ function clearRoot() {
 
 function addShadow(item) {
   const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
-  const base = item.kind === "prop" ? 72 : 54;
+  const base = item.kind === "prop" ? PROP_PIXEL_BASE : DECOR_PIXEL_BASE;
   const s = Math.max(24, base * (item.scale || 1) * (item.modelScale || 1));
   shadow.position.set(item.x, item.y + 16 * (item.scale || 1), -12 + (item.depth || 0) * 10);
   shadow.scale.set(s * 1.22, s * 0.34, 1);
@@ -146,7 +148,7 @@ function addItem(item, payload) {
   if (!model) return;
   addShadow(item);
 
-  const base = item.kind === "prop" ? 72 : 54;
+  const base = item.kind === "prop" ? PROP_PIXEL_BASE : DECOR_PIXEL_BASE;
   const scale = base * (item.scale || 1) * (item.modelScale || 1);
   model.position.set(item.x, item.y - scale * 0.24, (item.depth || 0) * 80);
   model.scale.setScalar(scale);
