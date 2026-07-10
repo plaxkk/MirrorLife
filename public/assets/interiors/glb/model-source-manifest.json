@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-10T06:29:14.584Z",
+  "updatedAt": "2026-07-10T10:30:17.934Z",
   "provider": "hunyuan",
-  "sourceDir": "dist/interior-3d-work/hunyuan/optimized-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-10T06-29-14-553Z",
+  "sourceDir": "dist/interior-3d-work/hunyuan/optimized-v31",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-10T10-30-17-889Z",
   "imported": [
     {
       "slot": "bed",
@@ -44,21 +44,61 @@
       "slot": "wall-board",
       "label": "公告板 / 黑板 / 作品墙",
       "provider": "hunyuan",
-      "source": "dist/interior-3d-work/hunyuan/optimized-glb/wall-board.glb",
+      "source": "dist/interior-3d-work/hunyuan/optimized-v31/wall-board.glb",
       "target": "public/assets/interiors/glb/wall-board.glb",
-      "bytes": 390168,
+      "bytes": 1456848,
       "qualityTier": "development",
-      "referenceViews": [],
-      "referenceFiles": [],
-      "importedAt": "2026-07-10T06:29:14.570Z"
+      "referenceViews": [
+        "isometric"
+      ],
+      "referenceFiles": [
+        "dist/assets/interior-props-image2/school_library/chalkboard.png"
+      ],
+      "masterFile": "dist/interior-3d-work/hunyuan/master-glb/wall-board.glb",
+      "masterBytes": 36493404,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-10T10:27:37.630Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 50000,
+        "webTriangleCount": 50000,
+        "master": {
+          "file": "dist/interior-3d-work/hunyuan/master-glb/wall-board-v31.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 50000,
+          "vertexCount": 31827,
+          "weldedVertexCount": 24988,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/hunyuan/optimized-glb/wall-board-v31.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 50000,
+          "vertexCount": 31827,
+          "weldedVertexCount": 24988,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-10T10:30:17.907Z"
     },
     {
       "slot": "desk",
       "label": "课桌 / 工位 / 记录桌",
       "provider": "hunyuan",
-      "source": "dist/interior-3d-work/hunyuan/optimized-glb/desk.glb",
+      "source": "dist/interior-3d-work/hunyuan/optimized-v31/desk.glb",
       "target": "public/assets/interiors/glb/desk.glb",
-      "bytes": 1602800,
+      "bytes": 1481720,
       "qualityTier": "development",
       "referenceViews": [
         "isometric"
@@ -66,7 +106,43 @@
       "referenceFiles": [
         "dist/assets/interior-props-image2/school_library/student_desk.png"
       ],
-      "importedAt": "2026-07-10T06:29:14.582Z"
+      "masterFile": "dist/interior-3d-work/hunyuan/master-glb/desk.glb",
+      "masterBytes": 32334924,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-10T10:18:29.834Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 49756,
+        "webTriangleCount": 49756,
+        "master": {
+          "file": "dist/interior-3d-work/hunyuan/master-glb/desk.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 49756,
+          "vertexCount": 32036,
+          "weldedVertexCount": 24874,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/hunyuan/optimized-v31/desk.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 49756,
+          "vertexCount": 32036,
+          "weldedVertexCount": 24874,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-10T10:30:17.932Z"
     },
     {
       "slot": "round-table",

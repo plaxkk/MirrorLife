@@ -113,11 +113,11 @@ button:active { transform: translate(2px, 2px); box-shadow: none; }
 
 .stage-toolbar strong { display: block; font-size: 18px; }
 
-.tool-actions { display: flex; gap: 9px; align-items: center; }
+.tool-actions { display: flex; gap: 9px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
 .tool-actions button { min-height: 34px; padding: 0 11px; background: #7ed3f7; }
-.angle-picker { display: flex; gap: 5px; }
-.angle-picker button { min-width: 44px; padding: 0 7px; background: #fff; }
-.angle-picker button[aria-pressed="true"] { background: #8ce8b5; }
+.view-picker { display: flex; gap: 5px; flex-wrap: wrap; justify-content: flex-end; }
+.view-picker button { min-width: 48px; padding: 0 7px; background: #fff; }
+.view-picker button[aria-pressed="true"] { background: #8ce8b5; }
 
 .viewport {
   position: relative;

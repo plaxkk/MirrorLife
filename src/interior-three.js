@@ -9,7 +9,7 @@ const MODEL_RENDER_PROFILES = {
   desk: { scale: 1.18, rotationY: -0.48 },
   seating: { scale: 1.2, rotationY: -0.35 },
   shelf: { scale: 1.08, rotationY: 0 },
-  "wall-board": { scale: 1.08, rotationY: 0 },
+  "wall-board": { scale: 1.08, decorScale: 3.1, rotationY: 0 },
   "round-table": { scale: 1.25, rotationY: -0.32 },
   table: { scale: 1.16, rotationY: -0.32 },
   "market-stall": { scale: 1.22, rotationY: -0.28 },
@@ -520,7 +520,8 @@ function rebuildModels(items) {
     if (!source) return;
     const model = source.clone(true);
     const profile = getModelRenderProfile(item.model);
-    const size = (item.kind === "prop" ? 1.22 : 0.74) * (item.modelScale || 1) * profile.scale;
+    const profileScale = item.kind === "decor" ? (profile.decorScale || profile.scale) : (profile.propScale || profile.scale);
+    const size = (item.kind === "prop" ? 1.22 : 0.74) * (item.modelScale || 1) * profileScale;
     model.scale.setScalar(size);
     model.position.set(item.worldX || 0, 0.03, item.worldZ || 0);
     const faceCenter = Math.atan2(-(item.worldX || 0), -(item.worldZ || 0));

@@ -33,7 +33,7 @@ const loadStatus = document.getElementById("loadStatus");
 const assetName = document.getElementById("assetName");
 const rotateToggle = document.getElementById("rotateToggle");
 const resetCamera = document.getElementById("resetCamera");
-const angleButtons = [...document.querySelectorAll("[data-angle]")];
+const viewButtons = [...document.querySelectorAll("[data-view]")];
 
 for (const [slot, [, label]] of Object.entries(SLOT_ASSETS)) {
   const option = document.createElement("option");
@@ -68,6 +68,10 @@ scene.add(key);
 const rim = new THREE.DirectionalLight(0x8dd8ff, 1.7);
 rim.position.set(5, 3, -4);
 scene.add(rim);
+const undersideFill = new THREE.DirectionalLight(0xffffff, 1.8);
+undersideFill.position.set(0, -5, 2);
+undersideFill.visible = false;
+scene.add(undersideFill);
 
 const ground = new THREE.Mesh(
   new THREE.CircleGeometry(3.3, 64),
@@ -83,6 +87,17 @@ scene.add(grid);
 
 const loader = new GLTFLoader();
 let activeModel = null;
+let activeView = "isometric";
+
+const VIEW_PRESETS = {
+  front: { direction: [0, 0.08, 1], up: [0, 1, 0] },
+  back: { direction: [0, 0.08, -1], up: [0, 1, 0] },
+  left: { direction: [-1, 0.08, 0], up: [0, 1, 0] },
+  right: { direction: [1, 0.08, 0], up: [0, 1, 0] },
+  top: { direction: [0, 1, 0.001], up: [0, 0, -1] },
+  bottom: { direction: [0, -1, 0.001], up: [0, 0, 1] },
+  isometric: { direction: [0.58, 0.42, 0.7], up: [0, 1, 0] }
+};
 
 function runtimeModel(slot) {
   return `/assets/interiors/glb/${slot}.glb`;
@@ -102,10 +117,26 @@ function setSlot(slot, preserveCustom = false) {
   }
 }
 
-function resetView() {
-  camera.position.set(4.5, 3.2, 5.2);
-  controls.target.set(0, 1.05, 0);
+function setReviewView(viewName = "isometric") {
+  const preset = VIEW_PRESETS[viewName] || VIEW_PRESETS.isometric;
+  activeView = VIEW_PRESETS[viewName] ? viewName : "isometric";
+  controls.autoRotate = false;
+  rotateToggle.setAttribute("aria-pressed", "false");
+  rotateToggle.textContent = "开始旋转";
+  activeModel?.rotation.set(0, 0, 0);
+  const target = controls.target.clone();
+  const direction = new THREE.Vector3(...preset.direction).normalize();
+  camera.position.copy(target).addScaledVector(direction, 5.9);
+  camera.up.set(...preset.up);
+  ground.visible = activeView !== "bottom";
+  grid.visible = activeView !== "bottom";
+  undersideFill.visible = activeView === "bottom";
+  viewButtons.forEach((button) => button.setAttribute("aria-pressed", String(button.dataset.view === activeView)));
   controls.update();
+}
+
+function resetView() {
+  setReviewView("isometric");
 }
 
 function formatCount(value) {
@@ -165,7 +196,7 @@ async function loadAsset(modelUrl, referenceUrl) {
     const finalBox = new THREE.Box3().setFromObject(activeModel);
     inspectModel(activeModel, originalBox);
     controls.target.set(0, finalBox.getSize(new THREE.Vector3()).y * 0.48, 0);
-    resetView();
+    setReviewView(activeView);
     loadStatus.textContent = "模型载入完成";
     loadStatus.classList.add("ready");
   } catch (error) {
@@ -194,27 +225,25 @@ form.addEventListener("submit", (event) => {
 });
 
 rotateToggle.addEventListener("click", () => {
-  controls.autoRotate = !controls.autoRotate;
+  const shouldRotate = !controls.autoRotate;
+  if (shouldRotate) setReviewView("isometric");
+  controls.autoRotate = shouldRotate;
   rotateToggle.setAttribute("aria-pressed", String(controls.autoRotate));
   rotateToggle.textContent = controls.autoRotate ? "暂停旋转" : "开始旋转";
 });
 
-angleButtons.forEach((button) => {
+viewButtons.forEach((button) => {
   button.addEventListener("click", () => {
     if (!activeModel) return;
-    controls.autoRotate = false;
-    rotateToggle.setAttribute("aria-pressed", "false");
-    rotateToggle.textContent = "开始旋转";
-    activeModel.rotation.y = THREE.MathUtils.degToRad(Number(button.dataset.angle || 0));
-    angleButtons.forEach((item) => item.setAttribute("aria-pressed", String(item === button)));
-    resetView();
+    setReviewView(button.dataset.view);
   });
 });
 
-resetCamera.addEventListener("click", resetView);
+resetCamera.addEventListener("click", () => setReviewView("isometric"));
 window.addEventListener("resize", resize);
 
 const initialSlot = params.get("slot") || "desk";
+activeView = VIEW_PRESETS[params.get("view")] ? params.get("view") : "isometric";
 setSlot(initialSlot);
 modelInput.value = params.get("model") || modelInput.value;
 referenceInput.value = params.get("reference") || referenceInput.value;
