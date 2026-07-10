@@ -2,6 +2,9 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const MAX_DPR = 1.6;
 const PROP_PIXEL_BASE = 88;
 const DECOR_PIXEL_BASE = 60;
+const MODEL_RENDER_PROFILES = {
+  desk: { scale: 1.45, rotationX: 0, rotationY: -0.3, lockView: true }
+};
 const cache = new Map();
 const loading = new Map();
 
@@ -134,10 +137,14 @@ function clearRoot() {
   while (root?.children.length) root.remove(root.children[0]);
 }
 
-function addShadow(item) {
+function getModelRenderProfile(type) {
+  return MODEL_RENDER_PROFILES[type] || { scale: 1, rotationX: 0, rotationY: 0 };
+}
+
+function addShadow(item, assetScale = 1) {
   const shadow = new THREE.Mesh(shadowGeometry, shadowMaterial);
   const base = item.kind === "prop" ? PROP_PIXEL_BASE : DECOR_PIXEL_BASE;
-  const s = Math.max(24, base * (item.scale || 1) * (item.modelScale || 1));
+  const s = Math.max(24, base * (item.scale || 1) * (item.modelScale || 1) * assetScale);
   shadow.position.set(item.x, item.y + 16 * (item.scale || 1), -12 + (item.depth || 0) * 10);
   shadow.scale.set(s * 1.22, s * 0.34, 1);
   root.add(shadow);
@@ -146,14 +153,16 @@ function addShadow(item) {
 function addItem(item, payload) {
   const model = cloneModel(item.model);
   if (!model) return;
-  addShadow(item);
+  const profile = getModelRenderProfile(item.model);
+  addShadow(item, profile.scale);
 
   const base = item.kind === "prop" ? PROP_PIXEL_BASE : DECOR_PIXEL_BASE;
-  const scale = base * (item.scale || 1) * (item.modelScale || 1);
+  const scale = base * (item.scale || 1) * (item.modelScale || 1) * profile.scale;
   model.position.set(item.x, item.y - scale * 0.24, (item.depth || 0) * 80);
   model.scale.setScalar(scale);
-  model.rotation.y += (payload.yaw || 0) * 0.1 + (item.angle || 0) * 0.035;
-  model.rotation.x += (0.58 - (payload.pitch || 0.58)) * 0.26;
+  const panoramaRotation = profile.lockView ? 0 : (payload.yaw || 0) * 0.1 + (item.angle || 0) * 0.035;
+  model.rotation.y += profile.rotationY + panoramaRotation;
+  model.rotation.x += profile.rotationX + (0.58 - (payload.pitch || 0.58)) * 0.26;
   model.traverse((node) => {
     if (node.isMesh || node.isLineSegments) node.frustumCulled = false;
   });

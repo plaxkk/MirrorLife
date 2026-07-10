@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>MirrorLife · 室内模型审片台</title>
+    <link rel="stylesheet" href="./interior-model-review.css" />
+  </head>
+  <body>
+    <main class="review-shell">
+      <header class="review-header">
+        <div>
+          <p>MirrorLife Asset Review</p>
+          <h1>室内模型审片台</h1>
+        </div>
+        <form id="assetForm" class="asset-form">
+          <label>
+            运行时槽位
+            <select id="slotSelect"></select>
+          </label>
+          <label>
+            GLB 地址
+            <input id="modelInput" type="text" spellcheck="false" />
+          </label>
+          <label>
+            设定图地址
+            <input id="referenceInput" type="text" spellcheck="false" />
+          </label>
+          <button type="submit">载入对照</button>
+        </form>
+      </header>
+
+      <section class="review-grid">
+        <article class="model-stage">
+          <div class="stage-toolbar">
+            <div>
+              <span class="eyebrow">360° 母版检查</span>
+              <strong id="assetName">等待载入</strong>
+            </div>
+            <div class="tool-actions">
+              <div class="angle-picker" aria-label="固定检查视角">
+                <button type="button" data-angle="0">0°</button>
+                <button type="button" data-angle="90">90°</button>
+                <button type="button" data-angle="180">180°</button>
+                <button type="button" data-angle="270">270°</button>
+              </div>
+              <button id="rotateToggle" type="button" aria-pressed="true">暂停旋转</button>
+              <button id="resetCamera" type="button">重置视角</button>
+            </div>
+          </div>
+          <div id="viewport" class="viewport" aria-label="可旋转 3D 模型视图"></div>
+          <div id="loadStatus" class="load-status">准备载入模型</div>
+        </article>
+
+        <aside class="reference-stage">
+          <div class="stage-toolbar">
+            <div>
+              <span class="eyebrow">Canonical Reference</span>
+              <strong>原始设定图</strong>
+            </div>
+          </div>
+          <div class="reference-frame">
+            <img id="referenceImage" alt="室内陈设原始设定图" />
+          </div>
+          <p class="reference-note">以轮廓、比例、主色块和关键配件为准。单张图看不到的背面必须结构连续，不能只是正面挤出。</p>
+        </aside>
+      </section>
+
+      <section class="metrics" aria-label="模型指标">
+        <div><span>三角面</span><strong id="triangleMetric">--</strong></div>
+        <div><span>网格</span><strong id="meshMetric">--</strong></div>
+        <div><span>材质</span><strong id="materialMetric">--</strong></div>
+        <div><span>尺寸比</span><strong id="dimensionMetric">--</strong></div>
+        <div><span>Web 预算</span><strong id="budgetMetric">--</strong></div>
+      </section>
+    </main>
+    <script type="module" src="./interior-model-review.js"></script>
+  </body>
+</html>

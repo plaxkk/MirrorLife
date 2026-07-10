@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-10T04:11:26.491Z",
-  "provider": "procedural-threejs",
-  "sourceDir": "dist/interior-3d-work/procedural-threejs/generated-glb",
-  "backupDir": "",
+  "updatedAt": "2026-07-10T06:29:14.584Z",
+  "provider": "hunyuan",
+  "sourceDir": "dist/interior-3d-work/hunyuan/optimized-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-10T06-29-14-553Z",
   "imported": [
     {
       "slot": "bed",
@@ -47,16 +47,26 @@
       "source": "dist/interior-3d-work/hunyuan/optimized-glb/wall-board.glb",
       "target": "public/assets/interiors/glb/wall-board.glb",
       "bytes": 390168,
-      "importedAt": "2026-07-10T01:45:06.813Z"
+      "qualityTier": "development",
+      "referenceViews": [],
+      "referenceFiles": [],
+      "importedAt": "2026-07-10T06:29:14.570Z"
     },
     {
       "slot": "desk",
       "label": "课桌 / 工位 / 记录桌",
-      "provider": "procedural-threejs",
-      "source": "dist/interior-3d-work/procedural-threejs/generated-glb/desk.glb",
+      "provider": "hunyuan",
+      "source": "dist/interior-3d-work/hunyuan/optimized-glb/desk.glb",
       "target": "public/assets/interiors/glb/desk.glb",
-      "bytes": 761152,
-      "importedAt": "2026-07-10T04:11:26.449Z"
+      "bytes": 1602800,
+      "qualityTier": "development",
+      "referenceViews": [
+        "isometric"
+      ],
+      "referenceFiles": [
+        "dist/assets/interior-props-image2/school_library/student_desk.png"
+      ],
+      "importedAt": "2026-07-10T06:29:14.582Z"
     },
     {
       "slot": "round-table",
