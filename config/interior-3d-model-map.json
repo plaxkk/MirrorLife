@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "goal": "Reconstruct every MirrorLife interior prop as a high-fidelity, fully modeled 360-degree asset. Procedural Three.js geometry and sprite cards are development placeholders only and must never pass release validation.",
   "sourceImageRoot": "dist/assets/interior-props-image2",
   "remoteManifest": "dist/assets/interior-props-image2/remote-manifest.json",
@@ -9,13 +9,16 @@
   "qualityPolicy": {
     "releaseProviders": ["tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"],
     "placeholderProviders": ["procedural-threejs", "sprite-card"],
-    "minimumReferenceViews": 4,
-    "requiredReferenceViews": ["front", "back", "left", "right"],
-    "preferredReferenceViews": ["front", "back", "left", "right", "top", "isometric"],
+    "minimumReferenceViews": 6,
+    "requiredReferenceViews": ["front", "back", "left", "right", "top", "isometric"],
+    "preferredReferenceViews": ["front", "back", "left", "right", "top", "bottom", "isometric"],
+    "requireMasterAsset": true,
+    "requireReviewReport": true,
+    "requireClosedGeometry": true,
     "masterTextureSize": 2048,
     "webTextureSize": 1024,
-    "webTriangleBudget": 40000,
-    "webFileBudgetBytes": 8388608,
+    "webTriangleBudget": 80000,
+    "webFileBudgetBytes": 12582912,
     "canonicalViewSilhouetteIou": 0.9,
     "canonicalViewColorSimilarity": 0.85
   },

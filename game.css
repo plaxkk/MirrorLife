@@ -122,6 +122,7 @@ body.interior-active .first-loop-panel.quest-stage {
 
 body.interior-active .game-menu,
 body.interior-active .event-log,
+body.interior-active .event-toasts,
 body.interior-active .hud-bottom,
 body.interior-active .scenario-bar,
 body.interior-active .detail-panel {
@@ -165,6 +166,8 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   display: block;
   width: 100%; height: 100%;
   background: var(--game-bg);
+  position: relative;
+  z-index: 0;
 }
 
 #interiorThreeLayer {
@@ -174,6 +177,11 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   height: 100%;
   pointer-events: none;
   z-index: 1;
+}
+
+body.interior-active #gameCanvas {
+  background: transparent;
+  z-index: 2;
 }
 
 /* ── HUD Top Bar ── */
@@ -4281,9 +4289,76 @@ body.detail-open .event-log:focus-within {
 }
 
 @media (max-width: 720px) {
+  body.interior-active .hud-top {
+    top: 8px;
+    left: 8px;
+    right: 8px;
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+    gap: 6px;
+    padding: 6px;
+  }
+
+  body.interior-active .hud-brand {
+    width: auto;
+    min-width: 118px;
+    padding: 4px 7px;
+    justify-content: flex-start;
+  }
+
+  body.interior-active .hud-logo {
+    width: 30px;
+    height: 30px;
+  }
+
+  body.interior-active .hud-stats {
+    width: auto;
+    min-width: 0;
+    margin: 0;
+    padding: 4px 6px;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+
+  body.interior-active .hud-stat:nth-child(1),
+  body.interior-active .hud-stat:nth-child(4),
+  body.interior-active .hud-scores,
+  body.interior-active #hudSaves,
+  body.interior-active #hudStory {
+    display: none;
+  }
+
+  body.interior-active .hud-stat-label {
+    font-size: 9px;
+  }
+
+  body.interior-active .hud-stat-value {
+    font-size: 12px;
+  }
+
+  body.interior-active .hud-controls {
+    grid-column: 1 / -1;
+    width: 100%;
+    padding: 3px 5px;
+    gap: 6px;
+    justify-content: flex-start;
+  }
+
+  body.interior-active .hud-btn {
+    width: 31px;
+    height: 31px;
+  }
+
+  body.interior-active .speed-control {
+    margin-left: auto;
+  }
+
   #interiorChip {
-    top: 74px;
+    top: 101px;
+    left: 10px;
     max-width: calc(100vw - 32px);
+    padding: 6px 10px;
+    font-size: 11px;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;

@@ -110,6 +110,9 @@ async function main() {
       const fileBudget = Number(policy.webFileBudgetBytes || 8 * 1024 * 1024);
       const requiredViews = policy.requiredReferenceViews || ["front", "back", "left", "right"];
       const minimumReferenceViews = Number(policy.minimumReferenceViews || requiredViews.length);
+      const silhouetteThreshold = Number(policy.canonicalViewSilhouetteIou || 0.9);
+      const colorThreshold = Number(policy.canonicalViewColorSimilarity || 0.85);
+      const triangleBudget = Number(policy.webTriangleBudget || 80000);
 
       for (const slot of config.slots) {
         const source = imported.get(slot.slot);
@@ -132,6 +135,81 @@ async function main() {
         const missingViews = requiredViews.filter((view) => !views.has(view));
         if (missingViews.length) {
           failures.push(`${slot.slot}: missing required reference views: ${missingViews.join(", ")}`);
+        }
+
+        const referenceFiles = source.referenceFiles || [];
+        if (referenceFiles.length !== (source.referenceViews || []).length) {
+          failures.push(`${slot.slot}: referenceFiles must map one-to-one with referenceViews`);
+        }
+        for (const referenceFile of referenceFiles) {
+          if (!await exists(path.resolve(referenceFile))) {
+            failures.push(`${slot.slot}: missing reference image ${referenceFile}`);
+          }
+        }
+
+        if (policy.requireMasterAsset !== false) {
+          if (!source.masterFile) {
+            failures.push(`${slot.slot}: missing preserved high-fidelity masterFile`);
+          } else if (!await exists(path.resolve(source.masterFile))) {
+            failures.push(`${slot.slot}: high-fidelity masterFile does not exist: ${source.masterFile}`);
+          } else {
+            const masterStat = await fs.stat(path.resolve(source.masterFile));
+            if (masterStat.size < 1024) failures.push(`${slot.slot}: high-fidelity masterFile is empty`);
+          }
+        }
+
+        const geometryAudit = source.geometryAudit || {};
+        if (policy.requireClosedGeometry !== false) {
+          if (geometryAudit.closedMeshes !== true) {
+            failures.push(`${slot.slot}: geometry audit must confirm closedMeshes=true`);
+          }
+          if (Number(geometryAudit.nonManifoldEdges) !== 0) {
+            failures.push(`${slot.slot}: geometry audit reports ${geometryAudit.nonManifoldEdges ?? "unknown"} non-manifold edges`);
+          }
+          if (Number(geometryAudit.openBoundaryEdges) !== 0) {
+            failures.push(`${slot.slot}: geometry audit reports ${geometryAudit.openBoundaryEdges ?? "unknown"} open boundary edges`);
+          }
+        }
+        if (!Number.isFinite(Number(geometryAudit.webTriangleCount))) {
+          failures.push(`${slot.slot}: geometry audit is missing webTriangleCount`);
+        } else if (Number(geometryAudit.webTriangleCount) > triangleBudget) {
+          failures.push(`${slot.slot}: ${geometryAudit.webTriangleCount} triangles exceed the ${triangleBudget} Web triangle budget`);
+        }
+
+        if (policy.requireReviewReport !== false) {
+          if (!source.reviewReport) {
+            failures.push(`${slot.slot}: missing approved canonical-view reviewReport`);
+          } else if (!await exists(path.resolve(source.reviewReport))) {
+            failures.push(`${slot.slot}: reviewReport does not exist: ${source.reviewReport}`);
+          } else {
+            const review = await readJson(path.resolve(source.reviewReport));
+            if (review.slot !== slot.slot) failures.push(`${slot.slot}: reviewReport slot does not match`);
+            if (review.status !== "approved") failures.push(`${slot.slot}: reviewReport status must be approved`);
+            if (!review.reviewer || !review.approvedAt) {
+              failures.push(`${slot.slot}: reviewReport requires reviewer and approvedAt`);
+            }
+            const reviewViews = new Map((review.views || []).map((view) => [view.view, view]));
+            for (const viewName of requiredViews) {
+              const view = reviewViews.get(viewName);
+              if (!view) {
+                failures.push(`${slot.slot}: reviewReport is missing ${viewName} comparison`);
+                continue;
+              }
+              if (!view.referenceFile || !await exists(path.resolve(view.referenceFile))) {
+                failures.push(`${slot.slot}: ${viewName} comparison is missing its reference render`);
+              }
+              if (!view.renderFile || !await exists(path.resolve(view.renderFile))) {
+                failures.push(`${slot.slot}: ${viewName} comparison is missing its model render`);
+              }
+              if (Number(view.silhouetteIou) < silhouetteThreshold) {
+                failures.push(`${slot.slot}: ${viewName} silhouette IoU ${view.silhouetteIou ?? "missing"} is below ${silhouetteThreshold}`);
+              }
+              if (Number(view.colorSimilarity) < colorThreshold) {
+                failures.push(`${slot.slot}: ${viewName} color similarity ${view.colorSimilarity ?? "missing"} is below ${colorThreshold}`);
+              }
+              if (view.passed !== true) failures.push(`${slot.slot}: ${viewName} comparison has not passed review`);
+            }
+          }
         }
 
         const result = results.find((item) => item.slot === slot.slot);

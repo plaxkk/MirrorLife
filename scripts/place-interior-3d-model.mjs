@@ -12,6 +12,8 @@ function parseArgs(argv) {
     file: "",
     referenceViews: [],
     referenceFiles: [],
+    reviewReport: "",
+    geometryAudit: "",
     qualityTier: "development",
     importNow: false,
   };
@@ -24,6 +26,8 @@ function parseArgs(argv) {
     else if (arg === "--file") args.file = argv[++i];
     else if (arg === "--reference-views") args.referenceViews = argv[++i].split(",").map((item) => item.trim()).filter(Boolean);
     else if (arg === "--reference-files") args.referenceFiles = argv[++i].split(",").map((item) => item.trim()).filter(Boolean);
+    else if (arg === "--review-report") args.reviewReport = argv[++i];
+    else if (arg === "--geometry-audit") args.geometryAudit = argv[++i];
     else if (arg === "--quality-tier") args.qualityTier = argv[++i];
     else if (arg === "--import-now") args.importNow = true;
     else if (arg === "--help" || arg === "-h") {
@@ -63,6 +67,8 @@ Options:
   --file <path>      Downloaded GLB file.
   --reference-views <csv>  Views used to reconstruct the asset, for example front,back,left,right,isometric.
   --reference-files <csv>  Reference image paths corresponding to the supplied views.
+  --review-report <path>   Approved canonical-view fidelity report JSON.
+  --geometry-audit <path>  Closed-mesh/topology audit JSON.
   --quality-tier <tier>    development or release-candidate. Default: development
   --import-now       Also copy this provider's generated GLBs into public runtime assets.
   -h, --help         Show help.
@@ -77,6 +83,24 @@ function expandHome(filePath) {
 
 async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, "utf8"));
+}
+
+async function exists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function normalizeRel(filePath) {
+  return path.relative(process.cwd(), filePath).split(path.sep).join("/");
+}
+
+async function copyUnlessSame(source, target) {
+  if (path.resolve(source) === path.resolve(target)) return;
+  await fs.copyFile(source, target);
 }
 
 async function assertGlb(filePath) {
@@ -108,9 +132,53 @@ async function main() {
 
   const source = path.resolve(expandHome(args.file));
   const bytes = await assertGlb(source);
+  const policy = config.qualityPolicy || {};
+  const requiredViews = policy.requiredReferenceViews || ["front", "back", "left", "right"];
+  const minimumReferenceViews = Number(policy.minimumReferenceViews || requiredViews.length);
+
+  if (args.qualityTier === "release-candidate") {
+    const releaseProviders = new Set(policy.releaseProviders || []);
+    if (releaseProviders.size && !releaseProviders.has(args.provider)) {
+      throw new Error(`${args.provider} cannot produce release-candidate assets. Use a multiview or manually corrected provider.`);
+    }
+    if (args.referenceViews.length < minimumReferenceViews) {
+      throw new Error(`release-candidate requires at least ${minimumReferenceViews} reference views.`);
+    }
+    const missingViews = requiredViews.filter((view) => !args.referenceViews.includes(view));
+    if (missingViews.length) throw new Error(`Missing required reference views: ${missingViews.join(", ")}`);
+    if (args.referenceFiles.length !== args.referenceViews.length) {
+      throw new Error("--reference-files must contain one file for every --reference-views entry.");
+    }
+    if (!args.reviewReport) throw new Error("release-candidate requires --review-report.");
+    if (!args.geometryAudit) throw new Error("release-candidate requires --geometry-audit.");
+  }
+
+  for (const referenceFile of args.referenceFiles) {
+    if (!await exists(path.resolve(expandHome(referenceFile)))) {
+      throw new Error(`Reference file does not exist: ${referenceFile}`);
+    }
+  }
+
+  const geometryAudit = args.geometryAudit
+    ? await readJson(path.resolve(expandHome(args.geometryAudit)))
+    : {};
+  const reviewSource = args.reviewReport ? path.resolve(expandHome(args.reviewReport)) : "";
+  if (reviewSource && !await exists(reviewSource)) throw new Error(`Review report does not exist: ${reviewSource}`);
+
+  const masterTarget = path.resolve(config.workRoot, args.provider, "master-glb", `${slot.slot}.glb`);
   const target = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.glb`);
+  await fs.mkdir(path.dirname(masterTarget), { recursive: true });
   await fs.mkdir(path.dirname(target), { recursive: true });
-  await fs.copyFile(source, target);
+  await copyUnlessSame(source, masterTarget);
+  await copyUnlessSame(source, target);
+
+  let reviewReport = "";
+  if (reviewSource) {
+    const reviewTarget = path.resolve(config.workRoot, args.provider, "reviews", `${slot.slot}.json`);
+    await fs.mkdir(path.dirname(reviewTarget), { recursive: true });
+    await copyUnlessSame(reviewSource, reviewTarget);
+    reviewReport = normalizeRel(reviewTarget);
+  }
 
   const placed = {
     placedAt: new Date().toISOString(),
@@ -120,9 +188,13 @@ async function main() {
     source,
     target,
     bytes,
+    masterFile: normalizeRel(masterTarget),
+    masterBytes: bytes,
     qualityTier: args.qualityTier,
     referenceViews: args.referenceViews,
-    referenceFiles: args.referenceFiles
+    referenceFiles: args.referenceFiles.map((filePath) => normalizeRel(path.resolve(expandHome(filePath)))),
+    reviewReport,
+    geometryAudit
   };
   const receipt = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.receipt.json`);
   await fs.writeFile(receipt, `${JSON.stringify(placed, null, 2)}\n`);

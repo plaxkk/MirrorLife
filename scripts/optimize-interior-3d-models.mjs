@@ -13,8 +13,8 @@ function parseArgs(argv) {
     output: "",
     slot: "",
     textureSize: "1024",
-    simplifyRatio: "0.15",
-    simplifyError: "0.003",
+    simplifyRatio: "0.45",
+    simplifyError: "0.0005",
     importNow: false,
   };
 
@@ -60,8 +60,8 @@ Options:
   --source <path>            Optimize one explicit GLB file.
   --output <path>            Output file for --source mode.
   --texture-size <px>        Maximum texture size. Default: 1024
-  --simplify-ratio <ratio>   Target vertex ratio to keep. Default: 0.15
-  --simplify-error <error>   Simplification tolerance. Default: 0.003
+  --simplify-ratio <ratio>   Target vertex ratio to keep. Default: 0.45
+  --simplify-error <error>   Simplification tolerance. Default: 0.0005
   --import-now               Copy optimized slot GLBs into public runtime assets.
   -h, --help                 Show help.
 `);

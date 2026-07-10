@@ -184,6 +184,10 @@ async function main() {
       qualityTier: provenance.qualityTier || "development",
       referenceViews: provenance.referenceViews || [],
       referenceFiles: provenance.referenceFiles || [],
+      masterFile: provenance.masterFile || "",
+      masterBytes: provenance.masterBytes || 0,
+      reviewReport: provenance.reviewReport || "",
+      geometryAudit: provenance.geometryAudit || {},
       importedAt: new Date().toISOString()
     });
     console.log(`Imported ${item.slot.slot}: ${normalizeRel(item.source)} -> ${normalizeRel(target)}`);

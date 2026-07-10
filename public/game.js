@@ -5557,8 +5557,8 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
       return;
     }
     button.hidden = false;
-    button.style.left = `${anchor.x}px`;
-    button.style.top = `${anchor.y - 52 * anchor.scale}px`;
+    button.style.left = `${anchor.hotspotX ?? anchor.x}px`;
+    button.style.top = `${anchor.hotspotY ?? (anchor.y - (anchor.screenProjected ? 0 : 52 * anchor.scale))}px`;
     button.style.setProperty("--hotspot-scale", String(clamp(anchor.scale, 0.72, 1.12)));
     button.classList.toggle("discovered", record.found.includes(anchor.label));
   });
@@ -5636,7 +5636,7 @@ function exploreInteriorHotspot(propIndex) {
       const behavior = BEHAVIOR_BY_ID.get(primaryBehavior);
       if (ia && anchor) {
         ia.targetX = anchor.x;
-        ia.targetY = anchor.y + 16;
+        ia.targetY = anchor.y + (anchor.screenProjected ? -4 : 16);
         ia.targetAnchor = anchor;
         ia.nextTargetAt = performance.now() + 3800;
         if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) startCitizenBehavior(observer, ia, behavior, performance.now());
@@ -6968,43 +6968,50 @@ function getInteriorThreeItems(blueprint, W, H) {
   const propItems = (blueprint.props || []).map((prop, index, props) => {
     const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
     const distance = getInteriorPropRadius(prop);
-    const point = projectInteriorPanoramaPoint(W, H, angle, distance);
-    const seed = hashCommunitySeed(prop.label || "prop", index);
-    const wobble = (seededCommunityValue(seed, 1) - 0.5) * 3;
+    const radius = 2.42 + distance * 2.25;
+    const worldX = Math.sin(angle) * radius;
+    const worldZ = -Math.cos(angle) * radius;
+    const interactionSide = index % 2 === 0 ? -1 : 1;
+    const interactionOffset = 0.72 * interactionSide;
     return {
+      key: `prop-${index}`,
+      index,
       model: interiorThreeModel(interiorPropModel(prop, blueprint)),
       label: prop.label || "",
       kind: "prop",
-      x: point.x + wobble,
-      y: point.y,
-      scale: point.scale,
-      depth: point.depth,
+      worldX,
+      worldZ,
+      interactionWorldX: worldX + Math.cos(angle) * interactionOffset,
+      interactionWorldZ: worldZ + Math.sin(angle) * interactionOffset,
+      anchorHeight: 1.18,
       angle,
       modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25),
-      visible: point.visible
+      visible: true
     };
   });
 
   const decorPlan = getInteriorDecorPlan(blueprint);
   const decorItems = decorPlan.map((item, index, items) => {
-    const angle = getInteriorPanoramaAngle(item.x, index, items.length);
-    const distance = getInteriorDecorRadius(item);
-    const point = projectInteriorPanoramaPoint(W, H, angle, distance, item.layer === "back" ? H * 0.03 : 0);
+    const baseAngle = getInteriorPanoramaAngle(item.x, index, items.length);
+    const angleOffset = (index % 2 === 0 ? -1 : 1) * (0.13 + (index % 3) * 0.025);
+    const angle = wrapInteriorAngle(baseAngle + angleOffset);
+    const radius = item.layer === "back" ? 4.72 : item.layer === "front" ? 2.82 : 3.72;
     return {
+      key: `decor-${index}`,
+      index,
       model: interiorDecorModel(item.type),
       label: item.type,
       kind: "decor",
-      x: point.x,
-      y: point.y,
-      scale: point.scale,
-      depth: point.depth - 0.04,
+      worldX: Math.sin(angle) * radius,
+      worldZ: -Math.cos(angle) * radius,
+      anchorHeight: item.layer === "back" ? 1.35 : 0.94,
       angle,
-      modelScale: clamp(item.s || 1, 0.68, 1.22) * 0.82,
-      visible: point.visible
+      modelScale: clamp(item.s || 1, 0.68, 1.22) * 0.72,
+      visible: true
     };
   });
 
-  return [...decorItems, ...propItems].filter(item => item.visible);
+  return [...decorItems, ...propItems];
 }
 
 function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
@@ -7018,6 +7025,8 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
     yaw: Number(interiorOrbit?.yaw || 0),
     pitch: Number(interiorOrbit?.pitch || 0.58),
     theme: {
+      wall: roomStyle.wall,
+      floor: roomStyle.floor,
       accent: roomStyle.accent,
       trim: roomStyle.trim,
       night: !!isNight
@@ -7505,7 +7514,8 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
         : null;
       if (anchor) {
         ia.targetX = anchor.x + (seededCommunityValue(seed, 5) - 0.5) * 28;
-        ia.targetY = anchor.y + 18 + (seededCommunityValue(seed, 6) - 0.5) * 16;
+        const anchorOffset = anchor.screenProjected ? -4 : 18;
+        ia.targetY = anchor.y + anchorOffset + (seededCommunityValue(seed, 6) - 0.5) * (anchor.screenProjected ? 8 : 16);
         ia.targetAnchor = anchor;
       } else {
         ia.targetX = layout.left + 30 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 60);
@@ -7554,15 +7564,35 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
   const blueprint = getInteriorBlueprint(zone);
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
-  const panoramaAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
+  const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
+  const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight);
+  const useThreeModels = !!threeState?.ready;
+  const projectedProps = new Map((threeState?.projections || [])
+    .filter((item) => String(item.key || "").startsWith("prop-"))
+    .map((item) => [item.index, item]));
+  const panoramaAnchors = fallbackAnchors.map((anchor) => {
+    const projected = projectedProps.get(anchor.index);
+    if (!useThreeModels || !projected) return anchor;
+    return {
+      ...anchor,
+      ...projected,
+      prop: anchor.prop,
+      label: anchor.label,
+      behaviors: anchor.behaviors,
+      screenProjected: true
+    };
+  });
   const interiorAnchors = panoramaAnchors.filter(anchor => anchor.visible);
-  const useThreeModels = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight);
 
-  drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
-  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H, useThreeModels);
-  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H, useThreeModels);
-  drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, useThreeModels);
-  drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, useThreeModels);
+  if (useThreeModels) {
+    ctx.clearRect(0, 0, W, H);
+  } else {
+    drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
+    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H, false);
+    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H, false);
+    drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, false);
+    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, false);
+  }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
   syncInteriorDiscoveryCard(now);
 
@@ -7621,17 +7651,39 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     if (!ia) {
       const spawnInside = !!canonicalAnim.indoor.spawnInside;
       const seed = hashCommunitySeed(citizen.id, "interior-spawn");
+      const spawnAnchor = useThreeModels && interiorAnchors.length
+        ? interiorAnchors[(seed + idx) % interiorAnchors.length]
+        : null;
       const entryX = interiorExitRect ? interiorExitRect.x + interiorExitRect.w / 2 : W * 0.86;
       const entryY = interiorExitRect ? interiorExitRect.y - 12 : layout.floorBottom - 32;
-      const sx = spawnInside
+      const sx = spawnAnchor?.x ?? (spawnInside
         ? layout.left + 40 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 80)
-        : entryX;
-      const sy = spawnInside
+        : entryX);
+      const sy = spawnAnchor?.y ?? (spawnInside
         ? layout.floorTop + 50 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 80)
-        : entryY;
+        : entryY);
       ia = interiorAnimations[citizen.id] = {
-        x: sx, y: sy, targetX: sx, targetY: sy, nextTargetAt: 0, walkPhase: 0, facing: 1
+        x: sx,
+        y: sy,
+        targetX: sx,
+        targetY: sy,
+        targetAnchor: spawnAnchor,
+        nextTargetAt: 0,
+        walkPhase: 0,
+        facing: 1
       };
+    }
+    if (useThreeModels && Number.isInteger(ia.targetAnchor?.index)) {
+      const liveAnchor = interiorAnchors.find((anchor) => anchor.index === ia.targetAnchor.index);
+      if (liveAnchor) {
+        const cameraShiftX = liveAnchor.x - Number(ia.targetAnchor.x ?? liveAnchor.x);
+        const cameraShiftY = liveAnchor.y - Number(ia.targetAnchor.y ?? liveAnchor.y);
+        ia.x += cameraShiftX;
+        ia.y += cameraShiftY;
+        ia.targetX = Number(ia.targetX || ia.x) + cameraShiftX;
+        ia.targetY = Number(ia.targetY || ia.y) + cameraShiftY;
+        ia.targetAnchor = liveAnchor;
+      }
     }
     updateInteriorCitizen(citizen, ia, canonicalAnim, layout, interiorAnchors, now, idx);
     entries.push({ citizen, moveAnim: ia, x: ia.x, y: ia.y, idx });
@@ -7642,7 +7694,8 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
-    const size = (isHover ? 20 : 16) + sizeBoost;
+    const baseSize = useThreeModels ? 27 : 16;
+    const size = (isHover ? baseSize + 4 : baseSize) + sizeBoost;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
     drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
@@ -7661,7 +7714,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   }
 
   // Night dim
-  if (isNight) {
+  if (isNight && !useThreeModels) {
     ctx.fillStyle = "rgba(5,10,25,0.18)";
     ctx.fillRect(0, 0, W, H);
   }
