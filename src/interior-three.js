@@ -190,6 +190,17 @@ function clearGroup(group) {
   while (group?.children.length) group.remove(group.children[0]);
 }
 
+function disposeOwnedGroup(group) {
+  if (!group) return;
+  group.traverse((node) => {
+    if (!node.isMesh) return;
+    node.geometry?.dispose?.();
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => material.dispose?.());
+  });
+  clearGroup(group);
+}
+
 function createToonMaterial(color, options = {}) {
   return new THREE.MeshToonMaterial({
     color: new THREE.Color(color),
@@ -250,11 +261,177 @@ function addWallPanel(angle, color, isWindow, index) {
   roomRoot.add(group);
 }
 
+function addRingBox(angle, radius, width, height, depth, color, y, options = {}) {
+  const material = createToonMaterial(color, options);
+  const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+  mesh.position.set(Math.sin(angle) * radius, y, -Math.cos(angle) * radius);
+  mesh.rotation.y = angle;
+  mesh.castShadow = options.castShadow !== false;
+  mesh.receiveShadow = true;
+  roomRoot.add(mesh);
+  return mesh;
+}
+
+function addPendant(angle, radius, color, y = 2.78) {
+  const x = Math.sin(angle) * radius;
+  const z = -Math.cos(angle) * radius;
+  const cable = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.012, ROOM_HEIGHT - y, 8),
+    createToonMaterial("#1a1a2e")
+  );
+  cable.position.set(x, y + (ROOM_HEIGHT - y) / 2, z);
+  roomRoot.add(cable);
+  const shade = new THREE.Mesh(
+    new THREE.ConeGeometry(0.18, 0.18, 16, 1, true),
+    createToonMaterial(color, { side: THREE.DoubleSide })
+  );
+  shade.position.set(x, y, z);
+  shade.rotation.x = Math.PI;
+  roomRoot.add(shade);
+  const bulb = new THREE.PointLight(color, 0.8, 2.8, 2);
+  bulb.position.set(x, y - 0.12, z);
+  roomRoot.add(bulb);
+}
+
+function addFloorPad(angle, radius, color, size = 0.7) {
+  const pad = new THREE.Mesh(
+    new THREE.CircleGeometry(size, 24),
+    createToonMaterial(color, { transparent: true, opacity: 0.72 })
+  );
+  pad.rotation.x = -Math.PI / 2;
+  pad.position.set(Math.sin(angle) * radius, 0.026, -Math.cos(angle) * radius);
+  pad.receiveShadow = true;
+  roomRoot.add(pad);
+}
+
+function addRoomArchitecture(theme, colors) {
+  const archetype = theme.archetype || "home";
+  const variantOffset = (Number(theme.variant || 0) % 4) * (Math.PI / 18);
+  const { accent, trim, wallColor, floorColor, night } = colors;
+
+  if (archetype === "care") {
+    const careBand = new THREE.Mesh(
+      new THREE.TorusGeometry(ROOM_RADIUS - 0.07, 0.055, 8, 64),
+      createToonMaterial("#56cfe1")
+    );
+    careBand.rotation.x = Math.PI / 2;
+    careBand.position.y = 1.28;
+    roomRoot.add(careBand);
+    for (let index = 0; index < 4; index += 1) {
+      const angle = variantOffset + index * Math.PI / 2;
+      addRingBox(angle, 4.78, 1.35, 0.07, 0.12, "#eefcff", 2.78);
+      addFloorPad(angle, 3.48, index % 2 ? "#b8f2e6" : "#dff7ff", 0.62);
+    }
+    return;
+  }
+
+  if (archetype === "learning") {
+    for (let index = 0; index < 6; index += 1) {
+      const angle = variantOffset + index * Math.PI / 3;
+      addRingBox(angle, 5.02, 0.1, 1.55, 0.16, index % 2 ? "#d89151" : "#f1c40f", 1.05);
+      if (index % 2 === 0) addPendant(angle + 0.18, 2.6, "#ffd166");
+    }
+    return;
+  }
+
+  if (archetype === "commerce") {
+    for (let index = 0; index < 8; index += 1) {
+      const angle = variantOffset + index * Math.PI / 4;
+      addRingBox(angle, 5.0, 0.58, 0.32, 0.18, index % 2 ? "#fafaf5" : "#e63946", 2.72);
+      if (index % 2 === 0) addPendant(angle, 3.2, "#ffd166", 2.68);
+    }
+    return;
+  }
+
+  if (archetype === "public" || archetype === "justice") {
+    const columnColor = archetype === "justice" ? "#e9eef8" : "#fff4cf";
+    for (let index = 0; index < 6; index += 1) {
+      const angle = variantOffset + Math.PI / 6 + index * Math.PI / 3;
+      const x = Math.sin(angle) * 5.08;
+      const z = -Math.cos(angle) * 5.08;
+      const column = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.12, 2.7, 12),
+        createToonMaterial(columnColor)
+      );
+      column.position.set(x, 1.35, z);
+      column.castShadow = true;
+      column.receiveShadow = true;
+      roomRoot.add(column);
+      addFloorPad(angle, 3.55, archetype === "justice" ? (index % 2 ? "#ffcad4" : "#bde0fe") : "#ffe98a", 0.52);
+    }
+    return;
+  }
+
+  if (archetype === "work") {
+    for (let index = 0; index < 8; index += 1) {
+      const angle = variantOffset + index * Math.PI / 4;
+      addRingBox(angle, 4.9, 0.13, 2.85, 0.16, index % 2 ? "#3d5a80" : "#f1c40f", 1.43);
+    }
+    const beam = new THREE.Mesh(
+      new THREE.TorusGeometry(3.65, 0.07, 8, 48),
+      createToonMaterial("#1a1a2e")
+    );
+    beam.rotation.x = Math.PI / 2;
+    beam.position.y = 2.86;
+    roomRoot.add(beam);
+    return;
+  }
+
+  if (archetype === "nature") {
+    for (let index = 0; index < 10; index += 1) {
+      const angle = variantOffset + index * Math.PI / 5;
+      addRingBox(angle, 5.04, 0.06, 2.95, 0.1, index % 2 ? "#2ecc71" : "#1a1a2e", 1.48);
+    }
+    const glassRing = new THREE.Mesh(
+      new THREE.TorusGeometry(4.18, 0.045, 8, 64),
+      createToonMaterial("#7bdff2", { transparent: true, opacity: night ? 0.38 : 0.56, depthWrite: false })
+    );
+    glassRing.rotation.x = Math.PI / 2;
+    glassRing.position.y = 2.72;
+    roomRoot.add(glassRing);
+    [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle) => addFloorPad(angle + variantOffset, 3.75, "#b8f2a1", 0.66));
+    return;
+  }
+
+  if (archetype === "creative") {
+    const palette = ["#e63946", "#4ea8de", "#f1c40f", "#2ecc71", "#ff7aa2"];
+    palette.forEach((color, index) => {
+      const angle = variantOffset + index * (Math.PI * 2 / palette.length);
+      addRingBox(angle, 5.02, 0.64, 0.12, 0.16, color, 2.7);
+      addPendant(angle + 0.14, 3.05, color, 2.76);
+      addFloorPad(angle, 3.62, color, 0.48);
+    });
+    return;
+  }
+
+  if (archetype === "memory") {
+    for (let index = 0; index < 8; index += 1) {
+      const angle = variantOffset + index * Math.PI / 4;
+      addRingBox(angle, 4.94, 0.08, 1.9, 0.12, index % 2 ? "#9d8189" : "#d8c3a5", 1.12);
+      if (index % 2 === 0) addPendant(angle, 3.5, "#ffd27d", 2.55);
+    }
+    return;
+  }
+
+  for (let index = 0; index < 6; index += 1) {
+    const angle = variantOffset + index * Math.PI / 3;
+    addRingBox(angle, 5.0, 0.72, 0.12, 0.16, index % 2 ? accent : "#d89151", 1.15);
+    if (index % 3 === 0) addPendant(angle, 2.9, "#ffd166", 2.72);
+  }
+  const homeRug = new THREE.Mesh(
+    new THREE.RingGeometry(1.82, 2.18, 48),
+    createToonMaterial(night ? "#56637a" : floorColor, { transparent: true, opacity: 0.72 })
+  );
+  homeRug.rotation.x = -Math.PI / 2;
+  homeRug.position.y = 0.024;
+  roomRoot.add(homeRug);
+}
+
 function rebuildRoom(theme = {}) {
-  const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night].join("|");
+  const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.variant].join("|");
   if (signature === roomSignature) return;
   roomSignature = signature;
-  clearGroup(roomRoot);
+  disposeOwnedGroup(roomRoot);
 
   const night = !!theme.night;
   const wallColor = night ? "#273448" : (theme.wall || "#f5eddc");
@@ -317,6 +494,7 @@ function rebuildRoom(theme = {}) {
     const angle = (i / 12) * Math.PI * 2;
     addWallPanel(angle, i % 3 === 0 ? "#bfe3f2" : accent, i % 3 === 0, i);
   }
+  addRoomArchitecture(theme, { accent, trim, wallColor, floorColor, night });
 }
 
 function getItemSignature(items) {
@@ -363,7 +541,7 @@ function updateCamera(payload = {}) {
     Math.sin(elevation),
     -Math.cos(yaw) * horizontal
   );
-  camera.position.set(0, CAMERA_HEIGHT, 0);
+  camera.position.set(Number(payload.cameraX || 0), CAMERA_HEIGHT, Number(payload.cameraZ || 0));
   camera.lookAt(camera.position.clone().add(direction));
   camera.updateMatrixWorld(true);
 }

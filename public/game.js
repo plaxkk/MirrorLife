@@ -52,7 +52,8 @@ let followedCitizenId = null;
 let followZoomUntil = 0;
 let lastFollowBannerAt = 0;
 let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
-let interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+let interiorOrbit = { yaw: 0.18, pitch: 0.58, x: 0, z: 0, lastMoveAt: 0, drag: false, lastX: 0, lastY: 0 };
+let interiorMoveKeys = new Set();
 let interiorExitRect = null;
 let interiorAnimations = {};
 let interiorHotspots = [];
@@ -78,6 +79,8 @@ const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
 const INTERIOR_PANORAMA_FOV = Math.PI * 0.68;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
+const INTERIOR_PLAYER_RADIUS = 1.72;
+const INTERIOR_PLAYER_SPEED = 1.55;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -925,6 +928,7 @@ function renderFirstLoopPanel() {
   state.firstSessionStage = stage;
   applyFirstSessionChrome();
   panel.classList.toggle("collapsed", questPanelCollapsed);
+  if (questPanelCollapsed) panel.scrollTop = 0;
   const renderers = {
     opening: renderOpeningQuest,
     choose_capsule: renderChooseCapsuleQuest,
@@ -935,6 +939,7 @@ function renderFirstLoopPanel() {
     unlocked_world: renderUnlockedWorldQuest
   };
   content.innerHTML = (renderers[stage] || renderChooseCapsuleQuest)();
+  if (questPanelCollapsed) panel.scrollTop = 0;
 }
 
 function buildFirstLoopResult(feedback, actionType, visibleChoice = "") {
@@ -5383,6 +5388,79 @@ const INTERIOR_ZONE_PROFILES = {
   }
 };
 
+const INTERIOR_SCENE_ACTIONS = {
+  care: {
+    label: "接过一次照护",
+    title: "照护交接",
+    behavior: "care",
+    text: "你没有急着追问发生了什么，只先接过手边那件小事，让已经很累的人能够喘一口气。",
+    reaction: "谢谢你先看见了我的疲惫。"
+  },
+  learning: {
+    label: "加入一次共学",
+    title: "小步练习",
+    behavior: "teach",
+    text: "你坐进空着的位置，把一个看似遥远的问题拆成了今天可以一起尝试的一小步。",
+    reaction: "原来不知道答案，也可以先一起试。"
+  },
+  commerce: {
+    label: "传递一份补给",
+    title: "邻里补给",
+    behavior: "handoff",
+    text: "你把一份资源交给真正需要的人，同时留下可继续流转的记录，而不是把帮助变成一次性的施舍。",
+    reaction: "我会记得把这份照顾继续传下去。"
+  },
+  public: {
+    label: "坐进那把空椅",
+    title: "公共讨论",
+    behavior: "meeting",
+    text: "你没有替任何人总结，而是把尚未被说出的顾虑留在桌面上，让决定多容纳一种生活。",
+    reaction: "谢谢你没有把复杂的问题说得太简单。"
+  },
+  justice: {
+    label: "为沉默留一分钟",
+    title: "修复性对话",
+    behavior: "comfort",
+    text: "你按下暂停，让双方先重新确认边界。沉默没有被解释成逃避，而被当成重新选择表达方式的时间。",
+    reaction: "这一次，我感觉自己仍然可以选择。"
+  },
+  work: {
+    label: "完成一次交接",
+    title: "协作交接",
+    behavior: "work",
+    text: "你把过程、风险和未完成的部分都交代清楚，没有把疲惫藏进一句轻描淡写的“已经好了”。",
+    reaction: "知道哪里还没完成，反而让我更安心。"
+  },
+  home: {
+    label: "一起准备一顿饭",
+    title: "共享日常",
+    behavior: "cook",
+    text: "你和屋里的人一起收拾桌面、准备食物。没有宏大的转折，关系却在这些能够共同完成的小事里变得真实。",
+    reaction: "你在这里的时候，这个房间更像家了。"
+  },
+  nature: {
+    label: "照料一株新芽",
+    title: "共同照料",
+    behavior: "garden",
+    text: "你只调整了水、光线和一点点空间，没有催促它立刻长大。照料被记进下一次轮值。",
+    reaction: "它今天没有变化，但我们的关系已经开始了。"
+  },
+  creative: {
+    label: "续上未完成的一笔",
+    title: "共同创作",
+    behavior: "write",
+    text: "你没有覆盖前一个人的表达，而是在它旁边留下自己的回应。作品因此多了一条可以继续生长的方向。",
+    reaction: "这一笔不像我，却让作品更完整。"
+  },
+  memory: {
+    label: "留下一段无名记忆",
+    title: "低声纪念",
+    behavior: "think",
+    text: "你留下了一段不署名的记忆，没有解释它属于谁。有人在旁边放下一朵花，让这份沉默有了陪伴。",
+    reaction: "有些故事不必公开，也值得被温柔保存。"
+  }
+};
+
 const INTERIOR_BLUEPRINT_CACHE = new Map();
 
 function inferInteriorBlueprintKey(zone) {
@@ -5445,6 +5523,56 @@ function getInteriorLayout(W, H) {
 function wrapInteriorAngle(angle) {
   const wrapped = (Number(angle || 0) + Math.PI) % INTERIOR_PANORAMA_TAU;
   return (wrapped < 0 ? wrapped + INTERIOR_PANORAMA_TAU : wrapped) - Math.PI;
+}
+
+function moveInteriorPlayer(forward, strafe, distance) {
+  const magnitude = Math.hypot(forward, strafe);
+  if (!magnitude || !distance) return;
+  const normalizedForward = forward / magnitude;
+  const normalizedStrafe = strafe / magnitude;
+  const yaw = Number(interiorOrbit.yaw || 0);
+  const forwardX = Math.sin(yaw);
+  const forwardZ = -Math.cos(yaw);
+  const rightX = Math.cos(yaw);
+  const rightZ = Math.sin(yaw);
+  let nextX = Number(interiorOrbit.x || 0) + (forwardX * normalizedForward + rightX * normalizedStrafe) * distance;
+  let nextZ = Number(interiorOrbit.z || 0) + (forwardZ * normalizedForward + rightZ * normalizedStrafe) * distance;
+  const radius = Math.hypot(nextX, nextZ);
+  if (radius > INTERIOR_PLAYER_RADIUS) {
+    nextX = nextX / radius * INTERIOR_PLAYER_RADIUS;
+    nextZ = nextZ / radius * INTERIOR_PLAYER_RADIUS;
+  }
+  interiorOrbit.x = nextX;
+  interiorOrbit.z = nextZ;
+}
+
+function nudgeInteriorPlayer(direction, distance = 0.11) {
+  if (direction === "forward") moveInteriorPlayer(1, 0, distance);
+  else if (direction === "back") moveInteriorPlayer(-1, 0, distance);
+  else if (direction === "left") moveInteriorPlayer(0, -1, distance);
+  else if (direction === "right") moveInteriorPlayer(0, 1, distance);
+}
+
+function updateInteriorPlayerMovement(now) {
+  if (!interiorView) return;
+  const previous = Number(interiorOrbit.lastMoveAt || now);
+  const dt = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+  interiorOrbit.lastMoveAt = now;
+  if (!interiorMoveKeys.size || dt <= 0) return;
+
+  let forward = 0;
+  let strafe = 0;
+  if (interiorMoveKeys.has("forward")) forward += 1;
+  if (interiorMoveKeys.has("back")) forward -= 1;
+  if (interiorMoveKeys.has("left")) strafe -= 1;
+  if (interiorMoveKeys.has("right")) strafe += 1;
+  const magnitude = Math.hypot(forward, strafe);
+  if (!magnitude) return;
+  forward /= magnitude;
+  strafe /= magnitude;
+
+  moveInteriorPlayer(forward, strafe, INTERIOR_PLAYER_SPEED * dt);
+  markRenderActive(220);
 }
 
 function interiorAngleDelta(angle, yaw) {
@@ -5515,7 +5643,7 @@ function getInteriorPanoramaAnchors(blueprint, W, H) {
 
 function getInteriorExplorationRecord(zoneId) {
   state.interiorExploration = state.interiorExploration || {};
-  state.interiorExploration[zoneId] = state.interiorExploration[zoneId] || { found: [], completed: false };
+  state.interiorExploration[zoneId] = state.interiorExploration[zoneId] || { found: [], completed: false, scenePlayed: false };
   return state.interiorExploration[zoneId];
 }
 
@@ -5577,13 +5705,71 @@ function syncInteriorDiscoveryCard(now) {
     card = document.createElement("aside");
     card.id = "interiorDiscoveryCard";
     card.setAttribute("aria-live", "polite");
+    card.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-interior-scene-action]");
+      if (!action) return;
+      event.stopPropagation();
+      playInteriorSceneAction();
+    });
     document.getElementById("gameShell")?.appendChild(card);
   }
-  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}`;
+  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}`;
   if (card.dataset.signature !== signature) {
     card.dataset.signature = signature;
-    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>`;
+    card.classList.toggle("has-action", !!discovery.actionLabel);
+    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}`;
   }
+}
+
+function playInteriorSceneAction() {
+  if (!interiorView) return;
+  const zone = interiorView.zone;
+  const blueprint = getInteriorBlueprint(zone);
+  const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  const record = getInteriorExplorationRecord(zone.id);
+  if (record.scenePlayed) return;
+  record.scenePlayed = true;
+
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  if (avatar) {
+    avatar.mood = clamp(Number(avatar.mood || 50) + 3, 0, 100);
+    avatar.energy = clamp(Number(avatar.energy || 50) - 1, 0, 100);
+    avatar.trust = clamp(Number(avatar.trust || 50) + 2, 0, 100);
+    avatar.lastAction = sceneAction.title;
+  }
+
+  const participant = getAliveCitizens(state.society)
+    .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
+  if (participant) {
+    participant.mood = clamp(Number(participant.mood || 50) + 3, 0, 100);
+    participant.trust = clamp(Number(participant.trust || 50) + 2, 0, 100);
+    participant.lastAction = sceneAction.title;
+    addSpeechBubble(participant.id, sceneAction.reaction, "support", { duration: 5200 });
+    const ia = interiorAnimations[participant.id];
+    const anchor = interiorHotspots.find((item) => item.behaviors?.includes(sceneAction.behavior)) || interiorHotspots[0];
+    const behavior = BEHAVIOR_BY_ID.get(sceneAction.behavior);
+    if (ia && anchor) {
+      ia.targetX = anchor.x;
+      ia.targetY = anchor.y - (anchor.screenProjected ? 4 : -16);
+      ia.targetAnchor = anchor;
+      ia.nextTargetAt = performance.now() + 5200;
+      if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) ia.forcedBehaviorId = behavior.id;
+    }
+  }
+
+  const sceneText = sceneAction.text.replace(/[。！？]+$/u, "");
+  const outcome = participant ? `${sceneText}，${participant.name}也留在了现场。` : `${sceneText}。`;
+  interiorView.discovery = {
+    title: sceneAction.title,
+    text: outcome,
+    progress: "共同经历",
+    until: performance.now() + 9600
+  };
+  addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, sceneAction.behavior, true, `interior-scene-${zone.id}`);
+  pushRobotSignal("avatar", "soft", `另一个世界里的你在${zone.name}${sceneAction.label}。这不是任务分数，而是一段关系开始改变的证据。`);
+  persist();
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
 }
 
 function getInteriorReactionLine(behaviorId, zoneName) {
@@ -5651,13 +5837,13 @@ function exploreInteriorHotspot(propIndex) {
       title: `${zone.name} · 场所回声`,
       text: completion,
       progress: "已读懂",
-      until: performance.now() + 9000
+      actionLabel: (INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home).label,
+      until: Number.POSITIVE_INFINITY
     };
     addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
     pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
-  } else {
-    persist();
   }
+  persist();
   syncInteriorDiscoveryCard(performance.now());
   markRenderActive(7600);
   updateHUD();
@@ -7024,11 +7210,15 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
     height: H,
     yaw: Number(interiorOrbit?.yaw || 0),
     pitch: Number(interiorOrbit?.pitch || 0.58),
+    cameraX: Number(interiorOrbit?.x || 0),
+    cameraZ: Number(interiorOrbit?.z || 0),
     theme: {
       wall: roomStyle.wall,
       floor: roomStyle.floor,
       accent: roomStyle.accent,
       trim: roomStyle.trim,
+      archetype: blueprint.key,
+      variant: hashCommunitySeed(interiorView?.zone?.id || blueprint.key, "interior-room") % 4,
       night: !!isNight
     },
     items
@@ -7384,19 +7574,25 @@ function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
   const blueprint = getInteriorBlueprint(zone);
   const enteredAt = performance.now();
+  const explorationRecord = getInteriorExplorationRecord(zone.id);
+  const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
   interiorView = {
     zone,
     source,
     enteredAt,
     nextArrivalCheckAt: 0,
     discovery: {
-      title: blueprint.title,
-      text: blueprint.profile?.intro || "拖动环视房间，靠近发光的陈设会看见这里发生过的生活。",
-      progress: "点击 ✦ 探索",
-      until: enteredAt + 7200
+      title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
+      text: explorationRecord.completed && !explorationRecord.scenePlayed
+        ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
+        : (blueprint.profile?.intro || "拖动环视房间，靠近发光的陈设会看见这里发生过的生活。"),
+      progress: explorationRecord.completed && !explorationRecord.scenePlayed ? "可以加入" : "点击 ✦ 探索",
+      actionLabel: explorationRecord.completed && !explorationRecord.scenePlayed ? sceneAction.label : "",
+      until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
   };
-  interiorOrbit = { yaw: 0, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+  interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, z: 0, lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
+  interiorMoveKeys.clear();
   interiorExitRect = null;
   hideDetail();
   document.body.classList.add("interior-active");
@@ -7405,6 +7601,7 @@ function enterInteriorView(zone, source = "manual") {
     renderFirstLoopPanel();
   }
   ensureInteriorChip(zone);
+  ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
   markRenderActive(3200);
 }
@@ -7413,10 +7610,12 @@ function exitInteriorView() {
   if (!interiorView) return;
   interiorView = null;
   interiorOrbit.drag = false;
+  interiorMoveKeys.clear();
   interiorExitRect = null;
   interiorHotspots = [];
   document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
+  document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
   document.getElementById("interiorDiscoveryCard")?.remove();
   markRenderActive(2200);
@@ -7427,13 +7626,45 @@ function ensureInteriorChip(zone) {
   const el = document.createElement("button");
   el.id = "interiorChip";
   el.type = "button";
-  el.textContent = `← 离开${zone.name} · 环视并点击 ✦ 探索`;
+  el.textContent = `← 离开${zone.name} · 拖动环视 · WASD 移动 · 点击 ✦ 探索`;
   el.addEventListener("click", () => {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
     if (wasFollow) stopFollowCitizen(false);
   });
   document.getElementById("gameShell")?.appendChild(el);
+}
+
+function ensureInteriorMovePad() {
+  document.getElementById("interiorMovePad")?.remove();
+  const pad = document.createElement("nav");
+  pad.id = "interiorMovePad";
+  pad.setAttribute("aria-label", "室内移动");
+  pad.innerHTML = `
+    <button type="button" data-interior-move="forward" aria-label="向前移动" title="向前">↑</button>
+    <button type="button" data-interior-move="left" aria-label="向左移动" title="向左">←</button>
+    <span aria-hidden="true">●</span>
+    <button type="button" data-interior-move="right" aria-label="向右移动" title="向右">→</button>
+    <button type="button" data-interior-move="back" aria-label="向后移动" title="向后">↓</button>`;
+  const stop = (direction) => {
+    interiorMoveKeys.delete(direction);
+    markRenderActive(300);
+  };
+  pad.querySelectorAll("[data-interior-move]").forEach((button) => {
+    const direction = button.dataset.interiorMove;
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      button.setPointerCapture?.(event.pointerId);
+      interiorMoveKeys.add(direction);
+      nudgeInteriorPlayer(direction, 0.08);
+      markRenderActive(1200);
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
+      button.addEventListener(eventName, () => stop(direction));
+    });
+  });
+  document.getElementById("gameShell")?.appendChild(pad);
 }
 
 // When the player walks in on their own, a couple of citizens are "already inside".
@@ -7537,7 +7768,10 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
     } else {
       // Arrived at a spot indoors: maybe settle into an activity.
       if (now > (ia.nextBehaviorAt || 0)) {
-        const pick = pickInteriorAnchorBehavior(citizen, interiorView?.zone, ia.targetAnchor, now, idx)
+        const forced = ia.forcedBehaviorId ? BEHAVIOR_BY_ID.get(ia.forcedBehaviorId) : null;
+        delete ia.forcedBehaviorId;
+        const pick = forced
+          || pickInteriorAnchorBehavior(citizen, interiorView?.zone, ia.targetAnchor, now, idx)
           || pickCitizenBehavior(citizen, interiorView?.zone, now, idx + 40, true);
         if (pick) {
           startCitizenBehavior(citizen, ia, pick, now);
@@ -7560,6 +7794,7 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
 
 function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const zone = interiorView.zone;
+  updateInteriorPlayerMovement(now);
   const layout = getInteriorLayout(W, H);
   const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
   const blueprint = getInteriorBlueprint(zone);
@@ -7686,6 +7921,10 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
       }
     }
     updateInteriorCitizen(citizen, ia, canonicalAnim, layout, interiorAnchors, now, idx);
+    ia.x = clamp(ia.x, 34, W - 34);
+    ia.y = clamp(ia.y, 96, H - 44);
+    ia.targetX = clamp(Number(ia.targetX || ia.x), 34, W - 34);
+    ia.targetY = clamp(Number(ia.targetY || ia.y), 96, H - 44);
     entries.push({ citizen, moveAnim: ia, x: ia.x, y: ia.y, idx });
   });
 
@@ -9877,11 +10116,38 @@ function bindGameEvents() {
       }
       return;
     }
+    if (interiorView) {
+      const movementByKey = {
+        w: "forward", arrowup: "forward",
+        s: "back", arrowdown: "back",
+        a: "left", arrowleft: "left",
+        d: "right", arrowright: "right"
+      };
+      const direction = movementByKey[e.key.toLowerCase()];
+      if (direction) {
+        e.preventDefault();
+        interiorMoveKeys.add(direction);
+        if (!e.repeat) nudgeInteriorPlayer(direction);
+        markRenderActive(1200);
+        return;
+      }
+    }
     if (e.key.toLowerCase() !== "g" || e.metaKey || e.ctrlKey || e.altKey) return;
     graphDebugVisible = !graphDebugVisible;
     renderFirstLoopPanel();
     showToast(graphDebugVisible ? "因果图调试已显示" : "因果图调试已隐藏", "support");
   });
+  document.addEventListener("keyup", (e) => {
+    const movementByKey = {
+      w: "forward", arrowup: "forward",
+      s: "back", arrowdown: "back",
+      a: "left", arrowleft: "left",
+      d: "right", arrowright: "right"
+    };
+    const direction = movementByKey[e.key.toLowerCase()];
+    if (direction) interiorMoveKeys.delete(direction);
+  });
+  window.addEventListener("blur", () => interiorMoveKeys.clear());
 
   // ── Canvas click ──
   if (canvas) {

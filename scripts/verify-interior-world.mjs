@@ -34,14 +34,20 @@ const [engine, game, configText, manifestText] = await Promise.all([
 
 const openWorldBlock = extractBlock(engine, /const OPEN_WORLD_ZONES = \[/, /\n\];/, "open world zones");
 const growthBlock = extractBlock(engine, /const EVOLVABLE_SCENE_BLUEPRINTS = \[/, /\n\];/, "evolvable scenes");
-const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior profiles");
+const blueprintBlock = extractBlock(game, /const INTERIOR_BLUEPRINTS = \{/, /\n\};\n\nconst INTERIOR_ZONE_PROFILES/, "interior blueprints");
+const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\nconst INTERIOR_SCENE_ACTIONS/, "interior profiles");
+const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
 
 const zoneIds = unique([...collectIds(openWorldBlock), ...collectIds(growthBlock)]);
 const profileIds = unique(collectProfileIds(profileBlock));
+const blueprintIds = unique(collectProfileIds(blueprintBlock));
+const sceneActionIds = unique(collectProfileIds(sceneActionBlock));
 const missingProfiles = zoneIds.filter((id) => !profileIds.includes(id));
 const unknownProfiles = profileIds.filter((id) => !zoneIds.includes(id));
 if (missingProfiles.length) throw new Error(`Buildings without interior profiles: ${missingProfiles.join(", ")}`);
 if (unknownProfiles.length) throw new Error(`Interior profiles without buildings: ${unknownProfiles.join(", ")}`);
+const missingSceneActions = blueprintIds.filter((id) => !sceneActionIds.includes(id));
+if (missingSceneActions.length) throw new Error(`Interior blueprints without shared scene actions: ${missingSceneActions.join(", ")}`);
 
 const config = JSON.parse(configText);
 const manifest = JSON.parse(manifestText);
@@ -61,4 +67,4 @@ for (const slot of config.slots || []) {
 if (missingModels.length) throw new Error(`Missing runtime GLBs: ${missingModels.join(", ")}`);
 if (fallbackModels.length) throw new Error(`Sprite-card fallbacks still active: ${fallbackModels.join(", ")}`);
 
-console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${config.slots.length} true 3D model slots.`);
+console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${blueprintIds.length} room archetypes, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);
