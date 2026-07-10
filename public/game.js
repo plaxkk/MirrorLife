@@ -5126,105 +5126,105 @@ const INTERIOR_BLUEPRINTS = {
   care: {
     title: "照护与恢复",
     props: [
-      { emoji: "🛏️", label: "休息床", x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
-      { emoji: "🌡️", label: "护理站", x: 0.44, y: 0.2, size: 30, behaviors: ["care", "write", "work"] },
-      { emoji: "🪑", label: "等候椅", x: 0.68, y: 0.32, size: 28, behaviors: ["phone", "read", "think", "tea"] },
-      { emoji: "💊", label: "药品柜", x: 0.82, y: 0.2, size: 28, behaviors: ["care", "handoff", "work"] },
-      { emoji: "🧸", label: "安抚角", x: 0.34, y: 0.66, size: 30, behaviors: ["comfort", "cry", "tea"] },
-      { emoji: "🪴", label: "复原植物", x: 0.72, y: 0.66, size: 29, behaviors: ["garden", "drink", "think"] }
+      { emoji: "🛏️", label: "休息床", assetIntent: "hospital-bed", model: "bed", render3d: true, x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
+      { emoji: "🌡️", label: "护理站", assetIntent: "reception-counter", model: "counter", render3d: true, x: 0.44, y: 0.2, size: 30, behaviors: ["care", "write", "work"] },
+      { emoji: "🪑", label: "等候椅", assetIntent: "waiting-chair", model: "waiting-chair", render3d: true, x: 0.68, y: 0.32, size: 28, behaviors: ["phone", "read", "think", "tea"] },
+      { emoji: "💊", label: "药品柜", assetIntent: "medicine-cabinet", model: "shelf", render3d: true, x: 0.82, y: 0.2, size: 28, behaviors: ["care", "handoff", "work"] },
+      { emoji: "🧸", label: "安抚角", assetIntent: "teddy-play-rug", model: "toy-corner", render3d: true, x: 0.34, y: 0.66, size: 30, behaviors: ["comfort", "cry", "tea"] },
+      { emoji: "🪴", label: "复原植物", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.72, y: 0.66, size: 29, behaviors: ["garden", "drink", "think"] }
     ]
   },
   learning: {
     title: "学习与成长",
     props: [
-      { emoji: "📚", label: "阅读角", x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
-      { emoji: "🧑‍🏫", label: "讲台", x: 0.5, y: 0.18, size: 31, behaviors: ["teach", "write"] },
-      { emoji: "🪑", label: "课桌", x: 0.34, y: 0.48, size: 28, behaviors: ["write", "read", "type"] },
-      { emoji: "🖊️", label: "练习桌", x: 0.58, y: 0.5, size: 28, behaviors: ["write", "read"] },
-      { emoji: "🌍", label: "探索墙", x: 0.78, y: 0.28, size: 30, behaviors: ["teach", "read", "think"] },
-      { emoji: "☕", label: "课间角", x: 0.74, y: 0.72, size: 26, behaviors: ["drink", "phone", "handoff"] }
+      { emoji: "📚", label: "阅读角", assetIntent: "reading-corner", model: "reading-corner", render3d: true, x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
+      { emoji: "🧑‍🏫", label: "讲台", assetIntent: "teacher-podium", model: "teacher-podium", render3d: true, x: 0.5, y: 0.18, size: 31, behaviors: ["teach", "write"] },
+      { emoji: "🪑", label: "课桌", assetIntent: "student-desk", model: "desk", render3d: true, x: 0.34, y: 0.48, size: 28, behaviors: ["write", "read", "type"] },
+      { emoji: "🖊️", label: "练习桌", assetIntent: "student-desk", model: "desk", render3d: true, x: 0.58, y: 0.5, size: 28, behaviors: ["write", "read"] },
+      { emoji: "🌍", label: "探索墙", assetIntent: "chalkboard", model: "wall-board", render3d: true, x: 0.78, y: 0.28, size: 30, behaviors: ["teach", "read", "think"] },
+      { emoji: "☕", label: "课间角", assetIntent: "break-seating", model: "reading-corner", render3d: true, x: 0.74, y: 0.72, size: 26, behaviors: ["drink", "phone", "handoff"] }
     ]
   },
   commerce: {
     title: "交易与补给",
     props: [
-      { emoji: "🏷️", label: "柜台", x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
-      { emoji: "🧺", label: "货架", x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
-      { emoji: "📦", label: "补给箱", x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
-      { emoji: "☕", label: "小坐区", x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
-      { emoji: "🍜", label: "热食台", x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
-      { emoji: "🧾", label: "交换板", x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
+      { emoji: "🏷️", label: "柜台", assetIntent: "service-counter", model: "counter", render3d: false, x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
+      { emoji: "🧺", label: "货架", assetIntent: "retail-shelf", model: "shelf", render3d: false, x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
+      { emoji: "📦", label: "补给箱", assetIntent: "supply-crate", model: "shelf", render3d: false, x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
+      { emoji: "☕", label: "小坐区", assetIntent: "cafe-seating", model: "seating", render3d: false, x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
+      { emoji: "🍜", label: "热食台", assetIntent: "hot-food-counter", model: "counter", render3d: false, x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
+      { emoji: "🧾", label: "交换板", assetIntent: "exchange-board", model: "wall-board", render3d: false, x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
     ]
   },
   public: {
     title: "公共讨论与共识",
     props: [
-      { emoji: "📢", label: "提案台", x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
-      { emoji: "🪧", label: "公告板", x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
-      { emoji: "🪑", label: "旁听席", x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
-      { emoji: "📝", label: "记录桌", x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
-      { emoji: "🤝", label: "共识圆桌", x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
-      { emoji: "🌿", label: "缓冲角", x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
+      { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "counter", render3d: false, x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
+      { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "wall-board", render3d: false, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
+      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "seating", render3d: false, x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
+      { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "desk", render3d: false, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
+      { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
     ]
   },
   work: {
     title: "协作与生产",
     props: [
-      { emoji: "💻", label: "工位", x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
-      { emoji: "🧰", label: "工具台", x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
-      { emoji: "📋", label: "协作板", x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
-      { emoji: "🪑", label: "会议桌", x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
-      { emoji: "⚙️", label: "设备区", x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
+      { emoji: "💻", label: "工位", assetIntent: "office-workstation", model: "desk", render3d: false, x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
+      { emoji: "🧰", label: "工具台", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
+      { emoji: "📋", label: "协作板", assetIntent: "collaboration-board", model: "wall-board", render3d: false, x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
+      { emoji: "🪑", label: "会议桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
+      { emoji: "⚙️", label: "设备区", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
     ]
   },
   justice: {
     title: "调停与记录",
     props: [
-      { emoji: "⚖️", label: "调停席", x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
-      { emoji: "🪑", label: "圆桌", x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
-      { emoji: "📝", label: "记录席", x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
-      { emoji: "🗄️", label: "档案柜", x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
-      { emoji: "🕊️", label: "冷静角", x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
+      { emoji: "⚖️", label: "调停席", assetIntent: "mediation-podium", model: "counter", render3d: false, x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
+      { emoji: "🪑", label: "圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
+      { emoji: "📝", label: "记录席", assetIntent: "record-desk", model: "desk", render3d: false, x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🗄️", label: "档案柜", assetIntent: "archive-cabinet", model: "shelf", render3d: false, x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🕊️", label: "冷静角", assetIntent: "calming-chair", model: "seating", render3d: false, x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
     ]
   },
   home: {
     title: "生活与休息",
     props: [
-      { emoji: "🛋️", label: "沙发", x: 0.22, y: 0.34, size: 34, behaviors: ["phone", "drink", "sleep", "think"] },
-      { emoji: "🍽️", label: "餐桌", x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
-      { emoji: "🛏️", label: "卧榻", x: 0.78, y: 0.32, size: 33, behaviors: ["sleep"] },
-      { emoji: "🪞", label: "洗漱台", x: 0.32, y: 0.7, size: 29, behaviors: ["wash", "clean"] },
-      { emoji: "📚", label: "书架", x: 0.5, y: 0.72, size: 29, behaviors: ["read", "write"] },
-      { emoji: "🪴", label: "阳台植物", x: 0.72, y: 0.7, size: 30, behaviors: ["garden", "drink", "think"] }
+      { emoji: "🛋️", label: "沙发", assetIntent: "sofa-set", model: "seating", render3d: true, x: 0.22, y: 0.34, size: 34, behaviors: ["phone", "drink", "sleep", "think"] },
+      { emoji: "🍽️", label: "餐桌", assetIntent: "round-dining-table", model: "round-table", render3d: true, x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
+      { emoji: "🛏️", label: "卧榻", assetIntent: "home-bed", model: "home-bed", render3d: true, x: 0.78, y: 0.32, size: 33, behaviors: ["sleep"] },
+      { emoji: "🪞", label: "洗漱台", assetIntent: "sink-vanity", model: "sink", render3d: true, x: 0.32, y: 0.7, size: 29, behaviors: ["wash", "clean"] },
+      { emoji: "📚", label: "书架", assetIntent: "bookcase", model: "bookcase", render3d: true, x: 0.5, y: 0.72, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🪴", label: "阳台植物", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.72, y: 0.7, size: 30, behaviors: ["garden", "drink", "think"] }
     ]
   },
   nature: {
     title: "生态与照料",
     props: [
-      { emoji: "🌿", label: "育苗架", x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
-      { emoji: "🪴", label: "温室台", x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
-      { emoji: "🪵", label: "工具棚", x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
-      { emoji: "🪑", label: "休息椅", x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
-      { emoji: "🌸", label: "照料区", x: 0.62, y: 0.68, size: 31, behaviors: ["garden", "care", "gather"] }
+      { emoji: "🌿", label: "育苗架", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
+      { emoji: "🪴", label: "温室台", assetIntent: "greenhouse-bench", model: "plant-zone", render3d: true, x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
+      { emoji: "🪵", label: "工具棚", assetIntent: "garden-tool-shed", model: "shelf", render3d: false, x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
+      { emoji: "🪑", label: "休息椅", assetIntent: "park-bench", model: "bench", render3d: true, x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
+      { emoji: "🌸", label: "照料区", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.62, y: 0.68, size: 31, behaviors: ["garden", "care", "gather"] }
     ]
   },
   creative: {
     title: "表达与创作",
     props: [
-      { emoji: "🎨", label: "画架", x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
-      { emoji: "🖼️", label: "作品墙", x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
-      { emoji: "🎭", label: "排练角", x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
-      { emoji: "📚", label: "故事桌", x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
-      { emoji: "🎶", label: "声音角", x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
+      { emoji: "🎨", label: "画架", assetIntent: "painting-easel", model: "easel", render3d: true, x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
+      { emoji: "🖼️", label: "作品墙", assetIntent: "gallery-wall", model: "wall-board", render3d: false, x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
+      { emoji: "🎭", label: "排练角", assetIntent: "rehearsal-stage", model: "market-stall", render3d: false, x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
+      { emoji: "📚", label: "故事桌", assetIntent: "story-table", model: "desk", render3d: false, x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🎶", label: "声音角", assetIntent: "music-corner", model: "table", render3d: false, x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
     ]
   },
   memory: {
     title: "安宁与记忆",
     props: [
-      { emoji: "🕯️", label: "纪念台", x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
-      { emoji: "🕊️", label: "静坐席", x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
-      { emoji: "📖", label: "记忆册", x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
-      { emoji: "🌿", label: "低声花园", x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
+      { emoji: "🕯️", label: "纪念台", assetIntent: "memorial-altar", model: "altar", render3d: true, x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
+      { emoji: "🕊️", label: "静坐席", assetIntent: "meditation-seat", model: "seating", render3d: false, x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
+      { emoji: "📖", label: "记忆册", assetIntent: "memory-book", model: "desk", render3d: false, x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🌿", label: "低声花园", assetIntent: "memory-garden", model: "plant-zone", render3d: true, x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
     ]
   }
 };
@@ -6048,6 +6048,7 @@ function getInteriorAnchors(blueprint, layout) {
 }
 
 function interiorPropModel(prop, blueprint) {
+  if (prop?.model) return prop.model;
   const text = `${blueprint?.title || ""} ${prop?.label || ""} ${prop?.emoji || ""}`;
   if (/休息床|卧榻|睡/.test(text)) return "bed";
   if (/护理站|柜台|热食台|提案台/.test(text)) return "counter";
@@ -7109,7 +7110,7 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
     const distance = getInteriorPropRadius(prop);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return { prop, point, index };
-  }).filter(item => item.point.visible)
+  }).filter(item => item.point.visible && (!useThreeModels || item.prop.render3d === false))
     .sort((a, b) => a.point.depth - b.point.depth);
 
   points.forEach(({ prop, point, index }) => {
@@ -7124,18 +7125,16 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
     ctx.ellipse(point.x, point.y + 8 * point.scale, (prop.size || 28) * 0.66 * point.scale, 6 * point.scale, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    if (!useThreeModels) {
-      drawInteriorPropModel(
-        ctx,
-        { ...prop, size: (prop.size || 30) * point.scale },
-        { ...point, x: point.x + wobble },
-        layout,
-        { accent: zoneColor, trim: darken(zoneColor, 30) },
-        isNight,
-        index,
-        blueprint
-      );
-    }
+    drawInteriorPropModel(
+      ctx,
+      { ...prop, size: (prop.size || 30) * point.scale },
+      { ...point, x: point.x + wobble },
+      layout,
+      { accent: zoneColor, trim: darken(zoneColor, 30) },
+      isNight,
+      index,
+      blueprint
+    );
 
     const showLabel = W > 520 || (point.x > W * 0.2 && point.x < W * 0.8 && Math.abs(point.delta) < INTERIOR_PANORAMA_FOV * 0.28);
     if (!showLabel) {
@@ -7159,6 +7158,7 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
 
 function getInteriorThreeItems(blueprint, W, H) {
   const propItems = (blueprint.props || []).map((prop, index, props) => {
+    if (prop.render3d === false) return null;
     const angle = getInteriorPropAngle(prop, index, props.length);
     const distance = getInteriorPropRadius(prop);
     const radius = 2.42 + distance * 2.25;
@@ -7181,7 +7181,7 @@ function getInteriorThreeItems(blueprint, W, H) {
       modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25),
       visible: true
     };
-  });
+  }).filter(Boolean);
 
   // Decorative aliases previously substituted semantically unrelated full-size
   // props (for example a chalkboard for picture frames). Keep the 3D room clean
@@ -7810,6 +7810,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
 
   if (useThreeModels) {
     ctx.clearRect(0, 0, W, H);
+    drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, true);
   } else {
     drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
     drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H, false);

@@ -51,12 +51,22 @@
 ```bash
 npm run prepare:interior-3d:fidelity
 npm run report:interior-3d:fidelity
+npm run report:interior-3d:semantic
 npm run audit:interior-3d:geometry -- --file web.glb --master-file master.glb --output geometry-audit.json
 npm run compare:interior-3d:view -- --slot desk --view front --reference front.png --render front-render.png --approve --reviewer your-name
 npm run verify:interior-3d:release
+npm run verify:interior-3d:semantic-release
 ```
 
-第一条命令为 17 类陈设生成严格重建工作包；第二条给出模型缺口和下一步；最后一条是正式发布硬门禁。当前程序化占位模型、单图生成模型和缺少背面/底部证据的模型应当失败，这是预期行为。
+第一条命令为 17 类陈设生成严格重建工作包；两条报告命令分别给出几何保真与场景语义缺口；最后两条是正式发布硬门禁。当前程序化占位模型、单图生成模型、语义不匹配模型和缺少背面/底部证据的模型应当失败，这是预期行为。
+
+每个室内陈设放置项必须声明：
+
+- `assetIntent`：该位置真正需要的物件，例如 `home-bed`，不能用宽泛的 `bed` 掩盖用途。
+- `model`：Three.js 实际加载或构建的模型槽位。
+- `render3d`：只有语义匹配的模型才可设为 `true`；尚未建成时保留语义正确的 2D 表达，不能显示错误 3D 替代物。
+
+`npm run report:interior-3d:semantic` 会统计这些放置项；`npm run verify:interior-3d:semantic-release` 要求全部陈设语义一致，并且所有模型都有 `release-candidate` 级资产证明。代码生成的 Three.js 模型即使语义正确，也只属于开发级实现，不能通过正式发布门禁。
 
 ## 场景内四向验收
 

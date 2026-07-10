@@ -1,3 +1,5 @@
+import { createSemanticInteriorModel, hasSemanticInteriorModel } from "./interior-semantic-models.js";
+
 const ASSET_BASE = "/assets/interiors/glb/";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
@@ -20,7 +22,12 @@ const MODEL_RENDER_PROFILES = {
   altar: { scale: 1.18, rotationY: -0.2 },
   fountain: { scale: 1.34, rotationY: 0 },
   bench: { scale: 1.16, rotationY: -0.2 },
-  "toy-corner": { scale: 1.2, rotationY: -0.2 }
+  "toy-corner": { scale: 1.2, rotationY: -0.2 },
+  "reading-corner": { scale: 1.24, rotationY: -0.34 },
+  "teacher-podium": { scale: 1.06, rotationY: -0.18 },
+  "waiting-chair": { scale: 1.12, rotationY: -0.18 },
+  "home-bed": { scale: 1.34, rotationY: -0.42 },
+  bookcase: { scale: 1.1, rotationY: 0 }
 };
 
 const cache = new Map();
@@ -29,6 +36,7 @@ const projectedItems = new Map();
 
 let THREE;
 let GLTFLoader;
+let RoundedBoxGeometry;
 let loader;
 let threeLoading;
 let canvas;
@@ -48,10 +56,12 @@ async function loadThree() {
   if (!threeLoading) {
     threeLoading = Promise.all([
       import("three"),
-      import("three/examples/jsm/loaders/GLTFLoader.js")
-    ]).then(([threeModule, loaderModule]) => {
+      import("three/examples/jsm/loaders/GLTFLoader.js"),
+      import("three/examples/jsm/geometries/RoundedBoxGeometry.js")
+    ]).then(([threeModule, loaderModule, roundedBoxModule]) => {
       THREE = threeModule;
       GLTFLoader = loaderModule.GLTFLoader;
+      RoundedBoxGeometry = roundedBoxModule.RoundedBoxGeometry;
       loader = new GLTFLoader();
       return true;
     });
@@ -163,6 +173,13 @@ function prepareModel(type, source) {
 function loadModel(type) {
   if (cache.has(type)) return Promise.resolve(cache.get(type));
   if (loading.has(type)) return loading.get(type);
+  if (hasSemanticInteriorModel(type)) {
+    const semanticSource = createSemanticInteriorModel(type, { THREE, RoundedBoxGeometry });
+    const prepared = prepareModel(type, semanticSource);
+    cache.set(type, prepared);
+    itemSignature = "";
+    return Promise.resolve(prepared);
+  }
   const promise = new Promise((resolve) => {
     loader.load(
       `${ASSET_BASE}${type}.glb`,

@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import vm from "node:vm";
 
 const ROOT = process.cwd();
 
@@ -25,6 +26,13 @@ function unique(values) {
   return [...new Set(values)];
 }
 
+function extractObject(source, name, nextName) {
+  const pattern = new RegExp(`const ${name} = (\\{[\\s\\S]*?\\n\\});\\n\\nconst ${nextName}`);
+  const match = source.match(pattern);
+  if (!match) throw new Error(`Unable to extract ${name}.`);
+  return vm.runInNewContext(`(${match[1]})`, Object.create(null));
+}
+
 const [engine, game, configText, manifestText] = await Promise.all([
   fs.readFile(path.join(ROOT, "public/engine.js"), "utf8"),
   fs.readFile(path.join(ROOT, "public/game.js"), "utf8"),
@@ -37,6 +45,7 @@ const growthBlock = extractBlock(engine, /const EVOLVABLE_SCENE_BLUEPRINTS = \[/
 const blueprintBlock = extractBlock(game, /const INTERIOR_BLUEPRINTS = \{/, /\n\};\n\nconst INTERIOR_ZONE_PROFILES/, "interior blueprints");
 const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\nconst INTERIOR_SCENE_ACTIONS/, "interior profiles");
 const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
+const blueprints = extractObject(game, "INTERIOR_BLUEPRINTS", "INTERIOR_ZONE_PROFILES");
 
 const zoneIds = unique([...collectIds(openWorldBlock), ...collectIds(growthBlock)]);
 const profileIds = unique(collectProfileIds(profileBlock));
@@ -48,6 +57,18 @@ if (missingProfiles.length) throw new Error(`Buildings without interior profiles
 if (unknownProfiles.length) throw new Error(`Interior profiles without buildings: ${unknownProfiles.join(", ")}`);
 const missingSceneActions = blueprintIds.filter((id) => !sceneActionIds.includes(id));
 if (missingSceneActions.length) throw new Error(`Interior blueprints without shared scene actions: ${missingSceneActions.join(", ")}`);
+
+const incompleteSemanticProps = [];
+for (const [blueprintId, blueprint] of Object.entries(blueprints)) {
+  for (const prop of blueprint.props || []) {
+    if (!prop.assetIntent || !prop.model || typeof prop.render3d !== "boolean") {
+      incompleteSemanticProps.push(`${blueprintId}:${prop.label || "unnamed"}`);
+    }
+  }
+}
+if (incompleteSemanticProps.length) {
+  throw new Error(`Interior props missing semantic model metadata: ${incompleteSemanticProps.join(", ")}`);
+}
 
 const config = JSON.parse(configText);
 const manifest = JSON.parse(manifestText);

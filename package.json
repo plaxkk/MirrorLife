@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/causal-graph.js && node --check public/game.js && node --check public/storage.js && node --check public/memory-hub.js && node --check public/story-engine.js && node --check server/memory-proxy.mjs",
+    "check": "node --check public/engine.js && node --check public/narrative.js && node --check public/causal-graph.js && node --check public/game.js && node --check public/storage.js && node --check public/memory-hub.js && node --check public/story-engine.js && node --check src/interior-three.js && node --check src/interior-semantic-models.js && node --check scripts/report-interior-semantic-gaps.mjs && node --check server/memory-proxy.mjs",
     "check:copy": "node scripts/review-copy.mjs",
     "test": "npm run check",
     "test:evolution": "node scripts/verify-evolution.mjs",
@@ -23,6 +23,8 @@
     "verify:interior-3d": "node scripts/verify-interior-3d-models.mjs",
     "verify:interior-3d:release": "node scripts/verify-interior-3d-models.mjs --require-source-manifest --release-quality",
     "report:interior-3d:fidelity": "node scripts/report-interior-3d-fidelity.mjs",
+    "report:interior-3d:semantic": "node scripts/report-interior-semantic-gaps.mjs",
+    "verify:interior-3d:semantic-release": "node scripts/report-interior-semantic-gaps.mjs --release",
     "audit:interior-3d:geometry": "node scripts/audit-interior-3d-geometry.mjs",
     "compare:interior-3d:view": "node scripts/compare-interior-3d-view.mjs",
     "verify:interior-world": "node scripts/verify-interior-world.mjs",
