@@ -98,6 +98,17 @@ async function main() {
     failures.push(`missing model source manifest: ${sourceManifestPath}`);
   }
 
+  if (await exists(sourceManifestPath)) {
+    const sourceManifest = await readJson(sourceManifestPath);
+    const imported = new Map((sourceManifest.imported || []).map((item) => [item.slot, item]));
+    for (const result of results) {
+      const source = imported.get(result.slot);
+      if (source && Number(source.bytes) !== result.bytes) {
+        failures.push(`${result.slot}: manifest bytes ${source.bytes ?? "missing"} do not match runtime GLB ${result.bytes}`);
+      }
+    }
+  }
+
   if (args.releaseQuality) {
     if (!await exists(sourceManifestPath)) {
       failures.push(`release validation requires model source manifest: ${sourceManifestPath}`);

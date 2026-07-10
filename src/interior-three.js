@@ -27,7 +27,29 @@ const MODEL_RENDER_PROFILES = {
   "teacher-podium": { scale: 1.06, rotationY: -0.18 },
   "waiting-chair": { scale: 1.12, rotationY: -0.18 },
   "home-bed": { scale: 1.34, rotationY: -0.42 },
-  bookcase: { scale: 1.1, rotationY: 0 }
+  bookcase: { scale: 1.1, rotationY: 0 },
+  "service-counter": { scale: 1.18, rotationY: -0.2 },
+  "retail-shelf": { scale: 1.08, rotationY: -0.08 },
+  "supply-crate": { scale: 1.16, rotationY: -0.28 },
+  "cafe-seating": { scale: 1.18, rotationY: -0.24 },
+  "hot-food-counter": { scale: 1.16, rotationY: -0.2 },
+  "exchange-board": { scale: 1.08, rotationY: -0.08 },
+  "proposal-podium": { scale: 1.08, rotationY: -0.2 },
+  "notice-board": { scale: 1.06, rotationY: -0.06 },
+  "audience-seating": { scale: 1.16, rotationY: -0.3 },
+  "record-desk": { scale: 1.16, rotationY: -0.28 },
+  "office-workstation": { scale: 1.18, rotationY: -0.32 },
+  "collaboration-board": { scale: 1.06, rotationY: -0.08 },
+  "mediation-podium": { scale: 1.08, rotationY: -0.18 },
+  "archive-cabinet": { scale: 1.08, rotationY: -0.12 },
+  "calming-chair": { scale: 1.18, rotationY: -0.3 },
+  "garden-tool-shed": { scale: 1.08, rotationY: -0.12 },
+  "gallery-wall": { scale: 1.06, rotationY: -0.04 },
+  "rehearsal-stage": { scale: 1.18, rotationY: -0.18 },
+  "story-table": { scale: 1.16, rotationY: -0.3 },
+  "music-corner": { scale: 1.12, rotationY: -0.22 },
+  "meditation-seat": { scale: 1.14, rotationY: -0.2 },
+  "memory-book": { scale: 1.1, rotationY: -0.18 }
 };
 
 const cache = new Map();
@@ -37,6 +59,7 @@ const projectedItems = new Map();
 let THREE;
 let GLTFLoader;
 let RoundedBoxGeometry;
+let mergeGeometries;
 let loader;
 let threeLoading;
 let canvas;
@@ -50,6 +73,7 @@ let lastHeight = 0;
 let roomSignature = "";
 let itemSignature = "";
 let activeItems = [];
+let lastStatsPublishedAt = 0;
 
 async function loadThree() {
   if (THREE && GLTFLoader) return true;
@@ -57,11 +81,13 @@ async function loadThree() {
     threeLoading = Promise.all([
       import("three"),
       import("three/examples/jsm/loaders/GLTFLoader.js"),
-      import("three/examples/jsm/geometries/RoundedBoxGeometry.js")
-    ]).then(([threeModule, loaderModule, roundedBoxModule]) => {
+      import("three/examples/jsm/geometries/RoundedBoxGeometry.js"),
+      import("three/examples/jsm/utils/BufferGeometryUtils.js")
+    ]).then(([threeModule, loaderModule, roundedBoxModule, geometryUtilsModule]) => {
       THREE = threeModule;
       GLTFLoader = loaderModule.GLTFLoader;
       RoundedBoxGeometry = roundedBoxModule.RoundedBoxGeometry;
+      mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
       return true;
     });
@@ -170,12 +196,52 @@ function prepareModel(type, source) {
   return wrapper;
 }
 
+function mergeSemanticModelMeshes(source) {
+  if (!source || !mergeGeometries) return source;
+  source.updateMatrixWorld(true);
+  const batches = new Map();
+  source.traverse((node) => {
+    if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
+    const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
+    geometry.applyMatrix4(node.matrixWorld);
+    const batch = batches.get(node.material) || [];
+    batch.push(geometry);
+    batches.set(node.material, batch);
+  });
+  if (!batches.size) return source;
+
+  const mergedRoot = new THREE.Group();
+  batches.forEach((geometries, material) => {
+    const geometry = geometries.length === 1 ? geometries[0] : mergeGeometries(geometries, false);
+    if (!geometry) {
+      geometries.forEach((candidate) => {
+        const mesh = new THREE.Mesh(candidate, material);
+        mesh.castShadow = true;
+        mesh.receiveShadow = true;
+        mergedRoot.add(mesh);
+      });
+      return;
+    }
+    geometries.forEach((candidate) => {
+      if (candidate !== geometry) candidate.dispose();
+    });
+    const mesh = new THREE.Mesh(geometry, material);
+    mesh.castShadow = true;
+    mesh.receiveShadow = true;
+    mergedRoot.add(mesh);
+  });
+  source.traverse((node) => {
+    if (node.isMesh) node.geometry?.dispose?.();
+  });
+  return mergedRoot;
+}
+
 function loadModel(type) {
   if (cache.has(type)) return Promise.resolve(cache.get(type));
   if (loading.has(type)) return loading.get(type);
   if (hasSemanticInteriorModel(type)) {
     const semanticSource = createSemanticInteriorModel(type, { THREE, RoundedBoxGeometry });
-    const prepared = prepareModel(type, semanticSource);
+    const prepared = prepareModel(type, mergeSemanticModelMeshes(semanticSource));
     cache.set(type, prepared);
     itemSignature = "";
     return Promise.resolve(prepared);
@@ -345,7 +411,11 @@ function addRoomArchitecture(theme, colors) {
   if (archetype === "learning") {
     for (let index = 0; index < 6; index += 1) {
       const angle = variantOffset + index * Math.PI / 3;
-      addRingBox(angle, 5.02, 0.1, 1.55, 0.16, index % 2 ? "#d89151" : "#f1c40f", 1.05);
+      addRingBox(angle, 5.25, 0.06, 1.36, 0.08, index % 2 ? "#d89151" : "#f1c40f", 1.12, {
+        transparent: true,
+        opacity: 0.46,
+        castShadow: false
+      });
       if (index % 2 === 0) addPendant(angle + 0.18, 2.6, "#ffd166");
     }
     return;
@@ -364,14 +434,14 @@ function addRoomArchitecture(theme, colors) {
     const columnColor = archetype === "justice" ? "#e9eef8" : "#fff4cf";
     for (let index = 0; index < 6; index += 1) {
       const angle = variantOffset + Math.PI / 6 + index * Math.PI / 3;
-      const x = Math.sin(angle) * 5.08;
-      const z = -Math.cos(angle) * 5.08;
+      const x = Math.sin(angle) * 5.28;
+      const z = -Math.cos(angle) * 5.28;
       const column = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.09, 0.12, 2.7, 12),
-        createToonMaterial(columnColor)
+        new THREE.CylinderGeometry(0.055, 0.075, 2.45, 12),
+        createToonMaterial(columnColor, { transparent: true, opacity: 0.48, depthWrite: false })
       );
-      column.position.set(x, 1.35, z);
-      column.castShadow = true;
+      column.position.set(x, 1.28, z);
+      column.castShadow = false;
       column.receiveShadow = true;
       roomRoot.add(column);
       addFloorPad(angle, 3.55, archetype === "justice" ? (index % 2 ? "#ffcad4" : "#bde0fe") : "#ffe98a", 0.52);
@@ -382,7 +452,12 @@ function addRoomArchitecture(theme, colors) {
   if (archetype === "work") {
     for (let index = 0; index < 8; index += 1) {
       const angle = variantOffset + index * Math.PI / 4;
-      addRingBox(angle, 4.9, 0.13, 2.85, 0.16, index % 2 ? "#3d5a80" : "#f1c40f", 1.43);
+      addRingBox(angle, 5.27, 0.055, 2.46, 0.08, index % 2 ? "#3d5a80" : "#f1c40f", 1.31, {
+        transparent: true,
+        opacity: 0.42,
+        castShadow: false,
+        depthWrite: false
+      });
     }
     const beam = new THREE.Mesh(
       new THREE.TorusGeometry(3.65, 0.07, 8, 48),
@@ -397,7 +472,12 @@ function addRoomArchitecture(theme, colors) {
   if (archetype === "nature") {
     for (let index = 0; index < 10; index += 1) {
       const angle = variantOffset + index * Math.PI / 5;
-      addRingBox(angle, 5.04, 0.06, 2.95, 0.1, index % 2 ? "#2ecc71" : "#1a1a2e", 1.48);
+      addRingBox(angle, 5.3, 0.035, 2.44, 0.06, index % 2 ? "#2ecc71" : "#1a1a2e", 1.28, {
+        transparent: true,
+        opacity: 0.34,
+        castShadow: false,
+        depthWrite: false
+      });
     }
     const glassRing = new THREE.Mesh(
       new THREE.TorusGeometry(4.18, 0.045, 8, 64),
@@ -616,6 +696,11 @@ function update(payload = {}) {
   canvas.style.display = payload.visible === false ? "none" : "block";
   updateProjections(activeItems, width, height);
   if (payload.visible !== false) renderer.render(scene, camera);
+  const now = Date.now();
+  if (now - lastStatsPublishedAt >= 1000) {
+    lastStatsPublishedAt = now;
+    canvas.dataset.renderStats = JSON.stringify(getStats());
+  }
   return { ready, projections: [...projectedItems.values()] };
 }
 
@@ -633,10 +718,27 @@ function getProjections() {
   return [...projectedItems.values()];
 }
 
+function getStats() {
+  const render = renderer?.info?.render || {};
+  const memory = renderer?.info?.memory || {};
+  return {
+    ready: !!renderer,
+    activeModelCount: activeItems.length,
+    activeModels: [...new Set(activeItems.map((item) => item.model))],
+    cachedModelCount: cache.size,
+    drawCalls: Number(render.calls || 0),
+    triangles: Number(render.triangles || 0),
+    geometries: Number(memory.geometries || 0),
+    textures: Number(memory.textures || 0),
+    pixelRatio: renderer?.getPixelRatio?.() || 1
+  };
+}
+
 window.MirrorLifeInterior3D = {
   update,
   hide,
   isReady,
   loadModel,
-  getProjections
+  getProjections,
+  getStats
 };

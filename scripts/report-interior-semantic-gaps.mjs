@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import vm from "node:vm";
+import { SEMANTIC_MODEL_TYPES } from "../src/interior-semantic-models.js";
 
 const ROOT = process.cwd();
 const OUTPUT_ROOT = path.join(ROOT, "dist/interior-3d-work");
@@ -48,13 +49,14 @@ for (const [blueprintId, blueprint] of Object.entries(blueprints)) {
       assetIntent: prop.assetIntent,
       currentModel: prop.model,
       render3d: prop.render3d === true,
+      modelAvailable: importedModels.has(prop.model) || SEMANTIC_MODEL_TYPES.has(prop.model),
       buildingCount,
       impactedPlacements: Math.max(1, buildingCount)
     });
   }
 }
 
-const unresolvedPlacements = placements.filter((item) => !item.render3d);
+const unresolvedPlacements = placements.filter((item) => !item.render3d || !item.modelAvailable);
 const intentMap = new Map();
 for (const item of unresolvedPlacements) {
   const current = intentMap.get(item.assetIntent) || {
@@ -125,7 +127,7 @@ const report = {
   totalBuildings: Object.keys(profiles).length,
   totalBlueprints: Object.keys(blueprints).length,
   totalPlacements: placements.length,
-  runtime3dPlacements: placements.filter((item) => item.render3d).length,
+  runtime3dPlacements: placements.filter((item) => item.render3d && item.modelAvailable).length,
   releaseReadyPlacements,
   unresolvedPlacements: unresolvedPlacements.length,
   unresolvedIntentCount: unresolvedIntents.length,

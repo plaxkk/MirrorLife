@@ -52,6 +52,7 @@
 npm run prepare:interior-3d:fidelity
 npm run report:interior-3d:fidelity
 npm run report:interior-3d:semantic
+npm run install:interior-3d:runtime-lod -- --slot bed --source /path/to/bed-web.glb --simplify-ratio 0.55 --simplify-error 0.0008
 npm run audit:interior-3d:geometry -- --file web.glb --master-file master.glb --output geometry-audit.json
 npm run compare:interior-3d:view -- --slot desk --view front --reference front.png --render front-render.png --approve --reviewer your-name
 npm run verify:interior-3d:release
@@ -67,6 +68,10 @@ npm run verify:interior-3d:semantic-release
 - `render3d`：只有语义匹配的模型才可设为 `true`；尚未建成时保留语义正确的 2D 表达，不能显示错误 3D 替代物。
 
 `npm run report:interior-3d:semantic` 会统计这些放置项；`npm run verify:interior-3d:semantic-release` 要求全部陈设语义一致，并且所有模型都有 `release-candidate` 级资产证明。代码生成的 Three.js 模型即使语义正确，也只属于开发级实现，不能通过正式发布门禁。
+
+当前室内蓝图的 54 个功能陈设位置均已接入用途匹配、可 360° 查看且具有完整正反结构的开发级模型。`verify:interior-world` 会同时确认每个 `render3d` 模型能够解析到真实 GLB 槽位或专用 Three.js 工厂，避免只有配置没有画面的假覆盖。正式交付仍以七视图和发布证明门禁为准。
+
+运行时 LOD 安装命令会先备份现有 GLB，再安装网页模型、执行几何审计并同步来源清单。室内 WebGL 画布的 `data-render-stats` 保存当前 draw calls、三角面、几何、纹理和缓存模型数量，可用于同场景前后性能回归；它不是发布质量证明。
 
 ## 场景内四向验收
 

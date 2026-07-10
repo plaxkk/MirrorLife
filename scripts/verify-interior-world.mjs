@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import vm from "node:vm";
+import { SEMANTIC_MODEL_TYPES } from "../src/interior-semantic-models.js";
 
 const ROOT = process.cwd();
 
@@ -73,6 +74,19 @@ if (incompleteSemanticProps.length) {
 const config = JSON.parse(configText);
 const manifest = JSON.parse(manifestText);
 const importedBySlot = new Map((manifest.imported || []).map((entry) => [entry.slot, entry]));
+const runtimeModelSlots = new Set(config.slots.map((slot) => slot.slot));
+const missingRuntimeModels = [];
+for (const [blueprintId, blueprint] of Object.entries(blueprints)) {
+  for (const prop of blueprint.props || []) {
+    if (!prop.render3d) continue;
+    if (!runtimeModelSlots.has(prop.model) && !SEMANTIC_MODEL_TYPES.has(prop.model)) {
+      missingRuntimeModels.push(`${blueprintId}:${prop.label}:${prop.model}`);
+    }
+  }
+}
+if (missingRuntimeModels.length) {
+  throw new Error(`Interior props reference missing GLB slots or semantic model factories: ${missingRuntimeModels.join(", ")}`);
+}
 const missingModels = [];
 const fallbackModels = [];
 for (const slot of config.slots || []) {

@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-10T12:18:11.107Z",
+  "updatedAt": "2026-07-10T15:57:19.611Z",
   "provider": "tripo",
   "sourceDir": "dist/interior-3d-work/tripo/optimized-glb",
   "backupDir": "dist/interior-3d-work/backups/2026-07-10T12-18-11-078Z",
@@ -10,8 +10,47 @@
       "provider": "tripo",
       "source": "dist/interior-3d-work/tripo/optimized-glb/bed.glb",
       "target": "public/assets/interiors/glb/bed.glb",
-      "bytes": 2068216,
-      "importedAt": "2026-07-09T16:05:40.987Z"
+      "bytes": 1275196,
+      "importedAt": "2026-07-09T16:05:40.987Z",
+      "qualityTier": "development",
+      "runtimeLod": {
+        "installedAt": "2026-07-10T15:55:43.781Z",
+        "sourceModel": "dist/interior-3d-work/tripo/optimized-glb/bed.glb",
+        "target": "public/assets/interiors/glb/bed.glb",
+        "backup": "dist/interior-3d-work/backups/2026-07-10T15-55-43-781Z/bed.glb",
+        "audit": "dist/interior-3d-work/runtime-lod-audits/bed.json",
+        "simplifyRatio": 0.55,
+        "simplifyError": 0.0008,
+        "triangleCount": 41360,
+        "vertexCount": 29502
+      },
+      "geometryAudit": {
+        "auditedAt": "2026-07-10T15:55:43.998Z",
+        "epsilon": 0.00001,
+        "closedMeshes": false,
+        "nonManifoldEdges": 6,
+        "openBoundaryEdges": 0,
+        "webTriangleCount": 41360,
+        "web": {
+          "file": "public/assets/interiors/glb/bed.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [
+            {
+              "meshIndex": 0,
+              "primitiveIndex": 0,
+              "openBoundaryEdges": 0,
+              "nonManifoldEdges": 6
+            }
+          ],
+          "triangleCount": 41360,
+          "vertexCount": 29502,
+          "weldedVertexCount": 20658,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 6
+        }
+      }
     },
     {
       "slot": "counter",
@@ -19,7 +58,7 @@
       "provider": "tripo",
       "source": "dist/interior-3d-work/tripo/optimized-glb/counter.glb",
       "target": "public/assets/interiors/glb/counter.glb",
-      "bytes": 3329960,
+      "bytes": 2390600,
       "qualityTier": "development",
       "referenceViews": [
         "isometric"
@@ -31,13 +70,13 @@
       "masterBytes": 3830572,
       "reviewReport": "",
       "geometryAudit": {
-        "auditedAt": "2026-07-10T12:13:52.765Z",
+        "auditedAt": "2026-07-10T15:57:19.999Z",
         "epsilon": 0.00001,
         "closedMeshes": false,
-        "nonManifoldEdges": 6,
+        "nonManifoldEdges": 5,
         "openBoundaryEdges": 0,
         "masterTriangleCount": 92666,
-        "webTriangleCount": 76686,
+        "webTriangleCount": 63642,
         "master": {
           "file": "dist/interior-3d-work/tripo/master-glb/counter.glb",
           "primitiveCount": 1,
@@ -58,7 +97,7 @@
           "nonManifoldEdges": 6
         },
         "web": {
-          "file": "dist/interior-3d-work/tripo/optimized-glb/counter-web.glb",
+          "file": "public/assets/interiors/glb/counter.glb",
           "primitiveCount": 1,
           "trianglePrimitiveCount": 1,
           "outlinePrimitiveCount": 0,
@@ -67,17 +106,28 @@
               "meshIndex": 0,
               "primitiveIndex": 0,
               "openBoundaryEdges": 0,
-              "nonManifoldEdges": 6
+              "nonManifoldEdges": 5
             }
           ],
-          "triangleCount": 76686,
-          "vertexCount": 74114,
-          "weldedVertexCount": 38337,
+          "triangleCount": 63642,
+          "vertexCount": 61591,
+          "weldedVertexCount": 31816,
           "openBoundaryEdges": 0,
-          "nonManifoldEdges": 6
+          "nonManifoldEdges": 5
         }
       },
-      "importedAt": "2026-07-10T12:18:11.100Z"
+      "importedAt": "2026-07-10T12:18:11.100Z",
+      "runtimeLod": {
+        "installedAt": "2026-07-10T15:57:19.611Z",
+        "sourceModel": "dist/interior-3d-work/tripo/optimized-glb/counter.glb",
+        "target": "public/assets/interiors/glb/counter.glb",
+        "backup": "dist/interior-3d-work/backups/2026-07-10T15-57-19-611Z/counter.glb",
+        "audit": "dist/interior-3d-work/runtime-lod-audits/counter.json",
+        "simplifyRatio": 0.45,
+        "simplifyError": 0.002,
+        "triangleCount": 63642,
+        "vertexCount": 61591
+      }
     },
     {
       "slot": "shelf",
@@ -85,8 +135,47 @@
       "provider": "tripo",
       "source": "dist/interior-3d-work/tripo/optimized-glb/shelf.glb",
       "target": "public/assets/interiors/glb/shelf.glb",
-      "bytes": 2459624,
-      "importedAt": "2026-07-09T16:05:41.013Z"
+      "bytes": 1169324,
+      "importedAt": "2026-07-09T16:05:41.013Z",
+      "qualityTier": "development",
+      "runtimeLod": {
+        "installedAt": "2026-07-10T15:56:31.510Z",
+        "sourceModel": "dist/interior-3d-work/tripo/optimized-glb/shelf.glb",
+        "target": "public/assets/interiors/glb/shelf.glb",
+        "backup": "dist/interior-3d-work/backups/2026-07-10T15-56-31-510Z/shelf.glb",
+        "audit": "dist/interior-3d-work/runtime-lod-audits/shelf.json",
+        "simplifyRatio": 0.45,
+        "simplifyError": 0.002,
+        "triangleCount": 33830,
+        "vertexCount": 28780
+      },
+      "geometryAudit": {
+        "auditedAt": "2026-07-10T15:56:31.709Z",
+        "epsilon": 0.00001,
+        "closedMeshes": false,
+        "nonManifoldEdges": 9,
+        "openBoundaryEdges": 0,
+        "webTriangleCount": 33830,
+        "web": {
+          "file": "public/assets/interiors/glb/shelf.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [
+            {
+              "meshIndex": 0,
+              "primitiveIndex": 0,
+              "openBoundaryEdges": 0,
+              "nonManifoldEdges": 9
+            }
+          ],
+          "triangleCount": 33830,
+          "vertexCount": 28780,
+          "weldedVertexCount": 16877,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 9
+        }
+      }
     },
     {
       "slot": "seating",

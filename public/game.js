@@ -5148,21 +5148,21 @@ const INTERIOR_BLUEPRINTS = {
   commerce: {
     title: "交易与补给",
     props: [
-      { emoji: "🏷️", label: "柜台", assetIntent: "service-counter", model: "counter", render3d: false, x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
-      { emoji: "🧺", label: "货架", assetIntent: "retail-shelf", model: "shelf", render3d: false, x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
-      { emoji: "📦", label: "补给箱", assetIntent: "supply-crate", model: "shelf", render3d: false, x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
-      { emoji: "☕", label: "小坐区", assetIntent: "cafe-seating", model: "seating", render3d: false, x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
-      { emoji: "🍜", label: "热食台", assetIntent: "hot-food-counter", model: "counter", render3d: false, x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
-      { emoji: "🧾", label: "交换板", assetIntent: "exchange-board", model: "wall-board", render3d: false, x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
+      { emoji: "🏷️", label: "柜台", assetIntent: "service-counter", model: "service-counter", render3d: true, x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
+      { emoji: "🧺", label: "货架", assetIntent: "retail-shelf", model: "retail-shelf", render3d: true, x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
+      { emoji: "📦", label: "补给箱", assetIntent: "supply-crate", model: "supply-crate", render3d: true, x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
+      { emoji: "☕", label: "小坐区", assetIntent: "cafe-seating", model: "cafe-seating", render3d: true, x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
+      { emoji: "🍜", label: "热食台", assetIntent: "hot-food-counter", model: "hot-food-counter", render3d: true, x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
+      { emoji: "🧾", label: "交换板", assetIntent: "exchange-board", model: "exchange-board", render3d: true, x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
     ]
   },
   public: {
     title: "公共讨论与共识",
     props: [
-      { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "counter", render3d: false, x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
-      { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "wall-board", render3d: false, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
-      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "seating", render3d: false, x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
-      { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "desk", render3d: false, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
+      { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "proposal-podium", render3d: true, x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
+      { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "notice-board", render3d: true, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
+      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
+      { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
       { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
       { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
     ]
@@ -5170,9 +5170,9 @@ const INTERIOR_BLUEPRINTS = {
   work: {
     title: "协作与生产",
     props: [
-      { emoji: "💻", label: "工位", assetIntent: "office-workstation", model: "desk", render3d: false, x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
+      { emoji: "💻", label: "工位", assetIntent: "office-workstation", model: "office-workstation", render3d: true, x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
       { emoji: "🧰", label: "工具台", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
-      { emoji: "📋", label: "协作板", assetIntent: "collaboration-board", model: "wall-board", render3d: false, x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
+      { emoji: "📋", label: "协作板", assetIntent: "collaboration-board", model: "collaboration-board", render3d: true, x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
       { emoji: "🪑", label: "会议桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
       { emoji: "⚙️", label: "设备区", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
     ]
@@ -5180,11 +5180,11 @@ const INTERIOR_BLUEPRINTS = {
   justice: {
     title: "调停与记录",
     props: [
-      { emoji: "⚖️", label: "调停席", assetIntent: "mediation-podium", model: "counter", render3d: false, x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
+      { emoji: "⚖️", label: "调停席", assetIntent: "mediation-podium", model: "mediation-podium", render3d: true, x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
       { emoji: "🪑", label: "圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
-      { emoji: "📝", label: "记录席", assetIntent: "record-desk", model: "desk", render3d: false, x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
-      { emoji: "🗄️", label: "档案柜", assetIntent: "archive-cabinet", model: "shelf", render3d: false, x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
-      { emoji: "🕊️", label: "冷静角", assetIntent: "calming-chair", model: "seating", render3d: false, x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
+      { emoji: "📝", label: "记录席", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🗄️", label: "档案柜", assetIntent: "archive-cabinet", model: "archive-cabinet", render3d: true, x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🕊️", label: "冷静角", assetIntent: "calming-chair", model: "calming-chair", render3d: true, x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
     ]
   },
   home: {
@@ -5203,7 +5203,7 @@ const INTERIOR_BLUEPRINTS = {
     props: [
       { emoji: "🌿", label: "育苗架", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
       { emoji: "🪴", label: "温室台", assetIntent: "greenhouse-bench", model: "plant-zone", render3d: true, x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
-      { emoji: "🪵", label: "工具棚", assetIntent: "garden-tool-shed", model: "shelf", render3d: false, x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
+      { emoji: "🪵", label: "工具棚", assetIntent: "garden-tool-shed", model: "garden-tool-shed", render3d: true, x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
       { emoji: "🪑", label: "休息椅", assetIntent: "park-bench", model: "bench", render3d: true, x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
       { emoji: "🌸", label: "照料区", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.62, y: 0.68, size: 31, behaviors: ["garden", "care", "gather"] }
     ]
@@ -5212,18 +5212,18 @@ const INTERIOR_BLUEPRINTS = {
     title: "表达与创作",
     props: [
       { emoji: "🎨", label: "画架", assetIntent: "painting-easel", model: "easel", render3d: true, x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
-      { emoji: "🖼️", label: "作品墙", assetIntent: "gallery-wall", model: "wall-board", render3d: false, x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
-      { emoji: "🎭", label: "排练角", assetIntent: "rehearsal-stage", model: "market-stall", render3d: false, x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
-      { emoji: "📚", label: "故事桌", assetIntent: "story-table", model: "desk", render3d: false, x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
-      { emoji: "🎶", label: "声音角", assetIntent: "music-corner", model: "table", render3d: false, x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
+      { emoji: "🖼️", label: "作品墙", assetIntent: "gallery-wall", model: "gallery-wall", render3d: true, x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
+      { emoji: "🎭", label: "排练角", assetIntent: "rehearsal-stage", model: "rehearsal-stage", render3d: true, x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
+      { emoji: "📚", label: "故事桌", assetIntent: "story-table", model: "story-table", render3d: true, x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🎶", label: "声音角", assetIntent: "music-corner", model: "music-corner", render3d: true, x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
     ]
   },
   memory: {
     title: "安宁与记忆",
     props: [
       { emoji: "🕯️", label: "纪念台", assetIntent: "memorial-altar", model: "altar", render3d: true, x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
-      { emoji: "🕊️", label: "静坐席", assetIntent: "meditation-seat", model: "seating", render3d: false, x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
-      { emoji: "📖", label: "记忆册", assetIntent: "memory-book", model: "desk", render3d: false, x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🕊️", label: "静坐席", assetIntent: "meditation-seat", model: "meditation-seat", render3d: true, x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
+      { emoji: "📖", label: "记忆册", assetIntent: "memory-book", model: "memory-book", render3d: true, x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
       { emoji: "🌿", label: "低声花园", assetIntent: "memory-garden", model: "plant-zone", render3d: true, x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
     ]
   }
@@ -5477,6 +5477,47 @@ function inferInteriorBlueprintKey(zone) {
   return "home";
 }
 
+const INTERIOR_STORY_TERMS = [
+  "床", "护理", "等候", "安抚", "植物", "阅读", "讲台", "课桌", "练习", "探索", "课间",
+  "柜台", "货架", "补给", "小坐", "热食", "交换", "提案", "公告", "旁听", "记录", "圆桌",
+  "缓冲", "工位", "工具", "协作", "会议", "设备", "调停", "档案", "冷静", "沙发", "餐桌",
+  "卧榻", "洗漱", "书架", "育苗", "温室", "休息", "照料", "画架", "作品", "排练", "故事",
+  "声音", "纪念", "静坐", "记忆", "花园"
+];
+
+function scoreInteriorClueForLabel(label, clue) {
+  const labelText = String(label || "");
+  const clueText = String(clue || "");
+  let score = 0;
+  INTERIOR_STORY_TERMS.forEach((term) => {
+    if (labelText.includes(term) && clueText.includes(term)) score += term.length * 12;
+  });
+  const hanChars = [...new Set(labelText.match(/\p{Script=Han}/gu) || [])];
+  hanChars.forEach((char) => {
+    if (clueText.includes(char)) score += 1;
+  });
+  for (let index = 0; index < labelText.length - 1; index += 1) {
+    const pair = labelText.slice(index, index + 2);
+    if (/^\p{Script=Han}{2}$/u.test(pair) && clueText.includes(pair)) score += 6;
+  }
+  return score;
+}
+
+function assignInteriorStoryClues(labels, clues) {
+  const assignments = new Map();
+  const available = new Set(labels.map((_, index) => index));
+  (clues || []).forEach((clue) => {
+    const ranked = [...available]
+      .map((index) => ({ index, score: scoreInteriorClueForLabel(labels[index], clue) }))
+      .sort((a, b) => b.score - a.score || a.index - b.index);
+    const match = ranked[0];
+    if (!match || match.score <= 0) return;
+    assignments.set(match.index, clue);
+    available.delete(match.index);
+  });
+  return assignments;
+}
+
 function getInteriorBlueprint(zone) {
   const cacheKey = zone?.id || `${zone?.role || ""}:${zone?.archetype || ""}`;
   if (INTERIOR_BLUEPRINT_CACHE.has(cacheKey)) return INTERIOR_BLUEPRINT_CACHE.get(cacheKey);
@@ -5484,6 +5525,7 @@ function getInteriorBlueprint(zone) {
   const key = profile?.blueprint || inferInteriorBlueprintKey(zone);
   const base = INTERIOR_BLUEPRINTS[key] || INTERIOR_BLUEPRINTS.home;
   const labels = profile?.labels || [];
+  const storyClues = assignInteriorStoryClues(labels, profile?.clues || []);
   const blueprint = {
     ...base,
     key,
@@ -5492,7 +5534,7 @@ function getInteriorBlueprint(zone) {
     props: (base.props || []).map((prop, index) => ({
       ...prop,
       label: labels[index] || prop.label,
-      storyIndex: index % Math.max(1, profile?.clues?.length || 1)
+      storyClue: storyClues.get(index) || ""
     }))
   };
   INTERIOR_BLUEPRINT_CACHE.set(cacheKey, blueprint);
@@ -5774,6 +5816,7 @@ function playInteriorSceneAction() {
   };
   addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, sceneAction.behavior, true, `interior-scene-${zone.id}`);
   pushRobotSignal("avatar", "soft", `另一个世界里的你在${zone.name}${sceneAction.label}。这不是任务分数，而是一段关系开始改变的证据。`);
+  persistInteriorExploration();
   persist();
   syncInteriorDiscoveryCard(performance.now());
   markRenderActive(9800);
@@ -5796,7 +5839,7 @@ function exploreInteriorHotspot(propIndex) {
   const profile = blueprint.profile;
   const record = getInteriorExplorationRecord(zone.id);
   const alreadyFound = record.found.includes(prop.label);
-  const clue = profile?.clues?.[prop.storyIndex]
+  const clue = prop.storyClue
     || `${prop.label}留下了被使用和照料的痕迹，让${zone.name}不只是一间空房。`;
   if (!alreadyFound) record.found.push(prop.label);
 
@@ -5850,6 +5893,7 @@ function exploreInteriorHotspot(propIndex) {
     addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
     pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
   }
+  persistInteriorExploration();
   persist();
   syncInteriorDiscoveryCard(performance.now());
   markRenderActive(7600);
