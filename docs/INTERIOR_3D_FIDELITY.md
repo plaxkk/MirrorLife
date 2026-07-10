@@ -2,19 +2,23 @@
 
 ## 目标
 
-正式资产必须能够从任意方向观察，并保留参考物件的轮廓、比例、色块、圆角、结构细节和 cel-shading 气质。Three.js 只负责加载、相机、灯光、碰撞和交互；程序化几何与平面卡片只可作为开发占位，不能作为正式还原结果。
+正式资产必须能够从任意方向观察，并逐件保留参考物件的轮廓、比例、色块、圆角、结构细节和 cel-shading 气质。Three.js 只负责加载、相机、灯光、碰撞和交互；程序化几何、平面卡片和单图深度挤出只可作为开发占位，不能作为正式还原结果。
+
+“完整还原”不是指从单张图猜一个相似物件，而是先建立一致的多视角事实，再完成建模和人工修模。原图没有展示的背面与底部必须通过独立参考视图确定，不能用通用结构补齐后直接交付。
 
 ## 生产流程
 
 1. 为单个物件准备透明背景的原始参考图，不包含其他物件或场景。
-2. 生成并人工检查 `front / back / left / right / top / isometric` 六个一致视图。必要时补 `bottom`。
-3. 使用 Tripo、混元或其他支持多视图的入口生成高模，禁止从单图结果直接标记为正式资产。
+2. 生成并人工检查 `front / back / left / right / top / bottom / isometric` 七个一致且独立的视图。
+3. 使用 Tripo Multiview、混元 Multiview 或 Blender 人工建模生成高模，禁止从单图结果直接标记为正式资产。
 4. 在 Blender 中校正比例、背面、遮挡区域、薄片结构、法线、UV 和材质色块；所有可见部件必须是完整几何。
 5. 保留未减面的高模母版到 `dist/interior-3d-work/<provider>/master-glb/`。
 6. 从母版生成网页 LOD。默认保留 45% 几何并使用 1024 纹理；若视觉回归不通过，提高几何或纹理预算。
-7. 从六个标准视角渲染网页 LOD，与对应参考图比较。每个视角都必须满足轮廓 IoU `>= 0.90`、颜色相似度 `>= 0.85`，并通过人工复核。
-8. 记录闭合网格审计，确认 `closedMeshes=true`、`nonManifoldEdges=0`、`openBoundaryEdges=0`。
-9. 只有 `release-candidate` 资产可以替换正式场景模型。
+7. 从七个标准视角渲染网页 LOD，与对应参考图比较。每个视角都必须满足轮廓 IoU `>= 0.92`、颜色相似度 `>= 0.88`，并通过人工复核。
+8. 按配置中的 `requiredParts` 逐项确认部件存在，并分别通过形状、位置和材质一致性检查。
+9. 渲染至少 12 帧的 360 度转台，确认背面、底部、遮挡区域、连接关系和贴图接缝完整。
+10. 记录闭合网格审计，确认 `closedMeshes=true`、`nonManifoldEdges=0`、`openBoundaryEdges=0`。
+11. 只有通过全部门禁的 `release-candidate` 资产可以替换正式场景模型。
 
 ## 资产证明文件
 
@@ -24,7 +28,7 @@
 {
   "provider": "hunyuan-multiview",
   "qualityTier": "release-candidate",
-  "referenceViews": ["front", "back", "left", "right", "top", "isometric"],
+  "referenceViews": ["front", "back", "left", "right", "top", "bottom", "isometric"],
   "referenceFiles": ["..."],
   "masterFile": "dist/interior-3d-work/hunyuan-multiview/master-glb/desk.glb",
   "reviewReport": "dist/interior-3d-work/hunyuan-multiview/reviews/desk.json",
@@ -38,15 +42,16 @@
 }
 ```
 
-`reviewReport` 的每个标准视角必须记录参考图、模型渲染图、轮廓 IoU、颜色相似度和人工通过状态。
+`reviewReport` 除了每个标准视角的参考图、模型渲染图、轮廓 IoU、颜色相似度和人工通过状态，还必须包含逐部件 `semanticInventory` 与至少 12 帧的 `turntable` 验收。
 
 ## 验收命令
 
 ```bash
+npm run prepare:interior-3d:fidelity
 npm run report:interior-3d:fidelity
 npm run audit:interior-3d:geometry -- --file web.glb --master-file master.glb --output geometry-audit.json
 npm run compare:interior-3d:view -- --slot desk --view front --reference front.png --render front-render.png --approve --reviewer your-name
 npm run verify:interior-3d:release
 ```
 
-第一条命令给出 17 个模型的缺口和下一步；第二条是正式发布硬门禁。当前程序化占位模型与单图生成模型应当失败，这是预期行为。
+第一条命令为 17 类陈设生成严格重建工作包；第二条给出模型缺口和下一步；最后一条是正式发布硬门禁。当前程序化占位模型、单图生成模型和缺少背面/底部证据的模型应当失败，这是预期行为。

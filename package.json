@@ -14,6 +14,7 @@
     "generate:interior-sprite-card-glb": "node scripts/generate-interior-sprite-card-glbs.mjs",
     "generate:interior-props-image2": "node scripts/generate-interior-props-image2.mjs",
     "prepare:interior-3d": "node scripts/prepare-interior-3d-workbench.mjs",
+    "prepare:interior-3d:fidelity": "node scripts/prepare-interior-reconstruction-packets.mjs",
     "package:interior-3d-web": "node scripts/package-interior-3d-web-batch.mjs",
     "place:interior-3d": "node scripts/place-interior-3d-model.mjs",
     "import:interior-3d": "node scripts/import-interior-3d-models.mjs",

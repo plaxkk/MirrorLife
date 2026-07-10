@@ -1,26 +1,29 @@
 {
   "version": 2,
-  "goal": "Reconstruct every MirrorLife interior prop as a high-fidelity, fully modeled 360-degree asset. Procedural Three.js geometry and sprite cards are development placeholders only and must never pass release validation.",
+  "goal": "Faithfully reconstruct every MirrorLife interior prop as a complete, inspectable 360-degree asset. A rough silhouette, single-view extrusion or guessed backside is not an acceptable reconstruction. Procedural Three.js geometry and sprite cards are development placeholders only and must never pass release validation.",
   "sourceImageRoot": "dist/assets/interior-props-image2",
   "remoteManifest": "dist/assets/interior-props-image2/remote-manifest.json",
   "targetGlbRoot": "public/assets/interiors/glb",
   "workRoot": "dist/interior-3d-work",
-  "stylePrompt": "Reconstruct this isolated MirrorLife prop as a complete 360-degree 3D asset. Match the reference silhouette, proportions, color blocking, rounded bevels, visible construction details and warm dopamine cel-shading art direction. Model coherent back, side, top and underside surfaces rather than extruding the visible image. Generate only the object, no text, no labels, no extra scene and no people. Preserve a high-fidelity master before creating a browser-optimized GLB LOD.",
+  "stylePrompt": "Faithfully reconstruct this isolated MirrorLife prop as a complete 360-degree 3D asset. Match every named component, silhouette, proportion, color block, rounded bevel, visible construction detail and warm dopamine cel-shading material. Use coherent independent front, back, left, right, top, bottom and isometric references; never extrude one image, flatten hidden surfaces or invent a generic backside. Generate only the object, no text, no labels, no extra scene and no people. Preserve a high-fidelity master before creating a browser-optimized GLB LOD.",
   "qualityPolicy": {
-    "releaseProviders": ["tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"],
+    "releaseProviders": ["tripo-multiview", "hunyuan-multiview", "blender-manual"],
     "placeholderProviders": ["procedural-threejs", "sprite-card"],
-    "minimumReferenceViews": 6,
-    "requiredReferenceViews": ["front", "back", "left", "right", "top", "isometric"],
+    "minimumReferenceViews": 7,
+    "requiredReferenceViews": ["front", "back", "left", "right", "top", "bottom", "isometric"],
     "preferredReferenceViews": ["front", "back", "left", "right", "top", "bottom", "isometric"],
     "requireMasterAsset": true,
     "requireReviewReport": true,
     "requireClosedGeometry": true,
+    "requireSemanticInventory": true,
+    "requireTurntableReview": true,
+    "minimumTurntableFrames": 12,
     "masterTextureSize": 2048,
     "webTextureSize": 1024,
     "webTriangleBudget": 80000,
     "webFileBudgetBytes": 12582912,
-    "canonicalViewSilhouetteIou": 0.9,
-    "canonicalViewColorSimilarity": 0.85
+    "canonicalViewSilhouetteIou": 0.92,
+    "canonicalViewColorSimilarity": 0.88
   },
   "slots": [
     {
@@ -29,6 +32,7 @@
       "priority": 1,
       "primaryImage": "hospital/hospital_bed_monitor_iv.png",
       "fallbackImages": ["residence/single_bed_nightstand.png", "residence/bedroom_suite_interior.png"],
+      "requiredParts": ["bed frame", "headboard", "footboard", "mattress", "pillow", "blanket", "caster wheels", "IV stand", "IV bag", "patient monitor", "bedside table"],
       "notes": "Hospital and home interiors both use this for sleeping/care anchors."
     },
     {
@@ -37,6 +41,7 @@
       "priority": 2,
       "primaryImage": "hospital/reception_counter.png",
       "fallbackImages": ["hospital/medical_supply_podium.png", "market_cafe/hot_food_counter.png"],
+      "requiredParts": ["curved counter body", "raised service ledge", "red cross emblem", "worktop", "computer monitor", "keyboard", "desk plant", "rear storage"],
       "notes": "Used for care desks, proposal desks, podiums and service counters."
     },
     {
@@ -45,6 +50,7 @@
       "priority": 3,
       "primaryImage": "hospital/medicine_cabinet.png",
       "fallbackImages": ["school_library/bookcase.png", "market_cafe/pantry_shelf.png"],
+      "requiredParts": ["cabinet frame", "top cornice", "open shelves", "medicine containers", "lower drawers", "lower doors", "handles", "finished back panel"],
       "notes": "Tall storage silhouette should read well from distance."
     },
     {
@@ -53,6 +59,7 @@
       "priority": 4,
       "primaryImage": "residence/sofa_coffee_table.png",
       "fallbackImages": ["school_library/reading_armchair_lamp.png", "market_cafe/cafe_table_corner.png"],
+      "requiredParts": ["two-seat sofa", "seat cushions", "back cushions", "armrests", "legs", "throw pillows", "coffee table", "tabletop plant"],
       "notes": "A soft resting corner for home, care, public and nature spaces."
     },
     {
@@ -61,6 +68,7 @@
       "priority": 5,
       "primaryImage": "school_library/chalkboard.png",
       "fallbackImages": ["park_plaza/notice_board.png", "studio_workshop/gallery_frames.png"],
+      "requiredParts": ["board surface", "wood frame", "left support post", "right support post", "floor feet", "chalk tray", "chalk pieces", "eraser", "finished rear panel"],
       "notes": "Keep it upright and readable; avoid thin geometry that disappears."
     },
     {
@@ -69,6 +77,7 @@
       "priority": 6,
       "primaryImage": "school_library/student_desk.png",
       "fallbackImages": ["studio_workshop/writing_desk.png", "residence/vanity_dresser.png"],
+      "requiredParts": ["desktop", "book", "backpack", "left desk support", "right desk support", "chair seat", "chair back", "chair legs", "finished underside"],
       "notes": "Must have a clear tabletop and chair silhouette."
     },
     {
@@ -77,6 +86,7 @@
       "priority": 7,
       "primaryImage": "residence/round_dining_table.png",
       "fallbackImages": ["residence/dining_table_set.png", "market_cafe/cafe_table_corner.png"],
+      "requiredParts": ["round tabletop", "central support", "table base", "four chairs", "chair backs", "chair legs", "center plant", "finished underside"],
       "notes": "Used for meetings and social interactions."
     },
     {
@@ -85,6 +95,7 @@
       "priority": 8,
       "primaryImage": "residence/dining_table_set.png",
       "fallbackImages": ["market_cafe/cafe_table_corner.png", "memorial_cemetery/low_memorial_table.png"],
+      "requiredParts": ["tabletop", "table apron", "four table legs", "four chairs", "chair backs", "chair legs", "tablecloth", "center plant", "finished underside"],
       "notes": "Generic fallback model for props without a specialized slot."
     },
     {
@@ -93,6 +104,7 @@
       "priority": 9,
       "primaryImage": "market_cafe/produce_stall.png",
       "fallbackImages": ["market_cafe/market_hall_interior.png", "market_cafe/fruit_baskets.png"],
+      "requiredParts": ["stall counter", "striped awning", "awning posts", "produce shelves", "fruit crates", "vegetable crates", "rear storage", "finished backside"],
       "notes": "Should feel like a lively miniature stall, but remain a single object."
     },
     {
@@ -101,6 +113,7 @@
       "priority": 10,
       "primaryImage": "greenhouse_garden/plant_shelf.png",
       "fallbackImages": ["greenhouse_garden/glass_greenhouse.png", "greenhouse_garden/flower_bed_watering_can.png"],
+      "requiredParts": ["tiered plant rack", "shelf boards", "support frame", "multiple plant pots", "leaf clusters", "flower clusters", "caster wheels", "watering can"],
       "notes": "Used heavily in nature, recovery and buffer corners."
     },
     {
@@ -109,6 +122,7 @@
       "priority": 11,
       "primaryImage": "studio_workshop/maker_workbench.png",
       "fallbackImages": ["studio_workshop/tool_chest.png", "studio_workshop/drill_press.png"],
+      "requiredParts": ["worktop", "wood frame", "four legs", "lower brace", "rear tool rail", "hand tools", "tool containers", "bench vise", "finished backside"],
       "notes": "Make the tool surface and craft identity obvious."
     },
     {
@@ -117,6 +131,7 @@
       "priority": 12,
       "primaryImage": "studio_workshop/painting_easel.png",
       "fallbackImages": ["studio_workshop/art_supply_cart.png", "studio_workshop/gallery_frames.png"],
+      "requiredParts": ["tripod frame", "rear support leg", "canvas support ledge", "canvas", "painted artwork", "hinge hardware", "paint palette", "brushes"],
       "notes": "Creative identity marker; keep easel legs stable and simple."
     },
     {
@@ -125,6 +140,7 @@
       "priority": 13,
       "primaryImage": "residence/sink_vanity.png",
       "fallbackImages": ["residence/vanity_dresser.png"],
+      "requiredParts": ["vanity cabinet", "cabinet doors", "drawer", "countertop", "sink basin", "faucet", "mirror", "mirror frame", "side plant", "finished rear panel"],
       "notes": "Used for wash/clean actions."
     },
     {
@@ -133,6 +149,7 @@
       "priority": 14,
       "primaryImage": "memorial_cemetery/long_memorial_altar.png",
       "fallbackImages": ["memorial_cemetery/low_memorial_table.png", "memorial_cemetery/tombstone_memorial.png"],
+      "requiredParts": ["long altar table", "table legs", "lower braces", "memorial portrait", "portrait frame", "candles", "incense vessel", "flower vase", "offering dishes", "finished backside"],
       "notes": "Needs a calm memorial feeling without becoming too realistic or somber."
     },
     {
@@ -141,6 +158,7 @@
       "priority": 15,
       "primaryImage": "park_plaza/flower_fountain.png",
       "fallbackImages": ["memorial_cemetery/small_fountain.png"],
+      "requiredParts": ["lower stone basin", "raised circular curb", "central pedestal", "upper bowl", "water spout", "water surface", "flower ring", "plant leaves", "finished underside"],
       "notes": "Useful as a visual anchor in public and memory spaces."
     },
     {
@@ -149,6 +167,7 @@
       "priority": 16,
       "primaryImage": "park_plaza/wooden_bench.png",
       "fallbackImages": ["memorial_cemetery/memorial_bench.png"],
+      "requiredParts": ["three seat slats", "two back slats", "left armrest", "right armrest", "four legs", "back supports", "under-seat braces", "joinery bolts", "finished back and underside"],
       "notes": "Simple low-cost model; a good candidate for Hunyuan fallback."
     },
     {
@@ -157,6 +176,7 @@
       "priority": 17,
       "primaryImage": "kindergarten/teddy_play_rug.png",
       "fallbackImages": ["kindergarten/playroom_interior.png", "kindergarten/baby_stroller.png"],
+      "requiredParts": ["round play rug", "scalloped rug edge", "teddy bear head", "teddy bear torso", "teddy bear arms", "teddy bear legs", "seat cushion", "heart cushion", "soft toy blocks"],
       "notes": "A cozy toy corner, not a character."
     }
   ]

@@ -110,6 +110,8 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(CONFIG_PATH);
   const policy = config.qualityPolicy || {};
+  const slot = config.slots.find((item) => item.slot === args.slot);
+  if (!slot) throw new Error(`Unknown slot: ${args.slot}`);
   const requiredViews = policy.requiredReferenceViews || [];
   if (!requiredViews.includes(args.view)) throw new Error(`--view must be one of: ${requiredViews.join(", ")}`);
   const metrics = compare(normalizeImage(await loadPng(args.reference)), normalizeImage(await loadPng(args.render)));
@@ -130,7 +132,23 @@ async function main() {
   report.views = [...(report.views || []).filter((view) => view.view !== args.view), viewReport]
     .sort((a, b) => requiredViews.indexOf(a.view) - requiredViews.indexOf(b.view));
   const byView = new Map(report.views.map((view) => [view.view, view]));
-  const complete = requiredViews.every((view) => byView.get(view)?.passed === true);
+  const canonicalViewsApproved = requiredViews.every((view) => byView.get(view)?.passed === true);
+  const inventory = new Map((report.semanticInventory || []).map((item) => [item.part, item]));
+  const semanticInventoryApproved = policy.requireSemanticInventory === false || (slot.requiredParts || []).every((part) => {
+    const item = inventory.get(part);
+    return item && ["present", "shapeMatched", "placementMatched", "materialMatched"]
+      .every((field) => item[field] === true);
+  });
+  const turntable = report.turntable || {};
+  const turntableApproved = policy.requireTurntableReview === false || (
+    (turntable.frameFiles || []).length >= Number(policy.minimumTurntableFrames || 12)
+    && ["silhouetteCoherent", "hiddenSurfacesComplete", "noFloatingParts", "humanApproved", "passed"]
+      .every((field) => turntable[field] === true)
+  );
+  const complete = canonicalViewsApproved && semanticInventoryApproved && turntableApproved;
+  report.canonicalViewsApproved = canonicalViewsApproved;
+  report.semanticInventoryApproved = semanticInventoryApproved;
+  report.turntableApproved = turntableApproved;
   report.status = complete ? "approved" : "draft";
   report.reviewer = complete ? args.reviewer : report.reviewer || "";
   report.approvedAt = complete ? new Date().toISOString() : "";

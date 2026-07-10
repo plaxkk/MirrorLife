@@ -46,7 +46,7 @@ const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: false, powerP
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.6));
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = THREE.PCFShadowMap;
 viewport.appendChild(renderer.domElement);
 
 const scene = new THREE.Scene();
@@ -131,10 +131,10 @@ function inspectModel(model, box) {
   document.getElementById("meshMetric").textContent = String(meshes);
   document.getElementById("materialMetric").textContent = String(materials.size);
   document.getElementById("dimensionMetric").textContent = `${size.x.toFixed(2)} × ${size.y.toFixed(2)} × ${size.z.toFixed(2)}`;
-  const budget = triangles <= 40000 ? "通过" : `超出 ${formatCount(Math.round(triangles - 40000))}`;
+  const budget = triangles <= 80000 ? "通过" : `超出 ${formatCount(Math.round(triangles - 80000))}`;
   const budgetMetric = document.getElementById("budgetMetric");
   budgetMetric.textContent = budget;
-  budgetMetric.style.color = triangles <= 40000 ? "#168a4c" : "#e63946";
+  budgetMetric.style.color = triangles <= 80000 ? "#168a4c" : "#e63946";
 }
 
 async function loadAsset(modelUrl, referenceUrl) {

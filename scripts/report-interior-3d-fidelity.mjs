@@ -18,12 +18,12 @@ async function exists(filePath) {
 }
 
 function suggestedAction(entry, issues) {
-  if (!entry) return "Create six-view references and reconstruct the asset.";
+  if (!entry) return "Create seven independent views and reconstruct the complete asset.";
   if (issues.some((issue) => issue.includes("placeholder"))) {
     return "Replace procedural geometry with a multiview reconstruction.";
   }
   if (issues.some((issue) => issue.includes("reference views"))) {
-    return "Generate coherent front/back/left/right/top/isometric references.";
+    return "Generate coherent front/back/left/right/top/bottom/isometric references.";
   }
   if (issues.some((issue) => issue.includes("master"))) {
     return "Restore the unsimplified master GLB before optimizing a Web LOD.";
@@ -32,7 +32,13 @@ function suggestedAction(entry, issues) {
     return "Repair topology and record the Blender geometry audit.";
   }
   if (issues.some((issue) => issue.includes("review"))) {
-    return "Render canonical views and complete silhouette/color review.";
+    return "Complete canonical-view, semantic-part and 360 turntable review.";
+  }
+  if (issues.some((issue) => issue.includes("semantic"))) {
+    return "Repair every missing or mismatched named component before approval.";
+  }
+  if (issues.some((issue) => issue.includes("turntable"))) {
+    return "Render and approve a full 360-degree turntable, including hidden surfaces.";
   }
   return "Promote the audited model to release-candidate and import it.";
 }
@@ -47,6 +53,7 @@ async function main() {
   const releaseProviders = new Set(policy.releaseProviders || []);
   const requiredViews = policy.requiredReferenceViews || [];
   const minimumViews = Number(policy.minimumReferenceViews || requiredViews.length);
+  const minimumTurntableFrames = Number(policy.minimumTurntableFrames || 12);
   const rows = [];
 
   for (const slot of config.slots) {
@@ -67,7 +74,30 @@ async function main() {
       if (audit.closedMeshes !== true || Number(audit.nonManifoldEdges) !== 0 || Number(audit.openBoundaryEdges) !== 0) {
         issues.push("geometry audit incomplete");
       }
-      if (!entry.reviewReport || !await exists(entry.reviewReport)) issues.push("canonical-view review missing");
+      if (!entry.reviewReport || !await exists(entry.reviewReport)) {
+        issues.push("canonical-view review missing");
+      } else {
+        const review = await readJson(entry.reviewReport);
+        if (review.status !== "approved" || !review.reviewer || !review.approvedAt) {
+          issues.push("review is not approved");
+        }
+        if (policy.requireSemanticInventory !== false) {
+          const inventory = new Map((review.semanticInventory || []).map((item) => [item.part, item]));
+          const semanticComplete = (slot.requiredParts || []).every((part) => {
+            const item = inventory.get(part);
+            return item && ["present", "shapeMatched", "placementMatched", "materialMatched"]
+              .every((field) => item[field] === true);
+          });
+          if (!semanticComplete) issues.push("semantic component inventory incomplete");
+        }
+        if (policy.requireTurntableReview !== false) {
+          const turntable = review.turntable || {};
+          const turntableComplete = (turntable.frameFiles || []).length >= minimumTurntableFrames
+            && ["silhouetteCoherent", "hiddenSurfacesComplete", "noFloatingParts", "humanApproved", "passed"]
+              .every((field) => turntable[field] === true);
+          if (!turntableComplete) issues.push("360 turntable review incomplete");
+        }
+      }
     }
 
     rows.push({
@@ -86,7 +116,7 @@ async function main() {
   const readyCount = rows.filter((row) => row.ready).length;
   const report = {
     generatedAt: new Date().toISOString(),
-    standard: "high-fidelity-multiview-v2",
+    standard: "faithful-complete-multiview-v3",
     readyCount,
     totalCount: rows.length,
     rows,

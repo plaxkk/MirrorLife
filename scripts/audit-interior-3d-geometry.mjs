@@ -70,7 +70,8 @@ function readAccessor(gltf, binary, accessorIndex) {
 }
 
 function auditPrimitive(gltf, binary, primitive, epsilon) {
-  if ((primitive.mode ?? 4) !== 4) throw new Error("Only triangle-list primitives can pass the topology audit.");
+  const mode = primitive.mode ?? 4;
+  if (mode !== 4) return { mode, ignored: true };
   const positions = readAccessor(gltf, binary, primitive.attributes.POSITION);
   const indices = primitive.indices === undefined
     ? positions.map((_, index) => index)
@@ -100,6 +101,8 @@ function auditPrimitive(gltf, binary, primitive, epsilon) {
   }
   const counts = [...edges.values()];
   return {
+    mode,
+    ignored: false,
     triangleCount: indices.length / 3,
     vertexCount: positions.length,
     weldedVertexCount: welded.size,
@@ -112,17 +115,34 @@ async function auditFile(filePath, epsilon) {
   const absolutePath = path.resolve(filePath);
   const { json, binary } = parseGlb(await fs.readFile(absolutePath));
   const primitives = [];
-  for (const mesh of json.meshes || []) {
-    for (const primitive of mesh.primitives || []) primitives.push(auditPrimitive(json, binary, primitive, epsilon));
+  for (const [meshIndex, mesh] of (json.meshes || []).entries()) {
+    for (const [primitiveIndex, primitive] of (mesh.primitives || []).entries()) {
+      primitives.push({ meshIndex, primitiveIndex, ...auditPrimitive(json, binary, primitive, epsilon) });
+    }
   }
-  const summary = primitives.reduce((result, item) => ({
+  const trianglePrimitives = primitives.filter((item) => !item.ignored);
+  const summary = trianglePrimitives.reduce((result, item) => ({
     triangleCount: result.triangleCount + item.triangleCount,
     vertexCount: result.vertexCount + item.vertexCount,
     weldedVertexCount: result.weldedVertexCount + item.weldedVertexCount,
     openBoundaryEdges: result.openBoundaryEdges + item.openBoundaryEdges,
     nonManifoldEdges: result.nonManifoldEdges + item.nonManifoldEdges,
   }), { triangleCount: 0, vertexCount: 0, weldedVertexCount: 0, openBoundaryEdges: 0, nonManifoldEdges: 0 });
-  return { file: path.relative(process.cwd(), absolutePath), primitiveCount: primitives.length, ...summary };
+  return {
+    file: path.relative(process.cwd(), absolutePath),
+    primitiveCount: primitives.length,
+    trianglePrimitiveCount: trianglePrimitives.length,
+    outlinePrimitiveCount: primitives.length - trianglePrimitives.length,
+    problemPrimitives: trianglePrimitives
+      .filter((item) => item.openBoundaryEdges > 0 || item.nonManifoldEdges > 0)
+      .map(({ meshIndex, primitiveIndex, openBoundaryEdges, nonManifoldEdges }) => ({
+        meshIndex,
+        primitiveIndex,
+        openBoundaryEdges,
+        nonManifoldEdges
+      })),
+    ...summary
+  };
 }
 
 async function main() {
@@ -132,7 +152,7 @@ async function main() {
   const result = {
     auditedAt: new Date().toISOString(),
     epsilon: args.epsilon,
-    closedMeshes: web.openBoundaryEdges === 0 && web.nonManifoldEdges === 0,
+    closedMeshes: web.trianglePrimitiveCount > 0 && web.openBoundaryEdges === 0 && web.nonManifoldEdges === 0,
     nonManifoldEdges: web.nonManifoldEdges,
     openBoundaryEdges: web.openBoundaryEdges,
     masterTriangleCount: master.triangleCount,

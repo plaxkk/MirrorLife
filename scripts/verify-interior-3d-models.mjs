@@ -113,6 +113,7 @@ async function main() {
       const silhouetteThreshold = Number(policy.canonicalViewSilhouetteIou || 0.9);
       const colorThreshold = Number(policy.canonicalViewColorSimilarity || 0.85);
       const triangleBudget = Number(policy.webTriangleBudget || 80000);
+      const minimumTurntableFrames = Number(policy.minimumTurntableFrames || 12);
 
       for (const slot of config.slots) {
         const source = imported.get(slot.slot);
@@ -188,6 +189,19 @@ async function main() {
             if (!review.reviewer || !review.approvedAt) {
               failures.push(`${slot.slot}: reviewReport requires reviewer and approvedAt`);
             }
+            if (policy.requireSemanticInventory !== false) {
+              const inventory = new Map((review.semanticInventory || []).map((item) => [item.part, item]));
+              for (const part of slot.requiredParts || []) {
+                const item = inventory.get(part);
+                if (!item) {
+                  failures.push(`${slot.slot}: semantic inventory is missing ${part}`);
+                  continue;
+                }
+                for (const field of ["present", "shapeMatched", "placementMatched", "materialMatched"]) {
+                  if (item[field] !== true) failures.push(`${slot.slot}: ${part} has not passed ${field}`);
+                }
+              }
+            }
             const reviewViews = new Map((review.views || []).map((view) => [view.view, view]));
             for (const viewName of requiredViews) {
               const view = reviewViews.get(viewName);
@@ -208,6 +222,19 @@ async function main() {
                 failures.push(`${slot.slot}: ${viewName} color similarity ${view.colorSimilarity ?? "missing"} is below ${colorThreshold}`);
               }
               if (view.passed !== true) failures.push(`${slot.slot}: ${viewName} comparison has not passed review`);
+            }
+            if (policy.requireTurntableReview !== false) {
+              const turntable = review.turntable || {};
+              const frameFiles = turntable.frameFiles || [];
+              if (frameFiles.length < minimumTurntableFrames) {
+                failures.push(`${slot.slot}: turntable has ${frameFiles.length}/${minimumTurntableFrames} frames`);
+              }
+              for (const frameFile of frameFiles) {
+                if (!await exists(path.resolve(frameFile))) failures.push(`${slot.slot}: missing turntable frame ${frameFile}`);
+              }
+              for (const field of ["silhouetteCoherent", "hiddenSurfacesComplete", "noFloatingParts", "humanApproved", "passed"]) {
+                if (turntable[field] !== true) failures.push(`${slot.slot}: turntable has not passed ${field}`);
+              }
             }
           }
         }

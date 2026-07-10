@@ -65,7 +65,7 @@ Options:
   --config <path>    Model slot mapping. Default: ${CONFIG_PATH}
   --slot <slot>      Runtime slot name, such as bed, counter, shelf.
   --file <path>      Downloaded GLB file.
-  --reference-views <csv>  Views used to reconstruct the asset, for example front,back,left,right,isometric.
+  --reference-views <csv>  Independent views used to reconstruct the asset, including front,back,left,right,top,bottom,isometric.
   --reference-files <csv>  Reference image paths corresponding to the supplied views.
   --review-report <path>   Approved canonical-view fidelity report JSON.
   --geometry-audit <path>  Closed-mesh/topology audit JSON.
@@ -149,6 +149,9 @@ async function main() {
     if (args.referenceFiles.length !== args.referenceViews.length) {
       throw new Error("--reference-files must contain one file for every --reference-views entry.");
     }
+    if (new Set(args.referenceFiles.map((filePath) => path.resolve(expandHome(filePath)))).size !== args.referenceFiles.length) {
+      throw new Error("release-candidate requires a distinct reference file for every view.");
+    }
     if (!args.reviewReport) throw new Error("release-candidate requires --review-report.");
     if (!args.geometryAudit) throw new Error("release-candidate requires --geometry-audit.");
   }
@@ -164,6 +167,36 @@ async function main() {
     : {};
   const reviewSource = args.reviewReport ? path.resolve(expandHome(args.reviewReport)) : "";
   if (reviewSource && !await exists(reviewSource)) throw new Error(`Review report does not exist: ${reviewSource}`);
+
+  if (args.qualityTier === "release-candidate") {
+    if (geometryAudit.closedMeshes !== true
+      || Number(geometryAudit.nonManifoldEdges) !== 0
+      || Number(geometryAudit.openBoundaryEdges) !== 0) {
+      throw new Error("release-candidate geometry audit must confirm a closed mesh with zero boundary and non-manifold edges.");
+    }
+    const review = await readJson(reviewSource);
+    if (review.slot !== slot.slot || review.status !== "approved" || !review.reviewer || !review.approvedAt) {
+      throw new Error("release-candidate review must match the slot and be approved by a named reviewer.");
+    }
+    if (policy.requireSemanticInventory !== false) {
+      const inventory = new Map((review.semanticInventory || []).map((item) => [item.part, item]));
+      for (const part of slot.requiredParts || []) {
+        const item = inventory.get(part);
+        if (!item || ["present", "shapeMatched", "placementMatched", "materialMatched"].some((field) => item[field] !== true)) {
+          throw new Error(`release-candidate semantic inventory has not fully approved: ${part}`);
+        }
+      }
+    }
+    if (policy.requireTurntableReview !== false) {
+      const turntable = review.turntable || {};
+      const minimumFrames = Number(policy.minimumTurntableFrames || 12);
+      if ((turntable.frameFiles || []).length < minimumFrames
+        || ["silhouetteCoherent", "hiddenSurfacesComplete", "noFloatingParts", "humanApproved", "passed"]
+          .some((field) => turntable[field] !== true)) {
+        throw new Error(`release-candidate requires an approved ${minimumFrames}-frame 360-degree turntable review.`);
+      }
+    }
+  }
 
   const masterTarget = path.resolve(config.workRoot, args.provider, "master-glb", `${slot.slot}.glb`);
   const target = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.glb`);
