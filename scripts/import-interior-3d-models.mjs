@@ -27,8 +27,8 @@ function parseArgs(argv) {
     }
   }
 
-  if (!["tripo", "hunyuan", "manual", "sprite-card"].includes(args.provider)) {
-    throw new Error("--provider must be tripo, hunyuan, manual, or sprite-card.");
+  if (!["tripo", "hunyuan", "manual", "sprite-card", "procedural-threejs"].includes(args.provider)) {
+    throw new Error("--provider must be tripo, hunyuan, manual, sprite-card, or procedural-threejs.");
   }
 
   return args;
@@ -41,7 +41,7 @@ Usage:
   node scripts/import-interior-3d-models.mjs [options]
 
 Options:
-  --provider <name>    tripo, hunyuan, or manual. Default: tripo
+  --provider <name>    tripo, hunyuan, manual, sprite-card, or procedural-threejs. Default: tripo
   --source <path>      Folder containing generated GLBs. Default: dist/interior-3d-work/<provider>/generated-glb
   --config <path>      Model slot mapping. Default: ${CONFIG_PATH}
   --require-all        Fail if any required slot GLB is missing.

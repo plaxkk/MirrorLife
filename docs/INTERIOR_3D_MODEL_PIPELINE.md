@@ -4,6 +4,24 @@
 
 当前游戏运行时只需要 17 个 GLB 槽位，不需要一次把 55 张图片全部做成独立模型。黑客松版本先替换这 17 个槽位，就能明显改变室内陈设风格。
 
+## Three.js 程序化模型
+
+当外部 2D-to-3D 平台额度不足时，可以直接生成仓库内维护的精细卡通模型。生成器把参考图拆成主体结构、功能件、装饰件和轮廓线，使用 Three.js 几何体与 PBR 平涂材质重建，产物是真正可旋转观察的 GLB，不是图片裁剪或平面卡片。
+
+默认只生成尚未由 Tripo / 混元替换的 12 个槽位：
+
+```bash
+npm run generate:interior-threejs
+npm run import:interior-3d -- --provider procedural-threejs
+npm run verify:interior-3d
+```
+
+产物先写入 `dist/interior-3d-work/procedural-threejs/generated-glb`，导入器会备份并合并运行时清单，不会覆盖已经完成的高优先级外部模型。也可以只生成指定槽位：
+
+```bash
+npm run generate:interior-threejs -- --slots desk,round-table,table
+```
+
 ## Runtime Slots
 
 配置文件：`config/interior-3d-model-map.json`
