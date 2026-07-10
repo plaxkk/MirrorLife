@@ -2,12 +2,15 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_TASKS = "dist/interior-3d-work/tripo/tasks.json";
+const DEFAULT_RUNTIME_MANIFEST = "public/assets/interiors/glb/model-source-manifest.json";
 
 function parseArgs(argv) {
   const args = {
     provider: "tripo",
     tasks: "",
     limit: 5,
+    runtimeManifest: DEFAULT_RUNTIME_MANIFEST,
+    fallbackOnly: false,
     force: false,
   };
 
@@ -16,6 +19,8 @@ function parseArgs(argv) {
     if (arg === "--provider") args.provider = argv[++i];
     else if (arg === "--tasks") args.tasks = argv[++i];
     else if (arg === "--limit") args.limit = Number.parseInt(argv[++i], 10);
+    else if (arg === "--runtime-manifest") args.runtimeManifest = argv[++i];
+    else if (arg === "--fallback-only") args.fallbackOnly = true;
     else if (arg === "--force") args.force = true;
     else if (arg === "--help" || arg === "-h") {
       printHelp();
@@ -42,6 +47,8 @@ Options:
   --provider <name>  tripo or hunyuan. Default: tripo
   --tasks <path>     Task manifest. Default: dist/interior-3d-work/<provider>/tasks.json
   --limit <count>    Number of pending slots to package. Default: 5
+  --fallback-only    Package only slots still backed by sprite-card runtime GLBs
+  --runtime-manifest Runtime source manifest for --fallback-only. Default: ${DEFAULT_RUNTIME_MANIFEST}
   --force            Include slots even when generated GLB already exists.
   -h, --help         Show help.
 `);
@@ -60,6 +67,14 @@ async function exists(filePath) {
   }
 }
 
+async function readRuntimeProviders(manifestPath) {
+  if (!manifestPath || !(await exists(manifestPath))) return new Map();
+  const manifest = await readJson(manifestPath);
+  return new Map((manifest.imported || [])
+    .filter((entry) => entry?.slot)
+    .map((entry) => [entry.slot, entry.provider]));
+}
+
 function normalizeRel(filePath) {
   return filePath.split(path.sep).join("/");
 }
@@ -68,6 +83,7 @@ async function main() {
   const args = parseArgs(process.argv.slice(2));
   const tasksPath = args.tasks || `dist/interior-3d-work/${args.provider}/tasks.json`;
   const manifest = await readJson(tasksPath);
+  const runtimeProviders = args.fallbackOnly ? await readRuntimeProviders(args.runtimeManifest) : new Map();
   const root = path.dirname(tasksPath);
   const batchDir = path.join(root, `web-upload-batch-${String(args.limit).padStart(2, "0")}`);
   const imagesDir = path.join(batchDir, "images");
@@ -78,6 +94,7 @@ async function main() {
 
   const pending = [];
   for (const task of manifest.tasks || []) {
+    if (args.fallbackOnly && runtimeProviders.get(task.slot) !== "sprite-card") continue;
     if (!args.force && await exists(task.expectedGeneratedGlb)) continue;
     pending.push(task);
   }
@@ -109,6 +126,7 @@ async function main() {
     count: packaged.length,
     imagesDir: normalizeRel(imagesDir),
     generatedGlbDir: normalizeRel(outputDir),
+    fallbackOnly: args.fallbackOnly,
     importCommand: `npm run import:interior-3d -- --provider ${args.provider}`,
     verifyCommand: "npm run verify:interior-3d",
     tasks: packaged

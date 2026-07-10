@@ -57,6 +57,13 @@ async function exists(filePath) {
   }
 }
 
+function assertPng(buffer, file) {
+  const signature = buffer.slice(0, 8).toString("hex");
+  if (signature !== "89504e470d0a1a0a") {
+    throw new Error(`Downloaded file is not a PNG: ${file}`);
+  }
+}
+
 function normalizeRel(filePath) {
   return filePath.split(path.sep).join("/");
 }
@@ -74,8 +81,29 @@ function getRemoteUrl(remoteManifest, file) {
   return remoteManifest.files?.[file]?.url || "";
 }
 
-async function copyInputImage({ sourceRoot, workInputDir, slot, sourceItem, force }) {
+async function ensureSourceImage({ sourceRoot, sourceItem, remoteManifest }) {
   const sourcePath = path.join(sourceRoot, sourceItem.file);
+  if (await exists(sourcePath)) return sourcePath;
+
+  const remoteUrl = getRemoteUrl(remoteManifest, sourceItem.file);
+  if (!remoteUrl) {
+    throw new Error(`Missing local source image and remote URL for ${sourceItem.file}`);
+  }
+
+  const response = await fetch(remoteUrl);
+  if (!response.ok) {
+    throw new Error(`Failed to download ${sourceItem.file}: ${response.status} ${await response.text()}`);
+  }
+
+  const buffer = Buffer.from(await response.arrayBuffer());
+  assertPng(buffer, sourceItem.file);
+  await fs.mkdir(path.dirname(sourcePath), { recursive: true });
+  await fs.writeFile(sourcePath, buffer);
+  return sourcePath;
+}
+
+async function copyInputImage({ sourceRoot, workInputDir, slot, sourceItem, remoteManifest, force }) {
+  const sourcePath = await ensureSourceImage({ sourceRoot, sourceItem, remoteManifest });
   const ext = path.extname(sourceItem.file) || ".png";
   const targetName = `${String(slot.priority).padStart(2, "0")}-${slot.slot}--${sourceItem.name}${ext}`;
   const targetPath = path.join(workInputDir, targetName);
@@ -107,6 +135,7 @@ async function main() {
       workInputDir: inputDir,
       slot,
       sourceItem,
+      remoteManifest,
       force: args.force,
     });
 

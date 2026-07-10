@@ -32,6 +32,31 @@
 
 ## Recommended Strategy
 
+## Browser Export Budget
+
+MirrorLife 的网页端室内层使用 `Three.js + GLTFLoader` 加载普通 `.glb`，当前没有接 `DracoLoader` 或 `MeshoptDecoder`。因此导出模型时优先选择“轻量、可直接加载”的 GLB，而不是影视级高面数模型。
+
+推荐导出规格：
+
+- 小陈设：10K-30K 面，512px 贴图，单文件尽量小于 1.5MB。
+- 常用家具：30K-50K 面，512px 或 1024px 贴图，单文件 1-3MB。
+- 重点物件：50K-100K 面，1024px 贴图，单文件 3-5MB。
+- 混元/Tripo 若只能导出高面数源文件，可以用 500K 作为源文件上限，但不要直接放进网页运行时。
+
+避免直接导出到运行时：
+
+- 1M / 1.5M 面模型。
+- 2K / 4K 大贴图。
+- Draco 压缩模型，除非 `src/interior-three.js` 增加对应解码器。
+
+高面数源文件下载后先优化：
+
+```bash
+npm run optimize:interior-3d -- --provider hunyuan --slot bed --texture-size 1024 --import-now
+```
+
+当前已验证的 Tripo 真 3D 模型优化后约 2MB-4MB/个，网页端可以正常校验和加载。
+
 ### 1. TripoAI first
 
 Use TripoAI free credits for the highest-impact 17 slots.
@@ -62,6 +87,19 @@ This creates:
 - `dist/interior-3d-work/tripo/web-upload-batch-05/manifest.json`
 
 Use this small batch when the browser automation plugin cannot control Chrome or when you want to spend free credits cautiously.
+
+当前仓库已经用 TripoAI 完成并导入了 4 个高优先级真 3D 槽位：
+
+- `bed`
+- `counter`
+- `shelf`
+- `seating`
+
+导入状态记录在：
+
+```text
+public/assets/interiors/glb/model-source-manifest.json
+```
 
 Workflow:
 
@@ -121,6 +159,34 @@ This creates:
 - `dist/interior-3d-work/hunyuan/input-images/`
 - `dist/interior-3d-work/hunyuan/generated-glb/`
 - `dist/interior-3d-work/hunyuan/hunyuan-jobs.jsonl`
+
+只打包仍然是 `sprite-card` 占位的运行时槽位，避免重复生成已经由 Tripo 完成的模型：
+
+```bash
+npm run package:interior-3d-web -- --provider hunyuan --limit 13 --fallback-only --force
+```
+
+这会生成：
+
+```text
+dist/interior-3d-work/hunyuan/web-upload-batch-13/
+```
+
+这个批次当前只包含剩余 13 个槽位：
+
+- `wall-board`
+- `desk`
+- `round-table`
+- `table`
+- `market-stall`
+- `plant-zone`
+- `workbench`
+- `easel`
+- `sink`
+- `altar`
+- `fountain`
+- `bench`
+- `toy-corner`
 
 Use either:
 

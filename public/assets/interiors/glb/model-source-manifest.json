@@ -1,44 +1,44 @@
 {
-  "updatedAt": "2026-07-09T13:32:53.758Z",
-  "provider": "sprite-card",
-  "sourceDir": "dist/interior-3d-work/sprite-card/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-09T13-32-53-664Z",
+  "updatedAt": "2026-07-09T16:05:41.022Z",
+  "provider": "tripo",
+  "sourceDir": "dist/interior-3d-work/tripo/optimized-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-09T16-05-40-951Z",
   "imported": [
     {
       "slot": "bed",
       "label": "休息床",
-      "provider": "sprite-card",
-      "source": "dist/interior-3d-work/sprite-card/generated-glb/bed.glb",
+      "provider": "tripo",
+      "source": "dist/interior-3d-work/tripo/optimized-glb/bed.glb",
       "target": "public/assets/interiors/glb/bed.glb",
-      "bytes": 372464,
-      "importedAt": "2026-07-09T13:32:53.712Z"
+      "bytes": 2068216,
+      "importedAt": "2026-07-09T16:05:40.987Z"
     },
     {
       "slot": "counter",
       "label": "柜台 / 护理站",
-      "provider": "sprite-card",
-      "source": "dist/interior-3d-work/sprite-card/generated-glb/counter.glb",
+      "provider": "tripo",
+      "source": "dist/interior-3d-work/tripo/optimized-glb/counter.glb",
       "target": "public/assets/interiors/glb/counter.glb",
-      "bytes": 80056,
-      "importedAt": "2026-07-09T13:32:53.721Z"
+      "bytes": 3830572,
+      "importedAt": "2026-07-09T16:05:41.003Z"
     },
     {
       "slot": "shelf",
       "label": "货架 / 药品柜 / 书架",
-      "provider": "sprite-card",
-      "source": "dist/interior-3d-work/sprite-card/generated-glb/shelf.glb",
+      "provider": "tripo",
+      "source": "dist/interior-3d-work/tripo/optimized-glb/shelf.glb",
       "target": "public/assets/interiors/glb/shelf.glb",
-      "bytes": 340020,
-      "importedAt": "2026-07-09T13:32:53.723Z"
+      "bytes": 2459624,
+      "importedAt": "2026-07-09T16:05:41.013Z"
     },
     {
       "slot": "seating",
       "label": "座椅 / 沙发",
-      "provider": "sprite-card",
-      "source": "dist/interior-3d-work/sprite-card/generated-glb/seating.glb",
+      "provider": "tripo",
+      "source": "dist/interior-3d-work/tripo/optimized-glb/seating.glb",
       "target": "public/assets/interiors/glb/seating.glb",
-      "bytes": 223320,
-      "importedAt": "2026-07-09T13:32:53.725Z"
+      "bytes": 3044688,
+      "importedAt": "2026-07-09T16:05:41.019Z"
     },
     {
       "slot": "wall-board",

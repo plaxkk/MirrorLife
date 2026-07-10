@@ -54,6 +54,11 @@ async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, "utf8"));
 }
 
+async function readJsonIfExists(filePath, fallback) {
+  if (!(await exists(filePath))) return fallback;
+  return readJson(filePath);
+}
+
 async function exists(filePath) {
   try {
     await fs.access(filePath);
@@ -66,6 +71,20 @@ async function exists(filePath) {
 function normalizeRel(filePath) {
   const normalized = path.isAbsolute(filePath) ? path.relative(process.cwd(), filePath) : filePath;
   return normalized.split(path.sep).join("/");
+}
+
+function mergeImportedEntries(slots, previousImported, imported) {
+  const bySlot = new Map();
+  for (const entry of previousImported || []) {
+    if (entry?.slot) bySlot.set(entry.slot, entry);
+  }
+  for (const entry of imported) {
+    bySlot.set(entry.slot, entry);
+  }
+
+  return slots
+    .map((slot) => bySlot.get(slot.slot))
+    .filter(Boolean);
 }
 
 async function findSourceGlb(sourceDir, slot) {
@@ -156,17 +175,24 @@ async function main() {
   }
 
   const manifestPath = path.join(targetDir, "model-source-manifest.json");
+  const previousManifest = await readJsonIfExists(manifestPath, { imported: [] });
+  const mergedImported = mergeImportedEntries(slots, previousManifest.imported, imported);
+  const mergedSlots = new Set(mergedImported.map((entry) => entry.slot));
+  const missingRuntimeSlots = slots
+    .filter((slot) => !mergedSlots.has(slot.slot))
+    .map((slot) => slot.slot);
   const manifest = {
     updatedAt: new Date().toISOString(),
     provider: args.provider,
     sourceDir: normalizeRel(sourceDir),
     backupDir: backupDir ? normalizeRel(backupDir) : "",
-    imported,
-    missing
+    imported: mergedImported,
+    missing: missingRuntimeSlots
   };
   await fs.writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
   console.log(`Wrote ${normalizeRel(manifestPath)}`);
-  if (missing.length) console.log(`Still missing: ${missing.join(", ")}`);
+  if (missing.length) console.log(`No new source GLB for: ${missing.join(", ")}`);
+  if (missingRuntimeSlots.length) console.log(`Still missing runtime slots: ${missingRuntimeSlots.join(", ")}`);
 }
 
 main().catch((error) => {
