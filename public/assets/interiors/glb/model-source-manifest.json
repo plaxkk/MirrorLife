@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-10T10:30:17.934Z",
-  "provider": "hunyuan",
-  "sourceDir": "dist/interior-3d-work/hunyuan/optimized-v31",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-10T10-30-17-889Z",
+  "updatedAt": "2026-07-10T12:18:11.107Z",
+  "provider": "tripo",
+  "sourceDir": "dist/interior-3d-work/tripo/optimized-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-10T12-18-11-078Z",
   "imported": [
     {
       "slot": "bed",
@@ -19,8 +19,65 @@
       "provider": "tripo",
       "source": "dist/interior-3d-work/tripo/optimized-glb/counter.glb",
       "target": "public/assets/interiors/glb/counter.glb",
-      "bytes": 3830572,
-      "importedAt": "2026-07-09T16:05:41.003Z"
+      "bytes": 3329960,
+      "qualityTier": "development",
+      "referenceViews": [
+        "isometric"
+      ],
+      "referenceFiles": [
+        "dist/assets/interior-props-image2/hospital/reception_counter.png"
+      ],
+      "masterFile": "dist/interior-3d-work/tripo/master-glb/counter.glb",
+      "masterBytes": 3830572,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-10T12:13:52.765Z",
+        "epsilon": 0.00001,
+        "closedMeshes": false,
+        "nonManifoldEdges": 6,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 92666,
+        "webTriangleCount": 76686,
+        "master": {
+          "file": "dist/interior-3d-work/tripo/master-glb/counter.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [
+            {
+              "meshIndex": 0,
+              "primitiveIndex": 0,
+              "openBoundaryEdges": 0,
+              "nonManifoldEdges": 6
+            }
+          ],
+          "triangleCount": 92666,
+          "vertexCount": 83736,
+          "weldedVertexCount": 46327,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 6
+        },
+        "web": {
+          "file": "dist/interior-3d-work/tripo/optimized-glb/counter-web.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [
+            {
+              "meshIndex": 0,
+              "primitiveIndex": 0,
+              "openBoundaryEdges": 0,
+              "nonManifoldEdges": 6
+            }
+          ],
+          "triangleCount": 76686,
+          "vertexCount": 74114,
+          "weldedVertexCount": 38337,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 6
+        }
+      },
+      "importedAt": "2026-07-10T12:18:11.100Z"
     },
     {
       "slot": "shelf",

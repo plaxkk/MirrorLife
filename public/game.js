@@ -5611,6 +5611,13 @@ function getInteriorPanoramaAngle(unit, index = 0, count = 1) {
   return wrapInteriorAngle((base - 0.5) * INTERIOR_PANORAMA_TAU);
 }
 
+function getInteriorPropAngle(prop, index, count) {
+  const evenUnit = (index + 0.5) / Math.max(1, count);
+  const authoredUnit = Number.isFinite(prop?.x) ? Number(prop.x) : evenUnit;
+  const unit = evenUnit * 0.9 + authoredUnit * 0.1;
+  return getInteriorPanoramaAngle(unit, index, count);
+}
+
 function getInteriorPropRadius(prop) {
   const y = clamp(Number(prop?.y ?? 0.5), 0, 1);
   return clamp(0.98 - y * 0.5, 0.42, 0.96);
@@ -5626,7 +5633,7 @@ function getInteriorDecorRadius(item) {
 function getInteriorPanoramaAnchors(blueprint, W, H) {
   const props = blueprint.props || [];
   return props.map((prop, index) => {
-    const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
+    const angle = getInteriorPropAngle(prop, index, props.length);
     const distance = getInteriorPropRadius(prop);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return {
@@ -7098,7 +7105,7 @@ function drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, style, isNight, 
 function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, isNight, W, H, useThreeModels = false) {
   const props = blueprint.props || [];
   const points = props.map((prop, index) => {
-    const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
+    const angle = getInteriorPropAngle(prop, index, props.length);
     const distance = getInteriorPropRadius(prop);
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return { prop, point, index };
@@ -7152,7 +7159,7 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
 
 function getInteriorThreeItems(blueprint, W, H) {
   const propItems = (blueprint.props || []).map((prop, index, props) => {
-    const angle = getInteriorPanoramaAngle(prop.x, index, props.length);
+    const angle = getInteriorPropAngle(prop, index, props.length);
     const distance = getInteriorPropRadius(prop);
     const radius = 2.42 + distance * 2.25;
     const worldX = Math.sin(angle) * radius;
@@ -7176,28 +7183,10 @@ function getInteriorThreeItems(blueprint, W, H) {
     };
   });
 
-  const decorPlan = getInteriorDecorPlan(blueprint);
-  const decorItems = decorPlan.map((item, index, items) => {
-    const baseAngle = getInteriorPanoramaAngle(item.x, index, items.length);
-    const angleOffset = (index % 2 === 0 ? -1 : 1) * (0.13 + (index % 3) * 0.025);
-    const angle = wrapInteriorAngle(baseAngle + angleOffset);
-    const radius = item.layer === "back" ? 4.72 : item.layer === "front" ? 2.82 : 3.72;
-    return {
-      key: `decor-${index}`,
-      index,
-      model: interiorDecorModel(item.type),
-      label: item.type,
-      kind: "decor",
-      worldX: Math.sin(angle) * radius,
-      worldZ: -Math.cos(angle) * radius,
-      anchorHeight: item.layer === "back" ? 1.35 : 0.94,
-      angle,
-      modelScale: clamp(item.s || 1, 0.68, 1.22) * 0.72,
-      visible: true
-    };
-  });
-
-  return [...decorItems, ...propItems];
+  // Decorative aliases previously substituted semantically unrelated full-size
+  // props (for example a chalkboard for picture frames). Keep the 3D room clean
+  // until each decorative object has its own faithful model.
+  return propItems;
 }
 
 function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
@@ -10779,11 +10768,57 @@ function bindGameEvents() {
 // INIT
 // ═══════════════════════════════════════════════════════════════
 
+function getLocalInteriorQaZoneId() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return "";
+  const zoneId = new URLSearchParams(window.location.search).get("qaInterior") || "";
+  return INTERIOR_ZONE_PROFILES[zoneId] ? zoneId : "";
+}
+
+function getLocalInteriorQaYaw() {
+  const degrees = Number(new URLSearchParams(window.location.search).get("qaYaw"));
+  if (!Number.isFinite(degrees)) return 0;
+  return wrapInteriorAngle(degrees * Math.PI / 180);
+}
+
+function openLocalInteriorQa(zoneId) {
+  if (!zoneId) return;
+  window.requestAnimationFrame(() => {
+    const zone = findRenderZoneById(zoneId);
+    if (!zone) {
+      console.warn(`MirrorLife interior QA zone not found: ${zoneId}`);
+      return;
+    }
+    pauseSocietyRun();
+    state.society.speed = 0.5;
+    const slider = document.getElementById("hudSpeed");
+    const sliderVal = document.getElementById("hudSpeedVal");
+    if (slider) slider.value = "0.5";
+    if (sliderVal) sliderVal.textContent = "0.5x";
+    enterInteriorView(zone, "qa");
+    interiorOrbit.yaw = getLocalInteriorQaYaw();
+    markRenderActive(1800);
+  });
+}
+
 function gameInit() {
   if (consumeDemoResetUrlParam()) return;
 
   initEngineState();
   mountDemoResetButton();
+
+  const interiorQaZoneId = getLocalInteriorQaZoneId();
+  if (interiorQaZoneId && !hasAvatarProfile()) {
+    createAndEnterWorld({
+      name: "室内验收员",
+      age: 28,
+      color: AVATAR_COLORS[0],
+      professionId: "designer",
+      professionName: "空间体验设计师",
+      avatarFrame: 0,
+      bio: "检查每个房间是否完整、可探索且有生活感"
+    });
+  }
+  if (interiorQaZoneId) state.firstSessionStage = "unlocked_world";
 
   // Ensure society exists
   if (!state.society.scenarioText) {
@@ -10845,6 +10880,7 @@ function gameInit() {
     updateHUD();
     renderFirstLoopPanel();
     persist();
+    openLocalInteriorQa(interiorQaZoneId);
   } else {
     // Show splash / avatar creation
     hydrateSocietyState();
@@ -10856,6 +10892,7 @@ function gameInit() {
     ensureGameRenderLoop();
     updateHUD();
     renderFirstLoopPanel();
+    openLocalInteriorQa(interiorQaZoneId);
   }
 }
 

@@ -249,7 +249,7 @@ modelInput.value = params.get("model") || modelInput.value;
 referenceInput.value = params.get("reference") || referenceInput.value;
 referenceImage.src = referenceInput.value;
 resize();
-resetView();
+setReviewView(activeView);
 loadAsset(modelInput.value, referenceInput.value);
 
 function render() {
