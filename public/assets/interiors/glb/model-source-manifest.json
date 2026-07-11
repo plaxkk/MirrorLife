@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T21:15:39.360Z",
+  "updatedAt": "2026-07-11T21:46:38.616Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T21-15-39-094Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T21-46-38-250Z",
   "imported": [
     {
       "slot": "bed",
@@ -1319,10 +1319,75 @@
         }
       },
       "importedAt": "2026-07-11T21:15:39.358Z"
+    },
+    {
+      "slot": "collaboration-board",
+      "label": "协作板",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/collaboration-board.glb",
+      "target": "public/assets/interiors/glb/collaboration-board.glb",
+      "bytes": 1583324,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/collaboration-board/front.png",
+        "public/assets/interiors/references/multiview/collaboration-board/back.png",
+        "public/assets/interiors/references/multiview/collaboration-board/left.png",
+        "public/assets/interiors/references/multiview/collaboration-board/right.png",
+        "public/assets/interiors/references/multiview/collaboration-board/top.png",
+        "public/assets/interiors/references/multiview/collaboration-board/bottom.png",
+        "public/assets/interiors/references/multiview/collaboration-board/isometric.png",
+        "public/assets/interiors/references/multiview/collaboration-board/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/collaboration-board.glb",
+      "masterBytes": 1583324,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T21:42:17.090Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 17888,
+        "webTriangleCount": 17888,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/collaboration-board.glb",
+          "primitiveCount": 92,
+          "trianglePrimitiveCount": 75,
+          "outlinePrimitiveCount": 17,
+          "problemPrimitives": [],
+          "triangleCount": 17888,
+          "vertexCount": 45400,
+          "weldedVertexCount": 9094,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/collaboration-board.glb",
+          "primitiveCount": 92,
+          "trianglePrimitiveCount": 75,
+          "outlinePrimitiveCount": 17,
+          "problemPrimitives": [],
+          "triangleCount": 17888,
+          "vertexCount": 45400,
+          "weldedVertexCount": 9094,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T21:46:38.614Z"
     }
   ],
   "missing": [
-    "collaboration-board",
     "mediation-podium",
     "archive-cabinet",
     "calming-chair",

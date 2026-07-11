@@ -21,7 +21,8 @@ const SLOT_ASSETS = {
   bench: ["park_plaza/wooden_bench.png", "长椅"],
   "toy-corner": ["kindergarten/teddy_play_rug.png", "安抚角"],
   "audience-seating": ["/assets/interiors/references/runtime-semantic/audience-seating.png", "旁听席"],
-  "office-workstation": ["/assets/interiors/references/runtime-semantic/office-workstation.png", "协作工位"]
+  "office-workstation": ["/assets/interiors/references/runtime-semantic/office-workstation.png", "协作工位"],
+  "collaboration-board": ["/assets/interiors/references/runtime-semantic/collaboration-board.png", "协作板"]
 };
 
 const params = new URLSearchParams(window.location.search);

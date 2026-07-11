@@ -1629,6 +1629,99 @@ function officeWorkstation() {
   return g;
 }
 
+function addCollaborationCaster(group, x, z, index) {
+  const caster = createPart(group, `locking-caster-wheel-${index}`);
+  caster.position.set(x, 0.12, z);
+  addMesh(caster, rounded(0.18, 0.19, 0.12, 0.035), P.metal, [0, 0.1, 0]);
+  addMesh(caster, cyl(0.14, 0.14, 0.09, 20), P.ink, [0, -0.02, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(caster, cyl(0.075, 0.075, 0.1, 18), P.metal, [0, -0.02, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(caster, rounded(0.17, 0.07, 0.2, 0.02), 0xe06b52, [0.08, 0.19, 0.02], [1, 1, 1], [0, 0, -0.32]);
+}
+
+function collaborationBoard() {
+  const g = new THREE.Group();
+  g.name = "collaboration-board";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const boardTeal = 0x2f7773;
+  const boardTealDark = 0x245d5b;
+  const deepTeal = 0x315f69;
+  const cardColors = [0xee8067, 0x74bde0, 0xf4c84a, 0xa9dec9, 0xb990df, 0xffecc9];
+  const magnetColors = [0xe95656, 0x4ea8de, 0xf4c84a, 0x79b95b, 0xa96fd4, 0xe8d7b5, 0x79b95b, 0xa96fd4];
+
+  const board = createPart(g, "double-sided-board-and-rounded-frame");
+  addMesh(board, rounded(2.42, 1.62, 0.18, 0.065), honeyDark, [0, 1.53, 0]);
+  addMesh(board, rounded(2.26, 1.46, 0.14, 0.05), honey, [0, 1.53, 0]);
+  addMesh(board, rounded(2.08, 1.3, 0.06, 0.024), boardTeal, [0, 1.53, 0.105]);
+  addMesh(board, rounded(2.08, 1.3, 0.06, 0.024), P.cream, [0, 1.53, -0.105]);
+  addMesh(board, rounded(2.52, 0.16, 0.26, 0.055), honeyLight, [0, 2.39, 0]);
+  addMesh(board, rounded(2.52, 0.16, 0.26, 0.055), honeyLight, [0, 0.67, 0]);
+  [-1.21, 1.21].forEach((x) => {
+    addMesh(board, rounded(0.17, 1.66, 0.26, 0.055), honey, [x, 1.53, 0]);
+  });
+
+  const connections = createPart(g, "three-visible-relationship-lines");
+  addCylinderBetween(connections, [-0.68, 1.82, 0.15], [0, 1.82, 0.15], 0.025, boardTealDark, "relationship-line-1");
+  addCylinderBetween(connections, [-0.68, 1.82, 0.15], [0, 1.22, 0.15], 0.025, boardTealDark, "relationship-line-2");
+  addCylinderBetween(connections, [0, 1.22, 0.15], [0.68, 1.22, 0.15], 0.025, boardTealDark, "relationship-line-3");
+
+  const cards = createPart(g, "six-blank-idea-cards-and-eight-round-magnets");
+  const cardPositions = [
+    [-0.68, 1.86], [0, 1.86], [0.68, 1.86],
+    [-0.68, 1.2], [0, 1.2], [0.68, 1.2]
+  ];
+  cardPositions.forEach(([x, y], index) => {
+    addMesh(cards, rounded(0.47, 0.5, 0.045, 0.016), cardColors[index], [x, y, 0.175]);
+    addMesh(cards, sphere(0.075, 18, 10), magnetColors[index], [x, y + 0.3, 0.225], [1, 1, 0.5]);
+  });
+  [[-0.9, 0.96], [0.9, 0.96]].forEach(([x, y], index) => {
+    addMesh(cards, sphere(0.075, 18, 10), magnetColors[index + 6], [x, y, 0.225], [1, 1, 0.5]);
+  });
+
+  const rear = createPart(g, "finished-rear-grid-and-two-storage-clips");
+  [-0.78, -0.39, 0, 0.39, 0.78].forEach((x) => {
+    addMesh(rear, rounded(0.018, 1.08, 0.016, 0.005), 0xd5c7aa, [x, 1.53, -0.145], [1, 1, 1], [0, 0, 0], false);
+  });
+  [1.12, 1.39, 1.66, 1.93].forEach((y) => {
+    addMesh(rear, rounded(1.8, 0.018, 0.016, 0.005), 0xd5c7aa, [0, y, -0.145], [1, 1, 1], [0, 0, 0], false);
+  });
+  [-0.72, 0.72].forEach((x, index) => {
+    addMesh(rear, rounded(0.28, 0.38, 0.12, 0.04), deepTeal, [x, 1.18 + index * 0.45, -0.2]);
+    addMesh(rear, rounded(0.2, 0.18, 0.08, 0.025), 0x477f82, [x, 1.12 + index * 0.45, -0.28]);
+  });
+
+  const tray = createPart(g, "lower-marker-tray-with-three-markers");
+  addMesh(tray, rounded(1.92, 0.13, 0.38, 0.055), honeyDark, [0, 0.65, 0.27]);
+  addMesh(tray, rounded(1.82, 0.08, 0.31, 0.035), honeyLight, [0, 0.74, 0.27]);
+  addMesh(tray, rounded(1.86, 0.17, 0.11, 0.038), honey, [0, 0.75, 0.46]);
+  [[-0.55, 0xee745f], [0, 0x4ea8de], [0.55, 0xffecc9]].forEach(([x, color]) => {
+    addMesh(tray, cyl(0.055, 0.055, 0.42, 16), color, [x, 0.84, 0.3], [1, 1, 1], [0, 0, Math.PI / 2]);
+    addMesh(tray, cyl(0.062, 0.062, 0.08, 16), P.paper, [x - 0.22, 0.84, 0.3], [1, 1, 1], [0, 0, Math.PI / 2]);
+  });
+
+  const stand = createPart(g, "two-support-legs-wide-crossbar-and-side-pivots");
+  [-1.4, 1.4].forEach((x) => {
+    addMesh(stand, rounded(0.2, 2.72, 0.24, 0.06), honey, [x, 1.4, 0]);
+    addMesh(stand, rounded(0.86, 0.18, 0.3, 0.06), honeyDark, [x, 0.3, 0]);
+    addMesh(stand, rounded(0.76, 0.11, 0.72, 0.04), honeyLight, [x, 0.38, 0]);
+    addMesh(stand, cyl(0.18, 0.18, 0.12, 22), honeyDark, [x, 1.53, 0], [1, 1, 1], [0, 0, Math.PI / 2]);
+    addMesh(stand, cyl(0.11, 0.11, 0.15, 20), honeyLight, [x, 1.53, 0], [1, 1, 1], [0, 0, Math.PI / 2]);
+  });
+  addMesh(stand, rounded(2.72, 0.18, 0.2, 0.055), honeyDark, [0, 0.32, 0]);
+  addMesh(stand, rounded(2.58, 0.09, 0.15, 0.035), honeyLight, [0, 0.43, 0]);
+
+  const wheels = createPart(g, "exactly-four-locking-caster-wheels");
+  let wheelIndex = 1;
+  [-1.4, 1.4].forEach((x) => {
+    [-0.28, 0.28].forEach((z) => {
+      addCollaborationCaster(wheels, x, z, wheelIndex);
+      wheelIndex += 1;
+    });
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1841,7 +1934,8 @@ const builders = {
   "proposal-podium": proposalPodium,
   "notice-board": noticeBoard,
   "audience-seating": audienceSeating,
-  "office-workstation": officeWorkstation
+  "office-workstation": officeWorkstation,
+  "collaboration-board": collaborationBoard
 };
 
 function parseArgs(argv) {
@@ -1878,7 +1972,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

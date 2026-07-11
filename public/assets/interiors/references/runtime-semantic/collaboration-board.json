@@ -1,0 +1,24 @@
+{
+  "model": "collaboration-board",
+  "label": "协作板",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/notice-board.png",
+    "dist/assets/interior-props-image2/school_library/chalkboard.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/collaboration-board.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "double-sided board",
+    "rounded frame",
+    "idea cards",
+    "magnets",
+    "marker tray",
+    "support legs",
+    "four caster wheels"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the deep-teal front board, cream gridded rear board, honey-wood rounded frame, side rotation pivots, exactly six blank idea cards, exactly eight magnets, three relationship lines, three tray markers, rear storage clips, two support legs, wide crossbar and exactly four locking caster wheels. Canonical views, closed development geometry and turntable review are still required."
+}
