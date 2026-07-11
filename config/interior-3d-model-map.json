@@ -7,7 +7,7 @@
   "workRoot": "dist/interior-3d-work",
   "stylePrompt": "Faithfully reconstruct this isolated MirrorLife prop as a complete 360-degree 3D asset. Match every named component, silhouette, proportion, color block, rounded bevel, visible construction detail and warm dopamine cel-shading material. Use coherent independent front, back, left, right, top, bottom and isometric references; never extrude one image, flatten hidden surfaces or invent a generic backside. Generate only the object, no text, no labels, no extra scene and no people. Preserve a high-fidelity master before creating a browser-optimized GLB LOD.",
   "qualityPolicy": {
-    "releaseProviders": ["tripo-multiview", "hunyuan-multiview", "blender-manual"],
+    "releaseProviders": ["tripo-multiview", "hunyuan-multiview", "blender-manual", "threejs-manual"],
     "placeholderProviders": ["procedural-threejs", "sprite-card"],
     "minimumReferenceViews": 7,
     "requiredReferenceViews": ["front", "back", "left", "right", "top", "bottom", "isometric"],

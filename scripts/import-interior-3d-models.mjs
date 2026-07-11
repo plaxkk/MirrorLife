@@ -9,6 +9,7 @@ const PROVIDERS = [
   "tripo-multiview",
   "hunyuan-multiview",
   "blender-manual",
+  "threejs-manual",
   "manual",
   "sprite-card",
   "procedural-threejs"
@@ -101,20 +102,7 @@ function mergeImportedEntries(slots, previousImported, imported) {
 async function findSourceGlb(sourceDir, slot) {
   const direct = path.join(sourceDir, `${slot}.glb`);
   if (await exists(direct)) return direct;
-
-  let entries = [];
-  try {
-    entries = await fs.readdir(sourceDir, { withFileTypes: true });
-  } catch {
-    return "";
-  }
-
-  const match = entries
-    .filter((entry) => entry.isFile() && entry.name.toLowerCase().endsWith(".glb"))
-    .map((entry) => path.join(sourceDir, entry.name))
-    .find((filePath) => path.basename(filePath).includes(slot));
-
-  return match || "";
+  return "";
 }
 
 async function backupCurrentTargets(config, slots) {

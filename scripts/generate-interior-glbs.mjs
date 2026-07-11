@@ -73,11 +73,14 @@ const outlineMaterial = new THREE.LineBasicMaterial({ color: P.ink });
 
 function addMesh(group, geometry, color, position = [0, 0, 0], scale = [1, 1, 1], rotation = [0, 0, 0], outline = true) {
   const mesh = new THREE.Mesh(geometry, mat(color));
+  const partName = group.name || "prop";
+  mesh.name = `${partName}-surface-${group.children.length}`;
   mesh.position.set(...position);
   mesh.scale.set(...scale);
   mesh.rotation.set(...rotation);
   if (outline) {
     const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 34), outlineMaterial);
+    edges.name = `${partName}-outline-${group.children.length}`;
     edges.position.copy(mesh.position);
     edges.scale.copy(mesh.scale).multiplyScalar(1.004);
     edges.rotation.copy(mesh.rotation);
@@ -215,6 +218,90 @@ function addOpenBook(group, x, y, z, scale = 1) {
   });
 }
 
+function createPart(parent, name) {
+  const part = new THREE.Group();
+  part.name = name;
+  parent.add(part);
+  return part;
+}
+
+function addRecordDeskChair(group) {
+  const frame = createPart(group, "chair-frame");
+  const cushion = createPart(group, "chair-cushions");
+  const x = -0.28;
+  const z = 0.92;
+  addMesh(cushion, rounded(0.54, 0.14, 0.48, 0.045), P.teal, [x, 0.52, z]);
+  addMesh(cushion, rounded(0.56, 0.52, 0.14, 0.045), P.teal, [x, 0.91, z + 0.18], [1, 1, 1], [-0.05, 0, 0]);
+  [-0.22, 0.22].forEach((dx) => {
+    addMesh(frame, rounded(0.075, 0.94, 0.09, 0.026), P.woodDark, [x + dx, 0.49, z + 0.18], [1, 1, 1], [-0.035, 0, 0]);
+    addMesh(frame, rounded(0.075, 0.5, 0.075, 0.024), P.woodDark, [x + dx, 0.25, z - 0.16], [1, 1, 1], [0.045, 0, 0]);
+  });
+  addMesh(frame, rounded(0.48, 0.075, 0.075, 0.024), P.woodDark, [x, 0.25, z + 0.17]);
+  addMesh(frame, rounded(0.48, 0.075, 0.075, 0.024), P.woodDark, [x, 0.25, z - 0.14]);
+  addMesh(frame, rounded(0.075, 0.075, 0.38, 0.024), P.woodDark, [x - 0.22, 0.25, z + 0.01]);
+  addMesh(frame, rounded(0.075, 0.075, 0.38, 0.024), P.woodDark, [x + 0.22, 0.25, z + 0.01]);
+  [-0.22, 0.22].forEach((dx) => {
+    addMesh(frame, cyl(0.035, 0.035, 0.035, 18), P.yellow, [x + dx, 0.92, z + 0.095], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  });
+}
+
+function addRecordDeskLamp(group) {
+  const lamp = createPart(group, "desk-lamp");
+  const x = 0.76;
+  const z = -0.23;
+  addMesh(lamp, cyl(0.16, 0.2, 0.085, 32), P.leafDark, [x, 1.18, z]);
+  addMesh(lamp, cyl(0.18, 0.18, 0.035, 32), P.yellow, [x, 1.235, z]);
+  const armPoints = [
+    new THREE.Vector3(x, 1.3, z),
+    new THREE.Vector3(x + 0.08, 1.38, z),
+    new THREE.Vector3(x + 0.09, 1.49, z),
+    new THREE.Vector3(x + 0.02, 1.58, z),
+    new THREE.Vector3(x - 0.1, 1.61, z)
+  ];
+  armPoints.slice(0, -1).forEach((start, index) => {
+    const end = armPoints[index + 1];
+    const direction = end.clone().sub(start);
+    const segment = createPart(lamp, `lamp-arm-${index + 1}`);
+    segment.position.copy(start.clone().add(end).multiplyScalar(0.5));
+    segment.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+    addMesh(segment, cyl(0.038, 0.038, direction.length(), 18), P.yellow);
+    addMesh(lamp, sphere(0.042, 14, 8), P.yellow, [end.x, end.y, end.z]);
+  });
+  addMesh(lamp, cyl(0.045, 0.045, 0.11, 18), P.yellow, [x, 1.29, z]);
+  addMesh(lamp, rounded(0.38, 0.21, 0.24, 0.095), P.leafDark, [x - 0.12, 1.61, z]);
+  addMesh(lamp, rounded(0.33, 0.04, 0.19, 0.018), P.cream, [x - 0.13, 1.5, z], [1, 1, 1], [0, 0, 0], false);
+  addMesh(lamp, sphere(0.055, 18, 10), P.yellow, [x + 0.085, 1.61, z - 0.13]);
+  addMesh(lamp, sphere(0.035, 14, 8), P.yellow, [x - 0.22, 1.43, z - 0.04]);
+}
+
+function addRecordDeskLedger(group) {
+  const ledger = createPart(group, "ledger");
+  addOpenBook(ledger, -0.08, 1.23, -0.18, 1.12);
+  const pageLines = [-0.13, -0.04, 0.05, 0.14];
+  pageLines.forEach((dz) => {
+    [-0.25, 0.11].forEach((x) => addMesh(ledger, box(0.22, 0.006, 0.008), P.blue, [x, 1.318, -0.18 + dz], [1, 1, 1], [0, 0, 0], false));
+  });
+}
+
+function addRecordDeskPaperStack(group) {
+  const stack = createPart(group, "paper-stack");
+  const colors = [P.woodDark, P.leafDark, P.paper, P.cream];
+  for (let index = 0; index < 5; index += 1) {
+    addMesh(stack, rounded(0.34 - index * 0.012, 0.035, 0.28 - index * 0.008, 0.014), colors[index % colors.length], [-0.72, 1.2 + index * 0.035, -0.2]);
+  }
+  addMesh(stack, rounded(0.08, 0.12, 0.04, 0.014), P.woodLight, [-0.72, 1.17, -0.355]);
+}
+
+function addRecordDeskPenTray(group) {
+  const tray = createPart(group, "pen-tray");
+  addMesh(tray, rounded(0.42, 0.075, 0.28, 0.022), P.woodDark, [0.45, 1.205, 0.03]);
+  addMesh(tray, rounded(0.34, 0.055, 0.2, 0.016), P.woodLight, [0.45, 1.245, 0.03]);
+  [-0.085, 0.085].forEach((dx, index) => {
+    addMesh(tray, cyl(0.023, 0.023, 0.28, 16), index ? P.leafDark : P.blueDark, [0.45 + dx, 1.3, 0.03], [1, 1, 1], [Math.PI / 2, 0, 0.08]);
+    addMesh(tray, new THREE.ConeGeometry(0.025, 0.07, 16), P.yellow, [0.45 + dx, 1.3, -0.145], [1, 1, 1], [-Math.PI / 2, 0, 0.08]);
+  });
+}
+
 function addBackpack(group, x, y, z, scale = 1) {
   addMesh(group, rounded(0.42 * scale, 0.55 * scale, 0.26 * scale, 0.09 * scale), P.blueDark, [x, y, z]);
   addMesh(group, rounded(0.34 * scale, 0.22 * scale, 0.12 * scale, 0.055 * scale), P.blue, [x, y - 0.11 * scale, z - 0.18 * scale]);
@@ -260,6 +347,20 @@ function normalize(group) {
   group.scale.setScalar(1.75 / max);
   group.rotation.y = Math.PI * 0.75;
   group.rotation.x = 0.52;
+  const scene = new THREE.Scene();
+  scene.add(group);
+  return scene;
+}
+
+function normalizeUpright(group) {
+  const box3 = new THREE.Box3().setFromObject(group);
+  const center = box3.getCenter(new THREE.Vector3());
+  group.position.x -= center.x;
+  group.position.z -= center.z;
+  group.position.y -= box3.min.y;
+  const size = box3.getSize(new THREE.Vector3());
+  const max = Math.max(size.x, size.y, size.z) || 1;
+  group.scale.setScalar(1.75 / max);
   const scene = new THREE.Scene();
   scene.add(group);
   return scene;
@@ -390,6 +491,37 @@ function desk() {
   addDrawer(g, 0.39, 0.49, -0.38, 0.3, 0.18);
   addChair(g, 0.05, 0, 0.72, Math.PI, P.orange, 0.9);
   addBackpack(g, -0.64, 0.35, 0.42, 0.82);
+  return g;
+}
+
+function recordDesk() {
+  const g = new THREE.Group();
+  g.name = "record-desk";
+
+  const body = createPart(g, "desk-body");
+  addMesh(body, rounded(1.92, 0.2, 0.82, 0.085), P.wood, [0, 1.08, 0]);
+  addMesh(body, rounded(1.76, 0.055, 0.7, 0.02), P.woodLight, [0, 1.19, 0]);
+  [-0.82, 0.82].forEach((x) => {
+    [-0.31, 0.31].forEach((z) => addMesh(body, rounded(0.16, 1.02, 0.16, 0.045), P.woodDark, [x, 0.54, z]));
+  });
+  addMesh(body, rounded(1.54, 0.12, 0.1, 0.035), P.woodDark, [-0.02, 0.91, -0.34]);
+  addMesh(body, rounded(1.56, 0.63, 0.08, 0.03), P.wood, [-0.02, 0.61, -0.34]);
+  addMesh(body, rounded(1.68, 0.1, 0.12, 0.03), P.woodDark, [-0.02, 0.25, -0.3]);
+
+  const drawerUnit = createPart(g, "drawer-unit");
+  addMesh(drawerUnit, rounded(0.56, 0.82, 0.66, 0.055), P.woodDark, [0.56, 0.61, -0.02]);
+  addMesh(drawerUnit, rounded(0.49, 0.34, 0.08, 0.028), P.woodLight, [0.56, 0.77, 0.38]);
+  addMesh(drawerUnit, rounded(0.49, 0.34, 0.08, 0.028), P.woodLight, [0.56, 0.39, 0.38]);
+  [0.77, 0.39].forEach((y) => {
+    addMesh(drawerUnit, cyl(0.045, 0.045, 0.045, 20), P.yellow, [0.56, y, 0.445], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  });
+  addMesh(drawerUnit, rounded(0.5, 0.08, 0.68, 0.025), P.woodLight, [0.56, 0.16, -0.02]);
+
+  addRecordDeskChair(g);
+  addRecordDeskLedger(g);
+  addRecordDeskPaperStack(g);
+  addRecordDeskPenTray(g);
+  addRecordDeskLamp(g);
   return g;
 }
 
@@ -592,7 +724,8 @@ const builders = {
   table,
   "market-stall": marketStall,
   bench,
-  fountain
+  fountain,
+  "record-desk": recordDesk
 };
 
 function parseArgs(argv) {
@@ -629,7 +762,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = normalize(build());
+  const scene = name === "record-desk" ? normalizeUpright(build()) : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
 }
 

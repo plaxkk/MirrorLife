@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T08:45:22.787Z",
-  "provider": "hunyuan-multiview",
-  "sourceDir": "dist/interior-3d-work/hunyuan-multiview/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T08-45-22-765Z",
+  "updatedAt": "2026-07-11T11:06:44.926Z",
+  "provider": "threejs-manual",
+  "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T11-06-44-896Z",
   "imported": [
     {
       "slot": "bed",
@@ -461,6 +461,72 @@
         }
       },
       "importedAt": "2026-07-11T08:45:22.780Z"
+    },
+    {
+      "slot": "record-desk",
+      "label": "记录桌",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/record-desk.glb",
+      "target": "public/assets/interiors/glb/record-desk.glb",
+      "bytes": 1244616,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/record-desk/front.png",
+        "public/assets/interiors/references/multiview/record-desk/back.png",
+        "public/assets/interiors/references/multiview/record-desk/left.png",
+        "public/assets/interiors/references/multiview/record-desk/right.png",
+        "public/assets/interiors/references/multiview/record-desk/top.png",
+        "public/assets/interiors/references/multiview/record-desk/bottom.png",
+        "public/assets/interiors/references/multiview/record-desk/isometric.png",
+        "public/assets/interiors/references/multiview/record-desk/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/record-desk.glb",
+      "masterBytes": 1244616,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T11:06:44.186Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 13384,
+        "webTriangleCount": 13384,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/record-desk.glb",
+          "primitiveCount": 86,
+          "trianglePrimitiveCount": 71,
+          "outlinePrimitiveCount": 15,
+          "problemPrimitives": [],
+          "triangleCount": 13384,
+          "vertexCount": 35378,
+          "weldedVertexCount": 6834,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/record-desk.glb",
+          "primitiveCount": 86,
+          "trianglePrimitiveCount": 71,
+          "outlinePrimitiveCount": 15,
+          "problemPrimitives": [],
+          "triangleCount": 13384,
+          "vertexCount": 35378,
+          "weldedVertexCount": 6834,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T11:06:44.916Z"
     }
   ],
   "missing": [
@@ -475,7 +541,6 @@
     "proposal-podium",
     "notice-board",
     "audience-seating",
-    "record-desk",
     "office-workstation",
     "collaboration-board",
     "mediation-podium",

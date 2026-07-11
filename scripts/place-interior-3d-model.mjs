@@ -3,7 +3,7 @@ import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
 const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
-const PROVIDERS = ["tripo", "hunyuan", "tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"];
+const PROVIDERS = ["tripo", "hunyuan", "tripo-multiview", "hunyuan-multiview", "blender-manual", "threejs-manual", "manual"];
 
 function parseArgs(argv) {
   const args = {
