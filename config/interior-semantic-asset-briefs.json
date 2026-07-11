@@ -1,0 +1,197 @@
+{
+  "version": 1,
+  "goal": "Give every semantic-only interior prop its own faithful high-fidelity source artwork and exact GLB. Design references guide style only; they are never approved as generic runtime aliases.",
+  "sourceImageRoot": "dist/assets/interior-props-image2",
+  "runtimeReferenceRoot": "runtime_semantic",
+  "items": [
+    {
+      "model": "waiting-chair",
+      "label": "家属等候椅",
+      "description": "three linked hospital waiting chairs with powder-blue, mint and pale-blue cushions on a dark metal beam",
+      "designReferences": ["school_library/reading_armchair_lamp.png", "park_plaza/wooden_bench.png"],
+      "requiredParts": ["three seats", "three backrests", "shared support beam", "two floor legs", "finished rear frame"]
+    },
+    {
+      "model": "reading-corner",
+      "label": "阅读角",
+      "description": "cozy green reading armchair, small round side table, warm floor lamp, pillow and tiny potted plant",
+      "designReferences": ["school_library/reading_armchair_lamp.png"],
+      "requiredParts": ["armchair", "seat cushion", "throw pillow", "round side table", "floor lamp", "potted plant"]
+    },
+    {
+      "model": "teacher-podium",
+      "label": "讲台",
+      "description": "compact warm-wood classroom podium with slanted reading top, closed storage, notebook and pencil cup",
+      "designReferences": ["hospital/medical_supply_podium.png", "school_library/student_desk.png"],
+      "requiredParts": ["podium body", "slanted reading top", "storage door", "lower plinth", "notebook", "pencil cup", "finished backside"]
+    },
+    {
+      "model": "service-counter",
+      "label": "服务柜台",
+      "description": "friendly neighborhood service counter with rounded wooden front, raised ledge, small register and parcel shelf",
+      "designReferences": ["hospital/reception_counter.png", "market_cafe/hot_food_counter.png"],
+      "requiredParts": ["rounded counter body", "service ledge", "worktop", "register", "parcel shelf", "rear storage", "finished backside"]
+    },
+    {
+      "model": "retail-shelf",
+      "label": "社区货架",
+      "description": "two-sided neighborhood retail shelf with colorful pantry goods, baskets and a low promotional end cap",
+      "designReferences": ["market_cafe/pantry_shelf.png", "hospital/medicine_cabinet.png"],
+      "requiredParts": ["two-sided shelf frame", "four shelf boards", "pantry goods", "lower baskets", "end cap", "finished back panel"]
+    },
+    {
+      "model": "supply-crate",
+      "label": "应急补给箱",
+      "description": "stack of three sturdy open community supply crates containing folded blankets, water and repair kits",
+      "designReferences": ["market_cafe/fruit_baskets.png", "studio_workshop/tool_chest.png"],
+      "requiredParts": ["three slatted crates", "folded blankets", "water bottles", "repair pouch", "side handles", "finished undersides"]
+    },
+    {
+      "model": "cafe-seating",
+      "label": "拼桌小坐区",
+      "description": "small round cafe table with three mismatched colorful chairs, three mugs and a tiny flower vase",
+      "designReferences": ["market_cafe/cafe_table_corner.png", "residence/round_dining_table.png"],
+      "requiredParts": ["round tabletop", "pedestal base", "three chairs", "three mugs", "flower vase", "finished underside"]
+    },
+    {
+      "model": "hot-food-counter",
+      "label": "热食台",
+      "description": "warm community meal counter with striped lower front, serving bowls, hanging lamps and covered hot trays",
+      "designReferences": ["market_cafe/hot_food_counter.png"],
+      "requiredParts": ["counter body", "serving ledge", "three hot trays", "serving bowls", "overhead rail", "hanging lamps", "rear storage"]
+    },
+    {
+      "model": "exchange-board",
+      "label": "交换板",
+      "description": "freestanding neighborhood exchange board with colorful offer and request cards, clips, tray and stable feet",
+      "designReferences": ["park_plaza/notice_board.png", "school_library/chalkboard.png"],
+      "requiredParts": ["board surface", "wood frame", "two support posts", "floor feet", "card clips", "exchange cards", "lower tray", "finished rear panel"]
+    },
+    {
+      "model": "proposal-podium",
+      "label": "提案台",
+      "description": "open civic proposal podium with teal front panel, document ledge, small microphone and suggestion drawer",
+      "designReferences": ["hospital/medical_supply_podium.png", "hospital/reception_counter.png"],
+      "requiredParts": ["podium body", "front accent panel", "document ledge", "microphone", "suggestion drawer", "wide base", "finished backside"]
+    },
+    {
+      "model": "notice-board",
+      "label": "社区公告板",
+      "description": "roofed outdoor community notice board with pinned illustrated cards, wooden posts and a small flower planter",
+      "designReferences": ["park_plaza/notice_board.png", "park_plaza/flower_planter.png"],
+      "requiredParts": ["roof cap", "notice surface", "wood frame", "two posts", "ground feet", "notice cards", "flower planter", "finished backside"]
+    },
+    {
+      "model": "audience-seating",
+      "label": "旁听席",
+      "description": "two short rows of colorful civic audience chairs with a center aisle and low shared support rails",
+      "designReferences": ["park_plaza/wooden_bench.png", "residence/dining_table_set.png"],
+      "requiredParts": ["six chair seats", "six backrests", "shared support rails", "floor feet", "center aisle gap", "finished rear frames"]
+    },
+    {
+      "model": "record-desk",
+      "label": "记录桌",
+      "description": "compact civic record desk with paper ledger, pen tray, desk lamp, drawer unit and one chair",
+      "designReferences": ["studio_workshop/writing_desk.png", "school_library/student_desk.png"],
+      "requiredParts": ["desktop", "four desk legs", "drawer unit", "ledger", "pen tray", "desk lamp", "chair", "finished underside"]
+    },
+    {
+      "model": "office-workstation",
+      "label": "协作工位",
+      "description": "friendly office workstation with rounded desk, monitor, keyboard, task chair, storage pedestal and potted plant",
+      "designReferences": ["studio_workshop/writing_desk.png", "residence/drawer_cabinet.png"],
+      "requiredParts": ["rounded desk", "monitor", "keyboard", "task chair", "storage pedestal", "potted plant", "cable channel", "finished backside"]
+    },
+    {
+      "model": "collaboration-board",
+      "label": "协作板",
+      "description": "mobile double-sided collaboration board with connected idea cards, magnets, marker tray and locking wheels",
+      "designReferences": ["school_library/chalkboard.png", "park_plaza/notice_board.png"],
+      "requiredParts": ["double-sided board", "rounded frame", "idea cards", "magnets", "marker tray", "support legs", "four caster wheels"]
+    },
+    {
+      "model": "mediation-podium",
+      "label": "调停席",
+      "description": "low circular mediation station with two equal document ledges, a central listening light and open sides",
+      "designReferences": ["hospital/reception_counter.png", "residence/round_dining_table.png"],
+      "requiredParts": ["low circular body", "two document ledges", "central light", "open side gaps", "two storage drawers", "wide floor base"]
+    },
+    {
+      "model": "archive-cabinet",
+      "label": "边界档案柜",
+      "description": "secure rounded archive cabinet with colored consent drawers, label holders, lock panel and finished back",
+      "designReferences": ["residence/drawer_cabinet.png", "hospital/medicine_cabinet.png"],
+      "requiredParts": ["cabinet body", "six consent drawers", "label holders", "drawer handles", "lock panel", "top cornice", "finished back panel"]
+    },
+    {
+      "model": "calming-chair",
+      "label": "情绪安抚角",
+      "description": "soft cocoon-like calming chair with wraparound back, weighted cushion, small footrest and warm side light",
+      "designReferences": ["school_library/reading_armchair_lamp.png", "residence/sofa_coffee_table.png"],
+      "requiredParts": ["cocoon chair shell", "seat cushion", "weighted pillow", "footrest", "side light", "stable floor base"]
+    },
+    {
+      "model": "home-bed",
+      "label": "卧榻",
+      "description": "cozy single wooden home bed with green quilt, pillow, low headboard, bedside table and reading lamp",
+      "designReferences": ["residence/single_bed_nightstand.png"],
+      "requiredParts": ["wood bed frame", "headboard", "mattress", "green quilt", "pillow", "bedside table", "reading lamp", "finished underside"]
+    },
+    {
+      "model": "bookcase",
+      "label": "故事书架",
+      "description": "warm wooden story bookcase filled with colorful books, two lower drawers and a small display shelf",
+      "designReferences": ["school_library/bookcase.png"],
+      "requiredParts": ["bookcase frame", "four shelves", "colorful books", "two lower drawers", "handles", "display shelf", "finished back panel"]
+    },
+    {
+      "model": "garden-tool-shed",
+      "label": "园艺工具棚",
+      "description": "compact open garden tool shed with green roof, pegboard, shovel, rake, watering cans and lower storage",
+      "designReferences": ["studio_workshop/tool_chest.png", "greenhouse_garden/plant_shelf.png"],
+      "requiredParts": ["shed frame", "green roof", "pegboard", "shovel", "rake", "watering cans", "lower storage", "finished rear wall"]
+    },
+    {
+      "model": "gallery-wall",
+      "label": "作品墙",
+      "description": "freestanding gallery wall with five colorful framed artworks, slim spotlights and stable floor feet",
+      "designReferences": ["studio_workshop/gallery_frames.png", "park_plaza/notice_board.png"],
+      "requiredParts": ["wall panel", "five artwork frames", "art panels", "two spotlights", "support posts", "floor feet", "finished backside"]
+    },
+    {
+      "model": "rehearsal-stage",
+      "label": "排练角",
+      "description": "small rounded rehearsal platform with coral curtain arch, floor marks, two stage lights and prop crate",
+      "designReferences": ["studio_workshop/gallery_frames.png", "market_cafe/market_hall_interior.png"],
+      "requiredParts": ["rounded stage platform", "curtain arch", "two curtains", "floor marks", "two stage lights", "prop crate", "rear brace"]
+    },
+    {
+      "model": "story-table",
+      "label": "故事桌",
+      "description": "round storytelling table with four mismatched chairs, open memory book, small lamp and card tray",
+      "designReferences": ["residence/round_dining_table.png", "studio_workshop/writing_desk.png"],
+      "requiredParts": ["round table", "central support", "four chairs", "open memory book", "small lamp", "card tray", "finished underside"]
+    },
+    {
+      "model": "music-corner",
+      "label": "声音角",
+      "description": "cozy music corner with small keyboard, standing microphone, two speakers, headphones and round rug",
+      "designReferences": ["studio_workshop/meditation_rug.png", "studio_workshop/maker_workbench.png"],
+      "requiredParts": ["small keyboard", "keyboard stand", "microphone", "microphone stand", "two speakers", "headphones", "round rug", "cable clips"]
+    },
+    {
+      "model": "meditation-seat",
+      "label": "静坐席",
+      "description": "round meditation rug with layered cushion, low flower vase, warm candle lantern and folded blanket",
+      "designReferences": ["studio_workshop/meditation_rug.png", "memorial_cemetery/low_memorial_table.png"],
+      "requiredParts": ["round rug", "layered cushion", "folded blanket", "flower vase", "candle lantern", "small side tray"]
+    },
+    {
+      "model": "memory-book",
+      "label": "记忆册",
+      "description": "large open illustrated memory book on a low wooden reading stand with ribbon marker, photo cards and warm reading light",
+      "designReferences": ["school_library/student_desk.png", "memorial_cemetery/long_memorial_altar.png"],
+      "requiredParts": ["open memory book", "illustrated pages", "ribbon marker", "wood reading stand", "photo cards", "reading light", "finished underside"]
+    }
+  ]
+}

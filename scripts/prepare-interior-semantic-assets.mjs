@@ -1,0 +1,131 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+
+const ROOT = process.cwd();
+const BRIEFS_PATH = path.join(ROOT, "config/interior-semantic-asset-briefs.json");
+const COVERAGE_PATH = path.join(ROOT, "dist/interior-3d-work/runtime-asset-coverage.json");
+
+async function readJson(filePath) {
+  return JSON.parse(await fs.readFile(filePath, "utf8"));
+}
+
+async function exists(filePath) {
+  try {
+    await fs.access(filePath);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function relative(filePath) {
+  return path.relative(ROOT, filePath).split(path.sep).join("/");
+}
+
+function buildReferencePrompt(item) {
+  return `Use case: stylized-concept
+Asset type: exact MirrorLife runtime interior prop reference
+Primary request: Create one isolated ${item.label} (${item.model}) matching the supplied MirrorLife design references.
+Subject: ${item.description}.
+Style/medium: polished warm dopamine cel-shaded mobile-game asset, chunky rounded geometry, thick clean dark ink outline, coherent soft materials.
+Composition/framing: isometric three-quarter view, complete object centered with generous padding, every component fully visible.
+Color palette: cheerful coral, sky blue, mint, sunflower yellow, warm wood and paper white, balanced for the object's meaning.
+Required components: ${item.requiredParts.join(", ")}.
+Constraints: this must become a unique exact 3D model named ${item.model}; preserve a construction that can be modeled from all sides; no generic substitute; no text; no labels; no people; no extra scenery.
+Avoid: flat billboard, cropped parts, ambiguous merged pieces, gradients, photorealism, dark cyberpunk styling, floor shadow baked into the object.
+Background: perfectly flat solid #ff00ff chroma-key background, no texture, no lighting variation, and do not use #ff00ff in the object.`;
+}
+
+function buildReconstructionPrompt(item, referenceFile) {
+  return `# ${item.label} / ${item.model}
+
+Faithfully reconstruct the approved isolated reference at ${referenceFile} as a complete 360-degree 3D asset.
+
+## Required semantic components
+
+${item.requiredParts.map((part) => `- ${part}`).join("\n")}
+
+## Reconstruction rules
+
+- Match silhouette, proportions, colors, component placement, rounded bevel language and ink-outline material treatment.
+- Model the back, sides, top and underside intentionally; never extrude or depth-warp the source image.
+- Generate coherent front, back, left, right, top, bottom and isometric references before accepting geometry.
+- Keep every named component independently inspectable in the editable master.
+- Preserve an unsimplified master GLB or Blender file, then derive a browser LOD.
+- Reject floating parts, open boundaries, generic substitutions, omitted backsides and texture-only fake geometry.
+`;
+}
+
+async function main() {
+  const [briefs, coverage] = await Promise.all([
+    readJson(BRIEFS_PATH),
+    readJson(COVERAGE_PATH)
+  ]);
+  const semanticOnly = coverage.rows.filter((row) => !row.hasExactGlb && row.fallbackAvailable);
+  const briefByModel = new Map(briefs.items.map((item) => [item.model, item]));
+  const missingBriefs = semanticOnly.filter((row) => !briefByModel.has(row.model)).map((row) => row.model);
+  const staleBriefs = briefs.items.filter((item) => !semanticOnly.some((row) => row.model === item.model)).map((item) => item.model);
+  if (missingBriefs.length) throw new Error(`Missing semantic asset briefs: ${missingBriefs.join(", ")}`);
+  if (staleBriefs.length) throw new Error(`Briefs no longer match semantic-only runtime models: ${staleBriefs.join(", ")}`);
+
+  const outputRoot = path.join(ROOT, "dist/interior-3d-work/semantic-fidelity-packets");
+  const queue = [];
+  for (const row of semanticOnly) {
+    const item = briefByModel.get(row.model);
+    const packetRoot = path.join(outputRoot, item.model);
+    const referenceFile = path.join(ROOT, briefs.sourceImageRoot, briefs.runtimeReferenceRoot, `${item.model}.png`);
+    const referenceReady = await exists(referenceFile);
+    await fs.mkdir(path.join(packetRoot, "references"), { recursive: true });
+    await fs.mkdir(path.join(packetRoot, "master"), { recursive: true });
+    await fs.mkdir(path.join(packetRoot, "web"), { recursive: true });
+    await fs.mkdir(path.join(packetRoot, "renders", "turntable"), { recursive: true });
+
+    const packet = {
+      version: 1,
+      model: item.model,
+      label: item.label,
+      placements: row.placements,
+      assetIntents: row.assetIntents,
+      referenceFile: relative(referenceFile),
+      referenceReady,
+      designReferences: item.designReferences.map((file) => `${briefs.sourceImageRoot}/${file}`),
+      requiredParts: item.requiredParts,
+      deliverables: {
+        master: `master/${item.model}.glb`,
+        web: `web/${item.model}.glb`,
+        canonicalRenders: "renders/{front,back,left,right,top,bottom,isometric}.png",
+        turntable: "renders/turntable/000.png ... 011.png"
+      }
+    };
+    await fs.writeFile(path.join(packetRoot, "packet.json"), `${JSON.stringify(packet, null, 2)}\n`);
+    await fs.writeFile(path.join(packetRoot, "REFERENCE_PROMPT.md"), `${buildReferencePrompt(item)}\n`);
+    await fs.writeFile(path.join(packetRoot, "RECONSTRUCTION_PROMPT.md"), buildReconstructionPrompt(item, relative(referenceFile)));
+    queue.push({
+      model: item.model,
+      label: item.label,
+      placements: row.placements,
+      referenceFile: relative(referenceFile),
+      referenceReady,
+      promptFile: relative(path.join(packetRoot, "REFERENCE_PROMPT.md")),
+      packet: relative(path.join(packetRoot, "packet.json"))
+    });
+  }
+
+  await fs.mkdir(outputRoot, { recursive: true });
+  await fs.writeFile(path.join(outputRoot, "queue.json"), `${JSON.stringify({
+    generatedAt: new Date().toISOString(),
+    count: queue.length,
+    referenceReady: queue.filter((item) => item.referenceReady).length,
+    pendingReferences: queue.filter((item) => !item.referenceReady).length,
+    items: queue.sort((a, b) => b.placements - a.placements || a.model.localeCompare(b.model))
+  }, null, 2)}\n`);
+
+  console.log(`Prepared ${queue.length} semantic fidelity packets.`);
+  console.log(`Reference artwork ready: ${queue.filter((item) => item.referenceReady).length}/${queue.length}.`);
+  console.log(`Queue: ${relative(path.join(outputRoot, "queue.json"))}`);
+}
+
+main().catch((error) => {
+  console.error(error.message);
+  process.exit(1);
+});
