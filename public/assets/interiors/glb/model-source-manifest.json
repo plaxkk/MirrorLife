@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T17:34:55.622Z",
+  "updatedAt": "2026-07-11T18:37:07.919Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T17-34-55-479Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T18-37-07-774Z",
   "imported": [
     {
       "slot": "bed",
@@ -991,6 +991,72 @@
       "importedAt": "2026-07-11T17:34:55.614Z"
     },
     {
+      "slot": "proposal-podium",
+      "label": "提案台",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/proposal-podium.glb",
+      "target": "public/assets/interiors/glb/proposal-podium.glb",
+      "bytes": 1019552,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/proposal-podium/front.png",
+        "public/assets/interiors/references/multiview/proposal-podium/back.png",
+        "public/assets/interiors/references/multiview/proposal-podium/left.png",
+        "public/assets/interiors/references/multiview/proposal-podium/right.png",
+        "public/assets/interiors/references/multiview/proposal-podium/top.png",
+        "public/assets/interiors/references/multiview/proposal-podium/bottom.png",
+        "public/assets/interiors/references/multiview/proposal-podium/isometric.png",
+        "public/assets/interiors/references/multiview/proposal-podium/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/proposal-podium.glb",
+      "masterBytes": 1019552,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T18:37:07.541Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 11292,
+        "webTriangleCount": 11292,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/proposal-podium.glb",
+          "primitiveCount": 62,
+          "trianglePrimitiveCount": 49,
+          "outlinePrimitiveCount": 13,
+          "problemPrimitives": [],
+          "triangleCount": 11292,
+          "vertexCount": 29237,
+          "weldedVertexCount": 5744,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/proposal-podium.glb",
+          "primitiveCount": 62,
+          "trianglePrimitiveCount": 49,
+          "outlinePrimitiveCount": 13,
+          "problemPrimitives": [],
+          "triangleCount": 11292,
+          "vertexCount": 29237,
+          "weldedVertexCount": 5744,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T18:37:07.911Z"
+    },
+    {
       "slot": "record-desk",
       "label": "记录桌",
       "provider": "threejs-manual",
@@ -1058,7 +1124,6 @@
     }
   ],
   "missing": [
-    "proposal-podium",
     "notice-board",
     "audience-seating",
     "office-workstation",

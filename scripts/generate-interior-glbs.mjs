@@ -91,6 +91,17 @@ function addMesh(group, geometry, color, position = [0, 0, 0], scale = [1, 1, 1]
   return mesh;
 }
 
+function addCylinderBetween(group, start, end, radius, color, name = "connector") {
+  const from = new THREE.Vector3(...start);
+  const to = new THREE.Vector3(...end);
+  const delta = to.clone().sub(from);
+  const segment = createPart(group, name);
+  segment.position.copy(from).add(to).multiplyScalar(0.5);
+  segment.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.clone().normalize());
+  addMesh(segment, cyl(radius, radius, delta.length(), 14), color);
+  return segment;
+}
+
 const rounded = (w, h, d, r = 0.08) => new RoundedBoxGeometry(w, h, d, 2, r);
 const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
 const cyl = (r1, r2, h, seg = 16) => new THREE.CylinderGeometry(r1, r2, h, seg);
@@ -1250,6 +1261,81 @@ function exchangeBoard() {
   return g;
 }
 
+function proposalPodium() {
+  const g = new THREE.Group();
+  g.name = "proposal-podium";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const teal = 0x4b9da0;
+  const tealLight = 0x78bdba;
+  const coral = 0xee745f;
+
+  const shell = createPart(g, "podium-body-and-finished-sides");
+  addMesh(shell, rounded(1.05, 1.18, 0.1, 0.035), honey, [0, 0.87, 0.4]);
+  [-0.51, 0.51].forEach((x) => addMesh(shell, rounded(0.16, 1.28, 0.82, 0.05), honeyLight, [x, 0.83, 0]));
+  [-1, 1].forEach((side) => {
+    addMesh(shell, rounded(0.08, 0.82, 0.64, 0.025), honeyDark, [side * 0.6, 0.88, 0]);
+    addMesh(shell, rounded(0.045, 0.7, 0.52, 0.016), honey, [side * 0.65, 0.88, 0]);
+  });
+  addMesh(shell, rounded(1.08, 0.14, 0.84, 0.045), honeyDark, [0, 1.43, 0]);
+
+  const frontPanel = createPart(g, "front-accent-panel");
+  addMesh(frontPanel, rounded(0.88, 0.5, 0.075, 0.03), honeyDark, [0, 1.02, 0.47]);
+  addMesh(frontPanel, rounded(0.78, 0.4, 0.055, 0.022), teal, [0, 1.02, 0.525]);
+  addMesh(frontPanel, rounded(0.66, 0.028, 0.03, 0.008), tealLight, [-0.02, 1.16, 0.56], [1, 1, 1], [0, 0, 0], false);
+
+  const drawer = createPart(g, "suggestion-drawer");
+  addMesh(drawer, rounded(0.88, 0.35, 0.1, 0.035), honeyDark, [0, 0.57, 0.48]);
+  addMesh(drawer, rounded(0.73, 0.24, 0.065, 0.023), honey, [0, 0.57, 0.55]);
+  addMesh(drawer, rounded(0.52, 0.035, 0.025, 0.008), P.ink, [0, 0.65, 0.6], [1, 1, 1], [0, 0, 0], false);
+  addMesh(drawer, sphere(0.07, 20, 12), P.yellow, [0, 0.51, 0.63], [1, 1, 0.58]);
+
+  const rearStorage = createPart(g, "finished-backside-with-two-cubbies");
+  addMesh(rearStorage, rounded(0.9, 1.05, 0.08, 0.028), honeyDark, [0, 0.82, 0.3]);
+  addMesh(rearStorage, rounded(0.77, 0.92, 0.055, 0.02), 0x5e3b25, [0, 0.82, 0.25]);
+  addMesh(rearStorage, rounded(0.83, 0.09, 0.68, 0.03), honey, [0, 0.76, -0.03]);
+  addMesh(rearStorage, rounded(0.83, 0.09, 0.68, 0.03), honey, [0, 0.34, -0.03]);
+  addMesh(rearStorage, rounded(0.68, 0.035, 0.43, 0.014), P.paper, [0, 0.84, -0.12]);
+  addMesh(rearStorage, rounded(0.64, 0.035, 0.4, 0.014), P.cream, [0.03, 0.89, -0.1], [1, 1, 1], [0, -0.03, 0]);
+  [-0.49, 0.49].forEach((x) => addMesh(rearStorage, rounded(0.12, 1.0, 0.12, 0.035), honey, [x, 0.79, -0.43]));
+
+  const slopedTop = createPart(g, "document-ledge");
+  addMesh(slopedTop, wedge(1.14, 0.86, 0.12, 0.43), honeyDark, [0, 1.44, 0]);
+  addMesh(slopedTop, rounded(1.28, 0.1, 0.94, 0.04), honeyLight, [0, 1.69, 0], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(slopedTop, rounded(1.15, 0.055, 0.8, 0.02), P.cream, [0, 1.76, -0.01], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(slopedTop, rounded(1.18, 0.12, 0.11, 0.035), honey, [0, 1.61, 0.43], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(slopedTop, rounded(1.16, 0.09, 0.1, 0.03), honeyDark, [0, 1.9, -0.39], [1, 1, 1], [0.31, 0, 0]);
+  const proposalSheet = createPart(slopedTop, "one-blank-proposal-sheet");
+  proposalSheet.position.set(-0.12, 1.82, 0.01);
+  proposalSheet.rotation.x = 0.31;
+  addMesh(proposalSheet, rounded(0.52, 0.035, 0.62, 0.014), P.paper);
+
+  const microphone = createPart(g, "gooseneck-microphone");
+  addMesh(microphone, cyl(0.12, 0.12, 0.06, 20), P.ink, [0.36, 1.93, -0.22]);
+  addMesh(microphone, cyl(0.075, 0.095, 0.16, 18), 0x3f4348, [0.36, 2.03, -0.22]);
+  const micPoints = [
+    [0.36, 2.1, -0.22], [0.35, 2.22, -0.21], [0.3, 2.32, -0.18],
+    [0.22, 2.4, -0.14], [0.12, 2.46, -0.1]
+  ];
+  micPoints.slice(0, -1).forEach((point, index) => {
+    addCylinderBetween(microphone, point, micPoints[index + 1], 0.027, 0x34383d, `gooseneck-segment-${index + 1}`);
+    addMesh(microphone, sphere(0.03, 12, 8), 0x4c5056, micPoints[index + 1]);
+  });
+  addCylinderBetween(microphone, [0.12, 2.46, -0.1], [0, 2.49, -0.06], 0.052, coral, "coral-indicator-ring");
+  addCylinderBetween(microphone, [0, 2.49, -0.06], [-0.18, 2.535, -0.005], 0.078, P.ink, "microphone-head");
+  addMesh(microphone, sphere(0.074, 18, 11), 0x3a3d42, [-0.195, 2.54, 0], [1.1, 0.88, 0.88]);
+
+  const base = createPart(g, "wide-base-and-four-feet");
+  addMesh(base, rounded(1.38, 0.19, 1.02, 0.065), honeyDark, [0, 0.18, 0]);
+  addMesh(base, rounded(1.28, 0.11, 0.92, 0.04), honeyLight, [0, 0.29, 0]);
+  [[-0.48, -0.36], [0.48, -0.36], [-0.48, 0.36], [0.48, 0.36]].forEach(([x, z]) => {
+    addMesh(base, cyl(0.1, 0.11, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+  addMesh(base, rounded(1.08, 0.07, 0.78, 0.025), honeyDark, [0, 0.31, 0]);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1458,7 +1544,8 @@ const builders = {
   "supply-crate": supplyCrate,
   "cafe-seating": cafeSeating,
   "hot-food-counter": hotFoodCounter,
-  "exchange-board": exchangeBoard
+  "exchange-board": exchangeBoard,
+  "proposal-podium": proposalPodium
 };
 
 function parseArgs(argv) {
@@ -1495,7 +1582,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
