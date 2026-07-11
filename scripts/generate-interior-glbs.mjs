@@ -1900,6 +1900,77 @@ function archiveCabinet() {
   return g;
 }
 
+function calmingChair() {
+  const g = new THREE.Group();
+  g.name = "calming-chair";
+  const deepTeal = 0x315f69;
+  const teal = 0x477f78;
+  const mint = 0x9bc9a1;
+  const mintLight = 0xc5dfb1;
+  const coral = 0xee806b;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const amber = 0xffd36b;
+
+  const base = createPart(g, "stable-wide-circular-floor-base-and-finished-underside");
+  addMesh(base, cyl(1.35, 1.35, 0.16, 56), deepTeal, [0, 0.12, 0]);
+  addMesh(base, cyl(1.24, 1.27, 0.12, 56), honey, [0, 0.26, 0]);
+  addMesh(base, cyl(1.04, 1.11, 0.12, 48), teal, [0, 0.38, -0.08]);
+  [[-0.82, -0.55], [0.82, -0.55], [-0.82, 0.55], [0.82, 0.55]].forEach(([x, z]) => {
+    addMesh(base, cyl(0.11, 0.13, 0.1, 18), honey, [x, 0.05, z]);
+  });
+
+  const shell = createPart(g, "cocoon-chair-shell-with-open-forward-exit");
+  addMesh(shell, rounded(1.48, 1.72, 0.42, 0.18), deepTeal, [0, 1.34, -0.4]);
+  addMesh(shell, rounded(1.3, 1.5, 0.25, 0.1), mint, [0, 1.4, -0.17]);
+  [-1, 1].forEach((side) => {
+    addMesh(shell, rounded(0.32, 1.46, 0.88, 0.15), deepTeal, [side * 0.68, 1.12, 0], [1, 1, 1], [0, side * 0.13, side * -0.05]);
+    addMesh(shell, rounded(0.21, 1.28, 0.75, 0.1), mintLight, [side * 0.58, 1.2, 0.08], [1, 1, 1], [0, side * 0.13, side * -0.05]);
+    addMesh(shell, sphere(0.28, 22, 14), mintLight, [side * 0.56, 1.92, -0.16], [1.12, 1.2, 0.7]);
+  });
+  addMesh(shell, sphere(0.62, 28, 18), mintLight, [0, 2.03, -0.25], [1.06, 0.55, 0.48]);
+
+  const cushion = createPart(g, "thick-removable-seat-cushion");
+  addMesh(cushion, rounded(1.05, 0.24, 0.72, 0.11), teal, [0, 0.67, 0.12]);
+  addMesh(cushion, rounded(0.96, 0.18, 0.64, 0.07), mintLight, [0, 0.82, 0.16]);
+  addMesh(cushion, rounded(0.7, 0.1, 0.025, 0.01), mint, [0, 0.84, 0.49], [1, 1, 1], [0, 0, 0], false);
+
+  const pillow = createPart(g, "coral-weighted-lap-pillow-with-carry-handle");
+  addMesh(pillow, rounded(0.76, 0.28, 0.5, 0.12), coral, [0, 1.18, 0.12], [1, 1, 1], [-0.12, 0, 0]);
+  addMesh(pillow, sphere(0.035, 14, 9), 0xb94f47, [0, 1.33, 0.37]);
+  addMesh(pillow, rounded(0.3, 0.06, 0.07, 0.025), honey, [0, 1.01, 0.38]);
+
+  const footrest = createPart(g, "separate-low-rounded-footrest");
+  addMesh(footrest, rounded(0.8, 0.18, 0.56, 0.07), honey, [0, 0.34, 1.02]);
+  addMesh(footrest, rounded(0.7, 0.25, 0.5, 0.11), mintLight, [0, 0.52, 1.02]);
+  [-0.28, 0.28].forEach((x) => {
+    [-0.16, 0.16].forEach((z) => addMesh(footrest, rounded(0.11, 0.22, 0.11, 0.035), honey, [x, 0.17, 1.02 + z]));
+  });
+
+  const light = createPart(g, "warm-side-light-and-water-cup-tray");
+  addMesh(light, cyl(0.055, 0.065, 1.48, 16), honey, [-1.04, 1.08, -0.1]);
+  addMesh(light, rounded(0.42, 0.08, 0.08, 0.028), honey, [-1.17, 1.82, -0.1]);
+  addMesh(light, torus(0.18, 0.04, 12, 32), honey, [-1.31, 1.67, -0.1]);
+  addMesh(light, sphere(0.135, 22, 14), amber, [-1.31, 1.67, -0.08], [1, 1, 0.82], [0, 0, 0], false);
+  addMesh(light, cyl(0.25, 0.25, 0.07, 28), honey, [-0.91, 0.96, 0.34]);
+  addMesh(light, cyl(0.19, 0.19, 0.04, 24), honeyLight, [-0.91, 1.02, 0.34]);
+  addMesh(light, cyl(0.1, 0.085, 0.25, 20), P.glass, [-0.91, 1.16, 0.34], [1, 1, 1], [0, 0, 0], false);
+  addMesh(light, cyl(0.078, 0.078, 0.015, 20), P.blue, [-0.91, 1.22, 0.34], [1, 1, 1], [0, 0, 0], false);
+
+  const pause = createPart(g, "pause-hourglass-on-opposite-arm");
+  addMesh(pause, cyl(0.22, 0.22, 0.07, 24), honey, [0.92, 0.96, 0.34]);
+  addMesh(pause, cyl(0.14, 0.14, 0.045, 20), honeyLight, [0.92, 1.02, 0.34]);
+  addMesh(pause, cyl(0.11, 0.11, 0.045, 18), honey, [0.92, 1.12, 0.34]);
+  addMesh(pause, cyl(0.11, 0.11, 0.045, 18), honey, [0.92, 1.43, 0.34]);
+  addMesh(pause, cyl(0.1, 0.025, 0.16, 18), amber, [0.92, 1.23, 0.34]);
+  addMesh(pause, cyl(0.025, 0.1, 0.16, 18), amber, [0.92, 1.34, 0.34]);
+  [-0.075, 0.075].forEach((x) => {
+    addMesh(pause, cyl(0.018, 0.018, 0.34, 10), honeyDark, [0.92 + x, 1.275, 0.34]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2115,7 +2186,8 @@ const builders = {
   "office-workstation": officeWorkstation,
   "collaboration-board": collaborationBoard,
   "mediation-podium": mediationPodium,
-  "archive-cabinet": archiveCabinet
+  "archive-cabinet": archiveCabinet,
+  "calming-chair": calmingChair
 };
 
 function parseArgs(argv) {
@@ -2152,7 +2224,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

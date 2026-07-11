@@ -91,7 +91,15 @@ function mergeImportedEntries(slots, previousImported, imported) {
     if (entry?.slot) bySlot.set(entry.slot, entry);
   }
   for (const entry of imported) {
-    bySlot.set(entry.slot, entry);
+    const previous = bySlot.get(entry.slot);
+    const sourceUnchanged = previous
+      && previous.provider === entry.provider
+      && previous.source === entry.source
+      && previous.bytes === entry.bytes
+      && JSON.stringify(previous.geometryAudit || {}) === JSON.stringify(entry.geometryAudit || {});
+    bySlot.set(entry.slot, sourceUnchanged
+      ? { ...entry, importedAt: previous.importedAt }
+      : entry);
   }
 
   return slots

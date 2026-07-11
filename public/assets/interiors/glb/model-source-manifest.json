@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T22:46:14.880Z",
+  "updatedAt": "2026-07-11T23:24:19.272Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T22-46-14-442Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T23-24-18-984Z",
   "imported": [
     {
       "slot": "bed",
@@ -1517,10 +1517,75 @@
         }
       },
       "importedAt": "2026-07-11T22:46:14.878Z"
+    },
+    {
+      "slot": "calming-chair",
+      "label": "情绪安抚角",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/calming-chair.glb",
+      "target": "public/assets/interiors/glb/calming-chair.glb",
+      "bytes": 795084,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/calming-chair/front.png",
+        "public/assets/interiors/references/multiview/calming-chair/back.png",
+        "public/assets/interiors/references/multiview/calming-chair/left.png",
+        "public/assets/interiors/references/multiview/calming-chair/right.png",
+        "public/assets/interiors/references/multiview/calming-chair/top.png",
+        "public/assets/interiors/references/multiview/calming-chair/bottom.png",
+        "public/assets/interiors/references/multiview/calming-chair/isometric.png",
+        "public/assets/interiors/references/multiview/calming-chair/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/calming-chair.glb",
+      "masterBytes": 795084,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T23:13:29.899Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 10964,
+        "webTriangleCount": 10964,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/calming-chair.glb",
+          "primitiveCount": 62,
+          "trianglePrimitiveCount": 44,
+          "outlinePrimitiveCount": 18,
+          "problemPrimitives": [],
+          "triangleCount": 10964,
+          "vertexCount": 21301,
+          "weldedVertexCount": 5568,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/calming-chair.glb",
+          "primitiveCount": 62,
+          "trianglePrimitiveCount": 44,
+          "outlinePrimitiveCount": 18,
+          "problemPrimitives": [],
+          "triangleCount": 10964,
+          "vertexCount": 21301,
+          "weldedVertexCount": 5568,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T23:17:06.423Z"
     }
   ],
   "missing": [
-    "calming-chair",
     "home-bed",
     "bookcase",
     "garden-tool-shed",
