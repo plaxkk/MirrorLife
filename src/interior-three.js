@@ -58,6 +58,7 @@ const projectedItems = new Map();
 
 let THREE;
 let GLTFLoader;
+let MeshoptDecoder;
 let RoundedBoxGeometry;
 let mergeGeometries;
 let loader;
@@ -82,13 +83,16 @@ async function loadThree() {
       import("three"),
       import("three/examples/jsm/loaders/GLTFLoader.js"),
       import("three/examples/jsm/geometries/RoundedBoxGeometry.js"),
-      import("three/examples/jsm/utils/BufferGeometryUtils.js")
-    ]).then(([threeModule, loaderModule, roundedBoxModule, geometryUtilsModule]) => {
+      import("three/examples/jsm/utils/BufferGeometryUtils.js"),
+      import("three/examples/jsm/libs/meshopt_decoder.module.js")
+    ]).then(([threeModule, loaderModule, roundedBoxModule, geometryUtilsModule, meshoptModule]) => {
       THREE = threeModule;
       GLTFLoader = loaderModule.GLTFLoader;
+      MeshoptDecoder = meshoptModule.MeshoptDecoder;
       RoundedBoxGeometry = roundedBoxModule.RoundedBoxGeometry;
       mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
+      loader.setMeshoptDecoder(MeshoptDecoder);
       return true;
     });
   }
@@ -247,6 +251,7 @@ function loadModel(type) {
     itemSignature = "";
     return prepared;
   };
+  const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
     loader.load(
       `${ASSET_BASE}${type}.glb`,
@@ -261,14 +266,14 @@ function loadModel(type) {
       undefined,
       (error) => {
         loading.delete(type);
-        const fallback = loadSemanticFallback();
-        if (!fallback) console.warn(`MirrorLife interior model failed: ${type}.glb`, error);
-        resolve(fallback);
+        const availableFallback = fallback || loadSemanticFallback();
+        if (!availableFallback) console.warn(`MirrorLife interior model failed: ${type}.glb`, error);
+        resolve(availableFallback);
       }
     );
   });
   loading.set(type, promise);
-  return promise;
+  return fallback ? Promise.resolve(fallback) : promise;
 }
 
 function clearGroup(group) {

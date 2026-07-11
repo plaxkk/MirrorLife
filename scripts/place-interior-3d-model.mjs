@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
 const PROVIDERS = ["tripo", "hunyuan", "tripo-multiview", "hunyuan-multiview", "blender-manual", "manual"];
 
 function parseArgs(argv) {
@@ -10,6 +11,7 @@ function parseArgs(argv) {
     config: CONFIG_PATH,
     slot: "",
     file: "",
+    masterFile: "",
     referenceViews: [],
     referenceFiles: [],
     reviewReport: "",
@@ -24,6 +26,7 @@ function parseArgs(argv) {
     else if (arg === "--config") args.config = argv[++i];
     else if (arg === "--slot") args.slot = argv[++i];
     else if (arg === "--file") args.file = argv[++i];
+    else if (arg === "--master-file") args.masterFile = argv[++i];
     else if (arg === "--reference-views") args.referenceViews = argv[++i].split(",").map((item) => item.trim()).filter(Boolean);
     else if (arg === "--reference-files") args.referenceFiles = argv[++i].split(",").map((item) => item.trim()).filter(Boolean);
     else if (arg === "--review-report") args.reviewReport = argv[++i];
@@ -65,6 +68,7 @@ Options:
   --config <path>    Model slot mapping. Default: ${CONFIG_PATH}
   --slot <slot>      Runtime slot name, such as bed, counter, shelf.
   --file <path>      Downloaded GLB file.
+  --master-file <path>  Optional unsimplified master GLB. Defaults to --file.
   --reference-views <csv>  Independent views used to reconstruct the asset, including front,back,left,right,top,bottom,isometric.
   --reference-files <csv>  Reference image paths corresponding to the supplied views.
   --review-report <path>   Approved canonical-view fidelity report JSON.
@@ -125,13 +129,27 @@ async function assertGlb(filePath) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(args.config);
-  const slot = config.slots.find((item) => item.slot === args.slot);
+  const semanticBriefs = await exists(path.resolve(SEMANTIC_BRIEFS_PATH))
+    ? await readJson(path.resolve(SEMANTIC_BRIEFS_PATH))
+    : { items: [] };
+  const semanticSlots = (semanticBriefs.items || []).map((item, index) => ({
+    slot: item.model,
+    label: item.label,
+    priority: 100 + index,
+    requiredParts: item.requiredParts || []
+  }));
+  const allSlots = [...config.slots, ...semanticSlots.filter((candidate) => (
+    !config.slots.some((slot) => slot.slot === candidate.slot)
+  ))];
+  const slot = allSlots.find((item) => item.slot === args.slot);
   if (!slot) {
-    throw new Error(`Unknown slot "${args.slot}". Valid slots: ${config.slots.map((item) => item.slot).join(", ")}`);
+    throw new Error(`Unknown slot "${args.slot}". Valid slots: ${allSlots.map((item) => item.slot).join(", ")}`);
   }
 
   const source = path.resolve(expandHome(args.file));
   const bytes = await assertGlb(source);
+  const masterSource = path.resolve(expandHome(args.masterFile || args.file));
+  const masterBytes = await assertGlb(masterSource);
   const policy = config.qualityPolicy || {};
   const requiredViews = policy.requiredReferenceViews || ["front", "back", "left", "right"];
   const minimumReferenceViews = Number(policy.minimumReferenceViews || requiredViews.length);
@@ -202,7 +220,7 @@ async function main() {
   const target = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.glb`);
   await fs.mkdir(path.dirname(masterTarget), { recursive: true });
   await fs.mkdir(path.dirname(target), { recursive: true });
-  await copyUnlessSame(source, masterTarget);
+  await copyUnlessSame(masterSource, masterTarget);
   await copyUnlessSame(source, target);
 
   let reviewReport = "";
@@ -222,7 +240,7 @@ async function main() {
     target,
     bytes,
     masterFile: normalizeRel(masterTarget),
-    masterBytes: bytes,
+    masterBytes,
     qualityTier: args.qualityTier,
     referenceViews: args.referenceViews,
     referenceFiles: args.referenceFiles.map((filePath) => normalizeRel(path.resolve(expandHome(filePath)))),

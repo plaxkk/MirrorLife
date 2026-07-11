@@ -75,6 +75,15 @@ async function main() {
     const packetRoot = path.join(outputRoot, item.model);
     const referenceFile = path.join(ROOT, briefs.sourceImageRoot, briefs.runtimeReferenceRoot, `${item.model}.png`);
     const referenceReady = await exists(referenceFile);
+    const multiviewManifest = path.join(ROOT, briefs.multiviewRoot, item.model, "manifest.json");
+    const multiview = await exists(multiviewManifest) ? await readJson(multiviewManifest) : null;
+    const requiredViews = ["front", "back", "left", "right", "top", "bottom", "isometric"];
+    const viewByName = new Map((multiview?.views || []).map((view) => [view.view, view]));
+    const viewReadiness = await Promise.all(requiredViews.map(async (view) => {
+      const entry = viewByName.get(view);
+      return Boolean(entry?.file) && exists(path.join(ROOT, entry.file));
+    }));
+    const multiviewReady = viewReadiness.every(Boolean);
     await fs.mkdir(path.join(packetRoot, "references"), { recursive: true });
     await fs.mkdir(path.join(packetRoot, "master"), { recursive: true });
     await fs.mkdir(path.join(packetRoot, "web"), { recursive: true });
@@ -88,6 +97,9 @@ async function main() {
       assetIntents: row.assetIntents,
       referenceFile: relative(referenceFile),
       referenceReady,
+      multiviewManifest: multiview ? relative(multiviewManifest) : "",
+      multiviewReady,
+      requiredViews,
       designReferences: item.designReferences.map((file) => `${briefs.designReferenceRoot}/${file}`),
       requiredParts: item.requiredParts,
       deliverables: {
@@ -106,6 +118,7 @@ async function main() {
       placements: row.placements,
       referenceFile: relative(referenceFile),
       referenceReady,
+      multiviewReady,
       promptFile: relative(path.join(packetRoot, "REFERENCE_PROMPT.md")),
       packet: relative(path.join(packetRoot, "packet.json"))
     });
@@ -116,6 +129,7 @@ async function main() {
     generatedAt: new Date().toISOString(),
     count: queue.length,
     referenceReady: queue.filter((item) => item.referenceReady).length,
+    multiviewReady: queue.filter((item) => item.multiviewReady).length,
     pendingReferences: queue.filter((item) => !item.referenceReady).length,
     items: queue.sort((a, b) => b.placements - a.placements || a.model.localeCompare(b.model))
   }, null, 2)}\n`);

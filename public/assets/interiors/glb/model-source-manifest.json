@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-10T15:57:19.611Z",
-  "provider": "tripo",
-  "sourceDir": "dist/interior-3d-work/tripo/optimized-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-10T12-18-11-078Z",
+  "updatedAt": "2026-07-11T08:45:22.787Z",
+  "provider": "hunyuan-multiview",
+  "sourceDir": "dist/interior-3d-work/hunyuan-multiview/generated-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T08-45-22-765Z",
   "imported": [
     {
       "slot": "bed",
@@ -388,7 +388,107 @@
       "target": "public/assets/interiors/glb/toy-corner.glb",
       "bytes": 313624,
       "importedAt": "2026-07-10T04:11:26.489Z"
+    },
+    {
+      "slot": "reading-corner",
+      "label": "阅读角",
+      "provider": "hunyuan-multiview",
+      "source": "dist/interior-3d-work/hunyuan-multiview/generated-glb/reading-corner.glb",
+      "target": "public/assets/interiors/glb/reading-corner.glb",
+      "bytes": 3457120,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/reading-corner/front.png",
+        "public/assets/interiors/references/multiview/reading-corner/back.png",
+        "public/assets/interiors/references/multiview/reading-corner/left.png",
+        "public/assets/interiors/references/multiview/reading-corner/right.png",
+        "public/assets/interiors/references/multiview/reading-corner/top.png",
+        "public/assets/interiors/references/multiview/reading-corner/bottom.png",
+        "public/assets/interiors/references/multiview/reading-corner/isometric.png",
+        "public/assets/interiors/references/multiview/reading-corner/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
+      "masterBytes": 82172896,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T08:01:01.933Z",
+        "epsilon": 0.00001,
+        "closedMeshes": false,
+        "nonManifoldEdges": 50,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 1500000,
+        "webTriangleCount": 75000,
+        "master": {
+          "file": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 1500000,
+          "vertexCount": 873701,
+          "weldedVertexCount": 749996,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/hunyuan-multiview/optimized-glb/reading-corner.glb",
+          "primitiveCount": 1,
+          "trianglePrimitiveCount": 1,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [
+            {
+              "meshIndex": 0,
+              "primitiveIndex": 0,
+              "openBoundaryEdges": 0,
+              "nonManifoldEdges": 50
+            }
+          ],
+          "triangleCount": 75000,
+          "vertexCount": 73926,
+          "weldedVertexCount": 37496,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 50
+        }
+      },
+      "importedAt": "2026-07-11T08:45:22.780Z"
     }
   ],
-  "missing": []
+  "missing": [
+    "waiting-chair",
+    "teacher-podium",
+    "service-counter",
+    "retail-shelf",
+    "supply-crate",
+    "cafe-seating",
+    "hot-food-counter",
+    "exchange-board",
+    "proposal-podium",
+    "notice-board",
+    "audience-seating",
+    "record-desk",
+    "office-workstation",
+    "collaboration-board",
+    "mediation-podium",
+    "archive-cabinet",
+    "calming-chair",
+    "home-bed",
+    "bookcase",
+    "garden-tool-shed",
+    "gallery-wall",
+    "rehearsal-stage",
+    "story-table",
+    "music-corner",
+    "meditation-seat",
+    "memory-book"
+  ]
 }

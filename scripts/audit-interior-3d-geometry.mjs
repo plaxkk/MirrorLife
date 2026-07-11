@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import { MeshoptDecoder } from "three/examples/jsm/libs/meshopt_decoder.module.js";
 
 function parseArgs(argv) {
   const args = { file: "", masterFile: "", output: "", epsilon: 1e-5 };
@@ -47,7 +48,7 @@ const COMPONENTS = {
 };
 const TYPE_SIZE = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT2: 4, MAT3: 9, MAT4: 16 };
 
-function readAccessor(gltf, binary, accessorIndex) {
+function readAccessor(gltf, binary, decodedViews, accessorIndex) {
   const accessor = gltf.accessors?.[accessorIndex];
   if (!accessor) throw new Error(`Missing accessor ${accessorIndex}.`);
   if (accessor.sparse) throw new Error("Sparse accessors are not supported by the topology audit.");
@@ -55,27 +56,29 @@ function readAccessor(gltf, binary, accessorIndex) {
   const component = COMPONENTS[accessor.componentType];
   const componentCount = TYPE_SIZE[accessor.type];
   if (!view || !component || !componentCount) throw new Error(`Unsupported accessor ${accessorIndex}.`);
-  const stride = view.byteStride || component.bytes * componentCount;
-  const base = (view.byteOffset || 0) + (accessor.byteOffset || 0);
+  const decoded = decodedViews.get(accessor.bufferView);
+  const source = decoded?.buffer || binary;
+  const stride = decoded?.byteStride || view.byteStride || component.bytes * componentCount;
+  const base = (decoded ? 0 : (view.byteOffset || 0)) + (accessor.byteOffset || 0);
   const values = new Array(accessor.count);
   for (let item = 0; item < accessor.count; item += 1) {
     const itemOffset = base + item * stride;
     const row = new Array(componentCount);
     for (let part = 0; part < componentCount; part += 1) {
-      row[part] = component.read(binary, itemOffset + part * component.bytes);
+      row[part] = component.read(source, itemOffset + part * component.bytes);
     }
     values[item] = componentCount === 1 ? row[0] : row;
   }
   return values;
 }
 
-function auditPrimitive(gltf, binary, primitive, epsilon) {
+function auditPrimitive(gltf, binary, decodedViews, primitive, epsilon) {
   const mode = primitive.mode ?? 4;
   if (mode !== 4) return { mode, ignored: true };
-  const positions = readAccessor(gltf, binary, primitive.attributes.POSITION);
+  const positions = readAccessor(gltf, binary, decodedViews, primitive.attributes.POSITION);
   const indices = primitive.indices === undefined
     ? positions.map((_, index) => index)
-    : readAccessor(gltf, binary, primitive.indices);
+    : readAccessor(gltf, binary, decodedViews, primitive.indices);
   if (indices.length % 3 !== 0) throw new Error("Triangle index count is not divisible by three.");
 
   const welded = new Map();
@@ -114,10 +117,32 @@ function auditPrimitive(gltf, binary, primitive, epsilon) {
 async function auditFile(filePath, epsilon) {
   const absolutePath = path.resolve(filePath);
   const { json, binary } = parseGlb(await fs.readFile(absolutePath));
+  const decodedViews = new Map();
+  const compressedViews = (json.bufferViews || [])
+    .map((view, index) => ({ index, view, extension: view.extensions?.EXT_meshopt_compression }))
+    .filter((item) => item.extension);
+  if (compressedViews.length) {
+    await MeshoptDecoder.ready;
+    for (const item of compressedViews) {
+      const extension = item.extension;
+      const sourceOffset = extension.byteOffset || 0;
+      const source = binary.subarray(sourceOffset, sourceOffset + extension.byteLength);
+      const target = Buffer.alloc(extension.count * extension.byteStride);
+      MeshoptDecoder.decodeGltfBuffer(
+        target,
+        extension.count,
+        extension.byteStride,
+        source,
+        extension.mode,
+        extension.filter
+      );
+      decodedViews.set(item.index, { buffer: target, byteStride: extension.byteStride });
+    }
+  }
   const primitives = [];
   for (const [meshIndex, mesh] of (json.meshes || []).entries()) {
     for (const [primitiveIndex, primitive] of (mesh.primitives || []).entries()) {
-      primitives.push({ meshIndex, primitiveIndex, ...auditPrimitive(json, binary, primitive, epsilon) });
+      primitives.push({ meshIndex, primitiveIndex, ...auditPrimitive(json, binary, decodedViews, primitive, epsilon) });
     }
   }
   const trianglePrimitives = primitives.filter((item) => !item.ignored);

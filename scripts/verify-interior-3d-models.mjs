@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
 
 function parseArgs(argv) {
   const args = {
@@ -77,10 +78,26 @@ async function verifyGlb(filePath) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(args.config);
+  const semanticBriefs = await exists(path.resolve(SEMANTIC_BRIEFS_PATH))
+    ? await readJson(path.resolve(SEMANTIC_BRIEFS_PATH))
+    : { items: [] };
+  const semanticSlots = (semanticBriefs.items || []).map((item, index) => ({
+    slot: item.model,
+    label: item.label,
+    requiredParts: item.requiredParts || [],
+    priority: 100 + index
+  }));
+  const semanticRuntimeSlots = [];
+  for (const candidate of semanticSlots) {
+    if (config.slots.some((slot) => slot.slot === candidate.slot)) continue;
+    const runtimeFile = path.resolve(config.targetGlbRoot, `${candidate.slot}.glb`);
+    if (args.releaseQuality || await exists(runtimeFile)) semanticRuntimeSlots.push(candidate);
+  }
+  const slots = [...config.slots, ...semanticRuntimeSlots];
   const failures = [];
   const results = [];
 
-  for (const slot of config.slots) {
+  for (const slot of slots) {
     const filePath = path.resolve(config.targetGlbRoot, `${slot.slot}.glb`);
     if (!await exists(filePath)) {
       failures.push(`${slot.slot}: missing ${filePath}`);
@@ -126,7 +143,7 @@ async function main() {
       const triangleBudget = Number(policy.webTriangleBudget || 80000);
       const minimumTurntableFrames = Number(policy.minimumTurntableFrames || 12);
 
-      for (const slot of config.slots) {
+      for (const slot of slots) {
         const source = imported.get(slot.slot);
         if (!source) {
           failures.push(`${slot.slot}: missing provenance entry in model-source-manifest.json`);

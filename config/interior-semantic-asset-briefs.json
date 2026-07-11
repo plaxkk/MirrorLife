@@ -3,6 +3,7 @@
   "goal": "Give every semantic-only interior prop its own faithful high-fidelity source artwork and exact GLB. Design references guide style only; they are never approved as generic runtime aliases.",
   "sourceImageRoot": "public/assets/interiors/references",
   "runtimeReferenceRoot": "runtime-semantic",
+  "multiviewRoot": "public/assets/interiors/references/multiview",
   "designReferenceRoot": "dist/assets/interior-props-image2",
   "items": [
     {

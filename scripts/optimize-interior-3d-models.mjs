@@ -15,6 +15,10 @@ function parseArgs(argv) {
     textureSize: "1024",
     simplifyRatio: "0.45",
     simplifyError: "0.0005",
+    compression: "false",
+    simplify: true,
+    join: true,
+    weld: true,
     importNow: false,
   };
 
@@ -28,6 +32,10 @@ function parseArgs(argv) {
     else if (arg === "--texture-size") args.textureSize = argv[++i];
     else if (arg === "--simplify-ratio") args.simplifyRatio = argv[++i];
     else if (arg === "--simplify-error") args.simplifyError = argv[++i];
+    else if (arg === "--compress") args.compression = argv[++i];
+    else if (arg === "--no-simplify") args.simplify = false;
+    else if (arg === "--no-join") args.join = false;
+    else if (arg === "--no-weld") args.weld = false;
     else if (arg === "--import-now") args.importNow = true;
     else if (arg === "--help" || arg === "-h") {
       printHelp();
@@ -39,6 +47,9 @@ function parseArgs(argv) {
 
   if (!PROVIDERS.includes(args.provider)) {
     throw new Error(`--provider must be one of: ${PROVIDERS.join(", ")}.`);
+  }
+  if (!["false", "meshopt", "draco"].includes(args.compression)) {
+    throw new Error("--compress must be false, meshopt, or draco.");
   }
 
   return args;
@@ -62,6 +73,10 @@ Options:
   --texture-size <px>        Maximum texture size. Default: 1024
   --simplify-ratio <ratio>   Target vertex ratio to keep. Default: 0.45
   --simplify-error <error>   Simplification tolerance. Default: 0.0005
+  --no-simplify              Preserve all source triangles and topology.
+  --no-join                  Preserve source mesh/primitive boundaries.
+  --no-weld                  Preserve the source vertex topology exactly.
+  --compress <mode>          false, meshopt, or draco. Default: false
   --import-now               Copy optimized slot GLBs into public runtime assets.
   -h, --help                 Show help.
 `);
@@ -109,21 +124,21 @@ function runGltfTransform(input, output, args) {
     input,
     output,
     "--compress",
-    "false",
+    String(args.compression),
     "--texture-compress",
     "webp",
     "--texture-size",
     String(args.textureSize),
     "--simplify",
-    "true",
+    String(args.simplify),
     "--simplify-ratio",
     String(args.simplifyRatio),
     "--simplify-error",
     String(args.simplifyError),
     "--join",
-    "true",
+    String(args.join),
     "--weld",
-    "true",
+    String(args.weld),
   ];
 
   const result = spawnSync("npx", commandArgs, {
@@ -186,6 +201,10 @@ async function main() {
     textureSize: Number(args.textureSize),
     simplifyRatio: Number(args.simplifyRatio),
     simplifyError: Number(args.simplifyError),
+    compression: args.compression,
+    simplify: args.simplify,
+    join: args.join,
+    weld: args.weld,
     results: results.map((result) => ({
       input: normalizeRel(result.input),
       output: normalizeRel(result.output),

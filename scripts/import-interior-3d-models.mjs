@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
 const PROVIDERS = [
   "tripo",
   "hunyuan",
@@ -144,11 +145,20 @@ async function assertGlb(filePath) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(args.config);
+  const semanticBriefs = await readJsonIfExists(path.resolve(SEMANTIC_BRIEFS_PATH), { items: [] });
   const sourceDir = path.resolve(args.source || path.join(config.workRoot, args.provider, "generated-glb"));
   const targetDir = path.resolve(config.targetGlbRoot);
   await fs.mkdir(targetDir, { recursive: true });
 
-  const slots = [...config.slots].sort((a, b) => a.priority - b.priority);
+  const semanticSlots = (semanticBriefs.items || []).map((item, index) => ({
+    slot: item.model,
+    label: item.label,
+    priority: 100 + index
+  }));
+  const slots = [
+    ...config.slots,
+    ...semanticSlots.filter((candidate) => !config.slots.some((slot) => slot.slot === candidate.slot))
+  ].sort((a, b) => a.priority - b.priority);
   const available = [];
   const missing = [];
 
