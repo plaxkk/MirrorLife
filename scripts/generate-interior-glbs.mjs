@@ -1179,6 +1179,77 @@ function hotFoodCounter() {
   return g;
 }
 
+function addExchangeCard(group, x, y, color, name) {
+  const card = createPart(group, name);
+  addMesh(card, rounded(0.43, 0.61, 0.045, 0.016), P.ink, [x, y - 0.012, 0.185], [1.025, 1.025, 1], [0, 0, 0], false);
+  addMesh(card, rounded(0.4, 0.58, 0.052, 0.018), color, [x, y, 0.205]);
+  addMesh(card, rounded(0.19, 0.11, 0.065, 0.027), 0x3f4348, [x, y + 0.33, 0.235]);
+  addMesh(card, rounded(0.13, 0.055, 0.072, 0.018), P.metal, [x, y + 0.295, 0.27]);
+  addMesh(card, torus(0.052, 0.018, 10, 24), 0x34383d, [x, y + 0.405, 0.25]);
+  addMesh(card, cyl(0.017, 0.017, 0.078, 12), P.metal, [x, y + 0.405, 0.252], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+}
+
+function exchangeBoard() {
+  const g = new THREE.Group();
+  g.name = "exchange-board";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const boardMint = 0x8fcfbe;
+  const colors = [0xee8067, 0x74bde0, 0xf4c84a, 0xffecc9, 0xffecc9, 0xf4c84a, 0xee8067, 0xa9dec9];
+
+  const frame = createPart(g, "wood-frame-and-two-support-posts");
+  addMesh(frame, rounded(2.06, 1.64, 0.16, 0.055), honeyDark, [0, 1.37, 0]);
+  addMesh(frame, rounded(1.92, 1.5, 0.13, 0.045), boardMint, [0, 1.37, 0.055]);
+  addMesh(frame, rounded(2.32, 0.17, 0.24, 0.05), honey, [0, 2.25, 0]);
+  addMesh(frame, rounded(2.32, 0.17, 0.24, 0.05), honey, [0, 0.49, 0]);
+  [-1.17, 1.17].forEach((x) => {
+    addMesh(frame, rounded(0.2, 2.3, 0.25, 0.055), honey, [x, 1.22, 0]);
+    addMesh(frame, rounded(0.31, 0.28, 0.29, 0.065), honeyLight, [x, 2.24, 0]);
+    addMesh(frame, sphere(0.055, 18, 10), P.metal, [x, 2.24, 0.175], [1, 1, 0.55]);
+    addMesh(frame, sphere(0.045, 16, 9), honeyDark, [x, 0.55, 0.175], [1, 1, 0.55]);
+  });
+
+  const cards = createPart(g, "eight-exchange-cards-and-clips");
+  const xs = [-0.76, -0.255, 0.255, 0.76];
+  [1.7, 0.99].forEach((y, row) => xs.forEach((x, column) => {
+    addExchangeCard(cards, x, y, colors[row * 4 + column], `exchange-card-${row * 4 + column + 1}`);
+  }));
+
+  const tray = createPart(g, "lower-tray-and-three-spare-cards");
+  addMesh(tray, rounded(1.78, 0.13, 0.48, 0.06), honeyDark, [0, 0.4, 0.29]);
+  addMesh(tray, rounded(1.68, 0.09, 0.4, 0.035), honeyLight, [0, 0.48, 0.3]);
+  addMesh(tray, rounded(1.72, 0.2, 0.12, 0.04), honey, [0, 0.51, 0.5]);
+  [-0.82, 0.82].forEach((x) => addMesh(tray, rounded(0.13, 0.25, 0.44, 0.045), honey, [x, 0.51, 0.3]));
+  [[-0.52, 0xee8067], [0, 0x74bde0], [0.52, 0xffecc9]].forEach(([x, color]) => {
+    addMesh(tray, rounded(0.39, 0.045, 0.28, 0.016), color, [x, 0.58, 0.29]);
+  });
+
+  const feet = createPart(g, "two-braced-floor-feet");
+  [-1.17, 1.17].forEach((x) => {
+    addMesh(feet, rounded(0.42, 0.18, 0.86, 0.065), honeyDark, [x, 0.13, 0]);
+    addMesh(feet, rounded(0.36, 0.12, 0.8, 0.045), honeyLight, [x, 0.23, 0]);
+    addMesh(feet, rounded(0.16, 0.56, 0.16, 0.038), honey, [x, 0.43, 0.2], [1, 1, 1], [-0.6, 0, 0]);
+    addMesh(feet, rounded(0.16, 0.56, 0.16, 0.038), honey, [x, 0.43, -0.2], [1, 1, 1], [0.6, 0, 0]);
+  });
+
+  const rear = createPart(g, "finished-rear-panel-and-cross-braces");
+  for (let index = 0; index < 6; index += 1) {
+    addMesh(rear, rounded(1.93, 0.25, 0.12, 0.025), index % 2 ? honey : honeyLight, [0, 0.74 + index * 0.255, -0.125]);
+  }
+  const braceLength = 2.18;
+  addMesh(rear, rounded(0.16, braceLength, 0.13, 0.04), honeyDark, [0, 1.38, -0.235], [1, 1, 1], [0, 0, 0.83]);
+  addMesh(rear, rounded(0.16, braceLength, 0.13, 0.04), honey, [0, 1.38, -0.31], [1, 1, 1], [0, 0, -0.83]);
+  [[-0.92, 0.63], [0.92, 0.63], [-0.92, 2.11], [0.92, 2.11]].forEach(([x, y]) => {
+    addMesh(rear, cyl(0.04, 0.04, 0.035, 14), P.metal, [x, y, -0.39], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  });
+
+  const underside = createPart(g, "closed-underside");
+  addMesh(underside, rounded(1.88, 0.1, 0.5, 0.035), honeyDark, [0, 0.31, 0.27]);
+  [-0.76, 0.76].forEach((x) => addMesh(underside, rounded(0.12, 0.32, 0.18, 0.035), honeyDark, [x, 0.42, 0.02]));
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1386,7 +1457,8 @@ const builders = {
   "retail-shelf": retailShelf,
   "supply-crate": supplyCrate,
   "cafe-seating": cafeSeating,
-  "hot-food-counter": hotFoodCounter
+  "hot-food-counter": hotFoodCounter,
+  "exchange-board": exchangeBoard
 };
 
 function parseArgs(argv) {
@@ -1423,7 +1495,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

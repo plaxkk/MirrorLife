@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T16:48:27.651Z",
+  "updatedAt": "2026-07-11T17:34:55.622Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T16-48-27-419Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T17-34-55-479Z",
   "imported": [
     {
       "slot": "bed",
@@ -925,6 +925,72 @@
       "importedAt": "2026-07-11T16:48:27.638Z"
     },
     {
+      "slot": "exchange-board",
+      "label": "交换板",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/exchange-board.glb",
+      "target": "public/assets/interiors/glb/exchange-board.glb",
+      "bytes": 2232040,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/exchange-board/front.png",
+        "public/assets/interiors/references/multiview/exchange-board/back.png",
+        "public/assets/interiors/references/multiview/exchange-board/left.png",
+        "public/assets/interiors/references/multiview/exchange-board/right.png",
+        "public/assets/interiors/references/multiview/exchange-board/top.png",
+        "public/assets/interiors/references/multiview/exchange-board/bottom.png",
+        "public/assets/interiors/references/multiview/exchange-board/isometric.png",
+        "public/assets/interiors/references/multiview/exchange-board/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/exchange-board.glb",
+      "masterBytes": 2232040,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T17:32:24.576Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 25708,
+        "webTriangleCount": 25708,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/exchange-board.glb",
+          "primitiveCount": 99,
+          "trianglePrimitiveCount": 91,
+          "outlinePrimitiveCount": 8,
+          "problemPrimitives": [],
+          "triangleCount": 25708,
+          "vertexCount": 64218,
+          "weldedVertexCount": 13020,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/exchange-board.glb",
+          "primitiveCount": 99,
+          "trianglePrimitiveCount": 91,
+          "outlinePrimitiveCount": 8,
+          "problemPrimitives": [],
+          "triangleCount": 25708,
+          "vertexCount": 64218,
+          "weldedVertexCount": 13020,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T17:34:55.614Z"
+    },
+    {
       "slot": "record-desk",
       "label": "记录桌",
       "provider": "threejs-manual",
@@ -992,7 +1058,6 @@
     }
   ],
   "missing": [
-    "exchange-board",
     "proposal-podium",
     "notice-board",
     "audience-seating",
