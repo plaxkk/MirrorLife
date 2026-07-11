@@ -217,14 +217,16 @@ function mergeSemanticModelMeshes(source) {
     if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
     const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
     geometry.applyMatrix4(node.matrixWorld);
-    const batch = batches.get(node.material) || [];
-    batch.push(geometry);
-    batches.set(node.material, batch);
+    const attributeSignature = Object.keys(geometry.attributes).sort().join(",");
+    const batchKey = `${node.material.uuid}:${attributeSignature}`;
+    const batch = batches.get(batchKey) || { material: node.material, geometries: [] };
+    batch.geometries.push(geometry);
+    batches.set(batchKey, batch);
   });
   if (!batches.size) return source;
 
   const mergedRoot = new THREE.Group();
-  batches.forEach((geometries, material) => {
+  batches.forEach(({ geometries, material }) => {
     const geometry = geometries.length === 1 ? geometries[0] : mergeGeometries(geometries, false);
     if (!geometry) {
       geometries.forEach((candidate) => {

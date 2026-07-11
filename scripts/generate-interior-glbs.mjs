@@ -903,6 +903,97 @@ function retailShelf() {
   return g;
 }
 
+function addSupplyCrateShell(parent, name, x, y, z) {
+  const crate = createPart(parent, name);
+  crate.position.set(x, y, z);
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const bracket = 0x493a3a;
+
+  const base = createPart(crate, "closed-bottom-rails");
+  addMesh(base, rounded(1.08, 0.1, 0.72, 0.035), honeyDark, [0, 0.08, 0]);
+  [-0.24, 0, 0.24].forEach((zOffset) => addMesh(base, rounded(0.94, 0.055, 0.12, 0.025), honeyLight, [0, 0.15, zOffset]));
+
+  const posts = createPart(crate, "corner-posts");
+  [-0.5, 0.5].forEach((px) => [-0.33, 0.33].forEach((pz) => {
+    addMesh(posts, rounded(0.13, 0.78, 0.13, 0.035), honey, [px, 0.46, pz]);
+  }));
+
+  const slats = createPart(crate, "complete-slatted-sides");
+  [0.24, 0.45, 0.66].forEach((sy) => {
+    [-0.35, 0.35].forEach((sz) => addMesh(slats, rounded(1.02, 0.13, 0.09, 0.03), honeyLight, [0, sy, sz]));
+    [-0.52, 0.52].forEach((sx) => addMesh(slats, rounded(0.09, 0.13, 0.62, 0.03), honey, [sx, sy, 0]));
+  });
+  [-0.35, 0.35].forEach((sz) => addMesh(slats, rounded(1.1, 0.11, 0.11, 0.035), honeyDark, [0, 0.81, sz]));
+  [-0.52, 0.52].forEach((sx) => addMesh(slats, rounded(0.11, 0.11, 0.7, 0.035), honeyDark, [sx, 0.81, 0]));
+
+  const handles = createPart(crate, "side-handles");
+  [-0.585, 0.585].forEach((sx) => {
+    addMesh(handles, rounded(0.035, 0.17, 0.35, 0.008), bracket, [sx, 0.58, 0]);
+    addMesh(handles, rounded(0.045, 0.09, 0.22, 0.015), P.ink, [sx + (sx < 0 ? -0.015 : 0.015), 0.58, 0]);
+  });
+
+  const brackets = createPart(crate, "reinforced-corner-brackets");
+  [-0.54, 0.54].forEach((bx) => [-0.37, 0.37].forEach((bz) => [0.18, 0.75].forEach((by) => {
+    addMesh(brackets, rounded(0.17, 0.17, 0.17, 0.035), bracket, [bx, by, bz]);
+    addMesh(brackets, sphere(0.035, 12, 7), P.yellow, [bx + (bx < 0 ? -0.07 : 0.07), by, bz + (bz < 0 ? -0.07 : 0.07)]);
+  })));
+  return crate;
+}
+
+function addSupplyBottle(group, x, y, z) {
+  const bottle = createPart(group, "water-bottle");
+  addMesh(bottle, cyl(0.115, 0.1, 0.32, 18), 0x55a9d5, [x, y, z]);
+  addMesh(bottle, cyl(0.065, 0.09, 0.1, 18), 0x87c9e6, [x, y + 0.2, z]);
+  addMesh(bottle, cyl(0.07, 0.07, 0.055, 18), P.blueDark, [x, y + 0.275, z]);
+  addMesh(bottle, torus(0.1, 0.018, 8, 18), P.blueDark, [x + 0.08, y + 0.19, z], [0.75, 1, 0.75], [Math.PI / 2, 0, 0]);
+}
+
+function supplyCrate() {
+  const g = new THREE.Group();
+  g.name = "supply-crate";
+  addSupplyCrateShell(g, "blanket-crate", -0.61, 0, 0.08);
+  addSupplyCrateShell(g, "water-crate", 0.61, 0, 0.08);
+  addSupplyCrateShell(g, "repair-crate", 0, 0.76, -0.12);
+
+  const blankets = createPart(g, "three-folded-blankets");
+  [
+    [0.35, P.mint],
+    [0.48, P.yellow],
+    [0.61, 0xef7468]
+  ].forEach(([y, color], index) => {
+    addMesh(blankets, rounded(0.78, 0.14, 0.56, 0.055), color, [-0.61, y, 0.08]);
+    addMesh(blankets, rounded(0.055, 0.11, 0.5, 0.018), index === 2 ? 0xd95f59 : P.cream, [-0.23, y, 0.08], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const water = createPart(g, "six-water-bottles");
+  [-0.21, 0.21].forEach((zOffset) => [-0.26, 0, 0.26].forEach((xOffset) => {
+    addSupplyBottle(water, 0.61 + xOffset, 0.45, 0.08 + zOffset);
+  }));
+
+  const pouch = createPart(g, "repair-pouch");
+  addMesh(pouch, rounded(0.48, 0.17, 0.48, 0.07), 0xef7468, [-0.26, 1.46, -0.12]);
+  addMesh(pouch, rounded(0.09, 0.2, 0.5, 0.025), P.cream, [-0.26, 1.48, -0.12]);
+  addMesh(pouch, rounded(0.5, 0.2, 0.09, 0.025), P.cream, [-0.26, 1.48, -0.12]);
+  addMesh(pouch, rounded(0.14, 0.12, 0.035, 0.012), P.woodDark, [-0.26, 1.58, 0.17]);
+
+  const flashlight = createPart(g, "flashlight");
+  addMesh(flashlight, cyl(0.085, 0.085, 0.42, 20), 0x394457, [0.18, 1.49, -0.09], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(flashlight, cyl(0.11, 0.09, 0.12, 20), P.ink, [0.42, 1.49, -0.09], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(flashlight, cyl(0.07, 0.07, 0.035, 18), P.red, [0.12, 1.57, -0.09]);
+
+  const bandage = createPart(g, "bandage-roll");
+  addMesh(bandage, cyl(0.11, 0.11, 0.16, 24), P.cream, [0.18, 1.48, 0.15], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(bandage, torus(0.055, 0.018, 10, 24), P.woodLight, [0.18, 1.48, 0.24]);
+
+  const wrenchKit = createPart(g, "wrench-kit");
+  addMesh(wrenchKit, rounded(0.28, 0.08, 0.44, 0.025), P.woodDark, [0.41, 1.43, 0.05]);
+  addTool(wrenchKit, 0.35, 1.51, 0.04, 0.2, P.metal);
+  addTool(wrenchKit, 0.48, 1.51, 0.04, -0.16, P.metal);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1107,7 +1198,8 @@ const builders = {
   "waiting-chair": waitingChair,
   "teacher-podium": teacherPodium,
   "service-counter": serviceCounter,
-  "retail-shelf": retailShelf
+  "retail-shelf": retailShelf,
+  "supply-crate": supplyCrate
 };
 
 function parseArgs(argv) {
@@ -1144,7 +1236,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

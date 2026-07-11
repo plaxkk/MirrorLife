@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T14:19:38.110Z",
+  "updatedAt": "2026-07-11T14:58:59.887Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T14-19-38-049Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T14-58-59-756Z",
   "imported": [
     {
       "slot": "bed",
@@ -453,7 +453,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:19:38.077Z"
+      "importedAt": "2026-07-11T14:58:59.813Z"
     },
     {
       "slot": "reading-corner",
@@ -592,7 +592,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:19:38.088Z"
+      "importedAt": "2026-07-11T14:58:59.828Z"
     },
     {
       "slot": "service-counter",
@@ -658,7 +658,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:19:38.096Z"
+      "importedAt": "2026-07-11T14:58:59.840Z"
     },
     {
       "slot": "retail-shelf",
@@ -724,7 +724,73 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:19:38.103Z"
+      "importedAt": "2026-07-11T14:58:59.860Z"
+    },
+    {
+      "slot": "supply-crate",
+      "label": "应急补给箱",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/supply-crate.glb",
+      "target": "public/assets/interiors/glb/supply-crate.glb",
+      "bytes": 4032864,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/supply-crate/front.png",
+        "public/assets/interiors/references/multiview/supply-crate/back.png",
+        "public/assets/interiors/references/multiview/supply-crate/left.png",
+        "public/assets/interiors/references/multiview/supply-crate/right.png",
+        "public/assets/interiors/references/multiview/supply-crate/top.png",
+        "public/assets/interiors/references/multiview/supply-crate/bottom.png",
+        "public/assets/interiors/references/multiview/supply-crate/isometric.png",
+        "public/assets/interiors/references/multiview/supply-crate/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/supply-crate.glb",
+      "masterBytes": 4032864,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T14:57:42.256Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 44188,
+        "webTriangleCount": 44188,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/supply-crate.glb",
+          "primitiveCount": 205,
+          "trianglePrimitiveCount": 176,
+          "outlinePrimitiveCount": 29,
+          "problemPrimitives": [],
+          "triangleCount": 44188,
+          "vertexCount": 117021,
+          "weldedVertexCount": 22432,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/supply-crate.glb",
+          "primitiveCount": 205,
+          "trianglePrimitiveCount": 176,
+          "outlinePrimitiveCount": 29,
+          "problemPrimitives": [],
+          "triangleCount": 44188,
+          "vertexCount": 117021,
+          "weldedVertexCount": 22432,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T14:58:59.879Z"
     },
     {
       "slot": "record-desk",
@@ -790,11 +856,10 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:19:38.109Z"
+      "importedAt": "2026-07-11T14:58:59.885Z"
     }
   ],
   "missing": [
-    "supply-crate",
     "cafe-seating",
     "hot-food-counter",
     "exchange-board",
