@@ -88,7 +88,7 @@ async function main() {
       assetIntents: row.assetIntents,
       referenceFile: relative(referenceFile),
       referenceReady,
-      designReferences: item.designReferences.map((file) => `${briefs.sourceImageRoot}/${file}`),
+      designReferences: item.designReferences.map((file) => `${briefs.designReferenceRoot}/${file}`),
       requiredParts: item.requiredParts,
       deliverables: {
         master: `master/${item.model}.glb`,

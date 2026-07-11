@@ -1,0 +1,20 @@
+{
+  "model": "reading-corner",
+  "label": "阅读角",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReference": "public/assets/mirrorlife-interior-prop-design-board.png",
+  "file": "public/assets/interiors/references/runtime-semantic/reading-corner.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "armchair",
+    "seat cushion",
+    "throw pillow",
+    "round side table",
+    "floor lamp",
+    "potted plant"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the isometric design reference. It is not a completed 3D asset and still requires coherent canonical views, a closed master model and turntable review."
+}
