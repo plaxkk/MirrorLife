@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T11:53:02.105Z",
+  "updatedAt": "2026-07-11T12:43:58.012Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T11-53-02-075Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T12-43-57-964Z",
   "imported": [
     {
       "slot": "bed",
@@ -453,7 +453,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T11:53:02.088Z"
+      "importedAt": "2026-07-11T12:43:57.990Z"
     },
     {
       "slot": "reading-corner",
@@ -529,6 +529,72 @@
       "importedAt": "2026-07-11T08:45:22.780Z"
     },
     {
+      "slot": "teacher-podium",
+      "label": "讲台",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/teacher-podium.glb",
+      "target": "public/assets/interiors/glb/teacher-podium.glb",
+      "bytes": 920484,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/teacher-podium/front.png",
+        "public/assets/interiors/references/multiview/teacher-podium/back.png",
+        "public/assets/interiors/references/multiview/teacher-podium/left.png",
+        "public/assets/interiors/references/multiview/teacher-podium/right.png",
+        "public/assets/interiors/references/multiview/teacher-podium/top.png",
+        "public/assets/interiors/references/multiview/teacher-podium/bottom.png",
+        "public/assets/interiors/references/multiview/teacher-podium/isometric.png",
+        "public/assets/interiors/references/multiview/teacher-podium/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/teacher-podium.glb",
+      "masterBytes": 920484,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T12:42:39.449Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 10316,
+        "webTriangleCount": 10316,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/teacher-podium.glb",
+          "primitiveCount": 65,
+          "trianglePrimitiveCount": 52,
+          "outlinePrimitiveCount": 13,
+          "problemPrimitives": [],
+          "triangleCount": 10316,
+          "vertexCount": 25895,
+          "weldedVertexCount": 5260,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/teacher-podium.glb",
+          "primitiveCount": 65,
+          "trianglePrimitiveCount": 52,
+          "outlinePrimitiveCount": 13,
+          "problemPrimitives": [],
+          "triangleCount": 10316,
+          "vertexCount": 25895,
+          "weldedVertexCount": 5260,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T12:43:58.003Z"
+    },
+    {
       "slot": "record-desk",
       "label": "记录桌",
       "provider": "threejs-manual",
@@ -592,11 +658,10 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T11:53:02.103Z"
+      "importedAt": "2026-07-11T12:43:58.010Z"
     }
   ],
   "missing": [
-    "teacher-podium",
     "service-counter",
     "retail-shelf",
     "supply-crate",

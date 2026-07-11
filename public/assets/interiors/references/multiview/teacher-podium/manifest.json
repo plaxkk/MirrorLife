@@ -1,0 +1,56 @@
+{
+  "model": "teacher-podium",
+  "sourceSheet": "public/assets/interiors/references/multiview/teacher-podium/source-sheet.png",
+  "generatedAt": "2026-07-11T12:34:19.706Z",
+  "grid": {
+    "columns": 4,
+    "rows": 2
+  },
+  "chromaKey": "#f309ed",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/teacher-podium/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

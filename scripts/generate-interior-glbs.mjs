@@ -97,6 +97,28 @@ const cyl = (r1, r2, h, seg = 16) => new THREE.CylinderGeometry(r1, r2, h, seg);
 const sphere = (r, w = 16, h = 10) => new THREE.SphereGeometry(r, w, h);
 const torus = (r, tube, radial = 10, tubular = 28) => new THREE.TorusGeometry(r, tube, radial, tubular);
 
+function wedge(w, d, frontHeight, backHeight) {
+  const hw = w / 2;
+  const hd = d / 2;
+  const positions = new Float32Array([
+    -hw, 0, hd, hw, 0, hd, hw, 0, -hd, -hw, 0, -hd,
+    -hw, frontHeight, hd, hw, frontHeight, hd, hw, backHeight, -hd, -hw, backHeight, -hd
+  ]);
+  const indices = [
+    0, 2, 1, 0, 3, 2,
+    4, 5, 6, 4, 6, 7,
+    0, 1, 5, 0, 5, 4,
+    1, 2, 6, 1, 6, 5,
+    2, 3, 7, 2, 7, 6,
+    3, 0, 4, 3, 4, 7
+  ];
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 function addBoard(group, x, y, z, w, h, color = P.paper) {
   addMesh(group, rounded(w, h, 0.08, 0.035), color, [x, y, z]);
 }
@@ -577,6 +599,78 @@ function waitingChair() {
   return g;
 }
 
+function teacherPodium() {
+  const g = new THREE.Group();
+  g.name = "teacher-podium";
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const teal = 0x4c9f9b;
+
+  const body = createPart(g, "podium-body");
+  addMesh(body, rounded(1.14, 1.28, 0.82, 0.08), honey, [0, 0.82, 0]);
+  addMesh(body, rounded(0.98, 1.12, 0.7, 0.055), honeyLight, [0, 0.84, 0]);
+  [-0.49, 0.49].forEach((x) => addMesh(body, rounded(0.12, 1.2, 0.74, 0.04), honeyDark, [x, 0.82, 0]));
+
+  const top = createPart(g, "slanted-reading-top");
+  addMesh(top, wedge(1.2, 0.84, 0.12, 0.42), honeyDark, [0, 1.43, 0]);
+  addMesh(top, rounded(1.3, 0.1, 0.92, 0.04), honeyLight, [0, 1.69, 0], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(top, rounded(1.2, 0.055, 0.78, 0.022), honey, [0, 1.75, -0.01], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(top, rounded(1.2, 0.11, 0.1, 0.035), honeyDark, [0, 1.59, 0.43], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(top, rounded(1.2, 0.09, 0.1, 0.03), honeyDark, [0, 1.86, -0.39], [1, 1, 1], [0.31, 0, 0]);
+
+  const door = createPart(g, "storage-door");
+  addMesh(door, rounded(0.64, 0.94, 0.08, 0.028), honeyDark, [-0.02, 0.86, 0.43]);
+  [0.65, 1.03].forEach((y) => {
+    addMesh(door, rounded(0.48, 0.29, 0.045, 0.016), honeyLight, [-0.02, y, 0.485]);
+    addMesh(door, rounded(0.38, 0.19, 0.025, 0.008), honey, [-0.02, y, 0.51], [1, 1, 1], [0, 0, 0], false);
+  });
+  [0.62, 1.1].forEach((y) => addMesh(door, rounded(0.055, 0.15, 0.045, 0.016), P.yellow, [-0.38, y, 0.51]));
+  addMesh(door, sphere(0.065, 20, 12), P.yellow, [0.31, 0.84, 0.53]);
+
+  const sideInlays = createPart(g, "side-inlays");
+  [-0.42, 0.42].forEach((x) => {
+    addMesh(sideInlays, rounded(0.15, 0.72, 0.045, 0.016), teal, [x, 0.87, 0.47]);
+    addMesh(sideInlays, rounded(0.08, 0.58, 0.018, 0.006), 0x8ed4d0, [x, 0.87, 0.5], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const backside = createPart(g, "finished-backside");
+  addMesh(backside, rounded(0.82, 0.82, 0.055, 0.02), honeyDark, [0, 0.87, -0.44]);
+  addMesh(backside, rounded(0.7, 0.7, 0.035, 0.012), honey, [0, 0.87, -0.48]);
+  [[-0.28, 0.58], [0.28, 0.58], [-0.28, 1.16], [0.28, 1.16]].forEach(([x, y]) => {
+    addMesh(backside, cyl(0.028, 0.028, 0.025, 14), P.yellow, [x, y, -0.515], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  });
+
+  const plinth = createPart(g, "lower-plinth");
+  addMesh(plinth, rounded(1.3, 0.2, 0.94, 0.06), honeyDark, [0, 0.2, 0]);
+  addMesh(plinth, rounded(1.2, 0.12, 0.86, 0.04), honeyLight, [0, 0.31, 0]);
+  [[-0.48, -0.34], [0.48, -0.34], [-0.48, 0.34], [0.48, 0.34]].forEach(([x, z]) => {
+    addMesh(plinth, cyl(0.1, 0.11, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+  [-0.5, 0.5].forEach((x) => addMesh(plinth, sphere(0.042, 16, 10), P.yellow, [x, 0.2, 0.49]));
+
+  const notebook = createPart(g, "notebook");
+  notebook.position.set(-0.08, 1.79, 0.02);
+  notebook.rotation.x = 0.31;
+  addOpenBook(notebook, 0, 0, 0, 0.92);
+
+  const pencilCup = createPart(g, "pencil-cup");
+  const cupX = 0.4;
+  const cupY = 1.91;
+  const cupZ = -0.2;
+  addMesh(pencilCup, cyl(0.11, 0.09, 0.26, 24), teal, [cupX, cupY, cupZ]);
+  addMesh(pencilCup, torus(0.105, 0.022, 10, 28), 0x8ed4d0, [cupX, cupY + 0.14, cupZ], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  [
+    [-0.055, 0xe95656, -0.08],
+    [0, 0xf4c84a, 0],
+    [0.055, 0x4ea8de, 0.08]
+  ].forEach(([dx, color, tilt]) => {
+    addMesh(pencilCup, cyl(0.017, 0.017, 0.38, 12), color, [cupX + dx, cupY + 0.25, cupZ], [1, 1, 1], [0, 0, tilt]);
+    addMesh(pencilCup, new THREE.ConeGeometry(0.021, 0.07, 12), P.cream, [cupX + dx - Math.sin(tilt) * 0.22, cupY + 0.475, cupZ], [1, 1, 1], [0, 0, tilt]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -778,7 +872,8 @@ const builders = {
   bench,
   fountain,
   "record-desk": recordDesk,
-  "waiting-chair": waitingChair
+  "waiting-chair": waitingChair,
+  "teacher-podium": teacherPodium
 };
 
 function parseArgs(argv) {
@@ -815,7 +910,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
