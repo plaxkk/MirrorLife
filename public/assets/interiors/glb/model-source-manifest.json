@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T21:46:38.616Z",
+  "updatedAt": "2026-07-11T22:21:01.992Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T21-46-38-250Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T22-21-01-501Z",
   "imported": [
     {
       "slot": "bed",
@@ -1385,10 +1385,75 @@
         }
       },
       "importedAt": "2026-07-11T21:46:38.614Z"
+    },
+    {
+      "slot": "mediation-podium",
+      "label": "调停席",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/mediation-podium.glb",
+      "target": "public/assets/interiors/glb/mediation-podium.glb",
+      "bytes": 2696576,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/mediation-podium/front.png",
+        "public/assets/interiors/references/multiview/mediation-podium/back.png",
+        "public/assets/interiors/references/multiview/mediation-podium/left.png",
+        "public/assets/interiors/references/multiview/mediation-podium/right.png",
+        "public/assets/interiors/references/multiview/mediation-podium/top.png",
+        "public/assets/interiors/references/multiview/mediation-podium/bottom.png",
+        "public/assets/interiors/references/multiview/mediation-podium/isometric.png",
+        "public/assets/interiors/references/multiview/mediation-podium/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/mediation-podium.glb",
+      "masterBytes": 2696576,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T22:16:19.132Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 30104,
+        "webTriangleCount": 30104,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/mediation-podium.glb",
+          "primitiveCount": 69,
+          "trianglePrimitiveCount": 48,
+          "outlinePrimitiveCount": 21,
+          "problemPrimitives": [],
+          "triangleCount": 30104,
+          "vertexCount": 78526,
+          "weldedVertexCount": 15144,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/mediation-podium.glb",
+          "primitiveCount": 69,
+          "trianglePrimitiveCount": 48,
+          "outlinePrimitiveCount": 21,
+          "problemPrimitives": [],
+          "triangleCount": 30104,
+          "vertexCount": 78526,
+          "weldedVertexCount": 15144,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T22:21:01.989Z"
     }
   ],
   "missing": [
-    "mediation-podium",
     "archive-cabinet",
     "calming-chair",
     "home-bed",

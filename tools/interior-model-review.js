@@ -22,7 +22,8 @@ const SLOT_ASSETS = {
   "toy-corner": ["kindergarten/teddy_play_rug.png", "安抚角"],
   "audience-seating": ["/assets/interiors/references/runtime-semantic/audience-seating.png", "旁听席"],
   "office-workstation": ["/assets/interiors/references/runtime-semantic/office-workstation.png", "协作工位"],
-  "collaboration-board": ["/assets/interiors/references/runtime-semantic/collaboration-board.png", "协作板"]
+  "collaboration-board": ["/assets/interiors/references/runtime-semantic/collaboration-board.png", "协作板"],
+  "mediation-podium": ["/assets/interiors/references/runtime-semantic/mediation-podium.png", "调停席"]
 };
 
 const params = new URLSearchParams(window.location.search);

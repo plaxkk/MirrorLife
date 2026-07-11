@@ -130,6 +130,24 @@ function wedge(w, d, frontHeight, backHeight) {
   return geometry;
 }
 
+function annularSector(innerRadius, outerRadius, height, startAngle, endAngle) {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, outerRadius, startAngle, endAngle, false);
+  shape.lineTo(innerRadius * Math.cos(endAngle), innerRadius * Math.sin(endAngle));
+  shape.absarc(0, 0, innerRadius, endAngle, startAngle, true);
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: height,
+    bevelEnabled: true,
+    bevelThickness: Math.min(0.035, height * 0.22),
+    bevelSize: 0.035,
+    bevelSegments: 2,
+    curveSegments: 48
+  });
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
 function addBoard(group, x, y, z, w, h, color = P.paper) {
   addMesh(group, rounded(w, h, 0.08, 0.035), color, [x, y, z]);
 }
@@ -1722,6 +1740,84 @@ function collaborationBoard() {
   return g;
 }
 
+function addMediationDocumentLedge(group, x, side) {
+  const ledge = createPart(group, side < 0 ? "equal-left-document-ledge" : "equal-right-document-ledge");
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  addMesh(ledge, rounded(0.72, 0.13, 0.5, 0.055), honeyDark, [x, 1.02, 0.48]);
+  addMesh(ledge, rounded(0.66, 0.08, 0.44, 0.035), honeyLight, [x, 1.11, 0.48]);
+  addMesh(ledge, rounded(0.43, 0.035, 0.32, 0.014), P.paper, [x, 1.18, 0.5], [1, 1, 1], [0, side * 0.05, 0]);
+  addMesh(ledge, rounded(0.5, 0.06, 0.17, 0.025), honeyDark, [x, 1.17, 0.2]);
+  addMesh(ledge, cyl(0.035, 0.035, 0.42, 14), P.blue, [x, 1.23, 0.2], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(ledge, cyl(0.045, 0.045, 0.08, 14), P.yellow, [x - side * 0.22, 1.23, 0.2], [1, 1, 1], [0, 0, Math.PI / 2]);
+}
+
+function mediationPodium() {
+  const g = new THREE.Group();
+  g.name = "mediation-podium";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const deepTeal = 0x315f69;
+  const mint = 0x8bcfbd;
+  const mintLight = 0xb8e5d5;
+  const brass = 0xe0a52f;
+
+  const base = createPart(g, "wide-circular-floor-base-and-four-subtle-feet");
+  addMesh(base, cyl(1.52, 1.52, 0.2, 64), deepTeal, [0, 0.16, 0]);
+  addMesh(base, cyl(1.43, 1.45, 0.1, 64), honeyLight, [0, 0.31, 0]);
+  addMesh(base, cyl(1.15, 1.15, 0.08, 64), mint, [0, 0.39, 0]);
+  [[-0.92, -0.75], [0.92, -0.75], [-0.92, 0.75], [0.92, 0.75]].forEach(([x, z]) => {
+    addMesh(base, cyl(0.13, 0.15, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+
+  const body = createPart(g, "low-circular-body-with-two-opposite-open-side-gaps");
+  const arc = 2.18;
+  const rightBody = createPart(body, "right-equal-ring-segment");
+  addMesh(rightBody, annularSector(0.86, 1.43, 0.56, -arc / 2, arc / 2), honey, [0, 0.38, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  const leftBody = createPart(body, "left-equal-ring-segment");
+  addMesh(leftBody, annularSector(0.86, 1.43, 0.56, Math.PI - arc / 2, Math.PI + arc / 2), honey, [0, 0.38, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+
+  const innerPanels = createPart(g, "symmetric-inner-teal-panels");
+  addMesh(innerPanels, annularSector(0.83, 0.98, 0.42, -arc / 2 + 0.08, arc / 2 - 0.08), deepTeal, [0, 0.48, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  addMesh(innerPanels, annularSector(0.83, 0.98, 0.42, Math.PI - arc / 2 + 0.08, Math.PI + arc / 2 - 0.08), deepTeal, [0, 0.48, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+
+  const tops = createPart(g, "two-equal-rounded-ring-worktops");
+  addMesh(tops, annularSector(0.78, 1.5, 0.15, -arc / 2 - 0.03, arc / 2 + 0.03), honeyLight, [0, 0.93, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  addMesh(tops, annularSector(0.78, 1.5, 0.15, Math.PI - arc / 2 - 0.03, Math.PI + arc / 2 + 0.03), honeyLight, [0, 0.93, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  addMesh(tops, annularSector(0.83, 1.43, 0.035, -arc / 2, arc / 2), 0xf2bd62, [0, 1.1, 0], [1, 1, 1], [-Math.PI / 2, 0, 0], false);
+  addMesh(tops, annularSector(0.83, 1.43, 0.035, Math.PI - arc / 2, Math.PI + arc / 2), 0xf2bd62, [0, 1.1, 0], [1, 1, 1], [-Math.PI / 2, 0, 0], false);
+
+  const drawers = createPart(g, "two-symmetric-storage-drawers");
+  [-1, 1].forEach((side) => {
+    addMesh(drawers, rounded(0.09, 0.34, 0.58, 0.032), honeyDark, [side * 1.39, 0.68, 0]);
+    addMesh(drawers, rounded(0.07, 0.27, 0.48, 0.025), mint, [side * 1.445, 0.68, 0]);
+    addMesh(drawers, sphere(0.075, 18, 10), brass, [side * 1.51, 0.68, 0], [0.55, 1, 1]);
+  });
+
+  addMediationDocumentLedge(g, -0.88, -1);
+  addMediationDocumentLedge(g, 0.88, 1);
+
+  const listeningLight = createPart(g, "central-listening-light-open-brass-ring-and-pedestal");
+  addMesh(listeningLight, cyl(0.24, 0.28, 0.1, 28), honeyDark, [0, 0.48, 0]);
+  addMesh(listeningLight, cyl(0.18, 0.22, 0.12, 28), brass, [0, 0.58, 0]);
+  addMesh(listeningLight, cyl(0.07, 0.08, 0.35, 18), brass, [0, 0.78, 0]);
+  addMesh(listeningLight, torus(0.29, 0.045, 12, 36), brass, [0, 1.08, 0]);
+  addMesh(listeningLight, torus(0.29, 0.035, 10, 36), honeyLight, [0, 1.08, 0], [1, 1, 1], [0, Math.PI / 2, 0]);
+  addMesh(listeningLight, sphere(0.2, 28, 18), 0xffe58a, [0, 1.08, 0]);
+  addMesh(listeningLight, sphere(0.115, 24, 16), 0xfff8cf, [0, 1.11, 0.05], [1, 1, 1], [0, 0, 0], false);
+
+  const gapTrim = createPart(g, "finished-open-gap-endcaps");
+  const gapAngles = [-arc / 2, arc / 2, Math.PI - arc / 2, Math.PI + arc / 2];
+  gapAngles.forEach((angle) => {
+    const x = Math.cos(angle) * 1.14;
+    const z = -Math.sin(angle) * 1.14;
+    addMesh(gapTrim, rounded(0.16, 0.66, 0.28, 0.055), honeyDark, [x, 0.7, z], [1, 1, 1], [0, -angle, 0]);
+    addMesh(gapTrim, rounded(0.11, 0.55, 0.2, 0.04), mintLight, [x * 0.98, 0.7, z * 0.98], [1, 1, 1], [0, -angle, 0]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1935,7 +2031,8 @@ const builders = {
   "notice-board": noticeBoard,
   "audience-seating": audienceSeating,
   "office-workstation": officeWorkstation,
-  "collaboration-board": collaborationBoard
+  "collaboration-board": collaborationBoard,
+  "mediation-podium": mediationPodium
 };
 
 function parseArgs(argv) {
@@ -1972,7 +2069,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

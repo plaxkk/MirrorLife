@@ -1,0 +1,23 @@
+{
+  "model": "mediation-podium",
+  "label": "调停席",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/hospital/reception_counter.png",
+    "dist/assets/interior-props-image2/residence/round_dining_table.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/mediation-podium.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "low circular body",
+    "two document ledges",
+    "central light",
+    "open side gaps",
+    "two storage drawers",
+    "wide floor base"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the low ring-shaped equal-status body, two opposite open approach gaps, two identical document ledges with matching paper and pen rests, two symmetric mint drawers, central listening orb inside an open brass ring, mint inner floor, wide deep-teal circular base and four subtle feet. The object must have no privileged front, throne or raised side. Canonical views, closed development geometry and turntable review are still required."
+}
