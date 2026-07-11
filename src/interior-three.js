@@ -239,13 +239,14 @@ function mergeSemanticModelMeshes(source) {
 function loadModel(type) {
   if (cache.has(type)) return Promise.resolve(cache.get(type));
   if (loading.has(type)) return loading.get(type);
-  if (hasSemanticInteriorModel(type)) {
+  const loadSemanticFallback = () => {
+    if (!hasSemanticInteriorModel(type)) return null;
     const semanticSource = createSemanticInteriorModel(type, { THREE, RoundedBoxGeometry });
     const prepared = prepareModel(type, mergeSemanticModelMeshes(semanticSource));
     cache.set(type, prepared);
     itemSignature = "";
-    return Promise.resolve(prepared);
-  }
+    return prepared;
+  };
   const promise = new Promise((resolve) => {
     loader.load(
       `${ASSET_BASE}${type}.glb`,
@@ -260,8 +261,9 @@ function loadModel(type) {
       undefined,
       (error) => {
         loading.delete(type);
-        console.warn(`MirrorLife interior model failed: ${type}.glb`, error);
-        resolve(null);
+        const fallback = loadSemanticFallback();
+        if (!fallback) console.warn(`MirrorLife interior model failed: ${type}.glb`, error);
+        resolve(fallback);
       }
     );
   });
@@ -675,7 +677,10 @@ function updateProjections(items, width, height) {
       scale: Math.max(0.68, Math.min(1.15, 4.2 / distance)),
       visible: inFront && marker.z >= -1 && marker.z <= 1 && hotspotX > -50 && hotspotX < width + 50 && hotspotY > -60 && hotspotY < height + 70,
       worldX: item.worldX || 0,
-      worldZ: item.worldZ || 0
+      worldZ: item.worldZ || 0,
+      interactionWorldX: item.interactionWorldX ?? item.worldX ?? 0,
+      interactionWorldZ: item.interactionWorldZ ?? item.worldZ ?? 0,
+      angle: item.angle
     });
   });
 }

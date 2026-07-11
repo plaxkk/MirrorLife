@@ -57,6 +57,8 @@ let interiorMoveKeys = new Set();
 let interiorExitRect = null;
 let interiorAnimations = {};
 let interiorHotspots = [];
+let interiorNearbyAnchor = null;
+let interiorFocusPropIndex = null;
 let activeEncounters = [];
 let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
@@ -79,8 +81,10 @@ const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
 const INTERIOR_PANORAMA_FOV = Math.PI * 0.68;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
-const INTERIOR_PLAYER_RADIUS = 1.72;
+const INTERIOR_PLAYER_RADIUS = 2.72;
 const INTERIOR_PLAYER_SPEED = 1.55;
+const INTERIOR_INTERACTION_RADIUS = 2.05;
+const INTERIOR_MODEL_CLEARANCE = 0.82;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -5584,6 +5588,19 @@ function moveInteriorPlayer(forward, strafe, distance) {
     nextX = nextX / radius * INTERIOR_PLAYER_RADIUS;
     nextZ = nextZ / radius * INTERIOR_PLAYER_RADIUS;
   }
+  if (interiorView) {
+    const blueprint = getInteriorBlueprint(interiorView.zone);
+    (blueprint.props || []).forEach((prop, index, props) => {
+      const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+      const dx = nextX - placement.worldX;
+      const dz = nextZ - placement.worldZ;
+      const distanceToModel = Math.hypot(dx, dz);
+      if (distanceToModel >= INTERIOR_MODEL_CLEARANCE) return;
+      const safeDistance = Math.max(distanceToModel, 0.001);
+      nextX = placement.worldX + dx / safeDistance * INTERIOR_MODEL_CLEARANCE;
+      nextZ = placement.worldZ + dz / safeDistance * INTERIOR_MODEL_CLEARANCE;
+    });
+  }
   interiorOrbit.x = nextX;
   interiorOrbit.z = nextZ;
 }
@@ -5665,6 +5682,24 @@ function getInteriorPropRadius(prop) {
   return clamp(0.98 - y * 0.5, 0.42, 0.96);
 }
 
+function getInteriorPropWorldPlacement(prop, index, count) {
+  const angle = getInteriorPropAngle(prop, index, count);
+  const distance = getInteriorPropRadius(prop);
+  const radius = 2.42 + distance * 2.25;
+  const worldX = Math.sin(angle) * radius;
+  const worldZ = -Math.cos(angle) * radius;
+  const interactionOffset = 0.72 * (index % 2 === 0 ? -1 : 1);
+  return {
+    angle,
+    distance,
+    radius,
+    worldX,
+    worldZ,
+    interactionWorldX: worldX + Math.cos(angle) * interactionOffset,
+    interactionWorldZ: worldZ + Math.sin(angle) * interactionOffset
+  };
+}
+
 function getInteriorDecorRadius(item) {
   const y = clamp(Number(item?.y ?? 0.5), 0, 1);
   if (item?.layer === "back") return clamp(0.96 - y * 0.08, 0.86, 0.98);
@@ -5675,11 +5710,12 @@ function getInteriorDecorRadius(item) {
 function getInteriorPanoramaAnchors(blueprint, W, H) {
   const props = blueprint.props || [];
   return props.map((prop, index) => {
-    const angle = getInteriorPropAngle(prop, index, props.length);
-    const distance = getInteriorPropRadius(prop);
+    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const { angle, distance } = placement;
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return {
       ...point,
+      ...placement,
       x: clamp(point.x, W * 0.06, W * 0.94),
       y: clamp(point.y, H * 0.42, H * 0.86),
       label: prop.label,
@@ -5696,6 +5732,80 @@ function getInteriorExplorationRecord(zoneId) {
   return state.interiorExploration[zoneId];
 }
 
+function getInteriorAnchorDistance(anchor) {
+  const targetX = Number(anchor?.interactionWorldX ?? anchor?.worldX);
+  const targetZ = Number(anchor?.interactionWorldZ ?? anchor?.worldZ);
+  if (!Number.isFinite(targetX) || !Number.isFinite(targetZ)) return Number.POSITIVE_INFINITY;
+  return Math.hypot(targetX - Number(interiorOrbit?.x || 0), targetZ - Number(interiorOrbit?.z || 0));
+}
+
+function isInteriorAnchorNearby(anchor) {
+  return getInteriorAnchorDistance(anchor) <= INTERIOR_INTERACTION_RADIUS;
+}
+
+function handleInteriorHotspotIntent(propIndex) {
+  if (!interiorView) return;
+  const anchor = interiorHotspots.find((item) => item.index === propIndex);
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const alreadyFound = anchor ? record.found.includes(anchor.label) : false;
+  if (!anchor || alreadyFound || isInteriorAnchorNearby(anchor)) {
+    exploreInteriorHotspot(propIndex);
+    return;
+  }
+
+  interiorFocusPropIndex = propIndex;
+  if (Number.isFinite(anchor.angle)) interiorOrbit.yaw = wrapInteriorAngle(anchor.angle);
+  interiorView.discovery = {
+    title: anchor.label,
+    text: "那段回声还在更近的地方。房间正在等你走进它。",
+    progress: "靠近它",
+    until: performance.now() + 4200
+  };
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(4400);
+}
+
+function syncInteriorContextAction(anchors) {
+  const candidates = (anchors || [])
+    .map((anchor) => ({ anchor, distance: getInteriorAnchorDistance(anchor) }))
+    .filter((item) => Number.isFinite(item.distance) && item.distance <= INTERIOR_INTERACTION_RADIUS)
+    .sort((a, b) => {
+      const aFocused = a.anchor.index === interiorFocusPropIndex ? 1 : 0;
+      const bFocused = b.anchor.index === interiorFocusPropIndex ? 1 : 0;
+      return bFocused - aFocused || a.distance - b.distance;
+    });
+  const nearest = candidates[0] || null;
+  interiorNearbyAnchor = nearest?.anchor || null;
+
+  let button = document.getElementById("interiorContextAction");
+  if (!interiorNearbyAnchor || !interiorView) {
+    button?.remove();
+    return;
+  }
+  if (!button) {
+    button = document.createElement("button");
+    button.id = "interiorContextAction";
+    button.type = "button";
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.propIndex);
+      if (Number.isInteger(index)) exploreInteriorHotspot(index);
+    });
+    document.getElementById("gameShell")?.appendChild(button);
+  }
+
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const discovered = record.found.includes(interiorNearbyAnchor.label);
+  const signature = `${interiorNearbyAnchor.index}|${interiorNearbyAnchor.label}|${discovered}`;
+  if (button.dataset.signature !== signature) {
+    button.dataset.signature = signature;
+    button.dataset.propIndex = String(interiorNearbyAnchor.index);
+    button.classList.toggle("discovered", discovered);
+    button.setAttribute("aria-label", `${discovered ? "再次聆听" : "探索"}${interiorNearbyAnchor.label}`);
+    button.innerHTML = `<span aria-hidden="true">✦</span><strong>${discovered ? "再次聆听" : "探索"} · ${escapeHtml(interiorNearbyAnchor.label)}</strong>`;
+  }
+  button.dataset.distance = nearest.distance.toFixed(2);
+}
+
 function ensureInteriorHotspotLayer() {
   let layer = document.getElementById("interiorHotspotLayer");
   if (layer) return layer;
@@ -5706,7 +5816,7 @@ function ensureInteriorHotspotLayer() {
     const button = event.target.closest("[data-interior-hotspot]");
     if (!button || !interiorView) return;
     event.stopPropagation();
-    exploreInteriorHotspot(Number(button.dataset.interiorHotspot));
+    handleInteriorHotspotIntent(Number(button.dataset.interiorHotspot));
   });
   document.getElementById("gameShell")?.appendChild(layer);
   return layer;
@@ -5737,7 +5847,13 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
     button.style.left = `${anchor.hotspotX ?? anchor.x}px`;
     button.style.top = `${anchor.hotspotY ?? (anchor.y - (anchor.screenProjected ? 0 : 52 * anchor.scale))}px`;
     button.style.setProperty("--hotspot-scale", String(clamp(anchor.scale, 0.72, 1.12)));
-    button.classList.toggle("discovered", record.found.includes(anchor.label));
+    const discovered = record.found.includes(anchor.label);
+    const nearby = isInteriorAnchorNearby(anchor);
+    button.classList.toggle("discovered", discovered);
+    button.classList.toggle("nearby", nearby);
+    button.classList.toggle("focused", anchor.index === interiorFocusPropIndex);
+    button.setAttribute("aria-label", `${discovered || nearby ? "探索" : "靠近"}${anchor.label}`);
+    button.title = discovered || nearby ? `探索${anchor.label}` : `靠近${anchor.label}`;
   });
   layer.setAttribute("aria-label", `${blueprint?.title || "室内"}可探索陈设`);
 }
@@ -5836,6 +5952,7 @@ function exploreInteriorHotspot(propIndex) {
   const blueprint = getInteriorBlueprint(zone);
   const prop = blueprint.props?.[propIndex];
   if (!prop) return;
+  if (interiorFocusPropIndex === propIndex) interiorFocusPropIndex = null;
   const profile = blueprint.profile;
   const record = getInteriorExplorationRecord(zone.id);
   const alreadyFound = record.found.includes(prop.label);
@@ -7203,14 +7320,10 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
 function getInteriorThreeItems(blueprint, W, H) {
   const propItems = (blueprint.props || []).map((prop, index, props) => {
     if (prop.render3d === false) return null;
-    const angle = getInteriorPropAngle(prop, index, props.length);
-    const distance = getInteriorPropRadius(prop);
-    const radius = 2.42 + distance * 2.25;
-    const worldX = Math.sin(angle) * radius;
-    const worldZ = -Math.cos(angle) * radius;
-    const interactionSide = index % 2 === 0 ? -1 : 1;
-    const interactionOffset = 0.72 * interactionSide;
+    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const { angle, worldX, worldZ } = placement;
     return {
+      ...placement,
       key: `prop-${index}`,
       index,
       model: interiorThreeModel(interiorPropModel(prop, blueprint)),
@@ -7218,8 +7331,6 @@ function getInteriorThreeItems(blueprint, W, H) {
       kind: "prop",
       worldX,
       worldZ,
-      interactionWorldX: worldX + Math.cos(angle) * interactionOffset,
-      interactionWorldZ: worldZ + Math.sin(angle) * interactionOffset,
       anchorHeight: 1.18,
       angle,
       modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25),
@@ -7618,14 +7729,18 @@ function enterInteriorView(zone, source = "manual") {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
       text: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
-        : (blueprint.profile?.intro || "拖动环视房间，靠近发光的陈设会看见这里发生过的生活。"),
-      progress: explorationRecord.completed && !explorationRecord.scenePlayed ? "可以加入" : "点击 ✦ 探索",
+        : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
+      progress: explorationRecord.completed && !explorationRecord.scenePlayed
+        ? "可以加入"
+        : `${Math.min(explorationRecord.found.length, 3)}/3 段场所记忆`,
       actionLabel: explorationRecord.completed && !explorationRecord.scenePlayed ? sceneAction.label : "",
       until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
   };
   interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, z: 0, lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
   interiorMoveKeys.clear();
+  interiorNearbyAnchor = null;
+  interiorFocusPropIndex = null;
   interiorExitRect = null;
   hideDetail();
   document.body.classList.add("interior-active");
@@ -7644,6 +7759,8 @@ function exitInteriorView() {
   interiorView = null;
   interiorOrbit.drag = false;
   interiorMoveKeys.clear();
+  interiorNearbyAnchor = null;
+  interiorFocusPropIndex = null;
   interiorExitRect = null;
   interiorHotspots = [];
   document.body.classList.remove("interior-active");
@@ -7651,6 +7768,7 @@ function exitInteriorView() {
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
   document.getElementById("interiorDiscoveryCard")?.remove();
+  document.getElementById("interiorContextAction")?.remove();
   markRenderActive(2200);
 }
 
@@ -7659,7 +7777,7 @@ function ensureInteriorChip(zone) {
   const el = document.createElement("button");
   el.id = "interiorChip";
   el.type = "button";
-  el.textContent = `← 离开${zone.name} · 拖动环视 · WASD 移动 · 点击 ✦ 探索`;
+  el.textContent = `← 离开${zone.name}`;
   el.addEventListener("click", () => {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
@@ -7863,6 +7981,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, false);
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
+  syncInteriorContextAction(interiorAnchors);
   syncInteriorDiscoveryCard(now);
 
   const exitW = Math.min(150, Math.max(110, W * 0.14));
@@ -7900,7 +8019,14 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.textBaseline = "alphabetic";
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  ctx.fillText(`${blueprint.title} · 拖动 360° 环视 · 点击 ✦ 发现故事 · Esc 回到街道`, W / 2, 58);
+  const explorationRecord = getInteriorExplorationRecord(zone.id);
+  const explorationGoal = Math.min(3, blueprint.props?.length || 3);
+  const interiorStatus = explorationRecord.scenePlayed
+    ? "共同经历已留下"
+    : explorationRecord.completed
+      ? "场所回声已解锁"
+      : `${Math.min(explorationRecord.found.length, explorationGoal)}/${explorationGoal} 段场所记忆`;
+  ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
 
   // Occupants
   const aliveCitizens = getAliveCitizens(society);
@@ -10151,6 +10277,11 @@ function bindGameEvents() {
       return;
     }
     if (interiorView) {
+      if (e.key.toLowerCase() === "e" && interiorNearbyAnchor) {
+        e.preventDefault();
+        if (!e.repeat) exploreInteriorHotspot(interiorNearbyAnchor.index);
+        return;
+      }
       const movementByKey = {
         w: "forward", arrowup: "forward",
         s: "back", arrowdown: "back",

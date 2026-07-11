@@ -4242,12 +4242,24 @@ body.detail-open .event-log:focus-within {
   transform: translate(-50%, -50%) scale(var(--hotspot-scale));
   border: 2px solid #1a1a2e;
   border-radius: 50%;
-  background: #f1c40f;
+  background: #fff4d6;
   color: #1a1a2e;
   box-shadow: 3px 3px 0 #1a1a2e;
   pointer-events: auto;
   transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease;
+  opacity: 0.72;
+}
+
+.interior-hotspot.nearby {
+  background: #f1c40f;
+  opacity: 1;
   animation: interior-hotspot-pulse 1.8s ease-in-out infinite;
+}
+
+.interior-hotspot.focused {
+  outline: 4px solid rgba(78, 168, 222, 0.62);
+  outline-offset: 4px;
+  opacity: 1;
 }
 
 .interior-hotspot:hover,
@@ -4267,6 +4279,59 @@ body.detail-open .event-log:focus-within {
   background: #8ce8b5;
   animation: none;
   opacity: 0.78;
+}
+
+#interiorContextAction {
+  position: absolute;
+  left: 50%;
+  bottom: 24px;
+  z-index: 16;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  min-width: 220px;
+  max-width: min(420px, calc(100vw - 340px));
+  min-height: 48px;
+  padding: 10px 18px;
+  transform: translateX(-50%);
+  border: 3px solid #1a1a2e;
+  border-radius: 8px;
+  background: #f1c40f;
+  color: #1a1a2e;
+  box-shadow: 5px 5px 0 #1a1a2e;
+  font-family: inherit;
+  cursor: pointer;
+  animation: interior-context-in 180ms ease-out;
+}
+
+#interiorContextAction span {
+  font-size: 20px;
+  line-height: 1;
+}
+
+#interiorContextAction strong {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 14px;
+  line-height: 1.25;
+}
+
+#interiorContextAction.discovered {
+  background: #8ce8b5;
+}
+
+#interiorContextAction:hover,
+#interiorContextAction:focus-visible {
+  background: #ffdd57;
+  outline: 3px solid rgba(78, 168, 222, 0.46);
+}
+
+#interiorContextAction:active {
+  transform: translate(calc(-50% + 3px), 3px);
+  box-shadow: 2px 2px 0 #1a1a2e;
 }
 
 .interior-hotspot-mark {
@@ -4377,6 +4442,11 @@ body.detail-open .event-log:focus-within {
   to { opacity: 1; transform: translateY(0); }
 }
 
+@keyframes interior-context-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to { opacity: 1; transform: translate(-50%, 0); }
+}
+
 @media (max-width: 720px) {
   body.interior-active .hud-top {
     top: 8px;
@@ -4455,6 +4525,26 @@ body.detail-open .event-log:focus-within {
 
   #interiorMovePad {
     display: grid;
+  }
+
+  #interiorContextAction {
+    left: 156px;
+    right: 12px;
+    bottom: 30px;
+    width: auto;
+    min-width: 0;
+    max-width: none;
+    transform: none;
+    padding: 9px 12px;
+  }
+
+  #interiorContextAction:active {
+    transform: translate(2px, 2px);
+  }
+
+  @keyframes interior-context-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
   }
 
   .interior-hotspot {
