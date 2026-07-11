@@ -19,7 +19,8 @@ const SLOT_ASSETS = {
   altar: ["memorial_cemetery/long_memorial_altar.png", "纪念台"],
   fountain: ["park_plaza/flower_fountain.png", "喷泉"],
   bench: ["park_plaza/wooden_bench.png", "长椅"],
-  "toy-corner": ["kindergarten/teddy_play_rug.png", "安抚角"]
+  "toy-corner": ["kindergarten/teddy_play_rug.png", "安抚角"],
+  "audience-seating": ["/assets/interiors/references/runtime-semantic/audience-seating.png", "旁听席"]
 };
 
 const params = new URLSearchParams(window.location.search);
@@ -104,7 +105,8 @@ function runtimeModel(slot) {
 }
 
 function referenceAsset(slot) {
-  return `/dist/assets/interior-props-image2/${SLOT_ASSETS[slot][0]}`;
+  const source = SLOT_ASSETS[slot][0];
+  return source.startsWith("/") ? source : `/dist/assets/interior-props-image2/${source}`;
 }
 
 function setSlot(slot, preserveCustom = false) {

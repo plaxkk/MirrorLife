@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T19:23:10.371Z",
+  "updatedAt": "2026-07-11T20:37:25.391Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T19-23-10-187Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T20-37-25-115Z",
   "imported": [
     {
       "slot": "bed",
@@ -1123,6 +1123,72 @@
       "importedAt": "2026-07-11T19:23:10.360Z"
     },
     {
+      "slot": "audience-seating",
+      "label": "旁听席",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/audience-seating.glb",
+      "target": "public/assets/interiors/glb/audience-seating.glb",
+      "bytes": 3283064,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/audience-seating/front.png",
+        "public/assets/interiors/references/multiview/audience-seating/back.png",
+        "public/assets/interiors/references/multiview/audience-seating/left.png",
+        "public/assets/interiors/references/multiview/audience-seating/right.png",
+        "public/assets/interiors/references/multiview/audience-seating/top.png",
+        "public/assets/interiors/references/multiview/audience-seating/bottom.png",
+        "public/assets/interiors/references/multiview/audience-seating/isometric.png",
+        "public/assets/interiors/references/multiview/audience-seating/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/audience-seating.glb",
+      "masterBytes": 3283064,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T20:06:50.352Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 35328,
+        "webTriangleCount": 35328,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/audience-seating.glb",
+          "primitiveCount": 138,
+          "trianglePrimitiveCount": 134,
+          "outlinePrimitiveCount": 4,
+          "problemPrimitives": [],
+          "triangleCount": 35328,
+          "vertexCount": 97174,
+          "weldedVertexCount": 17932,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/audience-seating.glb",
+          "primitiveCount": 138,
+          "trianglePrimitiveCount": 134,
+          "outlinePrimitiveCount": 4,
+          "problemPrimitives": [],
+          "triangleCount": 35328,
+          "vertexCount": 97174,
+          "weldedVertexCount": 17932,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T20:37:25.378Z"
+    },
+    {
       "slot": "record-desk",
       "label": "记录桌",
       "provider": "threejs-manual",
@@ -1190,7 +1256,6 @@
     }
   ],
   "missing": [
-    "audience-seating",
     "office-workstation",
     "collaboration-board",
     "mediation-podium",

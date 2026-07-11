@@ -1421,6 +1421,88 @@ function noticeBoard() {
   return g;
 }
 
+function addAudienceChair(group, x, z, color, index) {
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const chair = createPart(group, `chair-${index}-complete-frame-seat-and-backrest`);
+  chair.position.set(x, 0, z);
+
+  const frame = createPart(chair, `chair-${index}-honey-wood-frame`);
+  addMesh(frame, rounded(0.54, 0.12, 0.55, 0.045), honeyDark, [0, 0.52, 0]);
+  addMesh(frame, rounded(0.5, 0.09, 0.51, 0.036), honeyLight, [0, 0.59, 0]);
+  [-0.21, 0.21].forEach((px) => {
+    [-0.2, 0.2].forEach((pz) => {
+      addMesh(frame, rounded(0.1, 0.48, 0.1, 0.03), honey, [px, 0.3, pz]);
+    });
+  });
+
+  const seat = createPart(chair, `chair-${index}-colored-seat-cushion`);
+  addMesh(seat, rounded(0.49, 0.16, 0.48, 0.075), color, [0, 0.69, -0.015]);
+
+  const rear = createPart(chair, `chair-${index}-finished-x-braced-backrest`);
+  [-0.22, 0.22].forEach((px) => {
+    addMesh(rear, rounded(0.1, 0.76, 0.11, 0.03), honey, [px, 1.02, 0.22]);
+  });
+  addMesh(rear, rounded(0.57, 0.17, 0.14, 0.06), honeyLight, [0, 1.43, 0.22]);
+  addMesh(rear, rounded(0.075, 0.58, 0.075, 0.022), honeyDark, [0, 1.13, 0.22], [1, 1, 1], [0, 0, 0.69]);
+  addMesh(rear, rounded(0.075, 0.58, 0.075, 0.022), honey, [0, 1.13, 0.205], [1, 1, 1], [0, 0, -0.69]);
+  [-0.18, 0.18].forEach((px) => {
+    addMesh(rear, sphere(0.038, 14, 8), P.yellow, [px, 1.42, 0.305], [1, 1, 0.55]);
+  });
+  return chair;
+}
+
+function audienceSeating() {
+  const g = new THREE.Group();
+  g.name = "audience-seating";
+  const support = 0x315f69;
+  const supportLight = 0x477f82;
+  const honey = 0xc98035;
+  const cushionColors = [0xee745f, 0x5caee2, 0x7fc9a7, 0xf4c84a, 0xee745f, 0x5caee2];
+  const chairZs = [0.76, 0, -0.76];
+  const banks = [
+    { x: -0.52, colors: cushionColors.slice(0, 3) },
+    { x: 0.52, colors: cushionColors.slice(3, 6) }
+  ];
+
+  const rails = createPart(g, "two-shared-support-rails-center-aisle-and-floor-feet");
+  banks.forEach(({ x }, bankIndex) => {
+    addMesh(rails, rounded(0.62, 0.14, 2.08, 0.045), support, [x, 0.15, 0]);
+    addMesh(rails, rounded(0.54, 0.055, 1.98, 0.022), supportLight, [x, 0.25, 0]);
+    chairZs.forEach((z, chairIndex) => {
+      addMesh(rails, rounded(0.58, 0.08, 0.16, 0.025), supportLight, [x, 0.3, z]);
+      const partIndex = bankIndex * 3 + chairIndex + 1;
+      addAudienceChair(g, x, z, banks[bankIndex].colors[chairIndex], partIndex);
+    });
+    [-0.91, 0.91].forEach((z) => {
+      [-0.23, 0.23].forEach((dx) => {
+        addMesh(rails, rounded(0.13, 0.18, 0.18, 0.038), support, [x + dx, 0.09, z]);
+        addMesh(rails, rounded(0.1, 0.055, 0.15, 0.02), supportLight, [x + dx, 0.2, z]);
+      });
+    });
+  });
+
+  const aisle = createPart(g, "open-center-aisle-and-two-vote-token-posts");
+  [-1, 1].forEach((side, index) => {
+    const x = side * 0.2;
+    addMesh(aisle, cyl(0.09, 0.1, 0.48, 18), honey, [x, 0.4, 0.93]);
+    addMesh(aisle, cyl(0.13, 0.13, 0.09, 22), 0x81502a, [x, 0.66, 0.93]);
+    addMesh(aisle, sphere(0.095, 20, 12), index === 0 ? 0x6fbd72 : 0xee5f55, [x, 0.73, 0.93], [1, 0.72, 1]);
+  });
+
+  const underside = createPart(g, "finished-underside-crossmembers-and-fasteners");
+  chairZs.forEach((z) => {
+    [-0.52, 0.52].forEach((x) => {
+      addMesh(underside, rounded(0.42, 0.065, 0.18, 0.022), support, [x, 0.115, z]);
+      [-0.13, 0.13].forEach((dx) => {
+        addMesh(underside, cyl(0.035, 0.035, 0.035, 12), P.metal, [x + dx, 0.07, z], [1, 1, 1], [0, 0, 0], false);
+      });
+    });
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1631,7 +1713,8 @@ const builders = {
   "hot-food-counter": hotFoodCounter,
   "exchange-board": exchangeBoard,
   "proposal-podium": proposalPodium,
-  "notice-board": noticeBoard
+  "notice-board": noticeBoard,
+  "audience-seating": audienceSeating
 };
 
 function parseArgs(argv) {
@@ -1668,7 +1751,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

@@ -5165,7 +5165,7 @@ const INTERIOR_BLUEPRINTS = {
     props: [
       { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "proposal-podium", render3d: true, x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
       { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "notice-board", render3d: true, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
-      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
+      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, x: 0.72, y: 0.28, size: 29, behaviors: ["meeting", "think", "read", "drink"] },
       { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
       { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
       { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
@@ -5237,7 +5237,14 @@ const INTERIOR_ZONE_PROFILES = {
   "public-plaza": {
     blueprint: "public", title: "邻里议事客厅", intro: "这里没有高台，重要的事围着一张桌子慢慢说。",
     labels: ["居民提案台", "今日公告板", "开放旁听席", "公共记录桌", "邻里共识圆桌", "情绪缓冲角"],
-    clues: ["一张提案只写了半句：希望夜班的人也能被城市看见。", "公告板背面留着不同笔迹的补充，没有人急着署名。", "圆桌边多放了一把椅子，像是在等一个还没准备好开口的人。"],
+    clues: [
+      "一张提案只写了半句：希望夜班的人也能被城市看见。",
+      "公告板背面留着不同笔迹的补充，没有人急着署名。",
+      "旁听席最靠近通道的两张椅子没有被固定朝向讲台，它们也可以转向彼此。",
+      "记录桌的页脚专门留出一栏：还有谁没有被问到？",
+      "圆桌边多放了一把椅子，像是在等一个还没准备好开口的人。",
+      "缓冲角的水杯旁写着：离开十分钟，不代表退出讨论。"
+    ],
     completion: "你发现，公共生活不是所有人意见一致，而是每个人都有留下痕迹的位置。"
   },
   "maternity-hospital": {
