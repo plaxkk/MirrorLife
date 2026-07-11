@@ -1,0 +1,24 @@
+{
+  "model": "home-bed",
+  "label": "卧榻",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/mirrorlife-interior-prop-design-board.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/home-bed.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "wood bed frame",
+    "headboard",
+    "mattress",
+    "green quilt",
+    "pillow",
+    "bedside table",
+    "reading lamp",
+    "finished underside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the rounded honey-oak single bed frame, low slatted headboard, complete footboard, cream mattress, sage quilt with darker border, cream pillow, separate two-drawer bedside table and curved warm reading lamp. The four bed posts, under-bed clearance, support slats and underside must remain complete from rear and bottom views. Canonical views, closed development geometry and turntable review are still required."
+}

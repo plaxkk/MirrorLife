@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T23:24:19.272Z",
+  "updatedAt": "2026-07-11T23:38:30.932Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T23-24-18-984Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T23-38-30-523Z",
   "imported": [
     {
       "slot": "bed",
@@ -1583,10 +1583,75 @@
         }
       },
       "importedAt": "2026-07-11T23:17:06.423Z"
+    },
+    {
+      "slot": "home-bed",
+      "label": "卧榻",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/home-bed.glb",
+      "target": "public/assets/interiors/glb/home-bed.glb",
+      "bytes": 1307400,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/home-bed/front.png",
+        "public/assets/interiors/references/multiview/home-bed/back.png",
+        "public/assets/interiors/references/multiview/home-bed/left.png",
+        "public/assets/interiors/references/multiview/home-bed/right.png",
+        "public/assets/interiors/references/multiview/home-bed/top.png",
+        "public/assets/interiors/references/multiview/home-bed/bottom.png",
+        "public/assets/interiors/references/multiview/home-bed/isometric.png",
+        "public/assets/interiors/references/multiview/home-bed/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/home-bed.glb",
+      "masterBytes": 1307400,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T23:34:38.438Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 13908,
+        "webTriangleCount": 13908,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/home-bed.glb",
+          "primitiveCount": 52,
+          "trianglePrimitiveCount": 49,
+          "outlinePrimitiveCount": 3,
+          "problemPrimitives": [],
+          "triangleCount": 13908,
+          "vertexCount": 38869,
+          "weldedVertexCount": 7052,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/home-bed.glb",
+          "primitiveCount": 52,
+          "trianglePrimitiveCount": 49,
+          "outlinePrimitiveCount": 3,
+          "problemPrimitives": [],
+          "triangleCount": 13908,
+          "vertexCount": 38869,
+          "weldedVertexCount": 7052,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T23:38:30.926Z"
     }
   ],
   "missing": [
-    "home-bed",
     "bookcase",
     "garden-tool-shed",
     "gallery-wall",

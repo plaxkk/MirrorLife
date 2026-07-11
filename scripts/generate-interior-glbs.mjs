@@ -1971,6 +1971,79 @@ function calmingChair() {
   return g;
 }
 
+function homeBed() {
+  const g = new THREE.Group();
+  g.name = "home-bed";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const sage = 0x92b66f;
+  const sageDark = 0x577d49;
+  const cream = 0xffefce;
+  const amber = 0xffd36b;
+
+  const frame = createPart(g, "complete-honey-oak-bed-frame-with-four-posts-and-footboard");
+  addMesh(frame, rounded(2.42, 0.22, 1.22, 0.075), honeyDark, [0, 0.38, 0]);
+  addMesh(frame, rounded(2.28, 0.16, 1.1, 0.06), honey, [0, 0.5, 0]);
+  [-1.1, 1.1].forEach((x) => {
+    [-0.53, 0.53].forEach((z) => addMesh(frame, rounded(0.18, 1.14, 0.18, 0.055), honeyDark, [x, 0.64, z]));
+  });
+  addMesh(frame, rounded(0.18, 0.72, 1.18, 0.06), honey, [1.08, 0.72, 0]);
+  addMesh(frame, rounded(0.11, 0.52, 0.96, 0.045), honeyLight, [0.97, 0.76, 0]);
+  addMesh(frame, rounded(0.12, 0.09, 1.02, 0.035), honeyDark, [0.9, 0.55, 0]);
+
+  const headboard = createPart(g, "low-slatted-headboard-with-rounded-top-rail");
+  addMesh(headboard, rounded(0.18, 1.34, 1.2, 0.065), honey, [-1.08, 1.02, 0]);
+  addMesh(headboard, rounded(0.2, 0.2, 1.34, 0.08), honeyLight, [-1.08, 1.63, 0]);
+  [-0.38, -0.13, 0.13, 0.38].forEach((z) => {
+    addMesh(headboard, rounded(0.11, 0.63, 0.12, 0.035), honeyDark, [-0.96, 1.25, z]);
+  });
+  addMesh(headboard, rounded(0.13, 0.12, 0.98, 0.04), honeyDark, [-0.95, 0.93, 0]);
+
+  const mattress = createPart(g, "cream-mattress-with-finished-edge");
+  addMesh(mattress, rounded(1.95, 0.26, 0.98, 0.11), cream, [-0.03, 0.7, 0]);
+  addMesh(mattress, rounded(1.82, 0.035, 0.88, 0.014), 0xfff8df, [-0.05, 0.845, 0], [1, 1, 1], [0, 0, 0], false);
+
+  const quilt = createPart(g, "sage-green-quilt-with-dark-folded-border");
+  addMesh(quilt, rounded(1.25, 0.18, 1, 0.085), sage, [0.34, 0.89, 0]);
+  addMesh(quilt, rounded(0.16, 0.22, 1.03, 0.06), sageDark, [-0.31, 0.92, 0]);
+  [-0.27, 0.05, 0.37, 0.69].forEach((x) => {
+    addMesh(quilt, rounded(0.025, 0.015, 0.86, 0.006), sageDark, [x, 0.99, 0], [1, 1, 1], [0, 0, 0], false);
+  });
+  [-0.28, 0.28].forEach((z) => {
+    addMesh(quilt, rounded(1.08, 0.015, 0.025, 0.006), sageDark, [0.35, 0.99, z], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const pillow = createPart(g, "single-plump-cream-pillow");
+  addMesh(pillow, rounded(0.62, 0.2, 0.76, 0.095), cream, [-0.57, 1.01, 0], [1, 1, 1], [0, 0, 0.08]);
+  addMesh(pillow, sphere(0.035, 14, 9), honeyLight, [-0.57, 1.13, 0]);
+
+  const underside = createPart(g, "finished-underside-support-slats-and-center-beam");
+  [-0.72, -0.36, 0, 0.36, 0.72].forEach((x) => {
+    addMesh(underside, rounded(0.1, 0.08, 1, 0.025), honeyLight, [x, 0.28, 0]);
+  });
+  addMesh(underside, rounded(2.04, 0.11, 0.12, 0.035), honeyDark, [0, 0.23, 0]);
+
+  const table = createPart(g, "separate-two-drawer-bedside-table");
+  addMesh(table, rounded(0.68, 0.72, 0.62, 0.09), honey, [-0.87, 0.48, 0.93]);
+  addMesh(table, rounded(0.76, 0.13, 0.7, 0.055), honeyLight, [-0.87, 0.89, 0.93]);
+  [0.42, 0.68].forEach((y) => {
+    addMesh(table, rounded(0.5, 0.2, 0.08, 0.03), honeyLight, [-0.87, y, 1.26]);
+    addMesh(table, sphere(0.045, 14, 9), sageDark, [-0.87, y, 1.32], [1, 1, 0.55]);
+  });
+  [[-1.1, 0.72], [-0.64, 0.72], [-1.1, 1.14], [-0.64, 1.14]].forEach(([x, z]) => {
+    addMesh(table, rounded(0.1, 0.16, 0.1, 0.03), honeyDark, [x, 0.08, z]);
+  });
+
+  const lamp = createPart(g, "curved-warm-reading-lamp-with-connected-base");
+  addMesh(lamp, cyl(0.16, 0.18, 0.08, 22), honeyDark, [-0.87, 1, 0.93]);
+  addMesh(lamp, cyl(0.05, 0.05, 0.58, 14), honey, [-0.87, 1.31, 0.93]);
+  addMesh(lamp, rounded(0.42, 0.07, 0.08, 0.025), honey, [-0.7, 1.58, 0.93]);
+  addMesh(lamp, cyl(0.24, 0.16, 0.26, 24), sageDark, [-0.5, 1.48, 0.93], [1, 1, 1], [0, 0, -Math.PI / 2]);
+  addMesh(lamp, sphere(0.1, 18, 12), amber, [-0.45, 1.48, 0.93], [1, 1, 0.7], [0, 0, 0], false);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2187,7 +2260,8 @@ const builders = {
   "collaboration-board": collaborationBoard,
   "mediation-podium": mediationPodium,
   "archive-cabinet": archiveCabinet,
-  "calming-chair": calmingChair
+  "calming-chair": calmingChair,
+  "home-bed": homeBed
 };
 
 function parseArgs(argv) {
@@ -2224,7 +2298,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
