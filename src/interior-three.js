@@ -205,13 +205,16 @@ function mergeSemanticModelMeshes(source) {
   if (!source || !mergeGeometries) return source;
   source.updateMatrixWorld(true);
   const batches = new Map();
-  const lineObjects = [];
+  const lineBatches = new Map();
   source.traverse((node) => {
     if (node.isLineSegments && node.geometry) {
-      const line = new THREE.LineSegments(node.geometry.clone(), node.material);
-      line.geometry.applyMatrix4(node.matrixWorld);
-      line.name = node.name;
-      lineObjects.push(line);
+      const geometry = node.geometry.clone();
+      geometry.applyMatrix4(node.matrixWorld);
+      const attributeSignature = Object.keys(geometry.attributes).sort().join(",");
+      const batchKey = `${node.material.uuid}:${attributeSignature}`;
+      const batch = lineBatches.get(batchKey) || { material: node.material, geometries: [] };
+      batch.geometries.push(geometry);
+      lineBatches.set(batchKey, batch);
       return;
     }
     if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
@@ -245,7 +248,17 @@ function mergeSemanticModelMeshes(source) {
     mesh.receiveShadow = true;
     mergedRoot.add(mesh);
   });
-  lineObjects.forEach((line) => mergedRoot.add(line));
+  lineBatches.forEach(({ geometries, material }) => {
+    const geometry = geometries.length === 1 ? geometries[0] : mergeGeometries(geometries, false);
+    if (!geometry) {
+      geometries.forEach((candidate) => mergedRoot.add(new THREE.LineSegments(candidate, material)));
+      return;
+    }
+    geometries.forEach((candidate) => {
+      if (candidate !== geometry) candidate.dispose();
+    });
+    mergedRoot.add(new THREE.LineSegments(geometry, material));
+  });
   source.traverse((node) => {
     if (node.isMesh || node.isLineSegments) node.geometry?.dispose?.();
   });

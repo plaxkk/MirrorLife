@@ -994,6 +994,94 @@ function supplyCrate() {
   return g;
 }
 
+function addCafeChair(parent, name, x, z, rotation, color) {
+  const chair = createPart(parent, name);
+  chair.position.set(x, 0, z);
+  chair.rotation.y = rotation;
+  const dark = new THREE.Color(color).multiplyScalar(0.72).getHex();
+
+  const seat = createPart(chair, "seat-and-cushion");
+  addMesh(seat, cyl(0.34, 0.34, 0.12, 28), dark, [0, 0.58, 0]);
+  addMesh(seat, cyl(0.29, 0.29, 0.11, 28), P.cream, [0, 0.67, 0]);
+  addMesh(seat, cyl(0.255, 0.255, 0.06, 28), 0x513b3b, [0, 0.74, 0]);
+
+  const legs = createPart(chair, "four-legs-and-cross-braces");
+  [[-0.23, -0.2], [0.23, -0.2], [-0.23, 0.2], [0.23, 0.2]].forEach(([lx, lz]) => {
+    addMesh(legs, rounded(0.095, 0.62, 0.095, 0.025), color, [lx, 0.31, lz], [1, 1, 1], [lz * 0.08, 0, -lx * 0.08]);
+    addMesh(legs, rounded(0.12, 0.055, 0.12, 0.018), dark, [lx * 1.04, 0.025, lz * 1.04]);
+  });
+  [-0.2, 0.2].forEach((zBrace) => addMesh(legs, rounded(0.48, 0.07, 0.07, 0.022), dark, [0, 0.28, zBrace]));
+  [-0.23, 0.23].forEach((xBrace) => addMesh(legs, rounded(0.07, 0.07, 0.42, 0.022), dark, [xBrace, 0.28, 0]));
+
+  const back = createPart(chair, "complete-x-backrest");
+  [-0.24, 0.24].forEach((bx) => addMesh(back, rounded(0.1, 0.92, 0.11, 0.03), color, [bx, 1.04, 0.2], [1, 1, 1], [-0.04, 0, bx * 0.05]));
+  addMesh(back, rounded(0.58, 0.2, 0.13, 0.055), color, [0, 1.47, 0.2]);
+  addMesh(back, rounded(0.5, 0.07, 0.075, 0.022), dark, [0, 1.13, 0.205], [1, 1, 1], [0, 0, 0.68]);
+  addMesh(back, rounded(0.5, 0.07, 0.075, 0.022), dark, [0, 1.13, 0.205], [1, 1, 1], [0, 0, -0.68]);
+  return chair;
+}
+
+function addCafeMug(group, x, y, z, color, rotation = 0) {
+  const mug = createPart(group, "ceramic-mug");
+  addMesh(mug, cyl(0.095, 0.085, 0.2, 24), color, [x, y, z]);
+  addMesh(mug, torus(0.09, 0.018, 10, 28), P.cream, [x, y + 0.11, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(mug, cyl(0.068, 0.068, 0.018, 24), 0x4a3535, [x, y + 0.115, z]);
+  addMesh(mug, torus(0.085, 0.022, 10, 28), color, [x + Math.cos(rotation) * 0.11, y, z + Math.sin(rotation) * 0.11], [1, 1, 1], [Math.PI / 2, rotation, 0]);
+}
+
+function cafeSeating() {
+  const g = new THREE.Group();
+  g.name = "cafe-seating";
+  const honey = 0xd79448;
+  const honeyLight = 0xf0b867;
+  const honeyDark = 0x8a572e;
+  const teal = 0x337f82;
+  const blue = 0x62a8d6;
+  const coral = 0xee796d;
+  const mint = 0x78b88f;
+
+  const table = createPart(g, "round-tabletop");
+  addMesh(table, cyl(0.84, 0.84, 0.16, 48), honeyDark, [0, 0.92, 0]);
+  addMesh(table, cyl(0.8, 0.8, 0.11, 48), honeyLight, [0, 1.02, 0]);
+  addMesh(table, torus(0.79, 0.035, 12, 48), P.cream, [0, 1.08, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+
+  const pedestal = createPart(g, "pedestal-and-four-foot-base");
+  addMesh(pedestal, cyl(0.16, 0.22, 0.58, 28), teal, [0, 0.62, 0]);
+  addMesh(pedestal, sphere(0.22, 24, 14), teal, [0, 0.55, 0], [1, 1.3, 1]);
+  addMesh(pedestal, cyl(0.24, 0.19, 0.14, 28), 0x275f68, [0, 0.28, 0]);
+  [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle) => {
+    const foot = createPart(pedestal, "pedestal-foot");
+    foot.rotation.y = angle;
+    addMesh(foot, rounded(0.22, 0.12, 0.68, 0.055), teal, [0, 0.14, 0.28]);
+    addMesh(foot, rounded(0.24, 0.04, 0.26, 0.016), honeyDark, [0, 0.065, 0.52]);
+  });
+  addMesh(pedestal, rounded(0.5, 0.08, 0.1, 0.026), 0x275f68, [0, 0.86, 0], [1, 1, 1], [0, 0.78, 0]);
+  addMesh(pedestal, rounded(0.5, 0.08, 0.1, 0.026), 0x275f68, [0, 0.86, 0], [1, 1, 1], [0, -0.78, 0]);
+
+  addCafeChair(g, "sky-blue-chair", -1.02, -0.03, -Math.PI / 2, blue);
+  addCafeChair(g, "coral-chair", 1.02, -0.03, Math.PI / 2, coral);
+  addCafeChair(g, "mint-chair", 0, 0.94, Math.PI, mint);
+
+  const tabletopProps = createPart(g, "three-mugs-and-vase");
+  addCafeMug(tabletopProps, -0.42, 1.2, -0.08, blue, Math.PI);
+  addCafeMug(tabletopProps, 0.42, 1.2, -0.08, coral, 0);
+  addCafeMug(tabletopProps, 0, 1.2, 0.36, mint, Math.PI / 2);
+
+  const vase = createPart(tabletopProps, "cream-flower-vase");
+  addMesh(vase, cyl(0.11, 0.16, 0.27, 24), P.cream, [0, 1.25, -0.2]);
+  addMesh(vase, sphere(0.16, 20, 12), P.cream, [0, 1.23, -0.2], [1, 1.2, 1]);
+  addMesh(vase, torus(0.105, 0.022, 10, 28), honeyLight, [0, 1.4, -0.2], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  [
+    [-0.08, 1.73, P.yellow, -0.2],
+    [0.09, 1.68, coral, 0.18],
+    [-0.02, 1.58, blue, -0.04]
+  ].forEach(([x, y, color, tilt]) => {
+    addMesh(vase, cyl(0.018, 0.018, y - 1.38, 10), P.leafDark, [x / 2, (y + 1.38) / 2, -0.2], [1, 1, 1], [0, 0, tilt]);
+    addFlower(vase, x, y, -0.2, 1.65, color);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1199,7 +1287,8 @@ const builders = {
   "teacher-podium": teacherPodium,
   "service-counter": serviceCounter,
   "retail-shelf": retailShelf,
-  "supply-crate": supplyCrate
+  "supply-crate": supplyCrate,
+  "cafe-seating": cafeSeating
 };
 
 function parseArgs(argv) {
@@ -1236,7 +1325,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

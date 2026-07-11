@@ -1,0 +1,23 @@
+{
+  "model": "cafe-seating",
+  "label": "拼桌小坐区",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/residence/round_dining_table.png",
+    "dist/assets/interior-props-image2/residence/sofa_coffee_table.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/cafe-seating.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "round tabletop",
+    "pedestal base",
+    "three chairs",
+    "three mugs",
+    "flower vase",
+    "finished underside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the exact isometric design reference. Preserve one honey-wood round table, one teal pedestal with a four-foot base, exactly three mismatched chairs in sky blue/coral/mint, exactly three matching mugs, and one cream vase holding exactly three yellow/coral/blue flowers. Keep complete chair backs, cross-braces, finished underside, stable floor contacts and the open player approach gap. It still requires canonical views, a closed master model and turntable review."
+}

@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T14:58:59.887Z",
+  "updatedAt": "2026-07-11T15:41:24.556Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T14-58-59-756Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T15-41-24-409Z",
   "imported": [
     {
       "slot": "bed",
@@ -453,7 +453,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:58:59.813Z"
+      "importedAt": "2026-07-11T15:41:24.475Z"
     },
     {
       "slot": "reading-corner",
@@ -592,7 +592,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:58:59.828Z"
+      "importedAt": "2026-07-11T15:41:24.489Z"
     },
     {
       "slot": "service-counter",
@@ -658,7 +658,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:58:59.840Z"
+      "importedAt": "2026-07-11T15:41:24.499Z"
     },
     {
       "slot": "retail-shelf",
@@ -724,7 +724,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:58:59.860Z"
+      "importedAt": "2026-07-11T15:41:24.522Z"
     },
     {
       "slot": "supply-crate",
@@ -790,7 +790,73 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:58:59.879Z"
+      "importedAt": "2026-07-11T15:41:24.539Z"
+    },
+    {
+      "slot": "cafe-seating",
+      "label": "拼桌小坐区",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/cafe-seating.glb",
+      "target": "public/assets/interiors/glb/cafe-seating.glb",
+      "bytes": 2327428,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/cafe-seating/front.png",
+        "public/assets/interiors/references/multiview/cafe-seating/back.png",
+        "public/assets/interiors/references/multiview/cafe-seating/left.png",
+        "public/assets/interiors/references/multiview/cafe-seating/right.png",
+        "public/assets/interiors/references/multiview/cafe-seating/top.png",
+        "public/assets/interiors/references/multiview/cafe-seating/bottom.png",
+        "public/assets/interiors/references/multiview/cafe-seating/isometric.png",
+        "public/assets/interiors/references/multiview/cafe-seating/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/cafe-seating.glb",
+      "masterBytes": 2327428,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T15:40:28.741Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 28536,
+        "webTriangleCount": 28536,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/cafe-seating.glb",
+          "primitiveCount": 160,
+          "trianglePrimitiveCount": 112,
+          "outlinePrimitiveCount": 48,
+          "problemPrimitives": [],
+          "triangleCount": 28536,
+          "vertexCount": 63439,
+          "weldedVertexCount": 14476,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/cafe-seating.glb",
+          "primitiveCount": 160,
+          "trianglePrimitiveCount": 112,
+          "outlinePrimitiveCount": 48,
+          "problemPrimitives": [],
+          "triangleCount": 28536,
+          "vertexCount": 63439,
+          "weldedVertexCount": 14476,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T15:41:24.547Z"
     },
     {
       "slot": "record-desk",
@@ -856,11 +922,10 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T14:58:59.885Z"
+      "importedAt": "2026-07-11T15:41:24.554Z"
     }
   ],
   "missing": [
-    "cafe-seating",
     "hot-food-counter",
     "exchange-board",
     "proposal-podium",
