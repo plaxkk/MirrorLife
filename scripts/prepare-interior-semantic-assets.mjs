@@ -62,11 +62,16 @@ async function main() {
     readJson(COVERAGE_PATH)
   ]);
   const semanticOnly = coverage.rows.filter((row) => !row.hasExactGlb && row.fallbackAvailable);
+  const runtimeModels = new Set(coverage.rows.map((row) => row.model));
   const briefByModel = new Map(briefs.items.map((item) => [item.model, item]));
   const missingBriefs = semanticOnly.filter((row) => !briefByModel.has(row.model)).map((row) => row.model);
-  const staleBriefs = briefs.items.filter((item) => !semanticOnly.some((row) => row.model === item.model)).map((item) => item.model);
+  const orphanedBriefs = briefs.items.filter((item) => !runtimeModels.has(item.model)).map((item) => item.model);
+  const completedBriefs = briefs.items.filter((item) => {
+    const row = coverage.rows.find((candidate) => candidate.model === item.model);
+    return Boolean(row?.hasExactGlb);
+  }).map((item) => item.model);
   if (missingBriefs.length) throw new Error(`Missing semantic asset briefs: ${missingBriefs.join(", ")}`);
-  if (staleBriefs.length) throw new Error(`Briefs no longer match semantic-only runtime models: ${staleBriefs.join(", ")}`);
+  if (orphanedBriefs.length) throw new Error(`Briefs do not match any runtime model: ${orphanedBriefs.join(", ")}`);
 
   const outputRoot = path.join(ROOT, "dist/interior-3d-work/semantic-fidelity-packets");
   const queue = [];
@@ -136,6 +141,7 @@ async function main() {
 
   console.log(`Prepared ${queue.length} semantic fidelity packets.`);
   console.log(`Reference artwork ready: ${queue.filter((item) => item.referenceReady).length}/${queue.length}.`);
+  console.log(`Completed exact assets retained in the brief archive: ${completedBriefs.length}.`);
   console.log(`Queue: ${relative(path.join(outputRoot, "queue.json"))}`);
 }
 

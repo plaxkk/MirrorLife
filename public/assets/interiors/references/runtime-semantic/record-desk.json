@@ -1,0 +1,22 @@
+{
+  "model": "record-desk",
+  "label": "记录桌",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReference": "public/assets/mirrorlife-interior-prop-design-board.png",
+  "file": "public/assets/interiors/references/runtime-semantic/record-desk.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "desktop",
+    "four desk legs",
+    "drawer unit",
+    "ledger",
+    "pen tray",
+    "desk lamp",
+    "chair",
+    "finished underside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the isometric design reference. The desk, chair, ledger, paper stack, pen tray, lamp and finished drawer unit must remain a single coherent furniture set in every canonical view. It is not a completed 3D asset and still requires coherent canonical views, a closed master model and turntable review."
+}
