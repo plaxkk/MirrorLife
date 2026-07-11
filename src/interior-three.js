@@ -1,6 +1,7 @@
 import { createSemanticInteriorModel, hasSemanticInteriorModel } from "./interior-semantic-models.js";
 
 const ASSET_BASE = "/assets/interiors/glb/";
+const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.45;
@@ -253,8 +254,9 @@ function loadModel(type) {
   };
   const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
+    const assetUrl = `${ASSET_BASE}${type}.glb${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
     loader.load(
-      `${ASSET_BASE}${type}.glb`,
+      assetUrl,
       (gltf) => {
         const prepared = prepareModel(type, gltf.scene);
         cache.set(type, prepared);

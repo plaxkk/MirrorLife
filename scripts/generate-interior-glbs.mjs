@@ -247,6 +247,44 @@ function createPart(parent, name) {
   return part;
 }
 
+function extrudedFootprint(points, height, bevel = 0.04) {
+  const shape = new THREE.Shape();
+  points.forEach(([x, z], index) => {
+    const method = index === 0 ? "moveTo" : "lineTo";
+    shape[method](x, -z);
+  });
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: height,
+    bevelEnabled: bevel > 0,
+    bevelSegments: 3,
+    bevelSize: bevel,
+    bevelThickness: bevel,
+    curveSegments: 24,
+    steps: 1
+  });
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function addSunflower(group, x, y, z, scale = 1) {
+  const flower = createPart(group, "sunflower-emblem");
+  addMesh(flower, rounded(0.055 * scale, 0.42 * scale, 0.035 * scale, 0.014 * scale), P.leafDark, [x, y - 0.16 * scale, z]);
+  [-0.1, 0.1].forEach((dx, index) => {
+    addMesh(flower, sphere(0.11 * scale, 18, 10), index ? P.leaf : P.leafDark, [x + dx * scale, y - 0.18 * scale, z], [1.25, 0.5, 0.28], [0, 0, index ? -0.55 : 0.55]);
+  });
+  for (let index = 0; index < 10; index += 1) {
+    const angle = index * Math.PI * 2 / 10;
+    addMesh(flower, sphere(0.105 * scale, 16, 9), P.yellow, [
+      x + Math.cos(angle) * 0.15 * scale,
+      y + Math.sin(angle) * 0.15 * scale,
+      z
+    ], [0.68, 1.15, 0.3], [0, 0, angle - Math.PI / 2]);
+  }
+  addMesh(flower, sphere(0.115 * scale, 20, 12), P.woodDark, [x, y, z - 0.012 * scale], [1, 1, 0.36]);
+}
+
 function addRecordDeskChair(group) {
   const frame = createPart(group, "chair-frame");
   const cushion = createPart(group, "chair-cushions");
@@ -671,6 +709,97 @@ function teacherPodium() {
   return g;
 }
 
+function serviceCounter() {
+  const g = new THREE.Group();
+  g.name = "service-counter";
+  const honey = 0xc9853f;
+  const honeyLight = 0xe6a95c;
+  const honeyDark = 0x86502b;
+  const counterCream = 0xffe7b8;
+  const mint = 0x8ecdb0;
+  const mintLight = 0xc0ead4;
+  const coral = 0xe96e5f;
+  const parcelBlue = 0x55a9d5;
+
+  const customerStrip = [
+    [-1.22, 0.24], [0.48, 0.24], [0.69, 0.29], [0.83, 0.4], [0.9, 0.55],
+    [0.88, 0.68], [0.78, 0.78], [0.6, 0.84], [-0.83, 0.84], [-1.05, 0.79],
+    [-1.2, 0.68], [-1.29, 0.53], [-1.3, 0.38]
+  ];
+  const frontBody = createPart(g, "rounded-counter-body");
+  addMesh(frontBody, extrudedFootprint(customerStrip, 0.76, 0.035), honey, [0, 0.25, 0]);
+  addMesh(frontBody, rounded(1.92, 0.57, 0.08, 0.025), counterCream, [-0.17, 0.67, 0.92]);
+  [-1.13, 0.79].forEach((x) => addMesh(frontBody, rounded(0.12, 0.7, 0.12, 0.035), honeyDark, [x, 0.65, 0.91]));
+  for (let index = 0; index < 8; index += 1) {
+    const x = -0.97 + index * 0.24;
+    addMesh(frontBody, rounded(0.025, 0.48, 0.025, 0.008), 0xe0bf88, [x, 0.68, 0.972], [1, 1, 1], [0, 0, 0], false);
+  }
+  addSunflower(frontBody, -0.18, 0.73, 0.99, 0.72);
+
+  const rearStorage = createPart(g, "rear-storage");
+  addMesh(rearStorage, rounded(2.12, 0.86, 0.62, 0.06), honey, [-0.05, 0.58, -0.25]);
+  addMesh(rearStorage, rounded(1.98, 0.72, 0.5, 0.04), counterCream, [-0.05, 0.59, -0.27]);
+  [-1.02, 0.57, 1.01].forEach((x) => addMesh(rearStorage, rounded(0.09, 0.78, 0.54, 0.028), honeyDark, [x, 0.58, -0.25]));
+  addMesh(rearStorage, rounded(2.18, 0.16, 0.7, 0.05), honeyDark, [-0.05, 0.17, -0.25]);
+  addMesh(rearStorage, rounded(2.08, 0.1, 0.64, 0.035), honeyLight, [-0.05, 0.27, -0.25]);
+
+  const drawers = createPart(g, "two-drawers");
+  [-0.66, 0.06].forEach((x) => {
+    addMesh(drawers, rounded(0.62, 0.27, 0.075, 0.025), honeyLight, [x, 0.78, -0.59]);
+    addMesh(drawers, rounded(0.51, 0.18, 0.035, 0.012), counterCream, [x, 0.78, -0.635], [1, 1, 1], [0, 0, 0], false);
+    addMesh(drawers, sphere(0.052, 18, 10), P.yellow, [x, 0.79, -0.68], [1.45, 0.7, 0.55]);
+  });
+
+  const cabinet = createPart(g, "cabinet-door");
+  addMesh(cabinet, rounded(0.57, 0.6, 0.075, 0.025), honeyDark, [0.7, 0.57, -0.59]);
+  addMesh(cabinet, rounded(0.47, 0.5, 0.04, 0.016), counterCream, [0.7, 0.57, -0.635]);
+  addMesh(cabinet, rounded(0.3, 0.34, 0.022, 0.008), honeyLight, [0.7, 0.57, -0.66], [1, 1, 1], [0, 0, 0], false);
+  [-0.1, 0.1].forEach((x) => addMesh(cabinet, rounded(0.02, 0.3, 0.016, 0.006), honey, [0.7 + x, 0.57, -0.682], [1, 1, 1], [0, 0, 0], false));
+  addMesh(cabinet, sphere(0.055, 18, 10), P.yellow, [0.43, 0.58, -0.69]);
+  [0.42, 0.68].forEach((y) => addMesh(cabinet, rounded(0.045, 0.13, 0.025, 0.009), P.yellow, [0.99, y, -0.68]));
+
+  const worktop = createPart(g, "worktop");
+  addMesh(worktop, rounded(2.28, 0.16, 0.76, 0.06), honeyLight, [-0.05, 1.06, -0.18]);
+  addMesh(worktop, rounded(2.17, 0.05, 0.67, 0.018), 0xf0bc72, [-0.05, 1.16, -0.18]);
+  addMesh(worktop, extrudedFootprint(customerStrip, 0.13, 0.04), honeyLight, [0, 1.04, 0]);
+
+  const ledge = createPart(g, "service-ledge");
+  const ledgeStrip = customerStrip.map(([x, z]) => [x, z + (z > 0.7 ? 0.03 : 0)]);
+  addMesh(ledge, extrudedFootprint(ledgeStrip, 0.14, 0.055), mint, [0, 1.19, 0]);
+  addMesh(ledge, rounded(1.84, 0.035, 0.04, 0.012), mintLight, [-0.18, 1.34, 0.88], [1, 1, 1], [0, 0, 0], false);
+
+  const parcelShelf = createPart(g, "parcel-shelf");
+  addMesh(parcelShelf, rounded(0.5, 0.88, 0.61, 0.06), honey, [1.05, 0.69, 0.48]);
+  [0.42, 0.76].forEach((y) => addMesh(parcelShelf, rounded(0.46, 0.09, 0.58, 0.035), honeyDark, [1.05, y, 0.49]));
+  [-0.18, 0.18].forEach((z, index) => {
+    const y = index ? 0.91 : 0.57;
+    const parcel = createPart(parcelShelf, `parcel-${index + 1}`);
+    addMesh(parcel, rounded(0.34, 0.22, 0.34, 0.045), parcelBlue, [1.05, y, 0.49 + z * 0.08]);
+    addMesh(parcel, rounded(0.055, 0.235, 0.35, 0.016), P.cream, [1.05, y, 0.49 + z * 0.08]);
+    addMesh(parcel, rounded(0.35, 0.235, 0.055, 0.016), 0x87c9e6, [1.05, y, 0.49 + z * 0.08]);
+  });
+
+  const register = createPart(g, "register");
+  addMesh(register, rounded(0.48, 0.18, 0.42, 0.055), P.ink, [-0.76, 1.27, -0.05]);
+  addMesh(register, wedge(0.46, 0.38, 0.08, 0.26), coral, [-0.76, 1.37, -0.05]);
+  addMesh(register, rounded(0.42, 0.43, 0.18, 0.04), coral, [-0.76, 1.66, -0.2], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(register, rounded(0.35, 0.3, 0.08, 0.022), P.cream, [-0.76, 1.67, -0.3], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(register, rounded(0.27, 0.21, 0.035, 0.014), 0x29465f, [-0.76, 1.67, -0.32], [1, 1, 1], [-0.08, 0, 0], false);
+  [-0.85, -0.72, -0.59].forEach((x, index) => addMesh(register, rounded(0.09, 0.035, 0.09, 0.014), [mint, P.yellow, P.orange][index], [x, 1.58, 0.02]));
+
+  const rearRail = createPart(g, "finished-backside");
+  [-1.02, 0.92].forEach((x) => addMesh(rearRail, rounded(0.09, 0.52, 0.09, 0.03), honeyDark, [x, 1.37, -0.48]));
+  addMesh(rearRail, rounded(2.03, 0.11, 0.11, 0.035), honeyDark, [-0.05, 1.61, -0.48]);
+  addMesh(rearRail, rounded(1.88, 0.32, 0.06, 0.022), counterCream, [-0.05, 1.4, -0.51]);
+  [-0.68, 0, 0.68].forEach((x) => addMesh(rearRail, rounded(0.055, 0.31, 0.065, 0.018), honey, [x, 1.4, -0.52]));
+
+  const feet = createPart(g, "lower-plinth-and-feet");
+  [[-1.03, 0.55], [0.65, 0.64], [-0.96, -0.47], [0.92, -0.47]].forEach(([x, z]) => {
+    addMesh(feet, rounded(0.22, 0.14, 0.22, 0.045), 0x344852, [x, 0.08, z]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -873,7 +1002,8 @@ const builders = {
   fountain,
   "record-desk": recordDesk,
   "waiting-chair": waitingChair,
-  "teacher-podium": teacherPodium
+  "teacher-podium": teacherPodium,
+  "service-counter": serviceCounter
 };
 
 function parseArgs(argv) {
@@ -910,7 +1040,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T12:43:58.012Z",
+  "updatedAt": "2026-07-11T13:36:52.583Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T12-43-57-964Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T13-36-52-527Z",
   "imported": [
     {
       "slot": "bed",
@@ -453,7 +453,7 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T12:43:57.990Z"
+      "importedAt": "2026-07-11T13:36:52.557Z"
     },
     {
       "slot": "reading-corner",
@@ -592,7 +592,73 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T12:43:58.003Z"
+      "importedAt": "2026-07-11T13:36:52.570Z"
+    },
+    {
+      "slot": "service-counter",
+      "label": "服务柜台",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/service-counter.glb",
+      "target": "public/assets/interiors/glb/service-counter.glb",
+      "bytes": 1998676,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/service-counter/front.png",
+        "public/assets/interiors/references/multiview/service-counter/back.png",
+        "public/assets/interiors/references/multiview/service-counter/left.png",
+        "public/assets/interiors/references/multiview/service-counter/right.png",
+        "public/assets/interiors/references/multiview/service-counter/top.png",
+        "public/assets/interiors/references/multiview/service-counter/bottom.png",
+        "public/assets/interiors/references/multiview/service-counter/isometric.png",
+        "public/assets/interiors/references/multiview/service-counter/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/service-counter.glb",
+      "masterBytes": 1998676,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T13:36:51.881Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 23244,
+        "webTriangleCount": 23244,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/service-counter.glb",
+          "primitiveCount": 84,
+          "trianglePrimitiveCount": 80,
+          "outlinePrimitiveCount": 4,
+          "problemPrimitives": [],
+          "triangleCount": 23244,
+          "vertexCount": 58862,
+          "weldedVertexCount": 11782,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/service-counter.glb",
+          "primitiveCount": 84,
+          "trianglePrimitiveCount": 80,
+          "outlinePrimitiveCount": 4,
+          "problemPrimitives": [],
+          "triangleCount": 23244,
+          "vertexCount": 58862,
+          "weldedVertexCount": 11782,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T13:36:52.575Z"
     },
     {
       "slot": "record-desk",
@@ -658,11 +724,10 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T12:43:58.010Z"
+      "importedAt": "2026-07-11T13:36:52.582Z"
     }
   ],
   "missing": [
-    "service-counter",
     "retail-shelf",
     "supply-crate",
     "cafe-seating",
