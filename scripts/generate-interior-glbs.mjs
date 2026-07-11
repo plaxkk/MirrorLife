@@ -1336,6 +1336,91 @@ function proposalPodium() {
   return g;
 }
 
+function addNoticeFlower(group, x, color, name) {
+  const flower = createPart(group, name);
+  addMesh(flower, cyl(0.018, 0.02, 0.24, 10), P.leafDark, [x, 0.77, 0.3]);
+  addMesh(flower, sphere(0.075, 12, 7), P.leaf, [x - 0.055, 0.75, 0.3], [1.25, 0.45, 0.75], [0, 0, 0.45]);
+  addMesh(flower, sphere(0.075, 12, 7), P.leafDark, [x + 0.055, 0.7, 0.3], [1.25, 0.45, 0.75], [0, 0, -0.45]);
+  addFlower(flower, x, 0.92, 0.3, 1.9, color);
+}
+
+function noticeBoard() {
+  const g = new THREE.Group();
+  g.name = "notice-board";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const coralTile = 0xd96c51;
+  const tealBack = 0x6aa99b;
+  const mintPlanter = 0x83bdb0;
+  const cardColors = [0xee8067, 0x74bde0, 0xf4c84a, 0xa9dec9, 0xb69ad8, 0xffecc9];
+
+  const posts = createPart(g, "wood-frame-two-posts-and-ground-feet");
+  [-1.04, 1.04].forEach((x) => {
+    addMesh(posts, rounded(0.2, 2.2, 0.24, 0.055), honey, [x, 1.2, 0]);
+    addMesh(posts, rounded(0.38, 0.18, 0.62, 0.06), honeyDark, [x, 0.13, 0]);
+    addMesh(posts, rounded(0.32, 0.11, 0.56, 0.04), honeyLight, [x, 0.23, 0]);
+    addMesh(posts, rounded(0.28, 0.27, 0.3, 0.06), honeyLight, [x, 2.2, 0]);
+    addMesh(posts, sphere(0.045, 16, 9), P.metal, [x, 2.18, 0.17], [1, 1, 0.55]);
+  });
+
+  const board = createPart(g, "notice-surface-and-wood-frame");
+  addMesh(board, rounded(1.92, 1.42, 0.16, 0.05), honeyDark, [0, 1.43, 0]);
+  addMesh(board, rounded(1.76, 1.26, 0.13, 0.042), 0xf2d59d, [0, 1.43, 0.055]);
+  addMesh(board, rounded(2.02, 0.16, 0.23, 0.05), honey, [0, 2.18, 0]);
+  addMesh(board, rounded(2.02, 0.16, 0.23, 0.05), honey, [0, 0.68, 0]);
+  [-0.99, 0.99].forEach((x) => addMesh(board, rounded(0.16, 1.48, 0.23, 0.045), honey, [x, 1.43, 0]));
+
+  const cards = createPart(g, "six-notice-cards-and-six-brass-pins");
+  const cardXs = [-0.57, 0, 0.57];
+  [1.7, 1.16].forEach((y, row) => cardXs.forEach((x, column) => {
+    const index = row * 3 + column;
+    const card = createPart(cards, `notice-card-${index + 1}`);
+    addMesh(card, rounded(0.39, 0.45, 0.045, 0.016), cardColors[index], [x, y, 0.145]);
+    addMesh(card, sphere(0.055, 18, 10), P.yellow, [x, y + 0.25, 0.19], [1, 1, 0.55]);
+    addMesh(card, sphere(0.13, 18, 10), index % 2 ? 0x579fd0 : 0xd96356, [x + 0.08, y - 0.12, 0.178], [1.3, 0.55, 0.25], [0, 0, 0], false);
+  }));
+
+  const roof = createPart(g, "gabled-roof-cap-and-coral-tiles");
+  [-1, 1].forEach((side) => {
+    const half = createPart(roof, side > 0 ? "front-roof-slope" : "rear-roof-slope");
+    half.position.set(0, 2.47, side * 0.22);
+    half.rotation.x = side * 0.46;
+    addMesh(half, rounded(2.5, 0.12, 0.66, 0.035), honeyDark);
+    addMesh(half, rounded(2.36, 0.065, 0.56, 0.022), coralTile, [0, 0.075, 0]);
+    for (let row = 0; row < 3; row += 1) {
+      for (let column = 0; column < 9; column += 1) {
+        const x = -1.04 + column * 0.26 + (row % 2 ? 0.06 : 0);
+        addMesh(half, rounded(0.235, 0.025, 0.15, 0.008), row % 2 ? 0xe57a5d : coralTile, [x, 0.12, -0.18 + row * 0.18], [1, 1, 1], [0, 0, 0], false);
+      }
+    }
+  });
+  addMesh(roof, rounded(2.58, 0.15, 0.16, 0.05), honeyLight, [0, 2.65, 0]);
+  [-1.16, 1.16].forEach((x) => {
+    addMesh(roof, rounded(0.13, 0.13, 0.76, 0.038), honey, [x, 2.47, 0.2], [1, 1, 1], [0.46, 0, 0]);
+    addMesh(roof, rounded(0.13, 0.13, 0.76, 0.038), honey, [x, 2.47, -0.2], [1, 1, 1], [-0.46, 0, 0]);
+  });
+
+  const planter = createPart(g, "mint-flower-planter-with-five-plants");
+  addMesh(planter, rounded(2.12, 0.38, 0.62, 0.07), 0x477f74, [0, 0.52, 0.27]);
+  addMesh(planter, rounded(2.02, 0.32, 0.56, 0.055), mintPlanter, [0, 0.55, 0.28]);
+  addMesh(planter, rounded(1.88, 0.07, 0.43, 0.025), 0x5d452c, [0, 0.75, 0.28]);
+  [-0.72, -0.36, 0, 0.36, 0.72].forEach((x, index) => {
+    addNoticeFlower(planter, x, [0xee745f, 0xf4c84a, 0xffecc9, 0x68aee0, 0xa98ad5][index], `flowering-plant-${index + 1}`);
+  });
+  [-0.62, 0.62].forEach((x) => addMesh(planter, cyl(0.035, 0.035, 0.035, 12), P.ink, [x, 0.33, 0.28], [1, 1, 1], [Math.PI / 2, 0, 0], false));
+
+  const back = createPart(g, "finished-weatherproof-backside-and-cross-braces");
+  addMesh(back, rounded(1.77, 1.27, 0.12, 0.04), tealBack, [0, 1.43, -0.09]);
+  for (let index = 0; index < 8; index += 1) {
+    addMesh(back, rounded(0.025, 1.14, 0.02, 0.006), 0x4d877d, [-0.76 + index * 0.22, 1.43, -0.165], [1, 1, 1], [0, 0, 0], false);
+  }
+  addMesh(back, rounded(0.14, 2.0, 0.13, 0.04), honeyDark, [0, 1.43, -0.23], [1, 1, 1], [0, 0, 0.86]);
+  addMesh(back, rounded(0.14, 2.0, 0.13, 0.04), honey, [0, 1.43, -0.3], [1, 1, 1], [0, 0, -0.86]);
+  addMesh(back, rounded(1.94, 0.13, 0.16, 0.04), honey, [0, 0.72, -0.18]);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1545,7 +1630,8 @@ const builders = {
   "cafe-seating": cafeSeating,
   "hot-food-counter": hotFoodCounter,
   "exchange-board": exchangeBoard,
-  "proposal-podium": proposalPodium
+  "proposal-podium": proposalPodium,
+  "notice-board": noticeBoard
 };
 
 function parseArgs(argv) {
@@ -1582,7 +1668,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

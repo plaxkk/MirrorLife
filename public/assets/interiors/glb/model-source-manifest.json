@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T18:37:07.919Z",
+  "updatedAt": "2026-07-11T19:23:10.371Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T18-37-07-774Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T19-23-10-187Z",
   "imported": [
     {
       "slot": "bed",
@@ -1057,6 +1057,72 @@
       "importedAt": "2026-07-11T18:37:07.911Z"
     },
     {
+      "slot": "notice-board",
+      "label": "社区公告板",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/notice-board.glb",
+      "target": "public/assets/interiors/glb/notice-board.glb",
+      "bytes": 3288596,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/notice-board/front.png",
+        "public/assets/interiors/references/multiview/notice-board/back.png",
+        "public/assets/interiors/references/multiview/notice-board/left.png",
+        "public/assets/interiors/references/multiview/notice-board/right.png",
+        "public/assets/interiors/references/multiview/notice-board/top.png",
+        "public/assets/interiors/references/multiview/notice-board/bottom.png",
+        "public/assets/interiors/references/multiview/notice-board/isometric.png",
+        "public/assets/interiors/references/multiview/notice-board/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/notice-board.glb",
+      "masterBytes": 3288596,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T19:23:09.949Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 38356,
+        "webTriangleCount": 38356,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/notice-board.glb",
+          "primitiveCount": 194,
+          "trianglePrimitiveCount": 159,
+          "outlinePrimitiveCount": 35,
+          "problemPrimitives": [],
+          "triangleCount": 38356,
+          "vertexCount": 94755,
+          "weldedVertexCount": 19496,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/notice-board.glb",
+          "primitiveCount": 194,
+          "trianglePrimitiveCount": 159,
+          "outlinePrimitiveCount": 35,
+          "problemPrimitives": [],
+          "triangleCount": 38356,
+          "vertexCount": 94755,
+          "weldedVertexCount": 19496,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T19:23:10.360Z"
+    },
+    {
       "slot": "record-desk",
       "label": "记录桌",
       "provider": "threejs-manual",
@@ -1124,7 +1190,6 @@
     }
   ],
   "missing": [
-    "notice-board",
     "audience-seating",
     "office-workstation",
     "collaboration-board",

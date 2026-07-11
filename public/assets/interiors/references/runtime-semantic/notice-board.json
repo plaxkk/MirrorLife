@@ -1,0 +1,25 @@
+{
+  "model": "notice-board",
+  "label": "社区公告板",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/exchange-board.png",
+    "dist/assets/interior-props-image2/school_library/chalkboard.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/notice-board.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "roof cap",
+    "notice surface",
+    "wood frame",
+    "two posts",
+    "ground feet",
+    "notice cards",
+    "flower planter",
+    "finished backside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the shallow coral-tiled roof, cream cork surface, exactly six blank illustrated notices with six brass pins, two wood posts and feet, full-width mint planter with exactly five flowering plants, weatherproof teal rear panel, diagonal rear braces and finished underside. Canonical views, closed development geometry and turntable review are still required."
+}
