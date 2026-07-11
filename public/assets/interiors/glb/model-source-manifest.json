@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T20:37:25.391Z",
+  "updatedAt": "2026-07-11T21:15:39.360Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T20-37-25-115Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T21-15-39-094Z",
   "imported": [
     {
       "slot": "bed",
@@ -1253,10 +1253,75 @@
         }
       },
       "importedAt": "2026-07-11T15:41:24.554Z"
+    },
+    {
+      "slot": "office-workstation",
+      "label": "协作工位",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/office-workstation.glb",
+      "target": "public/assets/interiors/glb/office-workstation.glb",
+      "bytes": 2897820,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/office-workstation/front.png",
+        "public/assets/interiors/references/multiview/office-workstation/back.png",
+        "public/assets/interiors/references/multiview/office-workstation/left.png",
+        "public/assets/interiors/references/multiview/office-workstation/right.png",
+        "public/assets/interiors/references/multiview/office-workstation/top.png",
+        "public/assets/interiors/references/multiview/office-workstation/bottom.png",
+        "public/assets/interiors/references/multiview/office-workstation/isometric.png",
+        "public/assets/interiors/references/multiview/office-workstation/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/office-workstation.glb",
+      "masterBytes": 2897820,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T21:10:58.479Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 31508,
+        "webTriangleCount": 31508,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/office-workstation.glb",
+          "primitiveCount": 142,
+          "trianglePrimitiveCount": 124,
+          "outlinePrimitiveCount": 18,
+          "problemPrimitives": [],
+          "triangleCount": 31508,
+          "vertexCount": 84567,
+          "weldedVertexCount": 16000,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/office-workstation.glb",
+          "primitiveCount": 142,
+          "trianglePrimitiveCount": 124,
+          "outlinePrimitiveCount": 18,
+          "problemPrimitives": [],
+          "triangleCount": 31508,
+          "vertexCount": 84567,
+          "weldedVertexCount": 16000,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T21:15:39.358Z"
     }
   ],
   "missing": [
-    "office-workstation",
     "collaboration-board",
     "mediation-podium",
     "archive-cabinet",

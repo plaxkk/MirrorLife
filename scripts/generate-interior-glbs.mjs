@@ -1503,6 +1503,132 @@ function audienceSeating() {
   return g;
 }
 
+function addOfficeTaskChair(group) {
+  const chair = createPart(group, "adjustable-task-chair-with-five-spoke-base");
+  chair.position.set(-0.2, 0, 1.05);
+  const darkTeal = 0x315f69;
+  const teal = 0x4d9f9c;
+  const tealLight = 0x78c1ba;
+
+  addMesh(chair, cyl(0.13, 0.15, 0.5, 20), darkTeal, [0, 0.43, 0]);
+  addMesh(chair, cyl(0.18, 0.18, 0.08, 20), teal, [0, 0.68, 0]);
+  addMesh(chair, rounded(0.64, 0.17, 0.62, 0.075), teal, [0, 0.76, 0]);
+  addMesh(chair, rounded(0.54, 0.055, 0.5, 0.025), tealLight, [0, 0.865, -0.02], [1, 1, 1], [0, 0, 0], false);
+  addMesh(chair, rounded(0.16, 0.66, 0.14, 0.04), darkTeal, [0, 1.02, 0.28], [1, 1, 1], [-0.12, 0, 0]);
+  addMesh(chair, rounded(0.7, 0.67, 0.18, 0.08), darkTeal, [0, 1.35, 0.31], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(chair, rounded(0.61, 0.58, 0.19, 0.085), teal, [0, 1.35, 0.2], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(chair, rounded(0.45, 0.035, 0.08, 0.014), tealLight, [-0.03, 1.51, 0.09], [1, 1, 1], [-0.08, 0, 0], false);
+
+  const base = createPart(chair, "five-spoke-wheeled-base");
+  addMesh(base, cyl(0.16, 0.18, 0.12, 20), darkTeal, [0, 0.17, 0]);
+  for (let index = 0; index < 5; index += 1) {
+    const angle = index / 5 * Math.PI * 2;
+    const x = Math.sin(angle) * 0.39;
+    const z = Math.cos(angle) * 0.39;
+    addMesh(base, rounded(0.13, 0.1, 0.66, 0.04), darkTeal, [x * 0.5, 0.14, z * 0.5], [1, 1, 1], [0, angle, 0]);
+    const wheel = createPart(base, `caster-wheel-${index + 1}`);
+    wheel.position.set(x, 0.11, z);
+    addMesh(wheel, cyl(0.1, 0.1, 0.07, 18), P.ink, [0, 0, 0], [1, 1, 1], [Math.PI / 2, angle, 0]);
+    addMesh(wheel, cyl(0.055, 0.055, 0.075, 16), P.metal, [0, 0, 0], [1, 1, 1], [Math.PI / 2, angle, 0], false);
+  }
+  return chair;
+}
+
+function officeWorkstation() {
+  const g = new THREE.Group();
+  g.name = "office-workstation";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const deepTeal = 0x315f69;
+  const teal = 0x4d9f9c;
+  const sky = 0xa9e1ef;
+
+  const desk = createPart(g, "rounded-shallow-wrap-desk-and-open-legroom");
+  addMesh(desk, rounded(2.72, 0.22, 0.94, 0.095), honey, [0, 1.02, 0]);
+  addMesh(desk, rounded(0.84, 0.22, 0.78, 0.095), honey, [-0.95, 1.02, 0.36]);
+  addMesh(desk, rounded(2.58, 0.055, 0.82, 0.025), honeyLight, [0, 1.16, 0]);
+  addMesh(desk, rounded(0.74, 0.055, 0.68, 0.025), honeyLight, [-0.95, 1.16, 0.36]);
+  [[-1.18, -0.34], [-1.18, 0.55], [1.18, -0.34]].forEach(([x, z]) => {
+    addMesh(desk, rounded(0.17, 0.94, 0.17, 0.05), honeyDark, [x, 0.52, z]);
+    addMesh(desk, rounded(0.23, 0.16, 0.23, 0.055), honey, [x, 0.11, z]);
+  });
+  addMesh(desk, rounded(1.52, 0.52, 0.1, 0.035), honeyDark, [-0.16, 0.67, -0.42]);
+  addMesh(desk, rounded(1.4, 0.42, 0.065, 0.022), honey, [-0.16, 0.67, -0.48]);
+  addMesh(desk, rounded(2.78, 0.18, 0.14, 0.05), honeyDark, [0, 1.28, -0.42]);
+  addMesh(desk, rounded(2.66, 0.12, 0.12, 0.042), honeyLight, [0, 1.34, -0.4]);
+
+  const pedestal = createPart(g, "two-drawer-storage-pedestal-and-finished-back");
+  addMesh(pedestal, rounded(0.68, 0.88, 0.76, 0.065), honeyDark, [0.91, 0.54, -0.01]);
+  addMesh(pedestal, rounded(0.6, 0.8, 0.68, 0.05), honey, [0.91, 0.56, -0.01]);
+  [0.72, 0.36].forEach((y) => {
+    addMesh(pedestal, rounded(0.52, 0.29, 0.08, 0.028), honeyLight, [0.91, y, 0.38]);
+    addMesh(pedestal, sphere(0.07, 18, 10), teal, [0.91, y, 0.45], [1, 1, 0.55]);
+  });
+  addMesh(pedestal, rounded(0.52, 0.62, 0.06, 0.022), honeyLight, [0.91, 0.58, -0.39]);
+  [[0.7, -0.27], [1.12, -0.27], [0.7, 0.25], [1.12, 0.25]].forEach(([x, z]) => {
+    addMesh(pedestal, rounded(0.12, 0.12, 0.12, 0.035), honeyDark, [x, 0.08, z]);
+  });
+
+  const monitor = createPart(g, "monitor-blank-screen-and-stand");
+  addMesh(monitor, rounded(0.98, 0.7, 0.16, 0.07), deepTeal, [0.22, 1.72, -0.15]);
+  addMesh(monitor, rounded(0.82, 0.54, 0.035, 0.014), sky, [0.22, 1.72, -0.055]);
+  addMesh(monitor, rounded(0.7, 0.035, 0.025, 0.01), 0xffffff, [0.17, 1.89, -0.028], [1, 1, 1], [0, 0, 0], false);
+  addMesh(monitor, rounded(0.18, 0.36, 0.14, 0.04), deepTeal, [0.22, 1.28, -0.15]);
+  addMesh(monitor, rounded(0.58, 0.1, 0.34, 0.045), deepTeal, [0.22, 1.17, -0.08]);
+
+  const keyboard = createPart(g, "separate-keyboard-with-readable-keys");
+  keyboard.position.set(0.08, 1.25, 0.28);
+  keyboard.rotation.x = -0.05;
+  addMesh(keyboard, rounded(0.9, 0.09, 0.38, 0.04), deepTeal);
+  const rows = [10, 10, 9, 8];
+  rows.forEach((count, row) => {
+    for (let column = 0; column < count; column += 1) {
+      const width = 0.068;
+      const x = (column - (count - 1) / 2) * 0.078;
+      const z = -0.12 + row * 0.078;
+      addMesh(keyboard, rounded(width, 0.035, 0.058, 0.014), row === 3 && column === count - 1 ? P.red : P.cream, [x, 0.065, z], [1, 1, 1], [0, 0, 0], false);
+    }
+  });
+  addMesh(keyboard, rounded(0.34, 0.035, 0.06, 0.014), P.paper, [0, 0.065, 0.12], [1, 1, 1], [0, 0, 0], false);
+
+  const tray = createPart(g, "paper-handoff-tray");
+  addMesh(tray, rounded(0.56, 0.12, 0.42, 0.045), deepTeal, [-0.91, 1.25, -0.05]);
+  addMesh(tray, rounded(0.45, 0.06, 0.32, 0.022), P.paper, [-0.91, 1.34, -0.03]);
+  addMesh(tray, rounded(0.4, 0.025, 0.28, 0.01), P.cream, [-0.89, 1.39, -0.01], [1, 1, 1], [0, 0.04, 0], false);
+
+  const plant = createPart(g, "small-potted-plant");
+  addMesh(plant, cyl(0.19, 0.15, 0.28, 22), 0xd96d52, [1.02, 1.33, -0.1]);
+  addMesh(plant, torus(0.17, 0.035, 10, 24), teal, [1.02, 1.48, -0.1], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  for (let index = 0; index < 7; index += 1) {
+    const angle = index / 7 * Math.PI * 2;
+    addMesh(plant, sphere(0.16, 16, 9), index % 2 ? P.leaf : P.leafDark, [
+      1.02 + Math.sin(angle) * 0.14,
+      1.62 + (index % 3) * 0.05,
+      -0.1 + Math.cos(angle) * 0.09
+    ], [0.62, 1.18, 0.42], [0, angle, Math.sin(angle) * 0.45]);
+  }
+
+  const cable = createPart(g, "open-rear-cable-channel-two-cables-and-power-strip");
+  addMesh(cable, rounded(1.62, 0.16, 0.14, 0.045), 0x5b3826, [0.08, 1.39, -0.49]);
+  addMesh(cable, rounded(0.52, 0.17, 0.14, 0.04), P.metal, [-0.5, 1.41, -0.58]);
+  [-0.64, -0.52, -0.4].forEach((x) => addMesh(cable, sphere(0.025, 12, 7), P.yellow, [x, 1.41, -0.66], [1, 1, 0.5]));
+  const cablePaths = [
+    { color: 0xe86f58, y: 1.46, points: [[-0.82, -0.58], [-0.4, -0.6], [0.05, -0.59], [0.5, -0.57], [0.82, -0.58]] },
+    { color: 0x4ca7b0, y: 1.52, points: [[-0.76, -0.62], [-0.32, -0.64], [0.12, -0.63], [0.56, -0.61], [0.88, -0.62]] }
+  ];
+  cablePaths.forEach((pathItem, pathIndex) => {
+    pathItem.points.slice(0, -1).forEach(([x, z], index) => {
+      const [nextX, nextZ] = pathItem.points[index + 1];
+      addCylinderBetween(cable, [x, pathItem.y, z], [nextX, pathItem.y, nextZ], 0.026, pathItem.color, `organized-cable-${pathIndex + 1}-segment-${index + 1}`);
+    });
+    [-0.55, 0.32, 0.72].forEach((x) => addMesh(cable, rounded(0.1, 0.12, 0.11, 0.025), deepTeal, [x, pathItem.y, -0.64]));
+  });
+
+  addOfficeTaskChair(g);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1714,7 +1840,8 @@ const builders = {
   "exchange-board": exchangeBoard,
   "proposal-podium": proposalPodium,
   "notice-board": noticeBoard,
-  "audience-seating": audienceSeating
+  "audience-seating": audienceSeating,
+  "office-workstation": officeWorkstation
 };
 
 function parseArgs(argv) {
@@ -1751,7 +1878,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
