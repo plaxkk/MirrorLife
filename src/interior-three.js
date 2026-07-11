@@ -205,7 +205,15 @@ function mergeSemanticModelMeshes(source) {
   if (!source || !mergeGeometries) return source;
   source.updateMatrixWorld(true);
   const batches = new Map();
+  const lineObjects = [];
   source.traverse((node) => {
+    if (node.isLineSegments && node.geometry) {
+      const line = new THREE.LineSegments(node.geometry.clone(), node.material);
+      line.geometry.applyMatrix4(node.matrixWorld);
+      line.name = node.name;
+      lineObjects.push(line);
+      return;
+    }
     if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
     const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
     geometry.applyMatrix4(node.matrixWorld);
@@ -235,8 +243,9 @@ function mergeSemanticModelMeshes(source) {
     mesh.receiveShadow = true;
     mergedRoot.add(mesh);
   });
+  lineObjects.forEach((line) => mergedRoot.add(line));
   source.traverse((node) => {
-    if (node.isMesh) node.geometry?.dispose?.();
+    if (node.isMesh || node.isLineSegments) node.geometry?.dispose?.();
   });
   return mergedRoot;
 }
@@ -258,7 +267,7 @@ function loadModel(type) {
     loader.load(
       assetUrl,
       (gltf) => {
-        const prepared = prepareModel(type, gltf.scene);
+        const prepared = prepareModel(type, mergeSemanticModelMeshes(gltf.scene));
         cache.set(type, prepared);
         loading.delete(type);
         itemSignature = "";

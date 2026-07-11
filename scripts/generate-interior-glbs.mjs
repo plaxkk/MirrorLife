@@ -800,6 +800,109 @@ function serviceCounter() {
   return g;
 }
 
+function addRetailJar(group, x, y, z, scale, bodyColor, capColor) {
+  const jar = createPart(group, "pantry-jar");
+  addMesh(jar, cyl(0.09 * scale, 0.085 * scale, 0.22 * scale, 16), bodyColor, [x, y, z]);
+  addMesh(jar, cyl(0.095 * scale, 0.095 * scale, 0.055 * scale, 16), capColor, [x, y + 0.138 * scale, z]);
+  addMesh(jar, rounded(0.105 * scale, 0.095 * scale, 0.018 * scale, 0.006 * scale), P.cream, [x, y - 0.005 * scale, z + 0.09 * scale], [1, 1, 1], [0, 0, 0], false);
+}
+
+function addRetailCarton(group, x, y, z, scale, color) {
+  const carton = createPart(group, "pantry-carton");
+  addMesh(carton, rounded(0.17 * scale, 0.3 * scale, 0.15 * scale, 0.025 * scale), color, [x, y, z]);
+  addMesh(carton, rounded(0.11 * scale, 0.11 * scale, 0.018 * scale, 0.006 * scale), P.cream, [x, y - 0.015 * scale, z + 0.085 * scale], [1, 1, 1], [0, 0, 0], false);
+}
+
+function addRetailBottle(group, x, y, z, scale, color, capColor) {
+  const bottle = createPart(group, "pantry-bottle");
+  addMesh(bottle, cyl(0.07 * scale, 0.065 * scale, 0.25 * scale, 14), color, [x, y - 0.015 * scale, z]);
+  addMesh(bottle, cyl(0.042 * scale, 0.055 * scale, 0.09 * scale, 14), color, [x, y + 0.15 * scale, z]);
+  addMesh(bottle, cyl(0.046 * scale, 0.046 * scale, 0.035 * scale, 14), capColor, [x, y + 0.215 * scale, z]);
+  addMesh(bottle, rounded(0.085 * scale, 0.09 * scale, 0.016 * scale, 0.006 * scale), P.cream, [x, y - 0.02 * scale, z + 0.07 * scale], [1, 1, 1], [0, 0, 0], false);
+}
+
+function addRetailBasket(group, x, y, z, width = 0.72) {
+  const basket = createPart(group, "woven-basket");
+  addMesh(basket, rounded(width, 0.24, 0.38, 0.055), P.woodDark, [x, y, z]);
+  addMesh(basket, rounded(width - 0.09, 0.16, 0.31, 0.045), P.woodLight, [x, y + 0.06, z]);
+  [-0.12, 0, 0.12].forEach((dy) => addMesh(basket, rounded(width - 0.04, 0.025, 0.4, 0.008), 0x9b622f, [x, y + dy, z]));
+  for (let index = -2; index <= 2; index += 1) {
+    addMesh(basket, rounded(0.025, 0.23, 0.4, 0.008), 0xd79a52, [x + index * width * 0.17, y, z]);
+  }
+  const colors = [P.red, P.yellow, P.leaf, P.blue];
+  [-0.23, -0.08, 0.08, 0.23].forEach((dx, index) => {
+    addMesh(basket, rounded(0.13, 0.12, 0.2, 0.025), colors[index], [x + dx * width / 0.72, y + 0.18, z]);
+  });
+}
+
+function retailShelf() {
+  const g = new THREE.Group();
+  g.name = "retail-shelf";
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const productColors = [P.red, P.yellow, P.leaf, P.blue, P.mint, P.orange];
+
+  const rearPanel = createPart(g, "finished-back-panel");
+  addMesh(rearPanel, rounded(2.16, 1.92, 0.16, 0.045), honey, [-0.08, 1.14, -0.28]);
+  for (let index = -3; index <= 3; index += 1) {
+    addMesh(rearPanel, rounded(0.035, 1.72, 0.025, 0.008), honeyDark, [-0.08 + index * 0.29, 1.16, -0.38], [1, 1, 1], [0, 0, 0], false);
+  }
+  [0.49, 1.02, 1.55].forEach((y) => addMesh(rearPanel, rounded(2.08, 0.1, 0.1, 0.03), honeyDark, [-0.08, y, -0.4]));
+
+  const frame = createPart(g, "two-sided-shelf-frame");
+  [-1.16, 1].forEach((x) => {
+    addMesh(frame, rounded(0.18, 2.14, 0.38, 0.055), honeyDark, [x, 1.15, 0]);
+    addMesh(frame, rounded(0.12, 2.02, 0.32, 0.04), honeyLight, [x, 1.16, 0.01]);
+    addMesh(frame, rounded(0.28, 0.18, 0.5, 0.06), honeyLight, [x, 2.18, 0]);
+  });
+  addMesh(frame, rounded(2.38, 0.22, 0.48, 0.07), honeyDark, [-0.08, 2.17, 0]);
+  addMesh(frame, rounded(2.25, 0.14, 0.42, 0.045), honeyLight, [-0.08, 2.23, 0]);
+
+  const shelves = createPart(g, "four-shelf-boards");
+  [0.3, 0.78, 1.27, 1.75].forEach((y, index) => {
+    addMesh(shelves, rounded(2.22, 0.14, 0.64, 0.045), index === 0 ? honeyDark : honey, [-0.08, y, 0.02]);
+    addMesh(shelves, rounded(2.12, 0.045, 0.57, 0.016), honeyLight, [-0.08, y + 0.085, 0.04]);
+  });
+
+  const goods = createPart(g, "pantry-goods");
+  const shelfRows = [1.91, 1.43, 0.94];
+  shelfRows.forEach((y, row) => {
+    const count = row === 0 ? 10 : 9;
+    for (let index = 0; index < count; index += 1) {
+      const x = -0.96 + index * (1.76 / Math.max(1, count - 1));
+      const scale = row === 0 ? 0.86 : 0.92;
+      const color = productColors[(index + row * 2) % productColors.length];
+      const cap = productColors[(index + row + 1) % productColors.length];
+      if ((index + row) % 3 === 0) addRetailCarton(goods, x, y, 0.27, scale, color);
+      else if ((index + row) % 3 === 1) addRetailJar(goods, x, y, 0.27, scale, color, cap);
+      else addRetailBottle(goods, x, y, 0.27, scale, color, cap);
+    }
+  });
+
+  const baskets = createPart(g, "lower-baskets");
+  addRetailBasket(baskets, -0.61, 0.53, 0.2, 0.82);
+  addRetailBasket(baskets, 0.42, 0.53, 0.2, 0.82);
+
+  const endCap = createPart(g, "promotional-end-cap");
+  addMesh(endCap, rounded(0.48, 1.22, 0.58, 0.06), honeyDark, [1.35, 0.82, 0.03]);
+  addMesh(endCap, rounded(0.38, 1.1, 0.48, 0.045), honey, [1.35, 0.84, 0.05]);
+  [0.42, 0.79, 1.16].forEach((y) => addMesh(endCap, rounded(0.52, 0.11, 0.62, 0.04), honeyLight, [1.35, y, 0.05]));
+  [0.57, 0.94, 1.31].forEach((y, row) => {
+    [-0.1, 0.1].forEach((xOffset, index) => {
+      addRetailCarton(endCap, 1.35 + xOffset, y, 0.28, 0.72, productColors[(row * 2 + index) % productColors.length]);
+    });
+  });
+
+  const plinth = createPart(g, "closed-plinth-and-feet");
+  addMesh(plinth, rounded(2.62, 0.2, 0.72, 0.06), honeyDark, [0.1, 0.16, 0.02]);
+  addMesh(plinth, rounded(2.5, 0.12, 0.66, 0.04), honeyLight, [0.1, 0.27, 0.02]);
+  [[-1.05, -0.24], [0.92, -0.24], [-1.05, 0.27], [1.36, 0.27]].forEach(([x, z]) => {
+    addMesh(plinth, rounded(0.22, 0.16, 0.22, 0.05), honeyDark, [x, 0.06, z]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1003,7 +1106,8 @@ const builders = {
   "record-desk": recordDesk,
   "waiting-chair": waitingChair,
   "teacher-podium": teacherPodium,
-  "service-counter": serviceCounter
+  "service-counter": serviceCounter,
+  "retail-shelf": retailShelf
 };
 
 function parseArgs(argv) {
@@ -1040,7 +1144,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

@@ -1,0 +1,23 @@
+{
+  "model": "retail-shelf",
+  "label": "社区货架",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/market_cafe/produce_stall.png",
+    "dist/assets/interior-props-image2/hospital/medicine_cabinet.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/retail-shelf.png",
+  "dimensions": [1402, 1122],
+  "background": "transparent",
+  "requiredParts": [
+    "two-sided shelf frame",
+    "four shelf boards",
+    "pantry goods",
+    "lower baskets",
+    "end cap",
+    "finished back panel"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the exact isometric design reference. Preserve the warm honey-wood frame, four main shelf boards, dense but readable pantry assortment, exactly two lower woven baskets, the customer-right three-level promotional end cap, feet, finished rear panel and usable two-sided construction. It still requires canonical views, a closed master model and turntable review."
+}

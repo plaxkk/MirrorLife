@@ -6,13 +6,14 @@ const ROOT = process.cwd();
 const VIEW_NAMES = ["front", "back", "left", "right", "top", "bottom", "isometric", "isometric-back"];
 
 function parseArgs(argv) {
-  const args = { input: "", model: "", outputRoot: "public/assets/interiors/references/multiview", size: 1024 };
+  const args = { input: "", model: "", outputRoot: "public/assets/interiors/references/multiview", size: 1024, layout: "" };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--input") args.input = argv[++index];
     else if (arg === "--model") args.model = argv[++index];
     else if (arg === "--output-root") args.outputRoot = argv[++index];
     else if (arg === "--size") args.size = Number(argv[++index]);
+    else if (arg === "--layout") args.layout = argv[++index];
     else if (arg === "--help" || arg === "-h") {
       console.log(`Split a clean 4x2 MirrorLife multiview contact sheet into transparent square references.
 
@@ -24,6 +25,7 @@ Options:
   --model <name>        Runtime model name.
   --output-root <path>  Output root. Default: public/assets/interiors/references/multiview
   --size <pixels>       Square output size. Default: 1024
+  --layout <path>       Optional JSON map of view names to pixel bounds [x0,y0,x1,y1].
 `);
       process.exit(0);
     } else throw new Error(`Unknown argument: ${arg}`);
@@ -32,6 +34,25 @@ Options:
   if (!args.model) throw new Error("Missing --model.");
   if (!Number.isInteger(args.size) || args.size < 512) throw new Error("--size must be an integer of at least 512.");
   return args;
+}
+
+async function loadViewBounds(layoutPath, image) {
+  if (!layoutPath) return null;
+  const parsed = JSON.parse(await fs.readFile(path.resolve(layoutPath), "utf8"));
+  const source = parsed.views || parsed;
+  const result = new Map();
+  VIEW_NAMES.forEach((view) => {
+    const value = source[view];
+    if (!Array.isArray(value) || value.length !== 4 || value.some((item) => !Number.isFinite(Number(item)))) {
+      throw new Error(`Invalid or missing bounds for ${view} in --layout.`);
+    }
+    const [x0, y0, x1, y1] = value.map(Number);
+    if (x0 < 0 || y0 < 0 || x1 > image.width || y1 > image.height || x1 - x0 < 64 || y1 - y0 < 64) {
+      throw new Error(`Out-of-range bounds for ${view} in --layout.`);
+    }
+    result.set(view, { x0: Math.floor(x0), y0: Math.floor(y0), x1: Math.ceil(x1), y1: Math.ceil(y1) });
+  });
+  return result;
 }
 
 function colorDistance(r, g, b, key) {
@@ -149,6 +170,7 @@ async function main() {
   const inputPath = path.resolve(args.input);
   const image = PNG.sync.read(await fs.readFile(inputPath));
   const key = sampleKey(image);
+  const authoredBounds = await loadViewBounds(args.layout, image);
   const outputDir = path.resolve(args.outputRoot, args.model);
   await fs.mkdir(outputDir, { recursive: true });
   const files = [];
@@ -156,7 +178,7 @@ async function main() {
   for (let index = 0; index < VIEW_NAMES.length; index += 1) {
     const column = index % 4;
     const row = Math.floor(index / 4);
-    const bounds = {
+    const bounds = authoredBounds?.get(VIEW_NAMES[index]) || {
       x0: Math.floor(image.width * column / 4),
       x1: Math.floor(image.width * (column + 1) / 4),
       y0: Math.floor(image.height * row / 2),
@@ -173,7 +195,8 @@ async function main() {
     model: args.model,
     sourceSheet: path.relative(ROOT, inputPath).split(path.sep).join("/"),
     generatedAt: new Date().toISOString(),
-    grid: { columns: 4, rows: 2 },
+    grid: authoredBounds ? { mode: "authored-bounds" } : { columns: 4, rows: 2 },
+    layoutFile: args.layout ? path.relative(ROOT, path.resolve(args.layout)).split(path.sep).join("/") : "",
     chromaKey: `#${[key.r, key.g, key.b].map((value) => value.toString(16).padStart(2, "0")).join("")}`,
     outputSize: [args.size, args.size],
     views: VIEW_NAMES.map((view, index) => ({ view, file: files[index], status: "draft" }))
