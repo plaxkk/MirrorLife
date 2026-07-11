@@ -525,6 +525,58 @@ function recordDesk() {
   return g;
 }
 
+function waitingChair() {
+  const g = new THREE.Group();
+  g.name = "waiting-chair";
+  const navy = 0x31496d;
+  const navyDark = 0x203654;
+  const lavender = 0x8fa4e4;
+  const hospitalMint = 0x9ad6c8;
+  const sky = 0x91cbed;
+
+  const beam = createPart(g, "shared-support-beam");
+  addMesh(beam, rounded(2.72, 0.18, 0.18, 0.045), navyDark, [0, 0.57, 0.03]);
+  addMesh(beam, rounded(2.58, 0.055, 0.2, 0.018), navy, [0, 0.68, 0.03]);
+
+  const floorLegs = createPart(g, "two-floor-legs");
+  [-1.12, 1.12].forEach((x) => {
+    addMesh(floorLegs, rounded(0.17, 0.55, 0.17, 0.04), navy, [x, 0.29, 0.03]);
+    addMesh(floorLegs, rounded(0.21, 0.13, 0.76, 0.04), navyDark, [x, 0.07, 0.08]);
+    [-0.27, 0.37].forEach((z) => addMesh(floorLegs, rounded(0.11, 0.025, 0.12, 0.012), P.yellow, [x, 0.15, z]));
+    addMesh(floorLegs, rounded(0.23, 0.11, 0.23, 0.035), navy, [x, 0.57, 0.03]);
+  });
+
+  const rearFrame = createPart(g, "finished-rear-frame");
+  const boundaryX = [-1.28, -0.43, 0.43, 1.28];
+  boundaryX.forEach((x) => {
+    addMesh(rearFrame, rounded(0.1, 0.94, 0.12, 0.035), navyDark, [x, 1.15, -0.24]);
+  });
+  [-0.86, 0, 0.86].forEach((x) => {
+    addMesh(rearFrame, rounded(0.74, 0.12, 0.13, 0.04), navy, [x, 1.59, -0.24]);
+    addMesh(rearFrame, rounded(0.74, 0.1, 0.13, 0.035), navy, [x, 0.82, -0.24]);
+    addMesh(rearFrame, rounded(0.64, 0.48, 0.08, 0.03), navy, [x, 1.29, -0.32]);
+  });
+
+  const colors = [lavender, hospitalMint, sky];
+  [-0.86, 0, 0.86].forEach((x, index) => {
+    const seat = createPart(g, `seat-${index + 1}`);
+    const backrest = createPart(g, `backrest-${index + 1}`);
+    addMesh(seat, rounded(0.82, 0.12, 0.62, 0.05), navy, [x, 0.74, 0.05]);
+    addMesh(seat, rounded(0.72, 0.16, 0.52, 0.065), colors[index], [x, 0.86, 0.08]);
+    addMesh(seat, rounded(0.62, 0.025, 0.39, 0.01), 0xcfe9f0, [x, 0.958, 0.03], [1, 1, 1], [0, 0, 0], false);
+    addMesh(backrest, rounded(0.78, 0.72, 0.14, 0.06), navyDark, [x, 1.31, -0.2]);
+    addMesh(backrest, rounded(0.68, 0.61, 0.15, 0.07), colors[index], [x, 1.32, -0.11]);
+    addMesh(backrest, rounded(0.52, 0.025, 0.08, 0.01), 0xcfe9f0, [x - 0.04, 1.52, -0.02], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const jointCaps = createPart(g, "joint-caps");
+  boundaryX.forEach((x) => {
+    addMesh(jointCaps, cyl(0.075, 0.075, 0.055, 20), P.yellow, [x, 0.9, -0.16], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addMesh(jointCaps, rounded(0.13, 0.13, 0.13, 0.045), P.yellow, [x, 1.62, -0.2]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -725,7 +777,8 @@ const builders = {
   "market-stall": marketStall,
   bench,
   fountain,
-  "record-desk": recordDesk
+  "record-desk": recordDesk,
+  "waiting-chair": waitingChair
 };
 
 function parseArgs(argv) {
@@ -762,7 +815,9 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = name === "record-desk" ? normalizeUpright(build()) : normalize(build());
+  const scene = new Set(["record-desk", "waiting-chair"]).has(name)
+    ? normalizeUpright(build())
+    : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
 }
 

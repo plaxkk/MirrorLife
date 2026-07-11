@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T11:06:44.926Z",
+  "updatedAt": "2026-07-11T11:53:02.105Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T11-06-44-896Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T11-53-02-075Z",
   "imported": [
     {
       "slot": "bed",
@@ -390,6 +390,72 @@
       "importedAt": "2026-07-10T04:11:26.489Z"
     },
     {
+      "slot": "waiting-chair",
+      "label": "家属等候椅",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/waiting-chair.glb",
+      "target": "public/assets/interiors/glb/waiting-chair.glb",
+      "bytes": 1427128,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/waiting-chair/front.png",
+        "public/assets/interiors/references/multiview/waiting-chair/back.png",
+        "public/assets/interiors/references/multiview/waiting-chair/left.png",
+        "public/assets/interiors/references/multiview/waiting-chair/right.png",
+        "public/assets/interiors/references/multiview/waiting-chair/top.png",
+        "public/assets/interiors/references/multiview/waiting-chair/bottom.png",
+        "public/assets/interiors/references/multiview/waiting-chair/isometric.png",
+        "public/assets/interiors/references/multiview/waiting-chair/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/waiting-chair.glb",
+      "masterBytes": 1427128,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T11:52:01.947Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 14420,
+        "webTriangleCount": 14420,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/waiting-chair.glb",
+          "primitiveCount": 55,
+          "trianglePrimitiveCount": 51,
+          "outlinePrimitiveCount": 4,
+          "problemPrimitives": [],
+          "triangleCount": 14420,
+          "vertexCount": 42796,
+          "weldedVertexCount": 7312,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/waiting-chair.glb",
+          "primitiveCount": 55,
+          "trianglePrimitiveCount": 51,
+          "outlinePrimitiveCount": 4,
+          "problemPrimitives": [],
+          "triangleCount": 14420,
+          "vertexCount": 42796,
+          "weldedVertexCount": 7312,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T11:53:02.088Z"
+    },
+    {
       "slot": "reading-corner",
       "label": "阅读角",
       "provider": "hunyuan-multiview",
@@ -526,11 +592,10 @@
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T11:06:44.916Z"
+      "importedAt": "2026-07-11T11:53:02.103Z"
     }
   ],
   "missing": [
-    "waiting-chair",
     "teacher-podium",
     "service-counter",
     "retail-shelf",
