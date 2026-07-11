@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T15:41:24.556Z",
+  "updatedAt": "2026-07-11T16:48:27.651Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T15-41-24-409Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T16-48-27-419Z",
   "imported": [
     {
       "slot": "bed",
@@ -859,6 +859,72 @@
       "importedAt": "2026-07-11T15:41:24.547Z"
     },
     {
+      "slot": "hot-food-counter",
+      "label": "热食台",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/hot-food-counter.glb",
+      "target": "public/assets/interiors/glb/hot-food-counter.glb",
+      "bytes": 1944028,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/hot-food-counter/front.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/back.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/left.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/right.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/top.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/bottom.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/isometric.png",
+        "public/assets/interiors/references/multiview/hot-food-counter/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/hot-food-counter.glb",
+      "masterBytes": 1944028,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T16:47:15.596Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 26564,
+        "webTriangleCount": 26564,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/hot-food-counter.glb",
+          "primitiveCount": 121,
+          "trianglePrimitiveCount": 95,
+          "outlinePrimitiveCount": 26,
+          "problemPrimitives": [],
+          "triangleCount": 26564,
+          "vertexCount": 52550,
+          "weldedVertexCount": 13456,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/hot-food-counter.glb",
+          "primitiveCount": 121,
+          "trianglePrimitiveCount": 95,
+          "outlinePrimitiveCount": 26,
+          "problemPrimitives": [],
+          "triangleCount": 26564,
+          "vertexCount": 52550,
+          "weldedVertexCount": 13456,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T16:48:27.638Z"
+    },
+    {
       "slot": "record-desk",
       "label": "记录桌",
       "provider": "threejs-manual",
@@ -926,7 +992,6 @@
     }
   ],
   "missing": [
-    "hot-food-counter",
     "exchange-board",
     "proposal-podium",
     "notice-board",

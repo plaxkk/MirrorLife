@@ -1082,6 +1082,103 @@ function cafeSeating() {
   return g;
 }
 
+function addHotTray(group, x, y, z) {
+  const tray = createPart(group, "covered-hot-tray");
+  addMesh(tray, rounded(0.56, 0.08, 0.43, 0.035), 0x555d68, [x, y, z]);
+  addMesh(tray, rounded(0.5, 0.08, 0.37, 0.03), P.metal, [x, y + 0.07, z]);
+  addMesh(tray, wedge(0.44, 0.33, 0.1, 0.18), 0xdbe2e8, [x, y + 0.12, z]);
+  addMesh(tray, rounded(0.14, 0.08, 0.08, 0.025), 0x4a5260, [x, y + 0.3, z]);
+  addMesh(tray, rounded(0.06, 0.16, 0.06, 0.018), 0x4a5260, [x - 0.04, y + 0.24, z], [1, 1, 1], [0, 0, Math.PI / 2]);
+}
+
+function addServingBowl(group, x, y, z, color) {
+  const bowl = createPart(group, "serving-bowl");
+  addMesh(bowl, cyl(0.18, 0.13, 0.15, 28), color, [x, y, z]);
+  addMesh(bowl, torus(0.18, 0.025, 10, 32), P.cream, [x, y + 0.085, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(bowl, cyl(0.125, 0.125, 0.012, 28), 0x72564d, [x, y + 0.09, z]);
+}
+
+function addPendantLamp(group, x, y, z) {
+  const lamp = createPart(group, "warm-pendant-lamp");
+  addMesh(lamp, cyl(0.025, 0.025, 0.34, 12), P.woodDark, [x, y + 0.17, z]);
+  addMesh(lamp, cyl(0.1, 0.18, 0.18, 24), P.yellow, [x, y - 0.08, z]);
+  addMesh(lamp, torus(0.18, 0.025, 10, 32), P.orange, [x, y - 0.18, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(lamp, sphere(0.06, 16, 10), P.cream, [x, y - 0.15, z]);
+  addMesh(lamp, torus(0.1, 0.022, 10, 28), P.teal, [x, y + 0.01, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+}
+
+function hotFoodCounter() {
+  const g = new THREE.Group();
+  g.name = "hot-food-counter";
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const coral = 0xe96e5f;
+  const mint = 0x8ecdb0;
+
+  const body = createPart(g, "counter-body");
+  addMesh(body, rounded(2.5, 0.9, 0.8, 0.07), honey, [0, 0.6, 0]);
+  addMesh(body, rounded(2.34, 0.75, 0.66, 0.045), honeyLight, [0, 0.61, 0]);
+  [-1.15, 1.15].forEach((x) => addMesh(body, rounded(0.16, 0.84, 0.74, 0.045), honeyDark, [x, 0.61, 0]));
+
+  const stripedFront = createPart(g, "striped-customer-front");
+  for (let index = 0; index < 9; index += 1) {
+    const x = -0.95 + index * 0.235;
+    addMesh(stripedFront, rounded(0.205, 0.64, 0.06, 0.018), index % 2 ? P.cream : coral, [x, 0.62, 0.43]);
+  }
+  addSunflower(stripedFront, 0, 0.62, 0.48, 0.62);
+
+  const worktop = createPart(g, "worktop-and-serving-ledge");
+  addMesh(worktop, rounded(2.7, 0.18, 1.0, 0.075), P.cream, [0, 1.09, 0]);
+  addMesh(worktop, rounded(2.56, 0.045, 0.9, 0.018), 0xf7dca9, [0, 1.21, 0]);
+  addMesh(worktop, rounded(2.62, 0.14, 0.28, 0.06), mint, [0, 0.98, 0.54]);
+  addMesh(worktop, rounded(2.48, 0.035, 0.08, 0.012), 0xc0ead4, [0, 1.07, 0.66], [1, 1, 1], [0, 0, 0], false);
+
+  const hotTrays = createPart(g, "three-hot-trays");
+  [-0.78, -0.17, 0.44].forEach((x) => addHotTray(hotTrays, x, 1.28, 0.02));
+
+  const bowls = createPart(g, "two-serving-bowls");
+  addServingBowl(bowls, 0.85, 1.3, 0.02, mint);
+  addServingBowl(bowls, 1.16, 1.3, 0.02, coral);
+
+  const utensils = createPart(g, "ladle-and-tongs");
+  addMesh(utensils, sphere(0.105, 18, 10), P.metal, [0.72, 1.3, 0.33], [1, 0.35, 1], [0, 0, 0], false);
+  addMesh(utensils, cyl(0.022, 0.022, 0.45, 12), P.woodDark, [0.93, 1.31, 0.33], [1, 1, 1], [0, 0, Math.PI / 2]);
+  [-0.04, 0.04].forEach((offset) => {
+    addMesh(utensils, rounded(0.035, 0.035, 0.48, 0.01), P.metal, [1.08 + offset, 1.33, 0.34], [1, 1, 1], [0, -0.72, 0]);
+    addMesh(utensils, rounded(0.09, 0.035, 0.12, 0.01), 0x59616d, [1.25 + offset, 1.33, 0.19], [1, 1, 1], [0, -0.72, 0]);
+  });
+
+  const rearStorage = createPart(g, "rear-storage");
+  [-0.55, 0.3].forEach((x) => {
+    addMesh(rearStorage, rounded(0.62, 0.26, 0.06, 0.02), honeyDark, [x, 0.79, -0.43]);
+    addMesh(rearStorage, rounded(0.52, 0.18, 0.035, 0.012), honeyLight, [x, 0.79, -0.47]);
+    addMesh(rearStorage, sphere(0.045, 16, 10), P.woodDark, [x, 0.79, -0.51]);
+  });
+  addMesh(rearStorage, rounded(0.68, 0.56, 0.07, 0.025), honeyDark, [0.3, 0.44, -0.43]);
+  addMesh(rearStorage, rounded(0.58, 0.46, 0.04, 0.015), honeyLight, [0.3, 0.44, -0.48]);
+  addMesh(rearStorage, sphere(0.045, 16, 10), P.woodDark, [0.05, 0.46, -0.52]);
+  addMesh(rearStorage, rounded(0.62, 0.48, 0.58, 0.04), honeyDark, [0.9, 0.43, -0.05]);
+  addMesh(rearStorage, rounded(0.5, 0.36, 0.5, 0.025), honeyLight, [0.9, 0.45, -0.04]);
+
+  const backsplash = createPart(g, "finished-backsplash");
+  addMesh(backsplash, rounded(2.42, 0.36, 0.12, 0.045), honey, [0, 1.38, -0.42]);
+  addMesh(backsplash, rounded(2.28, 0.22, 0.055, 0.02), honeyLight, [0, 1.39, -0.49]);
+
+  const overhead = createPart(g, "overhead-rail-and-three-lamps");
+  [-1.08, 1.08].forEach((x) => addMesh(overhead, rounded(0.14, 1.25, 0.14, 0.04), P.woodDark, [x, 1.96, -0.35]));
+  addMesh(overhead, rounded(2.34, 0.16, 0.18, 0.05), P.woodDark, [0, 2.55, -0.35]);
+  [-0.72, 0, 0.72].forEach((x) => addPendantLamp(overhead, x, 2.23, -0.35));
+
+  const plinth = createPart(g, "closed-plinth-and-feet");
+  addMesh(plinth, rounded(2.66, 0.2, 0.88, 0.065), honeyDark, [0, 0.16, 0]);
+  addMesh(plinth, rounded(2.56, 0.12, 0.8, 0.04), honeyLight, [0, 0.27, 0]);
+  [[-1.15, -0.32], [1.15, -0.32], [-1.15, 0.32], [1.15, 0.32]].forEach(([x, z]) => {
+    addMesh(plinth, cyl(0.11, 0.12, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -1288,7 +1385,8 @@ const builders = {
   "service-counter": serviceCounter,
   "retail-shelf": retailShelf,
   "supply-crate": supplyCrate,
-  "cafe-seating": cafeSeating
+  "cafe-seating": cafeSeating,
+  "hot-food-counter": hotFoodCounter
 };
 
 function parseArgs(argv) {
@@ -1325,7 +1423,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
