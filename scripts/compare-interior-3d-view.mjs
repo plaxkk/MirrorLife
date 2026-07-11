@@ -145,10 +145,30 @@ async function main() {
     && ["silhouetteCoherent", "hiddenSurfacesComplete", "noFloatingParts", "humanApproved", "passed"]
       .every((field) => turntable[field] === true)
   );
-  const complete = canonicalViewsApproved && semanticInventoryApproved && turntableApproved;
+  const proof = report.productionProof || {};
+  const productionProofApproved = policy.requireProductionProof === false || (
+    Boolean(proof.authoredBy)
+    && Boolean(proof.authoringTool)
+    && [
+      "sourceWasNotSingleViewExtrusion",
+      "manualGeometryCorrection",
+      "manualTopologyReview",
+      "realWorldScaleVerified",
+      "hiddenGeometryVerified",
+      "materialPaletteVerified",
+      "masterAssetReviewed",
+      "webLodReviewed"
+    ].every((field) => proof[field] === true)
+    && ["width", "height", "depth"].every((axis) => (
+      Number.isFinite(Number(proof.dimensionsMeters?.[axis]))
+      && Number(proof.dimensionsMeters[axis]) > 0
+    ))
+  );
+  const complete = canonicalViewsApproved && semanticInventoryApproved && turntableApproved && productionProofApproved;
   report.canonicalViewsApproved = canonicalViewsApproved;
   report.semanticInventoryApproved = semanticInventoryApproved;
   report.turntableApproved = turntableApproved;
+  report.productionProofApproved = productionProofApproved;
   report.status = complete ? "approved" : "draft";
   report.reviewer = complete ? args.reviewer : report.reviewer || "";
   report.approvedAt = complete ? new Date().toISOString() : "";

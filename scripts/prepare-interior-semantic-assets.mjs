@@ -53,7 +53,52 @@ ${item.requiredParts.map((part) => `- ${part}`).join("\n")}
 - Keep every named component independently inspectable in the editable master.
 - Preserve an unsimplified master GLB or Blender file, then derive a browser LOD.
 - Reject floating parts, open boundaries, generic substitutions, omitted backsides and texture-only fake geometry.
+- Treat automated image-to-3D and procedural Three.js output as blockout only. Manually correct geometry, topology, scale and materials before approval.
+- Record the authoring tool, author, real-world dimensions and separate master/Web LOD reviews in review.draft.json.
 `;
+}
+
+function buildDraftReview(item) {
+  return {
+    model: item.model,
+    status: "draft",
+    reviewer: "",
+    approvedAt: "",
+    semanticInventory: item.requiredParts.map((part) => ({
+      part,
+      present: false,
+      shapeMatched: false,
+      placementMatched: false,
+      materialMatched: false,
+      notes: ""
+    })),
+    productionProof: {
+      authoredBy: "",
+      authoringTool: "",
+      sourceWasNotSingleViewExtrusion: false,
+      manualGeometryCorrection: false,
+      manualTopologyReview: false,
+      realWorldScaleVerified: false,
+      hiddenGeometryVerified: false,
+      materialPaletteVerified: false,
+      masterAssetReviewed: false,
+      webLodReviewed: false,
+      dimensionsMeters: { width: 0, height: 0, depth: 0 },
+      notes: ""
+    },
+    turntable: {
+      minimumFrames: 12,
+      frameFiles: Array.from({ length: 12 }, (_, index) => (
+        `renders/turntable/${String(index).padStart(3, "0")}.png`
+      )),
+      silhouetteCoherent: false,
+      hiddenSurfacesComplete: false,
+      noFloatingParts: false,
+      humanApproved: false,
+      passed: false
+    },
+    notes: ""
+  };
 }
 
 async function main() {
@@ -111,12 +156,17 @@ async function main() {
         master: `master/${item.model}.glb`,
         web: `web/${item.model}.glb`,
         canonicalRenders: "renders/{front,back,left,right,top,bottom,isometric}.png",
-        turntable: "renders/turntable/000.png ... 011.png"
+        turntable: "renders/turntable/000.png ... 011.png",
+        review: "review.draft.json"
       }
     };
     await fs.writeFile(path.join(packetRoot, "packet.json"), `${JSON.stringify(packet, null, 2)}\n`);
     await fs.writeFile(path.join(packetRoot, "REFERENCE_PROMPT.md"), `${buildReferencePrompt(item)}\n`);
     await fs.writeFile(path.join(packetRoot, "RECONSTRUCTION_PROMPT.md"), buildReconstructionPrompt(item, relative(referenceFile)));
+    const reviewPath = path.join(packetRoot, "review.draft.json");
+    if (!await exists(reviewPath)) {
+      await fs.writeFile(reviewPath, `${JSON.stringify(buildDraftReview(item), null, 2)}\n`);
+    }
     queue.push({
       model: item.model,
       label: item.label,

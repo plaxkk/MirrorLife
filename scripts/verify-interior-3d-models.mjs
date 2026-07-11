@@ -264,6 +264,30 @@ async function main() {
                 if (turntable[field] !== true) failures.push(`${slot.slot}: turntable has not passed ${field}`);
               }
             }
+            if (policy.requireProductionProof !== false) {
+              const proof = review.productionProof || {};
+              const requiredProof = [
+                "sourceWasNotSingleViewExtrusion",
+                "manualGeometryCorrection",
+                "manualTopologyReview",
+                "realWorldScaleVerified",
+                "hiddenGeometryVerified",
+                "materialPaletteVerified",
+                "masterAssetReviewed",
+                "webLodReviewed"
+              ];
+              if (!proof.authoredBy) failures.push(`${slot.slot}: production proof is missing authoredBy`);
+              if (!proof.authoringTool) failures.push(`${slot.slot}: production proof is missing authoringTool`);
+              for (const field of requiredProof) {
+                if (proof[field] !== true) failures.push(`${slot.slot}: production proof has not passed ${field}`);
+              }
+              const dimensions = proof.dimensionsMeters || {};
+              for (const axis of ["width", "height", "depth"]) {
+                if (!Number.isFinite(Number(dimensions[axis])) || Number(dimensions[axis]) <= 0) {
+                  failures.push(`${slot.slot}: production proof has invalid dimensionsMeters.${axis}`);
+                }
+              }
+            }
           }
         }
 

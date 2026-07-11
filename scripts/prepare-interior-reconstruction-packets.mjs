@@ -92,6 +92,9 @@ function makeChecklist(slot, views, minimumFrames) {
 - [ ] Front, back, sides, top and underside are intentionally modeled.
 - [ ] No open boundaries or non-manifold triangle edges remain.
 - [ ] The master asset is preserved before Web optimization.
+- [ ] Automated reconstruction has been manually corrected; a raw image-to-3D result is not accepted.
+- [ ] The asset uses a documented real-world scale and has been checked against gameplay clearance.
+- [ ] Materials and color blocks were reviewed on the master and Web LOD separately.
 
 ## Canonical views
 
@@ -146,6 +149,20 @@ function makeDraftReview(slot, views, minimumFrames, packetRoot) {
       humanApproved: false,
       passed: false
     },
+    productionProof: {
+      authoredBy: "",
+      authoringTool: "",
+      sourceWasNotSingleViewExtrusion: false,
+      manualGeometryCorrection: false,
+      manualTopologyReview: false,
+      realWorldScaleVerified: false,
+      hiddenGeometryVerified: false,
+      materialPaletteVerified: false,
+      masterAssetReviewed: false,
+      webLodReviewed: false,
+      dimensionsMeters: { width: 0, height: 0, depth: 0 },
+      notes: ""
+    },
     notes: ""
   };
 }
@@ -166,6 +183,14 @@ function mergeDraftReview(base, existing) {
       ...(existing.turntable || {}),
       minimumFrames: base.turntable.minimumFrames,
       frameFiles
+    },
+    productionProof: {
+      ...base.productionProof,
+      ...(existing.productionProof || {}),
+      dimensionsMeters: {
+        ...base.productionProof.dimensionsMeters,
+        ...(existing.productionProof?.dimensionsMeters || {})
+      }
     }
   };
 }

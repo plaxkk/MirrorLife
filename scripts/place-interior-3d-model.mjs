@@ -64,7 +64,7 @@ Examples:
   npm run place:interior-3d -- --slot counter --file ~/Downloads/tripo.glb --import-now
 
 Options:
-  --provider <name>  Source provider. Use tripo-multiview, hunyuan-multiview, or blender-manual for release assets.
+  --provider <name>  Source provider. Release assets require manually corrected multiview reconstruction or blender-manual.
   --config <path>    Model slot mapping. Default: ${CONFIG_PATH}
   --slot <slot>      Runtime slot name, such as bed, counter, shelf.
   --file <path>      Downloaded GLB file.
@@ -212,6 +212,31 @@ async function main() {
         || ["silhouetteCoherent", "hiddenSurfacesComplete", "noFloatingParts", "humanApproved", "passed"]
           .some((field) => turntable[field] !== true)) {
         throw new Error(`release-candidate requires an approved ${minimumFrames}-frame 360-degree turntable review.`);
+      }
+    }
+    if (policy.requireProductionProof !== false) {
+      const proof = review.productionProof || {};
+      const requiredProof = [
+        "sourceWasNotSingleViewExtrusion",
+        "manualGeometryCorrection",
+        "manualTopologyReview",
+        "realWorldScaleVerified",
+        "hiddenGeometryVerified",
+        "materialPaletteVerified",
+        "masterAssetReviewed",
+        "webLodReviewed"
+      ];
+      const missingProof = requiredProof.filter((field) => proof[field] !== true);
+      const dimensions = proof.dimensionsMeters || {};
+      const invalidDimensions = ["width", "height", "depth"]
+        .filter((axis) => !Number.isFinite(Number(dimensions[axis])) || Number(dimensions[axis]) <= 0);
+      if (!proof.authoredBy || !proof.authoringTool || missingProof.length || invalidDimensions.length) {
+        throw new Error(`release-candidate production proof is incomplete: ${[
+          ...(!proof.authoredBy ? ["authoredBy"] : []),
+          ...(!proof.authoringTool ? ["authoringTool"] : []),
+          ...missingProof,
+          ...invalidDimensions.map((axis) => `dimensionsMeters.${axis}`)
+        ].join(", ")}`);
       }
     }
   }

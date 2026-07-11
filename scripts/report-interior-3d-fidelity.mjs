@@ -97,6 +97,26 @@ async function main() {
               .every((field) => turntable[field] === true);
           if (!turntableComplete) issues.push("360 turntable review incomplete");
         }
+        if (policy.requireProductionProof !== false) {
+          const proof = review.productionProof || {};
+          const proofComplete = Boolean(proof.authoredBy)
+            && Boolean(proof.authoringTool)
+            && [
+              "sourceWasNotSingleViewExtrusion",
+              "manualGeometryCorrection",
+              "manualTopologyReview",
+              "realWorldScaleVerified",
+              "hiddenGeometryVerified",
+              "materialPaletteVerified",
+              "masterAssetReviewed",
+              "webLodReviewed"
+            ].every((field) => proof[field] === true)
+            && ["width", "height", "depth"].every((axis) => (
+              Number.isFinite(Number(proof.dimensionsMeters?.[axis]))
+              && Number(proof.dimensionsMeters[axis]) > 0
+            ));
+          if (!proofComplete) issues.push("manual production proof incomplete");
+        }
       }
     }
 
