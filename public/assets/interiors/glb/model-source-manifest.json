@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T22:21:01.992Z",
+  "updatedAt": "2026-07-11T22:46:14.880Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T22-21-01-501Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T22-46-14-442Z",
   "imported": [
     {
       "slot": "bed",
@@ -1451,10 +1451,75 @@
         }
       },
       "importedAt": "2026-07-11T22:21:01.989Z"
+    },
+    {
+      "slot": "archive-cabinet",
+      "label": "边界档案柜",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/archive-cabinet.glb",
+      "target": "public/assets/interiors/glb/archive-cabinet.glb",
+      "bytes": 2247332,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/archive-cabinet/front.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/back.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/left.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/right.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/top.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/bottom.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/isometric.png",
+        "public/assets/interiors/references/multiview/archive-cabinet/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/archive-cabinet.glb",
+      "masterBytes": 2247332,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T22:41:40.558Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 25184,
+        "webTriangleCount": 25184,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/archive-cabinet.glb",
+          "primitiveCount": 90,
+          "trianglePrimitiveCount": 89,
+          "outlinePrimitiveCount": 1,
+          "problemPrimitives": [],
+          "triangleCount": 25184,
+          "vertexCount": 66528,
+          "weldedVertexCount": 12768,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/archive-cabinet.glb",
+          "primitiveCount": 90,
+          "trianglePrimitiveCount": 89,
+          "outlinePrimitiveCount": 1,
+          "problemPrimitives": [],
+          "triangleCount": 25184,
+          "vertexCount": 66528,
+          "weldedVertexCount": 12768,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T22:46:14.878Z"
     }
   ],
   "missing": [
-    "archive-cabinet",
     "calming-chair",
     "home-bed",
     "bookcase",

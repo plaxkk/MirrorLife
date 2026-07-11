@@ -1818,6 +1818,88 @@ function mediationPodium() {
   return g;
 }
 
+function addArchiveDrawer(group, x, y, color, index) {
+  const drawer = createPart(group, `consent-drawer-${index}`);
+  const honey = 0xc98035;
+  const brass = 0xe0a52f;
+  addMesh(drawer, rounded(0.64, 0.52, 0.68, 0.07), 0xf6dfb4, [x, y, 0.06]);
+  addMesh(drawer, rounded(0.58, 0.46, 0.09, 0.035), color, [x, y, 0.43]);
+  addMesh(drawer, rounded(0.48, 0.36, 0.035, 0.014), color, [x, y, 0.49], [1, 1, 1], [0, 0, 0], false);
+
+  const label = createPart(drawer, `blank-label-holder-${index}`);
+  addMesh(label, rounded(0.31, 0.17, 0.08, 0.035), brass, [x, y + 0.08, 0.52]);
+  addMesh(label, rounded(0.23, 0.1, 0.045, 0.02), P.paper, [x, y + 0.08, 0.575], [1, 1, 1], [0, 0, 0], false);
+  [-0.135, 0.135].forEach((dx) => {
+    addMesh(label, sphere(0.018, 12, 8), honey, [x + dx, y + 0.08, 0.575]);
+  });
+
+  const handle = createPart(drawer, `separate-pull-handle-${index}`);
+  addMesh(handle, rounded(0.34, 0.065, 0.08, 0.025), brass, [x, y - 0.11, 0.575]);
+  [-0.13, 0.13].forEach((dx) => {
+    addMesh(handle, rounded(0.065, 0.11, 0.08, 0.024), brass, [x + dx, y - 0.075, 0.54]);
+  });
+}
+
+function archiveCabinet() {
+  const g = new THREE.Group();
+  g.name = "archive-cabinet";
+  const cream = 0xf6dfb4;
+  const creamLight = 0xffefce;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const brass = 0xe0a52f;
+  const drawerColors = [0xee806b, 0x8fcdb4, 0x67a9dc, 0xf0b442, 0xa78ac7, 0x78bdc0];
+
+  const body = createPart(g, "cabinet-body-closed-shell-and-recessed-plinth");
+  addMesh(body, rounded(1.68, 2.38, 0.86, 0.13), honeyDark, [0, 1.25, 0]);
+  addMesh(body, rounded(1.56, 2.26, 0.8, 0.11), cream, [0, 1.28, 0.015]);
+  addMesh(body, rounded(1.5, 0.2, 0.88, 0.07), honey, [0, 0.18, 0]);
+  addMesh(body, rounded(1.38, 0.1, 0.72, 0.035), creamLight, [0, 0.31, 0.02]);
+  [-0.66, 0.66].forEach((x) => {
+    addMesh(body, rounded(0.18, 2.02, 0.74, 0.06), creamLight, [x, 1.32, 0.015]);
+    addMesh(body, rounded(0.08, 1.86, 0.77, 0.03), honeyLight, [x, 1.32, 0.02]);
+  });
+  [[-0.62, -0.29], [0.62, -0.29], [-0.62, 0.29], [0.62, 0.29]].forEach(([x, z]) => {
+    addMesh(body, rounded(0.22, 0.16, 0.22, 0.055), honeyDark, [x, 0.08, z]);
+  });
+
+  const drawers = createPart(g, "exactly-six-colored-consent-drawers");
+  const xs = [-0.36, 0.36];
+  const ys = [0.61, 1.17, 1.73];
+  let drawerIndex = 1;
+  ys.forEach((y, row) => {
+    xs.forEach((x, column) => {
+      addArchiveDrawer(drawers, x, y, drawerColors[row * 2 + column], drawerIndex);
+      drawerIndex += 1;
+    });
+  });
+
+  const header = createPart(g, "privacy-header-and-compact-lock-panel");
+  addMesh(header, rounded(1.3, 0.32, 0.12, 0.055), creamLight, [0, 2.15, 0.41]);
+  addMesh(header, rounded(0.54, 0.25, 0.09, 0.035), honeyLight, [0.35, 2.15, 0.49]);
+  addMesh(header, cyl(0.09, 0.09, 0.055, 20), honeyDark, [0.16, 2.15, 0.56], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(header, rounded(0.025, 0.09, 0.025, 0.008), P.ink, [0.16, 2.14, 0.594]);
+  [0x4abf78, 0xf0c94a, 0xe95656].forEach((color, index) => {
+    addMesh(header, sphere(0.032, 14, 9), color, [0.36 + index * 0.11, 2.15, 0.565]);
+  });
+
+  const cornice = createPart(g, "substantial-rounded-top-cornice");
+  addMesh(cornice, rounded(1.82, 0.24, 1, 0.11), honeyDark, [0, 2.48, 0]);
+  addMesh(cornice, rounded(1.72, 0.22, 0.94, 0.1), honeyLight, [0, 2.55, 0]);
+  addMesh(cornice, rounded(1.43, 0.035, 0.69, 0.012), creamLight, [0, 2.675, 0.02], [1, 1, 1], [0, 0, 0], false);
+
+  const back = createPart(g, "fully-finished-rear-panel-with-seal-and-service-rail");
+  addMesh(back, rounded(1.32, 1.84, 0.08, 0.03), honey, [0, 1.35, -0.45]);
+  addMesh(back, rounded(1.18, 1.66, 0.045, 0.016), creamLight, [0, 1.35, -0.505]);
+  addMesh(back, rounded(0.98, 0.07, 0.055, 0.022), honeyLight, [0, 0.54, -0.54]);
+  addMesh(back, rounded(0.98, 0.07, 0.055, 0.022), honeyLight, [0, 2.16, -0.54]);
+  addMesh(back, torus(0.22, 0.045, 12, 30), brass, [0, 1.4, -0.55]);
+  addMesh(back, sphere(0.075, 18, 12), honeyDark, [0, 1.47, -0.59], [1, 1.05, 0.45]);
+  addMesh(back, rounded(0.08, 0.22, 0.05, 0.02), honeyDark, [0, 1.33, -0.59]);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2032,7 +2114,8 @@ const builders = {
   "audience-seating": audienceSeating,
   "office-workstation": officeWorkstation,
   "collaboration-board": collaborationBoard,
-  "mediation-podium": mediationPodium
+  "mediation-podium": mediationPodium,
+  "archive-cabinet": archiveCabinet
 };
 
 function parseArgs(argv) {
@@ -2069,7 +2152,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

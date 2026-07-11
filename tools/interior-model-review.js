@@ -23,7 +23,8 @@ const SLOT_ASSETS = {
   "audience-seating": ["/assets/interiors/references/runtime-semantic/audience-seating.png", "旁听席"],
   "office-workstation": ["/assets/interiors/references/runtime-semantic/office-workstation.png", "协作工位"],
   "collaboration-board": ["/assets/interiors/references/runtime-semantic/collaboration-board.png", "协作板"],
-  "mediation-podium": ["/assets/interiors/references/runtime-semantic/mediation-podium.png", "调停席"]
+  "mediation-podium": ["/assets/interiors/references/runtime-semantic/mediation-podium.png", "调停席"],
+  "archive-cabinet": ["/assets/interiors/references/runtime-semantic/archive-cabinet.png", "边界档案柜"]
 };
 
 const params = new URLSearchParams(window.location.search);
