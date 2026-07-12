@@ -27,7 +27,8 @@ const SLOT_ASSETS = {
   "archive-cabinet": ["/assets/interiors/references/runtime-semantic/archive-cabinet.png", "边界档案柜"],
   "calming-chair": ["/assets/interiors/references/runtime-semantic/calming-chair.png", "情绪安抚角"],
   "home-bed": ["/assets/interiors/references/runtime-semantic/home-bed.png", "卧榻"],
-  "bookcase": ["/assets/interiors/references/runtime-semantic/bookcase.png", "故事书架"]
+  "bookcase": ["/assets/interiors/references/runtime-semantic/bookcase.png", "故事书架"],
+  "garden-tool-shed": ["/assets/interiors/references/runtime-semantic/garden-tool-shed.png", "园艺工具棚"]
 };
 
 const params = new URLSearchParams(window.location.search);

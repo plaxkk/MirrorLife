@@ -2113,6 +2113,93 @@ function bookcase() {
   return g;
 }
 
+function addGardenWateringCan(group, x, z, color, side) {
+  const can = createPart(group, side < 0 ? "left-watering-can" : "right-watering-can");
+  addMesh(can, cyl(0.2, 0.23, 0.32, 24), color, [x, 0.93, z]);
+  addMesh(can, torus(0.2, 0.045, 10, 28), color, [x, 1.18, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addCylinderBetween(can, [x + side * 0.14, 1.02, z], [x + side * 0.47, 1.22, z], 0.055, color, "long-spout");
+  addMesh(can, cyl(0.11, 0.07, 0.08, 18), color, [x + side * 0.5, 1.25, z], [1, 1, 1], [0, 0, side * Math.PI / 3]);
+  addMesh(can, cyl(0.09, 0.09, 0.055, 18), P.cream, [x, 1.1, z], [1, 1, 1], [0, 0, 0], false);
+}
+
+function gardenToolShed() {
+  const g = new THREE.Group();
+  g.name = "garden-tool-shed";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const sage = 0x7f9859;
+  const sageDark = 0x465f3e;
+  const cream = 0xffefce;
+  const coral = 0xee806b;
+
+  const rear = createPart(g, "finished-cream-rear-wall-with-rear-trim");
+  addMesh(rear, rounded(1.7, 2.1, 0.16, 0.07), honeyDark, [0, 1.31, -0.33]);
+  addMesh(rear, rounded(1.54, 1.95, 0.08, 0.035), cream, [0, 1.32, -0.44]);
+  [-0.52, 0, 0.52].forEach((x) => addMesh(rear, rounded(0.035, 1.78, 0.035, 0.012), honeyLight, [x, 1.32, -0.49], [1, 1, 1], [0, 0, 0], false));
+
+  const frame = createPart(g, "open-shed-frame-side-braces-and-four-feet");
+  [-0.88, 0.88].forEach((x) => {
+    addMesh(frame, rounded(0.16, 2.24, 0.18, 0.055), honey, [x, 1.18, 0]);
+    addMesh(frame, rounded(0.12, 0.95, 0.13, 0.04), honeyLight, [x, 1.67, 0.12], [1, 1, 1], [0.42, 0, x < 0 ? 0.28 : -0.28]);
+    addMesh(frame, rounded(0.12, 0.82, 0.13, 0.04), honeyLight, [x, 0.52, 0.12], [1, 1, 1], [-0.42, 0, x < 0 ? -0.28 : 0.28]);
+  });
+  addMesh(frame, rounded(1.92, 0.16, 0.78, 0.06), honeyDark, [0, 0.16, 0]);
+  [[-0.82, -0.25], [0.82, -0.25], [-0.82, 0.25], [0.82, 0.25]].forEach(([x, z]) => {
+    addMesh(frame, rounded(0.17, 0.16, 0.17, 0.05), sageDark, [x, 0.07, z]);
+  });
+
+  const roof = createPart(g, "pitched-sage-green-roof-ridge-and-rain-gutter");
+  addMesh(roof, rounded(2.12, 0.14, 0.88, 0.055), sage, [0, 2.42, -0.2], [1, 1, 1], [0.38, 0, 0]);
+  addMesh(roof, rounded(2.12, 0.14, 0.88, 0.055), sage, [0, 2.42, 0.2], [1, 1, 1], [-0.38, 0, 0]);
+  addMesh(roof, rounded(2.18, 0.16, 0.16, 0.055), sageDark, [0, 2.61, 0]);
+  addMesh(roof, cyl(0.065, 0.065, 2.1, 16), sageDark, [0, 2.2, 0.56], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(roof, cyl(0.055, 0.055, 1.9, 14), sageDark, [1.01, 1.26, 0.5]);
+
+  const pegboard = createPart(g, "large-green-pegboard-with-dedicated-tool-hooks");
+  addMesh(pegboard, rounded(1.5, 1.02, 0.12, 0.05), sageDark, [0, 1.58, -0.18]);
+  addMesh(pegboard, rounded(1.38, 0.9, 0.055, 0.022), 0x637a4e, [0, 1.58, -0.1]);
+  for (let row = 0; row < 5; row += 1) {
+    for (let column = 0; column < 8; column += 1) {
+      addMesh(pegboard, cyl(0.018, 0.018, 0.025, 10), honeyDark, [-0.58 + column * 0.17, 1.25 + row * 0.16, -0.06], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+    }
+  }
+  [-0.5, 0, 0.5].forEach((x) => {
+    addMesh(pegboard, rounded(0.18, 0.04, 0.05, 0.015), P.metal, [x, 2, 0]);
+  });
+
+  const shovel = createPart(g, "full-size-shovel-with-grip-and-metal-blade");
+  addMesh(shovel, rounded(0.07, 1.05, 0.07, 0.022), honey, [-0.48, 1.48, 0.03]);
+  addMesh(shovel, torus(0.14, 0.04, 10, 24), sageDark, [-0.48, 2.02, 0.03], [0.72, 1, 1]);
+  addMesh(shovel, rounded(0.3, 0.38, 0.08, 0.03), P.metal, [-0.48, 0.82, 0.03], [1, 1, 1], [0, 0, 0]);
+  addMesh(shovel, rounded(0.18, 0.15, 0.085, 0.032), P.metal, [-0.48, 0.63, 0.03]);
+
+  const rake = createPart(g, "full-size-rake-with-eight-tines");
+  addMesh(rake, rounded(0.07, 1.1, 0.07, 0.022), honey, [0, 1.45, 0.03]);
+  addMesh(rake, rounded(0.48, 0.1, 0.08, 0.028), sageDark, [0, 2.02, 0.03]);
+  for (let index = 0; index < 8; index += 1) {
+    addMesh(rake, rounded(0.025, 0.22, 0.045, 0.009), P.metal, [-0.2 + index * 0.057, 1.88, 0.03]);
+  }
+
+  const handTools = createPart(g, "pruning-shears-and-hand-trowel");
+  addMesh(handTools, rounded(0.07, 0.52, 0.07, 0.022), coral, [0.37, 1.55, 0.03], [1, 1, 1], [0, 0, 0.24]);
+  addMesh(handTools, rounded(0.07, 0.52, 0.07, 0.022), coral, [0.5, 1.55, 0.03], [1, 1, 1], [0, 0, -0.24]);
+  addMesh(handTools, sphere(0.08, 14, 9), P.metal, [0.435, 1.81, 0.03], [1.4, 0.55, 0.55]);
+  addMesh(handTools, rounded(0.07, 0.55, 0.07, 0.022), honey, [0.68, 1.55, 0.03]);
+  addMesh(handTools, rounded(0.24, 0.3, 0.08, 0.03), P.metal, [0.68, 1.18, 0.03]);
+
+  const storage = createPart(g, "broad-lower-storage-shelf-two-blank-label-bins-and-watering-cans");
+  addMesh(storage, rounded(1.7, 0.14, 0.72, 0.055), honeyLight, [0, 0.72, 0.08]);
+  addMesh(storage, rounded(1.72, 0.14, 0.7, 0.05), honeyDark, [0, 0.27, 0.04]);
+  [-0.43, 0.43].forEach((x) => {
+    addMesh(storage, rounded(0.7, 0.34, 0.5, 0.065), honey, [x, 0.48, 0.02]);
+    addMesh(storage, rounded(0.3, 0.12, 0.05, 0.02), cream, [x, 0.48, 0.3], [1, 1, 1], [0, 0, 0], false);
+  });
+  addGardenWateringCan(storage, -0.35, 0.2, 0x4c9b90, -1);
+  addGardenWateringCan(storage, 0.38, 0.2, coral, 1);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2331,7 +2418,8 @@ const builders = {
   "archive-cabinet": archiveCabinet,
   "calming-chair": calmingChair,
   "home-bed": homeBed,
-  bookcase
+  bookcase,
+  "garden-tool-shed": gardenToolShed
 };
 
 function parseArgs(argv) {
@@ -2368,7 +2456,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

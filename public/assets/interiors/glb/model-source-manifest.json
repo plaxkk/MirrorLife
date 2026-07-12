@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T23:59:52.539Z",
+  "updatedAt": "2026-07-12T00:19:33.382Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T23-59-52-108Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T00-19-33-028Z",
   "imported": [
     {
       "slot": "bed",
@@ -1715,10 +1715,75 @@
         }
       },
       "importedAt": "2026-07-11T23:59:52.536Z"
+    },
+    {
+      "slot": "garden-tool-shed",
+      "label": "园艺工具棚",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/garden-tool-shed.glb",
+      "target": "public/assets/interiors/glb/garden-tool-shed.glb",
+      "bytes": 1672884,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/garden-tool-shed/front.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/back.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/left.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/right.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/top.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/bottom.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/isometric.png",
+        "public/assets/interiors/references/multiview/garden-tool-shed/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/garden-tool-shed.glb",
+      "masterBytes": 1672884,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-12T00:14:44.238Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 18236,
+        "webTriangleCount": 18236,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/garden-tool-shed.glb",
+          "primitiveCount": 112,
+          "trianglePrimitiveCount": 101,
+          "outlinePrimitiveCount": 11,
+          "problemPrimitives": [],
+          "triangleCount": 18236,
+          "vertexCount": 47031,
+          "weldedVertexCount": 9314,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/garden-tool-shed.glb",
+          "primitiveCount": 112,
+          "trianglePrimitiveCount": 101,
+          "outlinePrimitiveCount": 11,
+          "problemPrimitives": [],
+          "triangleCount": 18236,
+          "vertexCount": 47031,
+          "weldedVertexCount": 9314,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-12T00:19:33.380Z"
     }
   ],
   "missing": [
-    "garden-tool-shed",
     "gallery-wall",
     "rehearsal-stage",
     "story-table",

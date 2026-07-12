@@ -1,0 +1,25 @@
+{
+  "model": "garden-tool-shed",
+  "label": "园艺工具棚",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/greenhouse_garden/plant_shelf.png",
+    "public/assets/mirrorlife-interior-prop-design-board.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/garden-tool-shed.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "shed frame",
+    "green roof",
+    "pegboard",
+    "shovel",
+    "rake",
+    "watering cans",
+    "lower storage",
+    "finished rear wall"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the open honey-oak shed frame, pitched sage roof with visible thickness and gutter, finished cream rear wall, green pegboard, full-size shovel and rake, two distinct watering cans, hand tools, broad lower shelf and two blank-label storage bins. Keep side braces, dedicated hooks and four feet readable from all canonical views. Canonical views, closed development geometry and turntable review are still required."
+}
