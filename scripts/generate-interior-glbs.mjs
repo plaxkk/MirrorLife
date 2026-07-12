@@ -2570,6 +2570,97 @@ function meditationSeat() {
   return g;
 }
 
+function memoryBook() {
+  const g = new THREE.Group();
+  g.name = "memory-book";
+  const deepTeal = 0x315f69;
+  const sage = 0x92b66f;
+  const sageLight = 0xb7cf93;
+  const coral = 0xee806b;
+  const coralDark = 0xb94f47;
+  const cream = 0xffefce;
+  const pageEdge = 0xe2c89a;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const amber = 0xffd36b;
+  const leaf = 0x6f994e;
+
+  const mat = createPart(g, "round-sage-and-deep-teal-approach-mat-with-stitched-edge");
+  addMesh(mat, cyl(1.52, 1.52, 0.08, 64), deepTeal, [0, 0.07, 0.12]);
+  addMesh(mat, cyl(1.4, 1.44, 0.055, 64), sage, [0, 0.13, 0.12]);
+  addMesh(mat, torus(1.18, 0.022, 8, 48), cream, [0, 0.17, 0.12], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+
+  const stand = createPart(g, "low-honey-oak-reading-stand-board-braces-feet-and-finished-underside");
+  const surface = new THREE.Group();
+  surface.name = "tilted-reading-surface";
+  surface.position.set(0, 0.9, -0.16);
+  surface.rotation.x = 0.38;
+  stand.add(surface);
+  addMesh(surface, rounded(2.38, 0.16, 1.55, 0.07), honeyDark, [0, 0, 0]);
+  addMesh(surface, rounded(2.24, 0.13, 1.42, 0.06), honeyLight, [0, 0.11, 0]);
+  addMesh(surface, rounded(2.42, 0.16, 0.18, 0.055), honey, [0, 0.25, 0.7]);
+  addMesh(surface, rounded(0.58, 0.1, 0.16, 0.04), honeyDark, [-0.63, 0.29, 0.61]);
+  addMesh(surface, rounded(0.58, 0.1, 0.16, 0.04), honeyDark, [0.63, 0.29, 0.61]);
+  [-0.96, 0.96].forEach((x) => {
+    addMesh(stand, rounded(0.18, 0.84, 0.24, 0.075), honey, [x, 0.56, 0.03], [1, 1, 1], [0.18, 0, 0]);
+    addMesh(stand, rounded(0.46, 0.16, 0.42, 0.06), honeyDark, [x, 0.2, 0.34]);
+    addMesh(stand, rounded(0.42, 0.11, 0.38, 0.045), honeyLight, [x, 0.3, 0.34]);
+  });
+  addCylinderBetween(stand, [-0.92, 0.28, -0.42], [-0.6, 0.82, -0.4], 0.07, honeyDark, "left-rear-diagonal-brace");
+  addCylinderBetween(stand, [0.92, 0.28, -0.42], [0.6, 0.82, -0.4], 0.07, honeyDark, "right-rear-diagonal-brace");
+  addMesh(stand, rounded(1.84, 0.12, 0.16, 0.045), honeyDark, [0, 0.34, -0.44]);
+  addMesh(stand, rounded(1.94, 0.09, 0.9, 0.035), honey, [0, 0.71, -0.28], [1, 1, 1], [0.38, 0, 0]);
+
+  const book = createPart(surface, "open-memory-book-thick-cover-layered-pages-and-center-spine");
+  addMesh(book, rounded(2.02, 0.075, 1.12, 0.03), coralDark, [0, 0.25, -0.03]);
+  [-1, 1].forEach((side) => {
+    for (let layer = 0; layer < 4; layer += 1) {
+      addMesh(book, rounded(0.95, 0.035, 1.02, 0.014), layer === 3 ? cream : pageEdge,
+        [side * (0.5 + layer * 0.008), 0.32 + layer * 0.035, -0.03 + layer * 0.006],
+        [1, 1, 1], [0, 0, side * 0.075], false);
+    }
+  });
+  addMesh(book, rounded(0.08, 0.12, 1.05, 0.025), coral, [0, 0.43, -0.02]);
+  addMesh(book, rounded(0.075, 0.025, 1.18, 0.01), coral, [0, 0.53, 0.12], [1, 1, 1], [0, 0, 0], false);
+  addMesh(book, rounded(0.13, 0.025, 0.34, 0.01), coral, [0.03, 0.53, 0.82], [1, 1, 1], [0, 0.18, 0.12], false);
+
+  const illustrations = createPart(surface, "illustrated-page-scenes-house-tree-landscape-and-flower");
+  addMesh(illustrations, rounded(0.7, 0.018, 0.34, 0.008), sageLight, [-0.5, 0.53, -0.2], [1, 1, 1], [0, 0, -0.075], false);
+  addMesh(illustrations, rounded(0.28, 0.02, 0.18, 0.008), cream, [-0.5, 0.55, -0.21], [1, 1, 1], [0, 0, -0.075], false);
+  addMesh(illustrations, rounded(0.34, 0.025, 0.2, 0.008), coral, [-0.5, 0.57, -0.36], [1, 1, 1], [0, 0, Math.PI / 4 - 0.075], false);
+  addMesh(illustrations, rounded(0.7, 0.018, 0.34, 0.008), 0x9fcad0, [0.5, 0.53, -0.2], [1, 1, 1], [0, 0, 0.075], false);
+  addMesh(illustrations, sphere(0.14, 18, 10), leaf, [0.62, 0.57, -0.2], [1.15, 0.28, 0.9], [0, 0, 0], false);
+  addMesh(illustrations, rounded(0.04, 0.02, 0.26, 0.008), honeyDark, [0.62, 0.55, -0.05], [1, 1, 1], [0, 0.1, 0.075], false);
+  addCylinderBetween(illustrations, [-0.7, 0.54, 0.31], [-0.34, 0.54, 0.18], 0.018, leaf, "pressed-leaf-stem");
+  [-0.63, -0.53, -0.43].forEach((x, index) => addMesh(illustrations, sphere(0.06, 12, 7), leaf, [x, 0.56, 0.24 - index * 0.04], [1, 0.25, 0.65], [0, 0, -0.5], false));
+  addFlower(illustrations, 0.5, 0.56, 0.29, 0.72, coral);
+
+  const pencil = createPart(surface, "teal-pencil-in-front-groove");
+  addMesh(pencil, cyl(0.035, 0.035, 0.72, 12), deepTeal, [0, 0.34, 0.76], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(pencil, cyl(0.04, 0.04, 0.08, 12), coral, [0.4, 0.34, 0.76], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(pencil, cyl(0.04, 0.0, 0.12, 12), cream, [-0.42, 0.34, 0.76], [1, 1, 1], [0, 0, Math.PI / 2]);
+
+  const cards = createPart(g, "exactly-three-blank-photo-cards-in-separate-front-holders");
+  [-0.62, 0, 0.62].forEach((x, index) => {
+    addMesh(cards, rounded(0.38, 0.44, 0.045, 0.018), cream, [x, 0.48, 0.92], [1, 1, 1], [0, 0, (index - 1) * 0.035], false);
+    addMesh(cards, rounded(0.44, 0.12, 0.18, 0.04), honeyDark, [x, 0.26, 0.96]);
+    addMesh(cards, rounded(0.38, 0.08, 0.15, 0.03), honeyLight, [x, 0.35, 0.95]);
+  });
+
+  const lamp = createPart(g, "warm-curved-reading-light-with-base-shade-and-visible-core");
+  addMesh(lamp, cyl(0.2, 0.23, 0.1, 28), honeyDark, [0.92, 1.45, -0.68]);
+  addMesh(lamp, cyl(0.11, 0.13, 0.1, 24), honeyLight, [0.92, 1.55, -0.68]);
+  const curvePoints = [[0.92, 1.55, -0.68], [0.92, 1.9, -0.68], [0.83, 2.15, -0.62], [0.62, 2.32, -0.52], [0.34, 2.38, -0.42]];
+  for (let index = 0; index < curvePoints.length - 1; index += 1) {
+    addCylinderBetween(lamp, curvePoints[index], curvePoints[index + 1], 0.055, honey, `curved-lamp-arm-${index + 1}`);
+  }
+  addMesh(lamp, cyl(0.3, 0.15, 0.34, 28), honeyLight, [0.22, 2.2, -0.34], [1, 1, 1], [0.22, 0, -0.32]);
+  addMesh(lamp, cyl(0.24, 0.12, 0.29, 28), cream, [0.22, 2.17, -0.31], [1, 1, 1], [0.22, 0, -0.32]);
+  addMesh(lamp, sphere(0.11, 18, 12), amber, [0.2, 2.03, -0.22], [1, 0.8, 1], [0, 0, 0], false);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2794,7 +2885,8 @@ const builders = {
   "rehearsal-stage": rehearsalStage,
   "story-table": storyTable,
   "music-corner": musicCorner,
-  "meditation-seat": meditationSeat
+  "meditation-seat": meditationSeat,
+  "memory-book": memoryBook
 };
 
 function parseArgs(argv) {
@@ -2831,7 +2923,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table", "music-corner", "meditation-seat"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table", "music-corner", "meditation-seat", "memory-book"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

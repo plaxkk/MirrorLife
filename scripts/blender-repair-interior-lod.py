@@ -3,6 +3,7 @@ import json
 import math
 import os
 import sys
+from itertools import combinations
 
 import bmesh
 import bpy
@@ -65,6 +66,71 @@ def topology_stats(obj):
     }
     bm.free()
     return stats
+
+
+def repair_small_topology_defects(obj, max_problem_edges=64):
+    bm = bmesh.new()
+    bm.from_mesh(obj.data)
+    bm.normal_update()
+    bm.verts.ensure_lookup_table()
+    bm.edges.ensure_lookup_table()
+    bm.faces.ensure_lookup_table()
+    initial_boundary = [edge for edge in bm.edges if edge.is_boundary]
+    initial_non_manifold = [edge for edge in bm.edges if not edge.is_manifold and not edge.is_boundary]
+    if len(initial_boundary) + len(initial_non_manifold) > max_problem_edges:
+        bm.free()
+        return {
+            "attempted": False,
+            "reason": "problem edge limit exceeded",
+            "initialBoundaryEdges": len(initial_boundary),
+            "initialNonManifoldEdges": len(initial_non_manifold),
+            "removedFaces": 0,
+            "filledFaces": 0,
+        }
+
+    duplicate_faces = []
+    face_keys = {}
+    for face in bm.faces:
+        key = tuple(sorted(vertex.index for vertex in face.verts))
+        if key in face_keys:
+            duplicate_faces.append(face)
+        else:
+            face_keys[key] = face
+
+    faces_to_remove = set(duplicate_faces)
+    for edge in initial_non_manifold:
+        linked = [face for face in edge.link_faces if face not in faces_to_remove]
+        if len(linked) <= 2:
+            continue
+        keep_pair = min(
+            combinations(linked, 2),
+            key=lambda pair: pair[0].normal.dot(pair[1].normal)
+        )
+        keep = set(keep_pair)
+        faces_to_remove.update(face for face in linked if face not in keep)
+
+    if faces_to_remove:
+        bmesh.ops.delete(bm, geom=list(faces_to_remove), context="FACES")
+    bm.edges.ensure_lookup_table()
+    boundary_after_removal = [edge for edge in bm.edges if edge.is_boundary]
+    fill_result = bmesh.ops.holes_fill(bm, edges=boundary_after_removal, sides=max_problem_edges)
+    new_faces = list(fill_result.get("faces", []))
+    if new_faces:
+        bmesh.ops.triangulate(bm, faces=new_faces, quad_method="BEAUTY", ngon_method="BEAUTY")
+    bmesh.ops.dissolve_degenerate(bm, edges=bm.edges, dist=1e-8)
+    bmesh.ops.recalc_face_normals(bm, faces=list(bm.faces))
+    bm.to_mesh(obj.data)
+    bm.free()
+    obj.data.validate(verbose=False, clean_customdata=False)
+    obj.data.update()
+    return {
+        "attempted": True,
+        "reason": "small local repair",
+        "initialBoundaryEdges": len(initial_boundary),
+        "initialNonManifoldEdges": len(initial_non_manifold),
+        "removedFaces": len(faces_to_remove),
+        "filledFaces": len(new_faces),
+    }
 
 
 def dimensions(objects):
@@ -136,9 +202,21 @@ def main():
     ]
 
     ratios = []
+    repairs = []
     for obj, target in zip(objects, target_per_object):
         _, _, ratio = decimate(obj, target)
         triangulate_and_clean(obj, args.merge_distance)
+        object_repairs = []
+        for repair_pass in range(8):
+            current = topology_stats(obj)
+            if current["boundaryEdges"] == 0 and current["nonManifoldEdges"] == 0 and current["looseEdges"] == 0:
+                break
+            repair = repair_small_topology_defects(obj)
+            repair["pass"] = repair_pass + 1
+            object_repairs.append(repair)
+            if not repair["attempted"]:
+                break
+        repairs.append(object_repairs)
         ratios.append(ratio)
 
     after_stats = [topology_stats(obj) for obj in objects]
@@ -164,6 +242,7 @@ def main():
         "nonManifoldEdges": totals["nonManifoldEdges"],
         "looseEdges": totals["looseEdges"],
         "decimateRatios": ratios,
+        "topologyRepairs": repairs,
         "dimensions": dimensions(objects),
         "textures": texture_report,
         "objects": [
