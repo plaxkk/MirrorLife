@@ -2424,6 +2424,96 @@ function storyTable() {
   return g;
 }
 
+function addMusicSpeaker(group, x, color, index) {
+  const speaker = createPart(group, `rounded-speaker-${index}`);
+  const honey = 0xc98035;
+  const cream = 0xffefce;
+  const inkMetal = 0x3b3a43;
+  addMesh(speaker, cyl(0.3, 0.33, 0.08, 24), honey, [x, 0.27, 0.28]);
+  addMesh(speaker, cyl(0.08, 0.1, 0.46, 18), honey, [x, 0.5, 0.28]);
+  addMesh(speaker, rounded(0.48, 0.76, 0.38, 0.13), color, [x, 1.02, 0.28]);
+  addMesh(speaker, rounded(0.36, 0.64, 0.045, 0.018), cream, [x, 1.02, 0.5], [1, 1, 1], [0, 0, 0], false);
+  addMesh(speaker, cyl(0.135, 0.135, 0.05, 24), inkMetal, [x, 0.88, 0.54], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(speaker, cyl(0.085, 0.085, 0.055, 20), 0xf0b442, [x, 0.88, 0.58], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(speaker, cyl(0.07, 0.07, 0.05, 20), inkMetal, [x, 1.22, 0.54], [1, 1, 1], [Math.PI / 2, 0, 0]);
+}
+
+function musicCorner() {
+  const g = new THREE.Group();
+  g.name = "music-corner";
+  const deepTeal = 0x315f69;
+  const teal = 0x4c9b90;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const inkMetal = 0x3b3a43;
+
+  const rug = createPart(g, "round-deep-teal-rhythm-rug-with-finished-edge");
+  addMesh(rug, cyl(1.45, 1.45, 0.08, 56), deepTeal, [0, 0.07, 0]);
+  addMesh(rug, torus(1.17, 0.035, 10, 44), honeyLight, [0, 0.13, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  for (let index = 0; index < 16; index += 1) {
+    const angle = index / 16 * Math.PI * 2;
+    const color = index % 2 ? 0xee806b : 0xf0b442;
+    addMesh(rug, rounded(0.08, 0.025, 0.22, 0.008), color, [Math.cos(angle) * 1.02, 0.14, Math.sin(angle) * 1.02], [1, 1, 1], [0, -angle, 0], false);
+  }
+
+  const keyboard = createPart(g, "compact-small-keyboard-six-pad-sampler-and-control-shelf");
+  addMesh(keyboard, rounded(1.72, 0.22, 0.68, 0.09), honeyDark, [0, 1.02, -0.02]);
+  addMesh(keyboard, rounded(1.6, 0.16, 0.6, 0.07), teal, [0, 1.14, -0.02]);
+  for (let index = 0; index < 14; index += 1) {
+    const x = -0.69 + index * 0.106;
+    addMesh(keyboard, rounded(0.09, 0.045, 0.3, 0.012), cream, [x, 1.24, 0.05], [1, 1, 1], [0, 0, 0], false);
+    if (index < 13 && ![2, 6, 9].includes(index)) {
+      addMesh(keyboard, rounded(0.055, 0.055, 0.18, 0.012), inkMetal, [x + 0.053, 1.29, -0.04], [1, 1, 1], [0, 0, 0], false);
+    }
+  }
+  addMesh(keyboard, rounded(0.62, 0.12, 0.38, 0.05), honey, [0.45, 1.37, -0.22]);
+  const padColors = [0xee806b, 0xf0b442, 0x4c9b90, 0xf0b442, 0x5d9bd8, 0x4c9b90];
+  for (let index = 0; index < 6; index += 1) {
+    const x = 0.25 + (index % 3) * 0.18;
+    const z = -0.31 + Math.floor(index / 3) * 0.16;
+    addMesh(keyboard, rounded(0.14, 0.055, 0.12, 0.025), padColors[index], [x, 1.47, z]);
+  }
+
+  const stand = createPart(g, "sturdy-x-keyboard-stand-and-connected-crossbar");
+  addCylinderBetween(stand, [-0.65, 0.18, -0.08], [0.55, 0.96, -0.08], 0.07, honey, "left-x-stand-bar");
+  addCylinderBetween(stand, [0.65, 0.18, -0.08], [-0.55, 0.96, -0.08], 0.07, honey, "right-x-stand-bar");
+  addMesh(stand, cyl(0.11, 0.11, 0.12, 18), honeyDark, [0, 0.58, -0.08], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(stand, rounded(1.45, 0.09, 0.12, 0.03), honeyDark, [0, 0.94, -0.08]);
+  [-0.68, 0.68].forEach((x) => addMesh(stand, rounded(0.42, 0.09, 0.16, 0.03), honeyDark, [x, 0.13, -0.08]));
+
+  const microphone = createPart(g, "adjustable-standing-microphone-tripod-and-routed-lead");
+  addMesh(microphone, cyl(0.055, 0.055, 1.25, 14), inkMetal, [-1.02, 0.8, -0.42]);
+  addMesh(microphone, cyl(0.1, 0.08, 0.38, 20), teal, [-1.02, 1.56, -0.42], [1, 1, 1], [0, 0, -0.12]);
+  addMesh(microphone, cyl(0.085, 0.1, 0.22, 20), cream, [-1.04, 1.81, -0.42], [1, 1, 1], [0, 0, -0.12]);
+  [0, Math.PI * 2 / 3, Math.PI * 4 / 3].forEach((angle) => {
+    addCylinderBetween(microphone, [-1.02, 0.17, -0.42], [-1.02 + Math.cos(angle) * 0.42, 0.1, -0.42 + Math.sin(angle) * 0.42], 0.045, inkMetal, "tripod-leg");
+  });
+
+  const speakers = createPart(g, "exactly-two-rounded-speakers-on-low-stands");
+  addMusicSpeaker(speakers, -1.2, deepTeal, 1);
+  addMusicSpeaker(speakers, 1.2, deepTeal, 2);
+
+  const headphones = createPart(g, "over-ear-headphones-on-dedicated-hook");
+  addMesh(headphones, rounded(0.08, 1.25, 0.08, 0.025), honey, [0.95, 0.86, -0.6]);
+  addMesh(headphones, torus(0.28, 0.055, 12, 32), honeyLight, [0.95, 1.58, -0.58], [1, 1.15, 1]);
+  [-0.25, 0.25].forEach((dx) => {
+    addMesh(headphones, rounded(0.14, 0.28, 0.18, 0.055), inkMetal, [0.95 + dx, 1.42, -0.55]);
+    addMesh(headphones, rounded(0.09, 0.2, 0.12, 0.04), teal, [0.95 + dx, 1.42, -0.43]);
+  });
+  addMesh(headphones, cyl(0.22, 0.22, 0.07, 24), honey, [0.95, 0.62, -0.42]);
+  addMesh(headphones, cyl(0.1, 0.09, 0.2, 18), teal, [0.95, 0.76, -0.42]);
+
+  const cables = createPart(g, "neatly-routed-audio-cables-and-exactly-four-color-clips");
+  addMesh(cables, torus(0.62, 0.025, 8, 32), inkMetal, [0, 0.88, 0.18], [1.4, 0.55, 1], [Math.PI / 2, 0, 0], false);
+  [-0.6, -0.2, 0.2, 0.6].forEach((x, index) => {
+    const colors = [0xee806b, 0xf0b442, 0x4c9b90, cream];
+    addMesh(cables, rounded(0.12, 0.13, 0.09, 0.03), colors[index], [x, 0.88, 0.34]);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2646,7 +2736,8 @@ const builders = {
   "garden-tool-shed": gardenToolShed,
   "gallery-wall": galleryWall,
   "rehearsal-stage": rehearsalStage,
-  "story-table": storyTable
+  "story-table": storyTable,
+  "music-corner": musicCorner
 };
 
 function parseArgs(argv) {
@@ -2683,7 +2774,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table", "music-corner"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

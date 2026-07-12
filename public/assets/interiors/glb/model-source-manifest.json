@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-12T01:21:23.018Z",
+  "updatedAt": "2026-07-12T01:45:39.650Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-12T01-21-22-403Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T01-45-39-078Z",
   "imported": [
     {
       "slot": "bed",
@@ -1979,10 +1979,75 @@
         }
       },
       "importedAt": "2026-07-12T01:21:23.016Z"
+    },
+    {
+      "slot": "music-corner",
+      "label": "声音角",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/music-corner.glb",
+      "target": "public/assets/interiors/glb/music-corner.glb",
+      "bytes": 2146244,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/music-corner/front.png",
+        "public/assets/interiors/references/multiview/music-corner/back.png",
+        "public/assets/interiors/references/multiview/music-corner/left.png",
+        "public/assets/interiors/references/multiview/music-corner/right.png",
+        "public/assets/interiors/references/multiview/music-corner/top.png",
+        "public/assets/interiors/references/multiview/music-corner/bottom.png",
+        "public/assets/interiors/references/multiview/music-corner/isometric.png",
+        "public/assets/interiors/references/multiview/music-corner/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/music-corner.glb",
+      "masterBytes": 2146244,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-12T01:38:19.216Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 23468,
+        "webTriangleCount": 23468,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/music-corner.glb",
+          "primitiveCount": 110,
+          "trianglePrimitiveCount": 90,
+          "outlinePrimitiveCount": 20,
+          "problemPrimitives": [],
+          "triangleCount": 23468,
+          "vertexCount": 62521,
+          "weldedVertexCount": 11908,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/music-corner.glb",
+          "primitiveCount": 110,
+          "trianglePrimitiveCount": 90,
+          "outlinePrimitiveCount": 20,
+          "problemPrimitives": [],
+          "triangleCount": 23468,
+          "vertexCount": 62521,
+          "weldedVertexCount": 11908,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-12T01:45:39.646Z"
     }
   ],
   "missing": [
-    "music-corner",
     "meditation-seat",
     "memory-book"
   ]

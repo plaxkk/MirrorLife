@@ -1,0 +1,56 @@
+{
+  "model": "music-corner",
+  "sourceModel": "/assets/interiors/glb/music-corner.glb",
+  "sourceSheet": "public/assets/interiors/references/multiview/music-corner/source-sheet.png",
+  "generatedAt": "2026-07-12T01:40:58.659Z",
+  "grid": {
+    "mode": "deterministic-glb-orthographic"
+  },
+  "chromaKey": "#ff00ff",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/music-corner/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/music-corner/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/music-corner/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/music-corner/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/music-corner/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/music-corner/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/music-corner/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/music-corner/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}
