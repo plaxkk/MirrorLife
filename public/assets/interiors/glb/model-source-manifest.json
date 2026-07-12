@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-12T00:39:27.123Z",
+  "updatedAt": "2026-07-12T00:59:02.636Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-12T00-39-26-717Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T00-59-02-019Z",
   "imported": [
     {
       "slot": "bed",
@@ -1847,10 +1847,75 @@
         }
       },
       "importedAt": "2026-07-12T00:39:27.121Z"
+    },
+    {
+      "slot": "rehearsal-stage",
+      "label": "排练角",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/rehearsal-stage.glb",
+      "target": "public/assets/interiors/glb/rehearsal-stage.glb",
+      "bytes": 1413200,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/rehearsal-stage/front.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/back.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/left.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/right.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/top.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/bottom.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/isometric.png",
+        "public/assets/interiors/references/multiview/rehearsal-stage/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/rehearsal-stage.glb",
+      "masterBytes": 1413200,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-12T00:51:48.639Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 15840,
+        "webTriangleCount": 15840,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/rehearsal-stage.glb",
+          "primitiveCount": 83,
+          "trianglePrimitiveCount": 65,
+          "outlinePrimitiveCount": 18,
+          "problemPrimitives": [],
+          "triangleCount": 15840,
+          "vertexCount": 39735,
+          "weldedVertexCount": 8046,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/rehearsal-stage.glb",
+          "primitiveCount": 83,
+          "trianglePrimitiveCount": 65,
+          "outlinePrimitiveCount": 18,
+          "problemPrimitives": [],
+          "triangleCount": 15840,
+          "vertexCount": 39735,
+          "weldedVertexCount": 8046,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-12T00:59:02.633Z"
     }
   ],
   "missing": [
-    "rehearsal-stage",
     "story-table",
     "music-corner",
     "meditation-seat",
