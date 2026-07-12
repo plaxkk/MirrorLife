@@ -32,7 +32,8 @@ const SLOT_ASSETS = {
   "gallery-wall": ["/assets/interiors/references/runtime-semantic/gallery-wall.png", "作品墙"],
   "rehearsal-stage": ["/assets/interiors/references/runtime-semantic/rehearsal-stage.png", "排练角"],
   "story-table": ["/assets/interiors/references/runtime-semantic/story-table.png", "故事桌"],
-  "music-corner": ["/assets/interiors/references/runtime-semantic/music-corner.png", "声音角"]
+  "music-corner": ["/assets/interiors/references/runtime-semantic/music-corner.png", "声音角"],
+  "meditation-seat": ["/assets/interiors/references/runtime-semantic/meditation-seat.png", "静坐席"]
 };
 
 const params = new URLSearchParams(window.location.search);

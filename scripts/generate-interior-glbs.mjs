@@ -2514,6 +2514,62 @@ function musicCorner() {
   return g;
 }
 
+function meditationSeat() {
+  const g = new THREE.Group();
+  g.name = "meditation-seat";
+  const deepTeal = 0x315f69;
+  const sage = 0x92b66f;
+  const sageLight = 0xb7cf93;
+  const coral = 0xee806b;
+  const cream = 0xffefce;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const amber = 0xffd36b;
+
+  const rug = createPart(g, "layered-round-rug-finished-edge-and-stitched-rhythm-rings");
+  addMesh(rug, cyl(1.42, 1.42, 0.08, 56), deepTeal, [0, 0.07, 0]);
+  addMesh(rug, cyl(1.3, 1.34, 0.06, 56), sage, [0, 0.13, 0]);
+  addMesh(rug, torus(1.05, 0.022, 8, 44), cream, [0, 0.17, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(rug, torus(0.72, 0.018, 8, 40), cream, [0, 0.17, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+
+  const cushion = createPart(g, "two-level-central-layered-cushion-with-tuft");
+  addMesh(cushion, cyl(0.61, 0.65, 0.26, 44), deepTeal, [0, 0.34, -0.18]);
+  addMesh(cushion, cyl(0.55, 0.58, 0.25, 44), sageLight, [0, 0.58, -0.18]);
+  addMesh(cushion, torus(0.43, 0.025, 10, 36), sage, [0, 0.72, -0.18], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(cushion, sphere(0.055, 16, 10), sage, [0, 0.72, -0.18], [1, 0.6, 1]);
+
+  const blanket = createPart(g, "neatly-folded-coral-and-cream-blanket");
+  addMesh(blanket, rounded(0.68, 0.14, 0.5, 0.065), cream, [-0.72, 0.26, 0.48]);
+  addMesh(blanket, rounded(0.64, 0.13, 0.46, 0.06), coral, [-0.72, 0.38, 0.48]);
+  addMesh(blanket, rounded(0.06, 0.17, 0.48, 0.02), cream, [-0.44, 0.37, 0.48]);
+  [-0.18, -0.06, 0.06, 0.18].forEach((z) => addMesh(blanket, rounded(0.12, 0.04, 0.025, 0.008), cream, [-0.38, 0.31, 0.48 + z], [1, 1, 1], [0, 0, 0], false));
+
+  const tray = createPart(g, "low-honey-oak-side-tray-with-cup-recess-and-three-feet");
+  addMesh(tray, cyl(0.48, 0.48, 0.12, 36), honeyDark, [0.72, 0.3, 0.32]);
+  addMesh(tray, cyl(0.44, 0.45, 0.08, 36), honeyLight, [0.72, 0.39, 0.32]);
+  addMesh(tray, torus(0.16, 0.025, 8, 24), honey, [0.55, 0.45, 0.42], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  [0, Math.PI * 2 / 3, Math.PI * 4 / 3].forEach((angle) => {
+    addMesh(tray, cyl(0.07, 0.075, 0.2, 14), honeyDark, [0.72 + Math.cos(angle) * 0.31, 0.16, 0.32 + Math.sin(angle) * 0.31]);
+  });
+
+  const vase = createPart(g, "ceramic-flower-vase-with-exactly-three-simple-flowers");
+  addMesh(vase, cyl(0.13, 0.18, 0.36, 22), cream, [0.56, 0.64, 0.22]);
+  addMesh(vase, cyl(0.1, 0.1, 0.05, 20), sage, [0.56, 0.84, 0.22]);
+  [[-0.1, 0.34, coral], [0.02, 0.43, cream], [0.13, 0.31, 0xf0b442]].forEach(([dx, dy, color]) => {
+    addCylinderBetween(vase, [0.56, 0.83, 0.22], [0.56 + dx, 0.83 + dy, 0.22], 0.018, 0x577d49, "flower-stem");
+    addFlower(vase, 0.56 + dx, 0.83 + dy, 0.22, 1.25, color);
+  });
+
+  const lantern = createPart(g, "enclosed-warm-candle-lantern-with-complete-frame");
+  addMesh(lantern, cyl(0.22, 0.24, 0.08, 24), honeyDark, [0.92, 0.53, 0.16]);
+  addMesh(lantern, cyl(0.2, 0.22, 0.08, 24), honey, [0.92, 0.95, 0.16]);
+  [-0.14, 0.14].forEach((x) => [-0.1, 0.1].forEach((z) => addMesh(lantern, rounded(0.035, 0.38, 0.035, 0.012), honey, [0.92 + x, 0.75, 0.16 + z])));
+  addMesh(lantern, sphere(0.12, 18, 12), amber, [0.92, 0.73, 0.16], [0.75, 1.2, 0.75], [0, 0, 0], false);
+  addMesh(lantern, torus(0.16, 0.035, 10, 26), honey, [0.92, 1.12, 0.16], [1, 1.25, 1]);
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2737,7 +2793,8 @@ const builders = {
   "gallery-wall": galleryWall,
   "rehearsal-stage": rehearsalStage,
   "story-table": storyTable,
-  "music-corner": musicCorner
+  "music-corner": musicCorner,
+  "meditation-seat": meditationSeat
 };
 
 function parseArgs(argv) {
@@ -2774,7 +2831,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table", "music-corner"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table", "music-corner", "meditation-seat"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

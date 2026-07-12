@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-12T01:45:39.650Z",
+  "updatedAt": "2026-07-12T02:07:19.051Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-12T01-45-39-078Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T02-07-18-463Z",
   "imported": [
     {
       "slot": "bed",
@@ -2045,10 +2045,75 @@
         }
       },
       "importedAt": "2026-07-12T01:45:39.646Z"
+    },
+    {
+      "slot": "meditation-seat",
+      "label": "静坐席",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/meditation-seat.glb",
+      "target": "public/assets/interiors/glb/meditation-seat.glb",
+      "bytes": 672868,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/meditation-seat/front.png",
+        "public/assets/interiors/references/multiview/meditation-seat/back.png",
+        "public/assets/interiors/references/multiview/meditation-seat/left.png",
+        "public/assets/interiors/references/multiview/meditation-seat/right.png",
+        "public/assets/interiors/references/multiview/meditation-seat/top.png",
+        "public/assets/interiors/references/multiview/meditation-seat/bottom.png",
+        "public/assets/interiors/references/multiview/meditation-seat/isometric.png",
+        "public/assets/interiors/references/multiview/meditation-seat/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/meditation-seat.glb",
+      "masterBytes": 672868,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-12T02:01:15.610Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 10428,
+        "webTriangleCount": 10428,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/meditation-seat.glb",
+          "primitiveCount": 87,
+          "trianglePrimitiveCount": 52,
+          "outlinePrimitiveCount": 35,
+          "problemPrimitives": [],
+          "triangleCount": 10428,
+          "vertexCount": 16094,
+          "weldedVertexCount": 5308,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/meditation-seat.glb",
+          "primitiveCount": 87,
+          "trianglePrimitiveCount": 52,
+          "outlinePrimitiveCount": 35,
+          "problemPrimitives": [],
+          "triangleCount": 10428,
+          "vertexCount": 16094,
+          "weldedVertexCount": 5308,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-12T02:07:19.048Z"
     }
   ],
   "missing": [
-    "meditation-seat",
     "memory-book"
   ]
 }
