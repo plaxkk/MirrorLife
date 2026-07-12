@@ -423,7 +423,7 @@ function addLearningWindow(angle, palette) {
     createToonMaterial(palette.trim)
   );
   frame.position.z = 0.045;
-  frame.castShadow = true;
+  frame.castShadow = false;
   group.add(frame);
   const sky = new THREE.Mesh(
     new RoundedBoxGeometry(1.52, 1.08, 0.075, 4, 0.08),
@@ -440,7 +440,7 @@ function addLearningWindow(angle, palette) {
   group.add(horizontal);
   const rightEdge = new THREE.Mesh(new RoundedBoxGeometry(0.085, 1.18, 0.12, 2, 0.025), createToonMaterial(palette.trim));
   rightEdge.position.set(0.66, 0, 0.19);
-  rightEdge.castShadow = true;
+  rightEdge.castShadow = false;
   group.add(rightEdge);
   if (palette.night) {
     [[-0.48, 0.31], [0.46, 0.28], [0.33, -0.31], [-0.31, -0.24]].forEach(([sx, sy], index) => {
@@ -466,7 +466,7 @@ function addLearningShelf(angle, palette, variant = 0) {
   const darkWood = createToonMaterial("#7e4a32");
   const shelf = new THREE.Mesh(new RoundedBoxGeometry(1.62, 0.11, 0.28, 3, 0.045), darkWood);
   shelf.position.y = -0.4;
-  shelf.castShadow = true;
+  shelf.castShadow = false;
   group.add(shelf);
   const paletteBooks = variant % 2
     ? ["#e63946", "#f1c40f", "#4ea8de", "#2ecc71", "#ff8fa3"]
@@ -476,7 +476,7 @@ function addLearningShelf(angle, palette, variant = 0) {
     const book = new THREE.Mesh(new RoundedBoxGeometry(0.18, height, 0.22, 2, 0.025), createToonMaterial(color));
     book.position.set(-0.55 + index * 0.27, -0.4 + height / 2 + 0.06, -0.02);
     book.rotation.z = index === 4 ? -0.08 : 0;
-    book.castShadow = true;
+    book.castShadow = false;
     group.add(book);
   });
   const rail = new THREE.Mesh(new RoundedBoxGeometry(1.76, 0.08, 0.12, 2, 0.03), wood);
@@ -485,7 +485,7 @@ function addLearningShelf(angle, palette, variant = 0) {
   [-0.66, 0.66].forEach((bracketX) => {
     const bracket = new THREE.Mesh(new RoundedBoxGeometry(0.08, 0.36, 0.1, 2, 0.025), darkWood);
     bracket.position.set(bracketX, -0.18, 0.015);
-    bracket.castShadow = true;
+    bracket.castShadow = false;
     group.add(bracket);
   });
   const cardMaterial = createToonMaterial(palette.wallColor);
@@ -630,12 +630,222 @@ function addFloorPad(angle, radius, color, size = 0.7) {
   roomRoot.add(pad);
 }
 
+function addWainscot(color, height = 1.12) {
+  const panel = new THREE.Mesh(
+    new THREE.CylinderGeometry(ROOM_RADIUS - 0.075, ROOM_RADIUS - 0.075, height, 64, 1, true),
+    createToonMaterial(color, { side: THREE.BackSide })
+  );
+  panel.position.y = height / 2 + 0.08;
+  panel.receiveShadow = true;
+  roomRoot.add(panel);
+  return panel;
+}
+
+function addWallFeature(angle, options = {}) {
+  const width = options.width || 1.8;
+  const height = options.height || 1.12;
+  const radius = options.radius || ROOM_RADIUS - 0.14;
+  const [x, y, z] = wallPosition(angle, radius, options.y || 2.08);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = angle;
+  roomRoot.add(group);
+
+  const frame = new THREE.Mesh(
+    new RoundedBoxGeometry(width, height, 0.1, 4, Math.min(0.1, height * 0.12)),
+    createToonMaterial(options.frame || "#1a1a2e")
+  );
+  frame.position.z = 0.04;
+  frame.castShadow = false;
+  group.add(frame);
+  const inset = new THREE.Mesh(
+    new RoundedBoxGeometry(width - 0.18, height - 0.18, 0.075, 4, Math.min(0.075, height * 0.1)),
+    createToonMaterial(options.fill || "#fafaf5")
+  );
+  inset.position.z = 0.115;
+  group.add(inset);
+  const rightEdge = new THREE.Mesh(
+    new RoundedBoxGeometry(0.075, height - 0.08, 0.12, 2, 0.022),
+    createToonMaterial(options.frame || "#1a1a2e")
+  );
+  rightEdge.position.set(width * 0.41, 0, 0.18);
+  group.add(rightEdge);
+
+  if (options.dividers !== false) {
+    const dividerMaterial = createToonMaterial(options.divider || options.frame || "#1a1a2e");
+    const vertical = new THREE.Mesh(new RoundedBoxGeometry(0.045, height - 0.22, 0.11, 2, 0.016), dividerMaterial);
+    vertical.position.z = 0.17;
+    group.add(vertical);
+    const horizontal = new THREE.Mesh(new RoundedBoxGeometry(width - 0.22, 0.045, 0.11, 2, 0.016), dividerMaterial);
+    horizontal.position.z = 0.17;
+    group.add(horizontal);
+  }
+  return group;
+}
+
+function addWallCards(group, palette, rows = 2, columns = 4, scale = 1) {
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const color = palette[(row * columns + column) % palette.length];
+      const card = new THREE.Mesh(
+        new RoundedBoxGeometry(0.25 * scale, 0.18 * scale, 0.035, 2, 0.022),
+        createToonMaterial(color)
+      );
+      card.position.set((column - (columns - 1) / 2) * 0.32 * scale, 0.18 - row * 0.28 * scale, 0.19);
+      card.rotation.z = ((row + column) % 3 - 1) * 0.05;
+      group.add(card);
+    }
+  }
+}
+
+function addFloorPath(color, width = 2.1, depth = 5.1, z = -1.35, trimColor = "#1a1a2e") {
+  addRoundedRoomBox([width + 0.18, 0.04, depth + 0.18], 0.28, trimColor, [0, 0.035, z], [0, 0, 0], { segments: 4, castShadow: false });
+  addRoundedRoomBox([width, 0.045, depth], 0.24, color, [0, 0.065, z], [0, 0, 0], { segments: 4, castShadow: false });
+}
+
+function addCrossSymbol(group, color = "#e63946") {
+  const mat = createToonMaterial(color);
+  const horizontal = new THREE.Mesh(new RoundedBoxGeometry(0.54, 0.16, 0.06, 3, 0.045), mat);
+  horizontal.position.z = 0.2;
+  group.add(horizontal);
+  const vertical = new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.54, 0.06, 3, 0.045), mat);
+  vertical.position.z = 0.2;
+  group.add(vertical);
+}
+
+function addPlanter(angle, color, leafColor, width = 1.1) {
+  const [x, y, z] = wallPosition(angle, 4.92, 0.35);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = angle;
+  roomRoot.add(group);
+  const box = new THREE.Mesh(new RoundedBoxGeometry(width, 0.42, 0.5, 4, 0.09), createToonMaterial(color));
+  box.castShadow = true;
+  group.add(box);
+  [-0.36, 0, 0.36].forEach((offset, index) => {
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.21, 16, 12), createToonMaterial(index % 2 ? leafColor : "#76c442"));
+    leaf.scale.set(0.72, 1.25, 0.55);
+    leaf.position.set(offset * (width / 1.1), 0.36 + (index % 2) * 0.08, 0);
+    leaf.rotation.z = (index - 1) * 0.35;
+    group.add(leaf);
+  });
+}
+
+function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
+  const [x, , z] = wallPosition(angle, radius, y);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = angle;
+  roomRoot.add(group);
+  const frameMaterial = createToonMaterial("#6f5645");
+  const body = new THREE.Mesh(new RoundedBoxGeometry(0.28, 0.46, 0.22, 3, 0.06), createToonMaterial(color));
+  group.add(body);
+  [-0.13, 0.13].forEach((offset) => {
+    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.035, 0.5, 0.25), frameMaterial);
+    rail.position.x = offset;
+    group.add(rail);
+  });
+  const light = new THREE.PointLight(color, 0.5, 2.2, 2);
+  light.position.z = 0.15;
+  group.add(light);
+}
+
+function roomMaterialKey(material, geometry) {
+  const attributes = Object.keys(geometry.attributes).sort().join(",");
+  return [
+    material.type,
+    material.color?.getHexString?.() || "none",
+    material.transparent ? 1 : 0,
+    Number(material.opacity ?? 1).toFixed(3),
+    material.side,
+    material.depthWrite ? 1 : 0,
+    attributes
+  ].join("|");
+}
+
+function mergeRoomArchitectureMeshes() {
+  if (!roomRoot || !mergeGeometries) return;
+  roomRoot.updateMatrixWorld(true);
+  const batches = new Map();
+  const lights = [];
+  const sourceGeometries = new Set();
+  const sourceMaterials = new Set();
+
+  roomRoot.traverse((node) => {
+    if (node.isLight) {
+      const clone = node.clone();
+      clone.position.setFromMatrixPosition(node.matrixWorld);
+      lights.push(clone);
+      return;
+    }
+    if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
+    const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
+    geometry.applyMatrix4(node.matrixWorld);
+    const key = roomMaterialKey(node.material, geometry);
+    const batch = batches.get(key) || {
+      material: node.material.clone(),
+      geometries: [],
+      castShadow: false,
+      receiveShadow: false
+    };
+    batch.geometries.push(geometry);
+    batch.castShadow ||= node.castShadow;
+    batch.receiveShadow ||= node.receiveShadow;
+    batches.set(key, batch);
+    sourceGeometries.add(node.geometry);
+    sourceMaterials.add(node.material);
+  });
+
+  const mergedMeshes = [];
+  batches.forEach((batch) => {
+    const geometry = batch.geometries.length === 1
+      ? batch.geometries[0]
+      : mergeGeometries(batch.geometries, false);
+    if (!geometry) {
+      batch.geometries.forEach((candidate) => candidate.dispose());
+      batch.material.dispose();
+      return;
+    }
+    batch.geometries.forEach((candidate) => {
+      if (candidate !== geometry) candidate.dispose();
+    });
+    const mesh = new THREE.Mesh(geometry, batch.material);
+    mesh.castShadow = batch.castShadow;
+    mesh.receiveShadow = batch.receiveShadow;
+    mergedMeshes.push(mesh);
+  });
+
+  clearGroup(roomRoot);
+  sourceGeometries.forEach((geometry) => geometry.dispose());
+  sourceMaterials.forEach((material) => material.dispose());
+  roomRoot.add(...mergedMeshes, ...lights);
+}
+
 function addRoomArchitecture(theme, colors) {
   const archetype = theme.archetype || "home";
   const variantOffset = (Number(theme.variant || 0) % 4) * (Math.PI / 18);
-  const { accent, trim, wallColor, floorColor, night } = colors;
+  const { accent, secondary, trim, wallColor, floorColor, night } = colors;
 
   if (archetype === "care") {
+    addWainscot("#d8f3eb", 1.16);
+    addFloorPath("#dff7ff", 2.05, 4.9, -1.45, "#56cfe1");
+    const careWindow = addWallFeature(variantOffset, {
+      width: 2.2,
+      height: 1.18,
+      fill: night ? "#46658d" : "#bdefff",
+      divider: "#fafaf5"
+    });
+    addCrossSymbol(careWindow, "#e63946");
+    [variantOffset - 0.29, variantOffset + 0.29].forEach((angle, index) => {
+      const panel = addWallFeature(angle, {
+        width: 1.2,
+        height: 0.82,
+        y: 2.02,
+        fill: index ? "#ffe2e8" : "#e0f7f1",
+        dividers: false
+      });
+      addWallCards(panel, ["#56cfe1", "#2ecc71", "#ff8fa3"], 1, 3, 0.8);
+    });
     const careBand = new THREE.Mesh(
       new THREE.TorusGeometry(ROOM_RADIUS - 0.07, 0.055, 8, 64),
       createToonMaterial("#56cfe1")
@@ -643,11 +853,8 @@ function addRoomArchitecture(theme, colors) {
     careBand.rotation.x = Math.PI / 2;
     careBand.position.y = 1.28;
     roomRoot.add(careBand);
-    for (let index = 0; index < 4; index += 1) {
-      const angle = variantOffset + index * Math.PI / 2;
-      addRingBox(angle, 4.78, 1.35, 0.07, 0.12, "#eefcff", 2.78);
-      addFloorPad(angle, 3.48, index % 2 ? "#b8f2e6" : "#dff7ff", 0.62);
-    }
+    [variantOffset - 0.62, variantOffset + 0.62].forEach((angle) => addRingBox(angle, 4.72, 1.25, 0.09, 0.14, "#fafaf5", 2.75));
+    [variantOffset - 0.48, variantOffset + 0.48].forEach((angle) => addFloorPad(angle, 3.58, "#b8f2e6", 0.58));
     return;
   }
 
@@ -657,43 +864,78 @@ function addRoomArchitecture(theme, colors) {
   }
 
   if (archetype === "commerce") {
-    for (let index = 0; index < 8; index += 1) {
-      const angle = variantOffset + index * Math.PI / 4;
-      addRingBox(angle, 5.0, 0.58, 0.32, 0.18, index % 2 ? "#fafaf5" : "#e63946", 2.72);
-      if (index % 2 === 0) addPendant(angle, 3.2, "#ffd166", 2.68);
+    addWainscot("#ffe9a8", 1.02);
+    addFloorPath("#ffd166", 2.4, 4.55, -1.55, "#e63946");
+    const marketBoard = addWallFeature(variantOffset, {
+      width: 2.35,
+      height: 1.05,
+      fill: "#fff7df",
+      dividers: false
+    });
+    addWallCards(marketBoard, ["#e63946", "#4ea8de", "#2ecc71", "#f1c40f"], 2, 5, 0.85);
+    for (let index = 0; index < 7; index += 1) {
+      const stripe = new THREE.Mesh(
+        new RoundedBoxGeometry(0.32, 0.34, 0.13, 2, 0.035),
+        createToonMaterial(index % 2 ? "#fafaf5" : "#e63946")
+      );
+      stripe.position.set((index - 3) * 0.34, 0.72, 0.11);
+      stripe.rotation.z = index % 2 ? -0.03 : 0.03;
+      marketBoard.add(stripe);
     }
+    [variantOffset - 0.32, variantOffset + 0.32].forEach((angle, index) => {
+      const niche = addWallFeature(angle, { width: 1.05, height: 0.92, fill: index ? "#dff7e8" : "#dceeff", dividers: false });
+      addWallCards(niche, ["#f1c40f", "#2ecc71", "#4ea8de"], 2, 2, 0.75);
+    });
+    [variantOffset - 0.38, variantOffset + 0.38].forEach((angle) => addPendant(angle, 3.15, "#ffd166", 2.7));
     return;
   }
 
-  if (archetype === "public" || archetype === "justice") {
-    const columnColor = archetype === "justice" ? "#e9eef8" : "#fff4cf";
-    for (let index = 0; index < 6; index += 1) {
-      const angle = variantOffset + Math.PI / 6 + index * Math.PI / 3;
-      const x = Math.sin(angle) * 5.28;
-      const z = -Math.cos(angle) * 5.28;
-      const column = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.055, 0.075, 2.45, 12),
-        createToonMaterial(columnColor, { transparent: true, opacity: 0.48, depthWrite: false })
-      );
-      column.position.set(x, 1.28, z);
-      column.castShadow = false;
-      column.receiveShadow = true;
-      roomRoot.add(column);
-      addFloorPad(angle, 3.55, archetype === "justice" ? (index % 2 ? "#ffcad4" : "#bde0fe") : "#ffe98a", 0.52);
-    }
+  if (archetype === "public") {
+    addWainscot("#f6e8b7", 0.96);
+    const forumBoard = addWallFeature(variantOffset, { width: 2.45, height: 1.05, fill: "#fffdf4", dividers: false });
+    addWallCards(forumBoard, ["#f1c40f", "#4ea8de", "#e63946", "#2ecc71"], 2, 5, 0.84);
+    const meetingRing = new THREE.Mesh(new THREE.RingGeometry(1.75, 2.2, 64), createToonMaterial("#f1c40f"));
+    meetingRing.rotation.x = -Math.PI / 2;
+    meetingRing.position.y = 0.045;
+    roomRoot.add(meetingRing);
+    [variantOffset - 0.32, variantOffset + 0.32].forEach((angle, index) => {
+      const listeningPanel = addWallFeature(angle, { width: 1.05, height: 0.88, fill: index ? "#dceeff" : "#fff0b8", dividers: false });
+      addWallCards(listeningPanel, ["#fafaf5", "#4ea8de", "#f1c40f"], 2, 2, 0.72);
+    });
+    [variantOffset - 0.55, variantOffset + 0.55].forEach((angle) => addFloorPad(angle, 3.65, "#ffe98a", 0.56));
+    return;
+  }
+
+  if (archetype === "justice") {
+    addWainscot("#dce8f4", 1.04);
+    addFloorPath("#f7f4e9", 2.25, 4.7, -1.48, "#7aa5c9");
+    const balanceBoard = addWallFeature(variantOffset, { width: 2.25, height: 1.08, fill: "#fafaf5", dividers: false });
+    const leftField = new THREE.Mesh(new RoundedBoxGeometry(0.8, 0.72, 0.045, 3, 0.08), createToonMaterial("#ffd9e1"));
+    leftField.position.set(-0.47, 0, 0.19);
+    balanceBoard.add(leftField);
+    const rightField = new THREE.Mesh(new RoundedBoxGeometry(0.8, 0.72, 0.045, 3, 0.08), createToonMaterial("#d7eaff"));
+    rightField.position.set(0.47, 0, 0.19);
+    balanceBoard.add(rightField);
+    const bridge = new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.54, 0.06, 3, 0.045), createToonMaterial("#f1c40f"));
+    bridge.position.z = 0.24;
+    balanceBoard.add(bridge);
+    [variantOffset - 0.34, variantOffset + 0.34].forEach((angle, index) => {
+      const archive = addWallFeature(angle, { width: 1.0, height: 0.94, fill: index ? "#eef4fb" : "#fff0f3", dividers: false });
+      addWallCards(archive, ["#7aa5c9", "#ef7188", "#fafaf5"], 3, 2, 0.7);
+    });
+    [variantOffset - 0.48, variantOffset + 0.48].forEach((angle, index) => addFloorPad(angle, 3.55, index ? "#ffcad4" : "#bde0fe", 0.62));
     return;
   }
 
   if (archetype === "work") {
-    for (let index = 0; index < 8; index += 1) {
-      const angle = variantOffset + index * Math.PI / 4;
-      addRingBox(angle, 5.27, 0.055, 2.46, 0.08, index % 2 ? "#3d5a80" : "#f1c40f", 1.31, {
-        transparent: true,
-        opacity: 0.42,
-        castShadow: false,
-        depthWrite: false
-      });
-    }
+    addWainscot("#a9c8c0", 1.0);
+    addFloorPath("#9fd1c5", 2.15, 4.8, -1.5, "#1a1a2e");
+    const projectBoard = addWallFeature(variantOffset, { width: 2.5, height: 1.08, fill: "#315b66", dividers: false });
+    addWallCards(projectBoard, ["#f1c40f", "#4ea8de", "#fafaf5", "#2ecc71"], 2, 5, 0.82);
+    [variantOffset - 0.34, variantOffset + 0.34].forEach((angle, index) => {
+      const toolBay = addWallFeature(angle, { width: 1.08, height: 0.96, fill: index ? "#dce8e5" : "#fff2b8", dividers: false });
+      addWallCards(toolBay, ["#1a1a2e", "#f1c40f", "#4ea8de"], 2, 3, 0.68);
+    });
     const beam = new THREE.Mesh(
       new THREE.TorusGeometry(3.65, 0.07, 8, 48),
       createToonMaterial("#1a1a2e")
@@ -701,15 +943,28 @@ function addRoomArchitecture(theme, colors) {
     beam.rotation.x = Math.PI / 2;
     beam.position.y = 2.86;
     roomRoot.add(beam);
+    [variantOffset - 0.48, variantOffset + 0.48].forEach((angle) => addPendant(angle, 3.1, "#f1c40f", 2.68));
     return;
   }
 
   if (archetype === "nature") {
-    for (let index = 0; index < 10; index += 1) {
-      const angle = variantOffset + index * Math.PI / 5;
-      addRingBox(angle, 5.3, 0.035, 2.44, 0.06, index % 2 ? "#2ecc71" : "#1a1a2e", 1.28, {
+    addWainscot("#dff3d3", 0.78);
+    addFloorPath("#d8e8c3", 1.55, 5.05, -1.35, "#6f8f63");
+    const greenhouseView = addWallFeature(variantOffset, {
+      width: 2.45,
+      height: 1.35,
+      fill: night ? "#315d69" : "#bcecff",
+      divider: "#fafaf5"
+    });
+    const sun = new THREE.Mesh(new THREE.SphereGeometry(0.13, 18, 12), createToonMaterial(night ? "#ffd166" : "#f1c40f"));
+    sun.position.set(0.62, 0.28, 0.2);
+    greenhouseView.add(sun);
+    [variantOffset - 0.42, variantOffset + 0.42].forEach((angle) => addPlanter(angle, "#a86d3f", "#2ecc71", 1.28));
+    for (let index = 0; index < 8; index += 1) {
+      const angle = variantOffset + Math.PI / 8 + index * Math.PI / 4;
+      addRingBox(angle, 5.28, 0.035, 2.42, 0.06, index % 2 ? "#2ecc71" : "#7bdff2", 1.3, {
         transparent: true,
-        opacity: 0.34,
+        opacity: 0.3,
         castShadow: false,
         depthWrite: false
       });
@@ -721,42 +976,65 @@ function addRoomArchitecture(theme, colors) {
     glassRing.rotation.x = Math.PI / 2;
     glassRing.position.y = 2.72;
     roomRoot.add(glassRing);
-    [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle) => addFloorPad(angle + variantOffset, 3.75, "#b8f2a1", 0.66));
+    [variantOffset - 0.62, variantOffset + 0.62].forEach((angle) => addFloorPad(angle, 3.78, "#b8f2a1", 0.66));
     return;
   }
 
   if (archetype === "creative") {
+    addWainscot("#ffdfe8", 0.86);
     const palette = ["#e63946", "#4ea8de", "#f1c40f", "#2ecc71", "#ff7aa2"];
-    palette.forEach((color, index) => {
-      const angle = variantOffset + index * (Math.PI * 2 / palette.length);
-      addRingBox(angle, 5.02, 0.64, 0.12, 0.16, color, 2.7);
-      addPendant(angle + 0.14, 3.05, color, 2.76);
-      addFloorPad(angle, 3.62, color, 0.48);
+    const gallery = addWallFeature(variantOffset, { width: 2.55, height: 1.24, fill: "#fffaf2", dividers: false });
+    addWallCards(gallery, palette, 2, 5, 0.92);
+    [variantOffset - 0.35, variantOffset + 0.35].forEach((angle, index) => {
+      const canvas = addWallFeature(angle, { width: 1.05, height: 1.0, fill: index ? "#fff0b8" : "#dceeff", dividers: false });
+      addWallCards(canvas, palette.slice(index, index + 3), 2, 2, 0.74);
     });
+    palette.forEach((color, index) => addFloorPad(variantOffset - 0.72 + index * 0.36, 3.65, color, 0.42));
+    [variantOffset - 0.42, variantOffset, variantOffset + 0.42].forEach((angle, index) => addPendant(angle, 3.12, palette[index], 2.75));
     return;
   }
 
   if (archetype === "memory") {
-    for (let index = 0; index < 8; index += 1) {
-      const angle = variantOffset + index * Math.PI / 4;
-      addRingBox(angle, 4.94, 0.08, 1.9, 0.12, index % 2 ? "#9d8189" : "#d8c3a5", 1.12);
-      if (index % 2 === 0) addPendant(angle, 3.5, "#ffd27d", 2.55);
-    }
+    addWainscot("#d8c8ad", 1.0);
+    addFloorPath("#c9d8c7", 1.6, 5.0, -1.4, "#7f927e");
+    const memoryNiche = addWallFeature(variantOffset, { width: 2.2, height: 1.16, fill: "#f3e8d4", dividers: false, frame: "#6f5645" });
+    addWallCards(memoryNiche, ["#d8a45d", "#9d8189", "#7aa5c9", "#fafaf5"], 2, 4, 0.86);
+    [variantOffset - 0.36, variantOffset + 0.36].forEach((angle, index) => {
+      const quietNiche = addWallFeature(angle, { width: 0.95, height: 0.9, fill: index ? "#e8dfe6" : "#e2ece4", dividers: false, frame: "#6f5645" });
+      addWallCards(quietNiche, ["#d8a45d", "#fafaf5"], 2, 2, 0.68);
+    });
+    [variantOffset - 0.28, variantOffset + 0.28].forEach((angle) => addLantern(angle, 4.45, "#ffd27d", 1.55));
+    [variantOffset - 0.58, variantOffset + 0.58].forEach((angle) => addPlanter(angle, "#9d7650", "#6f9f68", 0.96));
     return;
   }
 
-  for (let index = 0; index < 6; index += 1) {
-    const angle = variantOffset + index * Math.PI / 3;
-    addRingBox(angle, 5.0, 0.72, 0.12, 0.16, index % 2 ? accent : "#d89151", 1.15);
-    if (index % 3 === 0) addPendant(angle, 2.9, "#ffd166", 2.72);
-  }
+  addWainscot("#efd3b5", 0.94);
+  const homeWindow = addWallFeature(variantOffset, {
+    width: 2.15,
+    height: 1.2,
+    fill: night ? "#415f87" : "#bdeaff",
+    divider: "#fafaf5"
+  });
+  [-0.92, 0.92].forEach((offset) => {
+    const curtain = new THREE.Mesh(new RoundedBoxGeometry(0.34, 1.28, 0.12, 4, 0.09), createToonMaterial("#ef7188"));
+    curtain.position.set(offset, -0.04, 0.13);
+    curtain.rotation.z = offset < 0 ? -0.08 : 0.08;
+    homeWindow.add(curtain);
+  });
+  [variantOffset - 0.34, variantOffset + 0.34].forEach((angle, index) => {
+    const portrait = addWallFeature(angle, { width: 0.92, height: 0.76, fill: index ? "#dceeff" : "#fff0b8", dividers: false, frame: "#7e4a32" });
+    const face = new THREE.Mesh(new THREE.CircleGeometry(0.16, 24), createToonMaterial(index ? "#4ea8de" : "#e63946"));
+    face.position.z = 0.2;
+    portrait.add(face);
+  });
   const homeRug = new THREE.Mesh(
     new THREE.RingGeometry(1.82, 2.18, 48),
-    createToonMaterial(night ? "#56637a" : floorColor, { transparent: true, opacity: 0.72 })
+    createToonMaterial(night ? secondary : accent, { transparent: true, opacity: 0.72 })
   );
   homeRug.rotation.x = -Math.PI / 2;
   homeRug.position.y = 0.024;
   roomRoot.add(homeRug);
+  [variantOffset - 0.48, variantOffset + 0.48].forEach((angle) => addPendant(angle, 2.95, "#ffd166", 2.72));
 }
 
 function rebuildRoom(theme = {}) {
@@ -778,7 +1056,7 @@ function rebuildRoom(theme = {}) {
   floor.receiveShadow = true;
   roomRoot.add(floor);
 
-  if ((theme.archetype || "home") !== "learning") {
+  if (!INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     const rug = new THREE.Mesh(
       new THREE.CircleGeometry(1.65, 48),
       createToonMaterial(night ? secondary : "#fff0a8")
@@ -809,13 +1087,14 @@ function rebuildRoom(theme = {}) {
   ceilingTrim.position.y = ROOM_HEIGHT - 0.12;
   roomRoot.add(ceilingTrim);
 
-  if ((theme.archetype || "home") !== "learning") {
+  if (!INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     for (let i = 0; i < 12; i += 1) {
       const angle = (i / 12) * Math.PI * 2;
       addWallPanel(angle, i % 3 === 0 ? "#bfe3f2" : accent, i % 3 === 0, i);
     }
   }
   addRoomArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  mergeRoomArchitectureMeshes();
 }
 
 function getItemSignature(items) {

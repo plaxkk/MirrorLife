@@ -54,3 +54,12 @@
 - 桌面和移动端都必须验证构图、文字/控件遮挡、横向溢出、近景清晰度与 WebGL 性能。
 
 `INTERIOR_ENVIRONMENT_PALETTES` 为十类房间提供稳定艺术基线；`npm run verify:interior-world` 会拒绝缺少环境配色契约的房间类型。建筑结构仍需逐类进行真实截图验收，不能仅凭配置存在宣称完成。
+
+环境截图验收命令：
+
+```bash
+npm run capture:interior-environments
+npm run capture:interior-environments:mobile
+```
+
+两条命令会分别生成桌面和移动端十场景 contact sheet，并检查室内模式、横向溢出和 WebGL 预算。当前单房间预算为不超过 180 draw calls、500,000 triangles 和 220 geometries；超过预算时任务必须失败，不能用降低截图分辨率掩盖性能问题。
