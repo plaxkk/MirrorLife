@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-12T02:07:19.051Z",
-  "provider": "threejs-manual",
-  "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-12T02-07-18-463Z",
+  "updatedAt": "2026-07-12T04:18:23.914Z",
+  "provider": "hunyuan-multiview",
+  "sourceDir": "dist/interior-3d-work/hunyuan-multiview/generated-glb",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T04-18-23-865Z",
   "imported": [
     {
       "slot": "bed",
@@ -461,7 +461,7 @@
       "provider": "hunyuan-multiview",
       "source": "dist/interior-3d-work/hunyuan-multiview/generated-glb/reading-corner.glb",
       "target": "public/assets/interiors/glb/reading-corner.glb",
-      "bytes": 3457120,
+      "bytes": 5820688,
       "qualityTier": "development",
       "referenceViews": [
         "front",
@@ -470,8 +470,7 @@
         "right",
         "top",
         "bottom",
-        "isometric",
-        "isometric-back"
+        "isometric"
       ],
       "referenceFiles": [
         "public/assets/interiors/references/multiview/reading-corner/front.png",
@@ -480,20 +479,22 @@
         "public/assets/interiors/references/multiview/reading-corner/right.png",
         "public/assets/interiors/references/multiview/reading-corner/top.png",
         "public/assets/interiors/references/multiview/reading-corner/bottom.png",
-        "public/assets/interiors/references/multiview/reading-corner/isometric.png",
-        "public/assets/interiors/references/multiview/reading-corner/isometric-back.png"
+        "public/assets/interiors/references/multiview/reading-corner/isometric.png"
       ],
-      "masterFile": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
-      "masterBytes": 82172896,
+      "masterFile": "",
+      "masterBytes": 0,
+      "candidateSourceFile": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
+      "candidateSourceBytes": 82172896,
+      "releaseEligibleProvider": true,
       "reviewReport": "",
       "geometryAudit": {
-        "auditedAt": "2026-07-11T08:01:01.933Z",
+        "auditedAt": "2026-07-12T03:16:05.490Z",
         "epsilon": 0.00001,
-        "closedMeshes": false,
-        "nonManifoldEdges": 50,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
         "openBoundaryEdges": 0,
         "masterTriangleCount": 1500000,
-        "webTriangleCount": 75000,
+        "webTriangleCount": 78000,
         "master": {
           "file": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
           "primitiveCount": 1,
@@ -507,26 +508,19 @@
           "nonManifoldEdges": 0
         },
         "web": {
-          "file": "dist/interior-3d-work/hunyuan-multiview/optimized-glb/reading-corner.glb",
+          "file": "dist/interior-3d-work/hunyuan-multiview/candidate-glb/reading-corner.glb",
           "primitiveCount": 1,
           "trianglePrimitiveCount": 1,
           "outlinePrimitiveCount": 0,
-          "problemPrimitives": [
-            {
-              "meshIndex": 0,
-              "primitiveIndex": 0,
-              "openBoundaryEdges": 0,
-              "nonManifoldEdges": 50
-            }
-          ],
-          "triangleCount": 75000,
-          "vertexCount": 73926,
-          "weldedVertexCount": 37496,
+          "problemPrimitives": [],
+          "triangleCount": 78000,
+          "vertexCount": 65108,
+          "weldedVertexCount": 38996,
           "openBoundaryEdges": 0,
-          "nonManifoldEdges": 50
+          "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-11T08:45:22.780Z"
+      "importedAt": "2026-07-12T03:51:28.118Z"
     },
     {
       "slot": "teacher-podium",

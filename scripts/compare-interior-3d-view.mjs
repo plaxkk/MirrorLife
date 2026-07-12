@@ -3,6 +3,7 @@ import path from "node:path";
 import { PNG } from "pngjs";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
 const SIZE = 256;
 
 function parseArgs(argv) {
@@ -109,8 +110,15 @@ function compare(reference, render) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(CONFIG_PATH);
+  const semanticBriefs = await readJson(SEMANTIC_BRIEFS_PATH);
   const policy = config.qualityPolicy || {};
-  const slot = config.slots.find((item) => item.slot === args.slot);
+  const semanticSlots = (semanticBriefs.items || []).map((item, index) => ({
+    slot: item.model,
+    label: item.label,
+    priority: 100 + index,
+    requiredParts: item.requiredParts || []
+  }));
+  const slot = [...config.slots, ...semanticSlots].find((item) => item.slot === args.slot);
   if (!slot) throw new Error(`Unknown slot: ${args.slot}`);
   const requiredViews = policy.requiredReferenceViews || [];
   if (!requiredViews.includes(args.view)) throw new Error(`--view must be one of: ${requiredViews.join(", ")}`);

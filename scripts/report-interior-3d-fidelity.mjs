@@ -26,6 +26,9 @@ function suggestedAction(entry, issues) {
   if (issues.some((issue) => issue.includes("reference views"))) {
     return "Generate coherent front/back/left/right/top/bottom/isometric references.";
   }
+  if (issues.some((issue) => issue.includes("candidate master"))) {
+    return "Manually correct and approve the candidate master, Web LOD, canonical views and turntable.";
+  }
   if (issues.some((issue) => issue.includes("master"))) {
     return "Restore the unsimplified master GLB before optimizing a Web LOD.";
   }
@@ -81,7 +84,13 @@ async function main() {
       if (views.size < minimumViews || requiredViews.some((view) => !views.has(view))) {
         issues.push(`${views.size}/${minimumViews} reference views`);
       }
-      if (!entry.masterFile || !await exists(entry.masterFile)) issues.push("missing high-fidelity master");
+      if (!entry.masterFile || !await exists(entry.masterFile)) {
+        if (entry.candidateSourceFile && await exists(entry.candidateSourceFile)) {
+          issues.push("candidate master awaits release approval");
+        } else {
+          issues.push("missing high-fidelity master");
+        }
+      }
       const audit = entry.geometryAudit || {};
       if (audit.closedMeshes !== true || Number(audit.nonManifoldEdges) !== 0 || Number(audit.openBoundaryEdges) !== 0) {
         issues.push("geometry audit incomplete");

@@ -1,8 +1,10 @@
 import { execFile } from "node:child_process";
+import crypto from "node:crypto";
 import fs from "node:fs/promises";
 import os from "node:os";
 import path from "node:path";
 import { promisify } from "node:util";
+import puppeteer from "puppeteer-core";
 
 const execFileAsync = promisify(execFile);
 const ROOT = process.cwd();
@@ -58,8 +60,22 @@ async function main() {
     "skills/.system/imagegen/scripts/remove_chroma_key.py"
   );
   await fs.mkdir(sourceDir, { recursive: true });
+  let browser;
 
   try {
+    browser = await puppeteer.launch({
+      executablePath: args.chrome,
+      headless: true,
+      userDataDir,
+      args: [
+        "--hide-scrollbars",
+        "--no-first-run",
+        "--no-default-browser-check",
+        "--disable-background-networking",
+        "--disable-component-update",
+        "--disable-sync"
+      ]
+    });
     for (const view of VIEWS) {
       const sourceFile = path.join(sourceDir, `${view}.png`);
       const outputFile = path.join(outputDir, `${view}.png`);
@@ -67,25 +83,15 @@ async function main() {
       url.searchParams.set("model", `${args.modelFile}${args.modelFile.includes("?") ? "&" : "?"}canonical=${Date.now()}`);
       url.searchParams.set("view", view);
       url.searchParams.set("background", "#ff00ff");
-      try {
-        await execFileAsync(args.chrome, [
-          "--headless=new",
-          "--hide-scrollbars",
-          "--no-first-run",
-          "--no-default-browser-check",
-          "--disable-background-networking",
-          "--disable-component-update",
-          "--disable-sync",
-          `--user-data-dir=${userDataDir}`,
-          `--window-size=${args.size},${args.size}`,
-          "--virtual-time-budget=3500",
-          `--screenshot=${sourceFile}`,
-          url.toString()
-        ], { maxBuffer: 1024 * 1024 * 4, timeout: 9000, killSignal: "SIGKILL" });
-      } catch (error) {
-        const screenshot = await fs.stat(sourceFile).catch(() => null);
-        if (!screenshot?.size) throw error;
-      }
+      const page = await browser.newPage();
+      await page.setViewport({ width: args.size, height: args.size, deviceScaleFactor: 1 });
+      await page.goto(url.toString(), { waitUntil: "networkidle0", timeout: 20000 });
+      await page.waitForFunction(
+        () => document.documentElement.dataset.renderReady === "true",
+        { timeout: 20000 }
+      );
+      await page.screenshot({ path: sourceFile, type: "png" });
+      await page.close();
       await execFileAsync("python", [
         removeKeyScript,
         "--input", sourceFile,
@@ -95,9 +101,17 @@ async function main() {
         "--transparent-threshold", "12",
         "--opaque-threshold", "220",
         "--edge-contract", "1",
-        "--despill"
+        "--despill",
+        "--force"
       ], { maxBuffer: 1024 * 1024 * 4 });
       console.log(`Rendered ${args.model}/${view}.`);
+    }
+
+    const viewDigests = await Promise.all(VIEWS.map(async (view) => (
+      crypto.createHash("sha256").update(await fs.readFile(path.join(outputDir, `${view}.png`))).digest("hex")
+    )));
+    if (new Set(viewDigests).size < Math.min(4, VIEWS.length)) {
+      throw new Error(`Canonical camera appears frozen: only ${new Set(viewDigests).size}/${VIEWS.length} unique renders.`);
     }
 
     const sourceSheet = path.join(outputDir, "source-sheet.png");
@@ -123,6 +137,7 @@ async function main() {
       grid: { mode: "deterministic-glb-orthographic" },
       chromaKey: "#ff00ff",
       outputSize: [args.size, args.size],
+      uniqueRenderCount: new Set(viewDigests).size,
       views: VIEWS.map((view) => ({
         view,
         file: `${relativeOutput}/${view}.png`,
@@ -132,6 +147,7 @@ async function main() {
     await fs.writeFile(path.join(outputDir, "manifest.json"), `${JSON.stringify(manifest, null, 2)}\n`);
     console.log(`Wrote ${path.relative(ROOT, path.join(outputDir, "manifest.json"))}.`);
   } finally {
+    await browser?.close();
     await fs.rm(userDataDir, { recursive: true, force: true });
   }
 }

@@ -6,5 +6,7 @@ dist/
 .claude/
 .gstack/
 *.log
+__pycache__/
+*.pyc
 .vercel
 docs/private/

@@ -214,6 +214,18 @@ async function prepareSlot(config, slot) {
     path.join(packetRoot, "web")
   ]) await fs.mkdir(directory, { recursive: true });
 
+  const canonicalReferenceRoot = path.resolve(
+    "public/assets/interiors/references/multiview",
+    slot.slot
+  );
+  for (const view of views) {
+    const canonicalReference = path.join(canonicalReferenceRoot, `${view}.png`);
+    if (await exists(canonicalReference)) {
+      await fs.copyFile(canonicalReference, path.join(packetRoot, "references", `${view}.png`));
+    }
+  }
+  await fs.copyFile(sourceFile, path.join(packetRoot, "references", "isometric-art-direction.png"));
+
   const packet = {
     version: 1,
     createdAt: new Date().toISOString(),

@@ -5,6 +5,8 @@ const params = new URLSearchParams(window.location.search);
 const modelUrl = params.get("model") || "/assets/interiors/glb/desk.glb";
 const viewName = params.get("view") || "isometric";
 const background = params.get("background") || "#ff00ff";
+const yawParam = params.get("yaw");
+const yawDegrees = yawParam === null ? Number.NaN : Number(yawParam);
 
 const VIEW_PRESETS = {
   front: { direction: [0, 0, 1], up: [0, 1, 0] },
@@ -49,7 +51,13 @@ function frameModel(model) {
 
   const centeredBounds = new THREE.Box3().setFromObject(model);
   const size = centeredBounds.getSize(new THREE.Vector3());
-  const preset = VIEW_PRESETS[viewName] || VIEW_PRESETS.isometric;
+  const turntableYaw = Number.isFinite(yawDegrees) ? yawDegrees / 180 * Math.PI : null;
+  const preset = turntableYaw === null
+    ? (VIEW_PRESETS[viewName] || VIEW_PRESETS.isometric)
+    : {
+        direction: [Math.sin(turntableYaw) * 0.82, 0.58, Math.cos(turntableYaw) * 0.82],
+        up: [0, 1, 0]
+      };
   const direction = new THREE.Vector3(...preset.direction).normalize();
   const distance = Math.max(size.x, size.y, size.z) * 4 + 2;
   camera.position.copy(direction.multiplyScalar(distance));

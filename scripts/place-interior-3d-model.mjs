@@ -268,8 +268,11 @@ async function main() {
   const masterTarget = args.qualityTier === "release-candidate"
     ? path.resolve(config.workRoot, args.provider, "master-glb", `${slot.slot}.glb`)
     : "";
+  const providerMasterRoot = path.resolve(config.workRoot, args.provider, "master-glb");
   const candidateTarget = args.qualityTier === "development" && masterSource
-    ? path.resolve(config.workRoot, args.provider, "candidate-source-glb", `${slot.slot}.glb`)
+    ? (masterSource.startsWith(`${providerMasterRoot}${path.sep}`)
+        ? masterSource
+        : path.resolve(config.workRoot, args.provider, "candidate-source-glb", `${slot.slot}.glb`))
     : "";
   const target = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.glb`);
   await fs.mkdir(path.dirname(target), { recursive: true });

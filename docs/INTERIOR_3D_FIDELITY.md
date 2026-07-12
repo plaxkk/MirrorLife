@@ -64,6 +64,18 @@ npm run prepare:interior-3d:fidelity
 npm run prepare:interior-3d:fidelity -- --slot memory-book
 ```
 
+从封闭高模生成并验证 Blender Web LOD：
+
+```bash
+npm run repair:interior-3d:blender -- \
+  --input dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb \
+  --output dist/interior-3d-work/hunyuan-multiview/candidate-glb/reading-corner.glb \
+  --report dist/interior-3d-work/hunyuan-multiview/audits/reading-corner-blender.json \
+  --target-triangles 78000
+```
+
+Blender 工具会保留贴图和 UV，执行本地减面、退化面清理、三角化和法线重算。任何边界边、非流形边或游离边都会让命令失败，失败结果不得进入运行时目录。
+
 `reviewReport` 除了每个标准视角的参考图、模型渲染图、轮廓 IoU、颜色相似度和人工通过状态，还必须包含逐部件 `semanticInventory` 与至少 12 帧的 `turntable` 验收。
 
 ## 验收命令
