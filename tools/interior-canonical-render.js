@@ -78,13 +78,22 @@ function frameModel(model) {
 try {
   const gltf = await loader.loadAsync(modelUrl);
   const model = gltf.scene;
+  const outlineMaterial = new THREE.LineBasicMaterial({ color: 0x1a1a2e, transparent: true, opacity: 0.88 });
+  const outlinedMeshes = [];
   model.traverse((node) => {
     if (!node.isMesh) return;
     node.frustumCulled = false;
+    outlinedMeshes.push(node);
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => {
       material.needsUpdate = true;
     });
+  });
+  outlinedMeshes.forEach((node) => {
+    const outline = new THREE.LineSegments(new THREE.EdgesGeometry(node.geometry, 34), outlineMaterial);
+    outline.name = "MirrorLife cel outline";
+    outline.renderOrder = 3;
+    node.add(outline);
   });
   scene.add(model);
   frameModel(model);

@@ -2,10 +2,23 @@ import { createSemanticInteriorModel, hasSemanticInteriorModel } from "./interio
 
 const ASSET_BASE = "/assets/interiors/glb/";
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const MAX_DPR = 1.5;
+const MAX_DPR = 1.25;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.45;
 const CAMERA_HEIGHT = 1.62;
+const INTERIOR_ENVIRONMENT_PALETTES = {
+  care: { wall: "#f4fbf7", nightWall: "#e8f3f0", floor: "#bdddcf", accent: "#56cfe1", secondary: "#ff8fa3", trim: "#1a1a2e" },
+  learning: { wall: "#fff6d8", nightWall: "#f5f0d9", floor: "#d79a58", accent: "#4ea8de", secondary: "#2f9e83", trim: "#1a1a2e" },
+  commerce: { wall: "#fff4cf", nightWall: "#f5ead1", floor: "#d38b54", accent: "#e63946", secondary: "#2ecc71", trim: "#1a1a2e" },
+  public: { wall: "#f7f4e9", nightWall: "#eceadf", floor: "#c8b48a", accent: "#f1c40f", secondary: "#4ea8de", trim: "#1a1a2e" },
+  justice: { wall: "#f5f7fb", nightWall: "#e8edf4", floor: "#b6c8d8", accent: "#ef7188", secondary: "#4ea8de", trim: "#1a1a2e" },
+  work: { wall: "#eef4f1", nightWall: "#e2ebe7", floor: "#8fb6ad", accent: "#f1c40f", secondary: "#4ea8de", trim: "#1a1a2e" },
+  home: { wall: "#fff4df", nightWall: "#f3eadb", floor: "#cc9865", accent: "#ff8a65", secondary: "#4ea8de", trim: "#1a1a2e" },
+  nature: { wall: "#eff9e9", nightWall: "#e4f0df", floor: "#9bcf9a", accent: "#2ecc71", secondary: "#4ea8de", trim: "#1a1a2e" },
+  creative: { wall: "#fff1f5", nightWall: "#f3e8ee", floor: "#cf9bb4", accent: "#e63946", secondary: "#f1c40f", trim: "#1a1a2e" },
+  memory: { wall: "#f7f2e8", nightWall: "#ece7df", floor: "#a9bfae", accent: "#d8a45d", secondary: "#7aa5c9", trim: "#1a1a2e" }
+};
+
 const MODEL_RENDER_PROFILES = {
   bed: { scale: 1.35, rotationY: -0.45 },
   counter: { scale: 0.98, rotationY: -0.2 },
@@ -168,11 +181,47 @@ function getModelRenderProfile(type) {
   return MODEL_RENDER_PROFILES[type] || { scale: 1.12, rotationY: -0.2 };
 }
 
+function addMergedModelOutline(source) {
+  if (!source || !mergeGeometries || source.userData.mirrorLifeOutline) return;
+  source.updateMatrixWorld(true);
+  const geometries = [];
+  let hasExistingLines = false;
+  source.traverse((node) => {
+    if (node.isLineSegments) {
+      hasExistingLines = true;
+      return;
+    }
+    if (!node.isMesh || !node.geometry) return;
+    const edges = new THREE.EdgesGeometry(node.geometry, 34);
+    edges.applyMatrix4(node.matrixWorld);
+    geometries.push(edges);
+  });
+  if (hasExistingLines || !geometries.length) return;
+  const geometry = geometries.length === 1 ? geometries[0] : mergeGeometries(geometries, false);
+  if (!geometry) {
+    geometries.forEach((candidate) => candidate.dispose());
+    return;
+  }
+  geometries.forEach((candidate) => {
+    if (candidate !== geometry) candidate.dispose();
+  });
+  const outline = new THREE.LineSegments(
+    geometry,
+    new THREE.LineBasicMaterial({ color: 0x1a1a2e, transparent: true, opacity: 0.82 })
+  );
+  outline.name = "MirrorLife cel outline";
+  outline.renderOrder = 3;
+  outline.frustumCulled = true;
+  source.add(outline);
+  source.userData.mirrorLifeOutline = true;
+}
+
 function prepareModel(type, source) {
   const wrapper = new THREE.Group();
   wrapper.name = `interior-${type}`;
   wrapper.add(source);
   source.updateMatrixWorld(true);
+  addMergedModelOutline(source);
 
   const box = new THREE.Box3().setFromObject(source);
   const size = box.getSize(new THREE.Vector3());
@@ -309,7 +358,7 @@ function clearGroup(group) {
 function disposeOwnedGroup(group) {
   if (!group) return;
   group.traverse((node) => {
-    if (!node.isMesh) return;
+    if (!node.isMesh && !node.isLineSegments) return;
     node.geometry?.dispose?.();
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => material.dispose?.());
@@ -325,6 +374,167 @@ function createToonMaterial(color, options = {}) {
     opacity: options.opacity ?? 1,
     depthWrite: options.depthWrite ?? true
   });
+}
+
+function resolveEnvironmentPalette(theme = {}) {
+  const archetype = theme.archetype || "home";
+  const palette = INTERIOR_ENVIRONMENT_PALETTES[archetype] || INTERIOR_ENVIRONMENT_PALETTES.home;
+  return {
+    ...palette,
+    wallColor: theme.night ? palette.nightWall : palette.wall,
+    floorColor: palette.floor,
+    accent: palette.accent,
+    secondary: palette.secondary,
+    trim: palette.trim,
+    night: !!theme.night
+  };
+}
+
+function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
+  const geometry = new RoundedBoxGeometry(
+    size[0],
+    size[1],
+    size[2],
+    options.segments || 3,
+    Math.min(radius, ...size.map((value) => value / 2))
+  );
+  const mesh = new THREE.Mesh(geometry, createToonMaterial(color, options));
+  mesh.position.set(...position);
+  mesh.rotation.set(...rotation);
+  mesh.castShadow = options.castShadow !== false;
+  mesh.receiveShadow = options.receiveShadow !== false;
+  roomRoot.add(mesh);
+  return mesh;
+}
+
+function wallPosition(angle, radius, y) {
+  return [Math.sin(angle) * radius, y, -Math.cos(angle) * radius];
+}
+
+function addLearningWindow(angle, palette) {
+  const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.13, 2.12);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = angle;
+  roomRoot.add(group);
+
+  const frame = new THREE.Mesh(
+    new RoundedBoxGeometry(1.72, 1.28, 0.1, 4, 0.1),
+    createToonMaterial(palette.trim)
+  );
+  frame.position.z = 0.045;
+  frame.castShadow = true;
+  group.add(frame);
+  const sky = new THREE.Mesh(
+    new RoundedBoxGeometry(1.52, 1.08, 0.075, 4, 0.08),
+    createToonMaterial(palette.night ? "#35558a" : "#9edfff")
+  );
+  sky.position.z = 0.115;
+  group.add(sky);
+  const creamMaterial = createToonMaterial("#fff9e8");
+  const vertical = new THREE.Mesh(new RoundedBoxGeometry(0.05, 1.06, 0.12, 2, 0.018), creamMaterial);
+  vertical.position.z = 0.175;
+  group.add(vertical);
+  const horizontal = new THREE.Mesh(new RoundedBoxGeometry(1.5, 0.05, 0.12, 2, 0.018), creamMaterial);
+  horizontal.position.z = 0.175;
+  group.add(horizontal);
+  const rightEdge = new THREE.Mesh(new RoundedBoxGeometry(0.085, 1.18, 0.12, 2, 0.025), createToonMaterial(palette.trim));
+  rightEdge.position.set(0.66, 0, 0.19);
+  rightEdge.castShadow = true;
+  group.add(rightEdge);
+  if (palette.night) {
+    [[-0.48, 0.31], [0.46, 0.28], [0.33, -0.31], [-0.31, -0.24]].forEach(([sx, sy], index) => {
+      const star = new THREE.Mesh(new THREE.SphereGeometry(index === 0 ? 0.035 : 0.025, 10, 8), createToonMaterial("#ffd166"));
+      star.position.set(sx, sy, 0.165);
+      group.add(star);
+    });
+  } else {
+    const cloud = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 10), createToonMaterial("#f9ffff"));
+    cloud.scale.set(1.7, 0.55, 0.32);
+    cloud.position.set(-0.36, 0.22, 0.165);
+    group.add(cloud);
+  }
+}
+
+function addLearningShelf(angle, palette, variant = 0) {
+  const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.18, 1.75);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = angle;
+  roomRoot.add(group);
+  const wood = createToonMaterial("#b96f3e");
+  const darkWood = createToonMaterial("#7e4a32");
+  const shelf = new THREE.Mesh(new RoundedBoxGeometry(1.62, 0.11, 0.28, 3, 0.045), darkWood);
+  shelf.position.y = -0.4;
+  shelf.castShadow = true;
+  group.add(shelf);
+  const paletteBooks = variant % 2
+    ? ["#e63946", "#f1c40f", "#4ea8de", "#2ecc71", "#ff8fa3"]
+    : ["#4ea8de", "#ff8fa3", "#f1c40f", "#2ecc71", "#e63946"];
+  paletteBooks.forEach((color, index) => {
+    const height = 0.43 + (index % 3) * 0.07;
+    const book = new THREE.Mesh(new RoundedBoxGeometry(0.18, height, 0.22, 2, 0.025), createToonMaterial(color));
+    book.position.set(-0.55 + index * 0.27, -0.4 + height / 2 + 0.06, -0.02);
+    book.rotation.z = index === 4 ? -0.08 : 0;
+    book.castShadow = true;
+    group.add(book);
+  });
+  const rail = new THREE.Mesh(new RoundedBoxGeometry(1.76, 0.08, 0.12, 2, 0.03), wood);
+  rail.position.y = 0.28;
+  group.add(rail);
+  [-0.66, 0.66].forEach((bracketX) => {
+    const bracket = new THREE.Mesh(new RoundedBoxGeometry(0.08, 0.36, 0.1, 2, 0.025), darkWood);
+    bracket.position.set(bracketX, -0.18, 0.015);
+    bracket.castShadow = true;
+    group.add(bracket);
+  });
+  const cardMaterial = createToonMaterial(palette.wallColor);
+  [-0.48, 0, 0.48].forEach((cardX, index) => {
+    const card = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.25, 0.04, 2, 0.025), cardMaterial);
+    card.position.set(cardX, 0.08 + (index % 2) * 0.04, -0.08);
+    card.rotation.z = (index - 1) * 0.05;
+    group.add(card);
+  });
+}
+
+function addLearningEnvironment(palette, variantOffset) {
+  const wainscot = new THREE.Mesh(
+    new THREE.CylinderGeometry(ROOM_RADIUS - 0.08, ROOM_RADIUS - 0.08, 1.22, 64, 1, true),
+    createToonMaterial("#77cbb6", { side: THREE.BackSide })
+  );
+  wainscot.position.y = 0.67;
+  wainscot.receiveShadow = true;
+  roomRoot.add(wainscot);
+
+  const chairRail = new THREE.Mesh(new THREE.TorusGeometry(ROOM_RADIUS - 0.11, 0.055, 8, 64), createToonMaterial(palette.trim));
+  chairRail.rotation.x = Math.PI / 2;
+  chairRail.position.y = 1.3;
+  roomRoot.add(chairRail);
+
+  const plankColors = ["#d69755", "#e0a665", "#c9874b", "#e4ad6f"];
+  for (let index = 0; index < 10; index += 1) {
+    addRoundedRoomBox(
+      [9.45, 0.025, 0.84],
+      0.035,
+      plankColors[index % plankColors.length],
+      [0, 0.018, -3.78 + index * 0.84],
+      [0, 0, 0],
+      { segments: 2, castShadow: false }
+    );
+  }
+  for (let index = 0; index < 9; index += 1) {
+    addRoundedRoomBox([9.35, 0.018, 0.022], 0.008, "#8a5438", [0, 0.039, -3.36 + index * 0.84], [0, 0, 0], { segments: 1, castShadow: false });
+  }
+  addRoundedRoomBox([4.15, 0.055, 2.25], 0.34, "#f5d75b", [0, 0.075, 0.3], [0, 0, 0], { segments: 5, castShadow: false });
+  addRoundedRoomBox([3.72, 0.058, 1.82], 0.28, "#86d7c5", [0, 0.105, 0.3], [0, 0, 0], { segments: 5, castShadow: false });
+
+  addLearningWindow(variantOffset, palette);
+  addLearningWindow(variantOffset + Math.PI * 0.64, palette);
+  addLearningWindow(variantOffset - Math.PI * 0.64, palette);
+  addLearningShelf(variantOffset + Math.PI * 0.14, palette, 0);
+  addLearningShelf(variantOffset - Math.PI * 0.14, palette, 1);
+
+  [variantOffset - 0.78, variantOffset + 0.78].forEach((angle) => addPendant(angle, 2.72, "#ffd166", 2.72));
 }
 
 function addWallPanel(angle, color, isWindow, index) {
@@ -442,15 +652,7 @@ function addRoomArchitecture(theme, colors) {
   }
 
   if (archetype === "learning") {
-    for (let index = 0; index < 6; index += 1) {
-      const angle = variantOffset + index * Math.PI / 3;
-      addRingBox(angle, 5.25, 0.06, 1.36, 0.08, index % 2 ? "#d89151" : "#f1c40f", 1.12, {
-        transparent: true,
-        opacity: 0.46,
-        castShadow: false
-      });
-      if (index % 2 === 0) addPendant(angle + 0.18, 2.6, "#ffd166");
-    }
+    addLearningEnvironment(colors, variantOffset);
     return;
   }
 
@@ -563,12 +765,9 @@ function rebuildRoom(theme = {}) {
   roomSignature = signature;
   disposeOwnedGroup(roomRoot);
 
-  const night = !!theme.night;
-  const wallColor = night ? "#273448" : (theme.wall || "#f5eddc");
-  const floorColor = night ? "#283b37" : (theme.floor || "#dcefdc");
-  const accent = theme.accent || "#4ea8de";
-  const trim = theme.trim || "#1a1a2e";
-  scene.background = new THREE.Color(night ? "#18202d" : "#dff4ff");
+  const palette = resolveEnvironmentPalette(theme);
+  const { night, wallColor, floorColor, accent, secondary, trim } = palette;
+  scene.background = new THREE.Color(night ? "#d9e7ef" : "#dff4ff");
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
@@ -579,26 +778,16 @@ function rebuildRoom(theme = {}) {
   floor.receiveShadow = true;
   roomRoot.add(floor);
 
-  const rug = new THREE.Mesh(
-    new THREE.CircleGeometry(1.65, 48),
-    createToonMaterial(night ? "#41536f" : "#fff0a8")
-  );
-  rug.rotation.x = -Math.PI / 2;
-  rug.position.y = 0.012;
-  rug.receiveShadow = true;
-  roomRoot.add(rug);
-
-  const seamMaterial = createToonMaterial(trim, {
-    transparent: true,
-    opacity: night ? 0.18 : 0.1,
-    depthWrite: false
-  });
-  [2.15, 3.45, 4.62].forEach((radius) => {
-    const seam = new THREE.Mesh(new THREE.TorusGeometry(radius, 0.012, 5, 64), seamMaterial);
-    seam.rotation.x = Math.PI / 2;
-    seam.position.y = 0.022;
-    roomRoot.add(seam);
-  });
+  if ((theme.archetype || "home") !== "learning") {
+    const rug = new THREE.Mesh(
+      new THREE.CircleGeometry(1.65, 48),
+      createToonMaterial(night ? secondary : "#fff0a8")
+    );
+    rug.rotation.x = -Math.PI / 2;
+    rug.position.y = 0.025;
+    rug.receiveShadow = true;
+    roomRoot.add(rug);
+  }
 
   const wall = new THREE.Mesh(
     new THREE.CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, ROOM_HEIGHT, 64, 1, true),
@@ -620,11 +809,13 @@ function rebuildRoom(theme = {}) {
   ceilingTrim.position.y = ROOM_HEIGHT - 0.12;
   roomRoot.add(ceilingTrim);
 
-  for (let i = 0; i < 12; i += 1) {
-    const angle = (i / 12) * Math.PI * 2;
-    addWallPanel(angle, i % 3 === 0 ? "#bfe3f2" : accent, i % 3 === 0, i);
+  if ((theme.archetype || "home") !== "learning") {
+    for (let i = 0; i < 12; i += 1) {
+      const angle = (i / 12) * Math.PI * 2;
+      addWallPanel(angle, i % 3 === 0 ? "#bfe3f2" : accent, i % 3 === 0, i);
+    }
   }
-  addRoomArchitecture(theme, { accent, trim, wallColor, floorColor, night });
+  addRoomArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
 }
 
 function getItemSignature(items) {

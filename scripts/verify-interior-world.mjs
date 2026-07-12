@@ -34,9 +34,10 @@ function extractObject(source, name, nextName) {
   return vm.runInNewContext(`(${match[1]})`, Object.create(null));
 }
 
-const [engine, game, configText, manifestText] = await Promise.all([
+const [engine, game, interiorThree, configText, manifestText] = await Promise.all([
   fs.readFile(path.join(ROOT, "public/engine.js"), "utf8"),
   fs.readFile(path.join(ROOT, "public/game.js"), "utf8"),
+  fs.readFile(path.join(ROOT, "src/interior-three.js"), "utf8"),
   fs.readFile(path.join(ROOT, "config/interior-3d-model-map.json"), "utf8"),
   fs.readFile(path.join(ROOT, "public/assets/interiors/glb/model-source-manifest.json"), "utf8")
 ]);
@@ -47,6 +48,7 @@ const blueprintBlock = extractBlock(game, /const INTERIOR_BLUEPRINTS = \{/, /\n\
 const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\nconst INTERIOR_SCENE_ACTIONS/, "interior profiles");
 const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
 const blueprints = extractObject(game, "INTERIOR_BLUEPRINTS", "INTERIOR_ZONE_PROFILES");
+const environmentPalettes = extractObject(interiorThree, "INTERIOR_ENVIRONMENT_PALETTES", "MODEL_RENDER_PROFILES");
 
 const zoneIds = unique([...collectIds(openWorldBlock), ...collectIds(growthBlock)]);
 const profileIds = unique(collectProfileIds(profileBlock));
@@ -58,6 +60,10 @@ if (missingProfiles.length) throw new Error(`Buildings without interior profiles
 if (unknownProfiles.length) throw new Error(`Interior profiles without buildings: ${unknownProfiles.join(", ")}`);
 const missingSceneActions = blueprintIds.filter((id) => !sceneActionIds.includes(id));
 if (missingSceneActions.length) throw new Error(`Interior blueprints without shared scene actions: ${missingSceneActions.join(", ")}`);
+const missingEnvironmentPalettes = blueprintIds.filter((id) => !environmentPalettes[id]);
+if (missingEnvironmentPalettes.length) {
+  throw new Error(`Interior blueprints without environment art palettes: ${missingEnvironmentPalettes.join(", ")}`);
+}
 
 const incompleteSemanticProps = [];
 for (const [blueprintId, blueprint] of Object.entries(blueprints)) {
@@ -102,4 +108,4 @@ for (const slot of config.slots || []) {
 if (missingModels.length) throw new Error(`Missing runtime GLBs: ${missingModels.join(", ")}`);
 if (fallbackModels.length) throw new Error(`Sprite-card fallbacks still active: ${fallbackModels.join(", ")}`);
 
-console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${blueprintIds.length} room archetypes, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);
+console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${blueprintIds.length} room archetypes, ${Object.keys(environmentPalettes).length} environment palettes, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);
