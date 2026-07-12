@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-12T00:59:02.636Z",
+  "updatedAt": "2026-07-12T01:21:23.018Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-12T00-59-02-019Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T01-21-22-403Z",
   "imported": [
     {
       "slot": "bed",
@@ -1913,10 +1913,75 @@
         }
       },
       "importedAt": "2026-07-12T00:59:02.633Z"
+    },
+    {
+      "slot": "story-table",
+      "label": "故事桌",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/story-table.glb",
+      "target": "public/assets/interiors/glb/story-table.glb",
+      "bytes": 1889684,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/story-table/front.png",
+        "public/assets/interiors/references/multiview/story-table/back.png",
+        "public/assets/interiors/references/multiview/story-table/left.png",
+        "public/assets/interiors/references/multiview/story-table/right.png",
+        "public/assets/interiors/references/multiview/story-table/top.png",
+        "public/assets/interiors/references/multiview/story-table/bottom.png",
+        "public/assets/interiors/references/multiview/story-table/isometric.png",
+        "public/assets/interiors/references/multiview/story-table/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/story-table.glb",
+      "masterBytes": 1889684,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-12T01:14:38.508Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 20588,
+        "webTriangleCount": 20588,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/story-table.glb",
+          "primitiveCount": 79,
+          "trianglePrimitiveCount": 71,
+          "outlinePrimitiveCount": 8,
+          "problemPrimitives": [],
+          "triangleCount": 20588,
+          "vertexCount": 55607,
+          "weldedVertexCount": 10432,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/story-table.glb",
+          "primitiveCount": 79,
+          "trianglePrimitiveCount": 71,
+          "outlinePrimitiveCount": 8,
+          "problemPrimitives": [],
+          "triangleCount": 20588,
+          "vertexCount": 55607,
+          "weldedVertexCount": 10432,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-12T01:21:23.016Z"
     }
   ],
   "missing": [
-    "story-table",
     "music-corner",
     "meditation-seat",
     "memory-book"

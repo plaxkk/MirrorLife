@@ -30,7 +30,8 @@ const SLOT_ASSETS = {
   "bookcase": ["/assets/interiors/references/runtime-semantic/bookcase.png", "故事书架"],
   "garden-tool-shed": ["/assets/interiors/references/runtime-semantic/garden-tool-shed.png", "园艺工具棚"],
   "gallery-wall": ["/assets/interiors/references/runtime-semantic/gallery-wall.png", "作品墙"],
-  "rehearsal-stage": ["/assets/interiors/references/runtime-semantic/rehearsal-stage.png", "排练角"]
+  "rehearsal-stage": ["/assets/interiors/references/runtime-semantic/rehearsal-stage.png", "排练角"],
+  "story-table": ["/assets/interiors/references/runtime-semantic/story-table.png", "故事桌"]
 };
 
 const params = new URLSearchParams(window.location.search);

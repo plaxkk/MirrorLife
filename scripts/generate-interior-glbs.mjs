@@ -2348,6 +2348,82 @@ function rehearsalStage() {
   return g;
 }
 
+function addMismatchedStoryChair(group, x, z, rotation, color, variant) {
+  const chair = createPart(group, `story-chair-${variant + 1}`);
+  const honeyDark = 0x81502a;
+  addMesh(chair, rounded(0.48, 0.14, 0.48, 0.055), color, [0, 0.58, 0]);
+  [-0.18, 0.18].forEach((cx) => {
+    [-0.17, 0.17].forEach((cz) => addMesh(chair, rounded(0.08, 0.52, 0.08, 0.025), honeyDark, [cx, 0.31, cz]));
+  });
+  [-0.19, 0.19].forEach((cx) => addMesh(chair, rounded(0.09, 0.88, 0.09, 0.03), color, [cx, 1.02, 0.19]));
+  addMesh(chair, rounded(0.48, 0.14, 0.12, 0.045), color, [0, 1.42, 0.19]);
+  if (variant === 0) {
+    [-0.11, 0, 0.11].forEach((cx) => addMesh(chair, rounded(0.06, 0.52, 0.07, 0.02), color, [cx, 1.14, 0.19]));
+  } else if (variant === 1) {
+    addMesh(chair, rounded(0.28, 0.4, 0.075, 0.03), color, [0, 1.18, 0.19]);
+    addMesh(chair, torus(0.09, 0.025, 10, 24), P.cream, [0, 1.26, 0.24], [1.25, 0.75, 1]);
+  } else if (variant === 2) {
+    addMesh(chair, rounded(0.22, 0.22, 0.07, 0.028), 0xe0a52f, [0, 1.18, 0.24], [1, 1, 1], [0, 0, Math.PI / 4]);
+  } else {
+    addMesh(chair, sphere(0.1, 16, 10), P.cream, [-0.065, 1.2, 0.24], [1, 1.25, 0.45]);
+    addMesh(chair, sphere(0.1, 16, 10), P.cream, [0.065, 1.2, 0.24], [1, 1.25, 0.45]);
+    addMesh(chair, rounded(0.14, 0.14, 0.055, 0.02), P.cream, [0, 1.13, 0.24], [1, 1, 1], [0, 0, Math.PI / 4]);
+  }
+  addMesh(chair, rounded(0.4, 0.055, 0.055, 0.018), honeyDark, [0, 0.3, 0.19]);
+  chair.position.set(x, 0, z);
+  chair.rotation.y = rotation;
+  return chair;
+}
+
+function storyTable() {
+  const g = new THREE.Group();
+  g.name = "story-table";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const deepTeal = 0x315f69;
+
+  const table = createPart(g, "round-tabletop-central-pedestal-and-finished-underside");
+  addMesh(table, cyl(0.94, 0.94, 0.16, 48), honeyDark, [0, 0.86, 0]);
+  addMesh(table, cyl(0.89, 0.92, 0.12, 48), honeyLight, [0, 0.98, 0]);
+  addMesh(table, torus(0.75, 0.025, 10, 36), honey, [0, 1.05, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(table, cyl(0.22, 0.3, 0.68, 28), honey, [0, 0.5, 0]);
+  addMesh(table, cyl(0.34, 0.28, 0.13, 28), honeyDark, [0, 0.18, 0]);
+  [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle) => {
+    const x = Math.cos(angle) * 0.43;
+    const z = Math.sin(angle) * 0.43;
+    addMesh(table, rounded(0.62, 0.12, 0.18, 0.045), honeyDark, [x, 0.12, z], [1, 1, 1], [0, -angle, 0]);
+    addMesh(table, rounded(0.18, 0.08, 0.2, 0.03), honeyLight, [Math.cos(angle) * 0.72, 0.11, Math.sin(angle) * 0.72], [1, 1, 1], [0, -angle, 0]);
+  });
+
+  const chairs = createPart(g, "exactly-four-mismatched-harmonious-chairs-with-clear-gaps");
+  addMismatchedStoryChair(chairs, -1.25, 0, -Math.PI / 2, 0x8fc69a, 0);
+  addMismatchedStoryChair(chairs, 1.25, 0, Math.PI / 2, 0x5d9bd8, 1);
+  addMismatchedStoryChair(chairs, 0, -1.2, 0, 0xf0b442, 2);
+  addMismatchedStoryChair(chairs, 0, 1.2, Math.PI, 0xee806b, 3);
+
+  const book = createPart(g, "open-central-memory-book-with-two-blank-pages");
+  addMesh(book, rounded(0.62, 0.055, 0.45, 0.018), honeyDark, [0, 1.1, 0]);
+  addMesh(book, rounded(0.31, 0.04, 0.4, 0.014), cream, [-0.16, 1.15, 0], [1, 1, 1], [0, 0, -0.08], false);
+  addMesh(book, rounded(0.31, 0.04, 0.4, 0.014), cream, [0.16, 1.15, 0], [1, 1, 1], [0, 0, 0.08], false);
+  addMesh(book, rounded(0.04, 0.025, 0.42, 0.008), 0xee806b, [0, 1.17, 0.06], [1, 1, 1], [0, 0, 0], false);
+
+  const lamp = createPart(g, "small-warm-table-lamp");
+  addMesh(lamp, cyl(0.11, 0.14, 0.07, 20), honeyDark, [-0.53, 1.12, -0.26]);
+  addMesh(lamp, cyl(0.035, 0.035, 0.28, 12), honey, [-0.53, 1.28, -0.26]);
+  addMesh(lamp, cyl(0.18, 0.11, 0.22, 22), cream, [-0.53, 1.48, -0.26]);
+  addMesh(lamp, sphere(0.07, 16, 10), 0xffd36b, [-0.53, 1.38, -0.26], [1, 0.85, 1], [0, 0, 0], false);
+
+  const cards = createPart(g, "shallow-story-card-tray-and-three-loose-blank-cards");
+  addMesh(cards, rounded(0.48, 0.11, 0.36, 0.045), deepTeal, [0.5, 1.11, -0.22]);
+  addMesh(cards, rounded(0.39, 0.04, 0.28, 0.014), cream, [0.5, 1.18, -0.22], [1, 1, 1], [0, 0.12, 0], false);
+  [[-0.48, 0.28, -0.04], [0.02, 0.45, 0.09], [0.46, 0.35, 0.04]].forEach(([x, z, tilt]) => {
+    addMesh(cards, rounded(0.26, 0.025, 0.18, 0.008), cream, [x, 1.13, z], [1, 1, 1], [0, tilt, 0], false);
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2569,7 +2645,8 @@ const builders = {
   bookcase,
   "garden-tool-shed": gardenToolShed,
   "gallery-wall": galleryWall,
-  "rehearsal-stage": rehearsalStage
+  "rehearsal-stage": rehearsalStage,
+  "story-table": storyTable
 };
 
 function parseArgs(argv) {
@@ -2606,7 +2683,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

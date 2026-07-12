@@ -1,0 +1,56 @@
+{
+  "model": "story-table",
+  "sourceModel": "/assets/interiors/glb/story-table.glb",
+  "sourceSheet": "public/assets/interiors/references/multiview/story-table/source-sheet.png",
+  "generatedAt": "2026-07-12T01:17:46.990Z",
+  "grid": {
+    "mode": "deterministic-glb-orthographic"
+  },
+  "chromaKey": "#ff00ff",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/story-table/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/story-table/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/story-table/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/story-table/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/story-table/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/story-table/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/story-table/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/story-table/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}
