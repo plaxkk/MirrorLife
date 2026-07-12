@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-11T23:38:30.932Z",
+  "updatedAt": "2026-07-11T23:59:52.539Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-11T23-38-30-523Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-11T23-59-52-108Z",
   "imported": [
     {
       "slot": "bed",
@@ -1649,10 +1649,75 @@
         }
       },
       "importedAt": "2026-07-11T23:38:30.926Z"
+    },
+    {
+      "slot": "bookcase",
+      "label": "故事书架",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/bookcase.glb",
+      "target": "public/assets/interiors/glb/bookcase.glb",
+      "bytes": 4111008,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/bookcase/front.png",
+        "public/assets/interiors/references/multiview/bookcase/back.png",
+        "public/assets/interiors/references/multiview/bookcase/left.png",
+        "public/assets/interiors/references/multiview/bookcase/right.png",
+        "public/assets/interiors/references/multiview/bookcase/top.png",
+        "public/assets/interiors/references/multiview/bookcase/bottom.png",
+        "public/assets/interiors/references/multiview/bookcase/isometric.png",
+        "public/assets/interiors/references/multiview/bookcase/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/bookcase.glb",
+      "masterBytes": 4111008,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-11T23:55:42.612Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 41400,
+        "webTriangleCount": 41400,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/bookcase.glb",
+          "primitiveCount": 138,
+          "trianglePrimitiveCount": 138,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 41400,
+          "vertexCount": 124200,
+          "weldedVertexCount": 20976,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/bookcase.glb",
+          "primitiveCount": 138,
+          "trianglePrimitiveCount": 138,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 41400,
+          "vertexCount": 124200,
+          "weldedVertexCount": 20976,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-11T23:59:52.536Z"
     }
   ],
   "missing": [
-    "bookcase",
     "garden-tool-shed",
     "gallery-wall",
     "rehearsal-stage",

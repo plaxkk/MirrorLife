@@ -26,7 +26,8 @@ const SLOT_ASSETS = {
   "mediation-podium": ["/assets/interiors/references/runtime-semantic/mediation-podium.png", "调停席"],
   "archive-cabinet": ["/assets/interiors/references/runtime-semantic/archive-cabinet.png", "边界档案柜"],
   "calming-chair": ["/assets/interiors/references/runtime-semantic/calming-chair.png", "情绪安抚角"],
-  "home-bed": ["/assets/interiors/references/runtime-semantic/home-bed.png", "卧榻"]
+  "home-bed": ["/assets/interiors/references/runtime-semantic/home-bed.png", "卧榻"],
+  "bookcase": ["/assets/interiors/references/runtime-semantic/bookcase.png", "故事书架"]
 };
 
 const params = new URLSearchParams(window.location.search);

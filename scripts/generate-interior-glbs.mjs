@@ -2044,6 +2044,75 @@ function homeBed() {
   return g;
 }
 
+function addStoryBookRow(group, y, rowIndex) {
+  const colors = [0x5d9bd8, 0xe87862, 0xf0b442, 0x7ea35f, 0xa78ac7, 0x5aaea4, 0xffefce];
+  const heights = [0.32, 0.38, 0.35, 0.41, 0.34, 0.39, 0.36, 0.4];
+  for (let index = 0; index < 8; index += 1) {
+    const height = heights[(index + rowIndex) % heights.length];
+    const x = -0.55 + index * 0.155;
+    const tilt = ((index + rowIndex) % 5 === 0 ? -0.08 : (index + rowIndex) % 6 === 0 ? 0.07 : 0);
+    const book = createPart(group, `story-book-row-${rowIndex + 1}-book-${index + 1}`);
+    addMesh(book, rounded(0.12, height, 0.26, 0.026), colors[(index + rowIndex * 2) % colors.length], [x, y + height / 2 + 0.05, 0.09], [1, 1, 1], [0, 0, tilt]);
+    addMesh(book, rounded(0.085, 0.025, 0.275, 0.009), 0xf4d9a6, [x - Math.sin(tilt) * height * 0.46, y + height + 0.055, 0.09], [1, 1, 1], [0, 0, tilt], false);
+    addMesh(book, rounded(0.075, 0.025, 0.02, 0.007), 0xe0a52f, [x, y + height * 0.58, 0.235], [1, 1, 1], [0, 0, tilt], false);
+  }
+}
+
+function bookcase() {
+  const g = new THREE.Group();
+  g.name = "bookcase";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const brass = 0xe0a52f;
+
+  const back = createPart(g, "finished-recessed-back-panel-with-rear-trim");
+  addMesh(back, rounded(1.5, 2.68, 0.16, 0.07), honeyDark, [0, 1.43, -0.24]);
+  addMesh(back, rounded(1.32, 2.43, 0.08, 0.035), honey, [0, 1.48, -0.35]);
+  [-0.48, 0, 0.48].forEach((x) => addMesh(back, rounded(0.035, 2.25, 0.035, 0.012), honeyLight, [x, 1.49, -0.405], [1, 1, 1], [0, 0, 0], false));
+
+  const frame = createPart(g, "substantial-rounded-bookcase-frame-and-plinth");
+  [-0.72, 0.72].forEach((x) => {
+    addMesh(frame, rounded(0.2, 2.58, 0.62, 0.075), honey, [x, 1.42, 0]);
+    addMesh(frame, rounded(0.09, 2.34, 0.52, 0.035), honeyLight, [x * 0.96, 1.45, 0.02]);
+  });
+  addMesh(frame, rounded(1.68, 0.22, 0.7, 0.09), honeyDark, [0, 0.16, 0]);
+  addMesh(frame, rounded(1.58, 0.18, 0.66, 0.075), honey, [0, 0.27, 0]);
+  addMesh(frame, rounded(1.72, 0.22, 0.72, 0.095), honeyDark, [0, 2.7, 0]);
+  addMesh(frame, rounded(1.62, 0.2, 0.68, 0.085), honeyLight, [0, 2.79, 0]);
+  [[-0.63, -0.21], [0.63, -0.21], [-0.63, 0.21], [0.63, 0.21]].forEach(([x, z]) => {
+    addMesh(frame, rounded(0.16, 0.14, 0.16, 0.045), honeyDark, [x, 0.07, z]);
+  });
+
+  const shelves = createPart(g, "exactly-four-usable-book-shelves");
+  const shelfYs = [0.62, 1.04, 1.46, 1.88];
+  shelfYs.forEach((y, index) => {
+    addMesh(shelves, rounded(1.36, 0.11, 0.55, 0.04), honeyDark, [0, y, 0.02]);
+    addMesh(shelves, rounded(1.28, 0.06, 0.5, 0.025), honeyLight, [0, y + 0.075, 0.02]);
+    addStoryBookRow(shelves, y + 0.05, index);
+  });
+
+  const display = createPart(g, "upper-display-niche-open-keepsake-book-and-blank-card");
+  addMesh(display, rounded(1.4, 0.11, 0.56, 0.04), honeyDark, [0, 2.31, 0.02]);
+  addMesh(display, rounded(1.25, 0.38, 0.06, 0.022), honey, [0, 2.48, -0.28]);
+  addMesh(display, rounded(0.42, 0.05, 0.34, 0.018), honeyDark, [-0.23, 2.42, 0.1], [1, 1, 1], [0, -0.12, 0]);
+  addMesh(display, rounded(0.22, 0.045, 0.3, 0.015), cream, [-0.34, 2.48, 0.12], [1, 1, 1], [0, -0.12, -0.12], false);
+  addMesh(display, rounded(0.22, 0.045, 0.3, 0.015), cream, [-0.12, 2.48, 0.12], [1, 1, 1], [0, -0.12, 0.12], false);
+  addMesh(display, rounded(0.25, 0.31, 0.08, 0.035), honeyDark, [0.37, 2.51, 0.08]);
+  addMesh(display, rounded(0.18, 0.24, 0.045, 0.022), cream, [0.37, 2.51, 0.135], [1, 1, 1], [0, 0, 0], false);
+
+  const drawers = createPart(g, "two-equal-lower-drawers-with-separate-handles");
+  [-0.36, 0.36].forEach((x, index) => {
+    addMesh(drawers, rounded(0.62, 0.28, 0.52, 0.065), honey, [x, 0.43, 0.02]);
+    addMesh(drawers, rounded(0.54, 0.22, 0.08, 0.03), honeyLight, [x, 0.43, 0.31]);
+    addMesh(drawers, rounded(0.26, 0.055, 0.08, 0.02), brass, [x, 0.39, 0.37]);
+    [-0.09, 0.09].forEach((dx) => addMesh(drawers, rounded(0.05, 0.1, 0.07, 0.018), brass, [x + dx, 0.43, 0.34]));
+    drawers.children.at(-1).name = `drawer-handle-${index + 1}`;
+  });
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2261,7 +2330,8 @@ const builders = {
   "mediation-podium": mediationPodium,
   "archive-cabinet": archiveCabinet,
   "calming-chair": calmingChair,
-  "home-bed": homeBed
+  "home-bed": homeBed,
+  bookcase
 };
 
 function parseArgs(argv) {
@@ -2298,7 +2368,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));
