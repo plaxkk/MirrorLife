@@ -1,8 +1,8 @@
 {
-  "updatedAt": "2026-07-12T00:19:33.382Z",
+  "updatedAt": "2026-07-12T00:39:27.123Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
-  "backupDir": "dist/interior-3d-work/backups/2026-07-12T00-19-33-028Z",
+  "backupDir": "dist/interior-3d-work/backups/2026-07-12T00-39-26-717Z",
   "imported": [
     {
       "slot": "bed",
@@ -1781,10 +1781,75 @@
         }
       },
       "importedAt": "2026-07-12T00:19:33.380Z"
+    },
+    {
+      "slot": "gallery-wall",
+      "label": "作品墙",
+      "provider": "threejs-manual",
+      "source": "dist/interior-3d-work/threejs-manual/generated-glb/gallery-wall.glb",
+      "target": "public/assets/interiors/glb/gallery-wall.glb",
+      "bytes": 1441880,
+      "qualityTier": "development",
+      "referenceViews": [
+        "front",
+        "back",
+        "left",
+        "right",
+        "top",
+        "bottom",
+        "isometric",
+        "isometric-back"
+      ],
+      "referenceFiles": [
+        "public/assets/interiors/references/multiview/gallery-wall/front.png",
+        "public/assets/interiors/references/multiview/gallery-wall/back.png",
+        "public/assets/interiors/references/multiview/gallery-wall/left.png",
+        "public/assets/interiors/references/multiview/gallery-wall/right.png",
+        "public/assets/interiors/references/multiview/gallery-wall/top.png",
+        "public/assets/interiors/references/multiview/gallery-wall/bottom.png",
+        "public/assets/interiors/references/multiview/gallery-wall/isometric.png",
+        "public/assets/interiors/references/multiview/gallery-wall/isometric-back.png"
+      ],
+      "masterFile": "dist/interior-3d-work/threejs-manual/master-glb/gallery-wall.glb",
+      "masterBytes": 1441880,
+      "reviewReport": "",
+      "geometryAudit": {
+        "auditedAt": "2026-07-12T00:33:01.568Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 17936,
+        "webTriangleCount": 17936,
+        "master": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/gallery-wall.glb",
+          "primitiveCount": 66,
+          "trianglePrimitiveCount": 60,
+          "outlinePrimitiveCount": 6,
+          "problemPrimitives": [],
+          "triangleCount": 17936,
+          "vertexCount": 41468,
+          "weldedVertexCount": 9084,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "dist/interior-3d-work/threejs-manual/generated-glb/gallery-wall.glb",
+          "primitiveCount": 66,
+          "trianglePrimitiveCount": 60,
+          "outlinePrimitiveCount": 6,
+          "problemPrimitives": [],
+          "triangleCount": 17936,
+          "vertexCount": 41468,
+          "weldedVertexCount": 9084,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      },
+      "importedAt": "2026-07-12T00:39:27.121Z"
     }
   ],
   "missing": [
-    "gallery-wall",
     "rehearsal-stage",
     "story-table",
     "music-corner",

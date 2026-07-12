@@ -2200,6 +2200,76 @@ function gardenToolShed() {
   return g;
 }
 
+function addGalleryArtwork(group, x, y, width, height, frameColor, artColors, index) {
+  const art = createPart(group, `artwork-frame-${index}`);
+  addMesh(art, rounded(width, height, 0.13, 0.055), frameColor, [x, y, 0.18]);
+  addMesh(art, rounded(width - 0.14, height - 0.14, 0.045, 0.018), P.cream, [x, y, 0.27], [1, 1, 1], [0, 0, 0], false);
+  addMesh(art, sphere(Math.min(width, height) * 0.17, 18, 12), artColors[0], [x - width * 0.16, y + height * 0.12, 0.31], [1.4, 0.75, 0.32], [0, 0, index * 0.38], false);
+  addMesh(art, sphere(Math.min(width, height) * 0.15, 18, 12), artColors[1], [x + width * 0.18, y - height * 0.13, 0.31], [1.1, 1.4, 0.32], [0, 0, -index * 0.31], false);
+  addMesh(art, rounded(width * 0.32, height * 0.12, 0.025, 0.008), artColors[2], [x + width * 0.1, y + height * 0.18, 0.325], [1, 1, 1], [0, 0, index % 2 ? 0.35 : -0.28], false);
+}
+
+function galleryWall() {
+  const g = new THREE.Group();
+  g.name = "gallery-wall";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const inkMetal = 0x3b3a43;
+  const artPalettes = [
+    [0xee806b, 0x5d9bd8, 0xf0b442],
+    [0xa78ac7, 0xf0b442, 0xee806b],
+    [0x5d9bd8, 0x7f9859, 0xf0b442],
+    [0x7fc5ad, 0xee806b, 0xa78ac7],
+    [0xf0b442, 0x5d9bd8, 0xee806b]
+  ];
+
+  const panel = createPart(g, "wide-finished-wall-panel-with-front-and-rear-insets");
+  addMesh(panel, rounded(2.72, 1.78, 0.18, 0.075), honeyDark, [0, 1.36, 0]);
+  addMesh(panel, rounded(2.56, 1.62, 0.1, 0.045), cream, [0, 1.36, 0.11]);
+  addMesh(panel, rounded(2.46, 1.5, 0.075, 0.032), 0xf5dfb8, [0, 1.36, -0.13]);
+  [-0.78, 0, 0.78].forEach((x) => addMesh(panel, rounded(0.035, 1.34, 0.035, 0.012), honeyLight, [x, 1.36, -0.19], [1, 1, 1], [0, 0, 0], false));
+
+  const posts = createPart(g, "two-honey-oak-support-posts-broad-floor-feet-and-top-rail");
+  [-1.46, 1.46].forEach((x) => {
+    addMesh(posts, rounded(0.18, 2.32, 0.22, 0.065), honey, [x, 1.2, 0]);
+    addMesh(posts, rounded(0.46, 0.16, 0.66, 0.055), honeyDark, [x, 0.12, 0]);
+    addMesh(posts, rounded(0.38, 0.11, 0.58, 0.04), honeyLight, [x, 0.22, 0]);
+    addMesh(posts, rounded(0.24, 0.2, 0.28, 0.07), honeyLight, [x, 2.39, 0]);
+  });
+  addMesh(posts, rounded(2.88, 0.16, 0.25, 0.06), honey, [0, 2.29, 0]);
+
+  const artworks = createPart(g, "exactly-five-colorful-framed-abstract-art-panels");
+  addGalleryArtwork(artworks, -0.9, 1.55, 0.58, 0.86, 0x5aaea4, artPalettes[0], 1);
+  addGalleryArtwork(artworks, -0.24, 1.78, 0.55, 0.65, 0xf0b442, artPalettes[1], 2);
+  addGalleryArtwork(artworks, 0.65, 1.79, 0.82, 0.58, 0xee806b, artPalettes[2], 3);
+  addGalleryArtwork(artworks, 0.18, 1.06, 0.88, 0.6, 0xa78ac7, artPalettes[3], 4);
+  addGalleryArtwork(artworks, 0.93, 1.08, 0.52, 0.66, 0x5aaea4, artPalettes[4], 5);
+
+  const comments = createPart(g, "lower-anonymous-comment-card-ledge-with-five-blank-cards");
+  addMesh(comments, rounded(2.48, 0.12, 0.38, 0.045), honeyDark, [0, 0.5, 0.28]);
+  addMesh(comments, rounded(2.38, 0.07, 0.32, 0.03), honeyLight, [0, 0.58, 0.28]);
+  [-0.92, -0.46, 0, 0.46, 0.92].forEach((x, index) => {
+    addMesh(comments, rounded(0.31, 0.22, 0.035, 0.013), cream, [x, 0.72 + (index % 2) * 0.02, 0.39], [1, 1, 1], [-0.2, 0, 0], false);
+  });
+
+  const lights = createPart(g, "two-adjustable-top-spotlights-with-rear-cable-route");
+  [-0.82, 0.82].forEach((x, index) => {
+    addMesh(lights, torus(0.13, 0.035, 10, 24), inkMetal, [x, 2.43, 0.08], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addMesh(lights, cyl(0.13, 0.19, 0.28, 20), inkMetal, [x, 2.19, 0.24], [1, 1, 1], [0.75, 0, index ? -0.16 : 0.16]);
+    addMesh(lights, cyl(0.1, 0.1, 0.025, 18), 0xffd36b, [x, 2.08, 0.34], [1, 1, 1], [0.75, 0, index ? -0.16 : 0.16], false);
+  });
+  addMesh(lights, rounded(2.18, 0.055, 0.055, 0.018), inkMetal, [0, 2.05, -0.22], [1, 1, 1], [0, 0, 0], false);
+
+  const rear = createPart(g, "finished-backside-cross-braces-cable-clips-and-center-rail");
+  addCylinderBetween(rear, [-1.12, 0.42, -0.25], [-0.12, 1.36, -0.25], 0.065, honey, "left-rear-cross-brace");
+  addCylinderBetween(rear, [1.12, 0.42, -0.25], [0.12, 1.36, -0.25], 0.065, honey, "right-rear-cross-brace");
+  addMesh(rear, rounded(2.22, 0.13, 0.15, 0.045), honeyDark, [0, 1.33, -0.23]);
+  [-0.8, 0, 0.8].forEach((x) => addMesh(rear, rounded(0.1, 0.14, 0.1, 0.03), inkMetal, [x, 2.05, -0.26]));
+  return g;
+}
+
 function roundTable() {
   const g = new THREE.Group();
   addBase(g, 2.05, 1.75, P.paper);
@@ -2419,7 +2489,8 @@ const builders = {
   "calming-chair": calmingChair,
   "home-bed": homeBed,
   bookcase,
-  "garden-tool-shed": gardenToolShed
+  "garden-tool-shed": gardenToolShed,
+  "gallery-wall": galleryWall
 };
 
 function parseArgs(argv) {
@@ -2456,7 +2527,7 @@ const args = parseArgs(process.argv.slice(2));
 await fs.mkdir(args.output, { recursive: true });
 for (const name of args.slots) {
   const build = builders[name];
-  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed"]).has(name)
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall"]).has(name)
     ? normalizeUpright(build())
     : normalize(build());
   await exportGlb(scene, path.join(args.output, `${name}.glb`));

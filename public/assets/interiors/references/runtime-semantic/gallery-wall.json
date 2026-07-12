@@ -1,0 +1,23 @@
+{
+  "model": "gallery-wall",
+  "label": "作品墙",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/mirrorlife-interior-prop-design-board.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/gallery-wall.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "wall panel",
+    "five artwork frames",
+    "art panels",
+    "two spotlights",
+    "support posts",
+    "floor feet",
+    "finished backside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved two-view design reference showing one intended freestanding gallery wall from front and rear. Preserve exactly five colorful framed abstract artworks, two adjustable top spotlights, comment-card ledge, two support posts and broad feet. Build a single object with finished recessed rear panels, cable route and cross braces. Canonical views, closed development geometry and turntable review are still required."
+}
