@@ -192,6 +192,9 @@ async function main() {
       referenceFiles: provenance.referenceFiles || [],
       masterFile: provenance.masterFile || "",
       masterBytes: provenance.masterBytes || 0,
+      candidateSourceFile: provenance.candidateSourceFile || "",
+      candidateSourceBytes: provenance.candidateSourceBytes || 0,
+      releaseEligibleProvider: provenance.releaseEligibleProvider === true,
       reviewReport: provenance.reviewReport || "",
       geometryAudit: provenance.geometryAudit || {},
       importedAt: new Date().toISOString()

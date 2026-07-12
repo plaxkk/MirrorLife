@@ -1,0 +1,24 @@
+{
+  "model": "memory-book",
+  "label": "记忆册",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/story-table.png",
+    "public/assets/interiors/references/runtime-semantic/meditation-seat.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/memory-book.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "open memory book",
+    "illustrated pages",
+    "ribbon marker",
+    "wood reading stand",
+    "photo cards",
+    "reading light",
+    "finished underside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the large open illustrated memory book, coral ribbon marker, low honey-oak reading stand, exactly three blank photo cards, teal pencil groove, warm curved reading light, broad feet and finished underside. This image is art direction only: release still requires seven independent coherent views, a manually corrected editable master, a distinct Web LOD and approved 360-degree review."
+}

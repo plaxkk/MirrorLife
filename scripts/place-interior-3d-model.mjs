@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
 const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
@@ -126,6 +127,12 @@ async function assertGlb(filePath) {
   return stat.size;
 }
 
+async function fileDigest(filePath) {
+  const hash = crypto.createHash("sha256");
+  hash.update(await fs.readFile(filePath));
+  return hash.digest("hex");
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(args.config);
@@ -148,9 +155,10 @@ async function main() {
 
   const source = path.resolve(expandHome(args.file));
   const bytes = await assertGlb(source);
-  const masterSource = path.resolve(expandHome(args.masterFile || args.file));
-  const masterBytes = await assertGlb(masterSource);
+  const masterSource = args.masterFile ? path.resolve(expandHome(args.masterFile)) : "";
+  const masterBytes = masterSource ? await assertGlb(masterSource) : 0;
   const policy = config.qualityPolicy || {};
+  const placeholderProviders = new Set(policy.placeholderProviders || []);
   const requiredViews = policy.requiredReferenceViews || ["front", "back", "left", "right"];
   const minimumReferenceViews = Number(policy.minimumReferenceViews || requiredViews.length);
 
@@ -172,11 +180,27 @@ async function main() {
     }
     if (!args.reviewReport) throw new Error("release-candidate requires --review-report.");
     if (!args.geometryAudit) throw new Error("release-candidate requires --geometry-audit.");
+    if (!masterSource) {
+      throw new Error("release-candidate requires an explicit --master-file; the Web LOD cannot stand in for the editable high-fidelity master.");
+    }
   }
 
   for (const referenceFile of args.referenceFiles) {
     if (!await exists(path.resolve(expandHome(referenceFile)))) {
       throw new Error(`Reference file does not exist: ${referenceFile}`);
+    }
+  }
+
+
+  if (args.qualityTier === "release-candidate") {
+    const referenceDigests = await Promise.all(args.referenceFiles.map((filePath) => (
+      fileDigest(path.resolve(expandHome(filePath)))
+    )));
+    if (new Set(referenceDigests).size !== referenceDigests.length) {
+      throw new Error("release-candidate requires independently rendered reference images; duplicate image content was detected.");
+    }
+    if (await fileDigest(source) === await fileDigest(masterSource)) {
+      throw new Error("release-candidate requires a distinct high-fidelity master and browser Web LOD; identical GLB content was supplied.");
     }
   }
 
@@ -241,11 +265,22 @@ async function main() {
     }
   }
 
-  const masterTarget = path.resolve(config.workRoot, args.provider, "master-glb", `${slot.slot}.glb`);
+  const masterTarget = args.qualityTier === "release-candidate"
+    ? path.resolve(config.workRoot, args.provider, "master-glb", `${slot.slot}.glb`)
+    : "";
+  const candidateTarget = args.qualityTier === "development" && masterSource
+    ? path.resolve(config.workRoot, args.provider, "candidate-source-glb", `${slot.slot}.glb`)
+    : "";
   const target = path.resolve(config.workRoot, args.provider, "generated-glb", `${slot.slot}.glb`);
-  await fs.mkdir(path.dirname(masterTarget), { recursive: true });
   await fs.mkdir(path.dirname(target), { recursive: true });
-  await copyUnlessSame(masterSource, masterTarget);
+  if (masterTarget) {
+    await fs.mkdir(path.dirname(masterTarget), { recursive: true });
+    await copyUnlessSame(masterSource, masterTarget);
+  }
+  if (candidateTarget) {
+    await fs.mkdir(path.dirname(candidateTarget), { recursive: true });
+    await copyUnlessSame(masterSource, candidateTarget);
+  }
   await copyUnlessSame(source, target);
 
   let reviewReport = "";
@@ -264,8 +299,11 @@ async function main() {
     source,
     target,
     bytes,
-    masterFile: normalizeRel(masterTarget),
-    masterBytes,
+    masterFile: masterTarget ? normalizeRel(masterTarget) : "",
+    masterBytes: masterTarget ? masterBytes : 0,
+    candidateSourceFile: candidateTarget ? normalizeRel(candidateTarget) : "",
+    candidateSourceBytes: candidateTarget ? masterBytes : 0,
+    releaseEligibleProvider: !placeholderProviders.has(args.provider),
     qualityTier: args.qualityTier,
     referenceViews: args.referenceViews,
     referenceFiles: args.referenceFiles.map((filePath) => normalizeRel(path.resolve(expandHome(filePath)))),

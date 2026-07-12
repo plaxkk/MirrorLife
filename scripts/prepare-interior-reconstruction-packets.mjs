@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const DEFAULT_CONFIG = "config/interior-3d-model-map.json";
+const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
 
 function parseArgs(argv) {
   const args = { config: DEFAULT_CONFIG, slot: "" };
@@ -200,7 +201,7 @@ async function prepareSlot(config, slot) {
   const views = policy.requiredReferenceViews || [];
   const minimumFrames = Number(policy.minimumTurntableFrames || 12);
   const packetRoot = path.resolve(config.workRoot, "fidelity-packets", slot.slot);
-  const sourceFile = path.resolve(config.sourceImageRoot, slot.primaryImage);
+  const sourceFile = path.resolve(slot.sourceArtwork);
   if (!await exists(sourceFile)) throw new Error(`${slot.slot}: missing source artwork ${sourceFile}`);
   if (!slot.requiredParts?.length) throw new Error(`${slot.slot}: requiredParts is empty`);
 
@@ -255,9 +256,28 @@ async function prepareSlot(config, slot) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(path.resolve(args.config));
+  const semanticBriefs = await readJson(path.resolve(SEMANTIC_BRIEFS_PATH));
+  const baseSlots = config.slots.map((slot) => ({
+    ...slot,
+    sourceArtwork: path.join(config.sourceImageRoot, slot.primaryImage)
+  }));
+  const semanticSlots = (semanticBriefs.items || [])
+    .filter((item) => !baseSlots.some((slot) => slot.slot === item.model))
+    .map((item, index) => ({
+      slot: item.model,
+      label: item.label,
+      priority: 100 + index,
+      requiredParts: item.requiredParts || [],
+      sourceArtwork: path.join(
+        semanticBriefs.sourceImageRoot,
+        semanticBriefs.runtimeReferenceRoot,
+        `${item.model}.png`
+      )
+    }));
+  const allSlots = [...baseSlots, ...semanticSlots];
   const slots = args.slot
-    ? config.slots.filter((slot) => slot.slot === args.slot)
-    : config.slots;
+    ? allSlots.filter((slot) => slot.slot === args.slot)
+    : allSlots;
   if (!slots.length) throw new Error(`Unknown slot: ${args.slot}`);
   const roots = [];
   for (const slot of slots) roots.push(await prepareSlot(config, slot));

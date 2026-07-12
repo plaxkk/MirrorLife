@@ -1,5 +1,5 @@
 {
-  "version": 2,
+  "version": 3,
   "goal": "Faithfully reconstruct every MirrorLife interior prop as a complete, inspectable 360-degree asset. A rough silhouette, single-view extrusion or guessed backside is not an acceptable reconstruction. Procedural Three.js geometry and sprite cards are development placeholders only and must never pass release validation.",
   "sourceImageRoot": "dist/assets/interior-props-image2",
   "remoteManifest": "dist/assets/interior-props-image2/remote-manifest.json",
@@ -18,6 +18,8 @@
     "requireSemanticInventory": true,
     "requireTurntableReview": true,
     "requireProductionProof": true,
+    "requireDistinctMasterAndWeb": true,
+    "minimumMasterToWebTriangleRatio": 1.1,
     "minimumTurntableFrames": 12,
     "masterTextureSize": 2048,
     "webTextureSize": 1024,

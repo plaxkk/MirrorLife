@@ -2,6 +2,7 @@ import fs from "node:fs/promises";
 import path from "node:path";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
+const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
 
 async function readJson(filePath) {
   return JSON.parse(await fs.readFile(filePath, "utf8"));
@@ -45,6 +46,7 @@ function suggestedAction(entry, issues) {
 
 async function main() {
   const config = await readJson(CONFIG_PATH);
+  const semanticBriefs = await readJson(SEMANTIC_BRIEFS_PATH);
   const manifestPath = path.resolve(config.targetGlbRoot, "model-source-manifest.json");
   const manifest = await readJson(manifestPath);
   const imported = new Map((manifest.imported || []).map((entry) => [entry.slot, entry]));
@@ -56,7 +58,17 @@ async function main() {
   const minimumTurntableFrames = Number(policy.minimumTurntableFrames || 12);
   const rows = [];
 
-  for (const slot of config.slots) {
+  const semanticSlots = (semanticBriefs.items || [])
+    .filter((item) => !config.slots.some((slot) => slot.slot === item.model))
+    .map((item, index) => ({
+      slot: item.model,
+      label: item.label,
+      priority: 100 + index,
+      requiredParts: item.requiredParts || []
+    }));
+  const slots = [...config.slots, ...semanticSlots];
+
+  for (const slot of slots) {
     const entry = imported.get(slot.slot);
     const issues = [];
     if (!entry) {
@@ -155,7 +167,7 @@ async function main() {
     "| ---: | --- | --- | ---: | :---: | --- |",
     ...rows.map((row) => `| ${row.priority} | ${row.slot} | ${row.provider} | ${row.referenceViewCount} | ${row.ready ? "yes" : "no"} | ${row.nextAction} |`),
     "",
-    "A model is ready only when it has an approved multiview provider, a preserved master GLB, closed geometry, and canonical-view fidelity review.",
+    "A model is ready only when it has seven independent references, a manually corrected editable master, a distinct Web LOD, closed geometry, semantic approval and a complete 360-degree review.",
   ];
   const markdownPath = path.join(outputRoot, "fidelity-gap-report.md");
   await fs.writeFile(markdownPath, `${lines.join("\n")}\n`);

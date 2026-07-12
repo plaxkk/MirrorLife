@@ -14,7 +14,7 @@
 2. 生成并人工检查 `front / back / left / right / top / bottom / isometric` 七个一致且独立的视图。
 3. 使用 Tripo Multiview、混元 Multiview 或 Blender 人工建模生成高模，禁止从单图结果直接标记为正式资产。
 4. 在 Blender 中校正比例、背面、遮挡区域、薄片结构、法线、UV 和材质色块；所有可见部件必须是完整几何。
-5. 保留未减面的高模母版到 `dist/interior-3d-work/<provider>/master-glb/`。
+5. 保留未减面的高模母版到 `dist/interior-3d-work/<provider>/master-glb/`。开发模型不会再被复制到该目录；未显式提供独立 `--master-file` 的资产不能成为发布候选。
 6. 从母版生成网页 LOD。默认保留 45% 几何并使用 1024 纹理；若视觉回归不通过，提高几何或纹理预算。
 7. 从七个标准视角渲染网页 LOD，与对应参考图比较。每个视角都必须满足轮廓 IoU `>= 0.92`、颜色相似度 `>= 0.88`，并通过人工复核。
 8. 按配置中的 `requiredParts` 逐项确认部件存在，并分别通过形状、位置和材质一致性检查。
@@ -42,6 +42,26 @@
     "webTriangleCount": 72000
   }
 }
+```
+
+## 完整还原与开发占位的边界
+
+- `threejs-manual`、`procedural-threejs` 和 `sprite-card` 只用于交互、碰撞和性能调试，不代表完成还原。
+- 单张等距图只承担美术方向，不足以证明背面、底部和遮挡区域。正式重建必须提供内容不同的 `front/back/left/right/top/bottom/isometric` 七视图。
+- `master` 是保留细节、可继续编辑和人工修正的高模；`web` 是从该高模派生的浏览器 LOD。两者文件内容必须不同，高模三角面数至少为 Web LOD 的 1.1 倍。
+- 自动 image-to-3D 结果必须经过人工几何修正、拓扑修复、真实尺度与材质复核。模型通过 12 帧 360 度转台、语义部件清单和七视图对比后，才允许标记为 `release-candidate`。
+- `npm run verify:interior-3d:release` 是最终发布门禁；普通 `npm run verify:interior-3d` 只说明开发运行时能加载 GLB。
+
+完整生产包覆盖基础与语义物件：
+
+```bash
+npm run prepare:interior-3d:fidelity
+```
+
+单个物件可先建立金标准：
+
+```bash
+npm run prepare:interior-3d:fidelity -- --slot memory-book
 ```
 
 `reviewReport` 除了每个标准视角的参考图、模型渲染图、轮廓 IoU、颜色相似度和人工通过状态，还必须包含逐部件 `semanticInventory` 与至少 12 帧的 `turntable` 验收。

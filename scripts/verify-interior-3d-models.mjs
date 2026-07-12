@@ -1,5 +1,6 @@
 import fs from "node:fs/promises";
 import path from "node:path";
+import crypto from "node:crypto";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
 const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
@@ -73,6 +74,12 @@ async function verifyGlb(filePath) {
   } finally {
     await handle.close();
   }
+}
+
+async function fileDigest(filePath) {
+  const hash = crypto.createHash("sha256");
+  hash.update(await fs.readFile(filePath));
+  return hash.digest("hex");
 }
 
 async function main() {
@@ -175,6 +182,17 @@ async function main() {
             failures.push(`${slot.slot}: missing reference image ${referenceFile}`);
           }
         }
+        const existingReferenceFiles = [];
+        for (const referenceFile of referenceFiles) {
+          const resolved = path.resolve(referenceFile);
+          if (await exists(resolved)) existingReferenceFiles.push(resolved);
+        }
+        if (existingReferenceFiles.length === referenceFiles.length) {
+          const digests = await Promise.all(existingReferenceFiles.map(fileDigest));
+          if (new Set(digests).size !== digests.length) {
+            failures.push(`${slot.slot}: canonical reference views contain duplicate image content`);
+          }
+        }
 
         if (policy.requireMasterAsset !== false) {
           if (!source.masterFile) {
@@ -184,6 +202,11 @@ async function main() {
           } else {
             const masterStat = await fs.stat(path.resolve(source.masterFile));
             if (masterStat.size < 1024) failures.push(`${slot.slot}: high-fidelity masterFile is empty`);
+            const runtimePath = path.resolve(config.targetGlbRoot, `${slot.slot}.glb`);
+            if (await exists(runtimePath)
+              && await fileDigest(runtimePath) === await fileDigest(path.resolve(source.masterFile))) {
+              failures.push(`${slot.slot}: high-fidelity master and Web LOD are identical files`);
+            }
           }
         }
 
@@ -203,6 +226,16 @@ async function main() {
           failures.push(`${slot.slot}: geometry audit is missing webTriangleCount`);
         } else if (Number(geometryAudit.webTriangleCount) > triangleBudget) {
           failures.push(`${slot.slot}: ${geometryAudit.webTriangleCount} triangles exceed the ${triangleBudget} Web triangle budget`);
+        }
+        if (policy.requireDistinctMasterAndWeb !== false) {
+          const masterTriangles = Number(geometryAudit.masterTriangleCount);
+          const webTriangles = Number(geometryAudit.webTriangleCount);
+          const minimumRatio = Number(policy.minimumMasterToWebTriangleRatio || 1.1);
+          if (!Number.isFinite(masterTriangles)) {
+            failures.push(`${slot.slot}: geometry audit is missing masterTriangleCount`);
+          } else if (Number.isFinite(webTriangles) && masterTriangles < webTriangles * minimumRatio) {
+            failures.push(`${slot.slot}: master triangle count ${masterTriangles} is not at least ${minimumRatio}x the Web LOD ${webTriangles}`);
+          }
         }
 
         if (policy.requireReviewReport !== false) {
