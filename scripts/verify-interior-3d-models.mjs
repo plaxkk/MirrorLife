@@ -1,6 +1,7 @@
 import fs from "node:fs/promises";
 import path from "node:path";
 import crypto from "node:crypto";
+import { PNG } from "pngjs";
 
 const CONFIG_PATH = "config/interior-3d-model-map.json";
 const SEMANTIC_BRIEFS_PATH = "config/interior-semantic-asset-briefs.json";
@@ -82,6 +83,11 @@ async function fileDigest(filePath) {
   return hash.digest("hex");
 }
 
+async function imageDimensions(filePath) {
+  const png = PNG.sync.read(await fs.readFile(filePath), { skipRescale: true });
+  return { width: png.width, height: png.height };
+}
+
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const config = await readJson(args.config);
@@ -145,6 +151,7 @@ async function main() {
       const fileBudget = Number(policy.webFileBudgetBytes || 8 * 1024 * 1024);
       const requiredViews = policy.requiredReferenceViews || ["front", "back", "left", "right"];
       const minimumReferenceViews = Number(policy.minimumReferenceViews || requiredViews.length);
+      const minimumReferenceDimension = Number(policy.minimumReferenceDimension || 512);
       const silhouetteThreshold = Number(policy.canonicalViewSilhouetteIou || 0.9);
       const colorThreshold = Number(policy.canonicalViewColorSimilarity || 0.85);
       const triangleBudget = Number(policy.webTriangleBudget || 80000);
@@ -178,8 +185,14 @@ async function main() {
           failures.push(`${slot.slot}: referenceFiles must map one-to-one with referenceViews`);
         }
         for (const referenceFile of referenceFiles) {
-          if (!await exists(path.resolve(referenceFile))) {
+          const resolved = path.resolve(referenceFile);
+          if (!await exists(resolved)) {
             failures.push(`${slot.slot}: missing reference image ${referenceFile}`);
+            continue;
+          }
+          const dimensions = await imageDimensions(resolved);
+          if (Math.min(dimensions.width, dimensions.height) < minimumReferenceDimension) {
+            failures.push(`${slot.slot}: reference ${referenceFile} is ${dimensions.width}x${dimensions.height}; both axes must be at least ${minimumReferenceDimension}px`);
           }
         }
         const existingReferenceFiles = [];
@@ -191,6 +204,37 @@ async function main() {
           const digests = await Promise.all(existingReferenceFiles.map(fileDigest));
           if (new Set(digests).size !== digests.length) {
             failures.push(`${slot.slot}: canonical reference views contain duplicate image content`);
+          }
+        }
+
+        if (policy.requireReferenceProvenance !== false) {
+          if (!source.referenceProvenance) {
+            failures.push(`${slot.slot}: missing approved referenceProvenance`);
+          } else if (!await exists(path.resolve(source.referenceProvenance))) {
+            failures.push(`${slot.slot}: referenceProvenance does not exist: ${source.referenceProvenance}`);
+          } else {
+            const provenance = await readJson(path.resolve(source.referenceProvenance));
+            if (provenance.slot !== slot.slot) failures.push(`${slot.slot}: referenceProvenance slot does not match`);
+            if (provenance.status !== "approved" || !provenance.reviewer || !provenance.approvedAt) {
+              failures.push(`${slot.slot}: referenceProvenance must be human-approved`);
+            }
+            const provenanceViews = new Map((provenance.views || []).map((view) => [view.view, view]));
+            for (const viewName of requiredViews) {
+              const view = provenanceViews.get(viewName);
+              if (!view) {
+                failures.push(`${slot.slot}: referenceProvenance is missing ${viewName}`);
+                continue;
+              }
+              for (const field of [
+                "independentlyAuthored",
+                "cameraMatched",
+                "proportionsLocked",
+                "hiddenGeometryIntentionallyDesigned",
+                "humanApproved"
+              ]) {
+                if (view[field] !== true) failures.push(`${slot.slot}: ${viewName} reference has not passed ${field}`);
+              }
+            }
           }
         }
 
@@ -207,6 +251,18 @@ async function main() {
               && await fileDigest(runtimePath) === await fileDigest(path.resolve(source.masterFile))) {
               failures.push(`${slot.slot}: high-fidelity master and Web LOD are identical files`);
             }
+          }
+        }
+        if (policy.requireEditableMaster !== false) {
+          const allowedExtensions = new Set((policy.editableMasterExtensions || [".blend"]).map((extension) => extension.toLowerCase()));
+          if (!source.editableMasterFile) {
+            failures.push(`${slot.slot}: missing native editableMasterFile`);
+          } else if (!allowedExtensions.has(path.extname(source.editableMasterFile).toLowerCase())) {
+            failures.push(`${slot.slot}: editableMasterFile must use one of: ${[...allowedExtensions].join(", ")}`);
+          } else if (!await exists(path.resolve(source.editableMasterFile))) {
+            failures.push(`${slot.slot}: editableMasterFile does not exist: ${source.editableMasterFile}`);
+          } else if ((await fs.stat(path.resolve(source.editableMasterFile))).size < 1024) {
+            failures.push(`${slot.slot}: editableMasterFile is empty`);
           }
         }
 
@@ -306,6 +362,10 @@ async function main() {
                 "realWorldScaleVerified",
                 "hiddenGeometryVerified",
                 "materialPaletteVerified",
+                "multiviewConsistencyReviewed",
+                "uvLayoutReviewed",
+                "textureResolutionVerified",
+                "rigidPartHierarchyReviewed",
                 "masterAssetReviewed",
                 "webLodReviewed"
               ];

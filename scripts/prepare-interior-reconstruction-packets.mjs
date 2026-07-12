@@ -76,11 +76,12 @@ ${views.map((view) => `- ${view}: references/${view}.png`).join("\n")}
 
 ## Delivery
 
-1. Keep the unsimplified, editable master model in \`master/${slot.slot}.blend\` or \`master/${slot.slot}.glb\`.
-2. Export a browser LOD to \`web/${slot.slot}.glb\` under the configured triangle and file budgets.
-3. Render all canonical views to \`renders/<view>.png\` using the same orthographic framing as the references.
-4. Render at least 12 evenly spaced turntable frames to \`renders/turntable/\`.
-5. Complete \`review.draft.json\`; release validation must reject incomplete components or views.
+1. Keep the editable native master in \`master/${slot.slot}.blend\`; a GLB alone is not an editable source of truth.
+2. Export an unsimplified interchange master to \`master/${slot.slot}.glb\` and a distinct browser LOD to \`web/${slot.slot}.glb\`.
+3. Complete and approve \`reference-provenance.draft.json\`; every canonical view must be independently authored, camera-matched and proportion-locked.
+4. Render all canonical views to \`renders/<view>.png\` using the same orthographic framing as the references.
+5. Render at least 12 evenly spaced turntable frames to \`renders/turntable/\`.
+6. Complete \`review.draft.json\`; release validation must reject incomplete components, UVs, textures, hidden geometry or views.
 `;
 }
 
@@ -93,9 +94,11 @@ function makeChecklist(slot, views, minimumFrames) {
 - [ ] Front, back, sides, top and underside are intentionally modeled.
 - [ ] No open boundaries or non-manifold triangle edges remain.
 - [ ] The master asset is preserved before Web optimization.
+- [ ] A native editable Blender master exists; the GLB is only an interchange/export artifact.
 - [ ] Automated reconstruction has been manually corrected; a raw image-to-3D result is not accepted.
 - [ ] The asset uses a documented real-world scale and has been checked against gameplay clearance.
 - [ ] Materials and color blocks were reviewed on the master and Web LOD separately.
+- [ ] UV layout, texture resolution and rigid-part hierarchy were reviewed in Blender.
 
 ## Canonical views
 
@@ -159,12 +162,48 @@ function makeDraftReview(slot, views, minimumFrames, packetRoot) {
       realWorldScaleVerified: false,
       hiddenGeometryVerified: false,
       materialPaletteVerified: false,
+      multiviewConsistencyReviewed: false,
+      uvLayoutReviewed: false,
+      textureResolutionVerified: false,
+      rigidPartHierarchyReviewed: false,
       masterAssetReviewed: false,
       webLodReviewed: false,
       dimensionsMeters: { width: 0, height: 0, depth: 0 },
       notes: ""
     },
     notes: ""
+  };
+}
+
+function makeReferenceProvenance(slot, views, packetRoot) {
+  const packetFile = (...segments) => relative(path.join(packetRoot, ...segments));
+  return {
+    slot: slot.slot,
+    status: "draft",
+    reviewer: "",
+    approvedAt: "",
+    sourceArtwork: packetFile("references", "isometric-art-direction.png"),
+    sourceArtworkRole: "art direction only; hidden surfaces require an intentional multiview design",
+    views: views.map((view) => ({
+      view,
+      file: packetFile("references", `${view}.png`),
+      independentlyAuthored: false,
+      cameraMatched: false,
+      proportionsLocked: false,
+      hiddenGeometryIntentionallyDesigned: false,
+      humanApproved: false,
+      notes: ""
+    })),
+    notes: ""
+  };
+}
+
+function mergeReferenceProvenance(base, existing) {
+  const byView = new Map((existing.views || []).map((item) => [item.view, item]));
+  return {
+    ...base,
+    ...existing,
+    views: base.views.map((item) => ({ ...item, ...byView.get(item.view) }))
   };
 }
 
@@ -227,7 +266,7 @@ async function prepareSlot(config, slot) {
   await fs.copyFile(sourceFile, path.join(packetRoot, "references", "isometric-art-direction.png"));
 
   const packet = {
-    version: 1,
+    version: 2,
     createdAt: new Date().toISOString(),
     slot: slot.slot,
     label: slot.label,
@@ -246,8 +285,10 @@ async function prepareSlot(config, slot) {
       webTextureSize: policy.webTextureSize
     },
     deliverables: {
-      master: `master/${slot.slot}.glb`,
+      editableMaster: `master/${slot.slot}.blend`,
+      interchangeMaster: `master/${slot.slot}.glb`,
       web: `web/${slot.slot}.glb`,
+      referenceProvenance: "reference-provenance.draft.json",
       geometryAudit: "geometry-audit.json",
       review: "review.draft.json"
     }
@@ -256,6 +297,12 @@ async function prepareSlot(config, slot) {
   await fs.writeFile(path.join(packetRoot, "packet.json"), `${JSON.stringify(packet, null, 2)}\n`);
   await fs.writeFile(path.join(packetRoot, "PROMPT.md"), makePrompt(config, slot, views));
   await fs.writeFile(path.join(packetRoot, "CHECKLIST.md"), makeChecklist(slot, views, minimumFrames));
+  const provenancePath = path.join(packetRoot, "reference-provenance.draft.json");
+  const baseProvenance = makeReferenceProvenance(slot, views, packetRoot);
+  const provenance = await exists(provenancePath)
+    ? mergeReferenceProvenance(baseProvenance, await readJson(provenancePath))
+    : baseProvenance;
+  await fs.writeFile(provenancePath, `${JSON.stringify(provenance, null, 2)}\n`);
   const reviewPath = path.join(packetRoot, "review.draft.json");
   const baseReview = makeDraftReview(slot, views, minimumFrames, packetRoot);
   const review = await exists(reviewPath)

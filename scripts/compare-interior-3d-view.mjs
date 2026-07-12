@@ -164,6 +164,10 @@ async function main() {
       "realWorldScaleVerified",
       "hiddenGeometryVerified",
       "materialPaletteVerified",
+      "multiviewConsistencyReviewed",
+      "uvLayoutReviewed",
+      "textureResolutionVerified",
+      "rigidPartHierarchyReviewed",
       "masterAssetReviewed",
       "webLodReviewed"
     ].every((field) => proof[field] === true)

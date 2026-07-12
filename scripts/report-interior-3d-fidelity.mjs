@@ -26,6 +26,12 @@ function suggestedAction(entry, issues) {
   if (issues.some((issue) => issue.includes("reference views"))) {
     return "Generate coherent front/back/left/right/top/bottom/isometric references.";
   }
+  if (issues.some((issue) => issue.includes("reference provenance"))) {
+    return "Approve independently authored canonical views before reconstruction.";
+  }
+  if (issues.some((issue) => issue.includes("editable master"))) {
+    return "Preserve and review the native Blender master before exporting GLB files.";
+  }
   if (issues.some((issue) => issue.includes("candidate master"))) {
     return "Manually correct and approve the candidate master, Web LOD, canonical views and turntable.";
   }
@@ -84,11 +90,41 @@ async function main() {
       if (views.size < minimumViews || requiredViews.some((view) => !views.has(view))) {
         issues.push(`${views.size}/${minimumViews} reference views`);
       }
+      if (policy.requireReferenceProvenance !== false) {
+        if (!entry.referenceProvenance || !await exists(entry.referenceProvenance)) {
+          issues.push("reference provenance missing");
+        } else {
+          const provenance = await readJson(path.resolve(entry.referenceProvenance));
+          const provenanceViews = new Map((provenance.views || []).map((view) => [view.view, view]));
+          const referencesApproved = provenance.status === "approved"
+            && Boolean(provenance.reviewer)
+            && Boolean(provenance.approvedAt)
+            && requiredViews.every((viewName) => {
+              const view = provenanceViews.get(viewName);
+              return view && [
+                "independentlyAuthored",
+                "cameraMatched",
+                "proportionsLocked",
+                "hiddenGeometryIntentionallyDesigned",
+                "humanApproved"
+              ].every((field) => view[field] === true);
+            });
+          if (!referencesApproved) issues.push("reference provenance is not approved");
+        }
+      }
       if (!entry.masterFile || !await exists(entry.masterFile)) {
         if (entry.candidateSourceFile && await exists(entry.candidateSourceFile)) {
           issues.push("candidate master awaits release approval");
         } else {
           issues.push("missing high-fidelity master");
+        }
+      }
+      if (policy.requireEditableMaster !== false) {
+        const allowedExtensions = new Set((policy.editableMasterExtensions || [".blend"]).map((extension) => extension.toLowerCase()));
+        if (!entry.editableMasterFile || !await exists(entry.editableMasterFile)) {
+          issues.push("native editable master missing");
+        } else if (!allowedExtensions.has(path.extname(entry.editableMasterFile).toLowerCase())) {
+          issues.push("native editable master format is not approved");
         }
       }
       const audit = entry.geometryAudit || {};
@@ -129,6 +165,10 @@ async function main() {
               "realWorldScaleVerified",
               "hiddenGeometryVerified",
               "materialPaletteVerified",
+              "multiviewConsistencyReviewed",
+              "uvLayoutReviewed",
+              "textureResolutionVerified",
+              "rigidPartHierarchyReviewed",
               "masterAssetReviewed",
               "webLodReviewed"
             ].every((field) => proof[field] === true)
@@ -176,7 +216,7 @@ async function main() {
     "| ---: | --- | --- | ---: | :---: | --- |",
     ...rows.map((row) => `| ${row.priority} | ${row.slot} | ${row.provider} | ${row.referenceViewCount} | ${row.ready ? "yes" : "no"} | ${row.nextAction} |`),
     "",
-    "A model is ready only when it has seven independent references, a manually corrected editable master, a distinct Web LOD, closed geometry, semantic approval and a complete 360-degree review.",
+    "A model is ready only when its seven independently authored views are approved, a native Blender master is preserved, UVs/textures/hidden geometry are reviewed, a distinct Web LOD is closed, and semantic plus 360-degree review is complete.",
   ];
   const markdownPath = path.join(outputRoot, "fidelity-gap-report.md");
   await fs.writeFile(markdownPath, `${lines.join("\n")}\n`);
