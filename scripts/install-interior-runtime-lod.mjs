@@ -5,11 +5,24 @@ import { spawnSync } from "node:child_process";
 const CONFIG_PATH = "config/interior-3d-model-map.json";
 
 function parseArgs(argv) {
-  const args = { slot: "", source: "", simplifyRatio: null, simplifyError: null };
+  const args = {
+    slot: "",
+    source: "",
+    provider: "",
+    masterSource: "",
+    sourceReference: "",
+    qualityTier: "",
+    simplifyRatio: null,
+    simplifyError: null
+  };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--slot") args.slot = argv[++index];
     else if (arg === "--source") args.source = argv[++index];
+    else if (arg === "--provider") args.provider = argv[++index];
+    else if (arg === "--master-source") args.masterSource = argv[++index];
+    else if (arg === "--source-reference") args.sourceReference = argv[++index];
+    else if (arg === "--quality-tier") args.qualityTier = argv[++index];
     else if (arg === "--simplify-ratio") args.simplifyRatio = Number(argv[++index]);
     else if (arg === "--simplify-error") args.simplifyError = Number(argv[++index]);
     else throw new Error(`Unknown argument: ${arg}`);
@@ -70,11 +83,15 @@ const audit = await readJson(auditPath);
 const manifest = await readJson(manifestPath);
 const entry = (manifest.imported || []).find((item) => item.slot === args.slot);
 if (!entry) throw new Error(`Missing provenance entry for ${args.slot}.`);
+entry.provider = args.provider || entry.provider;
+entry.source = normalizeRel(source);
+if (args.masterSource) entry.masterSource = normalizeRel(path.resolve(args.masterSource));
+if (args.sourceReference) entry.sourceReference = normalizeRel(path.resolve(args.sourceReference));
 entry.bytes = targetStat.size;
-entry.qualityTier = entry.qualityTier || "development";
+entry.qualityTier = args.qualityTier || entry.qualityTier || "development";
 entry.runtimeLod = {
   installedAt,
-  sourceModel: entry.source,
+  sourceModel: normalizeRel(source),
   target: entry.target,
   backup: normalizeRel(backup),
   audit: normalizeRel(auditPath),

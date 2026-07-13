@@ -120,7 +120,7 @@
       "priority": 10,
       "primaryImage": "greenhouse_garden/plant_shelf.png",
       "fallbackImages": ["greenhouse_garden/glass_greenhouse.png", "greenhouse_garden/flower_bed_watering_can.png"],
-      "requiredParts": ["tiered plant rack", "shelf boards", "support frame", "multiple plant pots", "leaf clusters", "flower clusters", "caster wheels", "watering can"],
+      "requiredParts": ["tiered plant rack", "three shelf boards", "left support frame", "right support frame", "eight plant pots", "distinct leaf clusters", "trailing vine", "side bolts", "finished backside", "finished underside"],
       "notes": "Used heavily in nature, recovery and buffer corners."
     },
     {

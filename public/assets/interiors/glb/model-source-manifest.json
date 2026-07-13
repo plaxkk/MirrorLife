@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-12T04:38:36.892Z",
+  "updatedAt": "2026-07-13T12:50:45.711Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
   "backupDir": "dist/interior-3d-work/backups/2026-07-12T04-38-36-418Z",
@@ -320,11 +320,45 @@
     {
       "slot": "plant-zone",
       "label": "植物照料区",
-      "provider": "procedural-threejs",
-      "source": "dist/interior-3d-work/procedural-threejs/generated-glb/plant-zone.glb",
+      "provider": "blender-manual",
+      "source": "dist/interior-3d-work/fidelity-packets/plant-zone/web/plant-zone.glb",
       "target": "public/assets/interiors/glb/plant-zone.glb",
-      "bytes": 690264,
-      "importedAt": "2026-07-10T04:11:26.472Z"
+      "bytes": 3334252,
+      "importedAt": "2026-07-10T04:11:26.472Z",
+      "masterSource": "dist/interior-3d-work/fidelity-packets/plant-zone/master/plant-zone.blend",
+      "sourceReference": "dist/assets/interior-props-image2/greenhouse_garden/plant_shelf.png",
+      "qualityTier": "development",
+      "runtimeLod": {
+        "installedAt": "2026-07-13T12:50:45.711Z",
+        "sourceModel": "dist/interior-3d-work/fidelity-packets/plant-zone/web/plant-zone.glb",
+        "target": "public/assets/interiors/glb/plant-zone.glb",
+        "backup": "dist/interior-3d-work/backups/2026-07-13T12-50-45-711Z/plant-zone.glb",
+        "audit": "dist/interior-3d-work/runtime-lod-audits/plant-zone.json",
+        "simplifyRatio": null,
+        "simplifyError": null,
+        "triangleCount": 48188,
+        "vertexCount": 97902
+      },
+      "geometryAudit": {
+        "auditedAt": "2026-07-13T12:50:46.213Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "webTriangleCount": 48188,
+        "web": {
+          "file": "public/assets/interiors/glb/plant-zone.glb",
+          "primitiveCount": 203,
+          "trianglePrimitiveCount": 203,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 48188,
+          "vertexCount": 97902,
+          "weldedVertexCount": 24468,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      }
     },
     {
       "slot": "workbench",
