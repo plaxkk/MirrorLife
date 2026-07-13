@@ -48,6 +48,7 @@ const blueprintBlock = extractBlock(game, /const INTERIOR_BLUEPRINTS = \{/, /\n\
 const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\nconst INTERIOR_SCENE_ACTIONS/, "interior profiles");
 const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
 const blueprints = extractObject(game, "INTERIOR_BLUEPRINTS", "INTERIOR_ZONE_PROFILES");
+const sceneActions = extractObject(game, "INTERIOR_SCENE_ACTIONS", "INTERIOR_BLUEPRINT_CACHE");
 const environmentPalettes = extractObject(interiorThree, "INTERIOR_ENVIRONMENT_PALETTES", "MODEL_RENDER_PROFILES");
 
 const zoneIds = unique([...collectIds(openWorldBlock), ...collectIds(growthBlock)]);
@@ -60,6 +61,28 @@ if (missingProfiles.length) throw new Error(`Buildings without interior profiles
 if (unknownProfiles.length) throw new Error(`Interior profiles without buildings: ${unknownProfiles.join(", ")}`);
 const missingSceneActions = blueprintIds.filter((id) => !sceneActionIds.includes(id));
 if (missingSceneActions.length) throw new Error(`Interior blueprints without shared scene actions: ${missingSceneActions.join(", ")}`);
+const invalidSceneChoices = [];
+for (const [sceneId, action] of Object.entries(sceneActions)) {
+  if (!Array.isArray(action.choices) || action.choices.length !== 2) {
+    invalidSceneChoices.push(`${sceneId}:expected-exactly-two-choices`);
+    continue;
+  }
+  const choiceIds = new Set();
+  action.choices.forEach((choice, index) => {
+    const prefix = `${sceneId}:choice-${index + 1}`;
+    if (!choice.id || choiceIds.has(choice.id)) invalidSceneChoices.push(`${prefix}:invalid-id`);
+    choiceIds.add(choice.id);
+    for (const field of ["label", "behavior", "relationType", "text", "reaction"]) {
+      if (typeof choice[field] !== "string" || !choice[field].trim()) invalidSceneChoices.push(`${prefix}:missing-${field}`);
+    }
+    for (const rewardField of ["socialResonance", "selfFulfillment", "lifeStability"]) {
+      if (!Number.isFinite(choice.reward?.[rewardField])) invalidSceneChoices.push(`${prefix}:invalid-${rewardField}`);
+    }
+  });
+}
+if (invalidSceneChoices.length) {
+  throw new Error(`Interior scene choices are incomplete: ${invalidSceneChoices.join(", ")}`);
+}
 const missingEnvironmentPalettes = blueprintIds.filter((id) => !environmentPalettes[id]);
 if (missingEnvironmentPalettes.length) {
   throw new Error(`Interior blueprints without environment art palettes: ${missingEnvironmentPalettes.join(", ")}`);

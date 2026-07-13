@@ -1653,7 +1653,16 @@ function normalizeInteriorExploration(savedRecords) {
         ? [...new Set(source.found.filter((label) => typeof label === "string").map((label) => label.slice(0, 80)))].slice(0, 12)
         : [],
       completed: !!source.completed,
-      scenePlayed: !!source.scenePlayed
+      scenePlayed: !!source.scenePlayed,
+      sceneChoice: typeof source.sceneChoice === "string" ? source.sceneChoice.slice(0, 80) : "",
+      sceneOutcome: typeof source.sceneOutcome === "string" ? source.sceneOutcome.slice(0, 500) : "",
+      sceneReward: source.sceneReward && typeof source.sceneReward === "object"
+        ? {
+            socialResonance: clamp(Math.round(Number(source.sceneReward.socialResonance) || 0), -10, 10),
+            selfFulfillment: clamp(Math.round(Number(source.sceneReward.selfFulfillment) || 0), -10, 10),
+            lifeStability: clamp(Math.round(Number(source.sceneReward.lifeStability) || 0), -10, 10)
+          }
+        : null
     }];
   }));
 }

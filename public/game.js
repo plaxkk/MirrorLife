@@ -5403,72 +5403,82 @@ const INTERIOR_SCENE_ACTIONS = {
   care: {
     label: "接过一次照护",
     title: "照护交接",
-    behavior: "care",
-    text: "你没有急着追问发生了什么，只先接过手边那件小事，让已经很累的人能够喘一口气。",
-    reaction: "谢谢你先看见了我的疲惫。"
+    choices: [
+      { id: "ask-first", label: "先问需要什么", behavior: "comfort", relationType: "listen", text: "你先问对方此刻最希望被怎样帮助，把照护的决定权留在了疲惫的人手里", reaction: "谢谢你没有替我决定。", avatar: { mood: 2, energy: 0, trust: 4 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 1, lifeStability: 2 } },
+      { id: "take-small-task", label: "先接过手边的事", behavior: "care", relationType: "support", text: "你没有追问缘由，只接过手边那件小事，让已经很累的人能够喘一口气", reaction: "谢谢你先看见了我的疲惫。", avatar: { mood: 3, energy: -1, trust: 2 }, participant: { mood: 4, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 2, lifeStability: 4 } }
+    ]
   },
   learning: {
     label: "加入一次共学",
     title: "小步练习",
-    behavior: "teach",
-    text: "你坐进空着的位置，把一个看似遥远的问题拆成了今天可以一起尝试的一小步。",
-    reaction: "原来不知道答案，也可以先一起试。"
+    choices: [
+      { id: "admit-unknown", label: "说出我也不会", behavior: "read", relationType: "listen", text: "你先承认自己也没有答案，空着的位置因此不再像一场考试", reaction: "原来不知道，也可以坐在一起。", avatar: { mood: 2, energy: 0, trust: 4 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 1 } },
+      { id: "small-experiment", label: "拆成一次小实验", behavior: "teach", relationType: "cooperate", text: "你把遥远的问题拆成今天能共同尝试的一小步，让想法有了可以落地的形状", reaction: "原来我们可以先试一次。", avatar: { mood: 3, energy: -1, trust: 2 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 4, lifeStability: 2 } }
+    ]
   },
   commerce: {
     label: "传递一份补给",
     title: "邻里补给",
-    behavior: "handoff",
-    text: "你把一份资源交给真正需要的人，同时留下可继续流转的记录，而不是把帮助变成一次性的施舍。",
-    reaction: "我会记得把这份照顾继续传下去。"
+    choices: [
+      { id: "fill-gap", label: "直接补上眼前缺口", behavior: "handoff", relationType: "support", text: "你把一份资源交给此刻真正需要的人，没有要求对方先解释自己的困境", reaction: "这份及时，让今天终于能继续。", avatar: { mood: 3, energy: -1, trust: 2 }, participant: { mood: 4, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 2, lifeStability: 4 } },
+      { id: "keep-circulating", label: "留下继续流转的办法", behavior: "write", relationType: "cooperate", text: "你补上资源，也留下下一次交接的方法，让帮助不必依赖某一个人的善意", reaction: "我会把这份照顾继续传下去。", avatar: { mood: 2, energy: -1, trust: 3 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 4 } }
+    ]
   },
   public: {
     label: "坐进那把空椅",
     title: "公共讨论",
-    behavior: "meeting",
-    text: "你没有替任何人总结，而是把尚未被说出的顾虑留在桌面上，让决定多容纳一种生活。",
-    reaction: "谢谢你没有把复杂的问题说得太简单。"
+    choices: [
+      { id: "leave-concern", label: "留下没说完的顾虑", behavior: "meeting", relationType: "listen", text: "你没有替任何人总结，而是把尚未被说出的顾虑留在桌面上，让决定多容纳一种生活", reaction: "谢谢你没有把复杂的问题说得太简单。", avatar: { mood: 2, energy: -1, trust: 3 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 2 } },
+      { id: "invite-quiet", label: "邀请沉默的人先选", behavior: "comfort", relationType: "support", text: "你把第一轮选择交给一直没有开口的人，讨论的节奏因此慢了下来", reaction: "我以为自己的犹豫不会被算进去。", avatar: { mood: 3, energy: -1, trust: 3 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 5, selfFulfillment: 2, lifeStability: 1 } }
+    ]
   },
   justice: {
     label: "为沉默留一分钟",
     title: "修复性对话",
-    behavior: "comfort",
-    text: "你按下暂停，让双方先重新确认边界。沉默没有被解释成逃避，而被当成重新选择表达方式的时间。",
-    reaction: "这一次，我感觉自己仍然可以选择。"
+    choices: [
+      { id: "confirm-boundary", label: "暂停并确认边界", behavior: "comfort", relationType: "listen", text: "你按下暂停，让双方重新确认哪些内容可以继续、哪些暂时不谈", reaction: "这一次，我感觉自己仍然可以选择。", avatar: { mood: 1, energy: -1, trust: 4 }, participant: { mood: 3, trust: 5 }, reward: { socialResonance: 4, selfFulfillment: 1, lifeStability: 5 } },
+      { id: "name-disagreement", label: "复述仍不同意的地方", behavior: "meeting", relationType: "cooperate", text: "你没有急着制造和解，只把双方仍不同意的地方准确地放回桌面", reaction: "被说清楚以后，分歧没有那么可怕了。", avatar: { mood: 2, energy: -1, trust: 3 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 4 } }
+    ]
   },
   work: {
     label: "完成一次交接",
     title: "协作交接",
-    behavior: "work",
-    text: "你把过程、风险和未完成的部分都交代清楚，没有把疲惫藏进一句轻描淡写的“已经好了”。",
-    reaction: "知道哪里还没完成，反而让我更安心。"
+    choices: [
+      { id: "name-unfinished", label: "如实交代未完成", behavior: "meeting", relationType: "listen", text: "你把过程、风险和未完成的部分都交代清楚，没有用一句“已经好了”藏起疲惫", reaction: "知道哪里还没完成，反而让我更安心。", avatar: { mood: 2, energy: -1, trust: 4 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 4 } },
+      { id: "remove-risk", label: "替下一班减掉一个风险", behavior: "work", relationType: "cooperate", text: "你先处理最容易在交接后被忽略的风险，再把剩余问题留成清晰的路标", reaction: "我接到的不是压力，而是一条能继续走的路。", avatar: { mood: 3, energy: -2, trust: 2 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 4, lifeStability: 4 } }
+    ]
   },
   home: {
     label: "一起准备一顿饭",
     title: "共享日常",
-    behavior: "cook",
-    text: "你和屋里的人一起收拾桌面、准备食物。没有宏大的转折，关系却在这些能够共同完成的小事里变得真实。",
-    reaction: "你在这里的时候，这个房间更像家了。"
+    choices: [
+      { id: "prepare-together", label: "一起动手准备", behavior: "cook", relationType: "cooperate", text: "你和屋里的人一起收拾桌面、准备食物，关系落进了可以共同完成的小事", reaction: "你在这里的时候，这个房间更像家了。", avatar: { mood: 4, energy: -1, trust: 3 }, participant: { mood: 4, trust: 3 }, reward: { socialResonance: 4, selfFulfillment: 3, lifeStability: 3 } },
+      { id: "ask-companionship", label: "先问今天想怎样被陪伴", behavior: "comfort", relationType: "listen", text: "你没有默认热闹就是答案，而是先问今天更适合聊天、安静吃饭，还是独处一会儿", reaction: "原来回到家，也不必立刻变得开心。", avatar: { mood: 3, energy: 0, trust: 4 }, participant: { mood: 4, trust: 5 }, reward: { socialResonance: 5, selfFulfillment: 2, lifeStability: 3 } }
+    ]
   },
   nature: {
     label: "照料一株新芽",
     title: "共同照料",
-    behavior: "garden",
-    text: "你只调整了水、光线和一点点空间，没有催促它立刻长大。照料被记进下一次轮值。",
-    reaction: "它今天没有变化，但我们的关系已经开始了。"
+    choices: [
+      { id: "adjust-and-wait", label: "调整环境，然后等待", behavior: "garden", relationType: "listen", text: "你只调整水、光线和一点空间，没有催促新芽立刻证明自己", reaction: "它今天没有变化，但我们的关系已经开始了。", avatar: { mood: 4, energy: 1, trust: 2 }, participant: { mood: 3, trust: 2 }, reward: { socialResonance: 2, selfFulfillment: 4, lifeStability: 4 } },
+      { id: "shared-roster", label: "邀请旁人共同轮值", behavior: "gather", relationType: "cooperate", text: "你把照料写进共同轮值，让这株新芽不再只依赖某一个人的坚持", reaction: "下次我来时，也会记得看看它。", avatar: { mood: 3, energy: -1, trust: 3 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 4 } }
+    ]
   },
   creative: {
     label: "续上未完成的一笔",
     title: "共同创作",
-    behavior: "write",
-    text: "你没有覆盖前一个人的表达，而是在它旁边留下自己的回应。作品因此多了一条可以继续生长的方向。",
-    reaction: "这一笔不像我，却让作品更完整。"
+    choices: [
+      { id: "add-beside", label: "在旁边续上一笔", behavior: "write", relationType: "cooperate", text: "你没有覆盖前一个人的表达，而是在旁边留下自己的回应，让作品长出另一条方向", reaction: "这一笔不像我，却让作品更完整。", avatar: { mood: 4, energy: -1, trust: 2 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 4, selfFulfillment: 4, lifeStability: 1 } },
+      { id: "keep-blank", label: "保留空白，等下一人", behavior: "think", relationType: "listen", text: "你克制住填满画面的冲动，为还没有到场的人保留了一块真正可用的空白", reaction: "原来没有画满，也是一种邀请。", avatar: { mood: 3, energy: 0, trust: 3 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 3 } }
+    ]
   },
   memory: {
     label: "留下一段无名记忆",
     title: "低声纪念",
-    behavior: "think",
-    text: "你留下了一段不署名的记忆，没有解释它属于谁。有人在旁边放下一朵花，让这份沉默有了陪伴。",
-    reaction: "有些故事不必公开，也值得被温柔保存。"
+    choices: [
+      { id: "anonymous-line", label: "留下一句无名的话", behavior: "write", relationType: "listen", text: "你留下一句不署名的话，没有解释它属于谁，只让它安静地被看见", reaction: "有些故事不必公开，也值得被保存。", avatar: { mood: 2, energy: 0, trust: 3 }, participant: { mood: 2, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 3 } },
+      { id: "place-object", label: "替沉默放下一件物品", behavior: "think", relationType: "support", text: "你没有逼沉默变成语言，只放下一件小物，让无法说出的记忆有了可以停靠的位置", reaction: "谢谢你没有要求这个故事说明自己。", avatar: { mood: 2, energy: -1, trust: 4 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 4 } }
+    ]
   }
 };
 
@@ -5735,7 +5745,14 @@ function getInteriorPanoramaAnchors(blueprint, W, H) {
 
 function getInteriorExplorationRecord(zoneId) {
   state.interiorExploration = state.interiorExploration || {};
-  state.interiorExploration[zoneId] = state.interiorExploration[zoneId] || { found: [], completed: false, scenePlayed: false };
+  state.interiorExploration[zoneId] = state.interiorExploration[zoneId] || {
+    found: [],
+    completed: false,
+    scenePlayed: false,
+    sceneChoice: "",
+    sceneOutcome: "",
+    sceneReward: null
+  };
   return state.interiorExploration[zoneId];
 }
 
@@ -5878,6 +5895,12 @@ function syncInteriorDiscoveryCard(now) {
     card.id = "interiorDiscoveryCard";
     card.setAttribute("aria-live", "polite");
     card.addEventListener("click", (event) => {
+      const choice = event.target.closest("[data-interior-scene-choice]");
+      if (choice) {
+        event.stopPropagation();
+        playInteriorSceneAction(choice.dataset.interiorSceneChoice || "");
+        return;
+      }
       const action = event.target.closest("[data-interior-scene-action]");
       if (!action) return;
       event.stopPropagation();
@@ -5885,41 +5908,80 @@ function syncInteriorDiscoveryCard(now) {
     });
     document.getElementById("gameShell")?.appendChild(card);
   }
-  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}`;
+  const choices = Array.isArray(discovery.choices) ? discovery.choices : [];
+  const choiceSignature = choices.map((choice) => `${choice.id}:${choice.label}`).join("|");
+  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}|${choiceSignature}`;
   if (card.dataset.signature !== signature) {
     card.dataset.signature = signature;
-    card.classList.toggle("has-action", !!discovery.actionLabel);
-    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}`;
+    card.classList.toggle("has-action", !!discovery.actionLabel || choices.length > 0);
+    const choiceButtons = choices.length
+      ? `<div class="interior-scene-choice-list" role="group" aria-label="选择你的回应">${choices.map((choice, index) => `<button class="interior-scene-choice choice-${index + 1}" type="button" data-interior-scene-choice="${escapeHtml(choice.id)}">${escapeHtml(choice.label)}</button>`).join("")}</div>`
+      : "";
+    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}${choiceButtons}`;
   }
 }
 
-function playInteriorSceneAction() {
+function applyInteriorSceneReward(zone, choice) {
+  const rewardDelta = choice.reward || {};
+  const lifeWeek = ensureLifeWeekSystem(state.society);
+  if (!lifeWeek) return null;
+  const current = lifeWeek.currentReward || buildDefaultLifeReward();
+  current.socialResonance = clamp(Math.round(Number(current.socialResonance || 50) + Number(rewardDelta.socialResonance || 0)), 0, 100);
+  current.selfFulfillment = clamp(Math.round(Number(current.selfFulfillment || 50) + Number(rewardDelta.selfFulfillment || 0)), 0, 100);
+  current.lifeStability = clamp(Math.round(Number(current.lifeStability || 50) + Number(rewardDelta.lifeStability || 0)), 0, 100);
+  current.total = clamp(Math.round((current.socialResonance + current.selfFulfillment + current.lifeStability) / 3), 0, 100);
+  current.reason = `${zone.name}：你选择“${choice.label}”，世界把这次回应记进了本周生活。`;
+  lifeWeek.currentReward = current;
+  return {
+    socialResonance: Number(rewardDelta.socialResonance || 0),
+    selfFulfillment: Number(rewardDelta.selfFulfillment || 0),
+    lifeStability: Number(rewardDelta.lifeStability || 0)
+  };
+}
+
+function playInteriorSceneAction(choiceId = "") {
   if (!interiorView) return;
   const zone = interiorView.zone;
   const blueprint = getInteriorBlueprint(zone);
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
   const record = getInteriorExplorationRecord(zone.id);
   if (record.scenePlayed) return;
+  const choices = Array.isArray(sceneAction.choices) ? sceneAction.choices : [];
+  if (!choiceId && choices.length) {
+    interiorView.discovery = {
+      title: sceneAction.title,
+      text: "房间里的人看向你。这一刻，你想怎样回应？",
+      progress: "选择回应",
+      choices,
+      until: Number.POSITIVE_INFINITY
+    };
+    syncInteriorDiscoveryCard(performance.now());
+    markRenderActive(1400);
+    return;
+  }
+  const choice = choices.find((item) => item.id === choiceId);
+  if (!choice) return;
   record.scenePlayed = true;
+  record.sceneChoice = choice.id;
 
   const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
   if (avatar) {
-    avatar.mood = clamp(Number(avatar.mood || 50) + 3, 0, 100);
-    avatar.energy = clamp(Number(avatar.energy || 50) - 1, 0, 100);
-    avatar.trust = clamp(Number(avatar.trust || 50) + 2, 0, 100);
-    avatar.lastAction = sceneAction.title;
+    avatar.mood = clamp(Number(avatar.mood || 50) + Number(choice.avatar?.mood || 0), 0, 100);
+    avatar.energy = clamp(Number(avatar.energy || 50) + Number(choice.avatar?.energy || 0), 0, 100);
+    avatar.trust = clamp(Number(avatar.trust || 50) + Number(choice.avatar?.trust || 0), 0, 100);
+    avatar.lastAction = choice.label;
   }
 
   const participant = getAliveCitizens(state.society)
     .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
   if (participant) {
-    participant.mood = clamp(Number(participant.mood || 50) + 3, 0, 100);
-    participant.trust = clamp(Number(participant.trust || 50) + 2, 0, 100);
-    participant.lastAction = sceneAction.title;
-    addSpeechBubble(participant.id, sceneAction.reaction, "support", { duration: 5200 });
+    participant.mood = clamp(Number(participant.mood || 50) + Number(choice.participant?.mood || 0), 0, 100);
+    participant.trust = clamp(Number(participant.trust || 50) + Number(choice.participant?.trust || 0), 0, 100);
+    participant.lastAction = choice.label;
+    addSpeechBubble(participant.id, choice.reaction, choice.relationType || "support", { duration: 5200 });
     const ia = interiorAnimations[participant.id];
-    const anchor = interiorHotspots.find((item) => item.behaviors?.includes(sceneAction.behavior)) || interiorHotspots[0];
-    const behavior = BEHAVIOR_BY_ID.get(sceneAction.behavior);
+    const anchor = interiorHotspots.find((item) => item.behaviors?.includes(choice.behavior)) || interiorHotspots[0];
+    const behavior = BEHAVIOR_BY_ID.get(choice.behavior);
     if (ia && anchor) {
       ia.targetX = anchor.x;
       ia.targetY = anchor.y - (anchor.screenProjected ? 4 : -16);
@@ -5927,18 +5989,39 @@ function playInteriorSceneAction() {
       ia.nextTargetAt = performance.now() + 5200;
       if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) ia.forcedBehaviorId = behavior.id;
     }
+    if (avatar) {
+      updateRelationshipModel(state.society, avatar, participant, {
+        type: choice.relationType || "cooperate",
+        score: 1,
+        text: choice.text
+      });
+    }
   }
 
-  const sceneText = sceneAction.text.replace(/[。！？]+$/u, "");
+  const sceneText = choice.text.replace(/[。！？]+$/u, "");
   const outcome = participant ? `${sceneText}，${participant.name}也留在了现场。` : `${sceneText}。`;
+  record.sceneOutcome = outcome;
+  record.sceneReward = applyInteriorSceneReward(zone, choice);
+  addLifeWeekLog("interior_scene", `${zone.name}里，你选择了“${choice.label}”。`, {
+    zoneId: zone.id,
+    choiceId: choice.id,
+    participantId: participant?.id || null
+  });
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}，我选择了“${choice.label}”：${outcome}`, {
+      kind: "interior_scene",
+      importance: 7,
+      references: [zone.id, participant?.id].filter(Boolean)
+    });
+  }
   interiorView.discovery = {
     title: sceneAction.title,
     text: outcome,
-    progress: "共同经历",
+    progress: `你的回应 · ${choice.label}`,
     until: performance.now() + 9600
   };
-  addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, sceneAction.behavior, true, `interior-scene-${zone.id}`);
-  pushRobotSignal("avatar", "soft", `另一个世界里的你在${zone.name}${sceneAction.label}。这不是任务分数，而是一段关系开始改变的证据。`);
+  addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, choice.behavior, true, `interior-scene-${zone.id}`);
+  pushRobotSignal("avatar", "soft", `另一个世界里的你在${zone.name}选择了“${choice.label}”。这不是任务分数，而是一段关系开始改变的证据。`);
   persistInteriorExploration();
   persist();
   syncInteriorDiscoveryCard(performance.now());
@@ -10963,6 +11046,11 @@ function getLocalInteriorQaYaw() {
   return wrapInteriorAngle(degrees * Math.PI / 180);
 }
 
+function isLocalInteriorSceneQaEnabled() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return false;
+  return new URLSearchParams(window.location.search).get("qaInteriorScene") === "1";
+}
+
 function openLocalInteriorQa(zoneId) {
   if (!zoneId) return;
   window.requestAnimationFrame(() => {
@@ -10978,6 +11066,29 @@ function openLocalInteriorQa(zoneId) {
     if (slider) slider.value = "0.5";
     if (sliderVal) sliderVal.textContent = "0.5x";
     enterInteriorView(zone, "qa");
+    if (isLocalInteriorSceneQaEnabled()) {
+      seedInteriorOccupants(zone);
+      Object.values(citizenAnimations).forEach((animation) => {
+        if (animation?.indoor?.zoneId === zone.id) animation.indoor.until = performance.now() + 60000;
+      });
+      const blueprint = getInteriorBlueprint(zone);
+      const record = getInteriorExplorationRecord(zone.id);
+      record.found = (blueprint.props || []).slice(0, 3).map((prop) => prop.label);
+      record.completed = true;
+      record.scenePlayed = false;
+      record.sceneChoice = "";
+      record.sceneOutcome = "";
+      record.sceneReward = null;
+      const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+      interiorView.discovery = {
+        title: `${zone.name} · 场所回声`,
+        text: blueprint.profile?.completion || `你读懂了${zone.name}的一小段生活。`,
+        progress: "已读懂",
+        actionLabel: sceneAction.label,
+        until: Number.POSITIVE_INFINITY
+      };
+      syncInteriorDiscoveryCard(performance.now());
+    }
     interiorOrbit.yaw = getLocalInteriorQaYaw();
     markRenderActive(1800);
   });
