@@ -49,7 +49,8 @@ const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n
 const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
 const blueprints = extractObject(game, "INTERIOR_BLUEPRINTS", "INTERIOR_ZONE_PROFILES");
 const sceneActions = extractObject(game, "INTERIOR_SCENE_ACTIONS", "INTERIOR_BLUEPRINT_CACHE");
-const environmentPalettes = extractObject(interiorThree, "INTERIOR_ENVIRONMENT_PALETTES", "MODEL_RENDER_PROFILES");
+const environmentPalettes = extractObject(interiorThree, "INTERIOR_ENVIRONMENT_PALETTES", "INTERIOR_ZONE_ENVIRONMENT_STYLES");
+const zoneEnvironmentStyles = extractObject(interiorThree, "INTERIOR_ZONE_ENVIRONMENT_STYLES", "MODEL_RENDER_PROFILES");
 
 const zoneIds = unique([...collectIds(openWorldBlock), ...collectIds(growthBlock)]);
 const profileIds = unique(collectProfileIds(profileBlock));
@@ -86,6 +87,21 @@ if (invalidSceneChoices.length) {
 const missingEnvironmentPalettes = blueprintIds.filter((id) => !environmentPalettes[id]);
 if (missingEnvironmentPalettes.length) {
   throw new Error(`Interior blueprints without environment art palettes: ${missingEnvironmentPalettes.join(", ")}`);
+}
+const missingZoneEnvironmentStyles = profileIds.filter((id) => !zoneEnvironmentStyles[id]);
+const unknownZoneEnvironmentStyles = Object.keys(zoneEnvironmentStyles).filter((id) => !profileIds.includes(id));
+if (missingZoneEnvironmentStyles.length) {
+  throw new Error(`Buildings without a dedicated 3D environment identity: ${missingZoneEnvironmentStyles.join(", ")}`);
+}
+if (unknownZoneEnvironmentStyles.length) {
+  throw new Error(`3D environment identities without buildings: ${unknownZoneEnvironmentStyles.join(", ")}`);
+}
+const incompleteZoneEnvironmentStyles = Object.entries(zoneEnvironmentStyles).flatMap(([id, style]) => {
+  const missing = ["motif", "accent", "secondary", "panel"].filter((field) => typeof style[field] !== "string" || !style[field].trim());
+  return missing.length ? [`${id}:${missing.join("+")}`] : [];
+});
+if (incompleteZoneEnvironmentStyles.length) {
+  throw new Error(`Incomplete 3D environment identities: ${incompleteZoneEnvironmentStyles.join(", ")}`);
 }
 
 const incompleteSemanticProps = [];
@@ -131,4 +147,4 @@ for (const slot of config.slots || []) {
 if (missingModels.length) throw new Error(`Missing runtime GLBs: ${missingModels.join(", ")}`);
 if (fallbackModels.length) throw new Error(`Sprite-card fallbacks still active: ${fallbackModels.join(", ")}`);
 
-console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${blueprintIds.length} room archetypes, ${Object.keys(environmentPalettes).length} environment palettes, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);
+console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${blueprintIds.length} room archetypes, ${Object.keys(environmentPalettes).length} environment palettes, ${Object.keys(zoneEnvironmentStyles).length} building identities, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);

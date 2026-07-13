@@ -21,6 +21,7 @@
     "render:interior-3d:canonical": "node scripts/render-interior-canonical-views.mjs",
     "render:interior-3d:turntable": "node scripts/render-interior-turntable.mjs",
     "capture:interior-environments": "node scripts/capture-interior-environment-board.mjs",
+    "capture:interior-identities": "MIRRORLIFE_CAPTURE_YAW=42 node scripts/capture-interior-environment-board.mjs",
     "capture:interior-environments:mobile": "MIRRORLIFE_CAPTURE_MOBILE=1 node scripts/capture-interior-environment-board.mjs",
     "verify:interior-scene-flow": "node scripts/verify-interior-scene-flow.mjs",
     "package:interior-3d-web": "node scripts/package-interior-3d-web-batch.mjs",

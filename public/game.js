@@ -7452,6 +7452,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
       accent: roomStyle.accent,
       trim: roomStyle.trim,
       archetype: blueprint.key,
+      zoneId: interiorView?.zone?.id || "",
       variant: hashCommunitySeed(interiorView?.zone?.id || blueprint.key, "interior-room") % 4,
       night: !!isNight
     },

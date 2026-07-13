@@ -8,7 +8,9 @@ const execFileAsync = promisify(execFile);
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const MOBILE = process.env.MIRRORLIFE_CAPTURE_MOBILE === "1";
-const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}`);
+const REVIEW_YAW = Number(process.env.MIRRORLIFE_CAPTURE_YAW || 0);
+const YAW_SUFFIX = REVIEW_YAW ? `-yaw-${String(REVIEW_YAW).replace(/[^0-9-]/g, "")}` : "";
+const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}`);
 const VIEWPORT = MOBILE
   ? { width: 390, height: 844, deviceScaleFactor: 1 }
   : { width: 1280, height: 720, deviceScaleFactor: 1 };
@@ -18,17 +20,36 @@ const PERFORMANCE_BUDGET = {
   geometries: Number(process.env.MIRRORLIFE_MAX_INTERIOR_GEOMETRIES || 220)
 };
 const SCENES = [
-  { archetype: "care", zone: "maternity-hospital", label: "照护 / 新生与守夜" },
-  { archetype: "learning", zone: "university", label: "学习 / 开放书院" },
-  { archetype: "commerce", zone: "commercial-zone", label: "商业 / 街市交换" },
   { archetype: "public", zone: "public-plaza", label: "公共 / 邻里议事" },
-  { archetype: "work", zone: "office-district", label: "工作 / 共事楼" },
-  { archetype: "justice", zone: "legal-court", label: "修复 / 公议庭" },
+  { archetype: "care", zone: "maternity-hospital", label: "照护 / 新生与守夜" },
   { archetype: "home", zone: "residential", label: "居住 / 生活巷" },
-  { archetype: "nature", zone: "botanical-garden", label: "自然 / 草木园" },
+  { archetype: "learning", zone: "kindergarten", label: "学习 / 童年游戏" },
+  { archetype: "learning", zone: "primary-school", label: "学习 / 初学共创" },
+  { archetype: "learning", zone: "middle-school", label: "学习 / 少年探索" },
+  { archetype: "learning", zone: "university", label: "学习 / 开放书院" },
+  { archetype: "work", zone: "office-district", label: "工作 / 共事楼" },
+  { archetype: "work", zone: "factory", label: "工作 / 匠造坊" },
+  { archetype: "justice", zone: "legal-court", label: "修复 / 公议庭" },
   { archetype: "creative", zone: "creative-studio", label: "创作 / 未完成现场" },
-  { archetype: "memory", zone: "cemetery", label: "记忆 / 告别厅" }
+  { archetype: "commerce", zone: "commercial-zone", label: "商业 / 街市交换" },
+  { archetype: "nature", zone: "farm", label: "自然 / 四季农圃" },
+  { archetype: "nature", zone: "park", label: "自然 / 公园呼吸" },
+  { archetype: "nature", zone: "zoo", label: "自然 / 动物照护" },
+  { archetype: "nature", zone: "botanical-garden", label: "自然 / 草木共生" },
+  { archetype: "commerce", zone: "night-market", label: "商业 / 深夜补给" },
+  { archetype: "memory", zone: "quiet-nook", label: "记忆 / 静心低声" },
+  { archetype: "care", zone: "repair-station", label: "照护 / 关系修复" },
+  { archetype: "memory", zone: "cemetery", label: "记忆 / 告别花园" },
+  { archetype: "care", zone: "empathy-lab", label: "照护 / 共情对话" },
+  { archetype: "creative", zone: "story-archive", label: "创作 / 口述档案" },
+  { archetype: "work", zone: "commons-workshop", label: "工作 / 公共建造" },
+  { archetype: "home", zone: "rest-courtyard", label: "居住 / 慢歇恢复" },
+  { archetype: "learning", zone: "mentor-hall", label: "学习 / 人生实验" },
+  { archetype: "commerce", zone: "resource-kitchen", label: "商业 / 邻里食堂" }
 ];
+const ZONE_FILTER = String(process.env.MIRRORLIFE_CAPTURE_ZONE || "").trim();
+const CAPTURE_SCENES = ZONE_FILTER ? SCENES.filter((scene) => scene.zone === ZONE_FILTER) : SCENES;
+if (!CAPTURE_SCENES.length) throw new Error(`Unknown interior capture zone: ${ZONE_FILTER}`);
 
 await fs.mkdir(OUTPUT_ROOT, { recursive: true });
 const browser = await puppeteer.launch({
@@ -41,9 +62,9 @@ const results = [];
 try {
   const page = await browser.newPage();
   await page.setViewport(VIEWPORT);
-  for (let index = 0; index < SCENES.length; index += 1) {
-    const scene = SCENES[index];
-    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaYaw=0`;
+  for (let index = 0; index < CAPTURE_SCENES.length; index += 1) {
+    const scene = CAPTURE_SCENES[index];
+    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
     await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
     await new Promise((resolve) => setTimeout(resolve, index === 0 ? 6500 : 4200));
     await page.evaluate(({ label, archetype }) => {
@@ -94,24 +115,36 @@ try {
 const columns = 5;
 const tileWidth = MOBILE ? 234 : 512;
 const tileHeight = MOBILE ? 506 : 288;
-const inputs = results.flatMap((result) => ["-i", path.join(OUTPUT_ROOT, result.file)]);
-const scales = results.map((_, index) => `[${index}:v]scale=${tileWidth}:${tileHeight}[s${index}]`).join(";");
-const stack = results.map((_, index) => `[s${index}]`).join("");
-const layout = results.map((_, index) => `${(index % columns) * tileWidth}_${Math.floor(index / columns) * tileHeight}`).join("|");
-await execFileAsync("ffmpeg", [
-  "-y",
-  ...inputs,
-  "-filter_complex",
-  `${scales};${stack}xstack=inputs=${results.length}:layout=${layout}:fill=0xfafaf5[v]`,
-  "-map", "[v]",
-  "-frames:v", "1",
-  path.join(OUTPUT_ROOT, "contact-sheet.png")
-], { maxBuffer: 1024 * 1024 * 8 });
+const contactSheetPath = path.join(OUTPUT_ROOT, "contact-sheet.png");
+if (results.length === 1) {
+  await execFileAsync("ffmpeg", [
+    "-y",
+    "-i", path.join(OUTPUT_ROOT, results[0].file),
+    "-vf", `scale=${tileWidth}:${tileHeight}`,
+    "-frames:v", "1",
+    contactSheetPath
+  ], { maxBuffer: 1024 * 1024 * 8 });
+} else {
+  const inputs = results.flatMap((result) => ["-i", path.join(OUTPUT_ROOT, result.file)]);
+  const scales = results.map((_, index) => `[${index}:v]scale=${tileWidth}:${tileHeight}[s${index}]`).join(";");
+  const stack = results.map((_, index) => `[s${index}]`).join("");
+  const layout = results.map((_, index) => `${(index % columns) * tileWidth}_${Math.floor(index / columns) * tileHeight}`).join("|");
+  await execFileAsync("ffmpeg", [
+    "-y",
+    ...inputs,
+    "-filter_complex",
+    `${scales};${stack}xstack=inputs=${results.length}:layout=${layout}:fill=0xfafaf5[v]`,
+    "-map", "[v]",
+    "-frames:v", "1",
+    contactSheetPath
+  ], { maxBuffer: 1024 * 1024 * 8 });
+}
 
 await fs.writeFile(path.join(OUTPUT_ROOT, "manifest.json"), `${JSON.stringify({
   generatedAt: new Date().toISOString(),
   baseUrl: BASE_URL,
   viewport: VIEWPORT,
+  yaw: REVIEW_YAW,
   performanceBudget: PERFORMANCE_BUDGET,
   contactSheet: "contact-sheet.png",
   scenes: results

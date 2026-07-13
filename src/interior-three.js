@@ -19,6 +19,35 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
   memory: { wall: "#f7f2e8", nightWall: "#ece7df", floor: "#a9bfae", accent: "#d8a45d", secondary: "#7aa5c9", trim: "#1a1a2e" }
 };
 
+const INTERIOR_ZONE_ENVIRONMENT_STYLES = {
+  "public-plaza": { motif: "voices", accent: "#f1c40f", secondary: "#4ea8de", panel: "#fffdf4" },
+  "maternity-hospital": { motif: "newborn", accent: "#ff8fa3", secondary: "#56cfe1", panel: "#fff5f7" },
+  residential: { motif: "window", accent: "#ff8a65", secondary: "#4ea8de", panel: "#fff7e8" },
+  kindergarten: { motif: "blocks", accent: "#e63946", secondary: "#f1c40f", panel: "#fff7d6" },
+  "primary-school": { motif: "steps", accent: "#2ecc71", secondary: "#4ea8de", panel: "#f1fff7" },
+  "middle-school": { motif: "compass", accent: "#4ea8de", secondary: "#f1c40f", panel: "#f2f7ff" },
+  university: { motif: "orbit", accent: "#4361ee", secondary: "#2f9e83", panel: "#eef3ff" },
+  "office-district": { motif: "grid", accent: "#4ea8de", secondary: "#f1c40f", panel: "#f2f8fb" },
+  factory: { motif: "gear", accent: "#f1c40f", secondary: "#e76f51", panel: "#fff8dc" },
+  "legal-court": { motif: "balance", accent: "#ef7188", secondary: "#4ea8de", panel: "#f8f9fc" },
+  "creative-studio": { motif: "spark", accent: "#e63946", secondary: "#f1c40f", panel: "#fff4f7" },
+  "commercial-zone": { motif: "stall", accent: "#e63946", secondary: "#2ecc71", panel: "#fff8df" },
+  farm: { motif: "furrows", accent: "#62a85b", secondary: "#d8a45d", panel: "#f3fae9" },
+  park: { motif: "ripple", accent: "#2ecc71", secondary: "#4ea8de", panel: "#effbf4" },
+  zoo: { motif: "paw", accent: "#e98b42", secondary: "#62a85b", panel: "#fff5df" },
+  "botanical-garden": { motif: "leaf", accent: "#2ecc71", secondary: "#56cfe1", panel: "#effbf2" },
+  "night-market": { motif: "moon", accent: "#ef7188", secondary: "#f1c40f", panel: "#fff1f6" },
+  "quiet-nook": { motif: "wave", accent: "#7aa5c9", secondary: "#9d8189", panel: "#f3f2f7" },
+  "repair-station": { motif: "bridge", accent: "#ff8a65", secondary: "#2f9e83", panel: "#fff5ed" },
+  cemetery: { motif: "lantern", accent: "#d8a45d", secondary: "#7f927e", panel: "#f6efe2" },
+  "empathy-lab": { motif: "dialogue", accent: "#56cfe1", secondary: "#ff8fa3", panel: "#effbfb" },
+  "story-archive": { motif: "rhythm", accent: "#e63946", secondary: "#4ea8de", panel: "#fff5ed" },
+  "commons-workshop": { motif: "nodes", accent: "#f1c40f", secondary: "#4ea8de", panel: "#f4f8f5" },
+  "rest-courtyard": { motif: "sunset", accent: "#ff8a65", secondary: "#d8a45d", panel: "#fff4e4" },
+  "mentor-hall": { motif: "pathways", accent: "#4ea8de", secondary: "#d8a45d", panel: "#f7f4e9" },
+  "resource-kitchen": { motif: "bowl", accent: "#e63946", secondary: "#2ecc71", panel: "#fff5df" }
+};
+
 const MODEL_RENDER_PROFILES = {
   bed: { scale: 1.35, rotationY: -0.45 },
   counter: { scale: 0.98, rotationY: -0.2 },
@@ -379,12 +408,13 @@ function createToonMaterial(color, options = {}) {
 function resolveEnvironmentPalette(theme = {}) {
   const archetype = theme.archetype || "home";
   const palette = INTERIOR_ENVIRONMENT_PALETTES[archetype] || INTERIOR_ENVIRONMENT_PALETTES.home;
+  const zoneStyle = INTERIOR_ZONE_ENVIRONMENT_STYLES[theme.zoneId] || {};
   return {
     ...palette,
     wallColor: theme.night ? palette.nightWall : palette.wall,
     floorColor: palette.floor,
-    accent: palette.accent,
-    secondary: palette.secondary,
+    accent: zoneStyle.accent || palette.accent,
+    secondary: zoneStyle.secondary || palette.secondary,
     trim: palette.trim,
     night: !!theme.night
   };
@@ -415,7 +445,7 @@ function addLearningWindow(angle, palette) {
   const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.13, 2.12);
   const group = new THREE.Group();
   group.position.set(x, y, z);
-  group.rotation.y = angle;
+  group.rotation.y = -angle;
   roomRoot.add(group);
 
   const frame = new THREE.Mesh(
@@ -460,7 +490,7 @@ function addLearningShelf(angle, palette, variant = 0) {
   const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.18, 1.75);
   const group = new THREE.Group();
   group.position.set(x, y, z);
-  group.rotation.y = angle;
+  group.rotation.y = -angle;
   roomRoot.add(group);
   const wood = createToonMaterial("#b96f3e");
   const darkWood = createToonMaterial("#7e4a32");
@@ -648,7 +678,7 @@ function addWallFeature(angle, options = {}) {
   const [x, y, z] = wallPosition(angle, radius, options.y || 2.08);
   const group = new THREE.Group();
   group.position.set(x, y, z);
-  group.rotation.y = angle;
+  group.rotation.y = -angle;
   roomRoot.add(group);
 
   const frame = new THREE.Mesh(
@@ -717,7 +747,7 @@ function addPlanter(angle, color, leafColor, width = 1.1) {
   const [x, y, z] = wallPosition(angle, 4.92, 0.35);
   const group = new THREE.Group();
   group.position.set(x, y, z);
-  group.rotation.y = angle;
+  group.rotation.y = -angle;
   roomRoot.add(group);
   const box = new THREE.Mesh(new RoundedBoxGeometry(width, 0.42, 0.5, 4, 0.09), createToonMaterial(color));
   box.castShadow = true;
@@ -748,6 +778,190 @@ function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
   const light = new THREE.PointLight(color, 0.5, 2.2, 2);
   light.position.z = 0.15;
   group.add(light);
+}
+
+function addIdentityBox(group, color, x, y, width, height, rotation = 0) {
+  const mesh = new THREE.Mesh(
+    new RoundedBoxGeometry(width, height, 0.065, 3, Math.min(0.055, width * 0.18, height * 0.18)),
+    createToonMaterial(color)
+  );
+  mesh.position.set(x, y, 0.215);
+  mesh.rotation.z = rotation;
+  mesh.castShadow = false;
+  group.add(mesh);
+  return mesh;
+}
+
+function addIdentityDisc(group, color, x, y, radius, scaleX = 1, scaleY = 1) {
+  const mesh = new THREE.Mesh(new THREE.CircleGeometry(radius, 24), createToonMaterial(color));
+  mesh.position.set(x, y, 0.218);
+  mesh.scale.set(scaleX, scaleY, 1);
+  mesh.castShadow = false;
+  group.add(mesh);
+  return mesh;
+}
+
+function addIdentityRing(group, color, x, y, innerRadius, outerRadius) {
+  const mesh = new THREE.Mesh(new THREE.RingGeometry(innerRadius, outerRadius, 32), createToonMaterial(color));
+  mesh.position.set(x, y, 0.22);
+  mesh.castShadow = false;
+  group.add(mesh);
+  return mesh;
+}
+
+function addZoneIdentityGlyph(group, style) {
+  const primary = style.accent;
+  const secondary = style.secondary;
+  const pale = style.panel;
+  const dark = "#1a1a2e";
+  const bar = (x, y, w, h, color = primary, rotation = 0) => addIdentityBox(group, color, x, y, w, h, rotation);
+  const disc = (x, y, r, color = primary, sx = 1, sy = 1) => addIdentityDisc(group, color, x, y, r, sx, sy);
+  const ring = (x, y, inner, outer, color = primary) => addIdentityRing(group, color, x, y, inner, outer);
+
+  switch (style.motif) {
+    case "voices":
+      [[-0.3, 0.15, secondary], [0, -0.02, primary], [0.3, 0.12, "#2ecc71"]].forEach(([x, y, color]) => {
+        bar(x, y, 0.34, 0.25, color);
+        bar(x + 0.08, y - 0.16, 0.08, 0.16, color, -0.45);
+      });
+      break;
+    case "newborn":
+      disc(0, 0.08, 0.25, secondary);
+      disc(-0.1, 0.12, 0.09, pale);
+      bar(0, -0.24, 0.54, 0.18, primary);
+      break;
+    case "window":
+      [-0.22, 0.22].forEach((x) => [-0.18, 0.18].forEach((y) => bar(x, y, 0.35, 0.28, y > 0 ? secondary : primary)));
+      break;
+    case "blocks":
+      bar(-0.28, -0.2, 0.32, 0.32, primary);
+      bar(0.05, -0.12, 0.34, 0.48, secondary);
+      bar(0.34, -0.23, 0.24, 0.26, "#2ecc71");
+      break;
+    case "steps":
+      [0.22, 0.36, 0.5, 0.64].forEach((width, index) => bar(-0.24 + index * 0.13, -0.27 + index * 0.17, width, 0.11, index % 2 ? secondary : primary));
+      break;
+    case "compass":
+      ring(0, 0, 0.23, 0.3, secondary);
+      bar(0, 0, 0.62, 0.08, primary, Math.PI / 4);
+      bar(0, 0, 0.62, 0.08, primary, -Math.PI / 4);
+      break;
+    case "orbit":
+      ring(0, 0, 0.24, 0.3, primary);
+      disc(0, 0, 0.13, secondary);
+      disc(0.34, 0.08, 0.07, "#f1c40f");
+      break;
+    case "grid":
+      for (let row = 0; row < 3; row += 1) for (let column = 0; column < 3; column += 1) {
+        bar((column - 1) * 0.25, (1 - row) * 0.22, 0.17, 0.15, (row + column) % 2 ? primary : secondary);
+      }
+      break;
+    case "gear":
+      ring(0, 0, 0.2, 0.3, primary);
+      for (let index = 0; index < 8; index += 1) bar(0, 0, 0.7, 0.08, index % 2 ? secondary : primary, index * Math.PI / 4);
+      disc(0, 0, 0.1, dark);
+      break;
+    case "balance":
+      bar(0, 0.15, 0.72, 0.09, dark);
+      bar(0, -0.02, 0.08, 0.5, "#f1c40f");
+      disc(-0.27, -0.14, 0.15, primary, 1.2, 0.55);
+      disc(0.27, -0.14, 0.15, secondary, 1.2, 0.55);
+      break;
+    case "spark":
+      [0, Math.PI / 4, Math.PI / 2, -Math.PI / 4].forEach((rotation, index) => bar(0, 0, index % 2 ? 0.65 : 0.78, 0.1, index % 2 ? secondary : primary, rotation));
+      disc(0, 0, 0.12, "#f1c40f");
+      break;
+    case "stall":
+      [-0.3, -0.1, 0.1, 0.3].forEach((x, index) => bar(x, 0.17, 0.18, 0.32, index % 2 ? pale : primary));
+      bar(0, -0.15, 0.78, 0.3, secondary);
+      break;
+    case "furrows":
+      [-0.27, -0.09, 0.09, 0.27].forEach((y, index) => bar(0, y, 0.8 - index * 0.08, 0.09, index % 2 ? secondary : primary, index % 2 ? 0.06 : -0.06));
+      break;
+    case "ripple":
+      ring(0, 0, 0.08, 0.13, primary);
+      ring(0, 0, 0.21, 0.26, secondary);
+      ring(0, 0, 0.35, 0.4, primary);
+      break;
+    case "paw":
+      disc(0, -0.1, 0.24, primary, 1.2, 0.9);
+      [[-0.3, 0.22], [-0.1, 0.31], [0.14, 0.3], [0.33, 0.17]].forEach(([x, y], index) => disc(x, y, 0.11, index % 2 ? secondary : primary, 0.85, 1.1));
+      break;
+    case "leaf":
+      disc(-0.2, 0.02, 0.22, primary, 0.58, 1.25).rotation.z = -0.52;
+      disc(0.18, 0.12, 0.24, secondary, 0.6, 1.28).rotation.z = 0.48;
+      bar(0, -0.12, 0.58, 0.07, dark, Math.PI / 2);
+      break;
+    case "moon":
+      disc(0, 0, 0.35, primary);
+      disc(0.15, 0.1, 0.31, pale);
+      disc(-0.34, 0.27, 0.055, secondary);
+      disc(0.35, -0.2, 0.045, secondary);
+      break;
+    case "wave":
+    case "rhythm":
+      [0.22, 0.42, 0.66, 0.36, 0.54, 0.25].forEach((height, index) => bar(-0.42 + index * 0.17, 0, 0.1, height, index % 2 ? secondary : primary));
+      break;
+    case "bridge":
+      bar(0, 0.05, 0.82, 0.12, primary);
+      [-0.31, 0.31].forEach((x) => bar(x, -0.18, 0.1, 0.5, secondary));
+      [-0.2, 0, 0.2].forEach((x) => bar(x, 0.19, 0.08, 0.26, dark));
+      break;
+    case "lantern":
+      bar(0, 0, 0.44, 0.56, primary);
+      [-0.24, 0.24].forEach((x) => bar(x, 0, 0.07, 0.68, dark));
+      bar(0, 0.34, 0.58, 0.07, dark);
+      disc(0, 0, 0.12, "#fff1ad");
+      break;
+    case "dialogue":
+      bar(-0.16, 0.12, 0.58, 0.34, primary);
+      bar(0.2, -0.14, 0.55, 0.32, secondary);
+      bar(-0.28, -0.1, 0.08, 0.2, primary, -0.45);
+      bar(0.31, -0.36, 0.08, 0.18, secondary, 0.45);
+      break;
+    case "nodes":
+      [[-0.32, 0.18], [0.28, 0.25], [-0.18, -0.27], [0.34, -0.2]].forEach(([x, y], index) => disc(x, y, 0.11, index % 2 ? secondary : primary));
+      bar(0, 0.03, 0.7, 0.065, dark, 0.12);
+      bar(0.05, 0.01, 0.62, 0.065, dark, Math.PI / 2.6);
+      break;
+    case "sunset":
+      disc(0, 0.07, 0.3, primary);
+      bar(0, -0.08, 0.84, 0.1, secondary);
+      bar(0, -0.27, 0.66, 0.08, dark);
+      break;
+    case "pathways":
+      bar(0, -0.08, 0.08, 0.72, primary);
+      bar(-0.17, 0.15, 0.42, 0.08, secondary, 0.5);
+      bar(0.17, 0.16, 0.42, 0.08, secondary, -0.5);
+      disc(0, -0.34, 0.09, dark);
+      break;
+    case "bowl":
+      ring(0, 0.02, 0.23, 0.32, primary);
+      bar(0, -0.22, 0.52, 0.18, secondary);
+      [-0.2, 0, 0.2].forEach((x, index) => disc(x, 0.08 + (index % 2) * 0.08, 0.07, index % 2 ? "#f1c40f" : "#2ecc71"));
+      break;
+    default:
+      ring(0, 0, 0.18, 0.3, primary);
+      disc(0, 0, 0.1, secondary);
+  }
+}
+
+function addZoneIdentity(theme, colors) {
+  const style = INTERIOR_ZONE_ENVIRONMENT_STYLES[theme.zoneId];
+  if (!style) return;
+  const variantOffset = (Number(theme.variant || 0) % 4) * (Math.PI / 18);
+  const identityAngle = variantOffset + 0.74;
+  const panel = addWallFeature(identityAngle, {
+    width: 1.28,
+    height: 1.02,
+    y: 2.08,
+    fill: style.panel,
+    frame: colors.trim,
+    dividers: false
+  });
+  addZoneIdentityGlyph(panel, style);
+  addFloorPad(identityAngle - 0.08, 4.18, style.accent, 0.34);
+  addFloorPad(identityAngle + 0.14, 3.72, style.secondary, 0.24);
 }
 
 function roomMaterialKey(material, geometry) {
@@ -1038,7 +1252,7 @@ function addRoomArchitecture(theme, colors) {
 }
 
 function rebuildRoom(theme = {}) {
-  const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.variant].join("|");
+  const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant].join("|");
   if (signature === roomSignature) return;
   roomSignature = signature;
   disposeOwnedGroup(roomRoot);
@@ -1094,6 +1308,7 @@ function rebuildRoom(theme = {}) {
     }
   }
   addRoomArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   mergeRoomArchitectureMeshes();
 }
 
