@@ -10,11 +10,13 @@ const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").re
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const MOBILE = process.env.MIRRORLIFE_CAPTURE_MOBILE === "1";
 const REVIEW_YAW = Number(process.env.MIRRORLIFE_CAPTURE_YAW || 0);
+const CAPTURE_WIDTH = Number(process.env.MIRRORLIFE_CAPTURE_WIDTH || 1280);
+const CAPTURE_HEIGHT = Number(process.env.MIRRORLIFE_CAPTURE_HEIGHT || 720);
 const YAW_SUFFIX = REVIEW_YAW ? `-yaw-${String(REVIEW_YAW).replace(/[^0-9-]/g, "")}` : "";
 const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}`);
 const VIEWPORT = MOBILE
   ? { width: 390, height: 844, deviceScaleFactor: 1 }
-  : { width: 1280, height: 720, deviceScaleFactor: 1 };
+  : { width: CAPTURE_WIDTH, height: CAPTURE_HEIGHT, deviceScaleFactor: 1 };
 const PERFORMANCE_BUDGET = {
   drawCalls: Number(process.env.MIRRORLIFE_MAX_INTERIOR_DRAW_CALLS || 180),
   triangles: Number(process.env.MIRRORLIFE_MAX_INTERIOR_TRIANGLES || 500000),

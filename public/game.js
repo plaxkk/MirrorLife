@@ -8316,9 +8316,9 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
       const entryX = interiorExitRect ? interiorExitRect.x + interiorExitRect.w / 2 : W * 0.86;
       const entryY = interiorExitRect ? interiorExitRect.y - 12 : layout.floorBottom - 32;
       const focalOffsets = [
-        { x: -72, y: 34 },
-        { x: 72, y: 34 },
-        { x: 0, y: -52 }
+        { x: -88, y: 42 },
+        { x: 88, y: 42 },
+        { x: 0, y: -66 }
       ];
       const focalOffset = focalAnchor && spawnAnchor === focalAnchor ? focalOffsets[idx] : null;
       const focalOffsetX = focalOffset?.x || 0;
@@ -8366,7 +8366,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
-    const baseSize = useThreeModels ? 31 : 16;
+    const baseSize = useThreeModels ? 39 : 16;
     const size = (isHover ? baseSize + 4 : baseSize) + sizeBoost;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
@@ -8401,7 +8401,7 @@ function hitTestInteriorCitizen(mx, my) {
     if (citizenAnimations[citizen.id]?.indoor?.zoneId !== zoneId) continue;
     const ia = interiorAnimations[citizen.id];
     if (!ia) continue;
-    if (Math.hypot(mx - ia.x, my - ia.y) < 22) return citizen;
+    if (Math.hypot(mx - ia.x, my - ia.y) < 28) return citizen;
   }
   return null;
 }
