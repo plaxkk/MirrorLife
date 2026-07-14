@@ -1,0 +1,56 @@
+{
+  "model": "cafe-seating",
+  "sourceSheet": "public/assets/interiors/references/multiview/cafe-seating/source-sheet.png",
+  "generatedAt": "2026-07-11T15:37:54.861Z",
+  "grid": {
+    "mode": "authored-bounds"
+  },
+  "layoutFile": "public/assets/interiors/references/multiview/cafe-seating/source-layout.json",
+  "chromaKey": "#ed05d7",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/cafe-seating/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

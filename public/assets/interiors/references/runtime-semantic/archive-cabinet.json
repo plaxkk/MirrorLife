@@ -1,0 +1,23 @@
+{
+  "model": "archive-cabinet",
+  "label": "边界档案柜",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/hospital/medicine_cabinet.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/archive-cabinet.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "cabinet body",
+    "six consent drawers",
+    "label holders",
+    "drawer handles",
+    "lock panel",
+    "top cornice",
+    "finished back panel"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve exactly six equal consent drawers arranged as two columns by three rows, six blank brass label holders, six separate pull handles, the upper-right key lock with three status lights, substantial rounded cornice, recessed plinth and finished furniture sides. The rear must be completed as a secure panel rather than an open shell. Canonical views, closed development geometry and turntable review are still required."
+}

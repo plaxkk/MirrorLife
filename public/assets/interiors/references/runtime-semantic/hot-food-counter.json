@@ -1,0 +1,24 @@
+{
+  "model": "hot-food-counter",
+  "label": "热食台",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/market_cafe/produce_stall.png",
+    "dist/assets/interior-props-image2/hospital/reception_counter.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/hot-food-counter.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "counter body",
+    "serving ledge",
+    "three hot trays",
+    "serving bowls",
+    "overhead rail",
+    "hanging lamps",
+    "rear storage"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the exact isometric design reference. Preserve the honey-wood counter, coral-and-cream vertical customer panels, mint serving ledge, exactly three covered hot trays, exactly two bowls, ladle, tongs, overhead rail with exactly three pendant lamps, sunflower emblem, staff-side drawers/cabinet/lower shelf, closed plinth and finished underside. It still requires canonical views, a closed master model and turntable review."
+}

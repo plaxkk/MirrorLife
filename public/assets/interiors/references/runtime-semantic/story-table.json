@@ -1,0 +1,24 @@
+{
+  "model": "story-table",
+  "label": "故事桌",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/bookcase.png",
+    "public/assets/interiors/references/runtime-semantic/rehearsal-stage.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/story-table.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "round table",
+    "central support",
+    "four chairs",
+    "open memory book",
+    "small lamp",
+    "card tray",
+    "finished underside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the round honey-oak table, central pedestal with four-way feet, exactly four mismatched chairs in mint, sky blue, mustard and coral with distinct backs, open memory book, warm small lamp, shallow blank-card tray and three loose cards. Keep clear knee space, walking gaps and a fully finished underside. Canonical views, closed development geometry and turntable review are still required."
+}

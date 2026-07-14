@@ -1,0 +1,2932 @@
+import fs from "node:fs/promises";
+import path from "node:path";
+import * as THREE from "three";
+import { GLTFExporter } from "three/examples/jsm/exporters/GLTFExporter.js";
+import { RoundedBoxGeometry } from "three/examples/jsm/geometries/RoundedBoxGeometry.js";
+
+global.FileReader = class {
+  readAsArrayBuffer(blob) {
+    blob.arrayBuffer().then((buffer) => {
+      this.result = buffer;
+      this.onloadend?.();
+    });
+  }
+};
+
+const DEFAULT_OUT_DIR = path.resolve("dist/interior-3d-work/procedural-threejs/generated-glb");
+const DEFAULT_SLOTS = [
+  "desk",
+  "round-table",
+  "table",
+  "market-stall",
+  "plant-zone",
+  "workbench",
+  "easel",
+  "sink",
+  "altar",
+  "fountain",
+  "bench",
+  "toy-corner"
+];
+const P = {
+  ink: 0x252236,
+  wood: 0xb8743c,
+  woodDark: 0x815128,
+  woodLight: 0xd39a5f,
+  cream: 0xfff0cf,
+  paper: 0xf8f1df,
+  linen: 0xffdbc4,
+  pink: 0xf39aa1,
+  rose: 0xf06f86,
+  mint: 0x8ccfc1,
+  teal: 0x5aaea4,
+  leaf: 0x6cae62,
+  leafDark: 0x3d7b42,
+  grass: 0x97cf78,
+  blue: 0x5d9bd8,
+  blueDark: 0x2f6ea8,
+  yellow: 0xf4c84a,
+  orange: 0xf19a38,
+  red: 0xe95656,
+  glass: 0xaee4ee,
+  stone: 0xb9b0a5,
+  tile: 0xe7d7ad,
+  chalk: 0x426b4c,
+  metal: 0x8b95a1
+};
+
+const matCache = new Map();
+function mat(color, opts = {}) {
+  const key = `${color}:${JSON.stringify(opts)}`;
+  if (!matCache.has(key)) {
+    matCache.set(key, new THREE.MeshStandardMaterial({
+      color,
+      roughness: 0.76,
+      metalness: 0.03,
+      ...opts
+    }));
+  }
+  return matCache.get(key);
+}
+
+const outlineMaterial = new THREE.LineBasicMaterial({ color: P.ink });
+
+function addMesh(group, geometry, color, position = [0, 0, 0], scale = [1, 1, 1], rotation = [0, 0, 0], outline = true) {
+  const mesh = new THREE.Mesh(geometry, mat(color));
+  const partName = group.name || "prop";
+  mesh.name = `${partName}-surface-${group.children.length}`;
+  mesh.position.set(...position);
+  mesh.scale.set(...scale);
+  mesh.rotation.set(...rotation);
+  if (outline) {
+    const edges = new THREE.LineSegments(new THREE.EdgesGeometry(geometry, 34), outlineMaterial);
+    edges.name = `${partName}-outline-${group.children.length}`;
+    edges.position.copy(mesh.position);
+    edges.scale.copy(mesh.scale).multiplyScalar(1.004);
+    edges.rotation.copy(mesh.rotation);
+    edges.renderOrder = 2;
+    group.add(edges);
+  }
+  group.add(mesh);
+  return mesh;
+}
+
+function addCylinderBetween(group, start, end, radius, color, name = "connector") {
+  const from = new THREE.Vector3(...start);
+  const to = new THREE.Vector3(...end);
+  const delta = to.clone().sub(from);
+  const segment = createPart(group, name);
+  segment.position.copy(from).add(to).multiplyScalar(0.5);
+  segment.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), delta.clone().normalize());
+  addMesh(segment, cyl(radius, radius, delta.length(), 14), color);
+  return segment;
+}
+
+const rounded = (w, h, d, r = 0.08) => new RoundedBoxGeometry(w, h, d, 2, r);
+const box = (w, h, d) => new THREE.BoxGeometry(w, h, d);
+const cyl = (r1, r2, h, seg = 16) => new THREE.CylinderGeometry(r1, r2, h, seg);
+const sphere = (r, w = 16, h = 10) => new THREE.SphereGeometry(r, w, h);
+const torus = (r, tube, radial = 10, tubular = 28) => new THREE.TorusGeometry(r, tube, radial, tubular);
+
+function wedge(w, d, frontHeight, backHeight) {
+  const hw = w / 2;
+  const hd = d / 2;
+  const positions = new Float32Array([
+    -hw, 0, hd, hw, 0, hd, hw, 0, -hd, -hw, 0, -hd,
+    -hw, frontHeight, hd, hw, frontHeight, hd, hw, backHeight, -hd, -hw, backHeight, -hd
+  ]);
+  const indices = [
+    0, 2, 1, 0, 3, 2,
+    4, 5, 6, 4, 6, 7,
+    0, 1, 5, 0, 5, 4,
+    1, 2, 6, 1, 6, 5,
+    2, 3, 7, 2, 7, 6,
+    3, 0, 4, 3, 4, 7
+  ];
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.BufferAttribute(positions, 3));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function annularSector(innerRadius, outerRadius, height, startAngle, endAngle) {
+  const shape = new THREE.Shape();
+  shape.absarc(0, 0, outerRadius, startAngle, endAngle, false);
+  shape.lineTo(innerRadius * Math.cos(endAngle), innerRadius * Math.sin(endAngle));
+  shape.absarc(0, 0, innerRadius, endAngle, startAngle, true);
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: height,
+    bevelEnabled: true,
+    bevelThickness: Math.min(0.035, height * 0.22),
+    bevelSize: 0.035,
+    bevelSegments: 2,
+    curveSegments: 48
+  });
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function addBoard(group, x, y, z, w, h, color = P.paper) {
+  addMesh(group, rounded(w, h, 0.08, 0.035), color, [x, y, z]);
+}
+
+function addBase(group, w = 1.8, d = 1.1, color = P.tile) {
+  // The runtime creates a shared soft shadow beneath every prop. Keeping the
+  // model itself floorless makes it match the isolated source art from every angle.
+  void group;
+  void w;
+  void d;
+  void color;
+}
+
+function addTrim(group, x, y, z, w, d, color = P.woodDark) {
+  addMesh(group, rounded(w, 0.055, d, 0.018), color, [x, y, z]);
+}
+
+function addLegs(group, x, y, z, w, d, h, color = P.woodDark) {
+  [[-1, -1], [1, -1], [-1, 1], [1, 1]].forEach(([sx, sz]) => {
+    addMesh(group, rounded(0.09, h, 0.09, 0.02), color, [x + sx * w * 0.42, y - h / 2, z + sz * d * 0.42]);
+  });
+}
+
+function addWheel(group, x, y, z, s = 1) {
+  addMesh(group, cyl(0.12 * s, 0.12 * s, 0.055 * s, 18), P.ink, [x, y, z], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(group, cyl(0.075 * s, 0.075 * s, 0.065 * s, 18), P.metal, [x, y, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+}
+
+function addFlower(group, x, y, z, s = 1, color = P.rose) {
+  for (let i = 0; i < 5; i++) {
+    const a = (i / 5) * Math.PI * 2;
+    addMesh(group, sphere(0.035 * s, 10, 6), color, [
+      x + Math.cos(a) * 0.045 * s,
+      y,
+      z + Math.sin(a) * 0.045 * s
+    ], [1.2, 0.7, 1]);
+  }
+  addMesh(group, sphere(0.025 * s, 8, 5), P.yellow, [x, y + 0.006 * s, z], [1, 0.75, 1]);
+}
+
+function addPlant(group, x, y, z, s = 1) {
+  addMesh(group, cyl(0.12 * s, 0.1 * s, 0.18 * s, 18), P.wood, [x, y + 0.09 * s, z]);
+  for (let i = 0; i < 6; i++) {
+    const a = i * Math.PI / 3;
+    addMesh(group, sphere(0.12 * s, 16, 10), i % 2 ? P.leaf : P.leafDark, [
+      x + Math.cos(a) * 0.12 * s,
+      y + 0.25 * s + Math.sin(i) * 0.03 * s,
+      z + Math.sin(a) * 0.08 * s
+    ], [1, 0.5, 0.72], [0.1, a, -0.15]);
+  }
+}
+
+function addPlanter(group, x, y, z, w = 0.5, d = 0.22) {
+  addMesh(group, rounded(w, 0.16, d, 0.035), P.woodLight, [x, y, z]);
+  addMesh(group, rounded(w * 0.85, 0.04, d * 0.74, 0.018), P.leafDark, [x, y + 0.09, z]);
+  [-0.17, 0, 0.17].forEach((dx, i) => addFlower(group, x + dx * w, y + 0.16, z + (i % 2) * 0.035, 0.9, i % 2 ? P.pink : P.rose));
+}
+
+function addBooks(group, x, y, z, count = 5) {
+  const colors = [P.blue, P.red, P.yellow, P.mint, P.wood];
+  for (let i = 0; i < count; i++) {
+    addMesh(group, rounded(0.08, 0.34, 0.22, 0.018), colors[i % colors.length], [
+      x + (i - count / 2) * 0.095,
+      y + 0.17,
+      z
+    ]);
+  }
+}
+
+function addCrateGoods(group, x, y, z, count = 5) {
+  for (let i = 0; i < count; i++) {
+    addMesh(group, sphere(0.065, 14, 8), [P.red, P.yellow, P.leaf][i % 3], [
+      x + (i - 2) * 0.09,
+      y,
+      z + (i % 2) * 0.08
+    ]);
+  }
+}
+
+function addDrawer(group, x, y, z, w = 0.34, h = 0.18) {
+  addMesh(group, rounded(w, h, 0.055, 0.018), P.woodLight, [x, y, z]);
+  addMesh(group, cyl(0.022, 0.022, 0.03, 10), P.yellow, [x, y, z - 0.04], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+}
+
+function addLamp(group, x, y, z, s = 1) {
+  addMesh(group, cyl(0.035 * s, 0.035 * s, 0.56 * s, 12), P.woodDark, [x, y + 0.28 * s, z]);
+  addMesh(group, cyl(0.22 * s, 0.14 * s, 0.2 * s, 24), P.linen, [x, y + 0.64 * s, z]);
+  addMesh(group, sphere(0.06 * s, 12, 8), P.yellow, [x, y + 0.51 * s, z], [1, 0.8, 1], [0, 0, 0], false);
+}
+
+function addChair(group, x, y, z, rotation = 0, color = P.teal, scale = 1) {
+  const chair = new THREE.Group();
+  addMesh(chair, rounded(0.4, 0.12, 0.4, 0.045), color, [0, 0.46, 0]);
+  addMesh(chair, rounded(0.4, 0.08, 0.1, 0.03), color, [0, 0.9, 0.18]);
+  addMesh(chair, rounded(0.08, 0.48, 0.1, 0.026), P.woodDark, [-0.17, 0.72, 0.18]);
+  addMesh(chair, rounded(0.08, 0.48, 0.1, 0.026), P.woodDark, [0.17, 0.72, 0.18]);
+  addMesh(chair, rounded(0.07, 0.43, 0.07, 0.022), color, [0, 0.72, 0.18], [1, 1, 1], [0, 0, 0.68]);
+  addMesh(chair, rounded(0.07, 0.43, 0.07, 0.022), color, [0, 0.72, 0.18], [1, 1, 1], [0, 0, -0.68]);
+  addLegs(chair, 0, 0.43, 0, 0.31, 0.31, 0.42, P.woodDark);
+  chair.position.set(x, y, z);
+  chair.rotation.y = rotation;
+  chair.scale.setScalar(scale);
+  group.add(chair);
+  return chair;
+}
+
+function addTool(group, x, y, z, rotation = 0, color = P.metal) {
+  addMesh(group, rounded(0.08, 0.42, 0.06, 0.018), P.woodDark, [x, y, z], [1, 1, 1], [0, 0, rotation]);
+  addMesh(group, rounded(0.3, 0.12, 0.09, 0.025), color, [x - Math.sin(rotation) * 0.2, y + Math.cos(rotation) * 0.2, z], [1, 1, 1], [0, 0, rotation]);
+}
+
+function addOpenBook(group, x, y, z, scale = 1) {
+  addMesh(group, rounded(0.64 * scale, 0.055 * scale, 0.44 * scale, 0.018 * scale), P.blueDark, [x, y, z]);
+  addMesh(group, rounded(0.3 * scale, 0.045 * scale, 0.4 * scale, 0.016 * scale), P.paper, [x - 0.15 * scale, y + 0.045 * scale, z], [1, 1, 1], [0, 0, -0.055]);
+  addMesh(group, rounded(0.3 * scale, 0.045 * scale, 0.4 * scale, 0.016 * scale), P.paper, [x + 0.15 * scale, y + 0.045 * scale, z], [1, 1, 1], [0, 0, 0.055]);
+  [-0.08, 0.02, 0.12].forEach((dz) => {
+    addMesh(group, box(0.2 * scale, 0.008 * scale, 0.012 * scale), P.woodDark, [x - 0.15 * scale, y + 0.073 * scale, z + dz * scale], [1, 1, 1], [0, 0.05, -0.055], false);
+    addMesh(group, box(0.2 * scale, 0.008 * scale, 0.012 * scale), P.woodDark, [x + 0.15 * scale, y + 0.073 * scale, z + dz * scale], [1, 1, 1], [0, -0.05, 0.055], false);
+  });
+}
+
+function createPart(parent, name) {
+  const part = new THREE.Group();
+  part.name = name;
+  parent.add(part);
+  return part;
+}
+
+function extrudedFootprint(points, height, bevel = 0.04) {
+  const shape = new THREE.Shape();
+  points.forEach(([x, z], index) => {
+    const method = index === 0 ? "moveTo" : "lineTo";
+    shape[method](x, -z);
+  });
+  shape.closePath();
+  const geometry = new THREE.ExtrudeGeometry(shape, {
+    depth: height,
+    bevelEnabled: bevel > 0,
+    bevelSegments: 3,
+    bevelSize: bevel,
+    bevelThickness: bevel,
+    curveSegments: 24,
+    steps: 1
+  });
+  geometry.rotateX(-Math.PI / 2);
+  geometry.computeVertexNormals();
+  return geometry;
+}
+
+function addSunflower(group, x, y, z, scale = 1) {
+  const flower = createPart(group, "sunflower-emblem");
+  addMesh(flower, rounded(0.055 * scale, 0.42 * scale, 0.035 * scale, 0.014 * scale), P.leafDark, [x, y - 0.16 * scale, z]);
+  [-0.1, 0.1].forEach((dx, index) => {
+    addMesh(flower, sphere(0.11 * scale, 18, 10), index ? P.leaf : P.leafDark, [x + dx * scale, y - 0.18 * scale, z], [1.25, 0.5, 0.28], [0, 0, index ? -0.55 : 0.55]);
+  });
+  for (let index = 0; index < 10; index += 1) {
+    const angle = index * Math.PI * 2 / 10;
+    addMesh(flower, sphere(0.105 * scale, 16, 9), P.yellow, [
+      x + Math.cos(angle) * 0.15 * scale,
+      y + Math.sin(angle) * 0.15 * scale,
+      z
+    ], [0.68, 1.15, 0.3], [0, 0, angle - Math.PI / 2]);
+  }
+  addMesh(flower, sphere(0.115 * scale, 20, 12), P.woodDark, [x, y, z - 0.012 * scale], [1, 1, 0.36]);
+}
+
+function addRecordDeskChair(group) {
+  const frame = createPart(group, "chair-frame");
+  const cushion = createPart(group, "chair-cushions");
+  const x = -0.28;
+  const z = 0.92;
+  addMesh(cushion, rounded(0.54, 0.14, 0.48, 0.045), P.teal, [x, 0.52, z]);
+  addMesh(cushion, rounded(0.56, 0.52, 0.14, 0.045), P.teal, [x, 0.91, z + 0.18], [1, 1, 1], [-0.05, 0, 0]);
+  [-0.22, 0.22].forEach((dx) => {
+    addMesh(frame, rounded(0.075, 0.94, 0.09, 0.026), P.woodDark, [x + dx, 0.49, z + 0.18], [1, 1, 1], [-0.035, 0, 0]);
+    addMesh(frame, rounded(0.075, 0.5, 0.075, 0.024), P.woodDark, [x + dx, 0.25, z - 0.16], [1, 1, 1], [0.045, 0, 0]);
+  });
+  addMesh(frame, rounded(0.48, 0.075, 0.075, 0.024), P.woodDark, [x, 0.25, z + 0.17]);
+  addMesh(frame, rounded(0.48, 0.075, 0.075, 0.024), P.woodDark, [x, 0.25, z - 0.14]);
+  addMesh(frame, rounded(0.075, 0.075, 0.38, 0.024), P.woodDark, [x - 0.22, 0.25, z + 0.01]);
+  addMesh(frame, rounded(0.075, 0.075, 0.38, 0.024), P.woodDark, [x + 0.22, 0.25, z + 0.01]);
+  [-0.22, 0.22].forEach((dx) => {
+    addMesh(frame, cyl(0.035, 0.035, 0.035, 18), P.yellow, [x + dx, 0.92, z + 0.095], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  });
+}
+
+function addRecordDeskLamp(group) {
+  const lamp = createPart(group, "desk-lamp");
+  const x = 0.76;
+  const z = -0.23;
+  addMesh(lamp, cyl(0.16, 0.2, 0.085, 32), P.leafDark, [x, 1.18, z]);
+  addMesh(lamp, cyl(0.18, 0.18, 0.035, 32), P.yellow, [x, 1.235, z]);
+  const armPoints = [
+    new THREE.Vector3(x, 1.3, z),
+    new THREE.Vector3(x + 0.08, 1.38, z),
+    new THREE.Vector3(x + 0.09, 1.49, z),
+    new THREE.Vector3(x + 0.02, 1.58, z),
+    new THREE.Vector3(x - 0.1, 1.61, z)
+  ];
+  armPoints.slice(0, -1).forEach((start, index) => {
+    const end = armPoints[index + 1];
+    const direction = end.clone().sub(start);
+    const segment = createPart(lamp, `lamp-arm-${index + 1}`);
+    segment.position.copy(start.clone().add(end).multiplyScalar(0.5));
+    segment.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), direction.clone().normalize());
+    addMesh(segment, cyl(0.038, 0.038, direction.length(), 18), P.yellow);
+    addMesh(lamp, sphere(0.042, 14, 8), P.yellow, [end.x, end.y, end.z]);
+  });
+  addMesh(lamp, cyl(0.045, 0.045, 0.11, 18), P.yellow, [x, 1.29, z]);
+  addMesh(lamp, rounded(0.38, 0.21, 0.24, 0.095), P.leafDark, [x - 0.12, 1.61, z]);
+  addMesh(lamp, rounded(0.33, 0.04, 0.19, 0.018), P.cream, [x - 0.13, 1.5, z], [1, 1, 1], [0, 0, 0], false);
+  addMesh(lamp, sphere(0.055, 18, 10), P.yellow, [x + 0.085, 1.61, z - 0.13]);
+  addMesh(lamp, sphere(0.035, 14, 8), P.yellow, [x - 0.22, 1.43, z - 0.04]);
+}
+
+function addRecordDeskLedger(group) {
+  const ledger = createPart(group, "ledger");
+  addOpenBook(ledger, -0.08, 1.23, -0.18, 1.12);
+  const pageLines = [-0.13, -0.04, 0.05, 0.14];
+  pageLines.forEach((dz) => {
+    [-0.25, 0.11].forEach((x) => addMesh(ledger, box(0.22, 0.006, 0.008), P.blue, [x, 1.318, -0.18 + dz], [1, 1, 1], [0, 0, 0], false));
+  });
+}
+
+function addRecordDeskPaperStack(group) {
+  const stack = createPart(group, "paper-stack");
+  const colors = [P.woodDark, P.leafDark, P.paper, P.cream];
+  for (let index = 0; index < 5; index += 1) {
+    addMesh(stack, rounded(0.34 - index * 0.012, 0.035, 0.28 - index * 0.008, 0.014), colors[index % colors.length], [-0.72, 1.2 + index * 0.035, -0.2]);
+  }
+  addMesh(stack, rounded(0.08, 0.12, 0.04, 0.014), P.woodLight, [-0.72, 1.17, -0.355]);
+}
+
+function addRecordDeskPenTray(group) {
+  const tray = createPart(group, "pen-tray");
+  addMesh(tray, rounded(0.42, 0.075, 0.28, 0.022), P.woodDark, [0.45, 1.205, 0.03]);
+  addMesh(tray, rounded(0.34, 0.055, 0.2, 0.016), P.woodLight, [0.45, 1.245, 0.03]);
+  [-0.085, 0.085].forEach((dx, index) => {
+    addMesh(tray, cyl(0.023, 0.023, 0.28, 16), index ? P.leafDark : P.blueDark, [0.45 + dx, 1.3, 0.03], [1, 1, 1], [Math.PI / 2, 0, 0.08]);
+    addMesh(tray, new THREE.ConeGeometry(0.025, 0.07, 16), P.yellow, [0.45 + dx, 1.3, -0.145], [1, 1, 1], [-Math.PI / 2, 0, 0.08]);
+  });
+}
+
+function addBackpack(group, x, y, z, scale = 1) {
+  addMesh(group, rounded(0.42 * scale, 0.55 * scale, 0.26 * scale, 0.09 * scale), P.blueDark, [x, y, z]);
+  addMesh(group, rounded(0.34 * scale, 0.22 * scale, 0.12 * scale, 0.055 * scale), P.blue, [x, y - 0.11 * scale, z - 0.18 * scale]);
+  addMesh(group, rounded(0.18 * scale, 0.09 * scale, 0.05 * scale, 0.025 * scale), P.orange, [x, y - 0.11 * scale, z - 0.25 * scale]);
+  addMesh(group, torus(0.13 * scale, 0.035 * scale, 8, 20), P.ink, [x, y + 0.31 * scale, z + 0.02 * scale], [1, 1, 1], [Math.PI / 2, 0, 0]);
+}
+
+function addCandle(group, x, y, z, scale = 1) {
+  addMesh(group, cyl(0.065 * scale, 0.065 * scale, 0.34 * scale, 16), P.cream, [x, y, z]);
+  addMesh(group, sphere(0.075 * scale, 14, 8), P.yellow, [x, y + 0.24 * scale, z], [0.7, 1.35, 0.7], [0, 0, 0], false);
+  addMesh(group, sphere(0.035 * scale, 12, 6), P.orange, [x, y + 0.24 * scale, z - 0.01], [0.65, 1.2, 0.65], [0, 0, 0], false);
+}
+
+function addFruitBowl(group, x, y, z, scale = 1) {
+  addMesh(group, cyl(0.2 * scale, 0.14 * scale, 0.09 * scale, 24), P.woodDark, [x, y, z]);
+  const colors = [P.red, P.orange, P.yellow, P.leaf];
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * Math.PI * 2;
+    addMesh(group, sphere(0.07 * scale, 12, 7), colors[i % colors.length], [x + Math.cos(a) * 0.11 * scale, y + 0.095 * scale, z + Math.sin(a) * 0.07 * scale]);
+  }
+}
+
+function addPottedSucculent(group, x, y, z, scale = 1, color = P.leaf) {
+  addMesh(group, cyl(0.11 * scale, 0.08 * scale, 0.16 * scale, 16), P.cream, [x, y, z]);
+  for (let i = 0; i < 8; i++) {
+    const a = (i / 8) * Math.PI * 2;
+    addMesh(group, sphere(0.09 * scale, 12, 7), i % 2 ? color : P.leafDark, [x + Math.cos(a) * 0.08 * scale, y + 0.12 * scale, z + Math.sin(a) * 0.06 * scale], [0.48, 1.1, 0.48], [0, 0, -Math.cos(a) * 0.35]);
+  }
+}
+
+function addTeddyPaw(group, x, y, z, rotation, scale = 1) {
+  addMesh(group, sphere(0.18 * scale, 16, 10), P.woodLight, [x, y, z], [0.92, 1.2, 0.82], [0, 0, rotation]);
+  addMesh(group, sphere(0.09 * scale, 14, 8), P.cream, [x, y - 0.025 * scale, z - 0.15 * scale], [1, 1.15, 0.55], [0, 0, rotation], false);
+  [-0.045, 0, 0.045].forEach((dx) => addMesh(group, sphere(0.018 * scale, 8, 5), P.woodDark, [x + dx * scale, y + 0.045 * scale, z - 0.205 * scale], [1, 1, 0.45], [0, 0, 0], false));
+}
+
+function normalize(group) {
+  const box3 = new THREE.Box3().setFromObject(group);
+  const center = box3.getCenter(new THREE.Vector3());
+  group.position.sub(center);
+  const size = box3.getSize(new THREE.Vector3());
+  const max = Math.max(size.x, size.y, size.z) || 1;
+  group.scale.setScalar(1.75 / max);
+  group.rotation.y = Math.PI * 0.75;
+  group.rotation.x = 0.52;
+  const scene = new THREE.Scene();
+  scene.add(group);
+  return scene;
+}
+
+function normalizeUpright(group) {
+  const box3 = new THREE.Box3().setFromObject(group);
+  const center = box3.getCenter(new THREE.Vector3());
+  group.position.x -= center.x;
+  group.position.z -= center.z;
+  group.position.y -= box3.min.y;
+  const size = box3.getSize(new THREE.Vector3());
+  const max = Math.max(size.x, size.y, size.z) || 1;
+  group.scale.setScalar(1.75 / max);
+  const scene = new THREE.Scene();
+  scene.add(group);
+  return scene;
+}
+
+function bed() {
+  const g = new THREE.Group();
+  addBase(g, 2.1, 1.25);
+  addMesh(g, rounded(1.8, 0.28, 0.92, 0.08), P.woodLight, [0, 0.38, 0]);
+  addTrim(g, 0, 0.56, -0.48, 1.72, 0.08);
+  addMesh(g, rounded(1.55, 0.18, 0.76, 0.09), P.paper, [0, 0.63, 0]);
+  addMesh(g, rounded(1.02, 0.13, 0.72, 0.06), P.pink, [0.24, 0.78, 0]);
+  addMesh(g, rounded(0.42, 0.1, 0.54, 0.06), 0xffffff, [-0.58, 0.84, 0]);
+  addMesh(g, rounded(0.12, 0.86, 1.04, 0.05), P.wood, [-0.98, 0.78, 0]);
+  addMesh(g, rounded(0.12, 0.68, 1.04, 0.05), P.wood, [0.98, 0.69, 0]);
+  [-0.84, -0.62, 0.62, 0.84].forEach((x) => {
+    addMesh(g, cyl(0.025, 0.025, 0.92, 10), P.metal, [x, 0.9, -0.5], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  });
+  addLegs(g, 0, 0.34, 0, 1.62, 0.72, 0.25);
+  addWheel(g, -0.72, 0.14, -0.44, 0.8);
+  addWheel(g, 0.72, 0.14, -0.44, 0.8);
+  addMesh(g, rounded(0.34, 0.42, 0.12, 0.035), P.blue, [1.16, 0.86, -0.44]);
+  addMesh(g, rounded(0.25, 0.18, 0.08, 0.025), P.ink, [1.16, 0.92, -0.52], [1, 1, 1], [0, 0, 0], false);
+  addMesh(g, cyl(0.025, 0.025, 0.9, 10), P.metal, [1.45, 0.75, -0.28]);
+  addMesh(g, rounded(0.16, 0.24, 0.09, 0.025), P.glass, [1.45, 1.25, -0.28]);
+  return g;
+}
+
+function counter() {
+  const g = new THREE.Group();
+  addBase(g, 2.15, 1.2);
+  addMesh(g, rounded(1.72, 0.6, 0.66, 0.14), P.cream, [0, 0.48, 0]);
+  addMesh(g, rounded(0.54, 0.52, 0.66, 0.12), P.cream, [-0.72, 0.5, 0.18], [1, 1, 1], [0, 0.18, 0]);
+  addMesh(g, rounded(0.54, 0.52, 0.66, 0.12), P.cream, [0.72, 0.5, 0.18], [1, 1, 1], [0, -0.18, 0]);
+  addMesh(g, rounded(1.78, 0.14, 0.78, 0.08), P.woodLight, [0, 0.85, 0]);
+  addTrim(g, 0, 0.2, -0.34, 1.55, 0.08);
+  addMesh(g, rounded(0.18, 0.48, 0.08, 0.025), P.red, [0, 0.55, -0.36]);
+  addMesh(g, rounded(0.56, 0.16, 0.08, 0.025), P.red, [0, 0.55, -0.36]);
+  addMesh(g, rounded(0.44, 0.3, 0.08, 0.035), P.ink, [-0.54, 1.08, -0.18], [1, 1, 1], [0, 0.18, 0]);
+  addMesh(g, rounded(0.38, 0.22, 0.055, 0.025), P.blue, [-0.54, 1.08, -0.24], [1, 1, 1], [0, 0.18, 0], false);
+  addPlant(g, 0.64, 0.86, -0.24, 0.65);
+  addDrawer(g, 0.45, 0.5, -0.38, 0.34, 0.16);
+  addDrawer(g, -0.45, 0.5, -0.38, 0.34, 0.16);
+  return g;
+}
+
+function shelf() {
+  const g = new THREE.Group();
+  addBase(g, 1.45, 0.82);
+  addMesh(g, rounded(1.06, 1.64, 0.42, 0.08), P.wood, [0, 0.9, 0]);
+  addMesh(g, rounded(0.9, 1.34, 0.1, 0.04), P.cream, [0, 0.94, -0.16]);
+  addMesh(g, rounded(1.14, 0.14, 0.5, 0.045), P.woodDark, [0, 1.74, 0]);
+  [-0.3, 0.05, 0.4].forEach(y => addMesh(g, rounded(0.96, 0.06, 0.48, 0.025), P.woodDark, [0, 0.72 + y, 0]));
+  addBooks(g, -0.18, 0.55, -0.05, 5);
+  addBooks(g, 0.16, 0.9, -0.05, 4);
+  addCrateGoods(g, 0, 1.35, -0.06, 6);
+  addDrawer(g, -0.24, 0.28, -0.18, 0.38, 0.22);
+  addDrawer(g, 0.24, 0.28, -0.18, 0.38, 0.22);
+  return g;
+}
+
+function seating() {
+  const g = new THREE.Group();
+  addBase(g, 2.05, 1.55, P.paper);
+  addMesh(g, rounded(1.45, 0.38, 0.78, 0.14), P.mint, [0, 0.44, 0]);
+  addMesh(g, rounded(1.45, 0.84, 0.2, 0.11), P.teal, [0, 0.78, 0.32]);
+  addMesh(g, rounded(0.24, 0.56, 0.74, 0.1), P.teal, [-0.82, 0.6, 0]);
+  addMesh(g, rounded(0.24, 0.56, 0.74, 0.1), P.teal, [0.82, 0.6, 0]);
+  addMesh(g, rounded(0.32, 0.16, 0.32, 0.06), P.yellow, [-0.32, 0.74, -0.1]);
+  addMesh(g, rounded(0.32, 0.16, 0.32, 0.06), P.pink, [0.24, 0.74, -0.08]);
+  addMesh(g, cyl(0.42, 0.42, 0.12, 28), P.woodLight, [0, 0.28, -0.7]);
+  addLegs(g, 0, 0.5, -0.7, 0.55, 0.28, 0.36);
+  addLamp(g, 0.78, 0.22, -0.65, 0.68);
+  addPlant(g, -0.65, 0.3, -0.65, 0.5);
+  return g;
+}
+
+function toyCorner() {
+  const g = new THREE.Group();
+  addMesh(g, cyl(0.88, 0.88, 0.12, 48), P.rose, [0, 0.09, 0], [1, 0.72, 1]);
+  addMesh(g, torus(0.72, 0.06, 12, 40), P.pink, [0, 0.17, 0], [1, 0.72, 1], [Math.PI / 2, 0, 0]);
+  addMesh(g, sphere(0.34), P.woodLight, [0, 0.7, 0]);
+  addMesh(g, sphere(0.4), P.woodLight, [0, 1.18, 0], [1, 0.94, 0.92]);
+  addMesh(g, sphere(0.16), P.woodLight, [-0.29, 1.42, 0]);
+  addMesh(g, sphere(0.16), P.woodLight, [0.29, 1.42, 0]);
+  addMesh(g, sphere(0.105), P.cream, [-0.29, 1.42, -0.08], [1, 1, 0.55], [0, 0, 0], false);
+  addMesh(g, sphere(0.105), P.cream, [0.29, 1.42, -0.08], [1, 1, 0.55], [0, 0, 0], false);
+  addMesh(g, sphere(0.16), P.cream, [0, 1.12, -0.34], [1.2, 0.82, 0.7]);
+  addMesh(g, sphere(0.045), P.ink, [-0.13, 1.25, -0.36], [1, 1, 0.65], [0, 0, 0], false);
+  addMesh(g, sphere(0.045), P.ink, [0.13, 1.25, -0.36], [1, 1, 0.65], [0, 0, 0], false);
+  addMesh(g, sphere(0.045), P.woodDark, [0, 1.16, -0.46], [1.2, 0.85, 0.7], [0, 0, 0], false);
+  addTeddyPaw(g, -0.36, 0.76, -0.08, -0.52, 0.9);
+  addTeddyPaw(g, 0.36, 0.76, -0.08, 0.52, 0.9);
+  addTeddyPaw(g, -0.3, 0.38, -0.22, -0.2, 1);
+  addTeddyPaw(g, 0.3, 0.38, -0.22, 0.2, 1);
+  addMesh(g, sphere(0.13), P.rose, [-0.1, 0.92, -0.36], [1.25, 0.72, 0.6], [0, 0, -0.45]);
+  addMesh(g, sphere(0.13), P.rose, [0.1, 0.92, -0.36], [1.25, 0.72, 0.6], [0, 0, 0.45]);
+  addMesh(g, sphere(0.06), P.yellow, [0, 0.92, -0.43], [1, 1, 0.6]);
+  addMesh(g, rounded(0.36, 0.13, 0.36, 0.08), P.pink, [-0.62, 0.25, -0.18], [1, 1, 1], [0, 0.15, -0.08]);
+  addMesh(g, rounded(0.34, 0.13, 0.34, 0.08), P.yellow, [0.62, 0.25, -0.1], [1, 1, 1], [0, -0.12, 0.08]);
+  return g;
+}
+
+function plantZone() {
+  const g = new THREE.Group();
+  addBase(g, 1.75, 1.05, P.tile);
+  [-0.72, 0.72].forEach((x) => {
+    addMesh(g, rounded(0.12, 1.75, 0.14, 0.04), P.wood, [x, 0.92, 0], [1, 1, 1], [0, 0, x < 0 ? -0.12 : 0.12]);
+    addMesh(g, rounded(0.12, 1.65, 0.14, 0.04), P.woodDark, [x, 0.83, 0.35], [1, 1, 1], [0.32, 0, x < 0 ? -0.12 : 0.12]);
+  });
+  [0.34, 0.83, 1.32].forEach((y, row) => {
+    addMesh(g, rounded(1.42, 0.12, 0.54, 0.04), P.woodLight, [0, y, 0]);
+    [-0.47, 0, 0.47].forEach((x, i) => addPottedSucculent(g, x, y + 0.18, -0.03, 0.78 + row * 0.05, (i + row) % 2 ? P.leaf : P.mint));
+  });
+  addMesh(g, rounded(1.56, 0.12, 0.18, 0.04), P.woodDark, [0, 1.75, 0]);
+  return g;
+}
+
+function desk() {
+  const g = new THREE.Group();
+  addBase(g, 1.75, 1.25, P.paper);
+  addMesh(g, rounded(1.25, 0.18, 0.72, 0.06), P.orange, [0, 0.62, 0]);
+  addMesh(g, rounded(1.04, 0.08, 0.05, 0.018), P.woodDark, [0, 0.46, -0.37]);
+  addLegs(g, 0, 0.58, 0, 1.02, 0.5, 0.58);
+  addMesh(g, rounded(0.7, 0.06, 0.45, 0.02), P.paper, [-0.1, 0.76, -0.03]);
+  addMesh(g, rounded(0.62, 0.035, 0.36, 0.015), P.cream, [-0.1, 0.8, -0.04], [1, 1, 1], [0, 0.06, 0], false);
+  addBooks(g, 0.42, 0.72, 0.1, 3);
+  addDrawer(g, 0.39, 0.49, -0.38, 0.3, 0.18);
+  addChair(g, 0.05, 0, 0.72, Math.PI, P.orange, 0.9);
+  addBackpack(g, -0.64, 0.35, 0.42, 0.82);
+  return g;
+}
+
+function recordDesk() {
+  const g = new THREE.Group();
+  g.name = "record-desk";
+
+  const body = createPart(g, "desk-body");
+  addMesh(body, rounded(1.92, 0.2, 0.82, 0.085), P.wood, [0, 1.08, 0]);
+  addMesh(body, rounded(1.76, 0.055, 0.7, 0.02), P.woodLight, [0, 1.19, 0]);
+  [-0.82, 0.82].forEach((x) => {
+    [-0.31, 0.31].forEach((z) => addMesh(body, rounded(0.16, 1.02, 0.16, 0.045), P.woodDark, [x, 0.54, z]));
+  });
+  addMesh(body, rounded(1.54, 0.12, 0.1, 0.035), P.woodDark, [-0.02, 0.91, -0.34]);
+  addMesh(body, rounded(1.56, 0.63, 0.08, 0.03), P.wood, [-0.02, 0.61, -0.34]);
+  addMesh(body, rounded(1.68, 0.1, 0.12, 0.03), P.woodDark, [-0.02, 0.25, -0.3]);
+
+  const drawerUnit = createPart(g, "drawer-unit");
+  addMesh(drawerUnit, rounded(0.56, 0.82, 0.66, 0.055), P.woodDark, [0.56, 0.61, -0.02]);
+  addMesh(drawerUnit, rounded(0.49, 0.34, 0.08, 0.028), P.woodLight, [0.56, 0.77, 0.38]);
+  addMesh(drawerUnit, rounded(0.49, 0.34, 0.08, 0.028), P.woodLight, [0.56, 0.39, 0.38]);
+  [0.77, 0.39].forEach((y) => {
+    addMesh(drawerUnit, cyl(0.045, 0.045, 0.045, 20), P.yellow, [0.56, y, 0.445], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  });
+  addMesh(drawerUnit, rounded(0.5, 0.08, 0.68, 0.025), P.woodLight, [0.56, 0.16, -0.02]);
+
+  addRecordDeskChair(g);
+  addRecordDeskLedger(g);
+  addRecordDeskPaperStack(g);
+  addRecordDeskPenTray(g);
+  addRecordDeskLamp(g);
+  return g;
+}
+
+function waitingChair() {
+  const g = new THREE.Group();
+  g.name = "waiting-chair";
+  const navy = 0x31496d;
+  const navyDark = 0x203654;
+  const lavender = 0x8fa4e4;
+  const hospitalMint = 0x9ad6c8;
+  const sky = 0x91cbed;
+
+  const beam = createPart(g, "shared-support-beam");
+  addMesh(beam, rounded(2.72, 0.18, 0.18, 0.045), navyDark, [0, 0.57, 0.03]);
+  addMesh(beam, rounded(2.58, 0.055, 0.2, 0.018), navy, [0, 0.68, 0.03]);
+
+  const floorLegs = createPart(g, "two-floor-legs");
+  [-1.12, 1.12].forEach((x) => {
+    addMesh(floorLegs, rounded(0.17, 0.55, 0.17, 0.04), navy, [x, 0.29, 0.03]);
+    addMesh(floorLegs, rounded(0.21, 0.13, 0.76, 0.04), navyDark, [x, 0.07, 0.08]);
+    [-0.27, 0.37].forEach((z) => addMesh(floorLegs, rounded(0.11, 0.025, 0.12, 0.012), P.yellow, [x, 0.15, z]));
+    addMesh(floorLegs, rounded(0.23, 0.11, 0.23, 0.035), navy, [x, 0.57, 0.03]);
+  });
+
+  const rearFrame = createPart(g, "finished-rear-frame");
+  const boundaryX = [-1.28, -0.43, 0.43, 1.28];
+  boundaryX.forEach((x) => {
+    addMesh(rearFrame, rounded(0.1, 0.94, 0.12, 0.035), navyDark, [x, 1.15, -0.24]);
+  });
+  [-0.86, 0, 0.86].forEach((x) => {
+    addMesh(rearFrame, rounded(0.74, 0.12, 0.13, 0.04), navy, [x, 1.59, -0.24]);
+    addMesh(rearFrame, rounded(0.74, 0.1, 0.13, 0.035), navy, [x, 0.82, -0.24]);
+    addMesh(rearFrame, rounded(0.64, 0.48, 0.08, 0.03), navy, [x, 1.29, -0.32]);
+  });
+
+  const colors = [lavender, hospitalMint, sky];
+  [-0.86, 0, 0.86].forEach((x, index) => {
+    const seat = createPart(g, `seat-${index + 1}`);
+    const backrest = createPart(g, `backrest-${index + 1}`);
+    addMesh(seat, rounded(0.82, 0.12, 0.62, 0.05), navy, [x, 0.74, 0.05]);
+    addMesh(seat, rounded(0.72, 0.16, 0.52, 0.065), colors[index], [x, 0.86, 0.08]);
+    addMesh(seat, rounded(0.62, 0.025, 0.39, 0.01), 0xcfe9f0, [x, 0.958, 0.03], [1, 1, 1], [0, 0, 0], false);
+    addMesh(backrest, rounded(0.78, 0.72, 0.14, 0.06), navyDark, [x, 1.31, -0.2]);
+    addMesh(backrest, rounded(0.68, 0.61, 0.15, 0.07), colors[index], [x, 1.32, -0.11]);
+    addMesh(backrest, rounded(0.52, 0.025, 0.08, 0.01), 0xcfe9f0, [x - 0.04, 1.52, -0.02], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const jointCaps = createPart(g, "joint-caps");
+  boundaryX.forEach((x) => {
+    addMesh(jointCaps, cyl(0.075, 0.075, 0.055, 20), P.yellow, [x, 0.9, -0.16], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addMesh(jointCaps, rounded(0.13, 0.13, 0.13, 0.045), P.yellow, [x, 1.62, -0.2]);
+  });
+  return g;
+}
+
+function teacherPodium() {
+  const g = new THREE.Group();
+  g.name = "teacher-podium";
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const teal = 0x4c9f9b;
+
+  const body = createPart(g, "podium-body");
+  addMesh(body, rounded(1.14, 1.28, 0.82, 0.08), honey, [0, 0.82, 0]);
+  addMesh(body, rounded(0.98, 1.12, 0.7, 0.055), honeyLight, [0, 0.84, 0]);
+  [-0.49, 0.49].forEach((x) => addMesh(body, rounded(0.12, 1.2, 0.74, 0.04), honeyDark, [x, 0.82, 0]));
+
+  const top = createPart(g, "slanted-reading-top");
+  addMesh(top, wedge(1.2, 0.84, 0.12, 0.42), honeyDark, [0, 1.43, 0]);
+  addMesh(top, rounded(1.3, 0.1, 0.92, 0.04), honeyLight, [0, 1.69, 0], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(top, rounded(1.2, 0.055, 0.78, 0.022), honey, [0, 1.75, -0.01], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(top, rounded(1.2, 0.11, 0.1, 0.035), honeyDark, [0, 1.59, 0.43], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(top, rounded(1.2, 0.09, 0.1, 0.03), honeyDark, [0, 1.86, -0.39], [1, 1, 1], [0.31, 0, 0]);
+
+  const door = createPart(g, "storage-door");
+  addMesh(door, rounded(0.64, 0.94, 0.08, 0.028), honeyDark, [-0.02, 0.86, 0.43]);
+  [0.65, 1.03].forEach((y) => {
+    addMesh(door, rounded(0.48, 0.29, 0.045, 0.016), honeyLight, [-0.02, y, 0.485]);
+    addMesh(door, rounded(0.38, 0.19, 0.025, 0.008), honey, [-0.02, y, 0.51], [1, 1, 1], [0, 0, 0], false);
+  });
+  [0.62, 1.1].forEach((y) => addMesh(door, rounded(0.055, 0.15, 0.045, 0.016), P.yellow, [-0.38, y, 0.51]));
+  addMesh(door, sphere(0.065, 20, 12), P.yellow, [0.31, 0.84, 0.53]);
+
+  const sideInlays = createPart(g, "side-inlays");
+  [-0.42, 0.42].forEach((x) => {
+    addMesh(sideInlays, rounded(0.15, 0.72, 0.045, 0.016), teal, [x, 0.87, 0.47]);
+    addMesh(sideInlays, rounded(0.08, 0.58, 0.018, 0.006), 0x8ed4d0, [x, 0.87, 0.5], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const backside = createPart(g, "finished-backside");
+  addMesh(backside, rounded(0.82, 0.82, 0.055, 0.02), honeyDark, [0, 0.87, -0.44]);
+  addMesh(backside, rounded(0.7, 0.7, 0.035, 0.012), honey, [0, 0.87, -0.48]);
+  [[-0.28, 0.58], [0.28, 0.58], [-0.28, 1.16], [0.28, 1.16]].forEach(([x, y]) => {
+    addMesh(backside, cyl(0.028, 0.028, 0.025, 14), P.yellow, [x, y, -0.515], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  });
+
+  const plinth = createPart(g, "lower-plinth");
+  addMesh(plinth, rounded(1.3, 0.2, 0.94, 0.06), honeyDark, [0, 0.2, 0]);
+  addMesh(plinth, rounded(1.2, 0.12, 0.86, 0.04), honeyLight, [0, 0.31, 0]);
+  [[-0.48, -0.34], [0.48, -0.34], [-0.48, 0.34], [0.48, 0.34]].forEach(([x, z]) => {
+    addMesh(plinth, cyl(0.1, 0.11, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+  [-0.5, 0.5].forEach((x) => addMesh(plinth, sphere(0.042, 16, 10), P.yellow, [x, 0.2, 0.49]));
+
+  const notebook = createPart(g, "notebook");
+  notebook.position.set(-0.08, 1.79, 0.02);
+  notebook.rotation.x = 0.31;
+  addOpenBook(notebook, 0, 0, 0, 0.92);
+
+  const pencilCup = createPart(g, "pencil-cup");
+  const cupX = 0.4;
+  const cupY = 1.91;
+  const cupZ = -0.2;
+  addMesh(pencilCup, cyl(0.11, 0.09, 0.26, 24), teal, [cupX, cupY, cupZ]);
+  addMesh(pencilCup, torus(0.105, 0.022, 10, 28), 0x8ed4d0, [cupX, cupY + 0.14, cupZ], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  [
+    [-0.055, 0xe95656, -0.08],
+    [0, 0xf4c84a, 0],
+    [0.055, 0x4ea8de, 0.08]
+  ].forEach(([dx, color, tilt]) => {
+    addMesh(pencilCup, cyl(0.017, 0.017, 0.38, 12), color, [cupX + dx, cupY + 0.25, cupZ], [1, 1, 1], [0, 0, tilt]);
+    addMesh(pencilCup, new THREE.ConeGeometry(0.021, 0.07, 12), P.cream, [cupX + dx - Math.sin(tilt) * 0.22, cupY + 0.475, cupZ], [1, 1, 1], [0, 0, tilt]);
+  });
+  return g;
+}
+
+function serviceCounter() {
+  const g = new THREE.Group();
+  g.name = "service-counter";
+  const honey = 0xc9853f;
+  const honeyLight = 0xe6a95c;
+  const honeyDark = 0x86502b;
+  const counterCream = 0xffe7b8;
+  const mint = 0x8ecdb0;
+  const mintLight = 0xc0ead4;
+  const coral = 0xe96e5f;
+  const parcelBlue = 0x55a9d5;
+
+  const customerStrip = [
+    [-1.22, 0.24], [0.48, 0.24], [0.69, 0.29], [0.83, 0.4], [0.9, 0.55],
+    [0.88, 0.68], [0.78, 0.78], [0.6, 0.84], [-0.83, 0.84], [-1.05, 0.79],
+    [-1.2, 0.68], [-1.29, 0.53], [-1.3, 0.38]
+  ];
+  const frontBody = createPart(g, "rounded-counter-body");
+  addMesh(frontBody, extrudedFootprint(customerStrip, 0.76, 0.035), honey, [0, 0.25, 0]);
+  addMesh(frontBody, rounded(1.92, 0.57, 0.08, 0.025), counterCream, [-0.17, 0.67, 0.92]);
+  [-1.13, 0.79].forEach((x) => addMesh(frontBody, rounded(0.12, 0.7, 0.12, 0.035), honeyDark, [x, 0.65, 0.91]));
+  for (let index = 0; index < 8; index += 1) {
+    const x = -0.97 + index * 0.24;
+    addMesh(frontBody, rounded(0.025, 0.48, 0.025, 0.008), 0xe0bf88, [x, 0.68, 0.972], [1, 1, 1], [0, 0, 0], false);
+  }
+  addSunflower(frontBody, -0.18, 0.73, 0.99, 0.72);
+
+  const rearStorage = createPart(g, "rear-storage");
+  addMesh(rearStorage, rounded(2.12, 0.86, 0.62, 0.06), honey, [-0.05, 0.58, -0.25]);
+  addMesh(rearStorage, rounded(1.98, 0.72, 0.5, 0.04), counterCream, [-0.05, 0.59, -0.27]);
+  [-1.02, 0.57, 1.01].forEach((x) => addMesh(rearStorage, rounded(0.09, 0.78, 0.54, 0.028), honeyDark, [x, 0.58, -0.25]));
+  addMesh(rearStorage, rounded(2.18, 0.16, 0.7, 0.05), honeyDark, [-0.05, 0.17, -0.25]);
+  addMesh(rearStorage, rounded(2.08, 0.1, 0.64, 0.035), honeyLight, [-0.05, 0.27, -0.25]);
+
+  const drawers = createPart(g, "two-drawers");
+  [-0.66, 0.06].forEach((x) => {
+    addMesh(drawers, rounded(0.62, 0.27, 0.075, 0.025), honeyLight, [x, 0.78, -0.59]);
+    addMesh(drawers, rounded(0.51, 0.18, 0.035, 0.012), counterCream, [x, 0.78, -0.635], [1, 1, 1], [0, 0, 0], false);
+    addMesh(drawers, sphere(0.052, 18, 10), P.yellow, [x, 0.79, -0.68], [1.45, 0.7, 0.55]);
+  });
+
+  const cabinet = createPart(g, "cabinet-door");
+  addMesh(cabinet, rounded(0.57, 0.6, 0.075, 0.025), honeyDark, [0.7, 0.57, -0.59]);
+  addMesh(cabinet, rounded(0.47, 0.5, 0.04, 0.016), counterCream, [0.7, 0.57, -0.635]);
+  addMesh(cabinet, rounded(0.3, 0.34, 0.022, 0.008), honeyLight, [0.7, 0.57, -0.66], [1, 1, 1], [0, 0, 0], false);
+  [-0.1, 0.1].forEach((x) => addMesh(cabinet, rounded(0.02, 0.3, 0.016, 0.006), honey, [0.7 + x, 0.57, -0.682], [1, 1, 1], [0, 0, 0], false));
+  addMesh(cabinet, sphere(0.055, 18, 10), P.yellow, [0.43, 0.58, -0.69]);
+  [0.42, 0.68].forEach((y) => addMesh(cabinet, rounded(0.045, 0.13, 0.025, 0.009), P.yellow, [0.99, y, -0.68]));
+
+  const worktop = createPart(g, "worktop");
+  addMesh(worktop, rounded(2.28, 0.16, 0.76, 0.06), honeyLight, [-0.05, 1.06, -0.18]);
+  addMesh(worktop, rounded(2.17, 0.05, 0.67, 0.018), 0xf0bc72, [-0.05, 1.16, -0.18]);
+  addMesh(worktop, extrudedFootprint(customerStrip, 0.13, 0.04), honeyLight, [0, 1.04, 0]);
+
+  const ledge = createPart(g, "service-ledge");
+  const ledgeStrip = customerStrip.map(([x, z]) => [x, z + (z > 0.7 ? 0.03 : 0)]);
+  addMesh(ledge, extrudedFootprint(ledgeStrip, 0.14, 0.055), mint, [0, 1.19, 0]);
+  addMesh(ledge, rounded(1.84, 0.035, 0.04, 0.012), mintLight, [-0.18, 1.34, 0.88], [1, 1, 1], [0, 0, 0], false);
+
+  const parcelShelf = createPart(g, "parcel-shelf");
+  addMesh(parcelShelf, rounded(0.5, 0.88, 0.61, 0.06), honey, [1.05, 0.69, 0.48]);
+  [0.42, 0.76].forEach((y) => addMesh(parcelShelf, rounded(0.46, 0.09, 0.58, 0.035), honeyDark, [1.05, y, 0.49]));
+  [-0.18, 0.18].forEach((z, index) => {
+    const y = index ? 0.91 : 0.57;
+    const parcel = createPart(parcelShelf, `parcel-${index + 1}`);
+    addMesh(parcel, rounded(0.34, 0.22, 0.34, 0.045), parcelBlue, [1.05, y, 0.49 + z * 0.08]);
+    addMesh(parcel, rounded(0.055, 0.235, 0.35, 0.016), P.cream, [1.05, y, 0.49 + z * 0.08]);
+    addMesh(parcel, rounded(0.35, 0.235, 0.055, 0.016), 0x87c9e6, [1.05, y, 0.49 + z * 0.08]);
+  });
+
+  const register = createPart(g, "register");
+  addMesh(register, rounded(0.48, 0.18, 0.42, 0.055), P.ink, [-0.76, 1.27, -0.05]);
+  addMesh(register, wedge(0.46, 0.38, 0.08, 0.26), coral, [-0.76, 1.37, -0.05]);
+  addMesh(register, rounded(0.42, 0.43, 0.18, 0.04), coral, [-0.76, 1.66, -0.2], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(register, rounded(0.35, 0.3, 0.08, 0.022), P.cream, [-0.76, 1.67, -0.3], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(register, rounded(0.27, 0.21, 0.035, 0.014), 0x29465f, [-0.76, 1.67, -0.32], [1, 1, 1], [-0.08, 0, 0], false);
+  [-0.85, -0.72, -0.59].forEach((x, index) => addMesh(register, rounded(0.09, 0.035, 0.09, 0.014), [mint, P.yellow, P.orange][index], [x, 1.58, 0.02]));
+
+  const rearRail = createPart(g, "finished-backside");
+  [-1.02, 0.92].forEach((x) => addMesh(rearRail, rounded(0.09, 0.52, 0.09, 0.03), honeyDark, [x, 1.37, -0.48]));
+  addMesh(rearRail, rounded(2.03, 0.11, 0.11, 0.035), honeyDark, [-0.05, 1.61, -0.48]);
+  addMesh(rearRail, rounded(1.88, 0.32, 0.06, 0.022), counterCream, [-0.05, 1.4, -0.51]);
+  [-0.68, 0, 0.68].forEach((x) => addMesh(rearRail, rounded(0.055, 0.31, 0.065, 0.018), honey, [x, 1.4, -0.52]));
+
+  const feet = createPart(g, "lower-plinth-and-feet");
+  [[-1.03, 0.55], [0.65, 0.64], [-0.96, -0.47], [0.92, -0.47]].forEach(([x, z]) => {
+    addMesh(feet, rounded(0.22, 0.14, 0.22, 0.045), 0x344852, [x, 0.08, z]);
+  });
+  return g;
+}
+
+function addRetailJar(group, x, y, z, scale, bodyColor, capColor) {
+  const jar = createPart(group, "pantry-jar");
+  addMesh(jar, cyl(0.09 * scale, 0.085 * scale, 0.22 * scale, 16), bodyColor, [x, y, z]);
+  addMesh(jar, cyl(0.095 * scale, 0.095 * scale, 0.055 * scale, 16), capColor, [x, y + 0.138 * scale, z]);
+  addMesh(jar, rounded(0.105 * scale, 0.095 * scale, 0.018 * scale, 0.006 * scale), P.cream, [x, y - 0.005 * scale, z + 0.09 * scale], [1, 1, 1], [0, 0, 0], false);
+}
+
+function addRetailCarton(group, x, y, z, scale, color) {
+  const carton = createPart(group, "pantry-carton");
+  addMesh(carton, rounded(0.17 * scale, 0.3 * scale, 0.15 * scale, 0.025 * scale), color, [x, y, z]);
+  addMesh(carton, rounded(0.11 * scale, 0.11 * scale, 0.018 * scale, 0.006 * scale), P.cream, [x, y - 0.015 * scale, z + 0.085 * scale], [1, 1, 1], [0, 0, 0], false);
+}
+
+function addRetailBottle(group, x, y, z, scale, color, capColor) {
+  const bottle = createPart(group, "pantry-bottle");
+  addMesh(bottle, cyl(0.07 * scale, 0.065 * scale, 0.25 * scale, 14), color, [x, y - 0.015 * scale, z]);
+  addMesh(bottle, cyl(0.042 * scale, 0.055 * scale, 0.09 * scale, 14), color, [x, y + 0.15 * scale, z]);
+  addMesh(bottle, cyl(0.046 * scale, 0.046 * scale, 0.035 * scale, 14), capColor, [x, y + 0.215 * scale, z]);
+  addMesh(bottle, rounded(0.085 * scale, 0.09 * scale, 0.016 * scale, 0.006 * scale), P.cream, [x, y - 0.02 * scale, z + 0.07 * scale], [1, 1, 1], [0, 0, 0], false);
+}
+
+function addRetailBasket(group, x, y, z, width = 0.72) {
+  const basket = createPart(group, "woven-basket");
+  addMesh(basket, rounded(width, 0.24, 0.38, 0.055), P.woodDark, [x, y, z]);
+  addMesh(basket, rounded(width - 0.09, 0.16, 0.31, 0.045), P.woodLight, [x, y + 0.06, z]);
+  [-0.12, 0, 0.12].forEach((dy) => addMesh(basket, rounded(width - 0.04, 0.025, 0.4, 0.008), 0x9b622f, [x, y + dy, z]));
+  for (let index = -2; index <= 2; index += 1) {
+    addMesh(basket, rounded(0.025, 0.23, 0.4, 0.008), 0xd79a52, [x + index * width * 0.17, y, z]);
+  }
+  const colors = [P.red, P.yellow, P.leaf, P.blue];
+  [-0.23, -0.08, 0.08, 0.23].forEach((dx, index) => {
+    addMesh(basket, rounded(0.13, 0.12, 0.2, 0.025), colors[index], [x + dx * width / 0.72, y + 0.18, z]);
+  });
+}
+
+function retailShelf() {
+  const g = new THREE.Group();
+  g.name = "retail-shelf";
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const productColors = [P.red, P.yellow, P.leaf, P.blue, P.mint, P.orange];
+
+  const rearPanel = createPart(g, "finished-back-panel");
+  addMesh(rearPanel, rounded(2.16, 1.92, 0.16, 0.045), honey, [-0.08, 1.14, -0.28]);
+  for (let index = -3; index <= 3; index += 1) {
+    addMesh(rearPanel, rounded(0.035, 1.72, 0.025, 0.008), honeyDark, [-0.08 + index * 0.29, 1.16, -0.38], [1, 1, 1], [0, 0, 0], false);
+  }
+  [0.49, 1.02, 1.55].forEach((y) => addMesh(rearPanel, rounded(2.08, 0.1, 0.1, 0.03), honeyDark, [-0.08, y, -0.4]));
+
+  const frame = createPart(g, "two-sided-shelf-frame");
+  [-1.16, 1].forEach((x) => {
+    addMesh(frame, rounded(0.18, 2.14, 0.38, 0.055), honeyDark, [x, 1.15, 0]);
+    addMesh(frame, rounded(0.12, 2.02, 0.32, 0.04), honeyLight, [x, 1.16, 0.01]);
+    addMesh(frame, rounded(0.28, 0.18, 0.5, 0.06), honeyLight, [x, 2.18, 0]);
+  });
+  addMesh(frame, rounded(2.38, 0.22, 0.48, 0.07), honeyDark, [-0.08, 2.17, 0]);
+  addMesh(frame, rounded(2.25, 0.14, 0.42, 0.045), honeyLight, [-0.08, 2.23, 0]);
+
+  const shelves = createPart(g, "four-shelf-boards");
+  [0.3, 0.78, 1.27, 1.75].forEach((y, index) => {
+    addMesh(shelves, rounded(2.22, 0.14, 0.64, 0.045), index === 0 ? honeyDark : honey, [-0.08, y, 0.02]);
+    addMesh(shelves, rounded(2.12, 0.045, 0.57, 0.016), honeyLight, [-0.08, y + 0.085, 0.04]);
+  });
+
+  const goods = createPart(g, "pantry-goods");
+  const shelfRows = [1.91, 1.43, 0.94];
+  shelfRows.forEach((y, row) => {
+    const count = row === 0 ? 10 : 9;
+    for (let index = 0; index < count; index += 1) {
+      const x = -0.96 + index * (1.76 / Math.max(1, count - 1));
+      const scale = row === 0 ? 0.86 : 0.92;
+      const color = productColors[(index + row * 2) % productColors.length];
+      const cap = productColors[(index + row + 1) % productColors.length];
+      if ((index + row) % 3 === 0) addRetailCarton(goods, x, y, 0.27, scale, color);
+      else if ((index + row) % 3 === 1) addRetailJar(goods, x, y, 0.27, scale, color, cap);
+      else addRetailBottle(goods, x, y, 0.27, scale, color, cap);
+    }
+  });
+
+  const baskets = createPart(g, "lower-baskets");
+  addRetailBasket(baskets, -0.61, 0.53, 0.2, 0.82);
+  addRetailBasket(baskets, 0.42, 0.53, 0.2, 0.82);
+
+  const endCap = createPart(g, "promotional-end-cap");
+  addMesh(endCap, rounded(0.48, 1.22, 0.58, 0.06), honeyDark, [1.35, 0.82, 0.03]);
+  addMesh(endCap, rounded(0.38, 1.1, 0.48, 0.045), honey, [1.35, 0.84, 0.05]);
+  [0.42, 0.79, 1.16].forEach((y) => addMesh(endCap, rounded(0.52, 0.11, 0.62, 0.04), honeyLight, [1.35, y, 0.05]));
+  [0.57, 0.94, 1.31].forEach((y, row) => {
+    [-0.1, 0.1].forEach((xOffset, index) => {
+      addRetailCarton(endCap, 1.35 + xOffset, y, 0.28, 0.72, productColors[(row * 2 + index) % productColors.length]);
+    });
+  });
+
+  const plinth = createPart(g, "closed-plinth-and-feet");
+  addMesh(plinth, rounded(2.62, 0.2, 0.72, 0.06), honeyDark, [0.1, 0.16, 0.02]);
+  addMesh(plinth, rounded(2.5, 0.12, 0.66, 0.04), honeyLight, [0.1, 0.27, 0.02]);
+  [[-1.05, -0.24], [0.92, -0.24], [-1.05, 0.27], [1.36, 0.27]].forEach(([x, z]) => {
+    addMesh(plinth, rounded(0.22, 0.16, 0.22, 0.05), honeyDark, [x, 0.06, z]);
+  });
+  return g;
+}
+
+function addSupplyCrateShell(parent, name, x, y, z) {
+  const crate = createPart(parent, name);
+  crate.position.set(x, y, z);
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const bracket = 0x493a3a;
+
+  const base = createPart(crate, "closed-bottom-rails");
+  addMesh(base, rounded(1.08, 0.1, 0.72, 0.035), honeyDark, [0, 0.08, 0]);
+  [-0.24, 0, 0.24].forEach((zOffset) => addMesh(base, rounded(0.94, 0.055, 0.12, 0.025), honeyLight, [0, 0.15, zOffset]));
+
+  const posts = createPart(crate, "corner-posts");
+  [-0.5, 0.5].forEach((px) => [-0.33, 0.33].forEach((pz) => {
+    addMesh(posts, rounded(0.13, 0.78, 0.13, 0.035), honey, [px, 0.46, pz]);
+  }));
+
+  const slats = createPart(crate, "complete-slatted-sides");
+  [0.24, 0.45, 0.66].forEach((sy) => {
+    [-0.35, 0.35].forEach((sz) => addMesh(slats, rounded(1.02, 0.13, 0.09, 0.03), honeyLight, [0, sy, sz]));
+    [-0.52, 0.52].forEach((sx) => addMesh(slats, rounded(0.09, 0.13, 0.62, 0.03), honey, [sx, sy, 0]));
+  });
+  [-0.35, 0.35].forEach((sz) => addMesh(slats, rounded(1.1, 0.11, 0.11, 0.035), honeyDark, [0, 0.81, sz]));
+  [-0.52, 0.52].forEach((sx) => addMesh(slats, rounded(0.11, 0.11, 0.7, 0.035), honeyDark, [sx, 0.81, 0]));
+
+  const handles = createPart(crate, "side-handles");
+  [-0.585, 0.585].forEach((sx) => {
+    addMesh(handles, rounded(0.035, 0.17, 0.35, 0.008), bracket, [sx, 0.58, 0]);
+    addMesh(handles, rounded(0.045, 0.09, 0.22, 0.015), P.ink, [sx + (sx < 0 ? -0.015 : 0.015), 0.58, 0]);
+  });
+
+  const brackets = createPart(crate, "reinforced-corner-brackets");
+  [-0.54, 0.54].forEach((bx) => [-0.37, 0.37].forEach((bz) => [0.18, 0.75].forEach((by) => {
+    addMesh(brackets, rounded(0.17, 0.17, 0.17, 0.035), bracket, [bx, by, bz]);
+    addMesh(brackets, sphere(0.035, 12, 7), P.yellow, [bx + (bx < 0 ? -0.07 : 0.07), by, bz + (bz < 0 ? -0.07 : 0.07)]);
+  })));
+  return crate;
+}
+
+function addSupplyBottle(group, x, y, z) {
+  const bottle = createPart(group, "water-bottle");
+  addMesh(bottle, cyl(0.115, 0.1, 0.32, 18), 0x55a9d5, [x, y, z]);
+  addMesh(bottle, cyl(0.065, 0.09, 0.1, 18), 0x87c9e6, [x, y + 0.2, z]);
+  addMesh(bottle, cyl(0.07, 0.07, 0.055, 18), P.blueDark, [x, y + 0.275, z]);
+  addMesh(bottle, torus(0.1, 0.018, 8, 18), P.blueDark, [x + 0.08, y + 0.19, z], [0.75, 1, 0.75], [Math.PI / 2, 0, 0]);
+}
+
+function supplyCrate() {
+  const g = new THREE.Group();
+  g.name = "supply-crate";
+  addSupplyCrateShell(g, "blanket-crate", -0.61, 0, 0.08);
+  addSupplyCrateShell(g, "water-crate", 0.61, 0, 0.08);
+  addSupplyCrateShell(g, "repair-crate", 0, 0.76, -0.12);
+
+  const blankets = createPart(g, "three-folded-blankets");
+  [
+    [0.35, P.mint],
+    [0.48, P.yellow],
+    [0.61, 0xef7468]
+  ].forEach(([y, color], index) => {
+    addMesh(blankets, rounded(0.78, 0.14, 0.56, 0.055), color, [-0.61, y, 0.08]);
+    addMesh(blankets, rounded(0.055, 0.11, 0.5, 0.018), index === 2 ? 0xd95f59 : P.cream, [-0.23, y, 0.08], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const water = createPart(g, "six-water-bottles");
+  [-0.21, 0.21].forEach((zOffset) => [-0.26, 0, 0.26].forEach((xOffset) => {
+    addSupplyBottle(water, 0.61 + xOffset, 0.45, 0.08 + zOffset);
+  }));
+
+  const pouch = createPart(g, "repair-pouch");
+  addMesh(pouch, rounded(0.48, 0.17, 0.48, 0.07), 0xef7468, [-0.26, 1.46, -0.12]);
+  addMesh(pouch, rounded(0.09, 0.2, 0.5, 0.025), P.cream, [-0.26, 1.48, -0.12]);
+  addMesh(pouch, rounded(0.5, 0.2, 0.09, 0.025), P.cream, [-0.26, 1.48, -0.12]);
+  addMesh(pouch, rounded(0.14, 0.12, 0.035, 0.012), P.woodDark, [-0.26, 1.58, 0.17]);
+
+  const flashlight = createPart(g, "flashlight");
+  addMesh(flashlight, cyl(0.085, 0.085, 0.42, 20), 0x394457, [0.18, 1.49, -0.09], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(flashlight, cyl(0.11, 0.09, 0.12, 20), P.ink, [0.42, 1.49, -0.09], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(flashlight, cyl(0.07, 0.07, 0.035, 18), P.red, [0.12, 1.57, -0.09]);
+
+  const bandage = createPart(g, "bandage-roll");
+  addMesh(bandage, cyl(0.11, 0.11, 0.16, 24), P.cream, [0.18, 1.48, 0.15], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(bandage, torus(0.055, 0.018, 10, 24), P.woodLight, [0.18, 1.48, 0.24]);
+
+  const wrenchKit = createPart(g, "wrench-kit");
+  addMesh(wrenchKit, rounded(0.28, 0.08, 0.44, 0.025), P.woodDark, [0.41, 1.43, 0.05]);
+  addTool(wrenchKit, 0.35, 1.51, 0.04, 0.2, P.metal);
+  addTool(wrenchKit, 0.48, 1.51, 0.04, -0.16, P.metal);
+  return g;
+}
+
+function addCafeChair(parent, name, x, z, rotation, color) {
+  const chair = createPart(parent, name);
+  chair.position.set(x, 0, z);
+  chair.rotation.y = rotation;
+  const dark = new THREE.Color(color).multiplyScalar(0.72).getHex();
+
+  const seat = createPart(chair, "seat-and-cushion");
+  addMesh(seat, cyl(0.34, 0.34, 0.12, 28), dark, [0, 0.58, 0]);
+  addMesh(seat, cyl(0.29, 0.29, 0.11, 28), P.cream, [0, 0.67, 0]);
+  addMesh(seat, cyl(0.255, 0.255, 0.06, 28), 0x513b3b, [0, 0.74, 0]);
+
+  const legs = createPart(chair, "four-legs-and-cross-braces");
+  [[-0.23, -0.2], [0.23, -0.2], [-0.23, 0.2], [0.23, 0.2]].forEach(([lx, lz]) => {
+    addMesh(legs, rounded(0.095, 0.62, 0.095, 0.025), color, [lx, 0.31, lz], [1, 1, 1], [lz * 0.08, 0, -lx * 0.08]);
+    addMesh(legs, rounded(0.12, 0.055, 0.12, 0.018), dark, [lx * 1.04, 0.025, lz * 1.04]);
+  });
+  [-0.2, 0.2].forEach((zBrace) => addMesh(legs, rounded(0.48, 0.07, 0.07, 0.022), dark, [0, 0.28, zBrace]));
+  [-0.23, 0.23].forEach((xBrace) => addMesh(legs, rounded(0.07, 0.07, 0.42, 0.022), dark, [xBrace, 0.28, 0]));
+
+  const back = createPart(chair, "complete-x-backrest");
+  [-0.24, 0.24].forEach((bx) => addMesh(back, rounded(0.1, 0.92, 0.11, 0.03), color, [bx, 1.04, 0.2], [1, 1, 1], [-0.04, 0, bx * 0.05]));
+  addMesh(back, rounded(0.58, 0.2, 0.13, 0.055), color, [0, 1.47, 0.2]);
+  addMesh(back, rounded(0.5, 0.07, 0.075, 0.022), dark, [0, 1.13, 0.205], [1, 1, 1], [0, 0, 0.68]);
+  addMesh(back, rounded(0.5, 0.07, 0.075, 0.022), dark, [0, 1.13, 0.205], [1, 1, 1], [0, 0, -0.68]);
+  return chair;
+}
+
+function addCafeMug(group, x, y, z, color, rotation = 0) {
+  const mug = createPart(group, "ceramic-mug");
+  addMesh(mug, cyl(0.095, 0.085, 0.2, 24), color, [x, y, z]);
+  addMesh(mug, torus(0.09, 0.018, 10, 28), P.cream, [x, y + 0.11, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(mug, cyl(0.068, 0.068, 0.018, 24), 0x4a3535, [x, y + 0.115, z]);
+  addMesh(mug, torus(0.085, 0.022, 10, 28), color, [x + Math.cos(rotation) * 0.11, y, z + Math.sin(rotation) * 0.11], [1, 1, 1], [Math.PI / 2, rotation, 0]);
+}
+
+function cafeSeating() {
+  const g = new THREE.Group();
+  g.name = "cafe-seating";
+  const honey = 0xd79448;
+  const honeyLight = 0xf0b867;
+  const honeyDark = 0x8a572e;
+  const teal = 0x337f82;
+  const blue = 0x62a8d6;
+  const coral = 0xee796d;
+  const mint = 0x78b88f;
+
+  const table = createPart(g, "round-tabletop");
+  addMesh(table, cyl(0.84, 0.84, 0.16, 48), honeyDark, [0, 0.92, 0]);
+  addMesh(table, cyl(0.8, 0.8, 0.11, 48), honeyLight, [0, 1.02, 0]);
+  addMesh(table, torus(0.79, 0.035, 12, 48), P.cream, [0, 1.08, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+
+  const pedestal = createPart(g, "pedestal-and-four-foot-base");
+  addMesh(pedestal, cyl(0.16, 0.22, 0.58, 28), teal, [0, 0.62, 0]);
+  addMesh(pedestal, sphere(0.22, 24, 14), teal, [0, 0.55, 0], [1, 1.3, 1]);
+  addMesh(pedestal, cyl(0.24, 0.19, 0.14, 28), 0x275f68, [0, 0.28, 0]);
+  [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle) => {
+    const foot = createPart(pedestal, "pedestal-foot");
+    foot.rotation.y = angle;
+    addMesh(foot, rounded(0.22, 0.12, 0.68, 0.055), teal, [0, 0.14, 0.28]);
+    addMesh(foot, rounded(0.24, 0.04, 0.26, 0.016), honeyDark, [0, 0.065, 0.52]);
+  });
+  addMesh(pedestal, rounded(0.5, 0.08, 0.1, 0.026), 0x275f68, [0, 0.86, 0], [1, 1, 1], [0, 0.78, 0]);
+  addMesh(pedestal, rounded(0.5, 0.08, 0.1, 0.026), 0x275f68, [0, 0.86, 0], [1, 1, 1], [0, -0.78, 0]);
+
+  addCafeChair(g, "sky-blue-chair", -1.02, -0.03, -Math.PI / 2, blue);
+  addCafeChair(g, "coral-chair", 1.02, -0.03, Math.PI / 2, coral);
+  addCafeChair(g, "mint-chair", 0, 0.94, Math.PI, mint);
+
+  const tabletopProps = createPart(g, "three-mugs-and-vase");
+  addCafeMug(tabletopProps, -0.42, 1.2, -0.08, blue, Math.PI);
+  addCafeMug(tabletopProps, 0.42, 1.2, -0.08, coral, 0);
+  addCafeMug(tabletopProps, 0, 1.2, 0.36, mint, Math.PI / 2);
+
+  const vase = createPart(tabletopProps, "cream-flower-vase");
+  addMesh(vase, cyl(0.11, 0.16, 0.27, 24), P.cream, [0, 1.25, -0.2]);
+  addMesh(vase, sphere(0.16, 20, 12), P.cream, [0, 1.23, -0.2], [1, 1.2, 1]);
+  addMesh(vase, torus(0.105, 0.022, 10, 28), honeyLight, [0, 1.4, -0.2], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  [
+    [-0.08, 1.73, P.yellow, -0.2],
+    [0.09, 1.68, coral, 0.18],
+    [-0.02, 1.58, blue, -0.04]
+  ].forEach(([x, y, color, tilt]) => {
+    addMesh(vase, cyl(0.018, 0.018, y - 1.38, 10), P.leafDark, [x / 2, (y + 1.38) / 2, -0.2], [1, 1, 1], [0, 0, tilt]);
+    addFlower(vase, x, y, -0.2, 1.65, color);
+  });
+  return g;
+}
+
+function addHotTray(group, x, y, z) {
+  const tray = createPart(group, "covered-hot-tray");
+  addMesh(tray, rounded(0.56, 0.08, 0.43, 0.035), 0x555d68, [x, y, z]);
+  addMesh(tray, rounded(0.5, 0.08, 0.37, 0.03), P.metal, [x, y + 0.07, z]);
+  addMesh(tray, wedge(0.44, 0.33, 0.1, 0.18), 0xdbe2e8, [x, y + 0.12, z]);
+  addMesh(tray, rounded(0.14, 0.08, 0.08, 0.025), 0x4a5260, [x, y + 0.3, z]);
+  addMesh(tray, rounded(0.06, 0.16, 0.06, 0.018), 0x4a5260, [x - 0.04, y + 0.24, z], [1, 1, 1], [0, 0, Math.PI / 2]);
+}
+
+function addServingBowl(group, x, y, z, color) {
+  const bowl = createPart(group, "serving-bowl");
+  addMesh(bowl, cyl(0.18, 0.13, 0.15, 28), color, [x, y, z]);
+  addMesh(bowl, torus(0.18, 0.025, 10, 32), P.cream, [x, y + 0.085, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(bowl, cyl(0.125, 0.125, 0.012, 28), 0x72564d, [x, y + 0.09, z]);
+}
+
+function addPendantLamp(group, x, y, z) {
+  const lamp = createPart(group, "warm-pendant-lamp");
+  addMesh(lamp, cyl(0.025, 0.025, 0.34, 12), P.woodDark, [x, y + 0.17, z]);
+  addMesh(lamp, cyl(0.1, 0.18, 0.18, 24), P.yellow, [x, y - 0.08, z]);
+  addMesh(lamp, torus(0.18, 0.025, 10, 32), P.orange, [x, y - 0.18, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(lamp, sphere(0.06, 16, 10), P.cream, [x, y - 0.15, z]);
+  addMesh(lamp, torus(0.1, 0.022, 10, 28), P.teal, [x, y + 0.01, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+}
+
+function hotFoodCounter() {
+  const g = new THREE.Group();
+  g.name = "hot-food-counter";
+  const honey = 0xc98035;
+  const honeyLight = 0xe2a653;
+  const honeyDark = 0x86502b;
+  const coral = 0xe96e5f;
+  const mint = 0x8ecdb0;
+
+  const body = createPart(g, "counter-body");
+  addMesh(body, rounded(2.5, 0.9, 0.8, 0.07), honey, [0, 0.6, 0]);
+  addMesh(body, rounded(2.34, 0.75, 0.66, 0.045), honeyLight, [0, 0.61, 0]);
+  [-1.15, 1.15].forEach((x) => addMesh(body, rounded(0.16, 0.84, 0.74, 0.045), honeyDark, [x, 0.61, 0]));
+
+  const stripedFront = createPart(g, "striped-customer-front");
+  for (let index = 0; index < 9; index += 1) {
+    const x = -0.95 + index * 0.235;
+    addMesh(stripedFront, rounded(0.205, 0.64, 0.06, 0.018), index % 2 ? P.cream : coral, [x, 0.62, 0.43]);
+  }
+  addSunflower(stripedFront, 0, 0.62, 0.48, 0.62);
+
+  const worktop = createPart(g, "worktop-and-serving-ledge");
+  addMesh(worktop, rounded(2.7, 0.18, 1.0, 0.075), P.cream, [0, 1.09, 0]);
+  addMesh(worktop, rounded(2.56, 0.045, 0.9, 0.018), 0xf7dca9, [0, 1.21, 0]);
+  addMesh(worktop, rounded(2.62, 0.14, 0.28, 0.06), mint, [0, 0.98, 0.54]);
+  addMesh(worktop, rounded(2.48, 0.035, 0.08, 0.012), 0xc0ead4, [0, 1.07, 0.66], [1, 1, 1], [0, 0, 0], false);
+
+  const hotTrays = createPart(g, "three-hot-trays");
+  [-0.78, -0.17, 0.44].forEach((x) => addHotTray(hotTrays, x, 1.28, 0.02));
+
+  const bowls = createPart(g, "two-serving-bowls");
+  addServingBowl(bowls, 0.85, 1.3, 0.02, mint);
+  addServingBowl(bowls, 1.16, 1.3, 0.02, coral);
+
+  const utensils = createPart(g, "ladle-and-tongs");
+  addMesh(utensils, sphere(0.105, 18, 10), P.metal, [0.72, 1.3, 0.33], [1, 0.35, 1], [0, 0, 0], false);
+  addMesh(utensils, cyl(0.022, 0.022, 0.45, 12), P.woodDark, [0.93, 1.31, 0.33], [1, 1, 1], [0, 0, Math.PI / 2]);
+  [-0.04, 0.04].forEach((offset) => {
+    addMesh(utensils, rounded(0.035, 0.035, 0.48, 0.01), P.metal, [1.08 + offset, 1.33, 0.34], [1, 1, 1], [0, -0.72, 0]);
+    addMesh(utensils, rounded(0.09, 0.035, 0.12, 0.01), 0x59616d, [1.25 + offset, 1.33, 0.19], [1, 1, 1], [0, -0.72, 0]);
+  });
+
+  const rearStorage = createPart(g, "rear-storage");
+  [-0.55, 0.3].forEach((x) => {
+    addMesh(rearStorage, rounded(0.62, 0.26, 0.06, 0.02), honeyDark, [x, 0.79, -0.43]);
+    addMesh(rearStorage, rounded(0.52, 0.18, 0.035, 0.012), honeyLight, [x, 0.79, -0.47]);
+    addMesh(rearStorage, sphere(0.045, 16, 10), P.woodDark, [x, 0.79, -0.51]);
+  });
+  addMesh(rearStorage, rounded(0.68, 0.56, 0.07, 0.025), honeyDark, [0.3, 0.44, -0.43]);
+  addMesh(rearStorage, rounded(0.58, 0.46, 0.04, 0.015), honeyLight, [0.3, 0.44, -0.48]);
+  addMesh(rearStorage, sphere(0.045, 16, 10), P.woodDark, [0.05, 0.46, -0.52]);
+  addMesh(rearStorage, rounded(0.62, 0.48, 0.58, 0.04), honeyDark, [0.9, 0.43, -0.05]);
+  addMesh(rearStorage, rounded(0.5, 0.36, 0.5, 0.025), honeyLight, [0.9, 0.45, -0.04]);
+
+  const backsplash = createPart(g, "finished-backsplash");
+  addMesh(backsplash, rounded(2.42, 0.36, 0.12, 0.045), honey, [0, 1.38, -0.42]);
+  addMesh(backsplash, rounded(2.28, 0.22, 0.055, 0.02), honeyLight, [0, 1.39, -0.49]);
+
+  const overhead = createPart(g, "overhead-rail-and-three-lamps");
+  [-1.08, 1.08].forEach((x) => addMesh(overhead, rounded(0.14, 1.25, 0.14, 0.04), P.woodDark, [x, 1.96, -0.35]));
+  addMesh(overhead, rounded(2.34, 0.16, 0.18, 0.05), P.woodDark, [0, 2.55, -0.35]);
+  [-0.72, 0, 0.72].forEach((x) => addPendantLamp(overhead, x, 2.23, -0.35));
+
+  const plinth = createPart(g, "closed-plinth-and-feet");
+  addMesh(plinth, rounded(2.66, 0.2, 0.88, 0.065), honeyDark, [0, 0.16, 0]);
+  addMesh(plinth, rounded(2.56, 0.12, 0.8, 0.04), honeyLight, [0, 0.27, 0]);
+  [[-1.15, -0.32], [1.15, -0.32], [-1.15, 0.32], [1.15, 0.32]].forEach(([x, z]) => {
+    addMesh(plinth, cyl(0.11, 0.12, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+  return g;
+}
+
+function addExchangeCard(group, x, y, color, name) {
+  const card = createPart(group, name);
+  addMesh(card, rounded(0.43, 0.61, 0.045, 0.016), P.ink, [x, y - 0.012, 0.185], [1.025, 1.025, 1], [0, 0, 0], false);
+  addMesh(card, rounded(0.4, 0.58, 0.052, 0.018), color, [x, y, 0.205]);
+  addMesh(card, rounded(0.19, 0.11, 0.065, 0.027), 0x3f4348, [x, y + 0.33, 0.235]);
+  addMesh(card, rounded(0.13, 0.055, 0.072, 0.018), P.metal, [x, y + 0.295, 0.27]);
+  addMesh(card, torus(0.052, 0.018, 10, 24), 0x34383d, [x, y + 0.405, 0.25]);
+  addMesh(card, cyl(0.017, 0.017, 0.078, 12), P.metal, [x, y + 0.405, 0.252], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+}
+
+function exchangeBoard() {
+  const g = new THREE.Group();
+  g.name = "exchange-board";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const boardMint = 0x8fcfbe;
+  const colors = [0xee8067, 0x74bde0, 0xf4c84a, 0xffecc9, 0xffecc9, 0xf4c84a, 0xee8067, 0xa9dec9];
+
+  const frame = createPart(g, "wood-frame-and-two-support-posts");
+  addMesh(frame, rounded(2.06, 1.64, 0.16, 0.055), honeyDark, [0, 1.37, 0]);
+  addMesh(frame, rounded(1.92, 1.5, 0.13, 0.045), boardMint, [0, 1.37, 0.055]);
+  addMesh(frame, rounded(2.32, 0.17, 0.24, 0.05), honey, [0, 2.25, 0]);
+  addMesh(frame, rounded(2.32, 0.17, 0.24, 0.05), honey, [0, 0.49, 0]);
+  [-1.17, 1.17].forEach((x) => {
+    addMesh(frame, rounded(0.2, 2.3, 0.25, 0.055), honey, [x, 1.22, 0]);
+    addMesh(frame, rounded(0.31, 0.28, 0.29, 0.065), honeyLight, [x, 2.24, 0]);
+    addMesh(frame, sphere(0.055, 18, 10), P.metal, [x, 2.24, 0.175], [1, 1, 0.55]);
+    addMesh(frame, sphere(0.045, 16, 9), honeyDark, [x, 0.55, 0.175], [1, 1, 0.55]);
+  });
+
+  const cards = createPart(g, "eight-exchange-cards-and-clips");
+  const xs = [-0.76, -0.255, 0.255, 0.76];
+  [1.7, 0.99].forEach((y, row) => xs.forEach((x, column) => {
+    addExchangeCard(cards, x, y, colors[row * 4 + column], `exchange-card-${row * 4 + column + 1}`);
+  }));
+
+  const tray = createPart(g, "lower-tray-and-three-spare-cards");
+  addMesh(tray, rounded(1.78, 0.13, 0.48, 0.06), honeyDark, [0, 0.4, 0.29]);
+  addMesh(tray, rounded(1.68, 0.09, 0.4, 0.035), honeyLight, [0, 0.48, 0.3]);
+  addMesh(tray, rounded(1.72, 0.2, 0.12, 0.04), honey, [0, 0.51, 0.5]);
+  [-0.82, 0.82].forEach((x) => addMesh(tray, rounded(0.13, 0.25, 0.44, 0.045), honey, [x, 0.51, 0.3]));
+  [[-0.52, 0xee8067], [0, 0x74bde0], [0.52, 0xffecc9]].forEach(([x, color]) => {
+    addMesh(tray, rounded(0.39, 0.045, 0.28, 0.016), color, [x, 0.58, 0.29]);
+  });
+
+  const feet = createPart(g, "two-braced-floor-feet");
+  [-1.17, 1.17].forEach((x) => {
+    addMesh(feet, rounded(0.42, 0.18, 0.86, 0.065), honeyDark, [x, 0.13, 0]);
+    addMesh(feet, rounded(0.36, 0.12, 0.8, 0.045), honeyLight, [x, 0.23, 0]);
+    addMesh(feet, rounded(0.16, 0.56, 0.16, 0.038), honey, [x, 0.43, 0.2], [1, 1, 1], [-0.6, 0, 0]);
+    addMesh(feet, rounded(0.16, 0.56, 0.16, 0.038), honey, [x, 0.43, -0.2], [1, 1, 1], [0.6, 0, 0]);
+  });
+
+  const rear = createPart(g, "finished-rear-panel-and-cross-braces");
+  for (let index = 0; index < 6; index += 1) {
+    addMesh(rear, rounded(1.93, 0.25, 0.12, 0.025), index % 2 ? honey : honeyLight, [0, 0.74 + index * 0.255, -0.125]);
+  }
+  const braceLength = 2.18;
+  addMesh(rear, rounded(0.16, braceLength, 0.13, 0.04), honeyDark, [0, 1.38, -0.235], [1, 1, 1], [0, 0, 0.83]);
+  addMesh(rear, rounded(0.16, braceLength, 0.13, 0.04), honey, [0, 1.38, -0.31], [1, 1, 1], [0, 0, -0.83]);
+  [[-0.92, 0.63], [0.92, 0.63], [-0.92, 2.11], [0.92, 2.11]].forEach(([x, y]) => {
+    addMesh(rear, cyl(0.04, 0.04, 0.035, 14), P.metal, [x, y, -0.39], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  });
+
+  const underside = createPart(g, "closed-underside");
+  addMesh(underside, rounded(1.88, 0.1, 0.5, 0.035), honeyDark, [0, 0.31, 0.27]);
+  [-0.76, 0.76].forEach((x) => addMesh(underside, rounded(0.12, 0.32, 0.18, 0.035), honeyDark, [x, 0.42, 0.02]));
+  return g;
+}
+
+function proposalPodium() {
+  const g = new THREE.Group();
+  g.name = "proposal-podium";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const teal = 0x4b9da0;
+  const tealLight = 0x78bdba;
+  const coral = 0xee745f;
+
+  const shell = createPart(g, "podium-body-and-finished-sides");
+  addMesh(shell, rounded(1.05, 1.18, 0.1, 0.035), honey, [0, 0.87, 0.4]);
+  [-0.51, 0.51].forEach((x) => addMesh(shell, rounded(0.16, 1.28, 0.82, 0.05), honeyLight, [x, 0.83, 0]));
+  [-1, 1].forEach((side) => {
+    addMesh(shell, rounded(0.08, 0.82, 0.64, 0.025), honeyDark, [side * 0.6, 0.88, 0]);
+    addMesh(shell, rounded(0.045, 0.7, 0.52, 0.016), honey, [side * 0.65, 0.88, 0]);
+  });
+  addMesh(shell, rounded(1.08, 0.14, 0.84, 0.045), honeyDark, [0, 1.43, 0]);
+
+  const frontPanel = createPart(g, "front-accent-panel");
+  addMesh(frontPanel, rounded(0.88, 0.5, 0.075, 0.03), honeyDark, [0, 1.02, 0.47]);
+  addMesh(frontPanel, rounded(0.78, 0.4, 0.055, 0.022), teal, [0, 1.02, 0.525]);
+  addMesh(frontPanel, rounded(0.66, 0.028, 0.03, 0.008), tealLight, [-0.02, 1.16, 0.56], [1, 1, 1], [0, 0, 0], false);
+
+  const drawer = createPart(g, "suggestion-drawer");
+  addMesh(drawer, rounded(0.88, 0.35, 0.1, 0.035), honeyDark, [0, 0.57, 0.48]);
+  addMesh(drawer, rounded(0.73, 0.24, 0.065, 0.023), honey, [0, 0.57, 0.55]);
+  addMesh(drawer, rounded(0.52, 0.035, 0.025, 0.008), P.ink, [0, 0.65, 0.6], [1, 1, 1], [0, 0, 0], false);
+  addMesh(drawer, sphere(0.07, 20, 12), P.yellow, [0, 0.51, 0.63], [1, 1, 0.58]);
+
+  const rearStorage = createPart(g, "finished-backside-with-two-cubbies");
+  addMesh(rearStorage, rounded(0.9, 1.05, 0.08, 0.028), honeyDark, [0, 0.82, 0.3]);
+  addMesh(rearStorage, rounded(0.77, 0.92, 0.055, 0.02), 0x5e3b25, [0, 0.82, 0.25]);
+  addMesh(rearStorage, rounded(0.83, 0.09, 0.68, 0.03), honey, [0, 0.76, -0.03]);
+  addMesh(rearStorage, rounded(0.83, 0.09, 0.68, 0.03), honey, [0, 0.34, -0.03]);
+  addMesh(rearStorage, rounded(0.68, 0.035, 0.43, 0.014), P.paper, [0, 0.84, -0.12]);
+  addMesh(rearStorage, rounded(0.64, 0.035, 0.4, 0.014), P.cream, [0.03, 0.89, -0.1], [1, 1, 1], [0, -0.03, 0]);
+  [-0.49, 0.49].forEach((x) => addMesh(rearStorage, rounded(0.12, 1.0, 0.12, 0.035), honey, [x, 0.79, -0.43]));
+
+  const slopedTop = createPart(g, "document-ledge");
+  addMesh(slopedTop, wedge(1.14, 0.86, 0.12, 0.43), honeyDark, [0, 1.44, 0]);
+  addMesh(slopedTop, rounded(1.28, 0.1, 0.94, 0.04), honeyLight, [0, 1.69, 0], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(slopedTop, rounded(1.15, 0.055, 0.8, 0.02), P.cream, [0, 1.76, -0.01], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(slopedTop, rounded(1.18, 0.12, 0.11, 0.035), honey, [0, 1.61, 0.43], [1, 1, 1], [0.31, 0, 0]);
+  addMesh(slopedTop, rounded(1.16, 0.09, 0.1, 0.03), honeyDark, [0, 1.9, -0.39], [1, 1, 1], [0.31, 0, 0]);
+  const proposalSheet = createPart(slopedTop, "one-blank-proposal-sheet");
+  proposalSheet.position.set(-0.12, 1.82, 0.01);
+  proposalSheet.rotation.x = 0.31;
+  addMesh(proposalSheet, rounded(0.52, 0.035, 0.62, 0.014), P.paper);
+
+  const microphone = createPart(g, "gooseneck-microphone");
+  addMesh(microphone, cyl(0.12, 0.12, 0.06, 20), P.ink, [0.36, 1.93, -0.22]);
+  addMesh(microphone, cyl(0.075, 0.095, 0.16, 18), 0x3f4348, [0.36, 2.03, -0.22]);
+  const micPoints = [
+    [0.36, 2.1, -0.22], [0.35, 2.22, -0.21], [0.3, 2.32, -0.18],
+    [0.22, 2.4, -0.14], [0.12, 2.46, -0.1]
+  ];
+  micPoints.slice(0, -1).forEach((point, index) => {
+    addCylinderBetween(microphone, point, micPoints[index + 1], 0.027, 0x34383d, `gooseneck-segment-${index + 1}`);
+    addMesh(microphone, sphere(0.03, 12, 8), 0x4c5056, micPoints[index + 1]);
+  });
+  addCylinderBetween(microphone, [0.12, 2.46, -0.1], [0, 2.49, -0.06], 0.052, coral, "coral-indicator-ring");
+  addCylinderBetween(microphone, [0, 2.49, -0.06], [-0.18, 2.535, -0.005], 0.078, P.ink, "microphone-head");
+  addMesh(microphone, sphere(0.074, 18, 11), 0x3a3d42, [-0.195, 2.54, 0], [1.1, 0.88, 0.88]);
+
+  const base = createPart(g, "wide-base-and-four-feet");
+  addMesh(base, rounded(1.38, 0.19, 1.02, 0.065), honeyDark, [0, 0.18, 0]);
+  addMesh(base, rounded(1.28, 0.11, 0.92, 0.04), honeyLight, [0, 0.29, 0]);
+  [[-0.48, -0.36], [0.48, -0.36], [-0.48, 0.36], [0.48, 0.36]].forEach(([x, z]) => {
+    addMesh(base, cyl(0.1, 0.11, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+  addMesh(base, rounded(1.08, 0.07, 0.78, 0.025), honeyDark, [0, 0.31, 0]);
+  return g;
+}
+
+function addNoticeFlower(group, x, color, name) {
+  const flower = createPart(group, name);
+  addMesh(flower, cyl(0.018, 0.02, 0.24, 10), P.leafDark, [x, 0.77, 0.3]);
+  addMesh(flower, sphere(0.075, 12, 7), P.leaf, [x - 0.055, 0.75, 0.3], [1.25, 0.45, 0.75], [0, 0, 0.45]);
+  addMesh(flower, sphere(0.075, 12, 7), P.leafDark, [x + 0.055, 0.7, 0.3], [1.25, 0.45, 0.75], [0, 0, -0.45]);
+  addFlower(flower, x, 0.92, 0.3, 1.9, color);
+}
+
+function noticeBoard() {
+  const g = new THREE.Group();
+  g.name = "notice-board";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const coralTile = 0xd96c51;
+  const tealBack = 0x6aa99b;
+  const mintPlanter = 0x83bdb0;
+  const cardColors = [0xee8067, 0x74bde0, 0xf4c84a, 0xa9dec9, 0xb69ad8, 0xffecc9];
+
+  const posts = createPart(g, "wood-frame-two-posts-and-ground-feet");
+  [-1.04, 1.04].forEach((x) => {
+    addMesh(posts, rounded(0.2, 2.2, 0.24, 0.055), honey, [x, 1.2, 0]);
+    addMesh(posts, rounded(0.38, 0.18, 0.62, 0.06), honeyDark, [x, 0.13, 0]);
+    addMesh(posts, rounded(0.32, 0.11, 0.56, 0.04), honeyLight, [x, 0.23, 0]);
+    addMesh(posts, rounded(0.28, 0.27, 0.3, 0.06), honeyLight, [x, 2.2, 0]);
+    addMesh(posts, sphere(0.045, 16, 9), P.metal, [x, 2.18, 0.17], [1, 1, 0.55]);
+  });
+
+  const board = createPart(g, "notice-surface-and-wood-frame");
+  addMesh(board, rounded(1.92, 1.42, 0.16, 0.05), honeyDark, [0, 1.43, 0]);
+  addMesh(board, rounded(1.76, 1.26, 0.13, 0.042), 0xf2d59d, [0, 1.43, 0.055]);
+  addMesh(board, rounded(2.02, 0.16, 0.23, 0.05), honey, [0, 2.18, 0]);
+  addMesh(board, rounded(2.02, 0.16, 0.23, 0.05), honey, [0, 0.68, 0]);
+  [-0.99, 0.99].forEach((x) => addMesh(board, rounded(0.16, 1.48, 0.23, 0.045), honey, [x, 1.43, 0]));
+
+  const cards = createPart(g, "six-notice-cards-and-six-brass-pins");
+  const cardXs = [-0.57, 0, 0.57];
+  [1.7, 1.16].forEach((y, row) => cardXs.forEach((x, column) => {
+    const index = row * 3 + column;
+    const card = createPart(cards, `notice-card-${index + 1}`);
+    addMesh(card, rounded(0.39, 0.45, 0.045, 0.016), cardColors[index], [x, y, 0.145]);
+    addMesh(card, sphere(0.055, 18, 10), P.yellow, [x, y + 0.25, 0.19], [1, 1, 0.55]);
+    addMesh(card, sphere(0.13, 18, 10), index % 2 ? 0x579fd0 : 0xd96356, [x + 0.08, y - 0.12, 0.178], [1.3, 0.55, 0.25], [0, 0, 0], false);
+  }));
+
+  const roof = createPart(g, "gabled-roof-cap-and-coral-tiles");
+  [-1, 1].forEach((side) => {
+    const half = createPart(roof, side > 0 ? "front-roof-slope" : "rear-roof-slope");
+    half.position.set(0, 2.47, side * 0.22);
+    half.rotation.x = side * 0.46;
+    addMesh(half, rounded(2.5, 0.12, 0.66, 0.035), honeyDark);
+    addMesh(half, rounded(2.36, 0.065, 0.56, 0.022), coralTile, [0, 0.075, 0]);
+    for (let row = 0; row < 3; row += 1) {
+      for (let column = 0; column < 9; column += 1) {
+        const x = -1.04 + column * 0.26 + (row % 2 ? 0.06 : 0);
+        addMesh(half, rounded(0.235, 0.025, 0.15, 0.008), row % 2 ? 0xe57a5d : coralTile, [x, 0.12, -0.18 + row * 0.18], [1, 1, 1], [0, 0, 0], false);
+      }
+    }
+  });
+  addMesh(roof, rounded(2.58, 0.15, 0.16, 0.05), honeyLight, [0, 2.65, 0]);
+  [-1.16, 1.16].forEach((x) => {
+    addMesh(roof, rounded(0.13, 0.13, 0.76, 0.038), honey, [x, 2.47, 0.2], [1, 1, 1], [0.46, 0, 0]);
+    addMesh(roof, rounded(0.13, 0.13, 0.76, 0.038), honey, [x, 2.47, -0.2], [1, 1, 1], [-0.46, 0, 0]);
+  });
+
+  const planter = createPart(g, "mint-flower-planter-with-five-plants");
+  addMesh(planter, rounded(2.12, 0.38, 0.62, 0.07), 0x477f74, [0, 0.52, 0.27]);
+  addMesh(planter, rounded(2.02, 0.32, 0.56, 0.055), mintPlanter, [0, 0.55, 0.28]);
+  addMesh(planter, rounded(1.88, 0.07, 0.43, 0.025), 0x5d452c, [0, 0.75, 0.28]);
+  [-0.72, -0.36, 0, 0.36, 0.72].forEach((x, index) => {
+    addNoticeFlower(planter, x, [0xee745f, 0xf4c84a, 0xffecc9, 0x68aee0, 0xa98ad5][index], `flowering-plant-${index + 1}`);
+  });
+  [-0.62, 0.62].forEach((x) => addMesh(planter, cyl(0.035, 0.035, 0.035, 12), P.ink, [x, 0.33, 0.28], [1, 1, 1], [Math.PI / 2, 0, 0], false));
+
+  const back = createPart(g, "finished-weatherproof-backside-and-cross-braces");
+  addMesh(back, rounded(1.77, 1.27, 0.12, 0.04), tealBack, [0, 1.43, -0.09]);
+  for (let index = 0; index < 8; index += 1) {
+    addMesh(back, rounded(0.025, 1.14, 0.02, 0.006), 0x4d877d, [-0.76 + index * 0.22, 1.43, -0.165], [1, 1, 1], [0, 0, 0], false);
+  }
+  addMesh(back, rounded(0.14, 2.0, 0.13, 0.04), honeyDark, [0, 1.43, -0.23], [1, 1, 1], [0, 0, 0.86]);
+  addMesh(back, rounded(0.14, 2.0, 0.13, 0.04), honey, [0, 1.43, -0.3], [1, 1, 1], [0, 0, -0.86]);
+  addMesh(back, rounded(1.94, 0.13, 0.16, 0.04), honey, [0, 0.72, -0.18]);
+  return g;
+}
+
+function addAudienceChair(group, x, z, color, index) {
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const chair = createPart(group, `chair-${index}-complete-frame-seat-and-backrest`);
+  chair.position.set(x, 0, z);
+
+  const frame = createPart(chair, `chair-${index}-honey-wood-frame`);
+  addMesh(frame, rounded(0.54, 0.12, 0.55, 0.045), honeyDark, [0, 0.52, 0]);
+  addMesh(frame, rounded(0.5, 0.09, 0.51, 0.036), honeyLight, [0, 0.59, 0]);
+  [-0.21, 0.21].forEach((px) => {
+    [-0.2, 0.2].forEach((pz) => {
+      addMesh(frame, rounded(0.1, 0.48, 0.1, 0.03), honey, [px, 0.3, pz]);
+    });
+  });
+
+  const seat = createPart(chair, `chair-${index}-colored-seat-cushion`);
+  addMesh(seat, rounded(0.49, 0.16, 0.48, 0.075), color, [0, 0.69, -0.015]);
+
+  const rear = createPart(chair, `chair-${index}-finished-x-braced-backrest`);
+  [-0.22, 0.22].forEach((px) => {
+    addMesh(rear, rounded(0.1, 0.76, 0.11, 0.03), honey, [px, 1.02, 0.22]);
+  });
+  addMesh(rear, rounded(0.57, 0.17, 0.14, 0.06), honeyLight, [0, 1.43, 0.22]);
+  addMesh(rear, rounded(0.075, 0.58, 0.075, 0.022), honeyDark, [0, 1.13, 0.22], [1, 1, 1], [0, 0, 0.69]);
+  addMesh(rear, rounded(0.075, 0.58, 0.075, 0.022), honey, [0, 1.13, 0.205], [1, 1, 1], [0, 0, -0.69]);
+  [-0.18, 0.18].forEach((px) => {
+    addMesh(rear, sphere(0.038, 14, 8), P.yellow, [px, 1.42, 0.305], [1, 1, 0.55]);
+  });
+  return chair;
+}
+
+function audienceSeating() {
+  const g = new THREE.Group();
+  g.name = "audience-seating";
+  const support = 0x315f69;
+  const supportLight = 0x477f82;
+  const honey = 0xc98035;
+  const cushionColors = [0xee745f, 0x5caee2, 0x7fc9a7, 0xf4c84a, 0xee745f, 0x5caee2];
+  const chairZs = [0.76, 0, -0.76];
+  const banks = [
+    { x: -0.52, colors: cushionColors.slice(0, 3) },
+    { x: 0.52, colors: cushionColors.slice(3, 6) }
+  ];
+
+  const rails = createPart(g, "two-shared-support-rails-center-aisle-and-floor-feet");
+  banks.forEach(({ x }, bankIndex) => {
+    addMesh(rails, rounded(0.62, 0.14, 2.08, 0.045), support, [x, 0.15, 0]);
+    addMesh(rails, rounded(0.54, 0.055, 1.98, 0.022), supportLight, [x, 0.25, 0]);
+    chairZs.forEach((z, chairIndex) => {
+      addMesh(rails, rounded(0.58, 0.08, 0.16, 0.025), supportLight, [x, 0.3, z]);
+      const partIndex = bankIndex * 3 + chairIndex + 1;
+      addAudienceChair(g, x, z, banks[bankIndex].colors[chairIndex], partIndex);
+    });
+    [-0.91, 0.91].forEach((z) => {
+      [-0.23, 0.23].forEach((dx) => {
+        addMesh(rails, rounded(0.13, 0.18, 0.18, 0.038), support, [x + dx, 0.09, z]);
+        addMesh(rails, rounded(0.1, 0.055, 0.15, 0.02), supportLight, [x + dx, 0.2, z]);
+      });
+    });
+  });
+
+  const aisle = createPart(g, "open-center-aisle-and-two-vote-token-posts");
+  [-1, 1].forEach((side, index) => {
+    const x = side * 0.2;
+    addMesh(aisle, cyl(0.09, 0.1, 0.48, 18), honey, [x, 0.4, 0.93]);
+    addMesh(aisle, cyl(0.13, 0.13, 0.09, 22), 0x81502a, [x, 0.66, 0.93]);
+    addMesh(aisle, sphere(0.095, 20, 12), index === 0 ? 0x6fbd72 : 0xee5f55, [x, 0.73, 0.93], [1, 0.72, 1]);
+  });
+
+  const underside = createPart(g, "finished-underside-crossmembers-and-fasteners");
+  chairZs.forEach((z) => {
+    [-0.52, 0.52].forEach((x) => {
+      addMesh(underside, rounded(0.42, 0.065, 0.18, 0.022), support, [x, 0.115, z]);
+      [-0.13, 0.13].forEach((dx) => {
+        addMesh(underside, cyl(0.035, 0.035, 0.035, 12), P.metal, [x + dx, 0.07, z], [1, 1, 1], [0, 0, 0], false);
+      });
+    });
+  });
+  return g;
+}
+
+function addOfficeTaskChair(group) {
+  const chair = createPart(group, "adjustable-task-chair-with-five-spoke-base");
+  chair.position.set(-0.2, 0, 1.05);
+  const darkTeal = 0x315f69;
+  const teal = 0x4d9f9c;
+  const tealLight = 0x78c1ba;
+
+  addMesh(chair, cyl(0.13, 0.15, 0.5, 20), darkTeal, [0, 0.43, 0]);
+  addMesh(chair, cyl(0.18, 0.18, 0.08, 20), teal, [0, 0.68, 0]);
+  addMesh(chair, rounded(0.64, 0.17, 0.62, 0.075), teal, [0, 0.76, 0]);
+  addMesh(chair, rounded(0.54, 0.055, 0.5, 0.025), tealLight, [0, 0.865, -0.02], [1, 1, 1], [0, 0, 0], false);
+  addMesh(chair, rounded(0.16, 0.66, 0.14, 0.04), darkTeal, [0, 1.02, 0.28], [1, 1, 1], [-0.12, 0, 0]);
+  addMesh(chair, rounded(0.7, 0.67, 0.18, 0.08), darkTeal, [0, 1.35, 0.31], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(chair, rounded(0.61, 0.58, 0.19, 0.085), teal, [0, 1.35, 0.2], [1, 1, 1], [-0.08, 0, 0]);
+  addMesh(chair, rounded(0.45, 0.035, 0.08, 0.014), tealLight, [-0.03, 1.51, 0.09], [1, 1, 1], [-0.08, 0, 0], false);
+
+  const base = createPart(chair, "five-spoke-wheeled-base");
+  addMesh(base, cyl(0.16, 0.18, 0.12, 20), darkTeal, [0, 0.17, 0]);
+  for (let index = 0; index < 5; index += 1) {
+    const angle = index / 5 * Math.PI * 2;
+    const x = Math.sin(angle) * 0.39;
+    const z = Math.cos(angle) * 0.39;
+    addMesh(base, rounded(0.13, 0.1, 0.66, 0.04), darkTeal, [x * 0.5, 0.14, z * 0.5], [1, 1, 1], [0, angle, 0]);
+    const wheel = createPart(base, `caster-wheel-${index + 1}`);
+    wheel.position.set(x, 0.11, z);
+    addMesh(wheel, cyl(0.1, 0.1, 0.07, 18), P.ink, [0, 0, 0], [1, 1, 1], [Math.PI / 2, angle, 0]);
+    addMesh(wheel, cyl(0.055, 0.055, 0.075, 16), P.metal, [0, 0, 0], [1, 1, 1], [Math.PI / 2, angle, 0], false);
+  }
+  return chair;
+}
+
+function officeWorkstation() {
+  const g = new THREE.Group();
+  g.name = "office-workstation";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const deepTeal = 0x315f69;
+  const teal = 0x4d9f9c;
+  const sky = 0xa9e1ef;
+
+  const desk = createPart(g, "rounded-shallow-wrap-desk-and-open-legroom");
+  addMesh(desk, rounded(2.72, 0.22, 0.94, 0.095), honey, [0, 1.02, 0]);
+  addMesh(desk, rounded(0.84, 0.22, 0.78, 0.095), honey, [-0.95, 1.02, 0.36]);
+  addMesh(desk, rounded(2.58, 0.055, 0.82, 0.025), honeyLight, [0, 1.16, 0]);
+  addMesh(desk, rounded(0.74, 0.055, 0.68, 0.025), honeyLight, [-0.95, 1.16, 0.36]);
+  [[-1.18, -0.34], [-1.18, 0.55], [1.18, -0.34]].forEach(([x, z]) => {
+    addMesh(desk, rounded(0.17, 0.94, 0.17, 0.05), honeyDark, [x, 0.52, z]);
+    addMesh(desk, rounded(0.23, 0.16, 0.23, 0.055), honey, [x, 0.11, z]);
+  });
+  addMesh(desk, rounded(1.52, 0.52, 0.1, 0.035), honeyDark, [-0.16, 0.67, -0.42]);
+  addMesh(desk, rounded(1.4, 0.42, 0.065, 0.022), honey, [-0.16, 0.67, -0.48]);
+  addMesh(desk, rounded(2.78, 0.18, 0.14, 0.05), honeyDark, [0, 1.28, -0.42]);
+  addMesh(desk, rounded(2.66, 0.12, 0.12, 0.042), honeyLight, [0, 1.34, -0.4]);
+
+  const pedestal = createPart(g, "two-drawer-storage-pedestal-and-finished-back");
+  addMesh(pedestal, rounded(0.68, 0.88, 0.76, 0.065), honeyDark, [0.91, 0.54, -0.01]);
+  addMesh(pedestal, rounded(0.6, 0.8, 0.68, 0.05), honey, [0.91, 0.56, -0.01]);
+  [0.72, 0.36].forEach((y) => {
+    addMesh(pedestal, rounded(0.52, 0.29, 0.08, 0.028), honeyLight, [0.91, y, 0.38]);
+    addMesh(pedestal, sphere(0.07, 18, 10), teal, [0.91, y, 0.45], [1, 1, 0.55]);
+  });
+  addMesh(pedestal, rounded(0.52, 0.62, 0.06, 0.022), honeyLight, [0.91, 0.58, -0.39]);
+  [[0.7, -0.27], [1.12, -0.27], [0.7, 0.25], [1.12, 0.25]].forEach(([x, z]) => {
+    addMesh(pedestal, rounded(0.12, 0.12, 0.12, 0.035), honeyDark, [x, 0.08, z]);
+  });
+
+  const monitor = createPart(g, "monitor-blank-screen-and-stand");
+  addMesh(monitor, rounded(0.98, 0.7, 0.16, 0.07), deepTeal, [0.22, 1.72, -0.15]);
+  addMesh(monitor, rounded(0.82, 0.54, 0.035, 0.014), sky, [0.22, 1.72, -0.055]);
+  addMesh(monitor, rounded(0.7, 0.035, 0.025, 0.01), 0xffffff, [0.17, 1.89, -0.028], [1, 1, 1], [0, 0, 0], false);
+  addMesh(monitor, rounded(0.18, 0.36, 0.14, 0.04), deepTeal, [0.22, 1.28, -0.15]);
+  addMesh(monitor, rounded(0.58, 0.1, 0.34, 0.045), deepTeal, [0.22, 1.17, -0.08]);
+
+  const keyboard = createPart(g, "separate-keyboard-with-readable-keys");
+  keyboard.position.set(0.08, 1.25, 0.28);
+  keyboard.rotation.x = -0.05;
+  addMesh(keyboard, rounded(0.9, 0.09, 0.38, 0.04), deepTeal);
+  const rows = [10, 10, 9, 8];
+  rows.forEach((count, row) => {
+    for (let column = 0; column < count; column += 1) {
+      const width = 0.068;
+      const x = (column - (count - 1) / 2) * 0.078;
+      const z = -0.12 + row * 0.078;
+      addMesh(keyboard, rounded(width, 0.035, 0.058, 0.014), row === 3 && column === count - 1 ? P.red : P.cream, [x, 0.065, z], [1, 1, 1], [0, 0, 0], false);
+    }
+  });
+  addMesh(keyboard, rounded(0.34, 0.035, 0.06, 0.014), P.paper, [0, 0.065, 0.12], [1, 1, 1], [0, 0, 0], false);
+
+  const tray = createPart(g, "paper-handoff-tray");
+  addMesh(tray, rounded(0.56, 0.12, 0.42, 0.045), deepTeal, [-0.91, 1.25, -0.05]);
+  addMesh(tray, rounded(0.45, 0.06, 0.32, 0.022), P.paper, [-0.91, 1.34, -0.03]);
+  addMesh(tray, rounded(0.4, 0.025, 0.28, 0.01), P.cream, [-0.89, 1.39, -0.01], [1, 1, 1], [0, 0.04, 0], false);
+
+  const plant = createPart(g, "small-potted-plant");
+  addMesh(plant, cyl(0.19, 0.15, 0.28, 22), 0xd96d52, [1.02, 1.33, -0.1]);
+  addMesh(plant, torus(0.17, 0.035, 10, 24), teal, [1.02, 1.48, -0.1], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  for (let index = 0; index < 7; index += 1) {
+    const angle = index / 7 * Math.PI * 2;
+    addMesh(plant, sphere(0.16, 16, 9), index % 2 ? P.leaf : P.leafDark, [
+      1.02 + Math.sin(angle) * 0.14,
+      1.62 + (index % 3) * 0.05,
+      -0.1 + Math.cos(angle) * 0.09
+    ], [0.62, 1.18, 0.42], [0, angle, Math.sin(angle) * 0.45]);
+  }
+
+  const cable = createPart(g, "open-rear-cable-channel-two-cables-and-power-strip");
+  addMesh(cable, rounded(1.62, 0.16, 0.14, 0.045), 0x5b3826, [0.08, 1.39, -0.49]);
+  addMesh(cable, rounded(0.52, 0.17, 0.14, 0.04), P.metal, [-0.5, 1.41, -0.58]);
+  [-0.64, -0.52, -0.4].forEach((x) => addMesh(cable, sphere(0.025, 12, 7), P.yellow, [x, 1.41, -0.66], [1, 1, 0.5]));
+  const cablePaths = [
+    { color: 0xe86f58, y: 1.46, points: [[-0.82, -0.58], [-0.4, -0.6], [0.05, -0.59], [0.5, -0.57], [0.82, -0.58]] },
+    { color: 0x4ca7b0, y: 1.52, points: [[-0.76, -0.62], [-0.32, -0.64], [0.12, -0.63], [0.56, -0.61], [0.88, -0.62]] }
+  ];
+  cablePaths.forEach((pathItem, pathIndex) => {
+    pathItem.points.slice(0, -1).forEach(([x, z], index) => {
+      const [nextX, nextZ] = pathItem.points[index + 1];
+      addCylinderBetween(cable, [x, pathItem.y, z], [nextX, pathItem.y, nextZ], 0.026, pathItem.color, `organized-cable-${pathIndex + 1}-segment-${index + 1}`);
+    });
+    [-0.55, 0.32, 0.72].forEach((x) => addMesh(cable, rounded(0.1, 0.12, 0.11, 0.025), deepTeal, [x, pathItem.y, -0.64]));
+  });
+
+  addOfficeTaskChair(g);
+  return g;
+}
+
+function addCollaborationCaster(group, x, z, index) {
+  const caster = createPart(group, `locking-caster-wheel-${index}`);
+  caster.position.set(x, 0.12, z);
+  addMesh(caster, rounded(0.18, 0.19, 0.12, 0.035), P.metal, [0, 0.1, 0]);
+  addMesh(caster, cyl(0.14, 0.14, 0.09, 20), P.ink, [0, -0.02, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(caster, cyl(0.075, 0.075, 0.1, 18), P.metal, [0, -0.02, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(caster, rounded(0.17, 0.07, 0.2, 0.02), 0xe06b52, [0.08, 0.19, 0.02], [1, 1, 1], [0, 0, -0.32]);
+}
+
+function collaborationBoard() {
+  const g = new THREE.Group();
+  g.name = "collaboration-board";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const boardTeal = 0x2f7773;
+  const boardTealDark = 0x245d5b;
+  const deepTeal = 0x315f69;
+  const cardColors = [0xee8067, 0x74bde0, 0xf4c84a, 0xa9dec9, 0xb990df, 0xffecc9];
+  const magnetColors = [0xe95656, 0x4ea8de, 0xf4c84a, 0x79b95b, 0xa96fd4, 0xe8d7b5, 0x79b95b, 0xa96fd4];
+
+  const board = createPart(g, "double-sided-board-and-rounded-frame");
+  addMesh(board, rounded(2.42, 1.62, 0.18, 0.065), honeyDark, [0, 1.53, 0]);
+  addMesh(board, rounded(2.26, 1.46, 0.14, 0.05), honey, [0, 1.53, 0]);
+  addMesh(board, rounded(2.08, 1.3, 0.06, 0.024), boardTeal, [0, 1.53, 0.105]);
+  addMesh(board, rounded(2.08, 1.3, 0.06, 0.024), P.cream, [0, 1.53, -0.105]);
+  addMesh(board, rounded(2.52, 0.16, 0.26, 0.055), honeyLight, [0, 2.39, 0]);
+  addMesh(board, rounded(2.52, 0.16, 0.26, 0.055), honeyLight, [0, 0.67, 0]);
+  [-1.21, 1.21].forEach((x) => {
+    addMesh(board, rounded(0.17, 1.66, 0.26, 0.055), honey, [x, 1.53, 0]);
+  });
+
+  const connections = createPart(g, "three-visible-relationship-lines");
+  addCylinderBetween(connections, [-0.68, 1.82, 0.15], [0, 1.82, 0.15], 0.025, boardTealDark, "relationship-line-1");
+  addCylinderBetween(connections, [-0.68, 1.82, 0.15], [0, 1.22, 0.15], 0.025, boardTealDark, "relationship-line-2");
+  addCylinderBetween(connections, [0, 1.22, 0.15], [0.68, 1.22, 0.15], 0.025, boardTealDark, "relationship-line-3");
+
+  const cards = createPart(g, "six-blank-idea-cards-and-eight-round-magnets");
+  const cardPositions = [
+    [-0.68, 1.86], [0, 1.86], [0.68, 1.86],
+    [-0.68, 1.2], [0, 1.2], [0.68, 1.2]
+  ];
+  cardPositions.forEach(([x, y], index) => {
+    addMesh(cards, rounded(0.47, 0.5, 0.045, 0.016), cardColors[index], [x, y, 0.175]);
+    addMesh(cards, sphere(0.075, 18, 10), magnetColors[index], [x, y + 0.3, 0.225], [1, 1, 0.5]);
+  });
+  [[-0.9, 0.96], [0.9, 0.96]].forEach(([x, y], index) => {
+    addMesh(cards, sphere(0.075, 18, 10), magnetColors[index + 6], [x, y, 0.225], [1, 1, 0.5]);
+  });
+
+  const rear = createPart(g, "finished-rear-grid-and-two-storage-clips");
+  [-0.78, -0.39, 0, 0.39, 0.78].forEach((x) => {
+    addMesh(rear, rounded(0.018, 1.08, 0.016, 0.005), 0xd5c7aa, [x, 1.53, -0.145], [1, 1, 1], [0, 0, 0], false);
+  });
+  [1.12, 1.39, 1.66, 1.93].forEach((y) => {
+    addMesh(rear, rounded(1.8, 0.018, 0.016, 0.005), 0xd5c7aa, [0, y, -0.145], [1, 1, 1], [0, 0, 0], false);
+  });
+  [-0.72, 0.72].forEach((x, index) => {
+    addMesh(rear, rounded(0.28, 0.38, 0.12, 0.04), deepTeal, [x, 1.18 + index * 0.45, -0.2]);
+    addMesh(rear, rounded(0.2, 0.18, 0.08, 0.025), 0x477f82, [x, 1.12 + index * 0.45, -0.28]);
+  });
+
+  const tray = createPart(g, "lower-marker-tray-with-three-markers");
+  addMesh(tray, rounded(1.92, 0.13, 0.38, 0.055), honeyDark, [0, 0.65, 0.27]);
+  addMesh(tray, rounded(1.82, 0.08, 0.31, 0.035), honeyLight, [0, 0.74, 0.27]);
+  addMesh(tray, rounded(1.86, 0.17, 0.11, 0.038), honey, [0, 0.75, 0.46]);
+  [[-0.55, 0xee745f], [0, 0x4ea8de], [0.55, 0xffecc9]].forEach(([x, color]) => {
+    addMesh(tray, cyl(0.055, 0.055, 0.42, 16), color, [x, 0.84, 0.3], [1, 1, 1], [0, 0, Math.PI / 2]);
+    addMesh(tray, cyl(0.062, 0.062, 0.08, 16), P.paper, [x - 0.22, 0.84, 0.3], [1, 1, 1], [0, 0, Math.PI / 2]);
+  });
+
+  const stand = createPart(g, "two-support-legs-wide-crossbar-and-side-pivots");
+  [-1.4, 1.4].forEach((x) => {
+    addMesh(stand, rounded(0.2, 2.72, 0.24, 0.06), honey, [x, 1.4, 0]);
+    addMesh(stand, rounded(0.86, 0.18, 0.3, 0.06), honeyDark, [x, 0.3, 0]);
+    addMesh(stand, rounded(0.76, 0.11, 0.72, 0.04), honeyLight, [x, 0.38, 0]);
+    addMesh(stand, cyl(0.18, 0.18, 0.12, 22), honeyDark, [x, 1.53, 0], [1, 1, 1], [0, 0, Math.PI / 2]);
+    addMesh(stand, cyl(0.11, 0.11, 0.15, 20), honeyLight, [x, 1.53, 0], [1, 1, 1], [0, 0, Math.PI / 2]);
+  });
+  addMesh(stand, rounded(2.72, 0.18, 0.2, 0.055), honeyDark, [0, 0.32, 0]);
+  addMesh(stand, rounded(2.58, 0.09, 0.15, 0.035), honeyLight, [0, 0.43, 0]);
+
+  const wheels = createPart(g, "exactly-four-locking-caster-wheels");
+  let wheelIndex = 1;
+  [-1.4, 1.4].forEach((x) => {
+    [-0.28, 0.28].forEach((z) => {
+      addCollaborationCaster(wheels, x, z, wheelIndex);
+      wheelIndex += 1;
+    });
+  });
+  return g;
+}
+
+function addMediationDocumentLedge(group, x, side) {
+  const ledge = createPart(group, side < 0 ? "equal-left-document-ledge" : "equal-right-document-ledge");
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  addMesh(ledge, rounded(0.72, 0.13, 0.5, 0.055), honeyDark, [x, 1.02, 0.48]);
+  addMesh(ledge, rounded(0.66, 0.08, 0.44, 0.035), honeyLight, [x, 1.11, 0.48]);
+  addMesh(ledge, rounded(0.43, 0.035, 0.32, 0.014), P.paper, [x, 1.18, 0.5], [1, 1, 1], [0, side * 0.05, 0]);
+  addMesh(ledge, rounded(0.5, 0.06, 0.17, 0.025), honeyDark, [x, 1.17, 0.2]);
+  addMesh(ledge, cyl(0.035, 0.035, 0.42, 14), P.blue, [x, 1.23, 0.2], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(ledge, cyl(0.045, 0.045, 0.08, 14), P.yellow, [x - side * 0.22, 1.23, 0.2], [1, 1, 1], [0, 0, Math.PI / 2]);
+}
+
+function mediationPodium() {
+  const g = new THREE.Group();
+  g.name = "mediation-podium";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const deepTeal = 0x315f69;
+  const mint = 0x8bcfbd;
+  const mintLight = 0xb8e5d5;
+  const brass = 0xe0a52f;
+
+  const base = createPart(g, "wide-circular-floor-base-and-four-subtle-feet");
+  addMesh(base, cyl(1.52, 1.52, 0.2, 64), deepTeal, [0, 0.16, 0]);
+  addMesh(base, cyl(1.43, 1.45, 0.1, 64), honeyLight, [0, 0.31, 0]);
+  addMesh(base, cyl(1.15, 1.15, 0.08, 64), mint, [0, 0.39, 0]);
+  [[-0.92, -0.75], [0.92, -0.75], [-0.92, 0.75], [0.92, 0.75]].forEach(([x, z]) => {
+    addMesh(base, cyl(0.13, 0.15, 0.12, 20), honeyDark, [x, 0.06, z]);
+  });
+
+  const body = createPart(g, "low-circular-body-with-two-opposite-open-side-gaps");
+  const arc = 2.18;
+  const rightBody = createPart(body, "right-equal-ring-segment");
+  addMesh(rightBody, annularSector(0.86, 1.43, 0.56, -arc / 2, arc / 2), honey, [0, 0.38, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  const leftBody = createPart(body, "left-equal-ring-segment");
+  addMesh(leftBody, annularSector(0.86, 1.43, 0.56, Math.PI - arc / 2, Math.PI + arc / 2), honey, [0, 0.38, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+
+  const innerPanels = createPart(g, "symmetric-inner-teal-panels");
+  addMesh(innerPanels, annularSector(0.83, 0.98, 0.42, -arc / 2 + 0.08, arc / 2 - 0.08), deepTeal, [0, 0.48, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  addMesh(innerPanels, annularSector(0.83, 0.98, 0.42, Math.PI - arc / 2 + 0.08, Math.PI + arc / 2 - 0.08), deepTeal, [0, 0.48, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+
+  const tops = createPart(g, "two-equal-rounded-ring-worktops");
+  addMesh(tops, annularSector(0.78, 1.5, 0.15, -arc / 2 - 0.03, arc / 2 + 0.03), honeyLight, [0, 0.93, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  addMesh(tops, annularSector(0.78, 1.5, 0.15, Math.PI - arc / 2 - 0.03, Math.PI + arc / 2 + 0.03), honeyLight, [0, 0.93, 0], [1, 1, 1], [-Math.PI / 2, 0, 0]);
+  addMesh(tops, annularSector(0.83, 1.43, 0.035, -arc / 2, arc / 2), 0xf2bd62, [0, 1.1, 0], [1, 1, 1], [-Math.PI / 2, 0, 0], false);
+  addMesh(tops, annularSector(0.83, 1.43, 0.035, Math.PI - arc / 2, Math.PI + arc / 2), 0xf2bd62, [0, 1.1, 0], [1, 1, 1], [-Math.PI / 2, 0, 0], false);
+
+  const drawers = createPart(g, "two-symmetric-storage-drawers");
+  [-1, 1].forEach((side) => {
+    addMesh(drawers, rounded(0.09, 0.34, 0.58, 0.032), honeyDark, [side * 1.39, 0.68, 0]);
+    addMesh(drawers, rounded(0.07, 0.27, 0.48, 0.025), mint, [side * 1.445, 0.68, 0]);
+    addMesh(drawers, sphere(0.075, 18, 10), brass, [side * 1.51, 0.68, 0], [0.55, 1, 1]);
+  });
+
+  addMediationDocumentLedge(g, -0.88, -1);
+  addMediationDocumentLedge(g, 0.88, 1);
+
+  const listeningLight = createPart(g, "central-listening-light-open-brass-ring-and-pedestal");
+  addMesh(listeningLight, cyl(0.24, 0.28, 0.1, 28), honeyDark, [0, 0.48, 0]);
+  addMesh(listeningLight, cyl(0.18, 0.22, 0.12, 28), brass, [0, 0.58, 0]);
+  addMesh(listeningLight, cyl(0.07, 0.08, 0.35, 18), brass, [0, 0.78, 0]);
+  addMesh(listeningLight, torus(0.29, 0.045, 12, 36), brass, [0, 1.08, 0]);
+  addMesh(listeningLight, torus(0.29, 0.035, 10, 36), honeyLight, [0, 1.08, 0], [1, 1, 1], [0, Math.PI / 2, 0]);
+  addMesh(listeningLight, sphere(0.2, 28, 18), 0xffe58a, [0, 1.08, 0]);
+  addMesh(listeningLight, sphere(0.115, 24, 16), 0xfff8cf, [0, 1.11, 0.05], [1, 1, 1], [0, 0, 0], false);
+
+  const gapTrim = createPart(g, "finished-open-gap-endcaps");
+  const gapAngles = [-arc / 2, arc / 2, Math.PI - arc / 2, Math.PI + arc / 2];
+  gapAngles.forEach((angle) => {
+    const x = Math.cos(angle) * 1.14;
+    const z = -Math.sin(angle) * 1.14;
+    addMesh(gapTrim, rounded(0.16, 0.66, 0.28, 0.055), honeyDark, [x, 0.7, z], [1, 1, 1], [0, -angle, 0]);
+    addMesh(gapTrim, rounded(0.11, 0.55, 0.2, 0.04), mintLight, [x * 0.98, 0.7, z * 0.98], [1, 1, 1], [0, -angle, 0]);
+  });
+  return g;
+}
+
+function addArchiveDrawer(group, x, y, color, index) {
+  const drawer = createPart(group, `consent-drawer-${index}`);
+  const honey = 0xc98035;
+  const brass = 0xe0a52f;
+  addMesh(drawer, rounded(0.64, 0.52, 0.68, 0.07), 0xf6dfb4, [x, y, 0.06]);
+  addMesh(drawer, rounded(0.58, 0.46, 0.09, 0.035), color, [x, y, 0.43]);
+  addMesh(drawer, rounded(0.48, 0.36, 0.035, 0.014), color, [x, y, 0.49], [1, 1, 1], [0, 0, 0], false);
+
+  const label = createPart(drawer, `blank-label-holder-${index}`);
+  addMesh(label, rounded(0.31, 0.17, 0.08, 0.035), brass, [x, y + 0.08, 0.52]);
+  addMesh(label, rounded(0.23, 0.1, 0.045, 0.02), P.paper, [x, y + 0.08, 0.575], [1, 1, 1], [0, 0, 0], false);
+  [-0.135, 0.135].forEach((dx) => {
+    addMesh(label, sphere(0.018, 12, 8), honey, [x + dx, y + 0.08, 0.575]);
+  });
+
+  const handle = createPart(drawer, `separate-pull-handle-${index}`);
+  addMesh(handle, rounded(0.34, 0.065, 0.08, 0.025), brass, [x, y - 0.11, 0.575]);
+  [-0.13, 0.13].forEach((dx) => {
+    addMesh(handle, rounded(0.065, 0.11, 0.08, 0.024), brass, [x + dx, y - 0.075, 0.54]);
+  });
+}
+
+function archiveCabinet() {
+  const g = new THREE.Group();
+  g.name = "archive-cabinet";
+  const cream = 0xf6dfb4;
+  const creamLight = 0xffefce;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const brass = 0xe0a52f;
+  const drawerColors = [0xee806b, 0x8fcdb4, 0x67a9dc, 0xf0b442, 0xa78ac7, 0x78bdc0];
+
+  const body = createPart(g, "cabinet-body-closed-shell-and-recessed-plinth");
+  addMesh(body, rounded(1.68, 2.38, 0.86, 0.13), honeyDark, [0, 1.25, 0]);
+  addMesh(body, rounded(1.56, 2.26, 0.8, 0.11), cream, [0, 1.28, 0.015]);
+  addMesh(body, rounded(1.5, 0.2, 0.88, 0.07), honey, [0, 0.18, 0]);
+  addMesh(body, rounded(1.38, 0.1, 0.72, 0.035), creamLight, [0, 0.31, 0.02]);
+  [-0.66, 0.66].forEach((x) => {
+    addMesh(body, rounded(0.18, 2.02, 0.74, 0.06), creamLight, [x, 1.32, 0.015]);
+    addMesh(body, rounded(0.08, 1.86, 0.77, 0.03), honeyLight, [x, 1.32, 0.02]);
+  });
+  [[-0.62, -0.29], [0.62, -0.29], [-0.62, 0.29], [0.62, 0.29]].forEach(([x, z]) => {
+    addMesh(body, rounded(0.22, 0.16, 0.22, 0.055), honeyDark, [x, 0.08, z]);
+  });
+
+  const drawers = createPart(g, "exactly-six-colored-consent-drawers");
+  const xs = [-0.36, 0.36];
+  const ys = [0.61, 1.17, 1.73];
+  let drawerIndex = 1;
+  ys.forEach((y, row) => {
+    xs.forEach((x, column) => {
+      addArchiveDrawer(drawers, x, y, drawerColors[row * 2 + column], drawerIndex);
+      drawerIndex += 1;
+    });
+  });
+
+  const header = createPart(g, "privacy-header-and-compact-lock-panel");
+  addMesh(header, rounded(1.3, 0.32, 0.12, 0.055), creamLight, [0, 2.15, 0.41]);
+  addMesh(header, rounded(0.54, 0.25, 0.09, 0.035), honeyLight, [0.35, 2.15, 0.49]);
+  addMesh(header, cyl(0.09, 0.09, 0.055, 20), honeyDark, [0.16, 2.15, 0.56], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(header, rounded(0.025, 0.09, 0.025, 0.008), P.ink, [0.16, 2.14, 0.594]);
+  [0x4abf78, 0xf0c94a, 0xe95656].forEach((color, index) => {
+    addMesh(header, sphere(0.032, 14, 9), color, [0.36 + index * 0.11, 2.15, 0.565]);
+  });
+
+  const cornice = createPart(g, "substantial-rounded-top-cornice");
+  addMesh(cornice, rounded(1.82, 0.24, 1, 0.11), honeyDark, [0, 2.48, 0]);
+  addMesh(cornice, rounded(1.72, 0.22, 0.94, 0.1), honeyLight, [0, 2.55, 0]);
+  addMesh(cornice, rounded(1.43, 0.035, 0.69, 0.012), creamLight, [0, 2.675, 0.02], [1, 1, 1], [0, 0, 0], false);
+
+  const back = createPart(g, "fully-finished-rear-panel-with-seal-and-service-rail");
+  addMesh(back, rounded(1.32, 1.84, 0.08, 0.03), honey, [0, 1.35, -0.45]);
+  addMesh(back, rounded(1.18, 1.66, 0.045, 0.016), creamLight, [0, 1.35, -0.505]);
+  addMesh(back, rounded(0.98, 0.07, 0.055, 0.022), honeyLight, [0, 0.54, -0.54]);
+  addMesh(back, rounded(0.98, 0.07, 0.055, 0.022), honeyLight, [0, 2.16, -0.54]);
+  addMesh(back, torus(0.22, 0.045, 12, 30), brass, [0, 1.4, -0.55]);
+  addMesh(back, sphere(0.075, 18, 12), honeyDark, [0, 1.47, -0.59], [1, 1.05, 0.45]);
+  addMesh(back, rounded(0.08, 0.22, 0.05, 0.02), honeyDark, [0, 1.33, -0.59]);
+  return g;
+}
+
+function calmingChair() {
+  const g = new THREE.Group();
+  g.name = "calming-chair";
+  const deepTeal = 0x315f69;
+  const teal = 0x477f78;
+  const mint = 0x9bc9a1;
+  const mintLight = 0xc5dfb1;
+  const coral = 0xee806b;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const amber = 0xffd36b;
+
+  const base = createPart(g, "stable-wide-circular-floor-base-and-finished-underside");
+  addMesh(base, cyl(1.35, 1.35, 0.16, 56), deepTeal, [0, 0.12, 0]);
+  addMesh(base, cyl(1.24, 1.27, 0.12, 56), honey, [0, 0.26, 0]);
+  addMesh(base, cyl(1.04, 1.11, 0.12, 48), teal, [0, 0.38, -0.08]);
+  [[-0.82, -0.55], [0.82, -0.55], [-0.82, 0.55], [0.82, 0.55]].forEach(([x, z]) => {
+    addMesh(base, cyl(0.11, 0.13, 0.1, 18), honey, [x, 0.05, z]);
+  });
+
+  const shell = createPart(g, "cocoon-chair-shell-with-open-forward-exit");
+  addMesh(shell, rounded(1.48, 1.72, 0.42, 0.18), deepTeal, [0, 1.34, -0.4]);
+  addMesh(shell, rounded(1.3, 1.5, 0.25, 0.1), mint, [0, 1.4, -0.17]);
+  [-1, 1].forEach((side) => {
+    addMesh(shell, rounded(0.32, 1.46, 0.88, 0.15), deepTeal, [side * 0.68, 1.12, 0], [1, 1, 1], [0, side * 0.13, side * -0.05]);
+    addMesh(shell, rounded(0.21, 1.28, 0.75, 0.1), mintLight, [side * 0.58, 1.2, 0.08], [1, 1, 1], [0, side * 0.13, side * -0.05]);
+    addMesh(shell, sphere(0.28, 22, 14), mintLight, [side * 0.56, 1.92, -0.16], [1.12, 1.2, 0.7]);
+  });
+  addMesh(shell, sphere(0.62, 28, 18), mintLight, [0, 2.03, -0.25], [1.06, 0.55, 0.48]);
+
+  const cushion = createPart(g, "thick-removable-seat-cushion");
+  addMesh(cushion, rounded(1.05, 0.24, 0.72, 0.11), teal, [0, 0.67, 0.12]);
+  addMesh(cushion, rounded(0.96, 0.18, 0.64, 0.07), mintLight, [0, 0.82, 0.16]);
+  addMesh(cushion, rounded(0.7, 0.1, 0.025, 0.01), mint, [0, 0.84, 0.49], [1, 1, 1], [0, 0, 0], false);
+
+  const pillow = createPart(g, "coral-weighted-lap-pillow-with-carry-handle");
+  addMesh(pillow, rounded(0.76, 0.28, 0.5, 0.12), coral, [0, 1.18, 0.12], [1, 1, 1], [-0.12, 0, 0]);
+  addMesh(pillow, sphere(0.035, 14, 9), 0xb94f47, [0, 1.33, 0.37]);
+  addMesh(pillow, rounded(0.3, 0.06, 0.07, 0.025), honey, [0, 1.01, 0.38]);
+
+  const footrest = createPart(g, "separate-low-rounded-footrest");
+  addMesh(footrest, rounded(0.8, 0.18, 0.56, 0.07), honey, [0, 0.34, 1.02]);
+  addMesh(footrest, rounded(0.7, 0.25, 0.5, 0.11), mintLight, [0, 0.52, 1.02]);
+  [-0.28, 0.28].forEach((x) => {
+    [-0.16, 0.16].forEach((z) => addMesh(footrest, rounded(0.11, 0.22, 0.11, 0.035), honey, [x, 0.17, 1.02 + z]));
+  });
+
+  const light = createPart(g, "warm-side-light-and-water-cup-tray");
+  addMesh(light, cyl(0.055, 0.065, 1.48, 16), honey, [-1.04, 1.08, -0.1]);
+  addMesh(light, rounded(0.42, 0.08, 0.08, 0.028), honey, [-1.17, 1.82, -0.1]);
+  addMesh(light, torus(0.18, 0.04, 12, 32), honey, [-1.31, 1.67, -0.1]);
+  addMesh(light, sphere(0.135, 22, 14), amber, [-1.31, 1.67, -0.08], [1, 1, 0.82], [0, 0, 0], false);
+  addMesh(light, cyl(0.25, 0.25, 0.07, 28), honey, [-0.91, 0.96, 0.34]);
+  addMesh(light, cyl(0.19, 0.19, 0.04, 24), honeyLight, [-0.91, 1.02, 0.34]);
+  addMesh(light, cyl(0.1, 0.085, 0.25, 20), P.glass, [-0.91, 1.16, 0.34], [1, 1, 1], [0, 0, 0], false);
+  addMesh(light, cyl(0.078, 0.078, 0.015, 20), P.blue, [-0.91, 1.22, 0.34], [1, 1, 1], [0, 0, 0], false);
+
+  const pause = createPart(g, "pause-hourglass-on-opposite-arm");
+  addMesh(pause, cyl(0.22, 0.22, 0.07, 24), honey, [0.92, 0.96, 0.34]);
+  addMesh(pause, cyl(0.14, 0.14, 0.045, 20), honeyLight, [0.92, 1.02, 0.34]);
+  addMesh(pause, cyl(0.11, 0.11, 0.045, 18), honey, [0.92, 1.12, 0.34]);
+  addMesh(pause, cyl(0.11, 0.11, 0.045, 18), honey, [0.92, 1.43, 0.34]);
+  addMesh(pause, cyl(0.1, 0.025, 0.16, 18), amber, [0.92, 1.23, 0.34]);
+  addMesh(pause, cyl(0.025, 0.1, 0.16, 18), amber, [0.92, 1.34, 0.34]);
+  [-0.075, 0.075].forEach((x) => {
+    addMesh(pause, cyl(0.018, 0.018, 0.34, 10), honeyDark, [0.92 + x, 1.275, 0.34]);
+  });
+  return g;
+}
+
+function homeBed() {
+  const g = new THREE.Group();
+  g.name = "home-bed";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const sage = 0x92b66f;
+  const sageDark = 0x577d49;
+  const cream = 0xffefce;
+  const amber = 0xffd36b;
+
+  const frame = createPart(g, "complete-honey-oak-bed-frame-with-four-posts-and-footboard");
+  addMesh(frame, rounded(2.42, 0.22, 1.22, 0.075), honeyDark, [0, 0.38, 0]);
+  addMesh(frame, rounded(2.28, 0.16, 1.1, 0.06), honey, [0, 0.5, 0]);
+  [-1.1, 1.1].forEach((x) => {
+    [-0.53, 0.53].forEach((z) => addMesh(frame, rounded(0.18, 1.14, 0.18, 0.055), honeyDark, [x, 0.64, z]));
+  });
+  addMesh(frame, rounded(0.18, 0.72, 1.18, 0.06), honey, [1.08, 0.72, 0]);
+  addMesh(frame, rounded(0.11, 0.52, 0.96, 0.045), honeyLight, [0.97, 0.76, 0]);
+  addMesh(frame, rounded(0.12, 0.09, 1.02, 0.035), honeyDark, [0.9, 0.55, 0]);
+
+  const headboard = createPart(g, "low-slatted-headboard-with-rounded-top-rail");
+  addMesh(headboard, rounded(0.18, 1.34, 1.2, 0.065), honey, [-1.08, 1.02, 0]);
+  addMesh(headboard, rounded(0.2, 0.2, 1.34, 0.08), honeyLight, [-1.08, 1.63, 0]);
+  [-0.38, -0.13, 0.13, 0.38].forEach((z) => {
+    addMesh(headboard, rounded(0.11, 0.63, 0.12, 0.035), honeyDark, [-0.96, 1.25, z]);
+  });
+  addMesh(headboard, rounded(0.13, 0.12, 0.98, 0.04), honeyDark, [-0.95, 0.93, 0]);
+
+  const mattress = createPart(g, "cream-mattress-with-finished-edge");
+  addMesh(mattress, rounded(1.95, 0.26, 0.98, 0.11), cream, [-0.03, 0.7, 0]);
+  addMesh(mattress, rounded(1.82, 0.035, 0.88, 0.014), 0xfff8df, [-0.05, 0.845, 0], [1, 1, 1], [0, 0, 0], false);
+
+  const quilt = createPart(g, "sage-green-quilt-with-dark-folded-border");
+  addMesh(quilt, rounded(1.25, 0.18, 1, 0.085), sage, [0.34, 0.89, 0]);
+  addMesh(quilt, rounded(0.16, 0.22, 1.03, 0.06), sageDark, [-0.31, 0.92, 0]);
+  [-0.27, 0.05, 0.37, 0.69].forEach((x) => {
+    addMesh(quilt, rounded(0.025, 0.015, 0.86, 0.006), sageDark, [x, 0.99, 0], [1, 1, 1], [0, 0, 0], false);
+  });
+  [-0.28, 0.28].forEach((z) => {
+    addMesh(quilt, rounded(1.08, 0.015, 0.025, 0.006), sageDark, [0.35, 0.99, z], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const pillow = createPart(g, "single-plump-cream-pillow");
+  addMesh(pillow, rounded(0.62, 0.2, 0.76, 0.095), cream, [-0.57, 1.01, 0], [1, 1, 1], [0, 0, 0.08]);
+  addMesh(pillow, sphere(0.035, 14, 9), honeyLight, [-0.57, 1.13, 0]);
+
+  const underside = createPart(g, "finished-underside-support-slats-and-center-beam");
+  [-0.72, -0.36, 0, 0.36, 0.72].forEach((x) => {
+    addMesh(underside, rounded(0.1, 0.08, 1, 0.025), honeyLight, [x, 0.28, 0]);
+  });
+  addMesh(underside, rounded(2.04, 0.11, 0.12, 0.035), honeyDark, [0, 0.23, 0]);
+
+  const table = createPart(g, "separate-two-drawer-bedside-table");
+  addMesh(table, rounded(0.68, 0.72, 0.62, 0.09), honey, [-0.87, 0.48, 0.93]);
+  addMesh(table, rounded(0.76, 0.13, 0.7, 0.055), honeyLight, [-0.87, 0.89, 0.93]);
+  [0.42, 0.68].forEach((y) => {
+    addMesh(table, rounded(0.5, 0.2, 0.08, 0.03), honeyLight, [-0.87, y, 1.26]);
+    addMesh(table, sphere(0.045, 14, 9), sageDark, [-0.87, y, 1.32], [1, 1, 0.55]);
+  });
+  [[-1.1, 0.72], [-0.64, 0.72], [-1.1, 1.14], [-0.64, 1.14]].forEach(([x, z]) => {
+    addMesh(table, rounded(0.1, 0.16, 0.1, 0.03), honeyDark, [x, 0.08, z]);
+  });
+
+  const lamp = createPart(g, "curved-warm-reading-lamp-with-connected-base");
+  addMesh(lamp, cyl(0.16, 0.18, 0.08, 22), honeyDark, [-0.87, 1, 0.93]);
+  addMesh(lamp, cyl(0.05, 0.05, 0.58, 14), honey, [-0.87, 1.31, 0.93]);
+  addMesh(lamp, rounded(0.42, 0.07, 0.08, 0.025), honey, [-0.7, 1.58, 0.93]);
+  addMesh(lamp, cyl(0.24, 0.16, 0.26, 24), sageDark, [-0.5, 1.48, 0.93], [1, 1, 1], [0, 0, -Math.PI / 2]);
+  addMesh(lamp, sphere(0.1, 18, 12), amber, [-0.45, 1.48, 0.93], [1, 1, 0.7], [0, 0, 0], false);
+  return g;
+}
+
+function addStoryBookRow(group, y, rowIndex) {
+  const colors = [0x5d9bd8, 0xe87862, 0xf0b442, 0x7ea35f, 0xa78ac7, 0x5aaea4, 0xffefce];
+  const heights = [0.32, 0.38, 0.35, 0.41, 0.34, 0.39, 0.36, 0.4];
+  for (let index = 0; index < 8; index += 1) {
+    const height = heights[(index + rowIndex) % heights.length];
+    const x = -0.55 + index * 0.155;
+    const tilt = ((index + rowIndex) % 5 === 0 ? -0.08 : (index + rowIndex) % 6 === 0 ? 0.07 : 0);
+    const book = createPart(group, `story-book-row-${rowIndex + 1}-book-${index + 1}`);
+    addMesh(book, rounded(0.12, height, 0.26, 0.026), colors[(index + rowIndex * 2) % colors.length], [x, y + height / 2 + 0.05, 0.09], [1, 1, 1], [0, 0, tilt]);
+    addMesh(book, rounded(0.085, 0.025, 0.275, 0.009), 0xf4d9a6, [x - Math.sin(tilt) * height * 0.46, y + height + 0.055, 0.09], [1, 1, 1], [0, 0, tilt], false);
+    addMesh(book, rounded(0.075, 0.025, 0.02, 0.007), 0xe0a52f, [x, y + height * 0.58, 0.235], [1, 1, 1], [0, 0, tilt], false);
+  }
+}
+
+function bookcase() {
+  const g = new THREE.Group();
+  g.name = "bookcase";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const brass = 0xe0a52f;
+
+  const back = createPart(g, "finished-recessed-back-panel-with-rear-trim");
+  addMesh(back, rounded(1.5, 2.68, 0.16, 0.07), honeyDark, [0, 1.43, -0.24]);
+  addMesh(back, rounded(1.32, 2.43, 0.08, 0.035), honey, [0, 1.48, -0.35]);
+  [-0.48, 0, 0.48].forEach((x) => addMesh(back, rounded(0.035, 2.25, 0.035, 0.012), honeyLight, [x, 1.49, -0.405], [1, 1, 1], [0, 0, 0], false));
+
+  const frame = createPart(g, "substantial-rounded-bookcase-frame-and-plinth");
+  [-0.72, 0.72].forEach((x) => {
+    addMesh(frame, rounded(0.2, 2.58, 0.62, 0.075), honey, [x, 1.42, 0]);
+    addMesh(frame, rounded(0.09, 2.34, 0.52, 0.035), honeyLight, [x * 0.96, 1.45, 0.02]);
+  });
+  addMesh(frame, rounded(1.68, 0.22, 0.7, 0.09), honeyDark, [0, 0.16, 0]);
+  addMesh(frame, rounded(1.58, 0.18, 0.66, 0.075), honey, [0, 0.27, 0]);
+  addMesh(frame, rounded(1.72, 0.22, 0.72, 0.095), honeyDark, [0, 2.7, 0]);
+  addMesh(frame, rounded(1.62, 0.2, 0.68, 0.085), honeyLight, [0, 2.79, 0]);
+  [[-0.63, -0.21], [0.63, -0.21], [-0.63, 0.21], [0.63, 0.21]].forEach(([x, z]) => {
+    addMesh(frame, rounded(0.16, 0.14, 0.16, 0.045), honeyDark, [x, 0.07, z]);
+  });
+
+  const shelves = createPart(g, "exactly-four-usable-book-shelves");
+  const shelfYs = [0.62, 1.04, 1.46, 1.88];
+  shelfYs.forEach((y, index) => {
+    addMesh(shelves, rounded(1.36, 0.11, 0.55, 0.04), honeyDark, [0, y, 0.02]);
+    addMesh(shelves, rounded(1.28, 0.06, 0.5, 0.025), honeyLight, [0, y + 0.075, 0.02]);
+    addStoryBookRow(shelves, y + 0.05, index);
+  });
+
+  const display = createPart(g, "upper-display-niche-open-keepsake-book-and-blank-card");
+  addMesh(display, rounded(1.4, 0.11, 0.56, 0.04), honeyDark, [0, 2.31, 0.02]);
+  addMesh(display, rounded(1.25, 0.38, 0.06, 0.022), honey, [0, 2.48, -0.28]);
+  addMesh(display, rounded(0.42, 0.05, 0.34, 0.018), honeyDark, [-0.23, 2.42, 0.1], [1, 1, 1], [0, -0.12, 0]);
+  addMesh(display, rounded(0.22, 0.045, 0.3, 0.015), cream, [-0.34, 2.48, 0.12], [1, 1, 1], [0, -0.12, -0.12], false);
+  addMesh(display, rounded(0.22, 0.045, 0.3, 0.015), cream, [-0.12, 2.48, 0.12], [1, 1, 1], [0, -0.12, 0.12], false);
+  addMesh(display, rounded(0.25, 0.31, 0.08, 0.035), honeyDark, [0.37, 2.51, 0.08]);
+  addMesh(display, rounded(0.18, 0.24, 0.045, 0.022), cream, [0.37, 2.51, 0.135], [1, 1, 1], [0, 0, 0], false);
+
+  const drawers = createPart(g, "two-equal-lower-drawers-with-separate-handles");
+  [-0.36, 0.36].forEach((x, index) => {
+    addMesh(drawers, rounded(0.62, 0.28, 0.52, 0.065), honey, [x, 0.43, 0.02]);
+    addMesh(drawers, rounded(0.54, 0.22, 0.08, 0.03), honeyLight, [x, 0.43, 0.31]);
+    addMesh(drawers, rounded(0.26, 0.055, 0.08, 0.02), brass, [x, 0.39, 0.37]);
+    [-0.09, 0.09].forEach((dx) => addMesh(drawers, rounded(0.05, 0.1, 0.07, 0.018), brass, [x + dx, 0.43, 0.34]));
+    drawers.children.at(-1).name = `drawer-handle-${index + 1}`;
+  });
+  return g;
+}
+
+function addGardenWateringCan(group, x, z, color, side) {
+  const can = createPart(group, side < 0 ? "left-watering-can" : "right-watering-can");
+  addMesh(can, cyl(0.2, 0.23, 0.32, 24), color, [x, 0.93, z]);
+  addMesh(can, torus(0.2, 0.045, 10, 28), color, [x, 1.18, z], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addCylinderBetween(can, [x + side * 0.14, 1.02, z], [x + side * 0.47, 1.22, z], 0.055, color, "long-spout");
+  addMesh(can, cyl(0.11, 0.07, 0.08, 18), color, [x + side * 0.5, 1.25, z], [1, 1, 1], [0, 0, side * Math.PI / 3]);
+  addMesh(can, cyl(0.09, 0.09, 0.055, 18), P.cream, [x, 1.1, z], [1, 1, 1], [0, 0, 0], false);
+}
+
+function gardenToolShed() {
+  const g = new THREE.Group();
+  g.name = "garden-tool-shed";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const sage = 0x7f9859;
+  const sageDark = 0x465f3e;
+  const cream = 0xffefce;
+  const coral = 0xee806b;
+
+  const rear = createPart(g, "finished-cream-rear-wall-with-rear-trim");
+  addMesh(rear, rounded(1.7, 2.1, 0.16, 0.07), honeyDark, [0, 1.31, -0.33]);
+  addMesh(rear, rounded(1.54, 1.95, 0.08, 0.035), cream, [0, 1.32, -0.44]);
+  [-0.52, 0, 0.52].forEach((x) => addMesh(rear, rounded(0.035, 1.78, 0.035, 0.012), honeyLight, [x, 1.32, -0.49], [1, 1, 1], [0, 0, 0], false));
+
+  const frame = createPart(g, "open-shed-frame-side-braces-and-four-feet");
+  [-0.88, 0.88].forEach((x) => {
+    addMesh(frame, rounded(0.16, 2.24, 0.18, 0.055), honey, [x, 1.18, 0]);
+    addMesh(frame, rounded(0.12, 0.95, 0.13, 0.04), honeyLight, [x, 1.67, 0.12], [1, 1, 1], [0.42, 0, x < 0 ? 0.28 : -0.28]);
+    addMesh(frame, rounded(0.12, 0.82, 0.13, 0.04), honeyLight, [x, 0.52, 0.12], [1, 1, 1], [-0.42, 0, x < 0 ? -0.28 : 0.28]);
+  });
+  addMesh(frame, rounded(1.92, 0.16, 0.78, 0.06), honeyDark, [0, 0.16, 0]);
+  [[-0.82, -0.25], [0.82, -0.25], [-0.82, 0.25], [0.82, 0.25]].forEach(([x, z]) => {
+    addMesh(frame, rounded(0.17, 0.16, 0.17, 0.05), sageDark, [x, 0.07, z]);
+  });
+
+  const roof = createPart(g, "pitched-sage-green-roof-ridge-and-rain-gutter");
+  addMesh(roof, rounded(2.12, 0.14, 0.88, 0.055), sage, [0, 2.42, -0.2], [1, 1, 1], [0.38, 0, 0]);
+  addMesh(roof, rounded(2.12, 0.14, 0.88, 0.055), sage, [0, 2.42, 0.2], [1, 1, 1], [-0.38, 0, 0]);
+  addMesh(roof, rounded(2.18, 0.16, 0.16, 0.055), sageDark, [0, 2.61, 0]);
+  addMesh(roof, cyl(0.065, 0.065, 2.1, 16), sageDark, [0, 2.2, 0.56], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(roof, cyl(0.055, 0.055, 1.9, 14), sageDark, [1.01, 1.26, 0.5]);
+
+  const pegboard = createPart(g, "large-green-pegboard-with-dedicated-tool-hooks");
+  addMesh(pegboard, rounded(1.5, 1.02, 0.12, 0.05), sageDark, [0, 1.58, -0.18]);
+  addMesh(pegboard, rounded(1.38, 0.9, 0.055, 0.022), 0x637a4e, [0, 1.58, -0.1]);
+  for (let row = 0; row < 5; row += 1) {
+    for (let column = 0; column < 8; column += 1) {
+      addMesh(pegboard, cyl(0.018, 0.018, 0.025, 10), honeyDark, [-0.58 + column * 0.17, 1.25 + row * 0.16, -0.06], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+    }
+  }
+  [-0.5, 0, 0.5].forEach((x) => {
+    addMesh(pegboard, rounded(0.18, 0.04, 0.05, 0.015), P.metal, [x, 2, 0]);
+  });
+
+  const shovel = createPart(g, "full-size-shovel-with-grip-and-metal-blade");
+  addMesh(shovel, rounded(0.07, 1.05, 0.07, 0.022), honey, [-0.48, 1.48, 0.03]);
+  addMesh(shovel, torus(0.14, 0.04, 10, 24), sageDark, [-0.48, 2.02, 0.03], [0.72, 1, 1]);
+  addMesh(shovel, rounded(0.3, 0.38, 0.08, 0.03), P.metal, [-0.48, 0.82, 0.03], [1, 1, 1], [0, 0, 0]);
+  addMesh(shovel, rounded(0.18, 0.15, 0.085, 0.032), P.metal, [-0.48, 0.63, 0.03]);
+
+  const rake = createPart(g, "full-size-rake-with-eight-tines");
+  addMesh(rake, rounded(0.07, 1.1, 0.07, 0.022), honey, [0, 1.45, 0.03]);
+  addMesh(rake, rounded(0.48, 0.1, 0.08, 0.028), sageDark, [0, 2.02, 0.03]);
+  for (let index = 0; index < 8; index += 1) {
+    addMesh(rake, rounded(0.025, 0.22, 0.045, 0.009), P.metal, [-0.2 + index * 0.057, 1.88, 0.03]);
+  }
+
+  const handTools = createPart(g, "pruning-shears-and-hand-trowel");
+  addMesh(handTools, rounded(0.07, 0.52, 0.07, 0.022), coral, [0.37, 1.55, 0.03], [1, 1, 1], [0, 0, 0.24]);
+  addMesh(handTools, rounded(0.07, 0.52, 0.07, 0.022), coral, [0.5, 1.55, 0.03], [1, 1, 1], [0, 0, -0.24]);
+  addMesh(handTools, sphere(0.08, 14, 9), P.metal, [0.435, 1.81, 0.03], [1.4, 0.55, 0.55]);
+  addMesh(handTools, rounded(0.07, 0.55, 0.07, 0.022), honey, [0.68, 1.55, 0.03]);
+  addMesh(handTools, rounded(0.24, 0.3, 0.08, 0.03), P.metal, [0.68, 1.18, 0.03]);
+
+  const storage = createPart(g, "broad-lower-storage-shelf-two-blank-label-bins-and-watering-cans");
+  addMesh(storage, rounded(1.7, 0.14, 0.72, 0.055), honeyLight, [0, 0.72, 0.08]);
+  addMesh(storage, rounded(1.72, 0.14, 0.7, 0.05), honeyDark, [0, 0.27, 0.04]);
+  [-0.43, 0.43].forEach((x) => {
+    addMesh(storage, rounded(0.7, 0.34, 0.5, 0.065), honey, [x, 0.48, 0.02]);
+    addMesh(storage, rounded(0.3, 0.12, 0.05, 0.02), cream, [x, 0.48, 0.3], [1, 1, 1], [0, 0, 0], false);
+  });
+  addGardenWateringCan(storage, -0.35, 0.2, 0x4c9b90, -1);
+  addGardenWateringCan(storage, 0.38, 0.2, coral, 1);
+  return g;
+}
+
+function addGalleryArtwork(group, x, y, width, height, frameColor, artColors, index) {
+  const art = createPart(group, `artwork-frame-${index}`);
+  addMesh(art, rounded(width, height, 0.13, 0.055), frameColor, [x, y, 0.18]);
+  addMesh(art, rounded(width - 0.14, height - 0.14, 0.045, 0.018), P.cream, [x, y, 0.27], [1, 1, 1], [0, 0, 0], false);
+  addMesh(art, sphere(Math.min(width, height) * 0.17, 18, 12), artColors[0], [x - width * 0.16, y + height * 0.12, 0.31], [1.4, 0.75, 0.32], [0, 0, index * 0.38], false);
+  addMesh(art, sphere(Math.min(width, height) * 0.15, 18, 12), artColors[1], [x + width * 0.18, y - height * 0.13, 0.31], [1.1, 1.4, 0.32], [0, 0, -index * 0.31], false);
+  addMesh(art, rounded(width * 0.32, height * 0.12, 0.025, 0.008), artColors[2], [x + width * 0.1, y + height * 0.18, 0.325], [1, 1, 1], [0, 0, index % 2 ? 0.35 : -0.28], false);
+}
+
+function galleryWall() {
+  const g = new THREE.Group();
+  g.name = "gallery-wall";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const inkMetal = 0x3b3a43;
+  const artPalettes = [
+    [0xee806b, 0x5d9bd8, 0xf0b442],
+    [0xa78ac7, 0xf0b442, 0xee806b],
+    [0x5d9bd8, 0x7f9859, 0xf0b442],
+    [0x7fc5ad, 0xee806b, 0xa78ac7],
+    [0xf0b442, 0x5d9bd8, 0xee806b]
+  ];
+
+  const panel = createPart(g, "wide-finished-wall-panel-with-front-and-rear-insets");
+  addMesh(panel, rounded(2.72, 1.78, 0.18, 0.075), honeyDark, [0, 1.36, 0]);
+  addMesh(panel, rounded(2.56, 1.62, 0.1, 0.045), cream, [0, 1.36, 0.11]);
+  addMesh(panel, rounded(2.46, 1.5, 0.075, 0.032), 0xf5dfb8, [0, 1.36, -0.13]);
+  [-0.78, 0, 0.78].forEach((x) => addMesh(panel, rounded(0.035, 1.34, 0.035, 0.012), honeyLight, [x, 1.36, -0.19], [1, 1, 1], [0, 0, 0], false));
+
+  const posts = createPart(g, "two-honey-oak-support-posts-broad-floor-feet-and-top-rail");
+  [-1.46, 1.46].forEach((x) => {
+    addMesh(posts, rounded(0.18, 2.32, 0.22, 0.065), honey, [x, 1.2, 0]);
+    addMesh(posts, rounded(0.46, 0.16, 0.66, 0.055), honeyDark, [x, 0.12, 0]);
+    addMesh(posts, rounded(0.38, 0.11, 0.58, 0.04), honeyLight, [x, 0.22, 0]);
+    addMesh(posts, rounded(0.24, 0.2, 0.28, 0.07), honeyLight, [x, 2.39, 0]);
+  });
+  addMesh(posts, rounded(2.88, 0.16, 0.25, 0.06), honey, [0, 2.29, 0]);
+
+  const artworks = createPart(g, "exactly-five-colorful-framed-abstract-art-panels");
+  addGalleryArtwork(artworks, -0.9, 1.55, 0.58, 0.86, 0x5aaea4, artPalettes[0], 1);
+  addGalleryArtwork(artworks, -0.24, 1.78, 0.55, 0.65, 0xf0b442, artPalettes[1], 2);
+  addGalleryArtwork(artworks, 0.65, 1.79, 0.82, 0.58, 0xee806b, artPalettes[2], 3);
+  addGalleryArtwork(artworks, 0.18, 1.06, 0.88, 0.6, 0xa78ac7, artPalettes[3], 4);
+  addGalleryArtwork(artworks, 0.93, 1.08, 0.52, 0.66, 0x5aaea4, artPalettes[4], 5);
+
+  const comments = createPart(g, "lower-anonymous-comment-card-ledge-with-five-blank-cards");
+  addMesh(comments, rounded(2.48, 0.12, 0.38, 0.045), honeyDark, [0, 0.5, 0.28]);
+  addMesh(comments, rounded(2.38, 0.07, 0.32, 0.03), honeyLight, [0, 0.58, 0.28]);
+  [-0.92, -0.46, 0, 0.46, 0.92].forEach((x, index) => {
+    addMesh(comments, rounded(0.31, 0.22, 0.035, 0.013), cream, [x, 0.72 + (index % 2) * 0.02, 0.39], [1, 1, 1], [-0.2, 0, 0], false);
+  });
+
+  const lights = createPart(g, "two-adjustable-top-spotlights-with-rear-cable-route");
+  [-0.82, 0.82].forEach((x, index) => {
+    addMesh(lights, torus(0.13, 0.035, 10, 24), inkMetal, [x, 2.43, 0.08], [1, 1, 1], [Math.PI / 2, 0, 0]);
+    addMesh(lights, cyl(0.13, 0.19, 0.28, 20), inkMetal, [x, 2.19, 0.24], [1, 1, 1], [0.75, 0, index ? -0.16 : 0.16]);
+    addMesh(lights, cyl(0.1, 0.1, 0.025, 18), 0xffd36b, [x, 2.08, 0.34], [1, 1, 1], [0.75, 0, index ? -0.16 : 0.16], false);
+  });
+  addMesh(lights, rounded(2.18, 0.055, 0.055, 0.018), inkMetal, [0, 2.05, -0.22], [1, 1, 1], [0, 0, 0], false);
+
+  const rear = createPart(g, "finished-backside-cross-braces-cable-clips-and-center-rail");
+  addCylinderBetween(rear, [-1.12, 0.42, -0.25], [-0.12, 1.36, -0.25], 0.065, honey, "left-rear-cross-brace");
+  addCylinderBetween(rear, [1.12, 0.42, -0.25], [0.12, 1.36, -0.25], 0.065, honey, "right-rear-cross-brace");
+  addMesh(rear, rounded(2.22, 0.13, 0.15, 0.045), honeyDark, [0, 1.33, -0.23]);
+  [-0.8, 0, 0.8].forEach((x) => addMesh(rear, rounded(0.1, 0.14, 0.1, 0.03), inkMetal, [x, 2.05, -0.26]));
+  return g;
+}
+
+function addStageLight(group, x, side) {
+  const light = createPart(group, side < 0 ? "left-adjustable-stage-light" : "right-adjustable-stage-light");
+  const inkMetal = 0x3b3a43;
+  addMesh(light, cyl(0.055, 0.055, 0.78, 14), inkMetal, [x, 0.76, 0.48]);
+  addMesh(light, rounded(0.42, 0.08, 0.11, 0.03), inkMetal, [x, 0.37, 0.48]);
+  addMesh(light, rounded(0.11, 0.08, 0.42, 0.03), inkMetal, [x, 0.37, 0.48]);
+  addMesh(light, cyl(0.16, 0.23, 0.32, 22), inkMetal, [x, 1.18, 0.39], [1, 1, 1], [0.82, 0, side * 0.15]);
+  addMesh(light, cyl(0.115, 0.115, 0.03, 20), 0xffd36b, [x - side * 0.03, 1.06, 0.51], [1, 1, 1], [0.82, 0, side * 0.15], false);
+  [-1, 1].forEach((flapSide) => {
+    addMesh(light, rounded(0.12, 0.24, 0.035, 0.012), inkMetal, [x + flapSide * 0.2, 1.18, 0.45], [1, 1, 1], [0, 0, flapSide * 0.38]);
+  });
+}
+
+function rehearsalStage() {
+  const g = new THREE.Group();
+  g.name = "rehearsal-stage";
+  const deepTeal = 0x315f69;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const coral = 0xee806b;
+  const coralDark = 0xb94f47;
+  const cream = 0xffefce;
+
+  const platform = createPart(g, "low-rounded-stage-platform-deep-teal-base-and-finished-underside");
+  addMesh(platform, cyl(1.5, 1.5, 0.28, 64), deepTeal, [0, 0.18, 0]);
+  addMesh(platform, cyl(1.43, 1.47, 0.16, 64), honeyDark, [0, 0.39, 0]);
+  addMesh(platform, cyl(1.38, 1.4, 0.12, 64), honeyLight, [0, 0.52, 0]);
+  [-0.92, -0.3, 0.3, 0.92].forEach((x) => addMesh(platform, rounded(0.04, 0.05, 2.2, 0.012), honey, [x, 0.6, 0], [1, 1, 1], [0, 0, 0], false));
+  [[-0.98, -0.74], [0.98, -0.74], [-0.98, 0.74], [0.98, 0.74]].forEach(([x, z]) => addMesh(platform, cyl(0.12, 0.14, 0.14, 18), honeyDark, [x, 0.07, z]));
+
+  const marks = createPart(g, "three-colored-floor-position-marks");
+  [[-0.62, 0xee806b], [0, 0x7fc5ad], [0.62, 0x5d9bd8]].forEach(([x, color]) => {
+    addMesh(marks, cyl(0.19, 0.19, 0.025, 28), cream, [x, 0.61, 0.36]);
+    addMesh(marks, cyl(0.15, 0.15, 0.03, 28), color, [x, 0.63, 0.36], [1, 1, 1], [0, 0, 0], false);
+  });
+
+  const arch = createPart(g, "honey-oak-curtain-arch-rail-and-open-center");
+  [-1.18, 1.18].forEach((x) => {
+    addMesh(arch, rounded(0.18, 1.95, 0.2, 0.06), honey, [x, 1.55, -0.55]);
+    addMesh(arch, rounded(0.24, 0.18, 0.26, 0.065), honeyLight, [x, 2.55, -0.55]);
+  });
+  addMesh(arch, rounded(1.05, 0.18, 0.2, 0.06), honey, [-0.72, 2.55, -0.55], [1, 1, 1], [0, 0, 0.16]);
+  addMesh(arch, rounded(1.05, 0.18, 0.2, 0.06), honey, [0.72, 2.55, -0.55], [1, 1, 1], [0, 0, -0.16]);
+  addMesh(arch, rounded(0.76, 0.2, 0.22, 0.065), coralDark, [0, 2.66, -0.54]);
+  addMesh(arch, rounded(2.18, 0.075, 0.075, 0.025), 0x3b3a43, [0, 2.36, -0.42]);
+
+  const curtains = createPart(g, "two-gathered-coral-curtains-tied-open");
+  [-1, 1].forEach((side) => {
+    for (let index = 0; index < 4; index += 1) {
+      const x = side * (0.87 - index * 0.11);
+      addMesh(curtains, rounded(0.18, 1.18, 0.13, 0.055), index % 2 ? coralDark : coral, [x, 1.77, -0.39], [1, 1, 1], [0, 0, side * (0.18 + index * 0.025)]);
+    }
+    addMesh(curtains, torus(0.18, 0.045, 10, 28), honeyLight, [side * 0.7, 1.35, -0.38], [1, 1.25, 1], [Math.PI / 2, 0, 0]);
+    addMesh(curtains, rounded(0.22, 0.55, 0.14, 0.055), coralDark, [side * 0.67, 1.02, -0.4], [1, 1, 1], [0, 0, side * 0.08]);
+  });
+
+  const lights = createPart(g, "exactly-two-floor-stage-lights");
+  addStageLight(lights, -1.08, -1);
+  addStageLight(lights, 1.08, 1);
+
+  const props = createPart(g, "open-prop-crate-mask-scarf-and-soft-practice-ball");
+  addMesh(props, rounded(0.72, 0.42, 0.56, 0.065), honeyDark, [0.65, 0.82, 0.02]);
+  addMesh(props, rounded(0.62, 0.32, 0.48, 0.05), deepTeal, [0.65, 0.86, 0.02]);
+  addMesh(props, rounded(0.7, 0.09, 0.5, 0.035), honeyLight, [0.65, 1.11, -0.15], [1, 1, 1], [-0.75, 0, 0]);
+  addMesh(props, rounded(0.34, 0.26, 0.055, 0.02), cream, [0.48, 1.14, 0.12], [1, 1, 1], [-0.15, 0, -0.2]);
+  [-0.09, 0.09].forEach((dx) => addMesh(props, sphere(0.045, 12, 8), 0x3b3a43, [0.48 + dx, 1.17, 0.16], [1.25, 0.72, 0.45], [0, 0, 0], false));
+  addMesh(props, sphere(0.14, 18, 12), 0x5aaea4, [0.78, 1.13, 0.09]);
+  addMesh(props, rounded(0.13, 0.7, 0.055, 0.02), coral, [0.82, 0.86, 0.34], [1, 1, 1], [0, 0, -0.45]);
+
+  const rear = createPart(g, "complete-rear-arch-braces-curtain-clips-and-cable-route");
+  addCylinderBetween(rear, [-1.13, 0.46, -0.68], [-0.42, 1.65, -0.68], 0.07, honey, "left-rear-arch-brace");
+  addCylinderBetween(rear, [1.13, 0.46, -0.68], [0.42, 1.65, -0.68], 0.07, honey, "right-rear-arch-brace");
+  addMesh(rear, rounded(1.9, 0.055, 0.055, 0.018), 0x3b3a43, [0, 0.74, -0.72], [1, 1, 1], [0, 0, 0], false);
+  [-0.72, 0, 0.72].forEach((x) => addMesh(rear, rounded(0.09, 0.12, 0.09, 0.025), 0x3b3a43, [x, 0.74, -0.75]));
+  return g;
+}
+
+function addMismatchedStoryChair(group, x, z, rotation, color, variant) {
+  const chair = createPart(group, `story-chair-${variant + 1}`);
+  const honeyDark = 0x81502a;
+  addMesh(chair, rounded(0.48, 0.14, 0.48, 0.055), color, [0, 0.58, 0]);
+  [-0.18, 0.18].forEach((cx) => {
+    [-0.17, 0.17].forEach((cz) => addMesh(chair, rounded(0.08, 0.52, 0.08, 0.025), honeyDark, [cx, 0.31, cz]));
+  });
+  [-0.19, 0.19].forEach((cx) => addMesh(chair, rounded(0.09, 0.88, 0.09, 0.03), color, [cx, 1.02, 0.19]));
+  addMesh(chair, rounded(0.48, 0.14, 0.12, 0.045), color, [0, 1.42, 0.19]);
+  if (variant === 0) {
+    [-0.11, 0, 0.11].forEach((cx) => addMesh(chair, rounded(0.06, 0.52, 0.07, 0.02), color, [cx, 1.14, 0.19]));
+  } else if (variant === 1) {
+    addMesh(chair, rounded(0.28, 0.4, 0.075, 0.03), color, [0, 1.18, 0.19]);
+    addMesh(chair, torus(0.09, 0.025, 10, 24), P.cream, [0, 1.26, 0.24], [1.25, 0.75, 1]);
+  } else if (variant === 2) {
+    addMesh(chair, rounded(0.22, 0.22, 0.07, 0.028), 0xe0a52f, [0, 1.18, 0.24], [1, 1, 1], [0, 0, Math.PI / 4]);
+  } else {
+    addMesh(chair, sphere(0.1, 16, 10), P.cream, [-0.065, 1.2, 0.24], [1, 1.25, 0.45]);
+    addMesh(chair, sphere(0.1, 16, 10), P.cream, [0.065, 1.2, 0.24], [1, 1.25, 0.45]);
+    addMesh(chair, rounded(0.14, 0.14, 0.055, 0.02), P.cream, [0, 1.13, 0.24], [1, 1, 1], [0, 0, Math.PI / 4]);
+  }
+  addMesh(chair, rounded(0.4, 0.055, 0.055, 0.018), honeyDark, [0, 0.3, 0.19]);
+  chair.position.set(x, 0, z);
+  chair.rotation.y = rotation;
+  return chair;
+}
+
+function storyTable() {
+  const g = new THREE.Group();
+  g.name = "story-table";
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const deepTeal = 0x315f69;
+
+  const table = createPart(g, "round-tabletop-central-pedestal-and-finished-underside");
+  addMesh(table, cyl(0.94, 0.94, 0.16, 48), honeyDark, [0, 0.86, 0]);
+  addMesh(table, cyl(0.89, 0.92, 0.12, 48), honeyLight, [0, 0.98, 0]);
+  addMesh(table, torus(0.75, 0.025, 10, 36), honey, [0, 1.05, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(table, cyl(0.22, 0.3, 0.68, 28), honey, [0, 0.5, 0]);
+  addMesh(table, cyl(0.34, 0.28, 0.13, 28), honeyDark, [0, 0.18, 0]);
+  [0, Math.PI / 2, Math.PI, Math.PI * 1.5].forEach((angle) => {
+    const x = Math.cos(angle) * 0.43;
+    const z = Math.sin(angle) * 0.43;
+    addMesh(table, rounded(0.62, 0.12, 0.18, 0.045), honeyDark, [x, 0.12, z], [1, 1, 1], [0, -angle, 0]);
+    addMesh(table, rounded(0.18, 0.08, 0.2, 0.03), honeyLight, [Math.cos(angle) * 0.72, 0.11, Math.sin(angle) * 0.72], [1, 1, 1], [0, -angle, 0]);
+  });
+
+  const chairs = createPart(g, "exactly-four-mismatched-harmonious-chairs-with-clear-gaps");
+  addMismatchedStoryChair(chairs, -1.25, 0, -Math.PI / 2, 0x8fc69a, 0);
+  addMismatchedStoryChair(chairs, 1.25, 0, Math.PI / 2, 0x5d9bd8, 1);
+  addMismatchedStoryChair(chairs, 0, -1.2, 0, 0xf0b442, 2);
+  addMismatchedStoryChair(chairs, 0, 1.2, Math.PI, 0xee806b, 3);
+
+  const book = createPart(g, "open-central-memory-book-with-two-blank-pages");
+  addMesh(book, rounded(0.62, 0.055, 0.45, 0.018), honeyDark, [0, 1.1, 0]);
+  addMesh(book, rounded(0.31, 0.04, 0.4, 0.014), cream, [-0.16, 1.15, 0], [1, 1, 1], [0, 0, -0.08], false);
+  addMesh(book, rounded(0.31, 0.04, 0.4, 0.014), cream, [0.16, 1.15, 0], [1, 1, 1], [0, 0, 0.08], false);
+  addMesh(book, rounded(0.04, 0.025, 0.42, 0.008), 0xee806b, [0, 1.17, 0.06], [1, 1, 1], [0, 0, 0], false);
+
+  const lamp = createPart(g, "small-warm-table-lamp");
+  addMesh(lamp, cyl(0.11, 0.14, 0.07, 20), honeyDark, [-0.53, 1.12, -0.26]);
+  addMesh(lamp, cyl(0.035, 0.035, 0.28, 12), honey, [-0.53, 1.28, -0.26]);
+  addMesh(lamp, cyl(0.18, 0.11, 0.22, 22), cream, [-0.53, 1.48, -0.26]);
+  addMesh(lamp, sphere(0.07, 16, 10), 0xffd36b, [-0.53, 1.38, -0.26], [1, 0.85, 1], [0, 0, 0], false);
+
+  const cards = createPart(g, "shallow-story-card-tray-and-three-loose-blank-cards");
+  addMesh(cards, rounded(0.48, 0.11, 0.36, 0.045), deepTeal, [0.5, 1.11, -0.22]);
+  addMesh(cards, rounded(0.39, 0.04, 0.28, 0.014), cream, [0.5, 1.18, -0.22], [1, 1, 1], [0, 0.12, 0], false);
+  [[-0.48, 0.28, -0.04], [0.02, 0.45, 0.09], [0.46, 0.35, 0.04]].forEach(([x, z, tilt]) => {
+    addMesh(cards, rounded(0.26, 0.025, 0.18, 0.008), cream, [x, 1.13, z], [1, 1, 1], [0, tilt, 0], false);
+  });
+  return g;
+}
+
+function addMusicSpeaker(group, x, color, index) {
+  const speaker = createPart(group, `rounded-speaker-${index}`);
+  const honey = 0xc98035;
+  const cream = 0xffefce;
+  const inkMetal = 0x3b3a43;
+  addMesh(speaker, cyl(0.3, 0.33, 0.08, 24), honey, [x, 0.27, 0.28]);
+  addMesh(speaker, cyl(0.08, 0.1, 0.46, 18), honey, [x, 0.5, 0.28]);
+  addMesh(speaker, rounded(0.48, 0.76, 0.38, 0.13), color, [x, 1.02, 0.28]);
+  addMesh(speaker, rounded(0.36, 0.64, 0.045, 0.018), cream, [x, 1.02, 0.5], [1, 1, 1], [0, 0, 0], false);
+  addMesh(speaker, cyl(0.135, 0.135, 0.05, 24), inkMetal, [x, 0.88, 0.54], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(speaker, cyl(0.085, 0.085, 0.055, 20), 0xf0b442, [x, 0.88, 0.58], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(speaker, cyl(0.07, 0.07, 0.05, 20), inkMetal, [x, 1.22, 0.54], [1, 1, 1], [Math.PI / 2, 0, 0]);
+}
+
+function musicCorner() {
+  const g = new THREE.Group();
+  g.name = "music-corner";
+  const deepTeal = 0x315f69;
+  const teal = 0x4c9b90;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const cream = 0xffefce;
+  const inkMetal = 0x3b3a43;
+
+  const rug = createPart(g, "round-deep-teal-rhythm-rug-with-finished-edge");
+  addMesh(rug, cyl(1.45, 1.45, 0.08, 56), deepTeal, [0, 0.07, 0]);
+  addMesh(rug, torus(1.17, 0.035, 10, 44), honeyLight, [0, 0.13, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  for (let index = 0; index < 16; index += 1) {
+    const angle = index / 16 * Math.PI * 2;
+    const color = index % 2 ? 0xee806b : 0xf0b442;
+    addMesh(rug, rounded(0.08, 0.025, 0.22, 0.008), color, [Math.cos(angle) * 1.02, 0.14, Math.sin(angle) * 1.02], [1, 1, 1], [0, -angle, 0], false);
+  }
+
+  const keyboard = createPart(g, "compact-small-keyboard-six-pad-sampler-and-control-shelf");
+  addMesh(keyboard, rounded(1.72, 0.22, 0.68, 0.09), honeyDark, [0, 1.02, -0.02]);
+  addMesh(keyboard, rounded(1.6, 0.16, 0.6, 0.07), teal, [0, 1.14, -0.02]);
+  for (let index = 0; index < 14; index += 1) {
+    const x = -0.69 + index * 0.106;
+    addMesh(keyboard, rounded(0.09, 0.045, 0.3, 0.012), cream, [x, 1.24, 0.05], [1, 1, 1], [0, 0, 0], false);
+    if (index < 13 && ![2, 6, 9].includes(index)) {
+      addMesh(keyboard, rounded(0.055, 0.055, 0.18, 0.012), inkMetal, [x + 0.053, 1.29, -0.04], [1, 1, 1], [0, 0, 0], false);
+    }
+  }
+  addMesh(keyboard, rounded(0.62, 0.12, 0.38, 0.05), honey, [0.45, 1.37, -0.22]);
+  const padColors = [0xee806b, 0xf0b442, 0x4c9b90, 0xf0b442, 0x5d9bd8, 0x4c9b90];
+  for (let index = 0; index < 6; index += 1) {
+    const x = 0.25 + (index % 3) * 0.18;
+    const z = -0.31 + Math.floor(index / 3) * 0.16;
+    addMesh(keyboard, rounded(0.14, 0.055, 0.12, 0.025), padColors[index], [x, 1.47, z]);
+  }
+
+  const stand = createPart(g, "sturdy-x-keyboard-stand-and-connected-crossbar");
+  addCylinderBetween(stand, [-0.65, 0.18, -0.08], [0.55, 0.96, -0.08], 0.07, honey, "left-x-stand-bar");
+  addCylinderBetween(stand, [0.65, 0.18, -0.08], [-0.55, 0.96, -0.08], 0.07, honey, "right-x-stand-bar");
+  addMesh(stand, cyl(0.11, 0.11, 0.12, 18), honeyDark, [0, 0.58, -0.08], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(stand, rounded(1.45, 0.09, 0.12, 0.03), honeyDark, [0, 0.94, -0.08]);
+  [-0.68, 0.68].forEach((x) => addMesh(stand, rounded(0.42, 0.09, 0.16, 0.03), honeyDark, [x, 0.13, -0.08]));
+
+  const microphone = createPart(g, "adjustable-standing-microphone-tripod-and-routed-lead");
+  addMesh(microphone, cyl(0.055, 0.055, 1.25, 14), inkMetal, [-1.02, 0.8, -0.42]);
+  addMesh(microphone, cyl(0.1, 0.08, 0.38, 20), teal, [-1.02, 1.56, -0.42], [1, 1, 1], [0, 0, -0.12]);
+  addMesh(microphone, cyl(0.085, 0.1, 0.22, 20), cream, [-1.04, 1.81, -0.42], [1, 1, 1], [0, 0, -0.12]);
+  [0, Math.PI * 2 / 3, Math.PI * 4 / 3].forEach((angle) => {
+    addCylinderBetween(microphone, [-1.02, 0.17, -0.42], [-1.02 + Math.cos(angle) * 0.42, 0.1, -0.42 + Math.sin(angle) * 0.42], 0.045, inkMetal, "tripod-leg");
+  });
+
+  const speakers = createPart(g, "exactly-two-rounded-speakers-on-low-stands");
+  addMusicSpeaker(speakers, -1.2, deepTeal, 1);
+  addMusicSpeaker(speakers, 1.2, deepTeal, 2);
+
+  const headphones = createPart(g, "over-ear-headphones-on-dedicated-hook");
+  addMesh(headphones, rounded(0.08, 1.25, 0.08, 0.025), honey, [0.95, 0.86, -0.6]);
+  addMesh(headphones, torus(0.28, 0.055, 12, 32), honeyLight, [0.95, 1.58, -0.58], [1, 1.15, 1]);
+  [-0.25, 0.25].forEach((dx) => {
+    addMesh(headphones, rounded(0.14, 0.28, 0.18, 0.055), inkMetal, [0.95 + dx, 1.42, -0.55]);
+    addMesh(headphones, rounded(0.09, 0.2, 0.12, 0.04), teal, [0.95 + dx, 1.42, -0.43]);
+  });
+  addMesh(headphones, cyl(0.22, 0.22, 0.07, 24), honey, [0.95, 0.62, -0.42]);
+  addMesh(headphones, cyl(0.1, 0.09, 0.2, 18), teal, [0.95, 0.76, -0.42]);
+
+  const cables = createPart(g, "neatly-routed-audio-cables-and-exactly-four-color-clips");
+  addMesh(cables, torus(0.62, 0.025, 8, 32), inkMetal, [0, 0.88, 0.18], [1.4, 0.55, 1], [Math.PI / 2, 0, 0], false);
+  [-0.6, -0.2, 0.2, 0.6].forEach((x, index) => {
+    const colors = [0xee806b, 0xf0b442, 0x4c9b90, cream];
+    addMesh(cables, rounded(0.12, 0.13, 0.09, 0.03), colors[index], [x, 0.88, 0.34]);
+  });
+  return g;
+}
+
+function meditationSeat() {
+  const g = new THREE.Group();
+  g.name = "meditation-seat";
+  const deepTeal = 0x315f69;
+  const sage = 0x92b66f;
+  const sageLight = 0xb7cf93;
+  const coral = 0xee806b;
+  const cream = 0xffefce;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const amber = 0xffd36b;
+
+  const rug = createPart(g, "layered-round-rug-finished-edge-and-stitched-rhythm-rings");
+  addMesh(rug, cyl(1.42, 1.42, 0.08, 56), deepTeal, [0, 0.07, 0]);
+  addMesh(rug, cyl(1.3, 1.34, 0.06, 56), sage, [0, 0.13, 0]);
+  addMesh(rug, torus(1.05, 0.022, 8, 44), cream, [0, 0.17, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(rug, torus(0.72, 0.018, 8, 40), cream, [0, 0.17, 0], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+
+  const cushion = createPart(g, "two-level-central-layered-cushion-with-tuft");
+  addMesh(cushion, cyl(0.61, 0.65, 0.26, 44), deepTeal, [0, 0.34, -0.18]);
+  addMesh(cushion, cyl(0.55, 0.58, 0.25, 44), sageLight, [0, 0.58, -0.18]);
+  addMesh(cushion, torus(0.43, 0.025, 10, 36), sage, [0, 0.72, -0.18], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  addMesh(cushion, sphere(0.055, 16, 10), sage, [0, 0.72, -0.18], [1, 0.6, 1]);
+
+  const blanket = createPart(g, "neatly-folded-coral-and-cream-blanket");
+  addMesh(blanket, rounded(0.68, 0.14, 0.5, 0.065), cream, [-0.72, 0.26, 0.48]);
+  addMesh(blanket, rounded(0.64, 0.13, 0.46, 0.06), coral, [-0.72, 0.38, 0.48]);
+  addMesh(blanket, rounded(0.06, 0.17, 0.48, 0.02), cream, [-0.44, 0.37, 0.48]);
+  [-0.18, -0.06, 0.06, 0.18].forEach((z) => addMesh(blanket, rounded(0.12, 0.04, 0.025, 0.008), cream, [-0.38, 0.31, 0.48 + z], [1, 1, 1], [0, 0, 0], false));
+
+  const tray = createPart(g, "low-honey-oak-side-tray-with-cup-recess-and-three-feet");
+  addMesh(tray, cyl(0.48, 0.48, 0.12, 36), honeyDark, [0.72, 0.3, 0.32]);
+  addMesh(tray, cyl(0.44, 0.45, 0.08, 36), honeyLight, [0.72, 0.39, 0.32]);
+  addMesh(tray, torus(0.16, 0.025, 8, 24), honey, [0.55, 0.45, 0.42], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+  [0, Math.PI * 2 / 3, Math.PI * 4 / 3].forEach((angle) => {
+    addMesh(tray, cyl(0.07, 0.075, 0.2, 14), honeyDark, [0.72 + Math.cos(angle) * 0.31, 0.16, 0.32 + Math.sin(angle) * 0.31]);
+  });
+
+  const vase = createPart(g, "ceramic-flower-vase-with-exactly-three-simple-flowers");
+  addMesh(vase, cyl(0.13, 0.18, 0.36, 22), cream, [0.56, 0.64, 0.22]);
+  addMesh(vase, cyl(0.1, 0.1, 0.05, 20), sage, [0.56, 0.84, 0.22]);
+  [[-0.1, 0.34, coral], [0.02, 0.43, cream], [0.13, 0.31, 0xf0b442]].forEach(([dx, dy, color]) => {
+    addCylinderBetween(vase, [0.56, 0.83, 0.22], [0.56 + dx, 0.83 + dy, 0.22], 0.018, 0x577d49, "flower-stem");
+    addFlower(vase, 0.56 + dx, 0.83 + dy, 0.22, 1.25, color);
+  });
+
+  const lantern = createPart(g, "enclosed-warm-candle-lantern-with-complete-frame");
+  addMesh(lantern, cyl(0.22, 0.24, 0.08, 24), honeyDark, [0.92, 0.53, 0.16]);
+  addMesh(lantern, cyl(0.2, 0.22, 0.08, 24), honey, [0.92, 0.95, 0.16]);
+  [-0.14, 0.14].forEach((x) => [-0.1, 0.1].forEach((z) => addMesh(lantern, rounded(0.035, 0.38, 0.035, 0.012), honey, [0.92 + x, 0.75, 0.16 + z])));
+  addMesh(lantern, sphere(0.12, 18, 12), amber, [0.92, 0.73, 0.16], [0.75, 1.2, 0.75], [0, 0, 0], false);
+  addMesh(lantern, torus(0.16, 0.035, 10, 26), honey, [0.92, 1.12, 0.16], [1, 1.25, 1]);
+  return g;
+}
+
+function memoryBook() {
+  const g = new THREE.Group();
+  g.name = "memory-book";
+  const deepTeal = 0x315f69;
+  const sage = 0x92b66f;
+  const sageLight = 0xb7cf93;
+  const coral = 0xee806b;
+  const coralDark = 0xb94f47;
+  const cream = 0xffefce;
+  const pageEdge = 0xe2c89a;
+  const honey = 0xc98035;
+  const honeyLight = 0xe3a657;
+  const honeyDark = 0x81502a;
+  const amber = 0xffd36b;
+  const leaf = 0x6f994e;
+
+  const mat = createPart(g, "round-sage-and-deep-teal-approach-mat-with-stitched-edge");
+  addMesh(mat, cyl(1.52, 1.52, 0.08, 64), deepTeal, [0, 0.07, 0.12]);
+  addMesh(mat, cyl(1.4, 1.44, 0.055, 64), sage, [0, 0.13, 0.12]);
+  addMesh(mat, torus(1.18, 0.022, 8, 48), cream, [0, 0.17, 0.12], [1, 1, 1], [Math.PI / 2, 0, 0], false);
+
+  const stand = createPart(g, "low-honey-oak-reading-stand-board-braces-feet-and-finished-underside");
+  const surface = new THREE.Group();
+  surface.name = "tilted-reading-surface";
+  surface.position.set(0, 0.9, -0.16);
+  surface.rotation.x = 0.38;
+  stand.add(surface);
+  addMesh(surface, rounded(2.38, 0.16, 1.55, 0.07), honeyDark, [0, 0, 0]);
+  addMesh(surface, rounded(2.24, 0.13, 1.42, 0.06), honeyLight, [0, 0.11, 0]);
+  addMesh(surface, rounded(2.42, 0.16, 0.18, 0.055), honey, [0, 0.25, 0.7]);
+  addMesh(surface, rounded(0.58, 0.1, 0.16, 0.04), honeyDark, [-0.63, 0.29, 0.61]);
+  addMesh(surface, rounded(0.58, 0.1, 0.16, 0.04), honeyDark, [0.63, 0.29, 0.61]);
+  [-0.96, 0.96].forEach((x) => {
+    addMesh(stand, rounded(0.18, 0.84, 0.24, 0.075), honey, [x, 0.56, 0.03], [1, 1, 1], [0.18, 0, 0]);
+    addMesh(stand, rounded(0.46, 0.16, 0.42, 0.06), honeyDark, [x, 0.2, 0.34]);
+    addMesh(stand, rounded(0.42, 0.11, 0.38, 0.045), honeyLight, [x, 0.3, 0.34]);
+  });
+  addCylinderBetween(stand, [-0.92, 0.28, -0.42], [-0.6, 0.82, -0.4], 0.07, honeyDark, "left-rear-diagonal-brace");
+  addCylinderBetween(stand, [0.92, 0.28, -0.42], [0.6, 0.82, -0.4], 0.07, honeyDark, "right-rear-diagonal-brace");
+  addMesh(stand, rounded(1.84, 0.12, 0.16, 0.045), honeyDark, [0, 0.34, -0.44]);
+  addMesh(stand, rounded(1.94, 0.09, 0.9, 0.035), honey, [0, 0.71, -0.28], [1, 1, 1], [0.38, 0, 0]);
+
+  const book = createPart(surface, "open-memory-book-thick-cover-layered-pages-and-center-spine");
+  addMesh(book, rounded(2.02, 0.075, 1.12, 0.03), coralDark, [0, 0.25, -0.03]);
+  [-1, 1].forEach((side) => {
+    for (let layer = 0; layer < 4; layer += 1) {
+      addMesh(book, rounded(0.95, 0.035, 1.02, 0.014), layer === 3 ? cream : pageEdge,
+        [side * (0.5 + layer * 0.008), 0.32 + layer * 0.035, -0.03 + layer * 0.006],
+        [1, 1, 1], [0, 0, side * 0.075], false);
+    }
+  });
+  addMesh(book, rounded(0.08, 0.12, 1.05, 0.025), coral, [0, 0.43, -0.02]);
+  addMesh(book, rounded(0.075, 0.025, 1.18, 0.01), coral, [0, 0.53, 0.12], [1, 1, 1], [0, 0, 0], false);
+  addMesh(book, rounded(0.13, 0.025, 0.34, 0.01), coral, [0.03, 0.53, 0.82], [1, 1, 1], [0, 0.18, 0.12], false);
+
+  const illustrations = createPart(surface, "illustrated-page-scenes-house-tree-landscape-and-flower");
+  addMesh(illustrations, rounded(0.7, 0.018, 0.34, 0.008), sageLight, [-0.5, 0.53, -0.2], [1, 1, 1], [0, 0, -0.075], false);
+  addMesh(illustrations, rounded(0.28, 0.02, 0.18, 0.008), cream, [-0.5, 0.55, -0.21], [1, 1, 1], [0, 0, -0.075], false);
+  addMesh(illustrations, rounded(0.34, 0.025, 0.2, 0.008), coral, [-0.5, 0.57, -0.36], [1, 1, 1], [0, 0, Math.PI / 4 - 0.075], false);
+  addMesh(illustrations, rounded(0.7, 0.018, 0.34, 0.008), 0x9fcad0, [0.5, 0.53, -0.2], [1, 1, 1], [0, 0, 0.075], false);
+  addMesh(illustrations, sphere(0.14, 18, 10), leaf, [0.62, 0.57, -0.2], [1.15, 0.28, 0.9], [0, 0, 0], false);
+  addMesh(illustrations, rounded(0.04, 0.02, 0.26, 0.008), honeyDark, [0.62, 0.55, -0.05], [1, 1, 1], [0, 0.1, 0.075], false);
+  addCylinderBetween(illustrations, [-0.7, 0.54, 0.31], [-0.34, 0.54, 0.18], 0.018, leaf, "pressed-leaf-stem");
+  [-0.63, -0.53, -0.43].forEach((x, index) => addMesh(illustrations, sphere(0.06, 12, 7), leaf, [x, 0.56, 0.24 - index * 0.04], [1, 0.25, 0.65], [0, 0, -0.5], false));
+  addFlower(illustrations, 0.5, 0.56, 0.29, 0.72, coral);
+
+  const pencil = createPart(surface, "teal-pencil-in-front-groove");
+  addMesh(pencil, cyl(0.035, 0.035, 0.72, 12), deepTeal, [0, 0.34, 0.76], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(pencil, cyl(0.04, 0.04, 0.08, 12), coral, [0.4, 0.34, 0.76], [1, 1, 1], [0, 0, Math.PI / 2]);
+  addMesh(pencil, cyl(0.04, 0.0, 0.12, 12), cream, [-0.42, 0.34, 0.76], [1, 1, 1], [0, 0, Math.PI / 2]);
+
+  const cards = createPart(g, "exactly-three-blank-photo-cards-in-separate-front-holders");
+  [-0.62, 0, 0.62].forEach((x, index) => {
+    addMesh(cards, rounded(0.38, 0.44, 0.045, 0.018), cream, [x, 0.48, 0.92], [1, 1, 1], [0, 0, (index - 1) * 0.035], false);
+    addMesh(cards, rounded(0.44, 0.12, 0.18, 0.04), honeyDark, [x, 0.26, 0.96]);
+    addMesh(cards, rounded(0.38, 0.08, 0.15, 0.03), honeyLight, [x, 0.35, 0.95]);
+  });
+
+  const lamp = createPart(g, "warm-curved-reading-light-with-base-shade-and-visible-core");
+  addMesh(lamp, cyl(0.2, 0.23, 0.1, 28), honeyDark, [0.92, 1.45, -0.68]);
+  addMesh(lamp, cyl(0.11, 0.13, 0.1, 24), honeyLight, [0.92, 1.55, -0.68]);
+  const curvePoints = [[0.92, 1.55, -0.68], [0.92, 1.9, -0.68], [0.83, 2.15, -0.62], [0.62, 2.32, -0.52], [0.34, 2.38, -0.42]];
+  for (let index = 0; index < curvePoints.length - 1; index += 1) {
+    addCylinderBetween(lamp, curvePoints[index], curvePoints[index + 1], 0.055, honey, `curved-lamp-arm-${index + 1}`);
+  }
+  addMesh(lamp, cyl(0.3, 0.15, 0.34, 28), honeyLight, [0.22, 2.2, -0.34], [1, 1, 1], [0.22, 0, -0.32]);
+  addMesh(lamp, cyl(0.24, 0.12, 0.29, 28), cream, [0.22, 2.17, -0.31], [1, 1, 1], [0.22, 0, -0.32]);
+  addMesh(lamp, sphere(0.11, 18, 12), amber, [0.2, 2.03, -0.22], [1, 0.8, 1], [0, 0, 0], false);
+  return g;
+}
+
+function roundTable() {
+  const g = new THREE.Group();
+  addBase(g, 2.05, 1.75, P.paper);
+  addMesh(g, cyl(0.72, 0.72, 0.12, 36), P.woodLight, [0, 0.7, 0]);
+  addMesh(g, cyl(0.12, 0.16, 0.62, 18), P.woodDark, [0, 0.38, 0]);
+  addChair(g, -0.92, 0, 0, -Math.PI / 2, P.teal, 0.9);
+  addChair(g, 0.92, 0, 0, Math.PI / 2, P.blue, 0.9);
+  addChair(g, 0, 0, -0.78, 0, P.mint, 0.9);
+  addChair(g, 0, 0, 0.78, Math.PI, P.yellow, 0.9);
+  addPlant(g, 0, 0.78, 0, 0.55);
+  addMesh(g, rounded(0.22, 0.05, 0.32, 0.02), P.paper, [0.28, 0.79, 0.08]);
+  return g;
+}
+
+function workbench() {
+  const g = new THREE.Group();
+  addBase(g, 2, 1.2, P.paper);
+  addMesh(g, rounded(1.55, 0.22, 0.78, 0.06), P.woodLight, [0, 0.62, 0]);
+  addLegs(g, 0, 0.58, 0, 1.24, 0.55, 0.58);
+  addMesh(g, rounded(0.56, 0.18, 0.34, 0.04), P.blueDark, [-0.36, 0.84, -0.1]);
+  addMesh(g, cyl(0.1, 0.1, 0.5, 18), P.blue, [0.4, 0.95, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(g, rounded(0.4, 0.16, 0.22, 0.035), P.yellow, [0.52, 0.76, 0.16]);
+  addMesh(g, cyl(0.035, 0.035, 0.44, 10), P.metal, [0.68, 0.92, -0.08], [1, 1, 1], [0.6, 0, 0.7]);
+  addMesh(g, rounded(0.32, 0.08, 0.1, 0.018), P.metal, [0.8, 1.07, -0.18], [1, 1, 1], [0, 0, 0.7]);
+  addMesh(g, rounded(0.14, 0.42, 0.12, 0.03), P.red, [-0.76, 0.86, 0.18]);
+  addBooks(g, 0, 0.74, 0.18, 4);
+  addMesh(g, rounded(1.3, 0.58, 0.08, 0.04), P.wood, [0, 1.15, 0.34]);
+  [-0.42, 0, 0.42].forEach((x, i) => addTool(g, x, 1.16, 0.27, (i - 1) * 0.28, i === 1 ? P.yellow : P.metal));
+  addMesh(g, rounded(0.44, 0.3, 0.25, 0.04), P.blueDark, [-0.48, 0.3, -0.34]);
+  [-0.38, 0, 0.38].forEach((x) => addDrawer(g, x, 0.46, -0.42, 0.3, 0.2));
+  addMesh(g, rounded(0.22, 0.14, 0.42, 0.035), P.blue, [-0.62, 0.82, -0.12]);
+  addMesh(g, rounded(0.1, 0.34, 0.12, 0.025), P.metal, [-0.72, 0.98, -0.12]);
+  addMesh(g, rounded(0.1, 0.34, 0.12, 0.025), P.metal, [-0.52, 0.98, -0.12]);
+  addMesh(g, cyl(0.24, 0.22, 0.12, 20), P.woodLight, [0.06, 0.24, 0.72]);
+  addLegs(g, 0.06, 0.38, 0.72, 0.28, 0.28, 0.34, P.woodDark);
+  return g;
+}
+
+function wallBoard() {
+  const g = new THREE.Group();
+  addBase(g, 1.9, 0.8, P.paper);
+  addMesh(g, rounded(1.52, 0.96, 0.08, 0.05), P.chalk, [0, 1, 0]);
+  addMesh(g, rounded(1.75, 0.14, 0.16, 0.04), P.wood, [0, 0.46, 0.02]);
+  addMesh(g, rounded(1.75, 0.14, 0.16, 0.04), P.wood, [0, 1.54, 0.02]);
+  addMesh(g, rounded(0.12, 1.08, 0.16, 0.035), P.wood, [-0.86, 1, 0.02]);
+  addMesh(g, rounded(0.12, 1.08, 0.16, 0.035), P.wood, [0.86, 1, 0.02]);
+  for (let i = 0; i < 5; i++) addMesh(g, box(0.52, 0.018, 0.018), P.yellow, [-0.2 + i * 0.1, 0.78 + i * 0.12, -0.08], [1, 1, 1], [0, 0, 0.12], false);
+  addMesh(g, rounded(0.22, 0.05, 0.04, 0.01), P.paper, [-0.56, 0.53, -0.08], [1, 1, 1], [0, 0, 0], false);
+  addMesh(g, rounded(0.18, 0.05, 0.04, 0.01), P.red, [-0.32, 0.53, -0.08], [1, 1, 1], [0, 0, 0], false);
+  return g;
+}
+
+function easel() {
+  const g = new THREE.Group();
+  addBase(g, 1.45, 1.05, P.paper);
+  addMesh(g, rounded(0.74, 0.82, 0.08, 0.035), P.paper, [0, 0.98, 0]);
+  addMesh(g, rounded(0.58, 0.42, 0.05, 0.025), P.blue, [0, 1.0, -0.04]);
+  addMesh(g, sphere(0.08, 12, 6), P.yellow, [-0.16, 1.06, -0.08], [1, 0.55, 1], [0, 0, 0], false);
+  addMesh(g, sphere(0.11, 12, 7), P.cream, [0.2, 0.98, -0.085], [1.2, 0.65, 0.7], [0, 0, 0], false);
+  addMesh(g, box(0.28, 0.025, 0.025), P.leafDark, [0.12, 0.9, -0.08], [1, 1, 1], [0, 0, 0.28], false);
+  addMesh(g, box(0.26, 0.025, 0.025), P.rose, [-0.09, 0.94, -0.085], [1, 1, 1], [0, 0, -0.25], false);
+  addMesh(g, cyl(0.045, 0.045, 1.22, 10), P.woodDark, [-0.38, 0.56, 0], [1, 1, 1], [0.28, 0, -0.15]);
+  addMesh(g, cyl(0.045, 0.045, 1.22, 10), P.woodDark, [0.38, 0.56, 0], [1, 1, 1], [0.28, 0, 0.15]);
+  addMesh(g, cyl(0.04, 0.04, 1.05, 10), P.woodDark, [0, 0.52, 0.18], [1, 1, 1], [0.72, 0, 0]);
+  addMesh(g, rounded(0.52, 0.2, 0.3, 0.04), P.woodLight, [0.5, 0.24, 0.1]);
+  [P.red, P.yellow, P.blue, P.leaf].forEach((c, i) => addMesh(g, sphere(0.045, 10, 6), c, [0.34 + i * 0.1, 0.38, -0.03], [1, 0.55, 1], [0, 0, 0], false));
+  addMesh(g, cyl(0.035, 0.035, 0.5, 10), P.woodDark, [0.72, 0.54, 0.05], [1, 1, 1], [0.12, 0, -0.2]);
+  addMesh(g, cyl(0.055, 0.045, 0.24, 12), P.rose, [0.76, 0.82, 0.02]);
+  return g;
+}
+
+function altar() {
+  const g = new THREE.Group();
+  addBase(g, 2.25, 1.05, P.paper);
+  addMesh(g, rounded(1.95, 0.24, 0.64, 0.06), P.wood, [0, 0.52, 0]);
+  addMesh(g, rounded(2.04, 0.08, 0.72, 0.025), P.woodDark, [0, 0.66, 0]);
+  addLegs(g, 0, 0.48, 0, 1.68, 0.42, 0.46);
+  addMesh(g, rounded(1.7, 0.12, 0.2, 0.03), P.woodDark, [0, 0.18, 0.18]);
+  addCandle(g, -0.82, 0.88, -0.04, 0.9);
+  addCandle(g, 0.82, 0.88, -0.04, 0.9);
+  addFruitBowl(g, 0.15, 0.75, -0.05, 0.85);
+  addMesh(g, cyl(0.12, 0.1, 0.18, 18), P.woodDark, [-0.32, 0.76, -0.06]);
+  [-0.05, 0, 0.05].forEach((dx) => addMesh(g, cyl(0.012, 0.012, 0.36, 8), P.red, [-0.32 + dx, 0.98, -0.06], [1, 1, 1], [0, 0, dx * 2], false));
+  addMesh(g, sphere(0.14, 16, 9), P.teal, [0.52, 0.82, 0], [1, 0.82, 1]);
+  addMesh(g, torus(0.12, 0.035, 8, 20), P.teal, [0.68, 0.84, 0], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(g, cyl(0.16, 0.14, 0.07, 18), P.cream, [-0.62, 0.75, 0.04]);
+  addMesh(g, cyl(0.11, 0.09, 0.08, 18), P.woodLight, [-0.58, 0.81, 0.04]);
+  return g;
+}
+
+function sink() {
+  const g = new THREE.Group();
+  addBase(g, 1.25, 0.9, P.paper);
+  addMesh(g, rounded(0.85, 0.62, 0.48, 0.08), P.wood, [0, 0.38, 0]);
+  addDrawer(g, -0.22, 0.36, -0.24, 0.28, 0.18);
+  addDrawer(g, 0.22, 0.36, -0.24, 0.28, 0.18);
+  addMesh(g, rounded(0.75, 0.1, 0.56, 0.035), P.cream, [0, 0.72, 0]);
+  addMesh(g, cyl(0.32, 0.28, 0.12, 32), P.paper, [0, 0.75, -0.04]);
+  addMesh(g, rounded(0.08, 0.28, 0.08, 0.025), P.metal, [0, 0.96, -0.22]);
+  addMesh(g, cyl(0.035, 0.035, 0.3, 10), P.metal, [0.1, 0.96, -0.2], [1, 1, 1], [Math.PI / 2, 0, 0]);
+  addMesh(g, rounded(0.68, 0.96, 0.08, 0.18), P.woodDark, [0, 1.25, 0.22]);
+  addMesh(g, rounded(0.52, 0.76, 0.05, 0.16), P.glass, [0, 1.25, 0.16], [1, 1, 1], [0, 0, 0], false);
+  addMesh(g, sphere(0.08, 14, 8), P.wood, [0, 1.77, 0.2], [1, 0.65, 0.8]);
+  addMesh(g, sphere(0.055, 12, 8), P.rose, [-0.34, 0.83, -0.12]);
+  addMesh(g, rounded(0.12, 0.25, 0.12, 0.03), P.mint, [0.34, 0.84, -0.1]);
+  return g;
+}
+
+function table() {
+  const g = new THREE.Group();
+  addBase(g, 1.65, 1.05, P.paper);
+  addMesh(g, rounded(1.15, 0.2, 0.68, 0.06), P.woodLight, [0, 0.58, 0]);
+  addLegs(g, 0, 0.55, 0, 0.88, 0.44, 0.54);
+  addPlant(g, 0, 0.66, 0, 0.4);
+  addMesh(g, rounded(0.92, 0.035, 0.5, 0.014), P.cream, [0, 0.7, 0], [1, 1, 1], [0, 0, 0], false);
+  addChair(g, -0.72, 0, 0, -Math.PI / 2, P.teal, 0.76);
+  addChair(g, 0.72, 0, 0, Math.PI / 2, P.teal, 0.76);
+  addChair(g, 0, 0, 0.64, Math.PI, P.mint, 0.76);
+  addChair(g, 0, 0, -0.64, 0, P.yellow, 0.76);
+  return g;
+}
+
+function marketStall() {
+  const g = new THREE.Group();
+  addBase(g, 2.05, 1.15, P.tile);
+  addMesh(g, rounded(1.45, 0.34, 0.72, 0.07), P.rose, [0, 0.36, 0]);
+  addMesh(g, rounded(1.6, 0.12, 0.82, 0.04), P.red, [0, 1.08, 0]);
+  for (let i = -2; i <= 2; i++) addMesh(g, rounded(0.25, 0.14, 0.86, 0.025), i % 2 ? P.paper : P.red, [i * 0.28, 1.17, 0]);
+  [-0.64, 0.64].forEach((x) => addMesh(g, cyl(0.04, 0.04, 1.0, 10), P.woodDark, [x, 0.64, -0.36]));
+  [-0.42, 0, 0.42].forEach((x, i) => {
+    addMesh(g, rounded(0.4, 0.16, 0.34, 0.025), i === 1 ? P.cream : P.wood, [x, 0.55, -0.04]);
+    addCrateGoods(g, x, 0.7, -0.05, 6);
+  });
+  addMesh(g, rounded(0.44, 0.38, 0.18, 0.035), P.wood, [0.68, 0.32, 0.34]);
+  addCrateGoods(g, 0.68, 0.58, 0.3, 4);
+  addMesh(g, rounded(0.5, 0.28, 0.36, 0.035), P.cream, [-0.56, 0.25, 0.38]);
+  addCrateGoods(g, -0.56, 0.45, 0.34, 5);
+  addMesh(g, rounded(0.34, 0.22, 0.08, 0.025), P.chalk, [0, 0.9, -0.46]);
+  addMesh(g, rounded(0.18, 0.025, 0.025, 0.01), P.cream, [0, 0.9, -0.51], [1, 1, 1], [0, 0, 0], false);
+  return g;
+}
+
+function fountain() {
+  const g = new THREE.Group();
+  addMesh(g, cyl(0.98, 0.98, 0.12, 48), P.grass, [0, 0.08, 0], [1, 0.78, 1]);
+  for (let i = 0; i < 18; i++) {
+    const a = (i / 18) * Math.PI * 2;
+    addMesh(g, rounded(0.3, 0.13, 0.2, 0.035), i % 2 ? P.stone : P.tile, [Math.cos(a) * 0.83, 0.18, Math.sin(a) * 0.66], [1, 1, 1], [0, -a, 0]);
+  }
+  addMesh(g, cyl(0.62, 0.58, 0.2, 40), P.stone, [0, 0.28, 0]);
+  addMesh(g, cyl(0.49, 0.45, 0.15, 36), P.glass, [0, 0.4, 0], [1, 0.72, 1]);
+  addMesh(g, cyl(0.12, 0.14, 0.52, 24), P.stone, [0, 0.64, 0]);
+  addMesh(g, sphere(0.16, 20, 12), P.glass, [0, 0.95, 0], [0.8, 0.55, 0.8]);
+  for (let i = 0; i < 4; i++) {
+    const a = i * Math.PI / 2;
+    addMesh(g, cyl(0.018, 0.028, 0.58, 8), P.glass, [Math.cos(a) * 0.28, 0.74, Math.sin(a) * 0.28], [1, 1, 1], [Math.sin(a) * 0.38, 0, Math.cos(a) * 0.38], false);
+  }
+  for (let i = 0; i < 22; i++) {
+    const a = (i / 22) * Math.PI * 2;
+    addFlower(g, Math.cos(a) * 0.78, 0.3, Math.sin(a) * 0.61, 0.75, i % 3 === 0 ? P.yellow : i % 2 ? P.pink : P.rose);
+  }
+  [-0.88, 0.88].forEach((x) => addPlant(g, x, 0.18, 0.1, 0.5));
+  return g;
+}
+
+function bench() {
+  const g = new THREE.Group();
+  addBase(g, 1.85, 1, P.paper);
+  addMesh(g, rounded(1.35, 0.16, 0.36, 0.05), P.woodLight, [0, 0.42, 0]);
+  addMesh(g, rounded(1.35, 0.16, 0.18, 0.05), P.woodLight, [0, 0.76, 0.2]);
+  addMesh(g, rounded(1.35, 0.08, 0.14, 0.035), P.wood, [0, 0.62, 0.22]);
+  addLegs(g, 0, 0.38, 0, 1.02, 0.22, 0.36);
+  [-0.44, 0, 0.44].forEach((x) => addMesh(g, rounded(0.1, 0.62, 0.08, 0.025), P.woodDark, [x, 0.62, 0.24]));
+  [-0.74, 0.74].forEach((x) => {
+    addMesh(g, rounded(0.08, 0.68, 0.08, 0.025), P.woodDark, [x, 0.58, 0.2]);
+    addMesh(g, rounded(0.34, 0.08, 0.08, 0.025), P.woodDark, [x + (x < 0 ? -0.1 : 0.1), 0.72, 0], [1, 1, 1], [0, 0, x < 0 ? -0.2 : 0.2]);
+  });
+  addPlant(g, -0.88, 0.17, -0.26, 0.5);
+  addPlant(g, 0.88, 0.17, -0.26, 0.5);
+  return g;
+}
+
+const builders = {
+  bed,
+  counter,
+  shelf,
+  seating,
+  "toy-corner": toyCorner,
+  "plant-zone": plantZone,
+  desk,
+  "wall-board": wallBoard,
+  "round-table": roundTable,
+  workbench,
+  easel,
+  altar,
+  sink,
+  table,
+  "market-stall": marketStall,
+  bench,
+  fountain,
+  "record-desk": recordDesk,
+  "waiting-chair": waitingChair,
+  "teacher-podium": teacherPodium,
+  "service-counter": serviceCounter,
+  "retail-shelf": retailShelf,
+  "supply-crate": supplyCrate,
+  "cafe-seating": cafeSeating,
+  "hot-food-counter": hotFoodCounter,
+  "exchange-board": exchangeBoard,
+  "proposal-podium": proposalPodium,
+  "notice-board": noticeBoard,
+  "audience-seating": audienceSeating,
+  "office-workstation": officeWorkstation,
+  "collaboration-board": collaborationBoard,
+  "mediation-podium": mediationPodium,
+  "archive-cabinet": archiveCabinet,
+  "calming-chair": calmingChair,
+  "home-bed": homeBed,
+  bookcase,
+  "garden-tool-shed": gardenToolShed,
+  "gallery-wall": galleryWall,
+  "rehearsal-stage": rehearsalStage,
+  "story-table": storyTable,
+  "music-corner": musicCorner,
+  "meditation-seat": meditationSeat,
+  "memory-book": memoryBook
+};
+
+function parseArgs(argv) {
+  const args = {
+    output: DEFAULT_OUT_DIR,
+    slots: DEFAULT_SLOTS
+  };
+  for (let i = 0; i < argv.length; i += 1) {
+    const arg = argv[i];
+    if (arg === "--output") args.output = path.resolve(argv[++i]);
+    else if (arg === "--slots") args.slots = argv[++i].split(",").map((slot) => slot.trim()).filter(Boolean);
+    else if (arg === "--all") args.slots = Object.keys(builders);
+    else if (arg === "--help" || arg === "-h") {
+      console.log(`Generate lightweight cel-shaded Three.js interior GLBs.\n\nOptions:\n  --output <dir>       Output directory.\n  --slots <a,b,c>      Comma-separated model slots.\n  --all                Generate all model slots.\n`);
+      process.exit(0);
+    } else {
+      throw new Error(`Unknown argument: ${arg}`);
+    }
+  }
+  const unknown = args.slots.filter((slot) => !builders[slot]);
+  if (unknown.length) throw new Error(`Unknown model slots: ${unknown.join(", ")}`);
+  return args;
+}
+
+async function exportGlb(scene, file) {
+  const exporter = new GLTFExporter();
+  const result = await new Promise((resolve, reject) => {
+    exporter.parse(scene, resolve, reject, { binary: true, onlyVisible: true });
+  });
+  await fs.writeFile(file, Buffer.from(result));
+}
+
+const args = parseArgs(process.argv.slice(2));
+await fs.mkdir(args.output, { recursive: true });
+for (const name of args.slots) {
+  const build = builders[name];
+  const scene = new Set(["record-desk", "waiting-chair", "teacher-podium", "service-counter", "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board", "proposal-podium", "notice-board", "audience-seating", "office-workstation", "collaboration-board", "mediation-podium", "archive-cabinet", "calming-chair", "home-bed", "bookcase", "garden-tool-shed", "gallery-wall", "rehearsal-stage", "story-table", "music-corner", "meditation-seat", "memory-book"]).has(name)
+    ? normalizeUpright(build())
+    : normalize(build());
+  await exportGlb(scene, path.join(args.output, `${name}.glb`));
+}
+
+console.log(`Generated ${args.slots.length} GLB interior props in ${args.output}`);

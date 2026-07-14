@@ -1,0 +1,613 @@
+{
+  "count": 55,
+  "model": "gpt-image-2",
+  "outputRoot": "/Users/kk/repos/MirrorLife/dist/assets/interior-props-image2",
+  "source": "dist/assets/mirrorlife-interior-prop-design-board.png",
+  "items": [
+    {
+      "category": "hospital",
+      "name": "hospital_bed_monitor_iv",
+      "description": "hospital bed with a pink blanket, bedside monitor, IV stand, small wheels",
+      "file": "hospital/hospital_bed_monitor_iv.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: hospital bed with a pink blanket, bedside monitor, IV stand, small wheels.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "hospital",
+      "name": "reception_counter",
+      "description": "curved hospital reception desk with red cross sign, small monitor, tiny potted plant",
+      "file": "hospital/reception_counter.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: curved hospital reception desk with red cross sign, small monitor, tiny potted plant.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "hospital",
+      "name": "medicine_cabinet",
+      "description": "tall medicine cabinet with glass shelves, bottles, lower drawers",
+      "file": "hospital/medicine_cabinet.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: tall medicine cabinet with glass shelves, bottles, lower drawers.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "hospital",
+      "name": "medical_supply_podium",
+      "description": "small wooden medical supply podium with red cross emblem, notebook, plant",
+      "file": "hospital/medical_supply_podium.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small wooden medical supply podium with red cross emblem, notebook, plant.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "kindergarten",
+      "name": "baby_stroller",
+      "description": "pink baby stroller with black wheels and rounded canopy",
+      "file": "kindergarten/baby_stroller.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: pink baby stroller with black wheels and rounded canopy.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "kindergarten",
+      "name": "teddy_play_rug",
+      "description": "cute teddy bear sitting on a pink play rug with pillows",
+      "file": "kindergarten/teddy_play_rug.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: cute teddy bear sitting on a pink play rug with pillows.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "kindergarten",
+      "name": "playroom_interior",
+      "description": "small cozy kindergarten nap room diorama with bed, toy blocks, window, curtains",
+      "file": "kindergarten/playroom_interior.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small cozy kindergarten nap room diorama with bed, toy blocks, window, curtains.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "school_library",
+      "name": "chalkboard",
+      "description": "green classroom chalkboard on wooden stand with chalk and eraser",
+      "file": "school_library/chalkboard.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: green classroom chalkboard on wooden stand with chalk and eraser.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "school_library",
+      "name": "student_desk",
+      "description": "small student desk with open book, chair, backpack",
+      "file": "school_library/student_desk.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small student desk with open book, chair, backpack.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "school_library",
+      "name": "reading_armchair_lamp",
+      "description": "green reading armchair with small round table, lamp, plant, pillow",
+      "file": "school_library/reading_armchair_lamp.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: green reading armchair with small round table, lamp, plant, pillow.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "school_library",
+      "name": "bookcase",
+      "description": "wooden bookcase filled with colorful books",
+      "file": "school_library/bookcase.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden bookcase filled with colorful books.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "school_library",
+      "name": "library_classroom_interior",
+      "description": "cozy library classroom diorama with bookshelves, desks, green armchair, arched window",
+      "file": "school_library/library_classroom_interior.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: cozy library classroom diorama with bookshelves, desks, green armchair, arched window.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "park_plaza",
+      "name": "notice_board",
+      "description": "wooden community notice board with pinned paper notices",
+      "file": "park_plaza/notice_board.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden community notice board with pinned paper notices.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "park_plaza",
+      "name": "wooden_bench",
+      "description": "simple wooden park bench",
+      "file": "park_plaza/wooden_bench.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: simple wooden park bench.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "park_plaza",
+      "name": "flower_fountain",
+      "description": "round park fountain surrounded by flowers and greenery",
+      "file": "park_plaza/flower_fountain.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: round park fountain surrounded by flowers and greenery.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "park_plaza",
+      "name": "flower_planter",
+      "description": "rectangular wooden flower planter filled with colorful flowers",
+      "file": "park_plaza/flower_planter.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: rectangular wooden flower planter filled with colorful flowers.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "park_plaza",
+      "name": "community_square",
+      "description": "small community square diorama with fountain, benches, flower beds, trees",
+      "file": "park_plaza/community_square.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small community square diorama with fountain, benches, flower beds, trees.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "market_cafe",
+      "name": "produce_stall",
+      "description": "small striped canopy produce stall with fresh vegetables",
+      "file": "market_cafe/produce_stall.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small striped canopy produce stall with fresh vegetables.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "market_cafe",
+      "name": "pantry_shelf",
+      "description": "wooden pantry shelf with jars and kitchen goods",
+      "file": "market_cafe/pantry_shelf.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden pantry shelf with jars and kitchen goods.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "market_cafe",
+      "name": "hot_food_counter",
+      "description": "small warm food counter with hanging lights and serving bowls",
+      "file": "market_cafe/hot_food_counter.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small warm food counter with hanging lights and serving bowls.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "market_cafe",
+      "name": "fruit_baskets",
+      "description": "two baskets of fresh fruit and vegetables",
+      "file": "market_cafe/fruit_baskets.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: two baskets of fresh fruit and vegetables.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "market_cafe",
+      "name": "market_hall_interior",
+      "description": "small colorful indoor market diorama with three stalls and central table",
+      "file": "market_cafe/market_hall_interior.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small colorful indoor market diorama with three stalls and central table.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "market_cafe",
+      "name": "cafe_table_corner",
+      "description": "cozy cafe corner with small chair, tree, round table, plant",
+      "file": "market_cafe/cafe_table_corner.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: cozy cafe corner with small chair, tree, round table, plant.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "sofa_coffee_table",
+      "description": "green sofa with pillows and low wooden coffee table",
+      "file": "residence/sofa_coffee_table.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: green sofa with pillows and low wooden coffee table.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "dining_table_set",
+      "description": "small dining table with four wooden chairs and potted plant",
+      "file": "residence/dining_table_set.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small dining table with four wooden chairs and potted plant.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "single_bed_nightstand",
+      "description": "single wooden bed with green blanket and small nightstand",
+      "file": "residence/single_bed_nightstand.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: single wooden bed with green blanket and small nightstand.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "vanity_dresser",
+      "description": "wooden vanity dresser with mirror, drawers, small plant",
+      "file": "residence/vanity_dresser.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden vanity dresser with mirror, drawers, small plant.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "sink_vanity",
+      "description": "wooden bathroom sink vanity with arched mirror",
+      "file": "residence/sink_vanity.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden bathroom sink vanity with arched mirror.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "bedroom_suite_interior",
+      "description": "cozy bedroom diorama with two green beds, railing, dresser, plants",
+      "file": "residence/bedroom_suite_interior.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: cozy bedroom diorama with two green beds, railing, dresser, plants.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "round_dining_table",
+      "description": "round dining table with four green chairs and small plant",
+      "file": "residence/round_dining_table.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: round dining table with four green chairs and small plant.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "drawer_cabinet",
+      "description": "tall wooden drawer cabinet with colored front panels",
+      "file": "residence/drawer_cabinet.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: tall wooden drawer cabinet with colored front panels.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "residence",
+      "name": "living_room_interior",
+      "description": "cozy living room diorama with windows, round table, green chairs, lamp, plants",
+      "file": "residence/living_room_interior.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: cozy living room diorama with windows, round table, green chairs, lamp, plants.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "painting_easel",
+      "description": "wooden painting easel with landscape painting",
+      "file": "studio_workshop/painting_easel.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden painting easel with landscape painting.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "art_supply_cart",
+      "description": "small rolling cart full of paint brushes and art supplies",
+      "file": "studio_workshop/art_supply_cart.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small rolling cart full of paint brushes and art supplies.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "gallery_frames",
+      "description": "cluster of framed wall paintings",
+      "file": "studio_workshop/gallery_frames.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: cluster of framed wall paintings.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "meditation_rug",
+      "description": "round rug with cushion and potted flower for meditation",
+      "file": "studio_workshop/meditation_rug.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: round rug with cushion and potted flower for meditation.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "maker_workbench",
+      "description": "wooden maker workbench with tools, jars, stool",
+      "file": "studio_workshop/maker_workbench.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden maker workbench with tools, jars, stool.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "writing_desk",
+      "description": "small writing desk with laptop, coffee cup, wooden chair",
+      "file": "studio_workshop/writing_desk.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small writing desk with laptop, coffee cup, wooden chair.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "tool_chest",
+      "description": "green rolling tool chest with tools on top",
+      "file": "studio_workshop/tool_chest.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: green rolling tool chest with tools on top.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "studio_workshop",
+      "name": "drill_press",
+      "description": "compact workshop drill press machine",
+      "file": "studio_workshop/drill_press.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: compact workshop drill press machine.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "greenhouse_garden",
+      "name": "glass_greenhouse",
+      "description": "small glass greenhouse full of potted plants",
+      "file": "greenhouse_garden/glass_greenhouse.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small glass greenhouse full of potted plants.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "greenhouse_garden",
+      "name": "plant_shelf",
+      "description": "rolling plant shelf filled with potted plants",
+      "file": "greenhouse_garden/plant_shelf.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: rolling plant shelf filled with potted plants.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "greenhouse_garden",
+      "name": "flower_bed_watering_can",
+      "description": "raised flower bed with watering can",
+      "file": "greenhouse_garden/flower_bed_watering_can.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: raised flower bed with watering can.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "greenhouse_garden",
+      "name": "fenced_garden",
+      "description": "small fenced garden patch with flowers, stone path, greenery",
+      "file": "greenhouse_garden/fenced_garden.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small fenced garden patch with flowers, stone path, greenery.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "cherry_blossom_tree",
+      "description": "small cherry blossom tree planter",
+      "file": "memorial_cemetery/cherry_blossom_tree.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small cherry blossom tree planter.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "stone_lantern_garden",
+      "description": "small stone lantern garden with stepping stones and shrubs",
+      "file": "memorial_cemetery/stone_lantern_garden.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small stone lantern garden with stepping stones and shrubs.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "tombstone_memorial",
+      "description": "small respectful tombstone memorial with flowers",
+      "file": "memorial_cemetery/tombstone_memorial.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small respectful tombstone memorial with flowers.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "memorial_bench",
+      "description": "wooden memorial bench with small plants",
+      "file": "memorial_cemetery/memorial_bench.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden memorial bench with small plants.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "low_memorial_table",
+      "description": "low memorial offering table with cushion, vase, candle",
+      "file": "memorial_cemetery/low_memorial_table.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: low memorial offering table with cushion, vase, candle.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "long_memorial_altar",
+      "description": "long memorial altar table with flowers, framed photo, candle, small offerings",
+      "file": "memorial_cemetery/long_memorial_altar.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: long memorial altar table with flowers, framed photo, candle, small offerings.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "flower_vase",
+      "description": "clear vase with pink flowers",
+      "file": "memorial_cemetery/flower_vase.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: clear vase with pink flowers.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "flower_box",
+      "description": "wooden flower box with white daisies",
+      "file": "memorial_cemetery/flower_box.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: wooden flower box with white daisies.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "small_fountain",
+      "description": "small stone fountain basin",
+      "file": "memorial_cemetery/small_fountain.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small stone fountain basin.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "garden_lantern",
+      "description": "small garden lantern",
+      "file": "memorial_cemetery/garden_lantern.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: small garden lantern.",
+      "size": [
+        1024,
+        1024
+      ]
+    },
+    {
+      "category": "memorial_cemetery",
+      "name": "cemetery_garden_interior",
+      "description": "peaceful memorial garden diorama with cherry blossom tree, tombstone, flowers, path",
+      "file": "memorial_cemetery/cemetery_garden_interior.png",
+      "prompt": "MirrorLife game prop asset. Single isolated object only, no extra objects, no labels, no text. Warm dopamine cel-shading cartoon style, isometric 3/4 view, thick clean ink outline, soft rounded forms, cozy humanistic feeling. Pure transparent background, centered composition, full object visible, game-ready PNG sprite. Match the source board's visual language: clean miniature interior props, gentle colors, readable silhouette, polished mobile-game asset.\nObject to generate: peaceful memorial garden diorama with cherry blossom tree, tombstone, flowers, path.",
+      "size": [
+        1024,
+        1024
+      ]
+    }
+  ]
+}

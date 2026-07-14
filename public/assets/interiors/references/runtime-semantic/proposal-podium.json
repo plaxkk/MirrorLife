@@ -1,0 +1,24 @@
+{
+  "model": "proposal-podium",
+  "label": "提案台",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/hospital/reception_counter.png",
+    "public/assets/interiors/references/runtime-semantic/teacher-podium.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/proposal-podium.png",
+  "dimensions": [1086, 1448],
+  "background": "transparent",
+  "requiredParts": [
+    "podium body",
+    "front accent panel",
+    "document ledge",
+    "microphone",
+    "suggestion drawer",
+    "wide base",
+    "finished backside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve one blank proposal sheet, one gooseneck microphone with coral ring, teal front panel, one slotted suggestion drawer with brass pull, broad base, staff-side paper cubby, lower shelf and finished underside. Canonical views, closed development geometry and turntable review are still required."
+}

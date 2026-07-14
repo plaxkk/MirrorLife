@@ -1,0 +1,23 @@
+{
+  "model": "bookcase",
+  "label": "故事书架",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/mirrorlife-interior-prop-design-board.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/bookcase.png",
+  "dimensions": [1024, 1536],
+  "background": "transparent",
+  "requiredParts": [
+    "bookcase frame",
+    "four shelves",
+    "colorful books",
+    "two lower drawers",
+    "handles",
+    "display shelf",
+    "finished back panel"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the tall rounded honey-oak frame, exactly four book shelves with varied colorful books, upper display niche with an open keepsake book and blank framed card, two equal lower drawers with separate handles, sturdy plinth and four feet. The rear must be a finished recessed furniture panel. Canonical views, closed development geometry and turntable review are still required."
+}

@@ -1,0 +1,21 @@
+{
+  "model": "service-counter",
+  "label": "服务柜台",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReference": "public/assets/mirrorlife-interior-prop-design-board.png",
+  "file": "public/assets/interiors/references/runtime-semantic/service-counter.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "rounded counter body",
+    "service ledge",
+    "worktop",
+    "register",
+    "parcel shelf",
+    "rear storage",
+    "finished backside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the exact isometric design reference. Preserve the curved cream customer front, mint service ledge, wood worktop, coral register, two blue parcels on the two-tier side shelf, rear drawers, cabinet door, back rail and finished staff workspace. It still requires canonical views, a closed master model and turntable review."
+}

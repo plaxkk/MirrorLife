@@ -1,0 +1,56 @@
+{
+  "model": "retail-shelf",
+  "sourceSheet": "public/assets/interiors/references/multiview/retail-shelf/source-sheet.png",
+  "generatedAt": "2026-07-11T14:15:58.250Z",
+  "grid": {
+    "mode": "authored-bounds"
+  },
+  "layoutFile": "public/assets/interiors/references/multiview/retail-shelf/source-layout.json",
+  "chromaKey": "#f00ddf",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/retail-shelf/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

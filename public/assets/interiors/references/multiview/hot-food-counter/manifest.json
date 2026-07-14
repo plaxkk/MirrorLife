@@ -1,0 +1,56 @@
+{
+  "model": "hot-food-counter",
+  "sourceSheet": "public/assets/interiors/references/multiview/hot-food-counter/source-sheet.png",
+  "generatedAt": "2026-07-11T16:43:16.588Z",
+  "grid": {
+    "mode": "authored-bounds"
+  },
+  "layoutFile": "public/assets/interiors/references/multiview/hot-food-counter/source-layout.json",
+  "chromaKey": "#ef13e7",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/hot-food-counter/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

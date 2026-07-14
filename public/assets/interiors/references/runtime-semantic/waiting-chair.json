@@ -1,0 +1,19 @@
+{
+  "model": "waiting-chair",
+  "label": "家属等候椅",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReference": "public/assets/mirrorlife-interior-prop-design-board.png",
+  "file": "public/assets/interiors/references/runtime-semantic/waiting-chair.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "three seats",
+    "three backrests",
+    "shared support beam",
+    "two floor legs",
+    "finished rear frame"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the exact isometric design reference. Preserve exactly three linked upholstered seats in lavender-blue, mint and sky blue, one continuous navy beam, two inverted-T floor legs, all rear supports and yellow joint caps. The reference still requires coherent canonical views, a closed master model and turntable review."
+}

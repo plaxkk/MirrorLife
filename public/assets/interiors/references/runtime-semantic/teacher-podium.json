@@ -1,0 +1,21 @@
+{
+  "model": "teacher-podium",
+  "label": "讲台",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-11T00:00:00.000Z",
+  "sourceStyleReference": "public/assets/mirrorlife-interior-prop-design-board.png",
+  "file": "public/assets/interiors/references/runtime-semantic/teacher-podium.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "podium body",
+    "slanted reading top",
+    "storage door",
+    "lower plinth",
+    "notebook",
+    "pencil cup",
+    "finished backside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved as the exact isometric design reference. Preserve the honey-wood body, slanted reading top with book-stop lip, two-panel storage door, blue side inlays, lower plinth, four feet, open notebook and teal cup with exactly three pencils. It still requires canonical views, a closed master model and turntable review."
+}

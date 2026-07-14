@@ -52,8 +52,13 @@ let followedCitizenId = null;
 let followZoomUntil = 0;
 let lastFollowBannerAt = 0;
 let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
-let interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+let interiorOrbit = { yaw: 0.18, pitch: 0.58, x: 0, z: 0, lastMoveAt: 0, drag: false, lastX: 0, lastY: 0 };
+let interiorMoveKeys = new Set();
+let interiorExitRect = null;
 let interiorAnimations = {};
+let interiorHotspots = [];
+let interiorNearbyAnchor = null;
+let interiorFocusPropIndex = null;
 let activeEncounters = [];
 let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
@@ -74,6 +79,12 @@ const MAX_FULL_CITIZENS_DESKTOP = 14;
 const MAX_FULL_CITIZENS_MOBILE = 8;
 const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
+const INTERIOR_PANORAMA_FOV = Math.PI * 0.38;
+const INTERIOR_PANORAMA_TAU = Math.PI * 2;
+const INTERIOR_PLAYER_RADIUS = 2.72;
+const INTERIOR_PLAYER_SPEED = 1.55;
+const INTERIOR_INTERACTION_RADIUS = 2.05;
+const INTERIOR_MODEL_CLEARANCE = 0.82;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -921,6 +932,7 @@ function renderFirstLoopPanel() {
   state.firstSessionStage = stage;
   applyFirstSessionChrome();
   panel.classList.toggle("collapsed", questPanelCollapsed);
+  if (questPanelCollapsed) panel.scrollTop = 0;
   const renderers = {
     opening: renderOpeningQuest,
     choose_capsule: renderChooseCapsuleQuest,
@@ -931,6 +943,7 @@ function renderFirstLoopPanel() {
     unlocked_world: renderUnlockedWorldQuest
   };
   content.innerHTML = (renderers[stage] || renderChooseCapsuleQuest)();
+  if (questPanelCollapsed) panel.scrollTop = 0;
 }
 
 function buildFirstLoopResult(feedback, actionType, visibleChoice = "") {
@@ -5113,125 +5126,473 @@ function updateFollowCamera(W, H, now) {
 
 // ── Interior scenes: step inside a building and look around ──
 
+const INTERIOR_STORY_THREADS = [
+  {
+    id: "unheard-voices",
+    title: "让沉默被听见",
+    objective: "找到没有被城市节奏照顾到的人",
+    zones: ["public-plaza", "quiet-nook", "legal-court", "empathy-lab", "story-archive"]
+  },
+  {
+    id: "care-relay",
+    title: "照护的接力",
+    objective: "看见照护者，也让照护能够继续流动",
+    zones: ["maternity-hospital", "resource-kitchen", "residential", "rest-courtyard", "cemetery"]
+  },
+  {
+    id: "growing-room",
+    title: "成长没有标准答案",
+    objective: "为每个阶段保留试错和重新选择的位置",
+    zones: ["kindergarten", "primary-school", "middle-school", "university", "mentor-hall"]
+  },
+  {
+    id: "shared-city",
+    title: "城市如何共同工作",
+    objective: "让交换、劳动和决定都留下可以接力的方法",
+    zones: ["commercial-zone", "night-market", "office-district", "factory", "commons-workshop"]
+  },
+  {
+    id: "more-than-human",
+    title: "与万物共同生活",
+    objective: "练习照料不同速度、不同语言的生命",
+    zones: ["farm", "park", "zoo", "botanical-garden", "creative-studio", "repair-station"]
+  }
+];
+
 const INTERIOR_BLUEPRINTS = {
   care: {
     title: "照护与恢复",
     props: [
-      { emoji: "🛏️", label: "休息床", x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
-      { emoji: "🌡️", label: "护理站", x: 0.44, y: 0.2, size: 30, behaviors: ["care", "write", "work"] },
-      { emoji: "🪑", label: "等候椅", x: 0.68, y: 0.32, size: 28, behaviors: ["phone", "read", "think", "tea"] },
-      { emoji: "💊", label: "药品柜", x: 0.82, y: 0.2, size: 28, behaviors: ["care", "handoff", "work"] },
-      { emoji: "🧸", label: "安抚角", x: 0.34, y: 0.66, size: 30, behaviors: ["comfort", "cry", "tea"] },
-      { emoji: "🪴", label: "复原植物", x: 0.72, y: 0.66, size: 29, behaviors: ["garden", "drink", "think"] }
+      { emoji: "🛏️", label: "休息床", assetIntent: "hospital-bed", model: "bed", render3d: true, x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
+      { emoji: "🌡️", label: "护理站", assetIntent: "reception-counter", model: "counter", render3d: true, x: 0.44, y: 0.2, size: 30, behaviors: ["care", "write", "work"] },
+      { emoji: "🪑", label: "等候椅", assetIntent: "waiting-chair", model: "waiting-chair", render3d: true, x: 0.68, y: 0.32, size: 28, behaviors: ["phone", "read", "think", "tea"] },
+      { emoji: "💊", label: "药品柜", assetIntent: "medicine-cabinet", model: "shelf", render3d: true, x: 0.82, y: 0.2, size: 28, behaviors: ["care", "handoff", "work"] },
+      { emoji: "🧸", label: "安抚角", assetIntent: "teddy-play-rug", model: "toy-corner", render3d: true, x: 0.34, y: 0.66, size: 30, behaviors: ["comfort", "cry", "tea"] },
+      { emoji: "🪴", label: "复原植物", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.72, y: 0.66, size: 29, behaviors: ["garden", "drink", "think"] }
     ]
   },
   learning: {
     title: "学习与成长",
     props: [
-      { emoji: "📚", label: "阅读角", x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
-      { emoji: "🧑‍🏫", label: "讲台", x: 0.5, y: 0.18, size: 31, behaviors: ["teach", "write"] },
-      { emoji: "🪑", label: "课桌", x: 0.34, y: 0.48, size: 28, behaviors: ["write", "read", "type"] },
-      { emoji: "🖊️", label: "练习桌", x: 0.58, y: 0.5, size: 28, behaviors: ["write", "read"] },
-      { emoji: "🌍", label: "探索墙", x: 0.78, y: 0.28, size: 30, behaviors: ["teach", "read", "think"] },
-      { emoji: "☕", label: "课间角", x: 0.74, y: 0.72, size: 26, behaviors: ["drink", "phone", "handoff"] }
+      { emoji: "📚", label: "阅读角", assetIntent: "reading-corner", model: "reading-corner", render3d: true, x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
+      { emoji: "🧑‍🏫", label: "讲台", assetIntent: "teacher-podium", model: "teacher-podium", render3d: true, x: 0.5, y: 0.18, size: 31, behaviors: ["teach", "write"] },
+      { emoji: "🪑", label: "课桌", assetIntent: "student-desk", model: "desk", render3d: true, x: 0.34, y: 0.48, size: 28, behaviors: ["write", "read", "type"] },
+      { emoji: "🖊️", label: "练习桌", assetIntent: "student-desk", model: "desk", render3d: true, x: 0.58, y: 0.5, size: 28, behaviors: ["write", "read"] },
+      { emoji: "🌍", label: "探索墙", assetIntent: "chalkboard", model: "wall-board", render3d: true, x: 0.78, y: 0.28, size: 30, behaviors: ["teach", "read", "think"] },
+      { emoji: "☕", label: "课间角", assetIntent: "break-seating", model: "reading-corner", render3d: true, x: 0.74, y: 0.72, size: 26, behaviors: ["drink", "phone", "handoff"] }
     ]
   },
   commerce: {
     title: "交易与补给",
     props: [
-      { emoji: "🏷️", label: "柜台", x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
-      { emoji: "🧺", label: "货架", x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
-      { emoji: "📦", label: "补给箱", x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
-      { emoji: "☕", label: "小坐区", x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
-      { emoji: "🍜", label: "热食台", x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
-      { emoji: "🧾", label: "交换板", x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
+      { emoji: "🏷️", label: "柜台", assetIntent: "service-counter", model: "service-counter", render3d: true, x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
+      { emoji: "🧺", label: "货架", assetIntent: "retail-shelf", model: "retail-shelf", render3d: true, x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
+      { emoji: "📦", label: "补给箱", assetIntent: "supply-crate", model: "supply-crate", render3d: true, x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
+      { emoji: "☕", label: "小坐区", assetIntent: "cafe-seating", model: "cafe-seating", render3d: true, x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
+      { emoji: "🍜", label: "热食台", assetIntent: "hot-food-counter", model: "hot-food-counter", render3d: true, x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
+      { emoji: "🧾", label: "交换板", assetIntent: "exchange-board", model: "exchange-board", render3d: true, x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
     ]
   },
   public: {
     title: "公共讨论与共识",
     props: [
-      { emoji: "📢", label: "提案台", x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
-      { emoji: "🪧", label: "公告板", x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
-      { emoji: "🪑", label: "旁听席", x: 0.72, y: 0.28, size: 29, behaviors: ["think", "read", "drink"] },
-      { emoji: "📝", label: "记录桌", x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
-      { emoji: "🤝", label: "共识圆桌", x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
-      { emoji: "🌿", label: "缓冲角", x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
+      { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "proposal-podium", render3d: true, x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
+      { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "notice-board", render3d: true, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
+      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, x: 0.72, y: 0.28, size: 29, behaviors: ["meeting", "think", "read", "drink"] },
+      { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
+      { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
     ]
   },
   work: {
     title: "协作与生产",
     props: [
-      { emoji: "💻", label: "工位", x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
-      { emoji: "🧰", label: "工具台", x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
-      { emoji: "📋", label: "协作板", x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
-      { emoji: "🪑", label: "会议桌", x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
-      { emoji: "⚙️", label: "设备区", x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
+      { emoji: "💻", label: "工位", assetIntent: "office-workstation", model: "office-workstation", render3d: true, x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
+      { emoji: "🧰", label: "工具台", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
+      { emoji: "📋", label: "协作板", assetIntent: "collaboration-board", model: "collaboration-board", render3d: true, x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
+      { emoji: "🪑", label: "会议桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
+      { emoji: "⚙️", label: "设备区", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
     ]
   },
   justice: {
     title: "调停与记录",
     props: [
-      { emoji: "⚖️", label: "调停席", x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
-      { emoji: "🪑", label: "圆桌", x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
-      { emoji: "📝", label: "记录席", x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
-      { emoji: "🗄️", label: "档案柜", x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
-      { emoji: "🕊️", label: "冷静角", x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
+      { emoji: "⚖️", label: "调停席", assetIntent: "mediation-podium", model: "mediation-podium", render3d: true, x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
+      { emoji: "🪑", label: "圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
+      { emoji: "📝", label: "记录席", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
+      { emoji: "🗄️", label: "档案柜", assetIntent: "archive-cabinet", model: "archive-cabinet", render3d: true, x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🕊️", label: "冷静角", assetIntent: "calming-chair", model: "calming-chair", render3d: true, x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
     ]
   },
   home: {
     title: "生活与休息",
     props: [
-      { emoji: "🛋️", label: "沙发", x: 0.22, y: 0.34, size: 34, behaviors: ["phone", "drink", "sleep", "think"] },
-      { emoji: "🍽️", label: "餐桌", x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
-      { emoji: "🛏️", label: "卧榻", x: 0.78, y: 0.32, size: 33, behaviors: ["sleep"] },
-      { emoji: "🪞", label: "洗漱台", x: 0.32, y: 0.7, size: 29, behaviors: ["wash", "clean"] },
-      { emoji: "📚", label: "书架", x: 0.5, y: 0.72, size: 29, behaviors: ["read", "write"] },
-      { emoji: "🪴", label: "阳台植物", x: 0.72, y: 0.7, size: 30, behaviors: ["garden", "drink", "think"] }
+      { emoji: "🛋️", label: "沙发", assetIntent: "sofa-set", model: "seating", render3d: true, x: 0.22, y: 0.34, size: 34, behaviors: ["phone", "drink", "sleep", "think"] },
+      { emoji: "🍽️", label: "餐桌", assetIntent: "round-dining-table", model: "round-table", render3d: true, x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
+      { emoji: "🛏️", label: "卧榻", assetIntent: "home-bed", model: "home-bed", render3d: true, x: 0.78, y: 0.32, size: 33, behaviors: ["sleep"] },
+      { emoji: "🪞", label: "洗漱台", assetIntent: "sink-vanity", model: "sink", render3d: true, x: 0.32, y: 0.7, size: 29, behaviors: ["wash", "clean"] },
+      { emoji: "📚", label: "书架", assetIntent: "bookcase", model: "bookcase", render3d: true, x: 0.5, y: 0.72, size: 29, behaviors: ["read", "write"] },
+      { emoji: "🪴", label: "阳台植物", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.72, y: 0.7, size: 30, behaviors: ["garden", "drink", "think"] }
     ]
   },
   nature: {
     title: "生态与照料",
     props: [
-      { emoji: "🌿", label: "育苗架", x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
-      { emoji: "🪴", label: "温室台", x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
-      { emoji: "🪵", label: "工具棚", x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
-      { emoji: "🪑", label: "休息椅", x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
-      { emoji: "🌸", label: "照料区", x: 0.62, y: 0.68, size: 31, behaviors: ["garden", "care", "gather"] }
+      { emoji: "🌿", label: "育苗架", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
+      { emoji: "🪴", label: "温室台", assetIntent: "greenhouse-bench", model: "plant-zone", render3d: true, x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
+      { emoji: "🪵", label: "工具棚", assetIntent: "garden-tool-shed", model: "garden-tool-shed", render3d: true, x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
+      { emoji: "🪑", label: "休息椅", assetIntent: "park-bench", model: "bench", render3d: true, x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
+      { emoji: "🌸", label: "照料区", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.62, y: 0.68, size: 31, behaviors: ["garden", "care", "gather"] }
     ]
   },
   creative: {
     title: "表达与创作",
     props: [
-      { emoji: "🎨", label: "画架", x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
-      { emoji: "🖼️", label: "作品墙", x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
-      { emoji: "🎭", label: "排练角", x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
-      { emoji: "📚", label: "故事桌", x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
-      { emoji: "🎶", label: "声音角", x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
+      { emoji: "🎨", label: "画架", assetIntent: "painting-easel", model: "easel", render3d: true, x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
+      { emoji: "🖼️", label: "作品墙", assetIntent: "gallery-wall", model: "gallery-wall", render3d: true, x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
+      { emoji: "🎭", label: "排练角", assetIntent: "rehearsal-stage", model: "rehearsal-stage", render3d: true, x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
+      { emoji: "📚", label: "故事桌", assetIntent: "story-table", model: "story-table", render3d: true, x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🎶", label: "声音角", assetIntent: "music-corner", model: "music-corner", render3d: true, x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
     ]
   },
   memory: {
     title: "安宁与记忆",
     props: [
-      { emoji: "🕯️", label: "纪念台", x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
-      { emoji: "🕊️", label: "静坐席", x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
-      { emoji: "📖", label: "记忆册", x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
-      { emoji: "🌿", label: "低声花园", x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
+      { emoji: "🕯️", label: "纪念台", assetIntent: "memorial-altar", model: "altar", render3d: true, x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
+      { emoji: "🕊️", label: "静坐席", assetIntent: "meditation-seat", model: "meditation-seat", render3d: true, x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
+      { emoji: "📖", label: "记忆册", assetIntent: "memory-book", model: "memory-book", render3d: true, x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
+      { emoji: "🌿", label: "低声花园", assetIntent: "memory-garden", model: "plant-zone", render3d: true, x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
     ]
   }
 };
 
+const INTERIOR_ZONE_PROFILES = {
+  "public-plaza": {
+    blueprint: "public", title: "邻里议事客厅", intro: "这里没有高台，重要的事围着一张桌子慢慢说。",
+    labels: ["居民提案台", "今日公告板", "开放旁听席", "公共记录桌", "邻里共识圆桌", "情绪缓冲角"],
+    clues: [
+      "一张提案只写了半句：希望夜班的人也能被城市看见。",
+      "公告板背面留着不同笔迹的补充，没有人急着署名。",
+      "旁听席最靠近通道的两张椅子没有被固定朝向讲台，它们也可以转向彼此。",
+      "记录桌的页脚专门留出一栏：还有谁没有被问到？",
+      "圆桌边多放了一把椅子，像是在等一个还没准备好开口的人。",
+      "缓冲角的水杯旁写着：离开十分钟，不代表退出讨论。"
+    ],
+    completion: "你发现，公共生活不是所有人意见一致，而是每个人都有留下痕迹的位置。"
+  },
+  "maternity-hospital": {
+    blueprint: "care", title: "新生与守夜病房", intro: "这里同时容纳第一次呼吸、漫长等待和照护者的疲惫。",
+    labels: ["晨光休息床", "值班护理站", "家属等候椅", "新生药品柜", "亲子安抚角", "复原植物窗"],
+    clues: ["床边卡片记录的不是病情，而是一个家庭第一次学会彼此照顾的时间。", "护理站抽屉里压着一张没送出去的感谢便签。", "安抚角的玩偶被缝补过很多次，每一道针脚都来自不同的人。"],
+    completion: "你听见这栋建筑真正守护的，不只是生命，也包括照护者不被遗忘的疲惫。"
+  },
+  residential: {
+    blueprint: "home", title: "生活巷共享起居室", intro: "普通日子在这里堆叠：吃饭、发呆、收拾和等待一个人回家。",
+    labels: ["窗边旧沙发", "四季餐桌", "晚归卧榻", "清晨洗漱台", "邻里借阅书架", "阳台植物角"],
+    clues: ["沙发缝里夹着一张旧车票，它没有目的地，只有回家的日期。", "餐桌上多摆的一只碗，属于一个偶尔回来吃饭的人。", "卧榻的阅读灯一直朝门口亮着，像是在替晚归的人保留一小块不必解释的安静。", "洗漱台边并排放着两只杯子，其中一只属于刚搬来、还没习惯说‘我们’的人。", "书架的借阅卡上，同一本书被两位从未见面的人反复续借。", "阳台植物的轮值牌没有惩罚栏，错过一次浇水的人只会收到一句：今天还好吗？"],
+    completion: "你看见，所谓归属感往往不是宏大承诺，而是有人替你保留一个位置。"
+  },
+  kindergarten: {
+    blueprint: "learning", title: "童年园游戏教室", intro: "规则被画成颜色，问题被允许用游戏回答。",
+    labels: ["绘本阅读角", "故事讲台", "积木课桌", "涂鸦练习桌", "好奇探索墙", "软垫课间角"],
+    clues: ["一本绘本的最后一页被孩子重新画过，坏人最后学会了道歉。", "积木城少了一扇门，因为建造它的人说：所有人都可以直接进来。", "探索墙上最受欢迎的问题是：大人为什么总说以后？"],
+    completion: "你想起，成长不是更快得到答案，而是还能保护自己提问的勇气。"
+  },
+  "primary-school": {
+    blueprint: "learning", title: "初学堂共学教室", intro: "第一次合作、第一次失败和第一次被认真倾听都发生在这里。",
+    labels: ["晨读阅读角", "共学讲台", "同桌课桌", "错题练习桌", "问题探索墙", "课间分享角"],
+    clues: ["错题本旁写着：这次不是不会，只是我太害怕举手。", "同桌把两张不同答案粘在一起，竟然拼出第三条路。", "讲台下面藏着一封写给未来老师的信：请不要只叫最快的人回答。"],
+    completion: "你发现，被允许慢一点，也是一种教育资源。"
+  },
+  "middle-school": {
+    blueprint: "learning", title: "少年学堂选择教室", intro: "这里的人开始追问：我是谁，以及我是否只能成为别人期待的样子。",
+    labels: ["匿名阅读角", "生涯讲台", "靠窗课桌", "选择练习桌", "未来探索墙", "放空课间角"],
+    clues: ["未来墙上最小的一张纸写着：我还不知道，这也可以吗？", "靠窗课桌刻着两个相反的志愿，后来都被轻轻划掉。", "匿名书页里有人回答：你不需要现在就决定一辈子。"],
+    completion: "你感到，青春期真正需要的不是标准答案，而是一段可以试错的缓冲带。"
+  },
+  university: {
+    blueprint: "learning", title: "开放书院跨界教室", intro: "知识在这里不是终点，而是通向陌生人的桥。",
+    labels: ["跨学科阅读角", "开放讲台", "研究课桌", "原型练习桌", "议题探索墙", "夜谈课间角"],
+    clues: ["一份被退回三次的研究计划，第四版把“对象”改成了“共同作者”。", "探索墙上两门互不相关的课程，共用着同一个社会问题。", "夜谈角的杯底压着一句话：我来这里不是为了证明聪明。"],
+    completion: "你发现，真正的开放不是知道更多，而是愿意让自己的观点被他人改变。"
+  },
+  "office-district": {
+    blueprint: "work", title: "共事楼项目现场", intro: "目标、边界和人的精力在同一张进度表上彼此拉扯。",
+    labels: ["靠窗工位", "共享工具台", "进度协作板", "项目会议桌", "原型设备区"],
+    clues: ["工位便签把“必须完成”改成了“今天能推进什么”。", "协作板角落留着一列不计入绩效的互助记录。", "会议桌下有一根充电线，标签写着：给快没电的人。"],
+    completion: "你看见，一份可持续的工作不仅交付结果，也保护做事的人。"
+  },
+  factory: {
+    blueprint: "work", title: "匠造坊安全车间", intro: "机器有节拍，人的经验则藏在每一次停机和交接里。",
+    labels: ["巡检工位", "精密工具台", "安全协作板", "交班会议桌", "生产设备区"],
+    clues: ["工具台上最旧的扳手刻着三个人的名字，它比任何说明书都熟悉这台机器。", "安全板记录了一次主动停线，没有人因此被责备。", "交班桌上每条异常后面都写着下一班可以求助的人。"],
+    completion: "你发现，可靠的生产不是从不出错，而是错误能够被诚实地传递。"
+  },
+  "legal-court": {
+    blueprint: "justice", title: "公议庭修复室", intro: "人们来这里不是赢下一场争论，而是让破裂的关系重新拥有边界。",
+    labels: ["平等调停席", "修复圆桌", "事实记录席", "公共档案柜", "呼吸冷静角"],
+    clues: ["调停席的桌面没有主位，所有椅子的高度完全相同。", "记录里保留了双方都不同意的部分，没有把复杂删成结论。", "冷静角的沙漏允许任何人暂停对话，而不被视为逃避。", "档案柜的六个抽屉分别记录授权范围；任何一方撤回同意，锁灯就会熄灭。", "冷静角的椅子朝向出口，坐下的人始终保有离开的选择。"],
+    completion: "你理解，正义有时不是惩罚更重，而是让受伤的人重新获得选择权。"
+  },
+  "creative-studio": {
+    blueprint: "creative", title: "创作工坊未完成现场", intro: "作品被允许停在半路，灵感也可以由不同的人接力。",
+    labels: ["共同画架", "未完成作品墙", "身体排练角", "故事草稿桌", "声音采样角"],
+    clues: ["画架上的颜色来自三个人，没人能说清哪一笔才是开始。", "作品墙专门留了一格给失败版本，下面的评论比成品更多。", "排练角的三枚站位点都朝向出口，任何人都可以在动作不舒服时离开角色。", "故事桌上有一个没有主角的开头，等待路过的人把自己写进去。", "声音角保留了一段没人署名的呼吸声，它后来成了整首作品的节拍。"],
+    completion: "你发现，表达不是展示一个完整的自己，而是允许别人看见你正在形成。"
+  },
+  "commercial-zone": {
+    blueprint: "commerce", title: "街市交换大厅", intro: "货物在流动，消息、信任和人情也在流动。",
+    labels: ["邻里服务柜台", "共享货架", "互助补给箱", "街坊小坐区", "当日热食台", "需求交换板"],
+    clues: ["补给箱里最常被取走的不是食物，而是写着“可以陪你去”的纸条。", "交换板上一份过期需求仍有人回复：现在还需要吗？", "热食台每天留一份不标价格的餐，只有一句“先吃饭”。"],
+    completion: "你看见，市场不只计算价格，也在悄悄衡量一座城市愿意如何互相托住。"
+  },
+  farm: {
+    blueprint: "nature", title: "社区农圃四季棚", intro: "土地不会立刻回答，但每一次照料都被它记住。",
+    labels: ["春季育苗架", "共享温室台", "农具工具棚", "田边休息椅", "轮值照料区"],
+    clues: ["育苗标签除了日期，还写着种下它的人当时的愿望。", "温室台的轮值本没有署名，只有一列彼此接上的浇水时间。", "工具棚里最干净的工具属于一位已经搬走的居民。", "休息椅下压着一张天气记录：今天不适合劳动，适合一起看雨。", "照料区有一行歪斜的新芽，旁边写着：第一次种，别笑。"],
+    completion: "你感到，自演化不是自动生长，而是许多微小照料被时间放大。"
+  },
+  park: {
+    blueprint: "nature", title: "邻里公园呼吸站", intro: "这里不要求产出，人们只是重新学会感受身体和天气。",
+    labels: ["树荫育苗架", "季节温室台", "维护工具棚", "湖边休息椅", "公共花圃照料区"],
+    clues: ["长椅扶手被磨得发亮，像是很多人曾在这里犹豫要不要回家。", "花圃里混种着互相保护的植物，没有一株独占整片阳光。", "维护记录写着：保留落叶，让冬天也有声音。"],
+    completion: "你发现，公共空间最珍贵的功能，是允许一个人暂时什么都不成为。"
+  },
+  zoo: {
+    blueprint: "nature", title: "动物照护园观察室", intro: "照护从观察开始，而不是把所有生命都变得听话。",
+    labels: ["幼体育苗架", "生态温室台", "饲养工具棚", "静默休息椅", "动物照料区"],
+    clues: ["观察记录里写得最多的是“今天没有靠近”，这也被视为进展。", "工具棚把清洁用品和玩具放在同等重要的位置。", "照料区门口提醒：先让动物看见你，再决定是否进入。"],
+    completion: "你理解，尊重另一种生命，就是接受关系不会完全由你控制。"
+  },
+  "botanical-garden": {
+    blueprint: "nature", title: "草木园共生温室", intro: "不同速度、不同高度的生命共享同一片光。",
+    labels: ["种子育苗架", "雨林温室台", "园艺工具棚", "苔藓休息椅", "共生照料区"],
+    clues: ["育苗架按需要的光线排列，而不是按植物的价格。", "一株生病的植物没有被移走，周围为它留出了恢复空间。", "温室记录把枯萎也算作季节的一部分。"],
+    completion: "你发现，好的系统不是让所有生命一样强壮，而是为不同状态保留位置。"
+  },
+  "night-market": {
+    blueprint: "commerce", title: "灯火夜市深夜补给站", intro: "当白天结束，另一群人的生活才刚刚亮灯。",
+    labels: ["夜航柜台", "流动货架", "应急补给箱", "深夜小坐区", "暖汤热食台", "匿名交换板"],
+    clues: ["夜航柜台为凌晨下班的人保留着当天第一句问候。", "匿名交换板上有人只写：今晚不想一个人吃饭。", "暖汤台的锅边贴着不同语言写成的“小心烫”。"],
+    completion: "你看见，一座城市是否温柔，要看它怎样对待不在标准作息里的人。"
+  },
+  "quiet-nook": {
+    blueprint: "memory", title: "静心角低声房间", intro: "这里不追问原因，只给情绪一段不会被催促的时间。",
+    labels: ["无名纪念台", "独处静坐席", "情绪记忆册", "低声花园"],
+    clues: ["记忆册允许只画一条线，不要求把感受解释清楚。", "静坐席之间留着足够距离，也留着可以靠近的方向。", "低声花园里有一块牌子：今天不开花也没关系。"],
+    completion: "你感到，被允许沉默，本身就是一种被理解。"
+  },
+  "repair-station": {
+    blueprint: "care", title: "和解小站关系修复室", intro: "关系不会被强行缝合，但每个人可以重新决定靠近的距离。",
+    labels: ["缓冲休息床", "关系护理站", "双向等候椅", "边界档案柜", "情绪安抚角", "复原植物窗"],
+    clues: ["档案柜只保存双方同意留下的内容，其余在对话结束后销毁。", "等候椅不是并排摆放，而是允许两个人慢慢调整角度。", "护理站有一张卡片：修复不等于回到原样。"],
+    completion: "你理解，和解不是取消受伤，而是让未来的选择不再被过去绑架。"
+  },
+  cemetery: {
+    blueprint: "memory", title: "记忆花园告别厅", intro: "离开的人以故事留下，活着的人在这里学习继续生活。",
+    labels: ["长明纪念台", "陪伴静坐席", "共同记忆册", "四季低声花园"],
+    clues: ["纪念台没有照片的一角，留给那些无法被公开说出的关系。", "静坐席前留着一条不被打扰的路，灯笼亮着，却没有人要求你必须说话。", "记忆册里有人每年只写同一句：我过得还可以。", "花园按逝者喜欢的季节种植，所以一年四季总有一处盛开。"],
+    completion: "你发现，告别不是把一个人放下，而是为这段关系找到新的存在方式。"
+  },
+  "empathy-lab": {
+    blueprint: "care", title: "谈心和解屋共情室", intro: "在这里，理解不代表同意，但每句话都会被完整听完。",
+    labels: ["安全休息床", "倾听护理站", "平行等候椅", "匿名档案柜", "情绪安抚角", "复原植物窗"],
+    clues: ["倾听台上有两只计时器，确保沉默也属于对话的一部分。", "匿名档案只记录需求，不保存对人的判断。", "安抚角准备了不同重量的毯子，让身体先于语言找到安全。"],
+    completion: "你看见，共情不是猜中别人，而是持续确认自己有没有听错。"
+  },
+  "story-archive": {
+    blueprint: "creative", title: "街坊故事馆口述室", intro: "城市的历史不只属于大事件，也属于普通人没来得及说完的一天。",
+    labels: ["记忆画架", "街坊作品墙", "口述排练角", "故事索引桌", "声音档案角"],
+    clues: ["故事墙按情绪而不是年份排列，相隔几十年的人因此成为邻居。", "索引桌保留“我记不清了”这样的句子，没有替讲述者补全。", "声音角能听见背景里的锅碗、风声和停顿，它们也被当作历史。"],
+    completion: "你发现，一座城市真正的档案，是人们愿意把不完整的自己交给彼此。"
+  },
+  "commons-workshop": {
+    blueprint: "work", title: "共议工坊公共建造间", intro: "决定和工具放在同一个房间里，提出问题的人也能参与建造。",
+    labels: ["开放设计工位", "公共工具台", "共议协作板", "决策会议桌", "社区原型区"],
+    clues: ["协作板每个方案旁都标着受影响但尚未到场的人。", "工具台没有专属抽屉，所有工具都附着归还和修复记录。", "原型区允许失败方案保留一周，让反对意见也能被看见。"],
+    completion: "你看见，公共参与不是投完票就离开，而是一起承担决定长成的样子。"
+  },
+  "rest-courtyard": {
+    blueprint: "home", title: "慢歇院恢复客厅", intro: "这里把休息当成生活基础，而不是完成任务后的奖励。",
+    labels: ["午后旧沙发", "共享餐桌", "安静卧榻", "温水洗漱台", "慢读书架", "庭院植物角"],
+    clues: ["卧榻旁没有时钟，只有一张写着“醒来再决定”的卡片。", "餐桌上的菜单按身体感受分类，而不是按效率分类。", "书架专门收集读到一半的书，允许兴趣没有结局。"],
+    completion: "你发现，恢复不是停止人生，而是让人生重新有余地。"
+  },
+  "mentor-hall": {
+    blueprint: "learning", title: "师友学堂人生实验室", intro: "导师不替人选择，只帮助每条可能的路变得可见。",
+    labels: ["人生阅读角", "经验讲台", "同行课桌", "小步练习桌", "可能性探索墙", "复盘课间角"],
+    clues: ["探索墙不写成功案例，只记录每次选择放弃了什么。", "练习桌把一个五年目标拆成了今天能完成的十分钟。", "讲台旁的空椅提醒导师：你不是答案本身。"],
+    completion: "你理解，好的指引不会让路变窄，而是让选择变得更诚实。"
+  },
+  "resource-kitchen": {
+    blueprint: "commerce", title: "邻里食堂共享厨房", intro: "一顿饭把陌生人的时间、劳动和照顾放进同一张桌子。",
+    labels: ["互助取餐柜台", "共享食材架", "应急补给箱", "拼桌小坐区", "今日热食台", "余量交换板"],
+    clues: ["食材架按保质期而不是归属排列，先到期的会成为今天的菜单。", "交换板记录的不只是剩余食物，还有谁愿意教一道家乡菜。", "热食台给独自吃饭的人准备了可以选择加入的长桌。"],
+    completion: "你看见，食物最强的社会功能，是让照顾变成可以共同完成的日常。"
+  }
+};
+
+const INTERIOR_SCENE_ACTIONS = {
+  care: {
+    label: "接过一次照护",
+    title: "照护交接",
+    choices: [
+      { id: "ask-first", label: "先问需要什么", behavior: "comfort", relationType: "listen", text: "你先问对方此刻最希望被怎样帮助，把照护的决定权留在了疲惫的人手里", reaction: "谢谢你没有替我决定。", avatar: { mood: 2, energy: 0, trust: 4 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 1, lifeStability: 2 } },
+      { id: "take-small-task", label: "先接过手边的事", behavior: "care", relationType: "support", text: "你没有追问缘由，只接过手边那件小事，让已经很累的人能够喘一口气", reaction: "谢谢你先看见了我的疲惫。", avatar: { mood: 3, energy: -1, trust: 2 }, participant: { mood: 4, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 2, lifeStability: 4 } }
+    ]
+  },
+  learning: {
+    label: "加入一次共学",
+    title: "小步练习",
+    choices: [
+      { id: "admit-unknown", label: "说出我也不会", behavior: "read", relationType: "listen", text: "你先承认自己也没有答案，空着的位置因此不再像一场考试", reaction: "原来不知道，也可以坐在一起。", avatar: { mood: 2, energy: 0, trust: 4 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 1 } },
+      { id: "small-experiment", label: "拆成一次小实验", behavior: "teach", relationType: "cooperate", text: "你把遥远的问题拆成今天能共同尝试的一小步，让想法有了可以落地的形状", reaction: "原来我们可以先试一次。", avatar: { mood: 3, energy: -1, trust: 2 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 4, lifeStability: 2 } }
+    ]
+  },
+  commerce: {
+    label: "传递一份补给",
+    title: "邻里补给",
+    choices: [
+      { id: "fill-gap", label: "直接补上眼前缺口", behavior: "handoff", relationType: "support", text: "你把一份资源交给此刻真正需要的人，没有要求对方先解释自己的困境", reaction: "这份及时，让今天终于能继续。", avatar: { mood: 3, energy: -1, trust: 2 }, participant: { mood: 4, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 2, lifeStability: 4 } },
+      { id: "keep-circulating", label: "留下继续流转的办法", behavior: "write", relationType: "cooperate", text: "你补上资源，也留下下一次交接的方法，让帮助不必依赖某一个人的善意", reaction: "我会把这份照顾继续传下去。", avatar: { mood: 2, energy: -1, trust: 3 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 4 } }
+    ]
+  },
+  public: {
+    label: "坐进那把空椅",
+    title: "公共讨论",
+    choices: [
+      { id: "leave-concern", label: "留下没说完的顾虑", behavior: "meeting", relationType: "listen", text: "你没有替任何人总结，而是把尚未被说出的顾虑留在桌面上，让决定多容纳一种生活", reaction: "谢谢你没有把复杂的问题说得太简单。", avatar: { mood: 2, energy: -1, trust: 3 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 2 } },
+      { id: "invite-quiet", label: "邀请沉默的人先选", behavior: "comfort", relationType: "support", text: "你把第一轮选择交给一直没有开口的人，讨论的节奏因此慢了下来", reaction: "我以为自己的犹豫不会被算进去。", avatar: { mood: 3, energy: -1, trust: 3 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 5, selfFulfillment: 2, lifeStability: 1 } }
+    ]
+  },
+  justice: {
+    label: "为沉默留一分钟",
+    title: "修复性对话",
+    choices: [
+      { id: "confirm-boundary", label: "暂停并确认边界", behavior: "comfort", relationType: "listen", text: "你按下暂停，让双方重新确认哪些内容可以继续、哪些暂时不谈", reaction: "这一次，我感觉自己仍然可以选择。", avatar: { mood: 1, energy: -1, trust: 4 }, participant: { mood: 3, trust: 5 }, reward: { socialResonance: 4, selfFulfillment: 1, lifeStability: 5 } },
+      { id: "name-disagreement", label: "复述仍不同意的地方", behavior: "meeting", relationType: "cooperate", text: "你没有急着制造和解，只把双方仍不同意的地方准确地放回桌面", reaction: "被说清楚以后，分歧没有那么可怕了。", avatar: { mood: 2, energy: -1, trust: 3 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 4 } }
+    ]
+  },
+  work: {
+    label: "完成一次交接",
+    title: "协作交接",
+    choices: [
+      { id: "name-unfinished", label: "如实交代未完成", behavior: "meeting", relationType: "listen", text: "你把过程、风险和未完成的部分都交代清楚，没有用一句“已经好了”藏起疲惫", reaction: "知道哪里还没完成，反而让我更安心。", avatar: { mood: 2, energy: -1, trust: 4 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 4 } },
+      { id: "remove-risk", label: "替下一班减掉一个风险", behavior: "work", relationType: "cooperate", text: "你先处理最容易在交接后被忽略的风险，再把剩余问题留成清晰的路标", reaction: "我接到的不是压力，而是一条能继续走的路。", avatar: { mood: 3, energy: -2, trust: 2 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 4, lifeStability: 4 } }
+    ]
+  },
+  home: {
+    label: "一起准备一顿饭",
+    title: "共享日常",
+    choices: [
+      { id: "prepare-together", label: "一起动手准备", behavior: "cook", relationType: "cooperate", text: "你和屋里的人一起收拾桌面、准备食物，关系落进了可以共同完成的小事", reaction: "你在这里的时候，这个房间更像家了。", avatar: { mood: 4, energy: -1, trust: 3 }, participant: { mood: 4, trust: 3 }, reward: { socialResonance: 4, selfFulfillment: 3, lifeStability: 3 } },
+      { id: "ask-companionship", label: "先问今天想怎样被陪伴", behavior: "comfort", relationType: "listen", text: "你没有默认热闹就是答案，而是先问今天更适合聊天、安静吃饭，还是独处一会儿", reaction: "原来回到家，也不必立刻变得开心。", avatar: { mood: 3, energy: 0, trust: 4 }, participant: { mood: 4, trust: 5 }, reward: { socialResonance: 5, selfFulfillment: 2, lifeStability: 3 } }
+    ]
+  },
+  nature: {
+    label: "照料一株新芽",
+    title: "共同照料",
+    choices: [
+      { id: "adjust-and-wait", label: "调整环境，然后等待", behavior: "garden", relationType: "listen", text: "你只调整水、光线和一点空间，没有催促新芽立刻证明自己", reaction: "它今天没有变化，但我们的关系已经开始了。", avatar: { mood: 4, energy: 1, trust: 2 }, participant: { mood: 3, trust: 2 }, reward: { socialResonance: 2, selfFulfillment: 4, lifeStability: 4 } },
+      { id: "shared-roster", label: "邀请旁人共同轮值", behavior: "gather", relationType: "cooperate", text: "你把照料写进共同轮值，让这株新芽不再只依赖某一个人的坚持", reaction: "下次我来时，也会记得看看它。", avatar: { mood: 3, energy: -1, trust: 3 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 4 } }
+    ]
+  },
+  creative: {
+    label: "续上未完成的一笔",
+    title: "共同创作",
+    choices: [
+      { id: "add-beside", label: "在旁边续上一笔", behavior: "write", relationType: "cooperate", text: "你没有覆盖前一个人的表达，而是在旁边留下自己的回应，让作品长出另一条方向", reaction: "这一笔不像我，却让作品更完整。", avatar: { mood: 4, energy: -1, trust: 2 }, participant: { mood: 3, trust: 3 }, reward: { socialResonance: 4, selfFulfillment: 4, lifeStability: 1 } },
+      { id: "keep-blank", label: "保留空白，等下一人", behavior: "think", relationType: "listen", text: "你克制住填满画面的冲动，为还没有到场的人保留了一块真正可用的空白", reaction: "原来没有画满，也是一种邀请。", avatar: { mood: 3, energy: 0, trust: 3 }, participant: { mood: 2, trust: 4 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 3 } }
+    ]
+  },
+  memory: {
+    label: "留下一段无名记忆",
+    title: "低声纪念",
+    choices: [
+      { id: "anonymous-line", label: "留下一句无名的话", behavior: "write", relationType: "listen", text: "你留下一句不署名的话，没有解释它属于谁，只让它安静地被看见", reaction: "有些故事不必公开，也值得被保存。", avatar: { mood: 2, energy: 0, trust: 3 }, participant: { mood: 2, trust: 3 }, reward: { socialResonance: 3, selfFulfillment: 3, lifeStability: 3 } },
+      { id: "place-object", label: "替沉默放下一件物品", behavior: "think", relationType: "support", text: "你没有逼沉默变成语言，只放下一件小物，让无法说出的记忆有了可以停靠的位置", reaction: "谢谢你没有要求这个故事说明自己。", avatar: { mood: 2, energy: -1, trust: 4 }, participant: { mood: 3, trust: 4 }, reward: { socialResonance: 4, selfFulfillment: 2, lifeStability: 4 } }
+    ]
+  }
+};
+
+const INTERIOR_BLUEPRINT_CACHE = new Map();
+
+function inferInteriorBlueprintKey(zone) {
+  const hint = `${zone?.role || ""} ${zone?.archetype || ""} ${zone?.id || ""}`;
+  if (/hospital|care|clinic|maternity|empathy|repair/.test(hint)) return "care";
+  if (/school|university|kinder|learn|mentor|library/.test(hint)) return "learning";
+  if (/commercial|market|shop|exchange|kitchen|resource/.test(hint)) return "commerce";
+  if (/public|plaza|forum|civic/.test(hint)) return "public";
+  if (/legal|court|justice|mediat/.test(hint)) return "justice";
+  if (/creative|studio|art|story|archive/.test(hint)) return "creative";
+  if (/work|office|factory|craft|build|commons/.test(hint)) return "work";
+  if (/park|garden|farm|eco|nature|zoo|green|botanical/.test(hint)) return "nature";
+  if (/cemetery|memory|quiet/.test(hint)) return "memory";
+  return "home";
+}
+
+const INTERIOR_STORY_TERMS = [
+  "床", "护理", "等候", "安抚", "植物", "阅读", "讲台", "课桌", "练习", "探索", "课间",
+  "柜台", "货架", "补给", "小坐", "热食", "交换", "提案", "公告", "旁听", "记录", "圆桌",
+  "缓冲", "工位", "工具", "协作", "会议", "设备", "调停", "档案", "冷静", "沙发", "餐桌",
+  "卧榻", "洗漱", "书架", "育苗", "温室", "休息", "照料", "画架", "作品", "排练", "故事",
+  "声音", "纪念", "静坐", "记忆", "花园"
+];
+
+function scoreInteriorClueForLabel(label, clue) {
+  const labelText = String(label || "");
+  const clueText = String(clue || "");
+  let score = 0;
+  INTERIOR_STORY_TERMS.forEach((term) => {
+    if (labelText.includes(term) && clueText.includes(term)) score += term.length * 12;
+  });
+  const hanChars = [...new Set(labelText.match(/\p{Script=Han}/gu) || [])];
+  hanChars.forEach((char) => {
+    if (clueText.includes(char)) score += 1;
+  });
+  for (let index = 0; index < labelText.length - 1; index += 1) {
+    const pair = labelText.slice(index, index + 2);
+    if (/^\p{Script=Han}{2}$/u.test(pair) && clueText.includes(pair)) score += 6;
+  }
+  return score;
+}
+
+function assignInteriorStoryClues(labels, clues) {
+  const assignments = new Map();
+  const available = new Set(labels.map((_, index) => index));
+  (clues || []).forEach((clue) => {
+    const ranked = [...available]
+      .map((index) => ({ index, score: scoreInteriorClueForLabel(labels[index], clue) }))
+      .sort((a, b) => b.score - a.score || a.index - b.index);
+    const match = ranked[0];
+    if (!match || match.score <= 0) return;
+    assignments.set(match.index, clue);
+    available.delete(match.index);
+  });
+  return assignments;
+}
+
 function getInteriorBlueprint(zone) {
-  const hint = `${zone.role || ""} ${zone.archetype || ""} ${zone.id || ""}`;
-  if (/hospital|care|clinic|maternity|empathy|repair/.test(hint)) return INTERIOR_BLUEPRINTS.care;
-  if (/school|university|kinder|learn|mentor|library/.test(hint)) return INTERIOR_BLUEPRINTS.learning;
-  if (/commercial|market|shop|exchange|kitchen|resource/.test(hint)) return INTERIOR_BLUEPRINTS.commerce;
-  if (/public|plaza|forum|civic/.test(hint)) return INTERIOR_BLUEPRINTS.public;
-  if (/legal|court|justice|mediat/.test(hint)) return INTERIOR_BLUEPRINTS.justice;
-  if (/creative|studio|art|story|archive/.test(hint)) return INTERIOR_BLUEPRINTS.creative;
-  if (/work|office|factory|craft|build|commons/.test(hint)) return INTERIOR_BLUEPRINTS.work;
-  if (/park|garden|farm|eco|nature|zoo|green|botanical/.test(hint)) return INTERIOR_BLUEPRINTS.nature;
-  if (/cemetery|memory|quiet/.test(hint)) return INTERIOR_BLUEPRINTS.memory;
-  return INTERIOR_BLUEPRINTS.home;
+  const cacheKey = zone?.id || `${zone?.role || ""}:${zone?.archetype || ""}`;
+  if (INTERIOR_BLUEPRINT_CACHE.has(cacheKey)) return INTERIOR_BLUEPRINT_CACHE.get(cacheKey);
+  const profile = INTERIOR_ZONE_PROFILES[zone?.id] || null;
+  const key = profile?.blueprint || inferInteriorBlueprintKey(zone);
+  const base = INTERIOR_BLUEPRINTS[key] || INTERIOR_BLUEPRINTS.home;
+  const labels = profile?.labels || [];
+  const storyClues = assignInteriorStoryClues(labels, profile?.clues || []);
+  const blueprint = {
+    ...base,
+    key,
+    title: profile?.title || base.title,
+    profile,
+    props: (base.props || []).map((prop, index) => ({
+      ...prop,
+      label: labels[index] || prop.label,
+      storyClue: storyClues.get(index) || ""
+    }))
+  };
+  INTERIOR_BLUEPRINT_CACHE.set(cacheKey, blueprint);
+  return blueprint;
 }
 
 function getInteriorLayout(W, H) {
@@ -5253,6 +5614,780 @@ function getInteriorLayout(W, H) {
     roomD: Math.max(260, floorBottom - floorTop),
     door: { x: W / 2 - doorW / 2 + yaw * 38, y: floorTop - doorH + Math.abs(yaw) * 8, w: doorW, h: doorH }
   };
+}
+
+function wrapInteriorAngle(angle) {
+  const wrapped = (Number(angle || 0) + Math.PI) % INTERIOR_PANORAMA_TAU;
+  return (wrapped < 0 ? wrapped + INTERIOR_PANORAMA_TAU : wrapped) - Math.PI;
+}
+
+function moveInteriorPlayer(forward, strafe, distance) {
+  const magnitude = Math.hypot(forward, strafe);
+  if (!magnitude || !distance) return;
+  const normalizedForward = forward / magnitude;
+  const normalizedStrafe = strafe / magnitude;
+  const yaw = Number(interiorOrbit.yaw || 0);
+  const forwardX = Math.sin(yaw);
+  const forwardZ = -Math.cos(yaw);
+  const rightX = Math.cos(yaw);
+  const rightZ = Math.sin(yaw);
+  let nextX = Number(interiorOrbit.x || 0) + (forwardX * normalizedForward + rightX * normalizedStrafe) * distance;
+  let nextZ = Number(interiorOrbit.z || 0) + (forwardZ * normalizedForward + rightZ * normalizedStrafe) * distance;
+  const radius = Math.hypot(nextX, nextZ);
+  if (radius > INTERIOR_PLAYER_RADIUS) {
+    nextX = nextX / radius * INTERIOR_PLAYER_RADIUS;
+    nextZ = nextZ / radius * INTERIOR_PLAYER_RADIUS;
+  }
+  if (interiorView) {
+    const blueprint = getInteriorBlueprint(interiorView.zone);
+    (blueprint.props || []).forEach((prop, index, props) => {
+      const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+      const dx = nextX - placement.worldX;
+      const dz = nextZ - placement.worldZ;
+      const distanceToModel = Math.hypot(dx, dz);
+      if (distanceToModel >= INTERIOR_MODEL_CLEARANCE) return;
+      const safeDistance = Math.max(distanceToModel, 0.001);
+      nextX = placement.worldX + dx / safeDistance * INTERIOR_MODEL_CLEARANCE;
+      nextZ = placement.worldZ + dz / safeDistance * INTERIOR_MODEL_CLEARANCE;
+    });
+  }
+  interiorOrbit.x = nextX;
+  interiorOrbit.z = nextZ;
+}
+
+function nudgeInteriorPlayer(direction, distance = 0.11) {
+  if (direction === "forward") moveInteriorPlayer(1, 0, distance);
+  else if (direction === "back") moveInteriorPlayer(-1, 0, distance);
+  else if (direction === "left") moveInteriorPlayer(0, -1, distance);
+  else if (direction === "right") moveInteriorPlayer(0, 1, distance);
+}
+
+function updateInteriorPlayerMovement(now) {
+  if (!interiorView) return;
+  const previous = Number(interiorOrbit.lastMoveAt || now);
+  const dt = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+  interiorOrbit.lastMoveAt = now;
+  if (!interiorMoveKeys.size || dt <= 0) return;
+
+  let forward = 0;
+  let strafe = 0;
+  if (interiorMoveKeys.has("forward")) forward += 1;
+  if (interiorMoveKeys.has("back")) forward -= 1;
+  if (interiorMoveKeys.has("left")) strafe -= 1;
+  if (interiorMoveKeys.has("right")) strafe += 1;
+  const magnitude = Math.hypot(forward, strafe);
+  if (!magnitude) return;
+  forward /= magnitude;
+  strafe /= magnitude;
+
+  moveInteriorPlayer(forward, strafe, INTERIOR_PLAYER_SPEED * dt);
+  markRenderActive(220);
+}
+
+function interiorAngleDelta(angle, yaw) {
+  return Math.atan2(Math.sin(angle - yaw), Math.cos(angle - yaw));
+}
+
+function projectInteriorPanoramaPoint(W, H, angle, distance = 0.66, height = 0) {
+  const yaw = Number(interiorOrbit?.yaw || 0);
+  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const delta = interiorAngleDelta(angle, yaw);
+  const halfFov = INTERIOR_PANORAMA_FOV / 2;
+  const visible = Math.abs(delta) <= halfFov * 1.08;
+  const radius = clamp(distance, 0.34, 0.98);
+  const side = Math.sin(delta) / Math.sin(halfFov);
+  const forward = radius * Math.cos(delta);
+  const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
+  const floorDepth = clamp(1 - (forward + 0.04) / 1.04, 0, 1);
+  const sideFalloff = 1 - Math.min(0.3, Math.abs(side) * 0.16);
+  const x = W / 2 + side * W * (0.38 + floorDepth * 0.12);
+  const y = horizon + H * (0.12 + floorDepth * 0.5) - height;
+  const scale = clamp((0.7 + floorDepth * 0.52) * sideFalloff, 0.48, 1.22);
+  return {
+    x,
+    y,
+    depth: floorDepth + Math.abs(side) * 0.04,
+    scale,
+    visible,
+    angle,
+    distance: radius,
+    delta
+  };
+}
+
+function getInteriorPanoramaAngle(unit, index = 0, count = 1) {
+  const base = Number.isFinite(unit) ? unit : (index + 0.5) / Math.max(1, count);
+  return wrapInteriorAngle((base - 0.5) * INTERIOR_PANORAMA_TAU);
+}
+
+function getInteriorPropAngle(prop, index, count) {
+  const evenUnit = (index + 0.5) / Math.max(1, count);
+  const authoredUnit = Number.isFinite(prop?.x) ? Number(prop.x) : evenUnit;
+  const unit = evenUnit * 0.9 + authoredUnit * 0.1;
+  return getInteriorPanoramaAngle(unit, index, count);
+}
+
+function getInteriorPropRadius(prop) {
+  const y = clamp(Number(prop?.y ?? 0.5), 0, 1);
+  return clamp(0.98 - y * 0.5, 0.42, 0.96);
+}
+
+function getInteriorPropWorldPlacement(prop, index, count) {
+  const angle = getInteriorPropAngle(prop, index, count);
+  const distance = getInteriorPropRadius(prop);
+  const radius = 2.42 + distance * 2.25;
+  const worldX = Math.sin(angle) * radius;
+  const worldZ = -Math.cos(angle) * radius;
+  const interactionOffset = 0.72 * (index % 2 === 0 ? -1 : 1);
+  return {
+    angle,
+    distance,
+    radius,
+    worldX,
+    worldZ,
+    interactionWorldX: worldX + Math.cos(angle) * interactionOffset,
+    interactionWorldZ: worldZ + Math.sin(angle) * interactionOffset
+  };
+}
+
+function getInteriorDecorRadius(item) {
+  const y = clamp(Number(item?.y ?? 0.5), 0, 1);
+  if (item?.layer === "back") return clamp(0.96 - y * 0.08, 0.86, 0.98);
+  if (item?.layer === "front") return clamp(0.62 - y * 0.18, 0.38, 0.58);
+  return clamp(0.82 - y * 0.22, 0.56, 0.78);
+}
+
+function getInteriorPanoramaAnchors(blueprint, W, H) {
+  const props = blueprint.props || [];
+  return props.map((prop, index) => {
+    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const { angle, distance } = placement;
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance);
+    return {
+      ...point,
+      ...placement,
+      x: clamp(point.x, W * 0.06, W * 0.94),
+      y: clamp(point.y, H * 0.42, H * 0.86),
+      label: prop.label,
+      behaviors: prop.behaviors || ["tea"],
+      index,
+      prop
+    };
+  });
+}
+
+function getInteriorExplorationRecord(zoneId) {
+  state.interiorExploration = state.interiorExploration || {};
+  state.interiorExploration[zoneId] = state.interiorExploration[zoneId] || {
+    found: [],
+    completed: false,
+    scenePlayed: false,
+    sceneChoice: "",
+    sceneOutcome: "",
+    sceneReward: null
+  };
+  return state.interiorExploration[zoneId];
+}
+
+function getInteriorStoryThread(zoneId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.zones.includes(zoneId)) || null;
+  if (!thread) return null;
+  const chapterIndex = thread.zones.indexOf(zoneId);
+  const completedCount = thread.zones.filter((id) => state.interiorExploration?.[id]?.scenePlayed).length;
+  return {
+    ...thread,
+    chapterIndex,
+    completedCount,
+    nextZoneId: thread.zones[chapterIndex + 1] || ""
+  };
+}
+
+function focusInteriorJourneyTarget(propIndex) {
+  if (!interiorView) return;
+  const blueprint = getInteriorBlueprint(interiorView.zone);
+  const prop = blueprint.props?.[propIndex];
+  if (!prop) return;
+  interiorFocusPropIndex = propIndex;
+  interiorOrbit.yaw = wrapInteriorAngle(getInteriorPropAngle(prop, propIndex, blueprint.props.length));
+  markRenderActive(2200);
+}
+
+function syncInteriorJourneyHud(blueprint) {
+  if (!interiorView || !blueprint) return;
+  const shell = document.getElementById("gameShell");
+  if (!shell) return;
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const thread = getInteriorStoryThread(interiorView.zone.id);
+  const props = blueprint.props || [];
+  const goal = Math.min(3, props.length || 3);
+  const foundCount = Math.min(record.found.length, goal);
+  const nextIndex = props.findIndex((prop) => !record.found.includes(prop.label));
+  const nextProp = nextIndex >= 0 ? props[nextIndex] : null;
+  const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  const phase = record.scenePlayed ? 3 : record.completed ? 2 : 1;
+
+  let panel = document.getElementById("interiorJourneyPanel");
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "interiorJourneyPanel";
+    panel.addEventListener("click", (event) => {
+      const guide = event.target.closest("[data-interior-guide]");
+      if (guide) {
+        focusInteriorJourneyTarget(Number(guide.dataset.interiorGuide));
+        return;
+      }
+      const action = event.target.closest("[data-interior-scene-action]");
+      if (action) {
+        playInteriorSceneAction();
+        return;
+      }
+      const nextChapter = event.target.closest("[data-interior-next-chapter]");
+      if (nextChapter) {
+        const nextZoneName = nextChapter.dataset.interiorNextChapter;
+        exitInteriorView();
+        showToast(`下一章：去街道上寻找${nextZoneName}`, "listen");
+      }
+    });
+    shell.appendChild(panel);
+  }
+
+  const signature = [
+    interiorView.zone.id,
+    foundCount,
+    record.completed,
+    record.scenePlayed,
+    nextIndex,
+    thread?.completedCount || 0
+  ].join("|");
+  if (panel.dataset.signature !== signature) {
+    panel.dataset.signature = signature;
+    const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
+    const nextAction = phase === 1 && nextProp
+      ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
+      : phase === 2
+        ? `<button type="button" data-interior-scene-action="journey">${escapeHtml(sceneAction.label)}</button>`
+        : nextZone
+          ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.name)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
+          : "";
+    panel.innerHTML = `
+      <header><span>房间故事簿</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
+      <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
+      <ol>
+        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>环顾线索<small>${foundCount}/${goal} 段场所记忆</small></span></li>
+        <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
+        <li class="${phase === 3 ? "current done" : ""}"><b>3</b><span>关系留下痕迹<small>${record.scenePlayed ? "已写入本周生活" : "让人物与城市真正改变"}</small></span></li>
+      </ol>
+      <footer><span>${thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应` : blueprint.title}</span>${nextAction}</footer>`;
+  }
+
+  let compass = document.getElementById("interiorCompass");
+  if (!compass) {
+    compass = document.createElement("nav");
+    compass.id = "interiorCompass";
+    compass.setAttribute("aria-label", "室内环绕导航");
+    compass.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-interior-compass]");
+      if (target) focusInteriorJourneyTarget(Number(target.dataset.interiorCompass));
+    });
+    shell.appendChild(compass);
+  }
+  const compassSignature = `${interiorView.zone.id}|${record.found.join("|")}`;
+  if (compass.dataset.signature !== compassSignature) {
+    compass.dataset.signature = compassSignature;
+    compass.innerHTML = `<span class="interior-compass-north">N</span><span class="interior-compass-cone" aria-hidden="true"></span>${props.map((prop, index) => {
+      const angle = getInteriorPropAngle(prop, index, props.length);
+      const found = record.found.includes(prop.label);
+      return `<button type="button" class="${found ? "found" : ""}" style="--compass-angle:${angle}rad" data-interior-compass="${index}" aria-label="朝向${escapeHtml(prop.label)}" title="${escapeHtml(prop.label)}"><span>${found ? "✓" : "•"}</span></button>`;
+    }).join("")}<strong>${foundCount}/${goal}</strong>`;
+  }
+  compass.style.setProperty("--interior-yaw", `${Number(interiorOrbit.yaw || 0)}rad`);
+  compass.querySelectorAll("[data-interior-compass]").forEach((button) => {
+    button.classList.toggle("focused", Number(button.dataset.interiorCompass) === interiorFocusPropIndex);
+  });
+}
+
+function getInteriorAnchorDistance(anchor) {
+  const targetX = Number(anchor?.interactionWorldX ?? anchor?.worldX);
+  const targetZ = Number(anchor?.interactionWorldZ ?? anchor?.worldZ);
+  if (!Number.isFinite(targetX) || !Number.isFinite(targetZ)) return Number.POSITIVE_INFINITY;
+  return Math.hypot(targetX - Number(interiorOrbit?.x || 0), targetZ - Number(interiorOrbit?.z || 0));
+}
+
+function isInteriorAnchorNearby(anchor) {
+  return getInteriorAnchorDistance(anchor) <= INTERIOR_INTERACTION_RADIUS;
+}
+
+function handleInteriorHotspotIntent(propIndex) {
+  if (!interiorView) return;
+  const anchor = interiorHotspots.find((item) => item.index === propIndex);
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const alreadyFound = anchor ? record.found.includes(anchor.label) : false;
+  if (!anchor || alreadyFound || isInteriorAnchorNearby(anchor)) {
+    exploreInteriorHotspot(propIndex);
+    return;
+  }
+
+  interiorFocusPropIndex = propIndex;
+  if (Number.isFinite(anchor.angle)) interiorOrbit.yaw = wrapInteriorAngle(anchor.angle);
+  interiorView.discovery = {
+    title: anchor.label,
+    text: "那段回声还在更近的地方。房间正在等你走进它。",
+    progress: "靠近它",
+    until: performance.now() + 4200
+  };
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(4400);
+}
+
+function syncInteriorContextAction(anchors) {
+  const candidates = (anchors || [])
+    .map((anchor) => ({ anchor, distance: getInteriorAnchorDistance(anchor) }))
+    .filter((item) => Number.isFinite(item.distance) && item.distance <= INTERIOR_INTERACTION_RADIUS)
+    .sort((a, b) => {
+      const aFocused = a.anchor.index === interiorFocusPropIndex ? 1 : 0;
+      const bFocused = b.anchor.index === interiorFocusPropIndex ? 1 : 0;
+      return bFocused - aFocused || a.distance - b.distance;
+    });
+  const nearest = candidates[0] || null;
+  interiorNearbyAnchor = nearest?.anchor || null;
+
+  let button = document.getElementById("interiorContextAction");
+  if (!interiorNearbyAnchor || !interiorView) {
+    button?.remove();
+    return;
+  }
+  if (!button) {
+    button = document.createElement("button");
+    button.id = "interiorContextAction";
+    button.type = "button";
+    button.addEventListener("click", () => {
+      const index = Number(button.dataset.propIndex);
+      if (Number.isInteger(index)) exploreInteriorHotspot(index);
+    });
+    document.getElementById("gameShell")?.appendChild(button);
+  }
+
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const discovered = record.found.includes(interiorNearbyAnchor.label);
+  const signature = `${interiorNearbyAnchor.index}|${interiorNearbyAnchor.label}|${discovered}`;
+  if (button.dataset.signature !== signature) {
+    button.dataset.signature = signature;
+    button.dataset.propIndex = String(interiorNearbyAnchor.index);
+    button.classList.toggle("discovered", discovered);
+    button.setAttribute("aria-label", `${discovered ? "再次聆听" : "探索"}${interiorNearbyAnchor.label}`);
+    button.innerHTML = `<kbd aria-hidden="true">E</kbd><strong>${discovered ? "再次聆听" : "倾听"} · ${escapeHtml(interiorNearbyAnchor.label)}</strong>`;
+  }
+  button.dataset.distance = nearest.distance.toFixed(2);
+}
+
+function ensureInteriorHotspotLayer() {
+  let layer = document.getElementById("interiorHotspotLayer");
+  if (layer) return layer;
+  layer = document.createElement("div");
+  layer.id = "interiorHotspotLayer";
+  layer.setAttribute("aria-label", "室内可探索陈设");
+  layer.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-interior-hotspot]");
+    if (!button || !interiorView) return;
+    event.stopPropagation();
+    handleInteriorHotspotIntent(Number(button.dataset.interiorHotspot));
+  });
+  document.getElementById("gameShell")?.appendChild(layer);
+  return layer;
+}
+
+function syncInteriorHotspotLayer(anchors, blueprint) {
+  if (!interiorView) return;
+  interiorHotspots = (anchors || []).filter((anchor) => anchor.visible);
+  const layer = ensureInteriorHotspotLayer();
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
+  if (layer.dataset.signature !== signature) {
+    layer.dataset.signature = signature;
+    layer.innerHTML = interiorHotspots.map((anchor) => {
+      const found = record.found.includes(anchor.label);
+      return `<button class="interior-hotspot${found ? " discovered" : ""}" type="button" data-interior-hotspot="${anchor.index}" aria-label="探索${escapeHtml(anchor.label)}" title="探索${escapeHtml(anchor.label)}"><span class="interior-hotspot-mark" aria-hidden="true">✦</span><span class="interior-hotspot-label">${escapeHtml(anchor.label)}</span></button>`;
+    }).join("");
+  }
+  const buttons = [...layer.querySelectorAll("[data-interior-hotspot]")];
+  buttons.forEach((button) => {
+    const index = Number(button.dataset.interiorHotspot);
+    const anchor = interiorHotspots.find((item) => item.index === index);
+    if (!anchor) {
+      button.hidden = true;
+      return;
+    }
+    button.hidden = false;
+    button.style.left = `${anchor.hotspotX ?? anchor.x}px`;
+    button.style.top = `${anchor.hotspotY ?? (anchor.y - (anchor.screenProjected ? 0 : 52 * anchor.scale))}px`;
+    button.style.setProperty("--hotspot-scale", String(clamp(anchor.scale, 0.72, 1.12)));
+    const discovered = record.found.includes(anchor.label);
+    const nearby = isInteriorAnchorNearby(anchor);
+    button.classList.toggle("discovered", discovered);
+    button.classList.toggle("nearby", nearby);
+    button.classList.toggle("focused", anchor.index === interiorFocusPropIndex);
+    button.setAttribute("aria-label", `${discovered || nearby ? "探索" : "靠近"}${anchor.label}`);
+    button.title = discovered || nearby ? `探索${anchor.label}` : `靠近${anchor.label}`;
+  });
+  layer.setAttribute("aria-label", `${blueprint?.title || "室内"}可探索陈设`);
+}
+
+function syncInteriorDiscoveryCard(now) {
+  const existing = document.getElementById("interiorDiscoveryCard");
+  const discovery = interiorView?.discovery;
+  if (!discovery || now > discovery.until) {
+    existing?.remove();
+    return;
+  }
+  let card = existing;
+  if (!card) {
+    card = document.createElement("aside");
+    card.id = "interiorDiscoveryCard";
+    card.setAttribute("aria-live", "polite");
+    card.addEventListener("click", (event) => {
+      const choice = event.target.closest("[data-interior-scene-choice]");
+      if (choice) {
+        event.stopPropagation();
+        playInteriorSceneAction(choice.dataset.interiorSceneChoice || "");
+        return;
+      }
+      const action = event.target.closest("[data-interior-scene-action]");
+      if (!action) return;
+      event.stopPropagation();
+      playInteriorSceneAction();
+    });
+    document.getElementById("gameShell")?.appendChild(card);
+  }
+  const choices = Array.isArray(discovery.choices) ? discovery.choices : [];
+  const choiceSignature = choices.map((choice) => `${choice.id}:${choice.label}`).join("|");
+  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}|${choiceSignature}`;
+  if (card.dataset.signature !== signature) {
+    card.dataset.signature = signature;
+    card.classList.toggle("has-action", !!discovery.actionLabel || choices.length > 0);
+    const choiceButtons = choices.length
+      ? `<div class="interior-scene-choice-list" role="group" aria-label="选择你的回应">${choices.map((choice, index) => `<button class="interior-scene-choice choice-${index + 1}" type="button" data-interior-scene-choice="${escapeHtml(choice.id)}">${escapeHtml(choice.label)}</button>`).join("")}</div>`
+      : "";
+    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}${choiceButtons}`;
+  }
+}
+
+function applyInteriorSceneReward(zone, choice) {
+  const rewardDelta = choice.reward || {};
+  const lifeWeek = ensureLifeWeekSystem(state.society);
+  if (!lifeWeek) return null;
+  const current = lifeWeek.currentReward || buildDefaultLifeReward();
+  current.socialResonance = clamp(Math.round(Number(current.socialResonance || 50) + Number(rewardDelta.socialResonance || 0)), 0, 100);
+  current.selfFulfillment = clamp(Math.round(Number(current.selfFulfillment || 50) + Number(rewardDelta.selfFulfillment || 0)), 0, 100);
+  current.lifeStability = clamp(Math.round(Number(current.lifeStability || 50) + Number(rewardDelta.lifeStability || 0)), 0, 100);
+  current.total = clamp(Math.round((current.socialResonance + current.selfFulfillment + current.lifeStability) / 3), 0, 100);
+  current.reason = `${zone.name}：你选择“${choice.label}”，世界把这次回应记进了本周生活。`;
+  lifeWeek.currentReward = current;
+  return {
+    socialResonance: Number(rewardDelta.socialResonance || 0),
+    selfFulfillment: Number(rewardDelta.selfFulfillment || 0),
+    lifeStability: Number(rewardDelta.lifeStability || 0)
+  };
+}
+
+function playInteriorSceneAction(choiceId = "") {
+  if (!interiorView) return;
+  const zone = interiorView.zone;
+  const blueprint = getInteriorBlueprint(zone);
+  const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  const record = getInteriorExplorationRecord(zone.id);
+  if (record.scenePlayed) return;
+  const choices = Array.isArray(sceneAction.choices) ? sceneAction.choices : [];
+  if (!choiceId && choices.length) {
+    interiorView.discovery = {
+      title: `${zone.name} · ${sceneAction.title}`,
+      text: `${blueprint.profile?.intro || "房间里的人看向你。"} 这一刻，你想怎样回应？`,
+      progress: "选择回应",
+      choices,
+      until: Number.POSITIVE_INFINITY
+    };
+    syncInteriorDiscoveryCard(performance.now());
+    markRenderActive(1400);
+    return;
+  }
+  const choice = choices.find((item) => item.id === choiceId);
+  if (!choice) return;
+  record.scenePlayed = true;
+  record.sceneChoice = choice.id;
+
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  if (avatar) {
+    avatar.mood = clamp(Number(avatar.mood || 50) + Number(choice.avatar?.mood || 0), 0, 100);
+    avatar.energy = clamp(Number(avatar.energy || 50) + Number(choice.avatar?.energy || 0), 0, 100);
+    avatar.trust = clamp(Number(avatar.trust || 50) + Number(choice.avatar?.trust || 0), 0, 100);
+    avatar.lastAction = choice.label;
+  }
+
+  const participant = getAliveCitizens(state.society)
+    .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
+  if (participant) {
+    participant.mood = clamp(Number(participant.mood || 50) + Number(choice.participant?.mood || 0), 0, 100);
+    participant.trust = clamp(Number(participant.trust || 50) + Number(choice.participant?.trust || 0), 0, 100);
+    participant.lastAction = choice.label;
+    addSpeechBubble(participant.id, choice.reaction, choice.relationType || "support", { duration: 5200 });
+    const ia = interiorAnimations[participant.id];
+    const anchor = interiorHotspots.find((item) => item.behaviors?.includes(choice.behavior)) || interiorHotspots[0];
+    const behavior = BEHAVIOR_BY_ID.get(choice.behavior);
+    if (ia && anchor) {
+      ia.targetX = anchor.x;
+      ia.targetY = anchor.y - (anchor.screenProjected ? 4 : -16);
+      ia.targetAnchor = anchor;
+      ia.nextTargetAt = performance.now() + 5200;
+      if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) ia.forcedBehaviorId = behavior.id;
+    }
+    if (avatar) {
+      updateRelationshipModel(state.society, avatar, participant, {
+        type: choice.relationType || "cooperate",
+        score: 1,
+        text: choice.text
+      });
+    }
+  }
+
+  const sceneText = choice.text.replace(/[。！？]+$/u, "");
+  const outcome = participant ? `${sceneText}，${participant.name}也留在了现场。` : `${sceneText}。`;
+  record.sceneOutcome = outcome;
+  record.sceneReward = applyInteriorSceneReward(zone, choice);
+  addLifeWeekLog("interior_scene", `${zone.name}里，你选择了“${choice.label}”。`, {
+    zoneId: zone.id,
+    choiceId: choice.id,
+    participantId: participant?.id || null
+  });
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}，我选择了“${choice.label}”：${outcome}`, {
+      kind: "interior_scene",
+      importance: 7,
+      references: [zone.id, participant?.id].filter(Boolean)
+    });
+  }
+  interiorView.discovery = {
+    title: sceneAction.title,
+    text: outcome,
+    progress: `你的回应 · ${choice.label}`,
+    until: performance.now() + 9600
+  };
+  addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, choice.behavior, true, `interior-scene-${zone.id}`);
+  pushRobotSignal("avatar", "soft", `另一个世界里的你在${zone.name}选择了“${choice.label}”。这不是任务分数，而是一段关系开始改变的证据。`);
+  persistInteriorExploration();
+  persist();
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+}
+
+function getInteriorReactionLine(behaviorId, zoneName) {
+  if (["care", "comfort", "drink", "sleep"].includes(behaviorId)) return `这里让人愿意慢一点。`;
+  if (["read", "write", "teach", "think"].includes(behaviorId)) return `原来${zoneName}还留着这样的故事。`;
+  if (["work", "type", "repair", "meeting"].includes(behaviorId)) return "这处细节也许会改变接下来的做法。";
+  if (["garden", "gather", "clean"].includes(behaviorId)) return "有人照料过的痕迹还在。";
+  return "我也刚刚注意到这里。";
+}
+
+function exploreInteriorHotspot(propIndex) {
+  if (!interiorView) return;
+  const zone = interiorView.zone;
+  const blueprint = getInteriorBlueprint(zone);
+  const prop = blueprint.props?.[propIndex];
+  if (!prop) return;
+  if (interiorFocusPropIndex === propIndex) interiorFocusPropIndex = null;
+  const profile = blueprint.profile;
+  const record = getInteriorExplorationRecord(zone.id);
+  const alreadyFound = record.found.includes(prop.label);
+  const clue = prop.storyClue
+    || `${prop.label}留下了被使用和照料的痕迹，让${zone.name}不只是一间空房。`;
+  if (!alreadyFound) record.found.push(prop.label);
+
+  const goal = Math.min(3, blueprint.props?.length || 3);
+  const progressCount = Math.min(record.found.length, goal);
+  interiorView.discovery = {
+    title: prop.label,
+    text: alreadyFound ? `你再次看见这处细节：${clue}` : clue,
+    progress: `${progressCount}/${goal}`,
+    until: performance.now() + 7200
+  };
+
+  if (!alreadyFound) {
+    const primaryBehavior = prop.behaviors?.[0] || "think";
+    const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+    if (avatar) {
+      const restoring = ["sleep", "drink", "comfort", "think", "read", "garden"].includes(primaryBehavior);
+      avatar.mood = clamp(Number(avatar.mood || 50) + (restoring ? 2 : 1), 0, 100);
+      avatar.energy = clamp(Number(avatar.energy || 50) + (restoring ? 1 : -1), 0, 100);
+      avatar.lastAction = `探索${prop.label}`;
+    }
+    addEventLogEntry(`室内发现 · ${zone.name}`, clue, primaryBehavior, true, `interior-${zone.id}-${propIndex}`);
+
+    const observer = getAliveCitizens(state.society)
+      .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
+    if (observer) {
+      addSpeechBubble(observer.id, getInteriorReactionLine(primaryBehavior, zone.name), "listen", { duration: 3800 });
+      const ia = interiorAnimations[observer.id];
+      const anchor = interiorHotspots.find((item) => item.index === propIndex);
+      const behavior = BEHAVIOR_BY_ID.get(primaryBehavior);
+      if (ia && anchor) {
+        ia.targetX = anchor.x;
+        ia.targetY = anchor.y + (anchor.screenProjected ? -4 : 16);
+        ia.targetAnchor = anchor;
+        ia.nextTargetAt = performance.now() + 3800;
+        if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) startCitizenBehavior(observer, ia, behavior, performance.now());
+      }
+    }
+  }
+
+  if (!record.completed && record.found.length >= goal) {
+    record.completed = true;
+    const completion = profile?.completion || `你读懂了${zone.name}的一小段生活。`;
+    interiorView.discovery = {
+      title: `${zone.name} · 场所回声`,
+      text: completion,
+      progress: "已读懂",
+      actionLabel: (INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home).label,
+      until: Number.POSITIVE_INFINITY
+    };
+    addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
+    pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
+  }
+  persistInteriorExploration();
+  persist();
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(7600);
+  updateHUD();
+}
+
+function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
+  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
+  const ceiling = ctx.createLinearGradient(0, 0, 0, horizon);
+  ceiling.addColorStop(0, isNight ? "#111827" : "#dff3f6");
+  ceiling.addColorStop(0.55, isNight ? darken(style.wall, 48) : style.wall);
+  ceiling.addColorStop(1, isNight ? darken(style.wall, 35) : hexWithAlpha(style.wall, 0.94));
+  ctx.fillStyle = ceiling;
+  ctx.fillRect(0, 0, W, horizon + 4);
+
+  const floor = ctx.createLinearGradient(0, horizon, 0, H);
+  floor.addColorStop(0, isNight ? darken(style.floor, 45) : style.floor);
+  floor.addColorStop(1, isNight ? "#182033" : "#f4ecd5");
+  ctx.fillStyle = floor;
+  ctx.fillRect(0, horizon, W, H - horizon);
+
+  ctx.save();
+  ctx.strokeStyle = isNight ? "rgba(250,250,245,0.13)" : "rgba(26,26,46,0.13)";
+  ctx.lineWidth = 1.4;
+  for (let i = -4; i <= 4; i++) {
+    const y = horizon + H * (0.1 + i * 0.085);
+    if (y <= horizon || y >= H) continue;
+    ctx.beginPath();
+    ctx.ellipse(W / 2, y, W * (0.32 + i * 0.08), H * 0.035, 0, Math.PI, Math.PI * 2);
+    ctx.stroke();
+  }
+  for (let i = -9; i <= 9; i++) {
+    const angle = wrapInteriorAngle(i * (Math.PI / 12));
+    const delta = interiorAngleDelta(angle, Number(interiorOrbit?.yaw || 0));
+    if (Math.abs(delta) > INTERIOR_PANORAMA_FOV / 2 * 1.1) continue;
+    const side = Math.sin(delta) / Math.sin(INTERIOR_PANORAMA_FOV / 2);
+    const x = W / 2 + side * W * 0.42;
+    ctx.beginPath();
+    ctx.moveTo(x, horizon + 8);
+    ctx.lineTo(W / 2 + (x - W / 2) * 1.9, H);
+    ctx.stroke();
+  }
+  ctx.restore();
+
+  ctx.save();
+  const panelCount = 14;
+  for (let i = 0; i < panelCount; i++) {
+    const angle = getInteriorPanoramaAngle((i + 0.5) / panelCount, i, panelCount);
+    const point = projectInteriorPanoramaPoint(W, H, angle, 0.96, H * 0.2);
+    if (!point.visible) continue;
+    const w = W * 0.1 * point.scale;
+    const h = H * 0.18 * point.scale;
+    const x = point.x - w / 2;
+    const y = horizon * 0.42 + Math.sin(i * 1.7) * 7;
+    const isWindow = i % 3 === 0;
+    ctx.fillStyle = isWindow
+      ? (isNight ? "#1c2541" : "#bfe3f2")
+      : hexWithAlpha(style.accent, isNight ? 0.16 : 0.12);
+    ctx.strokeStyle = hexWithAlpha(style.trim, 0.5);
+    ctx.lineWidth = 2.2 * point.scale;
+    roundRect(ctx, x, y, w, h, 7 * point.scale);
+    ctx.fill();
+    ctx.stroke();
+    if (isWindow) {
+      ctx.beginPath();
+      ctx.moveTo(x + w / 2, y);
+      ctx.lineTo(x + w / 2, y + h);
+      ctx.moveTo(x, y + h / 2);
+      ctx.lineTo(x + w, y + h / 2);
+      ctx.stroke();
+      ctx.fillStyle = isNight ? "#f7f4e9" : "#f6e27a";
+      ctx.beginPath();
+      ctx.arc(x + w * 0.72, y + h * 0.32, 8 * point.scale, 0, Math.PI * 2);
+      ctx.fill();
+    } else {
+      ctx.fillStyle = hexWithAlpha(style.trim, 0.25);
+      if (style.motif === "books") {
+        for (let b = 0; b < 4; b++) {
+          roundRect(ctx, x + 12 * point.scale + b * 12 * point.scale, y + h - 28 * point.scale, 7 * point.scale, 24 * point.scale, 2 * point.scale);
+          ctx.fill();
+        }
+      } else if (style.motif === "cross") {
+        roundRect(ctx, x + w / 2 - 5 * point.scale, y + h / 2 - 19 * point.scale, 10 * point.scale, 38 * point.scale, 2 * point.scale);
+        ctx.fill();
+        roundRect(ctx, x + w / 2 - 19 * point.scale, y + h / 2 - 5 * point.scale, 38 * point.scale, 10 * point.scale, 2 * point.scale);
+        ctx.fill();
+      } else if (style.motif === "leaf") {
+        for (let l = 0; l < 3; l++) {
+          ctx.beginPath();
+          ctx.ellipse(x + w * (0.34 + l * 0.16), y + h * 0.56, 12 * point.scale, 6 * point.scale, -0.7 + l * 0.45, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      } else {
+        ctx.beginPath();
+        ctx.arc(x + w / 2, y + h / 2, 18 * point.scale, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+  }
+  ctx.restore();
+
+  ctx.save();
+  ctx.strokeStyle = hexWithAlpha(style.trim, isNight ? 0.28 : 0.38);
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(0, horizon);
+  ctx.quadraticCurveTo(W / 2, horizon + 22, W, horizon);
+  ctx.stroke();
+  ctx.restore();
+
+  const rug = projectInteriorPanoramaPoint(W, H, Number(interiorOrbit?.yaw || 0), 0.42);
+  ctx.save();
+  ctx.fillStyle = hexWithAlpha(style.accent, isNight ? 0.16 : 0.22);
+  ctx.strokeStyle = hexWithAlpha(style.trim, 0.42);
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.ellipse(rug.x, rug.y + 28, W * 0.22, H * 0.045, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.restore();
+
+  ctx.save();
+  const yaw = Number(interiorOrbit?.yaw || 0);
+  const chip = `环视 · ${Math.round(((wrapInteriorAngle(yaw) + Math.PI) / INTERIOR_PANORAMA_TAU) * 360)}°`;
+  ctx.fillStyle = isNight ? "rgba(18,18,34,0.78)" : "rgba(250,250,245,0.88)";
+  ctx.strokeStyle = hexWithAlpha(style.trim, 0.58);
+  ctx.lineWidth = 2;
+  roundRect(ctx, W / 2 - 64, horizon + 14, 128, 28, 12);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = isNight ? "#f8f2e5" : "#1a1a2e";
+  ctx.font = `700 12px "Noto Sans SC", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(chip, W / 2, horizon + 28);
+  ctx.restore();
 }
 
 function getInteriorMaterialStyle(zone, blueprint) {
@@ -5314,6 +6449,7 @@ function getInteriorAnchors(blueprint, layout) {
 }
 
 function interiorPropModel(prop, blueprint) {
+  if (prop?.model) return prop.model;
   const text = `${blueprint?.title || ""} ${prop?.label || ""} ${prop?.emoji || ""}`;
   if (/休息床|卧榻|睡/.test(text)) return "bed";
   if (/护理站|柜台|热食台|提案台/.test(text)) return "counter";
@@ -5333,6 +6469,57 @@ function interiorPropModel(prop, blueprint) {
   if (/纪念台/.test(text)) return "altar";
   if (/洗漱台/.test(text)) return "sink";
   return "table";
+}
+
+function interiorDecorModel(type) {
+  const aliases = {
+    "floor-lamp": "altar",
+    "reading-lamp": "altar",
+    "iv-stand": "counter",
+    "privacy-screen": "shelf",
+    "medicine-cart": "shelf",
+    "tool-cart": "workbench",
+    "paint-cart": "easel",
+    "book-pile": "desk",
+    "file-stack": "shelf",
+    "notice-cards": "wall-board",
+    "menu-board": "wall-board",
+    "quiet-bench": "bench",
+    "fountain-mini": "fountain",
+    "coffee-table": "table",
+    "coffee-mug": "table",
+    "gallery-frames": "wall-board",
+    "picture-frames": "wall-board",
+    "plant-rack": "plant-zone",
+    "watering-can": "plant-zone",
+    "garden-stones": "plant-zone",
+    "memorial-frame": "altar",
+    "plant": "plant-zone",
+    "flowerbox": "plant-zone",
+    "greenhouse": "plant-zone",
+    "basket": "market-stall",
+    "fruit-crates": "market-stall",
+    "hanging-lights": "market-stall",
+    "stroller": "toy-corner",
+    "teddy": "toy-corner",
+    "floor-cushions": "seating",
+    "lantern": "altar",
+    "candles": "altar",
+    "machine": "workbench",
+    "cable-rug": "workbench",
+    "backpack": "desk"
+  };
+  return aliases[type] || type || "table";
+}
+
+function interiorThreeModel(type) {
+  const aliases = {
+    reading: "desk",
+    podium: "counter",
+    stage: "market-stall",
+    music: "table"
+  };
+  return aliases[type] || type || "table";
 }
 
 function drawInteriorShadow(ctx, x, y, w, alpha = 0.14) {
@@ -5806,13 +6993,14 @@ function drawInteriorPropModel(ctx, prop, point, layout, style, isNight, index, 
 
 function getInteriorDecorPlan(blueprint) {
   const title = blueprint?.title || "";
+  const key = blueprint?.key || "";
   const base = [
     { type: "plant", x: 0.08, y: 0.2, s: 0.9, layer: "back" },
     { type: "floor-lamp", x: 0.9, y: 0.22, s: 0.85, layer: "back" },
     { type: "flowerbox", x: 0.12, y: 0.86, s: 0.82, layer: "front" },
     { type: "flowerbox", x: 0.88, y: 0.86, s: 0.82, layer: "front" }
   ];
-  if (/照护/.test(title)) {
+  if (key === "care" || /照护/.test(title)) {
     return [
       { type: "iv-stand", x: 0.12, y: 0.34, s: 0.9, layer: "back" },
       { type: "privacy-screen", x: 0.28, y: 0.36, s: 1.0, layer: "back" },
@@ -5825,7 +7013,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "flowerbox", x: 0.9, y: 0.36, s: 0.78, layer: "back" }
     ];
   }
-  if (/学习/.test(title)) {
+  if (key === "learning" || /学习/.test(title)) {
     return [
       { type: "book-pile", x: 0.16, y: 0.33, s: 0.86, layer: "back" },
       { type: "notice-cards", x: 0.42, y: 0.3, s: 0.78, layer: "back" },
@@ -5837,7 +7025,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "coffee-mug", x: 0.82, y: 0.68, s: 0.72, layer: "front" }
     ];
   }
-  if (/交易/.test(title)) {
+  if (key === "commerce" || /交易/.test(title)) {
     return [
       { type: "hanging-lights", x: 0.5, y: 0.24, s: 1.0, layer: "back" },
       { type: "basket", x: 0.18, y: 0.45, s: 0.9, layer: "mid" },
@@ -5849,7 +7037,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant", x: 0.1, y: 0.82, s: 0.8, layer: "front" }
     ];
   }
-  if (/公共|调停/.test(title)) {
+  if (["public", "justice"].includes(key) || /公共|调停/.test(title)) {
     return [
       { type: "bench", x: 0.16, y: 0.42, s: 0.95, layer: "mid" },
       { type: "notice-cards", x: 0.29, y: 0.26, s: 0.9, layer: "back" },
@@ -5859,7 +7047,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "lantern", x: 0.88, y: 0.68, s: 0.74, layer: "front" }
     ];
   }
-  if (/协作/.test(title)) {
+  if (key === "work" || /协作/.test(title)) {
     return [
       { type: "tool-cart", x: 0.18, y: 0.46, s: 0.9, layer: "mid" },
       { type: "machine", x: 0.79, y: 0.45, s: 0.95, layer: "mid" },
@@ -5870,7 +7058,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant", x: 0.88, y: 0.78, s: 0.78, layer: "front" }
     ];
   }
-  if (/表达/.test(title)) {
+  if (key === "creative" || /表达/.test(title)) {
     return [
       { type: "paint-cart", x: 0.18, y: 0.52, s: 0.9, layer: "mid" },
       { type: "gallery-frames", x: 0.47, y: 0.24, s: 1.0, layer: "back" },
@@ -5880,7 +7068,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "plant", x: 0.86, y: 0.45, s: 0.86, layer: "mid" }
     ];
   }
-  if (/生态/.test(title)) {
+  if (key === "nature" || /生态/.test(title)) {
     return [
       { type: "greenhouse", x: 0.2, y: 0.42, s: 1.0, layer: "mid" },
       { type: "plant-rack", x: 0.47, y: 0.28, s: 1.0, layer: "back" },
@@ -5890,7 +7078,7 @@ function getInteriorDecorPlan(blueprint) {
       { type: "quiet-bench", x: 0.74, y: 0.82, s: 0.78, layer: "front" }
     ];
   }
-  if (/安宁/.test(title)) {
+  if (key === "memory" || /安宁/.test(title)) {
     return [
       { type: "candles", x: 0.32, y: 0.5, s: 1.0, layer: "mid" },
       { type: "memorial-frame", x: 0.5, y: 0.28, s: 0.95, layer: "back" },
@@ -5930,7 +7118,7 @@ function drawTinyCandle(ctx, x, y, scale = 1) {
 }
 
 function drawInteriorDecorItem(ctx, item, layout, style, isNight) {
-  const point = getInteriorDecorPoint(item, layout);
+  const point = item._point || getInteriorDecorPoint(item, layout);
   const depthScale = clamp(1 + point.depth * 0.08, 0.86, 1.12);
   const s = (item.s || 1) * depthScale * 1.12;
   const x = point.x;
@@ -6304,6 +7492,124 @@ function drawInteriorFunctionalZones(ctx, blueprint, layout, zoneColor, isNight)
   });
 }
 
+function drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, style, isNight, layer, W, H, useThreeModels = false) {
+  const plan = getInteriorDecorPlan(blueprint).filter(item => item.layer === layer);
+  plan.forEach((item, index) => {
+    const angle = getInteriorPanoramaAngle(item.x, index, plan.length);
+    const distance = getInteriorDecorRadius(item);
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance, layer === "back" ? H * 0.03 : 0);
+    if (!point.visible) return;
+    if (useThreeModels) return;
+    drawInteriorDecorItem(ctx, { ...item, _point: point, s: (item.s || 1) * point.scale }, layout, style, isNight);
+  });
+}
+
+function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, isNight, W, H, useThreeModels = false) {
+  const props = blueprint.props || [];
+  const points = props.map((prop, index) => {
+    const angle = getInteriorPropAngle(prop, index, props.length);
+    const distance = getInteriorPropRadius(prop);
+    const point = projectInteriorPanoramaPoint(W, H, angle, distance);
+    return { prop, point, index };
+  }).filter(item => item.point.visible && (!useThreeModels || item.prop.render3d === false))
+    .sort((a, b) => a.point.depth - b.point.depth);
+
+  points.forEach(({ prop, point, index }) => {
+    const panelW = Math.max(54, Math.min(92, String(prop.label || "").length * 9 + 20)) * point.scale;
+    const panelH = 24 * point.scale;
+    const seed = hashCommunitySeed(prop.label || "prop", index);
+    const wobble = (seededCommunityValue(seed, 1) - 0.5) * 3;
+
+    ctx.save();
+    ctx.fillStyle = isNight ? "rgba(18,18,34,0.24)" : "rgba(26,26,46,0.1)";
+    ctx.beginPath();
+    ctx.ellipse(point.x, point.y + 8 * point.scale, (prop.size || 28) * 0.66 * point.scale, 6 * point.scale, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    drawInteriorPropModel(
+      ctx,
+      { ...prop, size: (prop.size || 30) * point.scale },
+      { ...point, x: point.x + wobble },
+      layout,
+      { accent: zoneColor, trim: darken(zoneColor, 30) },
+      isNight,
+      index,
+      blueprint
+    );
+
+    const showLabel = W > 520 || (point.x > W * 0.2 && point.x < W * 0.8 && Math.abs(point.delta) < INTERIOR_PANORAMA_FOV * 0.28);
+    if (!showLabel) {
+      ctx.restore();
+      return;
+    }
+
+    ctx.fillStyle = isNight ? "rgba(18,18,34,0.66)" : "rgba(250,250,245,0.88)";
+    ctx.strokeStyle = "rgba(26,26,46,0.72)";
+    ctx.lineWidth = 1.5;
+    roundRect(ctx, point.x - panelW / 2, point.y + 30 * point.scale, panelW, panelH, 7 * point.scale);
+    ctx.fill();
+    ctx.stroke();
+    ctx.font = `700 ${Math.max(9, 10 * point.scale)}px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.fillStyle = isNight ? "rgba(250,250,245,0.88)" : "rgba(26,26,46,0.82)";
+    ctx.fillText(prop.label || "", point.x, point.y + 46 * point.scale);
+    ctx.restore();
+  });
+}
+
+function getInteriorThreeItems(blueprint, W, H) {
+  const propItems = (blueprint.props || []).map((prop, index, props) => {
+    if (prop.render3d === false) return null;
+    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const { angle, worldX, worldZ } = placement;
+    return {
+      ...placement,
+      key: `prop-${index}`,
+      index,
+      model: interiorThreeModel(interiorPropModel(prop, blueprint)),
+      label: prop.label || "",
+      kind: "prop",
+      worldX,
+      worldZ,
+      anchorHeight: 1.18,
+      angle,
+      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25),
+      visible: true
+    };
+  }).filter(Boolean);
+
+  // Decorative aliases previously substituted semantically unrelated full-size
+  // props (for example a chalkboard for picture frames). Keep the 3D room clean
+  // until each decorative object has its own faithful model.
+  return propItems;
+}
+
+function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
+  const api = window.MirrorLifeInterior3D;
+  if (!api?.update) return false;
+  const items = getInteriorThreeItems(blueprint, W, H);
+  return api.update({
+    visible: true,
+    width: W,
+    height: H,
+    yaw: Number(interiorOrbit?.yaw || 0),
+    pitch: Number(interiorOrbit?.pitch || 0.58),
+    cameraX: Number(interiorOrbit?.x || 0),
+    cameraZ: Number(interiorOrbit?.z || 0),
+    theme: {
+      wall: roomStyle.wall,
+      floor: roomStyle.floor,
+      accent: roomStyle.accent,
+      trim: roomStyle.trim,
+      archetype: blueprint.key,
+      zoneId: interiorView?.zone?.id || "",
+      variant: hashCommunitySeed(interiorView?.zone?.id || blueprint.key, "interior-room") % 4,
+      night: !!isNight
+    },
+    items
+  });
+}
+
 function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
   const backLeft = projectInteriorPoint(layout, -0.92, -0.78, 0);
   const backRight = projectInteriorPoint(layout, 0.92, -0.78, 0);
@@ -6651,8 +7957,32 @@ function findRenderZoneById(zoneId) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
-  interiorView = { zone, source, enteredAt: performance.now(), nextArrivalCheckAt: 0 };
-  interiorOrbit = { yaw: 0.18, pitch: 0.58, drag: false, lastX: 0, lastY: 0 };
+  const blueprint = getInteriorBlueprint(zone);
+  const enteredAt = performance.now();
+  const explorationRecord = getInteriorExplorationRecord(zone.id);
+  const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  interiorView = {
+    zone,
+    source,
+    enteredAt,
+    nextArrivalCheckAt: 0,
+    discovery: {
+      title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
+      text: explorationRecord.completed && !explorationRecord.scenePlayed
+        ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
+        : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
+      progress: explorationRecord.completed && !explorationRecord.scenePlayed
+        ? "可以加入"
+        : `${Math.min(explorationRecord.found.length, 3)}/3 段场所记忆`,
+      actionLabel: explorationRecord.completed && !explorationRecord.scenePlayed ? sceneAction.label : "",
+      until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
+    }
+  };
+  interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, z: 0, lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
+  interiorMoveKeys.clear();
+  interiorNearbyAnchor = null;
+  interiorFocusPropIndex = null;
+  interiorExitRect = null;
   hideDetail();
   document.body.classList.add("interior-active");
   if (!questPanelCollapsed) {
@@ -6660,6 +7990,7 @@ function enterInteriorView(zone, source = "manual") {
     renderFirstLoopPanel();
   }
   ensureInteriorChip(zone);
+  ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
   markRenderActive(3200);
 }
@@ -6668,8 +7999,19 @@ function exitInteriorView() {
   if (!interiorView) return;
   interiorView = null;
   interiorOrbit.drag = false;
+  interiorMoveKeys.clear();
+  interiorNearbyAnchor = null;
+  interiorFocusPropIndex = null;
+  interiorExitRect = null;
+  interiorHotspots = [];
   document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
+  document.getElementById("interiorMovePad")?.remove();
+  document.getElementById("interiorHotspotLayer")?.remove();
+  document.getElementById("interiorDiscoveryCard")?.remove();
+  document.getElementById("interiorContextAction")?.remove();
+  document.getElementById("interiorJourneyPanel")?.remove();
+  document.getElementById("interiorCompass")?.remove();
   markRenderActive(2200);
 }
 
@@ -6678,13 +8020,45 @@ function ensureInteriorChip(zone) {
   const el = document.createElement("button");
   el.id = "interiorChip";
   el.type = "button";
-  el.textContent = `← 离开${zone.name} · 拖动环绕`;
+  el.textContent = `← 离开${zone.name}`;
   el.addEventListener("click", () => {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
     if (wasFollow) stopFollowCitizen(false);
   });
   document.getElementById("gameShell")?.appendChild(el);
+}
+
+function ensureInteriorMovePad() {
+  document.getElementById("interiorMovePad")?.remove();
+  const pad = document.createElement("nav");
+  pad.id = "interiorMovePad";
+  pad.setAttribute("aria-label", "室内移动");
+  pad.innerHTML = `
+    <button type="button" data-interior-move="forward" aria-label="向前移动" title="向前">↑</button>
+    <button type="button" data-interior-move="left" aria-label="向左移动" title="向左">←</button>
+    <span aria-hidden="true">●</span>
+    <button type="button" data-interior-move="right" aria-label="向右移动" title="向右">→</button>
+    <button type="button" data-interior-move="back" aria-label="向后移动" title="向后">↓</button>`;
+  const stop = (direction) => {
+    interiorMoveKeys.delete(direction);
+    markRenderActive(300);
+  };
+  pad.querySelectorAll("[data-interior-move]").forEach((button) => {
+    const direction = button.dataset.interiorMove;
+    button.addEventListener("pointerdown", (event) => {
+      event.preventDefault();
+      event.stopPropagation();
+      button.setPointerCapture?.(event.pointerId);
+      interiorMoveKeys.add(direction);
+      nudgeInteriorPlayer(direction, 0.08);
+      markRenderActive(1200);
+    });
+    ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
+      button.addEventListener(eventName, () => stop(direction));
+    });
+  });
+  document.getElementById("gameShell")?.appendChild(pad);
 }
 
 // When the player walks in on their own, a couple of citizens are "already inside".
@@ -6765,7 +8139,8 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
         : null;
       if (anchor) {
         ia.targetX = anchor.x + (seededCommunityValue(seed, 5) - 0.5) * 28;
-        ia.targetY = anchor.y + 18 + (seededCommunityValue(seed, 6) - 0.5) * 16;
+        const anchorOffset = anchor.screenProjected ? -4 : 18;
+        ia.targetY = anchor.y + anchorOffset + (seededCommunityValue(seed, 6) - 0.5) * (anchor.screenProjected ? 8 : 16);
         ia.targetAnchor = anchor;
       } else {
         ia.targetX = layout.left + 30 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 60);
@@ -6787,7 +8162,10 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
     } else {
       // Arrived at a spot indoors: maybe settle into an activity.
       if (now > (ia.nextBehaviorAt || 0)) {
-        const pick = pickInteriorAnchorBehavior(citizen, interiorView?.zone, ia.targetAnchor, now, idx)
+        const forced = ia.forcedBehaviorId ? BEHAVIOR_BY_ID.get(ia.forcedBehaviorId) : null;
+        delete ia.forcedBehaviorId;
+        const pick = forced
+          || pickInteriorAnchorBehavior(citizen, interiorView?.zone, ia.targetAnchor, now, idx)
           || pickCitizenBehavior(citizen, interiorView?.zone, now, idx + 40, true);
         if (pick) {
           startCitizenBehavior(citizen, ia, pick, now);
@@ -6810,95 +8188,62 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
 
 function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const zone = interiorView.zone;
+  updateInteriorPlayerMovement(now);
   const layout = getInteriorLayout(W, H);
   const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
   const blueprint = getInteriorBlueprint(zone);
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
-  const interiorAnchors = getInteriorAnchors(blueprint, layout);
-
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, isNight ? "#101827" : "#dff3f6");
-  bg.addColorStop(1, isNight ? "#253047" : "#eef8f2");
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
-
-  drawInteriorRoomShell(ctx, W, H, layout, roomStyle, isNight);
-  drawInteriorWallInstallations(ctx, W, H, layout, roomStyle, blueprint, isNight);
-  drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back");
-
-  // Windows looking out to the sky
-  [W * 0.2 + layout.yaw * 30, W * 0.8 + layout.yaw * 30].forEach((wx) => {
-    const winW = Math.min(110, W * 0.16);
-    const winH = 78;
-    const winX = wx - winW / 2;
-    const winY = layout.wallTop + 14;
-    ctx.fillStyle = isNight ? "#1c2541" : "#bfe3f2";
-    roundRect(ctx, winX, winY, winW, winH, 6);
-    ctx.fill();
-    if (isNight) {
-      ctx.fillStyle = "#f7f4e9";
-      for (let s = 0; s < 5; s++) {
-        ctx.beginPath();
-        ctx.arc(winX + 12 + (s * 37) % (winW - 20), winY + 10 + (s * 23) % (winH - 20), 1.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-    } else {
-      ctx.fillStyle = "#f6e27a";
-      ctx.beginPath();
-      ctx.arc(winX + winW * 0.72, winY + winH * 0.3, 11, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 3;
-    roundRect(ctx, winX, winY, winW, winH, 6);
-    ctx.stroke();
-    ctx.beginPath();
-    ctx.moveTo(winX + winW / 2, winY);
-    ctx.lineTo(winX + winW / 2, winY + winH);
-    ctx.moveTo(winX, winY + winH / 2);
-    ctx.lineTo(winX + winW, winY + winH / 2);
-    ctx.lineWidth = 2;
-    ctx.stroke();
+  const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
+  const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight);
+  const useThreeModels = !!threeState?.ready;
+  const projectedProps = new Map((threeState?.projections || [])
+    .filter((item) => String(item.key || "").startsWith("prop-"))
+    .map((item) => [item.index, item]));
+  const panoramaAnchors = fallbackAnchors.map((anchor) => {
+    const projected = projectedProps.get(anchor.index);
+    if (!useThreeModels || !projected) return anchor;
+    return {
+      ...anchor,
+      ...projected,
+      prop: anchor.prop,
+      label: anchor.label,
+      behaviors: anchor.behaviors,
+      screenProjected: true
+    };
   });
+  const interiorAnchors = panoramaAnchors.filter(anchor => anchor.visible);
 
-  // Exit door on the back wall
-  const door = layout.door;
-  ctx.fillStyle = darken(roomStyle.trim, 20);
-  roundRect(ctx, door.x, door.y, door.w, door.h, 5);
-  ctx.fill();
+  if (useThreeModels) {
+    ctx.clearRect(0, 0, W, H);
+    drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, true);
+  } else {
+    drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
+    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H, false);
+    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H, false);
+    drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, false);
+    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, false);
+  }
+  syncInteriorHotspotLayer(panoramaAnchors, blueprint);
+  syncInteriorContextAction(interiorAnchors);
+  syncInteriorJourneyHud(blueprint);
+  syncInteriorDiscoveryCard(now);
+
+  const exitW = Math.min(150, Math.max(110, W * 0.14));
+  const exitH = 34;
+  interiorExitRect = { x: W - exitW - 24, y: H - exitH - 24, w: exitW, h: exitH };
+  ctx.save();
+  ctx.fillStyle = isNight ? "rgba(18,18,34,0.86)" : "rgba(250,250,245,0.92)";
   ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 3;
-  roundRect(ctx, door.x, door.y, door.w, door.h, 5);
-  ctx.stroke();
-  ctx.fillStyle = "#f1c40f";
-  ctx.beginPath();
-  ctx.arc(door.x + door.w - 12, door.y + door.h * 0.52, 3.5, 0, Math.PI * 2);
+  ctx.lineWidth = 2.5;
+  roundRect(ctx, interiorExitRect.x, interiorExitRect.y, interiorExitRect.w, interiorExitRect.h, 10);
   ctx.fill();
-  ctx.fillStyle = "rgba(250,250,245,0.92)";
-  ctx.font = `bold 11px "Noto Sans SC", sans-serif`;
+  ctx.stroke();
+  ctx.fillStyle = "#1a1a2e";
+  ctx.font = `bold 13px "Noto Sans SC", sans-serif`;
   ctx.textAlign = "center";
-  ctx.fillText("出口", door.x + door.w / 2, door.y - 8);
-  // Doormat
-  ctx.fillStyle = hexWithAlpha(roomStyle.trim, 0.5);
-  ctx.beginPath();
-  ctx.ellipse(door.x + door.w / 2, layout.floorTop + 12, door.w * 0.7, 9, 0, 0, Math.PI * 2);
-  ctx.fill();
-
-  drawInteriorFloorComposition(ctx, blueprint, layout, roomStyle, isNight);
-
-  // Rug, projected as a flattened ellipse on the room plane.
-  const rug = projectInteriorPoint(layout, 0, 0.18, 0);
-  ctx.fillStyle = hexWithAlpha(roomStyle.accent, isNight ? 0.12 : 0.16);
-  ctx.beginPath();
-  ctx.ellipse(rug.x, rug.y + 14, W * 0.18 * (1 - Math.abs(layout.yaw) * 0.12), 30 * layout.pitch, layout.yaw * 0.35, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.strokeStyle = hexWithAlpha(roomStyle.trim, 0.5);
-  ctx.lineWidth = 2;
-  ctx.stroke();
-
-  drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid");
-  drawInteriorFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight);
-  drawInteriorDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front");
+  ctx.textBaseline = "middle";
+  ctx.fillText("回到街道", interiorExitRect.x + interiorExitRect.w / 2, interiorExitRect.y + interiorExitRect.h / 2 + 1);
+  ctx.restore();
 
   // Header
   ctx.fillStyle = "rgba(250,250,245,0.94)";
@@ -6918,7 +8263,14 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.textBaseline = "alphabetic";
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  ctx.fillText(`${blueprint.title} · 拖动可环绕视角 · 点击大门或按 Esc 回到街道`, W / 2, 58);
+  const explorationRecord = getInteriorExplorationRecord(zone.id);
+  const explorationGoal = Math.min(3, blueprint.props?.length || 3);
+  const interiorStatus = explorationRecord.scenePlayed
+    ? "共同经历已留下"
+    : explorationRecord.completed
+      ? "场所回声已解锁"
+      : `${Math.min(explorationRecord.found.length, explorationGoal)}/${explorationGoal} 段场所记忆`;
+  ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
 
   // Occupants
   const aliveCitizens = getAliveCitizens(society);
@@ -6938,17 +8290,45 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     if (!ia) {
       const spawnInside = !!canonicalAnim.indoor.spawnInside;
       const seed = hashCommunitySeed(citizen.id, "interior-spawn");
-      const sx = spawnInside
+      const spawnAnchor = useThreeModels && interiorAnchors.length
+        ? interiorAnchors[(seed + idx) % interiorAnchors.length]
+        : null;
+      const entryX = interiorExitRect ? interiorExitRect.x + interiorExitRect.w / 2 : W * 0.86;
+      const entryY = interiorExitRect ? interiorExitRect.y - 12 : layout.floorBottom - 32;
+      const sx = spawnAnchor?.x ?? (spawnInside
         ? layout.left + 40 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 80)
-        : door.x + door.w / 2;
-      const sy = spawnInside
+        : entryX);
+      const sy = spawnAnchor?.y ?? (spawnInside
         ? layout.floorTop + 50 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 80)
-        : layout.floorTop + 20;
+        : entryY);
       ia = interiorAnimations[citizen.id] = {
-        x: sx, y: sy, targetX: sx, targetY: sy, nextTargetAt: 0, walkPhase: 0, facing: 1
+        x: sx,
+        y: sy,
+        targetX: sx,
+        targetY: sy,
+        targetAnchor: spawnAnchor,
+        nextTargetAt: 0,
+        walkPhase: 0,
+        facing: 1
       };
     }
+    if (useThreeModels && Number.isInteger(ia.targetAnchor?.index)) {
+      const liveAnchor = interiorAnchors.find((anchor) => anchor.index === ia.targetAnchor.index);
+      if (liveAnchor) {
+        const cameraShiftX = liveAnchor.x - Number(ia.targetAnchor.x ?? liveAnchor.x);
+        const cameraShiftY = liveAnchor.y - Number(ia.targetAnchor.y ?? liveAnchor.y);
+        ia.x += cameraShiftX;
+        ia.y += cameraShiftY;
+        ia.targetX = Number(ia.targetX || ia.x) + cameraShiftX;
+        ia.targetY = Number(ia.targetY || ia.y) + cameraShiftY;
+        ia.targetAnchor = liveAnchor;
+      }
+    }
     updateInteriorCitizen(citizen, ia, canonicalAnim, layout, interiorAnchors, now, idx);
+    ia.x = clamp(ia.x, 34, W - 34);
+    ia.y = clamp(ia.y, 96, H - 44);
+    ia.targetX = clamp(Number(ia.targetX || ia.x), 34, W - 34);
+    ia.targetY = clamp(Number(ia.targetY || ia.y), 96, H - 44);
     entries.push({ citizen, moveAnim: ia, x: ia.x, y: ia.y, idx });
   });
 
@@ -6957,7 +8337,8 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
-    const size = (isHover ? 20 : 16) + sizeBoost;
+    const baseSize = useThreeModels ? 27 : 16;
+    const size = (isHover ? baseSize + 4 : baseSize) + sizeBoost;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
     drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
@@ -6976,7 +8357,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   }
 
   // Night dim
-  if (isNight) {
+  if (isNight && !useThreeModels) {
     ctx.fillStyle = "rgba(5,10,25,0.18)";
     ctx.fillRect(0, 0, W, H);
   }
@@ -6997,6 +8378,10 @@ function hitTestInteriorCitizen(mx, my) {
 }
 
 function isInteriorDoorHit(mx, my) {
+  if (interiorExitRect) {
+    const d = interiorExitRect;
+    return mx >= d.x - 8 && mx <= d.x + d.w + 8 && my >= d.y - 8 && my <= d.y + d.h + 8;
+  }
   const canvas = document.getElementById("gameCanvas");
   if (!canvas) return false;
   const rect = canvas.getBoundingClientRect();
@@ -7305,7 +8690,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
     ctx.translate(-pivotX, -pivotY);
   }
 
-  const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim);
+  const usedCitizenSprite = !isAvatar && drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim, now);
 
   // Body: MBTI-inspired archetypes get distinct silhouettes.
   if (!usedCitizenSprite) {
@@ -7489,9 +8874,9 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   // Gesture overlays (wave / chat dots)
   if (!lowDetail) drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
 
-  // Modular body overlay (arms / legs) makes activity readable even when
-  // the citizen is rendered from a static sprite sheet frame.
-  if (!lowDetail) drawBehaviorBodyOverlay(ctx, citizen, anim, cx, cy, size, now);
+  // Vector limbs are only a fallback for non-sprite citizens. Sprite citizens
+  // are animated by cutting their own image into rigged body parts above.
+  if (!lowDetail && !usedCitizenSprite) drawBehaviorBodyOverlay(ctx, citizen, anim, cx, cy, size, now);
 
   // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
   if (!lowDetail) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
@@ -8006,6 +9391,7 @@ function drawGameWorld() {
     ensureGameRenderLoop();
     return;
   }
+  window.MirrorLifeInterior3D?.hide?.();
 
   const zoneOccupancy = new Map();
   const citizenIndex = new Map();
@@ -8812,7 +10198,145 @@ function getCitizenSpriteFrame(citizen) {
   return Math.abs(String(citizen?.id || "").split("").reduce((sum, ch) => sum + ch.charCodeAt(0), 0)) % CITIZEN_FRAME_COUNT;
 }
 
-function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}) {
+const CITIZEN_RIG_PARTS = {
+  backArm: { x: 0.04, y: 0.24, w: 0.33, h: 0.46, px: 0.76, py: 0.18 },
+  backLeg: { x: 0.23, y: 0.56, w: 0.28, h: 0.38, px: 0.58, py: 0.12 },
+  frontLeg: { x: 0.48, y: 0.56, w: 0.29, h: 0.38, px: 0.43, py: 0.12 },
+  torso: { x: 0.23, y: 0.29, w: 0.54, h: 0.42, px: 0.5, py: 0.18 },
+  frontArm: { x: 0.62, y: 0.24, w: 0.34, h: 0.47, px: 0.23, py: 0.18 },
+  head: { x: 0.16, y: 0.01, w: 0.68, h: 0.38, px: 0.5, py: 0.76 }
+};
+
+const CITIZEN_RIG_DRAW_ORDER = ["backArm", "backLeg", "frontLeg", "torso", "frontArm", "head"];
+
+function getCitizenRigIntent(anim, now) {
+  const behavior = getActiveBehavior(anim, now);
+  const gesture = getActiveGesture(anim, now);
+  if (behavior?.pose === "lie") return { active: false, behavior, gesture, kind: "lie" };
+  if (gesture?.type === "wave") return { active: true, behavior, gesture, kind: "wave" };
+  if (gesture?.type === "talk") return { active: true, behavior, gesture, kind: "talk" };
+  if (anim?.state === "walking" || behavior?.pose === "move") {
+    return { active: true, behavior, gesture, kind: behavior?.id === "run" ? "run" : "walk" };
+  }
+  if (behavior) return { active: true, behavior, gesture, kind: behavior.pose || behavior.id || "act" };
+  return { active: false, behavior, gesture, kind: "idle" };
+}
+
+function getCitizenRigTransforms(anim, now) {
+  const intent = getCitizenRigIntent(anim, now);
+  const seed = intent.behavior?.seed || 0;
+  const beat = Math.sin(now * 0.014 + seed);
+  const alt = Math.cos(now * 0.014 + seed);
+  const transforms = {
+    backArm: { r: 0, x: 0, y: 0 },
+    frontArm: { r: 0, x: 0, y: 0 },
+    backLeg: { r: 0, x: 0, y: 0 },
+    frontLeg: { r: 0, x: 0, y: 0 },
+    torso: { r: 0, x: 0, y: 0 },
+    head: { r: 0, x: 0, y: 0 }
+  };
+  if (!intent.active) return { intent, transforms };
+
+  const setArms = (front, back) => {
+    transforms.frontArm.r = front;
+    transforms.backArm.r = back;
+  };
+  const setLegs = (front, back) => {
+    transforms.frontLeg.r = front;
+    transforms.backLeg.r = back;
+  };
+
+  if (intent.kind === "walk" || intent.kind === "run") {
+    const amp = intent.kind === "run" ? 0.42 : 0.26;
+    setArms(-beat * amp * 0.9, beat * amp * 0.78);
+    setLegs(beat * amp, -beat * amp);
+    transforms.torso.r = beat * 0.025;
+    transforms.head.y = -Math.abs(alt) * (intent.kind === "run" ? 2.4 : 1.2);
+  } else if (intent.kind === "wave") {
+    transforms.frontArm.r = -0.86 + Math.sin(now * 0.024 + seed) * 0.32;
+    transforms.frontArm.y = -4;
+    transforms.backArm.r = 0.08;
+    transforms.head.r = Math.sin(now * 0.006 + seed) * 0.04;
+  } else if (intent.kind === "talk") {
+    transforms.frontArm.r = -0.24 + beat * 0.18;
+    transforms.backArm.r = 0.12 - alt * 0.08;
+    transforms.head.r = beat * 0.035;
+  } else if (intent.kind === "reach" || ["handoff", "comfort", "care", "shop", "gather", "teach"].includes(intent.behavior?.id)) {
+    transforms.frontArm.r = -0.52 + beat * 0.12;
+    transforms.frontArm.x = 4;
+    transforms.torso.r = 0.05 + beat * 0.025;
+    transforms.head.r = 0.03;
+  } else if (intent.kind === "rock" || ["repair", "cook", "clean", "garden", "work"].includes(intent.behavior?.id)) {
+    setArms(-0.36 + beat * 0.34, 0.18 - beat * 0.22);
+    transforms.torso.r = beat * 0.09;
+    transforms.head.r = beat * 0.035;
+  } else if (intent.kind === "dance" || intent.behavior?.id === "stretch") {
+    setArms(-0.88 + beat * 0.22, 0.62 - alt * 0.24);
+    setLegs(0.2 + beat * 0.18, -0.18 + alt * 0.16);
+    transforms.torso.r = beat * 0.14;
+    transforms.torso.y = -Math.abs(alt) * 4;
+    transforms.head.y = transforms.torso.y;
+  } else if (intent.kind === "bounce" || intent.behavior?.id === "ball") {
+    setArms(-0.18 + beat * 0.16, 0.12 - beat * 0.12);
+    setLegs(0.14 + beat * 0.12, -0.1 - beat * 0.1);
+    transforms.torso.y = -Math.abs(beat) * 5;
+    transforms.head.y = transforms.torso.y;
+  } else if (intent.kind === "wash") {
+    setArms(-0.62 + beat * 0.18, -0.4 - beat * 0.12);
+    transforms.head.r = beat * 0.025;
+  } else if (intent.kind === "lean" || intent.behavior?.id === "think") {
+    transforms.frontArm.r = -0.5;
+    transforms.torso.r = 0.1;
+    transforms.head.r = 0.08;
+  } else if (intent.kind === "sob" || intent.behavior?.id === "cry") {
+    setArms(-0.48, -0.32);
+    transforms.torso.r = 0.06 + beat * 0.025;
+    transforms.head.y = 2;
+  } else if (intent.kind === "stomp") {
+    transforms.frontLeg.r = 0.2 + Math.abs(beat) * 0.18;
+    transforms.frontLeg.y = Math.abs(beat) * 4;
+    transforms.frontArm.r = 0.24;
+    transforms.backArm.r = -0.12;
+    transforms.torso.r = beat * 0.08;
+  } else if (intent.kind === "sit" || ["type", "write", "phone", "eat", "drink", "read", "meeting", "overtime"].includes(intent.behavior?.id)) {
+    setArms(-0.18 + beat * 0.05, -0.08 - beat * 0.04);
+    setLegs(0.28, -0.22);
+    transforms.torso.y = 2;
+    transforms.head.r = beat * 0.025;
+  } else {
+    setArms(beat * 0.08, -beat * 0.06);
+    transforms.head.y = alt * 0.8;
+  }
+
+  return { intent, transforms };
+}
+
+function drawCitizenRigPart(ctx, spriteSource, sprite, drawW, drawH, part, transform = {}) {
+  const sx = sprite.sx + part.x * sprite.sw;
+  const sy = sprite.sy + part.y * sprite.sh;
+  const sw = part.w * sprite.sw;
+  const sh = part.h * sprite.sh;
+  const dw = part.w * drawW;
+  const dh = part.h * drawH;
+  const dx = part.x * drawW - drawW / 2;
+  const dy = part.y * drawH - drawH / 2;
+  const pivotX = dx + part.px * dw;
+  const pivotY = dy + part.py * dh;
+
+  ctx.save();
+  ctx.translate(pivotX + (transform.x || 0), pivotY + (transform.y || 0));
+  ctx.rotate(transform.r || 0);
+  ctx.drawImage(spriteSource, sx, sy, sw, sh, -part.px * dw, -part.py * dh, dw, dh);
+  ctx.restore();
+}
+
+function drawRiggedCitizenSprite(ctx, spriteSource, sprite, drawW, drawH, transforms) {
+  CITIZEN_RIG_DRAW_ORDER.forEach((key) => {
+    drawCitizenRigPart(ctx, spriteSource, sprite, drawW, drawH, CITIZEN_RIG_PARTS[key], transforms[key]);
+  });
+}
+
+function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}, now = performance.now()) {
   const frame = getCitizenSpriteFrame(citizen);
   const sprite = getSpriteFrameRect(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
   if (!sprite) return false;
@@ -8822,13 +10346,20 @@ function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {
   const gait = Math.sin(anim.walkPhase || 0);
   const facing = anim.facing || 1;
   const tilt = gait * 0.035;
+  const { intent, transforms } = getCitizenRigTransforms(anim, now);
+  const useRig = intent.active;
 
   ctx.save();
   ctx.translate(cx, cy - drawH * 0.3);
-  ctx.rotate(tilt);
+  ctx.rotate(useRig ? 0 : tilt);
   ctx.scale(facing, 1);
-  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, -drawW / 2, -drawH * 0.5, drawW, drawH);
+  if (useRig) {
+    drawRiggedCitizenSprite(ctx, spriteSource, sprite, drawW, drawH, transforms);
+  } else {
+    ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, -drawW / 2, -drawH * 0.5, drawW, drawH);
+  }
   ctx.restore();
+  anim.spriteBodyRenderedThisFrame = true;
   return true;
 }
 
@@ -8989,11 +10520,43 @@ function bindGameEvents() {
       }
       return;
     }
+    if (interiorView) {
+      if (e.key.toLowerCase() === "e" && interiorNearbyAnchor) {
+        e.preventDefault();
+        if (!e.repeat) exploreInteriorHotspot(interiorNearbyAnchor.index);
+        return;
+      }
+      const movementByKey = {
+        w: "forward", arrowup: "forward",
+        s: "back", arrowdown: "back",
+        a: "left", arrowleft: "left",
+        d: "right", arrowright: "right"
+      };
+      const direction = movementByKey[e.key.toLowerCase()];
+      if (direction) {
+        e.preventDefault();
+        interiorMoveKeys.add(direction);
+        if (!e.repeat) nudgeInteriorPlayer(direction);
+        markRenderActive(1200);
+        return;
+      }
+    }
     if (e.key.toLowerCase() !== "g" || e.metaKey || e.ctrlKey || e.altKey) return;
     graphDebugVisible = !graphDebugVisible;
     renderFirstLoopPanel();
     showToast(graphDebugVisible ? "因果图调试已显示" : "因果图调试已隐藏", "support");
   });
+  document.addEventListener("keyup", (e) => {
+    const movementByKey = {
+      w: "forward", arrowup: "forward",
+      s: "back", arrowdown: "back",
+      a: "left", arrowleft: "left",
+      d: "right", arrowright: "right"
+    };
+    const direction = movementByKey[e.key.toLowerCase()];
+    if (direction) interiorMoveKeys.delete(direction);
+  });
+  window.addEventListener("blur", () => interiorMoveKeys.clear());
 
   // ── Canvas click ──
   if (canvas) {
@@ -9104,8 +10667,8 @@ function bindGameEvents() {
       const dx = e.clientX - camera.lastX;
       const dy = e.clientY - camera.lastY;
       if (interiorView && interiorOrbit.drag) {
-        interiorOrbit.yaw = clamp(interiorOrbit.yaw + dx * 0.006, -0.72, 0.72);
-        interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.44, 0.72);
+        interiorOrbit.yaw = wrapInteriorAngle(interiorOrbit.yaw + dx * 0.006);
+        interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.36, 0.76);
       } else {
         camera.x += dx;
         camera.y += dy;
@@ -9130,7 +10693,7 @@ function bindGameEvents() {
       e.preventDefault();
       markRenderActive();
       if (interiorView) {
-        interiorOrbit.pitch = clamp(interiorOrbit.pitch + (e.deltaY > 0 ? -0.025 : 0.025), 0.44, 0.72);
+        interiorOrbit.pitch = clamp(interiorOrbit.pitch + (e.deltaY > 0 ? -0.025 : 0.025), 0.36, 0.76);
         return;
       }
       const delta = e.deltaY > 0 ? -0.08 : 0.08;
@@ -9168,8 +10731,8 @@ function bindGameEvents() {
         const dx = e.touches[0].clientX - camera.lastX;
         const dy = e.touches[0].clientY - camera.lastY;
         if (interiorView && interiorOrbit.drag) {
-          interiorOrbit.yaw = clamp(interiorOrbit.yaw + dx * 0.006, -0.72, 0.72);
-          interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.44, 0.72);
+          interiorOrbit.yaw = wrapInteriorAngle(interiorOrbit.yaw + dx * 0.006);
+          interiorOrbit.pitch = clamp(interiorOrbit.pitch - dy * 0.003, 0.36, 0.76);
         } else {
           camera.x += dx;
           camera.y += dy;
@@ -9625,11 +11188,85 @@ function bindGameEvents() {
 // INIT
 // ═══════════════════════════════════════════════════════════════
 
+function getLocalInteriorQaZoneId() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return "";
+  const zoneId = new URLSearchParams(window.location.search).get("qaInterior") || "";
+  return INTERIOR_ZONE_PROFILES[zoneId] ? zoneId : "";
+}
+
+function getLocalInteriorQaYaw() {
+  const degrees = Number(new URLSearchParams(window.location.search).get("qaYaw"));
+  if (!Number.isFinite(degrees)) return 0;
+  return wrapInteriorAngle(degrees * Math.PI / 180);
+}
+
+function isLocalInteriorSceneQaEnabled() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return false;
+  return new URLSearchParams(window.location.search).get("qaInteriorScene") === "1";
+}
+
+function openLocalInteriorQa(zoneId) {
+  if (!zoneId) return;
+  window.requestAnimationFrame(() => {
+    const zone = findRenderZoneById(zoneId);
+    if (!zone) {
+      console.warn(`MirrorLife interior QA zone not found: ${zoneId}`);
+      return;
+    }
+    pauseSocietyRun();
+    state.society.speed = 0.5;
+    const slider = document.getElementById("hudSpeed");
+    const sliderVal = document.getElementById("hudSpeedVal");
+    if (slider) slider.value = "0.5";
+    if (sliderVal) sliderVal.textContent = "0.5x";
+    enterInteriorView(zone, "qa");
+    if (isLocalInteriorSceneQaEnabled()) {
+      seedInteriorOccupants(zone);
+      Object.values(citizenAnimations).forEach((animation) => {
+        if (animation?.indoor?.zoneId === zone.id) animation.indoor.until = performance.now() + 60000;
+      });
+      const blueprint = getInteriorBlueprint(zone);
+      const record = getInteriorExplorationRecord(zone.id);
+      record.found = (blueprint.props || []).slice(0, 3).map((prop) => prop.label);
+      record.completed = true;
+      record.scenePlayed = false;
+      record.sceneChoice = "";
+      record.sceneOutcome = "";
+      record.sceneReward = null;
+      const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+      interiorView.discovery = {
+        title: `${zone.name} · 场所回声`,
+        text: blueprint.profile?.completion || `你读懂了${zone.name}的一小段生活。`,
+        progress: "已读懂",
+        actionLabel: sceneAction.label,
+        until: Number.POSITIVE_INFINITY
+      };
+      syncInteriorDiscoveryCard(performance.now());
+    }
+    interiorOrbit.yaw = getLocalInteriorQaYaw();
+    markRenderActive(1800);
+  });
+}
+
 function gameInit() {
   if (consumeDemoResetUrlParam()) return;
 
   initEngineState();
   mountDemoResetButton();
+
+  const interiorQaZoneId = getLocalInteriorQaZoneId();
+  if (interiorQaZoneId && !hasAvatarProfile()) {
+    createAndEnterWorld({
+      name: "室内验收员",
+      age: 28,
+      color: AVATAR_COLORS[0],
+      professionId: "designer",
+      professionName: "空间体验设计师",
+      avatarFrame: 0,
+      bio: "检查每个房间是否完整、可探索且有生活感"
+    });
+  }
+  if (interiorQaZoneId) state.firstSessionStage = "unlocked_world";
 
   // Ensure society exists
   if (!state.society.scenarioText) {
@@ -9691,6 +11328,7 @@ function gameInit() {
     updateHUD();
     renderFirstLoopPanel();
     persist();
+    openLocalInteriorQa(interiorQaZoneId);
   } else {
     // Show splash / avatar creation
     hydrateSocietyState();
@@ -9702,6 +11340,7 @@ function gameInit() {
     ensureGameRenderLoop();
     updateHUD();
     renderFirstLoopPanel();
+    openLocalInteriorQa(interiorQaZoneId);
   }
 }
 

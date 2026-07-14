@@ -1,4 +1,5 @@
 const STORAGE_KEY = "mirror-life-mvp";
+const INTERIOR_EXPLORATION_STORAGE_KEY = `${STORAGE_KEY}-interior-exploration`;
 
 let state = null;
 let activeMode = "mirror";
@@ -1643,7 +1644,50 @@ function mergeLifeCapsules(savedCapsules) {
   return [...byId.values()].slice(0, 16);
 }
 
+function normalizeInteriorExploration(savedRecords) {
+  if (!savedRecords || typeof savedRecords !== "object" || Array.isArray(savedRecords)) return {};
+  return Object.fromEntries(Object.entries(savedRecords).slice(0, 40).map(([zoneId, record]) => {
+    const source = record && typeof record === "object" ? record : {};
+    return [String(zoneId).slice(0, 80), {
+      found: Array.isArray(source.found)
+        ? [...new Set(source.found.filter((label) => typeof label === "string").map((label) => label.slice(0, 80)))].slice(0, 12)
+        : [],
+      completed: !!source.completed,
+      scenePlayed: !!source.scenePlayed,
+      sceneChoice: typeof source.sceneChoice === "string" ? source.sceneChoice.slice(0, 80) : "",
+      sceneOutcome: typeof source.sceneOutcome === "string" ? source.sceneOutcome.slice(0, 500) : "",
+      sceneReward: source.sceneReward && typeof source.sceneReward === "object"
+        ? {
+            socialResonance: clamp(Math.round(Number(source.sceneReward.socialResonance) || 0), -10, 10),
+            selfFulfillment: clamp(Math.round(Number(source.sceneReward.selfFulfillment) || 0), -10, 10),
+            lifeStability: clamp(Math.round(Number(source.sceneReward.lifeStability) || 0), -10, 10)
+          }
+        : null
+    }];
+  }));
+}
+
+function readPersistedInteriorExploration() {
+  try {
+    return normalizeInteriorExploration(JSON.parse(localStorage.getItem(INTERIOR_EXPLORATION_STORAGE_KEY) || "{}"));
+  } catch {
+    return {};
+  }
+}
+
+function persistInteriorExploration() {
+  try {
+    localStorage.setItem(
+      INTERIOR_EXPLORATION_STORAGE_KEY,
+      JSON.stringify(normalizeInteriorExploration(state?.interiorExploration))
+    );
+  } catch {
+    // Storage pressure should not interrupt an active interior scene.
+  }
+}
+
 function loadState() {
+  const persistedInteriorExploration = readPersistedInteriorExploration();
   const defaults = {
     profile: {},
     echoes: [],
@@ -1659,6 +1703,7 @@ function loadState() {
     continuation: null,
     firstLoop: null,
     causalGraph: null,
+    interiorExploration: persistedInteriorExploration,
     hasSeenTutorial: false,
     isFirstVisit: false,
     story: null,
@@ -1691,6 +1736,9 @@ function loadState() {
       continuation: saved.continuation && typeof saved.continuation === "object" ? saved.continuation : null,
       firstLoop: saved.firstLoop && typeof saved.firstLoop === "object" ? saved.firstLoop : null,
       causalGraph: saved.causalGraph && typeof saved.causalGraph === "object" ? saved.causalGraph : null,
+      interiorExploration: Object.keys(persistedInteriorExploration).length
+        ? persistedInteriorExploration
+        : normalizeInteriorExploration(saved.interiorExploration),
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
       story: saved.story && typeof saved.story === "object" ? saved.story : null,
@@ -1717,6 +1765,7 @@ function buildPersistSnapshot() {
     continuation: state.continuation || null,
     firstLoop: state.firstLoop || null,
     causalGraph: state.causalGraph || null,
+    interiorExploration: normalizeInteriorExploration(state.interiorExploration),
     hasSeenTutorial: !!state.hasSeenTutorial,
     isFirstVisit: !!state.isFirstVisit,
     story: state.story || null,

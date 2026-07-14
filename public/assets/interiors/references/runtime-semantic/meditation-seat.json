@@ -1,0 +1,23 @@
+{
+  "model": "meditation-seat",
+  "label": "静坐席",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/story-table.png",
+    "public/assets/interiors/references/runtime-semantic/calming-chair.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/meditation-seat.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "round rug",
+    "layered cushion",
+    "folded blanket",
+    "flower vase",
+    "candle lantern",
+    "small side tray"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the layered sage and deep-teal rug with stitched rhythm rings, two-level central cushion, folded coral-and-cream blanket, low honey-oak side tray with cup recess, ceramic vase with three simple flowers and enclosed warm candle lantern. Keep the front approach path open and avoid ceremonial symmetry. Canonical views, closed development geometry and turntable review are still required."
+}

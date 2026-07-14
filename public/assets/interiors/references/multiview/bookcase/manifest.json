@@ -1,0 +1,56 @@
+{
+  "model": "bookcase",
+  "sourceModel": "/assets/interiors/glb/bookcase.glb",
+  "sourceSheet": "public/assets/interiors/references/multiview/bookcase/source-sheet.png",
+  "generatedAt": "2026-07-11T23:57:27.243Z",
+  "grid": {
+    "mode": "deterministic-glb-orthographic"
+  },
+  "chromaKey": "#ff00ff",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/bookcase/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/bookcase/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/bookcase/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/bookcase/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/bookcase/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/bookcase/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/bookcase/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/bookcase/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

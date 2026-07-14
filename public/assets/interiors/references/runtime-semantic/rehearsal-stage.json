@@ -1,0 +1,23 @@
+{
+  "model": "rehearsal-stage",
+  "label": "排练角",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/gallery-wall.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/rehearsal-stage.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "rounded stage platform",
+    "curtain arch",
+    "two curtains",
+    "floor marks",
+    "two stage lights",
+    "prop crate",
+    "rear brace"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the low rounded honey-oak platform on a deep-teal base, coral curtain arch with two gathered curtains, three colored floor-position marks, exactly two adjustable floor lights and an open prop crate with mask, scarf and soft ball. Complete the rear arch braces, curtain rail, cable clips, stage feet and platform underside. Canonical views, closed development geometry and turntable review are still required."
+}

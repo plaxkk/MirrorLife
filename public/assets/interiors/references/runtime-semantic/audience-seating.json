@@ -1,0 +1,23 @@
+{
+  "model": "audience-seating",
+  "label": "旁听席",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/park_plaza/wooden_bench.png",
+    "dist/assets/interior-props-image2/residence/dining_table_set.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/audience-seating.png",
+  "dimensions": [1536, 1536],
+  "background": "transparent",
+  "requiredParts": [
+    "six chair seats",
+    "six backrests",
+    "shared support rails",
+    "floor feet",
+    "center aisle gap",
+    "finished rear frames"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve exactly six individually readable seats in two staggered three-seat rows, the broad center aisle, honey-wood X-braced rear frames, dark-teal shared floor rails and feet, five-color cushion rhythm, and the two small aisle-edge vote-token posts. Canonical views, closed development geometry and turntable review are still required."
+}

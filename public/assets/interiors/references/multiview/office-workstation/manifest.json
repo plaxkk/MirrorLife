@@ -1,0 +1,56 @@
+{
+  "model": "office-workstation",
+  "sourceModel": "/assets/interiors/glb/office-workstation.glb",
+  "sourceSheet": "public/assets/interiors/references/multiview/office-workstation/source-sheet.png",
+  "generatedAt": "2026-07-11T21:13:28.174Z",
+  "grid": {
+    "mode": "deterministic-glb-orthographic"
+  },
+  "chromaKey": "#ff00ff",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/office-workstation/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/office-workstation/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/office-workstation/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/office-workstation/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/office-workstation/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/office-workstation/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/office-workstation/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/office-workstation/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

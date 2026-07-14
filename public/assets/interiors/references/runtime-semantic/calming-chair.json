@@ -1,0 +1,22 @@
+{
+  "model": "calming-chair",
+  "label": "情绪安抚角",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/residence/sofa_coffee_table.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/calming-chair.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "cocoon chair shell",
+    "seat cushion",
+    "weighted pillow",
+    "footrest",
+    "side light",
+    "stable floor base"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the tall mint cocoon shell with an outward-facing opening, thick seat cushion, coral weighted lap pillow, separate low footrest, warm amber side light and broad circular floor base. Also retain the water tray and pause hourglass as interaction details. The rear shell and underside must be fully finished. Canonical views, closed development geometry and turntable review are still required."
+}

@@ -1,0 +1,24 @@
+{
+  "model": "exchange-board",
+  "label": "交换板",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "dist/assets/interior-props-image2/school_library/chalkboard.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/exchange-board.png",
+  "dimensions": [1254, 1254],
+  "background": "transparent",
+  "requiredParts": [
+    "board surface",
+    "wood frame",
+    "two support posts",
+    "floor feet",
+    "card clips",
+    "exchange cards",
+    "lower tray",
+    "finished rear panel"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve exactly eight blank exchange cards and eight dark metal clips, the mint board, honey-wood frame, two posts, two braced feet, three spare cards in the lower tray, finished rear panel and complete underside. Canonical views, closed development geometry and turntable review are still required."
+}

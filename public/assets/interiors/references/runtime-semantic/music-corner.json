@@ -1,0 +1,25 @@
+{
+  "model": "music-corner",
+  "label": "声音角",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/story-table.png",
+    "public/assets/interiors/references/runtime-semantic/rehearsal-stage.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/music-corner.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "small keyboard",
+    "keyboard stand",
+    "microphone",
+    "microphone stand",
+    "two speakers",
+    "headphones",
+    "round rug",
+    "cable clips"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the compact keyboard, six-pad sampler, sturdy X stand, adjustable microphone and tripod, exactly two rounded speakers on low stands, over-ear headphones on a dedicated hook, deep-teal rhythm rug, routed cables with four clips and small cup shelf. All stands, cables and undersides must remain connected and complete. Canonical views, closed development geometry and turntable review are still required."
+}

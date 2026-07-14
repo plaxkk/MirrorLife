@@ -1,0 +1,56 @@
+{
+  "model": "record-desk",
+  "sourceSheet": "public/assets/interiors/references/multiview/record-desk/source-sheet.png",
+  "generatedAt": "2026-07-11T10:10:23.243Z",
+  "grid": {
+    "columns": 4,
+    "rows": 2
+  },
+  "chromaKey": "#f407f2",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/record-desk/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/record-desk/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/record-desk/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/record-desk/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/record-desk/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/record-desk/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/record-desk/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/record-desk/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}

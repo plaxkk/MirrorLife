@@ -1,0 +1,25 @@
+{
+  "model": "office-workstation",
+  "label": "协作工位",
+  "provider": "gpt-image-2-built-in",
+  "generatedAt": "2026-07-12T00:00:00.000Z",
+  "sourceStyleReferences": [
+    "public/assets/interiors/references/runtime-semantic/record-desk.png",
+    "dist/assets/interior-props-image2/studio_workshop/maker_workbench.png"
+  ],
+  "file": "public/assets/interiors/references/runtime-semantic/office-workstation.png",
+  "dimensions": [1536, 1024],
+  "background": "transparent",
+  "requiredParts": [
+    "rounded desk",
+    "monitor",
+    "keyboard",
+    "task chair",
+    "storage pedestal",
+    "potted plant",
+    "cable channel",
+    "finished backside"
+  ],
+  "status": "approved-isometric-reference",
+  "notes": "Approved isometric design reference. Preserve the shallow-wrap honey-wood desk, open central legroom, deep-teal monitor and separate keyboard, teal five-spoke wheeled task chair, two-drawer right storage pedestal, left handoff tray, small potted plant, rear cable channel with coral and teal cables, power strip, and fully finished back and underside. Canonical views, closed development geometry and turntable review are still required."
+}

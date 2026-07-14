@@ -1,0 +1,283 @@
+{
+  "files": {
+    "greenhouse_garden/fenced_garden.png": {
+      "url": "https://origin.picgo.net/2026/07/09/fenced_gardenb1d7ea110ace3093.png",
+      "uploadedAt": "2026-07-08T16:46:05.285Z",
+      "bytes": 1651742
+    },
+    "greenhouse_garden/flower_bed_watering_can.png": {
+      "url": "https://origin.picgo.net/2026/07/09/flower_bed_watering_caneef27f4d90cc3412.png",
+      "uploadedAt": "2026-07-08T16:46:48.604Z",
+      "bytes": 1451923
+    },
+    "greenhouse_garden/glass_greenhouse.png": {
+      "url": "https://origin.picgo.net/2026/07/09/glass_greenhouse2e184c5f76162c09.png",
+      "uploadedAt": "2026-07-08T16:48:20.494Z",
+      "bytes": 1621145
+    },
+    "greenhouse_garden/plant_shelf.png": {
+      "url": "https://origin.picgo.net/2026/07/09/plant_shelfef6e6eed11173125.png",
+      "uploadedAt": "2026-07-08T16:49:31.286Z",
+      "bytes": 1555849
+    },
+    "hospital/hospital_bed_monitor_iv.png": {
+      "url": "https://origin.picgo.net/2026/07/09/hospital_bed_monitor_iv534fd00209e545d5.png",
+      "uploadedAt": "2026-07-08T16:50:47.569Z",
+      "bytes": 1519514
+    },
+    "hospital/medical_supply_podium.png": {
+      "url": "https://origin.picgo.net/2026/07/09/medical_supply_podiumf4a944645a4a65e7.png",
+      "uploadedAt": "2026-07-08T16:51:54.160Z",
+      "bytes": 1408244
+    },
+    "hospital/medicine_cabinet.png": {
+      "url": "https://origin.picgo.net/2026/07/09/medicine_cabinet4c8e50f0d5e82258.png",
+      "uploadedAt": "2026-07-08T16:52:55.143Z",
+      "bytes": 1438081
+    },
+    "hospital/reception_counter.png": {
+      "url": "https://origin.picgo.net/2026/07/09/reception_counter9846d9e98622db16.png",
+      "uploadedAt": "2026-07-08T16:54:17.077Z",
+      "bytes": 2268126
+    },
+    "kindergarten/baby_stroller.png": {
+      "url": "https://origin.picgo.net/2026/07/09/baby_stroller906447cd8a7712de.png",
+      "uploadedAt": "2026-07-08T16:55:07.982Z",
+      "bytes": 1470688
+    },
+    "kindergarten/playroom_interior.png": {
+      "url": "https://origin.picgo.net/2026/07/09/playroom_interiorc6925204c45b471b.png",
+      "uploadedAt": "2026-07-08T16:56:06.841Z",
+      "bytes": 1620585
+    },
+    "kindergarten/teddy_play_rug.png": {
+      "url": "https://origin.picgo.net/2026/07/09/teddy_play_ruge021cf63661e6111.png",
+      "uploadedAt": "2026-07-08T16:57:23.039Z",
+      "bytes": 1677277
+    },
+    "market_cafe/cafe_table_corner.png": {
+      "url": "https://origin.picgo.net/2026/07/09/cafe_table_cornerde9e43a4e79d6bf6.png",
+      "uploadedAt": "2026-07-08T16:58:07.060Z",
+      "bytes": 736692
+    },
+    "market_cafe/fruit_baskets.png": {
+      "url": "https://origin.picgo.net/2026/07/09/fruit_baskets605e1e876381abf2.png",
+      "uploadedAt": "2026-07-08T16:58:58.925Z",
+      "bytes": 1424303
+    },
+    "market_cafe/hot_food_counter.png": {
+      "url": "https://origin.picgo.net/2026/07/09/hot_food_counter0fb0f6a5b383a09c.png",
+      "uploadedAt": "2026-07-08T16:59:33.105Z",
+      "bytes": 797635
+    },
+    "market_cafe/market_hall_interior.png": {
+      "url": "https://origin.picgo.net/2026/07/09/market_hall_interior8082b3106bf2fb55.png",
+      "uploadedAt": "2026-07-08T17:44:55.159Z",
+      "bytes": 2311830
+    },
+    "market_cafe/pantry_shelf.png": {
+      "url": "https://origin.picgo.net/2026/07/09/pantry_shelf527db368815a01e7.png",
+      "uploadedAt": "2026-07-08T17:44:59.621Z",
+      "bytes": 2531455
+    },
+    "market_cafe/produce_stall.png": {
+      "url": "https://origin.picgo.net/2026/07/09/produce_stall3754c7626bfe38dc.png",
+      "uploadedAt": "2026-07-08T17:45:03.301Z",
+      "bytes": 1681395
+    },
+    "memorial_cemetery/cemetery_garden_interior.png": {
+      "url": "https://origin.picgo.net/2026/07/09/cemetery_garden_interior58e00df14116304d.png",
+      "uploadedAt": "2026-07-08T17:45:07.150Z",
+      "bytes": 1823585
+    },
+    "memorial_cemetery/cherry_blossom_tree.png": {
+      "url": "https://origin.picgo.net/2026/07/09/cherry_blossom_treea5d4120dff297e4b.png",
+      "uploadedAt": "2026-07-08T17:45:10.452Z",
+      "bytes": 767519
+    },
+    "memorial_cemetery/flower_box.png": {
+      "url": "https://origin.picgo.net/2026/07/09/flower_box15595a435ab7a6ce.png",
+      "uploadedAt": "2026-07-08T17:45:14.278Z",
+      "bytes": 1427545
+    },
+    "memorial_cemetery/flower_vase.png": {
+      "url": "https://origin.picgo.net/2026/07/09/flower_vase36915a92f485105a.png",
+      "uploadedAt": "2026-07-08T17:45:18.310Z",
+      "bytes": 1340527
+    },
+    "memorial_cemetery/garden_lantern.png": {
+      "url": "https://origin.picgo.net/2026/07/09/garden_lantern8aa07f113972fe1a.png",
+      "uploadedAt": "2026-07-08T17:45:21.952Z",
+      "bytes": 1134925
+    },
+    "memorial_cemetery/long_memorial_altar.png": {
+      "url": "https://origin.picgo.net/2026/07/09/long_memorial_altardc3485bc5508da34.png",
+      "uploadedAt": "2026-07-08T17:45:24.994Z",
+      "bytes": 1016592
+    },
+    "memorial_cemetery/low_memorial_table.png": {
+      "url": "https://origin.picgo.net/2026/07/09/low_memorial_table18cd349c763abebf.png",
+      "uploadedAt": "2026-07-08T17:45:28.992Z",
+      "bytes": 1207742
+    },
+    "memorial_cemetery/memorial_bench.png": {
+      "url": "https://origin.picgo.net/2026/07/09/memorial_bench387b9b3cfdbf94ef.png",
+      "uploadedAt": "2026-07-08T17:45:32.408Z",
+      "bytes": 1373616
+    },
+    "memorial_cemetery/small_fountain.png": {
+      "url": "https://origin.picgo.net/2026/07/09/small_fountain60a9b1b70f815e12.png",
+      "uploadedAt": "2026-07-08T17:45:35.875Z",
+      "bytes": 1323938
+    },
+    "memorial_cemetery/stone_lantern_garden.png": {
+      "url": "https://origin.picgo.net/2026/07/09/stone_lantern_garden06ef65b573368a4d.png",
+      "uploadedAt": "2026-07-08T17:45:39.753Z",
+      "bytes": 1637409
+    },
+    "memorial_cemetery/tombstone_memorial.png": {
+      "url": "https://origin.picgo.net/2026/07/09/tombstone_memorial9bcca34997a08d55.png",
+      "uploadedAt": "2026-07-08T17:45:43.395Z",
+      "bytes": 1073093
+    },
+    "park_plaza/community_square.png": {
+      "url": "https://origin.picgo.net/2026/07/09/community_squaredc97ebc59dc3c3d2.png",
+      "uploadedAt": "2026-07-08T17:45:46.886Z",
+      "bytes": 1728780
+    },
+    "park_plaza/flower_fountain.png": {
+      "url": "https://origin.picgo.net/2026/07/09/flower_fountain57b02465f090f0d5.png",
+      "uploadedAt": "2026-07-08T17:45:50.509Z",
+      "bytes": 1553641
+    },
+    "park_plaza/flower_planter.png": {
+      "url": "https://origin.picgo.net/2026/07/09/flower_planterb10ee25a358031fd.png",
+      "uploadedAt": "2026-07-08T17:45:54.103Z",
+      "bytes": 1591520
+    },
+    "park_plaza/notice_board.png": {
+      "url": "https://origin.picgo.net/2026/07/09/notice_board5912c425e97b8ecd.png",
+      "uploadedAt": "2026-07-08T17:45:58.256Z",
+      "bytes": 2427809
+    },
+    "park_plaza/wooden_bench.png": {
+      "url": "https://origin.picgo.net/2026/07/09/wooden_benchf19d9d5840361032.png",
+      "uploadedAt": "2026-07-08T17:46:02.524Z",
+      "bytes": 1072551
+    },
+    "residence/bedroom_suite_interior.png": {
+      "url": "https://origin.picgo.net/2026/07/09/bedroom_suite_interiorc1700b01679663c4.png",
+      "uploadedAt": "2026-07-08T17:46:06.130Z",
+      "bytes": 1815452
+    },
+    "residence/dining_table_set.png": {
+      "url": "https://origin.picgo.net/2026/07/09/dining_table_setfbeed22c9d3a6c8d.png",
+      "uploadedAt": "2026-07-08T17:46:09.673Z",
+      "bytes": 1643623
+    },
+    "residence/drawer_cabinet.png": {
+      "url": "https://origin.picgo.net/2026/07/09/drawer_cabinet3fd357782cab3c3c.png",
+      "uploadedAt": "2026-07-08T17:46:13.883Z",
+      "bytes": 2369729
+    },
+    "residence/living_room_interior.png": {
+      "url": "https://origin.picgo.net/2026/07/09/living_room_interiorf8542197e5e34677.png",
+      "uploadedAt": "2026-07-08T17:46:18.572Z",
+      "bytes": 1875205
+    },
+    "residence/round_dining_table.png": {
+      "url": "https://origin.picgo.net/2026/07/09/round_dining_table132700f1c5742fd1.png",
+      "uploadedAt": "2026-07-08T17:46:21.959Z",
+      "bytes": 533792
+    },
+    "residence/single_bed_nightstand.png": {
+      "url": "https://origin.picgo.net/2026/07/09/single_bed_nightstandf88bffc818e7039d.png",
+      "uploadedAt": "2026-07-08T17:46:25.543Z",
+      "bytes": 1608616
+    },
+    "residence/sink_vanity.png": {
+      "url": "https://origin.picgo.net/2026/07/09/sink_vanity37528acaa0446285.png",
+      "uploadedAt": "2026-07-08T17:46:29.074Z",
+      "bytes": 1327440
+    },
+    "residence/sofa_coffee_table.png": {
+      "url": "https://origin.picgo.net/2026/07/09/sofa_coffee_table6c0352afd345f2c7.png",
+      "uploadedAt": "2026-07-08T17:46:32.547Z",
+      "bytes": 1605059
+    },
+    "residence/vanity_dresser.png": {
+      "url": "https://origin.picgo.net/2026/07/09/vanity_dresser99250ad627a2a70c.png",
+      "uploadedAt": "2026-07-08T17:46:36.033Z",
+      "bytes": 1364430
+    },
+    "school_library/bookcase.png": {
+      "url": "https://origin.picgo.net/2026/07/09/bookcasea3bb0ff818cf661c.png",
+      "uploadedAt": "2026-07-08T17:46:39.906Z",
+      "bytes": 1435529
+    },
+    "school_library/chalkboard.png": {
+      "url": "https://origin.picgo.net/2026/07/09/chalkboard824b135d6a12c51d.png",
+      "uploadedAt": "2026-07-08T17:46:43.682Z",
+      "bytes": 1476851
+    },
+    "school_library/library_classroom_interior.png": {
+      "url": "https://origin.picgo.net/2026/07/09/library_classroom_interior298457062a54c6c1.png",
+      "uploadedAt": "2026-07-08T17:46:47.246Z",
+      "bytes": 1896605
+    },
+    "school_library/reading_armchair_lamp.png": {
+      "url": "https://origin.picgo.net/2026/07/09/reading_armchair_lampfe6396465aa15d37.png",
+      "uploadedAt": "2026-07-08T17:46:50.903Z",
+      "bytes": 1608478
+    },
+    "school_library/student_desk.png": {
+      "url": "https://origin.picgo.net/2026/07/09/student_desk42edd98cd8cf2a43.png",
+      "uploadedAt": "2026-07-08T17:46:54.951Z",
+      "bytes": 1564610
+    },
+    "studio_workshop/art_supply_cart.png": {
+      "url": "https://origin.picgo.net/2026/07/09/art_supply_cart3965cdb1605c7d9b.png",
+      "uploadedAt": "2026-07-08T17:46:58.872Z",
+      "bytes": 930884
+    },
+    "studio_workshop/drill_press.png": {
+      "url": "https://origin.picgo.net/2026/07/09/drill_press56301eac1e119bed.png",
+      "uploadedAt": "2026-07-08T17:47:02.690Z",
+      "bytes": 1082761
+    },
+    "studio_workshop/gallery_frames.png": {
+      "url": "https://origin.picgo.net/2026/07/09/gallery_frames0ca3b181082e391a.png",
+      "uploadedAt": "2026-07-08T17:47:05.944Z",
+      "bytes": 1519164
+    },
+    "studio_workshop/maker_workbench.png": {
+      "url": "https://origin.picgo.net/2026/07/09/maker_workbenchdc2979ec2409c3c2.png",
+      "uploadedAt": "2026-07-08T17:47:09.686Z",
+      "bytes": 1555635
+    },
+    "studio_workshop/meditation_rug.png": {
+      "url": "https://origin.picgo.net/2026/07/09/meditation_ruga54ff8cb0cec9028.png",
+      "uploadedAt": "2026-07-08T17:47:13.296Z",
+      "bytes": 1749431
+    },
+    "studio_workshop/painting_easel.png": {
+      "url": "https://origin.picgo.net/2026/07/09/painting_easel8afae74047c85845.png",
+      "uploadedAt": "2026-07-08T17:47:17.303Z",
+      "bytes": 914386
+    },
+    "studio_workshop/tool_chest.png": {
+      "url": "https://origin.picgo.net/2026/07/09/tool_chest48497aa62f2718de.png",
+      "uploadedAt": "2026-07-08T17:47:20.680Z",
+      "bytes": 1275273
+    },
+    "studio_workshop/writing_desk.png": {
+      "url": "https://origin.picgo.net/2026/07/09/writing_desk50dbdbfb3b9fdaab.png",
+      "uploadedAt": "2026-07-08T17:47:24.431Z",
+      "bytes": 1521115
+    }
+  },
+  "provider": "picgo",
+  "endpoint": "https://www.picgo.net/api/1/upload",
+  "source": "dist/assets/interior-props-image2",
+  "updatedAt": "2026-07-08T17:44:49.640Z"
+}

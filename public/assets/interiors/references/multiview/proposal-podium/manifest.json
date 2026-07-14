@@ -1,0 +1,56 @@
+{
+  "model": "proposal-podium",
+  "sourceSheet": "public/assets/interiors/references/multiview/proposal-podium/source-sheet.png",
+  "generatedAt": "2026-07-11T18:27:39.110Z",
+  "grid": {
+    "mode": "authored-bounds"
+  },
+  "layoutFile": "public/assets/interiors/references/multiview/proposal-podium/source-layout.json",
+  "chromaKey": "#f904f7",
+  "outputSize": [
+    1024,
+    1024
+  ],
+  "views": [
+    {
+      "view": "front",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/front.png",
+      "status": "draft"
+    },
+    {
+      "view": "back",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/back.png",
+      "status": "draft"
+    },
+    {
+      "view": "left",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/left.png",
+      "status": "draft"
+    },
+    {
+      "view": "right",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/right.png",
+      "status": "draft"
+    },
+    {
+      "view": "top",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/top.png",
+      "status": "draft"
+    },
+    {
+      "view": "bottom",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/bottom.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/isometric.png",
+      "status": "draft"
+    },
+    {
+      "view": "isometric-back",
+      "file": "public/assets/interiors/references/multiview/proposal-podium/isometric-back.png",
+      "status": "draft"
+    }
+  ]
+}
