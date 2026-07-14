@@ -2,6 +2,7 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { promisify } from "node:util";
+import { PNG } from "pngjs";
 import puppeteer from "puppeteer-core";
 
 const execFileAsync = promisify(execFile);
@@ -64,7 +65,7 @@ try {
   await page.setViewport(VIEWPORT);
   for (let index = 0; index < CAPTURE_SCENES.length; index += 1) {
     const scene = CAPTURE_SCENES[index];
-    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
+    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
     await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
     await new Promise((resolve) => setTimeout(resolve, index === 0 ? 6500 : 4200));
     await page.evaluate(({ label, archetype }) => {
@@ -112,32 +113,66 @@ try {
   await browser.close();
 }
 
+function sampleNearest(source, target, targetX, targetY, targetWidth, targetHeight) {
+  for (let y = 0; y < targetHeight; y += 1) {
+    const sourceY = Math.min(source.height - 1, Math.floor(y / targetHeight * source.height));
+    for (let x = 0; x < targetWidth; x += 1) {
+      const sourceX = Math.min(source.width - 1, Math.floor(x / targetWidth * source.width));
+      const sourceIndex = (sourceY * source.width + sourceX) * 4;
+      const targetIndex = ((targetY + y) * target.width + targetX + x) * 4;
+      target.data[targetIndex] = source.data[sourceIndex];
+      target.data[targetIndex + 1] = source.data[sourceIndex + 1];
+      target.data[targetIndex + 2] = source.data[sourceIndex + 2];
+      target.data[targetIndex + 3] = source.data[sourceIndex + 3];
+    }
+  }
+}
+
+async function buildContactSheetWithPngJs(outputPath) {
+  const rows = Math.ceil(results.length / columns);
+  const contactSheet = new PNG({ width: columns * tileWidth, height: rows * tileHeight });
+  contactSheet.data.fill(250);
+  for (let index = 0; index < results.length; index += 1) {
+    const source = PNG.sync.read(await fs.readFile(path.join(OUTPUT_ROOT, results[index].file)));
+    const targetX = (index % columns) * tileWidth;
+    const targetY = Math.floor(index / columns) * tileHeight;
+    sampleNearest(source, contactSheet, targetX, targetY, tileWidth, tileHeight);
+  }
+  await fs.writeFile(outputPath, PNG.sync.write(contactSheet));
+}
+
 const columns = 5;
 const tileWidth = MOBILE ? 234 : 512;
 const tileHeight = MOBILE ? 506 : 288;
 const contactSheetPath = path.join(OUTPUT_ROOT, "contact-sheet.png");
-if (results.length === 1) {
-  await execFileAsync("ffmpeg", [
-    "-y",
-    "-i", path.join(OUTPUT_ROOT, results[0].file),
-    "-vf", `scale=${tileWidth}:${tileHeight}`,
-    "-frames:v", "1",
-    contactSheetPath
-  ], { maxBuffer: 1024 * 1024 * 8 });
-} else {
-  const inputs = results.flatMap((result) => ["-i", path.join(OUTPUT_ROOT, result.file)]);
-  const scales = results.map((_, index) => `[${index}:v]scale=${tileWidth}:${tileHeight}[s${index}]`).join(";");
-  const stack = results.map((_, index) => `[s${index}]`).join("");
-  const layout = results.map((_, index) => `${(index % columns) * tileWidth}_${Math.floor(index / columns) * tileHeight}`).join("|");
-  await execFileAsync("ffmpeg", [
-    "-y",
-    ...inputs,
-    "-filter_complex",
-    `${scales};${stack}xstack=inputs=${results.length}:layout=${layout}:fill=0xfafaf5[v]`,
-    "-map", "[v]",
-    "-frames:v", "1",
-    contactSheetPath
-  ], { maxBuffer: 1024 * 1024 * 8 });
+try {
+  if (results.length === 1) {
+    await execFileAsync("ffmpeg", [
+      "-y",
+      "-i", path.join(OUTPUT_ROOT, results[0].file),
+      "-vf", `scale=${tileWidth}:${tileHeight}`,
+      "-frames:v", "1",
+      contactSheetPath
+    ], { maxBuffer: 1024 * 1024 * 8 });
+  } else {
+    const inputs = results.flatMap((result) => ["-i", path.join(OUTPUT_ROOT, result.file)]);
+    const scales = results.map((_, index) => `[${index}:v]scale=${tileWidth}:${tileHeight}[s${index}]`).join(";");
+    const stack = results.map((_, index) => `[s${index}]`).join("");
+    const layout = results.map((_, index) => `${(index % columns) * tileWidth}_${Math.floor(index / columns) * tileHeight}`).join("|");
+    await execFileAsync("ffmpeg", [
+      "-y",
+      ...inputs,
+      "-filter_complex",
+      `${scales};${stack}xstack=inputs=${results.length}:layout=${layout}:fill=0xfafaf5[v]`,
+      "-map", "[v]",
+      "-frames:v", "1",
+      contactSheetPath
+    ], { maxBuffer: 1024 * 1024 * 8 });
+  }
+} catch (error) {
+  if (error?.code !== "ENOENT") throw error;
+  await buildContactSheetWithPngJs(contactSheetPath);
+  console.warn("ffmpeg is unavailable; built the review board with pngjs instead.");
 }
 
 await fs.writeFile(path.join(OUTPUT_ROOT, "manifest.json"), `${JSON.stringify({
