@@ -4,8 +4,8 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
-const ROOM_HEIGHT = 3.45;
-const CAMERA_HEIGHT = 4.72;
+const ROOM_HEIGHT = 3.72;
+const CAMERA_HEIGHT = 4.42;
 const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
   plaster: "#f8eedf",
@@ -146,6 +146,8 @@ let roomSignature = "";
 let itemSignature = "";
 let activeItems = [];
 let lastStatsPublishedAt = 0;
+let contactShadowTexture;
+const surfaceBumpTextures = new Map();
 
 async function loadThree() {
   if (THREE && GLTFLoader) return true;
@@ -195,19 +197,19 @@ function ensureLayer() {
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.76;
+  renderer.toneMappingExposure = 0.92;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
   renderer.shadowMap.enabled = true;
-  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  renderer.shadowMap.type = THREE.VSMShadowMap;
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(62, 1, 0.08, 30);
+  camera = new THREE.PerspectiveCamera(55, 1, 0.08, 30);
   scene.add(camera);
 
   if (RoomEnvironment) {
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environmentIntensity = 0.34;
+    scene.environmentIntensity = 0.58;
     pmrem.dispose();
   }
 
@@ -215,11 +217,11 @@ function ensureLayer() {
   modelRoot = new THREE.Group();
   scene.add(roomRoot, modelRoot);
 
-  const hemi = new THREE.HemisphereLight(0xfff6e5, 0x89745f, 0.72);
+  const hemi = new THREE.HemisphereLight(0xfff8eb, 0x765f4c, 0.56);
   scene.add(hemi);
 
-  const key = new THREE.DirectionalLight(0xfff8e7, 2.25);
-  key.position.set(-3.8, 6.8, 3.6);
+  const key = new THREE.DirectionalLight(0xfff0d0, 3.15);
+  key.position.set(-4.8, 7.6, 4.4);
   key.castShadow = true;
   key.shadow.mapSize.set(2048, 2048);
   key.shadow.camera.left = -6;
@@ -228,20 +230,22 @@ function ensureLayer() {
   key.shadow.camera.bottom = -6;
   key.shadow.camera.near = 0.1;
   key.shadow.camera.far = 16;
+  key.shadow.radius = 4;
+  key.shadow.blurSamples = 12;
   scene.add(key);
 
   key.shadow.bias = -0.00035;
   key.shadow.normalBias = 0.025;
 
-  const fill = new THREE.DirectionalLight(0xffddc4, 0.38);
+  const fill = new THREE.DirectionalLight(0xffddc4, 0.46);
   fill.position.set(4.8, 3.6, -4.2);
   scene.add(fill);
 
-  const warmBounce = new THREE.PointLight(0xffd79a, 1.85, 10, 2.1);
+  const warmBounce = new THREE.PointLight(0xffd79a, 1.35, 10, 2.1);
   warmBounce.position.set(-0.6, 2.9, 1.8);
   scene.add(warmBounce);
 
-  const windowWash = new THREE.DirectionalLight(0xffe4bd, 0.68);
+  const windowWash = new THREE.DirectionalLight(0xffe4bd, 1.28);
   windowWash.position.set(-5.8, 4.4, 1.8);
   scene.add(windowWash);
   return true;
@@ -312,39 +316,52 @@ function nearestAtelierColor(input) {
   return nearest;
 }
 
+function atelierGradeColor(input, amount = 0.32) {
+  const source = input?.isColor ? input.clone() : new THREE.Color(input || ATELIER_TOKENS.ivory);
+  const target = nearestAtelierColor(source);
+  source.lerp(target, amount);
+  source.offsetHSL(0, -0.025, 0.025);
+  return source;
+}
+
 function upgradeModelMaterials(source) {
   source?.traverse((node) => {
-    if (node.isLineSegments && node.material) {
-      const lineMaterials = Array.isArray(node.material) ? node.material : [node.material];
-      lineMaterials.forEach((material) => {
-        material.color?.set?.(ATELIER_TOKENS.ink);
-        material.transparent = true;
-        material.opacity = Math.min(0.18, Number(material.opacity ?? 1));
-        material.depthWrite = false;
-        material.needsUpdate = true;
-      });
+    if (node.isLineSegments) {
+      node.visible = false;
       return;
     }
     if (!node.isMesh || !node.material) return;
     const originalMaterials = Array.isArray(node.material) ? node.material : [node.material];
     const upgraded = originalMaterials.map((material) => {
-      const color = nearestAtelierColor(material.color);
-      return new THREE.MeshStandardMaterial({
-        name: `${material.name || "MirrorLife"} clay`,
-        color,
-        map: material.map || null,
-        alphaMap: material.alphaMap || null,
-        transparent: !!material.transparent,
-        opacity: material.opacity ?? 1,
-        alphaTest: material.alphaTest ?? 0,
-        side: material.side,
-        depthWrite: material.depthWrite,
-        vertexColors: !!material.vertexColors,
-        roughness: 0.72,
-        metalness: 0.015,
-        emissive: color.clone().multiplyScalar(0.018),
-        emissiveIntensity: 0.5
-      });
+      const hasSurfaceMap = !!material.map;
+      const color = hasSurfaceMap
+        ? (material.color?.clone?.() || new THREE.Color(0xffffff)).lerp(new THREE.Color(0xfff5e8), 0.08)
+        : atelierGradeColor(material.color, 0.42);
+      const next = material.isMeshStandardMaterial || material.isMeshPhysicalMaterial
+        ? material.clone()
+        : new THREE.MeshStandardMaterial();
+      next.name = `${material.name || "MirrorLife"} atelier PBR`;
+      next.color.copy(color);
+      next.map = material.map || null;
+      next.normalMap = material.normalMap || null;
+      next.roughnessMap = material.roughnessMap || null;
+      next.metalnessMap = material.metalnessMap || null;
+      next.aoMap = material.aoMap || null;
+      next.alphaMap = material.alphaMap || null;
+      next.emissiveMap = material.emissiveMap || null;
+      next.transparent = !!material.transparent;
+      next.opacity = material.opacity ?? 1;
+      next.alphaTest = material.alphaTest ?? 0;
+      next.side = material.side;
+      next.depthWrite = material.depthWrite ?? true;
+      next.vertexColors = !!material.vertexColors;
+      next.roughness = Math.max(0.38, Math.min(0.9, Number(material.roughness ?? 0.66)));
+      next.metalness = Math.max(0, Math.min(0.16, Number(material.metalness ?? 0.01)));
+      next.envMapIntensity = 0.72;
+      next.emissive?.set?.(0x000000);
+      next.emissiveIntensity = 0;
+      next.needsUpdate = true;
+      return next;
     });
     node.material = Array.isArray(node.material) ? upgraded : upgraded[0];
   });
@@ -356,7 +373,6 @@ function prepareModel(type, source) {
   wrapper.add(source);
   upgradeModelMaterials(source);
   source.updateMatrixWorld(true);
-  addMergedModelOutline(source);
 
   const box = new THREE.Box3().setFromObject(source);
   const size = box.getSize(new THREE.Vector3());
@@ -391,6 +407,9 @@ function modelMaterialKey(material, geometry) {
     material.type,
     material.color?.getHexString?.() || "none",
     material.map?.uuid || "none",
+    material.normalMap?.uuid || "none",
+    material.roughnessMap?.uuid || "none",
+    material.metalnessMap?.uuid || "none",
     material.alphaMap?.uuid || "none",
     Number(material.opacity ?? 1).toFixed(3),
     material.transparent ? 1 : 0,
@@ -408,6 +427,7 @@ function mergeSemanticModelMeshes(source) {
   const batches = new Map();
   const lineBatches = new Map();
   source.traverse((node) => {
+    if (node.visible === false) return;
     if (node.isLineSegments && node.geometry) {
       const geometry = node.geometry.clone();
       geometry.applyMatrix4(node.matrixWorld);
@@ -516,9 +536,61 @@ function disposeOwnedGroup(group) {
   clearGroup(group);
 }
 
+function getSurfaceBumpTexture(kind = "plaster") {
+  if (surfaceBumpTextures.has(kind)) return surfaceBumpTextures.get(kind);
+  const size = 64;
+  const data = new Uint8Array(size * size);
+  let seed = kind.split("").reduce((sum, character) => sum + character.charCodeAt(0), 79);
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let y = 0; y < size; y += 1) {
+    for (let x = 0; x < size; x += 1) {
+      let value = 128;
+      if (kind === "wood") {
+        value += Math.sin((x + Math.sin(y * 0.22) * 4) * 0.52) * 18 + (random() - 0.5) * 9;
+      } else if (kind === "fabric") {
+        value += ((x + y) % 4 < 2 ? 8 : -8) + (random() - 0.5) * 7;
+      } else if (kind === "terrazzo") {
+        value += (random() - 0.5) * 22 + (random() > 0.94 ? 34 : 0);
+      } else {
+        value += (random() - 0.5) * 16 + Math.sin(x * 0.31 + y * 0.19) * 4;
+      }
+      data[y * size + x] = Math.max(0, Math.min(255, Math.round(value)));
+    }
+  }
+  const texture = new THREE.DataTexture(data, size, size, THREE.RedFormat, THREE.UnsignedByteType);
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(kind === "wood" ? 2 : 7, kind === "wood" ? 4 : 7);
+  texture.colorSpace = THREE.NoColorSpace;
+  texture.needsUpdate = true;
+  surfaceBumpTextures.set(kind, texture);
+  return texture;
+}
+
+function getContactShadowTexture() {
+  if (contactShadowTexture) return contactShadowTexture;
+  const shadowCanvas = document.createElement("canvas");
+  shadowCanvas.width = 128;
+  shadowCanvas.height = 128;
+  const context = shadowCanvas.getContext("2d");
+  const gradient = context.createRadialGradient(64, 64, 4, 64, 64, 60);
+  gradient.addColorStop(0, "rgba(66,39,24,0.6)");
+  gradient.addColorStop(0.42, "rgba(66,39,24,0.26)");
+  gradient.addColorStop(1, "rgba(66,39,24,0)");
+  context.fillStyle = gradient;
+  context.fillRect(0, 0, 128, 128);
+  contactShadowTexture = new THREE.CanvasTexture(shadowCanvas);
+  contactShadowTexture.colorSpace = THREE.SRGBColorSpace;
+  contactShadowTexture.needsUpdate = true;
+  return contactShadowTexture;
+}
+
 function createToonMaterial(color, options = {}) {
   const resolved = new THREE.Color(color);
-  return new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshStandardMaterial({
     color: resolved,
     roughness: options.roughness ?? 0.76,
     metalness: options.metalness ?? 0.01,
@@ -528,6 +600,27 @@ function createToonMaterial(color, options = {}) {
     transparent: !!options.transparent,
     opacity: options.opacity ?? 1,
     depthWrite: options.depthWrite ?? true
+  });
+  if (options.surface) {
+    material.bumpMap = getSurfaceBumpTexture(options.surface);
+    material.bumpScale = options.bumpScale ?? (options.surface === "wood" ? 0.012 : 0.018);
+  }
+  return material;
+}
+
+function createGlassMaterial(color = "#d8eee5", options = {}) {
+  return new THREE.MeshPhysicalMaterial({
+    color,
+    roughness: options.roughness ?? 0.12,
+    metalness: 0,
+    transmission: options.transmission ?? 0.28,
+    thickness: options.thickness ?? 0.22,
+    ior: 1.46,
+    transparent: true,
+    opacity: options.opacity ?? 0.72,
+    depthWrite: options.depthWrite ?? false,
+    side: THREE.DoubleSide,
+    envMapIntensity: 0.88
   });
 }
 
@@ -961,7 +1054,7 @@ function addAtelierRug(colors) {
   addLayer(0, 0.05, 1.45, 1.12, ATELIER_TOKENS.linen, 0.92);
 }
 
-function createArchPanelGeometry(width, height) {
+function createArchShape(width, height) {
   const radius = Math.min(width / 2, height * 0.44);
   const springY = height / 2 - radius;
   const shape = new THREE.Shape();
@@ -970,7 +1063,133 @@ function createArchPanelGeometry(width, height) {
   shape.lineTo(width / 2, springY);
   shape.absarc(0, springY, radius, 0, Math.PI, false);
   shape.lineTo(-width / 2, -height / 2);
-  return new THREE.ShapeGeometry(shape, 32);
+  return shape;
+}
+
+function createArchPanelGeometry(width, height) {
+  return new THREE.ShapeGeometry(createArchShape(width, height), 32);
+}
+
+function createArchExtrudeGeometry(width, height, depth = 0.08) {
+  const geometry = new THREE.ExtrudeGeometry(createArchShape(width, height), {
+    depth,
+    bevelEnabled: true,
+    bevelSegments: 3,
+    bevelSize: 0.045,
+    bevelThickness: 0.035,
+    curveSegments: 32,
+    steps: 1
+  });
+  geometry.translate(0, 0, -depth / 2);
+  return geometry;
+}
+
+function addBuiltInArchNiche(angle, colors, options = {}) {
+  const width = options.width || 1.42;
+  const height = options.height || 2.14;
+  const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.17, options.y || 1.92);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = -angle;
+  roomRoot.add(group);
+
+  const shell = new THREE.Mesh(
+    createArchExtrudeGeometry(width + 0.22, height + 0.22, 0.11),
+    createToonMaterial(options.frame || "#e7caa2", { roughness: 0.92, surface: "plaster", bumpScale: 0.014 })
+  );
+  shell.position.z = 0.015;
+  shell.castShadow = false;
+  group.add(shell);
+
+  const innerMaterial = options.glass
+    ? createGlassMaterial(options.inner || "#cde5da", { opacity: 0.58, transmission: 0.34 })
+    : createToonMaterial(options.inner || "#d9ba91", { roughness: 0.96, surface: "plaster", bumpScale: 0.016 });
+  const inner = new THREE.Mesh(createArchPanelGeometry(width, height), innerMaterial);
+  inner.position.z = 0.095;
+  inner.receiveShadow = true;
+  group.add(inner);
+
+  const shelfMaterial = createToonMaterial(options.wood || ATELIER_TOKENS.cork, {
+    roughness: 0.66,
+    surface: "wood",
+    bumpScale: 0.009
+  });
+  const shelfCount = options.shelves ?? (options.glass ? 3 : 2);
+  for (let index = 0; index < shelfCount; index += 1) {
+    const shelfY = -height * 0.26 + index * (height * 0.25);
+    const shelf = new THREE.Mesh(new RoundedBoxGeometry(width * 0.84, 0.08, 0.32, 4, 0.03), shelfMaterial);
+    shelf.position.set(0, shelfY, 0.22);
+    shelf.castShadow = true;
+    group.add(shelf);
+
+    if (options.glass) {
+      [-0.28, 0.04, 0.3].forEach((offset, objectIndex) => {
+        const vessel = new THREE.Mesh(
+          objectIndex === 1
+            ? new THREE.SphereGeometry(0.1 + index * 0.008, 18, 12)
+            : new THREE.CylinderGeometry(0.06 + objectIndex * 0.008, 0.085, 0.2 + index * 0.025, 18),
+          createToonMaterial([ATELIER_TOKENS.ceramic, colors.accent, ATELIER_TOKENS.pistachio][objectIndex], {
+            roughness: 0.42,
+            metalness: objectIndex === 1 ? 0.03 : 0
+          })
+        );
+        vessel.position.set(offset, shelfY + 0.15, 0.28);
+        group.add(vessel);
+      });
+    } else {
+      const bookColors = [ATELIER_TOKENS.cornflower, ATELIER_TOKENS.apricot, ATELIER_TOKENS.pistachio, ATELIER_TOKENS.butter];
+      for (let bookIndex = 0; bookIndex < 4; bookIndex += 1) {
+        const book = new THREE.Mesh(
+          new RoundedBoxGeometry(0.1, 0.24 + (bookIndex % 2) * 0.05, 0.2, 2, 0.018),
+          createToonMaterial(bookColors[(bookIndex + index) % bookColors.length], { roughness: 0.82 })
+        );
+        book.position.set(-0.34 + bookIndex * 0.115, shelfY + 0.16, 0.27);
+        book.rotation.z = (bookIndex - 1.5) * 0.025;
+        group.add(book);
+      }
+      const pot = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.09, 0.12, 0.16, 18),
+        createToonMaterial(index ? ATELIER_TOKENS.cornflower : ATELIER_TOKENS.apricot, { roughness: 0.48 })
+      );
+      pot.position.set(0.35, shelfY + 0.12, 0.28);
+      group.add(pot);
+      [-0.08, 0.08, 0].forEach((leafX, leafIndex) => {
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry(0.085, 14, 10),
+          createToonMaterial(leafIndex % 2 ? "#5f8f63" : "#7ca86f", { roughness: 0.94 })
+        );
+        leaf.scale.set(0.55, 1.15, 0.45);
+        leaf.position.set(0.35 + leafX, shelfY + 0.28 + (leafIndex % 2) * 0.04, 0.28);
+        leaf.rotation.z = (leafIndex - 1) * 0.38;
+        group.add(leaf);
+      });
+    }
+  }
+
+  const nicheLight = new THREE.PointLight(0xffcf91, options.glass ? 0.55 : 0.38, 2.1, 2.1);
+  nicheLight.position.set(0, height * 0.28, 0.42);
+  group.add(nicheLight);
+  return group;
+}
+
+function addSunlightPatches(night) {
+  if (night) return;
+  const material = new THREE.MeshBasicMaterial({
+    color: 0xffd88f,
+    transparent: true,
+    opacity: 0.1,
+    depthWrite: false,
+    toneMapped: false,
+    blending: THREE.AdditiveBlending
+  });
+  for (let index = 0; index < 6; index += 1) {
+    const patch = new THREE.Mesh(new RoundedBoxGeometry(2.6 - index * 0.16, 0.008, 0.17, 2, 0.04), material);
+    patch.position.set(-2.65 + index * 0.5, 0.052 + index * 0.001, 1.35 + index * 0.34);
+    patch.rotation.y = -0.28;
+    patch.castShadow = false;
+    patch.receiveShadow = false;
+    roomRoot.add(patch);
+  }
 }
 
 function addAmbientWindowBay(angle, colors, night) {
@@ -1396,6 +1615,9 @@ function roomMaterialKey(material, geometry) {
   return [
     material.type,
     material.color?.getHexString?.() || "none",
+    material.map?.uuid || "none",
+    material.bumpMap?.uuid || "none",
+    material.normalMap?.uuid || "none",
     material.transparent ? 1 : 0,
     Number(material.opacity ?? 1).toFixed(3),
     Number(material.roughness ?? 0).toFixed(3),
@@ -1749,6 +1971,7 @@ function mergePlacedModelMeshes(source) {
   const lineBatches = new Map();
 
   source.traverse((node) => {
+    if (node.visible === false) return;
     if ((!node.isMesh && !node.isLineSegments) || !node.geometry || Array.isArray(node.material)) return;
     const geometry = node.isMesh && node.geometry.index
       ? node.geometry.toNonIndexed()
@@ -1784,7 +2007,7 @@ function mergePlacedModelMeshes(source) {
     const object = lines
       ? new THREE.LineSegments(geometry, batch.material)
       : new THREE.Mesh(geometry, batch.material);
-    // Props already sit on a pair of soft contact-shadow cards. Avoid rendering
+    // Props already sit on a soft radial contact-shadow card. Avoid rendering
     // their dense geometry into the directional shadow map a second time.
     object.castShadow = false;
     object.receiveShadow = !lines && batch.receiveShadow;
@@ -1812,21 +2035,22 @@ function rebuildModels(items) {
     const model = source.clone(true);
     const profile = getModelRenderProfile(item.model);
     const profileScale = item.kind === "decor" ? (profile.decorScale || profile.scale) : (profile.propScale || profile.scale);
-    const size = (item.kind === "prop" ? 1.68 : 0.82) * (item.modelScale || 1) * profileScale;
-    const shadowOuter = new THREE.Mesh(
-      new THREE.CircleGeometry(0.68 * size, 32),
-      new THREE.MeshBasicMaterial({ color: 0x4b3428, transparent: true, opacity: 0.07, depthWrite: false })
+    const size = (item.kind === "prop" ? 1.78 : 0.86) * (item.modelScale || 1) * profileScale;
+    const contactShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(1.7 * size, 1.18 * size),
+      new THREE.MeshBasicMaterial({
+        color: 0x5b3a26,
+        map: getContactShadowTexture(),
+        transparent: true,
+        opacity: 0.34,
+        depthWrite: false,
+        toneMapped: false
+      })
     );
-    shadowOuter.rotation.x = -Math.PI / 2;
-    shadowOuter.scale.set(1.35, 0.64, 1);
-    shadowOuter.position.set(item.worldX || 0, 0.026, item.worldZ || 0);
-    shadowOuter.renderOrder = 0;
-    stagedModels.add(shadowOuter);
-    const shadowCore = shadowOuter.clone();
-    shadowCore.material = new THREE.MeshBasicMaterial({ color: 0x4b3428, transparent: true, opacity: 0.08, depthWrite: false });
-    shadowCore.scale.multiplyScalar(0.62);
-    shadowCore.position.y = 0.028;
-    stagedModels.add(shadowCore);
+    contactShadow.rotation.x = -Math.PI / 2;
+    contactShadow.position.set(item.worldX || 0, 0.027, item.worldZ || 0);
+    contactShadow.renderOrder = 0;
+    stagedModels.add(contactShadow);
     model.scale.setScalar(size);
     model.position.set(item.worldX || 0, 0.03, item.worldZ || 0);
     const faceCenter = Math.atan2(-(item.worldX || 0), -(item.worldZ || 0));
@@ -1846,9 +2070,9 @@ function updateCamera(payload = {}) {
   const playerZ = Number(payload.cameraZ || 0);
   const forwardX = Math.sin(yaw);
   const forwardZ = -Math.cos(yaw);
-  const cameraBack = 5.86;
-  const focusDistance = 0.72;
-  const focusHeight = 0.58 + (pitch - 0.36) / 0.4 * 0.68;
+  const cameraBack = 5.28;
+  const focusDistance = 0.62;
+  const focusHeight = 0.64 + (pitch - 0.36) / 0.4 * 0.62;
   camera.position.set(
     playerX - forwardX * cameraBack,
     CAMERA_HEIGHT,
