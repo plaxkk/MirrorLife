@@ -5196,12 +5196,12 @@ const INTERIOR_BLUEPRINTS = {
   public: {
     title: "公共讨论与共识",
     props: [
-      { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "proposal-podium", render3d: true, x: 0.22, y: 0.24, size: 31, behaviors: ["teach", "write", "handoff"] },
-      { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "notice-board", render3d: true, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
-      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, x: 0.72, y: 0.28, size: 29, behaviors: ["meeting", "think", "read", "drink"] },
-      { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
+      { emoji: "📢", label: "提案台", assetIntent: "proposal-podium", model: "proposal-podium", render3d: true, renderModel: false, x: 0.22, y: 0.24, size: 31, worldX: -2.35, worldZ: 0.72, behaviors: ["teach", "write", "handoff"] },
+      { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "notice-board", render3d: true, renderModel: false, x: 0.46, y: 0.2, size: 31, worldX: 0.08, worldZ: -4.18, behaviors: ["read", "write"] },
+      { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, renderModel: false, x: 0.72, y: 0.28, size: 29, worldX: 3.34, worldZ: -2.02, behaviors: ["meeting", "think", "read", "drink"] },
+      { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.34, y: 0.62, size: 30, worldX: 0.64, worldZ: -2.84, displayScale: 0.82, behaviors: ["write", "read"] },
       { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, focal: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
-      { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
+      { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, worldX: 2.54, worldZ: 1.34, displayScale: 0.82, behaviors: ["think", "drink", "comfort"] }
     ]
   },
   work: {
@@ -5733,6 +5733,22 @@ function getInteriorPropRadius(prop) {
 }
 
 function getInteriorPropWorldPlacement(prop, index, count) {
+  if (Number.isFinite(prop?.worldX) && Number.isFinite(prop?.worldZ)) {
+    const worldX = Number(prop.worldX);
+    const worldZ = Number(prop.worldZ);
+    const radius = Math.max(0.62, Math.hypot(worldX, worldZ));
+    const angle = Math.atan2(worldX, -worldZ);
+    const interactionOffset = 0.64 * (index % 2 === 0 ? -1 : 1);
+    return {
+      angle,
+      distance: clamp((radius - 1.92) / 2.08, 0.24, 0.98),
+      radius,
+      worldX,
+      worldZ,
+      interactionWorldX: worldX + Math.cos(angle) * interactionOffset,
+      interactionWorldZ: worldZ + Math.sin(angle) * interactionOffset
+    };
+  }
   if (prop?.focal) {
     const angle = 0;
     const radius = 0.62;
@@ -7583,13 +7599,14 @@ function getInteriorThreeItems(blueprint, W, H) {
       key: `prop-${index}`,
       index,
       model: interiorThreeModel(interiorPropModel(prop, blueprint)),
+      renderModel: prop.renderModel !== false,
       label: prop.label || "",
       kind: "prop",
       worldX,
       worldZ,
       anchorHeight: 1.18,
       angle,
-      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25) * (prop.focal ? 1.32 : 1),
+      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25) * (prop.focal ? 1.32 : 1) * Number(prop.displayScale || 1),
       visible: true
     };
   }).filter(Boolean);
@@ -8366,7 +8383,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
-    const baseSize = useThreeModels ? 39 : 16;
+    const baseSize = useThreeModels ? 43 : 16;
     const size = (isHover ? baseSize + 4 : baseSize) + sizeBoost;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;

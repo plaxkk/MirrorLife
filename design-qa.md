@@ -1,51 +1,60 @@
-**Comparison Target**
+# Interior Design QA
 
-- Source visual truth: `/Users/kk/.codex/generated_images/019f5e8e-03d1-77e3-8c1f-232b49eb3285/exec-9325472b-8b1f-4982-bc5a-4bfd0aa95fe4.png`
+## Comparison target
+
+- Source visual truth: `/Users/kk/.codex/attachments/bdda8e2a-dc7b-4e21-9cc8-5c43fc6e3b13/image-1.png`
 - Implementation: `http://127.0.0.1:4173/game.html?qaInterior=public-plaza&qaInteriorScene=1`
-- Implementation screenshot: `dist/interior-3d-work/design-qa/option1-implementation-1586x992.png`
-- Full-view comparison: `dist/interior-3d-work/design-qa/option1-side-by-side-1586x992.png`
-- Viewport: 1586 × 992, device scale factor 1
-- State: public-plaza interior, three room memories found, social scene ready, residents active
+- Exact implementation screenshot: `dist/interior-3d-work/design-qa/final-public-exact-1586x992.png`
+- Full same-size comparison: `dist/interior-3d-work/design-qa/public-reference-vs-final.png`
+- Focused-region comparison: `dist/interior-3d-work/design-qa/public-focused-comparison.png`
+- Browser-rendered evidence: `dist/interior-3d-work/design-qa/iab-public-final.png`
+- Viewport and state: 1586 × 992, device scale factor 1, `public-plaza`, room ready, three residents active, story journal and contextual action visible.
 
-**Findings**
+## Findings
 
-- No actionable P0, P1, or P2 issues remain.
-- [P3] The live Three.js room deliberately uses cleaner, lower-frequency surface detail than the offline concept render. The ivory plaster, oak/cork furniture, pistachio/apricot/cornflower accents, arched window bay, soft contact shadows, organic rug, plants, and warm light preserve the selected Sunlit Gelato Atelier direction while keeping the room within the browser performance budget.
+- No actionable P0, P1, or P2 visual or interaction issues remain.
+- [P3] The offline reference contains bespoke sculpted cabinetry and micro-prop density beyond the reusable real-time room system. The implementation preserves its important visual language—warm plaster, honey oak, arched daylight, glass display, layered shelving, foliage, soft seating, central social table, organic color fields, and warm directional shadows—while remaining orbitable and within the browser performance budget.
 
-**Required Fidelity Surfaces**
+## Required fidelity surfaces
 
-- Fonts and typography: the existing MirrorLife Chinese UI hierarchy, weights, line height, and compact HUD treatment are preserved; card copy remains readable at desktop and mobile sizes.
-- Spacing and layout rhythm: the top HUD, compass, story journal, scene card, context action, and exit control retain the selected composition. The room has a clear central social anchor and a quieter perimeter. No horizontal overflow was found at 1586 × 992, 1280 × 720, or 390 × 844.
-- Colors and visual tokens: the implementation uses the selected warm ivory, cork/oak, muted pistachio, apricot, cornflower, tomato, and butter palette. Dark ink is reserved primarily for UI and restrained model definition.
-- Image quality and asset fidelity: existing GLB props remain the primary room assets. Missing environmental pieces are native Three.js geometry with the same material system. The implementation does not substitute the selected room with a static background image.
-- Copy and content: the room story, three-step journal, contextual listening action, two response choices, visible outcome, reward, and relationship event are coherent with the social-simulation theme.
-- Icons and affordances: existing product icons and sprite characters are preserved; interaction hotspots, compass targets, movement controls, and primary action states remain visible and usable.
-- Accessibility and responsiveness: semantic buttons, keyboard interaction, visible focus behavior, mobile tap controls, and desktop/mobile scene completion were verified. Browser console and page-error checks returned no errors.
+- Fonts and typography: the established MirrorLife Chinese UI hierarchy, weights, borders, line heights, and compact HUD treatment are preserved. Story and interaction copy remain legible over the room.
+- Spacing and layout rhythm: the reference's central social anchor and quieter furnished perimeter are reproduced. The window/display zone, back work zone, central conversation zone, and right lounge zone remain visually distinct without obstructing navigation.
+- Colors and visual tokens: warm ivory plaster, honey oak/cork, pistachio, olive, apricot, butter yellow, cornflower blue, and restrained tomato accents match the approved premium dopamine direction. Dark ink remains concentrated in the HUD and interaction chrome.
+- Image quality and assets: existing GLB props remain primary. Missing architecture and furnishings use compatible Three.js geometry. The generated `public/assets/interiors/textures/atelier-window-view.png` supplies a full-resolution, stylistically matched exterior view inside the actual arched window rather than replacing the room with a static render.
+- Copy and content: the room story, three-step journal, contextual listening action, branching response choices, visible outcome, reward, and relationship event form a coherent playable social-simulation loop.
+- Icons and affordances: existing product icons and sprite characters are retained. Interaction targets, compass, scene action, movement controls, and exit control are visible and usable.
+- Interaction: the in-app browser completed the primary action, displayed both dialogue choices, accepted `leave-concern`, advanced the journal, and rendered the outcome state. Console and page-error checks returned no errors.
+- Accessibility and responsiveness: semantic controls, keyboard interaction, focus states, and mobile tap controls remain intact. Desktop and mobile scene-flow verification both passed.
 
-**Focused Region Comparison Evidence**
+## Comparison history
 
-- A separate crop was not required: both source and implementation were captured at the same native 1586 × 992 viewport, and the combined image keeps the HUD, room center, story journal, context action, residents, furniture, and exit control legible in one comparison.
+### Iteration 1
 
-**Comparison History**
+- Visible mismatch: the baseline room had a flat generic window, shallow arches, duplicated clustered props, sparse walls and floor, weak shadows, and undersized character staging.
+- Fixes: introduced the warm PBR material/lighting grade, recessed arch niches and cove profiles, explicit public-room composition, dynamic/contact shadows, render-only interaction anchors, larger resident staging, a glass display cabinet, sideboard, soft seating, and denser foliage.
+- Evidence: same-size full comparison and browser-rendered public-room capture.
 
-- Iteration 1 finding: the central rug layers shared one depth plane, creating visible fragmentation; model materials and outlines also came from too many unrelated source palettes, and full circular environment bands obscured learning/work rooms.
-- Fixes: separated rug layers in depth, introduced the nine-color atelier material system, globally batched matching meshes, reduced outline opacity, replaced full rings with rear-wall segments, and used soft contact-shadow cards instead of dense prop shadow-map passes.
-- Post-fix evidence: `dist/interior-3d-work/environment-review/contact-sheet.png`; 26/26 desktop rooms passed layout and performance budgets.
-- Iteration 2 finding: the shared window bay remained rectangular and read as a generic mirror rather than the selected softly arched architecture.
-- Fixes: rebuilt it as a real arched Three.js panel, warmed exposure, switched room trim to walnut, and softened secondary accents.
-- Post-fix evidence: `dist/interior-3d-work/design-qa/option1-implementation-1586x992.png` and `dist/interior-3d-work/design-qa/option1-side-by-side-1586x992.png`.
+### Iteration 2
 
-**Implementation Checklist**
+- Visible mismatch: the window exterior still lacked the reference's sunlit depth, while the floor and lounge edge remained too sparse.
+- Fixes: generated and fitted a premium Mediterranean window-view texture, normalized arched-panel UVs, increased terrazzo detail, added sculpted floor plants, moved the plant rack into the lounge composition, changed the sofa to ivory, and added the right credenza.
+- Evidence: `public-reference-vs-final.png` and the three-pair `public-focused-comparison.png`, covering the window/display, desk/table/characters, and wall/sofa/plant regions.
 
-- [x] Apply the selected Option 1 material and lighting system.
-- [x] Keep existing GLB assets and fill environmental gaps with compatible Three.js geometry.
-- [x] Stage residents around focal props and expose a complete room-story choice loop.
-- [x] Pass all 26 desktop and mobile interior captures without horizontal overflow.
-- [x] Pass the scene outcome, reward, and relationship-event flow on desktop and mobile.
-- [x] Keep representative public and learning rooms under draw-call, triangle, and geometry budgets.
+## Full-system verification
 
-**Follow-up Polish**
+- Desktop visual sweep: 26/26 interiors; maximum 179 draw calls, 491,972 triangles, and 137 geometries; zero budget failures and zero horizontal-overflow failures.
+- Mobile visual sweep: 26/26 interiors; maximum 129 draw calls, 437,665 triangles, and 99 geometries; zero budget failures and zero horizontal-overflow failures.
+- Story flow: desktop and mobile choice, outcome, reward, and relationship-event paths passed.
+- Static validation: project syntax checks and `git diff --check` passed.
+- Production build: Vite build passed. Existing non-module script and large Three.js chunk warnings remain non-blocking and unchanged in behavior.
 
-- Add more authored arch-niche variants per building family when future unique GLB props are promoted to release quality.
+## Implementation checklist
+
+- [x] Match the approved premium, relaxed dopamine art direction at the representative public-room state.
+- [x] Keep the room fully 3D, orbitable, and explorable.
+- [x] Prefer existing GLB assets and fill genuine gaps with consistent Three.js geometry and generated imagery.
+- [x] Stage residents around meaningful focal props and retain a complete branching social story loop.
+- [x] Apply the shared material, daylight, architectural, furnishing, and foliage system across all 26 building interiors.
+- [x] Pass desktop and mobile visual, layout, performance, story-flow, syntax, and production-build checks.
 
 final result: passed

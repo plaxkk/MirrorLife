@@ -12,6 +12,7 @@ const MOBILE = process.env.MIRRORLIFE_CAPTURE_MOBILE === "1";
 const REVIEW_YAW = Number(process.env.MIRRORLIFE_CAPTURE_YAW || 0);
 const CAPTURE_WIDTH = Number(process.env.MIRRORLIFE_CAPTURE_WIDTH || 1280);
 const CAPTURE_HEIGHT = Number(process.env.MIRRORLIFE_CAPTURE_HEIGHT || 720);
+const SHOW_REVIEW_LABEL = process.env.MIRRORLIFE_CAPTURE_LABEL !== "0";
 const YAW_SUFFIX = REVIEW_YAW ? `-yaw-${String(REVIEW_YAW).replace(/[^0-9-]/g, "")}` : "";
 const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}`);
 const VIEWPORT = MOBILE
@@ -70,26 +71,28 @@ try {
     const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
     await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
     await new Promise((resolve) => setTimeout(resolve, index === 0 ? 6500 : 4200));
-    await page.evaluate(({ label, archetype }) => {
-      document.getElementById("mirrorlife-environment-review-label")?.remove();
-      const badge = document.createElement("div");
-      badge.id = "mirrorlife-environment-review-label";
-      badge.textContent = `${label} · ${archetype}`;
-      Object.assign(badge.style, {
-        position: "fixed",
-        top: "104px",
-        right: "20px",
-        zIndex: "99999",
-        padding: "8px 12px",
-        border: "3px solid #1a1a2e",
-        borderRadius: "6px",
-        background: "#fafaf5",
-        color: "#1a1a2e",
-        font: "700 14px system-ui",
-        boxShadow: "3px 3px 0 #1a1a2e"
-      });
-      document.body.appendChild(badge);
-    }, scene);
+    if (SHOW_REVIEW_LABEL) {
+      await page.evaluate(({ label, archetype }) => {
+        document.getElementById("mirrorlife-environment-review-label")?.remove();
+        const badge = document.createElement("div");
+        badge.id = "mirrorlife-environment-review-label";
+        badge.textContent = `${label} · ${archetype}`;
+        Object.assign(badge.style, {
+          position: "fixed",
+          top: "104px",
+          right: "20px",
+          zIndex: "99999",
+          padding: "8px 12px",
+          border: "3px solid #1a1a2e",
+          borderRadius: "6px",
+          background: "#fafaf5",
+          color: "#1a1a2e",
+          font: "700 14px system-ui",
+          boxShadow: "3px 3px 0 #1a1a2e"
+        });
+        document.body.appendChild(badge);
+      }, scene);
+    }
     const file = `${String(index).padStart(2, "0")}-${scene.archetype}.png`;
     await page.screenshot({ path: path.join(OUTPUT_ROOT, file), type: "png" });
     const runtime = await page.evaluate(() => {

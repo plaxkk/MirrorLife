@@ -5,7 +5,7 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
-const CAMERA_HEIGHT = 4.08;
+const CAMERA_HEIGHT = 4.42;
 const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
   plaster: "#f8eedf",
@@ -37,8 +37,7 @@ const ATELIER_MODEL_SWATCHES = [
   "#4f7fae",
   ATELIER_TOKENS.tomato,
   ATELIER_TOKENS.butter,
-  ATELIER_TOKENS.ceramic,
-  ATELIER_TOKENS.ink
+  ATELIER_TOKENS.ceramic
 ];
 const INTERIOR_ENVIRONMENT_PALETTES = {
   care: { wall: "#ead5b8", nightWall: "#bdb0a0", floor: "#dfc5a0", accent: "#74a9c5", secondary: "#e99483", trim: "#30364e" },
@@ -52,6 +51,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
   creative: { wall: "#e9c19f", nightWall: "#b9a394", floor: "#ddaf89", accent: "#dc6355", secondary: "#efc85d", trim: "#30364e" },
   memory: { wall: "#dfc7aa", nightWall: "#aaa497", floor: "#ccb99d", accent: "#c38e5b", secondary: "#7d95ad", trim: "#30364e" }
 };
+const REALTIME_SHADOW_ARCHETYPES = new Set(["public", "work", "justice", "nature", "creative", "memory"]);
 
 const INTERIOR_ZONE_ENVIRONMENT_STYLES = {
   "public-plaza": { motif: "voices", accent: "#f1c40f", secondary: "#4ea8de", panel: "#fffdf4" },
@@ -145,6 +145,7 @@ let canvas;
 let renderer;
 let scene;
 let camera;
+let keyLight;
 let roomRoot;
 let modelRoot;
 let lastWidth = 0;
@@ -154,6 +155,8 @@ let itemSignature = "";
 let activeItems = [];
 let lastStatsPublishedAt = 0;
 let contactShadowTexture;
+let atelierWindowViewTexture;
+let atelierWindowViewTextureLoading;
 const surfaceBumpTextures = new Map();
 
 async function loadThree() {
@@ -204,7 +207,7 @@ function ensureLayer() {
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
-  renderer.toneMappingExposure = 0.78;
+  renderer.toneMappingExposure = 0.86;
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
@@ -216,7 +219,7 @@ function ensureLayer() {
   if (RoomEnvironment) {
     const pmrem = new THREE.PMREMGenerator(renderer);
     scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environmentIntensity = 0.32;
+    scene.environmentIntensity = 0.38;
     pmrem.dispose();
   }
 
@@ -224,27 +227,27 @@ function ensureLayer() {
   modelRoot = new THREE.Group();
   scene.add(roomRoot, modelRoot);
 
-  const hemi = new THREE.HemisphereLight(0xfff8eb, 0x6d5645, 0.42);
+  const hemi = new THREE.HemisphereLight(0xfff8eb, 0x6d5645, 0.44);
   scene.add(hemi);
 
-  const key = new THREE.DirectionalLight(0xffe6bc, 2.35);
-  key.position.set(-5.2, 7.2, 4.8);
-  key.castShadow = false;
-  key.shadow.mapSize.set(2048, 2048);
-  key.shadow.camera.left = -6;
-  key.shadow.camera.right = 6;
-  key.shadow.camera.top = 6;
-  key.shadow.camera.bottom = -6;
-  key.shadow.camera.near = 0.1;
-  key.shadow.camera.far = 16;
-  key.shadow.radius = 4;
-  key.shadow.blurSamples = 12;
-  scene.add(key);
+  keyLight = new THREE.DirectionalLight(0xffe6bc, 2.58);
+  keyLight.position.set(-5.2, 7.2, 4.8);
+  keyLight.castShadow = true;
+  keyLight.shadow.mapSize.set(2048, 2048);
+  keyLight.shadow.camera.left = -6;
+  keyLight.shadow.camera.right = 6;
+  keyLight.shadow.camera.top = 6;
+  keyLight.shadow.camera.bottom = -6;
+  keyLight.shadow.camera.near = 0.1;
+  keyLight.shadow.camera.far = 16;
+  keyLight.shadow.radius = 4;
+  keyLight.shadow.blurSamples = 12;
+  scene.add(keyLight);
 
-  key.shadow.bias = -0.00035;
-  key.shadow.normalBias = 0.025;
+  keyLight.shadow.bias = -0.00035;
+  keyLight.shadow.normalBias = 0.025;
 
-  const fill = new THREE.DirectionalLight(0xffddc4, 0.28);
+  const fill = new THREE.DirectionalLight(0xffddc4, 0.32);
   fill.position.set(4.8, 3.6, -4.2);
   scene.add(fill);
 
@@ -635,6 +638,30 @@ function getSurfaceBumpTexture(kind = "plaster") {
   texture.needsUpdate = true;
   surfaceBumpTextures.set(kind, texture);
   return texture;
+}
+
+function getAtelierWindowViewTexture() {
+  if (atelierWindowViewTexture) return atelierWindowViewTexture;
+  if (!atelierWindowViewTextureLoading && THREE) {
+    atelierWindowViewTextureLoading = new THREE.TextureLoader().load(
+      "/assets/interiors/textures/atelier-window-view.png",
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.needsUpdate = true;
+        atelierWindowViewTexture = texture;
+        roomSignature = "";
+        window.markRenderActive?.(1800);
+      },
+      undefined,
+      () => {
+        atelierWindowViewTextureLoading = null;
+      }
+    );
+  }
+  return atelierWindowViewTexture || null;
 }
 
 function getContactShadowTexture() {
@@ -1071,10 +1098,10 @@ function addAtelierTerrazzo(theme) {
     .split("")
     .reduce((sum, character, index) => sum + character.charCodeAt(0) * (index + 5), 17);
   const chipColors = ["#caa982", "#d99b78", "#7c9da4", "#a9ad7b", "#f3e5cf"];
-  for (let index = 0; index < 112; index += 1) {
+  for (let index = 0; index < 220; index += 1) {
     const angle = ((index * 2.39996) + seed * 0.013) % (Math.PI * 2);
     const radius = 0.85 + ((index * 37 + seed) % 100) / 100 * 4.15;
-    const size = 0.012 + ((index * 13 + seed) % 8) * 0.0032;
+    const size = 0.009 + ((index * 13 + seed) % 9) * 0.0028;
     const chip = new THREE.Mesh(
       new THREE.CircleGeometry(size, 7),
       createToonMaterial(chipColors[(index + seed) % chipColors.length], {
@@ -1138,7 +1165,15 @@ function createArchShape(width, height) {
 }
 
 function createArchPanelGeometry(width, height) {
-  return new THREE.ShapeGeometry(createArchShape(width, height), 32);
+  const geometry = new THREE.ShapeGeometry(createArchShape(width, height), 32);
+  const position = geometry.getAttribute("position");
+  const uv = new Float32Array(position.count * 2);
+  for (let index = 0; index < position.count; index += 1) {
+    uv[index * 2] = (position.getX(index) + width / 2) / width;
+    uv[index * 2 + 1] = (position.getY(index) + height / 2) / height;
+  }
+  geometry.setAttribute("uv", new THREE.BufferAttribute(uv, 2));
+  return geometry;
 }
 
 function createArchExtrudeGeometry(width, height, depth = 0.08) {
@@ -1175,8 +1210,19 @@ function addBuiltInArchNiche(angle, colors, options = {}) {
   const innerMaterial = options.glass
     ? createGlassMaterial(options.inner || "#cde5da", { opacity: 0.58, transmission: 0.34 })
     : createToonMaterial(options.inner || "#d9ba91", { roughness: 0.96, surface: "plaster", bumpScale: 0.016 });
+  const recessShadow = new THREE.Mesh(
+    createArchPanelGeometry(width + 0.08, height + 0.08),
+    createToonMaterial(ATELIER_TOKENS.walnut, {
+      roughness: 0.98,
+      transparent: true,
+      opacity: options.glass ? 0.2 : 0.16,
+      depthWrite: false
+    })
+  );
+  recessShadow.position.z = 0.075;
+  group.add(recessShadow);
   const inner = new THREE.Mesh(createArchPanelGeometry(width, height), innerMaterial);
-  inner.position.z = 0.095;
+  inner.position.z = 0.105;
   inner.receiveShadow = true;
   group.add(inner);
 
@@ -1237,6 +1283,13 @@ function addBuiltInArchNiche(angle, colors, options = {}) {
     }
   }
 
+  const lightStrip = new THREE.Mesh(
+    new RoundedBoxGeometry(width * 0.56, 0.025, 0.025, 2, 0.008),
+    new THREE.MeshBasicMaterial({ color: options.glass ? 0xffe2a3 : 0xffd49a, toneMapped: false })
+  );
+  lightStrip.position.set(0, height * 0.3, 0.25);
+  group.add(lightStrip);
+
   const nicheLight = new THREE.PointLight(0xffcf91, options.glass ? 0.55 : 0.38, 2.1, 2.1);
   nicheLight.position.set(0, height * 0.28, 0.42);
   group.add(nicheLight);
@@ -1278,6 +1331,7 @@ function addSunlightPatches(night) {
 }
 
 function addAmbientWindowBay(angle, colors, night) {
+  const windowViewTexture = getAtelierWindowViewTexture();
   const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.18, 1.82);
   const group = new THREE.Group();
   group.position.set(x, y, z);
@@ -1301,7 +1355,7 @@ function addAmbientWindowBay(angle, colors, night) {
     createGlassMaterial(night ? "#58718e" : "#bce2da", {
       roughness: 0.08,
       transmission: night ? 0.12 : 0.42,
-      opacity: night ? 0.82 : 0.62,
+      opacity: night ? 0.68 : 0.26,
       depthWrite: true
     })
   );
@@ -1309,35 +1363,60 @@ function addAmbientWindowBay(angle, colors, night) {
   group.add(glass);
   const frameMaterial = createToonMaterial("#f5e6ce", { roughness: 0.78 });
   [-0.55, 0, 0.55].forEach((offset) => {
-    const bar = new THREE.Mesh(new RoundedBoxGeometry(0.055, 1.76, 0.09, 2, 0.022), frameMaterial);
+    const bar = new THREE.Mesh(new RoundedBoxGeometry(0.038, 1.76, 0.075, 2, 0.016), frameMaterial);
     bar.position.set(offset, -0.12, 0.35);
     group.add(bar);
   });
-  const crossbar = new THREE.Mesh(new RoundedBoxGeometry(2.02, 0.06, 0.09, 2, 0.022), frameMaterial);
+  const crossbar = new THREE.Mesh(new RoundedBoxGeometry(2.02, 0.042, 0.075, 2, 0.016), frameMaterial);
   crossbar.position.set(0, -0.12, 0.35);
   group.add(crossbar);
-  const outdoor = new THREE.Mesh(
-    createArchPanelGeometry(2.12, 2.08),
-    createToonMaterial(night ? "#314a67" : "#cfe8d7", { roughness: 0.9, side: THREE.DoubleSide })
-  );
+  const outdoorMaterial = windowViewTexture
+    ? new THREE.MeshStandardMaterial({
+      color: night ? "#6a7890" : "#fff4df",
+      map: windowViewTexture,
+      roughness: 0.96,
+      metalness: 0,
+      side: THREE.DoubleSide,
+      envMapIntensity: 0.18
+    })
+    : createToonMaterial(night ? "#314a67" : "#cfe8d7", { roughness: 0.9, side: THREE.DoubleSide });
+  const outdoor = new THREE.Mesh(createArchPanelGeometry(2.12, 2.08), outdoorMaterial);
   outdoor.position.z = 0.2;
   group.add(outdoor);
-  [-0.72, 0.58].forEach((treeX, index) => {
-    const trunk = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.045, 0.075, 0.94 + index * 0.15, 10),
-      createToonMaterial("#8f6447", { roughness: 0.88, surface: "wood", bumpScale: 0.01 })
-    );
-    trunk.position.set(treeX, -0.42, 0.24);
-    group.add(trunk);
-    for (let leafIndex = 0; leafIndex < 5; leafIndex += 1) {
-      const leaf = new THREE.Mesh(
-        new THREE.SphereGeometry(0.22 + (leafIndex % 2) * 0.05, 18, 12),
-        createToonMaterial(leafIndex % 2 ? "#6f9667" : "#87aa71", { roughness: 0.96 })
+  if (!windowViewTexture) {
+    [-0.72, 0.58].forEach((treeX, index) => {
+      const trunk = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.045, 0.075, 0.94 + index * 0.15, 10),
+        createToonMaterial("#8f6447", { roughness: 0.88, surface: "wood", bumpScale: 0.01 })
       );
-      leaf.scale.set(0.86, 1.1, 0.5);
-      leaf.position.set(treeX + (leafIndex - 2) * 0.13, -0.03 + (leafIndex % 3) * 0.24, 0.25);
-      group.add(leaf);
-    }
+      trunk.position.set(treeX, -0.42, 0.24);
+      group.add(trunk);
+      for (let leafIndex = 0; leafIndex < 5; leafIndex += 1) {
+        const leaf = new THREE.Mesh(
+          new THREE.SphereGeometry(0.22 + (leafIndex % 2) * 0.05, 18, 12),
+          createToonMaterial(leafIndex % 2 ? "#6f9667" : "#87aa71", { roughness: 0.96 })
+        );
+        leaf.scale.set(0.86, 1.1, 0.5);
+        leaf.position.set(treeX + (leafIndex - 2) * 0.13, -0.03 + (leafIndex % 3) * 0.24, 0.25);
+        group.add(leaf);
+      }
+    });
+  }
+  [-0.74, -0.24, 0.26, 0.76].forEach((railX) => {
+    const rail = new THREE.Mesh(
+      new RoundedBoxGeometry(0.03, 0.74, 0.04, 2, 0.012),
+      createToonMaterial("#e9dbc4", { roughness: 0.82 })
+    );
+    rail.position.set(railX, -0.58, 0.235);
+    group.add(rail);
+  });
+  [-0.78, -0.52].forEach((railY) => {
+    const rail = new THREE.Mesh(
+      new RoundedBoxGeometry(1.72, 0.03, 0.04, 2, 0.012),
+      createToonMaterial("#e9dbc4", { roughness: 0.82 })
+    );
+    rail.position.set(0, railY, 0.235);
+    group.add(rail);
   });
   const sill = new THREE.Mesh(
     new RoundedBoxGeometry(2.72, 0.2, 0.72, 5, 0.09),
@@ -1416,6 +1495,224 @@ function addAmbientTeaTable(angle, colors) {
     cup.position.set(offset, 0.66, 0.04);
     group.add(cup);
   });
+}
+
+function addAtelierDisplayCabinet(theme, colors) {
+  const group = new THREE.Group();
+  group.position.set(-2.35, 0, 0.72);
+  group.rotation.y = 0.14;
+  roomRoot.add(group);
+
+  const archetype = theme.archetype || "home";
+  const bodyColor = archetype === "nature"
+    ? ATELIER_TOKENS.pistachio
+    : archetype === "memory"
+      ? "#a98668"
+      : ATELIER_TOKENS.apricot;
+  const wood = createToonMaterial(ATELIER_TOKENS.oak, {
+    roughness: 0.66,
+    surface: "wood",
+    bumpScale: 0.01
+  });
+  const body = createToonMaterial(bodyColor, { roughness: 0.68, clearcoat: 0.08 });
+  const cream = createToonMaterial(ATELIER_TOKENS.linen, { roughness: 0.78 });
+
+  const base = new THREE.Mesh(new RoundedBoxGeometry(1.62, 0.68, 0.78, 7, 0.16), body);
+  base.position.y = 0.4;
+  group.add(base);
+  const plinth = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.14, 0.86, 6, 0.07), wood);
+  plinth.position.y = 0.76;
+  group.add(plinth);
+  const frontInset = new THREE.Mesh(new RoundedBoxGeometry(1.24, 0.38, 0.045, 5, 0.075), cream);
+  frontInset.position.set(0, 0.36, 0.414);
+  group.add(frontInset);
+  const drawer = new THREE.Mesh(new RoundedBoxGeometry(0.58, 0.25, 0.055, 4, 0.055), createToonMaterial(colors.secondary));
+  drawer.position.set(0.28, 0.36, 0.445);
+  group.add(drawer);
+  const plaque = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.13, 0.03, 3, 0.035), createToonMaterial(colors.accent, { roughness: 0.52 }));
+  plaque.position.set(-0.38, 0.36, 0.46);
+  group.add(plaque);
+  [-0.62, 0.62].forEach((x) => {
+    [-0.24, 0.24].forEach((z) => {
+      const foot = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.07, 0.18, 14), wood);
+      foot.position.set(x, 0.1, z);
+      group.add(foot);
+    });
+  });
+
+  const displayFloor = new THREE.Mesh(new RoundedBoxGeometry(1.48, 0.09, 0.68, 5, 0.035), cream);
+  displayFloor.position.y = 0.86;
+  group.add(displayFloor);
+  const displayBack = new THREE.Mesh(new RoundedBoxGeometry(1.48, 0.66, 0.1, 6, 0.05), body);
+  displayBack.position.set(0, 1.15, -0.31);
+  group.add(displayBack);
+  const canopy = new THREE.Mesh(
+    new RoundedBoxGeometry(1.5, 0.66, 0.7, 9, 0.18),
+    createGlassMaterial(archetype === "nature" ? "#d5ead3" : "#f7e9dc", {
+      roughness: 0.08,
+      opacity: 0.3,
+      depthWrite: false
+    })
+  );
+  canopy.position.set(0, 1.16, 0.01);
+  group.add(canopy);
+  const frontGlass = new THREE.Mesh(
+    new RoundedBoxGeometry(1.42, 0.54, 0.025, 6, 0.06),
+    createGlassMaterial("#dff0ea", { roughness: 0.08, opacity: 0.42, depthWrite: false })
+  );
+  frontGlass.position.set(0, 1.16, 0.37);
+  frontGlass.rotation.x = -0.04;
+  group.add(frontGlass);
+  [0.9, 1.43].forEach((railY) => {
+    const rail = new THREE.Mesh(new RoundedBoxGeometry(1.5, 0.045, 0.055, 3, 0.018), wood);
+    rail.position.set(0, railY, 0.385);
+    group.add(rail);
+  });
+  [-0.72, 0.72].forEach((railX) => {
+    const rail = new THREE.Mesh(new RoundedBoxGeometry(0.045, 0.56, 0.055, 3, 0.018), wood);
+    rail.position.set(railX, 1.16, 0.385);
+    group.add(rail);
+  });
+
+  const contentColors = [
+    colors.accent,
+    colors.secondary,
+    ATELIER_TOKENS.apricot,
+    ATELIER_TOKENS.butter,
+    archetype === "memory" ? "#b9a1ad" : ATELIER_TOKENS.pistachio
+  ];
+  [-0.52, -0.26, 0, 0.26, 0.52].forEach((x, index) => {
+    const tray = new THREE.Mesh(
+      new RoundedBoxGeometry(0.22, 0.08, 0.42, 4, 0.035),
+      createToonMaterial("#d7b58f", { roughness: 0.56 })
+    );
+    tray.position.set(x, 0.94, 0.02);
+    group.add(tray);
+    const contents = new THREE.Mesh(
+      new THREE.SphereGeometry(0.13, 20, 14),
+      createToonMaterial(contentColors[index], { roughness: 0.72 })
+    );
+    contents.scale.set(0.78, 0.46, 1.14);
+    contents.position.set(x, 1.02 + (index % 2) * 0.025, 0.03);
+    group.add(contents);
+  });
+
+  const menuFrame = new THREE.Mesh(new RoundedBoxGeometry(0.48, 0.4, 0.07, 5, 0.055), wood);
+  menuFrame.position.set(-0.42, 1.64, 0.02);
+  menuFrame.rotation.x = -0.14;
+  group.add(menuFrame);
+  const menuCard = new THREE.Mesh(new RoundedBoxGeometry(0.38, 0.3, 0.025, 4, 0.04), cream);
+  menuCard.position.set(-0.42, 1.64, 0.064);
+  menuCard.rotation.x = -0.14;
+  group.add(menuCard);
+  [colors.accent, colors.secondary, ATELIER_TOKENS.butter].forEach((color, index) => {
+    const mark = new THREE.Mesh(new THREE.CircleGeometry(0.038, 16), createToonMaterial(color, { side: THREE.DoubleSide }));
+    mark.position.set(-0.51 + index * 0.09, 1.64 + (index % 2) * 0.06, 0.088);
+    mark.rotation.x = -0.14;
+    group.add(mark);
+  });
+
+  const displayLight = new THREE.PointLight(0xffd8a0, colors.night ? 1.25 : 0.82, 2.7, 2.1);
+  displayLight.position.set(0, 1.35, 0.34);
+  group.add(displayLight);
+}
+
+function addAmbientHangingPlant(angle, colors) {
+  const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.34, 2.42);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = -angle;
+  roomRoot.add(group);
+
+  const bracket = new THREE.Mesh(
+    new RoundedBoxGeometry(0.56, 0.12, 0.16, 4, 0.045),
+    createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.72, surface: "wood", bumpScale: 0.008 })
+  );
+  bracket.position.z = 0.08;
+  group.add(bracket);
+  [-0.13, 0.13].forEach((offset) => {
+    const cord = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.012, 0.012, 0.52, 8),
+      createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 })
+    );
+    cord.position.set(offset, -0.26, 0.1);
+    cord.rotation.z = offset < 0 ? -0.14 : 0.14;
+    group.add(cord);
+  });
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.16, 0.12, 0.24, 18),
+    createToonMaterial(colors.accent, { roughness: 0.52 })
+  );
+  pot.position.set(0, -0.55, 0.12);
+  group.add(pot);
+  for (let index = 0; index < 9; index += 1) {
+    const side = index % 2 ? 1 : -1;
+    const leaf = new THREE.Mesh(
+      new THREE.SphereGeometry(0.105, 14, 10),
+      createToonMaterial(index % 3 ? "#5f8f63" : "#88a96f", { roughness: 0.96 })
+    );
+    leaf.scale.set(0.48, 1.08, 0.42);
+    leaf.position.set(side * (0.07 + (index % 3) * 0.035), -0.68 - index * 0.085, 0.13);
+    leaf.rotation.z = side * (0.42 + (index % 2) * 0.18);
+    group.add(leaf);
+  }
+}
+
+function addSculptedFloorPlant(x, z, scale, colors, seed = 0) {
+  const group = new THREE.Group();
+  group.position.set(x, 0, z);
+  group.scale.setScalar(scale);
+  roomRoot.add(group);
+
+  const pot = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.28, 0.22, 0.5, 24),
+    createToonMaterial(seed % 2 ? colors.secondary : ATELIER_TOKENS.cork, {
+      roughness: 0.62,
+      surface: "terrazzo",
+      bumpScale: 0.012
+    })
+  );
+  pot.position.y = 0.29;
+  group.add(pot);
+  const rim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.28, 0.035, 8, 24),
+    createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66 })
+  );
+  rim.rotation.x = Math.PI / 2;
+  rim.position.y = 0.54;
+  group.add(rim);
+  const soil = new THREE.Mesh(
+    new THREE.CircleGeometry(0.245, 24),
+    createToonMaterial("#65452f", { roughness: 0.96 })
+  );
+  soil.rotation.x = -Math.PI / 2;
+  soil.position.y = 0.55;
+  group.add(soil);
+
+  const stemMaterial = createToonMaterial("#55784f", { roughness: 0.9 });
+  const leafMaterials = [createToonMaterial("#5f9659", { roughness: 0.96 })];
+  for (let index = 0; index < 18; index += 1) {
+    const level = Math.floor(index / 3);
+    const angle = index * 2.39996 + seed * 0.43;
+    const radius = 0.22 + level * 0.055 + (index % 3) * 0.035;
+    const leafY = 0.76 + level * 0.17 + (index % 2) * 0.06;
+    const leafX = Math.cos(angle) * radius;
+    const leafZ = Math.sin(angle) * radius * 0.72;
+
+    const stemHeight = Math.max(0.24, leafY - 0.55);
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.026, stemHeight, 8), stemMaterial);
+    stem.position.set(leafX * 0.46, 0.55 + stemHeight / 2, leafZ * 0.46);
+    stem.rotation.z = -leafX * 0.52;
+    stem.rotation.x = leafZ * 0.38;
+    group.add(stem);
+
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.18, 18, 12), leafMaterials[index % leafMaterials.length]);
+    leaf.scale.set(0.46 + (index % 2) * 0.06, 1.18 + (index % 3) * 0.08, 0.32);
+    leaf.position.set(leafX, leafY, leafZ);
+    leaf.rotation.z = angle + Math.PI / 2;
+    leaf.rotation.x = (index % 3 - 1) * 0.18;
+    group.add(leaf);
+  }
 }
 
 function addAtelierCeilingCove(colors, night) {
@@ -1549,6 +1846,7 @@ function addFocalStoryClutter(theme, colors) {
 
 function addAmbientSetDressing(theme, colors) {
   const variant = Number(theme.variant || 0);
+  const archetype = theme.archetype || "home";
   const offset = (variant % 4) * (Math.PI / 18);
   addAtelierTerrazzo(theme);
   addAtelierRug(colors);
@@ -1558,7 +1856,7 @@ function addAmbientSetDressing(theme, colors) {
     height: 2.18,
     y: 1.92,
     frame: "#ecd3b2",
-    inner: "#d4b48d",
+    inner: "#bd8f65",
     shelves: 3
   });
   addBuiltInArchNiche(offset - 0.45, colors, {
@@ -1566,7 +1864,7 @@ function addAmbientSetDressing(theme, colors) {
     height: 2.3,
     y: 1.86,
     frame: "#e8c9a2",
-    inner: "#bfded2",
+    inner: "#87aa9e",
     wood: ATELIER_TOKENS.walnut,
     glass: true,
     shelves: 3
@@ -1576,13 +1874,25 @@ function addAmbientSetDressing(theme, colors) {
     height: 1.86,
     y: 2.05,
     frame: "#efd9bc",
-    inner: "#d8bb95",
+    inner: "#c29870",
     shelves: 2
   });
+  addAtelierDisplayCabinet(theme, colors);
   addAmbientSideboard(offset - 0.83, colors, variant);
-  addAmbientBanquette(offset + 1.06, colors);
+  if (["public", "home", "creative"].includes(archetype)) {
+    addAmbientSideboard(offset + 1.5, colors, variant + 1);
+  }
+  addAmbientBanquette(
+    offset + 1.06,
+    archetype === "public" ? { ...colors, secondary: ATELIER_TOKENS.ivory } : colors
+  );
   addAmbientTeaTable(offset + 0.92, colors);
   addAmbientFloorLamp(offset + 1.38, colors);
+  addAmbientHangingPlant(offset + 0.48, colors);
+  addSculptedFloorPlant(-4.1, 1.28, 1.04, colors, variant + 2);
+  if (["public", "home", "care", "creative", "nature"].includes(archetype)) {
+    addSculptedFloorPlant(4.05, -0.78, 0.9, colors, variant + 5);
+  }
   addPlanter(offset - 0.62, ATELIER_TOKENS.cork, colors.secondary, 0.72);
   addPlanter(offset + 0.66, ATELIER_TOKENS.cork, colors.accent, 0.66);
   addAtelierCeilingCove(colors, !!colors.night);
@@ -1807,6 +2117,7 @@ function roomMaterialKey(material, geometry) {
     Number(material.metalness ?? 0).toFixed(3),
     material.side,
     material.depthWrite ? 1 : 0,
+    geometry.userData?.castShadow ? 1 : 0,
     attributes
   ].join("|");
 }
@@ -1829,6 +2140,7 @@ function mergeRoomArchitectureMeshes() {
     if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
     const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
     geometry.applyMatrix4(node.matrixWorld);
+    geometry.userData.castShadow = !!node.castShadow;
     const key = roomMaterialKey(node.material, geometry);
     const batch = batches.get(key) || {
       material: node.material.clone(),
@@ -2116,6 +2428,11 @@ function rebuildRoom(theme = {}) {
   roomSignature = signature;
   disposeOwnedGroup(roomRoot);
 
+  if (keyLight) {
+    keyLight.castShadow = REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home");
+    keyLight.shadow.needsUpdate = true;
+  }
+
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
   scene.background = new THREE.Color(night ? "#9da5a7" : "#d9b98f");
@@ -2123,7 +2440,7 @@ function rebuildRoom(theme = {}) {
 
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(ROOM_RADIUS, 64),
-    createToonMaterial(floorColor, { roughness: 0.88, surface: "terrazzo", bumpScale: 0.018 })
+    createToonMaterial(floorColor, { roughness: 0.9, surface: "terrazzo", bumpScale: 0.026 })
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
@@ -2165,6 +2482,29 @@ function rebuildRoom(theme = {}) {
   crown.castShadow = false;
   roomRoot.add(crown);
 
+  const crownShadow = new THREE.Mesh(
+    new THREE.TorusGeometry(ROOM_RADIUS - 0.075, 0.035, 8, 64),
+    createToonMaterial("#9c6e4b", {
+      roughness: 0.94,
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false
+    })
+  );
+  crownShadow.rotation.x = Math.PI / 2;
+  crownShadow.position.y = ROOM_HEIGHT - 0.34;
+  crownShadow.castShadow = false;
+  roomRoot.add(crownShadow);
+
+  const lowerCove = new THREE.Mesh(
+    new THREE.TorusGeometry(ROOM_RADIUS - 0.09, 0.055, 8, 64),
+    createToonMaterial("#f0d3aa", { roughness: 0.92, surface: "plaster", bumpScale: 0.01 })
+  );
+  lowerCove.rotation.x = Math.PI / 2;
+  lowerCove.position.y = ROOM_HEIGHT - 0.4;
+  lowerCove.castShadow = false;
+  roomRoot.add(lowerCove);
+
   if (!INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     for (let i = 0; i < 12; i += 1) {
       const angle = (i / 12) * Math.PI * 2;
@@ -2181,6 +2521,7 @@ function getItemSignature(items) {
   return items.map((item) => [
     item.key,
     item.model,
+    item.renderModel === false ? "anchor" : "model",
     Number(item.worldX || 0).toFixed(3),
     Number(item.worldZ || 0).toFixed(3),
     Number(item.modelScale || 1).toFixed(3)
@@ -2243,7 +2584,8 @@ function mergePlacedModelMeshes(source) {
 
 function rebuildModels(items) {
   const signature = getItemSignature(items);
-  const allReady = items.length > 0 && items.every((item) => cache.has(item.model));
+  const renderItems = items.filter((item) => item.renderModel !== false);
+  const allReady = renderItems.every((item) => cache.has(item.model));
   if (!allReady) return false;
   if (signature === itemSignature) return true;
   itemSignature = signature;
@@ -2251,7 +2593,7 @@ function rebuildModels(items) {
 
   const stagedModels = new THREE.Group();
 
-  items.forEach((item) => {
+  renderItems.forEach((item) => {
     const source = cache.get(item.model);
     if (!source) return;
     const model = source.clone(true);
@@ -2354,7 +2696,7 @@ function update(payload = {}) {
   resize(width, height);
 
   activeItems = (payload.items || []).filter((item) => item?.model);
-  const needed = [...new Set(activeItems.map((item) => item.model))];
+  const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))];
   needed.forEach(loadModel);
   rebuildRoom(payload.theme || {});
   updateCamera(payload);
@@ -2390,8 +2732,8 @@ function getStats() {
   const memory = renderer?.info?.memory || {};
   return {
     ready: !!renderer,
-    activeModelCount: activeItems.length,
-    activeModels: [...new Set(activeItems.map((item) => item.model))],
+    activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,
+    activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
     cachedModelCount: cache.size,
     drawCalls: Number(render.calls || 0),
     triangles: Number(render.triangles || 0),
