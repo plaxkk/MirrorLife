@@ -34,6 +34,13 @@ function extractObject(source, name, nextName) {
   return vm.runInNewContext(`(${match[1]})`, Object.create(null));
 }
 
+function extractArray(source, name, nextName) {
+  const pattern = new RegExp(`const ${name} = (\\[[\\s\\S]*?\\n\\]);\\n\\nconst ${nextName}`);
+  const match = source.match(pattern);
+  if (!match) throw new Error(`Unable to extract ${name}.`);
+  return vm.runInNewContext(`(${match[1]})`, Object.create(null));
+}
+
 const [engine, game, interiorThree, configText, manifestText] = await Promise.all([
   fs.readFile(path.join(ROOT, "public/engine.js"), "utf8"),
   fs.readFile(path.join(ROOT, "public/game.js"), "utf8"),
@@ -49,6 +56,7 @@ const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n
 const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
 const blueprints = extractObject(game, "INTERIOR_BLUEPRINTS", "INTERIOR_ZONE_PROFILES");
 const sceneActions = extractObject(game, "INTERIOR_SCENE_ACTIONS", "INTERIOR_BLUEPRINT_CACHE");
+const storyThreads = extractArray(game, "INTERIOR_STORY_THREADS", "INTERIOR_BLUEPRINTS");
 const environmentPalettes = extractObject(interiorThree, "INTERIOR_ENVIRONMENT_PALETTES", "INTERIOR_ZONE_ENVIRONMENT_STYLES");
 const zoneEnvironmentStyles = extractObject(interiorThree, "INTERIOR_ZONE_ENVIRONMENT_STYLES", "MODEL_RENDER_PROFILES");
 
@@ -60,6 +68,19 @@ const missingProfiles = zoneIds.filter((id) => !profileIds.includes(id));
 const unknownProfiles = profileIds.filter((id) => !zoneIds.includes(id));
 if (missingProfiles.length) throw new Error(`Buildings without interior profiles: ${missingProfiles.join(", ")}`);
 if (unknownProfiles.length) throw new Error(`Interior profiles without buildings: ${unknownProfiles.join(", ")}`);
+const threadedZoneIds = storyThreads.flatMap((thread) => thread.zones || []);
+const missingThreadZones = zoneIds.filter((id) => !threadedZoneIds.includes(id));
+const unknownThreadZones = threadedZoneIds.filter((id) => !zoneIds.includes(id));
+const duplicateThreadZones = threadedZoneIds.filter((id, index) => threadedZoneIds.indexOf(id) !== index);
+if (missingThreadZones.length) throw new Error(`Buildings without a cross-building story thread: ${missingThreadZones.join(", ")}`);
+if (unknownThreadZones.length) throw new Error(`Story threads reference unknown buildings: ${unknownThreadZones.join(", ")}`);
+if (duplicateThreadZones.length) throw new Error(`Buildings assigned to multiple story threads: ${unique(duplicateThreadZones).join(", ")}`);
+const incompleteThreads = storyThreads.flatMap((thread) => {
+  const missing = ["id", "title", "objective"].filter((field) => typeof thread[field] !== "string" || !thread[field].trim());
+  if (!Array.isArray(thread.zones) || thread.zones.length < 3) missing.push("zones");
+  return missing.length ? [`${thread.id || "unnamed"}:${missing.join("+")}`] : [];
+});
+if (incompleteThreads.length) throw new Error(`Incomplete interior story threads: ${incompleteThreads.join(", ")}`);
 const missingSceneActions = blueprintIds.filter((id) => !sceneActionIds.includes(id));
 if (missingSceneActions.length) throw new Error(`Interior blueprints without shared scene actions: ${missingSceneActions.join(", ")}`);
 const invalidSceneChoices = [];
@@ -147,4 +168,4 @@ for (const slot of config.slots || []) {
 if (missingModels.length) throw new Error(`Missing runtime GLBs: ${missingModels.join(", ")}`);
 if (fallbackModels.length) throw new Error(`Sprite-card fallbacks still active: ${fallbackModels.join(", ")}`);
 
-console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${blueprintIds.length} room archetypes, ${Object.keys(environmentPalettes).length} environment palettes, ${Object.keys(zoneEnvironmentStyles).length} building identities, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);
+console.log(`Interior world check passed: ${zoneIds.length} buildings, ${profileIds.length} profiles, ${storyThreads.length} cross-building story threads, ${blueprintIds.length} room archetypes, ${Object.keys(environmentPalettes).length} environment palettes, ${Object.keys(zoneEnvironmentStyles).length} building identities, ${sceneActionIds.length} shared scene actions, ${config.slots.length} runtime GLB slots.`);

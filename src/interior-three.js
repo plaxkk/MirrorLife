@@ -169,7 +169,7 @@ function ensureLayer() {
   renderer.shadowMap.type = THREE.PCFShadowMap;
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(52, 1, 0.08, 30);
+  camera = new THREE.PerspectiveCamera(68, 1, 0.08, 30);
   scene.add(camera);
 
   roomRoot = new THREE.Group();

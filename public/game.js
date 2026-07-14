@@ -79,7 +79,7 @@ const MAX_FULL_CITIZENS_DESKTOP = 14;
 const MAX_FULL_CITIZENS_MOBILE = 8;
 const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
-const INTERIOR_PANORAMA_FOV = Math.PI * 0.68;
+const INTERIOR_PANORAMA_FOV = Math.PI * 0.38;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
 const INTERIOR_PLAYER_RADIUS = 2.72;
 const INTERIOR_PLAYER_SPEED = 1.55;
@@ -5126,6 +5126,39 @@ function updateFollowCamera(W, H, now) {
 
 // ── Interior scenes: step inside a building and look around ──
 
+const INTERIOR_STORY_THREADS = [
+  {
+    id: "unheard-voices",
+    title: "让沉默被听见",
+    objective: "找到没有被城市节奏照顾到的人",
+    zones: ["public-plaza", "quiet-nook", "legal-court", "empathy-lab", "story-archive"]
+  },
+  {
+    id: "care-relay",
+    title: "照护的接力",
+    objective: "看见照护者，也让照护能够继续流动",
+    zones: ["maternity-hospital", "resource-kitchen", "residential", "rest-courtyard", "cemetery"]
+  },
+  {
+    id: "growing-room",
+    title: "成长没有标准答案",
+    objective: "为每个阶段保留试错和重新选择的位置",
+    zones: ["kindergarten", "primary-school", "middle-school", "university", "mentor-hall"]
+  },
+  {
+    id: "shared-city",
+    title: "城市如何共同工作",
+    objective: "让交换、劳动和决定都留下可以接力的方法",
+    zones: ["commercial-zone", "night-market", "office-district", "factory", "commons-workshop"]
+  },
+  {
+    id: "more-than-human",
+    title: "与万物共同生活",
+    objective: "练习照料不同速度、不同语言的生命",
+    zones: ["farm", "park", "zoo", "botanical-garden", "creative-studio", "repair-station"]
+  }
+];
+
 const INTERIOR_BLUEPRINTS = {
   care: {
     title: "照护与恢复",
@@ -5756,6 +5789,123 @@ function getInteriorExplorationRecord(zoneId) {
   return state.interiorExploration[zoneId];
 }
 
+function getInteriorStoryThread(zoneId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.zones.includes(zoneId)) || null;
+  if (!thread) return null;
+  const chapterIndex = thread.zones.indexOf(zoneId);
+  const completedCount = thread.zones.filter((id) => state.interiorExploration?.[id]?.scenePlayed).length;
+  return {
+    ...thread,
+    chapterIndex,
+    completedCount,
+    nextZoneId: thread.zones[chapterIndex + 1] || ""
+  };
+}
+
+function focusInteriorJourneyTarget(propIndex) {
+  if (!interiorView) return;
+  const blueprint = getInteriorBlueprint(interiorView.zone);
+  const prop = blueprint.props?.[propIndex];
+  if (!prop) return;
+  interiorFocusPropIndex = propIndex;
+  interiorOrbit.yaw = wrapInteriorAngle(getInteriorPropAngle(prop, propIndex, blueprint.props.length));
+  markRenderActive(2200);
+}
+
+function syncInteriorJourneyHud(blueprint) {
+  if (!interiorView || !blueprint) return;
+  const shell = document.getElementById("gameShell");
+  if (!shell) return;
+  const record = getInteriorExplorationRecord(interiorView.zone.id);
+  const thread = getInteriorStoryThread(interiorView.zone.id);
+  const props = blueprint.props || [];
+  const goal = Math.min(3, props.length || 3);
+  const foundCount = Math.min(record.found.length, goal);
+  const nextIndex = props.findIndex((prop) => !record.found.includes(prop.label));
+  const nextProp = nextIndex >= 0 ? props[nextIndex] : null;
+  const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  const phase = record.scenePlayed ? 3 : record.completed ? 2 : 1;
+
+  let panel = document.getElementById("interiorJourneyPanel");
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "interiorJourneyPanel";
+    panel.addEventListener("click", (event) => {
+      const guide = event.target.closest("[data-interior-guide]");
+      if (guide) {
+        focusInteriorJourneyTarget(Number(guide.dataset.interiorGuide));
+        return;
+      }
+      const action = event.target.closest("[data-interior-scene-action]");
+      if (action) {
+        playInteriorSceneAction();
+        return;
+      }
+      const nextChapter = event.target.closest("[data-interior-next-chapter]");
+      if (nextChapter) {
+        const nextZoneName = nextChapter.dataset.interiorNextChapter;
+        exitInteriorView();
+        showToast(`下一章：去街道上寻找${nextZoneName}`, "listen");
+      }
+    });
+    shell.appendChild(panel);
+  }
+
+  const signature = [
+    interiorView.zone.id,
+    foundCount,
+    record.completed,
+    record.scenePlayed,
+    nextIndex,
+    thread?.completedCount || 0
+  ].join("|");
+  if (panel.dataset.signature !== signature) {
+    panel.dataset.signature = signature;
+    const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
+    const nextAction = phase === 1 && nextProp
+      ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
+      : phase === 2
+        ? `<button type="button" data-interior-scene-action="journey">${escapeHtml(sceneAction.label)}</button>`
+        : nextZone
+          ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.name)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
+          : "";
+    panel.innerHTML = `
+      <header><span>房间故事簿</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
+      <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
+      <ol>
+        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>环顾线索<small>${foundCount}/${goal} 段场所记忆</small></span></li>
+        <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
+        <li class="${phase === 3 ? "current done" : ""}"><b>3</b><span>关系留下痕迹<small>${record.scenePlayed ? "已写入本周生活" : "让人物与城市真正改变"}</small></span></li>
+      </ol>
+      <footer><span>${thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应` : blueprint.title}</span>${nextAction}</footer>`;
+  }
+
+  let compass = document.getElementById("interiorCompass");
+  if (!compass) {
+    compass = document.createElement("nav");
+    compass.id = "interiorCompass";
+    compass.setAttribute("aria-label", "室内环绕导航");
+    compass.addEventListener("click", (event) => {
+      const target = event.target.closest("[data-interior-compass]");
+      if (target) focusInteriorJourneyTarget(Number(target.dataset.interiorCompass));
+    });
+    shell.appendChild(compass);
+  }
+  const compassSignature = `${interiorView.zone.id}|${record.found.join("|")}`;
+  if (compass.dataset.signature !== compassSignature) {
+    compass.dataset.signature = compassSignature;
+    compass.innerHTML = `<span class="interior-compass-north">N</span><span class="interior-compass-cone" aria-hidden="true"></span>${props.map((prop, index) => {
+      const angle = getInteriorPropAngle(prop, index, props.length);
+      const found = record.found.includes(prop.label);
+      return `<button type="button" class="${found ? "found" : ""}" style="--compass-angle:${angle}rad" data-interior-compass="${index}" aria-label="朝向${escapeHtml(prop.label)}" title="${escapeHtml(prop.label)}"><span>${found ? "✓" : "•"}</span></button>`;
+    }).join("")}<strong>${foundCount}/${goal}</strong>`;
+  }
+  compass.style.setProperty("--interior-yaw", `${Number(interiorOrbit.yaw || 0)}rad`);
+  compass.querySelectorAll("[data-interior-compass]").forEach((button) => {
+    button.classList.toggle("focused", Number(button.dataset.interiorCompass) === interiorFocusPropIndex);
+  });
+}
+
 function getInteriorAnchorDistance(anchor) {
   const targetX = Number(anchor?.interactionWorldX ?? anchor?.worldX);
   const targetZ = Number(anchor?.interactionWorldZ ?? anchor?.worldZ);
@@ -5825,7 +5975,7 @@ function syncInteriorContextAction(anchors) {
     button.dataset.propIndex = String(interiorNearbyAnchor.index);
     button.classList.toggle("discovered", discovered);
     button.setAttribute("aria-label", `${discovered ? "再次聆听" : "探索"}${interiorNearbyAnchor.label}`);
-    button.innerHTML = `<span aria-hidden="true">✦</span><strong>${discovered ? "再次聆听" : "探索"} · ${escapeHtml(interiorNearbyAnchor.label)}</strong>`;
+    button.innerHTML = `<kbd aria-hidden="true">E</kbd><strong>${discovered ? "再次聆听" : "倾听"} · ${escapeHtml(interiorNearbyAnchor.label)}</strong>`;
   }
   button.dataset.distance = nearest.distance.toFixed(2);
 }
@@ -5949,8 +6099,8 @@ function playInteriorSceneAction(choiceId = "") {
   const choices = Array.isArray(sceneAction.choices) ? sceneAction.choices : [];
   if (!choiceId && choices.length) {
     interiorView.discovery = {
-      title: sceneAction.title,
-      text: "房间里的人看向你。这一刻，你想怎样回应？",
+      title: `${zone.name} · ${sceneAction.title}`,
+      text: `${blueprint.profile?.intro || "房间里的人看向你。"} 这一刻，你想怎样回应？`,
       progress: "选择回应",
       choices,
       until: Number.POSITIVE_INFINITY
@@ -7860,6 +8010,8 @@ function exitInteriorView() {
   document.getElementById("interiorHotspotLayer")?.remove();
   document.getElementById("interiorDiscoveryCard")?.remove();
   document.getElementById("interiorContextAction")?.remove();
+  document.getElementById("interiorJourneyPanel")?.remove();
+  document.getElementById("interiorCompass")?.remove();
   markRenderActive(2200);
 }
 
@@ -8073,6 +8225,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
   syncInteriorContextAction(interiorAnchors);
+  syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
   const exitW = Math.min(150, Math.max(110, W * 0.14));

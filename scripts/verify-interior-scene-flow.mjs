@@ -23,6 +23,8 @@ async function inspectScene(page) {
       reward,
       relationshipCount: relationships.length,
       relationshipEventCount: relationships.reduce((total, relationship) => total + (relationship.eventLog?.length || 0), 0),
+      journeyText: document.getElementById("interiorJourneyPanel")?.innerText || "",
+      compassTargetCount: document.querySelectorAll("#interiorCompass [data-interior-compass]").length,
       interiorActive: document.body.classList.contains("interior-active"),
       overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth
     };
@@ -40,6 +42,9 @@ async function verifyViewport(browser, viewport, label) {
     const opening = await inspectScene(page);
     if (!opening.interiorActive || opening.actionCount !== 1 || opening.choiceCount !== 0) {
       throw new Error(`${label}: expected one natural scene entry before choices.`);
+    }
+    if (!opening.journeyText.includes("成长没有标准答案") || opening.compassTargetCount < 5) {
+      throw new Error(`${label}: cross-building story journal or room compass is missing.`);
     }
 
     await page.click("#interiorDiscoveryCard [data-interior-scene-action]");
