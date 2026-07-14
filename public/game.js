@@ -5163,7 +5163,7 @@ const INTERIOR_BLUEPRINTS = {
   care: {
     title: "照护与恢复",
     props: [
-      { emoji: "🛏️", label: "休息床", assetIntent: "hospital-bed", model: "bed", render3d: true, x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
+      { emoji: "🛏️", label: "休息床", assetIntent: "hospital-bed", model: "bed", render3d: true, focal: true, x: 0.18, y: 0.28, size: 34, behaviors: ["sleep", "care", "drink"] },
       { emoji: "🌡️", label: "护理站", assetIntent: "reception-counter", model: "counter", render3d: true, x: 0.44, y: 0.2, size: 30, behaviors: ["care", "write", "work"] },
       { emoji: "🪑", label: "等候椅", assetIntent: "waiting-chair", model: "waiting-chair", render3d: true, x: 0.68, y: 0.32, size: 28, behaviors: ["phone", "read", "think", "tea"] },
       { emoji: "💊", label: "药品柜", assetIntent: "medicine-cabinet", model: "shelf", render3d: true, x: 0.82, y: 0.2, size: 28, behaviors: ["care", "handoff", "work"] },
@@ -5174,7 +5174,7 @@ const INTERIOR_BLUEPRINTS = {
   learning: {
     title: "学习与成长",
     props: [
-      { emoji: "📚", label: "阅读角", assetIntent: "reading-corner", model: "reading-corner", render3d: true, x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
+      { emoji: "📚", label: "阅读角", assetIntent: "reading-corner", model: "reading-corner", render3d: true, focal: true, x: 0.18, y: 0.26, size: 32, behaviors: ["read", "think"] },
       { emoji: "🧑‍🏫", label: "讲台", assetIntent: "teacher-podium", model: "teacher-podium", render3d: true, x: 0.5, y: 0.18, size: 31, behaviors: ["teach", "write"] },
       { emoji: "🪑", label: "课桌", assetIntent: "student-desk", model: "desk", render3d: true, x: 0.34, y: 0.48, size: 28, behaviors: ["write", "read", "type"] },
       { emoji: "🖊️", label: "练习桌", assetIntent: "student-desk", model: "desk", render3d: true, x: 0.58, y: 0.5, size: 28, behaviors: ["write", "read"] },
@@ -5188,7 +5188,7 @@ const INTERIOR_BLUEPRINTS = {
       { emoji: "🏷️", label: "柜台", assetIntent: "service-counter", model: "service-counter", render3d: true, x: 0.22, y: 0.24, size: 30, behaviors: ["shop", "handoff", "work"] },
       { emoji: "🧺", label: "货架", assetIntent: "retail-shelf", model: "retail-shelf", render3d: true, x: 0.42, y: 0.22, size: 32, behaviors: ["shop", "gather"] },
       { emoji: "📦", label: "补给箱", assetIntent: "supply-crate", model: "supply-crate", render3d: true, x: 0.72, y: 0.22, size: 30, behaviors: ["handoff", "work", "repair"] },
-      { emoji: "☕", label: "小坐区", assetIntent: "cafe-seating", model: "cafe-seating", render3d: true, x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
+      { emoji: "☕", label: "小坐区", assetIntent: "cafe-seating", model: "cafe-seating", render3d: true, focal: true, x: 0.26, y: 0.68, size: 30, behaviors: ["drink", "phone", "eat"] },
       { emoji: "🍜", label: "热食台", assetIntent: "hot-food-counter", model: "hot-food-counter", render3d: true, x: 0.52, y: 0.62, size: 32, behaviors: ["eat", "cook"] },
       { emoji: "🧾", label: "交换板", assetIntent: "exchange-board", model: "exchange-board", render3d: true, x: 0.78, y: 0.62, size: 28, behaviors: ["read", "write", "shop"] }
     ]
@@ -5200,7 +5200,7 @@ const INTERIOR_BLUEPRINTS = {
       { emoji: "🪧", label: "公告板", assetIntent: "notice-board", model: "notice-board", render3d: true, x: 0.46, y: 0.2, size: 31, behaviors: ["read", "write"] },
       { emoji: "🪑", label: "旁听席", assetIntent: "audience-seating", model: "audience-seating", render3d: true, x: 0.72, y: 0.28, size: 29, behaviors: ["meeting", "think", "read", "drink"] },
       { emoji: "📝", label: "记录桌", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.34, y: 0.62, size: 30, behaviors: ["write", "read"] },
-      { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
+      { emoji: "🤝", label: "共识圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, focal: true, x: 0.62, y: 0.62, size: 31, behaviors: ["handoff", "comfort", "meeting"] },
       { emoji: "🌿", label: "缓冲角", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.82, y: 0.68, size: 29, behaviors: ["think", "drink", "comfort"] }
     ]
   },
@@ -5210,7 +5210,7 @@ const INTERIOR_BLUEPRINTS = {
       { emoji: "💻", label: "工位", assetIntent: "office-workstation", model: "office-workstation", render3d: true, x: 0.2, y: 0.28, size: 31, behaviors: ["type", "write", "overtime"] },
       { emoji: "🧰", label: "工具台", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.44, y: 0.25, size: 31, behaviors: ["repair", "work"] },
       { emoji: "📋", label: "协作板", assetIntent: "collaboration-board", model: "collaboration-board", render3d: true, x: 0.68, y: 0.22, size: 29, behaviors: ["meeting", "write", "read"] },
-      { emoji: "🪑", label: "会议桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
+      { emoji: "🪑", label: "会议桌", assetIntent: "consensus-table", model: "round-table", render3d: true, focal: true, x: 0.42, y: 0.62, size: 30, behaviors: ["meeting", "drink", "think"] },
       { emoji: "⚙️", label: "设备区", assetIntent: "maker-workbench", model: "workbench", render3d: true, x: 0.76, y: 0.62, size: 31, behaviors: ["repair", "work", "clean"] }
     ]
   },
@@ -5218,7 +5218,7 @@ const INTERIOR_BLUEPRINTS = {
     title: "调停与记录",
     props: [
       { emoji: "⚖️", label: "调停席", assetIntent: "mediation-podium", model: "mediation-podium", render3d: true, x: 0.5, y: 0.24, size: 34, behaviors: ["meeting", "teach", "write"] },
-      { emoji: "🪑", label: "圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
+      { emoji: "🪑", label: "圆桌", assetIntent: "consensus-table", model: "round-table", render3d: true, focal: true, x: 0.34, y: 0.58, size: 31, behaviors: ["comfort", "handoff", "think"] },
       { emoji: "📝", label: "记录席", assetIntent: "record-desk", model: "record-desk", render3d: true, x: 0.66, y: 0.58, size: 30, behaviors: ["write", "read"] },
       { emoji: "🗄️", label: "档案柜", assetIntent: "archive-cabinet", model: "archive-cabinet", render3d: true, x: 0.82, y: 0.24, size: 29, behaviors: ["read", "write"] },
       { emoji: "🕊️", label: "冷静角", assetIntent: "calming-chair", model: "calming-chair", render3d: true, x: 0.18, y: 0.68, size: 29, behaviors: ["think", "comfort", "drink"] }
@@ -5228,7 +5228,7 @@ const INTERIOR_BLUEPRINTS = {
     title: "生活与休息",
     props: [
       { emoji: "🛋️", label: "沙发", assetIntent: "sofa-set", model: "seating", render3d: true, x: 0.22, y: 0.34, size: 34, behaviors: ["phone", "drink", "sleep", "think"] },
-      { emoji: "🍽️", label: "餐桌", assetIntent: "round-dining-table", model: "round-table", render3d: true, x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
+      { emoji: "🍽️", label: "餐桌", assetIntent: "round-dining-table", model: "round-table", render3d: true, focal: true, x: 0.5, y: 0.38, size: 31, behaviors: ["eat", "drink", "write"] },
       { emoji: "🛏️", label: "卧榻", assetIntent: "home-bed", model: "home-bed", render3d: true, x: 0.78, y: 0.32, size: 33, behaviors: ["sleep"] },
       { emoji: "🪞", label: "洗漱台", assetIntent: "sink-vanity", model: "sink", render3d: true, x: 0.32, y: 0.7, size: 29, behaviors: ["wash", "clean"] },
       { emoji: "📚", label: "书架", assetIntent: "bookcase", model: "bookcase", render3d: true, x: 0.5, y: 0.72, size: 29, behaviors: ["read", "write"] },
@@ -5238,7 +5238,7 @@ const INTERIOR_BLUEPRINTS = {
   nature: {
     title: "生态与照料",
     props: [
-      { emoji: "🌿", label: "育苗架", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
+      { emoji: "🌿", label: "育苗架", assetIntent: "plant-shelf", model: "plant-zone", render3d: true, focal: true, x: 0.2, y: 0.28, size: 32, behaviors: ["garden", "gather"] },
       { emoji: "🪴", label: "温室台", assetIntent: "greenhouse-bench", model: "plant-zone", render3d: true, x: 0.44, y: 0.24, size: 31, behaviors: ["garden", "care"] },
       { emoji: "🪵", label: "工具棚", assetIntent: "garden-tool-shed", model: "garden-tool-shed", render3d: true, x: 0.72, y: 0.26, size: 30, behaviors: ["repair", "work", "clean"] },
       { emoji: "🪑", label: "休息椅", assetIntent: "park-bench", model: "bench", render3d: true, x: 0.26, y: 0.68, size: 29, behaviors: ["drink", "read", "fish"] },
@@ -5251,7 +5251,7 @@ const INTERIOR_BLUEPRINTS = {
       { emoji: "🎨", label: "画架", assetIntent: "painting-easel", model: "easel", render3d: true, x: 0.22, y: 0.28, size: 33, behaviors: ["work", "write", "think"] },
       { emoji: "🖼️", label: "作品墙", assetIntent: "gallery-wall", model: "gallery-wall", render3d: true, x: 0.48, y: 0.2, size: 31, behaviors: ["read", "think"] },
       { emoji: "🎭", label: "排练角", assetIntent: "rehearsal-stage", model: "rehearsal-stage", render3d: true, x: 0.74, y: 0.3, size: 31, behaviors: ["stretch", "dance", "teach"] },
-      { emoji: "📚", label: "故事桌", assetIntent: "story-table", model: "story-table", render3d: true, x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
+      { emoji: "📚", label: "故事桌", assetIntent: "story-table", model: "story-table", render3d: true, focal: true, x: 0.34, y: 0.68, size: 30, behaviors: ["read", "write"] },
       { emoji: "🎶", label: "声音角", assetIntent: "music-corner", model: "music-corner", render3d: true, x: 0.66, y: 0.68, size: 30, behaviors: ["dance", "drink", "phone"] }
     ]
   },
@@ -5259,7 +5259,7 @@ const INTERIOR_BLUEPRINTS = {
     title: "安宁与记忆",
     props: [
       { emoji: "🕯️", label: "纪念台", assetIntent: "memorial-altar", model: "altar", render3d: true, x: 0.28, y: 0.3, size: 31, behaviors: ["think", "cry", "drink"] },
-      { emoji: "🕊️", label: "静坐席", assetIntent: "meditation-seat", model: "meditation-seat", render3d: true, x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
+      { emoji: "🕊️", label: "静坐席", assetIntent: "meditation-seat", model: "meditation-seat", render3d: true, focal: true, x: 0.52, y: 0.45, size: 30, behaviors: ["think", "read", "comfort"] },
       { emoji: "📖", label: "记忆册", assetIntent: "memory-book", model: "memory-book", render3d: true, x: 0.74, y: 0.28, size: 30, behaviors: ["read", "write"] },
       { emoji: "🌿", label: "低声花园", assetIntent: "memory-garden", model: "plant-zone", render3d: true, x: 0.38, y: 0.72, size: 31, behaviors: ["garden", "think", "cry"] }
     ]
@@ -5733,9 +5733,25 @@ function getInteriorPropRadius(prop) {
 }
 
 function getInteriorPropWorldPlacement(prop, index, count) {
+  if (prop?.focal) {
+    const angle = 0;
+    const radius = 0.62;
+    const worldX = 0;
+    const worldZ = -radius;
+    const interactionOffset = index % 2 === 0 ? -0.9 : 0.9;
+    return {
+      angle,
+      distance: 0.24,
+      radius,
+      worldX,
+      worldZ,
+      interactionWorldX: interactionOffset,
+      interactionWorldZ: worldZ + 0.28
+    };
+  }
   const angle = getInteriorPropAngle(prop, index, count);
   const distance = getInteriorPropRadius(prop);
-  const radius = 2.42 + distance * 2.25;
+  const radius = 1.92 + distance * 2.08;
   const worldX = Math.sin(angle) * radius;
   const worldZ = -Math.cos(angle) * radius;
   const interactionOffset = 0.72 * (index % 2 === 0 ? -1 : 1);
@@ -6393,33 +6409,33 @@ function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
 function getInteriorMaterialStyle(zone, blueprint) {
   const hint = `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""} ${blueprint?.title || ""}`;
   if (/照护|hospital|maternity|care|repair/.test(hint)) {
-    return { wall: "#eaf7f3", floor: "#d7eee6", accent: "#52b6a8", trim: "#317d73", motif: "cross" };
+    return { wall: "#f5e9d8", floor: "#e7d7bd", accent: "#74a9c5", trim: "#30364e", motif: "cross" };
   }
   if (/学习|school|university|kinder|learn|mentor/.test(hint)) {
-    return { wall: "#f5eedc", floor: "#e8d8ad", accent: "#4f83cc", trim: "#2f5d90", motif: "books" };
+    return { wall: "#f6e8d1", floor: "#ead5b3", accent: "#6f9fd1", trim: "#30364e", motif: "books" };
   }
   if (/交易|commercial|market|shop|kitchen|resource/.test(hint)) {
-    return { wall: "#fff0d1", floor: "#e9c37d", accent: "#df5b3f", trim: "#9f3b2b", motif: "awning" };
+    return { wall: "#f6e6cf", floor: "#e8d0ac", accent: "#df6b58", trim: "#30364e", motif: "awning" };
   }
   if (/公共|plaza|forum|civic/.test(hint)) {
-    return { wall: "#eef1ff", floor: "#d8ddf0", accent: "#7b6fd6", trim: "#4b44a2", motif: "circle" };
+    return { wall: "#f5e7d1", floor: "#ead7b8", accent: "#efc85d", trim: "#30364e", motif: "circle" };
   }
   if (/调停|legal|court|justice/.test(hint)) {
-    return { wall: "#f1eadc", floor: "#d0bea0", accent: "#8b6b3e", trim: "#60472d", motif: "columns" };
+    return { wall: "#f3e7d7", floor: "#e5d4ba", accent: "#d98273", trim: "#30364e", motif: "columns" };
   }
   if (/协作|work|office|factory|craft|commons/.test(hint)) {
-    return { wall: "#eaf0f4", floor: "#c7d1d9", accent: "#3f88c5", trim: "#265b84", motif: "grid" };
+    return { wall: "#f2e7d5", floor: "#dfd2bd", accent: "#6e9d91", trim: "#30364e", motif: "grid" };
   }
   if (/表达|creative|studio|story|archive/.test(hint)) {
-    return { wall: "#f7e8f1", floor: "#e1c4d4", accent: "#d7588a", trim: "#8e3158", motif: "frames" };
+    return { wall: "#f6e6d4", floor: "#ead1b9", accent: "#dc6355", trim: "#30364e", motif: "frames" };
   }
   if (/生态|park|garden|farm|nature|zoo|botanical/.test(hint)) {
-    return { wall: "#eaf6df", floor: "#c9ddb5", accent: "#5d9b58", trim: "#386a35", motif: "leaf" };
+    return { wall: "#f3e9d5", floor: "#dfd5b9", accent: "#6f9a6d", trim: "#30364e", motif: "leaf" };
   }
   if (/安宁|memory|cemetery|quiet/.test(hint)) {
-    return { wall: "#ece8f4", floor: "#d4ccdf", accent: "#8371ad", trim: "#4d4368", motif: "candle" };
+    return { wall: "#f1e6d6", floor: "#ddd2bf", accent: "#c38e5b", trim: "#30364e", motif: "candle" };
   }
-  return { wall: "#f0e8d8", floor: "#e6d5b8", accent: zone?.color || "#8d99ae", trim: "#4a3f35", motif: "home" };
+  return { wall: "#f7e9d4", floor: "#ead2af", accent: "#e98860", trim: "#30364e", motif: "home" };
 }
 
 function projectInteriorPoint(layout, nx, nz, height = 0) {
@@ -7573,7 +7589,7 @@ function getInteriorThreeItems(blueprint, W, H) {
       worldZ,
       anchorHeight: 1.18,
       angle,
-      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25),
+      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25) * (prop.focal ? 1.32 : 1),
       visible: true
     };
   }).filter(Boolean);
@@ -8067,12 +8083,13 @@ function seedInteriorOccupants(zone) {
   const alive = getAliveCitizens(state.society)
     .filter(c => c.id !== "avatar" && !citizenAnimations[c.id]?.indoor);
   let candidates = alive.filter(c => c.zoneId === zone.id);
-  // Nobody claims this zone right now — a couple of passers-by wandered in earlier.
-  if (!candidates.length) {
-    const seed = hashCommunitySeed(zone.id, "seed-occupants");
-    candidates = alive.filter((_, i) => (i + seed) % 3 === 0).slice(0, 2);
-  }
-  candidates.slice(0, 2).forEach((citizen, i) => {
+  const seed = hashCommunitySeed(zone.id, "seed-occupants");
+  const candidateIds = new Set(candidates.map((citizen) => citizen.id));
+  const passersBy = alive
+    .filter((citizen) => !candidateIds.has(citizen.id))
+    .sort((a, b) => hashCommunitySeed(a.id, seed) - hashCommunitySeed(b.id, seed));
+  candidates = [...candidates, ...passersBy].slice(0, Math.min(3, MAX_INTERIOR_OCCUPANTS));
+  candidates.forEach((citizen, i) => {
     const anim = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
     anim.indoor = {
       zoneId: zone.id,
@@ -8290,15 +8307,26 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     if (!ia) {
       const spawnInside = !!canonicalAnim.indoor.spawnInside;
       const seed = hashCommunitySeed(citizen.id, "interior-spawn");
-      const spawnAnchor = useThreeModels && interiorAnchors.length
-        ? interiorAnchors[(seed + idx) % interiorAnchors.length]
-        : null;
+      const focalAnchor = useThreeModels ? interiorAnchors.find((anchor) => anchor.prop?.focal) : null;
+      const spawnAnchor = focalAnchor && idx < 3
+        ? focalAnchor
+        : useThreeModels && interiorAnchors.length
+          ? interiorAnchors[(seed + idx) % interiorAnchors.length]
+          : null;
       const entryX = interiorExitRect ? interiorExitRect.x + interiorExitRect.w / 2 : W * 0.86;
       const entryY = interiorExitRect ? interiorExitRect.y - 12 : layout.floorBottom - 32;
-      const sx = spawnAnchor?.x ?? (spawnInside
+      const focalOffsets = [
+        { x: -72, y: 34 },
+        { x: 72, y: 34 },
+        { x: 0, y: -52 }
+      ];
+      const focalOffset = focalAnchor && spawnAnchor === focalAnchor ? focalOffsets[idx] : null;
+      const focalOffsetX = focalOffset?.x || 0;
+      const focalOffsetY = focalOffset?.y || 0;
+      const sx = spawnAnchor ? spawnAnchor.x + focalOffsetX : (spawnInside
         ? layout.left + 40 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 80)
         : entryX);
-      const sy = spawnAnchor?.y ?? (spawnInside
+      const sy = spawnAnchor ? spawnAnchor.y + focalOffsetY : (spawnInside
         ? layout.floorTop + 50 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 80)
         : entryY);
       ia = interiorAnimations[citizen.id] = {
@@ -8309,7 +8337,8 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
         targetAnchor: spawnAnchor,
         nextTargetAt: 0,
         walkPhase: 0,
-        facing: 1
+        facing: focalOffsetX > 0 ? -1 : 1,
+        forcedBehaviorId: focalAnchor?.behaviors?.[idx % Math.max(1, focalAnchor.behaviors.length)] || null
       };
     }
     if (useThreeModels && Number.isInteger(ia.targetAnchor?.index)) {
@@ -8337,7 +8366,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
-    const baseSize = useThreeModels ? 27 : 16;
+    const baseSize = useThreeModels ? 31 : 16;
     const size = (isHover ? baseSize + 4 : baseSize) + sizeBoost;
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
