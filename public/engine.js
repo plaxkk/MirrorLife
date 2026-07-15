@@ -1688,7 +1688,40 @@ function normalizeInteriorExploration(savedRecords) {
             selfFulfillment: clamp(Math.round(Number(source.sceneReward.selfFulfillment) || 0), -10, 10),
             lifeStability: clamp(Math.round(Number(source.sceneReward.lifeStability) || 0), -10, 10)
           }
+        : null,
+      counterfactual: source.counterfactual && typeof source.counterfactual === "object"
+        ? {
+            factChoiceId: String(source.counterfactual.factChoiceId || "").slice(0, 80),
+            chosenChoiceId: String(source.counterfactual.chosenChoiceId || "").slice(0, 80),
+            alternativeChoiceId: String(source.counterfactual.alternativeChoiceId || "").slice(0, 80),
+            rewritten: !!source.counterfactual.rewritten,
+            receipt: String(source.counterfactual.receipt || "").slice(0, 1200),
+            turn: Math.max(0, Math.round(Number(source.counterfactual.turn) || 0))
+          }
         : null
+    }];
+  }));
+}
+
+function normalizeCounterfactualEpisodes(savedEpisodes) {
+  if (!savedEpisodes || typeof savedEpisodes !== "object" || Array.isArray(savedEpisodes)) return {};
+  return Object.fromEntries(Object.entries(savedEpisodes).slice(0, 12).map(([threadId, episode]) => {
+    const source = episode && typeof episode === "object" ? episode : {};
+    const normalizeEvent = (event) => ({
+      zoneId: String(event?.zoneId || "").slice(0, 80),
+      factChoiceId: String(event?.factChoiceId || "").slice(0, 80),
+      chosenChoiceId: String(event?.chosenChoiceId || "").slice(0, 80),
+      alternativeChoiceId: String(event?.alternativeChoiceId || "").slice(0, 80),
+      rewritten: !!event?.rewritten,
+      receipt: String(event?.receipt || "").slice(0, 1200),
+      turn: Math.max(0, Math.round(Number(event?.turn) || 0))
+    });
+    return [String(threadId).slice(0, 80), {
+      id: String(source.id || threadId).slice(0, 80),
+      rewriteTokens: clamp(Math.round(Number(source.rewriteTokens ?? 1)), 0, 1),
+      startedTurn: Math.max(0, Math.round(Number(source.startedTurn) || 0)),
+      rewrites: Array.isArray(source.rewrites) ? source.rewrites.slice(-8).map(normalizeEvent) : [],
+      receipts: Array.isArray(source.receipts) ? source.receipts.slice(-8).map((text) => String(text || "").slice(0, 1200)) : []
     }];
   }));
 }
@@ -1730,6 +1763,7 @@ function loadState() {
     firstLoop: null,
     causalGraph: null,
     interiorExploration: persistedInteriorExploration,
+    counterfactualEpisodes: {},
     hasSeenTutorial: false,
     isFirstVisit: false,
     story: null,
@@ -1765,6 +1799,7 @@ function loadState() {
       interiorExploration: Object.keys(persistedInteriorExploration).length
         ? persistedInteriorExploration
         : normalizeInteriorExploration(saved.interiorExploration),
+      counterfactualEpisodes: normalizeCounterfactualEpisodes(saved.counterfactualEpisodes),
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
       story: saved.story && typeof saved.story === "object" ? saved.story : null,
@@ -1792,6 +1827,7 @@ function buildPersistSnapshot() {
     firstLoop: state.firstLoop || null,
     causalGraph: state.causalGraph || null,
     interiorExploration: normalizeInteriorExploration(state.interiorExploration),
+    counterfactualEpisodes: normalizeCounterfactualEpisodes(state.counterfactualEpisodes),
     hasSeenTutorial: !!state.hasSeenTutorial,
     isFirstVisit: !!state.isFirstVisit,
     story: state.story || null,
