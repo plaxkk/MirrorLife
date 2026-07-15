@@ -2735,7 +2735,10 @@ function createActorObject(actor) {
     transparent: true,
     alphaTest: 0.08,
     depthTest: true,
-    depthWrite: false,
+    // Alpha-tested actor cards are opaque where a character exists. Writing
+    // those pixels to depth keeps two citizens from painting over each other
+    // in insertion order while transparent pixels remain discarded.
+    depthWrite: true,
     toneMapped: false
   });
   const sprite = new THREE.Sprite(material);

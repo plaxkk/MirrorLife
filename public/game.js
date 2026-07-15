@@ -8550,6 +8550,26 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
     if (Number.isInteger(ia.targetAnchor?.index)) {
       ia.targetAnchor = anchors.find((anchor) => anchor.index === ia.targetAnchor.index) || ia.targetAnchor;
     }
+    if (physics?.isWalkable && world && !physics.isWalkable(world, { x: ia.worldX, z: ia.worldZ }, citizenRadius)) {
+      const dynamic = [
+        ...getInteriorDynamicBodies(citizen.id),
+        { id: "player", x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0), radius: Number(physics.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) }
+      ];
+      const corrected = physics.findNearestWalkable(
+        world,
+        { x: ia.worldX, z: ia.worldZ },
+        citizenRadius,
+        { dynamic, selfId: citizen.id }
+      );
+      ia.worldX = corrected.x;
+      ia.worldZ = corrected.z;
+      ia.targetWorldX = corrected.x;
+      ia.targetWorldZ = corrected.z;
+      ia.path = [];
+      ia.pathIndex = 0;
+      ia.physicsContacts = ["runtime-correction"];
+      ia.nextTargetAt = 0;
+    }
     updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx);
     entries.push({
       citizen,

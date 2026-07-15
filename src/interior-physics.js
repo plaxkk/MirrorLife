@@ -5,50 +5,54 @@ const CITIZEN_RADIUS = 0.28;
 const NAV_CELL_SIZE = 0.32;
 const EPSILON = 1e-6;
 
+// World-space footprints of the models after interior-three normalizes and
+// applies its prop render profile. These include complete furniture sets (for
+// example the chairs around a round table), not just the semantic centrepiece.
+// rotation is the same model-facing correction used by the renderer.
 const MODEL_FOOTPRINTS = {
-  bed: { shape: "box", halfX: 1.02, halfZ: 0.66 },
-  counter: { shape: "box", halfX: 0.82, halfZ: 0.44 },
-  desk: { shape: "box", halfX: 0.7, halfZ: 0.46 },
-  seating: { shape: "box", halfX: 1.02, halfZ: 0.56 },
-  shelf: { shape: "box", halfX: 0.72, halfZ: 0.34 },
-  "wall-board": { sensorOnly: true },
-  "round-table": { shape: "circle", radius: 0.92 },
-  table: { shape: "circle", radius: 0.84 },
-  "plant-zone": { shape: "box", halfX: 0.78, halfZ: 0.42 },
-  workbench: { shape: "box", halfX: 0.84, halfZ: 0.48 },
-  easel: { shape: "box", halfX: 0.48, halfZ: 0.42 },
-  sink: { shape: "box", halfX: 0.7, halfZ: 0.4 },
-  altar: { shape: "box", halfX: 0.74, halfZ: 0.46 },
-  fountain: { shape: "circle", radius: 0.88 },
-  bench: { shape: "box", halfX: 0.92, halfZ: 0.38 },
-  "toy-corner": { shape: "circle", radius: 0.86 },
-  "reading-corner": { shape: "box", halfX: 0.9, halfZ: 0.62 },
-  "teacher-podium": { shape: "box", halfX: 0.64, halfZ: 0.42 },
-  "waiting-chair": { shape: "box", halfX: 0.5, halfZ: 0.48 },
-  "home-bed": { shape: "box", halfX: 1.06, halfZ: 0.68 },
-  bookcase: { shape: "box", halfX: 0.72, halfZ: 0.34 },
-  "service-counter": { shape: "box", halfX: 0.88, halfZ: 0.5 },
-  "retail-shelf": { shape: "box", halfX: 0.72, halfZ: 0.38 },
-  "supply-crate": { shape: "box", halfX: 0.54, halfZ: 0.48 },
-  "cafe-seating": { shape: "circle", radius: 0.94 },
-  "hot-food-counter": { shape: "box", halfX: 0.88, halfZ: 0.5 },
-  "exchange-board": { sensorOnly: true },
-  "proposal-podium": { shape: "box", halfX: 0.64, halfZ: 0.44 },
-  "notice-board": { sensorOnly: true },
-  "audience-seating": { shape: "box", halfX: 0.96, halfZ: 0.52 },
-  "record-desk": { shape: "box", halfX: 0.74, halfZ: 0.48 },
-  "office-workstation": { shape: "box", halfX: 0.9, halfZ: 0.52 },
-  "collaboration-board": { sensorOnly: true },
-  "mediation-podium": { shape: "box", halfX: 0.72, halfZ: 0.48 },
-  "archive-cabinet": { shape: "box", halfX: 0.66, halfZ: 0.36 },
-  "calming-chair": { shape: "box", halfX: 0.54, halfZ: 0.5 },
-  "garden-tool-shed": { shape: "box", halfX: 0.76, halfZ: 0.48 },
-  "gallery-wall": { sensorOnly: true },
-  "rehearsal-stage": { shape: "circle", radius: 0.92 },
-  "story-table": { shape: "box", halfX: 0.82, halfZ: 0.58 },
-  "music-corner": { shape: "box", halfX: 0.76, halfZ: 0.52 },
-  "meditation-seat": { shape: "circle", radius: 0.7 },
-  "memory-book": { shape: "box", halfX: 0.58, halfZ: 0.42 }
+  bed: { shape: "box", halfX: 1.08, halfZ: 0.7, rotation: -0.45 },
+  counter: { shape: "box", halfX: 0.86, halfZ: 0.48, rotation: -0.2 },
+  desk: { shape: "box", halfX: 0.92, halfZ: 0.62, rotation: -0.48 },
+  seating: { shape: "box", halfX: 1.08, halfZ: 0.64, rotation: -0.35 },
+  shelf: { shape: "box", halfX: 0.72, halfZ: 0.36 },
+  "wall-board": { shape: "box", halfX: 0.96, halfZ: 0.24 },
+  "round-table": { shape: "circle", radius: 1.14 },
+  table: { shape: "circle", radius: 1.08 },
+  "plant-zone": { shape: "box", halfX: 0.86, halfZ: 0.38, rotation: -0.2 },
+  workbench: { shape: "box", halfX: 0.92, halfZ: 1.02, rotation: -0.25 },
+  easel: { shape: "box", halfX: 0.64, halfZ: 0.94, rotation: -0.2 },
+  sink: { shape: "box", halfX: 0.52, halfZ: 0.72, rotation: -0.15 },
+  altar: { shape: "box", halfX: 1.06, halfZ: 0.99, rotation: -0.2 },
+  fountain: { shape: "circle", radius: 1.22 },
+  bench: { shape: "box", halfX: 1.06, halfZ: 0.98, rotation: -0.2 },
+  "toy-corner": { shape: "circle", radius: 1.09 },
+  "reading-corner": { shape: "box", halfX: 1.04, halfZ: 0.72, rotation: -0.34 },
+  "teacher-podium": { shape: "box", halfX: 0.51, halfZ: 0.44, rotation: -0.18 },
+  "waiting-chair": { shape: "box", halfX: 1.0, halfZ: 0.32, rotation: -0.18 },
+  "home-bed": { shape: "box", halfX: 1.2, halfZ: 0.98, rotation: -0.42 },
+  bookcase: { shape: "box", halfX: 0.59, halfZ: 0.29 },
+  "service-counter": { shape: "box", halfX: 1.06, halfZ: 0.7, rotation: -0.2 },
+  "retail-shelf": { shape: "box", halfX: 1.0, halfZ: 0.3, rotation: -0.08 },
+  "supply-crate": { shape: "box", halfX: 1.04, halfZ: 0.48, rotation: -0.28 },
+  "cafe-seating": { shape: "circle", radius: 1.08 },
+  "hot-food-counter": { shape: "box", halfX: 1.05, halfZ: 0.5, rotation: -0.2 },
+  "exchange-board": { shape: "box", halfX: 0.97, halfZ: 0.36, rotation: -0.08 },
+  "proposal-podium": { shape: "box", halfX: 0.51, halfZ: 0.44, rotation: -0.2 },
+  "notice-board": { shape: "box", halfX: 0.93, halfZ: 0.43, rotation: -0.06 },
+  "audience-seating": { shape: "box", halfX: 0.82, halfZ: 1.04, rotation: -0.3 },
+  "record-desk": { shape: "box", halfX: 1.06, halfZ: 0.89, rotation: -0.28 },
+  "office-workstation": { shape: "box", halfX: 1.08, halfZ: 0.88, rotation: -0.32 },
+  "collaboration-board": { shape: "box", halfX: 0.97, halfZ: 0.24, rotation: -0.08 },
+  "mediation-podium": { shape: "box", halfX: 0.98, halfZ: 0.96, rotation: -0.18 },
+  "archive-cabinet": { shape: "box", halfX: 0.67, halfZ: 0.46, rotation: -0.12 },
+  "calming-chair": { shape: "box", halfX: 1.08, halfZ: 1.01, rotation: -0.3 },
+  "garden-tool-shed": { shape: "box", halfX: 0.78, halfZ: 0.46, rotation: -0.12 },
+  "gallery-wall": { shape: "box", halfX: 0.97, halfZ: 0.24, rotation: -0.04 },
+  "rehearsal-stage": { shape: "circle", radius: 1.08 },
+  "story-table": { shape: "box", halfX: 1.06, halfZ: 1.02, rotation: -0.3 },
+  "music-corner": { shape: "box", halfX: 1.02, halfZ: 0.98, rotation: -0.22 },
+  "meditation-seat": { shape: "circle", radius: 1.04 },
+  "memory-book": { shape: "box", halfX: 1.0, halfZ: 1.0, rotation: -0.18 }
 };
 
 function finite(value, fallback = 0) {
@@ -261,7 +265,13 @@ function isWalkable(world, point, radius = CITIZEN_RADIUS, dynamic = [], selfId 
 }
 
 function moveCircle(world, from, delta, radius = PLAYER_RADIUS, options = {}) {
-  const start = resolvePosition(world, { x: finite(from?.x), z: finite(from?.z) }, radius, options.dynamic, options.selfId);
+  const dynamic = options.dynamic || [];
+  const selfId = options.selfId || "";
+  const rawStart = { x: finite(from?.x), z: finite(from?.z) };
+  const resolvedStart = resolvePosition(world, rawStart, radius, dynamic, selfId);
+  const start = isWalkable(world, resolvedStart, radius, dynamic, selfId)
+    ? resolvedStart
+    : findNearestWalkable(world, rawStart, radius, { dynamic, selfId });
   const dx = finite(delta?.x);
   const dz = finite(delta?.z);
   const distance = Math.hypot(dx, dz);
@@ -269,14 +279,37 @@ function moveCircle(world, from, delta, radius = PLAYER_RADIUS, options = {}) {
   let x = start.x;
   let z = start.z;
   let blocked = start.corrected;
-  const contacts = [...start.contacts];
+  const contacts = [...(start.contacts || [])];
   for (let step = 0; step < steps; step += 1) {
     const proposed = { x: x + dx / steps, z: z + dz / steps };
-    const resolved = resolvePosition(world, proposed, radius, options.dynamic, options.selfId);
-    if (resolved.corrected) blocked = true;
-    x = resolved.x;
-    z = resolved.z;
-    contacts.push(...resolved.contacts);
+    const resolved = resolvePosition(world, proposed, radius, dynamic, selfId);
+    if (isWalkable(world, resolved, radius, dynamic, selfId)) {
+      if (resolved.corrected) blocked = true;
+      x = resolved.x;
+      z = resolved.z;
+      contacts.push(...resolved.contacts);
+      continue;
+    }
+
+    // Intersecting furniture can push a circle from one collider into another.
+    // Try each axis independently for a natural wall slide. If neither result
+    // is legal, keep the previous legal position instead of returning a body
+    // embedded in scene geometry.
+    blocked = true;
+    const axisCandidates = [
+      resolvePosition(world, { x: proposed.x, z }, radius, dynamic, selfId),
+      resolvePosition(world, { x, z: proposed.z }, radius, dynamic, selfId)
+    ];
+    const axisMove = axisCandidates
+      .filter((candidate) => isWalkable(world, candidate, radius, dynamic, selfId))
+      .sort((a, b) => Math.hypot(b.x - x, b.z - z) - Math.hypot(a.x - x, a.z - z))[0];
+    if (axisMove) {
+      x = axisMove.x;
+      z = axisMove.z;
+      contacts.push(...axisMove.contacts);
+    } else {
+      contacts.push(...resolved.contacts);
+    }
   }
   return { x, z, blocked, contacts: [...new Set(contacts)] };
 }
