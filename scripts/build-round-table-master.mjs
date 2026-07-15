@@ -42,8 +42,8 @@ function run(command, argv) {
 }
 
 const blender = await findBlender();
-const script = path.resolve("scripts/blender-build-plant-zone.py");
-const packetRoot = path.resolve("dist/interior-3d-work/fidelity-packets/plant-zone");
+const script = path.resolve("scripts/blender-build-round-table.py");
+const packetRoot = path.resolve("dist/interior-3d-work/fidelity-packets/round-table");
 
 for (const lod of ["master", "web"]) {
   await run(blender, [

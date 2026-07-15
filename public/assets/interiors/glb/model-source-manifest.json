@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-13T12:50:45.711Z",
+  "updatedAt": "2026-07-14T01:07:21.345Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
   "backupDir": "dist/interior-3d-work/backups/2026-07-12T04-38-36-418Z",
@@ -293,11 +293,45 @@
     {
       "slot": "round-table",
       "label": "圆桌 / 共识桌",
-      "provider": "procedural-threejs",
-      "source": "dist/interior-3d-work/procedural-threejs/generated-glb/round-table.glb",
+      "provider": "blender-manual",
+      "source": "dist/interior-3d-work/fidelity-packets/round-table/web/round-table.glb",
       "target": "public/assets/interiors/glb/round-table.glb",
-      "bytes": 1299548,
-      "importedAt": "2026-07-10T04:11:26.461Z"
+      "bytes": 1981224,
+      "importedAt": "2026-07-10T04:11:26.461Z",
+      "masterSource": "dist/interior-3d-work/fidelity-packets/round-table/master/round-table.blend",
+      "sourceReference": "dist/assets/interior-props-image2/residence/round_dining_table.png",
+      "qualityTier": "development",
+      "runtimeLod": {
+        "installedAt": "2026-07-14T01:07:21.345Z",
+        "sourceModel": "dist/interior-3d-work/fidelity-packets/round-table/web/round-table.glb",
+        "target": "public/assets/interiors/glb/round-table.glb",
+        "backup": "dist/interior-3d-work/backups/2026-07-14T01-07-21-345Z/round-table.glb",
+        "audit": "dist/interior-3d-work/runtime-lod-audits/round-table.json",
+        "simplifyRatio": null,
+        "simplifyError": null,
+        "triangleCount": 29904,
+        "vertexCount": 58656
+      },
+      "geometryAudit": {
+        "auditedAt": "2026-07-14T01:07:21.554Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "webTriangleCount": 29904,
+        "web": {
+          "file": "public/assets/interiors/glb/round-table.glb",
+          "primitiveCount": 91,
+          "trianglePrimitiveCount": 91,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 29904,
+          "vertexCount": 58656,
+          "weldedVertexCount": 15122,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      }
     },
     {
       "slot": "table",

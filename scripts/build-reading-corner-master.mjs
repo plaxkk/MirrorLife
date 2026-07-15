@@ -45,6 +45,8 @@ const blender = await findBlender();
 await run(blender, [
   "--background",
   "--factory-startup",
+  "--python-exit-code",
+  "1",
   "--python",
   path.resolve("scripts/blender-build-reading-corner.py"),
   "--",

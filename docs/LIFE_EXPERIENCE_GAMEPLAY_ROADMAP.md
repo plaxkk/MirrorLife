@@ -264,4 +264,4 @@ Still intentionally deferred:
 - Real multi-user matching.
 - Physical robot hardware.
 - Backend persistence.
-- Production LLM or agent runtime.
+- Production LLM or remote agent runtime. The demo does include a local rule-driven agent runtime with memory, reflection, skill and audit stores; `public/narrative.js` also retains a disabled browser-direct LLM experiment, which is not configured or used in the current flow.

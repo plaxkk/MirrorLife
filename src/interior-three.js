@@ -148,6 +148,8 @@ let camera;
 let keyLight;
 let roomRoot;
 let modelRoot;
+let actorRoot;
+let physicsDebugRoot;
 let lastWidth = 0;
 let lastHeight = 0;
 let roomSignature = "";
@@ -157,7 +159,12 @@ let lastStatsPublishedAt = 0;
 let contactShadowTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
+let actorTextureLoading;
+let actorAtlasTexture;
+let physicsDebugSignature = "";
 const surfaceBumpTextures = new Map();
+const actorFrameTextures = new Map();
+const actorObjects = new Map();
 
 async function loadThree() {
   if (THREE && GLTFLoader) return true;
@@ -225,7 +232,11 @@ function ensureLayer() {
 
   roomRoot = new THREE.Group();
   modelRoot = new THREE.Group();
-  scene.add(roomRoot, modelRoot);
+  actorRoot = new THREE.Group();
+  physicsDebugRoot = new THREE.Group();
+  actorRoot.name = "interior-actors";
+  physicsDebugRoot.name = "interior-physics-debug";
+  scene.add(roomRoot, modelRoot, actorRoot, physicsDebugRoot);
 
   const hemi = new THREE.HemisphereLight(0xfff8eb, 0x6d5645, 0.44);
   scene.add(hemi);
@@ -2627,6 +2638,236 @@ function rebuildModels(items) {
   return true;
 }
 
+function loadActorTextureAtlas() {
+  if (actorAtlasTexture) return Promise.resolve(actorAtlasTexture);
+  if (actorTextureLoading) return actorTextureLoading;
+  actorTextureLoading = new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => {
+      const source = document.createElement("canvas");
+      source.width = image.naturalWidth;
+      source.height = image.naturalHeight;
+      const context = source.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        actorTextureLoading = null;
+        resolve(null);
+        return;
+      }
+      context.drawImage(image, 0, 0);
+      try {
+        const imageData = context.getImageData(0, 0, source.width, source.height);
+        const pixels = imageData.data;
+        for (let index = 0; index < pixels.length; index += 4) {
+          const red = pixels[index];
+          const green = pixels[index + 1];
+          const blue = pixels[index + 2];
+          const minimum = Math.min(red, green, blue);
+          const maximum = Math.max(red, green, blue);
+          if (minimum > 246 && maximum - minimum < 14) pixels[index + 3] = 0;
+          else if (minimum > 232 && maximum - minimum < 18) pixels[index + 3] = Math.min(pixels[index + 3], 80);
+        }
+        context.putImageData(imageData, 0, 0);
+      } catch {
+        // The local same-origin asset is expected to be readable. Keep the
+        // original atlas if a browser privacy policy prevents pixel access.
+      }
+      actorAtlasTexture = new THREE.CanvasTexture(source);
+      actorAtlasTexture.colorSpace = THREE.SRGBColorSpace;
+      actorAtlasTexture.wrapS = THREE.ClampToEdgeWrapping;
+      actorAtlasTexture.wrapT = THREE.ClampToEdgeWrapping;
+      actorAtlasTexture.minFilter = THREE.LinearFilter;
+      actorAtlasTexture.magFilter = THREE.LinearFilter;
+      actorAtlasTexture.needsUpdate = true;
+      window.markRenderActive?.(1800);
+      resolve(actorAtlasTexture);
+    };
+    image.onerror = () => {
+      actorTextureLoading = null;
+      resolve(null);
+    };
+    image.src = `/assets/mirrorlife-citizen-sprite.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
+  });
+  return actorTextureLoading;
+}
+
+function getActorFrameTexture(frame = 0) {
+  if (!actorAtlasTexture) return null;
+  const safeFrame = Math.max(0, Math.min(7, Math.round(Number(frame) || 0)));
+  if (actorFrameTextures.has(safeFrame)) return actorFrameTextures.get(safeFrame);
+  const texture = actorAtlasTexture.clone();
+  const column = safeFrame % 4;
+  const row = Math.floor(safeFrame / 4);
+  texture.repeat.set(1 / 4, 1 / 2);
+  texture.offset.set(column / 4, 1 - (row + 1) / 2);
+  texture.needsUpdate = true;
+  actorFrameTextures.set(safeFrame, texture);
+  return texture;
+}
+
+function createActorObject(actor) {
+  const texture = getActorFrameTexture(actor.frame);
+  if (!texture) return null;
+  const group = new THREE.Group();
+  group.name = `actor-${actor.id}`;
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.78, 0.48),
+    new THREE.MeshBasicMaterial({
+      color: 0x4d3528,
+      map: getContactShadowTexture(),
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+      toneMapped: false
+    })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.025;
+  group.add(shadow);
+
+  const material = new THREE.SpriteMaterial({
+    map: texture,
+    transparent: true,
+    alphaTest: 0.08,
+    depthTest: true,
+    depthWrite: false,
+    toneMapped: false
+  });
+  const sprite = new THREE.Sprite(material);
+  sprite.center.set(0.5, 0.035);
+  sprite.renderOrder = 2;
+  group.add(sprite);
+  actorRoot.add(group);
+  const entry = { group, sprite, shadow, frame: Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0))) };
+  actorObjects.set(actor.id, entry);
+  return entry;
+}
+
+function updateActors(actors = [], now = performance.now()) {
+  if (!actorRoot) return false;
+  if (!actorAtlasTexture) {
+    loadActorTextureAtlas();
+    actorRoot.visible = false;
+    return false;
+  }
+  actorRoot.visible = true;
+  const activeIds = new Set();
+  actors.forEach((actor) => {
+    if (!actor?.id) return;
+    activeIds.add(actor.id);
+    let entry = actorObjects.get(actor.id);
+    if (!entry) entry = createActorObject(actor);
+    if (!entry) return;
+    const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
+    if (entry.frame !== frame) {
+      entry.frame = frame;
+      entry.sprite.material.map = getActorFrameTexture(frame);
+      entry.sprite.material.needsUpdate = true;
+    }
+    const walking = actor.state === "walking";
+    const phase = Number(actor.walkPhase || 0);
+    const bob = walking ? Math.abs(Math.sin(phase)) * 0.035 : Math.sin(now * 0.0015 + frame) * 0.012;
+    const baseScale = Math.max(0.72, Math.min(1.38, Number(actor.scale || 1)));
+    entry.group.position.set(Number(actor.worldX || 0), 0, Number(actor.worldZ || 0));
+    entry.sprite.position.y = 0.05 + bob;
+    entry.sprite.scale.set(1.04 * baseScale * (Number(actor.facing || 1) < 0 ? -1 : 1), 1.72 * baseScale, 1);
+    entry.shadow.scale.setScalar(walking ? 0.92 : 1);
+    entry.group.visible = actor.visible !== false;
+  });
+  [...actorObjects.entries()].forEach(([id, entry]) => {
+    if (activeIds.has(id)) return;
+    entry.group.removeFromParent();
+    entry.sprite.material.dispose();
+    entry.shadow.geometry.dispose();
+    entry.shadow.material.dispose();
+    actorObjects.delete(id);
+  });
+  return true;
+}
+
+function projectWorldPoints(points = [], width = lastWidth || window.innerWidth, height = lastHeight || window.innerHeight) {
+  if (!camera) return [];
+  const cameraDirection = new THREE.Vector3();
+  camera.getWorldDirection(cameraDirection);
+  return points.map((point) => {
+    const world = new THREE.Vector3(Number(point.worldX || 0), Number(point.worldY ?? 0.06), Number(point.worldZ || 0));
+    const toPoint = world.clone().sub(camera.position);
+    const distance = Math.max(0.1, toPoint.length());
+    const projected = world.clone().project(camera);
+    return {
+      ...point,
+      x: (projected.x * 0.5 + 0.5) * width,
+      y: (-projected.y * 0.5 + 0.5) * height,
+      depth: projected.z,
+      distance,
+      scale: Math.max(0.66, Math.min(1.22, 4.35 / distance)),
+      visible: cameraDirection.dot(toPoint) > 0 && projected.z >= -1 && projected.z <= 1
+    };
+  });
+}
+
+function clearPhysicsDebug() {
+  if (!physicsDebugRoot) return;
+  physicsDebugRoot.traverse((node) => {
+    if (node === physicsDebugRoot) return;
+    node.geometry?.dispose?.();
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => material.dispose?.());
+  });
+  clearGroup(physicsDebugRoot);
+}
+
+function updatePhysicsDebug(physics = {}) {
+  if (!physicsDebugRoot) return;
+  const enabled = !!physics.enabled;
+  physicsDebugRoot.visible = enabled;
+  if (!enabled) return;
+  const colliders = physics.colliders || [];
+  const signature = JSON.stringify(colliders.map((collider) => [collider.id, collider.shape, collider.x, collider.z, collider.radius, collider.halfX, collider.halfZ, collider.rotation]));
+  if (signature !== physicsDebugSignature) {
+    physicsDebugSignature = signature;
+    clearPhysicsDebug();
+    const solidMaterial = new THREE.LineBasicMaterial({ color: 0xe63946, transparent: true, opacity: 0.8, depthTest: false });
+    colliders.forEach((collider) => {
+      let geometry;
+      if (collider.shape === "circle") {
+        geometry = new THREE.RingGeometry(Math.max(0.01, collider.radius - 0.018), collider.radius + 0.018, 32);
+      } else {
+        const shape = new THREE.Shape();
+        shape.moveTo(-collider.halfX, -collider.halfZ);
+        shape.lineTo(collider.halfX, -collider.halfZ);
+        shape.lineTo(collider.halfX, collider.halfZ);
+        shape.lineTo(-collider.halfX, collider.halfZ);
+        shape.closePath();
+        geometry = new THREE.ShapeGeometry(shape);
+      }
+      const material = collider.shape === "circle"
+        ? new THREE.MeshBasicMaterial({ color: 0xe63946, transparent: true, opacity: 0.38, side: THREE.DoubleSide, depthTest: false })
+        : new THREE.MeshBasicMaterial({ color: 0xe63946, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthTest: false });
+      const mesh = new THREE.Mesh(geometry, material);
+      mesh.rotation.x = -Math.PI / 2;
+      mesh.rotation.z = Number(collider.rotation || 0);
+      mesh.position.set(Number(collider.x || 0), 0.052, Number(collider.z || 0));
+      mesh.renderOrder = 20;
+      physicsDebugRoot.add(mesh);
+    });
+    solidMaterial.dispose();
+  }
+  [...physicsDebugRoot.children].forEach((child) => {
+    if (child.userData.dynamicPhysicsMarker) child.removeFromParent();
+  });
+  (physics.actors || []).forEach((actor) => {
+    const geometry = new THREE.RingGeometry(Math.max(0.01, Number(actor.radius || 0.28) - 0.016), Number(actor.radius || 0.28) + 0.016, 28);
+    const material = new THREE.MeshBasicMaterial({ color: actor.kind === "player" ? 0x4ea8de : 0x2ecc71, transparent: true, opacity: 0.88, side: THREE.DoubleSide, depthTest: false });
+    const marker = new THREE.Mesh(geometry, material);
+    marker.rotation.x = -Math.PI / 2;
+    marker.position.set(Number(actor.x || 0), 0.062, Number(actor.z || 0));
+    marker.renderOrder = 21;
+    marker.userData.dynamicPhysicsMarker = true;
+    physicsDebugRoot.add(marker);
+  });
+}
+
 function updateCamera(payload = {}) {
   const yaw = Number(payload.yaw || 0);
   const pitch = Number(payload.pitch || 0.58);
@@ -2634,7 +2875,13 @@ function updateCamera(payload = {}) {
   const playerZ = Number(payload.cameraZ || 0);
   const forwardX = Math.sin(yaw);
   const forwardZ = -Math.cos(yaw);
-  const cameraBack = 5.02;
+  const desiredCameraBack = 5.02;
+  const cameraRayX = -forwardX;
+  const cameraRayZ = -forwardZ;
+  const radialDot = playerX * cameraRayX + playerZ * cameraRayZ;
+  const roomRadius = ROOM_RADIUS - 0.2;
+  const boundaryDistance = -radialDot + Math.sqrt(Math.max(0.01, radialDot * radialDot + roomRadius * roomRadius - playerX * playerX - playerZ * playerZ));
+  const cameraBack = Math.max(1.45, Math.min(desiredCameraBack, boundaryDistance - 0.14));
   const focusDistance = 0.7;
   const focusHeight = 0.76 + (pitch - 0.36) / 0.4 * 0.56;
   camera.position.set(
@@ -2701,21 +2948,29 @@ function update(payload = {}) {
   rebuildRoom(payload.theme || {});
   updateCamera(payload);
   const ready = rebuildModels(activeItems);
+  const actorsReady = updateActors(payload.actors || [], performance.now());
+  updatePhysicsDebug(payload.physics || {});
 
   canvas.style.display = payload.visible === false ? "none" : "block";
   updateProjections(activeItems, width, height);
+  const actorProjections = projectWorldPoints((payload.actors || []).map((actor) => ({
+    ...actor,
+    worldY: actor.worldY ?? 0.05
+  })), width, height);
   if (payload.visible !== false) renderer.render(scene, camera);
   const now = Date.now();
   if (now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
     canvas.dataset.renderStats = JSON.stringify(getStats());
   }
-  return { ready, projections: [...projectedItems.values()] };
+  return { ready, actorsReady, projections: [...projectedItems.values()], actorProjections };
 }
 
 function hide() {
   if (!canvas || !renderer) return;
   canvas.style.display = "none";
+  if (actorRoot) actorRoot.visible = false;
+  if (physicsDebugRoot) physicsDebugRoot.visible = false;
   projectedItems.clear();
 }
 
@@ -2735,6 +2990,7 @@ function getStats() {
     activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,
     activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
     cachedModelCount: cache.size,
+    activeActorCount: actorObjects.size,
     drawCalls: Number(render.calls || 0),
     triangles: Number(render.triangles || 0),
     geometries: Number(memory.geometries || 0),
@@ -2749,5 +3005,6 @@ window.MirrorLifeInterior3D = {
   isReady,
   loadModel,
   getProjections,
+  projectWorldPoints,
   getStats
 };

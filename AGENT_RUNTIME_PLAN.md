@@ -12,7 +12,7 @@
 
 1. 世界状态中已包含 `agents` 运行时、`memoryStore`、`reflectionStore`、`skillStore`、`inbox`、`outbox` 和 `auditLog`。
 2. 每次社会回合都会写入 agent 记忆、反思与审计记录。
-3. 社会页已经有 `Agent 运行时` 面板展示循环、记忆、反思、技能和最近审计。
+3. 社会页会在任务、关系、剧情志和回声中展示这套本地运行时的结果；当前没有独立的 `Agent 运行时` 调试面板。
 4. 用户输入和玩家动作会通过同一条 agent 闭环进入社会推演。
 
 ## 1. 目标
@@ -416,15 +416,7 @@ type MemoryItem = {
 5. 社会准则评分。
 6. 回声档案。
 
-适合直接加上的下一层：
-
-1. `memoryStore`
-2. `reflectionStore`
-3. `agentInbox`
-4. `agentOutbox`
-5. `auditLog`
-
-如果要继续往代码里落，我建议优先把这五个状态挂到现有 `state.society` 里。
+当前本地运行时已经具备这些状态字段；如果继续工程化，下一步更适合补充专门的可观测界面和可替换的远程 agent 适配层，而不是重复添加同名 store。
 
 ## 12. 建议的最小可运行版本
 

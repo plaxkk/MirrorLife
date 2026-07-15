@@ -2,13 +2,13 @@
 
 目标：把 `dist/assets/interior-props-image2` 里的陈设物图片转成浏览器可加载的 `.glb`，替换当前 `public/assets/interiors/glb` 下的程序化室内陈设模型。
 
-当前游戏运行时只需要 17 个 GLB 槽位，不需要一次把 55 张图片全部做成独立模型。黑客松版本先替换这 17 个槽位，就能明显改变室内陈设风格。
+当前室内运行时共有 44 个 GLB 文件，另有部分语义物件可由专用 Three.js 工厂构建。`config/interior-3d-model-map.json` 中的 17 个槽位是第一批基础资产与严格重建门禁范围，不再代表全部运行时模型；当前 10 类室内蓝图合计有 54 个陈设放置位。
 
 ## Three.js 程序化模型
 
 当外部 2D-to-3D 平台额度不足时，可以直接生成仓库内维护的精细卡通模型。生成器把参考图拆成主体结构、功能件、装饰件和轮廓线，使用 Three.js 几何体与 PBR 平涂材质重建，产物是真正可旋转观察的 GLB，不是图片裁剪或平面卡片。
 
-默认只生成尚未由 Tripo / 混元替换的 12 个槽位：
+默认生成当前 17 个基础槽位中尚未由 Tripo / 混元替换的 12 个程序化模型：
 
 ```bash
 npm run generate:interior-threejs
@@ -22,13 +22,13 @@ npm run verify:interior-3d
 npm run generate:interior-threejs -- --slots desk,round-table,table
 ```
 
-## Runtime Slots
+## Base Reconstruction Slots
 
 配置文件：`config/interior-3d-model-map.json`
 
 运行时目录：`public/assets/interiors/glb`
 
-必需模型：
+`config/interior-3d-model-map.json` 定义以下 17 个基础重建槽位。运行时目录还包含后续加入的语义专用 GLB，因此这不是完整运行时文件清单：
 
 - `bed.glb`
 - `counter.glb`
@@ -106,7 +106,7 @@ This creates:
 
 Use this small batch when the browser automation plugin cannot control Chrome or when you want to spend free credits cautiously.
 
-当前仓库已经用 TripoAI 完成并导入了 4 个高优先级真 3D 槽位：
+当前来源清单显示，早期 Tripo 单图模型包括 `bed`、`counter`、`shelf` 和 `seating`。它们属于开发级资产，不等同于通过七视图与发布证明门禁的正式模型：
 
 - `bed`
 - `counter`
@@ -178,7 +178,7 @@ This creates:
 - `dist/interior-3d-work/hunyuan/generated-glb/`
 - `dist/interior-3d-work/hunyuan/hunyuan-jobs.jsonl`
 
-只打包仍然是 `sprite-card` 占位的运行时槽位，避免重复生成已经由 Tripo 完成的模型：
+以下命令展示的是早期 `sprite-card` 回退迁移批次的示例。当前来源清单已混合 Tripo、混元、多视图候选、Blender 手工模型和程序化/Three.js 开发资产，不能再把这 13 项视为“当前剩余”状态：
 
 ```bash
 npm run package:interior-3d-web -- --provider hunyuan --limit 13 --fallback-only --force
@@ -190,7 +190,7 @@ npm run package:interior-3d-web -- --provider hunyuan --limit 13 --fallback-only
 dist/interior-3d-work/hunyuan/web-upload-batch-13/
 ```
 
-这个批次当前只包含剩余 13 个槽位：
+该历史批次包含 13 个基础槽位：
 
 - `wall-board`
 - `desk`

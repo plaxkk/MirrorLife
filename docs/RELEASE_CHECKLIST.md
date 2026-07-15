@@ -7,10 +7,10 @@
 - [ ] Demo subtitle/chapter label confirmed, including whether `回声之城` is used
 - [x] One-line positioning confirmed: `你想活出怎样的人生`
 - [ ] Public repository decision deferred until the demo proves an initial fun/play value
-- [ ] README reflects current demo scope and setup
-- [ ] `.env.example` contains no real secrets
-- [ ] License file is present and correct
-- [ ] Experimental frontend API key entry remains hidden until backend proxy is ready
+- [x] README reflects current demo scope and setup
+- [x] `.env.example` contains no real secrets
+- [x] License file is present and declares MIT
+- [ ] Disabled browser-direct LLM code in `public/narrative.js` is removed or replaced by a backend proxy before production use; there is currently no frontend API-key entry
 - [ ] Existing non-module script Vite build warning is either fixed or documented as accepted
 - [ ] Any company/private material stays outside this repository
 
@@ -47,7 +47,7 @@
 
 ## Known Phase 1 Boundaries
 
-- No production LLM API from browser
+- No enabled production LLM path. `public/narrative.js` retains disabled browser-direct experiment code and must not receive a production key
 - No Supabase persistence
 - No payment or subscription wall
 - No psychotherapy or mental-health treatment claim

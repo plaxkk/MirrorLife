@@ -92,7 +92,7 @@
       "label": "圆桌 / 共识桌",
       "priority": 7,
       "primaryImage": "residence/round_dining_table.png",
-      "fallbackImages": ["residence/dining_table_set.png", "market_cafe/cafe_table_corner.png"],
+      "fallbackImages": ["residence/dining_table_set.png"],
       "requiredParts": ["round tabletop", "central support", "table base", "four chairs", "chair backs", "chair legs", "center plant", "finished underside"],
       "notes": "Used for meetings and social interactions."
     },

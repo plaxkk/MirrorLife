@@ -59,6 +59,8 @@ let interiorAnimations = {};
 let interiorHotspots = [];
 let interiorNearbyAnchor = null;
 let interiorFocusPropIndex = null;
+let interiorPhysicsWorld = null;
+let interiorPhysicsDebugVisible = new URLSearchParams(window.location.search).get("debugPhysics") === "1";
 let activeEncounters = [];
 let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
@@ -81,10 +83,10 @@ const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
 const INTERIOR_PANORAMA_FOV = Math.PI * 0.38;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
-const INTERIOR_PLAYER_RADIUS = 2.72;
 const INTERIOR_PLAYER_SPEED = 1.55;
 const INTERIOR_INTERACTION_RADIUS = 2.05;
-const INTERIOR_MODEL_CLEARANCE = 0.82;
+const INTERIOR_FALLBACK_PLAYER_RADIUS = 0.32;
+const INTERIOR_FALLBACK_CITIZEN_RADIUS = 0.28;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -5621,6 +5623,95 @@ function wrapInteriorAngle(angle) {
   return (wrapped < 0 ? wrapped + INTERIOR_PANORAMA_TAU : wrapped) - Math.PI;
 }
 
+function getInteriorPhysicsApi() {
+  return window.MirrorLifeInteriorPhysics || null;
+}
+
+function getInteriorPhysicsVariant(blueprint) {
+  return hashCommunitySeed(interiorView?.zone?.id || blueprint?.key || "home", "interior-room") % 4;
+}
+
+function getInteriorPhysicsItems(blueprint) {
+  return (blueprint?.props || []).map((prop, index, props) => {
+    if (prop.render3d === false) return null;
+    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    return {
+      ...placement,
+      key: `prop-${index}`,
+      index,
+      model: interiorThreeModel(interiorPropModel(prop, blueprint)),
+      renderModel: prop.renderModel !== false,
+      physicsSolid: prop.physicsSolid !== false,
+      label: prop.label || "",
+      kind: "prop",
+      anchorHeight: 1.18,
+      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25) * (prop.focal ? 1.32 : 1) * Number(prop.displayScale || 1),
+      visible: true
+    };
+  }).filter(Boolean);
+}
+
+function ensureInteriorPhysicsWorld(blueprint) {
+  const physics = getInteriorPhysicsApi();
+  if (!physics?.createWorld || !interiorView || !blueprint) return null;
+  const variant = getInteriorPhysicsVariant(blueprint);
+  const signature = `${interiorView.zone.id}|${blueprint.key}|${variant}`;
+  if (interiorPhysicsWorld?.signature === signature) return interiorPhysicsWorld;
+  const items = getInteriorPhysicsItems(blueprint);
+  const world = physics.createWorld({
+    id: interiorView.zone.id,
+    archetype: blueprint.key,
+    variant,
+    items,
+    spawn: { x: 0, z: 3.72 }
+  });
+  world.signature = signature;
+  interiorPhysicsWorld = world;
+  interiorView.physicsSignature = signature;
+  interiorView.physics = physics.getDebugSnapshot?.(world) || null;
+  window.__mirrorLifeInteriorPhysics = {
+    zoneId: interiorView.zone.id,
+    world,
+    get snapshot() {
+      return physics.getDebugSnapshot?.(world) || null;
+    }
+  };
+  return world;
+}
+
+function getInteriorInteractionPoint(index, fallback) {
+  const point = interiorPhysicsWorld?.interactions?.get?.(`prop-${index}`);
+  return point && Number.isFinite(point.x) && Number.isFinite(point.z)
+    ? { x: point.x, z: point.z }
+    : { x: fallback.interactionWorldX, z: fallback.interactionWorldZ };
+}
+
+function getInteriorDynamicBodies(excludeId = "") {
+  const physics = getInteriorPhysicsApi();
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  return Object.entries(interiorAnimations)
+    .filter(([id, animation]) => id !== excludeId && Number.isFinite(animation?.worldX) && Number.isFinite(animation?.worldZ))
+    .map(([id, animation]) => ({ id, x: animation.worldX, z: animation.worldZ, radius: citizenRadius }));
+}
+
+function getInteriorPhysicsAnchors(blueprint) {
+  const props = blueprint?.props || [];
+  return props.map((prop, index) => {
+    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const interaction = getInteriorInteractionPoint(index, placement);
+    return {
+      ...placement,
+      interactionWorldX: interaction.x,
+      interactionWorldZ: interaction.z,
+      label: prop.label,
+      behaviors: prop.behaviors || ["tea"],
+      index,
+      prop,
+      visible: true
+    };
+  });
+}
+
 function moveInteriorPlayer(forward, strafe, distance) {
   const magnitude = Math.hypot(forward, strafe);
   if (!magnitude || !distance) return;
@@ -5631,28 +5722,32 @@ function moveInteriorPlayer(forward, strafe, distance) {
   const forwardZ = -Math.cos(yaw);
   const rightX = Math.cos(yaw);
   const rightZ = Math.sin(yaw);
-  let nextX = Number(interiorOrbit.x || 0) + (forwardX * normalizedForward + rightX * normalizedStrafe) * distance;
-  let nextZ = Number(interiorOrbit.z || 0) + (forwardZ * normalizedForward + rightZ * normalizedStrafe) * distance;
-  const radius = Math.hypot(nextX, nextZ);
-  if (radius > INTERIOR_PLAYER_RADIUS) {
-    nextX = nextX / radius * INTERIOR_PLAYER_RADIUS;
-    nextZ = nextZ / radius * INTERIOR_PLAYER_RADIUS;
+  const delta = {
+    x: (forwardX * normalizedForward + rightX * normalizedStrafe) * distance,
+    z: (forwardZ * normalizedForward + rightZ * normalizedStrafe) * distance
+  };
+  const physics = getInteriorPhysicsApi();
+  const world = interiorView ? ensureInteriorPhysicsWorld(getInteriorBlueprint(interiorView.zone)) : null;
+  if (physics?.moveCircle && world) {
+    const moved = physics.moveCircle(
+      world,
+      { x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0) },
+      delta,
+      Number(physics.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS),
+      { dynamic: getInteriorDynamicBodies("player"), selfId: "player" }
+    );
+    interiorOrbit.x = moved.x;
+    interiorOrbit.z = moved.z;
+    interiorOrbit.blocked = moved.blocked;
+    interiorOrbit.contacts = moved.contacts;
+  } else {
+    const nextX = Number(interiorOrbit.x || 0) + delta.x;
+    const nextZ = Number(interiorOrbit.z || 0) + delta.z;
+    const radius = Math.hypot(nextX, nextZ);
+    const limit = 2.72;
+    interiorOrbit.x = radius > limit ? nextX / radius * limit : nextX;
+    interiorOrbit.z = radius > limit ? nextZ / radius * limit : nextZ;
   }
-  if (interiorView) {
-    const blueprint = getInteriorBlueprint(interiorView.zone);
-    (blueprint.props || []).forEach((prop, index, props) => {
-      const placement = getInteriorPropWorldPlacement(prop, index, props.length);
-      const dx = nextX - placement.worldX;
-      const dz = nextZ - placement.worldZ;
-      const distanceToModel = Math.hypot(dx, dz);
-      if (distanceToModel >= INTERIOR_MODEL_CLEARANCE) return;
-      const safeDistance = Math.max(distanceToModel, 0.001);
-      nextX = placement.worldX + dx / safeDistance * INTERIOR_MODEL_CLEARANCE;
-      nextZ = placement.worldZ + dz / safeDistance * INTERIOR_MODEL_CLEARANCE;
-    });
-  }
-  interiorOrbit.x = nextX;
-  interiorOrbit.z = nextZ;
 }
 
 function nudgeInteriorPlayer(direction, distance = 0.11) {
