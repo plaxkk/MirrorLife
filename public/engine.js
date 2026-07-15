@@ -1736,6 +1736,14 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
       zoneName: String(event?.zoneName || "").slice(0, 80),
       factChoiceId: String(event?.factChoiceId || "").slice(0, 80),
       factLabel: String(event?.factLabel || "").slice(0, 160),
+      factReason: String(event?.factReason || "").slice(0, 320),
+      factEvidence: Array.isArray(event?.factEvidence)
+        ? event.factEvidence.slice(0, 3).map((text) => String(text || "").slice(0, 240))
+        : [],
+      factScore: Number.isFinite(Number(event?.factScore)) ? Number(event.factScore) : 0,
+      factRunnerUpScore: Number.isFinite(Number(event?.factRunnerUpScore)) ? Number(event.factRunnerUpScore) : 0,
+      factDecisionVersion: Math.max(0, Math.round(Number(event?.factDecisionVersion) || 0)),
+      factPersonaLabel: String(event?.factPersonaLabel || "").slice(0, 120),
       chosenChoiceId: String(event?.chosenChoiceId || "").slice(0, 80),
       chosenLabel: String(event?.chosenLabel || "").slice(0, 160),
       alternativeChoiceId: String(event?.alternativeChoiceId || "").slice(0, 80),

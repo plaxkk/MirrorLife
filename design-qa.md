@@ -116,6 +116,47 @@ passed
 
 ---
 
+# Design QA — Social Avatar Fact Choice / 分身事实推演
+
+## Source truth and verification state
+
+- Accepted concept: `/tmp/mirrorlife-option-2.png`
+- Implementation capture: `dist/interior-3d-work/fact-choice-review/desktop-fact-choice.png`
+- Responsive capture: `dist/interior-3d-work/fact-choice-review/mobile-fact-choice.png`
+- Combined same-size comparison: `/tmp/mirrorlife-fact-choice-comparison.png`
+- Runtime URL: `http://127.0.0.1:4182/game.html?qaInterior=public-plaza&qaInteriorScene=1&qaPersonaFact=1&qaFresh=1`
+- Native viewports: `1536 × 1024` and `390 × 844`.
+
+The accepted concept and live implementation were inspected in one native-size `3072 × 1088` comparison canvas. The implementation deliberately preserves the approved full-viewport hierarchy while replacing generic “fact” copy with evidence from the running simulation.
+
+## Five-point fidelity and evidence ledger
+
+1. **Episode hierarchy — matched.** The ink header, centered dual-timeline title, act label and single rewrite token remain the dominant editorial frame.
+2. **Fact / if polarity — matched and made systemic.** Coral now means the social avatar's derived fact; jade remains the one possible rewrite. The left headline changed from a generic retained action to the avatar's actual support-first choice.
+3. **Evidence rails — intentionally upgraded.** The source's left past/present/future rail is replaced with three readable decision signals: persona, recent memory and value ranking. The right rail keeps the alternate timeline rhythm.
+4. **Social tableau — matched within the shipped asset system.** Three distinct existing citizen sprites remain centered on the live Three.js room and do not collide with the action dock at desktop or mobile sizes.
+5. **Action dock — matched and clarified.** The primary fact action says `保留分身选择` and explicitly states that personality, memory and relationship produced it; the alternate still communicates the cost of the episode's only rewrite.
+
+## Functional evidence
+
+- A seeded `ISFJ / 关怀 / 安全` avatar with support memories deterministically selects `invite-quiet`, although it is the scene's second authored option.
+- Re-running the derivation against identical state produces the same choice and exact ranked scores.
+- The overlay exposes at least two readable evidence items and binds its fact rail to the same `choiceId`.
+- Selecting the fact persists `factChoiceId`, reason, up to three evidence lines, persona label, scores and decision version; it does not consume the rewrite token.
+- Desktop and mobile screenshots have no horizontal overflow or clipped primary actions.
+- In-app browser interaction completed the fact path and rendered `1/5` progress with `0` browser errors.
+
+## Findings
+
+- No actionable P0, P1 or P2 visual, interaction or persistence defects remain.
+- [P3] Evidence text is deliberately clamped on the cinematic side rail so it cannot compete with the actors and decision dock. The complete reason persists in the receipt, finale and share text.
+
+## Final result
+
+passed
+
+---
+
 # Design QA — Counterfactual Episode / 方案 2
 
 ## Source truth and implementation

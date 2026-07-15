@@ -6061,6 +6061,236 @@ function getInteriorCounterfactualParticipant(zone) {
     || null;
 }
 
+const COUNTERFACTUAL_FACT_PROFILES = {
+  listen: {
+    label: "倾听",
+    values: ["benevolence", "universalism", "tradition"],
+    traits: { agreeableness: 0.24, openness: 0.14, extraversion: -0.06, conscientiousness: 0.05 },
+    memoryTerms: ["倾听", "等待", "边界", "沉默", "空白", "诚实", "没说完", "先问", "不知道"]
+  },
+  support: {
+    label: "支持",
+    values: ["benevolence", "security", "universalism"],
+    traits: { agreeableness: 0.28, extraversion: 0.04, neuroticism: 0.03, conscientiousness: 0.04 },
+    memoryTerms: ["支持", "照护", "疲惫", "接住", "陪伴", "安全", "帮助", "喘口气", "照顾"]
+  },
+  cooperate: {
+    label: "协作",
+    values: ["achievement", "benevolence", "self_direction"],
+    traits: { conscientiousness: 0.22, extraversion: 0.08, agreeableness: 0.12, openness: 0.08 },
+    memoryTerms: ["协作", "一起", "共同", "交接", "尝试", "轮值", "办法", "行动", "完成"]
+  },
+  meditate: {
+    label: "调停",
+    values: ["security", "benevolence", "conformity"],
+    traits: { conscientiousness: 0.16, agreeableness: 0.2, neuroticism: -0.08, openness: 0.05 },
+    memoryTerms: ["调停", "修复", "分歧", "冷静", "确认", "缓冲", "误解", "和解"]
+  },
+  propose: {
+    label: "提议",
+    values: ["achievement", "self_direction", "power"],
+    traits: { extraversion: 0.18, conscientiousness: 0.1, openness: 0.12, agreeableness: -0.04 },
+    memoryTerms: ["提案", "表达", "发起", "改变", "公开", "主张", "决定", "行动"]
+  }
+};
+
+function getCounterfactualChoiceAction(choice) {
+  if (COUNTERFACTUAL_FACT_PROFILES[choice?.relationType]) return choice.relationType;
+  if (["comfort", "care", "handoff"].includes(choice?.behavior)) return "support";
+  if (["meeting", "gather", "teach", "work", "cook"].includes(choice?.behavior)) return "cooperate";
+  return "listen";
+}
+
+function getCounterfactualAvatarMemories(avatarId) {
+  const runtime = typeof ensureAgentRuntime === "function" ? ensureAgentRuntime(state.society) : state.society?.agents;
+  const file = runtime?.memoryFiles?.[avatarId] || {};
+  const fileItems = [
+    ...(file.general || []),
+    ...(file.weeklyDiary || []),
+    ...Object.values(file.relationships || {}).flatMap((items) => Array.isArray(items) ? items : []),
+    ...Object.values(file.lifeCapsules || {}).flatMap((items) => Array.isArray(items) ? items : [])
+  ];
+  const runtimeItems = [
+    ...(runtime?.memoryStore?.[avatarId] || []),
+    ...(runtime?.reflectionStore?.[avatarId] || [])
+  ];
+  const seen = new Set();
+  return [...fileItems, ...runtimeItems]
+    .filter((item) => {
+      const key = item?.id || `${item?.text || ""}:${item?.turn || item?.createdAtTurn || 0}`;
+      if (!item?.text || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => Number(b.createdAtTurn ?? b.turn ?? 0) - Number(a.createdAtTurn ?? a.turn ?? 0))
+    .slice(0, 24);
+}
+
+function getCounterfactualRelationship(avatar, participant) {
+  if (!avatar?.id || !participant?.id || !state.society?.relationships) return null;
+  const key = typeof getRelationshipKey === "function"
+    ? getRelationshipKey(avatar.id, participant.id)
+    : [avatar.id, participant.id].sort().join("__");
+  return state.society.relationships[key] || null;
+}
+
+function getCounterfactualMemoryScore(choice, profile, memories, zone) {
+  const nowTurn = Number(state.society?.turn || 0);
+  const exactTerms = [choice?.label, choice?.id].filter(Boolean);
+  let score = 0;
+  let hits = 0;
+  let strongest = "";
+  let strongestWeight = 0;
+  memories.forEach((item) => {
+    const text = String(item?.text || "");
+    const age = Math.max(0, nowTurn - Number(item?.createdAtTurn ?? item?.turn ?? nowTurn));
+    const weight = clamp(Number(item?.importance || 4) / 10, 0.1, 1) / (1 + age / 40);
+    const exactHit = exactTerms.some((term) => term && text.includes(term));
+    const sceneHit = Boolean(zone?.name && text.includes(zone.name));
+    const semanticHits = profile.memoryTerms.filter((term) => text.includes(term)).length;
+    if (!exactHit && !sceneHit && !semanticHits) return;
+    const contribution = (exactHit ? 0.18 : 0) + (sceneHit ? 0.025 : 0) + Math.min(0.165, semanticHits * 0.055);
+    score += contribution * weight;
+    hits += 1;
+    if (contribution * weight > strongestWeight) {
+      strongestWeight = contribution * weight;
+      strongest = text;
+    }
+  });
+  return { score: clamp(score, 0, 0.48), hits, strongest };
+}
+
+function scoreCounterfactualFactChoice({ choice, avatar, participant, zone, episode, memories }) {
+  const action = getCounterfactualChoiceAction(choice);
+  const profile = COUNTERFACTUAL_FACT_PROFILES[action] || COUNTERFACTUAL_FACT_PROFILES.listen;
+  const bigFive = avatar?.bigFive || {};
+  const values = avatar?.values || {};
+  const persona = Number(avatar?.socialBias?.[action] || 0) * 1.4
+    + Object.entries(profile.traits).reduce((sum, [trait, weight]) => sum + (Number(bigFive[trait] || 0.5) - 0.5) * weight, 0);
+  const valueMatches = profile.values.map((key) => ({ key, score: Number(values[key] || 0) }));
+  const valueScore = valueMatches.reduce((sum, item) => sum + item.score, 0) / Math.max(1, valueMatches.length) * 0.55;
+  const memory = getCounterfactualMemoryScore(choice, profile, memories, zone);
+  const relationship = getCounterfactualRelationship(avatar, participant);
+  let relationshipScore = 0;
+  if (relationship) {
+    const trust = Number(relationship.trust || 50) / 100;
+    const strain = Number(relationship.strain || 0) / 100;
+    const reciprocity = Number(relationship.reciprocity || 50) / 100;
+    const disclosureGap = 1 - Number(relationship.disclosureDepth || 0) / 100;
+    if (action === "listen") relationshipScore = strain * 0.2 + disclosureGap * 0.13;
+    else if (action === "support") relationshipScore = strain * 0.14 + (1 - Number(participant?.energy || 50) / 100) * 0.18;
+    else if (action === "cooperate") relationshipScore = trust * 0.18 + reciprocity * 0.12 - strain * 0.08;
+    else if (action === "meditate") relationshipScore = strain * 0.3;
+    else relationshipScore = trust * 0.12 - strain * 0.06;
+  }
+  const energy = Number(avatar?.energy || 50);
+  const mood = Number(avatar?.mood || 50);
+  const trust = Number(avatar?.trust || 50);
+  const energyCost = Math.max(0, -Number(choice?.avatar?.energy || 0));
+  const stateScore = (action === "listen" && trust < 55 ? (55 - trust) / 230 : 0)
+    + (action === "support" && mood >= 52 ? (mood - 50) / 260 : 0)
+    + (action === "cooperate" && energy >= 48 ? (energy - 45) / 220 : 0)
+    - Math.max(0, 50 - energy) / 50 * energyCost * 0.12;
+  const recentEpisodeChoices = (episode?.rewrites || []).slice(-3);
+  const continuityScore = Math.min(0.24, recentEpisodeChoices.filter((event) => event.relationType === action).length * 0.08);
+  const tieBreak = Math.abs(hashCommunitySeed(`${avatar?.id || "avatar"}:${zone?.id || "zone"}:${choice.id}`, "fact-choice")) % 1000 / 1000000;
+  const score = 0.5 + persona + valueScore + memory.score + relationshipScore + stateScore + continuityScore + tieBreak;
+  return {
+    choice,
+    action,
+    actionLabel: profile.label,
+    score,
+    components: { persona, values: valueScore, memory: memory.score, relationship: relationshipScore, state: stateScore, continuity: continuityScore },
+    valueMatches: valueMatches.sort((a, b) => b.score - a.score),
+    memory,
+    relationship
+  };
+}
+
+function buildCounterfactualFactEvidence(scored, avatar, participant) {
+  const evidence = [];
+  const personaLabel = avatar?.personaLabel || avatar?.mbtiType || "当前人格轮廓";
+  evidence.push({
+    type: "persona",
+    label: "人格",
+    score: scored.components.persona,
+    text: `${personaLabel}更常用“${scored.actionLabel}”靠近这种现场`
+  });
+  const topValue = scored.valueMatches[0];
+  if (topValue?.score > 0) {
+    evidence.push({
+      type: "value",
+      label: "价值",
+      score: scored.components.values,
+      text: `你的“${VALUE_TAG_LABELS[topValue.key] || topValue.key}”排序支持这个选择`
+    });
+  }
+  if (scored.memory.hits) {
+    evidence.push({
+      type: "memory",
+      label: "记忆",
+      score: scored.components.memory,
+      text: `最近 ${scored.memory.hits} 条记忆与这次做法产生回声`
+    });
+  }
+  if (participant && scored.relationship) {
+    const strain = Number(scored.relationship.strain || 0);
+    const relationText = scored.action === "cooperate"
+      ? `你和${participant.name}已有的信任更适合一起行动`
+      : strain >= 24
+        ? `你和${participant.name}的关系仍有张力，分身先放慢一步`
+        : `你和${participant.name}的关系允许这次温和靠近`;
+    evidence.push({ type: "relationship", label: "关系", score: scored.components.relationship, text: relationText });
+  }
+  if (Math.abs(scored.components.state) > 0.025) {
+    evidence.push({
+      type: "state",
+      label: "此刻",
+      score: scored.components.state,
+      text: Number(avatar?.energy || 50) < 45 ? "你此刻精力偏低，分身不会承诺过多" : "你此刻仍有余力把选择变成行动"
+    });
+  }
+  if (scored.components.continuity > 0) {
+    evidence.push({ type: "continuity", label: "本集", score: scored.components.continuity, text: `你在本集已经多次选择“${scored.actionLabel}”` });
+  }
+  return evidence
+    .filter((item) => item.text)
+    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+    .slice(0, 3);
+}
+
+function deriveAvatarFactDecision(zone, sceneAction, participant, episode) {
+  const choices = Array.isArray(sceneAction?.choices) ? sceneAction.choices : [];
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar") || null;
+  if (!choices.length) return null;
+  const memories = getCounterfactualAvatarMemories(avatar?.id || "avatar");
+  const ranked = choices.map((choice) => scoreCounterfactualFactChoice({ choice, avatar, participant, zone, episode, memories }))
+    .sort((a, b) => b.score - a.score);
+  const winner = ranked[0];
+  const runnerUp = ranked[1] || winner;
+  const evidence = buildCounterfactualFactEvidence(winner, avatar, participant);
+  const decision = {
+    version: 1,
+    choice: winner.choice,
+    alternative: runnerUp.choice,
+    score: winner.score,
+    runnerUpScore: runnerUp.score,
+    reason: evidence[0]?.text || `${avatar?.name || "你的分身"}会先选择“${winner.choice.label}”`,
+    evidence,
+    action: winner.action,
+    memoryHits: winner.memory.hits,
+    personaLabel: avatar?.personaLabel || avatar?.mbtiType || "当前人格轮廓"
+  };
+  window.__mirrorLifeFactDecision = {
+    choiceId: decision.choice.id,
+    alternativeChoiceId: decision.alternative.id,
+    reason: decision.reason,
+    evidence: decision.evidence.map((item) => ({ ...item })),
+    ranked: ranked.map((item) => ({ choiceId: item.choice.id, score: Number(item.score.toFixed(4)) }))
+  };
+  return decision;
+}
+
 function stageInteriorCounterfactualActors(zone) {
   const blueprint = getInteriorBlueprint(zone);
   const anchors = getInteriorPhysicsAnchors(blueprint);
@@ -6419,16 +6649,17 @@ function closeCounterfactualEpisodeFinale() {
   clearCounterfactualActorStaging();
 }
 
-function buildCounterfactualReceipt({ zone, thread, fact, chosen, participant, rewritten }) {
+function buildCounterfactualReceipt({ zone, thread, fact, chosen, participant, rewritten, factDecision = null }) {
   const name = participant?.name || "房间里的人";
   return [
     `《${thread?.title || zone.name} · 同一个我，两种被记住的方式》`,
     `事实：${fact.label}`,
+    factDecision?.reason ? `分身依据：${factDecision.reason}` : "",
     `${rewritten ? "我选择改写" : "我选择保留"}：${chosen.label}`,
     `余波：${name}${chosen.reaction ? `说“${chosen.reaction}”` : "会把这件小事带进明天"}`,
     `这不是标准答案，而是我的社会分身留下的一条时间线。`,
     `#镜像人生 #MirrorLife`
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function drawWrappedShareText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
@@ -6735,17 +6966,19 @@ function buildCounterfactualEpisodeShareText(thread, episode, finale, featuredEc
   const beats = (episode.rewrites || []).slice(-5).map((event, index) => (
     `${index + 1}. ${event.zoneName || findRenderZoneById(event.zoneId)?.name || "某个房间"}：${event.chosenLabel || event.chosenChoiceId}`
   ));
+  const factBasis = (episode.rewrites || []).find((event) => event.factReason)?.factReason || "";
   const echoes = featuredEchoes.map((echo) => `“${echo.text.replace(/^.*?说：/, "")}”`).join("\n");
   return [
     `《${thread.title} · 这一集，世界如何记住我》`,
     finale.verdict,
+    factBasis ? `我的社会分身这样推演：${factBasis}` : "",
     ...beats,
     `保留事实 ${finale.factCount} 次 · 改写未来 ${finale.rewriteCount} 次`,
     echoes ? `没有发生的未来：\n${echoes}` : "没有发生的未来，也被世界认真保存。",
     finale.nextHook,
     "如果是你，会在哪一刻使用唯一一次改写？",
     "#镜像人生 #MirrorLife"
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function completeCounterfactualEpisode(thread) {
@@ -6881,6 +7114,12 @@ async function renderCounterfactualEpisodeCard(thread, episode, finale) {
   ctx.fillStyle = "#8793ae";
   ctx.font = '600 18px "PingFang SC", sans-serif';
   ctx.fillText(`${thread.title} · ${finale.completedZones}/${thread.zones.length} 场所已回应`, 64, 762);
+  const cardFactBasis = (episode.rewrites || []).find((event) => event.factReason)?.factReason || "";
+  if (cardFactBasis) {
+    ctx.fillStyle = "#ffb7a8";
+    ctx.font = '500 17px "PingFang SC", sans-serif';
+    ctx.fillText(`分身推演：${cardFactBasis}`.slice(0, 54), 64, 800);
+  }
 
   ctx.fillStyle = "#f7f2e8";
   ctx.font = '700 48px "Songti SC", "Noto Serif SC", serif';
@@ -6991,7 +7230,7 @@ function showCounterfactualEpisodeFinale(threadId) {
     </header>
     <aside class="counterfactual-finale-rail finale-fact-rail">
       <h2>你留下的事实</h2>
-      <ol>${visibleFacts.map((event) => `<li><span>${escapeHtml(event.zoneName || findRenderZoneById(event.zoneId)?.name || "某个房间")}</span><strong>${escapeHtml(event.chosenLabel || event.chosenChoiceId)}</strong></li>`).join("")}</ol>
+      <ol>${visibleFacts.map((event) => `<li><span>${escapeHtml(event.zoneName || findRenderZoneById(event.zoneId)?.name || "某个房间")}</span><strong>${escapeHtml(event.chosenLabel || event.chosenChoiceId)}</strong>${event.factReason ? `<em>${escapeHtml(event.factReason)}</em>` : ""}</li>`).join("")}</ol>
     </aside>
     <section class="counterfactual-memory-doors" aria-label="五个场所的记忆">
       ${thread.zones.map((zoneId, index) => {
@@ -7051,11 +7290,15 @@ function showInteriorCounterfactualStage(sceneAction) {
   const episode = getCounterfactualEpisodeState(thread?.id);
   const act = getCounterfactualAct(thread);
   const participant = getInteriorCounterfactualParticipant(zone);
-  const factChoice = choices[0];
-  const futureChoice = choices[1] || choices[0];
+  const factDecision = deriveAvatarFactDecision(zone, sceneAction, participant, episode);
+  const factChoice = factDecision?.choice || choices[0];
+  const futureChoice = factDecision?.alternative || choices.find((choice) => choice.id !== factChoice.id) || factChoice;
   const fact = getCounterfactualBranchCopy(factChoice, participant, "fact");
   const future = getCounterfactualBranchCopy(futureChoice, participant, "future");
   const canRewrite = episode.rewriteTokens > 0 && futureChoice.id !== factChoice.id;
+  const factEvidence = (factDecision?.evidence || []).length
+    ? factDecision.evidence
+    : [{ label: "人格", text: `${factDecision?.personaLabel || "当前人格轮廓"}会先这样靠近现场` }];
 
   const stage = document.createElement("section");
   stage.id = "interiorCounterfactualStage";
@@ -7070,14 +7313,14 @@ function showInteriorCounterfactualStage(sceneAction) {
       <div class="counterfactual-heading"><strong>同一个你，两种被记住的方式</strong><small>${escapeHtml(thread?.title || zone.name)} · ${escapeHtml(act.label)}</small></div>
       <div class="counterfactual-token">本集可改写 <b>${episode.rewriteTokens}</b> 次</div>
     </header>
-    <section class="counterfactual-branch counterfactual-fact-copy">
-      <span>事实</span><div><strong>${escapeHtml(fact.title)}</strong><small>${escapeHtml(fact.consequence)}</small></div>
+    <section class="counterfactual-branch counterfactual-fact-copy" data-fact-choice-id="${escapeHtml(factChoice.id)}">
+      <span>分身事实</span><div><strong>${escapeHtml(fact.title)}</strong><small>${escapeHtml(factDecision?.reason || fact.consequence)}</small></div>
     </section>
     <section class="counterfactual-branch counterfactual-if-copy">
       <span>如果</span><div><strong>${escapeHtml(future.title)}</strong><small>${escapeHtml(future.consequence)}</small></div>
     </section>
-    <aside class="counterfactual-film counterfactual-film-fact" aria-label="事实时间线">
-      <div><time>刚才</time><span>你看见了</span></div><div class="active"><time>现在</time><span>${escapeHtml(factChoice.label)}</span></div><div><time>明天</time><span>${escapeHtml(fact.consequence)}</span></div>
+    <aside class="counterfactual-film counterfactual-film-fact" aria-label="分身选择证据">
+      ${factEvidence.map((item, index) => `<div class="${index === 0 ? "active" : ""}"><time>${escapeHtml(item.label || "证据")}</time><span>${escapeHtml(item.text || "")}</span></div>`).join("")}
     </aside>
     <aside class="counterfactual-film counterfactual-film-if" aria-label="如果时间线">
       <div><time>刚才</time><span>你看见了</span></div><div class="active"><time>现在</time><span>${escapeHtml(futureChoice.label)}</span></div><div><time>明天</time><span>${escapeHtml(future.consequence)}</span></div>
@@ -7087,7 +7330,7 @@ function showInteriorCounterfactualStage(sceneAction) {
     <section class="counterfactual-choicebar">
       <p>把光拖过中线，进入另一种未来</p>
       <div class="counterfactual-choices">
-        <button type="button" data-counterfactual-choice="fact" data-choice-id="${escapeHtml(factChoice.id)}"><kbd>A</kbd><span><strong>保留事实</strong><small>${escapeHtml(factChoice.label)} · 让分身为自己的选择负责</small></span></button>
+        <button type="button" data-counterfactual-choice="fact" data-choice-id="${escapeHtml(factChoice.id)}"><kbd>A</kbd><span><strong>保留分身选择</strong><small>${escapeHtml(factChoice.label)} · 由人格、记忆与关系共同推演</small></span></button>
         <button type="button" class="future-choice" data-counterfactual-choice="future" data-choice-id="${escapeHtml(futureChoice.id)}" ${canRewrite ? "" : "disabled"}><kbd>D</kbd><span><strong>${canRewrite ? escapeHtml(futureChoice.label) : "本集改写已用完"}</strong><small>${canRewrite ? "消耗本集唯一一次改写" : "仍可观察，但不能替这条时间线决定"}</small></span></button>
       </div>
       <small>完成后生成一张「两种被记住的方式」社交切片</small>
@@ -7101,7 +7344,17 @@ function showInteriorCounterfactualStage(sceneAction) {
       fromCounterfactual: true,
       rewritten,
       factChoiceId: factChoice.id,
-      futureChoiceId: futureChoice.id
+      futureChoiceId: futureChoice.id,
+      factDecision: factDecision ? {
+        version: factDecision.version,
+        score: factDecision.score,
+        runnerUpScore: factDecision.runnerUpScore,
+        reason: factDecision.reason,
+        evidence: factDecision.evidence.map((item) => item.text),
+        personaLabel: factDecision.personaLabel,
+        action: factDecision.action,
+        memoryHits: factDecision.memoryHits
+      } : null
     });
   };
   stage.addEventListener("click", (event) => {
@@ -7218,10 +7471,23 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
   if (!choice) return;
   const thread = getInteriorStoryThread(zone.id);
   const episode = getCounterfactualEpisodeState(thread?.id);
-  const factChoice = choices.find((item) => item.id === counterfactualMeta?.factChoiceId) || choices[0] || choice;
+  const prospectiveParticipant = getInteriorCounterfactualParticipant(zone);
+  const derivedFactDecision = deriveAvatarFactDecision(zone, sceneAction, prospectiveParticipant, episode);
+  const factChoice = choices.find((item) => item.id === counterfactualMeta?.factChoiceId) || derivedFactDecision?.choice || choices[0] || choice;
   const futureChoice = choices.find((item) => item.id === counterfactualMeta?.futureChoiceId)
+    || derivedFactDecision?.alternative
     || choices.find((item) => item.id !== factChoice.id)
     || factChoice;
+  const factDecision = counterfactualMeta?.factDecision || (derivedFactDecision ? {
+    version: derivedFactDecision.version,
+    score: derivedFactDecision.score,
+    runnerUpScore: derivedFactDecision.runnerUpScore,
+    reason: derivedFactDecision.reason,
+    evidence: derivedFactDecision.evidence.map((item) => item.text),
+    personaLabel: derivedFactDecision.personaLabel,
+    action: derivedFactDecision.action,
+    memoryHits: derivedFactDecision.memoryHits
+  } : null);
   const rewritten = !!counterfactualMeta?.rewritten && episode.rewriteTokens > 0;
   if (rewritten) episode.rewriteTokens = Math.max(0, episode.rewriteTokens - 1);
   record.scenePlayed = true;
@@ -7235,8 +7501,7 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
     avatar.lastAction = choice.label;
   }
 
-  const participant = getAliveCitizens(state.society)
-    .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
+  const participant = prospectiveParticipant;
   if (participant) {
     participant.mood = clamp(Number(participant.mood || 50) + Number(choice.participant?.mood || 0), 0, 100);
     participant.trust = clamp(Number(participant.trust || 50) + Number(choice.participant?.trust || 0), 0, 100);
@@ -7264,13 +7529,19 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
 
   const sceneText = choice.text.replace(/[。！？]+$/u, "");
   const outcome = participant ? `${sceneText}，${participant.name}也留在了现场。` : `${sceneText}。`;
-  const receipt = buildCounterfactualReceipt({ zone, thread, fact: factChoice, chosen: choice, participant, rewritten });
+  const receipt = buildCounterfactualReceipt({ zone, thread, fact: factChoice, chosen: choice, participant, rewritten, factDecision });
   const alternativeChoice = choices.find((item) => item.id !== choice.id) || (rewritten ? factChoice : futureChoice);
   record.sceneOutcome = outcome;
   record.sceneReward = applyInteriorSceneReward(zone, choice);
   record.counterfactual = {
     factChoiceId: factChoice.id,
     factLabel: factChoice.label,
+    factReason: String(factDecision?.reason || ""),
+    factEvidence: Array.isArray(factDecision?.evidence) ? factDecision.evidence.slice(0, 3) : [],
+    factScore: Number(factDecision?.score || 0),
+    factRunnerUpScore: Number(factDecision?.runnerUpScore || 0),
+    factDecisionVersion: Number(factDecision?.version || 0),
+    factPersonaLabel: String(factDecision?.personaLabel || ""),
     chosenChoiceId: choice.id,
     chosenLabel: choice.label,
     alternativeChoiceId: alternativeChoice?.id || "",
@@ -7302,10 +7573,10 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
     counterfactualThreadId: thread?.id || "standalone"
   });
   if (avatar) {
-    recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}，我选择了“${choice.label}”：${outcome}`, {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}，分身原本会选择“${factChoice.label}”（${factDecision?.reason || "来自当时的人格与关系"}）；我最终${rewritten ? "改写为" : "保留了"}“${choice.label}”：${outcome}`, {
       kind: "interior_scene",
       importance: 7,
-      references: [zone.id, participant?.id].filter(Boolean)
+      references: [zone.id, participant?.id, factChoice.id, choice.id].filter(Boolean)
     });
   }
   const refreshedThread = getInteriorStoryThread(zone.id);
@@ -12610,6 +12881,37 @@ function isLocalCounterfactualFinaleQaEnabled() {
   return new URLSearchParams(window.location.search).get("qaCounterfactualFinale") === "1";
 }
 
+function isLocalPersonaFactQaEnabled() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return false;
+  return new URLSearchParams(window.location.search).get("qaPersonaFact") === "1";
+}
+
+function seedLocalPersonaFactQa(zone) {
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  if (!avatar) return;
+  applyPersonaToCitizen(avatar, {
+    mbtiType: "ISFJ",
+    valueTags: ["benevolence", "security"],
+    hobby: "照顾疲惫的人",
+    dislike: "有人被忽视",
+    unique: "先接住，再解释"
+  });
+  avatar.energy = 68;
+  avatar.mood = 64;
+  avatar.trust = 66;
+  recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}附近，我记得自己总会先照顾被忽视和疲惫的人，把安全感留给还没开口的人。`, {
+    kind: "qa-persona-fact",
+    importance: 9,
+    references: [zone.id, "support"]
+  });
+  recordAgentMemory(state.society, avatar.id, "我更习惯先接住沉默的人，再解释自己的判断。", "qa-persona-fact", 8, [zone.id, "support"]);
+  const participant = getInteriorCounterfactualParticipant(zone);
+  if (participant) {
+    participant.energy = 34;
+    participant.mood = 46;
+  }
+}
+
 function openLocalInteriorQa(zoneId) {
   if (!zoneId) return;
   window.requestAnimationFrame(() => {
@@ -12648,6 +12950,7 @@ function openLocalInteriorQa(zoneId) {
       episode.status = "active";
       episode.completedTurn = 0;
       episode.finale = null;
+      if (isLocalPersonaFactQaEnabled()) seedLocalPersonaFactQa(zone);
       const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
       interiorView.discovery = {
         title: `${zone.name} · 场所回声`,
@@ -12666,8 +12969,10 @@ function openLocalInteriorQa(zoneId) {
           const threadBlueprint = getInteriorBlueprint(threadZone);
           const threadScene = INTERIOR_SCENE_ACTIONS[threadBlueprint.key] || INTERIOR_SCENE_ACTIONS.home;
           const choices = Array.isArray(threadScene.choices) ? threadScene.choices : [];
-          const factChoice = choices[0];
-          const futureChoice = choices[1] || factChoice;
+          const participant = getInteriorCounterfactualParticipant(threadZone);
+          const factDecision = deriveAvatarFactDecision(threadZone, threadScene, participant, episode);
+          const factChoice = factDecision?.choice || choices[0];
+          const futureChoice = factDecision?.alternative || choices.find((choice) => choice.id !== factChoice?.id) || factChoice;
           if (!factChoice) return;
           const rewritten = index === 2 && futureChoice?.id !== factChoice.id;
           const chosen = rewritten ? futureChoice : factChoice;
@@ -12681,6 +12986,12 @@ function openLocalInteriorQa(zoneId) {
           threadRecord.counterfactual = {
             factChoiceId: factChoice.id,
             factLabel: factChoice.label,
+            factReason: factDecision?.reason || "",
+            factEvidence: factDecision?.evidence?.map((item) => item.text).slice(0, 3) || [],
+            factScore: Number(factDecision?.score || 0),
+            factRunnerUpScore: Number(factDecision?.runnerUpScore || 0),
+            factDecisionVersion: Number(factDecision?.version || 0),
+            factPersonaLabel: factDecision?.personaLabel || "",
             chosenChoiceId: chosen.id,
             chosenLabel: chosen.label,
             alternativeChoiceId: alternative?.id || "",
@@ -12706,6 +13017,8 @@ function openLocalInteriorQa(zoneId) {
         };
         syncInteriorDiscoveryCard(performance.now());
         window.setTimeout(() => showCounterfactualEpisodeFinale(thread.id), 420);
+      } else if (isLocalPersonaFactQaEnabled()) {
+        window.setTimeout(() => showInteriorCounterfactualStage(sceneAction), 420);
       }
     }
     interiorOrbit.yaw = getLocalInteriorQaYaw();

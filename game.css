@@ -5097,6 +5097,16 @@ body.counterfactual-active #interiorDiscoveryCard {
 
 .finale-fact-rail li span { color: #ffb0a0; font-size: 10px; letter-spacing: 0.08em; }
 .finale-fact-rail li strong { font-size: 14px; line-height: 1.45; }
+.finale-fact-rail li em {
+  display: -webkit-box;
+  overflow: hidden;
+  color: #d5c7ba;
+  font-size: 9px;
+  font-style: normal;
+  line-height: 1.38;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
 
 .finale-echo-rail li {
   display: grid;
@@ -5288,6 +5298,7 @@ body.counterfactual-finale-active #interiorDiscoveryCard {
   .counterfactual-finale-rail h2 { margin-bottom: 14px; font-size: 15px; }
   .counterfactual-finale-rail ol { gap: 14px; }
   .finale-fact-rail li strong { font-size: 11px; }
+  .finale-fact-rail li em { font-size: 8px; -webkit-line-clamp: 1; }
   .finale-echo-rail li { grid-template-columns: 36px minmax(0, 1fr); gap: 8px; }
   .counterfactual-echo-avatar { width: 34px; height: 34px; }
   .finale-echo-rail li p { display: -webkit-box; font-size: 9px; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
