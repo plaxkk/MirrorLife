@@ -2722,6 +2722,12 @@ async function showSavePanel() {
 async function showStoryPanel() {
   const h = escapeHtml;
   const story = state.story || { arcs: [], log: [] };
+  const director = story.director && typeof story.director === "object" ? story.director : { quests: [] };
+  const directorQuests = Array.isArray(director.quests) ? director.quests : [];
+  const directorActive = directorQuests.find((quest) => quest.id === director.activeQuestId && quest.status === "active")
+    || directorQuests.find((quest) => quest.status === "active")
+    || null;
+  const directorClosed = directorQuests.filter((quest) => quest.status === "closed").slice(-2).reverse();
   const active = (story.arcs || []).filter((arc) => arc.status === "active");
   const closed = (story.arcs || []).filter((arc) => arc.status === "closed").slice(-4).reverse();
   const stageDots = (arc) => ["起", "承", "转", "合"].map((label, i) =>
@@ -2734,9 +2740,34 @@ async function showStoryPanel() {
       ${(story.log || []).filter((entry) => entry.arcId === arc.id).slice(0, 4).reverse()
         .map((entry) => `<p style="opacity:0.85">「${h(entry.stage)}」${h(entry.text)}</p>`).join("")}
     </div>`;
+  const directorQuestBlock = (quest, isActive = false) => {
+    const missionRows = Object.values(quest.missions || {}).map((mission) => `
+      <p style="opacity:0.82"><strong>${h(mission.role || "现场角色")}</strong> · ${h(mission.description || "正在形成自己的行动意图")}</p>
+    `).join("");
+    const beats = (quest.beats || []).slice(-3).reverse().map((beat) => `
+      <p style="opacity:0.82">「${h(beat.stage || "现场") }」${h(beat.text || "")}</p>
+    `).join("");
+    return `
+      <div class="detail-section" style="padding:9px 10px;border-color:${isActive ? "#ee4266" : "rgba(26,26,46,0.28)"}">
+        <p><strong>${h(quest.emoji || "🎬")} ${h(quest.title || "未命名任务")}</strong>${quest.outcome ? ` · ${h(quest.outcome)}` : ""}</p>
+        ${quest.hook ? `<p>${h(quest.hook)}</p>` : ""}
+        ${quest.dramaticQuestion ? `<p style="color:#c72c48"><strong>戏剧问题：</strong>${h(quest.dramaticQuestion)}</p>` : ""}
+        ${quest.stakes ? `<p style="opacity:0.72">代价：${h(quest.stakes)}</p>` : ""}
+        <p style="background:rgba(255,213,79,0.22);padding:7px 8px;border-radius:8px"><strong>${isActive ? "当前任务" : "余波"}：</strong>${h(quest.currentTask || quest.outcome || "故事仍留在角色记忆里。")}</p>
+        ${missionRows}
+        ${beats}
+      </div>`;
+  };
   showDetail(`
     <h3>📖 剧情志</h3>
     <p class="detail-lead">剧情不由脚本写死——关系张力、心理连锁、城市脉动和生命事件会自己长出故事,并按「起承转合」推进。</p>
+    <div class="detail-section" style="background:linear-gradient(135deg,rgba(255,213,79,0.2),rgba(238,66,102,0.08))">
+      <div class="detail-section-title">🎬 AI剧情师</div>
+      <p>${h(director.tone || "轻盈的现实主义：温暖，但不替角色回避代价")}</p>
+      <p style="opacity:0.72">${h(director.promise || "任务根据真实社会状态生成，结果由分身的实际行动决定。")}</p>
+    </div>
+    ${directorActive ? directorQuestBlock(directorActive, true) : "<div class='detail-section'><p>剧情师正在观察关系、沉默和城市压力，下一幕不会凭空出现。</p></div>"}
+    ${directorClosed.length ? `<div class="detail-section"><div class="detail-section-title">最近的自演化结局</div></div>${directorClosed.map((quest) => directorQuestBlock(quest)).join("")}` : ""}
     <div class="detail-section">
       <div class="detail-section-title">进行中 (${active.length})</div>
       ${active.length ? "" : "<p>暂时风平浪静。让社会继续运转,故事会自己找上门。</p>"}
@@ -8139,6 +8170,8 @@ function findRenderZoneById(zoneId) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
+  window.__mirrorLifeInteriorRenderPhases = [];
+  delete document.body.dataset.interiorRenderPhase;
   const blueprint = getInteriorBlueprint(zone);
   const enteredAt = performance.now();
   const explorationRecord = getInteriorExplorationRecord(zone.id);
@@ -8194,6 +8227,7 @@ function exitInteriorView() {
   interiorHotspots = [];
   interiorPhysicsWorld = null;
   window.__mirrorLifeInteriorPhysics = null;
+  delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
@@ -8534,6 +8568,49 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
   return entries;
 }
 
+function drawInteriorLoadingCurtain(ctx, W, H, roomStyle, blueprint, isNight, now) {
+  ctx.save();
+  const top = isNight ? darken(roomStyle.wall, 54) : roomStyle.wall;
+  const bottom = isNight ? darken(roomStyle.floor, 58) : roomStyle.floor;
+  const gradient = ctx.createLinearGradient(0, 0, 0, H);
+  gradient.addColorStop(0, top);
+  gradient.addColorStop(1, bottom);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, W, H);
+
+  const pulse = 0.52 + Math.sin(now * 0.006) * 0.18;
+  const centerX = W / 2;
+  const centerY = H * 0.47;
+  ctx.globalAlpha = 0.15;
+  ctx.strokeStyle = roomStyle.accent;
+  ctx.lineWidth = 2;
+  for (let index = 0; index < 3; index += 1) {
+    ctx.beginPath();
+    ctx.arc(centerX, centerY, 52 + index * 42 + pulse * 8, Math.PI * 1.08, Math.PI * 1.92);
+    ctx.stroke();
+  }
+  ctx.globalAlpha = 1;
+  ctx.fillStyle = isNight ? "rgba(250,250,245,0.94)" : "rgba(26,26,46,0.88)";
+  ctx.textAlign = "center";
+  ctx.font = `800 18px "Noto Sans SC", sans-serif`;
+  ctx.fillText(`正在打开${blueprint.title}`, centerX, centerY + 28);
+  ctx.font = `12px "Noto Sans SC", sans-serif`;
+  ctx.globalAlpha = 0.64;
+  ctx.fillText("陈设、人物与故事正在同一空间里就位", centerX, centerY + 52);
+  ctx.globalAlpha = 1;
+  ctx.restore();
+}
+
+function setInteriorRenderPhase(phase) {
+  if (document.body.dataset.interiorRenderPhase === phase) return;
+  document.body.dataset.interiorRenderPhase = phase;
+  window.__mirrorLifeInteriorRenderPhases = window.__mirrorLifeInteriorRenderPhases || [];
+  window.__mirrorLifeInteriorRenderPhases.push({ phase, at: Math.round(performance.now()) });
+  if (window.__mirrorLifeInteriorRenderPhases.length > 12) {
+    window.__mirrorLifeInteriorRenderPhases = window.__mirrorLifeInteriorRenderPhases.slice(-12);
+  }
+}
+
 function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const zone = interiorView.zone;
   updateInteriorPlayerMovement(now);
@@ -8574,15 +8651,31 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   });
   const interiorAnchors = panoramaAnchors.filter(anchor => anchor.visible);
 
-  if (useThreeModels) {
-    ctx.clearRect(0, 0, W, H);
-    drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, true);
-  } else {
-    drawInteriorPanoramaBackground(ctx, W, H, roomStyle, blueprint, isNight);
-    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "back", W, H, false);
-    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "mid", W, H, false);
-    drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, false);
-    drawInteriorPanoramaDecorLayer(ctx, blueprint, layout, roomStyle, isNight, "front", W, H, false);
+  if (!useThreeModels) {
+    interiorView.renderPhase = "loading";
+    setInteriorRenderPhase("loading");
+    interiorExitRect = null;
+    syncInteriorHotspotLayer([], blueprint);
+    syncInteriorContextAction([]);
+    syncInteriorJourneyHud(blueprint);
+    syncInteriorDiscoveryCard(now);
+    drawInteriorLoadingCurtain(ctx, W, H, roomStyle, blueprint, isNight, now);
+    return;
+  }
+
+  if (!interiorView.renderReadyAt) interiorView.renderReadyAt = now;
+  interiorView.renderPhase = "ready";
+  setInteriorRenderPhase("ready");
+  ctx.clearRect(0, 0, W, H);
+  drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, roomStyle.accent, isNight, W, H, true);
+  const revealProgress = clamp((now - interiorView.renderReadyAt) / 220, 0, 1);
+  if (revealProgress < 1) {
+    ctx.save();
+    ctx.globalAlpha = 1 - revealProgress;
+    ctx.fillStyle = isNight ? darken(roomStyle.wall, 54) : roomStyle.wall;
+    ctx.fillRect(0, 0, W, H);
+    ctx.restore();
+    markRenderActive(360);
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
   syncInteriorContextAction(interiorAnchors);
@@ -8635,7 +8728,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
 
   // Occupants live in the same X/Z coordinate system as the furniture. Three.js
   // returns their floor projection for hit testing and provides real depth
-  // occlusion; the canvas renderer remains only as a loading fallback.
+  // occlusion; the canvas renderer remains only as an atomic loading curtain.
   const actorProjectionById = new Map((threeState?.actorProjections || []).map((projection) => [projection.id, projection]));
   entries.forEach((entry) => {
     const projection = actorProjectionById.get(entry.id);

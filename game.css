@@ -140,8 +140,13 @@ body.interior-active .event-log,
 body.interior-active .event-toasts,
 body.interior-active .hud-bottom,
 body.interior-active .scenario-bar,
-body.interior-active .detail-panel {
+body.interior-active .detail-panel:not(.open) {
   display: none !important;
+}
+
+body.interior-active .detail-panel.open {
+  display: block;
+  z-index: 72;
 }
 
 @media (max-width: 720px) {

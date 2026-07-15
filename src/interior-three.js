@@ -5,7 +5,8 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
-const CAMERA_HEIGHT = 4.42;
+const CAMERA_ORBIT_RADIUS = 4.28;
+const CAMERA_PIVOT_PLAYER_WEIGHT = 0.26;
 const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
   plaster: "#f8eedf",
@@ -162,6 +163,10 @@ let atelierWindowViewTextureLoading;
 let actorTextureLoading;
 let actorAtlasTexture;
 let physicsDebugSignature = "";
+let cameraPivotX = 0;
+let cameraPivotZ = 0;
+let cameraZoneId = "";
+let lastCameraState = null;
 const surfaceBumpTextures = new Map();
 const actorFrameTextures = new Map();
 const actorObjects = new Map();
@@ -2874,28 +2879,51 @@ function updateCamera(payload = {}) {
   const pitch = Number(payload.pitch || 0.58);
   const playerX = Number(payload.cameraX || 0);
   const playerZ = Number(payload.cameraZ || 0);
+  const zoneId = String(payload.theme?.zoneId || "");
   const forwardX = Math.sin(yaw);
   const forwardZ = -Math.cos(yaw);
-  const desiredCameraBack = 5.02;
+  const targetPivotX = playerX * CAMERA_PIVOT_PLAYER_WEIGHT;
+  const targetPivotZ = playerZ * CAMERA_PIVOT_PLAYER_WEIGHT;
+  if (cameraZoneId !== zoneId) {
+    cameraZoneId = zoneId;
+    cameraPivotX = targetPivotX;
+    cameraPivotZ = targetPivotZ;
+  } else {
+    cameraPivotX += (targetPivotX - cameraPivotX) * 0.16;
+    cameraPivotZ += (targetPivotZ - cameraPivotZ) * 0.16;
+  }
   const cameraRayX = -forwardX;
   const cameraRayZ = -forwardZ;
-  const radialDot = playerX * cameraRayX + playerZ * cameraRayZ;
+  const radialDot = cameraPivotX * cameraRayX + cameraPivotZ * cameraRayZ;
   const roomRadius = ROOM_RADIUS - 0.2;
-  const boundaryDistance = -radialDot + Math.sqrt(Math.max(0.01, radialDot * radialDot + roomRadius * roomRadius - playerX * playerX - playerZ * playerZ));
-  const cameraBack = Math.max(1.45, Math.min(desiredCameraBack, boundaryDistance - 0.14));
-  const focusDistance = 0.7;
-  const focusHeight = 0.76 + (pitch - 0.36) / 0.4 * 0.56;
+  const pivotRadiusSquared = cameraPivotX * cameraPivotX + cameraPivotZ * cameraPivotZ;
+  const boundaryDistance = -radialDot + Math.sqrt(Math.max(0.01, radialDot * radialDot + roomRadius * roomRadius - pivotRadiusSquared));
+  const cameraBack = Math.max(2.9, Math.min(CAMERA_ORBIT_RADIUS, boundaryDistance - 0.16));
+  const pitchOffset = Math.max(-0.22, Math.min(0.2, pitch - 0.58));
+  const cameraHeight = 3.58 + pitchOffset * 2.15;
+  const focusDistance = 0.22;
+  const focusHeight = 0.94 + pitchOffset * 1.05;
   camera.position.set(
-    playerX - forwardX * cameraBack,
-    CAMERA_HEIGHT,
-    playerZ - forwardZ * cameraBack
+    cameraPivotX - forwardX * cameraBack,
+    cameraHeight,
+    cameraPivotZ - forwardZ * cameraBack
   );
   camera.lookAt(
-    playerX + forwardX * focusDistance,
-    Math.max(0.38, Math.min(1.58, focusHeight)),
-    playerZ + forwardZ * focusDistance
+    cameraPivotX + forwardX * focusDistance,
+    Math.max(0.62, Math.min(1.24, focusHeight)),
+    cameraPivotZ + forwardZ * focusDistance
   );
   camera.updateMatrixWorld(true);
+  lastCameraState = {
+    pivotX: Number(cameraPivotX.toFixed(3)),
+    pivotZ: Number(cameraPivotZ.toFixed(3)),
+    playerX: Number(playerX.toFixed(3)),
+    playerZ: Number(playerZ.toFixed(3)),
+    orbitRadius: Number(cameraBack.toFixed(3)),
+    height: Number(cameraHeight.toFixed(3)),
+    yaw: Number(yaw.toFixed(3)),
+    pitch: Number(pitch.toFixed(3))
+  };
 }
 
 function updateProjections(items, width, height) {
@@ -2996,7 +3024,8 @@ function getStats() {
     triangles: Number(render.triangles || 0),
     geometries: Number(memory.geometries || 0),
     textures: Number(memory.textures || 0),
-    pixelRatio: renderer?.getPixelRatio?.() || 1
+    pixelRatio: renderer?.getPixelRatio?.() || 1,
+    camera: lastCameraState
   };
 }
 
