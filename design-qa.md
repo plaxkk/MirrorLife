@@ -61,6 +61,61 @@ final result: passed
 
 ---
 
+# Design QA — Counterfactual Episode Finale / 故事馆终章
+
+## Source truth and verification state
+
+- Accepted concept: `/Users/kk/repos/MirrorLife/docs/design/counterfactual-episode-finale.png`
+- Implementation capture: `/tmp/mirrorlife-episode-finale-desktop.png`
+- Combined same-size comparison: `/tmp/mirrorlife-episode-finale-comparison.png`
+- Responsive capture: `/tmp/mirrorlife-episode-finale-mobile-390.png`
+- Runtime URL: `http://127.0.0.1:4173/game.html?qaInterior=story-archive&qaInteriorScene=1&qaCounterfactualFinale=1&qaYaw=0`
+- Native desktop viewport: `1536 × 1024`; native mobile viewport: `390 × 844`.
+
+The accepted concept and the live implementation were inspected side by side in one `3072 × 1088` comparison canvas. Both source panels remain native `1536 × 1024`; neither was independently cropped or stretched.
+
+## Five-point fidelity ledger
+
+1. **Editorial episode header — matched.** Both versions use a single dark ink bar, MirrorLife mark, centered episode title, and a gold `5 / 5` completion counter. The implementation adds the story title and act as a compact second line so the screen remains grounded in live state.
+2. **Fact / unchosen-future polarity — matched.** Coral facts remain on the left and jade Agent interpretations remain on the right. The implementation uses the actual zone names, chosen action labels, citizen identities, and alternative choices from state rather than concept-only sample copy.
+3. **Five-location memory spine — matched with a system-driven treatment.** The concept shows five bespoke miniature room portals; the implementation renders five translucent memory doors over the currently loaded real Three.js room, with the single rewritten location marked jade. This retains live spatial continuity without inventing unrelated static room art.
+4. **Social tableau — matched in function, intentionally expanded in evidence.** The concept stages three seated witnesses. The implementation stages the player plus three distinct existing citizen roles at the room's physical focal point. This shows that the verdict belongs to a playable multi-Agent scene, not a detached results page.
+5. **Verdict and share dock — closely matched.** The gold next-episode hook, identity verdict, fact/rewrite counts, primary story-card action, and low-emphasis street return preserve the source hierarchy. The dock remains fully usable at desktop and mobile sizes.
+
+## Above-fold copy diff
+
+- Source brand subtitle: `MIRRORLIFE`; implementation: `EPISODE MEMORY` to identify this as an in-world archive state.
+- Source location names are atmospheric mock names; implementation uses the five real playable locations: 邻里广场、静心角、公议庭、谈心和解屋、街坊故事馆.
+- Source side rails contain authored sample interpretations; implementation replaces them with the current run's actual choice labels and three Agent-specific counterfactual responses.
+- The core headline, `5 / 5` completion, verdict, statistics, share action, and street-return promise remain semantically unchanged.
+
+## Findings
+
+### P0 / P1 / P2
+
+- None remain after the responsive and canvas-exit cleanup passes.
+
+### P3 — accepted intentional deviations
+
+- The five concept portals use five one-off miniature illustrations. The implementation keeps the live 3D story-archive room as the visual truth and represents each completed location with a glass memory door. This is more truthful to the product's explorable-world promise and avoids a disconnected results-screen asset set.
+- Citizen art uses MirrorLife's current profession sprite system instead of the concept's seated portrait style. Distinct silhouettes, roles, physical positions, and Agent names provide real simulation evidence while remaining consistent with the shipped world.
+
+## Interaction and responsive evidence
+
+- Five distinct locations complete the episode; the finale reports `4` retained facts and `1` rewritten future.
+- Three different Agent echoes are drawn from three different locations and persist in Agent memory/task state.
+- The share action runs without browser errors and produces a 1080 × 1350 episode card with Web Share, clipboard, and download fallback paths.
+- The return action closes the finale, exits the interior, restores the world HUD, and exposes the next-episode hook.
+- The finale can be reopened from the completed journey/discovery state.
+- At `390 × 844`, facts collapse into the five-door strip, all three Agent echoes remain readable, the verdict wraps, and both actions fit without horizontal overflow.
+- Final browser console/page-error count: `0`.
+
+## Final result
+
+passed
+
+---
+
 # Design QA — Counterfactual Episode / 方案 2
 
 ## Source truth and implementation

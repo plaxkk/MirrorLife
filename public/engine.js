@@ -1423,6 +1423,13 @@ function planCitizenAgentAction(society, citizen, baseAction) {
     && Array.isArray(item.desiredActions)
     && item.desiredActions.length
   ));
+  const counterfactualWitness = context.inbox.find((item) => (
+    item.type === "counterfactual-witness"
+    && item.targetId === citizen.id
+    && Number(item.untilTurn || 0) >= Number(society.turn || 0)
+    && Array.isArray(item.desiredActions)
+    && item.desiredActions.length
+  ));
   const memoryCount = context.memory.length + context.reflections.length;
 
   let action = baseAction;
@@ -1437,6 +1444,13 @@ function planCitizenAgentAction(society, citizen, baseAction) {
     const desired = directorMission.desiredActions[(Number(society.turn || 0) + citizen.id.length) % directorMission.desiredActions.length];
     const safeDesired = isActionSupportive(desired) || citizen.energy > 28 ? desired : "listen";
     action = { actorId: citizen.id, type: safeDesired, targetId: directorMission.actionTargetId || baseAction.targetId || null };
+  } else if (counterfactualWitness) {
+    const desired = counterfactualWitness.desiredActions[(Number(society.turn || 0) + citizen.id.length) % counterfactualWitness.desiredActions.length];
+    action = {
+      actorId: citizen.id,
+      type: isActionSupportive(desired) || citizen.energy > 34 ? desired : "listen",
+      targetId: counterfactualWitness.actionTargetId || baseAction.targetId || null
+    };
   } else if (context.skills.some((skill) => skill.id === "mediation") || inboxHint === "repair") {
     action = { actorId: citizen.id, type: "meditate", targetId: baseAction.targetId || null };
   } else if (memoryCount >= 6 && citizen.trust > 68 && baseAction.type === "listen") {
@@ -1451,7 +1465,8 @@ function planCitizenAgentAction(society, citizen, baseAction) {
     ...action,
     context: {
       ...context,
-      directorMission: directorMission || null
+      directorMission: directorMission || null,
+      counterfactualWitness: counterfactualWitness || null
     }
   };
 }
@@ -1485,6 +1500,7 @@ function recordAgentOutbox(society, citizen, result, context) {
     zone: result.zone || "",
     score: result.score || 0,
     directorQuestId: context.directorMission?.directorQuestId || "",
+    counterfactualEchoId: context.counterfactualWitness?.counterfactualEchoId || "",
     context: {
       memoryCount: context.memory.length,
       reflectionCount: context.reflections.length,
@@ -1492,6 +1508,14 @@ function recordAgentOutbox(society, citizen, result, context) {
     }
   };
   pushAgentRecord(runtime.outbox, item, AGENT_MEMORY_LIMIT);
+  if (item.counterfactualEchoId && state.counterfactualEpisodes && ["listen", "support", "propose"].includes(item.type)) {
+    Object.values(state.counterfactualEpisodes).some((episode) => {
+      const echo = episode?.echoes?.find((entry) => entry.id === item.counterfactualEchoId);
+      if (!echo) return false;
+      echo.discussed = true;
+      return true;
+    });
+  }
   runtime.scheduler.lastDecision = `${citizen.name} -> ${result.type}`;
   return item;
 }
@@ -1709,19 +1733,57 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
     const source = episode && typeof episode === "object" ? episode : {};
     const normalizeEvent = (event) => ({
       zoneId: String(event?.zoneId || "").slice(0, 80),
+      zoneName: String(event?.zoneName || "").slice(0, 80),
       factChoiceId: String(event?.factChoiceId || "").slice(0, 80),
+      factLabel: String(event?.factLabel || "").slice(0, 160),
       chosenChoiceId: String(event?.chosenChoiceId || "").slice(0, 80),
+      chosenLabel: String(event?.chosenLabel || "").slice(0, 160),
       alternativeChoiceId: String(event?.alternativeChoiceId || "").slice(0, 80),
+      alternativeLabel: String(event?.alternativeLabel || "").slice(0, 160),
+      relationType: String(event?.relationType || "").slice(0, 80),
+      participantId: String(event?.participantId || "").slice(0, 80),
+      participantName: String(event?.participantName || "").slice(0, 80),
       rewritten: !!event?.rewritten,
       receipt: String(event?.receipt || "").slice(0, 1200),
       turn: Math.max(0, Math.round(Number(event?.turn) || 0))
     });
+    const normalizeEcho = (echo) => ({
+      id: String(echo?.id || "").slice(0, 120),
+      zoneId: String(echo?.zoneId || "").slice(0, 80),
+      observerId: String(echo?.observerId || "").slice(0, 80),
+      observerName: String(echo?.observerName || "").slice(0, 80),
+      alternativeChoiceId: String(echo?.alternativeChoiceId || "").slice(0, 80),
+      alternativeLabel: String(echo?.alternativeLabel || "").slice(0, 160),
+      stance: String(echo?.stance || "question").slice(0, 40),
+      text: String(echo?.text || "").slice(0, 500),
+      turn: Math.max(0, Math.round(Number(echo?.turn) || 0)),
+      discussed: !!echo?.discussed
+    });
+    const finaleSource = source.finale && typeof source.finale === "object" ? source.finale : null;
     return [String(threadId).slice(0, 80), {
       id: String(source.id || threadId).slice(0, 80),
       rewriteTokens: clamp(Math.round(Number(source.rewriteTokens ?? 1)), 0, 1),
       startedTurn: Math.max(0, Math.round(Number(source.startedTurn) || 0)),
-      rewrites: Array.isArray(source.rewrites) ? source.rewrites.slice(-8).map(normalizeEvent) : [],
-      receipts: Array.isArray(source.receipts) ? source.receipts.slice(-8).map((text) => String(text || "").slice(0, 1200)) : []
+      completedTurn: Math.max(0, Math.round(Number(source.completedTurn) || 0)),
+      status: source.status === "complete" ? "complete" : "active",
+      rewrites: Array.isArray(source.rewrites) ? source.rewrites.slice(-12).map(normalizeEvent) : [],
+      receipts: Array.isArray(source.receipts) ? source.receipts.slice(-12).map((text) => String(text || "").slice(0, 1200)) : [],
+      echoes: Array.isArray(source.echoes) ? source.echoes.slice(-24).map(normalizeEcho) : [],
+      finale: finaleSource
+        ? {
+            verdict: String(finaleSource.verdict || "").slice(0, 300),
+            nextHook: String(finaleSource.nextHook || "").slice(0, 240),
+            factCount: clamp(Math.round(Number(finaleSource.factCount) || 0), 0, 12),
+            rewriteCount: clamp(Math.round(Number(finaleSource.rewriteCount) || 0), 0, 12),
+            completedZones: clamp(Math.round(Number(finaleSource.completedZones) || 0), 0, 12),
+            completedTurn: Math.max(0, Math.round(Number(finaleSource.completedTurn) || 0)),
+            durationTurns: Math.max(0, Math.round(Number(finaleSource.durationTurns) || 0)),
+            shareText: String(finaleSource.shareText || "").slice(0, 2400),
+            echoIds: Array.isArray(finaleSource.echoIds)
+              ? finaleSource.echoIds.slice(0, 8).map((id) => String(id || "").slice(0, 120))
+              : []
+          }
+        : null
     }];
   }));
 }
