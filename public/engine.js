@@ -1796,6 +1796,54 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
   }));
 }
 
+function normalizeMirrorRelay(savedRelay) {
+  const source = savedRelay && typeof savedRelay === "object" && !Array.isArray(savedRelay) ? savedRelay : {};
+  const allowedActions = new Set(["listen", "support", "cooperate", "meditate", "propose"]);
+  const allowedValues = new Set(["benevolence", "universalism", "self_direction"]);
+  const cleanText = (value, max) => String(value || "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max);
+  const normalizeChoice = (choice) => ({
+    id: cleanText(choice?.id, 80),
+    label: cleanText(choice?.label, 120),
+    action: allowedActions.has(choice?.action) ? choice.action : "listen"
+  });
+  const invites = Array.isArray(source.invites) ? source.invites.slice(-8).map((invite) => ({
+    kind: "invite",
+    version: Math.max(1, Math.round(Number(invite?.version) || 1)),
+    id: cleanText(invite?.id, 120),
+    threadId: cleanText(invite?.threadId, 80),
+    threadTitle: cleanText(invite?.threadTitle, 120),
+    inviterAlias: cleanText(invite?.inviterAlias, 20),
+    question: cleanText(invite?.question, 260),
+    hostChoiceId: cleanText(invite?.hostChoiceId, 80),
+    hostChoiceLabel: cleanText(invite?.hostChoiceLabel, 120),
+    choices: Array.isArray(invite?.choices) ? invite.choices.slice(0, 2).map(normalizeChoice) : [],
+    createdTurn: Math.max(0, Math.round(Number(invite?.createdTurn) || 0))
+  })).filter((invite) => invite.id && invite.question && invite.choices.length === 2) : [];
+  const responses = Array.isArray(source.responses) ? source.responses.slice(-12).map((response) => ({
+    kind: "response",
+    version: Math.max(1, Math.round(Number(response?.version) || 1)),
+    id: cleanText(response?.id, 120),
+    inviteId: cleanText(response?.inviteId, 120),
+    threadId: cleanText(response?.threadId, 80),
+    inviterAlias: cleanText(response?.inviterAlias, 20),
+    responderAlias: cleanText(response?.responderAlias, 20),
+    question: cleanText(response?.question, 260),
+    hostChoiceId: cleanText(response?.hostChoiceId, 80),
+    hostChoiceLabel: cleanText(response?.hostChoiceLabel, 120),
+    valueId: cleanText(response?.valueId, 40),
+    valueLabel: cleanText(response?.valueLabel, 80),
+    valueKey: allowedValues.has(response?.valueKey) ? response.valueKey : "benevolence",
+    choiceId: cleanText(response?.choiceId, 80),
+    choiceLabel: cleanText(response?.choiceLabel, 120),
+    action: allowedActions.has(response?.action) ? response.action : "listen",
+    avatarFrame: clamp(Math.round(Number(response?.avatarFrame) || 0), 0, 7),
+    consentState: ["saved", "joined", "removed"].includes(response?.consentState) ? response.consentState : "saved",
+    guestId: cleanText(response?.guestId, 120),
+    receivedTurn: Math.max(0, Math.round(Number(response?.receivedTurn) || 0))
+  })).filter((response) => response.id && response.inviteId && response.responderAlias && response.choiceId) : [];
+  return { invites, responses };
+}
+
 function readPersistedInteriorExploration() {
   try {
     return normalizeInteriorExploration(JSON.parse(localStorage.getItem(INTERIOR_EXPLORATION_STORAGE_KEY) || "{}"));
@@ -1834,6 +1882,7 @@ function loadState() {
     causalGraph: null,
     interiorExploration: persistedInteriorExploration,
     counterfactualEpisodes: {},
+    mirrorRelay: { invites: [], responses: [] },
     hasSeenTutorial: false,
     isFirstVisit: false,
     story: null,
@@ -1870,6 +1919,7 @@ function loadState() {
         ? persistedInteriorExploration
         : normalizeInteriorExploration(saved.interiorExploration),
       counterfactualEpisodes: normalizeCounterfactualEpisodes(saved.counterfactualEpisodes),
+      mirrorRelay: normalizeMirrorRelay(saved.mirrorRelay),
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
       story: saved.story && typeof saved.story === "object" ? saved.story : null,
@@ -1898,6 +1948,7 @@ function buildPersistSnapshot() {
     causalGraph: state.causalGraph || null,
     interiorExploration: normalizeInteriorExploration(state.interiorExploration),
     counterfactualEpisodes: normalizeCounterfactualEpisodes(state.counterfactualEpisodes),
+    mirrorRelay: normalizeMirrorRelay(state.mirrorRelay),
     hasSeenTutorial: !!state.hasSeenTutorial,
     isFirstVisit: !!state.isFirstVisit,
     story: state.story || null,
