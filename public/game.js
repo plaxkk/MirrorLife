@@ -5888,11 +5888,14 @@ function getInteriorPanoramaAnchors(blueprint, W, H) {
   const props = blueprint.props || [];
   return props.map((prop, index) => {
     const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const interaction = getInteriorInteractionPoint(index, placement);
     const { angle, distance } = placement;
     const point = projectInteriorPanoramaPoint(W, H, angle, distance);
     return {
       ...point,
       ...placement,
+      interactionWorldX: interaction.x,
+      interactionWorldZ: interaction.z,
       x: clamp(point.x, W * 0.06, W * 0.94),
       y: clamp(point.y, H * 0.42, H * 0.86),
       label: prop.label,
@@ -7685,26 +7688,14 @@ function drawInteriorPanoramaFunctionalZones(ctx, blueprint, layout, zoneColor, 
 }
 
 function getInteriorThreeItems(blueprint, W, H) {
-  const propItems = (blueprint.props || []).map((prop, index, props) => {
-    if (prop.render3d === false) return null;
-    const placement = getInteriorPropWorldPlacement(prop, index, props.length);
-    const { angle, worldX, worldZ } = placement;
+  const propItems = getInteriorPhysicsItems(blueprint).map((item) => {
+    const interaction = getInteriorInteractionPoint(item.index, item);
     return {
-      ...placement,
-      key: `prop-${index}`,
-      index,
-      model: interiorThreeModel(interiorPropModel(prop, blueprint)),
-      renderModel: prop.renderModel !== false,
-      label: prop.label || "",
-      kind: "prop",
-      worldX,
-      worldZ,
-      anchorHeight: 1.18,
-      angle,
-      modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25) * (prop.focal ? 1.32 : 1) * Number(prop.displayScale || 1),
-      visible: true
+      ...item,
+      interactionWorldX: interaction.x,
+      interactionWorldZ: interaction.z
     };
-  }).filter(Boolean);
+  });
 
   // Decorative aliases previously substituted semantically unrelated full-size
   // props (for example a chalkboard for picture frames). Keep the 3D room clean
