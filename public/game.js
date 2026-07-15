@@ -4882,6 +4882,12 @@ function haltEntryMovement(entry, now, duration) {
   if (!anim) return;
   anim.targetX = anim.x;
   anim.targetY = anim.y;
+  if (Number.isFinite(anim.worldX) && Number.isFinite(anim.worldZ)) {
+    anim.targetWorldX = anim.worldX;
+    anim.targetWorldZ = anim.worldZ;
+    anim.path = [];
+    anim.pathIndex = 0;
+  }
   anim.nextTargetAt = now + duration + 500;
 }
 
@@ -4893,7 +4899,12 @@ function maybeStartEncounters(entries, now) {
     for (let j = i + 1; j < entries.length; j++) {
       const A = entries[i];
       const B = entries[j];
-      if (Math.hypot(A.x - B.x, A.y - B.y) > ENCOUNTER_RADIUS) continue;
+      const physicalDistance = Number.isFinite(A.worldX) && Number.isFinite(A.worldZ) && Number.isFinite(B.worldX) && Number.isFinite(B.worldZ)
+        ? Math.hypot(A.worldX - B.worldX, A.worldZ - B.worldZ)
+        : null;
+      if (physicalDistance == null) {
+        if (Math.hypot(A.x - B.x, A.y - B.y) > ENCOUNTER_RADIUS) continue;
+      } else if (physicalDistance > 0.92) continue;
       const key = pairEncounterKey(A.citizen.id, B.citizen.id);
       if ((encounterCooldowns[key] || 0) > now) continue;
       const animA = citizenAnimations[A.citizen.id];
@@ -5668,12 +5679,47 @@ function ensureInteriorPhysicsWorld(blueprint) {
   world.signature = signature;
   interiorPhysicsWorld = world;
   interiorView.physicsSignature = signature;
+  if (!interiorView.physicsSpawnApplied && world.spawn) {
+    interiorOrbit.x = world.spawn.x;
+    interiorOrbit.z = world.spawn.z;
+    interiorView.physicsSpawnApplied = true;
+  }
   interiorView.physics = physics.getDebugSnapshot?.(world) || null;
   window.__mirrorLifeInteriorPhysics = {
     zoneId: interiorView.zone.id,
     world,
     get snapshot() {
       return physics.getDebugSnapshot?.(world) || null;
+    },
+    get runtime() {
+      const citizens = Object.entries(interiorAnimations)
+        .filter(([id, animation]) => (
+          citizenAnimations[id]?.indoor?.zoneId === interiorView?.zone?.id
+          && Number.isFinite(animation?.worldX)
+          && Number.isFinite(animation?.worldZ)
+        ))
+        .map(([id, animation]) => ({
+          id,
+          x: animation.worldX,
+          z: animation.worldZ,
+          walking: Boolean(animation.walking),
+          contacts: [...(animation.physicsContacts || [])],
+          walkable: physics.isWalkable?.(world, { x: animation.worldX, z: animation.worldZ }, physics.CITIZEN_RADIUS) !== false
+        }));
+      return {
+        player: {
+          x: Number(interiorOrbit.x || 0),
+          z: Number(interiorOrbit.z || 0),
+          blocked: Boolean(interiorOrbit.blocked),
+          contacts: [...(interiorOrbit.contacts || [])],
+          walkable: physics.isWalkable?.(world, { x: interiorOrbit.x, z: interiorOrbit.z }, physics.PLAYER_RADIUS) !== false
+        },
+        citizens,
+        allActorsWalkable: citizens.every(citizen => citizen.walkable)
+      };
+    },
+    probeMove(from, delta, radius = physics.PLAYER_RADIUS) {
+      return physics.moveCircle(world, from, delta, radius);
     }
   };
   return world;
@@ -5690,7 +5736,12 @@ function getInteriorDynamicBodies(excludeId = "") {
   const physics = getInteriorPhysicsApi();
   const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
   return Object.entries(interiorAnimations)
-    .filter(([id, animation]) => id !== excludeId && Number.isFinite(animation?.worldX) && Number.isFinite(animation?.worldZ))
+    .filter(([id, animation]) => (
+      id !== excludeId
+      && citizenAnimations[id]?.indoor?.zoneId === interiorView?.zone?.id
+      && Number.isFinite(animation?.worldX)
+      && Number.isFinite(animation?.worldZ)
+    ))
     .map(([id, animation]) => ({ id, x: animation.worldX, z: animation.worldZ, radius: citizenRadius }));
 }
 
@@ -6263,9 +6314,10 @@ function playInteriorSceneAction(choiceId = "") {
     const anchor = interiorHotspots.find((item) => item.behaviors?.includes(choice.behavior)) || interiorHotspots[0];
     const behavior = BEHAVIOR_BY_ID.get(choice.behavior);
     if (ia && anchor) {
-      ia.targetX = anchor.x;
-      ia.targetY = anchor.y - (anchor.screenProjected ? 4 : -16);
-      ia.targetAnchor = anchor;
+      setInteriorCitizenWorldTarget(participant, ia, {
+        x: Number(anchor.interactionWorldX ?? anchor.worldX),
+        z: Number(anchor.interactionWorldZ ?? anchor.worldZ)
+      }, anchor, performance.now());
       ia.nextTargetAt = performance.now() + 5200;
       if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) ia.forcedBehaviorId = behavior.id;
     }
@@ -6358,9 +6410,10 @@ function exploreInteriorHotspot(propIndex) {
       const anchor = interiorHotspots.find((item) => item.index === propIndex);
       const behavior = BEHAVIOR_BY_ID.get(primaryBehavior);
       if (ia && anchor) {
-        ia.targetX = anchor.x;
-        ia.targetY = anchor.y + (anchor.screenProjected ? -4 : 16);
-        ia.targetAnchor = anchor;
+        setInteriorCitizenWorldTarget(observer, ia, {
+          x: Number(anchor.interactionWorldX ?? anchor.worldX),
+          z: Number(anchor.interactionWorldZ ?? anchor.worldZ)
+        }, anchor, performance.now());
         ia.nextTargetAt = performance.now() + 3800;
         if (behavior && INDOOR_BEHAVIOR_IDS.has(behavior.id)) startCitizenBehavior(observer, ia, behavior, performance.now());
       }
@@ -7703,10 +7756,14 @@ function getInteriorThreeItems(blueprint, W, H) {
   return propItems;
 }
 
-function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
+function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []) {
   const api = window.MirrorLifeInterior3D;
   if (!api?.update) return false;
   const items = getInteriorThreeItems(blueprint, W, H);
+  const physicsActors = [
+    { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
+    ...actors.map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
+  ];
   return api.update({
     visible: true,
     width: W,
@@ -7722,10 +7779,16 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight) {
       trim: roomStyle.trim,
       archetype: blueprint.key,
       zoneId: interiorView?.zone?.id || "",
-      variant: hashCommunitySeed(interiorView?.zone?.id || blueprint.key, "interior-room") % 4,
+      variant: getInteriorPhysicsVariant(blueprint),
       night: !!isNight
     },
-    items
+    items,
+    actors,
+    physics: {
+      enabled: interiorPhysicsDebugVisible,
+      colliders: interiorPhysicsWorld?.colliders || [],
+      actors: physicsActors
+    }
   });
 }
 
@@ -8098,6 +8161,12 @@ function enterInteriorView(zone, source = "manual") {
     }
   };
   interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, z: 0, lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
+  interiorPhysicsWorld = null;
+  const physicsWorld = ensureInteriorPhysicsWorld(blueprint);
+  if (physicsWorld?.spawn) {
+    interiorOrbit.x = physicsWorld.spawn.x;
+    interiorOrbit.z = physicsWorld.spawn.z;
+  }
   interiorMoveKeys.clear();
   interiorNearbyAnchor = null;
   interiorFocusPropIndex = null;
@@ -8123,6 +8192,8 @@ function exitInteriorView() {
   interiorFocusPropIndex = null;
   interiorExitRect = null;
   interiorHotspots = [];
+  interiorPhysicsWorld = null;
+  window.__mirrorLifeInteriorPhysics = null;
   document.body.classList.remove("interior-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
@@ -8238,7 +8309,78 @@ function handleInteriorDeparture(citizen, anim, now) {
   }
 }
 
-function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now, idx) {
+function setInteriorCitizenWorldTarget(citizen, ia, desired, anchor, now) {
+  const physics = getInteriorPhysicsApi();
+  const world = interiorPhysicsWorld;
+  const radius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const dynamic = [
+    ...getInteriorDynamicBodies(citizen.id),
+    { id: "player", x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0), radius: Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) }
+  ];
+  const safeTarget = physics?.findNearestWalkable && world
+    ? physics.findNearestWalkable(world, desired, radius, { dynamic, selfId: citizen.id })
+    : desired;
+  ia.targetWorldX = safeTarget.x;
+  ia.targetWorldZ = safeTarget.z;
+  ia.targetAnchor = anchor || null;
+  ia.path = physics?.findPath && world
+    ? physics.findPath(world, { x: ia.worldX, z: ia.worldZ }, safeTarget, radius)
+    : [{ x: ia.worldX, z: ia.worldZ }, safeTarget];
+  ia.pathIndex = ia.path.length > 1 ? 1 : 0;
+  ia.nextTargetAt = now + 2200 + seededCommunityValue(hashCommunitySeed(citizen.id, Math.floor(now / 700)), 3) * 3200;
+}
+
+function updateInteriorCitizenWorldPosition(citizen, ia, now) {
+  const physics = getInteriorPhysicsApi();
+  const world = interiorPhysicsWorld;
+  const radius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const previous = Number(ia.lastPhysicsAt || now);
+  const dt = Math.min(0.06, Math.max(0, (now - previous) / 1000));
+  ia.lastPhysicsAt = now;
+  const path = ia.path || [];
+  let waypoint = path[ia.pathIndex || 0] || null;
+  if (!waypoint || dt <= 0) return false;
+  let dx = waypoint.x - ia.worldX;
+  let dz = waypoint.z - ia.worldZ;
+  let distance = Math.hypot(dx, dz);
+  if (distance < 0.08 && (ia.pathIndex || 0) < path.length - 1) {
+    ia.pathIndex += 1;
+    waypoint = path[ia.pathIndex];
+    dx = waypoint.x - ia.worldX;
+    dz = waypoint.z - ia.worldZ;
+    distance = Math.hypot(dx, dz);
+  }
+  if (distance < 0.065) return false;
+  const speed = 0.76;
+  const step = Math.min(distance, speed * dt);
+  const dynamic = [
+    ...getInteriorDynamicBodies(citizen.id),
+    { id: "player", x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0), radius: Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) }
+  ];
+  const moved = physics?.moveCircle && world
+    ? physics.moveCircle(
+      world,
+      { x: ia.worldX, z: ia.worldZ },
+      { x: dx / Math.max(distance, 0.001) * step, z: dz / Math.max(distance, 0.001) * step },
+      radius,
+      { dynamic, selfId: citizen.id }
+    )
+    : { x: ia.worldX + dx / Math.max(distance, 0.001) * step, z: ia.worldZ + dz / Math.max(distance, 0.001) * step };
+  const movedDistance = Math.hypot(moved.x - ia.worldX, moved.z - ia.worldZ);
+  ia.worldX = moved.x;
+  ia.worldZ = moved.z;
+  ia.physicsContacts = moved.contacts || [];
+  const screenRightX = Math.cos(Number(interiorOrbit.yaw || 0));
+  const screenRightZ = Math.sin(Number(interiorOrbit.yaw || 0));
+  ia.facing = dx * screenRightX + dz * screenRightZ >= 0 ? 1 : -1;
+  if (movedDistance > 0.0005) {
+    ia.walkPhase = (ia.walkPhase || 0) + movedDistance * 8.5;
+    return true;
+  }
+  return false;
+}
+
+function updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx) {
   const gesture = getActiveGesture(canonicalAnim, now);
   ia.gesture = canonicalAnim.gesture; // shared so the figure renderer can draw the overlay
   if (ia.behavior && now >= ia.behavior.until) {
@@ -8258,26 +8400,23 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
         ? anchors[seed % anchors.length]
         : null;
       if (anchor) {
-        ia.targetX = anchor.x + (seededCommunityValue(seed, 5) - 0.5) * 28;
-        const anchorOffset = anchor.screenProjected ? -4 : 18;
-        ia.targetY = anchor.y + anchorOffset + (seededCommunityValue(seed, 6) - 0.5) * (anchor.screenProjected ? 8 : 16);
-        ia.targetAnchor = anchor;
+        const tangentX = Math.cos(anchor.angle || 0);
+        const tangentZ = Math.sin(anchor.angle || 0);
+        const offset = (seededCommunityValue(seed, 5) - 0.5) * 0.44;
+        setInteriorCitizenWorldTarget(citizen, ia, {
+          x: Number(anchor.interactionWorldX ?? anchor.worldX) + tangentX * offset,
+          z: Number(anchor.interactionWorldZ ?? anchor.worldZ) + tangentZ * offset
+        }, anchor, now);
       } else {
-        ia.targetX = layout.left + 30 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 60);
-        ia.targetY = layout.floorTop + 34 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 60);
-        ia.targetAnchor = null;
+        const physics = getInteriorPhysicsApi();
+        const target = physics?.sampleWalkablePoint && interiorPhysicsWorld
+          ? physics.sampleWalkablePoint(interiorPhysicsWorld, seed, Number(physics.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS))
+          : { x: (seededCommunityValue(seed, 1) - 0.5) * 4, z: (seededCommunityValue(seed, 2) - 0.5) * 4 };
+        setInteriorCitizenWorldTarget(citizen, ia, target, null, now);
       }
-      ia.nextTargetAt = now + 2200 + seededCommunityValue(seed, 3) * 3200;
     }
-    const dx = (ia.targetX || ia.x) - ia.x;
-    const dy = (ia.targetY || ia.y) - ia.y;
-    const dist = Math.max(0.001, Math.hypot(dx, dy));
-    if (dist > 3) {
-      const speed = 0.55;
-      ia.x += (dx / dist) * Math.min(speed, dist);
-      ia.y += (dy / dist) * Math.min(speed, dist);
-      ia.facing = dx >= 0 ? 1 : -1;
-      ia.walkPhase = (ia.walkPhase || 0) + 0.1;
+    const targetDistance = Math.hypot(Number(ia.targetWorldX ?? ia.worldX) - ia.worldX, Number(ia.targetWorldZ ?? ia.worldZ) - ia.worldZ);
+    if (targetDistance > 0.09 && updateInteriorCitizenWorldPosition(citizen, ia, now)) {
       ia.state = "walking";
     } else {
       // Arrived at a spot indoors: maybe settle into an activity.
@@ -8299,11 +8438,100 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, layout, anchors, now,
     if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
     ia.state = gesture.type === "wave" ? "waving" : "talking";
     const partnerIa = gesture.partnerId ? interiorAnimations[gesture.partnerId] : null;
-    if (partnerIa && Number.isFinite(partnerIa.x)) {
-      ia.facing = partnerIa.x >= ia.x ? 1 : -1;
+    if (partnerIa && Number.isFinite(partnerIa.worldX)) {
+      const screenRightX = Math.cos(Number(interiorOrbit.yaw || 0));
+      const screenRightZ = Math.sin(Number(interiorOrbit.yaw || 0));
+      ia.facing = (partnerIa.worldX - ia.worldX) * screenRightX + (partnerIa.worldZ - ia.worldZ) * screenRightZ >= 0 ? 1 : -1;
     }
   }
   maybeShowCitizenThought(citizen, ia, interiorView?.zone, now);
+}
+
+function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(blueprint);
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const aliveCitizens = getAliveCitizens(society);
+  const indoorCitizens = aliveCitizens
+    .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
+    .slice(0, MAX_INTERIOR_OCCUPANTS);
+  manageInteriorArrivals(society, zone, indoorCitizens.length, now);
+
+  const entries = [];
+  indoorCitizens.forEach((citizen, idx) => {
+    const canonicalAnim = citizenAnimations[citizen.id];
+    if (now > canonicalAnim.indoor.until) {
+      handleInteriorDeparture(citizen, canonicalAnim, now);
+      return;
+    }
+    let ia = interiorAnimations[citizen.id];
+    if (!ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) {
+      const seed = hashCommunitySeed(citizen.id, "interior-spawn");
+      const focalAnchor = anchors.find((anchor) => anchor.prop?.focal) || null;
+      const spawnAnchor = focalAnchor && idx < 3
+        ? focalAnchor
+        : anchors.length
+          ? anchors[(seed + idx) % anchors.length]
+          : null;
+      let desired;
+      if (spawnAnchor) {
+        const tangent = { x: Math.cos(spawnAnchor.angle || 0), z: Math.sin(spawnAnchor.angle || 0) };
+        const offsets = [-0.78, 0.78, 0];
+        const forwardOffsets = [0.12, 0.12, 0.72];
+        const radialLength = Math.max(0.001, Math.hypot(spawnAnchor.worldX || 0, spawnAnchor.worldZ || 0));
+        const towardCenter = { x: -(spawnAnchor.worldX || 0) / radialLength, z: -(spawnAnchor.worldZ || 0) / radialLength };
+        desired = {
+          x: Number(spawnAnchor.interactionWorldX ?? spawnAnchor.worldX) + tangent.x * offsets[idx % offsets.length] + towardCenter.x * forwardOffsets[idx % forwardOffsets.length],
+          z: Number(spawnAnchor.interactionWorldZ ?? spawnAnchor.worldZ) + tangent.z * offsets[idx % offsets.length] + towardCenter.z * forwardOffsets[idx % forwardOffsets.length]
+        };
+      } else if (canonicalAnim.indoor.spawnInside && physics?.sampleWalkablePoint && world) {
+        desired = physics.sampleWalkablePoint(world, seed, citizenRadius);
+      } else {
+        desired = world?.spawn || { x: 0, z: 3.72 };
+      }
+      const dynamic = [
+        ...getInteriorDynamicBodies(citizen.id),
+        { id: "player", x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0), radius: Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) }
+      ];
+      const spawn = physics?.findNearestWalkable && world
+        ? physics.findNearestWalkable(world, desired, citizenRadius, { dynamic, selfId: citizen.id })
+        : desired;
+      ia = interiorAnimations[citizen.id] = {
+        worldX: spawn.x,
+        worldZ: spawn.z,
+        targetWorldX: spawn.x,
+        targetWorldZ: spawn.z,
+        x: 0,
+        y: 0,
+        path: [],
+        pathIndex: 0,
+        targetAnchor: spawnAnchor,
+        nextTargetAt: 0,
+        lastPhysicsAt: now,
+        walkPhase: 0,
+        facing: idx % 2 ? -1 : 1,
+        forcedBehaviorId: focalAnchor?.behaviors?.[idx % Math.max(1, focalAnchor.behaviors.length)] || null
+      };
+    }
+    if (Number.isInteger(ia.targetAnchor?.index)) {
+      ia.targetAnchor = anchors.find((anchor) => anchor.index === ia.targetAnchor.index) || ia.targetAnchor;
+    }
+    updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx);
+    entries.push({
+      citizen,
+      moveAnim: ia,
+      idx,
+      id: citizen.id,
+      worldX: ia.worldX,
+      worldZ: ia.worldZ,
+      frame: getCitizenSpriteFrame(citizen),
+      facing: ia.facing || 1,
+      state: ia.state || "idle",
+      walkPhase: ia.walkPhase || 0,
+      scale: citizen.avatarShape === "bold" ? 1.05 : citizen.avatarShape === "compact" ? 0.94 : 1
+    });
+  });
+  return entries;
 }
 
 function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
@@ -8312,9 +8540,22 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const layout = getInteriorLayout(W, H);
   const zoneColor = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#8d99ae";
   const blueprint = getInteriorBlueprint(zone);
+  ensureInteriorPhysicsWorld(blueprint);
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
+  const physicsAnchors = getInteriorPhysicsAnchors(blueprint);
+  const entries = prepareInteriorOccupants(society, zone, blueprint, physicsAnchors, now);
+  const actorPayload = entries.map((entry) => ({
+    id: entry.id,
+    worldX: entry.worldX,
+    worldZ: entry.worldZ,
+    frame: entry.frame,
+    facing: entry.facing,
+    state: entry.state,
+    walkPhase: entry.walkPhase,
+    scale: entry.scale
+  }));
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
-  const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight);
+  const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);
   const useThreeModels = !!threeState?.ready;
   const projectedProps = new Map((threeState?.projections || [])
     .filter((item) => String(item.key || "").startsWith("prop-"))
@@ -8392,94 +8633,54 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
       : `${Math.min(explorationRecord.found.length, explorationGoal)}/${explorationGoal} 段场所记忆`;
   ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
 
-  // Occupants
-  const aliveCitizens = getAliveCitizens(society);
-  const indoorCitizens = aliveCitizens
-    .filter(c => citizenAnimations[c.id]?.indoor?.zoneId === zone.id)
-    .slice(0, MAX_INTERIOR_OCCUPANTS);
-  manageInteriorArrivals(society, zone, indoorCitizens.length, now);
-
-  const entries = [];
-  indoorCitizens.forEach((citizen, idx) => {
-    const canonicalAnim = citizenAnimations[citizen.id];
-    if (now > canonicalAnim.indoor.until) {
-      handleInteriorDeparture(citizen, canonicalAnim, now);
-      return;
+  // Occupants live in the same X/Z coordinate system as the furniture. Three.js
+  // returns their floor projection for hit testing and provides real depth
+  // occlusion; the canvas renderer remains only as a loading fallback.
+  const actorProjectionById = new Map((threeState?.actorProjections || []).map((projection) => [projection.id, projection]));
+  entries.forEach((entry) => {
+    const projection = actorProjectionById.get(entry.id);
+    if (projection) {
+      entry.x = clamp(projection.x, 24, W - 24);
+      entry.y = clamp(projection.y, 82, H - 28);
+      entry.visible = projection.visible;
+      entry.renderScale = projection.scale;
+    } else {
+      const angle = Math.atan2(entry.worldX, -entry.worldZ);
+      const radialDistance = Math.hypot(entry.worldX, entry.worldZ);
+      const fallback = projectInteriorPanoramaPoint(W, H, angle, clamp((radialDistance - 1.2) / 3.7, 0.22, 0.95));
+      entry.x = fallback.x;
+      entry.y = fallback.y;
+      entry.visible = fallback.visible;
+      entry.renderScale = fallback.scale;
     }
-    let ia = interiorAnimations[citizen.id];
-    if (!ia) {
-      const spawnInside = !!canonicalAnim.indoor.spawnInside;
-      const seed = hashCommunitySeed(citizen.id, "interior-spawn");
-      const focalAnchor = useThreeModels ? interiorAnchors.find((anchor) => anchor.prop?.focal) : null;
-      const spawnAnchor = focalAnchor && idx < 3
-        ? focalAnchor
-        : useThreeModels && interiorAnchors.length
-          ? interiorAnchors[(seed + idx) % interiorAnchors.length]
-          : null;
-      const entryX = interiorExitRect ? interiorExitRect.x + interiorExitRect.w / 2 : W * 0.86;
-      const entryY = interiorExitRect ? interiorExitRect.y - 12 : layout.floorBottom - 32;
-      const focalOffsets = [
-        { x: -88, y: 42 },
-        { x: 88, y: 42 },
-        { x: 0, y: -66 }
-      ];
-      const focalOffset = focalAnchor && spawnAnchor === focalAnchor ? focalOffsets[idx] : null;
-      const focalOffsetX = focalOffset?.x || 0;
-      const focalOffsetY = focalOffset?.y || 0;
-      const sx = spawnAnchor ? spawnAnchor.x + focalOffsetX : (spawnInside
-        ? layout.left + 40 + seededCommunityValue(seed, 1) * (layout.right - layout.left - 80)
-        : entryX);
-      const sy = spawnAnchor ? spawnAnchor.y + focalOffsetY : (spawnInside
-        ? layout.floorTop + 50 + seededCommunityValue(seed, 2) * (layout.floorBottom - layout.floorTop - 80)
-        : entryY);
-      ia = interiorAnimations[citizen.id] = {
-        x: sx,
-        y: sy,
-        targetX: sx,
-        targetY: sy,
-        targetAnchor: spawnAnchor,
-        nextTargetAt: 0,
-        walkPhase: 0,
-        facing: focalOffsetX > 0 ? -1 : 1,
-        forcedBehaviorId: focalAnchor?.behaviors?.[idx % Math.max(1, focalAnchor.behaviors.length)] || null
-      };
-    }
-    if (useThreeModels && Number.isInteger(ia.targetAnchor?.index)) {
-      const liveAnchor = interiorAnchors.find((anchor) => anchor.index === ia.targetAnchor.index);
-      if (liveAnchor) {
-        const cameraShiftX = liveAnchor.x - Number(ia.targetAnchor.x ?? liveAnchor.x);
-        const cameraShiftY = liveAnchor.y - Number(ia.targetAnchor.y ?? liveAnchor.y);
-        ia.x += cameraShiftX;
-        ia.y += cameraShiftY;
-        ia.targetX = Number(ia.targetX || ia.x) + cameraShiftX;
-        ia.targetY = Number(ia.targetY || ia.y) + cameraShiftY;
-        ia.targetAnchor = liveAnchor;
-      }
-    }
-    updateInteriorCitizen(citizen, ia, canonicalAnim, layout, interiorAnchors, now, idx);
-    ia.x = clamp(ia.x, 34, W - 34);
-    ia.y = clamp(ia.y, 96, H - 44);
-    ia.targetX = clamp(Number(ia.targetX || ia.x), 34, W - 34);
-    ia.targetY = clamp(Number(ia.targetY || ia.y), 96, H - 44);
-    entries.push({ citizen, moveAnim: ia, x: ia.x, y: ia.y, idx });
+    entry.moveAnim.x = entry.x;
+    entry.moveAnim.y = entry.y;
+    entry.moveAnim.renderScale = entry.renderScale;
   });
-
-  entries.sort((a, b) => a.y - b.y);
-  entries.forEach(({ citizen, moveAnim, idx }) => {
+  entries.sort((a, b) => Number(a.y || 0) - Number(b.y || 0));
+  entries.forEach(({ citizen, moveAnim, idx, visible, renderScale }) => {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
     const sizeBoost = shape === "bold" ? 2 : shape === "compact" ? -1 : 0;
     const baseSize = useThreeModels ? 43 : 16;
-    const size = (isHover ? baseSize + 4 : baseSize) + sizeBoost;
+    const size = ((isHover ? baseSize + 4 : baseSize) + sizeBoost) * Number(renderScale || 1);
     const bobY = Math.sin(t * 1.5 + idx * 1.7) * 1.5;
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
-    drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
+    if (!threeState?.actorsReady && visible !== false) {
+      drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
+    }
     if (citizen.id === followedCitizenId) {
       updateFollowBanner(citizen, getCitizenBehaviorLabel(citizen, citizenAnimations[citizen.id], now));
     }
   });
 
-  maybeStartEncounters(entries, now);
+  maybeStartEncounters(entries.map((entry) => ({
+    ...entry,
+    worldX: entry.worldX,
+    worldZ: entry.worldZ,
+    x: entry.x,
+    y: entry.y
+  })), now);
 
   if (entries.length === 0) {
     ctx.fillStyle = isNight ? "rgba(250,250,245,0.6)" : "rgba(26,26,46,0.45)";
@@ -10653,6 +10854,15 @@ function bindGameEvents() {
       return;
     }
     if (interiorView) {
+      if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) {
+        e.preventDefault();
+        if (!e.repeat) {
+          interiorPhysicsDebugVisible = !interiorPhysicsDebugVisible;
+          showToast(interiorPhysicsDebugVisible ? "空间碰撞体已显示" : "空间碰撞体已隐藏", "support");
+          markRenderActive(2400);
+        }
+        return;
+      }
       if (e.key.toLowerCase() === "e" && interiorNearbyAnchor) {
         e.preventDefault();
         if (!e.repeat) exploreInteriorHotspot(interiorNearbyAnchor.index);

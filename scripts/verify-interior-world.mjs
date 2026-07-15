@@ -27,15 +27,15 @@ function unique(values) {
   return [...new Set(values)];
 }
 
-function extractObject(source, name, nextName) {
-  const pattern = new RegExp(`const ${name} = (\\{[\\s\\S]*?\\n\\});\\n\\nconst ${nextName}`);
+function extractObject(source, name) {
+  const pattern = new RegExp(`const ${name} = (\\{[\\s\\S]*?\\n\\});`);
   const match = source.match(pattern);
   if (!match) throw new Error(`Unable to extract ${name}.`);
   return vm.runInNewContext(`(${match[1]})`, Object.create(null));
 }
 
-function extractArray(source, name, nextName) {
-  const pattern = new RegExp(`const ${name} = (\\[[\\s\\S]*?\\n\\]);\\n\\nconst ${nextName}`);
+function extractArray(source, name) {
+  const pattern = new RegExp(`const ${name} = (\\[[\\s\\S]*?\\n\\]);`);
   const match = source.match(pattern);
   if (!match) throw new Error(`Unable to extract ${name}.`);
   return vm.runInNewContext(`(${match[1]})`, Object.create(null));

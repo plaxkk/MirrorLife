@@ -303,10 +303,14 @@ function findNearestWalkable(world, desired, radius = CITIZEN_RADIUS, options = 
       if (isWalkable(world, candidate, radius, options.dynamic, options.selfId)) return candidate;
     }
   }
-  return findNearestWalkable(world, { x: 0, z: 0 }, radius, { ...options, rings: 12, step: 0.18 });
+  if (!options._centerFallback) {
+    return findNearestWalkable(world, { x: 0, z: 0 }, radius, { ...options, rings: 30, step: 0.18, _centerFallback: true });
+  }
+  const resolved = resolvePosition(world, { x: 0, z: 0 }, radius, options.dynamic, options.selfId);
+  return { x: resolved.x, z: resolved.z };
 }
 
-function findInteractionPoint(world, item, collider, radius = CITIZEN_RADIUS) {
+function findInteractionPoint(world, item, collider, radius = CITIZEN_RADIUS, reachableFrom = null) {
   const origin = { x: finite(item?.worldX), z: finite(item?.worldZ) };
   const towardCenterLength = Math.max(EPSILON, Math.hypot(origin.x, origin.z));
   const towardCenter = { x: -origin.x / towardCenterLength, z: -origin.z / towardCenterLength };
@@ -316,15 +320,28 @@ function findInteractionPoint(world, item, collider, radius = CITIZEN_RADIUS) {
     { x: towardCenter.z, z: -towardCenter.x },
     { x: -towardCenter.x, z: -towardCenter.z }
   ];
+  for (let index = 0; index < 16; index += 1) {
+    const angle = index / 16 * Math.PI * 2;
+    directions.push({ x: Math.cos(angle), z: Math.sin(angle) });
+  }
+  const isReachable = (candidate) => {
+    if (!isWalkable(world, candidate, radius)) return false;
+    if (!reachableFrom) return true;
+    const path = findPath(world, reachableFrom, candidate, radius);
+    const last = path[path.length - 1];
+    return !!last && Math.hypot(last.x - candidate.x, last.z - candidate.z) < 0.46;
+  };
   for (const direction of directions) {
     const distance = colliderReach(collider, direction) + radius + 0.2;
     const candidate = {
       x: origin.x + direction.x * distance,
       z: origin.z + direction.z * distance
     };
-    if (isWalkable(world, candidate, radius)) return candidate;
+    if (isReachable(candidate)) return candidate;
   }
-  return findNearestWalkable(world, origin, radius);
+  const fallback = findNearestWalkable(world, origin, radius);
+  if (isReachable(fallback)) return fallback;
+  return findNearestWalkable(world, reachableFrom || { x: 0, z: 0 }, radius);
 }
 
 function createPhysicsWorld(options = {}) {
@@ -344,15 +361,16 @@ function createPhysicsWorld(options = {}) {
     itemColliders: new Map(itemColliders.filter((item) => item.itemKey).map((item) => [item.itemKey, item])),
     navCache: new Map()
   };
+  world.spawn = findNearestWalkable(world, options.spawn || { x: 0, z: 3.72 }, PLAYER_RADIUS);
   (options.items || []).forEach((item) => {
     const directCollider = world.itemColliders.get(item.key);
-    const nearestAmbient = directCollider || colliders
+    const nearestAmbientMatch = colliders
       .filter((collider) => collider.source === "environment")
       .map((collider) => ({ collider, distance: Math.hypot(collider.x - finite(item.worldX), collider.z - finite(item.worldZ)) }))
-      .sort((a, b) => a.distance - b.distance)[0]?.collider;
-    world.interactions.set(item.key, findInteractionPoint(world, item, nearestAmbient, CITIZEN_RADIUS));
+      .sort((a, b) => a.distance - b.distance)[0];
+    const nearestAmbient = directCollider || (nearestAmbientMatch?.distance < 1.4 ? nearestAmbientMatch.collider : null);
+    world.interactions.set(item.key, findInteractionPoint(world, item, nearestAmbient, CITIZEN_RADIUS, world.spawn));
   });
-  world.spawn = findNearestWalkable(world, options.spawn || { x: 0, z: 3.72 }, PLAYER_RADIUS);
   return world;
 }
 

@@ -2827,7 +2827,6 @@ function updatePhysicsDebug(physics = {}) {
   if (signature !== physicsDebugSignature) {
     physicsDebugSignature = signature;
     clearPhysicsDebug();
-    const solidMaterial = new THREE.LineBasicMaterial({ color: 0xe63946, transparent: true, opacity: 0.8, depthTest: false });
     colliders.forEach((collider) => {
       let geometry;
       if (collider.shape === "circle") {
@@ -2851,10 +2850,12 @@ function updatePhysicsDebug(physics = {}) {
       mesh.renderOrder = 20;
       physicsDebugRoot.add(mesh);
     });
-    solidMaterial.dispose();
   }
   [...physicsDebugRoot.children].forEach((child) => {
-    if (child.userData.dynamicPhysicsMarker) child.removeFromParent();
+    if (!child.userData.dynamicPhysicsMarker) return;
+    child.removeFromParent();
+    child.geometry?.dispose?.();
+    child.material?.dispose?.();
   });
   (physics.actors || []).forEach((actor) => {
     const geometry = new THREE.RingGeometry(Math.max(0.01, Number(actor.radius || 0.28) - 0.016), Number(actor.radius || 0.28) + 0.016, 28);
