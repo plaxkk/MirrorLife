@@ -1400,7 +1400,13 @@ function getCitizenAgentContext(society, citizen) {
   const memory = (runtime?.memoryStore?.[citizen.id] || []).slice(0, 6);
   const reflections = (runtime?.reflectionStore?.[citizen.id] || []).slice(0, 4);
   const skills = (runtime?.skillStore?.[citizen.id] || []).slice(0, 4);
-  const inbox = (runtime?.inbox || []).filter((item) => item.scope === "world" || item.targetId === citizen.id).slice(0, 4);
+  const relevantInbox = (runtime?.inbox || []).filter((item) => item.scope === "world" || item.targetId === citizen.id);
+  const directorMission = relevantInbox.find((item) => (
+    item.type === "plot-director-mission"
+    && item.targetId === citizen.id
+    && Number(item.untilTurn || 0) >= Number(society.turn || 0)
+  ));
+  const inbox = [directorMission, ...relevantInbox.filter((item) => item !== directorMission)].filter(Boolean).slice(0, 4);
   return { runtime, memory, reflections, skills, inbox };
 }
 
@@ -1410,11 +1416,27 @@ function planCitizenAgentAction(society, citizen, baseAction) {
   const recentSupport = context.reflections.find((item) => String(item.text || "").includes("安抚"));
   const skillHint = context.skills[0]?.id || "";
   const inboxHint = context.inbox[0]?.hint || "";
+  const directorMission = context.inbox.find((item) => (
+    item.type === "plot-director-mission"
+    && item.targetId === citizen.id
+    && Number(item.untilTurn || 0) >= Number(society.turn || 0)
+    && Array.isArray(item.desiredActions)
+    && item.desiredActions.length
+  ));
   const memoryCount = context.memory.length + context.reflections.length;
 
   let action = baseAction;
   if (citizen.mood < 32 || recentConflict) {
-    action = { actorId: citizen.id, type: "support", targetId: baseAction.targetId || null };
+    const safeMissionAction = directorMission?.desiredActions.find((type) => isActionSupportive(type));
+    action = {
+      actorId: citizen.id,
+      type: safeMissionAction || "support",
+      targetId: directorMission?.actionTargetId || baseAction.targetId || null
+    };
+  } else if (directorMission) {
+    const desired = directorMission.desiredActions[(Number(society.turn || 0) + citizen.id.length) % directorMission.desiredActions.length];
+    const safeDesired = isActionSupportive(desired) || citizen.energy > 28 ? desired : "listen";
+    action = { actorId: citizen.id, type: safeDesired, targetId: directorMission.actionTargetId || baseAction.targetId || null };
   } else if (context.skills.some((skill) => skill.id === "mediation") || inboxHint === "repair") {
     action = { actorId: citizen.id, type: "meditate", targetId: baseAction.targetId || null };
   } else if (memoryCount >= 6 && citizen.trust > 68 && baseAction.type === "listen") {
@@ -1427,7 +1449,10 @@ function planCitizenAgentAction(society, citizen, baseAction) {
 
   return {
     ...action,
-    context
+    context: {
+      ...context,
+      directorMission: directorMission || null
+    }
   };
 }
 
@@ -1459,6 +1484,7 @@ function recordAgentOutbox(society, citizen, result, context) {
     turn: society.turn,
     zone: result.zone || "",
     score: result.score || 0,
+    directorQuestId: context.directorMission?.directorQuestId || "",
     context: {
       memoryCount: context.memory.length,
       reflectionCount: context.reflections.length,

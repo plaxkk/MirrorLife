@@ -11,6 +11,384 @@ const STORY_MAX_ACTIVE_ARCS = 3;
 const STORY_LOG_LIMIT = 40;
 const STORY_BEAT_GAP_TURNS = [0, 3, 4, 4]; // 各幕之间的回合间距
 const STORY_STAGES = ["起", "承", "转", "合"];
+const PLOT_DIRECTOR_VERSION = 1;
+const PLOT_DIRECTOR_MAX_QUESTS = 5;
+const PLOT_DIRECTOR_COOLDOWN_TURNS = 6;
+
+const PLOT_DIRECTOR_QUESTS = [
+  {
+    id: "empty-chair",
+    title: "那把一直空着的椅子",
+    emoji: "🪑",
+    zoneId: "public-plaza",
+    roles: ["一直没开口的人", "最先注意到沉默的人", "拒绝替别人发言的见证者"],
+    stageActions: [["listen"], ["support", "cooperate"], ["propose", "meditate"]],
+    score: (observation) => 58 + Math.max(0, 52 - observation.quietMood) + observation.silencePressure,
+    hook: (observation) => `${observation.quietName}连续几次坐在讨论圈外。今天，广场中央有人特意留了一把空椅。`,
+    question: "真正的倾听，是邀请一个人开口，还是允许对方暂时保持沉默？",
+    stakes: "如果所有善意都急着得到回应，沉默的人会再次被善意推到角落。"
+  },
+  {
+    id: "borrowed-day",
+    title: "把我的一天借给你",
+    emoji: "🔄",
+    zoneId: "residential",
+    roles: ["想逃离自己日常的人", "接过另一种人生的人", "记录两种生活差异的人"],
+    stageActions: [["cooperate"], ["listen", "rest"], ["propose", "support"]],
+    score: (observation) => 48 + Math.round(observation.freedom * 0.18) + observation.routinePressure,
+    hook: (observation) => `${observation.quietName}和${observation.activeName}决定交换一天的日程，却约定不能替对方做“更正确”的选择。`,
+    question: "理解另一个人，究竟要体验他的辛苦，还是尊重他为何仍这样生活？",
+    stakes: "交换可能带来理解，也可能让两个人更确信自己才是对的。"
+  },
+  {
+    id: "one-light-left",
+    title: "今晚全城只留一盏灯",
+    emoji: "🏮",
+    zoneId: "night-market",
+    roles: ["决定灯留在哪里的人", "担心被遗忘的人", "把决定变成行动的人"],
+    stageActions: [["propose"], ["listen", "meditate"], ["cooperate", "support"]],
+    score: (observation) => 35 + observation.tension * 0.72,
+    hook: (observation) => `能源临时告急，夜里只能保留一处公共灯火。${observation.activeName}提出：不要投票，先听最怕黑的人。`,
+    question: "资源不够时，公平是多数人的选择，还是最脆弱者的安全感？",
+    stakes: "被熄灭的不只是灯，也可能是某群人对城市的信任。"
+  },
+  {
+    id: "impossible-meal",
+    title: "一顿无法表决的晚饭",
+    emoji: "🍲",
+    zoneId: "resource-kitchen",
+    roles: ["坚持原则的人", "承担实际后果的人", "试着改写问题的人"],
+    stageActions: [["listen", "meditate"], ["propose"], ["cooperate", "support"]],
+    score: (observation) => 42 + observation.relationshipStrain * 0.9,
+    hook: (observation) => `${observation.edgeNames || "两位邻居"}为了最后一份公共食材僵持不下。食堂把菜单擦掉：今晚先说谁会饿。`,
+    question: "当两个理由都成立时，关系能否发明出第三种答案？",
+    stakes: "若讨论只剩输赢，食物会被分完，裂痕却会留下。"
+  },
+  {
+    id: "future-complaint",
+    title: "寄给未来自己的投诉信",
+    emoji: "📮",
+    zoneId: "story-archive",
+    roles: ["对现在不满意的人", "替未来保存证据的人", "决定是否公开这封信的人"],
+    stageActions: [["propose"], ["listen", "support"], ["cooperate", "rest"]],
+    score: (observation) => 45 + Math.max(0, 72 - observation.openness) * 0.62,
+    hook: (observation) => `${observation.quietName}写下一封投诉信，收件人是十年后的自己：你为什么没有成为答应过的那个人？`,
+    question: "承诺能推动一个人前进，还是会成为审判自己的新工具？",
+    stakes: "信被公开会得到帮助，也可能让脆弱变成一场围观。"
+  },
+  {
+    id: "kind-lie",
+    title: "谁在替别人说“没关系”",
+    emoji: "🎭",
+    zoneId: "empathy-lab",
+    roles: ["习惯说没关系的人", "看见真实情绪的人", "愿意承受真话的人"],
+    stageActions: [["listen"], ["meditate", "support"], ["propose", "cooperate"]],
+    score: (observation) => 52 + Math.max(0, 50 - observation.quietMood) * 0.8 + observation.relationshipStrain * 0.35,
+    hook: (observation) => `${observation.quietName}第三次说“没关系”时，情绪实验室的记录灯却变成了红色。`,
+    question: "揭穿一句善意的谎言，是关心，还是另一种侵入？",
+    stakes: "逼人诚实会伤害边界，假装相信也可能让求救永远没人听见。"
+  }
+];
+
+function buildPlotDirectorState() {
+  return {
+    version: PLOT_DIRECTOR_VERSION,
+    sequence: 0,
+    nextQuestTurn: 2,
+    activeQuestId: "",
+    recentBlueprints: [],
+    observations: [],
+    quests: [],
+    tone: "轻盈的现实主义：温暖但不替角色回避代价",
+    promise: "每个任务都留下关系、记忆或城市状态的可见变化"
+  };
+}
+
+function ensurePlotDirectorState(story) {
+  const base = buildPlotDirectorState();
+  const director = story.director && typeof story.director === "object" ? story.director : {};
+  Object.entries(base).forEach(([key, value]) => {
+    if (director[key] === undefined || director[key] === null) director[key] = value;
+  });
+  director.observations = Array.isArray(director.observations) ? director.observations.slice(0, 12) : [];
+  director.recentBlueprints = Array.isArray(director.recentBlueprints) ? director.recentBlueprints.slice(0, 3) : [];
+  director.quests = (Array.isArray(director.quests) ? director.quests : [])
+    .slice(-PLOT_DIRECTOR_MAX_QUESTS)
+    .map((quest) => {
+      quest.status = quest.status === "closed" ? "closed" : "active";
+      quest.participants = Array.isArray(quest.participants) ? quest.participants : [];
+      quest.participantNames = Array.isArray(quest.participantNames) ? quest.participantNames : [];
+      quest.beats = Array.isArray(quest.beats) ? quest.beats : [];
+      quest.evidence = Array.isArray(quest.evidence) ? quest.evidence : [];
+      quest.missions = quest.missions && typeof quest.missions === "object" ? quest.missions : {};
+      quest.currentTask = String(quest.currentTask || "等待角色用实际行动推动这一幕。");
+      quest.outcome = String(quest.outcome || "");
+      return quest;
+    });
+  story.director = director;
+  return director;
+}
+
+function plotDirectorHash(value) {
+  let hash = 2166136261;
+  for (const character of String(value || "")) {
+    hash ^= character.charCodeAt(0);
+    hash = Math.imul(hash, 16777619);
+  }
+  return hash >>> 0;
+}
+
+function plotDirectorActionLabel(action) {
+  if (typeof ACTION_LABELS !== "undefined" && ACTION_LABELS?.[action]) return ACTION_LABELS[action];
+  if (typeof ACTION_LABELS_MAP !== "undefined" && ACTION_LABELS_MAP?.[action]) return ACTION_LABELS_MAP[action];
+  return action;
+}
+
+function observePlotSignals(society) {
+  const citizens = getAliveCitizens(society);
+  const quiet = [...citizens].sort((a, b) => (a.actionCount || 0) - (b.actionCount || 0) || (a.mood || 50) - (b.mood || 50))[0] || citizens[0];
+  const active = [...citizens].sort((a, b) => (b.actionCount || 0) - (a.actionCount || 0) || (b.energy || 50) - (a.energy || 50))[0] || citizens[0];
+  const strainedEdge = Object.values(society.relationships || {})
+    .filter((edge) => storyCitizen(society, edge.a) && storyCitizen(society, edge.b))
+    .sort((a, b) => (Number(b.strain) || 0) - (Number(a.strain) || 0))[0] || null;
+  const edgeA = strainedEdge ? storyCitizen(society, strainedEdge.a) : null;
+  const edgeB = strainedEdge ? storyCitizen(society, strainedEdge.b) : null;
+  const runtime = ensureAgentRuntime(society);
+  const recentActions = (runtime?.outbox || []).slice(0, Math.max(6, citizens.length));
+  const listeningCount = recentActions.filter((item) => item.type === "listen").length;
+  const observation = {
+    turn: society.turn || 0,
+    tension: Number(society.tension || 50),
+    freedom: Number(society.metrics?.freedom || 50),
+    openness: Number(society.metrics?.openness || 50),
+    quietId: quiet?.id || "",
+    quietName: quiet?.name || "某个一直没开口的人",
+    quietMood: Number(quiet?.mood || 50),
+    activeId: active?.id || "",
+    activeName: active?.name || "另一个人",
+    edgeId: strainedEdge?.id || "",
+    edgeAId: edgeA?.id || "",
+    edgeBId: edgeB?.id || "",
+    edgeNames: edgeA && edgeB ? `${edgeA.name}和${edgeB.name}` : "",
+    relationshipStrain: Number(strainedEdge?.strain || 0),
+    silencePressure: Math.max(0, citizens.length - listeningCount) * 2,
+    routinePressure: citizens.filter((citizen) => (citizen.energy || 50) < 42).length * 3
+  };
+  const story = ensureStoryState();
+  const director = ensurePlotDirectorState(story);
+  director.observations.unshift(observation);
+  director.observations = director.observations.slice(0, 12);
+  return observation;
+}
+
+function choosePlotDirectorBlueprint(observation, director) {
+  const recent = new Set(director.recentBlueprints || []);
+  return [...PLOT_DIRECTOR_QUESTS]
+    .map((blueprint) => ({
+      blueprint,
+      score: blueprint.score(observation) - (recent.has(blueprint.id) ? 46 : 0) + (plotDirectorHash(`${blueprint.id}:${observation.turn}`) % 9)
+    }))
+    .sort((a, b) => b.score - a.score)[0]?.blueprint || PLOT_DIRECTOR_QUESTS[0];
+}
+
+function getPlotDirectorParticipants(society, observation) {
+  const citizens = getAliveCitizens(society);
+  const byId = (id) => citizens.find((citizen) => citizen.id === id) || null;
+  const candidates = [
+    byId(observation.edgeAId),
+    byId(observation.edgeBId),
+    byId(observation.quietId),
+    byId(observation.activeId),
+    byId("avatar"),
+    ...citizens
+  ].filter(Boolean);
+  const unique = [];
+  candidates.forEach((citizen) => {
+    if (!unique.some((entry) => entry.id === citizen.id)) unique.push(citizen);
+  });
+  return unique.slice(0, Math.min(3, unique.length));
+}
+
+function describeDirectorMission(citizen, role, quest, desiredActions) {
+  const mood = Number(citizen.mood || 50);
+  const disposition = mood < 38 ? "先保护自己的边界，再决定是否靠近" : mood > 68 ? "把能量用来给别人留出位置" : "观察现场，再做一个不替别人决定的动作";
+  return `${citizen.name}在这幕里是“${role}”：${disposition}。可尝试：${desiredActions.map(plotDirectorActionLabel).join(" / ")}。`;
+}
+
+function assignPlotDirectorMissions(society, quest, blueprint) {
+  const runtime = ensureAgentRuntime(society);
+  const desiredActions = blueprint.stageActions[Math.min(quest.stage, blueprint.stageActions.length - 1)] || ["listen"];
+  runtime.inbox = (runtime.inbox || []).filter((message) => message.directorQuestId !== quest.id);
+  quest.missions = {};
+  quest.participants.forEach((participantId, index) => {
+    const citizen = storyCitizen(society, participantId);
+    if (!citizen) return;
+    const role = blueprint.roles[index % blueprint.roles.length];
+    const targetId = quest.participants.find((id) => id !== participantId) || null;
+    const description = describeDirectorMission(citizen, role, quest, desiredActions);
+    quest.missions[participantId] = { role, description, desiredActions: [...desiredActions], targetId };
+    queueAgentInbox(society, {
+      scope: "agent",
+      type: "plot-director-mission",
+      targetId: participantId,
+      directorQuestId: quest.id,
+      untilTurn: society.turn + 5,
+      desiredActions: [...desiredActions],
+      actionTargetId: targetId,
+      hint: desiredActions.includes("meditate") ? "repair" : "observe",
+      text: description
+    });
+  });
+}
+
+function logPlotDirectorBeat(society, quest, stage, text, evidence = null) {
+  if (!Array.isArray(quest.beats)) quest.beats = [];
+  const beat = {
+    id: `${quest.id}-beat-${quest.beats.length + 1}`,
+    turn: society.turn,
+    stage,
+    text,
+    evidenceId: evidence?.id || "",
+    actorId: evidence?.actorId || "",
+    action: evidence?.type || ""
+  };
+  quest.beats.push(beat);
+  quest.currentBeat = text;
+  addSocietyEvent(`AI剧情师 · ${quest.title} · ${stage}：${text}`, stage === "转" ? "conflict" : "support");
+  const speaker = evidence?.actorId || quest.participants[0];
+  if (speaker && typeof addSpeechBubble === "function") {
+    addSpeechBubble(speaker, `🎬 ${text.slice(0, 20)}`, "listen", { duration: 4600 });
+  }
+  return beat;
+}
+
+function buildPlotDirectorTask(society, quest, blueprint) {
+  const actionLabels = blueprint.stageActions[Math.min(quest.stage, blueprint.stageActions.length - 1)]
+    .map(plotDirectorActionLabel)
+    .join("、");
+  const names = quest.participants.map((id) => storyCitizen(society, id)?.name).filter(Boolean).join("、");
+  return `${names || "现场中的人"}需要通过${actionLabels}让故事继续；剧情师只观察真实行动，不替任何角色宣布正确答案。`;
+}
+
+function startPlotDirectorQuest(society, observation) {
+  const story = ensureStoryState();
+  const director = ensurePlotDirectorState(story);
+  const blueprint = choosePlotDirectorBlueprint(observation, director);
+  const participants = getPlotDirectorParticipants(society, observation);
+  if (!participants.length) return null;
+  director.sequence += 1;
+  const quest = {
+    id: `director-${director.sequence}`,
+    blueprintId: blueprint.id,
+    title: blueprint.title,
+    emoji: blueprint.emoji,
+    zoneId: society.zones?.some((zone) => zone.id === blueprint.zoneId) ? blueprint.zoneId : participants[0].zoneId,
+    hook: blueprint.hook(observation),
+    dramaticQuestion: blueprint.question,
+    stakes: blueprint.stakes,
+    participants: participants.map((citizen) => citizen.id),
+    participantNames: participants.map((citizen) => citizen.name),
+    stage: 0,
+    status: "active",
+    createdTurn: society.turn,
+    lastBeatTurn: society.turn,
+    lastEvaluatedTurn: society.turn - 1,
+    twistTurn: society.turn + 3,
+    twistApplied: false,
+    beats: [],
+    evidence: [],
+    missions: {},
+    currentTask: "",
+    outcome: ""
+  };
+  director.quests.push(quest);
+  director.quests = director.quests.slice(-PLOT_DIRECTOR_MAX_QUESTS);
+  director.activeQuestId = quest.id;
+  director.recentBlueprints = [blueprint.id, ...(director.recentBlueprints || []).filter((id) => id !== blueprint.id)].slice(0, 3);
+  quest.currentTask = buildPlotDirectorTask(society, quest, blueprint);
+  assignPlotDirectorMissions(society, quest, blueprint);
+  logPlotDirectorBeat(society, quest, "开场", quest.hook);
+  quest.participants.forEach((id) => recordAgentMemory(society, id, `被卷入任务「${quest.title}」：${quest.dramaticQuestion}`, "director-quest", 3, [quest.id]));
+  return quest;
+}
+
+function concludePlotDirectorQuest(society, quest) {
+  const story = ensureStoryState();
+  const director = ensurePlotDirectorState(story);
+  const actions = quest.evidence.map((item) => item.type);
+  const listened = actions.filter((type) => type === "listen" || type === "support").length;
+  const acted = actions.filter((type) => type === "cooperate" || type === "propose").length;
+  const repaired = actions.includes("meditate");
+  quest.outcome = repaired ? "真话被安全地说出" : listened >= acted ? "沉默获得了位置" : "人们共同发明了第三种答案";
+  quest.status = "closed";
+  quest.closedTurn = society.turn;
+  quest.currentTask = "任务已经结束，但后果会继续留在角色记忆和关系里。";
+  director.activeQuestId = "";
+  director.nextQuestTurn = society.turn + PLOT_DIRECTOR_COOLDOWN_TURNS;
+  logPlotDirectorBeat(society, quest, "余波", `${quest.outcome}。这不是标准结局，而是这群分身用实际行动写出的版本。`);
+  quest.participants.forEach((id) => {
+    const citizen = storyCitizen(society, id);
+    if (!citizen) return;
+    recordAgentReflection(society, id, `${citizen.name}从「${quest.title}」学到：关系的变化来自行动证据，而不是剧情师的判词。`, [quest.id, ...quest.evidence.map((item) => item.id)]);
+    recordAgentSkill(society, id, "story-agency", "在故事中保有行动权", 58 + Math.min(32, quest.evidence.length * 6));
+  });
+}
+
+function advancePlotDirectorQuest(society, quest) {
+  const blueprint = PLOT_DIRECTOR_QUESTS.find((item) => item.id === quest.blueprintId) || PLOT_DIRECTOR_QUESTS[0];
+  const runtime = ensureAgentRuntime(society);
+  const desiredActions = blueprint.stageActions[Math.min(quest.stage, blueprint.stageActions.length - 1)] || ["listen"];
+  const recentParticipantActions = (runtime.outbox || []).filter((item) => (
+    item.turn > quest.lastEvaluatedTurn
+    && quest.participants.includes(item.actorId)
+    && !quest.evidence.some((entry) => entry.id === item.id)
+  ));
+  const evidence = recentParticipantActions.find((item) => desiredActions.includes(item.type))
+    || recentParticipantActions.find((item) => item.directorQuestId === quest.id)
+    || null;
+  quest.lastEvaluatedTurn = society.turn;
+  if (evidence && society.turn > quest.lastBeatTurn) {
+    quest.evidence.push({ id: evidence.id, actorId: evidence.actorId, type: evidence.type, turn: evidence.turn, text: evidence.text });
+    quest.stage += 1;
+    quest.lastBeatTurn = society.turn;
+    const actor = storyCitizen(society, evidence.actorId);
+    if (quest.stage >= 3) {
+      concludePlotDirectorQuest(society, quest);
+      return;
+    }
+    const stage = quest.stage === 1 ? "选择" : "转折";
+    const followedPrompt = desiredActions.includes(evidence.type);
+    const text = followedPrompt
+      ? `${actor?.name || "有人"}用“${plotDirectorActionLabel(evidence.type)}”把戏剧问题推进成了新的现场事实。`
+      : `${actor?.name || "有人"}拒绝任务建议，改用“${plotDirectorActionLabel(evidence.type)}”行动；剧情师接受了这个偏航。`;
+    logPlotDirectorBeat(society, quest, stage, text, evidence);
+    quest.currentTask = buildPlotDirectorTask(society, quest, blueprint);
+    assignPlotDirectorMissions(society, quest, blueprint);
+    return;
+  }
+  if (!quest.twistApplied && society.turn >= quest.twistTurn) {
+    quest.twistApplied = true;
+    quest.twistTurn = society.turn + 3;
+    quest.currentTask = `没有人愿意先动。任务目标改变：先观察谁在承担沉默的代价，再决定要不要继续。`;
+    logPlotDirectorBeat(society, quest, "变奏", "现场没有按时发生转折。剧情师没有判定失败，而是把“无人行动”本身变成了新的事实。");
+    assignPlotDirectorMissions(society, quest, blueprint);
+  }
+}
+
+function plotDirectorOnTurn(society) {
+  const story = ensureStoryState();
+  const director = ensurePlotDirectorState(story);
+  const observation = observePlotSignals(society);
+  const activeQuest = director.quests.find((quest) => quest.id === director.activeQuestId && quest.status === "active");
+  if (activeQuest) {
+    advancePlotDirectorQuest(society, activeQuest);
+    return activeQuest;
+  }
+  if ((society.turn || 0) >= Number(director.nextQuestTurn || 0)) {
+    return startPlotDirectorQuest(society, observation);
+  }
+  return null;
+}
 
 function ensureStoryState() {
   if (!state.story || typeof state.story !== "object") {
@@ -19,6 +397,7 @@ function ensureStoryState() {
   if (!Array.isArray(state.story.arcs)) state.story.arcs = [];
   if (!Array.isArray(state.story.log)) state.story.log = [];
   if (!state.story.markers || typeof state.story.markers !== "object") state.story.markers = {};
+  ensurePlotDirectorState(state.story);
   return state.story;
 }
 
@@ -394,4 +773,15 @@ function storyEngineOnTurn(society) {
   if ((society.turn || 0) % 3 === 0) {
     scanStoryTriggers(society);
   }
+  plotDirectorOnTurn(society);
 }
+
+window.MirrorLifePlotDirector = {
+  version: PLOT_DIRECTOR_VERSION,
+  observe: observePlotSignals,
+  start: startPlotDirectorQuest,
+  tick: plotDirectorOnTurn,
+  getState() {
+    return ensurePlotDirectorState(ensureStoryState());
+  }
+};
