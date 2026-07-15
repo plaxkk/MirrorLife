@@ -1,32 +1,175 @@
 # 镜像人生（MirrorLife）
 
-你想活出怎样的人生。
+> 你想活出怎样的人生。
 
-**MirrorLife** 是正式英文名，**镜像人生** 是正式中文名。它不是 AI 情绪日记，也不承诺心理疗愈；它是一个人生试活与长期分身社会模拟游戏：玩家进入匿名重构的人生胶囊，做出关键选择，看见城市回应，并通过机器人信号、漂流瓶和回声档案持续回看另一种人生。
+MirrorLife 是一款“人生试活 + 社会模拟”游戏。玩家把选择、关系和现实片段交给自己的分身，在一座持续运行的镜像社区里观察：人物如何生活、关系如何变化、空间如何回应、故事如何从真实行动中长出来。
 
-`回声之城` 目前只作为 demo/章节/副标题候选，不作为产品正式中文名，也不是必须发布项。
+它希望成为一个“像世界一样活着、像游戏一样可玩、像镜子一样照见人”的虚拟社会。
 
-## Core Loop
+当前版本是 **local-first 的单人可玩开发版**：无需账号或外部 AI API 即可运行。在线多用户社会、生产级 LLM Agent、真实漂流匹配和正式 3D 美术资产仍在未来路线图中。
 
-```text
-试活人生 -> 城市回应 -> 机器人信号 / 漂流瓶 -> 回声档案 -> 回家复盘
+## 产品愿景
+
+MirrorLife 的核心问题不是“我有没有赢”，而是：
+
+> 当熟悉的身份不再足够定义我，我还想把自己带向哪里？
+
+产品由四层世界组成：
+
+1. **现实层**：玩家投放一段关系、压力、选择或生活愿望。
+2. **分身层**：每个角色拥有性格、需求、情绪、价值观、关系和记忆。
+3. **社会层**：分身在共同空间中行动，彼此影响并改变城市状态。
+4. **回声层**：世界把行动结果写成剧情、关系事件、人生周记和下一次选择。
+
+```mermaid
+flowchart LR
+    A["现实片段 / 人生选择"] --> B["玩家分身与 Citizen Agents"]
+    B --> C["社会规则与物理空间"]
+    C --> D["关系、情绪与城市变化"]
+    D --> E["AI 剧情师"]
+    E --> F["回声、记忆与新任务"]
+    F --> B
+    F --> A
 ```
 
-- **试活人生**：玩家选择匿名人生胶囊，短暂站进另一个身份，做一次关键选择。
-- **城市回应**：2D Canvas 社会地图展示分身、场所、关系和世界变化，回答“如果我这样选择，社会会怎样移动？”市民有拟人化的日常行为，可选中任意市民跟随 TA 的视角，也可以走进建筑探索室内。
-- **机器人信号 / 漂流瓶**：机器人接住低压回声，漂流瓶制造罕见的同频偶遇；二者都不是即时社交 feed。
-- **回声档案 / 回家复盘**：保存人生选择、现实片段、社会余波和未完回声，支撑次日继续。
+世界遵循四条社会原则：自由表达，也允许沉默；平等参与，不让强势角色垄断现场；保持开放，让现实片段能够改变世界；允许脆弱，让低状态角色仍然拥有行动权。
 
-现实片段仍是重要子循环：玩家可以把关系、压力或选择投进城市，系统把它转成社会事件种子、人生胶囊素材或回家复盘线索。
+## 给玩家：现在可以玩什么
 
-## Quick Start
+### 一次完整体验
+
+第一次进入游戏时，你可以：
+
+1. 创建一个带人格倾向的社会分身。
+2. 进入匿名人生胶囊，替另一种人生做一次关键选择。
+3. 看见城市、关系和分身状态如何回应。
+4. 在开放社区中观察市民的日常生活，或跟随某个角色行动。
+5. 进入建筑室内，以 360° 视角探索空间、人物和剧情热点。
+6. 在剧情志中查看 AI 剧情师提出的戏剧问题，以及角色如何用真实行动改写任务。
+7. 通过机器人信号、漂流回声、人生周记和回声档案回看这段经历。
+
+核心循环：
+
+```text
+试活一种人生 → 做出选择 → 城市回应 → 分身继续生活
+        ↑                               ↓
+   回家复盘 ← 回声与记忆 ← 关系 / 剧情 / 空间变化
+```
+
+### 已实现能力
+
+| 系统 | 玩家目前能体验到的内容 | 状态 |
+| --- | --- | --- |
+| 人生试活 | 人生胶囊、关键选择、城市回应、机器人信号、漂流瓶入口、未完回声 | 可玩 |
+| 分身创建 | 16 型人格叙事卡、价值观、爱好和形象选择；底层映射到 Big Five、需求、PAD 情绪与关系偏好 | 可玩 |
+| 开放社区 | 20 个固定场所，按公共、生活、医疗、教育、商业、工作、生态和记忆功能组织 | 可玩 |
+| 社会自演化 | 根据社会缺口，从 6 个蓝图中解锁新场景与新职业；目前是规则驱动，不是任意生成建筑 | 可玩 |
+| 市民生活 | 30 余种生活、社交、工作和情绪行为；人物会通勤、交谈、休息、工作、进出建筑 | 可玩 |
+| 关系系统 | 熟悉度、信任、亲近、互惠、披露深度、权力平衡和张力；每次互动保留事件证据 | 可玩 |
+| 心理连锁 | 现实事件经过认知评估，形成应对行为、场所寻求、社会互动和情绪涟漪 | 可玩 |
+| 本周生活 | `准备 → 联系 → 行动 → 回看 → 沉淀` 的长期节律，以及同频度、满足感、稳定感回声 | 可玩 |
+| 3D 室内 | 真实透视相机、360° 环视、统一 X/Z 世界坐标、人物/家具碰撞、热点与室内活动 | 开发版可玩 |
+| AI 剧情师 | 观察社会状态、生成戏剧任务、给不同分身分配意图，并根据真实行动证据推进或偏航 | 第一版可玩 |
+| 自演化剧情 | 关系裂痕、深交、城市张力、心理变化和生命事件会形成“起承转合”的剧情弧 | 可玩 |
+| 记忆与存档 | localStorage 热状态、IndexedDB 多槽存档、自动存档、JSON 导入导出、本地记忆检索 | 可玩 |
+| 云端记忆 | 可选通过后端代理接入火山引擎 Mem0；不配置时仍可完整游玩 | 可选实验能力 |
+| 安全边界 | 高风险文本走本地保护路径；产品不做心理诊断或治疗承诺 | 已接入基础规则 |
+
+### AI 剧情师如何工作
+
+当前 AI 剧情师是**基于模拟状态和 Agent 记忆的本地剧情调度器**，不是浏览器直连大模型。
+
+它会观察人物情绪、沉默、关系张力、城市压力和最近行动，从剧情原型中选择适合当前社会的问题，例如：
+
+- 《那把一直空着的椅子》：倾听是邀请对方开口，还是允许对方保持沉默？
+- 《把我的一天借给你》：理解另一个人，是体验他的辛苦，还是尊重他的选择？
+- 《今晚全城只留一盏灯》：资源不足时，多数选择和脆弱者安全感如何取舍？
+- 《一顿无法表决的晚饭》：当两个理由都成立时，关系能否创造第三种答案？
+
+剧情师只提供角色意图，不遥控角色。分身可以遵循任务，也可以因为情绪、记忆或自身倾向拒绝建议；偏航同样会被记录为剧情事实。任务结果会写回角色记忆、反思和技能，成为下一轮社会演化的输入。
+
+### 操作方式
+
+开放社区：
+
+- 拖动地图观察城市，使用滚轮或触控缩放。
+- 点击市民查看状态、关系和最近行动，也可以跟随 TA 的视角。
+- 点击建筑进入室内；顶部按钮可暂停、单步推进、调整速度、打开存档或剧情志。
+
+室内探索：
+
+- `WASD` / 方向键移动，移动端使用屏幕方向盘。
+- 拖动场景或点击环绕罗盘旋转视角。
+- 靠近家具和人物后使用场景动作；`Esc` 或“回到街道”离开。
+- 相机以房间中心为主要旋转枢轴，并轻微跟随玩家位置，避免围绕门口偏转。
+
+### 当前边界
+
+以下能力**尚未完成**，不应把当前 demo 描述成已经上线的在线 AI 社会：
+
+- 没有账号体系、真实多用户社区或云端世界状态。
+- 每个真实用户尚未拥有一个持续在线、可互相访问的 AI 社会分身。
+- 没有启用生产 LLM 编排；`public/narrative.js` 中的浏览器直连实验路径不得放入生产密钥。
+- 漂流瓶和交换人生目前是本地匿名模拟，不是真实用户匹配。
+- 3D 室内已具备完整物理与交互骨架，但运行时模型仍是开发资产，尚未全部通过正式美术发布门禁。
+- 没有支付、订阅、排行榜、自由建造、完整经济或物品制作系统。
+- MirrorLife 是游戏和叙事实验，不是心理治疗、诊断或危机干预服务。
+
+## 接下来要建设什么
+
+路线图描述产品方向，不代表承诺日期。优先级以“是否让游戏更好玩、更可理解、更值得回来”为准。
+
+### P0：完成真正有回访动力的单人游戏闭环
+
+- 让玩家能在剧情任务中主动选择介入、旁观、支持或改变规则，而不只是观察 Agent。
+- 增加可重玩的社会危机场景、关系任务和跨建筑剧情链。
+- 增加“离线期间发生了什么”摘要、夜间反思和未完成关系线索。
+- 建设同频关系图谱、因果回放和更清楚的“为什么世界变成这样”。
+- 把本周生活奖励进一步转化为场所开放、角色信任和行动权限，而不是抽象分数。
+- 优化首分钟引导、移动端交互、性能预算和无障碍体验。
+- 完成关键室内陈设的多视图高模、人工修模、Web LOD 和发布验收。
+
+### P1：生产级多 Agent 社会
+
+- 为每位用户建立一个长期社会分身，拥有可撤销的人格、边界、关系和记忆授权。
+- 建设服务端世界调度器、Citizen Agent、规则审计 Agent、记忆整理 Agent 和剧情师 Agent。
+- 接入生产 LLM 时，坚持“模型提出候选，规则引擎裁决状态”，避免模型直接篡改世界。
+- 增加 Agent trace、成本预算、失败降级、离线评测、越界审计和人工可解释回放。
+- 将短期/中期/长期记忆分层，并提供查看、导出、纠正、遗忘和删除能力。
+- 让角色从成功经历中沉淀调停、照护、组织、创作和建设技能，而不是在线修改模型权重。
+
+### P2：经过同意的真实弱连接
+
+- Supabase 或等价账号与云端存档。
+- 真实人生胶囊的授权、匿名化、撤回和审计。
+- 漂流瓶的延迟同频匹配，而不是即时聊天或社交 feed。
+- “只交换回声 → 双方同意继续 → 可随时退出”的渐进式连接。
+- 举报、屏蔽、内容审核、敏感数据隔离和用户数据删除流程。
+
+### P3：持续生长的空间世界
+
+- 从单个社区扩展到多个相连街区，并保持统一物理尺度、道路图和空间句法。
+- 玩家参与公共空间建设、室内布置、资源协作和职业生态，而不仅是规则自动解锁。
+- 更丰富的人生阶段、家庭与组织关系、公共制度、节日和长期社会事件。
+- 用户创作的剧情原型、建筑语义和社区规则进入可审核的内容管线。
+- 探索情感机器人作为现实与虚拟社会之间的低压力信使；硬件并非当前版本依赖。
+
+## 给开发者：运行项目
+
+### 环境要求
+
+- Node.js 22（CI 使用版本）
+- npm 10+
+- 现代 Chromium / Chrome 浏览器，支持 WebGL
+
+### 快速开始
 
 ```bash
-npm install
+npm ci
 npm run dev
 ```
 
-开发服务器默认打开：
+Vite 默认打开：
 
 ```text
 http://localhost:4173/game.html
@@ -40,155 +183,159 @@ npm run build
 npm run preview
 ```
 
-## Current Demo Scope
+默认运行不需要环境变量，也不需要 LLM API key。
 
-Phase 1 先验证叙事吸引力和回访理由，不让真实 LLM API、登录、支付或订阅阻塞 demo。
+### 可选云端记忆代理
 
-已实现：
+生产密钥只允许出现在服务端：
 
-- Canvas 2D 虚拟社会地图与分身状态。
-- 小型社会社区布局：公共核心、生活区、医疗照护、教育带、商业娱乐、工作生产、生态供给和安宁记忆区。
-- 无限流社区原型：镜头靠近边界时按种子确定性生成社区 chunk，附带空间句法指标。
-- 分身创建人格化：16 型 MBTI 卡片、价值观/爱好/独特点标签，接入大五人格与社会模拟偏置。
-- 市民动画状态机：沿路网散步、原地歇脚、挥手、面对面交谈、走向建筑门口并进出室内。
-- 拟人化行为动作库：吃饭、睡觉、喝水、洗漱、刷手机、跑步、打球、看书、写字、讲解、干活、敲电脑、修理、做饭、购物、采集、侍弄花草、照护、递交物品、安慰、思考、低落发呆、生气跺脚、拉伸、跳舞、钓鱼、喝茶、通勤、开会、午休、加班、打扫、生活杂事、睡前复盘和周末恢复等 30 余种日常行为，带身体姿态与道具动画；按时段、地点亲和、大五人格和精力需求加权选择，完成后反哺情绪/能量并写入最近动态，让日常生活与社会模拟共同演化。
-- NPC 相遇系统：市民擦肩时按双方外向性概率决定挥手问候、驻足多轮对话或互不打扰；台词随心情和地点变化。
-- 跟随视角：选中任意市民进入 TA 的视角观察，镜头平滑跟随，横幅实时显示当前行为（散步/看书/聊天/进建筑…），拖动镜头或 Esc 退出。
-- 建筑室内场景：进入任意建筑后可用真实透视相机 360° 环视，并通过 WASD、方向键或移动端方向盘在房间内移动；家具、探索热点和居民位于同一套室内世界坐标中。20 座固定建筑与最多 6 座自演化建筑共用 10 类差异化空间骨架和共同活动，读完场所线索后可参与照护、共学、协作、调停、创作等剧情。当前 54 个功能陈设位置均有语义匹配的开发级 3D 表达，但尚无陈设通过正式发布资产门禁；程序化模型和单图重建仍属于开发资产。
-- 首次试活链路：人生胶囊、关键选择、城市回应、机器人信号和漂流瓶入口。
-- 镜像舱：输入现实片段，选择镜子/旁观/陪伴模式。
-- 现实投影：镜像舱事件触发分身行动，并根据状态 delta 生成可读叙事。
-- 互动可视化分层：玩家互动展示完整结果卡片，社会自演事件降级为低干扰的细弱轨迹，动作符号使用直观 emoji（👂🤝💛…）。
-- 回声档案：保存现实投影、交换人生、漂流回声和社会余波。交换人生和漂流回声当前都是本地匿名模拟，不是真实社区匹配。
-- 未完回声：镜像舱完成后给出明日继续入口，并在回声档案/回家模式承接。
-- 本地因果图记忆：首分钟闭环会把现实片段、分身行动、影响对象、城市结果和下一步选择写成本地 property graph，并在结果卡显示可解释的“因果依据”。
-- 心理连锁反应框架：现实事件经认知评估(Lazarus)冲击需求与情绪,按应对风格(问题聚焦/支持寻求/回避)逐回合展开「应对行为 → 场所寻求 → 社会互动 → 情绪涟漪」连锁;含情绪感染、恢复性环境、人-环境匹配、场所依恋等机制,详见 [docs/PSYCHOLOGY_FRAMEWORK.md](docs/PSYCHOLOGY_FRAMEWORK.md)。
-- 自演化剧情引擎：剧情不写死脚本——关系裂痕/深交、心理连锁、城市张力、出生离世等模拟信号自发孕育剧情弧光,按「起承转合」推进,每一幕走向由推进时刻的真实模拟状态分支,结局反哺信任/情绪/场所依恋;HUD 📖 剧情志可回看。
-- 分层存档系统：localStorage 热态快照 + IndexedDB 多槽存档(手动/自动/导出/导入 JSON),HUD 💾 面板管理;选型调研见 [docs/STORAGE_RESEARCH.md](docs/STORAGE_RESEARCH.md)。
-- 记忆中枢：分身记忆与剧情节拍写入本地 IndexedDB 记忆库(关键词检索),可选接入火山引擎记忆库 Mem0(经后端代理,`npm run memory-proxy`),实现跨会话语义记忆与「记忆回响」;未配置时完整可玩。
-- 回合制社会模拟：市民行动、区域、关系、情绪、信任、能量、张力、治理指标。
-- 安全治理：高风险文本触发本地安全提示和保护路径。
-- 模板叙事 fallback：未配置外部 API 时仍可完整运行。
+```bash
+VOLC_MEM0_BASE_URL=<项目连接地址> \
+VOLC_MEM0_API_KEY=<API Key> \
+npm run memory-proxy
+```
 
-暂不进入 Phase 1：
+然后在游戏的 `💾 存档与记忆` 面板填入：
 
-- 浏览器内的生产 LLM 直连或正式 LLM 后端代理；`public/narrative.js` 保留了未启用的前端直连实验代码，当前运行只使用模板 fallback，发布前应移除直连路径或改为后端代理。
-- Supabase 登录和数据持久化。
-- 支付、订阅墙和套餐。
-- 复杂长期记忆、连续签到、成长系统。
-- 多用户社区、交换人生真实匹配、漂流瓶真实社交。
+```text
+http://localhost:8787/api/memory
+```
 
-## Project Structure
+未配置或代理不可用时，记忆系统自动降级到本地 IndexedDB。
+
+## 技术架构
+
+MirrorLife 当前采用浏览器本地优先架构：Canvas 负责开放社区与 UI，Three.js 负责室内 3D，规则引擎拥有最终状态，Agent 与剧情层只能通过受控动作改变世界。
+
+```mermaid
+flowchart TB
+    UI["game.html + game.css"] --> GAME["public/game.js\nUI / Canvas / 交互"]
+    GAME --> ENGINE["public/engine.js\n世界状态 / Utility AI / 关系 / 周循环"]
+    GAME --> THREE["src/interior-three.js\nThree.js 室内渲染"]
+    THREE --> PHYSICS["src/interior-physics.js\n统一坐标 / 碰撞 / 寻路"]
+    ENGINE --> AGENTS["Agent Runtime\nmemory / reflection / skills / inbox / outbox"]
+    AGENTS --> STORY["public/story-engine.js\n剧情弧 + AI 剧情师"]
+    ENGINE --> STORAGE["public/storage.js + public/memory-hub.js"]
+    STORY --> STORAGE
+    STORAGE --> LOCAL["localStorage / IndexedDB"]
+    STORAGE -.可选.-> MEM0["server/memory-proxy.mjs → Mem0"]
+```
+
+### 状态推进原则
+
+单个社会回合的大致顺序：
+
+```text
+世界观察 → Agent 读取记忆与任务 → Utility AI 选择行动
+→ 规则引擎结算 → 关系/心理/空间状态更新
+→ 剧情师读取行动证据 → 写入事件、反思、技能与存档
+```
+
+关键约束：
+
+- `public/engine.js` 是世界状态的最终裁决者。
+- Agent 任务是行动建议，不是跳过规则的状态写入权限。
+- 剧情必须引用真实 `outbox` 行动证据；角色拒绝任务也属于有效分支。
+- 室内人物、家具、交互距离和相机使用同一套 X/Z 世界坐标。
+- Three.js 未准备完成前只显示原子化加载幕，不渲染另一套临时房间。
+- 生产 API key 不进入浏览器，不把用户原始敏感文本默认共享给其他角色或用户。
+
+### 主要目录
 
 ```text
 .
-├── game.html              # 主游戏页面
-├── index.html             # 入口跳转页
-├── game.css               # 游戏 UI 样式
+├── game.html                         # 主游戏页面
+├── game.css                          # HUD、面板、移动端与室内 UI
+├── index.html                        # 入口页
 ├── public/
-│   ├── engine.js          # 社会模拟引擎和本地状态
-│   ├── narrative.js       # 叙事生成层和 fallback
-│   ├── causal-graph.js    # 首分钟本地因果图记忆
-│   ├── game.js            # Canvas/UI/交互层（行为动作库、跟随视角、室内场景）
-│   ├── storage.js         # IndexedDB 存档层(多槽/自动存档/导入导出)
-│   ├── memory-hub.js      # 记忆中枢(本地底座 + 火山 Mem0 出站队列)
-│   ├── story-engine.js    # 自演化剧情引擎(起承转合弧光)
-│   └── assets/            # 头像/市民/建筑精灵图
+│   ├── engine.js                     # 社会模拟、Agent runtime、关系与本周生活
+│   ├── game.js                       # Canvas 渲染、交互、人物动画与室内编排
+│   ├── story-engine.js               # 自演化剧情弧与 AI 剧情师
+│   ├── causal-graph.js               # 本地因果图记忆
+│   ├── storage.js                    # IndexedDB 多槽存档
+│   ├── memory-hub.js                 # 本地记忆与可选云端出站队列
+│   ├── narrative.js                  # 模板叙事 fallback 与停用的实验路径
+│   └── assets/                       # 精灵图、GLB、纹理与室内参考资产
+├── src/
+│   ├── interior-three.js             # Three.js 场景、模型、相机与投影
+│   ├── interior-physics.js           # 室内静态/动态碰撞、可行走区域与路径
+│   └── interior-semantic-models.js   # 语义匹配的程序化开发模型
 ├── server/
-│   └── memory-proxy.mjs   # 火山引擎记忆库 Mem0 后端代理(API Key 不进前端)
-├── scripts/
-│   └── verify-evolution.mjs  # 社会演化冒烟验证
-├── PRODUCT_DESIGN.md      # 产品设计文档
-├── AGENT_RUNTIME_PLAN.md  # agent 自动推演规划
-├── docs/
-│   ├── LIFE_EXPERIENCE_GAMEPLAY_ROADMAP.md
-│   ├── OPEN_WORLD_STREAMING_TECH_RESEARCH.md
-│   ├── GAMEPLAY_FUN_DESIGN.md
-│   ├── FIGMA_INTERACTION_REDESIGN.md
-│   ├── GRAPHRAG_MIRRORFISH_GAME_RESEARCH.md
-│   ├── INTUITIVE_LOOP_REDESIGN.md
-│   ├── STITCH_FINAL_VISUAL_DRAFT.md
-│   ├── STITCH_VISUAL_REDESIGN_PREP.md
-│   └── RELEASE_CHECKLIST.md
-└── .env.example
+│   └── memory-proxy.mjs              # 可选 Mem0 服务端代理
+├── config/                            # 室内模型映射与语义资产 brief
+├── scripts/                           # 构建、验证、截图与 3D 资产管线
+├── tools/                             # 室内模型与标准视图审查工具
+├── PRODUCT_DESIGN.md                  # 产品愿景与系统设计
+└── AGENT_RUNTIME_PLAN.md              # 多 Agent 运行时规划
 ```
 
-## Configuration
+## 验证与质量门禁
 
-当前 demo 无需环境变量即可运行。
-
-真实 LLM 目前未启用。仓库中的 `public/narrative.js` 仍保留实验性的浏览器直连实现，但没有配置入口或 API key；正式接入时应移除该直连路径并改走后端代理，生产 API key 不应暴露在前端。`.env.example` 仅保留后端代理和未来 Supabase 接入占位。
-
-可选:火山引擎记忆库 Mem0(跨会话语义记忆)。在控制台创建记忆项目与 API Key 后:
-
-```bash
-VOLC_MEM0_BASE_URL=<项目连接地址> VOLC_MEM0_API_KEY=<API Key> npm run memory-proxy
-```
-
-然后在游戏 HUD 💾「存档与记忆」面板填入 `http://localhost:8787/api/memory`。未配置时记忆自动降级为本地 IndexedDB,游戏完整可玩。
-
-## Validation
-
-基础检查：
+基础回归：
 
 ```bash
 npm run check
+npm run test:evolution
 npm run build
-npm run test:evolution   # 社会演化冒烟验证
+npm run verify:interior-physics
+git diff --check
 ```
 
-手工验收建议：
+室内端到端流程需要先启动本地服务：
 
-1. 打开 `game.html`，创建分身进入世界。
-2. 点左侧“镜像舱”，输入：`今天和同事一起合作做完了一个计划`，点击“交给分身”。
-3. 确认右侧事件流出现“现实投影”。
-4. 确认镜像舱下方出现“未完回声”。
-5. 打开“回声档案”，确认顶部承接未完回声，列表里保存了现实投影。
-6. 打开“回家模式”并切到“明日小事”，确认能看到上一轮现实投影。
-7. 可选输入：`今天因为误解和朋友吵架，有点焦虑`，确认叙事偏安抚/支持，和合作类输入明显不同。
+```bash
+# Terminal A
+npm run dev -- --host 127.0.0.1
 
-城市观察验收建议：
+# Terminal B
+MIRRORLIFE_BASE_URL=http://127.0.0.1:4173 npm run verify:interior-scene-flow
+```
 
-1. 观察街上的市民：应能看到散步、原地歇脚，以及看书📖、打球⚽、跑步💨、睡觉💤 等拟人化行为（行为随时段和地点变化，白天饭点吃饭、夜晚偏睡觉）。
-2. 两个市民靠近时，偶尔会互相挥手或驻足多轮对话；也可能互不打扰擦肩而过。
-3. 点击任意市民 → “👁 跟随TA的视角”，确认镜头平滑跟随、顶部横幅显示当前行为；拖动镜头或按 Esc 退出。
-4. 点击任意建筑进入室内，确认出现可 360° 环视的透视场景，家具热点随相机正确投影，市民会走动或落座活动；点击“回到街道”或按 Esc 离开。
-5. 跟随一个市民等 TA 走进建筑，确认视角自动切入室内；TA 出门后自动切回街道。
+这条流程会在桌面和移动端验证：
 
-室内模型的六视图、母版、拓扑和视觉回归要求见 [docs/INTERIOR_3D_FIDELITY.md](docs/INTERIOR_3D_FIDELITY.md)。
+- 室内只经过 `loading → ready`，不会先渲染旧房间再切换。
+- 相机枢轴以房间中心为主，不围绕门口玩家错误旋转。
+- 选择会更新本周奖励和关系事件。
+- AI 剧情师能创建任务、读取 Agent 行动证据、形成结局，并在室内剧情志中可见。
 
-## Open Source Status
+3D 开发运行时与正式发布资产是两套门禁：
 
-- License: MIT
-- 当前建议：进入公开发布准备，但仓库公开后置到产品具备初步“好玩儿能力”之后再决策。
-- 不开源内容：生产 API keys、真实用户数据、任何未脱敏访谈/商业资料。
-- 公司资料库不放入本仓库；本仓库只保留工程、产品和运行文档。
+```bash
+npm run verify:interior-world
+npm run verify:interior-3d
+npm run report:interior-3d:runtime
 
-## Pre-Release Confirmation Items
+# 正式资产门禁；当前开发占位模型预期不能全部通过
+npm run verify:interior-3d:release
+npm run verify:interior-3d:semantic-release
+```
 
-正式名称已确认：
+正式模型必须具备独立多视图参考、高模母版、人工修模、Web LOD、闭合网格审计、语义部件清单和 360° 转台验收。详见 [室内 3D 高保真规范](docs/INTERIOR_3D_FIDELITY.md)。
 
-- 英文名：MirrorLife
-- 中文名：镜像人生
+## 设计与工程文档
 
-公开发布前仍需要 @king-w 最终确认：
+- [产品设计方案](PRODUCT_DESIGN.md)：愿景、目标用户、社会规则和核心系统。
+- [Agent 运行方案](AGENT_RUNTIME_PLAN.md)：多 Agent、记忆、反思、技能和审计架构。
+- [玩法趣味设计](docs/GAMEPLAY_FUN_DESIGN.md)：社会危机、任务接力、回访动力和最小好玩 MVP。
+- [人生体验路线图](docs/LIFE_EXPERIENCE_GAMEPLAY_ROADMAP.md)：人生胶囊、机器人信使与灵魂漂流。
+- [心理连锁框架](docs/PSYCHOLOGY_FRAMEWORK.md)：人格、需求、应对、情绪感染和场所依恋。
+- [开放世界技术研究](docs/OPEN_WORLD_STREAMING_TECH_RESEARCH.md)：区块流式生成、道路图和空间句法。
+- [存储研究](docs/STORAGE_RESEARCH.md)：localStorage、IndexedDB 与云端演进边界。
+- [室内模型管线](docs/INTERIOR_3D_MODEL_PIPELINE.md)：从参考图、建模到 Web 运行时的资产流程。
+- [发布检查清单](docs/RELEASE_CHECKLIST.md)：公开发布前的产品、工程和安全门禁。
 
-- 副标题/章节名：是否使用“回声之城”作为当前 demo 章节或传播副标题。
-- 仓库公开条件：等初步“好玩儿能力”验证后，再决定 GitHub 仓库是否公开。
-- Phase 1 对外说明是否保持“个人叙事实验型社会模拟游戏”，避免心理疗愈承诺。
-- 正式 3D 陈设资产尚未通过发布门禁；当前开发版由多视图候选、单图重建、程序化 GLB 和专用 Three.js 模型共同组成。
+## 参与开发时的原则
 
-## Release
+1. **游戏先于面板**：玩家应先做一个有结果的动作，再看到系统解释。
+2. **行动先于台词**：角色说了什么不如角色实际做了什么；剧情必须能追溯到行动证据。
+3. **规则先于模型**：未来 LLM 可以提出计划和解释，但不能绕过世界规则直接改状态。
+4. **隐私默认收紧**：现实片段属于用户；共享、匹配和长期记忆必须可授权、可撤回、可删除。
+5. **开发资产不冒充正式资产**：可加载不等于达到发布品质，语义错误的模型不能用相似物件掩盖。
+6. **弱连接而非注意力剥夺**：不以即时聊天、排行榜、签到压力和通知轰炸作为留存核心。
 
-见 [docs/RELEASE_CHECKLIST.md](docs/RELEASE_CHECKLIST.md)。
+## 开源与安全
 
-## Design Prep
-
-- [Psychology framework](docs/PSYCHOLOGY_FRAMEWORK.md) documents the psych ripple system: theory-to-mechanic mapping (Big Five, Maslow, PAD, coping, contagion, restorative environments, place attachment) and its execution pipeline.
-- [Life experience gameplay roadmap](docs/LIFE_EXPERIENCE_GAMEPLAY_ROADMAP.md) is the current product/gameplay guide for the corrected direction: try-on lives, emotional robot messenger, and soul drift encounters.
-- [Figma interaction redesign](docs/FIGMA_INTERACTION_REDESIGN.md) is the latest board-level interaction plan for a lower-button, quest-led, game-like first session.
-- [GraphRAG + MiroFish game research](docs/GRAPHRAG_MIRRORFISH_GAME_RESEARCH.md) translates MiroFish's graph-and-swarm simulation workflow into a MirrorLife implementation plan.
-- [Multi-agent gameplay fun design](docs/GAMEPLAY_FUN_DESIGN.md) converts the future multi-agent direction into concrete play value.
-- [Infinite streaming open community tech research](docs/OPEN_WORLD_STREAMING_TECH_RESEARCH.md) records the current technical decision: Canvas runtime, chunk streaming, space syntax, road-graph walking, and where tldraw / gen-city / PixiJS fit later.
-- [Google Stitch visual redesign prep](docs/STITCH_VISUAL_REDESIGN_PREP.md) records the Phase 2 preparation layer. It is intentionally gated on the Phase 1 first-minute causal loop before any final UI direction is accepted.
-- [Google Stitch final visual interaction draft](docs/STITCH_FINAL_VISUAL_DRAFT.md) records the Phase 2 formal visual direction based on the accepted first-minute causal loop.
+- License：MIT，见 [LICENSE](LICENSE)。
+- 不要提交生产 API keys、真实用户数据、未脱敏访谈或商业资料。
+- `.env.example` 只提供占位配置；真实密钥应保存在服务端环境变量中。
+- 当前对外定位是个人叙事实验型社会模拟游戏，不提供心理疗愈或医疗承诺。
