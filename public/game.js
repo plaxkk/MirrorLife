@@ -154,6 +154,15 @@ const QUIET_PRESENCE_REQUIRED_MS = 8000;
 const QUIET_PRESENCE_GAZE_TOLERANCE = 0.24;
 const QUIET_PRESENCE_MIN_DISTANCE = 1.05;
 const QUIET_PRESENCE_MAX_DISTANCE = 5.2;
+const SOCIAL_PARALLAX_ZONE_ID = "legal-court";
+const SOCIAL_PARALLAX_RITUAL_ID = "social-parallax";
+const SOCIAL_PARALLAX_LISTEN_MS = 2200;
+const SOCIAL_PARALLAX_CENTER_MS = 2600;
+const SOCIAL_PARALLAX_GAZE_TOLERANCE = 0.3;
+const SOCIAL_PARALLAX_MIN_DISTANCE = 0.9;
+const SOCIAL_PARALLAX_MAX_DISTANCE = 3.15;
+const SOCIAL_PARALLAX_CENTER_RADIUS = 0.72;
+const SOCIAL_PARALLAX_CENTER_EVIDENCE = "站在分歧之间的空位";
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -6126,6 +6135,34 @@ function getInteriorExplorationRecord(zoneId) {
     record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
     record.ritual.progressMs = clamp(Number(record.ritual.progressMs || 0), 0, QUIET_PRESENCE_REQUIRED_MS);
     if (record.ritual.status === "complete") record.ritual.progressMs = QUIET_PRESENCE_REQUIRED_MS;
+  } else if (zoneId === SOCIAL_PARALLAX_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object" && record.ritual.id === SOCIAL_PARALLAX_RITUAL_ID
+      ? record.ritual
+      : {
+          id: SOCIAL_PARALLAX_RITUAL_ID,
+          status: "available",
+          witnessIds: [],
+          heardIds: [],
+          startedTurn: 0,
+          completedTurn: 0,
+          focusProgressMs: 0,
+          centerProgressMs: 0
+        };
+    record.ritual.id = SOCIAL_PARALLAX_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessIds = [...new Set((Array.isArray(record.ritual.witnessIds) ? record.ritual.witnessIds : [])
+      .map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2);
+    record.ritual.heardIds = [...new Set((Array.isArray(record.ritual.heardIds) ? record.ritual.heardIds : [])
+      .map((id) => String(id || "").slice(0, 80)).filter((id) => record.ritual.witnessIds.includes(id)))].slice(0, 2);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.focusProgressMs = clamp(Number(record.ritual.focusProgressMs || 0), 0, SOCIAL_PARALLAX_LISTEN_MS);
+    record.ritual.centerProgressMs = clamp(Number(record.ritual.centerProgressMs || 0), 0, SOCIAL_PARALLAX_CENTER_MS);
+    if (record.ritual.status === "complete") {
+      record.ritual.centerProgressMs = SOCIAL_PARALLAX_CENTER_MS;
+    }
   }
   if (!("counterfactual" in record)) record.counterfactual = null;
   return record;
@@ -6136,11 +6173,35 @@ function getQuietPresenceRitual(zoneId = interiorView?.zone?.id) {
   return getInteriorExplorationRecord(zoneId).ritual;
 }
 
+function getSocialParallaxRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== SOCIAL_PARALLAX_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
 function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExplorationRecord(zone?.id)) {
   const goal = Math.min(3, blueprint?.props?.length || 3);
   const propLabels = new Set((blueprint?.props || []).map((prop) => prop.label));
   const propCount = [...new Set(record.found || [])].filter((label) => propLabels.has(label)).length;
-  if (record.completed) return { count: goal, goal, propCount, ritualComplete: zone?.id !== QUIET_PRESENCE_ZONE_ID || getQuietPresenceRitual(zone.id)?.status === "complete" };
+  if (record.completed) return {
+    count: goal,
+    goal,
+    propCount,
+    ritualComplete: ![QUIET_PRESENCE_ZONE_ID, SOCIAL_PARALLAX_ZONE_ID].includes(zone?.id)
+      || (zone?.id === QUIET_PRESENCE_ZONE_ID
+        ? getQuietPresenceRitual(zone.id)?.status === "complete"
+        : getSocialParallaxRitual(zone.id)?.status === "complete")
+  };
+  if (zone?.id === SOCIAL_PARALLAX_ZONE_ID) {
+    const ritual = getSocialParallaxRitual(zone.id);
+    const heardCount = Math.min(2, ritual?.heardIds?.length || 0);
+    const ritualComplete = ritual?.status === "complete";
+    return {
+      count: Math.min(goal, heardCount + (ritualComplete ? 1 : 0)),
+      goal,
+      propCount,
+      ritualComplete
+    };
+  }
   if (zone?.id !== QUIET_PRESENCE_ZONE_ID) {
     return { count: Math.min(propCount, goal), goal, propCount, ritualComplete: false };
   }
@@ -6156,6 +6217,7 @@ function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExp
 function getInteriorNextExplorablePropIndex(zone, blueprint, record) {
   const props = blueprint?.props || [];
   if (record.completed) return -1;
+  if (zone?.id === SOCIAL_PARALLAX_ZONE_ID) return -1;
   if (zone?.id === QUIET_PRESENCE_ZONE_ID) {
     const progress = getInteriorExplorationProgress(zone, blueprint, record);
     if (progress.propCount >= 2) return -1;
@@ -6188,12 +6250,21 @@ function stageQuietPresenceWitness(zone = interiorView?.zone) {
   return citizen;
 }
 
+function getInteriorVisualCameraPivot() {
+  const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+  if (Number.isFinite(camera?.pivotX) && Number.isFinite(camera?.pivotZ)) {
+    return { x: Number(camera.pivotX), z: Number(camera.pivotZ) };
+  }
+  return { x: Number(interiorOrbit?.x || 0), z: Number(interiorOrbit?.z || 0) };
+}
+
 function focusQuietPresenceWitness(citizen) {
   if (!citizen || !interiorView) return false;
   const ia = interiorAnimations[citizen.id];
   if (!ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) return false;
-  const dx = ia.worldX - Number(interiorOrbit.x || 0);
-  const dz = ia.worldZ - Number(interiorOrbit.z || 0);
+  const pivot = getInteriorVisualCameraPivot();
+  const dx = ia.worldX - pivot.x;
+  const dz = ia.worldZ - pivot.z;
   interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(dx, -dz));
   return true;
 }
@@ -6328,7 +6399,8 @@ function updateQuietPresenceRitual(now) {
   const dx = ia.worldX - playerX;
   const dz = ia.worldZ - playerZ;
   const distance = Math.hypot(dx, dz);
-  const targetYaw = wrapInteriorAngle(Math.atan2(dx, -dz));
+  const visualPivot = getInteriorVisualCameraPivot();
+  const targetYaw = wrapInteriorAngle(Math.atan2(ia.worldX - visualPivot.x, -(ia.worldZ - visualPivot.z)));
   const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
   const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
   const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)))
@@ -6402,6 +6474,474 @@ window.MirrorLifeQuietPresence = {
   },
   start: startQuietPresenceRitual
 };
+
+function getSocialParallaxAxis(citizen) {
+  const bigFive = citizen?.bigFive || {};
+  const values = citizen?.values || {};
+  return clamp(
+    Number(bigFive.openness ?? 0.5) * 0.34
+      + Number(bigFive.agreeableness ?? 0.5) * 0.26
+      + Number(values.self_direction ?? 0.5) * 0.24
+      - Number(values.security ?? 0.5) * 0.16,
+    -0.16,
+    0.84
+  );
+}
+
+function getSocialParallaxTestimony(citizen, index) {
+  const energy = Number(citizen?.energy || 50);
+  const trust = Number(citizen?.trust || 50);
+  if (index === 0) {
+    return trust < 55
+      ? "我怕大家太快相信一个完整的结论，最后又是受伤的人负责证明自己。"
+      : "我需要边界先被说清楚。没有人应该为了和解，交出自己还没准备好的部分。";
+  }
+  return energy < 48
+    ? "我也怕拖得太久。等待并不总是中立，它有时只是让最累的人继续承担。"
+    : "我需要决定仍然能够向前。一直把复杂留在桌上，也可能让已经发生的伤害继续。";
+}
+
+function stageSocialParallaxWitnesses(zone = interiorView?.zone) {
+  if (!zone || zone.id !== SOCIAL_PARALLAX_ZONE_ID || interiorView?.zone?.id !== zone.id) return [];
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getSocialParallaxRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return [];
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let witnesses = ritual.witnessIds
+    .map((id) => alive.find((citizen) => citizen.id === id))
+    .filter(Boolean);
+  if (witnesses.length < 2) {
+    witnesses = [...alive].sort((a, b) => {
+      const axisDelta = getSocialParallaxAxis(a) - getSocialParallaxAxis(b);
+      return Math.abs(axisDelta) > 0.0001
+        ? axisDelta
+        : hashCommunitySeed(`${zone.id}:${a.id}`, SOCIAL_PARALLAX_RITUAL_ID)
+          - hashCommunitySeed(`${zone.id}:${b.id}`, SOCIAL_PARALLAX_RITUAL_ID);
+    });
+    witnesses = witnesses.length > 1 ? [witnesses[0], witnesses[witnesses.length - 1]] : witnesses;
+    ritual.witnessIds = witnesses.map((citizen) => citizen.id);
+    ritual.heardIds = ritual.heardIds.filter((id) => ritual.witnessIds.includes(id));
+  }
+  const now = performance.now();
+  witnesses.forEach((citizen) => {
+    const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+    const changedRoom = canonical.indoor?.zoneId !== zone.id;
+    canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+    if (changedRoom) delete interiorAnimations[citizen.id];
+  });
+  interiorView.socialParallaxWitnessIds = witnesses.map((citizen) => citizen.id);
+  interiorView.socialParallaxActive = ritual.status === "active";
+  return witnesses;
+}
+
+function holdSocialParallaxActors(zone, entries = []) {
+  if (zone?.id !== SOCIAL_PARALLAX_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const ritual = getSocialParallaxRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return null;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const desiredPoints = [{ x: -1.72, z: 1.28 }, { x: 1.72, z: 1.28 }];
+  const staged = [];
+  const positions = [];
+  ritual.witnessIds.forEach((id, index) => {
+    const ia = interiorAnimations[id];
+    if (!ia) return;
+    let point = interiorView.socialParallaxPositions?.witnesses?.[index];
+    if (!point) {
+      const desired = desiredPoints[index] || desiredPoints[0];
+      point = physics?.findNearestWalkable && world
+        ? physics.findNearestWalkable(world, desired, citizenRadius, { dynamic: staged, selfId: id })
+        : desired;
+    }
+    ia.worldX = point.x;
+    ia.worldZ = point.z;
+    ia.targetWorldX = point.x;
+    ia.targetWorldZ = point.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.socialParallaxHeld = true;
+    ia.state = "idle";
+    ia.facing = index === 0 ? 1 : -1;
+    staged.push({ id, x: point.x, z: point.z, radius: citizenRadius });
+    positions.push({ x: point.x, z: point.z });
+    const entry = entries.find((candidate) => candidate.id === id);
+    if (entry) {
+      entry.worldX = point.x;
+      entry.worldZ = point.z;
+      entry.moveAnim = ia;
+      entry.state = "idle";
+    }
+  });
+  const desiredCenter = { x: 0, z: 1.28 };
+  const center = interiorView.socialParallaxPositions?.center || (physics?.findNearestWalkable && world
+    ? physics.findNearestWalkable(world, desiredCenter, Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS), {
+        dynamic: staged,
+        selfId: "player"
+      })
+    : desiredCenter);
+  interiorView.socialParallaxPositions = { witnesses: positions, center: { x: center.x, z: center.z } };
+  return interiorView.socialParallaxPositions;
+}
+
+function focusSocialParallaxTarget() {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return false;
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual) return false;
+  const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+  const ia = nextId ? interiorAnimations[nextId] : null;
+  const point = ia && Number.isFinite(ia.worldX)
+    ? { x: ia.worldX, z: ia.worldZ }
+    : interiorView.socialParallaxPositions?.center;
+  if (!point) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  const dx = point.x - pivot.x;
+  const dz = point.z - pivot.z;
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(dx, -dz));
+  ritual.focusedTargetId = nextId || "center";
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastUpdatedAt = performance.now();
+  markRenderActive(1800);
+  return true;
+}
+
+function startSocialParallaxRitual() {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID);
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const witnesses = stageSocialParallaxWitnesses(interiorView.zone);
+  if (witnesses.length < 2) return false;
+  const alreadyActive = ritual.status === "active";
+  const now = performance.now();
+  ritual.status = "active";
+  if (!alreadyActive) {
+    ritual.startedTurn = Number(state.society?.turn || 0);
+    ritual.focusProgressMs = 0;
+    ritual.centerProgressMs = 0;
+    ritual.focusedTargetId = "";
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  ritual.feedback = ritual.heardIds.length >= 2
+    ? "走进两份证词之间，不必替它们和解"
+    : alreadyActive ? "刚才听见的版本仍然保留" : "先走向第一种说法";
+  interiorView.socialParallaxActive = true;
+  document.body.classList.add("social-parallax-active");
+  const focus = () => focusSocialParallaxTarget();
+  focus();
+  window.setTimeout(focus, 160);
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "parallax_started", {
+      zoneId: interiorView.zone.id,
+      detail: ritual.witnessIds.join("|")
+    }, { onceKey: `parallax-start-${interiorView.zone.id}` });
+    const first = witnesses.find((citizen) => !ritual.heardIds.includes(citizen.id)) || witnesses[0];
+    const firstIndex = ritual.witnessIds.indexOf(first.id);
+    addSpeechBubble(first.id, getSocialParallaxTestimony(first, firstIndex), "listen", { priority: true, duration: 7200 });
+  }
+  interiorView.discovery = {
+    title: "证词视差 · 同一件事有两个真实位置",
+    text: "分别走到两个人身边听完，不急着判断谁更正确。听见两边以后，房间会留下第三个位置。",
+    progress: "移动也是推理",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncSocialParallaxHud(now);
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(now);
+  markRenderActive(12000);
+  return true;
+}
+
+function completeSocialParallaxPerspective(citizen, index) {
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || !citizen || ritual.heardIds.includes(citizen.id)) return false;
+  ritual.heardIds.push(citizen.id);
+  ritual.focusProgressMs = 0;
+  const record = getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID);
+  const evidence = `听见${citizen.name}的版本`;
+  if (!record.found.includes(evidence)) record.found.push(evidence);
+  const thread = getInteriorStoryThread(SOCIAL_PARALLAX_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "perspective_heard", {
+    zoneId: SOCIAL_PARALLAX_ZONE_ID,
+    detail: `${index}:${citizen.id}`
+  }, { onceKey: `parallax-heard-${SOCIAL_PARALLAX_ZONE_ID}-${citizen.id}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `我在公议庭走到${citizen.name}所在的位置，听见了 Ta 的版本，没有立刻把它压成结论。`, {
+      kind: SOCIAL_PARALLAX_RITUAL_ID,
+      importance: 7,
+      references: [SOCIAL_PARALLAX_ZONE_ID, citizen.id, SOCIAL_PARALLAX_RITUAL_ID]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家走到我这一边听完了证词，但没有把我的说法当成唯一真相。`, SOCIAL_PARALLAX_RITUAL_ID, 7, [SOCIAL_PARALLAX_ZONE_ID, avatar.id]);
+    const result = resolveAction({ actorId: avatar.id, type: "listen", targetId: citizen.id });
+    if (result) {
+      applySocietyActionResult(result, "，由证词视差中的具身倾听触发。");
+      recordAgentOutbox(state.society, avatar, result, getCitizenAgentContext(state.society, avatar));
+    }
+  }
+  addSpeechBubble(citizen.id, "谢谢你听见我的位置，而不只是我的结论。", "listen", { priority: true, duration: 5200 });
+  const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+  if (nextId) {
+    const nextCitizen = state.society?.citizens?.find((item) => item.id === nextId);
+    ritual.feedback = `现在走向 ${nextCitizen?.name || "另一边"}，让第二种真实出现`;
+    window.setTimeout(() => {
+      focusSocialParallaxTarget();
+      if (nextCitizen) addSpeechBubble(nextCitizen.id, getSocialParallaxTestimony(nextCitizen, ritual.witnessIds.indexOf(nextId)), "listen", { priority: true, duration: 7200 });
+    }, 320);
+  } else {
+    ritual.feedback = "两边都被听见了；现在站进它们之间的空位";
+    window.setTimeout(focusSocialParallaxTarget, 320);
+  }
+  persistInteriorExploration();
+  persist();
+  return true;
+}
+
+function completeSocialParallaxRitual() {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return false;
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  const record = getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || ritual.status === "complete") return false;
+  ritual.status = "complete";
+  ritual.centerProgressMs = SOCIAL_PARALLAX_CENTER_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.feedback = "你没有替分歧制造一个假装完整的答案";
+  if (!record.found.includes(SOCIAL_PARALLAX_CENTER_EVIDENCE)) record.found.push(SOCIAL_PARALLAX_CENTER_EVIDENCE);
+  interiorView.socialParallaxActive = false;
+  document.body.classList.remove("social-parallax-active");
+  ritual.witnessIds.forEach((id) => {
+    const ia = interiorAnimations[id];
+    if (ia) delete ia.socialParallaxHeld;
+  });
+  const thread = getInteriorStoryThread(SOCIAL_PARALLAX_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "parallax_completed", {
+    zoneId: SOCIAL_PARALLAX_ZONE_ID,
+    detail: ritual.witnessIds.join("|")
+  }, { onceKey: `parallax-complete-${SOCIAL_PARALLAX_ZONE_ID}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", "我在公议庭先后站到两种证词旁边，最后站进分歧之间，没有用选边代替理解。", {
+      kind: SOCIAL_PARALLAX_RITUAL_ID,
+      importance: 9,
+      references: [SOCIAL_PARALLAX_ZONE_ID, ...ritual.witnessIds, SOCIAL_PARALLAX_RITUAL_ID]
+    });
+  }
+  addEventLogEntry("证词视差 · 公议庭", "两种互相冲突的真实被保留，而你用自己的站位承担了它们之间的张力。", "meditate", true, `social-parallax-${SOCIAL_PARALLAX_ZONE_ID}`);
+  interiorView.discovery = {
+    title: SOCIAL_PARALLAX_CENTER_EVIDENCE,
+    text: "你没有选出一个赢家。房间记住的是：两个人都不必消失，分歧也可以被共同承担。",
+    progress: "3/3",
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  persistInteriorExploration();
+  persist();
+  syncSocialParallaxHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateSocialParallaxRitual(now) {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return null;
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncSocialParallaxHud(now);
+    return ritual;
+  }
+  stageSocialParallaxWitnesses(interiorView.zone);
+  const positions = holdSocialParallaxActors(interiorView.zone);
+  if (!positions || positions.witnesses.length < 2) {
+    ritual.feedback = "正在让两位讲述者在房间里站稳";
+    syncSocialParallaxHud(now);
+    markRenderActive(480);
+    return ritual;
+  }
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)));
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX ?? playerX), playerZ - Number(ritual.lastPlayerZ ?? playerZ));
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.01 && playerDelta < 0.014;
+  const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+  if (nextId) {
+    const index = ritual.witnessIds.indexOf(nextId);
+    const citizen = state.society?.citizens?.find((item) => item.id === nextId);
+    const ia = interiorAnimations[nextId];
+    const dx = Number(ia?.worldX || 0) - playerX;
+    const dz = Number(ia?.worldZ || 0) - playerZ;
+    const distance = Math.hypot(dx, dz);
+    const visualPivot = getInteriorVisualCameraPivot();
+    const targetYaw = wrapInteriorAngle(Math.atan2(Number(ia?.worldX || 0) - visualPivot.x, -(Number(ia?.worldZ || 0) - visualPivot.z)));
+    const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
+    const aligned = gazeDelta <= SOCIAL_PARALLAX_GAZE_TOLERANCE;
+    const listeningDistance = distance >= SOCIAL_PARALLAX_MIN_DISTANCE && distance <= SOCIAL_PARALLAX_MAX_DISTANCE;
+    const valid = aligned && listeningDistance && still;
+    if (ritual.focusedTargetId !== nextId) focusSocialParallaxTarget();
+    ritual.focusProgressMs = clamp(Number(ritual.focusProgressMs || 0) + dt * (valid ? 1 : -0.32), 0, SOCIAL_PARALLAX_LISTEN_MS);
+    ritual.phase = index === 0 ? "side-a" : "side-b";
+    ritual.targetId = nextId;
+    ritual.distance = distance;
+    ritual.aligned = aligned;
+    ritual.still = still;
+    ritual.feedback = valid
+      ? `正在从 ${citizen?.name || "Ta"} 的位置听这件事`
+      : !listeningDistance
+        ? distance < SOCIAL_PARALLAX_MIN_DISTANCE ? "退后半步，给证词留下边界" : `走近 ${citizen?.name || "讲述者"}，让声音不只是远景`
+        : !aligned ? `让 ${citizen?.name || "讲述者"} 留在视野中央` : "停下来，听完这一种版本";
+    if (ritual.focusProgressMs >= SOCIAL_PARALLAX_LISTEN_MS) completeSocialParallaxPerspective(citizen, index);
+  } else {
+    const center = positions.center;
+    const distance = Math.hypot(center.x - playerX, center.z - playerZ);
+    const inside = distance <= SOCIAL_PARALLAX_CENTER_RADIUS;
+    const valid = inside && still;
+    if (ritual.focusedTargetId !== "center") focusSocialParallaxTarget();
+    ritual.centerProgressMs = clamp(Number(ritual.centerProgressMs || 0) + dt * (valid ? 1 : -0.28), 0, SOCIAL_PARALLAX_CENTER_MS);
+    ritual.phase = "center";
+    ritual.targetId = "";
+    ritual.distance = distance;
+    ritual.aligned = inside;
+    ritual.still = still;
+    ritual.feedback = valid
+      ? "两种真实都还在；你不需要立刻消除它们"
+      : inside ? "在这个空位里停一下，不必选边" : "走进两份证词之间发光的空位";
+    if (ritual.centerProgressMs >= SOCIAL_PARALLAX_CENTER_MS) completeSocialParallaxRitual();
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  syncSocialParallaxHud(now);
+  markRenderActive(480);
+  return ritual;
+}
+
+function syncSocialParallaxHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("socialParallaxRitual");
+  const ritual = getSocialParallaxRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("social-parallax-active");
+    panel?.remove();
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "socialParallaxRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const witnesses = ritual.witnessIds.map((id) => state.society?.citizens?.find((item) => item.id === id)).filter(Boolean);
+  const centerPhase = ritual.heardIds.length >= 2;
+  const activeWitness = witnesses.find((citizen) => citizen.id === ritual.targetId) || null;
+  const activeWitnessIndex = activeWitness ? ritual.witnessIds.indexOf(activeWitness.id) : -1;
+  const testimony = centerPhase
+    ? "一个人怕和解太快，另一个人怕决定太慢。两种担心都不该被删除。"
+    : activeWitness ? getSocialParallaxTestimony(activeWitness, activeWitnessIndex) : "先走到一个人的位置，再理解 Ta 看见了什么。";
+  const progressMs = centerPhase ? Number(ritual.centerProgressMs || 0) : Number(ritual.focusProgressMs || 0);
+  const requiredMs = centerPhase ? SOCIAL_PARALLAX_CENTER_MS : SOCIAL_PARALLAX_LISTEN_MS;
+  const progress = clamp(progressMs / requiredMs, 0, 1);
+  const signature = `${ritual.phase}|${ritual.heardIds.join("|")}|${Math.floor(progress * 40)}|${ritual.feedback}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--social-parallax-progress", `${Math.round(progress * 100)}%`);
+  panel.classList.toggle("is-centered", centerPhase && !!ritual.aligned && !!ritual.still);
+  panel.innerHTML = `
+    <span>SOCIAL PARALLAX · 证词视差</span>
+    <strong>${centerPhase ? "站进两种真实之间" : "先听完，再移动"}</strong>
+    <div class="social-parallax-sides">${witnesses.map((citizen, index) => {
+      const heard = ritual.heardIds.includes(citizen.id);
+      const active = ritual.targetId === citizen.id;
+      return `<div class="${heard ? "is-heard" : ""} ${active ? "is-active" : ""}"><i>${heard ? "✓" : index === 0 ? "A" : "B"}</i><span>${escapeHtml(citizen.name)}<small>${index === 0 ? "边界的版本" : "行动的版本"}</small></span></div>`;
+    }).join("")}</div>
+    <blockquote>“${escapeHtml(testimony)}”</blockquote>
+    <div class="social-parallax-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || "走向第一种说法")}</p>
+    <small>${centerPhase ? "第三个位置不属于任何一边" : `${Math.ceil((requiredMs - progressMs) / 1000)} 秒后听见这一侧`}</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeSocialParallax = {
+  getState: () => {
+    const ritual = getSocialParallaxRitual();
+    if (!ritual) return null;
+    const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+    const ia = nextId ? interiorAnimations[nextId] : null;
+    return {
+      ...ritual,
+      target: ia && Number.isFinite(ia.worldX)
+        ? { kind: "witness", id: nextId, x: ia.worldX, z: ia.worldZ }
+        : interiorView?.socialParallaxPositions?.center
+          ? { kind: "center", ...interiorView.socialParallaxPositions.center }
+          : null
+    };
+  },
+  start: startSocialParallaxRitual,
+  focus: focusSocialParallaxTarget
+};
+
+function drawSocialParallaxSpatialCue(ctx, W, H, now, entries, ritual) {
+  if (!ritual || ritual.status !== "active") return;
+  const witnesses = ritual.witnessIds
+    .map((id) => entries.find((entry) => entry.id === id))
+    .filter((entry) => entry && entry.visible !== false);
+  if (witnesses.length === 2) {
+    ctx.save();
+    const gradient = ctx.createLinearGradient(witnesses[0].x, witnesses[0].y, witnesses[1].x, witnesses[1].y);
+    gradient.addColorStop(0, "rgba(255, 139, 122, 0.62)");
+    gradient.addColorStop(0.48, "rgba(255, 247, 223, 0.16)");
+    gradient.addColorStop(0.52, "rgba(255, 247, 223, 0.16)");
+    gradient.addColorStop(1, "rgba(110, 184, 255, 0.62)");
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 8]);
+    ctx.lineDashOffset = -now * 0.012;
+    ctx.beginPath();
+    ctx.moveTo(witnesses[0].x, witnesses[0].y + 8);
+    ctx.lineTo(witnesses[1].x, witnesses[1].y + 8);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (ritual.heardIds.length < 2 || !interiorView?.socialParallaxPositions?.center) return;
+  const projection = window.MirrorLifeInterior3D?.projectWorldPoints?.([{
+    id: "social-parallax-center",
+    worldX: interiorView.socialParallaxPositions.center.x,
+    worldZ: interiorView.socialParallaxPositions.center.z,
+    worldY: 0.06
+  }], W, H)?.[0];
+  if (!projection?.visible) return;
+  const pulse = 0.5 + Math.sin(now * 0.006) * 0.5;
+  const progress = clamp(Number(ritual.centerProgressMs || 0) / SOCIAL_PARALLAX_CENTER_MS, 0, 1);
+  ctx.save();
+  ctx.translate(projection.x, projection.y);
+  ctx.strokeStyle = `rgba(255, 224, 154, ${0.68 + pulse * 0.24})`;
+  ctx.fillStyle = `rgba(255, 224, 154, ${0.08 + progress * 0.15})`;
+  ctx.lineWidth = 2.4 + progress * 2;
+  ctx.setLineDash([9, 6]);
+  ctx.lineDashOffset = -now * 0.015;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 54 + pulse * 7, 18 + pulse * 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+  roundRect(ctx, -51, -42, 102, 22, 11);
+  ctx.fill();
+  ctx.fillStyle = "#ffe09a";
+  ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("分歧之间的空位", 0, -31);
+  ctx.restore();
+}
 
 function getInteriorStoryThread(zoneId) {
   const thread = INTERIOR_STORY_THREADS.find((item) => item.zones.includes(zoneId)) || null;
@@ -7100,6 +7640,8 @@ function syncInteriorJourneyHud(blueprint) {
   const nextProp = nextIndex >= 0 ? props[nextIndex] : null;
   const quietPresence = getQuietPresenceRitual(interiorView.zone.id);
   const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !record.completed;
+  const socialParallax = getSocialParallaxRitual(interiorView.zone.id);
+  const socialParallaxPending = socialParallax && socialParallax.status !== "complete" && !record.completed;
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
   const aftermathEcho = record.scenePlayed ? getInteriorAftermathEcho(interiorView.zone.id) : null;
   const pendingAftermath = aftermathEcho && !aftermathEcho.discussed ? aftermathEcho : null;
@@ -7125,6 +7667,12 @@ function syncInteriorJourneyHud(blueprint) {
       const quietPresenceAction = event.target.closest("[data-quiet-presence-start]");
       if (quietPresenceAction) {
         startQuietPresenceRitual();
+        return;
+      }
+      const socialParallaxAction = event.target.closest("[data-social-parallax-start]");
+      if (socialParallaxAction) {
+        if (socialParallax?.status === "active") focusSocialParallaxTarget();
+        else startSocialParallaxRitual();
         return;
       }
       const finale = event.target.closest("[data-counterfactual-episode-finale]");
@@ -7159,6 +7707,10 @@ function syncInteriorJourneyHud(blueprint) {
     !!aftermathEcho?.discussed,
     quietPresence?.status || "",
     Math.floor(Number(quietPresence?.progressMs || 0) / 1000),
+    socialParallax?.status || "",
+    socialParallax?.heardIds?.join("|") || "",
+    socialParallax?.phase || "",
+    Math.floor(Number((socialParallax?.heardIds?.length || 0) >= 2 ? socialParallax?.centerProgressMs : socialParallax?.focusProgressMs) / 1000),
     nextIndex,
     thread?.completedCount || 0,
     episode.rewriteTokens,
@@ -7169,7 +7721,11 @@ function syncInteriorJourneyHud(blueprint) {
     panel.dataset.signature = signature;
     const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
     const finaleReady = !!thread && thread.completedCount >= thread.zones.length;
-    const nextAction = phase === 1 && quietPresencePending
+    const nextAction = phase === 1 && socialParallaxPending
+      ? `<button type="button" data-social-parallax-start>${socialParallax.status === "active"
+        ? socialParallax.heardIds.length >= 2 ? "朝向分歧之间的空位" : "朝向下一位讲述者"
+        : socialParallax.heardIds.length ? "继续穿过两种证词" : "进入证词视差"}</button>`
+      : phase === 1 && quietPresencePending
       ? `<button type="button" data-quiet-presence-start>${quietPresence.status === "active" ? "回到这段安静" : "找到不想解释的人"}</button>`
       : phase === 1 && nextProp
         ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
@@ -7186,7 +7742,11 @@ function syncInteriorJourneyHud(blueprint) {
       <header><span>${escapeHtml(act.label)}</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
       <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
       <ol>
-        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${quietPresence ? "读懂房间" : "环顾线索"}<small>${quietPresencePending ? quietPresence.status === "active" ? `安静 ${Math.floor(Number(quietPresence.progressMs || 0) / 1000)}/8 秒` : "一条线索不会回应点击" : `${foundCount}/${goal} 段场所记忆`}</small></span></li>
+        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${socialParallax ? "穿过分歧" : quietPresence ? "读懂房间" : "环顾线索"}<small>${socialParallaxPending
+          ? socialParallax.status === "active"
+            ? socialParallax.heardIds.length >= 2 ? "站进第三个位置" : `已听见 ${socialParallax.heardIds.length}/2 种证词`
+            : "陈设不能替人作证"
+          : quietPresencePending ? quietPresence.status === "active" ? `安静 ${Math.floor(Number(quietPresence.progressMs || 0) / 1000)}/8 秒` : "一条线索不会回应点击" : `${foundCount}/${goal} 段场所记忆`}</small></span></li>
         <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
         <li class="${phase === 3 ? "current" : ""} ${phase === 4 ? "done" : ""}"><b>3</b><span>听见活体余波<small>${pendingAftermath ? `${escapeHtml(pendingAftermath.observerName || "有人")}还记得另一种未来` : record.scenePlayed ? "另一种理解也进入了关系记忆" : "选择后会有人带着另一种记忆留下"}</small></span></li>
       </ol>
@@ -7204,6 +7764,7 @@ function syncInteriorJourneyHud(blueprint) {
     });
     shell.appendChild(compass);
   }
+  compass.hidden = !!socialParallaxPending;
   const compassSignature = `${interiorView.zone.id}|${record.found.join("|")}`;
   if (compass.dataset.signature !== compassSignature) {
     compass.dataset.signature = compassSignature;
@@ -7311,7 +7872,10 @@ function ensureInteriorHotspotLayer() {
 
 function syncInteriorHotspotLayer(anchors, blueprint) {
   if (!interiorView) return;
-  interiorHotspots = (anchors || []).filter((anchor) => anchor.visible);
+  const socialParallaxPending = interiorView.zone?.id === SOCIAL_PARALLAX_ZONE_ID
+    && getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID)?.status !== "complete"
+    && !getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID).completed;
+  interiorHotspots = socialParallaxPending ? [] : (anchors || []).filter((anchor) => anchor.visible);
   const layer = ensureInteriorHotspotLayer();
   const record = getInteriorExplorationRecord(interiorView.zone.id);
   const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
@@ -11348,6 +11912,8 @@ function enterInteriorView(zone, source = "manual") {
   const storyThread = getInteriorStoryThread(zone.id);
   const quietPresence = getQuietPresenceRitual(zone.id);
   const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !explorationRecord.completed;
+  const socialParallax = getSocialParallaxRitual(zone.id);
+  const socialParallaxPending = socialParallax && socialParallax.status !== "complete" && !explorationRecord.completed;
   interiorView = {
     zone,
     source,
@@ -11357,6 +11923,8 @@ function enterInteriorView(zone, source = "manual") {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
       text: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
+        : socialParallaxPending
+          ? "这里的陈设只能提供背景，不能替任何人作证。先走进两种互相冲突的说法。"
         : quietPresencePending
           ? "这里的第一段线索不会回应点击。先找到那个不想解释的人。"
           : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
@@ -11388,6 +11956,7 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
   stageQuietPresenceWitness(zone);
+  stageSocialParallaxWitnesses(zone);
   stageInteriorAftermathWitness(zone);
   if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   markRenderActive(3200);
@@ -11409,6 +11978,7 @@ function exitInteriorView() {
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
   document.body.classList.remove("quiet-presence-active");
+  document.body.classList.remove("social-parallax-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
@@ -11417,6 +11987,7 @@ function exitInteriorView() {
   document.getElementById("interiorJourneyPanel")?.remove();
   document.getElementById("interiorCompass")?.remove();
   document.getElementById("quietPresenceRitual")?.remove();
+  document.getElementById("socialParallaxRitual")?.remove();
   syncEpisodeTrailHud();
   markRenderActive(2200);
 }
@@ -11599,6 +12170,16 @@ function updateInteriorCitizenWorldPosition(citizen, ia, now) {
 function updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx) {
   const gesture = getActiveGesture(canonicalAnim, now);
   ia.gesture = canonicalAnim.gesture; // shared so the figure renderer can draw the overlay
+  const socialParallax = getSocialParallaxRitual(interiorView?.zone?.id);
+  if (ia.socialParallaxHeld && socialParallax?.status !== "complete" && socialParallax?.witnessIds?.includes(citizen.id)) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
   if (ia.quietPresenceHeld && citizen.id === interiorView?.quietPresenceWitnessId && interiorView?.quietPresenceActive) {
     if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
     ia.path = [];
@@ -11681,8 +12262,10 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
     .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
     .filter((citizen) => !interiorAnimations[citizen.id]?.counterfactualHidden)
     .sort((a, b) => {
+      const socialWitnessIds = getSocialParallaxRitual(zone.id)?.witnessIds || [];
       const priority = (citizen) => Number(citizen.id === interiorView?.aftermathWitnessId) * 2
-        + Number(citizen.id === interiorView?.quietPresenceWitnessId);
+        + Number(citizen.id === interiorView?.quietPresenceWitnessId)
+        + Number(socialWitnessIds.includes(citizen.id)) * 3;
       return priority(b) - priority(a);
     })
     .slice(0, MAX_INTERIOR_OCCUPANTS);
@@ -11838,6 +12421,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
   const physicsAnchors = getInteriorPhysicsAnchors(blueprint);
   const entries = prepareInteriorOccupants(society, zone, blueprint, physicsAnchors, now);
+  holdSocialParallaxActors(zone, entries);
   const actorPayload = entries.map((entry) => ({
     id: entry.id,
     worldX: entry.worldX,
@@ -11895,8 +12479,12 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     markRenderActive(360);
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
-  syncInteriorContextAction(interiorAnchors);
+  const socialParallaxPending = zone.id === SOCIAL_PARALLAX_ZONE_ID
+    && getSocialParallaxRitual(zone.id)?.status !== "complete"
+    && !getInteriorExplorationRecord(zone.id).completed;
+  syncInteriorContextAction(socialParallaxPending ? [] : interiorAnchors);
   updateQuietPresenceRitual(now);
+  updateSocialParallaxRitual(now);
   syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
@@ -11941,12 +12529,12 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
   const explorationRecord = getInteriorExplorationRecord(zone.id);
-  const explorationGoal = Math.min(3, blueprint.props?.length || 3);
+  const explorationProgress = getInteriorExplorationProgress(zone, blueprint, explorationRecord);
   const interiorStatus = explorationRecord.scenePlayed
     ? "共同经历已留下"
     : explorationRecord.completed
       ? "场所回声已解锁"
-      : `${Math.min(explorationRecord.found.length, explorationGoal)}/${explorationGoal} 段场所记忆`;
+      : `${explorationProgress.count}/${explorationProgress.goal} 段场所记忆`;
   ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
 
   // Occupants live in the same X/Z coordinate system as the furniture. Three.js
@@ -11979,6 +12567,8 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const quietPresenceWitnessId = quietPresenceRitual && quietPresenceRitual.status !== "complete"
     ? quietPresenceRitual.witnessId
     : "";
+  const socialParallaxRitual = getSocialParallaxRitual(zone.id);
+  drawSocialParallaxSpatialCue(ctx, W, H, now, entries, socialParallaxRitual);
   entries.forEach(({ citizen, moveAnim, idx, visible, renderScale }) => {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
@@ -12036,6 +12626,33 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText(active ? "请留下这段安静" : "不想解释", moveAnim.x, moveAnim.y - size * 1.52 + 10);
+      ctx.restore();
+    }
+    const socialParallaxIndex = socialParallaxRitual?.status !== "complete"
+      ? socialParallaxRitual.witnessIds?.indexOf(citizen.id) ?? -1
+      : -1;
+    if (socialParallaxIndex >= 0 && visible !== false) {
+      const heard = socialParallaxRitual.heardIds.includes(citizen.id);
+      const active = socialParallaxRitual.status === "active" && socialParallaxRitual.targetId === citizen.id;
+      const pulse = 0.5 + Math.sin(now * 0.007 + socialParallaxIndex * Math.PI) * 0.5;
+      const color = socialParallaxIndex === 0 ? "255, 139, 122" : "110, 184, 255";
+      ctx.save();
+      ctx.strokeStyle = `rgba(${color}, ${active ? 0.78 + pulse * 0.2 : heard ? 0.38 : 0.58})`;
+      ctx.lineWidth = active ? 3.2 + pulse * 1.6 : 2;
+      ctx.setLineDash(heard ? [] : [5, 5]);
+      ctx.lineDashOffset = -now * 0.012;
+      ctx.beginPath();
+      ctx.ellipse(moveAnim.x, moveAnim.y - size * 0.12, size * (active ? 1.04 : 0.94), size * (active ? 1.28 : 1.16), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(22, 27, 46, 0.88)";
+      roundRect(ctx, moveAnim.x - 45, moveAnim.y - size * 1.52, 90, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = socialParallaxIndex === 0 ? "#ffb3a7" : "#a9d6ff";
+      ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(heard ? `已听见 · 版本 ${socialParallaxIndex ? "B" : "A"}` : `证词版本 ${socialParallaxIndex ? "B" : "A"}`, moveAnim.x, moveAnim.y - size * 1.52 + 10);
       ctx.restore();
     }
     if (citizen.id === followedCitizenId) {

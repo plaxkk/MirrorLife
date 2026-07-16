@@ -5036,6 +5036,155 @@ body.detail-open .event-log:focus-within {
   50% { filter: brightness(1.18); }
 }
 
+#socialParallaxRitual {
+  --social-parallax-progress: 0%;
+  position: absolute;
+  right: 24px;
+  bottom: 82px;
+  z-index: 15;
+  width: min(326px, calc(100vw - 48px));
+  padding: 15px 16px 14px;
+  border: 2px solid #30364e;
+  border-radius: 16px;
+  background:
+    linear-gradient(90deg, rgba(255, 139, 122, 0.13), transparent 43%, transparent 57%, rgba(110, 184, 255, 0.14)),
+    linear-gradient(145deg, rgba(22, 27, 46, 0.97), rgba(39, 43, 61, 0.95));
+  color: #fff7df;
+  box-shadow: 0 16px 38px rgba(19, 26, 43, 0.3), 3px 3px 0 #30364e;
+  pointer-events: none;
+  animation: interior-discovery-in 220ms ease-out;
+}
+
+#socialParallaxRitual > span {
+  display: block;
+  color: #ffe09a;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 0.1em;
+}
+
+#socialParallaxRitual > strong {
+  display: block;
+  margin-top: 5px;
+  color: #fff7df;
+  font-family: var(--font-display);
+  font-size: 17px;
+  line-height: 1.3;
+}
+
+.social-parallax-sides {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 11px;
+}
+
+.social-parallax-sides > div {
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  align-items: center;
+  gap: 7px;
+  min-width: 0;
+  padding: 7px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+  opacity: 0.64;
+}
+
+.social-parallax-sides > div:first-child { border-color: rgba(255, 139, 122, 0.34); }
+.social-parallax-sides > div:last-child { border-color: rgba(110, 184, 255, 0.34); }
+.social-parallax-sides > div.is-active,
+.social-parallax-sides > div.is-heard { opacity: 1; }
+.social-parallax-sides > div.is-active { background: rgba(255, 224, 154, 0.08); }
+
+.social-parallax-sides i {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ff8b7a;
+  color: #1a1a2e;
+  font-size: 9px;
+  font-style: normal;
+  font-weight: 900;
+}
+
+.social-parallax-sides > div:last-child i { background: #6eb8ff; }
+.social-parallax-sides > div.is-heard i { background: #ffe09a; }
+
+.social-parallax-sides span {
+  min-width: 0;
+  overflow: hidden;
+  color: #f4f1e8;
+  font-size: 11px;
+  font-weight: 900;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.social-parallax-sides small {
+  display: block;
+  margin-top: 1px;
+  color: #9ba9bb;
+  font-size: 8px;
+  font-weight: 700;
+}
+
+.social-parallax-meter {
+  height: 8px;
+  margin-top: 11px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 224, 154, 0.35);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+#socialParallaxRitual blockquote {
+  margin: 9px 0 0;
+  padding: 0 0 0 9px;
+  border-left: 2px solid rgba(255, 224, 154, 0.48);
+  color: #f3ead6;
+  font-size: 11px;
+  font-style: normal;
+  line-height: 1.45;
+}
+
+.social-parallax-meter i {
+  display: block;
+  width: var(--social-parallax-progress);
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #ff8b7a, #ffe09a 50%, #6eb8ff);
+  box-shadow: 0 0 18px rgba(255, 224, 154, 0.35);
+  transition: width 140ms linear;
+}
+
+#socialParallaxRitual.is-centered .social-parallax-meter i {
+  animation: social-parallax-hold 1.8s ease-in-out infinite;
+}
+
+#socialParallaxRitual p {
+  margin: 9px 0 0;
+  color: #dce4ea;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+#socialParallaxRitual > small {
+  display: block;
+  margin-top: 5px;
+  color: #9ba9bb;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+@keyframes social-parallax-hold {
+  0%, 100% { filter: saturate(0.88) brightness(0.92); }
+  50% { filter: saturate(1.15) brightness(1.16); }
+}
+
 #interiorJourneyPanel {
   position: absolute;
   left: 24px;
@@ -6244,6 +6393,37 @@ body.counterfactual-finale-active #interiorDiscoveryCard {
   #quietPresenceRitual p { font-size: 10px; }
 
   body.quiet-presence-active #interiorDiscoveryCard {
+    display: none;
+  }
+
+  #socialParallaxRitual {
+    top: auto;
+    right: 12px;
+    bottom: 136px;
+    left: 124px;
+    width: auto;
+    padding: 10px 12px;
+    border-radius: 13px;
+  }
+
+  #socialParallaxRitual > strong { font-size: 14px; }
+  #socialParallaxRitual p { font-size: 10px; }
+  .social-parallax-sides { gap: 5px; margin-top: 7px; }
+  .social-parallax-sides > div { grid-template-columns: 19px 1fr; gap: 5px; padding: 5px 6px; }
+  .social-parallax-sides i { width: 18px; height: 18px; font-size: 8px; }
+  .social-parallax-sides span { font-size: 9px; }
+  .social-parallax-sides small { display: none; }
+  #socialParallaxRitual blockquote {
+    display: -webkit-box;
+    overflow: hidden;
+    margin-top: 6px;
+    font-size: 9px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  body.social-parallax-active #interiorDiscoveryCard {
     display: none;
   }
 

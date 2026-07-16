@@ -1745,9 +1745,15 @@ function normalizeInteriorExploration(savedRecords) {
         : null,
       ritual: source.ritual && typeof source.ritual === "object"
         ? {
-            id: source.ritual.id === "quiet-presence" ? "quiet-presence" : "",
+            id: ["quiet-presence", "social-parallax"].includes(source.ritual.id) ? source.ritual.id : "",
             status: source.ritual.status === "complete" ? "complete" : "available",
             witnessId: String(source.ritual.witnessId || "").slice(0, 80),
+            witnessIds: Array.isArray(source.ritual.witnessIds)
+              ? [...new Set(source.ritual.witnessIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2)
+              : [],
+            heardIds: Array.isArray(source.ritual.heardIds)
+              ? [...new Set(source.ritual.heardIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2)
+              : [],
             startedTurn: Math.max(0, Math.round(Number(source.ritual.startedTurn) || 0)),
             completedTurn: Math.max(0, Math.round(Number(source.ritual.completedTurn) || 0))
           }
@@ -1777,6 +1783,7 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
       "episode_started", "room_entered", "evidence_found", "evidence_revisited",
       "choice_opened", "choice_previewed", "choice_committed", "room_completed",
       "ritual_started", "ritual_completed",
+      "parallax_started", "perspective_heard", "parallax_completed",
       "aftermath_focused", "aftermath_witnessed", "finale_opened", "episode_shared",
       "relay_started", "returned_to_street"
     ]);
