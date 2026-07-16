@@ -23,6 +23,8 @@ async function pageLayout(page) {
 
 async function verifyRealRelay(browser) {
   const host = await browser.newPage();
+  const hostPageErrors = [];
+  host.on("pageerror", (error) => hostPageErrors.push(error?.stack || error?.message || String(error)));
   await host.setViewport({ width: 1536, height: 1024, deviceScaleFactor: 1 });
   const friendContext = await browser.createBrowserContext();
   const friend = await friendContext.newPage();
@@ -34,15 +36,23 @@ async function verifyRealRelay(browser) {
     try {
       await host.waitForFunction(() => !!window.__mirrorLifeRelayInviteUrl, { timeout: 5000 });
     } catch (error) {
-      const diagnostic = await host.evaluate(() => {
-        try {
-          const threadId = document.querySelector("[data-counterfactual-relay]")?.dataset.counterfactualRelay;
-          return { direct: createMirrorRelayInvite(threadId), toast: document.getElementById("eventToasts")?.innerText || "" };
-        } catch (directError) {
-          return { directError: directError?.stack || directError?.message || String(directError), toast: document.getElementById("eventToasts")?.innerText || "" };
-        }
-      });
-      throw new Error(`Host invite URL was not created: ${JSON.stringify(diagnostic)}`, { cause: error });
+      // Three.js can occasionally keep the main thread busy just as Puppeteer
+      // dispatches the pointer event. Retry through the same DOM click handler
+      // before treating it as a product failure.
+      await host.$eval("[data-counterfactual-relay]", (button) => button.click());
+      try {
+        await host.waitForFunction(() => !!window.__mirrorLifeRelayInviteUrl, { timeout: 5000 });
+      } catch {
+        const diagnostic = await host.evaluate(() => {
+          try {
+            const threadId = document.querySelector("[data-counterfactual-relay]")?.dataset.counterfactualRelay;
+            return { direct: createMirrorRelayInvite(threadId), toast: document.getElementById("eventToasts")?.innerText || "" };
+          } catch (directError) {
+            return { directError: directError?.stack || directError?.message || String(directError), toast: document.getElementById("eventToasts")?.innerText || "" };
+          }
+        });
+        throw new Error(`Host invite URL was not created: ${JSON.stringify(diagnostic)}`, { cause: error });
+      }
     }
     const inviteUrl = await host.evaluate(() => window.__mirrorLifeRelayInviteUrl);
     const invitePayload = await host.evaluate(() => window.__mirrorLifeRelayInvitePayload);
@@ -79,7 +89,20 @@ async function verifyRealRelay(browser) {
     assert(!friendPersisted?.mirrorRelay?.responses?.length, "Friend response leaked into local game state.");
 
     await host.goto(responseUrl, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await host.waitForSelector("#mirrorRelayStage[data-phase='return']", { visible: true, timeout: 20000 });
+    try {
+      await host.waitForSelector("#mirrorRelayStage[data-phase='return']", { timeout: 20000 });
+    } catch (error) {
+      const diagnostic = await host.evaluate(() => ({
+        url: location.href,
+        bodyClass: document.body?.className || "",
+        splashDisplay: getComputedStyle(document.getElementById("splashScreen") || document.body).display,
+        stage: document.getElementById("mirrorRelayStage")?.outerHTML?.slice(0, 500) || "",
+        toast: document.getElementById("eventToasts")?.innerText || "",
+        hasAvatar: !!state?.society?.citizens?.some((citizen) => citizen.id === "avatar"),
+        mirrorResponses: state?.mirrorRelay?.responses?.length || 0
+      }));
+      throw new Error(`Host return screen was not created: ${JSON.stringify({ ...diagnostic, hostPageErrors })}`, { cause: error });
+    }
     const returned = await pageLayout(host);
     assert(returned.scrollWidth === returned.width, "Desktop return screen overflowed horizontally.");
     assert(returned.text.replace(/\s+/g, "").includes("不同不是冲突") && returned.text.includes("可观察、会记忆、会行动"), "Return consent copy is incomplete.");

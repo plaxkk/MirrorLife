@@ -191,6 +191,174 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
 .mirror-relay-ledger-row > span.joined { background: #d9f1e6; color: #1c6f64; }
 .mirror-relay-ledger-row button { padding: 6px 8px; border: 1px solid #b54848; border-radius: 7px; background: transparent; color: #a23d3d; cursor: pointer; }
 
+/* ── Mirror Relay Co-Play: four evidence-led acts ── */
+body.mirror-relay-coplay-active .hud,
+body.mirror-relay-coplay-active .hud-top,
+body.mirror-relay-coplay-active .hud-bottom,
+body.mirror-relay-coplay-active .game-menu,
+body.mirror-relay-coplay-active #firstLoopPanel,
+body.mirror-relay-coplay-active #interiorChip,
+body.mirror-relay-coplay-active #interiorMovePad,
+body.mirror-relay-coplay-active #interiorHotspotLayer,
+body.mirror-relay-coplay-active #interiorDiscoveryCard,
+body.mirror-relay-coplay-active #interiorContextAction,
+body.mirror-relay-coplay-active #interiorJourneyPanel,
+body.mirror-relay-coplay-active #interiorCompass { opacity: 0; pointer-events: none; }
+
+#mirrorRelayCoPlayStage {
+  position: fixed;
+  inset: 0;
+  z-index: 1330;
+  overflow: hidden;
+  color: #17192d;
+  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  background: linear-gradient(180deg, rgba(7, 12, 24, 0.08), rgba(7, 12, 24, 0.46));
+  isolation: isolate;
+}
+
+#mirrorRelayCoPlayStage::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 56% 42%, rgba(255, 211, 108, 0.12), transparent 34%),
+    linear-gradient(90deg, rgba(7, 12, 24, 0.58), transparent 28%, transparent 76%, rgba(7, 12, 24, 0.18));
+}
+
+.mirror-relay-coplay-topbar {
+  width: calc(100vw - 36px);
+  max-width: none;
+  min-height: 72px;
+  grid-template-columns: minmax(230px, 0.8fr) minmax(420px, 1.6fr) minmax(150px, 0.6fr);
+  color: #fff8e8;
+  border-color: rgba(255, 249, 230, 0.22);
+  background: rgba(8, 16, 30, 0.92);
+  box-shadow: 0 18px 48px rgba(5, 10, 22, 0.34);
+}
+
+.mirror-relay-coplay-topbar > div:nth-child(2) { display: grid; gap: 4px; text-align: center; }
+.mirror-relay-coplay-topbar > div:nth-child(2) strong { font-family: "Songti SC", "Noto Serif SC", serif; font-size: clamp(16px, 1.7vw, 24px); letter-spacing: 0.05em; }
+.mirror-relay-coplay-topbar > div:nth-child(2) small { color: #c8c2b6; font-size: 11px; letter-spacing: 0.08em; }
+.mirror-relay-coplay-topbar > button {
+  justify-self: end;
+  min-height: 38px;
+  padding: 8px 13px;
+  border: 1px solid rgba(255, 248, 232, 0.32);
+  border-radius: 10px;
+  color: #fff8e8;
+  background: rgba(255,255,255,0.05);
+  font: 700 12px inherit;
+  cursor: pointer;
+}
+
+.mirror-relay-coplay-rail {
+  position: absolute;
+  left: 18px;
+  top: 108px;
+  bottom: 64px;
+  width: min(270px, 22vw);
+  padding: 14px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid rgba(255, 249, 230, 0.38);
+  border-radius: 24px;
+  color: #fff8e8;
+  background: rgba(8, 16, 30, 0.84);
+  box-shadow: 0 24px 60px rgba(5, 10, 22, 0.32);
+  backdrop-filter: blur(18px);
+}
+
+.mirror-relay-coplay-rail article {
+  position: relative;
+  min-height: 108px;
+  padding: 13px 8px 13px 48px;
+  display: grid;
+  align-items: center;
+  opacity: 0.42;
+}
+.mirror-relay-coplay-rail article::before { content: ""; position: absolute; left: 21px; top: 0; bottom: 0; width: 1px; background: rgba(216, 173, 82, 0.5); }
+.mirror-relay-coplay-rail article > span { position: absolute; left: 0; z-index: 1; width: 42px; height: 42px; display: grid; place-items: center; border: 1px solid #d8ad52; border-radius: 50%; color: #17192d; background: #fbf5e7; font: 900 17px "Songti SC", serif; }
+.mirror-relay-coplay-rail article strong { font-size: 14px; }
+.mirror-relay-coplay-rail article p { margin: 6px 0 0; color: #cac5ba; font-size: 10px; line-height: 1.5; }
+.mirror-relay-coplay-rail article.complete { opacity: 0.82; }
+.mirror-relay-coplay-rail article.active { margin: 2px -4px; padding-right: 12px; opacity: 1; border: 1px solid rgba(237, 93, 88, 0.72); border-radius: 17px; background: rgba(237, 93, 88, 0.12); }
+.mirror-relay-coplay-rail article.active > span { color: #fff; border-color: #ed5d58; background: #ed5d58; box-shadow: 0 0 22px rgba(237, 93, 88, 0.45); }
+
+.mirror-relay-coplay-turning {
+  position: absolute;
+  left: calc(50% + 116px);
+  bottom: 24px;
+  width: min(900px, calc(100vw - 360px));
+  min-height: 238px;
+  padding: 26px clamp(28px, 4vw, 62px) 22px;
+  transform: translateX(-50%);
+  display: grid;
+  place-items: center;
+  text-align: center;
+  border: 2px solid #e3c88c;
+  border-radius: 32px 18px 30px 18px;
+  color: #2d221d;
+  background: rgba(255, 249, 230, 0.95);
+  box-shadow: 0 28px 70px rgba(5, 10, 22, 0.36), inset 0 0 54px rgba(222, 178, 88, 0.12);
+  backdrop-filter: blur(20px);
+}
+.mirror-relay-coplay-turning > small { color: #b06a44; font-size: 12px; font-weight: 900; letter-spacing: 0.16em; }
+.mirror-relay-coplay-turning h1 { max-width: 760px; margin: 7px 0 14px; font-family: "Songti SC", "Noto Serif SC", serif; font-size: clamp(24px, 3vw, 40px); line-height: 1.25; }
+.mirror-relay-coplay-turning > div { width: 100%; display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+.mirror-relay-coplay-turning button,
+.mirror-relay-coplay-finale button {
+  min-height: 52px;
+  padding: 12px 20px;
+  border: 2px solid #17192d;
+  border-radius: 14px;
+  color: #17192d;
+  background: #fffaf0;
+  box-shadow: 4px 5px 0 rgba(23, 25, 45, 0.92);
+  font: 900 14px inherit;
+  cursor: pointer;
+}
+.mirror-relay-coplay-turning button.primary,
+.mirror-relay-coplay-finale button.primary { color: #fffdf3; border-color: #9f3e3b; background: #ed5d58; }
+.mirror-relay-coplay-turning > p { margin: 12px 0 0; color: #9b765c; font-size: 12px; letter-spacing: 0.08em; }
+
+.mirror-relay-coplay-finale {
+  position: absolute;
+  left: 50%;
+  bottom: 20px;
+  width: min(1120px, calc(100vw - 64px));
+  min-height: 480px;
+  padding: 36px 54px 30px;
+  transform: translateX(-50%);
+  display: grid;
+  align-content: center;
+  text-align: center;
+  border: 2px solid #d8ad52;
+  border-radius: 28px 14px 26px 14px;
+  color: #241e20;
+  background: rgba(255, 249, 230, 0.96);
+  box-shadow: 0 30px 80px rgba(5, 10, 22, 0.4), inset 0 0 60px rgba(216, 173, 82, 0.11);
+  backdrop-filter: blur(20px);
+}
+.relay-coplay-thread { display: grid; grid-template-columns: 70px repeat(4, minmax(0, 1fr)) 70px; align-items: start; gap: 12px; position: relative; }
+.relay-coplay-thread::before { content: ""; position: absolute; left: 66px; right: 66px; top: 31px; height: 1px; background: #d8ad52; }
+.relay-coplay-seal { z-index: 1; width: 62px; height: 62px; display: grid; place-items: center; border: 2px solid currentColor; border-radius: 50%; font: 900 16px "Songti SC", serif; background: #fff9e8; }
+.relay-coplay-seal.host { color: #d5534e; }
+.relay-coplay-seal.guest { color: #24796f; }
+.relay-coplay-proof { min-width: 0; display: grid; justify-items: center; gap: 5px; position: relative; z-index: 1; }
+.relay-coplay-proof i { width: 14px; height: 14px; margin-top: 25px; border-radius: 50%; background: #d8ad52; box-shadow: 0 0 0 5px #fff9e8; }
+.relay-coplay-proof strong { color: #5a4b40; font-size: 11px; }
+.relay-coplay-proof small { max-width: 180px; color: #81756d; font-size: 9px; line-height: 1.35; }
+.mirror-relay-coplay-finale h1 { max-width: 940px; margin: 28px auto 8px; font-family: "Songti SC", "Noto Serif SC", serif; font-size: clamp(30px, 3.6vw, 52px); line-height: 1.18; }
+.relay-coplay-consequence { margin: 0; color: #c45a4f; font-size: 13px; font-weight: 800; }
+.mirror-relay-coplay-finale blockquote { margin: 22px auto; color: #5f595a; font-family: "Songti SC", serif; font-size: 20px; }
+.mirror-relay-coplay-finale footer { display: grid; grid-template-columns: 1.35fr 1fr 0.75fr; gap: 14px; }
+.mirror-relay-coplay-finale button.quiet { border-color: #b6a995; box-shadow: none; background: transparent; color: #5f595a; }
+
+.mirror-relay-coplay-stage button:focus-visible { outline: 4px solid rgba(255, 213, 79, 0.78); outline-offset: 3px; }
+
 @media (max-width: 760px) {
   .mirror-relay-topbar { top: 8px; width: calc(100vw - 20px); min-height: 58px; margin-top: 8px; padding: 7px 10px; grid-template-columns: 1fr auto; border-width: 2px; border-radius: 12px; box-shadow: 4px 5px 0 #17192d; }
   .mirror-relay-topbar > strong { text-align: right; font-size: 11px; }
@@ -214,6 +382,28 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
   .mirror-relay-seam::before { left: 0; right: 0; top: 50%; bottom: auto; width: auto; height: 1px; }
   .mirror-relay-ledger-row { grid-template-columns: minmax(0, 1fr) auto; }
   .mirror-relay-ledger-row button { grid-column: 1 / -1; }
+
+  #mirrorRelayCoPlayStage { overflow-y: auto; }
+  .mirror-relay-coplay-topbar { position: sticky; width: calc(100vw - 16px); min-height: 66px; grid-template-columns: 1fr auto; gap: 8px; }
+  .mirror-relay-coplay-topbar > div:nth-child(2) { grid-column: 1 / -1; grid-row: 2; padding: 2px 4px 4px; }
+  .mirror-relay-coplay-topbar > div:nth-child(2) strong { font-size: 15px; }
+  .mirror-relay-coplay-topbar > div:nth-child(2) small { font-size: 9px; }
+  .mirror-relay-coplay-topbar > button { grid-column: 2; grid-row: 1; }
+  .mirror-relay-coplay-rail { position: relative; left: auto; top: auto; bottom: auto; width: calc(100vw - 20px); margin: 14px auto 0; padding: 10px; grid-template-columns: repeat(4, minmax(142px, 1fr)); align-content: stretch; gap: 6px; overflow-x: auto; border-radius: 16px; }
+  .mirror-relay-coplay-rail article { min-height: 126px; padding: 45px 10px 10px; align-items: start; }
+  .mirror-relay-coplay-rail article::before { left: 0; right: 0; top: 21px; bottom: auto; width: auto; height: 1px; }
+  .mirror-relay-coplay-rail article > span { left: 10px; top: 0; width: 40px; height: 40px; }
+  .mirror-relay-coplay-turning { position: relative; left: auto; bottom: auto; width: calc(100vw - 20px); min-height: 310px; margin: 150px auto 18px; padding: 24px 17px 20px; transform: none; border-radius: 22px 10px 20px 10px; }
+  .mirror-relay-coplay-turning h1 { font-size: clamp(25px, 7.2vw, 32px); }
+  .mirror-relay-coplay-turning > div { grid-template-columns: 1fr; gap: 10px; }
+  .mirror-relay-coplay-finale { position: relative; left: auto; bottom: auto; width: calc(100vw - 20px); min-height: 590px; margin: 108px auto 12px; padding: 20px 17px; transform: none; border-radius: 22px 10px 20px 10px; }
+  .relay-coplay-thread { grid-template-columns: 54px repeat(4, 120px) 54px; gap: 9px; overflow-x: auto; padding-bottom: 8px; }
+  .relay-coplay-thread::before { right: auto; width: 570px; }
+  .relay-coplay-seal { width: 52px; height: 52px; }
+  .relay-coplay-proof i { margin-top: 20px; }
+  .mirror-relay-coplay-finale h1 { font-size: clamp(29px, 8vw, 38px); }
+  .mirror-relay-coplay-finale blockquote { font-size: 18px; }
+  .mirror-relay-coplay-finale footer { grid-template-columns: 1fr; }
 }
 
 @media (prefers-reduced-motion: reduce) {

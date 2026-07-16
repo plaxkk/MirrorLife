@@ -92,6 +92,9 @@ const MIRROR_RELAY_URL_MAX_LENGTH = 4200;
 const MIRROR_RELAY_ALIAS_MAX = 20;
 const MIRROR_RELAY_MAX_RESPONSES = 12;
 const MIRROR_RELAY_GUEST_MISSION_TURNS = 16;
+const MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE = 8;
+const MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE = 16;
+const MIRROR_RELAY_COPLAY_MAX_EVIDENCE = 24;
 const MIRROR_RELAY_VALUES = [
   { id: "heard", label: "被听见", valueKey: "benevolence", mbtiType: "INFJ", professionId: "reporter", professionName: "回声观察者", personaLabel: "回声观察者" },
   { id: "respected", label: "被尊重", valueKey: "universalism", mbtiType: "ISFJ", professionId: "lawyer", professionName: "边界守望者", personaLabel: "边界守望者" },
@@ -135,6 +138,8 @@ const MIRROR_RELAY_PROMPTS = {
   }
 };
 let mirrorRelayResumeSocietyAfterClose = false;
+let mirrorRelayCoPlayResumeSocietyAfterClose = false;
+let mirrorRelayCoPlayEscapeHandler = null;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -2784,11 +2789,17 @@ async function showStoryPanel() {
     <div class="detail-section mirror-relay-ledger">
       <div class="detail-section-title">↔ 镜像接力 (${relayResponses.length})</div>
       <p style="opacity:0.72">真实朋友的回答只有经过双方同意，才会成为可行动的访客 Agent。</p>
-      ${relayResponses.map((response) => `<div class="mirror-relay-ledger-row">
-        <div><strong>${h(response.responderAlias)}</strong><small>${h(response.valueLabel)} · ${h(response.choiceLabel)}</small></div>
-        <span class="${h(response.consentState)}">${response.consentState === "joined" ? "下一集中" : response.consentState === "removed" ? "已离场" : "仅保存"}</span>
-        ${response.consentState === "joined" ? `<button type="button" data-relay-remove="${h(response.id)}">让分身离场</button>` : ""}
-      </div>`).join("")}
+      ${relayResponses.map((response) => {
+        const coPlay = ensureMirrorRelayCoPlay(response);
+        const relayStatus = response.consentState === "joined"
+          ? (coPlay.status === "resolved" ? "共演已完成" : `共演 ${Math.min(coPlay.evidence.length, MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE)}/${MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE}`)
+          : response.consentState === "removed" ? "已离场" : "仅保存";
+        return `<div class="mirror-relay-ledger-row">
+          <div><strong>${h(response.responderAlias)}</strong><small>${h(response.valueLabel)} · ${h(response.choiceLabel)}</small></div>
+          <span class="${h(response.consentState)}">${h(relayStatus)}</span>
+          ${response.consentState === "joined" ? `<button type="button" data-relay-coplay="${h(response.id)}">${coPlay.status === "resolved" ? "回看共同证据" : "进入四幕共演"}</button><button type="button" data-relay-remove="${h(response.id)}">让分身离场</button>` : ""}
+        </div>`;
+      }).join("")}
     </div>` : "";
   const stageDots = (arc) => ["起", "承", "转", "合"].map((label, i) =>
     `<span style="opacity:${i <= arc.stage ? 1 : 0.25};font-weight:${i <= arc.stage ? 800 : 400}">${label}</span>`
@@ -6914,12 +6925,220 @@ function upsertMirrorRelayResponse(response, consentState = "saved") {
     ...normalized,
     consentState: ["saved", "joined", "removed"].includes(consentState) ? consentState : "saved",
     guestId: previous?.guestId || getMirrorRelayGuestId(normalized),
-    receivedTurn: previous?.receivedTurn || Math.max(0, Number(state.society?.turn || 0))
+    receivedTurn: previous?.receivedTurn || Math.max(0, Number(state.society?.turn || 0)),
+    coPlay: previous?.coPlay || null
   };
   relay.responses = relay.responses.filter((item) => item.id !== record.id);
   relay.responses.push(record);
   relay.responses = relay.responses.slice(-MIRROR_RELAY_MAX_RESPONSES);
   return record;
+}
+
+function ensureMirrorRelayCoPlay(record) {
+  if (!record) return null;
+  const source = record.coPlay && typeof record.coPlay === "object" ? record.coPlay : {};
+  record.coPlay = {
+    status: ["active", "resolved", "removed"].includes(source.status) ? source.status : "active",
+    startedTurn: Math.max(0, Number(source.startedTurn || record.receivedTurn || state.society?.turn || 0)),
+    startHarmony: clamp(Number(source.startHarmony ?? state.society?.harmony ?? 0), 0, 100),
+    startTension: clamp(Number(source.startTension ?? state.society?.tension ?? 0), 0, 100),
+    intervention: ["join", "space"].includes(source.intervention) ? source.intervention : "",
+    interventionTurn: Math.max(0, Number(source.interventionTurn || 0)),
+    witnessId: sanitizeMirrorRelayText(source.witnessId, 120),
+    evidence: Array.isArray(source.evidence) ? source.evidence.slice(-MIRROR_RELAY_COPLAY_MAX_EVIDENCE) : [],
+    completedTurn: Math.max(0, Number(source.completedTurn || 0)),
+    outcome: source.outcome && typeof source.outcome === "object" ? source.outcome : null
+  };
+  return record.coPlay;
+}
+
+function getMirrorRelayDesiredActions(record, role = "guest") {
+  const primary = ["listen", "support", "cooperate", "meditate", "propose"].includes(record?.action)
+    ? record.action
+    : "listen";
+  const valueActions = {
+    heard: [primary, "listen", "support", "propose"],
+    respected: [primary, "listen", "meditate", "cooperate"],
+    authentic: [primary, "propose", "listen", "cooperate"]
+  };
+  if (role === "host") return ["listen", "cooperate", "support", "propose"];
+  if (role === "witness") return ["listen", "support", "cooperate"];
+  return valueActions[record?.valueId] || valueActions.heard;
+}
+
+function selectMirrorRelayWitness(record) {
+  const candidates = (state.society?.citizens || []).filter((citizen) => (
+    citizen.alive !== false
+    && citizen.id !== "avatar"
+    && citizen.id !== record?.guestId
+    && !String(citizen.id || "").startsWith("relay-guest-")
+  ));
+  return candidates.sort((a, b) => {
+    const pressureA = Number(a.mood || 0) + Number(a.trust || 0);
+    const pressureB = Number(b.mood || 0) + Number(b.trust || 0);
+    if (pressureA !== pressureB) return pressureA - pressureB;
+    return hashCommunitySeed(`${record.id}:${a.id}`, "relay-witness") - hashCommunitySeed(`${record.id}:${b.id}`, "relay-witness");
+  })[0] || null;
+}
+
+function queueMirrorRelayMission(record, actorId, role, actionTargetId, desiredActions) {
+  if (!record || !actorId || record.consentState !== "joined") return null;
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status !== "active") return null;
+  const runtime = ensureAgentRuntime(state.society);
+  runtime.inbox = (runtime.inbox || []).filter((item) => !(
+    item.type === "mirror-relay-mission"
+    && item.responseId === record.id
+    && item.targetId === actorId
+  ));
+  return queueAgentInbox(state.society, {
+    type: "mirror-relay-mission",
+    targetId: actorId,
+    actionTargetId: actionTargetId || null,
+    responseId: record.id,
+    role,
+    desiredActions: (desiredActions || getMirrorRelayDesiredActions(record, role)).slice(0, 4),
+    expiresTurn: Math.max(Number(state.society?.turn || 0), coPlay.startedTurn) + MIRROR_RELAY_GUEST_MISSION_TURNS,
+    prompt: record.question,
+    hint: role === "guest" ? "relay-autonomy" : role === "host" ? "relay-join" : "relay-witness",
+    instruction: role === "guest"
+      ? `先按“${record.choiceLabel}”行动，再观察它如何改变这里的人。`
+      : role === "host"
+        ? `不要替朋友重选答案；用自己的行动共同承担后果。`
+        : `只回应现场真实发生的事，不替任何一方宣布标准答案。`
+  });
+}
+
+function ensureMirrorRelayCoPlayTasks(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status !== "active" || record.consentState !== "joined") return;
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  const witness = coPlay.witnessId
+    ? state.society?.citizens?.find((citizen) => citizen.id === coPlay.witnessId)
+    : null;
+  queueMirrorRelayMission(record, record.guestId, "guest", witness?.id || avatar?.id || null);
+  if (coPlay.intervention) {
+    const selectedWitness = witness || selectMirrorRelayWitness(record);
+    if (selectedWitness) {
+      coPlay.witnessId = selectedWitness.id;
+      queueMirrorRelayMission(record, selectedWitness.id, "witness", record.guestId);
+    }
+    if (coPlay.intervention === "join" && avatar) {
+      queueMirrorRelayMission(record, avatar.id, "host", record.guestId);
+    }
+  }
+}
+
+function buildMirrorRelayCoPlayOutcome(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  const harmonyDelta = Math.round(Number(state.society?.harmony || 0) - Number(coPlay.startHarmony || 0));
+  const tensionDelta = Math.round(Number(state.society?.tension || 0) - Number(coPlay.startTension || 0));
+  const verdict = harmonyDelta > 0
+    ? "你们没有选同一个答案，却让同一个世界更愿意靠近"
+    : tensionDelta < 0
+      ? "你们没有选同一个答案，却让同一个现场慢了下来"
+      : "你们没有选同一个答案，却留下了同一条行动证据";
+  const consequence = [
+    harmonyDelta ? `安定 ${harmonyDelta > 0 ? "+" : ""}${harmonyDelta}` : "",
+    tensionDelta ? `紧绷 ${tensionDelta > 0 ? "+" : ""}${tensionDelta}` : ""
+  ].filter(Boolean).join(" · ") || "世界没有被强行判成更好，但记住了这次共同承担";
+  const featured = coPlay.evidence.slice(-4);
+  const shareText = [
+    "《镜像人生 · 两个分身的共同证据》",
+    verdict,
+    ...featured.map((item, index) => `${index + 1}. ${sanitizeMirrorRelayText(item.text, 120)}`),
+    `余波：${consequence}`,
+    "真正的同行，是赞同彼此，还是共同承担后果？",
+    "#镜像人生 #MirrorLife"
+  ].join("\n");
+  return {
+    verdict,
+    debateQuestion: "真正的同行，是赞同彼此，还是共同承担后果？",
+    consequence,
+    shareText
+  };
+}
+
+function completeMirrorRelayCoPlay(record) {
+  let coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status === "resolved") return coPlay?.outcome || null;
+  const outcome = buildMirrorRelayCoPlayOutcome(record);
+  // Outcome construction normalizes the nested record, so reacquire the live
+  // object before committing instead of mutating a detached reference.
+  coPlay = ensureMirrorRelayCoPlay(record);
+  coPlay.status = "resolved";
+  coPlay.completedTurn = Math.max(0, Number(state.society?.turn || 0));
+  coPlay.outcome = outcome;
+  const runtime = ensureAgentRuntime(state.society);
+  runtime.inbox = (runtime.inbox || []).filter((item) => !(item.type === "mirror-relay-mission" && item.responseId === record.id));
+  ensureMirrorRelayDirectorRecord(record);
+  if (typeof addSocietyEvent === "function") {
+    addSocietyEvent(`${record.responderAlias}与这里的人留下了一段共同证据：${coPlay.outcome.verdict}`, "support");
+  }
+  if (typeof addEventLogEntry === "function") {
+    addEventLogEntry("镜像接力 · 四幕共演", coPlay.outcome.verdict, "memory", true, `relay-coplay-${record.id}`);
+  }
+  persist(true);
+  return coPlay.outcome;
+}
+
+function commitMirrorRelayCoPlayIntervention(record, intervention) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status !== "active" || coPlay.intervention) return false;
+  if (coPlay.evidence.length < MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE) return false;
+  coPlay.intervention = intervention === "join" ? "join" : "space";
+  coPlay.interventionTurn = Math.max(0, Number(state.society?.turn || 0));
+  const witness = selectMirrorRelayWitness(record);
+  coPlay.witnessId = witness?.id || "";
+  ensureMirrorRelayCoPlayTasks(record);
+  ensureMirrorRelayDirectorRecord(record);
+  persist(true);
+  return true;
+}
+
+function mirrorRelayOnAgentAction(society, citizen, item, result, mission) {
+  const relay = ensureMirrorRelayState();
+  const record = relay.responses.find((response) => response.id === item?.mirrorRelayResponseId);
+  if (!record || record.consentState !== "joined") return;
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (coPlay.status !== "active" || coPlay.evidence.some((entry) => entry.id === item.id)) return;
+  coPlay.evidence.push({
+    id: item.id,
+    actorId: citizen.id,
+    targetId: result?.targetId || mission?.actionTargetId || "",
+    type: item.type,
+    text: sanitizeMirrorRelayText(item.text, 360),
+    zone: sanitizeMirrorRelayText(item.zone, 120),
+    turn: Math.max(0, Number(item.turn || society?.turn || 0)),
+    score: clamp(Number(item.score || 0), -20, 20)
+  });
+  coPlay.evidence = coPlay.evidence.slice(-MIRROR_RELAY_COPLAY_MAX_EVIDENCE);
+  if (!coPlay.intervention && coPlay.evidence.length >= 12) {
+    commitMirrorRelayCoPlayIntervention(record, "space");
+  }
+  const distinctActors = new Set(coPlay.evidence.map((entry) => entry.actorId));
+  if (coPlay.intervention && coPlay.evidence.length >= MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE && distinctActors.size >= 2) {
+    completeMirrorRelayCoPlay(record);
+  } else {
+    // The shared inbox is bounded and receives a world tick every turn. Keep an
+    // active relay mission at the front so ordinary world messages cannot evict it.
+    ensureMirrorRelayCoPlayTasks(record);
+  }
+  const stage = document.getElementById("mirrorRelayCoPlayStage");
+  if (stage?.dataset.responseId === record.id) renderMirrorRelayCoPlayStage(stage, record);
+}
+
+function mirrorRelayOnSocietyTurn() {
+  const relay = ensureMirrorRelayState();
+  relay.responses.forEach((record) => {
+    const coPlay = ensureMirrorRelayCoPlay(record);
+    if (record.consentState === "joined" && coPlay?.status === "active") {
+      // Plot-director and world messages may fill the bounded inbox late in a
+      // turn. Renew relay tasks after every system has run so the next turn can
+      // still consume the friend's explicit answer.
+      ensureMirrorRelayCoPlayTasks(record);
+    }
+  });
 }
 
 function ensureMirrorRelayDirectorRecord(record) {
@@ -6928,6 +7147,7 @@ function ensureMirrorRelayDirectorRecord(record) {
     ? state.story.director
     : { quests: [] };
   const existing = Array.isArray(state.story.director.mirrorRelays) ? state.story.director.mirrorRelays : [];
+  const coPlay = ensureMirrorRelayCoPlay(record);
   state.story.director.mirrorRelays = [
     ...existing.filter((item) => item.responseId !== record.id),
     {
@@ -6937,7 +7157,11 @@ function ensureMirrorRelayDirectorRecord(record) {
       question: record.question,
       answer: record.choiceLabel,
       status: record.consentState,
-      enteredTurn: record.receivedTurn
+      enteredTurn: record.receivedTurn,
+      coPlayStatus: coPlay?.status || "",
+      evidenceCount: coPlay?.evidence?.length || 0,
+      intervention: coPlay?.intervention || "",
+      outcome: coPlay?.outcome?.verdict || ""
     }
   ].slice(-12);
 }
@@ -6978,17 +7202,11 @@ function importMirrorRelayResponse(response, consentState = "saved", options = {
   }
 
   const runtime = ensureAgentRuntime(state.society);
-  const alreadyQueued = runtime.inbox.some((item) => item.type === "mirror-relay-mission" && item.responseId === record.id);
-  if (!alreadyQueued) {
-    queueAgentInbox(state.society, {
-      type: "mirror-relay-mission",
-      targetId: guest.id,
-      responseId: record.id,
-      expiresTurn: Math.max(0, Number(state.society.turn || 0)) + MIRROR_RELAY_GUEST_MISSION_TURNS,
-      prompt: record.question,
-      instruction: `先按“${record.choiceLabel}”行动，再观察它如何改变这里的人。`
-    });
-  }
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay.startedTurn) coPlay.startedTurn = Math.max(0, Number(state.society.turn || 0));
+  if (!coPlay.startHarmony) coPlay.startHarmony = clamp(Number(state.society.harmony || 0), 0, 100);
+  if (!coPlay.startTension) coPlay.startTension = clamp(Number(state.society.tension || 0), 0, 100);
+  ensureMirrorRelayCoPlayTasks(record);
   const hasMemory = (runtime.memoryStore?.[guest.id] || []).some((item) => item.references?.includes(record.id));
   if (!hasMemory) {
     recordAgentMemory(state.society, guest.id, `我通过镜像接力来到这里，因为我选择了“${record.choiceLabel}”。`, "mirror-relay", 8, [record.id]);
@@ -7021,11 +7239,13 @@ function removeMirrorRelayGuest(responseId) {
   const response = relay.responses.find((item) => item.id === responseId);
   if (!response) return false;
   response.consentState = "removed";
+  const coPlay = ensureMirrorRelayCoPlay(response);
+  coPlay.status = "removed";
   const guestId = response.guestId || getMirrorRelayGuestId(response);
   state.society.citizens = (state.society.citizens || []).filter((citizen) => citizen.id !== guestId);
   if (state.society.agents) {
     const runtime = state.society.agents;
-    runtime.inbox = (runtime.inbox || []).filter((item) => item.targetId !== guestId);
+    runtime.inbox = (runtime.inbox || []).filter((item) => item.targetId !== guestId && item.responseId !== response.id);
     runtime.outbox = (runtime.outbox || []).filter((item) => item.actorId !== guestId && item.targetId !== guestId);
     ["memoryStore", "reflectionStore", "skillStore", "memoryFiles"].forEach((key) => { delete runtime[key]?.[guestId]; });
   }
@@ -7068,6 +7288,332 @@ function prepareMirrorRelayRoom() {
   seedInteriorOccupants(zone);
   stageInteriorCounterfactualActors(zone);
   pauseSocietyRun();
+}
+
+function closeMirrorRelayCoPlayStage({ exitInterior = true } = {}) {
+  if (mirrorRelayCoPlayEscapeHandler) {
+    window.removeEventListener("keydown", mirrorRelayCoPlayEscapeHandler, true);
+    mirrorRelayCoPlayEscapeHandler = null;
+  }
+  document.body.classList.remove("mirror-relay-coplay-active");
+  document.getElementById("mirrorRelayCoPlayStage")?.remove();
+  if (exitInterior && interiorView?.source === "mirror-relay-coplay") exitInteriorView();
+  if (mirrorRelayCoPlayResumeSocietyAfterClose) startSocietyRun();
+  mirrorRelayCoPlayResumeSocietyAfterClose = false;
+  markRenderActive(1200);
+}
+
+function prepareMirrorRelayCoPlayRoom() {
+  const zone = findRenderZoneById("story-archive") || findRenderZoneById("public-plaza");
+  if (!zone || interiorView?.source === "mirror-relay-coplay") return;
+  mirrorRelayCoPlayResumeSocietyAfterClose = !!state.society?.running;
+  enterInteriorView(zone, "mirror-relay-coplay");
+  seedInteriorOccupants(zone);
+  stageInteriorCounterfactualActors(zone);
+  pauseSocietyRun();
+}
+
+function getMirrorRelayCoPlayBeat(record, index) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  const witness = state.society?.citizens?.find((citizen) => citizen.id === coPlay.witnessId);
+  const evidence = coPlay.evidence;
+  if (index === 0) return {
+    label: "起 · 带着回答入场",
+    text: `${record.responderAlias}带着“${record.choiceLabel}”进入了世界。`,
+    state: evidence.length ? "complete" : "active"
+  };
+  if (index === 1) return {
+    label: "承 · 第一次改变别人",
+    text: evidence[3]?.text || evidence[0]?.text || "世界正在等待第一条可以验证的行动。",
+    state: evidence.length >= 4 ? "complete" : evidence.length ? "active" : "locked"
+  };
+  if (index === 2) return {
+    label: "转 · 轮到你决定距离",
+    text: coPlay.intervention
+      ? (coPlay.intervention === "join" ? "你选择靠近，但没有替朋友重选答案。" : "你选择留出空间，让朋友的答案继续独立行动。")
+      : evidence.length >= MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE
+        ? "你已经看见足够证据，现在只决定距离。"
+        : "再观察几次真实行动，这个决定才会出现。",
+    state: coPlay.intervention ? "complete" : evidence.length >= MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE ? "active" : "locked"
+  };
+  return {
+    label: "合 · 世界留下共同证据",
+    text: coPlay.outcome?.verdict || (witness ? `${witness.name}已经进入这段余波。` : "尚未解锁这一幕。"),
+    state: coPlay.status === "resolved" ? "complete" : coPlay.intervention ? "active" : "locked"
+  };
+}
+
+function getMirrorRelayEvidenceCaption(record, entry) {
+  if (!entry) return "世界还没有留下证据";
+  const actor = state.society?.citizens?.find((citizen) => citizen.id === entry.actorId);
+  return `${actor?.name || record.responderAlias} · ${ACTION_LABELS_MAP?.[entry.type] || entry.type}`;
+}
+
+function renderMirrorRelayCoPlayStage(stage, record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  const evidenceCount = coPlay.evidence.length;
+  const isResolved = coPlay.status === "resolved";
+  const needsIntervention = !coPlay.intervention && evidenceCount >= MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE;
+  const beats = [0, 1, 2, 3].map((index) => getMirrorRelayCoPlayBeat(record, index));
+  stage.dataset.responseId = record.id;
+  stage.dataset.phase = isResolved ? "finale" : needsIntervention ? "intervention" : "observe";
+
+  if (isResolved) {
+    const featured = coPlay.evidence.slice(-4);
+    stage.innerHTML = `
+      <header class="mirror-relay-topbar mirror-relay-coplay-topbar">
+        <div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>SHARED EVIDENCE</small></div></div>
+        <div><strong>世界不记得谁赢了，只记得谁改变了什么</strong><small>${evidenceCount} 条行动证据 · 0 个标准答案</small></div>
+        <button type="button" data-relay-coplay-close>回到街道</button>
+      </header>
+      <section class="mirror-relay-coplay-finale">
+        <div class="relay-coplay-thread" aria-label="共同证据轨迹">
+          <span class="relay-coplay-seal host">你</span>
+          ${featured.map((entry) => `<div class="relay-coplay-proof"><i></i><strong>${escapeHtml(getMirrorRelayEvidenceCaption(record, entry))}</strong><small>${escapeHtml(entry.text)}</small></div>`).join("")}
+          <span class="relay-coplay-seal guest">${escapeHtml(record.responderAlias.slice(0, 2))}</span>
+        </div>
+        <h1>${escapeHtml(coPlay.outcome?.verdict || "两个不同答案，留下了一段共同证据")}</h1>
+        <p class="relay-coplay-consequence">${escapeHtml(coPlay.outcome?.consequence || "世界记住了这次共同承担")}</p>
+        <blockquote>${escapeHtml(coPlay.outcome?.debateQuestion || "真正的同行，是赞同彼此，还是共同承担后果？")}</blockquote>
+        <footer>
+          <button class="primary" type="button" data-relay-coplay-next>把这段共同证据交给下一个人</button>
+          <button type="button" data-relay-coplay-close>带着余波回到街道</button>
+          <button class="quiet" type="button" data-relay-coplay-share>保存 4:5 故事卡</button>
+        </footer>
+      </section>`;
+    return;
+  }
+
+  stage.innerHTML = `
+    <header class="mirror-relay-topbar mirror-relay-coplay-topbar">
+      <div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>LIVE CO-PLAY</small></div></div>
+      <div><strong>两个分身，正在把答案活成不同的事</strong><small>每一幕只认真实行动，不认预设台词</small></div>
+      <button type="button" data-relay-coplay-close>暂时离开</button>
+    </header>
+    <aside class="mirror-relay-coplay-rail">
+      ${beats.map((beat, index) => `<article class="${beat.state}"><span>${["起", "承", "转", "合"][index]}</span><div><strong>${escapeHtml(beat.label.replace(/^[起承转合] · /, ""))}</strong><p>${escapeHtml(beat.text)}</p></div></article>`).join("")}
+    </aside>
+    <section class="mirror-relay-coplay-turning ${needsIntervention ? "ready" : "watching"}">
+      ${needsIntervention ? `
+        <small>剧情拐点</small>
+        <h1>让 Ta 按自己的价值继续，<br>还是把我的分身也拉进来？</h1>
+        <div><button class="primary" type="button" data-relay-coplay-intervention="join">一起做点什么</button><button type="button" data-relay-coplay-intervention="space">给 Ta 留出空间</button></div>
+      ` : `
+        <small>${coPlay.intervention ? "共同承担正在发生" : "先观察，不替 Ta 决定"}</small>
+        <h1>${escapeHtml(coPlay.intervention ? (coPlay.intervention === "join" ? "你已经进入行动，但答案仍属于 Ta" : "你留出了空间，第三个人正在回应") : (coPlay.evidence.at(-1)?.text || `${record.responderAlias}正在把“${record.choiceLabel}”变成行动`))}</h1>
+        <button class="primary" type="button" data-relay-coplay-step>再观察一回合</button>
+      `}
+      <p>共演 <strong>${Math.min(evidenceCount, MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE)} / ${MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE}</strong></p>
+    </section>`;
+}
+
+async function renderMirrorRelayCoPlayCard(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay?.outcome) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.fillStyle = "#11182d";
+  ctx.fillRect(0, 0, 1080, 1350);
+  const sceneLayers = [document.getElementById("interiorThreeLayer"), document.getElementById("gameCanvas")]
+    .filter((layer) => layer instanceof HTMLCanvasElement && layer.width > 0 && layer.height > 0);
+  sceneLayers.forEach((layer) => {
+    try {
+      const targetRatio = 1080 / 640;
+      const sourceRatio = layer.width / layer.height;
+      let sx = 0; let sy = 0; let sw = layer.width; let sh = layer.height;
+      if (sourceRatio > targetRatio) { sw = sh * targetRatio; sx = (layer.width - sw) / 2; }
+      else { sh = sw / targetRatio; sy = Math.max(0, (layer.height - sh) * 0.42); }
+      ctx.drawImage(layer, sx, sy, sw, sh, 0, 0, 1080, 640);
+    } catch { /* typographic fallback remains shareable */ }
+  });
+  const fade = ctx.createLinearGradient(0, 360, 0, 700);
+  fade.addColorStop(0, "rgba(17,24,45,0)");
+  fade.addColorStop(1, "rgba(17,24,45,0.98)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 340, 1080, 380);
+  ctx.fillStyle = "#fbf5e7";
+  ctx.beginPath();
+  ctx.roundRect(42, 580, 996, 720, 30);
+  ctx.fill();
+  ctx.strokeStyle = "#d8ad52";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = "#ed5d58";
+  ctx.beginPath(); ctx.arc(100, 690, 42, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.font = '800 24px "PingFang SC", sans-serif';
+  ctx.fillText("你", 100, 699);
+  ctx.strokeStyle = "#d8ad52";
+  ctx.beginPath(); ctx.moveTo(150, 690); ctx.lineTo(930, 690); ctx.stroke();
+  const featured = coPlay.evidence.slice(-4);
+  featured.forEach((entry, index) => {
+    const x = 245 + index * 175;
+    ctx.fillStyle = index % 2 ? "#2f8f83" : "#ed5d58";
+    ctx.beginPath(); ctx.arc(x, 690, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#26283a";
+    ctx.textAlign = "center";
+    ctx.font = '600 17px "PingFang SC", sans-serif';
+    ctx.fillText(getMirrorRelayEvidenceCaption(record, entry).slice(0, 10), x, 735);
+  });
+  ctx.fillStyle = "#2f8f83";
+  ctx.beginPath(); ctx.arc(980, 690, 42, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = '800 22px "PingFang SC", sans-serif';
+  ctx.fillText(record.responderAlias.slice(0, 2), 980, 699);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#171a2d";
+  ctx.font = '700 48px "Songti SC", "Noto Serif SC", serif';
+  const verdictBottom = drawWrappedShareText(ctx, coPlay.outcome.verdict, 88, 835, 904, 66, 3);
+  ctx.fillStyle = "#66606a";
+  ctx.font = '500 24px "PingFang SC", sans-serif';
+  drawWrappedShareText(ctx, coPlay.outcome.debateQuestion, 88, verdictBottom + 44, 904, 38, 2);
+  ctx.fillStyle = "#ed5d58";
+  ctx.font = '700 23px "PingFang SC", sans-serif';
+  ctx.fillText(coPlay.outcome.consequence, 88, 1190);
+  ctx.fillStyle = "#827b82";
+  ctx.font = '500 18px system-ui, sans-serif';
+  ctx.fillText("16 回合 · 真实行动证据 · 0 个标准答案", 88, 1245);
+  ctx.fillText("#镜像人生  #MirrorLife", 88, 1278);
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
+}
+
+async function shareMirrorRelayCoPlay(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay?.outcome) return;
+  try {
+    const blob = await renderMirrorRelayCoPlayCard(record);
+    const file = blob ? new File([blob], `mirrorlife-coplay-${Date.now()}.png`, { type: "image/png" }) : null;
+    if (navigator.share && file && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ title: "镜像人生 · 共同证据", text: coPlay.outcome.shareText, files: [file] });
+      showToast("共同证据已经交给你选择的人", "support");
+      return;
+    }
+    await navigator.clipboard?.writeText(coPlay.outcome.shareText);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `镜像人生-共同证据-${Date.now()}.png`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+    showToast("4:5 故事卡已保存，文案也已复制", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("故事卡没有生成，再试一次吧", "conflict");
+  }
+}
+
+function createMirrorRelayInviteFromCoPlay(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay?.outcome || coPlay.status !== "resolved") {
+    throw new Error("共同证据完成后才能交给下一个人");
+  }
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  const inviterAlias = sanitizeMirrorRelayAlias(avatar?.name || state.profile?.identity || "一位同行者");
+  const question = sanitizeMirrorRelayText(coPlay.outcome.debateQuestion, 260);
+  const hostJoined = coPlay.intervention === "join";
+  const choices = [
+    { id: "share-burden", label: "即使答案不同，也一起承担接下来的影响", action: "cooperate" },
+    { id: "hold-distance", label: "先保留分歧，让行动继续证明它自己", action: "listen" }
+  ];
+  const hostChoice = choices[hostJoined ? 0 : 1];
+  const idSeed = `${record.id}:${state.society?.turn || 0}:${question}:${inviterAlias}`;
+  const invite = normalizeMirrorRelayUrlPayload({
+    kind: "invite",
+    version: MIRROR_RELAY_PAYLOAD_VERSION,
+    id: `relay-coplay-${Math.abs(hashCommunitySeed(idSeed, "invite")).toString(36)}`,
+    threadId: record.threadId || "mirror-relay-coplay",
+    threadTitle: "两个分身的共同证据",
+    inviterAlias,
+    question,
+    hostChoiceId: hostChoice.id,
+    hostChoiceLabel: hostChoice.label,
+    choices
+  }, "invite");
+  if (!invite) throw new Error("下一棒的问题还没有准备好");
+  const relay = ensureMirrorRelayState();
+  relay.invites = relay.invites.filter((item) => item.id !== invite.id);
+  relay.invites.push({ ...invite, createdTurn: Math.max(0, Number(state.society?.turn || 0)), sourceResponseId: record.id });
+  relay.invites = relay.invites.slice(-8);
+  const url = buildMirrorRelayUrl("mirrorInvite", invite);
+  window.__mirrorLifeRelayInviteUrl = url;
+  window.__mirrorLifeRelayInvitePayload = { ...invite, choices: invite.choices.map((choice) => ({ ...choice })) };
+  persist(true);
+  return { invite, url };
+}
+
+async function shareMirrorRelayCoPlayNext(record) {
+  try {
+    const { invite, url } = createMirrorRelayInviteFromCoPlay(record);
+    const text = `${invite.inviterAlias}没有问你谁对，而是把一段真实行动后的问题交给你：\n${invite.question}\n同意后，你的一次性分身会把答案活进下一幕。`;
+    if (navigator.share) {
+      await navigator.share({ title: "镜像人生 · 共同证据下一棒", text, url });
+      showToast("共同证据已经交给下一个人", "support");
+      return;
+    }
+    await navigator.clipboard?.writeText(`${text}\n${url}`);
+    showToast("下一棒链接已复制，只包含问题与昵称", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast(error?.message || "下一棒还没有准备好", "conflict");
+  }
+}
+
+function showMirrorRelayCoPlay(responseId) {
+  const getCurrentRecord = () => ensureMirrorRelayState().responses.find((response) => response.id === responseId);
+  const record = getCurrentRecord();
+  if (!record || record.consentState !== "joined") {
+    showToast("这段共演已经不在世界中", "listen");
+    return;
+  }
+  closeMirrorRelayCoPlayStage({ exitInterior: false });
+  hideDetail();
+  prepareMirrorRelayCoPlayRoom();
+  const stage = document.createElement("div");
+  stage.id = "mirrorRelayCoPlayStage";
+  stage.className = "mirror-relay-coplay-stage";
+  stage.tabIndex = -1;
+  renderMirrorRelayCoPlayStage(stage, record);
+  stage.addEventListener("click", (event) => {
+    if (event.target.closest("[data-relay-coplay-close]")) { closeMirrorRelayCoPlayStage(); return; }
+    const currentRecord = getCurrentRecord();
+    if (!currentRecord || currentRecord.consentState !== "joined") {
+      closeMirrorRelayCoPlayStage();
+      showToast("这段共演已经不在世界中", "listen");
+      return;
+    }
+    const intervention = event.target.closest("[data-relay-coplay-intervention]");
+    if (intervention) {
+      commitMirrorRelayCoPlayIntervention(currentRecord, intervention.dataset.relayCoplayIntervention);
+      renderMirrorRelayCoPlayStage(stage, getCurrentRecord() || currentRecord);
+      return;
+    }
+    if (event.target.closest("[data-relay-coplay-step]")) {
+      stepSociety();
+      updateHUD();
+      renderMirrorRelayCoPlayStage(stage, getCurrentRecord() || currentRecord);
+      return;
+    }
+    if (event.target.closest("[data-relay-coplay-share]")) { shareMirrorRelayCoPlay(currentRecord); return; }
+    if (event.target.closest("[data-relay-coplay-next]")) { shareMirrorRelayCoPlayNext(currentRecord); }
+  });
+  stage.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMirrorRelayCoPlayStage();
+  });
+  mirrorRelayCoPlayEscapeHandler = (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeMirrorRelayCoPlayStage();
+  };
+  window.addEventListener("keydown", mirrorRelayCoPlayEscapeHandler, true);
+  document.getElementById("gameShell")?.appendChild(stage);
+  document.body.classList.add("mirror-relay-coplay-active");
+  stage.querySelector("button")?.focus();
+  markRenderActive(4200);
 }
 
 function renderMirrorRelayStage(stage, payload, phase = "consent") {
@@ -7196,7 +7742,7 @@ function initializeMirrorRelayFromUrl() {
   const params = new URLSearchParams(window.location.search);
   const isLocalQa = ["localhost", "127.0.0.1"].includes(window.location.hostname);
   const qaPhase = isLocalQa ? params.get("qaMirrorRelay") : "";
-  if (qaPhase === "invite" || qaPhase === "return") {
+  if (["invite", "return", "coplay", "coplay-finale"].includes(qaPhase)) {
     const invite = normalizeMirrorRelayUrlPayload({
       kind: "invite", version: MIRROR_RELAY_PAYLOAD_VERSION,
       id: "relay-qa-consent", threadId: "voices-heard", threadTitle: "让沉默被听见",
@@ -7207,7 +7753,7 @@ function initializeMirrorRelayFromUrl() {
         { id: "name", label: "说出边界，但不替对方做最后决定", action: "support" }
       ]
     }, "invite");
-    const payload = qaPhase === "invite" ? invite : normalizeMirrorRelayUrlPayload({
+    const response = normalizeMirrorRelayUrlPayload({
       kind: "response", version: MIRROR_RELAY_PAYLOAD_VERSION,
       id: "response-relay-qa-consent-friend", inviteId: invite.id, threadId: invite.threadId,
       inviterAlias: invite.inviterAlias, responderAlias: "慢半拍的人", question: invite.question,
@@ -7215,7 +7761,31 @@ function initializeMirrorRelayFromUrl() {
       valueId: "authentic", choiceId: invite.choices[1].id, choiceLabel: invite.choices[1].label,
       action: invite.choices[1].action, avatarFrame: 4
     }, "response");
-    window.setTimeout(() => showMirrorRelayStage(payload), 180);
+    if (qaPhase === "invite" || qaPhase === "return") {
+      window.setTimeout(() => showMirrorRelayStage(qaPhase === "invite" ? invite : response), 180);
+      return;
+    }
+    if (!state.society?.citizens?.some((citizen) => citizen.id === "avatar")) {
+      const avatar = normalizeCitizen({
+        id: "avatar", name: "小镜", role: "玩家分身", professionId: "designer", profession: "关系设计师",
+        zoneId: "public-plaza", homeZoneId: "residential", mood: 70, energy: 72, trust: 66, avatarFrame: 0
+      });
+      applyPersonaToCitizen(avatar, { mbtiType: "INFJ", valueTags: ["benevolence", "self_direction"] });
+      state.society.citizens.push(avatar);
+    }
+    const record = importMirrorRelayResponse(response, "joined", { silent: true });
+    if (qaPhase === "coplay-finale") {
+      let guard = 0;
+      while (ensureMirrorRelayCoPlay(record).evidence.length < MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE && guard < 12) {
+        stepSociety(); guard += 1;
+      }
+      commitMirrorRelayCoPlayIntervention(record, "join");
+      while (ensureMirrorRelayCoPlay(record).status !== "resolved" && guard < 28) {
+        stepSociety(); guard += 1;
+      }
+    }
+    persist(true);
+    window.setTimeout(() => showMirrorRelayCoPlay(record.id), 240);
     return;
   }
   if (!params.has("mirrorInvite") && !params.has("mirrorResponse")) return;
@@ -13287,6 +13857,11 @@ function bindGameEvents() {
       if (enterBtn) {
         const modal = getZoneInteraction(enterBtn.dataset.enterZone)?.modal;
         if (modal) { hideDetail(); openModal(modal); }
+        return;
+      }
+      const relayCoPlay = e.target.closest("[data-relay-coplay]");
+      if (relayCoPlay) {
+        showMirrorRelayCoPlay(relayCoPlay.dataset.relayCoplay);
         return;
       }
       const relayRemove = e.target.closest("[data-relay-remove]");
