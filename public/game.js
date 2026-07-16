@@ -163,6 +163,29 @@ const SOCIAL_PARALLAX_MIN_DISTANCE = 0.9;
 const SOCIAL_PARALLAX_MAX_DISTANCE = 3.15;
 const SOCIAL_PARALLAX_CENTER_RADIUS = 0.72;
 const SOCIAL_PARALLAX_CENTER_EVIDENCE = "站在分歧之间的空位";
+const EMPATHY_CALIBRATION_ZONE_ID = "empathy-lab";
+const EMPATHY_CALIBRATION_RITUAL_ID = "empathy-calibration";
+const EMPATHY_CALIBRATION_POSITION_MS = 1200;
+const EMPATHY_CALIBRATION_CONFIRM_MS = 1800;
+const EMPATHY_CALIBRATION_POSITION_RADIUS = 0.78;
+const EMPATHY_CALIBRATION_GAZE_TOLERANCE = 0.34;
+const EMPATHY_CALIBRATION_EVIDENCE = "允许对方纠正我的理解";
+const EMPATHY_CALIBRATION_LENSES = [
+  { id: "stay", label: "先陪我一下", shortLabel: "陪伴", color: "#ff8b7a", targetDistance: 1.35 },
+  { id: "advise", label: "帮我想办法", shortLabel: "建议", color: "#ffe09a", targetDistance: 1.75 },
+  { id: "space", label: "先给我空间", shortLabel: "空间", color: "#6eb8ff", targetDistance: 2.3 }
+];
+const MEMORY_AUTHORIZATION_ZONE_ID = "story-archive";
+const MEMORY_AUTHORIZATION_RITUAL_ID = "memory-authorization";
+const MEMORY_AUTHORIZATION_HOLD_MS = 1800;
+const MEMORY_AUTHORIZATION_BOUNDARY_MS = 900;
+const MEMORY_AUTHORIZATION_POSITION_RADIUS = 0.76;
+const MEMORY_AUTHORIZATION_EVIDENCE = "按授权范围安放一段记忆";
+const MEMORY_AUTHORIZATION_SCOPES = [
+  { id: "private", label: "只属于 Ta", shortLabel: "私密", color: "#ff8b7a", level: 0 },
+  { id: "trusted", label: "只交给信任的人", shortLabel: "托付", color: "#ffe09a", level: 1 },
+  { id: "public", label: "允许城市记住", shortLabel: "公开", color: "#91ead1", level: 2 }
+];
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -5737,6 +5760,24 @@ function getInteriorBlueprint(zone) {
   const base = INTERIOR_BLUEPRINTS[key] || INTERIOR_BLUEPRINTS.home;
   const labels = profile?.labels || [];
   const storyClues = assignInteriorStoryClues(labels, profile?.clues || []);
+  const authoredPlacements = zone?.id === EMPATHY_CALIBRATION_ZONE_ID
+    ? [
+        { focal: false, worldX: -2.42, worldZ: -1.72, displayScale: 0.72 },
+        { worldX: -0.15, worldZ: -3.42, displayScale: 0.78 },
+        { worldX: 2.36, worldZ: -1.7, displayScale: 0.82 },
+        { worldX: 2.72, worldZ: 0.72, displayScale: 0.74 },
+        { worldX: -2.28, worldZ: 1.58, displayScale: 0.76 },
+        { worldX: 2.12, worldZ: 2.16, displayScale: 0.7 }
+      ]
+    : zone?.id === MEMORY_AUTHORIZATION_ZONE_ID
+      ? [
+          { worldX: -2.6, worldZ: -1.65, displayScale: 0.78 },
+          { worldX: 0, worldZ: -3.55, displayScale: 0.86 },
+          { worldX: 2.62, worldZ: -1.52, displayScale: 0.78 },
+          { focal: false, worldX: -2.3, worldZ: 1.72, displayScale: 0.78 },
+          { worldX: 2.34, worldZ: 1.74, displayScale: 0.76 }
+        ]
+      : [];
   const blueprint = {
     ...base,
     key,
@@ -5744,6 +5785,7 @@ function getInteriorBlueprint(zone) {
     profile,
     props: (base.props || []).map((prop, index) => ({
       ...prop,
+      ...(authoredPlacements[index] || {}),
       label: labels[index] || prop.label,
       storyClue: storyClues.get(index) || ""
     }))
@@ -6163,6 +6205,80 @@ function getInteriorExplorationRecord(zoneId) {
     if (record.ritual.status === "complete") {
       record.ritual.centerProgressMs = SOCIAL_PARALLAX_CENTER_MS;
     }
+  } else if (zoneId === EMPATHY_CALIBRATION_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object" && record.ritual.id === EMPATHY_CALIBRATION_RITUAL_ID
+      ? record.ritual
+      : {
+          id: EMPATHY_CALIBRATION_RITUAL_ID,
+          status: "available",
+          witnessId: "",
+          actualLensId: "",
+          attemptedLensIds: [],
+          confirmedLensId: "",
+          correctionCount: 0,
+          startedTurn: 0,
+          completedTurn: 0,
+          positionProgressMs: 0,
+          confirmProgressMs: 0
+        };
+    record.ritual.id = EMPATHY_CALIBRATION_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessId = String(record.ritual.witnessId || "").slice(0, 80);
+    record.ritual.actualLensId = EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === record.ritual.actualLensId)
+      ? record.ritual.actualLensId : "";
+    record.ritual.attemptedLensIds = [...new Set((Array.isArray(record.ritual.attemptedLensIds) ? record.ritual.attemptedLensIds : [])
+      .filter((id) => EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === id)))].slice(0, 3);
+    record.ritual.confirmedLensId = EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === record.ritual.confirmedLensId)
+      ? record.ritual.confirmedLensId : "";
+    record.ritual.correctionCount = clamp(Math.round(Number(record.ritual.correctionCount) || 0), 0, 9);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.positionProgressMs = clamp(Number(record.ritual.positionProgressMs || 0), 0, EMPATHY_CALIBRATION_POSITION_MS);
+    record.ritual.confirmProgressMs = clamp(Number(record.ritual.confirmProgressMs || 0), 0, EMPATHY_CALIBRATION_CONFIRM_MS);
+    if (record.ritual.status === "complete") record.ritual.confirmProgressMs = EMPATHY_CALIBRATION_CONFIRM_MS;
+  } else if (zoneId === MEMORY_AUTHORIZATION_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object" && record.ritual.id === MEMORY_AUTHORIZATION_RITUAL_ID
+      ? record.ritual
+      : {
+          id: MEMORY_AUTHORIZATION_RITUAL_ID,
+          status: "available",
+          witnessId: "",
+          memoryId: "",
+          authorizedScopeId: "",
+          attemptedScopeIds: [],
+          overstepCount: 0,
+          startedTurn: 0,
+          completedTurn: 0,
+          holdProgressMs: 0,
+          boundaryProgressMs: 0,
+          receipt: null
+        };
+    record.ritual.id = MEMORY_AUTHORIZATION_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessId = String(record.ritual.witnessId || "").slice(0, 80);
+    record.ritual.memoryId = String(record.ritual.memoryId || "").slice(0, 120);
+    record.ritual.authorizedScopeId = MEMORY_AUTHORIZATION_SCOPES.some((scope) => scope.id === record.ritual.authorizedScopeId)
+      ? record.ritual.authorizedScopeId : "";
+    record.ritual.attemptedScopeIds = [...new Set((Array.isArray(record.ritual.attemptedScopeIds) ? record.ritual.attemptedScopeIds : [])
+      .filter((id) => MEMORY_AUTHORIZATION_SCOPES.some((scope) => scope.id === id)))].slice(0, 3);
+    record.ritual.overstepCount = clamp(Math.round(Number(record.ritual.overstepCount) || 0), 0, 9);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.holdProgressMs = clamp(Number(record.ritual.holdProgressMs || 0), 0, MEMORY_AUTHORIZATION_HOLD_MS);
+    record.ritual.boundaryProgressMs = clamp(Number(record.ritual.boundaryProgressMs || 0), 0, MEMORY_AUTHORIZATION_BOUNDARY_MS);
+    record.ritual.receipt = record.ritual.receipt && typeof record.ritual.receipt === "object"
+      ? {
+          ownerId: String(record.ritual.receipt.ownerId || "").slice(0, 80),
+          memoryId: String(record.ritual.receipt.memoryId || "").slice(0, 120),
+          scopeId: MEMORY_AUTHORIZATION_SCOPES.some((scope) => scope.id === record.ritual.receipt.scopeId) ? record.ritual.receipt.scopeId : "",
+          turn: Math.max(0, Number(record.ritual.receipt.turn || 0))
+        }
+      : null;
+    if (record.ritual.status === "complete") record.ritual.holdProgressMs = MEMORY_AUTHORIZATION_HOLD_MS;
   }
   if (!("counterfactual" in record)) record.counterfactual = null;
   return record;
@@ -6178,6 +6294,16 @@ function getSocialParallaxRitual(zoneId = interiorView?.zone?.id) {
   return getInteriorExplorationRecord(zoneId).ritual;
 }
 
+function getEmpathyCalibrationRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== EMPATHY_CALIBRATION_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
+function getMemoryAuthorizationRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== MEMORY_AUTHORIZATION_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
 function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExplorationRecord(zone?.id)) {
   const goal = Math.min(3, blueprint?.props?.length || 3);
   const propLabels = new Set((blueprint?.props || []).map((prop) => prop.label));
@@ -6186,10 +6312,14 @@ function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExp
     count: goal,
     goal,
     propCount,
-    ritualComplete: ![QUIET_PRESENCE_ZONE_ID, SOCIAL_PARALLAX_ZONE_ID].includes(zone?.id)
+    ritualComplete: ![QUIET_PRESENCE_ZONE_ID, SOCIAL_PARALLAX_ZONE_ID, EMPATHY_CALIBRATION_ZONE_ID, MEMORY_AUTHORIZATION_ZONE_ID].includes(zone?.id)
       || (zone?.id === QUIET_PRESENCE_ZONE_ID
         ? getQuietPresenceRitual(zone.id)?.status === "complete"
-        : getSocialParallaxRitual(zone.id)?.status === "complete")
+        : zone?.id === SOCIAL_PARALLAX_ZONE_ID
+          ? getSocialParallaxRitual(zone.id)?.status === "complete"
+          : zone?.id === EMPATHY_CALIBRATION_ZONE_ID
+            ? getEmpathyCalibrationRitual(zone.id)?.status === "complete"
+            : getMemoryAuthorizationRitual(zone.id)?.status === "complete")
   };
   if (zone?.id === SOCIAL_PARALLAX_ZONE_ID) {
     const ritual = getSocialParallaxRitual(zone.id);
@@ -6197,6 +6327,30 @@ function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExp
     const ritualComplete = ritual?.status === "complete";
     return {
       count: Math.min(goal, heardCount + (ritualComplete ? 1 : 0)),
+      goal,
+      propCount,
+      ritualComplete
+    };
+  }
+  if (zone?.id === EMPATHY_CALIBRATION_ZONE_ID) {
+    const ritual = getEmpathyCalibrationRitual(zone.id);
+    const attempted = ritual?.attemptedLensIds?.length ? 1 : 0;
+    const confirmed = ritual?.confirmedLensId ? 1 : 0;
+    const ritualComplete = ritual?.status === "complete";
+    return {
+      count: Math.min(goal, attempted + confirmed + (ritualComplete ? 1 : 0)),
+      goal,
+      propCount,
+      ritualComplete
+    };
+  }
+  if (zone?.id === MEMORY_AUTHORIZATION_ZONE_ID) {
+    const ritual = getMemoryAuthorizationRitual(zone.id);
+    const offered = ritual?.memoryId ? 1 : 0;
+    const boundary = ritual?.attemptedScopeIds?.length ? 1 : 0;
+    const ritualComplete = ritual?.status === "complete";
+    return {
+      count: Math.min(goal, offered + boundary + (ritualComplete ? 1 : 0)),
       goal,
       propCount,
       ritualComplete
@@ -6218,6 +6372,8 @@ function getInteriorNextExplorablePropIndex(zone, blueprint, record) {
   const props = blueprint?.props || [];
   if (record.completed) return -1;
   if (zone?.id === SOCIAL_PARALLAX_ZONE_ID) return -1;
+  if (zone?.id === EMPATHY_CALIBRATION_ZONE_ID) return -1;
+  if (zone?.id === MEMORY_AUTHORIZATION_ZONE_ID) return -1;
   if (zone?.id === QUIET_PRESENCE_ZONE_ID) {
     const progress = getInteriorExplorationProgress(zone, blueprint, record);
     if (progress.propCount >= 2) return -1;
@@ -6943,6 +7099,1080 @@ function drawSocialParallaxSpatialCue(ctx, W, H, now, entries, ritual) {
   ctx.restore();
 }
 
+function getEmpathyLens(id) {
+  return EMPATHY_CALIBRATION_LENSES.find((lens) => lens.id === id) || EMPATHY_CALIBRATION_LENSES[0];
+}
+
+function getEmpathyNeedScores(citizen) {
+  const needs = citizen?.needs || {};
+  const bigFive = citizen?.bigFive || {};
+  const coping = citizen?.coping || {};
+  const interpersonal = citizen?.interpersonal || {};
+  const energy = clamp(Number(citizen?.energy ?? 50) / 100, 0, 1);
+  const mood = clamp(Number(citizen?.mood ?? 50) / 100, 0, 1);
+  const trust = clamp(Number(citizen?.trust ?? 50) / 100, 0, 1);
+  return {
+    stay: clamp(
+      (1 - Number(needs.relatedness ?? 0.5)) * 0.3
+      + (1 - Number(needs.belonging ?? 0.5)) * 0.22
+      + Number(interpersonal.warmth ?? bigFive.agreeableness ?? 0.5) * 0.18
+      + Number(coping.socialSeeking ?? 0.5) * 0.18
+      + (1 - mood) * 0.12,
+      0,
+      1
+    ),
+    advise: clamp(
+      (1 - Number(needs.competence ?? 0.5)) * 0.34
+      + Number(coping.problemFocused ?? 0.5) * 0.26
+      + trust * 0.18
+      + Number(bigFive.conscientiousness ?? 0.5) * 0.12
+      + (1 - mood) * 0.1,
+      0,
+      1
+    ),
+    space: clamp(
+      (1 - Number(needs.safety ?? 0.5)) * 0.28
+      + (1 - energy) * 0.22
+      + (1 - Number(needs.autonomy ?? 0.5)) * 0.18
+      + Number(coping.avoidant ?? 0.5) * 0.22
+      + Number(bigFive.neuroticism ?? 0.5) * 0.1,
+      0,
+      1
+    )
+  };
+}
+
+function getEmpathyActualLensId(citizen) {
+  const scores = getEmpathyNeedScores(citizen);
+  return Object.entries(scores).sort((a, b) => b[1] - a[1])[0]?.[0] || "stay";
+}
+
+function getEmpathyNeedMargin(citizen) {
+  const sorted = Object.values(getEmpathyNeedScores(citizen)).sort((a, b) => b - a);
+  return Number(sorted[0] || 0) - Number(sorted[1] || 0);
+}
+
+function getEmpathyCorrectionLine(actualLensId, attemptedLensId) {
+  const lines = {
+    stay: attemptedLensId === "space"
+      ? "我不是想一个人消失。我只是需要有人先陪我待一会儿。"
+      : "我知道你想帮忙，但现在先别替我找办法，陪我一下就好。",
+    advise: attemptedLensId === "stay"
+      ? "谢谢你留下，但我现在更需要一起把下一步想清楚。"
+      : "我需要的不是被放着不管，而是有人和我一起拆开这个问题。",
+    space: attemptedLensId === "stay"
+      ? "我知道你在关心我，但现在靠得太近会让我更难说话。"
+      : "先不用替我解决。给我一点空间，我会告诉你什么时候可以继续。"
+  };
+  return lines[actualLensId] || lines.stay;
+}
+
+function getEmpathyConfirmationLine(actualLensId) {
+  return {
+    stay: "对，就是这样。先在这里，不急着把我变好。",
+    advise: "对，我想和你一起看清下一步，不是把决定交给你。",
+    space: "对，留一点距离以后，我反而更能感觉到你还在。"
+  }[actualLensId] || "对，这次你先问了我。";
+}
+
+function stageEmpathyCalibrationWitness(zone = interiorView?.zone) {
+  if (!zone || zone.id !== EMPATHY_CALIBRATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getEmpathyCalibrationRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return null;
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let citizen = alive.find((candidate) => candidate.id === ritual.witnessId);
+  if (!citizen) {
+    citizen = [...alive].sort((a, b) => {
+      const marginDelta = getEmpathyNeedMargin(b) - getEmpathyNeedMargin(a);
+      return Math.abs(marginDelta) > 0.0001
+        ? marginDelta
+        : hashCommunitySeed(`${zone.id}:${a.id}`, EMPATHY_CALIBRATION_RITUAL_ID)
+          - hashCommunitySeed(`${zone.id}:${b.id}`, EMPATHY_CALIBRATION_RITUAL_ID);
+    })[0] || null;
+    ritual.witnessId = citizen?.id || "";
+    ritual.actualLensId = citizen ? getEmpathyActualLensId(citizen) : "";
+  }
+  if (!citizen) return null;
+  if (!ritual.actualLensId) ritual.actualLensId = getEmpathyActualLensId(citizen);
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  const changedRoom = canonical.indoor?.zoneId !== zone.id;
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (changedRoom) delete interiorAnimations[citizen.id];
+  interiorView.empathyCalibrationWitnessId = citizen.id;
+  interiorView.empathyCalibrationActive = ritual.status === "active";
+  return citizen;
+}
+
+function holdEmpathyCalibrationActor(zone, entries = []) {
+  if (zone?.id !== EMPATHY_CALIBRATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const ritual = getEmpathyCalibrationRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return null;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const playerRadius = Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS);
+  const staged = [];
+  const desiredWitness = { x: 0, z: -1.45 };
+  const actualLens = getEmpathyLens(ritual.actualLensId);
+  let witnessPosition = interiorView.empathyCalibrationPositions?.witness || null;
+  let negotiatedPosition = interiorView.empathyCalibrationPositions?.confirmations?.[actualLens.id] || null;
+  const existingPairIsValid = witnessPosition && negotiatedPosition && physics?.isWalkable && world
+    ? physics.isWalkable(world, witnessPosition, citizenRadius)
+      && physics.isWalkable(world, negotiatedPosition, playerRadius)
+      && Math.abs(Math.hypot(
+        negotiatedPosition.x - witnessPosition.x,
+        negotiatedPosition.z - witnessPosition.z
+      ) - actualLens.targetDistance) <= 0.42
+    : !!(witnessPosition && negotiatedPosition);
+  if (!existingPairIsValid && physics?.sampleWalkablePoint && physics?.isWalkable && world) {
+    const playerStart = { x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0) };
+    const witnessCandidates = [desiredWitness];
+    for (let index = 0; index < 72; index += 1) {
+      witnessCandidates.push(physics.sampleWalkablePoint(world, hashCommunitySeed(ritual.witnessId || "empathy", index), citizenRadius));
+    }
+    const pairs = [];
+    witnessCandidates.forEach((candidate, candidateIndex) => {
+      if (!physics.isWalkable(world, candidate, citizenRadius)) return;
+      for (let angleIndex = 0; angleIndex < 32; angleIndex += 1) {
+        const angle = angleIndex / 32 * Math.PI * 2 + candidateIndex * 0.17;
+        const confirmation = {
+          x: candidate.x + Math.cos(angle) * actualLens.targetDistance,
+          z: candidate.z + Math.sin(angle) * actualLens.targetDistance
+        };
+        if (!physics.isWalkable(world, confirmation, playerRadius)) continue;
+        const path = physics.findPath?.(world, playerStart, confirmation, playerRadius) || [playerStart, confirmation];
+        const pathEnd = path[path.length - 1];
+        if (!pathEnd || Math.hypot(pathEnd.x - confirmation.x, pathEnd.z - confirmation.z) > 0.42) continue;
+        pairs.push({
+          witness: candidate,
+          confirmation,
+          score: Math.hypot(candidate.x - desiredWitness.x, candidate.z - desiredWitness.z) * 0.3
+            + Math.hypot(confirmation.x - playerStart.x, confirmation.z - playerStart.z) * 0.12
+            + path.length * 0.04
+        });
+      }
+    });
+    pairs.sort((a, b) => a.score - b.score);
+    if (pairs[0]) {
+      witnessPosition = { x: pairs[0].witness.x, z: pairs[0].witness.z };
+      negotiatedPosition = { x: pairs[0].confirmation.x, z: pairs[0].confirmation.z };
+    }
+  }
+  if (!witnessPosition) {
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desiredWitness, citizenRadius, { dynamic: staged, selfId: ritual.witnessId })
+      : desiredWitness;
+    witnessPosition = { x: point.x, z: point.z };
+  }
+  const ia = interiorAnimations[ritual.witnessId];
+  if (ia) {
+    ia.worldX = witnessPosition.x;
+    ia.worldZ = witnessPosition.z;
+    ia.targetWorldX = witnessPosition.x;
+    ia.targetWorldZ = witnessPosition.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.empathyCalibrationHeld = true;
+    ia.state = "idle";
+    ia.facing = 1;
+    staged.push({ id: ritual.witnessId, x: witnessPosition.x, z: witnessPosition.z, radius: citizenRadius });
+    const entry = entries.find((candidate) => candidate.id === ritual.witnessId);
+    if (entry) {
+      entry.worldX = witnessPosition.x;
+      entry.worldZ = witnessPosition.z;
+      entry.moveAnim = ia;
+      entry.state = "idle";
+    }
+  }
+  const desiredByLens = {
+    stay: { x: -2.4, z: 1.45 },
+    advise: { x: 0, z: 1.9 },
+    space: { x: 2.4, z: 1.45 }
+  };
+  const lensPositions = {};
+  EMPATHY_CALIBRATION_LENSES.forEach((lens) => {
+    const existing = interiorView.empathyCalibrationPositions?.lenses?.[lens.id];
+    const desired = existing || desiredByLens[lens.id];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, playerRadius, { dynamic: staged, selfId: `lens-${lens.id}` })
+      : desired;
+    lensPositions[lens.id] = { x: point.x, z: point.z };
+  });
+  const confirmationPositions = {};
+  EMPATHY_CALIBRATION_LENSES.forEach((lens, lensIndex) => {
+    const previous = interiorView.empathyCalibrationPositions?.confirmations?.[lens.id];
+    const candidates = [];
+    if (lens.id === actualLens.id && negotiatedPosition) candidates.push(negotiatedPosition);
+    if (previous) candidates.push(previous);
+    for (let index = 0; index < 24; index += 1) {
+      const angle = (index / 24) * Math.PI * 2 + lensIndex * 0.41;
+      const desired = {
+        x: witnessPosition.x + Math.cos(angle) * lens.targetDistance,
+        z: witnessPosition.z + Math.sin(angle) * lens.targetDistance
+      };
+      const point = physics?.findNearestWalkable && world
+        ? physics.findNearestWalkable(world, desired, playerRadius, { dynamic: staged, selfId: `confirm-${lens.id}` })
+        : desired;
+      candidates.push(point);
+    }
+    const origin = lensPositions[lens.id];
+    const scored = candidates
+      .map((point) => {
+        const negotiatedDistance = Math.hypot(point.x - witnessPosition.x, point.z - witnessPosition.z);
+        const path = physics?.findPath && world
+          ? physics.findPath(world, { x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0) }, point, playerRadius)
+          : [];
+        const pathEnd = path[path.length - 1];
+        const reachable = !pathEnd || Math.hypot(pathEnd.x - point.x, pathEnd.z - point.z) <= 0.42;
+        return {
+          point,
+          distanceError: Math.abs(negotiatedDistance - lens.targetDistance),
+          reachable,
+          score: Math.abs(negotiatedDistance - lens.targetDistance) * 12
+            + Math.hypot(point.x - origin.x, point.z - origin.z)
+        };
+      })
+      .filter((candidate) => candidate.reachable && candidate.distanceError <= 0.42)
+      .sort((a, b) => a.score - b.score);
+    const selected = scored[0]?.point || origin;
+    confirmationPositions[lens.id] = { x: selected.x, z: selected.z };
+  });
+  interiorView.empathyCalibrationPositions = {
+    witness: { x: witnessPosition.x, z: witnessPosition.z },
+    lenses: lensPositions,
+    confirmations: confirmationPositions
+  };
+  return interiorView.empathyCalibrationPositions;
+}
+
+function focusEmpathyCalibrationTarget(lensId = "") {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return false;
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  const positions = holdEmpathyCalibrationActor(interiorView.zone);
+  if (!ritual || !positions) return false;
+  const phase = ritual.phase || (ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume");
+  const targetLensId = EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === lensId)
+    ? lensId
+    : phase === "confirm"
+      ? ""
+      : phase === "revise" ? ritual.actualLensId : EMPATHY_CALIBRATION_LENSES[0].id;
+  const point = targetLensId ? positions.lenses[targetLensId] : positions.witness;
+  if (!point) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(point.x - pivot.x, -(point.z - pivot.z)));
+  ritual.focusedTargetId = targetLensId || ritual.witnessId;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastUpdatedAt = performance.now();
+  markRenderActive(1800);
+  return true;
+}
+
+function startEmpathyCalibrationRitual() {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID);
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const citizen = stageEmpathyCalibrationWitness(interiorView.zone);
+  if (!citizen) return false;
+  holdEmpathyCalibrationActor(interiorView.zone);
+  const alreadyActive = ritual.status === "active";
+  const now = performance.now();
+  ritual.status = "active";
+  ritual.phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  if (!alreadyActive) {
+    ritual.startedTurn = Number(state.society?.turn || 0);
+    ritual.positionProgressMs = 0;
+    ritual.confirmProgressMs = 0;
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  ritual.feedback = ritual.phase === "confirm"
+    ? `按 ${citizen.name} 需要的距离重新靠近`
+    : ritual.phase === "revise"
+      ? `不要证明自己猜得有道理，按 ${citizen.name} 的说法换位`
+      : "走进一个理解位置，把它作为假设说出来";
+  interiorView.empathyCalibrationActive = true;
+  document.body.classList.add("empathy-calibration-active");
+  const focus = () => focusEmpathyCalibrationTarget();
+  focus();
+  window.setTimeout(focus, 160);
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "empathy_started", {
+      zoneId: interiorView.zone.id,
+      detail: citizen.id
+    }, { onceKey: `empathy-start-${interiorView.zone.id}` });
+    addSpeechBubble(citizen.id, "你可以先说你以为我需要什么，但请把它当成假设。", "listen", { priority: true, duration: 7200 });
+  }
+  interiorView.discovery = {
+    title: "误解校准 · 先承认你可能听错",
+    text: "房间里有三个理解位置。走进一个位置并停下来；Ta 可以确认，也可以纠正你。",
+    progress: "理解是一种可修改的假设",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncEmpathyCalibrationHud(now);
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(now);
+  markRenderActive(12000);
+  return true;
+}
+
+function recordEmpathyCorrection(citizen, attemptedLensId) {
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || !citizen) return;
+  const actualLens = getEmpathyLens(ritual.actualLensId);
+  const attemptedLens = getEmpathyLens(attemptedLensId);
+  const record = getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID);
+  const evidence = `被${citizen.name}纠正：${actualLens.label}`;
+  if (!record.found.includes(evidence)) record.found.push(evidence);
+  const thread = getInteriorStoryThread(EMPATHY_CALIBRATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "empathy_corrected", {
+    zoneId: EMPATHY_CALIBRATION_ZONE_ID,
+    detail: `${attemptedLensId}>${ritual.actualLensId}`
+  }, { onceKey: `empathy-corrected-${EMPATHY_CALIBRATION_ZONE_ID}-${attemptedLensId}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `我以为${citizen.name}需要“${attemptedLens.label}”，Ta 纠正我说其实是“${actualLens.label}”。我没有为自己的误读辩解。`, {
+      kind: EMPATHY_CALIBRATION_RITUAL_ID,
+      importance: 8,
+      references: [EMPATHY_CALIBRATION_ZONE_ID, citizen.id, attemptedLensId, ritual.actualLensId]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家误以为我需要“${attemptedLens.label}”，但允许我改口说出“${actualLens.label}”。`, EMPATHY_CALIBRATION_RITUAL_ID, 8, [EMPATHY_CALIBRATION_ZONE_ID, avatar.id]);
+  }
+}
+
+function commitEmpathyHypothesis(citizen, lensId) {
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || !citizen || ritual.status !== "active") return false;
+  const lens = getEmpathyLens(lensId);
+  if (!ritual.attemptedLensIds.includes(lensId)) ritual.attemptedLensIds.push(lensId);
+  ritual.positionProgressMs = 0;
+  const thread = getInteriorStoryThread(EMPATHY_CALIBRATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "empathy_hypothesis", {
+    zoneId: EMPATHY_CALIBRATION_ZONE_ID,
+    detail: lensId
+  }, { onceKey: `empathy-hypothesis-${EMPATHY_CALIBRATION_ZONE_ID}-${lensId}` });
+  if (lensId === ritual.actualLensId) {
+    ritual.confirmedLensId = lensId;
+    ritual.phase = "confirm";
+    ritual.feedback = `这次方向对了；现在按 ${citizen.name} 需要的距离靠近并再问一次`;
+    addSpeechBubble(citizen.id, getEmpathyConfirmationLine(lensId), "listen", { priority: true, duration: 7200 });
+    window.setTimeout(() => focusEmpathyCalibrationTarget(), 320);
+  } else {
+    ritual.correctionCount += 1;
+    ritual.phase = "revise";
+    ritual.feedback = `这不是失败：${citizen.name}正在把解释权拿回来`;
+    recordEmpathyCorrection(citizen, lensId);
+    addSpeechBubble(citizen.id, getEmpathyCorrectionLine(ritual.actualLensId, lensId), "listen", { priority: true, duration: 8200 });
+    window.setTimeout(() => focusEmpathyCalibrationTarget(ritual.actualLensId), 420);
+  }
+  persistInteriorExploration();
+  persist();
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  return true;
+}
+
+function completeEmpathyCalibrationRitual(citizen) {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return false;
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  const record = getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || !citizen) return false;
+  ritual.status = "complete";
+  ritual.phase = "complete";
+  ritual.confirmProgressMs = EMPATHY_CALIBRATION_CONFIRM_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.feedback = "你没有把猜中当作共情，而是把纠正权还给了对方";
+  if (!record.found.includes(EMPATHY_CALIBRATION_EVIDENCE)) record.found.push(EMPATHY_CALIBRATION_EVIDENCE);
+  interiorView.empathyCalibrationActive = false;
+  document.body.classList.remove("empathy-calibration-active");
+  const ia = interiorAnimations[citizen.id];
+  if (ia) delete ia.empathyCalibrationHeld;
+  const thread = getInteriorStoryThread(EMPATHY_CALIBRATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "empathy_completed", {
+    zoneId: EMPATHY_CALIBRATION_ZONE_ID,
+    detail: `${citizen.id}:${ritual.actualLensId}:${ritual.correctionCount}`
+  }, { onceKey: `empathy-complete-${EMPATHY_CALIBRATION_ZONE_ID}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", `我在共情室把自己的理解当作假设，并允许${citizen.name}纠正我；真正的共情不是猜中，而是持续确认。`, {
+      kind: EMPATHY_CALIBRATION_RITUAL_ID,
+      importance: 9,
+      references: [EMPATHY_CALIBRATION_ZONE_ID, citizen.id, ritual.actualLensId, EMPATHY_CALIBRATION_RITUAL_ID]
+    });
+    recordAgentMemory(state.society, citizen.id, "玩家按我说的需要重新调整了位置和距离，没有要求我配合 Ta 的理解。", EMPATHY_CALIBRATION_RITUAL_ID, 9, [EMPATHY_CALIBRATION_ZONE_ID, avatar.id]);
+    const result = resolveAction({ actorId: avatar.id, type: "listen", targetId: citizen.id });
+    if (result) {
+      applySocietyActionResult(result, "，由共情室中的误解校准触发。");
+      recordAgentOutbox(state.society, avatar, result, getCitizenAgentContext(state.society, avatar));
+    }
+  }
+  addEventLogEntry("误解校准 · 共情室", `你允许${citizen.name}纠正你，并按 Ta 需要的距离重新靠近。`, "listen", true, `empathy-calibration-${EMPATHY_CALIBRATION_ZONE_ID}`);
+  interiorView.discovery = {
+    title: EMPATHY_CALIBRATION_EVIDENCE,
+    text: "真正的共情，不是猜中别人，而是允许别人纠正你。",
+    progress: "3/3",
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  persistInteriorExploration();
+  persist();
+  syncEmpathyCalibrationHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateEmpathyCalibrationRitual(now) {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return null;
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncEmpathyCalibrationHud(now);
+    return ritual;
+  }
+  const citizen = stageEmpathyCalibrationWitness(interiorView.zone);
+  const positions = holdEmpathyCalibrationActor(interiorView.zone);
+  if (!citizen || !positions) {
+    ritual.feedback = "正在让对话中的两个人在房间里站稳";
+    syncEmpathyCalibrationHud(now);
+    markRenderActive(480);
+    return ritual;
+  }
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)));
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX ?? playerX), playerZ - Number(ritual.lastPlayerZ ?? playerZ));
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.012 && playerDelta < 0.016;
+  ritual.phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  ritual.activeLensId = "";
+  if (ritual.phase !== "confirm") {
+    const nearest = EMPATHY_CALIBRATION_LENSES
+      .map((lens) => ({ lens, distance: Math.hypot(positions.lenses[lens.id].x - playerX, positions.lenses[lens.id].z - playerZ) }))
+      .sort((a, b) => a.distance - b.distance)[0];
+    const inside = nearest?.distance <= EMPATHY_CALIBRATION_POSITION_RADIUS;
+    const isRevisionTarget = ritual.phase !== "revise" || nearest?.lens.id === ritual.actualLensId;
+    const valid = inside && still && isRevisionTarget;
+    ritual.activeLensId = inside ? nearest.lens.id : "";
+    ritual.positionProgressMs = clamp(Number(ritual.positionProgressMs || 0) + dt * (valid ? 1 : -0.3), 0, EMPATHY_CALIBRATION_POSITION_MS);
+    ritual.aligned = inside;
+    ritual.still = still;
+    ritual.distance = Number(nearest?.distance || 0);
+    ritual.feedback = ritual.phase === "revise"
+      ? !inside
+        ? `按 ${citizen.name} 的修正，走到“${getEmpathyLens(ritual.actualLensId).label}”`
+        : !isRevisionTarget
+          ? "先别替原来的判断辩解，试着按 Ta 的说法换位"
+          : !still ? "在新的理解里停一下，让修正真正发生" : `正在把“${nearest.lens.label}”作为新的理解`
+      : !inside
+        ? "走进任意一个发光位置，先暴露你的理解"
+        : !still ? "停下来；这不是答案，只是你的第一种假设" : `正在说出假设：“${nearest.lens.label}”`;
+    if (ritual.positionProgressMs >= EMPATHY_CALIBRATION_POSITION_MS && nearest?.lens) {
+      commitEmpathyHypothesis(citizen, nearest.lens.id);
+    }
+  } else {
+    const lens = getEmpathyLens(ritual.actualLensId);
+    const witness = positions.witness;
+    const distance = Math.hypot(witness.x - playerX, witness.z - playerZ);
+    const visualPivot = getInteriorVisualCameraPivot();
+    const targetYaw = wrapInteriorAngle(Math.atan2(witness.x - visualPivot.x, -(witness.z - visualPivot.z)));
+    const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
+    const aligned = gazeDelta <= EMPATHY_CALIBRATION_GAZE_TOLERANCE;
+    const distanceOk = Math.abs(distance - lens.targetDistance) <= 0.45;
+    const valid = aligned && distanceOk && still;
+    ritual.confirmProgressMs = clamp(Number(ritual.confirmProgressMs || 0) + dt * (valid ? 1 : -0.3), 0, EMPATHY_CALIBRATION_CONFIRM_MS);
+    ritual.distance = distance;
+    ritual.aligned = aligned;
+    ritual.still = still;
+    ritual.feedback = valid
+      ? `正在按 ${citizen.name} 需要的距离重新确认`
+      : !distanceOk
+        ? distance < lens.targetDistance - 0.45 ? "退后一点，让 Ta 决定靠近的速度" : "走近一点，但不要替 Ta 取消边界"
+        : !aligned ? `让 ${citizen.name} 留在视野中央，再问一次` : "停一下，给 Ta 改口的时间";
+    if (ritual.confirmProgressMs >= EMPATHY_CALIBRATION_CONFIRM_MS) completeEmpathyCalibrationRitual(citizen);
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  syncEmpathyCalibrationHud(now);
+  markRenderActive(480);
+  return ritual;
+}
+
+function syncEmpathyCalibrationHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("empathyCalibrationRitual");
+  const ritual = getEmpathyCalibrationRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("empathy-calibration-active");
+    panel?.remove();
+    return;
+  }
+  const citizen = state.society?.citizens?.find((item) => item.id === ritual.witnessId);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "empathyCalibrationRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  const progressMs = phase === "confirm" ? Number(ritual.confirmProgressMs || 0) : Number(ritual.positionProgressMs || 0);
+  const requiredMs = phase === "confirm" ? EMPATHY_CALIBRATION_CONFIRM_MS : EMPATHY_CALIBRATION_POSITION_MS;
+  const progress = clamp(progressMs / requiredMs, 0, 1);
+  const signature = `${phase}|${ritual.attemptedLensIds.join("|")}|${ritual.activeLensId}|${Math.floor(progress * 40)}|${ritual.feedback}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--empathy-calibration-progress", `${Math.round(progress * 100)}%`);
+  panel.classList.toggle("is-correcting", phase === "revise");
+  panel.classList.toggle("is-confirming", phase === "confirm" && !!ritual.aligned && !!ritual.still);
+  panel.innerHTML = `
+    <span>CALIBRATED EMPATHY · 误解校准</span>
+    <strong>${phase === "assume" ? "先承认：我可能听错" : phase === "revise" ? "让对方改写你的理解" : `按 ${escapeHtml(citizen?.name || "Ta")} 的距离再问一次`}</strong>
+    <div class="empathy-calibration-lenses">${EMPATHY_CALIBRATION_LENSES.map((lens) => {
+      const attempted = ritual.attemptedLensIds.includes(lens.id);
+      const corrected = phase !== "assume" && lens.id === ritual.actualLensId;
+      const active = ritual.activeLensId === lens.id || ritual.confirmedLensId === lens.id;
+      return `<div class="${attempted ? "is-attempted" : ""} ${corrected ? "is-corrected" : ""} ${active ? "is-active" : ""}" style="--lens-color:${lens.color}"><i>${attempted && !corrected ? "×" : corrected ? "✓" : "?"}</i><span>${escapeHtml(lens.label)}<small>${attempted ? "我的第一种理解" : corrected ? "Ta 的修正" : "仍是未知"}</small></span></div>`;
+    }).join("")}</div>
+    <blockquote>“${escapeHtml(phase === "revise" ? getEmpathyCorrectionLine(ritual.actualLensId, ritual.attemptedLensIds[ritual.attemptedLensIds.length - 1]) : phase === "confirm" ? getEmpathyConfirmationLine(ritual.actualLensId) : "先说出你以为我需要什么，但请允许我改口。") }”</blockquote>
+    <div class="empathy-calibration-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || "把理解作为假设说出来")}</p>
+    <small>${phase === "confirm" ? `协商距离 · ${Number(ritual.distance || 0).toFixed(1)}m` : phase === "revise" ? "修正不会扣分，也不会清空关系证据" : "走入位置，而不是点击答案"}</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeEmpathyCalibration = {
+  getState: () => {
+    const ritual = getEmpathyCalibrationRitual();
+    if (!ritual) return null;
+    const positions = interiorView?.empathyCalibrationPositions;
+    const phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+    const target = phase === "confirm"
+      ? positions?.confirmations?.[ritual.actualLensId]
+        ? {
+            kind: "confirm",
+            id: ritual.actualLensId,
+            ...positions.confirmations[ritual.actualLensId],
+            witness: positions.witness,
+            distance: getEmpathyLens(ritual.actualLensId).targetDistance
+          }
+        : null
+      : positions?.lenses?.[phase === "revise" ? ritual.actualLensId : ritual.focusedTargetId]
+        ? { kind: "lens", id: phase === "revise" ? ritual.actualLensId : ritual.focusedTargetId, ...positions.lenses[phase === "revise" ? ritual.actualLensId : ritual.focusedTargetId] }
+        : null;
+    return { ...ritual, phase, positions, target };
+  },
+  start: startEmpathyCalibrationRitual,
+  focus: focusEmpathyCalibrationTarget
+};
+
+function drawEmpathyCalibrationSpatialCue(ctx, W, H, now, entries, ritual) {
+  if (!ritual || ritual.status !== "active" || !interiorView?.empathyCalibrationPositions) return;
+  const phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  const points = EMPATHY_CALIBRATION_LENSES.map((lens) => ({
+    id: `empathy-lens-${lens.id}`,
+    worldX: interiorView.empathyCalibrationPositions.lenses[lens.id].x,
+    worldZ: interiorView.empathyCalibrationPositions.lenses[lens.id].z,
+    worldY: 0.05,
+    lens
+  }));
+  const projections = window.MirrorLifeInterior3D?.projectWorldPoints?.(points, W, H) || [];
+  projections.forEach((projection, index) => {
+    if (!projection?.visible) return;
+    const lens = points[index].lens;
+    const attempted = ritual.attemptedLensIds.includes(lens.id);
+    const corrected = phase !== "assume" && lens.id === ritual.actualLensId;
+    const active = ritual.activeLensId === lens.id;
+    const pulse = 0.5 + Math.sin(now * 0.006 + index * 1.7) * 0.5;
+    ctx.save();
+    ctx.translate(projection.x, projection.y);
+    ctx.globalAlpha = phase === "confirm" ? 0.22 : phase === "revise" && !corrected ? 0.3 : 1;
+    ctx.strokeStyle = lens.color;
+    ctx.fillStyle = active ? `${lens.color}35` : `${lens.color}18`;
+    ctx.lineWidth = active || corrected ? 3 + pulse * 1.5 : 2;
+    ctx.setLineDash(attempted && !corrected ? [3, 6] : [8, 6]);
+    ctx.lineDashOffset = -now * 0.014;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 48 + pulse * 6, 17 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+    roundRect(ctx, -46, -42, 92, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = lens.color;
+    ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(attempted && !corrected ? "被纠正" : corrected ? "Ta 的修正" : lens.shortLabel, 0, -31);
+    ctx.restore();
+  });
+  const witness = entries.find((entry) => entry.id === ritual.witnessId);
+  if (witness?.visible === false || !witness || phase !== "confirm") return;
+  const pulse = 0.5 + Math.sin(now * 0.008) * 0.5;
+  const confirmation = interiorView.empathyCalibrationPositions.confirmations?.[ritual.actualLensId];
+  const confirmationProjection = confirmation
+    ? window.MirrorLifeInterior3D?.projectWorldPoints?.([{
+        id: "empathy-confirmation",
+        worldX: confirmation.x,
+        worldZ: confirmation.z,
+        worldY: 0.05
+      }], W, H)?.[0]
+    : null;
+  if (confirmationProjection?.visible) {
+    ctx.save();
+    ctx.translate(confirmationProjection.x, confirmationProjection.y);
+    ctx.strokeStyle = `rgba(255, 224, 154, ${0.72 + pulse * 0.24})`;
+    ctx.fillStyle = `rgba(145, 234, 209, ${0.12 + pulse * 0.08})`;
+    ctx.lineWidth = 3 + pulse;
+    ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -now * 0.016;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 52 + pulse * 5, 18 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+    roundRect(ctx, -52, -42, 104, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = "#ffe09a";
+    ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Ta 允许的距离", 0, -31);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.strokeStyle = `rgba(145, 234, 209, ${0.68 + pulse * 0.25})`;
+  ctx.lineWidth = 2.5 + pulse;
+  ctx.setLineDash([7, 6]);
+  ctx.lineDashOffset = -now * 0.016;
+  ctx.beginPath();
+  ctx.ellipse(witness.x, witness.y + 8, 54 + pulse * 5, 18 + pulse * 2, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function getMemoryAuthorizationScope(scopeId) {
+  return MEMORY_AUTHORIZATION_SCOPES.find((scope) => scope.id === scopeId) || MEMORY_AUTHORIZATION_SCOPES[0];
+}
+
+function getCitizenMemoryAuthorizationItems(citizenId) {
+  const runtime = ensureAgentRuntime(state.society);
+  const file = runtime?.memoryFiles?.[citizenId] || {};
+  const relationshipItems = Object.values(file.relationships || {}).flatMap((items) => Array.isArray(items) ? items : []);
+  const capsuleItems = Object.values(file.lifeCapsules || {}).flatMap((items) => Array.isArray(items) ? items : []);
+  return [
+    ...(file.general || []),
+    ...(file.weeklyDiary || []),
+    ...relationshipItems,
+    ...capsuleItems,
+    ...(runtime?.memoryStore?.[citizenId] || [])
+  ].filter((item) => item?.id && item?.text).sort((a, b) => Number(b.importance || 0) - Number(a.importance || 0));
+}
+
+function deriveMemoryAuthorizationScope(citizen) {
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  const relationship = avatar && typeof getRelationshipBetween === "function"
+    ? getRelationshipBetween(state.society, avatar.id, citizen.id)
+    : null;
+  const openness = clamp(Number(citizen.bigFive?.openness ?? citizen.openness ?? 0.5), 0, 1);
+  const neuroticism = clamp(Number(citizen.bigFive?.neuroticism ?? 0.5), 0, 1);
+  const personalTrust = clamp(Number(citizen.trust || 50) / 100, 0, 1);
+  const relationshipTrust = clamp(Number(relationship?.trust || 42) / 100, 0, 1);
+  const privacyNeed = (1 - openness) * 0.34 + neuroticism * 0.24 + (1 - personalTrust) * 0.2 + (1 - relationshipTrust) * 0.22;
+  if (privacyNeed >= 0.6) return "private";
+  if (privacyNeed <= 0.38 && openness >= 0.58 && relationshipTrust >= 0.5) return "public";
+  return "trusted";
+}
+
+function getMemoryAuthorizationOffer(ritual) {
+  if (!ritual?.witnessId) return null;
+  return getCitizenMemoryAuthorizationItems(ritual.witnessId).find((item) => item.id === ritual.memoryId) || null;
+}
+
+function stageMemoryAuthorizationWitness(zone = interiorView?.zone) {
+  if (!zone || zone.id !== MEMORY_AUTHORIZATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getMemoryAuthorizationRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return null;
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let citizen = alive.find((candidate) => candidate.id === ritual.witnessId);
+  if (!citizen) {
+    citizen = [...alive].sort((a, b) => {
+      const memoryDelta = getCitizenMemoryAuthorizationItems(b.id).length - getCitizenMemoryAuthorizationItems(a.id).length;
+      return memoryDelta || Number(b.trust || 0) - Number(a.trust || 0)
+        || hashCommunitySeed(`${zone.id}:${a.id}`, MEMORY_AUTHORIZATION_RITUAL_ID)
+          - hashCommunitySeed(`${zone.id}:${b.id}`, MEMORY_AUTHORIZATION_RITUAL_ID);
+    })[0] || null;
+    ritual.witnessId = citizen?.id || "";
+  }
+  if (!citizen) return null;
+  let memories = getCitizenMemoryAuthorizationItems(citizen.id);
+  if (!memories.length) {
+    const currentZone = getCitizenZone(state.society, citizen);
+    recordAgentMemory(
+      state.society,
+      citizen.id,
+      `${citizen.name}记得自己在${currentZone?.name || "社区"}没有把“${ACTION_LABELS[citizen.lastAction] || citizen.lastAction || "停下来"}”解释成结果，只把那一刻留作仍可修改的生活片段。`,
+      "lived-trace",
+      6,
+      [currentZone?.id || zone.id]
+    );
+    memories = getCitizenMemoryAuthorizationItems(citizen.id);
+  }
+  if (!ritual.memoryId || !memories.some((item) => item.id === ritual.memoryId)) ritual.memoryId = memories[0]?.id || "";
+  if (!ritual.authorizedScopeId) ritual.authorizedScopeId = deriveMemoryAuthorizationScope(citizen);
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  const changedRoom = canonical.indoor?.zoneId !== zone.id;
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (changedRoom) delete interiorAnimations[citizen.id];
+  interiorView.memoryAuthorizationWitnessId = citizen.id;
+  interiorView.memoryAuthorizationActive = ritual.status === "active";
+  return citizen;
+}
+
+function holdMemoryAuthorizationActor(zone, entries = []) {
+  if (zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const ritual = getMemoryAuthorizationRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return null;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const playerRadius = Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS);
+  const witnessDesired = { x: 0, z: -1.48 };
+  const witness = interiorView.memoryAuthorizationPositions?.witness || (physics?.findNearestWalkable && world
+    ? physics.findNearestWalkable(world, witnessDesired, citizenRadius, { selfId: ritual.witnessId })
+    : witnessDesired);
+  const ia = interiorAnimations[ritual.witnessId];
+  const dynamic = [{ id: ritual.witnessId, x: witness.x, z: witness.z, radius: citizenRadius }];
+  if (ia) {
+    ia.worldX = witness.x;
+    ia.worldZ = witness.z;
+    ia.targetWorldX = witness.x;
+    ia.targetWorldZ = witness.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.memoryAuthorizationHeld = true;
+    ia.state = "idle";
+    const entry = entries.find((candidate) => candidate.id === ritual.witnessId);
+    if (entry) {
+      entry.worldX = witness.x;
+      entry.worldZ = witness.z;
+      entry.moveAnim = ia;
+      entry.state = "idle";
+    }
+  }
+  const desiredByScope = {
+    private: { x: -2.28, z: 1.52 },
+    trusted: { x: 0, z: 2.05 },
+    public: { x: 2.28, z: 1.52 }
+  };
+  const scopes = {};
+  MEMORY_AUTHORIZATION_SCOPES.forEach((scope) => {
+    const existing = interiorView.memoryAuthorizationPositions?.scopes?.[scope.id];
+    const desired = existing || desiredByScope[scope.id];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, playerRadius, { dynamic, selfId: `memory-scope-${scope.id}` })
+      : desired;
+    scopes[scope.id] = { x: point.x, z: point.z };
+  });
+  interiorView.memoryAuthorizationPositions = {
+    witness: { x: witness.x, z: witness.z },
+    scopes
+  };
+  return interiorView.memoryAuthorizationPositions;
+}
+
+function focusMemoryAuthorizationTarget() {
+  if (interiorView?.zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID) return false;
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  const positions = holdMemoryAuthorizationActor(interiorView.zone);
+  const point = positions?.scopes?.[ritual?.authorizedScopeId];
+  if (!ritual || !point) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(point.x - pivot.x, -(point.z - pivot.z)));
+  ritual.focusedTargetId = ritual.authorizedScopeId;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  markRenderActive(1800);
+  return true;
+}
+
+function startMemoryAuthorizationRitual() {
+  if (interiorView?.zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(MEMORY_AUTHORIZATION_ZONE_ID);
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const citizen = stageMemoryAuthorizationWitness(interiorView.zone);
+  const offer = getMemoryAuthorizationOffer(ritual);
+  if (!citizen || !offer) return false;
+  holdMemoryAuthorizationActor(interiorView.zone);
+  const alreadyActive = ritual.status === "active";
+  ritual.status = "active";
+  ritual.startedTurn = alreadyActive ? ritual.startedTurn : Number(state.society?.turn || 0);
+  ritual.holdProgressMs = alreadyActive ? ritual.holdProgressMs : 0;
+  ritual.boundaryProgressMs = 0;
+  ritual.lastUpdatedAt = performance.now();
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  ritual.feedback = `把封存的片段带到“${getMemoryAuthorizationScope(ritual.authorizedScopeId).label}”`;
+  interiorView.memoryAuthorizationActive = true;
+  document.body.classList.add("memory-authorization-active");
+  focusMemoryAuthorizationTarget();
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "authorization_started", {
+      zoneId: interiorView.zone.id,
+      detail: `${citizen.id}:${ritual.authorizedScopeId}`
+    }, { onceKey: `authorization-start-${interiorView.zone.id}` });
+    addSpeechBubble(citizen.id, `这段记忆可以被你带走，但只到“${getMemoryAuthorizationScope(ritual.authorizedScopeId).label}”。`, "listen", { priority: true, duration: 7800 });
+  }
+  interiorView.discovery = {
+    title: "记忆授权 · 讲述者决定边界",
+    text: "你拿到的是托付，不是所有权。走到 Ta 允许的保存范围，再停下来封存。",
+    progress: "记忆内容不会写入公开回执",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncMemoryAuthorizationHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(12000);
+  return true;
+}
+
+function recordMemoryAuthorizationBoundary(citizen, scopeId) {
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.attemptedScopeIds.includes(scopeId)) return;
+  ritual.attemptedScopeIds.push(scopeId);
+  const attempted = getMemoryAuthorizationScope(scopeId);
+  const authorized = getMemoryAuthorizationScope(ritual.authorizedScopeId);
+  const overstep = attempted.level > authorized.level;
+  if (overstep) ritual.overstepCount += 1;
+  const thread = getInteriorStoryThread(MEMORY_AUTHORIZATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "authorization_boundary", {
+    zoneId: MEMORY_AUTHORIZATION_ZONE_ID,
+    detail: `${scopeId}:${overstep ? "overstep" : "under-share"}`
+  }, { onceKey: `authorization-boundary-${scopeId}` });
+  addSpeechBubble(citizen.id, overstep
+    ? `先停在这里。被讲述，不等于被公开。我的边界是“${authorized.label}”。`
+    : `你可以少带走一些，但我愿意把它交到“${authorized.label}”。`, "listen", { priority: true, duration: 7600 });
+  ritual.feedback = overstep
+    ? "边界已让记忆胶囊熄灯；带它回到讲述者允许的位置"
+    : `Ta 允许更靠外一层：走向“${authorized.label}”`;
+  persistInteriorExploration();
+  persist();
+}
+
+function completeMemoryAuthorizationRitual(citizen) {
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  const record = getInteriorExplorationRecord(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || !citizen) return false;
+  const scope = getMemoryAuthorizationScope(ritual.authorizedScopeId);
+  ritual.status = "complete";
+  ritual.holdProgressMs = MEMORY_AUTHORIZATION_HOLD_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.receipt = {
+    ownerId: citizen.id,
+    memoryId: ritual.memoryId,
+    scopeId: scope.id,
+    turn: Number(state.society?.turn || 0)
+  };
+  ritual.feedback = "档案只记住授权关系，不复制讲述者没有同意公开的内容";
+  if (!record.found.includes(MEMORY_AUTHORIZATION_EVIDENCE)) record.found.push(MEMORY_AUTHORIZATION_EVIDENCE);
+  interiorView.memoryAuthorizationActive = false;
+  document.body.classList.remove("memory-authorization-active");
+  const ia = interiorAnimations[citizen.id];
+  if (ia) delete ia.memoryAuthorizationHeld;
+  const thread = getInteriorStoryThread(MEMORY_AUTHORIZATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "authorization_completed", {
+    zoneId: MEMORY_AUTHORIZATION_ZONE_ID,
+    detail: `${citizen.id}:${scope.id}:${ritual.overstepCount}`
+  }, { onceKey: `authorization-complete-${MEMORY_AUTHORIZATION_ZONE_ID}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `我替${citizen.name}搬运了一段记忆，但只把它放到“${scope.label}”；回执保存授权，不保存我无权公开的内容。`, {
+      kind: MEMORY_AUTHORIZATION_RITUAL_ID,
+      importance: 9,
+      targetId: citizen.id,
+      references: [MEMORY_AUTHORIZATION_ZONE_ID, citizen.id, scope.id]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家尊重我为一段记忆设定的“${scope.label}”边界，没有把托付误当成所有权。`, MEMORY_AUTHORIZATION_RITUAL_ID, 9, [MEMORY_AUTHORIZATION_ZONE_ID, avatar.id, scope.id]);
+    const result = resolveAction({ actorId: avatar.id, type: "listen", targetId: citizen.id });
+    if (result) {
+      applySocietyActionResult(result, "，由故事馆中的记忆授权触发。");
+      recordAgentOutbox(state.society, avatar, result, getCitizenAgentContext(state.society, avatar));
+    }
+  }
+  addEventLogEntry("记忆授权 · 街坊故事馆", `你把${citizen.name}的记忆安放在“${scope.label}”，档案只留下授权回执。`, "listen", true, `memory-authorization-${MEMORY_AUTHORIZATION_ZONE_ID}`);
+  interiorView.discovery = {
+    title: MEMORY_AUTHORIZATION_EVIDENCE,
+    text: "真正的记录不是收集得更多，而是让讲述者始终拥有撤回、限定和改口的权利。",
+    progress: "3/3",
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  persistInteriorExploration();
+  persist();
+  syncMemoryAuthorizationHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateMemoryAuthorizationRitual(now) {
+  if (interiorView?.zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID) return null;
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncMemoryAuthorizationHud(now);
+    return ritual;
+  }
+  const citizen = stageMemoryAuthorizationWitness(interiorView.zone);
+  const positions = holdMemoryAuthorizationActor(interiorView.zone);
+  if (!citizen || !positions) return ritual;
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)));
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX ?? playerX), playerZ - Number(ritual.lastPlayerZ ?? playerZ));
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.014 && playerDelta < 0.016;
+  const nearest = MEMORY_AUTHORIZATION_SCOPES
+    .map((scope) => ({ scope, distance: Math.hypot(positions.scopes[scope.id].x - playerX, positions.scopes[scope.id].z - playerZ) }))
+    .sort((a, b) => a.distance - b.distance)[0];
+  const inside = nearest?.distance <= MEMORY_AUTHORIZATION_POSITION_RADIUS;
+  const authorized = nearest?.scope.id === ritual.authorizedScopeId;
+  ritual.activeScopeId = inside ? nearest.scope.id : "";
+  ritual.still = still;
+  ritual.distance = Number(nearest?.distance || 0);
+  ritual.holdProgressMs = clamp(Number(ritual.holdProgressMs || 0) + dt * (inside && authorized && still ? 1 : -0.32), 0, MEMORY_AUTHORIZATION_HOLD_MS);
+  ritual.boundaryProgressMs = clamp(Number(ritual.boundaryProgressMs || 0) + dt * (inside && !authorized && still ? 1 : -0.45), 0, MEMORY_AUTHORIZATION_BOUNDARY_MS);
+  if (!inside) ritual.feedback = `把记忆胶囊带到“${getMemoryAuthorizationScope(ritual.authorizedScopeId).label}”`;
+  else if (!still) ritual.feedback = "先停下来；授权需要一个可以撤回的瞬间";
+  else if (authorized) ritual.feedback = "正在封存授权关系，原始内容不会进入公开回执";
+  else ritual.feedback = nearest.scope.level > getMemoryAuthorizationScope(ritual.authorizedScopeId).level
+    ? "你正在越过讲述者允许的公开边界"
+    : "你停得更保守，但还没有抵达讲述者选择的托付范围";
+  if (ritual.boundaryProgressMs >= MEMORY_AUTHORIZATION_BOUNDARY_MS && nearest?.scope) {
+    recordMemoryAuthorizationBoundary(citizen, nearest.scope.id);
+    ritual.boundaryProgressMs = 0;
+  }
+  if (ritual.holdProgressMs >= MEMORY_AUTHORIZATION_HOLD_MS) completeMemoryAuthorizationRitual(citizen);
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  syncMemoryAuthorizationHud(now);
+  markRenderActive(480);
+  return ritual;
+}
+
+function syncMemoryAuthorizationHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("memoryAuthorizationRitual");
+  const ritual = getMemoryAuthorizationRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("memory-authorization-active");
+    panel?.remove();
+    return;
+  }
+  const citizen = state.society?.citizens?.find((item) => item.id === ritual.witnessId);
+  const offer = getMemoryAuthorizationOffer(ritual);
+  const scope = getMemoryAuthorizationScope(ritual.authorizedScopeId);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "memoryAuthorizationRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const progress = clamp(Number(ritual.holdProgressMs || 0) / MEMORY_AUTHORIZATION_HOLD_MS, 0, 1);
+  const excerpt = String(offer?.text || "这段记忆正在等待讲述者授权。").slice(0, 68);
+  const signature = `${ritual.activeScopeId}|${ritual.attemptedScopeIds.join("|")}|${Math.floor(progress * 40)}|${ritual.feedback}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--memory-authorization-progress", `${Math.round(progress * 100)}%`);
+  panel.innerHTML = `
+    <span>CONSENT LEDGER · 记忆授权</span>
+    <strong>${escapeHtml(citizen?.name || "讲述者")}决定这段故事能走多远</strong>
+    <blockquote>“${escapeHtml(excerpt)}${String(offer?.text || "").length > 68 ? "…" : ""}”</blockquote>
+    <div class="memory-authorization-scopes">${MEMORY_AUTHORIZATION_SCOPES.map((item) => {
+      const active = ritual.activeScopeId === item.id;
+      const allowed = item.id === scope.id;
+      const attempted = ritual.attemptedScopeIds.includes(item.id);
+      return `<div class="${active ? "is-active" : ""} ${allowed ? "is-allowed" : ""} ${attempted ? "is-attempted" : ""}" style="--scope-color:${item.color}"><i>${allowed ? "✓" : attempted ? "×" : "·"}</i><span>${escapeHtml(item.shortLabel)}<small>${allowed ? "Ta 的授权" : item.label}</small></span></div>`;
+    }).join("")}</div>
+    <div class="memory-authorization-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || `走向“${scope.label}”`)}</p>
+    <small>回执只保存：谁授权给谁、什么范围、何时发生</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeMemoryAuthorization = {
+  getState: () => {
+    const ritual = getMemoryAuthorizationRitual();
+    if (!ritual) return null;
+    const positions = interiorView?.memoryAuthorizationPositions;
+    const target = positions?.scopes?.[ritual.authorizedScopeId]
+      ? { kind: "scope", id: ritual.authorizedScopeId, ...positions.scopes[ritual.authorizedScopeId] }
+      : null;
+    return { ...ritual, positions, target, offer: getMemoryAuthorizationOffer(ritual) };
+  },
+  start: startMemoryAuthorizationRitual,
+  focus: focusMemoryAuthorizationTarget
+};
+
+function drawMemoryAuthorizationSpatialCue(ctx, W, H, now, ritual) {
+  if (!ritual || ritual.status !== "active" || !interiorView?.memoryAuthorizationPositions) return;
+  const points = MEMORY_AUTHORIZATION_SCOPES.map((scope) => ({
+    id: `memory-scope-${scope.id}`,
+    worldX: interiorView.memoryAuthorizationPositions.scopes[scope.id].x,
+    worldZ: interiorView.memoryAuthorizationPositions.scopes[scope.id].z,
+    worldY: 0.05,
+    scope
+  }));
+  const projections = window.MirrorLifeInterior3D?.projectWorldPoints?.(points, W, H) || [];
+  projections.forEach((projection, index) => {
+    if (!projection?.visible) return;
+    const scope = points[index].scope;
+    const active = ritual.activeScopeId === scope.id;
+    const allowed = ritual.authorizedScopeId === scope.id;
+    const attempted = ritual.attemptedScopeIds.includes(scope.id);
+    const pulse = 0.5 + Math.sin(now * 0.006 + index * 1.8) * 0.5;
+    ctx.save();
+    ctx.translate(projection.x, projection.y);
+    ctx.globalAlpha = allowed ? 1 : attempted ? 0.36 : 0.58;
+    ctx.strokeStyle = scope.color;
+    ctx.fillStyle = active ? `${scope.color}32` : `${scope.color}12`;
+    ctx.lineWidth = allowed || active ? 3 + pulse : 2;
+    ctx.setLineDash(attempted && !allowed ? [3, 6] : [8, 6]);
+    ctx.lineDashOffset = -now * 0.014;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 50 + pulse * 5, 18 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+    roundRect(ctx, -50, -42, 100, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = scope.color;
+    ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(allowed ? `授权 · ${scope.shortLabel}` : scope.shortLabel, 0, -31);
+    ctx.restore();
+  });
+}
+
 function getInteriorStoryThread(zoneId) {
   const thread = INTERIOR_STORY_THREADS.find((item) => item.zones.includes(zoneId)) || null;
   if (!thread) return null;
@@ -7642,6 +8872,10 @@ function syncInteriorJourneyHud(blueprint) {
   const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !record.completed;
   const socialParallax = getSocialParallaxRitual(interiorView.zone.id);
   const socialParallaxPending = socialParallax && socialParallax.status !== "complete" && !record.completed;
+  const empathyCalibration = getEmpathyCalibrationRitual(interiorView.zone.id);
+  const empathyCalibrationPending = empathyCalibration && empathyCalibration.status !== "complete" && !record.completed;
+  const memoryAuthorization = getMemoryAuthorizationRitual(interiorView.zone.id);
+  const memoryAuthorizationPending = memoryAuthorization && memoryAuthorization.status !== "complete" && !record.completed;
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
   const aftermathEcho = record.scenePlayed ? getInteriorAftermathEcho(interiorView.zone.id) : null;
   const pendingAftermath = aftermathEcho && !aftermathEcho.discussed ? aftermathEcho : null;
@@ -7673,6 +8907,18 @@ function syncInteriorJourneyHud(blueprint) {
       if (socialParallaxAction) {
         if (socialParallax?.status === "active") focusSocialParallaxTarget();
         else startSocialParallaxRitual();
+        return;
+      }
+      const empathyCalibrationAction = event.target.closest("[data-empathy-calibration-start]");
+      if (empathyCalibrationAction) {
+        if (empathyCalibration?.status === "active") focusEmpathyCalibrationTarget();
+        else startEmpathyCalibrationRitual();
+        return;
+      }
+      const memoryAuthorizationAction = event.target.closest("[data-memory-authorization-start]");
+      if (memoryAuthorizationAction) {
+        if (memoryAuthorization?.status === "active") focusMemoryAuthorizationTarget();
+        else startMemoryAuthorizationRitual();
         return;
       }
       const finale = event.target.closest("[data-counterfactual-episode-finale]");
@@ -7711,6 +8957,15 @@ function syncInteriorJourneyHud(blueprint) {
     socialParallax?.heardIds?.join("|") || "",
     socialParallax?.phase || "",
     Math.floor(Number((socialParallax?.heardIds?.length || 0) >= 2 ? socialParallax?.centerProgressMs : socialParallax?.focusProgressMs) / 1000),
+    empathyCalibration?.status || "",
+    empathyCalibration?.phase || "",
+    empathyCalibration?.attemptedLensIds?.join("|") || "",
+    empathyCalibration?.confirmedLensId || "",
+    Math.floor(Number(empathyCalibration?.confirmedLensId ? empathyCalibration?.confirmProgressMs : empathyCalibration?.positionProgressMs) / 1000),
+    memoryAuthorization?.status || "",
+    memoryAuthorization?.authorizedScopeId || "",
+    memoryAuthorization?.attemptedScopeIds?.join("|") || "",
+    Math.floor(Number(memoryAuthorization?.holdProgressMs || 0) / 1000),
     nextIndex,
     thread?.completedCount || 0,
     episode.rewriteTokens,
@@ -7721,7 +8976,15 @@ function syncInteriorJourneyHud(blueprint) {
     panel.dataset.signature = signature;
     const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
     const finaleReady = !!thread && thread.completedCount >= thread.zones.length;
-    const nextAction = phase === 1 && socialParallaxPending
+    const nextAction = phase === 1 && memoryAuthorizationPending
+      ? `<button type="button" data-memory-authorization-start>${memoryAuthorization.status === "active"
+        ? `朝向授权范围 · ${escapeHtml(getMemoryAuthorizationScope(memoryAuthorization.authorizedScopeId).shortLabel)}`
+        : "接过一段有边界的记忆"}</button>`
+      : phase === 1 && empathyCalibrationPending
+      ? `<button type="button" data-empathy-calibration-start>${empathyCalibration.status === "active"
+        ? empathyCalibration.confirmedLensId ? "重新看向 Ta 并确认" : empathyCalibration.attemptedLensIds.length ? "按 Ta 的修正换位" : "朝向第一个理解位置"
+        : "开始误解校准"}</button>`
+      : phase === 1 && socialParallaxPending
       ? `<button type="button" data-social-parallax-start>${socialParallax.status === "active"
         ? socialParallax.heardIds.length >= 2 ? "朝向分歧之间的空位" : "朝向下一位讲述者"
         : socialParallax.heardIds.length ? "继续穿过两种证词" : "进入证词视差"}</button>`
@@ -7742,7 +9005,15 @@ function syncInteriorJourneyHud(blueprint) {
       <header><span>${escapeHtml(act.label)}</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
       <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
       <ol>
-        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${socialParallax ? "穿过分歧" : quietPresence ? "读懂房间" : "环顾线索"}<small>${socialParallaxPending
+        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${memoryAuthorization ? "安放记忆" : empathyCalibration ? "校准误解" : socialParallax ? "穿过分歧" : quietPresence ? "读懂房间" : "环顾线索"}<small>${memoryAuthorizationPending
+          ? memoryAuthorization.status === "active"
+            ? `只到“${escapeHtml(getMemoryAuthorizationScope(memoryAuthorization.authorizedScopeId).shortLabel)}” · ${memoryAuthorization.attemptedScopeIds.length ? "边界已被确认" : "携带中"}`
+            : "讲述不等于公开"
+          : empathyCalibrationPending
+          ? empathyCalibration.status === "active"
+            ? empathyCalibration.confirmedLensId ? "按对方需要的距离重新确认" : empathyCalibration.attemptedLensIds.length ? "误读可以被修正" : "走进一个理解位置"
+            : "陈设不能替对方回答"
+          : socialParallaxPending
           ? socialParallax.status === "active"
             ? socialParallax.heardIds.length >= 2 ? "站进第三个位置" : `已听见 ${socialParallax.heardIds.length}/2 种证词`
             : "陈设不能替人作证"
@@ -7764,7 +9035,7 @@ function syncInteriorJourneyHud(blueprint) {
     });
     shell.appendChild(compass);
   }
-  compass.hidden = !!socialParallaxPending;
+  compass.hidden = !!socialParallaxPending || !!empathyCalibrationPending || !!memoryAuthorizationPending;
   const compassSignature = `${interiorView.zone.id}|${record.found.join("|")}`;
   if (compass.dataset.signature !== compassSignature) {
     compass.dataset.signature = compassSignature;
@@ -7875,7 +9146,15 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
   const socialParallaxPending = interiorView.zone?.id === SOCIAL_PARALLAX_ZONE_ID
     && getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID)?.status !== "complete"
     && !getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID).completed;
-  interiorHotspots = socialParallaxPending ? [] : (anchors || []).filter((anchor) => anchor.visible);
+  const empathyCalibrationPending = interiorView.zone?.id === EMPATHY_CALIBRATION_ZONE_ID
+    && getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID)?.status !== "complete"
+    && !getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID).completed;
+  const memoryAuthorizationPending = interiorView.zone?.id === MEMORY_AUTHORIZATION_ZONE_ID
+    && getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID)?.status !== "complete"
+    && !getInteriorExplorationRecord(MEMORY_AUTHORIZATION_ZONE_ID).completed;
+  interiorHotspots = socialParallaxPending || empathyCalibrationPending || memoryAuthorizationPending
+    ? []
+    : (anchors || []).filter((anchor) => anchor.visible);
   const layer = ensureInteriorHotspotLayer();
   const record = getInteriorExplorationRecord(interiorView.zone.id);
   const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
@@ -11914,6 +13193,10 @@ function enterInteriorView(zone, source = "manual") {
   const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !explorationRecord.completed;
   const socialParallax = getSocialParallaxRitual(zone.id);
   const socialParallaxPending = socialParallax && socialParallax.status !== "complete" && !explorationRecord.completed;
+  const empathyCalibration = getEmpathyCalibrationRitual(zone.id);
+  const empathyCalibrationPending = empathyCalibration && empathyCalibration.status !== "complete" && !explorationRecord.completed;
+  const memoryAuthorization = getMemoryAuthorizationRitual(zone.id);
+  const memoryAuthorizationPending = memoryAuthorization && memoryAuthorization.status !== "complete" && !explorationRecord.completed;
   interiorView = {
     zone,
     source,
@@ -11923,6 +13206,10 @@ function enterInteriorView(zone, source = "manual") {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
       text: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
+        : memoryAuthorizationPending
+          ? "这里的故事不是公共素材。先找到讲述者，再按 Ta 选择的范围安放记忆。"
+        : empathyCalibrationPending
+          ? "这里没有标准答案。先走进一种理解，再允许房间里的人亲自纠正你。"
         : socialParallaxPending
           ? "这里的陈设只能提供背景，不能替任何人作证。先走进两种互相冲突的说法。"
         : quietPresencePending
@@ -11957,6 +13244,8 @@ function enterInteriorView(zone, source = "manual") {
   if (source === "manual") seedInteriorOccupants(zone);
   stageQuietPresenceWitness(zone);
   stageSocialParallaxWitnesses(zone);
+  stageEmpathyCalibrationWitness(zone);
+  stageMemoryAuthorizationWitness(zone);
   stageInteriorAftermathWitness(zone);
   if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   markRenderActive(3200);
@@ -11979,6 +13268,8 @@ function exitInteriorView() {
   document.body.classList.remove("interior-active");
   document.body.classList.remove("quiet-presence-active");
   document.body.classList.remove("social-parallax-active");
+  document.body.classList.remove("empathy-calibration-active");
+  document.body.classList.remove("memory-authorization-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
@@ -11988,6 +13279,8 @@ function exitInteriorView() {
   document.getElementById("interiorCompass")?.remove();
   document.getElementById("quietPresenceRitual")?.remove();
   document.getElementById("socialParallaxRitual")?.remove();
+  document.getElementById("empathyCalibrationRitual")?.remove();
+  document.getElementById("memoryAuthorizationRitual")?.remove();
   syncEpisodeTrailHud();
   markRenderActive(2200);
 }
@@ -12181,6 +13474,26 @@ function updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx) {
     return;
   }
   if (ia.quietPresenceHeld && citizen.id === interiorView?.quietPresenceWitnessId && interiorView?.quietPresenceActive) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
+  const empathyCalibration = getEmpathyCalibrationRitual(interiorView?.zone?.id);
+  if (ia.empathyCalibrationHeld && empathyCalibration?.status !== "complete" && empathyCalibration?.witnessId === citizen.id) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
+  const memoryAuthorization = getMemoryAuthorizationRitual(interiorView?.zone?.id);
+  if (ia.memoryAuthorizationHeld && memoryAuthorization?.status !== "complete" && memoryAuthorization?.witnessId === citizen.id) {
     if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
     ia.path = [];
     ia.pathIndex = 0;
@@ -12422,6 +13735,8 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const physicsAnchors = getInteriorPhysicsAnchors(blueprint);
   const entries = prepareInteriorOccupants(society, zone, blueprint, physicsAnchors, now);
   holdSocialParallaxActors(zone, entries);
+  holdEmpathyCalibrationActor(zone, entries);
+  holdMemoryAuthorizationActor(zone, entries);
   const actorPayload = entries.map((entry) => ({
     id: entry.id,
     worldX: entry.worldX,
@@ -12482,9 +13797,17 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const socialParallaxPending = zone.id === SOCIAL_PARALLAX_ZONE_ID
     && getSocialParallaxRitual(zone.id)?.status !== "complete"
     && !getInteriorExplorationRecord(zone.id).completed;
-  syncInteriorContextAction(socialParallaxPending ? [] : interiorAnchors);
+  const empathyCalibrationPending = zone.id === EMPATHY_CALIBRATION_ZONE_ID
+    && getEmpathyCalibrationRitual(zone.id)?.status !== "complete"
+    && !getInteriorExplorationRecord(zone.id).completed;
+  const memoryAuthorizationPending = zone.id === MEMORY_AUTHORIZATION_ZONE_ID
+    && getMemoryAuthorizationRitual(zone.id)?.status !== "complete"
+    && !getInteriorExplorationRecord(zone.id).completed;
+  syncInteriorContextAction(socialParallaxPending || empathyCalibrationPending || memoryAuthorizationPending ? [] : interiorAnchors);
   updateQuietPresenceRitual(now);
   updateSocialParallaxRitual(now);
+  updateEmpathyCalibrationRitual(now);
+  updateMemoryAuthorizationRitual(now);
   syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
@@ -12569,6 +13892,10 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     : "";
   const socialParallaxRitual = getSocialParallaxRitual(zone.id);
   drawSocialParallaxSpatialCue(ctx, W, H, now, entries, socialParallaxRitual);
+  const empathyCalibrationRitual = getEmpathyCalibrationRitual(zone.id);
+  drawEmpathyCalibrationSpatialCue(ctx, W, H, now, entries, empathyCalibrationRitual);
+  const memoryAuthorizationRitual = getMemoryAuthorizationRitual(zone.id);
+  drawMemoryAuthorizationSpatialCue(ctx, W, H, now, memoryAuthorizationRitual);
   entries.forEach(({ citizen, moveAnim, idx, visible, renderScale }) => {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";

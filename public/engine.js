@@ -1745,8 +1745,10 @@ function normalizeInteriorExploration(savedRecords) {
         : null,
       ritual: source.ritual && typeof source.ritual === "object"
         ? {
-            id: ["quiet-presence", "social-parallax"].includes(source.ritual.id) ? source.ritual.id : "",
-            status: source.ritual.status === "complete" ? "complete" : "available",
+            id: ["quiet-presence", "social-parallax", "empathy-calibration", "memory-authorization"].includes(source.ritual.id) ? source.ritual.id : "",
+            status: source.ritual.status === "complete"
+              ? "complete"
+              : source.ritual.status === "active" ? "active" : "available",
             witnessId: String(source.ritual.witnessId || "").slice(0, 80),
             witnessIds: Array.isArray(source.ritual.witnessIds)
               ? [...new Set(source.ritual.witnessIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2)
@@ -1754,6 +1756,30 @@ function normalizeInteriorExploration(savedRecords) {
             heardIds: Array.isArray(source.ritual.heardIds)
               ? [...new Set(source.ritual.heardIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2)
               : [],
+            actualLensId: ["stay", "advise", "space"].includes(source.ritual.actualLensId) ? source.ritual.actualLensId : "",
+            attemptedLensIds: Array.isArray(source.ritual.attemptedLensIds)
+              ? [...new Set(source.ritual.attemptedLensIds.filter((id) => ["stay", "advise", "space"].includes(id)))].slice(0, 3)
+              : [],
+            confirmedLensId: ["stay", "advise", "space"].includes(source.ritual.confirmedLensId) ? source.ritual.confirmedLensId : "",
+            correctionCount: clamp(Math.round(Number(source.ritual.correctionCount) || 0), 0, 9),
+            positionProgressMs: clamp(Math.round(Number(source.ritual.positionProgressMs) || 0), 0, 1200),
+            confirmProgressMs: clamp(Math.round(Number(source.ritual.confirmProgressMs) || 0), 0, 1800),
+            memoryId: String(source.ritual.memoryId || "").slice(0, 120),
+            authorizedScopeId: ["private", "trusted", "public"].includes(source.ritual.authorizedScopeId) ? source.ritual.authorizedScopeId : "",
+            attemptedScopeIds: Array.isArray(source.ritual.attemptedScopeIds)
+              ? [...new Set(source.ritual.attemptedScopeIds.filter((id) => ["private", "trusted", "public"].includes(id)))].slice(0, 3)
+              : [],
+            overstepCount: clamp(Math.round(Number(source.ritual.overstepCount) || 0), 0, 9),
+            holdProgressMs: clamp(Math.round(Number(source.ritual.holdProgressMs) || 0), 0, 1800),
+            boundaryProgressMs: clamp(Math.round(Number(source.ritual.boundaryProgressMs) || 0), 0, 900),
+            receipt: source.ritual.receipt && typeof source.ritual.receipt === "object"
+              ? {
+                  ownerId: String(source.ritual.receipt.ownerId || "").slice(0, 80),
+                  memoryId: String(source.ritual.receipt.memoryId || "").slice(0, 120),
+                  scopeId: ["private", "trusted", "public"].includes(source.ritual.receipt.scopeId) ? source.ritual.receipt.scopeId : "",
+                  turn: Math.max(0, Math.round(Number(source.ritual.receipt.turn) || 0))
+                }
+              : null,
             startedTurn: Math.max(0, Math.round(Number(source.ritual.startedTurn) || 0)),
             completedTurn: Math.max(0, Math.round(Number(source.ritual.completedTurn) || 0))
           }
@@ -1784,6 +1810,8 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
       "choice_opened", "choice_previewed", "choice_committed", "room_completed",
       "ritual_started", "ritual_completed",
       "parallax_started", "perspective_heard", "parallax_completed",
+      "empathy_started", "empathy_hypothesis", "empathy_corrected", "empathy_completed",
+      "authorization_started", "authorization_boundary", "authorization_completed",
       "aftermath_focused", "aftermath_witnessed", "finale_opened", "episode_shared",
       "relay_started", "returned_to_street"
     ]);

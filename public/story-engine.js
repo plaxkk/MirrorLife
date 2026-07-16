@@ -14,6 +14,10 @@ const STORY_STAGES = ["起", "承", "转", "合"];
 const PLOT_DIRECTOR_VERSION = 1;
 const PLOT_DIRECTOR_MAX_QUESTS = 5;
 const PLOT_DIRECTOR_COOLDOWN_TURNS = 6;
+const SCENE_CONTRACT_VERSION = 1;
+const AGENT_NARRATIVE_PROPOSAL_LIMIT = 24;
+const AGENT_NARRATIVE_ALLOWED_ACTIONS = new Set(["listen", "support", "cooperate", "propose", "meditate", "rest"]);
+const agentNarrativeAdapters = new Map();
 
 const PLOT_DIRECTOR_QUESTS = [
   {
@@ -90,6 +94,246 @@ const PLOT_DIRECTOR_QUESTS = [
   }
 ];
 
+const EMBODIED_SCENE_CONTRACTS = Object.freeze({
+  "public-plaza": Object.freeze({
+    sceneId: "unheard-voices-see",
+    verb: "看见",
+    proof: ["room_entered", "evidence_found", "room_completed"],
+    completion: "玩家从公共空间中找到未被节奏照顾的人，而不是替 Ta 发言。"
+  }),
+  "quiet-nook": Object.freeze({
+    sceneId: "unheard-voices-stay",
+    verb: "留下",
+    proof: ["ritual_started", "ritual_completed"],
+    completion: "玩家在真实距离和视线中保持八秒安静，不用点击逼迫解释。"
+  }),
+  "legal-court": Object.freeze({
+    sceneId: "unheard-voices-cross",
+    verb: "穿过",
+    proof: ["parallax_started", "perspective_heard", "parallax_completed"],
+    completion: "玩家听见两种冲突证词，再亲自站进不属于任何一方的第三位置。"
+  }),
+  "empathy-lab": Object.freeze({
+    sceneId: "unheard-voices-revise",
+    verb: "修正",
+    proof: ["empathy_started", "empathy_hypothesis", "empathy_corrected", "empathy_completed"],
+    completion: "玩家允许 Agent 纠正误读，并按对方需要重新协商距离。"
+  }),
+  "story-archive": Object.freeze({
+    sceneId: "unheard-voices-authorize",
+    verb: "授权",
+    proof: ["authorization_started", "authorization_boundary", "authorization_completed"],
+    completion: "记忆只能被安放到所有者授权的范围，公开回执不得复制未授权原文。"
+  })
+});
+
+function cloneNarrativeValue(value) {
+  try {
+    return JSON.parse(JSON.stringify(value));
+  } catch {
+    return null;
+  }
+}
+
+function getEmbodiedSceneContract(zoneId) {
+  const contract = EMBODIED_SCENE_CONTRACTS[zoneId];
+  return contract ? cloneNarrativeValue(contract) : null;
+}
+
+function buildPlotSceneContract(society, quest, blueprint) {
+  const stageIndex = Math.min(Number(quest.stage || 0), blueprint.stageActions.length - 1);
+  const allowedActions = [...new Set(blueprint.stageActions[stageIndex] || ["listen"])]
+    .filter((action) => AGENT_NARRATIVE_ALLOWED_ACTIONS.has(action));
+  return {
+    version: SCENE_CONTRACT_VERSION,
+    id: `${quest.id}:scene:${stageIndex}`,
+    questId: quest.id,
+    zoneId: quest.zoneId,
+    stage: stageIndex,
+    dramaticQuestion: quest.dramaticQuestion,
+    participantIds: [...quest.participants],
+    allowedActions,
+    evidenceSource: "engine-outbox-only",
+    worldMutationAuthority: "engine-only",
+    dialogueAuthority: "proposal-only",
+    completionPolicy: {
+      kind: "validated-action-evidence",
+      requiredEvidenceCount: 1,
+      rejectNarratorVerdicts: true
+    },
+    consentPolicy: {
+      actorMayRefuse: true,
+      refusalBecomesEvidence: true,
+      rawMemoryMayBePublished: false
+    },
+    embodiedContract: getEmbodiedSceneContract(quest.zoneId),
+    issuedAtTurn: Number(society.turn || 0)
+  };
+}
+
+function normalizePlotSceneContract(source, quest) {
+  if (!source || typeof source !== "object") return null;
+  const participants = new Set(quest.participants || []);
+  return {
+    version: SCENE_CONTRACT_VERSION,
+    id: String(source.id || `${quest.id}:scene:${Number(quest.stage || 0)}`).slice(0, 160),
+    questId: quest.id,
+    zoneId: String(source.zoneId || quest.zoneId || "").slice(0, 80),
+    stage: Math.max(0, Math.min(3, Math.round(Number(source.stage) || 0))),
+    dramaticQuestion: String(source.dramaticQuestion || quest.dramaticQuestion || "").slice(0, 320),
+    participantIds: [...new Set((source.participantIds || []).filter((id) => participants.has(id)))].slice(0, 4),
+    allowedActions: [...new Set((source.allowedActions || []).filter((action) => AGENT_NARRATIVE_ALLOWED_ACTIONS.has(action)))].slice(0, 6),
+    evidenceSource: "engine-outbox-only",
+    worldMutationAuthority: "engine-only",
+    dialogueAuthority: "proposal-only",
+    completionPolicy: {
+      kind: "validated-action-evidence",
+      requiredEvidenceCount: 1,
+      rejectNarratorVerdicts: true
+    },
+    consentPolicy: {
+      actorMayRefuse: true,
+      refusalBecomesEvidence: true,
+      rawMemoryMayBePublished: false
+    },
+    embodiedContract: getEmbodiedSceneContract(source.zoneId || quest.zoneId),
+    issuedAtTurn: Math.max(0, Math.round(Number(source.issuedAtTurn) || 0))
+  };
+}
+
+function buildAgentNarrativeContext(society, citizenId, quest, contract) {
+  const citizen = storyCitizen(society, citizenId);
+  const runtime = ensureAgentRuntime(society);
+  const relationshipRows = Object.values(society.relationships || {})
+    .filter((edge) => edge.a === citizenId || edge.b === citizenId)
+    .slice(0, 6)
+    .map((edge) => ({
+      otherId: edge.a === citizenId ? edge.b : edge.a,
+      trust: Number(edge.trust || 0),
+      strain: Number(edge.strain || 0),
+      lastAction: String(edge.lastAction || "")
+    }));
+  const recentMemories = (runtime?.memoryStore?.[citizenId] || []).slice(0, 5).map((item) => ({
+    id: item.id,
+    kind: item.kind,
+    text: String(item.text || "").slice(0, 360),
+    importance: Number(item.importance || 0)
+  }));
+  return Object.freeze(cloneNarrativeValue({
+    version: 1,
+    citizen: citizen ? {
+      id: citizen.id,
+      name: citizen.name,
+      mood: citizen.mood,
+      energy: citizen.energy,
+      trust: citizen.trust,
+      needs: citizen.needs,
+      values: citizen.values,
+      bigFive: citizen.bigFive
+    } : null,
+    quest: {
+      id: quest.id,
+      title: quest.title,
+      hook: quest.hook,
+      dramaticQuestion: quest.dramaticQuestion,
+      currentTask: quest.currentTask
+    },
+    contract,
+    relationships: relationshipRows,
+    memories: recentMemories,
+    world: {
+      turn: society.turn,
+      tension: society.tension,
+      metrics: society.metrics
+    }
+  }));
+}
+
+function validateAgentNarrativeProposal(society, proposal, contract) {
+  const errors = [];
+  const source = proposal && typeof proposal === "object" ? proposal : {};
+  const forbiddenFields = ["mutations", "patches", "worldState", "state", "effects", "relationshipDelta", "memoryWrites"];
+  forbiddenFields.forEach((field) => {
+    if (field in source) errors.push(`forbidden-field:${field}`);
+  });
+  const agentId = String(source.agentId || "").slice(0, 80);
+  const actionType = String(source.actionType || "").slice(0, 40);
+  const targetId = String(source.targetId || "").slice(0, 80);
+  if (!contract || source.questId !== contract.questId) errors.push("contract-mismatch");
+  if (!contract?.participantIds?.includes(agentId) || !storyCitizen(society, agentId)) errors.push("agent-not-participant");
+  if (!contract?.allowedActions?.includes(actionType)) errors.push("action-not-allowed");
+  if (targetId && !contract?.participantIds?.includes(targetId)) errors.push("target-not-participant");
+  const dialogue = String(source.dialogue || "").trim().slice(0, 280);
+  const intent = String(source.intent || "").trim().slice(0, 240);
+  if (!intent) errors.push("missing-intent");
+  if (!dialogue) errors.push("missing-dialogue");
+  return {
+    accepted: errors.length === 0,
+    errors,
+    proposal: errors.length ? null : {
+      id: String(source.id || `proposal-${agentId}-${society.turn}`).slice(0, 120),
+      questId: contract.questId,
+      contractId: contract.id,
+      agentId,
+      actionType,
+      targetId,
+      intent,
+      dialogue,
+      evidenceIds: Array.isArray(source.evidenceIds) ? source.evidenceIds.map((id) => String(id).slice(0, 120)).slice(0, 6) : [],
+      proposedAtTurn: Number(society.turn || 0)
+    }
+  };
+}
+
+function queueValidatedNarrativeProposal(society, validation) {
+  if (!validation?.accepted || !validation.proposal) return null;
+  const runtime = ensureAgentRuntime(society);
+  runtime.inbox = [
+    {
+      scope: "agent",
+      type: "agent-narrative-proposal",
+      targetId: validation.proposal.agentId,
+      directorQuestId: validation.proposal.questId,
+      desiredActions: [validation.proposal.actionType],
+      actionTargetId: validation.proposal.targetId || null,
+      text: validation.proposal.intent,
+      dialogue: validation.proposal.dialogue,
+      contractId: validation.proposal.contractId,
+      proposalOnly: true,
+      createdTurn: society.turn,
+      untilTurn: society.turn + 3
+    },
+    ...(runtime.inbox || [])
+  ].slice(0, AGENT_NARRATIVE_PROPOSAL_LIMIT);
+  return validation.proposal;
+}
+
+function registerAgentNarrativeAdapter(citizenId, adapter) {
+  if (!citizenId || !adapter || typeof adapter.propose !== "function") return false;
+  agentNarrativeAdapters.set(String(citizenId), adapter);
+  return true;
+}
+
+async function requestAgentNarrativeProposal(society, citizenId, questId = "") {
+  const story = ensureStoryState();
+  const director = ensurePlotDirectorState(story);
+  const quest = director.quests.find((item) => item.id === (questId || director.activeQuestId) && item.status === "active");
+  const adapter = agentNarrativeAdapters.get(String(citizenId));
+  if (!quest || !adapter) return { accepted: false, errors: [!quest ? "missing-active-quest" : "missing-adapter"], proposal: null };
+  const blueprint = PLOT_DIRECTOR_QUESTS.find((item) => item.id === quest.blueprintId) || PLOT_DIRECTOR_QUESTS[0];
+  const contract = normalizePlotSceneContract(quest.sceneContract, quest) || buildPlotSceneContract(society, quest, blueprint);
+  quest.sceneContract = contract;
+  let rawProposal;
+  try {
+    rawProposal = await adapter.propose(buildAgentNarrativeContext(society, citizenId, quest, contract));
+  } catch (error) {
+    return { accepted: false, errors: [`adapter-error:${String(error?.message || error).slice(0, 120)}`], proposal: null };
+  }
+  const validation = validateAgentNarrativeProposal(society, rawProposal, contract);
+  if (validation.accepted) queueValidatedNarrativeProposal(society, validation);
+  return validation;
+}
+
 function buildPlotDirectorState() {
   return {
     version: PLOT_DIRECTOR_VERSION,
@@ -121,6 +365,7 @@ function ensurePlotDirectorState(story) {
       quest.beats = Array.isArray(quest.beats) ? quest.beats : [];
       quest.evidence = Array.isArray(quest.evidence) ? quest.evidence : [];
       quest.missions = quest.missions && typeof quest.missions === "object" ? quest.missions : {};
+      quest.sceneContract = normalizePlotSceneContract(quest.sceneContract, quest);
       quest.currentTask = String(quest.currentTask || "等待角色用实际行动推动这一幕。");
       quest.outcome = String(quest.outcome || "");
       return quest;
@@ -217,6 +462,7 @@ function describeDirectorMission(citizen, role, quest, desiredActions) {
 
 function assignPlotDirectorMissions(society, quest, blueprint) {
   const runtime = ensureAgentRuntime(society);
+  quest.sceneContract = buildPlotSceneContract(society, quest, blueprint);
   const desiredActions = blueprint.stageActions[Math.min(quest.stage, blueprint.stageActions.length - 1)] || ["listen"];
   runtime.inbox = (runtime.inbox || []).filter((message) => message.directorQuestId !== quest.id);
   quest.missions = {};
@@ -232,6 +478,7 @@ function assignPlotDirectorMissions(society, quest, blueprint) {
       type: "plot-director-mission",
       targetId: participantId,
       directorQuestId: quest.id,
+      sceneContractId: quest.sceneContract.id,
       untilTurn: society.turn + 5,
       desiredActions: [...desiredActions],
       actionTargetId: targetId,
@@ -301,6 +548,7 @@ function startPlotDirectorQuest(society, observation) {
     currentTask: "",
     outcome: ""
   };
+  quest.sceneContract = buildPlotSceneContract(society, quest, blueprint);
   director.quests.push(quest);
   director.quests = director.quests.slice(-PLOT_DIRECTOR_MAX_QUESTS);
   director.activeQuestId = quest.id;
@@ -362,6 +610,7 @@ function advancePlotDirectorQuest(society, quest) {
       ? `${actor?.name || "有人"}用“${plotDirectorActionLabel(evidence.type)}”把戏剧问题推进成了新的现场事实。`
       : `${actor?.name || "有人"}拒绝任务建议，改用“${plotDirectorActionLabel(evidence.type)}”行动；剧情师接受了这个偏航。`;
     logPlotDirectorBeat(society, quest, stage, text, evidence);
+    quest.sceneContract = buildPlotSceneContract(society, quest, blueprint);
     quest.currentTask = buildPlotDirectorTask(society, quest, blueprint);
     assignPlotDirectorMissions(society, quest, blueprint);
     return;
@@ -783,5 +1032,31 @@ window.MirrorLifePlotDirector = {
   tick: plotDirectorOnTurn,
   getState() {
     return ensurePlotDirectorState(ensureStoryState());
+  }
+};
+
+window.MirrorLifeNarrativeRuntime = {
+  version: 1,
+  getEmbodiedSceneContract,
+  getActiveSceneContract() {
+    const director = ensurePlotDirectorState(ensureStoryState());
+    const quest = director.quests.find((item) => item.id === director.activeQuestId && item.status === "active") || null;
+    if (!quest) return null;
+    const blueprint = PLOT_DIRECTOR_QUESTS.find((item) => item.id === quest.blueprintId) || PLOT_DIRECTOR_QUESTS[0];
+    quest.sceneContract = normalizePlotSceneContract(quest.sceneContract, quest) || buildPlotSceneContract(state.society, quest, blueprint);
+    return cloneNarrativeValue(quest.sceneContract);
+  },
+  validateProposal(proposal) {
+    const director = ensurePlotDirectorState(ensureStoryState());
+    const quest = director.quests.find((item) => item.id === director.activeQuestId && item.status === "active") || null;
+    if (!quest) return { accepted: false, errors: ["missing-active-quest"], proposal: null };
+    const blueprint = PLOT_DIRECTOR_QUESTS.find((item) => item.id === quest.blueprintId) || PLOT_DIRECTOR_QUESTS[0];
+    const contract = normalizePlotSceneContract(quest.sceneContract, quest) || buildPlotSceneContract(state.society, quest, blueprint);
+    quest.sceneContract = contract;
+    return validateAgentNarrativeProposal(state.society, proposal, contract);
+  },
+  registerAdapter: registerAgentNarrativeAdapter,
+  requestProposal(citizenId, questId = "") {
+    return requestAgentNarrativeProposal(state.society, citizenId, questId);
   }
 };
