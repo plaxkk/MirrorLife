@@ -2438,14 +2438,102 @@ function addRoomArchitecture(theme, colors) {
   [variantOffset - 0.48, variantOffset + 0.48].forEach((angle) => addPendant(angle, 2.95, "#ffd166", 2.72));
 }
 
+function addZoneLayoutArchitecture(theme, colors) {
+  const profile = theme.layoutProfile;
+  if (!profile) return;
+  const zones = Array.isArray(profile.functionalZones) ? profile.functionalZones : [];
+  const zoneColors = [colors.accent, colors.secondary, "#ff8f70", "#62c6b4", "#ffd166"];
+  zones.forEach((zone, index) => {
+    const bounds = zone?.bounds;
+    const radius = Math.max(0.45, Number(zone?.radius || 0.8));
+    const width = bounds ? Math.max(0.7, Number(bounds.maxX) - Number(bounds.minX)) : radius * 2;
+    const depth = bounds ? Math.max(0.7, Number(bounds.maxZ) - Number(bounds.minZ)) : radius * 2;
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(0.76, 0.88, 40),
+      createToonMaterial(zoneColors[index % zoneColors.length], {
+        transparent: true,
+        opacity: zone.privacy === "sealed" ? 0.42 : 0.22,
+        depthWrite: false,
+        roughness: 0.8
+      })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.scale.set(width * 0.48, depth * 0.48, 1);
+    ring.position.set(
+      bounds ? (Number(bounds.minX) + Number(bounds.maxX)) / 2 : Number(zone.x || 0),
+      0.034,
+      bounds ? (Number(bounds.minZ) + Number(bounds.maxZ)) / 2 : Number(zone.z || 0)
+    );
+    ring.receiveShadow = false;
+    roomRoot.add(ring);
+  });
+
+  const zoneId = theme.zoneId;
+  if (zoneId === "legal-court") {
+    const seam = new THREE.Mesh(
+      new RoundedBoxGeometry(0.12, 0.035, 7.2, 4, 0.035),
+      createToonMaterial("#ff6b72", { transparent: true, opacity: 0.76, depthWrite: false })
+    );
+    seam.position.set(0, 0.052, -0.15);
+    roomRoot.add(seam);
+    [-2.15, 2.15].forEach((x, index) => {
+      const rail = new THREE.Mesh(
+        new RoundedBoxGeometry(0.08, 0.04, 3.7, 4, 0.025),
+        createToonMaterial(index ? "#5bc8b7" : "#ffb14f", { transparent: true, opacity: 0.68 })
+      );
+      rail.position.set(x, 0.045, 0.25);
+      roomRoot.add(rail);
+    });
+  } else if (zoneId === "story-archive") {
+    [-1.15, 1.15].forEach((x) => {
+      const threshold = new THREE.Mesh(
+        new RoundedBoxGeometry(0.055, 1.45, 4.8, 4, 0.025),
+        createToonMaterial("#a5e4de", { transparent: true, opacity: 0.16, depthWrite: false })
+      );
+      threshold.position.set(x, 0.74, 0.2);
+      roomRoot.add(threshold);
+    });
+  } else if (zoneId === "empathy-lab") {
+    [1.45, 2.1].forEach((radius, index) => {
+      const calibrationRing = new THREE.Mesh(
+        new THREE.RingGeometry(radius - 0.035, radius + 0.035, 64),
+        createToonMaterial(index ? "#ffbf69" : "#56c8b7", { transparent: true, opacity: 0.62, depthWrite: false })
+      );
+      calibrationRing.rotation.x = -Math.PI / 2;
+      calibrationRing.position.y = 0.043;
+      roomRoot.add(calibrationRing);
+    });
+  } else if (zoneId === "public-plaza") {
+    const listeningRing = new THREE.Mesh(
+      new THREE.RingGeometry(2.25, 2.42, 64),
+      createToonMaterial("#f4bd4f", { transparent: true, opacity: 0.48, depthWrite: false })
+    );
+    listeningRing.rotation.x = -Math.PI / 2;
+    listeningRing.position.y = 0.042;
+    roomRoot.add(listeningRing);
+  }
+
+  const focus = Array.isArray(profile.cameraTargets) ? profile.cameraTargets[0] : profile.cameraTargets?.primary;
+  if (focus) {
+    const focusMark = new THREE.Mesh(
+      new THREE.RingGeometry(0.28, 0.34, 36),
+      createToonMaterial("#fff2a6", { transparent: true, opacity: 0.56, depthWrite: false })
+    );
+    focusMark.rotation.x = -Math.PI / 2;
+    focusMark.position.set(Number(focus.x) || 0, 0.048, Number(focus.z) || 0);
+    roomRoot.add(focusMark);
+  }
+}
+
 function rebuildRoom(theme = {}) {
-  const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant].join("|");
+  const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
   if (signature === roomSignature) return;
   roomSignature = signature;
   disposeOwnedGroup(roomRoot);
 
   if (keyLight) {
-    keyLight.castShadow = REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home");
+    keyLight.castShadow = REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home")
+      && !["factory", "farm", "public-plaza", "legal-court"].includes(theme.zoneId);
     keyLight.shadow.needsUpdate = true;
   }
 
@@ -2529,6 +2617,7 @@ function rebuildRoom(theme = {}) {
   }
   addRoomArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addAmbientSetDressing(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  addZoneLayoutArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   mergeRoomArchitectureMeshes();
 }
@@ -2879,21 +2968,32 @@ function updatePhysicsDebug(physics = {}) {
 
 function updateCamera(payload = {}) {
   const yaw = Number(payload.yaw || 0);
-  const pitch = Number(payload.pitch || 0.58);
+  const pitch = Math.max(0.4, Math.min(0.72, Number(payload.pitch || 0.58)));
   const playerX = Number(payload.cameraX || 0);
   const playerZ = Number(payload.cameraZ || 0);
+  const narrativeX = Number(payload.cameraTargetX || 0);
+  const narrativeZ = Number(payload.cameraTargetZ || 0.2);
+  const safeArea = payload.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   const zoneId = String(payload.theme?.zoneId || "");
   const forwardX = Math.sin(yaw);
   const forwardZ = -Math.cos(yaw);
-  const targetPivotX = playerX * CAMERA_PIVOT_PLAYER_WEIGHT;
-  const targetPivotZ = playerZ * CAMERA_PIVOT_PLAYER_WEIGHT;
+  let targetPivotX = playerX * CAMERA_PIVOT_PLAYER_WEIGHT + narrativeX * (1 - CAMERA_PIVOT_PLAYER_WEIGHT);
+  let targetPivotZ = playerZ * CAMERA_PIVOT_PLAYER_WEIGHT + narrativeZ * (1 - CAMERA_PIVOT_PLAYER_WEIGHT);
+  const safeDx = targetPivotX - Number(safeArea.x || 0);
+  const safeDz = targetPivotZ - Number(safeArea.z || 0);
+  const safeDistance = Math.hypot(safeDx, safeDz);
+  const safeRadius = Math.max(0.8, Number(safeArea.radius || 2.1));
+  if (safeDistance > safeRadius) {
+    targetPivotX = Number(safeArea.x || 0) + safeDx / safeDistance * safeRadius;
+    targetPivotZ = Number(safeArea.z || 0) + safeDz / safeDistance * safeRadius;
+  }
   if (cameraZoneId !== zoneId) {
     cameraZoneId = zoneId;
     cameraPivotX = targetPivotX;
     cameraPivotZ = targetPivotZ;
   } else {
-    cameraPivotX += (targetPivotX - cameraPivotX) * 0.16;
-    cameraPivotZ += (targetPivotZ - cameraPivotZ) * 0.16;
+    cameraPivotX += (targetPivotX - cameraPivotX) * 0.1;
+    cameraPivotZ += (targetPivotZ - cameraPivotZ) * 0.1;
   }
   const cameraRayX = -forwardX;
   const cameraRayZ = -forwardZ;
@@ -2922,6 +3022,8 @@ function updateCamera(payload = {}) {
     pivotZ: Number(cameraPivotZ.toFixed(3)),
     playerX: Number(playerX.toFixed(3)),
     playerZ: Number(playerZ.toFixed(3)),
+    narrativeX: Number(narrativeX.toFixed(3)),
+    narrativeZ: Number(narrativeZ.toFixed(3)),
     orbitRadius: Number(cameraBack.toFixed(3)),
     height: Number(cameraHeight.toFixed(3)),
     yaw: Number(yaw.toFixed(3)),
@@ -2979,28 +3081,36 @@ function update(payload = {}) {
   needed.forEach(loadModel);
   rebuildRoom(payload.theme || {});
   updateCamera(payload);
-  const ready = rebuildModels(activeItems);
+  const modelsReady = rebuildModels(activeItems);
   const actorsReady = updateActors(payload.actors || [], performance.now());
   updatePhysicsDebug(payload.physics || {});
 
-  canvas.style.display = payload.visible === false ? "none" : "block";
+  const visible = payload.visible !== false;
+  const ready = modelsReady && actorsReady;
+  canvas.style.display = visible ? "block" : "none";
+  canvas.style.opacity = ready ? "1" : "0";
+  canvas.style.visibility = ready ? "visible" : "hidden";
+  canvas.dataset.sceneReady = ready ? "true" : "false";
   updateProjections(activeItems, width, height);
   const actorProjections = projectWorldPoints((payload.actors || []).map((actor) => ({
     ...actor,
     worldY: actor.worldY ?? 0.05
   })), width, height);
-  if (payload.visible !== false) renderer.render(scene, camera);
+  if (visible) renderer.render(scene, camera);
   const now = Date.now();
   if (now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
     canvas.dataset.renderStats = JSON.stringify(getStats());
   }
-  return { ready, actorsReady, projections: [...projectedItems.values()], actorProjections };
+  return { ready, modelsReady, actorsReady, projections: [...projectedItems.values()], actorProjections };
 }
 
 function hide() {
   if (!canvas || !renderer) return;
   canvas.style.display = "none";
+  canvas.style.opacity = "0";
+  canvas.style.visibility = "hidden";
+  canvas.dataset.sceneReady = "false";
   if (actorRoot) actorRoot.visible = false;
   if (physicsDebugRoot) physicsDebugRoot.visible = false;
   projectedItems.clear();

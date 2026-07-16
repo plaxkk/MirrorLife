@@ -1982,6 +1982,48 @@ function normalizeMirrorRelay(savedRelay) {
   return { invites, responses };
 }
 
+function normalizeSocialTwinEpisode(savedEpisode) {
+  const source = savedEpisode && typeof savedEpisode === "object" && !Array.isArray(savedEpisode) ? savedEpisode : {};
+  const allowedActs = new Set([
+    "late-apology", "private-before-after", "borrowed-promise", "relationship-rights",
+    "misread-correction", "consented-evidence", "citizen-hearing"
+  ]);
+  const allowedEndings = new Set(["merge", "delete", "release", "charter"]);
+  return {
+    version: 1,
+    definitionId: "preferred-other-self",
+    status: source.status === "complete" ? "complete" : source.status === "paused" ? "paused" : "active",
+    actIndex: clamp(Math.round(Number(source.actIndex) || 0), 0, 6),
+    startedAt: Math.max(0, Math.round(Number(source.startedAt) || Date.now())),
+    updatedAt: Math.max(0, Math.round(Number(source.updatedAt) || Date.now())),
+    visitedZoneIds: Array.isArray(source.visitedZoneIds)
+      ? [...new Set(source.visitedZoneIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 12)
+      : [],
+    evidence: Array.isArray(source.evidence) ? source.evidence.slice(0, 24).map((entry) => ({
+      id: String(entry?.id || "").slice(0, 120),
+      actId: allowedActs.has(entry?.actId) ? entry.actId : "",
+      zoneId: String(entry?.zoneId || "").slice(0, 80),
+      label: String(entry?.label || "").slice(0, 100),
+      summary: String(entry?.summary || "").slice(0, 260),
+      authorized: !!entry?.authorized,
+      refusal: !!entry?.refusal,
+      turn: Math.max(0, Math.round(Number(entry?.turn) || 0))
+    })).filter((entry) => entry.id && entry.actId) : [],
+    relationshipDelta: clamp(Math.round(Number(source.relationshipDelta) || 0), -30, 30),
+    cityState: String(source.cityState || "分身尚未取得城市身份").slice(0, 240),
+    twinContinuity: source.twinContinuity !== false,
+    authorizationReceipts: Array.isArray(source.authorizationReceipts) ? source.authorizationReceipts.slice(0, 8).map((receipt) => ({
+      id: String(receipt?.id || "").slice(0, 120),
+      scopeId: ["private", "trusted", "public"].includes(receipt?.scopeId) ? receipt.scopeId : "private",
+      ownerId: String(receipt?.ownerId || "").slice(0, 80)
+    })).filter((receipt) => receipt.id) : [],
+    endingId: allowedEndings.has(source.endingId) ? source.endingId : "",
+    aftermath: Array.isArray(source.aftermath) ? source.aftermath.slice(0, 8).map((entry) => String(entry || "").slice(0, 260)).filter(Boolean) : [],
+    dossierCreated: !!source.dossierCreated,
+    witnessInviteId: String(source.witnessInviteId || "").slice(0, 120)
+  };
+}
+
 function readPersistedInteriorExploration() {
   try {
     return normalizeInteriorExploration(JSON.parse(localStorage.getItem(INTERIOR_EXPLORATION_STORAGE_KEY) || "{}"));
@@ -2020,6 +2062,7 @@ function loadState() {
     causalGraph: null,
     interiorExploration: persistedInteriorExploration,
     counterfactualEpisodes: {},
+    socialTwinEpisode: normalizeSocialTwinEpisode(null),
     mirrorRelay: { invites: [], responses: [] },
     hasSeenTutorial: false,
     isFirstVisit: false,
@@ -2057,6 +2100,7 @@ function loadState() {
         ? persistedInteriorExploration
         : normalizeInteriorExploration(saved.interiorExploration),
       counterfactualEpisodes: normalizeCounterfactualEpisodes(saved.counterfactualEpisodes),
+      socialTwinEpisode: normalizeSocialTwinEpisode(saved.socialTwinEpisode),
       mirrorRelay: normalizeMirrorRelay(saved.mirrorRelay),
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
@@ -2086,6 +2130,7 @@ function buildPersistSnapshot() {
     causalGraph: state.causalGraph || null,
     interiorExploration: normalizeInteriorExploration(state.interiorExploration),
     counterfactualEpisodes: normalizeCounterfactualEpisodes(state.counterfactualEpisodes),
+    socialTwinEpisode: normalizeSocialTwinEpisode(state.socialTwinEpisode),
     mirrorRelay: normalizeMirrorRelay(state.mirrorRelay),
     hasSeenTutorial: !!state.hasSeenTutorial,
     isFirstVisit: !!state.isFirstVisit,

@@ -52,7 +52,7 @@ const [engine, game, interiorThree, configText, manifestText] = await Promise.al
 const openWorldBlock = extractBlock(engine, /const OPEN_WORLD_ZONES = \[/, /\n\];/, "open world zones");
 const growthBlock = extractBlock(engine, /const EVOLVABLE_SCENE_BLUEPRINTS = \[/, /\n\];/, "evolvable scenes");
 const blueprintBlock = extractBlock(game, /const INTERIOR_BLUEPRINTS = \{/, /\n\};\n\nconst INTERIOR_ZONE_PROFILES/, "interior blueprints");
-const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\nconst INTERIOR_SCENE_ACTIONS/, "interior profiles");
+const profileBlock = extractBlock(game, /const INTERIOR_ZONE_PROFILES = \{/, /\n\};\n\n\/\/ Every room/, "interior profiles");
 const sceneActionBlock = extractBlock(game, /const INTERIOR_SCENE_ACTIONS = \{/, /\n\};\n\nconst INTERIOR_BLUEPRINT_CACHE/, "interior scene actions");
 const blueprints = extractObject(game, "INTERIOR_BLUEPRINTS", "INTERIOR_ZONE_PROFILES");
 const sceneActions = extractObject(game, "INTERIOR_SCENE_ACTIONS", "INTERIOR_BLUEPRINT_CACHE");

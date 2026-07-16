@@ -402,7 +402,14 @@ function createPhysicsWorld(options = {}) {
       .map((collider) => ({ collider, distance: Math.hypot(collider.x - finite(item.worldX), collider.z - finite(item.worldZ)) }))
       .sort((a, b) => a.distance - b.distance)[0];
     const nearestAmbient = directCollider || (nearestAmbientMatch?.distance < 1.4 ? nearestAmbientMatch.collider : null);
-    world.interactions.set(item.key, findInteractionPoint(world, item, nearestAmbient, CITIZEN_RADIUS, world.spawn));
+    const authoredInteraction = Number.isFinite(Number(item.interactionWorldX)) && Number.isFinite(Number(item.interactionWorldZ))
+      ? { x: Number(item.interactionWorldX), z: Number(item.interactionWorldZ) }
+      : null;
+    const interaction = authoredInteraction && isWalkable(world, authoredInteraction, CITIZEN_RADIUS)
+      && segmentWalkable(world, world.spawn, authoredInteraction, CITIZEN_RADIUS)
+      ? authoredInteraction
+      : findInteractionPoint(world, item, nearestAmbient, CITIZEN_RADIUS, world.spawn);
+    world.interactions.set(item.key, interaction);
   });
   return world;
 }
