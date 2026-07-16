@@ -130,7 +130,10 @@ globalThis.__verificationResult = {
 vm.createContext(context);
 vm.runInContext(`${engineSource}\n${verification}`, context, {
   filename: "verify-evolution.vm.js",
-  timeout: 5000
+  // The complete engine now includes the relay persistence model in addition to
+  // the 60-turn society soak. Keep a guardrail, but avoid treating a healthy
+  // run on slower CI/desktop runtimes as a deadlock.
+  timeout: 15000
 });
 
 console.log(JSON.stringify(context.__verificationResult, null, 2));

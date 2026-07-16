@@ -1406,7 +1406,14 @@ function getCitizenAgentContext(society, citizen) {
     && item.targetId === citizen.id
     && Number(item.untilTurn || 0) >= Number(society.turn || 0)
   ));
-  const inbox = [directorMission, ...relevantInbox.filter((item) => item !== directorMission)].filter(Boolean).slice(0, 4);
+  const mirrorRelayMission = relevantInbox.find((item) => (
+    item.type === "mirror-relay-mission"
+    && item.targetId === citizen.id
+    && Number(item.expiresTurn || 0) >= Number(society.turn || 0)
+  ));
+  const inbox = [mirrorRelayMission, directorMission, ...relevantInbox.filter((item) => item !== directorMission && item !== mirrorRelayMission)]
+    .filter(Boolean)
+    .slice(0, 4);
   return { runtime, memory, reflections, skills, inbox };
 }
 
@@ -1420,6 +1427,20 @@ function planCitizenAgentAction(society, citizen, baseAction) {
     item.type === "plot-director-mission"
     && item.targetId === citizen.id
     && Number(item.untilTurn || 0) >= Number(society.turn || 0)
+    && Array.isArray(item.desiredActions)
+    && item.desiredActions.length
+  ));
+  const counterfactualWitness = context.inbox.find((item) => (
+    item.type === "counterfactual-witness"
+    && item.targetId === citizen.id
+    && Number(item.untilTurn || 0) >= Number(society.turn || 0)
+    && Array.isArray(item.desiredActions)
+    && item.desiredActions.length
+  ));
+  const mirrorRelayMission = context.inbox.find((item) => (
+    item.type === "mirror-relay-mission"
+    && item.targetId === citizen.id
+    && Number(item.expiresTurn || 0) >= Number(society.turn || 0)
     && Array.isArray(item.desiredActions)
     && item.desiredActions.length
   ));
@@ -1437,6 +1458,20 @@ function planCitizenAgentAction(society, citizen, baseAction) {
     const desired = directorMission.desiredActions[(Number(society.turn || 0) + citizen.id.length) % directorMission.desiredActions.length];
     const safeDesired = isActionSupportive(desired) || citizen.energy > 28 ? desired : "listen";
     action = { actorId: citizen.id, type: safeDesired, targetId: directorMission.actionTargetId || baseAction.targetId || null };
+  } else if (counterfactualWitness) {
+    const desired = counterfactualWitness.desiredActions[(Number(society.turn || 0) + citizen.id.length) % counterfactualWitness.desiredActions.length];
+    action = {
+      actorId: citizen.id,
+      type: isActionSupportive(desired) || citizen.energy > 34 ? desired : "listen",
+      targetId: counterfactualWitness.actionTargetId || baseAction.targetId || null
+    };
+  } else if (mirrorRelayMission) {
+    const desired = mirrorRelayMission.desiredActions[(Number(society.turn || 0) + citizen.id.length) % mirrorRelayMission.desiredActions.length];
+    action = {
+      actorId: citizen.id,
+      type: isActionSupportive(desired) || citizen.energy > 30 ? desired : "listen",
+      targetId: mirrorRelayMission.actionTargetId || baseAction.targetId || null
+    };
   } else if (context.skills.some((skill) => skill.id === "mediation") || inboxHint === "repair") {
     action = { actorId: citizen.id, type: "meditate", targetId: baseAction.targetId || null };
   } else if (memoryCount >= 6 && citizen.trust > 68 && baseAction.type === "listen") {
@@ -1451,7 +1486,9 @@ function planCitizenAgentAction(society, citizen, baseAction) {
     ...action,
     context: {
       ...context,
-      directorMission: directorMission || null
+      directorMission: directorMission || null,
+      counterfactualWitness: counterfactualWitness || null,
+      mirrorRelayMission: mirrorRelayMission || null
     }
   };
 }
@@ -1485,6 +1522,8 @@ function recordAgentOutbox(society, citizen, result, context) {
     zone: result.zone || "",
     score: result.score || 0,
     directorQuestId: context.directorMission?.directorQuestId || "",
+    counterfactualEchoId: context.counterfactualWitness?.counterfactualEchoId || "",
+    mirrorRelayResponseId: context.mirrorRelayMission?.responseId || "",
     context: {
       memoryCount: context.memory.length,
       reflectionCount: context.reflections.length,
@@ -1492,6 +1531,21 @@ function recordAgentOutbox(society, citizen, result, context) {
     }
   };
   pushAgentRecord(runtime.outbox, item, AGENT_MEMORY_LIMIT);
+  if (item.counterfactualEchoId && state.counterfactualEpisodes && ["listen", "support", "propose"].includes(item.type)) {
+    Object.values(state.counterfactualEpisodes).some((episode) => {
+      const echo = episode?.echoes?.find((entry) => entry.id === item.counterfactualEchoId);
+      if (!echo) return false;
+      echo.discussed = true;
+      return true;
+    });
+  }
+  if (item.mirrorRelayResponseId && typeof mirrorRelayOnAgentAction === "function") {
+    try {
+      mirrorRelayOnAgentAction(society, citizen, item, result, context.mirrorRelayMission);
+    } catch (error) {
+      console.warn("mirror relay evidence skipped", error);
+    }
+  }
   runtime.scheduler.lastDecision = `${citizen.name} -> ${result.type}`;
   return item;
 }
@@ -1688,9 +1742,244 @@ function normalizeInteriorExploration(savedRecords) {
             selfFulfillment: clamp(Math.round(Number(source.sceneReward.selfFulfillment) || 0), -10, 10),
             lifeStability: clamp(Math.round(Number(source.sceneReward.lifeStability) || 0), -10, 10)
           }
+        : null,
+      ritual: source.ritual && typeof source.ritual === "object"
+        ? {
+            id: ["quiet-presence", "social-parallax", "empathy-calibration", "memory-authorization"].includes(source.ritual.id) ? source.ritual.id : "",
+            status: source.ritual.status === "complete"
+              ? "complete"
+              : source.ritual.status === "active" ? "active" : "available",
+            witnessId: String(source.ritual.witnessId || "").slice(0, 80),
+            witnessIds: Array.isArray(source.ritual.witnessIds)
+              ? [...new Set(source.ritual.witnessIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2)
+              : [],
+            heardIds: Array.isArray(source.ritual.heardIds)
+              ? [...new Set(source.ritual.heardIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2)
+              : [],
+            actualLensId: ["stay", "advise", "space"].includes(source.ritual.actualLensId) ? source.ritual.actualLensId : "",
+            attemptedLensIds: Array.isArray(source.ritual.attemptedLensIds)
+              ? [...new Set(source.ritual.attemptedLensIds.filter((id) => ["stay", "advise", "space"].includes(id)))].slice(0, 3)
+              : [],
+            confirmedLensId: ["stay", "advise", "space"].includes(source.ritual.confirmedLensId) ? source.ritual.confirmedLensId : "",
+            correctionCount: clamp(Math.round(Number(source.ritual.correctionCount) || 0), 0, 9),
+            positionProgressMs: clamp(Math.round(Number(source.ritual.positionProgressMs) || 0), 0, 1200),
+            confirmProgressMs: clamp(Math.round(Number(source.ritual.confirmProgressMs) || 0), 0, 1800),
+            memoryId: String(source.ritual.memoryId || "").slice(0, 120),
+            authorizedScopeId: ["private", "trusted", "public"].includes(source.ritual.authorizedScopeId) ? source.ritual.authorizedScopeId : "",
+            attemptedScopeIds: Array.isArray(source.ritual.attemptedScopeIds)
+              ? [...new Set(source.ritual.attemptedScopeIds.filter((id) => ["private", "trusted", "public"].includes(id)))].slice(0, 3)
+              : [],
+            overstepCount: clamp(Math.round(Number(source.ritual.overstepCount) || 0), 0, 9),
+            holdProgressMs: clamp(Math.round(Number(source.ritual.holdProgressMs) || 0), 0, 1800),
+            boundaryProgressMs: clamp(Math.round(Number(source.ritual.boundaryProgressMs) || 0), 0, 900),
+            receipt: source.ritual.receipt && typeof source.ritual.receipt === "object"
+              ? {
+                  ownerId: String(source.ritual.receipt.ownerId || "").slice(0, 80),
+                  memoryId: String(source.ritual.receipt.memoryId || "").slice(0, 120),
+                  scopeId: ["private", "trusted", "public"].includes(source.ritual.receipt.scopeId) ? source.ritual.receipt.scopeId : "",
+                  turn: Math.max(0, Math.round(Number(source.ritual.receipt.turn) || 0))
+                }
+              : null,
+            startedTurn: Math.max(0, Math.round(Number(source.ritual.startedTurn) || 0)),
+            completedTurn: Math.max(0, Math.round(Number(source.ritual.completedTurn) || 0))
+          }
+        : null,
+      counterfactual: source.counterfactual && typeof source.counterfactual === "object"
+        ? {
+            factChoiceId: String(source.counterfactual.factChoiceId || "").slice(0, 80),
+            chosenChoiceId: String(source.counterfactual.chosenChoiceId || "").slice(0, 80),
+            alternativeChoiceId: String(source.counterfactual.alternativeChoiceId || "").slice(0, 80),
+            rewritten: !!source.counterfactual.rewritten,
+            receipt: String(source.counterfactual.receipt || "").slice(0, 1200),
+            turn: Math.max(0, Math.round(Number(source.counterfactual.turn) || 0))
+          }
         : null
     }];
   }));
+}
+
+function normalizeCounterfactualEpisodes(savedEpisodes) {
+  if (!savedEpisodes || typeof savedEpisodes !== "object" || Array.isArray(savedEpisodes)) return {};
+  return Object.fromEntries(Object.entries(savedEpisodes).slice(0, 12).map(([threadId, episode]) => {
+    const source = episode && typeof episode === "object" ? episode : {};
+    const experienceSource = source.experience && typeof source.experience === "object" && !Array.isArray(source.experience)
+      ? source.experience
+      : {};
+    const allowedExperienceEvents = new Set([
+      "episode_started", "room_entered", "evidence_found", "evidence_revisited",
+      "choice_opened", "choice_previewed", "choice_committed", "room_completed",
+      "ritual_started", "ritual_completed",
+      "parallax_started", "perspective_heard", "parallax_completed",
+      "empathy_started", "empathy_hypothesis", "empathy_corrected", "empathy_completed",
+      "authorization_started", "authorization_boundary", "authorization_completed",
+      "aftermath_focused", "aftermath_witnessed", "finale_opened", "episode_shared",
+      "relay_started", "returned_to_street"
+    ]);
+    const experienceEvents = Array.isArray(experienceSource.events)
+      ? experienceSource.events.slice(-120).map((event) => ({
+          id: String(event?.id || "").slice(0, 120),
+          type: allowedExperienceEvents.has(event?.type) ? event.type : "",
+          atMs: Math.max(0, Math.round(Number(event?.atMs) || 0)),
+          zoneId: String(event?.zoneId || "").slice(0, 80),
+          choiceId: String(event?.choiceId || "").slice(0, 80),
+          branch: ["fact", "future"].includes(event?.branch) ? event.branch : "",
+          dwellMs: Math.max(0, Math.min(30 * 60 * 1000, Math.round(Number(event?.dwellMs) || 0))),
+          detail: String(event?.detail || "").slice(0, 120)
+        })).filter((event) => event.id && event.type)
+      : [];
+    const normalizeEvent = (event) => ({
+      zoneId: String(event?.zoneId || "").slice(0, 80),
+      zoneName: String(event?.zoneName || "").slice(0, 80),
+      factChoiceId: String(event?.factChoiceId || "").slice(0, 80),
+      factLabel: String(event?.factLabel || "").slice(0, 160),
+      factReason: String(event?.factReason || "").slice(0, 320),
+      factEvidence: Array.isArray(event?.factEvidence)
+        ? event.factEvidence.slice(0, 3).map((text) => String(text || "").slice(0, 240))
+        : [],
+      factScore: Number.isFinite(Number(event?.factScore)) ? Number(event.factScore) : 0,
+      factRunnerUpScore: Number.isFinite(Number(event?.factRunnerUpScore)) ? Number(event.factRunnerUpScore) : 0,
+      factDecisionVersion: Math.max(0, Math.round(Number(event?.factDecisionVersion) || 0)),
+      factPersonaLabel: String(event?.factPersonaLabel || "").slice(0, 120),
+      chosenChoiceId: String(event?.chosenChoiceId || "").slice(0, 80),
+      chosenLabel: String(event?.chosenLabel || "").slice(0, 160),
+      alternativeChoiceId: String(event?.alternativeChoiceId || "").slice(0, 80),
+      alternativeLabel: String(event?.alternativeLabel || "").slice(0, 160),
+      relationType: String(event?.relationType || "").slice(0, 80),
+      participantId: String(event?.participantId || "").slice(0, 80),
+      participantName: String(event?.participantName || "").slice(0, 80),
+      rewritten: !!event?.rewritten,
+      receipt: String(event?.receipt || "").slice(0, 1200),
+      turn: Math.max(0, Math.round(Number(event?.turn) || 0))
+    });
+    const normalizeEcho = (echo) => ({
+      id: String(echo?.id || "").slice(0, 120),
+      zoneId: String(echo?.zoneId || "").slice(0, 80),
+      observerId: String(echo?.observerId || "").slice(0, 80),
+      observerName: String(echo?.observerName || "").slice(0, 80),
+      alternativeChoiceId: String(echo?.alternativeChoiceId || "").slice(0, 80),
+      alternativeLabel: String(echo?.alternativeLabel || "").slice(0, 160),
+      stance: String(echo?.stance || "question").slice(0, 40),
+      text: String(echo?.text || "").slice(0, 500),
+      turn: Math.max(0, Math.round(Number(echo?.turn) || 0)),
+      discussed: !!echo?.discussed,
+      discussedTurn: Math.max(0, Math.round(Number(echo?.discussedTurn) || 0)),
+      aftermathWitness: !!echo?.aftermathWitness,
+      finaleFeatured: !!echo?.finaleFeatured
+    });
+    const finaleSource = source.finale && typeof source.finale === "object" ? source.finale : null;
+    return [String(threadId).slice(0, 80), {
+      id: String(source.id || threadId).slice(0, 80),
+      rewriteTokens: clamp(Math.round(Number(source.rewriteTokens ?? 1)), 0, 1),
+      startedTurn: Math.max(0, Math.round(Number(source.startedTurn) || 0)),
+      completedTurn: Math.max(0, Math.round(Number(source.completedTurn) || 0)),
+      status: source.status === "complete" ? "complete" : "active",
+      rewrites: Array.isArray(source.rewrites) ? source.rewrites.slice(-12).map(normalizeEvent) : [],
+      receipts: Array.isArray(source.receipts) ? source.receipts.slice(-12).map((text) => String(text || "").slice(0, 1200)) : [],
+      echoes: Array.isArray(source.echoes) ? source.echoes.slice(-24).map(normalizeEcho) : [],
+      experience: {
+        version: 1,
+        sessionId: String(experienceSource.sessionId || "").slice(0, 120),
+        startedAt: Math.max(0, Math.round(Number(experienceSource.startedAt) || 0)),
+        activeMs: Math.max(0, Math.min(24 * 60 * 60 * 1000, Math.round(Number(experienceSource.activeMs) || 0))),
+        events: experienceEvents
+      },
+      finale: finaleSource
+        ? {
+            verdict: String(finaleSource.verdict || "").slice(0, 300),
+            nextHook: String(finaleSource.nextHook || "").slice(0, 240),
+            factCount: clamp(Math.round(Number(finaleSource.factCount) || 0), 0, 12),
+            rewriteCount: clamp(Math.round(Number(finaleSource.rewriteCount) || 0), 0, 12),
+            completedZones: clamp(Math.round(Number(finaleSource.completedZones) || 0), 0, 12),
+            completedTurn: Math.max(0, Math.round(Number(finaleSource.completedTurn) || 0)),
+            durationTurns: Math.max(0, Math.round(Number(finaleSource.durationTurns) || 0)),
+            shareText: String(finaleSource.shareText || "").slice(0, 2400),
+            echoIds: Array.isArray(finaleSource.echoIds)
+              ? finaleSource.echoIds.slice(0, 8).map((id) => String(id || "").slice(0, 120))
+              : []
+          }
+        : null
+    }];
+  }));
+}
+
+function normalizeMirrorRelay(savedRelay) {
+  const source = savedRelay && typeof savedRelay === "object" && !Array.isArray(savedRelay) ? savedRelay : {};
+  const allowedActions = new Set(["listen", "support", "cooperate", "meditate", "propose"]);
+  const allowedValues = new Set(["benevolence", "universalism", "self_direction"]);
+  const cleanText = (value, max) => String(value || "").replace(/[\u0000-\u001f\u007f]/g, " ").trim().slice(0, max);
+  const normalizeChoice = (choice) => ({
+    id: cleanText(choice?.id, 80),
+    label: cleanText(choice?.label, 120),
+    action: allowedActions.has(choice?.action) ? choice.action : "listen"
+  });
+  const normalizeCoPlay = (coPlay) => {
+    const item = coPlay && typeof coPlay === "object" && !Array.isArray(coPlay) ? coPlay : {};
+    const evidence = Array.isArray(item.evidence) ? item.evidence.slice(-24).map((entry) => ({
+      id: cleanText(entry?.id, 120),
+      actorId: cleanText(entry?.actorId, 120),
+      targetId: cleanText(entry?.targetId, 120),
+      type: allowedActions.has(entry?.type) ? entry.type : "listen",
+      text: cleanText(entry?.text, 360),
+      zone: cleanText(entry?.zone, 120),
+      turn: Math.max(0, Math.round(Number(entry?.turn) || 0)),
+      score: clamp(Math.round(Number(entry?.score) || 0), -20, 20)
+    })).filter((entry) => entry.id && entry.actorId) : [];
+    const outcomeSource = item.outcome && typeof item.outcome === "object" ? item.outcome : null;
+    return {
+      status: ["active", "resolved", "removed"].includes(item.status) ? item.status : "active",
+      startedTurn: Math.max(0, Math.round(Number(item.startedTurn) || 0)),
+      startHarmony: clamp(Math.round(Number(item.startHarmony) || 0), 0, 100),
+      startTension: clamp(Math.round(Number(item.startTension) || 0), 0, 100),
+      intervention: ["join", "space"].includes(item.intervention) ? item.intervention : "",
+      interventionTurn: Math.max(0, Math.round(Number(item.interventionTurn) || 0)),
+      witnessId: cleanText(item.witnessId, 120),
+      evidence,
+      completedTurn: Math.max(0, Math.round(Number(item.completedTurn) || 0)),
+      outcome: outcomeSource ? {
+        verdict: cleanText(outcomeSource.verdict, 260),
+        debateQuestion: cleanText(outcomeSource.debateQuestion, 260),
+        consequence: cleanText(outcomeSource.consequence, 260),
+        shareText: cleanText(outcomeSource.shareText, 2400)
+      } : null
+    };
+  };
+  const invites = Array.isArray(source.invites) ? source.invites.slice(-8).map((invite) => ({
+    kind: "invite",
+    version: Math.max(1, Math.round(Number(invite?.version) || 1)),
+    id: cleanText(invite?.id, 120),
+    threadId: cleanText(invite?.threadId, 80),
+    threadTitle: cleanText(invite?.threadTitle, 120),
+    inviterAlias: cleanText(invite?.inviterAlias, 20),
+    question: cleanText(invite?.question, 260),
+    hostChoiceId: cleanText(invite?.hostChoiceId, 80),
+    hostChoiceLabel: cleanText(invite?.hostChoiceLabel, 120),
+    choices: Array.isArray(invite?.choices) ? invite.choices.slice(0, 2).map(normalizeChoice) : [],
+    createdTurn: Math.max(0, Math.round(Number(invite?.createdTurn) || 0))
+  })).filter((invite) => invite.id && invite.question && invite.choices.length === 2) : [];
+  const responses = Array.isArray(source.responses) ? source.responses.slice(-12).map((response) => ({
+    kind: "response",
+    version: Math.max(1, Math.round(Number(response?.version) || 1)),
+    id: cleanText(response?.id, 120),
+    inviteId: cleanText(response?.inviteId, 120),
+    threadId: cleanText(response?.threadId, 80),
+    inviterAlias: cleanText(response?.inviterAlias, 20),
+    responderAlias: cleanText(response?.responderAlias, 20),
+    question: cleanText(response?.question, 260),
+    hostChoiceId: cleanText(response?.hostChoiceId, 80),
+    hostChoiceLabel: cleanText(response?.hostChoiceLabel, 120),
+    valueId: cleanText(response?.valueId, 40),
+    valueLabel: cleanText(response?.valueLabel, 80),
+    valueKey: allowedValues.has(response?.valueKey) ? response.valueKey : "benevolence",
+    choiceId: cleanText(response?.choiceId, 80),
+    choiceLabel: cleanText(response?.choiceLabel, 120),
+    action: allowedActions.has(response?.action) ? response.action : "listen",
+    avatarFrame: clamp(Math.round(Number(response?.avatarFrame) || 0), 0, 7),
+    consentState: ["saved", "joined", "removed"].includes(response?.consentState) ? response.consentState : "saved",
+    guestId: cleanText(response?.guestId, 120),
+    receivedTurn: Math.max(0, Math.round(Number(response?.receivedTurn) || 0)),
+    coPlay: normalizeCoPlay(response?.coPlay)
+  })).filter((response) => response.id && response.inviteId && response.responderAlias && response.choiceId) : [];
+  return { invites, responses };
 }
 
 function readPersistedInteriorExploration() {
@@ -1730,6 +2019,8 @@ function loadState() {
     firstLoop: null,
     causalGraph: null,
     interiorExploration: persistedInteriorExploration,
+    counterfactualEpisodes: {},
+    mirrorRelay: { invites: [], responses: [] },
     hasSeenTutorial: false,
     isFirstVisit: false,
     story: null,
@@ -1765,6 +2056,8 @@ function loadState() {
       interiorExploration: Object.keys(persistedInteriorExploration).length
         ? persistedInteriorExploration
         : normalizeInteriorExploration(saved.interiorExploration),
+      counterfactualEpisodes: normalizeCounterfactualEpisodes(saved.counterfactualEpisodes),
+      mirrorRelay: normalizeMirrorRelay(saved.mirrorRelay),
       hasSeenTutorial: !!saved.hasSeenTutorial,
       isFirstVisit: !!saved.isFirstVisit,
       story: saved.story && typeof saved.story === "object" ? saved.story : null,
@@ -1792,6 +2085,8 @@ function buildPersistSnapshot() {
     firstLoop: state.firstLoop || null,
     causalGraph: state.causalGraph || null,
     interiorExploration: normalizeInteriorExploration(state.interiorExploration),
+    counterfactualEpisodes: normalizeCounterfactualEpisodes(state.counterfactualEpisodes),
+    mirrorRelay: normalizeMirrorRelay(state.mirrorRelay),
     hasSeenTutorial: !!state.hasSeenTutorial,
     isFirstVisit: !!state.isFirstVisit,
     story: state.story || null,
@@ -4591,6 +4886,9 @@ function stepSociety() {
   applySocietyHomeostasis();
   recordSocietyMetricsHistory();
   advanceLifeWeekStage("society_step");
+  if (typeof mirrorRelayOnSocietyTurn === "function") {
+    try { mirrorRelayOnSocietyTurn(society); } catch (error) { console.warn("mirror relay turn upkeep skipped", error); }
+  }
   if (typeof renderSocietyViews === "function") renderSocietyViews();
   if (typeof renderSocietyEcho === "function") renderSocietyEcho();
   if (society.turn % 4 === 0) {

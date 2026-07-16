@@ -87,6 +87,105 @@ const INTERIOR_PLAYER_SPEED = 1.55;
 const INTERIOR_INTERACTION_RADIUS = 2.05;
 const INTERIOR_FALLBACK_PLAYER_RADIUS = 0.32;
 const INTERIOR_FALLBACK_CITIZEN_RADIUS = 0.28;
+const MIRROR_RELAY_PAYLOAD_VERSION = 1;
+const MIRROR_RELAY_URL_MAX_LENGTH = 4200;
+const MIRROR_RELAY_ALIAS_MAX = 20;
+const MIRROR_RELAY_MAX_RESPONSES = 12;
+const MIRROR_RELAY_GUEST_MISSION_TURNS = 16;
+const MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE = 8;
+const MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE = 16;
+const MIRROR_RELAY_COPLAY_MAX_EVIDENCE = 24;
+const EPISODE_TRAIL_FOCUS_MS = 7000;
+const EPISODE_TRAIL_ZOOM = 1.18;
+const EPISODE_EXPERIENCE_EVENT_LIMIT = 120;
+const MIRROR_RELAY_VALUES = [
+  { id: "heard", label: "被听见", valueKey: "benevolence", mbtiType: "INFJ", professionId: "reporter", professionName: "回声观察者", personaLabel: "回声观察者" },
+  { id: "respected", label: "被尊重", valueKey: "universalism", mbtiType: "ISFJ", professionId: "lawyer", professionName: "边界守望者", personaLabel: "边界守望者" },
+  { id: "authentic", label: "保持真实", valueKey: "self_direction", mbtiType: "INFP", professionId: "artist", professionName: "真实表达者", personaLabel: "真实表达者" }
+];
+const MIRROR_RELAY_PROMPTS = {
+  listen: {
+    question: "真正的倾听，是邀请一个人开口，还是允许对方继续沉默？",
+    choices: [
+      { id: "invite-voice", label: "邀请对方开口", action: "support" },
+      { id: "protect-silence", label: "允许对方继续沉默", action: "listen" }
+    ]
+  },
+  support: {
+    question: "真正的照顾，是立刻替对方分担，还是先问清楚对方需要什么？",
+    choices: [
+      { id: "step-in-now", label: "先接过眼前的事", action: "support" },
+      { id: "ask-before-help", label: "先问清楚再靠近", action: "listen" }
+    ]
+  },
+  cooperate: {
+    question: "真正的合作，是先达成一致，还是允许分歧留在共同的行动里？",
+    choices: [
+      { id: "agree-then-act", label: "先找出一致的部分", action: "cooperate" },
+      { id: "act-with-difference", label: "带着分歧一起行动", action: "propose" }
+    ]
+  },
+  meditate: {
+    question: "真正的修复，是现在把话说清楚，还是先替彼此保留一条边界？",
+    choices: [
+      { id: "repair-now", label: "现在把误解说清楚", action: "meditate" },
+      { id: "leave-boundary", label: "先替彼此留出边界", action: "listen" }
+    ]
+  },
+  propose: {
+    question: "真正的改变，是现在公开提出另一种可能，还是等更多人愿意加入？",
+    choices: [
+      { id: "speak-now", label: "现在把可能性放上桌面", action: "propose" },
+      { id: "wait-for-consent", label: "等更多人愿意再开始", action: "listen" }
+    ]
+  }
+};
+let mirrorRelayResumeSocietyAfterClose = false;
+let mirrorRelayCoPlayResumeSocietyAfterClose = false;
+let mirrorRelayCoPlayEscapeHandler = null;
+let episodeTrailFocusZoneId = "";
+let episodeTrailFocusUntil = 0;
+let episodeExperienceClock = { threadId: "", lastAt: 0, paused: true };
+
+const QUIET_PRESENCE_ZONE_ID = "quiet-nook";
+const QUIET_PRESENCE_RITUAL_ID = "quiet-presence";
+const QUIET_PRESENCE_EVIDENCE_LABEL = "被允许沉默的八秒";
+const QUIET_PRESENCE_REQUIRED_MS = 8000;
+const QUIET_PRESENCE_GAZE_TOLERANCE = 0.24;
+const QUIET_PRESENCE_MIN_DISTANCE = 1.05;
+const QUIET_PRESENCE_MAX_DISTANCE = 5.2;
+const SOCIAL_PARALLAX_ZONE_ID = "legal-court";
+const SOCIAL_PARALLAX_RITUAL_ID = "social-parallax";
+const SOCIAL_PARALLAX_LISTEN_MS = 2200;
+const SOCIAL_PARALLAX_CENTER_MS = 2600;
+const SOCIAL_PARALLAX_GAZE_TOLERANCE = 0.3;
+const SOCIAL_PARALLAX_MIN_DISTANCE = 0.9;
+const SOCIAL_PARALLAX_MAX_DISTANCE = 3.15;
+const SOCIAL_PARALLAX_CENTER_RADIUS = 0.72;
+const SOCIAL_PARALLAX_CENTER_EVIDENCE = "站在分歧之间的空位";
+const EMPATHY_CALIBRATION_ZONE_ID = "empathy-lab";
+const EMPATHY_CALIBRATION_RITUAL_ID = "empathy-calibration";
+const EMPATHY_CALIBRATION_POSITION_MS = 1200;
+const EMPATHY_CALIBRATION_CONFIRM_MS = 1800;
+const EMPATHY_CALIBRATION_POSITION_RADIUS = 0.78;
+const EMPATHY_CALIBRATION_GAZE_TOLERANCE = 0.34;
+const EMPATHY_CALIBRATION_EVIDENCE = "允许对方纠正我的理解";
+const EMPATHY_CALIBRATION_LENSES = [
+  { id: "stay", label: "先陪我一下", shortLabel: "陪伴", color: "#ff8b7a", targetDistance: 1.35 },
+  { id: "advise", label: "帮我想办法", shortLabel: "建议", color: "#ffe09a", targetDistance: 1.75 },
+  { id: "space", label: "先给我空间", shortLabel: "空间", color: "#6eb8ff", targetDistance: 2.3 }
+];
+const MEMORY_AUTHORIZATION_ZONE_ID = "story-archive";
+const MEMORY_AUTHORIZATION_RITUAL_ID = "memory-authorization";
+const MEMORY_AUTHORIZATION_HOLD_MS = 1800;
+const MEMORY_AUTHORIZATION_BOUNDARY_MS = 900;
+const MEMORY_AUTHORIZATION_POSITION_RADIUS = 0.76;
+const MEMORY_AUTHORIZATION_EVIDENCE = "按授权范围安放一段记忆";
+const MEMORY_AUTHORIZATION_SCOPES = [
+  { id: "private", label: "只属于 Ta", shortLabel: "私密", color: "#ff8b7a", level: 0 },
+  { id: "trusted", label: "只交给信任的人", shortLabel: "托付", color: "#ffe09a", level: 1 },
+  { id: "public", label: "允许城市记住", shortLabel: "公开", color: "#91ead1", level: 2 }
+];
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -1789,6 +1888,7 @@ function resetInMemoryGameState() {
   state.robotSignals = [];
   state.driftBottles = [];
   state.soulMatches = [];
+  state.mirrorRelay = { invites: [], responses: [] };
   state.firstSessionStage = "";
   state.firstSessionQuest = null;
   state.firstLoop = null;
@@ -2581,9 +2681,21 @@ function updateParticles() {
 // ── Citizen Interaction ──
 
 function showCitizenInteraction(citizen) {
-  const zone = getCitizenZone(state.society, citizen);
+  const indoorZoneId = citizenAnimations[citizen.id]?.indoor?.zoneId || "";
+  const zone = (interiorView && indoorZoneId === interiorView.zone?.id ? interiorView.zone : findRenderZoneById(indoorZoneId))
+    || getCitizenZone(state.society, citizen);
   const h = escapeHtml;
   const hook = getCitizenLifeHook(citizen);
+  const aftermathEcho = interiorView?.zone?.id
+    ? getInteriorAftermathEcho(interiorView.zone.id, { includeDiscussed: false })
+    : null;
+  const aftermathSection = aftermathEcho?.observerId === citizen.id ? `
+    <div class="detail-section interior-aftermath-detail">
+      <div class="detail-section-title">UNLIVED FUTURE · 没有发生的未来</div>
+      <p>${h(aftermathEcho.text.replace(/^.*?说：/, ""))}</p>
+      <button class="interaction-btn aftermath-listen-action" data-aftermath-witness="${h(aftermathEcho.id)}">听完这段余波</button>
+      <small>这不会改写已经发生的事实，只会让另一种理解留在关系记忆里。</small>
+    </div>` : "";
   // 心理动线:展示该分身最近的心理连锁步骤(评估→应对→场所→社交→涟漪)
   const chainEntries = (state.society.psychChain || [])
     .filter((entry) => !entry.actorName || entry.actorName === citizen.name)
@@ -2598,6 +2710,7 @@ function showCitizenInteraction(citizen) {
   showDetail(`
     <h3 style="color:${citizen.color}">${h(citizen.name)}</h3>
     <p>${h(citizen.role)} · ${h(citizen.profession)}</p>
+    ${aftermathSection}
     <div class="detail-section">
       <div class="detail-section-title">今天的生活线</div>
       <p><strong>${h(hook.status)}</strong> · ${h(hook.zoneName)}</p>
@@ -2730,6 +2843,23 @@ async function showStoryPanel() {
   const directorClosed = directorQuests.filter((quest) => quest.status === "closed").slice(-2).reverse();
   const active = (story.arcs || []).filter((arc) => arc.status === "active");
   const closed = (story.arcs || []).filter((arc) => arc.status === "closed").slice(-4).reverse();
+  const relayResponses = ensureMirrorRelayState().responses.slice().reverse();
+  const relayLedger = relayResponses.length ? `
+    <div class="detail-section mirror-relay-ledger">
+      <div class="detail-section-title">↔ 镜像接力 (${relayResponses.length})</div>
+      <p style="opacity:0.72">真实朋友的回答只有经过双方同意，才会成为可行动的访客 Agent。</p>
+      ${relayResponses.map((response) => {
+        const coPlay = ensureMirrorRelayCoPlay(response);
+        const relayStatus = response.consentState === "joined"
+          ? (coPlay.status === "resolved" ? "共演已完成" : `共演 ${Math.min(coPlay.evidence.length, MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE)}/${MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE}`)
+          : response.consentState === "removed" ? "已离场" : "仅保存";
+        return `<div class="mirror-relay-ledger-row">
+          <div><strong>${h(response.responderAlias)}</strong><small>${h(response.valueLabel)} · ${h(response.choiceLabel)}</small></div>
+          <span class="${h(response.consentState)}">${h(relayStatus)}</span>
+          ${response.consentState === "joined" ? `<button type="button" data-relay-coplay="${h(response.id)}">${coPlay.status === "resolved" ? "回看共同证据" : "进入四幕共演"}</button><button type="button" data-relay-remove="${h(response.id)}">让分身离场</button>` : ""}
+        </div>`;
+      }).join("")}
+    </div>` : "";
   const stageDots = (arc) => ["起", "承", "转", "合"].map((label, i) =>
     `<span style="opacity:${i <= arc.stage ? 1 : 0.25};font-weight:${i <= arc.stage ? 800 : 400}">${label}</span>`
   ).join(" → ");
@@ -2768,6 +2898,7 @@ async function showStoryPanel() {
     </div>
     ${directorActive ? directorQuestBlock(directorActive, true) : "<div class='detail-section'><p>剧情师正在观察关系、沉默和城市压力，下一幕不会凭空出现。</p></div>"}
     ${directorClosed.length ? `<div class="detail-section"><div class="detail-section-title">最近的自演化结局</div></div>${directorClosed.map((quest) => directorQuestBlock(quest)).join("")}` : ""}
+    ${relayLedger}
     <div class="detail-section">
       <div class="detail-section-title">进行中 (${active.length})</div>
       ${active.length ? "" : "<p>暂时风平浪静。让社会继续运转,故事会自己找上门。</p>"}
@@ -3244,6 +3375,11 @@ function buildModalHTML(type) {
           <p>${h(anonymizeLifeText(f.rawText).slice(0, 60))}${f.rawText.length > 60 ? "..." : ""}</p>
           <button class="modal-btn ghost compact" data-revoke-fragment="${h(f.id)}">撤回授权</button>
         </div>`).join("") || '<div class="reply-box"><p>当前没有已授权的人生片段。</p></div>'}
+      <div class="reply-box mirror-relay-safety">
+        <p class="reply-kicker">镜像接力</p>
+        <p>接力链接只包含昵称、当次问题、价值取向和回答；不会包含真实姓名、历史记忆或设备数据。链接校验和只能发现损坏，不能替代加密或身份认证。</p>
+        ${ensureMirrorRelayState().responses.filter((response) => response.consentState === "joined").map((response) => `<div class="mirror-relay-ledger-row"><div><strong>${h(response.responderAlias)}</strong><small>${h(response.choiceLabel)}</small></div><button type="button" data-relay-remove="${h(response.id)}">撤回访客分身</button></div>`).join("") || "<p style='opacity:0.72'>当前没有朋友分身在世界中活动。</p>"}
+      </div>
       <button class="modal-btn ghost" id="modalClearData" style="margin-top:16px;color:var(--accent-coral);border-color:var(--accent-coral);">清空本地数据</button>`;
 
     case "narrative-settings": {
@@ -5624,6 +5760,24 @@ function getInteriorBlueprint(zone) {
   const base = INTERIOR_BLUEPRINTS[key] || INTERIOR_BLUEPRINTS.home;
   const labels = profile?.labels || [];
   const storyClues = assignInteriorStoryClues(labels, profile?.clues || []);
+  const authoredPlacements = zone?.id === EMPATHY_CALIBRATION_ZONE_ID
+    ? [
+        { focal: false, worldX: -2.42, worldZ: -1.72, displayScale: 0.72 },
+        { worldX: -0.15, worldZ: -3.42, displayScale: 0.78 },
+        { worldX: 2.36, worldZ: -1.7, displayScale: 0.82 },
+        { worldX: 2.72, worldZ: 0.72, displayScale: 0.74 },
+        { worldX: -2.28, worldZ: 1.58, displayScale: 0.76 },
+        { worldX: 2.12, worldZ: 2.16, displayScale: 0.7 }
+      ]
+    : zone?.id === MEMORY_AUTHORIZATION_ZONE_ID
+      ? [
+          { worldX: -2.6, worldZ: -1.65, displayScale: 0.78 },
+          { worldX: 0, worldZ: -3.55, displayScale: 0.86 },
+          { worldX: 2.62, worldZ: -1.52, displayScale: 0.78 },
+          { focal: false, worldX: -2.3, worldZ: 1.72, displayScale: 0.78 },
+          { worldX: 2.34, worldZ: 1.74, displayScale: 0.76 }
+        ]
+      : [];
   const blueprint = {
     ...base,
     key,
@@ -5631,6 +5785,7 @@ function getInteriorBlueprint(zone) {
     profile,
     props: (base.props || []).map((prop, index) => ({
       ...prop,
+      ...(authoredPlacements[index] || {}),
       label: labels[index] || prop.label,
       storyClue: storyClues.get(index) || ""
     }))
@@ -5996,9 +6151,2026 @@ function getInteriorExplorationRecord(zoneId) {
     scenePlayed: false,
     sceneChoice: "",
     sceneOutcome: "",
-    sceneReward: null
+    sceneReward: null,
+    ritual: null,
+    counterfactual: null
   };
-  return state.interiorExploration[zoneId];
+  const record = state.interiorExploration[zoneId];
+  if (!("ritual" in record)) record.ritual = null;
+  if (zoneId === QUIET_PRESENCE_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object"
+      ? record.ritual
+      : {
+          id: QUIET_PRESENCE_RITUAL_ID,
+          status: "available",
+          witnessId: "",
+          startedTurn: 0,
+          completedTurn: 0,
+          progressMs: 0
+        };
+    record.ritual.id = QUIET_PRESENCE_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessId = String(record.ritual.witnessId || "").slice(0, 80);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.progressMs = clamp(Number(record.ritual.progressMs || 0), 0, QUIET_PRESENCE_REQUIRED_MS);
+    if (record.ritual.status === "complete") record.ritual.progressMs = QUIET_PRESENCE_REQUIRED_MS;
+  } else if (zoneId === SOCIAL_PARALLAX_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object" && record.ritual.id === SOCIAL_PARALLAX_RITUAL_ID
+      ? record.ritual
+      : {
+          id: SOCIAL_PARALLAX_RITUAL_ID,
+          status: "available",
+          witnessIds: [],
+          heardIds: [],
+          startedTurn: 0,
+          completedTurn: 0,
+          focusProgressMs: 0,
+          centerProgressMs: 0
+        };
+    record.ritual.id = SOCIAL_PARALLAX_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessIds = [...new Set((Array.isArray(record.ritual.witnessIds) ? record.ritual.witnessIds : [])
+      .map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 2);
+    record.ritual.heardIds = [...new Set((Array.isArray(record.ritual.heardIds) ? record.ritual.heardIds : [])
+      .map((id) => String(id || "").slice(0, 80)).filter((id) => record.ritual.witnessIds.includes(id)))].slice(0, 2);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.focusProgressMs = clamp(Number(record.ritual.focusProgressMs || 0), 0, SOCIAL_PARALLAX_LISTEN_MS);
+    record.ritual.centerProgressMs = clamp(Number(record.ritual.centerProgressMs || 0), 0, SOCIAL_PARALLAX_CENTER_MS);
+    if (record.ritual.status === "complete") {
+      record.ritual.centerProgressMs = SOCIAL_PARALLAX_CENTER_MS;
+    }
+  } else if (zoneId === EMPATHY_CALIBRATION_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object" && record.ritual.id === EMPATHY_CALIBRATION_RITUAL_ID
+      ? record.ritual
+      : {
+          id: EMPATHY_CALIBRATION_RITUAL_ID,
+          status: "available",
+          witnessId: "",
+          actualLensId: "",
+          attemptedLensIds: [],
+          confirmedLensId: "",
+          correctionCount: 0,
+          startedTurn: 0,
+          completedTurn: 0,
+          positionProgressMs: 0,
+          confirmProgressMs: 0
+        };
+    record.ritual.id = EMPATHY_CALIBRATION_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessId = String(record.ritual.witnessId || "").slice(0, 80);
+    record.ritual.actualLensId = EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === record.ritual.actualLensId)
+      ? record.ritual.actualLensId : "";
+    record.ritual.attemptedLensIds = [...new Set((Array.isArray(record.ritual.attemptedLensIds) ? record.ritual.attemptedLensIds : [])
+      .filter((id) => EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === id)))].slice(0, 3);
+    record.ritual.confirmedLensId = EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === record.ritual.confirmedLensId)
+      ? record.ritual.confirmedLensId : "";
+    record.ritual.correctionCount = clamp(Math.round(Number(record.ritual.correctionCount) || 0), 0, 9);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.positionProgressMs = clamp(Number(record.ritual.positionProgressMs || 0), 0, EMPATHY_CALIBRATION_POSITION_MS);
+    record.ritual.confirmProgressMs = clamp(Number(record.ritual.confirmProgressMs || 0), 0, EMPATHY_CALIBRATION_CONFIRM_MS);
+    if (record.ritual.status === "complete") record.ritual.confirmProgressMs = EMPATHY_CALIBRATION_CONFIRM_MS;
+  } else if (zoneId === MEMORY_AUTHORIZATION_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object" && record.ritual.id === MEMORY_AUTHORIZATION_RITUAL_ID
+      ? record.ritual
+      : {
+          id: MEMORY_AUTHORIZATION_RITUAL_ID,
+          status: "available",
+          witnessId: "",
+          memoryId: "",
+          authorizedScopeId: "",
+          attemptedScopeIds: [],
+          overstepCount: 0,
+          startedTurn: 0,
+          completedTurn: 0,
+          holdProgressMs: 0,
+          boundaryProgressMs: 0,
+          receipt: null
+        };
+    record.ritual.id = MEMORY_AUTHORIZATION_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessId = String(record.ritual.witnessId || "").slice(0, 80);
+    record.ritual.memoryId = String(record.ritual.memoryId || "").slice(0, 120);
+    record.ritual.authorizedScopeId = MEMORY_AUTHORIZATION_SCOPES.some((scope) => scope.id === record.ritual.authorizedScopeId)
+      ? record.ritual.authorizedScopeId : "";
+    record.ritual.attemptedScopeIds = [...new Set((Array.isArray(record.ritual.attemptedScopeIds) ? record.ritual.attemptedScopeIds : [])
+      .filter((id) => MEMORY_AUTHORIZATION_SCOPES.some((scope) => scope.id === id)))].slice(0, 3);
+    record.ritual.overstepCount = clamp(Math.round(Number(record.ritual.overstepCount) || 0), 0, 9);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.holdProgressMs = clamp(Number(record.ritual.holdProgressMs || 0), 0, MEMORY_AUTHORIZATION_HOLD_MS);
+    record.ritual.boundaryProgressMs = clamp(Number(record.ritual.boundaryProgressMs || 0), 0, MEMORY_AUTHORIZATION_BOUNDARY_MS);
+    record.ritual.receipt = record.ritual.receipt && typeof record.ritual.receipt === "object"
+      ? {
+          ownerId: String(record.ritual.receipt.ownerId || "").slice(0, 80),
+          memoryId: String(record.ritual.receipt.memoryId || "").slice(0, 120),
+          scopeId: MEMORY_AUTHORIZATION_SCOPES.some((scope) => scope.id === record.ritual.receipt.scopeId) ? record.ritual.receipt.scopeId : "",
+          turn: Math.max(0, Number(record.ritual.receipt.turn || 0))
+        }
+      : null;
+    if (record.ritual.status === "complete") record.ritual.holdProgressMs = MEMORY_AUTHORIZATION_HOLD_MS;
+  }
+  if (!("counterfactual" in record)) record.counterfactual = null;
+  return record;
+}
+
+function getQuietPresenceRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== QUIET_PRESENCE_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
+function getSocialParallaxRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== SOCIAL_PARALLAX_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
+function getEmpathyCalibrationRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== EMPATHY_CALIBRATION_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
+function getMemoryAuthorizationRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== MEMORY_AUTHORIZATION_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
+function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExplorationRecord(zone?.id)) {
+  const goal = Math.min(3, blueprint?.props?.length || 3);
+  const propLabels = new Set((blueprint?.props || []).map((prop) => prop.label));
+  const propCount = [...new Set(record.found || [])].filter((label) => propLabels.has(label)).length;
+  if (record.completed) return {
+    count: goal,
+    goal,
+    propCount,
+    ritualComplete: ![QUIET_PRESENCE_ZONE_ID, SOCIAL_PARALLAX_ZONE_ID, EMPATHY_CALIBRATION_ZONE_ID, MEMORY_AUTHORIZATION_ZONE_ID].includes(zone?.id)
+      || (zone?.id === QUIET_PRESENCE_ZONE_ID
+        ? getQuietPresenceRitual(zone.id)?.status === "complete"
+        : zone?.id === SOCIAL_PARALLAX_ZONE_ID
+          ? getSocialParallaxRitual(zone.id)?.status === "complete"
+          : zone?.id === EMPATHY_CALIBRATION_ZONE_ID
+            ? getEmpathyCalibrationRitual(zone.id)?.status === "complete"
+            : getMemoryAuthorizationRitual(zone.id)?.status === "complete")
+  };
+  if (zone?.id === SOCIAL_PARALLAX_ZONE_ID) {
+    const ritual = getSocialParallaxRitual(zone.id);
+    const heardCount = Math.min(2, ritual?.heardIds?.length || 0);
+    const ritualComplete = ritual?.status === "complete";
+    return {
+      count: Math.min(goal, heardCount + (ritualComplete ? 1 : 0)),
+      goal,
+      propCount,
+      ritualComplete
+    };
+  }
+  if (zone?.id === EMPATHY_CALIBRATION_ZONE_ID) {
+    const ritual = getEmpathyCalibrationRitual(zone.id);
+    const attempted = ritual?.attemptedLensIds?.length ? 1 : 0;
+    const confirmed = ritual?.confirmedLensId ? 1 : 0;
+    const ritualComplete = ritual?.status === "complete";
+    return {
+      count: Math.min(goal, attempted + confirmed + (ritualComplete ? 1 : 0)),
+      goal,
+      propCount,
+      ritualComplete
+    };
+  }
+  if (zone?.id === MEMORY_AUTHORIZATION_ZONE_ID) {
+    const ritual = getMemoryAuthorizationRitual(zone.id);
+    const offered = ritual?.memoryId ? 1 : 0;
+    const boundary = ritual?.attemptedScopeIds?.length ? 1 : 0;
+    const ritualComplete = ritual?.status === "complete";
+    return {
+      count: Math.min(goal, offered + boundary + (ritualComplete ? 1 : 0)),
+      goal,
+      propCount,
+      ritualComplete
+    };
+  }
+  if (zone?.id !== QUIET_PRESENCE_ZONE_ID) {
+    return { count: Math.min(propCount, goal), goal, propCount, ritualComplete: false };
+  }
+  const ritualComplete = getQuietPresenceRitual(zone.id)?.status === "complete";
+  return {
+    count: Math.min(goal, Math.min(2, propCount) + (ritualComplete ? 1 : 0)),
+    goal,
+    propCount,
+    ritualComplete
+  };
+}
+
+function getInteriorNextExplorablePropIndex(zone, blueprint, record) {
+  const props = blueprint?.props || [];
+  if (record.completed) return -1;
+  if (zone?.id === SOCIAL_PARALLAX_ZONE_ID) return -1;
+  if (zone?.id === EMPATHY_CALIBRATION_ZONE_ID) return -1;
+  if (zone?.id === MEMORY_AUTHORIZATION_ZONE_ID) return -1;
+  if (zone?.id === QUIET_PRESENCE_ZONE_ID) {
+    const progress = getInteriorExplorationProgress(zone, blueprint, record);
+    if (progress.propCount >= 2) return -1;
+  }
+  return props.findIndex((prop) => !record.found.includes(prop.label));
+}
+
+function stageQuietPresenceWitness(zone = interiorView?.zone) {
+  if (!zone || zone.id !== QUIET_PRESENCE_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getQuietPresenceRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return null;
+  const citizens = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let citizen = citizens.find((candidate) => candidate.id === ritual.witnessId);
+  if (!citizen) {
+    citizen = [...citizens].sort((a, b) => (
+      hashCommunitySeed(`${zone.id}:${a.id}`, QUIET_PRESENCE_RITUAL_ID)
+      - hashCommunitySeed(`${zone.id}:${b.id}`, QUIET_PRESENCE_RITUAL_ID)
+    ))[0] || null;
+    ritual.witnessId = citizen?.id || "";
+  }
+  if (!citizen) return null;
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  const changedRoom = canonical.indoor?.zoneId !== zone.id;
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (changedRoom) delete interiorAnimations[citizen.id];
+  interiorView.quietPresenceWitnessId = citizen.id;
+  interiorView.quietPresenceActive = ritual.status === "active";
+  return citizen;
+}
+
+function getInteriorVisualCameraPivot() {
+  const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+  if (Number.isFinite(camera?.pivotX) && Number.isFinite(camera?.pivotZ)) {
+    return { x: Number(camera.pivotX), z: Number(camera.pivotZ) };
+  }
+  return { x: Number(interiorOrbit?.x || 0), z: Number(interiorOrbit?.z || 0) };
+}
+
+function focusQuietPresenceWitness(citizen) {
+  if (!citizen || !interiorView) return false;
+  const ia = interiorAnimations[citizen.id];
+  if (!ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  const dx = ia.worldX - pivot.x;
+  const dz = ia.worldZ - pivot.z;
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(dx, -dz));
+  return true;
+}
+
+function startQuietPresenceRitual() {
+  if (interiorView?.zone?.id !== QUIET_PRESENCE_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(QUIET_PRESENCE_ZONE_ID);
+  const ritual = getQuietPresenceRitual(QUIET_PRESENCE_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const citizen = stageQuietPresenceWitness(interiorView.zone);
+  if (!citizen) return false;
+  const now = performance.now();
+  const alreadyActive = ritual.status === "active";
+  ritual.status = "active";
+  if (!alreadyActive) {
+    ritual.progressMs = 0;
+    ritual.startedTurn = Number(state.society?.turn || 0);
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.feedback = alreadyActive ? "重新找到 Ta，刚才的安静还在" : "先让 Ta 留在你的视野里";
+  interiorView.quietPresenceActive = true;
+  document.body.classList.add("quiet-presence-active");
+  const ia = interiorAnimations[citizen.id];
+  if (ia) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.quietPresenceHeld = true;
+  }
+  const focus = () => focusQuietPresenceWitness(citizen);
+  focus();
+  window.setTimeout(focus, 140);
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "ritual_started", {
+      zoneId: interiorView.zone.id,
+      detail: citizen.id
+    }, { onceKey: `ritual-start-${interiorView.zone.id}` });
+    addSpeechBubble(citizen.id, "我现在还不想解释。", "listen", { priority: true, duration: 5200 });
+  }
+  interiorView.discovery = {
+    title: `${citizen.name} · 不被催促的八秒`,
+    text: "让 Ta 留在视野里，不必靠得太近，也不要急着点击。镜头安静下来以后，时间才会开始。",
+    progress: "安静也是一种行动",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncQuietPresenceRitualHud(now);
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(now);
+  markRenderActive(QUIET_PRESENCE_REQUIRED_MS + 1800);
+  return true;
+}
+
+function completeQuietPresenceRitual(citizen) {
+  if (interiorView?.zone?.id !== QUIET_PRESENCE_ZONE_ID) return false;
+  const zone = interiorView.zone;
+  const blueprint = getInteriorBlueprint(zone);
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getQuietPresenceRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return false;
+  ritual.status = "complete";
+  ritual.progressMs = QUIET_PRESENCE_REQUIRED_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.feedback = "你没有要求沉默证明自己";
+  if (!record.found.includes(QUIET_PRESENCE_EVIDENCE_LABEL)) record.found.push(QUIET_PRESENCE_EVIDENCE_LABEL);
+  interiorView.quietPresenceActive = false;
+  document.body.classList.remove("quiet-presence-active");
+  const ia = citizen ? interiorAnimations[citizen.id] : null;
+  if (ia) delete ia.quietPresenceHeld;
+  const thread = getInteriorStoryThread(zone.id);
+  recordEpisodeExperienceEvent(thread?.id, "ritual_completed", {
+    zoneId: zone.id,
+    detail: citizen?.id || ritual.witnessId
+  }, { onceKey: `ritual-complete-${zone.id}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar && citizen) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `在${zone.name}，我陪${citizen.name}安静了八秒，没有要求沉默立刻变成解释。`, {
+      kind: QUIET_PRESENCE_RITUAL_ID,
+      importance: 8,
+      references: [zone.id, citizen.id, QUIET_PRESENCE_RITUAL_ID]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家在${zone.name}没有催我解释，只是留在一段安全的距离里。`, QUIET_PRESENCE_RITUAL_ID, 8, [zone.id, avatar.id]);
+    interactWithCitizen("listen", citizen.id);
+    addSpeechBubble(citizen.id, "谢谢你没有把沉默当成空白。", "support", { priority: true, duration: 7200 });
+  }
+  addEventLogEntry(`静默陪伴 · ${zone.name}`, `${citizen?.name || "有人"}被允许不解释，而这八秒也成为了关系证据。`, "listen", true, `quiet-presence-${zone.id}`);
+  interiorView.discovery = {
+    title: QUIET_PRESENCE_EVIDENCE_LABEL,
+    text: `${citizen?.name || "Ta"}没有说出原因，但房间记住了：你没有把沉默当成需要立刻解决的问题。`,
+    progress: `${getInteriorExplorationProgress(zone, blueprint, record).count}/3`,
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(zone, blueprint, record);
+  persistInteriorExploration();
+  persist();
+  syncQuietPresenceRitualHud(performance.now());
+  syncInteriorJourneyHud(blueprint);
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateQuietPresenceRitual(now) {
+  if (interiorView?.zone?.id !== QUIET_PRESENCE_ZONE_ID) return null;
+  const ritual = getQuietPresenceRitual(QUIET_PRESENCE_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncQuietPresenceRitualHud(now);
+    return ritual;
+  }
+  const citizen = stageQuietPresenceWitness(interiorView.zone);
+  const ia = citizen ? interiorAnimations[citizen.id] : null;
+  if (!citizen || !ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) {
+    ritual.feedback = "正在等 Ta 在房间里站稳";
+    syncQuietPresenceRitualHud(now);
+    markRenderActive(480);
+    return ritual;
+  }
+  ia.quietPresenceHeld = true;
+  ia.path = [];
+  ia.pathIndex = 0;
+  ia.targetWorldX = ia.worldX;
+  ia.targetWorldZ = ia.worldZ;
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dx = ia.worldX - playerX;
+  const dz = ia.worldZ - playerZ;
+  const distance = Math.hypot(dx, dz);
+  const visualPivot = getInteriorVisualCameraPivot();
+  const targetYaw = wrapInteriorAngle(Math.atan2(ia.worldX - visualPivot.x, -(ia.worldZ - visualPivot.z)));
+  const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)))
+    + Math.abs(Number(interiorOrbit.pitch || 0.58) - Number(ritual.lastPitch || 0.58)) * 0.75;
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX || playerX), playerZ - Number(ritual.lastPlayerZ || playerZ));
+  const aligned = gazeDelta <= QUIET_PRESENCE_GAZE_TOLERANCE;
+  const respectfulDistance = distance >= QUIET_PRESENCE_MIN_DISTANCE && distance <= QUIET_PRESENCE_MAX_DISTANCE;
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.008 && playerDelta < 0.012;
+  if (aligned && respectfulDistance && still) {
+    ritual.progressMs = clamp(Number(ritual.progressMs || 0) + dt, 0, QUIET_PRESENCE_REQUIRED_MS);
+    ritual.feedback = ritual.progressMs < 2000
+      ? "时间开始了，不需要做得更好"
+      : ritual.progressMs < 6000 ? "房间正在把安静还给 Ta" : "再留一会儿，别急着得到答案";
+  } else {
+    ritual.progressMs = clamp(Number(ritual.progressMs || 0) - dt * 0.22, 0, QUIET_PRESENCE_REQUIRED_MS);
+    ritual.feedback = !respectfulDistance
+      ? distance < QUIET_PRESENCE_MIN_DISTANCE ? "退后一点，让距离也成为边界" : "再靠近一点，别把陪伴变成远观"
+      : !aligned ? "让 Ta 回到视野中央" : "镜头可以慢慢停下来";
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  ritual.gazeDelta = gazeDelta;
+  ritual.distance = distance;
+  ritual.aligned = aligned;
+  ritual.still = still;
+  syncQuietPresenceRitualHud(now);
+  if (ritual.progressMs >= QUIET_PRESENCE_REQUIRED_MS) completeQuietPresenceRitual(citizen);
+  else markRenderActive(480);
+  return ritual;
+}
+
+function syncQuietPresenceRitualHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("quietPresenceRitual");
+  const ritual = getQuietPresenceRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("quiet-presence-active");
+    panel?.remove();
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "quietPresenceRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const citizen = state.society?.citizens?.find((item) => item.id === ritual.witnessId);
+  const progress = clamp(Number(ritual.progressMs || 0) / QUIET_PRESENCE_REQUIRED_MS, 0, 1);
+  const breath = Math.min(4, Math.floor(Number(ritual.progressMs || 0) / (QUIET_PRESENCE_REQUIRED_MS / 4)) + 1);
+  const signature = `${citizen?.id || ""}|${Math.floor(progress * 40)}|${ritual.feedback}|${ritual.aligned}|${ritual.still}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--quiet-presence-progress", `${Math.round(progress * 100)}%`);
+  panel.classList.toggle("is-settled", !!ritual.aligned && !!ritual.still);
+  panel.innerHTML = `
+    <span>QUIET PRESENCE · 静默陪伴</span>
+    <strong>允许 ${escapeHtml(citizen?.name || "Ta")} 不解释</strong>
+    <div class="quiet-presence-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || "让镜头慢慢停下来")}</p>
+    <small>第 ${breath}/4 次呼吸 · ${Math.ceil((QUIET_PRESENCE_REQUIRED_MS - Number(ritual.progressMs || 0)) / 1000)} 秒</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeQuietPresence = {
+  getState: () => {
+    const ritual = getQuietPresenceRitual();
+    return ritual ? { ...ritual } : null;
+  },
+  start: startQuietPresenceRitual
+};
+
+function getSocialParallaxAxis(citizen) {
+  const bigFive = citizen?.bigFive || {};
+  const values = citizen?.values || {};
+  return clamp(
+    Number(bigFive.openness ?? 0.5) * 0.34
+      + Number(bigFive.agreeableness ?? 0.5) * 0.26
+      + Number(values.self_direction ?? 0.5) * 0.24
+      - Number(values.security ?? 0.5) * 0.16,
+    -0.16,
+    0.84
+  );
+}
+
+function getSocialParallaxTestimony(citizen, index) {
+  const energy = Number(citizen?.energy || 50);
+  const trust = Number(citizen?.trust || 50);
+  if (index === 0) {
+    return trust < 55
+      ? "我怕大家太快相信一个完整的结论，最后又是受伤的人负责证明自己。"
+      : "我需要边界先被说清楚。没有人应该为了和解，交出自己还没准备好的部分。";
+  }
+  return energy < 48
+    ? "我也怕拖得太久。等待并不总是中立，它有时只是让最累的人继续承担。"
+    : "我需要决定仍然能够向前。一直把复杂留在桌上，也可能让已经发生的伤害继续。";
+}
+
+function stageSocialParallaxWitnesses(zone = interiorView?.zone) {
+  if (!zone || zone.id !== SOCIAL_PARALLAX_ZONE_ID || interiorView?.zone?.id !== zone.id) return [];
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getSocialParallaxRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return [];
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let witnesses = ritual.witnessIds
+    .map((id) => alive.find((citizen) => citizen.id === id))
+    .filter(Boolean);
+  if (witnesses.length < 2) {
+    witnesses = [...alive].sort((a, b) => {
+      const axisDelta = getSocialParallaxAxis(a) - getSocialParallaxAxis(b);
+      return Math.abs(axisDelta) > 0.0001
+        ? axisDelta
+        : hashCommunitySeed(`${zone.id}:${a.id}`, SOCIAL_PARALLAX_RITUAL_ID)
+          - hashCommunitySeed(`${zone.id}:${b.id}`, SOCIAL_PARALLAX_RITUAL_ID);
+    });
+    witnesses = witnesses.length > 1 ? [witnesses[0], witnesses[witnesses.length - 1]] : witnesses;
+    ritual.witnessIds = witnesses.map((citizen) => citizen.id);
+    ritual.heardIds = ritual.heardIds.filter((id) => ritual.witnessIds.includes(id));
+  }
+  const now = performance.now();
+  witnesses.forEach((citizen) => {
+    const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+    const changedRoom = canonical.indoor?.zoneId !== zone.id;
+    canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+    if (changedRoom) delete interiorAnimations[citizen.id];
+  });
+  interiorView.socialParallaxWitnessIds = witnesses.map((citizen) => citizen.id);
+  interiorView.socialParallaxActive = ritual.status === "active";
+  return witnesses;
+}
+
+function holdSocialParallaxActors(zone, entries = []) {
+  if (zone?.id !== SOCIAL_PARALLAX_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const ritual = getSocialParallaxRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return null;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const desiredPoints = [{ x: -1.72, z: 1.28 }, { x: 1.72, z: 1.28 }];
+  const staged = [];
+  const positions = [];
+  ritual.witnessIds.forEach((id, index) => {
+    const ia = interiorAnimations[id];
+    if (!ia) return;
+    let point = interiorView.socialParallaxPositions?.witnesses?.[index];
+    if (!point) {
+      const desired = desiredPoints[index] || desiredPoints[0];
+      point = physics?.findNearestWalkable && world
+        ? physics.findNearestWalkable(world, desired, citizenRadius, { dynamic: staged, selfId: id })
+        : desired;
+    }
+    ia.worldX = point.x;
+    ia.worldZ = point.z;
+    ia.targetWorldX = point.x;
+    ia.targetWorldZ = point.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.socialParallaxHeld = true;
+    ia.state = "idle";
+    ia.facing = index === 0 ? 1 : -1;
+    staged.push({ id, x: point.x, z: point.z, radius: citizenRadius });
+    positions.push({ x: point.x, z: point.z });
+    const entry = entries.find((candidate) => candidate.id === id);
+    if (entry) {
+      entry.worldX = point.x;
+      entry.worldZ = point.z;
+      entry.moveAnim = ia;
+      entry.state = "idle";
+    }
+  });
+  const desiredCenter = { x: 0, z: 1.28 };
+  const center = interiorView.socialParallaxPositions?.center || (physics?.findNearestWalkable && world
+    ? physics.findNearestWalkable(world, desiredCenter, Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS), {
+        dynamic: staged,
+        selfId: "player"
+      })
+    : desiredCenter);
+  interiorView.socialParallaxPositions = { witnesses: positions, center: { x: center.x, z: center.z } };
+  return interiorView.socialParallaxPositions;
+}
+
+function focusSocialParallaxTarget() {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return false;
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual) return false;
+  const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+  const ia = nextId ? interiorAnimations[nextId] : null;
+  const point = ia && Number.isFinite(ia.worldX)
+    ? { x: ia.worldX, z: ia.worldZ }
+    : interiorView.socialParallaxPositions?.center;
+  if (!point) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  const dx = point.x - pivot.x;
+  const dz = point.z - pivot.z;
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(dx, -dz));
+  ritual.focusedTargetId = nextId || "center";
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastUpdatedAt = performance.now();
+  markRenderActive(1800);
+  return true;
+}
+
+function startSocialParallaxRitual() {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID);
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const witnesses = stageSocialParallaxWitnesses(interiorView.zone);
+  if (witnesses.length < 2) return false;
+  const alreadyActive = ritual.status === "active";
+  const now = performance.now();
+  ritual.status = "active";
+  if (!alreadyActive) {
+    ritual.startedTurn = Number(state.society?.turn || 0);
+    ritual.focusProgressMs = 0;
+    ritual.centerProgressMs = 0;
+    ritual.focusedTargetId = "";
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  ritual.feedback = ritual.heardIds.length >= 2
+    ? "走进两份证词之间，不必替它们和解"
+    : alreadyActive ? "刚才听见的版本仍然保留" : "先走向第一种说法";
+  interiorView.socialParallaxActive = true;
+  document.body.classList.add("social-parallax-active");
+  const focus = () => focusSocialParallaxTarget();
+  focus();
+  window.setTimeout(focus, 160);
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "parallax_started", {
+      zoneId: interiorView.zone.id,
+      detail: ritual.witnessIds.join("|")
+    }, { onceKey: `parallax-start-${interiorView.zone.id}` });
+    const first = witnesses.find((citizen) => !ritual.heardIds.includes(citizen.id)) || witnesses[0];
+    const firstIndex = ritual.witnessIds.indexOf(first.id);
+    addSpeechBubble(first.id, getSocialParallaxTestimony(first, firstIndex), "listen", { priority: true, duration: 7200 });
+  }
+  interiorView.discovery = {
+    title: "证词视差 · 同一件事有两个真实位置",
+    text: "分别走到两个人身边听完，不急着判断谁更正确。听见两边以后，房间会留下第三个位置。",
+    progress: "移动也是推理",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncSocialParallaxHud(now);
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(now);
+  markRenderActive(12000);
+  return true;
+}
+
+function completeSocialParallaxPerspective(citizen, index) {
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || !citizen || ritual.heardIds.includes(citizen.id)) return false;
+  ritual.heardIds.push(citizen.id);
+  ritual.focusProgressMs = 0;
+  const record = getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID);
+  const evidence = `听见${citizen.name}的版本`;
+  if (!record.found.includes(evidence)) record.found.push(evidence);
+  const thread = getInteriorStoryThread(SOCIAL_PARALLAX_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "perspective_heard", {
+    zoneId: SOCIAL_PARALLAX_ZONE_ID,
+    detail: `${index}:${citizen.id}`
+  }, { onceKey: `parallax-heard-${SOCIAL_PARALLAX_ZONE_ID}-${citizen.id}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `我在公议庭走到${citizen.name}所在的位置，听见了 Ta 的版本，没有立刻把它压成结论。`, {
+      kind: SOCIAL_PARALLAX_RITUAL_ID,
+      importance: 7,
+      references: [SOCIAL_PARALLAX_ZONE_ID, citizen.id, SOCIAL_PARALLAX_RITUAL_ID]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家走到我这一边听完了证词，但没有把我的说法当成唯一真相。`, SOCIAL_PARALLAX_RITUAL_ID, 7, [SOCIAL_PARALLAX_ZONE_ID, avatar.id]);
+    const result = resolveAction({ actorId: avatar.id, type: "listen", targetId: citizen.id });
+    if (result) {
+      applySocietyActionResult(result, "，由证词视差中的具身倾听触发。");
+      recordAgentOutbox(state.society, avatar, result, getCitizenAgentContext(state.society, avatar));
+    }
+  }
+  addSpeechBubble(citizen.id, "谢谢你听见我的位置，而不只是我的结论。", "listen", { priority: true, duration: 5200 });
+  const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+  if (nextId) {
+    const nextCitizen = state.society?.citizens?.find((item) => item.id === nextId);
+    ritual.feedback = `现在走向 ${nextCitizen?.name || "另一边"}，让第二种真实出现`;
+    window.setTimeout(() => {
+      focusSocialParallaxTarget();
+      if (nextCitizen) addSpeechBubble(nextCitizen.id, getSocialParallaxTestimony(nextCitizen, ritual.witnessIds.indexOf(nextId)), "listen", { priority: true, duration: 7200 });
+    }, 320);
+  } else {
+    ritual.feedback = "两边都被听见了；现在站进它们之间的空位";
+    window.setTimeout(focusSocialParallaxTarget, 320);
+  }
+  persistInteriorExploration();
+  persist();
+  return true;
+}
+
+function completeSocialParallaxRitual() {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return false;
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  const record = getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || ritual.status === "complete") return false;
+  ritual.status = "complete";
+  ritual.centerProgressMs = SOCIAL_PARALLAX_CENTER_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.feedback = "你没有替分歧制造一个假装完整的答案";
+  if (!record.found.includes(SOCIAL_PARALLAX_CENTER_EVIDENCE)) record.found.push(SOCIAL_PARALLAX_CENTER_EVIDENCE);
+  interiorView.socialParallaxActive = false;
+  document.body.classList.remove("social-parallax-active");
+  ritual.witnessIds.forEach((id) => {
+    const ia = interiorAnimations[id];
+    if (ia) delete ia.socialParallaxHeld;
+  });
+  const thread = getInteriorStoryThread(SOCIAL_PARALLAX_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "parallax_completed", {
+    zoneId: SOCIAL_PARALLAX_ZONE_ID,
+    detail: ritual.witnessIds.join("|")
+  }, { onceKey: `parallax-complete-${SOCIAL_PARALLAX_ZONE_ID}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", "我在公议庭先后站到两种证词旁边，最后站进分歧之间，没有用选边代替理解。", {
+      kind: SOCIAL_PARALLAX_RITUAL_ID,
+      importance: 9,
+      references: [SOCIAL_PARALLAX_ZONE_ID, ...ritual.witnessIds, SOCIAL_PARALLAX_RITUAL_ID]
+    });
+  }
+  addEventLogEntry("证词视差 · 公议庭", "两种互相冲突的真实被保留，而你用自己的站位承担了它们之间的张力。", "meditate", true, `social-parallax-${SOCIAL_PARALLAX_ZONE_ID}`);
+  interiorView.discovery = {
+    title: SOCIAL_PARALLAX_CENTER_EVIDENCE,
+    text: "你没有选出一个赢家。房间记住的是：两个人都不必消失，分歧也可以被共同承担。",
+    progress: "3/3",
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  persistInteriorExploration();
+  persist();
+  syncSocialParallaxHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateSocialParallaxRitual(now) {
+  if (interiorView?.zone?.id !== SOCIAL_PARALLAX_ZONE_ID) return null;
+  const ritual = getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncSocialParallaxHud(now);
+    return ritual;
+  }
+  stageSocialParallaxWitnesses(interiorView.zone);
+  const positions = holdSocialParallaxActors(interiorView.zone);
+  if (!positions || positions.witnesses.length < 2) {
+    ritual.feedback = "正在让两位讲述者在房间里站稳";
+    syncSocialParallaxHud(now);
+    markRenderActive(480);
+    return ritual;
+  }
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)));
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX ?? playerX), playerZ - Number(ritual.lastPlayerZ ?? playerZ));
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.01 && playerDelta < 0.014;
+  const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+  if (nextId) {
+    const index = ritual.witnessIds.indexOf(nextId);
+    const citizen = state.society?.citizens?.find((item) => item.id === nextId);
+    const ia = interiorAnimations[nextId];
+    const dx = Number(ia?.worldX || 0) - playerX;
+    const dz = Number(ia?.worldZ || 0) - playerZ;
+    const distance = Math.hypot(dx, dz);
+    const visualPivot = getInteriorVisualCameraPivot();
+    const targetYaw = wrapInteriorAngle(Math.atan2(Number(ia?.worldX || 0) - visualPivot.x, -(Number(ia?.worldZ || 0) - visualPivot.z)));
+    const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
+    const aligned = gazeDelta <= SOCIAL_PARALLAX_GAZE_TOLERANCE;
+    const listeningDistance = distance >= SOCIAL_PARALLAX_MIN_DISTANCE && distance <= SOCIAL_PARALLAX_MAX_DISTANCE;
+    const valid = aligned && listeningDistance && still;
+    if (ritual.focusedTargetId !== nextId) focusSocialParallaxTarget();
+    ritual.focusProgressMs = clamp(Number(ritual.focusProgressMs || 0) + dt * (valid ? 1 : -0.32), 0, SOCIAL_PARALLAX_LISTEN_MS);
+    ritual.phase = index === 0 ? "side-a" : "side-b";
+    ritual.targetId = nextId;
+    ritual.distance = distance;
+    ritual.aligned = aligned;
+    ritual.still = still;
+    ritual.feedback = valid
+      ? `正在从 ${citizen?.name || "Ta"} 的位置听这件事`
+      : !listeningDistance
+        ? distance < SOCIAL_PARALLAX_MIN_DISTANCE ? "退后半步，给证词留下边界" : `走近 ${citizen?.name || "讲述者"}，让声音不只是远景`
+        : !aligned ? `让 ${citizen?.name || "讲述者"} 留在视野中央` : "停下来，听完这一种版本";
+    if (ritual.focusProgressMs >= SOCIAL_PARALLAX_LISTEN_MS) completeSocialParallaxPerspective(citizen, index);
+  } else {
+    const center = positions.center;
+    const distance = Math.hypot(center.x - playerX, center.z - playerZ);
+    const inside = distance <= SOCIAL_PARALLAX_CENTER_RADIUS;
+    const valid = inside && still;
+    if (ritual.focusedTargetId !== "center") focusSocialParallaxTarget();
+    ritual.centerProgressMs = clamp(Number(ritual.centerProgressMs || 0) + dt * (valid ? 1 : -0.28), 0, SOCIAL_PARALLAX_CENTER_MS);
+    ritual.phase = "center";
+    ritual.targetId = "";
+    ritual.distance = distance;
+    ritual.aligned = inside;
+    ritual.still = still;
+    ritual.feedback = valid
+      ? "两种真实都还在；你不需要立刻消除它们"
+      : inside ? "在这个空位里停一下，不必选边" : "走进两份证词之间发光的空位";
+    if (ritual.centerProgressMs >= SOCIAL_PARALLAX_CENTER_MS) completeSocialParallaxRitual();
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  syncSocialParallaxHud(now);
+  markRenderActive(480);
+  return ritual;
+}
+
+function syncSocialParallaxHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("socialParallaxRitual");
+  const ritual = getSocialParallaxRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("social-parallax-active");
+    panel?.remove();
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "socialParallaxRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const witnesses = ritual.witnessIds.map((id) => state.society?.citizens?.find((item) => item.id === id)).filter(Boolean);
+  const centerPhase = ritual.heardIds.length >= 2;
+  const activeWitness = witnesses.find((citizen) => citizen.id === ritual.targetId) || null;
+  const activeWitnessIndex = activeWitness ? ritual.witnessIds.indexOf(activeWitness.id) : -1;
+  const testimony = centerPhase
+    ? "一个人怕和解太快，另一个人怕决定太慢。两种担心都不该被删除。"
+    : activeWitness ? getSocialParallaxTestimony(activeWitness, activeWitnessIndex) : "先走到一个人的位置，再理解 Ta 看见了什么。";
+  const progressMs = centerPhase ? Number(ritual.centerProgressMs || 0) : Number(ritual.focusProgressMs || 0);
+  const requiredMs = centerPhase ? SOCIAL_PARALLAX_CENTER_MS : SOCIAL_PARALLAX_LISTEN_MS;
+  const progress = clamp(progressMs / requiredMs, 0, 1);
+  const signature = `${ritual.phase}|${ritual.heardIds.join("|")}|${Math.floor(progress * 40)}|${ritual.feedback}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--social-parallax-progress", `${Math.round(progress * 100)}%`);
+  panel.classList.toggle("is-centered", centerPhase && !!ritual.aligned && !!ritual.still);
+  panel.innerHTML = `
+    <span>SOCIAL PARALLAX · 证词视差</span>
+    <strong>${centerPhase ? "站进两种真实之间" : "先听完，再移动"}</strong>
+    <div class="social-parallax-sides">${witnesses.map((citizen, index) => {
+      const heard = ritual.heardIds.includes(citizen.id);
+      const active = ritual.targetId === citizen.id;
+      return `<div class="${heard ? "is-heard" : ""} ${active ? "is-active" : ""}"><i>${heard ? "✓" : index === 0 ? "A" : "B"}</i><span>${escapeHtml(citizen.name)}<small>${index === 0 ? "边界的版本" : "行动的版本"}</small></span></div>`;
+    }).join("")}</div>
+    <blockquote>“${escapeHtml(testimony)}”</blockquote>
+    <div class="social-parallax-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || "走向第一种说法")}</p>
+    <small>${centerPhase ? "第三个位置不属于任何一边" : `${Math.ceil((requiredMs - progressMs) / 1000)} 秒后听见这一侧`}</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeSocialParallax = {
+  getState: () => {
+    const ritual = getSocialParallaxRitual();
+    if (!ritual) return null;
+    const nextId = ritual.witnessIds.find((id) => !ritual.heardIds.includes(id));
+    const ia = nextId ? interiorAnimations[nextId] : null;
+    return {
+      ...ritual,
+      target: ia && Number.isFinite(ia.worldX)
+        ? { kind: "witness", id: nextId, x: ia.worldX, z: ia.worldZ }
+        : interiorView?.socialParallaxPositions?.center
+          ? { kind: "center", ...interiorView.socialParallaxPositions.center }
+          : null
+    };
+  },
+  start: startSocialParallaxRitual,
+  focus: focusSocialParallaxTarget
+};
+
+function drawSocialParallaxSpatialCue(ctx, W, H, now, entries, ritual) {
+  if (!ritual || ritual.status !== "active") return;
+  const witnesses = ritual.witnessIds
+    .map((id) => entries.find((entry) => entry.id === id))
+    .filter((entry) => entry && entry.visible !== false);
+  if (witnesses.length === 2) {
+    ctx.save();
+    const gradient = ctx.createLinearGradient(witnesses[0].x, witnesses[0].y, witnesses[1].x, witnesses[1].y);
+    gradient.addColorStop(0, "rgba(255, 139, 122, 0.62)");
+    gradient.addColorStop(0.48, "rgba(255, 247, 223, 0.16)");
+    gradient.addColorStop(0.52, "rgba(255, 247, 223, 0.16)");
+    gradient.addColorStop(1, "rgba(110, 184, 255, 0.62)");
+    ctx.strokeStyle = gradient;
+    ctx.lineWidth = 2;
+    ctx.setLineDash([7, 8]);
+    ctx.lineDashOffset = -now * 0.012;
+    ctx.beginPath();
+    ctx.moveTo(witnesses[0].x, witnesses[0].y + 8);
+    ctx.lineTo(witnesses[1].x, witnesses[1].y + 8);
+    ctx.stroke();
+    ctx.restore();
+  }
+  if (ritual.heardIds.length < 2 || !interiorView?.socialParallaxPositions?.center) return;
+  const projection = window.MirrorLifeInterior3D?.projectWorldPoints?.([{
+    id: "social-parallax-center",
+    worldX: interiorView.socialParallaxPositions.center.x,
+    worldZ: interiorView.socialParallaxPositions.center.z,
+    worldY: 0.06
+  }], W, H)?.[0];
+  if (!projection?.visible) return;
+  const pulse = 0.5 + Math.sin(now * 0.006) * 0.5;
+  const progress = clamp(Number(ritual.centerProgressMs || 0) / SOCIAL_PARALLAX_CENTER_MS, 0, 1);
+  ctx.save();
+  ctx.translate(projection.x, projection.y);
+  ctx.strokeStyle = `rgba(255, 224, 154, ${0.68 + pulse * 0.24})`;
+  ctx.fillStyle = `rgba(255, 224, 154, ${0.08 + progress * 0.15})`;
+  ctx.lineWidth = 2.4 + progress * 2;
+  ctx.setLineDash([9, 6]);
+  ctx.lineDashOffset = -now * 0.015;
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 54 + pulse * 7, 18 + pulse * 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+  roundRect(ctx, -51, -42, 102, 22, 11);
+  ctx.fill();
+  ctx.fillStyle = "#ffe09a";
+  ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText("分歧之间的空位", 0, -31);
+  ctx.restore();
+}
+
+function getEmpathyLens(id) {
+  return EMPATHY_CALIBRATION_LENSES.find((lens) => lens.id === id) || EMPATHY_CALIBRATION_LENSES[0];
+}
+
+function getEmpathyNeedScores(citizen) {
+  const needs = citizen?.needs || {};
+  const bigFive = citizen?.bigFive || {};
+  const coping = citizen?.coping || {};
+  const interpersonal = citizen?.interpersonal || {};
+  const energy = clamp(Number(citizen?.energy ?? 50) / 100, 0, 1);
+  const mood = clamp(Number(citizen?.mood ?? 50) / 100, 0, 1);
+  const trust = clamp(Number(citizen?.trust ?? 50) / 100, 0, 1);
+  return {
+    stay: clamp(
+      (1 - Number(needs.relatedness ?? 0.5)) * 0.3
+      + (1 - Number(needs.belonging ?? 0.5)) * 0.22
+      + Number(interpersonal.warmth ?? bigFive.agreeableness ?? 0.5) * 0.18
+      + Number(coping.socialSeeking ?? 0.5) * 0.18
+      + (1 - mood) * 0.12,
+      0,
+      1
+    ),
+    advise: clamp(
+      (1 - Number(needs.competence ?? 0.5)) * 0.34
+      + Number(coping.problemFocused ?? 0.5) * 0.26
+      + trust * 0.18
+      + Number(bigFive.conscientiousness ?? 0.5) * 0.12
+      + (1 - mood) * 0.1,
+      0,
+      1
+    ),
+    space: clamp(
+      (1 - Number(needs.safety ?? 0.5)) * 0.28
+      + (1 - energy) * 0.22
+      + (1 - Number(needs.autonomy ?? 0.5)) * 0.18
+      + Number(coping.avoidant ?? 0.5) * 0.22
+      + Number(bigFive.neuroticism ?? 0.5) * 0.1,
+      0,
+      1
+    )
+  };
+}
+
+function getEmpathyActualLensId(citizen) {
+  const scores = getEmpathyNeedScores(citizen);
+  return Object.entries(scores).sort((a, b) => b[1] - a[1])[0]?.[0] || "stay";
+}
+
+function getEmpathyNeedMargin(citizen) {
+  const sorted = Object.values(getEmpathyNeedScores(citizen)).sort((a, b) => b - a);
+  return Number(sorted[0] || 0) - Number(sorted[1] || 0);
+}
+
+function getEmpathyCorrectionLine(actualLensId, attemptedLensId) {
+  const lines = {
+    stay: attemptedLensId === "space"
+      ? "我不是想一个人消失。我只是需要有人先陪我待一会儿。"
+      : "我知道你想帮忙，但现在先别替我找办法，陪我一下就好。",
+    advise: attemptedLensId === "stay"
+      ? "谢谢你留下，但我现在更需要一起把下一步想清楚。"
+      : "我需要的不是被放着不管，而是有人和我一起拆开这个问题。",
+    space: attemptedLensId === "stay"
+      ? "我知道你在关心我，但现在靠得太近会让我更难说话。"
+      : "先不用替我解决。给我一点空间，我会告诉你什么时候可以继续。"
+  };
+  return lines[actualLensId] || lines.stay;
+}
+
+function getEmpathyConfirmationLine(actualLensId) {
+  return {
+    stay: "对，就是这样。先在这里，不急着把我变好。",
+    advise: "对，我想和你一起看清下一步，不是把决定交给你。",
+    space: "对，留一点距离以后，我反而更能感觉到你还在。"
+  }[actualLensId] || "对，这次你先问了我。";
+}
+
+function stageEmpathyCalibrationWitness(zone = interiorView?.zone) {
+  if (!zone || zone.id !== EMPATHY_CALIBRATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getEmpathyCalibrationRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return null;
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let citizen = alive.find((candidate) => candidate.id === ritual.witnessId);
+  if (!citizen) {
+    citizen = [...alive].sort((a, b) => {
+      const marginDelta = getEmpathyNeedMargin(b) - getEmpathyNeedMargin(a);
+      return Math.abs(marginDelta) > 0.0001
+        ? marginDelta
+        : hashCommunitySeed(`${zone.id}:${a.id}`, EMPATHY_CALIBRATION_RITUAL_ID)
+          - hashCommunitySeed(`${zone.id}:${b.id}`, EMPATHY_CALIBRATION_RITUAL_ID);
+    })[0] || null;
+    ritual.witnessId = citizen?.id || "";
+    ritual.actualLensId = citizen ? getEmpathyActualLensId(citizen) : "";
+  }
+  if (!citizen) return null;
+  if (!ritual.actualLensId) ritual.actualLensId = getEmpathyActualLensId(citizen);
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  const changedRoom = canonical.indoor?.zoneId !== zone.id;
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (changedRoom) delete interiorAnimations[citizen.id];
+  interiorView.empathyCalibrationWitnessId = citizen.id;
+  interiorView.empathyCalibrationActive = ritual.status === "active";
+  return citizen;
+}
+
+function holdEmpathyCalibrationActor(zone, entries = []) {
+  if (zone?.id !== EMPATHY_CALIBRATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const ritual = getEmpathyCalibrationRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return null;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const playerRadius = Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS);
+  const staged = [];
+  const desiredWitness = { x: 0, z: -1.45 };
+  const actualLens = getEmpathyLens(ritual.actualLensId);
+  let witnessPosition = interiorView.empathyCalibrationPositions?.witness || null;
+  let negotiatedPosition = interiorView.empathyCalibrationPositions?.confirmations?.[actualLens.id] || null;
+  const existingPairIsValid = witnessPosition && negotiatedPosition && physics?.isWalkable && world
+    ? physics.isWalkable(world, witnessPosition, citizenRadius)
+      && physics.isWalkable(world, negotiatedPosition, playerRadius)
+      && Math.abs(Math.hypot(
+        negotiatedPosition.x - witnessPosition.x,
+        negotiatedPosition.z - witnessPosition.z
+      ) - actualLens.targetDistance) <= 0.42
+    : !!(witnessPosition && negotiatedPosition);
+  if (!existingPairIsValid && physics?.sampleWalkablePoint && physics?.isWalkable && world) {
+    const playerStart = { x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0) };
+    const witnessCandidates = [desiredWitness];
+    for (let index = 0; index < 72; index += 1) {
+      witnessCandidates.push(physics.sampleWalkablePoint(world, hashCommunitySeed(ritual.witnessId || "empathy", index), citizenRadius));
+    }
+    const pairs = [];
+    witnessCandidates.forEach((candidate, candidateIndex) => {
+      if (!physics.isWalkable(world, candidate, citizenRadius)) return;
+      for (let angleIndex = 0; angleIndex < 32; angleIndex += 1) {
+        const angle = angleIndex / 32 * Math.PI * 2 + candidateIndex * 0.17;
+        const confirmation = {
+          x: candidate.x + Math.cos(angle) * actualLens.targetDistance,
+          z: candidate.z + Math.sin(angle) * actualLens.targetDistance
+        };
+        if (!physics.isWalkable(world, confirmation, playerRadius)) continue;
+        const path = physics.findPath?.(world, playerStart, confirmation, playerRadius) || [playerStart, confirmation];
+        const pathEnd = path[path.length - 1];
+        if (!pathEnd || Math.hypot(pathEnd.x - confirmation.x, pathEnd.z - confirmation.z) > 0.42) continue;
+        pairs.push({
+          witness: candidate,
+          confirmation,
+          score: Math.hypot(candidate.x - desiredWitness.x, candidate.z - desiredWitness.z) * 0.3
+            + Math.hypot(confirmation.x - playerStart.x, confirmation.z - playerStart.z) * 0.12
+            + path.length * 0.04
+        });
+      }
+    });
+    pairs.sort((a, b) => a.score - b.score);
+    if (pairs[0]) {
+      witnessPosition = { x: pairs[0].witness.x, z: pairs[0].witness.z };
+      negotiatedPosition = { x: pairs[0].confirmation.x, z: pairs[0].confirmation.z };
+    }
+  }
+  if (!witnessPosition) {
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desiredWitness, citizenRadius, { dynamic: staged, selfId: ritual.witnessId })
+      : desiredWitness;
+    witnessPosition = { x: point.x, z: point.z };
+  }
+  const ia = interiorAnimations[ritual.witnessId];
+  if (ia) {
+    ia.worldX = witnessPosition.x;
+    ia.worldZ = witnessPosition.z;
+    ia.targetWorldX = witnessPosition.x;
+    ia.targetWorldZ = witnessPosition.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.empathyCalibrationHeld = true;
+    ia.state = "idle";
+    ia.facing = 1;
+    staged.push({ id: ritual.witnessId, x: witnessPosition.x, z: witnessPosition.z, radius: citizenRadius });
+    const entry = entries.find((candidate) => candidate.id === ritual.witnessId);
+    if (entry) {
+      entry.worldX = witnessPosition.x;
+      entry.worldZ = witnessPosition.z;
+      entry.moveAnim = ia;
+      entry.state = "idle";
+    }
+  }
+  const desiredByLens = {
+    stay: { x: -2.4, z: 1.45 },
+    advise: { x: 0, z: 1.9 },
+    space: { x: 2.4, z: 1.45 }
+  };
+  const lensPositions = {};
+  EMPATHY_CALIBRATION_LENSES.forEach((lens) => {
+    const existing = interiorView.empathyCalibrationPositions?.lenses?.[lens.id];
+    const desired = existing || desiredByLens[lens.id];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, playerRadius, { dynamic: staged, selfId: `lens-${lens.id}` })
+      : desired;
+    lensPositions[lens.id] = { x: point.x, z: point.z };
+  });
+  const confirmationPositions = {};
+  EMPATHY_CALIBRATION_LENSES.forEach((lens, lensIndex) => {
+    const previous = interiorView.empathyCalibrationPositions?.confirmations?.[lens.id];
+    const candidates = [];
+    if (lens.id === actualLens.id && negotiatedPosition) candidates.push(negotiatedPosition);
+    if (previous) candidates.push(previous);
+    for (let index = 0; index < 24; index += 1) {
+      const angle = (index / 24) * Math.PI * 2 + lensIndex * 0.41;
+      const desired = {
+        x: witnessPosition.x + Math.cos(angle) * lens.targetDistance,
+        z: witnessPosition.z + Math.sin(angle) * lens.targetDistance
+      };
+      const point = physics?.findNearestWalkable && world
+        ? physics.findNearestWalkable(world, desired, playerRadius, { dynamic: staged, selfId: `confirm-${lens.id}` })
+        : desired;
+      candidates.push(point);
+    }
+    const origin = lensPositions[lens.id];
+    const scored = candidates
+      .map((point) => {
+        const negotiatedDistance = Math.hypot(point.x - witnessPosition.x, point.z - witnessPosition.z);
+        const path = physics?.findPath && world
+          ? physics.findPath(world, { x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0) }, point, playerRadius)
+          : [];
+        const pathEnd = path[path.length - 1];
+        const reachable = !pathEnd || Math.hypot(pathEnd.x - point.x, pathEnd.z - point.z) <= 0.42;
+        return {
+          point,
+          distanceError: Math.abs(negotiatedDistance - lens.targetDistance),
+          reachable,
+          score: Math.abs(negotiatedDistance - lens.targetDistance) * 12
+            + Math.hypot(point.x - origin.x, point.z - origin.z)
+        };
+      })
+      .filter((candidate) => candidate.reachable && candidate.distanceError <= 0.42)
+      .sort((a, b) => a.score - b.score);
+    const selected = scored[0]?.point || origin;
+    confirmationPositions[lens.id] = { x: selected.x, z: selected.z };
+  });
+  interiorView.empathyCalibrationPositions = {
+    witness: { x: witnessPosition.x, z: witnessPosition.z },
+    lenses: lensPositions,
+    confirmations: confirmationPositions
+  };
+  return interiorView.empathyCalibrationPositions;
+}
+
+function focusEmpathyCalibrationTarget(lensId = "") {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return false;
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  const positions = holdEmpathyCalibrationActor(interiorView.zone);
+  if (!ritual || !positions) return false;
+  const phase = ritual.phase || (ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume");
+  const targetLensId = EMPATHY_CALIBRATION_LENSES.some((lens) => lens.id === lensId)
+    ? lensId
+    : phase === "confirm"
+      ? ""
+      : phase === "revise" ? ritual.actualLensId : EMPATHY_CALIBRATION_LENSES[0].id;
+  const point = targetLensId ? positions.lenses[targetLensId] : positions.witness;
+  if (!point) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(point.x - pivot.x, -(point.z - pivot.z)));
+  ritual.focusedTargetId = targetLensId || ritual.witnessId;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastUpdatedAt = performance.now();
+  markRenderActive(1800);
+  return true;
+}
+
+function startEmpathyCalibrationRitual() {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID);
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const citizen = stageEmpathyCalibrationWitness(interiorView.zone);
+  if (!citizen) return false;
+  holdEmpathyCalibrationActor(interiorView.zone);
+  const alreadyActive = ritual.status === "active";
+  const now = performance.now();
+  ritual.status = "active";
+  ritual.phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  if (!alreadyActive) {
+    ritual.startedTurn = Number(state.society?.turn || 0);
+    ritual.positionProgressMs = 0;
+    ritual.confirmProgressMs = 0;
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  ritual.feedback = ritual.phase === "confirm"
+    ? `按 ${citizen.name} 需要的距离重新靠近`
+    : ritual.phase === "revise"
+      ? `不要证明自己猜得有道理，按 ${citizen.name} 的说法换位`
+      : "走进一个理解位置，把它作为假设说出来";
+  interiorView.empathyCalibrationActive = true;
+  document.body.classList.add("empathy-calibration-active");
+  const focus = () => focusEmpathyCalibrationTarget();
+  focus();
+  window.setTimeout(focus, 160);
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "empathy_started", {
+      zoneId: interiorView.zone.id,
+      detail: citizen.id
+    }, { onceKey: `empathy-start-${interiorView.zone.id}` });
+    addSpeechBubble(citizen.id, "你可以先说你以为我需要什么，但请把它当成假设。", "listen", { priority: true, duration: 7200 });
+  }
+  interiorView.discovery = {
+    title: "误解校准 · 先承认你可能听错",
+    text: "房间里有三个理解位置。走进一个位置并停下来；Ta 可以确认，也可以纠正你。",
+    progress: "理解是一种可修改的假设",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncEmpathyCalibrationHud(now);
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(now);
+  markRenderActive(12000);
+  return true;
+}
+
+function recordEmpathyCorrection(citizen, attemptedLensId) {
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || !citizen) return;
+  const actualLens = getEmpathyLens(ritual.actualLensId);
+  const attemptedLens = getEmpathyLens(attemptedLensId);
+  const record = getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID);
+  const evidence = `被${citizen.name}纠正：${actualLens.label}`;
+  if (!record.found.includes(evidence)) record.found.push(evidence);
+  const thread = getInteriorStoryThread(EMPATHY_CALIBRATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "empathy_corrected", {
+    zoneId: EMPATHY_CALIBRATION_ZONE_ID,
+    detail: `${attemptedLensId}>${ritual.actualLensId}`
+  }, { onceKey: `empathy-corrected-${EMPATHY_CALIBRATION_ZONE_ID}-${attemptedLensId}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `我以为${citizen.name}需要“${attemptedLens.label}”，Ta 纠正我说其实是“${actualLens.label}”。我没有为自己的误读辩解。`, {
+      kind: EMPATHY_CALIBRATION_RITUAL_ID,
+      importance: 8,
+      references: [EMPATHY_CALIBRATION_ZONE_ID, citizen.id, attemptedLensId, ritual.actualLensId]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家误以为我需要“${attemptedLens.label}”，但允许我改口说出“${actualLens.label}”。`, EMPATHY_CALIBRATION_RITUAL_ID, 8, [EMPATHY_CALIBRATION_ZONE_ID, avatar.id]);
+  }
+}
+
+function commitEmpathyHypothesis(citizen, lensId) {
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || !citizen || ritual.status !== "active") return false;
+  const lens = getEmpathyLens(lensId);
+  if (!ritual.attemptedLensIds.includes(lensId)) ritual.attemptedLensIds.push(lensId);
+  ritual.positionProgressMs = 0;
+  const thread = getInteriorStoryThread(EMPATHY_CALIBRATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "empathy_hypothesis", {
+    zoneId: EMPATHY_CALIBRATION_ZONE_ID,
+    detail: lensId
+  }, { onceKey: `empathy-hypothesis-${EMPATHY_CALIBRATION_ZONE_ID}-${lensId}` });
+  if (lensId === ritual.actualLensId) {
+    ritual.confirmedLensId = lensId;
+    ritual.phase = "confirm";
+    ritual.feedback = `这次方向对了；现在按 ${citizen.name} 需要的距离靠近并再问一次`;
+    addSpeechBubble(citizen.id, getEmpathyConfirmationLine(lensId), "listen", { priority: true, duration: 7200 });
+    window.setTimeout(() => focusEmpathyCalibrationTarget(), 320);
+  } else {
+    ritual.correctionCount += 1;
+    ritual.phase = "revise";
+    ritual.feedback = `这不是失败：${citizen.name}正在把解释权拿回来`;
+    recordEmpathyCorrection(citizen, lensId);
+    addSpeechBubble(citizen.id, getEmpathyCorrectionLine(ritual.actualLensId, lensId), "listen", { priority: true, duration: 8200 });
+    window.setTimeout(() => focusEmpathyCalibrationTarget(ritual.actualLensId), 420);
+  }
+  persistInteriorExploration();
+  persist();
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  return true;
+}
+
+function completeEmpathyCalibrationRitual(citizen) {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return false;
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  const record = getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || !citizen) return false;
+  ritual.status = "complete";
+  ritual.phase = "complete";
+  ritual.confirmProgressMs = EMPATHY_CALIBRATION_CONFIRM_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.feedback = "你没有把猜中当作共情，而是把纠正权还给了对方";
+  if (!record.found.includes(EMPATHY_CALIBRATION_EVIDENCE)) record.found.push(EMPATHY_CALIBRATION_EVIDENCE);
+  interiorView.empathyCalibrationActive = false;
+  document.body.classList.remove("empathy-calibration-active");
+  const ia = interiorAnimations[citizen.id];
+  if (ia) delete ia.empathyCalibrationHeld;
+  const thread = getInteriorStoryThread(EMPATHY_CALIBRATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "empathy_completed", {
+    zoneId: EMPATHY_CALIBRATION_ZONE_ID,
+    detail: `${citizen.id}:${ritual.actualLensId}:${ritual.correctionCount}`
+  }, { onceKey: `empathy-complete-${EMPATHY_CALIBRATION_ZONE_ID}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", `我在共情室把自己的理解当作假设，并允许${citizen.name}纠正我；真正的共情不是猜中，而是持续确认。`, {
+      kind: EMPATHY_CALIBRATION_RITUAL_ID,
+      importance: 9,
+      references: [EMPATHY_CALIBRATION_ZONE_ID, citizen.id, ritual.actualLensId, EMPATHY_CALIBRATION_RITUAL_ID]
+    });
+    recordAgentMemory(state.society, citizen.id, "玩家按我说的需要重新调整了位置和距离，没有要求我配合 Ta 的理解。", EMPATHY_CALIBRATION_RITUAL_ID, 9, [EMPATHY_CALIBRATION_ZONE_ID, avatar.id]);
+    const result = resolveAction({ actorId: avatar.id, type: "listen", targetId: citizen.id });
+    if (result) {
+      applySocietyActionResult(result, "，由共情室中的误解校准触发。");
+      recordAgentOutbox(state.society, avatar, result, getCitizenAgentContext(state.society, avatar));
+    }
+  }
+  addEventLogEntry("误解校准 · 共情室", `你允许${citizen.name}纠正你，并按 Ta 需要的距离重新靠近。`, "listen", true, `empathy-calibration-${EMPATHY_CALIBRATION_ZONE_ID}`);
+  interiorView.discovery = {
+    title: EMPATHY_CALIBRATION_EVIDENCE,
+    text: "真正的共情，不是猜中别人，而是允许别人纠正你。",
+    progress: "3/3",
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  persistInteriorExploration();
+  persist();
+  syncEmpathyCalibrationHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateEmpathyCalibrationRitual(now) {
+  if (interiorView?.zone?.id !== EMPATHY_CALIBRATION_ZONE_ID) return null;
+  const ritual = getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncEmpathyCalibrationHud(now);
+    return ritual;
+  }
+  const citizen = stageEmpathyCalibrationWitness(interiorView.zone);
+  const positions = holdEmpathyCalibrationActor(interiorView.zone);
+  if (!citizen || !positions) {
+    ritual.feedback = "正在让对话中的两个人在房间里站稳";
+    syncEmpathyCalibrationHud(now);
+    markRenderActive(480);
+    return ritual;
+  }
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)));
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX ?? playerX), playerZ - Number(ritual.lastPlayerZ ?? playerZ));
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.012 && playerDelta < 0.016;
+  ritual.phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  ritual.activeLensId = "";
+  if (ritual.phase !== "confirm") {
+    const nearest = EMPATHY_CALIBRATION_LENSES
+      .map((lens) => ({ lens, distance: Math.hypot(positions.lenses[lens.id].x - playerX, positions.lenses[lens.id].z - playerZ) }))
+      .sort((a, b) => a.distance - b.distance)[0];
+    const inside = nearest?.distance <= EMPATHY_CALIBRATION_POSITION_RADIUS;
+    const isRevisionTarget = ritual.phase !== "revise" || nearest?.lens.id === ritual.actualLensId;
+    const valid = inside && still && isRevisionTarget;
+    ritual.activeLensId = inside ? nearest.lens.id : "";
+    ritual.positionProgressMs = clamp(Number(ritual.positionProgressMs || 0) + dt * (valid ? 1 : -0.3), 0, EMPATHY_CALIBRATION_POSITION_MS);
+    ritual.aligned = inside;
+    ritual.still = still;
+    ritual.distance = Number(nearest?.distance || 0);
+    ritual.feedback = ritual.phase === "revise"
+      ? !inside
+        ? `按 ${citizen.name} 的修正，走到“${getEmpathyLens(ritual.actualLensId).label}”`
+        : !isRevisionTarget
+          ? "先别替原来的判断辩解，试着按 Ta 的说法换位"
+          : !still ? "在新的理解里停一下，让修正真正发生" : `正在把“${nearest.lens.label}”作为新的理解`
+      : !inside
+        ? "走进任意一个发光位置，先暴露你的理解"
+        : !still ? "停下来；这不是答案，只是你的第一种假设" : `正在说出假设：“${nearest.lens.label}”`;
+    if (ritual.positionProgressMs >= EMPATHY_CALIBRATION_POSITION_MS && nearest?.lens) {
+      commitEmpathyHypothesis(citizen, nearest.lens.id);
+    }
+  } else {
+    const lens = getEmpathyLens(ritual.actualLensId);
+    const witness = positions.witness;
+    const distance = Math.hypot(witness.x - playerX, witness.z - playerZ);
+    const visualPivot = getInteriorVisualCameraPivot();
+    const targetYaw = wrapInteriorAngle(Math.atan2(witness.x - visualPivot.x, -(witness.z - visualPivot.z)));
+    const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
+    const aligned = gazeDelta <= EMPATHY_CALIBRATION_GAZE_TOLERANCE;
+    const distanceOk = Math.abs(distance - lens.targetDistance) <= 0.45;
+    const valid = aligned && distanceOk && still;
+    ritual.confirmProgressMs = clamp(Number(ritual.confirmProgressMs || 0) + dt * (valid ? 1 : -0.3), 0, EMPATHY_CALIBRATION_CONFIRM_MS);
+    ritual.distance = distance;
+    ritual.aligned = aligned;
+    ritual.still = still;
+    ritual.feedback = valid
+      ? `正在按 ${citizen.name} 需要的距离重新确认`
+      : !distanceOk
+        ? distance < lens.targetDistance - 0.45 ? "退后一点，让 Ta 决定靠近的速度" : "走近一点，但不要替 Ta 取消边界"
+        : !aligned ? `让 ${citizen.name} 留在视野中央，再问一次` : "停一下，给 Ta 改口的时间";
+    if (ritual.confirmProgressMs >= EMPATHY_CALIBRATION_CONFIRM_MS) completeEmpathyCalibrationRitual(citizen);
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  syncEmpathyCalibrationHud(now);
+  markRenderActive(480);
+  return ritual;
+}
+
+function syncEmpathyCalibrationHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("empathyCalibrationRitual");
+  const ritual = getEmpathyCalibrationRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("empathy-calibration-active");
+    panel?.remove();
+    return;
+  }
+  const citizen = state.society?.citizens?.find((item) => item.id === ritual.witnessId);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "empathyCalibrationRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  const progressMs = phase === "confirm" ? Number(ritual.confirmProgressMs || 0) : Number(ritual.positionProgressMs || 0);
+  const requiredMs = phase === "confirm" ? EMPATHY_CALIBRATION_CONFIRM_MS : EMPATHY_CALIBRATION_POSITION_MS;
+  const progress = clamp(progressMs / requiredMs, 0, 1);
+  const signature = `${phase}|${ritual.attemptedLensIds.join("|")}|${ritual.activeLensId}|${Math.floor(progress * 40)}|${ritual.feedback}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--empathy-calibration-progress", `${Math.round(progress * 100)}%`);
+  panel.classList.toggle("is-correcting", phase === "revise");
+  panel.classList.toggle("is-confirming", phase === "confirm" && !!ritual.aligned && !!ritual.still);
+  panel.innerHTML = `
+    <span>CALIBRATED EMPATHY · 误解校准</span>
+    <strong>${phase === "assume" ? "先承认：我可能听错" : phase === "revise" ? "让对方改写你的理解" : `按 ${escapeHtml(citizen?.name || "Ta")} 的距离再问一次`}</strong>
+    <div class="empathy-calibration-lenses">${EMPATHY_CALIBRATION_LENSES.map((lens) => {
+      const attempted = ritual.attemptedLensIds.includes(lens.id);
+      const corrected = phase !== "assume" && lens.id === ritual.actualLensId;
+      const active = ritual.activeLensId === lens.id || ritual.confirmedLensId === lens.id;
+      return `<div class="${attempted ? "is-attempted" : ""} ${corrected ? "is-corrected" : ""} ${active ? "is-active" : ""}" style="--lens-color:${lens.color}"><i>${attempted && !corrected ? "×" : corrected ? "✓" : "?"}</i><span>${escapeHtml(lens.label)}<small>${attempted ? "我的第一种理解" : corrected ? "Ta 的修正" : "仍是未知"}</small></span></div>`;
+    }).join("")}</div>
+    <blockquote>“${escapeHtml(phase === "revise" ? getEmpathyCorrectionLine(ritual.actualLensId, ritual.attemptedLensIds[ritual.attemptedLensIds.length - 1]) : phase === "confirm" ? getEmpathyConfirmationLine(ritual.actualLensId) : "先说出你以为我需要什么，但请允许我改口。") }”</blockquote>
+    <div class="empathy-calibration-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || "把理解作为假设说出来")}</p>
+    <small>${phase === "confirm" ? `协商距离 · ${Number(ritual.distance || 0).toFixed(1)}m` : phase === "revise" ? "修正不会扣分，也不会清空关系证据" : "走入位置，而不是点击答案"}</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeEmpathyCalibration = {
+  getState: () => {
+    const ritual = getEmpathyCalibrationRitual();
+    if (!ritual) return null;
+    const positions = interiorView?.empathyCalibrationPositions;
+    const phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+    const target = phase === "confirm"
+      ? positions?.confirmations?.[ritual.actualLensId]
+        ? {
+            kind: "confirm",
+            id: ritual.actualLensId,
+            ...positions.confirmations[ritual.actualLensId],
+            witness: positions.witness,
+            distance: getEmpathyLens(ritual.actualLensId).targetDistance
+          }
+        : null
+      : positions?.lenses?.[phase === "revise" ? ritual.actualLensId : ritual.focusedTargetId]
+        ? { kind: "lens", id: phase === "revise" ? ritual.actualLensId : ritual.focusedTargetId, ...positions.lenses[phase === "revise" ? ritual.actualLensId : ritual.focusedTargetId] }
+        : null;
+    return { ...ritual, phase, positions, target };
+  },
+  start: startEmpathyCalibrationRitual,
+  focus: focusEmpathyCalibrationTarget
+};
+
+function drawEmpathyCalibrationSpatialCue(ctx, W, H, now, entries, ritual) {
+  if (!ritual || ritual.status !== "active" || !interiorView?.empathyCalibrationPositions) return;
+  const phase = ritual.confirmedLensId ? "confirm" : ritual.attemptedLensIds.length ? "revise" : "assume";
+  const points = EMPATHY_CALIBRATION_LENSES.map((lens) => ({
+    id: `empathy-lens-${lens.id}`,
+    worldX: interiorView.empathyCalibrationPositions.lenses[lens.id].x,
+    worldZ: interiorView.empathyCalibrationPositions.lenses[lens.id].z,
+    worldY: 0.05,
+    lens
+  }));
+  const projections = window.MirrorLifeInterior3D?.projectWorldPoints?.(points, W, H) || [];
+  projections.forEach((projection, index) => {
+    if (!projection?.visible) return;
+    const lens = points[index].lens;
+    const attempted = ritual.attemptedLensIds.includes(lens.id);
+    const corrected = phase !== "assume" && lens.id === ritual.actualLensId;
+    const active = ritual.activeLensId === lens.id;
+    const pulse = 0.5 + Math.sin(now * 0.006 + index * 1.7) * 0.5;
+    ctx.save();
+    ctx.translate(projection.x, projection.y);
+    ctx.globalAlpha = phase === "confirm" ? 0.22 : phase === "revise" && !corrected ? 0.3 : 1;
+    ctx.strokeStyle = lens.color;
+    ctx.fillStyle = active ? `${lens.color}35` : `${lens.color}18`;
+    ctx.lineWidth = active || corrected ? 3 + pulse * 1.5 : 2;
+    ctx.setLineDash(attempted && !corrected ? [3, 6] : [8, 6]);
+    ctx.lineDashOffset = -now * 0.014;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 48 + pulse * 6, 17 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+    roundRect(ctx, -46, -42, 92, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = lens.color;
+    ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(attempted && !corrected ? "被纠正" : corrected ? "Ta 的修正" : lens.shortLabel, 0, -31);
+    ctx.restore();
+  });
+  const witness = entries.find((entry) => entry.id === ritual.witnessId);
+  if (witness?.visible === false || !witness || phase !== "confirm") return;
+  const pulse = 0.5 + Math.sin(now * 0.008) * 0.5;
+  const confirmation = interiorView.empathyCalibrationPositions.confirmations?.[ritual.actualLensId];
+  const confirmationProjection = confirmation
+    ? window.MirrorLifeInterior3D?.projectWorldPoints?.([{
+        id: "empathy-confirmation",
+        worldX: confirmation.x,
+        worldZ: confirmation.z,
+        worldY: 0.05
+      }], W, H)?.[0]
+    : null;
+  if (confirmationProjection?.visible) {
+    ctx.save();
+    ctx.translate(confirmationProjection.x, confirmationProjection.y);
+    ctx.strokeStyle = `rgba(255, 224, 154, ${0.72 + pulse * 0.24})`;
+    ctx.fillStyle = `rgba(145, 234, 209, ${0.12 + pulse * 0.08})`;
+    ctx.lineWidth = 3 + pulse;
+    ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -now * 0.016;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 52 + pulse * 5, 18 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+    roundRect(ctx, -52, -42, 104, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = "#ffe09a";
+    ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("Ta 允许的距离", 0, -31);
+    ctx.restore();
+  }
+  ctx.save();
+  ctx.strokeStyle = `rgba(145, 234, 209, ${0.68 + pulse * 0.25})`;
+  ctx.lineWidth = 2.5 + pulse;
+  ctx.setLineDash([7, 6]);
+  ctx.lineDashOffset = -now * 0.016;
+  ctx.beginPath();
+  ctx.ellipse(witness.x, witness.y + 8, 54 + pulse * 5, 18 + pulse * 2, 0, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function getMemoryAuthorizationScope(scopeId) {
+  return MEMORY_AUTHORIZATION_SCOPES.find((scope) => scope.id === scopeId) || MEMORY_AUTHORIZATION_SCOPES[0];
+}
+
+function getCitizenMemoryAuthorizationItems(citizenId) {
+  const runtime = ensureAgentRuntime(state.society);
+  const file = runtime?.memoryFiles?.[citizenId] || {};
+  const relationshipItems = Object.values(file.relationships || {}).flatMap((items) => Array.isArray(items) ? items : []);
+  const capsuleItems = Object.values(file.lifeCapsules || {}).flatMap((items) => Array.isArray(items) ? items : []);
+  return [
+    ...(file.general || []),
+    ...(file.weeklyDiary || []),
+    ...relationshipItems,
+    ...capsuleItems,
+    ...(runtime?.memoryStore?.[citizenId] || [])
+  ].filter((item) => item?.id && item?.text).sort((a, b) => Number(b.importance || 0) - Number(a.importance || 0));
+}
+
+function deriveMemoryAuthorizationScope(citizen) {
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  const relationship = avatar && typeof getRelationshipBetween === "function"
+    ? getRelationshipBetween(state.society, avatar.id, citizen.id)
+    : null;
+  const openness = clamp(Number(citizen.bigFive?.openness ?? citizen.openness ?? 0.5), 0, 1);
+  const neuroticism = clamp(Number(citizen.bigFive?.neuroticism ?? 0.5), 0, 1);
+  const personalTrust = clamp(Number(citizen.trust || 50) / 100, 0, 1);
+  const relationshipTrust = clamp(Number(relationship?.trust || 42) / 100, 0, 1);
+  const privacyNeed = (1 - openness) * 0.34 + neuroticism * 0.24 + (1 - personalTrust) * 0.2 + (1 - relationshipTrust) * 0.22;
+  if (privacyNeed >= 0.6) return "private";
+  if (privacyNeed <= 0.38 && openness >= 0.58 && relationshipTrust >= 0.5) return "public";
+  return "trusted";
+}
+
+function getMemoryAuthorizationOffer(ritual) {
+  if (!ritual?.witnessId) return null;
+  return getCitizenMemoryAuthorizationItems(ritual.witnessId).find((item) => item.id === ritual.memoryId) || null;
+}
+
+function stageMemoryAuthorizationWitness(zone = interiorView?.zone) {
+  if (!zone || zone.id !== MEMORY_AUTHORIZATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getMemoryAuthorizationRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return null;
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let citizen = alive.find((candidate) => candidate.id === ritual.witnessId);
+  if (!citizen) {
+    citizen = [...alive].sort((a, b) => {
+      const memoryDelta = getCitizenMemoryAuthorizationItems(b.id).length - getCitizenMemoryAuthorizationItems(a.id).length;
+      return memoryDelta || Number(b.trust || 0) - Number(a.trust || 0)
+        || hashCommunitySeed(`${zone.id}:${a.id}`, MEMORY_AUTHORIZATION_RITUAL_ID)
+          - hashCommunitySeed(`${zone.id}:${b.id}`, MEMORY_AUTHORIZATION_RITUAL_ID);
+    })[0] || null;
+    ritual.witnessId = citizen?.id || "";
+  }
+  if (!citizen) return null;
+  let memories = getCitizenMemoryAuthorizationItems(citizen.id);
+  if (!memories.length) {
+    const currentZone = getCitizenZone(state.society, citizen);
+    recordAgentMemory(
+      state.society,
+      citizen.id,
+      `${citizen.name}记得自己在${currentZone?.name || "社区"}没有把“${ACTION_LABELS[citizen.lastAction] || citizen.lastAction || "停下来"}”解释成结果，只把那一刻留作仍可修改的生活片段。`,
+      "lived-trace",
+      6,
+      [currentZone?.id || zone.id]
+    );
+    memories = getCitizenMemoryAuthorizationItems(citizen.id);
+  }
+  if (!ritual.memoryId || !memories.some((item) => item.id === ritual.memoryId)) ritual.memoryId = memories[0]?.id || "";
+  if (!ritual.authorizedScopeId) ritual.authorizedScopeId = deriveMemoryAuthorizationScope(citizen);
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  const changedRoom = canonical.indoor?.zoneId !== zone.id;
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (changedRoom) delete interiorAnimations[citizen.id];
+  interiorView.memoryAuthorizationWitnessId = citizen.id;
+  interiorView.memoryAuthorizationActive = ritual.status === "active";
+  return citizen;
+}
+
+function holdMemoryAuthorizationActor(zone, entries = []) {
+  if (zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const ritual = getMemoryAuthorizationRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return null;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const playerRadius = Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS);
+  const witnessDesired = { x: 0, z: -1.48 };
+  const witness = interiorView.memoryAuthorizationPositions?.witness || (physics?.findNearestWalkable && world
+    ? physics.findNearestWalkable(world, witnessDesired, citizenRadius, { selfId: ritual.witnessId })
+    : witnessDesired);
+  const ia = interiorAnimations[ritual.witnessId];
+  const dynamic = [{ id: ritual.witnessId, x: witness.x, z: witness.z, radius: citizenRadius }];
+  if (ia) {
+    ia.worldX = witness.x;
+    ia.worldZ = witness.z;
+    ia.targetWorldX = witness.x;
+    ia.targetWorldZ = witness.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.memoryAuthorizationHeld = true;
+    ia.state = "idle";
+    const entry = entries.find((candidate) => candidate.id === ritual.witnessId);
+    if (entry) {
+      entry.worldX = witness.x;
+      entry.worldZ = witness.z;
+      entry.moveAnim = ia;
+      entry.state = "idle";
+    }
+  }
+  const desiredByScope = {
+    private: { x: -2.28, z: 1.52 },
+    trusted: { x: 0, z: 2.05 },
+    public: { x: 2.28, z: 1.52 }
+  };
+  const scopes = {};
+  MEMORY_AUTHORIZATION_SCOPES.forEach((scope) => {
+    const existing = interiorView.memoryAuthorizationPositions?.scopes?.[scope.id];
+    const desired = existing || desiredByScope[scope.id];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, playerRadius, { dynamic, selfId: `memory-scope-${scope.id}` })
+      : desired;
+    scopes[scope.id] = { x: point.x, z: point.z };
+  });
+  interiorView.memoryAuthorizationPositions = {
+    witness: { x: witness.x, z: witness.z },
+    scopes
+  };
+  return interiorView.memoryAuthorizationPositions;
+}
+
+function focusMemoryAuthorizationTarget() {
+  if (interiorView?.zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID) return false;
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  const positions = holdMemoryAuthorizationActor(interiorView.zone);
+  const point = positions?.scopes?.[ritual?.authorizedScopeId];
+  if (!ritual || !point) return false;
+  const pivot = getInteriorVisualCameraPivot();
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(point.x - pivot.x, -(point.z - pivot.z)));
+  ritual.focusedTargetId = ritual.authorizedScopeId;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  markRenderActive(1800);
+  return true;
+}
+
+function startMemoryAuthorizationRitual() {
+  if (interiorView?.zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(MEMORY_AUTHORIZATION_ZONE_ID);
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const citizen = stageMemoryAuthorizationWitness(interiorView.zone);
+  const offer = getMemoryAuthorizationOffer(ritual);
+  if (!citizen || !offer) return false;
+  holdMemoryAuthorizationActor(interiorView.zone);
+  const alreadyActive = ritual.status === "active";
+  ritual.status = "active";
+  ritual.startedTurn = alreadyActive ? ritual.startedTurn : Number(state.society?.turn || 0);
+  ritual.holdProgressMs = alreadyActive ? ritual.holdProgressMs : 0;
+  ritual.boundaryProgressMs = 0;
+  ritual.lastUpdatedAt = performance.now();
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  ritual.feedback = `把封存的片段带到“${getMemoryAuthorizationScope(ritual.authorizedScopeId).label}”`;
+  interiorView.memoryAuthorizationActive = true;
+  document.body.classList.add("memory-authorization-active");
+  focusMemoryAuthorizationTarget();
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "authorization_started", {
+      zoneId: interiorView.zone.id,
+      detail: `${citizen.id}:${ritual.authorizedScopeId}`
+    }, { onceKey: `authorization-start-${interiorView.zone.id}` });
+    addSpeechBubble(citizen.id, `这段记忆可以被你带走，但只到“${getMemoryAuthorizationScope(ritual.authorizedScopeId).label}”。`, "listen", { priority: true, duration: 7800 });
+  }
+  interiorView.discovery = {
+    title: "记忆授权 · 讲述者决定边界",
+    text: "你拿到的是托付，不是所有权。走到 Ta 允许的保存范围，再停下来封存。",
+    progress: "记忆内容不会写入公开回执",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncMemoryAuthorizationHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(12000);
+  return true;
+}
+
+function recordMemoryAuthorizationBoundary(citizen, scopeId) {
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.attemptedScopeIds.includes(scopeId)) return;
+  ritual.attemptedScopeIds.push(scopeId);
+  const attempted = getMemoryAuthorizationScope(scopeId);
+  const authorized = getMemoryAuthorizationScope(ritual.authorizedScopeId);
+  const overstep = attempted.level > authorized.level;
+  if (overstep) ritual.overstepCount += 1;
+  const thread = getInteriorStoryThread(MEMORY_AUTHORIZATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "authorization_boundary", {
+    zoneId: MEMORY_AUTHORIZATION_ZONE_ID,
+    detail: `${scopeId}:${overstep ? "overstep" : "under-share"}`
+  }, { onceKey: `authorization-boundary-${scopeId}` });
+  addSpeechBubble(citizen.id, overstep
+    ? `先停在这里。被讲述，不等于被公开。我的边界是“${authorized.label}”。`
+    : `你可以少带走一些，但我愿意把它交到“${authorized.label}”。`, "listen", { priority: true, duration: 7600 });
+  ritual.feedback = overstep
+    ? "边界已让记忆胶囊熄灯；带它回到讲述者允许的位置"
+    : `Ta 允许更靠外一层：走向“${authorized.label}”`;
+  persistInteriorExploration();
+  persist();
+}
+
+function completeMemoryAuthorizationRitual(citizen) {
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  const record = getInteriorExplorationRecord(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || !citizen) return false;
+  const scope = getMemoryAuthorizationScope(ritual.authorizedScopeId);
+  ritual.status = "complete";
+  ritual.holdProgressMs = MEMORY_AUTHORIZATION_HOLD_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.receipt = {
+    ownerId: citizen.id,
+    memoryId: ritual.memoryId,
+    scopeId: scope.id,
+    turn: Number(state.society?.turn || 0)
+  };
+  ritual.feedback = "档案只记住授权关系，不复制讲述者没有同意公开的内容";
+  if (!record.found.includes(MEMORY_AUTHORIZATION_EVIDENCE)) record.found.push(MEMORY_AUTHORIZATION_EVIDENCE);
+  interiorView.memoryAuthorizationActive = false;
+  document.body.classList.remove("memory-authorization-active");
+  const ia = interiorAnimations[citizen.id];
+  if (ia) delete ia.memoryAuthorizationHeld;
+  const thread = getInteriorStoryThread(MEMORY_AUTHORIZATION_ZONE_ID);
+  recordEpisodeExperienceEvent(thread?.id, "authorization_completed", {
+    zoneId: MEMORY_AUTHORIZATION_ZONE_ID,
+    detail: `${citizen.id}:${scope.id}:${ritual.overstepCount}`
+  }, { onceKey: `authorization-complete-${MEMORY_AUTHORIZATION_ZONE_ID}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `我替${citizen.name}搬运了一段记忆，但只把它放到“${scope.label}”；回执保存授权，不保存我无权公开的内容。`, {
+      kind: MEMORY_AUTHORIZATION_RITUAL_ID,
+      importance: 9,
+      targetId: citizen.id,
+      references: [MEMORY_AUTHORIZATION_ZONE_ID, citizen.id, scope.id]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家尊重我为一段记忆设定的“${scope.label}”边界，没有把托付误当成所有权。`, MEMORY_AUTHORIZATION_RITUAL_ID, 9, [MEMORY_AUTHORIZATION_ZONE_ID, avatar.id, scope.id]);
+    const result = resolveAction({ actorId: avatar.id, type: "listen", targetId: citizen.id });
+    if (result) {
+      applySocietyActionResult(result, "，由故事馆中的记忆授权触发。");
+      recordAgentOutbox(state.society, avatar, result, getCitizenAgentContext(state.society, avatar));
+    }
+  }
+  addEventLogEntry("记忆授权 · 街坊故事馆", `你把${citizen.name}的记忆安放在“${scope.label}”，档案只留下授权回执。`, "listen", true, `memory-authorization-${MEMORY_AUTHORIZATION_ZONE_ID}`);
+  interiorView.discovery = {
+    title: MEMORY_AUTHORIZATION_EVIDENCE,
+    text: "真正的记录不是收集得更多，而是让讲述者始终拥有撤回、限定和改口的权利。",
+    progress: "3/3",
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  persistInteriorExploration();
+  persist();
+  syncMemoryAuthorizationHud(performance.now());
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateMemoryAuthorizationRitual(now) {
+  if (interiorView?.zone?.id !== MEMORY_AUTHORIZATION_ZONE_ID) return null;
+  const ritual = getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncMemoryAuthorizationHud(now);
+    return ritual;
+  }
+  const citizen = stageMemoryAuthorizationWitness(interiorView.zone);
+  const positions = holdMemoryAuthorizationActor(interiorView.zone);
+  if (!citizen || !positions) return ritual;
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)));
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX ?? playerX), playerZ - Number(ritual.lastPlayerZ ?? playerZ));
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.014 && playerDelta < 0.016;
+  const nearest = MEMORY_AUTHORIZATION_SCOPES
+    .map((scope) => ({ scope, distance: Math.hypot(positions.scopes[scope.id].x - playerX, positions.scopes[scope.id].z - playerZ) }))
+    .sort((a, b) => a.distance - b.distance)[0];
+  const inside = nearest?.distance <= MEMORY_AUTHORIZATION_POSITION_RADIUS;
+  const authorized = nearest?.scope.id === ritual.authorizedScopeId;
+  ritual.activeScopeId = inside ? nearest.scope.id : "";
+  ritual.still = still;
+  ritual.distance = Number(nearest?.distance || 0);
+  ritual.holdProgressMs = clamp(Number(ritual.holdProgressMs || 0) + dt * (inside && authorized && still ? 1 : -0.32), 0, MEMORY_AUTHORIZATION_HOLD_MS);
+  ritual.boundaryProgressMs = clamp(Number(ritual.boundaryProgressMs || 0) + dt * (inside && !authorized && still ? 1 : -0.45), 0, MEMORY_AUTHORIZATION_BOUNDARY_MS);
+  if (!inside) ritual.feedback = `把记忆胶囊带到“${getMemoryAuthorizationScope(ritual.authorizedScopeId).label}”`;
+  else if (!still) ritual.feedback = "先停下来；授权需要一个可以撤回的瞬间";
+  else if (authorized) ritual.feedback = "正在封存授权关系，原始内容不会进入公开回执";
+  else ritual.feedback = nearest.scope.level > getMemoryAuthorizationScope(ritual.authorizedScopeId).level
+    ? "你正在越过讲述者允许的公开边界"
+    : "你停得更保守，但还没有抵达讲述者选择的托付范围";
+  if (ritual.boundaryProgressMs >= MEMORY_AUTHORIZATION_BOUNDARY_MS && nearest?.scope) {
+    recordMemoryAuthorizationBoundary(citizen, nearest.scope.id);
+    ritual.boundaryProgressMs = 0;
+  }
+  if (ritual.holdProgressMs >= MEMORY_AUTHORIZATION_HOLD_MS) completeMemoryAuthorizationRitual(citizen);
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  syncMemoryAuthorizationHud(now);
+  markRenderActive(480);
+  return ritual;
+}
+
+function syncMemoryAuthorizationHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("memoryAuthorizationRitual");
+  const ritual = getMemoryAuthorizationRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("memory-authorization-active");
+    panel?.remove();
+    return;
+  }
+  const citizen = state.society?.citizens?.find((item) => item.id === ritual.witnessId);
+  const offer = getMemoryAuthorizationOffer(ritual);
+  const scope = getMemoryAuthorizationScope(ritual.authorizedScopeId);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "memoryAuthorizationRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const progress = clamp(Number(ritual.holdProgressMs || 0) / MEMORY_AUTHORIZATION_HOLD_MS, 0, 1);
+  const excerpt = String(offer?.text || "这段记忆正在等待讲述者授权。").slice(0, 68);
+  const signature = `${ritual.activeScopeId}|${ritual.attemptedScopeIds.join("|")}|${Math.floor(progress * 40)}|${ritual.feedback}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--memory-authorization-progress", `${Math.round(progress * 100)}%`);
+  panel.innerHTML = `
+    <span>CONSENT LEDGER · 记忆授权</span>
+    <strong>${escapeHtml(citizen?.name || "讲述者")}决定这段故事能走多远</strong>
+    <blockquote>“${escapeHtml(excerpt)}${String(offer?.text || "").length > 68 ? "…" : ""}”</blockquote>
+    <div class="memory-authorization-scopes">${MEMORY_AUTHORIZATION_SCOPES.map((item) => {
+      const active = ritual.activeScopeId === item.id;
+      const allowed = item.id === scope.id;
+      const attempted = ritual.attemptedScopeIds.includes(item.id);
+      return `<div class="${active ? "is-active" : ""} ${allowed ? "is-allowed" : ""} ${attempted ? "is-attempted" : ""}" style="--scope-color:${item.color}"><i>${allowed ? "✓" : attempted ? "×" : "·"}</i><span>${escapeHtml(item.shortLabel)}<small>${allowed ? "Ta 的授权" : item.label}</small></span></div>`;
+    }).join("")}</div>
+    <div class="memory-authorization-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || `走向“${scope.label}”`)}</p>
+    <small>回执只保存：谁授权给谁、什么范围、何时发生</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeMemoryAuthorization = {
+  getState: () => {
+    const ritual = getMemoryAuthorizationRitual();
+    if (!ritual) return null;
+    const positions = interiorView?.memoryAuthorizationPositions;
+    const target = positions?.scopes?.[ritual.authorizedScopeId]
+      ? { kind: "scope", id: ritual.authorizedScopeId, ...positions.scopes[ritual.authorizedScopeId] }
+      : null;
+    return { ...ritual, positions, target, offer: getMemoryAuthorizationOffer(ritual) };
+  },
+  start: startMemoryAuthorizationRitual,
+  focus: focusMemoryAuthorizationTarget
+};
+
+function drawMemoryAuthorizationSpatialCue(ctx, W, H, now, ritual) {
+  if (!ritual || ritual.status !== "active" || !interiorView?.memoryAuthorizationPositions) return;
+  const points = MEMORY_AUTHORIZATION_SCOPES.map((scope) => ({
+    id: `memory-scope-${scope.id}`,
+    worldX: interiorView.memoryAuthorizationPositions.scopes[scope.id].x,
+    worldZ: interiorView.memoryAuthorizationPositions.scopes[scope.id].z,
+    worldY: 0.05,
+    scope
+  }));
+  const projections = window.MirrorLifeInterior3D?.projectWorldPoints?.(points, W, H) || [];
+  projections.forEach((projection, index) => {
+    if (!projection?.visible) return;
+    const scope = points[index].scope;
+    const active = ritual.activeScopeId === scope.id;
+    const allowed = ritual.authorizedScopeId === scope.id;
+    const attempted = ritual.attemptedScopeIds.includes(scope.id);
+    const pulse = 0.5 + Math.sin(now * 0.006 + index * 1.8) * 0.5;
+    ctx.save();
+    ctx.translate(projection.x, projection.y);
+    ctx.globalAlpha = allowed ? 1 : attempted ? 0.36 : 0.58;
+    ctx.strokeStyle = scope.color;
+    ctx.fillStyle = active ? `${scope.color}32` : `${scope.color}12`;
+    ctx.lineWidth = allowed || active ? 3 + pulse : 2;
+    ctx.setLineDash(attempted && !allowed ? [3, 6] : [8, 6]);
+    ctx.lineDashOffset = -now * 0.014;
+    ctx.beginPath();
+    ctx.ellipse(0, 0, 50 + pulse * 5, 18 + pulse * 2, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.stroke();
+    ctx.setLineDash([]);
+    ctx.fillStyle = "rgba(22, 27, 46, 0.9)";
+    roundRect(ctx, -50, -42, 100, 22, 11);
+    ctx.fill();
+    ctx.fillStyle = scope.color;
+    ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(allowed ? `授权 · ${scope.shortLabel}` : scope.shortLabel, 0, -31);
+    ctx.restore();
+  });
 }
 
 function getInteriorStoryThread(zoneId) {
@@ -6011,6 +8183,666 @@ function getInteriorStoryThread(zoneId) {
     chapterIndex,
     completedCount,
     nextZoneId: thread.zones[chapterIndex + 1] || ""
+  };
+}
+
+function getEpisodeTrailThread() {
+  const threadId = state.story?.activeEpisodeThreadId || "";
+  return INTERIOR_STORY_THREADS.find((thread) => thread.id === threadId) || null;
+}
+
+function getEpisodeTrailProgress(thread) {
+  const zones = thread?.zones || [];
+  const completedZoneIds = zones.filter((zoneId) => state.interiorExploration?.[zoneId]?.scenePlayed);
+  const nextZoneId = zones.find((zoneId) => !completedZoneIds.includes(zoneId)) || "";
+  return {
+    completedZoneIds,
+    completedCount: completedZoneIds.length,
+    nextZoneId,
+    complete: !!zones.length && completedZoneIds.length >= zones.length
+  };
+}
+
+function ensureEpisodeTrailStoryState() {
+  state.story = state.story && typeof state.story === "object" ? state.story : { arcs: [], log: [] };
+  state.story.episodeTrail = state.story.episodeTrail && typeof state.story.episodeTrail === "object"
+    ? state.story.episodeTrail
+    : { collapsed: false };
+  return state.story.episodeTrail;
+}
+
+function focusEpisodeTrailZone(zoneId) {
+  if (!zoneId || interiorView) return false;
+  const zone = findRenderZoneById(zoneId);
+  const canvas = document.getElementById("gameCanvas");
+  const rect = canvas?.getBoundingClientRect();
+  if (!zone || !rect?.width || !rect?.height) return false;
+  const W = rect.width;
+  const H = rect.height;
+  const zoneRect = lastWorldFrame.zoneRects?.get(zoneId) || getZoneGameRect(zone, W, H, getWorldGroundY(H));
+  camera.zoom = EPISODE_TRAIL_ZOOM;
+  camera.x = -(zoneRect.cx - W / 2) * camera.zoom;
+  camera.y = -(zoneRect.cy - H / 2) * camera.zoom - 40;
+  episodeTrailFocusZoneId = zoneId;
+  episodeTrailFocusUntil = performance.now() + EPISODE_TRAIL_FOCUS_MS;
+  markRenderActive(EPISODE_TRAIL_FOCUS_MS + 600);
+  syncEpisodeTrailHud();
+  showToast(`余波正在通往${zone.name}，点击发光的建筑进入下一章`, "listen");
+  return true;
+}
+
+function activateEpisodeTrail(threadId, focusZoneId = "", { force = false, persistState = true } = {}) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  if (!thread) return null;
+  const current = getEpisodeTrailThread();
+  const currentProgress = current ? getEpisodeTrailProgress(current) : null;
+  if (!force && current && current.id !== thread.id && !currentProgress?.complete) return current;
+  ensureEpisodeTrailStoryState();
+  state.story.activeEpisodeThreadId = thread.id;
+  if (persistState) persist(true);
+  syncEpisodeTrailHud();
+  if (focusZoneId) window.requestAnimationFrame(() => focusEpisodeTrailZone(focusZoneId));
+  return thread;
+}
+
+function syncEpisodeTrailHud() {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("episodeTrailPanel");
+  if (!shell || interiorView) {
+    panel?.remove();
+    return;
+  }
+  const thread = getEpisodeTrailThread();
+  const progress = thread ? getEpisodeTrailProgress(thread) : null;
+  if (!thread || !progress || progress.complete) {
+    panel?.remove();
+    return;
+  }
+  const trailState = ensureEpisodeTrailStoryState();
+  const nextZone = findRenderZoneById(progress.nextZoneId);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "episodeTrailPanel";
+    panel.setAttribute("aria-label", "本集余波路线");
+    panel.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-episode-trail-toggle]");
+      if (toggle) {
+        const currentState = ensureEpisodeTrailStoryState();
+        currentState.collapsed = !currentState.collapsed;
+        persist(true);
+        syncEpisodeTrailHud();
+        return;
+      }
+      const target = event.target.closest("[data-episode-trail-zone]");
+      if (target) focusEpisodeTrailZone(target.dataset.episodeTrailZone);
+    });
+    shell.appendChild(panel);
+  }
+  const signature = [
+    thread.id,
+    progress.completedZoneIds.join(","),
+    progress.nextZoneId,
+    trailState.collapsed,
+    episodeTrailFocusZoneId,
+    episodeTrailFocusUntil > performance.now()
+  ].join("|");
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.classList.toggle("collapsed", !!trailState.collapsed);
+  panel.innerHTML = `
+    <header><span>本集余波路线</span><strong>${escapeHtml(thread.title)}</strong><button type="button" data-episode-trail-toggle aria-label="${trailState.collapsed ? "展开余波路线" : "收起余波路线"}">${trailState.collapsed ? "+" : "−"}</button></header>
+    <div class="episode-trail-body">
+      <nav>${thread.zones.map((zoneId, index) => {
+        const zone = findRenderZoneById(zoneId);
+        const done = progress.completedZoneIds.includes(zoneId);
+        const current = zoneId === progress.nextZoneId;
+        const focused = zoneId === episodeTrailFocusZoneId && episodeTrailFocusUntil > performance.now();
+        return `<button type="button" class="${done ? "done" : current ? "current" : "locked"} ${focused ? "focused" : ""}" data-episode-trail-zone="${escapeHtml(zoneId)}"><b>${done ? "✓" : index + 1}</b><span>${escapeHtml(zone?.name || `第${index + 1}章`)}</span></button>`;
+      }).join("")}</nav>
+      <div class="episode-trail-next"><span>第 ${progress.completedCount + 1} / ${thread.zones.length} 章</span><strong>${escapeHtml(nextZone?.name || "下一处回声")}</strong><button type="button" data-episode-trail-zone="${escapeHtml(progress.nextZoneId)}">跟随余波</button></div>
+    </div>`;
+}
+
+function ensureEpisodeExperience(episode, threadId) {
+  if (!episode) return null;
+  const experience = episode.experience && typeof episode.experience === "object" ? episode.experience : {};
+  experience.version = 1;
+  experience.sessionId = String(experience.sessionId || `episode-${threadId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`).slice(0, 120);
+  experience.startedAt = Math.max(0, Number(experience.startedAt || Date.now()));
+  experience.activeMs = Math.max(0, Number(experience.activeMs || 0));
+  experience.events = Array.isArray(experience.events) ? experience.events.slice(-EPISODE_EXPERIENCE_EVENT_LIMIT) : [];
+  episode.experience = experience;
+  return experience;
+}
+
+function flushActiveEpisodeExperience({ persistState = false } = {}) {
+  const { threadId, lastAt, paused } = episodeExperienceClock;
+  if (!threadId || !lastAt) return null;
+  const episode = state.counterfactualEpisodes?.[threadId];
+  const experience = episode ? ensureEpisodeExperience(episode, threadId) : null;
+  const now = performance.now();
+  if (experience && !paused) {
+    const elapsed = clamp(now - lastAt, 0, 30 * 60 * 1000);
+    experience.activeMs = Math.min(24 * 60 * 60 * 1000, experience.activeMs + elapsed);
+  }
+  episodeExperienceClock.lastAt = now;
+  if (persistState && experience) persist(true);
+  return experience;
+}
+
+function resumeEpisodeExperienceClock(threadId) {
+  if (!threadId) return;
+  if (episodeExperienceClock.threadId !== threadId) {
+    flushActiveEpisodeExperience();
+    episodeExperienceClock = { threadId, lastAt: performance.now(), paused: document.hidden };
+    return;
+  }
+  flushActiveEpisodeExperience();
+  episodeExperienceClock.lastAt = performance.now();
+  episodeExperienceClock.paused = document.hidden;
+}
+
+function pauseEpisodeExperienceClock({ persistState = false } = {}) {
+  flushActiveEpisodeExperience({ persistState });
+  episodeExperienceClock.paused = true;
+}
+
+function recordEpisodeExperienceEvent(threadId, type, data = {}, { onceKey = "" } = {}) {
+  if (!threadId || threadId === "standalone") return null;
+  const episode = getCounterfactualEpisodeState(threadId);
+  const experience = ensureEpisodeExperience(episode, threadId);
+  if (!experience) return null;
+  if (episodeExperienceClock.threadId !== threadId) resumeEpisodeExperienceClock(threadId);
+  flushActiveEpisodeExperience();
+  const stableKey = String(onceKey || "").slice(0, 80);
+  const id = stableKey
+    ? `${experience.sessionId}:${type}:${stableKey}`.slice(0, 120)
+    : `${experience.sessionId}:${type}:${Date.now().toString(36)}:${experience.events.length}`.slice(0, 120);
+  if (stableKey && experience.events.some((event) => event.id === id)) return null;
+  const event = {
+    id,
+    type,
+    atMs: Math.round(experience.activeMs),
+    zoneId: String(data.zoneId || "").slice(0, 80),
+    choiceId: String(data.choiceId || "").slice(0, 80),
+    branch: ["fact", "future"].includes(data.branch) ? data.branch : "",
+    dwellMs: Math.max(0, Math.min(30 * 60 * 1000, Math.round(Number(data.dwellMs) || 0))),
+    detail: String(data.detail || "").slice(0, 120)
+  };
+  experience.events.push(event);
+  experience.events = experience.events.slice(-EPISODE_EXPERIENCE_EVENT_LIMIT);
+  persist();
+  return event;
+}
+
+function startEpisodeExperience(threadId, zoneId) {
+  if (!threadId || threadId === "standalone") return;
+  resumeEpisodeExperienceClock(threadId);
+  recordEpisodeExperienceEvent(threadId, "episode_started", { zoneId }, { onceKey: "episode" });
+  recordEpisodeExperienceEvent(threadId, "room_entered", { zoneId });
+}
+
+function getEpisodeExperienceSummary(threadId) {
+  const episode = state.counterfactualEpisodes?.[threadId];
+  if (!episode) return null;
+  flushActiveEpisodeExperience();
+  const experience = ensureEpisodeExperience(episode, threadId);
+  const events = experience?.events || [];
+  const choiceEvents = events.filter((event) => event.type === "choice_committed");
+  const dwellTimes = choiceEvents.map((event) => Number(event.dwellMs || 0)).filter((value) => value > 0).sort((a, b) => a - b);
+  const medianDwellMs = dwellTimes.length
+    ? dwellTimes[Math.floor((dwellTimes.length - 1) / 2)]
+    : 0;
+  const firstEvidence = events.find((event) => event.type === "evidence_found");
+  const completedZones = new Set(events.filter((event) => event.type === "room_completed").map((event) => event.zoneId).filter(Boolean));
+  return {
+    activeMs: Math.round(experience?.activeMs || 0),
+    firstEvidenceMs: Math.round(firstEvidence?.atMs || 0),
+    medianDwellMs: Math.round(medianDwellMs),
+    choices: choiceEvents.length,
+    completedRooms: completedZones.size,
+    revisits: events.filter((event) => event.type === "evidence_revisited").length,
+    shared: events.some((event) => event.type === "episode_shared"),
+    relayStarted: events.some((event) => event.type === "relay_started")
+  };
+}
+
+function formatEpisodeElapsed(milliseconds, { compact = false } = {}) {
+  const seconds = Math.max(0, Math.round(Number(milliseconds || 0) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  if (compact) return minutes ? `${minutes}分${String(remainder).padStart(2, "0")}秒` : `${remainder}秒`;
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function buildEpisodePlaytestEvidence(threadId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  const episode = state.counterfactualEpisodes?.[threadId];
+  if (!thread || !episode) return null;
+  flushActiveEpisodeExperience();
+  const experience = ensureEpisodeExperience(episode, threadId);
+  return {
+    schema: "mirrorlife-episode-playtest-v1",
+    episodeId: thread.id,
+    episodeTitle: thread.title,
+    sessionId: experience.sessionId,
+    activeDurationMs: Math.round(experience.activeMs || 0),
+    viewport: window.innerWidth < 600 ? "mobile" : window.innerWidth < 1000 ? "tablet" : "desktop",
+    summary: getEpisodeExperienceSummary(threadId),
+    events: experience.events.map((event) => ({
+      type: event.type,
+      atMs: Math.round(Number(event.atMs) || 0),
+      zoneId: event.zoneId || "",
+      choiceId: event.choiceId || "",
+      branch: event.branch || "",
+      dwellMs: Math.round(Number(event.dwellMs) || 0),
+      detail: event.detail || ""
+    }))
+  };
+}
+
+async function exportEpisodePlaytestEvidence(threadId) {
+  const evidence = buildEpisodePlaytestEvidence(threadId);
+  if (!evidence) return null;
+  const json = JSON.stringify(evidence, null, 2);
+  window.__mirrorLifeLastPlaytestEvidence = evidence;
+  try {
+    await navigator.clipboard?.writeText(json);
+    showToast("匿名试玩证据已复制，不含昵称、输入文本或设备标识", "support");
+  } catch {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mirrorlife-playtest-${threadId}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+    showToast("匿名试玩证据已保存", "support");
+  }
+  return evidence;
+}
+
+window.MirrorLifeEpisodeEvidence = {
+  getSummary: getEpisodeExperienceSummary,
+  build: buildEpisodePlaytestEvidence,
+  export: exportEpisodePlaytestEvidence,
+  flush: flushActiveEpisodeExperience
+};
+
+function getCounterfactualEpisodeState(threadId) {
+  const id = threadId || "standalone";
+  state.counterfactualEpisodes = state.counterfactualEpisodes || {};
+  const existing = state.counterfactualEpisodes[id];
+  if (!existing || typeof existing !== "object") {
+    state.counterfactualEpisodes[id] = {
+      id,
+      rewriteTokens: 1,
+      rewrites: [],
+      receipts: [],
+      echoes: [],
+      status: "active",
+      completedTurn: 0,
+      finale: null,
+      startedTurn: Number(state.society?.turn || 0),
+      experience: null
+    };
+  }
+  const episode = state.counterfactualEpisodes[id];
+  episode.rewriteTokens = clamp(Number(episode.rewriteTokens ?? 1), 0, 1);
+  episode.rewrites = Array.isArray(episode.rewrites) ? episode.rewrites : [];
+  episode.receipts = Array.isArray(episode.receipts) ? episode.receipts : [];
+  episode.echoes = Array.isArray(episode.echoes) ? episode.echoes : [];
+  episode.status = episode.status === "complete" ? "complete" : "active";
+  episode.completedTurn = Math.max(0, Number(episode.completedTurn || 0));
+  episode.finale = episode.finale && typeof episode.finale === "object" ? episode.finale : null;
+  ensureEpisodeExperience(episode, id);
+  if (id !== "standalone" && INTERIOR_STORY_THREADS.some((thread) => thread.id === id)) {
+    const activeThread = getEpisodeTrailThread();
+    const activeComplete = activeThread ? getEpisodeTrailProgress(activeThread).complete : true;
+    if (!activeThread || activeComplete) activateEpisodeTrail(id, "", { persistState: false });
+  }
+  return episode;
+}
+
+function getCounterfactualAct(thread) {
+  const completed = Number(thread?.completedCount || 0);
+  const total = Math.max(1, Number(thread?.zones?.length || 5));
+  const progress = completed / total;
+  if (progress >= 0.72) return { index: 3, label: "第三幕 · 回声", verb: "承担留下的关系" };
+  if (progress >= 0.32) return { index: 2, label: "第二幕 · 改写", verb: "只改写最重要的一次" };
+  return { index: 1, label: "第一幕 · 识别", verb: "看见谁没有被听见" };
+}
+
+function getInteriorCounterfactualParticipant(zone) {
+  return getAliveCitizens(state.society)
+    .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
+    || getAliveCitizens(state.society).find((citizen) => citizen.id !== "avatar")
+    || null;
+}
+
+const COUNTERFACTUAL_FACT_PROFILES = {
+  listen: {
+    label: "倾听",
+    values: ["benevolence", "universalism", "tradition"],
+    traits: { agreeableness: 0.24, openness: 0.14, extraversion: -0.06, conscientiousness: 0.05 },
+    memoryTerms: ["倾听", "等待", "边界", "沉默", "空白", "诚实", "没说完", "先问", "不知道"]
+  },
+  support: {
+    label: "支持",
+    values: ["benevolence", "security", "universalism"],
+    traits: { agreeableness: 0.28, extraversion: 0.04, neuroticism: 0.03, conscientiousness: 0.04 },
+    memoryTerms: ["支持", "照护", "疲惫", "接住", "陪伴", "安全", "帮助", "喘口气", "照顾"]
+  },
+  cooperate: {
+    label: "协作",
+    values: ["achievement", "benevolence", "self_direction"],
+    traits: { conscientiousness: 0.22, extraversion: 0.08, agreeableness: 0.12, openness: 0.08 },
+    memoryTerms: ["协作", "一起", "共同", "交接", "尝试", "轮值", "办法", "行动", "完成"]
+  },
+  meditate: {
+    label: "调停",
+    values: ["security", "benevolence", "conformity"],
+    traits: { conscientiousness: 0.16, agreeableness: 0.2, neuroticism: -0.08, openness: 0.05 },
+    memoryTerms: ["调停", "修复", "分歧", "冷静", "确认", "缓冲", "误解", "和解"]
+  },
+  propose: {
+    label: "提议",
+    values: ["achievement", "self_direction", "power"],
+    traits: { extraversion: 0.18, conscientiousness: 0.1, openness: 0.12, agreeableness: -0.04 },
+    memoryTerms: ["提案", "表达", "发起", "改变", "公开", "主张", "决定", "行动"]
+  }
+};
+
+function getCounterfactualChoiceAction(choice) {
+  if (COUNTERFACTUAL_FACT_PROFILES[choice?.relationType]) return choice.relationType;
+  if (["comfort", "care", "handoff"].includes(choice?.behavior)) return "support";
+  if (["meeting", "gather", "teach", "work", "cook"].includes(choice?.behavior)) return "cooperate";
+  return "listen";
+}
+
+function getCounterfactualAvatarMemories(avatarId) {
+  const runtime = typeof ensureAgentRuntime === "function" ? ensureAgentRuntime(state.society) : state.society?.agents;
+  const file = runtime?.memoryFiles?.[avatarId] || {};
+  const fileItems = [
+    ...(file.general || []),
+    ...(file.weeklyDiary || []),
+    ...Object.values(file.relationships || {}).flatMap((items) => Array.isArray(items) ? items : []),
+    ...Object.values(file.lifeCapsules || {}).flatMap((items) => Array.isArray(items) ? items : [])
+  ];
+  const runtimeItems = [
+    ...(runtime?.memoryStore?.[avatarId] || []),
+    ...(runtime?.reflectionStore?.[avatarId] || [])
+  ];
+  const seen = new Set();
+  return [...fileItems, ...runtimeItems]
+    .filter((item) => {
+      const key = item?.id || `${item?.text || ""}:${item?.turn || item?.createdAtTurn || 0}`;
+      if (!item?.text || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    })
+    .sort((a, b) => Number(b.createdAtTurn ?? b.turn ?? 0) - Number(a.createdAtTurn ?? a.turn ?? 0))
+    .slice(0, 24);
+}
+
+function getCounterfactualRelationship(avatar, participant) {
+  if (!avatar?.id || !participant?.id || !state.society?.relationships) return null;
+  const key = typeof getRelationshipKey === "function"
+    ? getRelationshipKey(avatar.id, participant.id)
+    : [avatar.id, participant.id].sort().join("__");
+  return state.society.relationships[key] || null;
+}
+
+function getCounterfactualMemoryScore(choice, profile, memories, zone) {
+  const nowTurn = Number(state.society?.turn || 0);
+  const exactTerms = [choice?.label, choice?.id].filter(Boolean);
+  let score = 0;
+  let hits = 0;
+  let strongest = "";
+  let strongestWeight = 0;
+  memories.forEach((item) => {
+    const text = String(item?.text || "");
+    const age = Math.max(0, nowTurn - Number(item?.createdAtTurn ?? item?.turn ?? nowTurn));
+    const weight = clamp(Number(item?.importance || 4) / 10, 0.1, 1) / (1 + age / 40);
+    const exactHit = exactTerms.some((term) => term && text.includes(term));
+    const sceneHit = Boolean(zone?.name && text.includes(zone.name));
+    const semanticHits = profile.memoryTerms.filter((term) => text.includes(term)).length;
+    if (!exactHit && !sceneHit && !semanticHits) return;
+    const contribution = (exactHit ? 0.18 : 0) + (sceneHit ? 0.025 : 0) + Math.min(0.165, semanticHits * 0.055);
+    score += contribution * weight;
+    hits += 1;
+    if (contribution * weight > strongestWeight) {
+      strongestWeight = contribution * weight;
+      strongest = text;
+    }
+  });
+  return { score: clamp(score, 0, 0.48), hits, strongest };
+}
+
+function scoreCounterfactualFactChoice({ choice, avatar, participant, zone, episode, memories }) {
+  const action = getCounterfactualChoiceAction(choice);
+  const profile = COUNTERFACTUAL_FACT_PROFILES[action] || COUNTERFACTUAL_FACT_PROFILES.listen;
+  const bigFive = avatar?.bigFive || {};
+  const values = avatar?.values || {};
+  const persona = Number(avatar?.socialBias?.[action] || 0) * 1.4
+    + Object.entries(profile.traits).reduce((sum, [trait, weight]) => sum + (Number(bigFive[trait] || 0.5) - 0.5) * weight, 0);
+  const valueMatches = profile.values.map((key) => ({ key, score: Number(values[key] || 0) }));
+  const valueScore = valueMatches.reduce((sum, item) => sum + item.score, 0) / Math.max(1, valueMatches.length) * 0.55;
+  const memory = getCounterfactualMemoryScore(choice, profile, memories, zone);
+  const relationship = getCounterfactualRelationship(avatar, participant);
+  let relationshipScore = 0;
+  if (relationship) {
+    const trust = Number(relationship.trust || 50) / 100;
+    const strain = Number(relationship.strain || 0) / 100;
+    const reciprocity = Number(relationship.reciprocity || 50) / 100;
+    const disclosureGap = 1 - Number(relationship.disclosureDepth || 0) / 100;
+    if (action === "listen") relationshipScore = strain * 0.2 + disclosureGap * 0.13;
+    else if (action === "support") relationshipScore = strain * 0.14 + (1 - Number(participant?.energy || 50) / 100) * 0.18;
+    else if (action === "cooperate") relationshipScore = trust * 0.18 + reciprocity * 0.12 - strain * 0.08;
+    else if (action === "meditate") relationshipScore = strain * 0.3;
+    else relationshipScore = trust * 0.12 - strain * 0.06;
+  }
+  const energy = Number(avatar?.energy || 50);
+  const mood = Number(avatar?.mood || 50);
+  const trust = Number(avatar?.trust || 50);
+  const energyCost = Math.max(0, -Number(choice?.avatar?.energy || 0));
+  const stateScore = (action === "listen" && trust < 55 ? (55 - trust) / 230 : 0)
+    + (action === "support" && mood >= 52 ? (mood - 50) / 260 : 0)
+    + (action === "cooperate" && energy >= 48 ? (energy - 45) / 220 : 0)
+    - Math.max(0, 50 - energy) / 50 * energyCost * 0.12;
+  const recentEpisodeChoices = (episode?.rewrites || []).slice(-3);
+  const continuityScore = Math.min(0.24, recentEpisodeChoices.filter((event) => event.relationType === action).length * 0.08);
+  const tieBreak = Math.abs(hashCommunitySeed(`${avatar?.id || "avatar"}:${zone?.id || "zone"}:${choice.id}`, "fact-choice")) % 1000 / 1000000;
+  const score = 0.5 + persona + valueScore + memory.score + relationshipScore + stateScore + continuityScore + tieBreak;
+  return {
+    choice,
+    action,
+    actionLabel: profile.label,
+    score,
+    components: { persona, values: valueScore, memory: memory.score, relationship: relationshipScore, state: stateScore, continuity: continuityScore },
+    valueMatches: valueMatches.sort((a, b) => b.score - a.score),
+    memory,
+    relationship
+  };
+}
+
+function buildCounterfactualFactEvidence(scored, avatar, participant) {
+  const evidence = [];
+  const personaLabel = avatar?.personaLabel || avatar?.mbtiType || "当前人格轮廓";
+  evidence.push({
+    type: "persona",
+    label: "人格",
+    score: scored.components.persona,
+    text: `${personaLabel}更常用“${scored.actionLabel}”靠近这种现场`
+  });
+  const topValue = scored.valueMatches[0];
+  if (topValue?.score > 0) {
+    evidence.push({
+      type: "value",
+      label: "价值",
+      score: scored.components.values,
+      text: `你的“${VALUE_TAG_LABELS[topValue.key] || topValue.key}”排序支持这个选择`
+    });
+  }
+  if (scored.memory.hits) {
+    evidence.push({
+      type: "memory",
+      label: "记忆",
+      score: scored.components.memory,
+      text: `最近 ${scored.memory.hits} 条记忆与这次做法产生回声`
+    });
+  }
+  if (participant && scored.relationship) {
+    const strain = Number(scored.relationship.strain || 0);
+    const relationText = scored.action === "cooperate"
+      ? `你和${participant.name}已有的信任更适合一起行动`
+      : strain >= 24
+        ? `你和${participant.name}的关系仍有张力，分身先放慢一步`
+        : `你和${participant.name}的关系允许这次温和靠近`;
+    evidence.push({ type: "relationship", label: "关系", score: scored.components.relationship, text: relationText });
+  }
+  if (Math.abs(scored.components.state) > 0.025) {
+    evidence.push({
+      type: "state",
+      label: "此刻",
+      score: scored.components.state,
+      text: Number(avatar?.energy || 50) < 45 ? "你此刻精力偏低，分身不会承诺过多" : "你此刻仍有余力把选择变成行动"
+    });
+  }
+  if (scored.components.continuity > 0) {
+    evidence.push({ type: "continuity", label: "本集", score: scored.components.continuity, text: `你在本集已经多次选择“${scored.actionLabel}”` });
+  }
+  return evidence
+    .filter((item) => item.text)
+    .sort((a, b) => Math.abs(b.score) - Math.abs(a.score))
+    .slice(0, 3);
+}
+
+function deriveAvatarFactDecision(zone, sceneAction, participant, episode) {
+  const choices = Array.isArray(sceneAction?.choices) ? sceneAction.choices : [];
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar") || null;
+  if (!choices.length) return null;
+  const memories = getCounterfactualAvatarMemories(avatar?.id || "avatar");
+  const ranked = choices.map((choice) => scoreCounterfactualFactChoice({ choice, avatar, participant, zone, episode, memories }))
+    .sort((a, b) => b.score - a.score);
+  const winner = ranked[0];
+  const runnerUp = ranked[1] || winner;
+  const evidence = buildCounterfactualFactEvidence(winner, avatar, participant);
+  const decision = {
+    version: 1,
+    choice: winner.choice,
+    alternative: runnerUp.choice,
+    score: winner.score,
+    runnerUpScore: runnerUp.score,
+    reason: evidence[0]?.text || `${avatar?.name || "你的分身"}会先选择“${winner.choice.label}”`,
+    evidence,
+    action: winner.action,
+    memoryHits: winner.memory.hits,
+    personaLabel: avatar?.personaLabel || avatar?.mbtiType || "当前人格轮廓"
+  };
+  window.__mirrorLifeFactDecision = {
+    choiceId: decision.choice.id,
+    alternativeChoiceId: decision.alternative.id,
+    reason: decision.reason,
+    evidence: decision.evidence.map((item) => ({ ...item })),
+    ranked: ranked.map((item) => ({ choiceId: item.choice.id, score: Number(item.score.toFixed(4)) }))
+  };
+  return decision;
+}
+
+function stageInteriorCounterfactualActors(zone) {
+  const blueprint = getInteriorBlueprint(zone);
+  const anchors = getInteriorPhysicsAnchors(blueprint);
+  const focal = anchors.find((anchor) => anchor.prop?.focal)
+    || anchors.find((anchor) => anchor.behaviors?.includes("meeting"))
+    || anchors[0];
+  if (!focal) return;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(blueprint);
+  const radius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const alive = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  const castSize = 3;
+  let citizens = alive.filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id).slice(0, castSize);
+  if (citizens.length < castSize) {
+    const present = new Set(citizens.map((citizen) => citizen.id));
+    alive.filter((citizen) => !present.has(citizen.id)).slice(0, castSize - citizens.length).forEach((citizen) => {
+      const animation = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+      animation.indoor = { zoneId: zone.id, zoneName: zone.name, until: performance.now() + 90000, spawnInside: true };
+      citizens.push(citizen);
+    });
+  }
+  const tangent = { x: Math.cos(focal.angle || 0), z: Math.sin(focal.angle || 0) };
+  const radialLength = Math.max(0.001, Math.hypot(focal.worldX || 0, focal.worldZ || 0));
+  const towardCenter = { x: -(focal.worldX || 0) / radialLength, z: -(focal.worldZ || 0) / radialLength };
+  const sideOffsets = [-0.82, 0.82, 0];
+  const depthOffsets = [0.62, 0.62, 0.46];
+  const staged = [];
+  const now = performance.now();
+  citizens.forEach((citizen, index) => {
+    const desired = {
+      x: Number(focal.interactionWorldX ?? focal.worldX) + tangent.x * sideOffsets[index] + towardCenter.x * depthOffsets[index],
+      z: Number(focal.interactionWorldZ ?? focal.worldZ) + tangent.z * sideOffsets[index] + towardCenter.z * depthOffsets[index]
+    };
+    const dynamic = [
+      ...staged,
+      { id: "player", x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0), radius: Number(physics?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) }
+    ];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, radius, { dynamic, selfId: citizen.id })
+      : desired;
+    const ia = interiorAnimations[citizen.id] = interiorAnimations[citizen.id] || {
+      worldX: point.x,
+      worldZ: point.z,
+      targetWorldX: point.x,
+      targetWorldZ: point.z,
+      x: 0,
+      y: 0,
+      path: [],
+      pathIndex: 0,
+      walkPhase: 0,
+      facing: index === 0 ? 1 : -1
+    };
+    ia.worldX = point.x;
+    ia.worldZ = point.z;
+    ia.targetWorldX = point.x;
+    ia.targetWorldZ = point.z;
+    ia.targetAnchor = focal;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.lastPhysicsAt = now;
+    ia.state = "idle";
+    ia.facing = index === 0 ? 1 : -1;
+    ia.counterfactualFrame = (getCitizenSpriteFrame(citizen) + index * 3) % CITIZEN_FRAME_COUNT;
+    if (citizenAnimations[citizen.id]?.indoor) citizenAnimations[citizen.id].indoor.until = now + 90000;
+    staged.push({ id: citizen.id, x: point.x, z: point.z, radius });
+  });
+  const castIds = new Set(citizens.map((citizen) => citizen.id));
+  alive.forEach((citizen) => {
+    const animation = interiorAnimations[citizen.id] = interiorAnimations[citizen.id] || {};
+    if (!castIds.has(citizen.id)) animation.counterfactualHidden = true;
+  });
+}
+
+function getCounterfactualBranchCopy(choice, participant, mode = "fact") {
+  const name = participant?.name || "对方";
+  const relationType = choice?.relationType || "listen";
+  const consequenceByRelation = {
+    listen: `${name}会更愿意把没说完的话交给你`,
+    support: `${name}会在明天把椅子挪近一点`,
+    cooperate: `${name}会主动接住下一次共同任务`,
+    meditate: `${name}会记得分歧也可以安全地留下`
+  };
+  const consequence = consequenceByRelation[relationType]
+    || (Number(choice?.participant?.mood || 0) >= 3
+      ? `${name}会记得这一刻没有被催促`
+      : `${name}会把这个动作带进明天`);
+  return {
+    label: mode === "fact" ? "事实" : "如果",
+    title: choice?.label || (mode === "fact" ? "保留原来的选择" : "进入另一种未来"),
+    consequence,
+    reaction: choice?.reaction || "这件小事会被记住。"
   };
 }
 
@@ -6031,12 +8863,25 @@ function syncInteriorJourneyHud(blueprint) {
   const record = getInteriorExplorationRecord(interiorView.zone.id);
   const thread = getInteriorStoryThread(interiorView.zone.id);
   const props = blueprint.props || [];
-  const goal = Math.min(3, props.length || 3);
-  const foundCount = Math.min(record.found.length, goal);
-  const nextIndex = props.findIndex((prop) => !record.found.includes(prop.label));
+  const explorationProgress = getInteriorExplorationProgress(interiorView.zone, blueprint, record);
+  const goal = explorationProgress.goal;
+  const foundCount = explorationProgress.count;
+  const nextIndex = getInteriorNextExplorablePropIndex(interiorView.zone, blueprint, record);
   const nextProp = nextIndex >= 0 ? props[nextIndex] : null;
+  const quietPresence = getQuietPresenceRitual(interiorView.zone.id);
+  const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !record.completed;
+  const socialParallax = getSocialParallaxRitual(interiorView.zone.id);
+  const socialParallaxPending = socialParallax && socialParallax.status !== "complete" && !record.completed;
+  const empathyCalibration = getEmpathyCalibrationRitual(interiorView.zone.id);
+  const empathyCalibrationPending = empathyCalibration && empathyCalibration.status !== "complete" && !record.completed;
+  const memoryAuthorization = getMemoryAuthorizationRitual(interiorView.zone.id);
+  const memoryAuthorizationPending = memoryAuthorization && memoryAuthorization.status !== "complete" && !record.completed;
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
-  const phase = record.scenePlayed ? 3 : record.completed ? 2 : 1;
+  const aftermathEcho = record.scenePlayed ? getInteriorAftermathEcho(interiorView.zone.id) : null;
+  const pendingAftermath = aftermathEcho && !aftermathEcho.discussed ? aftermathEcho : null;
+  const phase = record.scenePlayed ? (pendingAftermath ? 3 : 4) : record.completed ? 2 : 1;
+  const episode = getCounterfactualEpisodeState(thread?.id);
+  const act = getCounterfactualAct(thread);
 
   let panel = document.getElementById("interiorJourneyPanel");
   if (!panel) {
@@ -6053,11 +8898,47 @@ function syncInteriorJourneyHud(blueprint) {
         playInteriorSceneAction();
         return;
       }
+      const quietPresenceAction = event.target.closest("[data-quiet-presence-start]");
+      if (quietPresenceAction) {
+        startQuietPresenceRitual();
+        return;
+      }
+      const socialParallaxAction = event.target.closest("[data-social-parallax-start]");
+      if (socialParallaxAction) {
+        if (socialParallax?.status === "active") focusSocialParallaxTarget();
+        else startSocialParallaxRitual();
+        return;
+      }
+      const empathyCalibrationAction = event.target.closest("[data-empathy-calibration-start]");
+      if (empathyCalibrationAction) {
+        if (empathyCalibration?.status === "active") focusEmpathyCalibrationTarget();
+        else startEmpathyCalibrationRitual();
+        return;
+      }
+      const memoryAuthorizationAction = event.target.closest("[data-memory-authorization-start]");
+      if (memoryAuthorizationAction) {
+        if (memoryAuthorization?.status === "active") focusMemoryAuthorizationTarget();
+        else startMemoryAuthorizationRitual();
+        return;
+      }
+      const finale = event.target.closest("[data-counterfactual-episode-finale]");
+      if (finale) {
+        showCounterfactualEpisodeFinale(finale.dataset.counterfactualEpisodeFinale || "");
+        return;
+      }
+      const aftermath = event.target.closest("[data-interior-aftermath]");
+      if (aftermath) {
+        focusInteriorAftermathWitness(aftermath.dataset.interiorAftermath || "");
+        return;
+      }
       const nextChapter = event.target.closest("[data-interior-next-chapter]");
       if (nextChapter) {
-        const nextZoneName = nextChapter.dataset.interiorNextChapter;
+        const nextZoneId = nextChapter.dataset.interiorNextChapter;
+        const nextZone = findRenderZoneById(nextZoneId);
+        const activeThreadId = nextChapter.dataset.episodeThread || getInteriorStoryThread(interiorView?.zone?.id)?.id || "";
         exitInteriorView();
-        showToast(`下一章：去街道上寻找${nextZoneName}`, "listen");
+        activateEpisodeTrail(activeThreadId, nextZoneId, { force: true });
+        showToast(`下一章：${nextZone?.name || "沿着余波继续"}`, "listen");
       }
     });
     shell.appendChild(panel);
@@ -6068,28 +8949,79 @@ function syncInteriorJourneyHud(blueprint) {
     foundCount,
     record.completed,
     record.scenePlayed,
+    aftermathEcho?.id || "",
+    !!aftermathEcho?.discussed,
+    quietPresence?.status || "",
+    Math.floor(Number(quietPresence?.progressMs || 0) / 1000),
+    socialParallax?.status || "",
+    socialParallax?.heardIds?.join("|") || "",
+    socialParallax?.phase || "",
+    Math.floor(Number((socialParallax?.heardIds?.length || 0) >= 2 ? socialParallax?.centerProgressMs : socialParallax?.focusProgressMs) / 1000),
+    empathyCalibration?.status || "",
+    empathyCalibration?.phase || "",
+    empathyCalibration?.attemptedLensIds?.join("|") || "",
+    empathyCalibration?.confirmedLensId || "",
+    Math.floor(Number(empathyCalibration?.confirmedLensId ? empathyCalibration?.confirmProgressMs : empathyCalibration?.positionProgressMs) / 1000),
+    memoryAuthorization?.status || "",
+    memoryAuthorization?.authorizedScopeId || "",
+    memoryAuthorization?.attemptedScopeIds?.join("|") || "",
+    Math.floor(Number(memoryAuthorization?.holdProgressMs || 0) / 1000),
     nextIndex,
-    thread?.completedCount || 0
+    thread?.completedCount || 0,
+    episode.rewriteTokens,
+    episode.status,
+    act.index
   ].join("|");
   if (panel.dataset.signature !== signature) {
     panel.dataset.signature = signature;
     const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
-    const nextAction = phase === 1 && nextProp
-      ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
+    const finaleReady = !!thread && thread.completedCount >= thread.zones.length;
+    const nextAction = phase === 1 && memoryAuthorizationPending
+      ? `<button type="button" data-memory-authorization-start>${memoryAuthorization.status === "active"
+        ? `朝向授权范围 · ${escapeHtml(getMemoryAuthorizationScope(memoryAuthorization.authorizedScopeId).shortLabel)}`
+        : "接过一段有边界的记忆"}</button>`
+      : phase === 1 && empathyCalibrationPending
+      ? `<button type="button" data-empathy-calibration-start>${empathyCalibration.status === "active"
+        ? empathyCalibration.confirmedLensId ? "重新看向 Ta 并确认" : empathyCalibration.attemptedLensIds.length ? "按 Ta 的修正换位" : "朝向第一个理解位置"
+        : "开始误解校准"}</button>`
+      : phase === 1 && socialParallaxPending
+      ? `<button type="button" data-social-parallax-start>${socialParallax.status === "active"
+        ? socialParallax.heardIds.length >= 2 ? "朝向分歧之间的空位" : "朝向下一位讲述者"
+        : socialParallax.heardIds.length ? "继续穿过两种证词" : "进入证词视差"}</button>`
+      : phase === 1 && quietPresencePending
+      ? `<button type="button" data-quiet-presence-start>${quietPresence.status === "active" ? "回到这段安静" : "找到不想解释的人"}</button>`
+      : phase === 1 && nextProp
+        ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
       : phase === 2
         ? `<button type="button" data-interior-scene-action="journey">${escapeHtml(sceneAction.label)}</button>`
-        : nextZone
-          ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.name)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
-          : "";
+        : phase === 3 && pendingAftermath
+          ? `<button type="button" data-interior-aftermath="${escapeHtml(pendingAftermath.id)}">寻找 ${escapeHtml(pendingAftermath.observerName || "余波见证者")}</button>`
+          : finaleReady
+          ? `<button type="button" data-counterfactual-episode-finale="${escapeHtml(thread.id)}">回看本集终章</button>`
+          : nextZone
+            ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.id)}" data-episode-thread="${escapeHtml(thread.id)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
+            : "";
     panel.innerHTML = `
-      <header><span>房间故事簿</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
+      <header><span>${escapeHtml(act.label)}</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
       <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
       <ol>
-        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>环顾线索<small>${foundCount}/${goal} 段场所记忆</small></span></li>
+        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${memoryAuthorization ? "安放记忆" : empathyCalibration ? "校准误解" : socialParallax ? "穿过分歧" : quietPresence ? "读懂房间" : "环顾线索"}<small>${memoryAuthorizationPending
+          ? memoryAuthorization.status === "active"
+            ? `只到“${escapeHtml(getMemoryAuthorizationScope(memoryAuthorization.authorizedScopeId).shortLabel)}” · ${memoryAuthorization.attemptedScopeIds.length ? "边界已被确认" : "携带中"}`
+            : "讲述不等于公开"
+          : empathyCalibrationPending
+          ? empathyCalibration.status === "active"
+            ? empathyCalibration.confirmedLensId ? "按对方需要的距离重新确认" : empathyCalibration.attemptedLensIds.length ? "误读可以被修正" : "走进一个理解位置"
+            : "陈设不能替对方回答"
+          : socialParallaxPending
+          ? socialParallax.status === "active"
+            ? socialParallax.heardIds.length >= 2 ? "站进第三个位置" : `已听见 ${socialParallax.heardIds.length}/2 种证词`
+            : "陈设不能替人作证"
+          : quietPresencePending ? quietPresence.status === "active" ? `安静 ${Math.floor(Number(quietPresence.progressMs || 0) / 1000)}/8 秒` : "一条线索不会回应点击" : `${foundCount}/${goal} 段场所记忆`}</small></span></li>
         <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
-        <li class="${phase === 3 ? "current done" : ""}"><b>3</b><span>关系留下痕迹<small>${record.scenePlayed ? "已写入本周生活" : "让人物与城市真正改变"}</small></span></li>
+        <li class="${phase === 3 ? "current" : ""} ${phase === 4 ? "done" : ""}"><b>3</b><span>听见活体余波<small>${pendingAftermath ? `${escapeHtml(pendingAftermath.observerName || "有人")}还记得另一种未来` : record.scenePlayed ? "另一种理解也进入了关系记忆" : "选择后会有人带着另一种记忆留下"}</small></span></li>
       </ol>
-      <footer><span>${thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应` : blueprint.title}</span>${nextAction}</footer>`;
+      <footer><span>${thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应 · ${act.verb}` : blueprint.title}</span><em>本集可改写 <b>${episode.rewriteTokens}</b> 次</em>${nextAction}</footer>`;
   }
 
   let compass = document.getElementById("interiorCompass");
@@ -6103,6 +9035,7 @@ function syncInteriorJourneyHud(blueprint) {
     });
     shell.appendChild(compass);
   }
+  compass.hidden = !!socialParallaxPending || !!empathyCalibrationPending || !!memoryAuthorizationPending;
   const compassSignature = `${interiorView.zone.id}|${record.found.join("|")}`;
   if (compass.dataset.signature !== compassSignature) {
     compass.dataset.signature = compassSignature;
@@ -6210,7 +9143,18 @@ function ensureInteriorHotspotLayer() {
 
 function syncInteriorHotspotLayer(anchors, blueprint) {
   if (!interiorView) return;
-  interiorHotspots = (anchors || []).filter((anchor) => anchor.visible);
+  const socialParallaxPending = interiorView.zone?.id === SOCIAL_PARALLAX_ZONE_ID
+    && getSocialParallaxRitual(SOCIAL_PARALLAX_ZONE_ID)?.status !== "complete"
+    && !getInteriorExplorationRecord(SOCIAL_PARALLAX_ZONE_ID).completed;
+  const empathyCalibrationPending = interiorView.zone?.id === EMPATHY_CALIBRATION_ZONE_ID
+    && getEmpathyCalibrationRitual(EMPATHY_CALIBRATION_ZONE_ID)?.status !== "complete"
+    && !getInteriorExplorationRecord(EMPATHY_CALIBRATION_ZONE_ID).completed;
+  const memoryAuthorizationPending = interiorView.zone?.id === MEMORY_AUTHORIZATION_ZONE_ID
+    && getMemoryAuthorizationRitual(MEMORY_AUTHORIZATION_ZONE_ID)?.status !== "complete"
+    && !getInteriorExplorationRecord(MEMORY_AUTHORIZATION_ZONE_ID).completed;
+  interiorHotspots = socialParallaxPending || empathyCalibrationPending || memoryAuthorizationPending
+    ? []
+    : (anchors || []).filter((anchor) => anchor.visible);
   const layer = ensureInteriorHotspotLayer();
   const record = getInteriorExplorationRecord(interiorView.zone.id);
   const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
@@ -6244,6 +9188,1975 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
   layer.setAttribute("aria-label", `${blueprint?.title || "室内"}可探索陈设`);
 }
 
+function clearCounterfactualActorStaging() {
+  Object.values(interiorAnimations).forEach((animation) => {
+    delete animation?.counterfactualFrame;
+    delete animation?.counterfactualHidden;
+  });
+}
+
+function closeInteriorCounterfactualStage() {
+  document.body.classList.remove("counterfactual-active");
+  document.getElementById("interiorCounterfactualStage")?.remove();
+  clearCounterfactualActorStaging();
+}
+
+function closeCounterfactualEpisodeFinale() {
+  document.body.classList.remove("counterfactual-finale-active");
+  document.getElementById("counterfactualEpisodeFinale")?.remove();
+  clearCounterfactualActorStaging();
+}
+
+function ensureMirrorRelayState() {
+  state.mirrorRelay = typeof normalizeMirrorRelay === "function"
+    ? normalizeMirrorRelay(state.mirrorRelay)
+    : (state.mirrorRelay || { invites: [], responses: [] });
+  return state.mirrorRelay;
+}
+
+function sanitizeMirrorRelayText(value, max = 120) {
+  return String(value || "")
+    .replace(/[\u0000-\u001f\u007f]/g, " ")
+    .replace(/[<>]/g, "")
+    .replace(/\s+/g, " ")
+    .trim()
+    .slice(0, max);
+}
+
+function sanitizeMirrorRelayAlias(value) {
+  return sanitizeMirrorRelayText(value, MIRROR_RELAY_ALIAS_MAX) || "匿名同行者";
+}
+
+function encodeMirrorRelayJson(value) {
+  const bytes = new TextEncoder().encode(JSON.stringify(value));
+  let binary = "";
+  bytes.forEach((byte) => { binary += String.fromCharCode(byte); });
+  return btoa(binary).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/g, "");
+}
+
+function decodeMirrorRelayJson(token) {
+  const normalized = String(token || "").replace(/-/g, "+").replace(/_/g, "/");
+  const padded = normalized + "=".repeat((4 - normalized.length % 4) % 4);
+  const binary = atob(padded);
+  const bytes = Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  return JSON.parse(new TextDecoder().decode(bytes));
+}
+
+function getMirrorRelayChecksum(payload) {
+  return Math.abs(hashCommunitySeed(JSON.stringify(payload), `mirror-relay-v${MIRROR_RELAY_PAYLOAD_VERSION}`)).toString(36);
+}
+
+function normalizeMirrorRelayUrlPayload(payload, expectedKind = "") {
+  if (!payload || typeof payload !== "object" || Array.isArray(payload)) return null;
+  const kind = payload.kind === "response" ? "response" : payload.kind === "invite" ? "invite" : "";
+  if (!kind || (expectedKind && kind !== expectedKind) || Number(payload.version) !== MIRROR_RELAY_PAYLOAD_VERSION) return null;
+  const normalizeChoice = (choice) => {
+    const action = ["listen", "support", "cooperate", "meditate", "propose"].includes(choice?.action) ? choice.action : "listen";
+    return {
+      id: sanitizeMirrorRelayText(choice?.id, 80),
+      label: sanitizeMirrorRelayText(choice?.label, 120),
+      action
+    };
+  };
+  if (kind === "invite") {
+    const choices = Array.isArray(payload.choices) ? payload.choices.slice(0, 2).map(normalizeChoice) : [];
+    if (choices.length !== 2 || !choices.every((choice) => choice.id && choice.label) || choices[0].id === choices[1].id) return null;
+    const invite = {
+      kind,
+      version: MIRROR_RELAY_PAYLOAD_VERSION,
+      id: sanitizeMirrorRelayText(payload.id, 120),
+      threadId: sanitizeMirrorRelayText(payload.threadId, 80),
+      threadTitle: sanitizeMirrorRelayText(payload.threadTitle, 120),
+      inviterAlias: sanitizeMirrorRelayAlias(payload.inviterAlias),
+      question: sanitizeMirrorRelayText(payload.question, 260),
+      hostChoiceId: sanitizeMirrorRelayText(payload.hostChoiceId, 80),
+      hostChoiceLabel: sanitizeMirrorRelayText(payload.hostChoiceLabel, 120),
+      choices
+    };
+    return invite.id && invite.question ? invite : null;
+  }
+  const value = MIRROR_RELAY_VALUES.find((item) => item.id === payload.valueId);
+  const action = ["listen", "support", "cooperate", "meditate", "propose"].includes(payload.action) ? payload.action : "listen";
+  const response = {
+    kind,
+    version: MIRROR_RELAY_PAYLOAD_VERSION,
+    id: sanitizeMirrorRelayText(payload.id, 120),
+    inviteId: sanitizeMirrorRelayText(payload.inviteId, 120),
+    threadId: sanitizeMirrorRelayText(payload.threadId, 80),
+    inviterAlias: sanitizeMirrorRelayAlias(payload.inviterAlias),
+    responderAlias: sanitizeMirrorRelayAlias(payload.responderAlias),
+    question: sanitizeMirrorRelayText(payload.question, 260),
+    hostChoiceId: sanitizeMirrorRelayText(payload.hostChoiceId, 80),
+    hostChoiceLabel: sanitizeMirrorRelayText(payload.hostChoiceLabel, 120),
+    valueId: value?.id || "heard",
+    valueLabel: value?.label || "被听见",
+    valueKey: value?.valueKey || "benevolence",
+    choiceId: sanitizeMirrorRelayText(payload.choiceId, 80),
+    choiceLabel: sanitizeMirrorRelayText(payload.choiceLabel, 120),
+    action,
+    avatarFrame: clamp(Math.round(Number(payload.avatarFrame) || 0), 0, 7)
+  };
+  return response.id && response.inviteId && response.question && response.choiceId && response.choiceLabel ? response : null;
+}
+
+function encodeMirrorRelayPayload(payload) {
+  const normalized = normalizeMirrorRelayUrlPayload(payload, payload?.kind || "");
+  if (!normalized) throw new Error("接力内容不完整");
+  return encodeMirrorRelayJson({ payload: normalized, checksum: getMirrorRelayChecksum(normalized) });
+}
+
+function decodeMirrorRelayPayload(token, expectedKind = "") {
+  if (!token || String(token).length > MIRROR_RELAY_URL_MAX_LENGTH) return null;
+  try {
+    const wrapper = decodeMirrorRelayJson(token);
+    const normalized = normalizeMirrorRelayUrlPayload(wrapper?.payload, expectedKind);
+    if (!normalized || wrapper?.checksum !== getMirrorRelayChecksum(normalized)) return null;
+    return normalized;
+  } catch {
+    return null;
+  }
+}
+
+function buildMirrorRelayUrl(param, payload) {
+  const url = new URL(window.location.href);
+  url.search = "";
+  url.hash = "";
+  url.searchParams.set(param, encodeMirrorRelayPayload(payload));
+  const value = url.toString();
+  if (value.length > MIRROR_RELAY_URL_MAX_LENGTH) throw new Error("接力链接过长");
+  return value;
+}
+
+function removeMirrorRelayUrlParams() {
+  const url = new URL(window.location.href);
+  url.searchParams.delete("mirrorInvite");
+  url.searchParams.delete("mirrorResponse");
+  window.history.replaceState(null, "", `${url.pathname}${url.search}${url.hash}`);
+}
+
+function getMirrorRelayPrompt(thread, episode) {
+  const stats = getCounterfactualEpisodeStats(episode, thread);
+  const prompt = MIRROR_RELAY_PROMPTS[stats.primaryRelation] || MIRROR_RELAY_PROMPTS.listen;
+  const hostChoice = prompt.choices[stats.rewriteCount > 0 ? 1 : 0] || prompt.choices[0];
+  return { ...prompt, choices: prompt.choices.map((choice) => ({ ...choice })), hostChoice };
+}
+
+function createMirrorRelayInvite(threadId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  if (!thread) throw new Error("这一集还不能发起接力");
+  const episode = getCounterfactualEpisodeState(thread.id);
+  if (!episode.finale) throw new Error("完成这一集后才能把问题交给朋友");
+  const prompt = getMirrorRelayPrompt(thread, episode);
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  const inviterAlias = sanitizeMirrorRelayAlias(avatar?.name || state.profile?.identity || "一位同行者");
+  const idSeed = `${thread.id}:${state.society?.turn || 0}:${prompt.question}:${inviterAlias}`;
+  const invite = {
+    kind: "invite",
+    version: MIRROR_RELAY_PAYLOAD_VERSION,
+    id: `relay-${thread.id}-${Math.abs(hashCommunitySeed(idSeed, "invite")).toString(36)}`,
+    threadId: thread.id,
+    threadTitle: thread.title,
+    inviterAlias,
+    question: prompt.question,
+    hostChoiceId: prompt.hostChoice.id,
+    hostChoiceLabel: prompt.hostChoice.label,
+    choices: prompt.choices
+  };
+  const relay = ensureMirrorRelayState();
+  relay.invites = relay.invites.filter((item) => item.id !== invite.id);
+  relay.invites.push({ ...invite, createdTurn: Math.max(0, Number(state.society?.turn || 0)) });
+  relay.invites = relay.invites.slice(-8);
+  const url = buildMirrorRelayUrl("mirrorInvite", invite);
+  window.__mirrorLifeRelayInviteUrl = url;
+  window.__mirrorLifeRelayInvitePayload = { ...invite, choices: invite.choices.map((choice) => ({ ...choice })) };
+  persist(true);
+  return { invite, url };
+}
+
+async function shareMirrorRelayInvite(threadId) {
+  try {
+    const { invite, url } = createMirrorRelayInvite(threadId);
+    recordEpisodeExperienceEvent(threadId, "relay_started", { detail: "mirror-relay" }, { onceKey: "relay" });
+    const text = `${invite.inviterAlias}把一个没有标准答案的问题交给你：\n${invite.question}\n只有在你同意后，一次性分身才会回应。`;
+    if (navigator.share) {
+      await navigator.share({ title: "镜像人生 · 镜像接力", text, url });
+      showToast("问题已经交给你选择的人", "support");
+      return;
+    }
+    await navigator.clipboard?.writeText(`${text}\n${url}`);
+    showToast("接力链接已复制，只包含问题与昵称", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast(error?.message || "接力链接没有生成", "conflict");
+  }
+}
+
+function getMirrorRelayGuestId(response) {
+  return `relay-guest-${Math.abs(hashCommunitySeed(response?.id || response?.inviteId || "guest", "mirror-relay-guest")).toString(36)}`;
+}
+
+function getMirrorRelayValue(valueId) {
+  return MIRROR_RELAY_VALUES.find((item) => item.id === valueId) || MIRROR_RELAY_VALUES[0];
+}
+
+function upsertMirrorRelayResponse(response, consentState = "saved") {
+  const relay = ensureMirrorRelayState();
+  const normalized = normalizeMirrorRelayUrlPayload(response, "response");
+  if (!normalized) return null;
+  const previous = relay.responses.find((item) => item.id === normalized.id);
+  const record = {
+    ...normalized,
+    consentState: ["saved", "joined", "removed"].includes(consentState) ? consentState : "saved",
+    guestId: previous?.guestId || getMirrorRelayGuestId(normalized),
+    receivedTurn: previous?.receivedTurn || Math.max(0, Number(state.society?.turn || 0)),
+    coPlay: previous?.coPlay || null
+  };
+  relay.responses = relay.responses.filter((item) => item.id !== record.id);
+  relay.responses.push(record);
+  relay.responses = relay.responses.slice(-MIRROR_RELAY_MAX_RESPONSES);
+  return record;
+}
+
+function ensureMirrorRelayCoPlay(record) {
+  if (!record) return null;
+  const source = record.coPlay && typeof record.coPlay === "object" ? record.coPlay : {};
+  record.coPlay = {
+    status: ["active", "resolved", "removed"].includes(source.status) ? source.status : "active",
+    startedTurn: Math.max(0, Number(source.startedTurn || record.receivedTurn || state.society?.turn || 0)),
+    startHarmony: clamp(Number(source.startHarmony ?? state.society?.harmony ?? 0), 0, 100),
+    startTension: clamp(Number(source.startTension ?? state.society?.tension ?? 0), 0, 100),
+    intervention: ["join", "space"].includes(source.intervention) ? source.intervention : "",
+    interventionTurn: Math.max(0, Number(source.interventionTurn || 0)),
+    witnessId: sanitizeMirrorRelayText(source.witnessId, 120),
+    evidence: Array.isArray(source.evidence) ? source.evidence.slice(-MIRROR_RELAY_COPLAY_MAX_EVIDENCE) : [],
+    completedTurn: Math.max(0, Number(source.completedTurn || 0)),
+    outcome: source.outcome && typeof source.outcome === "object" ? source.outcome : null
+  };
+  return record.coPlay;
+}
+
+function getMirrorRelayDesiredActions(record, role = "guest") {
+  const primary = ["listen", "support", "cooperate", "meditate", "propose"].includes(record?.action)
+    ? record.action
+    : "listen";
+  const valueActions = {
+    heard: [primary, "listen", "support", "propose"],
+    respected: [primary, "listen", "meditate", "cooperate"],
+    authentic: [primary, "propose", "listen", "cooperate"]
+  };
+  if (role === "host") return ["listen", "cooperate", "support", "propose"];
+  if (role === "witness") return ["listen", "support", "cooperate"];
+  return valueActions[record?.valueId] || valueActions.heard;
+}
+
+function selectMirrorRelayWitness(record) {
+  const candidates = (state.society?.citizens || []).filter((citizen) => (
+    citizen.alive !== false
+    && citizen.id !== "avatar"
+    && citizen.id !== record?.guestId
+    && !String(citizen.id || "").startsWith("relay-guest-")
+  ));
+  return candidates.sort((a, b) => {
+    const pressureA = Number(a.mood || 0) + Number(a.trust || 0);
+    const pressureB = Number(b.mood || 0) + Number(b.trust || 0);
+    if (pressureA !== pressureB) return pressureA - pressureB;
+    return hashCommunitySeed(`${record.id}:${a.id}`, "relay-witness") - hashCommunitySeed(`${record.id}:${b.id}`, "relay-witness");
+  })[0] || null;
+}
+
+function queueMirrorRelayMission(record, actorId, role, actionTargetId, desiredActions) {
+  if (!record || !actorId || record.consentState !== "joined") return null;
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status !== "active") return null;
+  const runtime = ensureAgentRuntime(state.society);
+  runtime.inbox = (runtime.inbox || []).filter((item) => !(
+    item.type === "mirror-relay-mission"
+    && item.responseId === record.id
+    && item.targetId === actorId
+  ));
+  return queueAgentInbox(state.society, {
+    type: "mirror-relay-mission",
+    targetId: actorId,
+    actionTargetId: actionTargetId || null,
+    responseId: record.id,
+    role,
+    desiredActions: (desiredActions || getMirrorRelayDesiredActions(record, role)).slice(0, 4),
+    expiresTurn: Math.max(Number(state.society?.turn || 0), coPlay.startedTurn) + MIRROR_RELAY_GUEST_MISSION_TURNS,
+    prompt: record.question,
+    hint: role === "guest" ? "relay-autonomy" : role === "host" ? "relay-join" : "relay-witness",
+    instruction: role === "guest"
+      ? `先按“${record.choiceLabel}”行动，再观察它如何改变这里的人。`
+      : role === "host"
+        ? `不要替朋友重选答案；用自己的行动共同承担后果。`
+        : `只回应现场真实发生的事，不替任何一方宣布标准答案。`
+  });
+}
+
+function ensureMirrorRelayCoPlayTasks(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status !== "active" || record.consentState !== "joined") return;
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  const witness = coPlay.witnessId
+    ? state.society?.citizens?.find((citizen) => citizen.id === coPlay.witnessId)
+    : null;
+  queueMirrorRelayMission(record, record.guestId, "guest", witness?.id || avatar?.id || null);
+  if (coPlay.intervention) {
+    const selectedWitness = witness || selectMirrorRelayWitness(record);
+    if (selectedWitness) {
+      coPlay.witnessId = selectedWitness.id;
+      queueMirrorRelayMission(record, selectedWitness.id, "witness", record.guestId);
+    }
+    if (coPlay.intervention === "join" && avatar) {
+      queueMirrorRelayMission(record, avatar.id, "host", record.guestId);
+    }
+  }
+}
+
+function buildMirrorRelayCoPlayOutcome(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  const harmonyDelta = Math.round(Number(state.society?.harmony || 0) - Number(coPlay.startHarmony || 0));
+  const tensionDelta = Math.round(Number(state.society?.tension || 0) - Number(coPlay.startTension || 0));
+  const verdict = harmonyDelta > 0
+    ? "你们没有选同一个答案，却让同一个世界更愿意靠近"
+    : tensionDelta < 0
+      ? "你们没有选同一个答案，却让同一个现场慢了下来"
+      : "你们没有选同一个答案，却留下了同一条行动证据";
+  const consequence = [
+    harmonyDelta ? `安定 ${harmonyDelta > 0 ? "+" : ""}${harmonyDelta}` : "",
+    tensionDelta ? `紧绷 ${tensionDelta > 0 ? "+" : ""}${tensionDelta}` : ""
+  ].filter(Boolean).join(" · ") || "世界没有被强行判成更好，但记住了这次共同承担";
+  const featured = coPlay.evidence.slice(-4);
+  const shareText = [
+    "《镜像人生 · 两个分身的共同证据》",
+    verdict,
+    ...featured.map((item, index) => `${index + 1}. ${sanitizeMirrorRelayText(item.text, 120)}`),
+    `余波：${consequence}`,
+    "真正的同行，是赞同彼此，还是共同承担后果？",
+    "#镜像人生 #MirrorLife"
+  ].join("\n");
+  return {
+    verdict,
+    debateQuestion: "真正的同行，是赞同彼此，还是共同承担后果？",
+    consequence,
+    shareText
+  };
+}
+
+function completeMirrorRelayCoPlay(record) {
+  let coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status === "resolved") return coPlay?.outcome || null;
+  const outcome = buildMirrorRelayCoPlayOutcome(record);
+  // Outcome construction normalizes the nested record, so reacquire the live
+  // object before committing instead of mutating a detached reference.
+  coPlay = ensureMirrorRelayCoPlay(record);
+  coPlay.status = "resolved";
+  coPlay.completedTurn = Math.max(0, Number(state.society?.turn || 0));
+  coPlay.outcome = outcome;
+  const runtime = ensureAgentRuntime(state.society);
+  runtime.inbox = (runtime.inbox || []).filter((item) => !(item.type === "mirror-relay-mission" && item.responseId === record.id));
+  ensureMirrorRelayDirectorRecord(record);
+  if (typeof addSocietyEvent === "function") {
+    addSocietyEvent(`${record.responderAlias}与这里的人留下了一段共同证据：${coPlay.outcome.verdict}`, "support");
+  }
+  if (typeof addEventLogEntry === "function") {
+    addEventLogEntry("镜像接力 · 四幕共演", coPlay.outcome.verdict, "memory", true, `relay-coplay-${record.id}`);
+  }
+  persist(true);
+  return coPlay.outcome;
+}
+
+function commitMirrorRelayCoPlayIntervention(record, intervention) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay || coPlay.status !== "active" || coPlay.intervention) return false;
+  if (coPlay.evidence.length < MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE) return false;
+  coPlay.intervention = intervention === "join" ? "join" : "space";
+  coPlay.interventionTurn = Math.max(0, Number(state.society?.turn || 0));
+  const witness = selectMirrorRelayWitness(record);
+  coPlay.witnessId = witness?.id || "";
+  ensureMirrorRelayCoPlayTasks(record);
+  ensureMirrorRelayDirectorRecord(record);
+  persist(true);
+  return true;
+}
+
+function mirrorRelayOnAgentAction(society, citizen, item, result, mission) {
+  const relay = ensureMirrorRelayState();
+  const record = relay.responses.find((response) => response.id === item?.mirrorRelayResponseId);
+  if (!record || record.consentState !== "joined") return;
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (coPlay.status !== "active" || coPlay.evidence.some((entry) => entry.id === item.id)) return;
+  coPlay.evidence.push({
+    id: item.id,
+    actorId: citizen.id,
+    targetId: result?.targetId || mission?.actionTargetId || "",
+    type: item.type,
+    text: sanitizeMirrorRelayText(item.text, 360),
+    zone: sanitizeMirrorRelayText(item.zone, 120),
+    turn: Math.max(0, Number(item.turn || society?.turn || 0)),
+    score: clamp(Number(item.score || 0), -20, 20)
+  });
+  coPlay.evidence = coPlay.evidence.slice(-MIRROR_RELAY_COPLAY_MAX_EVIDENCE);
+  if (!coPlay.intervention && coPlay.evidence.length >= 12) {
+    commitMirrorRelayCoPlayIntervention(record, "space");
+  }
+  const distinctActors = new Set(coPlay.evidence.map((entry) => entry.actorId));
+  if (coPlay.intervention && coPlay.evidence.length >= MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE && distinctActors.size >= 2) {
+    completeMirrorRelayCoPlay(record);
+  } else {
+    // The shared inbox is bounded and receives a world tick every turn. Keep an
+    // active relay mission at the front so ordinary world messages cannot evict it.
+    ensureMirrorRelayCoPlayTasks(record);
+  }
+  const stage = document.getElementById("mirrorRelayCoPlayStage");
+  if (stage?.dataset.responseId === record.id) renderMirrorRelayCoPlayStage(stage, record);
+}
+
+function mirrorRelayOnSocietyTurn() {
+  const relay = ensureMirrorRelayState();
+  relay.responses.forEach((record) => {
+    const coPlay = ensureMirrorRelayCoPlay(record);
+    if (record.consentState === "joined" && coPlay?.status === "active") {
+      // Plot-director and world messages may fill the bounded inbox late in a
+      // turn. Renew relay tasks after every system has run so the next turn can
+      // still consume the friend's explicit answer.
+      ensureMirrorRelayCoPlayTasks(record);
+    }
+  });
+}
+
+function ensureMirrorRelayDirectorRecord(record) {
+  state.story = state.story && typeof state.story === "object" ? state.story : { arcs: [], log: [] };
+  state.story.director = state.story.director && typeof state.story.director === "object"
+    ? state.story.director
+    : { quests: [] };
+  const existing = Array.isArray(state.story.director.mirrorRelays) ? state.story.director.mirrorRelays : [];
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  state.story.director.mirrorRelays = [
+    ...existing.filter((item) => item.responseId !== record.id),
+    {
+      responseId: record.id,
+      guestId: record.guestId,
+      responderAlias: record.responderAlias,
+      question: record.question,
+      answer: record.choiceLabel,
+      status: record.consentState,
+      enteredTurn: record.receivedTurn,
+      coPlayStatus: coPlay?.status || "",
+      evidenceCount: coPlay?.evidence?.length || 0,
+      intervention: coPlay?.intervention || "",
+      outcome: coPlay?.outcome?.verdict || ""
+    }
+  ].slice(-12);
+}
+
+function importMirrorRelayResponse(response, consentState = "saved", options = {}) {
+  const record = upsertMirrorRelayResponse(response, consentState);
+  if (!record) return null;
+  if (consentState !== "joined") {
+    ensureMirrorRelayDirectorRecord(record);
+    if (!options.silent) persist(true);
+    return record;
+  }
+
+  const value = getMirrorRelayValue(record.valueId);
+  let guest = state.society?.citizens?.find((citizen) => citizen.id === record.guestId);
+  if (!guest) {
+    guest = normalizeCitizen({
+      id: record.guestId,
+      name: record.responderAlias,
+      role: "镜像接力访客",
+      professionId: value.professionId,
+      profession: value.professionName,
+      mbtiType: value.mbtiType,
+      zoneId: "public-plaza",
+      homeZoneId: "public-plaza",
+      purpose: record.question,
+      color: ["#ef6b62", "#2f8f83", "#d2a629"][record.avatarFrame % 3],
+      mood: 68,
+      energy: 64,
+      trust: 62,
+      avatarFrame: record.avatarFrame
+    });
+    applyPersonaToCitizen(guest, { mbtiType: value.mbtiType, valueTags: [value.valueKey] });
+    guest.avatarFrame = record.avatarFrame;
+    guest.lastAction = record.action;
+    guest.intention = `带着“${record.choiceLabel}”进入下一集`;
+    state.society.citizens.push(guest);
+  }
+
+  const runtime = ensureAgentRuntime(state.society);
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay.startedTurn) coPlay.startedTurn = Math.max(0, Number(state.society.turn || 0));
+  if (!coPlay.startHarmony) coPlay.startHarmony = clamp(Number(state.society.harmony || 0), 0, 100);
+  if (!coPlay.startTension) coPlay.startTension = clamp(Number(state.society.tension || 0), 0, 100);
+  ensureMirrorRelayCoPlayTasks(record);
+  const hasMemory = (runtime.memoryStore?.[guest.id] || []).some((item) => item.references?.includes(record.id));
+  if (!hasMemory) {
+    recordAgentMemory(state.society, guest.id, `我通过镜像接力来到这里，因为我选择了“${record.choiceLabel}”。`, "mirror-relay", 8, [record.id]);
+    recordAgentMemoryFileItem(state.society, guest.id, "general", `来自现实同行者的回答：${record.choiceLabel}`, {
+      kind: "mirror-relay",
+      importance: 8,
+      references: [record.id]
+    });
+    const avatar = state.society.citizens.find((citizen) => citizen.id === "avatar");
+    if (avatar) {
+      recordAgentMemory(state.society, avatar.id, `${record.responderAlias}对“${record.question}”给出了不同答案：${record.choiceLabel}`, "mirror-relay", 8, [record.id]);
+      updateRelationshipModel(state.society, avatar, guest, { type: record.action, score: 2 });
+    }
+    addSocietyEvent?.(`${record.responderAlias}带着一个不同答案进入了下一集。`, "support");
+  }
+  ensureMirrorRelayDirectorRecord(record);
+  if (!options.silent) persist(true);
+  return record;
+}
+
+function ensureMirrorRelayGuests() {
+  const relay = ensureMirrorRelayState();
+  relay.responses.filter((item) => item.consentState === "joined").forEach((item) => {
+    importMirrorRelayResponse(item, "joined", { silent: true });
+  });
+}
+
+function removeMirrorRelayGuest(responseId) {
+  const relay = ensureMirrorRelayState();
+  const response = relay.responses.find((item) => item.id === responseId);
+  if (!response) return false;
+  response.consentState = "removed";
+  const coPlay = ensureMirrorRelayCoPlay(response);
+  coPlay.status = "removed";
+  const guestId = response.guestId || getMirrorRelayGuestId(response);
+  state.society.citizens = (state.society.citizens || []).filter((citizen) => citizen.id !== guestId);
+  if (state.society.agents) {
+    const runtime = state.society.agents;
+    runtime.inbox = (runtime.inbox || []).filter((item) => item.targetId !== guestId && item.responseId !== response.id);
+    runtime.outbox = (runtime.outbox || []).filter((item) => item.actorId !== guestId && item.targetId !== guestId);
+    ["memoryStore", "reflectionStore", "skillStore", "memoryFiles"].forEach((key) => { delete runtime[key]?.[guestId]; });
+  }
+  Object.keys(state.society.relationships || {}).forEach((key) => {
+    const edge = state.society.relationships[key];
+    if (edge?.a === guestId || edge?.b === guestId) delete state.society.relationships[key];
+  });
+  delete citizenAnimations[guestId];
+  delete interiorAnimations[guestId];
+  ensureMirrorRelayDirectorRecord(response);
+  persist(true);
+  showToast(`${response.responderAlias}的回应已保留，分身已离场`, "listen");
+  return true;
+}
+
+function readMirrorRelayPayloadFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  if (params.has("mirrorResponse")) return decodeMirrorRelayPayload(params.get("mirrorResponse"), "response");
+  if (params.has("mirrorInvite")) return decodeMirrorRelayPayload(params.get("mirrorInvite"), "invite");
+  return null;
+}
+
+function closeMirrorRelayStage({ consumeUrl = false, exitInterior = false } = {}) {
+  document.body.classList.remove("mirror-relay-active");
+  document.getElementById("mirrorRelayStage")?.remove();
+  if (consumeUrl) removeMirrorRelayUrlParams();
+  if (exitInterior && interiorView?.source === "mirror-relay") {
+    exitInteriorView();
+    if (mirrorRelayResumeSocietyAfterClose) startSocietyRun();
+    mirrorRelayResumeSocietyAfterClose = false;
+  }
+  markRenderActive(1200);
+}
+
+function prepareMirrorRelayRoom() {
+  const zone = findRenderZoneById("story-archive") || findRenderZoneById("public-plaza");
+  if (!zone || interiorView?.source === "mirror-relay") return;
+  mirrorRelayResumeSocietyAfterClose = !!state.society?.running;
+  enterInteriorView(zone, "mirror-relay");
+  seedInteriorOccupants(zone);
+  stageInteriorCounterfactualActors(zone);
+  pauseSocietyRun();
+}
+
+function closeMirrorRelayCoPlayStage({ exitInterior = true } = {}) {
+  if (mirrorRelayCoPlayEscapeHandler) {
+    window.removeEventListener("keydown", mirrorRelayCoPlayEscapeHandler, true);
+    mirrorRelayCoPlayEscapeHandler = null;
+  }
+  document.body.classList.remove("mirror-relay-coplay-active");
+  document.getElementById("mirrorRelayCoPlayStage")?.remove();
+  if (exitInterior && interiorView?.source === "mirror-relay-coplay") exitInteriorView();
+  if (mirrorRelayCoPlayResumeSocietyAfterClose) startSocietyRun();
+  mirrorRelayCoPlayResumeSocietyAfterClose = false;
+  markRenderActive(1200);
+}
+
+function prepareMirrorRelayCoPlayRoom() {
+  const zone = findRenderZoneById("story-archive") || findRenderZoneById("public-plaza");
+  if (!zone || interiorView?.source === "mirror-relay-coplay") return;
+  mirrorRelayCoPlayResumeSocietyAfterClose = !!state.society?.running;
+  enterInteriorView(zone, "mirror-relay-coplay");
+  seedInteriorOccupants(zone);
+  stageInteriorCounterfactualActors(zone);
+  pauseSocietyRun();
+}
+
+function getMirrorRelayCoPlayBeat(record, index) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  const witness = state.society?.citizens?.find((citizen) => citizen.id === coPlay.witnessId);
+  const evidence = coPlay.evidence;
+  if (index === 0) return {
+    label: "起 · 带着回答入场",
+    text: `${record.responderAlias}带着“${record.choiceLabel}”进入了世界。`,
+    state: evidence.length ? "complete" : "active"
+  };
+  if (index === 1) return {
+    label: "承 · 第一次改变别人",
+    text: evidence[3]?.text || evidence[0]?.text || "世界正在等待第一条可以验证的行动。",
+    state: evidence.length >= 4 ? "complete" : evidence.length ? "active" : "locked"
+  };
+  if (index === 2) return {
+    label: "转 · 轮到你决定距离",
+    text: coPlay.intervention
+      ? (coPlay.intervention === "join" ? "你选择靠近，但没有替朋友重选答案。" : "你选择留出空间，让朋友的答案继续独立行动。")
+      : evidence.length >= MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE
+        ? "你已经看见足够证据，现在只决定距离。"
+        : "再观察几次真实行动，这个决定才会出现。",
+    state: coPlay.intervention ? "complete" : evidence.length >= MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE ? "active" : "locked"
+  };
+  return {
+    label: "合 · 世界留下共同证据",
+    text: coPlay.outcome?.verdict || (witness ? `${witness.name}已经进入这段余波。` : "尚未解锁这一幕。"),
+    state: coPlay.status === "resolved" ? "complete" : coPlay.intervention ? "active" : "locked"
+  };
+}
+
+function getMirrorRelayEvidenceCaption(record, entry) {
+  if (!entry) return "世界还没有留下证据";
+  const actor = state.society?.citizens?.find((citizen) => citizen.id === entry.actorId);
+  return `${actor?.name || record.responderAlias} · ${ACTION_LABELS_MAP?.[entry.type] || entry.type}`;
+}
+
+function renderMirrorRelayCoPlayStage(stage, record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  const evidenceCount = coPlay.evidence.length;
+  const isResolved = coPlay.status === "resolved";
+  const needsIntervention = !coPlay.intervention && evidenceCount >= MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE;
+  const beats = [0, 1, 2, 3].map((index) => getMirrorRelayCoPlayBeat(record, index));
+  stage.dataset.responseId = record.id;
+  stage.dataset.phase = isResolved ? "finale" : needsIntervention ? "intervention" : "observe";
+
+  if (isResolved) {
+    const featured = coPlay.evidence.slice(-4);
+    stage.innerHTML = `
+      <header class="mirror-relay-topbar mirror-relay-coplay-topbar">
+        <div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>SHARED EVIDENCE</small></div></div>
+        <div><strong>世界不记得谁赢了，只记得谁改变了什么</strong><small>${evidenceCount} 条行动证据 · 0 个标准答案</small></div>
+        <button type="button" data-relay-coplay-close>回到街道</button>
+      </header>
+      <section class="mirror-relay-coplay-finale">
+        <div class="relay-coplay-thread" aria-label="共同证据轨迹">
+          <span class="relay-coplay-seal host">你</span>
+          ${featured.map((entry) => `<div class="relay-coplay-proof"><i></i><strong>${escapeHtml(getMirrorRelayEvidenceCaption(record, entry))}</strong><small>${escapeHtml(entry.text)}</small></div>`).join("")}
+          <span class="relay-coplay-seal guest">${escapeHtml(record.responderAlias.slice(0, 2))}</span>
+        </div>
+        <h1>${escapeHtml(coPlay.outcome?.verdict || "两个不同答案，留下了一段共同证据")}</h1>
+        <p class="relay-coplay-consequence">${escapeHtml(coPlay.outcome?.consequence || "世界记住了这次共同承担")}</p>
+        <blockquote>${escapeHtml(coPlay.outcome?.debateQuestion || "真正的同行，是赞同彼此，还是共同承担后果？")}</blockquote>
+        <footer>
+          <button class="primary" type="button" data-relay-coplay-next>把这段共同证据交给下一个人</button>
+          <button type="button" data-relay-coplay-close>带着余波回到街道</button>
+          <button class="quiet" type="button" data-relay-coplay-share>保存 4:5 故事卡</button>
+        </footer>
+      </section>`;
+    return;
+  }
+
+  stage.innerHTML = `
+    <header class="mirror-relay-topbar mirror-relay-coplay-topbar">
+      <div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>LIVE CO-PLAY</small></div></div>
+      <div><strong>两个分身，正在把答案活成不同的事</strong><small>每一幕只认真实行动，不认预设台词</small></div>
+      <button type="button" data-relay-coplay-close>暂时离开</button>
+    </header>
+    <aside class="mirror-relay-coplay-rail">
+      ${beats.map((beat, index) => `<article class="${beat.state}"><span>${["起", "承", "转", "合"][index]}</span><div><strong>${escapeHtml(beat.label.replace(/^[起承转合] · /, ""))}</strong><p>${escapeHtml(beat.text)}</p></div></article>`).join("")}
+    </aside>
+    <section class="mirror-relay-coplay-turning ${needsIntervention ? "ready" : "watching"}">
+      ${needsIntervention ? `
+        <small>剧情拐点</small>
+        <h1>让 Ta 按自己的价值继续，<br>还是把我的分身也拉进来？</h1>
+        <div><button class="primary" type="button" data-relay-coplay-intervention="join">一起做点什么</button><button type="button" data-relay-coplay-intervention="space">给 Ta 留出空间</button></div>
+      ` : `
+        <small>${coPlay.intervention ? "共同承担正在发生" : "先观察，不替 Ta 决定"}</small>
+        <h1>${escapeHtml(coPlay.intervention ? (coPlay.intervention === "join" ? "你已经进入行动，但答案仍属于 Ta" : "你留出了空间，第三个人正在回应") : (coPlay.evidence.at(-1)?.text || `${record.responderAlias}正在把“${record.choiceLabel}”变成行动`))}</h1>
+        <button class="primary" type="button" data-relay-coplay-step>再观察一回合</button>
+      `}
+      <p>共演 <strong>${Math.min(evidenceCount, MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE)} / ${MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE}</strong></p>
+    </section>`;
+}
+
+async function renderMirrorRelayCoPlayCard(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay?.outcome) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+  ctx.fillStyle = "#11182d";
+  ctx.fillRect(0, 0, 1080, 1350);
+  const sceneLayers = [document.getElementById("interiorThreeLayer"), document.getElementById("gameCanvas")]
+    .filter((layer) => layer instanceof HTMLCanvasElement && layer.width > 0 && layer.height > 0);
+  sceneLayers.forEach((layer) => {
+    try {
+      const targetRatio = 1080 / 640;
+      const sourceRatio = layer.width / layer.height;
+      let sx = 0; let sy = 0; let sw = layer.width; let sh = layer.height;
+      if (sourceRatio > targetRatio) { sw = sh * targetRatio; sx = (layer.width - sw) / 2; }
+      else { sh = sw / targetRatio; sy = Math.max(0, (layer.height - sh) * 0.42); }
+      ctx.drawImage(layer, sx, sy, sw, sh, 0, 0, 1080, 640);
+    } catch { /* typographic fallback remains shareable */ }
+  });
+  const fade = ctx.createLinearGradient(0, 360, 0, 700);
+  fade.addColorStop(0, "rgba(17,24,45,0)");
+  fade.addColorStop(1, "rgba(17,24,45,0.98)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 340, 1080, 380);
+  ctx.fillStyle = "#fbf5e7";
+  ctx.beginPath();
+  ctx.roundRect(42, 580, 996, 720, 30);
+  ctx.fill();
+  ctx.strokeStyle = "#d8ad52";
+  ctx.lineWidth = 2;
+  ctx.stroke();
+  ctx.fillStyle = "#ed5d58";
+  ctx.beginPath(); ctx.arc(100, 690, 42, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.textAlign = "center";
+  ctx.font = '800 24px "PingFang SC", sans-serif';
+  ctx.fillText("你", 100, 699);
+  ctx.strokeStyle = "#d8ad52";
+  ctx.beginPath(); ctx.moveTo(150, 690); ctx.lineTo(930, 690); ctx.stroke();
+  const featured = coPlay.evidence.slice(-4);
+  featured.forEach((entry, index) => {
+    const x = 245 + index * 175;
+    ctx.fillStyle = index % 2 ? "#2f8f83" : "#ed5d58";
+    ctx.beginPath(); ctx.arc(x, 690, 10, 0, Math.PI * 2); ctx.fill();
+    ctx.fillStyle = "#26283a";
+    ctx.textAlign = "center";
+    ctx.font = '600 17px "PingFang SC", sans-serif';
+    ctx.fillText(getMirrorRelayEvidenceCaption(record, entry).slice(0, 10), x, 735);
+  });
+  ctx.fillStyle = "#2f8f83";
+  ctx.beginPath(); ctx.arc(980, 690, 42, 0, Math.PI * 2); ctx.fill();
+  ctx.fillStyle = "#fff";
+  ctx.font = '800 22px "PingFang SC", sans-serif';
+  ctx.fillText(record.responderAlias.slice(0, 2), 980, 699);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#171a2d";
+  ctx.font = '700 48px "Songti SC", "Noto Serif SC", serif';
+  const verdictBottom = drawWrappedShareText(ctx, coPlay.outcome.verdict, 88, 835, 904, 66, 3);
+  ctx.fillStyle = "#66606a";
+  ctx.font = '500 24px "PingFang SC", sans-serif';
+  drawWrappedShareText(ctx, coPlay.outcome.debateQuestion, 88, verdictBottom + 44, 904, 38, 2);
+  ctx.fillStyle = "#ed5d58";
+  ctx.font = '700 23px "PingFang SC", sans-serif';
+  ctx.fillText(coPlay.outcome.consequence, 88, 1190);
+  ctx.fillStyle = "#827b82";
+  ctx.font = '500 18px system-ui, sans-serif';
+  ctx.fillText("16 回合 · 真实行动证据 · 0 个标准答案", 88, 1245);
+  ctx.fillText("#镜像人生  #MirrorLife", 88, 1278);
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
+}
+
+async function shareMirrorRelayCoPlay(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay?.outcome) return;
+  try {
+    const blob = await renderMirrorRelayCoPlayCard(record);
+    const file = blob ? new File([blob], `mirrorlife-coplay-${Date.now()}.png`, { type: "image/png" }) : null;
+    if (navigator.share && file && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ title: "镜像人生 · 共同证据", text: coPlay.outcome.shareText, files: [file] });
+      showToast("共同证据已经交给你选择的人", "support");
+      return;
+    }
+    await navigator.clipboard?.writeText(coPlay.outcome.shareText);
+    if (blob) {
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `镜像人生-共同证据-${Date.now()}.png`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+    }
+    showToast("4:5 故事卡已保存，文案也已复制", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("故事卡没有生成，再试一次吧", "conflict");
+  }
+}
+
+function createMirrorRelayInviteFromCoPlay(record) {
+  const coPlay = ensureMirrorRelayCoPlay(record);
+  if (!coPlay?.outcome || coPlay.status !== "resolved") {
+    throw new Error("共同证据完成后才能交给下一个人");
+  }
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  const inviterAlias = sanitizeMirrorRelayAlias(avatar?.name || state.profile?.identity || "一位同行者");
+  const question = sanitizeMirrorRelayText(coPlay.outcome.debateQuestion, 260);
+  const hostJoined = coPlay.intervention === "join";
+  const choices = [
+    { id: "share-burden", label: "即使答案不同，也一起承担接下来的影响", action: "cooperate" },
+    { id: "hold-distance", label: "先保留分歧，让行动继续证明它自己", action: "listen" }
+  ];
+  const hostChoice = choices[hostJoined ? 0 : 1];
+  const idSeed = `${record.id}:${state.society?.turn || 0}:${question}:${inviterAlias}`;
+  const invite = normalizeMirrorRelayUrlPayload({
+    kind: "invite",
+    version: MIRROR_RELAY_PAYLOAD_VERSION,
+    id: `relay-coplay-${Math.abs(hashCommunitySeed(idSeed, "invite")).toString(36)}`,
+    threadId: record.threadId || "mirror-relay-coplay",
+    threadTitle: "两个分身的共同证据",
+    inviterAlias,
+    question,
+    hostChoiceId: hostChoice.id,
+    hostChoiceLabel: hostChoice.label,
+    choices
+  }, "invite");
+  if (!invite) throw new Error("下一棒的问题还没有准备好");
+  const relay = ensureMirrorRelayState();
+  relay.invites = relay.invites.filter((item) => item.id !== invite.id);
+  relay.invites.push({ ...invite, createdTurn: Math.max(0, Number(state.society?.turn || 0)), sourceResponseId: record.id });
+  relay.invites = relay.invites.slice(-8);
+  const url = buildMirrorRelayUrl("mirrorInvite", invite);
+  window.__mirrorLifeRelayInviteUrl = url;
+  window.__mirrorLifeRelayInvitePayload = { ...invite, choices: invite.choices.map((choice) => ({ ...choice })) };
+  persist(true);
+  return { invite, url };
+}
+
+async function shareMirrorRelayCoPlayNext(record) {
+  try {
+    const { invite, url } = createMirrorRelayInviteFromCoPlay(record);
+    const text = `${invite.inviterAlias}没有问你谁对，而是把一段真实行动后的问题交给你：\n${invite.question}\n同意后，你的一次性分身会把答案活进下一幕。`;
+    if (navigator.share) {
+      await navigator.share({ title: "镜像人生 · 共同证据下一棒", text, url });
+      showToast("共同证据已经交给下一个人", "support");
+      return;
+    }
+    await navigator.clipboard?.writeText(`${text}\n${url}`);
+    showToast("下一棒链接已复制，只包含问题与昵称", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast(error?.message || "下一棒还没有准备好", "conflict");
+  }
+}
+
+function showMirrorRelayCoPlay(responseId) {
+  const getCurrentRecord = () => ensureMirrorRelayState().responses.find((response) => response.id === responseId);
+  const record = getCurrentRecord();
+  if (!record || record.consentState !== "joined") {
+    showToast("这段共演已经不在世界中", "listen");
+    return;
+  }
+  closeMirrorRelayCoPlayStage({ exitInterior: false });
+  hideDetail();
+  prepareMirrorRelayCoPlayRoom();
+  const stage = document.createElement("div");
+  stage.id = "mirrorRelayCoPlayStage";
+  stage.className = "mirror-relay-coplay-stage";
+  stage.tabIndex = -1;
+  renderMirrorRelayCoPlayStage(stage, record);
+  stage.addEventListener("click", (event) => {
+    if (event.target.closest("[data-relay-coplay-close]")) { closeMirrorRelayCoPlayStage(); return; }
+    const currentRecord = getCurrentRecord();
+    if (!currentRecord || currentRecord.consentState !== "joined") {
+      closeMirrorRelayCoPlayStage();
+      showToast("这段共演已经不在世界中", "listen");
+      return;
+    }
+    const intervention = event.target.closest("[data-relay-coplay-intervention]");
+    if (intervention) {
+      commitMirrorRelayCoPlayIntervention(currentRecord, intervention.dataset.relayCoplayIntervention);
+      renderMirrorRelayCoPlayStage(stage, getCurrentRecord() || currentRecord);
+      return;
+    }
+    if (event.target.closest("[data-relay-coplay-step]")) {
+      stepSociety();
+      updateHUD();
+      renderMirrorRelayCoPlayStage(stage, getCurrentRecord() || currentRecord);
+      return;
+    }
+    if (event.target.closest("[data-relay-coplay-share]")) { shareMirrorRelayCoPlay(currentRecord); return; }
+    if (event.target.closest("[data-relay-coplay-next]")) { shareMirrorRelayCoPlayNext(currentRecord); }
+  });
+  stage.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMirrorRelayCoPlayStage();
+  });
+  mirrorRelayCoPlayEscapeHandler = (event) => {
+    if (event.key !== "Escape") return;
+    event.preventDefault();
+    event.stopPropagation();
+    closeMirrorRelayCoPlayStage();
+  };
+  window.addEventListener("keydown", mirrorRelayCoPlayEscapeHandler, true);
+  document.getElementById("gameShell")?.appendChild(stage);
+  document.body.classList.add("mirror-relay-coplay-active");
+  stage.querySelector("button")?.focus();
+  markRenderActive(4200);
+}
+
+function renderMirrorRelayStage(stage, payload, phase = "consent") {
+  const value = getMirrorRelayValue(stage.dataset.valueId || "heard");
+  const selectedChoice = payload.choices?.find((item) => item.id === stage.dataset.choiceId) || payload.choices?.[0];
+  const isInvite = payload.kind === "invite";
+  const hostAlias = payload.inviterAlias || "一位同行者";
+  stage.dataset.phase = phase;
+  if (phase === "consent") {
+    stage.innerHTML = `
+      <header class="mirror-relay-topbar"><div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>MIRROR RELAY</small></div></div><strong>这不是测试，也没有标准答案</strong><small>一次性分身 · 双向同意</small></header>
+      <div class="mirror-relay-sheet relay-consent-sheet">
+        <section class="mirror-relay-copy"><p class="mirror-relay-eyebrow">来自 ${escapeHtml(hostAlias)} 的邀请</p><h1>有人把一个没有标准答案的问题交给你</h1><blockquote>${escapeHtml(payload.question)}</blockquote><p>你可以看完就离开。只有主动同意后，你的昵称、价值取向与这一次回答才会生成回应链接。</p></section>
+        <aside class="mirror-relay-disclosure"><h2>这一次会发生什么</h2><div><strong>对方会看到</strong><p>你填写的昵称 · 一个价值取向 · 这一次回答</p></div><div><strong>不会发送</strong><p>真实姓名 · 过去记忆 · 设备数据 · 任何账号信息</p></div><small>链接只使用校验和检查损坏，不代表加密或身份认证。</small></aside>
+        <footer class="mirror-relay-actions"><button class="primary" type="button" data-relay-consent>同意，并让我的分身回应</button><button type="button" data-relay-decline>这次不加入</button></footer>
+      </div>`;
+  } else if (phase === "response") {
+    stage.innerHTML = `
+      <header class="mirror-relay-topbar"><div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>ONE-SCENE AVATAR</small></div></div><strong>让你的分身替你先走一步</strong><small>仅用于这次回应</small></header>
+      <div class="mirror-relay-sheet relay-response-sheet">
+        <section class="mirror-relay-copy"><p class="mirror-relay-eyebrow">问题仍然是</p><h1>${escapeHtml(payload.question)}</h1><label>这次想用什么昵称出现<input id="mirrorRelayAlias" maxlength="${MIRROR_RELAY_ALIAS_MAX}" autocomplete="off" value="${escapeHtml(stage.dataset.aliasDraft || "匿名同行者")}" /></label><h2>这一刻，你更想守住什么？</h2><div class="mirror-relay-values">${MIRROR_RELAY_VALUES.map((item, index) => `<button type="button" class="${item.id === value.id ? "selected" : ""}" data-relay-value="${item.id}"><span>0${index + 1}</span><strong>${item.label}</strong><small>${item.personaLabel}</small></button>`).join("")}</div></section>
+        <aside class="mirror-relay-choice-card"><p>你的分身会先做哪一步？</p>${payload.choices.map((choice, index) => `<button type="button" class="${choice.id === selectedChoice?.id ? "selected" : ""}" data-relay-choice="${escapeHtml(choice.id)}"><b>${index + 1}</b><span><strong>${escapeHtml(choice.label)}</strong><small>${escapeHtml(ACTION_LABELS_MAP?.[choice.action] || choice.action)}</small></span></button>`).join("")}<p class="mirror-relay-avatar-note">回应只生成一个轻量分身：它带着这个选择出现，不读取你过去的任何内容。</p></aside>
+        <footer class="mirror-relay-actions"><button class="primary" type="button" data-relay-generate>生成我的回应</button><button type="button" data-relay-back>返回授权说明</button></footer>
+      </div>`;
+  } else if (phase === "complete") {
+    stage.innerHTML = `
+      <header class="mirror-relay-topbar"><div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>RESPONSE READY</small></div></div><strong>你的回答已经准备好</strong><small>尚未自动发送</small></header>
+      <div class="mirror-relay-sheet relay-complete-sheet"><section class="mirror-relay-copy"><p class="mirror-relay-eyebrow">一次性分身已生成</p><h1>${escapeHtml(stage.dataset.alias)}选择了</h1><blockquote>${escapeHtml(selectedChoice?.label)}</blockquote><p>把下面的回应链接发回给 ${escapeHtml(hostAlias)}。对方仍需再次同意，你的分身才会进入下一集。</p></section><aside class="mirror-relay-disclosure"><h2>${escapeHtml(value.label)}</h2><p>${escapeHtml(value.personaLabel)} · ${escapeHtml(selectedChoice?.label)}</p><div><strong>你仍拥有决定权</strong><p>关闭页面不会产生长期账号；回应只存在于链接里。</p></div></aside><footer class="mirror-relay-actions"><button class="primary" type="button" data-relay-share-response>分享回应链接</button><button type="button" data-relay-copy-response>复制链接</button></footer></div>`;
+  } else {
+    stage.innerHTML = `
+      <header class="mirror-relay-topbar"><div class="mirror-relay-brand"><span>镜</span><div><strong>镜像人生</strong><small>RETURNED ANSWER</small></div></div><strong>一个真实的人，带着不同答案回来了</strong><small>由你决定它是否进入世界</small></header>
+      <div class="mirror-relay-sheet relay-return-sheet"><section class="mirror-relay-copy"><p class="mirror-relay-eyebrow">你的原选择</p><h1>${escapeHtml(payload.hostChoiceLabel || "你曾经留下的答案")}</h1><p>${escapeHtml(payload.question)}</p></section><div class="mirror-relay-seam" aria-hidden="true"><span>不同<br>不是<br>冲突</span></div><aside class="mirror-relay-choice-card"><p>${escapeHtml(payload.responderAlias)} 的选择</p><h2>${escapeHtml(payload.choiceLabel)}</h2><div class="mirror-relay-return-meta"><strong>${escapeHtml(payload.valueLabel)}</strong><span>${escapeHtml(ACTION_LABELS_MAP?.[payload.action] || payload.action)}</span></div><p>如果你同意，它会成为一个可观察、会记忆、会行动的访客 Agent，参与接下来 ${MIRROR_RELAY_GUEST_MISSION_TURNS} 回合。</p></aside><footer class="mirror-relay-actions"><button class="primary" type="button" data-relay-join>同意加入下一集</button><button type="button" data-relay-save-only>只保存回应，不让分身入场</button></footer></div>`;
+  }
+}
+
+async function shareMirrorRelayResponse(stage) {
+  const url = window.__mirrorLifeRelayResponseUrl;
+  if (!url) return;
+  try {
+    if (navigator.share) await navigator.share({ title: "镜像人生 · 我的回应", text: "我带着一个不同答案回来了。", url });
+    else await navigator.clipboard?.writeText(url);
+    showToast("回应链接已准备好，是否发送仍由你决定", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("回应链接没有分享成功", "conflict");
+  }
+}
+
+function showMirrorRelayStage(payload) {
+  if (!payload) return;
+  closeMirrorRelayStage();
+  prepareMirrorRelayRoom();
+  const stage = document.createElement("section");
+  stage.id = "mirrorRelayStage";
+  stage.setAttribute("role", "dialog");
+  stage.setAttribute("aria-modal", "true");
+  stage.dataset.valueId = "heard";
+  if (payload.kind === "invite") stage.dataset.choiceId = payload.choices[0]?.id || "";
+  renderMirrorRelayStage(stage, payload, payload.kind === "invite" ? "consent" : "return");
+  stage.addEventListener("click", async (event) => {
+    const valueButton = event.target.closest("[data-relay-value]");
+    if (valueButton) {
+      stage.dataset.aliasDraft = stage.querySelector("#mirrorRelayAlias")?.value || stage.dataset.aliasDraft || "";
+      stage.dataset.valueId = valueButton.dataset.relayValue;
+      renderMirrorRelayStage(stage, payload, "response");
+      return;
+    }
+    const choiceButton = event.target.closest("[data-relay-choice]");
+    if (choiceButton) {
+      stage.dataset.aliasDraft = stage.querySelector("#mirrorRelayAlias")?.value || stage.dataset.aliasDraft || "";
+      stage.dataset.choiceId = choiceButton.dataset.relayChoice;
+      renderMirrorRelayStage(stage, payload, "response");
+      return;
+    }
+    if (event.target.closest("[data-relay-consent]")) { renderMirrorRelayStage(stage, payload, "response"); return; }
+    if (event.target.closest("[data-relay-back]")) { renderMirrorRelayStage(stage, payload, "consent"); return; }
+    if (event.target.closest("[data-relay-decline]")) { closeMirrorRelayStage({ consumeUrl: true, exitInterior: true }); return; }
+    if (event.target.closest("[data-relay-generate]")) {
+      const alias = sanitizeMirrorRelayAlias(stage.querySelector("#mirrorRelayAlias")?.value);
+      const chosen = payload.choices.find((choice) => choice.id === stage.dataset.choiceId) || payload.choices[0];
+      const selectedValue = getMirrorRelayValue(stage.dataset.valueId);
+      const response = normalizeMirrorRelayUrlPayload({
+        kind: "response", version: MIRROR_RELAY_PAYLOAD_VERSION,
+        id: `response-${payload.id}-${Math.abs(hashCommunitySeed(alias, chosen.id, selectedValue.id)).toString(36)}`,
+        inviteId: payload.id, threadId: payload.threadId, inviterAlias: payload.inviterAlias,
+        responderAlias: alias, question: payload.question, hostChoiceId: payload.hostChoiceId,
+        hostChoiceLabel: payload.hostChoiceLabel, valueId: selectedValue.id,
+        choiceId: chosen.id, choiceLabel: chosen.label, action: chosen.action,
+        avatarFrame: Math.abs(hashCommunitySeed(alias, selectedValue.id)) % 8
+      }, "response");
+      stage.dataset.alias = alias;
+      window.__mirrorLifeRelayResponsePayload = response;
+      window.__mirrorLifeRelayResponseUrl = buildMirrorRelayUrl("mirrorResponse", response);
+      renderMirrorRelayStage(stage, payload, "complete");
+      return;
+    }
+    if (event.target.closest("[data-relay-share-response]")) { await shareMirrorRelayResponse(stage); return; }
+    if (event.target.closest("[data-relay-copy-response]")) {
+      await navigator.clipboard?.writeText(window.__mirrorLifeRelayResponseUrl || "");
+      showToast("回应链接已复制", "support");
+      return;
+    }
+    if (event.target.closest("[data-relay-join]")) {
+      const record = importMirrorRelayResponse(payload, "joined");
+      closeMirrorRelayStage({ consumeUrl: true, exitInterior: true });
+      showToast(`${record.responderAlias}的分身已进入下一集`, "support");
+      showStoryPanel();
+      return;
+    }
+    if (event.target.closest("[data-relay-save-only]")) {
+      importMirrorRelayResponse(payload, "saved");
+      closeMirrorRelayStage({ consumeUrl: true, exitInterior: true });
+      showToast("回应已保存，分身没有进入世界", "listen");
+      return;
+    }
+  });
+  stage.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeMirrorRelayStage({ exitInterior: true });
+  });
+  document.getElementById("gameShell")?.appendChild(stage);
+  document.body.classList.add("mirror-relay-active");
+  stage.querySelector("button")?.focus();
+  markRenderActive(4200);
+}
+
+function initializeMirrorRelayFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const isLocalQa = ["localhost", "127.0.0.1"].includes(window.location.hostname);
+  const qaPhase = isLocalQa ? params.get("qaMirrorRelay") : "";
+  if (["invite", "return", "coplay", "coplay-finale"].includes(qaPhase)) {
+    const invite = normalizeMirrorRelayUrlPayload({
+      kind: "invite", version: MIRROR_RELAY_PAYLOAD_VERSION,
+      id: "relay-qa-consent", threadId: "voices-heard", threadTitle: "让沉默被听见",
+      inviterAlias: "小镜", question: "当关心变成替别人决定，我们还算是在照顾对方吗？",
+      hostChoiceId: "ask", hostChoiceLabel: "先问对方真正需要什么",
+      choices: [
+        { id: "stay", label: "先留下来听完，再决定要不要帮忙", action: "listen" },
+        { id: "name", label: "说出边界，但不替对方做最后决定", action: "support" }
+      ]
+    }, "invite");
+    const response = normalizeMirrorRelayUrlPayload({
+      kind: "response", version: MIRROR_RELAY_PAYLOAD_VERSION,
+      id: "response-relay-qa-consent-friend", inviteId: invite.id, threadId: invite.threadId,
+      inviterAlias: invite.inviterAlias, responderAlias: "慢半拍的人", question: invite.question,
+      hostChoiceId: invite.hostChoiceId, hostChoiceLabel: invite.hostChoiceLabel,
+      valueId: "authentic", choiceId: invite.choices[1].id, choiceLabel: invite.choices[1].label,
+      action: invite.choices[1].action, avatarFrame: 4
+    }, "response");
+    if (qaPhase === "invite" || qaPhase === "return") {
+      window.setTimeout(() => showMirrorRelayStage(qaPhase === "invite" ? invite : response), 180);
+      return;
+    }
+    if (!state.society?.citizens?.some((citizen) => citizen.id === "avatar")) {
+      const avatar = normalizeCitizen({
+        id: "avatar", name: "小镜", role: "玩家分身", professionId: "designer", profession: "关系设计师",
+        zoneId: "public-plaza", homeZoneId: "residential", mood: 70, energy: 72, trust: 66, avatarFrame: 0
+      });
+      applyPersonaToCitizen(avatar, { mbtiType: "INFJ", valueTags: ["benevolence", "self_direction"] });
+      state.society.citizens.push(avatar);
+    }
+    const record = importMirrorRelayResponse(response, "joined", { silent: true });
+    if (qaPhase === "coplay-finale") {
+      let guard = 0;
+      while (ensureMirrorRelayCoPlay(record).evidence.length < MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE && guard < 12) {
+        stepSociety(); guard += 1;
+      }
+      commitMirrorRelayCoPlayIntervention(record, "join");
+      while (ensureMirrorRelayCoPlay(record).status !== "resolved" && guard < 28) {
+        stepSociety(); guard += 1;
+      }
+    }
+    persist(true);
+    window.setTimeout(() => showMirrorRelayCoPlay(record.id), 240);
+    return;
+  }
+  if (!params.has("mirrorInvite") && !params.has("mirrorResponse")) return;
+  const payload = readMirrorRelayPayloadFromUrl();
+  if (!payload) {
+    removeMirrorRelayUrlParams();
+    showToast("这条镜像接力链接已损坏或不是当前版本", "conflict");
+    return;
+  }
+  window.setTimeout(() => showMirrorRelayStage(payload), 180);
+}
+
+function buildCounterfactualReceipt({ zone, thread, fact, chosen, participant, rewritten, factDecision = null }) {
+  const name = participant?.name || "房间里的人";
+  return [
+    `《${thread?.title || zone.name} · 同一个我，两种被记住的方式》`,
+    `事实：${fact.label}`,
+    factDecision?.reason ? `分身依据：${factDecision.reason}` : "",
+    `${rewritten ? "我选择改写" : "我选择保留"}：${chosen.label}`,
+    `余波：${name}${chosen.reaction ? `说“${chosen.reaction}”` : "会把这件小事带进明天"}`,
+    `这不是标准答案，而是我的社会分身留下的一条时间线。`,
+    `#镜像人生 #MirrorLife`
+  ].filter(Boolean).join("\n");
+}
+
+function drawWrappedShareText(ctx, text, x, y, maxWidth, lineHeight, maxLines = 3) {
+  const characters = [...String(text || "")];
+  const lines = [];
+  let line = "";
+  characters.forEach((character) => {
+    const candidate = line + character;
+    if (line && ctx.measureText(candidate).width > maxWidth) {
+      lines.push(line);
+      line = character;
+    } else {
+      line = candidate;
+    }
+  });
+  if (line) lines.push(line);
+  lines.slice(0, maxLines).forEach((entry, index) => {
+    const clipped = index === maxLines - 1 && lines.length > maxLines ? `${entry.slice(0, -1)}…` : entry;
+    ctx.fillText(clipped, x, y + index * lineHeight);
+  });
+  return y + Math.min(lines.length, maxLines) * lineHeight;
+}
+
+async function renderCounterfactualShareCard(shareText) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const backdrop = ctx.createLinearGradient(0, 0, 1080, 1350);
+  backdrop.addColorStop(0, "#11182d");
+  backdrop.addColorStop(0.56, "#28203c");
+  backdrop.addColorStop(1, "#5c304f");
+  ctx.fillStyle = backdrop;
+  ctx.fillRect(0, 0, 1080, 1350);
+
+  const sceneLayers = [document.getElementById("interiorThreeLayer"), document.getElementById("gameCanvas")]
+    .filter((layer) => layer instanceof HTMLCanvasElement && layer.width > 0 && layer.height > 0);
+  sceneLayers.forEach((layer) => {
+    const sourceRatio = layer.width / layer.height;
+    const targetRatio = 1080 / 730;
+    let sx = 0;
+    let sy = 0;
+    let sw = layer.width;
+    let sh = layer.height;
+    if (sourceRatio > targetRatio) {
+      sw = sh * targetRatio;
+      sx = (layer.width - sw) / 2;
+    } else {
+      sh = sw / targetRatio;
+      sy = Math.max(0, (layer.height - sh) * 0.44);
+    }
+    try { ctx.drawImage(layer, sx, sy, sw, sh, 0, 0, 1080, 730); } catch { /* keep typographic fallback */ }
+  });
+
+  const fade = ctx.createLinearGradient(0, 430, 0, 880);
+  fade.addColorStop(0, "rgba(17,24,45,0)");
+  fade.addColorStop(1, "rgba(17,24,45,0.98)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 360, 1080, 540);
+  ctx.fillStyle = "rgba(13, 18, 35, 0.97)";
+  ctx.fillRect(0, 730, 1080, 620);
+
+  ctx.fillStyle = "#ff765f";
+  ctx.beginPath();
+  ctx.roundRect(64, 60, 64, 64, 18);
+  ctx.fill();
+  ctx.fillStyle = "#151a2d";
+  ctx.font = '900 30px "PingFang SC", sans-serif';
+  ctx.textAlign = "center";
+  ctx.fillText("镜", 96, 103);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#f7f2e8";
+  ctx.font = '800 30px "PingFang SC", sans-serif';
+  ctx.fillText("镜像人生", 148, 88);
+  ctx.fillStyle = "#b6c0d7";
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText("COUNTERFACTUAL EPISODE", 148, 116);
+
+  const lines = String(shareText || "").split("\n").filter(Boolean);
+  const title = (lines[0] || "同一个我，两种被记住的方式").replace(/[《》]/g, "");
+  const fact = (lines.find((line) => line.startsWith("事实：")) || "事实：原来的我").slice(3);
+  const chosenLine = lines.find((line) => line.startsWith("我选择")) || "我选择改写：另一种未来";
+  const chosen = chosenLine.split("：").slice(1).join("：") || chosenLine;
+  const aftermath = (lines.find((line) => line.startsWith("余波：")) || "余波：明天会记得这一刻").slice(3);
+
+  ctx.fillStyle = "#f7f2e8";
+  ctx.font = '700 52px "Songti SC", "Noto Serif SC", serif';
+  drawWrappedShareText(ctx, title, 64, 800, 952, 68, 2);
+
+  const branchY = 940;
+  ctx.fillStyle = "rgba(255, 118, 95, 0.13)";
+  ctx.beginPath();
+  ctx.roundRect(64, branchY, 456, 172, 28);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(255, 184, 118, 0.44)";
+  ctx.stroke();
+  ctx.fillStyle = "rgba(116, 217, 188, 0.14)";
+  ctx.beginPath();
+  ctx.roundRect(560, branchY, 456, 172, 28);
+  ctx.fill();
+  ctx.strokeStyle = "rgba(123, 224, 192, 0.5)";
+  ctx.stroke();
+
+  ctx.fillStyle = "#ffb876";
+  ctx.font = '800 18px "PingFang SC", sans-serif';
+  ctx.fillText("事实", 96, branchY + 42);
+  ctx.fillStyle = "#f7f2e8";
+  ctx.font = '700 29px "PingFang SC", sans-serif';
+  drawWrappedShareText(ctx, fact, 96, branchY + 88, 390, 38, 2);
+  ctx.fillStyle = "#7be0c0";
+  ctx.font = '800 18px "PingFang SC", sans-serif';
+  ctx.fillText("如果", 592, branchY + 42);
+  ctx.fillStyle = "#f7f2e8";
+  ctx.font = '700 29px "PingFang SC", sans-serif';
+  drawWrappedShareText(ctx, chosen, 592, branchY + 88, 390, 38, 2);
+
+  ctx.fillStyle = "#b8c0d4";
+  ctx.font = '500 23px "PingFang SC", sans-serif';
+  drawWrappedShareText(ctx, aftermath, 64, 1178, 952, 34, 2);
+  ctx.fillStyle = "#ffe49d";
+  ctx.font = '600 20px "PingFang SC", sans-serif';
+  ctx.fillText("同一个你，也可能被世界用另一种方式记住。", 64, 1280);
+  ctx.fillStyle = "#7f8ca9";
+  ctx.font = '500 17px system-ui, sans-serif';
+  ctx.fillText("#镜像人生  #MirrorLife", 64, 1315);
+
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
+}
+
+async function shareInteriorCounterfactualReceipt(text) {
+  const shareText = String(text || "").trim();
+  if (!shareText) return;
+  try {
+    const cardBlob = await renderCounterfactualShareCard(shareText);
+    const file = cardBlob ? new File([cardBlob], `mirrorlife-${Date.now()}.png`, { type: "image/png" }) : null;
+    if (navigator.share && file && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ title: "镜像人生 · 双线回声", text: shareText, files: [file] });
+      showToast("双线故事已交给你选择的朋友", "support");
+      return;
+    }
+    await navigator.clipboard.writeText(shareText);
+    if (cardBlob) {
+      const url = URL.createObjectURL(cardBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `镜像人生-两种被记住的方式-${Date.now()}.png`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+      showToast("双线故事卡已保存，文案也已复制", "support");
+      return;
+    }
+    showToast("双线故事已复制，可以发给朋友继续讨论", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("分享没有完成，再试一次吧", "conflict");
+  }
+}
+
+function recordCounterfactualDirectorImpact({ zone, thread, participant, chosen, rewritten, receipt }) {
+  const director = window.MirrorLifePlotDirector?.getState?.();
+  if (director) {
+    director.counterfactuals = Array.isArray(director.counterfactuals) ? director.counterfactuals : [];
+    director.counterfactuals.unshift({
+      turn: Number(state.society?.turn || 0),
+      zoneId: zone.id,
+      threadId: thread?.id || "standalone",
+      participantId: participant?.id || "",
+      choiceId: chosen.id,
+      rewritten: !!rewritten,
+      receipt
+    });
+    director.counterfactuals = director.counterfactuals.slice(0, 12);
+  }
+  if (participant && typeof queueAgentInbox === "function") {
+    queueAgentInbox(state.society, {
+      scope: "agent",
+      type: "counterfactual-aftermath",
+      targetId: participant.id,
+      untilTurn: Number(state.society?.turn || 0) + 8,
+      desiredActions: [chosen.relationType || "listen"],
+      actionTargetId: "avatar",
+      hint: rewritten ? "remember-the-rewrite" : "remember-the-restraint",
+      text: rewritten
+        ? `玩家在${zone.name}改写了原本会发生的选择。不要重复台词，用下一次真实行动回应这份改变。`
+        : `玩家在${zone.name}保留了分身原本的选择。把这种克制当作一条真实关系证据。`
+    });
+  }
+}
+
+function getCounterfactualEchoStance(citizen, index = 0) {
+  const mood = Number(citizen?.mood || 50);
+  const trust = Number(citizen?.trust || 50);
+  const role = `${citizen?.profession || ""} ${citizen?.personaLabel || ""}`;
+  if (mood < 44 || /照护|医生|护士|修复|顾问/.test(role)) return "protect";
+  if (trust < 52 || /记者|研究|法律|观察/.test(role)) return "question";
+  return index % 2 ? "connect" : "witness";
+}
+
+function buildCounterfactualEchoText(citizen, alternative, chosen, stance) {
+  const alternativeLabel = alternative?.label || "另一种做法";
+  const chosenLabel = chosen?.label || "已经发生的选择";
+  const lines = {
+    protect: `若当时选择“${alternativeLabel}”，也许有人会更安全；但我想先确认，那是不是对方真正需要的。`,
+    question: `我仍在想：“${alternativeLabel}”会不会让误解更深？没有发生，不代表它不值得被追问。`,
+    connect: `我理解“${chosenLabel}”，也愿意替“${alternativeLabel}”留一把椅子。关系不必只有一个版本。`,
+    witness: `我记住的不是谁选对了，而是“${alternativeLabel}”曾经真实地可能发生。`
+  };
+  return `${citizen?.name || "有人"}说：${lines[stance] || lines.witness}`;
+}
+
+function createCounterfactualAgentEchoes({ zone, participant, alternative, chosen, episode }) {
+  if (!episode || !alternative || alternative.id === chosen?.id) return [];
+  const citizens = getAliveCitizens(state.society)
+    .filter((citizen) => citizen.id !== "avatar" && citizen.id !== participant?.id)
+    .sort((a, b) => hashCommunitySeed(`${zone.id}:${a.id}`, "counterfactual-echo") - hashCommunitySeed(`${zone.id}:${b.id}`, "counterfactual-echo"))
+    .slice(0, 3);
+  const turn = Number(state.society?.turn || 0);
+  const echoes = citizens.map((citizen, index) => {
+    const stance = getCounterfactualEchoStance(citizen, index);
+    const echo = {
+      id: `echo-${zone.id}-${alternative.id}-${citizen.id}`,
+      zoneId: zone.id,
+      observerId: citizen.id,
+      observerName: citizen.name,
+      alternativeChoiceId: alternative.id,
+      alternativeLabel: alternative.label,
+      stance,
+      text: buildCounterfactualEchoText(citizen, alternative, chosen, stance),
+      turn,
+      discussed: false,
+      discussedTurn: 0,
+      aftermathWitness: index === 0,
+      finaleFeatured: false
+    };
+    if (typeof queueAgentInbox === "function") {
+      queueAgentInbox(state.society, {
+        scope: "agent",
+        type: "counterfactual-witness",
+        targetId: citizen.id,
+        counterfactualEchoId: echo.id,
+        untilTurn: turn + 12,
+        desiredActions: stance === "protect" ? ["listen", "support"] : ["listen", "propose"],
+        actionTargetId: participant?.id || "avatar",
+        hint: "counterfactual-reflection",
+        text: `你听说${zone.name}没有发生的选择：“${alternative.label}”。不要把它当成事实；在之后的真实行动里保留你的疑问。`
+      });
+    }
+    if (typeof recordAgentMemory === "function") {
+      recordAgentMemory(
+        state.society,
+        citizen.id,
+        `反事实见证 · ${zone.name}：没有发生的“${alternative.label}”仍值得被讨论。`,
+        "counterfactual",
+        4,
+        [zone.id, alternative.id, chosen?.id].filter(Boolean)
+      );
+    }
+    return echo;
+  });
+  const existingIds = new Set(episode.echoes.map((echo) => echo.id));
+  episode.echoes.push(...echoes.filter((echo) => !existingIds.has(echo.id)));
+  episode.echoes = episode.echoes.slice(-24);
+  return echoes;
+}
+
+function getInteriorAftermathEcho(zoneId, { includeDiscussed = true } = {}) {
+  const thread = getInteriorStoryThread(zoneId);
+  const episode = thread ? getCounterfactualEpisodeState(thread.id) : null;
+  const zoneEchoes = (episode?.echoes || []).filter((echo) => echo.zoneId === zoneId);
+  if (!zoneEchoes.length) return null;
+  let witness = zoneEchoes.find((echo) => echo.aftermathWitness);
+  if (!witness) {
+    witness = zoneEchoes[0];
+    witness.aftermathWitness = true;
+  }
+  if (!includeDiscussed && witness.discussed) return null;
+  return witness;
+}
+
+function stageInteriorAftermathWitness(zone, echo = getInteriorAftermathEcho(zone?.id, { includeDiscussed: false })) {
+  if (!zone || !echo || echo.discussed || !interiorView || interiorView.zone?.id !== zone.id) return null;
+  const citizen = state.society?.citizens?.find((item) => item.id === echo.observerId);
+  if (!citizen) return null;
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (interiorAnimations[citizen.id]) delete interiorAnimations[citizen.id].counterfactualHidden;
+  interiorView.aftermathEchoId = echo.id;
+  interiorView.aftermathWitnessId = citizen.id;
+  return citizen;
+}
+
+function focusInteriorAftermathWitness(echoId = "") {
+  if (!interiorView) return false;
+  const echo = getInteriorAftermathEcho(interiorView.zone.id, { includeDiscussed: false });
+  if (!echo || (echoId && echo.id !== echoId)) return false;
+  const citizen = stageInteriorAftermathWitness(interiorView.zone, echo);
+  if (!citizen) return false;
+  const focus = () => {
+    const ia = interiorAnimations[citizen.id];
+    if (ia && Number.isFinite(ia.worldX) && Number.isFinite(ia.worldZ)) {
+      interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(ia.worldX, -ia.worldZ));
+    }
+    interiorView.aftermathFocusUntil = performance.now() + 7600;
+    addSpeechBubble(citizen.id, "我还记得另一条没有发生的路。", "listen", { priority: true, duration: 6200 });
+    markRenderActive(8200);
+  };
+  focus();
+  window.setTimeout(focus, 120);
+  const thread = getInteriorStoryThread(interiorView.zone.id);
+  recordEpisodeExperienceEvent(thread?.id, "aftermath_focused", { zoneId: interiorView.zone.id, detail: citizen.id }, { onceKey: `aftermath-focus-${interiorView.zone.id}` });
+  showToast(`转向${citizen.name}，点击发光的身影听听另一种记忆`, "listen");
+  return true;
+}
+
+function resolveInteriorAftermathWitness(echoId = "") {
+  if (!interiorView) return false;
+  const zone = interiorView.zone;
+  const echo = getInteriorAftermathEcho(zone.id, { includeDiscussed: false });
+  if (!echo || (echoId && echo.id !== echoId)) return false;
+  const citizen = state.society?.citizens?.find((item) => item.id === echo.observerId);
+  if (!citizen) return false;
+  echo.discussed = true;
+  echo.discussedTurn = Number(state.society?.turn || 0);
+  const thread = getInteriorStoryThread(zone.id);
+  recordEpisodeExperienceEvent(thread?.id, "aftermath_witnessed", {
+    zoneId: zone.id,
+    detail: citizen.id
+  }, { onceKey: `aftermath-witness-${zone.id}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `在${zone.name}，我听${citizen.name}保留了另一条没有发生的未来：${echo.alternativeLabel}`, {
+      kind: "counterfactual-aftermath",
+      importance: 7,
+      references: [zone.id, echo.id, citizen.id]
+    });
+  }
+  recordAgentMemory(state.society, citizen.id, `我把${zone.name}里没有发生的“${echo.alternativeLabel}”说给玩家听，它没有被当作错误答案。`, "counterfactual-aftermath", 7, [zone.id, echo.id]);
+  interactWithCitizen("listen", citizen.id);
+  const record = getInteriorExplorationRecord(zone.id);
+  const finaleReady = !!thread && getCounterfactualEpisodeState(thread.id).status === "complete";
+  interiorView.discovery = {
+    title: `${citizen.name} · 余波见证`,
+    text: echo.text.replace(/^.*?说：/, ""),
+    progress: "另一种未来也被听见",
+    shareText: record.counterfactual?.receipt || "",
+    finaleThreadId: finaleReady ? thread.id : "",
+    until: Number.POSITIVE_INFINITY
+  };
+  addSpeechBubble(citizen.id, "谢谢你没有急着把另一种可能抹掉。", "support", { priority: true, duration: 6200 });
+  addEventLogEntry(`活体余波 · ${zone.name}`, `${citizen.name}替没有发生的“${echo.alternativeLabel}”留下证词。`, "listen", true, `aftermath-${echo.id}`);
+  persist();
+  syncInteriorJourneyHud(getInteriorBlueprint(zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(8200);
+  return true;
+}
+
+function getCounterfactualEpisodeStats(episode, thread) {
+  const events = (episode?.rewrites || []).filter((event) => thread?.zones?.includes(event.zoneId));
+  const relationCounts = events.reduce((counts, event) => {
+    const key = event.relationType || "listen";
+    counts[key] = Number(counts[key] || 0) + 1;
+    return counts;
+  }, {});
+  const primaryRelation = Object.entries(relationCounts).sort((a, b) => b[1] - a[1])[0]?.[0] || "listen";
+  return {
+    events,
+    factCount: events.filter((event) => !event.rewritten).length,
+    rewriteCount: events.filter((event) => event.rewritten).length,
+    completedZones: thread?.zones?.filter((zoneId) => state.interiorExploration?.[zoneId]?.scenePlayed).length || 0,
+    primaryRelation
+  };
+}
+
+function getCounterfactualVerdict(primaryRelation) {
+  const verdicts = {
+    listen: "你不是替人发言的人，你是给沉默留位置的人",
+    support: "你不是急着修好一切的人，你是愿意陪关系停在原地的人",
+    cooperate: "你不是把分歧压平的人，你是让不同的人仍能一起行动的人",
+    meditate: "你不是回避冲突的人，你是让真话可以安全留下的人",
+    propose: "你不是等待共识的人，你是把另一种可能放上桌面的人"
+  };
+  return verdicts[primaryRelation] || verdicts.listen;
+}
+
+function getCounterfactualNextHook(threadId) {
+  const hooks = {
+    "unheard-voices": "下一集：当照护者也需要被照护",
+    "care-relay": "下一集：成长如果没有标准答案",
+    "growing-room": "下一集：一座城市如何共同工作",
+    "shared-city": "下一集：当人的速度不再是唯一尺度",
+    "more-than-human": "下一集：沉默会以新的方式回来"
+  };
+  return hooks[threadId] || "下一集：未解决的问题会找到新的房间";
+}
+
+function buildCounterfactualEpisodeShareText(thread, episode, finale, featuredEchoes) {
+  const beats = (episode.rewrites || []).slice(-5).map((event, index) => (
+    `${index + 1}. ${event.zoneName || findRenderZoneById(event.zoneId)?.name || "某个房间"}：${event.chosenLabel || event.chosenChoiceId}`
+  ));
+  const factBasis = (episode.rewrites || []).find((event) => event.factReason)?.factReason || "";
+  const echoes = featuredEchoes.map((echo) => `“${echo.text.replace(/^.*?说：/, "")}”`).join("\n");
+  return [
+    `《${thread.title} · 这一集，世界如何记住我》`,
+    finale.verdict,
+    factBasis ? `我的社会分身这样推演：${factBasis}` : "",
+    ...beats,
+    `保留事实 ${finale.factCount} 次 · 改写未来 ${finale.rewriteCount} 次`,
+    echoes ? `没有发生的未来：\n${echoes}` : "没有发生的未来，也被世界认真保存。",
+    finale.nextHook,
+    "如果是你，会在哪一刻使用唯一一次改写？",
+    "#镜像人生 #MirrorLife"
+  ].filter(Boolean).join("\n");
+}
+
+function completeCounterfactualEpisode(thread) {
+  if (!thread) return null;
+  const episode = getCounterfactualEpisodeState(thread.id);
+  const stats = getCounterfactualEpisodeStats(episode, thread);
+  if (stats.completedZones < thread.zones.length) return null;
+  if (episode.status === "complete" && episode.finale) return episode.finale;
+
+  const uniqueObservers = new Set();
+  const uniqueZones = new Set();
+  const featuredEchoes = [...episode.echoes].reverse().filter((echo) => {
+    if (!echo?.observerId || uniqueObservers.has(echo.observerId) || uniqueZones.has(echo.zoneId)) return false;
+    uniqueObservers.add(echo.observerId);
+    uniqueZones.add(echo.zoneId);
+    return true;
+  }).slice(0, 3).reverse();
+  featuredEchoes.forEach((echo) => { echo.finaleFeatured = true; });
+  const completedTurn = Number(state.society?.turn || 0);
+  const finale = {
+    verdict: getCounterfactualVerdict(stats.primaryRelation),
+    nextHook: getCounterfactualNextHook(thread.id),
+    factCount: stats.factCount,
+    rewriteCount: stats.rewriteCount,
+    completedZones: stats.completedZones,
+    completedTurn,
+    durationTurns: Math.max(0, completedTurn - Number(episode.startedTurn || 0)),
+    echoIds: featuredEchoes.map((echo) => echo.id),
+    shareText: ""
+  };
+  finale.shareText = buildCounterfactualEpisodeShareText(thread, episode, finale, featuredEchoes);
+  episode.status = "complete";
+  episode.completedTurn = completedTurn;
+  episode.finale = finale;
+
+  const director = window.MirrorLifePlotDirector?.getState?.();
+  if (director) {
+    director.episodeFinales = Array.isArray(director.episodeFinales) ? director.episodeFinales : [];
+    director.episodeFinales.unshift({
+      threadId: thread.id,
+      turn: completedTurn,
+      verdict: finale.verdict,
+      echoIds: [...finale.echoIds]
+    });
+    director.episodeFinales = director.episodeFinales.slice(0, 8);
+  }
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  if (avatar && typeof recordAgentMemoryFileItem === "function") {
+    recordAgentMemoryFileItem(state.society, avatar.id, "weeklyDiary", `${thread.title}终章：${finale.verdict}`, {
+      kind: "counterfactual-finale",
+      importance: 9,
+      references: [thread.id, ...finale.echoIds]
+    });
+  }
+  addLifeWeekLog("counterfactual_finale", `${thread.title}完成：${finale.verdict}`, {
+    threadId: thread.id,
+    factCount: finale.factCount,
+    rewriteCount: finale.rewriteCount,
+    echoIds: [...finale.echoIds]
+  });
+  addEventLogEntry(`双线回声 · ${thread.title}`, finale.verdict, "memory", true, `counterfactual-finale-${thread.id}`);
+  persistInteriorExploration();
+  persist();
+  return finale;
+}
+
+function getEpisodeFeaturedEchoes(episode) {
+  const ids = new Set(episode?.finale?.echoIds || []);
+  const selected = (episode?.echoes || []).filter((echo) => ids.has(echo.id));
+  return selected.length ? selected : (episode?.echoes || []).slice(-3);
+}
+
+async function renderCounterfactualEpisodeCard(thread, episode, finale) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  if (!ctx) return null;
+
+  const backdrop = ctx.createLinearGradient(0, 0, 1080, 1350);
+  backdrop.addColorStop(0, "#11182d");
+  backdrop.addColorStop(0.58, "#241d34");
+  backdrop.addColorStop(1, "#4f2c49");
+  ctx.fillStyle = backdrop;
+  ctx.fillRect(0, 0, 1080, 1350);
+
+  const sceneLayers = [document.getElementById("interiorThreeLayer"), document.getElementById("gameCanvas")]
+    .filter((layer) => layer instanceof HTMLCanvasElement && layer.width > 0 && layer.height > 0);
+  sceneLayers.forEach((layer) => {
+    const sourceRatio = layer.width / layer.height;
+    const targetRatio = 1080 / 650;
+    let sx = 0;
+    let sy = 0;
+    let sw = layer.width;
+    let sh = layer.height;
+    if (sourceRatio > targetRatio) {
+      sw = sh * targetRatio;
+      sx = (layer.width - sw) / 2;
+    } else {
+      sh = sw / targetRatio;
+      sy = Math.max(0, (layer.height - sh) * 0.44);
+    }
+    try { ctx.drawImage(layer, sx, sy, sw, sh, 0, 0, 1080, 650); } catch { /* keep the editorial fallback */ }
+  });
+
+  const fade = ctx.createLinearGradient(0, 330, 0, 760);
+  fade.addColorStop(0, "rgba(17,24,45,0)");
+  fade.addColorStop(1, "rgba(17,24,45,0.98)");
+  ctx.fillStyle = fade;
+  ctx.fillRect(0, 300, 1080, 500);
+  ctx.fillStyle = "rgba(13, 18, 35, 0.98)";
+  ctx.fillRect(0, 650, 1080, 700);
+
+  ctx.fillStyle = "#ffe09a";
+  ctx.beginPath();
+  ctx.roundRect(64, 54, 64, 64, 18);
+  ctx.fill();
+  ctx.fillStyle = "#151a2d";
+  ctx.font = '900 30px "PingFang SC", sans-serif';
+  ctx.textAlign = "center";
+  ctx.fillText("镜", 96, 97);
+  ctx.textAlign = "left";
+  ctx.fillStyle = "#f7f2e8";
+  ctx.font = '800 30px "PingFang SC", sans-serif';
+  ctx.fillText("镜像人生", 148, 82);
+  ctx.fillStyle = "#bac3d9";
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText("EPISODE MEMORY", 148, 111);
+
+  ctx.fillStyle = "#ffe7ad";
+  ctx.font = '700 38px "Songti SC", "Noto Serif SC", serif';
+  ctx.fillText("这一集，世界如何记住你", 64, 726);
+  ctx.fillStyle = "#8793ae";
+  ctx.font = '600 18px "PingFang SC", sans-serif';
+  ctx.fillText(`${thread.title} · ${finale.completedZones}/${thread.zones.length} 场所已回应`, 64, 762);
+  const cardFactBasis = (episode.rewrites || []).find((event) => event.factReason)?.factReason || "";
+  if (cardFactBasis) {
+    ctx.fillStyle = "#ffb7a8";
+    ctx.font = '500 17px "PingFang SC", sans-serif';
+    ctx.fillText(`分身推演：${cardFactBasis}`.slice(0, 54), 64, 800);
+  }
+
+  ctx.fillStyle = "#f7f2e8";
+  ctx.font = '700 48px "Songti SC", "Noto Serif SC", serif';
+  const verdictBottom = drawWrappedShareText(ctx, finale.verdict, 64, 844, 952, 64, 2);
+
+  const trackY = verdictBottom + 38;
+  const gap = 16;
+  const stepWidth = (952 - gap * 4) / 5;
+  thread.zones.forEach((zoneId, index) => {
+    const event = (episode.rewrites || []).find((item) => item.zoneId === zoneId);
+    ctx.fillStyle = event?.rewritten ? "rgba(123,224,192,0.18)" : "rgba(255,118,95,0.16)";
+    ctx.beginPath();
+    ctx.roundRect(64 + index * (stepWidth + gap), trackY, stepWidth, 74, 16);
+    ctx.fill();
+    ctx.fillStyle = event?.rewritten ? "#7be0c0" : "#ff9a86";
+    ctx.font = '800 15px "PingFang SC", sans-serif';
+    ctx.fillText(`0${index + 1}`, 80 + index * (stepWidth + gap), trackY + 25);
+    ctx.fillStyle = "#f7f2e8";
+    ctx.font = '600 17px "PingFang SC", sans-serif';
+    const zoneName = event?.zoneName || findRenderZoneById(zoneId)?.name || "场所";
+    ctx.fillText(zoneName.slice(0, 7), 80 + index * (stepWidth + gap), trackY + 52);
+  });
+
+  const echoes = getEpisodeFeaturedEchoes(episode).slice(0, 3);
+  let echoY = trackY + 116;
+  ctx.fillStyle = "#ffe49d";
+  ctx.font = '800 18px "PingFang SC", sans-serif';
+  ctx.fillText("没有发生的未来，仍被三个人记住", 64, echoY);
+  echoY += 38;
+  echoes.forEach((echo) => {
+    ctx.fillStyle = "#f7f2e8";
+    ctx.font = '600 22px "PingFang SC", sans-serif';
+    const text = echo.text.replace(/^.*?说：/, "");
+    echoY = drawWrappedShareText(ctx, `“${text}”`, 64, echoY, 952, 32, 2) + 14;
+  });
+
+  ctx.fillStyle = "#bac3d9";
+  ctx.font = '600 20px "PingFang SC", sans-serif';
+  const experienceSummary = getEpisodeExperienceSummary(thread.id);
+  const experienceLabel = experienceSummary?.activeMs > 0
+    ? `  ·  真正走过 ${formatEpisodeElapsed(experienceSummary.activeMs, { compact: true })}`
+    : "";
+  ctx.fillText(`保留事实 ${finale.factCount} 次  ·  改写未来 ${finale.rewriteCount} 次${experienceLabel}`, 64, 1264);
+  ctx.fillStyle = "#ffe49d";
+  ctx.fillText("如果是你，会在哪一刻使用唯一一次改写？", 64, 1305);
+  ctx.fillStyle = "#78849f";
+  ctx.font = '500 16px system-ui, sans-serif';
+  ctx.fillText("#镜像人生  #MirrorLife", 64, 1334);
+
+  return new Promise((resolve) => canvas.toBlob(resolve, "image/png", 0.94));
+}
+
+async function shareCounterfactualEpisode(threadId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  if (!thread) return;
+  const episode = getCounterfactualEpisodeState(thread.id);
+  const finale = episode.finale;
+  if (!finale) return;
+  const experienceSummary = getEpisodeExperienceSummary(thread.id);
+  const shareText = experienceSummary?.activeMs > 0
+    ? `${finale.shareText}\n我真正走过这一集：${formatEpisodeElapsed(experienceSummary.activeMs, { compact: true })}`
+    : finale.shareText;
+  try {
+    const cardBlob = await renderCounterfactualEpisodeCard(thread, episode, finale);
+    const file = cardBlob ? new File([cardBlob], `mirrorlife-episode-${Date.now()}.png`, { type: "image/png" }) : null;
+    if (navigator.share && file && navigator.canShare?.({ files: [file] })) {
+      await navigator.share({ title: `镜像人生 · ${thread.title}`, text: shareText, files: [file] });
+      recordEpisodeExperienceEvent(thread.id, "episode_shared", { detail: "system-share" }, { onceKey: "shared" });
+      showToast("这一集已经交给你选择的人", "support");
+      return;
+    }
+    await navigator.clipboard.writeText(shareText);
+    if (cardBlob) {
+      const url = URL.createObjectURL(cardBlob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `镜像人生-${thread.title}-${Date.now()}.png`;
+      link.click();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+      recordEpisodeExperienceEvent(thread.id, "episode_shared", { detail: "card-download" }, { onceKey: "shared" });
+      showToast("本集双线故事已保存，讨论问题也已复制", "support");
+      return;
+    }
+    recordEpisodeExperienceEvent(thread.id, "episode_shared", { detail: "copy" }, { onceKey: "shared" });
+    showToast("本集故事已复制，可以发给朋友继续选择", "support");
+  } catch (error) {
+    if (error?.name !== "AbortError") showToast("故事卡没有生成，再试一次吧", "conflict");
+  }
+}
+
+function showCounterfactualEpisodeFinale(threadId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  if (!thread || !interiorView) return;
+  const finale = completeCounterfactualEpisode(getInteriorStoryThread(interiorView.zone.id));
+  if (!finale) {
+    showToast("还有房间没有回应，故事馆暂时不能替这一集下结论", "listen");
+    return;
+  }
+  const episode = getCounterfactualEpisodeState(thread.id);
+  recordEpisodeExperienceEvent(thread.id, "finale_opened", {}, { onceKey: "finale" });
+  const experience = getEpisodeExperienceSummary(thread.id);
+  const echoes = getEpisodeFeaturedEchoes(episode).slice(0, 3);
+  closeInteriorCounterfactualStage();
+  closeCounterfactualEpisodeFinale();
+  stageInteriorCounterfactualActors(interiorView.zone);
+
+  const stage = document.createElement("section");
+  stage.id = "counterfactualEpisodeFinale";
+  stage.setAttribute("role", "dialog");
+  stage.setAttribute("aria-modal", "true");
+  stage.setAttribute("aria-label", "这一集，世界如何记住你");
+  const factEvents = (episode.rewrites || []).filter((event) => !event.rewritten).slice(-3);
+  const fallbackFacts = (episode.rewrites || []).slice(-3);
+  const visibleFacts = factEvents.length ? factEvents : fallbackFacts;
+  stage.innerHTML = `
+    <div class="counterfactual-finale-vignette" aria-hidden="true"></div>
+    <header class="counterfactual-topbar counterfactual-finale-topbar">
+      <div class="counterfactual-brand"><span>镜</span><div><strong>镜像人生</strong><small>EPISODE MEMORY</small></div></div>
+      <div class="counterfactual-heading"><strong>这一集，世界如何记住你</strong><small>${escapeHtml(thread.title)} · 第三幕 · 回声</small></div>
+      <div class="counterfactual-token"><b>${finale.completedZones} / ${thread.zones.length}</b> 场所已回应</div>
+    </header>
+    <aside class="counterfactual-finale-rail finale-fact-rail">
+      <h2>你留下的事实</h2>
+      <ol>${visibleFacts.map((event) => `<li><span>${escapeHtml(event.zoneName || findRenderZoneById(event.zoneId)?.name || "某个房间")}</span><strong>${escapeHtml(event.chosenLabel || event.chosenChoiceId)}</strong>${event.factReason ? `<em>${escapeHtml(event.factReason)}</em>` : ""}</li>`).join("")}</ol>
+    </aside>
+    <section class="counterfactual-memory-doors" aria-label="五个场所的记忆">
+      ${thread.zones.map((zoneId, index) => {
+        const event = (episode.rewrites || []).find((item) => item.zoneId === zoneId);
+        const zoneName = event?.zoneName || findRenderZoneById(zoneId)?.name || `第${index + 1}站`;
+        return `<div class="${event?.rewritten ? "rewritten" : "fact"}"><small>第${index + 1}站</small><strong>${escapeHtml(zoneName)}</strong><span>${event?.rewritten ? "改写" : "事实"}</span></div>`;
+      }).join("")}
+    </section>
+    <aside class="counterfactual-finale-rail finale-echo-rail">
+      <h2>没有发生的未来</h2>
+      <ol>${echoes.map((echo) => {
+        const citizen = state.society?.citizens?.find((item) => item.id === echo.observerId);
+        const frame = getCitizenSpriteFrame(citizen);
+        const frameX = `${(frame % CITIZEN_SPRITE_COLUMNS) * (100 / (CITIZEN_SPRITE_COLUMNS - 1))}%`;
+        const frameY = `${Math.floor(frame / CITIZEN_SPRITE_COLUMNS) * 100}%`;
+        return `<li><span class="counterfactual-echo-avatar" style="--frame-x:${frameX};--frame-y:${frameY}" aria-hidden="true"></span><div><strong>${escapeHtml(echo.observerName || citizen?.name || "有人")}</strong><p>${escapeHtml(echo.text.replace(/^.*?说：/, ""))}</p></div></li>`;
+      }).join("")}</ol>
+    </aside>
+    <section class="counterfactual-finale-dock">
+      <p>${escapeHtml(finale.nextHook)}</p>
+      <h1>${escapeHtml(finale.verdict)}</h1>
+      <div class="counterfactual-finale-stats"><span>保留事实 <b>${finale.factCount}</b> 次</span><span>改写未来 <b>${finale.rewriteCount}</b> 次</span></div>
+      <div class="counterfactual-experience-fingerprint" aria-label="本机体验指纹">
+        <span><small>真正走过</small><b>${escapeHtml(formatEpisodeElapsed(experience?.activeMs, { compact: true }))}</b></span>
+        <span><small>第一次看见</small><b>${escapeHtml(formatEpisodeElapsed(experience?.firstEvidenceMs))}</b></span>
+        <span><small>决定前停留</small><b>${escapeHtml(formatEpisodeElapsed(experience?.medianDwellMs, { compact: true }))}</b></span>
+        <button type="button" data-counterfactual-playtest-export="${escapeHtml(thread.id)}">导出匿名试玩证据</button>
+      </div>
+      <button class="counterfactual-relay-cta" type="button" data-counterfactual-relay="${escapeHtml(thread.id)}">把未解决的问题交给一个真实的人</button>
+      <button type="button" data-counterfactual-episode-share="${escapeHtml(thread.id)}">生成这一集的双线故事</button>
+      <button class="counterfactual-finale-return" type="button" data-counterfactual-episode-return>带着未解决的问题回到街道</button>
+    </section>`;
+
+  stage.addEventListener("click", (event) => {
+    const relay = event.target.closest("[data-counterfactual-relay]");
+    if (relay) {
+      shareMirrorRelayInvite(relay.dataset.counterfactualRelay || thread.id);
+      return;
+    }
+    const share = event.target.closest("[data-counterfactual-episode-share]");
+    if (share) {
+      shareCounterfactualEpisode(share.dataset.counterfactualEpisodeShare || thread.id);
+      return;
+    }
+    const evidenceExport = event.target.closest("[data-counterfactual-playtest-export]");
+    if (evidenceExport) {
+      exportEpisodePlaytestEvidence(evidenceExport.dataset.counterfactualPlaytestExport || thread.id);
+      return;
+    }
+    if (event.target.closest("[data-counterfactual-episode-return]")) {
+      recordEpisodeExperienceEvent(thread.id, "returned_to_street", {}, { onceKey: "returned" });
+      pauseEpisodeExperienceClock({ persistState: true });
+      closeCounterfactualEpisodeFinale();
+      exitInteriorView();
+      showToast(finale.nextHook, "listen");
+    }
+  });
+  stage.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeCounterfactualEpisodeFinale();
+  });
+  document.getElementById("gameShell")?.appendChild(stage);
+  document.body.classList.add("counterfactual-finale-active");
+  stage.querySelector("[data-counterfactual-relay]")?.focus();
+  markRenderActive(4200);
+}
+
+function showInteriorCounterfactualStage(sceneAction) {
+  if (!interiorView) return;
+  const choices = Array.isArray(sceneAction?.choices) ? sceneAction.choices : [];
+  if (!choices.length) return;
+  closeInteriorCounterfactualStage();
+
+  const zone = interiorView.zone;
+  stageInteriorCounterfactualActors(zone);
+  const thread = getInteriorStoryThread(zone.id);
+  const episode = getCounterfactualEpisodeState(thread?.id);
+  const act = getCounterfactualAct(thread);
+  const participant = getInteriorCounterfactualParticipant(zone);
+  const factDecision = deriveAvatarFactDecision(zone, sceneAction, participant, episode);
+  const factChoice = factDecision?.choice || choices[0];
+  const futureChoice = factDecision?.alternative || choices.find((choice) => choice.id !== factChoice.id) || factChoice;
+  const fact = getCounterfactualBranchCopy(factChoice, participant, "fact");
+  const future = getCounterfactualBranchCopy(futureChoice, participant, "future");
+  const canRewrite = episode.rewriteTokens > 0 && futureChoice.id !== factChoice.id;
+  const factEvidence = (factDecision?.evidence || []).length
+    ? factDecision.evidence
+    : [{ label: "人格", text: `${factDecision?.personaLabel || "当前人格轮廓"}会先这样靠近现场` }];
+  recordEpisodeExperienceEvent(thread?.id, "choice_opened", {
+    zoneId: zone.id,
+    choiceId: factChoice.id
+  }, { onceKey: `choice-open-${zone.id}` });
+
+  const stage = document.createElement("section");
+  stage.id = "interiorCounterfactualStage";
+  stage.setAttribute("role", "dialog");
+  stage.setAttribute("aria-modal", "true");
+  stage.setAttribute("aria-label", "同一个你，两种被记住的方式");
+  stage.dataset.experienceOpenedAt = String(performance.now());
+  stage.style.setProperty("--counterfactual-split", "50%");
+  stage.innerHTML = `
+    <div class="counterfactual-vignette" aria-hidden="true"></div>
+    <header class="counterfactual-topbar">
+      <div class="counterfactual-brand"><span>镜</span><div><strong>镜像人生</strong><small>COUNTERFACTUAL EPISODE</small></div></div>
+      <div class="counterfactual-heading"><strong>同一个你，两种被记住的方式</strong><small>${escapeHtml(thread?.title || zone.name)} · ${escapeHtml(act.label)}</small></div>
+      <div class="counterfactual-token">本集可改写 <b>${episode.rewriteTokens}</b> 次</div>
+    </header>
+    <section class="counterfactual-branch counterfactual-fact-copy" data-fact-choice-id="${escapeHtml(factChoice.id)}">
+      <span>分身事实</span><div><strong>${escapeHtml(fact.title)}</strong><small>${escapeHtml(factDecision?.reason || fact.consequence)}</small></div>
+    </section>
+    <section class="counterfactual-branch counterfactual-if-copy">
+      <span>如果</span><div><strong>${escapeHtml(future.title)}</strong><small>${escapeHtml(future.consequence)}</small></div>
+    </section>
+    <aside class="counterfactual-film counterfactual-film-fact" aria-label="分身选择证据">
+      ${factEvidence.map((item, index) => `<div class="${index === 0 ? "active" : ""}"><time>${escapeHtml(item.label || "证据")}</time><span>${escapeHtml(item.text || "")}</span></div>`).join("")}
+    </aside>
+    <aside class="counterfactual-film counterfactual-film-if" aria-label="如果时间线">
+      <div><time>刚才</time><span>你看见了</span></div><div class="active"><time>现在</time><span>${escapeHtml(futureChoice.label)}</span></div><div><time>明天</time><span>${escapeHtml(future.consequence)}</span></div>
+    </aside>
+    <div class="counterfactual-focus" aria-hidden="true"></div>
+    <button class="counterfactual-seam" type="button" aria-label="在事实与如果之间切换"><span>改写点</span></button>
+    <section class="counterfactual-choicebar">
+      <p>把光拖过中线，进入另一种未来</p>
+      <div class="counterfactual-choices">
+        <button type="button" data-counterfactual-choice="fact" data-choice-id="${escapeHtml(factChoice.id)}"><kbd>A</kbd><span><strong>保留分身选择</strong><small>${escapeHtml(factChoice.label)} · 由人格、记忆与关系共同推演</small></span></button>
+        <button type="button" class="future-choice" data-counterfactual-choice="future" data-choice-id="${escapeHtml(futureChoice.id)}" ${canRewrite ? "" : "disabled"}><kbd>D</kbd><span><strong>${canRewrite ? escapeHtml(futureChoice.label) : "本集改写已用完"}</strong><small>${canRewrite ? "消耗本集唯一一次改写" : "仍可观察，但不能替这条时间线决定"}</small></span></button>
+      </div>
+      <small>完成后生成一张「两种被记住的方式」社交切片</small>
+    </section>`;
+
+  const commit = (branch) => {
+    const rewritten = branch === "future" && canRewrite;
+    const choice = rewritten ? futureChoice : factChoice;
+    recordEpisodeExperienceEvent(thread?.id, "choice_committed", {
+      zoneId: zone.id,
+      choiceId: choice.id,
+      branch: rewritten ? "future" : "fact",
+      dwellMs: performance.now() - Number(stage.dataset.experienceOpenedAt || performance.now())
+    }, { onceKey: `choice-commit-${zone.id}` });
+    closeInteriorCounterfactualStage();
+    playInteriorSceneAction(choice.id, {
+      fromCounterfactual: true,
+      rewritten,
+      factChoiceId: factChoice.id,
+      futureChoiceId: futureChoice.id,
+      factDecision: factDecision ? {
+        version: factDecision.version,
+        score: factDecision.score,
+        runnerUpScore: factDecision.runnerUpScore,
+        reason: factDecision.reason,
+        evidence: factDecision.evidence.map((item) => item.text),
+        personaLabel: factDecision.personaLabel,
+        action: factDecision.action,
+        memoryHits: factDecision.memoryHits
+      } : null
+    });
+  };
+  stage.addEventListener("click", (event) => {
+    const choiceButton = event.target.closest("[data-counterfactual-choice]");
+    if (choiceButton && !choiceButton.disabled) {
+      commit(choiceButton.dataset.counterfactualChoice);
+      return;
+    }
+    if (event.target.closest(".counterfactual-seam")) {
+      recordEpisodeExperienceEvent(thread?.id, "choice_previewed", { zoneId: zone.id }, { onceKey: `choice-preview-${zone.id}` });
+      stage.classList.toggle("preview-future");
+      stage.style.setProperty("--counterfactual-split", stage.classList.contains("preview-future") ? "38%" : "62%");
+    }
+  });
+  stage.addEventListener("pointermove", (event) => {
+    if (!event.buttons) return;
+    recordEpisodeExperienceEvent(thread?.id, "choice_previewed", { zoneId: zone.id }, { onceKey: `choice-preview-${zone.id}` });
+    const ratio = clamp(event.clientX / Math.max(1, window.innerWidth), 0.32, 0.68);
+    stage.style.setProperty("--counterfactual-split", `${Math.round(ratio * 100)}%`);
+    stage.classList.toggle("preview-future", ratio < 0.5);
+  });
+  stage.addEventListener("keydown", (event) => {
+    if (event.key.toLowerCase() === "a") commit("fact");
+    if (event.key.toLowerCase() === "d" && canRewrite) commit("future");
+    if (event.key === "Escape") closeInteriorCounterfactualStage();
+  });
+  document.getElementById("gameShell")?.appendChild(stage);
+  document.body.classList.add("counterfactual-active");
+  stage.querySelector("[data-counterfactual-choice='future']")?.focus();
+  markRenderActive(1600);
+}
+
 function syncInteriorDiscoveryCard(now) {
   const existing = document.getElementById("interiorDiscoveryCard");
   const discovery = interiorView?.discovery;
@@ -6257,6 +11170,18 @@ function syncInteriorDiscoveryCard(now) {
     card.id = "interiorDiscoveryCard";
     card.setAttribute("aria-live", "polite");
     card.addEventListener("click", (event) => {
+      const share = event.target.closest("[data-interior-share]");
+      if (share) {
+        event.stopPropagation();
+        shareInteriorCounterfactualReceipt(share.dataset.interiorShare || "");
+        return;
+      }
+      const finale = event.target.closest("[data-counterfactual-episode-finale]");
+      if (finale) {
+        event.stopPropagation();
+        showCounterfactualEpisodeFinale(finale.dataset.counterfactualEpisodeFinale || "");
+        return;
+      }
       const choice = event.target.closest("[data-interior-scene-choice]");
       if (choice) {
         event.stopPropagation();
@@ -6272,14 +11197,14 @@ function syncInteriorDiscoveryCard(now) {
   }
   const choices = Array.isArray(discovery.choices) ? discovery.choices : [];
   const choiceSignature = choices.map((choice) => `${choice.id}:${choice.label}`).join("|");
-  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}|${choiceSignature}`;
+  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}|${choiceSignature}|${discovery.shareText || ""}|${discovery.finaleThreadId || ""}`;
   if (card.dataset.signature !== signature) {
     card.dataset.signature = signature;
-    card.classList.toggle("has-action", !!discovery.actionLabel || choices.length > 0);
+    card.classList.toggle("has-action", !!discovery.actionLabel || choices.length > 0 || !!discovery.shareText || !!discovery.finaleThreadId);
     const choiceButtons = choices.length
       ? `<div class="interior-scene-choice-list" role="group" aria-label="选择你的回应">${choices.map((choice, index) => `<button class="interior-scene-choice choice-${index + 1}" type="button" data-interior-scene-choice="${escapeHtml(choice.id)}">${escapeHtml(choice.label)}</button>`).join("")}</div>`
       : "";
-    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}${choiceButtons}`;
+    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}${choiceButtons}${discovery.shareText ? `<button class="interior-share-receipt" type="button" data-interior-share="${escapeHtml(discovery.shareText)}">分享「两种被记住的方式」</button>` : ""}${discovery.finaleThreadId ? `<button class="interior-finale-entry" type="button" data-counterfactual-episode-finale="${escapeHtml(discovery.finaleThreadId)}">进入故事馆终章</button>` : ""}`;
   }
 }
 
@@ -6301,7 +11226,7 @@ function applyInteriorSceneReward(zone, choice) {
   };
 }
 
-function playInteriorSceneAction(choiceId = "") {
+function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
   if (!interiorView) return;
   const zone = interiorView.zone;
   const blueprint = getInteriorBlueprint(zone);
@@ -6310,19 +11235,33 @@ function playInteriorSceneAction(choiceId = "") {
   if (record.scenePlayed) return;
   const choices = Array.isArray(sceneAction.choices) ? sceneAction.choices : [];
   if (!choiceId && choices.length) {
-    interiorView.discovery = {
-      title: `${zone.name} · ${sceneAction.title}`,
-      text: `${blueprint.profile?.intro || "房间里的人看向你。"} 这一刻，你想怎样回应？`,
-      progress: "选择回应",
-      choices,
-      until: Number.POSITIVE_INFINITY
-    };
-    syncInteriorDiscoveryCard(performance.now());
+    showInteriorCounterfactualStage(sceneAction);
     markRenderActive(1400);
     return;
   }
   const choice = choices.find((item) => item.id === choiceId);
   if (!choice) return;
+  const thread = getInteriorStoryThread(zone.id);
+  const episode = getCounterfactualEpisodeState(thread?.id);
+  const prospectiveParticipant = getInteriorCounterfactualParticipant(zone);
+  const derivedFactDecision = deriveAvatarFactDecision(zone, sceneAction, prospectiveParticipant, episode);
+  const factChoice = choices.find((item) => item.id === counterfactualMeta?.factChoiceId) || derivedFactDecision?.choice || choices[0] || choice;
+  const futureChoice = choices.find((item) => item.id === counterfactualMeta?.futureChoiceId)
+    || derivedFactDecision?.alternative
+    || choices.find((item) => item.id !== factChoice.id)
+    || factChoice;
+  const factDecision = counterfactualMeta?.factDecision || (derivedFactDecision ? {
+    version: derivedFactDecision.version,
+    score: derivedFactDecision.score,
+    runnerUpScore: derivedFactDecision.runnerUpScore,
+    reason: derivedFactDecision.reason,
+    evidence: derivedFactDecision.evidence.map((item) => item.text),
+    personaLabel: derivedFactDecision.personaLabel,
+    action: derivedFactDecision.action,
+    memoryHits: derivedFactDecision.memoryHits
+  } : null);
+  const rewritten = !!counterfactualMeta?.rewritten && episode.rewriteTokens > 0;
+  if (rewritten) episode.rewriteTokens = Math.max(0, episode.rewriteTokens - 1);
   record.scenePlayed = true;
   record.sceneChoice = choice.id;
 
@@ -6334,8 +11273,7 @@ function playInteriorSceneAction(choiceId = "") {
     avatar.lastAction = choice.label;
   }
 
-  const participant = getAliveCitizens(state.society)
-    .find((citizen) => citizen.id !== "avatar" && citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id);
+  const participant = prospectiveParticipant;
   if (participant) {
     participant.mood = clamp(Number(participant.mood || 50) + Number(choice.participant?.mood || 0), 0, 100);
     participant.trust = clamp(Number(participant.trust || 50) + Number(choice.participant?.trust || 0), 0, 100);
@@ -6363,25 +11301,75 @@ function playInteriorSceneAction(choiceId = "") {
 
   const sceneText = choice.text.replace(/[。！？]+$/u, "");
   const outcome = participant ? `${sceneText}，${participant.name}也留在了现场。` : `${sceneText}。`;
+  const receipt = buildCounterfactualReceipt({ zone, thread, fact: factChoice, chosen: choice, participant, rewritten, factDecision });
+  const alternativeChoice = choices.find((item) => item.id !== choice.id) || (rewritten ? factChoice : futureChoice);
   record.sceneOutcome = outcome;
   record.sceneReward = applyInteriorSceneReward(zone, choice);
+  record.counterfactual = {
+    factChoiceId: factChoice.id,
+    factLabel: factChoice.label,
+    factReason: String(factDecision?.reason || ""),
+    factEvidence: Array.isArray(factDecision?.evidence) ? factDecision.evidence.slice(0, 3) : [],
+    factScore: Number(factDecision?.score || 0),
+    factRunnerUpScore: Number(factDecision?.runnerUpScore || 0),
+    factDecisionVersion: Number(factDecision?.version || 0),
+    factPersonaLabel: String(factDecision?.personaLabel || ""),
+    chosenChoiceId: choice.id,
+    chosenLabel: choice.label,
+    alternativeChoiceId: alternativeChoice?.id || "",
+    alternativeLabel: alternativeChoice?.label || "",
+    relationType: choice.relationType || "listen",
+    participantId: participant?.id || "",
+    participantName: participant?.name || "",
+    rewritten,
+    receipt,
+    turn: Number(state.society?.turn || 0)
+  };
+  episode.rewrites.push({ zoneId: zone.id, zoneName: zone.name, ...record.counterfactual });
+  episode.rewrites = episode.rewrites.slice(-12);
+  episode.receipts.push(receipt);
+  episode.receipts = episode.receipts.slice(-12);
+  const createdEchoes = createCounterfactualAgentEchoes({
+    zone,
+    participant,
+    alternative: alternativeChoice,
+    chosen: choice,
+    episode
+  });
+  const aftermathWitness = createdEchoes.find((echo) => echo.aftermathWitness) || null;
+  if (aftermathWitness) stageInteriorAftermathWitness(zone, aftermathWitness);
+  recordCounterfactualDirectorImpact({ zone, thread, participant, chosen: choice, rewritten, receipt });
   addLifeWeekLog("interior_scene", `${zone.name}里，你选择了“${choice.label}”。`, {
     zoneId: zone.id,
     choiceId: choice.id,
-    participantId: participant?.id || null
+    participantId: participant?.id || null,
+    rewritten,
+    counterfactualThreadId: thread?.id || "standalone"
   });
   if (avatar) {
-    recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}，我选择了“${choice.label}”：${outcome}`, {
+    recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}，分身原本会选择“${factChoice.label}”（${factDecision?.reason || "来自当时的人格与关系"}）；我最终${rewritten ? "改写为" : "保留了"}“${choice.label}”：${outcome}`, {
       kind: "interior_scene",
       importance: 7,
-      references: [zone.id, participant?.id].filter(Boolean)
+      references: [zone.id, participant?.id, factChoice.id, choice.id].filter(Boolean)
     });
   }
+  const refreshedThread = getInteriorStoryThread(zone.id);
+  recordEpisodeExperienceEvent(refreshedThread?.id, "room_completed", {
+    zoneId: zone.id,
+    choiceId: choice.id,
+    branch: rewritten ? "future" : "fact"
+  }, { onceKey: `room-complete-${zone.id}` });
+  const finale = completeCounterfactualEpisode(refreshedThread);
+  const pendingAftermath = getInteriorAftermathEcho(zone.id, { includeDiscussed: false });
   interiorView.discovery = {
     title: sceneAction.title,
     text: outcome,
-    progress: `你的回应 · ${choice.label}`,
-    until: performance.now() + 9600
+    progress: finale
+      ? pendingAftermath ? "五个场所已回应 · 终章前还有一段余波" : "五个场所都已回应 · 终章解锁"
+      : `${rewritten ? "你改写了这一刻" : "你保留了事实"} · ${choice.label}`,
+    shareText: receipt,
+    finaleThreadId: finale && !pendingAftermath ? refreshedThread?.id || "" : "",
+    until: Number.POSITIVE_INFINITY
   };
   addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, choice.behavior, true, `interior-scene-${zone.id}`);
   pushRobotSignal("avatar", "soft", `另一个世界里的你在${zone.name}选择了“${choice.label}”。这不是任务分数，而是一段关系开始改变的证据。`);
@@ -6399,6 +11387,24 @@ function getInteriorReactionLine(behaviorId, zoneName) {
   return "我也刚刚注意到这里。";
 }
 
+function maybeCompleteInteriorExploration(zone, blueprint, record) {
+  if (!zone || !blueprint || !record || record.completed) return false;
+  const progress = getInteriorExplorationProgress(zone, blueprint, record);
+  if (progress.count < progress.goal) return false;
+  record.completed = true;
+  const completion = blueprint.profile?.completion || `你读懂了${zone.name}的一小段生活。`;
+  interiorView.discovery = {
+    title: `${zone.name} · 场所回声`,
+    text: completion,
+    progress: "已读懂",
+    actionLabel: (INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home).label,
+    until: Number.POSITIVE_INFINITY
+  };
+  addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
+  pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
+  return true;
+}
+
 function exploreInteriorHotspot(propIndex) {
   if (!interiorView) return;
   const zone = interiorView.zone;
@@ -6406,19 +11412,37 @@ function exploreInteriorHotspot(propIndex) {
   const prop = blueprint.props?.[propIndex];
   if (!prop) return;
   if (interiorFocusPropIndex === propIndex) interiorFocusPropIndex = null;
-  const profile = blueprint.profile;
   const record = getInteriorExplorationRecord(zone.id);
   const alreadyFound = record.found.includes(prop.label);
+  const thread = getInteriorStoryThread(zone.id);
   const clue = prop.storyClue
     || `${prop.label}留下了被使用和照料的痕迹，让${zone.name}不只是一间空房。`;
+  const progressBefore = getInteriorExplorationProgress(zone, blueprint, record);
+  if (!alreadyFound && zone.id === QUIET_PRESENCE_ZONE_ID && progressBefore.propCount >= 2 && !record.completed) {
+    const ritual = getQuietPresenceRitual(zone.id);
+    interiorView.discovery = {
+      title: "这间房不需要更多物件",
+      text: ritual?.status === "complete"
+        ? "你已经看见两处生活痕迹。剩下的证据是一段真正不被催促的时间。"
+        : "你已经看见足够多的陈设。最后一段线索在那个不想解释的人身上。",
+      progress: `${progressBefore.count}/${progressBefore.goal}`,
+      until: performance.now() + 6200
+    };
+    syncInteriorDiscoveryCard(performance.now());
+    markRenderActive(6400);
+    return;
+  }
   if (!alreadyFound) record.found.push(prop.label);
+  recordEpisodeExperienceEvent(thread?.id, alreadyFound ? "evidence_revisited" : "evidence_found", {
+    zoneId: zone.id,
+    detail: String(prop.label || "").slice(0, 80)
+  }, alreadyFound ? {} : { onceKey: `evidence-${zone.id}-${propIndex}` });
 
-  const goal = Math.min(3, blueprint.props?.length || 3);
-  const progressCount = Math.min(record.found.length, goal);
+  const progress = getInteriorExplorationProgress(zone, blueprint, record);
   interiorView.discovery = {
     title: prop.label,
     text: alreadyFound ? `你再次看见这处细节：${clue}` : clue,
-    progress: `${progressCount}/${goal}`,
+    progress: `${progress.count}/${progress.goal}`,
     until: performance.now() + 7200
   };
 
@@ -6451,19 +11475,7 @@ function exploreInteriorHotspot(propIndex) {
     }
   }
 
-  if (!record.completed && record.found.length >= goal) {
-    record.completed = true;
-    const completion = profile?.completion || `你读懂了${zone.name}的一小段生活。`;
-    interiorView.discovery = {
-      title: `${zone.name} · 场所回声`,
-      text: completion,
-      progress: "已读懂",
-      actionLabel: (INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home).label,
-      until: Number.POSITIVE_INFINITY
-    };
-    addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
-    pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
-  }
+  maybeCompleteInteriorExploration(zone, blueprint, record);
   persistInteriorExploration();
   persist();
   syncInteriorDiscoveryCard(performance.now());
@@ -8176,6 +13188,15 @@ function enterInteriorView(zone, source = "manual") {
   const enteredAt = performance.now();
   const explorationRecord = getInteriorExplorationRecord(zone.id);
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  const storyThread = getInteriorStoryThread(zone.id);
+  const quietPresence = getQuietPresenceRitual(zone.id);
+  const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !explorationRecord.completed;
+  const socialParallax = getSocialParallaxRitual(zone.id);
+  const socialParallaxPending = socialParallax && socialParallax.status !== "complete" && !explorationRecord.completed;
+  const empathyCalibration = getEmpathyCalibrationRitual(zone.id);
+  const empathyCalibrationPending = empathyCalibration && empathyCalibration.status !== "complete" && !explorationRecord.completed;
+  const memoryAuthorization = getMemoryAuthorizationRitual(zone.id);
+  const memoryAuthorizationPending = memoryAuthorization && memoryAuthorization.status !== "complete" && !explorationRecord.completed;
   interiorView = {
     zone,
     source,
@@ -8185,10 +13206,18 @@ function enterInteriorView(zone, source = "manual") {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
       text: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
-        : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
+        : memoryAuthorizationPending
+          ? "这里的故事不是公共素材。先找到讲述者，再按 Ta 选择的范围安放记忆。"
+        : empathyCalibrationPending
+          ? "这里没有标准答案。先走进一种理解，再允许房间里的人亲自纠正你。"
+        : socialParallaxPending
+          ? "这里的陈设只能提供背景，不能替任何人作证。先走进两种互相冲突的说法。"
+        : quietPresencePending
+          ? "这里的第一段线索不会回应点击。先找到那个不想解释的人。"
+          : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
       progress: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "可以加入"
-        : `${Math.min(explorationRecord.found.length, 3)}/3 段场所记忆`,
+        : `${getInteriorExplorationProgress(zone, blueprint, explorationRecord).count}/3 段场所记忆`,
       actionLabel: explorationRecord.completed && !explorationRecord.scenePlayed ? sceneAction.label : "",
       until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
@@ -8213,11 +13242,19 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
+  stageQuietPresenceWitness(zone);
+  stageSocialParallaxWitnesses(zone);
+  stageEmpathyCalibrationWitness(zone);
+  stageMemoryAuthorizationWitness(zone);
+  stageInteriorAftermathWitness(zone);
+  if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   markRenderActive(3200);
 }
 
 function exitInteriorView() {
   if (!interiorView) return;
+  closeInteriorCounterfactualStage();
+  closeCounterfactualEpisodeFinale();
   interiorView = null;
   interiorOrbit.drag = false;
   interiorMoveKeys.clear();
@@ -8229,6 +13266,10 @@ function exitInteriorView() {
   window.__mirrorLifeInteriorPhysics = null;
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
+  document.body.classList.remove("quiet-presence-active");
+  document.body.classList.remove("social-parallax-active");
+  document.body.classList.remove("empathy-calibration-active");
+  document.body.classList.remove("memory-authorization-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
@@ -8236,6 +13277,11 @@ function exitInteriorView() {
   document.getElementById("interiorContextAction")?.remove();
   document.getElementById("interiorJourneyPanel")?.remove();
   document.getElementById("interiorCompass")?.remove();
+  document.getElementById("quietPresenceRitual")?.remove();
+  document.getElementById("socialParallaxRitual")?.remove();
+  document.getElementById("empathyCalibrationRitual")?.remove();
+  document.getElementById("memoryAuthorizationRitual")?.remove();
+  syncEpisodeTrailHud();
   markRenderActive(2200);
 }
 
@@ -8417,6 +13463,45 @@ function updateInteriorCitizenWorldPosition(citizen, ia, now) {
 function updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx) {
   const gesture = getActiveGesture(canonicalAnim, now);
   ia.gesture = canonicalAnim.gesture; // shared so the figure renderer can draw the overlay
+  const socialParallax = getSocialParallaxRitual(interiorView?.zone?.id);
+  if (ia.socialParallaxHeld && socialParallax?.status !== "complete" && socialParallax?.witnessIds?.includes(citizen.id)) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
+  if (ia.quietPresenceHeld && citizen.id === interiorView?.quietPresenceWitnessId && interiorView?.quietPresenceActive) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
+  const empathyCalibration = getEmpathyCalibrationRitual(interiorView?.zone?.id);
+  if (ia.empathyCalibrationHeld && empathyCalibration?.status !== "complete" && empathyCalibration?.witnessId === citizen.id) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
+  const memoryAuthorization = getMemoryAuthorizationRitual(interiorView?.zone?.id);
+  if (ia.memoryAuthorizationHeld && memoryAuthorization?.status !== "complete" && memoryAuthorization?.witnessId === citizen.id) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
   if (ia.behavior && now >= ia.behavior.until) {
     finishCitizenBehavior(citizen, ia, now);
   }
@@ -8488,6 +13573,14 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
   const aliveCitizens = getAliveCitizens(society);
   const indoorCitizens = aliveCitizens
     .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
+    .filter((citizen) => !interiorAnimations[citizen.id]?.counterfactualHidden)
+    .sort((a, b) => {
+      const socialWitnessIds = getSocialParallaxRitual(zone.id)?.witnessIds || [];
+      const priority = (citizen) => Number(citizen.id === interiorView?.aftermathWitnessId) * 2
+        + Number(citizen.id === interiorView?.quietPresenceWitnessId)
+        + Number(socialWitnessIds.includes(citizen.id)) * 3;
+      return priority(b) - priority(a);
+    })
     .slice(0, MAX_INTERIOR_OCCUPANTS);
   manageInteriorArrivals(society, zone, indoorCitizens.length, now);
 
@@ -8550,6 +13643,26 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
     if (Number.isInteger(ia.targetAnchor?.index)) {
       ia.targetAnchor = anchors.find((anchor) => anchor.index === ia.targetAnchor.index) || ia.targetAnchor;
     }
+    if (physics?.isWalkable && world && !physics.isWalkable(world, { x: ia.worldX, z: ia.worldZ }, citizenRadius)) {
+      const dynamic = [
+        ...getInteriorDynamicBodies(citizen.id),
+        { id: "player", x: Number(interiorOrbit.x || 0), z: Number(interiorOrbit.z || 0), radius: Number(physics.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) }
+      ];
+      const corrected = physics.findNearestWalkable(
+        world,
+        { x: ia.worldX, z: ia.worldZ },
+        citizenRadius,
+        { dynamic, selfId: citizen.id }
+      );
+      ia.worldX = corrected.x;
+      ia.worldZ = corrected.z;
+      ia.targetWorldX = corrected.x;
+      ia.targetWorldZ = corrected.z;
+      ia.path = [];
+      ia.pathIndex = 0;
+      ia.physicsContacts = ["runtime-correction"];
+      ia.nextTargetAt = 0;
+    }
     updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx);
     entries.push({
       citizen,
@@ -8558,7 +13671,7 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
       id: citizen.id,
       worldX: ia.worldX,
       worldZ: ia.worldZ,
-      frame: getCitizenSpriteFrame(citizen),
+      frame: Number.isFinite(ia.counterfactualFrame) ? ia.counterfactualFrame : getCitizenSpriteFrame(citizen),
       facing: ia.facing || 1,
       state: ia.state || "idle",
       walkPhase: ia.walkPhase || 0,
@@ -8621,6 +13734,9 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const roomStyle = getInteriorMaterialStyle(zone, blueprint);
   const physicsAnchors = getInteriorPhysicsAnchors(blueprint);
   const entries = prepareInteriorOccupants(society, zone, blueprint, physicsAnchors, now);
+  holdSocialParallaxActors(zone, entries);
+  holdEmpathyCalibrationActor(zone, entries);
+  holdMemoryAuthorizationActor(zone, entries);
   const actorPayload = entries.map((entry) => ({
     id: entry.id,
     worldX: entry.worldX,
@@ -8678,26 +13794,44 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     markRenderActive(360);
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
-  syncInteriorContextAction(interiorAnchors);
+  const socialParallaxPending = zone.id === SOCIAL_PARALLAX_ZONE_ID
+    && getSocialParallaxRitual(zone.id)?.status !== "complete"
+    && !getInteriorExplorationRecord(zone.id).completed;
+  const empathyCalibrationPending = zone.id === EMPATHY_CALIBRATION_ZONE_ID
+    && getEmpathyCalibrationRitual(zone.id)?.status !== "complete"
+    && !getInteriorExplorationRecord(zone.id).completed;
+  const memoryAuthorizationPending = zone.id === MEMORY_AUTHORIZATION_ZONE_ID
+    && getMemoryAuthorizationRitual(zone.id)?.status !== "complete"
+    && !getInteriorExplorationRecord(zone.id).completed;
+  syncInteriorContextAction(socialParallaxPending || empathyCalibrationPending || memoryAuthorizationPending ? [] : interiorAnchors);
+  updateQuietPresenceRitual(now);
+  updateSocialParallaxRitual(now);
+  updateEmpathyCalibrationRitual(now);
+  updateMemoryAuthorizationRitual(now);
   syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
-  const exitW = Math.min(150, Math.max(110, W * 0.14));
-  const exitH = 34;
-  interiorExitRect = { x: W - exitW - 24, y: H - exitH - 24, w: exitW, h: exitH };
-  ctx.save();
-  ctx.fillStyle = isNight ? "rgba(18,18,34,0.86)" : "rgba(250,250,245,0.92)";
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 2.5;
-  roundRect(ctx, interiorExitRect.x, interiorExitRect.y, interiorExitRect.w, interiorExitRect.h, 10);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "#1a1a2e";
-  ctx.font = `bold 13px "Noto Sans SC", sans-serif`;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText("回到街道", interiorExitRect.x + interiorExitRect.w / 2, interiorExitRect.y + interiorExitRect.h / 2 + 1);
-  ctx.restore();
+  const finaleActive = document.body.classList.contains("counterfactual-finale-active");
+  if (finaleActive) {
+    interiorExitRect = null;
+  } else {
+    const exitW = Math.min(150, Math.max(110, W * 0.14));
+    const exitH = 34;
+    interiorExitRect = { x: W - exitW - 24, y: H - exitH - 24, w: exitW, h: exitH };
+    ctx.save();
+    ctx.fillStyle = isNight ? "rgba(18,18,34,0.86)" : "rgba(250,250,245,0.92)";
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 2.5;
+    roundRect(ctx, interiorExitRect.x, interiorExitRect.y, interiorExitRect.w, interiorExitRect.h, 10);
+    ctx.fill();
+    ctx.stroke();
+    ctx.fillStyle = "#1a1a2e";
+    ctx.font = `bold 13px "Noto Sans SC", sans-serif`;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText("回到街道", interiorExitRect.x + interiorExitRect.w / 2, interiorExitRect.y + interiorExitRect.h / 2 + 1);
+    ctx.restore();
+  }
 
   // Header
   ctx.fillStyle = "rgba(250,250,245,0.94)";
@@ -8718,12 +13852,12 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   ctx.font = `11px "Noto Sans SC", sans-serif`;
   ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
   const explorationRecord = getInteriorExplorationRecord(zone.id);
-  const explorationGoal = Math.min(3, blueprint.props?.length || 3);
+  const explorationProgress = getInteriorExplorationProgress(zone, blueprint, explorationRecord);
   const interiorStatus = explorationRecord.scenePlayed
     ? "共同经历已留下"
     : explorationRecord.completed
       ? "场所回声已解锁"
-      : `${Math.min(explorationRecord.found.length, explorationGoal)}/${explorationGoal} 段场所记忆`;
+      : `${explorationProgress.count}/${explorationProgress.goal} 段场所记忆`;
   ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
 
   // Occupants live in the same X/Z coordinate system as the furniture. Three.js
@@ -8751,6 +13885,17 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     entry.moveAnim.renderScale = entry.renderScale;
   });
   entries.sort((a, b) => Number(a.y || 0) - Number(b.y || 0));
+  const pendingAftermathWitnessId = getInteriorAftermathEcho(zone.id, { includeDiscussed: false })?.observerId || "";
+  const quietPresenceRitual = getQuietPresenceRitual(zone.id);
+  const quietPresenceWitnessId = quietPresenceRitual && quietPresenceRitual.status !== "complete"
+    ? quietPresenceRitual.witnessId
+    : "";
+  const socialParallaxRitual = getSocialParallaxRitual(zone.id);
+  drawSocialParallaxSpatialCue(ctx, W, H, now, entries, socialParallaxRitual);
+  const empathyCalibrationRitual = getEmpathyCalibrationRitual(zone.id);
+  drawEmpathyCalibrationSpatialCue(ctx, W, H, now, entries, empathyCalibrationRitual);
+  const memoryAuthorizationRitual = getMemoryAuthorizationRitual(zone.id);
+  drawMemoryAuthorizationSpatialCue(ctx, W, H, now, memoryAuthorizationRitual);
   entries.forEach(({ citizen, moveAnim, idx, visible, renderScale }) => {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
@@ -8761,6 +13906,81 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
     if (!threeState?.actorsReady && visible !== false) {
       drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
+    }
+    if (citizen.id === pendingAftermathWitnessId && visible !== false) {
+      const focused = Number(interiorView.aftermathFocusUntil || 0) > now;
+      const pulse = 0.5 + Math.sin(now * 0.009) * 0.5;
+      ctx.save();
+      ctx.strokeStyle = focused ? `rgba(255, 211, 92, ${0.72 + pulse * 0.25})` : "rgba(126, 226, 198, 0.68)";
+      ctx.lineWidth = focused ? 3.2 + pulse * 2 : 2;
+      ctx.setLineDash(focused ? [8, 5] : [4, 5]);
+      ctx.lineDashOffset = -now * 0.018;
+      ctx.beginPath();
+      ctx.ellipse(moveAnim.x, moveAnim.y - size * 0.18, size * 0.92 + pulse * 5, size * 1.16 + pulse * 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = focused ? "rgba(22, 27, 46, 0.94)" : "rgba(22, 27, 46, 0.82)";
+      roundRect(ctx, moveAnim.x - 42, moveAnim.y - size * 1.52, 84, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = focused ? "#ffe09a" : "#91ead1";
+      ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("未发生的未来", moveAnim.x, moveAnim.y - size * 1.52 + 10);
+      ctx.restore();
+    }
+    if (citizen.id === quietPresenceWitnessId && visible !== false) {
+      const active = quietPresenceRitual.status === "active";
+      const settled = active && quietPresenceRitual.aligned && quietPresenceRitual.still;
+      const progress = clamp(Number(quietPresenceRitual.progressMs || 0) / QUIET_PRESENCE_REQUIRED_MS, 0, 1);
+      const pulse = 0.5 + Math.sin(now * 0.0048) * 0.5;
+      ctx.save();
+      ctx.strokeStyle = settled
+        ? `rgba(255, 224, 154, ${0.74 + pulse * 0.2})`
+        : active ? "rgba(126, 226, 198, 0.72)" : "rgba(126, 226, 198, 0.46)";
+      ctx.lineWidth = settled ? 3.2 : 2;
+      ctx.setLineDash(active ? [Math.max(4, 10 * progress), 6] : [3, 7]);
+      ctx.lineDashOffset = active ? -now * 0.009 : 0;
+      ctx.beginPath();
+      ctx.ellipse(moveAnim.x, moveAnim.y - size * 0.12, size * (0.9 + progress * 0.18), size * (1.12 + progress * 0.14), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(22, 27, 46, 0.86)";
+      roundRect(ctx, moveAnim.x - 44, moveAnim.y - size * 1.52, 88, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = settled ? "#ffe09a" : "#91ead1";
+      ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(active ? "请留下这段安静" : "不想解释", moveAnim.x, moveAnim.y - size * 1.52 + 10);
+      ctx.restore();
+    }
+    const socialParallaxIndex = socialParallaxRitual?.status !== "complete"
+      ? socialParallaxRitual.witnessIds?.indexOf(citizen.id) ?? -1
+      : -1;
+    if (socialParallaxIndex >= 0 && visible !== false) {
+      const heard = socialParallaxRitual.heardIds.includes(citizen.id);
+      const active = socialParallaxRitual.status === "active" && socialParallaxRitual.targetId === citizen.id;
+      const pulse = 0.5 + Math.sin(now * 0.007 + socialParallaxIndex * Math.PI) * 0.5;
+      const color = socialParallaxIndex === 0 ? "255, 139, 122" : "110, 184, 255";
+      ctx.save();
+      ctx.strokeStyle = `rgba(${color}, ${active ? 0.78 + pulse * 0.2 : heard ? 0.38 : 0.58})`;
+      ctx.lineWidth = active ? 3.2 + pulse * 1.6 : 2;
+      ctx.setLineDash(heard ? [] : [5, 5]);
+      ctx.lineDashOffset = -now * 0.012;
+      ctx.beginPath();
+      ctx.ellipse(moveAnim.x, moveAnim.y - size * 0.12, size * (active ? 1.04 : 0.94), size * (active ? 1.28 : 1.16), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(22, 27, 46, 0.88)";
+      roundRect(ctx, moveAnim.x - 45, moveAnim.y - size * 1.52, 90, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = socialParallaxIndex === 0 ? "#ffb3a7" : "#a9d6ff";
+      ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(heard ? `已听见 · 版本 ${socialParallaxIndex ? "B" : "A"}` : `证词版本 ${socialParallaxIndex ? "B" : "A"}`, moveAnim.x, moveAnim.y - size * 1.52 + 10);
+      ctx.restore();
     }
     if (citizen.id === followedCitizenId) {
       updateFollowBanner(citizen, getCitizenBehaviorLabel(citizen, citizenAnimations[citizen.id], now));
@@ -9813,11 +15033,13 @@ function drawGameWorld() {
 
   // ── Interior scene replaces the street view while inside a building ──
   if (interiorView) {
+    document.getElementById("episodeTrailPanel")?.remove();
     drawInteriorScene(ctx, W, H, now, t, society, isNight);
     ensureGameRenderLoop();
     return;
   }
   window.MirrorLifeInterior3D?.hide?.();
+  syncEpisodeTrailHud();
 
   const zoneOccupancy = new Map();
   const citizenIndex = new Map();
@@ -9888,13 +15110,26 @@ function drawGameWorld() {
     : null;
   drawableZones.forEach(({ zone, rect: r }) => {
     const color = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#a0a0a0";
-    const isHovered = hoveredZone === zone.id;
+    const isTrailFocus = episodeTrailFocusZoneId === zone.id && episodeTrailFocusUntil > now;
+    const isHovered = hoveredZone === zone.id || isTrailFocus;
     const count = zoneOccupancy.get(zone.id) || 0;
     try {
       // 沉浸模式:非焦点区域的建筑与标签整体淡化,让视线落在焦点身边
       const dimmed = followedCitizenId && zone.id !== focusZoneIdForDim;
       if (dimmed) { ctx.save(); ctx.globalAlpha = 0.55; }
       drawZonePlace(ctx, zone, r, color, dragRenderMode || dimmed ? 0 : count, isHovered, { lowDetail: dragRenderMode });
+      if (isTrailFocus) {
+        const pulse = 0.5 + Math.sin(now * 0.008) * 0.5;
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 211, 79, ${0.62 + pulse * 0.3})`;
+        ctx.lineWidth = 3 + pulse * 3;
+        ctx.setLineDash([10, 7]);
+        ctx.lineDashOffset = -now * 0.02;
+        ctx.beginPath();
+        ctx.roundRect(r.x - 10 - pulse * 4, r.y - 10 - pulse * 4, r.w + 20 + pulse * 8, r.h + 20 + pulse * 8, 18);
+        ctx.stroke();
+        ctx.restore();
+      }
       if (dimmed) ctx.restore();
     } catch (error) {
       console.warn("Zone layer skipped", zone.id, error);
@@ -10763,7 +15998,9 @@ function drawRiggedCitizenSprite(ctx, spriteSource, sprite, drawW, drawH, transf
 }
 
 function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {}, now = performance.now()) {
-  const frame = getCitizenSpriteFrame(citizen);
+  const frame = Number.isFinite(anim.counterfactualFrame)
+    ? anim.counterfactualFrame
+    : getCitizenSpriteFrame(citizen);
   const sprite = getSpriteFrameRect(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
   if (!sprite) return false;
   const spriteSource = getTransparentSpriteSource(citizenSpriteImage);
@@ -11227,11 +16464,16 @@ function bindGameEvents() {
     document.addEventListener("visibilitychange", () => {
       if (demoResetInProgress) return;
       if (document.hidden) {
+        pauseEpisodeExperienceClock();
         resumeSocietyAfterVisibilityPause = !!state?.society?.running;
         pauseSocietyRun();
         stopGameRenderLoop();
         persist(true);
         return;
+      }
+      const activeExperienceThread = getEpisodeTrailThread();
+      if (document.getElementById("counterfactualEpisodeFinale") || (activeExperienceThread && !getEpisodeTrailProgress(activeExperienceThread).complete)) {
+        resumeEpisodeExperienceClock(activeExperienceThread?.id || episodeExperienceClock.threadId);
       }
       ensureGameRenderLoop();
       markRenderActive(3000);
@@ -11241,11 +16483,17 @@ function bindGameEvents() {
       }
     });
     window.addEventListener("pagehide", () => {
-      if (!demoResetInProgress) persist(true);
+      if (!demoResetInProgress) {
+        pauseEpisodeExperienceClock();
+        persist(true);
+      }
       stopGameRenderLoop();
     });
     window.addEventListener("beforeunload", () => {
-      if (!demoResetInProgress) persist(true);
+      if (!demoResetInProgress) {
+        pauseEpisodeExperienceClock();
+        persist(true);
+      }
     });
   }
 
@@ -11441,6 +16689,11 @@ function bindGameEvents() {
         handleSavePanelClick(e.target).catch((err) => showToast(`操作失败:${err.message}`, "conflict"));
         return;
       }
+      const aftermathWitness = e.target.closest("[data-aftermath-witness]");
+      if (aftermathWitness) {
+        resolveInteriorAftermathWitness(aftermathWitness.dataset.aftermathWitness || "");
+        return;
+      }
       const interactBtn = e.target.closest("[data-interact]");
       if (interactBtn) {
         interactWithCitizen(interactBtn.dataset.interact, interactBtn.dataset.target);
@@ -11467,6 +16720,15 @@ function bindGameEvents() {
         const modal = getZoneInteraction(enterBtn.dataset.enterZone)?.modal;
         if (modal) { hideDetail(); openModal(modal); }
         return;
+      }
+      const relayCoPlay = e.target.closest("[data-relay-coplay]");
+      if (relayCoPlay) {
+        showMirrorRelayCoPlay(relayCoPlay.dataset.relayCoplay);
+        return;
+      }
+      const relayRemove = e.target.closest("[data-relay-remove]");
+      if (relayRemove && removeMirrorRelayGuest(relayRemove.dataset.relayRemove)) {
+        showStoryPanel();
       }
     });
   }
@@ -11516,6 +16778,12 @@ function bindGameEvents() {
 
       const revokeBtn = target.closest("[data-revoke-fragment]");
       if (revokeBtn) { revokeLifeFragment(revokeBtn.dataset.revokeFragment); return; }
+
+      const relayRemove = target.closest("[data-relay-remove]");
+      if (relayRemove && removeMirrorRelayGuest(relayRemove.dataset.relayRemove)) {
+        openModal("safety");
+        return;
+      }
 
       const openSoul = target.closest("[data-open-soul-match]");
       if (openSoul) {
@@ -11640,6 +16908,42 @@ function isLocalInteriorSceneQaEnabled() {
   return new URLSearchParams(window.location.search).get("qaInteriorScene") === "1";
 }
 
+function isLocalCounterfactualFinaleQaEnabled() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return false;
+  return new URLSearchParams(window.location.search).get("qaCounterfactualFinale") === "1";
+}
+
+function isLocalPersonaFactQaEnabled() {
+  if (!new Set(["localhost", "127.0.0.1", "::1"]).has(window.location.hostname)) return false;
+  return new URLSearchParams(window.location.search).get("qaPersonaFact") === "1";
+}
+
+function seedLocalPersonaFactQa(zone) {
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  if (!avatar) return;
+  applyPersonaToCitizen(avatar, {
+    mbtiType: "ISFJ",
+    valueTags: ["benevolence", "security"],
+    hobby: "照顾疲惫的人",
+    dislike: "有人被忽视",
+    unique: "先接住，再解释"
+  });
+  avatar.energy = 68;
+  avatar.mood = 64;
+  avatar.trust = 66;
+  recordAgentMemoryFileItem(state.society, avatar.id, "general", `在${zone.name}附近，我记得自己总会先照顾被忽视和疲惫的人，把安全感留给还没开口的人。`, {
+    kind: "qa-persona-fact",
+    importance: 9,
+    references: [zone.id, "support"]
+  });
+  recordAgentMemory(state.society, avatar.id, "我更习惯先接住沉默的人，再解释自己的判断。", "qa-persona-fact", 8, [zone.id, "support"]);
+  const participant = getInteriorCounterfactualParticipant(zone);
+  if (participant) {
+    participant.energy = 34;
+    participant.mood = 46;
+  }
+}
+
 function openLocalInteriorQa(zoneId) {
   if (!zoneId) return;
   window.requestAnimationFrame(() => {
@@ -11668,6 +16972,17 @@ function openLocalInteriorQa(zoneId) {
       record.sceneChoice = "";
       record.sceneOutcome = "";
       record.sceneReward = null;
+      record.counterfactual = null;
+      const thread = getInteriorStoryThread(zone.id);
+      const episode = getCounterfactualEpisodeState(thread?.id);
+      episode.rewriteTokens = 1;
+      episode.rewrites = [];
+      episode.receipts = [];
+      episode.echoes = [];
+      episode.status = "active";
+      episode.completedTurn = 0;
+      episode.finale = null;
+      if (isLocalPersonaFactQaEnabled()) seedLocalPersonaFactQa(zone);
       const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
       interiorView.discovery = {
         title: `${zone.name} · 场所回声`,
@@ -11677,6 +16992,66 @@ function openLocalInteriorQa(zoneId) {
         until: Number.POSITIVE_INFINITY
       };
       syncInteriorDiscoveryCard(performance.now());
+
+      if (isLocalCounterfactualFinaleQaEnabled() && thread) {
+        episode.startedTurn = Math.max(0, Number(state.society?.turn || 0) - 31);
+        thread.zones.forEach((threadZoneId, index) => {
+          const threadZone = findRenderZoneById(threadZoneId);
+          if (!threadZone) return;
+          const threadBlueprint = getInteriorBlueprint(threadZone);
+          const threadScene = INTERIOR_SCENE_ACTIONS[threadBlueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+          const choices = Array.isArray(threadScene.choices) ? threadScene.choices : [];
+          const participant = getInteriorCounterfactualParticipant(threadZone);
+          const factDecision = deriveAvatarFactDecision(threadZone, threadScene, participant, episode);
+          const factChoice = factDecision?.choice || choices[0];
+          const futureChoice = factDecision?.alternative || choices.find((choice) => choice.id !== factChoice?.id) || factChoice;
+          if (!factChoice) return;
+          const rewritten = index === 2 && futureChoice?.id !== factChoice.id;
+          const chosen = rewritten ? futureChoice : factChoice;
+          const alternative = rewritten ? factChoice : futureChoice;
+          const threadRecord = getInteriorExplorationRecord(threadZoneId);
+          threadRecord.found = (threadBlueprint.props || []).slice(0, 3).map((prop) => prop.label);
+          threadRecord.completed = true;
+          threadRecord.scenePlayed = true;
+          threadRecord.sceneChoice = chosen.id;
+          threadRecord.sceneOutcome = chosen.text || chosen.label;
+          threadRecord.counterfactual = {
+            factChoiceId: factChoice.id,
+            factLabel: factChoice.label,
+            factReason: factDecision?.reason || "",
+            factEvidence: factDecision?.evidence?.map((item) => item.text).slice(0, 3) || [],
+            factScore: Number(factDecision?.score || 0),
+            factRunnerUpScore: Number(factDecision?.runnerUpScore || 0),
+            factDecisionVersion: Number(factDecision?.version || 0),
+            factPersonaLabel: factDecision?.personaLabel || "",
+            chosenChoiceId: chosen.id,
+            chosenLabel: chosen.label,
+            alternativeChoiceId: alternative?.id || "",
+            alternativeLabel: alternative?.label || "",
+            relationType: chosen.relationType || "listen",
+            participantId: "",
+            participantName: "",
+            rewritten,
+            receipt: "",
+            turn: Number(state.society?.turn || 0) - (thread.zones.length - index)
+          };
+          episode.rewrites.push({ zoneId: threadZoneId, zoneName: threadZone.name, ...threadRecord.counterfactual });
+          createCounterfactualAgentEchoes({ zone: threadZone, participant: null, alternative, chosen, episode });
+        });
+        episode.rewriteTokens = 0;
+        const finale = completeCounterfactualEpisode(getInteriorStoryThread(zone.id));
+        interiorView.discovery = {
+          title: "这一集，世界如何记住你",
+          text: finale?.verdict || "五个场所都已经回应。",
+          progress: "终章已解锁",
+          finaleThreadId: thread.id,
+          until: Number.POSITIVE_INFINITY
+        };
+        syncInteriorDiscoveryCard(performance.now());
+        window.setTimeout(() => showCounterfactualEpisodeFinale(thread.id), 420);
+      } else if (isLocalPersonaFactQaEnabled()) {
+        window.setTimeout(() => showInteriorCounterfactualStage(sceneAction), 420);
+      }
     }
     interiorOrbit.yaw = getLocalInteriorQaYaw();
     markRenderActive(1800);
@@ -11777,6 +17152,9 @@ function gameInit() {
     renderFirstLoopPanel();
     openLocalInteriorQa(interiorQaZoneId);
   }
+
+  ensureMirrorRelayGuests();
+  initializeMirrorRelayFromUrl();
 }
 
 // ═══════════════════════════════════════════════════════════════

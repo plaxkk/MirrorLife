@@ -9,6 +9,8 @@ const OUTPUT_ROOT = path.resolve("dist/interior-3d-work/scene-flow-review");
 async function inspectScene(page) {
   return page.evaluate(() => {
     const card = document.getElementById("interiorDiscoveryCard");
+    const counterfactualStage = document.getElementById("interiorCounterfactualStage");
+    const choiceRoot = counterfactualStage || card;
     const zoneId = new URLSearchParams(window.location.search).get("qaInterior") || "";
     const gameState = typeof state === "object" ? state : null;
     const record = gameState?.interiorExploration?.[zoneId] || null;
@@ -23,8 +25,10 @@ async function inspectScene(page) {
     return {
       cardText: card?.innerText || "",
       actionCount: card?.querySelectorAll("[data-interior-scene-action]").length || 0,
-      choiceCount: card?.querySelectorAll("[data-interior-scene-choice]").length || 0,
-      choiceLabels: [...(card?.querySelectorAll("[data-interior-scene-choice]") || [])].map((button) => button.textContent.trim()),
+      shareActionCount: card?.querySelectorAll("[data-interior-share]").length || 0,
+      choiceCount: choiceRoot?.querySelectorAll("[data-counterfactual-choice], [data-interior-scene-choice]").length || 0,
+      choiceLabels: [...(choiceRoot?.querySelectorAll("[data-counterfactual-choice], [data-interior-scene-choice]") || [])].map((button) => button.textContent.trim()),
+      choiceIds: [...(choiceRoot?.querySelectorAll("[data-counterfactual-choice], [data-interior-scene-choice]") || [])].map((button) => button.dataset.choiceId || button.dataset.interiorSceneChoice || ""),
       record,
       reward,
       relationshipCount: relationships.length,
@@ -32,6 +36,7 @@ async function inspectScene(page) {
       journeyText: document.getElementById("interiorJourneyPanel")?.innerText || "",
       compassTargetCount: document.querySelectorAll("#interiorCompass [data-interior-compass]").length,
       interiorActive: document.body.classList.contains("interior-active"),
+      counterfactualActive: document.body.classList.contains("counterfactual-active"),
       renderPhase: document.body.dataset.interiorRenderPhase || "",
       renderPhases: [...(window.__mirrorLifeInteriorRenderPhases || [])],
       renderStats,
@@ -69,9 +74,9 @@ async function verifyViewport(browser, viewport, label) {
     }
 
     await page.click("#interiorDiscoveryCard [data-interior-scene-action]");
-    await page.waitForSelector("#interiorDiscoveryCard [data-interior-scene-choice]", { visible: true, timeout: 5000 });
+    await page.waitForSelector("#interiorCounterfactualStage [data-counterfactual-choice]", { visible: true, timeout: 5000 });
     const choosing = await inspectScene(page);
-    if (choosing.actionCount !== 0 || choosing.choiceCount !== 2 || new Set(choosing.choiceLabels).size !== 2) {
+    if (!choosing.counterfactualActive || choosing.choiceCount !== 2 || new Set(choosing.choiceIds).size !== 2) {
       throw new Error(`${label}: expected exactly two distinct responses after entering the scene.`);
     }
     if (choosing.overflowX) throw new Error(`${label}: choice card causes horizontal overflow.`);
@@ -80,13 +85,13 @@ async function verifyViewport(browser, viewport, label) {
 
     const baselineReward = { ...(choosing.reward || {}) };
     const baselineRelationshipEvents = choosing.relationshipEventCount;
-    await page.click('#interiorDiscoveryCard [data-interior-scene-choice="admit-unknown"]');
+    await page.click('#interiorCounterfactualStage [data-choice-id="admit-unknown"]');
     await page.waitForFunction(() => {
       const record = typeof state === "object" ? state.interiorExploration?.university : null;
       return record?.scenePlayed === true && record?.sceneChoice === "admit-unknown";
     }, { timeout: 5000 });
     const outcome = await inspectScene(page);
-    if (outcome.choiceCount !== 0 || !outcome.record?.sceneOutcome || !outcome.cardText.includes("你的回应")) {
+    if (outcome.choiceCount !== 0 || !outcome.record?.scenePlayed || !outcome.record?.sceneOutcome || outcome.shareActionCount !== 1) {
       throw new Error(`${label}: selected response did not become a visible persisted outcome.`);
     }
     if (Number(outcome.reward?.socialResonance || 0) <= Number(baselineReward.socialResonance || 0)) {
