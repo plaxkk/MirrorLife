@@ -97,6 +97,7 @@ const MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE = 16;
 const MIRROR_RELAY_COPLAY_MAX_EVIDENCE = 24;
 const EPISODE_TRAIL_FOCUS_MS = 7000;
 const EPISODE_TRAIL_ZOOM = 1.18;
+const EPISODE_EXPERIENCE_EVENT_LIMIT = 120;
 const MIRROR_RELAY_VALUES = [
   { id: "heard", label: "被听见", valueKey: "benevolence", mbtiType: "INFJ", professionId: "reporter", professionName: "回声观察者", personaLabel: "回声观察者" },
   { id: "respected", label: "被尊重", valueKey: "universalism", mbtiType: "ISFJ", professionId: "lawyer", professionName: "边界守望者", personaLabel: "边界守望者" },
@@ -144,6 +145,7 @@ let mirrorRelayCoPlayResumeSocietyAfterClose = false;
 let mirrorRelayCoPlayEscapeHandler = null;
 let episodeTrailFocusZoneId = "";
 let episodeTrailFocusUntil = 0;
+let episodeExperienceClock = { threadId: "", lastAt: 0, paused: true };
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -6215,6 +6217,172 @@ function syncEpisodeTrailHud() {
     </div>`;
 }
 
+function ensureEpisodeExperience(episode, threadId) {
+  if (!episode) return null;
+  const experience = episode.experience && typeof episode.experience === "object" ? episode.experience : {};
+  experience.version = 1;
+  experience.sessionId = String(experience.sessionId || `episode-${threadId}-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`).slice(0, 120);
+  experience.startedAt = Math.max(0, Number(experience.startedAt || Date.now()));
+  experience.activeMs = Math.max(0, Number(experience.activeMs || 0));
+  experience.events = Array.isArray(experience.events) ? experience.events.slice(-EPISODE_EXPERIENCE_EVENT_LIMIT) : [];
+  episode.experience = experience;
+  return experience;
+}
+
+function flushActiveEpisodeExperience({ persistState = false } = {}) {
+  const { threadId, lastAt, paused } = episodeExperienceClock;
+  if (!threadId || !lastAt) return null;
+  const episode = state.counterfactualEpisodes?.[threadId];
+  const experience = episode ? ensureEpisodeExperience(episode, threadId) : null;
+  const now = performance.now();
+  if (experience && !paused) {
+    const elapsed = clamp(now - lastAt, 0, 30 * 60 * 1000);
+    experience.activeMs = Math.min(24 * 60 * 60 * 1000, experience.activeMs + elapsed);
+  }
+  episodeExperienceClock.lastAt = now;
+  if (persistState && experience) persist(true);
+  return experience;
+}
+
+function resumeEpisodeExperienceClock(threadId) {
+  if (!threadId) return;
+  if (episodeExperienceClock.threadId !== threadId) {
+    flushActiveEpisodeExperience();
+    episodeExperienceClock = { threadId, lastAt: performance.now(), paused: document.hidden };
+    return;
+  }
+  flushActiveEpisodeExperience();
+  episodeExperienceClock.lastAt = performance.now();
+  episodeExperienceClock.paused = document.hidden;
+}
+
+function pauseEpisodeExperienceClock({ persistState = false } = {}) {
+  flushActiveEpisodeExperience({ persistState });
+  episodeExperienceClock.paused = true;
+}
+
+function recordEpisodeExperienceEvent(threadId, type, data = {}, { onceKey = "" } = {}) {
+  if (!threadId || threadId === "standalone") return null;
+  const episode = getCounterfactualEpisodeState(threadId);
+  const experience = ensureEpisodeExperience(episode, threadId);
+  if (!experience) return null;
+  if (episodeExperienceClock.threadId !== threadId) resumeEpisodeExperienceClock(threadId);
+  flushActiveEpisodeExperience();
+  const stableKey = String(onceKey || "").slice(0, 80);
+  const id = stableKey
+    ? `${experience.sessionId}:${type}:${stableKey}`.slice(0, 120)
+    : `${experience.sessionId}:${type}:${Date.now().toString(36)}:${experience.events.length}`.slice(0, 120);
+  if (stableKey && experience.events.some((event) => event.id === id)) return null;
+  const event = {
+    id,
+    type,
+    atMs: Math.round(experience.activeMs),
+    zoneId: String(data.zoneId || "").slice(0, 80),
+    choiceId: String(data.choiceId || "").slice(0, 80),
+    branch: ["fact", "future"].includes(data.branch) ? data.branch : "",
+    dwellMs: Math.max(0, Math.min(30 * 60 * 1000, Math.round(Number(data.dwellMs) || 0))),
+    detail: String(data.detail || "").slice(0, 120)
+  };
+  experience.events.push(event);
+  experience.events = experience.events.slice(-EPISODE_EXPERIENCE_EVENT_LIMIT);
+  persist();
+  return event;
+}
+
+function startEpisodeExperience(threadId, zoneId) {
+  if (!threadId || threadId === "standalone") return;
+  resumeEpisodeExperienceClock(threadId);
+  recordEpisodeExperienceEvent(threadId, "episode_started", { zoneId }, { onceKey: "episode" });
+  recordEpisodeExperienceEvent(threadId, "room_entered", { zoneId });
+}
+
+function getEpisodeExperienceSummary(threadId) {
+  const episode = state.counterfactualEpisodes?.[threadId];
+  if (!episode) return null;
+  flushActiveEpisodeExperience();
+  const experience = ensureEpisodeExperience(episode, threadId);
+  const events = experience?.events || [];
+  const choiceEvents = events.filter((event) => event.type === "choice_committed");
+  const dwellTimes = choiceEvents.map((event) => Number(event.dwellMs || 0)).filter((value) => value > 0).sort((a, b) => a - b);
+  const medianDwellMs = dwellTimes.length
+    ? dwellTimes[Math.floor((dwellTimes.length - 1) / 2)]
+    : 0;
+  const firstEvidence = events.find((event) => event.type === "evidence_found");
+  const completedZones = new Set(events.filter((event) => event.type === "room_completed").map((event) => event.zoneId).filter(Boolean));
+  return {
+    activeMs: Math.round(experience?.activeMs || 0),
+    firstEvidenceMs: Math.round(firstEvidence?.atMs || 0),
+    medianDwellMs: Math.round(medianDwellMs),
+    choices: choiceEvents.length,
+    completedRooms: completedZones.size,
+    revisits: events.filter((event) => event.type === "evidence_revisited").length,
+    shared: events.some((event) => event.type === "episode_shared"),
+    relayStarted: events.some((event) => event.type === "relay_started")
+  };
+}
+
+function formatEpisodeElapsed(milliseconds, { compact = false } = {}) {
+  const seconds = Math.max(0, Math.round(Number(milliseconds || 0) / 1000));
+  const minutes = Math.floor(seconds / 60);
+  const remainder = seconds % 60;
+  if (compact) return minutes ? `${minutes}分${String(remainder).padStart(2, "0")}秒` : `${remainder}秒`;
+  return `${String(minutes).padStart(2, "0")}:${String(remainder).padStart(2, "0")}`;
+}
+
+function buildEpisodePlaytestEvidence(threadId) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  const episode = state.counterfactualEpisodes?.[threadId];
+  if (!thread || !episode) return null;
+  flushActiveEpisodeExperience();
+  const experience = ensureEpisodeExperience(episode, threadId);
+  return {
+    schema: "mirrorlife-episode-playtest-v1",
+    episodeId: thread.id,
+    episodeTitle: thread.title,
+    sessionId: experience.sessionId,
+    activeDurationMs: Math.round(experience.activeMs || 0),
+    viewport: window.innerWidth < 600 ? "mobile" : window.innerWidth < 1000 ? "tablet" : "desktop",
+    summary: getEpisodeExperienceSummary(threadId),
+    events: experience.events.map((event) => ({
+      type: event.type,
+      atMs: Math.round(Number(event.atMs) || 0),
+      zoneId: event.zoneId || "",
+      choiceId: event.choiceId || "",
+      branch: event.branch || "",
+      dwellMs: Math.round(Number(event.dwellMs) || 0),
+      detail: event.detail || ""
+    }))
+  };
+}
+
+async function exportEpisodePlaytestEvidence(threadId) {
+  const evidence = buildEpisodePlaytestEvidence(threadId);
+  if (!evidence) return null;
+  const json = JSON.stringify(evidence, null, 2);
+  window.__mirrorLifeLastPlaytestEvidence = evidence;
+  try {
+    await navigator.clipboard?.writeText(json);
+    showToast("匿名试玩证据已复制，不含昵称、输入文本或设备标识", "support");
+  } catch {
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `mirrorlife-playtest-${threadId}.json`;
+    link.click();
+    window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+    showToast("匿名试玩证据已保存", "support");
+  }
+  return evidence;
+}
+
+window.MirrorLifeEpisodeEvidence = {
+  getSummary: getEpisodeExperienceSummary,
+  build: buildEpisodePlaytestEvidence,
+  export: exportEpisodePlaytestEvidence,
+  flush: flushActiveEpisodeExperience
+};
+
 function getCounterfactualEpisodeState(threadId) {
   const id = threadId || "standalone";
   state.counterfactualEpisodes = state.counterfactualEpisodes || {};
@@ -6229,7 +6397,8 @@ function getCounterfactualEpisodeState(threadId) {
       status: "active",
       completedTurn: 0,
       finale: null,
-      startedTurn: Number(state.society?.turn || 0)
+      startedTurn: Number(state.society?.turn || 0),
+      experience: null
     };
   }
   const episode = state.counterfactualEpisodes[id];
@@ -6240,6 +6409,7 @@ function getCounterfactualEpisodeState(threadId) {
   episode.status = episode.status === "complete" ? "complete" : "active";
   episode.completedTurn = Math.max(0, Number(episode.completedTurn || 0));
   episode.finale = episode.finale && typeof episode.finale === "object" ? episode.finale : null;
+  ensureEpisodeExperience(episode, id);
   if (id !== "standalone" && INTERIOR_STORY_THREADS.some((thread) => thread.id === id)) {
     const activeThread = getEpisodeTrailThread();
     const activeComplete = activeThread ? getEpisodeTrailProgress(activeThread).complete : true;
@@ -7024,6 +7194,7 @@ function createMirrorRelayInvite(threadId) {
 async function shareMirrorRelayInvite(threadId) {
   try {
     const { invite, url } = createMirrorRelayInvite(threadId);
+    recordEpisodeExperienceEvent(threadId, "relay_started", { detail: "mirror-relay" }, { onceKey: "relay" });
     const text = `${invite.inviterAlias}把一个没有标准答案的问题交给你：\n${invite.question}\n只有在你同意后，一次性分身才会回应。`;
     if (navigator.share) {
       await navigator.share({ title: "镜像人生 · 镜像接力", text, url });
@@ -8436,7 +8607,11 @@ async function renderCounterfactualEpisodeCard(thread, episode, finale) {
 
   ctx.fillStyle = "#bac3d9";
   ctx.font = '600 20px "PingFang SC", sans-serif';
-  ctx.fillText(`保留事实 ${finale.factCount} 次  ·  改写未来 ${finale.rewriteCount} 次`, 64, 1264);
+  const experienceSummary = getEpisodeExperienceSummary(thread.id);
+  const experienceLabel = experienceSummary?.activeMs > 0
+    ? `  ·  真正走过 ${formatEpisodeElapsed(experienceSummary.activeMs, { compact: true })}`
+    : "";
+  ctx.fillText(`保留事实 ${finale.factCount} 次  ·  改写未来 ${finale.rewriteCount} 次${experienceLabel}`, 64, 1264);
   ctx.fillStyle = "#ffe49d";
   ctx.fillText("如果是你，会在哪一刻使用唯一一次改写？", 64, 1305);
   ctx.fillStyle = "#78849f";
@@ -8452,15 +8627,20 @@ async function shareCounterfactualEpisode(threadId) {
   const episode = getCounterfactualEpisodeState(thread.id);
   const finale = episode.finale;
   if (!finale) return;
+  const experienceSummary = getEpisodeExperienceSummary(thread.id);
+  const shareText = experienceSummary?.activeMs > 0
+    ? `${finale.shareText}\n我真正走过这一集：${formatEpisodeElapsed(experienceSummary.activeMs, { compact: true })}`
+    : finale.shareText;
   try {
     const cardBlob = await renderCounterfactualEpisodeCard(thread, episode, finale);
     const file = cardBlob ? new File([cardBlob], `mirrorlife-episode-${Date.now()}.png`, { type: "image/png" }) : null;
     if (navigator.share && file && navigator.canShare?.({ files: [file] })) {
-      await navigator.share({ title: `镜像人生 · ${thread.title}`, text: finale.shareText, files: [file] });
+      await navigator.share({ title: `镜像人生 · ${thread.title}`, text: shareText, files: [file] });
+      recordEpisodeExperienceEvent(thread.id, "episode_shared", { detail: "system-share" }, { onceKey: "shared" });
       showToast("这一集已经交给你选择的人", "support");
       return;
     }
-    await navigator.clipboard.writeText(finale.shareText);
+    await navigator.clipboard.writeText(shareText);
     if (cardBlob) {
       const url = URL.createObjectURL(cardBlob);
       const link = document.createElement("a");
@@ -8468,9 +8648,11 @@ async function shareCounterfactualEpisode(threadId) {
       link.download = `镜像人生-${thread.title}-${Date.now()}.png`;
       link.click();
       window.setTimeout(() => URL.revokeObjectURL(url), 1200);
+      recordEpisodeExperienceEvent(thread.id, "episode_shared", { detail: "card-download" }, { onceKey: "shared" });
       showToast("本集双线故事已保存，讨论问题也已复制", "support");
       return;
     }
+    recordEpisodeExperienceEvent(thread.id, "episode_shared", { detail: "copy" }, { onceKey: "shared" });
     showToast("本集故事已复制，可以发给朋友继续选择", "support");
   } catch (error) {
     if (error?.name !== "AbortError") showToast("故事卡没有生成，再试一次吧", "conflict");
@@ -8486,6 +8668,8 @@ function showCounterfactualEpisodeFinale(threadId) {
     return;
   }
   const episode = getCounterfactualEpisodeState(thread.id);
+  recordEpisodeExperienceEvent(thread.id, "finale_opened", {}, { onceKey: "finale" });
+  const experience = getEpisodeExperienceSummary(thread.id);
   const echoes = getEpisodeFeaturedEchoes(episode).slice(0, 3);
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
@@ -8531,6 +8715,12 @@ function showCounterfactualEpisodeFinale(threadId) {
       <p>${escapeHtml(finale.nextHook)}</p>
       <h1>${escapeHtml(finale.verdict)}</h1>
       <div class="counterfactual-finale-stats"><span>保留事实 <b>${finale.factCount}</b> 次</span><span>改写未来 <b>${finale.rewriteCount}</b> 次</span></div>
+      <div class="counterfactual-experience-fingerprint" aria-label="本机体验指纹">
+        <span><small>真正走过</small><b>${escapeHtml(formatEpisodeElapsed(experience?.activeMs, { compact: true }))}</b></span>
+        <span><small>第一次看见</small><b>${escapeHtml(formatEpisodeElapsed(experience?.firstEvidenceMs))}</b></span>
+        <span><small>决定前停留</small><b>${escapeHtml(formatEpisodeElapsed(experience?.medianDwellMs, { compact: true }))}</b></span>
+        <button type="button" data-counterfactual-playtest-export="${escapeHtml(thread.id)}">导出匿名试玩证据</button>
+      </div>
       <button class="counterfactual-relay-cta" type="button" data-counterfactual-relay="${escapeHtml(thread.id)}">把未解决的问题交给一个真实的人</button>
       <button type="button" data-counterfactual-episode-share="${escapeHtml(thread.id)}">生成这一集的双线故事</button>
       <button class="counterfactual-finale-return" type="button" data-counterfactual-episode-return>带着未解决的问题回到街道</button>
@@ -8547,7 +8737,14 @@ function showCounterfactualEpisodeFinale(threadId) {
       shareCounterfactualEpisode(share.dataset.counterfactualEpisodeShare || thread.id);
       return;
     }
+    const evidenceExport = event.target.closest("[data-counterfactual-playtest-export]");
+    if (evidenceExport) {
+      exportEpisodePlaytestEvidence(evidenceExport.dataset.counterfactualPlaytestExport || thread.id);
+      return;
+    }
     if (event.target.closest("[data-counterfactual-episode-return]")) {
+      recordEpisodeExperienceEvent(thread.id, "returned_to_street", {}, { onceKey: "returned" });
+      pauseEpisodeExperienceClock({ persistState: true });
       closeCounterfactualEpisodeFinale();
       exitInteriorView();
       showToast(finale.nextHook, "listen");
@@ -8583,12 +8780,17 @@ function showInteriorCounterfactualStage(sceneAction) {
   const factEvidence = (factDecision?.evidence || []).length
     ? factDecision.evidence
     : [{ label: "人格", text: `${factDecision?.personaLabel || "当前人格轮廓"}会先这样靠近现场` }];
+  recordEpisodeExperienceEvent(thread?.id, "choice_opened", {
+    zoneId: zone.id,
+    choiceId: factChoice.id
+  }, { onceKey: `choice-open-${zone.id}` });
 
   const stage = document.createElement("section");
   stage.id = "interiorCounterfactualStage";
   stage.setAttribute("role", "dialog");
   stage.setAttribute("aria-modal", "true");
   stage.setAttribute("aria-label", "同一个你，两种被记住的方式");
+  stage.dataset.experienceOpenedAt = String(performance.now());
   stage.style.setProperty("--counterfactual-split", "50%");
   stage.innerHTML = `
     <div class="counterfactual-vignette" aria-hidden="true"></div>
@@ -8623,6 +8825,12 @@ function showInteriorCounterfactualStage(sceneAction) {
   const commit = (branch) => {
     const rewritten = branch === "future" && canRewrite;
     const choice = rewritten ? futureChoice : factChoice;
+    recordEpisodeExperienceEvent(thread?.id, "choice_committed", {
+      zoneId: zone.id,
+      choiceId: choice.id,
+      branch: rewritten ? "future" : "fact",
+      dwellMs: performance.now() - Number(stage.dataset.experienceOpenedAt || performance.now())
+    }, { onceKey: `choice-commit-${zone.id}` });
     closeInteriorCounterfactualStage();
     playInteriorSceneAction(choice.id, {
       fromCounterfactual: true,
@@ -8648,12 +8856,14 @@ function showInteriorCounterfactualStage(sceneAction) {
       return;
     }
     if (event.target.closest(".counterfactual-seam")) {
+      recordEpisodeExperienceEvent(thread?.id, "choice_previewed", { zoneId: zone.id }, { onceKey: `choice-preview-${zone.id}` });
       stage.classList.toggle("preview-future");
       stage.style.setProperty("--counterfactual-split", stage.classList.contains("preview-future") ? "38%" : "62%");
     }
   });
   stage.addEventListener("pointermove", (event) => {
     if (!event.buttons) return;
+    recordEpisodeExperienceEvent(thread?.id, "choice_previewed", { zoneId: zone.id }, { onceKey: `choice-preview-${zone.id}` });
     const ratio = clamp(event.clientX / Math.max(1, window.innerWidth), 0.32, 0.68);
     stage.style.setProperty("--counterfactual-split", `${Math.round(ratio * 100)}%`);
     stage.classList.toggle("preview-future", ratio < 0.5);
@@ -8864,6 +9074,11 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
     });
   }
   const refreshedThread = getInteriorStoryThread(zone.id);
+  recordEpisodeExperienceEvent(refreshedThread?.id, "room_completed", {
+    zoneId: zone.id,
+    choiceId: choice.id,
+    branch: rewritten ? "future" : "fact"
+  }, { onceKey: `room-complete-${zone.id}` });
   const finale = completeCounterfactualEpisode(refreshedThread);
   interiorView.discovery = {
     title: sceneAction.title,
@@ -8899,9 +9114,14 @@ function exploreInteriorHotspot(propIndex) {
   const profile = blueprint.profile;
   const record = getInteriorExplorationRecord(zone.id);
   const alreadyFound = record.found.includes(prop.label);
+  const thread = getInteriorStoryThread(zone.id);
   const clue = prop.storyClue
     || `${prop.label}留下了被使用和照料的痕迹，让${zone.name}不只是一间空房。`;
   if (!alreadyFound) record.found.push(prop.label);
+  recordEpisodeExperienceEvent(thread?.id, alreadyFound ? "evidence_revisited" : "evidence_found", {
+    zoneId: zone.id,
+    detail: String(prop.label || "").slice(0, 80)
+  }, alreadyFound ? {} : { onceKey: `evidence-${zone.id}-${propIndex}` });
 
   const goal = Math.min(3, blueprint.props?.length || 3);
   const progressCount = Math.min(record.found.length, goal);
@@ -10666,6 +10886,7 @@ function enterInteriorView(zone, source = "manual") {
   const enteredAt = performance.now();
   const explorationRecord = getInteriorExplorationRecord(zone.id);
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
+  const storyThread = getInteriorStoryThread(zone.id);
   interiorView = {
     zone,
     source,
@@ -10703,6 +10924,7 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
+  if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   markRenderActive(3200);
 }
 
@@ -13763,11 +13985,16 @@ function bindGameEvents() {
     document.addEventListener("visibilitychange", () => {
       if (demoResetInProgress) return;
       if (document.hidden) {
+        pauseEpisodeExperienceClock();
         resumeSocietyAfterVisibilityPause = !!state?.society?.running;
         pauseSocietyRun();
         stopGameRenderLoop();
         persist(true);
         return;
+      }
+      const activeExperienceThread = getEpisodeTrailThread();
+      if (document.getElementById("counterfactualEpisodeFinale") || (activeExperienceThread && !getEpisodeTrailProgress(activeExperienceThread).complete)) {
+        resumeEpisodeExperienceClock(activeExperienceThread?.id || episodeExperienceClock.threadId);
       }
       ensureGameRenderLoop();
       markRenderActive(3000);
@@ -13777,11 +14004,17 @@ function bindGameEvents() {
       }
     });
     window.addEventListener("pagehide", () => {
-      if (!demoResetInProgress) persist(true);
+      if (!demoResetInProgress) {
+        pauseEpisodeExperienceClock();
+        persist(true);
+      }
       stopGameRenderLoop();
     });
     window.addEventListener("beforeunload", () => {
-      if (!demoResetInProgress) persist(true);
+      if (!demoResetInProgress) {
+        pauseEpisodeExperienceClock();
+        persist(true);
+      }
     });
   }
 

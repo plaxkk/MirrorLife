@@ -1761,6 +1761,26 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
   if (!savedEpisodes || typeof savedEpisodes !== "object" || Array.isArray(savedEpisodes)) return {};
   return Object.fromEntries(Object.entries(savedEpisodes).slice(0, 12).map(([threadId, episode]) => {
     const source = episode && typeof episode === "object" ? episode : {};
+    const experienceSource = source.experience && typeof source.experience === "object" && !Array.isArray(source.experience)
+      ? source.experience
+      : {};
+    const allowedExperienceEvents = new Set([
+      "episode_started", "room_entered", "evidence_found", "evidence_revisited",
+      "choice_opened", "choice_previewed", "choice_committed", "room_completed",
+      "finale_opened", "episode_shared", "relay_started", "returned_to_street"
+    ]);
+    const experienceEvents = Array.isArray(experienceSource.events)
+      ? experienceSource.events.slice(-120).map((event) => ({
+          id: String(event?.id || "").slice(0, 120),
+          type: allowedExperienceEvents.has(event?.type) ? event.type : "",
+          atMs: Math.max(0, Math.round(Number(event?.atMs) || 0)),
+          zoneId: String(event?.zoneId || "").slice(0, 80),
+          choiceId: String(event?.choiceId || "").slice(0, 80),
+          branch: ["fact", "future"].includes(event?.branch) ? event.branch : "",
+          dwellMs: Math.max(0, Math.min(30 * 60 * 1000, Math.round(Number(event?.dwellMs) || 0))),
+          detail: String(event?.detail || "").slice(0, 120)
+        })).filter((event) => event.id && event.type)
+      : [];
     const normalizeEvent = (event) => ({
       zoneId: String(event?.zoneId || "").slice(0, 80),
       zoneName: String(event?.zoneName || "").slice(0, 80),
@@ -1807,6 +1827,13 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
       rewrites: Array.isArray(source.rewrites) ? source.rewrites.slice(-12).map(normalizeEvent) : [],
       receipts: Array.isArray(source.receipts) ? source.receipts.slice(-12).map((text) => String(text || "").slice(0, 1200)) : [],
       echoes: Array.isArray(source.echoes) ? source.echoes.slice(-24).map(normalizeEcho) : [],
+      experience: {
+        version: 1,
+        sessionId: String(experienceSource.sessionId || "").slice(0, 120),
+        startedAt: Math.max(0, Math.round(Number(experienceSource.startedAt) || 0)),
+        activeMs: Math.max(0, Math.min(24 * 60 * 60 * 1000, Math.round(Number(experienceSource.activeMs) || 0))),
+        events: experienceEvents
+      },
       finale: finaleSource
         ? {
             verdict: String(finaleSource.verdict || "").slice(0, 300),
