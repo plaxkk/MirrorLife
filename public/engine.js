@@ -1743,6 +1743,15 @@ function normalizeInteriorExploration(savedRecords) {
             lifeStability: clamp(Math.round(Number(source.sceneReward.lifeStability) || 0), -10, 10)
           }
         : null,
+      ritual: source.ritual && typeof source.ritual === "object"
+        ? {
+            id: source.ritual.id === "quiet-presence" ? "quiet-presence" : "",
+            status: source.ritual.status === "complete" ? "complete" : "available",
+            witnessId: String(source.ritual.witnessId || "").slice(0, 80),
+            startedTurn: Math.max(0, Math.round(Number(source.ritual.startedTurn) || 0)),
+            completedTurn: Math.max(0, Math.round(Number(source.ritual.completedTurn) || 0))
+          }
+        : null,
       counterfactual: source.counterfactual && typeof source.counterfactual === "object"
         ? {
             factChoiceId: String(source.counterfactual.factChoiceId || "").slice(0, 80),
@@ -1767,6 +1776,7 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
     const allowedExperienceEvents = new Set([
       "episode_started", "room_entered", "evidence_found", "evidence_revisited",
       "choice_opened", "choice_previewed", "choice_committed", "room_completed",
+      "ritual_started", "ritual_completed",
       "aftermath_focused", "aftermath_witnessed", "finale_opened", "episode_shared",
       "relay_started", "returned_to_street"
     ]);

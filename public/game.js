@@ -147,6 +147,14 @@ let episodeTrailFocusZoneId = "";
 let episodeTrailFocusUntil = 0;
 let episodeExperienceClock = { threadId: "", lastAt: 0, paused: true };
 
+const QUIET_PRESENCE_ZONE_ID = "quiet-nook";
+const QUIET_PRESENCE_RITUAL_ID = "quiet-presence";
+const QUIET_PRESENCE_EVIDENCE_LABEL = "被允许沉默的八秒";
+const QUIET_PRESENCE_REQUIRED_MS = 8000;
+const QUIET_PRESENCE_GAZE_TOLERANCE = 0.24;
+const QUIET_PRESENCE_MIN_DISTANCE = 1.05;
+const QUIET_PRESENCE_MAX_DISTANCE = 5.2;
+
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
 const ENCOUNTER_RADIUS = 30;
@@ -6093,12 +6101,307 @@ function getInteriorExplorationRecord(zoneId) {
     sceneChoice: "",
     sceneOutcome: "",
     sceneReward: null,
+    ritual: null,
     counterfactual: null
   };
   const record = state.interiorExploration[zoneId];
+  if (!("ritual" in record)) record.ritual = null;
+  if (zoneId === QUIET_PRESENCE_ZONE_ID) {
+    record.ritual = record.ritual && typeof record.ritual === "object"
+      ? record.ritual
+      : {
+          id: QUIET_PRESENCE_RITUAL_ID,
+          status: "available",
+          witnessId: "",
+          startedTurn: 0,
+          completedTurn: 0,
+          progressMs: 0
+        };
+    record.ritual.id = QUIET_PRESENCE_RITUAL_ID;
+    record.ritual.status = record.completed || record.ritual.status === "complete"
+      ? "complete"
+      : record.ritual.status === "active" ? "active" : "available";
+    record.ritual.witnessId = String(record.ritual.witnessId || "").slice(0, 80);
+    record.ritual.startedTurn = Math.max(0, Number(record.ritual.startedTurn || 0));
+    record.ritual.completedTurn = Math.max(0, Number(record.ritual.completedTurn || 0));
+    record.ritual.progressMs = clamp(Number(record.ritual.progressMs || 0), 0, QUIET_PRESENCE_REQUIRED_MS);
+    if (record.ritual.status === "complete") record.ritual.progressMs = QUIET_PRESENCE_REQUIRED_MS;
+  }
   if (!("counterfactual" in record)) record.counterfactual = null;
   return record;
 }
+
+function getQuietPresenceRitual(zoneId = interiorView?.zone?.id) {
+  if (zoneId !== QUIET_PRESENCE_ZONE_ID) return null;
+  return getInteriorExplorationRecord(zoneId).ritual;
+}
+
+function getInteriorExplorationProgress(zone, blueprint, record = getInteriorExplorationRecord(zone?.id)) {
+  const goal = Math.min(3, blueprint?.props?.length || 3);
+  const propLabels = new Set((blueprint?.props || []).map((prop) => prop.label));
+  const propCount = [...new Set(record.found || [])].filter((label) => propLabels.has(label)).length;
+  if (record.completed) return { count: goal, goal, propCount, ritualComplete: zone?.id !== QUIET_PRESENCE_ZONE_ID || getQuietPresenceRitual(zone.id)?.status === "complete" };
+  if (zone?.id !== QUIET_PRESENCE_ZONE_ID) {
+    return { count: Math.min(propCount, goal), goal, propCount, ritualComplete: false };
+  }
+  const ritualComplete = getQuietPresenceRitual(zone.id)?.status === "complete";
+  return {
+    count: Math.min(goal, Math.min(2, propCount) + (ritualComplete ? 1 : 0)),
+    goal,
+    propCount,
+    ritualComplete
+  };
+}
+
+function getInteriorNextExplorablePropIndex(zone, blueprint, record) {
+  const props = blueprint?.props || [];
+  if (record.completed) return -1;
+  if (zone?.id === QUIET_PRESENCE_ZONE_ID) {
+    const progress = getInteriorExplorationProgress(zone, blueprint, record);
+    if (progress.propCount >= 2) return -1;
+  }
+  return props.findIndex((prop) => !record.found.includes(prop.label));
+}
+
+function stageQuietPresenceWitness(zone = interiorView?.zone) {
+  if (!zone || zone.id !== QUIET_PRESENCE_ZONE_ID || interiorView?.zone?.id !== zone.id) return null;
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getQuietPresenceRitual(zone.id);
+  if (!ritual || ritual.status === "complete" || record.completed) return null;
+  const citizens = getAliveCitizens(state.society).filter((citizen) => citizen.id !== "avatar");
+  let citizen = citizens.find((candidate) => candidate.id === ritual.witnessId);
+  if (!citizen) {
+    citizen = [...citizens].sort((a, b) => (
+      hashCommunitySeed(`${zone.id}:${a.id}`, QUIET_PRESENCE_RITUAL_ID)
+      - hashCommunitySeed(`${zone.id}:${b.id}`, QUIET_PRESENCE_RITUAL_ID)
+    ))[0] || null;
+    ritual.witnessId = citizen?.id || "";
+  }
+  if (!citizen) return null;
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  const changedRoom = canonical.indoor?.zoneId !== zone.id;
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (changedRoom) delete interiorAnimations[citizen.id];
+  interiorView.quietPresenceWitnessId = citizen.id;
+  interiorView.quietPresenceActive = ritual.status === "active";
+  return citizen;
+}
+
+function focusQuietPresenceWitness(citizen) {
+  if (!citizen || !interiorView) return false;
+  const ia = interiorAnimations[citizen.id];
+  if (!ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) return false;
+  const dx = ia.worldX - Number(interiorOrbit.x || 0);
+  const dz = ia.worldZ - Number(interiorOrbit.z || 0);
+  interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(dx, -dz));
+  return true;
+}
+
+function startQuietPresenceRitual() {
+  if (interiorView?.zone?.id !== QUIET_PRESENCE_ZONE_ID) return false;
+  const record = getInteriorExplorationRecord(QUIET_PRESENCE_ZONE_ID);
+  const ritual = getQuietPresenceRitual(QUIET_PRESENCE_ZONE_ID);
+  if (!ritual || ritual.status === "complete" || record.completed) return false;
+  const citizen = stageQuietPresenceWitness(interiorView.zone);
+  if (!citizen) return false;
+  const now = performance.now();
+  const alreadyActive = ritual.status === "active";
+  ritual.status = "active";
+  if (!alreadyActive) {
+    ritual.progressMs = 0;
+    ritual.startedTurn = Number(state.society?.turn || 0);
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.feedback = alreadyActive ? "重新找到 Ta，刚才的安静还在" : "先让 Ta 留在你的视野里";
+  interiorView.quietPresenceActive = true;
+  document.body.classList.add("quiet-presence-active");
+  const ia = interiorAnimations[citizen.id];
+  if (ia) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.quietPresenceHeld = true;
+  }
+  const focus = () => focusQuietPresenceWitness(citizen);
+  focus();
+  window.setTimeout(focus, 140);
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPlayerX = Number(interiorOrbit.x || 0);
+  ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
+  if (!alreadyActive) {
+    const thread = getInteriorStoryThread(interiorView.zone.id);
+    recordEpisodeExperienceEvent(thread?.id, "ritual_started", {
+      zoneId: interiorView.zone.id,
+      detail: citizen.id
+    }, { onceKey: `ritual-start-${interiorView.zone.id}` });
+    addSpeechBubble(citizen.id, "我现在还不想解释。", "listen", { priority: true, duration: 5200 });
+  }
+  interiorView.discovery = {
+    title: `${citizen.name} · 不被催促的八秒`,
+    text: "让 Ta 留在视野里，不必靠得太近，也不要急着点击。镜头安静下来以后，时间才会开始。",
+    progress: "安静也是一种行动",
+    until: Number.POSITIVE_INFINITY
+  };
+  persist();
+  syncQuietPresenceRitualHud(now);
+  syncInteriorJourneyHud(getInteriorBlueprint(interiorView.zone));
+  syncInteriorDiscoveryCard(now);
+  markRenderActive(QUIET_PRESENCE_REQUIRED_MS + 1800);
+  return true;
+}
+
+function completeQuietPresenceRitual(citizen) {
+  if (interiorView?.zone?.id !== QUIET_PRESENCE_ZONE_ID) return false;
+  const zone = interiorView.zone;
+  const blueprint = getInteriorBlueprint(zone);
+  const record = getInteriorExplorationRecord(zone.id);
+  const ritual = getQuietPresenceRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return false;
+  ritual.status = "complete";
+  ritual.progressMs = QUIET_PRESENCE_REQUIRED_MS;
+  ritual.completedTurn = Number(state.society?.turn || 0);
+  ritual.feedback = "你没有要求沉默证明自己";
+  if (!record.found.includes(QUIET_PRESENCE_EVIDENCE_LABEL)) record.found.push(QUIET_PRESENCE_EVIDENCE_LABEL);
+  interiorView.quietPresenceActive = false;
+  document.body.classList.remove("quiet-presence-active");
+  const ia = citizen ? interiorAnimations[citizen.id] : null;
+  if (ia) delete ia.quietPresenceHeld;
+  const thread = getInteriorStoryThread(zone.id);
+  recordEpisodeExperienceEvent(thread?.id, "ritual_completed", {
+    zoneId: zone.id,
+    detail: citizen?.id || ritual.witnessId
+  }, { onceKey: `ritual-complete-${zone.id}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar && citizen) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `在${zone.name}，我陪${citizen.name}安静了八秒，没有要求沉默立刻变成解释。`, {
+      kind: QUIET_PRESENCE_RITUAL_ID,
+      importance: 8,
+      references: [zone.id, citizen.id, QUIET_PRESENCE_RITUAL_ID]
+    });
+    recordAgentMemory(state.society, citizen.id, `玩家在${zone.name}没有催我解释，只是留在一段安全的距离里。`, QUIET_PRESENCE_RITUAL_ID, 8, [zone.id, avatar.id]);
+    interactWithCitizen("listen", citizen.id);
+    addSpeechBubble(citizen.id, "谢谢你没有把沉默当成空白。", "support", { priority: true, duration: 7200 });
+  }
+  addEventLogEntry(`静默陪伴 · ${zone.name}`, `${citizen?.name || "有人"}被允许不解释，而这八秒也成为了关系证据。`, "listen", true, `quiet-presence-${zone.id}`);
+  interiorView.discovery = {
+    title: QUIET_PRESENCE_EVIDENCE_LABEL,
+    text: `${citizen?.name || "Ta"}没有说出原因，但房间记住了：你没有把沉默当成需要立刻解决的问题。`,
+    progress: `${getInteriorExplorationProgress(zone, blueprint, record).count}/3`,
+    until: performance.now() + 9200
+  };
+  maybeCompleteInteriorExploration(zone, blueprint, record);
+  persistInteriorExploration();
+  persist();
+  syncQuietPresenceRitualHud(performance.now());
+  syncInteriorJourneyHud(blueprint);
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(9800);
+  return true;
+}
+
+function updateQuietPresenceRitual(now) {
+  if (interiorView?.zone?.id !== QUIET_PRESENCE_ZONE_ID) return null;
+  const ritual = getQuietPresenceRitual(QUIET_PRESENCE_ZONE_ID);
+  if (!ritual || ritual.status !== "active") {
+    syncQuietPresenceRitualHud(now);
+    return ritual;
+  }
+  const citizen = stageQuietPresenceWitness(interiorView.zone);
+  const ia = citizen ? interiorAnimations[citizen.id] : null;
+  if (!citizen || !ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) {
+    ritual.feedback = "正在等 Ta 在房间里站稳";
+    syncQuietPresenceRitualHud(now);
+    markRenderActive(480);
+    return ritual;
+  }
+  ia.quietPresenceHeld = true;
+  ia.path = [];
+  ia.pathIndex = 0;
+  ia.targetWorldX = ia.worldX;
+  ia.targetWorldZ = ia.worldZ;
+  const playerX = Number(interiorOrbit.x || 0);
+  const playerZ = Number(interiorOrbit.z || 0);
+  const dx = ia.worldX - playerX;
+  const dz = ia.worldZ - playerZ;
+  const distance = Math.hypot(dx, dz);
+  const targetYaw = wrapInteriorAngle(Math.atan2(dx, -dz));
+  const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
+  const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
+  const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)))
+    + Math.abs(Number(interiorOrbit.pitch || 0.58) - Number(ritual.lastPitch || 0.58)) * 0.75;
+  const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX || playerX), playerZ - Number(ritual.lastPlayerZ || playerZ));
+  const aligned = gazeDelta <= QUIET_PRESENCE_GAZE_TOLERANCE;
+  const respectfulDistance = distance >= QUIET_PRESENCE_MIN_DISTANCE && distance <= QUIET_PRESENCE_MAX_DISTANCE;
+  const still = !interiorOrbit.drag && interiorMoveKeys.size === 0 && cameraDelta < 0.008 && playerDelta < 0.012;
+  if (aligned && respectfulDistance && still) {
+    ritual.progressMs = clamp(Number(ritual.progressMs || 0) + dt, 0, QUIET_PRESENCE_REQUIRED_MS);
+    ritual.feedback = ritual.progressMs < 2000
+      ? "时间开始了，不需要做得更好"
+      : ritual.progressMs < 6000 ? "房间正在把安静还给 Ta" : "再留一会儿，别急着得到答案";
+  } else {
+    ritual.progressMs = clamp(Number(ritual.progressMs || 0) - dt * 0.22, 0, QUIET_PRESENCE_REQUIRED_MS);
+    ritual.feedback = !respectfulDistance
+      ? distance < QUIET_PRESENCE_MIN_DISTANCE ? "退后一点，让距离也成为边界" : "再靠近一点，别把陪伴变成远观"
+      : !aligned ? "让 Ta 回到视野中央" : "镜头可以慢慢停下来";
+  }
+  ritual.lastUpdatedAt = now;
+  ritual.lastYaw = Number(interiorOrbit.yaw || 0);
+  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPlayerX = playerX;
+  ritual.lastPlayerZ = playerZ;
+  ritual.gazeDelta = gazeDelta;
+  ritual.distance = distance;
+  ritual.aligned = aligned;
+  ritual.still = still;
+  syncQuietPresenceRitualHud(now);
+  if (ritual.progressMs >= QUIET_PRESENCE_REQUIRED_MS) completeQuietPresenceRitual(citizen);
+  else markRenderActive(480);
+  return ritual;
+}
+
+function syncQuietPresenceRitualHud(now = performance.now()) {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("quietPresenceRitual");
+  const ritual = getQuietPresenceRitual();
+  if (!shell || !interiorView || !ritual || ritual.status !== "active") {
+    document.body.classList.remove("quiet-presence-active");
+    panel?.remove();
+    return;
+  }
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "quietPresenceRitual";
+    panel.setAttribute("aria-live", "polite");
+    shell.appendChild(panel);
+  }
+  const citizen = state.society?.citizens?.find((item) => item.id === ritual.witnessId);
+  const progress = clamp(Number(ritual.progressMs || 0) / QUIET_PRESENCE_REQUIRED_MS, 0, 1);
+  const breath = Math.min(4, Math.floor(Number(ritual.progressMs || 0) / (QUIET_PRESENCE_REQUIRED_MS / 4)) + 1);
+  const signature = `${citizen?.id || ""}|${Math.floor(progress * 40)}|${ritual.feedback}|${ritual.aligned}|${ritual.still}`;
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.style.setProperty("--quiet-presence-progress", `${Math.round(progress * 100)}%`);
+  panel.classList.toggle("is-settled", !!ritual.aligned && !!ritual.still);
+  panel.innerHTML = `
+    <span>QUIET PRESENCE · 静默陪伴</span>
+    <strong>允许 ${escapeHtml(citizen?.name || "Ta")} 不解释</strong>
+    <div class="quiet-presence-meter"><i></i></div>
+    <p>${escapeHtml(ritual.feedback || "让镜头慢慢停下来")}</p>
+    <small>第 ${breath}/4 次呼吸 · ${Math.ceil((QUIET_PRESENCE_REQUIRED_MS - Number(ritual.progressMs || 0)) / 1000)} 秒</small>`;
+  panel.dataset.updatedAt = String(Math.round(now));
+}
+
+window.MirrorLifeQuietPresence = {
+  getState: () => {
+    const ritual = getQuietPresenceRitual();
+    return ritual ? { ...ritual } : null;
+  },
+  start: startQuietPresenceRitual
+};
 
 function getInteriorStoryThread(zoneId) {
   const thread = INTERIOR_STORY_THREADS.find((item) => item.zones.includes(zoneId)) || null;
@@ -6790,10 +7093,13 @@ function syncInteriorJourneyHud(blueprint) {
   const record = getInteriorExplorationRecord(interiorView.zone.id);
   const thread = getInteriorStoryThread(interiorView.zone.id);
   const props = blueprint.props || [];
-  const goal = Math.min(3, props.length || 3);
-  const foundCount = Math.min(record.found.length, goal);
-  const nextIndex = props.findIndex((prop) => !record.found.includes(prop.label));
+  const explorationProgress = getInteriorExplorationProgress(interiorView.zone, blueprint, record);
+  const goal = explorationProgress.goal;
+  const foundCount = explorationProgress.count;
+  const nextIndex = getInteriorNextExplorablePropIndex(interiorView.zone, blueprint, record);
   const nextProp = nextIndex >= 0 ? props[nextIndex] : null;
+  const quietPresence = getQuietPresenceRitual(interiorView.zone.id);
+  const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !record.completed;
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
   const aftermathEcho = record.scenePlayed ? getInteriorAftermathEcho(interiorView.zone.id) : null;
   const pendingAftermath = aftermathEcho && !aftermathEcho.discussed ? aftermathEcho : null;
@@ -6814,6 +7120,11 @@ function syncInteriorJourneyHud(blueprint) {
       const action = event.target.closest("[data-interior-scene-action]");
       if (action) {
         playInteriorSceneAction();
+        return;
+      }
+      const quietPresenceAction = event.target.closest("[data-quiet-presence-start]");
+      if (quietPresenceAction) {
+        startQuietPresenceRitual();
         return;
       }
       const finale = event.target.closest("[data-counterfactual-episode-finale]");
@@ -6846,6 +7157,8 @@ function syncInteriorJourneyHud(blueprint) {
     record.scenePlayed,
     aftermathEcho?.id || "",
     !!aftermathEcho?.discussed,
+    quietPresence?.status || "",
+    Math.floor(Number(quietPresence?.progressMs || 0) / 1000),
     nextIndex,
     thread?.completedCount || 0,
     episode.rewriteTokens,
@@ -6856,8 +7169,10 @@ function syncInteriorJourneyHud(blueprint) {
     panel.dataset.signature = signature;
     const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
     const finaleReady = !!thread && thread.completedCount >= thread.zones.length;
-    const nextAction = phase === 1 && nextProp
-      ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
+    const nextAction = phase === 1 && quietPresencePending
+      ? `<button type="button" data-quiet-presence-start>${quietPresence.status === "active" ? "回到这段安静" : "找到不想解释的人"}</button>`
+      : phase === 1 && nextProp
+        ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
       : phase === 2
         ? `<button type="button" data-interior-scene-action="journey">${escapeHtml(sceneAction.label)}</button>`
         : phase === 3 && pendingAftermath
@@ -6871,7 +7186,7 @@ function syncInteriorJourneyHud(blueprint) {
       <header><span>${escapeHtml(act.label)}</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
       <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
       <ol>
-        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>环顾线索<small>${foundCount}/${goal} 段场所记忆</small></span></li>
+        <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${quietPresence ? "读懂房间" : "环顾线索"}<small>${quietPresencePending ? quietPresence.status === "active" ? `安静 ${Math.floor(Number(quietPresence.progressMs || 0) / 1000)}/8 秒` : "一条线索不会回应点击" : `${foundCount}/${goal} 段场所记忆`}</small></span></li>
         <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
         <li class="${phase === 3 ? "current" : ""} ${phase === 4 ? "done" : ""}"><b>3</b><span>听见活体余波<small>${pendingAftermath ? `${escapeHtml(pendingAftermath.observerName || "有人")}还记得另一种未来` : record.scenePlayed ? "另一种理解也进入了关系记忆" : "选择后会有人带着另一种记忆留下"}</small></span></li>
       </ol>
@@ -9229,6 +9544,24 @@ function getInteriorReactionLine(behaviorId, zoneName) {
   return "我也刚刚注意到这里。";
 }
 
+function maybeCompleteInteriorExploration(zone, blueprint, record) {
+  if (!zone || !blueprint || !record || record.completed) return false;
+  const progress = getInteriorExplorationProgress(zone, blueprint, record);
+  if (progress.count < progress.goal) return false;
+  record.completed = true;
+  const completion = blueprint.profile?.completion || `你读懂了${zone.name}的一小段生活。`;
+  interiorView.discovery = {
+    title: `${zone.name} · 场所回声`,
+    text: completion,
+    progress: "已读懂",
+    actionLabel: (INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home).label,
+    until: Number.POSITIVE_INFINITY
+  };
+  addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
+  pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
+  return true;
+}
+
 function exploreInteriorHotspot(propIndex) {
   if (!interiorView) return;
   const zone = interiorView.zone;
@@ -9236,24 +9569,37 @@ function exploreInteriorHotspot(propIndex) {
   const prop = blueprint.props?.[propIndex];
   if (!prop) return;
   if (interiorFocusPropIndex === propIndex) interiorFocusPropIndex = null;
-  const profile = blueprint.profile;
   const record = getInteriorExplorationRecord(zone.id);
   const alreadyFound = record.found.includes(prop.label);
   const thread = getInteriorStoryThread(zone.id);
   const clue = prop.storyClue
     || `${prop.label}留下了被使用和照料的痕迹，让${zone.name}不只是一间空房。`;
+  const progressBefore = getInteriorExplorationProgress(zone, blueprint, record);
+  if (!alreadyFound && zone.id === QUIET_PRESENCE_ZONE_ID && progressBefore.propCount >= 2 && !record.completed) {
+    const ritual = getQuietPresenceRitual(zone.id);
+    interiorView.discovery = {
+      title: "这间房不需要更多物件",
+      text: ritual?.status === "complete"
+        ? "你已经看见两处生活痕迹。剩下的证据是一段真正不被催促的时间。"
+        : "你已经看见足够多的陈设。最后一段线索在那个不想解释的人身上。",
+      progress: `${progressBefore.count}/${progressBefore.goal}`,
+      until: performance.now() + 6200
+    };
+    syncInteriorDiscoveryCard(performance.now());
+    markRenderActive(6400);
+    return;
+  }
   if (!alreadyFound) record.found.push(prop.label);
   recordEpisodeExperienceEvent(thread?.id, alreadyFound ? "evidence_revisited" : "evidence_found", {
     zoneId: zone.id,
     detail: String(prop.label || "").slice(0, 80)
   }, alreadyFound ? {} : { onceKey: `evidence-${zone.id}-${propIndex}` });
 
-  const goal = Math.min(3, blueprint.props?.length || 3);
-  const progressCount = Math.min(record.found.length, goal);
+  const progress = getInteriorExplorationProgress(zone, blueprint, record);
   interiorView.discovery = {
     title: prop.label,
     text: alreadyFound ? `你再次看见这处细节：${clue}` : clue,
-    progress: `${progressCount}/${goal}`,
+    progress: `${progress.count}/${progress.goal}`,
     until: performance.now() + 7200
   };
 
@@ -9286,19 +9632,7 @@ function exploreInteriorHotspot(propIndex) {
     }
   }
 
-  if (!record.completed && record.found.length >= goal) {
-    record.completed = true;
-    const completion = profile?.completion || `你读懂了${zone.name}的一小段生活。`;
-    interiorView.discovery = {
-      title: `${zone.name} · 场所回声`,
-      text: completion,
-      progress: "已读懂",
-      actionLabel: (INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home).label,
-      until: Number.POSITIVE_INFINITY
-    };
-    addEventLogEntry("场所回声", completion, "listen", true, `interior-complete-${zone.id}`);
-    pushRobotSignal("avatar", "soft", `另一个世界里的你读懂了${zone.name}：${completion}`);
-  }
+  maybeCompleteInteriorExploration(zone, blueprint, record);
   persistInteriorExploration();
   persist();
   syncInteriorDiscoveryCard(performance.now());
@@ -11012,6 +11346,8 @@ function enterInteriorView(zone, source = "manual") {
   const explorationRecord = getInteriorExplorationRecord(zone.id);
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
   const storyThread = getInteriorStoryThread(zone.id);
+  const quietPresence = getQuietPresenceRitual(zone.id);
+  const quietPresencePending = quietPresence && quietPresence.status !== "complete" && !explorationRecord.completed;
   interiorView = {
     zone,
     source,
@@ -11021,10 +11357,12 @@ function enterInteriorView(zone, source = "manual") {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
       text: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "你已经读懂这里留下的三段记忆。房间里的人正在等待一次真正的共同活动。"
-        : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
+        : quietPresencePending
+          ? "这里的第一段线索不会回应点击。先找到那个不想解释的人。"
+          : (blueprint.profile?.intro || "房间里留着一些尚未被听见的生活。"),
       progress: explorationRecord.completed && !explorationRecord.scenePlayed
         ? "可以加入"
-        : `${Math.min(explorationRecord.found.length, 3)}/3 段场所记忆`,
+        : `${getInteriorExplorationProgress(zone, blueprint, explorationRecord).count}/3 段场所记忆`,
       actionLabel: explorationRecord.completed && !explorationRecord.scenePlayed ? sceneAction.label : "",
       until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
@@ -11049,6 +11387,7 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
+  stageQuietPresenceWitness(zone);
   stageInteriorAftermathWitness(zone);
   if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   markRenderActive(3200);
@@ -11069,6 +11408,7 @@ function exitInteriorView() {
   window.__mirrorLifeInteriorPhysics = null;
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
+  document.body.classList.remove("quiet-presence-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
@@ -11076,6 +11416,7 @@ function exitInteriorView() {
   document.getElementById("interiorContextAction")?.remove();
   document.getElementById("interiorJourneyPanel")?.remove();
   document.getElementById("interiorCompass")?.remove();
+  document.getElementById("quietPresenceRitual")?.remove();
   syncEpisodeTrailHud();
   markRenderActive(2200);
 }
@@ -11258,6 +11599,15 @@ function updateInteriorCitizenWorldPosition(citizen, ia, now) {
 function updateInteriorCitizen(citizen, ia, canonicalAnim, anchors, now, idx) {
   const gesture = getActiveGesture(canonicalAnim, now);
   ia.gesture = canonicalAnim.gesture; // shared so the figure renderer can draw the overlay
+  if (ia.quietPresenceHeld && citizen.id === interiorView?.quietPresenceWitnessId && interiorView?.quietPresenceActive) {
+    if (ia.behavior) finishCitizenBehavior(citizen, ia, now, true);
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.targetWorldX = ia.worldX;
+    ia.targetWorldZ = ia.worldZ;
+    ia.state = "idle";
+    return;
+  }
   if (ia.behavior && now >= ia.behavior.until) {
     finishCitizenBehavior(citizen, ia, now);
   }
@@ -11330,7 +11680,11 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
   const indoorCitizens = aliveCitizens
     .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
     .filter((citizen) => !interiorAnimations[citizen.id]?.counterfactualHidden)
-    .sort((a, b) => Number(b.id === interiorView?.aftermathWitnessId) - Number(a.id === interiorView?.aftermathWitnessId))
+    .sort((a, b) => {
+      const priority = (citizen) => Number(citizen.id === interiorView?.aftermathWitnessId) * 2
+        + Number(citizen.id === interiorView?.quietPresenceWitnessId);
+      return priority(b) - priority(a);
+    })
     .slice(0, MAX_INTERIOR_OCCUPANTS);
   manageInteriorArrivals(society, zone, indoorCitizens.length, now);
 
@@ -11542,6 +11896,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
   syncInteriorContextAction(interiorAnchors);
+  updateQuietPresenceRitual(now);
   syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
@@ -11620,6 +11975,10 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   });
   entries.sort((a, b) => Number(a.y || 0) - Number(b.y || 0));
   const pendingAftermathWitnessId = getInteriorAftermathEcho(zone.id, { includeDiscussed: false })?.observerId || "";
+  const quietPresenceRitual = getQuietPresenceRitual(zone.id);
+  const quietPresenceWitnessId = quietPresenceRitual && quietPresenceRitual.status !== "complete"
+    ? quietPresenceRitual.witnessId
+    : "";
   entries.forEach(({ citizen, moveAnim, idx, visible, renderScale }) => {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
@@ -11651,6 +12010,32 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
       ctx.fillText("未发生的未来", moveAnim.x, moveAnim.y - size * 1.52 + 10);
+      ctx.restore();
+    }
+    if (citizen.id === quietPresenceWitnessId && visible !== false) {
+      const active = quietPresenceRitual.status === "active";
+      const settled = active && quietPresenceRitual.aligned && quietPresenceRitual.still;
+      const progress = clamp(Number(quietPresenceRitual.progressMs || 0) / QUIET_PRESENCE_REQUIRED_MS, 0, 1);
+      const pulse = 0.5 + Math.sin(now * 0.0048) * 0.5;
+      ctx.save();
+      ctx.strokeStyle = settled
+        ? `rgba(255, 224, 154, ${0.74 + pulse * 0.2})`
+        : active ? "rgba(126, 226, 198, 0.72)" : "rgba(126, 226, 198, 0.46)";
+      ctx.lineWidth = settled ? 3.2 : 2;
+      ctx.setLineDash(active ? [Math.max(4, 10 * progress), 6] : [3, 7]);
+      ctx.lineDashOffset = active ? -now * 0.009 : 0;
+      ctx.beginPath();
+      ctx.ellipse(moveAnim.x, moveAnim.y - size * 0.12, size * (0.9 + progress * 0.18), size * (1.12 + progress * 0.14), 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = "rgba(22, 27, 46, 0.86)";
+      roundRect(ctx, moveAnim.x - 44, moveAnim.y - size * 1.52, 88, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = settled ? "#ffe09a" : "#91ead1";
+      ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(active ? "请留下这段安静" : "不想解释", moveAnim.x, moveAnim.y - size * 1.52 + 10);
       ctx.restore();
     }
     if (citizen.id === followedCitizenId) {
