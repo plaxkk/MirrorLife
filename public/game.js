@@ -2641,9 +2641,21 @@ function updateParticles() {
 // ── Citizen Interaction ──
 
 function showCitizenInteraction(citizen) {
-  const zone = getCitizenZone(state.society, citizen);
+  const indoorZoneId = citizenAnimations[citizen.id]?.indoor?.zoneId || "";
+  const zone = (interiorView && indoorZoneId === interiorView.zone?.id ? interiorView.zone : findRenderZoneById(indoorZoneId))
+    || getCitizenZone(state.society, citizen);
   const h = escapeHtml;
   const hook = getCitizenLifeHook(citizen);
+  const aftermathEcho = interiorView?.zone?.id
+    ? getInteriorAftermathEcho(interiorView.zone.id, { includeDiscussed: false })
+    : null;
+  const aftermathSection = aftermathEcho?.observerId === citizen.id ? `
+    <div class="detail-section interior-aftermath-detail">
+      <div class="detail-section-title">UNLIVED FUTURE · 没有发生的未来</div>
+      <p>${h(aftermathEcho.text.replace(/^.*?说：/, ""))}</p>
+      <button class="interaction-btn aftermath-listen-action" data-aftermath-witness="${h(aftermathEcho.id)}">听完这段余波</button>
+      <small>这不会改写已经发生的事实，只会让另一种理解留在关系记忆里。</small>
+    </div>` : "";
   // 心理动线:展示该分身最近的心理连锁步骤(评估→应对→场所→社交→涟漪)
   const chainEntries = (state.society.psychChain || [])
     .filter((entry) => !entry.actorName || entry.actorName === citizen.name)
@@ -2658,6 +2670,7 @@ function showCitizenInteraction(citizen) {
   showDetail(`
     <h3 style="color:${citizen.color}">${h(citizen.name)}</h3>
     <p>${h(citizen.role)} · ${h(citizen.profession)}</p>
+    ${aftermathSection}
     <div class="detail-section">
       <div class="detail-section-title">今天的生活线</div>
       <p><strong>${h(hook.status)}</strong> · ${h(hook.zoneName)}</p>
@@ -6782,7 +6795,9 @@ function syncInteriorJourneyHud(blueprint) {
   const nextIndex = props.findIndex((prop) => !record.found.includes(prop.label));
   const nextProp = nextIndex >= 0 ? props[nextIndex] : null;
   const sceneAction = INTERIOR_SCENE_ACTIONS[blueprint.key] || INTERIOR_SCENE_ACTIONS.home;
-  const phase = record.scenePlayed ? 3 : record.completed ? 2 : 1;
+  const aftermathEcho = record.scenePlayed ? getInteriorAftermathEcho(interiorView.zone.id) : null;
+  const pendingAftermath = aftermathEcho && !aftermathEcho.discussed ? aftermathEcho : null;
+  const phase = record.scenePlayed ? (pendingAftermath ? 3 : 4) : record.completed ? 2 : 1;
   const episode = getCounterfactualEpisodeState(thread?.id);
   const act = getCounterfactualAct(thread);
 
@@ -6806,6 +6821,11 @@ function syncInteriorJourneyHud(blueprint) {
         showCounterfactualEpisodeFinale(finale.dataset.counterfactualEpisodeFinale || "");
         return;
       }
+      const aftermath = event.target.closest("[data-interior-aftermath]");
+      if (aftermath) {
+        focusInteriorAftermathWitness(aftermath.dataset.interiorAftermath || "");
+        return;
+      }
       const nextChapter = event.target.closest("[data-interior-next-chapter]");
       if (nextChapter) {
         const nextZoneId = nextChapter.dataset.interiorNextChapter;
@@ -6824,6 +6844,8 @@ function syncInteriorJourneyHud(blueprint) {
     foundCount,
     record.completed,
     record.scenePlayed,
+    aftermathEcho?.id || "",
+    !!aftermathEcho?.discussed,
     nextIndex,
     thread?.completedCount || 0,
     episode.rewriteTokens,
@@ -6838,7 +6860,9 @@ function syncInteriorJourneyHud(blueprint) {
       ? `<button type="button" data-interior-guide="${nextIndex}">朝向下一处 · ${escapeHtml(nextProp.label)}</button>`
       : phase === 2
         ? `<button type="button" data-interior-scene-action="journey">${escapeHtml(sceneAction.label)}</button>`
-        : finaleReady
+        : phase === 3 && pendingAftermath
+          ? `<button type="button" data-interior-aftermath="${escapeHtml(pendingAftermath.id)}">寻找 ${escapeHtml(pendingAftermath.observerName || "余波见证者")}</button>`
+          : finaleReady
           ? `<button type="button" data-counterfactual-episode-finale="${escapeHtml(thread.id)}">回看本集终章</button>`
           : nextZone
             ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.id)}" data-episode-thread="${escapeHtml(thread.id)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
@@ -6849,7 +6873,7 @@ function syncInteriorJourneyHud(blueprint) {
       <ol>
         <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>环顾线索<small>${foundCount}/${goal} 段场所记忆</small></span></li>
         <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
-        <li class="${phase === 3 ? "current done" : ""}"><b>3</b><span>关系留下痕迹<small>${record.scenePlayed ? "已写入本周生活" : "让人物与城市真正改变"}</small></span></li>
+        <li class="${phase === 3 ? "current" : ""} ${phase === 4 ? "done" : ""}"><b>3</b><span>听见活体余波<small>${pendingAftermath ? `${escapeHtml(pendingAftermath.observerName || "有人")}还记得另一种未来` : record.scenePlayed ? "另一种理解也进入了关系记忆" : "选择后会有人带着另一种记忆留下"}</small></span></li>
       </ol>
       <footer><span>${thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应 · ${act.verb}` : blueprint.title}</span><em>本集可改写 <b>${episode.rewriteTokens}</b> 次</em>${nextAction}</footer>`;
   }
@@ -8339,7 +8363,10 @@ function createCounterfactualAgentEchoes({ zone, participant, alternative, chose
       stance,
       text: buildCounterfactualEchoText(citizen, alternative, chosen, stance),
       turn,
-      discussed: false
+      discussed: false,
+      discussedTurn: 0,
+      aftermathWitness: index === 0,
+      finaleFeatured: false
     };
     if (typeof queueAgentInbox === "function") {
       queueAgentInbox(state.society, {
@@ -8370,6 +8397,99 @@ function createCounterfactualAgentEchoes({ zone, participant, alternative, chose
   episode.echoes.push(...echoes.filter((echo) => !existingIds.has(echo.id)));
   episode.echoes = episode.echoes.slice(-24);
   return echoes;
+}
+
+function getInteriorAftermathEcho(zoneId, { includeDiscussed = true } = {}) {
+  const thread = getInteriorStoryThread(zoneId);
+  const episode = thread ? getCounterfactualEpisodeState(thread.id) : null;
+  const zoneEchoes = (episode?.echoes || []).filter((echo) => echo.zoneId === zoneId);
+  if (!zoneEchoes.length) return null;
+  let witness = zoneEchoes.find((echo) => echo.aftermathWitness);
+  if (!witness) {
+    witness = zoneEchoes[0];
+    witness.aftermathWitness = true;
+  }
+  if (!includeDiscussed && witness.discussed) return null;
+  return witness;
+}
+
+function stageInteriorAftermathWitness(zone, echo = getInteriorAftermathEcho(zone?.id, { includeDiscussed: false })) {
+  if (!zone || !echo || echo.discussed || !interiorView || interiorView.zone?.id !== zone.id) return null;
+  const citizen = state.society?.citizens?.find((item) => item.id === echo.observerId);
+  if (!citizen) return null;
+  const now = performance.now();
+  const canonical = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
+  canonical.indoor = { zoneId: zone.id, zoneName: zone.name, until: now + 120000, spawnInside: true };
+  if (interiorAnimations[citizen.id]) delete interiorAnimations[citizen.id].counterfactualHidden;
+  interiorView.aftermathEchoId = echo.id;
+  interiorView.aftermathWitnessId = citizen.id;
+  return citizen;
+}
+
+function focusInteriorAftermathWitness(echoId = "") {
+  if (!interiorView) return false;
+  const echo = getInteriorAftermathEcho(interiorView.zone.id, { includeDiscussed: false });
+  if (!echo || (echoId && echo.id !== echoId)) return false;
+  const citizen = stageInteriorAftermathWitness(interiorView.zone, echo);
+  if (!citizen) return false;
+  const focus = () => {
+    const ia = interiorAnimations[citizen.id];
+    if (ia && Number.isFinite(ia.worldX) && Number.isFinite(ia.worldZ)) {
+      interiorOrbit.yaw = wrapInteriorAngle(Math.atan2(ia.worldX, -ia.worldZ));
+    }
+    interiorView.aftermathFocusUntil = performance.now() + 7600;
+    addSpeechBubble(citizen.id, "我还记得另一条没有发生的路。", "listen", { priority: true, duration: 6200 });
+    markRenderActive(8200);
+  };
+  focus();
+  window.setTimeout(focus, 120);
+  const thread = getInteriorStoryThread(interiorView.zone.id);
+  recordEpisodeExperienceEvent(thread?.id, "aftermath_focused", { zoneId: interiorView.zone.id, detail: citizen.id }, { onceKey: `aftermath-focus-${interiorView.zone.id}` });
+  showToast(`转向${citizen.name}，点击发光的身影听听另一种记忆`, "listen");
+  return true;
+}
+
+function resolveInteriorAftermathWitness(echoId = "") {
+  if (!interiorView) return false;
+  const zone = interiorView.zone;
+  const echo = getInteriorAftermathEcho(zone.id, { includeDiscussed: false });
+  if (!echo || (echoId && echo.id !== echoId)) return false;
+  const citizen = state.society?.citizens?.find((item) => item.id === echo.observerId);
+  if (!citizen) return false;
+  echo.discussed = true;
+  echo.discussedTurn = Number(state.society?.turn || 0);
+  const thread = getInteriorStoryThread(zone.id);
+  recordEpisodeExperienceEvent(thread?.id, "aftermath_witnessed", {
+    zoneId: zone.id,
+    detail: citizen.id
+  }, { onceKey: `aftermath-witness-${zone.id}` });
+  const avatar = state.society?.citizens?.find((item) => item.id === "avatar");
+  if (avatar) {
+    recordAgentMemoryFileItem(state.society, avatar.id, "relationships", `在${zone.name}，我听${citizen.name}保留了另一条没有发生的未来：${echo.alternativeLabel}`, {
+      kind: "counterfactual-aftermath",
+      importance: 7,
+      references: [zone.id, echo.id, citizen.id]
+    });
+  }
+  recordAgentMemory(state.society, citizen.id, `我把${zone.name}里没有发生的“${echo.alternativeLabel}”说给玩家听，它没有被当作错误答案。`, "counterfactual-aftermath", 7, [zone.id, echo.id]);
+  interactWithCitizen("listen", citizen.id);
+  const record = getInteriorExplorationRecord(zone.id);
+  const finaleReady = !!thread && getCounterfactualEpisodeState(thread.id).status === "complete";
+  interiorView.discovery = {
+    title: `${citizen.name} · 余波见证`,
+    text: echo.text.replace(/^.*?说：/, ""),
+    progress: "另一种未来也被听见",
+    shareText: record.counterfactual?.receipt || "",
+    finaleThreadId: finaleReady ? thread.id : "",
+    until: Number.POSITIVE_INFINITY
+  };
+  addSpeechBubble(citizen.id, "谢谢你没有急着把另一种可能抹掉。", "support", { priority: true, duration: 6200 });
+  addEventLogEntry(`活体余波 · ${zone.name}`, `${citizen.name}替没有发生的“${echo.alternativeLabel}”留下证词。`, "listen", true, `aftermath-${echo.id}`);
+  persist();
+  syncInteriorJourneyHud(getInteriorBlueprint(zone));
+  syncInteriorDiscoveryCard(performance.now());
+  markRenderActive(8200);
+  return true;
 }
 
 function getCounterfactualEpisodeStats(episode, thread) {
@@ -8445,7 +8565,7 @@ function completeCounterfactualEpisode(thread) {
     uniqueZones.add(echo.zoneId);
     return true;
   }).slice(0, 3).reverse();
-  featuredEchoes.forEach((echo) => { echo.discussed = true; });
+  featuredEchoes.forEach((echo) => { echo.finaleFeatured = true; });
   const completedTurn = Number(state.society?.turn || 0);
   const finale = {
     verdict: getCounterfactualVerdict(stats.primaryRelation),
@@ -9051,13 +9171,15 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
   episode.rewrites = episode.rewrites.slice(-12);
   episode.receipts.push(receipt);
   episode.receipts = episode.receipts.slice(-12);
-  createCounterfactualAgentEchoes({
+  const createdEchoes = createCounterfactualAgentEchoes({
     zone,
     participant,
     alternative: alternativeChoice,
     chosen: choice,
     episode
   });
+  const aftermathWitness = createdEchoes.find((echo) => echo.aftermathWitness) || null;
+  if (aftermathWitness) stageInteriorAftermathWitness(zone, aftermathWitness);
   recordCounterfactualDirectorImpact({ zone, thread, participant, chosen: choice, rewritten, receipt });
   addLifeWeekLog("interior_scene", `${zone.name}里，你选择了“${choice.label}”。`, {
     zoneId: zone.id,
@@ -9080,12 +9202,15 @@ function playInteriorSceneAction(choiceId = "", counterfactualMeta = null) {
     branch: rewritten ? "future" : "fact"
   }, { onceKey: `room-complete-${zone.id}` });
   const finale = completeCounterfactualEpisode(refreshedThread);
+  const pendingAftermath = getInteriorAftermathEcho(zone.id, { includeDiscussed: false });
   interiorView.discovery = {
     title: sceneAction.title,
     text: outcome,
-    progress: finale ? "五个场所都已回应 · 终章解锁" : `${rewritten ? "你改写了这一刻" : "你保留了事实"} · ${choice.label}`,
+    progress: finale
+      ? pendingAftermath ? "五个场所已回应 · 终章前还有一段余波" : "五个场所都已回应 · 终章解锁"
+      : `${rewritten ? "你改写了这一刻" : "你保留了事实"} · ${choice.label}`,
     shareText: receipt,
-    finaleThreadId: finale ? refreshedThread?.id || "" : "",
+    finaleThreadId: finale && !pendingAftermath ? refreshedThread?.id || "" : "",
     until: Number.POSITIVE_INFINITY
   };
   addEventLogEntry(`室内共同活动 · ${zone.name}`, outcome, choice.behavior, true, `interior-scene-${zone.id}`);
@@ -10924,6 +11049,7 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
   if (source === "manual") seedInteriorOccupants(zone);
+  stageInteriorAftermathWitness(zone);
   if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   markRenderActive(3200);
 }
@@ -11204,6 +11330,7 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
   const indoorCitizens = aliveCitizens
     .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
     .filter((citizen) => !interiorAnimations[citizen.id]?.counterfactualHidden)
+    .sort((a, b) => Number(b.id === interiorView?.aftermathWitnessId) - Number(a.id === interiorView?.aftermathWitnessId))
     .slice(0, MAX_INTERIOR_OCCUPANTS);
   manageInteriorArrivals(society, zone, indoorCitizens.length, now);
 
@@ -11492,6 +11619,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     entry.moveAnim.renderScale = entry.renderScale;
   });
   entries.sort((a, b) => Number(a.y || 0) - Number(b.y || 0));
+  const pendingAftermathWitnessId = getInteriorAftermathEcho(zone.id, { includeDiscussed: false })?.observerId || "";
   entries.forEach(({ citizen, moveAnim, idx, visible, renderScale }) => {
     const isHover = hoveredCitizen === citizen.id;
     const shape = citizen.avatarShape || "soft";
@@ -11502,6 +11630,28 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     const stepBob = moveAnim.state === "walking" ? Math.sin(moveAnim.walkPhase || 0) * 2.2 : 0;
     if (!threeState?.actorsReady && visible !== false) {
       drawCitizenFigure(ctx, citizen, moveAnim, moveAnim.x, moveAnim.y + bobY + stepBob, size, isHover, now, t);
+    }
+    if (citizen.id === pendingAftermathWitnessId && visible !== false) {
+      const focused = Number(interiorView.aftermathFocusUntil || 0) > now;
+      const pulse = 0.5 + Math.sin(now * 0.009) * 0.5;
+      ctx.save();
+      ctx.strokeStyle = focused ? `rgba(255, 211, 92, ${0.72 + pulse * 0.25})` : "rgba(126, 226, 198, 0.68)";
+      ctx.lineWidth = focused ? 3.2 + pulse * 2 : 2;
+      ctx.setLineDash(focused ? [8, 5] : [4, 5]);
+      ctx.lineDashOffset = -now * 0.018;
+      ctx.beginPath();
+      ctx.ellipse(moveAnim.x, moveAnim.y - size * 0.18, size * 0.92 + pulse * 5, size * 1.16 + pulse * 4, 0, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = focused ? "rgba(22, 27, 46, 0.94)" : "rgba(22, 27, 46, 0.82)";
+      roundRect(ctx, moveAnim.x - 42, moveAnim.y - size * 1.52, 84, 20, 10);
+      ctx.fill();
+      ctx.fillStyle = focused ? "#ffe09a" : "#91ead1";
+      ctx.font = `800 9px "Noto Sans SC", sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText("未发生的未来", moveAnim.x, moveAnim.y - size * 1.52 + 10);
+      ctx.restore();
     }
     if (citizen.id === followedCitizenId) {
       updateFollowBanner(citizen, getCitizenBehaviorLabel(citizen, citizenAnimations[citizen.id], now));
@@ -14208,6 +14358,11 @@ function bindGameEvents() {
       // 存档/记忆面板的异步操作
       if (e.target.closest("[data-save-load],[data-save-over],[data-save-del],[data-save-export],[data-save-new],[data-save-import],[data-memory-save-proxy],[data-memory-test-proxy]")) {
         handleSavePanelClick(e.target).catch((err) => showToast(`操作失败:${err.message}`, "conflict"));
+        return;
+      }
+      const aftermathWitness = e.target.closest("[data-aftermath-witness]");
+      if (aftermathWitness) {
+        resolveInteriorAftermathWitness(aftermathWitness.dataset.aftermathWitness || "");
         return;
       }
       const interactBtn = e.target.closest("[data-interact]");

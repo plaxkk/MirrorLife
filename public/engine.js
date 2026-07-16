@@ -1767,7 +1767,8 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
     const allowedExperienceEvents = new Set([
       "episode_started", "room_entered", "evidence_found", "evidence_revisited",
       "choice_opened", "choice_previewed", "choice_committed", "room_completed",
-      "finale_opened", "episode_shared", "relay_started", "returned_to_street"
+      "aftermath_focused", "aftermath_witnessed", "finale_opened", "episode_shared",
+      "relay_started", "returned_to_street"
     ]);
     const experienceEvents = Array.isArray(experienceSource.events)
       ? experienceSource.events.slice(-120).map((event) => ({
@@ -1815,7 +1816,10 @@ function normalizeCounterfactualEpisodes(savedEpisodes) {
       stance: String(echo?.stance || "question").slice(0, 40),
       text: String(echo?.text || "").slice(0, 500),
       turn: Math.max(0, Math.round(Number(echo?.turn) || 0)),
-      discussed: !!echo?.discussed
+      discussed: !!echo?.discussed,
+      discussedTurn: Math.max(0, Math.round(Number(echo?.discussedTurn) || 0)),
+      aftermathWitness: !!echo?.aftermathWitness,
+      finaleFeatured: !!echo?.finaleFeatured
     });
     const finaleSource = source.finale && typeof source.finale === "object" ? source.finale : null;
     return [String(threadId).slice(0, 80), {
