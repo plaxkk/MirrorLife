@@ -95,6 +95,8 @@ const MIRROR_RELAY_GUEST_MISSION_TURNS = 16;
 const MIRROR_RELAY_COPLAY_MIDPOINT_EVIDENCE = 8;
 const MIRROR_RELAY_COPLAY_RESOLVE_EVIDENCE = 16;
 const MIRROR_RELAY_COPLAY_MAX_EVIDENCE = 24;
+const EPISODE_TRAIL_FOCUS_MS = 7000;
+const EPISODE_TRAIL_ZOOM = 1.18;
 const MIRROR_RELAY_VALUES = [
   { id: "heard", label: "被听见", valueKey: "benevolence", mbtiType: "INFJ", professionId: "reporter", professionName: "回声观察者", personaLabel: "回声观察者" },
   { id: "respected", label: "被尊重", valueKey: "universalism", mbtiType: "ISFJ", professionId: "lawyer", professionName: "边界守望者", personaLabel: "边界守望者" },
@@ -140,6 +142,8 @@ const MIRROR_RELAY_PROMPTS = {
 let mirrorRelayResumeSocietyAfterClose = false;
 let mirrorRelayCoPlayResumeSocietyAfterClose = false;
 let mirrorRelayCoPlayEscapeHandler = null;
+let episodeTrailFocusZoneId = "";
+let episodeTrailFocusUntil = 0;
 
 // ── Citizen behavior / encounter tuning ──
 const GESTURE_DURATIONS = { wave: 1900, talk: 5200 };
@@ -6094,6 +6098,123 @@ function getInteriorStoryThread(zoneId) {
   };
 }
 
+function getEpisodeTrailThread() {
+  const threadId = state.story?.activeEpisodeThreadId || "";
+  return INTERIOR_STORY_THREADS.find((thread) => thread.id === threadId) || null;
+}
+
+function getEpisodeTrailProgress(thread) {
+  const zones = thread?.zones || [];
+  const completedZoneIds = zones.filter((zoneId) => state.interiorExploration?.[zoneId]?.scenePlayed);
+  const nextZoneId = zones.find((zoneId) => !completedZoneIds.includes(zoneId)) || "";
+  return {
+    completedZoneIds,
+    completedCount: completedZoneIds.length,
+    nextZoneId,
+    complete: !!zones.length && completedZoneIds.length >= zones.length
+  };
+}
+
+function ensureEpisodeTrailStoryState() {
+  state.story = state.story && typeof state.story === "object" ? state.story : { arcs: [], log: [] };
+  state.story.episodeTrail = state.story.episodeTrail && typeof state.story.episodeTrail === "object"
+    ? state.story.episodeTrail
+    : { collapsed: false };
+  return state.story.episodeTrail;
+}
+
+function focusEpisodeTrailZone(zoneId) {
+  if (!zoneId || interiorView) return false;
+  const zone = findRenderZoneById(zoneId);
+  const canvas = document.getElementById("gameCanvas");
+  const rect = canvas?.getBoundingClientRect();
+  if (!zone || !rect?.width || !rect?.height) return false;
+  const W = rect.width;
+  const H = rect.height;
+  const zoneRect = lastWorldFrame.zoneRects?.get(zoneId) || getZoneGameRect(zone, W, H, getWorldGroundY(H));
+  camera.zoom = EPISODE_TRAIL_ZOOM;
+  camera.x = -(zoneRect.cx - W / 2) * camera.zoom;
+  camera.y = -(zoneRect.cy - H / 2) * camera.zoom - 40;
+  episodeTrailFocusZoneId = zoneId;
+  episodeTrailFocusUntil = performance.now() + EPISODE_TRAIL_FOCUS_MS;
+  markRenderActive(EPISODE_TRAIL_FOCUS_MS + 600);
+  syncEpisodeTrailHud();
+  showToast(`余波正在通往${zone.name}，点击发光的建筑进入下一章`, "listen");
+  return true;
+}
+
+function activateEpisodeTrail(threadId, focusZoneId = "", { force = false, persistState = true } = {}) {
+  const thread = INTERIOR_STORY_THREADS.find((item) => item.id === threadId);
+  if (!thread) return null;
+  const current = getEpisodeTrailThread();
+  const currentProgress = current ? getEpisodeTrailProgress(current) : null;
+  if (!force && current && current.id !== thread.id && !currentProgress?.complete) return current;
+  ensureEpisodeTrailStoryState();
+  state.story.activeEpisodeThreadId = thread.id;
+  if (persistState) persist(true);
+  syncEpisodeTrailHud();
+  if (focusZoneId) window.requestAnimationFrame(() => focusEpisodeTrailZone(focusZoneId));
+  return thread;
+}
+
+function syncEpisodeTrailHud() {
+  const shell = document.getElementById("gameShell");
+  let panel = document.getElementById("episodeTrailPanel");
+  if (!shell || interiorView) {
+    panel?.remove();
+    return;
+  }
+  const thread = getEpisodeTrailThread();
+  const progress = thread ? getEpisodeTrailProgress(thread) : null;
+  if (!thread || !progress || progress.complete) {
+    panel?.remove();
+    return;
+  }
+  const trailState = ensureEpisodeTrailStoryState();
+  const nextZone = findRenderZoneById(progress.nextZoneId);
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "episodeTrailPanel";
+    panel.setAttribute("aria-label", "本集余波路线");
+    panel.addEventListener("click", (event) => {
+      const toggle = event.target.closest("[data-episode-trail-toggle]");
+      if (toggle) {
+        const currentState = ensureEpisodeTrailStoryState();
+        currentState.collapsed = !currentState.collapsed;
+        persist(true);
+        syncEpisodeTrailHud();
+        return;
+      }
+      const target = event.target.closest("[data-episode-trail-zone]");
+      if (target) focusEpisodeTrailZone(target.dataset.episodeTrailZone);
+    });
+    shell.appendChild(panel);
+  }
+  const signature = [
+    thread.id,
+    progress.completedZoneIds.join(","),
+    progress.nextZoneId,
+    trailState.collapsed,
+    episodeTrailFocusZoneId,
+    episodeTrailFocusUntil > performance.now()
+  ].join("|");
+  if (panel.dataset.signature === signature) return;
+  panel.dataset.signature = signature;
+  panel.classList.toggle("collapsed", !!trailState.collapsed);
+  panel.innerHTML = `
+    <header><span>本集余波路线</span><strong>${escapeHtml(thread.title)}</strong><button type="button" data-episode-trail-toggle aria-label="${trailState.collapsed ? "展开余波路线" : "收起余波路线"}">${trailState.collapsed ? "+" : "−"}</button></header>
+    <div class="episode-trail-body">
+      <nav>${thread.zones.map((zoneId, index) => {
+        const zone = findRenderZoneById(zoneId);
+        const done = progress.completedZoneIds.includes(zoneId);
+        const current = zoneId === progress.nextZoneId;
+        const focused = zoneId === episodeTrailFocusZoneId && episodeTrailFocusUntil > performance.now();
+        return `<button type="button" class="${done ? "done" : current ? "current" : "locked"} ${focused ? "focused" : ""}" data-episode-trail-zone="${escapeHtml(zoneId)}"><b>${done ? "✓" : index + 1}</b><span>${escapeHtml(zone?.name || `第${index + 1}章`)}</span></button>`;
+      }).join("")}</nav>
+      <div class="episode-trail-next"><span>第 ${progress.completedCount + 1} / ${thread.zones.length} 章</span><strong>${escapeHtml(nextZone?.name || "下一处回声")}</strong><button type="button" data-episode-trail-zone="${escapeHtml(progress.nextZoneId)}">跟随余波</button></div>
+    </div>`;
+}
+
 function getCounterfactualEpisodeState(threadId) {
   const id = threadId || "standalone";
   state.counterfactualEpisodes = state.counterfactualEpisodes || {};
@@ -6119,6 +6240,11 @@ function getCounterfactualEpisodeState(threadId) {
   episode.status = episode.status === "complete" ? "complete" : "active";
   episode.completedTurn = Math.max(0, Number(episode.completedTurn || 0));
   episode.finale = episode.finale && typeof episode.finale === "object" ? episode.finale : null;
+  if (id !== "standalone" && INTERIOR_STORY_THREADS.some((thread) => thread.id === id)) {
+    const activeThread = getEpisodeTrailThread();
+    const activeComplete = activeThread ? getEpisodeTrailProgress(activeThread).complete : true;
+    if (!activeThread || activeComplete) activateEpisodeTrail(id, "", { persistState: false });
+  }
   return episode;
 }
 
@@ -6512,9 +6638,12 @@ function syncInteriorJourneyHud(blueprint) {
       }
       const nextChapter = event.target.closest("[data-interior-next-chapter]");
       if (nextChapter) {
-        const nextZoneName = nextChapter.dataset.interiorNextChapter;
+        const nextZoneId = nextChapter.dataset.interiorNextChapter;
+        const nextZone = findRenderZoneById(nextZoneId);
+        const activeThreadId = nextChapter.dataset.episodeThread || getInteriorStoryThread(interiorView?.zone?.id)?.id || "";
         exitInteriorView();
-        showToast(`下一章：去街道上寻找${nextZoneName}`, "listen");
+        activateEpisodeTrail(activeThreadId, nextZoneId, { force: true });
+        showToast(`下一章：${nextZone?.name || "沿着余波继续"}`, "listen");
       }
     });
     shell.appendChild(panel);
@@ -6542,7 +6671,7 @@ function syncInteriorJourneyHud(blueprint) {
         : finaleReady
           ? `<button type="button" data-counterfactual-episode-finale="${escapeHtml(thread.id)}">回看本集终章</button>`
           : nextZone
-            ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.name)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
+            ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.id)}" data-episode-thread="${escapeHtml(thread.id)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
             : "";
     panel.innerHTML = `
       <header><span>${escapeHtml(act.label)}</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
@@ -10599,6 +10728,7 @@ function exitInteriorView() {
   document.getElementById("interiorContextAction")?.remove();
   document.getElementById("interiorJourneyPanel")?.remove();
   document.getElementById("interiorCompass")?.remove();
+  syncEpisodeTrailHud();
   markRenderActive(2200);
 }
 
@@ -12202,11 +12332,13 @@ function drawGameWorld() {
 
   // ── Interior scene replaces the street view while inside a building ──
   if (interiorView) {
+    document.getElementById("episodeTrailPanel")?.remove();
     drawInteriorScene(ctx, W, H, now, t, society, isNight);
     ensureGameRenderLoop();
     return;
   }
   window.MirrorLifeInterior3D?.hide?.();
+  syncEpisodeTrailHud();
 
   const zoneOccupancy = new Map();
   const citizenIndex = new Map();
@@ -12277,13 +12409,26 @@ function drawGameWorld() {
     : null;
   drawableZones.forEach(({ zone, rect: r }) => {
     const color = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#a0a0a0";
-    const isHovered = hoveredZone === zone.id;
+    const isTrailFocus = episodeTrailFocusZoneId === zone.id && episodeTrailFocusUntil > now;
+    const isHovered = hoveredZone === zone.id || isTrailFocus;
     const count = zoneOccupancy.get(zone.id) || 0;
     try {
       // 沉浸模式:非焦点区域的建筑与标签整体淡化,让视线落在焦点身边
       const dimmed = followedCitizenId && zone.id !== focusZoneIdForDim;
       if (dimmed) { ctx.save(); ctx.globalAlpha = 0.55; }
       drawZonePlace(ctx, zone, r, color, dragRenderMode || dimmed ? 0 : count, isHovered, { lowDetail: dragRenderMode });
+      if (isTrailFocus) {
+        const pulse = 0.5 + Math.sin(now * 0.008) * 0.5;
+        ctx.save();
+        ctx.strokeStyle = `rgba(255, 211, 79, ${0.62 + pulse * 0.3})`;
+        ctx.lineWidth = 3 + pulse * 3;
+        ctx.setLineDash([10, 7]);
+        ctx.lineDashOffset = -now * 0.02;
+        ctx.beginPath();
+        ctx.roundRect(r.x - 10 - pulse * 4, r.y - 10 - pulse * 4, r.w + 20 + pulse * 8, r.h + 20 + pulse * 8, 18);
+        ctx.stroke();
+        ctx.restore();
+      }
       if (dimmed) ctx.restore();
     } catch (error) {
       console.warn("Zone layer skipped", zone.id, error);
