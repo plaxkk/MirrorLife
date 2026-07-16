@@ -5612,6 +5612,160 @@ const INTERIOR_ZONE_PROFILES = {
   }
 };
 
+// Every room now resolves through one physical/spatial contract. The six rooms
+// used by the social-twin vertical slice are fully authored; the remaining
+// buildings still receive a stable per-zone contract instead of relying on an
+// anonymous archetype at runtime.
+const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
+  residential: Object.freeze({
+    shellId: "domestic-split-v1",
+    lightingPreset: "window-coral",
+    materialPreset: "linen-oak-coral",
+    functionalZones: [
+      { id: "living", label: "共同生活", x: -1.45, z: 0.45, radius: 1.35, color: "#f2a07b" },
+      { id: "private", label: "私人记忆", x: 2.55, z: -1.2, radius: 1.05, color: "#8aa8d8" },
+      { id: "message", label: "消息与承诺", x: -0.15, z: -3.25, radius: 1.0, color: "#f2cb61" }
+    ],
+    props: [
+      { worldX: -3.05, worldZ: 0.8, displayScale: 0.78, interactionWorldX: -2.0, interactionWorldZ: 0.72 },
+      { worldX: -0.95, worldZ: 0.35, displayScale: 0.78, focal: false, interactionWorldX: -0.1, interactionWorldZ: 1.05 },
+      { worldX: 2.82, worldZ: -1.28, displayScale: 0.72, interactionWorldX: 1.78, interactionWorldZ: -0.55 },
+      { worldX: 3.52, worldZ: 1.18, displayScale: 0.68, interactionWorldX: 2.58, interactionWorldZ: 1.28 },
+      { worldX: -0.18, worldZ: -3.76, displayScale: 0.78, interactionWorldX: -0.15, interactionWorldZ: -2.62 },
+      { worldX: -3.65, worldZ: -1.65, displayScale: 0.66, interactionWorldX: -2.72, interactionWorldZ: -1.28 }
+    ],
+    actorStagingPoints: [{ x: -0.2, z: 1.65 }, { x: 1.35, z: 0.6 }, { x: -1.6, z: -1.25 }],
+    cameraSafeArea: { x: 0, z: 0.25, radius: 2.15 },
+    cameraTargets: [{ id: "living", x: -0.65, z: 0.35 }, { id: "private", x: 1.45, z: -0.7 }]
+  }),
+  "office-district": Object.freeze({
+    shellId: "studio-workflow-v1",
+    lightingPreset: "daylight-teal",
+    materialPreset: "glass-metal-cork",
+    functionalZones: [
+      { id: "focus", label: "专注工作", x: -2.35, z: -1.7, radius: 1.25, color: "#63a99b" },
+      { id: "promise", label: "共同承诺", x: 0.15, z: -3.45, radius: 1.05, color: "#f1c85b" },
+      { id: "collaboration", label: "协作复盘", x: 1.45, z: 0.35, radius: 1.35, color: "#6f9fd1" },
+      { id: "breathing", label: "喘息缓冲", x: 3.35, z: 1.65, radius: 0.8, color: "#ef916d" }
+    ],
+    props: [
+      { worldX: -2.8, worldZ: -1.65, displayScale: 0.72, interactionWorldX: -1.65, interactionWorldZ: -1.2 },
+      { worldX: 3.58, worldZ: -1.55, displayScale: 0.62, interactionWorldX: 2.55, interactionWorldZ: -1.15 },
+      { worldX: 0.1, worldZ: -4.18, displayScale: 0.74, interactionWorldX: 0.1, interactionWorldZ: -3.08 },
+      { worldX: 1.1, worldZ: 0.55, displayScale: 0.78, focal: false, interactionWorldX: 0.1, interactionWorldZ: 1.28 },
+      { worldX: -3.55, worldZ: 1.7, displayScale: 0.6, interactionWorldX: -2.48, interactionWorldZ: 1.48 }
+    ],
+    actorStagingPoints: [{ x: -1.4, z: 0.72 }, { x: 1.55, z: -0.65 }, { x: 2.55, z: 1.45 }],
+    cameraSafeArea: { x: 0.05, z: 0.1, radius: 2.05 },
+    cameraTargets: [{ id: "promise", x: 0.1, z: -1.45 }, { id: "collaboration", x: 0.85, z: 0.35 }]
+  }),
+  "public-plaza": Object.freeze({
+    shellId: "civic-listening-ring-v1",
+    lightingPreset: "civic-ivory",
+    materialPreset: "terrazzo-teal-brass",
+    functionalZones: [
+      { id: "hearing", label: "公民听证环", x: 0, z: 0.1, radius: 1.55, color: "#f1c85b" },
+      { id: "evidence", label: "证据与记录", x: -2.85, z: -1.85, radius: 1.05, color: "#6f9fd1" },
+      { id: "audience", label: "旁听与退出", x: 3.1, z: -1.4, radius: 1.1, color: "#75aa88" },
+      { id: "pause", label: "情绪缓冲", x: 3.45, z: 1.85, radius: 0.78, color: "#ed9164" }
+    ],
+    props: [
+      { renderModel: true, worldX: -3.15, worldZ: -1.4, displayScale: 0.72, interactionWorldX: -2.15, interactionWorldZ: -0.95 },
+      { renderModel: true, worldX: 0, worldZ: -4.22, displayScale: 0.72, interactionWorldX: 0, interactionWorldZ: -3.12 },
+      { renderModel: true, worldX: 3.25, worldZ: -1.52, displayScale: 0.66, interactionWorldX: 2.18, interactionWorldZ: -1.0 },
+      { worldX: -3.2, worldZ: 1.45, displayScale: 0.68, interactionWorldX: -2.1, interactionWorldZ: 1.15 },
+      { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
+      { worldX: 3.55, worldZ: 1.92, displayScale: 0.62, interactionWorldX: 2.62, interactionWorldZ: 1.55 }
+    ],
+    actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
+    cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
+    cameraTargets: [{ id: "hearing", x: 0, z: 0.15 }, { id: "evidence", x: -1.25, z: -0.8 }]
+  }),
+  "empathy-lab": Object.freeze({
+    shellId: "calibration-circle-v1",
+    lightingPreset: "soft-cyan",
+    materialPreset: "textile-glass-ash",
+    functionalZones: [
+      { id: "calibration", label: "距离校准", x: 0, z: 0.15, radius: 1.65, color: "#70c7c0" },
+      { id: "hypothesis", label: "理解假设", x: -2.7, z: -1.75, radius: 1.0, color: "#f0a2b5" },
+      { id: "boundary", label: "边界确认", x: 2.75, z: -1.72, radius: 1.0, color: "#8aa8d8" }
+    ],
+    props: [
+      { model: "calming-chair", assetIntent: "calibration-chair", focal: false, worldX: -3.25, worldZ: 0.75, displayScale: 0.62, interactionWorldX: -2.18, interactionWorldZ: 0.55 },
+      { model: "record-desk", assetIntent: "dialogue-console", worldX: -2.55, worldZ: -2.25, displayScale: 0.66, interactionWorldX: -1.55, interactionWorldZ: -1.62 },
+      { worldX: 3.15, worldZ: -1.9, displayScale: 0.62, interactionWorldX: 2.12, interactionWorldZ: -1.32 },
+      { model: "archive-cabinet", assetIntent: "consent-cabinet", worldX: 0.12, worldZ: -4.1, displayScale: 0.72, interactionWorldX: 0.12, interactionWorldZ: -3.05 },
+      { model: "meditation-seat", assetIntent: "grounding-seat", worldX: 3.28, worldZ: 1.42, displayScale: 0.6, interactionWorldX: 2.18, interactionWorldZ: 1.15 },
+      { worldX: -3.45, worldZ: -1.35, displayScale: 0.58, interactionWorldX: -2.55, interactionWorldZ: -1.05 }
+    ],
+    actorStagingPoints: [{ x: -1.05, z: 0.2 }, { x: 1.05, z: 0.2 }, { x: 0, z: 1.45 }],
+    cameraSafeArea: { x: 0, z: 0.25, radius: 1.85 },
+    cameraTargets: [{ id: "calibration", x: 0, z: 0.2 }, { id: "boundary", x: 1.2, z: -0.65 }]
+  }),
+  "story-archive": Object.freeze({
+    shellId: "consent-archive-v1",
+    lightingPreset: "cobalt-paper",
+    materialPreset: "paper-glass-plum",
+    functionalZones: [
+      { id: "public", label: "公开档案", x: -2.7, z: 0.8, radius: 1.2, color: "#6f9fd1" },
+      { id: "consent", label: "授权缓冲", x: 0, z: 0.05, radius: 1.45, color: "#ef7188" },
+      { id: "sealed", label: "封存档案", x: 2.95, z: -1.4, radius: 1.15, color: "#75548f" },
+      { id: "witness", label: "圆形见证台", x: 1.9, z: 1.75, radius: 0.9, color: "#b9de62" }
+    ],
+    props: [
+      { model: "archive-cabinet", assetIntent: "public-archive-cabinet", worldX: -3.35, worldZ: -1.25, displayScale: 0.66, interactionWorldX: -2.25, interactionWorldZ: -0.85 },
+      { worldX: -0.95, worldZ: -4.12, displayScale: 0.7, interactionWorldX: -0.82, interactionWorldZ: -3.02 },
+      { model: "mediation-podium", assetIntent: "consent-threshold", physicsSolid: false, worldX: 0.35, worldZ: -1.15, displayScale: 0.58, interactionWorldX: 0.2, interactionWorldZ: 0.2 },
+      { worldX: -2.65, worldZ: 1.65, displayScale: 0.68, focal: false, interactionWorldX: -1.55, interactionWorldZ: 1.35 },
+      { model: "memory-book", assetIntent: "sealed-memory-vault", worldX: 2.92, worldZ: -1.32, displayScale: 0.66, interactionWorldX: 1.88, interactionWorldZ: -0.82 }
+    ],
+    actorStagingPoints: [{ x: -0.8, z: 0.75 }, { x: 0.9, z: 0.75 }, { x: 1.85, z: 1.55 }],
+    cameraSafeArea: { x: 0, z: 0.35, radius: 1.95 },
+    cameraTargets: [{ id: "consent", x: 0, z: 0.15 }, { id: "sealed", x: 1.4, z: -0.65 }]
+  }),
+  "legal-court": Object.freeze({
+    shellId: "mirror-hearing-v1",
+    lightingPreset: "navy-brass",
+    materialPreset: "terrazzo-glass-walnut",
+    functionalZones: [
+      { id: "self", label: "现实主体", x: -1.65, z: 0.1, radius: 1.3, color: "#ed9164" },
+      { id: "twin", label: "社会分身", x: 1.65, z: 0.1, radius: 1.3, color: "#70c7c0" },
+      { id: "seam", label: "镜像裂缝", x: 0, z: 0.1, radius: 0.72, color: "#f1c85b" },
+      { id: "evidence", label: "双侧证据", x: 0, z: -3.65, radius: 1.1, color: "#8aa8d8" }
+    ],
+    props: [
+      { worldX: 0, worldZ: -4.05, displayScale: 0.7, interactionWorldX: 0, interactionWorldZ: -2.95 },
+      { worldX: -2.05, worldZ: 1.15, displayScale: 0.64, focal: false, interactionWorldX: -1.05, interactionWorldZ: 0.82 },
+      { worldX: 2.65, worldZ: -2.2, displayScale: 0.66, interactionWorldX: 1.65, interactionWorldZ: -1.55 },
+      { worldX: 3.55, worldZ: 0.65, displayScale: 0.62, interactionWorldX: 2.52, interactionWorldZ: 0.48 },
+      { worldX: -3.5, worldZ: -1.05, displayScale: 0.6, interactionWorldX: -2.45, interactionWorldZ: -0.78 }
+    ],
+    actorStagingPoints: [{ x: -1.2, z: 0.3 }, { x: 1.2, z: 0.3 }, { x: -2.1, z: 1.55 }, { x: 2.1, z: 1.55 }],
+    cameraSafeArea: { x: 0, z: 0.2, radius: 1.75 },
+    cameraTargets: [{ id: "seam", x: 0, z: 0.2 }, { id: "evidence", x: 0, z: -1.25 }]
+  })
+});
+
+function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
+  const zoneId = String(zone?.id || "unknown-room");
+  const authored = INTERIOR_ZONE_LAYOUT_PROFILES[zoneId] || {};
+  return {
+    version: 1,
+    zoneId,
+    shellId: authored.shellId || `${zoneId}-shell-v1`,
+    lightingPreset: authored.lightingPreset || `${blueprintKey}-soft-daylight`,
+    materialPreset: authored.materialPreset || `${blueprintKey}-layered-dopamine`,
+    functionalZones: Array.isArray(authored.functionalZones) ? authored.functionalZones.map((item) => ({ ...item })) : [],
+    props: Array.isArray(authored.props) ? authored.props.map((item) => ({ ...item })) : [],
+    actorStagingPoints: Array.isArray(authored.actorStagingPoints)
+      ? authored.actorStagingPoints.map((point) => ({ x: Number(point.x || 0), z: Number(point.z || 0) }))
+      : [{ x: -0.9, z: 0.8 }, { x: 0.9, z: 0.8 }, { x: 0, z: -0.9 }],
+    cameraSafeArea: { x: 0, z: 0.3, radius: 2.1, ...(authored.cameraSafeArea || {}) },
+    cameraTargets: Array.isArray(authored.cameraTargets) ? authored.cameraTargets.map((item) => ({ ...item })) : [{ id: "center", x: 0, z: 0.2 }],
+    standards: { mainCirculation: 1.4, interactionClearance: 0.9, spawnClearance: 1, narrativeClearRadius: 1.5 }
+  };
+}
+
 const INTERIOR_SCENE_ACTIONS = {
   care: {
     label: "接过一次照护",
@@ -5758,31 +5912,16 @@ function getInteriorBlueprint(zone) {
   const profile = INTERIOR_ZONE_PROFILES[zone?.id] || null;
   const key = profile?.blueprint || inferInteriorBlueprintKey(zone);
   const base = INTERIOR_BLUEPRINTS[key] || INTERIOR_BLUEPRINTS.home;
+  const layoutProfile = getInteriorZoneLayoutProfile(zone, key);
   const labels = profile?.labels || [];
   const storyClues = assignInteriorStoryClues(labels, profile?.clues || []);
-  const authoredPlacements = zone?.id === EMPATHY_CALIBRATION_ZONE_ID
-    ? [
-        { focal: false, worldX: -2.42, worldZ: -1.72, displayScale: 0.72 },
-        { worldX: -0.15, worldZ: -3.42, displayScale: 0.78 },
-        { worldX: 2.36, worldZ: -1.7, displayScale: 0.82 },
-        { worldX: 2.72, worldZ: 0.72, displayScale: 0.74 },
-        { worldX: -2.28, worldZ: 1.58, displayScale: 0.76 },
-        { worldX: 2.12, worldZ: 2.16, displayScale: 0.7 }
-      ]
-    : zone?.id === MEMORY_AUTHORIZATION_ZONE_ID
-      ? [
-          { worldX: -2.6, worldZ: -1.65, displayScale: 0.78 },
-          { worldX: 0, worldZ: -3.55, displayScale: 0.86 },
-          { worldX: 2.62, worldZ: -1.52, displayScale: 0.78 },
-          { focal: false, worldX: -2.3, worldZ: 1.72, displayScale: 0.78 },
-          { worldX: 2.34, worldZ: 1.74, displayScale: 0.76 }
-        ]
-      : [];
+  const authoredPlacements = layoutProfile.props;
   const blueprint = {
     ...base,
     key,
     title: profile?.title || base.title,
     profile,
+    layoutProfile,
     props: (base.props || []).map((prop, index) => ({
       ...prop,
       ...(authoredPlacements[index] || {}),
@@ -5852,7 +5991,8 @@ function ensureInteriorPhysicsWorld(blueprint) {
   const physics = getInteriorPhysicsApi();
   if (!physics?.createWorld || !interiorView || !blueprint) return null;
   const variant = getInteriorPhysicsVariant(blueprint);
-  const signature = `${interiorView.zone.id}|${blueprint.key}|${variant}`;
+  const layoutProfile = blueprint.layoutProfile || getInteriorZoneLayoutProfile(interiorView.zone, blueprint.key);
+  const signature = `${interiorView.zone.id}|${blueprint.key}|${layoutProfile.shellId}|${variant}`;
   if (interiorPhysicsWorld?.signature === signature) return interiorPhysicsWorld;
   const items = getInteriorPhysicsItems(blueprint);
   const world = physics.createWorld({
@@ -5863,6 +6003,7 @@ function ensureInteriorPhysicsWorld(blueprint) {
     spawn: { x: 0, z: 3.72 }
   });
   world.signature = signature;
+  world.layoutProfile = layoutProfile;
   interiorPhysicsWorld = world;
   interiorView.physicsSignature = signature;
   if (!interiorView.physicsSpawnApplied && world.spawn) {
@@ -6071,14 +6212,20 @@ function getInteriorPropWorldPlacement(prop, index, count) {
     const radius = Math.max(0.62, Math.hypot(worldX, worldZ));
     const angle = Math.atan2(worldX, -worldZ);
     const interactionOffset = 0.64 * (index % 2 === 0 ? -1 : 1);
+    const interactionWorldX = Number.isFinite(prop?.interactionWorldX)
+      ? Number(prop.interactionWorldX)
+      : worldX + Math.cos(angle) * interactionOffset;
+    const interactionWorldZ = Number.isFinite(prop?.interactionWorldZ)
+      ? Number(prop.interactionWorldZ)
+      : worldZ + Math.sin(angle) * interactionOffset;
     return {
       angle,
       distance: clamp((radius - 1.92) / 2.08, 0.24, 0.98),
       radius,
       worldX,
       worldZ,
-      interactionWorldX: worldX + Math.cos(angle) * interactionOffset,
-      interactionWorldZ: worldZ + Math.sin(angle) * interactionOffset
+      interactionWorldX,
+      interactionWorldZ
     };
   }
   if (prop?.focal) {
@@ -6897,6 +7044,7 @@ function completeSocialParallaxRitual() {
     until: performance.now() + 9200
   };
   maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  maybeAdvanceSocialTwinEpisode();
   persistInteriorExploration();
   persist();
   syncSocialParallaxHud(performance.now());
@@ -7519,7 +7667,12 @@ function completeEmpathyCalibrationRitual(citizen) {
     progress: "3/3",
     until: performance.now() + 9200
   };
-  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  const blueprint = getInteriorBlueprint(interiorView.zone);
+  maybeCompleteInteriorExploration(interiorView.zone, blueprint, record);
+  (blueprint.props || []).slice(0, 3).forEach((prop) => {
+    recordSocialTwinEvidence(interiorView.zone, prop, prop.storyClue || `${prop.label}只以授权摘要进入听证。`);
+  });
+  maybeAdvanceSocialTwinEpisode();
   persistInteriorExploration();
   persist();
   syncEmpathyCalibrationHud(performance.now());
@@ -8021,7 +8174,12 @@ function completeMemoryAuthorizationRitual(citizen) {
     progress: "3/3",
     until: performance.now() + 9200
   };
-  maybeCompleteInteriorExploration(interiorView.zone, getInteriorBlueprint(interiorView.zone), record);
+  const blueprint = getInteriorBlueprint(interiorView.zone);
+  maybeCompleteInteriorExploration(interiorView.zone, blueprint, record);
+  (blueprint.props || []).slice(0, 3).forEach((prop) => {
+    recordSocialTwinEvidence(interiorView.zone, prop, prop.storyClue || `${prop.label}只以授权摘要进入听证。`);
+  });
+  maybeAdvanceSocialTwinEpisode();
   persistInteriorExploration();
   persist();
   syncMemoryAuthorizationHud(performance.now());
@@ -8846,6 +9004,259 @@ function getCounterfactualBranchCopy(choice, participant, mode = "fact") {
   };
 }
 
+function getActiveSocialTwinEpisodeDefinition() {
+  return window.MirrorLifeNarrativeRuntime?.getEpisodeDefinition?.("preferred-other-self") || null;
+}
+
+function ensureSocialTwinEpisodeRun() {
+  const runtime = window.MirrorLifeNarrativeRuntime;
+  const normalized = runtime?.normalizeEpisodeRunState?.(state.socialTwinEpisode, "preferred-other-self");
+  if (normalized) state.socialTwinEpisode = normalized;
+  return state.socialTwinEpisode || null;
+}
+
+function getSocialTwinEpisodeAct(run = ensureSocialTwinEpisodeRun()) {
+  const definition = getActiveSocialTwinEpisodeDefinition();
+  if (!definition || !run) return null;
+  return definition.acts[Math.max(0, Math.min(definition.acts.length - 1, Number(run.actIndex || 0)))] || null;
+}
+
+function getSocialTwinActEvidence(run, act) {
+  return (run?.evidence || []).filter((entry) => entry.actId === act?.id && entry.authorized !== false);
+}
+
+function setSocialTwinEpisodeDiscovery(act, text = "") {
+  if (!interiorView || !act) return;
+  const run = ensureSocialTwinEpisodeRun();
+  const count = getSocialTwinActEvidence(run, act).length;
+  interiorView.discovery = {
+    title: `社会分身案 · ${act.title}`,
+    text: text || act.objective,
+    progress: `第 ${act.index + 1}/7 幕 · 证据 ${Math.min(count, act.requiredEvidence)}/${act.requiredEvidence}`,
+    until: performance.now() + 8500
+  };
+}
+
+function maybeAdvanceSocialTwinEpisode() {
+  const definition = getActiveSocialTwinEpisodeDefinition();
+  const run = ensureSocialTwinEpisodeRun();
+  const act = getSocialTwinEpisodeAct(run);
+  if (!definition || !run || !act || run.status === "complete") return false;
+  const evidenceCount = getSocialTwinActEvidence(run, act).length;
+  if (evidenceCount < act.requiredEvidence) return false;
+  if (act.zoneId === "empathy-lab" && getEmpathyCalibrationRitual(act.zoneId)?.status !== "complete") return false;
+  if (act.zoneId === "story-archive" && getMemoryAuthorizationRitual(act.zoneId)?.status !== "complete") return false;
+  if (act.index >= definition.acts.length - 1) {
+    setSocialTwinEpisodeDiscovery(act, "证据已经齐备。走到镜像裂缝中央，决定你与另一个你的关系。");
+    return true;
+  }
+  run.actIndex += 1;
+  run.updatedAt = Date.now();
+  const next = definition.acts[run.actIndex];
+  setSocialTwinEpisodeDiscovery(next, next.zoneId === interiorView?.zone?.id
+    ? `第一份证据已经改变了问题：${next.objective}`
+    : `本幕证据已封存。下一站：${findRenderZoneById(next.zoneId)?.name || next.title}。`);
+  if (interiorView?.discovery && next.zoneId !== interiorView?.zone?.id) {
+    interiorView.discovery.socialTwinNextZoneId = next.zoneId;
+  }
+  addEventLogEntry("社会分身案", `第 ${act.index + 1} 幕完成：${act.title}。下一幕将前往${findRenderZoneById(next.zoneId)?.name || next.title}。`, "listen", true, `social-twin-act-${act.id}`);
+  persist(true);
+  return true;
+}
+
+function recordSocialTwinEvidence(zone, prop, clue) {
+  const run = ensureSocialTwinEpisodeRun();
+  const act = getSocialTwinEpisodeAct(run);
+  if (!run || !act || run.status !== "active" || act.zoneId !== zone?.id) return false;
+  const id = `${act.id}:${String(prop?.label || "evidence").slice(0, 60)}`;
+  const archiveRitual = zone.id === "story-archive" ? getMemoryAuthorizationRitual(zone.id) : null;
+  const authorized = zone.id !== "story-archive" || archiveRitual?.status === "complete";
+  const existing = run.evidence.find((entry) => entry.id === id);
+  if (existing) {
+    if (authorized && !existing.authorized) {
+      existing.authorized = true;
+      existing.summary = String(clue || existing.summary).slice(0, 260);
+      maybeAdvanceSocialTwinEpisode();
+      return true;
+    }
+    return false;
+  }
+  run.evidence.push({
+    id,
+    actId: act.id,
+    zoneId: zone.id,
+    label: String(prop?.label || "空间证据").slice(0, 100),
+    summary: String(clue || "这处空间留下了一条可以核验的关系痕迹。").slice(0, 260),
+    authorized,
+    refusal: zone.id === "empathy-lab" && /拒绝|边界/.test(String(clue || "")),
+    turn: Math.max(0, Number(state.society?.turn || 0))
+  });
+  run.updatedAt = Date.now();
+  if (!authorized) {
+    setSocialTwinEpisodeDiscovery(act, "你找到了这段记忆，但它仍未获得携出封存区的授权。先完成记忆授权仪式。");
+  } else {
+    maybeAdvanceSocialTwinEpisode();
+  }
+  return true;
+}
+
+function enterSocialTwinEpisodeRoom(zone) {
+  const run = ensureSocialTwinEpisodeRun();
+  const act = getSocialTwinEpisodeAct(run);
+  if (!run || !act || run.status !== "active" || act.zoneId !== zone?.id) return;
+  if (!run.visitedZoneIds.includes(zone.id)) run.visitedZoneIds.push(zone.id);
+  run.updatedAt = Date.now();
+  const opening = act.id === "late-apology"
+    ? "你的社会分身昨晚替你发出了一次迟到的道歉。回复只有一句：‘我接受，但以后我更想和那个你说话。’"
+    : act.objective;
+  setSocialTwinEpisodeDiscovery(act, opening);
+  persist();
+}
+
+function getSocialTwinEnding(id) {
+  return getActiveSocialTwinEpisodeDefinition()?.endings?.find((ending) => ending.id === id) || null;
+}
+
+function applySocialTwinEnding(endingId) {
+  const run = ensureSocialTwinEpisodeRun();
+  const ending = getSocialTwinEnding(endingId);
+  if (!run || !ending || run.status === "complete") return;
+  const effects = {
+    merge: { relationship: 6, tension: -2, continuity: true, city: "分身记忆并入本体，拒绝权被写入个人边界" },
+    delete: { relationship: -8, tension: 6, continuity: false, city: "城市停止分身代理，居民保留告别与异议" },
+    release: { relationship: 2, tension: 3, continuity: true, city: "分身成为独立居民，不再替本体履约" },
+    charter: { relationship: 4, tension: -4, continuity: true, city: "城市启用双向授权的社会分身共存协议" }
+  };
+  const effect = effects[endingId];
+  run.status = "complete";
+  run.endingId = endingId;
+  run.relationshipDelta = effect.relationship;
+  run.twinContinuity = effect.continuity;
+  run.cityState = effect.city;
+  run.updatedAt = Date.now();
+  run.aftermath = [ending.consequence, `下一次进入相关建筑时，居民会依据“${ending.title}”重新决定与谁交流。`];
+  state.society.tension = clamp(Number(state.society.tension || 50) + effect.tension, 0, 100);
+  Object.values(state.society.relationships || {}).forEach((edge) => {
+    if (edge.a === "avatar" || edge.b === "avatar") edge.trust = clamp(Number(edge.trust || 50) + effect.relationship, 0, 100);
+  });
+  const memoryBucket = state.society?.agentRuntime?.memoryStore?.avatar;
+  if (Array.isArray(memoryBucket)) memoryBucket.push({ id: `social-twin-ending-${endingId}`, kind: "hearing", text: `公民听证选择：${ending.title}。${ending.consequence}`, importance: 9, turn: Number(state.society.turn || 0) });
+  addEventLogEntry("公民听证", `你选择了“${ending.title}”：${ending.consequence}`, "propose", true, `social-twin-ending-${endingId}`);
+  pushRobotSignal("avatar", "strong", `社会分身案结案：${ending.title}。${effect.city}`);
+  persist(true);
+  renderSocialTwinHearingStage("resolved");
+}
+
+function buildSocialTwinDossierCanvas() {
+  const run = ensureSocialTwinEpisodeRun();
+  const ending = getSocialTwinEnding(run?.endingId);
+  if (!run || !ending) return null;
+  const canvas = document.createElement("canvas");
+  canvas.width = 1080;
+  canvas.height = 1350;
+  const ctx = canvas.getContext("2d");
+  const evidence = run.evidence.filter((entry) => entry.authorized).slice(-2);
+  ctx.fillStyle = "#fff8e8"; ctx.fillRect(0, 0, 1080, 1350);
+  ctx.fillStyle = "#23243a"; ctx.fillRect(52, 48, 976, 112);
+  ctx.fillStyle = "#ffd166"; ctx.font = "900 30px sans-serif"; ctx.fillText("MIRRORLIFE · 公民听证档案", 88, 118);
+  ctx.fillStyle = "#e95d5d"; ctx.font = "900 68px sans-serif"; ctx.fillText(`选择：${ending.title}`, 74, 280);
+  ctx.fillStyle = "#30364e"; ctx.font = "700 31px sans-serif";
+  wrapCanvasText(ctx, "所有人都更喜欢“另一个我”", 74, 344, 900, 48);
+  evidence.forEach((entry, index) => {
+    const y = 485 + index * 230;
+    ctx.fillStyle = index ? "#d9f2e9" : "#fff0b5"; roundRect(ctx, 68, y, 944, 178, 28); ctx.fill();
+    ctx.fillStyle = "#30364e"; ctx.font = "900 28px sans-serif"; ctx.fillText(`证据 ${index + 1} · ${entry.label}`, 102, y + 52);
+    ctx.font = "600 22px sans-serif"; wrapCanvasText(ctx, entry.summary, 102, y + 92, 850, 33);
+  });
+  ctx.fillStyle = "#30364e"; ctx.font = "900 28px sans-serif"; ctx.fillText("关系后果", 76, 980);
+  ctx.font = "600 24px sans-serif"; wrapCanvasText(ctx, ending.consequence, 76, 1030, 900, 38);
+  ctx.fillStyle = "#e95d5d"; ctx.font = "900 30px sans-serif"; wrapCanvasText(ctx, "如果一个分身比你更会爱人，它拥有留下来的权利吗？", 76, 1168, 900, 45);
+  ctx.fillStyle = "#72758a"; ctx.font = "600 18px sans-serif"; ctx.fillText("仅含本局授权摘要 · 不含原始记忆、真实姓名或未授权文本", 76, 1300);
+  return canvas;
+}
+
+function wrapCanvasText(ctx, text, x, y, maxWidth, lineHeight) {
+  let line = "";
+  [...String(text || "")].forEach((char) => {
+    const test = line + char;
+    if (ctx.measureText(test).width > maxWidth && line) { ctx.fillText(line, x, y); line = char; y += lineHeight; }
+    else line = test;
+  });
+  if (line) ctx.fillText(line, x, y);
+}
+
+function downloadSocialTwinDossier() {
+  const canvas = buildSocialTwinDossierCanvas();
+  if (!canvas) return;
+  const run = ensureSocialTwinEpisodeRun();
+  run.dossierCreated = true;
+  const link = document.createElement("a");
+  link.download = "mirrorlife-citizen-hearing.png";
+  link.href = canvas.toDataURL("image/png");
+  link.click();
+  persist(true);
+}
+
+function createSocialTwinWitnessInvite() {
+  const run = ensureSocialTwinEpisodeRun();
+  const ending = getSocialTwinEnding(run?.endingId);
+  if (!run || !ending) return null;
+  const prompt = MIRROR_RELAY_PROMPTS.listen;
+  const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
+  const invite = normalizeMirrorRelayUrlPayload({
+    kind: "invite", version: MIRROR_RELAY_PAYLOAD_VERSION,
+    id: `relay-social-twin-${Date.now().toString(36)}`,
+    threadId: "preferred-other-self", threadTitle: "所有人都更喜欢“另一个我”",
+    inviterAlias: sanitizeMirrorRelayAlias(avatar?.name || "一位同行者"),
+    question: "如果一个分身比本体更会维系关系，它拥有留下来的权利吗？",
+    hostChoiceId: ending.id, hostChoiceLabel: ending.title,
+    choices: prompt.choices
+  }, "invite");
+  if (!invite) return null;
+  const relay = ensureMirrorRelayState();
+  relay.invites.push({ ...invite, createdTurn: Number(state.society?.turn || 0) });
+  relay.invites = relay.invites.slice(-8);
+  const url = buildMirrorRelayUrl("mirrorInvite", invite);
+  run.witnessInviteId = invite.id;
+  window.__mirrorLifeRelayInviteUrl = url;
+  window.__mirrorLifeRelayInvitePayload = invite;
+  persist(true);
+  return { invite, url };
+}
+
+async function shareSocialTwinWitnessInvite() {
+  const result = createSocialTwinWitnessInvite();
+  if (!result) return;
+  const text = `我在 MirrorLife 选择了“${getSocialTwinEnding(ensureSocialTwinEpisodeRun().endingId)?.title}”。请先阅读授权说明，再让你的一次性分身回应：${result.url}`;
+  if (navigator.share) await navigator.share({ title: "MirrorLife 公民听证", text, url: result.url }).catch(() => {});
+  else await navigator.clipboard?.writeText?.(text);
+  showToast("见证链接已准备好；朋友同意后才会生成一次性回应", "listen");
+}
+
+function renderSocialTwinHearingStage(mode = "choice") {
+  const run = ensureSocialTwinEpisodeRun();
+  const definition = getActiveSocialTwinEpisodeDefinition();
+  if (!run || !definition) return;
+  let stage = document.getElementById("socialTwinHearingStage");
+  if (!stage) {
+    stage = document.createElement("section");
+    stage.id = "socialTwinHearingStage";
+    stage.addEventListener("click", (event) => {
+      const ending = event.target.closest("[data-social-twin-ending]");
+      if (ending) applySocialTwinEnding(ending.dataset.socialTwinEnding);
+      if (event.target.closest("[data-social-twin-dossier]")) downloadSocialTwinDossier();
+      if (event.target.closest("[data-social-twin-witness]")) shareSocialTwinWitnessInvite();
+      if (event.target.closest("[data-social-twin-close]")) { stage.remove(); document.body.classList.remove("social-twin-hearing-active"); }
+    });
+    document.getElementById("gameShell")?.appendChild(stage);
+  }
+  const resolved = mode === "resolved" || run.status === "complete";
+  const ending = getSocialTwinEnding(run.endingId);
+  const evidence = run.evidence.filter((entry) => entry.authorized).slice(-2);
+  stage.innerHTML = `<div class="social-twin-hearing-card"><span>公民听证 · 案号 ML-01</span><h1>${resolved ? escapeHtml(ending?.title || "已结案") : "另一个我，有权留下来吗？"}</h1><p>${resolved ? escapeHtml(ending?.consequence || "") : "没有标准答案。每个选择都会修改关系、记忆与城市规则。"}</p><div class="social-twin-evidence">${evidence.map((entry) => `<article><small>已授权证据</small><strong>${escapeHtml(entry.label)}</strong><p>${escapeHtml(entry.summary)}</p></article>`).join("")}</div>${resolved ? `<div class="social-twin-resolution"><strong>${escapeHtml(run.cityState)}</strong><p>关系变化 ${run.relationshipDelta > 0 ? "+" : ""}${run.relationshipDelta} · 下一次进入相关建筑会出现可观察余波。</p></div><footer><button data-social-twin-dossier>保存公民听证档案</button><button data-social-twin-witness>邀请好友见证</button><button class="quiet" data-social-twin-close>回到城市</button></footer>` : `<div class="social-twin-ending-grid">${definition.endings.map((item) => `<button data-social-twin-ending="${item.id}"><strong>${escapeHtml(item.title)}</strong><span>${escapeHtml(item.consequence)}</span></button>`).join("")}</div><button class="quiet" data-social-twin-close>暂不裁决</button>`}</div>`;
+  document.body.classList.add("social-twin-hearing-active");
+}
+
 function focusInteriorJourneyTarget(propIndex) {
   if (!interiorView) return;
   const blueprint = getInteriorBlueprint(interiorView.zone);
@@ -8882,6 +9293,16 @@ function syncInteriorJourneyHud(blueprint) {
   const phase = record.scenePlayed ? (pendingAftermath ? 3 : 4) : record.completed ? 2 : 1;
   const episode = getCounterfactualEpisodeState(thread?.id);
   const act = getCounterfactualAct(thread);
+  const socialTwinRun = ensureSocialTwinEpisodeRun();
+  const socialTwinAct = getSocialTwinEpisodeAct(socialTwinRun);
+  const socialTwinInRoom = socialTwinRun?.status !== "complete" && socialTwinAct?.zoneId === interiorView.zone.id;
+  const socialTwinEvidenceCount = socialTwinInRoom ? getSocialTwinActEvidence(socialTwinRun, socialTwinAct).length : 0;
+  const socialTwinEmbodiedReady = socialTwinAct?.id === "misread-correction"
+    ? empathyCalibration?.status === "complete"
+    : socialTwinAct?.id === "consented-evidence"
+      ? memoryAuthorization?.status === "complete"
+      : true;
+  const socialTwinActReady = socialTwinInRoom && socialTwinEmbodiedReady && socialTwinEvidenceCount >= Number(socialTwinAct.requiredEvidence || 0);
 
   let panel = document.getElementById("interiorJourneyPanel");
   if (!panel) {
@@ -8924,6 +9345,19 @@ function syncInteriorJourneyHud(blueprint) {
       const finale = event.target.closest("[data-counterfactual-episode-finale]");
       if (finale) {
         showCounterfactualEpisodeFinale(finale.dataset.counterfactualEpisodeFinale || "");
+        return;
+      }
+      const socialTwinNext = event.target.closest("[data-social-twin-next]");
+      if (socialTwinNext) {
+        event.stopPropagation();
+        const nextZone = findRenderZoneById(socialTwinNext.dataset.socialTwinNext);
+        exitInteriorView();
+        showToast(`下一幕：${nextZone?.name || "社会分身案继续"}`, "listen");
+        return;
+      }
+      const socialTwinFinale = event.target.closest("[data-social-twin-finale]");
+      if (socialTwinFinale) {
+        renderSocialTwinHearingStage();
         return;
       }
       const aftermath = event.target.closest("[data-interior-aftermath]");
@@ -8970,13 +9404,21 @@ function syncInteriorJourneyHud(blueprint) {
     thread?.completedCount || 0,
     episode.rewriteTokens,
     episode.status,
-    act.index
+    act.index,
+    socialTwinRun?.status || "",
+    socialTwinAct?.id || "",
+    socialTwinEvidenceCount
   ].join("|");
   if (panel.dataset.signature !== signature) {
     panel.dataset.signature = signature;
     const nextZone = thread?.nextZoneId ? findRenderZoneById(thread.nextZoneId) : null;
     const finaleReady = !!thread && thread.completedCount >= thread.zones.length;
-    const nextAction = phase === 1 && memoryAuthorizationPending
+    const nextSocialTwinAct = getActiveSocialTwinEpisodeDefinition()?.acts?.[Number(socialTwinRun?.actIndex || 0) + 1] || null;
+    const nextAction = socialTwinActReady && socialTwinAct?.id === "citizen-hearing"
+      ? `<button type="button" data-social-twin-finale>进入镜像裂缝 · 完成公民听证</button>`
+      : socialTwinActReady && nextSocialTwinAct && nextSocialTwinAct.zoneId !== interiorView.zone.id
+      ? `<button type="button" data-social-twin-next="${escapeHtml(nextSocialTwinAct.zoneId)}">下一幕 · ${escapeHtml(findRenderZoneById(nextSocialTwinAct.zoneId)?.name || nextSocialTwinAct.title)}</button>`
+      : phase === 1 && memoryAuthorizationPending
       ? `<button type="button" data-memory-authorization-start>${memoryAuthorization.status === "active"
         ? `朝向授权范围 · ${escapeHtml(getMemoryAuthorizationScope(memoryAuthorization.authorizedScopeId).shortLabel)}`
         : "接过一段有边界的记忆"}</button>`
@@ -9002,8 +9444,8 @@ function syncInteriorJourneyHud(blueprint) {
             ? `<button type="button" data-interior-next-chapter="${escapeHtml(nextZone.id)}" data-episode-thread="${escapeHtml(thread.id)}">下一章 · ${escapeHtml(nextZone.name)}</button>`
             : "";
     panel.innerHTML = `
-      <header><span>${escapeHtml(act.label)}</span><strong>${escapeHtml(thread?.title || blueprint.title)}</strong></header>
-      <p>${escapeHtml(thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
+      <header><span>${socialTwinInRoom ? `社会分身案 · ${socialTwinAct.index + 1}/7` : escapeHtml(act.label)}</span><strong>${escapeHtml(socialTwinInRoom ? socialTwinAct.title : thread?.title || blueprint.title)}</strong></header>
+      <p>${escapeHtml(socialTwinInRoom ? socialTwinAct.objective : thread?.objective || blueprint.profile?.intro || "读懂这个房间留下的生活。")}</p>
       <ol>
         <li class="${phase === 1 ? "current" : ""} ${record.completed ? "done" : ""}"><b>1</b><span>${memoryAuthorization ? "安放记忆" : empathyCalibration ? "校准误解" : socialParallax ? "穿过分歧" : quietPresence ? "读懂房间" : "环顾线索"}<small>${memoryAuthorizationPending
           ? memoryAuthorization.status === "active"
@@ -9021,7 +9463,7 @@ function syncInteriorJourneyHud(blueprint) {
         <li class="${phase === 2 ? "current" : ""} ${record.scenePlayed ? "done" : ""}"><b>2</b><span>倾听与选择<small>${record.completed ? sceneAction.title : "读懂三段回声后解锁"}</small></span></li>
         <li class="${phase === 3 ? "current" : ""} ${phase === 4 ? "done" : ""}"><b>3</b><span>听见活体余波<small>${pendingAftermath ? `${escapeHtml(pendingAftermath.observerName || "有人")}还记得另一种未来` : record.scenePlayed ? "另一种理解也进入了关系记忆" : "选择后会有人带着另一种记忆留下"}</small></span></li>
       </ol>
-      <footer><span>${thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应 · ${act.verb}` : blueprint.title}</span><em>本集可改写 <b>${episode.rewriteTokens}</b> 次</em>${nextAction}</footer>`;
+      <footer><span>${socialTwinInRoom ? `证据 ${Math.min(socialTwinEvidenceCount, socialTwinAct.requiredEvidence)}/${socialTwinAct.requiredEvidence} · ${socialTwinAct.verb}` : thread ? `${thread.completedCount}/${thread.zones.length} 个场所已回应 · ${act.verb}` : blueprint.title}</span><em>${socialTwinInRoom ? "拒绝同样会成为证据" : `本集可改写 <b>${episode.rewriteTokens}</b> 次`}</em>${nextAction}</footer>`;
   }
 
   let compass = document.getElementById("interiorCompass");
@@ -11197,14 +11639,14 @@ function syncInteriorDiscoveryCard(now) {
   }
   const choices = Array.isArray(discovery.choices) ? discovery.choices : [];
   const choiceSignature = choices.map((choice) => `${choice.id}:${choice.label}`).join("|");
-  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}|${choiceSignature}|${discovery.shareText || ""}|${discovery.finaleThreadId || ""}`;
+  const signature = `${discovery.title}|${discovery.text}|${discovery.progress}|${discovery.actionLabel || ""}|${choiceSignature}|${discovery.shareText || ""}|${discovery.finaleThreadId || ""}|${discovery.socialTwinNextZoneId || ""}`;
   if (card.dataset.signature !== signature) {
     card.dataset.signature = signature;
-    card.classList.toggle("has-action", !!discovery.actionLabel || choices.length > 0 || !!discovery.shareText || !!discovery.finaleThreadId);
+    card.classList.toggle("has-action", !!discovery.actionLabel || choices.length > 0 || !!discovery.shareText || !!discovery.finaleThreadId || !!discovery.socialTwinNextZoneId);
     const choiceButtons = choices.length
       ? `<div class="interior-scene-choice-list" role="group" aria-label="选择你的回应">${choices.map((choice, index) => `<button class="interior-scene-choice choice-${index + 1}" type="button" data-interior-scene-choice="${escapeHtml(choice.id)}">${escapeHtml(choice.label)}</button>`).join("")}</div>`
       : "";
-    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}${choiceButtons}${discovery.shareText ? `<button class="interior-share-receipt" type="button" data-interior-share="${escapeHtml(discovery.shareText)}">分享「两种被记住的方式」</button>` : ""}${discovery.finaleThreadId ? `<button class="interior-finale-entry" type="button" data-counterfactual-episode-finale="${escapeHtml(discovery.finaleThreadId)}">进入故事馆终章</button>` : ""}`;
+    card.innerHTML = `<span>场所记忆 · ${escapeHtml(discovery.progress)}</span><strong>${escapeHtml(discovery.title)}</strong><p>${escapeHtml(discovery.text)}</p>${discovery.actionLabel ? `<button type="button" data-interior-scene-action>${escapeHtml(discovery.actionLabel)}</button>` : ""}${choiceButtons}${discovery.socialTwinNextZoneId ? `<button type="button" data-social-twin-next="${escapeHtml(discovery.socialTwinNextZoneId)}">前往下一幕 · ${escapeHtml(findRenderZoneById(discovery.socialTwinNextZoneId)?.name || "继续听证")}</button>` : ""}${discovery.shareText ? `<button class="interior-share-receipt" type="button" data-interior-share="${escapeHtml(discovery.shareText)}">分享「两种被记住的方式」</button>` : ""}${discovery.finaleThreadId ? `<button class="interior-finale-entry" type="button" data-counterfactual-episode-finale="${escapeHtml(discovery.finaleThreadId)}">进入故事馆终章</button>` : ""}`;
   }
 }
 
@@ -11476,6 +11918,7 @@ function exploreInteriorHotspot(propIndex) {
   }
 
   maybeCompleteInteriorExploration(zone, blueprint, record);
+  recordSocialTwinEvidence(zone, prop, clue);
   persistInteriorExploration();
   persist();
   syncInteriorDiscoveryCard(performance.now());
@@ -12799,10 +13242,35 @@ function getInteriorThreeItems(blueprint, W, H) {
   return propItems;
 }
 
+function getInteriorCameraFocus(blueprint, actors = []) {
+  const layoutProfile = blueprint?.layoutProfile || getInteriorZoneLayoutProfile(interiorView?.zone, blueprint?.key);
+  const target = layoutProfile.cameraTargets?.[0] || { x: 0, z: 0.2 };
+  const ritual = getSocialParallaxRitual(interiorView?.zone?.id)
+    || getEmpathyCalibrationRitual(interiorView?.zone?.id)
+    || getMemoryAuthorizationRitual(interiorView?.zone?.id);
+  const focusId = String(interiorView?.focusActorId || ritual?.targetId || ritual?.witnessId || "");
+  const actor = actors.find((candidate) => candidate.id === focusId) || null;
+  const actorWeight = actor ? 0.42 : 0;
+  const targetWeight = 1 - actorWeight;
+  const safeArea = layoutProfile.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
+  let x = Number(target.x || 0) * targetWeight + Number(actor?.worldX || 0) * actorWeight;
+  let z = Number(target.z || 0.2) * targetWeight + Number(actor?.worldZ || 0) * actorWeight;
+  const dx = x - Number(safeArea.x || 0);
+  const dz = z - Number(safeArea.z || 0);
+  const distance = Math.hypot(dx, dz);
+  const radius = Math.max(0.8, Number(safeArea.radius || 2.1));
+  if (distance > radius) {
+    x = Number(safeArea.x || 0) + dx / distance * radius;
+    z = Number(safeArea.z || 0) + dz / distance * radius;
+  }
+  return { x, z, safeArea };
+}
+
 function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []) {
   const api = window.MirrorLifeInterior3D;
   if (!api?.update) return false;
   const items = getInteriorThreeItems(blueprint, W, H);
+  const cameraFocus = getInteriorCameraFocus(blueprint, actors);
   const physicsActors = [
     { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
     ...actors.map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
@@ -12815,6 +13283,9 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     pitch: Number(interiorOrbit?.pitch || 0.58),
     cameraX: Number(interiorOrbit?.x || 0),
     cameraZ: Number(interiorOrbit?.z || 0),
+    cameraTargetX: cameraFocus.x,
+    cameraTargetZ: cameraFocus.z,
+    cameraSafeArea: cameraFocus.safeArea,
     theme: {
       wall: roomStyle.wall,
       floor: roomStyle.floor,
@@ -12823,6 +13294,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
       archetype: blueprint.key,
       zoneId: interiorView?.zone?.id || "",
       variant: getInteriorPhysicsVariant(blueprint),
+      layoutProfile: blueprint.layoutProfile,
       night: !!isNight
     },
     items,
@@ -13182,6 +13654,7 @@ function findRenderZoneById(zoneId) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
+  window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
   const blueprint = getInteriorBlueprint(zone);
@@ -13248,6 +13721,7 @@ function enterInteriorView(zone, source = "manual") {
   stageMemoryAuthorizationWitness(zone);
   stageInteriorAftermathWitness(zone);
   if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
+  enterSocialTwinEpisodeRoom(zone);
   markRenderActive(3200);
 }
 
@@ -13594,6 +14068,7 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
     let ia = interiorAnimations[citizen.id];
     if (!ia || !Number.isFinite(ia.worldX) || !Number.isFinite(ia.worldZ)) {
       const seed = hashCommunitySeed(citizen.id, "interior-spawn");
+      const authoredStagingPoint = blueprint.layoutProfile?.actorStagingPoints?.[idx] || null;
       const focalAnchor = anchors.find((anchor) => anchor.prop?.focal) || null;
       const spawnAnchor = focalAnchor && idx < 3
         ? focalAnchor
@@ -13601,7 +14076,9 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
           ? anchors[(seed + idx) % anchors.length]
           : null;
       let desired;
-      if (spawnAnchor) {
+      if (authoredStagingPoint) {
+        desired = { x: Number(authoredStagingPoint.x || 0), z: Number(authoredStagingPoint.z || 0) };
+      } else if (spawnAnchor) {
         const tangent = { x: Math.cos(spawnAnchor.angle || 0), z: Math.sin(spawnAnchor.angle || 0) };
         const offsets = [-0.78, 0.78, 0];
         const forwardOffsets = [0.12, 0.12, 0.72];
@@ -13955,11 +14432,11 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
       ctx.fillText(active ? "请留下这段安静" : "不想解释", moveAnim.x, moveAnim.y - size * 1.52 + 10);
       ctx.restore();
     }
-    const socialParallaxIndex = socialParallaxRitual?.status !== "complete"
-      ? socialParallaxRitual.witnessIds?.indexOf(citizen.id) ?? -1
+    const socialParallaxIndex = socialParallaxRitual && socialParallaxRitual.status !== "complete"
+      ? (Array.isArray(socialParallaxRitual.witnessIds) ? socialParallaxRitual.witnessIds.indexOf(citizen.id) : -1)
       : -1;
     if (socialParallaxIndex >= 0 && visible !== false) {
-      const heard = socialParallaxRitual.heardIds.includes(citizen.id);
+      const heard = Array.isArray(socialParallaxRitual.heardIds) && socialParallaxRitual.heardIds.includes(citizen.id);
       const active = socialParallaxRitual.status === "active" && socialParallaxRitual.targetId === citizen.id;
       const pulse = 0.5 + Math.sin(now * 0.007 + socialParallaxIndex * Math.PI) * 0.5;
       const color = socialParallaxIndex === 0 ? "255, 139, 122" : "110, 184, 255";

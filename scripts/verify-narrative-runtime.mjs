@@ -13,6 +13,12 @@ try {
   await page.goto(`${BASE_URL}/game.html?qaFresh=1`, { waitUntil: "networkidle0", timeout: 30000 });
   await page.waitForFunction(() => !!window.MirrorLifeNarrativeRuntime && !!state?.society, { timeout: 12000 });
   const report = await page.evaluate(async () => {
+    const socialTwinDefinition = MirrorLifeNarrativeRuntime.getEpisodeDefinition("preferred-other-self");
+    const migratedSocialTwinRun = MirrorLifeNarrativeRuntime.normalizeEpisodeRunState({
+      actIndex: 99,
+      evidence: [{ id: "legacy-evidence", actId: "late-apology", label: "旧证据", summary: "迁移后仍存在", authorized: true }],
+      endingId: "invalid-ending"
+    });
     const observation = MirrorLifePlotDirector.observe(state.society);
     const quest = MirrorLifePlotDirector.start(state.society, observation);
     const contract = MirrorLifeNarrativeRuntime.getActiveSceneContract();
@@ -59,8 +65,11 @@ try {
       memoryStore: ensureAgentRuntime(state.society).memoryStore
     });
     const queued = ensureAgentRuntime(state.society).inbox.find((item) => item.type === "agent-narrative-proposal" && item.targetId === agentId);
-    return { questId: quest.id, contract, embodied, malicious, accepted, queued, worldUnchanged: before === after };
+    return { questId: quest.id, contract, embodied, socialTwinDefinition, migratedSocialTwinRun, malicious, accepted, queued, worldUnchanged: before === after };
   });
+  assert(report.socialTwinDefinition?.acts?.length === 7 && report.socialTwinDefinition?.endings?.length === 4, "The social-twin vertical slice is missing acts or endings.");
+  assert(report.socialTwinDefinition.privacyPolicy?.rawMemoryMayBePublished === false && report.socialTwinDefinition.dialogueAuthority === "proposal-only", "The social-twin episode bypasses privacy or proposal-only rules.");
+  assert(report.migratedSocialTwinRun?.actIndex === 6 && report.migratedSocialTwinRun?.evidence?.[0]?.id === "legacy-evidence" && !report.migratedSocialTwinRun?.endingId, "Social-twin save migration is destructive or accepts an invalid ending.");
   assert(report.contract?.worldMutationAuthority === "engine-only" && report.contract?.evidenceSource === "engine-outbox-only", "Scene contract does not reserve state changes for the engine.");
   assert(report.contract?.consentPolicy?.actorMayRefuse && report.contract?.consentPolicy?.rawMemoryMayBePublished === false, "Scene contract is missing agency or memory consent constraints.");
   assert(report.embodied.length === 5 && report.embodied.every((item) => item?.verb && item?.proof?.length), "The five embodied chapters are not represented as scene contracts.");

@@ -20,6 +20,73 @@
   color-scheme: dark;
 }
 
+body.social-twin-hearing-active .hud-top,
+body.social-twin-hearing-active #interiorChip,
+body.social-twin-hearing-active #interiorMovePad,
+body.social-twin-hearing-active #interiorHotspotLayer,
+body.social-twin-hearing-active #interiorContextAction,
+body.social-twin-hearing-active #interiorJourneyPanel,
+body.social-twin-hearing-active #interiorCompass,
+body.social-twin-hearing-active #interiorDiscoveryCard { visibility: hidden; }
+
+#socialTwinHearingStage {
+  position: absolute;
+  inset: 0;
+  z-index: 80;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  overflow: auto;
+  background: linear-gradient(90deg, rgba(255,112,104,.13), transparent 44%, rgba(86,200,183,.13)), radial-gradient(circle at 50% 38%, rgba(255,240,181,.34), transparent 34%), rgba(24,27,45,.9);
+  backdrop-filter: blur(14px);
+}
+
+.social-twin-hearing-card {
+  width: min(960px, calc(100vw - 42px));
+  padding: clamp(24px, 4vw, 54px);
+  border: 2px solid #30364e;
+  border-radius: 32px 12px;
+  background: #fff8e8;
+  color: #30364e;
+  box-shadow: 12px 12px 0 rgba(241,196,15,.82), 0 34px 90px rgba(12,15,31,.42);
+}
+
+.social-twin-hearing-card > span { color: #e95d5d; font-size: 11px; font-weight: 950; letter-spacing: .14em; }
+.social-twin-hearing-card h1 { max-width: 780px; margin: 10px 0 8px; font-family: var(--font-display); font-size: clamp(30px,5vw,58px); line-height: 1.08; }
+.social-twin-hearing-card > p { max-width: 700px; margin: 0; color: rgba(48,54,78,.72); font-size: 15px; line-height: 1.7; }
+
+.social-twin-evidence { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 26px 0 18px; }
+.social-twin-evidence article { min-height: 132px; padding: 17px 18px; border: 2px solid #30364e; border-radius: 16px 6px; background: #fff0b5; box-shadow: 4px 4px 0 #30364e; }
+.social-twin-evidence article:nth-child(even) { background: #d9f2e9; }
+.social-twin-evidence small { display: block; color: #e95d5d; font-size: 9px; font-weight: 900; }
+.social-twin-evidence strong { display: block; margin-top: 5px; font-size: 16px; }
+.social-twin-evidence p { margin: 6px 0 0; color: rgba(48,54,78,.72); font-size: 12px; line-height: 1.52; }
+
+.social-twin-ending-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 22px; }
+.social-twin-ending-grid button,
+.social-twin-hearing-card footer button,
+.social-twin-hearing-card > button.quiet { min-height: 86px; padding: 14px 16px; border: 2px solid #30364e; border-radius: 14px; background: #ffcf56; color: #30364e; box-shadow: 4px 4px 0 #30364e; text-align: left; cursor: pointer; }
+.social-twin-ending-grid button:nth-child(2) { background: #ff958b; }
+.social-twin-ending-grid button:nth-child(3) { background: #9ed9f2; }
+.social-twin-ending-grid button:nth-child(4) { background: #9be2c5; }
+.social-twin-ending-grid strong { display: block; font: 950 18px/1.2 inherit; }
+.social-twin-ending-grid span { display: block; margin-top: 6px; font-size: 11px; line-height: 1.5; }
+.social-twin-hearing-card > button.quiet { min-height: 42px; margin-top: 16px; background: transparent; box-shadow: none; text-align: center; }
+
+.social-twin-resolution { margin: 18px 0; padding: 18px; border-left: 7px solid #56c8b7; background: #e3f4ed; }
+.social-twin-resolution strong { font-size: 18px; }
+.social-twin-resolution p { margin: 6px 0 0; font-size: 12px; }
+.social-twin-hearing-card footer { display: grid; grid-template-columns: 1fr 1fr auto; gap: 12px; }
+.social-twin-hearing-card footer button { min-height: 48px; text-align: center; }
+.social-twin-hearing-card footer button:nth-child(2) { background: #9be2c5; }
+.social-twin-hearing-card footer button.quiet { background: transparent; box-shadow: none; }
+
+@media (max-width: 700px) {
+  #socialTwinHearingStage { padding: 10px; place-items: start center; }
+  .social-twin-hearing-card { margin: 78px 0 12px; padding: 22px 17px; }
+  .social-twin-evidence, .social-twin-ending-grid, .social-twin-hearing-card footer { grid-template-columns: 1fr; }
+}
+
 /* ── Mirror Relay: consent-first social avatar handoff ── */
 body.mirror-relay-active .hud,
 body.mirror-relay-active .hud-top,
@@ -6832,4 +6899,27 @@ body.counterfactual-finale-active #interiorDiscoveryCard {
   #interiorDiscoveryCard .interior-scene-choice {
     min-height: 42px;
   }
+}
+
+/* Final cascade placement for compact interior HUD. */
+body.interior-active #interiorJourneyPanel {
+  width: 232px;
+  max-height: min(36vh, 310px);
+  overflow: auto;
+  padding: 11px 12px 10px;
+}
+
+body.interior-active #interiorDiscoveryCard {
+  left: auto;
+  right: 24px;
+  bottom: 24px;
+  width: min(350px, 32vw);
+  transform: none;
+}
+
+body.interior-active #interiorCompass { width: 104px; height: 104px; }
+
+@media (max-width: 700px) {
+  body.interior-active #interiorJourneyPanel { left: 10px; bottom: 10px; width: min(210px,54vw); max-height: 28vh; }
+  body.interior-active #interiorDiscoveryCard { left: 12px; right: auto; bottom: 152px; width: calc(100vw - 24px); }
 }

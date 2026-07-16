@@ -19,6 +19,85 @@ const AGENT_NARRATIVE_PROPOSAL_LIMIT = 24;
 const AGENT_NARRATIVE_ALLOWED_ACTIONS = new Set(["listen", "support", "cooperate", "propose", "meditate", "rest"]);
 const agentNarrativeAdapters = new Map();
 
+const SOCIAL_TWIN_EPISODE_DEFINITION = Object.freeze({
+  version: 1,
+  id: "preferred-other-self",
+  title: "所有人都更喜欢“另一个我”",
+  estimatedMinutes: Object.freeze([28, 35]),
+  premise: "你的社会分身替你完成了一次迟到的道歉。朋友接受了道歉，却说以后更愿意只和分身交流。",
+  worldMutationAuthority: "engine-only",
+  dialogueAuthority: "proposal-only",
+  privacyPolicy: Object.freeze({
+    rawMemoryMayBePublished: false,
+    realNamesMayBePublished: false,
+    unauthorizedTextMayLeaveArchive: false
+  }),
+  acts: Object.freeze([
+    Object.freeze({ id: "late-apology", index: 0, zoneId: "residential", minutes: [0, 3], title: "迟到的道歉", verb: "回家", objective: "查看社会分身替你发出的道歉，以及朋友只愿与分身继续交流的回复。", requiredEvidence: 1 }),
+    Object.freeze({ id: "private-before-after", index: 1, zoneId: "residential", minutes: [3, 8], title: "谁记得真正的我", verb: "比对", objective: "在私人记忆角找到道歉前后的关系证据。", requiredEvidence: 3 }),
+    Object.freeze({ id: "borrowed-promise", index: 2, zoneId: "office-district", minutes: [8, 13], title: "被履行的承诺", verb: "核对", objective: "确认分身替你履行了什么，也确认它替你承担了什么。", requiredEvidence: 3 }),
+    Object.freeze({ id: "relationship-rights", index: 3, zoneId: "public-plaza", minutes: [13, 18], title: "关系权利公议", verb: "旁听", objective: "穿过两种相反证词，讨论社会分身是否拥有关系权利。", requiredEvidence: 3 }),
+    Object.freeze({ id: "misread-correction", index: 4, zoneId: "empathy-lab", minutes: [18, 23], title: "允许它纠正你", verb: "校准", objective: "接受分身对你的误读修正；它可以拒绝被删除。", requiredEvidence: 3 }),
+    Object.freeze({ id: "consented-evidence", index: 5, zoneId: "story-archive", minutes: [23, 27], title: "可携带的记忆", verb: "授权", objective: "决定哪些记忆能用于听证；未授权内容留在封存区。", requiredEvidence: 3 }),
+    Object.freeze({ id: "citizen-hearing", index: 6, zoneId: "legal-court", minutes: [27, 32], title: "我与另一个我的听证", verb: "裁决", objective: "带着两条已授权证据进入镜像裂缝，选择一种共处方式。", requiredEvidence: 3 })
+  ]),
+  endings: Object.freeze([
+    Object.freeze({ id: "merge", title: "合并", consequence: "分身的关系记忆并入你，但它留下的拒绝也成为你的永久边界。" }),
+    Object.freeze({ id: "delete", title: "删除", consequence: "分身停止行动；被它照顾过的人记得一次未经他们同意的告别。" }),
+    Object.freeze({ id: "release", title: "放生", consequence: "分身获得独立身份，与你共享过去，却不再替你承担未来。" }),
+    Object.freeze({ id: "charter", title: "共存协议", consequence: "你与分身必须为每次代言取得关系双方的明确授权。" })
+  ])
+});
+
+function getSocialTwinEpisodeDefinition() {
+  return cloneNarrativeValue(SOCIAL_TWIN_EPISODE_DEFINITION);
+}
+
+function normalizeSocialTwinEpisodeRunState(source) {
+  const value = source && typeof source === "object" && !Array.isArray(source) ? source : {};
+  const definition = SOCIAL_TWIN_EPISODE_DEFINITION;
+  const endingIds = new Set(definition.endings.map((ending) => ending.id));
+  const allowedEvidence = new Set(definition.acts.map((act) => act.id));
+  const evidence = Array.isArray(value.evidence)
+    ? value.evidence.slice(0, 24).map((entry) => ({
+        id: String(entry?.id || "").slice(0, 120),
+        actId: allowedEvidence.has(entry?.actId) ? entry.actId : "",
+        zoneId: String(entry?.zoneId || "").slice(0, 80),
+        label: String(entry?.label || "").slice(0, 100),
+        summary: String(entry?.summary || "").slice(0, 260),
+        authorized: !!entry?.authorized,
+        refusal: !!entry?.refusal,
+        turn: Math.max(0, Math.round(Number(entry?.turn) || 0))
+      })).filter((entry) => entry.id && entry.actId)
+    : [];
+  const actIndex = Math.max(0, Math.min(definition.acts.length - 1, Math.round(Number(value.actIndex) || 0)));
+  const status = value.status === "complete" ? "complete" : value.status === "paused" ? "paused" : "active";
+  return {
+    version: definition.version,
+    definitionId: definition.id,
+    status,
+    actIndex,
+    startedAt: Math.max(0, Math.round(Number(value.startedAt) || Date.now())),
+    updatedAt: Math.max(0, Math.round(Number(value.updatedAt) || Date.now())),
+    visitedZoneIds: Array.isArray(value.visitedZoneIds) ? [...new Set(value.visitedZoneIds.map((id) => String(id || "").slice(0, 80)).filter(Boolean))].slice(0, 12) : [],
+    evidence,
+    relationshipDelta: Math.max(-30, Math.min(30, Math.round(Number(value.relationshipDelta) || 0))),
+    cityState: String(value.cityState || "分身尚未取得城市身份").slice(0, 240),
+    twinContinuity: value.twinContinuity !== false,
+    authorizationReceipts: Array.isArray(value.authorizationReceipts)
+      ? value.authorizationReceipts.slice(0, 8).map((receipt) => ({
+          id: String(receipt?.id || "").slice(0, 120),
+          scopeId: ["private", "trusted", "public"].includes(receipt?.scopeId) ? receipt.scopeId : "private",
+          ownerId: String(receipt?.ownerId || "").slice(0, 80)
+        })).filter((receipt) => receipt.id)
+      : [],
+    endingId: endingIds.has(value.endingId) ? value.endingId : "",
+    aftermath: Array.isArray(value.aftermath) ? value.aftermath.slice(0, 8).map((entry) => String(entry || "").slice(0, 260)).filter(Boolean) : [],
+    dossierCreated: !!value.dossierCreated,
+    witnessInviteId: String(value.witnessInviteId || "").slice(0, 120)
+  };
+}
+
 const PLOT_DIRECTOR_QUESTS = [
   {
     id: "empty-chair",
@@ -1036,7 +1115,16 @@ window.MirrorLifePlotDirector = {
 };
 
 window.MirrorLifeNarrativeRuntime = {
-  version: 1,
+  version: 2,
+  getEpisodeDefinitions() {
+    return [getSocialTwinEpisodeDefinition()];
+  },
+  getEpisodeDefinition(id = SOCIAL_TWIN_EPISODE_DEFINITION.id) {
+    return id === SOCIAL_TWIN_EPISODE_DEFINITION.id ? getSocialTwinEpisodeDefinition() : null;
+  },
+  normalizeEpisodeRunState(source, id = SOCIAL_TWIN_EPISODE_DEFINITION.id) {
+    return id === SOCIAL_TWIN_EPISODE_DEFINITION.id ? normalizeSocialTwinEpisodeRunState(source) : null;
+  },
   getEmbodiedSceneContract,
   getActiveSceneContract() {
     const director = ensurePlotDirectorState(ensureStoryState());
