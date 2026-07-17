@@ -67,7 +67,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.18, fill: 0.38, hemi: 0.46, bounce: 0.54, wash: 0.84, exposure: 0.82, keyColor: "#ffdbab", fillColor: "#a9ccd1" },
+  "civic-ivory": { key: 3.08, fill: 0.16, hemi: 0.22, bounce: 0.3, wash: 0.82, exposure: 0.94, keyColor: "#ffc982", fillColor: "#91b8bd" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -161,10 +161,18 @@ let MeshoptDecoder;
 let RoundedBoxGeometry;
 let RoomEnvironment;
 let mergeGeometries;
+let EffectComposer;
+let RenderPass;
+let SSAOPass;
+let OutputPass;
 let loader;
 let threeLoading;
 let canvas;
 let renderer;
+let composer;
+let renderPass;
+let ssaoPass;
+let outputPass;
 let scene;
 let camera;
 let keyLight;
@@ -209,13 +217,32 @@ async function loadThree() {
       import("three/examples/jsm/geometries/RoundedBoxGeometry.js"),
       import("three/examples/jsm/utils/BufferGeometryUtils.js"),
       import("three/examples/jsm/libs/meshopt_decoder.module.js"),
-      import("three/examples/jsm/environments/RoomEnvironment.js")
-    ]).then(([threeModule, loaderModule, roundedBoxModule, geometryUtilsModule, meshoptModule, roomEnvironmentModule]) => {
+      import("three/examples/jsm/environments/RoomEnvironment.js"),
+      import("three/examples/jsm/postprocessing/EffectComposer.js"),
+      import("three/examples/jsm/postprocessing/RenderPass.js"),
+      import("three/examples/jsm/postprocessing/SSAOPass.js"),
+      import("three/examples/jsm/postprocessing/OutputPass.js")
+    ]).then(([
+      threeModule,
+      loaderModule,
+      roundedBoxModule,
+      geometryUtilsModule,
+      meshoptModule,
+      roomEnvironmentModule,
+      effectComposerModule,
+      renderPassModule,
+      ssaoPassModule,
+      outputPassModule
+    ]) => {
       THREE = threeModule;
       GLTFLoader = loaderModule.GLTFLoader;
       MeshoptDecoder = meshoptModule.MeshoptDecoder;
       RoundedBoxGeometry = roundedBoxModule.RoundedBoxGeometry;
       RoomEnvironment = roomEnvironmentModule.RoomEnvironment;
+      EffectComposer = effectComposerModule.EffectComposer;
+      RenderPass = renderPassModule.RenderPass;
+      SSAOPass = ssaoPassModule.SSAOPass;
+      OutputPass = outputPassModule.OutputPass;
       mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
       loader.setMeshoptDecoder(MeshoptDecoder);
@@ -308,6 +335,21 @@ function ensureLayer() {
   windowWashLight = new THREE.DirectionalLight(0xffe4bd, 0.92);
   windowWashLight.position.set(-5.8, 4.4, 1.8);
   scene.add(windowWashLight);
+
+  // The civic hero room relies on contact depth rather than heavy outlines.
+  // Keep the pass allocated once and switch it per-room so other interiors and
+  // mobile devices retain their existing performance profile.
+  composer = new EffectComposer(renderer);
+  renderPass = new RenderPass(scene, camera);
+  ssaoPass = new SSAOPass(scene, camera, 1, 1);
+  ssaoPass.kernelRadius = 7;
+  ssaoPass.minDistance = 0.0018;
+  ssaoPass.maxDistance = 0.11;
+  ssaoPass.enabled = false;
+  outputPass = new OutputPass();
+  composer.addPass(renderPass);
+  composer.addPass(ssaoPass);
+  composer.addPass(outputPass);
   return true;
 }
 
@@ -316,6 +358,7 @@ function resize(width, height) {
   lastWidth = width;
   lastHeight = height;
   renderer.setSize(width, height, false);
+  composer?.setSize(width, height);
   camera.aspect = width / height;
   camera.fov = width / height < 0.82 ? 56 : 48;
   camera.updateProjectionMatrix();
@@ -804,7 +847,7 @@ function applyLightingPreset(theme = {}) {
   if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
   if (windowWashLight) windowWashLight.intensity = preset.wash;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.26 : 0.42;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.42;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -1169,11 +1212,15 @@ function addAtelierTerrazzo(theme) {
   const seed = String(theme.zoneId || theme.archetype || "atelier")
     .split("")
     .reduce((sum, character, index) => sum + character.charCodeAt(0) * (index + 5), 17);
-  const chipColors = ["#caa982", "#d99b78", "#7c9da4", "#a9ad7b", "#f3e5cf"];
-  for (let index = 0; index < 220; index += 1) {
+  const civic = theme.zoneId === "public-plaza";
+  const chipColors = civic
+    ? ["#846d59", "#b7795f", "#5f8188", "#7d875f", "#d3b995", "#514a43"]
+    : ["#caa982", "#d99b78", "#7c9da4", "#a9ad7b", "#f3e5cf"];
+  const chipCount = civic ? 380 : 220;
+  for (let index = 0; index < chipCount; index += 1) {
     const angle = ((index * 2.39996) + seed * 0.013) % (Math.PI * 2);
     const radius = 0.85 + ((index * 37 + seed) % 100) / 100 * 4.15;
-    const size = 0.009 + ((index * 13 + seed) % 9) * 0.0028;
+    const size = (civic ? 0.016 : 0.009) + ((index * 13 + seed) % 9) * (civic ? 0.0042 : 0.0028);
     const chip = new THREE.Mesh(
       new THREE.CircleGeometry(size, 7),
       createToonMaterial(chipColors[(index + seed) % chipColors.length], {
@@ -1571,8 +1618,8 @@ function addAmbientTeaTable(angle, colors) {
 
 function addAtelierDisplayCabinet(theme, colors) {
   const group = new THREE.Group();
-  group.position.set(-2.35, 0, 0.72);
-  group.rotation.y = 0.14;
+  group.position.set(theme.zoneId === "public-plaza" ? -3.28 : -2.35, 0, theme.zoneId === "public-plaza" ? 0.56 : 0.72);
+  group.rotation.y = theme.zoneId === "public-plaza" ? 0.28 : 0.14;
   roomRoot.add(group);
 
   const archetype = theme.archetype || "home";
@@ -2057,6 +2104,129 @@ function addCivicRecordDesk(colors) {
   group.add(shade);
 }
 
+function addCivicHeroNoticeWall(colors) {
+  const group = new THREE.Group();
+  group.position.set(0, 2.2, -5.08);
+  roomRoot.add(group);
+
+  const oak = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.58, surface: "wood", bumpScale: 0.014 });
+  const darkWood = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.66, surface: "wood", bumpScale: 0.011 });
+  const cork = createToonMaterial("#d7b78b", { roughness: 0.97, surface: "fabric", bumpScale: 0.018 });
+  const frame = new THREE.Mesh(new RoundedBoxGeometry(2.9, 1.48, 0.16, 7, 0.09), darkWood);
+  frame.position.z = 0.01;
+  group.add(frame);
+  const board = new THREE.Mesh(new RoundedBoxGeometry(2.64, 1.22, 0.1, 6, 0.06), cork);
+  board.position.z = 0.1;
+  group.add(board);
+
+  const title = new THREE.Mesh(new RoundedBoxGeometry(0.84, 0.24, 0.09, 4, 0.05), createToonMaterial("#f0d49a", { roughness: 0.74 }));
+  title.position.set(0, 0.47, 0.18);
+  group.add(title);
+  [-0.24, 0, 0.24].forEach((x) => {
+    const line = new THREE.Mesh(new RoundedBoxGeometry(0.14, 0.025, 0.02, 2, 0.009), darkWood);
+    line.position.set(x, 0.47, 0.232);
+    group.add(line);
+  });
+
+  const paperColors = ["#f8edd7", "#f1dbb6", "#e9f0dc", "#f4d8cc", "#dce8e5", "#fff5da", "#eadac8"];
+  const paperLayout = [
+    [-0.96, 0.08, 0.42, 0.5, -0.045], [-0.49, 0.12, 0.34, 0.44, 0.035],
+    [-0.08, 0.02, 0.43, 0.52, -0.02], [0.43, 0.12, 0.36, 0.42, 0.055],
+    [0.88, 0.02, 0.38, 0.5, -0.04], [-0.66, -0.43, 0.5, 0.27, 0.025],
+    [0.08, -0.44, 0.62, 0.26, -0.015], [0.81, -0.43, 0.4, 0.28, 0.035]
+  ];
+  paperLayout.forEach(([x, y, w, h, rz], index) => {
+    const paper = new THREE.Mesh(new RoundedBoxGeometry(w, h, 0.025, 3, 0.025), createToonMaterial(paperColors[index % paperColors.length], { roughness: 0.94 }));
+    paper.position.set(x, y, 0.18 + index * 0.0005);
+    paper.rotation.z = rz;
+    group.add(paper);
+    for (let lineIndex = 0; lineIndex < 3; lineIndex += 1) {
+      const line = new THREE.Mesh(new RoundedBoxGeometry(w * (0.48 + lineIndex * 0.1), 0.012, 0.012, 1, 0.004), createToonMaterial(index % 2 ? "#8b806e" : colors.secondary, { roughness: 0.8 }));
+      line.position.set(x, y + h * 0.18 - lineIndex * h * 0.18, 0.201 + index * 0.0005);
+      line.rotation.z = rz;
+      group.add(line);
+    }
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), createToonMaterial(index % 3 ? "#c99b43" : colors.accent, { metalness: 0.28, roughness: 0.38 }));
+    pin.position.set(x, y + h * 0.4, 0.215);
+    group.add(pin);
+  });
+
+  [-1.22, 1.22].forEach((x) => {
+    const bracket = new THREE.Mesh(new RoundedBoxGeometry(0.09, 0.44, 0.12, 3, 0.03), oak);
+    bracket.position.set(x, 0.92, 0.05);
+    group.add(bracket);
+    const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 10), createToonMaterial("#f6c968", { emissive: 0xffb84d, emissiveIntensity: 0.7, roughness: 0.35 }));
+    lamp.position.set(x, 1.11, 0.14);
+    group.add(lamp);
+    const light = new THREE.PointLight(0xffc875, 1.25, 3.1, 2.1);
+    light.position.set(x, 0.86, 0.6);
+    group.add(light);
+  });
+}
+
+function addCivicLibraryWall(colors) {
+  const group = new THREE.Group();
+  group.position.set(4.66, 0, -2.76);
+  group.rotation.y = -1.03;
+  roomRoot.add(group);
+  const oak = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.6, surface: "wood", bumpScale: 0.014 });
+  const walnut = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.7 });
+  const body = new THREE.Mesh(new RoundedBoxGeometry(1.34, 2.42, 0.48, 7, 0.13), oak);
+  body.position.y = 1.26;
+  group.add(body);
+  const recess = new THREE.Mesh(new RoundedBoxGeometry(1.08, 2.08, 0.09, 6, 0.08), createToonMaterial("#d7b78c", { roughness: 0.9 }));
+  recess.position.set(0, 1.36, 0.27);
+  group.add(recess);
+  const palette = [colors.secondary, ATELIER_TOKENS.apricot, ATELIER_TOKENS.butter, "#7c9f79", "#e9dfc9", "#789bc0"];
+  for (let shelfIndex = 0; shelfIndex < 4; shelfIndex += 1) {
+    const shelfY = 0.48 + shelfIndex * 0.48;
+    const shelf = new THREE.Mesh(new RoundedBoxGeometry(1.12, 0.08, 0.4, 3, 0.025), walnut);
+    shelf.position.set(0, shelfY, 0.25);
+    group.add(shelf);
+    for (let bookIndex = 0; bookIndex < 6; bookIndex += 1) {
+      const h = 0.26 + ((bookIndex + shelfIndex) % 3) * 0.045;
+      const book = new THREE.Mesh(new RoundedBoxGeometry(0.12, h, 0.26, 2, 0.018), createToonMaterial(palette[(bookIndex + shelfIndex) % palette.length], { roughness: 0.82 }));
+      book.position.set(-0.43 + bookIndex * 0.17, shelfY + 0.04 + h / 2, 0.27);
+      book.rotation.z = ((bookIndex + shelfIndex) % 3 - 1) * 0.035;
+      group.add(book);
+    }
+  }
+}
+
+function addCivicThresholdFlowers(colors) {
+  const group = new THREE.Group();
+  group.position.set(-4.05, 0, -1.25);
+  roomRoot.add(group);
+  const table = new THREE.Mesh(new THREE.CylinderGeometry(0.42, 0.48, 0.68, 28), createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.64, surface: "wood", bumpScale: 0.012 }));
+  table.position.y = 0.34;
+  group.add(table);
+  const vase = new THREE.Mesh(new THREE.LatheGeometry([
+    new THREE.Vector2(0.13, 0), new THREE.Vector2(0.2, 0.08), new THREE.Vector2(0.22, 0.34),
+    new THREE.Vector2(0.13, 0.5), new THREE.Vector2(0.11, 0.62)
+  ], 28), createToonMaterial("#eee0c8", { roughness: 0.48, surface: "ceramic", bumpScale: 0.006 }));
+  vase.position.y = 0.7;
+  group.add(vase);
+  const stemMaterial = createToonMaterial("#477449", { roughness: 0.9 });
+  const flowerPalette = ["#db6655", "#e9a33b", "#f2cf62", colors.secondary];
+  [-0.22, -0.08, 0.08, 0.23].forEach((x, index) => {
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.016, 0.58 + index * 0.04, 8), stemMaterial);
+    stem.position.set(x * 0.45, 1.24 + index * 0.02, 0);
+    stem.rotation.z = -x * 0.65;
+    group.add(stem);
+    const core = new THREE.Mesh(new THREE.SphereGeometry(0.075, 14, 10), createToonMaterial(flowerPalette[index], { roughness: 0.72 }));
+    core.position.set(x, 1.54 + index * 0.06, 0);
+    group.add(core);
+    for (let petalIndex = 0; petalIndex < 7; petalIndex += 1) {
+      const angle = petalIndex / 7 * Math.PI * 2;
+      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.065, 12, 8), createToonMaterial(flowerPalette[index], { roughness: 0.76 }));
+      petal.scale.set(1.25, 0.68, 0.7);
+      petal.position.set(x + Math.cos(angle) * 0.1, 1.54 + index * 0.06 + Math.sin(angle) * 0.1, 0);
+      petal.rotation.z = angle;
+      group.add(petal);
+    }
+  });
+}
+
 function addCivicReferenceDressing(theme, colors) {
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
@@ -2085,11 +2255,14 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicBrassInlay([[0.1, 4.92], [0.08, 3.72], [0.04, 2.55], [0.02, 2.02]]);
 
   addAtelierDisplayCabinet(theme, colors);
-  addCivicRecordDesk(colors);
   addCivicListeningConsole(colors);
+  addCivicHeroNoticeWall(colors);
+  addCivicLibraryWall(colors);
+  addCivicThresholdFlowers(colors);
   addAmbientBanquette(1.06, { ...colors, secondary: "#4b9189" });
   addAmbientTeaTable(0.92, colors);
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
+  addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 2);
   addBuiltInArchNiche(0.62, colors, {
     width: 1.22,
     height: 2.12,
@@ -2098,11 +2271,9 @@ function addCivicReferenceDressing(theme, colors) {
     inner: "#b88b67",
     shelves: 3
   });
-  addAmbientHangingPlant(0.28, colors);
   addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
   addSculptedFloorPlant(4.08, -0.64, 0.88, colors, 9);
-  addSculptedFloorPlant(3.86, 2.28, 0.72, colors, 12);
-  addAtelierCeilingCove(colors, !!colors.night);
+  addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
   addSunlightPatches(!!colors.night);
 }
 
@@ -2853,6 +3024,7 @@ function rebuildRoom(theme = {}) {
     createToonMaterial(floorColor, { roughness: 0.9, surface: "terrazzo", bumpScale: 0.026 })
   );
   floor.rotation.x = -Math.PI / 2;
+  if (theme.zoneId === "public-plaza") floor.scale.setScalar(1.42);
   floor.receiveShadow = true;
   roomRoot.add(floor);
 
@@ -2867,21 +3039,24 @@ function rebuildRoom(theme = {}) {
     roomRoot.add(rug);
   }
 
+  const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
   const wall = new THREE.Mesh(
-    new THREE.CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, ROOM_HEIGHT, 64, 1, true),
+    new THREE.CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, wallHeight, 64, 1, true),
     createToonMaterial(wallColor, { side: THREE.BackSide, roughness: 0.94, surface: "plaster", bumpScale: 0.021 })
   );
-  wall.position.y = ROOM_HEIGHT / 2;
+  wall.position.y = wallHeight / 2;
   wall.receiveShadow = true;
   roomRoot.add(wall);
 
-  const baseboard = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.03, 0.055, 8, 64),
-    createToonMaterial(trim, { roughness: 0.7, surface: "wood", bumpScale: 0.008 })
-  );
-  baseboard.rotation.x = Math.PI / 2;
-  baseboard.position.y = 0.12;
-  roomRoot.add(baseboard);
+  if (theme.zoneId !== "public-plaza") {
+    const baseboard = new THREE.Mesh(
+      new THREE.TorusGeometry(ROOM_RADIUS - 0.03, 0.055, 8, 64),
+      createToonMaterial(trim, { roughness: 0.7, surface: "wood", bumpScale: 0.008 })
+    );
+    baseboard.rotation.x = Math.PI / 2;
+    baseboard.position.y = 0.12;
+    roomRoot.add(baseboard);
+  }
 
   // V2 rooms are intentionally ceilingless cutaways. Full 360° crown rings read
   // as horizontal bars whenever the player orbits outside the shell.
@@ -3224,24 +3399,95 @@ function createActorLimb(material, length, width) {
   return pivot;
 }
 
+function mergeActorVertexColorMeshes(target, excludedRoots = []) {
+  if (!target || !mergeGeometries) return;
+  target.updateMatrixWorld(true);
+  const excluded = new Set(excludedRoots);
+  const targetInverse = target.matrixWorld.clone().invert();
+  const geometries = [];
+  const sources = [];
+  target.traverse((node) => {
+    if (node === target || !node.isMesh || !node.geometry || Array.isArray(node.material)) return;
+    let parent = node;
+    while (parent && parent !== target) {
+      if (excluded.has(parent)) return;
+      parent = parent.parent;
+    }
+    if (node.material?.transparent || Number(node.material?.opacity ?? 1) < 0.999) return;
+    const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
+    const relativeMatrix = new THREE.Matrix4().multiplyMatrices(targetInverse, node.matrixWorld);
+    geometry.applyMatrix4(relativeMatrix);
+    Object.keys(geometry.attributes).forEach((attribute) => {
+      if (attribute !== "position" && attribute !== "normal") geometry.deleteAttribute(attribute);
+    });
+    if (!geometry.getAttribute("normal")) geometry.computeVertexNormals();
+    const count = geometry.getAttribute("position")?.count || 0;
+    const color = node.material?.color || new THREE.Color(0xffffff);
+    const colors = new Float32Array(count * 3);
+    for (let index = 0; index < count; index += 1) {
+      colors[index * 3] = color.r;
+      colors[index * 3 + 1] = color.g;
+      colors[index * 3 + 2] = color.b;
+    }
+    geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometries.push(geometry);
+    sources.push(node);
+  });
+  if (!geometries.length) return;
+  const geometry = geometries.length === 1 ? geometries[0] : mergeGeometries(geometries, false);
+  if (!geometry) {
+    geometries.forEach((candidate) => candidate.dispose());
+    return;
+  }
+  geometries.forEach((candidate) => {
+    if (candidate !== geometry) candidate.dispose();
+  });
+  sources.forEach((node) => {
+    node.removeFromParent();
+    node.geometry?.dispose?.();
+  });
+  const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    roughness: 0.76,
+    metalness: 0.015,
+    envMapIntensity: 0.52
+  }));
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  target.add(mesh);
+}
+
 function addActorHair(headGroup, style, material) {
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.338, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.58), material);
-  cap.scale.set(0.96, 0.84, 0.92);
-  cap.position.y = 0.045;
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.35, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.62), material);
+  cap.scale.set(0.98, 0.9, 0.96);
+  cap.position.y = 0.052;
   cap.castShadow = true;
   headGroup.add(cap);
-  const locks = style === 0 || style === 7 ? 5 : 2 + (style % 3);
+  const locks = style === 0 || style === 7 ? 5 : 3;
   for (let index = 0; index < locks; index += 1) {
-    const angle = -1.08 + index / Math.max(1, locks - 1) * 2.16;
-    const lock = new THREE.Mesh(new THREE.SphereGeometry(0.09 + (style % 2) * 0.012, 12, 9), material);
-    lock.position.set(Math.sin(angle) * 0.27, -0.015 - (index % 2) * 0.035, Math.cos(angle) * 0.245);
-    lock.scale.set(0.82, style === 3 ? 1.5 : 1.18, 0.7);
+    const amount = locks === 1 ? 0.5 : index / (locks - 1);
+    const x = -0.23 + amount * 0.46;
+    const lock = new THREE.Mesh(new THREE.SphereGeometry(0.082 + (style % 2) * 0.008, 16, 12), material);
+    lock.position.set(x, 0.145 - (index % 2) * 0.018, 0.272 - Math.abs(x) * 0.1);
+    lock.scale.set(0.82, style === 3 ? 1.08 : 0.92, 0.52);
+    lock.rotation.z = x * -0.55;
     lock.castShadow = true;
     headGroup.add(lock);
   }
+  if ([2, 3, 6].includes(style)) {
+    [-1, 1].forEach((side) => {
+      const sideLock = new THREE.Mesh(new THREE.SphereGeometry(0.15, 18, 13), material);
+      sideLock.scale.set(0.58, style === 2 ? 1.5 : 1.18, 0.72);
+      sideLock.position.set(side * 0.27, -0.09, -0.015);
+      sideLock.rotation.z = side * 0.16;
+      sideLock.castShadow = true;
+      headGroup.add(sideLock);
+    });
+  }
   if (style === 2 || style === 6) {
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(style === 2 ? 0.16 : 0.13, 14, 11), material);
-    bun.position.set(style === 2 ? 0.2 : -0.18, 0.19, -0.12);
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(style === 2 ? 0.18 : 0.14, 20, 15), material);
+    bun.position.set(style === 2 ? 0.2 : -0.18, 0.18, -0.19);
     bun.castShadow = true;
     headGroup.add(bun);
   }
@@ -3370,6 +3616,9 @@ function createActorObject(actor) {
 
   const torso = actorPart([0.5, 0.58, 0.33], 0.13, topMaterial, [0, 1.0, 0]);
   visual.add(torso);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.12, 0.13, 16), skinMaterial);
+  neck.position.set(0, 1.34, 0);
+  visual.add(neck);
   [-1, 1].forEach((side) => {
     const collar = actorPart([0.17, 0.14, 0.035], 0.025, outerMaterial, [side * 0.085, 1.2, 0.178]);
     collar.rotation.z = side * 0.42;
@@ -3377,47 +3626,83 @@ function createActorObject(actor) {
   });
   const hem = actorPart([0.45, 0.09, 0.34], 0.035, accentMaterial, [0, 0.72, 0]);
   visual.add(hem);
+  const zipper = actorPart([0.022, 0.38, 0.025], 0.007, outerMaterial, [0, 1.01, 0.184]);
+  visual.add(zipper);
+  [-0.15, 0.15].forEach((x) => {
+    const pocket = actorPart([0.13, 0.1, 0.025], 0.025, accentMaterial, [x, 0.87, 0.188]);
+    pocket.rotation.z = x < 0 ? 0.08 : -0.08;
+    visual.add(pocket);
+  });
   const headGroup = new THREE.Group();
-  headGroup.position.y = 1.5;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 22, 16), skinMaterial);
-  head.scale.set(0.94, 1.02, 0.9);
+  headGroup.position.y = 1.52;
+  headGroup.scale.setScalar(0.86);
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.335, 28, 20), skinMaterial);
+  head.scale.set(0.96, 1.05, 0.92);
   head.castShadow = true;
   headGroup.add(head);
   addActorHair(headGroup, style.hairStyle, hairMaterial);
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), skinMaterial);
-  nose.position.set(0, -0.02, 0.292);
-  headGroup.add(nose);
-  const eyes = new THREE.InstancedMesh(
-    new THREE.SphereGeometry(0.032, 10, 8),
-    inkMaterial,
-    2
-  );
-  [-1, 1].forEach((side, index) => {
-    const matrix = new THREE.Matrix4().makeTranslation(side * 0.105, 0.04, 0.284);
-    eyes.setMatrixAt(index, matrix);
+  [-1, 1].forEach((side) => {
+    const ear = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10), skinMaterial);
+    ear.scale.set(0.58, 0.9, 0.45);
+    ear.position.set(side * 0.318, -0.01, 0.015);
+    headGroup.add(ear);
   });
-  eyes.instanceMatrix.needsUpdate = true;
-  headGroup.add(eyes);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), skinMaterial);
+  nose.position.set(0, -0.018, 0.313);
+  headGroup.add(nose);
+  const eyeWhiteMaterial = createToonMaterial("#fffaf0", { roughness: 0.48 });
+  const blushMaterial = createToonMaterial("#e6a09a", { roughness: 0.82 });
+  [-1, 1].forEach((side) => {
+    const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.051, 14, 10), eyeWhiteMaterial);
+    eyeWhite.scale.set(0.78, 1.12, 0.38);
+    eyeWhite.position.set(side * 0.108, 0.045, 0.302);
+    headGroup.add(eyeWhite);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 9), inkMaterial);
+    pupil.scale.set(0.74, 1.16, 0.48);
+    pupil.position.set(side * 0.108, 0.043, 0.326);
+    headGroup.add(pupil);
+    const glint = new THREE.Mesh(new THREE.SphereGeometry(0.008, 8, 6), eyeWhiteMaterial);
+    glint.position.set(side * 0.101, 0.058, 0.348);
+    headGroup.add(glint);
+    const brow = actorPart([0.105, 0.018, 0.018], 0.007, hairMaterial, [side * 0.108, 0.116, 0.305]);
+    brow.rotation.z = side * -0.11;
+    headGroup.add(brow);
+    const blush = new THREE.Mesh(new THREE.SphereGeometry(0.044, 12, 8), blushMaterial);
+    blush.scale.set(1.28, 0.42, 0.24);
+    blush.position.set(side * 0.196, -0.055, 0.294);
+    headGroup.add(blush);
+  });
+  const mouth = new THREE.Mesh(new THREE.TorusGeometry(0.045, 0.008, 8, 18, Math.PI * 0.78), inkMaterial);
+  mouth.position.set(0, -0.09, 0.318);
+  mouth.rotation.z = Math.PI * 0.11;
+  headGroup.add(mouth);
   visual.add(headGroup);
 
   const leftArm = createActorLimb(topMaterial, 0.54, 0.16);
   const rightArm = createActorLimb(topMaterial, 0.54, 0.16);
   leftArm.position.set(-0.32, 1.22, 0);
   rightArm.position.set(0.32, 1.22, 0);
-  const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), skinMaterial);
+  const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), skinMaterial);
   const rightHand = leftHand.clone();
   leftHand.position.set(0, -0.54, 0);
   rightHand.position.set(0, -0.54, 0);
   leftArm.add(leftHand);
   rightArm.add(rightHand);
   visual.add(leftArm, rightArm);
-  const leftLeg = createActorLimb(lowerMaterial, 0.6, 0.2);
-  const rightLeg = createActorLimb(lowerMaterial, 0.6, 0.2);
+  const leftLeg = createActorLimb(lowerMaterial, 0.64, 0.18);
+  const rightLeg = createActorLimb(lowerMaterial, 0.64, 0.18);
   leftLeg.position.set(-0.14, 0.74, 0);
   rightLeg.position.set(0.14, 0.74, 0);
   const shoeMaterial = createToonMaterial("#3b342f", { roughness: 0.7 });
-  const leftShoe = actorPart([0.22, 0.15, 0.34], 0.065, shoeMaterial, [0, -0.59, 0.07]);
+  const leftShoe = actorPart([0.2, 0.14, 0.3], 0.06, shoeMaterial, [0, -0.63, 0.06]);
   const rightShoe = leftShoe.clone();
+  const laceMaterial = createToonMaterial("#e9ddc8", { roughness: 0.76 });
+  [-1, 1].forEach((side, index) => {
+    const shoe = index === 0 ? leftShoe : rightShoe;
+    const sole = actorPart([0.205, 0.032, 0.3], 0.014, laceMaterial, [0, -0.062, 0]);
+    const lace = actorPart([0.12, 0.016, 0.022], 0.006, laceMaterial, [0, 0.03, 0.15]);
+    shoe.add(sole, lace);
+  });
   leftLeg.add(leftShoe);
   rightLeg.add(rightShoe);
   visual.add(leftLeg, rightLeg);
@@ -3430,6 +3715,11 @@ function createActorObject(actor) {
     outer: outerMaterial,
     ink: inkMaterial
   }, actor);
+  mergeActorVertexColorMeshes(headGroup);
+  mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg]);
+  [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => mergeActorVertexColorMeshes(limb));
+  [skinMaterial, hairMaterial, topMaterial, lowerMaterial, accentMaterial, outerMaterial, inkMaterial, eyeWhiteMaterial, blushMaterial, shoeMaterial, laceMaterial]
+    .forEach((material) => material.dispose());
   actorRoot.add(group);
   const entry = {
     group,
@@ -3514,6 +3804,7 @@ function updateActors(actors = [], now = performance.now()) {
     }
     entry.shadow.scale.setScalar(walking ? 0.92 : 1);
     entry.shadow.material.opacity = actor.grounded === false ? 0.16 : 0.28;
+    entry.shadow.visible = cameraZoneId !== "public-plaza";
     entry.group.visible = actor.visible !== false;
   });
   [...actorObjects.entries()].forEach(([id, entry]) => {
@@ -3619,6 +3910,12 @@ function updateCamera(payload = {}) {
   const narrativeZ = Number(payload.cameraTargetZ || 0.2);
   const safeArea = payload.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   const zoneId = String(payload.theme?.zoneId || "");
+  const cinematicCivic = zoneId === "public-plaza";
+  const targetFov = cinematicCivic ? (portrait ? 62 : 43) : (portrait ? 56 : 48);
+  if (Math.abs(camera.fov - targetFov) > 0.01) {
+    camera.fov = targetFov;
+    camera.updateProjectionMatrix();
+  }
   const forwardX = Math.sin(yaw);
   const forwardZ = -Math.cos(yaw);
   const pathX = Number(payload.cameraPathX ?? safeArea.x ?? 0);
@@ -3651,10 +3948,18 @@ function updateCamera(payload = {}) {
     cameraPivotZ += (targetPivotZ - cameraPivotZ) * focusAlpha;
   }
   const pitchOffset = Math.max(-0.22, Math.min(0.2, pitch - 0.58));
-  const playerFollowDistance = Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
-  const cameraHeight = (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
-  const focusDistance = 0.22;
-  const focusHeight = 0.94 + pitchOffset * 1.05;
+  // The civic room uses a lower, 35–40 mm editorial camera. It keeps the
+  // player as the foreground anchor while allowing the listening circle,
+  // witnesses and the furnished back wall to share one readable composition.
+  // Other rooms retain the more elevated exploration camera.
+  const playerFollowDistance = cinematicCivic
+    ? (portrait ? 6.35 : 5.18)
+    : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
+  const cameraHeight = cinematicCivic
+    ? (portrait ? 3.68 : 2.92) + pitchOffset * 1.45
+    : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
+  const focusDistance = cinematicCivic ? 0.46 : 0.22;
+  const focusHeight = (cinematicCivic ? 1.06 : 0.94) + pitchOffset * (cinematicCivic ? 0.72 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
     Math.max(0.72, Math.min(1.28, focusHeight)),
@@ -3852,7 +4157,11 @@ function update(payload = {}) {
     ...actor,
     worldY: actor.worldY ?? 0.05
   })), width, height);
-  if (visible) renderer.render(scene, camera);
+  if (ssaoPass) ssaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+  if (visible) {
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
+  }
   const now = Date.now();
   if (now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
@@ -3880,17 +4189,40 @@ function getProjections() {
   return [...projectedItems.values()];
 }
 
+function getSceneComplexity() {
+  let drawCalls = 0;
+  let triangles = 0;
+  const drawCallsByLayer = { room: 0, models: 0, actors: 0, other: 0 };
+  scene?.traverseVisible?.((node) => {
+    if (!node.isMesh || !node.geometry) return;
+    const geometry = node.geometry;
+    const materialCount = Array.isArray(node.material) ? Math.max(1, node.material.length) : 1;
+    drawCalls += materialCount;
+    let root = node;
+    while (root?.parent && root.parent !== scene) root = root.parent;
+    const layer = root === roomRoot ? "room" : root === modelRoot ? "models" : root === actorRoot ? "actors" : "other";
+    drawCallsByLayer[layer] += materialCount;
+    const indexCount = Number(geometry.index?.count || 0);
+    const vertexCount = Number(geometry.attributes?.position?.count || 0);
+    const primitiveTriangles = indexCount > 0 ? indexCount / 3 : vertexCount / 3;
+    triangles += primitiveTriangles * Math.max(1, Number(node.count || 1));
+  });
+  return { drawCalls: Math.round(drawCalls), triangles: Math.round(triangles), drawCallsByLayer };
+}
+
 function getStats() {
   const render = renderer?.info?.render || {};
   const memory = renderer?.info?.memory || {};
+  const sceneComplexity = composer ? getSceneComplexity() : null;
   return {
     ready: !!renderer,
     activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,
     activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
     cachedModelCount: cache.size,
     activeActorCount: actorObjects.size,
-    drawCalls: Number(render.calls || 0),
-    triangles: Number(render.triangles || 0),
+    drawCalls: sceneComplexity?.drawCalls ?? Number(render.calls || 0),
+    drawCallsByLayer: sceneComplexity?.drawCallsByLayer || null,
+    triangles: sceneComplexity?.triangles ?? Number(render.triangles || 0),
     geometries: Number(memory.geometries || 0),
     textures: Number(memory.textures || 0),
     pixelRatio: renderer?.getPixelRatio?.() || 1,
