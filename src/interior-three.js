@@ -5,8 +5,12 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
-const CAMERA_ORBIT_RADIUS = 4.28;
-const CAMERA_PIVOT_PLAYER_WEIGHT = 0.26;
+const CAMERA_ORBIT_RADIUS = 5.2;
+const CAMERA_MIN_DISTANCE = 1.35;
+const CAMERA_COLLISION_RADIUS = 0.22;
+const CAMERA_PIVOT_PLAYER_WEIGHT = 0.65;
+const CAMERA_PIVOT_NARRATIVE_WEIGHT = 0.25;
+const CAMERA_PIVOT_PATH_WEIGHT = 0.1;
 const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
   plaster: "#f8eedf",
@@ -52,6 +56,23 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
   creative: { wall: "#e9c19f", nightWall: "#b9a394", floor: "#ddaf89", accent: "#dc6355", secondary: "#efc85d", trim: "#30364e" },
   memory: { wall: "#dfc7aa", nightWall: "#aaa497", floor: "#ccb99d", accent: "#c38e5b", secondary: "#7d95ad", trim: "#30364e" }
 };
+const MATERIAL_PRESET_PALETTES = Object.freeze({
+  "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
+  "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
+  "terrazzo-teal-brass": { wall: "#f2eadb", floor: "#dfd0b8", accent: "#d59f3c", secondary: "#438f88", trim: "#7b5437" },
+  "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
+  "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
+  "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
+});
+const LIGHTING_PRESETS = Object.freeze({
+  "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
+  "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
+  "civic-ivory": { key: 2.12, fill: 0.46, hemi: 0.55, bounce: 0.58, wash: 0.98, exposure: 0.9, keyColor: "#ffe7c0", fillColor: "#b9d8dc" },
+  "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
+  "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
+  "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
+  default: { key: 1.92, fill: 0.42, hemi: 0.5, bounce: 0.5, wash: 0.82, exposure: 0.86, keyColor: "#ffe2be", fillColor: "#c6dce6" }
+});
 const REALTIME_SHADOW_ARCHETYPES = new Set(["public", "work", "justice", "nature", "creative", "memory"]);
 
 const INTERIOR_ZONE_ENVIRONMENT_STYLES = {
@@ -147,6 +168,10 @@ let renderer;
 let scene;
 let camera;
 let keyLight;
+let hemisphereLight;
+let fillLight;
+let warmBounceLight;
+let windowWashLight;
 let roomRoot;
 let modelRoot;
 let actorRoot;
@@ -167,9 +192,13 @@ let cameraPivotX = 0;
 let cameraPivotZ = 0;
 let cameraZoneId = "";
 let lastCameraState = null;
+let cameraLastUpdateAt = 0;
+let cameraRaycaster;
+const occludedMaterials = new Map();
 const surfaceBumpTextures = new Map();
 const actorFrameTextures = new Map();
 const actorObjects = new Map();
+const dynamicModelObjects = new Map();
 
 async function loadThree() {
   if (THREE && GLTFLoader) return true;
@@ -225,7 +254,8 @@ function ensureLayer() {
   renderer.shadowMap.type = THREE.VSMShadowMap;
 
   scene = new THREE.Scene();
-  camera = new THREE.PerspectiveCamera(52, 1, 0.08, 30);
+  camera = new THREE.PerspectiveCamera(48, 1, 0.08, 30);
+  cameraRaycaster = new THREE.Raycaster();
   scene.add(camera);
 
   if (RoomEnvironment) {
@@ -243,8 +273,8 @@ function ensureLayer() {
   physicsDebugRoot.name = "interior-physics-debug";
   scene.add(roomRoot, modelRoot, actorRoot, physicsDebugRoot);
 
-  const hemi = new THREE.HemisphereLight(0xfff8eb, 0x6d5645, 0.44);
-  scene.add(hemi);
+  hemisphereLight = new THREE.HemisphereLight(0xfff8eb, 0x6d5645, 0.44);
+  scene.add(hemisphereLight);
 
   keyLight = new THREE.DirectionalLight(0xffe6bc, 2.58);
   keyLight.position.set(-5.2, 7.2, 4.8);
@@ -263,17 +293,17 @@ function ensureLayer() {
   keyLight.shadow.bias = -0.00035;
   keyLight.shadow.normalBias = 0.025;
 
-  const fill = new THREE.DirectionalLight(0xffddc4, 0.32);
-  fill.position.set(4.8, 3.6, -4.2);
-  scene.add(fill);
+  fillLight = new THREE.DirectionalLight(0xffddc4, 0.32);
+  fillLight.position.set(4.8, 3.6, -4.2);
+  scene.add(fillLight);
 
-  const warmBounce = new THREE.PointLight(0xffcf86, 0.72, 9, 2.1);
-  warmBounce.position.set(-0.6, 2.9, 1.8);
-  scene.add(warmBounce);
+  warmBounceLight = new THREE.PointLight(0xffcf86, 0.72, 9, 2.1);
+  warmBounceLight.position.set(-0.6, 2.9, 1.8);
+  scene.add(warmBounceLight);
 
-  const windowWash = new THREE.DirectionalLight(0xffe4bd, 0.92);
-  windowWash.position.set(-5.8, 4.4, 1.8);
-  scene.add(windowWash);
+  windowWashLight = new THREE.DirectionalLight(0xffe4bd, 0.92);
+  windowWashLight.position.set(-5.8, 4.4, 1.8);
+  scene.add(windowWashLight);
   return true;
 }
 
@@ -283,6 +313,7 @@ function resize(width, height) {
   lastHeight = height;
   renderer.setSize(width, height, false);
   camera.aspect = width / height;
+  camera.fov = width / height < 0.82 ? 56 : 48;
   camera.updateProjectionMatrix();
 }
 
@@ -385,9 +416,12 @@ function upgradeModelMaterials(source) {
       next.roughness = hasSurfaceMap
         ? sourceRoughness
         : sourceRoughness < 0.56 ? 0.48 : sourceRoughness < 0.76 ? 0.66 : 0.84;
-      const sourceMetalness = Math.max(0, Math.min(0.16, Number(material.metalness ?? 0.01)));
-      next.metalness = hasSurfaceMap ? sourceMetalness : sourceMetalness > 0.04 ? 0.08 : 0;
-      next.envMapIntensity = 0.72;
+      const materialName = String(material.name || "").toLowerCase();
+      const metallicName = /metal|steel|iron|brass|gold|chrome|copper/.test(materialName);
+      const sourceMetalness = Math.max(0, Math.min(0.88, Number(material.metalness ?? 0.01)));
+      next.metalness = metallicName ? Math.max(0.58, sourceMetalness) : hasSurfaceMap ? sourceMetalness : Math.min(0.12, sourceMetalness);
+      if (metallicName) next.roughness = Math.min(next.roughness, 0.42);
+      next.envMapIntensity = metallicName ? 1.08 : 0.72;
       next.emissive?.set?.(0x000000);
       next.emissiveIntensity = 0;
       next.needsUpdate = true;
@@ -740,15 +774,33 @@ function resolveEnvironmentPalette(theme = {}) {
   const archetype = theme.archetype || "home";
   const palette = INTERIOR_ENVIRONMENT_PALETTES[archetype] || INTERIOR_ENVIRONMENT_PALETTES.home;
   const zoneStyle = INTERIOR_ZONE_ENVIRONMENT_STYLES[theme.zoneId] || {};
+  const materialPreset = MATERIAL_PRESET_PALETTES[theme.layoutProfile?.materialPreset] || null;
   return {
     ...palette,
-    wallColor: theme.night ? palette.nightWall : palette.wall,
-    floorColor: palette.floor,
-    accent: `#${nearestAtelierColor(zoneStyle.accent || palette.accent).getHexString()}`,
-    secondary: `#${nearestAtelierColor(zoneStyle.secondary || palette.secondary).getHexString()}`,
-    trim: ATELIER_TOKENS.walnut,
+    wallColor: theme.night ? palette.nightWall : materialPreset?.wall || palette.wall,
+    floorColor: materialPreset?.floor || palette.floor,
+    accent: materialPreset?.accent || `#${nearestAtelierColor(zoneStyle.accent || palette.accent).getHexString()}`,
+    secondary: materialPreset?.secondary || `#${nearestAtelierColor(zoneStyle.secondary || palette.secondary).getHexString()}`,
+    trim: materialPreset?.trim || ATELIER_TOKENS.walnut,
     night: !!theme.night
   };
+}
+
+function applyLightingPreset(theme = {}) {
+  const preset = LIGHTING_PRESETS[theme.layoutProfile?.lightingPreset] || LIGHTING_PRESETS.default;
+  if (keyLight) {
+    keyLight.intensity = preset.key;
+    keyLight.color.set(preset.keyColor);
+  }
+  if (fillLight) {
+    fillLight.intensity = preset.fill;
+    fillLight.color.set(preset.fillColor);
+  }
+  if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
+  if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
+  if (windowWashLight) windowWashLight.intensity = preset.wash;
+  if (renderer) renderer.toneMappingExposure = preset.exposure;
+  if (scene) scene.environmentIntensity = theme.night ? 0.26 : 0.42;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -2525,6 +2577,52 @@ function addZoneLayoutArchitecture(theme, colors) {
   }
 }
 
+function addExitPortal(theme, colors) {
+  const door = theme.layoutProfile?.shell?.door || { angle: 0, width: 0.95, height: 2.15, depth: 0.16 };
+  const angle = Number(door.angle || 0);
+  const width = Math.max(0.82, Number(door.width || 0.95));
+  const height = Math.max(1.95, Number(door.height || 2.15));
+  const [x, , z] = wallPosition(angle, ROOM_RADIUS - 0.2, height / 2);
+  const group = new THREE.Group();
+  group.name = "interior-visible-exit";
+  group.position.set(x, height / 2, z);
+  group.rotation.y = -angle;
+  roomRoot.add(group);
+
+  const frame = new THREE.Mesh(
+    new RoundedBoxGeometry(width + 0.28, height + 0.24, 0.14, 4, 0.08),
+    createToonMaterial(colors.trim, { roughness: 0.58, surface: "wood", bumpScale: 0.008 })
+  );
+  frame.position.z = 0.02;
+  frame.castShadow = true;
+  group.add(frame);
+  const slab = new THREE.Mesh(
+    new RoundedBoxGeometry(width, height, Number(door.depth || 0.16), 4, 0.07),
+    createToonMaterial(colors.secondary, { roughness: 0.72 })
+  );
+  slab.position.z = 0.11;
+  slab.castShadow = true;
+  group.add(slab);
+  const inset = new THREE.Mesh(
+    new RoundedBoxGeometry(width * 0.7, height * 0.62, 0.035, 4, 0.06),
+    createToonMaterial(colors.wallColor, { roughness: 0.88 })
+  );
+  inset.position.set(0, 0.08, 0.205);
+  group.add(inset);
+  const handle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.055, 12, 10),
+    createToonMaterial("#c99a3d", { roughness: 0.26, metalness: 0.72 })
+  );
+  handle.position.set(width * 0.34, -0.02, 0.23);
+  group.add(handle);
+  const threshold = new THREE.Mesh(
+    new RoundedBoxGeometry(width + 0.18, 0.04, 0.34, 3, 0.018),
+    createToonMaterial("#d7b56e", { roughness: 0.46, metalness: 0.34 })
+  );
+  threshold.position.set(0, -height / 2 + 0.02, 0.16);
+  group.add(threshold);
+}
+
 function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
   if (signature === roomSignature) return;
@@ -2532,10 +2630,12 @@ function rebuildRoom(theme = {}) {
   disposeOwnedGroup(roomRoot);
 
   if (keyLight) {
-    keyLight.castShadow = REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home")
+    keyLight.castShadow = lastWidth > 720
+      && REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home")
       && !["factory", "farm", "public-plaza", "legal-court"].includes(theme.zoneId);
     keyLight.shadow.needsUpdate = true;
   }
+  applyLightingPreset(theme);
 
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
@@ -2577,37 +2677,41 @@ function rebuildRoom(theme = {}) {
   baseboard.position.y = 0.12;
   roomRoot.add(baseboard);
 
-  const crown = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.04, 0.075, 8, 64),
-    createToonMaterial("#e7c79e", { roughness: 0.92, surface: "plaster", bumpScale: 0.012 })
-  );
-  crown.rotation.x = Math.PI / 2;
-  crown.position.y = ROOM_HEIGHT - 0.18;
-  crown.castShadow = false;
-  roomRoot.add(crown);
+  // V2 rooms are intentionally ceilingless cutaways. Full 360° crown rings read
+  // as horizontal bars whenever the player orbits outside the shell.
+  if (Number(theme.layoutProfile?.version || 0) < 2) {
+    const crown = new THREE.Mesh(
+      new THREE.TorusGeometry(ROOM_RADIUS - 0.04, 0.075, 8, 64),
+      createToonMaterial("#e7c79e", { roughness: 0.92, surface: "plaster", bumpScale: 0.012 })
+    );
+    crown.rotation.x = Math.PI / 2;
+    crown.position.y = ROOM_HEIGHT - 0.18;
+    crown.castShadow = false;
+    roomRoot.add(crown);
 
-  const crownShadow = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.075, 0.035, 8, 64),
-    createToonMaterial("#9c6e4b", {
-      roughness: 0.94,
-      transparent: true,
-      opacity: 0.28,
-      depthWrite: false
-    })
-  );
-  crownShadow.rotation.x = Math.PI / 2;
-  crownShadow.position.y = ROOM_HEIGHT - 0.34;
-  crownShadow.castShadow = false;
-  roomRoot.add(crownShadow);
+    const crownShadow = new THREE.Mesh(
+      new THREE.TorusGeometry(ROOM_RADIUS - 0.075, 0.035, 8, 64),
+      createToonMaterial("#9c6e4b", {
+        roughness: 0.94,
+        transparent: true,
+        opacity: 0.28,
+        depthWrite: false
+      })
+    );
+    crownShadow.rotation.x = Math.PI / 2;
+    crownShadow.position.y = ROOM_HEIGHT - 0.34;
+    crownShadow.castShadow = false;
+    roomRoot.add(crownShadow);
 
-  const lowerCove = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.09, 0.055, 8, 64),
-    createToonMaterial("#f0d3aa", { roughness: 0.92, surface: "plaster", bumpScale: 0.01 })
-  );
-  lowerCove.rotation.x = Math.PI / 2;
-  lowerCove.position.y = ROOM_HEIGHT - 0.4;
-  lowerCove.castShadow = false;
-  roomRoot.add(lowerCove);
+    const lowerCove = new THREE.Mesh(
+      new THREE.TorusGeometry(ROOM_RADIUS - 0.09, 0.055, 8, 64),
+      createToonMaterial("#f0d3aa", { roughness: 0.92, surface: "plaster", bumpScale: 0.01 })
+    );
+    lowerCove.rotation.x = Math.PI / 2;
+    lowerCove.position.y = ROOM_HEIGHT - 0.4;
+    lowerCove.castShadow = false;
+    roomRoot.add(lowerCove);
+  }
 
   if (!INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     for (let i = 0; i < 12; i += 1) {
@@ -2616,9 +2720,12 @@ function rebuildRoom(theme = {}) {
     }
   }
   addRoomArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
-  addAmbientSetDressing(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  if (Number(theme.layoutProfile?.version || 0) < 2) {
+    addAmbientSetDressing(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  }
   addZoneLayoutArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
   mergeRoomArchitectureMeshes();
 }
 
@@ -2627,10 +2734,48 @@ function getItemSignature(items) {
     item.key,
     item.model,
     item.renderModel === false ? "anchor" : "model",
+    item.mobileProxy ? "mobile-proxy" : "full-detail",
+    item.rigidBody?.type || "fixed",
     Number(item.worldX || 0).toFixed(3),
     Number(item.worldZ || 0).toFixed(3),
     Number(item.modelScale || 1).toFixed(3)
   ].join(":" )).join("|");
+}
+
+const MOBILE_HERO_PROP_INDEXES = {
+  "public-plaza": [0, 1, 3],
+  residential: [0, 1, 4],
+  "office-district": [0, 2],
+  "legal-court": [0, 1, 3],
+  "empathy-lab": [0, 1, 3],
+  "story-archive": [0, 2, 4]
+};
+
+function applyMobileModelLod(items, zoneId, width) {
+  if (Number(width || 0) > 720) return items;
+  const heroIndexes = new Set(MOBILE_HERO_PROP_INDEXES[zoneId] || [0, 2, 3]);
+  return items.map((item) => ({
+    ...item,
+    mobileProxy: item.renderModel !== false && !heroIndexes.has(Number(item.index))
+  }));
+}
+
+function createMobilePropProxy(item) {
+  const collider = item.collider || {};
+  const halfX = Math.max(0.22, Number(collider.halfX || collider.radius || 0.42));
+  const halfZ = Math.max(0.18, Number(collider.halfZ || collider.radius || 0.36));
+  const halfY = Math.max(0.2, Number(collider.halfY || 0.42));
+  const color = item.material === "textile" ? "#78b7ac" : item.material === "metal" ? "#91a4b5" : "#c89862";
+  const geometry = collider.shape === "circle"
+    ? new THREE.CylinderGeometry(Math.max(halfX, halfZ), Math.max(halfX, halfZ), halfY * 2, 12)
+    : new RoundedBoxGeometry(halfX * 2, halfY * 2, halfZ * 2, 2, Math.min(0.1, halfX * 0.18));
+  const mesh = new THREE.Mesh(geometry, createToonMaterial(color, { roughness: 0.82 }));
+  mesh.position.y = halfY;
+  mesh.castShadow = false;
+  mesh.receiveShadow = true;
+  const group = new THREE.Group();
+  group.add(mesh);
+  return group;
 }
 
 function mergePlacedModelMeshes(source) {
@@ -2690,21 +2835,22 @@ function mergePlacedModelMeshes(source) {
 function rebuildModels(items) {
   const signature = getItemSignature(items);
   const renderItems = items.filter((item) => item.renderModel !== false);
-  const allReady = renderItems.every((item) => cache.has(item.model));
+  const allReady = renderItems.every((item) => item.mobileProxy || cache.has(item.model));
   if (!allReady) return false;
   if (signature === itemSignature) return true;
   itemSignature = signature;
   disposeOwnedGroup(modelRoot);
+  dynamicModelObjects.clear();
 
   const stagedModels = new THREE.Group();
 
   renderItems.forEach((item) => {
-    const source = cache.get(item.model);
-    if (!source) return;
-    const model = source.clone(true);
-    const profile = getModelRenderProfile(item.model);
-    const profileScale = item.kind === "decor" ? (profile.decorScale || profile.scale) : (profile.propScale || profile.scale);
-    const size = (item.kind === "prop" ? 1.78 : 0.86) * (item.modelScale || 1) * profileScale;
+    const source = item.mobileProxy ? null : cache.get(item.model);
+    if (!item.mobileProxy && !source) return;
+    const model = item.mobileProxy ? createMobilePropProxy(item) : source.clone(true);
+    const profile = item.mobileProxy ? { rotationY: 0, scale: 1 } : getModelRenderProfile(item.model);
+    const profileScale = item.mobileProxy ? 1 : item.kind === "decor" ? (profile.decorScale || profile.scale) : (profile.propScale || profile.scale);
+    const size = item.mobileProxy ? 1 : (item.kind === "prop" ? 1.78 : 0.86) * (item.modelScale || 1) * profileScale;
     const contactShadow = new THREE.Mesh(
       new THREE.PlaneGeometry(1.7 * size, 1.18 * size),
       new THREE.MeshBasicMaterial({
@@ -2717,19 +2863,53 @@ function rebuildModels(items) {
       })
     );
     contactShadow.rotation.x = -Math.PI / 2;
-    contactShadow.position.set(item.worldX || 0, 0.027, item.worldZ || 0);
     contactShadow.renderOrder = 0;
-    stagedModels.add(contactShadow);
     model.scale.setScalar(size);
-    model.position.set(item.worldX || 0, 0.03, item.worldZ || 0);
     const faceCenter = Math.atan2(-(item.worldX || 0), -(item.worldZ || 0));
-    model.rotation.y = faceCenter + profile.rotationY;
     model.userData.interiorKey = item.key;
-    stagedModels.add(model);
+    if (item.rigidBody?.type === "dynamic") {
+      const dynamicGroup = new THREE.Group();
+      dynamicGroup.name = `dynamic-${item.key}`;
+      dynamicGroup.position.set(item.worldX || 0, item.worldY || 0, item.worldZ || 0);
+      dynamicGroup.rotation.y = Number(item.rotationY ?? faceCenter + profile.rotationY);
+      contactShadow.position.set(0, 0.027, 0);
+      model.position.set(0, 0.03, 0);
+      model.rotation.y = profile.rotationY;
+      const dynamicStage = new THREE.Group();
+      dynamicStage.add(contactShadow, model);
+      const mergedDynamic = mergePlacedModelMeshes(dynamicStage);
+      dynamicGroup.add(...mergedDynamic.children);
+      contactShadow.geometry.dispose();
+      contactShadow.material.dispose();
+      dynamicStage.clear();
+      modelRoot.add(dynamicGroup);
+      dynamicModelObjects.set(item.key, dynamicGroup);
+    } else {
+      contactShadow.position.set(item.worldX || 0, 0.027, item.worldZ || 0);
+      model.position.set(item.worldX || 0, item.worldY || 0.03, item.worldZ || 0);
+      model.rotation.y = Number(item.rotationY ?? faceCenter + profile.rotationY);
+      stagedModels.add(contactShadow, model);
+    }
   });
   const mergedModels = mergePlacedModelMeshes(stagedModels);
   modelRoot.add(...mergedModels.children);
   return true;
+}
+
+function updateDynamicModels(dynamics = []) {
+  dynamics.forEach((dynamic) => {
+    const group = dynamicModelObjects.get(dynamic.itemKey);
+    if (!group) return;
+    const position = dynamic.position || {};
+    const rotation = dynamic.rotation || {};
+    group.position.set(Number(position.x || 0), Number(position.y || 0), Number(position.z || 0));
+    group.quaternion.set(
+      Number(rotation.x || 0),
+      Number(rotation.y || 0),
+      Number(rotation.z || 0),
+      Number.isFinite(Number(rotation.w)) ? Number(rotation.w) : 1
+    );
+  });
 }
 
 function loadActorTextureAtlas() {
@@ -2799,9 +2979,58 @@ function getActorFrameTexture(frame = 0) {
   return texture;
 }
 
+const ACTOR_STYLE_PROFILES = [
+  { skin: "#f2c29f", hair: "#2f2b35", top: "#2f8f83", lower: "#39465d", accent: "#f0b64d", hairStyle: 0 },
+  { skin: "#e7ad84", hair: "#4b2d26", top: "#e4775e", lower: "#536a54", accent: "#f4d26a", hairStyle: 1 },
+  { skin: "#f0bb92", hair: "#202a42", top: "#5d82bd", lower: "#3c4c63", accent: "#f08d68", hairStyle: 2 },
+  { skin: "#b97854", hair: "#291f22", top: "#d6a54d", lower: "#416c65", accent: "#72b8d4", hairStyle: 3 },
+  { skin: "#f3c7ad", hair: "#8a4a3f", top: "#769b67", lower: "#5a4b68", accent: "#ef8b78", hairStyle: 4 },
+  { skin: "#d99a73", hair: "#171a24", top: "#755c9c", lower: "#354b56", accent: "#86c7ba", hairStyle: 5 },
+  { skin: "#f1b68d", hair: "#c65f55", top: "#3f8ea3", lower: "#4d596d", accent: "#f2c85b", hairStyle: 6 },
+  { skin: "#a86749", hair: "#36251f", top: "#d06d55", lower: "#3e625b", accent: "#7ca7d7", hairStyle: 7 }
+];
+
+function actorPart(size, radius, material, position = [0, 0, 0]) {
+  const mesh = new THREE.Mesh(new RoundedBoxGeometry(size[0], size[1], size[2], 3, radius), material);
+  mesh.position.set(...position);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
+function createActorLimb(material, length, width) {
+  const pivot = new THREE.Group();
+  const limb = actorPart([width, length, width], Math.min(width * 0.42, 0.07), material, [0, -length / 2, 0]);
+  pivot.add(limb);
+  return pivot;
+}
+
+function addActorHair(headGroup, style, material) {
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.266, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), material);
+  cap.scale.y = 0.86;
+  cap.position.y = 0.035;
+  cap.castShadow = true;
+  headGroup.add(cap);
+  const locks = 1 + (style % 2);
+  for (let index = 0; index < locks; index += 1) {
+    const angle = -0.9 + index / Math.max(1, locks - 1) * 1.8;
+    const lock = new THREE.Mesh(new THREE.SphereGeometry(0.08 + (style % 2) * 0.012, 10, 8), material);
+    lock.position.set(Math.sin(angle) * 0.22, -0.02 - (index % 2) * 0.025, Math.cos(angle) * 0.18);
+    lock.scale.set(0.86, 1.18, 0.78);
+    lock.castShadow = true;
+    headGroup.add(lock);
+  }
+  if (style === 1 || style === 6) {
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(style === 6 ? 0.13 : 0.11, 12, 10), material);
+    bun.position.set(style === 6 ? 0.16 : -0.16, 0.2, -0.05);
+    bun.castShadow = true;
+    headGroup.add(bun);
+  }
+}
+
 function createActorObject(actor) {
-  const texture = getActorFrameTexture(actor.frame);
-  if (!texture) return null;
+  const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
+  const style = ACTOR_STYLE_PROFILES[frame];
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
@@ -2818,35 +3047,77 @@ function createActorObject(actor) {
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.025;
   group.add(shadow);
+  const visual = new THREE.Group();
+  group.add(visual);
 
-  const material = new THREE.SpriteMaterial({
-    map: texture,
-    transparent: true,
-    alphaTest: 0.08,
-    depthTest: true,
-    // Alpha-tested actor cards are opaque where a character exists. Writing
-    // those pixels to depth keeps two citizens from painting over each other
-    // in insertion order while transparent pixels remain discarded.
-    depthWrite: true,
-    toneMapped: false
+  const skinMaterial = createToonMaterial(style.skin, { roughness: 0.82 });
+  const hairMaterial = createToonMaterial(style.hair, { roughness: 0.9 });
+  const topMaterial = createToonMaterial(style.top, { roughness: 0.76, surface: "textile", bumpScale: 0.006 });
+  const lowerMaterial = createToonMaterial(style.lower, { roughness: 0.82, surface: "textile", bumpScale: 0.006 });
+  const accentMaterial = createToonMaterial(style.accent, { roughness: 0.68 });
+
+  const torso = actorPart([0.48, 0.6, 0.31], 0.12, topMaterial, [0, 1.02, 0]);
+  visual.add(torso);
+  const headGroup = new THREE.Group();
+  headGroup.position.y = 1.52;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 18, 14), skinMaterial);
+  head.scale.set(0.94, 1.02, 0.9);
+  head.castShadow = true;
+  headGroup.add(head);
+  addActorHair(headGroup, style.hairStyle, hairMaterial);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), skinMaterial);
+  nose.position.set(0, -0.025, 0.225);
+  headGroup.add(nose);
+  const eyes = new THREE.InstancedMesh(
+    new THREE.SphereGeometry(0.025, 8, 6),
+    createToonMaterial("#25283a", { roughness: 0.7 }),
+    2
+  );
+  [-1, 1].forEach((side, index) => {
+    const matrix = new THREE.Matrix4().makeTranslation(side * 0.085, 0.035, 0.218);
+    eyes.setMatrixAt(index, matrix);
   });
-  const sprite = new THREE.Sprite(material);
-  sprite.center.set(0.5, 0.035);
-  sprite.renderOrder = 2;
-  group.add(sprite);
+  eyes.instanceMatrix.needsUpdate = true;
+  headGroup.add(eyes);
+  visual.add(headGroup);
+
+  const leftArm = createActorLimb(topMaterial, 0.56, 0.16);
+  const rightArm = createActorLimb(topMaterial, 0.56, 0.16);
+  leftArm.position.set(-0.31, 1.24, 0);
+  rightArm.position.set(0.31, 1.24, 0);
+  visual.add(leftArm, rightArm);
+  const leftLeg = createActorLimb(lowerMaterial, 0.68, 0.2);
+  const rightLeg = createActorLimb(lowerMaterial, 0.68, 0.2);
+  leftLeg.position.set(-0.14, 0.82, 0);
+  rightLeg.position.set(0.14, 0.82, 0);
+  visual.add(leftLeg, rightLeg);
+
+  if (actor.role === "player") {
+    const backpack = actorPart([0.38, 0.46, 0.18], 0.08, accentMaterial, [0, 1.02, -0.23]);
+    visual.add(backpack);
+  }
   actorRoot.add(group);
-  const entry = { group, sprite, shadow, frame: Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0))) };
+  const entry = {
+    group,
+    visual,
+    shadow,
+    torso,
+    headGroup,
+    leftArm,
+    rightArm,
+    leftLeg,
+    rightLeg,
+    frame,
+    lastX: Number(actor.worldX || 0),
+    lastZ: Number(actor.worldZ || 0),
+    facingYaw: 0
+  };
   actorObjects.set(actor.id, entry);
   return entry;
 }
 
 function updateActors(actors = [], now = performance.now()) {
   if (!actorRoot) return false;
-  if (!actorAtlasTexture) {
-    loadActorTextureAtlas();
-    actorRoot.visible = false;
-    return false;
-  }
   actorRoot.visible = true;
   const activeIds = new Set();
   actors.forEach((actor) => {
@@ -2857,26 +3128,64 @@ function updateActors(actors = [], now = performance.now()) {
     if (!entry) return;
     const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
     if (entry.frame !== frame) {
-      entry.frame = frame;
-      entry.sprite.material.map = getActorFrameTexture(frame);
-      entry.sprite.material.needsUpdate = true;
+      entry.group.removeFromParent();
+      actorObjects.delete(actor.id);
+      entry = createActorObject(actor);
     }
-    const walking = actor.state === "walking";
+    const walking = actor.state === "walking" || actor.state === "walk" || actor.state === "run";
+    const running = actor.state === "run";
     const phase = Number(actor.walkPhase || 0);
-    const bob = walking ? Math.abs(Math.sin(phase)) * 0.035 : Math.sin(now * 0.0015 + frame) * 0.012;
+    const bob = walking ? Math.abs(Math.sin(phase)) * (running ? 0.055 : 0.035) : Math.sin(now * 0.0015 + frame) * 0.012;
     const baseScale = Math.max(0.72, Math.min(1.38, Number(actor.scale || 1)));
-    entry.group.position.set(Number(actor.worldX || 0), 0, Number(actor.worldZ || 0));
-    entry.sprite.position.y = 0.05 + bob;
-    entry.sprite.scale.set(1.04 * baseScale * (Number(actor.facing || 1) < 0 ? -1 : 1), 1.72 * baseScale, 1);
+    const x = Number(actor.worldX || 0);
+    const z = Number(actor.worldZ || 0);
+    const y = Number(actor.worldY || 0);
+    const dx = Number(actor.velocity?.x ?? x - entry.lastX);
+    const dz = Number(actor.velocity?.z ?? z - entry.lastZ);
+    if (Math.hypot(dx, dz) > 0.015) entry.facingYaw = Math.atan2(dx, dz);
+    entry.lastX = x;
+    entry.lastZ = z;
+    entry.group.position.set(x, y + bob, z);
+    entry.visual.scale.setScalar(baseScale);
+    entry.visual.rotation.y = entry.facingYaw;
+    const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;
+    entry.leftLeg.rotation.x = stride;
+    entry.rightLeg.rotation.x = -stride;
+    entry.leftArm.rotation.x = -stride * 0.72;
+    entry.rightArm.rotation.x = stride * 0.72;
+    entry.leftArm.rotation.z = 0;
+    entry.rightArm.rotation.z = 0;
+    entry.headGroup.rotation.y = 0;
+    entry.visual.rotation.z = 0;
+    if (actor.state === "jump") {
+      entry.leftLeg.rotation.x = -0.42;
+      entry.rightLeg.rotation.x = -0.42;
+      entry.leftArm.rotation.x = 0.38;
+      entry.rightArm.rotation.x = 0.38;
+      entry.visual.rotation.z = -0.04;
+    } else if (actor.state === "fall") {
+      entry.leftArm.rotation.z = 0.42;
+      entry.rightArm.rotation.z = -0.42;
+      entry.visual.rotation.z = 0.03;
+    } else if (["doing", "talking", "waving", "interact", "listen"].includes(actor.state)) {
+      entry.rightArm.rotation.x = -0.82;
+      entry.rightArm.rotation.z = -0.22;
+      entry.headGroup.rotation.y = Math.sin(now * 0.0016 + frame) * 0.12;
+      entry.visual.rotation.z = 0;
+    } else {
+      entry.leftArm.rotation.z = 0;
+      entry.rightArm.rotation.z = 0;
+      entry.headGroup.rotation.y = Math.sin(now * 0.0012 + frame) * 0.06;
+      entry.visual.rotation.z = 0;
+    }
     entry.shadow.scale.setScalar(walking ? 0.92 : 1);
+    entry.shadow.material.opacity = actor.grounded === false ? 0.16 : 0.28;
     entry.group.visible = actor.visible !== false;
   });
   [...actorObjects.entries()].forEach(([id, entry]) => {
     if (activeIds.has(id)) return;
+    disposeOwnedGroup(entry.group);
     entry.group.removeFromParent();
-    entry.sprite.material.dispose();
-    entry.shadow.geometry.dispose();
-    entry.shadow.material.dispose();
     actorObjects.delete(id);
   });
   return true;
@@ -2968,7 +3277,8 @@ function updatePhysicsDebug(physics = {}) {
 
 function updateCamera(payload = {}) {
   const yaw = Number(payload.yaw || 0);
-  const pitch = Math.max(0.4, Math.min(0.72, Number(payload.pitch || 0.58)));
+  const portrait = (lastWidth || window.innerWidth) / Math.max(1, lastHeight || window.innerHeight) < 0.82;
+  const pitch = Math.max(portrait ? 0.49 : 0.42, Math.min(portrait ? 0.77 : 0.66, Number(payload.pitch || 0.58)));
   const playerX = Number(payload.cameraX || 0);
   const playerZ = Number(payload.cameraZ || 0);
   const narrativeX = Number(payload.cameraTargetX || 0);
@@ -2977,8 +3287,14 @@ function updateCamera(payload = {}) {
   const zoneId = String(payload.theme?.zoneId || "");
   const forwardX = Math.sin(yaw);
   const forwardZ = -Math.cos(yaw);
-  let targetPivotX = playerX * CAMERA_PIVOT_PLAYER_WEIGHT + narrativeX * (1 - CAMERA_PIVOT_PLAYER_WEIGHT);
-  let targetPivotZ = playerZ * CAMERA_PIVOT_PLAYER_WEIGHT + narrativeZ * (1 - CAMERA_PIVOT_PLAYER_WEIGHT);
+  const pathX = Number(payload.cameraPathX ?? safeArea.x ?? 0);
+  const pathZ = Number(payload.cameraPathZ ?? safeArea.z ?? 0.2);
+  let targetPivotX = playerX * CAMERA_PIVOT_PLAYER_WEIGHT
+    + narrativeX * CAMERA_PIVOT_NARRATIVE_WEIGHT
+    + pathX * CAMERA_PIVOT_PATH_WEIGHT;
+  let targetPivotZ = playerZ * CAMERA_PIVOT_PLAYER_WEIGHT
+    + narrativeZ * CAMERA_PIVOT_NARRATIVE_WEIGHT
+    + pathZ * CAMERA_PIVOT_PATH_WEIGHT;
   const safeDx = targetPivotX - Number(safeArea.x || 0);
   const safeDz = targetPivotZ - Number(safeArea.z || 0);
   const safeDistance = Math.hypot(safeDx, safeDz);
@@ -2987,35 +3303,55 @@ function updateCamera(payload = {}) {
     targetPivotX = Number(safeArea.x || 0) + safeDx / safeDistance * safeRadius;
     targetPivotZ = Number(safeArea.z || 0) + safeDz / safeDistance * safeRadius;
   }
-  if (cameraZoneId !== zoneId) {
+  const now = performance.now();
+  const dt = Math.min(0.1, Math.max(1 / 240, (now - (cameraLastUpdateAt || now - 16)) / 1000));
+  cameraLastUpdateAt = now;
+  const zoneChanged = cameraZoneId !== zoneId;
+  if (zoneChanged) {
     cameraZoneId = zoneId;
     cameraPivotX = targetPivotX;
     cameraPivotZ = targetPivotZ;
   } else {
-    cameraPivotX += (targetPivotX - cameraPivotX) * 0.1;
-    cameraPivotZ += (targetPivotZ - cameraPivotZ) * 0.1;
+    const focusAlpha = 1 - Math.exp(-dt / 0.3);
+    cameraPivotX += (targetPivotX - cameraPivotX) * focusAlpha;
+    cameraPivotZ += (targetPivotZ - cameraPivotZ) * focusAlpha;
   }
-  const cameraRayX = -forwardX;
-  const cameraRayZ = -forwardZ;
-  const radialDot = cameraPivotX * cameraRayX + cameraPivotZ * cameraRayZ;
-  const roomRadius = ROOM_RADIUS - 0.2;
-  const pivotRadiusSquared = cameraPivotX * cameraPivotX + cameraPivotZ * cameraPivotZ;
-  const boundaryDistance = -radialDot + Math.sqrt(Math.max(0.01, radialDot * radialDot + roomRadius * roomRadius - pivotRadiusSquared));
-  const cameraBack = Math.max(2.9, Math.min(CAMERA_ORBIT_RADIUS, boundaryDistance - 0.16));
   const pitchOffset = Math.max(-0.22, Math.min(0.2, pitch - 0.58));
-  const cameraHeight = 3.58 + pitchOffset * 2.15;
+  const playerFollowDistance = Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
+  const cameraHeight = (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = 0.22;
   const focusHeight = 0.94 + pitchOffset * 1.05;
-  camera.position.set(
-    cameraPivotX - forwardX * cameraBack,
-    cameraHeight,
-    cameraPivotZ - forwardZ * cameraBack
-  );
-  camera.lookAt(
+  const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
-    Math.max(0.62, Math.min(1.24, focusHeight)),
+    Math.max(0.72, Math.min(1.28, focusHeight)),
     cameraPivotZ + forwardZ * focusDistance
   );
+  const desiredPosition = new THREE.Vector3(
+    playerX - forwardX * playerFollowDistance,
+    cameraHeight,
+    playerZ - forwardZ * playerFollowDistance
+  );
+  const cameraDirection = desiredPosition.clone().sub(focus);
+  const desiredDistance = cameraDirection.length();
+  cameraDirection.normalize();
+  let resolvedDistance = desiredDistance;
+  if (cameraRaycaster && modelRoot?.children.length) {
+    cameraRaycaster.set(focus, cameraDirection);
+    cameraRaycaster.near = 0.4;
+    cameraRaycaster.far = desiredDistance;
+    const obstruction = cameraRaycaster.intersectObject(modelRoot, true).find((hit) => {
+      const material = hit.object?.material;
+      return hit.distance > CAMERA_MIN_DISTANCE && material?.opacity !== 0;
+    });
+    if (obstruction) resolvedDistance = Math.max(CAMERA_MIN_DISTANCE, obstruction.distance - CAMERA_COLLISION_RADIUS);
+  }
+  const resolvedPosition = focus.clone().addScaledVector(cameraDirection, resolvedDistance);
+  if (zoneChanged || !Number.isFinite(camera.position.x)) camera.position.copy(resolvedPosition);
+  else {
+    const followAlpha = 1 - Math.exp(-dt / 0.16);
+    camera.position.lerp(resolvedPosition, followAlpha);
+  }
+  camera.lookAt(focus);
   camera.updateMatrixWorld(true);
   lastCameraState = {
     pivotX: Number(cameraPivotX.toFixed(3)),
@@ -3024,11 +3360,91 @@ function updateCamera(payload = {}) {
     playerZ: Number(playerZ.toFixed(3)),
     narrativeX: Number(narrativeX.toFixed(3)),
     narrativeZ: Number(narrativeZ.toFixed(3)),
-    orbitRadius: Number(cameraBack.toFixed(3)),
+    orbitRadius: Number(playerFollowDistance.toFixed(3)),
+    focusDistance: Number(resolvedDistance.toFixed(3)),
     height: Number(cameraHeight.toFixed(3)),
+    fov: Number(camera.fov.toFixed(2)),
+    collisionAdjusted: resolvedDistance < desiredDistance - 0.02,
     yaw: Number(yaw.toFixed(3)),
     pitch: Number(pitch.toFixed(3))
   };
+}
+
+function setMaterialOcclusionTarget(material, targetOpacity) {
+  if (!material) return;
+  if (!occludedMaterials.has(material)) {
+    occludedMaterials.set(material, {
+      baseOpacity: Number.isFinite(material.opacity) ? material.opacity : 1,
+      baseTransparent: !!material.transparent,
+      targetOpacity: Number.isFinite(material.opacity) ? material.opacity : 1
+    });
+  }
+  const state = occludedMaterials.get(material);
+  state.targetOpacity = Math.min(state.targetOpacity, targetOpacity);
+}
+
+function getObjectOcclusionMaterial(object, materialIndex = 0) {
+  if (!object?.material) return null;
+  const source = Array.isArray(object.material) ? object.material[materialIndex] : object.material;
+  if (!source) return null;
+  if (source.userData?.interiorOcclusionOwned) return source;
+  const owned = source.clone();
+  owned.userData = { ...source.userData, interiorOcclusionOwned: true };
+  if (Array.isArray(object.material)) {
+    const materials = [...object.material];
+    materials[materialIndex] = owned;
+    object.material = materials;
+  } else {
+    object.material = owned;
+  }
+  return owned;
+}
+
+function updateCameraOcclusion(payload = {}) {
+  if (!cameraRaycaster || !camera || !modelRoot) return;
+  occludedMaterials.forEach((state) => {
+    state.targetOpacity = state.baseOpacity;
+  });
+  const targets = [
+    new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
+    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2))
+  ];
+  targets.forEach((target) => {
+    const direction = target.clone().sub(camera.position);
+    const distance = direction.length();
+    if (distance < 0.4) return;
+    direction.normalize();
+    cameraRaycaster.set(camera.position, direction);
+    cameraRaycaster.near = 0.18;
+    cameraRaycaster.far = distance - 0.18;
+    const hits = cameraRaycaster.intersectObjects([roomRoot, modelRoot], true)
+      .filter((hit) => hit.distance < distance - 0.2 && hit.point?.y > 0.35 && !hit.object?.userData?.neverFade);
+    const nearestDistance = hits[0]?.distance ?? Number.POSITIVE_INFINITY;
+    hits.forEach((hit) => {
+      // Fade the complete near-wall assembly (crown, cove and wall skin), but do
+      // not dissolve unrelated furniture deeper in the room along the same ray.
+      if (hit.distance > nearestDistance + 1.15) return;
+      const materials = Array.isArray(hit.object?.material) ? hit.object.material : [hit.object?.material];
+      materials.forEach((material, materialIndex) => {
+        if (!material) return;
+        setMaterialOcclusionTarget(getObjectOcclusionMaterial(hit.object, materialIndex), 0.18);
+      });
+    });
+  });
+  const now = performance.now();
+  const dt = Math.min(0.1, Math.max(1 / 240, (now - (updateCameraOcclusion.lastAt || now - 16)) / 1000));
+  updateCameraOcclusion.lastAt = now;
+  occludedMaterials.forEach((state, material) => {
+    const fading = state.targetOpacity < material.opacity;
+    const duration = fading ? 0.18 : 0.24;
+    const alpha = 1 - Math.exp(-dt / duration);
+    material.opacity += (state.targetOpacity - material.opacity) * alpha;
+    const restored = Math.abs(material.opacity - state.baseOpacity) < 0.01 && state.targetOpacity === state.baseOpacity;
+    material.transparent = restored ? state.baseTransparent : true;
+    material.depthWrite = restored && !state.baseTransparent;
+    material.needsUpdate = true;
+    if (restored) occludedMaterials.delete(material);
+  });
 }
 
 function updateProjections(items, width, height) {
@@ -3076,13 +3492,19 @@ function update(payload = {}) {
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
   resize(width, height);
 
-  activeItems = (payload.items || []).filter((item) => item?.model);
-  const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))];
+  activeItems = applyMobileModelLod(
+    (payload.items || []).filter((item) => item?.model),
+    String(payload.theme?.zoneId || ""),
+    width
+  );
+  const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false && !item.mobileProxy).map((item) => item.model))];
   needed.forEach(loadModel);
   rebuildRoom(payload.theme || {});
-  updateCamera(payload);
   const modelsReady = rebuildModels(activeItems);
+  if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
   const actorsReady = updateActors(payload.actors || [], performance.now());
+  updateCamera(payload);
+  updateCameraOcclusion(payload);
   updatePhysicsDebug(payload.physics || {});
 
   const visible = payload.visible !== false;

@@ -19,8 +19,8 @@ const VIEWPORT = MOBILE
   ? { width: 390, height: 844, deviceScaleFactor: 1 }
   : { width: CAPTURE_WIDTH, height: CAPTURE_HEIGHT, deviceScaleFactor: 1 };
 const PERFORMANCE_BUDGET = {
-  drawCalls: Number(process.env.MIRRORLIFE_MAX_INTERIOR_DRAW_CALLS || 180),
-  triangles: Number(process.env.MIRRORLIFE_MAX_INTERIOR_TRIANGLES || 500000),
+  drawCalls: Number(process.env.MIRRORLIFE_MAX_INTERIOR_DRAW_CALLS || (MOBILE ? 110 : 180)),
+  triangles: Number(process.env.MIRRORLIFE_MAX_INTERIOR_TRIANGLES || (MOBILE ? 250000 : 450000)),
   geometries: Number(process.env.MIRRORLIFE_MAX_INTERIOR_GEOMETRIES || 220)
 };
 const SCENES = [
@@ -69,7 +69,7 @@ try {
   for (let index = 0; index < CAPTURE_SCENES.length; index += 1) {
     const scene = CAPTURE_SCENES[index];
     const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
-    await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await new Promise((resolve) => setTimeout(resolve, index === 0 ? 6500 : 4200));
     if (SHOW_REVIEW_LABEL) {
       await page.evaluate(({ label, archetype }) => {

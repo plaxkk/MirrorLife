@@ -2,15 +2,24 @@ import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
 import {
+  INTERIOR_PHYSICS_CONFIG,
   PLAYER_RADIUS,
   CITIZEN_RADIUS,
   createPhysicsWorld,
+  createRapierRuntime,
+  disposeRapierRuntime,
+  queueRapierJump,
+  stepRapierCharacter,
   isWalkable,
   moveCircle,
   findPath,
   sampleWalkablePoint,
   getDebugSnapshot
 } from "../src/interior-physics.js";
+
+assert.equal(INTERIOR_PHYSICS_CONFIG.worldScaleMeters, 1, "v2 physics must use one world unit per meter");
+assert.equal(INTERIOR_PHYSICS_CONFIG.gravity, -18, "v2 gravity contract changed unexpectedly");
+assert.equal(INTERIOR_PHYSICS_CONFIG.fixedTimeStep, 1 / 60, "v2 physics must use a fixed 60Hz step");
 
 const SOLID_MODEL_TYPES = [
   "bed", "counter", "desk", "seating", "shelf", "wall-board", "round-table", "table",
@@ -193,6 +202,52 @@ for (const [zoneId, archetype] of ZONES) {
   });
 }
 
+const rapierProfile = {
+  version: 2,
+  worldScaleMeters: 1,
+  shell: { id: "qa-round-room", radius: 5.4, height: 3.72 },
+  props: [
+    {
+      key: "fixed-desk",
+      model: "desk",
+      transform: { position: { x: 2.1, y: 0.37, z: 0 }, rotationY: 0, scale: 1 },
+      collider: { shape: "box", halfX: 0.65, halfY: 0.37, halfZ: 0.38 },
+      rigidBody: { type: "fixed", material: "wood" }
+    },
+    {
+      key: "pushable-crate",
+      model: "supply-crate",
+      transform: { position: { x: 0, y: 0.29, z: -1.4 }, rotationY: 0, scale: 1 },
+      collider: { shape: "box", halfX: 0.31, halfY: 0.29, halfZ: 0.31 },
+      rigidBody: { type: "dynamic", material: "wood", mass: 4 }
+    }
+  ]
+};
+const rapier = await createRapierRuntime({
+  layoutProfile: rapierProfile,
+  spawn: { x: 0, y: 0.86, z: 2.7 }
+});
+try {
+  assert(rapier?.world && rapier?.controller, "Rapier runtime did not initialize");
+  let sample = null;
+  for (let frame = 0; frame < 90; frame += 1) {
+    sample = stepRapierCharacter(rapier, { x: 0, z: -1, run: frame > 30 }, 1 / 60);
+  }
+  assert(sample.z < 1.2, "Rapier capsule did not move through the room in world meters");
+  assert(sample.grounded, "Rapier character should remain grounded before jumping");
+  queueRapierJump(rapier);
+  let apex = sample.y;
+  for (let frame = 0; frame < 120; frame += 1) {
+    sample = stepRapierCharacter(rapier, { x: 0, z: 0 }, 1 / 60);
+    apex = Math.max(apex, sample.y);
+  }
+  assert(apex > 1.55, `Rapier jump apex was too low (${apex.toFixed(3)}m)`);
+  assert(sample.grounded, "Rapier character did not land after the jump");
+  assert(Math.abs(sample.y - 0.86) < 0.08, `Rapier capsule landed at an invalid height (${sample.y.toFixed(3)}m)`);
+} finally {
+  disposeRapierRuntime(rapier);
+}
+
 const output = {
   generatedAt: new Date().toISOString(),
   zoneCount: reports.length,
@@ -203,7 +258,9 @@ const output = {
     roomBoundary: true,
     interactionReachability: true,
     pathfinding: true,
-    randomWalkableSampling: true
+    randomWalkableSampling: true,
+    rapier3dRuntime: true,
+    fixedTimestepJumpAndLanding: true
   },
   reports
 };

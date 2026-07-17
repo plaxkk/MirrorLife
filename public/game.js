@@ -60,6 +60,10 @@ let interiorHotspots = [];
 let interiorNearbyAnchor = null;
 let interiorFocusPropIndex = null;
 let interiorPhysicsWorld = null;
+let interiorRapierRuntime = null;
+let interiorRapierLoading = null;
+let interiorRunHeld = false;
+let interiorJoystick = { x: 0, z: 0, pointerId: null };
 let interiorPhysicsDebugVisible = new URLSearchParams(window.location.search).get("debugPhysics") === "1";
 let activeEncounters = [];
 let encounterCooldowns = {};
@@ -83,7 +87,8 @@ const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
 const INTERIOR_PANORAMA_FOV = Math.PI * 0.38;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
-const INTERIOR_PLAYER_SPEED = 1.55;
+const INTERIOR_PLAYER_SPEED = 2.4;
+const INTERIOR_PLAYER_RUN_SPEED = 4;
 const INTERIOR_INTERACTION_RADIUS = 2.05;
 const INTERIOR_FALLBACK_PLAYER_RADIUS = 0.32;
 const INTERIOR_FALLBACK_CITIZEN_RADIUS = 0.28;
@@ -193,6 +198,12 @@ const ENCOUNTER_RADIUS = 30;
 const ENCOUNTER_COOLDOWN_MS = 26000;
 const INDOOR_ENTER_CHANCE = 0.09;
 const MAX_INTERIOR_OCCUPANTS = 4;
+const CORE_INTERIOR_STORY_ZONES = new Set(["residential", "office-district", "public-plaza", "empathy-lab", "story-archive", "legal-court"]);
+const getInteriorOccupantCap = (zoneId) => {
+  const mobile = typeof window !== "undefined" && window.innerWidth <= 720;
+  if (mobile) return CORE_INTERIOR_STORY_ZONES.has(zoneId) ? 2 : 1;
+  return CORE_INTERIOR_STORY_ZONES.has(zoneId) ? MAX_INTERIOR_OCCUPANTS : 2;
+};
 const IMMERSION_NEAR_RADIUS = 150; // 跟随模式下的注意力半径(px,世界坐标)
 
 const ENCOUNTER_GREETINGS = ["你好呀", "嗨,好久不见", "今天过得怎么样?", "又见面啦", "早啊"];
@@ -5575,15 +5586,15 @@ const INTERIOR_ZONE_PROFILES = {
     completion: "你发现，告别不是把一个人放下，而是为这段关系找到新的存在方式。"
   },
   "empathy-lab": {
-    blueprint: "care", title: "谈心和解屋共情室", intro: "在这里，理解不代表同意，但每句话都会被完整听完。",
-    labels: ["安全休息床", "倾听护理站", "平行等候椅", "匿名档案柜", "情绪安抚角", "复原植物窗"],
-    clues: ["倾听台上有两只计时器，确保沉默也属于对话的一部分。", "匿名档案只记录需求，不保存对人的判断。", "安抚角准备了不同重量的毯子，让身体先于语言找到安全。"],
+    blueprint: "care", title: "谈心和解屋共情室", intro: "在这里，理解不代表同意；距离、目光和边界都可以被重新校准。",
+    labels: ["距离校准椅", "对话校准台", "平行目光位", "边界授权柜", "身体安定席", "呼吸光窗"],
+    clues: ["对话校准台上有两只计时器，确保沉默也属于对话的一部分。", "边界授权柜只记录需求，不保存对人的判断。", "身体安定席提供不同支撑，让身体先于语言找到安全。"],
     completion: "你看见，共情不是猜中别人，而是持续确认自己有没有听错。"
   },
   "story-archive": {
     blueprint: "creative", title: "街坊故事馆口述室", intro: "城市的历史不只属于大事件，也属于普通人没来得及说完的一天。",
-    labels: ["记忆画架", "街坊作品墙", "口述排练角", "故事索引桌", "声音档案角"],
-    clues: ["故事墙按情绪而不是年份排列，相隔几十年的人因此成为邻居。", "索引桌保留“我记不清了”这样的句子，没有替讲述者补全。", "声音角能听见背景里的锅碗、风声和停顿，它们也被当作历史。"],
+    labels: ["公开故事柜", "授权范围墙", "封存缓冲门", "见证索引桌", "声音封存匣"],
+    clues: ["公开故事柜按情绪而不是年份排列，相隔几十年的人因此成为邻居。", "授权范围墙保留“我记不清了”这样的句子，没有替讲述者补全。", "声音封存匣能听见背景里的锅碗、风声和停顿；带出封存区之前，讲述者必须再次确认。"],
     completion: "你发现，一座城市真正的档案，是人们愿意把不完整的自己交给彼此。"
   },
   "commons-workshop": {
@@ -5749,20 +5760,50 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
 function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
   const zoneId = String(zone?.id || "unknown-room");
   const authored = INTERIOR_ZONE_LAYOUT_PROFILES[zoneId] || {};
+  const defaultIdentity = INTERIOR_ZONE_PROFILES[zoneId] || {};
+  const defaultDoorAngle = 0;
   return {
-    version: 1,
+    version: 2,
     zoneId,
+    worldScaleMeters: 1,
     shellId: authored.shellId || `${zoneId}-shell-v1`,
+    shell: {
+      shape: "round-cutaway",
+      radius: 5.4,
+      height: 3.72,
+      floorY: 0,
+      door: { id: "exit", angle: defaultDoorAngle, width: 0.95, height: 2.15, depth: 0.16 },
+      levels: [{ id: "ground", y: 0, walkable: true }]
+    },
     lightingPreset: authored.lightingPreset || `${blueprintKey}-soft-daylight`,
     materialPreset: authored.materialPreset || `${blueprintKey}-layered-dopamine`,
     functionalZones: Array.isArray(authored.functionalZones) ? authored.functionalZones.map((item) => ({ ...item })) : [],
-    props: Array.isArray(authored.props) ? authored.props.map((item) => ({ ...item })) : [],
+    props: Array.isArray(authored.props) ? authored.props.map((item, index) => ({
+      ...item,
+      id: item.id || `prop-${index}`,
+      transform: {
+        position: { x: Number(item.worldX || 0), y: Number(item.worldY || 0), z: Number(item.worldZ || 0) },
+        rotation: { x: 0, y: Number(item.rotationY || 0), z: 0 },
+        scale: Number(item.displayScale || 1)
+      },
+      collider: item.collider || { shape: "model-bounds", source: "render-transform" },
+      rigidBody: item.rigidBody || { type: "fixed", material: "wood", persistence: "room-reset" },
+      interactionAnchor: {
+        position: { x: Number(item.interactionWorldX ?? item.worldX ?? 0), y: 0, z: Number(item.interactionWorldZ ?? item.worldZ ?? 0) },
+        facing: Number(item.interactionFacing || 0),
+        reach: 0.9
+      }
+    })) : [],
     actorStagingPoints: Array.isArray(authored.actorStagingPoints)
-      ? authored.actorStagingPoints.map((point) => ({ x: Number(point.x || 0), z: Number(point.z || 0) }))
-      : [{ x: -0.9, z: 0.8 }, { x: 0.9, z: 0.8 }, { x: 0, z: -0.9 }],
+      ? authored.actorStagingPoints.map((point) => ({ x: Number(point.x || 0), y: Number(point.y || 0), z: Number(point.z || 0), facing: Number(point.facing || 0) }))
+      : [{ x: -0.9, y: 0, z: 0.8 }, { x: 0.9, y: 0, z: 0.8 }, { x: 0, y: 0, z: -0.9 }],
     cameraSafeArea: { x: 0, z: 0.3, radius: 2.1, ...(authored.cameraSafeArea || {}) },
     cameraTargets: Array.isArray(authored.cameraTargets) ? authored.cameraTargets.map((item) => ({ ...item })) : [{ id: "center", x: 0, z: 0.2 }],
-    standards: { mainCirculation: 1.4, interactionClearance: 0.9, spawnClearance: 1, narrativeClearRadius: 1.5 }
+    cameraVolumes: [{ id: "main", center: { x: 0, y: 1.1, z: 0.3 }, radius: 4.85, minDistance: 1.35, maxDistance: 5.2 }],
+    navSurfaces: [{ id: "ground", shape: "disc", radius: 4.86, y: 0, maxSlope: 45, maxStep: 0.22 }],
+    interactionAnchors: [],
+    standards: { mainCirculation: 1.4, interactionClearance: 0.9, spawnClearance: 1, narrativeClearRadius: 1.5 },
+    identity: { title: defaultIdentity.title || zone?.name || zoneId, blueprintKey }
   };
 }
 
@@ -5971,13 +6012,36 @@ function getInteriorPhysicsItems(blueprint) {
   return (blueprint?.props || []).map((prop, index, props) => {
     if (prop.render3d === false) return null;
     const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const model = interiorThreeModel(interiorPropModel(prop, blueprint));
+    const physics = getInteriorPhysicsApi();
+    const authoredCollider = prop.collider?.shape && prop.collider.shape !== "model-bounds"
+      ? prop.collider
+      : physics?.MODEL_FOOTPRINTS?.[model] || null;
+    const dynamicModel = ["supply-crate", "meditation-seat"].includes(model);
+    const rigidBody = prop.rigidBody?.type && prop.rigidBody.type !== "fixed"
+      ? prop.rigidBody
+      : dynamicModel
+        ? { type: "dynamic", material: model === "meditation-seat" ? "textile" : "wood", mass: model === "meditation-seat" ? 3 : 8, persistence: "room-reset" }
+        : prop.rigidBody || { type: "fixed", material: "wood", persistence: "room-reset" };
+    const position = prop.transform?.position || {};
+    const rotation = prop.transform?.rotation || {};
+    const interaction = prop.interactionAnchor?.position || {};
     return {
       ...placement,
+      worldX: Number.isFinite(Number(position.x)) ? Number(position.x) : placement.worldX,
+      worldY: Number.isFinite(Number(position.y)) ? Number(position.y) : 0,
+      worldZ: Number.isFinite(Number(position.z)) ? Number(position.z) : placement.worldZ,
+      rotationY: Number.isFinite(Number(rotation.y)) ? Number(rotation.y) : -placement.angle,
+      interactionWorldX: Number.isFinite(Number(interaction.x)) ? Number(interaction.x) : placement.interactionWorldX,
+      interactionWorldZ: Number.isFinite(Number(interaction.z)) ? Number(interaction.z) : placement.interactionWorldZ,
       key: `prop-${index}`,
       index,
-      model: interiorThreeModel(interiorPropModel(prop, blueprint)),
+      model,
       renderModel: prop.renderModel !== false,
       physicsSolid: prop.physicsSolid !== false,
+      collider: authoredCollider,
+      rigidBody,
+      material: rigidBody.material || "wood",
       label: prop.label || "",
       kind: "prop",
       anchorHeight: 1.18,
@@ -6000,7 +6064,8 @@ function ensureInteriorPhysicsWorld(blueprint) {
     archetype: blueprint.key,
     variant,
     items,
-    spawn: { x: 0, z: 3.72 }
+    layoutProfile,
+    spawn: { x: 0, y: 0.86, z: 3.72 }
   });
   world.signature = signature;
   world.layoutProfile = layoutProfile;
@@ -6050,6 +6115,47 @@ function ensureInteriorPhysicsWorld(blueprint) {
     }
   };
   return world;
+}
+
+function disposeInteriorRapierRuntime() {
+  const physics = getInteriorPhysicsApi();
+  if (interiorRapierRuntime) physics?.disposeRapierRuntime?.(interiorRapierRuntime);
+  interiorRapierRuntime = null;
+  interiorRapierLoading = null;
+}
+
+function ensureInteriorRapierRuntime(blueprint) {
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(blueprint);
+  if (!physics?.createRapierRuntime || !world || !interiorView) return null;
+  if (interiorRapierRuntime?.signature === world.signature && !interiorRapierRuntime.disposed) return interiorRapierRuntime;
+  if (interiorRapierLoading?.signature === world.signature) return null;
+  disposeInteriorRapierRuntime();
+  const loading = physics.createRapierRuntime({ world }).then((runtime) => {
+    if (!interiorView || interiorPhysicsWorld?.signature !== world.signature) {
+      physics.disposeRapierRuntime?.(runtime);
+      return null;
+    }
+    runtime.signature = world.signature;
+    interiorRapierRuntime = runtime;
+    interiorRapierLoading = null;
+    const position = runtime.playerBody.translation();
+    interiorOrbit.x = position.x;
+    interiorOrbit.y = position.y;
+    interiorOrbit.z = position.z;
+    interiorOrbit.grounded = true;
+    interiorView.physicsReadyAt = performance.now();
+    markRenderActive(1800);
+    return runtime;
+  }).catch((error) => {
+    console.error("Rapier interior physics failed to initialize", error);
+    interiorRapierLoading = null;
+    if (interiorView) interiorView.physicsError = String(error?.message || error);
+    markRenderActive(1000);
+    return null;
+  });
+  interiorRapierLoading = { signature: world.signature, promise: loading };
+  return null;
 }
 
 function getInteriorInteractionPoint(index, fallback) {
@@ -6129,6 +6235,7 @@ function moveInteriorPlayer(forward, strafe, distance) {
 }
 
 function nudgeInteriorPlayer(direction, distance = 0.11) {
+  if (interiorRapierRuntime) return;
   if (direction === "forward") moveInteriorPlayer(1, 0, distance);
   else if (direction === "back") moveInteriorPlayer(-1, 0, distance);
   else if (direction === "left") moveInteriorPlayer(0, -1, distance);
@@ -6137,23 +6244,57 @@ function nudgeInteriorPlayer(direction, distance = 0.11) {
 
 function updateInteriorPlayerMovement(now) {
   if (!interiorView) return;
+  const blueprint = getInteriorBlueprint(interiorView.zone);
+  ensureInteriorRapierRuntime(blueprint);
   const previous = Number(interiorOrbit.lastMoveAt || now);
-  const dt = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+  const dt = Math.min(0.1, Math.max(0, (now - previous) / 1000));
   interiorOrbit.lastMoveAt = now;
-  if (!interiorMoveKeys.size || dt <= 0) return;
+  if (dt <= 0) return;
 
-  let forward = 0;
-  let strafe = 0;
+  let forward = Number(interiorJoystick.z || 0);
+  let strafe = Number(interiorJoystick.x || 0);
   if (interiorMoveKeys.has("forward")) forward += 1;
   if (interiorMoveKeys.has("back")) forward -= 1;
   if (interiorMoveKeys.has("left")) strafe -= 1;
   if (interiorMoveKeys.has("right")) strafe += 1;
   const magnitude = Math.hypot(forward, strafe);
-  if (!magnitude) return;
-  forward /= magnitude;
-  strafe /= magnitude;
+  if (magnitude > 1) {
+    forward /= magnitude;
+    strafe /= magnitude;
+  }
 
-  moveInteriorPlayer(forward, strafe, INTERIOR_PLAYER_SPEED * dt);
+  if (interiorRapierRuntime) {
+    const yaw = Number(interiorOrbit.yaw || 0);
+    const forwardX = Math.sin(yaw);
+    const forwardZ = -Math.cos(yaw);
+    const rightX = Math.cos(yaw);
+    const rightZ = Math.sin(yaw);
+    const result = getInteriorPhysicsApi()?.stepRapierCharacter?.(interiorRapierRuntime, {
+      x: forwardX * forward + rightX * strafe,
+      z: forwardZ * forward + rightZ * strafe,
+      run: interiorRunHeld
+    }, dt);
+    if (result) {
+      const movedDistance = Math.hypot(result.x - Number(interiorOrbit.x || 0), result.z - Number(interiorOrbit.z || 0));
+      interiorOrbit.x = result.x;
+      interiorOrbit.y = result.y;
+      interiorOrbit.z = result.z;
+      interiorOrbit.grounded = result.grounded;
+      interiorOrbit.velocity = result.velocity;
+      interiorOrbit.contacts = result.contacts;
+      interiorOrbit.blocked = result.contacts.length > 0;
+      interiorOrbit.motionState = !result.grounded
+        ? result.velocity.y > 0.1 ? "jump" : "fall"
+        : magnitude > 0.05 ? interiorRunHeld ? "run" : "walk" : "idle";
+      interiorOrbit.walkPhase = Number(interiorOrbit.walkPhase || 0) + movedDistance * (interiorRunHeld ? 12 : 8.5);
+    }
+    if (magnitude > 0.01 || !result?.grounded) markRenderActive(220);
+    return;
+  }
+
+  if (!magnitude) return;
+
+  moveInteriorPlayer(forward, strafe, (interiorRunHeld ? INTERIOR_PLAYER_RUN_SPEED : INTERIOR_PLAYER_SPEED) * dt);
   markRenderActive(220);
 }
 
@@ -13272,7 +13413,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
   const items = getInteriorThreeItems(blueprint, W, H);
   const cameraFocus = getInteriorCameraFocus(blueprint, actors);
   const physicsActors = [
-    { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
+    { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), y: Number(interiorOrbit?.y || 0.86), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
     ...actors.map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
   ];
   return api.update({
@@ -13302,7 +13443,9 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     physics: {
       enabled: interiorPhysicsDebugVisible,
       colliders: interiorPhysicsWorld?.colliders || [],
-      actors: physicsActors
+      actors: physicsActors,
+      ready: !!interiorRapierRuntime,
+      dynamics: getInteriorPhysicsApi()?.getRapierDynamicTransforms?.(interiorRapierRuntime) || []
     }
   });
 }
@@ -13695,14 +13838,19 @@ function enterInteriorView(zone, source = "manual") {
       until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
   };
-  interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, z: 0, lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
+  interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
   interiorPhysicsWorld = null;
+  disposeInteriorRapierRuntime();
   const physicsWorld = ensureInteriorPhysicsWorld(blueprint);
   if (physicsWorld?.spawn) {
     interiorOrbit.x = physicsWorld.spawn.x;
+    interiorOrbit.y = physicsWorld.spawn.y || 0.86;
     interiorOrbit.z = physicsWorld.spawn.z;
   }
+  ensureInteriorRapierRuntime(blueprint);
   interiorMoveKeys.clear();
+  interiorRunHeld = false;
+  interiorJoystick = { x: 0, z: 0, pointerId: null };
   interiorNearbyAnchor = null;
   interiorFocusPropIndex = null;
   interiorExitRect = null;
@@ -13737,6 +13885,9 @@ function exitInteriorView() {
   interiorExitRect = null;
   interiorHotspots = [];
   interiorPhysicsWorld = null;
+  disposeInteriorRapierRuntime();
+  interiorRunHeld = false;
+  interiorJoystick = { x: 0, z: 0, pointerId: null };
   window.__mirrorLifeInteriorPhysics = null;
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
@@ -13777,30 +13928,64 @@ function ensureInteriorMovePad() {
   document.getElementById("interiorMovePad")?.remove();
   const pad = document.createElement("nav");
   pad.id = "interiorMovePad";
-  pad.setAttribute("aria-label", "室内移动");
+  pad.setAttribute("aria-label", "室内移动与动作");
   pad.innerHTML = `
-    <button type="button" data-interior-move="forward" aria-label="向前移动" title="向前">↑</button>
-    <button type="button" data-interior-move="left" aria-label="向左移动" title="向左">←</button>
-    <span aria-hidden="true">●</span>
-    <button type="button" data-interior-move="right" aria-label="向右移动" title="向右">→</button>
-    <button type="button" data-interior-move="back" aria-label="向后移动" title="向后">↓</button>`;
-  const stop = (direction) => {
-    interiorMoveKeys.delete(direction);
+    <div class="interior-joystick" data-interior-joystick role="application" aria-label="拖动移动">
+      <span class="interior-joystick-knob" aria-hidden="true"></span>
+    </div>
+    <div class="interior-action-buttons">
+      <button type="button" data-interior-action="interact" aria-label="互动" title="互动">聊</button>
+      <button type="button" data-interior-action="jump" aria-label="跳跃" title="跳跃">跃</button>
+    </div>`;
+  const joystick = pad.querySelector("[data-interior-joystick]");
+  const knob = pad.querySelector(".interior-joystick-knob");
+  const updateJoystick = (event) => {
+    const rect = joystick.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    const radius = Math.max(1, rect.width * 0.32);
+    const distance = Math.hypot(dx, dy);
+    const scale = distance > radius ? radius / distance : 1;
+    const x = dx * scale;
+    const y = dy * scale;
+    interiorJoystick.x = clamp(x / radius, -1, 1);
+    interiorJoystick.z = clamp(-y / radius, -1, 1);
+    knob.style.transform = `translate(${x}px, ${y}px)`;
+    markRenderActive(400);
+  };
+  const stop = (event) => {
+    if (interiorJoystick.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== interiorJoystick.pointerId) return;
+    interiorJoystick = { x: 0, z: 0, pointerId: null };
+    knob.style.transform = "translate(0, 0)";
     markRenderActive(300);
   };
-  pad.querySelectorAll("[data-interior-move]").forEach((button) => {
-    const direction = button.dataset.interiorMove;
-    button.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      button.setPointerCapture?.(event.pointerId);
-      interiorMoveKeys.add(direction);
-      nudgeInteriorPlayer(direction, 0.08);
-      markRenderActive(1200);
-    });
-    ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
-      button.addEventListener(eventName, () => stop(direction));
-    });
+  joystick.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    interiorJoystick.pointerId = event.pointerId;
+    joystick.setPointerCapture?.(event.pointerId);
+    updateJoystick(event);
+  });
+  joystick.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== interiorJoystick.pointerId) return;
+    event.preventDefault();
+    updateJoystick(event);
+  });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => joystick.addEventListener(eventName, stop));
+  pad.querySelector('[data-interior-action="jump"]').addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    getInteriorPhysicsApi()?.queueRapierJump?.(interiorRapierRuntime);
+    interiorOrbit.motionState = "jump";
+    markRenderActive(1600);
+  });
+  pad.querySelector('[data-interior-action="interact"]').addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (interiorNearbyAnchor) exploreInteriorHotspot(interiorNearbyAnchor.index);
+    else showToast("再靠近一点，就能听见这段故事。", "listen");
   });
   document.getElementById("gameShell")?.appendChild(pad);
 }
@@ -13816,7 +14001,7 @@ function seedInteriorOccupants(zone) {
   const passersBy = alive
     .filter((citizen) => !candidateIds.has(citizen.id))
     .sort((a, b) => hashCommunitySeed(a.id, seed) - hashCommunitySeed(b.id, seed));
-  candidates = [...candidates, ...passersBy].slice(0, Math.min(3, MAX_INTERIOR_OCCUPANTS));
+  candidates = [...candidates, ...passersBy].slice(0, Math.min(3, getInteriorOccupantCap(zone.id)));
   candidates.forEach((citizen, i) => {
     const anim = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
     anim.indoor = {
@@ -13832,7 +14017,7 @@ function seedInteriorOccupants(zone) {
 function manageInteriorArrivals(society, zone, indoorCount, now) {
   if (!interiorView || now < (interiorView.nextArrivalCheckAt || 0)) return;
   interiorView.nextArrivalCheckAt = now + 4200;
-  if (indoorCount >= MAX_INTERIOR_OCCUPANTS) return;
+  if (indoorCount >= getInteriorOccupantCap(zone.id)) return;
   const alive = getAliveCitizens(society)
     .filter(c => c.id !== "avatar" && !citizenAnimations[c.id]?.indoor);
   const inZone = alive.filter(c => c.zoneId === zone.id);
@@ -14055,7 +14240,7 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
         + Number(socialWitnessIds.includes(citizen.id)) * 3;
       return priority(b) - priority(a);
     })
-    .slice(0, MAX_INTERIOR_OCCUPANTS);
+    .slice(0, getInteriorOccupantCap(zone.id));
   manageInteriorArrivals(society, zone, indoorCitizens.length, now);
 
   const entries = [];
@@ -14214,19 +14399,36 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   holdSocialParallaxActors(zone, entries);
   holdEmpathyCalibrationActor(zone, entries);
   holdMemoryAuthorizationActor(zone, entries);
-  const actorPayload = entries.map((entry) => ({
+  const avatarCitizen = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
+  const playerPayload = {
+    id: "player",
+    identityId: "avatar",
+    role: "player",
+    worldX: Number(interiorOrbit.x || 0),
+    worldY: Math.max(0, Number(interiorOrbit.y || 0.86) - 0.86),
+    worldZ: Number(interiorOrbit.z || 0),
+    frame: getCitizenSpriteFrame(avatarCitizen),
+    facing: Number(interiorOrbit.velocity?.x || 0) >= 0 ? 1 : -1,
+    state: interiorOrbit.motionState || "idle",
+    velocity: interiorOrbit.velocity || { x: 0, y: 0, z: 0 },
+    grounded: interiorOrbit.grounded !== false,
+    walkPhase: Number(interiorOrbit.walkPhase || 0),
+    scale: avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1
+  };
+  const actorPayload = [playerPayload, ...entries.map((entry) => ({
     id: entry.id,
     worldX: entry.worldX,
+    worldY: 0,
     worldZ: entry.worldZ,
     frame: entry.frame,
     facing: entry.facing,
     state: entry.state,
     walkPhase: entry.walkPhase,
     scale: entry.scale
-  }));
+  }))];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
   const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);
-  const useThreeModels = !!threeState?.ready;
+  const useThreeModels = !!threeState?.ready && !!interiorRapierRuntime;
   const projectedProps = new Map((threeState?.projections || [])
     .filter((item) => String(item.key || "").startsWith("prop-"))
     .map((item) => [item.index, item]));
@@ -14288,54 +14490,9 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
-  const finaleActive = document.body.classList.contains("counterfactual-finale-active");
-  if (finaleActive) {
-    interiorExitRect = null;
-  } else {
-    const exitW = Math.min(150, Math.max(110, W * 0.14));
-    const exitH = 34;
-    interiorExitRect = { x: W - exitW - 24, y: H - exitH - 24, w: exitW, h: exitH };
-    ctx.save();
-    ctx.fillStyle = isNight ? "rgba(18,18,34,0.86)" : "rgba(250,250,245,0.92)";
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2.5;
-    roundRect(ctx, interiorExitRect.x, interiorExitRect.y, interiorExitRect.w, interiorExitRect.h, 10);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#1a1a2e";
-    ctx.font = `bold 13px "Noto Sans SC", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("回到街道", interiorExitRect.x + interiorExitRect.w / 2, interiorExitRect.y + interiorExitRect.h / 2 + 1);
-    ctx.restore();
-  }
-
-  // Header
-  ctx.fillStyle = "rgba(250,250,245,0.94)";
-  const headerText = `${ZONE_ICONS?.[zone.id] || "🏠"} ${zone.name} · 室内`;
-  ctx.font = `bold 15px "Noto Sans SC", sans-serif`;
-  const headerW = ctx.measureText(headerText).width + 34;
-  roundRect(ctx, W / 2 - headerW / 2, 14, headerW, 30, 15);
-  ctx.fill();
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 2;
-  roundRect(ctx, W / 2 - headerW / 2, 14, headerW, 30, 15);
-  ctx.stroke();
-  ctx.fillStyle = "#1a1a2e";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(headerText, W / 2, 29 + 1);
-  ctx.textBaseline = "alphabetic";
-  ctx.font = `11px "Noto Sans SC", sans-serif`;
-  ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  const explorationRecord = getInteriorExplorationRecord(zone.id);
-  const explorationProgress = getInteriorExplorationProgress(zone, blueprint, explorationRecord);
-  const interiorStatus = explorationRecord.scenePlayed
-    ? "共同经历已留下"
-    : explorationRecord.completed
-      ? "场所回声已解锁"
-      : `${explorationProgress.count}/${explorationProgress.goal} 段场所记忆`;
-  ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
+  // The DOM chip is the single exit affordance in the 3D renderer. Duplicating
+  // a canvas exit/header competes with touch controls and the compact HUD.
+  interiorExitRect = null;
 
   // Occupants live in the same X/Z coordinate system as the furniture. Three.js
   // returns their floor projection for hit testing and provides real depth
@@ -16661,6 +16818,20 @@ function bindGameEvents() {
       return;
     }
     if (interiorView) {
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!e.repeat) {
+          getInteriorPhysicsApi()?.queueRapierJump?.(interiorRapierRuntime);
+          interiorOrbit.motionState = "jump";
+          markRenderActive(1600);
+        }
+        return;
+      }
+      if (e.key === "Shift") {
+        interiorRunHeld = true;
+        markRenderActive(600);
+        return;
+      }
       if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         if (!e.repeat) {
@@ -16696,6 +16867,7 @@ function bindGameEvents() {
     showToast(graphDebugVisible ? "因果图调试已显示" : "因果图调试已隐藏", "support");
   });
   document.addEventListener("keyup", (e) => {
+    if (e.key === "Shift") interiorRunHeld = false;
     const movementByKey = {
       w: "forward", arrowup: "forward",
       s: "back", arrowdown: "back",
@@ -16705,7 +16877,11 @@ function bindGameEvents() {
     const direction = movementByKey[e.key.toLowerCase()];
     if (direction) interiorMoveKeys.delete(direction);
   });
-  window.addEventListener("blur", () => interiorMoveKeys.clear());
+  window.addEventListener("blur", () => {
+    interiorMoveKeys.clear();
+    interiorRunHeld = false;
+    interiorJoystick = { x: 0, z: 0, pointerId: null };
+  });
 
   // ── Canvas click ──
   if (canvas) {

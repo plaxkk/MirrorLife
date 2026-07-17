@@ -10,7 +10,7 @@ const pageErrors = [];
 page.on("pageerror", (error) => pageErrors.push(String(error?.message || error)));
 
 try {
-  await page.goto(`${BASE_URL}/game.html?qaFresh=1`, { waitUntil: "networkidle0", timeout: 30000 });
+  await page.goto(`${BASE_URL}/game.html?qaFresh=1`, { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.waitForFunction(() => !!state?.society && typeof enterInteriorView === "function", { timeout: 12000 });
   const report = await page.evaluate(async () => {
     const zoneIds = Object.keys(INTERIOR_ZONE_PROFILES);
