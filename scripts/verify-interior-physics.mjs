@@ -22,7 +22,7 @@ assert.equal(INTERIOR_PHYSICS_CONFIG.gravity, -18, "v2 gravity contract changed 
 assert.equal(INTERIOR_PHYSICS_CONFIG.fixedTimeStep, 1 / 60, "v2 physics must use a fixed 60Hz step");
 
 const SOLID_MODEL_TYPES = [
-  "bed", "counter", "desk", "seating", "shelf", "wall-board", "round-table", "table",
+  "bed", "counter", "desk", "seating", "civic-seating", "shelf", "wall-board", "round-table", "table",
   "plant-zone", "workbench", "easel", "sink", "altar", "fountain", "bench", "toy-corner",
   "reading-corner", "teacher-podium", "waiting-chair", "home-bed", "bookcase", "service-counter",
   "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board",

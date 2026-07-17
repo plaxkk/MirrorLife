@@ -5695,15 +5695,29 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     props: [
       { renderModel: false, physicsSolid: true, worldX: -3.28, worldZ: 0.56, displayScale: 1, collider: { shape: "box", halfX: 0.9, halfY: 0.86, halfZ: 0.52, rotation: 0.28 }, interactionWorldX: -2.18, interactionWorldZ: 0.72 },
       { renderModel: false, physicsSolid: true, worldX: 0, worldZ: -4.56, displayScale: 1, collider: { shape: "box", halfX: 1.12, halfY: 0.55, halfZ: 0.34 }, interactionWorldX: 0, interactionWorldZ: -3.52 },
-      { renderModel: false, physicsSolid: true, worldX: 3.77, worldZ: -2.1, displayScale: 1, collider: { shape: "box", halfX: 1.03, halfY: 0.64, halfZ: 0.52, rotation: -1.06 }, interactionWorldX: 2.62, interactionWorldZ: -1.42 },
-      { renderModel: true, physicsSolid: true, worldX: -4.18, worldZ: 2.42, displayScale: 1, collider: { shape: "box", halfX: 1.16, halfY: 0.78, halfZ: 0.52, rotation: 0.24 }, interactionWorldX: -2.82, interactionWorldZ: 2.1 },
+      {
+        model: "civic-seating",
+        assetIntent: "civic-lounge",
+        renderModel: true,
+        physicsSolid: true,
+        worldX: 3.58,
+        worldZ: -1.72,
+        rotationY: -1.12,
+        // The reference lounge reads as a real two-seat conversation bay.
+        // Keep its authored sofa/table transform and its collider footprint in
+        // the same metre-scale contract so the player never hits empty space.
+        displayScale: 1,
+        collider: { shape: "box", halfX: 1.08, halfY: 0.58, halfZ: 1.12, rotation: 0 },
+        interactionWorldX: 2.35,
+        interactionWorldZ: -1.02
+      },
+      { renderModel: true, physicsSolid: true, worldX: -4.18, worldZ: 2.42, displayScale: 0.92, collider: { shape: "box", halfX: 1.06, halfY: 0.72, halfZ: 0.48, rotation: 0.24 }, interactionWorldX: -2.82, interactionWorldZ: 2.1 },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
-      { renderModel: false, physicsSolid: true, worldX: 4.08, worldZ: -0.64, displayScale: 1, collider: { shape: "circle", radius: 0.42, halfY: 0.72 }, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
+      { renderModel: false, physicsSolid: false, focal: false, worldX: 4.08, worldZ: -0.64, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
     ],
     extraColliders: [
       { id: "civic-library-wall", x: 4.66, z: -2.76, collider: { shape: "box", halfX: 0.72, halfY: 1.26, halfZ: 0.36, rotation: -1.03 }, material: "wood" },
-      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" },
-      { id: "civic-foreground-tea-table", x: 3.18, z: 1.72, collider: { shape: "box", halfX: 0.7, halfY: 0.48, halfZ: 0.42, rotation: -0.28 }, material: "wood" }
+      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" }
     ],
     actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },

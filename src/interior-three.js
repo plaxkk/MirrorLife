@@ -59,7 +59,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#eee1cc", floor: "#d2c1a7", accent: "#c49336", secondary: "#3f8982", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f0e7d9", floor: "#cbc5bb", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -109,6 +109,7 @@ const MODEL_RENDER_PROFILES = {
   counter: { scale: 0.98, rotationY: -0.2 },
   desk: { scale: 1.18, rotationY: -0.48 },
   seating: { scale: 1.2, rotationY: -0.35 },
+  "civic-seating": { scale: 1.2, rotationY: -0.35 },
   shelf: { scale: 1.08, rotationY: 0 },
   "wall-board": { scale: 1.08, decorScale: 3.1, rotationY: 0 },
   "round-table": { scale: 1.25, rotationY: -0.32 },
@@ -2421,10 +2422,7 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicHeroNoticeWall(colors);
   addCivicLibraryWall(colors);
   addCivicThresholdFlowers(colors);
-  addCivicForegroundTeaTable(colors);
   addCivicCovenantPanel(colors);
-  addAmbientBanquette(1.06, { ...colors, secondary: "#4b9189" });
-  addAmbientTeaTable(0.92, colors);
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
   addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 2);
   addBuiltInArchNiche(0.62, colors, {
@@ -2436,7 +2434,6 @@ function addCivicReferenceDressing(theme, colors) {
     shelves: 3
   });
   addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
-  addSculptedFloorPlant(4.08, -0.64, 0.88, colors, 9);
   addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
   addSunlightPatches(!!colors.night);
 }
@@ -3342,7 +3339,7 @@ function getItemSignature(items) {
 }
 
 const MOBILE_HERO_PROP_INDEXES = {
-  "public-plaza": [0, 1, 3],
+  "public-plaza": [2, 3],
   residential: [0, 1, 4],
   "office-district": [0, 2],
   "legal-court": [0, 1, 3],

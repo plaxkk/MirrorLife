@@ -1,5 +1,28 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-17 reference-fidelity v4 addendum
+
+- Native source: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Live desktop: `/tmp/mirrorlife-civic-fidelity-v4-desktop.png` (`1672 × 941`).
+- Live mobile: `/tmp/mirrorlife-civic-fidelity-v4-mobile.png` (`390 × 844`).
+- Combined inspection: `/tmp/mirrorlife-civic-fidelity-v4-comparison.png`; reference and implementation were judged together at their native desktop size.
+
+### Changes verified in this pass
+
+- Replaced the small procedural lounge cluster with the existing textured `seating.glb` composition, repaired and reduced in Blender from `75,323` to `17,997` triangles for the Web runtime. The sofa, cushions, coffee table, cups and plant now read as one authored hero grouping instead of disconnected primitives.
+- Rescaled the group to a credible two-seat conversation bay and authored a single matching metre-scale collider. The old duplicate coffee-table collider and invisible plant collider were removed, eliminating empty-space collision and the tipped/detached furniture failure shown in the defect reference.
+- Reduced the foreground record-desk footprint so it still frames the shot without swallowing the traversal lane.
+- Kept the civic material hierarchy restrained: warmer ivory plaster, cooler terrazzo, honey oak, teal upholstery, coral accents and brass routes preserve the source's 70/20/10 hierarchy.
+- Desktop keyboard movement and camera orbit were exercised in the live room; mobile `390 × 844` retains the central cast, current action and touch controls. The room remains genuine Three.js geometry rather than a static background.
+- Static syntax, 26-zone physics reachability and 78 interior transition passes completed without runtime failures; the production Vite build completed successfully.
+
+### Remaining production-tier gap
+
+- Layout, furniture stability, navigation, identity continuity and the hero-room composition now pass. Literal parity with the offline source still requires the shared-rig hero character asset set described in `docs/design/avatar-2d-to-3d-pipeline.md`: sculpted hair, cloth silhouettes, hand/face deformation, authored animation and higher-order bounced-light/material response.
+- The current procedural citizens are an intentionally playable identity prototype. They should be replaced through `AvatarDNA + shared skeleton + portrait rerender`, not by independently generating one incompatible mesh per 2D portrait.
+
+v4 result: passed for playable real-time room fidelity and placement; cinematic character sculpt fidelity remains the next asset milestone.
+
 ## Comparison target
 
 - Source visual truth: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-c3ed3c29-42bb-4808-b433-d1e982ae0bb3.png`

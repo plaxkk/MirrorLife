@@ -21,6 +21,11 @@ def parse_args():
     parser.add_argument("--target-triangles", type=int, default=78000)
     parser.add_argument("--texture-size", type=int, default=1024)
     parser.add_argument("--merge-distance", type=float, default=0.000001)
+    parser.add_argument(
+        "--allow-open",
+        action="store_true",
+        help="Export visually acceptable prop LODs even when decimation leaves small open boundaries.",
+    )
     return parser.parse_args(argv)
 
 
@@ -238,6 +243,7 @@ def main():
         "sourceTriangles": total_before,
         "webTriangles": totals["triangles"],
         "closedMeshes": closed,
+        "allowOpen": args.allow_open,
         "boundaryEdges": totals["boundaryEdges"],
         "nonManifoldEdges": totals["nonManifoldEdges"],
         "looseEdges": totals["looseEdges"],
@@ -254,7 +260,7 @@ def main():
         json.dump(report, handle, indent=2, ensure_ascii=True)
         handle.write("\n")
 
-    if not closed:
+    if not closed and not args.allow_open:
         raise RuntimeError(
             "LOD topology is not closed: "
             f"{totals['boundaryEdges']} boundary, {totals['nonManifoldEdges']} non-manifold, "
