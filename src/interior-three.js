@@ -2374,6 +2374,55 @@ function addCivicCovenantPanel(colors) {
   });
 }
 
+function addCivicOrbitFrames(colors) {
+  // These two shallow wall pieces live on the side that becomes the far wall
+  // after the player orbits. They are culled while they sit on the camera's
+  // near hemisphere, so they enrich secondary views without floating across
+  // the hero composition.
+  [
+    { angle: -1.72, accent: colors.secondary, width: 1.3 },
+    { angle: -2.46, accent: ATELIER_TOKENS.apricot, width: 1.12 }
+  ].forEach((panel, panelIndex) => {
+    const [x, y, z] = wallPosition(panel.angle, ROOM_RADIUS - 0.16, 2.12 - panelIndex * 0.08);
+    const group = new THREE.Group();
+    group.name = `civic-orbit-frame-${panelIndex + 1}`;
+    group.position.set(x, y, z);
+    group.rotation.y = -panel.angle;
+    group.userData.dynamicWallDecor = true;
+    group.userData.wallAngle = panel.angle;
+    roomRoot.add(group);
+
+    const frame = new THREE.Mesh(
+      new RoundedBoxGeometry(panel.width + 0.16, 1.34, 0.1, 5, 0.07),
+      createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.62, surface: "wood", bumpScale: 0.009 })
+    );
+    frame.castShadow = false;
+    group.add(frame);
+    const paper = new THREE.Mesh(
+      new RoundedBoxGeometry(panel.width, 1.18, 0.045, 4, 0.05),
+      createToonMaterial("#f1e7d7", { roughness: 0.9, surface: "paper", bumpScale: 0.006 })
+    );
+    paper.position.z = 0.075;
+    group.add(paper);
+    const title = new THREE.Mesh(
+      new RoundedBoxGeometry(panel.width * 0.62, 0.06, 0.025, 2, 0.018),
+      createToonMaterial(panel.accent, { roughness: 0.58 })
+    );
+    title.position.set(0, 0.42, 0.108);
+    group.add(title);
+    const cardPalette = [colors.secondary, ATELIER_TOKENS.butter, ATELIER_TOKENS.apricot, "#7aa07a"];
+    cardPalette.forEach((color, index) => {
+      const card = new THREE.Mesh(
+        new RoundedBoxGeometry(0.22, 0.28, 0.02, 2, 0.022),
+        createToonMaterial(color, { roughness: 0.82 })
+      );
+      card.position.set((index % 2 ? 0.17 : -0.17), 0.08 - Math.floor(index / 2) * 0.35, 0.112);
+      card.rotation.z = (index % 2 ? 1 : -1) * 0.025;
+      group.add(card);
+    });
+  });
+}
+
 function addCivicReferenceDressing(theme, colors) {
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
@@ -2423,6 +2472,7 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicLibraryWall(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
+  addCivicOrbitFrames(colors);
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
   addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 2);
   addBuiltInArchNiche(0.62, colors, {
@@ -2672,6 +2722,15 @@ function canBatchRoomVertexColors(material) {
 function mergeRoomArchitectureMeshes() {
   if (!roomRoot || !mergeGeometries) return;
   roomRoot.updateMatrixWorld(true);
+  const preservedObjects = roomRoot.children.filter((child) => child.userData?.dynamicWallDecor);
+  const isPreservedNode = (node) => {
+    let current = node;
+    while (current && current !== roomRoot) {
+      if (current.userData?.dynamicWallDecor) return true;
+      current = current.parent;
+    }
+    return false;
+  };
   const batches = new Map();
   const lights = [];
   const sourceGeometries = new Set();
@@ -2679,6 +2738,7 @@ function mergeRoomArchitectureMeshes() {
   const colorBatches = new Map();
 
   roomRoot.traverse((node) => {
+    if (isPreservedNode(node)) return;
     if (node.isLight) {
       const clone = node.clone();
       clone.position.setFromMatrixPosition(node.matrixWorld);
@@ -2758,10 +2818,11 @@ function mergeRoomArchitectureMeshes() {
     mergedMeshes.push(mesh);
   });
 
+  preservedObjects.forEach((object) => object.removeFromParent());
   clearGroup(roomRoot);
   sourceGeometries.forEach((geometry) => geometry.dispose());
   sourceMaterials.forEach((material) => material.dispose());
-  const mergedObjects = [...mergedMeshes, ...lights];
+  const mergedObjects = [...mergedMeshes, ...lights, ...preservedObjects];
   if (mergedObjects.length) roomRoot.add(...mergedObjects);
 }
 
@@ -3684,6 +3745,17 @@ function createActorLimb(material, length, width) {
   return pivot;
 }
 
+function createActorCapsule(material, length, width, position = [0, 0, 0]) {
+  const mesh = new THREE.Mesh(
+    new THREE.CapsuleGeometry(width / 2, Math.max(0.08, length - width), 7, 14),
+    material
+  );
+  mesh.position.set(...position);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  return mesh;
+}
+
 function createActorTorso(material) {
   // A softly tailored, tapered body reads much closer to the illustrated
   // reference than a rounded cuboid while keeping one inexpensive mesh.
@@ -3711,7 +3783,7 @@ function createActorSkirt(material, y = 0.66) {
   return skirt;
 }
 
-function mergeActorVertexColorMeshes(target, excludedRoots = []) {
+function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions = {}) {
   if (!target || !mergeGeometries) return;
   target.updateMatrixWorld(true);
   const excluded = new Set(excludedRoots);
@@ -3761,9 +3833,9 @@ function mergeActorVertexColorMeshes(target, excludedRoots = []) {
   const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
     color: 0xffffff,
     vertexColors: true,
-    roughness: 0.76,
+    roughness: Number(materialOptions.roughness ?? 0.72),
     metalness: 0.015,
-    envMapIntensity: 0.52
+    envMapIntensity: Number(materialOptions.envMapIntensity ?? 0.62)
   }));
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -3896,8 +3968,12 @@ function addActorIdentityDetails(visual, headGroup, style, materials, actor) {
   }
 
   if (identity === "botanist" || identity === "mediator") {
-    const leftCoat = actorPart([0.19, 0.58, 0.34], 0.07, materials.outer, [-0.17, 1.0, 0.025]);
-    const rightCoat = actorPart([0.19, 0.58, 0.34], 0.07, materials.outer, [0.17, 1.0, 0.025]);
+    const leftCoat = createActorCapsule(materials.outer, 0.58, 0.19, [-0.16, 1.0, 0.035]);
+    const rightCoat = createActorCapsule(materials.outer, 0.58, 0.19, [0.16, 1.0, 0.035]);
+    leftCoat.scale.z = 1.32;
+    rightCoat.scale.z = 1.32;
+    leftCoat.rotation.z = -0.045;
+    rightCoat.rotation.z = 0.045;
     const skirt = createActorSkirt(materials.lower);
     visual.add(leftCoat, rightCoat, skirt);
     [-0.18, -0.09, 0, 0.09, 0.18].forEach((x, index) => {
@@ -4039,22 +4115,22 @@ function createActorObject(actor) {
     ear.position.set(side * 0.318, -0.01, 0.015);
     headGroup.add(ear);
   });
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), skinMaterial);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.031, 12, 9), skinMaterial);
   nose.position.set(0, -0.018, 0.313);
   headGroup.add(nose);
   const eyeWhiteMaterial = createToonMaterial("#fffaf0", { roughness: 0.48 });
   const irisMaterial = createToonMaterial(style.eye || "#4a392f", { roughness: 0.52 });
   const blushMaterial = createToonMaterial("#e6a09a", { roughness: 0.82 });
   [-1, 1].forEach((side) => {
-    const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.051, 14, 10), eyeWhiteMaterial);
-    eyeWhite.scale.set(0.78, 1.12, 0.38);
+    const eyeWhite = new THREE.Mesh(new THREE.SphereGeometry(0.061, 16, 12), eyeWhiteMaterial);
+    eyeWhite.scale.set(0.76, 1.16, 0.34);
     eyeWhite.position.set(side * 0.108, 0.045, 0.302);
     headGroup.add(eyeWhite);
-    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.034, 14, 10), irisMaterial);
-    iris.scale.set(0.82, 1.16, 0.46);
+    const iris = new THREE.Mesh(new THREE.SphereGeometry(0.041, 16, 12), irisMaterial);
+    iris.scale.set(0.8, 1.14, 0.42);
     iris.position.set(side * 0.108, 0.043, 0.324);
     headGroup.add(iris);
-    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.019, 12, 9), inkMaterial);
+    const pupil = new THREE.Mesh(new THREE.SphereGeometry(0.023, 12, 9), inkMaterial);
     pupil.scale.set(0.78, 1.18, 0.5);
     pupil.position.set(side * 0.108, 0.043, 0.343);
     headGroup.add(pupil);
@@ -4077,8 +4153,8 @@ function createActorObject(actor) {
 
   const leftArm = createActorLimb(topMaterial, 0.54, 0.16);
   const rightArm = createActorLimb(topMaterial, 0.54, 0.16);
-  leftArm.position.set(-0.32, 1.22, 0);
-  rightArm.position.set(0.32, 1.22, 0);
+  leftArm.position.set(-0.295, 1.2, 0);
+  rightArm.position.set(0.295, 1.2, 0);
   const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), skinMaterial);
   const rightHand = leftHand.clone();
   leftHand.position.set(0, -0.54, 0);
@@ -4129,9 +4205,9 @@ function createActorObject(actor) {
     outer: outerMaterial,
     ink: inkMaterial
   }, actor);
-  mergeActorVertexColorMeshes(headGroup);
-  mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg]);
-  [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => mergeActorVertexColorMeshes(limb));
+  mergeActorVertexColorMeshes(headGroup, [], { roughness: 0.62, envMapIntensity: 0.74 });
+  mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.7, envMapIntensity: 0.66 });
+  [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => mergeActorVertexColorMeshes(limb, [], { roughness: 0.68, envMapIntensity: 0.68 }));
   group.traverse((node) => node.layers?.enable?.(1));
   [skinMaterial, hairMaterial, topMaterial, lowerMaterial, accentMaterial, outerMaterial, inkMaterial, eyeWhiteMaterial, irisMaterial, blushMaterial, shoeMaterial, laceMaterial]
     .forEach((material) => material.dispose());
@@ -4160,6 +4236,7 @@ function createActorObject(actor) {
 function updateActors(actors = [], now = performance.now()) {
   if (!actorRoot) return false;
   actorRoot.visible = true;
+  const playerActor = actors.find((actor) => actor?.role === "player" || actor?.id === "player") || null;
   const activeIds = new Set();
   actors.forEach((actor) => {
     if (!actor?.id) return;
@@ -4197,7 +4274,16 @@ function updateActors(actors = [], now = performance.now()) {
     entry.rightArm.rotation.x = stride * 0.72;
     entry.leftArm.rotation.z = 0;
     entry.rightArm.rotation.z = 0;
-    entry.headGroup.rotation.y = 0;
+    let headLookYaw = 0;
+    if (cameraZoneId === "public-plaza" && playerActor && actor.id !== playerActor.id && !walking) {
+      const lookWorldYaw = Math.atan2(Number(playerActor.worldX || 0) - x, Number(playerActor.worldZ || 0) - z);
+      const localLookYaw = Math.atan2(
+        Math.sin(lookWorldYaw - entry.facingYaw),
+        Math.cos(lookWorldYaw - entry.facingYaw)
+      );
+      headLookYaw = THREE.MathUtils.clamp(localLookYaw, -0.5, 0.5) * 0.82;
+    }
+    entry.headGroup.rotation.y = headLookYaw;
     entry.visual.rotation.z = 0;
     if (actor.state === "jump") {
       entry.leftLeg.rotation.x = -0.42;
@@ -4223,12 +4309,12 @@ function updateActors(actors = [], now = performance.now()) {
         entry.rightArm.rotation.x = -0.82;
         entry.rightArm.rotation.z = -0.22;
       }
-      entry.headGroup.rotation.y = Math.sin(now * 0.0016 + frame) * 0.12;
+      entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0016 + frame) * 0.06;
       entry.visual.rotation.z = 0;
     } else {
       entry.leftArm.rotation.z = 0;
       entry.rightArm.rotation.z = 0;
-      entry.headGroup.rotation.y = Math.sin(now * 0.0012 + frame) * 0.06;
+      entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0012 + frame) * 0.035;
       entry.visual.rotation.z = 0;
     }
     entry.shadow.material.opacity = actor.grounded === false
@@ -4440,6 +4526,19 @@ function updateCamera(payload = {}) {
   };
 }
 
+function updateDynamicWallDecorVisibility() {
+  if (!roomRoot || !camera) return;
+  const cameraAngle = Math.atan2(camera.position.x, -camera.position.z);
+  roomRoot.children.forEach((object) => {
+    if (!object.userData?.dynamicWallDecor) return;
+    const wallAngle = Number(object.userData.wallAngle || 0);
+    const delta = Math.atan2(Math.sin(wallAngle - cameraAngle), Math.cos(wallAngle - cameraAngle));
+    // Only expose decor on the deep far hemisphere. A generous hidden arc is
+    // important because the orbit camera sits just outside the circular shell.
+    object.visible = Math.abs(delta) > 1.84;
+  });
+}
+
 function setMaterialOcclusionTarget(material, targetOpacity) {
   if (!material) return;
   if (!occludedMaterials.has(material)) {
@@ -4574,6 +4673,7 @@ function update(payload = {}) {
   if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
   const actorsReady = updateActors(payload.actors || [], performance.now());
   updateCamera(payload);
+  updateDynamicWallDecorVisibility();
   updateCameraOcclusion(payload);
   updatePhysicsDebug(payload.physics || {});
 

@@ -1,5 +1,38 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-17 reference-fidelity v5 in-progress gate
+
+### Evidence
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Pre-change implementation baseline: `/tmp/mirrorlife-civic-fidelity-v4-desktop.png` (`1672 × 941`, commit `e03d58f`).
+- Full native-size baseline comparison: `/tmp/mirrorlife-civic-fidelity-v4-comparison.png`.
+- Focused character evidence: `/tmp/mirrorlife-reference-characters.png` and `/tmp/mirrorlife-v4-characters.png`.
+- State: `public-plaza`, deterministic four-resident review cast, default story-circle camera.
+
+### Findings and implemented fixes
+
+- [P1] Character/world finish mismatch. The baseline room uses authored textured furniture and layered lighting, while the citizens remain oversized and read as procedural blockouts. The civic presentation scale is reduced from `1.08` to `0.96`, aligning visual adults with the 1.68–1.72m physics contract and restoring the reference's breathing room.
+- [P1] Faces disappear in three-quarter staging. The baseline side residents look away from the player because the whole body faces the circle and the head has only idle noise. Civic NPC heads now track the player with a clamped 0.5-radian local turn; eyes and irises are enlarged, the nose is reduced, and facial material response is separated from cloth response.
+- [P2] Clothing reads as rounded boxes. Facilitator and mediator coat panels now use tapered capsule silhouettes; shoulder span is reduced and actor material batches use role-appropriate roughness/environment response.
+- [P2] Secondary orbit views expose a blank circular wall. Two civic wall-story frames now exist on the previously empty side. They remain as individually culled room objects and become visible only on the camera's deep far hemisphere, preventing the foreground-overlay failure found in the earlier orbit experiment.
+
+### Verification status
+
+- Syntax/check suite passed.
+- 26-zone / 10-archetype physics verification passed.
+- 44 GLB runtime assets passed validation (`77.84 MB`).
+- Desktop and mobile scene flow passed.
+- 78 interior transitions completed with zero failures and zero runtime errors.
+- Production Vite build passed; existing non-module-script and chunk-size warnings remain non-blocking.
+- A fresh browser-rendered `public-plaza` capture for the v5 visual changes is missing because the selected in-app browser rejected the local preview URL under its URL policy. The source and baseline are available, but the post-fix same-state comparison cannot be truthfully claimed yet.
+
+### Next gate
+
+- Capture the pushed preview at `1672 × 941`, inspect the character close-up and yaw `0° / 90° / 180° / 270°`, then either tune or accept the new scale, head tracking and far-wall visibility.
+
+final result: blocked
+
 ## 2026-07-17 reference-fidelity v4 addendum
 
 - Native source: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).

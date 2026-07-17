@@ -14554,7 +14554,11 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   holdEmpathyCalibrationActor(zone, entries);
   holdMemoryAuthorizationActor(zone, entries);
   const avatarCitizen = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
-  const civicActorScale = zone.id === "public-plaza" ? 1.08 : 1;
+  // The civic room is authored at a real 1m = 1 world-unit scale. The earlier
+  // 1.08 presentation multiplier made adults read close to two metres tall and
+  // crowded the listening circle. Keep their visual height aligned with the
+  // 1.68–1.72m physics capsules and the reference's calmer social spacing.
+  const civicActorScale = zone.id === "public-plaza" ? 0.96 : 1;
   const playerPayload = {
     id: "player",
     identityId: "avatar",
