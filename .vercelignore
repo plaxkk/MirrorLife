@@ -1,0 +1,21 @@
+# Local build output and dependency caches are recreated by Vercel.
+dist/
+node_modules/
+.git/
+.vercel/
+
+# Design and QA source material is not used by the runtime bundle.
+public/assets/interiors/references/
+docs/
+design/
+deprecated/
+.gstack/
+.claude/
+
+# Local-only files.
+.DS_Store
+.env
+.env.local
+*.log
+__pycache__/
+*.pyc
