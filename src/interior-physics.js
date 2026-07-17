@@ -220,7 +220,11 @@ function createAmbientColliders(archetype, variant = 0) {
 }
 
 function createItemCollider(item) {
-  if (!item || item.renderModel === false || item.physicsSolid === false) return null;
+  // Some authored hero furnishings are rendered as part of the room shell so
+  // they can be batched with lighting and trim, while their semantic prop still
+  // owns interaction and collision. `renderModel: false` must not make those
+  // visible furnishings intangible; `physicsSolid` is the explicit contract.
+  if (!item || item.physicsSolid === false) return null;
   const authored = item.collider && typeof item.collider === "object" ? item.collider : null;
   const profile = authored || MODEL_FOOTPRINTS[item.model] || { shape: "circle", radius: 0.58 };
   if (profile.sensorOnly) return null;

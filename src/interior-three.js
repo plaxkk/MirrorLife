@@ -59,7 +59,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f2eadb", floor: "#dfd0b8", accent: "#d59f3c", secondary: "#438f88", trim: "#7b5437" },
+  "terrazzo-teal-brass": { wall: "#eee1cc", floor: "#d2c1a7", accent: "#c49336", secondary: "#3f8982", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -67,7 +67,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.12, fill: 0.46, hemi: 0.55, bounce: 0.58, wash: 0.98, exposure: 0.9, keyColor: "#ffe7c0", fillColor: "#b9d8dc" },
+  "civic-ivory": { key: 2.18, fill: 0.38, hemi: 0.46, bounce: 0.54, wash: 0.84, exposure: 0.82, keyColor: "#ffdbab", fillColor: "#a9ccd1" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -244,6 +244,10 @@ function ensureLayer() {
     canvas,
     alpha: false,
     antialias: true,
+    // The game creates share cards and QA captures from the live WebGL scene.
+    // Preserving the resolved frame prevents black compositor tiles after the
+    // render loop becomes idle, without changing scene content or physics.
+    preserveDrawingBuffer: true,
     powerPreference: "high-performance"
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -1968,6 +1972,140 @@ function addAmbientSetDressing(theme, colors) {
   addFocalStoryClutter(theme, colors);
 }
 
+function addCivicBrassInlay(points, color = "#caa04a") {
+  const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0.048, z)));
+  const path = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, 28, 0.035, 8, false),
+    createToonMaterial(color, { roughness: 0.32, metalness: 0.64 })
+  );
+  path.castShadow = false;
+  path.receiveShadow = true;
+  roomRoot.add(path);
+}
+
+function addCivicListeningConsole(colors) {
+  const group = new THREE.Group();
+  group.position.set(0, 0, -4.56);
+  roomRoot.add(group);
+  const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.65, surface: "wood", bumpScale: 0.01 });
+  const darkWood = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72, surface: "wood", bumpScale: 0.009 });
+  const top = new THREE.Mesh(new RoundedBoxGeometry(2.18, 0.16, 0.58, 5, 0.075), wood);
+  top.position.y = 0.78;
+  group.add(top);
+  [-0.82, 0.82].forEach((x) => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.065, 0.075, 0.72, 14), darkWood);
+    leg.position.set(x, 0.38, 0);
+    group.add(leg);
+  });
+  const basket = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.42, 0.46, 5, 0.12), createToonMaterial("#b18459", { roughness: 0.94, surface: "fabric", bumpScale: 0.02 }));
+  basket.position.set(0, 0.27, 0);
+  group.add(basket);
+  const bookColors = [colors.secondary, ATELIER_TOKENS.butter, ATELIER_TOKENS.apricot, ATELIER_TOKENS.linen];
+  bookColors.forEach((color, index) => {
+    const book = new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.34 + (index % 2) * 0.08, 0.24, 2, 0.025), createToonMaterial(color, { roughness: 0.82 }));
+    book.position.set(-0.58 + index * 0.22, 1.02 + (index % 2) * 0.02, 0.02);
+    book.rotation.z = (index - 1.5) * 0.035;
+    group.add(book);
+  });
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.12, 0.15, 0.22, 18), createToonMaterial(ATELIER_TOKENS.ceramic, { roughness: 0.48 }));
+  pot.position.set(0.72, 0.97, 0.02);
+  group.add(pot);
+  [-0.09, 0.09, 0].forEach((x, index) => {
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), createToonMaterial(index % 2 ? "#5d8e62" : "#79a26f", { roughness: 0.96 }));
+    leaf.scale.set(0.54, 1.18, 0.42);
+    leaf.position.set(0.72 + x, 1.18 + (index % 2) * 0.05, 0.02);
+    leaf.rotation.z = (index - 1) * 0.42;
+    group.add(leaf);
+  });
+}
+
+function addCivicRecordDesk(colors) {
+  const group = new THREE.Group();
+  group.position.set(-3.32, 0, 1.72);
+  group.rotation.y = 2.05;
+  roomRoot.add(group);
+  const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66, surface: "wood", bumpScale: 0.012 });
+  const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
+  const top = new THREE.Mesh(new RoundedBoxGeometry(1.65, 0.16, 0.78, 6, 0.1), wood);
+  top.position.y = 0.77;
+  group.add(top);
+  [-0.62, 0.62].forEach((x) => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.085, 0.7, 16), trim);
+    leg.position.set(x, 0.38, 0);
+    group.add(leg);
+  });
+  const clipboard = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.045, 0.48, 4, 0.035), createToonMaterial(ATELIER_TOKENS.linen, { roughness: 0.9 }));
+  clipboard.position.set(-0.22, 0.89, 0);
+  clipboard.rotation.y = -0.12;
+  group.add(clipboard);
+  [colors.accent, colors.secondary, ATELIER_TOKENS.apricot].forEach((color, index) => {
+    const note = new THREE.Mesh(new RoundedBoxGeometry(0.18, 0.025, 0.14, 2, 0.015), createToonMaterial(color, { roughness: 0.84 }));
+    note.position.set(-0.38 + index * 0.21, 0.925 + index * 0.002, -0.04 + index * 0.04);
+    note.rotation.y = -0.18 + index * 0.13;
+    group.add(note);
+  });
+  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.06, 18), trim);
+  lampBase.position.set(0.55, 0.9, -0.08);
+  group.add(lampBase);
+  const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.55, 12), trim);
+  lampStem.position.set(0.55, 1.16, -0.08);
+  lampStem.rotation.z = -0.13;
+  group.add(lampStem);
+  const shade = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.2, 20, 1, true), createToonMaterial(colors.secondary, { side: THREE.DoubleSide, roughness: 0.64 }));
+  shade.position.set(0.62, 1.43, -0.08);
+  shade.rotation.x = Math.PI;
+  group.add(shade);
+}
+
+function addCivicReferenceDressing(theme, colors) {
+  addAtelierTerrazzo(theme);
+  const center = new THREE.Mesh(
+    new THREE.CircleGeometry(1.48, 64),
+    createToonMaterial("#f4ead9", { roughness: 0.94, surface: "fabric", bumpScale: 0.009 })
+  );
+  center.rotation.x = -Math.PI / 2;
+  center.position.set(0, 0.041, 0.18);
+  center.receiveShadow = true;
+  roomRoot.add(center);
+  [
+    [1.5, 1.62, "#4c948c", 0.82],
+    [1.7, 1.79, "#c89d43", 0.94],
+    [2.18, 2.25, "#c89d43", 0.62]
+  ].forEach(([inner, outer, color, opacity], index) => {
+    const ring = new THREE.Mesh(
+      new THREE.RingGeometry(inner, outer, 72),
+      createToonMaterial(color, { roughness: index === 1 ? 0.34 : 0.72, metalness: index === 1 ? 0.55 : 0.08, transparent: opacity < 1, opacity })
+    );
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(0, 0.047 + index * 0.003, 0.18);
+    roomRoot.add(ring);
+  });
+  addCivicBrassInlay([[-4.45, -2.45], [-3.35, -1.45], [-2.2, -0.55], [-1.78, 0.05]]);
+  addCivicBrassInlay([[4.35, -2.15], [3.2, -1.22], [2.25, -0.35], [1.76, 0.14]]);
+  addCivicBrassInlay([[0.1, 4.92], [0.08, 3.72], [0.04, 2.55], [0.02, 2.02]]);
+
+  addAtelierDisplayCabinet(theme, colors);
+  addCivicRecordDesk(colors);
+  addCivicListeningConsole(colors);
+  addAmbientBanquette(1.06, { ...colors, secondary: "#4b9189" });
+  addAmbientTeaTable(0.92, colors);
+  addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
+  addBuiltInArchNiche(0.62, colors, {
+    width: 1.22,
+    height: 2.12,
+    y: 1.94,
+    frame: "#ead5b5",
+    inner: "#b88b67",
+    shelves: 3
+  });
+  addAmbientHangingPlant(0.28, colors);
+  addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
+  addSculptedFloorPlant(4.08, -0.64, 0.88, colors, 9);
+  addSculptedFloorPlant(3.86, 2.28, 0.72, colors, 12);
+  addAtelierCeilingCove(colors, !!colors.night);
+  addSunlightPatches(!!colors.night);
+}
+
 function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
   const [x, , z] = wallPosition(angle, radius, y);
   const group = new THREE.Group();
@@ -2246,7 +2384,8 @@ function mergeRoomArchitectureMeshes() {
   clearGroup(roomRoot);
   sourceGeometries.forEach((geometry) => geometry.dispose());
   sourceMaterials.forEach((material) => material.dispose());
-  roomRoot.add(...mergedMeshes, ...lights);
+  const mergedObjects = [...mergedMeshes, ...lights];
+  if (mergedObjects.length) roomRoot.add(...mergedObjects);
 }
 
 function addRoomArchitecture(theme, colors) {
@@ -2323,19 +2462,21 @@ function addRoomArchitecture(theme, colors) {
       dividers: false
     });
     addWallCards(forumBoard, [ATELIER_TOKENS.butter, ATELIER_TOKENS.cornflower, ATELIER_TOKENS.tomato, ATELIER_TOKENS.pistachio], 2, 5, 0.84);
-    const meetingRing = new THREE.Mesh(
-      new THREE.RingGeometry(1.55, 1.82, 64),
-      createToonMaterial(ATELIER_TOKENS.butter, {
-        transparent: true,
-        opacity: 0.68,
-        roughness: 0.92,
-        surface: "fabric",
-        bumpScale: 0.01
-      })
-    );
-    meetingRing.rotation.x = -Math.PI / 2;
-    meetingRing.position.set(0, 0.052, -0.42);
-    roomRoot.add(meetingRing);
+    if (theme.zoneId !== "public-plaza") {
+      const meetingRing = new THREE.Mesh(
+        new THREE.RingGeometry(1.55, 1.82, 64),
+        createToonMaterial(ATELIER_TOKENS.butter, {
+          transparent: true,
+          opacity: 0.68,
+          roughness: 0.92,
+          surface: "fabric",
+          bumpScale: 0.01
+        })
+      );
+      meetingRing.rotation.x = -Math.PI / 2;
+      meetingRing.position.set(0, 0.052, -0.42);
+      roomRoot.add(meetingRing);
+    }
     [variantOffset - 0.32, variantOffset + 0.32].forEach((angle, index) => {
       const listeningPanel = addWallFeature(angle, {
         width: 1.05,
@@ -2493,7 +2634,9 @@ function addRoomArchitecture(theme, colors) {
 function addZoneLayoutArchitecture(theme, colors) {
   const profile = theme.layoutProfile;
   if (!profile) return;
-  const zones = Array.isArray(profile.functionalZones) ? profile.functionalZones : [];
+  const zones = theme.zoneId === "public-plaza"
+    ? []
+    : Array.isArray(profile.functionalZones) ? profile.functionalZones : [];
   const zoneColors = [colors.accent, colors.secondary, "#ff8f70", "#62c6b4", "#ffd166"];
   zones.forEach((zone, index) => {
     const bounds = zone?.bounds;
@@ -2555,14 +2698,6 @@ function addZoneLayoutArchitecture(theme, colors) {
       calibrationRing.position.y = 0.043;
       roomRoot.add(calibrationRing);
     });
-  } else if (zoneId === "public-plaza") {
-    const listeningRing = new THREE.Mesh(
-      new THREE.RingGeometry(2.25, 2.42, 64),
-      createToonMaterial("#f4bd4f", { transparent: true, opacity: 0.48, depthWrite: false })
-    );
-    listeningRing.rotation.x = -Math.PI / 2;
-    listeningRing.position.y = 0.042;
-    roomRoot.add(listeningRing);
   }
 
   const focus = Array.isArray(profile.cameraTargets) ? profile.cameraTargets[0] : profile.cameraTargets?.primary;
@@ -2577,7 +2712,78 @@ function addZoneLayoutArchitecture(theme, colors) {
   }
 }
 
+function addCivicOpenPortal(theme, colors) {
+  const door = theme.layoutProfile?.shell?.door || { angle: -1.02, width: 1.42, height: 2.48, depth: 0.16 };
+  const angle = Number(door.angle ?? -1.02);
+  const width = Math.max(1.18, Number(door.width || 1.42));
+  const height = Math.max(2.25, Number(door.height || 2.48));
+  const [x, , z] = wallPosition(angle, ROOM_RADIUS - 0.18, height / 2);
+  const group = new THREE.Group();
+  group.name = "interior-visible-exit civic-open-portal";
+  group.position.set(x, height / 2, z);
+  group.rotation.y = -angle;
+  roomRoot.add(group);
+
+  const outdoorTexture = getAtelierWindowViewTexture();
+  const outdoorMaterial = outdoorTexture
+    ? new THREE.MeshStandardMaterial({
+      color: theme.night ? "#67839a" : "#fff2d8",
+      map: outdoorTexture,
+      roughness: 0.94,
+      metalness: 0,
+      side: THREE.DoubleSide
+    })
+    : createToonMaterial(theme.night ? "#45637a" : "#badcb7", { side: THREE.DoubleSide, roughness: 0.92 });
+  const opening = new THREE.Mesh(createArchPanelGeometry(width, height), outdoorMaterial);
+  opening.position.z = 0.2;
+  opening.userData.neverFade = true;
+  group.add(opening);
+
+  const frameMaterial = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.62, surface: "wood", bumpScale: 0.012 });
+  const springY = height / 2 - width / 2;
+  const jambHeight = springY + height / 2;
+  [-width / 2, width / 2].forEach((jambX) => {
+    const jamb = new THREE.Mesh(new RoundedBoxGeometry(0.14, jambHeight, 0.18, 4, 0.05), frameMaterial);
+    jamb.position.set(jambX, -height / 2 + jambHeight / 2, 0.27);
+    group.add(jamb);
+  });
+  const arch = new THREE.Mesh(new THREE.TorusGeometry(width / 2, 0.075, 10, 36, Math.PI), frameMaterial);
+  arch.position.set(0, springY, 0.27);
+  group.add(arch);
+
+  [-1, 1].forEach((side) => {
+    const leaf = new THREE.Mesh(
+      new RoundedBoxGeometry(width * 0.42, height * 0.82, Number(door.depth || 0.14), 5, 0.07),
+      createToonMaterial(side < 0 ? "#9f653d" : "#b67849", { roughness: 0.7, surface: "wood", bumpScale: 0.012 })
+    );
+    leaf.position.set(side * width * 0.61, -height * 0.08, 0.39);
+    leaf.rotation.y = side * -1.12;
+    group.add(leaf);
+    const window = new THREE.Mesh(
+      new RoundedBoxGeometry(width * 0.2, height * 0.42, 0.025, 5, 0.055),
+      createGlassMaterial("#c6dfd1", { opacity: 0.34, roughness: 0.18 })
+    );
+    window.position.set(side * width * 0.61, height * 0.02, 0.46);
+    window.rotation.y = leaf.rotation.y;
+    group.add(window);
+  });
+  const threshold = new THREE.Mesh(
+    new RoundedBoxGeometry(width + 0.34, 0.055, 0.62, 4, 0.025),
+    createToonMaterial("#c8a154", { roughness: 0.34, metalness: 0.5 })
+  );
+  threshold.position.set(0, -height / 2 + 0.025, 0.3);
+  threshold.userData.neverFade = true;
+  group.add(threshold);
+  const daylight = new THREE.PointLight(theme.night ? 0x8fb7dd : 0xffd7a1, theme.night ? 1.1 : 2.25, 4.6, 2.1);
+  daylight.position.set(0, 0.1, 0.72);
+  group.add(daylight);
+}
+
 function addExitPortal(theme, colors) {
+  if (theme.zoneId === "public-plaza") {
+    addCivicOpenPortal(theme, colors);
+    return;
+  }
   const door = theme.layoutProfile?.shell?.door || { angle: 0, width: 0.95, height: 2.15, depth: 0.16 };
   const angle = Number(door.angle || 0);
   const width = Math.max(0.82, Number(door.width || 0.95));
@@ -2632,7 +2838,7 @@ function rebuildRoom(theme = {}) {
   if (keyLight) {
     keyLight.castShadow = lastWidth > 720
       && REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home")
-      && !["factory", "farm", "public-plaza", "legal-court"].includes(theme.zoneId);
+      && !["factory", "farm", "legal-court"].includes(theme.zoneId);
     keyLight.shadow.needsUpdate = true;
   }
   applyLightingPreset(theme);
@@ -2720,6 +2926,9 @@ function rebuildRoom(theme = {}) {
     }
   }
   addRoomArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  if (theme.zoneId === "public-plaza") {
+    addCivicReferenceDressing(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  }
   if (Number(theme.layoutProfile?.version || 0) < 2) {
     addAmbientSetDressing(theme, { accent, secondary, trim, wallColor, floorColor, night });
   }
@@ -2878,7 +3087,7 @@ function rebuildModels(items) {
       const dynamicStage = new THREE.Group();
       dynamicStage.add(contactShadow, model);
       const mergedDynamic = mergePlacedModelMeshes(dynamicStage);
-      dynamicGroup.add(...mergedDynamic.children);
+      if (mergedDynamic.children.length) dynamicGroup.add(...mergedDynamic.children);
       contactShadow.geometry.dispose();
       contactShadow.material.dispose();
       dynamicStage.clear();
@@ -2892,7 +3101,7 @@ function rebuildModels(items) {
     }
   });
   const mergedModels = mergePlacedModelMeshes(stagedModels);
-  modelRoot.add(...mergedModels.children);
+  if (mergedModels.children.length) modelRoot.add(...mergedModels.children);
   return true;
 }
 
@@ -2979,15 +3188,19 @@ function getActorFrameTexture(frame = 0) {
   return texture;
 }
 
+// The two sprite atlases are the identity source of truth. A frame is not just
+// a colour swap: it maps to a readable 3D silhouette, profession prop and
+// clothing hierarchy. This keeps the HUD portrait, outdoor citizen and indoor
+// actor recognisably the same person without projecting a flat sprite into 3D.
 const ACTOR_STYLE_PROFILES = [
-  { skin: "#f2c29f", hair: "#2f2b35", top: "#2f8f83", lower: "#39465d", accent: "#f0b64d", hairStyle: 0 },
-  { skin: "#e7ad84", hair: "#4b2d26", top: "#e4775e", lower: "#536a54", accent: "#f4d26a", hairStyle: 1 },
-  { skin: "#f0bb92", hair: "#202a42", top: "#5d82bd", lower: "#3c4c63", accent: "#f08d68", hairStyle: 2 },
-  { skin: "#b97854", hair: "#291f22", top: "#d6a54d", lower: "#416c65", accent: "#72b8d4", hairStyle: 3 },
-  { skin: "#f3c7ad", hair: "#8a4a3f", top: "#769b67", lower: "#5a4b68", accent: "#ef8b78", hairStyle: 4 },
-  { skin: "#d99a73", hair: "#171a24", top: "#755c9c", lower: "#354b56", accent: "#86c7ba", hairStyle: 5 },
-  { skin: "#f1b68d", hair: "#c65f55", top: "#3f8ea3", lower: "#4d596d", accent: "#f2c85b", hairStyle: 6 },
-  { skin: "#a86749", hair: "#36251f", top: "#d06d55", lower: "#3e625b", accent: "#7ca7d7", hairStyle: 7 }
+  { identity: "artist", skin: "#f2c29f", hair: "#242633", top: "#e9b83f", lower: "#315f5c", accent: "#ef754e", outer: "#f6e6c8", hairStyle: 0 },
+  { identity: "builder", skin: "#e7ad84", hair: "#292b35", top: "#278d88", lower: "#a86238", accent: "#f1c34f", outer: "#e9824e", hairStyle: 1 },
+  { identity: "botanist", skin: "#f0bb92", hair: "#d86f83", top: "#f5f0df", lower: "#35786b", accent: "#e88978", outer: "#f7f3e8", hairStyle: 2 },
+  { identity: "scholar", skin: "#b97854", hair: "#51456e", top: "#e6b64b", lower: "#35445f", accent: "#6c9dcd", outer: "#f5e8ca", hairStyle: 3 },
+  { identity: "observer", skin: "#f3c7ad", hair: "#262b35", top: "#4e83a3", lower: "#47586b", accent: "#2f9b8f", outer: "#dce8e6", hairStyle: 4 },
+  { identity: "explorer", skin: "#d99a73", hair: "#e9e2d8", top: "#317e7a", lower: "#91724f", accent: "#e9b744", outer: "#f0dfb8", hairStyle: 5 },
+  { identity: "chef", skin: "#f1b68d", hair: "#7b4838", top: "#f6efe0", lower: "#a84e46", accent: "#e6804e", outer: "#fffaf0", hairStyle: 6 },
+  { identity: "mentor", skin: "#a86749", hair: "#29252b", top: "#8b674d", lower: "#3e5660", accent: "#5d8db8", outer: "#e8d4b8", hairStyle: 7 }
 ];
 
 function actorPart(size, radius, material, position = [0, 0, 0]) {
@@ -3000,32 +3213,129 @@ function actorPart(size, radius, material, position = [0, 0, 0]) {
 
 function createActorLimb(material, length, width) {
   const pivot = new THREE.Group();
-  const limb = actorPart([width, length, width], Math.min(width * 0.42, 0.07), material, [0, -length / 2, 0]);
+  const limb = new THREE.Mesh(
+    new THREE.CapsuleGeometry(width / 2, Math.max(0.08, length - width), 6, 12),
+    material
+  );
+  limb.position.set(0, -length / 2, 0);
+  limb.castShadow = true;
+  limb.receiveShadow = true;
   pivot.add(limb);
   return pivot;
 }
 
 function addActorHair(headGroup, style, material) {
-  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.266, 16, 10, 0, Math.PI * 2, 0, Math.PI * 0.58), material);
-  cap.scale.y = 0.86;
-  cap.position.y = 0.035;
+  const cap = new THREE.Mesh(new THREE.SphereGeometry(0.338, 20, 14, 0, Math.PI * 2, 0, Math.PI * 0.58), material);
+  cap.scale.set(0.96, 0.84, 0.92);
+  cap.position.y = 0.045;
   cap.castShadow = true;
   headGroup.add(cap);
-  const locks = 1 + (style % 2);
+  const locks = style === 0 || style === 7 ? 5 : 2 + (style % 3);
   for (let index = 0; index < locks; index += 1) {
-    const angle = -0.9 + index / Math.max(1, locks - 1) * 1.8;
-    const lock = new THREE.Mesh(new THREE.SphereGeometry(0.08 + (style % 2) * 0.012, 10, 8), material);
-    lock.position.set(Math.sin(angle) * 0.22, -0.02 - (index % 2) * 0.025, Math.cos(angle) * 0.18);
-    lock.scale.set(0.86, 1.18, 0.78);
+    const angle = -1.08 + index / Math.max(1, locks - 1) * 2.16;
+    const lock = new THREE.Mesh(new THREE.SphereGeometry(0.09 + (style % 2) * 0.012, 12, 9), material);
+    lock.position.set(Math.sin(angle) * 0.27, -0.015 - (index % 2) * 0.035, Math.cos(angle) * 0.245);
+    lock.scale.set(0.82, style === 3 ? 1.5 : 1.18, 0.7);
     lock.castShadow = true;
     headGroup.add(lock);
   }
-  if (style === 1 || style === 6) {
-    const bun = new THREE.Mesh(new THREE.SphereGeometry(style === 6 ? 0.13 : 0.11, 12, 10), material);
-    bun.position.set(style === 6 ? 0.16 : -0.16, 0.2, -0.05);
+  if (style === 2 || style === 6) {
+    const bun = new THREE.Mesh(new THREE.SphereGeometry(style === 2 ? 0.16 : 0.13, 14, 11), material);
+    bun.position.set(style === 2 ? 0.2 : -0.18, 0.19, -0.12);
     bun.castShadow = true;
     headGroup.add(bun);
   }
+}
+
+function addActorHeadwear(headGroup, style, materials) {
+  const { identity } = style;
+  if (identity === "builder") {
+    const dome = new THREE.Mesh(new THREE.SphereGeometry(0.36, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.46), materials.accent);
+    dome.scale.y = 0.54;
+    dome.position.y = 0.24;
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.37, 0.37, 0.055, 24), materials.accent);
+    brim.position.set(0, 0.24, 0.03);
+    headGroup.add(dome, brim);
+  } else if (identity === "observer") {
+    const cap = new THREE.Mesh(new THREE.SphereGeometry(0.355, 20, 12, 0, Math.PI * 2, 0, Math.PI * 0.43), materials.accent);
+    cap.scale.y = 0.56;
+    cap.position.y = 0.25;
+    const brim = new THREE.Mesh(new RoundedBoxGeometry(0.31, 0.045, 0.18, 3, 0.025), materials.accent);
+    brim.position.set(0, 0.22, 0.29);
+    brim.rotation.x = -0.08;
+    headGroup.add(cap, brim);
+  } else if (identity === "explorer") {
+    const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.25, 0.29, 0.21, 24), materials.accent);
+    crown.position.y = 0.3;
+    const brim = new THREE.Mesh(new THREE.CylinderGeometry(0.43, 0.43, 0.045, 28), materials.outer);
+    brim.position.y = 0.2;
+    headGroup.add(crown, brim);
+  } else if (identity === "chef") {
+    const band = new THREE.Mesh(new THREE.CylinderGeometry(0.3, 0.31, 0.16, 24), materials.outer);
+    band.position.y = 0.25;
+    headGroup.add(band);
+    [-0.16, 0, 0.16].forEach((x, index) => {
+      const puff = new THREE.Mesh(new THREE.SphereGeometry(0.18, 16, 12), materials.outer);
+      puff.position.set(x, 0.42 + (index === 1 ? 0.05 : 0), 0);
+      headGroup.add(puff);
+    });
+  }
+}
+
+function addActorIdentityDetails(visual, headGroup, style, materials, actor) {
+  const frontZ = 0.205;
+  const identity = style.identity;
+  if (identity === "scholar") {
+    [-0.105, 0.105].forEach((x) => {
+      const lens = new THREE.Mesh(new THREE.TorusGeometry(0.072, 0.012, 8, 20), materials.ink);
+      lens.position.set(x, 0.035, 0.294);
+      headGroup.add(lens);
+    });
+    const bridge = actorPart([0.085, 0.018, 0.018], 0.008, materials.ink, [0, 0.035, 0.294]);
+    headGroup.add(bridge);
+  }
+
+  if (identity === "botanist") {
+    const leftCoat = actorPart([0.19, 0.58, 0.34], 0.07, materials.outer, [-0.17, 1.0, 0.025]);
+    const rightCoat = actorPart([0.19, 0.58, 0.34], 0.07, materials.outer, [0.17, 1.0, 0.025]);
+    visual.add(leftCoat, rightCoat);
+    const leafBadge = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 9), materials.accent);
+    leafBadge.scale.set(0.62, 1.2, 0.35);
+    leafBadge.position.set(0.13, 1.11, frontZ);
+    leafBadge.rotation.z = -0.42;
+    visual.add(leafBadge);
+  } else if (identity === "builder") {
+    const bib = actorPart([0.31, 0.36, 0.045], 0.04, materials.outer, [0, 0.98, frontZ]);
+    visual.add(bib);
+    [-0.17, 0.17].forEach((x) => {
+      const strap = actorPart([0.055, 0.42, 0.035], 0.018, materials.outer, [x, 1.13, frontZ]);
+      strap.rotation.z = x < 0 ? -0.06 : 0.06;
+      visual.add(strap);
+    });
+  } else if (identity === "chef") {
+    const apron = actorPart([0.38, 0.54, 0.045], 0.055, materials.outer, [0, 0.92, frontZ]);
+    const pocket = actorPart([0.2, 0.13, 0.025], 0.025, materials.accent, [0, 0.82, frontZ + 0.03]);
+    visual.add(apron, pocket);
+  } else if (identity === "artist") {
+    const crossBody = actorPart([0.055, 0.7, 0.04], 0.018, materials.outer, [-0.04, 1.02, frontZ]);
+    crossBody.rotation.z = -0.47;
+    const palette = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 0.15, 0.035, 22), materials.outer);
+    palette.rotation.x = Math.PI / 2;
+    palette.position.set(0.27, 0.7, 0.19);
+    visual.add(crossBody, palette);
+  } else if (identity === "mentor") {
+    const scarf = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.065, 10, 28, Math.PI * 1.25), materials.accent);
+    scarf.rotation.set(Math.PI / 2, 0, -Math.PI * 0.62);
+    scarf.position.set(0, 1.27, 0.02);
+    visual.add(scarf);
+  }
+
+  if (["observer", "explorer"].includes(identity) || actor.role === "player") {
+    const backpack = actorPart([0.4, 0.48, 0.19], 0.09, materials.accent, [0, 0.98, -0.24]);
+    const flap = actorPart([0.32, 0.14, 0.025], 0.035, materials.outer, [0, 1.1, -0.345]);
+    visual.add(backpack, flap);
+  }
+  addActorHeadwear(headGroup, style, materials);
 }
 
 function createActorObject(actor) {
@@ -3055,47 +3365,71 @@ function createActorObject(actor) {
   const topMaterial = createToonMaterial(style.top, { roughness: 0.76, surface: "textile", bumpScale: 0.006 });
   const lowerMaterial = createToonMaterial(style.lower, { roughness: 0.82, surface: "textile", bumpScale: 0.006 });
   const accentMaterial = createToonMaterial(style.accent, { roughness: 0.68 });
+  const outerMaterial = createToonMaterial(style.outer, { roughness: 0.8, surface: "textile", bumpScale: 0.005 });
+  const inkMaterial = createToonMaterial("#272936", { roughness: 0.66 });
 
-  const torso = actorPart([0.48, 0.6, 0.31], 0.12, topMaterial, [0, 1.02, 0]);
+  const torso = actorPart([0.5, 0.58, 0.33], 0.13, topMaterial, [0, 1.0, 0]);
   visual.add(torso);
+  [-1, 1].forEach((side) => {
+    const collar = actorPart([0.17, 0.14, 0.035], 0.025, outerMaterial, [side * 0.085, 1.2, 0.178]);
+    collar.rotation.z = side * 0.42;
+    visual.add(collar);
+  });
+  const hem = actorPart([0.45, 0.09, 0.34], 0.035, accentMaterial, [0, 0.72, 0]);
+  visual.add(hem);
   const headGroup = new THREE.Group();
-  headGroup.position.y = 1.52;
-  const head = new THREE.Mesh(new THREE.SphereGeometry(0.25, 18, 14), skinMaterial);
+  headGroup.position.y = 1.5;
+  const head = new THREE.Mesh(new THREE.SphereGeometry(0.32, 22, 16), skinMaterial);
   head.scale.set(0.94, 1.02, 0.9);
   head.castShadow = true;
   headGroup.add(head);
   addActorHair(headGroup, style.hairStyle, hairMaterial);
-  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.035, 8, 6), skinMaterial);
-  nose.position.set(0, -0.025, 0.225);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(0.04, 10, 8), skinMaterial);
+  nose.position.set(0, -0.02, 0.292);
   headGroup.add(nose);
   const eyes = new THREE.InstancedMesh(
-    new THREE.SphereGeometry(0.025, 8, 6),
-    createToonMaterial("#25283a", { roughness: 0.7 }),
+    new THREE.SphereGeometry(0.032, 10, 8),
+    inkMaterial,
     2
   );
   [-1, 1].forEach((side, index) => {
-    const matrix = new THREE.Matrix4().makeTranslation(side * 0.085, 0.035, 0.218);
+    const matrix = new THREE.Matrix4().makeTranslation(side * 0.105, 0.04, 0.284);
     eyes.setMatrixAt(index, matrix);
   });
   eyes.instanceMatrix.needsUpdate = true;
   headGroup.add(eyes);
   visual.add(headGroup);
 
-  const leftArm = createActorLimb(topMaterial, 0.56, 0.16);
-  const rightArm = createActorLimb(topMaterial, 0.56, 0.16);
-  leftArm.position.set(-0.31, 1.24, 0);
-  rightArm.position.set(0.31, 1.24, 0);
+  const leftArm = createActorLimb(topMaterial, 0.54, 0.16);
+  const rightArm = createActorLimb(topMaterial, 0.54, 0.16);
+  leftArm.position.set(-0.32, 1.22, 0);
+  rightArm.position.set(0.32, 1.22, 0);
+  const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.09, 12, 10), skinMaterial);
+  const rightHand = leftHand.clone();
+  leftHand.position.set(0, -0.54, 0);
+  rightHand.position.set(0, -0.54, 0);
+  leftArm.add(leftHand);
+  rightArm.add(rightHand);
   visual.add(leftArm, rightArm);
-  const leftLeg = createActorLimb(lowerMaterial, 0.68, 0.2);
-  const rightLeg = createActorLimb(lowerMaterial, 0.68, 0.2);
-  leftLeg.position.set(-0.14, 0.82, 0);
-  rightLeg.position.set(0.14, 0.82, 0);
+  const leftLeg = createActorLimb(lowerMaterial, 0.6, 0.2);
+  const rightLeg = createActorLimb(lowerMaterial, 0.6, 0.2);
+  leftLeg.position.set(-0.14, 0.74, 0);
+  rightLeg.position.set(0.14, 0.74, 0);
+  const shoeMaterial = createToonMaterial("#3b342f", { roughness: 0.7 });
+  const leftShoe = actorPart([0.22, 0.15, 0.34], 0.065, shoeMaterial, [0, -0.59, 0.07]);
+  const rightShoe = leftShoe.clone();
+  leftLeg.add(leftShoe);
+  rightLeg.add(rightShoe);
   visual.add(leftLeg, rightLeg);
-
-  if (actor.role === "player") {
-    const backpack = actorPart([0.38, 0.46, 0.18], 0.08, accentMaterial, [0, 1.02, -0.23]);
-    visual.add(backpack);
-  }
+  addActorIdentityDetails(visual, headGroup, style, {
+    skin: skinMaterial,
+    hair: hairMaterial,
+    top: topMaterial,
+    lower: lowerMaterial,
+    accent: accentMaterial,
+    outer: outerMaterial,
+    ink: inkMaterial
+  }, actor);
   actorRoot.add(group);
   const entry = {
     group,
@@ -3110,7 +3444,7 @@ function createActorObject(actor) {
     frame,
     lastX: Number(actor.worldX || 0),
     lastZ: Number(actor.worldZ || 0),
-    facingYaw: 0
+    facingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0))
   };
   actorObjects.set(actor.id, entry);
   return entry;

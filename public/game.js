@@ -201,6 +201,7 @@ const MAX_INTERIOR_OCCUPANTS = 4;
 const CORE_INTERIOR_STORY_ZONES = new Set(["residential", "office-district", "public-plaza", "empathy-lab", "story-archive", "legal-court"]);
 const getInteriorOccupantCap = (zoneId) => {
   const mobile = typeof window !== "undefined" && window.innerWidth <= 720;
+  if (zoneId === "public-plaza") return mobile ? 2 : 3;
   if (mobile) return CORE_INTERIOR_STORY_ZONES.has(zoneId) ? 2 : 1;
   return CORE_INTERIOR_STORY_ZONES.has(zoneId) ? MAX_INTERIOR_OCCUPANTS : 2;
 };
@@ -5672,6 +5673,13 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
   }),
   "public-plaza": Object.freeze({
     shellId: "civic-listening-ring-v1",
+    shell: {
+      shape: "round-cutaway",
+      radius: 5.4,
+      height: 3.72,
+      floorY: 0,
+      door: { id: "exit", angle: -1.02, width: 1.42, height: 2.48, depth: 0.14 }
+    },
     lightingPreset: "civic-ivory",
     materialPreset: "terrazzo-teal-brass",
     functionalZones: [
@@ -5681,12 +5689,12 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "pause", label: "情绪缓冲", x: 3.45, z: 1.85, radius: 0.78, color: "#ed9164" }
     ],
     props: [
-      { renderModel: true, worldX: -3.15, worldZ: -1.4, displayScale: 0.72, interactionWorldX: -2.15, interactionWorldZ: -0.95 },
-      { renderModel: true, worldX: 0, worldZ: -4.22, displayScale: 0.72, interactionWorldX: 0, interactionWorldZ: -3.12 },
-      { renderModel: true, worldX: 3.25, worldZ: -1.52, displayScale: 0.66, interactionWorldX: 2.18, interactionWorldZ: -1.0 },
-      { worldX: -3.2, worldZ: 1.45, displayScale: 0.68, interactionWorldX: -2.1, interactionWorldZ: 1.15 },
+      { renderModel: false, physicsSolid: true, worldX: -2.35, worldZ: 0.72, displayScale: 1, collider: { shape: "box", halfX: 0.9, halfY: 0.86, halfZ: 0.52, rotation: 0.14 }, interactionWorldX: -1.25, interactionWorldZ: 0.55 },
+      { renderModel: false, physicsSolid: true, worldX: 0, worldZ: -4.56, displayScale: 1, collider: { shape: "box", halfX: 1.12, halfY: 0.55, halfZ: 0.34 }, interactionWorldX: 0, interactionWorldZ: -3.52 },
+      { renderModel: false, physicsSolid: true, worldX: 3.77, worldZ: -2.1, displayScale: 1, collider: { shape: "box", halfX: 1.03, halfY: 0.64, halfZ: 0.52, rotation: -1.06 }, interactionWorldX: 2.62, interactionWorldZ: -1.42 },
+      { renderModel: false, physicsSolid: true, worldX: -3.32, worldZ: 1.72, displayScale: 1, collider: { shape: "box", halfX: 0.84, halfY: 0.75, halfZ: 0.46, rotation: 2.05 }, interactionWorldX: -2.18, interactionWorldZ: 1.16 },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
-      { worldX: 3.55, worldZ: 1.92, displayScale: 0.62, interactionWorldX: 2.62, interactionWorldZ: 1.55 }
+      { renderModel: false, physicsSolid: true, worldX: 4.08, worldZ: -0.64, displayScale: 1, collider: { shape: "circle", radius: 0.42, halfY: 0.72 }, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
     ],
     actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
@@ -5768,11 +5776,12 @@ function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
     worldScaleMeters: 1,
     shellId: authored.shellId || `${zoneId}-shell-v1`,
     shell: {
+      ...(authored.shell || {}),
       shape: "round-cutaway",
-      radius: 5.4,
-      height: 3.72,
-      floorY: 0,
-      door: { id: "exit", angle: defaultDoorAngle, width: 0.95, height: 2.15, depth: 0.16 },
+      radius: Number(authored.shell?.radius || 5.4),
+      height: Number(authored.shell?.height || 3.72),
+      floorY: Number(authored.shell?.floorY || 0),
+      door: { id: "exit", angle: defaultDoorAngle, width: 0.95, height: 2.15, depth: 0.16, ...(authored.shell?.door || {}) },
       levels: [{ id: "ground", y: 0, walkable: true }]
     },
     lightingPreset: authored.lightingPreset || `${blueprintKey}-soft-daylight`,
@@ -6017,11 +6026,14 @@ function getInteriorPhysicsItems(blueprint) {
     const authoredCollider = prop.collider?.shape && prop.collider.shape !== "model-bounds"
       ? prop.collider
       : physics?.MODEL_FOOTPRINTS?.[model] || null;
-    const dynamicModel = ["supply-crate", "meditation-seat"].includes(model);
+    // Only genuinely hand-sized props may become free dynamic bodies. The
+    // meditation seat is full-size furniture; making it dynamic caused the
+    // tilted chair / floating dowel failure visible in production rooms.
+    const dynamicModel = model === "supply-crate";
     const rigidBody = prop.rigidBody?.type && prop.rigidBody.type !== "fixed"
       ? prop.rigidBody
       : dynamicModel
-        ? { type: "dynamic", material: model === "meditation-seat" ? "textile" : "wood", mass: model === "meditation-seat" ? 3 : 8, persistence: "room-reset" }
+        ? { type: "dynamic", material: "wood", mass: 8, persistence: "room-reset" }
         : prop.rigidBody || { type: "fixed", material: "wood", persistence: "room-reset" };
     const position = prop.transform?.position || {};
     const rotation = prop.transform?.rotation || {};
@@ -7028,6 +7040,48 @@ function holdSocialParallaxActors(zone, entries = []) {
     : desiredCenter);
   interiorView.socialParallaxPositions = { witnesses: positions, center: { x: center.x, z: center.z } };
   return interiorView.socialParallaxPositions;
+}
+
+function stagePublicListeningEnsemble(zone, entries = []) {
+  if (zone?.id !== SOCIAL_PARALLAX_ZONE_ID || interiorView?.zone?.id !== zone.id) return;
+  const ritual = getSocialParallaxRitual(zone.id);
+  if (!ritual || ritual.status === "complete") return;
+  const witnessIds = new Set(ritual.witnessIds || []);
+  const extras = entries.filter((entry) => !witnessIds.has(entry.id));
+  if (!extras.length) return;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const staged = entries
+    .filter((entry) => witnessIds.has(entry.id))
+    .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
+  const listeningPoints = [
+    { x: 0.9, z: -1.45 },
+    { x: 3.15, z: 0.72 },
+    { x: -3.05, z: -0.35 }
+  ];
+  extras.forEach((entry, index) => {
+    const ia = interiorAnimations[entry.id];
+    if (!ia) return;
+    const desired = listeningPoints[index] || listeningPoints[listeningPoints.length - 1];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, citizenRadius, { dynamic: staged, selfId: entry.id })
+      : desired;
+    ia.worldX = point.x;
+    ia.worldZ = point.z;
+    ia.targetWorldX = point.x;
+    ia.targetWorldZ = point.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.state = index === 0 ? "listen" : "idle";
+    entry.worldX = point.x;
+    entry.worldZ = point.z;
+    entry.state = ia.state;
+    entry.moveAnim = ia;
+    staged.push({ id: entry.id, x: point.x, z: point.z, radius: citizenRadius });
+  });
 }
 
 function focusSocialParallaxTarget() {
@@ -14397,6 +14451,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const physicsAnchors = getInteriorPhysicsAnchors(blueprint);
   const entries = prepareInteriorOccupants(society, zone, blueprint, physicsAnchors, now);
   holdSocialParallaxActors(zone, entries);
+  stagePublicListeningEnsemble(zone, entries);
   holdEmpathyCalibrationActor(zone, entries);
   holdMemoryAuthorizationActor(zone, entries);
   const avatarCitizen = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
@@ -16477,6 +16532,9 @@ function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
 }
 
 function getCitizenSpriteFrame(citizen) {
+  if (Number.isFinite(Number(citizen?.avatarFrame))) {
+    return clamp(Math.round(Number(citizen.avatarFrame)), 0, CITIZEN_FRAME_COUNT - 1);
+  }
   const professionId = citizen?.professionId || "";
   const role = `${citizen?.role || ""} ${citizen?.profession || ""} ${citizen?.personaLabel || ""}`;
   const age = Number(citizen?.age || 30);

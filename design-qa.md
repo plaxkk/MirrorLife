@@ -1,3 +1,46 @@
+# Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
+
+## Comparison target
+
+- Source visual truth: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-c3ed3c29-42bb-4808-b433-d1e982ae0bb3.png`
+- Placement defect reference: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-2cfcd589-aa2c-4955-942d-0942d03873fe.png`
+- Runtime: `http://127.0.0.1:4182/game.html?qaInterior=public-plaza&qaInteriorScene=1`
+- Desktop capture: `artifacts/design-qa/public-plaza-final-desktop.png` (1680 × 945)
+- Mobile capture: `artifacts/design-qa/public-plaza-final-mobile.png` (390 × 844)
+- Same-size comparison: `artifacts/design-qa/public-plaza-side-by-side.png`
+
+## Fidelity ledger
+
+1. **Composition and first read — matched.** The open daylight arch establishes the left background, the listening ensemble occupies the middle ground, and the record/display desks frame the foreground. The player, current witnesses, exit and listening focus remain readable without relying on the room title.
+2. **Functional zoning — matched.** The implementation reproduces the reference's arrival threshold, public evidence display, central listening circle, background record wall and right-side decompression lounge as physically distinct, traversable zones.
+3. **Material and lighting hierarchy — matched in real-time form.** Warm plaster, terrazzo, oak, teal upholstery, brass inlays, glass and foliage replace the previous uniform soft-plastic treatment. Daylight and warm practical lights shape the route and social focus.
+4. **Character identity — materially upgraded.** UI `avatarFrame` now maps to explicit 3D identities rather than generic profession colors. Eight silhouettes combine body shape, hair, headwear, glasses, coat/apron/overalls, backpack and identity props. The production hand-off path to shared-rig GLB characters is documented in `docs/character-identity-3d-pipeline.md`.
+5. **Physics and placement — fixed.** Large seating is no longer promoted to an unconstrained dynamic rigid body, which caused the reference defect's tipped seat and detached rods. Render and collision placement now share authored transforms; hero furniture can be room-shell geometry while retaining explicit solid colliders.
+6. **UI and readability — preserved intentionally.** The reference label `邻里议事厅 · public` is represented by the live product's `邻里广场 · 场所回声` state, keeping real save data, narrative actions and current MirrorLife HUD instead of replacing the application with a static mockup.
+
+## Interaction proof
+
+- Public-room scene reached the ready state with one player and three separated NPC witnesses on desktop; mobile uses the reduced two-witness composition.
+- Character staging avoids the central pile-up and reserves a navigable listening circle.
+- The runtime console/page-error pass returned no errors after the empty merged-model guard was added.
+- Desktop and mobile captures are from the actual orbitable Three.js room, not a composited concept image.
+
+## Intentional deviations
+
+- The reference is a high-detail offline target render. This pass matches its spatial hierarchy, premium dopamine palette and hero-object language in a performant real-time procedural room; it does not fake that fidelity with a flat background image.
+- Existing story state and controls remain authoritative. Bespoke sculpted GLB faces, clothing folds and hand-authored animation polish remain the next production asset tier, with identity continuity and acceptance criteria already specified in the character pipeline document.
+
+## Iteration history
+
+- Baseline: generic circular room, sparse perimeter, billboard-like character repetition and unstable full-size dynamic seating.
+- Room rebuild: added the open arch, exterior depth, terrazzo/brass route, public evidence display, listening console, lounge, foliage and layered light.
+- Identity pass: connected UI avatar identity to modular 3D silhouettes and accessories.
+- Physics/QA pass: removed furniture auto-dynamics, retained colliders for shell-rendered furnishings, fixed empty spread runtime errors, capped/staged occupants and verified desktop/mobile outputs.
+
+final result: passed
+
+---
+
 # Interior Design QA
 
 ## Comparison target
