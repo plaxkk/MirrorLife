@@ -13,6 +13,7 @@ const REVIEW_YAW = Number(process.env.MIRRORLIFE_CAPTURE_YAW || 0);
 const CAPTURE_WIDTH = Number(process.env.MIRRORLIFE_CAPTURE_WIDTH || 1280);
 const CAPTURE_HEIGHT = Number(process.env.MIRRORLIFE_CAPTURE_HEIGHT || 720);
 const SHOW_REVIEW_LABEL = process.env.MIRRORLIFE_CAPTURE_LABEL !== "0";
+const READY_TIMEOUT_MS = Number(process.env.MIRRORLIFE_CAPTURE_READY_TIMEOUT || 45000);
 const YAW_SUFFIX = REVIEW_YAW ? `-yaw-${String(REVIEW_YAW).replace(/[^0-9-]/g, "")}` : "";
 const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}`);
 const VIEWPORT = MOBILE
@@ -70,7 +71,18 @@ try {
     const scene = CAPTURE_SCENES[index];
     const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
-    await new Promise((resolve) => setTimeout(resolve, index === 0 ? 6500 : 4200));
+    await page.waitForFunction(() => {
+      const layer = document.querySelector("#interiorThreeLayer");
+      return document.body.classList.contains("interior-active")
+        && layer?.dataset.sceneReady === "true"
+        && getComputedStyle(layer).visibility !== "hidden";
+    }, { timeout: READY_TIMEOUT_MS });
+    // Give the atomic reveal, camera damping, shadow maps and late material
+    // uploads two settled frames before taking evidence. Fixed sleeps could
+    // otherwise capture the loading shell on a cold asset cache.
+    await page.evaluate(() => new Promise((resolve) => {
+      requestAnimationFrame(() => requestAnimationFrame(resolve));
+    }));
     if (SHOW_REVIEW_LABEL) {
       await page.evaluate(({ label, archetype }) => {
         document.getElementById("mirrorlife-environment-review-label")?.remove();

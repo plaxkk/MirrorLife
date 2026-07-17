@@ -1,5 +1,31 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-17 reference-fidelity v6 browser gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current desktop hero: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`).
+- Combined reference/current canvas: `/tmp/mirrorlife-civic-fidelity-v5-comparison.png`.
+- Orbit evidence: `dist/interior-3d-work/environment-review-yaw-90/00-public.png`, `environment-review-yaw-180/00-public.png`, and `environment-review-yaw-270/00-public.png`.
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Findings and fixes in this gate
+
+- [fixed] Cold-cache captures could stop on the atomic loading shell even when the final room was healthy. The environment capture now waits for `interior-active`, `data-scene-ready=true`, visible Three.js output, and two settled animation frames instead of relying on a fixed sleep.
+- [fixed] Civic faces lost expression under backlighting and side NPCs became flat profiles. A camera-side actor-only fill light now follows the orbit camera; NPC bodies open 24% toward the camera while their heads keep tracking the player.
+- [fixed] All witnesses used the same rigid hanging-arm silhouette. Listener, facilitator and mediator now receive role-specific conversational poses, making the social function readable from the hero and reverse angles.
+- [fixed] Secondary orbit angles exposed an undecorated circular shell. Eight performance-safe wall-molding bays follow the far hemisphere, while the story frames remain culled from the foreground. No bay becomes a physical obstacle or separates rendering from authored colliders.
+- [fixed] Mobile room complexity remains inside the hard budget after the wall system was reduced to low-triangle box molding: `86` draw calls, `218,869` triangles and `69` geometries. Desktop hero remains `96` draw calls, `277,680` triangles and `99` geometries.
+- [P1 remaining] The combined canvas still shows a categorical asset gap between the procedural shared-rig prototype and the source's bespoke sculpted characters: hand topology, cloth folds, hair strand grouping, facial deformation and authored idle animation are not cinematic-production quality.
+- [P2 remaining] The real-time room matches the source's spatial hierarchy, palette, arched threshold, social circle, evidence wall, lounge, foreground desks and brass path, but it does not yet match the source's micro-prop density, bounced-light subtlety or bespoke joinery.
+
+### Gate result
+
+The room is now stable, orbitable, physically readable and free of the tipped/floating furniture failure. It passes as a playable real-time vertical slice, but not yet as literal cinematic parity with the supplied image. The next asset milestone remains the documented shared-skeleton GLB character pack plus authored hero-room cabinetry.
+
+v6 final result: blocked on production character and bespoke environment assets
+
 ## 2026-07-17 reference-fidelity v5 in-progress gate
 
 ### Evidence

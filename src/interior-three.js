@@ -182,6 +182,7 @@ let fillLight;
 let warmBounceLight;
 let windowWashLight;
 let actorRimLight;
+let actorFaceLight;
 let roomRoot;
 let modelRoot;
 let actorRoot;
@@ -347,6 +348,12 @@ function ensureLayer() {
   actorRimLight.position.set(4.6, 6.2, -4.8);
   actorRimLight.layers.set(1);
   scene.add(actorRimLight);
+
+  // A camera-side fill is restricted to the actor layer. It keeps eyes and
+  // expressions readable at every orbit angle without flattening the room.
+  actorFaceLight = new THREE.PointLight(0xffe3c6, 0.7, 12, 1.7);
+  actorFaceLight.layers.set(1);
+  scene.add(actorFaceLight);
 
   // The civic hero room relies on contact depth rather than heavy outlines.
   // Keep the pass allocated once and switch it per-room so other interiors and
@@ -922,6 +929,7 @@ function applyLightingPreset(theme = {}) {
   if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
   if (windowWashLight) windowWashLight.intensity = preset.wash;
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.18 : 0.26;
 }
@@ -2423,7 +2431,58 @@ function addCivicOrbitFrames(colors) {
   });
 }
 
+function addCivicArchitecturalShell(colors) {
+  // A sequence of shallow editorial wall bays replaces the generic unbroken
+  // cylinder with a believable civic interior. Each bay follows the far wall
+  // as the camera orbits, so the room keeps depth without placing opaque
+  // geometry between the player and the current conversation.
+  const bayCount = 8;
+  const trim = createToonMaterial("#dec5a3", { roughness: 0.86, surface: "plaster", bumpScale: 0.006, emissive: 0.018 });
+  const darkTrim = createToonMaterial("#b68b64", { roughness: 0.76, surface: "wood", bumpScale: 0.007 });
+  for (let index = 0; index < bayCount; index += 1) {
+    const angle = -Math.PI + (index + 0.5) / bayCount * Math.PI * 2;
+    const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.12, 1.02);
+    const bay = new THREE.Group();
+    bay.name = `civic-wall-bay-${index + 1}`;
+    bay.position.set(x, y, z);
+    bay.rotation.y = -angle;
+    bay.userData.dynamicWallDecor = true;
+    bay.userData.wallAngle = angle;
+    roomRoot.add(bay);
+
+    [-0.79, 0.79].forEach((railY) => {
+      const rail = new THREE.Mesh(new THREE.BoxGeometry(3.82, 0.065, 0.075), trim);
+      rail.position.set(0, railY, 0.06);
+      rail.castShadow = false;
+      bay.add(rail);
+    });
+    [-1.88, 1.88].forEach((railX) => {
+      const pilaster = new THREE.Mesh(new THREE.BoxGeometry(0.065, 1.6, 0.075), darkTrim);
+      pilaster.position.set(railX, 0, 0.06);
+      pilaster.castShadow = false;
+      bay.add(pilaster);
+    });
+
+    if (index % 3 === 1) {
+      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.32, 0.1), darkTrim);
+      bracket.position.set(0, 1.26, 0.08);
+      const shade = new THREE.Mesh(
+        new THREE.SphereGeometry(0.13, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.58),
+        createToonMaterial(index % 2 ? colors.secondary : "#efc86a", {
+          emissive: 0.13,
+          roughness: 0.42
+        })
+      );
+      shade.scale.set(1.24, 0.78, 0.82);
+      shade.position.set(0, 1.4, 0.15);
+      shade.rotation.x = Math.PI;
+      bay.add(bracket, shade);
+    }
+  }
+}
+
 function addCivicReferenceDressing(theme, colors) {
+  addCivicArchitecturalShell(colors);
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
     new THREE.CircleGeometry(1.48, 64),
@@ -4266,7 +4325,18 @@ function updateActors(actors = [], now = performance.now()) {
     entry.lastZ = z;
     entry.group.position.set(x, y + bob, z);
     entry.visual.scale.setScalar(baseScale);
-    entry.visual.rotation.y = entry.facingYaw;
+    let bodyYaw = entry.facingYaw;
+    if (cameraZoneId === "public-plaza" && actor.id !== playerActor?.id && !walking && camera) {
+      const cameraFacingYaw = Math.atan2(camera.position.x - x, camera.position.z - z);
+      const cameraDelta = Math.atan2(
+        Math.sin(cameraFacingYaw - bodyYaw),
+        Math.cos(cameraFacingYaw - bodyYaw)
+      );
+      // Preserve the social circle while opening the silhouettes by roughly a
+      // quarter turn toward the player camera, matching conversational staging.
+      bodyYaw += cameraDelta * 0.24;
+    }
+    entry.visual.rotation.y = bodyYaw;
     const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;
     entry.leftLeg.rotation.x = stride;
     entry.rightLeg.rotation.x = -stride;
@@ -4278,8 +4348,8 @@ function updateActors(actors = [], now = performance.now()) {
     if (cameraZoneId === "public-plaza" && playerActor && actor.id !== playerActor.id && !walking) {
       const lookWorldYaw = Math.atan2(Number(playerActor.worldX || 0) - x, Number(playerActor.worldZ || 0) - z);
       const localLookYaw = Math.atan2(
-        Math.sin(lookWorldYaw - entry.facingYaw),
-        Math.cos(lookWorldYaw - entry.facingYaw)
+        Math.sin(lookWorldYaw - bodyYaw),
+        Math.cos(lookWorldYaw - bodyYaw)
       );
       headLookYaw = THREE.MathUtils.clamp(localLookYaw, -0.5, 0.5) * 0.82;
     }
@@ -4316,6 +4386,24 @@ function updateActors(actors = [], now = performance.now()) {
       entry.rightArm.rotation.z = 0;
       entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0012 + frame) * 0.035;
       entry.visual.rotation.z = 0;
+    }
+    if (cameraZoneId === "public-plaza" && !walking && actor.civicRole && actor.civicRole !== "player") {
+      if (actor.civicRole === "mediator") {
+        entry.leftArm.rotation.x = -0.62;
+        entry.rightArm.rotation.x = -1.04;
+        entry.leftArm.rotation.z = 0.13;
+        entry.rightArm.rotation.z = -0.22;
+      } else if (actor.civicRole === "facilitator") {
+        entry.leftArm.rotation.x = -0.48;
+        entry.rightArm.rotation.x = -0.88;
+        entry.leftArm.rotation.z = 0.12;
+        entry.rightArm.rotation.z = -0.18;
+      } else if (actor.civicRole === "listener") {
+        entry.leftArm.rotation.x = -0.22;
+        entry.rightArm.rotation.x = -0.52;
+        entry.leftArm.rotation.z = 0.1;
+        entry.rightArm.rotation.z = -0.12;
+      }
     }
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
@@ -4509,6 +4597,10 @@ function updateCamera(payload = {}) {
   }
   camera.lookAt(focus);
   camera.updateMatrixWorld(true);
+  if (actorFaceLight) {
+    actorFaceLight.position.copy(camera.position);
+    actorFaceLight.position.y = Math.max(2.2, camera.position.y - 0.35);
+  }
   lastCameraState = {
     pivotX: Number(cameraPivotX.toFixed(3)),
     pivotZ: Number(cameraPivotZ.toFixed(3)),
