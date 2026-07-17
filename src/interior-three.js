@@ -67,7 +67,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.62, fill: 0.3, hemi: 0.28, bounce: 0.48, wash: 0.9, exposure: 0.84, keyColor: "#ffc985", fillColor: "#94b7b5" },
+  "civic-ivory": { key: 2.92, fill: 0.2, hemi: 0.2, bounce: 0.4, wash: 1.06, exposure: 0.84, keyColor: "#ffc77f", fillColor: "#8fb2b2" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -180,6 +180,7 @@ let hemisphereLight;
 let fillLight;
 let warmBounceLight;
 let windowWashLight;
+let actorRimLight;
 let roomRoot;
 let modelRoot;
 let actorRoot;
@@ -204,6 +205,7 @@ let cameraLastUpdateAt = 0;
 let cameraRaycaster;
 const occludedMaterials = new Map();
 const surfaceBumpTextures = new Map();
+const surfaceColorTextures = new Map();
 const actorFrameTextures = new Map();
 const actorObjects = new Map();
 const dynamicModelObjects = new Map();
@@ -286,6 +288,7 @@ function ensureLayer() {
 
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(48, 1, 0.08, 30);
+  camera.layers.enable(1);
   cameraRaycaster = new THREE.Raycaster();
   scene.add(camera);
 
@@ -335,6 +338,14 @@ function ensureLayer() {
   windowWashLight = new THREE.DirectionalLight(0xffe4bd, 0.92);
   windowWashLight.position.set(-5.8, 4.4, 1.8);
   scene.add(windowWashLight);
+
+  // A dedicated layer-only rim light gives the small stylised citizens the
+  // same warm edge separation as the reference without bleaching the room.
+  // Actors keep layer 0 for the room lighting and additionally enable layer 1.
+  actorRimLight = new THREE.DirectionalLight(0xffefd1, 0.72);
+  actorRimLight.position.set(4.6, 6.2, -4.8);
+  actorRimLight.layers.set(1);
+  scene.add(actorRimLight);
 
   // The civic hero room relies on contact depth rather than heavy outlines.
   // Keep the pass allocated once and switch it per-room so other interiors and
@@ -737,6 +748,67 @@ function getSurfaceBumpTexture(kind = "plaster") {
   return texture;
 }
 
+function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
+  const key = `terrazzo-color:${baseColor}`;
+  if (surfaceColorTextures.has(key)) return surfaceColorTextures.get(key);
+  const size = 512;
+  const textureCanvas = document.createElement("canvas");
+  textureCanvas.width = size;
+  textureCanvas.height = size;
+  const context = textureCanvas.getContext("2d");
+  if (!context) return null;
+  context.fillStyle = baseColor;
+  context.fillRect(0, 0, size, size);
+  let seed = 0x51c1c;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  const chips = ["#786a5c", "#a87562", "#5d7f82", "#7d896d", "#d8c5a6", "#4f4943", "#f2e8d7"];
+  for (let index = 0; index < 1750; index += 1) {
+    const x = random() * size;
+    const y = random() * size;
+    const radius = 0.55 + random() * (random() > 0.88 ? 3.2 : 1.8);
+    const sides = 3 + Math.floor(random() * 4);
+    context.beginPath();
+    for (let side = 0; side < sides; side += 1) {
+      const angle = side / sides * Math.PI * 2 + random() * 0.35;
+      const distance = radius * (0.62 + random() * 0.52);
+      const px = x + Math.cos(angle) * distance;
+      const py = y + Math.sin(angle) * distance;
+      if (side === 0) context.moveTo(px, py);
+      else context.lineTo(px, py);
+    }
+    context.closePath();
+    context.globalAlpha = 0.3 + random() * 0.48;
+    context.fillStyle = chips[Math.floor(random() * chips.length)];
+    context.fill();
+  }
+  context.globalAlpha = 0.16;
+  context.strokeStyle = "#786c5f";
+  context.lineWidth = 1;
+  [0, size / 2, size - 1].forEach((position) => {
+    context.beginPath();
+    context.moveTo(position, 0);
+    context.lineTo(position, size);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(0, position);
+    context.lineTo(size, position);
+    context.stroke();
+  });
+  context.globalAlpha = 1;
+  const texture = new THREE.CanvasTexture(textureCanvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.RepeatWrapping;
+  texture.wrapT = THREE.RepeatWrapping;
+  texture.repeat.set(3.2, 3.2);
+  texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  texture.needsUpdate = true;
+  surfaceColorTextures.set(key, texture);
+  return texture;
+}
+
 function getAtelierWindowViewTexture() {
   if (atelierWindowViewTexture) return atelierWindowViewTexture;
   if (!atelierWindowViewTextureLoading && THREE) {
@@ -796,6 +868,8 @@ function createToonMaterial(color, options = {}) {
     material.bumpMap = getSurfaceBumpTexture(options.surface);
     material.bumpScale = options.bumpScale ?? (options.surface === "wood" ? 0.012 : 0.018);
   }
+  if (options.map) material.map = options.map;
+  if (Number.isFinite(options.envMapIntensity)) material.envMapIntensity = options.envMapIntensity;
   return material;
 }
 
@@ -846,8 +920,9 @@ function applyLightingPreset(theme = {}) {
   if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
   if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
   if (windowWashLight) windowWashLight.intensity = preset.wash;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.18 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -1209,6 +1284,10 @@ function addPlanter(angle, color, leafColor, width = 1.1) {
 }
 
 function addAtelierTerrazzo(theme) {
+  // The civic hero room uses one high-resolution terrazzo color texture on
+  // the floor. Hundreds of separate flat chips looked like confetti from the
+  // gameplay camera and cost six material batches without adding depth.
+  if (theme.zoneId === "public-plaza") return;
   const seed = String(theme.zoneId || theme.archetype || "atelier")
     .split("")
     .reduce((sum, character, index) => sum + character.charCodeAt(0) * (index + 5), 17);
@@ -2227,6 +2306,73 @@ function addCivicThresholdFlowers(colors) {
   });
 }
 
+function addCivicForegroundTeaTable(colors) {
+  const group = new THREE.Group();
+  group.position.set(3.18, 0, 1.72);
+  group.rotation.y = -0.28;
+  roomRoot.add(group);
+  const rug = new THREE.Mesh(
+    new THREE.CircleGeometry(0.92, 48),
+    createToonMaterial("#d7e1d2", { roughness: 0.98, surface: "fabric", bumpScale: 0.01 })
+  );
+  rug.rotation.x = -Math.PI / 2;
+  rug.scale.set(1.12, 0.78, 1);
+  rug.position.y = 0.022;
+  rug.receiveShadow = true;
+  group.add(rug);
+  const top = new THREE.Mesh(
+    new RoundedBoxGeometry(1.28, 0.15, 0.72, 6, 0.18),
+    createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.6, surface: "wood", bumpScale: 0.01 })
+  );
+  top.position.y = 0.52;
+  group.add(top);
+  [-0.43, 0.43].forEach((x) => {
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.075, 0.48, 16), createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.7 }));
+    leg.position.set(x, 0.26, 0);
+    group.add(leg);
+  });
+  const bookColors = [colors.secondary, ATELIER_TOKENS.apricot, ATELIER_TOKENS.linen];
+  bookColors.forEach((color, index) => {
+    const book = new THREE.Mesh(new RoundedBoxGeometry(0.34 - index * 0.025, 0.035, 0.22, 2, 0.016), createToonMaterial(color, { roughness: 0.82 }));
+    book.position.set(-0.29 + index * 0.04, 0.61 + index * 0.038, -0.04 + index * 0.02);
+    book.rotation.y = -0.1 + index * 0.06;
+    group.add(book);
+  });
+  const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.18, 18), createToonMaterial(ATELIER_TOKENS.ceramic, { roughness: 0.48 }));
+  pot.position.set(0.33, 0.68, 0.02);
+  group.add(pot);
+  [-0.08, 0.08, 0].forEach((x, index) => {
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.1, 14, 10), createToonMaterial(index % 2 ? "#5d8e62" : "#79a26f", { roughness: 0.94 }));
+    leaf.scale.set(0.52, 1.18, 0.42);
+    leaf.position.set(0.33 + x, 0.89 + (index % 2) * 0.04, 0.02);
+    leaf.rotation.z = (index - 1) * 0.45;
+    group.add(leaf);
+  });
+}
+
+function addCivicCovenantPanel(colors) {
+  const group = new THREE.Group();
+  group.position.set(2.12, 2.23, -4.78);
+  group.rotation.y = -0.42;
+  roomRoot.add(group);
+  const frame = new THREE.Mesh(new RoundedBoxGeometry(0.72, 1.55, 0.12, 5, 0.07), createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.62, surface: "wood", bumpScale: 0.009 }));
+  group.add(frame);
+  const paper = new THREE.Mesh(new RoundedBoxGeometry(0.58, 1.38, 0.045, 4, 0.045), createToonMaterial("#f3ead8", { roughness: 0.94 }));
+  paper.position.z = 0.075;
+  group.add(paper);
+  const heading = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.045, 0.018, 2, 0.012), createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.82 }));
+  heading.position.set(0, 0.51, 0.106);
+  group.add(heading);
+  [0.25, 0.02, -0.21, -0.44].forEach((y, index) => {
+    const mark = new THREE.Mesh(new THREE.SphereGeometry(0.035, 10, 8), createToonMaterial(index % 2 ? colors.secondary : "#6b8b68", { roughness: 0.72 }));
+    mark.scale.set(0.78, 1.12, 0.45);
+    mark.position.set(-0.2, y, 0.11);
+    const line = new THREE.Mesh(new RoundedBoxGeometry(0.26 + (index % 2) * 0.05, 0.024, 0.015, 1, 0.007), createToonMaterial("#8d7b68", { roughness: 0.84 }));
+    line.position.set(0.05, y, 0.11);
+    group.add(mark, line);
+  });
+}
+
 function addCivicReferenceDressing(theme, colors) {
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
@@ -2275,6 +2421,8 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicHeroNoticeWall(colors);
   addCivicLibraryWall(colors);
   addCivicThresholdFlowers(colors);
+  addCivicForegroundTeaTable(colors);
+  addCivicCovenantPanel(colors);
   addAmbientBanquette(1.06, { ...colors, secondary: "#4b9189" });
   addAmbientTeaTable(0.92, colors);
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
@@ -2515,6 +2663,15 @@ function roomMaterialKey(material, geometry) {
   ].join("|");
 }
 
+function canBatchRoomVertexColors(material) {
+  if (!material || Array.isArray(material)) return false;
+  if (material.transparent || Number(material.opacity ?? 1) < 0.999) return false;
+  if (material.side !== THREE.FrontSide) return false;
+  if (material.map || material.bumpMap || material.normalMap || material.roughnessMap || material.metalnessMap || material.aoMap || material.alphaMap) return false;
+  if (Number(material.metalness || 0) > 0.16) return false;
+  return material.isMeshStandardMaterial || material.isMeshPhysicalMaterial;
+}
+
 function mergeRoomArchitectureMeshes() {
   if (!roomRoot || !mergeGeometries) return;
   roomRoot.updateMatrixWorld(true);
@@ -2522,6 +2679,7 @@ function mergeRoomArchitectureMeshes() {
   const lights = [];
   const sourceGeometries = new Set();
   const sourceMaterials = new Set();
+  const colorBatches = new Map();
 
   roomRoot.traverse((node) => {
     if (node.isLight) {
@@ -2531,6 +2689,19 @@ function mergeRoomArchitectureMeshes() {
       return;
     }
     if (!node.isMesh || !node.geometry || Array.isArray(node.material)) return;
+    if (canBatchRoomVertexColors(node.material)) {
+      const batchKey = `${node.castShadow ? 1 : 0}:${node.receiveShadow ? 1 : 0}`;
+      const batch = colorBatches.get(batchKey) || {
+        geometries: [],
+        castShadow: !!node.castShadow,
+        receiveShadow: !!node.receiveShadow
+      };
+      batch.geometries.push(geometryWithSolidVertexColor(node));
+      colorBatches.set(batchKey, batch);
+      sourceGeometries.add(node.geometry);
+      sourceMaterials.add(node.material);
+      return;
+    }
     const geometry = node.geometry.index ? node.geometry.toNonIndexed() : node.geometry.clone();
     geometry.applyMatrix4(node.matrixWorld);
     geometry.userData.castShadow = !!node.castShadow;
@@ -2550,6 +2721,28 @@ function mergeRoomArchitectureMeshes() {
   });
 
   const mergedMeshes = [];
+  colorBatches.forEach((batch) => {
+    const geometry = batch.geometries.length === 1
+      ? batch.geometries[0]
+      : mergeGeometries(batch.geometries, false);
+    if (!geometry) {
+      batch.geometries.forEach((candidate) => candidate.dispose());
+      return;
+    }
+    batch.geometries.forEach((candidate) => {
+      if (candidate !== geometry) candidate.dispose();
+    });
+    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+      color: 0xffffff,
+      vertexColors: true,
+      roughness: 0.8,
+      metalness: 0.015,
+      envMapIntensity: 0.58
+    }));
+    mesh.castShadow = batch.castShadow;
+    mesh.receiveShadow = batch.receiveShadow;
+    mergedMeshes.push(mesh);
+  });
   batches.forEach((batch) => {
     const geometry = batch.geometries.length === 1
       ? batch.geometries[0]
@@ -3037,7 +3230,13 @@ function rebuildRoom(theme = {}) {
 
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(ROOM_RADIUS, 64),
-    createToonMaterial(floorColor, { roughness: 0.9, surface: "terrazzo", bumpScale: 0.026 })
+    createToonMaterial(floorColor, {
+      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
+      surface: "terrazzo",
+      bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
+      map: theme.zoneId === "public-plaza" ? getTerrazzoColorTexture(floorColor) : null,
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.62 : 0.48
+    })
   );
   floor.rotation.x = -Math.PI / 2;
   if (theme.zoneId === "public-plaza") floor.scale.setScalar(1.42);
@@ -3440,15 +3639,32 @@ function getActorFrameTexture(frame = 0) {
 // clothing hierarchy. This keeps the HUD portrait, outdoor citizen and indoor
 // actor recognisably the same person without projecting a flat sprite into 3D.
 const ACTOR_STYLE_PROFILES = [
-  { identity: "artist", skin: "#f2c29f", hair: "#242633", eye: "#59452f", top: "#e9b83f", lower: "#315f5c", accent: "#ef754e", outer: "#f6e6c8", hairStyle: 0 },
-  { identity: "builder", skin: "#e7ad84", hair: "#292b35", eye: "#4a392d", top: "#278d88", lower: "#a86238", accent: "#f1c34f", outer: "#e9824e", hairStyle: 1 },
-  { identity: "botanist", skin: "#f0bb92", hair: "#cf5f58", eye: "#55704c", top: "#f5f0df", lower: "#35786b", accent: "#e88978", outer: "#f7f3e8", hairStyle: 2 },
-  { identity: "scholar", skin: "#b97854", hair: "#51456e", eye: "#493a62", top: "#e6b64b", lower: "#35445f", accent: "#6c9dcd", outer: "#f5e8ca", hairStyle: 3 },
-  { identity: "observer", skin: "#f3c7ad", hair: "#262b35", eye: "#4b382f", top: "#367f7c", lower: "#384c58", accent: "#18877e", outer: "#dce8e6", hairStyle: 4 },
-  { identity: "explorer", skin: "#d99a73", hair: "#e9e2d8", eye: "#5b4834", top: "#317e7a", lower: "#91724f", accent: "#e9b744", outer: "#f0dfb8", hairStyle: 5 },
-  { identity: "mediator", skin: "#f1b68d", hair: "#654338", eye: "#5a4030", top: "#f6efe0", lower: "#3e745f", accent: "#d7885c", outer: "#fffaf0", hairStyle: 6 },
-  { identity: "mentor", skin: "#a86749", hair: "#29252b", eye: "#382f2c", top: "#687f55", lower: "#313e42", accent: "#8f603d", outer: "#e8d4b8", hairStyle: 7 }
+  { identity: "artist", skin: "#f2bd91", hair: "#202331", eye: "#4a3425", top: "#f2bd22", lower: "#28364e", accent: "#ef5f45", outer: "#fff4df", hairStyle: 0 },
+  { identity: "builder", skin: "#edb081", hair: "#202631", eye: "#44332a", top: "#168d88", lower: "#e28d18", accent: "#f3b519", outer: "#8b4d27", hairStyle: 1 },
+  { identity: "botanist", skin: "#f2bd94", hair: "#ef7884", eye: "#32705d", top: "#f8f1df", lower: "#087b70", accent: "#4c9b56", outer: "#fff8ed", hairStyle: 2 },
+  { identity: "scholar", skin: "#efbd91", hair: "#3f294d", eye: "#3d315b", top: "#efbd28", lower: "#253a58", accent: "#216bb0", outer: "#fbf5e7", hairStyle: 3 },
+  { identity: "observer", skin: "#ecb083", hair: "#1d2634", eye: "#3e3129", top: "#174b91", lower: "#253248", accent: "#147b89", outer: "#dce8e6", hairStyle: 4 },
+  { identity: "explorer", skin: "#e5a87c", hair: "#eee7dc", eye: "#4b3c2e", top: "#178e87", lower: "#667044", accent: "#edb323", outer: "#f4e8ca", hairStyle: 5 },
+  { identity: "chef", skin: "#edac80", hair: "#202639", eye: "#3f3028", top: "#faf2df", lower: "#253b5c", accent: "#d83d42", outer: "#fffaf0", hairStyle: 6 },
+  { identity: "mentor", skin: "#e9aa7d", hair: "#35283a", eye: "#3b2f2c", top: "#9b673d", lower: "#716d67", accent: "#256997", outer: "#f1e7d5", hairStyle: 7 }
 ];
+
+// Public-plaza roles are scene costumes, not alternate portrait identities.
+// Keeping the base atlas mapping exact means the same eight portraits remain
+// recognisable everywhere else, while the hero scene can match its selected
+// cinematic reference with a teal listener and two civic facilitators.
+const CIVIC_ACTOR_STYLE_OVERRIDES = Object.freeze({
+  listener: { identity: "observer", hair: "#252b34", top: "#277f79", lower: "#344a52", accent: "#168b80", outer: "#e4ece7", hairStyle: 4 },
+  facilitator: { identity: "botanist", hair: "#d96158", top: "#f8f1df", lower: "#2e705b", accent: "#db7c67", outer: "#fff8ed", hairStyle: 2 },
+  mediator: { identity: "mediator", hair: "#65463a", top: "#f8f1df", lower: "#3b735f", accent: "#d49363", outer: "#fffaf0", hairStyle: 6 },
+  player: { identity: "mentor", hair: "#2b2830", top: "#687e54", lower: "#303e43", accent: "#8d5f3f", outer: "#ead7bd", hairStyle: 7 }
+});
+
+function resolveActorStyle(actor, frame) {
+  const base = ACTOR_STYLE_PROFILES[frame] || ACTOR_STYLE_PROFILES[0];
+  const civic = CIVIC_ACTOR_STYLE_OVERRIDES[actor.civicRole];
+  return civic ? { ...base, ...civic } : base;
+}
 
 function actorPart(size, radius, material, position = [0, 0, 0]) {
   const mesh = new THREE.Mesh(new RoundedBoxGeometry(size[0], size[1], size[2], 3, radius), material);
@@ -3557,7 +3773,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = []) {
   target.add(mesh);
 }
 
-function addActorHair(headGroup, style, material) {
+function addActorHair(headGroup, actorStyle, material) {
+  const style = actorStyle.hairStyle;
   const cap = new THREE.Mesh(new THREE.SphereGeometry(0.35, 28, 20, 0, Math.PI * 2, 0, Math.PI * 0.62), material);
   cap.scale.set(0.98, 0.9, 0.96);
   cap.position.y = 0.052;
@@ -3604,6 +3821,32 @@ function addActorHair(headGroup, style, material) {
     bun.position.set(style === 2 ? 0.2 : -0.18, 0.18, -0.19);
     bun.castShadow = true;
     headGroup.add(bun);
+  }
+  if (style === 2) {
+    // The botanist/facilitator portrait has a recognisable side ponytail.
+    // A tapered chain preserves that silhouette from front, side and rear.
+    for (let index = 0; index < 4; index += 1) {
+      const tail = new THREE.Mesh(new THREE.SphereGeometry(0.145 - index * 0.016, 18, 13), material);
+      tail.scale.set(0.82, 1.15, 0.76);
+      tail.position.set(0.26 + index * 0.035, 0.02 - index * 0.18, -0.2 - index * 0.018);
+      tail.rotation.z = -0.12 - index * 0.08;
+      tail.castShadow = true;
+      headGroup.add(tail);
+    }
+  }
+  if (actorStyle.identity === "mediator") {
+    const braid = new THREE.Mesh(new THREE.TorusGeometry(0.302, 0.028, 9, 30, Math.PI * 1.12), material);
+    braid.rotation.set(Math.PI / 2, 0, Math.PI * 0.94);
+    braid.position.set(0, 0.16, 0.06);
+    braid.castShadow = true;
+    headGroup.add(braid);
+    [-0.23, -0.12, 0, 0.12, 0.23].forEach((x, index) => {
+      const knot = new THREE.Mesh(new THREE.SphereGeometry(0.045, 12, 9), material);
+      knot.scale.set(1, 0.72, 0.8);
+      knot.position.set(x, 0.21 - Math.abs(x) * 0.32, 0.265 - Math.abs(x) * 0.12);
+      knot.rotation.z = (index - 2) * 0.16;
+      headGroup.add(knot);
+    });
   }
 }
 
@@ -3660,6 +3903,21 @@ function addActorIdentityDetails(visual, headGroup, style, materials, actor) {
     const rightCoat = actorPart([0.19, 0.58, 0.34], 0.07, materials.outer, [0.17, 1.0, 0.025]);
     const skirt = createActorSkirt(materials.lower);
     visual.add(leftCoat, rightCoat, skirt);
+    [-0.18, -0.09, 0, 0.09, 0.18].forEach((x, index) => {
+      const pleat = actorPart([0.025, 0.38, 0.018], 0.008, index % 2 ? materials.lower : materials.accent, [x, 0.65, 0.27]);
+      pleat.rotation.z = x * -0.08;
+      visual.add(pleat);
+    });
+    [-1, 1].forEach((side) => {
+      const lapel = actorPart([0.13, 0.3, 0.035], 0.025, materials.outer, [side * 0.085, 1.12, 0.2]);
+      lapel.rotation.z = side * 0.43;
+      visual.add(lapel);
+    });
+    [0.94, 1.08].forEach((y) => {
+      const button = new THREE.Mesh(new THREE.SphereGeometry(0.024, 10, 8), materials.accent);
+      button.position.set(0, y, 0.225);
+      visual.add(button);
+    });
     if (identity === "botanist") {
       const leafBadge = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 9), materials.accent);
       leafBadge.scale.set(0.62, 1.2, 0.35);
@@ -3704,16 +3962,26 @@ function addActorIdentityDetails(visual, headGroup, style, materials, actor) {
   }
 
   if (["observer", "explorer"].includes(identity) || actor.role === "player") {
-    const backpack = actorPart([0.4, 0.48, 0.19], 0.09, materials.accent, [0, 0.98, -0.24]);
-    const flap = actorPart([0.32, 0.14, 0.025], 0.035, materials.outer, [0, 1.1, -0.345]);
-    visual.add(backpack, flap);
+    const backpack = actorPart([0.42, 0.5, 0.2], 0.11, materials.accent, [0, 0.98, -0.25]);
+    const flap = actorPart([0.34, 0.16, 0.035], 0.045, materials.outer, [0, 1.11, -0.365]);
+    const pocket = actorPart([0.28, 0.17, 0.045], 0.05, materials.outer, [0, 0.86, -0.37]);
+    const buckle = actorPart([0.07, 0.055, 0.025], 0.012, materials.accent, [0, 1.045, -0.397]);
+    visual.add(backpack, flap, pocket, buckle);
+    [-1, 1].forEach((side) => {
+      const shoulderStrap = new THREE.Mesh(new THREE.TorusGeometry(0.25, 0.027, 8, 24, Math.PI * 0.92), materials.outer);
+      shoulderStrap.scale.set(0.72, 1, 0.65);
+      shoulderStrap.rotation.set(Math.PI / 2, 0, side > 0 ? 0.42 : Math.PI + 0.42);
+      shoulderStrap.position.set(side * 0.13, 1.03, -0.08);
+      visual.add(shoulderStrap);
+    });
   }
   addActorHeadwear(headGroup, style, materials);
 }
 
 function createActorObject(actor) {
   const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
-  const style = ACTOR_STYLE_PROFILES[frame];
+  const style = resolveActorStyle(actor, frame);
+  const styleKey = `${frame}:${actor.civicRole || style.identity}`;
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
@@ -3767,7 +4035,7 @@ function createActorObject(actor) {
   head.scale.set(0.96, 1.05, 0.92);
   head.castShadow = true;
   headGroup.add(head);
-  addActorHair(headGroup, style.hairStyle, hairMaterial);
+  addActorHair(headGroup, style, hairMaterial);
   [-1, 1].forEach((side) => {
     const ear = new THREE.Mesh(new THREE.SphereGeometry(0.07, 14, 10), skinMaterial);
     ear.scale.set(0.58, 0.9, 0.45);
@@ -3820,6 +4088,16 @@ function createActorObject(actor) {
   rightHand.position.set(0, -0.54, 0);
   leftArm.add(leftHand);
   rightArm.add(rightHand);
+  [leftArm, rightArm].forEach((arm, index) => {
+    const cuff = new THREE.Mesh(new THREE.CylinderGeometry(0.086, 0.086, 0.085, 14), outerMaterial);
+    cuff.position.set(0, -0.47, 0);
+    arm.add(cuff);
+    const thumb = new THREE.Mesh(new THREE.SphereGeometry(0.031, 10, 8), skinMaterial);
+    thumb.scale.set(0.74, 1.2, 0.7);
+    thumb.position.set(index === 0 ? 0.057 : -0.057, -0.54, 0.018);
+    thumb.rotation.z = index === 0 ? -0.42 : 0.42;
+    arm.add(thumb);
+  });
   visual.add(leftArm, rightArm);
   const leftLeg = createActorLimb(lowerMaterial, 0.64, 0.18);
   const rightLeg = createActorLimb(lowerMaterial, 0.64, 0.18);
@@ -3834,6 +4112,13 @@ function createActorObject(actor) {
     const sole = actorPart([0.205, 0.032, 0.3], 0.014, laceMaterial, [0, -0.062, 0]);
     const lace = actorPart([0.12, 0.016, 0.022], 0.006, laceMaterial, [0, 0.03, 0.15]);
     shoe.add(sole, lace);
+  });
+  [leftLeg, rightLeg].forEach((leg) => {
+    const trouserCuff = new THREE.Mesh(new THREE.CylinderGeometry(0.095, 0.1, 0.09, 14), accentMaterial);
+    trouserCuff.position.set(0, -0.51, 0);
+    leg.add(trouserCuff);
+    const kneeSeam = actorPart([0.14, 0.022, 0.025], 0.008, accentMaterial, [0, -0.28, 0.085]);
+    leg.add(kneeSeam);
   });
   leftLeg.add(leftShoe);
   rightLeg.add(rightShoe);
@@ -3850,6 +4135,7 @@ function createActorObject(actor) {
   mergeActorVertexColorMeshes(headGroup);
   mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg]);
   [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => mergeActorVertexColorMeshes(limb));
+  group.traverse((node) => node.layers?.enable?.(1));
   [skinMaterial, hairMaterial, topMaterial, lowerMaterial, accentMaterial, outerMaterial, inkMaterial, eyeWhiteMaterial, irisMaterial, blushMaterial, shoeMaterial, laceMaterial]
     .forEach((material) => material.dispose());
   actorRoot.add(group);
@@ -3864,6 +4150,7 @@ function createActorObject(actor) {
     leftLeg,
     rightLeg,
     frame,
+    styleKey,
     identity: style.identity,
     lastX: Number(actor.worldX || 0),
     lastZ: Number(actor.worldZ || 0),
@@ -3884,7 +4171,8 @@ function updateActors(actors = [], now = performance.now()) {
     if (!entry) entry = createActorObject(actor);
     if (!entry) return;
     const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
-    if (entry.frame !== frame) {
+    const styleKey = `${frame}:${actor.civicRole || resolveActorStyle(actor, frame).identity}`;
+    if (entry.frame !== frame || entry.styleKey !== styleKey) {
       entry.group.removeFromParent();
       actorObjects.delete(actor.id);
       entry = createActorObject(actor);
@@ -3946,9 +4234,11 @@ function updateActors(actors = [], now = performance.now()) {
       entry.headGroup.rotation.y = Math.sin(now * 0.0012 + frame) * 0.06;
       entry.visual.rotation.z = 0;
     }
-    entry.shadow.scale.setScalar(walking ? 0.92 : 1);
-    entry.shadow.material.opacity = actor.grounded === false ? 0.16 : 0.28;
-    entry.shadow.visible = cameraZoneId !== "public-plaza";
+    entry.shadow.material.opacity = actor.grounded === false
+      ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
+      : (cameraZoneId === "public-plaza" ? 0.2 : 0.28);
+    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.82 : 0.9) : (walking ? 0.92 : 1));
+    entry.shadow.visible = true;
     entry.group.visible = actor.visible !== false;
   });
   [...actorObjects.entries()].forEach(([id, entry]) => {

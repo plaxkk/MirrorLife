@@ -5702,7 +5702,8 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     ],
     extraColliders: [
       { id: "civic-library-wall", x: 4.66, z: -2.76, collider: { shape: "box", halfX: 0.72, halfY: 1.26, halfZ: 0.36, rotation: -1.03 }, material: "wood" },
-      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" }
+      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" },
+      { id: "civic-foreground-tea-table", x: 3.18, z: 1.72, collider: { shape: "box", halfX: 0.7, halfY: 0.48, halfZ: 0.42, rotation: -0.28 }, material: "wood" }
     ],
     actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
@@ -14553,11 +14554,13 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     velocity: interiorOrbit.velocity || { x: 0, y: 0, z: 0 },
     grounded: interiorOrbit.grounded !== false,
     walkPhase: Number(interiorOrbit.walkPhase || 0),
+    civicRole: zone.id === "public-plaza" ? "player" : "",
     scale: (avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1) * civicActorScale
   };
   // The deterministic review cast mirrors the selected art target: a teal-cap
   // listener, a coral-haired facilitator and a brunette civic mediator.
-  const qaCivicFrames = [4, 2, 6];
+  const qaCivicFrames = [4, 2, 3];
+  const qaCivicRoles = ["listener", "facilitator", "mediator"];
   const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => ({
     id: entry.id,
     worldX: entry.worldX,
@@ -14569,6 +14572,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     facing: entry.facing,
     state: entry.state,
     walkPhase: entry.walkPhase,
+    civicRole: zone.id === "public-plaza" ? qaCivicRoles[entryIndex % qaCivicRoles.length] : "",
     scale: entry.scale * civicActorScale
   }))];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);

@@ -164,10 +164,10 @@ passed
 ## Source truth and verification state
 
 - Source reference: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-c3ed3c29-42bb-4808-b433-d1e982ae0bb3.png`
-- Latest live desktop capture: `/tmp/mirrorlife-civic-fidelity-v2-desktop-1672x941.png`
-- Latest live mobile capture: `/tmp/mirrorlife-civic-fidelity-v2-mobile.png`
-- Same-size combined comparison: `/tmp/mirrorlife-civic-fidelity-v2-comparison.png`
-- Runtime URL: `http://localhost:4173/game.html?qaInterior=public-plaza&qaInteriorScene=1&qaFresh=1`
+- Latest live desktop capture: `/tmp/mirrorlife-civic-fidelity-v3-desktop-final.png`
+- Latest live mobile capture: `/tmp/mirrorlife-civic-fidelity-v3-mobile-final.png`
+- Same-size combined comparison: `/tmp/mirrorlife-civic-fidelity-v3-comparison-final.png`
+- Runtime URL: `http://localhost:4173/game.html?qaInterior=public-plaza&qaInteriorScene=1`
 - Native viewports: `1672 × 941` and `390 × 844`.
 
 The source and latest live implementation were judged together in one native-size comparison. The implementation is a real-time, physically navigable Three.js room rather than a static image: desktop input moved the player by about `1.10m`; the orbit camera changed from yaw `0` to `-1.20`; mobile joystick input changed the player position and a scene drag changed yaw from `0` to `-0.69`.
@@ -179,14 +179,16 @@ The source and latest live implementation were judged together in one native-siz
 - The source's dark translucent editorial HUD and four-option bottom action rail are implemented as live controls with responsive desktop/mobile layouts.
 - Existing `record-desk.glb` is reused as the high-detail foreground hero asset; missing civic architecture and furniture are authored as coherent Three.js geometry.
 - Four residents are staged around the story circle on desktop. The current 8-frame portrait atlas maps to eight distinct 3D identity profiles with different hair, eye color, face, clothing, bags and props. The civic review cast now deliberately uses teal listener, coral facilitator, brunette mediator and olive player silhouettes.
+- Civic-role overrides now preserve those base portrait identities while adding the reference-specific cap, side braid, braided headband, tailored layers, skirt pleats, cuffs and backpack construction.
+- A procedural terrazzo color/bump surface replaces hundreds of flat floor chips; an additional foreground tea table, covenant panel, contact shadows and actor-only warm rim light strengthen the foreground/background hierarchy without exceeding the scene budget.
 - The player enters at the listening-circle edge instead of the cutaway wall, and the camera is framed around the conversation rather than a giant foreground avatar.
 - Mobile touch controls remain visible beside the story action rail; an informational discovery card no longer suppresses the joystick.
 - Legacy 2D canvas compositing is placed behind this room, removing the pale mobile veil while preserving the rest of the game's compatibility layer.
 
 ## Runtime evidence
 
-- Desktop at `1672 × 941`: 159 draw calls and 254,949 triangles with four actors.
-- Mobile at `390 × 844`: 153 draw calls and 235,217 triangles, zero horizontal overflow, visible joystick/action buttons and a ready Three.js scene.
+- Desktop at `1672 × 941`: 79 draw calls and 282,573 triangles with four actors.
+- Mobile at `390 × 844`: 72 draw calls and 255,263 triangles, zero horizontal overflow, visible joystick/action buttons and a ready Three.js scene.
 - Camera orbit, keyboard movement, mobile joystick movement, touch camera drag, responsive FOV and atomic room readiness were exercised in the in-app browser.
 - No runtime exceptions were observed. Local-only Vercel Analytics script messages are expected because `/_vercel/insights/script.js` is unavailable on localhost.
 
@@ -199,6 +201,7 @@ The source and latest live implementation were judged together in one native-siz
 ### P2 — remaining asset-fidelity gap
 
 - The reference uses bespoke cinematic character sculpts, cloth silhouettes, facial features, micro-props, bounced light and material variation. The current Web implementation has reached the same composition and product direction, but its procedural citizens and several furnishings still read as a polished playable blockout when viewed directly beside the source.
+- The final native-size comparison confirms the remaining gap is concentrated in authored assets and material response, not layout, camera, physics, UI or runtime performance. Further procedural geometry would add noise faster than fidelity.
 - Reaching literal source quality now requires an authored shared-rig character kit and a small set of hero furniture/material assets; adding more procedural boxes would increase detail without closing the visible sculpt and surface-quality gap.
 - The recommended production path and acceptance criteria are documented in `docs/design/avatar-2d-to-3d-pipeline.md`.
 
