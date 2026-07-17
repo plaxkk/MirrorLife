@@ -244,6 +244,22 @@ body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicAction
     font-size: 10px;
     white-space: nowrap;
   }
+  body.interior-active[data-interior-zone="public-plaza"] .interior-joystick {
+    left: 14px;
+    bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+    width: 92px;
+    height: 92px;
+    background: radial-gradient(circle, rgba(255,255,255,.42) 0 20%, rgba(58,50,44,.72) 21% 100%);
+    border-color: rgba(255, 240, 214, .28);
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .interior-joystick-knob {
+    width: 39px;
+    height: 39px;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .interior-action-buttons {
+    right: 14px;
+    bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px));
+  }
 }
 
 body.social-twin-hearing-active .hud-top,
@@ -7477,8 +7493,8 @@ body.interior-active #interiorContextAction strong { font-size: 12px; }
   }
   body.interior-active #interiorDiscoveryCard button { margin-top: 6px; min-height: 34px; padding: 6px 8px; font-size: 10px; }
 
-  body.interior-active:has(#interiorDiscoveryCard) .interior-joystick,
-  body.interior-active:has(#interiorDiscoveryCard) .interior-action-buttons {
+  body.interior-active:not([data-interior-zone="public-plaza"]):has(#interiorDiscoveryCard.has-action) .interior-joystick,
+  body.interior-active:not([data-interior-zone="public-plaza"]):has(#interiorDiscoveryCard.has-action) .interior-action-buttons {
     opacity: 0;
     pointer-events: none;
   }

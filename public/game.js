@@ -5680,7 +5680,10 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       floorY: 0,
       door: { id: "exit", angle: -1.02, width: 2.08, height: 3.02, depth: 0.18 }
     },
-    spawn: { x: 0, y: 0.86, z: 2.48 },
+    // Enter directly at the edge of the listening circle. The earlier spawn
+    // lived near the cutaway wall, which made the player read as a giant
+    // foreground obstruction instead of one participant in the discussion.
+    spawn: { x: 0, y: 0.86, z: 1.62 },
     lightingPreset: "civic-ivory",
     materialPreset: "terrazzo-teal-brass",
     functionalZones: [
@@ -5780,6 +5783,11 @@ function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
     zoneId,
     worldScaleMeters: 1,
     shellId: authored.shellId || `${zoneId}-shell-v1`,
+    spawn: {
+      x: Number(authored.spawn?.x || 0),
+      y: Number(authored.spawn?.y || 0.86),
+      z: Number(authored.spawn?.z ?? 3.72)
+    },
     shell: {
       ...(authored.shell || {}),
       shape: "round-cutaway",
@@ -7070,9 +7078,9 @@ function holdSocialParallaxActors(zone, entries = []) {
 }
 
 function stagePublicListeningEnsemble(zone, entries = []) {
-  if (zone?.id !== SOCIAL_PARALLAX_ZONE_ID || interiorView?.zone?.id !== zone.id) return;
+  const qaComposition = zone?.id === "public-plaza" && isLocalInteriorSceneQaEnabled();
+  if ((!qaComposition && zone?.id !== SOCIAL_PARALLAX_ZONE_ID) || interiorView?.zone?.id !== zone.id) return;
   const ritual = getSocialParallaxRitual(zone.id);
-  const qaComposition = isLocalInteriorSceneQaEnabled();
   if ((!ritual || ritual.status === "complete") && !qaComposition) return;
   const witnessIds = new Set(qaComposition ? entries.map((entry) => entry.id) : (ritual?.witnessIds || []));
   const extras = entries.filter((entry) => !witnessIds.has(entry.id));
@@ -7085,9 +7093,9 @@ function stagePublicListeningEnsemble(zone, entries = []) {
     .filter((entry) => witnessIds.has(entry.id))
     .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
   const listeningPoints = qaComposition ? [
-    { x: -1.35, z: 0.15 },
-    { x: 1.35, z: 0.15 },
-    { x: 0.56, z: -1.28 }
+    { x: -1.72, z: 0.12 },
+    { x: 1.72, z: 0.16 },
+    { x: 0.52, z: -1.58 }
   ] : [
     { x: 0.9, z: -1.45 },
     { x: 3.15, z: 0.72 },
@@ -14531,6 +14539,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   holdEmpathyCalibrationActor(zone, entries);
   holdMemoryAuthorizationActor(zone, entries);
   const avatarCitizen = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
+  const civicActorScale = zone.id === "public-plaza" ? 1.08 : 1;
   const playerPayload = {
     id: "player",
     identityId: "avatar",
@@ -14544,9 +14553,11 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     velocity: interiorOrbit.velocity || { x: 0, y: 0, z: 0 },
     grounded: interiorOrbit.grounded !== false,
     walkPhase: Number(interiorOrbit.walkPhase || 0),
-    scale: avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1
+    scale: (avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1) * civicActorScale
   };
-  const qaCivicFrames = [4, 2, 0];
+  // The deterministic review cast mirrors the selected art target: a teal-cap
+  // listener, a coral-haired facilitator and a brunette civic mediator.
+  const qaCivicFrames = [4, 2, 6];
   const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => ({
     id: entry.id,
     worldX: entry.worldX,
@@ -14558,7 +14569,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     facing: entry.facing,
     state: entry.state,
     walkPhase: entry.walkPhase,
-    scale: entry.scale
+    scale: entry.scale * civicActorScale
   }))];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
   const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);

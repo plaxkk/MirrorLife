@@ -164,14 +164,13 @@ passed
 ## Source truth and verification state
 
 - Source reference: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-c3ed3c29-42bb-4808-b433-d1e982ae0bb3.png`
-- Live desktop capture: `artifacts/design-qa/public-plaza-fidelity-desktop-final.png`
-- Live mobile capture: `artifacts/design-qa/public-plaza-fidelity-mobile-final.png`
-- Orbit verification capture: `artifacts/design-qa/public-plaza-fidelity-rotated-final.png`
-- Same-size combined comparison: `artifacts/design-qa/public-plaza-fidelity-final-comparison.png`
-- Runtime URL: `http://127.0.0.1:4182/game.html?qaInterior=public-plaza&qaInteriorScene=1`
+- Latest live desktop capture: `/tmp/mirrorlife-civic-fidelity-v2-desktop-1672x941.png`
+- Latest live mobile capture: `/tmp/mirrorlife-civic-fidelity-v2-mobile.png`
+- Same-size combined comparison: `/tmp/mirrorlife-civic-fidelity-v2-comparison.png`
+- Runtime URL: `http://localhost:4173/game.html?qaInterior=public-plaza&qaInteriorScene=1&qaFresh=1`
 - Native viewports: `1672 × 941` and `390 × 844`.
 
-The source and live implementation were judged together in one native-size comparison. The implementation is a real-time, physically navigable Three.js room rather than a static image: the player moved from `z=3.720` to `z=3.697` through browser input, and the orbit camera changed from yaw `0` to `-1.44` while keeping the staged conversation visible.
+The source and latest live implementation were judged together in one native-size comparison. The implementation is a real-time, physically navigable Three.js room rather than a static image: desktop input moved the player by about `1.10m`; the orbit camera changed from yaw `0` to `-1.20`; mobile joystick input changed the player position and a scene drag changed yaw from `0` to `-0.69`.
 
 ## Matched design language
 
@@ -179,14 +178,16 @@ The source and live implementation were judged together in one native-size compa
 - Warm plaster, oak, terrazzo, teal upholstery, coral accents, foliage, glass and brass establish the same premium warm civic atmosphere.
 - The source's dark translucent editorial HUD and four-option bottom action rail are implemented as live controls with responsive desktop/mobile layouts.
 - Existing `record-desk.glb` is reused as the high-detail foreground hero asset; missing civic architecture and furniture are authored as coherent Three.js geometry.
-- Four residents are staged around the story circle on desktop. The current 8-frame portrait atlas maps to eight distinct 3D identity profiles with different hair, face, clothing, bags and props.
+- Four residents are staged around the story circle on desktop. The current 8-frame portrait atlas maps to eight distinct 3D identity profiles with different hair, eye color, face, clothing, bags and props. The civic review cast now deliberately uses teal listener, coral facilitator, brunette mediator and olive player silhouettes.
+- The player enters at the listening-circle edge instead of the cutaway wall, and the camera is framed around the conversation rather than a giant foreground avatar.
+- Mobile touch controls remain visible beside the story action rail; an informational discovery card no longer suppresses the joystick.
 - Legacy 2D canvas compositing is placed behind this room, removing the pale mobile veil while preserving the rest of the game's compatibility layer.
 
 ## Runtime evidence
 
-- Desktop: 158 draw calls, 243,749 triangles, 165 geometries, four actors and one reused GLB asset.
-- Mobile: 152 draw calls, 226,277 triangles, 121 geometries, three actors, zero horizontal overflow and a ready Three.js scene.
-- Camera orbit, keyboard movement, responsive FOV and atomic room readiness were exercised in the in-app browser.
+- Desktop at `1672 × 941`: 159 draw calls and 254,949 triangles with four actors.
+- Mobile at `390 × 844`: 153 draw calls and 235,217 triangles, zero horizontal overflow, visible joystick/action buttons and a ready Three.js scene.
+- Camera orbit, keyboard movement, mobile joystick movement, touch camera drag, responsive FOV and atomic room readiness were exercised in the in-app browser.
 - No runtime exceptions were observed. Local-only Vercel Analytics script messages are expected because `/_vercel/insights/script.js` is unavailable on localhost.
 
 ## Findings
