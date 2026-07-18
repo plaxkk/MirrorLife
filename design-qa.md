@@ -1,5 +1,49 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v16 authored hero-furniture and complete-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/environment-review/00-public.png` (public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v16-full.png` and `civic-fidelity-v16-focus.png`.
+- Complete orbit: `environment-review-yaw-{90,180,270}/00-public.png`; responsive evidence: `environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Earlier findings, fixes and post-fix evidence
+
+- [fixed from v15 P1 / generic hero furniture] The left display, central notice/console and right lounge are no longer runtime arrangements of reusable rounded primitives. They are three authored Blender GLBs with real joinery, inset doors, glass, trays, ceramics, pinned papers, brass lamps, a woven basket, separated sofa cushions, coffee-table dressing and a complete bookcase.
+- [fixed / authored material hierarchy] The civic hero loader preserves the assets' oak, walnut, teal, coral, cork, ceramic, paper, brass and glass palette instead of snapping those colors to the generic archetype swatches. Opaque surfaces retain individual roughness/metalness in one vertex-surface batch; glass remains its own transparent batch.
+- [fixed / spatial contract] The three visible models and their fixed colliders share the same `INTERIOR_ZONE_LAYOUT_PROFILES.public-plaza.props[]` transforms. The display interaction face, notice reading position, lounge footprint and existing library-wall safety collider remain reachable in the 26-zone physics audit.
+- [fixed / orbit authorship] The new furniture has complete front, side and back geometry. `0°`, `90°`, `180°` and `270°` browser captures show no missing back faces, fallen pieces, floating dowels or old/new asset overlap. Near-side assets participate in the existing camera composition and occlusion rules.
+- [fixed / performance headroom] Exported opaque meshes use outward normals and single-sided rendering, allowing all three GLBs to become one authored vertex batch plus glass/contact shadow. The previous reverse-view first pass reached `161` draw calls; the corrected asset batch returns it to `147`.
+
+### Runtime and performance evidence
+
+- Authored asset contract: display `7,384`, notice `7,244`, lounge `11,780` triangles; aggregate `26,408` triangles. All three GLBs pass named-part, byte-size and metre-contract validation.
+- Desktop `0° / 90° / 180° / 270°`: `136/213,751`, `138/216,175`, `147/227,279`, `145/220,099` draw-calls/triangles. Models consume only `3` draw calls and all views remain below the strict `160 / 300,000` gate.
+- Mobile `390 × 844`: `108` draw calls, `213,045` triangles, `84` geometries and `11` textures. The display/notice remain in the room batch while the compact authored lounge stays live.
+- Primary interaction: four civic GLB roles loaded; WASD moved the player `3.01m`; pointer drag rotated the follow camera `65.3°`.
+- Regression: 26 zones / 10 archetypes passed physical-space validation; 78 enter/exit transitions completed with no failure or runtime error; desktop/mobile scene flow, civic character/prop validation, syntax checks and production build passed.
+
+### Required fidelity surfaces
+
+- [checked][spacing/layout] Entry, listening circle, evidence/display foreground, notice wall and lounge preserve the reference's foreground/middle/background hierarchy. The live room intentionally leaves a wider deterministic walking loop than the offline composition.
+- [checked][colors/tokens] The 70/20/10 warm-neutral, teal/coral and brass hierarchy is coherent across authored props, characters and HUD. The target still has stronger warm indirect color transfer.
+- [P1][image quality / characters] Furniture authorship is materially closer, but the target characters still have production sculpted anatomy, cloth/hair deformation, hand posing and full animation clips. The browser cast remains a modular Web LOD despite real facial morphs and articulated limbs.
+- [P1][image quality / lighting] The reference uses offline global illumination, denser contact bounce, softer multi-scale penumbrae and richer albedo/specular breakup. Realtime portal light, GTAO, scanned micro-surfaces and dappled shadows remain visibly flatter in the same-canvas comparison.
+- [P1][asset density] Three major clusters are now authored, but the threshold plants, foreground desk accessories, wall joinery and secondary ceramics still need the same bespoke mesh/UV treatment before literal image-1 parity can pass.
+- [P2][typography/icons] HUD hierarchy and touch layout remain usable, but the compact icon drawing and optical type weights are simpler than the target artwork.
+- [checked][copy/content] Location, exit, listening action and story-memory text remain coherent.
+- [checked][responsiveness] No horizontal overflow or clipped primary action appears at `390 × 844`; player, witnesses, movement control and context actions remain visible.
+
+### Gate result
+
+This iteration replaces the most conspicuous generic furniture clusters with real, orbit-safe, physics-aligned authored assets and simultaneously improves runtime cost. The same-canvas evidence still contains actionable P1 character, secondary-asset and offline-lighting differences, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production character/body animation, remaining secondary hero assets/UV albedo and offline-grade indirect lighting remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v15 portal light, scanned surfaces and facial-deformation gate
 
 ### Evidence inspected together

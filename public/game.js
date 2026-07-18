@@ -5693,10 +5693,10 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "pause", label: "情绪缓冲", x: 3.45, z: 1.85, radius: 0.78, color: "#ed9164" }
     ],
     props: [
-      { renderModel: false, physicsSolid: true, worldX: -3.28, worldZ: 0.56, displayScale: 1, collider: { shape: "box", halfX: 0.9, halfY: 0.86, halfZ: 0.52, rotation: 0.28 }, interactionWorldX: -2.18, interactionWorldZ: 0.72 },
-      { renderModel: false, physicsSolid: true, worldX: 0, worldZ: -4.56, displayScale: 1, collider: { shape: "box", halfX: 1.12, halfY: 0.55, halfZ: 0.34 }, interactionWorldX: 0, interactionWorldZ: -3.52 },
+      { model: "civic-display-case", assetIntent: "civic-display-case", renderModel: true, physicsSolid: true, worldX: -3.28, worldZ: 0.56, rotationY: 0.28, displayScale: 1, collider: { shape: "box", halfX: 0.9, halfY: 0.94, halfZ: 0.52, rotation: 0 }, interactionWorldX: -2.18, interactionWorldZ: 0.72 },
+      { model: "civic-notice-console", assetIntent: "civic-notice-console", renderModel: true, physicsSolid: true, worldX: 0, worldZ: -4.56, rotationY: 0, displayScale: 1, collider: { shape: "box", halfX: 1.12, halfY: 1.34, halfZ: 0.34, rotation: 0 }, interactionWorldX: 0, interactionWorldZ: -3.52 },
       {
-        model: "civic-seating",
+        model: "civic-lounge-suite",
         assetIntent: "civic-lounge",
         renderModel: true,
         physicsSolid: true,
@@ -5707,7 +5707,7 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         // Keep its authored sofa/table transform and its collider footprint in
         // the same metre-scale contract so the player never hits empty space.
         displayScale: 1,
-        collider: { shape: "box", halfX: 1.08, halfY: 0.58, halfZ: 1.12, rotation: 0 },
+        collider: { shape: "box", halfX: 1.25, halfY: 0.9, halfZ: 0.92, rotation: 0 },
         interactionWorldX: 2.35,
         interactionWorldZ: -1.02
       },

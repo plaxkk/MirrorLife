@@ -111,6 +111,9 @@ const MODEL_RENDER_PROFILES = {
   desk: { scale: 1.18, rotationY: -0.48 },
   seating: { scale: 1.2, rotationY: -0.35 },
   "civic-seating": { scale: 1.2, rotationY: -0.35 },
+  "civic-display-case": { scale: 1.02, rotationY: 0 },
+  "civic-notice-console": { scale: 1.45, rotationY: 0 },
+  "civic-lounge-suite": { scale: 1.65, rotationY: 0 },
   shelf: { scale: 1.08, rotationY: 0 },
   "wall-board": { scale: 1.08, decorScale: 3.1, rotationY: 0 },
   "round-table": { scale: 1.25, rotationY: -0.32 },
@@ -477,7 +480,8 @@ function atelierGradeColor(input, amount = 0.32) {
   return source;
 }
 
-function upgradeModelMaterials(source) {
+function upgradeModelMaterials(source, type = "") {
+  const preserveAuthoredCivicPalette = String(type).startsWith("civic-") && type !== "civic-seating";
   source?.traverse((node) => {
     if (node.isLineSegments) {
       node.visible = false;
@@ -489,7 +493,9 @@ function upgradeModelMaterials(source) {
       const hasSurfaceMap = !!(material.map || material.normalMap || material.roughnessMap || material.metalnessMap || material.aoMap);
       const color = hasSurfaceMap
         ? (material.color?.clone?.() || new THREE.Color(0xffffff)).offsetHSL(0, 0.04, -0.02)
-        : nearestAtelierColor(material.color);
+        : preserveAuthoredCivicPalette
+          ? atelierGradeColor(material.color, 0.08)
+          : nearestAtelierColor(material.color);
       const next = hasSurfaceMap && (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial)
         ? material.clone()
         : new THREE.MeshStandardMaterial();
@@ -531,7 +537,7 @@ function prepareModel(type, source) {
   const wrapper = new THREE.Group();
   wrapper.name = `interior-${type}`;
   wrapper.add(source);
-  upgradeModelMaterials(source);
+  upgradeModelMaterials(source, type);
   source.updateMatrixWorld(true);
 
   const box = new THREE.Box3().setFromObject(source);
@@ -2990,11 +2996,17 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicBrassInlay([[4.35, -2.15], [3.2, -1.22], [2.25, -0.35], [1.76, 0.14]]);
   addCivicBrassInlay([[0.1, 4.92], [0.08, 3.72], [0.04, 2.55], [0.02, 2.02]]);
 
-  addAtelierDisplayCabinet(theme, colors);
-  addCivicListeningConsole(colors);
+  // Desktop uses authored Blender hero assets for the three highest-salience
+  // furniture groups. Mobile keeps the existing baked room batches so the
+  // same space remains readable without loading or drawing sub-pixel joinery.
+  if (mobileLod) {
+    addAtelierDisplayCabinet(theme, colors);
+    addCivicListeningConsole(colors);
+  }
   addCivicRecordDesk(colors);
-  addCivicHeroNoticeWall(colors);
-  addCivicLibraryWall(colors);
+  if (mobileLod) {
+    addCivicHeroNoticeWall(colors);
+  }
   addCivicHeroPendant(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
@@ -4034,10 +4046,19 @@ const MOBILE_HERO_PROP_INDEXES = {
 function applyMobileModelLod(items, zoneId, width) {
   if (Number(width || 0) > 720) return items;
   const heroIndexes = new Set(MOBILE_HERO_PROP_INDEXES[zoneId] || [0, 2, 3]);
-  return items.map((item) => ({
-    ...item,
-    mobileProxy: item.renderModel !== false && !heroIndexes.has(Number(item.index))
-  }));
+  return items.map((item) => {
+    const index = Number(item.index);
+    // Public mobile already carries the display and notice compositions in
+    // the room batch. Do not add placeholder collider boxes on top of them;
+    // only the compact authored lounge GLB remains a live model.
+    if (zoneId === "public-plaza" && (index === 0 || index === 1)) {
+      return { ...item, renderModel: false, mobileProxy: false };
+    }
+    return {
+      ...item,
+      mobileProxy: item.renderModel !== false && !heroIndexes.has(index)
+    };
+  });
 }
 
 function createMobilePropProxy(item) {

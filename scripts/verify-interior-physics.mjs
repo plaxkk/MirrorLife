@@ -22,7 +22,7 @@ assert.equal(INTERIOR_PHYSICS_CONFIG.gravity, -18, "v2 gravity contract changed 
 assert.equal(INTERIOR_PHYSICS_CONFIG.fixedTimeStep, 1 / 60, "v2 physics must use a fixed 60Hz step");
 
 const SOLID_MODEL_TYPES = [
-  "bed", "counter", "desk", "seating", "civic-seating", "shelf", "wall-board", "round-table", "table",
+  "bed", "counter", "desk", "seating", "civic-seating", "civic-display-case", "civic-notice-console", "civic-lounge-suite", "shelf", "wall-board", "round-table", "table",
   "plant-zone", "workbench", "easel", "sink", "altar", "fountain", "bench", "toy-corner",
   "reading-corner", "teacher-podium", "waiting-chair", "home-bed", "bookcase", "service-counter",
   "retail-shelf", "supply-crate", "cafe-seating", "hot-food-counter", "exchange-board",
@@ -62,6 +62,28 @@ const boardWorld = createPhysicsWorld({
   items: [{ key: "board", model: "wall-board", worldX: 0, worldZ: 0, angle: 0, modelScale: 1, renderModel: true }]
 });
 assert(boardWorld.itemColliders.has("board"), "wall-board: visible support feet must be solid");
+
+const authoredRotation = 0.28;
+const civicDisplayWorld = createPhysicsWorld({
+  id: "civic-hero-rotation-regression",
+  archetype: "public",
+  variant: 0,
+  items: [{
+    key: "display",
+    model: "civic-display-case",
+    worldX: 0,
+    worldZ: 0,
+    rotationY: authoredRotation,
+    modelScale: 1,
+    renderModel: true,
+    collider: { shape: "box", halfX: 0.9, halfY: 0.94, halfZ: 0.52, rotation: 0 }
+  }]
+});
+assert.equal(
+  civicDisplayWorld.itemColliders.get("display")?.rotation,
+  authoredRotation,
+  "civic-display-case: collider must use the same single world rotation as its rendered mesh"
+);
 
 const ZONES = [
   ["public-plaza", "public"],
