@@ -14,6 +14,8 @@ function angularDistance(a, b) {
 
 async function readStats(page) {
   return page.evaluate(() => {
+    const live = window.MirrorLifeInterior3D?.getStats?.();
+    if (live) return live;
     const raw = document.querySelector("#interiorThreeLayer")?.dataset.renderStats || "{}";
     return JSON.parse(raw);
   });

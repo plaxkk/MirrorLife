@@ -16,11 +16,11 @@ const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
   plaster: "#f8eedf",
   terrazzo: "#ead8bc",
-  cork: "#c68b58",
-  oak: "#9d633f",
-  walnut: "#69452f",
-  pistachio: "#7da77b",
-  apricot: "#ed9164",
+  cork: "#b97a4f",
+  oak: "#875238",
+  walnut: "#503525",
+  pistachio: "#6f9a70",
+  apricot: "#e47f5a",
   cornflower: "#6f9fd1",
   tomato: "#dc6355",
   butter: "#f1c85b",
@@ -68,7 +68,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.56, fill: 0.3, hemi: 0.28, bounce: 0.56, wash: 1.16, exposure: 0.87, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
+  "civic-ivory": { key: 2.46, fill: 0.14, hemi: 0.16, bounce: 0.36, wash: 0.68, exposure: 0.82, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -197,6 +197,7 @@ let roomSignature = "";
 let itemSignature = "";
 let activeItems = [];
 let lastStatsPublishedAt = 0;
+let lastSceneReady = false;
 let contactShadowTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
@@ -326,7 +327,7 @@ function ensureLayer() {
   keyLight.shadow.camera.bottom = -6;
   keyLight.shadow.camera.near = 0.1;
   keyLight.shadow.camera.far = 16;
-  keyLight.shadow.radius = 6;
+  keyLight.shadow.radius = 4;
   keyLight.shadow.blurSamples = 20;
   scene.add(keyLight);
 
@@ -365,9 +366,9 @@ function ensureLayer() {
   composer = new EffectComposer(renderer);
   renderPass = new RenderPass(scene, camera);
   ssaoPass = new SSAOPass(scene, camera, 1, 1);
-  ssaoPass.kernelRadius = 5;
-  ssaoPass.minDistance = 0.0024;
-  ssaoPass.maxDistance = 0.082;
+  ssaoPass.kernelRadius = 7;
+  ssaoPass.minDistance = 0.0018;
+  ssaoPass.maxDistance = 0.11;
   ssaoPass.enabled = false;
   outputPass = new OutputPass();
   composer.addPass(renderPass);
@@ -970,10 +971,10 @@ function applyLightingPreset(theme = {}) {
   if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
   if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
   if (windowWashLight) windowWashLight.intensity = preset.wash;
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.74 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.84 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.28 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.36 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -2823,7 +2824,9 @@ function addCivicReferenceDressing(theme, colors) {
   });
   addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
   addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
-  addSunlightPatches(!!colors.night);
+  // The public hero uses real directional shadows from the open threshold.
+  // The generic additive floor decals read as painted white blobs in this
+  // close editorial composition, so keep them for archetype rooms only.
 }
 
 function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
@@ -3528,20 +3531,52 @@ function addCivicOpenPortal(theme, colors) {
   group.add(arch);
 
   [-1, 1].forEach((side) => {
-    const leaf = new THREE.Mesh(
-      new RoundedBoxGeometry(width * 0.42, height * 0.82, Number(door.depth || 0.14), 5, 0.07),
-      createToonMaterial(side < 0 ? "#9f653d" : "#b67849", { roughness: 0.7, surface: "wood", bumpScale: 0.012 })
+    const leafGroup = new THREE.Group();
+    leafGroup.position.set(side * width * 0.61, -height * 0.08, 0.39);
+    leafGroup.rotation.y = side * -1.12;
+    group.add(leafGroup);
+    const leafWidth = width * 0.42;
+    const leafHeight = height * 0.82;
+    const leafWood = createToonMaterial(side < 0 ? "#8f5a38" : "#a96b41", {
+      roughness: 0.58,
+      surface: "wood",
+      bumpScale: 0.014,
+      envMapIntensity: 0.74
+    });
+    const pane = new THREE.Mesh(
+      new RoundedBoxGeometry(leafWidth * 0.78, leafHeight * 0.78, 0.022, 3, 0.035),
+      createGlassMaterial("#d6eee5", { opacity: 0.26, roughness: 0.12 })
     );
-    leaf.position.set(side * width * 0.61, -height * 0.08, 0.39);
-    leaf.rotation.y = side * -1.12;
-    group.add(leaf);
-    const window = new THREE.Mesh(
-      new RoundedBoxGeometry(width * 0.2, height * 0.42, 0.025, 5, 0.055),
-      createGlassMaterial("#c6dfd1", { opacity: 0.34, roughness: 0.18 })
+    pane.position.z = 0.015;
+    leafGroup.add(pane);
+    [-1, 1].forEach((edge) => {
+      const stile = new THREE.Mesh(new RoundedBoxGeometry(0.09, leafHeight, 0.09, 3, 0.035), leafWood);
+      stile.position.set(edge * leafWidth * 0.44, 0, 0.04);
+      leafGroup.add(stile);
+      const rail = new THREE.Mesh(new RoundedBoxGeometry(leafWidth, 0.09, 0.09, 3, 0.035), leafWood);
+      rail.position.set(0, edge * leafHeight * 0.44, 0.04);
+      leafGroup.add(rail);
+    });
+    const centerStile = new THREE.Mesh(new RoundedBoxGeometry(0.055, leafHeight * 0.78, 0.065, 2, 0.02), leafWood);
+    centerStile.position.z = 0.055;
+    leafGroup.add(centerStile);
+    [-0.22, 0.1, 0.42].forEach((ratio) => {
+      const muntin = new THREE.Mesh(new RoundedBoxGeometry(leafWidth * 0.78, 0.055, 0.065, 2, 0.02), leafWood);
+      muntin.position.set(0, leafHeight * ratio, 0.055);
+      leafGroup.add(muntin);
+    });
+    const kickPanel = new THREE.Mesh(
+      new RoundedBoxGeometry(leafWidth * 0.78, leafHeight * 0.17, 0.075, 3, 0.035),
+      createToonMaterial(side < 0 ? "#a96b41" : "#b97849", { roughness: 0.66, surface: "wood", bumpScale: 0.012 })
     );
-    window.position.set(side * width * 0.61, height * 0.02, 0.46);
-    window.rotation.y = leaf.rotation.y;
-    group.add(window);
+    kickPanel.position.set(0, -leafHeight * 0.33, 0.065);
+    leafGroup.add(kickPanel);
+    const handle = new THREE.Mesh(
+      new THREE.SphereGeometry(0.045, 14, 10),
+      createToonMaterial("#c99a3d", { roughness: 0.24, metalness: 0.68 })
+    );
+    handle.position.set(-side * leafWidth * 0.28, -leafHeight * 0.02, 0.1);
+    leafGroup.add(handle);
   });
   const threshold = new THREE.Mesh(
     new RoundedBoxGeometry(width + 0.34, 0.055, 0.62, 4, 0.025),
@@ -4542,6 +4577,14 @@ function createProceduralActorObject(actor) {
   visual.add(leftArm, rightArm);
   const leftLeg = createActorLimb(lowerMaterial, 0.64, 0.18);
   const rightLeg = createActorLimb(lowerMaterial, 0.64, 0.18);
+  const leftKnee = new THREE.Group();
+  const rightKnee = new THREE.Group();
+  leftKnee.name = "LeftKneePivot";
+  rightKnee.name = "RightKneePivot";
+  leftKnee.position.y = -0.285;
+  rightKnee.position.y = -0.285;
+  leftLeg.add(leftKnee);
+  rightLeg.add(rightKnee);
   leftLeg.position.set(-0.14, 0.74, 0);
   rightLeg.position.set(0.14, 0.74, 0);
   const shoeMaterial = createToonMaterial("#3b342f", { roughness: 0.7 });
@@ -4592,6 +4635,8 @@ function createProceduralActorObject(actor) {
     rightElbow,
     leftLeg,
     rightLeg,
+    leftKnee,
+    rightKnee,
     frame,
     styleKey,
     identity: style.identity,
@@ -4647,10 +4692,12 @@ function createCivicActorObject(actor, asset) {
   const rightElbow = rightArm?.getObjectByName("RightElbowPivot");
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
   const rightLeg = visual?.getObjectByName("RightLegPivot");
+  const leftKnee = leftLeg?.getObjectByName("LeftKneePivot");
+  const rightKnee = rightLeg?.getObjectByName("RightKneePivot");
   const eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
   const browPivots = [headGroup?.getObjectByName("BrowPivot_-1"), headGroup?.getObjectByName("BrowPivot_1")].filter(Boolean);
   const mouthPivot = headGroup?.getObjectByName("MouthPivot");
-  if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !mouthPivot) {
+  if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
   }
@@ -4687,7 +4734,9 @@ function createCivicActorObject(actor, asset) {
   }
   mergeActorVertexColorMeshes(leftArm, [leftElbow], { roughness: 0.67, envMapIntensity: 0.72 });
   mergeActorVertexColorMeshes(rightArm, [rightElbow], { roughness: 0.67, envMapIntensity: 0.72 });
-  [leftElbow, rightElbow, leftLeg, rightLeg].forEach((limb) => {
+  mergeActorVertexColorMeshes(leftLeg, [leftKnee], { roughness: 0.67, envMapIntensity: 0.72 });
+  mergeActorVertexColorMeshes(rightLeg, [rightKnee], { roughness: 0.67, envMapIntensity: 0.72 });
+  [leftElbow, rightElbow, leftKnee, rightKnee].forEach((limb) => {
     mergeActorVertexColorMeshes(limb, [], { roughness: 0.67, envMapIntensity: 0.72 });
   });
   const retainedMaterials = new Set();
@@ -4713,6 +4762,8 @@ function createCivicActorObject(actor, asset) {
     rightElbow,
     leftLeg,
     rightLeg,
+    leftKnee,
+    rightKnee,
     eyePivots: fullExpressionLod ? eyePivots : [],
     browPivots: fullExpressionLod ? browPivots : [],
     mouthPivot: fullExpressionLod ? mouthPivot : null,
@@ -4802,6 +4853,10 @@ function updateActors(actors = [], now = performance.now()) {
     const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;
     entry.leftLeg.rotation.x = stride;
     entry.rightLeg.rotation.x = -stride;
+    entry.leftLeg.rotation.z = 0;
+    entry.rightLeg.rotation.z = 0;
+    entry.leftKnee.rotation.x = walking ? Math.max(0, -stride) * (running ? 0.78 : 0.62) : 0;
+    entry.rightKnee.rotation.x = walking ? Math.max(0, stride) * (running ? 0.78 : 0.62) : 0;
     entry.leftArm.rotation.x = -stride * 0.72;
     entry.rightArm.rotation.x = stride * 0.72;
     entry.leftArm.rotation.z = 0;
@@ -4843,7 +4898,10 @@ function updateActors(actors = [], now = performance.now()) {
     if (entry.browPivots?.length) {
       const attentiveLift = cameraZoneId === "public-plaza" && actor.civicRole !== "player" ? 0.018 : 0;
       entry.browPivots.forEach((browPivot, browIndex) => {
-        browPivot.position.z = 0.12 + attentiveLift + socialBreath * 0.003;
+        if (!Number.isFinite(browPivot.userData.mirrorLifeBaseY)) {
+          browPivot.userData.mirrorLifeBaseY = browPivot.position.y;
+        }
+        browPivot.position.y = browPivot.userData.mirrorLifeBaseY + attentiveLift + socialBreath * 0.003;
         browPivot.rotation.y = 0;
         browPivot.rotation.z = (browIndex ? -1 : 1) * attentiveLift * 0.9;
       });
@@ -4851,19 +4909,23 @@ function updateActors(actors = [], now = performance.now()) {
     if (entry.mouthPivot) {
       const speaking = actor.state === "talking" || actor.state === "interact" || actor.state === "doing";
       const talkPulse = speaking ? 0.78 + Math.abs(Math.sin(now * 0.009 + frame)) * 0.5 : 1;
-      entry.mouthPivot.scale.set(1, 1, talkPulse);
+      entry.mouthPivot.scale.set(1, talkPulse, 1);
       entry.mouthPivot.rotation.z = socialBreath * 0.018;
     }
     entry.visual.rotation.z = 0;
     if (actor.state === "jump") {
       entry.leftLeg.rotation.x = -0.42;
       entry.rightLeg.rotation.x = -0.42;
+      entry.leftKnee.rotation.x = 0.72;
+      entry.rightKnee.rotation.x = 0.72;
       entry.leftArm.rotation.x = 0.38;
       entry.rightArm.rotation.x = 0.38;
       entry.leftElbow.rotation.x = -0.28;
       entry.rightElbow.rotation.x = -0.28;
       entry.visual.rotation.z = -0.04;
     } else if (actor.state === "fall") {
+      entry.leftKnee.rotation.x = 0.28;
+      entry.rightKnee.rotation.x = 0.48;
       entry.leftArm.rotation.z = 0.42;
       entry.rightArm.rotation.z = -0.42;
       entry.leftElbow.rotation.x = -0.22;
@@ -4906,6 +4968,9 @@ function updateActors(actors = [], now = performance.now()) {
         entry.leftElbow.rotation.x = 0.42;
         entry.rightElbow.rotation.x = 1.72;
         entry.rightElbow.rotation.z = -0.24;
+        entry.leftLeg.rotation.z = 0.035;
+        entry.rightLeg.rotation.z = -0.018;
+        entry.leftKnee.rotation.x = 0.08;
         entry.headGroup.rotation.x = -0.045;
         entry.headGroup.rotation.z = 0.045;
       } else if (actor.civicRole === "facilitator") {
@@ -4919,6 +4984,9 @@ function updateActors(actors = [], now = performance.now()) {
         entry.rightElbow.rotation.x = 1.08;
         entry.leftElbow.rotation.z = 0.22;
         entry.rightElbow.rotation.z = -0.12;
+        entry.leftLeg.rotation.z = -0.025;
+        entry.rightLeg.rotation.z = 0.04;
+        entry.rightKnee.rotation.x = 0.11;
         entry.headGroup.rotation.z = -0.035;
       } else if (actor.civicRole === "listener") {
         entry.leftArm.rotation.x = -0.12;
@@ -4927,6 +4995,9 @@ function updateActors(actors = [], now = performance.now()) {
         entry.rightArm.rotation.z = -0.16;
         entry.leftElbow.rotation.x = 0.34;
         entry.rightElbow.rotation.x = 0.82;
+        entry.leftLeg.rotation.z = 0.028;
+        entry.rightLeg.rotation.z = -0.036;
+        entry.leftKnee.rotation.x = 0.06;
         entry.headGroup.rotation.z = 0.025;
       }
     }
@@ -5083,13 +5154,13 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.45 : 5.8)
+    ? (portrait ? 6.2 : 5.48)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.28 : 3.76) + pitchOffset * 1.45
+    ? (portrait ? 4.12 : 3.44) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
-  const focusHeight = (cinematicCivic ? 1.06 : 0.94) + pitchOffset * (cinematicCivic ? 0.72 : 1.05);
+  const focusHeight = (cinematicCivic ? 1.03 : 0.94) + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
     Math.max(0.72, Math.min(1.28, focusHeight)),
@@ -5296,6 +5367,8 @@ function update(payload = {}) {
 
   const visible = payload.visible !== false;
   const ready = modelsReady && actorsReady;
+  if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
+  lastSceneReady = ready;
   canvas.style.display = visible ? "block" : "none";
   canvas.style.opacity = ready ? "1" : "0";
   canvas.style.visibility = ready ? "visible" : "hidden";

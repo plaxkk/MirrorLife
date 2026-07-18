@@ -228,7 +228,7 @@ def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.82),
         "hair": material(f"{role} hair", config["hair"], 0.72),
-        "eye_white": material(f"{role} eye white", "#fffaf0", 0.3, clearcoat=0.42),
+        "eye_white": material(f"{role} eye white", "#fffefa", 0.3, clearcoat=0.42),
         "iris": material(f"{role} iris", config["eye"], 0.34, clearcoat=0.35),
         "ink": material(f"{role} ink", "#25242b", 0.58),
         "blush": material(f"{role} blush", "#df8e88", 0.88),
@@ -244,13 +244,13 @@ def build_materials(role, config):
 
 
 def build_face(head, mats):
-    ellipsoid("Head", (0, 0, 0), (0.265, 0.218, 0.28), mats["skin"], head, segments=32, rings=20)
+    ellipsoid("Head", (0, 0, 0), (0.265, 0.218, 0.28), mats["skin"], head, segments=28, rings=18)
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
         eye = empty(f"EyePivot_{side}", head, (side * 0.09, -0.207, 0.035))
-        ellipsoid(f"EyeWhite_{side}", (0, 0, 0), (0.049, 0.023, 0.064), mats["eye_white"], eye, segments=20, rings=12)
-        ellipsoid(f"Iris_{side}", (0, -0.022, -0.004), (0.027, 0.011, 0.041), mats["iris"], eye, segments=18, rings=10)
-        ellipsoid(f"Pupil_{side}", (0, -0.033, -0.006), (0.014, 0.007, 0.025), mats["ink"], eye, segments=14, rings=8)
+        ellipsoid(f"EyeWhite_{side}", (0, 0, 0), (0.042, 0.021, 0.053), mats["eye_white"], eye, segments=20, rings=12)
+        ellipsoid(f"Iris_{side}", (0, -0.02, -0.004), (0.019, 0.009, 0.029), mats["iris"], eye, segments=18, rings=10)
+        ellipsoid(f"Pupil_{side}", (0, -0.031, -0.006), (0.008, 0.005, 0.014), mats["ink"], eye, segments=14, rings=8)
         ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.041, 0.013), (0.005, 0.0035, 0.008), mats["eye_white"], eye, segments=10, rings=6)
         brow = empty(f"BrowPivot_{side}", head, (side * 0.09, -0.228, 0.12))
         curve_tube(
@@ -267,7 +267,7 @@ def build_face(head, mats):
 
 
 def build_hair(head, mats, style):
-    ellipsoid("HairCap", (0, 0.045, 0.085), (0.282, 0.225, 0.255), mats["hair"], head, segments=30, rings=18)
+    ellipsoid("HairCap", (0, 0.045, 0.085), (0.282, 0.225, 0.255), mats["hair"], head, segments=26, rings=16)
     fringe_x = (-0.2, -0.12, -0.04, 0.05, 0.14, 0.21)
     for index, x in enumerate(fringe_x):
         height = 0.16 + (index % 2) * 0.035
@@ -278,11 +278,11 @@ def build_hair(head, mats, style):
             mats["hair"],
             head,
             rotation=(0, math.radians(-8), math.radians(-x * 75)),
-            segments=18,
-            rings=12,
+            segments=16,
+            rings=10,
         )
     for side in (-1, 1):
-        ellipsoid(f"SideHair_{side}", (side * 0.235, -0.008, -0.07), (0.07, 0.075, 0.17), mats["hair"], head, rotation=(0, 0, side * 0.12), segments=20, rings=12)
+        ellipsoid(f"SideHair_{side}", (side * 0.235, -0.008, -0.07), (0.07, 0.075, 0.17), mats["hair"], head, rotation=(0, 0, side * 0.12), segments=16, rings=10)
 
     if style == "spiky":
         for index, (x, z, angle) in enumerate(((-0.2, 0.25, -28), (-0.07, 0.29, -12), (0.08, 0.29, 12), (0.21, 0.24, 28))):
@@ -330,12 +330,14 @@ def build_body(role, config, mats, visual):
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.27))
     left_leg = empty("LeftLegPivot", visual, (-0.135, 0, 0.73))
     right_leg = empty("RightLegPivot", visual, (0.135, 0, 0.73))
+    left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.285))
+    right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
-        ellipsoid(f"UpperArm_{side}", (0, 0, -0.14), (0.082, 0.075, 0.17), mats["top"], pivot, segments=22, rings=14)
-        ellipsoid(f"Forearm_{side}", (0, 0, -0.14), (0.074, 0.067, 0.16), mats["outer"], elbow, segments=22, rings=14)
+        ellipsoid(f"UpperArm_{side}", (0, 0, -0.14), (0.082, 0.075, 0.17), mats["top"], pivot, segments=18, rings=12)
+        ellipsoid(f"Forearm_{side}", (0, 0, -0.14), (0.074, 0.067, 0.16), mats["outer"], elbow, segments=18, rings=12)
         cylinder(f"Cuff_{side}", 0.079, 0.075, 0.065, (0, 0, -0.27), mats["accent"], elbow, vertices=18)
-        ellipsoid(f"Hand_{side}", (0, -0.006, -0.34), (0.072, 0.06, 0.083), mats["skin"], elbow, segments=20, rings=12)
+        ellipsoid(f"Hand_{side}", (0, -0.006, -0.34), (0.072, 0.06, 0.083), mats["skin"], elbow, segments=16, rings=10)
         ellipsoid(f"Thumb_{side}", (-side * 0.05, -0.045, -0.322), (0.025, 0.022, 0.05), mats["skin"], elbow, rotation=(0, side * 0.38, side * 0.35), segments=14, rings=8)
         for finger_index, finger_x in enumerate((-0.03, 0, 0.03)):
             ellipsoid(
@@ -349,14 +351,26 @@ def build_body(role, config, mats, visual):
                 rings=8,
             )
 
-    for side, pivot in ((-1, left_leg), (1, right_leg)):
-        ellipsoid(f"Leg_{side}", (0, 0, -0.285), (0.095, 0.09, 0.31), mats["lower"], pivot, segments=22, rings=14)
-        cylinder(f"TrouserCuff_{side}", 0.102, 0.096, 0.09, (0, 0, -0.535), mats["accent"], pivot, vertices=18)
-        rounded_box(f"Shoe_{side}", (0.21, 0.31, 0.15), (0, -0.055, -0.63), mats["shoe"], pivot, radius=0.055)
-        rounded_box(f"Sole_{side}", (0.215, 0.31, 0.035), (0, -0.055, -0.705), mats["sole"], pivot, radius=0.012, segments=2)
-        curve_tube(f"Lace_{side}", [(-0.055, -0.218, -0.605), (0, -0.225, -0.59), (0.055, -0.218, -0.605)], 0.009, mats["sole"], pivot)
+    for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
+        ellipsoid(f"Thigh_{side}", (0, 0, -0.14), (0.1, 0.092, 0.18), mats["lower"], pivot, segments=18, rings=12)
+        ellipsoid(f"Shin_{side}", (0, 0, -0.145), (0.092, 0.086, 0.18), mats["lower"], knee, segments=18, rings=12)
+        # Two shallow same-material ridges catch the warm key light like cloth
+        # tension instead of painting dark stripes onto the trousers.
+        for fold_index, fold_x in enumerate((-0.035, 0.035)):
+            curve_tube(
+                f"TrouserFold_{side}_{fold_index + 1}",
+                [(fold_x, -0.087, -0.035), (fold_x * 0.55, -0.095, -0.14), (fold_x * 0.8, -0.087, -0.235)],
+                0.006,
+                mats["lower"],
+                knee,
+                resolution=2,
+            )
+        cylinder(f"TrouserCuff_{side}", 0.102, 0.096, 0.09, (0, 0, -0.25), mats["accent"], knee, vertices=18)
+        rounded_box(f"Shoe_{side}", (0.21, 0.31, 0.15), (0, -0.055, -0.345), mats["shoe"], knee, radius=0.055)
+        rounded_box(f"Sole_{side}", (0.215, 0.31, 0.035), (0, -0.055, -0.42), mats["sole"], knee, radius=0.012, segments=2)
+        curve_tube(f"Lace_{side}", [(-0.055, -0.218, -0.32), (0, -0.225, -0.305), (0.055, -0.218, -0.32)], 0.009, mats["sole"], knee)
 
-    return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg
+    return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
 
 
 def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, right_elbow):
@@ -403,11 +417,11 @@ def build_character(role, config):
     root["real_world_unit"] = "meter"
     root["identity_role"] = role
 
-    torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg = build_body(role, config, mats, root)
-    head = empty("HeadPivot", root, (0, 0, 1.46))
+    torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee = build_body(role, config, mats, root)
+    head = empty("HeadPivot", root, (0, 0, 1.49))
     # The reference uses a composed 1:3.5 silhouette. The previous head was
     # closer to a toy-like 1:3 and overwhelmed hands, clothing and acting.
-    head.scale = (0.91, 0.91, 0.91)
+    head.scale = (0.82, 0.82, 0.82)
     build_face(head, mats)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":

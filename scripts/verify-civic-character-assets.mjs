@@ -31,6 +31,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("MouthPivot")), `${role}: mouth expression pivot is missing`);
   assert(contents.includes(Buffer.from("LeftElbowPivot")), `${role}: left elbow articulation is missing`);
   assert(contents.includes(Buffer.from("RightElbowPivot")), `${role}: right elbow articulation is missing`);
+  assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
+  assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
   totalBytes += stat.size;
 }
 

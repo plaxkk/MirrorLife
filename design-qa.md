@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v11 cinematic-camera, knees and final browser gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1672 × 941`, public-plaza, yaw `0°`).
+- Same-canvas full comparison: `dist/interior-3d-work/civic-fidelity-v11-full.png`.
+- Same-canvas actor/composition crop: `dist/interior-3d-work/civic-fidelity-v11-focus.png`.
+- Four-direction orbit evidence: `dist/interior-3d-work/civic-orbit-v11.png` plus `environment-review-yaw-{90,180,270}/00-public.png`.
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Implemented and verified
+
+- [fixed] The public room now uses a lower editorial camera (`46°` FOV, `3.44m` camera height, `5.48m` follow distance) rather than the elevated archetype view. The player remains the foreground anchor while the listening circle, portal and furnished back wall share a readable middle/background composition.
+- [fixed] The open threshold is no longer represented by opaque slabs. Both leaves now have visible wood stiles, rails, glass panes, muntins, kick panels and brass hardware, improving the source's courtyard-threshold read from front and reverse angles.
+- [fixed] Four metre-scale civic GLBs now expose knee pivots in addition to shoulder, elbow, head, eye, brow and mouth controls. Walk/run/jump/fall and role-specific idle poses articulate the lower leg; trouser folds, cuffs and shoes remain parented to the correct segment.
+- [fixed] Facial expression axes are corrected: brows move on the Blender/Three vertical axis and speech scales the mouth vertically instead of pushing both controls into the face. Reduced iris/pupil proportions preserve visible sclera at gameplay distance.
+- [fixed] Civic lighting now has stronger warm-key separation, restrained fill, real doorway shadows and richer environment response. The previous additive white floor decals were removed from this hero room.
+- [fixed] Room-ready diagnostics publish immediately after the atomic reveal, so a cold asset load can no longer expose stale `activeModelCount: 0` evidence.
+- [fixed] The browser exploration gate now reads live renderer diagnostics instead of a one-second telemetry snapshot. It proves `2.97m` of WASD movement and a `65.3°` drag orbit while four GLB roles remain loaded.
+- [fixed] The four desktop angles are within the strict core budget: `146/281,088`, `148/283,512`, `157/294,616`, and `155/287,436` draw-calls/triangles. Mobile is `108/245,874`, within `110/250,000`.
+- [fixed] The 26-zone physics gate, 78-transition stress gate, desktop/mobile scene-flow gate, syntax suite and production build all pass.
+
+### Current findings
+
+- [P1][character production] The same-canvas crop still shows a categorical gap. The source uses sculpted anatomy, authored cloth/hair topology, hand poses, facial deformation and animation clips; the live cast remains a modular pivot-rig Web LOD despite improved joints and expressions.
+- [P1][environment production] The source's display case, cabinetry, woven accessories, ceramics and architectural joinery are bespoke hero assets with richer texture response. The live equivalents preserve composition and function but remain simplified reusable geometry.
+- [P1][lighting] The source has offline-quality global illumination, soft contact bounce and material-specific specular breakup. The live browser grade is coherent and readable but cannot claim literal cinematic parity.
+- [P2][orbit composition] All four angles preserve the player and conversation, but the `90°` view still relies on foreground transparency around the portal/desk rather than having a fully bespoke secondary-camera composition.
+- [P2][scope] This gate proves one hero interior. It does not prove image-1 authorship for the remaining 25 buildings.
+
+### Gate result
+
+The deliverable is a real walkable, camera-following, 360° Three.js room with stable physics, authored front/reverse sets and modular 3D citizens. The reference remains an offline render target, and literal image-1 asset/lighting parity is still visibly contradicted by the combined comparison.
+
+final result: blocked
+
+Blocker: production character deformation, bespoke texture/material authoring and room-specific hero meshes remain actionable P1 work.
+
 ## 2026-07-18 reference-fidelity v10 articulated-acting and complete-orbit gate
 
 ### Evidence inspected together
