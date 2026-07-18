@@ -60,7 +60,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f6ead8", floor: "#ddd2c2", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f6ead8", floor: "#d3cbc0", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -68,7 +68,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.34, fill: 0.24, hemi: 0.24, bounce: 0.42, wash: 0.72, exposure: 0.84, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
+  "civic-ivory": { key: 2.46, fill: 0.2, hemi: 0.18, bounce: 0.5, wash: 0.68, exposure: 0.82, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -202,6 +202,7 @@ let activeItems = [];
 let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
 let contactShadowTexture;
+let civicDappleTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
 let actorTextureLoading;
@@ -375,7 +376,20 @@ function ensureLayer() {
   // The civic hero room relies on contact depth rather than heavy outlines.
   // Keep the pass allocated once and switch it per-room so other interiors and
   // mobile devices retain their existing performance profile.
-  composer = new EffectComposer(renderer);
+  // WebGLRenderer's canvas MSAA is bypassed once EffectComposer renders into
+  // its own offscreen target. The previous pipeline therefore made the
+  // rounded character silhouettes look visibly stepped even though the base
+  // renderer requested antialiasing. Use a multisampled HDR target so GTAO and
+  // tone mapping keep their range while the final character/furniture edges
+  // resolve cleanly without an extra full-screen pass or draw-call cost.
+  const composerTarget = new THREE.WebGLRenderTarget(1, 1, {
+    type: THREE.HalfFloatType,
+    depthBuffer: true,
+    stencilBuffer: false,
+    samples: renderer.capabilities.isWebGL2 ? (window.innerWidth < 720 ? 2 : 4) : 0
+  });
+  composerTarget.texture.name = "MirrorLife interior MSAA HDR";
+  composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
   gtaoPass.blendIntensity = 0.72;
@@ -411,6 +425,11 @@ function resize(width, height) {
   lastHeight = height;
   renderer.setSize(width, height, false);
   composer?.setSize(width, height);
+  if (composer && renderer?.capabilities?.isWebGL2) {
+    const samples = width < 720 ? 2 : 4;
+    composer.renderTarget1.samples = samples;
+    composer.renderTarget2.samples = samples;
+  }
   camera.aspect = width / height;
   camera.fov = width / height < 0.82 ? 56 : 48;
   camera.updateProjectionMatrix();
@@ -953,11 +972,11 @@ function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  const chips = ["#66584c", "#9e6654", "#4e7377", "#6f7c5e", "#cbb28f", "#3e3935", "#efe3d0"];
-  for (let index = 0; index < 4200; index += 1) {
+  const chips = ["#534943", "#8d5c4d", "#41676b", "#626e55", "#b59d7d", "#302d2b", "#e8dccb"];
+  for (let index = 0; index < 3400; index += 1) {
     const x = random() * size;
     const y = random() * size;
-    const radius = 0.5 + random() * (random() > 0.9 ? 2.8 : 1.65);
+    const radius = 0.8 + random() * (random() > 0.82 ? 4.2 : 2.45);
     const sides = 3 + Math.floor(random() * 4);
     context.beginPath();
     for (let side = 0; side < sides; side += 1) {
@@ -969,13 +988,13 @@ function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
       else context.lineTo(px, py);
     }
     context.closePath();
-    context.globalAlpha = 0.3 + random() * 0.48;
+    context.globalAlpha = 0.42 + random() * 0.46;
     context.fillStyle = chips[Math.floor(random() * chips.length)];
     context.fill();
   }
-  context.globalAlpha = 0.16;
+  context.globalAlpha = 0.22;
   context.strokeStyle = "#786c5f";
-  context.lineWidth = 1;
+  context.lineWidth = 1.35;
   [0, size / 2, size - 1].forEach((position) => {
     context.beginPath();
     context.moveTo(position, 0);
@@ -991,7 +1010,7 @@ function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.RepeatWrapping;
   texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(3.2, 3.2);
+  texture.repeat.set(2.45, 2.45);
   texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
   texture.needsUpdate = true;
   surfaceColorTextures.set(key, texture);
@@ -1038,6 +1057,79 @@ function getContactShadowTexture() {
   contactShadowTexture.colorSpace = THREE.SRGBColorSpace;
   contactShadowTexture.needsUpdate = true;
   return contactShadowTexture;
+}
+
+function getCivicDappleTexture() {
+  if (civicDappleTexture) return civicDappleTexture;
+  const size = lastWidth <= 720 ? 256 : 512;
+  const lightCanvas = document.createElement("canvas");
+  lightCanvas.width = size;
+  lightCanvas.height = size;
+  const context = lightCanvas.getContext("2d");
+  if (!context) return null;
+  context.clearRect(0, 0, size, size);
+
+  const paintSoftEllipse = (x, y, radiusX, radiusY, rotation, inner, outer) => {
+    context.save();
+    context.translate(x, y);
+    context.rotate(rotation);
+    context.scale(radiusX, radiusY);
+    const gradient = context.createRadialGradient(0, 0, 0.05, 0, 0, 1);
+    gradient.addColorStop(0, inner);
+    gradient.addColorStop(0.62, inner);
+    gradient.addColorStop(1, outer);
+    context.fillStyle = gradient;
+    context.beginPath();
+    context.arc(0, 0, 1, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  };
+
+  // Broad warm window pools establish the same late-afternoon direction as
+  // the reference. Smaller cool olive ellipses behave as soft leaf shadows;
+  // all marks live in one transparent texture and cost one draw call.
+  [
+    [0.2, 0.28, 0.24, 0.12, -0.28],
+    [0.43, 0.42, 0.31, 0.15, 0.18],
+    [0.65, 0.58, 0.28, 0.14, -0.12],
+    [0.78, 0.76, 0.22, 0.11, 0.34]
+  ].forEach(([x, y, rx, ry, rotation]) => {
+    paintSoftEllipse(
+      x * size,
+      y * size,
+      rx * size,
+      ry * size,
+      rotation,
+      "rgba(255,232,177,0.34)",
+      "rgba(255,232,177,0)"
+    );
+  });
+  let seed = 0xc1a0f5;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let index = 0; index < 38; index += 1) {
+    const t = random();
+    const x = (0.12 + t * 0.78 + (random() - 0.5) * 0.08) * size;
+    const y = (0.18 + t * 0.68 + (random() - 0.5) * 0.16) * size;
+    const radius = (0.016 + random() * 0.032) * size;
+    paintSoftEllipse(
+      x,
+      y,
+      radius * (0.72 + random() * 0.66),
+      radius * (0.44 + random() * 0.34),
+      (random() - 0.5) * 1.8,
+      "rgba(72,83,55,0.115)",
+      "rgba(72,83,55,0)"
+    );
+  }
+  civicDappleTexture = new THREE.CanvasTexture(lightCanvas);
+  civicDappleTexture.colorSpace = THREE.SRGBColorSpace;
+  civicDappleTexture.minFilter = THREE.LinearFilter;
+  civicDappleTexture.magFilter = THREE.LinearFilter;
+  civicDappleTexture.needsUpdate = true;
+  return civicDappleTexture;
 }
 
 function createToonMaterial(color, options = {}) {
@@ -1128,8 +1220,8 @@ function applyLightingPreset(theme = {}) {
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.74 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.84 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.66 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.36 : 0.26;
 }
@@ -2901,9 +2993,15 @@ function addCivicArchitecturalShell(colors) {
   const panelMaterial = createToonMaterial("#ead8c0", { roughness: 0.96, surface: "plaster", bumpScale: 0.012 });
   const trim = createToonMaterial("#d3b58f", { roughness: 0.86, surface: "plaster", bumpScale: 0.006, emissive: 0.012 });
   const darkTrim = createToonMaterial("#9f7353", { roughness: 0.76, surface: "wood", bumpScale: 0.007 });
+  const portalAngle = -1.02;
   for (let index = 0; index < bayCount; index += 1) {
     const angle = -Math.PI + (index + 0.5) / bayCount * Math.PI * 2;
-    const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.12, 1.02);
+    const portalDelta = Math.atan2(Math.sin(angle - portalAngle), Math.cos(angle - portalAngle));
+    // The portal is now an actual break in the wall. Leaving a decorative bay
+    // across that wedge produced an opaque waist-high rectangle in the open
+    // doorway, so reserve the complete threshold sightline for the courtyard.
+    if (Math.abs(portalDelta) < 0.52) continue;
+    const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.12, 1.82);
     const bay = new THREE.Group();
     bay.name = `civic-wall-bay-${index + 1}`;
     bay.position.set(x, y, z);
@@ -2913,19 +3011,19 @@ function addCivicArchitecturalShell(colors) {
     roomRoot.add(bay);
 
     const recess = new THREE.Mesh(new RoundedBoxGeometry(3.68, 1.46, 0.035, 5, 0.11), panelMaterial);
-    recess.position.z = 0.025;
+    recess.position.set(0, -0.8, 0.025);
     recess.castShadow = false;
     recess.receiveShadow = true;
     bay.add(recess);
 
-    [-0.79, 0.79].forEach((railY) => {
+    [-1.59].forEach((railY) => {
       const rail = new THREE.Mesh(new THREE.BoxGeometry(3.82, 0.065, 0.075), trim);
       rail.position.set(0, railY, 0.06);
       rail.castShadow = false;
       bay.add(rail);
     });
     [-1.88, 1.88].forEach((railX) => {
-      const pilaster = new THREE.Mesh(new THREE.BoxGeometry(0.065, 1.6, 0.075), darkTrim);
+      const pilaster = new THREE.Mesh(new THREE.BoxGeometry(0.065, 3.44, 0.075), darkTrim);
       pilaster.position.set(railX, 0, 0.06);
       pilaster.castShadow = false;
       bay.add(pilaster);
@@ -2933,7 +3031,7 @@ function addCivicArchitecturalShell(colors) {
 
     if (index % 3 === 1) {
       const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.32, 0.1), darkTrim);
-      bracket.position.set(0, 1.26, 0.08);
+      bracket.position.set(0, 1.35, 0.08);
       const shade = new THREE.Mesh(
         new THREE.SphereGeometry(0.13, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.58),
         createToonMaterial(index % 2 ? colors.secondary : "#efc86a", {
@@ -2942,7 +3040,7 @@ function addCivicArchitecturalShell(colors) {
         })
       );
       shade.scale.set(1.24, 0.78, 0.82);
-      shade.position.set(0, 1.4, 0.15);
+      shade.position.set(0, 1.49, 0.15);
       shade.rotation.x = Math.PI;
       bay.add(bracket, shade);
     }
@@ -3027,9 +3125,28 @@ function addCivicReferenceDressing(theme, colors) {
   });
   addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
   addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
-  // The public hero uses real directional shadows from the open threshold.
-  // The generic additive floor decals read as painted white blobs in this
-  // close editorial composition, so keep them for archetype rooms only.
+  const dappleTexture = getCivicDappleTexture();
+  if (dappleTexture) {
+    const dapple = new THREE.Mesh(
+      new THREE.PlaneGeometry(6.2, 4.25),
+      new THREE.MeshBasicMaterial({
+        map: dappleTexture,
+        transparent: true,
+        opacity: theme.night ? 0.12 : 0.82,
+        depthWrite: false,
+        toneMapped: false,
+        side: THREE.DoubleSide
+      })
+    );
+    dapple.name = "civic-window-dapple";
+    dapple.rotation.x = -Math.PI / 2;
+    dapple.rotation.z = -0.32;
+    dapple.position.set(-1.08, 0.058, -0.42);
+    dapple.renderOrder = 1;
+    dapple.castShadow = false;
+    dapple.receiveShadow = false;
+    roomRoot.add(dapple);
+  }
 }
 
 function addCivicSunShadowCasters(theme) {
@@ -3769,10 +3886,101 @@ function addCivicOpenPortal(theme, colors) {
       side: THREE.DoubleSide
     })
     : createToonMaterial(theme.night ? "#45637a" : "#badcb7", { side: THREE.DoubleSide, roughness: 0.92 });
-  const opening = new THREE.Mesh(createArchPanelGeometry(width, height), outdoorMaterial);
-  opening.position.z = 0.2;
+  // Keep the painted courtyard several metres beyond the threshold. The
+  // public room now has a real break in its cylindrical shell, so the view
+  // gains parallax from the authored plants, paving and notice stand instead
+  // of reading as a photograph pasted directly onto the wall.
+  // The frame itself supplies the arch silhouette. A broad rectangular
+  // backdrop is intentionally larger than that opening: a perspective camera
+  // viewing the threshold obliquely must never expose the clear colour around
+  // the distant courtyard card.
+  const opening = new THREE.Mesh(new THREE.PlaneGeometry(width * 4.2, height * 2.25), outdoorMaterial);
+  opening.position.set(0, 0.34, -2.48);
   opening.userData.neverFade = true;
   group.add(opening);
+
+  const courtyard = new THREE.Group();
+  courtyard.name = "civic-courtyard-parallax";
+  courtyard.position.set(0, -height / 2, -0.18);
+  courtyard.userData.neverFade = true;
+  group.add(courtyard);
+
+  const paving = new THREE.Mesh(
+    new THREE.PlaneGeometry(width * 2.35, 4.7, 1, 1),
+    createToonMaterial(theme.night ? "#60727a" : "#d9cdb8", {
+      roughness: 0.92,
+      surface: "terrazzo",
+      bumpScale: 0.014,
+      envMapIntensity: 0.34,
+      side: THREE.DoubleSide
+    })
+  );
+  paving.rotation.x = -Math.PI / 2;
+  paving.position.set(0, 0.018, -1.92);
+  paving.receiveShadow = true;
+  courtyard.add(paving);
+
+  const path = new THREE.Mesh(
+    new RoundedBoxGeometry(width * 0.78, 0.024, 4.1, 3, 0.02),
+    createToonMaterial(theme.night ? "#829197" : "#efe4cf", { roughness: 0.96 })
+  );
+  path.position.set(0, 0.04, -1.9);
+  path.castShadow = false;
+  path.receiveShadow = true;
+  courtyard.add(path);
+
+  const outdoorWood = createToonMaterial("#8d6244", {
+    roughness: 0.72,
+    surface: "wood",
+    bumpScale: 0.01
+  });
+  const notice = new THREE.Group();
+  notice.position.set(-0.73, 0, -2.02);
+  notice.rotation.y = 0.12;
+  courtyard.add(notice);
+  const noticeField = new THREE.Mesh(
+    new RoundedBoxGeometry(0.86, 0.72, 0.08, 4, 0.055),
+    createToonMaterial("#d5b98c", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 })
+  );
+  noticeField.position.y = 1.06;
+  notice.add(noticeField);
+  [-0.34, 0.34].forEach((x) => {
+    const post = new THREE.Mesh(new THREE.CylinderGeometry(0.035, 0.045, 1.34, 10), outdoorWood);
+    post.position.set(x, 0.67, 0);
+    notice.add(post);
+  });
+  ["#f5ead5", "#dfe9db", "#efcfb0"].forEach((color, index) => {
+    const note = new THREE.Mesh(
+      new RoundedBoxGeometry(0.22, 0.28, 0.012, 2, 0.014),
+      createToonMaterial(color, { roughness: 0.94, surface: "paper", bumpScale: 0.003 })
+    );
+    note.position.set(-0.25 + index * 0.25, 1.08 + (index % 2) * 0.06, 0.055);
+    note.rotation.z = (index - 1) * 0.035;
+    notice.add(note);
+  });
+
+  [-0.82, 0.82].forEach((plantX, plantIndex) => {
+    const planter = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.18, 0.23, 0.42, 16),
+      createToonMaterial(plantIndex ? "#c89459" : "#d8b36c", { roughness: 0.78 })
+    );
+    planter.position.set(plantX, 0.21, -1.13 - plantIndex * 0.34);
+    courtyard.add(planter);
+    for (let leafIndex = 0; leafIndex < 5; leafIndex += 1) {
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(0.18, 12, 8),
+        createToonMaterial(leafIndex % 2 ? "#4f8557" : "#75a568", { roughness: 0.96 })
+      );
+      leaf.scale.set(0.48, 1.3, 0.42);
+      leaf.position.set(
+        plantX + (leafIndex - 2) * 0.075,
+        0.58 + (leafIndex % 2) * 0.16,
+        -1.13 - plantIndex * 0.34
+      );
+      leaf.rotation.z = (leafIndex - 2) * 0.22;
+      courtyard.add(leaf);
+    }
+  });
 
   const frameMaterial = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.62, surface: "wood", bumpScale: 0.012 });
   const springY = height / 2 - width / 2;
@@ -3844,6 +4052,55 @@ function addCivicOpenPortal(theme, colors) {
   const daylight = new THREE.PointLight(theme.night ? 0x8fb7dd : 0xffd7a1, theme.night ? 1.1 : 2.25, 4.6, 2.1);
   daylight.position.set(0, 0.1, 0.72);
   group.add(daylight);
+}
+
+function addCivicPortalWallShell(theme, wallHeight, wallMaterial) {
+  const door = theme.layoutProfile?.shell?.door || { angle: -1.02, width: 2.08, height: 3.02 };
+  const doorAngle = Number(door.angle ?? -1.02);
+  const doorWidth = Math.max(1.18, Number(door.width || 2.08));
+  const doorHeight = Math.max(2.25, Number(door.height || 3.02));
+  const centerTheta = ((Math.PI - doorAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
+  const halfOpening = Math.min(0.34, doorWidth / (ROOM_RADIUS * 2) + 0.045);
+  const arcRanges = [
+    [0, Math.max(0.02, centerTheta - halfOpening)],
+    [Math.min(Math.PI * 2 - 0.02, centerTheta + halfOpening), Math.PI * 2]
+  ];
+
+  arcRanges.forEach(([start, end], index) => {
+    const length = end - start;
+    if (length <= 0.02) return;
+    const geometry = new THREE.CylinderGeometry(
+      ROOM_RADIUS,
+      ROOM_RADIUS,
+      wallHeight,
+      Math.max(18, Math.ceil(64 * length / (Math.PI * 2))),
+      1,
+      true,
+      start,
+      length
+    );
+    const wallArc = new THREE.Mesh(geometry, wallMaterial);
+    wallArc.name = `civic-architectural-wall-arc-${index + 1}`;
+    wallArc.position.y = wallHeight / 2;
+    wallArc.receiveShadow = true;
+    roomRoot.add(wallArc);
+  });
+
+  // The skipped cylinder wedge forms the true walk-out opening. Fill only the
+  // area above the door so the arch reads as part of a continuous wall rather
+  // than a full-height theatrical slit.
+  const overdoorHeight = Math.max(0.5, wallHeight - doorHeight);
+  const [x, , z] = wallPosition(doorAngle, ROOM_RADIUS - 0.05, doorHeight + overdoorHeight / 2);
+  const overdoor = new THREE.Mesh(
+    new RoundedBoxGeometry(doorWidth + 0.52, overdoorHeight + 0.16, 0.14, 4, 0.08),
+    wallMaterial
+  );
+  overdoor.name = "civic-portal-overdoor-wall";
+  overdoor.position.set(x, doorHeight + overdoorHeight / 2, z);
+  overdoor.rotation.y = -doorAngle;
+  overdoor.castShadow = false;
+  overdoor.receiveShadow = true;
+  roomRoot.add(overdoor);
 }
 
 function addExitPortal(theme, colors) {
@@ -3918,11 +4175,11 @@ function rebuildRoom(theme = {}) {
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(ROOM_RADIUS, 64),
     createToonMaterial(floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.7 : 0.9,
       surface: "terrazzo",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
       map: theme.zoneId === "public-plaza" ? getTerrazzoColorTexture(floorColor) : null,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.62 : 0.48
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.7 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -3942,13 +4199,23 @@ function rebuildRoom(theme = {}) {
   }
 
   const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
-  const wall = new THREE.Mesh(
-    new THREE.CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, wallHeight, 64, 1, true),
-    createToonMaterial(wallColor, { side: THREE.BackSide, roughness: 0.94, surface: "plaster", bumpScale: 0.021 })
-  );
-  wall.position.y = wallHeight / 2;
-  wall.receiveShadow = true;
-  roomRoot.add(wall);
+  const wallMaterial = createToonMaterial(wallColor, {
+    side: THREE.BackSide,
+    roughness: 0.94,
+    surface: "plaster",
+    bumpScale: 0.021
+  });
+  if (theme.zoneId === "public-plaza") {
+    addCivicPortalWallShell(theme, wallHeight, wallMaterial);
+  } else {
+    const wall = new THREE.Mesh(
+      new THREE.CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, wallHeight, 64, 1, true),
+      wallMaterial
+    );
+    wall.position.y = wallHeight / 2;
+    wall.receiveShadow = true;
+    roomRoot.add(wall);
+  }
 
   if (theme.zoneId !== "public-plaza") {
     const baseboard = new THREE.Mesh(
@@ -4459,12 +4726,20 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const count = geometry.getAttribute("position")?.count || 0;
     const color = node.material?.color || new THREE.Color(0xffffff);
     const colors = new Float32Array(count * 3);
+    const roughnessValues = new Float32Array(count);
+    const metalnessValues = new Float32Array(count);
+    const sourceRoughness = THREE.MathUtils.clamp(Number(node.material?.roughness ?? materialOptions.roughness ?? 0.72), 0.04, 1);
+    const sourceMetalness = THREE.MathUtils.clamp(Number(node.material?.metalness ?? 0), 0, 1);
     for (let index = 0; index < count; index += 1) {
       colors[index * 3] = color.r;
       colors[index * 3 + 1] = color.g;
       colors[index * 3 + 2] = color.b;
+      roughnessValues[index] = sourceRoughness;
+      metalnessValues[index] = sourceMetalness;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+    geometry.setAttribute("mirrorLifeRoughness", new THREE.BufferAttribute(roughnessValues, 1));
+    geometry.setAttribute("mirrorLifeMetalness", new THREE.BufferAttribute(metalnessValues, 1));
     geometries.push(geometry);
     sources.push(node);
   });
@@ -4492,14 +4767,42 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
   // the existing actor material preserves that identity without a duplicate
   // back-face shell (which would double mobile triangles).
   material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        attribute float mirrorLifeRoughness;
+        attribute float mirrorLifeMetalness;
+        varying float vMirrorLifeRoughness;
+        varying float vMirrorLifeMetalness;`
+      )
+      .replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+        vMirrorLifeRoughness = mirrorLifeRoughness;
+        vMirrorLifeMetalness = mirrorLifeMetalness;`
+      );
     shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <common>",
+      `#include <common>
+      varying float vMirrorLifeRoughness;
+      varying float vMirrorLifeMetalness;`
+    ).replace(
+      "#include <roughnessmap_fragment>",
+      `#include <roughnessmap_fragment>
+      roughnessFactor = clamp(vMirrorLifeRoughness, 0.04, 1.0);`
+    ).replace(
+      "#include <metalnessmap_fragment>",
+      `#include <metalnessmap_fragment>
+      metalnessFactor = clamp(vMirrorLifeMetalness, 0.0, 1.0);`
+    ).replace(
       "#include <opaque_fragment>",
       `#include <opaque_fragment>
       float mirrorLifeInkRim = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 4.2);
       gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.085, 0.072, 0.09), mirrorLifeInkRim * 0.38);`
     );
   };
-  material.customProgramCacheKey = () => "mirrorlife-actor-ink-rim-v1";
+  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v2";
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -5142,6 +5445,10 @@ function updateActors(actors = [], now = performance.now()) {
     entry.lastX = x;
     entry.lastZ = z;
     entry.group.position.set(x, y + bob, z);
+    // The contact shadow belongs to the floor, not to the bouncing visual
+    // root. Keeping it at world floor height removes the subtle "floating
+    // sticker" cue during walking, jumping and idle breathing.
+    entry.shadow.position.y = 0.025 - (y + bob);
     entry.visual.scale.setScalar(baseScale);
     let bodyYaw = entry.facingYaw;
     if (cameraZoneId === "public-plaza" && actor.id !== playerActor?.id && !walking && camera) {
@@ -5793,6 +6100,7 @@ function getStats() {
     geometries: Number(memory.geometries || 0),
     textures: Number(memory.textures || 0),
     pixelRatio: renderer?.getPixelRatio?.() || 1,
+    msaaSamples: Number(composer?.renderTarget1?.samples || 0),
     camera: lastCameraState
   };
 }

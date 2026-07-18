@@ -14573,7 +14573,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   // 1.08 presentation multiplier made adults read close to two metres tall and
   // crowded the listening circle. Keep their visual height aligned with the
   // 1.68–1.72m physics capsules and the reference's calmer social spacing.
-  const civicActorScale = zone.id === "public-plaza" ? 0.96 : 1;
+  const civicActorScale = zone.id === "public-plaza" ? 0.92 : 1;
   const playerPayload = {
     id: "player",
     identityId: "avatar",
