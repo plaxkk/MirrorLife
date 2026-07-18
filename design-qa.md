@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v14 2D identity-to-3D facial-language gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1674 × 944`, public-plaza, yaw `0°`).
+- Same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v14-full.png`.
+- Orbit evidence: `environment-review-yaw-{90,180,270}/00-public.png`; responsive evidence: `environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Implemented and verified
+
+- [fixed from v13 P1 / identity translation] The four hero citizens no longer inherit only hair and clothing colors from the 2D avatar language. The GLBs now carry larger curved sclera, iris, pupil and catchlight geometry, articulated upper-lid contours, stronger brow arches, inner ears, cheek color and an asymmetric smile dimple. Facilitator and mediator receive role-specific outer lashes.
+- [fixed / spatial truth] The new facial cues remain children of `EyePivot`, `BrowPivot` and `MouthPivot`. They rotate with the modeled head, blink in 3D, accept room/actor lights, cast or receive occlusion, and remain valid in side and reverse orbit views; no camera-facing portrait plane was added.
+- [fixed / asset contract] Asset validation now rejects any civic role missing either upper-lid contour and rejects the two authored feminine roles when their outer-lash geometry is absent.
+- [checked / environment] The rebuilt civic room retains its authored foreground desk, center listening circle, open portal, public notice wall, side lounge and collision-safe prop placement. No fallen or floating furniture appears in the four-direction capture.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `148/274,776`, `150/277,200`, `159/288,304`, `157/281,124` draw-calls/triangles. All remain within the strict `160 / 300,000` public-room gate.
+- Mobile `390 × 844`: `110` draw calls, `239,458` triangles and `84` geometries, within the `110 / 250,000` mobile gate.
+- Browser interaction: four GLB roles loaded; WASD moved the player `3.01m`; pointer drag rotated the live camera `65.3°`.
+- Regression: 26-zone/10-archetype physics, civic asset validation, syntax checks and production build passed.
+
+### Required fidelity surfaces
+
+- [P1][characters] Facial identity is more readable, but the source still uses sculpted topology, true eyelid/lip blend shapes, authored fingers, cloth deformation and animation clips. The current browser cast remains a modular pivot-rig Web LOD.
+- [P1][environment] Composition and furniture categories are close, but the source has bespoke hero cabinetry, woven storage, ceramics and upholstery with hand-authored UV texture breakup; the live room still relies heavily on reusable geometry and vertex-color materials.
+- [P1][lighting] The live room has warm key/fill/rim lights, shadow maps and GTAO, but not the source render's offline global illumination, dappled window-gobo shadows and material-specific micro-specular response.
+- [P2][HUD] Hierarchy and interaction remain usable, but icon finish and compact typography are simpler than the target artwork.
+
+### Gate result
+
+This pass closes the most obvious 2D-identity translation gap while preserving real movement, follow camera and full orbit. Literal image-1 production parity is still visibly contradicted by the remaining character deformation, texture and offline-lighting differences.
+
+final result: blocked
+
+Blocker: production facial blend shapes/animation, bespoke per-object UV textures and offline-grade indirect lighting remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v13 facial-state, GTAO and foreground-hero gate
 
 ### Evidence inspected together

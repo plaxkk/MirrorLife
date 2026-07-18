@@ -288,31 +288,60 @@ def build_materials(role, config):
     }
 
 
-def build_face(head, mats):
-    ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=28, rings=18)
+def build_face(head, mats, role):
+    """Translate the illustrated avatar language into lit, rotatable geometry.
+
+    The 2D portraits depend on a dark upper eye contour, a clean white sclera,
+    readable iris catchlights and role-specific lashes.  Those cues must live
+    on the curved head (and under the expression pivots), rather than on a
+    camera-facing portrait card, so they survive orbit, occlusion and shadow.
+    """
+    feminine = role in ("facilitator", "mediator")
+    ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=32, rings=22)
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
+        ellipsoid(f"EarInner_{side}", (side * 0.272, -0.027, -0.014), (0.018, 0.008, 0.034), mats["blush"], head, segments=12, rings=8)
         eye = empty(f"EyePivot_{side}", head, (side * 0.09, -0.207, 0.035))
-        ellipsoid(f"EyeWhite_{side}", (0, 0, 0), (0.042, 0.021, 0.053), mats["eye_white"], eye, segments=20, rings=12)
-        ellipsoid(f"Iris_{side}", (0, -0.02, -0.004), (0.019, 0.009, 0.029), mats["iris"], eye, segments=18, rings=10)
-        ellipsoid(f"Pupil_{side}", (0, -0.031, -0.006), (0.008, 0.005, 0.014), mats["ink"], eye, segments=14, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.041, 0.013), (0.005, 0.0035, 0.008), mats["eye_white"], eye, segments=10, rings=6)
-        brow = empty(f"BrowPivot_{side}", head, (side * 0.09, -0.228, 0.12))
+        ellipsoid(f"EyeWhite_{side}", (0, -0.002, 0), (0.045, 0.021, 0.059), mats["eye_white"], eye, segments=22, rings=14)
+        ellipsoid(f"Iris_{side}", (-side * 0.002, -0.022, -0.002), (0.021, 0.009, 0.034), mats["iris"], eye, segments=18, rings=10)
+        ellipsoid(f"Pupil_{side}", (-side * 0.002, -0.032, -0.004), (0.009, 0.005, 0.018), mats["ink"], eye, segments=14, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.042, 0.016), (0.0065, 0.0035, 0.009), mats["eye_white"], eye, segments=10, rings=6)
+        # Upper lids/lashes preserve the drawn identity at normal gameplay
+        # distance. They remain children of EyePivot, so blinking still works.
+        curve_tube(
+            f"UpperLid_{side}",
+            [(-0.044, -0.025, 0.042), (0, -0.031, 0.059), (0.044, -0.025, 0.041)],
+            0.0065 if feminine else 0.0055,
+            mats["ink"],
+            eye,
+            resolution=2,
+        )
+        if feminine:
+            curve_tube(
+                f"OuterLash_{side}",
+                [(side * 0.038, -0.025, 0.043), (side * 0.058, -0.027, 0.058)],
+                0.005,
+                mats["ink"],
+                eye,
+                resolution=2,
+            )
+        brow = empty(f"BrowPivot_{side}", head, (side * 0.09, -0.228, 0.124))
         curve_tube(
             f"Brow_{side}",
-            [(side * 0.055, 0.003, -0.005), (0, -0.008, 0.005), (-side * 0.045, 0.003, -0.005)],
-            0.009,
+            [(side * 0.057, 0.003, -0.007), (0, -0.008, 0.008), (-side * 0.05, 0.003, -0.004)],
+            0.011,
             mats["hair"],
             brow,
         )
-        ellipsoid(f"Blush_{side}", (side * 0.175, -0.211, -0.045), (0.04, 0.009, 0.018), mats["blush"], head, segments=14, rings=8)
-    ellipsoid("Nose", (0, -0.222, -0.02), (0.026, 0.018, 0.035), mats["skin"], head, segments=14, rings=8)
-    mouth = empty("MouthPivot", head, (0, -0.23, -0.102))
+        ellipsoid(f"Blush_{side}", (side * 0.175, -0.211, -0.048), (0.043, 0.009, 0.018), mats["blush"], head, segments=14, rings=8)
+    ellipsoid("Nose", (0, -0.224, -0.018), (0.024, 0.018, 0.032), mats["skin"], head, segments=16, rings=10)
+    mouth = empty("MouthPivot", head, (0, -0.232, -0.101))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.046, 0.002, 0.006), (0, -0.006, -0.009), (0.046, 0.002, 0.006)], 0.007, mats["ink"], closed)
+    curve_tube("MouthClosed", [(-0.049, 0.002, 0.007), (-0.007, -0.007, -0.011), (0.048, 0.002, 0.004)], 0.0065, mats["ink"], closed)
+    ellipsoid("SmileDimple", (0.052, -0.001, 0.007), (0.009, 0.004, 0.006), mats["blush"], closed, segments=10, rings=6)
     open_mouth = empty("MouthOpenPivot", mouth)
-    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.038, 0.009, 0.027), mats["ink"], open_mouth, segments=18, rings=10)
-    ellipsoid("Tongue", (0, -0.014, -0.012), (0.022, 0.005, 0.008), mats["blush"], open_mouth, segments=14, rings=8)
+    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.04, 0.009, 0.03), mats["ink"], open_mouth, segments=20, rings=12)
+    ellipsoid("Tongue", (0, -0.014, -0.013), (0.023, 0.005, 0.009), mats["blush"], open_mouth, segments=14, rings=8)
 
 
 def build_hair(head, mats, style):
@@ -498,7 +527,7 @@ def build_character(role, config):
     # The reference uses a composed 1:3.5 silhouette. The previous head was
     # closer to a toy-like 1:3 and overwhelmed hands, clothing and acting.
     head.scale = (0.82, 0.82, 0.82)
-    build_face(head, mats)
+    build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
         build_cap(head, mats)

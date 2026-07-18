@@ -6,26 +6,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 63,
-      "triangles": 18388
+      "meshes": 66,
+      "triangles": 19688
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 60,
-      "triangles": 17840
+      "meshes": 63,
+      "triangles": 19140
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 69,
-      "triangles": 21316
+      "meshes": 72,
+      "triangles": 22616
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 68,
-      "triangles": 19440
+      "meshes": 71,
+      "triangles": 20740
     }
   }
 }

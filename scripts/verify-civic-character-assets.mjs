@@ -26,6 +26,12 @@ for (const role of expectedRoles) {
   assert.equal(header.toString("utf8"), "glTF", `${role}: invalid GLB header`);
   assert(contents.includes(Buffer.from("EyePivot_-1")), `${role}: left blink pivot is missing`);
   assert(contents.includes(Buffer.from("EyePivot_1")), `${role}: right blink pivot is missing`);
+  assert(contents.includes(Buffer.from("UpperLid_-1")), `${role}: left illustrated eye contour is missing`);
+  assert(contents.includes(Buffer.from("UpperLid_1")), `${role}: right illustrated eye contour is missing`);
+  if (["facilitator", "mediator"].includes(role)) {
+    assert(contents.includes(Buffer.from("OuterLash_-1")), `${role}: left role-specific lash is missing`);
+    assert(contents.includes(Buffer.from("OuterLash_1")), `${role}: right role-specific lash is missing`);
+  }
   assert(contents.includes(Buffer.from("BrowPivot_-1")), `${role}: left expression brow pivot is missing`);
   assert(contents.includes(Buffer.from("BrowPivot_1")), `${role}: right expression brow pivot is missing`);
   assert(contents.includes(Buffer.from("MouthPivot")), `${role}: mouth expression pivot is missing`);
