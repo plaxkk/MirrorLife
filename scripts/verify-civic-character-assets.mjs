@@ -44,6 +44,12 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("RightElbowPivot")), `${role}: right elbow articulation is missing`);
   assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
+  if (role === "player") {
+    assert(contents.includes(Buffer.from("Backpack")), "player: backpack mesh is missing");
+    assert(contents.includes(Buffer.from("BackpackPivot")), "player: backpack secondary-motion pivot is missing");
+  }
+  if (role === "listener") assert(contents.includes(Buffer.from("Satchel")), "listener: satchel secondary-motion node is missing");
+  if (role === "facilitator") assert(contents.includes(Buffer.from("PonytailPivot")), "facilitator: ponytail secondary-motion pivot is missing");
   totalBytes += stat.size;
 }
 

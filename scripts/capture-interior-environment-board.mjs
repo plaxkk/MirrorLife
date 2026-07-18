@@ -75,6 +75,7 @@ try {
       const layer = document.querySelector("#interiorThreeLayer");
       return document.body.classList.contains("interior-active")
         && layer?.dataset.sceneReady === "true"
+        && document.body.dataset.interiorRenderPhase === "ready"
         && getComputedStyle(layer).visibility !== "hidden";
     }, { timeout: READY_TIMEOUT_MS });
     // Give the atomic reveal, camera damping, shadow maps and late material

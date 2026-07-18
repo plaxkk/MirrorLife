@@ -332,8 +332,10 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.035),
-        "hair": material(f"{role} hair", config["hair"], 0.58, clearcoat=0.08),
-        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.55, clearcoat=0.1),
+        # Matte hair keeps the warm key light broad and painterly.  The older
+        # clear-coated finish exposed every low-poly facet in the game camera.
+        "hair": material(f"{role} hair", config["hair"], 0.68, clearcoat=0.025),
+        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.64, clearcoat=0.035),
         "eye_white": material(f"{role} eye white", "#fffefa", 0.3, clearcoat=0.42),
         "iris": material(f"{role} iris", config["eye"], 0.34, clearcoat=0.35),
         "ink": material(f"{role} ink", "#25242b", 0.58),
@@ -453,12 +455,12 @@ def build_face(head, mats, role):
 def build_hair(head, mats, style):
     ellipsoid("HairCap", (0, 0.045, 0.085), (0.282, 0.225, 0.255), mats["hair"], head, segments=26, rings=16)
     fringe_specs = (
-        (-0.19, -0.15, 0.145, 0.05),
-        (-0.12, -0.085, 0.135, 0.055),
-        (-0.045, -0.018, 0.105, 0.058),
-        (0.04, 0.018, 0.115, 0.058),
-        (0.12, 0.085, 0.14, 0.054),
-        (0.19, 0.15, 0.15, 0.048),
+        (-0.19, -0.15, 0.16, 0.044),
+        (-0.12, -0.085, 0.15, 0.048),
+        (-0.045, -0.018, 0.122, 0.05),
+        (0.04, 0.018, 0.132, 0.05),
+        (0.12, 0.085, 0.155, 0.047),
+        (0.19, 0.15, 0.165, 0.042),
     )
     for index, (root_x, tip_x, tip_z, root_radius) in enumerate(fringe_specs):
         tapered_lock(
@@ -508,19 +510,20 @@ def build_hair(head, mats, style):
             )
     elif style == "coral_ponytail":
         ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.15, 0.13, 0.16), mats["hair"], head, segments=24, rings=14)
+        ponytail = empty("PonytailPivot", head, (0.2, 0.12, 0.15))
         tapered_lock(
             "Ponytail_Main",
             [
-                (0.2, 0.12, 0.15),
-                (0.255, 0.13, 0.04),
-                (0.285, 0.125, -0.1),
-                (0.3, 0.115, -0.25),
-                (0.29, 0.1, -0.4),
-                (0.25, 0.085, -0.54),
+                (0, 0, 0),
+                (0.055, 0.01, -0.11),
+                (0.085, 0.005, -0.25),
+                (0.1, -0.005, -0.4),
+                (0.09, -0.02, -0.55),
+                (0.05, -0.035, -0.69),
             ],
             (0.13, 0.135, 0.125, 0.112, 0.088, 0.018),
             mats["hair"],
-            head,
+            ponytail,
             sides=14,
         )
     elif style == "braided_bob":
@@ -557,8 +560,12 @@ def build_body(role, config, mats, visual):
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
-        ellipsoid(f"UpperArm_{side}", (0, 0, -0.122), (0.064, 0.06, 0.15), mats["top"], pivot, segments=20, rings=14)
-        ellipsoid(f"Forearm_{side}", (0, 0, -0.118), (0.055, 0.052, 0.142), mats["outer"], elbow, segments=20, rings=14)
+        # A rounded shoulder cap and elbow bridge remove the toy-block gaps
+        # while keeping every segment independently poseable at runtime.
+        ellipsoid(f"ShoulderCap_{side}", (0, 0, -0.028), (0.068, 0.062, 0.078), mats["top"], pivot, segments=22, rings=14)
+        cylinder(f"UpperArm_{side}", 0.058, 0.073, 0.285, (0, 0, -0.135), mats["top"], pivot, vertices=24)
+        ellipsoid(f"ElbowBridge_{side}", (0, 0, 0.004), (0.063, 0.058, 0.067), mats["outer"], elbow, segments=20, rings=12)
+        cylinder(f"Forearm_{side}", 0.05, 0.061, 0.265, (0, 0, -0.132), mats["outer"], elbow, vertices=22)
         cylinder(f"Cuff_{side}", 0.06, 0.056, 0.052, (0, 0, -0.236), mats["accent"], elbow, vertices=20)
         ellipsoid(f"Hand_{side}", (0, -0.006, -0.302), (0.055, 0.046, 0.073), mats["skin"], elbow, segments=18, rings=12)
         ellipsoid(f"Thumb_{side}", (-side * 0.039, -0.038, -0.286), (0.019, 0.017, 0.04), mats["skin"], elbow, rotation=(0, side * 0.38, side * 0.35), segments=14, rings=8)
@@ -575,8 +582,8 @@ def build_body(role, config, mats, visual):
             )
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
-        ellipsoid(f"Thigh_{side}", (0, 0, -0.14), (0.086, 0.08, 0.18), mats["lower"], pivot, segments=18, rings=12)
-        ellipsoid(f"Shin_{side}", (0, 0, -0.145), (0.078, 0.073, 0.18), mats["lower"], knee, segments=18, rings=12)
+        cylinder(f"Thigh_{side}", 0.076, 0.09, 0.34, (0, 0, -0.15), mats["lower"], pivot, vertices=24)
+        cylinder(f"Shin_{side}", 0.065, 0.078, 0.33, (0, 0, -0.155), mats["lower"], knee, vertices=22)
         # Two shallow same-material ridges catch the warm key light like cloth
         # tension instead of painting dark stripes onto the trousers.
         for fold_index, fold_x in enumerate((-0.035, 0.035)):
@@ -613,9 +620,10 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
                 radius=0.018,
                 rotation=(0, side * 0.025, side * 0.065),
             )
-        rounded_box("Backpack", (0.37, 0.17, 0.43), (0, 0.155, 1.0), mats["accent"], visual, radius=0.09)
-        rounded_box("BackpackFlap", (0.29, 0.04, 0.13), (0, 0.252, 1.105), mats["shoe"], visual, radius=0.03)
-        rounded_box("BackpackPocket", (0.23, 0.04, 0.14), (0, 0.252, 0.91), mats["outer"], visual, radius=0.035)
+        backpack = empty("BackpackPivot", visual, (0, 0.155, 1.0))
+        rounded_box("Backpack", (0.37, 0.17, 0.43), (0, 0, 0), mats["accent"], backpack, radius=0.09)
+        rounded_box("BackpackFlap", (0.29, 0.04, 0.13), (0, 0.097, 0.105), mats["shoe"], backpack, radius=0.03)
+        rounded_box("BackpackPocket", (0.23, 0.04, 0.14), (0, 0.097, -0.09), mats["outer"], backpack, radius=0.035)
         curve_tube("Scarf", [(-0.16, -0.005, 1.275), (0, -0.105, 1.255), (0.16, -0.005, 1.275)], 0.027, mats["accent"], visual)
     elif costume == "listener":
         curve_tube("Hood", [(-0.19, 0.02, 1.27), (0, 0.11, 1.34), (0.19, 0.02, 1.27)], 0.055, mats["outer"], visual)

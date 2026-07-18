@@ -5,6 +5,7 @@ import puppeteer from "puppeteer-core";
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const OUTPUT_ROOT = path.resolve("dist/interior-3d-work/scene-flow-review");
+const READY_TIMEOUT_MS = Number(process.env.MIRRORLIFE_SCENE_READY_TIMEOUT || 45000);
 
 async function inspectScene(page) {
   return page.evaluate(() => {
@@ -54,7 +55,7 @@ async function verifyViewport(browser, viewport, label) {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector("#interiorDiscoveryCard [data-interior-scene-action]", { visible: true, timeout: 20000 });
     await page.waitForFunction(() => document.body.dataset.interiorRenderPhase === "ready"
-      && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true", { timeout: 20000 });
+      && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true", { timeout: READY_TIMEOUT_MS });
 
     const opening = await inspectScene(page);
     if (!opening.interiorActive || opening.actionCount !== 1 || opening.choiceCount !== 0) {

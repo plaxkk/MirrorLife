@@ -5508,6 +5508,9 @@ function createCivicActorObject(actor, asset) {
   const mouthClosedPivot = mouthPivot?.getObjectByName("MouthClosedPivot") || null;
   const mouthOpenPivot = mouthPivot?.getObjectByName("MouthOpenPivot") || null;
   const faceMorphMesh = headGroup?.getObjectByName("Head") || null;
+  const backpackNode = visual?.getObjectByName("BackpackPivot") || null;
+  const satchelNode = visual?.getObjectByName("Satchel") || null;
+  const ponytailPivot = headGroup?.getObjectByName("PonytailPivot") || null;
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -5545,7 +5548,7 @@ function createCivicActorObject(actor, asset) {
     ? [...eyePivots, ...browPivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
     : [];
   const headMergeExclusions = fullExpressionLod && faceMorphMesh?.morphTargetDictionary
-    ? [...expressionPivots, faceMorphMesh]
+    ? [...expressionPivots, faceMorphMesh, ponytailPivot].filter(Boolean)
     : expressionPivots;
   mergeActorVertexColorMeshes(headGroup, headMergeExclusions, { roughness: 0.6, envMapIntensity: 0.78 });
   if (fullExpressionLod && faceMorphMesh?.morphTargetDictionary) {
@@ -5557,7 +5560,15 @@ function createCivicActorObject(actor, asset) {
       material.needsUpdate = true;
     });
   }
-  mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.69, envMapIntensity: 0.7 });
+  const bodyMergeExclusions = [
+    headGroup,
+    leftArm,
+    rightArm,
+    leftLeg,
+    rightLeg,
+    ...(fullExpressionLod ? [backpackNode, satchelNode].filter(Boolean) : [])
+  ];
+  mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.69, envMapIntensity: 0.7 });
   if (fullExpressionLod) {
     eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
@@ -5586,6 +5597,21 @@ function createCivicActorObject(actor, asset) {
     if (!retainedMaterials.has(material)) material.dispose?.();
   });
   group.traverse((node) => node.layers?.enable?.(1));
+  const secondaryMotion = {};
+  if (fullExpressionLod) {
+    [
+      ["backpack", backpackNode],
+      ["satchel", satchelNode],
+      ["ponytail", ponytailPivot]
+    ].forEach(([key, node]) => {
+      if (!node?.parent) return;
+      secondaryMotion[key] = {
+        node,
+        basePosition: node.position.clone(),
+        baseRotation: node.rotation.clone()
+      };
+    });
+  }
   actorRoot.add(group);
   const entry = {
     group,
@@ -5607,6 +5633,7 @@ function createCivicActorObject(actor, asset) {
     mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
     mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
     faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
+    secondaryMotion,
     frame,
     styleKey: `${frame}:${role}:civic-glb-v1`,
     identity: style.identity,
@@ -5897,6 +5924,33 @@ function updateActors(actors = [], now = performance.now()) {
       entry.headGroup.rotation.z = -0.012;
       entry.visual.rotation.z = -0.01 + idleShift * 0.4;
     }
+    if (entry.secondaryMotion) {
+      const travelSway = walking ? Math.sin(phase) : socialBreath * 0.22;
+      const travelLift = walking ? Math.abs(Math.cos(phase)) : (socialBreath + 1) * 0.18;
+      const backpack = entry.secondaryMotion.backpack;
+      if (backpack) {
+        backpack.node.position.copy(backpack.basePosition);
+        backpack.node.rotation.copy(backpack.baseRotation);
+        backpack.node.position.y += travelLift * (running ? 0.016 : 0.009);
+        backpack.node.rotation.x += walking ? -0.022 - travelLift * 0.018 : socialBreath * 0.004;
+        backpack.node.rotation.z += travelSway * (running ? 0.04 : 0.024);
+      }
+      const satchel = entry.secondaryMotion.satchel;
+      if (satchel) {
+        satchel.node.position.copy(satchel.basePosition);
+        satchel.node.rotation.copy(satchel.baseRotation);
+        satchel.node.position.y += travelLift * 0.008;
+        satchel.node.rotation.x += travelSway * (running ? 0.055 : 0.032);
+        satchel.node.rotation.z += travelSway * (running ? 0.08 : 0.045);
+      }
+      const ponytail = entry.secondaryMotion.ponytail;
+      if (ponytail) {
+        ponytail.node.position.copy(ponytail.basePosition);
+        ponytail.node.rotation.copy(ponytail.baseRotation);
+        ponytail.node.rotation.x += walking ? -travelSway * (running ? 0.13 : 0.08) : socialBreath * 0.018;
+        ponytail.node.rotation.z += walking ? travelSway * (running ? 0.16 : 0.1) : socialBreath * 0.025;
+      }
+    }
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
       : (cameraZoneId === "public-plaza" ? 0.3 : 0.28);
@@ -6017,12 +6071,18 @@ function updateCamera(payload = {}) {
   const forwardZ = -Math.cos(yaw);
   const pathX = Number(payload.cameraPathX ?? safeArea.x ?? 0);
   const pathZ = Number(payload.cameraPathZ ?? safeArea.z ?? 0.2);
-  let targetPivotX = playerX * CAMERA_PIVOT_PLAYER_WEIGHT
-    + narrativeX * CAMERA_PIVOT_NARRATIVE_WEIGHT
-    + pathX * CAMERA_PIVOT_PATH_WEIGHT;
-  let targetPivotZ = playerZ * CAMERA_PIVOT_PLAYER_WEIGHT
-    + narrativeZ * CAMERA_PIVOT_NARRATIVE_WEIGHT
-    + pathZ * CAMERA_PIVOT_PATH_WEIGHT;
+  // Portrait play has much less horizontal breathing room. Keep the player
+  // dominant there while desktop can spend more of the frame on the current
+  // social target and authored path composition.
+  const playerWeight = portrait ? 0.8 : CAMERA_PIVOT_PLAYER_WEIGHT;
+  const narrativeWeight = portrait ? 0.15 : CAMERA_PIVOT_NARRATIVE_WEIGHT;
+  const pathWeight = portrait ? 0.05 : CAMERA_PIVOT_PATH_WEIGHT;
+  let targetPivotX = playerX * playerWeight
+    + narrativeX * narrativeWeight
+    + pathX * pathWeight;
+  let targetPivotZ = playerZ * playerWeight
+    + narrativeZ * narrativeWeight
+    + pathZ * pathWeight;
   const safeDx = targetPivotX - Number(safeArea.x || 0);
   const safeDz = targetPivotZ - Number(safeArea.z || 0);
   const safeDistance = Math.hypot(safeDx, safeDz);
@@ -6030,6 +6090,17 @@ function updateCamera(payload = {}) {
   if (safeDistance > safeRadius) {
     targetPivotX = Number(safeArea.x || 0) + safeDx / safeDistance * safeRadius;
     targetPivotZ = Number(safeArea.z || 0) + safeDz / safeDistance * safeRadius;
+  }
+  // The room-safe clamp must never push the controlled character out of the
+  // playable composition when they approach the shell. Constrain the final
+  // focus offset from the player, then let camera collision shorten distance.
+  const playerFocusDx = targetPivotX - playerX;
+  const playerFocusDz = targetPivotZ - playerZ;
+  const playerFocusDistance = Math.hypot(playerFocusDx, playerFocusDz);
+  const maxPlayerFocusOffset = portrait ? 0.68 : 1.08;
+  if (playerFocusDistance > maxPlayerFocusOffset) {
+    targetPivotX = playerX + playerFocusDx / playerFocusDistance * maxPlayerFocusOffset;
+    targetPivotZ = playerZ + playerFocusDz / playerFocusDistance * maxPlayerFocusOffset;
   }
   const now = performance.now();
   const dt = Math.min(0.1, Math.max(1 / 240, (now - (cameraLastUpdateAt || now - 16)) / 1000));
@@ -6344,7 +6415,14 @@ function getStats() {
       assetRole: entry.assetRole || "procedural",
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
-      facingYaw: Number(entry.facingYaw.toFixed(3))
+      facingYaw: Number(entry.facingYaw.toFixed(3)),
+      secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
+        key,
+        {
+          x: Number((motion.node.rotation.x - motion.baseRotation.x).toFixed(4)),
+          z: Number((motion.node.rotation.z - motion.baseRotation.z).toFixed(4))
+        }
+      ])))
     })),
     drawCalls: sceneComplexity?.drawCalls ?? Number(render.calls || 0),
     drawCallsByLayer: sceneComplexity?.drawCallsByLayer || null,

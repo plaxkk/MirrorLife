@@ -1,5 +1,49 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v24 articulated silhouette, prop inertia and portrait-follow gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v24/desktop-yaw-0.png` (`1280 × 720`, public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v24-full.png` and `civic-fidelity-v24-focus.png`.
+- Complete orbit: current `desktop-yaw-0.png` / `desktop-yaw-90.png` plus unchanged desktop camera evidence `civic-fidelity-v20/desktop-yaw-{180,270}-v23.png`; responsive evidence: `civic-fidelity-v24/mobile-390x844-v25.png` (`390 × 844`).
+- Embodied mobile evidence: `civic-fidelity-v24/mobile-walk-v25.png`, captured after a real joystick drag with the player and follow-camera pivot both advancing.
+
+### Implemented and verified
+
+- [fixed from v19 P1 / articulated silhouette] Civic shoulders now end in rounded caps, elbow gaps receive tapered bridges and limb cylinders narrow through the joint. Fringe and crown mass were reduced and hair roughness increased, removing the hardest toy-plastic highlights at gameplay distance.
+- [fixed / secondary motion] Backpack, satchel and ponytail are retained as real named pivots in the desktop GLB LOD. Walk/run cadence adds restrained lift, sway and lag; idle breathing settles them without detaching visual geometry from the character root. Runtime stats expose each delta for regression checks.
+- [fixed / authored asset contract] The Blender masters, generated GLBs, manifest and validator agree on `BackpackPivot`, `Satchel` and `PonytailPivot`. Four roles pass the asset contract at `6.42 MB` total and `20,660–22,768` triangles per role.
+- [fixed / atomic visual evidence] Environment capture now waits for `interiorRenderPhase === "ready"`, preventing the lightweight loading shell from being misreported as the final room.
+- [fixed / portrait composition] Mobile camera focus now weights the player at 80% and clamps the post-safe-area focus to within `0.68m` of the controlled character. A real joystick drag moves both player and pivot, so walking near the shell no longer leaves the avatar stranded at the screen edge while the camera follows the room centre.
+- [checked / movement and orbit] A clean Chrome exploration run moved the 3D player `1.25m` during the fixed input window and rotated the follow camera `65.3°`. The earlier `0.292m` reading did not reproduce when the verifier ran alone; no motion thresholds or physical parameters were weakened to obtain the passing result.
+
+### Runtime and performance evidence
+
+- Desktop yaw `0°`: `145` draw calls / `246,144` triangles; yaw `90°`: `152` draw calls. Both remain below the strict `160 / 300,000` core-room gate.
+- Mobile `390 × 844`: `110` draw calls / `223,302` triangles, within the `110 / 250,000` gate. Mobile intentionally batches secondary accessories instead of paying the desktop articulation cost.
+- Static and build checks: `pnpm check`, production build, civic character validation, civic prop validation and all `26` zones / `10` archetypes passed.
+- Runtime checks: character exploration, scene-flow and transition-stress completed successfully against the local QA server after the portrait camera change.
+
+### Required fidelity surfaces
+
+- [checked][interaction/follow camera] Player movement is physical, the camera follows the moving actor rather than a fixed diorama centre, and pointer orbit preserves a complete navigable 360-degree room.
+- [checked][responsiveness] At `390 × 844`, player, two witnesses, joystick, jump/chat and the action rail remain reachable without horizontal overflow; the new focus clamp keeps the controlled actor in the playable composition.
+- [checked][asset integrity] Hair and all moving accessories have full side/back geometry and are rooted in the generated GLB rather than screen-facing sprites or runtime placeholder boxes.
+- [P1][characters] The target still has sculpted hand topology, cloth folds, layered hair anatomy, expressive poses and production animation clips. The current modular rigs read clearly but remain boxier and less emotionally specific in the same-canvas comparison.
+- [P1][lighting/material finish] Material roughness and contact depth have improved, but the reference still carries stronger indirect bounce, skin/cloth separation, multi-scale shadow softness and object-specific surface breakup.
+- [P1][reverse-room authorship] The `90°` view exposes a conspicuous blank secondary wall. It needs a functional architectural landmark and authored dressing without shrinking the collision-safe walking loop.
+- [P2][HUD finish] Controls remain usable, but icon drawing, optical type weights and translucent-panel microdetail are still visibly simpler than the reference.
+
+### Gate result
+
+This iteration strengthens the controlled character's physical silhouette, gives carried objects believable inertia and fixes portrait follow-camera composition without sacrificing 360-degree exploration or mobile budgets. The same-canvas comparison still shows actionable P1 character sculpt, indirect-lighting and reverse-wall gaps, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production character/cloth animation, richer indirect material response and an authored reverse-wall landmark remain visible P1 differences.
+
 ## 2026-07-18 reference-fidelity v19 editorial foliage, rug surface and embodied-motion gate
 
 ### Evidence inspected together
