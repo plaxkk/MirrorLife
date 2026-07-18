@@ -2438,6 +2438,113 @@ function addCivicDomesticDetails(colors) {
   });
 }
 
+function addCivicReverseWitnessWall(colors, mobileLod = false) {
+  // The default hero view is deliberately composed toward the listening wall,
+  // but a true orbitable room also needs a designed reverse shot. This witness
+  // wall, low bench and paired plants give the 180-degree view its own focal
+  // hierarchy instead of exposing an empty cylinder.
+  const group = new THREE.Group();
+  group.position.set(0, 0, 4.82);
+  group.rotation.y = Math.PI;
+  group.userData.dynamicWallDecor = true;
+  group.userData.wallAngle = Math.PI;
+  roomRoot.add(group);
+
+  const oak = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.62, surface: "wood", bumpScale: 0.012 });
+  const walnut = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.7, surface: "wood", bumpScale: 0.009 });
+  const paper = createToonMaterial("#efe2cc", { roughness: 0.96, surface: "paper", bumpScale: 0.005 });
+  const frame = new THREE.Mesh(new RoundedBoxGeometry(2.82, 1.46, 0.14, 3, 0.09), walnut);
+  frame.position.set(0, 2.28, 0.02);
+  group.add(frame);
+  const field = new THREE.Mesh(new RoundedBoxGeometry(2.58, 1.22, 0.055, 3, 0.06), paper);
+  field.position.set(0, 2.28, 0.12);
+  group.add(field);
+  const heading = new THREE.Mesh(new RoundedBoxGeometry(1.02, 0.18, 0.045, 3, 0.045), createToonMaterial("#e5c37d", { roughness: 0.72 }));
+  heading.position.set(0, 2.67, 0.17);
+  group.add(heading);
+  const responseColors = [colors.secondary, ATELIER_TOKENS.apricot, ATELIER_TOKENS.pistachio, ATELIER_TOKENS.butter];
+  const responseCount = mobileLod ? 1 : 4;
+  const responseColumns = mobileLod ? 1 : 2;
+  for (let index = 0; index < responseCount; index += 1) {
+    const column = index % responseColumns;
+    const row = Math.floor(index / responseColumns);
+    const card = new THREE.Mesh(
+      new RoundedBoxGeometry(0.62, 0.34, 0.025, 2, 0.025),
+      createToonMaterial(index % 2 ? "#f8edd9" : "#e8efe7", { roughness: 0.94 })
+    );
+    card.position.set((column - (responseColumns - 1) / 2) * 0.82, 2.35 - row * 0.42, 0.17);
+    card.rotation.z = (column - (responseColumns - 1) / 2) * 0.035;
+    group.add(card);
+    const mark = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.18, 0.018, 2, 0.018), createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.76 }));
+    mark.position.set(card.position.x - 0.18, card.position.y, 0.192);
+    mark.rotation.z = card.rotation.z;
+    group.add(mark);
+    [0.06, -0.055].forEach((lineY, lineIndex) => {
+      const line = new THREE.Mesh(new RoundedBoxGeometry(lineIndex ? 0.22 : 0.28, 0.016, 0.012, 1, 0.006), createToonMaterial("#7e766a", { roughness: 0.84 }));
+      line.position.set(card.position.x + 0.1, card.position.y + lineY, 0.193);
+      line.rotation.z = card.rotation.z;
+      group.add(line);
+    });
+  }
+
+  const benchBase = new THREE.Mesh(new RoundedBoxGeometry(2.46, 0.36, 0.7, 3, 0.14), oak);
+  benchBase.position.set(0, 0.28, 0.54);
+  group.add(benchBase);
+  const benchSeat = new THREE.Mesh(new RoundedBoxGeometry(2.34, 0.22, 0.72, 3, 0.14), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
+  benchSeat.position.set(0, 0.58, 0.56);
+  group.add(benchSeat);
+  const benchBack = new THREE.Mesh(new RoundedBoxGeometry(2.28, 0.72, 0.22, 3, 0.13), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
+  benchBack.position.set(0, 0.91, 0.29);
+  benchBack.rotation.x = -0.08;
+  group.add(benchBack);
+  [-0.62, 0.62].forEach((x, index) => {
+    const cushion = new THREE.Mesh(
+      new RoundedBoxGeometry(0.46, 0.38, 0.18, 3, 0.11),
+      createToonMaterial(index ? ATELIER_TOKENS.apricot : ATELIER_TOKENS.butter, { roughness: 0.98, surface: "fabric", bumpScale: 0.012 })
+    );
+    cushion.position.set(x, 0.92, 0.54);
+    cushion.rotation.z = index ? -0.07 : 0.07;
+    group.add(cushion);
+  });
+
+  [-2.05, 2.05].forEach((x, plantIndex) => {
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 0.54, 18), createToonMaterial(plantIndex ? "#e6d4ba" : "#d9a557", { roughness: 0.72 }));
+    pot.position.set(x, 0.27, 0.34);
+    group.add(pot);
+    const leafCount = 4;
+    for (let leafIndex = 0; leafIndex < leafCount; leafIndex += 1) {
+      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), createToonMaterial(leafIndex % 2 ? "#4d865c" : "#6ca36b", { roughness: 0.95 }));
+      leaf.scale.set(0.5, 1.32, 0.42);
+      leaf.position.set(x + (leafIndex - (leafCount - 1) / 2) * 0.11, 0.67 + (leafIndex % 2) * 0.22, 0.34);
+      leaf.rotation.z = (leafIndex - (leafCount - 1) / 2) * 0.24;
+      group.add(leaf);
+    }
+  });
+
+  const pendantCord = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.02, 10), walnut);
+  pendantCord.position.set(0, 3.58, 0.62);
+  group.add(pendantCord);
+  const pendantShade = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.28, 24, 1, true), createToonMaterial("#f0c969", { roughness: 0.5, side: THREE.DoubleSide }));
+  pendantShade.position.set(0, 3.04, 0.62);
+  pendantShade.rotation.x = Math.PI;
+  group.add(pendantShade);
+  const pendantLight = new THREE.PointLight(0xffc879, mobileLod ? 0.46 : 0.78, 3.2, 2.1);
+  pendantLight.position.set(0, 2.88, 0.7);
+  group.add(pendantLight);
+
+  // This entire wall toggles as a single orbit-aware composition. Batch its
+  // opaque meshes after placement so hiding/showing it remains atomic without
+  // spending a draw call on every note, leaf and cushion.
+  const sourceMaterials = new Set();
+  group.traverse((node) => {
+    if (!node.isMesh || node === pendantShade) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => sourceMaterials.add(material));
+  });
+  mergeActorVertexColorMeshes(group, [pendantShade], { roughness: 0.76, envMapIntensity: 0.66 });
+  sourceMaterials.forEach((material) => material.dispose?.());
+}
+
 function addCivicThresholdFlowers(colors) {
   const group = new THREE.Group();
   group.position.set(-4.05, 0, -1.25);
@@ -2546,7 +2653,8 @@ function addCivicOrbitFrames(colors) {
   // the hero composition.
   [
     { angle: -1.72, accent: colors.secondary, width: 1.3 },
-    { angle: -2.46, accent: ATELIER_TOKENS.apricot, width: 1.12 }
+    { angle: -2.46, accent: ATELIER_TOKENS.apricot, width: 1.12 },
+    { angle: 1.72, accent: ATELIER_TOKENS.butter, width: 1.34 }
   ].forEach((panel, panelIndex) => {
     const [x, y, z] = wallPosition(panel.angle, ROOM_RADIUS - 0.16, 2.12 - panelIndex * 0.08);
     const group = new THREE.Group();
@@ -2698,6 +2806,7 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicLibraryWall(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
+  addCivicReverseWitnessWall(colors, mobileLod);
   if (!mobileLod) {
     addCivicOrbitFrames(colors);
     addCivicDomesticDetails(colors);
@@ -4401,6 +4510,17 @@ function createProceduralActorObject(actor) {
 
   const leftArm = createActorLimb(topMaterial, 0.54, 0.16);
   const rightArm = createActorLimb(topMaterial, 0.54, 0.16);
+  // Procedural actors predate the articulated civic GLBs. Keep a compatible
+  // (currently visual-neutral) elbow pivot on them so the shared locomotion
+  // and social-pose state machine can animate either representation safely.
+  const leftElbow = new THREE.Group();
+  const rightElbow = new THREE.Group();
+  leftElbow.name = "LeftElbowPivot";
+  rightElbow.name = "RightElbowPivot";
+  leftElbow.position.y = -0.27;
+  rightElbow.position.y = -0.27;
+  leftArm.add(leftElbow);
+  rightArm.add(rightElbow);
   leftArm.position.set(-0.295, 1.2, 0);
   rightArm.position.set(0.295, 1.2, 0);
   const leftHand = new THREE.Mesh(new THREE.SphereGeometry(0.075, 12, 10), skinMaterial);
@@ -4468,6 +4588,8 @@ function createProceduralActorObject(actor) {
     headGroup,
     leftArm,
     rightArm,
+    leftElbow,
+    rightElbow,
     leftLeg,
     rightLeg,
     frame,
@@ -4521,12 +4643,31 @@ function createCivicActorObject(actor, asset) {
   const headGroup = visual?.getObjectByName("HeadPivot");
   const leftArm = visual?.getObjectByName("LeftArmPivot");
   const rightArm = visual?.getObjectByName("RightArmPivot");
+  const leftElbow = leftArm?.getObjectByName("LeftElbowPivot");
+  const rightElbow = rightArm?.getObjectByName("RightElbowPivot");
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
   const rightLeg = visual?.getObjectByName("RightLegPivot");
   const eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
-  if (!visual || !headGroup || !leftArm || !rightArm || !leftLeg || !rightLeg) {
+  const browPivots = [headGroup?.getObjectByName("BrowPivot_-1"), headGroup?.getObjectByName("BrowPivot_1")].filter(Boolean);
+  const mouthPivot = headGroup?.getObjectByName("MouthPivot");
+  if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
+  }
+  const fullExpressionLod = lastWidth > 720;
+  if (!fullExpressionLod) {
+    // Keep the silhouette and articulated elbows on mobile, but fold tiny
+    // fingers into a simpler mitten profile and merge facial parts into the
+    // head batch. At phone scale those extra meshes are sub-pixel while five
+    // additional actor batches materially affect the 30fps budget.
+    const mobileDetailNodes = [];
+    assetScene.traverse((node) => {
+      if (node.isMesh && String(node.name || "").startsWith("Finger_")) mobileDetailNodes.push(node);
+    });
+    mobileDetailNodes.forEach((node) => {
+      node.removeFromParent();
+      node.geometry?.dispose?.();
+    });
   }
   group.add(assetScene);
 
@@ -4536,10 +4677,17 @@ function createCivicActorObject(actor, asset) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => importedMaterials.add(material));
   });
-  mergeActorVertexColorMeshes(headGroup, eyePivots, { roughness: 0.6, envMapIntensity: 0.78 });
+  const expressionPivots = fullExpressionLod ? [...eyePivots, ...browPivots, mouthPivot] : [];
+  mergeActorVertexColorMeshes(headGroup, expressionPivots, { roughness: 0.6, envMapIntensity: 0.78 });
   mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.69, envMapIntensity: 0.7 });
-  eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
-  [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => {
+  if (fullExpressionLod) {
+    eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
+    browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
+    mergeActorVertexColorMeshes(mouthPivot, [], { roughness: 0.58, envMapIntensity: 0.68 });
+  }
+  mergeActorVertexColorMeshes(leftArm, [leftElbow], { roughness: 0.67, envMapIntensity: 0.72 });
+  mergeActorVertexColorMeshes(rightArm, [rightElbow], { roughness: 0.67, envMapIntensity: 0.72 });
+  [leftElbow, rightElbow, leftLeg, rightLeg].forEach((limb) => {
     mergeActorVertexColorMeshes(limb, [], { roughness: 0.67, envMapIntensity: 0.72 });
   });
   const retainedMaterials = new Set();
@@ -4561,9 +4709,13 @@ function createCivicActorObject(actor, asset) {
     headGroup,
     leftArm,
     rightArm,
+    leftElbow,
+    rightElbow,
     leftLeg,
     rightLeg,
-    eyePivots,
+    eyePivots: fullExpressionLod ? eyePivots : [],
+    browPivots: fullExpressionLod ? browPivots : [],
+    mouthPivot: fullExpressionLod ? mouthPivot : null,
     frame,
     styleKey: `${frame}:${role}:civic-glb-v1`,
     identity: style.identity,
@@ -4654,6 +4806,10 @@ function updateActors(actors = [], now = performance.now()) {
     entry.rightArm.rotation.x = stride * 0.72;
     entry.leftArm.rotation.z = 0;
     entry.rightArm.rotation.z = 0;
+    entry.leftElbow.rotation.x = walking ? Math.max(0, stride) * 0.18 : 0;
+    entry.rightElbow.rotation.x = walking ? Math.max(0, -stride) * 0.18 : 0;
+    entry.leftElbow.rotation.z = 0;
+    entry.rightElbow.rotation.z = 0;
     let headLookYaw = 0;
     if (cameraZoneId === "public-plaza" && playerActor && actor.id !== playerActor.id && !walking) {
       const lookWorldYaw = Math.atan2(Number(playerActor.worldX || 0) - x, Number(playerActor.worldZ || 0) - z);
@@ -4664,12 +4820,39 @@ function updateActors(actors = [], now = performance.now()) {
       headLookYaw = THREE.MathUtils.clamp(localLookYaw, -0.5, 0.5) * 0.82;
     }
     entry.headGroup.rotation.y = headLookYaw;
+    entry.headGroup.rotation.x = 0;
+    entry.headGroup.rotation.z = 0;
     if (entry.eyePivots?.length) {
       const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
       const blinkScale = blinkCycle > 4.58
         ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
         : 1;
-      entry.eyePivots.forEach((eyePivot) => eyePivot.scale.y = blinkScale);
+      entry.eyePivots.forEach((eyePivot, eyeIndex) => {
+        eyePivot.scale.y = blinkScale;
+        if (playerActor && actor.id !== playerActor.id && !walking) {
+          const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22, -0.09, 0.09);
+          eyePivot.rotation.y = gaze;
+          eyePivot.rotation.z = (eyeIndex ? 1 : -1) * gaze * 0.08;
+        } else {
+          eyePivot.rotation.y = 0;
+          eyePivot.rotation.z = 0;
+        }
+      });
+    }
+    const socialBreath = Math.sin(now * 0.00145 + frame * 0.83);
+    if (entry.browPivots?.length) {
+      const attentiveLift = cameraZoneId === "public-plaza" && actor.civicRole !== "player" ? 0.018 : 0;
+      entry.browPivots.forEach((browPivot, browIndex) => {
+        browPivot.position.z = 0.12 + attentiveLift + socialBreath * 0.003;
+        browPivot.rotation.y = 0;
+        browPivot.rotation.z = (browIndex ? -1 : 1) * attentiveLift * 0.9;
+      });
+    }
+    if (entry.mouthPivot) {
+      const speaking = actor.state === "talking" || actor.state === "interact" || actor.state === "doing";
+      const talkPulse = speaking ? 0.78 + Math.abs(Math.sin(now * 0.009 + frame)) * 0.5 : 1;
+      entry.mouthPivot.scale.set(1, 1, talkPulse);
+      entry.mouthPivot.rotation.z = socialBreath * 0.018;
     }
     entry.visual.rotation.z = 0;
     if (actor.state === "jump") {
@@ -4677,10 +4860,14 @@ function updateActors(actors = [], now = performance.now()) {
       entry.rightLeg.rotation.x = -0.42;
       entry.leftArm.rotation.x = 0.38;
       entry.rightArm.rotation.x = 0.38;
+      entry.leftElbow.rotation.x = -0.28;
+      entry.rightElbow.rotation.x = -0.28;
       entry.visual.rotation.z = -0.04;
     } else if (actor.state === "fall") {
       entry.leftArm.rotation.z = 0.42;
       entry.rightArm.rotation.z = -0.42;
+      entry.leftElbow.rotation.x = -0.22;
+      entry.rightElbow.rotation.x = -0.22;
       entry.visual.rotation.z = 0.03;
     } else if (["doing", "talking", "waving", "interact", "listen"].includes(actor.state)) {
       if (actor.state === "listen" && entry.identity === "mediator") {
@@ -4688,13 +4875,17 @@ function updateActors(actors = [], now = performance.now()) {
         entry.rightArm.rotation.x = -0.62;
         entry.leftArm.rotation.z = 0.12;
         entry.rightArm.rotation.z = -0.12;
+        entry.leftElbow.rotation.x = -0.62;
+        entry.rightElbow.rotation.x = -0.82;
       } else if (actor.state === "listen" && entry.identity === "botanist") {
         entry.leftArm.rotation.x = -0.34;
         entry.rightArm.rotation.x = -0.78;
         entry.rightArm.rotation.z = -0.18;
+        entry.rightElbow.rotation.x = -0.72;
       } else {
         entry.rightArm.rotation.x = -0.82;
         entry.rightArm.rotation.z = -0.22;
+        entry.rightElbow.rotation.x = -0.74;
       }
       entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0016 + frame) * 0.06;
       entry.visual.rotation.z = 0;
@@ -4706,20 +4897,37 @@ function updateActors(actors = [], now = performance.now()) {
     }
     if (cameraZoneId === "public-plaza" && !walking && actor.civicRole && actor.civicRole !== "player") {
       if (actor.civicRole === "mediator") {
-        entry.leftArm.rotation.x = -0.62;
-        entry.rightArm.rotation.x = -1.04;
-        entry.leftArm.rotation.z = 0.13;
-        entry.rightArm.rotation.z = -0.22;
+        // One hand near the chin and one relaxed hand: the mediator should
+        // read as attentive, not as a symmetrical mannequin.
+        entry.leftArm.rotation.x = -0.18;
+        entry.rightArm.rotation.x = -0.28;
+        entry.leftArm.rotation.z = 0.08;
+        entry.rightArm.rotation.z = -0.3;
+        entry.leftElbow.rotation.x = 0.42;
+        entry.rightElbow.rotation.x = 1.72;
+        entry.rightElbow.rotation.z = -0.24;
+        entry.headGroup.rotation.x = -0.045;
+        entry.headGroup.rotation.z = 0.045;
       } else if (actor.civicRole === "facilitator") {
-        entry.leftArm.rotation.x = -0.48;
-        entry.rightArm.rotation.x = -0.88;
-        entry.leftArm.rotation.z = 0.12;
-        entry.rightArm.rotation.z = -0.18;
+        // Fold both forearms back toward the notebook so it is visibly held
+        // at the waist rather than floating at the end of a straight arm.
+        entry.leftArm.rotation.x = -0.38;
+        entry.rightArm.rotation.x = -0.34;
+        entry.leftArm.rotation.z = 0.26;
+        entry.rightArm.rotation.z = -0.2;
+        entry.leftElbow.rotation.x = 1.34;
+        entry.rightElbow.rotation.x = 1.08;
+        entry.leftElbow.rotation.z = 0.22;
+        entry.rightElbow.rotation.z = -0.12;
+        entry.headGroup.rotation.z = -0.035;
       } else if (actor.civicRole === "listener") {
-        entry.leftArm.rotation.x = -0.22;
-        entry.rightArm.rotation.x = -0.52;
-        entry.leftArm.rotation.z = 0.1;
-        entry.rightArm.rotation.z = -0.12;
+        entry.leftArm.rotation.x = -0.12;
+        entry.rightArm.rotation.x = -0.42;
+        entry.leftArm.rotation.z = 0.08;
+        entry.rightArm.rotation.z = -0.16;
+        entry.leftElbow.rotation.x = 0.34;
+        entry.rightElbow.rotation.x = 0.82;
+        entry.headGroup.rotation.z = 0.025;
       }
     }
     entry.shadow.material.opacity = actor.grounded === false

@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v10 articulated-acting and complete-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, public-plaza QA state, yaw `0°`).
+- Same-viewport full comparison: `dist/interior-3d-work/civic-fidelity-v10-full.png`.
+- Focused actor comparison: `dist/interior-3d-work/civic-fidelity-v10-actor-focus.png`.
+- Four-direction orbit evidence: `dist/interior-3d-work/civic-orbit-v10-board.png` (`0° / 90° / 180° / 270°`).
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Comparison history and fixes
+
+- [fixed from v9 P1] Civic characters no longer use a single rigid arm segment. Four regenerated GLBs now expose left/right elbow pivots, articulated forearms, cuff/hand silhouettes and desktop finger detail. Listener, facilitator and mediator use different asymmetric listening poses.
+- [fixed from v9 P1] Faces now expose independently validated brow and mouth pivots in addition to eye pivots. Desktop characters blink, shift gaze, lift brows and pulse the mouth during speech; head scale was reduced to move the silhouette toward the reference's calmer `1:3.5` proportion.
+- [fixed from v9 P2] The `180°` reverse shot no longer reveals an empty generic wall. It now has a dedicated witness-response wall, pendant, upholstered bench, cushions and paired planters, while the `90°` view gains a balanced story frame above the sideboard.
+- [fixed] Reverse-shot furniture has matching fixed colliders. The camera-facing version is culled only while it would sit between the camera and the conversation; the authored physical boundary remains stable and does not become a moving camera-dependent collider.
+- [fixed] Mobile keeps articulated elbows but merges sub-pixel facial parts into the head batch and removes finger micro-geometry. The current captured hero is `100` draw calls, `248,562` triangles and `81` geometries, below the `110 / 250,000` mobile gate.
+- [fixed] The reverse-wall notes, leaves and cushions are merged into one orbit-aware static batch. The four desktop views now measure `136 / 285,416`, `138 / 287,840`, `147 / 298,944` and `145 / 291,764` draw-calls/triangles respectively, all within the core `160 / 300,000` gate.
+- [fixed regression] The shared articulated state machine originally assumed every legacy procedural actor exposed elbow pivots, causing non-civic interiors such as the university to remain in the atomic loading state. Procedural actors now provide compatibility pivots; the 26-zone, three-pass transition stress gate completes `78` transitions with no runtime error, and the desktop/mobile scene-flow gate passes again.
+
+### Current findings
+
+- [P1][image quality / asset fidelity] The focused comparison still shows a categorical character-production gap. The source has sculpted hand anatomy, layered cloth folds, facial blend shapes, authored hair strands and nuanced weight shifts; the live characters remain modular low-poly assets driven by hierarchical pivots.
+- [P1][materials / lighting] The source uses materially richer wood grain, woven fabric, ceramic glaze, terrazzo variation and soft indirect bounce. The live room preserves the palette and hierarchy but still reads as simplified real-time toon materials in close comparison.
+- [P1][layout / bespoke assets] The default live composition contains more wall-board repetition and less bespoke architectural joinery than the source. The source's left courtyard threshold, foreground display case and right lounge are each hero assets; the live equivalents remain assembled from a reusable Web asset language.
+- [P2][acting] Elbows and facial controls materially improve the silhouettes, but the four-person group is still more symmetrical and less narratively staged than the source. The source communicates specific roles through hand props, gaze and stance before any label is read.
+- [P2][scope] This v10 visual comparison proves the public hero room and four orbit directions only. It does not prove image-1 authorship for the remaining 25 interiors.
+- [checked][typography / UI] The top status rail and lower action rail preserve the source's dark translucent hierarchy and Chinese label density, but the live top controls remain more compact and less optically polished than the rendered target.
+- [checked][copy / interaction] The core actions are coherent and functional; WASD walking and drag orbit were browser-tested. The location title, listening action and exit remain reachable without covering the conversation center.
+
+### Gate result
+
+The new pass proves a more expressive shared-rig cast and a genuinely authored 360° room rather than a single-camera facade. Literal image-1 production parity is still contradicted by the same-canvas character/material comparison, so this cannot be handed off as a passed clone.
+
+final result: blocked
+
+Blocker: cinematic hero-character deformation, bespoke texture/material production and room-specific hero assets remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v9 material, joinery and living-face gate
 
 ### Evidence inspected together

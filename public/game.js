@@ -5717,7 +5717,10 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     ],
     extraColliders: [
       { id: "civic-library-wall", x: 4.66, z: -2.76, collider: { shape: "box", halfX: 0.72, halfY: 1.26, halfZ: 0.36, rotation: -1.03 }, material: "wood" },
-      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" }
+      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" },
+      { id: "civic-reverse-witness-bench", x: 0, z: 4.28, collider: { shape: "box", halfX: 1.3, halfY: 0.62, halfZ: 0.48, rotation: 0 }, material: "fabric" },
+      { id: "civic-reverse-planter-left", x: -2.05, z: 4.48, collider: { shape: "circle", radius: 0.34, halfY: 0.76 }, material: "terrazzo" },
+      { id: "civic-reverse-planter-right", x: 2.05, z: 4.48, collider: { shape: "circle", radius: 0.34, halfY: 0.76 }, material: "terrazzo" }
     ],
     actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
