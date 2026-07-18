@@ -60,7 +60,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f7ead6", floor: "#ddd3c2", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f3dfc3", floor: "#e1d8ca", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -68,7 +68,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.72, fill: 0.16, hemi: 0.13, bounce: 0.34, wash: 0.78, exposure: 0.84, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
+  "civic-ivory": { key: 2.72, fill: 0.14, hemi: 0.11, bounce: 0.48, wash: 0.56, exposure: 0.79, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -220,7 +220,6 @@ let cameraLastUpdateAt = 0;
 let cameraRaycaster;
 const occludedMaterials = new Map();
 const surfaceBumpTextures = new Map();
-const surfaceColorTextures = new Map();
 const physicalSurfaceMaps = new Map();
 const actorFrameTextures = new Map();
 const actorObjects = new Map();
@@ -306,7 +305,8 @@ function ensureLayer() {
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
   physicalSurfaceMaps.forEach((maps) => {
-    [maps.normal, maps.roughness].forEach((texture) => {
+    [maps.map, maps.normal, maps.roughness].forEach((texture) => {
+      if (!texture) return;
       texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
       texture.needsUpdate = true;
     });
@@ -398,11 +398,11 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.86;
+  gtaoPass.blendIntensity = 0.98;
   gtaoPass.updateGtaoMaterial({
-    radius: 0.34,
+    radius: 0.38,
     distanceExponent: 1.7,
-    thickness: 1.25,
+    thickness: 1.36,
     distanceFallOff: 0.9,
     scale: 0.82,
     samples: 12,
@@ -438,9 +438,9 @@ function ensureLayer() {
         vec4 texel = texture2D(tDiffuse, vUv);
         vec3 color = texel.rgb;
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-        color = mix(vec3(luma), color, 1.035 * strength);
-        color = max(vec3(0.0), (color - vec3(0.18)) * (1.0 + 0.035 * strength) + vec3(0.18));
-        color *= mix(vec3(1.0), vec3(1.022, 1.0, 0.974), strength);
+        color = mix(vec3(luma), color, 1.075 * strength);
+        color = max(vec3(0.0), (color - vec3(0.18)) * (1.0 + 0.09 * strength) + vec3(0.18));
+        color *= mix(vec3(1.0), vec3(1.035, 1.007, 0.962), strength);
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
         color *= 1.0 - vignette * 0.085 * strength;
@@ -941,6 +941,10 @@ function getSurfaceBumpTexture(kind = "plaster") {
 
 function getPhysicalSurfaceSources() {
   return {
+    terrazzo: {
+      map: "/assets/interiors/textures/civic-terrazzo-basecolor-v1.png",
+      repeat: [4.8, 4.8]
+    },
     wood: {
       normal: "/assets/interiors/textures/wood-table-001-normal-gl-1k.jpg",
       roughness: "/assets/interiors/textures/wood-table-001-roughness-1k.jpg",
@@ -955,24 +959,37 @@ function getPhysicalSurfaceSources() {
 }
 
 async function preloadPhysicalSurfaceMaps() {
-  if (!THREE || window.innerWidth <= 720) return;
+  if (!THREE) return;
   if (physicalSurfaceLoading) return physicalSurfaceLoading;
   physicalSurfaceLoading = (async () => {
     const textureLoader = new THREE.TextureLoader();
     const sources = getPhysicalSurfaceSources();
     await Promise.all(Object.entries(sources).map(async ([kind, source]) => {
-      const [normal, roughness] = await Promise.all([
-        textureLoader.loadAsync(source.normal),
-        textureLoader.loadAsync(source.roughness)
-      ]);
-      [normal, roughness].forEach((texture) => {
+      // The civic floor's authored base color is part of the atomic scene load
+      // on every device. Heavier scanned normal/roughness maps stay desktop-only.
+      const map = source.map ? await textureLoader.loadAsync(source.map) : null;
+      if (map) {
+        map.colorSpace = THREE.SRGBColorSpace;
+        map.wrapS = THREE.RepeatWrapping;
+        map.wrapT = THREE.RepeatWrapping;
+        map.repeat.set(...source.repeat);
+        map.needsUpdate = true;
+      }
+      if (window.innerWidth <= 720 && !map) return;
+      const [normal, roughness] = source.normal && source.roughness
+        ? await Promise.all([
+          textureLoader.loadAsync(source.normal),
+          textureLoader.loadAsync(source.roughness)
+        ])
+        : [null, null];
+      [normal, roughness].filter(Boolean).forEach((texture) => {
         texture.colorSpace = THREE.NoColorSpace;
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(...source.repeat);
         texture.needsUpdate = true;
       });
-      physicalSurfaceMaps.set(kind, { normal, roughness });
+      physicalSurfaceMaps.set(kind, { map, normal, roughness });
     }));
   })().catch((error) => {
     console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
@@ -982,77 +999,16 @@ async function preloadPhysicalSurfaceMaps() {
 }
 
 function getPhysicalSurfaceMaps(kind) {
-  if (lastWidth <= 720 || !["wood", "fabric"].includes(kind)) return null;
+  if (!["wood", "fabric", "terrazzo"].includes(kind)) return null;
+  if (lastWidth <= 720 && kind !== "terrazzo") return null;
   const maps = physicalSurfaceMaps.get(kind);
   if (maps) {
-    [maps.normal, maps.roughness].forEach((texture) => {
+    [maps.map, maps.normal, maps.roughness].forEach((texture) => {
       if (!texture) return;
-      texture.colorSpace = THREE.NoColorSpace;
       texture.needsUpdate = true;
     });
   }
   return maps || null;
-}
-
-function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
-  const key = `terrazzo-color:${baseColor}`;
-  if (surfaceColorTextures.has(key)) return surfaceColorTextures.get(key);
-  const size = 768;
-  const textureCanvas = document.createElement("canvas");
-  textureCanvas.width = size;
-  textureCanvas.height = size;
-  const context = textureCanvas.getContext("2d");
-  if (!context) return null;
-  context.fillStyle = baseColor;
-  context.fillRect(0, 0, size, size);
-  let seed = 0x51c1c;
-  const random = () => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 4294967296;
-  };
-  const chips = ["#76675d", "#a77867", "#648185", "#7b866f", "#baa68d", "#5d5751", "#ebe0d0"];
-  for (let index = 0; index < 3400; index += 1) {
-    const x = random() * size;
-    const y = random() * size;
-    const radius = 0.8 + random() * (random() > 0.82 ? 4.2 : 2.45);
-    const sides = 3 + Math.floor(random() * 4);
-    context.beginPath();
-    for (let side = 0; side < sides; side += 1) {
-      const angle = side / sides * Math.PI * 2 + random() * 0.35;
-      const distance = radius * (0.62 + random() * 0.52);
-      const px = x + Math.cos(angle) * distance;
-      const py = y + Math.sin(angle) * distance;
-      if (side === 0) context.moveTo(px, py);
-      else context.lineTo(px, py);
-    }
-    context.closePath();
-    context.globalAlpha = 0.24 + random() * 0.34;
-    context.fillStyle = chips[Math.floor(random() * chips.length)];
-    context.fill();
-  }
-  context.globalAlpha = 0.22;
-  context.strokeStyle = "#786c5f";
-  context.lineWidth = 1.35;
-  [0, size / 2, size - 1].forEach((position) => {
-    context.beginPath();
-    context.moveTo(position, 0);
-    context.lineTo(position, size);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(0, position);
-    context.lineTo(size, position);
-    context.stroke();
-  });
-  context.globalAlpha = 1;
-  const texture = new THREE.CanvasTexture(textureCanvas);
-  texture.colorSpace = THREE.SRGBColorSpace;
-  texture.wrapS = THREE.RepeatWrapping;
-  texture.wrapT = THREE.RepeatWrapping;
-  texture.repeat.set(2.45, 2.45);
-  texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
-  texture.needsUpdate = true;
-  surfaceColorTextures.set(key, texture);
-  return texture;
 }
 
 function getAtelierWindowViewTexture() {
@@ -1244,14 +1200,20 @@ function createToonMaterial(color, options = {}) {
   if (options.surface) {
     const physicalMaps = getPhysicalSurfaceMaps(options.surface);
     if (physicalMaps) {
-      material.normalMap = physicalMaps.normal;
-      material.roughnessMap = physicalMaps.roughness;
-      // The scanned map already contains the full roughness range. Keeping
-      // the scalar at one avoids multiplying a .6 map by a .6 material and
-      // turning varnished oak into wet plastic.
-      material.roughness = 1;
-      const normalStrength = options.surface === "wood" ? 0.16 : 0.24;
-      material.normalScale.set(normalStrength, normalStrength);
+      if (physicalMaps.map && !options.map && options.useSurfaceMap !== false) material.map = physicalMaps.map;
+      if (physicalMaps.normal && physicalMaps.roughness) {
+        material.normalMap = physicalMaps.normal;
+        material.roughnessMap = physicalMaps.roughness;
+        // The scanned map already contains the full roughness range. Keeping
+        // the scalar at one avoids multiplying a .6 map by a .6 material and
+        // turning varnished oak into wet plastic.
+        material.roughness = 1;
+        const normalStrength = options.surface === "wood" ? 0.16 : 0.24;
+        material.normalScale.set(normalStrength, normalStrength);
+      } else {
+        material.bumpMap = getSurfaceBumpTexture(options.surface);
+        material.bumpScale = options.bumpScale ?? 0.018;
+      }
     } else {
       material.bumpMap = getSurfaceBumpTexture(options.surface);
       material.bumpScale = options.bumpScale ?? 0.018;
@@ -1309,16 +1271,20 @@ function applyLightingPreset(theme = {}) {
     fillLight.color.set(preset.fillColor);
   }
   if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
-  if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
+  if (warmBounceLight) {
+    warmBounceLight.intensity = preset.bounce;
+    if (theme.zoneId === "public-plaza") warmBounceLight.position.set(0.35, 0.52, 0.65);
+    else warmBounceLight.position.set(-0.6, 2.9, 1.8);
+  }
   if (windowWashLight) {
     windowWashLight.intensity = preset.wash;
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.66 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.9 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.74 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.22 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -3158,6 +3124,125 @@ function addCivicCovenantPanel(colors) {
   });
 }
 
+function addCivicResponseAlcove(colors) {
+  // The first side-orbit review exposed half a screen of undecided plaster at
+  // 90 degrees.  Give that wall a civic purpose instead of filling it with
+  // generic pictures: this shallow, inaccessible listening alcove records how
+  // residents felt heard.  It lives behind the shell contact plane and only
+  // appears on the far hemisphere, so it adds a landmark without stealing
+  // walking width or becoming a false interaction surface.
+  // Yaw 90 places the camera on the room's negative-X side, so +X is the
+  // actual far wall in that shot (wall angle ~= PI / 2).
+  const angle = 2.02;
+  const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.15, 1.65);
+  const group = new THREE.Group();
+  group.name = "civic-response-alcove";
+  group.position.set(x, y, z);
+  group.rotation.y = -angle;
+  group.userData.dynamicWallDecor = true;
+  group.userData.wallAngle = angle;
+  roomRoot.add(group);
+
+  const walnut = createToonMaterial(ATELIER_TOKENS.walnut, {
+    roughness: 0.66,
+    surface: "wood",
+    bumpScale: 0.009
+  });
+  const oak = createToonMaterial(ATELIER_TOKENS.oak, {
+    roughness: 0.61,
+    surface: "wood",
+    bumpScale: 0.012
+  });
+  const felt = createToonMaterial("#dce6dc", {
+    roughness: 0.98,
+    surface: "fabric",
+    bumpScale: 0.013
+  });
+  const paper = createToonMaterial("#f5ead8", {
+    roughness: 0.95,
+    surface: "paper",
+    bumpScale: 0.005
+  });
+  const brass = createToonMaterial("#c79c47", {
+    roughness: 0.34,
+    metalness: 0.58,
+    envMapIntensity: 0.92
+  });
+
+  const backing = new THREE.Mesh(new RoundedBoxGeometry(2.82, 2.34, 0.055, 7, 0.18), felt);
+  backing.position.z = 0.025;
+  group.add(backing);
+  const innerField = new THREE.Mesh(new RoundedBoxGeometry(2.42, 1.94, 0.045, 6, 0.14), paper);
+  innerField.position.set(0, -0.03, 0.073);
+  group.add(innerField);
+
+  [-1.34, 1.34].forEach((postX) => {
+    const post = new THREE.Mesh(new RoundedBoxGeometry(0.13, 1.62, 0.11, 4, 0.055), walnut);
+    post.position.set(postX, -0.36, 0.1);
+    group.add(post);
+  });
+  const arch = new THREE.Mesh(new THREE.TorusGeometry(1.34, 0.066, 10, 48, Math.PI), walnut);
+  arch.position.set(0, 0.45, 0.1);
+  group.add(arch);
+  const ledge = new THREE.Mesh(new RoundedBoxGeometry(2.56, 0.13, 0.13, 5, 0.055), oak);
+  ledge.position.set(0, -1.05, 0.105);
+  group.add(ledge);
+
+  const heading = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.19, 0.035, 4, 0.05), oak);
+  heading.position.set(0, 0.68, 0.118);
+  group.add(heading);
+  [-0.32, -0.12, 0.12, 0.32].forEach((lineX, index) => {
+    const line = new THREE.Mesh(
+      new RoundedBoxGeometry(index % 2 ? 0.12 : 0.16, 0.025, 0.018, 2, 0.008),
+      index === 1 ? brass : walnut
+    );
+    line.position.set(lineX, 0.68, 0.143);
+    group.add(line);
+  });
+
+  const cardColors = ["#e8a080", "#73a69b", "#edc968"];
+  [-0.72, 0, 0.72].forEach((cardX, index) => {
+    const card = new THREE.Mesh(
+      new RoundedBoxGeometry(0.52, 0.72, 0.035, 4, 0.08),
+      createToonMaterial(index === 1 ? "#edf1e8" : "#f5ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
+    );
+    card.position.set(cardX, -0.12 + (index === 1 ? 0.05 : 0), 0.12);
+    card.rotation.z = (index - 1) * 0.025;
+    group.add(card);
+    const response = new THREE.Mesh(
+      new THREE.CircleGeometry(0.115, 24),
+      createToonMaterial(cardColors[index], { roughness: 0.62 })
+    );
+    response.position.set(cardX, 0.04 + (index === 1 ? 0.05 : 0), 0.145);
+    response.rotation.z = card.rotation.z;
+    group.add(response);
+    [-0.19, -0.31].forEach((lineY, lineIndex) => {
+      const copyLine = new THREE.Mesh(
+        new RoundedBoxGeometry(lineIndex ? 0.23 : 0.3, 0.018, 0.012, 1, 0.006),
+        createToonMaterial("#887a69", { roughness: 0.84 })
+      );
+      copyLine.position.set(cardX, lineY + (index === 1 ? 0.05 : 0), 0.147);
+      copyLine.rotation.z = card.rotation.z;
+      group.add(copyLine);
+    });
+  });
+
+  // A warm architectural wash separates this landmark from the empty plaster
+  // while remaining subtle enough not to compete with the listening circle.
+  const light = new THREE.PointLight(0xffc87b, lastWidth <= 720 ? 0.22 : 0.48, 2.8, 2.15);
+  light.position.set(0, 0.62, 0.75);
+  group.add(light);
+
+  const sourceMaterials = new Set();
+  group.traverse((node) => {
+    if (!node.isMesh) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => sourceMaterials.add(material));
+  });
+  mergeActorVertexColorMeshes(group, [], { roughness: 0.76, envMapIntensity: 0.7 });
+  sourceMaterials.forEach((material) => material.dispose?.());
+}
+
 function addCivicOrbitFrames(colors) {
   // These two shallow wall pieces live on the side that becomes the far wall
   // after the player orbits. They are culled while they sit on the camera's
@@ -3165,8 +3250,7 @@ function addCivicOrbitFrames(colors) {
   // the hero composition.
   [
     { angle: -1.72, accent: colors.secondary, width: 1.3 },
-    { angle: -2.46, accent: ATELIER_TOKENS.apricot, width: 1.12 },
-    { angle: 1.72, accent: ATELIER_TOKENS.butter, width: 1.34 }
+    { angle: -2.46, accent: ATELIER_TOKENS.apricot, width: 1.12 }
   ].forEach((panel, panelIndex) => {
     const [x, y, z] = wallPosition(panel.angle, ROOM_RADIUS - 0.16, 2.12 - panelIndex * 0.08);
     const group = new THREE.Group();
@@ -3341,6 +3425,7 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicCovenantPanel(colors);
   addCivicReverseWitnessWall(colors, mobileLod);
   if (!mobileLod) {
+    addCivicResponseAlcove(colors);
     addCivicOrbitFrames(colors);
     addCivicDomesticDetails(colors);
   }
@@ -4407,11 +4492,11 @@ function rebuildRoom(theme = {}) {
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(ROOM_RADIUS, 64),
     createToonMaterial(floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.62 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.5 : 0.9,
       surface: "terrazzo",
+      useSurfaceMap: theme.zoneId === "public-plaza",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
-      map: theme.zoneId === "public-plaza" ? getTerrazzoColorTexture(floorColor) : null,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.7 : 0.48
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.86 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5913,10 +5998,12 @@ function updateActors(actors = [], now = performance.now()) {
       // symmetric mannequin pose whenever movement stops. Keep the offset
       // small enough that the capsule/feet remain visually planted.
       const idleShift = Math.sin(now * 0.0009 + frame) * 0.008;
-      entry.leftArm.rotation.z = 0.075 + idleShift;
-      entry.rightArm.rotation.z = -0.045 - idleShift;
-      entry.leftElbow.rotation.x = -0.12;
-      entry.rightElbow.rotation.x = -0.06;
+      entry.leftArm.rotation.x = -0.15;
+      entry.rightArm.rotation.x = 0.1;
+      entry.leftArm.rotation.z = 0.095 + idleShift;
+      entry.rightArm.rotation.z = -0.065 - idleShift;
+      entry.leftElbow.rotation.x = -0.3;
+      entry.rightElbow.rotation.x = -0.18;
       entry.leftLeg.rotation.z = 0.03;
       entry.rightLeg.rotation.z = -0.018;
       entry.leftKnee.rotation.x = 0.045;
@@ -6062,7 +6149,7 @@ function updateCamera(payload = {}) {
   const safeArea = payload.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   const zoneId = String(payload.theme?.zoneId || "");
   const cinematicCivic = zoneId === "public-plaza";
-  const targetFov = cinematicCivic ? (portrait ? 60 : 46) : (portrait ? 56 : 48);
+  const targetFov = cinematicCivic ? (portrait ? 60 : 41) : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
     camera.updateProjectionMatrix();
@@ -6121,10 +6208,10 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.48)
+    ? (portrait ? 6.2 : 5.0)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.44) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.3) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   const focusHeight = (cinematicCivic ? 1.03 : 0.94) + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
@@ -6190,7 +6277,7 @@ function updateDynamicWallDecorVisibility() {
     const delta = Math.atan2(Math.sin(wallAngle - cameraAngle), Math.cos(wallAngle - cameraAngle));
     // Only expose decor on the deep far hemisphere. A generous hidden arc is
     // important because the orbit camera sits just outside the circular shell.
-    object.visible = Math.abs(delta) > 1.84;
+    object.visible = Math.abs(delta) > 2.08;
   });
 }
 

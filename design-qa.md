@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v51 authored terrazzo, organic joints and complete-orbit budget gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v51/desktop-yaw-0-1672x941.png` (`1672 × 941`, public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v51-full.png` and `dist/interior-3d-work/civic-fidelity-v51-focus.png`.
+- Complete desktop orbit: `dist/interior-3d-work/civic-fidelity-v51/desktop-yaw-{0,90,180,270}-1672x941.png`.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v51/mobile-yaw-{0,180}-390x844.png` (`390 × 844`).
+
+### Earlier findings, fixes and post-fix evidence
+
+- [fixed from v45 P1 / floor image quality] Replaced the runtime-drawn civic terrazzo with the authored `1024 × 1024` raster asset at `public/assets/interiors/textures/civic-terrazzo-basecolor-v1.png`. The texture is preloaded with the Three.js runtime before the final room is exposed, uses sRGB colour, repeat wrapping and anisotropic filtering, and no longer swaps in after scene reveal.
+- [fixed / architectural scale] The first v46 capture showed aggregate chips that read as oversized stones. The final v51 floor repeats at `4.8 × 4.8`, bringing the visible aggregate down to believable architectural scale while preserving the reference's warm ivory/cool-grey mineral breakup.
+- [fixed from v45 P1 / robot joints] Shoulder, elbow and knee bridge volumes were reduced and upper-arm roots widened. The regenerated GLBs now overlap their tapered limb profiles through the pivots instead of exposing large ball-joint silhouettes; the complete rig contract remains intact.
+- [fixed / editorial contrast] The civic light preset now carries lower exposure and key/wash intensity plus a restrained contrast/saturation grade. Floor chips, brass routes, teal upholstery, white coats and skin no longer collapse into the same pale value range.
+- [fixed / composition scale] Desktop civic FOV changed from `43°` to `41°` and follow distance from `5.12m` to `5.0m`. The cast is larger and more legible while the portal, notice wall, lounge and action rail remain in frame.
+- [fixed / complete-orbit performance] Reverse views initially reached `169` draw calls. Narrowing the dynamic far-wall visibility arc keeps authored landmarks in the reverse composition while reducing the final maximum to `158` without deleting the navigable loop.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `149 / 154 / 158 / 156` draw calls and `259,544 / 275,924 / 272,988 / 263,468` triangles. Every view remains below the strict `160 / 300,000` civic-room gate.
+- Mobile `0° / 180°`: `106 / 108` draw calls and `233,082 / 240,154` triangles, below the `110 / 250,000` mobile gate.
+- Character asset contract: four shared-pivot roles pass at `7.23 MB` total; regenerated roles use `24,656–26,732` triangles.
+- Embodied verification: automated exploration moved the player `3.05m` and rotated the follow camera `65.3°`; desktop and mobile scene flow passed.
+- World regression: all `26` interiors passed the physics audit; `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: `pnpm check`, production build, civic character validation and civic prop validation passed.
+
+### Required fidelity surfaces
+
+- [checked][spacing/layout rhythm] The closer editorial camera strengthens the player/cast hierarchy without losing the foreground desk, portal, notice console or lounge. Four desktop yaws and two portrait yaws keep a functional landmark or exit readable.
+- [checked][colors/tokens] Warm ivory remains dominant; teal and coral separate civic roles; brass is reserved for evidence routes and the listening circle. The revised grade adds separation without recolouring the dark HUD.
+- [checked][image quality] The floor now consumes a project-bound raster material asset rather than a generated canvas approximation. It remains sharp at the hero viewport and loads before scene reveal.
+- [checked][copy/content] Existing location, story-memory, exit and four social actions remain coherent and unchanged.
+- [checked][responsiveness/accessibility] At `390 × 844`, joystick, contextual action, chat, jump and the four-action rail remain visible with no horizontal overflow; controls preserve practical touch sizes.
+- [checked][interaction] The character walks through the physical world, the camera follows the player, pointer/touch orbit remains 360-degree, and all actors retain real side/back geometry rather than billboards.
+- [P1][characters] The reference still has sculpted continuous anatomy, richer cloth topology, layered strand-group hair, natural hand poses and authored full-body acting. The current shared-pivot citizens are more organic than v45 but still read as modular web characters in the focused same-canvas comparison.
+- [P1][lighting/material finish] The authored floor and stronger grade close the largest surface gap, but the source still has offline bounced light, subsurface skin, multi-scale shadow softness and bespoke UV response on most props.
+- [P1][environment asset density] The functional composition matches, but cabinetry joinery, ceramics, woven storage, paper stacks and lounge accessories remain visibly simpler and less numerous than the source.
+- [P2][HUD finish] Hierarchy and interaction are clear, but icon drawing, optical type weights and translucent-panel microdetail remain simpler than the reference.
+
+### Gate result
+
+This iteration materially improves the most visible floor material, character joint silhouettes, camera scale, contrast and every-angle performance while preserving physical walking and full orbit. The paired reference/implementation canvas still contains actionable P1 character-sculpt, indirect-lighting and bespoke-prop differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production character sculpt/cloth acting, offline-grade indirect material response and broader bespoke environment assets remain visible P1 differences.
+
 ## 2026-07-18 reference-fidelity v24 articulated silhouette, prop inertia and portrait-follow gate
 
 ### Evidence inspected together

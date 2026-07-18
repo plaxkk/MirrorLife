@@ -5683,7 +5683,9 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     // Enter directly at the edge of the listening circle. The earlier spawn
     // lived near the cutaway wall, which made the player read as a giant
     // foreground obstruction instead of one participant in the discussion.
-    spawn: { x: 0, y: 0.86, z: 1.62 },
+    // A slight off-axis entrance avoids the rigid, perfectly symmetrical back
+    // view while keeping the player on the listening circle and fully walkable.
+    spawn: { x: 0.36, y: 0.86, z: 1.56 },
     lightingPreset: "civic-ivory",
     materialPreset: "terrazzo-teal-brass",
     functionalZones: [
@@ -5736,7 +5738,7 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     ],
     actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
-    cameraTargets: [{ id: "hearing", x: 0, z: 0.15 }, { id: "evidence", x: -1.25, z: -0.8 }]
+    cameraTargets: [{ id: "hearing", x: -0.18, z: 0.15 }, { id: "evidence", x: -1.25, z: -0.8 }]
   }),
   "empathy-lab": Object.freeze({
     shellId: "calibration-circle-v1",
@@ -17790,14 +17792,40 @@ function openLocalInteriorQa(zoneId) {
       console.warn(`MirrorLife interior QA zone not found: ${zoneId}`);
       return;
     }
+    const deterministicSceneQa = isLocalInteriorSceneQaEnabled();
+    if (deterministicSceneQa) {
+      // Visual comparisons must not inherit however many simulation ticks a
+      // previous reload happened to accumulate.  Freeze the selected room at
+      // the reference's clear 06:00 state so lighting, HUD copy and character
+      // staging are reproducible across yaw/mobile captures.
+      state.society.turn = 0;
+      state.society.phaseId = WORLD_PHASES[0]?.id || state.society.phaseId;
+      state.society.phaseTurn = 0;
+      state.society.clock = {
+        ...(state.society.clock || {}),
+        day: 1,
+        hour: 6,
+        minute: 0,
+        tick: 0,
+        weather: "fine"
+      };
+      state.society.lifeWeek = {
+        ...buildLifeWeekSystem(),
+        ...(state.society.lifeWeek || {}),
+        week: 1,
+        stage: "plan",
+        stageTurn: 0
+      };
+    }
     pauseSocietyRun();
     state.society.speed = 0.5;
     const slider = document.getElementById("hudSpeed");
     const sliderVal = document.getElementById("hudSpeedVal");
     if (slider) slider.value = "0.5";
     if (sliderVal) sliderVal.textContent = "0.5x";
+    if (deterministicSceneQa) updateHUD();
     enterInteriorView(zone, "qa");
-    if (isLocalInteriorSceneQaEnabled()) {
+    if (deterministicSceneQa) {
       seedInteriorOccupants(zone);
       Object.values(citizenAnimations).forEach((animation) => {
         // Visual QA sessions must remain deterministic long enough for four-way

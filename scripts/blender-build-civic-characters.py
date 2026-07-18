@@ -250,6 +250,63 @@ def cylinder(name, radius_bottom, radius_top, depth, location, mat, parent=None,
     return obj
 
 
+def organic_limb(name, depth, profile, location, mat, parent=None, rotation=(0, 0, 0), sides=18):
+    """Build a softly changing limb volume instead of a straight cone.
+
+    ``profile`` contains ``(height_ratio, radius_x, radius_y)`` rings ordered
+    from top to bottom.  A calf can therefore swell before tapering into the
+    ankle, and a sleeve can roll naturally from the shoulder into the elbow.
+    The mesh stays inexpensive and keeps the existing pivot-rig contract.
+    """
+    if len(profile) < 3:
+        raise ValueError("organic_limb requires at least three profile rings")
+    vertices = []
+    faces = []
+    for height_ratio, radius_x, radius_y in profile:
+        z = depth * height_ratio
+        for side in range(sides):
+            angle = math.tau * side / sides
+            vertices.append((
+                math.cos(angle) * radius_x,
+                math.sin(angle) * radius_y,
+                z,
+            ))
+    for ring in range(len(profile) - 1):
+        current = ring * sides
+        following_ring = (ring + 1) * sides
+        for side in range(sides):
+            following = (side + 1) % sides
+            faces.append((
+                current + side,
+                current + following,
+                following_ring + following,
+                following_ring + side,
+            ))
+    vertices.extend(((0, 0, depth * profile[0][0]), (0, 0, depth * profile[-1][0])))
+    top_center = len(vertices) - 2
+    bottom_center = len(vertices) - 1
+    last_ring = (len(profile) - 1) * sides
+    for side in range(sides):
+        following = (side + 1) % sides
+        faces.append((top_center, side, following))
+        faces.append((bottom_center, last_ring + following, last_ring + side))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    obj.location = location
+    obj.rotation_euler = rotation
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Organic limb softness", "BEVEL")
+    bevel.width = 0.006
+    bevel.segments = 2
+    return obj
+
+
 def torus(name, major_radius, minor_radius, location, mat, parent=None, rotation=(0, 0, 0), major_segments=32):
     bpy.ops.mesh.primitive_torus_add(
         major_radius=major_radius,
@@ -329,6 +386,47 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
     return obj
 
 
+def cloth_fold_ribbon(name, points, widths, mat, parent=None, depth=0.008):
+    """Create a shallow tapered fabric ridge that reads as cloth, not piping.
+
+    The earlier garment creases were round curve tubes. At gameplay distance
+    those looked like cords glued onto the costume. This low triangular ribbon
+    rolls one soft highlight across the fold and then disappears into the base
+    cloth at both ends.
+    """
+    if len(points) != len(widths) or len(points) < 2:
+        raise ValueError("cloth_fold_ribbon requires matching point/width arrays")
+    vertices = []
+    for point, width in zip(points, widths):
+        x, y, z = point
+        vertices.extend((
+            (x - width, y, z),
+            (x, y - depth, z),
+            (x + width, y, z),
+        ))
+    faces = []
+    for index in range(len(points) - 1):
+        base = index * 3
+        following = (index + 1) * 3
+        faces.extend((
+            (base, base + 1, following + 1, following),
+            (base + 1, base + 2, following + 2, following + 1),
+        ))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Fabric fold softness", "BEVEL")
+    bevel.width = min(depth * 0.46, min(widths) * 0.32)
+    bevel.segments = 2
+    return obj
+
+
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.035),
@@ -360,7 +458,7 @@ def build_face(head, mats, role):
     camera-facing portrait card, so they survive orbit, occlusion and shadow.
     """
     feminine = role in ("facilitator", "mediator")
-    face = ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=32, rings=22)
+    face = ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=40, rings=28)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -453,7 +551,11 @@ def build_face(head, mats, role):
 
 
 def build_hair(head, mats, style):
-    ellipsoid("HairCap", (0, 0.045, 0.085), (0.282, 0.225, 0.255), mats["hair"], head, segments=26, rings=16)
+    # Keep the cap inside the face silhouette.  A wide full sphere reads like a
+    # plastic helmet from the follow camera, especially on the player whose
+    # back faces the camera for most conversations.
+    cap_scale = (0.265, 0.187, 0.236) if style == "spiky" else (0.278, 0.21, 0.25)
+    ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
     fringe_specs = (
         (-0.19, -0.15, 0.16, 0.044),
         (-0.12, -0.085, 0.15, 0.048),
@@ -506,7 +608,30 @@ def build_hair(head, mats, style):
                 (0.048, 0.043, 0.026, 0.005),
                 mats["hair_highlight"] if index == 1 else mats["hair"],
                 head,
-                sides=10,
+                sides=14,
+            )
+        # Break the rear silhouette into swept clumps.  These overlap the cap
+        # at their roots, so the gameplay camera sees one authored hairstyle
+        # rather than a sphere with a few decorative spikes on top.
+        for index, (root_x, tip_x, tip_z) in enumerate((
+            (-0.2, -0.24, 0.08),
+            (-0.1, -0.15, 0.015),
+            (0.0, 0.02, -0.04),
+            (0.1, 0.16, 0.01),
+            (0.2, 0.25, 0.085),
+        )):
+            tapered_lock(
+                f"BackHairLock_{index + 1}",
+                [
+                    (root_x, 0.125, 0.185 - abs(root_x) * 0.14),
+                    ((root_x * 2 + tip_x) / 3, 0.195, 0.13 - abs(root_x) * 0.08),
+                    ((root_x + tip_x * 2) / 3, 0.228, tip_z + 0.045),
+                    (tip_x, 0.215, tip_z),
+                ],
+                (0.044, 0.042, 0.027, 0.006),
+                mats["hair_highlight"] if index in (1, 3) else mats["hair"],
+                head,
+                sides=14,
             )
     elif style == "coral_ponytail":
         ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.15, 0.13, 0.16), mats["hair"], head, segments=24, rings=14)
@@ -562,38 +687,102 @@ def build_body(role, config, mats, visual):
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
         # A rounded shoulder cap and elbow bridge remove the toy-block gaps
         # while keeping every segment independently poseable at runtime.
-        ellipsoid(f"ShoulderCap_{side}", (0, 0, -0.028), (0.068, 0.062, 0.078), mats["top"], pivot, segments=22, rings=14)
-        cylinder(f"UpperArm_{side}", 0.058, 0.073, 0.285, (0, 0, -0.135), mats["top"], pivot, vertices=24)
-        ellipsoid(f"ElbowBridge_{side}", (0, 0, 0.004), (0.063, 0.058, 0.067), mats["outer"], elbow, segments=20, rings=12)
-        cylinder(f"Forearm_{side}", 0.05, 0.061, 0.265, (0, 0, -0.132), mats["outer"], elbow, vertices=22)
+        ellipsoid(f"ShoulderCap_{side}", (0, 0, -0.038), (0.055, 0.052, 0.06), mats["top"], pivot, segments=20, rings=12)
+        organic_limb(
+            f"UpperArm_{side}",
+            0.285,
+            (
+                (0.5, 0.071, 0.067),
+                (0.28, 0.069, 0.064),
+                (0.02, 0.062, 0.058),
+                (-0.28, 0.055, 0.052),
+                (-0.5, 0.051, 0.049),
+            ),
+            (0, 0, -0.135),
+            mats["top"],
+            pivot,
+        )
+        ellipsoid(f"ElbowBridge_{side}", (0, 0, 0.002), (0.047, 0.045, 0.05), mats["outer"], elbow, segments=18, rings=10)
+        organic_limb(
+            f"Forearm_{side}",
+            0.265,
+            (
+                (0.5, 0.058, 0.055),
+                (0.23, 0.061, 0.057),
+                (-0.08, 0.055, 0.052),
+                (-0.34, 0.048, 0.046),
+                (-0.5, 0.045, 0.043),
+            ),
+            (0, 0, -0.132),
+            mats["outer"],
+            elbow,
+        )
         cylinder(f"Cuff_{side}", 0.06, 0.056, 0.052, (0, 0, -0.236), mats["accent"], elbow, vertices=20)
-        ellipsoid(f"Hand_{side}", (0, -0.006, -0.302), (0.055, 0.046, 0.073), mats["skin"], elbow, segments=18, rings=12)
-        ellipsoid(f"Thumb_{side}", (-side * 0.039, -0.038, -0.286), (0.019, 0.017, 0.04), mats["skin"], elbow, rotation=(0, side * 0.38, side * 0.35), segments=14, rings=8)
-        for finger_index, finger_x in enumerate((-0.03, 0, 0.03)):
+        # The reference uses a soft illustrated hand at gameplay distance, not
+        # individually separated doll fingers.  Keep four anatomical knuckle
+        # forms for close-up animation, but bury their roots inside a longer
+        # tapered palm so they merge into one readable mitten silhouette.
+        ellipsoid(f"Hand_{side}", (0, -0.008, -0.307), (0.052, 0.041, 0.062), mats["skin"], elbow, segments=24, rings=16)
+        ellipsoid(f"Thumb_{side}", (-side * 0.04, -0.035, -0.306), (0.017, 0.014, 0.034), mats["skin"], elbow, rotation=(0.08, side * 0.34, side * 0.36), segments=14, rings=8)
+        finger_specs = (
+            (-0.027, 0.025),
+            (-0.009, 0.028),
+            (0.009, 0.029),
+            (0.027, 0.026),
+        )
+        for finger_index, (finger_x, finger_length) in enumerate(finger_specs):
+            role_curl = 0.12 if role == "facilitator" and side == -1 else 0.08 if role == "mediator" and side == 1 else 0.05
             ellipsoid(
                 f"Finger_{side}_{finger_index + 1}",
-                (finger_x * 0.82, -0.046, -0.316),
-                (0.012, 0.015, 0.04),
+                (finger_x * 0.67, -0.035, -0.357 + abs(finger_x) * 0.035),
+                (0.0088, 0.0105, finger_length),
                 mats["skin"],
                 elbow,
-                rotation=(0.08, 0, -side * finger_x * 2.2),
+                rotation=(role_curl, side * finger_x * 0.35, -side * finger_x * 0.45),
                 segments=12,
                 rings=8,
             )
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
-        cylinder(f"Thigh_{side}", 0.076, 0.09, 0.34, (0, 0, -0.15), mats["lower"], pivot, vertices=24)
-        cylinder(f"Shin_{side}", 0.065, 0.078, 0.33, (0, 0, -0.155), mats["lower"], knee, vertices=22)
-        # Two shallow same-material ridges catch the warm key light like cloth
-        # tension instead of painting dark stripes onto the trousers.
+        organic_limb(
+            f"Thigh_{side}",
+            0.34,
+            (
+                (0.5, 0.089, 0.082),
+                (0.25, 0.09, 0.084),
+                (0.0, 0.084, 0.08),
+                (-0.3, 0.075, 0.071),
+                (-0.5, 0.069, 0.066),
+            ),
+            (0, 0, -0.15),
+            mats["lower"],
+            pivot,
+        )
+        ellipsoid(f"KneeBridge_{side}", (0, 0, 0.002), (0.06, 0.056, 0.06), mats["lower"], knee, segments=18, rings=10)
+        organic_limb(
+            f"Shin_{side}",
+            0.33,
+            (
+                (0.5, 0.071, 0.067),
+                (0.28, 0.078, 0.073),
+                (0.04, 0.083, 0.077),
+                (-0.3, 0.068, 0.064),
+                (-0.5, 0.06, 0.058),
+            ),
+            (0, 0, -0.155),
+            mats["lower"],
+            knee,
+        )
+        # Two shallow same-material ribbons catch the warm key light like cloth
+        # tension instead of reading as cords glued onto the trousers.
         for fold_index, fold_x in enumerate((-0.035, 0.035)):
-            curve_tube(
+            cloth_fold_ribbon(
                 f"TrouserFold_{side}_{fold_index + 1}",
                 [(fold_x, -0.087, -0.035), (fold_x * 0.55, -0.095, -0.14), (fold_x * 0.8, -0.087, -0.235)],
-                0.006,
+                (0.002, 0.008, 0.002),
                 mats["lower"],
                 knee,
-                resolution=2,
+                depth=0.006,
             )
         cylinder(f"TrouserCuff_{side}", 0.088, 0.082, 0.082, (0, 0, -0.25), mats["accent"], knee, vertices=18)
         rounded_box(f"Shoe_{side}", (0.164, 0.25, 0.12), (0, -0.04, -0.35), mats["shoe"], knee, radius=0.046)
@@ -620,27 +809,89 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
                 radius=0.018,
                 rotation=(0, side * 0.025, side * 0.065),
             )
+            rounded_box(
+                f"VestPocket_{side}",
+                (0.105, 0.035, 0.12),
+                (side * 0.12, -0.206, 0.93),
+                mats["accent"],
+                visual,
+                radius=0.018,
+                rotation=(0.02, side * 0.02, side * 0.045),
+            )
+            cloth_fold_ribbon(
+                f"VestDrape_{side}",
+                [
+                    (side * 0.055, -0.208, 1.215),
+                    (side * 0.075, -0.218, 1.06),
+                    (side * 0.09, -0.211, 0.86),
+                ],
+                (0.002, 0.011, 0.002),
+                mats["outer"],
+                visual,
+                depth=0.008,
+            )
+        curve_tube("VestCenterSeam", [(0, -0.207, 0.83), (0, -0.215, 1.05), (0, -0.205, 1.24)], 0.006, mats["accent"], visual, resolution=2)
+        curve_tube("TravelerCollar", [(-0.17, -0.12, 1.25), (0, -0.205, 1.2), (0.17, -0.12, 1.25)], 0.026, mats["outer"], visual)
         backpack = empty("BackpackPivot", visual, (0, 0.155, 1.0))
-        rounded_box("Backpack", (0.37, 0.17, 0.43), (0, 0, 0), mats["accent"], backpack, radius=0.09)
+        # A rounded volume avoids the large rectangular block that dominates
+        # the default follow-camera view from behind the player.
+        ellipsoid("Backpack", (0, 0, 0), (0.205, 0.105, 0.235), mats["accent"], backpack, segments=28, rings=18)
         rounded_box("BackpackFlap", (0.29, 0.04, 0.13), (0, 0.097, 0.105), mats["shoe"], backpack, radius=0.03)
         rounded_box("BackpackPocket", (0.23, 0.04, 0.14), (0, 0.097, -0.09), mats["outer"], backpack, radius=0.035)
+        curve_tube("BackpackHandle", [(-0.08, 0.02, 0.225), (0, 0.07, 0.26), (0.08, 0.02, 0.225)], 0.014, mats["shoe"], backpack, resolution=2)
+        cloth_fold_ribbon(
+            "BackpackCenterDrape",
+            [(0, 0.106, 0.08), (0.012, 0.112, -0.02), (0, 0.106, -0.16)],
+            (0.002, 0.012, 0.002),
+            mats["accent"],
+            backpack,
+            depth=0.007,
+        )
+        for side in (-1, 1):
+            rounded_box(f"BackpackSidePocket_{side}", (0.075, 0.12, 0.16), (side * 0.205, 0.018, -0.08), mats["outer"], backpack, radius=0.025)
+            curve_tube(
+                f"BackpackStrap_{side}",
+                [(side * 0.16, 0.105, 0.25), (side * 0.2, 0.145, 0.02), (side * 0.16, 0.11, -0.22)],
+                0.018,
+                mats["shoe"],
+                backpack,
+            )
+            rounded_box(f"BackpackBuckle_{side}", (0.055, 0.025, 0.065), (side * 0.16, 0.125, -0.04), mats["metal"], backpack, radius=0.012)
         curve_tube("Scarf", [(-0.16, -0.005, 1.275), (0, -0.105, 1.255), (0.16, -0.005, 1.275)], 0.027, mats["accent"], visual)
     elif costume == "listener":
         curve_tube("Hood", [(-0.19, 0.02, 1.27), (0, 0.11, 1.34), (0.19, 0.02, 1.27)], 0.055, mats["outer"], visual)
+        curve_tube("JacketCenterSeam", [(0, -0.205, 0.83), (0, -0.216, 1.04), (0, -0.205, 1.24)], 0.006, mats["outer"], visual, resolution=2)
+        curve_tube("JacketHem", [(-0.2, -0.13, 0.79), (0, -0.205, 0.77), (0.2, -0.13, 0.79)], 0.008, mats["outer"], visual, resolution=2)
+        for side in (-1, 1):
+            cloth_fold_ribbon(
+                f"JacketTensionFold_{side}",
+                [
+                    (side * 0.17, -0.186, 1.2),
+                    (side * 0.105, -0.215, 1.04),
+                    (side * 0.14, -0.2, 0.84),
+                ],
+                (0.002, 0.012, 0.002),
+                mats["top"],
+                visual,
+                depth=0.008,
+            )
         rounded_box("Satchel", (0.34, 0.14, 0.27), (0.31, 0.08, 0.78), mats["accent"], visual, radius=0.065)
+        rounded_box("SatchelFlap", (0.27, 0.035, 0.09), (0.31, -0.002, 0.84), mats["shoe"], visual, radius=0.02)
+        rounded_box("SatchelClasp", (0.055, 0.025, 0.065), (0.31, -0.023, 0.8), mats["metal"], visual, radius=0.012)
         curve_tube("CrossBodyStrap", [(-0.2, -0.17, 1.23), (0.02, -0.19, 1.0), (0.25, -0.12, 0.78)], 0.018, mats["outer"], visual)
         for side in (-1, 1):
             rounded_box(f"CargoPocket_{side}", (0.14, 0.055, 0.17), (side * 0.14, -0.095, 0.52), mats["accent"], visual, radius=0.025)
     elif costume in ("facilitator", "mediator"):
         cylinder("Skirt", 0.29, 0.21, 0.5, (0, 0, 0.72), mats["lower"], visual, vertices=32)
+        curve_tube("SkirtHem", [(-0.27, -0.08, 0.48), (0, -0.285, 0.46), (0.27, -0.08, 0.48)], 0.008, mats["accent"], visual, resolution=2)
         for pleat_index, pleat_x in enumerate((-0.1, 0, 0.1)):
-            curve_tube(
+            cloth_fold_ribbon(
                 f"SkirtPleat_{pleat_index + 1}",
                 [(pleat_x * 0.72, -0.215, 0.94), (pleat_x * 0.9, -0.25, 0.73), (pleat_x, -0.275, 0.5)],
-                0.003,
+                (0.002, 0.012 if pleat_x else 0.016, 0.002),
                 mats["lower"],
                 visual,
-                resolution=2,
+                depth=0.008,
             )
         for side in (-1, 1):
             tailored_panel(
@@ -657,6 +908,26 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
                 rotation=(0, side * 0.022, side * 0.028),
             )
             rounded_box(f"Lapel_{side}", (0.12, 0.035, 0.3), (side * 0.07, -0.21, 1.12), mats["outer"], visual, radius=0.025, rotation=(0, side * 0.08, side * 0.45))
+            curve_tube(
+                f"CoatHem_{side}",
+                [(side * 0.02, -0.214, 0.79), (side * 0.1, -0.222, 0.8), (side * 0.19, -0.18, 0.81)],
+                0.006,
+                mats["accent"],
+                visual,
+                resolution=2,
+            )
+            cloth_fold_ribbon(
+                f"CoatDrape_{side}",
+                [
+                    (side * 0.155, -0.211, 1.18),
+                    (side * 0.125, -0.225, 1.0),
+                    (side * 0.16, -0.204, 0.82),
+                ],
+                (0.002, 0.012, 0.002),
+                mats["outer"],
+                visual,
+                depth=0.008,
+            )
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.022, 0.012, 0.022), mats["accent"], visual, segments=12, rings=8)
         if costume == "facilitator":

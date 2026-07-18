@@ -16,7 +16,9 @@ let totalBytes = 0;
 for (const role of expectedRoles) {
   const entry = manifest.roles[role];
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 80, `${role}: source mesh count is outside the authored range`);
+  // Runtime batches these semantic parts per articulated pivot, so source-part
+  // count may grow modestly without increasing the live draw-call budget.
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 90, `${role}: source mesh count is outside the authored range`);
   assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 35000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
@@ -44,12 +46,34 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("RightElbowPivot")), `${role}: right elbow articulation is missing`);
   assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
+  assert(contents.includes(Buffer.from("Finger_-1_4")), `${role}: fourth left-hand finger silhouette is missing`);
+  assert(contents.includes(Buffer.from("Finger_1_4")), `${role}: fourth right-hand finger silhouette is missing`);
   if (role === "player") {
     assert(contents.includes(Buffer.from("Backpack")), "player: backpack mesh is missing");
     assert(contents.includes(Buffer.from("BackpackPivot")), "player: backpack secondary-motion pivot is missing");
+    assert(contents.includes(Buffer.from("VestCenterSeam")), "player: vest seam detail is missing");
+    assert(contents.includes(Buffer.from("VestDrape_-1")), "player: left vest drape is missing");
+    assert(contents.includes(Buffer.from("VestDrape_1")), "player: right vest drape is missing");
+    assert(contents.includes(Buffer.from("BackpackStrap_-1")), "player: left backpack strap is missing");
+    assert(contents.includes(Buffer.from("BackpackStrap_1")), "player: right backpack strap is missing");
+    assert(contents.includes(Buffer.from("BackpackHandle")), "player: backpack handle is missing");
+    assert(contents.includes(Buffer.from("BackpackCenterDrape")), "player: backpack fabric drape is missing");
   }
-  if (role === "listener") assert(contents.includes(Buffer.from("Satchel")), "listener: satchel secondary-motion node is missing");
+  if (role === "listener") {
+    assert(contents.includes(Buffer.from("Satchel")), "listener: satchel secondary-motion node is missing");
+    assert(contents.includes(Buffer.from("JacketCenterSeam")), "listener: jacket seam detail is missing");
+    assert(contents.includes(Buffer.from("SatchelClasp")), "listener: satchel clasp is missing");
+    assert(contents.includes(Buffer.from("JacketTensionFold_-1")), "listener: left jacket tension fold is missing");
+    assert(contents.includes(Buffer.from("JacketTensionFold_1")), "listener: right jacket tension fold is missing");
+  }
   if (role === "facilitator") assert(contents.includes(Buffer.from("PonytailPivot")), "facilitator: ponytail secondary-motion pivot is missing");
+  if (role === "facilitator" || role === "mediator") {
+    assert(contents.includes(Buffer.from("SkirtHem")), `${role}: skirt hem detail is missing`);
+    assert(contents.includes(Buffer.from("CoatHem_-1")), `${role}: left coat hem detail is missing`);
+    assert(contents.includes(Buffer.from("CoatHem_1")), `${role}: right coat hem detail is missing`);
+    assert(contents.includes(Buffer.from("CoatDrape_-1")), `${role}: left coat drape is missing`);
+    assert(contents.includes(Buffer.from("CoatDrape_1")), `${role}: right coat drape is missing`);
+  }
   totalBytes += stat.size;
 }
 
