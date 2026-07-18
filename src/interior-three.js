@@ -172,6 +172,7 @@ let mergeGeometries;
 let EffectComposer;
 let RenderPass;
 let GTAOPass;
+let ShaderPass;
 let OutputPass;
 let loader;
 let threeLoading;
@@ -180,6 +181,7 @@ let renderer;
 let composer;
 let renderPass;
 let gtaoPass;
+let cinematicGradePass;
 let outputPass;
 let scene;
 let camera;
@@ -203,6 +205,7 @@ let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
 let contactShadowTexture;
 let civicDappleTexture;
+let civicRugTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
 let actorTextureLoading;
@@ -236,6 +239,7 @@ async function loadThree() {
       import("three/examples/jsm/postprocessing/EffectComposer.js"),
       import("three/examples/jsm/postprocessing/RenderPass.js"),
       import("three/examples/jsm/postprocessing/GTAOPass.js"),
+      import("three/examples/jsm/postprocessing/ShaderPass.js"),
       import("three/examples/jsm/postprocessing/OutputPass.js")
     ]).then(([
       threeModule,
@@ -247,6 +251,7 @@ async function loadThree() {
       effectComposerModule,
       renderPassModule,
       gtaoPassModule,
+      shaderPassModule,
       outputPassModule
     ]) => {
       THREE = threeModule;
@@ -257,6 +262,7 @@ async function loadThree() {
       EffectComposer = effectComposerModule.EffectComposer;
       RenderPass = renderPassModule.RenderPass;
       GTAOPass = gtaoPassModule.GTAOPass;
+      ShaderPass = shaderPassModule.ShaderPass;
       OutputPass = outputPassModule.OutputPass;
       mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
@@ -412,9 +418,41 @@ function ensureLayer() {
     samples: 12
   });
   gtaoPass.enabled = false;
+  cinematicGradePass = new ShaderPass({
+    uniforms: {
+      tDiffuse: { value: null },
+      strength: { value: 1 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      void main() {
+        vUv = uv;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0);
+      }
+    `,
+    fragmentShader: `
+      uniform sampler2D tDiffuse;
+      uniform float strength;
+      varying vec2 vUv;
+      void main() {
+        vec4 texel = texture2D(tDiffuse, vUv);
+        vec3 color = texel.rgb;
+        float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
+        color = mix(vec3(luma), color, 1.035 * strength);
+        color = max(vec3(0.0), (color - vec3(0.18)) * (1.0 + 0.035 * strength) + vec3(0.18));
+        color *= mix(vec3(1.0), vec3(1.022, 1.0, 0.974), strength);
+        vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
+        float vignette = smoothstep(0.34, 0.73, length(centred));
+        color *= 1.0 - vignette * 0.085 * strength;
+        gl_FragColor = vec4(color, texel.a);
+      }
+    `
+  });
+  cinematicGradePass.enabled = false;
   outputPass = new OutputPass();
   composer.addPass(renderPass);
   composer.addPass(gtaoPass);
+  composer.addPass(cinematicGradePass);
   composer.addPass(outputPass);
   return true;
 }
@@ -1130,6 +1168,63 @@ function getCivicDappleTexture() {
   civicDappleTexture.magFilter = THREE.LinearFilter;
   civicDappleTexture.needsUpdate = true;
   return civicDappleTexture;
+}
+
+function getCivicRugTexture() {
+  if (civicRugTexture) return civicRugTexture;
+  const size = lastWidth <= 720 ? 256 : 512;
+  const rugCanvas = document.createElement("canvas");
+  rugCanvas.width = size;
+  rugCanvas.height = size;
+  const context = rugCanvas.getContext("2d");
+  if (!context) return null;
+  context.fillStyle = "#f2e9da";
+  context.fillRect(0, 0, size, size);
+  context.save();
+  context.translate(size / 2, size / 2);
+  context.lineCap = "round";
+  context.lineJoin = "round";
+  context.strokeStyle = "rgba(151,126,91,0.19)";
+  context.lineWidth = size * 0.008;
+  for (let petalIndex = 0; petalIndex < 12; petalIndex += 1) {
+    const angle = petalIndex / 12 * Math.PI * 2;
+    context.save();
+    context.rotate(angle);
+    context.beginPath();
+    context.moveTo(0, size * 0.055);
+    context.bezierCurveTo(size * 0.028, size * 0.095, size * 0.12, size * 0.11, size * 0.155, size * 0.205);
+    context.bezierCurveTo(size * 0.09, size * 0.195, size * 0.038, size * 0.16, 0, size * 0.055);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(size * 0.04, size * 0.14);
+    context.quadraticCurveTo(size * 0.12, size * 0.18, size * 0.19, size * 0.13);
+    context.stroke();
+    context.restore();
+  }
+  context.strokeStyle = "rgba(78,130,121,0.11)";
+  context.lineWidth = size * 0.006;
+  [0.115, 0.285, 0.39].forEach((radius) => {
+    context.beginPath();
+    context.arc(0, 0, size * radius, 0, Math.PI * 2);
+    context.stroke();
+  });
+  context.restore();
+  let seed = 0x5eed123;
+  for (let index = 0; index < 720; index += 1) {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const x = seed / 4294967296 * size;
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    const y = seed / 4294967296 * size;
+    context.fillStyle = index % 3 ? "rgba(118,98,75,0.035)" : "rgba(255,255,255,0.09)";
+    context.fillRect(x, y, 1, 1);
+  }
+  civicRugTexture = new THREE.CanvasTexture(rugCanvas);
+  civicRugTexture.colorSpace = THREE.SRGBColorSpace;
+  civicRugTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  civicRugTexture.magFilter = THREE.LinearFilter;
+  civicRugTexture.generateMipmaps = true;
+  civicRugTexture.needsUpdate = true;
+  return civicRugTexture;
 }
 
 function createToonMaterial(color, options = {}) {
@@ -2689,6 +2784,135 @@ function addCivicDomesticDetails(colors) {
   });
 }
 
+function addCivicEditorialFoliage(colors, mobileLod = false) {
+  // The reference is framed by mature plants rather than scattered tiny pots.
+  // Keep these clusters behind existing fixed furniture / against the wall so
+  // they enrich depth without creating a visual walkable-space promise.
+  const leafMaterials = [
+    createToonMaterial("#356f4c", { roughness: 0.86, envMapIntensity: 0.48 }),
+    createToonMaterial("#4f8a5a", { roughness: 0.9, envMapIntensity: 0.44 }),
+    createToonMaterial("#7aa66b", { roughness: 0.94, envMapIntensity: 0.4 })
+  ];
+  const stemMaterial = createToonMaterial("#52714a", { roughness: 0.94 });
+  const basketMaterial = createToonMaterial("#b78552", {
+    roughness: 0.98,
+    surface: "fabric",
+    bumpScale: 0.018
+  });
+  const basketDark = createToonMaterial("#8b603d", { roughness: 0.9, surface: "wood", bumpScale: 0.008 });
+  const ceramicMaterial = createToonMaterial("#eadcc7", {
+    roughness: 0.46,
+    surface: "ceramic",
+    bumpScale: 0.004,
+    envMapIntensity: 0.72
+  });
+  const leafGeometry = new THREE.SphereGeometry(1, 16, 12);
+  const leafPositions = leafGeometry.getAttribute("position");
+  for (let index = 0; index < leafPositions.count; index += 1) {
+    const x = leafPositions.getX(index);
+    const y = leafPositions.getY(index);
+    const z = leafPositions.getZ(index);
+    const belly = Math.max(0, 1 - y * y);
+    // A soft centre fold and a slightly narrower tip preserve curved volume
+    // while avoiding the generic capsule profile of an undeformed sphere.
+    const taper = 0.76 + belly * 0.24;
+    leafPositions.setXYZ(index, x * taper, y, z * taper + belly * 0.12);
+  }
+  leafGeometry.computeVertexNormals();
+
+  const addCluster = ({ x, z, scale, rotation = 0, woven = false, seed = 0, leaves = 14 }) => {
+    const group = new THREE.Group();
+    group.position.set(x, 0, z);
+    group.rotation.y = rotation;
+    group.scale.setScalar(scale);
+    roomRoot.add(group);
+
+    if (woven) {
+      const basket = new THREE.Mesh(new THREE.CylinderGeometry(0.34, 0.28, 0.58, 28), basketMaterial);
+      basket.position.y = 0.3;
+      group.add(basket);
+      for (let ringIndex = 0; ringIndex < 5; ringIndex += 1) {
+        const ring = new THREE.Mesh(new THREE.TorusGeometry(0.294 + ringIndex * 0.007, 0.013, 6, 28), basketDark);
+        ring.rotation.x = Math.PI / 2;
+        ring.position.y = 0.11 + ringIndex * 0.11;
+        group.add(ring);
+      }
+      for (let ribIndex = 0; ribIndex < 8; ribIndex += 1) {
+        const angle = ribIndex / 8 * Math.PI * 2;
+        const rib = new THREE.Mesh(new THREE.CylinderGeometry(0.011, 0.013, 0.5, 6), basketDark);
+        rib.position.set(Math.cos(angle) * 0.305, 0.31, Math.sin(angle) * 0.305);
+        rib.rotation.z = Math.cos(angle) * 0.055;
+        rib.rotation.x = -Math.sin(angle) * 0.055;
+        group.add(rib);
+      }
+    } else {
+      const pot = new THREE.Mesh(new THREE.LatheGeometry([
+        new THREE.Vector2(0.24, 0), new THREE.Vector2(0.3, 0.07),
+        new THREE.Vector2(0.32, 0.42), new THREE.Vector2(0.28, 0.54),
+        new THREE.Vector2(0.25, 0.57)
+      ], 28), ceramicMaterial);
+      pot.position.y = 0.02;
+      group.add(pot);
+      const potRim = new THREE.Mesh(new THREE.TorusGeometry(0.274, 0.032, 8, 28), basketDark);
+      potRim.rotation.x = Math.PI / 2;
+      potRim.position.y = 0.58;
+      group.add(potRim);
+    }
+
+    for (let index = 0; index < leaves; index += 1) {
+      const band = Math.floor(index / 4);
+      const angle = index * 2.39996 + seed * 0.51;
+      const radius = 0.2 + band * 0.07 + (index % 3) * 0.035;
+      const height = 0.86 + band * 0.19 + (index % 2) * 0.08;
+      const leafX = Math.cos(angle) * radius;
+      const leafZ = Math.sin(angle) * radius * 0.62;
+      const stemHeight = height - 0.57;
+      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.023, stemHeight, 7), stemMaterial);
+      stem.position.set(leafX * 0.42, 0.57 + stemHeight / 2, leafZ * 0.42);
+      stem.rotation.z = -leafX * 0.55;
+      stem.rotation.x = leafZ * 0.42;
+      group.add(stem);
+
+      const leaf = new THREE.Mesh(leafGeometry, leafMaterials[(index + seed) % leafMaterials.length]);
+      leaf.scale.set(0.13 + (index % 3) * 0.012, 0.31 + (index % 2) * 0.035, 0.085);
+      leaf.position.set(leafX, height, leafZ);
+      leaf.rotation.order = "YXZ";
+      leaf.rotation.y = angle;
+      leaf.rotation.x = 0.08 + (index % 3) * 0.06;
+      leaf.rotation.z = Math.sin(angle) * 0.28 + (index % 3 - 1) * 0.08;
+      group.add(leaf);
+    }
+  };
+
+  addCluster({ x: -3.66, z: -3.36, scale: 1.08, rotation: 0.28, woven: false, seed: 3, leaves: mobileLod ? 8 : 15 });
+  if (!mobileLod) {
+    addCluster({ x: 4.18, z: -2.92, scale: 1.12, rotation: -0.52, woven: false, seed: 8, leaves: 16 });
+    addCluster({ x: 4.62, z: 1.74, scale: 0.92, rotation: -0.86, woven: true, seed: 12, leaves: 13 });
+  }
+}
+
+function addCivicArchitecturalCove(colors) {
+  // Two shallow concentric rails give the tall cylindrical shell a deliberate
+  // ceiling termination. They remain above the portal and all camera-safe
+  // targets, so the room feels built without becoming a visible cage.
+  const upper = new THREE.Mesh(
+    new THREE.TorusGeometry(ROOM_RADIUS - 0.18, 0.075, 8, 128),
+    createToonMaterial("#d1ae83", { roughness: 0.72, surface: "plaster", bumpScale: 0.006 })
+  );
+  upper.rotation.x = Math.PI / 2;
+  upper.position.y = 3.84;
+  upper.castShadow = false;
+  roomRoot.add(upper);
+  const glowRail = new THREE.Mesh(
+    new THREE.TorusGeometry(ROOM_RADIUS - 0.24, 0.027, 6, 128),
+    createToonMaterial("#e8bf70", { roughness: 0.46, emissive: 0.07, envMapIntensity: 0.74 })
+  );
+  glowRail.rotation.x = Math.PI / 2;
+  glowRail.position.y = 3.68;
+  glowRail.castShadow = false;
+  roomRoot.add(glowRail);
+}
+
 function addCivicReverseWitnessWall(colors, mobileLod = false) {
   // The default hero view is deliberately composed toward the listening wall,
   // but a true orbitable room also needs a designed reverse shot. This witness
@@ -3050,10 +3274,17 @@ function addCivicArchitecturalShell(colors) {
 function addCivicReferenceDressing(theme, colors) {
   const mobileLod = lastWidth <= 720;
   addCivicArchitecturalShell(colors);
+  if (!mobileLod) addCivicArchitecturalCove(colors);
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
     new THREE.CircleGeometry(1.48, 64),
-    createToonMaterial("#f4ead9", { roughness: 0.94, surface: "fabric", bumpScale: 0.009 })
+    createToonMaterial("#ffffff", {
+      roughness: 0.94,
+      surface: "fabric",
+      bumpScale: 0.009,
+      map: mobileLod ? null : getCivicRugTexture(),
+      envMapIntensity: 0.36
+    })
   );
   center.rotation.x = -Math.PI / 2;
   center.position.set(0, 0.041, 0.18);
@@ -3113,6 +3344,7 @@ function addCivicReferenceDressing(theme, colors) {
     addCivicOrbitFrames(colors);
     addCivicDomesticDetails(colors);
   }
+  addCivicEditorialFoliage(colors, mobileLod);
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
   addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 2);
   addBuiltInArchNiche(0.62, colors, {
@@ -5463,6 +5695,9 @@ function updateActors(actors = [], now = performance.now()) {
     }
     entry.visual.rotation.y = bodyYaw;
     const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;
+    const walkRoll = walking ? Math.cos(phase) * (running ? 0.026 : 0.017) : 0;
+    entry.visual.rotation.x = walking ? (running ? -0.07 : -0.035) : 0;
+    entry.visual.rotation.z = walkRoll;
     entry.leftLeg.rotation.x = stride;
     entry.rightLeg.rotation.x = -stride;
     entry.leftLeg.rotation.z = 0;
@@ -5557,8 +5792,8 @@ function updateActors(actors = [], now = performance.now()) {
         influences[concernIndex] = THREE.MathUtils.lerp(Number(influences[concernIndex] || 0), concernTarget, 0.12);
       }
     }
-    entry.visual.rotation.z = 0;
     if (actor.state === "jump") {
+      entry.visual.rotation.x = -0.045;
       entry.leftLeg.rotation.x = -0.42;
       entry.rightLeg.rotation.x = -0.42;
       entry.leftKnee.rotation.x = 0.72;
@@ -5569,6 +5804,7 @@ function updateActors(actors = [], now = performance.now()) {
       entry.rightElbow.rotation.x = -0.28;
       entry.visual.rotation.z = -0.04;
     } else if (actor.state === "fall") {
+      entry.visual.rotation.x = 0.035;
       entry.leftKnee.rotation.x = 0.28;
       entry.rightKnee.rotation.x = 0.48;
       entry.leftArm.rotation.z = 0.42;
@@ -5595,12 +5831,12 @@ function updateActors(actors = [], now = performance.now()) {
         entry.rightElbow.rotation.x = -0.74;
       }
       entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0016 + frame) * 0.06;
-      entry.visual.rotation.z = 0;
+      entry.visual.rotation.z = walking ? walkRoll : 0;
     } else {
       entry.leftArm.rotation.z = 0;
       entry.rightArm.rotation.z = 0;
       entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0012 + frame) * 0.035;
-      entry.visual.rotation.z = 0;
+      entry.visual.rotation.z = walking ? walkRoll : 0;
     }
     if (cameraZoneId === "public-plaza" && !walking && actor.civicRole && actor.civicRole !== "player") {
       if (actor.civicRole === "mediator") {
@@ -5645,6 +5881,21 @@ function updateActors(actors = [], now = performance.now()) {
         entry.leftKnee.rotation.x = 0.06;
         entry.headGroup.rotation.z = 0.025;
       }
+    } else if (cameraZoneId === "public-plaza" && !walking && actor.civicRole === "player") {
+      // The hero should settle onto one leg instead of returning to a rigid
+      // symmetric mannequin pose whenever movement stops. Keep the offset
+      // small enough that the capsule/feet remain visually planted.
+      const idleShift = Math.sin(now * 0.0009 + frame) * 0.008;
+      entry.leftArm.rotation.z = 0.075 + idleShift;
+      entry.rightArm.rotation.z = -0.045 - idleShift;
+      entry.leftElbow.rotation.x = -0.12;
+      entry.rightElbow.rotation.x = -0.06;
+      entry.leftLeg.rotation.z = 0.03;
+      entry.rightLeg.rotation.z = -0.018;
+      entry.leftKnee.rotation.x = 0.045;
+      entry.headGroup.rotation.x = -0.018;
+      entry.headGroup.rotation.z = -0.012;
+      entry.visual.rotation.z = -0.01 + idleShift * 0.4;
     }
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
@@ -6024,6 +6275,7 @@ function update(payload = {}) {
     worldY: actor.worldY ?? 0.05
   })), width, height);
   if (gtaoPass) gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+  if (cinematicGradePass) cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
   if (visible) {
     if (composer) composer.render();
     else renderer.render(scene, camera);

@@ -1,5 +1,51 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v19 editorial foliage, rug surface and embodied-motion gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1920 × 1080`, public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v19-full.png` and `civic-fidelity-v19-focus.png`.
+- Complete orbit: `environment-review-yaw-{90,180,270}/00-public.png`; responsive evidence: `environment-review-mobile/00-public.png` (`390 × 844`).
+- Embodied-motion evidence: `dist/interior-3d-work/civic-player-walk-v19.png` (`1280 × 720`, live W-key movement with the follow camera active).
+
+### Earlier findings, fixes and post-fix evidence
+
+- [fixed from v18 P1 / secondary density] The portal, lounge and right foreground now receive three authored editorial foliage clusters using curved-volume leaves, stems, ceramic pots and a complete woven basket. They sit behind fixed furniture or against the wall, frame the hero view and remain present in side/reverse shots without promising false walkable space.
+- [fixed / tall-shell termination] Desktop adds a restrained plaster/brass ceiling cove so the cylindrical room ends as designed architecture instead of blank wall panels. The first mobile capture exposed the near cove as a horizontal obstruction; the cove is now desktop-only and the post-fix `390 × 844` capture has no obstruction.
+- [fixed from v18 P1 / centre surface] The listening rug now carries a dedicated 512px woven colour texture with subtle radial botanical emboss, linen variation and low-contrast teal rings. It remains a horizontal 3D receiver under the characters rather than a screen overlay. Mobile deliberately keeps the simpler batched fabric surface.
+- [fixed / cinematic material separation] A public-room-only desktop grade adds restrained warm/cool separation, saturation, contrast and an 8.5% edge vignette after GTAO and before output tone mapping. It is disabled on mobile and does not affect HUD colour.
+- [fixed from v18 P1 / embodied motion] Walking now adds speed-aware forward lean and alternating body roll while retaining fixed floor shadows. The player settles into an asymmetric one-leg idle stance instead of snapping back to a rigid mirrored mannequin pose. Live movement evidence shows a raised stepping foot, planted support foot and follow-camera progression without clipping.
+- [checked / runtime spatial truth] Foliage is staged behind existing collision-safe hero furniture or at the non-walkable shell edge; the 26-zone physics audit and 2.81m movement test remain green.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `140/241,056`, `147/244,980`, `155/256,072`, `150/247,416` draw-calls/triangles. All remain below the strict `160 / 300,000` public-room gate.
+- Mobile `390 × 844`: `110` draw calls, `219,486` triangles, `85` geometries and `12` textures, at or below the `110 / 250,000` gate.
+- Browser interaction: four civic GLB roles loaded; WASD moved the player `2.81m`; pointer drag rotated the follow camera `65.3°`; the explicit walking capture verifies the rendered mid-stride pose.
+- Regression: syntax checks and production build passed; civic character/prop contracts passed; 26 zones / 10 archetypes passed physics; 78 enter/exit transitions completed with no failure/runtime error; desktop/mobile scene flow passed.
+
+### Required fidelity surfaces
+
+- [checked][spacing/layout] Portal foliage, foreground desk, listening circle, notice wall and lounge now produce a stronger foreground/middle/background sequence while preserving the deterministic walking loop.
+- [checked][colors/tokens] Warm neutral architecture remains dominant; teal/coral carry civic identity; brass is reserved for routes and evidence. The post grade improves edge depth without shifting the HUD palette.
+- [checked][image/asset quality for this iteration] New plants have full side/back volume, ceramic/basket material contrast and complete orbit evidence; the rug texture remains sharp at the hero viewport and disappears cleanly at mobile LOD.
+- [checked][copy/content] Existing location, exit, listening action and story-memory copy remains unchanged and coherent.
+- [checked][responsiveness] The initial mobile cove obstruction was caught and removed. Final `390 × 844` has no horizontal overflow, clipped primary action or scene-wide foreground obstruction.
+- [P1][characters] The target still has production sculpted anatomy, layered hair, cloth folds, hand topology and authored full-body animation clips. Current characters have real 3D volume, facial morphs and better procedural motion but remain a modular Web LOD.
+- [P1][lighting/material finish] The realtime grade and foliage improve depth, but the source still has offline bounced colour, subsurface skin, multi-scale soft shadows and bespoke per-object UV wear that are visibly richer.
+- [P1][remaining secondary assets] Plants and rug close two prominent gaps; wall joinery, ceramics, woven storage, books/paper and small lounge props still need broader bespoke mesh/UV treatment for literal frame parity.
+- [P2][HUD finish] Hierarchy and controls are functional across breakpoints, but icon drawing, optical type balance and translucent-panel microdetail remain simpler than the reference artwork.
+
+### Gate result
+
+This pass materially improves environmental density, centre-surface finish and the physical feel of walking while preserving the requested follow camera and complete 360-degree room. The same-canvas comparison still contains actionable P1 production-character, secondary-asset and offline-lighting differences, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production character sculpt/cloth animation, remaining bespoke secondary assets and offline-grade indirect material response remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v18 character silhouette, material hierarchy and daylight-depth gate
 
 ### Evidence inspected together
