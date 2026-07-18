@@ -1,5 +1,50 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v13 facial-state, GTAO and foreground-hero gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1672 × 941`, public-plaza, yaw `0°`).
+- Same-canvas full comparison: `dist/interior-3d-work/civic-fidelity-v13-full.png`.
+- Same-canvas actor/composition crop: `dist/interior-3d-work/civic-fidelity-v13-focus.png`.
+- Four-direction orbit evidence: `dist/interior-3d-work/civic-orbit-v13.png` and `environment-review-yaw-{90,180,270}/00-public.png`.
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Earlier findings, fixes and post-fix evidence
+
+- [fixed from v12 P1 / facial state] Each civic GLB now contains independently validated `MouthClosedPivot` and `MouthOpenPivot` nodes. Talking/interacting actors switch a modeled dark mouth and tongue instead of scaling one line; the closed alternative remains stable at rest. Mobile removes the unused open state before the head batch is built.
+- [fixed from v12 P1 / contact depth] The public hero moved from the older SSAO pass to a tuned GTAO pass with denoising. Floor rings, actor feet, sofa, display case and wall furniture retain soft contact separation without globally dirtying the ivory surfaces. The pass is desktop-only.
+- [fixed from v12 P1 / foreground authorship] The generic record-desk model was replaced in the civic layout by a room-authored foreground desk with a banker lamp, clipboard, notebook, marks, cup, pens and a water-glass silhouette. Its render transform and collider share the same `ZoneLayoutProfile` metre coordinates, so the added composition does not reintroduce visual/physical drift.
+- [fixed from v12 P2 / framing] The desk now forms a deliberate lower-left frame like the source instead of exposing only an oversized drawer block. Its scaled footprint remains outside the listening-circle route and has a reachable interaction anchor.
+- [fixed performance regression] The first transparent glass treatment added three visible passes and exceeded the reverse/mobile gates. The final stylised glass uses one opaque, batchable silhouette; the desk shade joins the room batch. Reverse view returned to `159/160` draw calls and mobile to `110/110`.
+- [checked] An attempted broad bloom grade was rejected after same-viewport capture visibly washed out skin, paper and ivory plaster. It is not present in the final implementation.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `148/269,048`, `150/271,472`, `159/282,576`, `157/275,396` draw-calls/triangles. All remain within the strict `160 / 300,000` public-room gate.
+- Mobile `390 × 844`: `110` draw calls, `235,218` triangles and `84` geometries, within the `110 / 250,000` mobile gate.
+- Browser interaction: four GLB roles loaded; WASD moved the player `2.93m`; pointer drag rotated the live Three.js camera `65.3°`.
+- Regression: 26-zone/10-archetype physics passed; 78 room transitions completed without failure or runtime error; desktop/mobile scene flow, character asset validation, syntax checks and production build passed.
+
+### Required fidelity surfaces
+
+- [P1][image quality / characters] The source still uses sculpted facial topology, blend-shape expressions, authored hand poses, cloth deformation and production animation clips. The live cast has real 3D hair, articulated limbs and modeled mouth states, but remains a modular pivot-rig Web LOD.
+- [P1][image quality / environment] The reference display case, cabinetry, ceramics, woven storage and plants have bespoke UVs and texture breakup. The live room now matches their functional hierarchy and foreground/middle/background placement, but most props remain reusable geometry with procedural surface response.
+- [P1][colors / lighting] GTAO improves contact depth and the warm-neutral/teal/coral/brass hierarchy is coherent, but the reference's offline global illumination, dappled window shadows and material-specific specular response remain visibly richer.
+- [P2][spacing / orbit] The hero view is readable, but the `90°` orbit deliberately lets the near desk/display edge enter the frame and rely on opacity handling; it is a valid exploration view rather than a separately art-directed cinematic shot.
+- [P2][typography / icons] The HUD preserves the source hierarchy and is usable at both breakpoints, but icon optical weight and compact status typography remain simpler than the target render.
+- [checked][copy / content] Location, listening action, exit and story-memory labels remain coherent.
+- [checked][responsiveness / interaction] No horizontal overflow or clipped primary action was found; mobile keeps the player, witnesses, interaction prompt, joystick and actions visible.
+
+### Gate result
+
+This pass makes concrete progress toward the reference while preserving genuine walking, camera following and full orbit. The same-canvas actor/material comparison still contains visible actionable P1 production differences, so literal image-1 quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production character blend shapes/animation, bespoke per-object UV textures and offline-grade indirect lighting remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v12 authored-hair, social-acting and lounge-light gate
 
 ### Evidence inspected together

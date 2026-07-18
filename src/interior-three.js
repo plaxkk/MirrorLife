@@ -168,7 +168,7 @@ let RoomEnvironment;
 let mergeGeometries;
 let EffectComposer;
 let RenderPass;
-let SSAOPass;
+let GTAOPass;
 let OutputPass;
 let loader;
 let threeLoading;
@@ -176,7 +176,7 @@ let canvas;
 let renderer;
 let composer;
 let renderPass;
-let ssaoPass;
+let gtaoPass;
 let outputPass;
 let scene;
 let camera;
@@ -229,7 +229,7 @@ async function loadThree() {
       import("three/examples/jsm/environments/RoomEnvironment.js"),
       import("three/examples/jsm/postprocessing/EffectComposer.js"),
       import("three/examples/jsm/postprocessing/RenderPass.js"),
-      import("three/examples/jsm/postprocessing/SSAOPass.js"),
+      import("three/examples/jsm/postprocessing/GTAOPass.js"),
       import("three/examples/jsm/postprocessing/OutputPass.js")
     ]).then(([
       threeModule,
@@ -240,7 +240,7 @@ async function loadThree() {
       roomEnvironmentModule,
       effectComposerModule,
       renderPassModule,
-      ssaoPassModule,
+      gtaoPassModule,
       outputPassModule
     ]) => {
       THREE = threeModule;
@@ -250,7 +250,7 @@ async function loadThree() {
       RoomEnvironment = roomEnvironmentModule.RoomEnvironment;
       EffectComposer = effectComposerModule.EffectComposer;
       RenderPass = renderPassModule.RenderPass;
-      SSAOPass = ssaoPassModule.SSAOPass;
+      GTAOPass = gtaoPassModule.GTAOPass;
       OutputPass = outputPassModule.OutputPass;
       mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
@@ -365,14 +365,30 @@ function ensureLayer() {
   // mobile devices retain their existing performance profile.
   composer = new EffectComposer(renderer);
   renderPass = new RenderPass(scene, camera);
-  ssaoPass = new SSAOPass(scene, camera, 1, 1);
-  ssaoPass.kernelRadius = 7;
-  ssaoPass.minDistance = 0.0018;
-  ssaoPass.maxDistance = 0.11;
-  ssaoPass.enabled = false;
+  gtaoPass = new GTAOPass(scene, camera, 1, 1);
+  gtaoPass.blendIntensity = 0.72;
+  gtaoPass.updateGtaoMaterial({
+    radius: 0.34,
+    distanceExponent: 1.7,
+    thickness: 1.25,
+    distanceFallOff: 0.9,
+    scale: 0.82,
+    samples: 12,
+    screenSpaceRadius: false
+  });
+  gtaoPass.updatePdMaterial({
+    lumaPhi: 8,
+    depthPhi: 2.2,
+    normalPhi: 3.2,
+    radius: 6,
+    radiusExponent: 2,
+    rings: 2,
+    samples: 12
+  });
+  gtaoPass.enabled = false;
   outputPass = new OutputPass();
   composer.addPass(renderPass);
-  composer.addPass(ssaoPass);
+  composer.addPass(gtaoPass);
   composer.addPass(outputPass);
   return true;
 }
@@ -2199,8 +2215,11 @@ function addCivicListeningConsole(colors) {
 
 function addCivicRecordDesk(colors) {
   const group = new THREE.Group();
-  group.position.set(-3.32, 0, 1.72);
-  group.rotation.y = 2.05;
+  // Stage the desk as a deliberate foreground frame, matching the reference
+  // composition while leaving the main listening route unobstructed.
+  group.position.set(-3.38, 0, 2.06);
+  group.rotation.y = 2.12;
+  group.scale.setScalar(1.24);
   roomRoot.add(group);
   const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66, surface: "wood", bumpScale: 0.012 });
   const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
@@ -2222,16 +2241,19 @@ function addCivicRecordDesk(colors) {
     note.rotation.y = -0.18 + index * 0.13;
     group.add(note);
   });
-  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.06, 18), trim);
-  lampBase.position.set(0.55, 0.9, -0.08);
+  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.055, 18), trim);
+  lampBase.position.set(-0.58, 0.9, -0.08);
   group.add(lampBase);
-  const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.025, 0.03, 0.55, 12), trim);
-  lampStem.position.set(0.55, 1.16, -0.08);
-  lampStem.rotation.z = -0.13;
+  const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.46, 12), trim);
+  lampStem.position.set(-0.58, 1.12, -0.08);
+  lampStem.rotation.z = 0.13;
   group.add(lampStem);
-  const shade = new THREE.Mesh(new THREE.ConeGeometry(0.2, 0.2, 20, 1, true), createToonMaterial(colors.secondary, { side: THREE.DoubleSide, roughness: 0.64 }));
-  shade.position.set(0.62, 1.43, -0.08);
-  shade.rotation.x = Math.PI;
+  const shade = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 22, 12, 0, Math.PI * 2, 0, Math.PI * 0.5),
+    createToonMaterial("#356f68", { roughness: 0.52, envMapIntensity: 0.78 })
+  );
+  shade.scale.set(1.18, 0.62, 0.9);
+  shade.position.set(-0.64, 1.34, -0.08);
   group.add(shade);
 
   // Editorial micro-props give the foreground the lived-in density of the
@@ -2252,28 +2274,23 @@ function addCivicRecordDesk(colors) {
     line.rotation.y = 0.14;
     group.add(line);
   });
-  const glass = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.105, 0.09, 0.24, 28, 1, true),
-    createGlassMaterial("#dceeed", { opacity: 0.42, roughness: 0.08, depthWrite: false })
+  // At gameplay distance a single cool ceramic-glass silhouette reads more
+  // cleanly than two transparent passes and keeps the mobile hero at budget.
+  const waterGlass = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.095, 0.085, 0.22, 22),
+    createToonMaterial("#cde4df", { roughness: 0.3, envMapIntensity: 0.86 })
   );
-  glass.position.set(0.18, 0.91, 0.18);
-  group.add(glass);
-  const water = new THREE.Mesh(
-    new THREE.CircleGeometry(0.087, 28),
-    createGlassMaterial("#b9dfe6", { opacity: 0.56, roughness: 0.05, depthWrite: false })
-  );
-  water.rotation.x = -Math.PI / 2;
-  water.position.set(0.18, 1.005, 0.18);
-  group.add(water);
+  waterGlass.position.set(0.18, 0.91, 0.18);
+  group.add(waterGlass);
   const penCup = new THREE.Mesh(
     new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20),
     createToonMaterial("#4d8b83", { roughness: 0.46 })
   );
-  penCup.position.set(-0.05, 0.93, -0.18);
+  penCup.position.set(0.44, 0.93, -0.18);
   group.add(penCup);
   [colors.accent, "#476e91", "#b45f51"].forEach((color, index) => {
     const pen = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.31, 8), createToonMaterial(color, { roughness: 0.58 }));
-    pen.position.set(-0.09 + index * 0.04, 1.09 + index * 0.015, -0.18);
+    pen.position.set(0.4 + index * 0.04, 1.09 + index * 0.015, -0.18);
     pen.rotation.z = (index - 1) * 0.1;
     group.add(pen);
   });
@@ -2840,6 +2857,7 @@ function addCivicReferenceDressing(theme, colors) {
 
   addAtelierDisplayCabinet(theme, colors);
   addCivicListeningConsole(colors);
+  addCivicRecordDesk(colors);
   addCivicHeroNoticeWall(colors);
   addCivicLibraryWall(colors);
   addCivicHeroPendant(colors);
@@ -4735,6 +4753,8 @@ function createCivicActorObject(actor, asset) {
   const eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
   const browPivots = [headGroup?.getObjectByName("BrowPivot_-1"), headGroup?.getObjectByName("BrowPivot_1")].filter(Boolean);
   const mouthPivot = headGroup?.getObjectByName("MouthPivot");
+  const mouthClosedPivot = mouthPivot?.getObjectByName("MouthClosedPivot") || null;
+  const mouthOpenPivot = mouthPivot?.getObjectByName("MouthOpenPivot") || null;
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -4753,6 +4773,12 @@ function createCivicActorObject(actor, asset) {
       node.removeFromParent();
       node.geometry?.dispose?.();
     });
+    // Mobile keeps the closed expression in the head batch. Merging the open
+    // alternative too would show overlapping lips and waste sub-pixel faces.
+    if (mouthOpenPivot) {
+      disposeOwnedGroup(mouthOpenPivot);
+      mouthOpenPivot.removeFromParent();
+    }
   }
   group.add(assetScene);
 
@@ -4762,13 +4788,21 @@ function createCivicActorObject(actor, asset) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => importedMaterials.add(material));
   });
-  const expressionPivots = fullExpressionLod ? [...eyePivots, ...browPivots, mouthPivot] : [];
+  const expressionPivots = fullExpressionLod
+    ? [...eyePivots, ...browPivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
+    : [];
   mergeActorVertexColorMeshes(headGroup, expressionPivots, { roughness: 0.6, envMapIntensity: 0.78 });
   mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.69, envMapIntensity: 0.7 });
   if (fullExpressionLod) {
     eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
-    mergeActorVertexColorMeshes(mouthPivot, [], { roughness: 0.58, envMapIntensity: 0.68 });
+    if (mouthClosedPivot && mouthOpenPivot) {
+      mergeActorVertexColorMeshes(mouthClosedPivot, [], { roughness: 0.54, envMapIntensity: 0.7 });
+      mergeActorVertexColorMeshes(mouthOpenPivot, [], { roughness: 0.5, envMapIntensity: 0.72 });
+      mouthOpenPivot.visible = false;
+    } else {
+      mergeActorVertexColorMeshes(mouthPivot, [], { roughness: 0.58, envMapIntensity: 0.68 });
+    }
   }
   mergeActorVertexColorMeshes(leftArm, [leftElbow], { roughness: 0.67, envMapIntensity: 0.72 });
   mergeActorVertexColorMeshes(rightArm, [rightElbow], { roughness: 0.67, envMapIntensity: 0.72 });
@@ -4805,6 +4839,8 @@ function createCivicActorObject(actor, asset) {
     eyePivots: fullExpressionLod ? eyePivots : [],
     browPivots: fullExpressionLod ? browPivots : [],
     mouthPivot: fullExpressionLod ? mouthPivot : null,
+    mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
+    mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
     frame,
     styleKey: `${frame}:${role}:civic-glb-v1`,
     identity: style.identity,
@@ -4947,7 +4983,15 @@ function updateActors(actors = [], now = performance.now()) {
     if (entry.mouthPivot) {
       const speaking = actor.state === "talking" || actor.state === "interact" || actor.state === "doing";
       const talkPulse = speaking ? 0.78 + Math.abs(Math.sin(now * 0.009 + frame)) * 0.5 : 1;
-      entry.mouthPivot.scale.set(1, talkPulse, 1);
+      if (entry.mouthClosedPivot && entry.mouthOpenPivot) {
+        const open = speaking && Math.sin(now * 0.011 + frame) > -0.22;
+        entry.mouthClosedPivot.visible = !open;
+        entry.mouthOpenPivot.visible = open;
+        entry.mouthOpenPivot.scale.set(1, 0.72 + talkPulse * 0.32, 1);
+        entry.mouthPivot.scale.set(1, 1, 1);
+      } else {
+        entry.mouthPivot.scale.set(1, talkPulse, 1);
+      }
       entry.mouthPivot.rotation.z = socialBreath * 0.018;
     }
     entry.visual.rotation.z = 0;
@@ -5416,7 +5460,7 @@ function update(payload = {}) {
     ...actor,
     worldY: actor.worldY ?? 0.05
   })), width, height);
-  if (ssaoPass) ssaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+  if (gtaoPass) gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
   if (visible) {
     if (composer) composer.render();
     else renderer.render(scene, camera);

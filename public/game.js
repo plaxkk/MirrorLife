@@ -5711,7 +5711,19 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         interactionWorldX: 2.35,
         interactionWorldZ: -1.02
       },
-      { renderModel: true, physicsSolid: true, worldX: -4.18, worldZ: 2.42, displayScale: 0.92, collider: { shape: "box", halfX: 1.06, halfY: 0.72, halfZ: 0.48, rotation: 0.24 }, interactionWorldX: -2.82, interactionWorldZ: 2.1 },
+      {
+        // The civic foreground desk is authored directly in the room renderer
+        // so its lamp, water glass, paper and stationery can match the hero
+        // composition. Physics reads the same metre-space transform.
+        renderModel: false,
+        physicsSolid: true,
+        worldX: -3.38,
+        worldZ: 2.06,
+        displayScale: 1,
+        collider: { shape: "box", halfX: 1.12, halfY: 1.07, halfZ: 0.65, rotation: 2.12 },
+        interactionWorldX: -2.32,
+        interactionWorldZ: 1.62
+      },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 4.08, worldZ: -0.64, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
     ],

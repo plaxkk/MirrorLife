@@ -308,7 +308,11 @@ def build_face(head, mats):
         ellipsoid(f"Blush_{side}", (side * 0.175, -0.211, -0.045), (0.04, 0.009, 0.018), mats["blush"], head, segments=14, rings=8)
     ellipsoid("Nose", (0, -0.222, -0.02), (0.026, 0.018, 0.035), mats["skin"], head, segments=14, rings=8)
     mouth = empty("MouthPivot", head, (0, -0.23, -0.102))
-    curve_tube("Mouth", [(-0.044, 0.002, 0.007), (0, -0.006, -0.008), (0.044, 0.002, 0.007)], 0.008, mats["ink"], mouth)
+    closed = empty("MouthClosedPivot", mouth)
+    curve_tube("MouthClosed", [(-0.046, 0.002, 0.006), (0, -0.006, -0.009), (0.046, 0.002, 0.006)], 0.007, mats["ink"], closed)
+    open_mouth = empty("MouthOpenPivot", mouth)
+    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.038, 0.009, 0.027), mats["ink"], open_mouth, segments=18, rings=10)
+    ellipsoid("Tongue", (0, -0.014, -0.012), (0.022, 0.005, 0.008), mats["blush"], open_mouth, segments=14, rings=8)
 
 
 def build_hair(head, mats, style):
