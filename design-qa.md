@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v15 portal light, scanned surfaces and facial-deformation gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v15-full.png` and `civic-fidelity-v15-focus.png`.
+- Orbit evidence: `environment-review-yaw-{90,180,270}/00-public.png`; responsive evidence: `environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Implemented and verified
+
+- [fixed from v14 P1 / facial deformation] Each civic GLB now carries authored `WarmSmile`, `SpeechJaw` and `Concern` shape keys on the actual head volume. Three.js continuously blends cheek/jaw deformation with role warmth, speech cadence and attentive state while the existing eyes, brows and modeled mouth remain independent controls.
+- [fixed / mobile LOD] Desktop preserves the expressive head as one morphable mesh. Mobile deliberately removes sub-pixel morph attributes before batching the complete head, returning actor rendering to the `33`-draw-call mobile budget instead of silently leaving every face part separate.
+- [fixed from v14 P1 / lighting] The public room key and wash now originate at the courtyard portal. A merged, invisible canopy casts real soft dappled shadows through the room; the pattern remains spatially correct across camera orbit instead of being a white floor decal.
+- [fixed from v14 P1 / surfaces] Wood and upholstery use CC0 scanned normal/roughness maps from Poly Haven, preloaded before the desktop room's atomic reveal. Per-vertex roughness and metalness survive the room/model batches, allowing paper, brass, plaster and fabric to separate without multiplying draw calls.
+- [checked / spatial integrity] Four-direction evidence retains the authored entry, listening circle, notice wall, lounge and foreground desk without fallen furniture, visual/collider drift or blocked route. Player movement and camera orbit remain live.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `145/277,656`, `147/280,080`, `156/291,184`, `154/284,004` draw-calls/triangles. All remain within the strict `160 / 300,000` public-room gate.
+- Mobile `390 × 844`: `110` draw calls, `239,458` triangles, `84` geometries and `12` textures, within the `110 / 250,000` mobile gate.
+- Browser interaction: four civic GLB roles loaded; WASD moved the player `2.57m`; pointer drag rotated the live camera `65.3°`.
+- Regression: 26-zone/10-archetype physics, desktop/mobile scene flow, civic morph asset validation, syntax checks and production build passed.
+
+### Required fidelity surfaces
+
+- [P1][characters] Real face morphs close the rigid-mask defect, but the target still uses production sculpted anatomy, authored hand poses, cloth/hair deformation and full animation clips. Current bodies remain modular Web LOD assets.
+- [P1][environment] Scanned micro-surfaces improve material response, but hero cabinetry, display joinery, ceramics, woven baskets and plants still need bespoke meshes, UVs and authored albedo breakup to match the reference's object-level finish.
+- [P1][lighting] Portal-direction keying and true dappled shadows add depth, but browser realtime lighting still lacks the target's offline bounce, soft penumbra density and cinematic indirect color transfer.
+- [P2][HUD] The interaction hierarchy is readable and responsive, but icon drawing, type optical balance and translucent-panel finish remain simpler than the target artwork.
+
+### Gate result
+
+This pass materially improves facial acting, material separation and daylight direction without compromising real movement, 360° orbit or mobile performance. The side-by-side image still visibly contradicts literal image-1 production parity, especially in hero asset density and character sculpt/animation.
+
+final result: blocked
+
+Blocker: bespoke hero meshes/UV albedo work, production body/cloth animation and offline-grade indirect lighting remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v14 2D identity-to-3D facial-language gate
 
 ### Evidence inspected together

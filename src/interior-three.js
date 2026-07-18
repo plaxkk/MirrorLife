@@ -68,7 +68,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.46, fill: 0.14, hemi: 0.16, bounce: 0.36, wash: 0.68, exposure: 0.82, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
+  "civic-ivory": { key: 2.34, fill: 0.24, hemi: 0.24, bounce: 0.42, wash: 0.72, exposure: 0.84, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -203,6 +203,7 @@ let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
 let actorTextureLoading;
 let actorAtlasTexture;
+let physicalSurfaceLoading;
 let physicsDebugSignature = "";
 let cameraPivotX = 0;
 let cameraPivotZ = 0;
@@ -213,6 +214,7 @@ let cameraRaycaster;
 const occludedMaterials = new Map();
 const surfaceBumpTextures = new Map();
 const surfaceColorTextures = new Map();
+const physicalSurfaceMaps = new Map();
 const actorFrameTextures = new Map();
 const actorObjects = new Map();
 const dynamicModelObjects = new Map();
@@ -259,6 +261,7 @@ async function loadThree() {
     });
   }
   await threeLoading;
+  await preloadPhysicalSurfaceMaps();
   return true;
 }
 
@@ -292,6 +295,12 @@ function ensureLayer() {
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
+  physicalSurfaceMaps.forEach((maps) => {
+    [maps.normal, maps.roughness].forEach((texture) => {
+      texture.anisotropy = Math.min(8, renderer.capabilities.getMaxAnisotropy());
+      texture.needsUpdate = true;
+    });
+  });
 
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(48, 1, 0.08, 30);
@@ -327,8 +336,8 @@ function ensureLayer() {
   keyLight.shadow.camera.bottom = -6;
   keyLight.shadow.camera.near = 0.1;
   keyLight.shadow.camera.far = 16;
-  keyLight.shadow.radius = 6;
-  keyLight.shadow.blurSamples = 20;
+  keyLight.shadow.radius = 9;
+  keyLight.shadow.blurSamples = 24;
   scene.add(keyLight);
 
   keyLight.shadow.bias = -0.00035;
@@ -591,13 +600,71 @@ function geometryWithSolidVertexColor(node) {
   const count = geometry.getAttribute("position")?.count || 0;
   const color = node.material.color || new THREE.Color(0xffffff);
   const colors = new Float32Array(count * 3);
+  const roughness = new Float32Array(count);
+  const metalness = new Float32Array(count);
+  const sourceRoughness = Math.max(0.16, Math.min(1, Number(node.material?.roughness ?? 0.76)));
+  const sourceMetalness = Math.max(0, Math.min(0.18, Number(node.material?.metalness ?? 0.01)));
   for (let index = 0; index < count; index += 1) {
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;
     colors[index * 3 + 2] = color.b;
+    roughness[index] = sourceRoughness;
+    metalness[index] = sourceMetalness;
   }
   geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
+  geometry.setAttribute("surfaceRoughness", new THREE.BufferAttribute(roughness, 1));
+  geometry.setAttribute("surfaceMetalness", new THREE.BufferAttribute(metalness, 1));
   return geometry;
+}
+
+function createVertexSurfaceMaterial(options = {}) {
+  const material = new THREE.MeshStandardMaterial({
+    color: 0xffffff,
+    vertexColors: true,
+    roughness: 1,
+    metalness: 1,
+    envMapIntensity: Number(options.envMapIntensity ?? 0.64)
+  });
+  // Room batching previously flattened oak, ceramic, painted wood and cloth
+  // into one roughness value. Two compact vertex attributes keep one draw call
+  // while restoring the per-object micro-surface response visible in the art
+  // target. Disconnected meshes do not interpolate into one another.
+  material.onBeforeCompile = (shader) => {
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        attribute float surfaceRoughness;
+        attribute float surfaceMetalness;
+        varying float vSurfaceRoughness;
+        varying float vSurfaceMetalness;`
+      )
+      .replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+        vSurfaceRoughness = surfaceRoughness;
+        vSurfaceMetalness = surfaceMetalness;`
+      );
+    shader.fragmentShader = shader.fragmentShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        varying float vSurfaceRoughness;
+        varying float vSurfaceMetalness;`
+      )
+      .replace(
+        "#include <roughnessmap_fragment>",
+        `#include <roughnessmap_fragment>
+        roughnessFactor = clamp(vSurfaceRoughness, 0.16, 1.0);`
+      )
+      .replace(
+        "#include <metalnessmap_fragment>",
+        `#include <metalnessmap_fragment>
+        metalnessFactor = clamp(vSurfaceMetalness, 0.0, 0.18);`
+      );
+  };
+  material.customProgramCacheKey = () => "mirrorlife-vertex-surface-v1";
+  return material;
 }
 
 function mergeSemanticModelMeshes(source) {
@@ -640,13 +707,7 @@ function mergeSemanticModelMeshes(source) {
       solidColorGeometries.forEach((candidate) => {
         if (candidate !== geometry) candidate.dispose();
       });
-      const material = new THREE.MeshStandardMaterial({
-        color: 0xffffff,
-        vertexColors: true,
-        roughness: 0.7,
-        metalness: 0.01,
-        envMapIntensity: 0.72
-      });
+      const material = createVertexSurfaceMaterial({ envMapIntensity: 0.72 });
       const mesh = new THREE.Mesh(geometry, material);
       mesh.castShadow = true;
       mesh.receiveShadow = true;
@@ -815,6 +876,61 @@ function getSurfaceBumpTexture(kind = "plaster") {
   return texture;
 }
 
+function getPhysicalSurfaceSources() {
+  return {
+    wood: {
+      normal: "/assets/interiors/textures/wood-table-001-normal-gl-1k.jpg",
+      roughness: "/assets/interiors/textures/wood-table-001-roughness-1k.jpg",
+      repeat: [2.2, 4.4]
+    },
+    fabric: {
+      normal: "/assets/interiors/textures/terlenka-normal-gl-512.jpg",
+      roughness: "/assets/interiors/textures/terlenka-roughness-512.jpg",
+      repeat: [7.5, 7.5]
+    }
+  };
+}
+
+async function preloadPhysicalSurfaceMaps() {
+  if (!THREE || window.innerWidth <= 720) return;
+  if (physicalSurfaceLoading) return physicalSurfaceLoading;
+  physicalSurfaceLoading = (async () => {
+    const textureLoader = new THREE.TextureLoader();
+    const sources = getPhysicalSurfaceSources();
+    await Promise.all(Object.entries(sources).map(async ([kind, source]) => {
+      const [normal, roughness] = await Promise.all([
+        textureLoader.loadAsync(source.normal),
+        textureLoader.loadAsync(source.roughness)
+      ]);
+      [normal, roughness].forEach((texture) => {
+        texture.colorSpace = THREE.NoColorSpace;
+        texture.wrapS = THREE.RepeatWrapping;
+        texture.wrapT = THREE.RepeatWrapping;
+        texture.repeat.set(...source.repeat);
+        texture.needsUpdate = true;
+      });
+      physicalSurfaceMaps.set(kind, { normal, roughness });
+    }));
+  })().catch((error) => {
+    console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
+    physicalSurfaceMaps.clear();
+  });
+  return physicalSurfaceLoading;
+}
+
+function getPhysicalSurfaceMaps(kind) {
+  if (lastWidth <= 720 || !["wood", "fabric"].includes(kind)) return null;
+  const maps = physicalSurfaceMaps.get(kind);
+  if (maps) {
+    [maps.normal, maps.roughness].forEach((texture) => {
+      if (!texture) return;
+      texture.colorSpace = THREE.NoColorSpace;
+      texture.needsUpdate = true;
+    });
+  }
+  return maps || null;
+}
+
 function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
   const key = `terrazzo-color:${baseColor}`;
   if (surfaceColorTextures.has(key)) return surfaceColorTextures.get(key);
@@ -929,11 +1045,24 @@ function createToonMaterial(color, options = {}) {
     side: options.side || THREE.FrontSide,
     transparent: !!options.transparent,
     opacity: options.opacity ?? 1,
-    depthWrite: options.depthWrite ?? true
+    depthWrite: options.depthWrite ?? true,
+    envMapIntensity: options.envMapIntensity ?? 0.54
   });
   if (options.surface) {
-    material.bumpMap = getSurfaceBumpTexture(options.surface);
-    material.bumpScale = options.bumpScale ?? (options.surface === "wood" ? 0.012 : 0.018);
+    const physicalMaps = getPhysicalSurfaceMaps(options.surface);
+    if (physicalMaps) {
+      material.normalMap = physicalMaps.normal;
+      material.roughnessMap = physicalMaps.roughness;
+      // The scanned map already contains the full roughness range. Keeping
+      // the scalar at one avoids multiplying a .6 map by a .6 material and
+      // turning varnished oak into wet plastic.
+      material.roughness = 1;
+      const normalStrength = options.surface === "wood" ? 0.16 : 0.24;
+      material.normalScale.set(normalStrength, normalStrength);
+    } else {
+      material.bumpMap = getSurfaceBumpTexture(options.surface);
+      material.bumpScale = options.bumpScale ?? 0.018;
+    }
   }
   if (options.map) material.map = options.map;
   if (Number.isFinite(options.envMapIntensity)) material.envMapIntensity = options.envMapIntensity;
@@ -979,6 +1108,8 @@ function applyLightingPreset(theme = {}) {
   if (keyLight) {
     keyLight.intensity = preset.key;
     keyLight.color.set(preset.keyColor);
+    if (theme.zoneId === "public-plaza") keyLight.position.set(-5.8, 7.6, -4.1);
+    else keyLight.position.set(-5.2, 7.2, 4.8);
   }
   if (fillLight) {
     fillLight.intensity = preset.fill;
@@ -986,7 +1117,11 @@ function applyLightingPreset(theme = {}) {
   }
   if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
   if (warmBounceLight) warmBounceLight.intensity = preset.bounce;
-  if (windowWashLight) windowWashLight.intensity = preset.wash;
+  if (windowWashLight) {
+    windowWashLight.intensity = preset.wash;
+    if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
+    else windowWashLight.position.set(-5.8, 4.4, 1.8);
+  }
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.74 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.84 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
@@ -2885,6 +3020,65 @@ function addCivicReferenceDressing(theme, colors) {
   // close editorial composition, so keep them for archetype rooms only.
 }
 
+function addCivicSunShadowCasters(theme) {
+  if (theme.zoneId !== "public-plaza" || lastWidth <= 720 || !mergeGeometries) return;
+  // A real, invisible canopy sits between the authored portal-side sun and
+  // the room. It contributes only to the directional shadow map: unlike a
+  // painted floor decal, the dapple follows receivers, actor feet and the
+  // complete orbit correctly.
+  const leafSource = new THREE.SphereGeometry(0.24, 10, 7).toNonIndexed();
+  const geometries = [];
+  let seed = 0x91c1c;
+  const random = () => {
+    seed = (seed * 1664525 + 1013904223) >>> 0;
+    return seed / 4294967296;
+  };
+  for (let index = 0; index < 24; index += 1) {
+    const angle = random() * Math.PI * 2;
+    const geometry = leafSource.clone();
+    const matrix = new THREE.Matrix4();
+    const quaternion = new THREE.Quaternion().setFromEuler(new THREE.Euler(
+      (random() - 0.5) * 0.8,
+      angle,
+      (random() - 0.5) * 1.2
+    ));
+    const position = new THREE.Vector3(
+      -4.15 + random() * 3.15,
+      3.75 + random() * 0.82,
+      -3.32 + random() * 2.55
+    );
+    const scale = new THREE.Vector3(
+      0.4 + random() * 0.46,
+      0.1 + random() * 0.1,
+      0.76 + random() * 0.58
+    );
+    matrix.compose(position, quaternion, scale);
+    geometry.applyMatrix4(matrix);
+    geometries.push(geometry);
+  }
+  leafSource.dispose();
+  const geometry = mergeGeometries(geometries, false);
+  if (!geometry) {
+    geometries.forEach((candidate) => candidate.dispose());
+    return;
+  }
+  geometries.forEach((candidate) => {
+    if (candidate !== geometry) candidate.dispose();
+  });
+  const material = new THREE.MeshBasicMaterial({
+    color: 0x000000,
+    colorWrite: false,
+    depthWrite: false,
+    side: THREE.DoubleSide
+  });
+  const canopy = new THREE.Mesh(geometry, material);
+  canopy.name = "civic-sun-shadow-canopy";
+  canopy.castShadow = true;
+  canopy.receiveShadow = false;
+  canopy.frustumCulled = false;
+  roomRoot.add(canopy);
+}
+
 function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
   const [x, , z] = wallPosition(angle, radius, y);
   const group = new THREE.Group();
@@ -3186,13 +3380,7 @@ function mergeRoomArchitectureMeshes() {
     batch.geometries.forEach((candidate) => {
       if (candidate !== geometry) candidate.dispose();
     });
-    const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
-      color: 0xffffff,
-      vertexColors: true,
-      roughness: 0.8,
-      metalness: 0.015,
-      envMapIntensity: 0.58
-    }));
+    const mesh = new THREE.Mesh(geometry, createVertexSurfaceMaterial({ envMapIntensity: 0.58 }));
     mesh.castShadow = batch.castShadow;
     mesh.receiveShadow = batch.receiveShadow;
     mergedMeshes.push(mesh);
@@ -3813,6 +4001,7 @@ function rebuildRoom(theme = {}) {
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
   mergeRoomArchitectureMeshes();
+  addCivicSunShadowCasters(theme);
 }
 
 function getItemSignature(items) {
@@ -4238,6 +4427,13 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     Object.keys(geometry.attributes).forEach((attribute) => {
       if (attribute !== "position" && attribute !== "normal") geometry.deleteAttribute(attribute);
     });
+    // Merged actor LOD batches are intentionally static. Imported shape-key
+    // data on one source mesh makes BufferGeometryUtils reject an otherwise
+    // compatible batch and leaves every tiny facial mesh as a draw call. The
+    // desktop expressive head is excluded before this path; mobile discards
+    // the sub-pixel morph deltas so the complete head can remain one batch.
+    geometry.morphAttributes = {};
+    geometry.morphTargetsRelative = false;
     if (!geometry.getAttribute("normal")) geometry.computeVertexNormals();
     const count = geometry.getAttribute("position")?.count || 0;
     const color = node.material?.color || new THREE.Color(0xffffff);
@@ -4755,6 +4951,7 @@ function createCivicActorObject(actor, asset) {
   const mouthPivot = headGroup?.getObjectByName("MouthPivot");
   const mouthClosedPivot = mouthPivot?.getObjectByName("MouthClosedPivot") || null;
   const mouthOpenPivot = mouthPivot?.getObjectByName("MouthOpenPivot") || null;
+  const faceMorphMesh = headGroup?.getObjectByName("Head") || null;
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -4791,7 +4988,19 @@ function createCivicActorObject(actor, asset) {
   const expressionPivots = fullExpressionLod
     ? [...eyePivots, ...browPivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
     : [];
-  mergeActorVertexColorMeshes(headGroup, expressionPivots, { roughness: 0.6, envMapIntensity: 0.78 });
+  const headMergeExclusions = fullExpressionLod && faceMorphMesh?.morphTargetDictionary
+    ? [...expressionPivots, faceMorphMesh]
+    : expressionPivots;
+  mergeActorVertexColorMeshes(headGroup, headMergeExclusions, { roughness: 0.6, envMapIntensity: 0.78 });
+  if (fullExpressionLod && faceMorphMesh?.morphTargetDictionary) {
+    const faceMaterials = Array.isArray(faceMorphMesh.material) ? faceMorphMesh.material : [faceMorphMesh.material];
+    faceMaterials.filter(Boolean).forEach((material) => {
+      material.roughness = 0.78;
+      material.metalness = 0;
+      material.envMapIntensity = 0.56;
+      material.needsUpdate = true;
+    });
+  }
   mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.69, envMapIntensity: 0.7 });
   if (fullExpressionLod) {
     eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
@@ -4841,6 +5050,7 @@ function createCivicActorObject(actor, asset) {
     mouthPivot: fullExpressionLod ? mouthPivot : null,
     mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
     mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
+    faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
     frame,
     styleKey: `${frame}:${role}:civic-glb-v1`,
     identity: style.identity,
@@ -4993,6 +5203,31 @@ function updateActors(actors = [], now = performance.now()) {
         entry.mouthPivot.scale.set(1, talkPulse, 1);
       }
       entry.mouthPivot.rotation.z = socialBreath * 0.018;
+    }
+    if (entry.faceMorphMesh?.morphTargetDictionary && entry.faceMorphMesh?.morphTargetInfluences) {
+      const dictionary = entry.faceMorphMesh.morphTargetDictionary;
+      const influences = entry.faceMorphMesh.morphTargetInfluences;
+      const speaking = actor.state === "talking" || actor.state === "interact" || actor.state === "doing";
+      const listening = actor.state === "listen" || (!walking && actor.civicRole && actor.civicRole !== "player");
+      const smileIndex = dictionary.WarmSmile;
+      const speechIndex = dictionary.SpeechJaw;
+      const concernIndex = dictionary.Concern;
+      if (Number.isInteger(smileIndex)) {
+        const roleWarmth = actor.civicRole === "facilitator" ? 0.62 : actor.civicRole === "listener" ? 0.42 : 0.28;
+        influences[smileIndex] = THREE.MathUtils.lerp(
+          Number(influences[smileIndex] || 0),
+          speaking ? roleWarmth * 0.72 : roleWarmth + socialBreath * 0.04,
+          0.14
+        );
+      }
+      if (Number.isInteger(speechIndex)) {
+        const speechTarget = speaking ? 0.28 + Math.abs(Math.sin(now * 0.009 + frame)) * 0.58 : 0;
+        influences[speechIndex] = THREE.MathUtils.lerp(Number(influences[speechIndex] || 0), speechTarget, 0.24);
+      }
+      if (Number.isInteger(concernIndex)) {
+        const concernTarget = actor.civicRole === "mediator" && listening ? 0.34 : actor.state === "listen" ? 0.16 : 0;
+        influences[concernIndex] = THREE.MathUtils.lerp(Number(influences[concernIndex] || 0), concernTarget, 0.12);
+      }
     }
     entry.visual.rotation.z = 0;
     if (actor.state === "jump") {

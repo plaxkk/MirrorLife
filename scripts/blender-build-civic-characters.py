@@ -297,7 +297,40 @@ def build_face(head, mats, role):
     camera-facing portrait card, so they survive orbit, occlusion and shadow.
     """
     feminine = role in ("facilitator", "mediator")
-    ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=32, rings=22)
+    face = ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=32, rings=22)
+    # Keep the facial volume itself expressive. The previous rig swapped
+    # mouth meshes but left the cheeks and jaw completely rigid, which read as
+    # a toy mask in close conversational framing. These sparse, authored shape
+    # keys preserve the illustrated silhouette while giving speech and warmth
+    # a continuous deformation that can be driven in Three.js.
+    face.shape_key_add(name="Basis")
+    smile = face.shape_key_add(name="WarmSmile")
+    speech = face.shape_key_add(name="SpeechJaw")
+    concern = face.shape_key_add(name="Concern")
+    for index, vertex in enumerate(face.data.vertices):
+        x, y, z = vertex.co
+        front = max(0.0, min(1.0, (-y - 0.035) / 0.155))
+        lower = max(0.0, min(1.0, (-z + 0.015) / 0.17))
+        cheek = max(0.0, min(1.0, (abs(x) - 0.045) / 0.12)) * front
+
+        smile_co = smile.data[index].co
+        smile_co.x *= 1.0 + cheek * lower * 0.018
+        smile_co.y -= cheek * 0.004
+        smile_co.z += cheek * lower * 0.012
+        if z < -0.045:
+            smile_co.z += front * lower * 0.009
+
+        speech_co = speech.data[index].co
+        if z < -0.02:
+            speech_co.z -= front * lower * 0.02
+            speech_co.y -= front * lower * 0.006
+            speech_co.x *= 1.0 - front * lower * 0.012
+
+        concern_co = concern.data[index].co
+        concern_co.x *= 1.0 - cheek * 0.009
+        concern_co.z += cheek * 0.004
+        if z < -0.055:
+            concern_co.z -= front * lower * 0.005
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
         ellipsoid(f"EarInner_{side}", (side * 0.272, -0.027, -0.014), (0.018, 0.008, 0.034), mats["blush"], head, segments=12, rings=8)

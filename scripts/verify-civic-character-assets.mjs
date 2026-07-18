@@ -37,6 +37,9 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("MouthPivot")), `${role}: mouth expression pivot is missing`);
   assert(contents.includes(Buffer.from("MouthClosedPivot")), `${role}: closed-mouth expression is missing`);
   assert(contents.includes(Buffer.from("MouthOpenPivot")), `${role}: open-mouth expression is missing`);
+  assert(contents.includes(Buffer.from("WarmSmile")), `${role}: warm-smile face morph is missing`);
+  assert(contents.includes(Buffer.from("SpeechJaw")), `${role}: speech-jaw face morph is missing`);
+  assert(contents.includes(Buffer.from("Concern")), `${role}: concern face morph is missing`);
   assert(contents.includes(Buffer.from("LeftElbowPivot")), `${role}: left elbow articulation is missing`);
   assert(contents.includes(Buffer.from("RightElbowPivot")), `${role}: right elbow articulation is missing`);
   assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
