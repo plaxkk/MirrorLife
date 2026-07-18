@@ -1,5 +1,36 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v7 shared-rig character gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current desktop hero: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`).
+- Combined source/current canvas: `/tmp/mirrorlife-civic-fidelity-v7-comparison.png`.
+- Character canonical views: `dist/interior-3d-work/characters/civic/canonical/civic-{player,listener,facilitator,mediator}/{front,back,left,right,isometric}.png`.
+- Orbit evidence: `dist/interior-3d-work/environment-review-yaw-{90,180,270}/00-public.png`.
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` (`390 × 844`).
+- Whole-building placement board: `dist/interior-3d-work/environment-review/contact-sheet.png` (26 cold-started interiors).
+
+### Findings and fixes in this gate
+
+- [fixed] The hero cast no longer uses runtime-built generic meshes or camera-facing portrait sprites. Four real metre-scale GLBs now share the `mirrorlife-shared-pivot-v1` contract and preserve head, arm and leg pivots for walk, run, jump, fall, listen and conversation states.
+- [fixed] The four reference roles now have authored 360° identity features: player backpack and scarf, listener cap/satchel/cargo pockets, facilitator coral ponytail/notebook, and mediator braided bob/coat/necklace.
+- [fixed] Character assets load lazily and participate in the atomic room-ready gate. Missing or malformed rigs fall back to the procedural actor without exposing a half-loaded room.
+- [fixed] Imported meshes are merged per head, torso and limb after cloning, reducing four production characters to `28` actor draw calls. The current desktop scene is `96` draw calls / `257,824` triangles; mobile is `89` draw calls / `236,542` triangles.
+- [fixed] A browser exploration gate now verifies the actual result rather than inferring interactivity from screenshots: repeated runs moved the player `0.53–0.77m`, drag orbit rotated `65.3°`, all four GLB roles stayed loaded, and the scene remained ready.
+- [fixed] The four public GLBs total `5.53 MB`; static validation enforces the metre scale, role list, triangle/size budgets, GLB header and absence of workstation paths in the public manifest.
+- [fixed] The 26-room cold-start board shows no repeat of the tipped full-size chair/shelf defect. Large furnishings remain fixed bodies; only the hand-scale supply crate remains pushable.
+- [P1 remaining] The combined canvas still shows a production-detail gap in character anatomy and acting: hands are mitten-like, faces have no blend-shape deformation, cloth lacks folds, hair uses grouped solid locks, and idle/listening motion is pivot-driven rather than hand-authored clips.
+- [P1 remaining] The 20 non-core interiors remain too archetype-repetitive. The learning, nature, commerce and care families reuse the same hero arrangements and therefore do not yet reach the source's bespoke-room authorship.
+- [P2 remaining] The civic hero room has the correct composition, navigation, material hierarchy and interaction loop, but still lacks the source's micro-prop density, detailed joinery, soft bounce lighting and foreground depth.
+
+### Gate result
+
+The requested 2D-to-3D transition is now implemented as a reusable shared-pivot asset pipeline, and the hero room is genuinely walkable and orbitable on desktop/mobile within budget. Literal image-1 production parity and bespoke identity for all remaining interiors are not yet proven.
+
+v7 final result: blocked on cinematic character deformation and bespoke per-building environment assets
+
 ## 2026-07-17 reference-fidelity v6 browser gate
 
 ### Evidence inspected together

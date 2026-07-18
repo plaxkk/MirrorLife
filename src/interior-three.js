@@ -1,6 +1,7 @@
 import { createSemanticInteriorModel, hasSemanticInteriorModel } from "./interior-semantic-models.js";
 
 const ASSET_BASE = "/assets/interiors/glb/";
+const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
@@ -154,6 +155,9 @@ const MODEL_RENDER_PROFILES = {
 
 const cache = new Map();
 const loading = new Map();
+const civicActorAssets = new Map();
+const civicActorLoading = new Map();
+const civicActorFailures = new Set();
 const projectedItems = new Map();
 
 let THREE;
@@ -705,6 +709,44 @@ function loadModel(type) {
   });
   loading.set(type, promise);
   return fallback ? Promise.resolve(fallback) : promise;
+}
+
+function loadCivicActorAsset(role) {
+  if (!role || civicActorFailures.has(role)) return Promise.resolve(null);
+  if (civicActorAssets.has(role)) return Promise.resolve(civicActorAssets.get(role));
+  if (civicActorLoading.has(role)) return civicActorLoading.get(role);
+  const promise = new Promise((resolve) => {
+    const assetUrl = `${CIVIC_CHARACTER_ASSET_BASE}${role}.glb${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
+    loader.load(
+      assetUrl,
+      (gltf) => {
+        const visual = gltf.scene?.getObjectByName?.("VisualRoot");
+        const requiredPivots = ["HeadPivot", "LeftArmPivot", "RightArmPivot", "LeftLegPivot", "RightLegPivot"];
+        const contractValid = visual && requiredPivots.every((name) => visual.getObjectByName(name));
+        if (!contractValid) {
+          civicActorFailures.add(role);
+          civicActorLoading.delete(role);
+          console.warn(`MirrorLife civic actor rig contract is incomplete: ${role}.glb`);
+          resolve(null);
+          return;
+        }
+        civicActorAssets.set(role, gltf.scene);
+        civicActorLoading.delete(role);
+        window.markRenderActive?.(1800);
+        resolve(gltf.scene);
+      },
+      undefined,
+      (error) => {
+        civicActorLoading.delete(role);
+        civicActorFailures.add(role);
+        console.warn(`MirrorLife civic actor failed: ${role}.glb`, error);
+        window.markRenderActive?.(600);
+        resolve(null);
+      }
+    );
+  });
+  civicActorLoading.set(role, promise);
+  return promise;
 }
 
 function clearGroup(group) {
@@ -4110,10 +4152,10 @@ function addActorIdentityDetails(visual, headGroup, style, materials, actor) {
   addActorHeadwear(headGroup, style, materials);
 }
 
-function createActorObject(actor) {
+function createProceduralActorObject(actor) {
   const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
   const style = resolveActorStyle(actor, frame);
-  const styleKey = `${frame}:${actor.civicRole || style.identity}`;
+  const styleKey = `${frame}:${actor.civicRole || style.identity}:procedural`;
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
@@ -4292,20 +4334,138 @@ function createActorObject(actor) {
   return entry;
 }
 
+function cloneCivicActorScene(source) {
+  const clone = source.clone(true);
+  clone.traverse((node) => {
+    if (!node.isMesh) return;
+    node.geometry = node.geometry?.clone?.() || node.geometry;
+    if (Array.isArray(node.material)) node.material = node.material.map((material) => material?.clone?.() || material);
+    else node.material = node.material?.clone?.() || node.material;
+    node.castShadow = true;
+    node.receiveShadow = true;
+    node.frustumCulled = true;
+  });
+  return clone;
+}
+
+function createCivicActorObject(actor, asset) {
+  const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
+  const style = resolveActorStyle(actor, frame);
+  const role = String(actor.civicRole || "");
+  const group = new THREE.Group();
+  group.name = `actor-${actor.id}`;
+  const shadow = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.78, 0.48),
+    new THREE.MeshBasicMaterial({
+      color: 0x4d3528,
+      map: getContactShadowTexture(),
+      transparent: true,
+      opacity: 0.28,
+      depthWrite: false,
+      toneMapped: false
+    })
+  );
+  shadow.rotation.x = -Math.PI / 2;
+  shadow.position.y = 0.025;
+  group.add(shadow);
+
+  const assetScene = cloneCivicActorScene(asset);
+  const visual = assetScene.getObjectByName("VisualRoot");
+  const headGroup = visual?.getObjectByName("HeadPivot");
+  const leftArm = visual?.getObjectByName("LeftArmPivot");
+  const rightArm = visual?.getObjectByName("RightArmPivot");
+  const leftLeg = visual?.getObjectByName("LeftLegPivot");
+  const rightLeg = visual?.getObjectByName("RightLegPivot");
+  if (!visual || !headGroup || !leftArm || !rightArm || !leftLeg || !rightLeg) {
+    disposeOwnedGroup(assetScene);
+    return null;
+  }
+  group.add(assetScene);
+
+  const importedMaterials = new Set();
+  assetScene.traverse((node) => {
+    if (!node.isMesh) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => importedMaterials.add(material));
+  });
+  mergeActorVertexColorMeshes(headGroup, [], { roughness: 0.6, envMapIntensity: 0.78 });
+  mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.69, envMapIntensity: 0.7 });
+  [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => {
+    mergeActorVertexColorMeshes(limb, [], { roughness: 0.67, envMapIntensity: 0.72 });
+  });
+  const retainedMaterials = new Set();
+  assetScene.traverse((node) => {
+    if (!node.isMesh) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => retainedMaterials.add(material));
+  });
+  importedMaterials.forEach((material) => {
+    if (!retainedMaterials.has(material)) material.dispose?.();
+  });
+  group.traverse((node) => node.layers?.enable?.(1));
+  actorRoot.add(group);
+  const entry = {
+    group,
+    visual,
+    shadow,
+    torso: visual.getObjectByName("Torso") || visual,
+    headGroup,
+    leftArm,
+    rightArm,
+    leftLeg,
+    rightLeg,
+    frame,
+    styleKey: `${frame}:${role}:civic-glb-v1`,
+    identity: style.identity,
+    assetRole: role,
+    lastX: Number(actor.worldX || 0),
+    lastZ: Number(actor.worldZ || 0),
+    facingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0))
+  };
+  actorObjects.set(actor.id, entry);
+  return entry;
+}
+
+function getActorStyleKey(actor, frame) {
+  const style = resolveActorStyle(actor, frame);
+  const role = String(actor.civicRole || "");
+  const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
+  return usesAsset ? `${frame}:${role}:civic-glb-v1` : `${frame}:${role || style.identity}:procedural`;
+}
+
+function createActorObject(actor) {
+  const role = String(actor.civicRole || "");
+  if (role && civicActorAssets.has(role) && !civicActorFailures.has(role)) {
+    return createCivicActorObject(actor, civicActorAssets.get(role));
+  }
+  return createProceduralActorObject(actor);
+}
+
 function updateActors(actors = [], now = performance.now()) {
   if (!actorRoot) return false;
   actorRoot.visible = true;
   const playerActor = actors.find((actor) => actor?.role === "player" || actor?.id === "player") || null;
   const activeIds = new Set();
+  let ready = true;
   actors.forEach((actor) => {
     if (!actor?.id) return;
     activeIds.add(actor.id);
+    const civicRole = String(actor.civicRole || "");
+    if (civicRole && !civicActorAssets.has(civicRole) && !civicActorFailures.has(civicRole)) {
+      loadCivicActorAsset(civicRole);
+      ready = false;
+      return;
+    }
     let entry = actorObjects.get(actor.id);
     if (!entry) entry = createActorObject(actor);
-    if (!entry) return;
+    if (!entry) {
+      ready = false;
+      return;
+    }
     const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
-    const styleKey = `${frame}:${actor.civicRole || resolveActorStyle(actor, frame).identity}`;
+    const styleKey = getActorStyleKey(actor, frame);
     if (entry.frame !== frame || entry.styleKey !== styleKey) {
+      disposeOwnedGroup(entry.group);
       entry.group.removeFromParent();
       actorObjects.delete(actor.id);
       entry = createActorObject(actor);
@@ -4418,7 +4578,7 @@ function updateActors(actors = [], now = performance.now()) {
     entry.group.removeFromParent();
     actorObjects.delete(id);
   });
-  return true;
+  return ready;
 }
 
 function projectWorldPoints(points = [], width = lastWidth || window.innerWidth, height = lastHeight || window.innerHeight) {
@@ -4846,6 +5006,7 @@ function getStats() {
     actors: [...actorObjects.entries()].map(([id, entry]) => ({
       id,
       frame: entry.frame,
+      assetRole: entry.assetRole || "procedural",
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
       facingYaw: Number(entry.facingYaw.toFixed(3))

@@ -1,0 +1,31 @@
+{
+  "contract": "mirrorlife-shared-pivot-v1",
+  "worldUnitMeters": 1,
+  "heightMeters": 1.72,
+  "roles": {
+    "player": {
+      "file": "player.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
+      "meshes": 51,
+      "triangles": 18868
+    },
+    "listener": {
+      "file": "listener.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
+      "meshes": 48,
+      "triangles": 18320
+    },
+    "facilitator": {
+      "file": "facilitator.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
+      "meshes": 57,
+      "triangles": 22340
+    },
+    "mediator": {
+      "file": "mediator.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
+      "meshes": 56,
+      "triangles": 20464
+    }
+  }
+}
