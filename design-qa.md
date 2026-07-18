@@ -665,8 +665,8 @@ v4 result: passed for playable real-time room fidelity and placement; cinematic 
 
 ## Comparison target
 
-- Source visual truth: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-c3ed3c29-42bb-4808-b433-d1e982ae0bb3.png`
-- Placement defect reference: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-2cfcd589-aa2c-4955-942d-0942d03873fe.png`
+- Source visual truth: `design/references/civic-interior-visual-target.png`
+- Placement defect reference: `design/references/civic-furniture-placement-defect.png`
 - Runtime: `http://127.0.0.1:4182/game.html?qaInterior=public-plaza&qaInteriorScene=1`
 - Desktop capture: `artifacts/design-qa/public-plaza-final-desktop.png` (1680 × 945)
 - Mobile capture: `artifacts/design-qa/public-plaza-final-mobile.png` (390 × 844)
@@ -826,7 +826,7 @@ passed
 
 ## Source truth and verification state
 
-- Source reference: `/var/folders/fr/fwnphzln4y196lk1qw4h7p3h0000gn/T/codex-clipboard-c3ed3c29-42bb-4808-b433-d1e982ae0bb3.png`
+- Source reference: `design/references/civic-interior-visual-target.png`
 - Latest live desktop capture: `/tmp/mirrorlife-civic-fidelity-v3-desktop-final.png`
 - Latest live mobile capture: `/tmp/mirrorlife-civic-fidelity-v3-mobile-final.png`
 - Same-size combined comparison: `/tmp/mirrorlife-civic-fidelity-v3-comparison-final.png`
