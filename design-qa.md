@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v55 continuous sculpt and calibrated civic light gate
+
+### Evidence inspected together
+
+- Source visual truth: `design/references/civic-interior-visual-target.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v55/desktop-yaw-0-final.png` (`1672 × 941`, public-plaza, yaw `0°`, final ready state).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v55/reference-vs-v55-full.png` and `reference-vs-v55-focus.png`.
+- Complete desktop orbit: `dist/interior-3d-work/civic-fidelity-v55/desktop-yaw-{0,90,180,270}.png`.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v55/mobile-yaw-0-390x844.png` (`390 × 844`).
+- In-app Browser was unavailable after selection, so the Product Design browser rule permitted the available Chrome extension fallback. Every final capture reached `interiorRenderPhase=ready` / `sceneReady=true`; final desktop and mobile console warning/error lists were empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v52 P1 / ball-jointed silhouette] Rebuilt shoulders as integrated rounded upper-arm topology instead of separate spherical caps. Side and reverse captures no longer expose detached toy-ball joints.
+- [fixed / mitten hands and detached props] Replaced pill fingers with a continuous sculpted palm/finger mass plus shallow crease geometry, and moved the facilitator notebook into real palm contact. Rounded shoe uppers replace the previous box profile.
+- [fixed / rigid costume and sheared hair] Added a true pleated skirt, tailored coat/lapel panels and path-aligned tapered hair locks. Fringe is shorter so eyes remain readable in the `180°` face view; braids and side hair follow curved local frames instead of shearing across horizontal rings.
+- [fixed / asset weight] The four regenerated GLBs remain full-volume side/back geometry while dropping ten source meshes per role. The validated cast is `6.46 MB`; role triangle counts are `22,544–25,356`.
+- [fixed from v53 P1 / overbright low-saturation grade] Rebalanced the civic key, portal wash, actor-only rim/face fill, environment response, rug value and tone-mapped dapple. The first lighting iteration was rejected at mean luminance `0.450` / saturation `0.506`; the post-fix browser frame reaches `0.516 / 0.433`, closely tracking the reference's `0.518 / 0.427` without replacing the scene with a static backdrop.
+- [fixed / mobile visual drift] The same civic grade now runs at a reduced `0.72` strength on mobile. The final `390 × 844` capture keeps player, two witnesses, joystick, chat, jump, contextual action and the full action rail visible with no horizontal overflow.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `149 / 154 / 158 / 156` draw calls and `255,472 / 271,852 / 268,916 / 259,396` triangles. Every view remains below the strict `160 / 300,000` civic-room gate.
+- Mobile `390 × 844`: `106` draw calls / `233,202` triangles, below the `110 / 250,000` mobile gate even with the reduced-strength grade enabled.
+- Embodied verification: the physical player moved `3.53m`; the weighted follow camera rotated `65.3°`. Four stabilized yaw captures prove real front, side and reverse geometry rather than a billboard or pre-rendered panorama.
+- World regression: all `26` interiors passed the physics audit; `78` enter/exit transitions completed with no failure or runtime error; desktop/mobile scene flow passed.
+- Static/build checks: `pnpm check`, production build, civic character validation and civic prop validation passed.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] WASD/touch locomotion, shared physical coordinates, animated stride, player-weighted follow pivot and drag orbit remain coupled. The lighting/material pass changes only real-time rendering and does not weaken collision or camera behavior.
+- [checked][spacing/layout rhythm] Portal, notice wall, listening circle, lounge and foreground records still create a readable foreground/middle/background sequence in the hero view. Four yaws retain actors plus at least one functional landmark.
+- [checked][colors/tokens] Whole-frame mean luminance and saturation now closely match the source. Ivory architecture, darker honey wood, teal/coral identity, brass routes and restrained dark HUD preserve the source's warm-neutral / identity-color / accent hierarchy.
+- [checked][image and asset quality for this iteration] Characters, furniture, foliage, rug, terrazzo and window are project assets or Three.js meshes with true depth, shadows and side/back views. No static room background, screen-facing citizen card, CSS drawing or placeholder image substitutes the target.
+- [checked][copy/content] Location, exit, story-memory and four social actions remain coherent and unchanged.
+- [checked][responsiveness/accessibility] `390 × 844` has no horizontal overflow; touch controls stay visible and practical. The player and current action remain inside the portrait safe composition.
+- [P1][character sculpt and deformation] The new continuous silhouettes are materially better, but the source still has authored facial anatomy, smaller hands, more natural limb taper, cloth compression/folds, layered strand-group hair and skin/cloth deformation. The focused comparison still reads as production illustration versus modular web rig.
+- [P1][local light distribution] Global colour statistics now match, but the implementation's dark percentile remains lower (`0.169` versus `0.221`) and bright percentile remains lower (`0.751` versus `0.799`). The portal/outdoor view, face bounce and sun patches need more localized dynamic range rather than another global exposure change.
+- [P1][environment craftsmanship and density] The functional zones match, but the target carries richer cabinetry joinery, baskets, ceramics, paper stacks, books, textiles and foreground desk detail. Current large wall/floor regions remain visibly simpler.
+- [P2][HUD finish] Information and interaction are clear, but optical type weights, icon drawing, translucent-panel layering and spacing remain simpler than the reference.
+
+### Gate result
+
+This iteration closes the largest overexposure/saturation error, improves character continuity and preserves genuine physical walking, player-follow framing, full orbit and mobile budgets. The paired canvas still contains actionable P1 character deformation, localized daylight and bespoke environment-craft differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production character deformation, localized portal/daylight response and a broader set of bespoke micro-assets remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v52 authored motion clips and state-blend gate
 
 ### Evidence inspected together

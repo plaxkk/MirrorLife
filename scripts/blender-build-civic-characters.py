@@ -5,6 +5,7 @@ import os
 import sys
 
 import bpy
+from mathutils import Vector
 
 
 ROLE_CONFIGS = {
@@ -180,37 +181,49 @@ def tailored_panel(
     radius=0.025,
     rotation=(0, 0, 0),
 ):
-    """Create a softly tapered clothing panel instead of a rigid slab.
+    """Create a fitted fabric panel with authored drape in the base topology.
 
-    Three horizontal rings give the vest and cardigan a shoulder, waist and
-    hem silhouette.  The front ring bows forward slightly, so warm key light
-    rolls across the cloth rather than producing one flat rectangular face.
+    Earlier panels used three box-like rings and then relied on decorative
+    strips for every fold.  Five height rings and seven width samples now bow
+    the cloth over the chest, relax it at the waist and break the front into
+    broad alternating planes.  The result reads as one garment from every
+    orbit angle while retaining one inexpensive mesh and the existing rig.
     """
-    rings = (
-        (-height / 2, width_bottom, 0.0),
-        (height * 0.08, width_waist, -depth * 0.12),
-        (height / 2, width_top, 0.0),
-    )
+    ring_factors = (0.0, 0.24, 0.5, 0.76, 1.0)
+    column_factors = (-1.0, -0.66, -0.33, 0.0, 0.33, 0.66, 1.0)
     vertices = []
-    for z, width, front_bow in rings:
-        half_width = width / 2
-        vertices.extend((
-            (-half_width, -depth / 2 + front_bow, z),
-            (half_width, -depth / 2 + front_bow, z),
-            (-half_width, depth / 2, z),
-            (half_width, depth / 2, z),
-        ))
+    for height_factor in ring_factors:
+        if height_factor <= 0.5:
+            width = width_bottom + (width_waist - width_bottom) * (height_factor / 0.5)
+        else:
+            width = width_waist + (width_top - width_waist) * ((height_factor - 0.5) / 0.5)
+        z = -height / 2 + height * height_factor
+        body_roll = math.sin(math.pi * height_factor)
+        for column in column_factors:
+            x = column * width / 2
+            broad_fold = math.cos(column * math.pi * 2.5) * depth * 0.075 * body_roll
+            centre_bow = (1.0 - abs(column)) * depth * 0.13 * body_roll
+            vertices.append((x, -depth / 2 - broad_fold - centre_bow, z))
+        for column in column_factors:
+            vertices.append((column * width / 2, depth / 2, z))
+    columns = len(column_factors)
+    stride = columns * 2
     faces = []
-    for ring in range(2):
-        base = ring * 4
-        following = (ring + 1) * 4
-        faces.extend((
-            (base, base + 1, following + 1, following),
-            (base + 3, base + 2, following + 2, following + 3),
-            (base + 2, base, following, following + 2),
-            (base + 1, base + 3, following + 3, following + 1),
-        ))
-    faces.extend(((0, 2, 3, 1), (8, 9, 11, 10)))
+    for ring in range(len(ring_factors) - 1):
+        current = ring * stride
+        following = (ring + 1) * stride
+        for column in range(columns - 1):
+            faces.append((current + column, current + column + 1, following + column + 1, following + column))
+            back = current + columns + column
+            back_following = following + columns + column
+            faces.append((back + 1, back, back_following, back_following + 1))
+        faces.append((current + columns, current, following, following + columns))
+        faces.append((current + columns - 1, current + stride - 1, following + stride - 1, following + columns - 1))
+    bottom = 0
+    top = (len(ring_factors) - 1) * stride
+    for column in range(columns - 1):
+        faces.append((bottom + column, bottom + columns + column, bottom + columns + column + 1, bottom + column + 1))
+        faces.append((top + column + 1, top + columns + column + 1, top + columns + column, top + column))
     mesh = bpy.data.meshes.new(f"{name}Mesh")
     mesh.from_pydata(vertices, [], faces)
     mesh.update()
@@ -352,21 +365,27 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
         raise ValueError("tapered_lock requires matching point/radius arrays")
     vertices = []
     faces = []
-    for point, radius in zip(points, radii):
+    vectors = [Vector(point) for point in points]
+    for index, (point, radius) in enumerate(zip(vectors, radii)):
+        before = vectors[max(0, index - 1)]
+        after = vectors[min(len(vectors) - 1, index + 1)]
+        tangent = (after - before).normalized()
+        reference = Vector((0, 1, 0)) if abs(tangent.dot(Vector((0, 1, 0)))) < 0.9 else Vector((1, 0, 0))
+        normal = tangent.cross(reference).normalized()
+        binormal = tangent.cross(normal).normalized()
         for side in range(sides):
             angle = math.tau * side / sides
-            vertices.append((
-                point[0] + math.cos(angle) * radius,
-                point[1] + math.sin(angle) * radius * 0.72,
-                point[2],
-            ))
+            # A path-aligned oval prevents the sheared, stacked-cylinder look
+            # that the old horizontal rings produced on curved fringe locks.
+            coordinate = point + normal * (math.cos(angle) * radius) + binormal * (math.sin(angle) * radius * 0.72)
+            vertices.append(tuple(coordinate))
     for ring in range(len(points) - 1):
         base = ring * sides
         next_base = (ring + 1) * sides
         for side in range(sides):
             following = (side + 1) % sides
             faces.append((base + side, base + following, next_base + following, next_base + side))
-    vertices.extend([points[0], points[-1]])
+    vertices.extend([tuple(vectors[0]), tuple(vectors[-1])])
     start_center = len(vertices) - 2
     end_center = len(vertices) - 1
     for side in range(sides):
@@ -383,6 +402,88 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
     link_material(obj, mat)
     for polygon in mesh.polygons:
         polygon.use_smooth = True
+    return obj
+
+
+def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 0), side=1):
+    """Build one continuous illustrated hand with a readable finger fan.
+
+    Separate pill-shaped fingers left visible gaps in the gameplay camera.
+    This tapered palm carries the wrist, palm, knuckles and fingertip mass in
+    one watertight volume; three shallow crease meshes preserve four-finger
+    readability and can still be stripped at the phone LOD.
+    """
+    hand = organic_limb(
+        name,
+        0.16,
+        (
+            (0.5, 0.038, 0.033),
+            (0.28, 0.049, 0.038),
+            (0.05, 0.057, 0.041),
+            (-0.18, 0.059, 0.039),
+            (-0.38, 0.052, 0.034),
+            (-0.5, 0.039, 0.027),
+        ),
+        location,
+        mat,
+        parent,
+        rotation=rotation,
+        sides=24,
+    )
+    for crease_index, crease_x in enumerate((-0.026, 0.0, 0.026), start=1):
+        curve_tube(
+            f"FingerCrease_{side}_{crease_index}",
+            [
+                (location[0] + crease_x, location[1] - 0.036, location[2] - 0.048),
+                (location[0] + crease_x * 0.92, location[1] - 0.039, location[2] - 0.071),
+            ],
+            0.0031,
+            crease_mat,
+            parent,
+            resolution=2,
+        )
+    return hand
+
+
+def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=None, pleats=10, segments=40):
+    """Create a conical skirt whose folds belong to its silhouette."""
+    rings = ((0.5, waist_radius, 0.06), (0.12, (waist_radius + hem_radius) * 0.5, 0.55), (-0.5, hem_radius, 1.0))
+    vertices = []
+    faces = []
+    for z_factor, radius, fold_strength in rings:
+        for segment in range(segments):
+            angle = math.tau * segment / segments
+            fold = math.cos(angle * pleats) * 0.014 * fold_strength
+            front_bias = max(0.0, -math.sin(angle)) * 0.008 * fold_strength
+            current_radius = radius + fold + front_bias
+            vertices.append((math.cos(angle) * current_radius, math.sin(angle) * current_radius, depth * z_factor))
+    for ring in range(len(rings) - 1):
+        current = ring * segments
+        following = (ring + 1) * segments
+        for segment in range(segments):
+            next_segment = (segment + 1) % segments
+            faces.append((current + segment, current + next_segment, following + next_segment, following + segment))
+    vertices.extend(((0, 0, depth * rings[0][0]), (0, 0, depth * rings[-1][0])))
+    top_center = len(vertices) - 2
+    bottom_center = len(vertices) - 1
+    last = (len(rings) - 1) * segments
+    for segment in range(segments):
+        next_segment = (segment + 1) % segments
+        faces.append((top_center, next_segment, segment))
+        faces.append((bottom_center, last + segment, last + next_segment))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    obj.location = location
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Pleated hem softness", "BEVEL")
+    bevel.width = 0.006
+    bevel.segments = 2
     return obj
 
 
@@ -430,6 +531,7 @@ def cloth_fold_ribbon(name, points, widths, mat, parent=None, depth=0.008):
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.035),
+        "skin_shadow": material(f"{role} hand crease", "#c97e64", 0.82),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
         "hair": material(f"{role} hair", config["hair"], 0.68, clearcoat=0.025),
@@ -557,21 +659,21 @@ def build_hair(head, mats, style):
     cap_scale = (0.265, 0.187, 0.236) if style == "spiky" else (0.278, 0.21, 0.25)
     ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
     fringe_specs = (
-        (-0.19, -0.15, 0.16, 0.044),
-        (-0.12, -0.085, 0.15, 0.048),
-        (-0.045, -0.018, 0.122, 0.05),
-        (0.04, 0.018, 0.132, 0.05),
-        (0.12, 0.085, 0.155, 0.047),
-        (0.19, 0.15, 0.165, 0.042),
+        (-0.19, -0.15, 0.205, 0.036),
+        (-0.12, -0.085, 0.18, 0.04),
+        (-0.045, -0.018, 0.158, 0.041),
+        (0.04, 0.018, 0.166, 0.041),
+        (0.12, 0.085, 0.188, 0.039),
+        (0.19, 0.15, 0.21, 0.035),
     )
     for index, (root_x, tip_x, tip_z, root_radius) in enumerate(fringe_specs):
         tapered_lock(
             f"Fringe_{index + 1}",
             [
-                (root_x, -0.13, 0.225 - abs(root_x) * 0.1),
-                ((root_x * 3 + tip_x) / 4, -0.18, 0.18),
-                ((root_x + tip_x) / 2, -0.208, 0.115),
-                ((root_x + tip_x * 3) / 4, -0.223, 0.055),
+                (root_x, -0.13, 0.235 - abs(root_x) * 0.08),
+                ((root_x * 3 + tip_x) / 4, -0.18, 0.205),
+                ((root_x + tip_x) / 2, -0.208, 0.172),
+                ((root_x + tip_x * 3) / 4, -0.223, 0.148),
                 (tip_x, -0.229, tip_z),
             ],
             (root_radius * 0.9, root_radius * 1.04, root_radius * 0.88, root_radius * 0.58, 0.006),
@@ -582,15 +684,18 @@ def build_hair(head, mats, style):
     for side in (-1, 1):
         side_height = 0.125 if style == "spiky" else 0.17
         side_z = -0.035 if style == "spiky" else -0.07
-        ellipsoid(
+        tapered_lock(
             f"SideHair_{side}",
-            (side * 0.235, -0.008, side_z),
-            (0.067, 0.073, side_height),
+            [
+                (side * 0.19, 0.105, 0.19),
+                (side * 0.245, 0.055, 0.11),
+                (side * 0.262, -0.005, side_z + side_height * 0.18),
+                (side * 0.23, -0.052, side_z - side_height * 0.55),
+            ],
+            (0.062, 0.069, 0.052, 0.009),
             mats["hair"],
             head,
-            rotation=(0, 0, side * 0.12),
-            segments=16,
-            rings=10,
+            sides=14,
         )
 
     if style == "spiky":
@@ -653,14 +758,18 @@ def build_hair(head, mats, style):
         )
     elif style == "braided_bob":
         for index, x in enumerate((-0.22, -0.11, 0, 0.11, 0.22)):
-            ellipsoid(
+            side = -1 if x < 0 else 1
+            tapered_lock(
                 f"BraidKnot_{index + 1}",
-                (x, -0.018, 0.18 - abs(x) * 0.45),
-                (0.052, 0.05, 0.045),
-                mats["hair"],
+                [
+                    (x * 0.72, 0.015, 0.245 - abs(x) * 0.2),
+                    (x, -0.02, 0.205 - abs(x) * 0.28),
+                    (x + side * 0.025, -0.055, 0.155 - abs(x) * 0.36),
+                ],
+                (0.052, 0.048, 0.012),
+                mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
-                segments=16,
-                rings=10,
+                sides=12,
             )
 
 
@@ -684,25 +793,26 @@ def build_body(role, config, mats, visual):
     left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.285))
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
+    sleeve_mat = mats["outer"] if config["costume"] in ("traveler", "facilitator", "mediator") else mats["top"]
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
-        # A rounded shoulder cap and elbow bridge remove the toy-block gaps
-        # while keeping every segment independently poseable at runtime.
-        ellipsoid(f"ShoulderCap_{side}", (0, 0, -0.038), (0.055, 0.052, 0.06), mats["top"], pivot, segments=20, rings=12)
+        # The upper-arm topology now carries its own rounded shoulder. A
+        # separate sphere made white coats read like ball-jointed dolls.
         organic_limb(
             f"UpperArm_{side}",
-            0.285,
+            0.31,
             (
-                (0.5, 0.071, 0.067),
-                (0.28, 0.069, 0.064),
+                (0.56, 0.036, 0.034),
+                (0.42, 0.067, 0.063),
+                (0.24, 0.071, 0.066),
                 (0.02, 0.062, 0.058),
                 (-0.28, 0.055, 0.052),
                 (-0.5, 0.051, 0.049),
             ),
-            (0, 0, -0.135),
-            mats["top"],
+            (0, 0, -0.15),
+            sleeve_mat,
             pivot,
         )
-        ellipsoid(f"ElbowBridge_{side}", (0, 0, 0.002), (0.047, 0.045, 0.05), mats["outer"], elbow, segments=18, rings=10)
+        ellipsoid(f"ElbowBridge_{side}", (0, 0, 0.002), (0.05, 0.048, 0.054), sleeve_mat, elbow, segments=18, rings=10)
         organic_limb(
             f"Forearm_{side}",
             0.265,
@@ -714,34 +824,19 @@ def build_body(role, config, mats, visual):
                 (-0.5, 0.045, 0.043),
             ),
             (0, 0, -0.132),
-            mats["outer"],
+            sleeve_mat,
             elbow,
         )
         cylinder(f"Cuff_{side}", 0.06, 0.056, 0.052, (0, 0, -0.236), mats["accent"], elbow, vertices=20)
-        # The reference uses a soft illustrated hand at gameplay distance, not
-        # individually separated doll fingers.  Keep four anatomical knuckle
-        # forms for close-up animation, but bury their roots inside a longer
-        # tapered palm so they merge into one readable mitten silhouette.
-        ellipsoid(f"Hand_{side}", (0, -0.008, -0.307), (0.052, 0.041, 0.062), mats["skin"], elbow, segments=24, rings=16)
-        ellipsoid(f"Thumb_{side}", (-side * 0.04, -0.035, -0.306), (0.017, 0.014, 0.034), mats["skin"], elbow, rotation=(0.08, side * 0.34, side * 0.36), segments=14, rings=8)
-        finger_specs = (
-            (-0.027, 0.025),
-            (-0.009, 0.028),
-            (0.009, 0.029),
-            (0.027, 0.026),
+        sculpted_hand(
+            f"Hand_{side}",
+            (0, -0.008, -0.319),
+            mats["skin"],
+            mats["skin_shadow"],
+            elbow,
+            side=side,
         )
-        for finger_index, (finger_x, finger_length) in enumerate(finger_specs):
-            role_curl = 0.12 if role == "facilitator" and side == -1 else 0.08 if role == "mediator" and side == 1 else 0.05
-            ellipsoid(
-                f"Finger_{side}_{finger_index + 1}",
-                (finger_x * 0.67, -0.035, -0.357 + abs(finger_x) * 0.035),
-                (0.0088, 0.0105, finger_length),
-                mats["skin"],
-                elbow,
-                rotation=(role_curl, side * finger_x * 0.35, -side * finger_x * 0.45),
-                segments=12,
-                rings=8,
-            )
+        ellipsoid(f"Thumb_{side}", (-side * 0.045, -0.038, -0.32), (0.019, 0.015, 0.04), mats["skin"], elbow, rotation=(0.12, side * 0.38, side * 0.42), segments=16, rings=10)
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
         organic_limb(
@@ -785,7 +880,7 @@ def build_body(role, config, mats, visual):
                 depth=0.006,
             )
         cylinder(f"TrouserCuff_{side}", 0.088, 0.082, 0.082, (0, 0, -0.25), mats["accent"], knee, vertices=18)
-        rounded_box(f"Shoe_{side}", (0.164, 0.25, 0.12), (0, -0.04, -0.35), mats["shoe"], knee, radius=0.046)
+        ellipsoid(f"Shoe_{side}", (0, -0.055, -0.35), (0.082, 0.126, 0.064), mats["shoe"], knee, segments=22, rings=14)
         rounded_box(f"Sole_{side}", (0.17, 0.255, 0.024), (0, -0.04, -0.411), mats["sole"], knee, radius=0.01, segments=2)
         curve_tube(f"Lace_{side}", [(-0.046, -0.199, -0.33), (0, -0.205, -0.316), (0.046, -0.199, -0.33)], 0.007, mats["sole"], knee)
 
@@ -882,7 +977,7 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
         for side in (-1, 1):
             rounded_box(f"CargoPocket_{side}", (0.14, 0.055, 0.17), (side * 0.14, -0.095, 0.52), mats["accent"], visual, radius=0.025)
     elif costume in ("facilitator", "mediator"):
-        cylinder("Skirt", 0.29, 0.21, 0.5, (0, 0, 0.72), mats["lower"], visual, vertices=32)
+        pleated_skirt("Skirt", 0.21, 0.29, 0.5, (0, 0, 0.72), mats["lower"], visual, pleats=10, segments=40)
         curve_tube("SkirtHem", [(-0.27, -0.08, 0.48), (0, -0.285, 0.46), (0.27, -0.08, 0.48)], 0.008, mats["accent"], visual, resolution=2)
         for pleat_index, pleat_x in enumerate((-0.1, 0, 0.1)):
             cloth_fold_ribbon(
@@ -907,7 +1002,19 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
                 radius=0.018,
                 rotation=(0, side * 0.022, side * 0.028),
             )
-            rounded_box(f"Lapel_{side}", (0.12, 0.035, 0.3), (side * 0.07, -0.21, 1.12), mats["outer"], visual, radius=0.025, rotation=(0, side * 0.08, side * 0.45))
+            tailored_panel(
+                f"Lapel_{side}",
+                0.08,
+                0.105,
+                0.065,
+                0.28,
+                0.026,
+                (side * 0.07, -0.212, 1.12),
+                mats["outer"],
+                visual,
+                radius=0.012,
+                rotation=(0, side * 0.08, side * 0.45),
+            )
             curve_tube(
                 f"CoatHem_{side}",
                 [(side * 0.02, -0.214, 0.79), (side * 0.1, -0.222, 0.8), (side * 0.19, -0.18, 0.81)],
@@ -929,10 +1036,10 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
                 depth=0.008,
             )
         for index in range(3):
-            ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.022, 0.012, 0.022), mats["accent"], visual, segments=12, rings=8)
+            ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
         if costume == "facilitator":
-            rounded_box("StoryNotebook", (0.22, 0.05, 0.3), (0.1, -0.12, -0.24), mats["accent"], left_elbow, radius=0.035, rotation=(0.08, -0.18, -0.08))
-            rounded_box("NotebookPaper", (0.19, 0.012, 0.27), (0.1, -0.151, -0.24), mats["paper"], left_elbow, radius=0.025, rotation=(0.08, -0.18, -0.08))
+            rounded_box("StoryNotebook", (0.22, 0.05, 0.3), (0.085, -0.07, -0.24), mats["accent"], left_elbow, radius=0.035, rotation=(0.08, -0.18, -0.08))
+            rounded_box("NotebookPaper", (0.19, 0.012, 0.27), (0.085, -0.101, -0.24), mats["paper"], left_elbow, radius=0.025, rotation=(0.08, -0.18, -0.08))
         else:
             curve_tube("Necklace", [(-0.11, -0.205, 1.2), (0, -0.225, 1.08), (0.11, -0.205, 1.2)], 0.012, mats["metal"], visual)
             ellipsoid("NecklacePendant", (0, -0.24, 1.07), (0.035, 0.012, 0.05), mats["metal"], visual, segments=14, rings=8)
@@ -1014,6 +1121,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
+        "sculptContract": "mirrorlife-civic-sculpt-v3",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v2",
             "runtime": "authored-keyframe-blend",

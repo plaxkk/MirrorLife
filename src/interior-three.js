@@ -76,7 +76,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.72, fill: 0.14, hemi: 0.11, bounce: 0.48, wash: 0.56, exposure: 0.79, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
+  "civic-ivory": { key: 2.55, fill: 0.14, hemi: 0.11, bounce: 0.44, wash: 0.6, exposure: 0.79, keyColor: "#ffd09a", fillColor: "#a9cec8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -446,12 +446,12 @@ function ensureLayer() {
         vec4 texel = texture2D(tDiffuse, vUv);
         vec3 color = texel.rgb;
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-        color = mix(vec3(luma), color, 1.075 * strength);
-        color = max(vec3(0.0), (color - vec3(0.18)) * (1.0 + 0.09 * strength) + vec3(0.18));
-        color *= mix(vec3(1.0), vec3(1.035, 1.007, 0.962), strength);
+        color = mix(vec3(luma), color, 1.16 * strength);
+        color = max(vec3(0.0), (color - vec3(0.68)) * (1.0 + 0.07 * strength) + vec3(0.68));
+        color *= mix(vec3(1.0), vec3(1.018, 0.982, 0.94), strength);
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.085 * strength;
+        color *= 1.0 - vignette * 0.1 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1289,10 +1289,10 @@ function applyLightingPreset(theme = {}) {
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.9 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.74 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.76 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.22 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -1942,6 +1942,9 @@ function addAmbientWindowBay(angle, colors, night) {
     ? new THREE.MeshStandardMaterial({
       color: night ? "#6a7890" : "#fff4df",
       map: windowViewTexture,
+      emissive: night ? "#18243a" : "#f0c894",
+      emissiveMap: windowViewTexture,
+      emissiveIntensity: night ? 0.08 : 0.3,
       roughness: 0.96,
       metalness: 0,
       side: THREE.DoubleSide,
@@ -3370,7 +3373,7 @@ function addCivicReferenceDressing(theme, colors) {
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
     new THREE.CircleGeometry(1.48, 64),
-    createToonMaterial("#ffffff", {
+    createToonMaterial("#eadfc9", {
       roughness: 0.94,
       surface: "fabric",
       bumpScale: 0.009,
@@ -3457,9 +3460,9 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.12 : 0.82,
+        opacity: theme.night ? 0.1 : 0.5,
         depthWrite: false,
-        toneMapped: false,
+        toneMapped: true,
         side: THREE.DoubleSide
       })
     );
@@ -5687,7 +5690,7 @@ function createCivicActorObject(actor, asset) {
     // additional actor batches materially affect the 30fps budget.
     const mobileDetailNodes = [];
     assetScene.traverse((node) => {
-      if (node.isMesh && String(node.name || "").startsWith("Finger_")) mobileDetailNodes.push(node);
+      if (node.isMesh && String(node.name || "").startsWith("FingerCrease_")) mobileDetailNodes.push(node);
     });
     mobileDetailNodes.forEach((node) => {
       node.removeFromParent();
@@ -6520,7 +6523,10 @@ function update(payload = {}) {
     worldY: actor.worldY ?? 0.05
   })), width, height);
   if (gtaoPass) gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
-  if (cinematicGradePass) cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+  if (cinematicGradePass) {
+    cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
+    cinematicGradePass.uniforms.strength.value = width >= 760 ? 1 : 0.72;
+  }
   if (visible) {
     if (composer) composer.render();
     else renderer.render(scene, camera);
