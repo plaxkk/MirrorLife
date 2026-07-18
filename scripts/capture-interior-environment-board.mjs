@@ -115,15 +115,25 @@ try {
       } catch {
         stats = {};
       }
+      const physicsItems = typeof getInteriorPhysicsItems === "function" && typeof getInteriorBlueprint === "function" && interiorView?.zone
+        ? getInteriorPhysicsItems(getInteriorBlueprint(interiorView.zone))
+        : [];
+      const unsupportedStructuralDynamics = physicsItems
+        .filter((item) => item.renderModel !== false && item.rigidBody?.type === "dynamic" && item.model !== "supply-crate")
+        .map((item) => ({ key: item.key, model: item.model }));
       return {
         stats,
+        propIntegrity: {
+          unsupportedStructuralDynamics,
+          dynamicModels: physicsItems.filter((item) => item.rigidBody?.type === "dynamic").map((item) => item.model)
+        },
         layout: {
           interiorActive: document.body.classList.contains("interior-active"),
           overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth
         }
       };
     });
-    results.push({ ...scene, file, stats: runtime.stats, layout: runtime.layout });
+    results.push({ ...scene, file, stats: runtime.stats, layout: runtime.layout, propIntegrity: runtime.propIntegrity });
     console.log(`Captured ${scene.archetype}: ${scene.zone}`);
   }
 } finally {
@@ -208,6 +218,9 @@ const performanceFailures = results.flatMap((result) => {
   if (result.stats.ready !== true) failures.push("renderer not ready");
   if (result.layout?.interiorActive !== true) failures.push("interior mode not active");
   if (result.layout?.overflowX === true) failures.push("horizontal overflow");
+  if (result.propIntegrity?.unsupportedStructuralDynamics?.length) {
+    failures.push(`unstable structural props ${result.propIntegrity.unsupportedStructuralDynamics.map((item) => item.model).join(", ")}`);
+  }
   for (const key of ["drawCalls", "triangles", "geometries"]) {
     if (Number(result.stats[key] || 0) > PERFORMANCE_BUDGET[key]) {
       failures.push(`${key} ${result.stats[key]}/${PERFORMANCE_BUDGET[key]}`);

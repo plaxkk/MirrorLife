@@ -1,5 +1,32 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v9 material, joinery and living-face gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current live implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1672 × 941`).
+- Same-canvas source/current comparison: `/tmp/mirrorlife-civic-fidelity-v9-comparison.png`.
+- Whole-building placement board: `dist/interior-3d-work/environment-review/contact-sheet.png` (26 interiors).
+
+### Findings and fixes in this gate
+
+- [fixed] The civic room no longer uses an evenly washed cream grade. Key/fill/environment balance now restores warm directional contrast while retaining readable faces and floor routes.
+- [fixed] Eight shallow wall bays now include real recessed plaster fields, stronger oak/plaster trim separation and readable pilasters. The upper half no longer reads as one unbroken generic cylinder.
+- [fixed] The foreground record desk, library and side wall gained paper, pen, water, cabinet, ceramic, textile and hardware detail without introducing new traversal colliders.
+- [fixed] Civic GLBs now include independently validated left/right eye pivots. Live characters blink, use slightly more restrained eye proportions and receive a single-pass view-normal ink rim instead of a triangle-doubling outline shell.
+- [fixed] The 26-room capture gate now rejects any full-size rendered furnishing promoted to an unconstrained dynamic rigid body. `supply-crate` remains the only permitted free dynamic prop, preventing the tipped chair/shelf and detached-rod failure shown in the defect reference.
+- [fixed] The final 26-room sweep stays within budget: desktop peaks at `113` draw calls, `420,238` triangles and `116` geometries; mobile peaks at `100` draw calls, `245,130` triangles and `81` geometries. The public hero itself is `113` draw calls / `245,423` triangles at the native desktop comparison size.
+- [P1 remaining] Direct comparison still shows a categorical production gap in characters: the source has hand-sculpted anatomy, expressive hands, cloth folds, facial deformation and authored acting; the current GLBs remain modular Web LOD0 characters with pivot animation.
+- [P1 remaining] Furniture forms and joinery are still noticeably simpler than the source's bespoke assets, especially the foreground display case, lounge cabinetry and architectural opening.
+- [P2 remaining] The 20 non-core rooms pass stability and path readability but remain visibly organized by archetype families rather than 20 independently art-directed layouts.
+
+### Gate result
+
+The room is materially closer, fully 3D, walkable, orbitable and protected against the reported placement failure. Literal image-1 production parity and bespoke authorship for all building interiors are not yet proven.
+
+v9 final result: blocked on hero character deformation and bespoke per-building environment assets
+
 ## 2026-07-18 reference-fidelity v7 shared-rig character gate
 
 ### Evidence inspected together

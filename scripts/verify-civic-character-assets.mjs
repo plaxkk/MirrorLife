@@ -21,14 +21,11 @@ for (const role of expectedRoles) {
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
   assert(stat.size > 100000 && stat.size < 2 * 1024 * 1024, `${role}: GLB size is outside the 0.1–2 MB budget`);
-  const header = Buffer.alloc(4);
-  const handle = await fs.open(file, "r");
-  try {
-    await handle.read(header, 0, 4, 0);
-  } finally {
-    await handle.close();
-  }
+  const contents = await fs.readFile(file);
+  const header = contents.subarray(0, 4);
   assert.equal(header.toString("utf8"), "glTF", `${role}: invalid GLB header`);
+  assert(contents.includes(Buffer.from("EyePivot_-1")), `${role}: left blink pivot is missing`);
+  assert(contents.includes(Buffer.from("EyePivot_1")), `${role}: right blink pivot is missing`);
   totalBytes += stat.size;
 }
 

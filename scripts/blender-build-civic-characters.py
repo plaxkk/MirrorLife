@@ -247,10 +247,11 @@ def build_face(head, mats):
     ellipsoid("Head", (0, 0, 0), (0.265, 0.218, 0.28), mats["skin"], head, segments=32, rings=20)
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
-        ellipsoid(f"EyeWhite_{side}", (side * 0.09, -0.207, 0.035), (0.055, 0.025, 0.073), mats["eye_white"], head, segments=20, rings=12)
-        ellipsoid(f"Iris_{side}", (side * 0.09, -0.229, 0.03), (0.032, 0.012, 0.047), mats["iris"], head, segments=18, rings=10)
-        ellipsoid(f"Pupil_{side}", (side * 0.09, -0.24, 0.028), (0.017, 0.008, 0.03), mats["ink"], head, segments=14, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (side * 0.083, -0.248, 0.05), (0.006, 0.004, 0.009), mats["eye_white"], head, segments=10, rings=6)
+        eye = empty(f"EyePivot_{side}", head, (side * 0.09, -0.207, 0.035))
+        ellipsoid(f"EyeWhite_{side}", (0, 0, 0), (0.049, 0.023, 0.064), mats["eye_white"], eye, segments=20, rings=12)
+        ellipsoid(f"Iris_{side}", (0, -0.022, -0.004), (0.027, 0.011, 0.041), mats["iris"], eye, segments=18, rings=10)
+        ellipsoid(f"Pupil_{side}", (0, -0.033, -0.006), (0.014, 0.007, 0.025), mats["ink"], eye, segments=14, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.041, 0.013), (0.005, 0.0035, 0.008), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"Brow_{side}",
             [(side * 0.145, -0.225, 0.115), (side * 0.09, -0.236, 0.125), (side * 0.045, -0.225, 0.115)],

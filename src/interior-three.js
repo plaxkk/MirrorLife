@@ -60,7 +60,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f0e7d9", floor: "#cbc5bb", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f6ead8", floor: "#ddd2c2", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -68,7 +68,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.92, fill: 0.2, hemi: 0.2, bounce: 0.4, wash: 1.06, exposure: 0.84, keyColor: "#ffc77f", fillColor: "#8fb2b2" },
+  "civic-ivory": { key: 2.56, fill: 0.3, hemi: 0.28, bounce: 0.56, wash: 1.16, exposure: 0.87, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -326,8 +326,8 @@ function ensureLayer() {
   keyLight.shadow.camera.bottom = -6;
   keyLight.shadow.camera.near = 0.1;
   keyLight.shadow.camera.far = 16;
-  keyLight.shadow.radius = 4;
-  keyLight.shadow.blurSamples = 12;
+  keyLight.shadow.radius = 6;
+  keyLight.shadow.blurSamples = 20;
   scene.add(keyLight);
 
   keyLight.shadow.bias = -0.00035;
@@ -365,9 +365,9 @@ function ensureLayer() {
   composer = new EffectComposer(renderer);
   renderPass = new RenderPass(scene, camera);
   ssaoPass = new SSAOPass(scene, camera, 1, 1);
-  ssaoPass.kernelRadius = 7;
-  ssaoPass.minDistance = 0.0018;
-  ssaoPass.maxDistance = 0.11;
+  ssaoPass.kernelRadius = 5;
+  ssaoPass.minDistance = 0.0024;
+  ssaoPass.maxDistance = 0.082;
   ssaoPass.enabled = false;
   outputPass = new OutputPass();
   composer.addPass(renderPass);
@@ -973,7 +973,7 @@ function applyLightingPreset(theme = {}) {
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.18 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.28 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -2232,6 +2232,50 @@ function addCivicRecordDesk(colors) {
   shade.position.set(0.62, 1.43, -0.08);
   shade.rotation.x = Math.PI;
   group.add(shade);
+
+  // Editorial micro-props give the foreground the lived-in density of the
+  // reference while staying inside the authored desk footprint/collider.
+  const notebook = new THREE.Mesh(
+    new RoundedBoxGeometry(0.46, 0.035, 0.32, 3, 0.025),
+    createToonMaterial("#f4ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
+  );
+  notebook.position.set(-0.42, 0.89, 0.2);
+  notebook.rotation.y = 0.14;
+  group.add(notebook);
+  [-0.11, 0, 0.11].forEach((z, index) => {
+    const line = new THREE.Mesh(
+      new RoundedBoxGeometry(0.29 - index * 0.03, 0.009, 0.008, 1, 0.003),
+      createToonMaterial(index === 0 ? colors.secondary : "#8e8170", { roughness: 0.84 })
+    );
+    line.position.set(-0.42, 0.912 + index * 0.0005, 0.2 + z);
+    line.rotation.y = 0.14;
+    group.add(line);
+  });
+  const glass = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.105, 0.09, 0.24, 28, 1, true),
+    createGlassMaterial("#dceeed", { opacity: 0.42, roughness: 0.08, depthWrite: false })
+  );
+  glass.position.set(0.18, 0.91, 0.18);
+  group.add(glass);
+  const water = new THREE.Mesh(
+    new THREE.CircleGeometry(0.087, 28),
+    createGlassMaterial("#b9dfe6", { opacity: 0.56, roughness: 0.05, depthWrite: false })
+  );
+  water.rotation.x = -Math.PI / 2;
+  water.position.set(0.18, 1.005, 0.18);
+  group.add(water);
+  const penCup = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20),
+    createToonMaterial("#4d8b83", { roughness: 0.46 })
+  );
+  penCup.position.set(-0.05, 0.93, -0.18);
+  group.add(penCup);
+  [colors.accent, "#476e91", "#b45f51"].forEach((color, index) => {
+    const pen = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.31, 8), createToonMaterial(color, { roughness: 0.58 }));
+    pen.position.set(-0.09 + index * 0.04, 1.09 + index * 0.015, -0.18);
+    pen.rotation.z = (index - 1) * 0.1;
+    group.add(pen);
+  });
 }
 
 function addCivicHeroNoticeWall(colors) {
@@ -2307,6 +2351,14 @@ function addCivicLibraryWall(colors) {
   const recess = new THREE.Mesh(new RoundedBoxGeometry(1.08, 2.08, 0.09, 6, 0.08), createToonMaterial("#d7b78c", { roughness: 0.9 }));
   recess.position.set(0, 1.36, 0.27);
   group.add(recess);
+  const crown = new THREE.Mesh(new THREE.TorusGeometry(0.58, 0.075, 10, 36, Math.PI), walnut);
+  crown.position.set(0, 2.18, 0.3);
+  group.add(crown);
+  [-0.58, 0.58].forEach((x) => {
+    const pilaster = new THREE.Mesh(new RoundedBoxGeometry(0.1, 2.18, 0.12, 4, 0.04), walnut);
+    pilaster.position.set(x, 1.24, 0.29);
+    group.add(pilaster);
+  });
   const palette = [colors.secondary, ATELIER_TOKENS.apricot, ATELIER_TOKENS.butter, "#7c9f79", "#e9dfc9", "#789bc0"];
   for (let shelfIndex = 0; shelfIndex < 4; shelfIndex += 1) {
     const shelfY = 0.48 + shelfIndex * 0.48;
@@ -2321,6 +2373,69 @@ function addCivicLibraryWall(colors) {
       group.add(book);
     }
   }
+  const lowerRail = new THREE.Mesh(new RoundedBoxGeometry(1.18, 0.11, 0.42, 4, 0.035), walnut);
+  lowerRail.position.set(0, 0.28, 0.25);
+  group.add(lowerRail);
+  [-0.27, 0.27].forEach((x, index) => {
+    const door = new THREE.Mesh(new RoundedBoxGeometry(0.47, 0.42, 0.055, 4, 0.05), createToonMaterial(index ? "#477f73" : "#f1dfbd", { roughness: 0.72 }));
+    door.position.set(x, 0.48, 0.3);
+    group.add(door);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.03, 12, 8), createToonMaterial("#c99d44", { roughness: 0.3, metalness: 0.5 }));
+    knob.position.set(x + (x < 0 ? 0.14 : -0.14), 0.48, 0.34);
+    group.add(knob);
+  });
+}
+
+function addCivicDomesticDetails(colors) {
+  // A small wall rail, woven storage and ceramic still life fill the two large
+  // negative spaces visible in the source without narrowing the walking loop.
+  const [railX, railY, railZ] = wallPosition(0.58, ROOM_RADIUS - 0.13, 2.15);
+  const railGroup = new THREE.Group();
+  railGroup.position.set(railX, railY, railZ);
+  railGroup.rotation.y = -0.58;
+  roomRoot.add(railGroup);
+  const rail = new THREE.Mesh(
+    new RoundedBoxGeometry(1.08, 0.16, 0.12, 4, 0.055),
+    createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.62, surface: "wood", bumpScale: 0.01 })
+  );
+  railGroup.add(rail);
+  [-0.36, 0, 0.36].forEach((x, index) => {
+    const hook = new THREE.Mesh(new THREE.TorusGeometry(0.075, 0.025, 8, 18, Math.PI), createToonMaterial("#c99b43", { metalness: 0.56, roughness: 0.34 }));
+    hook.position.set(x, -0.12, 0.08);
+    hook.rotation.z = Math.PI;
+    railGroup.add(hook);
+    if (index === 1) return;
+    const textile = new THREE.Mesh(
+      new RoundedBoxGeometry(index ? 0.26 : 0.32, index ? 0.62 : 0.42, 0.1, 6, 0.09),
+      createToonMaterial(index ? "#d89a55" : "#4e5655", { roughness: 0.96, surface: "fabric", bumpScale: 0.012 })
+    );
+    textile.position.set(x, index ? -0.43 : -0.32, 0.12);
+    textile.rotation.z = index ? -0.09 : 0.06;
+    railGroup.add(textile);
+  });
+
+  const stillLife = new THREE.Group();
+  stillLife.position.set(3.82, 0, 1.34);
+  stillLife.rotation.y = -0.54;
+  roomRoot.add(stillLife);
+  const tray = new THREE.Mesh(
+    new RoundedBoxGeometry(0.9, 0.09, 0.42, 4, 0.06),
+    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.7, surface: "wood", bumpScale: 0.009 })
+  );
+  tray.position.y = 0.56;
+  stillLife.add(tray);
+  const vesselColors = ["#efe1ca", colors.secondary, "#d99064"];
+  [-0.27, 0, 0.27].forEach((x, index) => {
+    const vessel = new THREE.Mesh(
+      new THREE.LatheGeometry([
+        new THREE.Vector2(0.07, 0), new THREE.Vector2(0.11, 0.05),
+        new THREE.Vector2(0.1 + index * 0.015, 0.2 + index * 0.04), new THREE.Vector2(0.055, 0.28 + index * 0.05)
+      ], 22),
+      createToonMaterial(vesselColors[index], { roughness: 0.42, surface: "ceramic", bumpScale: 0.004 })
+    );
+    vessel.position.set(x, 0.61, 0);
+    stillLife.add(vessel);
+  });
 }
 
 function addCivicThresholdFlowers(colors) {
@@ -2479,8 +2594,9 @@ function addCivicArchitecturalShell(colors) {
   // as the camera orbits, so the room keeps depth without placing opaque
   // geometry between the player and the current conversation.
   const bayCount = 8;
-  const trim = createToonMaterial("#dec5a3", { roughness: 0.86, surface: "plaster", bumpScale: 0.006, emissive: 0.018 });
-  const darkTrim = createToonMaterial("#b68b64", { roughness: 0.76, surface: "wood", bumpScale: 0.007 });
+  const panelMaterial = createToonMaterial("#ead8c0", { roughness: 0.96, surface: "plaster", bumpScale: 0.012 });
+  const trim = createToonMaterial("#d3b58f", { roughness: 0.86, surface: "plaster", bumpScale: 0.006, emissive: 0.012 });
+  const darkTrim = createToonMaterial("#9f7353", { roughness: 0.76, surface: "wood", bumpScale: 0.007 });
   for (let index = 0; index < bayCount; index += 1) {
     const angle = -Math.PI + (index + 0.5) / bayCount * Math.PI * 2;
     const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.12, 1.02);
@@ -2491,6 +2607,12 @@ function addCivicArchitecturalShell(colors) {
     bay.userData.dynamicWallDecor = true;
     bay.userData.wallAngle = angle;
     roomRoot.add(bay);
+
+    const recess = new THREE.Mesh(new RoundedBoxGeometry(3.68, 1.46, 0.035, 5, 0.11), panelMaterial);
+    recess.position.z = 0.025;
+    recess.castShadow = false;
+    recess.receiveShadow = true;
+    bay.add(recess);
 
     [-0.79, 0.79].forEach((railY) => {
       const rail = new THREE.Mesh(new THREE.BoxGeometry(3.82, 0.065, 0.075), trim);
@@ -2524,6 +2646,7 @@ function addCivicArchitecturalShell(colors) {
 }
 
 function addCivicReferenceDressing(theme, colors) {
+  const mobileLod = lastWidth <= 720;
   addCivicArchitecturalShell(colors);
   addAtelierTerrazzo(theme);
   const center = new THREE.Mesh(
@@ -2534,21 +2657,23 @@ function addCivicReferenceDressing(theme, colors) {
   center.position.set(0, 0.041, 0.18);
   center.receiveShadow = true;
   roomRoot.add(center);
-  const embossMaterial = createToonMaterial("#c89d43", {
-    roughness: 0.34,
-    metalness: 0.55,
-    transparent: true,
-    opacity: 0.94
-  });
-  for (let index = 0; index < 16; index += 1) {
-    const angle = index / 16 * Math.PI * 2;
-    const petal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 8), embossMaterial);
-    petal.scale.set(1.55, 0.07, 0.46);
-    petal.rotation.y = -angle;
-    petal.position.set(Math.sin(angle) * 0.58, 0.052, 0.18 - Math.cos(angle) * 0.58);
-    petal.castShadow = false;
-    petal.receiveShadow = true;
-    roomRoot.add(petal);
+  if (!mobileLod) {
+    const embossMaterial = createToonMaterial("#c89d43", {
+      roughness: 0.34,
+      metalness: 0.55,
+      transparent: true,
+      opacity: 0.94
+    });
+    for (let index = 0; index < 16; index += 1) {
+      const angle = index / 16 * Math.PI * 2;
+      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 8), embossMaterial);
+      petal.scale.set(1.55, 0.07, 0.46);
+      petal.rotation.y = -angle;
+      petal.position.set(Math.sin(angle) * 0.58, 0.052, 0.18 - Math.cos(angle) * 0.58);
+      petal.castShadow = false;
+      petal.receiveShadow = true;
+      roomRoot.add(petal);
+    }
   }
   [
     [1.5, 1.62, "#4c948c", 0.82],
@@ -2573,7 +2698,10 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicLibraryWall(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
-  addCivicOrbitFrames(colors);
+  if (!mobileLod) {
+    addCivicOrbitFrames(colors);
+    addCivicDomesticDetails(colors);
+  }
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
   addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 2);
   addBuiltInArchNiche(0.62, colors, {
@@ -3384,7 +3512,7 @@ function rebuildRoom(theme = {}) {
 
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
-  scene.background = new THREE.Color(night ? "#9da5a7" : "#d9b98f");
+  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee2d1" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
@@ -3503,6 +3631,11 @@ function getItemSignature(items) {
 const MOBILE_HERO_PROP_INDEXES = {
   "public-plaza": [2, 3],
   residential: [0, 1, 4],
+  kindergarten: [0, 2],
+  "primary-school": [0, 2],
+  "middle-school": [0, 2],
+  university: [0, 2],
+  "mentor-hall": [0, 2],
   "office-district": [0, 2],
   "legal-court": [0, 1, 3],
   "empathy-lab": [0, 1, 3],
@@ -3931,16 +4064,30 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     node.removeFromParent();
     node.geometry?.dispose?.();
   });
-  const mesh = new THREE.Mesh(geometry, new THREE.MeshStandardMaterial({
+  const material = new THREE.MeshStandardMaterial({
     color: 0xffffff,
     vertexColors: true,
     roughness: Number(materialOptions.roughness ?? 0.72),
     metalness: 0.015,
     envMapIntensity: Number(materialOptions.envMapIntensity ?? 0.62)
-  }));
+  });
+  // The source portraits use a restrained ink contour. A view-normal rim in
+  // the existing actor material preserves that identity without a duplicate
+  // back-face shell (which would double mobile triangles).
+  material.onBeforeCompile = (shader) => {
+    shader.fragmentShader = shader.fragmentShader.replace(
+      "#include <opaque_fragment>",
+      `#include <opaque_fragment>
+      float mirrorLifeInkRim = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 4.2);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.085, 0.072, 0.09), mirrorLifeInkRim * 0.38);`
+    );
+  };
+  material.customProgramCacheKey = () => "mirrorlife-actor-ink-rim-v1";
+  const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   target.add(mesh);
+  return mesh;
 }
 
 function addActorHair(headGroup, actorStyle, material) {
@@ -4376,6 +4523,7 @@ function createCivicActorObject(actor, asset) {
   const rightArm = visual?.getObjectByName("RightArmPivot");
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
   const rightLeg = visual?.getObjectByName("RightLegPivot");
+  const eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
   if (!visual || !headGroup || !leftArm || !rightArm || !leftLeg || !rightLeg) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -4388,8 +4536,9 @@ function createCivicActorObject(actor, asset) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => importedMaterials.add(material));
   });
-  mergeActorVertexColorMeshes(headGroup, [], { roughness: 0.6, envMapIntensity: 0.78 });
+  mergeActorVertexColorMeshes(headGroup, eyePivots, { roughness: 0.6, envMapIntensity: 0.78 });
   mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.69, envMapIntensity: 0.7 });
+  eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
   [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => {
     mergeActorVertexColorMeshes(limb, [], { roughness: 0.67, envMapIntensity: 0.72 });
   });
@@ -4414,6 +4563,7 @@ function createCivicActorObject(actor, asset) {
     rightArm,
     leftLeg,
     rightLeg,
+    eyePivots,
     frame,
     styleKey: `${frame}:${role}:civic-glb-v1`,
     identity: style.identity,
@@ -4514,6 +4664,13 @@ function updateActors(actors = [], now = performance.now()) {
       headLookYaw = THREE.MathUtils.clamp(localLookYaw, -0.5, 0.5) * 0.82;
     }
     entry.headGroup.rotation.y = headLookYaw;
+    if (entry.eyePivots?.length) {
+      const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
+      const blinkScale = blinkCycle > 4.58
+        ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
+        : 1;
+      entry.eyePivots.forEach((eyePivot) => eyePivot.scale.y = blinkScale);
+    }
     entry.visual.rotation.z = 0;
     if (actor.state === "jump") {
       entry.leftLeg.rotation.x = -0.42;
