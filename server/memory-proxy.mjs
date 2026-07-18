@@ -4,7 +4,7 @@
 
    启动(自动读取项目根目录 .env,或直接传环境变量):
      npm run memory-proxy
-   然后在游戏「存档与记忆」面板填入 http://localhost:8787/api/memory
+   然后在游戏「存档与记忆」面板填入 http://127.0.0.1:8797/api/memory
 
    前端合同(稳定,不随火山接口变化):
      POST { op:"add",    userId, records:[{agentId,text,kind,importance,turn,ts}] }
@@ -37,7 +37,8 @@ import { fileURLToPath } from "node:url";
   } catch { /* .env 读取失败则仅用进程环境变量 */ }
 })();
 
-const PORT = Number(process.env.MEMORY_PROXY_PORT || 8787);
+const HOST = process.env.MEMORY_PROXY_HOST || "127.0.0.1";
+const PORT = Number(process.env.MEMORY_PROXY_PORT || 8797);
 const BASE_URL = (process.env.VOLC_MEM0_BASE_URL || "").replace(/\/$/, "");
 const API_KEY = process.env.VOLC_MEM0_API_KEY || "";
 
@@ -142,7 +143,17 @@ const server = http.createServer(async (req, res) => {
   });
 });
 
-server.listen(PORT, () => {
-  console.log(`[memory-proxy] listening on http://localhost:${PORT}/api/memory`);
+server.on("error", (error) => {
+  if (error?.code === "EADDRINUSE") {
+    console.error(`[memory-proxy] ${HOST}:${PORT} 已被其他程序占用，请设置 MEMORY_PROXY_PORT 后重试。`);
+    process.exitCode = 1;
+    return;
+  }
+  console.error(`[memory-proxy] start failed: ${error?.message || error}`);
+  process.exitCode = 1;
+});
+
+server.listen(PORT, HOST, () => {
+  console.log(`[memory-proxy] listening on http://${HOST}:${PORT}/api/memory`);
   console.log(`[memory-proxy] upstream: ${BASE_URL || "(未配置,将返回 503)"}`);
 });

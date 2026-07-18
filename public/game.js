@@ -2832,7 +2832,7 @@ async function showSavePanel() {
       <p style="opacity:0.8">${memory.enabled
         ? `已连接代理 · 已同步 ${memory.synced} 条 · 待同步 ${memory.pending} 条${memory.lastError ? ` · ⚠ ${h(memory.lastError)}` : ""}`
         : "未配置。记忆当前只保存在这台设备上；填入代理地址后，可以同步到你自己的云端记忆库。"}</p>
-      <input type="text" id="memoryProxyInput" placeholder="http://localhost:8787/api/memory"
+      <input type="text" id="memoryProxyInput" placeholder="${h(typeof getDefaultMemoryProxyUrl === "function" ? getDefaultMemoryProxyUrl() : "http://127.0.0.1:8797/api/memory")}"
         value="${h(typeof getMemoryProxyUrl === "function" ? getMemoryProxyUrl() : "")}"
         style="width:100%;box-sizing:border-box;padding:6px 8px;border:2px solid #1a1a2e;border-radius:8px;font-size:12px;margin:4px 0" />
       <div style="display:flex;gap:4px">
