@@ -1,5 +1,52 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v58 portal daylight, cloth follow-through and foreground story-density gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v58/desktop-yaw-0-1672x941.png` (`1672 × 941`, public-plaza, yaw `0°`, final ready state).
+- Same-canvas comparisons: `reference-vs-v58-full.png`, `reference-vs-v58-portal-focus.png` and `reference-vs-v58-cast-focus.png` in the same evidence directory.
+- Complete desktop orbit: `desktop-yaw-{0,90,180,270}-1672x941.png`; responsive evidence: `mobile-yaw-0-390x844.png`.
+- Product Design's in-app Browser was unavailable, so the project-approved local Chrome fallback was used. Desktop and mobile reached `sceneReady=true`, had no horizontal or vertical document overflow, and reported no console warning/error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v55 P1 / dark outdoor card] The civic open portal now renders its real courtyard raster as a daylight source rather than a lit wall material. The texture URL participates in `assetRevision`, removing the stale cached exterior that made source changes invisible. The focused comparison now has a bright exterior threshold and stronger foreground/background separation.
+- [fixed / rigid skirt cone] Facilitator and mediator GLBs now contain a named `SkirtPivot` at the waist. The runtime preserves and batches that subtree separately, then applies restrained gait- and breath-driven follow-through. Runtime evidence records non-zero skirt rotation for both roles while their feet remain grounded.
+- [fixed / sparse foreground records] The foreground record desk adds a file tray, four paper cards, glass rim, coaster and brass clip. Small opaque props are merged into one vertex-surface batch, increasing story density without increasing the room's draw-call ceiling.
+- [fixed / unversioned texture regression] The exterior texture now follows the same query revision contract as GLB assets, so a hard reload and a fresh deployment cannot silently keep an older window image.
+- [checked / core interaction] Activating `倾听线索` changed the selected action state and advanced the visible room memory to `3/3`; the contextual action changed to `再次聆听邻里共识圆桌`.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `150 / 155 / 159 / 157` draw calls and `258,060 / 274,440 / 271,504 / 261,984` triangles. All views remain below the strict `160 / 300,000` civic-room gate.
+- Mobile `390 × 844`: `106` draw calls / `235,790` triangles, below the `110 / 250,000` mobile gate with the skirt subtree still independently animated.
+- Embodied verification: the physical player moved `3.65m`; the weighted follow camera rotated `65.3°`. Four new yaw captures prove real side/reverse geometry and complete room orbit.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed without failure or runtime error.
+- Static/build checks: civic character/hero-prop contracts, `pnpm check` and the Vite production build passed.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] Physical movement, player-weighted follow framing, 360° orbit and the social action loop remain live. Skirt motion is attached to the real character hierarchy instead of a screen effect.
+- [checked][spacing/layout rhythm] The portal, foreground cabinet/desk, listening circle, notice console and lounge establish a readable three-depth composition; all four yaw views retain the player plus a functional landmark.
+- [checked][colors/tokens] Warm ivory, teal/coral identity colours, oak/walnut and brass remain coherent. The exterior is now intentionally the brightest local value, matching the reference's entrance hierarchy without lifting the whole room exposure.
+- [checked][image and asset quality for this iteration] The courtyard uses a real project raster with correct crop/UVs and cache revision. Characters and props remain full-volume geometry with side/back evidence; no static room backdrop replaces exploration.
+- [checked][copy/content] Location, room memory, exit, contextual listening action and the four social verbs remain coherent. The tested action produces a visible state change.
+- [checked][responsiveness/accessibility] `390 × 844` has no page overflow; joystick, chat, jump, contextual action and all four social actions remain visible. Mobile keeps the public room below its rendering budget.
+- [P1][character production sculpt] The new skirt follow-through fixes one rigid costume layer, but the same-canvas cast crop still shows simplified cylindrical anatomy, large hands/feet, flatter facial planes, sparse strand-group hair and limited cloth compression compared with the reference's production character sculpt.
+- [P1][environment craft and composition] The brighter threshold closes the local-light blocker, but the reference still has a physically open garden door, finer cabinet joinery, woven/ceramic/paper material breakup and a denser foreground that frames the cast. Current broad wall and floor regions remain simpler and the display cabinet reads more like a modular game prop.
+- [P1][lighting integration] The portal itself is now bright, but exterior-to-interior bounce, face fill, contact-shadow softness and dapple continuity are still less natural than the reference. The doorway crop is slightly hotter and less spatially integrated than the source.
+- [P2][HUD optical finish] Information hierarchy and interaction pass, but icon design, type weight, translucent depth and spacing are visibly simpler than the reference HUD.
+
+### Gate result
+
+This iteration materially improves the strongest remaining local-light mismatch, adds real cloth follow-through and increases foreground narrative density while preserving physical movement, complete orbit and mobile performance. The paired canvases still contain actionable P1 character-sculpt, environment-craft and indirect-light integration differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production character sculpt/deformation, broader bespoke environment craftsmanship and more natural indirect light integration remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v55 continuous sculpt and calibrated civic light gate
 
 ### Evidence inspected together

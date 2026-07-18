@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v3",
+  "sculptContract": "mirrorlife-civic-sculpt-v4",
   "animationContract": {
     "version": "mirrorlife-civic-clips-v2",
     "runtime": "authored-keyframe-blend",

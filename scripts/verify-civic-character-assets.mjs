@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v3", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v4", "civic character sculpt contract is stale");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -95,6 +95,7 @@ for (const role of expectedRoles) {
   }
   if (role === "facilitator") assert(contents.includes(Buffer.from("PonytailPivot")), "facilitator: ponytail secondary-motion pivot is missing");
   if (role === "facilitator" || role === "mediator") {
+    assert(contents.includes(Buffer.from("SkirtPivot")), `${role}: skirt secondary-motion pivot is missing`);
     assert(contents.includes(Buffer.from("SkirtHem")), `${role}: skirt hem detail is missing`);
     assert(contents.includes(Buffer.from("CoatHem_-1")), `${role}: left coat hem detail is missing`);
     assert(contents.includes(Buffer.from("CoatHem_1")), `${role}: right coat hem detail is missing`);

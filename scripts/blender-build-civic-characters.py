@@ -977,15 +977,19 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
         for side in (-1, 1):
             rounded_box(f"CargoPocket_{side}", (0.14, 0.055, 0.17), (side * 0.14, -0.095, 0.52), mats["accent"], visual, radius=0.025)
     elif costume in ("facilitator", "mediator"):
-        pleated_skirt("Skirt", 0.21, 0.29, 0.5, (0, 0, 0.72), mats["lower"], visual, pleats=10, segments=40)
-        curve_tube("SkirtHem", [(-0.27, -0.08, 0.48), (0, -0.285, 0.46), (0.27, -0.08, 0.48)], 0.008, mats["accent"], visual, resolution=2)
+        # Keep the skirt on its own waist pivot so the runtime can add a small
+        # amount of delayed cloth follow-through without deforming the torso.
+        # Coordinates below are local to the 0.94 m waist pivot.
+        skirt_pivot = empty("SkirtPivot", visual, (0, 0, 0.94))
+        pleated_skirt("Skirt", 0.21, 0.29, 0.5, (0, 0, -0.22), mats["lower"], skirt_pivot, pleats=10, segments=40)
+        curve_tube("SkirtHem", [(-0.27, -0.08, -0.46), (0, -0.285, -0.48), (0.27, -0.08, -0.46)], 0.008, mats["accent"], skirt_pivot, resolution=2)
         for pleat_index, pleat_x in enumerate((-0.1, 0, 0.1)):
             cloth_fold_ribbon(
                 f"SkirtPleat_{pleat_index + 1}",
-                [(pleat_x * 0.72, -0.215, 0.94), (pleat_x * 0.9, -0.25, 0.73), (pleat_x, -0.275, 0.5)],
+                [(pleat_x * 0.72, -0.215, 0), (pleat_x * 0.9, -0.25, -0.21), (pleat_x, -0.275, -0.44)],
                 (0.002, 0.012 if pleat_x else 0.016, 0.002),
                 mats["lower"],
-                visual,
+                skirt_pivot,
                 depth=0.008,
             )
         for side in (-1, 1):
@@ -1121,7 +1125,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v3",
+        "sculptContract": "mirrorlife-civic-sculpt-v4",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v2",
             "runtime": "authored-keyframe-blend",

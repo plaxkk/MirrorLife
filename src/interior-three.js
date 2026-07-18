@@ -1023,7 +1023,7 @@ function getAtelierWindowViewTexture() {
   if (atelierWindowViewTexture) return atelierWindowViewTexture;
   if (!atelierWindowViewTextureLoading && THREE) {
     atelierWindowViewTextureLoading = new THREE.TextureLoader().load(
-      "/assets/interiors/textures/atelier-window-view.png",
+      `/assets/interiors/textures/atelier-window-view.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
       (texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.wrapS = THREE.ClampToEdgeWrapping;
@@ -1922,9 +1922,9 @@ function addAmbientWindowBay(angle, colors, night) {
     createArchPanelGeometry(2.2, 2.16),
     createGlassMaterial(night ? "#58718e" : "#bce2da", {
       roughness: 0.08,
-      transmission: night ? 0.12 : 0.42,
-      opacity: night ? 0.68 : 0.26,
-      depthWrite: true
+      transmission: night ? 0.12 : 0,
+      opacity: night ? 0.68 : 0.045,
+      depthWrite: night
     })
   );
   glass.position.z = 0.31;
@@ -1939,18 +1939,33 @@ function addAmbientWindowBay(angle, colors, night) {
   crossbar.position.set(0, -0.12, 0.35);
   group.add(crossbar);
   const outdoorMaterial = windowViewTexture
-    ? new THREE.MeshStandardMaterial({
-      color: night ? "#6a7890" : "#fff4df",
-      map: windowViewTexture,
-      emissive: night ? "#18243a" : "#f0c894",
-      emissiveMap: windowViewTexture,
-      emissiveIntensity: night ? 0.08 : 0.3,
-      roughness: 0.96,
-      metalness: 0,
-      side: THREE.DoubleSide,
-      envMapIntensity: 0.18
-    })
+    ? night
+      ? new THREE.MeshStandardMaterial({
+        color: "#6a7890",
+        map: windowViewTexture,
+        emissive: "#18243a",
+        emissiveMap: windowViewTexture,
+        emissiveIntensity: 0.08,
+        roughness: 0.96,
+        metalness: 0,
+        side: THREE.DoubleSide,
+        envMapIntensity: 0.18
+      })
+      : new THREE.MeshBasicMaterial({
+        color: "#ffffff",
+        map: windowViewTexture,
+        side: THREE.DoubleSide,
+        // The portal is a source of daylight, not an interior surface. Keep
+        // its photographic luminance out of the room's ACES exposure pass.
+        toneMapped: false
+      })
     : createToonMaterial(night ? "#314a67" : "#cfe8d7", { roughness: 0.9, side: THREE.DoubleSide });
+  if (windowViewTexture && !night) {
+    // EffectComposer applies the output tone map to the whole frame, including
+    // unlit materials. Feed the exterior a modest HDR multiplier so it reads
+    // as sunlit space beyond the room instead of a dark painting on the wall.
+    outdoorMaterial.color.setRGB(1.55, 1.4, 1.2);
+  }
   const outdoor = new THREE.Mesh(createArchPanelGeometry(2.12, 2.08), outdoorMaterial);
   outdoor.position.z = 0.2;
   group.add(outdoor);
@@ -2004,9 +2019,16 @@ function addAmbientWindowBay(angle, colors, night) {
     cushion.rotation.z = (index - 1) * 0.05;
     group.add(cushion);
   });
-  const glow = new THREE.PointLight(night ? 0x8fb8ff : 0xffd8a2, night ? 1.35 : 1.15, 4.8, 2.2);
+  const glow = new THREE.PointLight(night ? 0x8fb8ff : 0xffd8a2, night ? 1.35 : 1.65, 5.2, 2.2);
   glow.position.set(0, 0.05, 0.72);
   group.add(glow);
+  if (!night) {
+    const daylightWash = new THREE.SpotLight(0xffe2ae, 4.2, 7.2, Math.PI * 0.28, 0.68, 1.6);
+    daylightWash.position.set(0, 1.1, 0.45);
+    daylightWash.target.position.set(0.35, -1.25, 4.2);
+    daylightWash.castShadow = false;
+    group.add(daylightWash, daylightWash.target);
+  }
 }
 
 function addAmbientBanquette(angle, colors) {
@@ -2536,15 +2558,18 @@ function addCivicRecordDesk(colors) {
     leg.position.set(x, 0.38, 0);
     group.add(leg);
   });
+  const microProps = new THREE.Group();
+  microProps.name = "CivicRecordDeskMicroProps";
+  group.add(microProps);
   const clipboard = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.045, 0.48, 4, 0.035), createToonMaterial(ATELIER_TOKENS.linen, { roughness: 0.9 }));
   clipboard.position.set(-0.22, 0.89, 0);
   clipboard.rotation.y = -0.12;
-  group.add(clipboard);
+  microProps.add(clipboard);
   [colors.accent, colors.secondary, ATELIER_TOKENS.apricot].forEach((color, index) => {
     const note = new THREE.Mesh(new RoundedBoxGeometry(0.18, 0.025, 0.14, 2, 0.015), createToonMaterial(color, { roughness: 0.84 }));
     note.position.set(-0.38 + index * 0.21, 0.925 + index * 0.002, -0.04 + index * 0.04);
     note.rotation.y = -0.18 + index * 0.13;
-    group.add(note);
+    microProps.add(note);
   });
   const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.055, 18), trim);
   lampBase.position.set(-0.58, 0.9, -0.08);
@@ -2569,7 +2594,7 @@ function addCivicRecordDesk(colors) {
   );
   notebook.position.set(-0.42, 0.89, 0.2);
   notebook.rotation.y = 0.14;
-  group.add(notebook);
+  microProps.add(notebook);
   [-0.11, 0, 0.11].forEach((z, index) => {
     const line = new THREE.Mesh(
       new RoundedBoxGeometry(0.29 - index * 0.03, 0.009, 0.008, 1, 0.003),
@@ -2577,7 +2602,7 @@ function addCivicRecordDesk(colors) {
     );
     line.position.set(-0.42, 0.912 + index * 0.0005, 0.2 + z);
     line.rotation.y = 0.14;
-    group.add(line);
+    microProps.add(line);
   });
   // At gameplay distance a single cool ceramic-glass silhouette reads more
   // cleanly than two transparent passes and keeps the mobile hero at budget.
@@ -2585,20 +2610,56 @@ function addCivicRecordDesk(colors) {
     new THREE.CylinderGeometry(0.095, 0.085, 0.22, 22),
     createToonMaterial("#cde4df", { roughness: 0.3, envMapIntensity: 0.86 })
   );
-  waterGlass.position.set(0.18, 0.91, 0.18);
-  group.add(waterGlass);
+  waterGlass.position.set(0.18, 0.97, 0.18);
+  microProps.add(waterGlass);
+  const glassRim = new THREE.Mesh(
+    new THREE.TorusGeometry(0.092, 0.008, 8, 24),
+    createToonMaterial("#edf8f3", { roughness: 0.22, envMapIntensity: 0.92 })
+  );
+  glassRim.rotation.x = Math.PI / 2;
+  glassRim.position.set(0.18, 1.085, 0.18);
+  microProps.add(glassRim);
+  const coaster = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.125, 0.125, 0.018, 24),
+    createToonMaterial(ATELIER_TOKENS.cork, { roughness: 0.86 })
+  );
+  coaster.position.set(0.18, 0.866, 0.18);
+  microProps.add(coaster);
   const penCup = new THREE.Mesh(
     new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20),
     createToonMaterial("#4d8b83", { roughness: 0.46 })
   );
   penCup.position.set(0.44, 0.93, -0.18);
-  group.add(penCup);
+  microProps.add(penCup);
   [colors.accent, "#476e91", "#b45f51"].forEach((color, index) => {
     const pen = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.31, 8), createToonMaterial(color, { roughness: 0.58 }));
     pen.position.set(0.4 + index * 0.04, 1.09 + index * 0.015, -0.18);
     pen.rotation.z = (index - 1) * 0.1;
-    group.add(pen);
+    microProps.add(pen);
   });
+  const fileTray = new THREE.Mesh(
+    new RoundedBoxGeometry(0.34, 0.07, 0.24, 3, 0.025),
+    createToonMaterial("#5f8d82", { roughness: 0.62 })
+  );
+  fileTray.position.set(0.08, 0.9, -0.2);
+  microProps.add(fileTray);
+  ["#f2e2bf", "#d4e4dc", "#edbd92", "#e9d6c0"].forEach((color, index) => {
+    const card = new THREE.Mesh(
+      new RoundedBoxGeometry(0.052, 0.16 + index * 0.008, 0.18, 2, 0.012),
+      createToonMaterial(color, { roughness: 0.92 })
+    );
+    card.position.set(-0.015 + index * 0.064, 1.005 + index * 0.005, -0.2);
+    card.rotation.z = -0.035 + index * 0.022;
+    microProps.add(card);
+  });
+  const brassClip = new THREE.Mesh(
+    new THREE.TorusGeometry(0.045, 0.008, 8, 20, Math.PI * 1.6),
+    createToonMaterial(ATELIER_TOKENS.brass, { roughness: 0.34, metalness: 0.72 })
+  );
+  brassClip.rotation.set(Math.PI / 2, 0, -0.2);
+  brassClip.position.set(-0.17, 0.924, 0.17);
+  microProps.add(brassClip);
+  mergeActorVertexColorMeshes(microProps, [], { roughness: 0.74, envMapIntensity: 0.68 });
 }
 
 function addCivicHeroNoticeWall(colors) {
@@ -4206,14 +4267,22 @@ function addCivicOpenPortal(theme, colors) {
 
   const outdoorTexture = getAtelierWindowViewTexture();
   const outdoorMaterial = outdoorTexture
-    ? new THREE.MeshStandardMaterial({
-      color: theme.night ? "#67839a" : "#fff2d8",
-      map: outdoorTexture,
-      roughness: 0.94,
-      metalness: 0,
-      side: THREE.DoubleSide
-    })
+    ? theme.night
+      ? new THREE.MeshStandardMaterial({
+        color: "#67839a",
+        map: outdoorTexture,
+        roughness: 0.94,
+        metalness: 0,
+        side: THREE.DoubleSide
+      })
+      : new THREE.MeshBasicMaterial({
+        color: "#ffffff",
+        map: outdoorTexture,
+        side: THREE.DoubleSide,
+        toneMapped: false
+      })
     : createToonMaterial(theme.night ? "#45637a" : "#badcb7", { side: THREE.DoubleSide, roughness: 0.92 });
+  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(2.6, 2.25, 1.72);
   // Keep the painted courtyard several metres beyond the threshold. The
   // public room now has a real break in its cylindrical shell, so the view
   // gains parallax from the authored plants, paving and notice stand instead
@@ -5678,6 +5747,7 @@ function createCivicActorObject(actor, asset) {
   const backpackNode = visual?.getObjectByName("BackpackPivot") || null;
   const satchelNode = visual?.getObjectByName("Satchel") || null;
   const ponytailPivot = headGroup?.getObjectByName("PonytailPivot") || null;
+  const skirtPivot = visual?.getObjectByName("SkirtPivot") || null;
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -5733,9 +5803,11 @@ function createCivicActorObject(actor, asset) {
     rightArm,
     leftLeg,
     rightLeg,
+    skirtPivot,
     ...(fullExpressionLod ? [backpackNode, satchelNode].filter(Boolean) : [])
   ];
   mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.69, envMapIntensity: 0.7 });
+  if (skirtPivot) mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 });
   if (fullExpressionLod) {
     eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
@@ -5778,6 +5850,13 @@ function createCivicActorObject(actor, asset) {
         baseRotation: node.rotation.clone()
       };
     });
+  }
+  if (skirtPivot?.parent) {
+    secondaryMotion.skirt = {
+      node: skirtPivot,
+      basePosition: skirtPivot.position.clone(),
+      baseRotation: skirtPivot.rotation.clone()
+    };
   }
   actorRoot.add(group);
   const entry = {
@@ -6126,6 +6205,15 @@ function updateActors(actors = [], now = performance.now()) {
         ponytail.node.rotation.copy(ponytail.baseRotation);
         ponytail.node.rotation.x += walking ? -travelSway * (running ? 0.13 : 0.08) : socialBreath * 0.018;
         ponytail.node.rotation.z += walking ? travelSway * (running ? 0.16 : 0.1) : socialBreath * 0.025;
+      }
+      const skirt = entry.secondaryMotion.skirt;
+      if (skirt) {
+        skirt.node.position.copy(skirt.basePosition);
+        skirt.node.rotation.copy(skirt.baseRotation);
+        // The hem trails the pelvis instead of moving as a rigid cone. Keep
+        // the amplitude restrained so feet and collision still read planted.
+        skirt.node.rotation.x += walking ? -travelSway * (running ? 0.07 : 0.045) : socialBreath * 0.007;
+        skirt.node.rotation.z += walking ? -travelSway * (running ? 0.085 : 0.052) : socialBreath * 0.01;
       }
     }
     entry.shadow.material.opacity = actor.grounded === false
