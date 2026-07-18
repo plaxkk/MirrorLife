@@ -1014,6 +1014,11 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
+        "animationContract": {
+            "version": "mirrorlife-civic-clips-v2",
+            "runtime": "authored-keyframe-blend",
+            "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
+        },
         "worldUnitMeters": 1,
         "heightMeters": 1.72,
         "roles": {},

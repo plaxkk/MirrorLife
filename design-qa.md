@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v52 authored motion clips and state-blend gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v52/desktop-yaw-0-1672x941.png` (`1672 × 941`, public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v52/reference-vs-v52-full.png` and `reference-vs-v52-focus.png`.
+- Complete desktop orbit: `dist/interior-3d-work/civic-fidelity-v52/desktop-yaw-{0,90,180,270}-1672x941.png`.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v52/mobile-yaw-{0,180}-390x844.png` (`390 × 844`).
+- Embodied motion evidence: `dist/interior-3d-work/civic-fidelity-v52/player-walk-1280x720.png`, captured while the physical player was in the authored walk state.
+
+### Earlier findings, fixes and post-fix evidence
+
+- [fixed from v51 P1 / procedural-only acting] Replaced the civic cast's unrelated per-frame joint overrides with a versioned seven-clip motion library: `idle`, `walk`, `run`, `listen`, `gesture`, `jump` and `fall`. Each clip has explicit timing and reviewable full-body key poses covering root lift, torso, head, shoulders, elbows, hips and knees.
+- [fixed / abrupt state changes] Movement, stopping, airborne motion and social behavior now crossfade over `90–220ms`. The runtime carries the outgoing pose through the transition rather than snapping every joint to the next state's first frame.
+- [fixed / social silhouette repetition] Listener, facilitator and mediator share locomotion timing but receive authored role offsets for listening. The facilitator continues to hold the notebook near the body, the mediator keeps the thinking hand nearer the face and the listener uses a more open arm line.
+- [fixed / locomotion legibility] Walk/run cadence is phase-locked to the physics controller's `walkPhase`. An automated six-sample gate verifies a real alternating stride instead of accepting a single potentially neutral passing pose; the captured player walk shows one foot lifted while the contact shadow remains planted on the floor.
+- [fixed / animation observability] Runtime diagnostics now expose animation contract version, current clip, transition state, root lift and principal limb rotations. Character validation also rejects stale manifests, missing clips, invalid timing or non-finite key tracks.
+- [checked / browser state] Same-size in-app browser captures report player `idle` plus three role-specific `listen` states on desktop, with no console warning/error. Mobile retains player plus the two closest witnesses under its existing actor LOD.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `149 / 154 / 158 / 156` draw calls and `259,544 / 275,924 / 272,988 / 263,468` triangles. Every view remains below the strict `160 / 300,000` civic-room gate.
+- Mobile `0° / 180°`: `106 / 108` draw calls and `233,082 / 240,154` triangles, below the `110 / 250,000` mobile gate.
+- Embodied verification: the repeatable exploration gate entered the authored walk clip, sampled a non-neutral alternating stride, moved the player `3.21m`, blended back to settled idle and rotated the follow camera `65.3°`.
+- World regression: all `26` interiors passed the physics audit; `78` enter/exit transitions completed with no failure or runtime error; desktop/mobile scene flow passed.
+- Static/build checks: `pnpm check`, production build, civic character validation and civic prop validation passed.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The player walks, runs, jumps and falls inside the metre-based physical world while the follow camera remains coupled to the controlled actor. Locomotion animation reads the same controller phase instead of visually skating independently from displacement.
+- [checked][spacing/layout rhythm] The closer editorial framing, centre listening circle and role-specific silhouettes preserve one dominant social focus. Four stabilized yaw captures retain the player and at least one functional landmark; the initial transient `180°` capture was rejected and recaptured only after the camera reached its target yaw.
+- [checked][colors/tokens] Warm ivory architecture, teal/coral civic roles, brass evidence routes and the dark translucent HUD remain consistent with the prior approved palette hierarchy.
+- [checked][image quality for this iteration] The motion system adds no billboard, CSS drawing or placeholder asset. All animated silhouettes remain full-volume GLB geometry with side/back views, real facial pivots and articulated limbs.
+- [checked][copy/content] Location, exit, story-memory and four social actions remain coherent and unchanged.
+- [checked][responsiveness/accessibility] At `390 × 844`, joystick, contextual action, chat, jump and the complete action rail remain visible without horizontal overflow; both portrait yaws stay within mobile geometry budgets.
+- [P1][character sculpt/deformation] Authored timing closes the procedural-motion gap, but the source still has continuous sculpted anatomy, articulated fingers, cloth/hair deformation and more nuanced hand contact. Current web characters animate rigid pivot sections and remain visibly blockier in the focused same-canvas comparison.
+- [P1][lighting/material finish] The source still carries offline bounced color, subsurface skin, softer multi-scale penumbrae and object-specific roughness breakup. Current GTAO, portal key and raster floor are coherent but flatter.
+- [P1][environment asset density] Cabinet joinery, ceramics, woven storage, paper/book stacks and lounge micro-props remain less numerous and less bespoke than the source.
+- [P2][HUD finish] Information hierarchy and interaction are clear, but optical type weights, compact icon drawing and translucent-panel microdetail remain simpler than the target artwork.
+
+### Gate result
+
+This iteration turns civic acting into a deterministic, blendable animation system and proves that it stays synchronized with physical movement, follow-camera rotation, responsive layouts and scene budgets. The paired reference/implementation canvas still contains actionable P1 character-deformation, indirect-lighting and bespoke-environment differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: continuous character/cloth deformation, offline-grade indirect material response and broader bespoke environment assets remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v51 authored terrazzo, organic joints and complete-orbit budget gate
 
 ### Evidence inspected together

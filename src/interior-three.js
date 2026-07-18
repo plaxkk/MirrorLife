@@ -1,4 +1,12 @@
 import { createSemanticInteriorModel, hasSemanticInteriorModel } from "./interior-semantic-models.js";
+import {
+  CIVIC_ANIMATION_CLIP_VERSION,
+  blendCivicAnimationPoses,
+  getCivicAnimationClip,
+  normalizedWalkPhase,
+  resolveCivicAnimationState,
+  sampleCivicAnimationPose
+} from "./civic-animation-clips.js";
 
 const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
@@ -5555,6 +5563,77 @@ function cloneCivicActorScene(source) {
   return clone;
 }
 
+function civicMotionSeed(actorId = "") {
+  return [...String(actorId)].reduce((sum, character, index) => sum + character.charCodeAt(0) * (index + 3), 0) % 997;
+}
+
+function updateCivicAnimation(entry, actor, now, walking, running) {
+  if (!entry.assetRole) return null;
+  const nextState = resolveCivicAnimationState(actor, {
+    walking,
+    running,
+    publicRoom: cameraZoneId === "public-plaza"
+  });
+  const seed = civicMotionSeed(actor.id);
+  const seededPhase = ["idle", "listen"].includes(nextState) ? (seed % 83) / 83 : 0;
+  if (!entry.animation) {
+    entry.animation = {
+      version: CIVIC_ANIMATION_CLIP_VERSION,
+      state: nextState,
+      startedAt: now,
+      currentPose: sampleCivicAnimationPose(nextState, seededPhase, entry.assetRole),
+      fromPose: null,
+      transitionMs: 0
+    };
+  }
+  const runtime = entry.animation;
+  if (runtime.state !== nextState) {
+    runtime.fromPose = runtime.currentPose;
+    runtime.state = nextState;
+    runtime.startedAt = now;
+    runtime.transitionMs = ["jump", "fall"].includes(nextState)
+      ? 90
+      : ["walk", "run"].includes(nextState)
+        ? 150
+        : 220;
+  }
+  const clip = getCivicAnimationClip(runtime.state);
+  const normalizedTime = ["walk", "run"].includes(runtime.state)
+    ? normalizedWalkPhase(actor.walkPhase)
+    : ((now - runtime.startedAt) / 1000 / clip.duration)
+      + (["idle", "listen"].includes(runtime.state) ? (seed % 83) / 83 : 0);
+  const targetPose = sampleCivicAnimationPose(runtime.state, normalizedTime, entry.assetRole);
+  const transitionAlpha = runtime.transitionMs > 0
+    ? THREE.MathUtils.clamp((now - runtime.startedAt) / runtime.transitionMs, 0, 1)
+    : 1;
+  runtime.currentPose = blendCivicAnimationPoses(runtime.fromPose, targetPose, transitionAlpha);
+  if (transitionAlpha >= 1) runtime.fromPose = null;
+  return runtime.currentPose;
+}
+
+function applyCivicAnimationPose(entry, animationPose) {
+  if (!animationPose) return;
+  const joints = [
+    "visual",
+    "headGroup",
+    "leftArm",
+    "rightArm",
+    "leftElbow",
+    "rightElbow",
+    "leftLeg",
+    "rightLeg",
+    "leftKnee",
+    "rightKnee"
+  ];
+  joints.forEach((joint) => {
+    const node = entry[joint];
+    const rotation = animationPose[joint];
+    if (!node || !rotation) return;
+    const preservedYaw = joint === "visual" ? node.rotation.y : rotation[1];
+    node.rotation.set(rotation[0], preservedYaw, rotation[2]);
+  });
+}
+
 function createCivicActorObject(actor, asset) {
   const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
   const style = resolveActorStyle(actor, frame);
@@ -5723,6 +5802,7 @@ function createCivicActorObject(actor, asset) {
     styleKey: `${frame}:${role}:civic-glb-v1`,
     identity: style.identity,
     assetRole: role,
+    animation: null,
     lastX: Number(actor.worldX || 0),
     lastZ: Number(actor.worldZ || 0),
     facingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0))
@@ -5778,7 +5858,6 @@ function updateActors(actors = [], now = performance.now()) {
     const walking = actor.state === "walking" || actor.state === "walk" || actor.state === "run";
     const running = actor.state === "run";
     const phase = Number(actor.walkPhase || 0);
-    const bob = walking ? Math.abs(Math.sin(phase)) * (running ? 0.055 : 0.035) : Math.sin(now * 0.0015 + frame) * 0.012;
     const baseScale = Math.max(0.72, Math.min(1.38, Number(actor.scale || 1)));
     const x = Number(actor.worldX || 0);
     const z = Number(actor.worldZ || 0);
@@ -5788,6 +5867,9 @@ function updateActors(actors = [], now = performance.now()) {
     if (Math.hypot(dx, dz) > 0.015) entry.facingYaw = Math.atan2(dx, dz);
     entry.lastX = x;
     entry.lastZ = z;
+    const animationPose = updateCivicAnimation(entry, actor, now, walking, running);
+    const bob = animationPose?.rootY
+      ?? (walking ? Math.abs(Math.sin(phase)) * (running ? 0.055 : 0.035) : Math.sin(now * 0.0015 + frame) * 0.012);
     entry.group.position.set(x, y + bob, z);
     // The contact shadow belongs to the floor, not to the bouncing visual
     // root. Keeping it at world floor height removes the subtle "floating
@@ -5808,22 +5890,26 @@ function updateActors(actors = [], now = performance.now()) {
     entry.visual.rotation.y = bodyYaw;
     const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;
     const walkRoll = walking ? Math.cos(phase) * (running ? 0.026 : 0.017) : 0;
-    entry.visual.rotation.x = walking ? (running ? -0.07 : -0.035) : 0;
-    entry.visual.rotation.z = walkRoll;
-    entry.leftLeg.rotation.x = stride;
-    entry.rightLeg.rotation.x = -stride;
-    entry.leftLeg.rotation.z = 0;
-    entry.rightLeg.rotation.z = 0;
-    entry.leftKnee.rotation.x = walking ? Math.max(0, -stride) * (running ? 0.78 : 0.62) : 0;
-    entry.rightKnee.rotation.x = walking ? Math.max(0, stride) * (running ? 0.78 : 0.62) : 0;
-    entry.leftArm.rotation.x = -stride * 0.72;
-    entry.rightArm.rotation.x = stride * 0.72;
-    entry.leftArm.rotation.z = 0;
-    entry.rightArm.rotation.z = 0;
-    entry.leftElbow.rotation.x = walking ? Math.max(0, stride) * 0.18 : 0;
-    entry.rightElbow.rotation.x = walking ? Math.max(0, -stride) * 0.18 : 0;
-    entry.leftElbow.rotation.z = 0;
-    entry.rightElbow.rotation.z = 0;
+    if (animationPose) {
+      applyCivicAnimationPose(entry, animationPose);
+    } else {
+      entry.visual.rotation.x = walking ? (running ? -0.07 : -0.035) : 0;
+      entry.visual.rotation.z = walkRoll;
+      entry.leftLeg.rotation.x = stride;
+      entry.rightLeg.rotation.x = -stride;
+      entry.leftLeg.rotation.z = 0;
+      entry.rightLeg.rotation.z = 0;
+      entry.leftKnee.rotation.x = walking ? Math.max(0, -stride) * (running ? 0.78 : 0.62) : 0;
+      entry.rightKnee.rotation.x = walking ? Math.max(0, stride) * (running ? 0.78 : 0.62) : 0;
+      entry.leftArm.rotation.x = -stride * 0.72;
+      entry.rightArm.rotation.x = stride * 0.72;
+      entry.leftArm.rotation.z = 0;
+      entry.rightArm.rotation.z = 0;
+      entry.leftElbow.rotation.x = walking ? Math.max(0, stride) * 0.18 : 0;
+      entry.rightElbow.rotation.x = walking ? Math.max(0, -stride) * 0.18 : 0;
+      entry.leftElbow.rotation.z = 0;
+      entry.rightElbow.rotation.z = 0;
+    }
     let headLookYaw = 0;
     if (cameraZoneId === "public-plaza" && playerActor && actor.id !== playerActor.id && !walking) {
       const lookWorldYaw = Math.atan2(Number(playerActor.worldX || 0) - x, Number(playerActor.worldZ || 0) - z);
@@ -5833,9 +5919,8 @@ function updateActors(actors = [], now = performance.now()) {
       );
       headLookYaw = THREE.MathUtils.clamp(localLookYaw, -0.5, 0.5) * 0.82;
     }
-    entry.headGroup.rotation.y = headLookYaw;
-    entry.headGroup.rotation.x = 0;
-    entry.headGroup.rotation.z = 0;
+    const animatedHead = animationPose?.headGroup || [0, 0, 0];
+    entry.headGroup.rotation.set(animatedHead[0], animatedHead[1] + headLookYaw, animatedHead[2]);
     if (entry.eyePivots?.length) {
       const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
       const blinkScale = blinkCycle > 4.58
@@ -5904,112 +5989,114 @@ function updateActors(actors = [], now = performance.now()) {
         influences[concernIndex] = THREE.MathUtils.lerp(Number(influences[concernIndex] || 0), concernTarget, 0.12);
       }
     }
-    if (actor.state === "jump") {
-      entry.visual.rotation.x = -0.045;
-      entry.leftLeg.rotation.x = -0.42;
-      entry.rightLeg.rotation.x = -0.42;
-      entry.leftKnee.rotation.x = 0.72;
-      entry.rightKnee.rotation.x = 0.72;
-      entry.leftArm.rotation.x = 0.38;
-      entry.rightArm.rotation.x = 0.38;
-      entry.leftElbow.rotation.x = -0.28;
-      entry.rightElbow.rotation.x = -0.28;
-      entry.visual.rotation.z = -0.04;
-    } else if (actor.state === "fall") {
-      entry.visual.rotation.x = 0.035;
-      entry.leftKnee.rotation.x = 0.28;
-      entry.rightKnee.rotation.x = 0.48;
-      entry.leftArm.rotation.z = 0.42;
-      entry.rightArm.rotation.z = -0.42;
-      entry.leftElbow.rotation.x = -0.22;
-      entry.rightElbow.rotation.x = -0.22;
-      entry.visual.rotation.z = 0.03;
-    } else if (["doing", "talking", "waving", "interact", "listen"].includes(actor.state)) {
-      if (actor.state === "listen" && entry.identity === "mediator") {
-        entry.leftArm.rotation.x = -0.58;
-        entry.rightArm.rotation.x = -0.62;
-        entry.leftArm.rotation.z = 0.12;
-        entry.rightArm.rotation.z = -0.12;
-        entry.leftElbow.rotation.x = -0.62;
-        entry.rightElbow.rotation.x = -0.82;
-      } else if (actor.state === "listen" && entry.identity === "botanist") {
-        entry.leftArm.rotation.x = -0.34;
-        entry.rightArm.rotation.x = -0.78;
-        entry.rightArm.rotation.z = -0.18;
-        entry.rightElbow.rotation.x = -0.72;
+    if (!animationPose) {
+      if (actor.state === "jump") {
+        entry.visual.rotation.x = -0.045;
+        entry.leftLeg.rotation.x = -0.42;
+        entry.rightLeg.rotation.x = -0.42;
+        entry.leftKnee.rotation.x = 0.72;
+        entry.rightKnee.rotation.x = 0.72;
+        entry.leftArm.rotation.x = 0.38;
+        entry.rightArm.rotation.x = 0.38;
+        entry.leftElbow.rotation.x = -0.28;
+        entry.rightElbow.rotation.x = -0.28;
+        entry.visual.rotation.z = -0.04;
+      } else if (actor.state === "fall") {
+        entry.visual.rotation.x = 0.035;
+        entry.leftKnee.rotation.x = 0.28;
+        entry.rightKnee.rotation.x = 0.48;
+        entry.leftArm.rotation.z = 0.42;
+        entry.rightArm.rotation.z = -0.42;
+        entry.leftElbow.rotation.x = -0.22;
+        entry.rightElbow.rotation.x = -0.22;
+        entry.visual.rotation.z = 0.03;
+      } else if (["doing", "talking", "waving", "interact", "listen"].includes(actor.state)) {
+        if (actor.state === "listen" && entry.identity === "mediator") {
+          entry.leftArm.rotation.x = -0.58;
+          entry.rightArm.rotation.x = -0.62;
+          entry.leftArm.rotation.z = 0.12;
+          entry.rightArm.rotation.z = -0.12;
+          entry.leftElbow.rotation.x = -0.62;
+          entry.rightElbow.rotation.x = -0.82;
+        } else if (actor.state === "listen" && entry.identity === "botanist") {
+          entry.leftArm.rotation.x = -0.34;
+          entry.rightArm.rotation.x = -0.78;
+          entry.rightArm.rotation.z = -0.18;
+          entry.rightElbow.rotation.x = -0.72;
+        } else {
+          entry.rightArm.rotation.x = -0.82;
+          entry.rightArm.rotation.z = -0.22;
+          entry.rightElbow.rotation.x = -0.74;
+        }
+        entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0016 + frame) * 0.06;
+        entry.visual.rotation.z = walking ? walkRoll : 0;
       } else {
-        entry.rightArm.rotation.x = -0.82;
-        entry.rightArm.rotation.z = -0.22;
-        entry.rightElbow.rotation.x = -0.74;
+        entry.leftArm.rotation.z = 0;
+        entry.rightArm.rotation.z = 0;
+        entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0012 + frame) * 0.035;
+        entry.visual.rotation.z = walking ? walkRoll : 0;
       }
-      entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0016 + frame) * 0.06;
-      entry.visual.rotation.z = walking ? walkRoll : 0;
-    } else {
-      entry.leftArm.rotation.z = 0;
-      entry.rightArm.rotation.z = 0;
-      entry.headGroup.rotation.y = headLookYaw + Math.sin(now * 0.0012 + frame) * 0.035;
-      entry.visual.rotation.z = walking ? walkRoll : 0;
-    }
-    if (cameraZoneId === "public-plaza" && !walking && actor.civicRole && actor.civicRole !== "player") {
-      if (actor.civicRole === "mediator") {
-        // One hand near the chin and one relaxed hand: the mediator should
-        // read as attentive, not as a symmetrical mannequin.
-        entry.leftArm.rotation.x = -0.3;
-        entry.rightArm.rotation.x = -0.18;
-        entry.leftArm.rotation.z = 0.1;
-        entry.rightArm.rotation.z = -0.3;
-        entry.leftElbow.rotation.x = -1.16;
-        entry.rightElbow.rotation.x = -1.96;
-        entry.rightElbow.rotation.z = -0.24;
-        entry.leftLeg.rotation.z = 0.035;
+      if (cameraZoneId === "public-plaza" && !walking && actor.civicRole && actor.civicRole !== "player") {
+        if (actor.civicRole === "mediator") {
+          // One hand near the chin and one relaxed hand: the mediator should
+          // read as attentive, not as a symmetrical mannequin.
+          entry.leftArm.rotation.x = -0.3;
+          entry.rightArm.rotation.x = -0.18;
+          entry.leftArm.rotation.z = 0.1;
+          entry.rightArm.rotation.z = -0.3;
+          entry.leftElbow.rotation.x = -1.16;
+          entry.rightElbow.rotation.x = -1.96;
+          entry.rightElbow.rotation.z = -0.24;
+          entry.leftLeg.rotation.z = 0.035;
+          entry.rightLeg.rotation.z = -0.018;
+          entry.leftKnee.rotation.x = 0.08;
+          entry.headGroup.rotation.x = -0.045;
+          entry.headGroup.rotation.z = 0.045;
+        } else if (actor.civicRole === "facilitator") {
+          // Fold both forearms back toward the notebook so it is visibly held
+          // at the waist rather than floating at the end of a straight arm.
+          entry.leftArm.rotation.x = -0.34;
+          entry.rightArm.rotation.x = -0.28;
+          entry.leftArm.rotation.z = 0.26;
+          entry.rightArm.rotation.z = -0.24;
+          entry.leftElbow.rotation.x = -1.34;
+          entry.rightElbow.rotation.x = -1.46;
+          entry.leftElbow.rotation.z = 0.22;
+          entry.rightElbow.rotation.z = -0.12;
+          entry.leftLeg.rotation.z = -0.025;
+          entry.rightLeg.rotation.z = 0.04;
+          entry.rightKnee.rotation.x = 0.11;
+          entry.headGroup.rotation.z = -0.035;
+        } else if (actor.civicRole === "listener") {
+          entry.leftArm.rotation.x = -0.18;
+          entry.rightArm.rotation.x = -0.3;
+          entry.leftArm.rotation.z = 0.28;
+          entry.rightArm.rotation.z = -0.16;
+          entry.leftElbow.rotation.x = -0.88;
+          entry.rightElbow.rotation.x = -1.32;
+          entry.leftLeg.rotation.z = 0.028;
+          entry.rightLeg.rotation.z = -0.036;
+          entry.leftKnee.rotation.x = 0.06;
+          entry.headGroup.rotation.z = 0.025;
+        }
+      } else if (cameraZoneId === "public-plaza" && !walking && actor.civicRole === "player") {
+        // The hero should settle onto one leg instead of returning to a rigid
+        // symmetric mannequin pose whenever movement stops. Keep the offset
+        // small enough that the capsule/feet remain visually planted.
+        const idleShift = Math.sin(now * 0.0009 + frame) * 0.008;
+        entry.leftArm.rotation.x = -0.15;
+        entry.rightArm.rotation.x = 0.1;
+        entry.leftArm.rotation.z = 0.095 + idleShift;
+        entry.rightArm.rotation.z = -0.065 - idleShift;
+        entry.leftElbow.rotation.x = -0.3;
+        entry.rightElbow.rotation.x = -0.18;
+        entry.leftLeg.rotation.z = 0.03;
         entry.rightLeg.rotation.z = -0.018;
-        entry.leftKnee.rotation.x = 0.08;
-        entry.headGroup.rotation.x = -0.045;
-        entry.headGroup.rotation.z = 0.045;
-      } else if (actor.civicRole === "facilitator") {
-        // Fold both forearms back toward the notebook so it is visibly held
-        // at the waist rather than floating at the end of a straight arm.
-        entry.leftArm.rotation.x = -0.34;
-        entry.rightArm.rotation.x = -0.28;
-        entry.leftArm.rotation.z = 0.26;
-        entry.rightArm.rotation.z = -0.24;
-        entry.leftElbow.rotation.x = -1.34;
-        entry.rightElbow.rotation.x = -1.46;
-        entry.leftElbow.rotation.z = 0.22;
-        entry.rightElbow.rotation.z = -0.12;
-        entry.leftLeg.rotation.z = -0.025;
-        entry.rightLeg.rotation.z = 0.04;
-        entry.rightKnee.rotation.x = 0.11;
-        entry.headGroup.rotation.z = -0.035;
-      } else if (actor.civicRole === "listener") {
-        entry.leftArm.rotation.x = -0.18;
-        entry.rightArm.rotation.x = -0.3;
-        entry.leftArm.rotation.z = 0.28;
-        entry.rightArm.rotation.z = -0.16;
-        entry.leftElbow.rotation.x = -0.88;
-        entry.rightElbow.rotation.x = -1.32;
-        entry.leftLeg.rotation.z = 0.028;
-        entry.rightLeg.rotation.z = -0.036;
-        entry.leftKnee.rotation.x = 0.06;
-        entry.headGroup.rotation.z = 0.025;
+        entry.leftKnee.rotation.x = 0.045;
+        entry.headGroup.rotation.x = -0.018;
+        entry.headGroup.rotation.z = -0.012;
+        entry.visual.rotation.z = -0.01 + idleShift * 0.4;
       }
-    } else if (cameraZoneId === "public-plaza" && !walking && actor.civicRole === "player") {
-      // The hero should settle onto one leg instead of returning to a rigid
-      // symmetric mannequin pose whenever movement stops. Keep the offset
-      // small enough that the capsule/feet remain visually planted.
-      const idleShift = Math.sin(now * 0.0009 + frame) * 0.008;
-      entry.leftArm.rotation.x = -0.15;
-      entry.rightArm.rotation.x = 0.1;
-      entry.leftArm.rotation.z = 0.095 + idleShift;
-      entry.rightArm.rotation.z = -0.065 - idleShift;
-      entry.leftElbow.rotation.x = -0.3;
-      entry.rightElbow.rotation.x = -0.18;
-      entry.leftLeg.rotation.z = 0.03;
-      entry.rightLeg.rotation.z = -0.018;
-      entry.leftKnee.rotation.x = 0.045;
-      entry.headGroup.rotation.x = -0.018;
-      entry.headGroup.rotation.z = -0.012;
-      entry.visual.rotation.z = -0.01 + idleShift * 0.4;
     }
     if (entry.secondaryMotion) {
       const travelSway = walking ? Math.sin(phase) : socialBreath * 0.22;
@@ -6503,6 +6590,16 @@ function getStats() {
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
       facingYaw: Number(entry.facingYaw.toFixed(3)),
+      animation: entry.animation ? {
+        version: entry.animation.version,
+        state: entry.animation.state,
+        transitioning: !!entry.animation.fromPose,
+        rootY: Number((entry.animation.currentPose?.rootY || 0).toFixed(4)),
+        leftLegX: Number((entry.leftLeg?.rotation.x || 0).toFixed(4)),
+        rightLegX: Number((entry.rightLeg?.rotation.x || 0).toFixed(4)),
+        leftArmX: Number((entry.leftArm?.rotation.x || 0).toFixed(4)),
+        rightArmX: Number((entry.rightArm?.rotation.x || 0).toFixed(4))
+      } : null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
         key,
         {

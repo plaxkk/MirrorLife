@@ -1,8 +1,11 @@
 import assert from "node:assert/strict";
+import fs from "node:fs/promises";
+import path from "node:path";
 import puppeteer from "puppeteer-core";
 
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
+const WALK_SCREENSHOT = process.env.MIRRORLIFE_WALK_SCREENSHOT || "";
 
 function playerFrom(stats) {
   return stats?.actors?.find((actor) => actor.id === "player") || null;
@@ -48,15 +51,41 @@ try {
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   const beforeMove = playerFrom(opening);
   assert(beforeMove, "player actor diagnostics are missing");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v2", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
 
   await page.keyboard.down("w");
-  await new Promise((resolve) => setTimeout(resolve, 1250));
+  let stridePeak = 0;
+  let screenshotCaptured = false;
+  for (let sample = 0; sample < 6; sample += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 90));
+    const inMotionStats = await readStats(page);
+    const inMotionPlayer = playerFrom(inMotionStats);
+    assert.equal(inMotionPlayer?.animation?.state, "walk", "player locomotion did not enter the authored walk clip");
+    const stride = Math.abs(Number(inMotionPlayer.animation.leftLegX) - Number(inMotionPlayer.animation.rightLegX));
+    stridePeak = Math.max(stridePeak, stride);
+    if (WALK_SCREENSHOT && !screenshotCaptured && stride > 0.22) {
+      const screenshotPath = path.resolve(WALK_SCREENSHOT);
+      await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
+      await page.screenshot({ path: screenshotPath, type: "png" });
+      screenshotCaptured = true;
+    }
+  }
+  assert(stridePeak > 0.22, `walk clip did not produce a readable alternating stride (${stridePeak.toFixed(3)}rad)`);
+  if (WALK_SCREENSHOT && !screenshotCaptured) {
+    const screenshotPath = path.resolve(WALK_SCREENSHOT);
+    await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
+    await page.screenshot({ path: screenshotPath, type: "png" });
+  }
+  await new Promise((resolve) => setTimeout(resolve, 710));
   await page.keyboard.up("w");
   await new Promise((resolve) => setTimeout(resolve, 500));
   const afterMoveStats = await readStats(page);
   const afterMove = playerFrom(afterMoveStats);
   const walked = Math.hypot(afterMove.x - beforeMove.x, afterMove.z - beforeMove.z);
   assert(walked > 0.45, `WASD movement did not move the 3D player far enough (${walked.toFixed(3)}m)`);
+  assert.equal(afterMove.animation?.state, "idle", "player did not blend back to the authored idle clip after stopping");
+  assert.equal(afterMove.animation?.transitioning, false, "player idle transition did not settle within the blend window");
 
   const beforeYaw = Number(afterMoveStats.camera?.yaw || 0);
   const canvas = await page.$("#gameCanvas");

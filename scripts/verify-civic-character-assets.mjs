@@ -1,16 +1,42 @@
 import assert from "node:assert/strict";
 import fs from "node:fs/promises";
 import path from "node:path";
+import {
+  CIVIC_ANIMATION_CLIPS,
+  CIVIC_ANIMATION_CLIP_VERSION,
+  resolveCivicAnimationState,
+  sampleCivicAnimationPose
+} from "../src/civic-animation-clips.js";
 
 const ROOT = path.resolve("public/assets/characters/civic");
 const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), "utf8"));
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
+assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
+assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
+assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
 assert.equal(manifest.worldUnitMeters, 1, "civic characters must use one world unit per metre");
 assert.equal(manifest.heightMeters, 1.72, "civic character height contract changed");
 assert.deepEqual(Object.keys(manifest.roles).sort(), [...expectedRoles].sort(), "civic character role manifest is incomplete");
 assert(!JSON.stringify(manifest).includes("/Users/"), "public character manifest leaks a workstation path");
+
+for (const clipName of manifest.animationContract.clips) {
+  const clip = CIVIC_ANIMATION_CLIPS[clipName];
+  assert(clip && Number(clip.duration) > 0, `${clipName}: duration is invalid`);
+  assert.equal(clip.keys[0][0], 0, `${clipName}: first authored key must start at zero`);
+  assert.equal(clip.keys.at(-1)[0], 1, `${clipName}: final authored key must end at one`);
+  const sampled = sampleCivicAnimationPose(clipName, 0.37, "listener");
+  assert(Number.isFinite(sampled.rootY), `${clipName}: root motion is invalid`);
+  ["visual", "headGroup", "leftArm", "rightArm", "leftLeg", "rightLeg"].forEach((track) => {
+    assert.equal(sampled[track].length, 3, `${clipName}: ${track} track is incomplete`);
+    assert(sampled[track].every(Number.isFinite), `${clipName}: ${track} contains a non-finite key`);
+  });
+}
+assert.equal(resolveCivicAnimationState({ state: "walking", civicRole: "player" }, { walking: true }), "walk");
+assert.equal(resolveCivicAnimationState({ state: "run", civicRole: "player" }, { walking: true, running: true }), "run");
+assert.equal(resolveCivicAnimationState({ state: "listen", civicRole: "listener" }, { publicRoom: true }), "listen");
+assert.equal(resolveCivicAnimationState({ state: "talking", civicRole: "facilitator" }, { publicRoom: true }), "gesture");
 
 let totalBytes = 0;
 for (const role of expectedRoles) {
