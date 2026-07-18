@@ -1,5 +1,50 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v18 character silhouette, material hierarchy and daylight-depth gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1920 × 1080`, public-plaza, yaw `0°`).
+- Same-canvas full/focused comparisons: `dist/interior-3d-work/civic-fidelity-v18-full.png` and `civic-fidelity-v18-focus.png`.
+- Complete orbit: `environment-review-yaw-{90,180,270}/00-public.png`; responsive evidence: `environment-review-mobile/00-public.png` (`390 × 844`).
+- Canonical character review: `dist/interior-3d-work/civic-character-canonical-v18/civic-player/{front,left,isometric}.png`.
+
+### Implemented and verified
+
+- [fixed from v16 P1 / toy-like silhouette] All four citizens now use narrower upper arms, forearms, hands, thighs, shins, cuffs and shoes. The head mesh has a restrained illustrated jaw taper, while the player vest, scarf and side hair no longer inflate the torso/neck silhouette.
+- [fixed / facial artifact] The separate glossy lower-lip mesh was removed after canonical lighting exposed it as a floating moustache at gameplay distance. Closed speech is again one clean ink contour; the modeled dark mouth and tongue remain available for the talking state.
+- [fixed / crown readability] The player's symmetric crown points that read as cat ears in reverse orbit were replaced by one lower, asymmetric swept ridge. Hair still has true side/back volume and remains fully rotatable.
+- [fixed from v16 P1 / material hierarchy] The civic display case changed from pale coral toy plastic to oak, walnut, teal and brass. The public room now has warmer ivory/plaster values, restrained terrazzo contrast, stronger portal dapple, denser contact shadows and less environment flattening.
+- [fixed / shared authored contract] Character and display changes are regenerated from the Blender masters. Named face/expression pivots, metre scale, collider alignment and the existing Three.js animation controls remain intact.
+- [checked / complete orbit and responsive composition] Four desktop yaws keep the cast, current objective and either the exit or functional landmark readable. Mobile retains player, two witnesses, joystick, jump/chat and the complete action rail without horizontal overflow.
+
+### Runtime and performance evidence
+
+- Character assets: four GLBs pass the pivot/morph/semantic contract at `6.13 MB` total. Player is `19,468` authored triangles after the silhouette cleanup; the full cast remains below the scene budget.
+- Hero furniture: three Blender GLBs pass validation at `26,596` aggregate authored triangles.
+- Desktop `0° / 90° / 180° / 270°`: `136/217,504`, `143/221,348`, `151/232,440`, `146/223,784` draw-calls/triangles. All remain below the strict `160 / 300,000` public-room gate.
+- Mobile `390 × 844`: `108` draw calls, `215,774` triangles, `85` geometries and `12` textures, below the `110 / 250,000` gate.
+- Interaction regression: WASD moved the player `2.93m`; pointer drag rotated the follow camera `65.3°`.
+- System regression: syntax checks and production build passed; 26 zones / 10 archetypes passed physics; 78 enter/exit transitions completed with no failure/runtime error; desktop/mobile scene flow and civic character/prop validators passed.
+
+### Required fidelity surfaces
+
+- [checked][first-read composition] The entrance/daylight, listening circle, foreground evidence desk, public notice wall and lounge create a clear front/middle/back read. The center remains walkable instead of duplicating an offline beauty render that has no playable route.
+- [checked][palette/material hierarchy] Warm neutral plaster and terrazzo dominate; teal/coral identify civic roles and furniture; brass is limited to navigation/evidence emphasis. The display case no longer breaks this hierarchy.
+- [P1][characters] Silhouette and facial cleanup are materially better, but the target still uses production sculpted anatomy, cloth folds, hair cards/strands, authored hand posing and full-body animation clips. Current characters remain a modular pivot-rig Web LOD.
+- [P1][lighting/material finish] Direction, dapple and contact depth improved, but the reference's offline bounced colour, soft multi-scale penumbrae, subsurface skin and bespoke UV wear still produce visibly richer material separation.
+- [P1][secondary asset density] The hero clusters are authored, but threshold foliage, ceramics, paper clutter, wall joinery and the remaining side furniture need the same bespoke mesh/UV finish for literal frame parity.
+- [P2][HUD finish] Desktop and mobile hierarchy are clear and functional, but icon drawing, optical type balance and translucent-panel microdetail remain simpler than the reference artwork.
+
+### Gate result
+
+This pass removes the largest toy-like character and display-material defects while preserving real movement, follow camera, full orbit, collision and mobile budgets. The same-canvas comparison still shows actionable P1 sculpt, secondary-asset and offline-lighting gaps, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production character sculpt/cloth animation, remaining secondary bespoke assets and offline-grade indirect material response remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v16 authored hero-furniture and complete-orbit gate
 
 ### Evidence inspected together

@@ -60,7 +60,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f6ead8", floor: "#d3cbc0", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f7ead6", floor: "#ddd3c2", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -68,7 +68,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.46, fill: 0.2, hemi: 0.18, bounce: 0.5, wash: 0.68, exposure: 0.82, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
+  "civic-ivory": { key: 2.72, fill: 0.16, hemi: 0.13, bounce: 0.34, wash: 0.78, exposure: 0.84, keyColor: "#ffd09a", fillColor: "#b8d5cf" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -392,7 +392,7 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.72;
+  gtaoPass.blendIntensity = 0.86;
   gtaoPass.updateGtaoMaterial({
     radius: 0.34,
     distanceExponent: 1.7,
@@ -972,7 +972,7 @@ function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  const chips = ["#534943", "#8d5c4d", "#41676b", "#626e55", "#b59d7d", "#302d2b", "#e8dccb"];
+  const chips = ["#76675d", "#a77867", "#648185", "#7b866f", "#baa68d", "#5d5751", "#ebe0d0"];
   for (let index = 0; index < 3400; index += 1) {
     const x = random() * size;
     const y = random() * size;
@@ -988,7 +988,7 @@ function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
       else context.lineTo(px, py);
     }
     context.closePath();
-    context.globalAlpha = 0.42 + random() * 0.46;
+    context.globalAlpha = 0.24 + random() * 0.34;
     context.fillStyle = chips[Math.floor(random() * chips.length)];
     context.fill();
   }
@@ -1100,7 +1100,7 @@ function getCivicDappleTexture() {
       rx * size,
       ry * size,
       rotation,
-      "rgba(255,232,177,0.34)",
+      "rgba(255,232,177,0.5)",
       "rgba(255,232,177,0)"
     );
   });
@@ -1120,7 +1120,7 @@ function getCivicDappleTexture() {
       radius * (0.72 + random() * 0.66),
       radius * (0.44 + random() * 0.34),
       (random() - 0.5) * 1.8,
-      "rgba(72,83,55,0.115)",
+      "rgba(72,83,55,0.16)",
       "rgba(72,83,55,0)"
     );
   }
@@ -1223,7 +1223,7 @@ function applyLightingPreset(theme = {}) {
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.66 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.36 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -4175,7 +4175,7 @@ function rebuildRoom(theme = {}) {
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(ROOM_RADIUS, 64),
     createToonMaterial(floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.7 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.62 : 0.9,
       surface: "terrazzo",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
       map: theme.zoneId === "public-plaza" ? getTerrazzoColorTexture(floorColor) : null,
@@ -5648,7 +5648,7 @@ function updateActors(actors = [], now = performance.now()) {
     }
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
-      : (cameraZoneId === "public-plaza" ? 0.2 : 0.28);
+      : (cameraZoneId === "public-plaza" ? 0.3 : 0.28);
     entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.82 : 0.9) : (walking ? 0.92 : 1));
     entry.shadow.visible = true;
     entry.group.visible = actor.visible !== false;

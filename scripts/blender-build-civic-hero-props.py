@@ -209,18 +209,19 @@ def build_display_case(mats):
     root = empty("CivicDisplayCase")
     root["asset"] = "civic-display-case"
     # Low cabinet with real joinery, inset doors and a brass toe rail.
-    rounded_box("DisplayCoralBase", (1.86, 0.65, 0.7), (0, 0, 0.38), mats["coral"], root, 0.1, segments=5)
-    rounded_box("DisplayOakPlinth", (1.96, 0.12, 0.78), (0, 0, 0.73), mats["oak"], root, 0.045)
+    rounded_box("DisplayOakBase", (1.86, 0.65, 0.7), (0, 0, 0.38), mats["oak"], root, 0.1, segments=5)
+    rounded_box("DisplayWalnutPlinth", (1.96, 0.12, 0.78), (0, 0, 0.73), mats["walnut"], root, 0.045)
     for side in (-1, 1):
-        rounded_box(f"DisplayInset_{side}", (0.68, 0.035, 0.37), (side * 0.41, -0.357, 0.38), mats["ivory"], root, 0.045)
+        rounded_box(f"DisplayInset_{side}", (0.68, 0.035, 0.37), (side * 0.41, -0.357, 0.38), mats["deep_teal"], root, 0.045)
         cylinder(f"DisplayKnob_{side}", 0.035, 0.045, (side * 0.12, -0.392, 0.39), mats["brass"], root, 14, (math.pi / 2, 0, 0))
+    rounded_box("DisplayBrassToeRail", (1.68, 0.03, 0.035), (0, -0.382, 0.11), mats["brass"], root, 0.012)
     for x in (-0.78, 0.78):
         cylinder(f"DisplayFoot_{x}", 0.055, 0.22, (x, 0, 0.11), mats["walnut"], root, 14)
 
     # The upper glass case has a complete back, shelf, wood frame and side panes.
     rounded_box("DisplayCaseFloor", (1.78, 0.66, 0.09), (0, 0, 0.8), mats["oak"], root, 0.03)
-    rounded_box("DisplayCaseBack", (1.78, 0.08, 0.68), (0, 0.29, 1.13), mats["ivory"], root, 0.035)
-    rounded_box("DisplayCaseTop", (1.82, 0.72, 0.1), (0, 0, 1.5), mats["oak"], root, 0.035)
+    rounded_box("DisplayCaseBack", (1.78, 0.08, 0.68), (0, 0.29, 1.13), mats["walnut"], root, 0.035)
+    rounded_box("DisplayCaseTop", (1.82, 0.72, 0.1), (0, 0, 1.5), mats["walnut"], root, 0.035)
     for x in (-0.86, 0.86):
         rounded_box(f"DisplayPost_{x}", (0.07, 0.07, 0.7), (x, -0.3, 1.14), mats["walnut"], root, 0.025)
     rounded_box("DisplayFrontGlass", (1.68, 0.026, 0.58), (0, -0.345, 1.16), mats["glass"], root, 0.012)
