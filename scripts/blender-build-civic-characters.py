@@ -11,6 +11,7 @@ ROLE_CONFIGS = {
     "player": {
         "skin": "#e8a678",
         "hair": "#26252d",
+        "hair_highlight": "#3d3a45",
         "eye": "#3f342d",
         "top": "#efe4cf",
         "outer": "#71825a",
@@ -23,6 +24,7 @@ ROLE_CONFIGS = {
     "listener": {
         "skin": "#e5a174",
         "hair": "#242832",
+        "hair_highlight": "#39414f",
         "eye": "#3a312b",
         "top": "#258b82",
         "outer": "#eee4d3",
@@ -35,6 +37,7 @@ ROLE_CONFIGS = {
     "facilitator": {
         "skin": "#efb187",
         "hair": "#d45f52",
+        "hair_highlight": "#ec796b",
         "eye": "#3d6d5d",
         "top": "#f6efe2",
         "outer": "#faf5eb",
@@ -47,6 +50,7 @@ ROLE_CONFIGS = {
     "mediator": {
         "skin": "#e9aa80",
         "hair": "#604237",
+        "hair_highlight": "#79584b",
         "eye": "#4f6149",
         "top": "#f5eee1",
         "outer": "#fff8ed",
@@ -224,10 +228,51 @@ def curve_tube(name, points, radius, mat, parent=None, cyclic=False, resolution=
     return obj
 
 
+def tapered_lock(name, points, radii, mat, parent=None, sides=10):
+    """Build a light, curved and tapered hair lock instead of a capsule fringe."""
+    if len(points) != len(radii) or len(points) < 2:
+        raise ValueError("tapered_lock requires matching point/radius arrays")
+    vertices = []
+    faces = []
+    for point, radius in zip(points, radii):
+        for side in range(sides):
+            angle = math.tau * side / sides
+            vertices.append((
+                point[0] + math.cos(angle) * radius,
+                point[1] + math.sin(angle) * radius * 0.72,
+                point[2],
+            ))
+    for ring in range(len(points) - 1):
+        base = ring * sides
+        next_base = (ring + 1) * sides
+        for side in range(sides):
+            following = (side + 1) % sides
+            faces.append((base + side, base + following, next_base + following, next_base + side))
+    vertices.extend([points[0], points[-1]])
+    start_center = len(vertices) - 2
+    end_center = len(vertices) - 1
+    for side in range(sides):
+        following = (side + 1) % sides
+        faces.append((start_center, following, side))
+        last = (len(points) - 1) * sides
+        faces.append((end_center, last + side, last + following))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    return obj
+
+
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.82),
         "hair": material(f"{role} hair", config["hair"], 0.72),
+        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.7),
         "eye_white": material(f"{role} eye white", "#fffefa", 0.3, clearcoat=0.42),
         "iris": material(f"{role} iris", config["eye"], 0.34, clearcoat=0.35),
         "ink": material(f"{role} ink", "#25242b", 0.58),
@@ -244,7 +289,7 @@ def build_materials(role, config):
 
 
 def build_face(head, mats):
-    ellipsoid("Head", (0, 0, 0), (0.265, 0.218, 0.28), mats["skin"], head, segments=28, rings=18)
+    ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=28, rings=18)
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
         eye = empty(f"EyePivot_{side}", head, (side * 0.09, -0.207, 0.035))
@@ -268,18 +313,28 @@ def build_face(head, mats):
 
 def build_hair(head, mats, style):
     ellipsoid("HairCap", (0, 0.045, 0.085), (0.282, 0.225, 0.255), mats["hair"], head, segments=26, rings=16)
-    fringe_x = (-0.2, -0.12, -0.04, 0.05, 0.14, 0.21)
-    for index, x in enumerate(fringe_x):
-        height = 0.16 + (index % 2) * 0.035
-        ellipsoid(
+    fringe_specs = (
+        (-0.19, -0.15, 0.08, 0.05),
+        (-0.12, -0.085, 0.07, 0.055),
+        (-0.045, -0.018, 0.02, 0.058),
+        (0.04, 0.018, 0.035, 0.058),
+        (0.12, 0.085, 0.07, 0.054),
+        (0.19, 0.15, 0.085, 0.048),
+    )
+    for index, (root_x, tip_x, tip_z, root_radius) in enumerate(fringe_specs):
+        tapered_lock(
             f"Fringe_{index + 1}",
-            (x, -0.194, 0.125 - abs(x) * 0.12),
-            (0.062, 0.035, height),
-            mats["hair"],
+            [
+                (root_x, -0.13, 0.225 - abs(root_x) * 0.1),
+                ((root_x * 3 + tip_x) / 4, -0.18, 0.18),
+                ((root_x + tip_x) / 2, -0.208, 0.115),
+                ((root_x + tip_x * 3) / 4, -0.223, 0.055),
+                (tip_x, -0.229, tip_z),
+            ],
+            (root_radius * 0.9, root_radius * 1.04, root_radius * 0.88, root_radius * 0.58, 0.006),
+            mats["hair_highlight"] if index in (1, 4) else mats["hair"],
             head,
-            rotation=(0, math.radians(-8), math.radians(-x * 75)),
-            segments=16,
-            rings=10,
+            sides=10,
         )
     for side in (-1, 1):
         ellipsoid(f"SideHair_{side}", (side * 0.235, -0.008, -0.07), (0.07, 0.075, 0.17), mats["hair"], head, rotation=(0, 0, side * 0.12), segments=16, rings=10)
@@ -324,8 +379,8 @@ def build_body(role, config, mats, visual):
     cylinder("Neck", 0.09, 0.085, 0.12, (0, 0, 1.33), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.45, 0.28, 0.075), (0, -0.005, 0.76), mats["accent"], visual, radius=0.04)
 
-    left_arm = empty("LeftArmPivot", visual, (-0.275, 0, 1.2))
-    right_arm = empty("RightArmPivot", visual, (0.275, 0, 1.2))
+    left_arm = empty("LeftArmPivot", visual, (-0.242, 0, 1.2))
+    right_arm = empty("RightArmPivot", visual, (0.242, 0, 1.2))
     left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.27))
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.27))
     left_leg = empty("LeftLegPivot", visual, (-0.135, 0, 0.73))
@@ -334,16 +389,16 @@ def build_body(role, config, mats, visual):
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
-        ellipsoid(f"UpperArm_{side}", (0, 0, -0.14), (0.082, 0.075, 0.17), mats["top"], pivot, segments=18, rings=12)
-        ellipsoid(f"Forearm_{side}", (0, 0, -0.14), (0.074, 0.067, 0.16), mats["outer"], elbow, segments=18, rings=12)
-        cylinder(f"Cuff_{side}", 0.079, 0.075, 0.065, (0, 0, -0.27), mats["accent"], elbow, vertices=18)
-        ellipsoid(f"Hand_{side}", (0, -0.006, -0.34), (0.072, 0.06, 0.083), mats["skin"], elbow, segments=16, rings=10)
-        ellipsoid(f"Thumb_{side}", (-side * 0.05, -0.045, -0.322), (0.025, 0.022, 0.05), mats["skin"], elbow, rotation=(0, side * 0.38, side * 0.35), segments=14, rings=8)
+        ellipsoid(f"UpperArm_{side}", (0, 0, -0.145), (0.068, 0.064, 0.18), mats["top"], pivot, segments=18, rings=12)
+        ellipsoid(f"Forearm_{side}", (0, 0, -0.145), (0.061, 0.057, 0.17), mats["outer"], elbow, segments=18, rings=12)
+        cylinder(f"Cuff_{side}", 0.066, 0.062, 0.058, (0, 0, -0.282), mats["accent"], elbow, vertices=18)
+        ellipsoid(f"Hand_{side}", (0, -0.006, -0.348), (0.058, 0.048, 0.076), mats["skin"], elbow, segments=16, rings=10)
+        ellipsoid(f"Thumb_{side}", (-side * 0.042, -0.038, -0.334), (0.021, 0.019, 0.043), mats["skin"], elbow, rotation=(0, side * 0.38, side * 0.35), segments=14, rings=8)
         for finger_index, finger_x in enumerate((-0.03, 0, 0.03)):
             ellipsoid(
                 f"Finger_{side}_{finger_index + 1}",
-                (finger_x, -0.054, -0.355),
-                (0.014, 0.018, 0.046),
+                (finger_x * 0.82, -0.044, -0.36),
+                (0.012, 0.015, 0.04),
                 mats["skin"],
                 elbow,
                 rotation=(0.08, 0, -side * finger_x * 2.2),
@@ -366,8 +421,8 @@ def build_body(role, config, mats, visual):
                 resolution=2,
             )
         cylinder(f"TrouserCuff_{side}", 0.102, 0.096, 0.09, (0, 0, -0.25), mats["accent"], knee, vertices=18)
-        rounded_box(f"Shoe_{side}", (0.21, 0.31, 0.15), (0, -0.055, -0.345), mats["shoe"], knee, radius=0.055)
-        rounded_box(f"Sole_{side}", (0.215, 0.31, 0.035), (0, -0.055, -0.42), mats["sole"], knee, radius=0.012, segments=2)
+        rounded_box(f"Shoe_{side}", (0.185, 0.275, 0.14), (0, -0.045, -0.345), mats["shoe"], knee, radius=0.052)
+        rounded_box(f"Sole_{side}", (0.19, 0.278, 0.03), (0, -0.045, -0.415), mats["sole"], knee, radius=0.012, segments=2)
         curve_tube(f"Lace_{side}", [(-0.055, -0.218, -0.32), (0, -0.225, -0.305), (0.055, -0.218, -0.32)], 0.009, mats["sole"], knee)
 
     return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
@@ -390,8 +445,25 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
             rounded_box(f"CargoPocket_{side}", (0.14, 0.055, 0.17), (side * 0.14, -0.095, 0.52), mats["accent"], visual, radius=0.025)
     elif costume in ("facilitator", "mediator"):
         cylinder("Skirt", 0.29, 0.21, 0.5, (0, 0, 0.72), mats["lower"], visual, vertices=32)
+        for pleat_index, pleat_x in enumerate((-0.1, 0, 0.1)):
+            curve_tube(
+                f"SkirtPleat_{pleat_index + 1}",
+                [(pleat_x * 0.72, -0.215, 0.94), (pleat_x * 0.9, -0.25, 0.73), (pleat_x, -0.275, 0.5)],
+                0.003,
+                mats["lower"],
+                visual,
+                resolution=2,
+            )
         for side in (-1, 1):
-            ellipsoid(f"CoatPanel_{side}", (side * 0.13, -0.155, 0.99), (0.13, 0.045, 0.32), mats["outer"], visual, rotation=(0, side * 0.04, side * 0.08), segments=22, rings=14)
+            rounded_box(
+                f"CoatPanel_{side}",
+                (0.19, 0.055, 0.47),
+                (side * 0.095, -0.17, 1.01),
+                mats["outer"],
+                visual,
+                radius=0.045,
+                rotation=(0, side * 0.025, side * 0.035),
+            )
             rounded_box(f"Lapel_{side}", (0.12, 0.035, 0.3), (side * 0.07, -0.21, 1.12), mats["outer"], visual, radius=0.025, rotation=(0, side * 0.08, side * 0.45))
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.022, 0.012, 0.022), mats["accent"], visual, segments=12, rings=8)

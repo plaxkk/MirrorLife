@@ -92,7 +92,7 @@ async function main() {
       );
       await page.screenshot({ path: sourceFile, type: "png" });
       await page.close();
-      await execFileAsync("python", [
+      await execFileAsync(process.env.PYTHON_BIN || "python3", [
         removeKeyScript,
         "--input", sourceFile,
         "--out", outputFile,

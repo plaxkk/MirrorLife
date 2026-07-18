@@ -1,5 +1,51 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-18 reference-fidelity v12 authored-hair, social-acting and lounge-light gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1672 × 941`, public-plaza, yaw `0°`).
+- Same-canvas full comparison: `dist/interior-3d-work/civic-fidelity-v12-full.png`.
+- Same-canvas actor/composition crop: `dist/interior-3d-work/civic-fidelity-v12-focus.png`.
+- Four-direction orbit evidence: `dist/interior-3d-work/civic-orbit-v12.png` and the individual `environment-review-yaw-{90,180,270}/00-public.png` captures.
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` (`390 × 844`).
+
+### Earlier findings, fixes and post-fix evidence
+
+- [fixed from v11 P1 / character silhouette] The six identical capsule bangs were the strongest visible AI-kit artifact. Each role now uses curved, multi-ring tapered locks with a controlled root, pointed tip and restrained highlight color. Forehead and eyes remain readable from the live gameplay camera while the back/side silhouette stays fully modeled.
+- [fixed from v11 P1 / anatomy] Shoulder pivots moved inward; upper arms, forearms, palms, fingers and footwear were re-proportioned. Facilitator and mediator now use tailored cardigan panels rather than two balloon-like ellipsoids, and their skirts have a restrained pleat structure.
+- [fixed from v11 P2 / acting] The listener, facilitator and mediator no longer stand with hands behind their bodies. Live role poses now stage an open listener gesture, a two-handed notebook gesture and a hand-to-chin mediator gesture. These are visible in `civic-fidelity-v12-focus.png`, not inferred from rig metadata.
+- [fixed from v11 P1 / environment hierarchy] The right lounge now has a real brass-and-ivory pendant with a warm local point light. It provides the reference's secondary warm focal point without adding a floor obstacle or changing the collision map.
+- [fixed from v11 P1 / material scale] The public terrazzo texture increased from a repeating `512px / 1,750-chip` field to a sharper `768px / 4,200-chip` field with smaller, darker aggregate. The floor now reads as mineral material rather than sparse confetti.
+- [fixed] Directional shadows are softened while actor contact shadows remain, reducing the hard diagonal stripe quality on the plaster shell.
+- [fixed tooling] Canonical GLB rendering now defaults to `python3` (or `PYTHON_BIN`) instead of assuming a `python` shim, so character front/side/isometric inspections work in the configured workspace runtime.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `148/276,604`, `150/279,028`, `159/290,132`, `157/282,952` draw-calls/triangles. All stay within the strict `160 / 300,000` public-room gate.
+- Mobile `390 × 844`: `110` draw calls, `242,774` triangles and `84` geometries, within the `110 / 250,000` mobile gate.
+- Browser interaction: four GLB roles loaded; WASD moved the player `2.97m`; pointer drag rotated the live Three.js camera `65.3°`.
+- Regression: 26-zone/10-archetype physics passed; 78 room transitions completed without failure or runtime error; desktop/mobile scene flow, syntax checks and production build passed.
+
+### Required fidelity surfaces
+
+- [P1][image quality / characters] Hair, clothing and social acting are materially more authored, but the source still has sculpted hands, facial blend shapes, cloth deformation and production animation clips. The Web cast remains a modular pivot-rig LOD.
+- [P1][image quality / environment] The source's foreground display case, cabinetry, ceramics, woven storage and plant assets have bespoke texture work. The implementation matches their functional placement and hierarchy but not their offline asset density or micro-surface detail.
+- [P1][colors / lighting] The warm-neutral, teal, coral and brass hierarchy now matches directionally, but the source still has offline global illumination, window-gobo shadows and richer specular breakup.
+- [P2][spacing / layout] The source gives the four actors slightly more asymmetric spacing and negative space. The live circle stays deliberately more regular so navigation, interaction anchors and camera orbit remain deterministic.
+- [P2][typography / icons] The live HUD preserves the source's dark translucent rails and compact Chinese hierarchy, but its iconography and optical weights remain simpler than the rendered reference.
+- [checked][copy / content] Location, listening action, exit and story-memory labels are coherent and remain usable at desktop and mobile sizes.
+- [checked][responsiveness / interaction] No horizontal overflow or clipped primary action was found. Mobile keeps the player, two witnesses, interaction prompt, joystick and actions visible.
+
+### Gate result
+
+This pass is a concrete fidelity improvement and keeps the requested experience genuinely walkable, camera-following and orbitable. The same-canvas comparison still visibly contradicts literal image-1 production parity, so the Product Design handoff gate remains blocked.
+
+final result: blocked
+
+Blocker: hero-character deformation/animation, bespoke per-object textures and offline-grade indirect lighting remain actionable P1 differences.
+
 ## 2026-07-18 reference-fidelity v11 cinematic-camera, knees and final browser gate
 
 ### Evidence inspected together

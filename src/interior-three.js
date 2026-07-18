@@ -327,7 +327,7 @@ function ensureLayer() {
   keyLight.shadow.camera.bottom = -6;
   keyLight.shadow.camera.near = 0.1;
   keyLight.shadow.camera.far = 16;
-  keyLight.shadow.radius = 4;
+  keyLight.shadow.radius = 6;
   keyLight.shadow.blurSamples = 20;
   scene.add(keyLight);
 
@@ -802,7 +802,7 @@ function getSurfaceBumpTexture(kind = "plaster") {
 function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
   const key = `terrazzo-color:${baseColor}`;
   if (surfaceColorTextures.has(key)) return surfaceColorTextures.get(key);
-  const size = 512;
+  const size = 768;
   const textureCanvas = document.createElement("canvas");
   textureCanvas.width = size;
   textureCanvas.height = size;
@@ -815,11 +815,11 @@ function getTerrazzoColorTexture(baseColor = "#d2c1a7") {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  const chips = ["#786a5c", "#a87562", "#5d7f82", "#7d896d", "#d8c5a6", "#4f4943", "#f2e8d7"];
-  for (let index = 0; index < 1750; index += 1) {
+  const chips = ["#66584c", "#9e6654", "#4e7377", "#6f7c5e", "#cbb28f", "#3e3935", "#efe3d0"];
+  for (let index = 0; index < 4200; index += 1) {
     const x = random() * size;
     const y = random() * size;
-    const radius = 0.55 + random() * (random() > 0.88 ? 3.2 : 1.8);
+    const radius = 0.5 + random() * (random() > 0.9 ? 2.8 : 1.65);
     const sides = 3 + Math.floor(random() * 4);
     context.beginPath();
     for (let side = 0; side < sides; side += 1) {
@@ -2624,6 +2624,43 @@ function addCivicForegroundTeaTable(colors) {
   });
 }
 
+function addCivicHeroPendant(colors) {
+  // A real overhead fixture gives the lounge a warm secondary focal point like
+  // the reference without consuming floor space or changing the physics map.
+  const group = new THREE.Group();
+  group.position.set(3.18, 0, -2.34);
+  group.rotation.y = -0.12;
+  group.userData.neverFade = true;
+  roomRoot.add(group);
+  const brass = createToonMaterial("#9f7535", { roughness: 0.28, metalness: 0.68, envMapIntensity: 0.96 });
+  const cord = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.28, 10), brass);
+  cord.position.y = 3.08;
+  group.add(cord);
+  const canopy = new THREE.Mesh(new THREE.CylinderGeometry(0.13, 0.16, 0.08, 18), brass);
+  canopy.position.y = 3.72;
+  group.add(canopy);
+  const shade = new THREE.Mesh(
+    new THREE.ConeGeometry(0.4, 0.34, 32, 1, true),
+    createToonMaterial("#f1d48a", {
+      roughness: 0.5,
+      side: THREE.DoubleSide,
+      envMapIntensity: 0.72
+    })
+  );
+  shade.position.y = 2.45;
+  shade.rotation.x = Math.PI;
+  group.add(shade);
+  const bulb = new THREE.Mesh(
+    new THREE.SphereGeometry(0.09, 18, 12),
+    createToonMaterial("#ffd996", { roughness: 0.24, emissive: 0.42 })
+  );
+  bulb.position.y = 2.31;
+  group.add(bulb);
+  const light = new THREE.PointLight(0xffc97d, lastWidth <= 720 ? 0.38 : 0.72, 3.4, 2.15);
+  light.position.set(0, 2.22, 0.04);
+  group.add(light);
+}
+
 function addCivicCovenantPanel(colors) {
   const group = new THREE.Group();
   group.position.set(2.12, 2.23, -4.78);
@@ -2805,6 +2842,7 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicListeningConsole(colors);
   addCivicHeroNoticeWall(colors);
   addCivicLibraryWall(colors);
+  addCivicHeroPendant(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
   addCivicReverseWitnessWall(colors, mobileLod);
@@ -4961,12 +4999,12 @@ function updateActors(actors = [], now = performance.now()) {
       if (actor.civicRole === "mediator") {
         // One hand near the chin and one relaxed hand: the mediator should
         // read as attentive, not as a symmetrical mannequin.
-        entry.leftArm.rotation.x = -0.18;
-        entry.rightArm.rotation.x = -0.28;
-        entry.leftArm.rotation.z = 0.08;
+        entry.leftArm.rotation.x = -0.3;
+        entry.rightArm.rotation.x = -0.18;
+        entry.leftArm.rotation.z = 0.1;
         entry.rightArm.rotation.z = -0.3;
-        entry.leftElbow.rotation.x = 0.42;
-        entry.rightElbow.rotation.x = 1.72;
+        entry.leftElbow.rotation.x = -1.16;
+        entry.rightElbow.rotation.x = -1.96;
         entry.rightElbow.rotation.z = -0.24;
         entry.leftLeg.rotation.z = 0.035;
         entry.rightLeg.rotation.z = -0.018;
@@ -4976,12 +5014,12 @@ function updateActors(actors = [], now = performance.now()) {
       } else if (actor.civicRole === "facilitator") {
         // Fold both forearms back toward the notebook so it is visibly held
         // at the waist rather than floating at the end of a straight arm.
-        entry.leftArm.rotation.x = -0.38;
-        entry.rightArm.rotation.x = -0.34;
+        entry.leftArm.rotation.x = -0.34;
+        entry.rightArm.rotation.x = -0.28;
         entry.leftArm.rotation.z = 0.26;
-        entry.rightArm.rotation.z = -0.2;
-        entry.leftElbow.rotation.x = 1.34;
-        entry.rightElbow.rotation.x = 1.08;
+        entry.rightArm.rotation.z = -0.24;
+        entry.leftElbow.rotation.x = -1.34;
+        entry.rightElbow.rotation.x = -1.46;
         entry.leftElbow.rotation.z = 0.22;
         entry.rightElbow.rotation.z = -0.12;
         entry.leftLeg.rotation.z = -0.025;
@@ -4989,12 +5027,12 @@ function updateActors(actors = [], now = performance.now()) {
         entry.rightKnee.rotation.x = 0.11;
         entry.headGroup.rotation.z = -0.035;
       } else if (actor.civicRole === "listener") {
-        entry.leftArm.rotation.x = -0.12;
-        entry.rightArm.rotation.x = -0.42;
-        entry.leftArm.rotation.z = 0.08;
+        entry.leftArm.rotation.x = -0.18;
+        entry.rightArm.rotation.x = -0.3;
+        entry.leftArm.rotation.z = 0.28;
         entry.rightArm.rotation.z = -0.16;
-        entry.leftElbow.rotation.x = 0.34;
-        entry.rightElbow.rotation.x = 0.82;
+        entry.leftElbow.rotation.x = -0.88;
+        entry.rightElbow.rotation.x = -1.32;
         entry.leftLeg.rotation.z = 0.028;
         entry.rightLeg.rotation.z = -0.036;
         entry.leftKnee.rotation.x = 0.06;
