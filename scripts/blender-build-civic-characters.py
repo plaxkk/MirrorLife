@@ -560,7 +560,7 @@ def build_face(head, mats, role):
     camera-facing portrait card, so they survive orbit, occlusion and shadow.
     """
     feminine = role in ("facilitator", "mediator")
-    face = ellipsoid("Head", (0, 0, 0), (0.248, 0.216, 0.29), mats["skin"], head, segments=40, rings=28)
+    face = ellipsoid("Head", (0, 0, 0), (0.246, 0.214, 0.288), mats["skin"], head, segments=40, rings=28)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -607,17 +607,38 @@ def build_face(head, mats, role):
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
         ellipsoid(f"EarInner_{side}", (side * 0.272, -0.027, -0.014), (0.018, 0.008, 0.034), mats["blush"], head, segments=12, rings=8)
-        eye = empty(f"EyePivot_{side}", head, (side * 0.09, -0.207, 0.035))
-        ellipsoid(f"EyeWhite_{side}", (0, -0.002, 0), (0.048, 0.021, 0.062), mats["eye_white"], eye, segments=22, rings=14)
-        ellipsoid(f"Iris_{side}", (-side * 0.002, -0.022, -0.002), (0.022, 0.009, 0.036), mats["iris"], eye, segments=18, rings=10)
-        ellipsoid(f"Pupil_{side}", (-side * 0.002, -0.032, -0.004), (0.0095, 0.005, 0.019), mats["ink"], eye, segments=14, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.042, 0.016), (0.0065, 0.0035, 0.009), mats["eye_white"], eye, segments=10, rings=6)
+        # Keep the eyes readable without letting two protruding white spheres
+        # dominate the face.  A flatter corneal stack and a slightly narrower
+        # sclera read much closer to the painted reference at gameplay scale.
+        eye = empty(f"EyePivot_{side}", head, (side * 0.086, -0.205, 0.036))
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.042, 0.013, 0.053), mats["eye_white"], eye, segments=24, rings=16)
+        ellipsoid(f"Iris_{side}", (-side * 0.0015, -0.014, -0.002), (0.024, 0.006, 0.039), mats["iris"], eye, segments=20, rings=12)
+        ellipsoid(f"Pupil_{side}", (-side * 0.0015, -0.019, -0.004), (0.0135, 0.0035, 0.026), mats["ink"], eye, segments=14, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.023, 0.014), (0.0055, 0.0022, 0.008), mats["eye_white"], eye, segments=10, rings=6)
+        curve_tube(
+            f"EyeOutline_{side}",
+            [
+                (-0.041, -0.016, 0),
+                (-0.032, -0.016, 0.036),
+                (0, -0.016, 0.052),
+                (0.032, -0.016, 0.036),
+                (0.041, -0.016, 0),
+                (0.032, -0.016, -0.036),
+                (0, -0.016, -0.052),
+                (-0.032, -0.016, -0.036),
+            ],
+            0.0021,
+            mats["ink"],
+            eye,
+            cyclic=True,
+            resolution=2,
+        )
         # Upper lids/lashes preserve the drawn identity at normal gameplay
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.044, -0.025, 0.042), (0, -0.031, 0.059), (0.044, -0.025, 0.041)],
-            0.0052 if feminine else 0.0045,
+            [(-0.04, -0.017, 0.035), (0, -0.02, 0.051), (0.04, -0.017, 0.035)],
+            0.0046 if feminine else 0.004,
             mats["ink"],
             eye,
             resolution=2,
@@ -625,31 +646,31 @@ def build_face(head, mats, role):
         if feminine:
             curve_tube(
                 f"OuterLash_{side}",
-                [(side * 0.038, -0.025, 0.043), (side * 0.058, -0.027, 0.058)],
-                0.0043,
+                [(side * 0.034, -0.017, 0.037), (side * 0.052, -0.019, 0.05)],
+                0.0038,
                 mats["ink"],
                 eye,
                 resolution=2,
             )
-        brow = empty(f"BrowPivot_{side}", head, (side * 0.09, -0.228, 0.124))
+        brow = empty(f"BrowPivot_{side}", head, (side * 0.086, -0.219, 0.116))
         curve_tube(
             f"Brow_{side}",
             [(side * 0.057, 0.003, -0.007), (0, -0.008, 0.008), (-side * 0.05, 0.003, -0.004)],
-            0.0085,
+            0.0072,
             mats["hair"],
             brow,
         )
         ellipsoid(f"Blush_{side}", (side * 0.175, -0.211, -0.048), (0.043, 0.009, 0.018), mats["blush"], head, segments=14, rings=8)
-    ellipsoid("Nose", (0, -0.224, -0.018), (0.02, 0.015, 0.027), mats["skin"], head, segments=16, rings=10)
-    mouth = empty("MouthPivot", head, (0, -0.232, -0.101))
+    ellipsoid("Nose", (0, -0.219, -0.019), (0.016, 0.011, 0.023), mats["skin"], head, segments=16, rings=10)
+    mouth = empty("MouthPivot", head, (0, -0.225, -0.099))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.042, 0.002, 0.006), (-0.006, -0.006, -0.009), (0.041, 0.002, 0.003)], 0.0048, mats["ink"], closed)
+    curve_tube("MouthClosed", [(-0.036, 0.002, 0.005), (-0.005, -0.005, -0.008), (0.036, 0.002, 0.003)], 0.0042, mats["ink"], closed)
     # A separate glossy lower-lip mesh read as a floating moustache at the
     # authored gameplay distance. Keep the closed mouth as one clean ink line;
     # the open-mouth/tongue pair supplies colour only while speaking.
     open_mouth = empty("MouthOpenPivot", mouth)
-    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.04, 0.009, 0.03), mats["ink"], open_mouth, segments=20, rings=12)
-    ellipsoid("Tongue", (0, -0.014, -0.013), (0.023, 0.005, 0.009), mats["blush"], open_mouth, segments=14, rings=8)
+    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.035, 0.008, 0.026), mats["ink"], open_mouth, segments=20, rings=12)
+    ellipsoid("Tongue", (0, -0.012, -0.012), (0.02, 0.004, 0.008), mats["blush"], open_mouth, segments=14, rings=8)
 
 
 def build_hair(head, mats, style):
@@ -781,6 +802,16 @@ def build_cap(head, mats):
 
 def build_body(role, config, mats, visual):
     torso = ellipsoid("Torso", (0, 0, 1.0), (0.25, 0.155, 0.32), mats["top"], visual, segments=28, rings=18)
+    # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
+    # authored volume in one mesh avoids the ball-jointed toy silhouette while
+    # preserving the inexpensive shared-pivot animation contract.
+    for vertex in torso.data.vertices:
+        x, y, z = vertex.co
+        normalized = max(-1.0, min(1.0, z / 0.32))
+        shoulder = max(0.0, min(1.0, (normalized - 0.2) / 0.8))
+        waist = max(0.0, 1.0 - abs(normalized + 0.48) / 0.52)
+        vertex.co.x *= 1.0 + shoulder * 0.09 - waist * 0.11
+        vertex.co.y *= 1.0 - waist * 0.06
     cylinder("Neck", 0.09, 0.085, 0.12, (0, 0, 1.33), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.39, 0.245, 0.055), (0, -0.005, 0.775), mats["accent"], visual, radius=0.026)
 
@@ -1125,7 +1156,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v4",
+        "sculptContract": "mirrorlife-civic-sculpt-v5",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v2",
             "runtime": "authored-keyframe-blend",

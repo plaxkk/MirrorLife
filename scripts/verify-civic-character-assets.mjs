@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v4", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v5", "civic character sculpt contract is stale");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -57,6 +57,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("EyePivot_1")), `${role}: right blink pivot is missing`);
   assert(contents.includes(Buffer.from("UpperLid_-1")), `${role}: left illustrated eye contour is missing`);
   assert(contents.includes(Buffer.from("UpperLid_1")), `${role}: right illustrated eye contour is missing`);
+  assert(contents.includes(Buffer.from("EyeOutline_-1")), `${role}: left eye silhouette is missing`);
+  assert(contents.includes(Buffer.from("EyeOutline_1")), `${role}: right eye silhouette is missing`);
   if (["facilitator", "mediator"].includes(role)) {
     assert(contents.includes(Buffer.from("OuterLash_-1")), `${role}: left role-specific lash is missing`);
     assert(contents.includes(Buffer.from("OuterLash_1")), `${role}: right role-specific lash is missing`);

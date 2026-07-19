@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v64 facial silhouette, balanced civic light and complete-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v64/desktop-yaw-0-1672x941-v64.png` (`1672 × 941`, public-plaza, yaw `0°`, final ready state).
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v64/reference-vs-v64-full.png` and `reference-vs-v64-cast-focus.png`, with the reference on the left and the live implementation on the right.
+- Complete desktop orbit: `desktop-yaw-{0,90,180,270}-1672x941-v64.png`; responsive evidence: `mobile-yaw-0-390x844-v64.png`.
+- Product Design's in-app Browser reached `sceneReady=true` on desktop and mobile. Desktop and mobile console warning/error lists were empty; the mobile document reported `scrollWidth=390` at a `390px` viewport.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v58 P1 / protruding white-sphere eyes] Civic GLBs now use flatter sclerae, larger iris/pupil coverage, a restrained closed eye outline and reduced upper-lid thickness. The eyes remain expressive at gameplay distance without becoming the first high-contrast shape on every face.
+- [fixed / generic circular torso] The shared base torso now carries a soft shoulder-to-waist taper in authored geometry. It preserves the existing pivot animation contract while reducing the stacked-capsule silhouette in front, side and reverse views.
+- [fixed / harsh face-shadow split] The civic preset now carries stronger fill, hemisphere and warm bounce with a slightly lower key. The cast remains modelled by light, but facial features and white coats no longer fall into the earlier hard light/dark partition.
+- [fixed / floor-light noise] Daylight dapple opacity was reduced from `0.50` to `0.34`, retaining the portal cue without competing with the brass route and listening ring.
+- [fixed / weak foreground frame] The public record desk is larger and staged closer to the lower-left camera edge. It now creates an intentional foreground crop in the hero view and resolves as real side/back geometry in the `180°` and `270°` views.
+- [fixed / animation regression flake] The exploration gate now waits for the actual authored `walk` transition instead of assuming a full four-character, post-processed frame always completes within `90ms`. The original failure reproduced as `idle !== walk`; the corrected gate then passed with `1.25m` of movement and `65.3°` of orbit.
+- [checked / core interaction] Activating `倾听线索` selected the action, advanced the visible room memory to `3/3` and changed the contextual affordance to `再次聆听邻里共识圆桌`.
+
+### Runtime and performance evidence
+
+- Desktop hero view: `150` draw calls / `262,732` triangles at `1672 × 941`, below the strict `160 / 300,000` civic-room gate. All four captured yaws retain the player, the social circle and at least one functional landmark or the exit.
+- Mobile `390 × 844`: `106` draw calls / `239,294` triangles, below the `110 / 250,000` gate; player plus the two closest witnesses remain visible with joystick, chat, jump, contextual action and all four social actions.
+- Character contract: four civic roles pass at `6.64 MB` total with the `mirrorlife-civic-sculpt-v5` silhouette contract and complete authored animation clips.
+- Embodied verification: the physical player moved `1.25m`, entered and left the authored walk state, and rotated the weighted follow camera `65.3°`.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed without failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the Vite production build passed. Vite continues to report the existing non-module script and large-chunk advisory warnings; neither blocks the current static deployment.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The reference composition is now a real playable room: WASD/touch movement, metre-based collision, authored locomotion, weighted player-follow framing and drag orbit remain coupled to the same spatial state.
+- [checked][spacing/layout rhythm] Portal, foreground records, central listening ring, notice console and lounge create a readable foreground/middle/background sequence. The `90°`, `180°` and `270°` captures prove that the room is not a billboard and that the social focus survives camera rotation.
+- [checked][colors/tokens] Warm ivory remains dominant; teal and coral identify social roles; brass is reserved for navigation/evidence; dark translucent HUD surfaces retain contrast. Softer fill improves face readability without flattening the warm daylight direction.
+- [checked][image and asset quality for this iteration] All four citizens are full-volume GLBs with front/side/back geometry, real eye silhouettes and role-specific hair/costume secondary motion. Room props cast shadows and remain spatially coherent under orbit; no static room backdrop replaces exploration.
+- [checked][copy/content] Location, room memory, exit, contextual listening action and the four social verbs remain coherent. The tested primary action produces a visible state transition rather than a decorative control.
+- [checked][responsiveness/accessibility] `390 × 844` has no document overflow; touch movement, chat and jump remain visible, while the full action rail stays reachable at the bottom edge.
+- [P1][character production sculpt] Eye hierarchy and torso taper are better, but the cast crop still shows rigid fingers, cylindrical forearms/calves, large shoes, simplified facial planes, coarse hair masses and limited cloth compression. The reference characters have continuous anatomy, finer strand grouping, articulated hand contact and materially richer skin/cloth response.
+- [P1][environment craftsmanship] The functional layout and depth hierarchy now read clearly, but cabinetry joinery, desk objects, ceramics, woven storage, books/paper density and upholstery shaping remain visibly simpler. Several objects still read as clean modular primitives rather than bespoke narrative furniture.
+- [P1][indirect-light integration] The softer fill fixes the harsh split, but the reference retains more natural portal-to-room bounce, softer multi-scale contact shadows, skin subsurface response and finer roughness variation. Current hair shadows can still crush to black, while broad walls remain comparatively flat.
+- [P2][HUD optical finish] The interaction hierarchy works across viewports, but icon drawing, type weight, translucent depth, spacing and control detailing remain simpler than the reference HUD.
+
+### Gate result
+
+This iteration improves facial readability, softens civic light, strengthens the foreground frame and proves the full playable orbit on desktop and mobile. The paired canvas still contains actionable P1 character-sculpt, bespoke-environment and indirect-light differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production character anatomy/deformation, bespoke narrative furniture craftsmanship and more natural indirect material response remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v58 portal daylight, cloth follow-through and foreground story-density gate
 
 ### Evidence inspected together

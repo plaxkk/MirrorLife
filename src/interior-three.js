@@ -76,7 +76,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.55, fill: 0.14, hemi: 0.11, bounce: 0.44, wash: 0.6, exposure: 0.79, keyColor: "#ffd09a", fillColor: "#a9cec8" },
+  "civic-ivory": { key: 2.18, fill: 0.32, hemi: 0.3, bounce: 0.52, wash: 0.72, exposure: 0.81, keyColor: "#ffd6a5", fillColor: "#b4d4d0" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -2544,9 +2544,9 @@ function addCivicRecordDesk(colors) {
   const group = new THREE.Group();
   // Stage the desk as a deliberate foreground frame, matching the reference
   // composition while leaving the main listening route unobstructed.
-  group.position.set(-3.38, 0, 2.06);
-  group.rotation.y = 2.12;
-  group.scale.setScalar(1.24);
+  group.position.set(-2.86, 0, 2.46);
+  group.rotation.y = 2.18;
+  group.scale.setScalar(1.34);
   roomRoot.add(group);
   const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66, surface: "wood", bumpScale: 0.012 });
   const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
@@ -3521,7 +3521,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.5,
+        opacity: theme.night ? 0.1 : 0.34,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
