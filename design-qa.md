@@ -1,5 +1,52 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v65 continuous limb centre-lines and sculpted footwear gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current browser implementation: `dist/interior-3d-work/civic-fidelity-v65/desktop-yaw-0-1672x941-v65.png` (`1672 × 941`, public-plaza, yaw `0°`, final ready state).
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v65/reference-vs-v65-full.png` and `reference-vs-v65-cast-focus.png`, with the reference on the left and the live implementation on the right.
+- Complete desktop orbit: `desktop-yaw-{0,90,180,270}-1672x941-v65.png`; responsive evidence: `mobile-yaw-0-390x844-v65.png`.
+- Product Design's in-app Browser reached `sceneReady=true` on desktop and mobile. Desktop warning/error logs were empty; desktop and mobile document dimensions matched their viewport exactly.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v64 P1 / cylindrical limbs and toy joints] Upper arms, forearms, thighs and calves now follow authored bowed centre-lines with changing oval sections. Overlapping elbow and knee sleeves replace the exposed spherical bridges, so the hero, face and side views no longer read as ball-jointed dolls.
+- [fixed / oversized mitten hands] The palm/finger mass is shorter and flatter, with a narrower wrist, tapered fingertip fan and shallower crease geometry. The role props and animation pivot contract remain unchanged.
+- [fixed / capsule-on-box footwear] Shoes now use a seven-station, sixteen-sided last with distinct heel, ankle, instep, ball and rounded toe volumes plus role-specific sole colours. The first v65 browser pass exposed a wedge silhouette; the second exposed inward-facing side polygons. Both were rejected, corrected and recaptured before the full orbit.
+- [checked / physical movement] The player moved `2.37m`, entered the authored walk clip, settled back to idle and rotated the weighted follow camera `65.3°`.
+- [checked / atomic reveal] Cold asset revisions displayed only the room-matched loading shell until model, actor, physics and camera readiness; the finalized captures contain no old room or intermediate background.
+
+### Runtime and performance evidence
+
+- Desktop `0° / 90° / 180° / 270°`: `150 / 155 / 159 / 157` draw calls and `264,588 / 280,968 / 278,448 / 268,512` triangles. Every view stays below the strict `160 / 300,000` civic-room gate.
+- Mobile `390 × 844`: `106` draw calls / `240,686` triangles, below the `110 / 250,000` gate; player and two nearest witnesses remain visible with movement, chat, jump, contextual action and the full social-action rail.
+- Character contract: four civic roles pass at `6.24 MB` total with `mirrorlife-civic-sculpt-v6`; role triangle counts are `23,424–26,236`, including the continuous joint sleeves and rounded shoe lasts.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed without failure or runtime error. The exploration test passed in isolation after one parallel-load timing miss, confirming `2.37m` locomotion and a settled idle blend.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the Vite production build passed. The build retains the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The reference composition remains a real metre-based room with keyboard/touch locomotion, authored walk/run/jump states, furniture collision and drag orbit. The new topology preserves the same movement and pivot diagnostics rather than becoming a static render.
+- [checked][spacing/layout rhythm] Portal and foreground records frame the cast; the listening ring, proposal wall and lounge hold the middle/background hierarchy. Four desktop yaws retain the player and functional landmarks.
+- [checked][colors/tokens] Warm ivory is dominant, teal/coral identify social roles and brass remains the route/evidence accent. Dark role-specific footwear now anchors the characters without the rejected white wedge highlights.
+- [checked][image and asset quality for this iteration] All citizens are full-volume GLBs with front/side/back geometry. The new limbs, palms and shoe lasts are authored meshes with correct face orientation, shadows and animation pivots; no sprite or static-room substitute is used.
+- [checked][copy/content] Location, room memory, exit, contextual listening prompt and the four social verbs remain coherent and unchanged.
+- [checked][responsiveness/accessibility] The `390 × 844` document reports `390 × 844` scroll dimensions; touch movement, jump, chat, contextual action and the four social verbs remain visible.
+- [P1][character production sculpt] Continuous centre-lines and footwear remove the clearest toy-joint defects, but the paired cast crop still shows simplified facial planes, rigid finger contact, coarse hair grouping, limited cloth compression and flatter skin/cloth response than the reference's production character sculpt.
+- [P1][environment craftsmanship] The gameplay layout and depth sequence are credible, but cabinet joinery, woven storage, ceramics, paper density, upholstery shaping and foreground object craftsmanship remain materially simpler than the source.
+- [P1][indirect-light integration] The warm portal and character fill are coherent, but the reference still carries softer portal bounce, multi-scale contact shadows, skin subsurface response and more varied roughness. Current broad walls and hair shadow masses remain flatter.
+- [P2][HUD optical finish] The responsive hierarchy works, but icon drawing, optical type weight, translucent layering and control spacing remain less refined than the reference HUD.
+
+### Gate result
+
+This iteration closes the visible ball-joint, cylindrical-limb and capsule-shoe regressions while preserving physical movement, complete orbit and mobile performance. The same-canvas comparison still contains actionable P1 production character, bespoke-environment and indirect-material differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial/cloth deformation, bespoke narrative furniture craftsmanship and more natural indirect material response remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v64 facial silhouette, balanced civic light and complete-orbit gate
 
 ### Evidence inspected together

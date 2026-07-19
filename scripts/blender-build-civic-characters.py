@@ -19,6 +19,7 @@ ROLE_CONFIGS = {
         "lower": "#303b40",
         "accent": "#996c48",
         "shoe": "#3b342f",
+        "sole": "#282421",
         "hair_style": "spiky",
         "costume": "traveler",
     },
@@ -32,6 +33,7 @@ ROLE_CONFIGS = {
         "lower": "#85765b",
         "accent": "#d1a04c",
         "shoe": "#2d4948",
+        "sole": "#e5ddcf",
         "hair_style": "cap",
         "costume": "listener",
     },
@@ -45,6 +47,7 @@ ROLE_CONFIGS = {
         "lower": "#356e58",
         "accent": "#d98769",
         "shoe": "#5c4031",
+        "sole": "#332722",
         "hair_style": "coral_ponytail",
         "costume": "facilitator",
     },
@@ -58,6 +61,7 @@ ROLE_CONFIGS = {
         "lower": "#47745d",
         "accent": "#c69455",
         "shoe": "#503b31",
+        "sole": "#302520",
         "hair_style": "braided_bob",
         "costume": "mediator",
     },
@@ -267,21 +271,31 @@ def organic_limb(name, depth, profile, location, mat, parent=None, rotation=(0, 
     """Build a softly changing limb volume instead of a straight cone.
 
     ``profile`` contains ``(height_ratio, radius_x, radius_y)`` rings ordered
-    from top to bottom.  A calf can therefore swell before tapering into the
-    ankle, and a sleeve can roll naturally from the shoulder into the elbow.
-    The mesh stays inexpensive and keeps the existing pivot-rig contract.
+    from top to bottom. Optional ``offset_x`` and ``offset_y`` values let the
+    centre line bow like a real forearm or calf instead of remaining a perfect
+    lathed cylinder. The mesh stays inexpensive and keeps the pivot contract.
     """
     if len(profile) < 3:
         raise ValueError("organic_limb requires at least three profile rings")
     vertices = []
     faces = []
-    for height_ratio, radius_x, radius_y in profile:
+    normalized_profile = []
+    for ring in profile:
+        if len(ring) == 3:
+            height_ratio, radius_x, radius_y = ring
+            offset_x = 0
+            offset_y = 0
+        elif len(ring) == 5:
+            height_ratio, radius_x, radius_y, offset_x, offset_y = ring
+        else:
+            raise ValueError("organic_limb profile rings require 3 or 5 values")
+        normalized_profile.append((height_ratio, radius_x, radius_y, offset_x, offset_y))
         z = depth * height_ratio
         for side in range(sides):
             angle = math.tau * side / sides
             vertices.append((
-                math.cos(angle) * radius_x,
-                math.sin(angle) * radius_y,
+                offset_x + math.cos(angle) * radius_x,
+                offset_y + math.sin(angle) * radius_y,
                 z,
             ))
     for ring in range(len(profile) - 1):
@@ -295,7 +309,10 @@ def organic_limb(name, depth, profile, location, mat, parent=None, rotation=(0, 
                 following_ring + following,
                 following_ring + side,
             ))
-    vertices.extend(((0, 0, depth * profile[0][0]), (0, 0, depth * profile[-1][0])))
+    vertices.extend((
+        (normalized_profile[0][3], normalized_profile[0][4], depth * normalized_profile[0][0]),
+        (normalized_profile[-1][3], normalized_profile[-1][4], depth * normalized_profile[-1][0]),
+    ))
     top_center = len(vertices) - 2
     bottom_center = len(vertices) - 1
     last_ring = (len(profile) - 1) * sides
@@ -415,14 +432,14 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     """
     hand = organic_limb(
         name,
-        0.16,
+        0.14,
         (
-            (0.5, 0.038, 0.033),
-            (0.28, 0.049, 0.038),
-            (0.05, 0.057, 0.041),
-            (-0.18, 0.059, 0.039),
-            (-0.38, 0.052, 0.034),
-            (-0.5, 0.039, 0.027),
+            (0.5, 0.032, 0.025, 0, 0),
+            (0.3, 0.043, 0.03, -side * 0.002, 0),
+            (0.08, 0.051, 0.033, -side * 0.004, -0.002),
+            (-0.15, 0.053, 0.031, -side * 0.004, -0.004),
+            (-0.36, 0.046, 0.027, 0, -0.004),
+            (-0.5, 0.033, 0.021, side * 0.004, -0.002),
         ),
         location,
         mat,
@@ -443,6 +460,97 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             resolution=2,
         )
     return hand
+
+
+def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
+    """Create a compact illustrated shoe last with a tapered toe and heel.
+
+    The old sphere-on-box construction made every foot read as an oversized
+    toy capsule. Seven authored cross-sections now form a single upper whose
+    toe, instep and heel remain readable in all four orbit views.
+    """
+    stations = (
+        # y, half-width, lower surface, upper surface. The terminal toe ring
+        # closes down in both width and height, producing a true rounded last
+        # instead of the four-sided wedge exposed by the first v6 pass.
+        (0.082, 0.043, -0.026, 0.034),
+        (0.04, 0.056, -0.036, 0.061),
+        (-0.018, 0.068, -0.043, 0.084),
+        (-0.09, 0.074, -0.045, 0.073),
+        (-0.156, 0.069, -0.044, 0.054),
+        (-0.203, 0.052, -0.036, 0.036),
+        (-0.224, 0.018, -0.016, 0.018),
+    )
+    radial_segments = 16
+    vertices = []
+    for y, half_width, bottom, top in stations:
+        centre_z = (bottom + top) * 0.5
+        half_height = (top - bottom) * 0.5
+        for segment in range(radial_segments):
+            angle = math.tau * segment / radial_segments
+            vertices.append((
+                math.cos(angle) * half_width,
+                y,
+                centre_z + math.sin(angle) * half_height,
+            ))
+    faces = []
+    for station in range(len(stations) - 1):
+        current = station * radial_segments
+        following = (station + 1) * radial_segments
+        for segment in range(radial_segments):
+            next_segment = (segment + 1) % radial_segments
+            faces.append((
+                current + segment,
+                current + next_segment,
+                following + next_segment,
+                following + segment,
+            ))
+    vertices.extend(((0, stations[0][0], (stations[0][2] + stations[0][3]) * 0.5),
+                     (0, stations[-1][0], (stations[-1][2] + stations[-1][3]) * 0.5)))
+    heel_center = len(vertices) - 2
+    toe_center = len(vertices) - 1
+    toe_ring = (len(stations) - 1) * radial_segments
+    for segment in range(radial_segments):
+        next_segment = (segment + 1) % radial_segments
+        faces.append((heel_center, next_segment, segment))
+        faces.append((toe_center, toe_ring + segment, toe_ring + next_segment))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    shoe = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(shoe)
+    shoe.parent = parent
+    shoe.location = location
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = shoe.modifiers.new("Sculpted shoe edge", "BEVEL")
+    bevel.width = 0.006
+    bevel.segments = 2
+    link_material(shoe, upper_mat)
+
+    rounded_box(
+        f"{name}Sole",
+        (0.142, 0.266, 0.022),
+        (location[0], location[1] - 0.057, location[2] - 0.05),
+        sole_mat,
+        parent,
+        radius=0.012,
+        segments=3,
+    )
+    for lace_index, lace_y in enumerate((-0.04, -0.078), start=1):
+        curve_tube(
+            f"{name}Lace_{lace_index}",
+            [
+                (-0.041, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
+                (0, lace_y - 0.006, location[2] + 0.058 - (lace_index - 1) * 0.008),
+                (0.041, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
+            ],
+            0.0045,
+            sole_mat,
+            parent,
+            resolution=2,
+        )
+    return shoe
 
 
 def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=None, pleats=10, segments=40):
@@ -545,7 +653,7 @@ def build_materials(role, config):
         "lower": material(f"{role} lower fabric", config["lower"], 0.88),
         "accent": material(f"{role} accent", config["accent"], 0.72),
         "shoe": material(f"{role} shoes", config["shoe"], 0.68),
-        "sole": material(f"{role} soles", "#e9ddca", 0.8),
+        "sole": material(f"{role} soles", config["sole"], 0.8),
         "metal": material(f"{role} metal", "#c69b4a", 0.34, metallic=0.62),
         "paper": material(f"{role} paper", "#f5ead6", 0.93),
     }
@@ -832,72 +940,100 @@ def build_body(role, config, mats, visual):
             f"UpperArm_{side}",
             0.31,
             (
-                (0.56, 0.036, 0.034),
-                (0.42, 0.067, 0.063),
-                (0.24, 0.071, 0.066),
-                (0.02, 0.062, 0.058),
-                (-0.28, 0.055, 0.052),
-                (-0.5, 0.051, 0.049),
+                (0.58, 0.046, 0.042, -side * 0.006, 0),
+                (0.43, 0.076, 0.069, -side * 0.004, 0.002),
+                (0.23, 0.079, 0.072, 0, 0.004),
+                (0.02, 0.071, 0.065, side * 0.003, 0.003),
+                (-0.28, 0.06, 0.056, side * 0.004, 0),
+                (-0.55, 0.053, 0.049, side * 0.002, -0.002),
             ),
             (0, 0, -0.15),
             sleeve_mat,
             pivot,
+            sides=22,
         )
-        ellipsoid(f"ElbowBridge_{side}", (0, 0, 0.002), (0.05, 0.048, 0.054), sleeve_mat, elbow, segments=18, rings=10)
         organic_limb(
-            f"Forearm_{side}",
-            0.265,
+            f"ElbowSleeve_{side}",
+            0.12,
             (
-                (0.5, 0.058, 0.055),
-                (0.23, 0.061, 0.057),
-                (-0.08, 0.055, 0.052),
-                (-0.34, 0.048, 0.046),
-                (-0.5, 0.045, 0.043),
+                (0.5, 0.055, 0.051),
+                (0.12, 0.058, 0.054, 0, -0.002),
+                (-0.5, 0.052, 0.048, side * 0.002, 0),
             ),
-            (0, 0, -0.132),
+            (0, 0, 0),
             sleeve_mat,
             elbow,
+            sides=20,
         )
-        cylinder(f"Cuff_{side}", 0.06, 0.056, 0.052, (0, 0, -0.236), mats["accent"], elbow, vertices=20)
+        organic_limb(
+            f"Forearm_{side}",
+            0.27,
+            (
+                (0.53, 0.055, 0.051, side * 0.002, 0),
+                (0.27, 0.062, 0.057, side * 0.006, -0.002),
+                (-0.02, 0.06, 0.054, side * 0.008, -0.005),
+                (-0.3, 0.051, 0.047, side * 0.005, -0.004),
+                (-0.52, 0.043, 0.039, 0, -0.002),
+            ),
+            (0, 0, -0.137),
+            sleeve_mat,
+            elbow,
+            sides=22,
+        )
+        cylinder(f"Cuff_{side}", 0.055, 0.052, 0.046, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
         sculpted_hand(
             f"Hand_{side}",
-            (0, -0.008, -0.319),
+            (0, -0.007, -0.307),
             mats["skin"],
             mats["skin_shadow"],
             elbow,
             side=side,
         )
-        ellipsoid(f"Thumb_{side}", (-side * 0.045, -0.038, -0.32), (0.019, 0.015, 0.04), mats["skin"], elbow, rotation=(0.12, side * 0.38, side * 0.42), segments=16, rings=10)
+        ellipsoid(f"Thumb_{side}", (-side * 0.042, -0.034, -0.313), (0.016, 0.012, 0.03), mats["skin"], elbow, rotation=(0.12, side * 0.34, side * 0.38), segments=18, rings=10)
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
         organic_limb(
             f"Thigh_{side}",
             0.34,
             (
-                (0.5, 0.089, 0.082),
-                (0.25, 0.09, 0.084),
-                (0.0, 0.084, 0.08),
-                (-0.3, 0.075, 0.071),
-                (-0.5, 0.069, 0.066),
+                (0.54, 0.095, 0.087, -side * 0.004, 0),
+                (0.31, 0.102, 0.092, -side * 0.002, 0.003),
+                (0.04, 0.093, 0.087, side * 0.002, 0.006),
+                (-0.27, 0.078, 0.073, side * 0.004, 0.003),
+                (-0.53, 0.066, 0.062, side * 0.002, 0),
             ),
             (0, 0, -0.15),
             mats["lower"],
             pivot,
+            sides=22,
         )
-        ellipsoid(f"KneeBridge_{side}", (0, 0, 0.002), (0.06, 0.056, 0.06), mats["lower"], knee, segments=18, rings=10)
+        organic_limb(
+            f"KneeSleeve_{side}",
+            0.125,
+            (
+                (0.5, 0.068, 0.063),
+                (0.08, 0.071, 0.066, 0, -0.002),
+                (-0.5, 0.064, 0.059, -side * 0.002, 0),
+            ),
+            (0, 0, 0),
+            mats["lower"],
+            knee,
+            sides=20,
+        )
         organic_limb(
             f"Shin_{side}",
             0.33,
             (
-                (0.5, 0.071, 0.067),
-                (0.28, 0.078, 0.073),
-                (0.04, 0.083, 0.077),
-                (-0.3, 0.068, 0.064),
-                (-0.5, 0.06, 0.058),
+                (0.52, 0.066, 0.061, -side * 0.002, 0),
+                (0.3, 0.077, 0.071, -side * 0.005, -0.004),
+                (0.04, 0.086, 0.078, -side * 0.008, -0.006),
+                (-0.26, 0.071, 0.065, -side * 0.005, -0.004),
+                (-0.52, 0.054, 0.05, 0, -0.002),
             ),
             (0, 0, -0.155),
             mats["lower"],
             knee,
+            sides=22,
         )
         # Two shallow same-material ribbons catch the warm key light like cloth
         # tension instead of reading as cords glued onto the trousers.
@@ -910,10 +1046,8 @@ def build_body(role, config, mats, visual):
                 knee,
                 depth=0.006,
             )
-        cylinder(f"TrouserCuff_{side}", 0.088, 0.082, 0.082, (0, 0, -0.25), mats["accent"], knee, vertices=18)
-        ellipsoid(f"Shoe_{side}", (0, -0.055, -0.35), (0.082, 0.126, 0.064), mats["shoe"], knee, segments=22, rings=14)
-        rounded_box(f"Sole_{side}", (0.17, 0.255, 0.024), (0, -0.04, -0.411), mats["sole"], knee, radius=0.01, segments=2)
-        curve_tube(f"Lace_{side}", [(-0.046, -0.199, -0.33), (0, -0.205, -0.316), (0.046, -0.199, -0.33)], 0.007, mats["sole"], knee)
+        cylinder(f"TrouserCuff_{side}", 0.078, 0.07, 0.068, (0, 0, -0.265), mats["accent"], knee, vertices=20)
+        sculpted_shoe(f"ShoeUpper_{side}", (0, 0, -0.365), mats["shoe"], mats["sole"], knee, side=side)
 
     return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
 
@@ -1156,7 +1290,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v5",
+        "sculptContract": "mirrorlife-civic-sculpt-v6",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v2",
             "runtime": "authored-keyframe-blend",
