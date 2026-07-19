@@ -1289,8 +1289,8 @@ function applyLightingPreset(theme = {}) {
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.76 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.7 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
 }
@@ -5791,9 +5791,23 @@ function createCivicActorObject(actor, asset) {
   if (fullExpressionLod && faceMorphMesh?.morphTargetDictionary) {
     const faceMaterials = Array.isArray(faceMorphMesh.material) ? faceMorphMesh.material : [faceMorphMesh.material];
     faceMaterials.filter(Boolean).forEach((material) => {
-      material.roughness = 0.78;
+      // Keep the sculpted cheeks and jaw readable under every orbit angle.
+      // A slightly softer roughness plus a restrained warm view-rim emulates
+      // the broad subsurface wrap of the reference without a second face mesh
+      // or a screen-space portrait card.
+      material.color?.offsetHSL?.(0, -0.018, 0.018);
+      material.roughness = 0.62;
       material.metalness = 0;
-      material.envMapIntensity = 0.56;
+      material.envMapIntensity = 0.74;
+      material.onBeforeCompile = (shader) => {
+        shader.fragmentShader = shader.fragmentShader.replace(
+          "#include <opaque_fragment>",
+          `#include <opaque_fragment>
+          float mirrorLifeSkinWrap = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 2.4);
+          gl_FragColor.rgb += vec3(0.052, 0.023, 0.014) * mirrorLifeSkinWrap * 0.42;`
+        );
+      };
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v1";
       material.needsUpdate = true;
     });
   }

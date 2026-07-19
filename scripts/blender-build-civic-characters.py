@@ -10,11 +10,11 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#efb28a",
-        "hair": "#26252d",
-        "hair_highlight": "#3d3a45",
+        "skin": "#f2bf9d",
+        "hair": "#302e38",
+        "hair_highlight": "#4a4653",
         "eye": "#3f342d",
-        "top": "#efe4cf",
+        "top": "#e6dbc9",
         "outer": "#71825a",
         "lower": "#303b40",
         "accent": "#996c48",
@@ -24,9 +24,9 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#ecad82",
-        "hair": "#242832",
-        "hair_highlight": "#39414f",
+        "skin": "#efb994",
+        "hair": "#2c323d",
+        "hair_highlight": "#47505f",
         "eye": "#3a312b",
         "top": "#258b82",
         "outer": "#eee4d3",
@@ -38,12 +38,12 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f2b991",
+        "skin": "#f4c4a2",
         "hair": "#d45f52",
         "hair_highlight": "#ec796b",
         "eye": "#3d6d5d",
-        "top": "#f6efe2",
-        "outer": "#faf5eb",
+        "top": "#f2eadc",
+        "outer": "#eee5d8",
         "lower": "#356e58",
         "accent": "#d98769",
         "shoe": "#5c4031",
@@ -52,12 +52,12 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#efb38a",
-        "hair": "#604237",
-        "hair_highlight": "#79584b",
+        "skin": "#f2c09d",
+        "hair": "#6b4a3c",
+        "hair_highlight": "#876457",
         "eye": "#4f6149",
-        "top": "#f5eee1",
-        "outer": "#fff8ed",
+        "top": "#f1e8da",
+        "outer": "#f4ebdd",
         "lower": "#47745d",
         "accent": "#c69455",
         "shoe": "#503b31",
@@ -639,7 +639,7 @@ def cloth_fold_ribbon(name, points, widths, mat, parent=None, depth=0.008):
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.035),
-        "skin_shadow": material(f"{role} hand crease", "#c97e64", 0.82),
+        "skin_shadow": material(f"{role} hand crease", "#cb8069", 0.82),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
         "hair": material(f"{role} hair", config["hair"], 0.68, clearcoat=0.025),
@@ -647,7 +647,7 @@ def build_materials(role, config):
         "eye_white": material(f"{role} eye white", "#fffefa", 0.3, clearcoat=0.42),
         "iris": material(f"{role} iris", config["eye"], 0.34, clearcoat=0.35),
         "ink": material(f"{role} ink", "#25242b", 0.58),
-        "blush": material(f"{role} blush", "#df8e88", 0.88),
+        "blush": material(f"{role} blush", "#e5a096", 0.9),
         "top": material(f"{role} top fabric", config["top"], 0.91),
         "outer": material(f"{role} outer fabric", config["outer"], 0.9),
         "lower": material(f"{role} lower fabric", config["lower"], 0.88),
@@ -668,7 +668,7 @@ def build_face(head, mats, role):
     camera-facing portrait card, so they survive orbit, occlusion and shadow.
     """
     feminine = role in ("facilitator", "mediator")
-    face = ellipsoid("Head", (0, 0, 0), (0.246, 0.214, 0.288), mats["skin"], head, segments=40, rings=28)
+    face = ellipsoid("Head", (0, 0, 0), (0.242, 0.202, 0.286), mats["skin"], head, segments=44, rings=30)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -676,9 +676,18 @@ def build_face(head, mats, role):
         x, y, z = vertex.co
         lower = max(0.0, min(1.0, (-z - 0.012) / 0.22))
         front = max(0.0, min(1.0, (-y - 0.015) / 0.17))
-        vertex.co.x *= 1.0 - lower * 0.16
+        vertex.co.x *= 1.0 - lower * 0.2
         if front > 0 and z < -0.02:
-            vertex.co.y += lower * front * 0.008
+            vertex.co.y += lower * front * 0.006
+        # Model a shallow cheek plane instead of relying on circular blush
+        # stickers to imply the whole mid-face. The forward volume catches the
+        # portal key and face fill differently as the camera orbits.
+        cheek_height = max(0.0, min(1.0, 1.0 - abs(z + 0.035) / 0.095))
+        cheek_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.118) / 0.075))
+        if front > 0:
+            vertex.co.y -= cheek_height * cheek_width * front * 0.01
+        chin = max(0.0, min(1.0, (-z - 0.12) / 0.13))
+        vertex.co.z -= chin * front * 0.006
     # Keep the facial volume itself expressive. The previous rig swapped
     # mouth meshes but left the cheeks and jaw completely rigid, which read as
     # a toy mask in close conversational framing. These sparse, authored shape
@@ -713,40 +722,36 @@ def build_face(head, mats, role):
         if z < -0.055:
             concern_co.z -= front * lower * 0.005
     for side in (-1, 1):
-        ellipsoid(f"Ear_{side}", (side * 0.255, 0.002, -0.015), (0.052, 0.032, 0.072), mats["skin"], head, segments=18, rings=12)
-        ellipsoid(f"EarInner_{side}", (side * 0.272, -0.027, -0.014), (0.018, 0.008, 0.034), mats["blush"], head, segments=12, rings=8)
+        ellipsoid(f"Ear_{side}", (side * 0.246, 0.004, -0.014), (0.044, 0.026, 0.061), mats["skin"], head, segments=20, rings=12)
+        ellipsoid(f"EarInner_{side}", (side * 0.261, -0.021, -0.014), (0.014, 0.006, 0.028), mats["blush"], head, segments=12, rings=8)
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.086, -0.205, 0.036))
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.042, 0.013, 0.053), mats["eye_white"], eye, segments=24, rings=16)
-        ellipsoid(f"Iris_{side}", (-side * 0.0015, -0.014, -0.002), (0.024, 0.006, 0.039), mats["iris"], eye, segments=20, rings=12)
-        ellipsoid(f"Pupil_{side}", (-side * 0.0015, -0.019, -0.004), (0.0135, 0.0035, 0.026), mats["ink"], eye, segments=14, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.023, 0.014), (0.0055, 0.0022, 0.008), mats["eye_white"], eye, segments=10, rings=6)
+        eye = empty(f"EyePivot_{side}", head, (side * 0.082, -0.193, 0.034))
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.036, 0.011, 0.045), mats["eye_white"], eye, segments=26, rings=16)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.012, -0.002), (0.021, 0.005, 0.033), mats["iris"], eye, segments=22, rings=12)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.016, -0.004), (0.0105, 0.003, 0.02), mats["ink"], eye, segments=16, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.007, -0.019, 0.012), (0.0045, 0.0018, 0.0065), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
-                (-0.041, -0.016, 0),
-                (-0.032, -0.016, 0.036),
-                (0, -0.016, 0.052),
-                (0.032, -0.016, 0.036),
-                (0.041, -0.016, 0),
-                (0.032, -0.016, -0.036),
-                (0, -0.016, -0.052),
-                (-0.032, -0.016, -0.036),
+                (-0.033, -0.013, -0.006),
+                (-0.018, -0.014, -0.034),
+                (0, -0.014, -0.043),
+                (0.018, -0.014, -0.034),
+                (0.033, -0.013, -0.006),
             ],
-            0.0021,
+            0.00155,
             mats["ink"],
             eye,
-            cyclic=True,
             resolution=2,
         )
         # Upper lids/lashes preserve the drawn identity at normal gameplay
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.04, -0.017, 0.035), (0, -0.02, 0.051), (0.04, -0.017, 0.035)],
-            0.0046 if feminine else 0.004,
+            [(-0.034, -0.014, 0.027), (0, -0.017, 0.044), (0.034, -0.014, 0.027)],
+            0.0038 if feminine else 0.0033,
             mats["ink"],
             eye,
             resolution=2,
@@ -754,31 +759,32 @@ def build_face(head, mats, role):
         if feminine:
             curve_tube(
                 f"OuterLash_{side}",
-                [(side * 0.034, -0.017, 0.037), (side * 0.052, -0.019, 0.05)],
-                0.0038,
+                [(side * 0.03, -0.014, 0.031), (side * 0.046, -0.016, 0.042)],
+                0.003,
                 mats["ink"],
                 eye,
                 resolution=2,
             )
-        brow = empty(f"BrowPivot_{side}", head, (side * 0.086, -0.219, 0.116))
+        brow = empty(f"BrowPivot_{side}", head, (side * 0.082, -0.207, 0.105))
         curve_tube(
             f"Brow_{side}",
             [(side * 0.057, 0.003, -0.007), (0, -0.008, 0.008), (-side * 0.05, 0.003, -0.004)],
-            0.0072,
+            0.0062,
             mats["hair"],
             brow,
         )
-        ellipsoid(f"Blush_{side}", (side * 0.175, -0.211, -0.048), (0.043, 0.009, 0.018), mats["blush"], head, segments=14, rings=8)
-    ellipsoid("Nose", (0, -0.219, -0.019), (0.016, 0.011, 0.023), mats["skin"], head, segments=16, rings=10)
-    mouth = empty("MouthPivot", head, (0, -0.225, -0.099))
+        ellipsoid(f"Blush_{side}", (side * 0.165, -0.198, -0.045), (0.034, 0.006, 0.012), mats["blush"], head, segments=16, rings=8)
+    ellipsoid("NoseBridge", (0, -0.195, 0.002), (0.011, 0.009, 0.029), mats["skin"], head, segments=18, rings=10)
+    ellipsoid("NoseTip", (0, -0.205, -0.023), (0.016, 0.011, 0.017), mats["skin"], head, segments=18, rings=10)
+    mouth = empty("MouthPivot", head, (0, -0.212, -0.093))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.036, 0.002, 0.005), (-0.005, -0.005, -0.008), (0.036, 0.002, 0.003)], 0.0042, mats["ink"], closed)
+    curve_tube("MouthClosed", [(-0.032, 0.002, 0.004), (-0.004, -0.004, -0.007), (0.032, 0.002, 0.003)], 0.0035, mats["ink"], closed)
     # A separate glossy lower-lip mesh read as a floating moustache at the
     # authored gameplay distance. Keep the closed mouth as one clean ink line;
     # the open-mouth/tongue pair supplies colour only while speaking.
     open_mouth = empty("MouthOpenPivot", mouth)
-    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.035, 0.008, 0.026), mats["ink"], open_mouth, segments=20, rings=12)
-    ellipsoid("Tongue", (0, -0.012, -0.012), (0.02, 0.004, 0.008), mats["blush"], open_mouth, segments=14, rings=8)
+    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.031, 0.007, 0.023), mats["ink"], open_mouth, segments=20, rings=12)
+    ellipsoid("Tongue", (0, -0.011, -0.011), (0.017, 0.0035, 0.007), mats["blush"], open_mouth, segments=14, rings=8)
 
 
 def build_hair(head, mats, style):
@@ -788,12 +794,14 @@ def build_hair(head, mats, style):
     cap_scale = (0.265, 0.187, 0.236) if style == "spiky" else (0.278, 0.21, 0.25)
     ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
     fringe_specs = (
-        (-0.19, -0.15, 0.205, 0.036),
-        (-0.12, -0.085, 0.18, 0.04),
-        (-0.045, -0.018, 0.158, 0.041),
-        (0.04, 0.018, 0.166, 0.041),
-        (0.12, 0.085, 0.188, 0.039),
-        (0.19, 0.15, 0.21, 0.035),
+        (-0.19, -0.15, 0.205, 0.03),
+        (-0.145, -0.112, 0.19, 0.032),
+        (-0.095, -0.06, 0.174, 0.034),
+        (-0.04, -0.012, 0.16, 0.035),
+        (0.025, 0.052, 0.165, 0.035),
+        (0.09, 0.118, 0.18, 0.034),
+        (0.15, 0.176, 0.196, 0.032),
+        (0.19, 0.155, 0.21, 0.029),
     )
     for index, (root_x, tip_x, tip_z, root_radius) in enumerate(fringe_specs):
         tapered_lock(
@@ -1290,7 +1298,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v6",
+        "sculptContract": "mirrorlife-civic-sculpt-v7",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v2",
             "runtime": "authored-keyframe-blend",

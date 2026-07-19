@@ -1,5 +1,52 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-19 reference-fidelity v66 facial hierarchy, skin wrap and responsive budget gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Current in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v66/desktop-yaw-0-1672x941-v66.jpg` (`1672 × 941`, public-plaza, yaw `0°`, final ready state) and `desktop-yaw-180-1672x941-v66.jpg` for the front-facing player/cast inspection.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v66/reference-vs-v66-full.png` and `reference-vs-v66-cast-focus.png`, with the reference on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v66/mobile-yaw-0-390x844-v66.jpg` (`390 × 844`). In-app Browser logs contain only Vite connection diagnostics and no warning/error entries.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v65 P1 / mask-like facial stack] Reauthored the head into a narrower illustrated jaw with shallow cheek and chin planes, reduced the ears and blush marks, and replaced the protruding single nose with a restrained bridge/tip volume pair. The profile remains fully rotatable geometry rather than a camera-facing portrait.
+- [fixed / high-contrast toy eyes] Rebalanced sclera, iris, pupil and glint sizes; replaced the cyclic black eye ring with a thin lower contour; reduced upper-lid, lash and brow weight. The live cast keeps readable expressions without two white discs becoming the first focal point.
+- [fixed / coarse hair grouping] Eight narrower tapered fringe locks replace six broad slabs. Warmer lifted hair highlights preserve form in the civic key/fill without returning to glossy plastic facets.
+- [fixed / muddy skin and white-costume collapse] Skin palettes are lighter and less grey, pale fabrics are separated from skin and walls with warmer hues, and the desktop face material now receives a restrained view-dependent warm wrap. The wrap is shader-based on the real facial mesh and does not change collision, rigging or scene readiness.
+- [fixed / brittle locomotion sampling] The exploration gate now waits up to `2.5s` for the observable `idle && !transitioning` contract after key release. It still fails if the animation never settles, while avoiding a false failure when headless Chrome compiles the skin shader during an arbitrary `500ms` sample.
+- [checked / embodied camera] The physical player moved `1.53m`, entered the authored walk clip, returned to settled idle and rotated the weighted 3D follow camera `65.3°`.
+
+### Runtime and performance evidence
+
+- Desktop yaw `0°`: `150` draw calls / `268,876` triangles. Desktop yaw `180°`: `159` draw calls / `282,320` triangles. Both stay below the strict `160 / 300,000` civic-room gate.
+- Mobile `390 × 844`: `106` draw calls / `243,902` triangles, below the `110 / 250,000` gate; player and two nearest witnesses remain in the metre-based scene with joystick, chat, jump, contextual action and the full social-action rail.
+- Character contract: four civic roles pass at `6.68 MB` total with `mirrorlife-civic-sculpt-v7`; role triangle counts are `24,784–27,596`, below the `35,000` per-role Web budget.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed without failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the Vite production build passed. The production build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The target composition remains a live Y-up 3D room. WASD/touch locomotion, furniture collision, authored movement states, player-follow camera and drag orbit all read from the same spatial state.
+- [checked][spacing/layout rhythm] The live hero frame preserves the source's bright portal, foreground records, central listening circle and background proposal/lounge zones. The `180°` evidence proves front, side and reverse actor geometry rather than a billboard solution.
+- [checked][colors/tokens] Warm ivory remains dominant; teal/coral identify roles; brass marks navigation/evidence. Lighter skin, warmer pale cloth and restrained view-rim response improve separation without breaking the established palette.
+- [checked][image and asset quality for this iteration] Facial planes, nose, eyes, brows, lashes and hair fringe are authored GLB geometry with real occlusion, lighting and reverse views. No sprite, CSS drawing or static room panorama replaces the playable scene.
+- [checked][copy/content] Location, room memory, exit, contextual listening prompt and the four social verbs remain coherent and unchanged.
+- [checked][responsiveness/accessibility] The `390 × 844` frame keeps all essential touch controls visible while the room remains below the mobile geometry and draw-call ceilings.
+- [P1][production character fidelity] Facial hierarchy is materially cleaner, but the paired crop still shows simplified skin anatomy, rigid finger/prop contact, limited expression deformation, coarse rear hair masses and less cloth compression than the reference's production sculpt.
+- [P1][environment craftsmanship] The spatial composition is close, but the source still has more bespoke joinery, woven storage, ceramics, paper/book density, upholstery tailoring and foreground micro-story assets.
+- [P1][indirect-light/material response] The face wrap and lifted palette improve readability, but the reference retains softer portal bounce, subsurface skin, multi-scale contact shadows and broader object-specific roughness variation.
+- [P2][HUD optical finish] The responsive interaction hierarchy works, but icon drawing, optical type weight, translucent layering and compact control spacing remain less refined than the reference.
+
+### Gate result
+
+This iteration closes the clearest facial-proportion, eye-outline, hair-fringe and muddy-material defects while preserving physical movement, player-follow orbit and mobile performance. The same-canvas comparison still contains actionable P1 production-character, bespoke-environment and indirect-material differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial/cloth deformation, bespoke narrative furniture craftsmanship and more natural indirect material response remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v65 continuous limb centre-lines and sculpted footwear gate
 
 ### Evidence inspected together

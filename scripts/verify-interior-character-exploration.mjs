@@ -92,7 +92,16 @@ try {
   }
   await new Promise((resolve) => setTimeout(resolve, 710));
   await page.keyboard.up("w");
-  await new Promise((resolve) => setTimeout(resolve, 500));
+  // The authored blend is short, but a full civic frame can be delayed while
+  // headless Chrome compiles the skin-wrap shader and updates four GLBs. Wait
+  // on the observable animation contract instead of sampling one arbitrary
+  // wall-clock instant; this still fails if the runtime never settles.
+  await page.waitForFunction(() => {
+    const live = window.MirrorLifeInterior3D?.getStats?.();
+    const stored = JSON.parse(document.querySelector("#interiorThreeLayer")?.dataset.renderStats || "{}");
+    const player = (live || stored)?.actors?.find((actor) => actor.id === "player");
+    return player?.animation?.state === "idle" && player.animation.transitioning === false;
+  }, { polling: 50, timeout: 2500 });
   const afterMoveStats = await readStats(page);
   const afterMove = playerFrom(afterMoveStats);
   const walked = Math.hypot(afterMove.x - beforeMove.x, afterMove.z - beforeMove.z);
