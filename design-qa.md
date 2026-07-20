@@ -1,5 +1,53 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v69 editorial framing, proportion and cloth-form gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v69/desktop-yaw-0-1672x941-v69.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v69.jpg` for reverse actor, furniture and room-volume evidence.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v69/reference-vs-v69-full.png` and `reference-vs-v69-cast-focus.png`, with the source on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v69/mobile-yaw-0-390x844-v69.jpg` (`390 × 844`, final ready state with touch movement, camera and action controls).
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v68 P1 / toy-like head and eye hierarchy] Re-sculpted all four heads with a narrower jaw, smaller hair cap, restrained ear/nose/mouth volumes and a smaller sclera/lid/lash stack. The cast crop now gives clothing, gesture and body language more visual weight instead of letting two white eye discs dominate each face.
+- [fixed / compressed social tableau] The public-room desktop camera now uses a wider `5.65m` follow radius, `3.56m` height, `42°` FOV and a `56/32/12` player/target/path pivot. The listening circle moves out of the lower HUD band and gains the reference's editorial breathing room without becoming a static overview.
+- [fixed / rigid skirt and sleeve cylinders] The two skirted roles now use a five-ring asymmetric drape with twelve pleats, a shaped hem and runtime secondary motion. Traveler, facilitator and mediator sleeves add two shallow elbow-compression ribbons per arm, while a high-roughness cloth mask adds restrained grazing-angle sheen.
+- [fixed / oversized toy limbs and shoes] Torso, shoulder spacing, neck, waistband, head scale and shoe lasts were rebalanced toward the target's approximately `1:3.5` illustrated silhouette. The player remains `1.72m` in metre space and keeps the existing capsule, locomotion and interaction contract.
+- [fixed / undersized environment inside large colliders] The authored display case, notice console and lounge suite were rescaled toward their authoritative metre-space footprints. The middle and background now carry more believable civic-room mass, and the visible furniture aligns more closely with collision expectations.
+- [checked / embodied movement and orbit] Local Chrome moved the physical player `1.69m`, observed the authored walk/idle contract and rotated the weighted follow camera `65.3°`. Reverse-view evidence confirms full-volume faces, clothing, held props and furniture rather than camera-facing substitutes.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `150` draw calls / `274,208` triangles, below the strict `160 / 300,000` civic-room gate.
+- Mobile `390 × 844`: `106` draw calls / `240,172` triangles, below the `110 / 250,000` gate while retaining three actors, touch locomotion, jump, camera and contextual/social actions.
+- Character contract: four civic roles pass `mirrorlife-civic-sculpt-v9` and `mirrorlife-civic-clips-v3` at `6.84 MB` total. Role triangle counts are player `27,888`, listener `24,972`, facilitator `29,174` and mediator `27,262`, all below the `35,000` per-role Web budget.
+- Hero-prop contract: three authored civic assets pass `mirrorlife-civic-hero-props-v3` at `29,532` aggregate triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the Vite production build passed. The production build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The room remains a live metre-based Y-up scene with Rapier collision, keyboard/touch locomotion, authored animation states, a player-follow pivot and drag orbit. Camera and visual changes do not replace the playable world with a framed render.
+- [checked][spacing/layout rhythm] A foreground story board frames the cast, the listening ring owns the middle ground, and the proposal wall, storage, display and lounge create readable background function. The wider camera keeps foreground, middle and background visible in one designed composition.
+- [checked][colors/tokens] Warm ivory remains dominant, teal/coral identify social roles and brass is reserved for evidence/navigation. Daylight dapples and cloth sheen add material separation without adding unrelated palette noise.
+- [checked][image and asset quality for this iteration] Facial planes, eye stack, five-ring skirt drape, sleeve folds and adjusted furniture are real geometry or mesh-shader response with actual lighting, occlusion, collision context and reverse-view evidence.
+- [checked][copy/content] Location, room memory, exit, contextual listening prompt and the four social verbs remain coherent and unchanged.
+- [checked][responsiveness/accessibility] At `390 × 844`, the final scene keeps all required touch controls visible, avoids horizontal overflow and remains below the strict mobile render budget.
+- [P1][production character deformation] The new proportions are materially closer, but the paired crop still shows simpler hands, facial deformation, strand grouping, garment tension and foot-to-ground compression than the source cast.
+- [P1][environment craftsmanship] Furniture scale and depth are better, but cabinet joinery, ceramics, books/paper density, upholstery tailoring, woven storage and object-specific wear remain visibly less authored than the reference.
+- [P1][lighting/material integration] The warmer dapple and cloth sheen improve hierarchy, but the source still has richer portal bounce, skin subsurface response, multi-scale indirect shadows and roughness breakup across terrazzo, timber, paper, fabric, glass and brass.
+- [P2][HUD optical finish] The responsive controls remain functional, but icon drawing, type weight, translucent depth and spacing are less optically refined than the reference HUD.
+
+### Gate result
+
+This iteration closes the largest camera-breathing, toy-proportion, rigid-cloth and undersized-furniture gaps while preserving real movement, collision, orbit and mobile budgets. The same-canvas comparison still exposes actionable P1 production deformation, bespoke environment craft and indirect-material differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production hand/face/cloth deformation, denser bespoke environment craftsmanship and richer indirect material response remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v68 asymmetric social staging, story-board and mobile-detail gate
 
 ### Evidence inspected together

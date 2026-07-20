@@ -119,9 +119,13 @@ const MODEL_RENDER_PROFILES = {
   desk: { scale: 1.18, rotationY: -0.48 },
   seating: { scale: 1.2, rotationY: -0.35 },
   "civic-seating": { scale: 1.2, rotationY: -0.35 },
-  "civic-display-case": { scale: 1.02, rotationY: 0 },
-  "civic-notice-console": { scale: 1.45, rotationY: 0 },
-  "civic-lounge-suite": { scale: 1.65, rotationY: 0 },
+  // The authored hero GLBs are normalized by their largest dimension before
+  // placement. These scales restore believable metre-space footprints and
+  // bring the visible furniture closer to the already-authoritative physics
+  // colliders instead of leaving a small sofa inside a much larger blocker.
+  "civic-display-case": { scale: 1.18, rotationY: 0 },
+  "civic-notice-console": { scale: 1.75, rotationY: 0 },
+  "civic-lounge-suite": { scale: 2.15, rotationY: 0 },
   shelf: { scale: 1.08, rotationY: 0 },
   "wall-board": { scale: 1.08, decorScale: 3.1, rotationY: 0 },
   "round-table": { scale: 1.25, rotationY: -0.32 },
@@ -3524,7 +3528,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.34,
+        opacity: theme.night ? 0.1 : 0.4,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5198,11 +5202,15 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     ).replace(
       "#include <opaque_fragment>",
       `#include <opaque_fragment>
-      float mirrorLifeInkRim = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 4.2);
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.085, 0.072, 0.09), mirrorLifeInkRim * 0.38);`
+      float mirrorLifeViewWrap = 1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
+      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 4.35);
+      float mirrorLifeClothMask = smoothstep(0.82, 0.94, vMirrorLifeRoughness);
+      float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.085, 0.072, 0.09), mirrorLifeInkRim * 0.29);
+      gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.34;`
     );
   };
-  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v2";
+  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v3";
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -6381,7 +6389,7 @@ function updateCamera(payload = {}) {
   const safeArea = payload.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   const zoneId = String(payload.theme?.zoneId || "");
   const cinematicCivic = zoneId === "public-plaza";
-  const targetFov = cinematicCivic ? (portrait ? 60 : 41) : (portrait ? 56 : 48);
+  const targetFov = cinematicCivic ? (portrait ? 60 : 42) : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
     camera.updateProjectionMatrix();
@@ -6393,9 +6401,9 @@ function updateCamera(payload = {}) {
   // Portrait play has much less horizontal breathing room. Keep the player
   // dominant there while desktop can spend more of the frame on the current
   // social target and authored path composition.
-  const playerWeight = portrait ? 0.8 : CAMERA_PIVOT_PLAYER_WEIGHT;
-  const narrativeWeight = portrait ? 0.15 : CAMERA_PIVOT_NARRATIVE_WEIGHT;
-  const pathWeight = portrait ? 0.05 : CAMERA_PIVOT_PATH_WEIGHT;
+  const playerWeight = portrait ? 0.8 : cinematicCivic ? 0.56 : CAMERA_PIVOT_PLAYER_WEIGHT;
+  const narrativeWeight = portrait ? 0.15 : cinematicCivic ? 0.32 : CAMERA_PIVOT_NARRATIVE_WEIGHT;
+  const pathWeight = portrait ? 0.05 : cinematicCivic ? 0.12 : CAMERA_PIVOT_PATH_WEIGHT;
   let targetPivotX = playerX * playerWeight
     + narrativeX * narrativeWeight
     + pathX * pathWeight;
@@ -6440,13 +6448,14 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.0)
+    ? (portrait ? 6.2 : 5.65)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.3) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.56) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
-  const focusDistance = cinematicCivic ? 0.46 : 0.22;
-  const focusHeight = (cinematicCivic ? 1.03 : 0.94) + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
+  const focusDistance = cinematicCivic ? 0.38 : 0.22;
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.72) : 0.94)
+    + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
     Math.max(0.72, Math.min(1.28, focusHeight)),
