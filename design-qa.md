@@ -1,5 +1,53 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v81 grounded anatomy, conversational pose and transparent-story-layer gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/civic-fidelity-v81/desktop-yaw-0-1672x941-v81.png` (`1672 × 941`, `public-plaza`, ready listening-circle state), plus `desktop-yaw-90-1672x941-v81.png` and `desktop-yaw-180-1672x941-v81.png` for side/back volume and orbit composition.
+- Full-view same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v81/reference-vs-v81-full.png`; both halves use the exact source viewport and equivalent opening social state.
+- Focused cast comparison: `dist/interior-3d-work/civic-fidelity-v81/reference-vs-v81-cast.png`. The crop is required because hand scale, lower-leg weight, held-prop contact and eye direction remain too small to judge reliably in the full-room pair.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v81/mobile-yaw-0-390x844-v81.png` (`390 × 844`, ready state).
+- Primary interactions tested in the in-app browser: `90°` and `180°` drag orbit, desktop/mobile viewport transition, atomic ready-state reveal, contextual interaction visibility and mobile touch-control layout. Browser warning/error logs were empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v80 / hands and feet disappeared at gameplay scale] Sculpt contract `mirrorlife-civic-sculpt-v18` broadens palms, fingers, thumbs, thighs, knees, shins, cuffs, shoes and soles while preserving the `1.68–1.72m` body/capsule contract. The hero, side and reverse captures show stable contact silhouettes instead of needle-like lower limbs and undersized hands.
+- [fixed / listener presented an invisible tray] Animation contract `mirrorlife-civic-clips-v5` lowers and counter-rotates the listener's arms, relaxes the strap-side elbow and adds a restrained weight shift. The opening frame now reads as attentive listening rather than an unexplained holding action.
+- [fixed / display-case glass behaved like an opaque mint panel] Named glass materials now use a physical transmission material with `0.24` maximum opacity, `0.34` transmission, `0.16` roughness and disabled depth writing. Pastries, labels and shelf depth remain visible while the cabinet still reads as glazed furniture.
+- [fixed / civic faces and portal daylight lost hierarchy] Face fill rises from `0.46` to `0.56`, curved facial identity receives a restrained emissive lift from `0.055` to `0.09`, and the authored daylight-dapple layer rises from `0.62` to `0.76`. The final pair separates faces from hair and restores a more legible warm threshold without flattening the full head volume.
+- [checked / improvements survive complete orbit and portrait layout] The revised anatomy, face identity and social pose remain full-volume at `90°`, `180°` and `390 × 844`; no camera-facing sprite, flat character card or non-physical portrait substitute is used.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `147` draw calls / `283,170` triangles, with `77 / 3 / 67` calls across room/models/actors. Camera diagnostics report a `5.55m` orbit radius, `3.42m` height and `46°` FOV in the captured rear arc.
+- Mobile `390 × 844`: `110` draw calls / `240,790` triangles, `13` textures, `2×` MSAA and `1.0` pixel ratio. It meets the mobile draw-call ceiling and stays below `250,000` triangles.
+- Character assets total approximately `7.17 MB`: player `30,428`, listener `27,512`, facilitator `31,682` and mediator `29,770` triangles, all below the `35,000`-triangle role cap and validated against sculpt v18 / animation clips v5.
+- Atomic rendering exposed only the room-consistent loading shell before `data-interior-render-phase=ready`; the final desktop and mobile captures contain no prior room, black block or half-initialized actor state.
+- World regression: the physical player walked `3.05m` and the weighted camera rotated `65.3°`; desktop/mobile scene flow passed; all `26` interiors completed `78` enter/exit transitions with only `loading → ready` phases and no failure or runtime error.
+- Static/build validation: civic characters, civic hero props, all 26 interior physics profiles, syntax/project references, production build and `git diff --check` passed. Existing non-module-script and large-chunk Vite advisories remain unchanged.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts/typography] Chinese location, memory-state, contextual action and social-action labels remain readable on desktop and mobile. The source still uses finer icon/type optical weights and more balanced translucent grouping; this remains P2 HUD drift.
+- [checked][spacing/layout rhythm] The threshold, record station, central four-person hearing, evidence wall, lounge and floor story-line produce a coherent foreground/middle/background composition around the movable player. The reference still has denser authored overlap, more foreground crop and finer negative-space control.
+- [checked][colors/tokens] Ivory, teal, coral, oak, paper, terrazzo and brass remain aligned with the source. Glass now behaves as a distinct optical material rather than another pastel plastic surface.
+- [checked][image and asset quality] All citizens and hero furniture are lit geometry with complete front/side/back volume. The identical-canvas and focused comparisons still show lower facial topology, hair strand grouping, finger articulation, cloth tension, cabinet joinery and upholstery detail than the source.
+- [checked][copy/content] Existing deterministic place-memory and social-action copy remains coherent; live QA values are intentionally not forged to copy the source screenshot.
+- [checked][responsiveness/accessibility] Mobile keeps the player, two social witnesses, objective marker, joystick, chat, jump, contextual interaction and four action choices visible without clipping. Touch targets remain practical and no warning/error log was emitted.
+- [P1][production body deformation and emotional acting] Location: all four civic actors. Evidence: v18 fixes gameplay-scale hand/foot weight and v5 removes the listener's false tray pose, but the focused pair still shows rigid shoulders, single-piece elbows, limited finger arcs, weak cloth tension and less expressive whole-body conversation than the source. Impact: the emotional product surface still reads as an authored prototype rather than a production social scene. Fix: migrate the current identity, scale and clip contracts onto a genuinely skinned production rig with shoulder/elbow deformation, hand contact poses, cloth corrective shapes and role-specific conversational beats.
+- [P1][bespoke environment craft and localized light transport] Location: full civic room. Evidence: the implementation now has transparent storytelling glass and stronger portal/facial hierarchy, but the source retains substantially finer doorway construction, cabinet joinery, upholstery tailoring, paper/ceramic variation, localized roughness, daylight bounce and contact penumbrae. Impact: the room remains one production tier below the target even though its spatial logic, movement and orbit work. Fix: replace the remaining modular furniture with authored hero assets and add baked/probe-driven local bounce plus object-specific roughness breakup inside the current performance envelope.
+- [P2][opening camera and HUD optical finish] Location: initial desktop view, top status strip and lower action rail. Evidence: the implementation establishes the same broad social tableau but presents larger, more frontal low-poly actors and darker segmented controls; the source has a calmer editorial pullback, richer foreground framing and more integrated iconography. Impact: the implementation exposes its geometry limits sooner and the chrome competes with the hearing. Fix: after the production-rig pass, retune the authored opening lens/crop and consolidate the status/action surfaces rather than hiding the current asset gap with a premature camera-only change.
+
+### Gate result
+
+This iteration materially improves grounded anatomy, social-pose legibility, transparent cabinet storytelling and face/portal hierarchy while preserving physical movement, complete orbit, atomic loading and strict desktop/mobile budgets. The exact-size same-canvas review still contains actionable P1 character-deformation and bespoke environment/light differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production-grade skinned body/hand/cloth acting and a fully bespoke, locally lit environment pass remain visible P1 differences against the source.
+
 ## 2026-07-20 reference-fidelity v80 metre-scale hero props, editorial camera and material separation gate
 
 ### Evidence inspected together

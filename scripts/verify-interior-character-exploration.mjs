@@ -52,7 +52,7 @@ try {
   assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the authored curved facial identity atlas");
   const beforeMove = playerFrom(opening);
   assert(beforeMove, "player actor diagnostics are missing");
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v4", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v5", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
 
   await page.keyboard.down("w");

@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v4";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v5";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -298,12 +298,13 @@ const ROLE_OFFSETS = Object.freeze({
   },
   listener: {
     listen: pose(0, {
-      // One open hand and one bent strap-side arm produce the asymmetric,
-      // approachable listener silhouette visible in the visual target.
-      visual: v(-0.01, 0, 0.056), headGroup: v(0.008, 0.016, 0.052),
-      leftArm: v(0.18, 0, 0.18), rightArm: v(-0.06, 0, -0.055),
-      leftElbow: v(0.46), rightElbow: v(-0.22),
-      leftLeg: v(0, 0, 0.045), rightLeg: v(0, 0, -0.04), leftKnee: v(0.045)
+      // The reference listener attends with relaxed hands rather than
+      // presenting an invisible tray. Keep one palm subtly open, lower the
+      // strap-side elbow and let the shoulders counter-rotate toward centre.
+      visual: v(-0.012, 0, 0.048), headGroup: v(0.006, 0.018, 0.046),
+      leftArm: v(0.12, 0, 0.12), rightArm: v(0.14, 0, -0.035),
+      leftElbow: v(0.38), rightElbow: v(0.7),
+      leftLeg: v(0, 0, 0.055), rightLeg: v(0, 0, -0.05), leftKnee: v(0.055)
     })
   }
 });

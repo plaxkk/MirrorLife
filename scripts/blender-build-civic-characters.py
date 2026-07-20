@@ -435,11 +435,11 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         name,
         0.105,
         (
-            (0.5, 0.034, 0.025, 0, 0),
-            (0.28, 0.047, 0.031, -side * 0.002, 0),
-            (0.02, 0.056, 0.035, -side * 0.004, -0.003),
-            (-0.26, 0.054, 0.033, -side * 0.004, -0.005),
-            (-0.5, 0.047, 0.028, 0, -0.004),
+            (0.5, 0.038, 0.028, 0, 0),
+            (0.28, 0.052, 0.035, -side * 0.002, 0),
+            (0.02, 0.061, 0.039, -side * 0.004, -0.003),
+            (-0.26, 0.059, 0.037, -side * 0.004, -0.005),
+            (-0.5, 0.052, 0.032, 0, -0.004),
         ),
         location,
         mat,
@@ -454,10 +454,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # x, length, radius, lateral splay and fingertip curl.  A small
         # fan-and-curl silhouette reads as a relaxed hand instead of four
         # parallel dowels while keeping the same four-ring finger topology.
-        (-0.036, 0.055, 0.0125, -side * 0.004, 0.008),
-        (-0.012, 0.066, 0.014, -side * 0.0015, 0.011),
-        (0.012, 0.063, 0.0138, side * 0.0015, 0.012),
-        (0.036, 0.052, 0.0118, side * 0.0045, 0.01),
+        (-0.038, 0.051, 0.014, -side * 0.004, 0.008),
+        (-0.013, 0.061, 0.0158, -side * 0.0015, 0.011),
+        (0.013, 0.058, 0.0155, side * 0.0015, 0.012),
+        (0.038, 0.048, 0.0134, side * 0.0045, 0.01),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         organic_limb(
@@ -473,9 +473,9 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             mat,
             parent,
             rotation=rotation,
-            # Six sides remain visually round after smooth shading at game
-            # scale and recover enough budget for the four-finger silhouette.
-            sides=6,
+            # Eight sides keep the fuller fingertip silhouette smooth in the
+            # tighter social camera while remaining negligible in the budget.
+            sides=8,
         )
     # A tapered, two-joint thumb shares the palm volume and follows the same
     # relaxed curl.  Replacing the former isolated ellipsoid fixes the
@@ -484,10 +484,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         f"ThumbVolume_{side}",
         0.075,
         (
-            (0.5, 0.017, 0.014),
-            (0.12, 0.019, 0.015, -side * 0.004, 0.003),
-            (-0.26, 0.016, 0.012, -side * 0.011, 0.009),
-            (-0.5, 0.008, 0.007, -side * 0.016, 0.014),
+            (0.5, 0.019, 0.016),
+            (0.12, 0.021, 0.017, -side * 0.004, 0.003),
+            (-0.26, 0.018, 0.014, -side * 0.011, 0.009),
+            (-0.5, 0.009, 0.008, -side * 0.016, 0.014),
         ),
         (location[0] - side * 0.04, location[1] - 0.022, location[2] + 0.004),
         mat,
@@ -522,13 +522,13 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
         # y, half-width, lower surface, upper surface. The terminal toe ring
         # closes down in both width and height, producing a true rounded last
         # instead of the four-sided wedge exposed by the first v6 pass.
-        (0.074, 0.04, -0.024, 0.032),
-        (0.036, 0.052, -0.033, 0.056),
-        (-0.016, 0.063, -0.04, 0.077),
-        (-0.082, 0.068, -0.042, 0.067),
-        (-0.143, 0.064, -0.041, 0.05),
-        (-0.187, 0.048, -0.033, 0.033),
-        (-0.206, 0.016, -0.014, 0.016),
+        (0.078, 0.043, -0.025, 0.034),
+        (0.038, 0.055, -0.035, 0.059),
+        (-0.017, 0.067, -0.042, 0.081),
+        (-0.086, 0.072, -0.044, 0.07),
+        (-0.15, 0.068, -0.043, 0.053),
+        (-0.197, 0.051, -0.035, 0.035),
+        (-0.216, 0.017, -0.015, 0.017),
     )
     radial_segments = 16
     vertices = []
@@ -579,7 +579,7 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
 
     rounded_box(
         f"{name}Sole",
-        (0.132, 0.246, 0.02),
+        (0.142, 0.262, 0.022),
         (location[0], location[1] - 0.052, location[2] - 0.047),
         sole_mat,
         parent,
@@ -590,9 +590,9 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
         curve_tube(
             f"{name}Lace_{lace_index}",
             [
-                (-0.041, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
+                (-0.044, lace_y, location[2] + 0.055 - (lace_index - 1) * 0.008),
                 (0, lace_y - 0.006, location[2] + 0.058 - (lace_index - 1) * 0.008),
-                (0.041, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
+                (0.044, lace_y, location[2] + 0.055 - (lace_index - 1) * 0.008),
             ],
             0.0045,
             sole_mat,
@@ -1062,8 +1062,8 @@ def build_body(role, config, mats, visual):
     right_arm = empty("RightArmPivot", visual, (0.234, 0, 1.2))
     left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.235))
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.235))
-    left_leg = empty("LeftLegPivot", visual, (-0.135, 0, 0.73))
-    right_leg = empty("RightLegPivot", visual, (0.135, 0, 0.73))
+    left_leg = empty("LeftLegPivot", visual, (-0.145, 0, 0.73))
+    right_leg = empty("RightLegPivot", visual, (0.145, 0, 0.73))
     left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.285))
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
@@ -1159,11 +1159,11 @@ def build_body(role, config, mats, visual):
             f"Thigh_{side}",
             0.34,
             (
-                (0.54, 0.095, 0.087, -side * 0.004, 0),
-                (0.31, 0.102, 0.092, -side * 0.002, 0.003),
-                (0.04, 0.093, 0.087, side * 0.002, 0.006),
-                (-0.27, 0.078, 0.073, side * 0.004, 0.003),
-                (-0.53, 0.066, 0.062, side * 0.002, 0),
+                (0.54, 0.101, 0.093, -side * 0.004, 0),
+                (0.31, 0.108, 0.098, -side * 0.002, 0.003),
+                (0.04, 0.099, 0.093, side * 0.002, 0.006),
+                (-0.27, 0.083, 0.078, side * 0.004, 0.003),
+                (-0.53, 0.07, 0.066, side * 0.002, 0),
             ),
             (0, 0, -0.15),
             mats["lower"],
@@ -1174,9 +1174,9 @@ def build_body(role, config, mats, visual):
             f"KneeSleeve_{side}",
             0.125,
             (
-                (0.5, 0.068, 0.063),
-                (0.08, 0.071, 0.066, 0, -0.002),
-                (-0.5, 0.064, 0.059, -side * 0.002, 0),
+                (0.5, 0.072, 0.067),
+                (0.08, 0.075, 0.07, 0, -0.002),
+                (-0.5, 0.068, 0.063, -side * 0.002, 0),
             ),
             (0, 0, 0),
             mats["lower"],
@@ -1187,11 +1187,11 @@ def build_body(role, config, mats, visual):
             f"Shin_{side}",
             0.33,
             (
-                (0.52, 0.066, 0.061, -side * 0.002, 0),
-                (0.3, 0.077, 0.071, -side * 0.005, -0.004),
-                (0.04, 0.086, 0.078, -side * 0.008, -0.006),
-                (-0.26, 0.071, 0.065, -side * 0.005, -0.004),
-                (-0.52, 0.054, 0.05, 0, -0.002),
+                (0.52, 0.07, 0.065, -side * 0.002, 0),
+                (0.3, 0.082, 0.076, -side * 0.005, -0.004),
+                (0.04, 0.091, 0.083, -side * 0.008, -0.006),
+                (-0.26, 0.075, 0.069, -side * 0.005, -0.004),
+                (-0.52, 0.057, 0.053, 0, -0.002),
             ),
             (0, 0, -0.155),
             mats["lower"],
@@ -1209,7 +1209,7 @@ def build_body(role, config, mats, visual):
                 knee,
                 depth=0.006,
             )
-        cylinder(f"TrouserCuff_{side}", 0.078, 0.07, 0.068, (0, 0, -0.265), mats["accent"], knee, vertices=20)
+        cylinder(f"TrouserCuff_{side}", 0.082, 0.074, 0.068, (0, 0, -0.265), mats["accent"], knee, vertices=20)
         sculpted_shoe(f"ShoeUpper_{side}", (0, 0, -0.365), mats["shoe"], mats["sole"], knee, side=side)
 
     return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
@@ -1475,7 +1475,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v17",
+        "sculptContract": "mirrorlife-civic-sculpt-v18",
         "faceDecal": {
             "contract": "mirrorlife-civic-face-decal-v1",
             "path": "civic-face-decals.png",
@@ -1483,7 +1483,7 @@ def main():
             "mapping": ["player", "listener", "facilitator", "mediator"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v4",
+            "version": "mirrorlife-civic-clips-v5",
             "runtime": "authored-keyframe-blend",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

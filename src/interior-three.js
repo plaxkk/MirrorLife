@@ -606,9 +606,13 @@ function upgradeModelMaterials(source, type = "") {
         : preserveAuthoredCivicPalette
           ? atelierGradeColor(material.color, 0.08)
           : nearestAtelierColor(material.color);
-      const next = hasSurfaceMap && (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial)
-        ? material.clone()
-        : new THREE.MeshStandardMaterial();
+      const materialName = String(material.name || "").toLowerCase();
+      const glassName = /glass|glazing|windowpane/.test(materialName);
+      const next = glassName
+        ? new THREE.MeshPhysicalMaterial()
+        : hasSurfaceMap && (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial)
+          ? material.clone()
+          : new THREE.MeshStandardMaterial();
       next.name = `${material.name || "MirrorLife"} atelier PBR`;
       next.color.copy(color);
       next.map = material.map || null;
@@ -628,12 +632,26 @@ function upgradeModelMaterials(source, type = "") {
       next.roughness = hasSurfaceMap
         ? sourceRoughness
         : sourceRoughness < 0.56 ? 0.48 : sourceRoughness < 0.76 ? 0.66 : 0.84;
-      const materialName = String(material.name || "").toLowerCase();
       const metallicName = /metal|steel|iron|brass|gold|chrome|copper/.test(materialName);
       const sourceMetalness = Math.max(0, Math.min(0.88, Number(material.metalness ?? 0.01)));
       next.metalness = metallicName ? Math.max(0.58, sourceMetalness) : hasSurfaceMap ? sourceMetalness : Math.min(0.12, sourceMetalness);
       if (metallicName) next.roughness = Math.min(next.roughness, 0.42);
       next.envMapIntensity = metallicName ? 1.08 : 0.72;
+      if (glassName) {
+        // Preserve the display case as a transparent storytelling layer. The
+        // former generic StandardMaterial made the pale glass read as an
+        // opaque mint panel and hid the pastries, labels and shelf depth.
+        next.color.lerp(new THREE.Color("#f3fbf7"), 0.52);
+        next.transparent = true;
+        next.opacity = Math.min(0.24, Number(material.opacity ?? 0.28));
+        next.depthWrite = false;
+        next.roughness = 0.16;
+        next.metalness = 0;
+        next.transmission = 0.34;
+        next.thickness = 0.025;
+        next.ior = 1.45;
+        next.envMapIntensity = 1.12;
+      }
       next.emissive?.set?.(0x000000);
       next.emissiveIntensity = 0;
       next.needsUpdate = true;
@@ -1356,7 +1374,7 @@ function applyLightingPreset(theme = {}) {
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.86 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.56 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
@@ -3724,7 +3742,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.62,
+        opacity: theme.night ? 0.1 : 0.76,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5265,7 +5283,7 @@ function createCivicFaceDecal(role = "player") {
     // continues to receive real shading and occlusion from the hair volume.
     emissive: new THREE.Color(0xffffff),
     emissiveMap: texture,
-    emissiveIntensity: 0.055,
+    emissiveIntensity: 0.09,
     roughness: 0.88,
     metalness: 0,
     alphaTest: 0.08,
