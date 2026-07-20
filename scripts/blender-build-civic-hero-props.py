@@ -235,8 +235,17 @@ def build_display_case(mats):
         rounded_box(f"DisplayLabel_{index + 1}", (0.16, 0.012, 0.075), (x, -0.225, 0.9), mats["paper"], root, 0.008, (-0.22, 0, 0))
 
     # Top still life gives the foreground silhouette the authored density of the target.
-    rounded_box("DisplayMenuFrame", (0.48, 0.06, 0.4), (-0.48, -0.03, 1.75), mats["walnut"], root, 0.045, (0.16, 0, 0))
-    rounded_box("DisplayMenuPaper", (0.39, 0.03, 0.31), (-0.48, -0.055, 1.75), mats["paper"], root, 0.035, (0.16, 0, 0))
+    # The foreground menu is the target composition's "today's topic"
+    # clipboard. Give it a readable editorial hierarchy instead of a blank
+    # pale slab: warm wood frame, cream paper, title, three response rows and
+    # a brass clip, all authored on the front face for orbit-safe lighting.
+    rounded_box("DisplayMenuFrame", (0.72, 0.075, 0.72), (-0.58, -0.03, 1.82), mats["walnut"], root, 0.055, (0.12, 0, 0))
+    rounded_box("DisplayMenuPaper", (0.6, 0.03, 0.59), (-0.58, -0.072, 1.82), mats["ivory"], root, 0.04, (0.12, 0, 0))
+    rounded_box("DisplayMenuTitle", (0.34, 0.018, 0.042), (-0.61, -0.095, 2.04), mats["walnut"], root, 0.009, (0.12, 0, 0), 1)
+    for row_index, (z, color) in enumerate(((1.92, "teal"), (1.78, "coral"), (1.64, "brass"))):
+        cylinder(f"DisplayMenuMark_{row_index + 1}", 0.023, 0.012, (-0.77, -0.098, z), mats[color], root, 10, (math.pi / 2, 0, 0))
+        rounded_box(f"DisplayMenuLine_{row_index + 1}", (0.28 - row_index * 0.022, 0.012, 0.021), (-0.53, -0.1, z), mats["ink"], root, 0.006, (0.12, 0, 0), 1)
+    rounded_box("DisplayMenuClip", (0.14, 0.025, 0.04), (-0.58, -0.1, 2.15), mats["brass"], root, 0.013, (0.12, 0, 0), 2)
     add_ceramic(root, mats, "DisplayTopVase", (0.53, -0.03, 1.66), 0.95)
     for index, angle in enumerate((-0.75, -0.24, 0.24, 0.78)):
         cylinder(f"DisplayFlowerStem_{index}", 0.009, 0.38 + index * 0.03, (0.53 + angle * 0.08, -0.03, 1.9), mats["leaf"], root, 7, (0, angle * 0.2, -angle * 0.24))
@@ -417,7 +426,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v2",
+        "contract": "mirrorlife-civic-hero-props-v3",
         "worldUnitMeters": 1,
         "assets": {},
     }

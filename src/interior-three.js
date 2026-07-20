@@ -76,7 +76,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.18, fill: 0.32, hemi: 0.3, bounce: 0.52, wash: 0.72, exposure: 0.81, keyColor: "#ffd6a5", fillColor: "#b4d4d0" },
+  "civic-ivory": { key: 2.08, fill: 0.4, hemi: 0.36, bounce: 0.66, wash: 0.78, exposure: 0.82, keyColor: "#ffd6a5", fillColor: "#b4d4d0" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -406,9 +406,9 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.98;
+  gtaoPass.blendIntensity = 0.88;
   gtaoPass.updateGtaoMaterial({
-    radius: 0.38,
+    radius: 0.32,
     distanceExponent: 1.7,
     thickness: 1.36,
     distanceFallOff: 0.9,
@@ -1289,10 +1289,10 @@ function applyLightingPreset(theme = {}) {
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.7 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.72 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -2561,50 +2561,6 @@ function addCivicRecordDesk(colors) {
   const microProps = new THREE.Group();
   microProps.name = "CivicRecordDeskMicroProps";
   group.add(microProps);
-  // The source foreground is anchored by an upright agenda board. The older
-  // broad horizontal clipboard collapsed into a white "printer" silhouette
-  // when the editorial camera cropped the desk. This framed, slightly leaned
-  // record board reads cleanly from the same angle and gives the foreground a
-  // civic purpose without adding a new interaction/collider.
-  const agenda = new THREE.Group();
-  agenda.name = "CivicRecordDeskAgenda";
-  agenda.position.set(-0.22, 1.22, -0.04);
-  agenda.rotation.x = -0.12;
-  // Counter the desk's diagonal staging so the paper plane faces the yaw-0
-  // editorial camera instead of presenting a pale edge-on sliver.
-  agenda.rotation.y = -1.56;
-  microProps.add(agenda);
-  const agendaFrame = new THREE.Mesh(
-    new RoundedBoxGeometry(0.66, 0.7, 0.07, 5, 0.055),
-    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.66, surface: "wood", bumpScale: 0.008 })
-  );
-  agenda.add(agendaFrame);
-  const agendaPaper = new THREE.Mesh(
-    new RoundedBoxGeometry(0.56, 0.59, 0.03, 4, 0.04),
-    createToonMaterial("#f2e6d2", { roughness: 0.95, surface: "paper", bumpScale: 0.004 })
-  );
-  agendaPaper.position.z = 0.049;
-  agenda.add(agendaPaper);
-  const agendaTitle = new THREE.Mesh(
-    new RoundedBoxGeometry(0.33, 0.055, 0.018, 2, 0.016),
-    createToonMaterial(colors.accent, { roughness: 0.68 })
-  );
-  agendaTitle.position.set(-0.06, 0.2, 0.071);
-  agenda.add(agendaTitle);
-  [0.07, -0.085, -0.24].forEach((rowY, index) => {
-    const marker = new THREE.Mesh(
-      new THREE.RingGeometry(0.035, 0.047, 14),
-      createToonMaterial(index === 1 ? colors.secondary : "#c79b45", { roughness: 0.42, metalness: index === 2 ? 0.46 : 0.08 })
-    );
-    marker.position.set(-0.2, rowY, 0.073);
-    agenda.add(marker);
-    const line = new THREE.Mesh(
-      new RoundedBoxGeometry(0.28 - index * 0.025, 0.024, 0.014, 1, 0.007),
-      createToonMaterial(index === 0 ? "#776b5d" : colors.secondary, { roughness: 0.84 })
-    );
-    line.position.set(0.08, rowY, 0.073);
-    agenda.add(line);
-  });
   const clipboard = new THREE.Mesh(
     new RoundedBoxGeometry(0.42, 0.032, 0.29, 3, 0.026),
     createToonMaterial("#e9dcc8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
@@ -5806,12 +5762,32 @@ function createCivicActorObject(actor, asset) {
     // head batch. At phone scale those extra meshes are sub-pixel while five
     // additional actor batches materially affect the 30fps budget.
     const mobileDetailNodes = [];
+    const mobileDetailNames = new Set([
+      "NoseBridge",
+      "NoseTip",
+      "NotebookElastic",
+      "NotebookPencil"
+    ]);
+    const mobileDetailPrefixes = [
+      "FingerCrease_",
+      "EarInner_",
+      "EyeGlint_",
+      "OuterLash_",
+      "CoatButton_",
+      "Thumb_"
+    ];
     assetScene.traverse((node) => {
-      if (node.isMesh && String(node.name || "").startsWith("FingerCrease_")) mobileDetailNodes.push(node);
+      if (!node.isMesh) return;
+      const nodeName = String(node.name || "");
+      if (mobileDetailNames.has(nodeName) || mobileDetailPrefixes.some((prefix) => nodeName.startsWith(prefix))) {
+        mobileDetailNodes.push(node);
+      }
     });
     mobileDetailNodes.forEach((node) => {
       node.removeFromParent();
       node.geometry?.dispose?.();
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      materials.filter(Boolean).forEach((material) => material.dispose?.());
     });
     // Mobile keeps the closed expression in the head batch. Merging the open
     // alternative too would show overlapping lips and waste sub-pixel faces.
@@ -5850,11 +5826,14 @@ function createCivicActorObject(actor, asset) {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <opaque_fragment>",
           `#include <opaque_fragment>
-          float mirrorLifeSkinWrap = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 2.4);
-          gl_FragColor.rgb += vec3(0.052, 0.023, 0.014) * mirrorLifeSkinWrap * 0.42;`
+          float mirrorLifeSkinWrap = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 2.25);
+          float mirrorLifeSkinLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+          float mirrorLifeSkinShadow = 1.0 - smoothstep(0.24, 0.62, mirrorLifeSkinLuma);
+          gl_FragColor.rgb += vec3(0.054, 0.023, 0.014) * mirrorLifeSkinWrap * 0.46;
+          gl_FragColor.rgb += vec3(0.027, 0.009, 0.005) * mirrorLifeSkinShadow * 0.16;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v1";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v2";
       material.needsUpdate = true;
     });
   }

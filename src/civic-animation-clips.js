@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v2";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v3";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -264,22 +264,34 @@ export const CIVIC_ANIMATION_CLIPS = Object.freeze({
 const ROLE_OFFSETS = Object.freeze({
   mediator: {
     listen: pose(0, {
-      headGroup: v(-0.01, 0, 0.012), rightArm: v(0.12, 0, -0.11),
-      leftElbow: v(-0.38), rightElbow: v(-0.82, 0, -0.16)
+      // Put one hand at the chin while the opposite arm hangs softly. The
+      // previous offset bent both elbows and produced the same "holding an
+      // invisible tray" silhouette as the other two civic roles.
+      visual: v(0.018, 0, 0.028), headGroup: v(-0.012, 0, 0.022),
+      leftArm: v(0.18, 0, 0.035), rightArm: v(0.12, 0, -0.12),
+      leftElbow: v(0.46), rightElbow: v(-0.82, 0, -0.16),
+      leftLeg: v(0, 0, 0.035), rightLeg: v(0, 0, -0.025), leftKnee: v(0.055)
     })
   },
   facilitator: {
     listen: pose(0, {
-      headGroup: v(0, 0, -0.065), leftArm: v(-0.1, 0, 0.14), rightArm: v(0.02, 0, -0.06),
+      // Keep the notebook supported by both palms, then shift the ribcage and
+      // legs in opposite directions so the stance reads as a human response
+      // rather than a symmetrical display pose.
+      visual: v(-0.012, 0, -0.032), headGroup: v(0, 0, -0.052),
+      leftArm: v(-0.1, 0, 0.16), rightArm: v(0.025, 0, -0.085),
       leftElbow: v(-0.62, 0, 0.18), rightElbow: v(-0.4, 0, -0.08),
-      leftLeg: v(0, 0, -0.05), rightLeg: v(0, 0, 0.07), rightKnee: v(0.045)
+      leftLeg: v(0, 0, -0.065), rightLeg: v(0, 0, 0.085), rightKnee: v(0.07)
     })
   },
   listener: {
     listen: pose(0, {
-      headGroup: v(0.008, 0, -0.015), leftArm: v(0.02, 0, 0.14), rightArm: v(0, 0, 0.02),
-      leftElbow: v(-0.18), rightElbow: v(-0.2),
-      leftLeg: v(0, 0, 0.01), rightLeg: v(0, 0, -0.005)
+      // One open hand and one bent strap-side arm produce the asymmetric,
+      // approachable listener silhouette visible in the visual target.
+      visual: v(-0.01, 0, 0.042), headGroup: v(0.008, 0, 0.018),
+      leftArm: v(0.18, 0, 0.18), rightArm: v(-0.06, 0, -0.055),
+      leftElbow: v(0.46), rightElbow: v(-0.22),
+      leftLeg: v(0, 0, 0.045), rightLeg: v(0, 0, -0.04), leftKnee: v(0.045)
     })
   }
 });

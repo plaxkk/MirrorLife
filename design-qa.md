@@ -1,5 +1,53 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v68 asymmetric social staging, story-board and mobile-detail gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v68/desktop-yaw-0-1672x941-v68.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v68.jpg` for the reverse actor/prop view.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v68/reference-vs-v68-full.png` and `reference-vs-v68-cast-focus.png`, with the reference on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v68/mobile-yaw-0-390x844-v68.jpg` (`390 × 844`, final ready state rather than the loading shell).
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v67 P1 / symmetrical mannequin listening] The `listen` contract is now role-specific and asymmetric. The mediator shifts weight while bringing one hand toward the chin, the listener opens one side of the body while holding the satchel side closer, and the facilitator braces the notebook with opposing ribcage and leg weight. The desktop hero and reverse frames show three distinct social silhouettes instead of one mirrored arm pose.
+- [fixed / blank foreground slab] The stale foreground display mesh was rebuilt as a real walnut-and-ivory “today's topic” board with title bar, response rows and brass clip. The final hero frame contains no white placeholder slab; the board reads as a civic story object from front, side and reverse angles.
+- [fixed / over-crisp contact and cool shadow wrap] The civic key/fill/hemisphere/bounce balance, GTAO radius/blend, actor rim, face fill and environment intensity were recalibrated. The desktop skin material now uses the `skin-wrap-v2` response, keeping faces warm and readable without flattening their form.
+- [fixed / redundant foreground geometry] A duplicate procedural agenda assembly hidden behind the authored hero asset was removed. Rendering, collisions and story affordances retain one authoritative foreground prop instead of paying for two overlapping versions.
+- [fixed / mobile budget regression] Mobile actor LOD now removes only sub-pixel nose, lash/glint, button, thumb, finger-crease and notebook micro-meshes while retaining full silhouettes, eyes, costumes and held-prop readability. This recovered `6,888` triangles without reducing the visible player/two-witness composition or touch controls.
+- [checked / embodied movement and orbit] The automated real-browser gate moved the physical player `3.41m`, observed the authored locomotion transition and rotated the weighted follow camera `65.3°`; the scene remains playable rather than a matched static render.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `150` draw calls / `272,204` triangles, below the strict `160 / 300,000` civic-room gate. The reverse frame also remains within the previously verified complete-orbit budget and keeps the cast plus functional furniture readable.
+- Mobile `390 × 844`: `106` draw calls / `242,062` triangles, below the `110 / 250,000` gate after selective micro-detail LOD.
+- Character contract: four civic roles pass at `6.76 MB` total with `mirrorlife-civic-clips-v3`; all three witness roles expose distinct settled listening offsets and secondary-motion diagnostics.
+- Hero-prop contract: three authored civic assets pass `mirrorlife-civic-hero-props-v3` at `29,532` aggregate triangles. The display asset includes the new title and three response-line meshes.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the Vite production build passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The public room remains a metre-based Y-up scene with Rapier-backed collision, keyboard/touch locomotion, authored animation states, player-weighted framing and orbit rotation. No screenshot or screen-space substitute was introduced.
+- [checked][spacing/layout rhythm] A real foreground record desk frames the scene, the four-person listening ring owns the middle ground, and the topic wall, storage and lounge establish a functional background. The blank slab no longer interrupts the depth sequence.
+- [checked][colors/tokens] Warm ivory remains dominant, teal/coral identify social roles and brass is reserved for evidence/navigation. Softer bounce and skin wrap improve separation without adding unrelated colours.
+- [checked][image and asset quality for this iteration] The agenda board, cast, notebook and furnishings are full-volume meshes with real lighting, occlusion and reverse-view evidence. The role poses remain attached to the actual skeletal hierarchy.
+- [checked][copy/content] Location, room memory, exit, contextual listening prompt and the four social verbs remain coherent. The rebuilt topic board adds physical story context without introducing unreadable UI copy.
+- [checked][responsiveness/accessibility] At `390 × 844`, the final scene keeps joystick, chat, jump, contextual action and all four social actions visible while remaining below the strict mobile draw/triangle ceilings.
+- [P1][production character fidelity] Asymmetric staging fixes the mannequin read, but the paired crop still shows simpler finger articulation, facial deformation, cloth compression, hair strand grouping and body-volume transitions than the reference cast.
+- [P1][environment craftsmanship] The foreground story object is now authored and coherent, but cabinet joinery, pottery, paper/book density, upholstery softness and object-specific wear remain materially simpler than the reference.
+- [P1][lighting/material integration] Softer fill, GTAO and skin wrap improve contact, but the source still has richer skin subsurface response, portal bounce, cloth/wood roughness breakup and multi-scale indirect shadows.
+- [P2][HUD optical finish] Responsive hierarchy and controls work, but icon craft, typography, translucent depth and compact spacing remain less refined than the reference HUD.
+
+### Gate result
+
+This iteration removes the blank foreground artifact, gives every witness a distinct social stance, improves material integration and restores the mobile performance margin while preserving real movement, collision and orbit. The same-canvas comparison still contains actionable P1 character-deformation, bespoke-environment and indirect-material differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production hand/face/cloth deformation, denser bespoke environment craftsmanship and more natural indirect material response remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v67 embodied story contact and hero-prop craft gate
 
 ### Evidence inspected together

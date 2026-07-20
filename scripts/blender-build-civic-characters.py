@@ -1312,7 +1312,7 @@ def main():
         "contract": "mirrorlife-shared-pivot-v1",
         "sculptContract": "mirrorlife-civic-sculpt-v8",
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v2",
+            "version": "mirrorlife-civic-clips-v3",
             "runtime": "authored-keyframe-blend",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
