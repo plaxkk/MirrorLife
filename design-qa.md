@@ -1,5 +1,52 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v67 embodied story contact and hero-prop craft gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v67/desktop-yaw-0-1672x941-v67.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v67.jpg` for front-facing prop/contact inspection.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v67/reference-vs-v67-full.png` and `reference-vs-v67-cast-focus.png`, with the reference on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v67/mobile-yaw-0-390x844-v67.jpg` (`390 × 844`). In-app Browser logs contain only Vite connection diagnostics and no warning/error entries.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v66 P1 / disconnected story prop] The facilitator's notebook moved from a visible `0.12m` hand gap into the authored palm, is counter-rotated against the listening elbow pose and now includes a real spine, elastic and pencil. The reverse crop confirms upright, readable full-volume geometry instead of two floating bars.
+- [fixed / printer-like foreground clutter] The oversized horizontal clipboard was replaced by an upright civic agenda with frame, paper hierarchy, title markers and three response rows. The desk cluster was rescaled and pulled back so it frames the cast without becoming the dominant white rectangle.
+- [fixed / uniform expression stack] The runtime now couples `WarmSmile` to restrained eye compression and mouth width/depth. This retains gameplay-scale readability while allowing a smile to affect more than one isolated facial mesh.
+- [fixed / generic lounge and storage craft] The lounge gains upholstery seams, back tufts, inset cushion panels, a handled cup and bookmark. The notice basket now has alternating weave rings, ribs and a liner; these remain authored GLB details with side/back evidence under orbit.
+- [checked / embodied camera and mobile composition] The same metre-based cast, furniture collision and camera pivot remain active on desktop. Mobile retains the player, two nearest witnesses, touch movement, chat, jump, contextual action and the complete social-action rail.
+
+### Runtime and performance evidence
+
+- Desktop yaw `0°`: `150` draw calls / `274,944` triangles. Desktop yaw `180°`: `159` draw calls / `288,388` triangles. Both stay below the strict `160 / 300,000` civic-room gate.
+- Mobile `390 × 844`: `106` draw calls / `248,950` triangles, below the `110 / 250,000` gate.
+- Character contract: four civic roles pass at `6.76 MB` total with `mirrorlife-civic-sculpt-v8`; facilitator includes the held notebook spine, elastic and pencil.
+- Hero-prop contract: three authored civic assets pass `mirrorlife-civic-hero-props-v2` at `29,140` aggregate triangles, including lounge seams/cup detail and woven basket liner.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow and embodied character exploration passed; all `78` enter/exit transitions completed successfully with local Chrome.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the Vite production build passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The scene remains a real Y-up 3D room with keyboard/touch locomotion, furniture collision, authored character clips, player-follow framing and drag orbit. Story props are attached to the real actor hierarchy rather than overlaid in screen space.
+- [checked][spacing/layout rhythm] The bright portal and record desk frame the foreground; the four-person listening circle holds the middle; proposal wall, storage and lounge establish background function. The final reverse view proves complete actor and furniture volume.
+- [checked][colors/tokens] Warm ivory remains the base, teal/coral identify social roles and brass reserves evidence/navigation emphasis. New agenda, notebook, upholstery and basket details inherit those materials rather than introducing unrelated accent colours.
+- [checked][image and asset quality for this iteration] The notebook, agenda, upholstery details and weave are full geometry with real occlusion, lighting and reverse views. No billboard, CSS drawing or static panorama substitutes for the playable room.
+- [checked][copy/content] Location, room memory, exit, contextual listening prompt and four social verbs remain coherent. The agenda and held notebook increase story legibility without adding instructional copy.
+- [checked][responsiveness/accessibility] Essential mobile controls remain visible at `390 × 844`; the room remains within the strict mobile render budget.
+- [P1][production character fidelity] The prop-hand gap is closed and expression coupling is better, but finger articulation, facial/cloth deformation, rear hair shaping and body-language asymmetry remain visibly simpler than the reference cast.
+- [P1][environment craftsmanship] The agenda, basket and lounge close the clearest modular-prop gaps, but cabinet joinery, pottery, paper/book density, upholstery softness and object-specific wear still lack the reference's authored richness.
+- [P1][lighting/material integration] Contact reads more clearly, but the source retains softer portal bounce, skin subsurface response, multi-scale contact shadows and wider roughness variation across wood, paper, cloth, terrazzo and metal.
+- [P2][HUD optical finish] Responsive hierarchy and controls work, but icon craft, type weight, translucent depth and compact spacing remain less refined than the reference HUD.
+
+### Gate result
+
+This iteration fixes the clearest story-prop contact error, removes the printer-like foreground silhouette and adds bespoke furniture craft while preserving the playable camera, collisions and responsive budgets. The paired canvases still contain actionable P1 character-deformation, environment-craft and indirect-material differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production hand/face/cloth deformation, broader bespoke environment craftsmanship and more natural indirect material response remain visible P1 differences.
+
 ## 2026-07-19 reference-fidelity v66 facial hierarchy, skin wrap and responsive budget gate
 
 ### Evidence inspected together

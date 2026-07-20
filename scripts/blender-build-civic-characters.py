@@ -1215,8 +1215,20 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
         if costume == "facilitator":
-            rounded_box("StoryNotebook", (0.22, 0.05, 0.3), (0.085, -0.07, -0.24), mats["accent"], left_elbow, radius=0.035, rotation=(0.08, -0.18, -0.08))
-            rounded_box("NotebookPaper", (0.19, 0.012, 0.27), (0.085, -0.101, -0.24), mats["paper"], left_elbow, radius=0.025, rotation=(0.08, -0.18, -0.08))
+            # Seat the story notebook inside the authored palm volume. The old
+            # centre was 12 cm from the hand and read as a floating prop in the
+            # reverse/cast view. Spine, elastic and pencil give the contact a
+            # believable grip silhouette without introducing a separate rig.
+            notebook_location = (0.04, -0.04, -0.292)
+            # The listen clip folds the elbow by roughly -1.3 rad. Counter it
+            # here so the book remains upright in world space instead of
+            # turning into two horizontal orange bars beside the actor.
+            notebook_rotation = (1.18, -0.18, -0.08)
+            rounded_box("StoryNotebook", (0.22, 0.05, 0.3), notebook_location, mats["accent"], left_elbow, radius=0.035, rotation=notebook_rotation)
+            rounded_box("NotebookPaper", (0.19, 0.012, 0.27), (0.04, -0.071, -0.292), mats["paper"], left_elbow, radius=0.025, rotation=notebook_rotation)
+            rounded_box("NotebookSpine", (0.026, 0.058, 0.29), (-0.058, -0.04, -0.292), mats["shoe"], left_elbow, radius=0.009, rotation=notebook_rotation)
+            rounded_box("NotebookElastic", (0.018, 0.016, 0.274), (0.085, -0.075, -0.292), mats["metal"], left_elbow, radius=0.007, rotation=notebook_rotation)
+            cylinder("NotebookPencil", 0.008, 0.006, 0.235, (-0.078, -0.077, -0.292), mats["accent"], left_elbow, vertices=10, rotation=(0.08, -0.18, -0.08))
         else:
             curve_tube("Necklace", [(-0.11, -0.205, 1.2), (0, -0.225, 1.08), (0.11, -0.205, 1.2)], 0.012, mats["metal"], visual)
             ellipsoid("NecklacePendant", (0, -0.24, 1.07), (0.035, 0.012, 0.05), mats["metal"], visual, segments=14, rings=8)
@@ -1298,7 +1310,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v7",
+        "sculptContract": "mirrorlife-civic-sculpt-v8",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v2",
             "runtime": "authored-keyframe-blend",

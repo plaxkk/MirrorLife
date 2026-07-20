@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v7", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v8", "civic character sculpt contract is stale");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -61,6 +61,11 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("EyeOutline_1")), `${role}: right eye silhouette is missing`);
   assert(contents.includes(Buffer.from("NoseBridge")), `${role}: sculpted nose bridge is missing`);
   assert(contents.includes(Buffer.from("NoseTip")), `${role}: sculpted nose tip is missing`);
+  if (role === "facilitator") {
+    assert(contents.includes(Buffer.from("NotebookSpine")), "facilitator: held notebook spine is missing");
+    assert(contents.includes(Buffer.from("NotebookElastic")), "facilitator: held notebook elastic is missing");
+    assert(contents.includes(Buffer.from("NotebookPencil")), "facilitator: held notebook pencil is missing");
+  }
   assert(contents.includes(Buffer.from("ElbowSleeve_-1")), `${role}: left continuous elbow sleeve is missing`);
   assert(contents.includes(Buffer.from("ElbowSleeve_1")), `${role}: right continuous elbow sleeve is missing`);
   assert(contents.includes(Buffer.from("KneeSleeve_-1")), `${role}: left continuous knee sleeve is missing`);

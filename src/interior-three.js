@@ -2544,9 +2544,9 @@ function addCivicRecordDesk(colors) {
   const group = new THREE.Group();
   // Stage the desk as a deliberate foreground frame, matching the reference
   // composition while leaving the main listening route unobstructed.
-  group.position.set(-2.86, 0, 2.46);
+  group.position.set(-2.72, 0, 1.96);
   group.rotation.y = 2.18;
-  group.scale.setScalar(1.34);
+  group.scale.setScalar(1.12);
   roomRoot.add(group);
   const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66, surface: "wood", bumpScale: 0.012 });
   const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
@@ -2561,21 +2561,68 @@ function addCivicRecordDesk(colors) {
   const microProps = new THREE.Group();
   microProps.name = "CivicRecordDeskMicroProps";
   group.add(microProps);
-  const clipboard = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.045, 0.48, 4, 0.035), createToonMaterial(ATELIER_TOKENS.linen, { roughness: 0.9 }));
-  clipboard.position.set(-0.22, 0.89, 0);
-  clipboard.rotation.y = -0.12;
+  // The source foreground is anchored by an upright agenda board. The older
+  // broad horizontal clipboard collapsed into a white "printer" silhouette
+  // when the editorial camera cropped the desk. This framed, slightly leaned
+  // record board reads cleanly from the same angle and gives the foreground a
+  // civic purpose without adding a new interaction/collider.
+  const agenda = new THREE.Group();
+  agenda.name = "CivicRecordDeskAgenda";
+  agenda.position.set(-0.22, 1.22, -0.04);
+  agenda.rotation.x = -0.12;
+  // Counter the desk's diagonal staging so the paper plane faces the yaw-0
+  // editorial camera instead of presenting a pale edge-on sliver.
+  agenda.rotation.y = -1.56;
+  microProps.add(agenda);
+  const agendaFrame = new THREE.Mesh(
+    new RoundedBoxGeometry(0.66, 0.7, 0.07, 5, 0.055),
+    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.66, surface: "wood", bumpScale: 0.008 })
+  );
+  agenda.add(agendaFrame);
+  const agendaPaper = new THREE.Mesh(
+    new RoundedBoxGeometry(0.56, 0.59, 0.03, 4, 0.04),
+    createToonMaterial("#f2e6d2", { roughness: 0.95, surface: "paper", bumpScale: 0.004 })
+  );
+  agendaPaper.position.z = 0.049;
+  agenda.add(agendaPaper);
+  const agendaTitle = new THREE.Mesh(
+    new RoundedBoxGeometry(0.33, 0.055, 0.018, 2, 0.016),
+    createToonMaterial(colors.accent, { roughness: 0.68 })
+  );
+  agendaTitle.position.set(-0.06, 0.2, 0.071);
+  agenda.add(agendaTitle);
+  [0.07, -0.085, -0.24].forEach((rowY, index) => {
+    const marker = new THREE.Mesh(
+      new THREE.RingGeometry(0.035, 0.047, 14),
+      createToonMaterial(index === 1 ? colors.secondary : "#c79b45", { roughness: 0.42, metalness: index === 2 ? 0.46 : 0.08 })
+    );
+    marker.position.set(-0.2, rowY, 0.073);
+    agenda.add(marker);
+    const line = new THREE.Mesh(
+      new RoundedBoxGeometry(0.28 - index * 0.025, 0.024, 0.014, 1, 0.007),
+      createToonMaterial(index === 0 ? "#776b5d" : colors.secondary, { roughness: 0.84 })
+    );
+    line.position.set(0.08, rowY, 0.073);
+    agenda.add(line);
+  });
+  const clipboard = new THREE.Mesh(
+    new RoundedBoxGeometry(0.42, 0.032, 0.29, 3, 0.026),
+    createToonMaterial("#e9dcc8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
+  );
+  clipboard.position.set(0.08, 0.875, 0.12);
+  clipboard.rotation.y = -0.08;
   microProps.add(clipboard);
-  [colors.accent, colors.secondary, ATELIER_TOKENS.apricot].forEach((color, index) => {
-    const note = new THREE.Mesh(new RoundedBoxGeometry(0.18, 0.025, 0.14, 2, 0.015), createToonMaterial(color, { roughness: 0.84 }));
-    note.position.set(-0.38 + index * 0.21, 0.925 + index * 0.002, -0.04 + index * 0.04);
-    note.rotation.y = -0.18 + index * 0.13;
+  [colors.accent, colors.secondary].forEach((color, index) => {
+    const note = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.018, 0.09, 2, 0.012), createToonMaterial(color, { roughness: 0.84 }));
+    note.position.set(0.01 + index * 0.14, 0.895 + index * 0.002, 0.09 + index * 0.035);
+    note.rotation.y = -0.1 + index * 0.12;
     microProps.add(note);
   });
   const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.055, 18), trim);
-  lampBase.position.set(-0.58, 0.9, -0.08);
+  lampBase.position.set(-0.67, 0.9, 0.23);
   group.add(lampBase);
   const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.46, 12), trim);
-  lampStem.position.set(-0.58, 1.12, -0.08);
+  lampStem.position.set(-0.67, 1.12, 0.23);
   lampStem.rotation.z = 0.13;
   group.add(lampStem);
   const shade = new THREE.Mesh(
@@ -2583,7 +2630,7 @@ function addCivicRecordDesk(colors) {
     createToonMaterial("#356f68", { roughness: 0.52, envMapIntensity: 0.78 })
   );
   shade.scale.set(1.18, 0.62, 0.9);
-  shade.position.set(-0.64, 1.34, -0.08);
+  shade.position.set(-0.73, 1.34, 0.23);
   group.add(shade);
 
   // Editorial micro-props give the foreground the lived-in density of the
@@ -2592,7 +2639,7 @@ function addCivicRecordDesk(colors) {
     new RoundedBoxGeometry(0.46, 0.035, 0.32, 3, 0.025),
     createToonMaterial("#f4ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
   );
-  notebook.position.set(-0.42, 0.89, 0.2);
+  notebook.position.set(0.43, 0.89, 0.15);
   notebook.rotation.y = 0.14;
   microProps.add(notebook);
   [-0.11, 0, 0.11].forEach((z, index) => {
@@ -2600,7 +2647,7 @@ function addCivicRecordDesk(colors) {
       new RoundedBoxGeometry(0.29 - index * 0.03, 0.009, 0.008, 1, 0.003),
       createToonMaterial(index === 0 ? colors.secondary : "#8e8170", { roughness: 0.84 })
     );
-    line.position.set(-0.42, 0.912 + index * 0.0005, 0.2 + z);
+    line.position.set(0.43, 0.912 + index * 0.0005, 0.15 + z);
     line.rotation.y = 0.14;
     microProps.add(line);
   });
@@ -6017,13 +6064,22 @@ function updateActors(actors = [], now = performance.now()) {
     }
     const animatedHead = animationPose?.headGroup || [0, 0, 0];
     entry.headGroup.rotation.set(animatedHead[0], animatedHead[1] + headLookYaw, animatedHead[2]);
+    const smileDictionary = entry.faceMorphMesh?.morphTargetDictionary;
+    const smileInfluences = entry.faceMorphMesh?.morphTargetInfluences;
+    const smileIndexForFeatures = smileDictionary?.WarmSmile;
+    const smileInfluenceForFeatures = Number.isInteger(smileIndexForFeatures)
+      ? THREE.MathUtils.clamp(Number(smileInfluences?.[smileIndexForFeatures] || 0), 0, 1)
+      : 0;
     if (entry.eyePivots?.length) {
       const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
       const blinkScale = blinkCycle > 4.58
         ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
         : 1;
       entry.eyePivots.forEach((eyePivot, eyeIndex) => {
-        eyePivot.scale.y = blinkScale;
+        // A warm expression slightly compresses the lower/upper lid stack.
+        // Keeping this coupled to the real facial morph makes the smile read
+        // through the eyes instead of leaving a moving jaw under a rigid mask.
+        eyePivot.scale.y = blinkScale * (1 - smileInfluenceForFeatures * 0.075);
         if (playerActor && actor.id !== playerActor.id && !walking) {
           const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22, -0.09, 0.09);
           eyePivot.rotation.y = gaze;
@@ -6053,6 +6109,11 @@ function updateActors(actors = [], now = performance.now()) {
         const open = speaking && Math.sin(now * 0.011 + frame) > -0.22;
         entry.mouthClosedPivot.visible = !open;
         entry.mouthOpenPivot.visible = open;
+        entry.mouthClosedPivot.scale.set(
+          1 + smileInfluenceForFeatures * 0.055,
+          1,
+          1 + smileInfluenceForFeatures * 0.14
+        );
         entry.mouthOpenPivot.scale.set(1, 0.72 + talkPulse * 0.32, 1);
         entry.mouthPivot.scale.set(1, 1, 1);
       } else {

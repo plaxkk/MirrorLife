@@ -280,15 +280,25 @@ def build_notice_console(mats):
         add_book(root, mats, f"NoticeBook_{index + 1}", (x, -0.08 + index * 0.015, 1.04 + index * 0.045), (0.28, 0.05, 0.2), ("teal", "paper", "blue")[index], (0, 0, (index - 1) * 0.04))
     add_plant(root, mats, "NoticePlant", (0.72, 0, 1.05), 0.72)
     cylinder("NoticeBasketCore", 0.33, 0.5, (0, 0.05, 0.3), mats["cork"], root, 24, radius_top=0.38)
-    for ring_index in range(4):
-        torus(f"NoticeBasketRing_{ring_index + 1}", 0.335 + ring_index * 0.012, 0.018, (0, 0.05, 0.14 + ring_index * 0.12), mats["walnut"], root)
-    for rib_index in range(10):
-        angle = rib_index / 10 * math.pi * 2
+    for ring_index in range(7):
+        torus(
+            f"NoticeBasketRing_{ring_index + 1}",
+            0.326 + ring_index * 0.008,
+            0.012,
+            (0, 0.05, 0.11 + ring_index * 0.067),
+            mats["walnut"] if ring_index % 2 else mats["oak"],
+            root,
+            major_segments=28,
+            minor_segments=6,
+        )
+    for rib_index in range(14):
+        angle = rib_index / 14 * math.pi * 2
         cylinder(
             f"NoticeBasketRib_{rib_index + 1}", 0.012, 0.46,
             (math.cos(angle) * 0.345, 0.05 + math.sin(angle) * 0.345, 0.3),
             mats["walnut"], root, 7,
         )
+    cylinder("NoticeBasketLiner", 0.35, 0.12, (0, 0.05, 0.52), mats["paper"], root, 28, radius_top=0.39)
     return root
 
 
@@ -301,6 +311,11 @@ def build_lounge_suite(mats):
     for side in (-1, 1):
         rounded_box(f"LoungeSeat_{side}", (0.94, 0.68, 0.22), (side * 0.5, -0.02, 0.58), mats["teal"], root, 0.12, segments=5)
         rounded_box(f"LoungeBackCushion_{side}", (0.88, 0.2, 0.62), (side * 0.49, 0.17, 0.94), mats["sage"], root, 0.12, (0.05, 0, 0), 5)
+        # Shallow inset seams catch the warm side light and stop the two large
+        # upholstered planes from reading as featureless rounded boxes.
+        rounded_box(f"LoungeSeatSeam_{side}", (0.76, 0.022, 0.02), (side * 0.5, -0.365, 0.6), mats["deep_teal"], root, 0.008, segments=2)
+        rounded_box(f"LoungeBackSeam_{side}", (0.7, 0.018, 0.022), (side * 0.49, 0.058, 0.98), mats["teal"], root, 0.008, (0.05, 0, 0), 2)
+        sphere(f"LoungeBackTuft_{side}", (0.035, 0.018, 0.035), (side * 0.49, 0.055, 0.94), mats["deep_teal"], root, 14, 8)
     for x in (-1.02, 1.02):
         rounded_box(f"LoungeArm_{x}", (0.15, 0.76, 0.72), (x, 0.02, 0.62), mats["oak"], root, 0.055)
     for x in (-0.82, 0.82):
@@ -308,6 +323,8 @@ def build_lounge_suite(mats):
             cylinder(f"LoungeFoot_{x}_{y}", 0.045, 0.24, (x, y, 0.12), mats["walnut"], root, 12)
     rounded_box("LoungePillowButter", (0.42, 0.16, 0.38), (-0.48, -0.13, 1.05), mats["butter"], root, 0.11, (0.05, -0.08, -0.08), 5)
     rounded_box("LoungePillowCoral", (0.42, 0.16, 0.38), (0.5, -0.13, 1.04), mats["coral"], root, 0.11, (-0.04, 0.08, 0.08), 5)
+    rounded_box("LoungePillowButterInset", (0.3, 0.018, 0.27), (-0.48, -0.218, 1.05), mats["paper"], root, 0.06, (0.05, -0.08, -0.08), 3)
+    rounded_box("LoungePillowCoralInset", (0.3, 0.018, 0.27), (0.5, -0.218, 1.04), mats["butter"], root, 0.06, (-0.04, 0.08, 0.08), 3)
 
     # Low oval coffee table, ceramics and editorial stack.
     table = rounded_box("LoungeCoffeeTop", (1.35, 0.72, 0.13), (0.1, -1.1, 0.5), mats["oak"], root, 0.16, segments=6)
@@ -317,6 +334,8 @@ def build_lounge_suite(mats):
     add_book(root, mats, "LoungeBookOne", (-0.2, -1.1, 0.61), (0.4, 0.045, 0.28), "blue", (0, 0, -0.08))
     add_book(root, mats, "LoungeBookTwo", (-0.14, -1.1, 0.67), (0.34, 0.04, 0.24), "paper", (0, 0, 0.05))
     add_ceramic(root, mats, "LoungeCup", (0.46, -1.1, 0.68), 0.72, "ceramic")
+    torus("LoungeCupHandle", 0.055, 0.011, (0.53, -1.1, 0.69), mats["ceramic"], root, rotation=(math.pi / 2, 0, 0), major_segments=18, minor_segments=6)
+    rounded_box("LoungeBookmark", (0.035, 0.012, 0.2), (-0.12, -1.1, 0.7), mats["coral"], root, 0.008, (0, 0, 0.05), 2)
 
     # Side bookshelf gives the lounge a real back/side silhouette in orbit.
     rounded_box("LoungeBookcaseBack", (0.95, 0.18, 1.65), (1.72, 0.24, 0.9), mats["deep_teal"], root, 0.06)
@@ -398,7 +417,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v1",
+        "contract": "mirrorlife-civic-hero-props-v2",
         "worldUnitMeters": 1,
         "assets": {},
     }
