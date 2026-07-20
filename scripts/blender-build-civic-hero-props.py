@@ -76,8 +76,8 @@ def materials():
     return {
         "ivory": material("Civic plaster ivory", PALETTE["ivory"], 0.94),
         "paper": material("Civic paper", PALETTE["paper"], 0.92),
-        "oak": material("Civic oak", PALETTE["oak"], 0.62),
-        "walnut": material("Civic walnut", PALETTE["walnut"], 0.7),
+        "oak": material("Civic oak", PALETTE["oak"], 0.54),
+        "walnut": material("Civic walnut", PALETTE["walnut"], 0.66),
         "cork": material("Civic cork", PALETTE["cork"], 0.88),
         "coral": material("Civic coral paint", PALETTE["coral"], 0.7),
         "teal": material("Civic teal textile", PALETTE["teal"], 0.9),
@@ -88,7 +88,11 @@ def materials():
         "blue": material("Civic cornflower paper", PALETTE["blue"], 0.86),
         "brass": material("Civic brushed brass", PALETTE["brass"], 0.3, 0.7),
         "ink": material("Civic ink", PALETTE["ink"], 0.74),
-        "ceramic": material("Civic warm ceramic", PALETTE["ceramic"], 0.46),
+        "ceramic": material("Civic warm ceramic", PALETTE["ceramic"], 0.34),
+        "ceramic_teal": material("Civic teal glaze", PALETTE["teal"], 0.29),
+        "ceramic_butter": material("Civic butter glaze", PALETTE["butter"], 0.31),
+        "ceramic_coral": material("Civic coral glaze", PALETTE["coral"], 0.32),
+        "ceramic_blue": material("Civic blue glaze", PALETTE["blue"], 0.3),
         "glass": material("Civic display glass", PALETTE["glass"], 0.18, 0.0, 0.28),
     }
 
@@ -182,6 +186,20 @@ def add_book(parent, mats, name, location, size=(0.18, 0.05, 0.26), color="blue"
     rounded_box(name, size, location, mats[color], parent, 0.012, rotation, 2)
     rounded_box(f"{name}_pages", (size[0] * 0.88, size[1] * 0.68, size[2] * 0.92),
                 (location[0], location[1] - 0.004, location[2] - 0.006), mats["paper"], parent, 0.008, rotation, 2)
+    # A narrow inset and brass foil mark keep books from collapsing into
+    # anonymous coloured blocks after the room is viewed from gameplay range.
+    rounded_box(
+        f"{name}_spine_inset",
+        (size[0] * 0.12, size[1] * 1.08, size[2] * 0.76),
+        (location[0] - size[0] * 0.37, location[1] - 0.006, location[2]),
+        mats["walnut"], parent, 0.006, rotation, 1,
+    )
+    rounded_box(
+        f"{name}_foil",
+        (size[0] * 0.07, size[1] * 1.14, size[2] * 0.08),
+        (location[0] - size[0] * 0.37, location[1] - 0.009, location[2] + size[2] * 0.19),
+        mats["brass"], parent, 0.004, rotation, 1,
+    )
 
 
 def add_plant(parent, mats, name, location, scale=1.0):
@@ -201,8 +219,12 @@ def add_plant(parent, mats, name, location, scale=1.0):
 
 
 def add_ceramic(parent, mats, name, location, scale=1.0, accent=None):
-    cylinder(f"{name}_body", 0.1 * scale, 0.2 * scale, location, mats[accent or "ceramic"], parent, 22, radius_top=0.075 * scale)
-    torus(f"{name}_rim", 0.072 * scale, 0.012 * scale, (location[0], location[1], location[2] + 0.105 * scale), mats["brass"] if accent else mats["ceramic"], parent)
+    glaze_key = f"ceramic_{accent}" if accent in ("teal", "butter", "coral", "blue") else "ceramic"
+    glaze = mats[glaze_key]
+    cylinder(f"{name}_body", 0.1 * scale, 0.2 * scale, location, glaze, parent, 22, radius_top=0.075 * scale)
+    torus(f"{name}_rim", 0.072 * scale, 0.012 * scale, (location[0], location[1], location[2] + 0.105 * scale), mats["brass"] if accent else glaze, parent)
+    torus(f"{name}_glaze_band", 0.086 * scale, 0.009 * scale, (location[0], location[1], location[2] + 0.02 * scale), mats["brass"] if accent else mats["oak"], parent, major_segments=20, minor_segments=6)
+    cylinder(f"{name}_foot", 0.062 * scale, 0.026 * scale, (location[0], location[1], location[2] - 0.112 * scale), mats["walnut"], parent, 18, radius_top=0.068 * scale)
 
 
 def build_display_case(mats):
@@ -225,9 +247,12 @@ def build_display_case(mats):
     for x in (-0.86, 0.86):
         rounded_box(f"DisplayPost_{x}", (0.07, 0.07, 0.7), (x, -0.3, 1.14), mats["walnut"], root, 0.025)
     rounded_box("DisplayFrontGlass", (1.68, 0.026, 0.58), (0, -0.345, 1.16), mats["glass"], root, 0.012)
+    for x in (-0.28, 0.28):
+        rounded_box(f"DisplayGlassMullion_{x}", (0.028, 0.034, 0.62), (x, -0.36, 1.16), mats["brass"], root, 0.009)
     for x in (-0.84, 0.84):
         rounded_box(f"DisplaySideGlass_{x}", (0.026, 0.58, 0.58), (x, -0.01, 1.16), mats["glass"], root, 0.012)
     rounded_box("DisplayShelf", (1.68, 0.55, 0.035), (0, -0.02, 1.1), mats["glass"], root, 0.01)
+    rounded_box("DisplayShelfBrassRail", (1.68, 0.025, 0.025), (0, -0.31, 1.1), mats["brass"], root, 0.008)
 
     for index, x in enumerate((-0.55, -0.18, 0.2, 0.56)):
         rounded_box(f"DisplayTray_{index + 1}", (0.28, 0.35, 0.035), (x, -0.04, 0.87), mats["oak"], root, 0.025)
@@ -247,6 +272,8 @@ def build_display_case(mats):
         rounded_box(f"DisplayMenuLine_{row_index + 1}", (0.28 - row_index * 0.022, 0.012, 0.021), (-0.53, -0.1, z), mats["ink"], root, 0.006, (0.12, 0, 0), 1)
     rounded_box("DisplayMenuClip", (0.14, 0.025, 0.04), (-0.58, -0.1, 2.15), mats["brass"], root, 0.013, (0.12, 0, 0), 2)
     add_ceramic(root, mats, "DisplayTopVase", (0.53, -0.03, 1.66), 0.95)
+    rounded_box("DisplayStoryCard", (0.3, 0.028, 0.22), (0.08, -0.07, 1.68), mats["paper"], root, 0.026, (-0.08, 0.04, 0.03), 2)
+    rounded_box("DisplayStoryCardRule", (0.18, 0.012, 0.018), (0.08, -0.091, 1.7), mats["teal"], root, 0.005, (-0.08, 0.04, 0.03), 1)
     for index, angle in enumerate((-0.75, -0.24, 0.24, 0.78)):
         cylinder(f"DisplayFlowerStem_{index}", 0.009, 0.38 + index * 0.03, (0.53 + angle * 0.08, -0.03, 1.9), mats["leaf"], root, 7, (0, angle * 0.2, -angle * 0.24))
         sphere(f"DisplayFlower_{index}", (0.07, 0.07, 0.055), (0.53 + angle * 0.16, -0.03, 2.08 + index * 0.025), mats[("coral", "butter", "blue", "teal")[index]], root, 14, 9)
@@ -283,11 +310,15 @@ def build_notice_console(mats):
     # Console table and woven archive basket below the public wall.
     rounded_box("NoticeConsoleTop", (2.25, 0.52, 0.13), (0, 0, 0.93), mats["oak"], root, 0.055)
     rounded_box("NoticeConsoleApron", (1.95, 0.14, 0.16), (0, 0.12, 0.81), mats["walnut"], root, 0.035)
+    for side in (-1, 1):
+        rounded_box(f"NoticeDrawer_{side}", (0.72, 0.035, 0.24), (side * 0.45, -0.27, 0.8), mats["oak"], root, 0.028)
+        cylinder(f"NoticeDrawerPull_{side}", 0.026, 0.045, (side * 0.45, -0.304, 0.8), mats["brass"], root, 14, (math.pi / 2, 0, 0))
     for x in (-0.9, 0.9):
         cylinder(f"NoticeConsoleLeg_{x}", 0.055, 0.8, (x, 0.08, 0.45), mats["walnut"], root, 16, radius_top=0.045)
     for index, x in enumerate((-0.64, -0.48, 0.38)):
         add_book(root, mats, f"NoticeBook_{index + 1}", (x, -0.08 + index * 0.015, 1.04 + index * 0.045), (0.28, 0.05, 0.2), ("teal", "paper", "blue")[index], (0, 0, (index - 1) * 0.04))
     add_plant(root, mats, "NoticePlant", (0.72, 0, 1.05), 0.72)
+    add_ceramic(root, mats, "NoticeWitnessCup", (0.34, -0.08, 1.05), 0.58, "teal")
     cylinder("NoticeBasketCore", 0.33, 0.5, (0, 0.05, 0.3), mats["cork"], root, 24, radius_top=0.38)
     for ring_index in range(7):
         torus(
@@ -324,6 +355,8 @@ def build_lounge_suite(mats):
         # upholstered planes from reading as featureless rounded boxes.
         rounded_box(f"LoungeSeatSeam_{side}", (0.76, 0.022, 0.02), (side * 0.5, -0.365, 0.6), mats["deep_teal"], root, 0.008, segments=2)
         rounded_box(f"LoungeBackSeam_{side}", (0.7, 0.018, 0.022), (side * 0.49, 0.058, 0.98), mats["teal"], root, 0.008, (0.05, 0, 0), 2)
+        cylinder(f"LoungeSeatPiping_{side}", 0.012, 0.76, (side * 0.5, -0.372, 0.66), mats["sage"], root, 10, (0, math.pi / 2, 0))
+        cylinder(f"LoungeBackPiping_{side}", 0.011, 0.69, (side * 0.49, 0.053, 1.08), mats["butter"], root, 10, (0, math.pi / 2, 0))
         sphere(f"LoungeBackTuft_{side}", (0.035, 0.018, 0.035), (side * 0.49, 0.055, 0.94), mats["deep_teal"], root, 14, 8)
     for x in (-1.02, 1.02):
         rounded_box(f"LoungeArm_{x}", (0.15, 0.76, 0.72), (x, 0.02, 0.62), mats["oak"], root, 0.055)
@@ -342,7 +375,7 @@ def build_lounge_suite(mats):
         cylinder(f"LoungeCoffeeLeg_{x}", 0.055, 0.43, (x, -1.1, 0.25), mats["walnut"], root, 14, radius_top=0.045)
     add_book(root, mats, "LoungeBookOne", (-0.2, -1.1, 0.61), (0.4, 0.045, 0.28), "blue", (0, 0, -0.08))
     add_book(root, mats, "LoungeBookTwo", (-0.14, -1.1, 0.67), (0.34, 0.04, 0.24), "paper", (0, 0, 0.05))
-    add_ceramic(root, mats, "LoungeCup", (0.46, -1.1, 0.68), 0.72, "ceramic")
+    add_ceramic(root, mats, "LoungeCup", (0.46, -1.1, 0.68), 0.72, "teal")
     torus("LoungeCupHandle", 0.055, 0.011, (0.53, -1.1, 0.69), mats["ceramic"], root, rotation=(math.pi / 2, 0, 0), major_segments=18, minor_segments=6)
     rounded_box("LoungeBookmark", (0.035, 0.012, 0.2), (-0.12, -1.1, 0.7), mats["coral"], root, 0.008, (0, 0, 0.05), 2)
 
@@ -426,7 +459,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v3",
+        "contract": "mirrorlife-civic-hero-props-v4",
         "worldUnitMeters": 1,
         "assets": {},
     }

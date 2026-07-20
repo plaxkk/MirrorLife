@@ -76,7 +76,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.08, fill: 0.4, hemi: 0.36, bounce: 0.66, wash: 0.78, exposure: 0.82, keyColor: "#ffd6a5", fillColor: "#b4d4d0" },
+  "civic-ivory": { key: 2.02, fill: 0.46, hemi: 0.42, bounce: 0.82, wash: 0.9, exposure: 0.84, keyColor: "#ffd6a5", fillColor: "#b4d4d0" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -678,7 +678,11 @@ function geometryWithSolidVertexColor(node) {
   const roughness = new Float32Array(count);
   const metalness = new Float32Array(count);
   const sourceRoughness = Math.max(0.16, Math.min(1, Number(node.material?.roughness ?? 0.76)));
-  const sourceMetalness = Math.max(0, Math.min(0.18, Number(node.material?.metalness ?? 0.01)));
+  // Preserve authored brass and metal accents. The old 0.18 ceiling made
+  // every exported surface read as painted plastic after batching, even when
+  // Blender supplied a deliberately metallic material. Vertex attributes
+  // retain that hierarchy without adding another draw call.
+  const sourceMetalness = Math.max(0, Math.min(0.82, Number(node.material?.metalness ?? 0.01)));
   for (let index = 0; index < count; index += 1) {
     colors[index * 3] = color.r;
     colors[index * 3 + 1] = color.g;
@@ -735,10 +739,10 @@ function createVertexSurfaceMaterial(options = {}) {
       .replace(
         "#include <metalnessmap_fragment>",
         `#include <metalnessmap_fragment>
-        metalnessFactor = clamp(vSurfaceMetalness, 0.0, 0.18);`
+        metalnessFactor = clamp(vSurfaceMetalness, 0.0, 0.82);`
       );
   };
-  material.customProgramCacheKey = () => "mirrorlife-vertex-surface-v1";
+  material.customProgramCacheKey = () => "mirrorlife-vertex-surface-v2";
   return material;
 }
 
@@ -1296,7 +1300,7 @@ function applyLightingPreset(theme = {}) {
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.72 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {

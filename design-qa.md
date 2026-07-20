@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v70 material hierarchy and authored environment-craft gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v70/desktop-yaw-0-1672x941-v70.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v70.jpg` for the reverse room and full-volume asset check.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v70/reference-vs-v70-full.png` and `reference-vs-v70-cast-focus.png`, with the source on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v70/mobile-yaw-0-390x844-v70.jpg` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v69 P1 / material hierarchy flattened after batching] Semantic-model batching now preserves authored metalness up to `0.82` instead of clipping every object to `0.18`. Brass inlays, pulls, rims and mullions retain their Blender-authored response in one draw call, while timber, paper, ceramics and fabric keep their existing per-vertex roughness.
+- [fixed / generic display-case silhouette] The foreground display gains brass glass mullions and shelf rail, a readable witness card and richer glazed-vessel construction. These are exported meshes with reverse-view depth, not decals or screen-space decoration.
+- [fixed / anonymous notice-console table] The proposal wall console gains inset drawers, brass pulls, a teal witness cup and books with spine insets and foil marks. The desk, basket and public papers now read as one authored civic record station rather than a template table under a board.
+- [fixed / featureless lounge upholstery and shelf blocks] Seat/back piping now catches the side light, ceramics use distinct glazed materials and every shelf book has page, spine and foil hierarchy. The lounge remains a functional two-seat conversation zone while carrying more of the source's domestic specificity.
+- [fixed / cool, isolated direct lighting] The civic preset now lifts hemisphere, fill, portal wash, warm bounce and environment contribution while slightly reducing the hard key. The comparison shows softer room integration and more legible reflective accents without washing out the cast.
+- [checked / embodied movement and orbit] Local Chrome moved the physical player `3.97m`, observed the authored locomotion contract and rotated the weighted follow camera `65.3°`. The `180°` frame confirms back/side surfaces, furniture depth and material response around the full orbit.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `150` draw calls / `279,008` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `159` draw calls / `292,452` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `106` draw calls / `242,428` triangles, below the `110 / 250,000` gate with three actors, one authored lounge asset and all touch controls visible.
+- Hero-prop contract: `mirrorlife-civic-hero-props-v4` passes at `34,332` aggregate triangles: display case `8,988`, notice console `9,784`, lounge suite `15,560`.
+- Character contract remains `mirrorlife-civic-sculpt-v9` / `mirrorlife-civic-clips-v3`, four roles and `6.84 MB` total.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The result remains a live metre-based Y-up room with Rapier collision, keyboard/touch locomotion, authored animation, player-follow framing and drag orbit. All visual changes are real 3D scene content.
+- [checked][spacing/layout rhythm] Foreground civic records frame the four-person listening circle; the proposal wall, display cabinet and lounge create a functional background. Added craft stays on room edges and preserves the `1.5m` clear story centre.
+- [checked][colors/tokens] Warm ivory remains the dominant field; teal/coral identify social roles; brass is reserved for evidence, joinery and navigation. New glazes and foil marks reuse the existing palette rather than introducing unrelated colour noise.
+- [checked][material hierarchy] Brass, timber, paper, high-roughness textile and glazed ceramic now retain materially distinct surface parameters through runtime batching. Glass remains separately transparent and double-sided.
+- [checked][image and asset quality for this iteration] Mullions, rails, drawers, pulls, book bindings, ceramic feet/bands and upholstery piping are authored mesh parts with actual lighting, occlusion and reverse-view evidence.
+- [checked][responsiveness/accessibility] At `390 × 844`, no horizontal overflow occurs; joystick, chat, jump, contextual action and four social actions remain visible under the mobile draw/triangle caps.
+- [P1][production character deformation] v69 proportions remain improved, but hands, facial deformation, strand grouping, garment tension and foot-to-ground compression are still visibly simpler than the source cast.
+- [P1][environment uniqueness beyond hero assets] The three highest-salience furniture groups are now substantially richer, but wall plaster breakup, built-in joinery, portal landscaping, ceramics and paper storytelling across the entire room remain less bespoke than the source.
+- [P1][indirect-light realism] The softer fill and restored metalness improve integration, but the source still has more natural skin subsurface response, portal bounce, contact-shadow scale separation and localized roughness/wear.
+- [P2][HUD optical finish] Responsive controls work, but icon drawing, type weight, translucent depth and compact spacing remain less optically refined than the reference HUD.
+
+### Gate result
+
+This iteration fixes the environment's most visible material-flattening defect and adds meaningful authored craft to all three hero furniture groups while preserving movement, collision, orbit and strict desktop/mobile budgets. The paired canvas still exposes actionable P1 character deformation, whole-room uniqueness and indirect-light differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production hand/face/cloth deformation, broader whole-room authored craftsmanship and more natural indirect light/material response remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v69 editorial framing, proportion and cloth-form gate
 
 ### Evidence inspected together
