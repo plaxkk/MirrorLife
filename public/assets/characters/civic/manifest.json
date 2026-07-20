@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v19",
+  "sculptContract": "mirrorlife-civic-sculpt-v20",
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
     "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -31,11 +31,33 @@
       "listener",
       "facilitator",
       "mediator"
+    ],
+    "morphContract": "mirrorlife-civic-face-morph-v1",
+    "morphs": [
+      "WarmSmile",
+      "SpeechJaw",
+      "Concern",
+      "Attentive",
+      "Blink"
+    ]
+  },
+  "handContract": {
+    "version": "mirrorlife-civic-hand-v1",
+    "pivots": [
+      "Hand_-1",
+      "Hand_1"
+    ],
+    "poseStyles": [
+      "relaxed",
+      "soft-cup",
+      "notebook-grip",
+      "thoughtful",
+      "open"
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v6",
-    "runtime": "authored-keyframe-blend+continuous-skin",
+    "version": "mirrorlife-civic-clips-v7",
+    "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
     "clips": [
       "idle",
       "walk",

@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v19", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v20", "civic character sculpt contract is stale");
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -31,8 +31,12 @@ assert.equal(manifest.faceDecal?.contract, "mirrorlife-civic-face-decal-v1", "ci
 assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face decal path is invalid");
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
+assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v1", "civic facial morph contract is stale");
+assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"], "civic facial morph set changed");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v1", "civic hand contract is stale");
+assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
-assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin", "civic animation runtime contract changed");
+assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin+facial-hand-acting", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
 assert.equal(manifest.worldUnitMeters, 1, "civic characters must use one world unit per metre");
 assert.equal(manifest.heightMeters, 1.72, "civic character height contract changed");
@@ -48,7 +52,7 @@ for (const clipName of manifest.animationContract.clips) {
   assert.equal(clip.keys.at(-1)[0], 1, `${clipName}: final authored key must end at one`);
   const sampled = sampleCivicAnimationPose(clipName, 0.37, "listener");
   assert(Number.isFinite(sampled.rootY), `${clipName}: root motion is invalid`);
-  ["visual", "headGroup", "leftArm", "rightArm", "leftLeg", "rightLeg"].forEach((track) => {
+  ["visual", "headGroup", "leftArm", "rightArm", "leftHand", "rightHand", "leftLeg", "rightLeg"].forEach((track) => {
     assert.equal(sampled[track].length, 3, `${clipName}: ${track} track is incomplete`);
     assert(sampled[track].every(Number.isFinite), `${clipName}: ${track} contains a non-finite key`);
   });
@@ -113,6 +117,10 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("Attentive")), `${role}: attentive face morph is missing`);
   assert(contents.includes(Buffer.from("LeftElbowPivot")), `${role}: left elbow articulation is missing`);
   assert(contents.includes(Buffer.from("RightElbowPivot")), `${role}: right elbow articulation is missing`);
+  assert(contents.includes(Buffer.from("Hand_-1")), `${role}: left wrist articulation is missing`);
+  assert(contents.includes(Buffer.from("Hand_1")), `${role}: right wrist articulation is missing`);
+  assert(contents.includes(Buffer.from("FingerPivot_-1_4")), `${role}: left finger grip pivot is missing`);
+  assert(contents.includes(Buffer.from("FingerPivot_1_4")), `${role}: right finger grip pivot is missing`);
   assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
   assert(contents.includes(Buffer.from("FingerCrease_-1_3")), `${role}: left sculpted-hand finger separation is missing`);

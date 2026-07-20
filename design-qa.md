@@ -1,5 +1,59 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v85 facial morphs, independent hands and action-driven acting gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/civic-fidelity-v85/desktop-yaw-0-1672x941-v85-final.png` (`1672 × 941`, `public-plaza`, ready listening-circle state).
+- Full-view same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v85/reference-vs-v85-final.png`; source and implementation use the same viewport and equivalent opening social state.
+- Focused cast comparison: `dist/interior-3d-work/civic-fidelity-v85/reference-vs-v85-cast-final.png`. This crop is required because eyelid/jaw response, wrist posture, finger silhouette, cloth construction and contact posing are not reliable at full-room scale.
+- Interaction evidence: `dist/interior-3d-work/civic-fidelity-v85/desktop-suggest-1672x941-v85.png`; selecting “提出建议” visibly changes the player from idle to a two-arm speaking gesture and puts the witnesses into listening poses.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v85/mobile-yaw-0-390x844-v85-final.png` and `walk-stride-1280x720.png`.
+- Primary interactions tested in the in-app browser and local Chrome regression: social-action selection, authored speech/gesture state, facial speech morph, independent wrist acting, physical WASD locomotion (`5.43m`), drag orbit (`65.3°`), contextual interaction visibility and mobile controls. Browser logs contained Vite connection debug entries only; no runtime warning/error was emitted.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v84 P1 / static facial print] The curved role-identity face now exposes five real position morphs: `WarmSmile`, `SpeechJaw`, `Concern`, `Attentive` and `Blink`. Runtime gaze, blinking, listening and speech drive those morphs instead of swapping a flat sprite.
+- [fixed from v84 P1 / mitten-like hand block] Every character now has independent wrist, palm, thumb and finger pivots. Relaxed, open, soft-cup, notebook-grip and thoughtful profiles produce role-specific silhouettes; the mediator's hand approaches the chin and the facilitator cups the notebook.
+- [fixed / action rail did not animate the scene] “倾听线索 / 提出建议 / 引导对话” now stage deterministic temporary acting beats. The selected action controls the speaker, listener poses, speech jaw and wrist animation while preserving movement priority and persistent world-state ownership.
+- [fixed / uniformly empty central floor] A restrained daylight-dapple layer adds localized leaf shadow and warm light pools across the hearing ring without creating a collider or false interaction surface.
+- [checked / motion and physical contracts remain synchronized] Character animation advances to v7 while keeping continuous skin v1 and metre-scale collider parity. The verifier confirms real stride deformation, morph convergence, independent wrist rotation, action-driven gesture/speech and full return to idle.
+
+### Runtime and regression evidence
+
+- Desktop public-room sample remains within the strict hero-room budget at approximately `142` draw calls / `230,118` triangles for four actors.
+- Mobile `390 × 844` remains within the mobile gate at approximately `108` draw calls / `211,600` triangles for three actors; core controls and the social-action rail remain visible.
+- Civic character assets total `5.79MB`: player `28,900`, listener `24,784`, facilitator `28,954`, mediator `27,042` triangles; every role remains below the `35,000`-triangle cap.
+- All `26` physics profiles passed. Desktop/mobile scene flow passed. All `78` enter/exit transitions completed through only `loading → ready`, with no failure or runtime error. Production build passed with the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts/typography] Chinese status, place-memory, contextual and action labels are legible on desktop/mobile. The implementation still uses heavier, smaller and more segmented chrome than the source's calmer editorial UI; this remains P2.
+- [checked][spacing/layout rhythm] Entrance, record station, hearing ring, evidence wall and side lounge form a complete foreground/middle/background path. The source still has substantially finer negative-space control, smaller cast scale, richer foreground overlap and a calmer pullback.
+- [checked][colors/tokens] Ivory, oak, teal, coral, paper, terrazzo and brass remain source-aligned. Daylight dappling improves hierarchy, but the implementation still lacks the source's localized bounce and controlled material-to-material value separation.
+- [checked][image and asset quality] Citizens are real lit/skinned geometry with full front/side/back volume, facial morphs and articulated hands. The focused comparison still exposes much simpler face topology, hair clumping, fingers, garment folds, footwear and hand-to-prop contact than the source.
+- [checked][copy/content] App-specific story and social-action copy remains coherent; no fake resident count, public percentage or source text was injected to imitate the reference.
+- [checked][responsiveness/accessibility] At `390 × 844`, player, witnesses, objective, joystick, chat/jump, contextual action and all four civic actions remain reachable without clipping; keyboard movement and semantic buttons remain active.
+- [P1][character production topology and cloth correctives] Location: all four civic actors. Evidence: v85 adds actual facial and hand articulation, but the focused pair shows planar cheeks, compressed eye/mouth topology, coarse hair masses, simplified fingers and straight garment tubes beside the source's sculpted eyelids, cheeks, knuckles, folds and layered clothing. Impact: close social acting still reads as prototype-grade. Fix: replace the decal-dominant face with an integrated facial mesh, add corrective eyelid/cheek/jaw shapes, improve finger topology and contact poses, and add shoulder/elbow/hip/knee garment correctives.
+- [P1][bespoke furniture craft and local light transport] Location: full civic room. Evidence: the implementation matches the room program and palette, but cabinetry, upholstery, papers, ceramics, doorway joinery, roughness breakup, bounce light and contact penumbrae remain visibly simpler and more modular. Impact: the environment remains one production tier below the visual target. Fix: rebuild the threshold, lounge and remaining casework as authored hero assets; add baked/probe local bounce and object-specific roughness/normal variation within the current budget.
+- [P2][opening camera and HUD optical finish] Location: desktop opening and persistent controls. Evidence: the implementation crops furniture more aggressively, makes the cast larger and uses dark segmented surfaces; the source presents a calmer editorial overview and lighter integrated controls. Impact: UI and low-detail facial geometry compete with the story tableau. Fix: after the production asset pass, reduce cast screen height, pull back the authored opening camera slightly and consolidate status/action surfaces with consistent icon weights.
+
+### Implementation checklist
+
+1. Build integrated facial topology and cloth correctives on the existing shared skeleton; preserve the v7 state/morph contract.
+2. Add higher-fidelity fingers and authored hand-to-notebook/chin/contact poses.
+3. Rebuild the remaining threshold, cabinetry and lounge hero assets; add local bounce, contact shadows and per-material roughness breakup.
+4. Retune the opening camera and HUD after asset fidelity improves, then repeat the identical-canvas desktop/mobile QA.
+
+### Gate result
+
+This iteration closes the static-face, mitten-hand and non-reactive-action blockers while preserving real movement, full orbit, physics parity, atomic transitions and performance. The identical-canvas comparison still contains actionable P1 character-topology/cloth and bespoke-environment/lighting gaps, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: integrated production facial/cloth topology and a fully bespoke, locally lit environment pass remain visible P1 differences against the source.
+
 ## 2026-07-20 reference-fidelity v84 continuous armature skinning and physical-stride gate
 
 ### Evidence inspected together

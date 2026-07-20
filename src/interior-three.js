@@ -1192,7 +1192,7 @@ function getCivicDappleTexture() {
       rx * size,
       ry * size,
       rotation,
-      "rgba(255,232,177,0.5)",
+      "rgba(255,232,177,0.62)",
       "rgba(255,232,177,0)"
     );
   });
@@ -1212,7 +1212,7 @@ function getCivicDappleTexture() {
       radius * (0.72 + random() * 0.66),
       radius * (0.44 + random() * 0.34),
       (random() - 0.5) * 1.8,
-      "rgba(72,83,55,0.16)",
+      "rgba(72,83,55,0.2)",
       "rgba(72,83,55,0)"
     );
   }
@@ -3754,11 +3754,11 @@ function addCivicReferenceDressing(theme, colors) {
   const dappleTexture = getCivicDappleTexture();
   if (dappleTexture) {
     const dapple = new THREE.Mesh(
-      new THREE.PlaneGeometry(6.2, 4.25),
+      new THREE.PlaneGeometry(7.4, 5.1),
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.76,
+        opacity: theme.night ? 0.1 : 0.84,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -3766,8 +3766,8 @@ function addCivicReferenceDressing(theme, colors) {
     );
     dapple.name = "civic-window-dapple";
     dapple.rotation.x = -Math.PI / 2;
-    dapple.rotation.z = -0.32;
-    dapple.position.set(-1.08, 0.058, -0.42);
+    dapple.rotation.z = -0.18;
+    dapple.position.set(-0.55, 0.062, -0.18);
     dapple.renderOrder = 1;
     dapple.castShadow = false;
     dapple.receiveShadow = false;
@@ -5280,7 +5280,7 @@ function createCivicFaceDecal(role = "player") {
   if (!texture) return null;
   const width = 0.35;
   const height = 0.285;
-  const geometry = new THREE.PlaneGeometry(width, height, 18, 12);
+  const geometry = new THREE.PlaneGeometry(width, height, 36, 24);
   const positions = geometry.attributes.position;
   for (let index = 0; index < positions.count; index += 1) {
     const x = positions.getX(index);
@@ -5289,6 +5289,66 @@ function createCivicFaceDecal(role = "player") {
     positions.setXYZ(index, x, y, Math.sqrt(ellipse) * 0.196 + 0.0045);
   }
   positions.needsUpdate = true;
+  geometry.morphTargetsRelative = true;
+  const morphDefinitions = [
+    {
+      name: "WarmSmile",
+      deform(x, y) {
+        const mouth = Math.max(0, 1 - Math.abs(y + 0.078) / 0.052) * Math.max(0, 1 - Math.abs(x) / 0.145);
+        const cheek = Math.max(0, 1 - Math.abs(y + 0.012) / 0.065) * Math.max(0, 1 - Math.abs(Math.abs(x) - 0.095) / 0.07);
+        const cornerLift = mouth * Math.pow(Math.min(1, Math.abs(x) / 0.11), 1.35);
+        return [Math.sign(x) * cheek * 0.0018, cornerLift * 0.014 - mouth * 0.0025, cheek * 0.0035];
+      }
+    },
+    {
+      name: "SpeechJaw",
+      deform(x, y) {
+        const lowerFace = Math.max(0, Math.min(1, (-y - 0.02) / 0.105)) * Math.max(0, 1 - Math.abs(x) / 0.17);
+        const mouth = Math.max(0, 1 - Math.abs(y + 0.078) / 0.05) * Math.max(0, 1 - Math.abs(x) / 0.12);
+        return [-x * lowerFace * 0.014, -lowerFace * 0.009 - mouth * 0.009, mouth * 0.0045];
+      }
+    },
+    {
+      name: "Concern",
+      deform(x, y) {
+        const brow = Math.max(0, 1 - Math.abs(y - 0.073) / 0.045) * Math.max(0, 1 - Math.abs(x) / 0.15);
+        const inner = Math.max(0, 1 - Math.abs(x) / 0.075);
+        const mouth = Math.max(0, 1 - Math.abs(y + 0.08) / 0.045) * Math.max(0, 1 - Math.abs(x) / 0.13);
+        const corner = Math.pow(Math.min(1, Math.abs(x) / 0.11), 1.3);
+        return [0, brow * (inner * 0.011 - (1 - inner) * 0.004) - mouth * corner * 0.005, brow * 0.0018];
+      }
+    },
+    {
+      name: "Attentive",
+      deform(x, y) {
+        const eyeBand = Math.max(0, 1 - Math.abs(y - 0.018) / 0.06);
+        const eyePair = Math.max(0, 1 - Math.abs(Math.abs(x) - 0.075) / 0.065);
+        const cheek = Math.max(0, 1 - Math.abs(y + 0.018) / 0.07) * eyePair;
+        return [Math.sign(x) * cheek * 0.0012, eyeBand * eyePair * 0.0045 + cheek * 0.003, cheek * 0.003];
+      }
+    },
+    {
+      name: "Blink",
+      deform(x, y) {
+        const eyeCenterY = 0.018;
+        const eyePair = Math.max(0, 1 - Math.abs(Math.abs(x) - 0.075) / 0.062);
+        const eyeBand = Math.max(0, 1 - Math.abs(y - eyeCenterY) / 0.052) * eyePair;
+        return [0, (eyeCenterY - y) * eyeBand * 0.82, eyeBand * 0.0008];
+      }
+    }
+  ];
+  geometry.morphAttributes.position = morphDefinitions.map(({ name, deform }) => {
+    const delta = new Float32Array(positions.count * 3);
+    for (let index = 0; index < positions.count; index += 1) {
+      const [dx, dy, dz] = deform(positions.getX(index), positions.getY(index));
+      delta[index * 3] = dx;
+      delta[index * 3 + 1] = dy;
+      delta[index * 3 + 2] = dz;
+    }
+    const attribute = new THREE.Float32BufferAttribute(delta, 3);
+    attribute.name = name;
+    return attribute;
+  });
   geometry.computeVertexNormals();
   const material = new THREE.MeshStandardMaterial({
     map: texture,
@@ -5312,11 +5372,13 @@ function createCivicFaceDecal(role = "player") {
   });
   material.envMapIntensity = 0.34;
   const decal = new THREE.Mesh(geometry, material);
+  decal.updateMorphTargets();
   decal.name = "CivicFaceDecal";
   decal.castShadow = false;
   decal.receiveShadow = false;
   decal.renderOrder = 2;
   decal.userData.mirrorLifeFaceDecal = true;
+  decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v1";
   return decal;
 }
 
@@ -6118,6 +6180,8 @@ function applyCivicAnimationPose(entry, animationPose) {
     "rightArm",
     "leftElbow",
     "rightElbow",
+    "leftHand",
+    "rightHand",
     "leftLeg",
     "rightLeg",
     "leftKnee",
@@ -6169,6 +6233,8 @@ function createCivicActorObject(actor, asset) {
   const rightArm = visual?.getObjectByName("RightArmPivot");
   const leftElbow = leftArm?.getObjectByName("LeftElbowPivot");
   const rightElbow = rightArm?.getObjectByName("RightElbowPivot");
+  const leftHand = leftElbow?.getObjectByName("Hand_-1") || null;
+  const rightHand = rightElbow?.getObjectByName("Hand_1") || null;
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
   const rightLeg = visual?.getObjectByName("RightLegPivot");
   const leftKnee = leftLeg?.getObjectByName("LeftKneePivot");
@@ -6207,7 +6273,7 @@ function createCivicActorObject(actor, asset) {
   assetScene.traverse((node) => {
     if (node.isSkinnedMesh) skinnedMeshes.push(node);
   });
-  if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
+  if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftHand || !rightHand || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
   }
@@ -6356,9 +6422,15 @@ function createCivicActorObject(actor, asset) {
   mergeActorVertexColorMeshes(rightArm, [rightElbow], { roughness: 0.67, envMapIntensity: 0.72 });
   mergeActorVertexColorMeshes(leftLeg, [leftKnee], { roughness: 0.67, envMapIntensity: 0.72 });
   mergeActorVertexColorMeshes(rightLeg, [rightKnee], { roughness: 0.67, envMapIntensity: 0.72 });
-  [leftElbow, rightElbow, leftKnee, rightKnee].forEach((limb) => {
+  mergeActorVertexColorMeshes(leftElbow, fullExpressionLod ? [leftHand] : [], { roughness: 0.67, envMapIntensity: 0.72 });
+  mergeActorVertexColorMeshes(rightElbow, fullExpressionLod ? [rightHand] : [], { roughness: 0.67, envMapIntensity: 0.72 });
+  [leftKnee, rightKnee].forEach((limb) => {
     mergeActorVertexColorMeshes(limb, [], { roughness: 0.67, envMapIntensity: 0.72 });
   });
+  if (fullExpressionLod) {
+    mergeActorVertexColorMeshes(leftHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
+    mergeActorVertexColorMeshes(rightHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
+  }
   const retainedMaterials = new Set();
   assetScene.traverse((node) => {
     if (!node.isMesh) return;
@@ -6402,6 +6474,8 @@ function createCivicActorObject(actor, asset) {
     rightArm,
     leftElbow,
     rightElbow,
+    leftHand: fullExpressionLod ? leftHand : null,
+    rightHand: fullExpressionLod ? rightHand : null,
     leftLeg,
     rightLeg,
     leftKnee,
@@ -6549,11 +6623,12 @@ function updateActors(actors = [], now = performance.now()) {
     const attentiveInfluenceForFeatures = Number.isInteger(attentiveIndexForFeatures)
       ? THREE.MathUtils.clamp(Number(smileInfluences?.[attentiveIndexForFeatures] || 0), 0, 1)
       : 0;
+    const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
+    const blinkScale = blinkCycle > 4.58
+      ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
+      : 1;
+    const blinkInfluence = 1 - blinkScale;
     if (entry.eyePivots?.length) {
-      const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
-      const blinkScale = blinkCycle > 4.58
-        ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
-        : 1;
       entry.eyePivots.forEach((eyePivot, eyeIndex) => {
         // A warm expression slightly compresses the lower/upper lid stack.
         // Keeping this coupled to the real facial morph makes the smile read
@@ -6645,6 +6720,21 @@ function updateActors(actors = [], now = performance.now()) {
           0.13
         );
       }
+    }
+    if (entry.faceDecal?.morphTargetDictionary && entry.faceDecal?.morphTargetInfluences) {
+      const decalDictionary = entry.faceDecal.morphTargetDictionary;
+      const decalInfluences = entry.faceDecal.morphTargetInfluences;
+      ["WarmSmile", "SpeechJaw", "Concern", "Attentive"].forEach((morphName) => {
+        const decalIndex = decalDictionary[morphName];
+        if (!Number.isInteger(decalIndex)) return;
+        const sourceIndex = entry.faceMorphMesh?.morphTargetDictionary?.[morphName];
+        const sourceInfluence = Number.isInteger(sourceIndex)
+          ? Number(entry.faceMorphMesh.morphTargetInfluences?.[sourceIndex] || 0)
+          : 0;
+        decalInfluences[decalIndex] = sourceInfluence;
+      });
+      const blinkIndex = decalDictionary.Blink;
+      if (Number.isInteger(blinkIndex)) decalInfluences[blinkIndex] = blinkInfluence;
     }
     if (!animationPose) {
       if (actor.state === "jump") {
@@ -7292,6 +7382,19 @@ function getStats() {
         rightArmX: Number((entry.skinJoints?.rightArm?.deltaEuler.x || 0).toFixed(4)),
         leftLegX: Number((entry.skinJoints?.leftLeg?.deltaEuler.x || 0).toFixed(4)),
         rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
+      } : null,
+      hands: entry.leftHand && entry.rightHand ? {
+        version: "mirrorlife-civic-hand-v1",
+        leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
+        rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
+      } : null,
+      facial: entry.faceDecal?.morphTargetDictionary ? {
+        version: "mirrorlife-civic-face-morph-v1",
+        morphCount: Object.keys(entry.faceDecal.morphTargetDictionary).length,
+        smile: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.WarmSmile] || 0).toFixed(4)),
+        speech: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.SpeechJaw] || 0).toFixed(4)),
+        attentive: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.Attentive] || 0).toFixed(4)),
+        blink: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.Blink] || 0).toFixed(4))
       } : null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
         key,

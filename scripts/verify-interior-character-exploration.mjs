@@ -45,17 +45,55 @@ try {
     const stats = JSON.parse(document.querySelector("#interiorThreeLayer")?.dataset.renderStats || "{}");
     return stats.actors?.length === 4 && stats.actors.every((actor) => actor.assetRole && actor.assetRole !== "procedural");
   }, { timeout: 15000 });
+  await page.waitForFunction(() => {
+    const live = window.MirrorLifeInterior3D?.getStats?.();
+    const stored = JSON.parse(document.querySelector("#interiorThreeLayer")?.dataset.renderStats || "{}");
+    const actors = (live || stored)?.actors || [];
+    const witnesses = actors.filter((actor) => actor.assetRole !== "player");
+    const player = actors.find((actor) => actor.assetRole === "player");
+    return witnesses.length === 3
+      && witnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35)
+      && Number(player?.facial?.smile || 0) > 0.2;
+  }, { polling: 50, timeout: 2500 });
 
   const opening = await readStats(page);
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the authored curved facial identity atlas");
+  assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
+  assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic curved face morph set is incomplete");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v1"), "civic actors did not expose independent wrist acting");
+  const attentiveWitnesses = opening.actors.filter((actor) => actor.assetRole !== "player");
+  assert(attentiveWitnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35), "civic witness faces did not settle into attentive expression morphs");
+  assert(Number(opening.actors.find((actor) => actor.assetRole === "player")?.facial?.smile || 0) > 0.2, "player curved face did not receive the authored warm-smile morph");
+  const mediator = opening.actors.find((actor) => actor.assetRole === "mediator");
+  const facilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
+  assert(Math.abs(Number(mediator?.hands?.rightWristX || 0)) > 0.15, "mediator thoughtful wrist pose did not reach the runtime hand pivot");
+  assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = playerFrom(opening);
   assert(beforeMove, "player actor diagnostics are missing");
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v6", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v7", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");
+
+  await page.click('[data-civic-action="suggest"]');
+  await page.waitForFunction(() => {
+    const stats = window.MirrorLifeInterior3D?.getStats?.();
+    const player = stats?.actors?.find((actor) => actor.id === "player");
+    return player?.animation?.state === "gesture" && Number(player.facial?.speech || 0) > 0.18;
+  }, { polling: 50, timeout: 2500 });
+  const suggestionStats = await readStats(page);
+  const speakingPlayer = playerFrom(suggestionStats);
+  assert.equal(speakingPlayer?.animation?.state, "gesture", "suggest action did not trigger the authored player gesture clip");
+  assert(Number(speakingPlayer?.facial?.speech || 0) > 0.18, "suggest action did not drive the player's speech facial morph");
+  assert(suggestionStats.actors
+    .filter((actor) => actor.id !== "player")
+    .every((actor) => actor.animation?.state === "listen"), "suggest action did not settle the civic witnesses into listening poses");
+  await page.waitForFunction(() => {
+    const stats = window.MirrorLifeInterior3D?.getStats?.();
+    return stats?.actors?.find((actor) => actor.id === "player")?.animation?.state === "idle";
+  }, { polling: 80, timeout: 4200 });
 
   await page.keyboard.down("w");
   // A full civic frame can take longer than 90ms while the four GLBs and

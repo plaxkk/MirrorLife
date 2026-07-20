@@ -64,6 +64,7 @@ let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
 let interiorRunHeld = false;
 let interiorJoystick = { x: 0, z: 0, pointerId: null };
+let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
 let interiorPhysicsDebugVisible = new URLSearchParams(window.location.search).get("debugPhysics") === "1";
 let activeEncounters = [];
 let encounterCooldowns = {};
@@ -14025,6 +14026,8 @@ function exitInteriorView() {
   disposeInteriorRapierRuntime();
   interiorRunHeld = false;
   interiorJoystick = { x: 0, z: 0, pointerId: null };
+  interiorCivicActing = { action: "", startedAt: 0, until: 0 };
+  delete document.body.dataset.civicActing;
   window.__mirrorLifeInteriorPhysics = null;
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
@@ -14149,23 +14152,64 @@ function ensureInteriorCinematicActionRail(zone) {
       return;
     }
     if (action === "listen") {
+      startInteriorCivicActing("listen", 2600);
       if (interiorNearbyAnchor) exploreInteriorHotspot(interiorNearbyAnchor.index);
       else document.querySelector("#interiorJourneyPanel footer button, #interiorDiscoveryCard button")?.click();
       return;
     }
     if (action === "suggest") {
+      startInteriorCivicActing("suggest", 2900);
       interiorFocusPropIndex = 0;
       showToast("先走近居民提案台，让建议拥有具体的听众。", "listen");
-      markRenderActive(1400);
       return;
     }
     if (action === "guide") {
+      startInteriorCivicActing("guide", 2900);
       const ritual = getSocialParallaxRitual(zone.id);
       if (ritual && ritual.status !== "complete") focusSocialParallaxTarget();
       else document.querySelector("#interiorDiscoveryCard button, #interiorJourneyPanel footer button")?.click();
     }
   });
   document.getElementById("gameShell")?.appendChild(rail);
+}
+
+function startInteriorCivicActing(action, durationMs = 2800) {
+  if (interiorView?.zone?.id !== "public-plaza") return;
+  const now = performance.now();
+  interiorCivicActing = {
+    action: String(action || ""),
+    startedAt: now,
+    until: now + Math.max(900, Number(durationMs) || 2800)
+  };
+  const rail = document.getElementById("interiorCinematicActions");
+  rail?.querySelectorAll("[data-civic-action]").forEach((button) => {
+    button.classList.toggle("primary", button.dataset.civicAction === action);
+    button.setAttribute("aria-pressed", button.dataset.civicAction === action ? "true" : "false");
+  });
+  document.body.dataset.civicActing = String(action || "");
+  markRenderActive(durationMs + 500);
+}
+
+function getInteriorCivicActingState(role, baseState, now = performance.now()) {
+  const movementState = String(baseState || "idle");
+  if (["walking", "walk", "run", "jump", "fall"].includes(movementState)) return movementState;
+  if (interiorView?.zone?.id !== "public-plaza" || now >= Number(interiorCivicActing.until || 0)) {
+    if (interiorCivicActing.action) {
+      interiorCivicActing = { action: "", startedAt: 0, until: 0 };
+      delete document.body.dataset.civicActing;
+      const rail = document.getElementById("interiorCinematicActions");
+      rail?.querySelectorAll("[data-civic-action]").forEach((button) => {
+        button.classList.toggle("primary", button.dataset.civicAction === "listen");
+        button.setAttribute("aria-pressed", button.dataset.civicAction === "listen" ? "true" : "false");
+      });
+    }
+    return movementState;
+  }
+  const action = interiorCivicActing.action;
+  if (action === "suggest") return role === "player" ? "talking" : "listen";
+  if (action === "guide") return role === "facilitator" ? "talking" : "listen";
+  if (action === "listen") return role === "listener" ? "talking" : "listen";
+  return movementState;
 }
 
 // When the player walks in on their own, a couple of citizens are "already inside".
@@ -14593,7 +14637,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     worldZ: Number(interiorOrbit.z || 0),
     frame: getCitizenSpriteFrame(avatarCitizen),
     facing: Number(interiorOrbit.velocity?.x || 0) >= 0 ? 1 : -1,
-    state: interiorOrbit.motionState || "idle",
+    state: getInteriorCivicActingState("player", interiorOrbit.motionState || "idle", now),
     velocity: interiorOrbit.velocity || { x: 0, y: 0, z: 0 },
     grounded: interiorOrbit.grounded !== false,
     walkPhase: Number(interiorOrbit.walkPhase || 0),
@@ -14604,20 +14648,23 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   // listener, a coral-haired facilitator and a brunette civic mediator.
   const qaCivicFrames = [4, 2, 3];
   const qaCivicRoles = ["listener", "facilitator", "mediator"];
-  const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => ({
-    id: entry.id,
-    worldX: entry.worldX,
-    worldY: 0,
-    worldZ: entry.worldZ,
-    frame: isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
-      ? qaCivicFrames[entryIndex % qaCivicFrames.length]
-      : entry.frame,
-    facing: entry.facing,
-    state: entry.state,
-    walkPhase: entry.walkPhase,
-    civicRole: zone.id === "public-plaza" ? qaCivicRoles[entryIndex % qaCivicRoles.length] : "",
-    scale: entry.scale * civicActorScale
-  }))];
+  const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => {
+    const civicRole = zone.id === "public-plaza" ? qaCivicRoles[entryIndex % qaCivicRoles.length] : "";
+    return {
+      id: entry.id,
+      worldX: entry.worldX,
+      worldY: 0,
+      worldZ: entry.worldZ,
+      frame: isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
+        ? qaCivicFrames[entryIndex % qaCivicFrames.length]
+        : entry.frame,
+      facing: entry.facing,
+      state: getInteriorCivicActingState(civicRole, entry.state, now),
+      walkPhase: entry.walkPhase,
+      civicRole,
+      scale: entry.scale * civicActorScale
+    };
+  })];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
   const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);
   const useThreeModels = !!threeState?.ready && !!interiorRapierRuntime;

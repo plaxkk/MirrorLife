@@ -530,7 +530,7 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
     return obj
 
 
-def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 0), side=1):
+def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 0), side=1, pose_style="relaxed"):
     """Build an overlapping palm-and-finger hand for conversational acting.
 
     The v9 mitten removed gaps but also erased the finger silhouette visible
@@ -539,8 +539,11 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     pieces into one elbow draw, while the outer contour reads as a real hand
     from front, side and notebook-holding poses.
     """
+    hand_pivot = empty(name, parent, location, rotation)
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v1"
+    hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
-        name,
+        f"{name}Palm",
         0.105,
         (
             (0.5, 0.038, 0.028, 0, 0),
@@ -549,15 +552,22 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             (-0.26, 0.059, 0.037, -side * 0.004, -0.005),
             (-0.5, 0.052, 0.032, 0, -0.004),
         ),
-        location,
+        (0, 0, 0),
         mat,
-        parent,
-        rotation=rotation,
+        hand_pivot,
         # The hand occupies fewer than 30 px at the default story camera.
         # Sixteen radial sides keep the palm silhouette round while avoiding
         # spending full face-sculpt density on a tiny extremity.
         sides=16,
     )
+    pose_profiles = {
+        "relaxed": {"curl": 0.38, "splay": 1.0, "thumb": 0.34},
+        "open": {"curl": 0.12, "splay": 1.28, "thumb": 0.18},
+        "soft-cup": {"curl": 0.56, "splay": 0.72, "thumb": 0.5},
+        "notebook-grip": {"curl": 0.86, "splay": 0.42, "thumb": 0.72},
+        "thoughtful": {"curl": 0.64, "splay": 0.58, "thumb": 0.6},
+    }
+    profile = pose_profiles.get(pose_style, pose_profiles["relaxed"])
     finger_specs = (
         # x, length, radius, lateral splay and fingertip curl.  A small
         # fan-and-curl silhouette reads as a relaxed hand instead of four
@@ -568,6 +578,20 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         (0.038, 0.048, 0.0134, side * 0.0045, 0.01),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
+        finger_pivot = empty(
+            f"FingerPivot_{side}_{finger_index}",
+            hand_pivot,
+            (
+                finger_x,
+                -0.006,
+                -0.025,
+            ),
+            (
+                -profile["curl"] * (0.72 + finger_index * 0.055),
+                side * splay * profile["splay"] * 2.6,
+                -side * splay * profile["splay"] * 1.7,
+            ),
+        )
         organic_limb(
             f"FingerVolume_{side}_{finger_index}",
             finger_length,
@@ -577,10 +601,9 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
                 (-0.28, finger_radius * 0.9, finger_radius * 0.76, splay * 0.58, curl * 0.42),
                 (-0.5, finger_radius * 0.46, finger_radius * 0.42, splay, curl),
             ),
-            (location[0] + finger_x, location[1] - 0.006, location[2] - 0.025 - finger_length / 2),
+            (0, 0, -finger_length / 2),
             mat,
-            parent,
-            rotation=rotation,
+            finger_pivot,
             # Eight sides keep the fuller fingertip silhouette smooth in the
             # tighter social camera while remaining negligible in the budget.
             sides=8,
@@ -588,6 +611,16 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     # A tapered, two-joint thumb shares the palm volume and follows the same
     # relaxed curl.  Replacing the former isolated ellipsoid fixes the
     # ball-jointed silhouette in side and notebook-holding views.
+    thumb_pivot = empty(
+        f"ThumbPivot_{side}",
+        hand_pivot,
+        (-side * 0.04, -0.022, 0.004),
+        (
+            -0.18 - profile["thumb"] * 0.42,
+            side * (0.58 + profile["thumb"] * 0.32),
+            side * (0.34 + profile["thumb"] * 0.2),
+        ),
+    )
     organic_limb(
         f"ThumbVolume_{side}",
         0.075,
@@ -597,26 +630,25 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             (-0.26, 0.018, 0.014, -side * 0.011, 0.009),
             (-0.5, 0.009, 0.008, -side * 0.016, 0.014),
         ),
-        (location[0] - side * 0.04, location[1] - 0.022, location[2] + 0.004),
+        (0, 0, -0.032),
         mat,
-        parent,
-        rotation=(0.1, side * 0.78, side * 0.46),
+        thumb_pivot,
         sides=8,
     )
     for crease_index, crease_x in enumerate((-0.025, 0.0, 0.025), start=1):
         curve_tube(
             f"FingerCrease_{side}_{crease_index}",
             [
-                (location[0] + crease_x, location[1] - 0.039, location[2] - 0.026),
-                (location[0] + crease_x * 0.94, location[1] - 0.041, location[2] - 0.052),
+                (crease_x, -0.039, -0.026),
+                (crease_x * 0.94, -0.041, -0.052),
             ],
             0.0026,
             crease_mat,
-            parent,
+            hand_pivot,
             resolution=1,
             bevel_resolution=1,
         )
-    return hand
+    return hand_pivot
 
 
 def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
@@ -1248,13 +1280,27 @@ def build_body(role, config, mats, visual):
                 depth=0.006,
             )
         cylinder(f"Cuff_{side}", 0.055, 0.052, 0.046, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
+        if config["costume"] == "facilitator":
+            hand_pose = "notebook-grip"
+            hand_rotation = (0.02, side * 0.2, -side * 0.2)
+        elif config["costume"] == "mediator":
+            hand_pose = "thoughtful" if side == 1 else "open"
+            hand_rotation = (0.08 if side == 1 else -0.03, -side * 0.13, -side * 0.16)
+        elif config["costume"] == "listener":
+            hand_pose = "soft-cup"
+            hand_rotation = (-0.04, side * 0.08, -side * 0.1)
+        else:
+            hand_pose = "relaxed"
+            hand_rotation = (0.02, side * 0.04, -side * 0.055)
         sculpted_hand(
             f"Hand_{side}",
             (0, -0.007, -0.307),
             mats["skin"],
             mats["skin_shadow"],
             elbow,
+            rotation=hand_rotation,
             side=side,
+            pose_style=hand_pose,
         )
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
@@ -1588,7 +1634,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v19",
+        "sculptContract": "mirrorlife-civic-sculpt-v20",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -1609,10 +1655,17 @@ def main():
             "path": "civic-face-decals.png",
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
+            "morphContract": "mirrorlife-civic-face-morph-v1",
+            "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
+        },
+        "handContract": {
+            "version": "mirrorlife-civic-hand-v1",
+            "pivots": ["Hand_-1", "Hand_1"],
+            "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v6",
-            "runtime": "authored-keyframe-blend+continuous-skin",
+            "version": "mirrorlife-civic-clips-v7",
+            "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
         "worldUnitMeters": 1,
