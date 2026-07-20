@@ -1195,6 +1195,27 @@ def build_body(role, config, mats, visual):
         diagonal_tension = max(0.0, 1.0 - abs(abs(x) - (0.09 + normalized * 0.035)) / 0.045)
         vertex.co.y -= front * centre_drape * 0.006
         vertex.co.y += front * diagonal_tension * 0.0035
+    # Three tapered fabric planes turn the broad torso highlight into cloth
+    # tension radiating from collar and shoulder toward the waist. They share
+    # the base fabric material and fade to a two-millimetre tip, so they read as
+    # garment construction rather than decorative piping in the story camera.
+    for fold_index, (root_x, waist_x, depth) in enumerate((
+        (-0.145, -0.085, 0.009),
+        (0.0, 0.018, 0.007),
+        (0.145, 0.09, 0.009),
+    )):
+        cloth_fold_ribbon(
+            f"TorsoTensionFold_{fold_index + 1}",
+            [
+                (root_x, -0.153, 1.245),
+                ((root_x + waist_x) * 0.52, -0.166 - depth, 1.06),
+                (waist_x, -0.151, 0.82),
+            ],
+            (0.002, 0.011 if fold_index != 1 else 0.009, 0.002),
+            mats["top"],
+            visual,
+            depth=depth,
+        )
     cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.37, 0.225, 0.052), (0, -0.005, 0.775), mats["accent"], visual, radius=0.024)
 
@@ -1634,7 +1655,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v20",
+        "sculptContract": "mirrorlife-civic-sculpt-v21",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -1656,6 +1677,8 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
+            "integrationContract": "mirrorlife-civic-face-volume-v2",
+            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {

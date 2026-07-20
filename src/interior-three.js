@@ -81,7 +81,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // exposure collapsed plaster, skin and timber into one ochre value. Keep a
   // strong doorway direction while restoring the neutral daylight and soft
   // lower-body bounce visible in the reference.
-  "civic-ivory": { key: 1.92, fill: 0.28, hemi: 0.27, bounce: 0.56, wash: 0.82, exposure: 0.86, keyColor: "#ffe2c3", fillColor: "#b7dcd8" },
+  "civic-ivory": { key: 2.05, fill: 0.22, hemi: 0.22, bounce: 0.48, wash: 0.76, exposure: 0.84, keyColor: "#ffe2c3", fillColor: "#b7dcd8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -442,11 +442,11 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 1.02;
+  gtaoPass.blendIntensity = 1.14;
   gtaoPass.updateGtaoMaterial({
-    radius: 0.28,
+    radius: 0.32,
     distanceExponent: 1.7,
-    thickness: 1.36,
+    thickness: 1.48,
     distanceFallOff: 0.9,
     scale: 0.94,
     samples: 12,
@@ -488,9 +488,9 @@ function ensureLayer() {
         // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
         // carried by light and material response; saturation stays editorial
         // rather than toy-like.
-        color = mix(vec3(luma), color, 1.025 * strength);
-        color = max(vec3(0.0), (color - vec3(0.61)) * (1.0 + 0.115 * strength) + vec3(0.61));
-        color *= mix(vec3(1.0), vec3(1.006, 1.0, 0.992), strength);
+        color = mix(vec3(luma), color, 1.045 * strength);
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.145 * strength) + vec3(0.58));
+        color *= mix(vec3(1.0), vec3(1.01, 1.0, 0.988), strength);
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -500,7 +500,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.052 * strength;
+        color *= 1.0 - vignette * 0.06 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -604,13 +604,28 @@ function upgradeModelMaterials(source, type = "") {
     if (!node.isMesh || !node.material) return;
     const originalMaterials = Array.isArray(node.material) ? node.material : [node.material];
     const upgraded = originalMaterials.map((material) => {
-      const hasSurfaceMap = !!(material.map || material.normalMap || material.roughnessMap || material.metalnessMap || material.aoMap);
+      const materialName = String(material.name || "").toLowerCase();
+      const physicalKind = preserveAuthoredCivicPalette && /oak|walnut|wood|cork/.test(materialName)
+        ? "wood"
+        : preserveAuthoredCivicPalette && /textile|fabric|cloth|cushion|sage/.test(materialName)
+          ? "fabric"
+          : null;
+      const physicalMaps = physicalKind ? getPhysicalSurfaceMaps(physicalKind) : null;
+      const hasSurfaceMap = !!(
+        material.map
+        || material.normalMap
+        || material.roughnessMap
+        || material.metalnessMap
+        || material.aoMap
+        || physicalMaps?.map
+        || physicalMaps?.normal
+        || physicalMaps?.roughness
+      );
       const color = hasSurfaceMap
         ? (material.color?.clone?.() || new THREE.Color(0xffffff)).offsetHSL(0, 0.04, -0.02)
         : preserveAuthoredCivicPalette
           ? atelierGradeColor(material.color, 0.08)
           : nearestAtelierColor(material.color);
-      const materialName = String(material.name || "").toLowerCase();
       const glassName = /glass|glazing|windowpane/.test(materialName);
       const next = glassName
         ? new THREE.MeshPhysicalMaterial()
@@ -619,9 +634,9 @@ function upgradeModelMaterials(source, type = "") {
           : new THREE.MeshStandardMaterial();
       next.name = `${material.name || "MirrorLife"} atelier PBR`;
       next.color.copy(color);
-      next.map = material.map || null;
-      next.normalMap = material.normalMap || null;
-      next.roughnessMap = material.roughnessMap || null;
+      next.map = material.map || physicalMaps?.map || null;
+      next.normalMap = material.normalMap || physicalMaps?.normal || null;
+      next.roughnessMap = material.roughnessMap || physicalMaps?.roughness || null;
       next.metalnessMap = material.metalnessMap || null;
       next.aoMap = material.aoMap || null;
       next.alphaMap = material.alphaMap || null;
@@ -632,6 +647,10 @@ function upgradeModelMaterials(source, type = "") {
       next.side = material.side;
       next.depthWrite = material.depthWrite ?? true;
       next.vertexColors = !!material.vertexColors;
+      if (next.normalMap && physicalKind) {
+        const normalStrength = physicalKind === "wood" ? 0.24 : 0.18;
+        next.normalScale.set(normalStrength, normalStrength);
+      }
       const sourceRoughness = Math.max(0.38, Math.min(0.9, Number(material.roughness ?? 0.66)));
       next.roughness = hasSurfaceMap
         ? sourceRoughness
@@ -641,6 +660,8 @@ function upgradeModelMaterials(source, type = "") {
       next.metalness = metallicName ? Math.max(0.58, sourceMetalness) : hasSurfaceMap ? sourceMetalness : Math.min(0.12, sourceMetalness);
       if (metallicName) next.roughness = Math.min(next.roughness, 0.42);
       next.envMapIntensity = metallicName ? 1.08 : 0.72;
+      if (physicalKind === "wood") next.envMapIntensity = 0.82;
+      if (physicalKind === "fabric") next.envMapIntensity = 0.56;
       if (glassName) {
         // Preserve the display case as a transparent storytelling layer. The
         // former generic StandardMaterial made the pale glass read as an
@@ -1389,8 +1410,8 @@ function applyLightingPreset(theme = {}) {
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.86 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.56 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.92 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.48 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
@@ -5214,9 +5235,50 @@ function clearConnectedFaceAtlasBackground(context, width, height) {
     if (y > 0) enqueue(pixelIndex - width);
     if (y + 1 < height) enqueue(pixelIndex + width);
   }
+  // Feather the connected white field instead of handing alphaTest a hard
+  // one-pixel contour. The previous binary cutout made the illustrated lashes
+  // and cheeks stair-step at the 70–100px gameplay face size. A six-pixel
+  // source-space distance band survives mipmapping as a clean painted edge,
+  // while enclosed eye whites remain opaque because they are not connected to
+  // the atlas border.
+  const featherDistance = new Uint8Array(width * height);
+  const featherQueue = new Int32Array(width * height);
+  let featherHead = 0;
+  let featherTail = 0;
   for (let pixelIndex = 0; pixelIndex < visited.length; pixelIndex += 1) {
     if (!visited[pixelIndex]) continue;
-    pixels[pixelIndex * 4 + 3] = 0;
+    featherDistance[pixelIndex] = 1;
+    featherQueue[featherTail++] = pixelIndex;
+  }
+  const maxFeatherPixels = 6;
+  while (featherHead < featherTail) {
+    const pixelIndex = featherQueue[featherHead++];
+    const distance = featherDistance[pixelIndex];
+    if (distance > maxFeatherPixels) continue;
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+    const visitNeighbour = (neighbour) => {
+      if (featherDistance[neighbour]) return;
+      featherDistance[neighbour] = distance + 1;
+      featherQueue[featherTail++] = neighbour;
+    };
+    if (x > 0) visitNeighbour(pixelIndex - 1);
+    if (x + 1 < width) visitNeighbour(pixelIndex + 1);
+    if (y > 0) visitNeighbour(pixelIndex - width);
+    if (y + 1 < height) visitNeighbour(pixelIndex + width);
+  }
+  for (let pixelIndex = 0; pixelIndex < visited.length; pixelIndex += 1) {
+    if (visited[pixelIndex]) {
+      pixels[pixelIndex * 4 + 3] = 0;
+      continue;
+    }
+    const distance = featherDistance[pixelIndex];
+    if (distance > 1 && distance <= maxFeatherPixels + 1) {
+      pixels[pixelIndex * 4 + 3] = Math.min(
+        pixels[pixelIndex * 4 + 3],
+        Math.round((distance - 1) / maxFeatherPixels * 255)
+      );
+    }
   }
   context.putImageData(imageData, 0, 0);
   return true;
@@ -5362,7 +5424,8 @@ function createCivicFaceDecal(role = "player") {
     emissiveIntensity: 0.09,
     roughness: 0.88,
     metalness: 0,
-    alphaTest: 0.08,
+    alphaTest: 0.025,
+    alphaToCoverage: true,
     transparent: false,
     depthWrite: true,
     polygonOffset: true,
@@ -6217,7 +6280,7 @@ function createCivicActorObject(actor, asset) {
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.34,
       depthWrite: false,
       toneMapped: false
     })
@@ -6291,9 +6354,7 @@ function createCivicActorObject(actor, asset) {
       "BrowPivot_1",
       "MouthPivot",
       "Blush_-1",
-      "Blush_1",
-      "NoseBridge",
-      "NoseTip"
+      "Blush_1"
     ]);
     const obsoleteFeatures = [];
     headGroup.traverse((node) => {
@@ -7001,7 +7062,7 @@ function updateCamera(payload = {}) {
     ? Math.pow((1 - Math.cos(yaw)) * 0.5, 1.5)
     : 0;
   const targetFov = cinematicCivic
-    ? (portrait ? 60 : 44 + civicRearArc * 2)
+    ? (portrait ? 60 : 45 + civicRearArc * 2)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -7061,10 +7122,10 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.1 + civicRearArc * 0.45)
+    ? (portrait ? 6.2 : 5.3 + civicRearArc * 0.45)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.2 + civicRearArc * 0.22) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.28 + civicRearArc * 0.22) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.38 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
@@ -7390,6 +7451,7 @@ function getStats() {
       } : null,
       facial: entry.faceDecal?.morphTargetDictionary ? {
         version: "mirrorlife-civic-face-morph-v1",
+        integration: "mirrorlife-civic-face-volume-v2",
         morphCount: Object.keys(entry.faceDecal.morphTargetDictionary).length,
         smile: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.WarmSmile] || 0).toFixed(4)),
         speech: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.SpeechJaw] || 0).toFixed(4)),
