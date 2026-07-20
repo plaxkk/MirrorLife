@@ -1,5 +1,53 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v76 material-depth, portal-bounce and editorial-foreground gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v76/desktop-yaw-0-1672x941-v76.png` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v76.png` for the complete opposite orbit.
+- Same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v76/reference-vs-v76-full.png`, with source and final live implementation at identical size and state.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v76/mobile-yaw-0-390x844-v76.png` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v75 P1 / ivory room collapsed into one bright value] Public lighting now uses a lower ambient/fill ratio and keeps the directional key as the primary form light. GTAO is tighter and stronger, so feet, furniture bases, display cabinetry and wall joinery regain contact without dirtying the terrazzo field.
+- [fixed / portal daylight had no localized color logic] A dedicated warm portal bounce is aimed from the left threshold into the listening circle, balanced by a restrained cool reflection near the right lounge. The source/implementation pair now shows a readable warm-left/cool-right material rhythm rather than uniform cream illumination.
+- [fixed / public wood read as flat painted plastic] Desktop wood surfaces now use a neutralized CC0 Poly Haven wood diffuse together with the existing physical normal and roughness maps. Authored oak/walnut colors remain the palette source while real grain and roughness break up broad desk, console and architectural surfaces. Mobile intentionally keeps the cheaper map-free material path.
+- [fixed / foreground record desk remained generic] The lower-left record station gains an oak apron, drawer front, brass pull and a full-volume civic brief with frame, paper, clip and response marks. The brief is readable from the reverse side as a real object and remains within the existing shared render/collider transform.
+- [fixed / hero lens enlarged the room centre but lost editorial context] The desktop civic lens moves from `40° / 5.20m / 3.34m` to `44° / 5.45m / 3.48m`. The final same-size comparison retains the cast as the middle-ground subject while restoring more of the threshold, record station, lounge and wall evidence.
+- [fixed / architecture spent budget on invisible long-edge bevels] Straight wall, dado, base and reveal runs now use true rectilinear geometry, matching the reference joinery and removing `3,552` triangles from the reverse view. Brass path tubes also use a silhouette-equivalent lower segment count, bringing mobile below its hard cap.
+- [checked / embodied movement and rotation] Local Chrome moved the physical player `3.17m` and rotated the weighted camera `65.3°`; materials, light and foreground framing remain attached to the navigable, Rapier-backed scene rather than a fixed visual plate.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `151` draw calls / `285,294` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `160` draw calls / `299,362` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `107` draw calls / `249,906` triangles, below the `110 / 250,000` gate with three actors and all touch controls visible.
+- Character and hero-prop contracts remain valid: four civic roles at `7.09 MB` total and three authored hero props at `34,332` triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] Metre-space Rapier movement, keyboard/touch controls, camera orbit, atomic loading and the shared record-desk render/collider transform remain intact.
+- [checked][spacing/layout rhythm] The wider editorial lens and new foreground brief establish a stronger foreground/middle-ground/background progression without shrinking the four-person listening conflict into background decoration.
+- [checked][colors/materials] Warm plaster, neutral terrazzo, teal fabric, coral accents, oak and brass retain the source palette. The new physical wood source changes surface response, not the authored color language.
+- [checked][lighting/readability] Warm threshold energy, cooler lounge separation, tighter contact occlusion and reduced ambient lift improve facial, garment and furniture-plane readability in the exact-size comparison.
+- [checked][responsiveness/accessibility] At `390 × 844`, the player, target and witnesses remain visible; joystick, chat, jump, contextual interaction and all four social actions stay usable inside the hard rendering budget.
+- [P1][production character anatomy and deformation] The reference still has substantially better face topology, hair clumping, eyelid/cheek integration, hand articulation, cloth tension and hand-to-prop contact. Lighting helps the current sculpts but cannot substitute for production deformation.
+- [P1][whole-room bespoke asset craftsmanship] The foreground brief and physical wood improve specificity, but the source still carries denser cabinet joinery, tailored upholstery, ceramic/paper variation, object wear and prop-by-prop silhouette authorship.
+- [P1][indirect illumination and localized material breakup] The portal-bounce logic is now spatially correct, but the source retains more convincing multi-bounce daylight, skin response, soft penumbrae and per-object roughness variation.
+- [P2][HUD optical finish and captured content state] The interface remains functional, compact and responsive, but its icon construction, translucent layering and exact resident/status state do not literally match the reference capture.
+
+### Gate result
+
+This iteration materially improves depth, portal lighting, physical wood response, foreground storytelling and reference-like lensing while keeping the room fully explorable and within every desktop/mobile performance gate. The identical-canvas review still exposes production character, bespoke whole-room asset and multi-bounce material-response gaps, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial/hand/cloth deformation, a fully bespoke environment asset set and richer localized indirect illumination remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v75 rectilinear-room and foreground-depth gate
 
 ### Evidence inspected together

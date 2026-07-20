@@ -76,7 +76,7 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.02, fill: 0.46, hemi: 0.42, bounce: 0.82, wash: 0.9, exposure: 0.84, keyColor: "#ffd6a5", fillColor: "#b4d4d0" },
+  "civic-ivory": { key: 2.08, fill: 0.24, hemi: 0.22, bounce: 0.42, wash: 0.74, exposure: 0.81, keyColor: "#ffd2a0", fillColor: "#a9d3d0" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -202,6 +202,8 @@ let hemisphereLight;
 let fillLight;
 let warmBounceLight;
 let windowWashLight;
+let portalBounceLight;
+let coolReflectionLight;
 let actorRimLight;
 let actorFaceLight;
 let roomRoot;
@@ -377,6 +379,21 @@ function ensureLayer() {
   windowWashLight.position.set(-5.8, 4.4, 1.8);
   scene.add(windowWashLight);
 
+  // A broad, non-shadow-casting portal bounce gives the civic room the warm
+  // indirect lift visible in the reference. It is intentionally separate from
+  // the sharp sun key so plaster, faces and furniture can retain shadow shape.
+  portalBounceLight = new THREE.SpotLight(0xffc77f, 0, 9.5, Math.PI * 0.42, 0.88, 1.35);
+  portalBounceLight.position.set(-4.35, 2.25, -2.7);
+  portalBounceLight.target.position.set(-0.35, 0.72, 0.22);
+  portalBounceLight.castShadow = false;
+  scene.add(portalBounceLight, portalBounceLight.target);
+
+  // A restrained cool reflection on the lounge side separates teal textile
+  // and white garments from the warm plaster without turning into a fill wash.
+  coolReflectionLight = new THREE.PointLight(0x9ed4cf, 0, 7.2, 2.15);
+  coolReflectionLight.position.set(3.75, 1.15, -1.1);
+  scene.add(coolReflectionLight);
+
   // A dedicated layer-only rim light gives the small stylised citizens the
   // same warm edge separation as the reference without bleaching the room.
   // Actors keep layer 0 for the room lighting and additionally enable layer 1.
@@ -410,13 +427,13 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.88;
+  gtaoPass.blendIntensity = 1.02;
   gtaoPass.updateGtaoMaterial({
-    radius: 0.32,
+    radius: 0.28,
     distanceExponent: 1.7,
     thickness: 1.36,
     distanceFallOff: 0.9,
-    scale: 0.82,
+    scale: 0.94,
     samples: 12,
     screenSpaceRadius: false
   });
@@ -456,9 +473,9 @@ function ensureLayer() {
         // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
         // carried by light and material response; saturation stays editorial
         // rather than toy-like.
-        color = mix(vec3(luma), color, 1.14 * strength);
-        color = max(vec3(0.0), (color - vec3(0.66)) * (1.0 + 0.12 * strength) + vec3(0.66));
-        color *= mix(vec3(1.0), vec3(1.012, 0.995, 0.975), strength);
+        color = mix(vec3(luma), color, 1.06 * strength);
+        color = max(vec3(0.0), (color - vec3(0.61)) * (1.0 + 0.16 * strength) + vec3(0.61));
+        color *= mix(vec3(1.0), vec3(1.01, 0.997, 0.982), strength);
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -468,7 +485,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.1 * strength;
+        color *= 1.0 - vignette * 0.075 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -975,6 +992,7 @@ function getPhysicalSurfaceSources() {
       repeat: [4.8, 4.8]
     },
     wood: {
+      map: "/assets/interiors/textures/wood-table-001-diffuse-neutral-1k.jpg",
       normal: "/assets/interiors/textures/wood-table-001-normal-gl-1k.jpg",
       roughness: "/assets/interiors/textures/wood-table-001-roughness-1k.jpg",
       repeat: [2.2, 4.4]
@@ -994,6 +1012,7 @@ async function preloadPhysicalSurfaceMaps() {
     const textureLoader = new THREE.TextureLoader();
     const sources = getPhysicalSurfaceSources();
     await Promise.all(Object.entries(sources).map(async ([kind, source]) => {
+      if (window.innerWidth <= 720 && kind !== "terrazzo") return;
       // The civic floor's authored base color is part of the atomic scene load
       // on every device. Heavier scanned normal/roughness maps stay desktop-only.
       const map = source.map ? await textureLoader.loadAsync(source.map) : null;
@@ -1004,7 +1023,6 @@ async function preloadPhysicalSurfaceMaps() {
         map.repeat.set(...source.repeat);
         map.needsUpdate = true;
       }
-      if (window.innerWidth <= 720 && !map) return;
       const [normal, roughness] = source.normal && source.roughness
         ? await Promise.all([
           textureLoader.loadAsync(source.normal),
@@ -1310,13 +1328,24 @@ function applyLightingPreset(theme = {}) {
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
+  if (portalBounceLight) {
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.68 : 0;
+    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffc27a");
+  }
+  if (coolReflectionLight) {
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.2) : 0;
+  }
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.9 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.86 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.34 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
+  if (keyLight?.shadow) {
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 5.5 : 9;
+    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 16 : 24;
+  }
 }
 
 function addRoundedRoomBox(size, radius, color, position, rotation = [0, 0, 0], options = {}) {
@@ -2520,7 +2549,7 @@ function addAmbientSetDressing(theme, colors) {
 function addCivicBrassInlay(points, color = "#caa04a") {
   const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0.048, z)));
   const path = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 28, 0.035, 8, false),
+    new THREE.TubeGeometry(curve, 20, 0.035, 6, false),
     createToonMaterial(color, { roughness: 0.32, metalness: 0.64 })
   );
   path.castShadow = false;
@@ -2574,11 +2603,27 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   group.rotation.y = Number(deskProfile?.rotationY ?? 2.12);
   group.scale.setScalar(Number(deskProfile?.displayScale ?? 1.12));
   roomRoot.add(group);
-  const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66, surface: "wood", bumpScale: 0.012 });
+  const wood = createToonMaterial("#a66b43", { roughness: 0.68, surface: "wood", bumpScale: 0.012 });
   const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
   const top = new THREE.Mesh(new RoundedBoxGeometry(1.65, 0.16, 0.78, 6, 0.1), wood);
   top.position.y = 0.77;
   group.add(top);
+  const apron = new THREE.Mesh(new RoundedBoxGeometry(1.45, 0.24, 0.14, 4, 0.045), wood);
+  apron.position.set(0, 0.62, 0.34);
+  group.add(apron);
+  const drawerFront = new THREE.Mesh(
+    new RoundedBoxGeometry(0.62, 0.14, 0.035, 3, 0.025),
+    createToonMaterial("#8c593d", { roughness: 0.64, surface: "wood", bumpScale: 0.009 })
+  );
+  drawerFront.position.set(0.28, 0.63, 0.425);
+  group.add(drawerFront);
+  const drawerPull = new THREE.Mesh(
+    new THREE.SphereGeometry(0.035, 14, 10),
+    createToonMaterial("#c89a43", { roughness: 0.28, metalness: 0.7, envMapIntensity: 0.94 })
+  );
+  drawerPull.scale.set(1.35, 0.76, 0.72);
+  drawerPull.position.set(0.28, 0.63, 0.465);
+  group.add(drawerPull);
   [-0.62, 0.62].forEach((x) => {
     // Light oak, tapered legs preserve the foreground frame without creating
     // the reference-breaking black vertical bar at the near edge.
@@ -2616,6 +2661,51 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   shade.scale.set(1.18, 0.62, 0.9);
   shade.position.set(-0.73, 1.34, 0.23);
   group.add(shade);
+
+  // The reference foreground is anchored by a standing civic brief, not an
+  // anonymous tabletop. Keep this full-volume board inside the desk collider
+  // so it stays believable when the player walks around the reverse side.
+  const brief = new THREE.Group();
+  brief.position.set(0.34, 1.2, 0.22);
+  brief.rotation.y = -0.04;
+  brief.rotation.z = -0.025;
+  group.add(brief);
+  const briefFrame = new THREE.Mesh(
+    new RoundedBoxGeometry(0.62, 0.48, 0.07, 4, 0.045),
+    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.68, surface: "wood", bumpScale: 0.009 })
+  );
+  brief.add(briefFrame);
+  const briefPaper = new THREE.Mesh(
+    new RoundedBoxGeometry(0.54, 0.4, 0.025, 3, 0.032),
+    createToonMaterial("#f3ead9", { roughness: 0.96, surface: "paper", bumpScale: 0.004 })
+  );
+  briefPaper.position.z = 0.048;
+  brief.add(briefPaper);
+  const briefTitle = new THREE.Mesh(
+    new RoundedBoxGeometry(0.28, 0.035, 0.014, 2, 0.008),
+    createToonMaterial("#765038", { roughness: 0.78 })
+  );
+  briefTitle.position.set(-0.07, 0.135, 0.068);
+  brief.add(briefTitle);
+  [0.045, -0.055, -0.155].forEach((y, index) => {
+    const mark = new THREE.Mesh(
+      new THREE.SphereGeometry(0.025, 10, 8),
+      createToonMaterial([colors.secondary, colors.accent, "#df8066"][index], { roughness: 0.54 })
+    );
+    mark.position.set(-0.19, y, 0.07);
+    const line = new THREE.Mesh(
+      new RoundedBoxGeometry(0.26 - index * 0.018, 0.018, 0.012, 1, 0.005),
+      createToonMaterial("#847565", { roughness: 0.86 })
+    );
+    line.position.set(0.03, y, 0.07);
+    brief.add(mark, line);
+  });
+  const briefClip = new THREE.Mesh(
+    new RoundedBoxGeometry(0.14, 0.035, 0.018, 2, 0.009),
+    createToonMaterial("#c89a43", { roughness: 0.3, metalness: 0.68 })
+  );
+  briefClip.position.set(0, 0.225, 0.07);
+  brief.add(briefClip);
 
   // Editorial micro-props give the foreground the lived-in density of the
   // reference while staying inside the authored desk footprint/collider.
@@ -3448,7 +3538,10 @@ function addCivicArchitecturalShell(colors) {
     envMapIntensity: 0.9
   });
   const mobileLod = lastWidth <= 720;
-  const architecturalBox = (width, height, depth, segments = 4, radius = 0.05) => mobileLod
+  // The room shell is intentionally rectilinear. Keeping long wall, dado and
+  // reveal runs as true boxes both matches the reference joinery and avoids
+  // spending thousands of invisible bevel triangles in reverse orbit views.
+  const architecturalBox = (width, height, depth, segments = 4, radius = 0.05) => mobileLod || width > 4
     ? new THREE.BoxGeometry(width, height, depth)
     : new RoundedBoxGeometry(width, height, depth, segments, radius);
   const panels = [
@@ -6508,7 +6601,7 @@ function updateCamera(payload = {}) {
     ? Math.pow((1 - Math.cos(yaw)) * 0.5, 1.5)
     : 0;
   const targetFov = cinematicCivic
-    ? (portrait ? 60 : 40 + civicRearArc * 2)
+    ? (portrait ? 60 : 44 + civicRearArc * 2)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -6568,10 +6661,10 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.2 + civicRearArc * 0.45)
+    ? (portrait ? 6.2 : 5.45 + civicRearArc * 0.45)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.34 + civicRearArc * 0.22) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.48 + civicRearArc * 0.22) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.38 : 0.22;
   const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.72) : 0.94)
