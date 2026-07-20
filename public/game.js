@@ -7130,9 +7130,9 @@ function stagePublicListeningEnsemble(zone, entries = []) {
     .filter((entry) => witnessIds.has(entry.id))
     .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
   const listeningPoints = qaComposition ? [
-    { x: -1.72, z: 0.12 },
-    { x: 1.72, z: 0.16 },
-    { x: 0.52, z: -1.58 }
+    { x: -1.54, z: 0.14 },
+    { x: 1.54, z: 0.18 },
+    { x: 0.46, z: -1.42 }
   ] : [
     { x: 0.9, z: -1.45 },
     { x: 3.15, z: 0.72 },
@@ -14576,11 +14576,11 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   holdEmpathyCalibrationActor(zone, entries);
   holdMemoryAuthorizationActor(zone, entries);
   const avatarCitizen = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
-  // The civic room is authored at a real 1m = 1 world-unit scale. The earlier
-  // 1.08 presentation multiplier made adults read close to two metres tall and
-  // crowded the listening circle. Keep their visual height aligned with the
-  // 1.68–1.72m physics capsules and the reference's calmer social spacing.
-  const civicActorScale = zone.id === "public-plaza" ? 0.92 : 1;
+  // Civic GLBs are authored to the same 1.68–1.72m contract as their Rapier
+  // capsules. Rendering them at 0.92 made the cast visibly undersized against
+  // desks and sofas and broke mesh/collider scale parity. Keep one metre equal
+  // to one world unit here; the tighter authored staging provides calm spacing.
+  const civicActorScale = 1;
   const playerPayload = {
     id: "player",
     identityId: "avatar",

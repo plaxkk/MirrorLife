@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v77 metre-scale cast and rigid held-prop gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v77/desktop-yaw-0-1672x941-v77.png` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v77.png` for the complete opposite orbit.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v77/reference-vs-v77-full.png` and `reference-vs-v77-cast-focus.png`, with source and final implementation captured at identical size and state. `v76-vs-v77-cast-focus.png` isolates this iteration's cast-scale change.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v77/mobile-yaw-0-390x844-v77.png` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v76 P1 / render and physics used different actor scale] All four GLBs are authored at `1.68–1.72m`, but the civic payload applied an additional `0.92` visual scale while Rapier retained the real capsule size. The runtime now renders civic actors at `1.0`, restoring mesh/collider parity and the reference-like body height visible in `v76-vs-v77-cast-focus.png`.
+- [fixed / cast read as scattered room props] Listening stations move inward from approximately `±1.72m` to `±1.54m`, with the rear witness moving from `-1.58m` to `-1.42m`. The final paired crop shows a more intimate four-person hearing while keeping the `1.5m` story centre free of furniture and preserving actor-to-actor collision clearance.
+- [fixed / facilitator notebook exploded into disconnected bars] Cover, pages, spine, elastic and pencil now share a single `NotebookPivot`. Authored listen motion rotates one rigid object instead of independently transformed parts; hero and reverse frames show a coherent open notebook in the facilitator's hands.
+- [fixed / cap hair collapsed into one dark helmet] Player and listener crown lobes receive stronger silhouette displacement and a slightly lifted highlight family. The complete orbit retains distinct front clumps and back volume without adding geometry.
+- [fixed / costume panels overpowered the torso] Traveler vest and civic coat panels are slimmer, shallower and shorter, reducing the rigid armour-plate read while retaining role identity, animation clips and the existing capsule contract.
+- [checked / embodied movement and rotation] Local Chrome moved the physical player `3.41m` and rotated the weighted camera `65.3°`; the four authored roles returned to idle/listen states and stayed collision-backed after the scale correction.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `151` draw calls / `285,182` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `160` draw calls / `298,626` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `107` draw calls / `249,850` triangles, below the `110 / 250,000` gate with the contextual action and all touch controls visible.
+- Character contract advances to `mirrorlife-civic-sculpt-v14` / `mirrorlife-civic-clips-v3`: player `29,504`, listener `26,588`, facilitator `30,758`, mediator `28,846`; four roles total `7.08 MB`. The notebook hierarchy fix removes `56` triangles from each civic-skirt role instead of increasing the budget.
+- Hero-prop contract remains valid: three authored civic props at `34,332` triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check` and the production build passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] Render mesh, metre-space capsule, authored skeleton, walk/listen clips, Rapier movement and weighted orbit now agree on the same actor scale.
+- [checked][spacing/layout rhythm] The four citizens own the middle-ground listening circle at the same visual weight as the source; the threshold, evidence wall, lounge and foreground record desk continue to establish depth.
+- [checked][colors/tokens] Warm ivory, neutral terrazzo, teal, coral, oak and brass remain stable. Hair highlight changes improve small-scale silhouette separation without introducing a new palette.
+- [checked][image and asset quality] All four citizens remain lit, shadowed, full-volume GLBs with real back/side geometry. The notebook fix is authored hierarchy, not a camera-facing replacement.
+- [checked][fonts/typography] Chinese location, memory and social-action labels remain readable at desktop and mobile sizes. The reference still has finer icon and type optical alignment, classified below as P2 HUD drift.
+- [checked][copy/content] The live deterministic QA state intentionally shows `6` residents and the established MirrorLife action copy rather than fabricating the reference capture's `13`-resident state.
+- [checked][responsiveness/accessibility] At `390 × 844`, joystick, chat, jump, interaction and four social actions remain within the viewport; the player and two witnesses remain readable inside the strict mobile budget.
+- [P1][production character anatomy and deformation] Correct scale exposes rather than hides the main remaining gap: the source still has substantially better cheek/eyelid topology, smooth hair clumping, finger articulation, cloth folds, shoe construction and skin/cloth response. Current citizens remain recognizably low-poly beside the source.
+- [P1][whole-room bespoke asset craftsmanship] The source retains finer cabinetry joinery, upholstery tailoring, ceramic/paper variation, architectural reveals and prop-specific wear. The current room is coherent and functional but still less authored object by object.
+- [P1][localized indirect illumination] The warm portal/cool lounge structure is correct, but the source has richer skin response, multi-bounce daylight, softer contact penumbrae and more localized roughness breakup.
+- [P2][HUD optical finish and reverse-orbit framing] The HUD remains less refined than the reference, and the rear witness occupies a heavy foreground position at `180°`; gameplay remains readable, but the opposite orbit needs a dedicated composition target in a later pass.
+
+### Gate result
+
+This iteration fixes the hidden metre-scale contract error, restores reference-like cast prominence, strengthens social proximity and makes the facilitator's notebook behave as one believable held object while preserving movement, collision, full orbit and every performance gate. The identical-canvas review still exposes production character anatomy, bespoke environment and localized indirect-light P1 gaps, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial/hand/cloth deformation, a fully bespoke environment asset set and richer localized indirect illumination remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v76 material-depth, portal-bounce and editorial-foreground gate
 
 ### Evidence inspected together

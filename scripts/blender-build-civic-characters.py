@@ -11,8 +11,8 @@ from mathutils import Vector
 ROLE_CONFIGS = {
     "player": {
         "skin": "#f2bf9d",
-        "hair": "#302e38",
-        "hair_highlight": "#4a4653",
+        "hair": "#34323e",
+        "hair_highlight": "#595462",
         "eye": "#3f342d",
         "top": "#e6dbc9",
         "outer": "#71825a",
@@ -25,8 +25,8 @@ ROLE_CONFIGS = {
     },
     "listener": {
         "skin": "#efb994",
-        "hair": "#2c323d",
-        "hair_highlight": "#47505f",
+        "hair": "#303744",
+        "hair_highlight": "#536070",
         "eye": "#3a312b",
         "top": "#258b82",
         "outer": "#eee4d3",
@@ -817,7 +817,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.188, 0.038))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.183, 0.038))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -899,10 +899,10 @@ def build_hair(head, mats, style):
             continue
         angle = math.atan2(y, x)
         crown = max(0.0, min(1.0, (z + 0.045) / 0.245))
-        lobe = math.sin(angle * 5 + style_phase) * (0.004 + crown * 0.008)
+        lobe = math.sin(angle * 5 + style_phase) * (0.005 + crown * 0.011)
         vertex.co.x += x / radial * lobe
         vertex.co.y += y / radial * lobe * 0.72
-        vertex.co.z += max(0.0, math.cos(angle * 3 - style_phase)) * crown * 0.006
+        vertex.co.z += max(0.0, math.cos(angle * 3 - style_phase)) * crown * 0.009
     fringe_specs = (
         (-0.19, -0.15, 0.205, 0.03),
         (-0.145, -0.112, 0.19, 0.032),
@@ -1213,15 +1213,15 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
         for side in (-1, 1):
             tailored_panel(
                 f"Vest_{side}",
-                0.13,
-                0.104,
-                0.118,
-                0.335,
-                0.038,
-                (side * 0.073, -0.165, 1.045),
+                0.116,
+                0.094,
+                0.108,
+                0.305,
+                0.029,
+                (side * 0.066, -0.158, 1.055),
                 mats["outer"],
                 visual,
-                radius=0.018,
+                radius=0.013,
                 rotation=(0, side * 0.025, side * 0.065),
             )
             rounded_box(
@@ -1315,15 +1315,15 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
         for side in (-1, 1):
             tailored_panel(
                 f"CoatPanel_{side}",
-                0.178,
-                0.142,
-                0.172,
-                0.475,
-                0.044,
-                (side * 0.089, -0.164, 1.015),
+                0.162,
+                0.132,
+                0.148,
+                0.445,
+                0.031,
+                (side * 0.081, -0.157, 1.03),
                 mats["outer"],
                 visual,
-                radius=0.018,
+                radius=0.012,
                 rotation=(0, side * 0.022, side * 0.028),
             )
             tailored_panel(
@@ -1366,16 +1366,21 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
             # centre was 12 cm from the hand and read as a floating prop in the
             # reverse/cast view. Spine, elastic and pencil give the contact a
             # believable grip silhouette without introducing a separate rig.
-            notebook_location = (0.04, -0.04, -0.292)
+            notebook_location = (0.04, -0.035, -0.292)
             # The listen clip folds the elbow by roughly -1.3 rad. Counter it
             # here so the book remains upright in world space instead of
             # turning into two horizontal orange bars beside the actor.
             notebook_rotation = (1.18, -0.18, -0.08)
-            rounded_box("StoryNotebook", (0.22, 0.05, 0.3), notebook_location, mats["accent"], left_elbow, radius=0.035, rotation=notebook_rotation)
-            rounded_box("NotebookPaper", (0.19, 0.012, 0.27), (0.04, -0.071, -0.292), mats["paper"], left_elbow, radius=0.025, rotation=notebook_rotation)
-            rounded_box("NotebookSpine", (0.026, 0.058, 0.29), (-0.058, -0.04, -0.292), mats["shoe"], left_elbow, radius=0.009, rotation=notebook_rotation)
-            rounded_box("NotebookElastic", (0.018, 0.016, 0.274), (0.085, -0.075, -0.292), mats["metal"], left_elbow, radius=0.007, rotation=notebook_rotation)
-            cylinder("NotebookPencil", 0.008, 0.006, 0.235, (-0.078, -0.077, -0.292), mats["accent"], left_elbow, vertices=10, rotation=(0.08, -0.18, -0.08))
+            notebook = empty("NotebookPivot", left_elbow, notebook_location, notebook_rotation)
+            # Keep cover, paper, spine, elastic and pencil in one local frame.
+            # The previous components repeated the rotation around different
+            # world-space centres, which separated them into orange bars once
+            # the listening elbow folded.
+            rounded_box("StoryNotebook", (0.235, 0.042, 0.31), (0, 0, 0), mats["accent"], notebook, radius=0.031)
+            rounded_box("NotebookPaper", (0.205, 0.012, 0.278), (0, -0.026, 0), mats["paper"], notebook, radius=0.021)
+            rounded_box("NotebookSpine", (0.027, 0.052, 0.292), (-0.104, 0, 0), mats["shoe"], notebook, radius=0.008)
+            rounded_box("NotebookElastic", (0.018, 0.014, 0.282), (0.083, -0.031, 0), mats["metal"], notebook, radius=0.006)
+            cylinder("NotebookPencil", 0.007, 0.005, 0.238, (-0.078, -0.034, 0.008), mats["accent"], notebook, vertices=10, rotation=(0, 0, 0.03))
         else:
             curve_tube("Necklace", [(-0.11, -0.205, 1.2), (0, -0.225, 1.08), (0.11, -0.205, 1.2)], 0.012, mats["metal"], visual)
             ellipsoid("NecklacePendant", (0, -0.24, 1.07), (0.035, 0.012, 0.05), mats["metal"], visual, segments=14, rings=8)
@@ -1457,7 +1462,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v13",
+        "sculptContract": "mirrorlife-civic-sculpt-v14",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v3",
             "runtime": "authored-keyframe-blend",
