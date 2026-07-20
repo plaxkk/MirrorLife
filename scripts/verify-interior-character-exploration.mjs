@@ -51,7 +51,7 @@ try {
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   const beforeMove = playerFrom(opening);
   assert(beforeMove, "player actor diagnostics are missing");
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v3", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v4", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
 
   await page.keyboard.down("w");

@@ -11,8 +11,8 @@ from mathutils import Vector
 ROLE_CONFIGS = {
     "player": {
         "skin": "#f2bf9d",
-        "hair": "#34323e",
-        "hair_highlight": "#595462",
+        "hair": "#3b3947",
+        "hair_highlight": "#696373",
         "eye": "#3f342d",
         "top": "#e6dbc9",
         "outer": "#71825a",
@@ -707,7 +707,11 @@ def build_materials(role, config):
         "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.64, clearcoat=0.035),
         "eye_white": material(f"{role} eye white", "#fffefa", 0.3, clearcoat=0.42),
         "iris": material(f"{role} iris", config["eye"], 0.34, clearcoat=0.35),
-        "ink": material(f"{role} ink", "#25242b", 0.58),
+        # Warm charcoal keeps the illustrated eye and lash language while
+        # avoiding the pure-black sticker effect visible in the v77 paired
+        # crop. The reference uses brown-violet linework that participates in
+        # the room light rather than swallowing it.
+        "ink": material(f"{role} ink", "#342b30", 0.64),
         "blush": material(f"{role} blush", "#e5a096", 0.9),
         "top": material(f"{role} top fabric", config["top"], 0.91),
         "outer": material(f"{role} outer fabric", config["outer"], 0.9),
@@ -822,20 +826,20 @@ def build_face(head, mats, role):
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
         # rather than the white toy-doll discs of the early character pass.
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.0385, 0.009, 0.045), mats["eye_white"], eye, segments=26, rings=16)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.01, -0.002), (0.0255, 0.0046, 0.0345), mats["iris"], eye, segments=22, rings=12)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.004), (0.0105, 0.0027, 0.0185), mats["ink"], eye, segments=16, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.007, -0.017, 0.014), (0.0052, 0.0016, 0.0072), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.041, 0.0085, 0.045), mats["eye_white"], eye, segments=26, rings=16)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.0095, -0.002), (0.023, 0.0042, 0.031), mats["iris"], eye, segments=22, rings=12)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0135, -0.003), (0.0088, 0.0024, 0.0155), mats["ink"], eye, segments=16, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.016, 0.012), (0.0046, 0.0014, 0.0062), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
-                (-0.034, -0.011, -0.005),
-                (-0.018, -0.012, -0.031),
-                (0, -0.012, -0.037),
-                (0.018, -0.012, -0.031),
-                (0.034, -0.011, -0.005),
+                (-0.03, -0.01, -0.009),
+                (-0.016, -0.011, -0.021),
+                (0, -0.0115, -0.025),
+                (0.016, -0.011, -0.021),
+                (0.03, -0.01, -0.009),
             ],
-            0.0017,
+            0.00125,
             mats["skin_shadow"],
             eye,
             resolution=2,
@@ -845,7 +849,7 @@ def build_face(head, mats, role):
         curve_tube(
             f"UpperLid_{side}",
             [(-0.035, -0.012, 0.028), (0, -0.015, 0.045), (0.035, -0.012, 0.028)],
-            0.0034 if feminine else 0.0029,
+            0.00315 if feminine else 0.00265,
             mats["ink"],
             eye,
             resolution=2,
@@ -872,7 +876,7 @@ def build_face(head, mats, role):
     ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
     mouth = empty("MouthPivot", head, (0, -0.204, -0.09))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.028, 0.002, 0.004), (-0.004, -0.004, -0.006), (0.028, 0.002, 0.003)], 0.0031, mats["ink"], closed)
+    curve_tube("MouthClosed", [(-0.024, 0.002, 0.003), (-0.003, -0.003, -0.004), (0.024, 0.002, 0.002)], 0.00255, mats["skin_shadow"], closed)
     # A separate glossy lower-lip mesh read as a floating moustache at the
     # authored gameplay distance. Keep the closed mouth as one clean ink line;
     # the open-mouth/tongue pair supplies colour only while speaking.
@@ -1401,10 +1405,13 @@ def build_character(role, config):
     root["identity_role"] = role
 
     torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee = build_body(role, config, mats, root)
-    head = empty("HeadPivot", root, (0, 0, 1.47))
-    # The reference uses a composed 1:3.5 silhouette. The previous head was
-    # closer to a toy-like 1:3 and overwhelmed hands, clothing and acting.
-    head.scale = (0.87, 0.87, 0.84)
+    # The paired story-camera crop shows that the reference head is about
+    # eighty percent of shoulder width, while v77/v78a only reached roughly
+    # seventy percent. Enlarge the complete authored head hierarchy and lower
+    # its pivot by 3.5 cm so the silhouette becomes expressive without growing
+    # beyond the existing 1.72 m capsule or exposing a long toy-like neck.
+    head = empty("HeadPivot", root, (0, 0, 1.435))
+    head.scale = (0.96, 0.96, 0.94)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -1462,9 +1469,9 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v14",
+        "sculptContract": "mirrorlife-civic-sculpt-v16",
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v3",
+            "version": "mirrorlife-civic-clips-v4",
             "runtime": "authored-keyframe-blend",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

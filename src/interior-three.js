@@ -5307,18 +5307,27 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const colors = new Float32Array(count * 3);
     const roughnessValues = new Float32Array(count);
     const metalnessValues = new Float32Array(count);
+    const skinMaskValues = new Float32Array(count);
+    const hairMaskValues = new Float32Array(count);
     const sourceRoughness = THREE.MathUtils.clamp(Number(node.material?.roughness ?? materialOptions.roughness ?? 0.72), 0.04, 1);
     const sourceMetalness = THREE.MathUtils.clamp(Number(node.material?.metalness ?? 0), 0, 1);
+    const materialName = String(node.material?.name || "").toLowerCase();
+    const sourceSkinMask = materialName.endsWith(" skin") ? 1 : 0;
+    const sourceHairMask = materialName.includes(" hair") ? 1 : 0;
     for (let index = 0; index < count; index += 1) {
       colors[index * 3] = color.r;
       colors[index * 3 + 1] = color.g;
       colors[index * 3 + 2] = color.b;
       roughnessValues[index] = sourceRoughness;
       metalnessValues[index] = sourceMetalness;
+      skinMaskValues[index] = sourceSkinMask;
+      hairMaskValues[index] = sourceHairMask;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute("mirrorLifeRoughness", new THREE.BufferAttribute(roughnessValues, 1));
     geometry.setAttribute("mirrorLifeMetalness", new THREE.BufferAttribute(metalnessValues, 1));
+    geometry.setAttribute("mirrorLifeSkinMask", new THREE.BufferAttribute(skinMaskValues, 1));
+    geometry.setAttribute("mirrorLifeHairMask", new THREE.BufferAttribute(hairMaskValues, 1));
     geometries.push(geometry);
     sources.push(node);
   });
@@ -5352,20 +5361,28 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         `#include <common>
         attribute float mirrorLifeRoughness;
         attribute float mirrorLifeMetalness;
+        attribute float mirrorLifeSkinMask;
+        attribute float mirrorLifeHairMask;
         varying float vMirrorLifeRoughness;
-        varying float vMirrorLifeMetalness;`
+        varying float vMirrorLifeMetalness;
+        varying float vMirrorLifeSkinMask;
+        varying float vMirrorLifeHairMask;`
       )
       .replace(
         "#include <begin_vertex>",
         `#include <begin_vertex>
         vMirrorLifeRoughness = mirrorLifeRoughness;
-        vMirrorLifeMetalness = mirrorLifeMetalness;`
+        vMirrorLifeMetalness = mirrorLifeMetalness;
+        vMirrorLifeSkinMask = mirrorLifeSkinMask;
+        vMirrorLifeHairMask = mirrorLifeHairMask;`
       );
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <common>",
       `#include <common>
       varying float vMirrorLifeRoughness;
-      varying float vMirrorLifeMetalness;`
+      varying float vMirrorLifeMetalness;
+      varying float vMirrorLifeSkinMask;
+      varying float vMirrorLifeHairMask;`
     ).replace(
       "#include <roughnessmap_fragment>",
       `#include <roughnessmap_fragment>
@@ -5378,14 +5395,18 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       "#include <opaque_fragment>",
       `#include <opaque_fragment>
       float mirrorLifeViewWrap = 1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
-      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 4.35);
+      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 5.1);
       float mirrorLifeClothMask = smoothstep(0.82, 0.94, vMirrorLifeRoughness);
       float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.085, 0.072, 0.09), mirrorLifeInkRim * 0.29);
-      gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.34;`
+      float mirrorLifeSkinWrap = pow(mirrorLifeViewWrap, 1.72) * vMirrorLifeSkinMask;
+      float mirrorLifeHairSheen = pow(mirrorLifeViewWrap, 2.45) * vMirrorLifeHairMask;
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.18);
+      gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.24;
+      gl_FragColor.rgb += vec3(0.082, 0.035, 0.02) * mirrorLifeSkinWrap * 0.34;
+      gl_FragColor.rgb += vec3(0.052, 0.045, 0.038) * mirrorLifeHairSheen * 0.2;`
     );
   };
-  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v3";
+  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v4";
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -6002,9 +6023,9 @@ function createCivicActorObject(actor, asset) {
       // the broad subsurface wrap of the reference without a second face mesh
       // or a screen-space portrait card.
       material.color?.offsetHSL?.(0, -0.018, 0.018);
-      material.roughness = 0.62;
+      material.roughness = 0.68;
       material.metalness = 0;
-      material.envMapIntensity = 0.74;
+      material.envMapIntensity = 0.64;
       material.onBeforeCompile = (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <opaque_fragment>",
@@ -6014,12 +6035,12 @@ function createCivicActorObject(actor, asset) {
           float mirrorLifeSkinLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
           float mirrorLifeSkinShadow = 1.0 - smoothstep(0.24, 0.62, mirrorLifeSkinLuma);
           float mirrorLifeSkinVelvet = pow(mirrorLifeSkinFacing, 7.0) * smoothstep(0.42, 0.82, mirrorLifeSkinLuma);
-          gl_FragColor.rgb += vec3(0.064, 0.028, 0.017) * mirrorLifeSkinWrap * 0.52;
-          gl_FragColor.rgb += vec3(0.032, 0.012, 0.007) * mirrorLifeSkinShadow * 0.2;
-          gl_FragColor.rgb += vec3(0.018, 0.011, 0.008) * mirrorLifeSkinVelvet;`
+          gl_FragColor.rgb += vec3(0.064, 0.028, 0.017) * mirrorLifeSkinWrap * 0.44;
+          gl_FragColor.rgb += vec3(0.032, 0.012, 0.007) * mirrorLifeSkinShadow * 0.16;
+          gl_FragColor.rgb += vec3(0.018, 0.011, 0.008) * mirrorLifeSkinVelvet * 0.72;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v3";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v4";
       material.needsUpdate = true;
     });
   }
