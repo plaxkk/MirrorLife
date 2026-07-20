@@ -59,10 +59,11 @@ try {
   const opening = await readStats(page);
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
-  assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the authored curved facial identity atlas");
+  assert(opening.actors.every((actor) => actor.faceMode === "hybrid-volume"), "civic scene did not use the hybrid facial volume contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v2"), "civic face atlas did not preserve the sculpted facial volume contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v3"), "civic face atlas did not preserve the hybrid facial volume contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic curved face morph set is incomplete");
+  assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v1" && actor.eyes?.count === 2), "civic actors did not expose two animated volumetric eyes");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v1"), "civic actors did not expose independent wrist acting");
   const attentiveWitnesses = opening.actors.filter((actor) => actor.assetRole !== "player");
   assert(attentiveWitnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35), "civic witness faces did not settle into attentive expression morphs");

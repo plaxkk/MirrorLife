@@ -12,6 +12,9 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
+const CIVIC_FACE_MODE = new URLSearchParams(window.location.search).get("civicFaceMode") === "atlas"
+  ? "curved-atlas"
+  : "hybrid-volume";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -5284,6 +5287,43 @@ function clearConnectedFaceAtlasBackground(context, width, height) {
   return true;
 }
 
+function clearCivicAtlasEyeRegions(context, width, height) {
+  if (CIVIC_FACE_MODE !== "hybrid-volume") return false;
+  // The atlas still provides role-specific brows, blush and mouth identity,
+  // but the emotional focus now comes from the authored sclera/iris/lid
+  // geometry exported with every citizen. Remove only the painted eye pair
+  // from each quadrant with an elliptical feather so the real eye volume can
+  // catch highlights, blink, gaze and self-occlude without a rectangular seam.
+  const cellWidth = width / 2;
+  const cellHeight = height / 2;
+  context.save();
+  context.globalCompositeOperation = "destination-out";
+  for (let row = 0; row < 2; row += 1) {
+    for (let column = 0; column < 2; column += 1) {
+      [-1, 1].forEach((side) => {
+        const centreX = column * cellWidth + cellWidth * (side < 0 ? 0.285 : 0.715);
+        const centreY = row * cellHeight + cellHeight * 0.49;
+        const radiusX = cellWidth * 0.155;
+        const radiusY = cellHeight * 0.125;
+        context.save();
+        context.translate(centreX, centreY);
+        context.scale(radiusX, radiusY);
+        const feather = context.createRadialGradient(0, 0, 0.72, 0, 0, 1);
+        feather.addColorStop(0, "rgba(0, 0, 0, 1)");
+        feather.addColorStop(0.8, "rgba(0, 0, 0, 1)");
+        feather.addColorStop(1, "rgba(0, 0, 0, 0)");
+        context.fillStyle = feather;
+        context.beginPath();
+        context.arc(0, 0, 1, 0, Math.PI * 2);
+        context.fill();
+        context.restore();
+      });
+    }
+  }
+  context.restore();
+  return true;
+}
+
 function loadCivicFaceAtlas() {
   if (civicFaceAtlasTexture) return Promise.resolve(civicFaceAtlasTexture);
   if (civicFaceAtlasLoading) return civicFaceAtlasLoading;
@@ -5302,6 +5342,7 @@ function loadCivicFaceAtlas() {
       }
       context.drawImage(image, 0, 0);
       clearConnectedFaceAtlasBackground(context, source.width, source.height);
+      clearCivicAtlasEyeRegions(context, source.width, source.height);
       civicFaceAtlasTexture = new THREE.CanvasTexture(source);
       civicFaceAtlasTexture.colorSpace = THREE.SRGBColorSpace;
       civicFaceAtlasTexture.wrapS = THREE.ClampToEdgeWrapping;
@@ -5442,6 +5483,7 @@ function createCivicFaceDecal(role = "player") {
   decal.renderOrder = 2;
   decal.userData.mirrorLifeFaceDecal = true;
   decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v1";
+  decal.userData.mirrorLifeFaceMode = CIVIC_FACE_MODE;
   return decal;
 }
 
@@ -6348,8 +6390,7 @@ function createCivicActorObject(actor, asset) {
     // plastic doll read. The curved decal is parented to HeadPivot, writes
     // depth and is occluded normally by fringe hair at every orbit angle.
     const authoredFeatureNames = new Set([
-      "EyePivot_-1",
-      "EyePivot_1",
+      ...(CIVIC_FACE_MODE === "hybrid-volume" ? [] : ["EyePivot_-1", "EyePivot_1"]),
       "BrowPivot_-1",
       "BrowPivot_1",
       "MouthPivot",
@@ -6365,7 +6406,7 @@ function createCivicActorObject(actor, asset) {
       node.removeFromParent();
     });
     headGroup.add(faceDecal);
-    eyePivots = [];
+    if (CIVIC_FACE_MODE !== "hybrid-volume") eyePivots = [];
     browPivots = [];
     mouthPivot = null;
     mouthClosedPivot = null;
@@ -7422,7 +7463,7 @@ function getStats() {
       id,
       frame: entry.frame,
       assetRole: entry.assetRole || "procedural",
-      faceMode: entry.faceDecal ? "curved-atlas" : "sculpted",
+      faceMode: entry.faceDecal?.userData?.mirrorLifeFaceMode || (entry.faceDecal ? "curved-atlas" : "sculpted"),
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
       facingYaw: Number(entry.facingYaw.toFixed(3)),
@@ -7451,12 +7492,18 @@ function getStats() {
       } : null,
       facial: entry.faceDecal?.morphTargetDictionary ? {
         version: "mirrorlife-civic-face-morph-v1",
-        integration: "mirrorlife-civic-face-volume-v2",
+        integration: CIVIC_FACE_MODE === "hybrid-volume"
+          ? "mirrorlife-civic-face-volume-v3"
+          : "mirrorlife-civic-face-volume-v2",
         morphCount: Object.keys(entry.faceDecal.morphTargetDictionary).length,
         smile: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.WarmSmile] || 0).toFixed(4)),
         speech: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.SpeechJaw] || 0).toFixed(4)),
         attentive: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.Attentive] || 0).toFixed(4)),
         blink: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.Blink] || 0).toFixed(4))
+      } : null,
+      eyes: entry.eyePivots?.length ? {
+        version: "mirrorlife-civic-eye-volume-v1",
+        count: entry.eyePivots.length
       } : null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
         key,

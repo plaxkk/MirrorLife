@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v90 hybrid volumetric eyes and weighted silhouette gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/civic-fidelity-v90/desktop-hybrid-1672x941-v90.png` (`1672 × 941`, `public-plaza`, ready listening-circle state).
+- Full-view same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v90/reference-vs-v90-full.png`; source and implementation use the same viewport and equivalent opening social state.
+- Focused cast comparison: `dist/interior-3d-work/civic-fidelity-v90/reference-vs-hybrid-cast-v90.png`. This crop is required because eye shape, iris catchlight, lid volume, limb weight and shoe contact are not safely judgeable at full-room scale.
+- Internal option comparison: `dist/interior-3d-work/civic-fidelity-v88/atlas-vs-hybrid-cast-v88.png`; the left side uses the prior decal-only eyes and the right uses real eye geometry at the same viewport/state. `dist/interior-3d-work/civic-fidelity-v89/v88-vs-v89-cast.png` then isolates the circular-to-almond eye correction.
+- Previous/final comparison: `dist/interior-3d-work/civic-fidelity-v90/v87-vs-v90-full.png`; v90 preserves the v87 room grade while changing character facial volume and silhouette.
+- Orbit evidence: `dist/interior-3d-work/civic-fidelity-v90/desktop-yaw-90-1672x941-v90.png` and `desktop-yaw-180-1672x941-v90.png` prove side/back head, hair, eye occlusion and body volume.
+- Interaction and responsive evidence: `dist/interior-3d-work/civic-fidelity-v90/desktop-suggest-1672x941-v90.png`, `walk-stride-1280x720-v90.png` and `mobile-yaw-0-390x844-v90.png`.
+- Primary interactions tested in the in-app browser and local Chrome regression: social-action selection, speech/gesture morphs, real-eye gaze/blink pivots, physical WASD locomotion (`4.61m`), drag orbit (`65.3°`), `90°/180°` inspection, mobile controls, desktop/mobile atomic scene flow and all 78 transitions. Browser warning/error logs were empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v87 P1 / decal-dominant eyes] Runtime face mode advances from `curved-atlas` to `hybrid-volume`. Each role keeps atlas-authored brows, blush and mouth, while a feathered elliptical mask reveals the exported sclera, iris, pupil, glint, lower contour and upper lid geometry underneath.
+- [fixed from first v88 comparison / circular doll eyes] Sculpt v22 compresses the eye-white, iris, pupil, glint and lid stack into an almond aspect ratio. The v88/v89 same-crop pair shows less exposed circular sclera while keeping expressions readable at the story camera.
+- [fixed / eyes did not participate in social acting] Every desktop citizen exposes two `mirrorlife-civic-eye-volume-v1` pivots. Existing gaze, smile compression and blink timing now deform real lit eye geometry; speech continues to drive the shared facial morph contract.
+- [fixed from v89 / overly narrow mannequin silhouette] Sculpt v23 adds modest torso depth/width, larger continuous sleeve and trouser cross-sections, wider cuffs and a broader shoe last. The visual remains within the metre-scale capsule tolerance while reading with more foot and garment weight.
+- [checked / full orbit remains real] The `90°` and `180°` captures show correct eye/head occlusion, asymmetrical hairstyles, costume backs and articulated props; neither face nor character rotates toward the camera as a sprite.
+- [checked / performance remains inside the hero-room gate] Desktop is `147` draw calls / `247,910` triangles, including `79` actor calls for four full-expression citizens. Mobile merges eye detail into the head LOD and remains `108` / `222,232` for three citizens.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts/typography] Chinese status, location, memory and action labels remain readable at desktop/mobile sizes. The implementation still uses heavier, more segmented dark surfaces and less refined icon optical weights than the source; this remains P2.
+- [checked][spacing/layout rhythm] Entrance, record station, hearing circle, evidence wall and lounge maintain a deliberate foreground/middle/background sequence at yaw 0. Side/reverse views remain navigable, although some orbit angles expose more blank wall and foreground furniture overlap than an authored story camera would.
+- [checked][colors/tokens] Warm ivory, teal, coral, oak, paper, terrazzo and brass remain consistent with the source direction. Real eye highlights now join the light hierarchy instead of staying printed at one value.
+- [checked][image and asset quality] Characters are real lit, skinned geometry with volumetric eyes, sculpted nose/head, morphing facial sheet, independent hands and continuous limb skin. The focused comparison still shows simpler eyelid/cheek/lip anatomy, coarse hair clumps, limited cloth layering and hand contact compared with the target.
+- [checked][copy/content] MirrorLife story and social-action copy remains coherent; no fake resident count, public percentage or source-private content was copied into runtime.
+- [checked][responsiveness/accessibility] At `390 × 844`, player, two witnesses, objective, joystick, chat/jump, contextual action and all four social actions remain visible and reachable without clipping.
+- [P1][character production anatomy remains below the reference] Location: four civic actors. Evidence: v90 replaces painted eyes with real animated volume and improves body weight, but the target still has integrated eyelid/cheek/lip topology, layered hair strands, tailored garment overlaps, stronger hand contact and subtler joint deformation. Impact: close social scenes are more alive yet still visibly prototype-grade beside the target. Fix: add role-specific eyelid/cheek/lip geometry and corrective facial shapes; rebuild hair and outer garments as layered production meshes on the current skeleton.
+- [P1][environment craft and local light transport remain one tier lower] Location: doorway, evidence cabinetry, lounge, record station and small props. Evidence: the room program, materials and composition are coherent, but the target contains finer joinery, textile tailoring, ceramic/paper variation, portal bounce and contact penumbrae. Impact: the visual target still wins immediately on richness and believable authored detail. Fix: rebuild the remaining threshold/casework/lounge as bespoke hero assets and add localized baked/probe lighting inside the current performance budget.
+- [P2][HUD and free-orbit framing need an editorial pass] Location: persistent top/bottom chrome and yaw 90/180 frames. Evidence: controls remain dark and segmented; side views can give blank wall or foreground desk disproportionate weight. Impact: the scene feels more like a debug-free sandbox than a directed social drama at some angles. Fix: consolidate HUD surfaces and bias orbit collision/composition targets toward the active cast while retaining player control.
+
+### Implementation checklist
+
+1. Add integrated eyelid, cheek and lip geometry plus role-specific facial correctives to the v23 shared skeleton.
+2. Rebuild layered hair and outer-garment silhouettes; author reliable notebook/chin/conversation hand contacts.
+3. Replace remaining modular threshold, evidence cabinetry and lounge pieces with bespoke hero assets and localized bounce.
+4. Add orbit-composition bias and finish the HUD only after the production art pass, then repeat identical desktop/mobile/action/orbit QA.
+
+### Gate result
+
+v90 closes the decal-only-eye problem, adds real gaze/blink/highlight behavior, improves limb and shoe weight, preserves complete orbit and remains inside desktop/mobile performance gates. The source comparison still contains actionable P1 character-production and bespoke-environment differences, so reference-level parity is not yet proven.
+
+final result: blocked
+
+Blocker: production facial/hair/garment anatomy and a fully bespoke, locally lit civic environment remain visible P1 differences against the source.
+
 ## 2026-07-21 reference-fidelity v87 integrated face volume, cloth tension and material-depth gate
 
 ### Evidence inspected together

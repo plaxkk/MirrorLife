@@ -662,13 +662,13 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
         # y, half-width, lower surface, upper surface. The terminal toe ring
         # closes down in both width and height, producing a true rounded last
         # instead of the four-sided wedge exposed by the first v6 pass.
-        (0.078, 0.043, -0.025, 0.034),
-        (0.038, 0.055, -0.035, 0.059),
-        (-0.017, 0.067, -0.042, 0.081),
-        (-0.086, 0.072, -0.044, 0.07),
-        (-0.15, 0.068, -0.043, 0.053),
-        (-0.197, 0.051, -0.035, 0.035),
-        (-0.216, 0.017, -0.015, 0.017),
+        (0.078, 0.046, -0.025, 0.034),
+        (0.038, 0.059, -0.035, 0.059),
+        (-0.017, 0.072, -0.042, 0.081),
+        (-0.086, 0.077, -0.044, 0.07),
+        (-0.15, 0.073, -0.043, 0.053),
+        (-0.197, 0.055, -0.035, 0.035),
+        (-0.216, 0.018, -0.015, 0.017),
     )
     radial_segments = 16
     vertices = []
@@ -719,7 +719,7 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1):
 
     rounded_box(
         f"{name}Sole",
-        (0.142, 0.262, 0.022),
+        (0.152, 0.262, 0.022),
         (location[0], location[1] - 0.052, location[2] - 0.047),
         sole_mat,
         parent,
@@ -966,18 +966,22 @@ def build_face(head, mats, role):
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
         # rather than the white toy-doll discs of the early character pass.
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.041, 0.0085, 0.045), mats["eye_white"], eye, segments=26, rings=16)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.0095, -0.002), (0.023, 0.0042, 0.031), mats["iris"], eye, segments=22, rings=12)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0135, -0.003), (0.0088, 0.0024, 0.0155), mats["ink"], eye, segments=16, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.016, 0.012), (0.0046, 0.0014, 0.0062), mats["eye_white"], eye, segments=10, rings=6)
+        # An almond aspect ratio avoids the circular doll-eye silhouette that
+        # appeared when the sculpted eyes first replaced the painted atlas.
+        # Width remains readable at the authored story camera while the lower
+        # lid, iris and glint now sit inside a compressed, reference-like eye.
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.044, 0.008, 0.036), mats["eye_white"], eye, segments=26, rings=16)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.009, -0.001), (0.0225, 0.004, 0.026), mats["iris"], eye, segments=22, rings=12)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.013, -0.002), (0.0085, 0.0022, 0.013), mats["ink"], eye, segments=16, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0155, 0.009), (0.0042, 0.0012, 0.005), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
-                (-0.03, -0.01, -0.009),
-                (-0.016, -0.011, -0.021),
-                (0, -0.0115, -0.025),
-                (0.016, -0.011, -0.021),
-                (0.03, -0.01, -0.009),
+                (-0.034, -0.01, -0.005),
+                (-0.017, -0.011, -0.014),
+                (0, -0.0115, -0.018),
+                (0.017, -0.011, -0.014),
+                (0.034, -0.01, -0.005),
             ],
             0.00125,
             mats["skin_shadow"],
@@ -988,7 +992,7 @@ def build_face(head, mats, role):
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.035, -0.012, 0.028), (0, -0.015, 0.045), (0.035, -0.012, 0.028)],
+            [(-0.038, -0.012, 0.021), (0, -0.015, 0.036), (0.038, -0.012, 0.021)],
             0.00315 if feminine else 0.00265,
             mats["ink"],
             eye,
@@ -1175,7 +1179,7 @@ def build_body(role, config, mats, visual):
     # the overall height was correct. Broaden the shoulder/chest volume by a
     # few centimetres and add front/back depth while remaining inside the
     # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid("Torso", (0, 0, 1.0), (0.252, 0.152, 0.332), mats["top"], visual, segments=32, rings=22)
+    torso = ellipsoid("Torso", (0, 0, 1.0), (0.26, 0.158, 0.332), mats["top"], visual, segments=32, rings=22)
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1217,7 +1221,7 @@ def build_body(role, config, mats, visual):
             depth=depth,
         )
     cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
-    rounded_box("WaistBand", (0.37, 0.225, 0.052), (0, -0.005, 0.775), mats["accent"], visual, radius=0.024)
+    rounded_box("WaistBand", (0.39, 0.23, 0.052), (0, -0.005, 0.775), mats["accent"], visual, radius=0.024)
 
     left_arm = empty("LeftArmPivot", visual, (-0.234, 0, 1.2))
     right_arm = empty("RightArmPivot", visual, (0.234, 0, 1.2))
@@ -1234,15 +1238,15 @@ def build_body(role, config, mats, visual):
         "SkinnedArmVolume",
         (-0.234, 0.234),
         (
-            (1.2, 0.075, 0.069, 0.002),
-            (1.15, 0.082, 0.074, 0.003),
-            (1.07, 0.078, 0.071, 0.004),
-            (1.0, 0.069, 0.063, 0.003),
-            (0.965, 0.062, 0.058, 0),
-            (0.925, 0.064, 0.059, -0.002),
-            (0.85, 0.061, 0.056, -0.004),
-            (0.775, 0.055, 0.05, -0.004),
-            (0.705, 0.047, 0.043, -0.002),
+            (1.2, 0.082, 0.075, 0.002),
+            (1.15, 0.09, 0.081, 0.003),
+            (1.07, 0.086, 0.078, 0.004),
+            (1.0, 0.076, 0.069, 0.003),
+            (0.965, 0.068, 0.064, 0),
+            (0.925, 0.07, 0.065, -0.002),
+            (0.85, 0.067, 0.062, -0.004),
+            (0.775, 0.061, 0.055, -0.004),
+            (0.705, 0.052, 0.047, -0.002),
         ),
         0.965,
         sleeve_mat,
@@ -1254,15 +1258,15 @@ def build_body(role, config, mats, visual):
         "SkinnedLegVolume",
         (-0.145, 0.145),
         (
-            (0.73, 0.108, 0.098, 0.002),
-            (0.65, 0.111, 0.101, 0.004),
-            (0.55, 0.1, 0.093, 0.006),
-            (0.475, 0.083, 0.077, 0.003),
-            (0.445, 0.075, 0.07, 0),
-            (0.405, 0.078, 0.072, -0.002),
-            (0.33, 0.086, 0.08, -0.005),
-            (0.245, 0.08, 0.074, -0.005),
-            (0.155, 0.061, 0.057, -0.002),
+            (0.73, 0.116, 0.106, 0.002),
+            (0.65, 0.119, 0.109, 0.004),
+            (0.55, 0.107, 0.1, 0.006),
+            (0.475, 0.089, 0.083, 0.003),
+            (0.445, 0.081, 0.076, 0),
+            (0.405, 0.084, 0.078, -0.002),
+            (0.33, 0.092, 0.086, -0.005),
+            (0.245, 0.086, 0.08, -0.005),
+            (0.155, 0.066, 0.062, -0.002),
         ),
         0.445,
         mats["lower"],
@@ -1300,7 +1304,7 @@ def build_body(role, config, mats, visual):
                 elbow,
                 depth=0.006,
             )
-        cylinder(f"Cuff_{side}", 0.055, 0.052, 0.046, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
+        cylinder(f"Cuff_{side}", 0.061, 0.057, 0.046, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
         if config["costume"] == "facilitator":
             hand_pose = "notebook-grip"
             hand_rotation = (0.02, side * 0.2, -side * 0.2)
@@ -1336,7 +1340,7 @@ def build_body(role, config, mats, visual):
                 knee,
                 depth=0.006,
             )
-        cylinder(f"TrouserCuff_{side}", 0.082, 0.074, 0.068, (0, 0, -0.265), mats["accent"], knee, vertices=20)
+        cylinder(f"TrouserCuff_{side}", 0.088, 0.08, 0.068, (0, 0, -0.265), mats["accent"], knee, vertices=20)
         sculpted_shoe(f"ShoeUpper_{side}", (0, 0, -0.365), mats["shoe"], mats["sole"], knee, side=side)
 
     return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
@@ -1655,7 +1659,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v21",
+        "sculptContract": "mirrorlife-civic-sculpt-v23",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -1677,8 +1681,10 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v2",
+            "integrationContract": "mirrorlife-civic-face-volume-v3",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip"],
+            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
+            "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {
