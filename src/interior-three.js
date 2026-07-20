@@ -77,7 +77,11 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  "civic-ivory": { key: 2.08, fill: 0.24, hemi: 0.22, bounce: 0.42, wash: 0.74, exposure: 0.81, keyColor: "#ffd2a0", fillColor: "#a9d3d0" },
+  // The public room is intentionally warm, but the former orange key and low
+  // exposure collapsed plaster, skin and timber into one ochre value. Keep a
+  // strong doorway direction while restoring the neutral daylight and soft
+  // lower-body bounce visible in the reference.
+  "civic-ivory": { key: 1.92, fill: 0.28, hemi: 0.27, bounce: 0.56, wash: 0.82, exposure: 0.86, keyColor: "#ffe2c3", fillColor: "#b7dcd8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -125,7 +129,10 @@ const MODEL_RENDER_PROFILES = {
   // bring the visible furniture closer to the already-authoritative physics
   // colliders instead of leaving a small sofa inside a much larger blocker.
   "civic-display-case": { scale: 1.18, rotationY: 0 },
-  "civic-notice-console": { scale: 1.75, rotationY: 0 },
+  // Normalized prop meshes are multiplied by the shared 1.78 prop factor.
+  // 1.28 therefore restores a ~2.2m console, matching its authored collider;
+  // the previous 1.75 profile rendered a ~3m wall unit around a 2.24m blocker.
+  "civic-notice-console": { scale: 1.28, rotationY: 0 },
   "civic-lounge-suite": { scale: 2.15, rotationY: 0 },
   shelf: { scale: 1.08, rotationY: 0 },
   "wall-board": { scale: 1.08, decorScale: 3.1, rotationY: 0 },
@@ -477,19 +484,19 @@ function ensureLayer() {
         // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
         // carried by light and material response; saturation stays editorial
         // rather than toy-like.
-        color = mix(vec3(luma), color, 1.06 * strength);
-        color = max(vec3(0.0), (color - vec3(0.61)) * (1.0 + 0.16 * strength) + vec3(0.61));
-        color *= mix(vec3(1.0), vec3(1.01, 0.997, 0.982), strength);
+        color = mix(vec3(luma), color, 1.025 * strength);
+        color = max(vec3(0.0), (color - vec3(0.61)) * (1.0 + 0.115 * strength) + vec3(0.61));
+        color *= mix(vec3(1.0), vec3(1.006, 1.0, 0.992), strength);
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaDown = dot(texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float sceneEdge = max(abs(lumaRight - lumaLeft), abs(lumaUp - lumaDown));
-        float editorialInk = smoothstep(0.085, 0.26, sceneEdge) * 0.09 * strength;
+        float editorialInk = smoothstep(0.09, 0.28, sceneEdge) * 0.045 * strength;
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.075 * strength;
+        color *= 1.0 - vignette * 0.052 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -2611,10 +2618,10 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   const deskProfile = layoutProfile?.props?.find((prop) => prop?.assetIntent === "civic-record-desk");
   group.position.set(Number(deskProfile?.worldX ?? -2.72), 0, Number(deskProfile?.worldZ ?? 2.62));
   group.rotation.y = Number(deskProfile?.rotationY ?? 2.12);
-  group.scale.setScalar(Number(deskProfile?.displayScale ?? 1.12));
+  group.scale.setScalar(Number(deskProfile?.displayScale ?? 1.02));
   roomRoot.add(group);
   const wood = createToonMaterial("#a66b43", { roughness: 0.68, surface: "wood", bumpScale: 0.012 });
-  const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
+  const trim = createToonMaterial("#665044", { roughness: 0.76 });
   const top = new THREE.Mesh(new RoundedBoxGeometry(1.65, 0.16, 0.78, 6, 0.1), wood);
   top.position.y = 0.77;
   group.add(top);
@@ -5252,6 +5259,13 @@ function createCivicFaceDecal(role = "player") {
   const material = new THREE.MeshStandardMaterial({
     map: texture,
     color: 0xffffff,
+    // A very small self-lit contribution preserves the authored iris and
+    // mouth colours through the complete orbit without making the face glow.
+    // Room light still supplies the dominant value and the curved surface
+    // continues to receive real shading and occlusion from the hair volume.
+    emissive: new THREE.Color(0xffffff),
+    emissiveMap: texture,
+    emissiveIntensity: 0.055,
     roughness: 0.88,
     metalness: 0,
     alphaTest: 0.08,
@@ -5523,7 +5537,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         varying float vMirrorLifeRoughness;
         varying float vMirrorLifeMetalness;
         varying float vMirrorLifeSkinMask;
-        varying float vMirrorLifeHairMask;`
+        varying float vMirrorLifeHairMask;
+        varying vec3 vMirrorLifeSurfacePosition;`
       )
       .replace(
         "#include <begin_vertex>",
@@ -5531,7 +5546,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeRoughness = mirrorLifeRoughness;
         vMirrorLifeMetalness = mirrorLifeMetalness;
         vMirrorLifeSkinMask = mirrorLifeSkinMask;
-        vMirrorLifeHairMask = mirrorLifeHairMask;`
+        vMirrorLifeHairMask = mirrorLifeHairMask;
+        vMirrorLifeSurfacePosition = transformed;`
       );
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <common>",
@@ -5539,7 +5555,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       varying float vMirrorLifeRoughness;
       varying float vMirrorLifeMetalness;
       varying float vMirrorLifeSkinMask;
-      varying float vMirrorLifeHairMask;`
+      varying float vMirrorLifeHairMask;
+      varying vec3 vMirrorLifeSurfacePosition;`
     ).replace(
       "#include <roughnessmap_fragment>",
       `#include <roughnessmap_fragment>
@@ -5557,13 +5574,21 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
       float mirrorLifeSkinWrap = pow(mirrorLifeViewWrap, 1.72) * vMirrorLifeSkinMask;
       float mirrorLifeHairSheen = pow(mirrorLifeViewWrap, 2.45) * vMirrorLifeHairMask;
+      // Resolve broad single-colour garments into a very restrained woven
+      // surface. The crossed frequencies are small enough to disappear at
+      // mobile LOD, but at story-camera distance they break the plastic toy
+      // read without requiring per-role texture draw calls or changing UVs.
+      float mirrorLifeWeaveA = sin(vMirrorLifeSurfacePosition.x * 235.0 + vMirrorLifeSurfacePosition.z * 31.0);
+      float mirrorLifeWeaveB = sin(vMirrorLifeSurfacePosition.y * 248.0 - vMirrorLifeSurfacePosition.z * 37.0);
+      float mirrorLifeWeave = mirrorLifeWeaveA * mirrorLifeWeaveB * mirrorLifeClothMask;
       gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.18);
       gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.24;
+      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.018;
       gl_FragColor.rgb += vec3(0.082, 0.035, 0.02) * mirrorLifeSkinWrap * 0.34;
       gl_FragColor.rgb += vec3(0.052, 0.045, 0.038) * mirrorLifeHairSheen * 0.2;`
     );
   };
-  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v4";
+  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v5";
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -6873,13 +6898,16 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.45 + civicRearArc * 0.45)
+    ? (portrait ? 6.2 : 5.1 + civicRearArc * 0.45)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.48 + civicRearArc * 0.22) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.2 + civicRearArc * 0.22) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.38 : 0.22;
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.72) : 0.94)
+  // The desktop civic shot sits closer to an illustrated 35mm eye line than
+  // a management-game bird's-eye view: more portal and character silhouette,
+  // less undifferentiated floor. Portrait keeps the higher navigation read.
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.82) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,

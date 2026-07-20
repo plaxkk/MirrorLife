@@ -5726,8 +5726,11 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         worldX: -2.72,
         worldZ: 2.62,
         rotationY: 2.12,
-        displayScale: 1.12,
-        collider: { shape: "box", halfX: 1.12, halfY: 1.07, halfZ: 0.65, rotation: 0 },
+        // Keep the foreground frame readable without letting it dominate the
+        // listening circle. The collider includes the tapered legs and brief,
+        // while staying within 10cm of the rendered tabletop footprint.
+        displayScale: 1.02,
+        collider: { shape: "box", halfX: 0.95, halfY: 1.0, halfZ: 0.48, rotation: 0 },
         interactionWorldX: -1.88,
         interactionWorldZ: 1.74
       },

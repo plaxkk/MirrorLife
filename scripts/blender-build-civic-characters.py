@@ -699,7 +699,7 @@ def cloth_fold_ribbon(name, points, widths, mat, parent=None, depth=0.008):
 
 def build_materials(role, config):
     return {
-        "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.035),
+        "skin": material(f"{role} skin", config["skin"], 0.64, clearcoat=0.05),
         "skin_shadow": material(f"{role} hand crease", "#cb8069", 0.82),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
@@ -1031,7 +1031,11 @@ def build_cap(head, mats):
 
 
 def build_body(role, config, mats, visual):
-    torso = ellipsoid("Torso", (0, 0, 1.0), (0.242, 0.145, 0.332), mats["top"], visual, segments=30, rings=20)
+    # The story-camera comparison showed a narrow mannequin torso even though
+    # the overall height was correct. Broaden the shoulder/chest volume by a
+    # few centimetres and add front/back depth while remaining inside the
+    # authoritative 0.32 m capsule at the limbs.
+    torso = ellipsoid("Torso", (0, 0, 1.0), (0.252, 0.152, 0.332), mats["top"], visual, segments=32, rings=22)
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1054,8 +1058,8 @@ def build_body(role, config, mats, visual):
     cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.37, 0.225, 0.052), (0, -0.005, 0.775), mats["accent"], visual, radius=0.024)
 
-    left_arm = empty("LeftArmPivot", visual, (-0.228, 0, 1.2))
-    right_arm = empty("RightArmPivot", visual, (0.228, 0, 1.2))
+    left_arm = empty("LeftArmPivot", visual, (-0.234, 0, 1.2))
+    right_arm = empty("RightArmPivot", visual, (0.234, 0, 1.2))
     left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.235))
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.235))
     left_leg = empty("LeftLegPivot", visual, (-0.135, 0, 0.73))
@@ -1071,12 +1075,12 @@ def build_body(role, config, mats, visual):
             f"UpperArm_{side}",
             0.31,
             (
-                (0.58, 0.046, 0.042, -side * 0.006, 0),
-                (0.43, 0.076, 0.069, -side * 0.004, 0.002),
-                (0.23, 0.079, 0.072, 0, 0.004),
-                (0.02, 0.071, 0.065, side * 0.003, 0.003),
-                (-0.28, 0.06, 0.056, side * 0.004, 0),
-                (-0.55, 0.053, 0.049, side * 0.002, -0.002),
+                (0.58, 0.049, 0.045, -side * 0.006, 0),
+                (0.43, 0.08, 0.073, -side * 0.004, 0.002),
+                (0.23, 0.083, 0.076, 0, 0.004),
+                (0.02, 0.075, 0.069, side * 0.003, 0.003),
+                (-0.28, 0.063, 0.059, side * 0.004, 0),
+                (-0.55, 0.056, 0.052, side * 0.002, -0.002),
             ),
             (0, 0, -0.15),
             sleeve_mat,
@@ -1087,9 +1091,9 @@ def build_body(role, config, mats, visual):
             f"ElbowSleeve_{side}",
             0.12,
             (
-                (0.5, 0.055, 0.051),
-                (0.12, 0.058, 0.054, 0, -0.002),
-                (-0.5, 0.052, 0.048, side * 0.002, 0),
+                (0.5, 0.058, 0.054),
+                (0.12, 0.061, 0.057, 0, -0.002),
+                (-0.5, 0.055, 0.051, side * 0.002, 0),
             ),
             (0, 0, 0),
             sleeve_mat,
@@ -1100,11 +1104,11 @@ def build_body(role, config, mats, visual):
             f"Forearm_{side}",
             0.27,
             (
-                (0.53, 0.055, 0.051, side * 0.002, 0),
-                (0.27, 0.062, 0.057, side * 0.006, -0.002),
-                (-0.02, 0.06, 0.054, side * 0.008, -0.005),
-                (-0.3, 0.051, 0.047, side * 0.005, -0.004),
-                (-0.52, 0.043, 0.039, 0, -0.002),
+                (0.53, 0.058, 0.054, side * 0.002, 0),
+                (0.27, 0.065, 0.06, side * 0.006, -0.002),
+                (-0.02, 0.063, 0.057, side * 0.008, -0.005),
+                (-0.3, 0.054, 0.05, side * 0.005, -0.004),
+                (-0.52, 0.046, 0.042, 0, -0.002),
             ),
             (0, 0, -0.137),
             sleeve_mat,
@@ -1411,7 +1415,9 @@ def build_character(role, config):
     # its pivot by 3.5 cm so the silhouette becomes expressive without growing
     # beyond the existing 1.72 m capsule or exposing a long toy-like neck.
     head = empty("HeadPivot", root, (0, 0, 1.435))
-    head.scale = (0.96, 0.96, 0.94)
+    # Preserve the exact height/capsule contract while giving the face a
+    # slightly broader illustrated presence in front and three-quarter views.
+    head.scale = (1.0, 1.0, 0.94)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -1469,7 +1475,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v16",
+        "sculptContract": "mirrorlife-civic-sculpt-v17",
         "faceDecal": {
             "contract": "mirrorlife-civic-face-decal-v1",
             "path": "civic-face-decals.png",
