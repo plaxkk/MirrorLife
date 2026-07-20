@@ -1,5 +1,53 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v73 silhouette rhythm and editorial-edge gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v73/desktop-yaw-0-1672x941-v73.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v73.jpg` for rear-volume, crown silhouette and skirt-hem inspection.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v73/reference-vs-v73-full.png` and `reference-vs-v73-cast-focus.png`, with the source on the left and the live implementation on the right. `v72-vs-v73-full.png` isolates the visual delta from the previous accepted baseline.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v73/mobile-yaw-0-390x844-v73.jpg` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v72 P1 / mathematically smooth helmet hair] Character sculpt v12 reshapes the existing cap topology into five broad, style-phased crown lobes. This breaks the generic spherical silhouette in the hero and reverse frames without adding triangles or replacing the lit 3D head with a view-facing graphic.
+- [fixed / tubular torso read] Shoulder and waist weighting are stronger across the existing body vertices. The player and witnesses now carry a clearer shoulder-to-waist rhythm, while metre scale, skeleton, capsule and animation bindings remain unchanged.
+- [fixed / perfectly circular skirt hem] Skirt vertices now combine asymmetric radial drape with a shallow phase-driven hem drop. The facilitator and mediator retain collision-safe floor clearance and secondary motion, but no longer terminate in a mechanically level ring.
+- [fixed / weak illustrated edge hierarchy] The public-room cinematic pass derives a restrained luminance edge response from the existing rendered scene and applies it before final color output. It is limited to the 3D canvas, leaves the DOM HUD untouched, and the v72/v73 A/B shows improved prop/actor separation without crunchy terrazzo noise or posterized shading.
+- [checked / full-volume orbit and responsive LOD] The reverse frame keeps all four actors and room landmarks readable; the mobile frame retains three actors, the interaction target and touch controls. No crown spike, skirt-floor intersection, long-lived occluder or black/old-scene residue appears in the captured states.
+- [checked / embodied movement and rotation] Local Chrome moved the physical player `3.53m` and rotated the weighted camera `65.3°`; the sculpt and edge changes remain integrated with collision-backed movement rather than existing only in a matched still.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `150` draw calls / `284,688` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `159` draw calls / `298,132` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `106` draw calls / `247,324` triangles, below the `110 / 250,000` gate with three actors, touch locomotion, camera and action controls visible.
+- Character contract: `mirrorlife-civic-sculpt-v12` / `mirrorlife-civic-clips-v3`, four roles and `7.21 MB` total. Geometry is player `29,512`, listener `26,596`, facilitator `30,822` and mediator `28,910` triangles; the only topology delta is the already budgeted skirt edge treatment (`+24` triangles per skirted role).
+- Hero-prop contract remains `mirrorlife-civic-hero-props-v4` at `34,332` aggregate authored triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The public room remains metre-based, Y-up and Rapier-backed with keyboard/touch locomotion, authored animation, weighted follow framing and drag orbit. The new silhouette work deforms the production meshes used by the running actors.
+- [checked][spacing/layout rhythm] The listening circle remains the single middle-ground focus; foreground records and the display case frame it, while the portal, proposal wall and lounge preserve readable depth and exit orientation.
+- [checked][colors/tokens] Warm ivory, teal, coral, timber and brass remain the only dominant families. The edge response changes separation, not palette or atmosphere.
+- [checked][image and asset quality for this iteration] Hair, torso and skirt improvements are mesh-space changes with real back and side volume; the cinematic edge response operates on the live 3D render instead of replacing authored geometry.
+- [checked][responsiveness/accessibility] At `390 × 844`, there is no horizontal overflow and all established touch controls remain visible under the strict mobile rendering budget.
+- [P1][production face and hand deformation] The source still has materially better facial planes, expressive eyelid/cheek integration, skinned finger arcs and hand-to-prop contact. Current faces and hands remain visibly simplified in the paired crop.
+- [P1][garment construction and whole-room craftsmanship] The asymmetric hem improves rhythm, but cloth folds, seams, tension, upholstery tailoring, joinery, wall plaster variation and object-specific wear remain less bespoke than the source.
+- [P1][indirect light and material breakup] The editorial edge helps silhouette separation, but the source retains richer portal bounce, skin subsurface response, localized roughness and multi-scale contact occlusion.
+- [P2][HUD optical finish] Controls are functional and responsive, but icon construction, optical weight, translucent depth and compact alignment remain less refined than the reference HUD.
+
+### Gate result
+
+This iteration removes several procedural-looking silhouette cues and adds a restrained illustrated depth response while preserving a playable full orbit, strict budgets and all 26-room regressions. The paired source/implementation canvas still exposes production face/hand deformation, garment construction, whole-room hero craftsmanship and indirect-light P1 gaps, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial/hand skinning, bespoke whole-room environment assets and richer indirect-light/material breakup remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v72 story-scale framing, illustrated gaze and orbit-composition gate
 
 ### Evidence inspected together

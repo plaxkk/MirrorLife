@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v11",
+  "sculptContract": "mirrorlife-civic-sculpt-v12",
   "animationContract": {
     "version": "mirrorlife-civic-clips-v3",
     "runtime": "authored-keyframe-blend",
@@ -33,13 +33,13 @@
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 93,
-      "triangles": 30798
+      "triangles": 30822
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
       "meshes": 92,
-      "triangles": 28886
+      "triangles": 28910
     }
   }
 }

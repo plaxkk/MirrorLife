@@ -433,7 +433,8 @@ function ensureLayer() {
   cinematicGradePass = new ShaderPass({
     uniforms: {
       tDiffuse: { value: null },
-      strength: { value: 1 }
+      strength: { value: 1 },
+      texelSize: { value: new THREE.Vector2(1 / 1280, 1 / 720) }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -445,6 +446,7 @@ function ensureLayer() {
     fragmentShader: `
       uniform sampler2D tDiffuse;
       uniform float strength;
+      uniform vec2 texelSize;
       varying vec2 vUv;
       void main() {
         vec4 texel = texture2D(tDiffuse, vUv);
@@ -453,6 +455,13 @@ function ensureLayer() {
         color = mix(vec3(luma), color, 1.2 * strength);
         color = max(vec3(0.0), (color - vec3(0.66)) * (1.0 + 0.1 * strength) + vec3(0.66));
         color *= mix(vec3(1.0), vec3(1.025, 0.98, 0.93), strength);
+        float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
+        float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
+        float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
+        float lumaDown = dot(texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
+        float sceneEdge = max(abs(lumaRight - lumaLeft), abs(lumaUp - lumaDown));
+        float editorialInk = smoothstep(0.075, 0.24, sceneEdge) * 0.14 * strength;
+        color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
         color *= 1.0 - vignette * 0.1 * strength;
@@ -6719,6 +6728,7 @@ function update(payload = {}) {
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
     cinematicGradePass.uniforms.strength.value = width >= 760 ? 1 : 0.72;
+    cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
   }
   if (visible) {
     if (composer) composer.render();

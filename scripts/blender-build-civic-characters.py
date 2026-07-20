@@ -601,9 +601,10 @@ def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=N
             angle = math.tau * segment / segments
             fold = math.cos(angle * pleats) * 0.014 * fold_strength
             front_bias = max(0.0, -math.sin(angle)) * 0.009 * fold_strength
-            asymmetric_drape = math.sin(angle + 0.7) * 0.005 * fold_strength
+            asymmetric_drape = math.sin(angle + 0.7) * 0.009 * fold_strength
             current_radius = radius + fold + front_bias + asymmetric_drape
-            vertices.append((math.cos(angle) * current_radius, math.sin(angle) * current_radius, depth * z_factor))
+            hem_drop = -max(0.0, math.sin(angle + 0.42)) * 0.018 * fold_strength
+            vertices.append((math.cos(angle) * current_radius, math.sin(angle) * current_radius, depth * z_factor + hem_drop))
     for ring in range(len(rings) - 1):
         current = ring * segments
         following = (ring + 1) * segments
@@ -852,7 +853,23 @@ def build_hair(head, mats, style):
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
     cap_scale = (0.252, 0.178, 0.226) if style == "spiky" else (0.266, 0.198, 0.24)
-    ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
+    cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
+    # Break the mathematically perfect helmet silhouette without adding a
+    # second shell or more triangles. Five broad crown lobes reshape the same
+    # cap topology, giving fringe and rear locks a volume to grow from instead
+    # of looking glued to a smooth sphere.
+    style_phase = {"spiky": 0.34, "coral_ponytail": 1.08, "braided_bob": 1.72}.get(style, 0.74)
+    for vertex in cap.data.vertices:
+        x, y, z = vertex.co
+        radial = math.hypot(x, y)
+        if radial < 1e-5:
+            continue
+        angle = math.atan2(y, x)
+        crown = max(0.0, min(1.0, (z + 0.045) / 0.245))
+        lobe = math.sin(angle * 5 + style_phase) * (0.004 + crown * 0.008)
+        vertex.co.x += x / radial * lobe
+        vertex.co.y += y / radial * lobe * 0.72
+        vertex.co.z += max(0.0, math.cos(angle * 3 - style_phase)) * crown * 0.006
     fringe_specs = (
         (-0.19, -0.15, 0.205, 0.03),
         (-0.145, -0.112, 0.19, 0.032),
@@ -986,8 +1003,8 @@ def build_body(role, config, mats, visual):
         normalized = max(-1.0, min(1.0, z / 0.332))
         shoulder = max(0.0, min(1.0, (normalized - 0.2) / 0.8))
         waist = max(0.0, 1.0 - abs(normalized + 0.48) / 0.52)
-        vertex.co.x *= 1.0 + shoulder * 0.09 - waist * 0.11
-        vertex.co.y *= 1.0 - waist * 0.06
+        vertex.co.x *= 1.0 + shoulder * 0.14 - waist * 0.16
+        vertex.co.y *= 1.0 - waist * 0.1
     cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.37, 0.225, 0.052), (0, -0.005, 0.775), mats["accent"], visual, radius=0.024)
 
@@ -1399,7 +1416,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v11",
+        "sculptContract": "mirrorlife-civic-sculpt-v12",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v3",
             "runtime": "authored-keyframe-blend",
