@@ -5678,7 +5678,10 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       radius: 5.4,
       height: 3.72,
       floorY: 0,
-      door: { id: "exit", angle: -1.02, width: 2.08, height: 3.02, depth: 0.18 }
+      // Place the sunlit threshold on the left-third story axis visible in
+      // the reference composition. The same transform drives the wall gap,
+      // rendered arch and Rapier exit instead of moving only the backdrop.
+      door: { id: "exit", angle: -0.88, width: 2.08, height: 3.02, depth: 0.18 }
     },
     // Enter directly at the edge of the listening circle. The earlier spawn
     // lived near the cutaway wall, which made the player read as a giant

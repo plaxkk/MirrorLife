@@ -1,5 +1,56 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v74 facial-plane, relaxed-hand and threshold-axis gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v74/desktop-yaw-0-1672x941-v74-final.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v74.jpg` for rear-volume, held-prop, hand silhouette and complete-orbit inspection.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v74/reference-vs-v74-final-full.png` and `reference-vs-v74-final-cast-focus.png`, with the source on the left and the final live implementation on the right. `v73-vs-v74-cast-focus.png`, `v74a-vs-v74b-cast-focus.png` and `v74b-vs-v74c-full.png` isolate character, lighting and grade iterations.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v74/mobile-yaw-0-390x844-v74.jpg` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v73 P1 / pasted-on eye stack] Character sculpt v13 recesses the eye socket into the existing head topology, transitions the upper cheek forward below it and subtly compresses forehead corners. The dark lower eye ring is replaced by a warmer, shallower lid contour; sclera-to-iris-to-pupil proportions now keep illustrated gaze readable without the black-disc or toy-eye failure modes.
+- [fixed / four parallel dowel fingers] Every finger now has role-independent lateral fan and fingertip curl authored in the existing four-ring topology. The isolated thumb ellipsoid is replaced by a tapered two-joint volume seated into the palm. The main and reverse frames retain the relaxed silhouette through animated elbow poses, and the total character asset size falls from `7.21 MB` to `7.09 MB`.
+- [fixed / uniformly inflated garment torso] Existing torso vertices now carry a shallow centre drape and two diagonal tension valleys. Camera-side actor fill is reduced while warm rim contribution increases, so eye socket, cheek and garment planes read through real lighting rather than additional outline geometry.
+- [fixed from first v74 comparison / yellow, toy-like grade] The public-room grade is more neutral and restrained: saturation and yellow multiplication decrease, contrast rises slightly and the screen-space edge term is reduced and narrowed. Ivory plaster, skin, teal cloth, timber and terrazzo no longer collapse into one yellow field.
+- [fixed / black foreground leg] The near public-record desk legs change from heavy walnut cylinders to slimmer tapered oak supports. The foreground still frames the scene and retains its collider, but no longer creates the reference-breaking black vertical bar.
+- [fixed / entrance outside the story axis] The visible portal, wall opening and physical exit move together from `-1.02` to `-0.88` radians. The final full comparison shows the sunlit doorway on the left-third axis leading directly toward the listening circle, matching the source hierarchy more closely without moving only the painted courtyard card.
+- [fixed / weak ground contact and daylight movement] Civic character contact shadow increases from `0.30` to `0.34`, while the window-dapple layer rises from `0.40` to `0.52`. Feet remain planted and the room gains warmer, directional light rhythm without baking the actors into a static background.
+- [checked / embodied movement and rotation] Local Chrome moved the physical player `1.45m` and rotated the weighted camera `65.3°`; Rapier, authored movement clips and the same door transform remain active. Reverse and mobile frames prove the result is full-volume and responsive rather than a matched still.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `146` draw calls / `283,168` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `159` draw calls / `298,100` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `102` draw calls / `247,756` triangles, below the `110 / 250,000` gate with three actors, touch locomotion, camera and action controls visible.
+- Character contract: `mirrorlife-civic-sculpt-v13` / `mirrorlife-civic-clips-v3`, four roles and `7.09 MB` total. Geometry is player `29,504`, listener `26,588`, facilitator `30,814` and mediator `28,902` triangles; the hand improvement removes `8` triangles per role rather than buying fidelity through a larger mesh budget.
+- Hero-prop contract remains `mirrorlife-civic-hero-props-v4` at `34,332` aggregate authored triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The public room remains metre-based, Y-up and Rapier-backed with keyboard/touch locomotion, authored animation, weighted follow framing, drag orbit and one shared door transform for render and physics.
+- [checked][spacing/layout rhythm] The portal now anchors the left third, the four-person listening circle owns the middle ground, and proposal wall/lounge records create a functional background. The reverse hemisphere retains its own witness-wall composition.
+- [checked][colors/tokens] Warm ivory, teal, coral, timber and brass remain the dominant families. The final grade improves separation and material neutrality rather than inventing a different palette.
+- [checked][image and asset quality for this iteration] Face, hand and cloth changes are lit mesh-space deformations with back/side volume. The portal is a real opening with parallax courtyard geometry; no fullscreen image or view-facing actor card replaces the explorable scene.
+- [checked][fonts/typography and copy] Chinese location, exit and social-action labels remain readable at both viewports. The live deterministic QA state still shows `6` residents where the source mock shows `13`; this is a content-state mismatch, not a layout failure, and remains P2 until the reference capture state is reproducible.
+- [checked][responsiveness/accessibility] At `390 × 844`, no horizontal overflow occurs; joystick, chat, jump, contextual action and all social actions remain visible and practical under the mobile rendering budget.
+- [P1][production face and hand deformation] The paired crop shows better form and relaxed fingers, but the source still has skinned finger arcs, stronger hand-to-prop contact, integrated eyelid/cheek animation and more nuanced facial anatomy.
+- [P1][whole-room asset craftsmanship and geometry] The threshold axis is better, but cabinetry joinery, upholstery tailoring, architectural plaster, paper/ceramic storytelling, object-specific wear and room-shell construction remain materially less bespoke than the source.
+- [P1][indirect light and material breakup] Neutral grading and stronger dapple help, but the source retains richer bounce-light color, skin subsurface response, localized roughness and multi-scale contact occlusion.
+- [P2][HUD optical finish and captured content state] Controls function at both viewports, but icons, optical weight, compact alignment, translucent depth and the reference's exact resident/status values remain visibly different.
+
+### Gate result
+
+This iteration corrects the cast's most procedural facial/hand cues, strengthens cloth and contact response, and restores the source's sunlit threshold-to-listening-circle axis while preserving a real moving, collision-backed, fully orbitable 3D room. The paired canvas still exposes actionable P1 production deformation, bespoke whole-room craftsmanship and indirect-light/material differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial/hand skinning, bespoke whole-room environment construction and richer indirect-light/material response remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v73 silhouette rhythm and editorial-edge gate
 
 ### Evidence inspected together

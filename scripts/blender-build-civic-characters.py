@@ -451,20 +451,23 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         sides=16,
     )
     finger_specs = (
-        (-0.036, 0.055, 0.0125),
-        (-0.012, 0.066, 0.014),
-        (0.012, 0.063, 0.0138),
-        (0.036, 0.052, 0.0118),
+        # x, length, radius, lateral splay and fingertip curl.  A small
+        # fan-and-curl silhouette reads as a relaxed hand instead of four
+        # parallel dowels while keeping the same four-ring finger topology.
+        (-0.036, 0.055, 0.0125, -side * 0.004, 0.008),
+        (-0.012, 0.066, 0.014, -side * 0.0015, 0.011),
+        (0.012, 0.063, 0.0138, side * 0.0015, 0.012),
+        (0.036, 0.052, 0.0118, side * 0.0045, 0.01),
     )
-    for finger_index, (finger_x, finger_length, finger_radius) in enumerate(finger_specs, start=1):
+    for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         organic_limb(
             f"FingerVolume_{side}_{finger_index}",
             finger_length,
             (
                 (0.5, finger_radius, finger_radius * 0.82),
-                (0.12, finger_radius * 1.04, finger_radius * 0.86, -side * 0.001, -0.001),
-                (-0.28, finger_radius * 0.9, finger_radius * 0.76, -side * 0.0015, -0.002),
-                (-0.5, finger_radius * 0.46, finger_radius * 0.42, 0, -0.001),
+                (0.12, finger_radius * 1.04, finger_radius * 0.86, splay * 0.2, curl * 0.08),
+                (-0.28, finger_radius * 0.9, finger_radius * 0.76, splay * 0.58, curl * 0.42),
+                (-0.5, finger_radius * 0.46, finger_radius * 0.42, splay, curl),
             ),
             (location[0] + finger_x, location[1] - 0.006, location[2] - 0.025 - finger_length / 2),
             mat,
@@ -474,6 +477,24 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             # scale and recover enough budget for the four-finger silhouette.
             sides=6,
         )
+    # A tapered, two-joint thumb shares the palm volume and follows the same
+    # relaxed curl.  Replacing the former isolated ellipsoid fixes the
+    # ball-jointed silhouette in side and notebook-holding views.
+    organic_limb(
+        f"ThumbVolume_{side}",
+        0.075,
+        (
+            (0.5, 0.017, 0.014),
+            (0.12, 0.019, 0.015, -side * 0.004, 0.003),
+            (-0.26, 0.016, 0.012, -side * 0.011, 0.009),
+            (-0.5, 0.008, 0.007, -side * 0.016, 0.014),
+        ),
+        (location[0] - side * 0.04, location[1] - 0.022, location[2] + 0.004),
+        mat,
+        parent,
+        rotation=(0.1, side * 0.78, side * 0.46),
+        sides=8,
+    )
     for crease_index, crease_x in enumerate((-0.025, 0.0, 0.025), start=1):
         curve_tube(
             f"FingerCrease_{side}_{crease_index}",
@@ -730,6 +751,18 @@ def build_face(head, mats, role):
         cheek_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.118) / 0.075))
         if front > 0:
             vertex.co.y -= cheek_height * cheek_width * front * 0.012
+        # Recess the eye socket and let the upper cheek transition forward
+        # underneath it. This creates a continuous brow/eye/cheek plane under
+        # moving light instead of a sphere with eye pieces pasted on top.
+        socket_height = max(0.0, min(1.0, 1.0 - abs(z - 0.04) / 0.075))
+        socket_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.083) / 0.07))
+        vertex.co.y += socket_height * socket_width * front * 0.006
+        upper_cheek = max(0.0, min(1.0, 1.0 - abs(z + 0.018) / 0.06)) * cheek_width
+        vertex.co.y -= upper_cheek * front * 0.005
+        # Slightly compress the temple/forehead corners so the face reads as
+        # an authored illustrated head rather than a uniformly round sphere.
+        temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
+        vertex.co.x *= 1.0 - temple * 0.045
         chin = max(0.0, min(1.0, (-z - 0.12) / 0.13))
         vertex.co.z -= chin * front * 0.006
     # Keep the facial volume itself expressive. The previous rig swapped
@@ -789,21 +822,21 @@ def build_face(head, mats, role):
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
         # rather than the white toy-doll discs of the early character pass.
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.037, 0.009, 0.045), mats["eye_white"], eye, segments=26, rings=16)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.01, -0.002), (0.0275, 0.0046, 0.037), mats["iris"], eye, segments=22, rings=12)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.004), (0.012, 0.0027, 0.021), mats["ink"], eye, segments=16, rings=8)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.0385, 0.009, 0.045), mats["eye_white"], eye, segments=26, rings=16)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.01, -0.002), (0.0255, 0.0046, 0.0345), mats["iris"], eye, segments=22, rings=12)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.004), (0.0105, 0.0027, 0.0185), mats["ink"], eye, segments=16, rings=8)
         ellipsoid(f"EyeGlint_{side}", (-side * 0.007, -0.017, 0.014), (0.0052, 0.0016, 0.0072), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
                 (-0.034, -0.011, -0.005),
-                (-0.018, -0.012, -0.035),
-                (0, -0.012, -0.043),
-                (0.018, -0.012, -0.035),
+                (-0.018, -0.012, -0.031),
+                (0, -0.012, -0.037),
+                (0.018, -0.012, -0.031),
                 (0.034, -0.011, -0.005),
             ],
-            0.0014,
-            mats["ink"],
+            0.0017,
+            mats["skin_shadow"],
             eye,
             resolution=2,
         )
@@ -1005,6 +1038,15 @@ def build_body(role, config, mats, visual):
         waist = max(0.0, 1.0 - abs(normalized + 0.48) / 0.52)
         vertex.co.x *= 1.0 + shoulder * 0.14 - waist * 0.16
         vertex.co.y *= 1.0 - waist * 0.1
+        # Put the garment volume in the mesh rather than drawing crease cords
+        # on top. A shallow central drape and two diagonal tension valleys
+        # catch the key light differently as the actor turns, while the back
+        # and side silhouette remain unchanged.
+        front = max(0.0, min(1.0, (-y - 0.008) / 0.13))
+        centre_drape = max(0.0, 1.0 - abs(x) / 0.15) * max(0.0, 1.0 - abs(normalized + 0.02) / 0.86)
+        diagonal_tension = max(0.0, 1.0 - abs(abs(x) - (0.09 + normalized * 0.035)) / 0.045)
+        vertex.co.y -= front * centre_drape * 0.006
+        vertex.co.y += front * diagonal_tension * 0.0035
     cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.37, 0.225, 0.052), (0, -0.005, 0.775), mats["accent"], visual, radius=0.024)
 
@@ -1103,7 +1145,6 @@ def build_body(role, config, mats, visual):
             elbow,
             side=side,
         )
-        ellipsoid(f"Thumb_{side}", (-side * 0.042, -0.034, -0.313), (0.016, 0.012, 0.03), mats["skin"], elbow, rotation=(0.12, side * 0.34, side * 0.38), segments=18, rings=10)
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
         organic_limb(
@@ -1416,7 +1457,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v12",
+        "sculptContract": "mirrorlife-civic-sculpt-v13",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v3",
             "runtime": "authored-keyframe-blend",

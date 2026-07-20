@@ -452,15 +452,19 @@ function ensureLayer() {
         vec4 texel = texture2D(tDiffuse, vUv);
         vec3 color = texel.rgb;
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-        color = mix(vec3(luma), color, 1.2 * strength);
-        color = max(vec3(0.0), (color - vec3(0.66)) * (1.0 + 0.1 * strength) + vec3(0.66));
-        color *= mix(vec3(1.0), vec3(1.025, 0.98, 0.93), strength);
+        // Keep the target's warm daylight without the yellow cast that made
+        // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
+        // carried by light and material response; saturation stays editorial
+        // rather than toy-like.
+        color = mix(vec3(luma), color, 1.14 * strength);
+        color = max(vec3(0.0), (color - vec3(0.66)) * (1.0 + 0.12 * strength) + vec3(0.66));
+        color *= mix(vec3(1.0), vec3(1.012, 0.995, 0.975), strength);
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaDown = dot(texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float sceneEdge = max(abs(lumaRight - lumaLeft), abs(lumaUp - lumaDown));
-        float editorialInk = smoothstep(0.075, 0.24, sceneEdge) * 0.14 * strength;
+        float editorialInk = smoothstep(0.085, 0.26, sceneEdge) * 0.09 * strength;
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
@@ -1306,8 +1310,11 @@ function applyLightingPreset(theme = {}) {
     if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.72 : 0.34;
+  // The old camera-side fill erased the eye-socket, cheek and garment planes
+  // that are now present in the civic sculpts. Shift that energy into a warm
+  // rim so expressions stay readable but the actors retain dimensional form.
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.9 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
 }
@@ -2571,7 +2578,9 @@ function addCivicRecordDesk(colors) {
   top.position.y = 0.77;
   group.add(top);
   [-0.62, 0.62].forEach((x) => {
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.07, 0.085, 0.7, 16), trim);
+    // Light oak, tapered legs preserve the foreground frame without creating
+    // the reference-breaking black vertical bar at the near edge.
+    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.068, 0.7, 16), wood);
     leg.position.set(x, 0.38, 0);
     group.add(leg);
   });
@@ -3393,7 +3402,7 @@ function addCivicArchitecturalShell(colors) {
   const panelMaterial = createToonMaterial("#ead8c0", { roughness: 0.96, surface: "plaster", bumpScale: 0.012 });
   const trim = createToonMaterial("#d3b58f", { roughness: 0.86, surface: "plaster", bumpScale: 0.006, emissive: 0.012 });
   const darkTrim = createToonMaterial("#9f7353", { roughness: 0.76, surface: "wood", bumpScale: 0.007 });
-  const portalAngle = -1.02;
+  const portalAngle = -0.88;
   for (let index = 0; index < bayCount; index += 1) {
     const angle = -Math.PI + (index + 0.5) / bayCount * Math.PI * 2;
     const portalDelta = Math.atan2(Math.sin(angle - portalAngle), Math.cos(angle - portalAngle));
@@ -3541,7 +3550,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.4,
+        opacity: theme.night ? 0.1 : 0.52,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -4274,8 +4283,8 @@ function addZoneLayoutArchitecture(theme, colors) {
 }
 
 function addCivicOpenPortal(theme, colors) {
-  const door = theme.layoutProfile?.shell?.door || { angle: -1.02, width: 1.42, height: 2.48, depth: 0.16 };
-  const angle = Number(door.angle ?? -1.02);
+  const door = theme.layoutProfile?.shell?.door || { angle: -0.88, width: 1.42, height: 2.48, depth: 0.16 };
+  const angle = Number(door.angle ?? -0.88);
   const width = Math.max(1.18, Number(door.width || 1.42));
   const height = Math.max(2.25, Number(door.height || 2.48));
   const [x, , z] = wallPosition(angle, ROOM_RADIUS - 0.18, height / 2);
@@ -4472,8 +4481,8 @@ function addCivicOpenPortal(theme, colors) {
 }
 
 function addCivicPortalWallShell(theme, wallHeight, wallMaterial) {
-  const door = theme.layoutProfile?.shell?.door || { angle: -1.02, width: 2.08, height: 3.02 };
-  const doorAngle = Number(door.angle ?? -1.02);
+  const door = theme.layoutProfile?.shell?.door || { angle: -0.88, width: 2.08, height: 3.02 };
+  const doorAngle = Number(door.angle ?? -0.88);
   const doorWidth = Math.max(1.18, Number(door.width || 2.08));
   const doorHeight = Math.max(2.25, Number(door.height || 3.02));
   const centerTheta = ((Math.PI - doorAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
@@ -6321,7 +6330,7 @@ function updateActors(actors = [], now = performance.now()) {
     }
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
-      : (cameraZoneId === "public-plaza" ? 0.3 : 0.28);
+      : (cameraZoneId === "public-plaza" ? 0.34 : 0.28);
     entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.82 : 0.9) : (walking ? 0.92 : 1));
     entry.shadow.visible = true;
     entry.group.visible = actor.visible !== false;
