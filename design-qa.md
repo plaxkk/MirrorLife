@@ -1,5 +1,52 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v75 rectilinear-room and foreground-depth gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v75/desktop-yaw-0-1672x941-v75.png` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v75.png` for the opposite wall, navigation ring and complete-orbit inspection.
+- Same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v75/reference-vs-v75-full.png`, with the source on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v75/mobile-yaw-0-390x844-v75.png` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v74 P1 / circular sample-room shell] The dominant visible room envelope is rebuilt as a broad rectilinear listening wall, two shorter side wings and an orbit-aware witness wall. Straight oak/brass coves replace the complete circular ceiling rails, and the public terrazzo changes from an oversized circle to a continuous rectangular floor plane. The hero and reverse captures now read as designed rooms rather than opposite views of one undecorated cylinder.
+- [fixed / flat reverse hemisphere] The rear witness composition now sits against its own full-height straight wall. A `180°` orbit retains a readable sofa, response board, plants, record desk and listening cast instead of revealing curved blank plaster.
+- [fixed / oversized foliage dominated the story axis] Portal-side and lounge-side editorial plants are reduced by roughly `18–24%`, with fewer desktop leaf clusters. The threshold, faces and notice wall regain hierarchy while plants still frame daylight and material contrast.
+- [fixed / circular floor graphics overwhelmed the actors] The outer listening inlay contracts from `2.25m` to `2.09m`; the conversation circle remains the interaction affordance but no longer reads as an arena occupying most of the room.
+- [fixed / no useful foreground depth] The record desk moves toward the lower-left camera edge and now reads its transform directly from the public `ZoneLayoutProfile`. Rendering, collider and interaction station therefore share the same metre-space coordinates and rotation while the furniture works as a foreground frame.
+- [fixed / mobile architecture exceeded budget] Mobile wall panels switch to low-complexity box geometry while preserving the exact silhouette and material hierarchy. The completed mobile frame falls from the first-pass `251,286` triangles to `245,814`.
+- [checked / embodied movement and rotation] Local Chrome moved the physical player `2.37m` and rotated the weighted camera `65.3°`; the new room remains an explorable scene rather than a matched still.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `146` draw calls / `284,754` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `155` draw calls / `298,198` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `101` draw calls / `245,814` triangles, below the `110 / 250,000` gate with three actors and all touch controls visible.
+- Character and hero-prop contracts remain valid: four civic character roles at `7.09 MB` total and three authored hero props at `34,332` triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The room remains metre-based, Y-up and Rapier-backed with keyboard/touch locomotion, weighted camera follow, drag orbit and atomic loading.
+- [checked][spacing/layout rhythm] The left daylight threshold, central four-person hearing, rear listening wall, right lounge and lower-left record station form distinct foreground, middle-ground and background layers. The reverse hemisphere has an authored focal wall rather than filler.
+- [checked][colors/tokens] Ivory plaster, terrazzo, teal upholstery, coral accents, oak and brass remain aligned with the source palette; this iteration changes architecture and hierarchy rather than inventing a new visual language.
+- [checked][responsiveness/accessibility] At `390 × 844`, the player, current goal and two witnesses remain visible; joystick, jump, chat, contextual action and the four social actions stay within the viewport.
+- [P1][bespoke environment craftsmanship] The rectilinear shell corrects the room type, but the source still has materially better cabinetry joinery, upholstery tailoring, paper/ceramic storytelling, architectural reveals, object wear and prop-specific silhouette design.
+- [P1][indirect light and material response] The source retains richer portal bounce, softer penumbrae, skin subsurface response, localized roughness and multi-scale contact occlusion. Current materials remain more uniformly lit and toy-like.
+- [P1][production character deformation] Faces, hands and garment tension remain visibly simpler than the source, especially eyelid/cheek integration, skinned finger arcs and hand-to-prop contact.
+- [P2][HUD optical finish and captured content state] Controls are functional and responsive, but icon design, translucent depth, compact optical alignment and the source's exact resident/status state remain different.
+
+### Gate result
+
+This iteration replaces the most damaging sample-room cue with a believable rectilinear civic interior, restores foreground/middle/background depth, keeps the full orbit authored and preserves strict desktop/mobile performance gates. The same-canvas comparison still exposes P1 bespoke asset, indirect-light/material and character-deformation gaps, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production-grade whole-room assets, richer indirect lighting/material response and final facial/hand skinning remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v74 facial-plane, relaxed-hand and threshold-axis gate
 
 ### Evidence inspected together

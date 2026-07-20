@@ -2564,13 +2564,15 @@ function addCivicListeningConsole(colors) {
   });
 }
 
-function addCivicRecordDesk(colors) {
+function addCivicRecordDesk(colors, layoutProfile = null) {
   const group = new THREE.Group();
   // Stage the desk as a deliberate foreground frame, matching the reference
-  // composition while leaving the main listening route unobstructed.
-  group.position.set(-2.72, 0, 1.96);
-  group.rotation.y = 2.18;
-  group.scale.setScalar(1.12);
+  // composition while leaving the main listening route unobstructed. This is
+  // the exact authored transform used by ZoneLayoutProfile and Rapier.
+  const deskProfile = layoutProfile?.props?.find((prop) => prop?.assetIntent === "civic-record-desk");
+  group.position.set(Number(deskProfile?.worldX ?? -2.72), 0, Number(deskProfile?.worldZ ?? 2.62));
+  group.rotation.y = Number(deskProfile?.rotationY ?? 2.12);
+  group.scale.setScalar(Number(deskProfile?.displayScale ?? 1.12));
   roomRoot.add(group);
   const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.66, surface: "wood", bumpScale: 0.012 });
   const trim = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72 });
@@ -2951,33 +2953,56 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
     }
   };
 
-  addCluster({ x: -3.66, z: -3.36, scale: 1.08, rotation: 0.28, woven: false, seed: 3, leaves: mobileLod ? 8 : 15 });
+  addCluster({ x: -3.72, z: -3.42, scale: 0.84, rotation: 0.28, woven: false, seed: 3, leaves: mobileLod ? 7 : 12 });
   if (!mobileLod) {
-    addCluster({ x: 4.18, z: -2.92, scale: 1.12, rotation: -0.52, woven: false, seed: 8, leaves: 16 });
-    addCluster({ x: 4.62, z: 1.74, scale: 0.92, rotation: -0.86, woven: true, seed: 12, leaves: 13 });
+    addCluster({ x: 4.22, z: -2.96, scale: 0.88, rotation: -0.52, woven: false, seed: 8, leaves: 13 });
+    addCluster({ x: 4.62, z: 1.74, scale: 0.76, rotation: -0.86, woven: true, seed: 12, leaves: 10 });
   }
 }
 
 function addCivicArchitecturalCove(colors) {
-  // Two shallow concentric rails give the tall cylindrical shell a deliberate
-  // ceiling termination. They remain above the portal and all camera-safe
-  // targets, so the room feels built without becoming a visible cage.
-  const upper = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.18, 0.075, 8, 128),
-    createToonMaterial("#d1ae83", { roughness: 0.72, surface: "plaster", bumpScale: 0.006 })
-  );
-  upper.rotation.x = Math.PI / 2;
-  upper.position.y = 3.84;
-  upper.castShadow = false;
-  roomRoot.add(upper);
-  const glowRail = new THREE.Mesh(
-    new THREE.TorusGeometry(ROOM_RADIUS - 0.24, 0.027, 6, 128),
-    createToonMaterial("#e8bf70", { roughness: 0.46, emissive: 0.07, envMapIntensity: 0.74 })
-  );
-  glowRail.rotation.x = Math.PI / 2;
-  glowRail.position.y = 3.68;
-  glowRail.castShadow = false;
-  roomRoot.add(glowRail);
+  // The reference reads as a crafted room, not a circular arena. Terminate the
+  // shell with three straight architectural beams so the hero camera sees a
+  // broad back wall and two shallow wings. The cylindrical collision boundary
+  // remains outside these pieces, preserving the complete orbit and metre-space
+  // movement contract while removing the visible "theme-park rotunda" cue.
+  const beamMaterial = createToonMaterial("#c79d72", {
+    roughness: 0.68,
+    surface: "wood",
+    bumpScale: 0.008,
+    envMapIntensity: 0.58
+  });
+  const brass = createToonMaterial("#d2a44c", {
+    roughness: 0.36,
+    metalness: 0.48,
+    emissive: 0.025,
+    envMapIntensity: 0.84
+  });
+  const beams = [
+    { x: 0.55, z: -5.02, width: 7.72, depth: 0.15, rotation: 0 },
+    { x: 5.02, z: -0.42, width: 7.45, depth: 0.15, rotation: Math.PI / 2 },
+    { x: -5.02, z: 1.18, width: 4.75, depth: 0.15, rotation: Math.PI / 2 }
+  ];
+  beams.forEach((entry, index) => {
+    const beam = new THREE.Mesh(
+      new RoundedBoxGeometry(entry.width, 0.17, entry.depth, 4, 0.055),
+      beamMaterial
+    );
+    beam.name = `civic-straight-cove-${index + 1}`;
+    beam.position.set(entry.x, 3.86, entry.z);
+    beam.rotation.y = entry.rotation;
+    beam.castShadow = false;
+    roomRoot.add(beam);
+
+    const reveal = new THREE.Mesh(
+      new RoundedBoxGeometry(entry.width - 0.16, 0.035, 0.035, 3, 0.014),
+      brass
+    );
+    reveal.position.set(entry.x, 3.7, entry.z + (entry.rotation ? 0 : 0.1));
+    reveal.rotation.y = entry.rotation;
+    reveal.castShadow = false;
+    roomRoot.add(reveal);
+  });
 }
 
 function addCivicReverseWitnessWall(colors, mobileLod = false) {
@@ -3394,66 +3419,100 @@ function addCivicOrbitFrames(colors) {
 }
 
 function addCivicArchitecturalShell(colors) {
-  // A sequence of shallow editorial wall bays replaces the generic unbroken
-  // cylinder with a believable civic interior. Each bay follows the far wall
-  // as the camera orbits, so the room keeps depth without placing opaque
-  // geometry between the player and the current conversation.
-  const bayCount = 8;
-  const panelMaterial = createToonMaterial("#ead8c0", { roughness: 0.96, surface: "plaster", bumpScale: 0.012 });
-  const trim = createToonMaterial("#d3b58f", { roughness: 0.86, surface: "plaster", bumpScale: 0.006, emissive: 0.012 });
-  const darkTrim = createToonMaterial("#9f7353", { roughness: 0.76, surface: "wood", bumpScale: 0.007 });
-  const portalAngle = -0.88;
-  for (let index = 0; index < bayCount; index += 1) {
-    const angle = -Math.PI + (index + 0.5) / bayCount * Math.PI * 2;
-    const portalDelta = Math.atan2(Math.sin(angle - portalAngle), Math.cos(angle - portalAngle));
-    // The portal is now an actual break in the wall. Leaving a decorative bay
-    // across that wedge produced an opaque waist-high rectangle in the open
-    // doorway, so reserve the complete threshold sightline for the courtyard.
-    if (Math.abs(portalDelta) < 0.52) continue;
-    const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.12, 1.82);
-    const bay = new THREE.Group();
-    bay.name = `civic-wall-bay-${index + 1}`;
-    bay.position.set(x, y, z);
-    bay.rotation.y = -angle;
-    bay.userData.dynamicWallDecor = true;
-    bay.userData.wallAngle = angle;
-    roomRoot.add(bay);
+  // Build an editorial, rectilinear room inside the circular navigation shell.
+  // A wide back plane establishes the hero composition, while shorter side
+  // wings leave the left threshold open and retain a complete 360-degree route.
+  // These planes sit just inside the physical boundary; players therefore meet
+  // the real shell before they could ever cross the visible architecture.
+  const plaster = createToonMaterial("#eee1cf", {
+    roughness: 0.94,
+    surface: "plaster",
+    bumpScale: 0.014,
+    envMapIntensity: 0.34
+  });
+  const lowerPlaster = createToonMaterial("#dfd2bd", {
+    roughness: 0.9,
+    surface: "plaster",
+    bumpScale: 0.011,
+    envMapIntensity: 0.38
+  });
+  const oak = createToonMaterial("#a97148", {
+    roughness: 0.64,
+    surface: "wood",
+    bumpScale: 0.012,
+    envMapIntensity: 0.62
+  });
+  const brass = createToonMaterial("#c99942", {
+    roughness: 0.34,
+    metalness: 0.56,
+    envMapIntensity: 0.9
+  });
+  const mobileLod = lastWidth <= 720;
+  const architecturalBox = (width, height, depth, segments = 4, radius = 0.05) => mobileLod
+    ? new THREE.BoxGeometry(width, height, depth)
+    : new RoundedBoxGeometry(width, height, depth, segments, radius);
+  const panels = [
+    { name: "back", x: 0.55, z: -5.12, width: 7.72, height: 5.3, rotation: 0, angle: 0 },
+    { name: "right", x: 5.12, z: -0.42, width: 7.42, height: 5.05, rotation: Math.PI / 2, angle: Math.PI / 2 },
+    { name: "left", x: -5.12, z: 1.18, width: 4.72, height: 4.9, rotation: Math.PI / 2, angle: -Math.PI / 2 },
+    { name: "witness", x: 0, z: 5.12, width: 7.64, height: 4.95, rotation: 0, angle: Math.PI }
+  ];
 
-    const recess = new THREE.Mesh(new RoundedBoxGeometry(3.68, 1.46, 0.035, 5, 0.11), panelMaterial);
-    recess.position.set(0, -0.8, 0.025);
-    recess.castShadow = false;
-    recess.receiveShadow = true;
-    bay.add(recess);
+  panels.forEach((entry) => {
+    const group = new THREE.Group();
+    group.name = `civic-architectural-${entry.name}-wall`;
+    group.position.set(entry.x, 0, entry.z);
+    group.rotation.y = entry.rotation;
+    group.userData.dynamicWallDecor = true;
+    group.userData.wallAngle = entry.angle;
+    roomRoot.add(group);
 
-    [-1.59].forEach((railY) => {
-      const rail = new THREE.Mesh(new THREE.BoxGeometry(3.82, 0.065, 0.075), trim);
-      rail.position.set(0, railY, 0.06);
-      rail.castShadow = false;
-      bay.add(rail);
-    });
-    [-1.88, 1.88].forEach((railX) => {
-      const pilaster = new THREE.Mesh(new THREE.BoxGeometry(0.065, 3.44, 0.075), darkTrim);
-      pilaster.position.set(railX, 0, 0.06);
-      pilaster.castShadow = false;
-      bay.add(pilaster);
-    });
+    const wall = new THREE.Mesh(
+      architecturalBox(entry.width, entry.height, 0.16, 5, 0.07),
+      plaster
+    );
+    wall.position.y = entry.height / 2;
+    wall.castShadow = false;
+    wall.receiveShadow = true;
+    group.add(wall);
 
-    if (index % 3 === 1) {
-      const bracket = new THREE.Mesh(new THREE.BoxGeometry(0.11, 0.32, 0.1), darkTrim);
-      bracket.position.set(0, 1.35, 0.08);
-      const shade = new THREE.Mesh(
-        new THREE.SphereGeometry(0.13, 8, 5, 0, Math.PI * 2, 0, Math.PI * 0.58),
-        createToonMaterial(index % 2 ? colors.secondary : "#efc86a", {
-          emissive: 0.13,
-          roughness: 0.42
-        })
-      );
-      shade.scale.set(1.24, 0.78, 0.82);
-      shade.position.set(0, 1.49, 0.15);
-      shade.rotation.x = Math.PI;
-      bay.add(bracket, shade);
-    }
-  }
+    const dado = new THREE.Mesh(
+      architecturalBox(entry.width - 0.08, 0.76, 0.075, 4, 0.045),
+      lowerPlaster
+    );
+    dado.position.set(0, 0.42, 0.12);
+    dado.castShadow = false;
+    dado.receiveShadow = true;
+    group.add(dado);
+
+    const base = new THREE.Mesh(
+      architecturalBox(entry.width - 0.04, 0.12, 0.12, 3, 0.035),
+      oak
+    );
+    base.position.set(0, 0.1, 0.16);
+    base.castShadow = false;
+    group.add(base);
+
+    const reveal = new THREE.Mesh(
+      architecturalBox(entry.width - 0.22, 0.035, 0.035, 3, 0.014),
+      brass
+    );
+    reveal.position.set(0, 0.84, 0.175);
+    reveal.castShadow = false;
+    group.add(reveal);
+  });
+
+  // Two vertical oak posts frame the civic listening wall. They provide human
+  // scale and a clear background hierarchy without adding another prop cluster.
+  [-3.18, 4.26].forEach((x) => {
+    const post = new THREE.Mesh(
+      architecturalBox(0.14, 3.72, 0.16, 4, 0.045),
+      oak
+    );
+    post.position.set(x, 1.93, -4.98);
+    post.castShadow = false;
+    roomRoot.add(post);
+  });
 }
 
 function addCivicReferenceDressing(theme, colors) {
@@ -3496,7 +3555,7 @@ function addCivicReferenceDressing(theme, colors) {
   [
     [1.5, 1.62, "#4c948c", 0.82],
     [1.7, 1.79, "#c89d43", 0.94],
-    [2.18, 2.25, "#c89d43", 0.62]
+    [2.02, 2.09, "#c89d43", 0.62]
   ].forEach(([inner, outer, color, opacity], index) => {
     const ring = new THREE.Mesh(
       new THREE.RingGeometry(inner, outer, 72),
@@ -3517,7 +3576,7 @@ function addCivicReferenceDressing(theme, colors) {
     addAtelierDisplayCabinet(theme, colors);
     addCivicListeningConsole(colors);
   }
-  addCivicRecordDesk(colors);
+  addCivicRecordDesk(colors, theme.layoutProfile);
   if (mobileLod) {
     addCivicHeroNoticeWall(colors);
   }
@@ -4599,7 +4658,9 @@ function rebuildRoom(theme = {}) {
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
-    new THREE.CircleGeometry(ROOM_RADIUS, 64),
+    theme.zoneId === "public-plaza"
+      ? new THREE.PlaneGeometry(ROOM_RADIUS * 2.62, ROOM_RADIUS * 2.48)
+      : new THREE.CircleGeometry(ROOM_RADIUS, 64),
     createToonMaterial(floorColor, {
       roughness: theme.zoneId === "public-plaza" ? 0.66 : 0.9,
       surface: "terrazzo",
@@ -4609,7 +4670,6 @@ function rebuildRoom(theme = {}) {
     })
   );
   floor.rotation.x = -Math.PI / 2;
-  if (theme.zoneId === "public-plaza") floor.scale.setScalar(1.42);
   floor.receiveShadow = true;
   roomRoot.add(floor);
 
