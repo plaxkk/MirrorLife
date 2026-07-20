@@ -14,6 +14,10 @@ const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
 assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v16", "civic character sculpt contract is stale");
+assert.equal(manifest.faceDecal?.contract, "mirrorlife-civic-face-decal-v1", "civic face decal contract is stale");
+assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face decal path is invalid");
+assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
+assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -21,6 +25,8 @@ assert.equal(manifest.worldUnitMeters, 1, "civic characters must use one world u
 assert.equal(manifest.heightMeters, 1.72, "civic character height contract changed");
 assert.deepEqual(Object.keys(manifest.roles).sort(), [...expectedRoles].sort(), "civic character role manifest is incomplete");
 assert(!JSON.stringify(manifest).includes("/Users/"), "public character manifest leaks a workstation path");
+const faceDecalStat = await fs.stat(path.join(ROOT, manifest.faceDecal.path));
+assert(faceDecalStat.size > 100000 && faceDecalStat.size < 5 * 1024 * 1024, "civic face decal asset size is outside the 0.1–5 MB budget");
 
 for (const clipName of manifest.animationContract.clips) {
   const clip = CIVIC_ANIMATION_CLIPS[clipName];

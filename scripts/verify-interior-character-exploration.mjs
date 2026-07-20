@@ -49,6 +49,7 @@ try {
   const opening = await readStats(page);
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
+  assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the authored curved facial identity atlas");
   const beforeMove = playerFrom(opening);
   assert(beforeMove, "player actor diagnostics are missing");
   assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v4", "player did not use the authored animation contract");
@@ -65,11 +66,22 @@ try {
     const stats = live || stored;
     return stats?.actors?.find((actor) => actor.id === "player")?.animation?.state === "walk";
   }, { polling: 50, timeout: 2000 });
+  // Start measuring only after the authored 150ms idle→walk blend has
+  // completed. Sampling the transition itself made the stride assertion
+  // dependent on headless Chrome's first-frame shader compilation time.
+  await page.waitForFunction(() => {
+    const live = window.MirrorLifeInterior3D?.getStats?.();
+    const stored = JSON.parse(document.querySelector("#interiorThreeLayer")?.dataset.renderStats || "{}");
+    const player = (live || stored)?.actors?.find((actor) => actor.id === "player");
+    return player?.animation?.state === "walk" && player.animation.transitioning === false;
+  }, { polling: 40, timeout: 2000 });
   let stridePeak = 0;
   let walkSamples = 0;
   let screenshotCaptured = false;
-  for (let sample = 0; sample < 6; sample += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 90));
+  // Cover at least one complete 0.72s walk cycle so the check cannot land
+  // exclusively around the two passing poses where both legs are near zero.
+  for (let sample = 0; sample < 10; sample += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 80));
     const inMotionStats = await readStats(page);
     const inMotionPlayer = playerFrom(inMotionStats);
     if (inMotionPlayer?.animation?.state !== "walk") continue;
@@ -83,7 +95,7 @@ try {
       screenshotCaptured = true;
     }
   }
-  assert(walkSamples >= 4, `player locomotion did not remain in the authored walk clip (${walkSamples}/6 samples)`);
+  assert(walkSamples >= 7, `player locomotion did not remain in the authored walk clip (${walkSamples}/10 samples)`);
   assert(stridePeak > 0.22, `walk clip did not produce a readable alternating stride (${stridePeak.toFixed(3)}rad)`);
   if (WALK_SCREENSHOT && !screenshotCaptured) {
     const screenshotPath = path.resolve(WALK_SCREENSHOT);

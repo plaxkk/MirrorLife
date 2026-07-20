@@ -10,6 +10,7 @@ import {
 
 const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
+const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
@@ -224,6 +225,8 @@ let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
 let actorTextureLoading;
 let actorAtlasTexture;
+let civicFaceAtlasLoading;
+let civicFaceAtlasTexture;
 let physicalSurfaceLoading;
 let physicsDebugSignature = "";
 let cameraPivotX = 0;
@@ -236,6 +239,7 @@ const occludedMaterials = new Map();
 const surfaceBumpTextures = new Map();
 const physicalSurfaceMaps = new Map();
 const actorFrameTextures = new Map();
+const civicFaceTextures = new Map();
 const actorObjects = new Map();
 const dynamicModelObjects = new Map();
 
@@ -917,10 +921,16 @@ function loadCivicActorAsset(role) {
           resolve(null);
           return;
         }
-        civicActorAssets.set(role, gltf.scene);
-        civicActorLoading.delete(role);
-        window.markRenderActive?.(1800);
-        resolve(gltf.scene);
+        // The illustrated face atlas is part of the civic actor's authored
+        // appearance, not a late decorative enhancement. Resolve the actor
+        // only after both GLB and decal are ready so atomic room entry never
+        // flashes the older toy-like eye stack before the final face appears.
+        loadCivicFaceAtlas().then(() => {
+          civicActorAssets.set(role, gltf.scene);
+          civicActorLoading.delete(role);
+          window.markRenderActive?.(1800);
+          resolve(gltf.scene);
+        });
       },
       undefined,
       (error) => {
@@ -1339,7 +1349,7 @@ function applyLightingPreset(theme = {}) {
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.86 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.34 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
@@ -3661,6 +3671,11 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicBrassInlay([[-4.45, -2.45], [-3.35, -1.45], [-2.2, -0.55], [-1.78, 0.05]]);
   addCivicBrassInlay([[4.35, -2.15], [3.2, -1.22], [2.25, -0.35], [1.76, 0.14]]);
   addCivicBrassInlay([[0.1, 4.92], [0.08, 3.72], [0.04, 2.55], [0.02, 2.02]]);
+  // Continue the listening ring toward the lower-right pause/exit axis. The
+  // source uses this brass sweep to give the open foreground direction and
+  // story purpose; unlike a decorative rug, it remains truthful walkable
+  // floor and reads correctly from every orbit angle.
+  if (!mobileLod) addCivicBrassInlay([[1.74, 0.28], [2.38, 0.86], [3.18, 1.5], [4.02, 2.22], [4.72, 3.16]]);
 
   // Desktop uses authored Blender hero assets for the three highest-salience
   // furniture groups. Mobile keeps the existing baked room batches so the
@@ -3702,7 +3717,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.52,
+        opacity: theme.night ? 0.1 : 0.62,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5115,6 +5130,148 @@ function updateDynamicModels(dynamics = []) {
   });
 }
 
+function clearConnectedFaceAtlasBackground(context, width, height) {
+  let imageData;
+  try {
+    imageData = context.getImageData(0, 0, width, height);
+  } catch {
+    return false;
+  }
+  const pixels = imageData.data;
+  const visited = new Uint8Array(width * height);
+  const queue = new Int32Array(width * height);
+  let head = 0;
+  let tail = 0;
+  const isBackground = (pixelIndex) => {
+    const offset = pixelIndex * 4;
+    const red = pixels[offset];
+    const green = pixels[offset + 1];
+    const blue = pixels[offset + 2];
+    const minimum = Math.min(red, green, blue);
+    const maximum = Math.max(red, green, blue);
+    return minimum >= 232 && maximum - minimum <= 20;
+  };
+  const enqueue = (pixelIndex) => {
+    if (visited[pixelIndex] || !isBackground(pixelIndex)) return;
+    visited[pixelIndex] = 1;
+    queue[tail++] = pixelIndex;
+  };
+  for (let x = 0; x < width; x += 1) {
+    enqueue(x);
+    enqueue((height - 1) * width + x);
+  }
+  for (let y = 1; y < height - 1; y += 1) {
+    enqueue(y * width);
+    enqueue(y * width + width - 1);
+  }
+  while (head < tail) {
+    const pixelIndex = queue[head++];
+    const x = pixelIndex % width;
+    const y = Math.floor(pixelIndex / width);
+    if (x > 0) enqueue(pixelIndex - 1);
+    if (x + 1 < width) enqueue(pixelIndex + 1);
+    if (y > 0) enqueue(pixelIndex - width);
+    if (y + 1 < height) enqueue(pixelIndex + width);
+  }
+  for (let pixelIndex = 0; pixelIndex < visited.length; pixelIndex += 1) {
+    if (!visited[pixelIndex]) continue;
+    pixels[pixelIndex * 4 + 3] = 0;
+  }
+  context.putImageData(imageData, 0, 0);
+  return true;
+}
+
+function loadCivicFaceAtlas() {
+  if (civicFaceAtlasTexture) return Promise.resolve(civicFaceAtlasTexture);
+  if (civicFaceAtlasLoading) return civicFaceAtlasLoading;
+  civicFaceAtlasLoading = new Promise((resolve) => {
+    const image = new Image();
+    image.decoding = "async";
+    image.onload = () => {
+      const source = document.createElement("canvas");
+      source.width = image.naturalWidth;
+      source.height = image.naturalHeight;
+      const context = source.getContext("2d", { willReadFrequently: true });
+      if (!context) {
+        civicFaceAtlasLoading = null;
+        resolve(null);
+        return;
+      }
+      context.drawImage(image, 0, 0);
+      clearConnectedFaceAtlasBackground(context, source.width, source.height);
+      civicFaceAtlasTexture = new THREE.CanvasTexture(source);
+      civicFaceAtlasTexture.colorSpace = THREE.SRGBColorSpace;
+      civicFaceAtlasTexture.wrapS = THREE.ClampToEdgeWrapping;
+      civicFaceAtlasTexture.wrapT = THREE.ClampToEdgeWrapping;
+      civicFaceAtlasTexture.minFilter = THREE.LinearMipmapLinearFilter;
+      civicFaceAtlasTexture.magFilter = THREE.LinearFilter;
+      civicFaceAtlasTexture.generateMipmaps = true;
+      civicFaceAtlasTexture.needsUpdate = true;
+      window.markRenderActive?.(1800);
+      resolve(civicFaceAtlasTexture);
+    };
+    image.onerror = () => {
+      civicFaceAtlasLoading = null;
+      resolve(null);
+    };
+    image.src = `${CIVIC_FACE_DECAL_ASSET}${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
+  });
+  return civicFaceAtlasLoading;
+}
+
+function getCivicFaceTexture(role = "player") {
+  if (!civicFaceAtlasTexture) return null;
+  const safeRole = ["player", "listener", "facilitator", "mediator"].includes(role) ? role : "player";
+  if (civicFaceTextures.has(safeRole)) return civicFaceTextures.get(safeRole);
+  const roleIndex = { player: 0, listener: 1, facilitator: 2, mediator: 3 }[safeRole];
+  const texture = civicFaceAtlasTexture.clone();
+  const column = roleIndex % 2;
+  const row = Math.floor(roleIndex / 2);
+  texture.repeat.set(0.5, 0.5);
+  texture.offset.set(column * 0.5, row === 0 ? 0.5 : 0);
+  texture.needsUpdate = true;
+  civicFaceTextures.set(safeRole, texture);
+  return texture;
+}
+
+function createCivicFaceDecal(role = "player") {
+  const texture = getCivicFaceTexture(role);
+  if (!texture) return null;
+  const width = 0.35;
+  const height = 0.285;
+  const geometry = new THREE.PlaneGeometry(width, height, 18, 12);
+  const positions = geometry.attributes.position;
+  for (let index = 0; index < positions.count; index += 1) {
+    const x = positions.getX(index);
+    const y = positions.getY(index) - 0.005;
+    const ellipse = Math.max(0.08, 1 - (x / 0.242) ** 2 - (y / 0.292) ** 2);
+    positions.setXYZ(index, x, y, Math.sqrt(ellipse) * 0.196 + 0.0045);
+  }
+  positions.needsUpdate = true;
+  geometry.computeVertexNormals();
+  const material = new THREE.MeshStandardMaterial({
+    map: texture,
+    color: 0xffffff,
+    roughness: 0.88,
+    metalness: 0,
+    alphaTest: 0.08,
+    transparent: false,
+    depthWrite: true,
+    polygonOffset: true,
+    polygonOffsetFactor: -1,
+    polygonOffsetUnits: -1,
+    side: THREE.FrontSide
+  });
+  material.envMapIntensity = 0.34;
+  const decal = new THREE.Mesh(geometry, material);
+  decal.name = "CivicFaceDecal";
+  decal.castShadow = false;
+  decal.receiveShadow = false;
+  decal.renderOrder = 2;
+  decal.userData.mirrorLifeFaceDecal = true;
+  return decal;
+}
+
 function loadActorTextureAtlas() {
   if (actorAtlasTexture) return Promise.resolve(actorAtlasTexture);
   if (actorTextureLoading) return actorTextureLoading;
@@ -5945,11 +6102,11 @@ function createCivicActorObject(actor, asset) {
   const rightLeg = visual?.getObjectByName("RightLegPivot");
   const leftKnee = leftLeg?.getObjectByName("LeftKneePivot");
   const rightKnee = rightLeg?.getObjectByName("RightKneePivot");
-  const eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
-  const browPivots = [headGroup?.getObjectByName("BrowPivot_-1"), headGroup?.getObjectByName("BrowPivot_1")].filter(Boolean);
-  const mouthPivot = headGroup?.getObjectByName("MouthPivot");
-  const mouthClosedPivot = mouthPivot?.getObjectByName("MouthClosedPivot") || null;
-  const mouthOpenPivot = mouthPivot?.getObjectByName("MouthOpenPivot") || null;
+  let eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
+  let browPivots = [headGroup?.getObjectByName("BrowPivot_-1"), headGroup?.getObjectByName("BrowPivot_1")].filter(Boolean);
+  let mouthPivot = headGroup?.getObjectByName("MouthPivot");
+  let mouthClosedPivot = mouthPivot?.getObjectByName("MouthClosedPivot") || null;
+  let mouthOpenPivot = mouthPivot?.getObjectByName("MouthOpenPivot") || null;
   const faceMorphMesh = headGroup?.getObjectByName("Head") || null;
   const backpackNode = visual?.getObjectByName("BackpackPivot") || null;
   const satchelNode = visual?.getObjectByName("Satchel") || null;
@@ -5958,6 +6115,39 @@ function createCivicActorObject(actor, asset) {
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
+  }
+  const faceDecal = createCivicFaceDecal(role);
+  if (faceDecal) {
+    // The purpose-built atlas contains only illustrated facial features. The
+    // head, ears, hair and silhouette remain genuine volume, while the former
+    // stack of protruding eye spheres and tube lines is removed to avoid the
+    // plastic doll read. The curved decal is parented to HeadPivot, writes
+    // depth and is occluded normally by fringe hair at every orbit angle.
+    const authoredFeatureNames = new Set([
+      "EyePivot_-1",
+      "EyePivot_1",
+      "BrowPivot_-1",
+      "BrowPivot_1",
+      "MouthPivot",
+      "Blush_-1",
+      "Blush_1",
+      "NoseBridge",
+      "NoseTip"
+    ]);
+    const obsoleteFeatures = [];
+    headGroup.traverse((node) => {
+      if (node !== headGroup && authoredFeatureNames.has(String(node.name || ""))) obsoleteFeatures.push(node);
+    });
+    obsoleteFeatures.forEach((node) => {
+      disposeOwnedGroup(node);
+      node.removeFromParent();
+    });
+    headGroup.add(faceDecal);
+    eyePivots = [];
+    browPivots = [];
+    mouthPivot = null;
+    mouthClosedPivot = null;
+    mouthOpenPivot = null;
   }
   const fullExpressionLod = lastWidth > 720;
   if (!fullExpressionLod) {
@@ -6012,8 +6202,8 @@ function createCivicActorObject(actor, asset) {
     ? [...eyePivots, ...browPivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
     : [];
   const headMergeExclusions = fullExpressionLod && faceMorphMesh?.morphTargetDictionary
-    ? [...expressionPivots, faceMorphMesh, ponytailPivot].filter(Boolean)
-    : expressionPivots;
+    ? [...expressionPivots, faceMorphMesh, ponytailPivot, faceDecal].filter(Boolean)
+    : [...expressionPivots, faceDecal].filter(Boolean);
   mergeActorVertexColorMeshes(headGroup, headMergeExclusions, { roughness: 0.6, envMapIntensity: 0.78 });
   if (fullExpressionLod && faceMorphMesh?.morphTargetDictionary) {
     const faceMaterials = Array.isArray(faceMorphMesh.material) ? faceMorphMesh.material : [faceMorphMesh.material];
@@ -6126,9 +6316,10 @@ function createCivicActorObject(actor, asset) {
     mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
     mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
     faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
+    faceDecal,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v1`,
+    styleKey: `${frame}:${role}:civic-glb-v2`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -6144,7 +6335,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v1` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v2` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -6979,6 +7170,7 @@ function getStats() {
       id,
       frame: entry.frame,
       assetRole: entry.assetRole || "procedural",
+      faceMode: entry.faceDecal ? "curved-atlas" : "sculpted",
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
       facingYaw: Number(entry.facingYaw.toFixed(3)),

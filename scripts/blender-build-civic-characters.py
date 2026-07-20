@@ -1470,6 +1470,12 @@ def main():
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
         "sculptContract": "mirrorlife-civic-sculpt-v16",
+        "faceDecal": {
+            "contract": "mirrorlife-civic-face-decal-v1",
+            "path": "civic-face-decals.png",
+            "grid": [2, 2],
+            "mapping": ["player", "listener", "facilitator", "mediator"],
+        },
         "animationContract": {
             "version": "mirrorlife-civic-clips-v4",
             "runtime": "authored-keyframe-blend",
