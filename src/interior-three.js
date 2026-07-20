@@ -68,7 +68,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f3dfc3", floor: "#e1d8ca", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f3dfc3", floor: "#d8cbb7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -450,9 +450,9 @@ function ensureLayer() {
         vec4 texel = texture2D(tDiffuse, vUv);
         vec3 color = texel.rgb;
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-        color = mix(vec3(luma), color, 1.16 * strength);
-        color = max(vec3(0.0), (color - vec3(0.68)) * (1.0 + 0.07 * strength) + vec3(0.68));
-        color *= mix(vec3(1.0), vec3(1.018, 0.982, 0.94), strength);
+        color = mix(vec3(luma), color, 1.2 * strength);
+        color = max(vec3(0.0), (color - vec3(0.66)) * (1.0 + 0.1 * strength) + vec3(0.66));
+        color *= mix(vec3(1.0), vec3(1.025, 0.98, 0.93), strength);
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
         color *= 1.0 - vignette * 0.1 * strength;
@@ -4293,7 +4293,7 @@ function addCivicOpenPortal(theme, colors) {
         toneMapped: false
       })
     : createToonMaterial(theme.night ? "#45637a" : "#badcb7", { side: THREE.DoubleSide, roughness: 0.92 });
-  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(2.6, 2.25, 1.72);
+  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(1.78, 1.61, 1.36);
   // Keep the painted courtyard several metres beyond the threshold. The
   // public room now has a real break in its cylindrical shell, so the view
   // gains parallax from the authored plants, paving and notice stand instead
@@ -4457,7 +4457,7 @@ function addCivicOpenPortal(theme, colors) {
   threshold.position.set(0, -height / 2 + 0.025, 0.3);
   threshold.userData.neverFade = true;
   group.add(threshold);
-  const daylight = new THREE.PointLight(theme.night ? 0x8fb7dd : 0xffd7a1, theme.night ? 1.1 : 2.25, 4.6, 2.1);
+  const daylight = new THREE.PointLight(theme.night ? 0x8fb7dd : 0xffd7a1, theme.night ? 1.1 : 1.72, 4.6, 2.1);
   daylight.position.set(0, 0.1, 0.72);
   group.add(daylight);
 }
@@ -4583,11 +4583,11 @@ function rebuildRoom(theme = {}) {
   const floor = new THREE.Mesh(
     new THREE.CircleGeometry(ROOM_RADIUS, 64),
     createToonMaterial(floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.5 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.66 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.86 : 0.48
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.58 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5443,7 +5443,7 @@ function createProceduralActorObject(actor) {
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.28,
+      opacity: 0.36,
       depthWrite: false,
       toneMapped: false
     })
@@ -6421,7 +6421,17 @@ function updateCamera(payload = {}) {
   const safeArea = payload.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   const zoneId = String(payload.theme?.zoneId || "");
   const cinematicCivic = zoneId === "public-plaza";
-  const targetFov = cinematicCivic ? (portrait ? 60 : 42) : (portrait ? 56 : 48);
+  // The hero angle can stay intimate, but a constant close orbit made the
+  // opposite witness become a cropped foreground wall at 180 degrees. Ease
+  // back to the wider exploration lens only across the rear hemisphere so a
+  // full drag orbit keeps the cast readable without sacrificing the authored
+  // opening composition.
+  const civicRearArc = cinematicCivic && !portrait
+    ? Math.pow((1 - Math.cos(yaw)) * 0.5, 1.5)
+    : 0;
+  const targetFov = cinematicCivic
+    ? (portrait ? 60 : 40 + civicRearArc * 2)
+    : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
     camera.updateProjectionMatrix();
@@ -6480,10 +6490,10 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.65)
+    ? (portrait ? 6.2 : 5.2 + civicRearArc * 0.45)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.56) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.34 + civicRearArc * 0.22) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.38 : 0.22;
   const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.72) : 0.94)

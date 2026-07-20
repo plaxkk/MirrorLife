@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v72 story-scale framing, illustrated gaze and orbit-composition gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v72/desktop-yaw-0-1672x941-v72.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v72.jpg` for the rear-hemisphere composition, furniture depth and full-volume actor check.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v72/reference-vs-v72-full.png` and `reference-vs-v72-cast-focus.png`, with the source on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v72/mobile-yaw-0-390x844-v72.jpg` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v71 P1 / cast read as small scene props] The public-room hero camera moves from `5.65m / 3.56m / 42°` to `5.2m / 3.34m / 40°`. The same-canvas hero comparison shows the social circle and body language occupying a more reference-like share of the frame while retaining the doorway, proposal wall, display case and lounge.
+- [fixed / eyes collapsed into dark pixels] Character sculpt v11 enlarges the complete corneal stack, but increases the iris proportion more strongly than the white. The resulting gaze is readable at story-camera distance without restoring the two protruding white discs rejected in the earlier toy-doll pass. Lids, outlines, lashes, pupils and catchlights were resized together, preserving blink and `Attentive` expression articulation.
+- [fixed / portal and floor competed with faces] The daylight card multiplier and local portal light are reduced, the civic terrazzo is darker and warmer, and its roughness/env-map response is less mirror-like. The cinematic grade adds modest saturation and shoulder contrast, recovering teal, coral, timber and brass separation without changing the established palette.
+- [fixed / weak foot contact] Actor contact-shadow opacity increases from `0.28` to `0.36`. The focused crop and reverse frame now show a clearer weight connection at the feet rather than a floating cut-out edge.
+- [fixed from v72 first comparison / close lens broke the rear orbit] A fixed close camera made the opposite witness become a cropped foreground wall at yaw `180°`. The final camera now eases radius, height and FOV across the rear hemisphere, reaching the previous safe `5.65m / 3.56m / 42°` only at `180°` while keeping the intimate hero angle at `0°`. The revised reverse frame restores the player, three witnesses and room landmarks in one readable composition.
+- [checked / embodied movement and rotation] Local Chrome moved the physical player `3.97m` and rotated the weighted camera `65.3°`; the room remains a navigable, collision-backed 3D scene rather than a matched still.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `150` draw calls / `284,640` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `159` draw calls / `298,084` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `106` draw calls / `247,300` triangles, below the `110 / 250,000` gate with three actors, touch movement, camera and action controls visible.
+- Character contract: `mirrorlife-civic-sculpt-v11` / `mirrorlife-civic-clips-v3`, four roles and `7.21 MB` total. Geometry remains player `29,512`, listener `26,596`, facilitator `30,798` and mediator `28,886` triangles because the eye refinement changes authored scale, not topology.
+- Hero-prop contract remains `mirrorlife-civic-hero-props-v4` at `34,332` aggregate authored triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The public room remains metre-based, Y-up and collision-backed with keyboard/touch locomotion, animation, weighted follow framing and drag orbit. The yaw-dependent lens is continuous rather than a cut between static cameras.
+- [checked][spacing/layout rhythm] The hero frame gives the cast and listening circle more of the source's visual authority; foreground records, the portal and the lounge continue to establish front, middle and back depth.
+- [checked][colors/tokens] Warm ivory, teal, coral, timber and brass remain the only dominant families. The new grade and terrazzo response increase separation rather than inventing a new visual language.
+- [checked][image and asset quality for this iteration] Eyes are real lit geometry with iris, pupil, sclera, outline, lid and catchlight; the portal remains a parallax 3D threshold with an exterior card rather than a fullscreen background replacement.
+- [checked][copy/content] Location memory, exit, contextual listening prompt and the four social verbs remain coherent and unchanged.
+- [checked][responsiveness/accessibility] At `390 × 844`, no horizontal overflow occurs and all required touch controls remain visible at the established mobile budget.
+- [P1][production character modelling] The larger gaze and better story scale improve readability, but the source still has more natural head planes, hair strand grouping, hand skinning, garment seams/tension and facial deformation; the current actors remain visibly simpler in the focused crop.
+- [P1][whole-room asset craftsmanship] The room is functionally authored, but portal joinery, upholstery tailoring, wall plaster variation, built-in cabinetry, paper/ceramic storytelling and object-specific wear remain less dense and bespoke than the source.
+- [P1][indirect light and contact complexity] Portal highlights and foot contact are better controlled, but the source retains richer bounce-light color, skin subsurface response, multi-scale occlusion and roughness breakup.
+- [P2][HUD optical finish] The controls remain functional and responsive, but icon drawing, optical weight, translucent depth and compact alignment are less refined than the reference HUD.
+
+### Gate result
+
+This iteration makes the cast the first visual read, restores illustrated eye contact, grounds the actors and preserves a usable full orbit with no performance regression. The paired canvas still exposes production character-modelling, whole-room craftsmanship and indirect-light P1 gaps, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production-level character modelling, broader room-specific asset craftsmanship and richer indirect-light/material response remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v71 articulated hands and attentive-expression gate
 
 ### Evidence inspected together

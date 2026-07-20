@@ -783,19 +783,23 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.078, -0.188, 0.036))
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.032, 0.009, 0.039), mats["eye_white"], eye, segments=26, rings=16)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.01, -0.002), (0.0215, 0.0045, 0.03), mats["iris"], eye, segments=22, rings=12)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.004), (0.0095, 0.0026, 0.017), mats["ink"], eye, segments=16, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.017, 0.011), (0.004, 0.0015, 0.0058), mats["eye_white"], eye, segments=10, rings=6)
+        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.188, 0.038))
+        # At the authored story camera the v10 eyes collapsed into two dark
+        # pixels. Enlarge the complete corneal stack, but let the iris occupy
+        # most of the sclera so the result reads as illustrated attention
+        # rather than the white toy-doll discs of the early character pass.
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.037, 0.009, 0.045), mats["eye_white"], eye, segments=26, rings=16)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.01, -0.002), (0.0275, 0.0046, 0.037), mats["iris"], eye, segments=22, rings=12)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.004), (0.012, 0.0027, 0.021), mats["ink"], eye, segments=16, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.007, -0.017, 0.014), (0.0052, 0.0016, 0.0072), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
-                (-0.029, -0.011, -0.005),
-                (-0.016, -0.012, -0.03),
-                (0, -0.012, -0.037),
-                (0.016, -0.012, -0.03),
-                (0.029, -0.011, -0.005),
+                (-0.034, -0.011, -0.005),
+                (-0.018, -0.012, -0.035),
+                (0, -0.012, -0.043),
+                (0.018, -0.012, -0.035),
+                (0.034, -0.011, -0.005),
             ],
             0.0014,
             mats["ink"],
@@ -806,7 +810,7 @@ def build_face(head, mats, role):
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.03, -0.012, 0.024), (0, -0.015, 0.039), (0.03, -0.012, 0.024)],
+            [(-0.035, -0.012, 0.028), (0, -0.015, 0.045), (0.035, -0.012, 0.028)],
             0.0034 if feminine else 0.0029,
             mats["ink"],
             eye,
@@ -815,7 +819,7 @@ def build_face(head, mats, role):
         if feminine:
             curve_tube(
                 f"OuterLash_{side}",
-                [(side * 0.027, -0.012, 0.028), (side * 0.041, -0.014, 0.038)],
+                [(side * 0.032, -0.012, 0.032), (side * 0.047, -0.014, 0.044)],
                 0.0026,
                 mats["ink"],
                 eye,
@@ -1395,7 +1399,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v10",
+        "sculptContract": "mirrorlife-civic-sculpt-v11",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v3",
             "runtime": "authored-keyframe-blend",
