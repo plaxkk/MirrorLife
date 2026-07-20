@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v5";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v6";
 
 const TRACKS = Object.freeze([
   "visual",

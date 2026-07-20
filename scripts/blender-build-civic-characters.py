@@ -132,6 +132,114 @@ def empty(name, parent=None, location=(0, 0, 0), rotation=(0, 0, 0)):
     return obj
 
 
+def create_skin_armature(parent):
+    """Create a compact deformation rig behind the public controller pivots.
+
+    MirrorLife's original shared-pivot contract remains the animation API for
+    props and authored staging.  These bones mirror the same shoulder/elbow
+    and hip/knee locations so the visible sleeve and trouser volumes can bend
+    continuously instead of separating into rigid toy pieces.
+    """
+    armature_data = bpy.data.armatures.new("CivicSkinRigData")
+    armature = bpy.data.objects.new("CivicSkinRig", armature_data)
+    bpy.context.collection.objects.link(armature)
+    armature.parent = parent
+    armature.location = (0, 0, 0)
+    armature["rig_contract"] = "mirrorlife-civic-skin-v1"
+    armature.show_in_front = False
+
+    bpy.context.view_layer.objects.active = armature
+    armature.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+
+    root_bone = armature_data.edit_bones.new("SkinRoot")
+    root_bone.head = (0, 0, 0.02)
+    root_bone.tail = (0, 0, 0.16)
+
+    specifications = (
+        ("SkinLeftArm", (-0.234, 0, 1.2), (-0.234, 0, 0.965), None),
+        ("SkinLeftElbow", (-0.234, 0, 0.965), (-0.234, 0, 0.69), "SkinLeftArm"),
+        ("SkinRightArm", (0.234, 0, 1.2), (0.234, 0, 0.965), None),
+        ("SkinRightElbow", (0.234, 0, 0.965), (0.234, 0, 0.69), "SkinRightArm"),
+        ("SkinLeftLeg", (-0.145, 0, 0.73), (-0.145, 0, 0.445), None),
+        ("SkinLeftKnee", (-0.145, 0, 0.445), (-0.145, 0, 0.14), "SkinLeftLeg"),
+        ("SkinRightLeg", (0.145, 0, 0.73), (0.145, 0, 0.445), None),
+        ("SkinRightKnee", (0.145, 0, 0.445), (0.145, 0, 0.14), "SkinRightLeg"),
+    )
+    created = {"SkinRoot": root_bone}
+    for name, head, tail, parent_name in specifications:
+        bone = armature_data.edit_bones.new(name)
+        bone.head = head
+        bone.tail = tail
+        bone.parent = created[parent_name] if parent_name else root_bone
+        bone.use_connect = bool(parent_name)
+        created[name] = bone
+
+    bpy.ops.object.mode_set(mode="OBJECT")
+    armature.select_set(False)
+    return armature
+
+
+def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, armature, bone_names, sides=22):
+    """Build two continuously weighted limbs in one Web-friendly skin mesh."""
+    vertices = []
+    faces = []
+    weights = []
+    blend_half = 0.075
+    for limb_index, centre_x in enumerate(side_centres):
+        upper_name, lower_name = bone_names[limb_index]
+        vertex_start = len(vertices)
+        for ring_index, ring in enumerate(rings):
+            z, radius_x, radius_y = ring[:3]
+            centre_y = ring[3] if len(ring) > 3 else 0
+            # Cosine smoothstep across a 15 cm elbow/knee band gives the
+            # illustrated soft bend missing from the former hard seam.
+            lower_weight = max(0.0, min(1.0, (joint_z + blend_half - z) / (blend_half * 2)))
+            lower_weight = lower_weight * lower_weight * (3.0 - 2.0 * lower_weight)
+            for side_index in range(sides):
+                angle = math.tau * side_index / sides
+                vertices.append((
+                    centre_x + math.cos(angle) * radius_x,
+                    centre_y + math.sin(angle) * radius_y,
+                    z,
+                ))
+                weights.append((upper_name, lower_name, 1.0 - lower_weight, lower_weight))
+        for ring_index in range(len(rings) - 1):
+            row = vertex_start + ring_index * sides
+            next_row = row + sides
+            for side_index in range(sides):
+                following = (side_index + 1) % sides
+                faces.append((row + side_index, row + following, next_row + following, next_row + side_index))
+        bottom = vertex_start
+        top = vertex_start + (len(rings) - 1) * sides
+        faces.append(tuple(bottom + index for index in reversed(range(sides))))
+        faces.append(tuple(top + index for index in range(sides)))
+
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = armature
+    obj.location = (0, 0, 0)
+    link_material(obj, material_value)
+    for bone_name in {name for pair in bone_names for name in pair}:
+        obj.vertex_groups.new(name=bone_name)
+    for vertex_index, (upper_name, lower_name, upper_weight, lower_weight) in enumerate(weights):
+        if upper_weight > 0.0001:
+            obj.vertex_groups[upper_name].add([vertex_index], upper_weight, "REPLACE")
+        if lower_weight > 0.0001:
+            obj.vertex_groups[lower_name].add([vertex_index], lower_weight, "REPLACE")
+    modifier = obj.modifiers.new("Civic continuous skin", "ARMATURE")
+    modifier.object = armature
+    modifier.use_deform_preserve_volume = True
+    obj["semantic_part"] = name
+    obj["skin_contract"] = "mirrorlife-civic-skin-v1"
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    return obj
+
+
 def apply_scale(obj):
     bpy.context.view_layer.objects.active = obj
     obj.select_set(True)
@@ -1068,53 +1176,48 @@ def build_body(role, config, mats, visual):
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
     sleeve_mat = mats["outer"] if config["costume"] in ("traveler", "facilitator", "mediator") else mats["top"]
+    skin_armature = create_skin_armature(visual)
+    build_skinned_limb_pair(
+        "SkinnedArmVolume",
+        (-0.234, 0.234),
+        (
+            (1.2, 0.075, 0.069, 0.002),
+            (1.15, 0.082, 0.074, 0.003),
+            (1.07, 0.078, 0.071, 0.004),
+            (1.0, 0.069, 0.063, 0.003),
+            (0.965, 0.062, 0.058, 0),
+            (0.925, 0.064, 0.059, -0.002),
+            (0.85, 0.061, 0.056, -0.004),
+            (0.775, 0.055, 0.05, -0.004),
+            (0.705, 0.047, 0.043, -0.002),
+        ),
+        0.965,
+        sleeve_mat,
+        skin_armature,
+        (("SkinLeftArm", "SkinLeftElbow"), ("SkinRightArm", "SkinRightElbow")),
+        sides=24,
+    )
+    build_skinned_limb_pair(
+        "SkinnedLegVolume",
+        (-0.145, 0.145),
+        (
+            (0.73, 0.108, 0.098, 0.002),
+            (0.65, 0.111, 0.101, 0.004),
+            (0.55, 0.1, 0.093, 0.006),
+            (0.475, 0.083, 0.077, 0.003),
+            (0.445, 0.075, 0.07, 0),
+            (0.405, 0.078, 0.072, -0.002),
+            (0.33, 0.086, 0.08, -0.005),
+            (0.245, 0.08, 0.074, -0.005),
+            (0.155, 0.061, 0.057, -0.002),
+        ),
+        0.445,
+        mats["lower"],
+        skin_armature,
+        (("SkinLeftLeg", "SkinLeftKnee"), ("SkinRightLeg", "SkinRightKnee")),
+        sides=24,
+    )
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
-        # The upper-arm topology now carries its own rounded shoulder. A
-        # separate sphere made white coats read like ball-jointed dolls.
-        organic_limb(
-            f"UpperArm_{side}",
-            0.31,
-            (
-                (0.58, 0.049, 0.045, -side * 0.006, 0),
-                (0.43, 0.08, 0.073, -side * 0.004, 0.002),
-                (0.23, 0.083, 0.076, 0, 0.004),
-                (0.02, 0.075, 0.069, side * 0.003, 0.003),
-                (-0.28, 0.063, 0.059, side * 0.004, 0),
-                (-0.55, 0.056, 0.052, side * 0.002, -0.002),
-            ),
-            (0, 0, -0.15),
-            sleeve_mat,
-            pivot,
-            sides=22,
-        )
-        organic_limb(
-            f"ElbowSleeve_{side}",
-            0.12,
-            (
-                (0.5, 0.058, 0.054),
-                (0.12, 0.061, 0.057, 0, -0.002),
-                (-0.5, 0.055, 0.051, side * 0.002, 0),
-            ),
-            (0, 0, 0),
-            sleeve_mat,
-            elbow,
-            sides=20,
-        )
-        organic_limb(
-            f"Forearm_{side}",
-            0.27,
-            (
-                (0.53, 0.058, 0.054, side * 0.002, 0),
-                (0.27, 0.065, 0.06, side * 0.006, -0.002),
-                (-0.02, 0.063, 0.057, side * 0.008, -0.005),
-                (-0.3, 0.054, 0.05, side * 0.005, -0.004),
-                (-0.52, 0.046, 0.042, 0, -0.002),
-            ),
-            (0, 0, -0.137),
-            sleeve_mat,
-            elbow,
-            sides=22,
-        )
         if config["costume"] in ("traveler", "facilitator", "mediator"):
             # Two shallow diagonal compression ridges follow the bending
             # elbow. They catch the warm key as cloth folds and disappear at
@@ -1155,49 +1258,6 @@ def build_body(role, config, mats, visual):
         )
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
-        organic_limb(
-            f"Thigh_{side}",
-            0.34,
-            (
-                (0.54, 0.101, 0.093, -side * 0.004, 0),
-                (0.31, 0.108, 0.098, -side * 0.002, 0.003),
-                (0.04, 0.099, 0.093, side * 0.002, 0.006),
-                (-0.27, 0.083, 0.078, side * 0.004, 0.003),
-                (-0.53, 0.07, 0.066, side * 0.002, 0),
-            ),
-            (0, 0, -0.15),
-            mats["lower"],
-            pivot,
-            sides=22,
-        )
-        organic_limb(
-            f"KneeSleeve_{side}",
-            0.125,
-            (
-                (0.5, 0.072, 0.067),
-                (0.08, 0.075, 0.07, 0, -0.002),
-                (-0.5, 0.068, 0.063, -side * 0.002, 0),
-            ),
-            (0, 0, 0),
-            mats["lower"],
-            knee,
-            sides=20,
-        )
-        organic_limb(
-            f"Shin_{side}",
-            0.33,
-            (
-                (0.52, 0.07, 0.065, -side * 0.002, 0),
-                (0.3, 0.082, 0.076, -side * 0.005, -0.004),
-                (0.04, 0.091, 0.083, -side * 0.008, -0.006),
-                (-0.26, 0.075, 0.069, -side * 0.005, -0.004),
-                (-0.52, 0.057, 0.053, 0, -0.002),
-            ),
-            (0, 0, -0.155),
-            mats["lower"],
-            knee,
-            sides=22,
-        )
         # Two shallow same-material ribbons catch the warm key light like cloth
         # tension instead of reading as cords glued onto the trousers.
         for fold_index, fold_x in enumerate((-0.035, 0.035)):
@@ -1215,7 +1275,18 @@ def build_body(role, config, mats, visual):
     return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
 
 
-def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, right_elbow):
+def build_costume(
+    role,
+    config,
+    mats,
+    visual,
+    left_arm,
+    right_arm,
+    left_elbow,
+    right_elbow,
+    left_leg,
+    right_leg,
+):
     costume = config["costume"]
     if costume == "traveler":
         for side in (-1, 1):
@@ -1281,6 +1352,27 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
             )
             rounded_box(f"BackpackBuckle_{side}", (0.055, 0.025, 0.065), (side * 0.16, 0.125, -0.04), mats["metal"], backpack, radius=0.012)
         curve_tube("Scarf", [(-0.16, -0.005, 1.275), (0, -0.105, 1.255), (0.16, -0.005, 1.275)], 0.027, mats["accent"], visual)
+        for side, leg in ((-1, left_leg), (1, right_leg)):
+            # Cargo pockets belong to the moving thigh, not the static torso.
+            # Their asymmetric flap adds the utility silhouette visible on
+            # the reference player while remaining aligned during a stride.
+            rounded_box(
+                f"TravelerCargoPocket_{side}",
+                (0.132, 0.052, 0.145),
+                (0, -0.094, -0.145),
+                mats["outer"],
+                leg,
+                radius=0.022,
+                rotation=(0.01, 0, side * 0.025),
+            )
+            rounded_box(
+                f"TravelerCargoFlap_{side}",
+                (0.112, 0.026, 0.045),
+                (0, -0.126, -0.095),
+                mats["accent"],
+                leg,
+                radius=0.012,
+            )
     elif costume == "listener":
         curve_tube("Hood", [(-0.19, 0.02, 1.27), (0, 0.11, 1.34), (0.19, 0.02, 1.27)], 0.055, mats["outer"], visual)
         curve_tube("JacketCenterSeam", [(0, -0.205, 0.83), (0, -0.216, 1.04), (0, -0.205, 1.24)], 0.006, mats["outer"], visual, resolution=2)
@@ -1302,8 +1394,15 @@ def build_costume(role, config, mats, visual, left_arm, right_arm, left_elbow, r
         rounded_box("SatchelFlap", (0.27, 0.035, 0.09), (0.31, -0.002, 0.84), mats["shoe"], visual, radius=0.02)
         rounded_box("SatchelClasp", (0.055, 0.025, 0.065), (0.31, -0.023, 0.8), mats["metal"], visual, radius=0.012)
         curve_tube("CrossBodyStrap", [(-0.2, -0.17, 1.23), (0.02, -0.19, 1.0), (0.25, -0.12, 0.78)], 0.018, mats["outer"], visual)
-        for side in (-1, 1):
-            rounded_box(f"CargoPocket_{side}", (0.14, 0.055, 0.17), (side * 0.14, -0.095, 0.52), mats["accent"], visual, radius=0.025)
+        for side, leg in ((-1, left_leg), (1, right_leg)):
+            rounded_box(
+                f"CargoPocket_{side}",
+                (0.14, 0.055, 0.17),
+                (0, -0.095, -0.21),
+                mats["accent"],
+                leg,
+                radius=0.025,
+            )
     elif costume in ("facilitator", "mediator"):
         # Keep the skirt on its own waist pivot so the runtime can add a small
         # amount of delayed cloth follow-through without deforming the torso.
@@ -1405,6 +1504,7 @@ def build_character(role, config):
     root = empty("VisualRoot")
     root["asset"] = f"civic-{role}"
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
+    root["skin_contract"] = "mirrorlife-civic-skin-v1"
     root["real_world_unit"] = "meter"
     root["identity_role"] = role
 
@@ -1422,7 +1522,18 @@ def build_character(role, config):
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
         build_cap(head, mats)
-    build_costume(role, config, mats, root, left_arm, right_arm, left_elbow, right_elbow)
+    build_costume(
+        role,
+        config,
+        mats,
+        root,
+        left_arm,
+        right_arm,
+        left_elbow,
+        right_elbow,
+        left_leg,
+        right_leg,
+    )
 
     for obj in bpy.context.scene.objects:
         if obj.type == "MESH":
@@ -1440,7 +1551,9 @@ def export_character(role, output_root, master_root):
     bpy.ops.export_scene.gltf(
         filepath=glb_path,
         export_format="GLB",
-        export_apply=True,
+        # Preserve armature bind matrices. Applying object transforms during
+        # glTF export can bake away the rest pose and break browser skinning.
+        export_apply=False,
         export_materials="EXPORT",
         export_texcoords=True,
         export_normals=True,
@@ -1475,7 +1588,22 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v18",
+        "sculptContract": "mirrorlife-civic-sculpt-v19",
+        "skinContract": {
+            "version": "mirrorlife-civic-skin-v1",
+            "runtime": "shared-controller-pivots+continuous-limb-skin",
+            "joints": [
+                "SkinLeftArm",
+                "SkinLeftElbow",
+                "SkinRightArm",
+                "SkinRightElbow",
+                "SkinLeftLeg",
+                "SkinLeftKnee",
+                "SkinRightLeg",
+                "SkinRightKnee",
+            ],
+            "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
+        },
         "faceDecal": {
             "contract": "mirrorlife-civic-face-decal-v1",
             "path": "civic-face-decals.png",
@@ -1483,8 +1611,8 @@ def main():
             "mapping": ["player", "listener", "facilitator", "mediator"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v5",
-            "runtime": "authored-keyframe-blend",
+            "version": "mirrorlife-civic-clips-v6",
+            "runtime": "authored-keyframe-blend+continuous-skin",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
         "worldUnitMeters": 1,

@@ -1,5 +1,60 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v84 continuous armature skinning and physical-stride gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/civic-fidelity-v84/desktop-yaw-0-1672x941-v84.png` (`1672 × 941`, `public-plaza`, ready listening-circle state), plus `desktop-yaw-90-1672x941-v84.png` and `desktop-yaw-180-1672x941-v84.png` for side/reverse volume.
+- Full-view same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v84/reference-vs-v84-full.png`; source and implementation use the same viewport and equivalent opening social state.
+- Focused cast comparison: `dist/interior-3d-work/civic-fidelity-v84/reference-vs-v84-cast.png`. The crop is required because limb continuity, hand silhouette, cloth construction and face integration are too small to judge reliably in the full-room pair.
+- Iteration comparison: `dist/interior-3d-work/civic-fidelity-v84/v81-vs-v84-cast.png`; this isolates the production change from rigid segmented limbs to continuous weighted limb volumes.
+- Responsive and motion evidence: `dist/interior-3d-work/civic-fidelity-v84/mobile-yaw-0-390x844-v84.png` and `dist/interior-3d-work/civic-fidelity-v84/walk-stride-1280x720.png`.
+- Primary interactions tested in the in-app browser and local Chrome regression: physical WASD locomotion, actual bone-driven arm/leg deformation, `65.3°` camera orbit, `90°`/`180°` volume inspection, contextual interaction visibility and mobile controls. Browser warning/error logs were empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v81 P1 / rigid shoulder-elbow and hip-knee segments] Character contract `mirrorlife-civic-skin-v1` adds a real Blender armature with eight deform joints and two continuously weighted meshes per role. A `15cm` cosine-smooth blend band spans every elbow and knee, removing the hard sleeve seam and disconnected-cylinder motion visible in the earlier cast.
+- [fixed / runtime controller motion did not deform a production skin] Runtime animation v6 multiplies authored pose deltas into the exported glTF rest quaternions. The movement verifier records skin stride above `0.22rad` and within `0.035rad` of the controller stride, so the visible surface and animation controller remain synchronized.
+- [fixed / citizen instances could share mutable joint state] Every citizen is cloned with `SkeletonUtils`, preserving independent skeletons, bind matrices, identity materials and held props. Actor diagnostics report skin v1 and exactly two deforming meshes for every visible role.
+- [fixed / traveler cargo details stayed attached to the torso] Player and listener cargo pockets/flaps are parented to moving leg pivots, so costume identity follows the physical stride instead of floating through the thigh.
+- [fixed / rigid-limb mesh overhead] Replacing the segmented limb batches with two skinned volumes reduces the four-character payload from approximately `7.17MB` to `5.77MB` and lowers the public-room render cost while preserving full front/side/back volume.
+- [checked / physical movement and orbit remain real] The movement capture shows a genuine alternating stride after `5.43m` of travel; the weighted camera rotates `65.3°`, and the `90°`/`180°` evidence confirms that neither character nor face is a camera-facing sprite.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `131` draw calls / `224,934` triangles, with `63` actor calls across four skinned actors. Camera diagnostics report `5.10m` radius, `3.20m` height and `44°` FOV.
+- Mobile `390 × 844`: `108` draw calls / `207,712` triangles, `35` actor calls across three skinned actors, `19` textures, `2×` MSAA and `1.0` pixel ratio. It remains below the `110 / 250,000` mobile gate.
+- Character manifest: player `89` meshes / `28,900` triangles, listener `69 / 24,784`, facilitator `83 / 28,954`, mediator `82 / 27,042`; every role remains below the `35,000`-triangle cap.
+- Atomic ready-state capture contains no prior room, black block or half-initialized actor state. Browser warning/error logs were empty.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts/typography] Chinese place, memory, action and interaction labels remain legible at desktop/mobile sizes. The source still has finer icon/type optical weights and calmer translucent grouping; this remains P2 HUD drift.
+- [checked][spacing/layout rhythm] The implementation preserves an entrance, foreground record station, central hearing ring, rear evidence wall and side lounge across the full orbit. The source still has denser authored overlap, more natural furniture scale variation and stronger foreground framing.
+- [checked][colors/tokens] Warm ivory, teal, coral, oak, paper, terrazzo and brass remain source-aligned. The room is coherent, but material response is flatter and more uniformly rough than the reference.
+- [checked][image and asset quality] Four citizens are real lit, skinned geometry with full front/side/back volume. Continuous limbs are a measurable improvement over v81; the paired crop still shows simpler facial topology, hair grouping, finger articulation, cloth folds, footwear and hand-to-prop contact than the source.
+- [checked][copy/content] Existing deterministic place-memory and social-action copy remains coherent; runtime values are not forged to imitate the source screenshot.
+- [checked][responsiveness/accessibility] At `390 × 844`, the player, two witnesses, objective, joystick, chat, jump, contextual interaction and four social actions remain visible without clipping. Touch targets remain practical and logs are clean.
+- [P1][production face, hands and cloth deformation] Location: all four civic actors. Evidence: v84 solves rigid limb continuity, but the focused pair still shows flat cheek/eyelid construction, mitten-like hands, limited finger contact, straight garment silhouettes and weak cloth tension compared with the reference. Impact: the cast remains visibly prototype-grade in the social scene's most emotionally important surface. Fix: add facial blend shapes and eyelid/jaw loops, articulated finger chains and role-specific contact poses, plus cloth corrective shapes around shoulder, elbow, hip and knee deformation.
+- [P1][bespoke environment craft and localized light] Location: full civic room. Evidence: the reference has authored doorway joinery, tailored upholstery, cabinetry, paper/ceramic story detail, localized roughness, daylight bounce and contact penumbrae; the implementation remains more modular and uniformly lit. Impact: the room still sits one production tier below the target despite correct navigation, physics and performance. Fix: author the remaining hero furniture and threshold assets, bake/probe local bounce, and add object-specific roughness/normal breakup inside the recovered performance budget.
+- [P2][opening camera, cast scale and HUD optical finish] Location: opening desktop frame and persistent controls. Evidence: the implementation uses larger, more frontal actors and darker segmented controls, while the source has a calmer editorial pullback, richer foreground crop and more integrated iconography. Impact: the asset gap is exposed early and UI competes with the hearing. Fix: after the face/hand/cloth pass, retune the authored opening crop and consolidate status/action surfaces.
+
+### Implementation checklist
+
+1. Add face/jaw/eyelid blend shapes, finger chains and authored hand-contact poses to the existing shared skeleton.
+2. Add shoulder/elbow/hip/knee cloth correctives and role-specific garment silhouettes without regressing metre scale or capsule parity.
+3. Replace the remaining modular threshold, cabinets and seating with bespoke hero assets; add local bounce and material breakup.
+4. Retune the opening camera and HUD only after production actor/environment detail is present, then repeat identical-canvas QA.
+
+### Gate result
+
+This iteration closes the prior rigid-body-deformation blocker: movement is physically grounded, character instances have independent real skeletons, skin and controller motion are synchronized, full orbit remains stable, and desktop/mobile budgets improve materially. The same-canvas comparison still contains actionable P1 face/hand/cloth and bespoke environment/light differences, so exact reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production facial/hand/cloth deformation and a fully bespoke, locally lit environment pass remain visible P1 differences against the source.
+
 ## 2026-07-20 reference-fidelity v81 grounded anatomy, conversational pose and transparent-story-layer gate
 
 ### Evidence inspected together

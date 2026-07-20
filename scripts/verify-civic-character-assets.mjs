@@ -13,13 +13,26 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v18", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v19", "civic character sculpt contract is stale");
+assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
+assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
+assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
+assert.deepEqual(manifest.skinContract?.joints, [
+  "SkinLeftArm",
+  "SkinLeftElbow",
+  "SkinRightArm",
+  "SkinRightElbow",
+  "SkinLeftLeg",
+  "SkinLeftKnee",
+  "SkinRightLeg",
+  "SkinRightKnee"
+], "continuous civic skin joint map changed");
 assert.equal(manifest.faceDecal?.contract, "mirrorlife-civic-face-decal-v1", "civic face decal contract is stale");
 assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face decal path is invalid");
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
-assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
+assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
 assert.equal(manifest.worldUnitMeters, 1, "civic characters must use one world unit per metre");
 assert.equal(manifest.heightMeters, 1.72, "civic character height contract changed");
@@ -73,10 +86,16 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("NotebookElastic")), "facilitator: held notebook elastic is missing");
     assert(contents.includes(Buffer.from("NotebookPencil")), "facilitator: held notebook pencil is missing");
   }
-  assert(contents.includes(Buffer.from("ElbowSleeve_-1")), `${role}: left continuous elbow sleeve is missing`);
-  assert(contents.includes(Buffer.from("ElbowSleeve_1")), `${role}: right continuous elbow sleeve is missing`);
-  assert(contents.includes(Buffer.from("KneeSleeve_-1")), `${role}: left continuous knee sleeve is missing`);
-  assert(contents.includes(Buffer.from("KneeSleeve_1")), `${role}: right continuous knee sleeve is missing`);
+  assert(contents.includes(Buffer.from("SkinnedArmVolume")), `${role}: continuous skinned arm volume is missing`);
+  assert(contents.includes(Buffer.from("SkinnedLegVolume")), `${role}: continuous skinned leg volume is missing`);
+  assert(contents.includes(Buffer.from("SkinLeftArm")), `${role}: left upper-arm skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinLeftElbow")), `${role}: left elbow skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinRightArm")), `${role}: right upper-arm skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinRightElbow")), `${role}: right elbow skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinLeftLeg")), `${role}: left upper-leg skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinLeftKnee")), `${role}: left knee skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinRightLeg")), `${role}: right upper-leg skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinRightKnee")), `${role}: right knee skin joint is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1")), `${role}: left sculpted shoe last is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_1")), `${role}: right sculpted shoe last is missing`);
   if (["facilitator", "mediator"].includes(role)) {
@@ -110,6 +129,10 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("BackpackStrap_1")), "player: right backpack strap is missing");
     assert(contents.includes(Buffer.from("BackpackHandle")), "player: backpack handle is missing");
     assert(contents.includes(Buffer.from("BackpackCenterDrape")), "player: backpack fabric drape is missing");
+    assert(contents.includes(Buffer.from("TravelerCargoPocket_-1")), "player: left moving cargo pocket is missing");
+    assert(contents.includes(Buffer.from("TravelerCargoPocket_1")), "player: right moving cargo pocket is missing");
+    assert(contents.includes(Buffer.from("TravelerCargoFlap_-1")), "player: left cargo pocket flap is missing");
+    assert(contents.includes(Buffer.from("TravelerCargoFlap_1")), "player: right cargo pocket flap is missing");
   }
   if (role === "listener") {
     assert(contents.includes(Buffer.from("Satchel")), "listener: satchel secondary-motion node is missing");

@@ -194,6 +194,7 @@ let RenderPass;
 let GTAOPass;
 let ShaderPass;
 let OutputPass;
+let cloneSkeleton;
 let loader;
 let threeLoading;
 let canvas;
@@ -264,7 +265,8 @@ async function loadThree() {
       import("three/examples/jsm/postprocessing/RenderPass.js"),
       import("three/examples/jsm/postprocessing/GTAOPass.js"),
       import("three/examples/jsm/postprocessing/ShaderPass.js"),
-      import("three/examples/jsm/postprocessing/OutputPass.js")
+      import("three/examples/jsm/postprocessing/OutputPass.js"),
+      import("three/examples/jsm/utils/SkeletonUtils.js")
     ]).then(([
       threeModule,
       loaderModule,
@@ -276,7 +278,8 @@ async function loadThree() {
       renderPassModule,
       gtaoPassModule,
       shaderPassModule,
-      outputPassModule
+      outputPassModule,
+      skeletonUtilsModule
     ]) => {
       THREE = threeModule;
       GLTFLoader = loaderModule.GLTFLoader;
@@ -288,6 +291,7 @@ async function loadThree() {
       GTAOPass = gtaoPassModule.GTAOPass;
       ShaderPass = shaderPassModule.ShaderPass;
       OutputPass = outputPassModule.OutputPass;
+      cloneSkeleton = skeletonUtilsModule.clone;
       mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
       loader.setMeshoptDecoder(MeshoptDecoder);
@@ -938,7 +942,19 @@ function loadCivicActorAsset(role) {
       (gltf) => {
         const visual = gltf.scene?.getObjectByName?.("VisualRoot");
         const requiredPivots = ["HeadPivot", "LeftArmPivot", "RightArmPivot", "LeftLegPivot", "RightLegPivot"];
-        const contractValid = visual && requiredPivots.every((name) => visual.getObjectByName(name));
+        const requiredSkinJoints = [
+          "SkinLeftArm",
+          "SkinLeftElbow",
+          "SkinRightArm",
+          "SkinRightElbow",
+          "SkinLeftLeg",
+          "SkinLeftKnee",
+          "SkinRightLeg",
+          "SkinRightKnee"
+        ];
+        const contractValid = visual
+          && requiredPivots.every((name) => visual.getObjectByName(name))
+          && requiredSkinJoints.every((name) => visual.getObjectByName(name));
         if (!contractValid) {
           civicActorFailures.add(role);
           civicActorLoading.delete(role);
@@ -6029,7 +6045,10 @@ function createProceduralActorObject(actor) {
 }
 
 function cloneCivicActorScene(source) {
-  const clone = source.clone(true);
+  // SkeletonUtils remaps bones for every citizen instance. A normal deep
+  // clone leaves SkinnedMesh.skeleton pointing at the cached source bones,
+  // causing one actor's gesture to deform every copy in the room.
+  const clone = cloneSkeleton ? cloneSkeleton(source) : source.clone(true);
   clone.traverse((node) => {
     if (!node.isMesh) return;
     node.geometry = node.geometry?.clone?.() || node.geometry;
@@ -6111,6 +6130,15 @@ function applyCivicAnimationPose(entry, animationPose) {
     const preservedYaw = joint === "visual" ? node.rotation.y : rotation[1];
     node.rotation.set(rotation[0], preservedYaw, rotation[2]);
   });
+  Object.entries(entry.skinJoints || {}).forEach(([joint, state]) => {
+    const rotation = animationPose[joint];
+    if (!state?.node || !rotation) return;
+    state.deltaEuler.set(rotation[0], rotation[1], rotation[2], "XYZ");
+    state.deltaQuaternion.setFromEuler(state.deltaEuler);
+    // Preserve Blender/glTF's rest orientation, then layer the same authored
+    // controller pose over the skin bone in local space.
+    state.node.quaternion.copy(state.restQuaternion).multiply(state.deltaQuaternion);
+  });
 }
 
 function createCivicActorObject(actor, asset) {
@@ -6155,6 +6183,30 @@ function createCivicActorObject(actor, asset) {
   const satchelNode = visual?.getObjectByName("Satchel") || null;
   const ponytailPivot = headGroup?.getObjectByName("PonytailPivot") || null;
   const skirtPivot = visual?.getObjectByName("SkirtPivot") || null;
+  const skinRig = visual?.getObjectByName("CivicSkinRig") || null;
+  const skinJointNames = {
+    leftArm: "SkinLeftArm",
+    rightArm: "SkinRightArm",
+    leftElbow: "SkinLeftElbow",
+    rightElbow: "SkinRightElbow",
+    leftLeg: "SkinLeftLeg",
+    rightLeg: "SkinRightLeg",
+    leftKnee: "SkinLeftKnee",
+    rightKnee: "SkinRightKnee"
+  };
+  const skinJoints = Object.fromEntries(Object.entries(skinJointNames).map(([track, nodeName]) => {
+    const node = visual?.getObjectByName(nodeName) || null;
+    return [track, node ? {
+      node,
+      restQuaternion: node.quaternion.clone(),
+      deltaEuler: new THREE.Euler(),
+      deltaQuaternion: new THREE.Quaternion()
+    } : null];
+  }));
+  const skinnedMeshes = [];
+  assetScene.traverse((node) => {
+    if (node.isSkinnedMesh) skinnedMeshes.push(node);
+  });
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -6279,6 +6331,7 @@ function createCivicActorObject(actor, asset) {
   }
   const bodyMergeExclusions = [
     headGroup,
+    skinRig,
     leftArm,
     rightArm,
     leftLeg,
@@ -6360,9 +6413,11 @@ function createCivicActorObject(actor, asset) {
     mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
     faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
     faceDecal,
+    skinJoints,
+    skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v2`,
+    styleKey: `${frame}:${role}:civic-glb-v3`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -6378,7 +6433,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v2` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v3` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -7229,6 +7284,14 @@ function getStats() {
         rightLegX: Number((entry.rightLeg?.rotation.x || 0).toFixed(4)),
         leftArmX: Number((entry.leftArm?.rotation.x || 0).toFixed(4)),
         rightArmX: Number((entry.rightArm?.rotation.x || 0).toFixed(4))
+      } : null,
+      skin: entry.skinnedMeshes?.length ? {
+        version: "mirrorlife-civic-skin-v1",
+        meshCount: entry.skinnedMeshes.length,
+        leftArmX: Number((entry.skinJoints?.leftArm?.deltaEuler.x || 0).toFixed(4)),
+        rightArmX: Number((entry.skinJoints?.rightArm?.deltaEuler.x || 0).toFixed(4)),
+        leftLegX: Number((entry.skinJoints?.leftLeg?.deltaEuler.x || 0).toFixed(4)),
+        rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
       } : null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
         key,

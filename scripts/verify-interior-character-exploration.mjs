@@ -52,8 +52,10 @@ try {
   assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the authored curved facial identity atlas");
   const beforeMove = playerFrom(opening);
   assert(beforeMove, "player actor diagnostics are missing");
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v5", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v6", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
+  assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
+  assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");
 
   await page.keyboard.down("w");
   // A full civic frame can take longer than 90ms while the four GLBs and
@@ -76,6 +78,7 @@ try {
     return player?.animation?.state === "walk" && player.animation.transitioning === false;
   }, { polling: 40, timeout: 2000 });
   let stridePeak = 0;
+  let skinStridePeak = 0;
   let walkSamples = 0;
   let screenshotCaptured = false;
   // Cover at least one complete 0.72s walk cycle so the check cannot land
@@ -87,7 +90,9 @@ try {
     if (inMotionPlayer?.animation?.state !== "walk") continue;
     walkSamples += 1;
     const stride = Math.abs(Number(inMotionPlayer.animation.leftLegX) - Number(inMotionPlayer.animation.rightLegX));
+    const skinStride = Math.abs(Number(inMotionPlayer.skin?.leftLegX) - Number(inMotionPlayer.skin?.rightLegX));
     stridePeak = Math.max(stridePeak, stride);
+    skinStridePeak = Math.max(skinStridePeak, skinStride);
     if (WALK_SCREENSHOT && !screenshotCaptured && stride > 0.22) {
       const screenshotPath = path.resolve(WALK_SCREENSHOT);
       await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
@@ -97,6 +102,8 @@ try {
   }
   assert(walkSamples >= 7, `player locomotion did not remain in the authored walk clip (${walkSamples}/10 samples)`);
   assert(stridePeak > 0.22, `walk clip did not produce a readable alternating stride (${stridePeak.toFixed(3)}rad)`);
+  assert(skinStridePeak > 0.22, `walk clip did not drive the continuous leg skin (${skinStridePeak.toFixed(3)}rad)`);
+  assert(Math.abs(stridePeak - skinStridePeak) < 0.035, `controller and skin stride diverged (${stridePeak.toFixed(3)} vs ${skinStridePeak.toFixed(3)}rad)`);
   if (WALK_SCREENSHOT && !screenshotCaptured) {
     const screenshotPath = path.resolve(WALK_SCREENSHOT);
     await fs.mkdir(path.dirname(screenshotPath), { recursive: true });

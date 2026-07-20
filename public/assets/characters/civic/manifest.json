@@ -1,6 +1,24 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v18",
+  "sculptContract": "mirrorlife-civic-sculpt-v19",
+  "skinContract": {
+    "version": "mirrorlife-civic-skin-v1",
+    "runtime": "shared-controller-pivots+continuous-limb-skin",
+    "joints": [
+      "SkinLeftArm",
+      "SkinLeftElbow",
+      "SkinRightArm",
+      "SkinRightElbow",
+      "SkinLeftLeg",
+      "SkinLeftKnee",
+      "SkinRightLeg",
+      "SkinRightKnee"
+    ],
+    "deformedParts": [
+      "SkinnedArmVolume",
+      "SkinnedLegVolume"
+    ]
+  },
   "faceDecal": {
     "contract": "mirrorlife-civic-face-decal-v1",
     "path": "civic-face-decals.png",
@@ -16,8 +34,8 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v5",
-    "runtime": "authored-keyframe-blend",
+    "version": "mirrorlife-civic-clips-v6",
+    "runtime": "authored-keyframe-blend+continuous-skin",
     "clips": [
       "idle",
       "walk",
@@ -34,26 +52,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 95,
-      "triangles": 30428
+      "meshes": 89,
+      "triangles": 28900
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 79,
-      "triangles": 27512
+      "meshes": 69,
+      "triangles": 24784
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 93,
-      "triangles": 31682
+      "meshes": 83,
+      "triangles": 28954
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 92,
-      "triangles": 29770
+      "meshes": 82,
+      "triangles": 27042
     }
   }
 }
