@@ -355,12 +355,12 @@ def torus(name, major_radius, minor_radius, location, mat, parent=None, rotation
     return obj
 
 
-def curve_tube(name, points, radius, mat, parent=None, cyclic=False, resolution=3):
+def curve_tube(name, points, radius, mat, parent=None, cyclic=False, resolution=3, bevel_resolution=3):
     curve = bpy.data.curves.new(name, "CURVE")
     curve.dimensions = "3D"
     curve.resolution_u = resolution
     curve.bevel_depth = radius
-    curve.bevel_resolution = 3
+    curve.bevel_resolution = bevel_resolution
     curve.use_fill_caps = True
     spline = curve.splines.new("BEZIER")
     spline.bezier_points.add(len(points) - 1)
@@ -423,41 +423,69 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
 
 
 def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 0), side=1):
-    """Build one continuous illustrated hand with a readable finger fan.
+    """Build an overlapping palm-and-finger hand for conversational acting.
 
-    Separate pill-shaped fingers left visible gaps in the gameplay camera.
-    This tapered palm carries the wrist, palm, knuckles and fingertip mass in
-    one watertight volume; three shallow crease meshes preserve four-finger
-    readability and can still be stripped at the phone LOD.
+    The v9 mitten removed gaps but also erased the finger silhouette visible
+    in the reference cast. A shorter continuous palm now overlaps four tapered
+    finger volumes by roughly 2.5 cm. Runtime batching still collapses the
+    pieces into one elbow draw, while the outer contour reads as a real hand
+    from front, side and notebook-holding poses.
     """
     hand = organic_limb(
         name,
-        0.14,
+        0.105,
         (
-            (0.5, 0.032, 0.025, 0, 0),
-            (0.3, 0.043, 0.03, -side * 0.002, 0),
-            (0.08, 0.051, 0.033, -side * 0.004, -0.002),
-            (-0.15, 0.053, 0.031, -side * 0.004, -0.004),
-            (-0.36, 0.046, 0.027, 0, -0.004),
-            (-0.5, 0.033, 0.021, side * 0.004, -0.002),
+            (0.5, 0.034, 0.025, 0, 0),
+            (0.28, 0.047, 0.031, -side * 0.002, 0),
+            (0.02, 0.056, 0.035, -side * 0.004, -0.003),
+            (-0.26, 0.054, 0.033, -side * 0.004, -0.005),
+            (-0.5, 0.047, 0.028, 0, -0.004),
         ),
         location,
         mat,
         parent,
         rotation=rotation,
-        sides=24,
+        # The hand occupies fewer than 30 px at the default story camera.
+        # Sixteen radial sides keep the palm silhouette round while avoiding
+        # spending full face-sculpt density on a tiny extremity.
+        sides=16,
     )
-    for crease_index, crease_x in enumerate((-0.026, 0.0, 0.026), start=1):
+    finger_specs = (
+        (-0.036, 0.055, 0.0125),
+        (-0.012, 0.066, 0.014),
+        (0.012, 0.063, 0.0138),
+        (0.036, 0.052, 0.0118),
+    )
+    for finger_index, (finger_x, finger_length, finger_radius) in enumerate(finger_specs, start=1):
+        organic_limb(
+            f"FingerVolume_{side}_{finger_index}",
+            finger_length,
+            (
+                (0.5, finger_radius, finger_radius * 0.82),
+                (0.12, finger_radius * 1.04, finger_radius * 0.86, -side * 0.001, -0.001),
+                (-0.28, finger_radius * 0.9, finger_radius * 0.76, -side * 0.0015, -0.002),
+                (-0.5, finger_radius * 0.46, finger_radius * 0.42, 0, -0.001),
+            ),
+            (location[0] + finger_x, location[1] - 0.006, location[2] - 0.025 - finger_length / 2),
+            mat,
+            parent,
+            rotation=rotation,
+            # Six sides remain visually round after smooth shading at game
+            # scale and recover enough budget for the four-finger silhouette.
+            sides=6,
+        )
+    for crease_index, crease_x in enumerate((-0.025, 0.0, 0.025), start=1):
         curve_tube(
             f"FingerCrease_{side}_{crease_index}",
             [
-                (location[0] + crease_x, location[1] - 0.036, location[2] - 0.048),
-                (location[0] + crease_x * 0.92, location[1] - 0.039, location[2] - 0.071),
+                (location[0] + crease_x, location[1] - 0.039, location[2] - 0.026),
+                (location[0] + crease_x * 0.94, location[1] - 0.041, location[2] - 0.052),
             ],
-            0.0031,
+            0.0026,
             crease_mat,
             parent,
-            resolution=2,
+            resolution=1,
+            bevel_resolution=1,
         )
     return hand
 
@@ -712,6 +740,7 @@ def build_face(head, mats, role):
     smile = face.shape_key_add(name="WarmSmile")
     speech = face.shape_key_add(name="SpeechJaw")
     concern = face.shape_key_add(name="Concern")
+    attentive = face.shape_key_add(name="Attentive")
     for index, vertex in enumerate(face.data.vertices):
         x, y, z = vertex.co
         front = max(0.0, min(1.0, (-y - 0.035) / 0.155))
@@ -719,11 +748,11 @@ def build_face(head, mats, role):
         cheek = max(0.0, min(1.0, (abs(x) - 0.045) / 0.12)) * front
 
         smile_co = smile.data[index].co
-        smile_co.x *= 1.0 + cheek * lower * 0.024
-        smile_co.y -= cheek * 0.006
-        smile_co.z += cheek * lower * 0.016
+        smile_co.x *= 1.0 + cheek * lower * 0.032
+        smile_co.y -= cheek * 0.008
+        smile_co.z += cheek * lower * 0.021
         if z < -0.045:
-            smile_co.z += front * lower * 0.012
+            smile_co.z += front * lower * 0.016
 
         speech_co = speech.data[index].co
         if z < -0.02:
@@ -736,6 +765,18 @@ def build_face(head, mats, role):
         concern_co.z += cheek * 0.004
         if z < -0.055:
             concern_co.z -= front * lower * 0.005
+
+        # Listening should alter the facial volume, not only rotate two brow
+        # curves. Lift the upper cheek/lower-lid band and bring it slightly
+        # forward; the runtime blends this by role while the eyes compress.
+        attentive_co = attentive.data[index].co
+        eye_height = max(0.0, min(1.0, 1.0 - abs(z - 0.012) / 0.085))
+        eye_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.09) / 0.085))
+        attentive_band = eye_height * eye_width * front
+        attentive_co.y -= attentive_band * 0.008
+        attentive_co.z += attentive_band * 0.009
+        if z < -0.08:
+            attentive_co.z += front * lower * 0.003
     for side in (-1, 1):
         ellipsoid(f"Ear_{side}", (side * 0.236, 0.004, -0.014), (0.038, 0.023, 0.054), mats["skin"], head, segments=20, rings=12)
         ellipsoid(f"EarInner_{side}", (side * 0.248, -0.019, -0.014), (0.012, 0.005, 0.024), mats["blush"], head, segments=12, rings=8)
@@ -1354,7 +1395,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v9",
+        "sculptContract": "mirrorlife-civic-sculpt-v10",
         "animationContract": {
             "version": "mirrorlife-civic-clips-v3",
             "runtime": "authored-keyframe-blend",

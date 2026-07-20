@@ -5838,14 +5838,17 @@ function createCivicActorObject(actor, asset) {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <opaque_fragment>",
           `#include <opaque_fragment>
-          float mirrorLifeSkinWrap = pow(1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0), 2.25);
+          float mirrorLifeSkinFacing = clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
+          float mirrorLifeSkinWrap = pow(1.0 - mirrorLifeSkinFacing, 1.86);
           float mirrorLifeSkinLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
           float mirrorLifeSkinShadow = 1.0 - smoothstep(0.24, 0.62, mirrorLifeSkinLuma);
-          gl_FragColor.rgb += vec3(0.054, 0.023, 0.014) * mirrorLifeSkinWrap * 0.46;
-          gl_FragColor.rgb += vec3(0.027, 0.009, 0.005) * mirrorLifeSkinShadow * 0.16;`
+          float mirrorLifeSkinVelvet = pow(mirrorLifeSkinFacing, 7.0) * smoothstep(0.42, 0.82, mirrorLifeSkinLuma);
+          gl_FragColor.rgb += vec3(0.064, 0.028, 0.017) * mirrorLifeSkinWrap * 0.52;
+          gl_FragColor.rgb += vec3(0.032, 0.012, 0.007) * mirrorLifeSkinShadow * 0.2;
+          gl_FragColor.rgb += vec3(0.018, 0.011, 0.008) * mirrorLifeSkinVelvet;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v2";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v3";
       material.needsUpdate = true;
     });
   }
@@ -6058,8 +6061,12 @@ function updateActors(actors = [], now = performance.now()) {
     const smileDictionary = entry.faceMorphMesh?.morphTargetDictionary;
     const smileInfluences = entry.faceMorphMesh?.morphTargetInfluences;
     const smileIndexForFeatures = smileDictionary?.WarmSmile;
+    const attentiveIndexForFeatures = smileDictionary?.Attentive;
     const smileInfluenceForFeatures = Number.isInteger(smileIndexForFeatures)
       ? THREE.MathUtils.clamp(Number(smileInfluences?.[smileIndexForFeatures] || 0), 0, 1)
+      : 0;
+    const attentiveInfluenceForFeatures = Number.isInteger(attentiveIndexForFeatures)
+      ? THREE.MathUtils.clamp(Number(smileInfluences?.[attentiveIndexForFeatures] || 0), 0, 1)
       : 0;
     if (entry.eyePivots?.length) {
       const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
@@ -6070,7 +6077,9 @@ function updateActors(actors = [], now = performance.now()) {
         // A warm expression slightly compresses the lower/upper lid stack.
         // Keeping this coupled to the real facial morph makes the smile read
         // through the eyes instead of leaving a moving jaw under a rigid mask.
-        eyePivot.scale.y = blinkScale * (1 - smileInfluenceForFeatures * 0.075);
+        eyePivot.scale.y = blinkScale * (
+          1 - smileInfluenceForFeatures * 0.075 - attentiveInfluenceForFeatures * 0.09
+        );
         if (playerActor && actor.id !== playerActor.id && !walking) {
           const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22, -0.09, 0.09);
           eyePivot.rotation.y = gaze;
@@ -6088,7 +6097,10 @@ function updateActors(actors = [], now = performance.now()) {
         if (!Number.isFinite(browPivot.userData.mirrorLifeBaseY)) {
           browPivot.userData.mirrorLifeBaseY = browPivot.position.y;
         }
-        browPivot.position.y = browPivot.userData.mirrorLifeBaseY + attentiveLift + socialBreath * 0.003;
+        browPivot.position.y = browPivot.userData.mirrorLifeBaseY
+          + attentiveLift
+          + attentiveInfluenceForFeatures * 0.012
+          + socialBreath * 0.003;
         browPivot.rotation.y = 0;
         browPivot.rotation.z = (browIndex ? -1 : 1) * attentiveLift * 0.9;
       });
@@ -6120,6 +6132,7 @@ function updateActors(actors = [], now = performance.now()) {
       const smileIndex = dictionary.WarmSmile;
       const speechIndex = dictionary.SpeechJaw;
       const concernIndex = dictionary.Concern;
+      const attentiveIndex = dictionary.Attentive;
       if (Number.isInteger(smileIndex)) {
         const roleWarmth = actor.civicRole === "facilitator" ? 0.62 : actor.civicRole === "listener" ? 0.42 : 0.28;
         influences[smileIndex] = THREE.MathUtils.lerp(
@@ -6135,6 +6148,21 @@ function updateActors(actors = [], now = performance.now()) {
       if (Number.isInteger(concernIndex)) {
         const concernTarget = actor.civicRole === "mediator" && listening ? 0.34 : actor.state === "listen" ? 0.16 : 0;
         influences[concernIndex] = THREE.MathUtils.lerp(Number(influences[concernIndex] || 0), concernTarget, 0.12);
+      }
+      if (Number.isInteger(attentiveIndex)) {
+        const roleAttention = actor.civicRole === "mediator"
+          ? 0.58
+          : actor.civicRole === "listener"
+            ? 0.5
+            : actor.civicRole === "facilitator"
+              ? 0.42
+              : 0.16;
+        const attentiveTarget = listening ? roleAttention : speaking ? roleAttention * 0.42 : 0;
+        influences[attentiveIndex] = THREE.MathUtils.lerp(
+          Number(influences[attentiveIndex] || 0),
+          attentiveTarget,
+          0.13
+        );
       }
     }
     if (!animationPose) {

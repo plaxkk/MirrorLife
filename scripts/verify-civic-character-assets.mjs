@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v9", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v10", "civic character sculpt contract is stale");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -45,7 +45,7 @@ for (const role of expectedRoles) {
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
   // Runtime batches these semantic parts per articulated pivot, so source-part
   // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 90, `${role}: source mesh count is outside the authored range`);
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 100, `${role}: source mesh count is outside the authored range`);
   assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 35000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
@@ -84,12 +84,15 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("WarmSmile")), `${role}: warm-smile face morph is missing`);
   assert(contents.includes(Buffer.from("SpeechJaw")), `${role}: speech-jaw face morph is missing`);
   assert(contents.includes(Buffer.from("Concern")), `${role}: concern face morph is missing`);
+  assert(contents.includes(Buffer.from("Attentive")), `${role}: attentive face morph is missing`);
   assert(contents.includes(Buffer.from("LeftElbowPivot")), `${role}: left elbow articulation is missing`);
   assert(contents.includes(Buffer.from("RightElbowPivot")), `${role}: right elbow articulation is missing`);
   assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
   assert(contents.includes(Buffer.from("FingerCrease_-1_3")), `${role}: left sculpted-hand finger separation is missing`);
   assert(contents.includes(Buffer.from("FingerCrease_1_3")), `${role}: right sculpted-hand finger separation is missing`);
+  assert(contents.includes(Buffer.from("FingerVolume_-1_4")), `${role}: left articulated finger volume is missing`);
+  assert(contents.includes(Buffer.from("FingerVolume_1_4")), `${role}: right articulated finger volume is missing`);
   if (role === "player") {
     assert(contents.includes(Buffer.from("Backpack")), "player: backpack mesh is missing");
     assert(contents.includes(Buffer.from("BackpackPivot")), "player: backpack secondary-motion pivot is missing");

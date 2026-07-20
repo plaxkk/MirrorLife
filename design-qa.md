@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-20 reference-fidelity v71 articulated hands and attentive-expression gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final in-app Browser implementation: `dist/interior-3d-work/civic-fidelity-v71/desktop-yaw-0-1672x941-v71.jpg` (`1672 × 941`, public-plaza, yaw `0°`) and `desktop-yaw-180-1672x941-v71.jpg` for the reverse cast, hand silhouette and full-volume asset check.
+- Same-canvas comparisons: `dist/interior-3d-work/civic-fidelity-v71/reference-vs-v71-full.png` and `reference-vs-v71-cast-focus.png`, with the source on the left and the live implementation on the right.
+- Responsive evidence: `dist/interior-3d-work/civic-fidelity-v71/mobile-yaw-0-390x844-v71.jpg` (`390 × 844`, final ready state). In-app Browser warning/error logs are empty.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v70 P1 / mitten-like hands] Every hand now combines a shorter continuous palm with four overlapping, tapered finger volumes. The six-sided finger cross-section and sixteen-sided palm are smooth-shaded at gameplay scale; they preserve the readable four-finger contour without spending face-sculpt density on sub-pixel extremities.
+- [fixed / static listening faces] The v10 face contract adds an `Attentive` morph that lifts the lower-lid and upper-cheek band. Runtime expression weights are role-specific (`0.58` mediator, `0.50` listener, `0.42` facilitator and restrained `0.16` player) and are coordinated with eye compression and brow lift rather than applied as a universal smile.
+- [fixed / weak smile volume] `WarmSmile` now carries more cheek lift and jaw response, so the authored facial state changes surface form rather than only swapping mouth graphics.
+- [fixed / waxy shadow-side skin] `mirrorlife-civic-skin-wrap-v3` broadens warm grazing response, adds restrained shadow warmth and a front-facing velvet highlight. Faces remain materially separate from hair and cloth under both hero and reverse lighting.
+- [fixed / v71 first-pass budget overrun] The first four-finger pass measured `302,388` triangles at yaw `180°` and `249,880` on mobile. Palm radial density, finger cross-sections and crease bevel resolution were reduced only where invisible at story-camera scale; final reverse is `298,084` and mobile is `247,300` while retaining all four finger volumes on desktop.
+- [checked / embodied movement and orbit] Local Chrome moved the physical player `3.57m` and rotated the weighted follow camera `65.3°`. The reverse frame confirms articulated hand and expression geometry remains full-volume rather than becoming camera-facing artwork.
+
+### Runtime and performance evidence
+
+- Desktop hero yaw `0°`: `150` draw calls / `284,640` triangles, below the strict `160 / 300,000` civic-room gate.
+- Desktop reverse yaw `180°`: `159` draw calls / `298,084` triangles, below the same complete-orbit gate.
+- Mobile `390 × 844`: `106` draw calls / `247,300` triangles, below the `110 / 250,000` gate with three actors, one authored lounge asset and all touch controls visible.
+- Character contract: `mirrorlife-civic-sculpt-v10` / `mirrorlife-civic-clips-v3`, four roles and `7.21 MB` total. Role triangle counts are player `29,512`, listener `26,596`, facilitator `30,798` and mediator `28,886`, all below the `35,000` per-role Web LOD0 budget.
+- Hero-prop contract remains `mirrorlife-civic-hero-props-v4` at `34,332` aggregate authored triangles.
+- World regression: all `26` interiors passed the physics audit; desktop/mobile scene flow passed; all `78` enter/exit transitions completed with no failure or runtime error.
+- Static/build checks: civic character/hero-prop validation, `pnpm check`, production build and `git diff --check` passed. The build retains only the existing non-module-script and large-chunk advisories.
+
+### Required fidelity surfaces
+
+- [checked][interaction/motion] The result remains a live metre-based Y-up room with Rapier collision, keyboard/touch locomotion, authored animation, player-follow framing and drag orbit. The new face and hand work is integrated into the same moving actors.
+- [checked][character silhouette] Four overlapping fingers, a shorter palm, shaped shoes and role-specific clothing create a clearer human silhouette in hero and reverse views. Mobile removes only sub-pixel crease micro-meshes, not the actor or interaction pose.
+- [checked][expression hierarchy] Eye, brow, cheek and mouth states now collaborate to communicate attention. Witness roles no longer share one undifferentiated neutral face.
+- [checked][lighting/material integration] The v3 skin response preserves warm edge light, front-plane readability and cloth/hair separation across the orbit without adding a second face mesh or screen-space portrait.
+- [checked][spacing/layout rhythm] The four-person story circle remains clear and collision-safe; hand and facial changes do not encroach on the `1.5m` story centre or interaction anchors.
+- [checked][responsiveness/accessibility] At `390 × 844`, the final state has no horizontal overflow; joystick, chat, jump, contextual action and all social actions remain visible within the strict mobile budget.
+- [P1][production face and hand deformation] The paired crop confirms materially better acting, but fingers are still rigid volumes rather than a skinned production hand, and cheek/jaw/eyelid deformation remains less anatomically integrated than the source.
+- [P1][whole-room authored craftsmanship] Hero furniture is materially richer, but portal landscaping, wall plaster, built-in joinery, paper density and small prop storytelling still have less specificity and natural variation than the source room.
+- [P1][contact and indirect-light realism] The skin wrap is warmer, but the source retains more convincing subsurface response, foot contact compression, multi-scale bounce and localized roughness/wear.
+- [P2][HUD optical finish] Responsive controls work, but icon construction, type weight, translucent depth and compact spacing remain less refined than the reference HUD.
+
+### Gate result
+
+This iteration closes the most visible mitten-hand and neutral-listening-face gaps while preserving real movement, collision, full orbit and strict desktop/mobile budgets. The paired canvas still exposes P1 production deformation, whole-room craftsmanship and indirect-light differences, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production hand/face deformation, broader room-specific environmental craftsmanship and richer contact/indirect material response remain visible P1 differences.
+
 ## 2026-07-20 reference-fidelity v70 material hierarchy and authored environment-craft gate
 
 ### Evidence inspected together
