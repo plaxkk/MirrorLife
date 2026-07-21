@@ -976,19 +976,19 @@ def build_face(head, mats, role):
         # black bead in the story camera. Preserve a generous almond-shaped
         # white, then layer a smaller coloured iris, pupil and two catchlights
         # so gaze remains readable from both front and three-quarter views.
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.053, 0.007, 0.032), mats["eye_white"], eye, segments=30, rings=18)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.009, -0.002), (0.018, 0.0038, 0.021), mats["iris"], eye, segments=24, rings=14)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.013, -0.003), (0.0062, 0.002, 0.0095), mats["ink"], eye, segments=18, rings=10)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0065, -0.0155, 0.008), (0.0044, 0.0012, 0.0048), mats["eye_white"], eye, segments=12, rings=7)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.061, 0.007, 0.036), mats["eye_white"], eye, segments=30, rings=18)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.009, -0.002), (0.0215, 0.0038, 0.024), mats["iris"], eye, segments=24, rings=14)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.013, -0.003), (0.0072, 0.002, 0.0105), mats["ink"], eye, segments=18, rings=10)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0075, -0.0155, 0.009), (0.0048, 0.0012, 0.0052), mats["eye_white"], eye, segments=12, rings=7)
         ellipsoid(f"EyeGlintSmall_{side}", (side * 0.004, -0.0158, -0.006), (0.0022, 0.0009, 0.0024), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
-                (-0.034, -0.01, -0.005),
-                (-0.017, -0.011, -0.014),
-                (0, -0.0115, -0.018),
-                (0.017, -0.011, -0.014),
-                (0.034, -0.01, -0.005),
+                (-0.041, -0.01, -0.005),
+                (-0.02, -0.011, -0.016),
+                (0, -0.0115, -0.021),
+                (0.02, -0.011, -0.016),
+                (0.041, -0.01, -0.005),
             ],
             0.00125,
             mats["skin_shadow"],
@@ -999,9 +999,17 @@ def build_face(head, mats, role):
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.047, -0.012, 0.017), (0, -0.015, 0.031), (0.047, -0.012, 0.017)],
-            0.00335 if feminine else 0.00285,
+            [(-0.054, -0.012, 0.018), (0, -0.015, 0.035), (0.054, -0.012, 0.018)],
+            0.0038 if feminine else 0.00325,
             mats["ink"],
+            eye,
+            resolution=2,
+        )
+        curve_tube(
+            f"LowerLid_{side}",
+            [(-0.036, -0.011, -0.013), (0, -0.013, -0.023), (0.036, -0.011, -0.013)],
+            0.0017,
+            mats["skin_shadow"],
             eye,
             resolution=2,
         )
@@ -1018,16 +1026,24 @@ def build_face(head, mats, role):
         curve_tube(
             f"Brow_{side}",
             [(side * 0.058, 0.003, -0.006), (0, -0.007, 0.008), (-side * 0.052, 0.003, -0.004)],
-            0.0056,
+            0.0062,
             mats["hair"],
             brow,
         )
         ellipsoid(f"Blush_{side}", (side * 0.158, -0.191, -0.045), (0.029, 0.005, 0.011), mats["blush"], head, segments=16, rings=8)
     ellipsoid("NoseBridge", (0, -0.19, 0.004), (0.009, 0.007, 0.025), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
+    curve_tube(
+        "NoseContour",
+        [(0.008, -0.207, 0.006), (0.012, -0.211, -0.018), (0.003, -0.212, -0.034)],
+        0.0017,
+        mats["skin_shadow"],
+        head,
+        resolution=2,
+    )
     mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.029, 0.002, 0.004), (-0.004, -0.004, -0.004), (0.029, 0.002, 0.003)], 0.0027, mats["skin_shadow"], closed)
+    curve_tube("MouthClosed", [(-0.034, 0.002, 0.004), (-0.004, -0.004, -0.005), (0.034, 0.002, 0.003)], 0.00315, mats["skin_shadow"], closed)
     # A separate glossy lower-lip mesh read as a floating moustache at the
     # authored gameplay distance. Keep the closed mouth as one clean ink line;
     # the open-mouth/tongue pair supplies colour only while speaking.
@@ -1058,15 +1074,16 @@ def build_hair(head, mats, style):
         vertex.co.x += x / radial * lobe
         vertex.co.y += y / radial * lobe * 0.72
         vertex.co.z += max(0.0, math.cos(angle * 3 - style_phase)) * crown * 0.009
+    # Six overlapping, wider locks replace the comb-like row of eight narrow
+    # points. The silhouette reads as deliberately grouped hair at the story
+    # camera while retaining complete side/back volume.
     fringe_specs = (
-        (-0.19, -0.15, 0.205, 0.03),
-        (-0.145, -0.112, 0.19, 0.032),
-        (-0.095, -0.06, 0.174, 0.034),
-        (-0.04, -0.012, 0.16, 0.035),
-        (0.025, 0.052, 0.165, 0.035),
-        (0.09, 0.118, 0.18, 0.034),
-        (0.15, 0.176, 0.196, 0.032),
-        (0.19, 0.155, 0.21, 0.029),
+        (-0.19, -0.145, 0.205, 0.036),
+        (-0.12, -0.058, 0.18, 0.04),
+        (-0.045, 0.012, 0.16, 0.042),
+        (0.035, 0.092, 0.168, 0.041),
+        (0.115, 0.17, 0.19, 0.038),
+        (0.19, 0.15, 0.21, 0.034),
     )
     for index, (root_x, tip_x, tip_z, root_radius) in enumerate(fringe_specs):
         tapered_lock(
@@ -1513,6 +1530,23 @@ def build_costume(
                 skirt_pivot,
                 depth=0.008,
             )
+        if costume == "mediator":
+            # The reference mediator wears an unmistakable green dress under
+            # a warm ivory coat. A separate fitted bodice restores that
+            # readable two-layer silhouette instead of leaving one white
+            # tubular torso from neck to skirt.
+            tailored_panel(
+                "MediatorDressBodice",
+                0.28,
+                0.22,
+                0.25,
+                0.39,
+                0.04,
+                (0, -0.172, 1.04),
+                mats["lower"],
+                visual,
+                radius=0.012,
+            )
         for side in (-1, 1):
             tailored_panel(
                 f"CoatPanel_{side}",
@@ -1682,7 +1716,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v24",
+        "sculptContract": "mirrorlife-civic-sculpt-v25",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -1704,8 +1738,8 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v3",
-            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip"],
+            "integrationContract": "mirrorlife-civic-face-volume-v4",
+            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "NoseContour"],
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],

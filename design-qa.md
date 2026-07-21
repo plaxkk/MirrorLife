@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v94 sculpted face and role-readability gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas full-room comparison: `dist/interior-3d-work/civic-fidelity-v94/reference-vs-v94.png`; focused cast comparison: `reference-vs-v94-cast.png`.
+- Final desktop implementation: `dist/interior-3d-work/civic-fidelity-v94/desktop-1672x941-v94.png` at `153` draw calls / `278,728` triangles.
+- Real quarter orbit: `dist/interior-3d-work/civic-fidelity-v94/desktop-orbit-v94.png` at `1.50rad`, `158 / 293,668`.
+- Real gesture state: `dist/interior-3d-work/civic-fidelity-v94/desktop-gesture-v94.png`; the player enters the authored gesture/speech state and all three witnesses enter listening poses.
+- Real mobile Chrome evidence: `dist/interior-3d-work/civic-fidelity-v94/mobile-390x844-v94.png` at `390 × 844`, `101 / 239,058` for three citizens.
+- Browser warning and error logs were empty throughout desktop, action, orbit and mobile checks.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v93 P1 / face features became stippled and detached at story distance] The production default is now `sculpted-volume`: eyes, lids, brows, nose and mouth are exported lit geometry instead of a bitmap feature sheet. The atlas remains only as an explicit comparison fallback and is no longer requested during normal atomic room entry.
+- [fixed / eyes and lids were too small to read] Sculpt v25 enlarges the almond sclera, iris, pupil, glints and outline, adds independent lower lids and strengthens the upper-lid silhouette without turning the actor toward the camera.
+- [fixed / facial mid-plane read as a smooth toy mask] A restrained nose contour now joins the existing bridge and tip, while the closed mouth has a clearer authored width and volume. Smile, speech, concern and attentive morphs remain live.
+- [fixed / fringe read as a repeated comb] Six broader overlapping fringe groups replace eight narrow repeated locks, reducing procedural repetition while preserving complete side/back hair volume.
+- [fixed / mediator costume identity disappeared under the ivory coat] A green layered bodice restores the role's dress silhouette and connects the 2D identity palette to the 3D garment stack.
+- [fixed / richer face geometry risked exceeding the room budget] Static brow geometry joins the authored head batch; mouth and eye pivots stay independent for acting. Desktop, orbit and mobile all remain below `160 / 300,000` and `110 / 250,000` gates.
+
+### Required fidelity surfaces and findings
+
+- [checked][3D identity] All four citizens use real head, eye, hair, garment, hand and shoe volume with correct self-occlusion through the quarter orbit. The production path no longer swaps from a placeholder face after entry.
+- [checked][interaction] The same actor rig supports idle, listening, proposal gesture, facial speech and physical exploration; the gesture evidence proves the sculpted facial morphs and witness states remain connected to gameplay.
+- [checked][responsive/performance] Desktop preserves four citizens at `153 / 278,728`; mobile preserves the player and two witnesses at `101 / 239,058`, with controls and story target visible.
+- [P1][body anatomy and tailoring remain visibly coarser than the source] The same-canvas cast crop still shows tubular arms/legs, mitten-like hands, simplified shoes, coarse coat/dress seams and weaker hand-to-prop contact. Next fix: role-specific garment shells, palm/finger silhouettes, shoe lasts and corrective contact poses on the shared rig.
+- [P1][hair masses still need authored breakup] The wider fringe removes the comb artifact, but the source carries finer secondary clumps, root-to-tip flow and role-specific silhouette transitions. Next fix: replace remaining primitive clumps with a small reusable curve-derived hair library and role-level LODs.
+- [P1][indirect light and micro-story density remain below the reference] Local light pools and material identity are stable, but the source has softer bounce, stronger contact penumbrae and richer ceramics/papers/textiles at the portal and cabinetry edges.
+- [P2][HUD optical weight remains higher than the source] Functional grouping and mobile coverage pass, but the dark segmented controls still compete with the editorial tableau.
+
+### Gate result
+
+v94 removes the largest facial rendering artifact, promotes a fully volumetric production face, improves eye, lid, nose, fringe and mediator costume readability, and preserves real movement, action states, orbit and strict performance budgets. The direct same-canvas comparison still exposes production body/cloth/hand/hair and indirect-light gaps, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-specific body/garment/hand production topology and room-wide indirect-light/micro-detail remain below the reference.
+
 ## 2026-07-21 reference-fidelity v93 evidence wall, record station and orbit-material gate
 
 ### Evidence inspected together

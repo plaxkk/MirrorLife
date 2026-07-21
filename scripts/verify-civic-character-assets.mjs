@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v24", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v25", "civic character sculpt contract is stale");
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -32,8 +32,8 @@ assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face deca
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v1", "civic facial morph contract is stale");
-assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v3", "civic facial volume integration contract is stale");
-assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip"], "civic sculpted facial parts changed");
+assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v4", "civic facial volume integration contract is stale");
+assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "NoseContour"], "civic sculpted facial parts changed");
 assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v1", "civic eye geometry contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"], "civic facial morph set changed");
@@ -86,10 +86,13 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("UpperLid_1")), `${role}: right illustrated eye contour is missing`);
   assert(contents.includes(Buffer.from("EyeOutline_-1")), `${role}: left eye silhouette is missing`);
   assert(contents.includes(Buffer.from("EyeOutline_1")), `${role}: right eye silhouette is missing`);
+  assert(contents.includes(Buffer.from("LowerLid_-1")), `${role}: left sculpted lower lid is missing`);
+  assert(contents.includes(Buffer.from("LowerLid_1")), `${role}: right sculpted lower lid is missing`);
   assert(contents.includes(Buffer.from("EyeGlintSmall_-1")), `${role}: left secondary eye catchlight is missing`);
   assert(contents.includes(Buffer.from("EyeGlintSmall_1")), `${role}: right secondary eye catchlight is missing`);
   assert(contents.includes(Buffer.from("NoseBridge")), `${role}: sculpted nose bridge is missing`);
   assert(contents.includes(Buffer.from("NoseTip")), `${role}: sculpted nose tip is missing`);
+  assert(contents.includes(Buffer.from("NoseContour")), `${role}: sculpted nose contour is missing`);
   if (role === "facilitator") {
     assert(contents.includes(Buffer.from("NotebookPivot")), "facilitator: unified notebook transform pivot is missing");
     assert(contents.includes(Buffer.from("NotebookSpine")), "facilitator: held notebook spine is missing");
@@ -164,6 +167,7 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("CoatDrape_-1")), `${role}: left coat drape is missing`);
     assert(contents.includes(Buffer.from("CoatDrape_1")), `${role}: right coat drape is missing`);
   }
+  if (role === "mediator") assert(contents.includes(Buffer.from("MediatorDressBodice")), "mediator: layered dress bodice is missing");
   totalBytes += stat.size;
 }
 

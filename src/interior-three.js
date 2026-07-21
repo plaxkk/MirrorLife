@@ -12,9 +12,12 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_FACE_MODE = new URLSearchParams(window.location.search).get("civicFaceMode") === "atlas"
+const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
+const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
-  : "hybrid-volume";
+  : CIVIC_FACE_MODE_QUERY === "hybrid"
+    ? "hybrid-volume"
+    : "sculpted-volume";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -990,11 +993,14 @@ function loadCivicActorAsset(role) {
           resolve(null);
           return;
         }
-        // The illustrated face atlas is part of the civic actor's authored
-        // appearance, not a late decorative enhancement. Resolve the actor
-        // only after both GLB and decal are ready so atomic room entry never
-        // flashes the older toy-like eye stack before the final face appears.
-        loadCivicFaceAtlas().then(() => {
+        // Production actors now use their exported volumetric face by
+        // default. Only legacy atlas/hybrid comparison modes need to block on
+        // the bitmap; skipping it removes a redundant request from atomic
+        // room entry and prevents any decal-to-volume visual swap.
+        const faceAssetsReady = CIVIC_FACE_MODE === "sculpted-volume"
+          ? Promise.resolve()
+          : loadCivicFaceAtlas();
+        faceAssetsReady.then(() => {
           civicActorAssets.set(role, gltf.scene);
           civicActorLoading.delete(role);
           window.markRenderActive?.(1800);
@@ -6583,7 +6589,10 @@ function createCivicActorObject(actor, asset) {
     disposeOwnedGroup(assetScene);
     return null;
   }
-  const faceDecal = createCivicFaceDecal(role);
+  // The sculpted QA path keeps every authored eyelid, brow, mouth and blush
+  // mesh from the GLB. It lets us compare the production-volume face against
+  // the legacy feature atlas without changing animation or world staging.
+  const faceDecal = CIVIC_FACE_MODE === "sculpted-volume" ? null : createCivicFaceDecal(role);
   if (faceDecal) {
     // The purpose-built atlas contains only illustrated facial features. The
     // head, ears, hair and silhouette remain genuine volume, while the former
@@ -6662,8 +6671,12 @@ function createCivicActorObject(actor, asset) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => importedMaterials.add(material));
   });
+  // Brows already read clearly through the sculpted face and eye motion. Fold
+  // their geometry into the head batch instead of spending two live draw
+  // calls on sub-pixel pivot animation; speech keeps its dedicated mouth
+  // pivots and therefore retains clear action feedback.
   const expressionPivots = fullExpressionLod
-    ? [...eyePivots, ...browPivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
+    ? [...eyePivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
     : [];
   const headMergeExclusions = fullExpressionLod && faceMorphMesh?.morphTargetDictionary
     ? [...expressionPivots, faceMorphMesh, ponytailPivot, faceDecal].filter(Boolean)
@@ -7680,7 +7693,7 @@ function getStats() {
       id,
       frame: entry.frame,
       assetRole: entry.assetRole || "procedural",
-      faceMode: entry.faceDecal?.userData?.mirrorLifeFaceMode || (entry.faceDecal ? "curved-atlas" : "sculpted"),
+      faceMode: entry.faceDecal?.userData?.mirrorLifeFaceMode || "sculpted-volume",
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
       facingYaw: Number(entry.facingYaw.toFixed(3)),
@@ -7707,16 +7720,24 @@ function getStats() {
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
-      facial: entry.faceDecal?.morphTargetDictionary ? {
+      facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
-        integration: CIVIC_FACE_MODE === "hybrid-volume"
-          ? "mirrorlife-civic-face-volume-v3"
-          : "mirrorlife-civic-face-volume-v2",
-        morphCount: Object.keys(entry.faceDecal.morphTargetDictionary).length,
-        smile: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.WarmSmile] || 0).toFixed(4)),
-        speech: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.SpeechJaw] || 0).toFixed(4)),
-        attentive: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.Attentive] || 0).toFixed(4)),
-        blink: Number((entry.faceDecal.morphTargetInfluences?.[entry.faceDecal.morphTargetDictionary.Blink] || 0).toFixed(4))
+        integration: CIVIC_FACE_MODE === "sculpted-volume"
+          ? "mirrorlife-civic-face-volume-v4"
+          : CIVIC_FACE_MODE === "hybrid-volume"
+            ? "mirrorlife-civic-face-volume-v3"
+            : "mirrorlife-civic-face-volume-v2",
+        morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
+        smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]
+          ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.WarmSmile]
+          ?? 0).toFixed(4)),
+        speech: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.SpeechJaw]
+          ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.SpeechJaw]
+          ?? 0).toFixed(4)),
+        attentive: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.Attentive]
+          ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.Attentive]
+          ?? 0).toFixed(4)),
+        blink: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.Blink] || 0).toFixed(4))
       } : null,
       eyes: entry.eyePivots?.length ? {
         version: "mirrorlife-civic-eye-volume-v1",
