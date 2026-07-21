@@ -1,5 +1,41 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v92 face readability and lounge construction gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v92/reference-vs-v92-1672x941.png`; both source and implementation are `1672 × 941` and show the opening civic-room state.
+- Final desktop implementation: `dist/interior-3d-work/civic-fidelity-v92/desktop-1672x941-v92-final.png`.
+- Quarter-orbit evidence: `dist/interior-3d-work/civic-fidelity-v92/desktop-yaw-72-1280x720-v92b.png`; the camera reaches `1.26rad` while preserving the player, witnesses and functional room landmarks.
+- Real mobile Chrome evidence: `dist/interior-3d-work/civic-fidelity-v92/mobile-390x844-v92-final.png` at `390 × 844`.
+- Final runtime sample is `156` draw calls / `271,450` triangles on desktop and `108` / `241,148` on mobile. Both remain inside the civic-room quality gates.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v91 P1 / tiny, low-contrast facial read] Sculpt v24 enlarges and reshapes the head/eye stack, adds secondary catchlights, widens lids, brows and mouth, lowers the head pivot and raises civic face lighting. Expressions remain real lit geometry with gaze, blink and speech animation.
+- [fixed / actors presented as a closed ring] Conversational body yaw now opens the four citizens farther toward the authored story camera while preserving their actual world-space staging and collision capsules. Faces, hands and costume identity are more readable without turning actors into billboards.
+- [fixed from v91 P1 / lounge read as stacked plastic blocks] Hero-prop v5 replaces the solid sofa box with an open oak rail frame, ladder arms, separate rounded seat/back upholstery and layered cushions. The model keeps complete side/back construction for real orbit views.
+- [fixed / mobile budget risk from richer upholstery] The mobile scene remains at `108` draw calls and `241,148` triangles, below the `110 / 250,000` mobile limits; the desktop scene remains below `160 / 300,000`.
+- [checked / visual and physical contracts remain synchronized] Furniture collision still comes from the authoritative spatial profile rather than decorative mesh batches. The four civic actors retain metre-scale capsules, real locomotion and complete 3D volume.
+
+### Required fidelity surfaces and findings
+
+- [checked][composition] Entrance, foreground record desk, hearing ring, evidence wall and lounge produce a clear foreground/middle/background sequence. The conflict remains centred and can be followed through a real orbit.
+- [checked][materials] The rebuilt lounge now separates oak structure, woven upholstery and accent cushions. Terrazzo, brass, paper and plants keep the room palette coherent.
+- [checked][interaction] Desktop and mobile reach one atomic ready state, support physical movement and camera rotation, and keep the contextual action visible without hiding the social tableau.
+- [P1][character anatomy is improved but still visibly coarser than the source] The identical-canvas pair shows better eye contrast and body presentation, but the target still has integrated eyelid/cheek/lip planes, finer fingers, tailored cloth folds and authored hand contact. Next fix: replace the remaining feature-sheet dependency with role-specific facial topology and add corrective garment/hand poses.
+- [P1][environment density and light transport remain below the source] The lounge is no longer block-built, but the evidence wall, record station, shelving, small ceramics/papers and portal bounce remain more modular and evenly lit than the reference. Next fix: rebuild those hero families and add localized bounce/contact-light treatment within the current budgets.
+- [P2][HUD still dominates the upper edge] Controls are functional and responsive, but the target uses calmer translucent grouping, better icon optics and less segmented chrome.
+
+### Gate result
+
+v92 materially improves facial readability, opens the social staging toward the player camera and removes the lounge's stacked-block construction while preserving full movement/orbit, collider parity and desktop/mobile performance. The identical-canvas comparison still contains two visible P1 production-art gaps, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production facial/cloth topology and consistent authored hero-asset density/local lighting across the civic room are still below the reference.
+
 ## 2026-07-21 reference-fidelity v91 authored threshold and quarter-orbit composition gate
 
 ### Evidence inspected together

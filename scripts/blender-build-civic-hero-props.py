@@ -345,28 +345,46 @@ def build_notice_console(mats):
 def build_lounge_suite(mats):
     root = empty("CivicLoungeSuite")
     root["asset"] = "civic-lounge-suite"
-    # Real two-seat sofa with timber frame, separate cushions and readable seams.
-    rounded_box("LoungeSofaBase", (2.15, 0.82, 0.42), (0, 0.12, 0.38), mats["oak"], root, 0.09, segments=5)
-    rounded_box("LoungeSofaBack", (2.04, 0.25, 0.92), (0, 0.38, 0.92), mats["teal"], root, 0.13, (0.04, 0, 0), 5)
+    # Open timber rails and visibly compressed cushions replace the previous
+    # full-width rounded blocks. The sofa now reads as upholstered furniture,
+    # not a teal toy cuboid, from both the hero camera and reverse orbit.
+    rounded_box("LoungeSofaLowerRail", (1.96, 0.62, 0.12), (0, 0.12, 0.28), mats["oak"], root, 0.045, segments=4)
+    rounded_box("LoungeSofaBack", (1.94, 0.12, 0.82), (0, 0.38, 0.78), mats["oak"], root, 0.045, (0.035, 0, 0), 4)
     for side in (-1, 1):
-        rounded_box(f"LoungeSeat_{side}", (0.94, 0.68, 0.22), (side * 0.5, -0.02, 0.58), mats["teal"], root, 0.12, segments=5)
-        rounded_box(f"LoungeBackCushion_{side}", (0.88, 0.2, 0.62), (side * 0.49, 0.17, 0.94), mats["sage"], root, 0.12, (0.05, 0, 0), 5)
+        seat = sphere(
+            f"LoungeSeat_{side}",
+            (0.5, 0.36, 0.135),
+            (side * 0.5, -0.03, 0.52),
+            mats["teal"], root, 28, 18,
+        )
+        seat.scale.x *= 0.98
+        back = sphere(
+            f"LoungeBackCushion_{side}",
+            (0.47, 0.13, 0.36),
+            (side * 0.49, 0.2, 0.9),
+            mats["sage"], root, 28, 18, (0.04, 0, 0),
+        )
+        back.scale.z *= 1.02
         # Shallow inset seams catch the warm side light and stop the two large
         # upholstered planes from reading as featureless rounded boxes.
-        rounded_box(f"LoungeSeatSeam_{side}", (0.76, 0.022, 0.02), (side * 0.5, -0.365, 0.6), mats["deep_teal"], root, 0.008, segments=2)
-        rounded_box(f"LoungeBackSeam_{side}", (0.7, 0.018, 0.022), (side * 0.49, 0.058, 0.98), mats["teal"], root, 0.008, (0.05, 0, 0), 2)
-        cylinder(f"LoungeSeatPiping_{side}", 0.012, 0.76, (side * 0.5, -0.372, 0.66), mats["sage"], root, 10, (0, math.pi / 2, 0))
-        cylinder(f"LoungeBackPiping_{side}", 0.011, 0.69, (side * 0.49, 0.053, 1.08), mats["butter"], root, 10, (0, math.pi / 2, 0))
-        sphere(f"LoungeBackTuft_{side}", (0.035, 0.018, 0.035), (side * 0.49, 0.055, 0.94), mats["deep_teal"], root, 14, 8)
+        rounded_box(f"LoungeSeatSeam_{side}", (0.76, 0.022, 0.02), (side * 0.5, -0.365, 0.55), mats["deep_teal"], root, 0.008, segments=2)
+        rounded_box(f"LoungeBackSeam_{side}", (0.7, 0.018, 0.022), (side * 0.49, 0.064, 0.94), mats["teal"], root, 0.008, (0.04, 0, 0), 2)
+        cylinder(f"LoungeSeatPiping_{side}", 0.011, 0.76, (side * 0.5, -0.369, 0.6), mats["sage"], root, 10, (0, math.pi / 2, 0))
+        cylinder(f"LoungeBackPiping_{side}", 0.01, 0.69, (side * 0.49, 0.058, 1.03), mats["butter"], root, 10, (0, math.pi / 2, 0))
+        sphere(f"LoungeBackTuft_{side}", (0.034, 0.018, 0.034), (side * 0.49, 0.056, 0.9), mats["deep_teal"], root, 14, 8)
     for x in (-1.02, 1.02):
-        rounded_box(f"LoungeArm_{x}", (0.15, 0.76, 0.72), (x, 0.02, 0.62), mats["oak"], root, 0.055)
+        # Reference-like ladder arms keep the room visible through the frame.
+        rounded_box(f"LoungeArmPostFront_{x}", (0.1, 0.1, 0.68), (x, -0.24, 0.5), mats["oak"], root, 0.032)
+        rounded_box(f"LoungeArmPostRear_{x}", (0.1, 0.1, 0.9), (x, 0.3, 0.62), mats["oak"], root, 0.032)
+        rounded_box(f"LoungeArmRail_{x}", (0.1, 0.66, 0.1), (x, 0.02, 0.78), mats["oak"], root, 0.032, (0, 0, 0.03 * -x))
+        rounded_box(f"LoungeArmPad_{x}", (0.15, 0.58, 0.09), (x, 0.0, 0.82), mats["teal"], root, 0.04)
     for x in (-0.82, 0.82):
         for y in (-0.25, 0.25):
             cylinder(f"LoungeFoot_{x}_{y}", 0.045, 0.24, (x, y, 0.12), mats["walnut"], root, 12)
-    rounded_box("LoungePillowButter", (0.42, 0.16, 0.38), (-0.48, -0.13, 1.05), mats["butter"], root, 0.11, (0.05, -0.08, -0.08), 5)
-    rounded_box("LoungePillowCoral", (0.42, 0.16, 0.38), (0.5, -0.13, 1.04), mats["coral"], root, 0.11, (-0.04, 0.08, 0.08), 5)
-    rounded_box("LoungePillowButterInset", (0.3, 0.018, 0.27), (-0.48, -0.218, 1.05), mats["paper"], root, 0.06, (0.05, -0.08, -0.08), 3)
-    rounded_box("LoungePillowCoralInset", (0.3, 0.018, 0.27), (0.5, -0.218, 1.04), mats["butter"], root, 0.06, (-0.04, 0.08, 0.08), 3)
+    sphere("LoungePillowButter", (0.23, 0.09, 0.22), (-0.48, -0.14, 1.01), mats["butter"], root, 22, 14, (0.06, -0.08, -0.08))
+    sphere("LoungePillowCoral", (0.23, 0.09, 0.22), (0.5, -0.14, 1.0), mats["coral"], root, 22, 14, (-0.05, 0.08, 0.08))
+    rounded_box("LoungePillowButterInset", (0.25, 0.018, 0.2), (-0.48, -0.229, 1.01), mats["paper"], root, 0.05, (0.06, -0.08, -0.08), 3)
+    rounded_box("LoungePillowCoralInset", (0.25, 0.018, 0.2), (0.5, -0.229, 1.0), mats["butter"], root, 0.05, (-0.05, 0.08, 0.08), 3)
 
     # Low oval coffee table, ceramics and editorial stack.
     table = rounded_box("LoungeCoffeeTop", (1.35, 0.72, 0.13), (0.1, -1.1, 0.5), mats["oak"], root, 0.16, segments=6)
@@ -459,7 +477,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v4",
+        "contract": "mirrorlife-civic-hero-props-v5",
         "worldUnitMeters": 1,
         "assets": {},
     }

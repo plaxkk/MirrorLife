@@ -16,7 +16,9 @@ ROLE_CONFIGS = {
         "eye": "#3f342d",
         "top": "#e6dbc9",
         "outer": "#71825a",
-        "lower": "#303b40",
+        # Lift the trousers out of near-black so folds, cargo pockets and knee
+        # articulation remain readable in the warm civic grade.
+        "lower": "#5b6668",
         "accent": "#996c48",
         "shoe": "#3b342f",
         "sole": "#282421",
@@ -30,7 +32,7 @@ ROLE_CONFIGS = {
         "eye": "#3a312b",
         "top": "#258b82",
         "outer": "#eee4d3",
-        "lower": "#85765b",
+        "lower": "#aa9270",
         "accent": "#d1a04c",
         "shoe": "#2d4948",
         "sole": "#e5ddcf",
@@ -877,7 +879,7 @@ def build_face(head, mats, role):
     # oversized toy-doll head of the early assets. The narrower depth and
     # slightly slimmer jaw leave more silhouette room for hair, costume and
     # hand acting, matching the reference's editorial 1:3.5 proportion.
-    face = ellipsoid("Head", (0, 0, 0), (0.232, 0.194, 0.282), mats["skin"], head, segments=44, rings=30)
+    face = ellipsoid("Head", (0, 0, 0), (0.244, 0.198, 0.284), mats["skin"], head, segments=48, rings=32)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -961,7 +963,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.183, 0.038))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.087, -0.188, 0.042))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -970,10 +972,15 @@ def build_face(head, mats, role):
         # appeared when the sculpted eyes first replaced the painted atlas.
         # Width remains readable at the authored story camera while the lower
         # lid, iris and glint now sit inside a compressed, reference-like eye.
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.044, 0.008, 0.036), mats["eye_white"], eye, segments=26, rings=16)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.009, -0.001), (0.0225, 0.004, 0.026), mats["iris"], eye, segments=22, rings=12)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.013, -0.002), (0.0085, 0.0022, 0.013), mats["ink"], eye, segments=16, rings=8)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0155, 0.009), (0.0042, 0.0012, 0.005), mats["eye_white"], eye, segments=10, rings=6)
+        # The previous iris filled almost the entire sclera and collapsed to a
+        # black bead in the story camera. Preserve a generous almond-shaped
+        # white, then layer a smaller coloured iris, pupil and two catchlights
+        # so gaze remains readable from both front and three-quarter views.
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.053, 0.007, 0.032), mats["eye_white"], eye, segments=30, rings=18)
+        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.009, -0.002), (0.018, 0.0038, 0.021), mats["iris"], eye, segments=24, rings=14)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.013, -0.003), (0.0062, 0.002, 0.0095), mats["ink"], eye, segments=18, rings=10)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0065, -0.0155, 0.008), (0.0044, 0.0012, 0.0048), mats["eye_white"], eye, segments=12, rings=7)
+        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.004, -0.0158, -0.006), (0.0022, 0.0009, 0.0024), mats["eye_white"], eye, segments=10, rings=6)
         curve_tube(
             f"EyeOutline_{side}",
             [
@@ -992,8 +999,8 @@ def build_face(head, mats, role):
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.038, -0.012, 0.021), (0, -0.015, 0.036), (0.038, -0.012, 0.021)],
-            0.00315 if feminine else 0.00265,
+            [(-0.047, -0.012, 0.017), (0, -0.015, 0.031), (0.047, -0.012, 0.017)],
+            0.00335 if feminine else 0.00285,
             mats["ink"],
             eye,
             resolution=2,
@@ -1001,26 +1008,26 @@ def build_face(head, mats, role):
         if feminine:
             curve_tube(
                 f"OuterLash_{side}",
-                [(side * 0.032, -0.012, 0.032), (side * 0.047, -0.014, 0.044)],
+                [(side * 0.041, -0.012, 0.027), (side * 0.057, -0.014, 0.039)],
                 0.0026,
                 mats["ink"],
                 eye,
                 resolution=2,
             )
-        brow = empty(f"BrowPivot_{side}", head, (side * 0.078, -0.201, 0.102))
+        brow = empty(f"BrowPivot_{side}", head, (side * 0.084, -0.204, 0.108))
         curve_tube(
             f"Brow_{side}",
-            [(side * 0.052, 0.003, -0.006), (0, -0.007, 0.007), (-side * 0.046, 0.003, -0.004)],
-            0.0053,
+            [(side * 0.058, 0.003, -0.006), (0, -0.007, 0.008), (-side * 0.052, 0.003, -0.004)],
+            0.0056,
             mats["hair"],
             brow,
         )
         ellipsoid(f"Blush_{side}", (side * 0.158, -0.191, -0.045), (0.029, 0.005, 0.011), mats["blush"], head, segments=16, rings=8)
     ellipsoid("NoseBridge", (0, -0.19, 0.004), (0.009, 0.007, 0.025), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
-    mouth = empty("MouthPivot", head, (0, -0.204, -0.09))
+    mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.024, 0.002, 0.003), (-0.003, -0.003, -0.004), (0.024, 0.002, 0.002)], 0.00255, mats["skin_shadow"], closed)
+    curve_tube("MouthClosed", [(-0.029, 0.002, 0.004), (-0.004, -0.004, -0.004), (0.029, 0.002, 0.003)], 0.0027, mats["skin_shadow"], closed)
     # A separate glossy lower-lip mesh read as a floating moustache at the
     # authored gameplay distance. Keep the closed mouth as one clean ink line;
     # the open-mouth/tongue pair supplies colour only while speaking.
@@ -1033,7 +1040,7 @@ def build_hair(head, mats, style):
     # Keep the cap inside the face silhouette.  A wide full sphere reads like a
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
-    cap_scale = (0.252, 0.178, 0.226) if style == "spiky" else (0.266, 0.198, 0.24)
+    cap_scale = (0.258, 0.178, 0.226) if style == "spiky" else (0.272, 0.196, 0.238)
     cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
     # Break the mathematically perfect helmet silhouette without adding a
     # second shell or more triangles. Five broad crown lobes reshape the same
@@ -1151,6 +1158,22 @@ def build_hair(head, mats, style):
             ponytail,
             sides=14,
         )
+        # Layered flyaway locks break the single rubber-hose ponytail into the
+        # soft, authored red-hair silhouette visible in the reference.
+        for index, (offset_x, offset_y, tip_x) in enumerate(((-0.045, -0.018, 0.0), (0.045, 0.012, 0.105))):
+            tapered_lock(
+                f"PonytailLayer_{index + 1}",
+                [
+                    (0.01 + offset_x, offset_y, -0.08),
+                    (0.055 + offset_x, 0.015 + offset_y, -0.25),
+                    (0.095 + offset_x, 0.0 + offset_y, -0.43),
+                    (tip_x, -0.025 + offset_y, -0.61),
+                ],
+                (0.052, 0.055, 0.041, 0.007),
+                mats["hair_highlight"] if index == 0 else mats["hair"],
+                ponytail,
+                sides=12,
+            )
     elif style == "braided_bob":
         for index, x in enumerate((-0.22, -0.11, 0, 0.11, 0.22)):
             side = -1 if x < 0 else 1
@@ -1179,7 +1202,7 @@ def build_body(role, config, mats, visual):
     # the overall height was correct. Broaden the shoulder/chest volume by a
     # few centimetres and add front/back depth while remaining inside the
     # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid("Torso", (0, 0, 1.0), (0.26, 0.158, 0.332), mats["top"], visual, segments=32, rings=22)
+    torso = ellipsoid("Torso", (0, 0, 1.0), (0.276, 0.164, 0.332), mats["top"], visual, segments=36, rings=24)
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1585,10 +1608,10 @@ def build_character(role, config):
     # seventy percent. Enlarge the complete authored head hierarchy and lower
     # its pivot by 3.5 cm so the silhouette becomes expressive without growing
     # beyond the existing 1.72 m capsule or exposing a long toy-like neck.
-    head = empty("HeadPivot", root, (0, 0, 1.435))
+    head = empty("HeadPivot", root, (0, 0, 1.423))
     # Preserve the exact height/capsule contract while giving the face a
     # slightly broader illustrated presence in front and three-quarter views.
-    head.scale = (1.0, 1.0, 0.94)
+    head.scale = (1.06, 1.035, 0.98)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -1659,7 +1682,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v23",
+        "sculptContract": "mirrorlife-civic-sculpt-v24",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",

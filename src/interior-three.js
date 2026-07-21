@@ -1416,7 +1416,7 @@ function applyLightingPreset(theme = {}) {
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.92 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.48 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
@@ -6791,7 +6791,11 @@ function updateActors(actors = [], now = performance.now()) {
       );
       // Preserve the social circle while opening the silhouettes by roughly a
       // quarter turn toward the player camera, matching conversational staging.
-      bodyYaw += cameraDelta * 0.24;
+      // Open the conversational circle toward the authored story camera. The
+      // actors still face the player, but a stronger three-quarter bias keeps
+      // both eyes, garment construction and hand acting readable instead of
+      // presenting three near-profile silhouettes.
+      bodyYaw += cameraDelta * 0.38;
     }
     entry.visual.rotation.y = bodyYaw;
     const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;

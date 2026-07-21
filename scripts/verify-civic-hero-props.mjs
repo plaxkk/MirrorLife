@@ -10,7 +10,7 @@ const expectations = {
   "civic-lounge-suite": ["LoungeSofaBack", "LoungeCoffeeTop", "LoungeBookcaseBack", "LoungeSeatPiping_1", "LoungeCupHandle"]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v4");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v5");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 
@@ -18,7 +18,10 @@ let triangles = 0;
 for (const [assetId, requiredParts] of Object.entries(expectations)) {
   const entry = manifest.assets[assetId];
   assert.equal(entry.file, `${assetId}.glb`);
-  assert(Number(entry.meshes) >= 18 && Number(entry.meshes) <= 120, `${assetId}: authored mesh count outside budget`);
+  // Blender source-part count may grow as upholstery rails, piping and book
+  // details become independently editable. The runtime still batches opaque
+  // compatible meshes; triangles and live draw calls remain the release gate.
+  assert(Number(entry.meshes) >= 18 && Number(entry.meshes) <= 140, `${assetId}: authored mesh count outside budget`);
   assert(Number(entry.triangles) >= 2500 && Number(entry.triangles) <= 60000, `${assetId}: triangle count outside budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
