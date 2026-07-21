@@ -73,6 +73,74 @@ ROLE_CONFIGS = {
 }
 
 
+# The source cast does not reuse one doll face. Each role carries a slightly
+# different eye aperture, brow rhythm, cheek volume and resting mouth. Keep
+# those differences compact and metre-authored so they survive the same shared
+# rig, collider and animation contract.
+FACE_PROFILES = {
+    "player": {
+        "eye_width": 0.050,
+        "eye_height": 0.029,
+        "iris_width": 0.0255,
+        "iris_height": 0.0255,
+        "outer_eye_lift": 0.001,
+        "brow_outer": -0.004,
+        "brow_apex": 0.008,
+        "brow_inner": -0.002,
+        "mouth_width": 0.032,
+        "mouth_corner": 0.002,
+        "mouth_center": -0.003,
+        "cheek_forward": 1.0,
+        "muzzle_forward": 1.0,
+    },
+    "listener": {
+        "eye_width": 0.049,
+        "eye_height": 0.0285,
+        "iris_width": 0.025,
+        "iris_height": 0.025,
+        "outer_eye_lift": -0.001,
+        "brow_outer": -0.006,
+        "brow_apex": 0.006,
+        "brow_inner": -0.001,
+        "mouth_width": 0.033,
+        "mouth_corner": 0.004,
+        "mouth_center": -0.002,
+        "cheek_forward": 0.94,
+        "muzzle_forward": 0.96,
+    },
+    "facilitator": {
+        "eye_width": 0.050,
+        "eye_height": 0.030,
+        "iris_width": 0.0255,
+        "iris_height": 0.0265,
+        "outer_eye_lift": 0.003,
+        "brow_outer": 0.001,
+        "brow_apex": 0.011,
+        "brow_inner": -0.003,
+        "mouth_width": 0.035,
+        "mouth_corner": 0.005,
+        "mouth_center": -0.002,
+        "cheek_forward": 1.08,
+        "muzzle_forward": 1.03,
+    },
+    "mediator": {
+        "eye_width": 0.0485,
+        "eye_height": 0.0285,
+        "iris_width": 0.0245,
+        "iris_height": 0.025,
+        "outer_eye_lift": 0.001,
+        "brow_outer": -0.003,
+        "brow_apex": 0.009,
+        "brow_inner": 0.001,
+        "mouth_width": 0.032,
+        "mouth_corner": 0.002,
+        "mouth_center": -0.002,
+        "cheek_forward": 0.98,
+        "muzzle_forward": 0.98,
+    },
+}
+
+
 def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(description="Build MirrorLife shared-pivot civic character GLBs.")
@@ -486,6 +554,42 @@ def curve_tube(name, points, radius, mat, parent=None, cyclic=False, resolution=
     bpy.context.collection.objects.link(obj)
     obj.parent = parent
     link_material(obj, mat)
+    return obj
+
+
+def morphable_mouth_curve(name, points, radius, mat, parent=None):
+    """Create one lit mouth line whose corners deform with the face rig.
+
+    Scaling a static tube made the cheek smile move underneath an unmoving
+    mouth, which was the strongest mask-like cue in the story-camera crop.
+    Converting the tiny curve to one mesh preserves the existing single draw
+    call while giving the corners real WarmSmile/Concern deformation.
+    """
+    obj = curve_tube(name, points, radius, mat, parent, resolution=3, bevel_resolution=3)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.convert(target="MESH")
+    obj = bpy.context.object
+    obj.name = name
+    obj.select_set(False)
+    obj.shape_key_add(name="Basis")
+    smile = obj.shape_key_add(name="WarmSmile")
+    speech = obj.shape_key_add(name="SpeechJaw")
+    concern = obj.shape_key_add(name="Concern")
+    attentive = obj.shape_key_add(name="Attentive")
+    extent = max((abs(vertex.co.x) for vertex in obj.data.vertices), default=0.03)
+    for index, vertex in enumerate(obj.data.vertices):
+        x = vertex.co.x
+        edge = max(0.0, min(1.0, (abs(x) / max(extent, 1e-5) - 0.34) / 0.66))
+        centre = max(0.0, 1.0 - abs(x) / max(extent * 0.72, 1e-5))
+        smile.data[index].co.z += edge * 0.011 - centre * 0.0015
+        smile.data[index].co.x *= 1.0 + edge * 0.035
+        speech.data[index].co.z -= centre * 0.004
+        speech.data[index].co.y -= centre * 0.0015
+        concern.data[index].co.z -= edge * 0.008
+        concern.data[index].co.x *= 1.0 - edge * 0.018
+        attentive.data[index].co.z += edge * 0.0025
+    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v1"
     return obj
 
 
@@ -921,7 +1025,7 @@ def facial_lid_surface(
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.64, clearcoat=0.05),
-        "skin_shadow": material(f"{role} hand crease", "#cb8069", 0.82),
+        "skin_shadow": material(f"{role} hand crease", "#b96f66", 0.84),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
         "hair": material(f"{role} hair", config["hair"], 0.68, clearcoat=0.025),
@@ -958,6 +1062,7 @@ def build_face(head, mats, role):
     camera-facing portrait card, so they survive orbit, occlusion and shadow.
     """
     feminine = role in ("facilitator", "mediator")
+    face_profile = FACE_PROFILES[role]
     # Keep the face readable from the game camera without returning to the
     # oversized toy-doll head of the early assets. The narrower depth and
     # slightly slimmer jaw leave more silhouette room for hair, costume and
@@ -979,7 +1084,7 @@ def build_face(head, mats, role):
         cheek_height = max(0.0, min(1.0, 1.0 - abs(z + 0.035) / 0.095))
         cheek_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.118) / 0.075))
         if front > 0:
-            vertex.co.y -= cheek_height * cheek_width * front * 0.017
+            vertex.co.y -= cheek_height * cheek_width * front * 0.017 * face_profile["cheek_forward"]
         # Recess the eye socket and let the upper cheek transition forward
         # underneath it. This creates a continuous brow/eye/cheek plane under
         # moving light instead of a sphere with eye pieces pasted on top.
@@ -993,7 +1098,7 @@ def build_face(head, mats, role):
         # mouth appeared detached under three-quarter light.
         muzzle_height = max(0.0, min(1.0, 1.0 - abs(z + 0.075) / 0.065))
         muzzle_width = max(0.0, min(1.0, 1.0 - abs(x) / 0.105))
-        vertex.co.y -= muzzle_height * muzzle_width * front * 0.007
+        vertex.co.y -= muzzle_height * muzzle_width * front * 0.007 * face_profile["muzzle_forward"]
         # Slightly compress the temple/forehead corners so the face reads as
         # an authored illustrated head rather than a uniformly round sphere.
         temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
@@ -1065,15 +1170,27 @@ def build_face(head, mats, role):
         # black bead in the story camera. Preserve a generous almond-shaped
         # white, then layer a smaller coloured iris, pupil and two catchlights
         # so gaze remains readable from both front and three-quarter views.
-        eye_height = 0.03 if feminine else 0.028
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (0.052, 0.006, eye_height), mats["eye_white"], eye, segments=30, rings=18)
-        ellipsoid(f"Iris_{side}", (-side * 0.001, -0.0085, -0.002), (0.028, 0.0038, 0.027 if feminine else 0.026), mats["iris"], eye, segments=24, rings=14)
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.013, -0.003), (0.0105, 0.002, 0.0135), mats["ink"], eye, segments=18, rings=10)
+        eye_width = face_profile["eye_width"]
+        eye_height = face_profile["eye_height"]
+        outer_lift = face_profile["outer_eye_lift"]
+        eye.rotation_euler.y = side * outer_lift * 2.8
+        eye.rotation_euler.z = -side * outer_lift * 3.2
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0055, eye_height), mats["eye_white"], eye, segments=32, rings=18)
+        ellipsoid(
+            f"Iris_{side}",
+            (-side * 0.001, -0.0082, -0.002),
+            (face_profile["iris_width"], 0.0036, face_profile["iris_height"]),
+            mats["iris"],
+            eye,
+            segments=26,
+            rings=14,
+        )
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0125, -0.003), (0.0098, 0.0018, 0.0135), mats["ink"], eye, segments=18, rings=10)
         ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.0155, 0.008), (0.0046, 0.0012, 0.0048), mats["eye_white"], eye, segments=12, rings=7)
         ellipsoid(f"EyeGlintSmall_{side}", (side * 0.004, -0.0158, -0.006), (0.0018, 0.0009, 0.002), mats["eye_white"], eye, segments=10, rings=6)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
-            0.054,
+            eye_width + 0.002,
             0.015,
             0.012,
             0.029,
@@ -1083,7 +1200,7 @@ def build_face(head, mats, role):
         )
         facial_lid_surface(
             f"LowerLidSkin_{side}",
-            0.048,
+            eye_width - 0.002,
             -0.014,
             -0.006,
             -0.026,
@@ -1094,13 +1211,11 @@ def build_face(head, mats, role):
         curve_tube(
             f"EyeOutline_{side}",
             [
-                (-0.036, -0.017, -0.008),
-                (-0.018, -0.017, -0.015),
-                (0, -0.0175, -0.019),
-                (0.018, -0.017, -0.015),
-                (0.036, -0.017, -0.008),
+                (side * eye_width * 0.68, -0.017, -0.002),
+                (side * eye_width * 0.86, -0.0175, 0.003),
+                (side * eye_width, -0.017, 0.011 + side * outer_lift),
             ],
-            0.00125,
+            0.00095,
             mats["skin_shadow"],
             eye,
             resolution=2,
@@ -1109,16 +1224,20 @@ def build_face(head, mats, role):
         # distance. They remain children of EyePivot, so blinking still works.
         curve_tube(
             f"UpperLid_{side}",
-            [(-0.049, -0.018, 0.012), (0, -0.019, 0.028), (0.049, -0.018, 0.012)],
-            0.0034 if feminine else 0.0029,
+            [
+                (-eye_width + 0.001, -0.018, 0.011 - side * outer_lift),
+                (0, -0.019, eye_height - 0.001),
+                (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
+            ],
+            0.0031 if feminine else 0.0028,
             mats["ink"],
             eye,
             resolution=2,
         )
         curve_tube(
             f"LowerLid_{side}",
-            [(-0.033, -0.017, -0.011), (0, -0.018, -0.019), (0.033, -0.017, -0.011)],
-            0.00135,
+            [(-eye_width * 0.66, -0.017, -0.01), (0, -0.018, -eye_height * 0.68), (eye_width * 0.66, -0.017, -0.01)],
+            0.00105,
             mats["skin_shadow"],
             eye,
             resolution=2,
@@ -1132,15 +1251,32 @@ def build_face(head, mats, role):
                 eye,
                 resolution=2,
             )
+        curve_tube(
+            f"EyelidCrease_{side}",
+            [
+                (-eye_width * 0.7, -0.009, eye_height * 0.82),
+                (0, -0.011, eye_height * 1.25),
+                (eye_width * 0.7, -0.009, eye_height * 0.82),
+            ],
+            0.00065,
+            mats["skin_shadow"],
+            eye,
+            resolution=2,
+            bevel_resolution=2,
+        )
         brow = empty(f"BrowPivot_{side}", head, (side * 0.084, -0.204, 0.102))
         curve_tube(
             f"Brow_{side}",
-            [(side * 0.058, 0.003, -0.006), (0, -0.007, 0.008), (-side * 0.052, 0.003, -0.004)],
-            0.0049,
+            [
+                (side * 0.058, 0.003, face_profile["brow_outer"]),
+                (0, -0.007, face_profile["brow_apex"]),
+                (-side * 0.052, 0.003, face_profile["brow_inner"]),
+            ],
+            0.0045 if feminine else 0.0047,
             mats["hair"],
             brow,
         )
-        ellipsoid(f"Blush_{side}", (side * 0.152, -0.194, -0.047), (0.023, 0.0038, 0.008), mats["blush"], head, segments=16, rings=8)
+        ellipsoid(f"Blush_{side}", (side * 0.152, -0.194, -0.047), (0.020, 0.0032, 0.0065), mats["blush"], head, segments=16, rings=8)
     ellipsoid("NoseBridge", (0, -0.19, 0.004), (0.009, 0.007, 0.025), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
     curve_tube(
@@ -1153,12 +1289,22 @@ def build_face(head, mats, role):
     )
     mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
     closed = empty("MouthClosedPivot", mouth)
-    curve_tube("MouthClosed", [(-0.032, 0.001, 0.003), (-0.004, -0.004, -0.004), (0.032, 0.001, 0.002)], 0.0027, mats["skin_shadow"], closed)
-    # A small lower-lip centre belongs to the muzzle plane rather than sitting
-    # across the complete mouth width. This preserves a clean illustrated read
-    # while giving soft front/side highlights and avoiding the old floating
-    # moustache artifact.
-    ellipsoid("LowerLip", (0, -0.0055, -0.008), (0.022, 0.0024, 0.0048), mats["lip"], closed, segments=18, rings=10)
+    mouth_width = face_profile["mouth_width"]
+    mouth_corner = face_profile["mouth_corner"]
+    mouth_center = face_profile["mouth_center"]
+    morphable_mouth_curve(
+        "MouthClosed",
+        [
+            (-mouth_width, 0.001, mouth_corner),
+            (-mouth_width * 0.48, -0.003, mouth_center * 0.6),
+            (0, -0.004, mouth_center),
+            (mouth_width * 0.48, -0.003, mouth_center * 0.6),
+            (mouth_width, 0.001, mouth_corner),
+        ],
+        0.0027,
+        mats["skin_shadow"],
+        closed,
+    )
     open_mouth = empty("MouthOpenPivot", mouth)
     ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.024, 0.0055, 0.018), mats["ink"], open_mouth, segments=20, rings=12)
     ellipsoid("Tongue", (0, -0.01, -0.009), (0.013, 0.003, 0.005), mats["lip"], open_mouth, segments=14, rings=8)
@@ -1851,7 +1997,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v27",
+        "sculptContract": "mirrorlife-civic-sculpt-v28",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -1873,8 +2019,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v4",
-            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "NoseContour"],
+            "integrationContract": "mirrorlife-civic-face-volume-v5",
+            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "NoseContour", "MouthClosed"],
+            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],

@@ -6608,6 +6608,7 @@ function createCivicActorObject(actor, asset) {
   let mouthPivot = headGroup?.getObjectByName("MouthPivot");
   let mouthClosedPivot = mouthPivot?.getObjectByName("MouthClosedPivot") || null;
   let mouthOpenPivot = mouthPivot?.getObjectByName("MouthOpenPivot") || null;
+  let mouthClosedMesh = mouthClosedPivot?.getObjectByName("MouthClosed") || null;
   const faceMorphMesh = headGroup?.getObjectByName("Head") || null;
   const backpackNode = visual?.getObjectByName("BackpackPivot") || null;
   const satchelNode = visual?.getObjectByName("Satchel") || null;
@@ -6673,6 +6674,7 @@ function createCivicActorObject(actor, asset) {
     mouthPivot = null;
     mouthClosedPivot = null;
     mouthOpenPivot = null;
+    mouthClosedMesh = null;
   }
   const fullExpressionLod = lastWidth > 720;
   if (!fullExpressionLod) {
@@ -6779,11 +6781,35 @@ function createCivicActorObject(actor, asset) {
     eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
     if (mouthClosedPivot && mouthOpenPivot) {
-      mergeActorVertexColorMeshes(mouthClosedPivot, [], { roughness: 0.54, envMapIntensity: 0.7 });
+      // Sculpt v28 exports the closed mouth as one morphable curve. Keeping
+      // that one mesh intact costs the same draw call as the former static
+      // mouth batch, but lets its corners follow the cheek expression instead
+      // of floating over a deforming face.
+      if (!mouthClosedMesh?.morphTargetDictionary) {
+        mergeActorVertexColorMeshes(mouthClosedPivot, [], { roughness: 0.54, envMapIntensity: 0.7 });
+      }
       mergeActorVertexColorMeshes(mouthOpenPivot, [], { roughness: 0.5, envMapIntensity: 0.72 });
       mouthOpenPivot.visible = false;
     } else {
       mergeActorVertexColorMeshes(mouthPivot, [], { roughness: 0.58, envMapIntensity: 0.68 });
+    }
+    if (faceMorphMesh?.morphTargetDictionary && faceMorphMesh?.morphTargetInfluences) {
+      // Atomic room reveal should present a socially alive cast immediately.
+      // Starting every role from a zeroed neutral mask made the first visible
+      // frames look like a model swap before the normal expression lerp had
+      // time to converge.
+      const initialExpression = {
+        player: { WarmSmile: 0.18, Attentive: 0.08 },
+        listener: { WarmSmile: 0.4, Attentive: 0.46 },
+        facilitator: { WarmSmile: 0.56, Attentive: 0.38 },
+        mediator: { WarmSmile: 0.26, Attentive: 0.52, Concern: 0.22 }
+      }[role] || {};
+      Object.entries(initialExpression).forEach(([morphName, value]) => {
+        const faceIndex = faceMorphMesh.morphTargetDictionary[morphName];
+        if (Number.isInteger(faceIndex)) faceMorphMesh.morphTargetInfluences[faceIndex] = value;
+        const mouthIndex = mouthClosedMesh?.morphTargetDictionary?.[morphName];
+        if (Number.isInteger(mouthIndex)) mouthClosedMesh.morphTargetInfluences[mouthIndex] = value;
+      });
     }
   }
   mergeActorVertexColorMeshes(leftArm, [leftElbow], { roughness: 0.67, envMapIntensity: 0.72 });
@@ -6853,13 +6879,14 @@ function createCivicActorObject(actor, asset) {
     mouthPivot: fullExpressionLod ? mouthPivot : null,
     mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
     mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
+    mouthClosedMesh: fullExpressionLod && mouthClosedMesh?.morphTargetDictionary ? mouthClosedMesh : null,
     faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
     faceDecal,
     skinJoints,
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v3`,
+    styleKey: `${frame}:${role}:civic-glb-v4`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -6875,7 +6902,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v3` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v4` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -7000,12 +7027,17 @@ function updateActors(actors = [], now = performance.now()) {
       ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
       : 1;
     const blinkInfluence = 1 - blinkScale;
+    entry.blinkInfluence = blinkInfluence;
     if (entry.eyePivots?.length) {
       entry.eyePivots.forEach((eyePivot, eyeIndex) => {
         // A warm expression slightly compresses the lower/upper lid stack.
         // Keeping this coupled to the real facial morph makes the smile read
         // through the eyes instead of leaving a moving jaw under a rigid mask.
-        eyePivot.scale.y = blinkScale * (
+        // Blender authors the facial vertical axis as local Z. Scaling Y only
+        // flattened corneal depth and never actually closed the lid aperture,
+        // leaving a rigid doll stare during smiles and blinks.
+        eyePivot.scale.y = 1;
+        eyePivot.scale.z = blinkScale * (
           1 - smileInfluenceForFeatures * 0.075 - attentiveInfluenceForFeatures * 0.09
         );
         if (playerActor && actor.id !== playerActor.id && !walking) {
@@ -7092,6 +7124,18 @@ function updateActors(actors = [], now = performance.now()) {
           0.13
         );
       }
+    }
+    if (entry.mouthClosedMesh?.morphTargetDictionary && entry.mouthClosedMesh?.morphTargetInfluences) {
+      const mouthDictionary = entry.mouthClosedMesh.morphTargetDictionary;
+      const mouthInfluences = entry.mouthClosedMesh.morphTargetInfluences;
+      ["WarmSmile", "SpeechJaw", "Concern", "Attentive"].forEach((morphName) => {
+        const mouthIndex = mouthDictionary[morphName];
+        const faceIndex = entry.faceMorphMesh?.morphTargetDictionary?.[morphName];
+        if (!Number.isInteger(mouthIndex)) return;
+        mouthInfluences[mouthIndex] = Number.isInteger(faceIndex)
+          ? Number(entry.faceMorphMesh.morphTargetInfluences?.[faceIndex] || 0)
+          : 0;
+      });
     }
     if (entry.faceDecal?.morphTargetDictionary && entry.faceDecal?.morphTargetInfluences) {
       const decalDictionary = entry.faceDecal.morphTargetDictionary;
@@ -7803,7 +7847,7 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v4"
+          ? "mirrorlife-civic-face-volume-v5"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-volume-v3"
             : "mirrorlife-civic-face-volume-v2",
@@ -7817,11 +7861,16 @@ function getStats() {
         attentive: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.Attentive]
           ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.Attentive]
           ?? 0).toFixed(4)),
-        blink: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.Blink] || 0).toFixed(4))
+        blink: Number((entry.blinkInfluence || 0).toFixed(4))
       } : null,
       eyes: entry.eyePivots?.length ? {
         version: "mirrorlife-civic-eye-volume-v1",
-        count: entry.eyePivots.length
+        count: entry.eyePivots.length,
+        blinkAxis: "z",
+        verticalScale: Number((entry.eyePivots.reduce(
+          (sum, eyePivot) => sum + Number(eyePivot.scale.z || 0),
+          0
+        ) / entry.eyePivots.length).toFixed(4))
       } : null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
         key,

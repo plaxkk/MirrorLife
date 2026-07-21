@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v29 role-specific face and expression-continuity gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas source/implementation comparison: `tmp/reference-vs-v29-final.png`; both halves show the equivalent opening listening-circle state on one `1672 × 941` canvas.
+- Focused cast evidence: source crop `tmp/v28-source-cast.png` and final implementation crop `tmp/v29-final-cast.png`.
+- Final desktop implementation: `dist/interior-3d-work/environment-review/00-public.png` at `154` draw calls / `280,936` triangles.
+- Real quarter and reverse orbits: `dist/interior-3d-work/environment-review-yaw-90/00-public.png` at `155 / 295,828`, and `dist/interior-3d-work/environment-review-yaw-180/00-public.png` at `157 / 294,380`.
+- Real physical stride evidence: `tmp/v29-character-walk.png`; the final exploration run moved the player `3.65m` and rotated the camera `65.3°`.
+- Real mobile Chrome evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`, `98 / 240,634`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v28 P1 / four roles shared the same doll-like resting face] Sculpt v28 introduces metre-authored role profiles for eye aperture, iris ratio, brow rhythm, cheek projection, muzzle projection and resting mouth. Player, listener, facilitator and mediator now preserve their own facial silhouette through front and reverse orbit instead of differing only by hair and colour.
+- [fixed from v28 P1 / smile deformed the cheek under a static mouth line] The closed mouth is now one real morph-target mesh with `WarmSmile`, `SpeechJaw`, `Concern` and `Attentive` shapes. Its corners follow the same expression weights as the head without adding another draw call.
+- [fixed / lower eye contour looked doubled and tired] The duplicated full-width eye outline is reduced to a restrained outer-corner contour; lower lid and eyelid crease thickness are separately authored. Sclera, iris and pupil ratios are rebalanced per role.
+- [fixed / blink compressed corneal depth instead of closing the eye] Runtime blinking now scales the Blender-authored local Z aperture and exposes `blinkAxis: z` plus vertical scale diagnostics. Eye depth stays stable while the lid stack actually closes.
+- [fixed / atomic reveal showed neutral masks before expression lerps settled] Each role receives an authored initial social expression before the room becomes visible. Listener, facilitator and mediator appear attentive on the first revealed frame; subsequent runtime acting remains continuous.
+- [checked / browser runtime] The in-app browser reached `sceneReady=true` at the real `180°` view with no warnings or errors. All four actors exposed `mirrorlife-civic-face-volume-v5`, four head morphs and two volumetric eyes.
+- [checked / performance and interaction] The richer GLBs remain `6.82 MB` total and stay under the same Web LOD budgets. Desktop/mobile scene flow passes; physical exploration walks `3.65m` and rotates `65.3°`.
+
+### Required fidelity surfaces and findings
+
+- [checked][3D character continuity] Eyes, lids, brows, nose, cheeks, mouth, hair, costume and props remain lit geometry with correct front/side/back self-occlusion; no portrait billboard or sprite fallback is used.
+- [checked][responsive/performance] All three desktop views remain below `160 / 300,000`; mobile remains below `110 / 250,000` with three actors and complete touch controls.
+- [checked][expression readability] The focused crop shows cleaner eye corners, less duplicated lower-lid ink and role-specific mouth/brow rhythms. The reverse orbit exposes the player's face and confirms the same geometry survives a real camera turn.
+- [P1][production facial topology still remains below the source] The source has more natural eyelid-to-cheek continuity, softer lip corners, finer nose/ear anatomy, cleaner hair roots and subtler skin-normal response. v29 removes the shared-mask and static-mouth defects, but close comparison still reads as a procedural low-poly sculpt. Next fix: authored per-role head meshes or artist-quality normal maps rather than further primitive-level parameter tuning.
+- [P1][character clothing/contact finish remains below the source] The reference has cleaner finger anatomy, fabric compression, seam construction and shoe/ground contact. Current silhouettes and notebook grip are functional, but the cast still lacks the source's production cloth and hand finish.
+- [P1][room-wide micro-story density and indirect light remain below the source] The source still carries denser ceramics, paper, foliage and cabinetry storytelling plus more nuanced local bounce and contact penumbrae.
+- [P2][HUD optical hierarchy remains heavier than the source] Coverage and controls pass, but the dark segmented rails still compete with the social tableau.
+
+### Gate result
+
+v29 closes the shared-face, static-mouth, doubled-lid and wrong-axis blink defects while preserving genuine locomotion, complete orbit, atomic reveal and strict performance budgets. The mandatory full-view and focused comparisons still expose actionable P1 gaps in artist-authored facial/cloth topology and room microdetail, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production-quality authored head/hand/cloth topology and room-wide micro-story/indirect-light fidelity remain visibly below the reference.
+
 ## 2026-07-21 reference-fidelity v28 balanced light transport and full-orbit batching gate
 
 ### Evidence inspected together
