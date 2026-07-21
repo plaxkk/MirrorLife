@@ -88,7 +88,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // exposure collapsed plaster, skin and timber into one ochre value. Keep a
   // strong doorway direction while restoring the neutral daylight and soft
   // lower-body bounce visible in the reference.
-  "civic-ivory": { key: 1.48, fill: 0.34, hemi: 0.3, bounce: 0.6, wash: 0.78, exposure: 0.88, keyColor: "#ffe0bc", fillColor: "#b7dcd8" },
+  "civic-ivory": { key: 1.32, fill: 0.46, hemi: 0.4, bounce: 0.72, wash: 0.62, exposure: 0.89, keyColor: "#ffe5ca", fillColor: "#c4dedb" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -453,13 +453,13 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.96;
+  gtaoPass.blendIntensity = 0.82;
   gtaoPass.updateGtaoMaterial({
-    radius: 0.32,
-    distanceExponent: 1.7,
-    thickness: 1.48,
-    distanceFallOff: 0.9,
-    scale: 0.94,
+    radius: 0.28,
+    distanceExponent: 1.8,
+    thickness: 1.2,
+    distanceFallOff: 1,
+    scale: 0.84,
     samples: 12,
     screenSpaceRadius: false
   });
@@ -499,19 +499,19 @@ function ensureLayer() {
         // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
         // carried by light and material response; saturation stays editorial
         // rather than toy-like.
-        color = mix(vec3(luma), color, 1.045 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.145 * strength) + vec3(0.58));
-        color *= mix(vec3(1.0), vec3(1.01, 1.0, 0.988), strength);
+        color = mix(vec3(luma), color, 0.995 * strength);
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.105 * strength) + vec3(0.58));
+        color *= mix(vec3(1.0), vec3(1.006, 1.0, 0.994), strength);
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaDown = dot(texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float sceneEdge = max(abs(lumaRight - lumaLeft), abs(lumaUp - lumaDown));
-        float editorialInk = smoothstep(0.09, 0.28, sceneEdge) * 0.045 * strength;
+        float editorialInk = smoothstep(0.1, 0.3, sceneEdge) * 0.018 * strength;
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.06 * strength;
+        color *= 1.0 - vignette * 0.035 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1462,22 +1462,22 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.68 : 0;
-    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffc27a");
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.82 : 0;
+    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.2) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.26) : 0;
   }
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.38 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 8.5 : 9;
-    keyLight.shadow.blurSamples = 24;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 12 : 9;
+    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 32 : 24;
   }
 }
 
@@ -2927,7 +2927,11 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   // Collapse the complete opaque desk and stationery suite into one vertex-
   // surfaced batch. Keep only the mapped agenda face separate, preserving the
   // Chinese content while recovering enough budget for all four orbit views.
-  mergeActorVertexColorMeshes(group, [briefArtwork], { roughness: 0.82, envMapIntensity: 0.42 });
+  mergeActorVertexColorMeshes(group, [briefArtwork], {
+    roughness: 0.82,
+    envMapIntensity: 0.42,
+    actorShading: false
+  });
 }
 
 function addCivicLocalStoryLights(mobileLod = false) {
@@ -3370,7 +3374,11 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => sourceMaterials.add(material));
   });
-  mergeActorVertexColorMeshes(group, [pendantShade], { roughness: 0.76, envMapIntensity: 0.66 });
+  mergeActorVertexColorMeshes(group, [pendantShade], {
+    roughness: 0.76,
+    envMapIntensity: 0.66,
+    actorShading: false
+  });
   sourceMaterials.forEach((material) => material.dispose?.());
 }
 
@@ -3627,7 +3635,11 @@ function addCivicResponseAlcove(colors) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => sourceMaterials.add(material));
   });
-  mergeActorVertexColorMeshes(group, [], { roughness: 0.76, envMapIntensity: 0.7 });
+  mergeActorVertexColorMeshes(group, [], {
+    roughness: 0.76,
+    envMapIntensity: 0.7,
+    actorShading: false
+  });
   sourceMaterials.forEach((material) => material.dispose?.());
 }
 
@@ -3676,6 +3688,11 @@ function addCivicOrbitFrames(colors) {
       card.position.set((index % 2 ? 0.17 : -0.17), 0.08 - Math.floor(index / 2) * 0.35, 0.112);
       card.rotation.z = (index % 2 ? 1 : -1) * 0.025;
       group.add(card);
+    });
+    mergeActorVertexColorMeshes(group, [], {
+      roughness: 0.78,
+      envMapIntensity: 0.54,
+      actorShading: false
     });
   });
 }
@@ -3765,6 +3782,15 @@ function addCivicArchitecturalShell(colors) {
     reveal.position.set(0, 0.84, 0.175);
     reveal.castShadow = false;
     group.add(reveal);
+    // Each wall must remain an independently hideable orbit surface, but its
+    // plaster, dado, base and brass reveal do not need four live draw calls.
+    // Collapse the opaque construction into one vertex-surfaced batch before
+    // the global room merger preserves the wall group.
+    mergeActorVertexColorMeshes(group, [], {
+      roughness: 0.82,
+      envMapIntensity: 0.46,
+      actorShading: false
+    });
   });
 
   // Two vertical oak posts frame the civic listening wall. They provide human
@@ -3880,7 +3906,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.84,
+        opacity: theme.night ? 0.1 : 0.52,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5052,11 +5078,11 @@ function rebuildRoom(theme = {}) {
       ? new THREE.PlaneGeometry(ROOM_RADIUS * 2.62, ROOM_RADIUS * 2.48)
       : new THREE.CircleGeometry(ROOM_RADIUS, 64),
     createToonMaterial(floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.66 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.58 : 0.48
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.48 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5079,7 +5105,8 @@ function rebuildRoom(theme = {}) {
     side: THREE.BackSide,
     roughness: 0.94,
     surface: "plaster",
-    bumpScale: 0.021
+    bumpScale: 0.014,
+    envMapIntensity: theme.zoneId === "public-plaza" ? 0.42 : 0.54
   });
   if (theme.zoneId === "public-plaza") {
     addCivicPortalWallShell(theme, wallHeight, wallMaterial);
@@ -5864,6 +5891,7 @@ function createActorSkirt(material, y = 0.66) {
 
 function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions = {}) {
   if (!target || !mergeGeometries) return;
+  const actorShading = materialOptions.actorShading !== false;
   target.updateMatrixWorld(true);
   const excluded = new Set(excludedRoots);
   const targetInverse = target.matrixWorld.clone().invert();
@@ -5940,9 +5968,10 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     metalness: 0.015,
     envMapIntensity: Number(materialOptions.envMapIntensity ?? 0.62)
   });
-  // The source portraits use a restrained ink contour. A view-normal rim in
-  // the existing actor material preserves that identity without a duplicate
-  // back-face shell (which would double mobile triangles).
+  // The same vertex-surface batcher is also used for static civic furniture.
+  // Furniture keeps per-part roughness and metalness but must not inherit the
+  // character ink rim, skin wrap or cloth sheen; those effects are reserved
+  // for the living cast.
   material.onBeforeCompile = (shader) => {
     shader.vertexShader = shader.vertexShader
       .replace(
@@ -5983,9 +6012,11 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       "#include <metalnessmap_fragment>",
       `#include <metalnessmap_fragment>
       metalnessFactor = clamp(vMirrorLifeMetalness, 0.0, 1.0);`
-    ).replace(
-      "#include <opaque_fragment>",
-      `#include <opaque_fragment>
+    );
+    if (actorShading) {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <opaque_fragment>",
+        `#include <opaque_fragment>
       float mirrorLifeViewWrap = 1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
       float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 5.1);
       float mirrorLifeClothMask = smoothstep(0.82, 0.94, vMirrorLifeRoughness);
@@ -5999,14 +6030,25 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       float mirrorLifeWeaveA = sin(vMirrorLifeSurfacePosition.x * 235.0 + vMirrorLifeSurfacePosition.z * 31.0);
       float mirrorLifeWeaveB = sin(vMirrorLifeSurfacePosition.y * 248.0 - vMirrorLifeSurfacePosition.z * 37.0);
       float mirrorLifeWeave = mirrorLifeWeaveA * mirrorLifeWeaveB * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.18);
-      gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.24;
-      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.018;
-      gl_FragColor.rgb += vec3(0.082, 0.035, 0.02) * mirrorLifeSkinWrap * 0.34;
-      gl_FragColor.rgb += vec3(0.052, 0.045, 0.038) * mirrorLifeHairSheen * 0.2;`
-    );
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.14);
+      gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.18;
+      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.012;
+      gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.22;
+      gl_FragColor.rgb += vec3(0.052, 0.045, 0.038) * mirrorLifeHairSheen * 0.14;`
+      );
+    } else {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <opaque_fragment>",
+        `#include <opaque_fragment>
+        float mirrorLifeSurfaceGrain = sin(vMirrorLifeSurfacePosition.x * 41.0 + vMirrorLifeSurfacePosition.z * 17.0)
+          * sin(vMirrorLifeSurfacePosition.y * 47.0 - vMirrorLifeSurfacePosition.z * 13.0);
+        gl_FragColor.rgb *= 1.0 + mirrorLifeSurfaceGrain * 0.004;`
+      );
+    }
   };
-  material.customProgramCacheKey = () => "mirrorlife-actor-material-hierarchy-v5";
+  material.customProgramCacheKey = () => actorShading
+    ? "mirrorlife-actor-material-hierarchy-v6"
+    : "mirrorlife-room-vertex-surface-v1";
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;

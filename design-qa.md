@@ -1,5 +1,42 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v28 balanced light transport and full-orbit batching gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas source/implementation comparison: `tmp/reference-vs-v28-balanced.png`; both halves show the equivalent opening listening-circle state on one `1672 × 941` canvas.
+- Final desktop implementation: `dist/interior-3d-work/environment-review/00-public.png` at `154` draw calls / `280,824` triangles.
+- Real quarter and reverse orbits: `dist/interior-3d-work/environment-review-yaw-90/00-public.png` at `155 / 295,716`, and `dist/interior-3d-work/environment-review-yaw-180/00-public.png` at `157 / 294,268`.
+- Real physical stride evidence: `tmp/v28-character-walk.png`; the final exploration run moved the player `2.85m` and rotated the camera `65.3°`.
+- Real mobile Chrome evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`, `98 / 240,550`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v27 P1 / reverse orbit exceeded the strict civic budget] The public-room orbit frames, architectural wall groups and three static hero assemblies now retain group-level camera visibility while batching their opaque submeshes into vertex-surface meshes. The reverse view falls from `166` to `157` draw calls; all three desktop angles now satisfy the `160`-call civic gate.
+- [fixed / static furniture inherited character skin and cloth shading] The shared batcher now has explicit actor and room modes. Room furniture preserves per-part roughness and metalness without receiving character ink, skin-wrap or hair-sheen terms.
+- [improved from v27 P1 / crushed contact and yellow plastic read] Civic key/fill/hemi/bounce, portal bounce, environment response, GTAO radius/thickness and the editorial grade are rebalanced together. The opening frame retains grounded feet and furniture contact while recovering pale plaster, paper and terrazzo separation.
+- [improved / broad materials collapsed into one gloss level] Civic floor and wall roughness, wall relief, environment response and the non-actor vertex surface are separately tuned; wood, paper, upholstery, ceramic, brass and terrazzo retain different highlight widths after batching.
+- [fixed / render-ready regression during the material split] Browser console inspection exposed two misplaced material-mode variables that held atomic entry in `loading`. Both scopes were corrected; the in-app browser then reached `sceneReady=true` with no warnings or errors, and desktop/mobile scene-flow regression passed.
+- [checked / physical exploration] The final browser run walks `2.85m`, rotates `65.3°`, keeps the volumetric cast and preserves the same authoritative spatial/physics contract.
+
+### Required fidelity surfaces and findings
+
+- [checked][full-orbit performance] Opening, quarter and reverse views are `154`, `155` and `157` calls respectively; all stay below `160 / 300,000`. Mobile is `98 / 240,550`, below `110 / 250,000`.
+- [checked][atomic readiness] The room, imported models, cast, physics, camera and UI reveal together. Fresh browser logs are empty and the scene-flow verifier passes on desktop and mobile.
+- [checked][material hierarchy] The balanced frame is less yellow and less crushed than v27 while retaining warm daylight, contact separation and readable interaction paths.
+- [P1][facial emotion and surface normals still remain below the source] The source carries finer eyelid-to-cheek transitions, lip corners, skin normals and role-specific micro-expression. The current cast is fully volumetric and animated but remains visibly more procedural at the story camera. Next fix: role-specific facial correctives and authored skin normal/roughness maps on the existing morph rig.
+- [P1][indirect light and authored micro-story density remain below the source] The current room now separates material families and avoids hard AO, but the reference still has richer portal bounce, softer local penumbrae, woven/paper detail and denser evidence/cabinet stories. Next fix: localized light probes or baked hero-light cards plus restrained normal/roughness breakup for hero props.
+- [P2][HUD optical hierarchy remains heavier than the source] Coverage and touch targets pass, but the dark segmented rails still compete with the cast more than the translucent reference treatment.
+
+### Gate result
+
+v28 closes the full-orbit civic performance blocker, restores a calmer material hierarchy and verifies atomic entry, real locomotion and mobile composition. The mandatory same-canvas comparison still shows visible P1 gaps in facial finish and room-wide indirect-light/micro-story fidelity, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: production facial normals/correctives and room-wide authored indirect-light/material microdetail remain visibly below the reference.
+
 ## 2026-07-21 reference-fidelity v27 integrated face, tailored coat and contact-pose gate
 
 ### Evidence inspected together
