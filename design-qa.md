@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v93 evidence wall, record station and orbit-material gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas comparison: `dist/interior-3d-work/civic-fidelity-v93/reference-vs-v93-final.png`; both halves are `1672 × 941` and show the equivalent opening listening-circle state.
+- Final desktop implementation: `dist/interior-3d-work/civic-fidelity-v93/desktop-1672x941-v93-final.png`.
+- Focused pre-fix comparisons: `dist/interior-3d-work/civic-fidelity-v93/reference-vs-v92-evidence-focus.png` and `reference-vs-v92-record-focus.png` isolate the undersized evidence wall and glossy, poorly oriented record station that this pass replaces.
+- Real mobile Chrome evidence: `dist/interior-3d-work/civic-fidelity-v93/mobile-390x844-v93-final.png` at `390 × 844`.
+- Opening desktop runtime is `153` draw calls / `281,728` triangles; an in-app quarter orbit at `1.50rad` is `158 / 296,668`; mobile is `104 / 241,410`. All remain inside the civic desktop `160 / 300,000` and mobile `110 / 250,000` gates.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v92 P1 / evidence wall was small and diagrammatic] Hero-prop v6 enlarges the wall, adds real oak rails and finials, layered cork/paper depth, a mesh-authored `倾听墙` title, picture-light arms/shades/bulbs and a wider evidence console. It now occupies the rear narrative axis rather than reading as generic wall decoration.
+- [fixed from v92 P1 / record station read as glossy red plastic] The station now uses pale oak joinery, a thinner top and apron, four tapered legs, a restrained green task lamp, paper/glass/stationery micro-props and a physically oriented agenda board with readable `今日议题 / 倾听 / 理解 / 回应` content.
+- [fixed / hero palette became white after room batching] The complete record assembly is collapsed once into authored vertex colors; the room batcher now preserves pre-authored vertex-color materials instead of repainting them with a white base. The `1.50rad` orbit proves that oak, paper, green paint and brass remain intact from the side/reverse view.
+- [fixed / hero props remained evenly lit] Two restrained evidence-wall picture-light pools and a warm record-lamp pool add localized emphasis while the room key/fill/wash balance is lowered to restore contact separation.
+- [fixed / visual and physical positions could diverge after the desk enlargement] The public profile now moves and resizes the record-station collider and interaction anchor with the rendered transform. All `26` zone profiles continue to pass the shared physics verifier.
+- [fixed / visual capture could finish while headless Chrome remained orphaned] The environment capture runner now bounds the WebGL browser shutdown handshake and terminates its own child browser when necessary, so desktop/mobile evidence and manifests finish deterministically.
+
+### Required fidelity surfaces and findings
+
+- [checked][composition] The arched portal and record station frame the foreground, four citizens own the middle listening ring, and the enlarged evidence wall plus lounge provide a legible background story axis.
+- [checked][materials and light] Oak, cork, paper, terrazzo, teal upholstery, ceramic, brass and localized warm pools are now visibly distinct; the station remains correctly shaded through real orbit angles.
+- [checked][interaction and physics] The room performs an atomic ready reveal, supports physical WASD locomotion and real drag orbit, preserves metre-scale colliders and keeps every rendered hero prop off the walkable listening centre.
+- [checked][responsive/performance] Mobile keeps the player, two witnesses, evidence target, joystick, actions and context prompt visible at `390 × 844`, with `104` calls and `241,410` triangles.
+- [P1][character production anatomy remains the largest source gap] The same-canvas pair still shows simpler facial planes, hair layering, cloth tailoring, fingers, shoes and hand-to-prop contact than the reference. Next fix: rebuild role-specific head/hair/outer-garment shells and corrective contact poses on the existing shared skeleton without regressing animation or mobile LOD.
+- [P1][remaining set density and indirect light are still one tier lower] The evidence wall and record station now have authored identity, but the source has richer threshold foliage, cabinetry accessories, ceramics/papers, woven detail and softer local bounce/contact penumbrae. Next fix: advance doorway/casework micro-stories and add restrained probe/baked bounce while holding the current budgets.
+- [P2][HUD remains optically heavier] The top rail and segmented action chrome are functional and compact, but still compete more with the tableau than the reference's calmer translucent grouping.
+
+### Gate result
+
+v93 closes the two targeted furniture blockers, retains authored material identity through the real 360° orbit, synchronizes the enlarged desk with physics and stays inside strict desktop/mobile budgets. The identical-canvas comparison still exposes production-character anatomy and room-wide micro-detail/light-transport gaps, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-specific production character anatomy and consistent room-wide authored micro-detail/indirect lighting remain below the reference.
+
 ## 2026-07-21 reference-fidelity v92 face readability and lounge construction gate
 
 ### Evidence inspected together

@@ -6,11 +6,11 @@ const ROOT = path.resolve("public/assets/interiors/glb");
 const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "civic-hero-props-manifest.json"), "utf8"));
 const expectations = {
   "civic-display-case": ["DisplayFrontGlass", "DisplayGlassMullion_-0.28", "DisplayMenuFrame", "DisplayMenuTitle", "DisplayStoryCard", "DisplayTopVase"],
-  "civic-notice-console": ["NoticeFrame", "NoticeConsoleTop", "NoticeDrawer_-1", "NoticeWitnessCup_body", "NoticeBasketCore", "NoticeBasketLiner"],
+  "civic-notice-console": ["NoticeFrame", "NoticeTitleText", "NoticeConsoleTop", "NoticeDrawer_-1", "NoticeLampShade_1", "NoticeWitnessCup_body", "NoticeBasketCore", "NoticeBasketLiner"],
   "civic-lounge-suite": ["LoungeSofaBack", "LoungeCoffeeTop", "LoungeBookcaseBack", "LoungeSeatPiping_1", "LoungeCupHandle"]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v5");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v6");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 

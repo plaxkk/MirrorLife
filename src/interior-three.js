@@ -85,7 +85,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // exposure collapsed plaster, skin and timber into one ochre value. Keep a
   // strong doorway direction while restoring the neutral daylight and soft
   // lower-body bounce visible in the reference.
-  "civic-ivory": { key: 2.05, fill: 0.22, hemi: 0.22, bounce: 0.48, wash: 0.76, exposure: 0.84, keyColor: "#ffe2c3", fillColor: "#b7dcd8" },
+  "civic-ivory": { key: 1.72, fill: 0.18, hemi: 0.17, bounce: 0.5, wash: 0.62, exposure: 0.8, keyColor: "#ffe0bc", fillColor: "#b7dcd8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -134,9 +134,10 @@ const MODEL_RENDER_PROFILES = {
   // colliders instead of leaving a small sofa inside a much larger blocker.
   "civic-display-case": { scale: 1.18, rotationY: 0 },
   // Normalized prop meshes are multiplied by the shared 1.78 prop factor.
-  // 1.28 therefore restores a ~2.2m console, matching its authored collider;
-  // the previous 1.75 profile rendered a ~3m wall unit around a 2.24m blocker.
-  "civic-notice-console": { scale: 1.28, rotationY: 0 },
+  // v93 restores the evidence wall as a true background hero object. Its
+  // enlarged authored frame is paired with the updated metre-space collider,
+  // so the visual and physical footprints stay aligned.
+  "civic-notice-console": { scale: 1.5, rotationY: 0 },
   "civic-lounge-suite": { scale: 2.15, rotationY: 0 },
   shelf: { scale: 1.08, rotationY: 0 },
   "wall-board": { scale: 1.08, decorScale: 3.1, rotationY: 0 },
@@ -234,6 +235,7 @@ let lastSceneReady = false;
 let contactShadowTexture;
 let civicDappleTexture;
 let civicRugTexture;
+let civicBriefTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
 let actorTextureLoading;
@@ -1305,6 +1307,53 @@ function getCivicRugTexture() {
   civicRugTexture.generateMipmaps = true;
   civicRugTexture.needsUpdate = true;
   return civicRugTexture;
+}
+
+function getCivicBriefTexture() {
+  if (civicBriefTexture) return civicBriefTexture;
+  const briefCanvas = document.createElement("canvas");
+  briefCanvas.width = 640;
+  briefCanvas.height = 480;
+  const context = briefCanvas.getContext("2d");
+  if (!context) return null;
+  context.fillStyle = "#f4ead9";
+  context.fillRect(0, 0, briefCanvas.width, briefCanvas.height);
+  context.strokeStyle = "rgba(111,75,50,0.18)";
+  context.lineWidth = 4;
+  context.strokeRect(18, 18, briefCanvas.width - 36, briefCanvas.height - 36);
+  context.textAlign = "center";
+  context.textBaseline = "middle";
+  context.fillStyle = "#5f412f";
+  context.font = "700 62px 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif";
+  context.fillText("今日议题", briefCanvas.width / 2, 88);
+  const rows = [
+    ["倾听", "#4b9189"],
+    ["理解", "#df8066"],
+    ["回应", "#c49b45"]
+  ];
+  context.textAlign = "left";
+  context.font = "600 48px 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif";
+  rows.forEach(([label, color], index) => {
+    const y = 190 + index * 92;
+    context.fillStyle = "#5e5145";
+    context.fillText(label, 148, y);
+    context.strokeStyle = color;
+    context.lineWidth = 10;
+    context.lineCap = "round";
+    context.beginPath();
+    context.moveTo(440, y + 2);
+    context.lineTo(462, y + 23);
+    context.lineTo(505, y - 27);
+    context.stroke();
+  });
+  civicBriefTexture = new THREE.CanvasTexture(briefCanvas);
+  civicBriefTexture.colorSpace = THREE.SRGBColorSpace;
+  civicBriefTexture.minFilter = THREE.LinearMipmapLinearFilter;
+  civicBriefTexture.magFilter = THREE.LinearFilter;
+  civicBriefTexture.generateMipmaps = true;
+  civicBriefTexture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  civicBriefTexture.needsUpdate = true;
+  return civicBriefTexture;
 }
 
 function createToonMaterial(color, options = {}) {
@@ -2680,108 +2729,119 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   group.rotation.y = Number(deskProfile?.rotationY ?? 2.12);
   group.scale.setScalar(Number(deskProfile?.displayScale ?? 1.02));
   roomRoot.add(group);
-  const wood = createToonMaterial("#a66b43", { roughness: 0.68, surface: "wood", bumpScale: 0.012 });
-  const trim = createToonMaterial("#665044", { roughness: 0.76 });
-  const top = new THREE.Mesh(new RoundedBoxGeometry(1.65, 0.16, 0.78, 6, 0.1), wood);
-  top.position.y = 0.77;
+  // Natural open-grain oak replaces the saturated, glossy mahogany that made
+  // the reference-like foreground desk read as a toy. The slimmer edge and
+  // four tapered legs preserve negative space under the desk from the orbit.
+  const wood = createToonMaterial("#b88759", { roughness: 0.9, envMapIntensity: 0.34 });
+  const trim = createToonMaterial("#6f4c36", { roughness: 0.86, envMapIntensity: 0.34 });
+  const top = new THREE.Mesh(new RoundedBoxGeometry(1.9, 0.13, 0.86, 6, 0.065), wood);
+  top.position.y = 0.79;
   group.add(top);
-  const apron = new THREE.Mesh(new RoundedBoxGeometry(1.45, 0.24, 0.14, 4, 0.045), wood);
-  apron.position.set(0, 0.62, 0.34);
+  const frontEdge = new THREE.Mesh(new RoundedBoxGeometry(1.76, 0.07, 0.05, 3, 0.022), trim);
+  frontEdge.position.set(0, 0.755, 0.425);
+  group.add(frontEdge);
+  const apron = new THREE.Mesh(new RoundedBoxGeometry(1.6, 0.2, 0.12, 4, 0.038), wood);
+  apron.position.set(0, 0.64, 0.34);
   group.add(apron);
   const drawerFront = new THREE.Mesh(
     new RoundedBoxGeometry(0.62, 0.14, 0.035, 3, 0.025),
     createToonMaterial("#8c593d", { roughness: 0.64, surface: "wood", bumpScale: 0.009 })
   );
-  drawerFront.position.set(0.28, 0.63, 0.425);
+  drawerFront.position.set(0.34, 0.64, 0.415);
   group.add(drawerFront);
   const drawerPull = new THREE.Mesh(
     new THREE.SphereGeometry(0.035, 14, 10),
     createToonMaterial("#c89a43", { roughness: 0.28, metalness: 0.7, envMapIntensity: 0.94 })
   );
   drawerPull.scale.set(1.35, 0.76, 0.72);
-  drawerPull.position.set(0.28, 0.63, 0.465);
+  drawerPull.position.set(0.34, 0.64, 0.455);
   group.add(drawerPull);
-  [-0.62, 0.62].forEach((x) => {
-    // Light oak, tapered legs preserve the foreground frame without creating
-    // the reference-breaking black vertical bar at the near edge.
-    const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.052, 0.068, 0.7, 16), wood);
-    leg.position.set(x, 0.38, 0);
-    group.add(leg);
+  [-0.76, 0.76].forEach((x) => {
+    [-0.29, 0.29].forEach((z) => {
+      const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.057, 0.72, 16), trim);
+      leg.position.set(x, 0.39, z);
+      leg.rotation.z = x * 0.028;
+      group.add(leg);
+    });
   });
   const microProps = new THREE.Group();
   microProps.name = "CivicRecordDeskMicroProps";
   group.add(microProps);
   const clipboard = new THREE.Mesh(
-    new RoundedBoxGeometry(0.42, 0.032, 0.29, 3, 0.026),
+    new RoundedBoxGeometry(0.44, 0.025, 0.3, 3, 0.022),
     createToonMaterial("#e9dcc8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
   );
-  clipboard.position.set(0.08, 0.875, 0.12);
-  clipboard.rotation.y = -0.08;
+  clipboard.position.set(0.22, 0.872, -0.03);
+  clipboard.rotation.y = 0.08;
   microProps.add(clipboard);
   [colors.accent, colors.secondary].forEach((color, index) => {
     const note = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.018, 0.09, 2, 0.012), createToonMaterial(color, { roughness: 0.84 }));
-    note.position.set(0.01 + index * 0.14, 0.895 + index * 0.002, 0.09 + index * 0.035);
-    note.rotation.y = -0.1 + index * 0.12;
+    note.position.set(0.14 + index * 0.14, 0.892 + index * 0.002, -0.055 + index * 0.035);
+    note.rotation.y = 0.02 + index * 0.12;
     microProps.add(note);
   });
-  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.11, 0.14, 0.055, 18), trim);
-  lampBase.position.set(-0.67, 0.9, 0.23);
+  const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.052, 18), trim);
+  lampBase.position.set(-0.9, 0.89, -0.08);
   group.add(lampBase);
-  const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.024, 0.46, 12), trim);
-  lampStem.position.set(-0.67, 1.12, 0.23);
-  lampStem.rotation.z = 0.13;
+  const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.021, 0.43, 12), trim);
+  lampStem.position.set(-0.9, 1.09, -0.08);
+  lampStem.rotation.z = 0.11;
   group.add(lampStem);
   const shade = new THREE.Mesh(
-    new THREE.SphereGeometry(0.18, 22, 12, 0, Math.PI * 2, 0, Math.PI * 0.5),
-    createToonMaterial("#356f68", { roughness: 0.52, envMapIntensity: 0.78 })
+    new THREE.SphereGeometry(0.12, 22, 12, 0, Math.PI * 2, 0, Math.PI * 0.5),
+    createToonMaterial("#356f68", { roughness: 0.74, envMapIntensity: 0.46 })
   );
-  shade.scale.set(1.18, 0.62, 0.9);
-  shade.position.set(-0.73, 1.34, 0.23);
+  shade.scale.set(1.22, 0.58, 0.9);
+  shade.position.set(-0.94, 1.27, -0.08);
   group.add(shade);
+  const lampGlow = new THREE.PointLight(0xffc77a, 0.32, 2.1, 2.2);
+  lampGlow.position.set(-0.94, 1.19, -0.08);
+  lampGlow.castShadow = false;
+  group.add(lampGlow);
 
   // The reference foreground is anchored by a standing civic brief, not an
   // anonymous tabletop. Keep this full-volume board inside the desk collider
   // so it stays believable when the player walks around the reverse side.
   const brief = new THREE.Group();
-  brief.position.set(0.34, 1.2, 0.22);
-  brief.rotation.y = -0.04;
-  brief.rotation.z = -0.025;
+  brief.position.set(-0.28, 1.2, 0.14);
+  // The desk itself is angled toward the listening circle. Counter-rotate the
+  // brief so its content faces the authored opening camera rather than showing
+  // a bright edge-on slab as it did in v92.
+  brief.rotation.y = -1.08;
+  brief.rotation.z = -0.02;
   group.add(brief);
   const briefFrame = new THREE.Mesh(
-    new RoundedBoxGeometry(0.62, 0.48, 0.07, 4, 0.045),
-    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.68, surface: "wood", bumpScale: 0.009 })
+    new RoundedBoxGeometry(0.7, 0.58, 0.065, 4, 0.045),
+    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.8, surface: "wood", bumpScale: 0.008, envMapIntensity: 0.44 })
   );
   brief.add(briefFrame);
   const briefPaper = new THREE.Mesh(
-    new RoundedBoxGeometry(0.54, 0.4, 0.025, 3, 0.032),
+    new RoundedBoxGeometry(0.62, 0.5, 0.022, 3, 0.03),
     createToonMaterial("#f3ead9", { roughness: 0.96, surface: "paper", bumpScale: 0.004 })
   );
-  briefPaper.position.z = 0.048;
+  briefPaper.position.z = 0.045;
   brief.add(briefPaper);
-  const briefTitle = new THREE.Mesh(
-    new RoundedBoxGeometry(0.28, 0.035, 0.014, 2, 0.008),
-    createToonMaterial("#765038", { roughness: 0.78 })
+  const briefBack = new THREE.Mesh(
+    new RoundedBoxGeometry(0.62, 0.5, 0.024, 3, 0.03),
+    createToonMaterial("#956744", { roughness: 0.88, envMapIntensity: 0.34 })
   );
-  briefTitle.position.set(-0.07, 0.135, 0.068);
-  brief.add(briefTitle);
-  [0.045, -0.055, -0.155].forEach((y, index) => {
-    const mark = new THREE.Mesh(
-      new THREE.SphereGeometry(0.025, 10, 8),
-      createToonMaterial([colors.secondary, colors.accent, "#df8066"][index], { roughness: 0.54 })
-    );
-    mark.position.set(-0.19, y, 0.07);
-    const line = new THREE.Mesh(
-      new RoundedBoxGeometry(0.26 - index * 0.018, 0.018, 0.012, 1, 0.005),
-      createToonMaterial("#847565", { roughness: 0.86 })
-    );
-    line.position.set(0.03, y, 0.07);
-    brief.add(mark, line);
-  });
+  briefBack.position.z = -0.045;
+  brief.add(briefBack);
+  const briefArtwork = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.59, 0.47),
+    createToonMaterial("#ffffff", {
+      roughness: 0.96,
+      map: getCivicBriefTexture(),
+      envMapIntensity: 0.16
+    })
+  );
+  briefArtwork.position.z = 0.059;
+  brief.add(briefArtwork);
   const briefClip = new THREE.Mesh(
-    new RoundedBoxGeometry(0.14, 0.035, 0.018, 2, 0.009),
+    new RoundedBoxGeometry(0.18, 0.045, 0.025, 2, 0.011),
     createToonMaterial("#c89a43", { roughness: 0.3, metalness: 0.68 })
   );
-  briefClip.position.set(0, 0.225, 0.07);
+  briefClip.position.set(0, 0.285, 0.071);
   brief.add(briefClip);
 
   // Editorial micro-props give the foreground the lived-in density of the
@@ -2790,16 +2850,16 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     new RoundedBoxGeometry(0.46, 0.035, 0.32, 3, 0.025),
     createToonMaterial("#f4ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
   );
-  notebook.position.set(0.43, 0.89, 0.15);
-  notebook.rotation.y = 0.14;
+  notebook.position.set(0.34, 0.88, 0.12);
+  notebook.rotation.y = 0.1;
   microProps.add(notebook);
   [-0.11, 0, 0.11].forEach((z, index) => {
     const line = new THREE.Mesh(
       new RoundedBoxGeometry(0.29 - index * 0.03, 0.009, 0.008, 1, 0.003),
       createToonMaterial(index === 0 ? colors.secondary : "#8e8170", { roughness: 0.84 })
     );
-    line.position.set(0.43, 0.912 + index * 0.0005, 0.15 + z);
-    line.rotation.y = 0.14;
+    line.position.set(0.34, 0.902 + index * 0.0005, 0.12 + z);
+    line.rotation.y = 0.1;
     microProps.add(line);
   });
   // At gameplay distance a single cool ceramic-glass silhouette reads more
@@ -2808,30 +2868,30 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     new THREE.CylinderGeometry(0.095, 0.085, 0.22, 22),
     createToonMaterial("#cde4df", { roughness: 0.3, envMapIntensity: 0.86 })
   );
-  waterGlass.position.set(0.18, 0.97, 0.18);
+  waterGlass.position.set(0.76, 0.965, 0.2);
   microProps.add(waterGlass);
   const glassRim = new THREE.Mesh(
     new THREE.TorusGeometry(0.092, 0.008, 8, 24),
     createToonMaterial("#edf8f3", { roughness: 0.22, envMapIntensity: 0.92 })
   );
   glassRim.rotation.x = Math.PI / 2;
-  glassRim.position.set(0.18, 1.085, 0.18);
+  glassRim.position.set(0.76, 1.08, 0.2);
   microProps.add(glassRim);
   const coaster = new THREE.Mesh(
     new THREE.CylinderGeometry(0.125, 0.125, 0.018, 24),
     createToonMaterial(ATELIER_TOKENS.cork, { roughness: 0.86 })
   );
-  coaster.position.set(0.18, 0.866, 0.18);
+  coaster.position.set(0.76, 0.868, 0.2);
   microProps.add(coaster);
   const penCup = new THREE.Mesh(
     new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20),
     createToonMaterial("#4d8b83", { roughness: 0.46 })
   );
-  penCup.position.set(0.44, 0.93, -0.18);
+  penCup.position.set(0.64, 0.93, -0.18);
   microProps.add(penCup);
   [colors.accent, "#476e91", "#b45f51"].forEach((color, index) => {
     const pen = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.31, 8), createToonMaterial(color, { roughness: 0.58 }));
-    pen.position.set(0.4 + index * 0.04, 1.09 + index * 0.015, -0.18);
+    pen.position.set(0.6 + index * 0.04, 1.09 + index * 0.015, -0.18);
     pen.rotation.z = (index - 1) * 0.1;
     microProps.add(pen);
   });
@@ -2843,10 +2903,10 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   microProps.add(fileTray);
   ["#f2e2bf", "#d4e4dc", "#edbd92", "#e9d6c0"].forEach((color, index) => {
     const card = new THREE.Mesh(
-      new RoundedBoxGeometry(0.052, 0.16 + index * 0.008, 0.18, 2, 0.012),
+      new RoundedBoxGeometry(0.046, 0.115 + index * 0.006, 0.16, 2, 0.01),
       createToonMaterial(color, { roughness: 0.92 })
     );
-    card.position.set(-0.015 + index * 0.064, 1.005 + index * 0.005, -0.2);
+    card.position.set(-0.015 + index * 0.058, 0.982 + index * 0.004, -0.2);
     card.rotation.z = -0.035 + index * 0.022;
     microProps.add(card);
   });
@@ -2857,7 +2917,31 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   brassClip.rotation.set(Math.PI / 2, 0, -0.2);
   brassClip.position.set(-0.17, 0.924, 0.17);
   microProps.add(brassClip);
-  mergeActorVertexColorMeshes(microProps, [], { roughness: 0.74, envMapIntensity: 0.68 });
+  // Collapse the complete opaque desk and stationery suite into one vertex-
+  // surfaced batch. Keep only the mapped agenda face separate, preserving the
+  // Chinese content while recovering enough budget for all four orbit views.
+  mergeActorVertexColorMeshes(group, [briefArtwork], { roughness: 0.82, envMapIntensity: 0.42 });
+}
+
+function addCivicLocalStoryLights(mobileLod = false) {
+  // Local picture-light pools articulate the evidence wall and console. The
+  // GLB deliberately contains only geometry, so these non-shadow-casting
+  // lights remain a room concern and can be reduced on mobile independently.
+  const lightXs = mobileLod ? [0] : [-0.92, 0.92];
+  lightXs.forEach((x) => {
+    const light = new THREE.SpotLight(
+      0xffc77a,
+      mobileLod ? 0.32 : 0.56,
+      4.2,
+      Math.PI * 0.23,
+      0.9,
+      2.05
+    );
+    light.position.set(x, 2.7, -4.05);
+    light.target.position.set(x * 0.58, 1.42, -4.58);
+    light.castShadow = false;
+    roomRoot.add(light, light.target);
+  });
 }
 
 function addCivicHeroNoticeWall(colors) {
@@ -3755,6 +3839,7 @@ function addCivicReferenceDressing(theme, colors) {
   if (mobileLod) {
     addCivicHeroNoticeWall(colors);
   }
+  addCivicLocalStoryLights(mobileLod);
   addCivicHeroPendant(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
@@ -4084,6 +4169,10 @@ function roomMaterialKey(material, geometry) {
 
 function canBatchRoomVertexColors(material) {
   if (!material || Array.isArray(material)) return false;
+  // Hero assemblies can already carry their authored palette in a vertex
+  // color attribute. Feeding those meshes back through the room solid-color
+  // batch would flatten the full assembly to the material's white base color.
+  if (material.vertexColors) return false;
   if (material.transparent || Number(material.opacity ?? 1) < 0.999) return false;
   if (material.side !== THREE.FrontSide) return false;
   if (material.map || material.bumpMap || material.normalMap || material.roughnessMap || material.metalnessMap || material.aoMap || material.alphaMap) return false;

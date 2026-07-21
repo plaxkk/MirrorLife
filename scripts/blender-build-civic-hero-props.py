@@ -182,6 +182,40 @@ def torus(name, major, minor, location, mat, parent, rotation=(0, 0, 0), major_s
     return link(obj, mat)
 
 
+def text_mesh(name, body, location, size, mat, parent, extrude=0.006):
+    """Create real, orbit-safe sign lettering instead of a blank title slab."""
+    bpy.ops.object.text_add(location=(0, 0, 0))
+    obj = bpy.context.object
+    obj.name = name
+    obj.data.body = body
+    obj.data.align_x = "CENTER"
+    obj.data.align_y = "CENTER"
+    obj.data.size = size
+    obj.data.extrude = extrude
+    obj.data.bevel_depth = min(0.0025, extrude * 0.35)
+    obj.data.bevel_resolution = 2
+    font_path = "/System/Library/Fonts/Hiragino Sans GB.ttc"
+    if os.path.exists(font_path):
+        obj.data.font = bpy.data.fonts.load(font_path, check_existing=True)
+    obj.location = location
+    # Blender text lies on XY with +Z facing out. Rotate it onto the XZ notice
+    # plane so the glyph faces the civic-room camera and remains real geometry
+    # from every orbit angle.
+    obj.rotation_euler = (math.pi / 2, 0, 0)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    bpy.ops.object.convert(target="MESH")
+    # CJK outlines contain many tiny Bézier segments. A low-ratio collapse is
+    # visually lossless at the room camera but avoids spending ~24k triangles
+    # on a 14cm title and keeps every orbit under the 300k hero-room budget.
+    decimate = obj.modifiers.new("Sign glyph optimization", "DECIMATE")
+    decimate.ratio = 0.32
+    decimate.use_collapse_triangulate = True
+    bpy.ops.object.modifier_apply(modifier=decimate.name)
+    obj.select_set(False)
+    return link(obj, mat, parent)
+
+
 def add_book(parent, mats, name, location, size=(0.18, 0.05, 0.26), color="blue", rotation=(0, 0, 0)):
     rounded_box(name, size, location, mats[color], parent, 0.012, rotation, 2)
     rounded_box(f"{name}_pages", (size[0] * 0.88, size[1] * 0.68, size[2] * 0.92),
@@ -283,15 +317,24 @@ def build_display_case(mats):
 def build_notice_console(mats):
     root = empty("CivicNoticeConsole")
     root["asset"] = "civic-notice-console"
-    # Framed cork wall with layered paper, pins and warm picture lamps.
-    rounded_box("NoticeFrame", (2.55, 0.12, 1.42), (0, 0.04, 1.78), mats["walnut"], root, 0.075, segments=5)
-    rounded_box("NoticeCork", (2.34, 0.055, 1.22), (0, -0.035, 1.78), mats["cork"], root, 0.045)
-    rounded_box("NoticeTitle", (0.62, 0.035, 0.2), (0, -0.08, 2.27), mats["ivory"], root, 0.035)
+    # The evidence wall is the background hero anchor in the source. Give it a
+    # substantial furniture-scale frame, inset rails and recognisable title so
+    # it reads as a crafted civic installation rather than a small pinboard.
+    rounded_box("NoticeFrame", (2.9, 0.16, 1.56), (0, 0.04, 1.82), mats["walnut"], root, 0.085, segments=6)
+    rounded_box("NoticeCork", (2.62, 0.055, 1.28), (0, -0.065, 1.82), mats["cork"], root, 0.055, segments=4)
+    for x in (-1.37, 1.37):
+        rounded_box(f"NoticeSideRail_{x}", (0.1, 0.1, 1.48), (x, -0.055, 1.82), mats["oak"], root, 0.035, segments=3)
+        sphere(f"NoticeRailFinial_{x}", (0.105, 0.07, 0.105), (x, -0.075, 2.56), mats["oak"], root, 18, 10)
+        sphere(f"NoticeRailFoot_{x}", (0.085, 0.06, 0.085), (x, -0.075, 1.08), mats["walnut"], root, 16, 9)
+    rounded_box("NoticeTopRail", (2.72, 0.1, 0.1), (0, -0.055, 2.54), mats["oak"], root, 0.035, segments=3)
+    rounded_box("NoticeBottomRail", (2.72, 0.1, 0.1), (0, -0.055, 1.1), mats["oak"], root, 0.035, segments=3)
+    rounded_box("NoticeTitle", (0.82, 0.045, 0.23), (0, -0.115, 2.3), mats["ivory"], root, 0.045, segments=4)
+    text_mesh("NoticeTitleText", "倾听墙", (0, -0.145, 2.298), 0.145, mats["walnut"], root, 0.0045)
     for index, (x, z, width, height, color) in enumerate((
-        (-0.78, 1.95, 0.38, 0.5, "paper"), (-0.29, 1.84, 0.48, 0.62, "paper"),
-        (0.25, 1.97, 0.42, 0.46, "ivory"), (0.76, 1.82, 0.4, 0.68, "paper"),
-        (-0.72, 1.5, 0.32, 0.25, "blue"), (-0.22, 1.46, 0.48, 0.28, "paper"),
-        (0.36, 1.49, 0.46, 0.3, "butter"), (0.8, 1.48, 0.27, 0.24, "teal"),
+        (-0.91, 1.95, 0.38, 0.5, "paper"), (-0.4, 1.84, 0.48, 0.62, "paper"),
+        (0.18, 1.97, 0.42, 0.46, "ivory"), (0.78, 1.82, 0.4, 0.68, "paper"),
+        (-0.88, 1.5, 0.32, 0.25, "blue"), (-0.31, 1.46, 0.48, 0.28, "paper"),
+        (0.32, 1.49, 0.46, 0.3, "butter"), (0.9, 1.48, 0.27, 0.24, "teal"),
     )):
         rotation = (0, 0, ((index % 3) - 1) * 0.035)
         rounded_box(f"NoticePaper_{index + 1}", (width, 0.02, height), (x, -0.075 - index * 0.0005, z), mats[color], root, 0.018, rotation, 2)
@@ -304,16 +347,20 @@ def build_notice_console(mats):
                 mats["ink"], root, 0.006, rotation, 1,
             )
     for side in (-1, 1):
-        cylinder(f"NoticeLampArm_{side}", 0.018, 0.3, (side * 0.82, 0, 2.61), mats["brass"], root, 10, (math.pi / 2, 0, 0))
-        cylinder(f"NoticeLampShade_{side}", 0.11, 0.18, (side * 0.82, -0.16, 2.55), mats["brass"], root, 18, (math.pi / 2, 0, 0), 0.18)
+        # Proper picture lamps project from wall plates. The previous cones
+        # were seen end-on and collapsed into two floating gold spheres.
+        rounded_box(f"NoticeLampPlate_{side}", (0.13, 0.05, 0.19), (side * 0.96, -0.12, 2.65), mats["brass"], root, 0.03, segments=3)
+        cylinder(f"NoticeLampArm_{side}", 0.014, 0.29, (side * 0.96, -0.265, 2.63), mats["brass"], root, 12, (math.pi / 2, 0, 0))
+        cylinder(f"NoticeLampShade_{side}", 0.08, 0.13, (side * 0.96, -0.43, 2.54), mats["brass"], root, 20, (math.pi / 2, 0, 0), 0.15)
+        sphere(f"NoticeLampBulb_{side}", (0.05, 0.032, 0.04), (side * 0.96, -0.5, 2.515), mats["butter"], root, 16, 9)
 
     # Console table and woven archive basket below the public wall.
-    rounded_box("NoticeConsoleTop", (2.25, 0.52, 0.13), (0, 0, 0.93), mats["oak"], root, 0.055)
-    rounded_box("NoticeConsoleApron", (1.95, 0.14, 0.16), (0, 0.12, 0.81), mats["walnut"], root, 0.035)
+    rounded_box("NoticeConsoleTop", (2.56, 0.56, 0.13), (0, 0, 0.93), mats["oak"], root, 0.055)
+    rounded_box("NoticeConsoleApron", (2.22, 0.14, 0.16), (0, 0.12, 0.81), mats["walnut"], root, 0.035)
     for side in (-1, 1):
         rounded_box(f"NoticeDrawer_{side}", (0.72, 0.035, 0.24), (side * 0.45, -0.27, 0.8), mats["oak"], root, 0.028)
         cylinder(f"NoticeDrawerPull_{side}", 0.026, 0.045, (side * 0.45, -0.304, 0.8), mats["brass"], root, 14, (math.pi / 2, 0, 0))
-    for x in (-0.9, 0.9):
+    for x in (-1.04, 1.04):
         cylinder(f"NoticeConsoleLeg_{x}", 0.055, 0.8, (x, 0.08, 0.45), mats["walnut"], root, 16, radius_top=0.045)
     for index, x in enumerate((-0.64, -0.48, 0.38)):
         add_book(root, mats, f"NoticeBook_{index + 1}", (x, -0.08 + index * 0.015, 1.04 + index * 0.045), (0.28, 0.05, 0.2), ("teal", "paper", "blue")[index], (0, 0, (index - 1) * 0.04))
@@ -477,7 +524,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v5",
+        "contract": "mirrorlife-civic-hero-props-v6",
         "worldUnitMeters": 1,
         "assets": {},
     }

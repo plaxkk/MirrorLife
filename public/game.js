@@ -5700,7 +5700,22 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     ],
     props: [
       { model: "civic-display-case", assetIntent: "civic-display-case", renderModel: true, physicsSolid: true, worldX: -3.28, worldZ: 0.56, rotationY: 0.28, displayScale: 1, collider: { shape: "box", halfX: 0.9, halfY: 0.94, halfZ: 0.52, rotation: 0 }, interactionWorldX: -2.18, interactionWorldZ: 0.72 },
-      { model: "civic-notice-console", assetIntent: "civic-notice-console", renderModel: true, physicsSolid: true, worldX: 0, worldZ: -4.56, rotationY: 0, displayScale: 1, collider: { shape: "box", halfX: 1.12, halfY: 1.34, halfZ: 0.34, rotation: 0 }, interactionWorldX: 0, interactionWorldZ: -3.52 },
+      {
+        model: "civic-notice-console",
+        assetIntent: "civic-notice-console",
+        renderModel: true,
+        physicsSolid: true,
+        worldX: 0,
+        worldZ: -4.56,
+        rotationY: 0,
+        displayScale: 1,
+        // v93 enlarges the crafted evidence wall and console together. Keep
+        // the collider within the visible oak frame while leaving a full metre
+        // of reachable standing space in front of the drawers.
+        collider: { shape: "box", halfX: 1.33, halfY: 1.48, halfZ: 0.4, rotation: 0 },
+        interactionWorldX: 0,
+        interactionWorldZ: -3.46
+      },
       {
         model: "civic-lounge-suite",
         assetIntent: "civic-lounge",
@@ -5724,15 +5739,15 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         assetIntent: "civic-record-desk",
         renderModel: false,
         physicsSolid: true,
-        worldX: -2.72,
+        worldX: -2.35,
         worldZ: 2.62,
         rotationY: 2.12,
         // Keep the foreground frame readable without letting it dominate the
         // listening circle. The collider includes the tapered legs and brief,
         // while staying within 10cm of the rendered tabletop footprint.
-        displayScale: 1.02,
-        collider: { shape: "box", halfX: 0.95, halfY: 1.0, halfZ: 0.48, rotation: 0 },
-        interactionWorldX: -1.88,
+        displayScale: 1.18,
+        collider: { shape: "box", halfX: 1.1, halfY: 1.08, halfZ: 0.55, rotation: 2.12 },
+        interactionWorldX: -1.4,
         interactionWorldZ: 1.74
       },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },

@@ -138,7 +138,17 @@ try {
     console.log(`Captured ${scene.archetype}: ${scene.zone}`);
   }
 } finally {
-  await browser.close();
+  // Headless Chrome can occasionally finish the capture but never resolve
+  // its DevTools shutdown handshake (notably after WebGL/WASM scenes). Keep
+  // visual QA deterministic and avoid leaving orphaned browser processes.
+  const browserProcess = browser.process();
+  await Promise.race([
+    browser.close(),
+    new Promise((resolve) => setTimeout(resolve, 4000))
+  ]);
+  if (browserProcess && browserProcess.exitCode == null && !browserProcess.killed) {
+    browserProcess.kill("SIGTERM");
+  }
 }
 
 function sampleNearest(source, target, targetX, targetY, targetWidth, targetHeight) {
