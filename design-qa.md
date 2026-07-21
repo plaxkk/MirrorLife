@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v27 integrated face, tailored coat and contact-pose gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas source/implementation comparison: `tmp/reference-vs-v27-final.png`; both halves use the same `1672 × 941` opening listening-circle state.
+- Focused final cast evidence: `tmp/v27b-cast-crop.png`.
+- Final desktop implementation: `dist/interior-3d-work/environment-review/00-public.png` at `157` draw calls / `280,824` triangles.
+- Real quarter and reverse orbits: `dist/interior-3d-work/environment-review-yaw-90/00-public.png` at `158 / 295,716`, and `dist/interior-3d-work/environment-review-yaw-180/00-public.png` at `166 / 294,268`.
+- Real physical stride evidence: `tmp/v27b-character-walk.png`; the exploration run moved the player `3.01m` and rotated the camera `65.3°`.
+- Real mobile Chrome evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`, `101 / 240,550`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v95 P1 / sclera and features floated on the head] Sculpt v27 adds actual upper and lower skin lid planes, deeper eye sockets, upper-cheek and muzzle shaping, a restrained lower-lip volume and a warmer sclera. These parts remain children of the live eye/mouth pivots, so gaze, blink, speech and expression blending still operate through orbit.
+- [fixed from v95 P1 / box-shaped outerwear] Facilitator and mediator coats now taper through the waist, release over the skirt and gain authored waist-to-hem fold planes. The front, side and reverse captures keep the changed silhouette and complete self-occlusion.
+- [fixed from v95 P1 / notebook floated beside the actor] The facilitator notebook remains in one elbow-local transform and is visibly supported inside the palm silhouettes. Cover, paper block, spine, elastic and pencil stay coherent through the quarter and reverse orbit.
+- [fixed / eye material read as pure-white plastic] The sclera is warmer and rougher, with a larger iris/pupil ratio and reduced clearcoat. This lowers the white-disc contrast while retaining the catchlight at the story camera.
+- [checked / physical character contract] All four generated assets preserve `1m = 1m`, `1.72m` player height, the continuous arm/leg skin, independent wrists, expression pivots and full side/back geometry. The browser moved the player `3.01m` and rotated `65.3°` without sprite fallback or foot detachment.
+- [checked / regression] Four civic assets, JavaScript syntax, 26-zone physics, desktop/mobile atomic scene flow and production build all pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][3D exploration] Front, quarter and reverse frames expose genuine facial, hair, garment, hand, notebook, backpack and footwear volume. The player follows physical input and the camera completes the real orbit around the room.
+- [checked][responsive/performance] Opening desktop remains inside the `160 / 300,000` civic gate and mobile inside `110 / 250,000`. The reverse room view reaches `166` calls because eight extra wall-decoration batches become visible; it remains inside the project-wide `180` hard ceiling but needs another room-batching pass to meet the strict civic target at every angle.
+- [checked][contact and staging] The four citizens remain clear of furniture and share the authored listening ring. The notebook is no longer an unsupported floating prop.
+- [P1][facial finish still remains visibly below the source] The source has softer eyelid-to-cheek transitions, calmer iris alignment, more natural lip corners and finer role-specific expression. The integrated geometry removes the floating-eye failure, but the cast crop still reads more procedural and less emotionally nuanced. Next fix: role-specific eye aperture and lip-corner correctives plus higher-quality face normals/skin shading.
+- [P1][room light transport and material microdetail remain one tier lower] The same-canvas pair still shows harder contrast, flatter plaster bounce, simpler fabric/wood/paper roughness and less finely distributed story clutter than the source. Next fix: local probe/baked bounce and restrained normal/roughness breakup on the hero material families.
+- [P1][reverse orbit exceeds the strict civic draw-call target] `180°` is visually readable and below the global ceiling, but `166` calls exceeds the civic goal of `160`. Next fix: merge the reverse-wall paper/decor batches by material while keeping camera-managed foreground coves independently fadeable.
+- [P2][HUD optical hierarchy remains heavier than the source] Coverage and touch targets pass, but the dark segmented bars still compete with the social tableau.
+
+### Gate result
+
+v27 closes the specific floating facial-feature, boxy coat and unsupported notebook-contact defects while preserving real locomotion, complete orbit, mobile controls and the shared physical/animation contracts. The required same-canvas comparison still shows visible P1 gaps in emotional facial finish, indirect light/material nuance and reverse-orbit batching, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: role-specific facial finish, room-wide indirect-light/material nuance and the `180°` civic draw-call spike remain below the target.
+
 ## 2026-07-21 reference-fidelity v95 body volume, footwear and orbit-occlusion gate
 
 ### Evidence inspected together

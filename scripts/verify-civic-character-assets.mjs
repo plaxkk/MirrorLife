@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v26", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v27", "civic character sculpt contract is stale");
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -88,6 +88,10 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("EyeOutline_1")), `${role}: right eye silhouette is missing`);
   assert(contents.includes(Buffer.from("LowerLid_-1")), `${role}: left sculpted lower lid is missing`);
   assert(contents.includes(Buffer.from("LowerLid_1")), `${role}: right sculpted lower lid is missing`);
+  assert(contents.includes(Buffer.from("UpperLidSkin_-1")), `${role}: left integrated upper lid surface is missing`);
+  assert(contents.includes(Buffer.from("UpperLidSkin_1")), `${role}: right integrated upper lid surface is missing`);
+  assert(contents.includes(Buffer.from("LowerLidSkin_-1")), `${role}: left integrated lower lid surface is missing`);
+  assert(contents.includes(Buffer.from("LowerLidSkin_1")), `${role}: right integrated lower lid surface is missing`);
   assert(contents.includes(Buffer.from("EyeGlintSmall_-1")), `${role}: left secondary eye catchlight is missing`);
   assert(contents.includes(Buffer.from("EyeGlintSmall_1")), `${role}: right secondary eye catchlight is missing`);
   assert(contents.includes(Buffer.from("NoseBridge")), `${role}: sculpted nose bridge is missing`);
@@ -122,6 +126,7 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("MouthPivot")), `${role}: mouth expression pivot is missing`);
   assert(contents.includes(Buffer.from("MouthClosedPivot")), `${role}: closed-mouth expression is missing`);
   assert(contents.includes(Buffer.from("MouthOpenPivot")), `${role}: open-mouth expression is missing`);
+  assert(contents.includes(Buffer.from("LowerLip")), `${role}: integrated lower lip volume is missing`);
   assert(contents.includes(Buffer.from("WarmSmile")), `${role}: warm-smile face morph is missing`);
   assert(contents.includes(Buffer.from("SpeechJaw")), `${role}: speech-jaw face morph is missing`);
   assert(contents.includes(Buffer.from("Concern")), `${role}: concern face morph is missing`);
@@ -168,6 +173,8 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("CoatHem_1")), `${role}: right coat hem detail is missing`);
     assert(contents.includes(Buffer.from("CoatDrape_-1")), `${role}: left coat drape is missing`);
     assert(contents.includes(Buffer.from("CoatDrape_1")), `${role}: right coat drape is missing`);
+    assert(contents.includes(Buffer.from("CoatWaistRelease_-1")), `${role}: left coat waist release is missing`);
+    assert(contents.includes(Buffer.from("CoatWaistRelease_1")), `${role}: right coat waist release is missing`);
   }
   if (role === "mediator") assert(contents.includes(Buffer.from("MediatorDressBodice")), "mediator: layered dress bodice is missing");
   totalBytes += stat.size;
