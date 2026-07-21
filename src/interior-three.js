@@ -24,6 +24,7 @@ const CAMERA_COLLISION_RADIUS = 0.22;
 const CAMERA_PIVOT_PLAYER_WEIGHT = 0.65;
 const CAMERA_PIVOT_NARRATIVE_WEIGHT = 0.25;
 const CAMERA_PIVOT_PATH_WEIGHT = 0.1;
+const CIVIC_PORTAL_CONTRACT_VERSION = "mirrorlife-civic-portal-v2";
 const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
   plaster: "#f8eedf",
@@ -225,6 +226,7 @@ let physicsDebugRoot;
 let lastWidth = 0;
 let lastHeight = 0;
 let roomSignature = "";
+let activeCivicPortalContract = "";
 let itemSignature = "";
 let activeItems = [];
 let lastStatsPublishedAt = 0;
@@ -4516,12 +4518,15 @@ function addZoneLayoutArchitecture(theme, colors) {
 
 function addCivicOpenPortal(theme, colors) {
   const door = theme.layoutProfile?.shell?.door || { angle: -0.88, width: 1.42, height: 2.48, depth: 0.16 };
+  const mobileLod = lastWidth <= 720;
   const angle = Number(door.angle ?? -0.88);
   const width = Math.max(1.18, Number(door.width || 1.42));
   const height = Math.max(2.25, Number(door.height || 2.48));
   const [x, , z] = wallPosition(angle, ROOM_RADIUS - 0.18, height / 2);
   const group = new THREE.Group();
   group.name = "interior-visible-exit civic-open-portal";
+  group.userData.portalContract = CIVIC_PORTAL_CONTRACT_VERSION;
+  activeCivicPortalContract = CIVIC_PORTAL_CONTRACT_VERSION;
   group.position.set(x, height / 2, z);
   group.rotation.y = -angle;
   roomRoot.add(group);
@@ -4640,75 +4645,181 @@ function addCivicOpenPortal(theme, colors) {
     }
   });
 
-  const frameMaterial = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.62, surface: "wood", bumpScale: 0.012 });
+  // Treat the threshold as hero architecture, not a flat door icon. The
+  // layered plaster reveal, oak casing and brass inner line give the opening
+  // readable depth from oblique orbit angles while preserving the exact same
+  // metre-space aperture used by the wall gap and Rapier exit.
+  const revealMaterial = createToonMaterial("#ead8bf", {
+    roughness: 0.9,
+    surface: "plaster",
+    bumpScale: 0.012,
+    envMapIntensity: 0.34
+  });
+  const frameMaterial = createToonMaterial("#b7784b", {
+    roughness: 0.58,
+    surface: "wood",
+    bumpScale: 0.014,
+    envMapIntensity: 0.66
+  });
+  const innerFrameMaterial = mobileLod
+    ? frameMaterial
+    : createToonMaterial("#ce9360", {
+      roughness: 0.54,
+      surface: "wood",
+      bumpScale: 0.01,
+      envMapIntensity: 0.72
+    });
+  const brassMaterial = createToonMaterial("#bd8f39", {
+    roughness: 0.28,
+    metalness: 0.62,
+    envMapIntensity: 0.96
+  });
   const springY = height / 2 - width / 2;
   const jambHeight = springY + height / 2;
   [-width / 2, width / 2].forEach((jambX) => {
-    const jamb = new THREE.Mesh(new RoundedBoxGeometry(0.14, jambHeight, 0.18, 4, 0.05), frameMaterial);
-    jamb.position.set(jambX, -height / 2 + jambHeight / 2, 0.27);
+    const reveal = new THREE.Mesh(new RoundedBoxGeometry(0.3, jambHeight + 0.12, 0.24, 5, 0.075), revealMaterial);
+    reveal.position.set(jambX, -height / 2 + jambHeight / 2 - 0.02, 0.18);
+    reveal.castShadow = false;
+    reveal.receiveShadow = true;
+    group.add(reveal);
+
+    const jamb = new THREE.Mesh(new RoundedBoxGeometry(0.15, jambHeight, 0.2, 4, 0.05), frameMaterial);
+    jamb.position.set(jambX, -height / 2 + jambHeight / 2, 0.29);
+    jamb.castShadow = true;
+    jamb.receiveShadow = true;
     group.add(jamb);
+
+    const innerStop = new THREE.Mesh(new RoundedBoxGeometry(0.035, jambHeight - 0.08, 0.045, 3, 0.014), brassMaterial);
+    innerStop.position.set(jambX - Math.sign(jambX) * 0.095, -height / 2 + jambHeight / 2, 0.405);
+    group.add(innerStop);
   });
-  const arch = new THREE.Mesh(new THREE.TorusGeometry(width / 2, 0.075, 10, 36, Math.PI), frameMaterial);
-  arch.position.set(0, springY, 0.27);
+  const revealArch = new THREE.Mesh(new THREE.TorusGeometry(width / 2, 0.155, 12, 48, Math.PI), revealMaterial);
+  revealArch.position.set(0, springY, 0.18);
+  revealArch.castShadow = false;
+  revealArch.receiveShadow = true;
+  group.add(revealArch);
+  const arch = new THREE.Mesh(new THREE.TorusGeometry(width / 2, 0.085, 12, 48, Math.PI), frameMaterial);
+  arch.position.set(0, springY, 0.3);
+  arch.castShadow = true;
   group.add(arch);
+  const brassArch = new THREE.Mesh(new THREE.TorusGeometry(width / 2 - 0.105, 0.018, 8, 48, Math.PI), brassMaterial);
+  brassArch.position.set(0, springY, 0.414);
+  group.add(brassArch);
+
+  const fanlightRadius = width / 2 - 0.13;
+  const fanlight = new THREE.Mesh(
+    new THREE.CircleGeometry(fanlightRadius, 40, 0, Math.PI),
+    createGlassMaterial(theme.night ? "#789bad" : "#d8eee2", {
+      opacity: theme.night ? 0.24 : 0.2,
+      roughness: 0.08
+    })
+  );
+  fanlight.position.set(0, springY, 0.255);
+  group.add(fanlight);
+  [Math.PI * 0.18, Math.PI * 0.5, Math.PI * 0.82].forEach((fanAngle) => {
+    const length = fanlightRadius * 0.92;
+    const muntin = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, length, 8), innerFrameMaterial);
+    muntin.position.set(
+      Math.cos(fanAngle) * length * 0.5,
+      springY + Math.sin(fanAngle) * length * 0.5,
+      0.41
+    );
+    muntin.rotation.z = fanAngle - Math.PI / 2;
+    group.add(muntin);
+  });
+  const fanlightBase = new THREE.Mesh(new RoundedBoxGeometry(width - 0.22, 0.105, 0.105, 4, 0.035), innerFrameMaterial);
+  fanlightBase.position.set(0, springY, 0.4);
+  group.add(fanlightBase);
+  const keystone = new THREE.Mesh(new RoundedBoxGeometry(0.22, 0.28, 0.17, 5, 0.055), revealMaterial);
+  keystone.position.set(0, springY + width / 2 + 0.055, 0.2);
+  keystone.rotation.z = 0.02;
+  group.add(keystone);
 
   [-1, 1].forEach((side) => {
     const leafGroup = new THREE.Group();
-    leafGroup.position.set(side * width * 0.61, -height * 0.08, 0.39);
-    leafGroup.rotation.y = side * -1.12;
+    // Pivot each leaf at its real jamb. The former centre-pivoted leaves
+    // floated away from the frame and read as two ladders when the camera
+    // orbited. Child geometry now extends inward from an actual hinge line.
+    leafGroup.position.set(side * width * 0.5, -height * 0.165, 0.38);
+    leafGroup.rotation.y = side * -1.04;
     group.add(leafGroup);
     const leafWidth = width * 0.42;
-    const leafHeight = height * 0.82;
-    const leafWood = createToonMaterial(side < 0 ? "#8f5a38" : "#a96b41", {
-      roughness: 0.58,
-      surface: "wood",
-      bumpScale: 0.014,
-      envMapIntensity: 0.74
-    });
+    const leafHeight = height * 0.66;
+    const leafWood = mobileLod
+      ? frameMaterial
+      : createToonMaterial(side < 0 ? "#a96843" : "#b47749", {
+        roughness: 0.58,
+        surface: "wood",
+        bumpScale: 0.014,
+        envMapIntensity: 0.74
+      });
+    const leafCenterX = -side * leafWidth * 0.5;
     const pane = new THREE.Mesh(
-      new RoundedBoxGeometry(leafWidth * 0.78, leafHeight * 0.78, 0.022, 3, 0.035),
-      createGlassMaterial("#d6eee5", { opacity: 0.26, roughness: 0.12 })
+      new RoundedBoxGeometry(leafWidth * 0.76, leafHeight * 0.7, 0.026, 3, 0.035),
+      createGlassMaterial("#d6eee5", { opacity: 0.2, roughness: 0.08 })
     );
-    pane.position.z = 0.015;
+    pane.position.set(leafCenterX, leafHeight * 0.055, 0.015);
     leafGroup.add(pane);
     [-1, 1].forEach((edge) => {
-      const stile = new THREE.Mesh(new RoundedBoxGeometry(0.09, leafHeight, 0.09, 3, 0.035), leafWood);
-      stile.position.set(edge * leafWidth * 0.44, 0, 0.04);
+      const stile = new THREE.Mesh(new RoundedBoxGeometry(0.1, leafHeight, 0.105, 3, 0.035), leafWood);
+      stile.position.set(leafCenterX + edge * leafWidth * 0.44, 0, 0.045);
       leafGroup.add(stile);
       const rail = new THREE.Mesh(new RoundedBoxGeometry(leafWidth, 0.09, 0.09, 3, 0.035), leafWood);
-      rail.position.set(0, edge * leafHeight * 0.44, 0.04);
+      rail.position.set(leafCenterX, edge * leafHeight * 0.44, 0.045);
       leafGroup.add(rail);
     });
-    const centerStile = new THREE.Mesh(new RoundedBoxGeometry(0.055, leafHeight * 0.78, 0.065, 2, 0.02), leafWood);
-    centerStile.position.z = 0.055;
+    const centerStile = new THREE.Mesh(new RoundedBoxGeometry(0.055, leafHeight * 0.7, 0.07, 2, 0.02), innerFrameMaterial);
+    centerStile.position.set(leafCenterX, leafHeight * 0.055, 0.06);
     leafGroup.add(centerStile);
-    [-0.22, 0.1, 0.42].forEach((ratio) => {
-      const muntin = new THREE.Mesh(new RoundedBoxGeometry(leafWidth * 0.78, 0.055, 0.065, 2, 0.02), leafWood);
-      muntin.position.set(0, leafHeight * ratio, 0.055);
+    [-0.16, 0.16, 0.42].forEach((ratio) => {
+      const muntin = new THREE.Mesh(new RoundedBoxGeometry(leafWidth * 0.76, 0.052, 0.07, 2, 0.02), innerFrameMaterial);
+      muntin.position.set(leafCenterX, leafHeight * ratio, 0.06);
       leafGroup.add(muntin);
     });
     const kickPanel = new THREE.Mesh(
       new RoundedBoxGeometry(leafWidth * 0.78, leafHeight * 0.17, 0.075, 3, 0.035),
-      createToonMaterial(side < 0 ? "#a96b41" : "#b97849", { roughness: 0.66, surface: "wood", bumpScale: 0.012 })
+      mobileLod
+        ? frameMaterial
+        : createToonMaterial(side < 0 ? "#ba7950" : "#c48558", { roughness: 0.66, surface: "wood", bumpScale: 0.012 })
     );
-    kickPanel.position.set(0, -leafHeight * 0.33, 0.065);
+    kickPanel.position.set(leafCenterX, -leafHeight * 0.33, 0.07);
     leafGroup.add(kickPanel);
+    if (!mobileLod) {
+      const kickMoulding = new THREE.Mesh(
+        new RoundedBoxGeometry(leafWidth * 0.62, leafHeight * 0.105, 0.028, 3, 0.02),
+        createToonMaterial(side < 0 ? "#cb8d5d" : "#d29a68", { roughness: 0.6, surface: "wood" })
+      );
+      kickMoulding.position.set(leafCenterX, -leafHeight * 0.33, 0.115);
+      leafGroup.add(kickMoulding);
+    }
     const handle = new THREE.Mesh(
-      new THREE.SphereGeometry(0.045, 14, 10),
-      createToonMaterial("#c99a3d", { roughness: 0.24, metalness: 0.68 })
+      new THREE.SphereGeometry(0.052, 16, 12),
+      brassMaterial
     );
-    handle.position.set(-side * leafWidth * 0.28, -leafHeight * 0.02, 0.1);
+    handle.position.set(-side * leafWidth * 0.76, -leafHeight * 0.02, 0.115);
     leafGroup.add(handle);
+    if (!mobileLod) {
+      [-0.31, 0.31].forEach((hingeRatio) => {
+        const hinge = new THREE.Mesh(new RoundedBoxGeometry(0.035, 0.15, 0.03, 2, 0.01), brassMaterial);
+        hinge.position.set(-side * 0.025, leafHeight * hingeRatio, 0.1);
+        leafGroup.add(hinge);
+      });
+    }
   });
-  const threshold = new THREE.Mesh(
-    new RoundedBoxGeometry(width + 0.34, 0.055, 0.62, 4, 0.025),
-    createToonMaterial("#c8a154", { roughness: 0.34, metalness: 0.5 })
+  const sill = new THREE.Mesh(
+    new RoundedBoxGeometry(width + 0.48, 0.075, 0.72, 4, 0.03),
+    createToonMaterial("#cfc0aa", { roughness: 0.78, surface: "terrazzo", bumpScale: 0.012 })
   );
-  threshold.position.set(0, -height / 2 + 0.025, 0.3);
-  threshold.userData.neverFade = true;
-  group.add(threshold);
-  const daylight = new THREE.PointLight(theme.night ? 0x8fb7dd : 0xffd7a1, theme.night ? 1.1 : 1.72, 4.6, 2.1);
-  daylight.position.set(0, 0.1, 0.72);
+  sill.position.set(0, -height / 2 + 0.033, 0.28);
+  sill.userData.neverFade = true;
+  sill.receiveShadow = true;
+  group.add(sill);
+  const thresholdInlay = new THREE.Mesh(new RoundedBoxGeometry(width + 0.3, 0.018, 0.075, 3, 0.014), brassMaterial);
+  thresholdInlay.position.set(0, -height / 2 + 0.079, 0.04);
+  thresholdInlay.userData.neverFade = true;
+  group.add(thresholdInlay);
+  const daylight = new THREE.PointLight(theme.night ? 0x8fb7dd : 0xffd7a1, theme.night ? 1.1 : 1.86, 5.2, 2.05);
+  daylight.position.set(0, 0.18, 0.82);
   group.add(daylight);
 }
 
@@ -4815,6 +4926,7 @@ function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
   if (signature === roomSignature) return;
   roomSignature = signature;
+  activeCivicPortalContract = "";
   disposeOwnedGroup(roomRoot);
 
   if (keyLight) {
@@ -7102,8 +7214,15 @@ function updateCamera(payload = {}) {
   const civicRearArc = cinematicCivic && !portrait
     ? Math.pow((1 - Math.cos(yaw)) * 0.5, 1.5)
     : 0;
+  // Quarter-turn views place the foreground record desk and lounge closest
+  // to camera. Give those side arcs a little more distance and elevation so
+  // the furniture still frames the shot without turning into a wall across
+  // the player or the listening target.
+  const civicSideArc = cinematicCivic && !portrait
+    ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
+    : 0;
   const targetFov = cinematicCivic
-    ? (portrait ? 60 : 45 + civicRearArc * 2)
+    ? (portrait ? 60 : 45 + civicRearArc * 2 + civicSideArc * 1.5)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -7163,10 +7282,10 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.3 + civicRearArc * 0.45)
+    ? (portrait ? 6.2 : 5.3 + civicRearArc * 0.45 + civicSideArc * 0.55)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.28 + civicRearArc * 0.22) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.28 + civicRearArc * 0.22 + civicSideArc * 0.18) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.38 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
@@ -7452,9 +7571,14 @@ function getSceneComplexity() {
 function getStats() {
   const render = renderer?.info?.render || {};
   const memory = renderer?.info?.memory || {};
-  const sceneComplexity = composer ? getSceneComplexity() : null;
+  // Keep the budget diagnostic renderer-independent. Mobile browsers can
+  // intentionally skip the post-processing composer; falling back to
+  // renderer.info in that mode counted shadow/auxiliary passes and made the
+  // same scene look four times more expensive than its actual draw graph.
+  const sceneComplexity = getSceneComplexity();
   return {
     ready: !!renderer,
+    portal: activeCivicPortalContract ? { version: activeCivicPortalContract } : null,
     activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,
     activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
     cachedModelCount: cache.size,

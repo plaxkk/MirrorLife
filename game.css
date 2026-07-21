@@ -109,6 +109,22 @@ body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard s
 body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard p,
 body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard button { display: none; }
 
+/* The cinematic action rail owns the lower-left quadrant. Keep the local
+   interaction prompt on the opposite editorial edge so 1280px desktop
+   layouts never stack two independent controls over one another. */
+@media (min-width: 721px) {
+  body.interior-active[data-interior-zone="public-plaza"] #interiorContextAction {
+    right: 28px;
+    bottom: 24px;
+    left: auto;
+    max-width: min(300px, 34vw);
+    transform: none;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorContextAction:active {
+    transform: translate(2px, 2px);
+  }
+}
+
 #interiorCinematicActions {
   position: absolute;
   left: 44px;

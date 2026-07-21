@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v91 authored threshold and quarter-orbit composition gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas implementation/reference pair: `dist/interior-3d-work/civic-fidelity-v91/reference-vs-v91-full.png`, built from `desktop-threshold-warm-1672x941-v91.png` and the source image at identical size.
+- Final desktop implementation: `dist/interior-3d-work/civic-fidelity-v91/desktop-yaw-0-1280x720-v91-final.png`.
+- Quarter-orbit evidence: `dist/interior-3d-work/civic-fidelity-v91/desktop-yaw-90-1280x720-v91e.png`; the before/after camera comparison is `v90-vs-v91-yaw-90.png`.
+- Mobile evidence: `dist/interior-3d-work/civic-fidelity-v91/mobile-yaw-0-390x844-v91-final.png`.
+- Runtime diagnostics expose `mirrorlife-civic-portal-v2`; the final desktop scene is `154` draw calls / `260,066` triangles and mobile is `108` / `232,012` for three citizens.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v90 P1 / threshold read as a thin black ladder] The public entrance is now layered hero architecture: plaster reveal, oak casing, brass inner stop, semi-circular glass fanlight, radial muntins, keystone, terrazzo sill and brass threshold line.
+- [fixed / door leaves floated around their centres] Both leaves now pivot at the real jamb hinge line and extend inward from that pivot. Their stiles, rails, glazing, kick panels, handles and hinge plates remain true 3D from the complete orbit.
+- [fixed / mobile portal detail exceeded the strict budget] The mobile LOD reuses the principal oak material and omits secondary kick moulding and hinge plates. The final scene remains at `108` draw calls, below the `110` mobile gate.
+- [fixed / mobile could remain on the atomic loading shell] Browser logs exposed an undefined `mobileLod` branch introduced during the portal optimization. The branch now derives from the authoritative canvas width before any material selection; the final page reaches `sceneReady=true` and `108 / 232,012` without the partial room.
+- [fixed from v90 P2 / quarter-turn foreground became a wall] The civic camera now adds a side-arc term at `90°/270°`, widening to `47.21°`, increasing orbit radius to `6.01m` and height to `3.54m`. The player and active witnesses remain readable while the record desk still frames the foreground.
+- [fixed / desktop action controls overlapped at 1280px] The civic contextual action now occupies the lower-right editorial edge while the four-action rail owns the lower-left. Mobile retains its separate joystick/action layout.
+- [checked / visual, physical and performance contracts remain aligned] The opening keeps the existing `2.08m × 3.02m` shell gap and physical exit; decorative depth does not create a false collider. All `26` physics profiles, four civic character assets and three civic hero props pass their validators.
+
+### Required fidelity surfaces and findings
+
+- [checked][composition] The entrance now carries the same left-third architectural role as the reference, the hearing circle remains the middle-ground conflict stage, and evidence/lounge furniture completes the background.
+- [checked][materials and light] Oak, plaster, terrazzo, brass and glass provide clearer material hierarchy. Portal daylight gains a warmer local source without changing the room's neutral ivory grade.
+- [checked][interaction] The scene reaches an atomic ready state on desktop/mobile, exposes the same physical exit, and retains keyboard/touch exploration plus real 360° orbit.
+- [P1][character production anatomy remains below the source] Faces, hair, garments and hands remain visibly coarser than the reference despite real volumetric eyes, skinning, facial morphs and full side/back volume. Next fix: role-specific eyelid/cheek/lip correctives, layered hair clumps, tailored garment shells and authored hand contact.
+- [P1][remaining furniture craft remains uneven] The new threshold is now a hero asset, but the evidence wall, lounge, record desk and small paper/ceramic props still have simpler joinery, upholstery and roughness breakup than the source. Next fix: advance those three furniture families to the same authored standard.
+- [P2][HUD optical finish remains heavier] Placement is now non-overlapping, but the segmented dark controls still carry more visual weight than the reference's calmer translucent groups.
+
+### Gate result
+
+v91 closes the threshold-construction blocker, fixes its mobile runtime regression, improves the quarter-orbit composition and removes desktop action overlap while retaining real movement, complete orbit, collider parity and strict mobile/desktop budgets. Literal source parity is still not proven because production character anatomy and the remaining furniture families remain visible P1 gaps.
+
+final result: blocked
+
+Blocker: role-specific production character anatomy and consistent hero-asset craft across the remaining civic furniture are still below the reference.
+
 ## 2026-07-21 reference-fidelity v90 hybrid volumetric eyes and weighted silhouette gate
 
 ### Evidence inspected together

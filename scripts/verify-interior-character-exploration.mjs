@@ -27,7 +27,13 @@ async function readStats(page) {
 const browser = await puppeteer.launch({
   executablePath: CHROME,
   headless: true,
-  args: ["--no-sandbox", "--disable-background-networking", "--disable-component-update"]
+  args: [
+    "--no-sandbox",
+    "--disable-background-networking",
+    "--disable-background-timer-throttling",
+    "--disable-renderer-backgrounding",
+    "--disable-component-update"
+  ]
 });
 
 try {
@@ -54,10 +60,15 @@ try {
     return witnesses.length === 3
       && witnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35)
       && Number(player?.facial?.smile || 0) > 0.2;
-  }, { polling: 50, timeout: 2500 });
+  // Cold headless Chrome can spend several seconds compiling the civic skin,
+  // face and post-processing shaders before it advances enough frames for the
+  // expression lerps to settle. Keep this tied to the observable authored
+  // expression contract without turning shader warm-up into a false failure.
+  }, { polling: 50, timeout: 8000 });
 
   const opening = await readStats(page);
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
+  assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   assert(opening.actors.every((actor) => actor.faceMode === "hybrid-volume"), "civic scene did not use the hybrid facial volume contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
