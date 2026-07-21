@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-21 reference-fidelity v95 body volume, footwear and orbit-occlusion gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas source/implementation comparison: `tmp/reference-vs-v95-final.png`; the source and current opening state are each scaled from the same `1672 × 941` viewport.
+- Final desktop implementation: `dist/interior-3d-work/environment-review/00-public.png` at `157` draw calls / `279,112` triangles.
+- Real quarter orbit after the occlusion fix: `dist/interior-3d-work/environment-review-yaw-90/00-public.png` at `1.571rad`, `158 / 294,004`.
+- Real physical stride evidence: `tmp/civic-v95-walk-1280x720.png`; the automated exploration run moved the player `1.89m` and rotated the camera `65.3°`.
+- Real mobile Chrome evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`, `101 / 239,274`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v94 P1 / tubular anatomy] The v26 shared sculpt thickens the skinned torso, arms and legs while preserving the continuous two-mesh skin contract and metre-scale capsule. The player lower fabric receives a lighter teal-grey value so leg separation survives the room grade.
+- [fixed from v94 P1 / mitten hand and weak prop grip] Palms gain depth and the authored finger silhouettes are longer, thinner and more separated. Existing independent wrist pivots and notebook/thoughtful/listening poses remain live.
+- [fixed from v94 P1 / identical block footwear] The player and listener now use a wider sneaker last with a separate tongue; facilitator and mediator use a distinct ankle-boot collar. Soles, uppers and role colours remain full side/back geometry through orbit.
+- [fixed from v94 P1 / flat costume layers] Vest, coat, bodice and skirt shells gain wider/deeper tailored volume without changing the shared skeleton, identity mapping or mobile LOD contract.
+- [fixed / hard contact and muddy floor light] Civic key/fill/bounce/wash balance, GTAO blend, actor shadow alpha and leaf-dapple density are rebalanced for softer contact and warmer face readability.
+- [fixed / 90° orbit was physically rotatable but visually unusable] The first real side capture exposed a near-camera brass cove as a full-width bar across the cast and HUD. Eye-height occlusion rays were added, and the three authored cove wings/reveals now stay independently addressable after room batching and fade to `6%` opacity inside the camera near field. The post-fix `1.571rad` capture keeps the whole cast and story furniture readable.
+- [checked / performance] Preserving six camera-managed cove meshes adds only five effective room calls at the side view. Desktop remains below the `160 / 300,000` civic gate and mobile below `110 / 250,000`.
+
+### Required fidelity surfaces and findings
+
+- [checked][3D exploration] The player uses real WASD locomotion, alternating skinned stride and full drag orbit. Side/rear geometry, shoes, hands, hair and garments self-occlude instead of facing the camera as sprites.
+- [checked][responsive/performance] Desktop keeps four citizens at `157 / 279,112`; the quarter orbit is `158 / 294,004`; mobile keeps three citizens and complete touch controls at `101 / 239,274`.
+- [checked][camera safety] The quarter-turn cove no longer obscures the citizens, evidence markers or HUD. Actor torso and face rays now participate in the same 180ms occlusion fade contract.
+- [P1][facial topology and expression still remain substantially below the source] The same-canvas comparison shows flatter cheek/lip planes, larger graphic eyes, coarser eyelids and less nuanced role-specific expression. Next fix: role-specific cheek/lip/eyelid correctives and smaller, better integrated eye topology on the existing morph rig.
+- [P1][hands and clothing are improved silhouettes, not yet production contact anatomy] Fingers remain coarse at story distance, notebook/cup contacts are approximate, and coat/skirt/trouser surfaces lack the source's seam, fold and compression logic. Next fix: authored contact poses plus corrective cloth shells for each role.
+- [P1][room light transport and micro-material detail remain one production tier lower] The source still has softer global bounce, richer portal daylight, more nuanced terrazzo, fabric, paper and ceramic variation, and better value grouping. Next fix: localized baked/probe bounce and restrained material breakup while holding current budgets.
+- [P2][HUD optical hierarchy remains heavier than the source] Coverage passes on desktop/mobile, but the dark segmented bars still compete with the social tableau.
+
+### Gate result
+
+v95 materially improves body weight, garment and shoe differentiation, hand silhouette, contact lighting and—most importantly—the real quarter-orbit composition. The direct same-canvas comparison still contradicts literal reference-quality parity in face topology, contact anatomy, tailored cloth and indirect-light/material finish, so the full target remains unproven.
+
+final result: blocked
+
+Blocker: production facial/contact/cloth topology and room-wide indirect-light/material nuance remain visibly below the reference.
+
 ## 2026-07-21 reference-fidelity v94 sculpted face and role-readability gate
 
 ### Evidence inspected together

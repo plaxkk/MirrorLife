@@ -88,7 +88,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // exposure collapsed plaster, skin and timber into one ochre value. Keep a
   // strong doorway direction while restoring the neutral daylight and soft
   // lower-body bounce visible in the reference.
-  "civic-ivory": { key: 1.72, fill: 0.18, hemi: 0.17, bounce: 0.5, wash: 0.62, exposure: 0.8, keyColor: "#ffe0bc", fillColor: "#b7dcd8" },
+  "civic-ivory": { key: 1.48, fill: 0.34, hemi: 0.3, bounce: 0.6, wash: 0.78, exposure: 0.88, keyColor: "#ffe0bc", fillColor: "#b7dcd8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -254,6 +254,7 @@ let lastCameraState = null;
 let cameraLastUpdateAt = 0;
 let cameraRaycaster;
 const occludedMaterials = new Map();
+const cameraForegroundObjects = new Set();
 const surfaceBumpTextures = new Map();
 const physicalSurfaceMaps = new Map();
 const actorFrameTextures = new Map();
@@ -452,7 +453,7 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 1.14;
+  gtaoPass.blendIntensity = 0.96;
   gtaoPass.updateGtaoMaterial({
     radius: 0.32,
     distanceExponent: 1.7,
@@ -1174,8 +1175,8 @@ function getContactShadowTexture() {
   shadowCanvas.height = 128;
   const context = shadowCanvas.getContext("2d");
   const gradient = context.createRadialGradient(64, 64, 4, 64, 64, 60);
-  gradient.addColorStop(0, "rgba(66,39,24,0.6)");
-  gradient.addColorStop(0.42, "rgba(66,39,24,0.26)");
+  gradient.addColorStop(0, "rgba(66,39,24,0.42)");
+  gradient.addColorStop(0.42, "rgba(66,39,24,0.18)");
   gradient.addColorStop(1, "rgba(66,39,24,0)");
   context.fillStyle = gradient;
   context.fillRect(0, 0, 128, 128);
@@ -1235,18 +1236,18 @@ function getCivicDappleTexture() {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  for (let index = 0; index < 38; index += 1) {
+  for (let index = 0; index < 54; index += 1) {
     const t = random();
     const x = (0.12 + t * 0.78 + (random() - 0.5) * 0.08) * size;
     const y = (0.18 + t * 0.68 + (random() - 0.5) * 0.16) * size;
-    const radius = (0.016 + random() * 0.032) * size;
+    const radius = (0.009 + random() * 0.019) * size;
     paintSoftEllipse(
       x,
       y,
       radius * (0.72 + random() * 0.66),
       radius * (0.44 + random() * 0.34),
       (random() - 0.5) * 1.8,
-      "rgba(72,83,55,0.2)",
+      "rgba(72,83,55,0.105)",
       "rgba(72,83,55,0)"
     );
   }
@@ -1470,13 +1471,13 @@ function applyLightingPreset(theme = {}) {
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.92 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.78 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 5.5 : 9;
-    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 16 : 24;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 8.5 : 9;
+    keyLight.shadow.blurSamples = 24;
   }
 }
 
@@ -3249,6 +3250,8 @@ function addCivicArchitecturalCove(colors) {
     beam.position.set(entry.x, 3.86, entry.z);
     beam.rotation.y = entry.rotation;
     beam.castShadow = false;
+    beam.userData.cameraForegroundFade = true;
+    cameraForegroundObjects.add(beam);
     roomRoot.add(beam);
 
     const reveal = new THREE.Mesh(
@@ -3258,6 +3261,8 @@ function addCivicArchitecturalCove(colors) {
     reveal.position.set(entry.x, 3.7, entry.z + (entry.rotation ? 0 : 0.1));
     reveal.rotation.y = entry.rotation;
     reveal.castShadow = false;
+    reveal.userData.cameraForegroundFade = true;
+    cameraForegroundObjects.add(reveal);
     roomRoot.add(reveal);
   });
 }
@@ -4189,11 +4194,15 @@ function canBatchRoomVertexColors(material) {
 function mergeRoomArchitectureMeshes() {
   if (!roomRoot || !mergeGeometries) return;
   roomRoot.updateMatrixWorld(true);
-  const preservedObjects = roomRoot.children.filter((child) => child.userData?.dynamicWallDecor);
+  // Camera-managed foreground pieces must stay addressable after batching so
+  // their material can fade independently at side/rear orbit angles.
+  const preservedObjects = roomRoot.children.filter((child) => (
+    child.userData?.dynamicWallDecor || child.userData?.cameraForegroundFade
+  ));
   const isPreservedNode = (node) => {
     let current = node;
     while (current && current !== roomRoot) {
-      if (current.userData?.dynamicWallDecor) return true;
+      if (current.userData?.dynamicWallDecor || current.userData?.cameraForegroundFade) return true;
       current = current.parent;
     }
     return false;
@@ -5022,6 +5031,7 @@ function rebuildRoom(theme = {}) {
   if (signature === roomSignature) return;
   roomSignature = signature;
   activeCivicPortalContract = "";
+  cameraForegroundObjects.clear();
   disposeOwnedGroup(roomRoot);
 
   if (keyLight) {
@@ -6220,7 +6230,7 @@ function createProceduralActorObject(actor) {
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.78, 0.48),
+    new THREE.PlaneGeometry(0.62, 0.34),
     new THREE.MeshBasicMaterial({
       color: 0x4d3528,
       map: getContactShadowTexture(),
@@ -6524,12 +6534,12 @@ function createCivicActorObject(actor, asset) {
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.78, 0.48),
+    new THREE.PlaneGeometry(0.62, 0.34),
     new THREE.MeshBasicMaterial({
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.34,
+      opacity: 0.22,
       depthWrite: false,
       toneMapped: false
     })
@@ -6689,7 +6699,7 @@ function createCivicActorObject(actor, asset) {
       // A slightly softer roughness plus a restrained warm view-rim emulates
       // the broad subsurface wrap of the reference without a second face mesh
       // or a screen-space portrait card.
-      material.color?.offsetHSL?.(0, -0.018, 0.018);
+      material.color?.offsetHSL?.(0.005, 0.028, 0.002);
       material.roughness = 0.68;
       material.metalness = 0;
       material.envMapIntensity = 0.64;
@@ -7202,9 +7212,9 @@ function updateActors(actors = [], now = performance.now()) {
       }
     }
     entry.shadow.material.opacity = actor.grounded === false
-      ? (cameraZoneId === "public-plaza" ? 0.08 : 0.16)
-      : (cameraZoneId === "public-plaza" ? 0.34 : 0.28);
-    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.82 : 0.9) : (walking ? 0.92 : 1));
+      ? (cameraZoneId === "public-plaza" ? 0.05 : 0.16)
+      : (cameraZoneId === "public-plaza" ? 0.22 : 0.28);
+    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.76 : 0.84) : (walking ? 0.92 : 1));
     entry.shadow.visible = true;
     entry.group.visible = actor.visible !== false;
   });
@@ -7341,9 +7351,9 @@ function updateCamera(payload = {}) {
   // Portrait play has much less horizontal breathing room. Keep the player
   // dominant there while desktop can spend more of the frame on the current
   // social target and authored path composition.
-  const playerWeight = portrait ? 0.8 : cinematicCivic ? 0.56 : CAMERA_PIVOT_PLAYER_WEIGHT;
-  const narrativeWeight = portrait ? 0.15 : cinematicCivic ? 0.32 : CAMERA_PIVOT_NARRATIVE_WEIGHT;
-  const pathWeight = portrait ? 0.05 : cinematicCivic ? 0.12 : CAMERA_PIVOT_PATH_WEIGHT;
+  const playerWeight = portrait ? 0.8 : cinematicCivic ? 0.65 : CAMERA_PIVOT_PLAYER_WEIGHT;
+  const narrativeWeight = portrait ? 0.15 : cinematicCivic ? 0.25 : CAMERA_PIVOT_NARRATIVE_WEIGHT;
+  const pathWeight = portrait ? 0.05 : cinematicCivic ? 0.1 : CAMERA_PIVOT_PATH_WEIGHT;
   let targetPivotX = playerX * playerWeight
     + narrativeX * narrativeWeight
     + pathX * pathWeight;
@@ -7388,16 +7398,16 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.3 + civicRearArc * 0.45 + civicSideArc * 0.55)
+    ? (portrait ? 6.2 : 5.55 + civicRearArc * 0.42 + civicSideArc * 0.52)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.28 + civicRearArc * 0.22 + civicSideArc * 0.18) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.55 + civicRearArc * 0.24 + civicSideArc * 0.2) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.38 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
   // a management-game bird's-eye view: more portal and character silhouette,
   // less undifferentiated floor. Portrait keeps the higher navigation read.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.82) : 0.94)
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.68) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
@@ -7500,9 +7510,37 @@ function updateCameraOcclusion(payload = {}) {
   occludedMaterials.forEach((state) => {
     state.targetOpacity = state.baseOpacity;
   });
+  // Architectural coves are intentionally above the actor rays, but at a
+  // side orbit the camera can sit almost level with a wing beam and project it
+  // as a full-width bar across the frame and HUD.  Fade only authored
+  // foreground candidates when the camera enters their near field.  This is
+  // complementary to ray occlusion: it protects the composition without
+  // dissolving distant walls or evidence props.
+  const foregroundPosition = updateCameraOcclusion.foregroundPosition
+    || (updateCameraOcclusion.foregroundPosition = new THREE.Vector3());
+  cameraForegroundObjects.forEach((object) => {
+    if (!object?.parent) {
+      cameraForegroundObjects.delete(object);
+      return;
+    }
+    object.getWorldPosition(foregroundPosition);
+    if (foregroundPosition.distanceTo(camera.position) > 3.15) return;
+    const materials = Array.isArray(object.material) ? object.material : [object.material];
+    materials.forEach((material, materialIndex) => {
+      if (!material) return;
+      setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), 0.06);
+    });
+  });
+  // Test both the torso and face lines of sight.  The original pair of rays
+  // ended around chest height, so a near-wall cove could remain fully opaque
+  // while cutting straight across every actor's face in side-orbit views.
+  // Keeping the same two semantic targets at eye height makes the fade match
+  // what the player actually needs to read, without hiding distant set pieces.
   const targets = [
     new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2))
+    new THREE.Vector3(Number(payload.cameraX || 0), 1.68, Number(payload.cameraZ || 0)),
+    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2)),
+    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.68, Number(payload.cameraTargetZ || 0.2))
   ];
   targets.forEach((target) => {
     const direction = target.clone().sub(camera.position);
