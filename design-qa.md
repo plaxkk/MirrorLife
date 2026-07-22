@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v30 eye-line composition, tactile story rug and volumetric gaze gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Same-canvas source/implementation comparison: `tmp/reference-vs-v30-final.png`; both halves show the opening listening-circle state at the same `1280 × 720` presentation ratio.
+- Final desktop opening: `tmp/v30-final-neutral-yaw0.jpg` at `155` draw calls / `281,128` triangles.
+- Real quarter and reverse views: `tmp/v30-yaw90.png` at `156 / 296,020`, and `tmp/v30-yaw180.png` at `158 / 294,572`.
+- Real physical stride evidence: `tmp/v30-character-walk.png`; the authored walk clip, volumetric cast and player-follow camera remain active during WASD motion.
+- Real mobile browser evidence: `tmp/v30-mobile-390x844.jpg` at `390 × 844`, `98 / 240,826`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v29 P1 / management-game top-down camera flattened the room] The desktop civic opening now uses a roughly `18°` character-eye-line composition (`2.76m` camera height, `6.05m` orbit radius, `45°` FOV). The portal, cast, listening wall and foreground evidence desk resolve as foreground/midground/background rather than stacked floor icons.
+- [fixed / lower lens exposed floating ceiling bars] The authored cove termination is lifted above the story lens. The opening frame no longer contains unrelated cropped beams, while the independently managed cove still frames real quarter and reverse orbits.
+- [fixed / listening circle read as a painted target decal] The story rug is now a thin real cylinder with a visible textile edge, woven colour texture, restrained low-relief thread motif and physically distinct fabric response. Brass paths remain walkable floor inlay rather than collision-bearing decoration.
+- [improved from v29 P1 / character gaze collapsed into black pixels] Sculpt v29 / facial volume v6 increases the four role-specific eye apertures and gives sclera, iris and pupil real corneal depth. Listener, facilitator and mediator eye direction remains readable in the opening, quarter and reverse frames without a billboard face.
+- [improved / civic floor collapsed into the same beige as skin and plaster] The photographed terrazzo colour is multiplied by a neutral mineral value instead of the warm fallback floor palette; cool chips, warm wood and skin now separate more clearly under the same doorway light.
+- [checked / full orbit and mobile] Player and at least one social target remain visible at `90°` and `180°`; no furniture becomes a full-frame blocker. Desktop stays below `160 / 300,000`, mobile below `110 / 250,000`.
+- [checked / runtime contracts] All four citizens expose `mirrorlife-civic-face-volume-v6`, two volumetric eyes, continuous limb skin, independent wrists and authored expression morphs. Syntax, asset, 26-zone physics, desktop/mobile scene flow and production build checks pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][camera and spatial readability] The new eye-line lens is materially closer to the source composition and preserves genuine 360-degree exploration. The player-follow pivot remains player-led, with story and path weighting, safe-area clamping and collision diagnostics.
+- [checked][material/grounding] The central rug has truthful thickness and contact, the terrazzo is materially distinct from plaster, and character feet remain on the physical floor during idle and stride.
+- [checked][responsive/performance] Opening, quarter and reverse frames are `155`, `156` and `158` calls. Mobile keeps three citizens, joystick and contextual actions at `98 / 240,826`.
+- [P1][production character topology remains below the source] Enlarged volumetric eyes improve gaze, but the source still has artist-authored eyelid-to-cheek flow, ear anatomy, hand joints, cloth compression, hair roots and footwear finish. The current cast remains recognizably procedural in the same-canvas comparison.
+- [P1][room-wide hero-asset fidelity remains below the source] The reference has denser ceramics, paper stacks, glass display contents, woven storage and furniture joinery with softer indirect penumbrae. Current layout and semantic staging are coherent, but several props still read as simplified primitives.
+- [P2][mobile opening spends too much vertical space on an undecorated upper wall] Controls and actors remain usable, but the portrait composition needs a dedicated camera target or taller background story landmark rather than inheriting the desktop wall framing.
+- [P2][HUD optical hierarchy remains heavier than the source] Coverage passes, but the dark segmented rails still compete with the social tableau.
+
+### Gate result
+
+v30 closes the high-impact top-down composition, floating-cove, flat-rug and unreadable-gaze defects while preserving complete orbit, physical locomotion, responsive controls and strict performance budgets. The mandatory same-canvas comparison still exposes material differences in artist-authored character anatomy and hero-prop production finish, so literal reference-quality parity remains unproven.
+
+final result: blocked
+
+Blocker: artist-quality head/hand/cloth topology and source-level hero-prop microdetail remain visibly below the reference.
+
 ## 2026-07-21 reference-fidelity v29 role-specific face and expression-continuity gate
 
 ### Evidence inspected together

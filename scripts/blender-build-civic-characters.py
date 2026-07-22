@@ -79,10 +79,10 @@ ROLE_CONFIGS = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.050,
-        "eye_height": 0.029,
-        "iris_width": 0.0255,
-        "iris_height": 0.0255,
+        "eye_width": 0.054,
+        "eye_height": 0.033,
+        "iris_width": 0.0275,
+        "iris_height": 0.029,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -94,10 +94,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.049,
-        "eye_height": 0.0285,
-        "iris_width": 0.025,
-        "iris_height": 0.025,
+        "eye_width": 0.053,
+        "eye_height": 0.0325,
+        "iris_width": 0.027,
+        "iris_height": 0.0285,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -109,10 +109,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.050,
-        "eye_height": 0.030,
-        "iris_width": 0.0255,
-        "iris_height": 0.0265,
+        "eye_width": 0.054,
+        "eye_height": 0.034,
+        "iris_width": 0.0275,
+        "iris_height": 0.03,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -124,10 +124,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0485,
-        "eye_height": 0.0285,
-        "iris_width": 0.0245,
-        "iris_height": 0.025,
+        "eye_width": 0.0525,
+        "eye_height": 0.0325,
+        "iris_width": 0.0265,
+        "iris_height": 0.0285,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1175,17 +1175,17 @@ def build_face(head, mats, role):
         outer_lift = face_profile["outer_eye_lift"]
         eye.rotation_euler.y = side * outer_lift * 2.8
         eye.rotation_euler.z = -side * outer_lift * 3.2
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0055, eye_height), mats["eye_white"], eye, segments=32, rings=18)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0085, eye_height), mats["eye_white"], eye, segments=32, rings=18)
         ellipsoid(
             f"Iris_{side}",
             (-side * 0.001, -0.0082, -0.002),
-            (face_profile["iris_width"], 0.0036, face_profile["iris_height"]),
+            (face_profile["iris_width"], 0.0052, face_profile["iris_height"]),
             mats["iris"],
             eye,
             segments=26,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0125, -0.003), (0.0098, 0.0018, 0.0135), mats["ink"], eye, segments=18, rings=10)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0132, -0.003), (0.0106, 0.0022, 0.0148), mats["ink"], eye, segments=18, rings=10)
         ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.0155, 0.008), (0.0046, 0.0012, 0.0048), mats["eye_white"], eye, segments=12, rings=7)
         ellipsoid(f"EyeGlintSmall_{side}", (side * 0.004, -0.0158, -0.006), (0.0018, 0.0009, 0.002), mats["eye_white"], eye, segments=10, rings=6)
         facial_lid_surface(
@@ -1997,7 +1997,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v28",
+        "sculptContract": "mirrorlife-civic-sculpt-v29",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2019,7 +2019,7 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v5",
+            "integrationContract": "mirrorlife-civic-face-volume-v6",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "NoseContour", "MouthClosed"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",

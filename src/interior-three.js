@@ -88,7 +88,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // exposure collapsed plaster, skin and timber into one ochre value. Keep a
   // strong doorway direction while restoring the neutral daylight and soft
   // lower-body bounce visible in the reference.
-  "civic-ivory": { key: 1.32, fill: 0.46, hemi: 0.4, bounce: 0.72, wash: 0.62, exposure: 0.89, keyColor: "#ffe5ca", fillColor: "#c4dedb" },
+  "civic-ivory": { key: 1.46, fill: 0.38, hemi: 0.34, bounce: 0.58, wash: 0.5, exposure: 0.86, keyColor: "#ffe1bf", fillColor: "#bddbd8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -1267,8 +1267,31 @@ function getCivicRugTexture() {
   rugCanvas.height = size;
   const context = rugCanvas.getContext("2d");
   if (!context) return null;
-  context.fillStyle = "#f2e9da";
+  const ground = context.createRadialGradient(size * 0.45, size * 0.42, size * 0.03, size / 2, size / 2, size * 0.56);
+  ground.addColorStop(0, "#f7efe2");
+  ground.addColorStop(0.72, "#eee3d1");
+  ground.addColorStop(1, "#e1d1ba");
+  context.fillStyle = ground;
   context.fillRect(0, 0, size, size);
+  // A real woven ground is especially important at the lower story camera:
+  // it gives the social circle a tactile scale cue instead of reading as a
+  // flat UI decal painted over the terrazzo. Two restrained thread directions
+  // keep the pattern legible without introducing high-frequency shimmer.
+  context.save();
+  context.globalAlpha = 0.11;
+  context.lineWidth = Math.max(1, size / 512);
+  for (let line = 0; line <= size; line += Math.max(4, Math.round(size / 96))) {
+    context.strokeStyle = line % 12 ? "#9c866d" : "#fffaf1";
+    context.beginPath();
+    context.moveTo(0, line + Math.sin(line * 0.11) * 0.8);
+    context.lineTo(size, line + Math.cos(line * 0.09) * 0.8);
+    context.stroke();
+    context.beginPath();
+    context.moveTo(line + Math.cos(line * 0.1) * 0.8, 0);
+    context.lineTo(line + Math.sin(line * 0.08) * 0.8, size);
+    context.stroke();
+  }
+  context.restore();
   context.save();
   context.translate(size / 2, size / 2);
   context.lineCap = "round";
@@ -1312,6 +1335,7 @@ function getCivicRugTexture() {
   civicRugTexture.minFilter = THREE.LinearMipmapLinearFilter;
   civicRugTexture.magFilter = THREE.LinearFilter;
   civicRugTexture.generateMipmaps = true;
+  civicRugTexture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
   civicRugTexture.needsUpdate = true;
   return civicRugTexture;
 }
@@ -1462,7 +1486,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.82 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.68 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
@@ -3251,7 +3275,10 @@ function addCivicArchitecturalCove(colors) {
       beamMaterial
     );
     beam.name = `civic-straight-cove-${index + 1}`;
-    beam.position.set(entry.x, 3.86, entry.z);
+    // The story camera now sits near character eye level. Lift the wall
+    // termination above that lens so side beams frame the room instead of
+    // being cropped into two unrelated floating bars at the top corners.
+    beam.position.set(entry.x, 4.58, entry.z);
     beam.rotation.y = entry.rotation;
     beam.castShadow = false;
     beam.userData.cameraForegroundFade = true;
@@ -3262,7 +3289,7 @@ function addCivicArchitecturalCove(colors) {
       new RoundedBoxGeometry(entry.width - 0.16, 0.035, 0.035, 3, 0.014),
       brass
     );
-    reveal.position.set(entry.x, 3.7, entry.z + (entry.rotation ? 0 : 0.1));
+    reveal.position.set(entry.x, 4.42, entry.z + (entry.rotation ? 0 : 0.1));
     reveal.rotation.y = entry.rotation;
     reveal.castShadow = false;
     reveal.userData.cameraForegroundFade = true;
@@ -3811,33 +3838,37 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicArchitecturalShell(colors);
   if (!mobileLod) addCivicArchitecturalCove(colors);
   addAtelierTerrazzo(theme);
+  // Give the listening rug a truthful textile edge. The old zero-thickness
+  // circle disappeared into the floor at player eye level and made the story
+  // space feel like a painted target marker rather than a furnished room.
   const center = new THREE.Mesh(
-    new THREE.CircleGeometry(1.48, 64),
+    new THREE.CylinderGeometry(1.48, 1.49, 0.026, 64, 1, false),
     createToonMaterial("#eadfc9", {
       roughness: 0.94,
       surface: "fabric",
-      bumpScale: 0.009,
-      map: mobileLod ? null : getCivicRugTexture(),
-      envMapIntensity: 0.36
+      bumpScale: 0.014,
+      map: getCivicRugTexture(),
+      envMapIntensity: 0.3
     })
   );
-  center.rotation.x = -Math.PI / 2;
-  center.position.set(0, 0.041, 0.18);
+  center.position.set(0, 0.028, 0.18);
   center.receiveShadow = true;
   roomRoot.add(center);
   if (!mobileLod) {
-    const embossMaterial = createToonMaterial("#c89d43", {
-      roughness: 0.34,
-      metalness: 0.55,
+    const embossMaterial = createToonMaterial("#d4c2a5", {
+      roughness: 0.88,
+      metalness: 0.02,
       transparent: true,
-      opacity: 0.94
+      opacity: 0.62,
+      surface: "fabric",
+      bumpScale: 0.008
     });
     for (let index = 0; index < 16; index += 1) {
       const angle = index / 16 * Math.PI * 2;
       const petal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 8), embossMaterial);
-      petal.scale.set(1.55, 0.07, 0.46);
+      petal.scale.set(1.55, 0.026, 0.46);
       petal.rotation.y = -angle;
-      petal.position.set(Math.sin(angle) * 0.58, 0.052, 0.18 - Math.cos(angle) * 0.58);
+      petal.position.set(Math.sin(angle) * 0.58, 0.045, 0.18 - Math.cos(angle) * 0.58);
       petal.castShadow = false;
       petal.receiveShadow = true;
       roomRoot.add(petal);
@@ -5077,7 +5108,12 @@ function rebuildRoom(theme = {}) {
     theme.zoneId === "public-plaza"
       ? new THREE.PlaneGeometry(ROOM_RADIUS * 2.62, ROOM_RADIUS * 2.48)
       : new THREE.CircleGeometry(ROOM_RADIUS, 64),
-    createToonMaterial(floorColor, {
+    // The civic floor owns a photographed neutral terrazzo base colour. Do
+    // not multiply it by the beige fallback palette: that previously erased
+    // the cool stone chips and collapsed floor, plaster and skin into one
+    // warm value. Lighting supplies the room warmth while the material keeps
+    // its authored mineral colour separation.
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#dedcd8" : floorColor, {
       roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
@@ -6886,7 +6922,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v4`,
+    styleKey: `${frame}:${role}:civic-glb-v5`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -6902,7 +6938,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v4` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v5` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -7484,16 +7520,16 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 5.55 + civicRearArc * 0.42 + civicSideArc * 0.52)
+    ? (portrait ? 6.2 : 6.05 + civicRearArc * 0.48 + civicSideArc * 0.56)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.55 + civicRearArc * 0.24 + civicSideArc * 0.2) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 2.76 + civicRearArc * 0.38 + civicSideArc * 0.34) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
-  const focusDistance = cinematicCivic ? 0.38 : 0.22;
+  const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
   // a management-game bird's-eye view: more portal and character silhouette,
   // less undifferentiated floor. Portrait keeps the higher navigation read.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.68) : 0.94)
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.84) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
@@ -7847,7 +7883,7 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v5"
+          ? "mirrorlife-civic-face-volume-v6"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-volume-v3"
             : "mirrorlife-civic-face-volume-v2",
