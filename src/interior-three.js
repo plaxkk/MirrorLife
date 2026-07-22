@@ -453,7 +453,7 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.82;
+  gtaoPass.blendIntensity = 0.7;
   gtaoPass.updateGtaoMaterial({
     radius: 0.28,
     distanceExponent: 1.8,
@@ -497,17 +497,21 @@ function ensureLayer() {
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
         // Keep the target's warm daylight without the yellow cast that made
         // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
-        // carried by light and material response; saturation stays editorial
-        // rather than toy-like.
-        color = mix(vec3(luma), color, 0.995 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.105 * strength) + vec3(0.58));
-        color *= mix(vec3(1.0), vec3(1.006, 1.0, 0.994), strength);
+        // carried by light and material response. Strength is an effect
+        // amount, not a direct saturation multiplier: the former expression
+        // accidentally removed 28% of mobile colour at 0.72.
+        color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.078 * strength) + vec3(0.58));
+        float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
+        float highlightTone = smoothstep(0.5, 0.92, luma);
+        color *= mix(vec3(1.0), vec3(0.985, 1.0, 1.018), shadowTone * 0.34 * strength);
+        color += vec3(0.018, 0.008, -0.005) * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaDown = dot(texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float sceneEdge = max(abs(lumaRight - lumaLeft), abs(lumaUp - lumaDown));
-        float editorialInk = smoothstep(0.1, 0.3, sceneEdge) * 0.018 * strength;
+        float editorialInk = smoothstep(0.1, 0.3, sceneEdge) * 0.012 * strength;
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
@@ -633,9 +637,9 @@ function upgradeModelMaterials(source, type = "") {
         || physicalMaps?.roughness
       );
       const color = hasSurfaceMap
-        ? (material.color?.clone?.() || new THREE.Color(0xffffff)).offsetHSL(0, 0.04, -0.02)
+        ? (material.color?.clone?.() || new THREE.Color(0xffffff)).offsetHSL(0, 0.02, -0.015)
         : preserveAuthoredCivicPalette
-          ? atelierGradeColor(material.color, 0.08)
+          ? atelierGradeColor(material.color, 0.08).offsetHSL(0, -0.025, 0.008)
           : nearestAtelierColor(material.color);
       const glassName = /glass|glazing|windowpane/.test(materialName);
       const next = glassName
@@ -1486,7 +1490,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.5 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.7 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
@@ -3949,7 +3953,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.67,
+        opacity: theme.night ? 0.1 : 0.48,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -4429,6 +4433,13 @@ function addRoomArchitecture(theme, colors) {
   }
 
   if (archetype === "public") {
+    // The civic listening room is an authored reference rebuild with its own
+    // evidence wall, covenant panel, orbit landmarks and architectural shell.
+    // Re-applying the generic public-room kit here stacked three unrelated
+    // notice boards behind the cast and left several panels floating across
+    // secondary camera angles. Keep the generic kit for the other public
+    // interiors, but let the civic room own one coherent wall composition.
+    if (theme.zoneId === "public-plaza") return;
     addWainscot("#e5cba8", 0.78);
     const forumBoard = addWallFeature(variantOffset, {
       width: 2.52,
@@ -4439,21 +4450,19 @@ function addRoomArchitecture(theme, colors) {
       dividers: false
     });
     addWallCards(forumBoard, [ATELIER_TOKENS.butter, ATELIER_TOKENS.cornflower, ATELIER_TOKENS.tomato, ATELIER_TOKENS.pistachio], 2, 5, 0.84);
-    if (theme.zoneId !== "public-plaza") {
-      const meetingRing = new THREE.Mesh(
-        new THREE.RingGeometry(1.55, 1.82, 64),
-        createToonMaterial(ATELIER_TOKENS.butter, {
-          transparent: true,
-          opacity: 0.68,
-          roughness: 0.92,
-          surface: "fabric",
-          bumpScale: 0.01
-        })
-      );
-      meetingRing.rotation.x = -Math.PI / 2;
-      meetingRing.position.set(0, 0.052, -0.42);
-      roomRoot.add(meetingRing);
-    }
+    const meetingRing = new THREE.Mesh(
+      new THREE.RingGeometry(1.55, 1.82, 64),
+      createToonMaterial(ATELIER_TOKENS.butter, {
+        transparent: true,
+        opacity: 0.68,
+        roughness: 0.92,
+        surface: "fabric",
+        bumpScale: 0.01
+      })
+    );
+    meetingRing.rotation.x = -Math.PI / 2;
+    meetingRing.position.set(0, 0.052, -0.42);
+    roomRoot.add(meetingRing);
     [variantOffset - 0.32, variantOffset + 0.32].forEach((angle, index) => {
       const listeningPanel = addWallFeature(angle, {
         width: 1.05,
@@ -5125,12 +5134,12 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#dedcd8" : floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#bfc0bd" : floorColor, {
+      roughness: theme.zoneId === "public-plaza" ? 0.82 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.34 : 0.48
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.38 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5974,11 +5983,15 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const metalnessValues = new Float32Array(count);
     const skinMaskValues = new Float32Array(count);
     const hairMaskValues = new Float32Array(count);
+    const clothMaskValues = new Float32Array(count);
+    const leatherMaskValues = new Float32Array(count);
     const sourceRoughness = THREE.MathUtils.clamp(Number(node.material?.roughness ?? materialOptions.roughness ?? 0.72), 0.04, 1);
     const sourceMetalness = THREE.MathUtils.clamp(Number(node.material?.metalness ?? 0), 0, 1);
     const materialName = String(node.material?.name || "").toLowerCase();
     const sourceSkinMask = materialName.endsWith(" skin") ? 1 : 0;
     const sourceHairMask = materialName.includes(" hair") ? 1 : 0;
+    const sourceClothMask = /fabric|cloth/.test(materialName) ? 1 : 0;
+    const sourceLeatherMask = /shoes|soles/.test(materialName) ? 1 : 0;
     for (let index = 0; index < count; index += 1) {
       colors[index * 3] = color.r;
       colors[index * 3 + 1] = color.g;
@@ -5987,12 +6000,16 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       metalnessValues[index] = sourceMetalness;
       skinMaskValues[index] = sourceSkinMask;
       hairMaskValues[index] = sourceHairMask;
+      clothMaskValues[index] = sourceClothMask;
+      leatherMaskValues[index] = sourceLeatherMask;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute("mirrorLifeRoughness", new THREE.BufferAttribute(roughnessValues, 1));
     geometry.setAttribute("mirrorLifeMetalness", new THREE.BufferAttribute(metalnessValues, 1));
     geometry.setAttribute("mirrorLifeSkinMask", new THREE.BufferAttribute(skinMaskValues, 1));
     geometry.setAttribute("mirrorLifeHairMask", new THREE.BufferAttribute(hairMaskValues, 1));
+    geometry.setAttribute("mirrorLifeClothMask", new THREE.BufferAttribute(clothMaskValues, 1));
+    geometry.setAttribute("mirrorLifeLeatherMask", new THREE.BufferAttribute(leatherMaskValues, 1));
     geometries.push(geometry);
     sources.push(node);
   });
@@ -6029,10 +6046,14 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         attribute float mirrorLifeMetalness;
         attribute float mirrorLifeSkinMask;
         attribute float mirrorLifeHairMask;
+        attribute float mirrorLifeClothMask;
+        attribute float mirrorLifeLeatherMask;
         varying float vMirrorLifeRoughness;
         varying float vMirrorLifeMetalness;
         varying float vMirrorLifeSkinMask;
         varying float vMirrorLifeHairMask;
+        varying float vMirrorLifeClothMask;
+        varying float vMirrorLifeLeatherMask;
         varying vec3 vMirrorLifeSurfacePosition;`
       )
       .replace(
@@ -6042,6 +6063,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeMetalness = mirrorLifeMetalness;
         vMirrorLifeSkinMask = mirrorLifeSkinMask;
         vMirrorLifeHairMask = mirrorLifeHairMask;
+        vMirrorLifeClothMask = mirrorLifeClothMask;
+        vMirrorLifeLeatherMask = mirrorLifeLeatherMask;
         vMirrorLifeSurfacePosition = transformed;`
       );
     shader.fragmentShader = shader.fragmentShader.replace(
@@ -6051,11 +6074,20 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       varying float vMirrorLifeMetalness;
       varying float vMirrorLifeSkinMask;
       varying float vMirrorLifeHairMask;
+      varying float vMirrorLifeClothMask;
+      varying float vMirrorLifeLeatherMask;
       varying vec3 vMirrorLifeSurfacePosition;`
     ).replace(
       "#include <roughnessmap_fragment>",
       `#include <roughnessmap_fragment>
-      roughnessFactor = clamp(vMirrorLifeRoughness, 0.04, 1.0);`
+      float mirrorLifeThreadA = sin(vMirrorLifeSurfacePosition.x * 228.0 + vMirrorLifeSurfacePosition.z * 29.0);
+      float mirrorLifeThreadB = sin(vMirrorLifeSurfacePosition.y * 244.0 - vMirrorLifeSurfacePosition.z * 41.0);
+      float mirrorLifeThread = mirrorLifeThreadA * mirrorLifeThreadB;
+      roughnessFactor = clamp(
+        vMirrorLifeRoughness + mirrorLifeThread * 0.034 * vMirrorLifeClothMask - 0.045 * vMirrorLifeLeatherMask,
+        0.04,
+        1.0
+      );`
     ).replace(
       "#include <metalnessmap_fragment>",
       `#include <metalnessmap_fragment>
@@ -6067,22 +6099,30 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         `#include <opaque_fragment>
       float mirrorLifeViewWrap = 1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
       float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 5.1);
-      float mirrorLifeClothMask = smoothstep(0.82, 0.94, vMirrorLifeRoughness);
+      float mirrorLifeClothMask = vMirrorLifeClothMask;
       float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
       float mirrorLifeSkinWrap = pow(mirrorLifeViewWrap, 1.72) * vMirrorLifeSkinMask;
       float mirrorLifeHairSheen = pow(mirrorLifeViewWrap, 2.45) * vMirrorLifeHairMask;
+      float mirrorLifeHairStrand = pow(0.5 + 0.5 * sin(
+        vMirrorLifeSurfacePosition.y * 92.0
+        + vMirrorLifeSurfacePosition.x * 31.0
+        - vMirrorLifeSurfacePosition.z * 19.0
+      ), 8.0) * vMirrorLifeHairMask;
+      float mirrorLifeLeatherSheen = pow(mirrorLifeViewWrap, 3.8) * vMirrorLifeLeatherMask;
       // Resolve broad single-colour garments into a very restrained woven
       // surface. The crossed frequencies are small enough to disappear at
       // mobile LOD, but at story-camera distance they break the plastic toy
       // read without requiring per-role texture draw calls or changing UVs.
-      float mirrorLifeWeaveA = sin(vMirrorLifeSurfacePosition.x * 235.0 + vMirrorLifeSurfacePosition.z * 31.0);
-      float mirrorLifeWeaveB = sin(vMirrorLifeSurfacePosition.y * 248.0 - vMirrorLifeSurfacePosition.z * 37.0);
+      float mirrorLifeWeaveA = sin(vMirrorLifeSurfacePosition.x * 228.0 + vMirrorLifeSurfacePosition.z * 29.0);
+      float mirrorLifeWeaveB = sin(vMirrorLifeSurfacePosition.y * 244.0 - vMirrorLifeSurfacePosition.z * 41.0);
       float mirrorLifeWeave = mirrorLifeWeaveA * mirrorLifeWeaveB * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.14);
-      gl_FragColor.rgb += vec3(0.052, 0.042, 0.031) * mirrorLifeClothSheen * 0.18;
-      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.012;
-      gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.22;
-      gl_FragColor.rgb += vec3(0.052, 0.045, 0.038) * mirrorLifeHairSheen * 0.14;`
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.1);
+      gl_FragColor.rgb += vec3(0.058, 0.047, 0.035) * mirrorLifeClothSheen * 0.24;
+      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.018;
+      gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.24;
+      gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.16;
+      gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.16;
+      gl_FragColor.rgb += vec3(0.042, 0.031, 0.022) * mirrorLifeLeatherSheen * 0.2;`
       );
     } else {
       shader.fragmentShader = shader.fragmentShader.replace(
@@ -6095,8 +6135,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? "mirrorlife-actor-material-hierarchy-v6"
-    : "mirrorlife-room-vertex-surface-v1";
+    ? "mirrorlife-actor-material-hierarchy-v7"
+    : "mirrorlife-room-vertex-surface-v2";
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;

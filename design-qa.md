@@ -1,5 +1,42 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v39 single-layout, material hierarchy and optical-weight gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v39-desktop-yaw0.png` (`1600 × 900`, `151 / 266,616`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v39.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Quarter and reverse orbit evidence: `tmp/v39-desktop-yaw90.png` (`152 / 281,508`, `4.17m` orbit) and `tmp/v39-desktop-yaw180.png` (`154 / 280,060`, `4.60m` orbit).
+- Mobile evidence: `tmp/v39-mobile-390x844.png` (`390 × 844`, `94 / 225,602`, three-character LOD).
+- Physical exploration evidence: `tmp/v39-character-walk.png`; the browser regression walked `4.29m`, completed the authored action/idle transitions and rotated the camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / generic and authored room generators overlapped] The public-plaza room no longer receives the generic public-room wall kit underneath the authored civic build. This removes the stacked forum board, paired floating panels, duplicate wainscot and unrelated floor pads that cluttered the cast silhouette and several orbit angles.
+- [fixed / mobile grade unintentionally removed colour] The cinematic grade now treats strength as effect amount. At the mobile value of `0.72`, saturation is preserved with a restrained lift instead of being multiplied down to roughly `0.72`.
+- [improved / broad surfaces shared one beige value] The civic terrazzo base is cooler and slightly rougher, portal bounce is stronger, contact AO is lighter, and the final grade adds restrained cool-shadow/warm-highlight separation. Plaster, stone, wood, teal upholstery and skin are more distinguishable without returning to toy saturation.
+- [improved / actor materials behaved like one plastic shader] Batching now preserves explicit cloth and leather masks. Cloth receives subtle woven roughness and grazing sheen, hair gets a restrained strand response, and footwear receives a narrower leather highlight while the existing skin wrap remains intact.
+- [improved from v35 P2 / HUD dominated the tableau] Civic status rails and action surfaces use lower-opacity warm glass treatment. They retain legibility but expose more of the room and compete less with the listening circle.
+- [checked / real runtime and budgets] Four desktop/mobile screenshots, physical locomotion, camera drag, 26-zone physics, civic asset contracts, atomic scene flow, syntax and production build pass. Removing the duplicate room kit reduces the opening by `4` draw calls and `12,440` triangles versus v38.
+
+### Required fidelity surfaces and findings
+
+- [checked][spatial authorship] The hero view now has one coherent hierarchy: sunlit threshold and display evidence in the foreground, four citizens in the listening circle, and the authored listening wall/living bay behind them. The obvious template collision is absent.
+- [checked][orbit and responsive performance] Desktop stays at `151–154` calls and `266,616–281,508` triangles; mobile is `94 / 225,602`. Player, social target and a designed room landmark remain readable at `0°`, `90°`, `180°` and portrait framing.
+- [checked][movement and physical continuity] The final room supports real metre-space walking and a `65.3°` player-controlled camera turn; the furniture physics contract is unchanged and all 26 zones still validate.
+- [P1][artist-authored character finish remains below the source] Same-canvas comparison still exposes boxier head/body transitions, simplified facial planes, hair roots, hands, shoes and cloth compression. The material hierarchy improves response but cannot replace role-authored topology, corrective poses and baked surface maps.
+- [P1][cinematic light transport remains below the source] Portal bounce and material separation improve the frame, but the source still has richer bounced daylight, softer contact penumbrae, more nuanced local shadow colour and denser glass/paper/foliage microdetail.
+- [P2][secondary orbit walls remain more graphic than tactile] The quarter and reverse landmarks are spatially coherent, but several framed response panels still read as flat symbol boards rather than crafted paper, cork, glazing and joinery.
+
+### Gate result
+
+v39 removes the accidental template overlap, fixes the mobile colour-grade defect and establishes a clearer room/actor/HUD material hierarchy while preserving physical exploration and full orbit performance. The mandatory same-canvas comparison still shows actionable P1 gaps in production character topology and source-level indirect light, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character topology/surface maps and source-level baked or probe-driven indirect light remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v35 character-readability and facial-shadow gate
 
 ### Evidence inspected together
