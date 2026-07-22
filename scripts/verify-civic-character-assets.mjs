@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v29", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v30", "civic character sculpt contract is stale");
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -32,7 +32,7 @@ assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face deca
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v1", "civic facial morph contract is stale");
-assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v6", "civic facial volume integration contract is stale");
+assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v7", "civic facial volume integration contract is stale");
 assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "NoseContour", "MouthClosed"], "civic sculpted facial parts changed");
 assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-morph-v1", "civic mouth morph contract is stale");
 assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v1", "civic eye geometry contract is stale");
@@ -89,6 +89,10 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("EyeOutline_1")), `${role}: right eye silhouette is missing`);
   assert(contents.includes(Buffer.from("LowerLid_-1")), `${role}: left sculpted lower lid is missing`);
   assert(contents.includes(Buffer.from("LowerLid_1")), `${role}: right sculpted lower lid is missing`);
+  assert(contents.includes(Buffer.from("EarShell_-1")), `${role}: left sculpted ear shell is missing`);
+  assert(contents.includes(Buffer.from("EarShell_1")), `${role}: right sculpted ear shell is missing`);
+  assert(contents.includes(Buffer.from("EarConcha_-1")), `${role}: left inset ear concha is missing`);
+  assert(contents.includes(Buffer.from("EarConcha_1")), `${role}: right inset ear concha is missing`);
   assert(contents.includes(Buffer.from("UpperLidSkin_-1")), `${role}: left integrated upper lid surface is missing`);
   assert(contents.includes(Buffer.from("UpperLidSkin_1")), `${role}: right integrated upper lid surface is missing`);
   assert(contents.includes(Buffer.from("LowerLidSkin_-1")), `${role}: left integrated lower lid surface is missing`);

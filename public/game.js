@@ -5739,16 +5739,16 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         assetIntent: "civic-record-desk",
         renderModel: false,
         physicsSolid: true,
-        worldX: -2.35,
-        worldZ: 2.62,
+        worldX: -2.56,
+        worldZ: 2.7,
         rotationY: 2.12,
         // Keep the foreground frame readable without letting it dominate the
         // listening circle. The collider includes the tapered legs and brief,
         // while staying within 10cm of the rendered tabletop footprint.
-        displayScale: 1.18,
-        collider: { shape: "box", halfX: 1.1, halfY: 1.08, halfZ: 0.55, rotation: 2.12 },
-        interactionWorldX: -1.4,
-        interactionWorldZ: 1.74
+        displayScale: 1.08,
+        collider: { shape: "box", halfX: 1.1, halfY: 0.84, halfZ: 0.52, rotation: 2.12 },
+        interactionWorldX: -1.58,
+        interactionWorldZ: 1.82
       },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 4.08, worldZ: -0.64, interactionWorldX: 3.15, interactionWorldZ: -0.15 }

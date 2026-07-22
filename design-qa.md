@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v31 foreground editorial desk and sculpted-ear gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `tmp/v31-character-desk-ready.png` (`1600 × 900`, CSS viewport `1600 × 900`, DPR normalized to `1` for comparison).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v31.png`; source and implementation are normalized to the same `16:9` frame and shown side by side in the same comparison image.
+- Focused desktop orbit evidence: `tmp/v31-desktop-yaw90.png` (`156 / 294,060`) and `tmp/v31-desktop-yaw180.png` (`158 / 292,612`).
+- Physical movement evidence: `tmp/v31-character-walk.png`; automated exploration walked `3.33m` and rotated the camera `65.3°`.
+- Mobile evidence: `tmp/v31-mobile-390x844.png` (`390 × 844`, `98 / 239,938`, three-character mobile LOD).
+- State: opening public listening-circle scene, 06:00, no modal; source and implementation share the same story tableau but not identical furniture inventory.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v30 P1 / foreground agenda read as a giant easel] The `0.70 × 0.58m` upright board is replaced by a `0.58 × 0.42m` low-angle drafting clipboard with two physical walnut rests. The desk top is wider and lower, so lamp, paper, pen cup, file tray and water glass form a layered foreground still life instead of hiding behind one slab.
+- [fixed / foreground render and collision scale diverged] The record desk profile, visible transform, collider height and reachable interaction point now share the same lowered authored contract. The player cannot collide with the former invisible tall board.
+- [improved from v30 P1 / ears read as glued-on beads] Sculpt v30 / facial volume v7 replaces paired ear ellipsoids with a custom helix shell, recessed concha bowl, back thickness and antihelix curve on all four roles. The result remains real lit geometry through front, quarter and reverse views.
+- [checked / runtime and motion] All four desktop actors expose facial volume v7, two volumetric eyes, continuous limb skin, independent wrists and authored action clips. Real WASD movement and drag orbit pass without sprite fallback.
+- [checked / responsive performance] Opening desktop is `155 / 279,168`; quarter and reverse stay below `160 / 300,000`; mobile remains below `110 / 250,000` with joystick and contextual actions.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD and room copy remain readable with consistent optical weight and no truncation at desktop/mobile sizes. The implementation HUD is intentionally denser than the reference and remains a P2 optical-hierarchy difference.
+- [checked][spacing and layout rhythm] The lower foreground desk now frames rather than occludes the circle. Player, three witnesses, exit and primary evidence wall remain readable at 0°, 90° and 180°; mobile retains a centered movement lane and 52px-class action controls.
+- [checked][colors and visual tokens] Warm plaster, neutral terrazzo, oak, teal, coral and brass preserve the reference palette hierarchy, but the implementation remains brighter and flatter in broad wall/floor values than the source.
+- [checked][image quality and asset fidelity] All visible cast and hero furniture are real 3D assets or authored Three.js geometry with side/back surfaces, shadows and occlusion; no sprite or billboard replacement is used. The new ear shell and desk assembly sharpen silhouette fidelity without breaking budgets.
+- [checked][copy and content] “倾听墙”, “邻里广场 · 场所回声”, “倾听线索” and the four civic actions remain aligned to the same social-listening story state; no private-memory copy appears in the screenshot.
+- [P1][character production finish remains below the source] Ear anatomy is materially improved, but the same-canvas pair still exposes coarser eyelid-to-cheek flow, hand contact, hair roots, cloth compression and shoe finish. Concrete next fix: artist-authored normal/roughness maps and role-specific corrective head/hand/cloth meshes rather than more primitive detail stacking.
+- [P1][room light transport and micro-story density remain below the source] The reference has stronger portal sunlight, softer indirect penumbrae, darker value grouping and denser ceramics/paper/glass storytelling. The current room is spatially coherent but still reads brighter, cleaner and more procedural. Concrete next fix: bake or probe a civic-only bounce/lightmap pass and upgrade the display case/sideboard content density while keeping the open route.
+- [P2][mobile upper wall remains under-authored] Portrait framing keeps gameplay clear but still spends too much vertical space on pale wall. A mobile-specific target should lift the listening wall and portal into the upper third.
+- [P2][HUD remains optically heavy] The dark top rails and bottom segmented action bar pull more attention than the source's translucent treatment.
+
+### Gate result
+
+v31 fixes the largest foreground composition defect and replaces bead-like ears with true orbit-safe anatomy while preserving atomic entry, physical locomotion and strict desktop/mobile budgets. The same-canvas comparison still shows actionable P1 gaps in character surface/contact finish and civic indirect-light/micro-story density, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: artist-quality head/hand/cloth surface finish and source-level indirect light/material storytelling remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v30 eye-line composition, tactile story rug and volumetric gaze gate
 
 ### Evidence inspected together

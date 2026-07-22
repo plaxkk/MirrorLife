@@ -2765,14 +2765,14 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   // four tapered legs preserve negative space under the desk from the orbit.
   const wood = createToonMaterial("#b88759", { roughness: 0.9, envMapIntensity: 0.34 });
   const trim = createToonMaterial("#6f4c36", { roughness: 0.86, envMapIntensity: 0.34 });
-  const top = new THREE.Mesh(new RoundedBoxGeometry(1.9, 0.13, 0.86, 6, 0.065), wood);
-  top.position.y = 0.79;
+  const top = new THREE.Mesh(new RoundedBoxGeometry(2.02, 0.12, 0.94, 6, 0.06), wood);
+  top.position.y = 0.77;
   group.add(top);
-  const frontEdge = new THREE.Mesh(new RoundedBoxGeometry(1.76, 0.07, 0.05, 3, 0.022), trim);
-  frontEdge.position.set(0, 0.755, 0.425);
+  const frontEdge = new THREE.Mesh(new RoundedBoxGeometry(1.88, 0.065, 0.05, 3, 0.022), trim);
+  frontEdge.position.set(0, 0.735, 0.465);
   group.add(frontEdge);
-  const apron = new THREE.Mesh(new RoundedBoxGeometry(1.6, 0.2, 0.12, 4, 0.038), wood);
-  apron.position.set(0, 0.64, 0.34);
+  const apron = new THREE.Mesh(new RoundedBoxGeometry(1.72, 0.18, 0.12, 4, 0.038), wood);
+  apron.position.set(0, 0.63, 0.38);
   group.add(apron);
   const drawerFront = new THREE.Mesh(
     new RoundedBoxGeometry(0.62, 0.14, 0.035, 3, 0.025),
@@ -2787,8 +2787,8 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   drawerPull.scale.set(1.35, 0.76, 0.72);
   drawerPull.position.set(0.34, 0.64, 0.455);
   group.add(drawerPull);
-  [-0.76, 0.76].forEach((x) => {
-    [-0.29, 0.29].forEach((z) => {
+  [-0.82, 0.82].forEach((x) => {
+    [-0.32, 0.32].forEach((z) => {
       const leg = new THREE.Mesh(new THREE.CylinderGeometry(0.04, 0.057, 0.72, 16), trim);
       leg.position.set(x, 0.39, z);
       leg.rotation.z = x * 0.028;
@@ -2812,10 +2812,10 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     microProps.add(note);
   });
   const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.052, 18), trim);
-  lampBase.position.set(-0.9, 0.89, -0.08);
+  lampBase.position.set(-0.84, 0.855, -0.2);
   group.add(lampBase);
   const lampStem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.021, 0.43, 12), trim);
-  lampStem.position.set(-0.9, 1.09, -0.08);
+  lampStem.position.set(-0.84, 1.055, -0.2);
   lampStem.rotation.z = 0.11;
   group.add(lampStem);
   const shade = new THREE.Mesh(
@@ -2823,43 +2823,43 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     createToonMaterial("#356f68", { roughness: 0.74, envMapIntensity: 0.46 })
   );
   shade.scale.set(1.22, 0.58, 0.9);
-  shade.position.set(-0.94, 1.27, -0.08);
+  shade.position.set(-0.88, 1.235, -0.2);
   group.add(shade);
   const lampGlow = new THREE.PointLight(0xffc77a, 0.32, 2.1, 2.2);
-  lampGlow.position.set(-0.94, 1.19, -0.08);
+  lampGlow.position.set(-0.88, 1.155, -0.2);
   lampGlow.castShadow = false;
   group.add(lampGlow);
 
-  // The reference foreground is anchored by a standing civic brief, not an
-  // anonymous tabletop. Keep this full-volume board inside the desk collider
-  // so it stays believable when the player walks around the reverse side.
+  // Keep the agenda readable, but treat it as a low drafting-board clipboard
+  // resting on the desk. The former upright 0.7m board filled the foreground
+  // like an easel, hid the editorial props and contradicted the reference's
+  // low, layered record-desk silhouette.
   const brief = new THREE.Group();
-  brief.position.set(-0.28, 1.2, 0.14);
+  brief.position.set(-0.34, 0.985, 0.12);
   // The desk itself is angled toward the listening circle. Counter-rotate the
   // brief so its content faces the authored opening camera rather than showing
   // a bright edge-on slab as it did in v92.
-  brief.rotation.y = -1.08;
-  brief.rotation.z = -0.02;
+  brief.rotation.set(-0.86, -1.08, -0.015);
   group.add(brief);
   const briefFrame = new THREE.Mesh(
-    new RoundedBoxGeometry(0.7, 0.58, 0.065, 4, 0.045),
+    new RoundedBoxGeometry(0.58, 0.42, 0.055, 4, 0.038),
     createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.8, surface: "wood", bumpScale: 0.008, envMapIntensity: 0.44 })
   );
   brief.add(briefFrame);
   const briefPaper = new THREE.Mesh(
-    new RoundedBoxGeometry(0.62, 0.5, 0.022, 3, 0.03),
+    new RoundedBoxGeometry(0.51, 0.35, 0.018, 3, 0.025),
     createToonMaterial("#f3ead9", { roughness: 0.96, surface: "paper", bumpScale: 0.004 })
   );
   briefPaper.position.z = 0.045;
   brief.add(briefPaper);
   const briefBack = new THREE.Mesh(
-    new RoundedBoxGeometry(0.62, 0.5, 0.024, 3, 0.03),
+    new RoundedBoxGeometry(0.51, 0.35, 0.02, 3, 0.025),
     createToonMaterial("#956744", { roughness: 0.88, envMapIntensity: 0.34 })
   );
   briefBack.position.z = -0.045;
   brief.add(briefBack);
   const briefArtwork = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.59, 0.47),
+    new THREE.PlaneGeometry(0.485, 0.33),
     createToonMaterial("#ffffff", {
       roughness: 0.96,
       map: getCivicBriefTexture(),
@@ -2869,11 +2869,23 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   briefArtwork.position.z = 0.059;
   brief.add(briefArtwork);
   const briefClip = new THREE.Mesh(
-    new RoundedBoxGeometry(0.18, 0.045, 0.025, 2, 0.011),
+    new RoundedBoxGeometry(0.15, 0.038, 0.022, 2, 0.01),
     createToonMaterial("#c89a43", { roughness: 0.3, metalness: 0.68 })
   );
-  briefClip.position.set(0, 0.285, 0.071);
+  briefClip.position.set(0, 0.205, 0.063);
   brief.add(briefClip);
+
+  // Two walnut wedges make the readable angle physically believable from
+  // every orbit instead of leaving the clipboard apparently floating.
+  [-0.2, 0.2].forEach((x) => {
+    const rest = new THREE.Mesh(
+      new RoundedBoxGeometry(0.035, 0.26, 0.035, 2, 0.012),
+      createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.84, surface: "wood", bumpScale: 0.007 })
+    );
+    rest.position.set(x, -0.08, -0.13);
+    rest.rotation.x = 0.86;
+    brief.add(rest);
+  });
 
   // Editorial micro-props give the foreground the lived-in density of the
   // reference while staying inside the authored desk footprint/collider.
@@ -6727,7 +6739,7 @@ function createCivicActorObject(actor, asset) {
     ]);
     const mobileDetailPrefixes = [
       "FingerCrease_",
-      "EarInner_",
+      "EarConcha_",
       "EyeGlint_",
       "OuterLash_",
       "CoatButton_",
@@ -7883,7 +7895,7 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v6"
+          ? "mirrorlife-civic-face-volume-v7"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-volume-v3"
             : "mirrorlife-civic-face-volume-v2",

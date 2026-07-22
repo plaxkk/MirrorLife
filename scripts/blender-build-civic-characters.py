@@ -1022,6 +1022,82 @@ def facial_lid_surface(
     return obj
 
 
+def sculpted_ear_shell(name, location, skin_mat, concha_mat, parent=None, side=1, segments=24):
+    """Create an inset helix/concha ear instead of two stacked ellipsoids.
+
+    The old ear read as a bead glued to the head in three-quarter views.  This
+    single authored shell has a raised outer helix, a recessed bowl and real
+    back thickness, so the silhouette and shadow survive a full camera orbit.
+    """
+    width = 0.041
+    height = 0.058
+    vertices = []
+    for index in range(segments):
+        angle = math.tau * index / segments
+        cosine = math.cos(angle)
+        sine = math.sin(angle)
+        # Four elliptical rings: front helix, inset concha lip and their back
+        # surfaces.  Slight asymmetry at the lobe avoids a perfect torus read.
+        lobe = max(0.0, -sine) * 0.004
+        vertices.extend((
+            (side * cosine * width, -0.004, sine * height - lobe),
+            (side * cosine * width * 0.54, -0.022, sine * height * 0.61 - lobe * 0.35),
+            (side * cosine * width, 0.018, sine * height - lobe),
+            (side * cosine * width * 0.5, 0.008, sine * height * 0.58 - lobe * 0.3),
+        ))
+    front_center = len(vertices)
+    vertices.append((side * 0.004, 0.002, -0.006))
+    back_center = len(vertices)
+    vertices.append((0, 0.019, -0.004))
+    faces = []
+    for index in range(segments):
+        following = (index + 1) % segments
+        outer_front = index * 4
+        inner_front = outer_front + 1
+        outer_back = outer_front + 2
+        inner_back = outer_front + 3
+        next_outer_front = following * 4
+        next_inner_front = next_outer_front + 1
+        next_outer_back = next_outer_front + 2
+        next_inner_back = next_outer_front + 3
+        faces.extend((
+            (outer_front, next_outer_front, next_inner_front, inner_front),
+            (outer_back, inner_back, next_inner_back, next_outer_back),
+            (outer_front, outer_back, next_outer_back, next_outer_front),
+            (inner_front, next_inner_front, front_center),
+            (inner_back, back_center, next_inner_back),
+        ))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    obj.location = location
+    link_material(obj, skin_mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Ear helix softness", "BEVEL")
+    bevel.width = 0.0026
+    bevel.segments = 2
+
+    # A short curved antihelix gives the inset bowl a readable warm shadow at
+    # gameplay distance without returning to a painted, camera-facing decal.
+    curve_tube(
+        f"EarConcha_{side}",
+        [
+            (location[0] - side * 0.006, location[1] - 0.024, location[2] + 0.025),
+            (location[0] + side * 0.011, location[1] - 0.028, location[2] + 0.006),
+            (location[0] + side * 0.006, location[1] - 0.026, location[2] - 0.023),
+        ],
+        0.0032,
+        concha_mat,
+        parent,
+        resolution=2,
+    )
+    return obj
+
+
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.64, clearcoat=0.05),
@@ -1152,8 +1228,14 @@ def build_face(head, mats, role):
         if z < -0.08:
             attentive_co.z += front * lower * 0.003
     for side in (-1, 1):
-        ellipsoid(f"Ear_{side}", (side * 0.236, 0.004, -0.014), (0.038, 0.023, 0.054), mats["skin"], head, segments=20, rings=12)
-        ellipsoid(f"EarInner_{side}", (side * 0.248, -0.019, -0.014), (0.012, 0.005, 0.024), mats["blush"], head, segments=12, rings=8)
+        sculpted_ear_shell(
+            f"EarShell_{side}",
+            (side * 0.236, 0.004, -0.014),
+            mats["skin"],
+            mats["blush"],
+            head,
+            side,
+        )
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
@@ -1997,7 +2079,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v29",
+        "sculptContract": "mirrorlife-civic-sculpt-v30",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2019,7 +2101,7 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v6",
+            "integrationContract": "mirrorlife-civic-face-volume-v7",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "NoseContour", "MouthClosed"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
