@@ -640,16 +640,15 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
 
 
 def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 0), side=1, pose_style="relaxed"):
-    """Build an overlapping palm-and-finger hand for conversational acting.
+    """Build a compact illustrated hand that stays legible at story distance.
 
-    The v9 mitten removed gaps but also erased the finger silhouette visible
-    in the reference cast. A shorter continuous palm now overlaps four tapered
-    finger volumes by roughly 2.5 cm. Runtime batching still collapses the
-    pieces into one elbow draw, while the outer contour reads as a real hand
-    from front, side and notebook-holding poses.
+    The previous thin, splayed fingers turned into a dark wire fan once the
+    actor occupied fewer than thirty screen pixels. Keep four real volumes for
+    orbit and contact poses, but cluster them into the calm rounded silhouette
+    used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v1"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v2"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -681,10 +680,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # x, length, radius, lateral splay and fingertip curl.  A small
         # fan-and-curl silhouette reads as a relaxed hand instead of four
         # parallel dowels while keeping the same four-ring finger topology.
-        (-0.041, 0.058, 0.0134, -side * 0.004, 0.009),
-        (-0.014, 0.069, 0.0148, -side * 0.0015, 0.012),
-        (0.014, 0.066, 0.0146, side * 0.0015, 0.013),
-        (0.041, 0.054, 0.0128, side * 0.0045, 0.011),
+        (-0.038, 0.047, 0.0162, -side * 0.002, 0.006),
+        (-0.013, 0.055, 0.0174, -side * 0.0008, 0.008),
+        (0.013, 0.053, 0.0172, side * 0.0008, 0.008),
+        (0.038, 0.045, 0.0156, side * 0.0022, 0.006),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         finger_pivot = empty(
@@ -697,8 +696,8 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             ),
             (
                 -profile["curl"] * (0.72 + finger_index * 0.055),
-                side * splay * profile["splay"] * 2.6,
-                -side * splay * profile["splay"] * 1.7,
+                side * splay * profile["splay"] * 1.35,
+                -side * splay * profile["splay"] * 0.9,
             ),
         )
         organic_limb(
@@ -744,19 +743,6 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         thumb_pivot,
         sides=8,
     )
-    for crease_index, crease_x in enumerate((-0.025, 0.0, 0.025), start=1):
-        curve_tube(
-            f"FingerCrease_{side}_{crease_index}",
-            [
-                (crease_x, -0.039, -0.026),
-                (crease_x * 0.94, -0.041, -0.052),
-            ],
-            0.0026,
-            crease_mat,
-            hand_pivot,
-            resolution=1,
-            bevel_resolution=1,
-        )
     return hand_pivot
 
 
@@ -1290,20 +1276,9 @@ def build_face(head, mats, role):
             mats["skin"],
             eye,
         )
-        curve_tube(
-            f"EyeOutline_{side}",
-            [
-                (side * eye_width * 0.68, -0.017, -0.002),
-                (side * eye_width * 0.86, -0.0175, 0.003),
-                (side * eye_width, -0.017, 0.011 + side * outer_lift),
-            ],
-            0.00095,
-            mats["skin_shadow"],
-            eye,
-            resolution=2,
-        )
-        # Upper lids/lashes preserve the drawn identity at normal gameplay
-        # distance. They remain children of EyePivot, so blinking still works.
+        # One clean upper contour carries the expression at gameplay distance.
+        # The former lower line, outer outline and crease stacked into three
+        # dark stripes after shadowing and made every face look tired.
         curve_tube(
             f"UpperLid_{side}",
             [
@@ -1311,16 +1286,8 @@ def build_face(head, mats, role):
                 (0, -0.019, eye_height - 0.001),
                 (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
             ],
-            0.0031 if feminine else 0.0028,
+            0.00255 if feminine else 0.0023,
             mats["ink"],
-            eye,
-            resolution=2,
-        )
-        curve_tube(
-            f"LowerLid_{side}",
-            [(-eye_width * 0.66, -0.017, -0.01), (0, -0.018, -eye_height * 0.68), (eye_width * 0.66, -0.017, -0.01)],
-            0.00105,
-            mats["skin_shadow"],
             eye,
             resolution=2,
         )
@@ -1333,19 +1300,6 @@ def build_face(head, mats, role):
                 eye,
                 resolution=2,
             )
-        curve_tube(
-            f"EyelidCrease_{side}",
-            [
-                (-eye_width * 0.7, -0.009, eye_height * 0.82),
-                (0, -0.011, eye_height * 1.25),
-                (eye_width * 0.7, -0.009, eye_height * 0.82),
-            ],
-            0.00065,
-            mats["skin_shadow"],
-            eye,
-            resolution=2,
-            bevel_resolution=2,
-        )
         brow = empty(f"BrowPivot_{side}", head, (side * 0.084, -0.204, 0.102))
         curve_tube(
             f"Brow_{side}",
@@ -1354,21 +1308,13 @@ def build_face(head, mats, role):
                 (0, -0.007, face_profile["brow_apex"]),
                 (-side * 0.052, 0.003, face_profile["brow_inner"]),
             ],
-            0.0045 if feminine else 0.0047,
+            0.0038 if feminine else 0.004,
             mats["hair"],
             brow,
         )
         ellipsoid(f"Blush_{side}", (side * 0.152, -0.194, -0.047), (0.020, 0.0032, 0.0065), mats["blush"], head, segments=16, rings=8)
     ellipsoid("NoseBridge", (0, -0.19, 0.004), (0.009, 0.007, 0.025), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
-    curve_tube(
-        "NoseContour",
-        [(0.008, -0.207, 0.006), (0.012, -0.211, -0.018), (0.003, -0.212, -0.034)],
-        0.0017,
-        mats["skin_shadow"],
-        head,
-        resolution=2,
-    )
     mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
     closed = empty("MouthClosedPivot", mouth)
     mouth_width = face_profile["mouth_width"]
@@ -1618,15 +1564,15 @@ def build_body(role, config, mats, visual):
         "SkinnedArmVolume",
         (-0.234, 0.234),
         (
-            (1.2, 0.09, 0.082, 0.002),
-            (1.15, 0.099, 0.09, 0.003),
-            (1.07, 0.094, 0.086, 0.004),
-            (1.0, 0.084, 0.076, 0.003),
-            (0.965, 0.075, 0.07, 0),
-            (0.925, 0.077, 0.071, -0.002),
-            (0.85, 0.074, 0.068, -0.004),
-            (0.775, 0.068, 0.061, -0.004),
-            (0.705, 0.058, 0.052, -0.002),
+            (1.2, 0.083, 0.075, 0.002),
+            (1.15, 0.091, 0.083, 0.003),
+            (1.07, 0.086, 0.079, 0.004),
+            (1.0, 0.077, 0.07, 0.003),
+            (0.965, 0.069, 0.064, 0),
+            (0.925, 0.071, 0.065, -0.002),
+            (0.85, 0.068, 0.063, -0.004),
+            (0.775, 0.063, 0.056, -0.004),
+            (0.705, 0.054, 0.048, -0.002),
         ),
         0.965,
         sleeve_mat,
@@ -1638,15 +1584,15 @@ def build_body(role, config, mats, visual):
         "SkinnedLegVolume",
         (-0.145, 0.145),
         (
-            (0.73, 0.132, 0.12, 0.002),
-            (0.65, 0.135, 0.123, 0.004),
-            (0.55, 0.121, 0.111, 0.006),
-            (0.475, 0.101, 0.093, 0.003),
-            (0.445, 0.092, 0.085, 0),
-            (0.405, 0.096, 0.089, -0.002),
-            (0.33, 0.105, 0.098, -0.005),
-            (0.245, 0.098, 0.091, -0.005),
-            (0.155, 0.076, 0.07, -0.002),
+            (0.73, 0.121, 0.11, 0.002),
+            (0.65, 0.124, 0.113, 0.004),
+            (0.55, 0.111, 0.102, 0.006),
+            (0.475, 0.093, 0.086, 0.003),
+            (0.445, 0.085, 0.078, 0),
+            (0.405, 0.088, 0.082, -0.002),
+            (0.33, 0.097, 0.09, -0.005),
+            (0.245, 0.09, 0.084, -0.005),
+            (0.155, 0.07, 0.064, -0.002),
         ),
         0.445,
         mats["lower"],
@@ -2079,7 +2025,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v30",
+        "sculptContract": "mirrorlife-civic-sculpt-v31",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2101,15 +2047,15 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v7",
-            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "NoseContour", "MouthClosed"],
+            "integrationContract": "mirrorlife-civic-face-volume-v8",
+            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "MouthClosed"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v1",
+            "version": "mirrorlife-civic-hand-v2",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
         },

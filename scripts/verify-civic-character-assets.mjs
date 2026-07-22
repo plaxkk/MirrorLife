@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v30", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v31", "civic character sculpt contract is stale");
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -32,13 +32,13 @@ assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face deca
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v1", "civic facial morph contract is stale");
-assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v7", "civic facial volume integration contract is stale");
-assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "NoseContour", "MouthClosed"], "civic sculpted facial parts changed");
+assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v8", "civic facial volume integration contract is stale");
+assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "MouthClosed"], "civic sculpted facial parts changed");
 assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-morph-v1", "civic mouth morph contract is stale");
 assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v1", "civic eye geometry contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v1", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v2", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin+facial-hand-acting", "civic animation runtime contract changed");
@@ -85,10 +85,6 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("EyePivot_1")), `${role}: right blink pivot is missing`);
   assert(contents.includes(Buffer.from("UpperLid_-1")), `${role}: left illustrated eye contour is missing`);
   assert(contents.includes(Buffer.from("UpperLid_1")), `${role}: right illustrated eye contour is missing`);
-  assert(contents.includes(Buffer.from("EyeOutline_-1")), `${role}: left eye silhouette is missing`);
-  assert(contents.includes(Buffer.from("EyeOutline_1")), `${role}: right eye silhouette is missing`);
-  assert(contents.includes(Buffer.from("LowerLid_-1")), `${role}: left sculpted lower lid is missing`);
-  assert(contents.includes(Buffer.from("LowerLid_1")), `${role}: right sculpted lower lid is missing`);
   assert(contents.includes(Buffer.from("EarShell_-1")), `${role}: left sculpted ear shell is missing`);
   assert(contents.includes(Buffer.from("EarShell_1")), `${role}: right sculpted ear shell is missing`);
   assert(contents.includes(Buffer.from("EarConcha_-1")), `${role}: left inset ear concha is missing`);
@@ -97,13 +93,10 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("UpperLidSkin_1")), `${role}: right integrated upper lid surface is missing`);
   assert(contents.includes(Buffer.from("LowerLidSkin_-1")), `${role}: left integrated lower lid surface is missing`);
   assert(contents.includes(Buffer.from("LowerLidSkin_1")), `${role}: right integrated lower lid surface is missing`);
-  assert(contents.includes(Buffer.from("EyelidCrease_-1")), `${role}: left authored eyelid crease is missing`);
-  assert(contents.includes(Buffer.from("EyelidCrease_1")), `${role}: right authored eyelid crease is missing`);
   assert(contents.includes(Buffer.from("EyeGlintSmall_-1")), `${role}: left secondary eye catchlight is missing`);
   assert(contents.includes(Buffer.from("EyeGlintSmall_1")), `${role}: right secondary eye catchlight is missing`);
   assert(contents.includes(Buffer.from("NoseBridge")), `${role}: sculpted nose bridge is missing`);
   assert(contents.includes(Buffer.from("NoseTip")), `${role}: sculpted nose tip is missing`);
-  assert(contents.includes(Buffer.from("NoseContour")), `${role}: sculpted nose contour is missing`);
   if (role === "facilitator") {
     assert(contents.includes(Buffer.from("NotebookPivot")), "facilitator: unified notebook transform pivot is missing");
     assert(contents.includes(Buffer.from("NotebookSpine")), "facilitator: held notebook spine is missing");
@@ -146,8 +139,6 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("FingerPivot_1_4")), `${role}: right finger grip pivot is missing`);
   assert(contents.includes(Buffer.from("LeftKneePivot")), `${role}: left knee articulation is missing`);
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
-  assert(contents.includes(Buffer.from("FingerCrease_-1_3")), `${role}: left sculpted-hand finger separation is missing`);
-  assert(contents.includes(Buffer.from("FingerCrease_1_3")), `${role}: right sculpted-hand finger separation is missing`);
   assert(contents.includes(Buffer.from("FingerVolume_-1_4")), `${role}: left articulated finger volume is missing`);
   assert(contents.includes(Buffer.from("FingerVolume_1_4")), `${role}: right articulated finger volume is missing`);
   if (role === "player") {

@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v35 character-readability and facial-shadow gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v35-iab-desktop-yaw0.png` (`1600 × 900`, `155 / 279,056`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v35.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Focused cast evidence: `tmp/v34-reference-cast.png` and `tmp/v35-current-cast.png`.
+- Quarter and reverse orbit evidence: `tmp/v34-iab-desktop-yaw90.png` (`157 / 293,948`, `4.17m` orbit) and `tmp/v34-iab-desktop-yaw180.png` (`159 / 292,500`, `4.60m` orbit).
+- Mobile evidence: `tmp/v34-iab-mobile-390x844.png` (`390 × 844`, `98 / 238,042`, three-character LOD).
+- Physical exploration evidence: `tmp/v35-character-walk.png`; the browser regression completed authored walk, idle return, camera drag and scene-ready assertions.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v33 P1 / faces accumulated several dark horizontal bands] Sculpt v31 removes redundant eye outline, lower-lid ink, eyelid crease and nose-contour tubes. One thinner upper-lid contour now carries the illustrated eye language while real upper/lower lid surfaces preserve orbit-safe volume.
+- [fixed / tiny facial pieces cast dirty VSM stripes] Facial volume, eyes and expression-mouth surfaces retain PBR response but no longer participate in the shadow map. A camera-side actor-only warm fill restores eye and skin readability without flattening the room.
+- [fixed from v33 P1 / fingers collapsed into dark wires] Hand v2 shortens, thickens and clusters four real finger volumes, removes decorative crease tubes and preserves independent wrist pivots plus notebook/listening/contact poses.
+- [improved / limbs read as thick procedural tubes] Continuous arm and leg skin radii are reduced by roughly eight to ten percent while the `1.72m` player scale, capsule, bones, animation and foot contact remain unchanged.
+- [checked / production contracts] Four regenerated GLBs expose sculpt v31, facial volume v8, hand v2, continuous skin and the existing animation set. Total character payload falls to `6.36 MB`.
+- [checked / real runtime] In-app Browser reached atomic `ready` with all four volumetric actors. Real movement/orbit, 26-zone physics, desktop/mobile scene flow, syntax and production build all pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][face readability] The focused cast comparison no longer shows the former triple eye bands or nose stripe. Sclera, iris, expression and role identity remain readable at the authored story camera and through the real quarter/reverse orbit.
+- [checked][hand and body silhouette] Hands read as compact illustrated volumes instead of separated wire fans; slimmer limbs move the cast closer to the reference's editorial `1:3.5` proportion without creating gaps in the continuous skin.
+- [checked][responsive/performance] Desktop remains at `155–159` calls and `279,056–293,948` triangles; mobile remains at `98 / 238,042`, all inside the strict civic budgets.
+- [P1][artist-authored character finish remains below the source] The same-canvas comparison still exposes simpler cloth compression, hair-root transitions, footwear construction, face normals and hand contact than the reference. The geometry is now clean and readable, but it still reads as procedural low-poly rather than production character art.
+- [P1][cinematic indirect light and material microdetail remain below the source] Character-only fill improves faces, but the reference still has softer portal bounce, richer contact penumbrae, denser fabric/paper/wood response and more nuanced local shadow colour.
+- [P2][HUD remains optically heavy] The dark top rails and segmented action bar still compete with the social tableau more than the reference's translucent treatment.
+- [P2][mobile background framing remains under-authored] Portrait framing is usable and within performance budget, but too much pale upper architecture remains compared with the reference's stronger story landmark composition.
+
+### Gate result
+
+v35 closes the highest-noise facial-shadow, wire-finger and heavy-limb defects while preserving the full animation, physics, orbit, responsive and performance contracts. The mandatory same-canvas comparison still shows actionable P1 gaps in artist-authored character surfaces and source-level indirect light, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production cloth/hair/skin/hand-contact assets and source-level indirect-light/material transport remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v33 directional-light, curated-display and orbit-shell gate
 
 ### Evidence inspected together

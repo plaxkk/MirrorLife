@@ -430,7 +430,7 @@ function ensureLayer() {
 
   // A camera-side fill is restricted to the actor layer. It keeps eyes and
   // expressions readable at every orbit angle without flattening the room.
-  actorFaceLight = new THREE.PointLight(0xffe3c6, 0.7, 12, 1.7);
+  actorFaceLight = new THREE.PointLight(0xffead9, 0.82, 12, 1.7);
   actorFaceLight.layers.set(1);
   scene.add(actorFaceLight);
 
@@ -1495,8 +1495,8 @@ function applyLightingPreset(theme = {}) {
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.54 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.6 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
@@ -6783,8 +6783,20 @@ function createCivicActorObject(actor, asset) {
   const headMergeExclusions = fullExpressionLod && faceMorphMesh?.morphTargetDictionary
     ? [...expressionPivots, faceMorphMesh, ponytailPivot, faceDecal].filter(Boolean)
     : [...expressionPivots, faceDecal].filter(Boolean);
-  mergeActorVertexColorMeshes(headGroup, headMergeExclusions, { roughness: 0.6, envMapIntensity: 0.78 });
+  const softenFacialShadowing = (mesh) => {
+    if (!mesh) return mesh;
+    // Tiny volumetric lids, fringe and nose pieces previously cast several
+    // VSM bands across the face. The reference keeps facial light broad and
+    // lets painted features carry contrast, so retain the real geometry and
+    // PBR response without including these surfaces in the shadow map.
+    mesh.castShadow = false;
+    mesh.receiveShadow = false;
+    return mesh;
+  };
+  const headSurfaceMesh = mergeActorVertexColorMeshes(headGroup, headMergeExclusions, { roughness: 0.64, envMapIntensity: 0.72 });
+  softenFacialShadowing(headSurfaceMesh);
   if (fullExpressionLod && faceMorphMesh?.morphTargetDictionary) {
+    softenFacialShadowing(faceMorphMesh);
     const faceMaterials = Array.isArray(faceMorphMesh.material) ? faceMorphMesh.material : [faceMorphMesh.material];
     faceMaterials.filter(Boolean).forEach((material) => {
       // Keep the sculpted cheeks and jaw readable under every orbit angle.
@@ -6826,20 +6838,21 @@ function createCivicActorObject(actor, asset) {
   mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.69, envMapIntensity: 0.7 });
   if (skirtPivot) mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 });
   if (fullExpressionLod) {
-    eyePivots.forEach((eyePivot) => mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.42, envMapIntensity: 0.84 }));
+    eyePivots.forEach((eyePivot) => softenFacialShadowing(mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.46, envMapIntensity: 0.78 })));
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
     if (mouthClosedPivot && mouthOpenPivot) {
+      softenFacialShadowing(mouthClosedMesh);
       // Sculpt v28 exports the closed mouth as one morphable curve. Keeping
       // that one mesh intact costs the same draw call as the former static
       // mouth batch, but lets its corners follow the cheek expression instead
       // of floating over a deforming face.
       if (!mouthClosedMesh?.morphTargetDictionary) {
-        mergeActorVertexColorMeshes(mouthClosedPivot, [], { roughness: 0.54, envMapIntensity: 0.7 });
+        softenFacialShadowing(mergeActorVertexColorMeshes(mouthClosedPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
       }
-      mergeActorVertexColorMeshes(mouthOpenPivot, [], { roughness: 0.5, envMapIntensity: 0.72 });
+      softenFacialShadowing(mergeActorVertexColorMeshes(mouthOpenPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
       mouthOpenPivot.visible = false;
     } else {
-      mergeActorVertexColorMeshes(mouthPivot, [], { roughness: 0.58, envMapIntensity: 0.68 });
+      softenFacialShadowing(mergeActorVertexColorMeshes(mouthPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
     }
     if (faceMorphMesh?.morphTargetDictionary && faceMorphMesh?.morphTargetInfluences) {
       // Atomic room reveal should present a socially alive cast immediately.
@@ -7892,14 +7905,14 @@ function getStats() {
         rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v1",
+        version: "mirrorlife-civic-hand-v2",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v7"
+          ? "mirrorlife-civic-face-volume-v8"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-volume-v3"
             : "mirrorlife-civic-face-volume-v2",
