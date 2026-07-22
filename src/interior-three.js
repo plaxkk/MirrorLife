@@ -84,11 +84,11 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  // The public room is intentionally warm, but the former orange key and low
-  // exposure collapsed plaster, skin and timber into one ochre value. Keep a
-  // strong doorway direction while restoring the neutral daylight and soft
-  // lower-body bounce visible in the reference.
-  "civic-ivory": { key: 1.46, fill: 0.38, hemi: 0.34, bounce: 0.58, wash: 0.5, exposure: 0.86, keyColor: "#ffe1bf", fillColor: "#bddbd8" },
+  // The public room is intentionally warm, but broad ambient fill previously
+  // collapsed plaster, skin and timber into one pale value. Concentrate energy
+  // in the doorway key and keep the cool/global fills restrained so the room
+  // preserves the reference's directional value grouping.
+  "civic-ivory": { key: 1.78, fill: 0.22, hemi: 0.23, bounce: 0.34, wash: 0.3, exposure: 0.79, keyColor: "#ffd29f", fillColor: "#a8cbd0" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -1467,7 +1467,7 @@ function applyLightingPreset(theme = {}) {
   if (keyLight) {
     keyLight.intensity = preset.key;
     keyLight.color.set(preset.keyColor);
-    if (theme.zoneId === "public-plaza") keyLight.position.set(-5.8, 7.6, -4.1);
+    if (theme.zoneId === "public-plaza") keyLight.position.set(-5.9, 7.8, -3.4);
     else keyLight.position.set(-5.2, 7.2, 4.8);
   }
   if (fillLight) {
@@ -1477,31 +1477,31 @@ function applyLightingPreset(theme = {}) {
   if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
   if (warmBounceLight) {
     warmBounceLight.intensity = preset.bounce;
-    if (theme.zoneId === "public-plaza") warmBounceLight.position.set(0.35, 0.52, 0.65);
+    if (theme.zoneId === "public-plaza") warmBounceLight.position.set(-1.15, 0.64, -0.35);
     else warmBounceLight.position.set(-0.6, 2.9, 1.8);
   }
   if (windowWashLight) {
     windowWashLight.intensity = preset.wash;
-    if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.1, 5.4, -3.6);
+    if (theme.zoneId === "public-plaza") windowWashLight.position.set(-5.35, 5.7, -3.15);
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.68 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.5 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.26) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.18) : 0;
   }
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.54 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.38 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 12 : 9;
-    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 32 : 24;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 8 : 9;
+    keyLight.shadow.blurSamples = 24;
   }
 }
 
@@ -3949,7 +3949,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.52,
+        opacity: theme.night ? 0.1 : 0.67,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5113,7 +5113,7 @@ function rebuildRoom(theme = {}) {
 
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
-  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee2d1" : "#d9b98f");
+  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#dfd0bb" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
@@ -5130,7 +5130,7 @@ function rebuildRoom(theme = {}) {
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
       bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.48 : 0.48
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.34 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5154,7 +5154,7 @@ function rebuildRoom(theme = {}) {
     roughness: 0.94,
     surface: "plaster",
     bumpScale: 0.014,
-    envMapIntensity: theme.zoneId === "public-plaza" ? 0.42 : 0.54
+    envMapIntensity: theme.zoneId === "public-plaza" ? 0.3 : 0.54
   });
   if (theme.zoneId === "public-plaza") {
     addCivicPortalWallShell(theme, wallHeight, wallMaterial);
@@ -7532,7 +7532,11 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    ? (portrait ? 6.2 : 6.05 + civicRearArc * 0.48 + civicSideArc * 0.56)
+    // Keep the orbit inside the authored room shell. The former 6.0–6.8 m
+    // civic radius crossed the 5.6 m wall on side views, placing the entrance
+    // arch between the camera and actors as a floating black curve. A tighter
+    // player-follow radius also matches the 3.6–5.2 m camera contract.
+    ? (portrait ? 5.2 : 5.05 - civicRearArc * 0.45 - civicSideArc * 0.72)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 2.76 + civicRearArc * 0.38 + civicSideArc * 0.34) + pitchOffset * 1.35

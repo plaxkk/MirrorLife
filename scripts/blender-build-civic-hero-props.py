@@ -288,10 +288,25 @@ def build_display_case(mats):
     rounded_box("DisplayShelf", (1.68, 0.55, 0.035), (0, -0.02, 1.1), mats["glass"], root, 0.01)
     rounded_box("DisplayShelfBrassRail", (1.68, 0.025, 0.025), (0, -0.31, 1.1), mats["brass"], root, 0.008)
 
+    # The lower shelf must read as a curated community pastry/ceramic display,
+    # not four anonymous colour blobs. Layer trays, feet, glazed domes and a
+    # contrasting garnish so their silhouettes survive the gameplay camera.
+    display_materials = ("butter", "ceramic", "coral", "teal")
     for index, x in enumerate((-0.55, -0.18, 0.2, 0.56)):
         rounded_box(f"DisplayTray_{index + 1}", (0.28, 0.35, 0.035), (x, -0.04, 0.87), mats["oak"], root, 0.025)
-        sphere(f"DisplayObject_{index + 1}", (0.12, 0.14, 0.07 + (index % 2) * 0.025), (x, -0.05, 0.96), mats[("butter", "ceramic", "coral", "teal")[index]], root, 16, 10)
+        cylinder(f"DisplayObject_{index + 1}_Base", 0.105, 0.035, (x, -0.05, 0.925), mats["ivory"], root, 20)
+        sphere(f"DisplayObject_{index + 1}_Glaze", (0.105, 0.105, 0.07 + (index % 2) * 0.022), (x, -0.05, 0.985), mats[display_materials[index]], root, 18, 10)
+        sphere(f"DisplayObject_{index + 1}_Garnish", (0.03, 0.03, 0.018), (x + 0.028, -0.073, 1.055), mats["leaf" if index % 2 == 0 else "brass"], root, 12, 7)
         rounded_box(f"DisplayLabel_{index + 1}", (0.16, 0.012, 0.075), (x, -0.225, 0.9), mats["paper"], root, 0.008, (-0.22, 0, 0))
+
+    # A second evidence tier adds the small-scale narrative density visible in
+    # the reference: archive tokens, folded response cards and individual
+    # labels. Keep it behind the mullions so the cabinet still reads as glass.
+    for index, x in enumerate((-0.47, 0.0, 0.47)):
+        rounded_box(f"DisplayUpperTray_{index + 1}", (0.34, 0.28, 0.028), (x, 0.01, 1.18), mats["oak"], root, 0.02)
+        cylinder(f"DisplayArchiveToken_{index + 1}", 0.075, 0.07, (x - 0.065, -0.02, 1.245), mats[("teal", "brass", "coral")[index]], root, 16)
+        rounded_box(f"DisplayFoldedEvidence_{index + 1}", (0.13, 0.1, 0.1), (x + 0.07, -0.015, 1.245), mats[("paper", "blue", "ivory")[index]], root, 0.018, (0, 0, -0.1 + index * 0.1))
+        rounded_box(f"DisplayUpperLabel_{index + 1}", (0.14, 0.012, 0.058), (x, -0.2, 1.19), mats["paper"], root, 0.007, (-0.18, 0, 0))
 
     # Top still life gives the foreground silhouette the authored density of the target.
     # The foreground menu is the target composition's "today's topic"

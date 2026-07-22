@@ -1,5 +1,42 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v33 directional-light, curated-display and orbit-shell gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v33-desktop-yaw0.png` (`1600 × 900`, `155 / 282,064`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v33.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Final quarter and reverse orbit evidence: `tmp/v32-desktop-yaw90.png` (`156 / 296,956`, `4.17m` orbit) and `tmp/v33-desktop-yaw180.png` (`158 / 295,508`, `4.60m` orbit).
+- Mobile evidence: `tmp/v32-mobile-390x844.png` (`390 × 844`, `98 / 239,938`, three-character LOD).
+- Physical exploration evidence: `tmp/v33-character-walk.png`; browser regression walked `1.89m` and rotated the camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v31 P1 / room collapsed into one pale beige value] Civic key light is stronger and warmer at the portal while hemisphere, environment, fill, wash and bounce are reduced. Plaster, terrazzo, timber, skin and paper now form distinct value groups instead of sharing one global fill.
+- [improved from v31 P1 / glass display contained anonymous colour blobs] The foreground case now contains four tray-mounted glazed objects with bases and garnish plus a second evidence tier with archive tokens, folded response cards and labels. The rebuilt GLB remains `11,884` triangles; the complete three-prop suite is `50,500` authored triangles.
+- [fixed / side orbit crossed the room shell] The civic camera no longer expands to `6.0–6.8m`. The player-led orbit now remains within the declared `3.6–5.2m` range, preventing the entrance arch from becoming a floating black foreground curve at `90°`.
+- [checked / complete orbit and responsive performance] Opening, quarter and reverse views remain below `160 / 300,000`; mobile remains below `110 / 250,000`. Player, a social target and the action context remain readable through the real orbit.
+- [checked / runtime contracts] Civic prop verification, JavaScript syntax, 26-zone physics, desktop/mobile atomic scene flow, real movement/orbit and production build all pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][space and camera] The entrance, listening circle, evidence wall and foreground desk now retain foreground/midground/background separation without leaving the room shell. The former side-view black arch is absent in post-fix evidence.
+- [checked][material storytelling] The display case reads as curated civic evidence rather than generic decoration; doorway sunlight and the quieter cool fill better separate ceramic, glass, wood, paper and terrazzo.
+- [checked][responsive/performance] Desktop stays at `155–158` calls and `282,064–296,956` triangles; mobile stays at `98 / 239,938`.
+- [P1][character production finish remains visibly below the source] The same-canvas comparison still exposes coarse facial topology, oversized graphic features, stiff hand contacts, simplified cloth folds and weak hair-root/shoe finish. Concrete next fix: replace the current procedural face/hand/cloth surfaces with artist-authored role meshes plus baked normal/roughness maps while preserving the shared animation contract.
+- [P1][light transport is improved but not source-level] The reference still has softer bounced sunlight, finer contact penumbrae and richer local shadow colour. Current lighting has clearer direction and value grouping but still reads as real-time procedural shading rather than authored cinematic transport.
+- [P2][HUD remains optically heavy] The dark top rails and segmented bottom bar still compete with the social tableau more than the source's translucent treatment.
+- [P2][mobile upper-wall allocation remains generous] The story wall is readable, but portrait framing still gives pale architecture more vertical weight than the actors.
+
+### Gate result
+
+v33 closes the civic global-fill problem, replaces generic display blobs with legible micro-stories and restores an orbit radius that stays inside the physical room shell. The mandatory same-canvas comparison still shows an actionable P1 gap in artist-authored character surfaces and cinematic indirect light, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production-quality character face/hand/cloth assets and source-level indirect light remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v31 foreground editorial desk and sculpted-ear gate
 
 ### Evidence inspected together

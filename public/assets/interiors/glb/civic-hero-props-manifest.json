@@ -4,8 +4,8 @@
   "assets": {
     "civic-display-case": {
       "file": "civic-display-case.glb",
-      "meshes": 57,
-      "triangles": 8988
+      "meshes": 77,
+      "triangles": 11884
     },
     "civic-notice-console": {
       "file": "civic-notice-console.glb",
