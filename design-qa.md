@@ -1,5 +1,41 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v42 hybrid identity, proportion and editorial-lens gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v42-desktop-yaw0.png` (`1600 × 900`, `151 / 276,232`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v42.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Quarter and reverse orbit evidence: `tmp/v42-desktop-yaw90.png` (`152 / 291,124`, `4.32m` orbit) and `tmp/v42-desktop-yaw180.png` (`154 / 289,676`, `4.75m` orbit).
+- Mobile evidence: `tmp/v42-mobile-390x844.png` (`390 × 844`, `97 / 232,814`, three-character LOD).
+- Physical exploration evidence: `tmp/v42-character-walk.png`; the browser regression walked `5.37m`, completed the authored action/idle transitions and rotated the camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / production faces lost the existing 2D identity] The default civic face path is now a true hybrid: the role-specific illustrated brow, blush and mouth atlas deforms on a curved facial surface while real volumetric eyes, lids, nose, head and hair preserve depth, gaze, blinking, light and side/reverse occlusion. Pure atlas and pure volume remain explicit QA modes, not the production default.
+- [improved / cast read as broad-headed toy figures] Sculpt v32 shortens the head mass, extends the torso rhythm, narrows shoulders, arms and leg spacing, and moves the four roles toward the reference's editorial `1:3.5` proportion without changing the metre-space capsule or foot contact.
+- [improved / eyes and footwear dominated the silhouette] Role eye apertures, irises, pupils, highlights and contour strokes are reduced; shoe lasts, soles, ankles, tongues and laces are shorter and narrower. Faces remain readable at gameplay distance without the former doll-eye/oversized-foot weight.
+- [improved / opening camera made the characters one scale too large] The authored desktop lens moves from `45° / 5.05m` to `48° / 5.20m`. The final same-canvas pair has more breathing room around the listening circle and a closer match to the reference's cast-to-room ratio while retaining the player-led pivot and full drag orbit.
+- [checked / web and physical contracts] The four regenerated assets are `7.27 MB` total. Hybrid facial morphs, two volumetric eyes, independent wrists, continuous limb skin, real movement, camera drag, desktop/mobile atomic scene flow, 26-zone physics, syntax and strict civic performance budgets pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][identity continuity] The same role identity now survives front, quarter and reverse views: atlas features no longer replace the volumetric skull, and the volumetric head no longer discards the existing 2D avatar language.
+- [checked][proportion and framing] The slimmer cast and `48°` opening lens materially reduce the previous toy-scale feeling. Four citizens, the listening circle, threshold, evidence wall and foreground desk remain legible in the hero view.
+- [checked][movement and responsive performance] Desktop stays at `151–154` calls and `276,232–291,124` triangles; mobile is `97 / 232,814`. The player walks on the physical floor, returns to idle, and supports a real `65.3°` user camera rotation without a sprite fallback.
+- [P1][artist-authored skin, cloth and hair finish remains below the source] The hybrid face fixes identity loss and feature scale, but the source still has better eyelid-to-cheek flow, hair roots, cloth compression, hand contact, footwear construction and texture-space normals. The current geometry is cleaner but still visibly procedural.
+- [P1][source-level indirect light and material density remain unmatched] The reference retains softer portal bounce, richer local shadow colour, finer contact penumbrae and more convincing paper, glass, ceramic, foliage and fabric microdetail.
+- [P2][quarter/reverse orbit foreground actors can become optically heavy] All required characters remain readable and the camera stays within the shell, but the nearest witness occupies substantial frame area at `90°`/`180°`. A later authored orbit-volume pass should reposition witness staging or use actor-aware composition rather than hiding characters.
+
+### Gate result
+
+v42 closes the largest 2D-avatar identity loss, toy-proportion and opening-scale defects while preserving real 3D movement, orbit, physical grounding, atomic entry and mobile budgets. The mandatory same-canvas comparison still exposes actionable P1 gaps in artist-authored surface finish and cinematic indirect light, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: production-quality cloth/hair/skin/contact assets and source-level indirect-light/material transport remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v39 single-layout, material hierarchy and optical-weight gate
 
 ### Evidence inspected together

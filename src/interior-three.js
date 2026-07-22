@@ -15,9 +15,9 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
-  : CIVIC_FACE_MODE_QUERY === "hybrid"
-    ? "hybrid-volume"
-    : "sculpted-volume";
+  : CIVIC_FACE_MODE_QUERY === "volume"
+    ? "sculpted-volume"
+    : "hybrid-volume";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -7525,7 +7525,7 @@ function updateCamera(payload = {}) {
     ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
     : 0;
   const targetFov = cinematicCivic
-    ? (portrait ? 60 : 45 + civicRearArc * 2 + civicSideArc * 1.5)
+    ? (portrait ? 60 : 48 + civicRearArc * 2 + civicSideArc * 1.5)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -7589,7 +7589,7 @@ function updateCamera(payload = {}) {
     // civic radius crossed the 5.6 m wall on side views, placing the entrance
     // arch between the camera and actors as a floating black curve. A tighter
     // player-follow radius also matches the 3.6–5.2 m camera contract.
-    ? (portrait ? 5.2 : 5.05 - civicRearArc * 0.45 - civicSideArc * 0.72)
+    ? (portrait ? 5.2 : 5.2 - civicRearArc * 0.45 - civicSideArc * 0.72)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 2.76 + civicRearArc * 0.38 + civicSideArc * 0.34) + pitchOffset * 1.35
@@ -7952,9 +7952,9 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v8"
+          ? "mirrorlife-civic-face-volume-v9"
           : CIVIC_FACE_MODE === "hybrid-volume"
-            ? "mirrorlife-civic-face-volume-v3"
+            ? "mirrorlife-civic-face-hybrid-v1"
             : "mirrorlife-civic-face-volume-v2",
         morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
         smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]

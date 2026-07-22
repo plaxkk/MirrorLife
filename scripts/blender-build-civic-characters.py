@@ -79,10 +79,10 @@ ROLE_CONFIGS = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.054,
-        "eye_height": 0.033,
-        "iris_width": 0.0275,
-        "iris_height": 0.029,
+        "eye_width": 0.0515,
+        "eye_height": 0.0292,
+        "iris_width": 0.0236,
+        "iris_height": 0.0248,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -94,10 +94,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.053,
-        "eye_height": 0.0325,
-        "iris_width": 0.027,
-        "iris_height": 0.0285,
+        "eye_width": 0.0508,
+        "eye_height": 0.029,
+        "iris_width": 0.0232,
+        "iris_height": 0.0245,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -109,10 +109,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.054,
-        "eye_height": 0.034,
-        "iris_width": 0.0275,
-        "iris_height": 0.03,
+        "eye_width": 0.0515,
+        "eye_height": 0.0305,
+        "iris_width": 0.0238,
+        "iris_height": 0.0258,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -124,10 +124,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0525,
-        "eye_height": 0.0325,
-        "iris_width": 0.0265,
-        "iris_height": 0.0285,
+        "eye_width": 0.0505,
+        "eye_height": 0.0295,
+        "iris_width": 0.023,
+        "iris_height": 0.025,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -230,14 +230,14 @@ def create_skin_armature(parent):
     root_bone.tail = (0, 0, 0.16)
 
     specifications = (
-        ("SkinLeftArm", (-0.234, 0, 1.2), (-0.234, 0, 0.965), None),
-        ("SkinLeftElbow", (-0.234, 0, 0.965), (-0.234, 0, 0.69), "SkinLeftArm"),
-        ("SkinRightArm", (0.234, 0, 1.2), (0.234, 0, 0.965), None),
-        ("SkinRightElbow", (0.234, 0, 0.965), (0.234, 0, 0.69), "SkinRightArm"),
-        ("SkinLeftLeg", (-0.145, 0, 0.73), (-0.145, 0, 0.445), None),
-        ("SkinLeftKnee", (-0.145, 0, 0.445), (-0.145, 0, 0.14), "SkinLeftLeg"),
-        ("SkinRightLeg", (0.145, 0, 0.73), (0.145, 0, 0.445), None),
-        ("SkinRightKnee", (0.145, 0, 0.445), (0.145, 0, 0.14), "SkinRightLeg"),
+        ("SkinLeftArm", (-0.22, 0, 1.2), (-0.22, 0, 0.965), None),
+        ("SkinLeftElbow", (-0.22, 0, 0.965), (-0.22, 0, 0.69), "SkinLeftArm"),
+        ("SkinRightArm", (0.22, 0, 1.2), (0.22, 0, 0.965), None),
+        ("SkinRightElbow", (0.22, 0, 0.965), (0.22, 0, 0.69), "SkinRightArm"),
+        ("SkinLeftLeg", (-0.13, 0, 0.73), (-0.13, 0, 0.445), None),
+        ("SkinLeftKnee", (-0.13, 0, 0.445), (-0.13, 0, 0.14), "SkinLeftLeg"),
+        ("SkinRightLeg", (0.13, 0, 0.73), (0.13, 0, 0.445), None),
+        ("SkinRightKnee", (0.13, 0, 0.445), (0.13, 0, 0.14), "SkinRightLeg"),
     )
     created = {"SkinRoot": root_bone}
     for name, head, tail, parent_name in specifications:
@@ -757,13 +757,13 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
         # y, half-width, lower surface, upper surface. The terminal toe ring
         # closes down in both width and height, producing a true rounded last
         # instead of the four-sided wedge exposed by the first v6 pass.
-        (0.09, 0.059, -0.027, 0.048 if style == "ankle-boot" else 0.04),
-        (0.042, 0.077, -0.038, 0.078 if style == "ankle-boot" else 0.069),
-        (-0.018, 0.092, -0.046, 0.105 if style == "ankle-boot" else 0.094),
-        (-0.094, 0.099, -0.048, 0.087 if style == "ankle-boot" else 0.078),
-        (-0.17, 0.093, -0.046, 0.061),
-        (-0.232, 0.07, -0.038, 0.039),
-        (-0.255, 0.023, -0.016, 0.018),
+        (0.08, 0.052, -0.027, 0.045 if style == "ankle-boot" else 0.037),
+        (0.038, 0.068, -0.038, 0.072 if style == "ankle-boot" else 0.064),
+        (-0.015, 0.082, -0.046, 0.096 if style == "ankle-boot" else 0.086),
+        (-0.082, 0.088, -0.048, 0.08 if style == "ankle-boot" else 0.072),
+        (-0.148, 0.082, -0.046, 0.057),
+        (-0.205, 0.062, -0.038, 0.036),
+        (-0.225, 0.02, -0.016, 0.016),
     )
     radial_segments = 16
     vertices = []
@@ -827,9 +827,9 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     if style == "ankle-boot":
         cylinder(
             f"{name}AnkleCollar",
-            0.073,
-            0.067,
-            0.105,
+            0.064,
+            0.059,
+            0.098,
             (location[0], location[1] + 0.048, location[2] + 0.078),
             upper_mat,
             parent,
@@ -838,20 +838,20 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     else:
         rounded_box(
             f"{name}Tongue",
-            (0.105, 0.034, 0.105),
+            (0.094, 0.032, 0.098),
             (location[0], location[1] - 0.018, location[2] + 0.072),
             upper_mat,
             parent,
             radius=0.02,
             rotation=(math.radians(11), 0, 0),
         )
-    for lace_index, lace_y in enumerate((-0.04, -0.078), start=1):
+    for lace_index, lace_y in enumerate((-0.035, -0.068), start=1):
         curve_tube(
             f"{name}Lace_{lace_index}",
             [
-                (-0.044, lace_y, location[2] + 0.055 - (lace_index - 1) * 0.008),
+                (-0.038, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
                 (0, lace_y - 0.006, location[2] + 0.058 - (lace_index - 1) * 0.008),
-                (0.044, lace_y, location[2] + 0.055 - (lace_index - 1) * 0.008),
+                (0.038, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
             ],
             0.0045,
             sole_mat,
@@ -1086,17 +1086,17 @@ def sculpted_ear_shell(name, location, skin_mat, concha_mat, parent=None, side=1
 
 def build_materials(role, config):
     return {
-        "skin": material(f"{role} skin", config["skin"], 0.64, clearcoat=0.05),
+        "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.025),
         "skin_shadow": material(f"{role} hand crease", "#b96f66", 0.84),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
-        "hair": material(f"{role} hair", config["hair"], 0.68, clearcoat=0.025),
-        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.64, clearcoat=0.035),
+        "hair": material(f"{role} hair", config["hair"], 0.74, clearcoat=0.015),
+        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.7, clearcoat=0.02),
         # The reference uses a warm, softly reflective sclera and a large dark
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
-        "eye_white": material(f"{role} eye white", "#f4eee5", 0.42, clearcoat=0.22),
-        "iris": material(f"{role} iris", config["eye"], 0.31, clearcoat=0.38),
+        "eye_white": material(f"{role} eye white", "#f4eee5", 0.55, clearcoat=0.08),
+        "iris": material(f"{role} iris", config["eye"], 0.46, clearcoat=0.14),
         # Warm charcoal keeps the illustrated eye and lash language while
         # avoiding the pure-black sticker effect visible in the v77 paired
         # crop. The reference uses brown-violet linework that participates in
@@ -1129,7 +1129,7 @@ def build_face(head, mats, role):
     # oversized toy-doll head of the early assets. The narrower depth and
     # slightly slimmer jaw leave more silhouette room for hair, costume and
     # hand acting, matching the reference's editorial 1:3.5 proportion.
-    face = ellipsoid("Head", (0, 0, 0), (0.244, 0.198, 0.284), mats["skin"], head, segments=48, rings=32)
+    face = ellipsoid("Head", (0, 0, 0), (0.24, 0.194, 0.272), mats["skin"], head, segments=52, rings=38)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -1243,7 +1243,7 @@ def build_face(head, mats, role):
         outer_lift = face_profile["outer_eye_lift"]
         eye.rotation_euler.y = side * outer_lift * 2.8
         eye.rotation_euler.z = -side * outer_lift * 3.2
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0085, eye_height), mats["eye_white"], eye, segments=32, rings=18)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0078, eye_height), mats["eye_white"], eye, segments=32, rings=18)
         ellipsoid(
             f"Iris_{side}",
             (-side * 0.001, -0.0082, -0.002),
@@ -1253,9 +1253,9 @@ def build_face(head, mats, role):
             segments=26,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0132, -0.003), (0.0106, 0.0022, 0.0148), mats["ink"], eye, segments=18, rings=10)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.008, -0.0155, 0.008), (0.0046, 0.0012, 0.0048), mats["eye_white"], eye, segments=12, rings=7)
-        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.004, -0.0158, -0.006), (0.0018, 0.0009, 0.002), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0125, -0.003), (0.0092, 0.002, 0.0128), mats["ink"], eye, segments=18, rings=10)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0065, -0.0147, 0.0065), (0.0038, 0.001, 0.004), mats["eye_white"], eye, segments=12, rings=7)
+        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.0035, -0.015, -0.005), (0.00135, 0.0007, 0.0015), mats["eye_white"], eye, segments=10, rings=6)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -1286,7 +1286,7 @@ def build_face(head, mats, role):
                 (0, -0.019, eye_height - 0.001),
                 (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
             ],
-            0.00255 if feminine else 0.0023,
+            0.00205 if feminine else 0.0019,
             mats["ink"],
             eye,
             resolution=2,
@@ -1295,7 +1295,7 @@ def build_face(head, mats, role):
             curve_tube(
                 f"OuterLash_{side}",
                 [(side * 0.041, -0.012, 0.027), (side * 0.057, -0.014, 0.039)],
-                0.0026,
+                0.0021,
                 mats["ink"],
                 eye,
                 resolution=2,
@@ -1308,7 +1308,7 @@ def build_face(head, mats, role):
                 (0, -0.007, face_profile["brow_apex"]),
                 (-side * 0.052, 0.003, face_profile["brow_inner"]),
             ],
-            0.0038 if feminine else 0.004,
+            0.00315 if feminine else 0.0033,
             mats["hair"],
             brow,
         )
@@ -1505,7 +1505,7 @@ def build_body(role, config, mats, visual):
     # the overall height was correct. Broaden the shoulder/chest volume by a
     # few centimetres and add front/back depth while remaining inside the
     # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid("Torso", (0, 0, 1.0), (0.29, 0.177, 0.336), mats["top"], visual, segments=36, rings=24)
+    torso = ellipsoid("Torso", (0, 0, 1.0), (0.266, 0.164, 0.344), mats["top"], visual, segments=42, rings=30)
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1514,8 +1514,8 @@ def build_body(role, config, mats, visual):
         normalized = max(-1.0, min(1.0, z / 0.332))
         shoulder = max(0.0, min(1.0, (normalized - 0.2) / 0.8))
         waist = max(0.0, 1.0 - abs(normalized + 0.48) / 0.52)
-        vertex.co.x *= 1.0 + shoulder * 0.14 - waist * 0.16
-        vertex.co.y *= 1.0 - waist * 0.1
+        vertex.co.x *= 1.0 + shoulder * 0.1 - waist * 0.18
+        vertex.co.y *= 1.0 - waist * 0.12
         # Put the garment volume in the mesh rather than drawing crease cords
         # on top. A shallow central drape and two diagonal tension valleys
         # catch the key light differently as the actor turns, while the back
@@ -1547,14 +1547,14 @@ def build_body(role, config, mats, visual):
             depth=depth,
         )
     cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
-    rounded_box("WaistBand", (0.42, 0.245, 0.055), (0, -0.005, 0.775), mats["accent"], visual, radius=0.025)
+    rounded_box("WaistBand", (0.38, 0.226, 0.048), (0, -0.005, 0.775), mats["accent"], visual, radius=0.022)
 
-    left_arm = empty("LeftArmPivot", visual, (-0.234, 0, 1.2))
-    right_arm = empty("RightArmPivot", visual, (0.234, 0, 1.2))
+    left_arm = empty("LeftArmPivot", visual, (-0.22, 0, 1.2))
+    right_arm = empty("RightArmPivot", visual, (0.22, 0, 1.2))
     left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.235))
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.235))
-    left_leg = empty("LeftLegPivot", visual, (-0.145, 0, 0.73))
-    right_leg = empty("RightLegPivot", visual, (0.145, 0, 0.73))
+    left_leg = empty("LeftLegPivot", visual, (-0.13, 0, 0.73))
+    right_leg = empty("RightLegPivot", visual, (0.13, 0, 0.73))
     left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.285))
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
 
@@ -1562,17 +1562,17 @@ def build_body(role, config, mats, visual):
     skin_armature = create_skin_armature(visual)
     build_skinned_limb_pair(
         "SkinnedArmVolume",
-        (-0.234, 0.234),
+        (-0.22, 0.22),
         (
-            (1.2, 0.083, 0.075, 0.002),
-            (1.15, 0.091, 0.083, 0.003),
-            (1.07, 0.086, 0.079, 0.004),
-            (1.0, 0.077, 0.07, 0.003),
-            (0.965, 0.069, 0.064, 0),
-            (0.925, 0.071, 0.065, -0.002),
-            (0.85, 0.068, 0.063, -0.004),
-            (0.775, 0.063, 0.056, -0.004),
-            (0.705, 0.054, 0.048, -0.002),
+            (1.2, 0.075, 0.069, 0.002),
+            (1.15, 0.081, 0.075, 0.003),
+            (1.07, 0.077, 0.072, 0.004),
+            (1.0, 0.069, 0.064, 0.003),
+            (0.965, 0.063, 0.059, 0),
+            (0.925, 0.064, 0.059, -0.002),
+            (0.85, 0.061, 0.057, -0.004),
+            (0.775, 0.057, 0.052, -0.004),
+            (0.705, 0.05, 0.045, -0.002),
         ),
         0.965,
         sleeve_mat,
@@ -1582,17 +1582,17 @@ def build_body(role, config, mats, visual):
     )
     build_skinned_limb_pair(
         "SkinnedLegVolume",
-        (-0.145, 0.145),
+        (-0.13, 0.13),
         (
-            (0.73, 0.121, 0.11, 0.002),
-            (0.65, 0.124, 0.113, 0.004),
-            (0.55, 0.111, 0.102, 0.006),
-            (0.475, 0.093, 0.086, 0.003),
-            (0.445, 0.085, 0.078, 0),
-            (0.405, 0.088, 0.082, -0.002),
-            (0.33, 0.097, 0.09, -0.005),
-            (0.245, 0.09, 0.084, -0.005),
-            (0.155, 0.07, 0.064, -0.002),
+            (0.73, 0.108, 0.1, 0.002),
+            (0.65, 0.111, 0.103, 0.004),
+            (0.55, 0.101, 0.094, 0.006),
+            (0.475, 0.087, 0.081, 0.003),
+            (0.445, 0.079, 0.073, 0),
+            (0.405, 0.081, 0.076, -0.002),
+            (0.33, 0.088, 0.083, -0.005),
+            (0.245, 0.082, 0.077, -0.005),
+            (0.155, 0.064, 0.059, -0.002),
         ),
         0.445,
         mats["lower"],
@@ -1630,7 +1630,7 @@ def build_body(role, config, mats, visual):
                 elbow,
                 depth=0.006,
             )
-        cylinder(f"Cuff_{side}", 0.067, 0.061, 0.048, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
+        cylinder(f"Cuff_{side}", 0.059, 0.054, 0.042, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
         if config["costume"] == "facilitator":
             hand_pose = "notebook-grip"
             hand_rotation = (0.02, side * 0.2, -side * 0.2)
@@ -1666,7 +1666,7 @@ def build_body(role, config, mats, visual):
                 knee,
                 depth=0.006,
             )
-        cylinder(f"TrouserCuff_{side}", 0.096, 0.087, 0.07, (0, 0, -0.265), mats["accent"], knee, vertices=20)
+        cylinder(f"TrouserCuff_{side}", 0.083, 0.076, 0.06, (0, 0, -0.265), mats["accent"], knee, vertices=20)
         sculpted_shoe(
             f"ShoeUpper_{side}",
             (0, 0, -0.365),
@@ -1951,10 +1951,10 @@ def build_character(role, config):
     # seventy percent. Enlarge the complete authored head hierarchy and lower
     # its pivot by 3.5 cm so the silhouette becomes expressive without growing
     # beyond the existing 1.72 m capsule or exposing a long toy-like neck.
-    head = empty("HeadPivot", root, (0, 0, 1.423))
+    head = empty("HeadPivot", root, (0, 0, 1.438))
     # Preserve the exact height/capsule contract while giving the face a
     # slightly broader illustrated presence in front and three-quarter views.
-    head.scale = (1.06, 1.035, 0.98)
+    head.scale = (1.02, 1.015, 0.92)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -2025,7 +2025,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v31",
+        "sculptContract": "mirrorlife-civic-sculpt-v32",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2047,8 +2047,8 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v8",
-            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "MouthClosed"],
+            "integrationContract": "mirrorlife-civic-face-volume-v9",
+            "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
