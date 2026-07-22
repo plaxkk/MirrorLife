@@ -1,5 +1,41 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v47 scanned-surface, daylight and actor-aware-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v47-desktop-yaw0.png` (`1600 × 900`, `151 / 276,232`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v47.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Quarter and reverse orbit evidence: `tmp/v47-desktop-yaw90.png` (`152 / 291,124`) and `tmp/v47-desktop-yaw180.png` (`154 / 289,676`).
+- Mobile evidence: `tmp/v47-mobile-390x844.png` (`390 × 844`, `97 / 232,814`, three-character LOD).
+- Physical exploration evidence: `tmp/v47-character-walk.png`; the browser regression walked `5.37m`, completed action/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / batching erased wood, cloth, paper and mineral identity] The merged civic room and actor shaders now retain per-vertex semantic surface masks. Wood and fabric consume the existing scanned colour/roughness maps through local triplanar sampling; paper, mineral, leather, hair and skin keep restrained material-specific response without adding draw calls.
+- [improved / broad daylight lacked authored value separation] Portal bounce, key-light energy, shadow radius, floor dapples, contact shadows and the final cool-shadow/warm-highlight grade are coordinated as one civic preset. The threshold reads warmer, the cast has clearer ground contact and the terrazzo no longer collapses into one flat beige value.
+- [improved / gameplay-distance eyes became unreadable] Sculpt v33 / facial volume v10 enlarges the eye aperture and iris only enough to preserve gaze at the authored camera while retaining true volumetric eyes, blinking and quarter/reverse occlusion. Atlas brows, blush and mouth still carry the established 2D identity.
+- [improved from v42 P2 / foreground actors dominated side orbit] The desktop camera now measures non-player actors in the camera-to-focus corridor and applies a bounded tangential composition offset. The `90°` and `180°` frames retain the complete cast without hiding witnesses or allowing a single foreground body to occupy the story centre.
+- [checked / complete runtime] All four regenerated character assets total `7.25 MB`. Character contracts, syntax, 26-zone physics, real movement/camera drag and desktop/mobile atomic scene flow pass; desktop and mobile remain inside strict budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][material and light hierarchy] The room now distinguishes photographed wood/fabric response from paper, terrazzo, metal, leather, hair and skin while maintaining one warm civic palette. Portal sunlight and floor dapples establish a clearer entrance-to-circle depth axis.
+- [checked][physical and orbit continuity] The player walks on the metre-space physical floor, returns to idle and supports a real `65.3°` drag turn. Actor-aware orbit composition is additive to wall collision, safe-area clamping and player-led focus rather than a scripted screenshot camera.
+- [checked][responsive performance] Desktop stays at `151–154` calls and `276,232–291,124` triangles; mobile is `97 / 232,814`. No sprite fallback, black block, stale room or collision/render divergence appeared in the final captures and regressions.
+- [P1][artist-authored character surfaces remain below the source] Eyes and cloth response are clearer, but the same-canvas pair still exposes weaker eyelid-to-cheek topology, hair roots, hand-object contact, cloth compression and footwear construction than the reference. These gaps require role-authored meshes, UV textures and corrective poses rather than additional procedural primitives.
+- [P1][indirect light transport and prop finish remain below the source] The authored real-time daylight pass improves hierarchy, but the reference still has softer multi-bounce penumbrae, richer local shadow colour, finer furniture bevels and denser glass, ceramic, foliage and paper microdetail.
+- [P2][reverse orbit still carries foreground optical weight] The bounded camera offset keeps the story centre readable, but the nearest listener remains visually large in the `180°` frame. A later room-specific staging-volume pass should redistribute witnesses without breaking physical reachability.
+
+### Gate result
+
+v47 preserves the playable metre-space world and full orbit while materially improving surface semantics, portal daylight, eye readability and actor-aware composition. The mandatory same-canvas comparison still exposes actionable P1 gaps in production character topology, prop finish and indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/prop surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v42 hybrid identity, proportion and editorial-lens gate
 
 ### Evidence inspected together

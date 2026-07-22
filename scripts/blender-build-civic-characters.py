@@ -79,10 +79,10 @@ ROLE_CONFIGS = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0515,
-        "eye_height": 0.0292,
-        "iris_width": 0.0236,
-        "iris_height": 0.0248,
+        "eye_width": 0.0535,
+        "eye_height": 0.0322,
+        "iris_width": 0.0248,
+        "iris_height": 0.0268,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -94,10 +94,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.0508,
-        "eye_height": 0.029,
-        "iris_width": 0.0232,
-        "iris_height": 0.0245,
+        "eye_width": 0.053,
+        "eye_height": 0.032,
+        "iris_width": 0.0245,
+        "iris_height": 0.0266,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -109,10 +109,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.0515,
-        "eye_height": 0.0305,
-        "iris_width": 0.0238,
-        "iris_height": 0.0258,
+        "eye_width": 0.0536,
+        "eye_height": 0.0332,
+        "iris_width": 0.025,
+        "iris_height": 0.0278,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -124,10 +124,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0505,
-        "eye_height": 0.0295,
-        "iris_width": 0.023,
-        "iris_height": 0.025,
+        "eye_width": 0.0528,
+        "eye_height": 0.0323,
+        "iris_width": 0.0244,
+        "iris_height": 0.027,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -2025,7 +2025,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v32",
+        "sculptContract": "mirrorlife-civic-sculpt-v33",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2047,7 +2047,7 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v9",
+            "integrationContract": "mirrorlife-civic-face-volume-v10",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",

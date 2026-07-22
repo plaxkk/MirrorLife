@@ -88,7 +88,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 1.78, fill: 0.22, hemi: 0.23, bounce: 0.34, wash: 0.3, exposure: 0.79, keyColor: "#ffd29f", fillColor: "#a8cbd0" },
+  "civic-ivory": { key: 2.12, fill: 0.17, hemi: 0.2, bounce: 0.44, wash: 0.38, exposure: 0.82, keyColor: "#ffd09a", fillColor: "#9fc7cd" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -250,6 +250,7 @@ let physicsDebugSignature = "";
 let cameraPivotX = 0;
 let cameraPivotZ = 0;
 let cameraZoneId = "";
+let cameraActorAvoidanceOffset = 0;
 let lastCameraState = null;
 let cameraLastUpdateAt = 0;
 let cameraRaycaster;
@@ -501,11 +502,11 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.078 * strength) + vec3(0.58));
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.102 * strength) + vec3(0.58));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
-        color *= mix(vec3(1.0), vec3(0.985, 1.0, 1.018), shadowTone * 0.34 * strength);
-        color += vec3(0.018, 0.008, -0.005) * highlightTone * strength;
+        color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
+        color += vec3(0.022, 0.01, -0.006) * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -515,7 +516,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.035 * strength;
+        color *= 1.0 - vignette * 0.046 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1231,7 +1232,7 @@ function getCivicDappleTexture() {
       rx * size,
       ry * size,
       rotation,
-      "rgba(255,232,177,0.62)",
+      "rgba(255,232,177,0.7)",
       "rgba(255,232,177,0)"
     );
   });
@@ -1251,7 +1252,7 @@ function getCivicDappleTexture() {
       radius * (0.72 + random() * 0.66),
       radius * (0.44 + random() * 0.34),
       (random() - 0.5) * 1.8,
-      "rgba(72,83,55,0.105)",
+      "rgba(72,83,55,0.18)",
       "rgba(72,83,55,0)"
     );
   }
@@ -1429,6 +1430,10 @@ function createToonMaterial(color, options = {}) {
   }
   if (options.map) material.map = options.map;
   if (Number.isFinite(options.envMapIntensity)) material.envMapIntensity = options.envMapIntensity;
+  // Batching must not erase the authored material class. The merged civic
+  // room and actor shaders use this semantic to retain scanned wood/fabric
+  // response without reopening a draw call for every tiny prop or garment.
+  material.userData.mirrorLifeSurface = String(options.surface || "");
   return material;
 }
 
@@ -1490,7 +1495,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.7 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.94 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
@@ -1499,12 +1504,12 @@ function applyLightingPreset(theme = {}) {
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.6 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.52 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 8 : 9;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 5.5 : 9;
     keyLight.shadow.blurSamples = 24;
   }
 }
@@ -3949,11 +3954,11 @@ function addCivicReferenceDressing(theme, colors) {
   const dappleTexture = getCivicDappleTexture();
   if (dappleTexture) {
     const dapple = new THREE.Mesh(
-      new THREE.PlaneGeometry(7.4, 5.1),
+      new THREE.PlaneGeometry(8.8, 6.7),
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.48,
+        opacity: theme.night ? 0.1 : 0.62,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -3962,7 +3967,7 @@ function addCivicReferenceDressing(theme, colors) {
     dapple.name = "civic-window-dapple";
     dapple.rotation.x = -Math.PI / 2;
     dapple.rotation.z = -0.18;
-    dapple.position.set(-0.55, 0.062, -0.18);
+    dapple.position.set(-0.35, 0.062, 0.52);
     dapple.renderOrder = 1;
     dapple.castShadow = false;
     dapple.receiveShadow = false;
@@ -5954,6 +5959,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
   const targetInverse = target.matrixWorld.clone().invert();
   const geometries = [];
   const sources = [];
+  const fabricSurfaceMaps = getPhysicalSurfaceMaps("fabric");
+  const woodSurfaceMaps = getPhysicalSurfaceMaps("wood");
   target.traverse((node) => {
     if (node === target || !node.isMesh || !node.geometry || Array.isArray(node.material)) return;
     let parent = node;
@@ -5985,13 +5992,20 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const hairMaskValues = new Float32Array(count);
     const clothMaskValues = new Float32Array(count);
     const leatherMaskValues = new Float32Array(count);
+    const woodMaskValues = new Float32Array(count);
+    const paperMaskValues = new Float32Array(count);
+    const mineralMaskValues = new Float32Array(count);
     const sourceRoughness = THREE.MathUtils.clamp(Number(node.material?.roughness ?? materialOptions.roughness ?? 0.72), 0.04, 1);
     const sourceMetalness = THREE.MathUtils.clamp(Number(node.material?.metalness ?? 0), 0, 1);
     const materialName = String(node.material?.name || "").toLowerCase();
+    const surfaceName = String(node.material?.userData?.mirrorLifeSurface || "").toLowerCase();
     const sourceSkinMask = materialName.endsWith(" skin") ? 1 : 0;
     const sourceHairMask = materialName.includes(" hair") ? 1 : 0;
-    const sourceClothMask = /fabric|cloth/.test(materialName) ? 1 : 0;
+    const sourceClothMask = /fabric|cloth/.test(materialName) || surfaceName === "fabric" ? 1 : 0;
     const sourceLeatherMask = /shoes|soles/.test(materialName) ? 1 : 0;
+    const sourceWoodMask = surfaceName === "wood" || /oak|walnut|wood/.test(materialName) ? 1 : 0;
+    const sourcePaperMask = surfaceName === "paper" || /paper|card|cork/.test(materialName) ? 1 : 0;
+    const sourceMineralMask = /plaster|terrazzo|ceramic/.test(surfaceName) ? 1 : 0;
     for (let index = 0; index < count; index += 1) {
       colors[index * 3] = color.r;
       colors[index * 3 + 1] = color.g;
@@ -6002,6 +6016,9 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       hairMaskValues[index] = sourceHairMask;
       clothMaskValues[index] = sourceClothMask;
       leatherMaskValues[index] = sourceLeatherMask;
+      woodMaskValues[index] = sourceWoodMask;
+      paperMaskValues[index] = sourcePaperMask;
+      mineralMaskValues[index] = sourceMineralMask;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute("mirrorLifeRoughness", new THREE.BufferAttribute(roughnessValues, 1));
@@ -6010,6 +6027,9 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     geometry.setAttribute("mirrorLifeHairMask", new THREE.BufferAttribute(hairMaskValues, 1));
     geometry.setAttribute("mirrorLifeClothMask", new THREE.BufferAttribute(clothMaskValues, 1));
     geometry.setAttribute("mirrorLifeLeatherMask", new THREE.BufferAttribute(leatherMaskValues, 1));
+    geometry.setAttribute("mirrorLifeWoodMask", new THREE.BufferAttribute(woodMaskValues, 1));
+    geometry.setAttribute("mirrorLifePaperMask", new THREE.BufferAttribute(paperMaskValues, 1));
+    geometry.setAttribute("mirrorLifeMineralMask", new THREE.BufferAttribute(mineralMaskValues, 1));
     geometries.push(geometry);
     sources.push(node);
   });
@@ -6038,6 +6058,14 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
   // character ink rim, skin wrap or cloth sheen; those effects are reserved
   // for the living cast.
   material.onBeforeCompile = (shader) => {
+    if (fabricSurfaceMaps?.roughness) shader.uniforms.mirrorLifeFabricRoughness = { value: fabricSurfaceMaps.roughness };
+    if (woodSurfaceMaps?.map) shader.uniforms.mirrorLifeWoodColor = { value: woodSurfaceMaps.map };
+    if (woodSurfaceMaps?.roughness) shader.uniforms.mirrorLifeWoodRoughness = { value: woodSurfaceMaps.roughness };
+    const surfaceUniforms = [
+      fabricSurfaceMaps?.roughness ? "uniform sampler2D mirrorLifeFabricRoughness;" : "",
+      woodSurfaceMaps?.map ? "uniform sampler2D mirrorLifeWoodColor;" : "",
+      woodSurfaceMaps?.roughness ? "uniform sampler2D mirrorLifeWoodRoughness;" : ""
+    ].filter(Boolean).join("\n");
     shader.vertexShader = shader.vertexShader
       .replace(
         "#include <common>",
@@ -6048,12 +6076,18 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         attribute float mirrorLifeHairMask;
         attribute float mirrorLifeClothMask;
         attribute float mirrorLifeLeatherMask;
+        attribute float mirrorLifeWoodMask;
+        attribute float mirrorLifePaperMask;
+        attribute float mirrorLifeMineralMask;
         varying float vMirrorLifeRoughness;
         varying float vMirrorLifeMetalness;
         varying float vMirrorLifeSkinMask;
         varying float vMirrorLifeHairMask;
         varying float vMirrorLifeClothMask;
         varying float vMirrorLifeLeatherMask;
+        varying float vMirrorLifeWoodMask;
+        varying float vMirrorLifePaperMask;
+        varying float vMirrorLifeMineralMask;
         varying vec3 vMirrorLifeSurfacePosition;`
       )
       .replace(
@@ -6065,26 +6099,41 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeHairMask = mirrorLifeHairMask;
         vMirrorLifeClothMask = mirrorLifeClothMask;
         vMirrorLifeLeatherMask = mirrorLifeLeatherMask;
+        vMirrorLifeWoodMask = mirrorLifeWoodMask;
+        vMirrorLifePaperMask = mirrorLifePaperMask;
+        vMirrorLifeMineralMask = mirrorLifeMineralMask;
         vMirrorLifeSurfacePosition = transformed;`
       );
     shader.fragmentShader = shader.fragmentShader.replace(
       "#include <common>",
       `#include <common>
+      ${surfaceUniforms}
       varying float vMirrorLifeRoughness;
       varying float vMirrorLifeMetalness;
       varying float vMirrorLifeSkinMask;
       varying float vMirrorLifeHairMask;
       varying float vMirrorLifeClothMask;
       varying float vMirrorLifeLeatherMask;
+      varying float vMirrorLifeWoodMask;
+      varying float vMirrorLifePaperMask;
+      varying float vMirrorLifeMineralMask;
       varying vec3 vMirrorLifeSurfacePosition;`
     ).replace(
       "#include <roughnessmap_fragment>",
       `#include <roughnessmap_fragment>
+      vec2 mirrorLifeFabricUv = fract(vec2(vMirrorLifeSurfacePosition.x * 1.7 + vMirrorLifeSurfacePosition.z * 0.31, vMirrorLifeSurfacePosition.y * 1.9 - vMirrorLifeSurfacePosition.z * 0.22));
+      vec2 mirrorLifeWoodUv = fract(vec2(vMirrorLifeSurfacePosition.x * 0.42 + vMirrorLifeSurfacePosition.z * 0.18, vMirrorLifeSurfacePosition.y * 0.62 + vMirrorLifeSurfacePosition.z * 0.12));
       float mirrorLifeThreadA = sin(vMirrorLifeSurfacePosition.x * 228.0 + vMirrorLifeSurfacePosition.z * 29.0);
       float mirrorLifeThreadB = sin(vMirrorLifeSurfacePosition.y * 244.0 - vMirrorLifeSurfacePosition.z * 41.0);
       float mirrorLifeThread = mirrorLifeThreadA * mirrorLifeThreadB;
+      float mirrorLifeFabricScan = ${fabricSurfaceMaps?.roughness ? "texture2D(mirrorLifeFabricRoughness, mirrorLifeFabricUv).r - 0.5" : "0.0"};
+      float mirrorLifeWoodScan = ${woodSurfaceMaps?.roughness ? "texture2D(mirrorLifeWoodRoughness, mirrorLifeWoodUv).r - 0.5" : "0.0"};
       roughnessFactor = clamp(
-        vMirrorLifeRoughness + mirrorLifeThread * 0.034 * vMirrorLifeClothMask - 0.045 * vMirrorLifeLeatherMask,
+        vMirrorLifeRoughness
+          + (mirrorLifeThread * 0.024 + mirrorLifeFabricScan * 0.16) * vMirrorLifeClothMask
+          + mirrorLifeWoodScan * 0.12 * vMirrorLifeWoodMask
+          + mirrorLifeThread * 0.018 * vMirrorLifePaperMask
+          - 0.045 * vMirrorLifeLeatherMask,
         0.04,
         1.0
       );`
@@ -6118,7 +6167,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       float mirrorLifeWeave = mirrorLifeWeaveA * mirrorLifeWeaveB * mirrorLifeClothMask;
       gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.1);
       gl_FragColor.rgb += vec3(0.058, 0.047, 0.035) * mirrorLifeClothSheen * 0.24;
-      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.018;
+      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.012 + mirrorLifeFabricScan * 0.045 * mirrorLifeClothMask;
       gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.24;
       gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.16;
       gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.16;
@@ -6130,13 +6179,21 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         `#include <opaque_fragment>
         float mirrorLifeSurfaceGrain = sin(vMirrorLifeSurfacePosition.x * 41.0 + vMirrorLifeSurfacePosition.z * 17.0)
           * sin(vMirrorLifeSurfacePosition.y * 47.0 - vMirrorLifeSurfacePosition.z * 13.0);
-        gl_FragColor.rgb *= 1.0 + mirrorLifeSurfaceGrain * 0.004;`
+        float mirrorLifeWoodLuma = ${woodSurfaceMaps?.map ? "dot(texture2D(mirrorLifeWoodColor, mirrorLifeWoodUv).rgb, vec3(0.2126, 0.7152, 0.0722)) - 0.5" : "0.0"};
+        float mirrorLifePaperFibre = sin(vMirrorLifeSurfacePosition.x * 93.0 + vMirrorLifeSurfacePosition.y * 41.0)
+          * sin(vMirrorLifeSurfacePosition.z * 77.0 - vMirrorLifeSurfacePosition.y * 31.0);
+        gl_FragColor.rgb *= 1.0
+          + mirrorLifeSurfaceGrain * 0.006
+          + mirrorLifeWoodLuma * 0.11 * vMirrorLifeWoodMask
+          + mirrorLifeFabricScan * 0.052 * vMirrorLifeClothMask
+          + mirrorLifePaperFibre * 0.014 * vMirrorLifePaperMask;
+        gl_FragColor.rgb += vec3(0.014, 0.01, 0.006) * (1.0 - abs(mirrorLifeSurfaceGrain)) * vMirrorLifeMineralMask;`
       );
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? "mirrorlife-actor-material-hierarchy-v7"
-    : "mirrorlife-room-vertex-surface-v2";
+    ? `mirrorlife-actor-material-hierarchy-v8-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    : `mirrorlife-room-vertex-surface-v3-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -6360,7 +6417,7 @@ function createProceduralActorObject(actor) {
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.62, 0.34),
+    new THREE.PlaneGeometry(0.7, 0.38),
     new THREE.MeshBasicMaterial({
       color: 0x4d3528,
       map: getContactShadowTexture(),
@@ -6669,7 +6726,7 @@ function createCivicActorObject(actor, asset) {
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.22,
+      opacity: 0.27,
       depthWrite: false,
       toneMapped: false
     })
@@ -7610,6 +7667,46 @@ function updateCamera(payload = {}) {
     cameraHeight,
     playerZ - forwardZ * playerFollowDistance
   );
+  // The listening circle intentionally places people around the player. A
+  // literal orbit therefore drove the camera straight behind a witness at
+  // quarter/reverse angles, turning a useful 360° view into a close-up of the
+  // back of one head. Preserve the requested yaw, but slide the camera up to
+  // half a metre along the tangent when a non-player actor enters the view
+  // corridor. This is an authored composition correction, not actor hiding:
+  // every witness remains visible and the camera stays inside the room shell.
+  let targetActorAvoidance = 0;
+  if (cinematicCivic && !portrait && actorObjects.size > 1) {
+    const viewX = focus.x - desiredPosition.x;
+    const viewZ = focus.z - desiredPosition.z;
+    const viewLength = Math.max(0.001, Math.hypot(viewX, viewZ));
+    const directionX = viewX / viewLength;
+    const directionZ = viewZ / viewLength;
+    // Screen-space perspective makes a near witness feel obstructive well
+    // before their world-space centre crosses the exact look ray. A 1.5 m
+    // composition corridor corresponds to roughly one body width at the near
+    // third of this 48–50° lens and still leaves the camera inside the shell.
+    const corridorRadius = 1.5;
+    actorObjects.forEach((entry) => {
+      if (!entry?.group || entry.assetRole === "player") return;
+      const actorDx = entry.group.position.x - desiredPosition.x;
+      const actorDz = entry.group.position.z - desiredPosition.z;
+      const along = (actorDx * directionX + actorDz * directionZ) / viewLength;
+      if (along < 0.1 || along > 0.82) return;
+      const signedAcross = directionX * actorDz - directionZ * actorDx;
+      const across = Math.abs(signedAcross);
+      if (across >= corridorRadius) return;
+      const depthWeight = Math.sin(Math.PI * THREE.MathUtils.clamp((along - 0.1) / 0.72, 0, 1));
+      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 0.9 * depthWeight;
+      if (Math.abs(candidate) > Math.abs(targetActorAvoidance)) targetActorAvoidance = candidate;
+    });
+  }
+  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -0.62, 0.62);
+  const avoidanceAlpha = zoneChanged ? 1 : 1 - Math.exp(-dt / 0.22);
+  cameraActorAvoidanceOffset += (targetActorAvoidance - cameraActorAvoidanceOffset) * avoidanceAlpha;
+  const tangentX = -forwardZ;
+  const tangentZ = forwardX;
+  desiredPosition.x += tangentX * cameraActorAvoidanceOffset;
+  desiredPosition.z += tangentZ * cameraActorAvoidanceOffset;
   const cameraDirection = desiredPosition.clone().sub(focus);
   const desiredDistance = cameraDirection.length();
   cameraDirection.normalize();
@@ -7644,6 +7741,7 @@ function updateCamera(payload = {}) {
     narrativeX: Number(narrativeX.toFixed(3)),
     narrativeZ: Number(narrativeZ.toFixed(3)),
     orbitRadius: Number(playerFollowDistance.toFixed(3)),
+    actorAvoidanceOffset: Number(cameraActorAvoidanceOffset.toFixed(3)),
     focusDistance: Number(resolvedDistance.toFixed(3)),
     height: Number(cameraHeight.toFixed(3)),
     fov: Number(camera.fov.toFixed(2)),
@@ -7952,7 +8050,7 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v9"
+          ? "mirrorlife-civic-face-volume-v10"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-hybrid-v1"
             : "mirrorlife-civic-face-volume-v2",
