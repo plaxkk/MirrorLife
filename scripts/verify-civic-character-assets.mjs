@@ -13,7 +13,14 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v42", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v43", "civic character sculpt contract is stale");
+assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v1", "civic body identity contract is stale");
+assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
+assert.deepEqual(
+  manifest.bodyIdentityContract?.dimensions,
+  ["torso", "shoulder", "waist", "limb", "head", "garment-silhouette"],
+  "civic body identity dimensions changed"
+);
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -111,6 +118,11 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("NotebookElastic")), "facilitator: held notebook elastic is missing");
     assert(contents.includes(Buffer.from("NotebookPencil")), "facilitator: held notebook pencil is missing");
     assert(contents.includes(Buffer.from("NotebookGripContact")), "facilitator: notebook contact surface is missing");
+    assert(contents.includes(Buffer.from("FacilitatorShoulderYoke")), "facilitator: tailored shoulder yoke is missing");
+  }
+  if (role === "mediator") {
+    assert(contents.includes(Buffer.from("MediatorWaistSash")), "mediator: fitted waist sash is missing");
+    assert(contents.includes(Buffer.from("MediatorSashKnot")), "mediator: sash knot is missing");
   }
   if (["player", "listener"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1Tongue")), `${role}: authored sneaker tongue is missing`);
   if (["facilitator", "mediator"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollar")), `${role}: authored ankle-boot collar is missing`);

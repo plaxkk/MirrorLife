@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v72 role-body, garment-silhouette and reverse-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v72-release-desktop-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `160 / 277,596`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v72.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Mandatory focused cast comparison: `tmp/reference-vs-v72-cast.png`; source and implementation character groups are inspected at an equal `660 × 460` panel scale.
+- Full-orbit evidence: `tmp/v72-mix-desktop-yaw90.png` (`161 / 292,488`, actor avoidance `0.32m`, no radial pullback) and `tmp/v72-mix-desktop-yaw180.png` (`164 / 305,932`, actor avoidance `1.142m`, radial clearance `1.427m`).
+- Mobile evidence: `tmp/v72-mix-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 237,728`, three-character LOD).
+- Physical exploration evidence: `tmp/v72-character-walk.png`; the browser regression walked `5.37m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, metre-space physics, character assets, civic props, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / four roles inherited one generic body] Sculpt v43 introduces role-owned torso width/depth/height, shoulder and hip placement, waist taper, arm and leg dimensions, hand scale, head scale and shoulder slope. The player, listener, facilitator and mediator no longer read as the same mannequin with colour swaps.
+- [improved / civic women depended on hair colour for identity] The facilitator receives a longer flared skirt, fitted long coat and shoulder yoke. The mediator receives a shorter skirt, cropped jacket, waist sash and physical knot. These are orbit-safe garment meshes on the actual animated actors, not screen-space decoration.
+- [improved / rig proportions ignored the authored silhouette] Armature shoulders and hips, continuous skinned limbs, cuffs, hands and controller pivots now derive from the same body profile as visible anatomy. Walk, gesture, notebook hold and idle continue to use the shared animation contract without separating hands from the role-specific body.
+- [fixed / reverse orbit produced a full-frame witness shoulder] The camera now combines fast tangent avoidance with reverse-angle-weighted radial clearance. Quarter orbit retains the intimate `6.231m` composition, while the reverse arc expands to `7.4m`, keeping all four citizens, the social centre and room landmarks visible without translucent or disappearing characters.
+- [checked / performance and complete runtime] Four role GLBs total `7.25 MB`; player/listener/facilitator/mediator remain within individual asset gates at `34,156 / 32,992 / 37,904 / 36,638` authored triangles. Opening, side, reverse and mobile frames remain below their release budgets.
+
+### Required fidelity surfaces and findings
+
+- [improved][character role readability] The equal-scale cast comparison shows clearer differences in shoulder width, torso length, leg proportion, skirt length and outerwear silhouette. The player backpack, listener satchel, facilitator notebook and mediator sash remain readable from the authored opening and side orbit.
+- [checked][physical movement and hand-object contact] The `1.72m` player walks inside the same metre-space room, remains grounded and turns the real camera. Role-specific armatures preserve planted feet, hand pivots and the notebook interaction while colliders and authored interaction anchors remain unchanged.
+- [improved][360° composition] `0°` keeps the intimate reference-led conversation frame, `90°` uses a restrained `0.32m` lateral correction, and `180°` widens only as much as needed to keep the closest witness from becoming a visual wall. No actor fade, sprite substitution or camera teleport is used.
+- [checked][responsive UI and budgets] Desktop action controls remain below the social centre; the portrait layout preserves the player, two partners, listening landmark, joystick and action rail. Desktop peaks at `164 / 305,932`; mobile remains `98 / 237,728`.
+- [P1][character surface fidelity remains below the source] The role-owned body contract fixes mannequin sameness, but the focused comparison still exposes blockier skull/cheek transitions, hair roots, fingers, shoe construction, cloth folds, hems and hand-object contact than the reference. Literal parity requires production character topology, painted UV sets, facial correctives and garment-specific deformation.
+- [P1][environment finish remains below the source] Functional zoning, bespoke hero furniture, foliage and textile joinery are coherent, but the reference retains denser foreground stationery, finer wood/glass construction, more natural upholstery deformation and stronger material aging.
+- [P1][lighting transport remains below the source] The portal key, local warm/cool bounces, GTAO and mineral floor establish hierarchy, but the reference still has softer multi-bounce penumbrae, richer skin/cloth colour return and more convincing sun integration.
+
+### Gate result
+
+v72 removes the shared-mannequin character contract, gives all four social roles measurable body identity, adds role-authored facilitator/mediator garment construction and resolves the worst reverse-orbit obstruction without hiding citizens. The complete 3D room remains walkable, animated, mobile-safe and inside performance budgets. The required same-canvas comparisons still expose production-level differences in character surface topology, whole-room bespoke finish and indirect light transport.
+
+final result: blocked
+
+Blocker: production character topology/UV/deformation, complete-room hero-asset finish and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-23 reference-fidelity v71 broadleaf, textile-joinery and local-bounce gate
 
 ### Evidence inspected together

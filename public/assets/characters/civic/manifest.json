@@ -1,6 +1,23 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v42",
+  "sculptContract": "mirrorlife-civic-sculpt-v43",
+  "bodyIdentityContract": {
+    "version": "mirrorlife-civic-body-identity-v1",
+    "roles": [
+      "player",
+      "listener",
+      "facilitator",
+      "mediator"
+    ],
+    "dimensions": [
+      "torso",
+      "shoulder",
+      "waist",
+      "limb",
+      "head",
+      "garment-silhouette"
+    ]
+  },
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
     "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -119,13 +136,13 @@
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 110,
-      "triangles": 37824
+      "triangles": 37904
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 114,
-      "triangles": 36016
+      "meshes": 116,
+      "triangles": 36638
     }
   }
 }

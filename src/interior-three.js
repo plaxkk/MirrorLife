@@ -7500,7 +7500,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v5`,
+    styleKey: `${frame}:${role}:civic-glb-v6`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7516,7 +7516,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v5` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v6` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8156,17 +8156,33 @@ function updateCamera(payload = {}) {
       const across = Math.abs(signedAcross);
       if (across >= corridorRadius) return;
       const depthWeight = Math.sin(Math.PI * THREE.MathUtils.clamp((along - 0.03) / 0.89, 0, 1));
-      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 1.2 * depthWeight;
+      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 4.8 * depthWeight;
       if (Math.abs(candidate) > Math.abs(targetActorAvoidance)) targetActorAvoidance = candidate;
     });
   }
-  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -0.85, 0.85);
-  const avoidanceAlpha = zoneChanged ? 1 : 1 - Math.exp(-dt / 0.22);
+  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -1.6, 1.6);
+  const reverseOrbitWeight = Math.abs(Math.cos(yaw));
+  targetActorAvoidance *= 0.28 + reverseOrbitWeight * 0.72;
+  const avoidanceAlpha = zoneChanged ? 1 : 1 - Math.exp(-dt / 0.08);
   cameraActorAvoidanceOffset += (targetActorAvoidance - cameraActorAvoidanceOffset) * avoidanceAlpha;
   const tangentX = -forwardZ;
   const tangentZ = forwardX;
   desiredPosition.x += tangentX * cameraActorAvoidanceOffset;
   desiredPosition.z += tangentZ * cameraActorAvoidanceOffset;
+  // A tangent slide protects the central sightline, while a small radial
+  // pullback keeps the near witness at a readable scale instead of turning
+  // their shoulder into a full-screen wall. This preserves all participants
+  // in a true 360° view without relying on character disappearance.
+  const actorClearanceDistance = cinematicCivic
+    ? THREE.MathUtils.clamp(Math.abs(cameraActorAvoidanceOffset) * 1.25 * reverseOrbitWeight, 0, 1.55)
+    : 0;
+  if (actorClearanceDistance > 0.01) {
+    const radialX = desiredPosition.x - focus.x;
+    const radialZ = desiredPosition.z - focus.z;
+    const radialLength = Math.max(0.001, Math.hypot(radialX, radialZ));
+    desiredPosition.x += (radialX / radialLength) * actorClearanceDistance;
+    desiredPosition.z += (radialZ / radialLength) * actorClearanceDistance;
+  }
   const cameraDirection = desiredPosition.clone().sub(focus);
   const desiredDistance = cameraDirection.length();
   cameraDirection.normalize();
@@ -8202,6 +8218,7 @@ function updateCamera(payload = {}) {
     narrativeZ: Number(narrativeZ.toFixed(3)),
     orbitRadius: Number(playerFollowDistance.toFixed(3)),
     actorAvoidanceOffset: Number(cameraActorAvoidanceOffset.toFixed(3)),
+    actorClearanceDistance: Number(actorClearanceDistance.toFixed(3)),
     focusDistance: Number(resolvedDistance.toFixed(3)),
     height: Number(cameraHeight.toFixed(3)),
     fov: Number(camera.fov.toFixed(2)),

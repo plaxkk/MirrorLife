@@ -75,6 +75,82 @@ ROLE_CONFIGS = {
     },
 }
 
+# Four social roles share one animation vocabulary, not one mannequin body.
+# These metre-space profiles keep every actor inside the same authoritative
+# capsule while authoring different shoulder, waist, limb and head rhythms.
+# The variation is intentionally modest: identity should survive silhouette
+# and orbit without making collision or authored hand poses dishonest.
+BODY_PROFILES = {
+    "player": {
+        "torso_width": 1.03,
+        "torso_depth": 1.0,
+        "torso_height": 1.0,
+        "shoulder_x": 0.222,
+        "hip_x": 0.118,
+        "arm_width": 1.0,
+        "arm_depth": 1.02,
+        "leg_width": 1.02,
+        "leg_depth": 1.03,
+        "waist_width": 1.02,
+        "hand_scale": 0.92,
+        "head_scale": (0.925, 0.91, 0.91),
+        "head_z": 1.495,
+        "shoulder_slope": 0.08,
+        "waist_taper": 0.16,
+    },
+    "listener": {
+        "torso_width": 0.96,
+        "torso_depth": 0.95,
+        "torso_height": 1.01,
+        "shoulder_x": 0.21,
+        "hip_x": 0.109,
+        "arm_width": 0.94,
+        "arm_depth": 0.95,
+        "leg_width": 0.96,
+        "leg_depth": 0.97,
+        "waist_width": 0.96,
+        "hand_scale": 0.9,
+        "head_scale": (0.91, 0.9, 0.9),
+        "head_z": 1.49,
+        "shoulder_slope": 0.055,
+        "waist_taper": 0.19,
+    },
+    "facilitator": {
+        "torso_width": 0.92,
+        "torso_depth": 0.92,
+        "torso_height": 1.02,
+        "shoulder_x": 0.202,
+        "hip_x": 0.106,
+        "arm_width": 0.9,
+        "arm_depth": 0.92,
+        "leg_width": 0.91,
+        "leg_depth": 0.93,
+        "waist_width": 0.9,
+        "hand_scale": 0.88,
+        "head_scale": (0.91, 0.9, 0.9),
+        "head_z": 1.5,
+        "shoulder_slope": 0.035,
+        "waist_taper": 0.24,
+    },
+    "mediator": {
+        "torso_width": 0.95,
+        "torso_depth": 0.94,
+        "torso_height": 0.99,
+        "shoulder_x": 0.207,
+        "hip_x": 0.108,
+        "arm_width": 0.92,
+        "arm_depth": 0.94,
+        "leg_width": 0.93,
+        "leg_depth": 0.95,
+        "waist_width": 0.93,
+        "hand_scale": 0.89,
+        "head_scale": (0.925, 0.91, 0.91),
+        "head_z": 1.49,
+        "shoulder_slope": 0.045,
+        "waist_taper": 0.21,
+    },
+}
+
 
 # The source cast does not reuse one doll face. Each role carries a slightly
 # different eye aperture, brow rhythm, cheek volume and resting mouth. Keep
@@ -208,7 +284,7 @@ def empty(name, parent=None, location=(0, 0, 0), rotation=(0, 0, 0)):
     return obj
 
 
-def create_skin_armature(parent):
+def create_skin_armature(parent, shoulder_x=0.216, hip_x=0.115):
     """Create a compact deformation rig behind the public controller pivots.
 
     MirrorLife's original shared-pivot contract remains the animation API for
@@ -232,15 +308,16 @@ def create_skin_armature(parent):
     root_bone.head = (0, 0, 0.02)
     root_bone.tail = (0, 0, 0.16)
 
+    skin_shoulder_x = shoulder_x * 0.95
     specifications = (
-        ("SkinLeftArm", (-0.205, 0, 1.23), (-0.205, 0, 0.975), None),
-        ("SkinLeftElbow", (-0.205, 0, 0.975), (-0.205, 0, 0.675), "SkinLeftArm"),
-        ("SkinRightArm", (0.205, 0, 1.23), (0.205, 0, 0.975), None),
-        ("SkinRightElbow", (0.205, 0, 0.975), (0.205, 0, 0.675), "SkinRightArm"),
-        ("SkinLeftLeg", (-0.115, 0, 0.78), (-0.115, 0, 0.46), None),
-        ("SkinLeftKnee", (-0.115, 0, 0.46), (-0.115, 0, 0.135), "SkinLeftLeg"),
-        ("SkinRightLeg", (0.115, 0, 0.78), (0.115, 0, 0.46), None),
-        ("SkinRightKnee", (0.115, 0, 0.46), (0.115, 0, 0.135), "SkinRightLeg"),
+        ("SkinLeftArm", (-skin_shoulder_x, 0, 1.23), (-skin_shoulder_x, 0, 0.975), None),
+        ("SkinLeftElbow", (-skin_shoulder_x, 0, 0.975), (-skin_shoulder_x, 0, 0.675), "SkinLeftArm"),
+        ("SkinRightArm", (skin_shoulder_x, 0, 1.23), (skin_shoulder_x, 0, 0.975), None),
+        ("SkinRightElbow", (skin_shoulder_x, 0, 0.975), (skin_shoulder_x, 0, 0.675), "SkinRightArm"),
+        ("SkinLeftLeg", (-hip_x, 0, 0.78), (-hip_x, 0, 0.46), None),
+        ("SkinLeftKnee", (-hip_x, 0, 0.46), (-hip_x, 0, 0.135), "SkinLeftLeg"),
+        ("SkinRightLeg", (hip_x, 0, 0.78), (hip_x, 0, 0.46), None),
+        ("SkinRightKnee", (hip_x, 0, 0.46), (hip_x, 0, 0.135), "SkinRightLeg"),
     )
     created = {"SkinRoot": root_bone}
     for name, head, tail, parent_name in specifications:
@@ -1654,11 +1731,24 @@ def build_cap(head, mats):
 
 
 def build_body(role, config, mats, visual):
+    profile = BODY_PROFILES[role]
     # The story-camera comparison showed a narrow mannequin torso even though
     # the overall height was correct. Broaden the shoulder/chest volume by a
     # few centimetres and add front/back depth while remaining inside the
     # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid("Torso", (0, 0, 1.04), (0.252, 0.154, 0.36), mats["top"], visual, segments=42, rings=30)
+    torso = ellipsoid(
+        "Torso",
+        (0, 0, 1.04),
+        (
+            0.252 * profile["torso_width"],
+            0.154 * profile["torso_depth"],
+            0.36 * profile["torso_height"],
+        ),
+        mats["top"],
+        visual,
+        segments=42,
+        rings=30,
+    )
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1667,7 +1757,7 @@ def build_body(role, config, mats, visual):
         normalized = max(-1.0, min(1.0, z / 0.332))
         shoulder = max(0.0, min(1.0, (normalized - 0.2) / 0.8))
         waist = max(0.0, 1.0 - abs(normalized + 0.48) / 0.52)
-        vertex.co.x *= 1.0 + shoulder * 0.1 - waist * 0.18
+        vertex.co.x *= 1.0 + shoulder * profile["shoulder_slope"] - waist * profile["waist_taper"]
         vertex.co.y *= 1.0 - waist * 0.12
         # Put the garment volume in the mesh rather than drawing crease cords
         # on top. A shallow central drape and two diagonal tension valleys
@@ -1700,32 +1790,48 @@ def build_body(role, config, mats, visual):
             depth=depth,
         )
     cylinder("Neck", 0.078, 0.074, 0.12, (0, 0, 1.39), mats["skin"], visual, vertices=20)
-    rounded_box("WaistBand", (0.35, 0.21, 0.046), (0, -0.005, 0.79), mats["accent"], visual, radius=0.021)
+    rounded_box(
+        "WaistBand",
+        (0.35 * profile["waist_width"], 0.21 * profile["torso_depth"], 0.046),
+        (0, -0.005, 0.79),
+        mats["accent"],
+        visual,
+        radius=0.021,
+    )
 
-    left_arm = empty("LeftArmPivot", visual, (-0.216, 0, 1.23))
-    right_arm = empty("RightArmPivot", visual, (0.216, 0, 1.23))
+    shoulder_x = profile["shoulder_x"]
+    hip_x = profile["hip_x"]
+    left_arm = empty("LeftArmPivot", visual, (-shoulder_x, 0, 1.23))
+    right_arm = empty("RightArmPivot", visual, (shoulder_x, 0, 1.23))
     left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.255))
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.255))
-    left_leg = empty("LeftLegPivot", visual, (-0.115, 0, 0.78))
-    right_leg = empty("RightLegPivot", visual, (0.115, 0, 0.78))
+    left_leg = empty("LeftLegPivot", visual, (-hip_x, 0, 0.78))
+    right_leg = empty("RightLegPivot", visual, (hip_x, 0, 0.78))
     left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.32))
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.32))
 
     sleeve_mat = mats["outer"] if config["costume"] in ("traveler", "facilitator", "mediator") else mats["top"]
-    skin_armature = create_skin_armature(visual)
+    skin_armature = create_skin_armature(visual, shoulder_x, hip_x)
+    arm_width = profile["arm_width"]
+    arm_depth = profile["arm_depth"]
+    leg_width = profile["leg_width"]
+    leg_depth = profile["leg_depth"]
     build_skinned_limb_pair(
         "SkinnedArmVolume",
-        (-0.216, 0.216),
-        (
-            (1.23, 0.075, 0.07, 0.002),
-            (1.175, 0.08, 0.075, 0.003),
-            (1.09, 0.077, 0.072, 0.004),
-            (1.015, 0.07, 0.066, 0.003),
-            (0.975, 0.065, 0.061, 0),
-            (0.93, 0.066, 0.062, -0.002),
-            (0.845, 0.063, 0.059, -0.004),
-            (0.76, 0.06, 0.056, -0.004),
-            (0.675, 0.054, 0.05, -0.002),
+        (-shoulder_x, shoulder_x),
+        tuple(
+            (z, radius_x * arm_width, radius_y * arm_depth, centre_y)
+            for z, radius_x, radius_y, centre_y in (
+                (1.23, 0.075, 0.07, 0.002),
+                (1.175, 0.08, 0.075, 0.003),
+                (1.09, 0.077, 0.072, 0.004),
+                (1.015, 0.07, 0.066, 0.003),
+                (0.975, 0.065, 0.061, 0),
+                (0.93, 0.066, 0.062, -0.002),
+                (0.845, 0.063, 0.059, -0.004),
+                (0.76, 0.06, 0.056, -0.004),
+                (0.675, 0.054, 0.05, -0.002),
+            )
         ),
         0.975,
         sleeve_mat,
@@ -1735,17 +1841,20 @@ def build_body(role, config, mats, visual):
     )
     build_skinned_limb_pair(
         "SkinnedLegVolume",
-        (-0.115, 0.115),
-        (
-            (0.78, 0.106, 0.1, 0.002),
-            (0.695, 0.109, 0.103, 0.004),
-            (0.59, 0.102, 0.096, 0.006),
-            (0.505, 0.089, 0.084, 0.003),
-            (0.46, 0.082, 0.077, 0),
-            (0.415, 0.084, 0.08, -0.002),
-            (0.335, 0.089, 0.084, -0.005),
-            (0.245, 0.084, 0.079, -0.005),
-            (0.135, 0.067, 0.063, -0.002),
+        (-hip_x, hip_x),
+        tuple(
+            (z, radius_x * leg_width, radius_y * leg_depth, centre_y)
+            for z, radius_x, radius_y, centre_y in (
+                (0.78, 0.106, 0.1, 0.002),
+                (0.695, 0.109, 0.103, 0.004),
+                (0.59, 0.102, 0.096, 0.006),
+                (0.505, 0.089, 0.084, 0.003),
+                (0.46, 0.082, 0.077, 0),
+                (0.415, 0.084, 0.08, -0.002),
+                (0.335, 0.089, 0.084, -0.005),
+                (0.245, 0.084, 0.079, -0.005),
+                (0.135, 0.067, 0.063, -0.002),
+            )
         ),
         0.46,
         mats["lower"],
@@ -1783,7 +1892,16 @@ def build_body(role, config, mats, visual):
                 elbow,
                 depth=0.006,
             )
-        cylinder(f"Cuff_{side}", 0.059, 0.054, 0.042, (0, 0, -0.248), mats["accent"], elbow, vertices=22)
+        cylinder(
+            f"Cuff_{side}",
+            0.059 * arm_width,
+            0.054 * arm_width,
+            0.042,
+            (0, 0, -0.248),
+            mats["accent"],
+            elbow,
+            vertices=22,
+        )
         if config["costume"] == "facilitator":
             hand_pose = "notebook-grip"
             hand_rotation = (0.02, side * 0.2, -side * 0.2)
@@ -1796,7 +1914,7 @@ def build_body(role, config, mats, visual):
         else:
             hand_pose = "relaxed"
             hand_rotation = (0.02, side * 0.04, -side * 0.055)
-        sculpted_hand(
+        hand = sculpted_hand(
             f"Hand_{side}",
             (0, -0.007, -0.325),
             mats["skin"],
@@ -1805,6 +1923,11 @@ def build_body(role, config, mats, visual):
             rotation=hand_rotation,
             side=side,
             pose_style=hand_pose,
+        )
+        hand.scale = (
+            profile["hand_scale"],
+            profile["hand_scale"],
+            profile["hand_scale"],
         )
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
@@ -1819,7 +1942,16 @@ def build_body(role, config, mats, visual):
                 knee,
                 depth=0.006,
             )
-        cylinder(f"TrouserCuff_{side}", 0.075, 0.068, 0.058, (0, 0, -0.29), mats["accent"], knee, vertices=20)
+        cylinder(
+            f"TrouserCuff_{side}",
+            0.075 * leg_width,
+            0.068 * leg_width,
+            0.058,
+            (0, 0, -0.29),
+            mats["accent"],
+            knee,
+            vertices=20,
+        )
         sculpted_shoe(
             f"ShoeUpper_{side}",
             (0, 0, -0.395),
@@ -2013,12 +2145,24 @@ def build_costume(
                 radius=0.025,
             )
     elif costume in ("facilitator", "mediator"):
+        is_facilitator = costume == "facilitator"
         # Keep the skirt on its own waist pivot so the runtime can add a small
         # amount of delayed cloth follow-through without deforming the torso.
         # Coordinates below are local to the 0.94 m waist pivot.
         skirt_pivot = empty("SkirtPivot", visual, (0, 0, 0.94))
-        pleated_skirt("Skirt", 0.21, 0.335, 0.52, (0, 0, -0.23), mats["lower"], skirt_pivot, pleats=12, segments=48)
-        curve_tube("SkirtHem", [(-0.31, -0.1, -0.478), (0, -0.326, -0.5), (0.31, -0.1, -0.478)], 0.007, mats["accent"], skirt_pivot, resolution=2)
+        skirt_waist = 0.205 if is_facilitator else 0.215
+        skirt_hem = 0.34 if is_facilitator else 0.31
+        skirt_depth = 0.54 if is_facilitator else 0.49
+        pleated_skirt("Skirt", skirt_waist, skirt_hem, skirt_depth, (0, 0, -0.23), mats["lower"], skirt_pivot, pleats=12, segments=48)
+        hem_x = skirt_hem * 0.93
+        curve_tube(
+            "SkirtHem",
+            [(-hem_x, -0.1, -0.478), (0, -skirt_hem * 0.97, -0.5), (hem_x, -0.1, -0.478)],
+            0.007,
+            mats["accent"],
+            skirt_pivot,
+            resolution=2,
+        )
         for pleat_index, pleat_x in enumerate((-0.1, 0, 0.1)):
             cloth_fold_ribbon(
                 f"SkirtPleat_{pleat_index + 1}",
@@ -2058,17 +2202,19 @@ def build_costume(
                     radius=0.021,
                 )
         for side in (-1, 1):
+            coat_height = 0.5 if is_facilitator else 0.42
+            coat_z = 1.015 if is_facilitator else 1.075
             tailored_panel(
                 f"CoatPanel_{side}",
                 # The reference coat is fitted through the waist and releases
                 # over the skirt.  A near-rectangular panel made the civic
                 # women read as boxy toys from the three-quarter story camera.
-                0.14,
-                0.098,
-                0.16,
-                0.48,
+                0.145 if is_facilitator else 0.14,
+                0.092 if is_facilitator else 0.105,
+                0.17 if is_facilitator else 0.135,
+                coat_height,
                 0.048,
-                (side * 0.13, -0.172, 1.025),
+                (side * (0.132 if is_facilitator else 0.125), -0.172, coat_z),
                 mats["outer"],
                 visual,
                 radius=0.012,
@@ -2154,6 +2300,16 @@ def build_costume(
                 vertices=18,
             )
         if costume == "facilitator":
+            # A shallow shoulder yoke gives the long cardigan a tailored
+            # upper silhouette distinct from the mediator's cropped jacket.
+            curve_tube(
+                "FacilitatorShoulderYoke",
+                [(-0.19, -0.145, 1.25), (0, -0.205, 1.28), (0.19, -0.145, 1.25)],
+                0.009,
+                mats["accent"],
+                visual,
+                resolution=2,
+            )
             # Seat the story notebook inside the authored palm volume. The old
             # centre was 12 cm from the hand and read as a floating prop in the
             # reverse/cast view. Spine, elastic and pencil give the contact a
@@ -2188,6 +2344,26 @@ def build_costume(
                 rings=10,
             )
         else:
+            # A fitted sash and offset knot make the mediator readable as a
+            # distinct civic role even when her face is in profile.
+            rounded_box(
+                "MediatorWaistSash",
+                (0.34, 0.045, 0.07),
+                (0, -0.205, 0.91),
+                mats["accent"],
+                visual,
+                radius=0.02,
+                rotation=(0.02, 0, -0.025),
+            )
+            ellipsoid(
+                "MediatorSashKnot",
+                (0.15, -0.232, 0.91),
+                (0.045, 0.025, 0.04),
+                mats["metal"],
+                visual,
+                segments=16,
+                rings=10,
+            )
             curve_tube("Necklace", [(-0.11, -0.205, 1.2), (0, -0.225, 1.08), (0.11, -0.205, 1.2)], 0.012, mats["metal"], visual)
             ellipsoid("NecklacePendant", (0, -0.24, 1.07), (0.035, 0.012, 0.05), mats["metal"], visual, segments=14, rings=8)
 
@@ -2212,10 +2388,11 @@ def build_character(role, config):
     # eighty percent of shoulder width. Keep the complete authored hierarchy
     # at that ratio: the earlier 1.02-wide head drifted back toward a toy
     # silhouette once the slimmer torso and full costume were visible.
-    head = empty("HeadPivot", root, (0, 0, 1.49))
+    body_profile = BODY_PROFILES[role]
+    head = empty("HeadPivot", root, (0, 0, body_profile["head_z"]))
     # This resolves to about 0.46 m wide and 0.48 m tall, yielding the target
     # editorial 1:3.5 rhythm while staying inside the existing 1.72 m capsule.
-    head.scale = (0.94, 0.93, 0.93)
+    head.scale = body_profile["head_scale"]
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -2286,7 +2463,12 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v42",
+        "sculptContract": "mirrorlife-civic-sculpt-v43",
+        "bodyIdentityContract": {
+            "version": "mirrorlife-civic-body-identity-v1",
+            "roles": ["player", "listener", "facilitator", "mediator"],
+            "dimensions": ["torso", "shoulder", "waist", "limb", "head", "garment-silhouette"],
+        },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
