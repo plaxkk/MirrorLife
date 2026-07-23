@@ -10,7 +10,7 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#f5c9aa",
+        "skin": "#eeb389",
         "hair": "#3b3947",
         "hair_highlight": "#504c5a",
         "eye": "#3f342d",
@@ -29,7 +29,7 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#f3c4a2",
+        "skin": "#e9ab82",
         "hair": "#303744",
         "hair_highlight": "#536070",
         "eye": "#3a312b",
@@ -43,7 +43,7 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f6ceb0",
+        "skin": "#efb68e",
         "hair": "#d45f52",
         "hair_highlight": "#ec796b",
         "eye": "#3d6d5d",
@@ -51,7 +51,7 @@ ROLE_CONFIGS = {
         # A warmer oatmeal cardigan preserves the source's cloth hierarchy
         # under the strong portal key; near-white previously clipped into flat
         # vertical bars beside the green dress.
-        "outer": "#e4d6c4",
+        "outer": "#d6c2a9",
         "lower": "#356e58",
         "accent": "#d98769",
         "shoe": "#5c4031",
@@ -60,12 +60,12 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#f4c9aa",
+        "skin": "#ecb087",
         "hair": "#6b4a3c",
         "hair_highlight": "#876457",
         "eye": "#4f6149",
         "top": "#f1e8da",
-        "outer": "#e8dac7",
+        "outer": "#dbc7ae",
         "lower": "#47745d",
         "accent": "#c69455",
         "shoe": "#503b31",
@@ -82,60 +82,60 @@ ROLE_CONFIGS = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0455,
-        "eye_height": 0.0272,
-        "iris_width": 0.0196,
-        "iris_height": 0.0224,
+        "eye_width": 0.0525,
+        "eye_height": 0.032,
+        "iris_width": 0.0238,
+        "iris_height": 0.027,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
         "brow_inner": -0.002,
-        "mouth_width": 0.032,
+        "mouth_width": 0.037,
         "mouth_corner": 0.002,
         "mouth_center": -0.003,
         "cheek_forward": 1.0,
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.045,
-        "eye_height": 0.027,
-        "iris_width": 0.0194,
-        "iris_height": 0.0222,
+        "eye_width": 0.052,
+        "eye_height": 0.0315,
+        "iris_width": 0.0235,
+        "iris_height": 0.0265,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
         "brow_inner": -0.001,
-        "mouth_width": 0.033,
+        "mouth_width": 0.038,
         "mouth_corner": 0.004,
         "mouth_center": -0.002,
         "cheek_forward": 0.94,
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.0456,
-        "eye_height": 0.028,
-        "iris_width": 0.0198,
-        "iris_height": 0.0232,
+        "eye_width": 0.053,
+        "eye_height": 0.0328,
+        "iris_width": 0.0242,
+        "iris_height": 0.0278,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
         "brow_inner": -0.003,
-        "mouth_width": 0.035,
+        "mouth_width": 0.039,
         "mouth_corner": 0.005,
         "mouth_center": -0.002,
         "cheek_forward": 1.08,
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0448,
-        "eye_height": 0.0273,
-        "iris_width": 0.0193,
-        "iris_height": 0.0226,
+        "eye_width": 0.0522,
+        "eye_height": 0.032,
+        "iris_width": 0.0237,
+        "iris_height": 0.027,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
         "brow_inner": 0.001,
-        "mouth_width": 0.032,
+        "mouth_width": 0.037,
         "mouth_corner": 0.002,
         "mouth_center": -0.002,
         "cheek_forward": 0.98,
@@ -1176,7 +1176,7 @@ def sculpted_ear_shell(name, location, skin_mat, concha_mat, parent=None, side=1
 def build_materials(role, config):
     return {
         "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.025),
-        "skin_shadow": material(f"{role} hand crease", "#b96f66", 0.84),
+        "skin_shadow": material(f"{role} hand crease", "#a95d55", 0.84),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
         "hair": material(f"{role} hair", config["hair"], 0.74, clearcoat=0.015),
@@ -1191,8 +1191,8 @@ def build_materials(role, config):
         # crop. The reference uses brown-violet linework that participates in
         # the room light rather than swallowing it.
         "ink": material(f"{role} ink", "#342b30", 0.64),
-        "blush": material(f"{role} blush", "#e5a096", 0.9),
-        "lip": material(f"{role} lip", "#b96f68", 0.82, clearcoat=0.025),
+        "blush": material(f"{role} blush", "#d9887b", 0.9),
+        "lip": material(f"{role} lip", "#a95f5e", 0.82, clearcoat=0.025),
         "top": material(f"{role} top fabric", config["top"], 0.91),
         "outer": material(f"{role} outer fabric", config["outer"], 0.9),
         "lower": material(f"{role} lower fabric", config["lower"], 0.88),
@@ -1218,7 +1218,10 @@ def build_face(head, mats, role):
     # oversized toy-doll head of the early assets. The narrower depth and
     # slightly slimmer jaw leave more silhouette room for hair, costume and
     # hand acting, matching the reference's editorial 1:3.5 proportion.
-    face = ellipsoid("Head", (0, 0, 0), (0.24, 0.194, 0.272), mats["skin"], head, segments=52, rings=38)
+    # Four facial morph targets multiply every head vertex in the exported
+    # GLB. A 48×34 surface remains visually smooth at the 46 cm gameplay head
+    # scale while keeping all four roles inside the strict 2 MiB asset gate.
+    face = ellipsoid("Head", (0, 0, 0), (0.24, 0.194, 0.272), mats["skin"], head, segments=48, rings=34)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -1314,7 +1317,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.083, -0.188, 0.039))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.078, -0.188, 0.037))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -1332,19 +1335,19 @@ def build_face(head, mats, role):
         outer_lift = face_profile["outer_eye_lift"]
         eye.rotation_euler.y = side * outer_lift * 2.8
         eye.rotation_euler.z = -side * outer_lift * 3.2
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0078, eye_height), mats["eye_white"], eye, segments=32, rings=18)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0088, eye_height), mats["eye_white"], eye, segments=30, rings=18)
         ellipsoid(
             f"Iris_{side}",
-            (-side * 0.001, -0.0082, -0.002),
+            (-side * 0.001, -0.0092, -0.002),
             (face_profile["iris_width"], 0.0052, face_profile["iris_height"]),
             mats["iris"],
             eye,
-            segments=26,
+            segments=24,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0125, -0.003), (0.0068, 0.002, 0.0095), mats["ink"], eye, segments=18, rings=10)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0052, -0.0147, 0.0055), (0.0032, 0.001, 0.0034), mats["eye_white"], eye, segments=12, rings=7)
-        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.0028, -0.015, -0.0042), (0.00115, 0.0007, 0.0013), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0078, 0.0022, 0.0108), mats["ink"], eye, segments=20, rings=12)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0163, 0.0065), (0.0038, 0.0011, 0.004), mats["eye_white"], eye, segments=12, rings=8)
+        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.003, -0.0165, -0.0048), (0.0013, 0.0008, 0.0015), mats["eye_white"], eye, segments=10, rings=6)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -1375,7 +1378,7 @@ def build_face(head, mats, role):
                 (0, -0.019, eye_height - 0.001),
                 (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
             ],
-            0.00205 if feminine else 0.0019,
+            0.00235 if feminine else 0.00215,
             mats["ink"],
             eye,
             resolution=2,
@@ -1397,13 +1400,14 @@ def build_face(head, mats, role):
                 (0, -0.007, face_profile["brow_apex"]),
                 (-side * 0.052, 0.003, face_profile["brow_inner"]),
             ],
-            0.00315 if feminine else 0.0033,
+            0.00365 if feminine else 0.0038,
             mats["hair"],
             brow,
         )
-        ellipsoid(f"Blush_{side}", (side * 0.152, -0.194, -0.047), (0.020, 0.0032, 0.0065), mats["blush"], head, segments=16, rings=8)
+        ellipsoid(f"Blush_{side}", (side * 0.148, -0.194, -0.046), (0.022, 0.0027, 0.006), mats["blush"], head, segments=16, rings=8)
     ellipsoid("NoseBridge", (0, -0.19, 0.004), (0.009, 0.007, 0.025), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
+    ellipsoid("NoseShadow", (0, -0.2085, -0.033), (0.009, 0.0017, 0.0032), mats["skin_shadow"], head, segments=14, rings=8)
     mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
     closed = empty("MouthClosedPivot", mouth)
     mouth_width = face_profile["mouth_width"]
@@ -1418,9 +1422,18 @@ def build_face(head, mats, role):
             (mouth_width * 0.48, -0.003, mouth_center * 0.6),
             (mouth_width, 0.001, mouth_corner),
         ],
-        0.0027,
+        0.0032,
         mats["skin_shadow"],
         closed,
+    )
+    ellipsoid(
+        "LowerLip",
+        (0, -0.0065, -0.011),
+        (mouth_width * 0.58, 0.0022, 0.0042),
+        mats["lip"],
+        closed,
+        segments=18,
+        rings=9,
     )
     open_mouth = empty("MouthOpenPivot", mouth)
     ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.024, 0.0055, 0.018), mats["ink"], open_mouth, segments=20, rings=12)
@@ -2202,7 +2215,7 @@ def build_character(role, config):
     head = empty("HeadPivot", root, (0, 0, 1.49))
     # This resolves to about 0.46 m wide and 0.48 m tall, yielding the target
     # editorial 1:3.5 rhythm while staying inside the existing 1.72 m capsule.
-    head.scale = (0.91, 0.91, 0.89)
+    head.scale = (0.94, 0.93, 0.93)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -2273,7 +2286,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v41",
+        "sculptContract": "mirrorlife-civic-sculpt-v42",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2297,8 +2310,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v11",
-            "productionIntegrationContract": "mirrorlife-civic-face-illustrated-cornea-v3",
+            "integrationContract": "mirrorlife-civic-face-volume-v12",
+            "productionFaceMode": "sculpted-volume",
+            "productionIntegrationContract": "mirrorlife-civic-face-volume-v12",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",

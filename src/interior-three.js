@@ -23,7 +23,12 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
         ? "uv-hybrid"
         : CIVIC_FACE_MODE_QUERY === "illustrated"
           ? "illustrated-cornea"
-          : "illustrated-cornea";
+          // The default production face must be a lit part of the character,
+          // not a photographed feature layer hovering above it. The curved
+          // atlas remains available as an explicit comparison mode, while
+          // gameplay now uses the authored head, eyelids, irises, brows and
+          // mouth that survive every camera angle without a pale face mask.
+          : "sculpted-volume";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -1007,9 +1012,9 @@ function loadCivicActorAsset(role) {
           resolve(null);
           return;
         }
-        // Production actors bake the existing illustrated identity into the
-        // exported head UV before the atomic reveal. Only the pure sculpted
-        // comparison path can skip the atlas request.
+        // Production now uses the exported volumetric face and therefore does
+        // not wait on a raster atlas before the atomic reveal. Legacy atlas,
+        // UV and hybrid QA modes still load the image explicitly.
         const faceAssetsReady = CIVIC_FACE_MODE === "sculpted-volume"
           ? Promise.resolve()
           : loadCivicFaceAtlas();
@@ -5166,12 +5171,17 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#bec1bd" : floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#d7d0c5" : floorColor, {
+      // A softly honed mineral surface matches the reference better than the
+      // former cold grey, high-contrast chip field. The colour map still
+      // supplies real terrazzo variation, while reduced bump and stronger
+      // environment response keep faces and furniture from competing with a
+      // noisy floor at the intimate 46° story lens.
+      roughness: theme.zoneId === "public-plaza" ? 0.7 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
-      bumpScale: theme.zoneId === "public-plaza" ? 0.016 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.44 : 0.48
+      bumpScale: theme.zoneId === "public-plaza" ? 0.007 : 0.026,
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.6 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -7962,11 +7972,11 @@ function updateCamera(payload = {}) {
     ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
     : 0;
   const targetFov = cinematicCivic
-    // Keep the authored 48° opening, then widen only while orbiting into the
-    // witness corridor. The former 50° reverse cap left the nearest head as a
-    // third-frame obstruction even after tangential avoidance; 52–52.5°
-    // retains scale while exposing the player, current target and exit.
-    ? (portrait ? 60 : 48 + civicRearArc * 4 + civicSideArc * 3)
+    // Match the reference's more intimate editorial lens in the opening
+    // conversation, then widen only while orbiting into the witness corridor.
+    // The 46° hero lens makes faces and hand acting readable without changing
+    // world scale; the reverse arc still reaches 52° for spatial clarity.
+    ? (portrait ? 60 : 46 + civicRearArc * 6 + civicSideArc * 4)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -8026,16 +8036,14 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    // Keep the same authored 5.2 m radius through the full orbit. Pulling the
-    // camera inward on the side/rear arcs made the nearest witness fill the
-    // frame and created the impression that the pivot had jumped away from
-    // the player. The room shell has enough clearance for this constant arc;
-    // collision resolution still shortens it only when real geometry blocks
-    // the ray.
-    ? (portrait ? 5.2 : 5.55)
+    // The reference's cast occupies roughly two thirds of the story frame;
+    // the former 5.55 m opening made the citizens read as miniature props.
+    // Start at an intimate 4.8 m, then ease back through side/rear arcs so a
+    // full drag orbit retains the existing obstruction-safe composition.
+    ? (portrait ? 5.2 : 4.8 + civicRearArc * 0.75 + civicSideArc * 0.35)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.02 + civicRearArc * 0.34 + civicSideArc * 0.3) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 2.78 + civicRearArc * 0.48 + civicSideArc * 0.4) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
@@ -8445,7 +8453,7 @@ function getStats() {
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v11"
+          ? "mirrorlife-civic-face-volume-v12"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"

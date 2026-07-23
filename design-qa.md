@@ -1,5 +1,48 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v70 volumetric-face, intimate-camera and mineral-surface gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v70-final-desktop-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `157 / 281,912`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v70.png`; source and implementation are both rendered as `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Mandatory focused cast comparison: `tmp/reference-vs-v70-cast.png`; the source and implementation character groups are inspected at an equal `660 × 460` panel scale.
+- Full-orbit evidence: `tmp/v70-final-desktop-yaw90.png` (`158 / 296,804`, `52.12°`, `5.415m`, actor avoidance `0.354m`) and `tmp/v70-final-desktop-yaw180.png` (`161 / 295,356`, `52°`, `5.55m`, actor avoidance `0.31m`).
+- Mobile evidence: `tmp/v70-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `95 / 236,106`, three-character LOD).
+- Physical exploration evidence: `tmp/v70-character-walk.png`; the browser regression walked `5.37m`, completed gesture/walk/idle and facial-expression transitions, and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop and mobile scene-flow checks passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / v69 premium portrait layer created a pale face mask] Production no longer uses the curved raster layer. Sculpt v42 keeps the face inside the real head hierarchy: role-specific head volume, eyelids, sclera, irises, pupils, brows, nose, lips and cheek planes all receive room light, depth, occlusion, expression morphs and full-orbit parallax. Legacy atlas modes remain explicit QA options only.
+- [improved / previous volumetric fallback read as tiny robotic eyes] All four role profiles now have larger almond-shaped sclera, proportionate irises and pupils, stronger upper contours, clearer brows, a subtle lower lip and nose shadow. Skin values are warmer and less clipped; each role preserves distinct eye aperture, brow rhythm, mouth and cheek volume.
+- [improved / citizens read as miniature props inside the room] The desktop opening moves from a `5.55m / 48°` orbit to `4.8m / 46°`, with a lower `2.672m` camera. The cast now owns the middle ground at a scale materially closer to the reference. Side and rear arcs progressively widen and retreat to retain safe 360° exploration rather than applying the intimate distance globally.
+- [improved / cardigan layers clipped to white vertical bars] Facilitator and mediator outer cloth moves to deeper oatmeal values, retaining cream identity while making lapels, sleeves and dress layers readable under the portal key.
+- [improved / floor competed with faces and furniture] The photographed terrazzo remains the real surface asset, but its material shifts from cold grey to warm honed mineral, with bump reduced from `0.016` to `0.007`, roughness from `0.78` to `0.70`, and environment response raised from `0.44` to `0.60`.
+- [checked / asset and performance budgets] Four sculpt-v42 role GLBs total `7.23 MB`; each remains below the `2 MiB` gate. The intimate desktop frame remains below `180` calls / `450k` triangles and mobile remains below `110` / `250k`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts, typography, copy and icons] The compact Chinese HUD, room-memory card, interaction markers and action labels preserve the existing product typography and content hierarchy. No label clips in the `1600 × 900` or `390 × 844` evidence; the primary actions remain keyboard and touch reachable.
+- [improved][spacing, layout rhythm and composition] The closer lens removes excess empty foreground and makes the player/listening circle the first read. The entrance, listening wall and lounge remain background landmarks, while the display case and record desk provide foreground framing. Side/rear easing prevents the same camera distance from becoming obstructive during rotation.
+- [checked][viewport resilience and interactions] Desktop opening, quarter orbit, reverse orbit, portrait mobile, gesture, walking and camera-drag states remain functional. Mobile controls do not cover the player or current target, and the action rail remains usable.
+- [improved][colors, tokens and material response] Warm neutral architecture remains dominant, teal carries civic identity, and coral/gold marks actors and actions. Skin and oatmeal cloth separate more clearly from plaster; terrazzo is quieter and more polished while wood, fabric, paper, ceramic and metal preserve distinct roughness.
+- [fixed][image quality / facial asset integration] The visible raster halo and mask are removed from the production path. Faces are real 3D geometry, not billboards, sprites, CSS art or a photographed facial card.
+- [checked][copy/content and behavior] The civic listening objective, room memory, four actions and interaction prompt remain coherent with the playable social scene. Suggest, listen, guide and leave continue to drive real character and narrative states.
+- [P1][production character topology and deformation remain below the source] The focused cast comparison still shows simpler skull/cheek transitions, hair roots, fingers, shoe construction, cloth drape, elbows and hand-object contact. The current shared-pivot/continuous-limb rig is playable and materially improved, but source-level parity needs role-authored topology, facial blendshape correctives and garment-specific skinning.
+- [P1][environment asset density and joinery remain below the source] The reference contains finer sofa/cabinet joinery, transparent glass thickness, denser foliage, textiles, stationery, ceramics and authored wear. The implementation remains visibly more procedural and lower frequency despite having the same functional zones.
+- [P1][indirect light transport remains below the source] Real-time portal key, fill, bounce, GTAO and dapple establish direction, but the reference still has softer multi-bounce penumbrae, localized colour bleed and more convincing contact integration across skin, cloth, floor and furniture.
+- [P2][reverse-orbit foreground actor remains visually heavy] At `180°`, the nearest mediator occupies a large lower-frame area even after `0.31m` tangential avoidance. The player and target remain visible, but the next camera pass should add screen-space capsule avoidance or a temporary shoulder fade rather than hiding the actor.
+
+### Gate result
+
+v70 removes the most damaging facial-mask artifact, restores genuinely volumetric role faces, brings the story camera and cast scale much closer to the selected reference, and improves cloth/floor separation without compromising real walking, full orbit, atomic loading, mobile controls or performance budgets. The normalized full-view and focused comparisons still expose actionable P1 differences in production character topology, environment micro-assets and source-level indirect transport.
+
+final result: blocked
+
+Blocker: role-authored character/garment topology, environment asset density and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-23 reference-fidelity v69 premium portrait, garment identity and soft-transport gate
 
 ### Evidence inspected together
