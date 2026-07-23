@@ -1603,7 +1603,7 @@ def build_body(role, config, mats, visual):
     # the overall height was correct. Broaden the shoulder/chest volume by a
     # few centimetres and add front/back depth while remaining inside the
     # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid("Torso", (0, 0, 1.04), (0.238, 0.15, 0.36), mats["top"], visual, segments=42, rings=30)
+    torso = ellipsoid("Torso", (0, 0, 1.04), (0.252, 0.154, 0.36), mats["top"], visual, segments=42, rings=30)
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1647,8 +1647,8 @@ def build_body(role, config, mats, visual):
     cylinder("Neck", 0.078, 0.074, 0.12, (0, 0, 1.39), mats["skin"], visual, vertices=20)
     rounded_box("WaistBand", (0.35, 0.21, 0.046), (0, -0.005, 0.79), mats["accent"], visual, radius=0.021)
 
-    left_arm = empty("LeftArmPivot", visual, (-0.205, 0, 1.23))
-    right_arm = empty("RightArmPivot", visual, (0.205, 0, 1.23))
+    left_arm = empty("LeftArmPivot", visual, (-0.216, 0, 1.23))
+    right_arm = empty("RightArmPivot", visual, (0.216, 0, 1.23))
     left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.255))
     right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.255))
     left_leg = empty("LeftLegPivot", visual, (-0.115, 0, 0.78))
@@ -1660,17 +1660,17 @@ def build_body(role, config, mats, visual):
     skin_armature = create_skin_armature(visual)
     build_skinned_limb_pair(
         "SkinnedArmVolume",
-        (-0.205, 0.205),
+        (-0.216, 0.216),
         (
-            (1.23, 0.071, 0.066, 0.002),
-            (1.175, 0.076, 0.071, 0.003),
-            (1.09, 0.073, 0.068, 0.004),
-            (1.015, 0.066, 0.062, 0.003),
-            (0.975, 0.061, 0.057, 0),
-            (0.93, 0.062, 0.058, -0.002),
-            (0.845, 0.059, 0.055, -0.004),
-            (0.76, 0.056, 0.052, -0.004),
-            (0.675, 0.05, 0.046, -0.002),
+            (1.23, 0.075, 0.07, 0.002),
+            (1.175, 0.08, 0.075, 0.003),
+            (1.09, 0.077, 0.072, 0.004),
+            (1.015, 0.07, 0.066, 0.003),
+            (0.975, 0.065, 0.061, 0),
+            (0.93, 0.066, 0.062, -0.002),
+            (0.845, 0.063, 0.059, -0.004),
+            (0.76, 0.06, 0.056, -0.004),
+            (0.675, 0.054, 0.05, -0.002),
         ),
         0.975,
         sleeve_mat,
@@ -1682,15 +1682,15 @@ def build_body(role, config, mats, visual):
         "SkinnedLegVolume",
         (-0.115, 0.115),
         (
-            (0.78, 0.101, 0.095, 0.002),
-            (0.695, 0.104, 0.098, 0.004),
-            (0.59, 0.097, 0.091, 0.006),
-            (0.505, 0.084, 0.079, 0.003),
-            (0.46, 0.077, 0.072, 0),
-            (0.415, 0.079, 0.075, -0.002),
-            (0.335, 0.084, 0.079, -0.005),
-            (0.245, 0.079, 0.074, -0.005),
-            (0.135, 0.062, 0.058, -0.002),
+            (0.78, 0.106, 0.1, 0.002),
+            (0.695, 0.109, 0.103, 0.004),
+            (0.59, 0.102, 0.096, 0.006),
+            (0.505, 0.089, 0.084, 0.003),
+            (0.46, 0.082, 0.077, 0),
+            (0.415, 0.084, 0.08, -0.002),
+            (0.335, 0.089, 0.084, -0.005),
+            (0.245, 0.084, 0.079, -0.005),
+            (0.135, 0.067, 0.063, -0.002),
         ),
         0.46,
         mats["lower"],
@@ -1992,12 +1992,12 @@ def build_costume(
                 # The reference coat is fitted through the waist and releases
                 # over the skirt.  A near-rectangular panel made the civic
                 # women read as boxy toys from the three-quarter story camera.
-                0.158,
-                0.112,
-                0.176,
+                0.14,
+                0.098,
+                0.16,
                 0.48,
                 0.048,
-                (side * 0.105, -0.172, 1.025),
+                (side * 0.13, -0.172, 1.025),
                 mats["outer"],
                 visual,
                 radius=0.012,
@@ -2005,12 +2005,12 @@ def build_costume(
             )
             tailored_panel(
                 f"Lapel_{side}",
-                0.073,
-                0.096,
-                0.058,
+                0.062,
+                0.078,
+                0.052,
                 0.27,
                 0.022,
-                (side * 0.065, -0.202, 1.12),
+                (side * 0.092, -0.202, 1.12),
                 mats["outer"],
                 visual,
                 radius=0.012,
@@ -2070,7 +2070,7 @@ def build_costume(
                 rotation=(0.03, side * 0.025, side * 0.09),
             )
         for index in range(3):
-            ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
+            ellipsoid(f"CoatButton_{index + 1}", (-0.067, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
         for side, elbow in ((-1, left_elbow), (1, right_elbow)):
             cylinder(
                 f"CoatCuff_{side}",
@@ -2215,7 +2215,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v38",
+        "sculptContract": "mirrorlife-civic-sculpt-v39",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2238,6 +2238,8 @@ def main():
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
             "integrationContract": "mirrorlife-civic-face-volume-v10",
+            "productionIntegrationContract": "mirrorlife-civic-face-uv-hybrid-v1",
+            "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",

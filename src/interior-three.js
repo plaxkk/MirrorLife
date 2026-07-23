@@ -19,7 +19,11 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
     ? "sculpted-volume"
     : CIVIC_FACE_MODE_QUERY === "hybrid"
       ? "hybrid-volume"
-      : "illustrated-cornea";
+      : CIVIC_FACE_MODE_QUERY === "uv"
+        ? "uv-hybrid"
+        : CIVIC_FACE_MODE_QUERY === "illustrated"
+          ? "illustrated-cornea"
+          : "uv-hybrid";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -90,7 +94,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 2.08, fill: 0.18, hemi: 0.18, bounce: 0.52, wash: 0.32, exposure: 0.83, keyColor: "#ffd3a2", fillColor: "#a8cdd1" },
+  "civic-ivory": { key: 2.28, fill: 0.14, hemi: 0.14, bounce: 0.48, wash: 0.26, exposure: 0.82, keyColor: "#ffd09b", fillColor: "#a8cdd1" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -262,6 +266,7 @@ const surfaceBumpTextures = new Map();
 const physicalSurfaceMaps = new Map();
 const actorFrameTextures = new Map();
 const civicFaceTextures = new Map();
+const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
 const dynamicModelObjects = new Map();
 
@@ -358,6 +363,7 @@ function ensureLayer() {
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(48, 1, 0.08, 30);
   camera.layers.enable(1);
+  camera.layers.enable(2);
   cameraRaycaster = new THREE.Raycaster();
   scene.add(camera);
 
@@ -434,7 +440,7 @@ function ensureLayer() {
   // A camera-side fill is restricted to the actor layer. It keeps eyes and
   // expressions readable at every orbit angle without flattening the room.
   actorFaceLight = new THREE.PointLight(0xffead9, 0.82, 12, 1.7);
-  actorFaceLight.layers.set(1);
+  actorFaceLight.layers.set(2);
   scene.add(actorFaceLight);
 
   // The civic hero room relies on contact depth rather than heavy outlines.
@@ -1001,10 +1007,9 @@ function loadCivicActorAsset(role) {
           resolve(null);
           return;
         }
-        // Production actors now use their exported volumetric face by
-        // default. Only legacy atlas/hybrid comparison modes need to block on
-        // the bitmap; skipping it removes a redundant request from atomic
-        // room entry and prevents any decal-to-volume visual swap.
+        // Production actors bake the existing illustrated identity into the
+        // exported head UV before the atomic reveal. Only the pure sculpted
+        // comparison path can skip the atlas request.
         const faceAssetsReady = CIVIC_FACE_MODE === "sculpted-volume"
           ? Promise.resolve()
           : loadCivicFaceAtlas();
@@ -1497,21 +1502,21 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.98 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.18 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.18) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.22) : 0;
   }
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.52 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.66 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 8 : 9;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 6.5 : 9;
     keyLight.shadow.blurSamples = 24;
   }
 }
@@ -3971,7 +3976,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.4,
+        opacity: theme.night ? 0.1 : 0.46,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5705,6 +5710,135 @@ function getCivicFaceTexture(role = "player") {
   return texture;
 }
 
+function clearCivicFaceCellEyes(context, width, height) {
+  context.save();
+  context.globalCompositeOperation = "destination-out";
+  [-1, 1].forEach((side) => {
+    const centreX = width * (side < 0 ? 0.285 : 0.715);
+    const centreY = height * 0.49;
+    const radiusX = width * 0.16;
+    const radiusY = height * 0.13;
+    context.save();
+    context.translate(centreX, centreY);
+    context.scale(radiusX, radiusY);
+    const feather = context.createRadialGradient(0, 0, 0.72, 0, 0, 1);
+    feather.addColorStop(0, "rgba(0, 0, 0, 1)");
+    feather.addColorStop(0.78, "rgba(0, 0, 0, 1)");
+    feather.addColorStop(1, "rgba(0, 0, 0, 0)");
+    context.fillStyle = feather;
+    context.beginPath();
+    context.arc(0, 0, 1, 0, Math.PI * 2);
+    context.fill();
+    context.restore();
+  });
+  context.restore();
+}
+
+function getCivicHeadUvTexture(role = "player", skinColor = new THREE.Color("#efb489")) {
+  if (!civicFaceAtlasTexture?.image) return null;
+  const safeRole = ["player", "listener", "facilitator", "mediator"].includes(role) ? role : "player";
+  const resolvedSkin = skinColor?.isColor ? skinColor.clone() : new THREE.Color(skinColor || "#efb489");
+  const cacheKey = `${safeRole}:${resolvedSkin.getHexString()}`;
+  if (civicHeadUvTextures.has(cacheKey)) return civicHeadUvTextures.get(cacheKey);
+
+  const atlas = civicFaceAtlasTexture.image;
+  const roleIndex = { player: 0, listener: 1, facilitator: 2, mediator: 3 }[safeRole];
+  const cellWidth = Math.floor(atlas.width / 2);
+  const cellHeight = Math.floor(atlas.height / 2);
+  const column = roleIndex % 2;
+  const row = Math.floor(roleIndex / 2);
+  const faceCell = document.createElement("canvas");
+  faceCell.width = cellWidth;
+  faceCell.height = cellHeight;
+  const faceContext = faceCell.getContext("2d");
+  if (!faceContext) return null;
+  faceContext.drawImage(
+    atlas,
+    column * cellWidth,
+    row * cellHeight,
+    cellWidth,
+    cellHeight,
+    0,
+    0,
+    cellWidth,
+    cellHeight
+  );
+  // The UV-hybrid face keeps the role-authored brow, blush, nose and mouth,
+  // while the exported cornea, iris and eyelids remain real geometry with
+  // gaze and blink animation. Remove the painted eye pair before baking.
+  clearCivicFaceCellEyes(faceContext, cellWidth, cellHeight);
+
+  const size = 1024;
+  const canvas = document.createElement("canvas");
+  canvas.width = size;
+  canvas.height = size;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  context.fillStyle = `#${resolvedSkin.getHexString()}`;
+  context.fillRect(0, 0, size, size);
+  // Blender's UV-sphere front occupies U≈0.15–0.35 and V≈0.34–0.68.
+  // Project the complete role cell into a larger neutral field so only the
+  // painted features land on that front band; the rest of the skull remains
+  // the exact exported skin colour with no decal edge at quarter view.
+  context.drawImage(
+    faceCell,
+    0,
+    0,
+    cellWidth,
+    cellHeight,
+    Math.round(size * 0.11),
+    Math.round(size * 0.2),
+    Math.round(size * 0.28),
+    Math.round(size * 0.56)
+  );
+
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.name = `CivicHeadUv_${safeRole}`;
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.flipY = false;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = Math.min(8, Number(renderer?.capabilities?.getMaxAnisotropy?.() || 1));
+  texture.generateMipmaps = true;
+  texture.needsUpdate = true;
+  texture.userData.mirrorLifeCivicHeadUvContract = "mirrorlife-civic-head-uv-v1";
+  civicHeadUvTextures.set(cacheKey, texture);
+  return texture;
+}
+
+function applyCivicHeadUvIdentity(headMesh, role) {
+  if (!headMesh?.isMesh) return false;
+  const sourceMaterials = Array.isArray(headMesh.material) ? headMesh.material : [headMesh.material];
+  let applied = false;
+  const materials = sourceMaterials.map((sourceMaterial) => {
+    if (!sourceMaterial) return sourceMaterial;
+    const material = sourceMaterial.clone();
+    const skinColor = sourceMaterial.color?.clone?.() || new THREE.Color("#efb489");
+    const texture = getCivicHeadUvTexture(role, skinColor);
+    if (!texture) return material;
+    material.map = texture;
+    material.color?.set?.(0xffffff);
+    material.emissive?.set?.(0x000000);
+    material.emissiveMap = null;
+    material.roughness = 0.7;
+    material.metalness = 0;
+    material.envMapIntensity = 0.68;
+    material.name = `${sourceMaterial.name || role} UV identity`;
+    material.userData = {
+      ...(material.userData || {}),
+      mirrorLifeCivicHeadUvContract: "mirrorlife-civic-head-uv-v1"
+    };
+    material.needsUpdate = true;
+    applied = true;
+    return material;
+  });
+  headMesh.material = Array.isArray(headMesh.material) ? materials : materials[0];
+  headMesh.userData.mirrorLifeCivicHeadUvContract = applied ? "mirrorlife-civic-head-uv-v1" : "";
+  return applied;
+}
+
 function createCivicFaceDecal(role = "player") {
   const texture = getCivicFaceTexture(role);
   if (!texture) return null;
@@ -6714,6 +6848,10 @@ function createProceduralActorObject(actor) {
   mergeActorVertexColorMeshes(visual, [headGroup, leftArm, rightArm, leftLeg, rightLeg], { roughness: 0.7, envMapIntensity: 0.66 });
   [leftArm, rightArm, leftLeg, rightLeg].forEach((limb) => mergeActorVertexColorMeshes(limb, [], { roughness: 0.68, envMapIntensity: 0.68 }));
   group.traverse((node) => node.layers?.enable?.(1));
+  // Keep camera-side expression fill off the clothes and props. The head and
+  // volumetric eyes alone join layer 2, preserving readable faces without
+  // flattening cardigan folds, backpack depth or the notebook grip.
+  headGroup.traverse((node) => node.layers?.enable?.(2));
   [skinMaterial, hairMaterial, topMaterial, lowerMaterial, accentMaterial, outerMaterial, inkMaterial, eyeWhiteMaterial, irisMaterial, blushMaterial, shoeMaterial, laceMaterial]
     .forEach((material) => material.dispose());
   actorRoot.add(group);
@@ -6914,10 +7052,37 @@ function createCivicActorObject(actor, asset) {
     disposeOwnedGroup(assetScene);
     return null;
   }
-  // The sculpted QA path keeps every authored eyelid, brow, mouth and blush
-  // mesh from the GLB. It lets us compare the production-volume face against
-  // the legacy feature atlas without changing animation or world staging.
-  const faceDecal = CIVIC_FACE_MODE === "sculpted-volume" ? null : createCivicFaceDecal(role);
+  // The sculpted QA path keeps every authored feature mesh. The production
+  // UV-hybrid path bakes the role's 2D brow/blush/mouth identity into the
+  // actual morphable head while retaining only the volumetric eye assembly.
+  // Legacy curved carriers remain available as explicit comparison modes.
+  const usesHeadUvIdentity = CIVIC_FACE_MODE === "uv-hybrid";
+  if (usesHeadUvIdentity) applyCivicHeadUvIdentity(faceMorphMesh, role);
+  const faceDecal = CIVIC_FACE_MODE === "sculpted-volume" || usesHeadUvIdentity
+    ? null
+    : createCivicFaceDecal(role);
+  if (usesHeadUvIdentity) {
+    const bakedFeatureNames = new Set([
+      "BrowPivot_-1",
+      "BrowPivot_1",
+      "MouthPivot",
+      "Blush_-1",
+      "Blush_1"
+    ]);
+    const bakedFeatures = [];
+    headGroup.traverse((node) => {
+      if (node !== headGroup && bakedFeatureNames.has(String(node.name || ""))) bakedFeatures.push(node);
+    });
+    bakedFeatures.forEach((node) => {
+      disposeOwnedGroup(node);
+      node.removeFromParent();
+    });
+    browPivots = [];
+    mouthPivot = null;
+    mouthClosedPivot = null;
+    mouthOpenPivot = null;
+    mouthClosedMesh = null;
+  }
   if (faceDecal) {
     // The purpose-built atlas contains only illustrated facial features. The
     // head, ears, hair and silhouette remain genuine volume, while the former
@@ -7004,7 +7169,8 @@ function createCivicActorObject(actor, asset) {
   const expressionPivots = fullExpressionLod
     ? [...eyePivots, mouthPivot, mouthClosedPivot, mouthOpenPivot].filter(Boolean)
     : [];
-  const headMergeExclusions = fullExpressionLod && faceMorphMesh?.morphTargetDictionary
+  const preserveUvHead = usesHeadUvIdentity && faceMorphMesh;
+  const headMergeExclusions = (fullExpressionLod && faceMorphMesh?.morphTargetDictionary) || preserveUvHead
     ? [...expressionPivots, faceMorphMesh, ponytailPivot, faceDecal].filter(Boolean)
     : [...expressionPivots, faceDecal].filter(Boolean);
   const softenFacialShadowing = (mesh) => {
@@ -7165,9 +7331,10 @@ function createCivicActorObject(actor, asset) {
     mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
     mouthOpenPivot: fullExpressionLod ? mouthOpenPivot : null,
     mouthClosedMesh: fullExpressionLod && mouthClosedMesh?.morphTargetDictionary ? mouthClosedMesh : null,
-    faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
+    faceMorphMesh: (fullExpressionLod || usesHeadUvIdentity) && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
     faceDecal,
     faceCornea: faceDecal?.getObjectByName("CivicCorneaLenses") || null,
+    faceMode: CIVIC_FACE_MODE,
     skinJoints,
     skinnedMeshes,
     secondaryMotion,
@@ -8160,7 +8327,7 @@ function getStats() {
       id,
       frame: entry.frame,
       assetRole: entry.assetRole || "procedural",
-      faceMode: entry.faceDecal?.userData?.mirrorLifeFaceMode || "sculpted-volume",
+      faceMode: entry.faceMode || entry.faceDecal?.userData?.mirrorLifeFaceMode || "sculpted-volume",
       x: Number(entry.group.position.x.toFixed(3)),
       z: Number(entry.group.position.z.toFixed(3)),
       facingYaw: Number(entry.facingYaw.toFixed(3)),
@@ -8191,6 +8358,8 @@ function getStats() {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
           ? "mirrorlife-civic-face-volume-v10"
+          : CIVIC_FACE_MODE === "uv-hybrid"
+            ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-hybrid-v1"
             : CIVIC_FACE_MODE === "illustrated-cornea"

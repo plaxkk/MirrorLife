@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v67 head-UV identity, volumetric-eye and directional-light gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v67-final-yaw0.png` (`1600 × 900`, `148 / 276,544`, `48°`, `5.2m` orbit).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v67.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Mandatory focused cast comparison: `tmp/reference-vs-v67-cast.png`; the source and implementation character groups are inspected at equal panel scale.
+- Full-orbit evidence: `tmp/v67-final-desktop-yaw90.png` (`149 / 291,436`, `52.41°`) and `tmp/v67-final-desktop-yaw180.png` (`151 / 289,988`, `52°`).
+- Mobile evidence: `tmp/v67-final-mobile-390x844.png` (`390 × 844`, `101 / 231,726`, three-character LOD).
+- Physical exploration evidence: `tmp/v67-character-walk.png`; the browser regression walked `5.09m`, completed action/walk/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / illustrated identity still lived on a curved card] The production face no longer renders the role atlas on a separate carrier. Each role's brow, blush, nose and mouth are baked into the real morphable head UV; the exported sclera, iris and eyelids remain volumetric, physically lit, gaze-capable and blink-capable. The `90°` and `180°` evidence has no carrier edge or front-only face swap.
+- [fixed / choosing full volume discarded the existing 2D avatar language] The v67 UV-hybrid path reuses the existing four-role face asset instead of replacing it with one generic procedural face. Four head-volume expression morphs and the independent eye blink preserve social animation while every facial pixel now follows the actual skull surface.
+- [improved / actors retained a narrow mannequin silhouette] Sculpt v39 broadens the torso, shoulder/arm volume and leg cross-sections inside the authoritative character capsule. The result is closer to the reference's soft illustrated mass without changing the `1.72m` scale, foot contact, skeleton or movement controller.
+- [improved / civic cardigans hid the coloured dress] Facilitator and mediator panels are narrower and farther apart, lapels are reduced, buttons move to the opening edge and the green bodice now forms a readable central layer. The notebook grip and skirt follow-through remain intact.
+- [improved / camera fill flattened clothing to keep faces legible] Expression fill now uses a dedicated face layer. Heads and volumetric eyes receive the warm camera-side lift while cardigan folds, backpack, notebook and trouser volumes retain the directional portal key and rim hierarchy.
+- [improved / room daylight remained broad and low-contrast] Civic global fill, hemisphere and environment energy are reduced; the portal key, low warm bounce, cool lounge reflection, actor rim, shadow definition and window dapple are coordinated into a more directional warm-daylight preset.
+- [checked / complete runtime] Four sculpt-v39 GLBs total `7.61 MB`. Head-UV identity, volumetric eyes, civic assets, 26-zone physics, desktop/mobile atomic scene flow, real movement/camera drag, syntax and production build remain within the strict budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][3D identity continuity] The role-specific 2D identity now lives on the actual 3D head and deforms with it. Eyes retain real parallax, gaze, blink, light and occlusion, and no sprite or camera-facing face surface appears in the complete orbit.
+- [checked][camera, layout and interaction continuity] The player-led `5.2m` orbit, `48°` opening lens, wider side/reverse lenses, camera collision and weighted narrative pivot remain unchanged. The listening circle, doorway, foreground evidence desk and action deck remain functional in desktop and portrait states.
+- [checked][responsive performance] Desktop stays at `148–151` calls and `276,544–291,436` triangles; mobile is `101 / 231,726`. No stale background, black block, duplicate room, collider mismatch, face swap, runtime exception or movement regression appeared in final evidence.
+- [P1][role-authored character topology and texture finish remain below the source] The carrier defect is resolved, but the focused pair still exposes simpler hair roots, eyelid-to-cheek flow, cloth compression, footwear, fingers and hand-object contact. Literal parity needs artist-authored head/garment UV texture sets, corrective cloth shapes and denser silhouette topology rather than additional generic primitives.
+- [P1][source-level indirect transport and furniture microdetail remain below the source] Directional light hierarchy is stronger, yet the reference retains softer multi-bounce penumbrae, richer local colour bleed, finer joinery and denser paper/glass/ceramic/foliage storytelling. The real-time room is coherent and playable but not yet source-level production art.
+- [P2][facial feature styling remains more graphic than the target render] The inherited 2D atlas preserves product identity and now behaves as true 3D, but its eye/line treatment is sharper and more anime-like than the reference's softer sculpted face shading. A later role texture pass should repaint those maps for the final art direction without reintroducing a carrier.
+
+### Gate result
+
+v67 closes the separate-face-carrier defect and establishes the requested 2D-avatar-to-true-3D path while materially improving character mass, cardigan layering, face-only readability lighting and portal directionality. The mandatory same-canvas comparisons still expose actionable P1 gaps in production character topology/texture finish, furniture microdetail and source-level indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-23 reference-fidelity v66 editorial-camera, layered-garment and integrated-inlay gate
 
 ### Evidence inspected together
