@@ -5751,6 +5751,22 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         interactionWorldX: -1.58,
         interactionWorldZ: 1.82
       },
+      {
+        // A low lounge table completes the sofa conversation bay visible in
+        // the reference. The procedural renderer and Rapier both read this
+        // exact metre-space transform, so the books and plant never become a
+        // visual-only obstacle that the player can walk through.
+        assetIntent: "civic-tea-table",
+        renderModel: false,
+        physicsSolid: true,
+        worldX: 3.08,
+        worldZ: -0.62,
+        rotationY: -0.28,
+        displayScale: 0.94,
+        collider: { shape: "box", halfX: 0.69, halfY: 0.64, halfZ: 0.42, rotation: -0.28 },
+        interactionWorldX: 2.14,
+        interactionWorldZ: -0.12
+      },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 4.08, worldZ: -0.64, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
     ],

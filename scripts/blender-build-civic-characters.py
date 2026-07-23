@@ -10,7 +10,7 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#f2bf9d",
+        "skin": "#f5c9aa",
         "hair": "#3b3947",
         "hair_highlight": "#504c5a",
         "eye": "#3f342d",
@@ -29,7 +29,7 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#efb994",
+        "skin": "#f3c4a2",
         "hair": "#303744",
         "hair_highlight": "#536070",
         "eye": "#3a312b",
@@ -43,7 +43,7 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f4c4a2",
+        "skin": "#f6ceb0",
         "hair": "#d45f52",
         "hair_highlight": "#ec796b",
         "eye": "#3d6d5d",
@@ -57,7 +57,7 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#f2c09d",
+        "skin": "#f4c9aa",
         "hair": "#6b4a3c",
         "hair_highlight": "#876457",
         "eye": "#4f6149",
@@ -79,10 +79,10 @@ ROLE_CONFIGS = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0535,
-        "eye_height": 0.0322,
-        "iris_width": 0.0248,
-        "iris_height": 0.0268,
+        "eye_width": 0.0455,
+        "eye_height": 0.0272,
+        "iris_width": 0.0196,
+        "iris_height": 0.0224,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -94,10 +94,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.053,
-        "eye_height": 0.032,
-        "iris_width": 0.0245,
-        "iris_height": 0.0266,
+        "eye_width": 0.045,
+        "eye_height": 0.027,
+        "iris_width": 0.0194,
+        "iris_height": 0.0222,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -109,10 +109,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.0536,
-        "eye_height": 0.0332,
-        "iris_width": 0.025,
-        "iris_height": 0.0278,
+        "eye_width": 0.0456,
+        "eye_height": 0.028,
+        "iris_width": 0.0198,
+        "iris_height": 0.0232,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -124,10 +124,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0528,
-        "eye_height": 0.0323,
-        "iris_width": 0.0244,
-        "iris_height": 0.027,
+        "eye_width": 0.0448,
+        "eye_height": 0.0273,
+        "iris_width": 0.0193,
+        "iris_height": 0.0226,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1300,9 +1300,9 @@ def build_face(head, mats, role):
             segments=26,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0125, -0.003), (0.0092, 0.002, 0.0128), mats["ink"], eye, segments=18, rings=10)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0065, -0.0147, 0.0065), (0.0038, 0.001, 0.004), mats["eye_white"], eye, segments=12, rings=7)
-        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.0035, -0.015, -0.005), (0.00135, 0.0007, 0.0015), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0125, -0.003), (0.0068, 0.002, 0.0095), mats["ink"], eye, segments=18, rings=10)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0052, -0.0147, 0.0055), (0.0032, 0.001, 0.0034), mats["eye_white"], eye, segments=12, rings=7)
+        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.0028, -0.015, -0.0042), (0.00115, 0.0007, 0.0013), mats["eye_white"], eye, segments=10, rings=6)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -2144,7 +2144,7 @@ def build_character(role, config):
     head = empty("HeadPivot", root, (0, 0, 1.49))
     # This resolves to about 0.46 m wide and 0.48 m tall, yielding the target
     # editorial 1:3.5 rhythm while staying inside the existing 1.72 m capsule.
-    head.scale = (0.86, 0.86, 0.84)
+    head.scale = (0.91, 0.91, 0.89)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -2215,7 +2215,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v39",
+        "sculptContract": "mirrorlife-civic-sculpt-v40",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2237,8 +2237,8 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v10",
-            "productionIntegrationContract": "mirrorlife-civic-face-uv-hybrid-v1",
+            "integrationContract": "mirrorlife-civic-face-volume-v11",
+            "productionIntegrationContract": "mirrorlife-civic-face-illustrated-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",

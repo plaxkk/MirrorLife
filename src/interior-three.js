@@ -23,7 +23,7 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
         ? "uv-hybrid"
         : CIVIC_FACE_MODE_QUERY === "illustrated"
           ? "illustrated-cornea"
-          : "uv-hybrid";
+          : "illustrated-cornea";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -82,7 +82,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f3dfc3", floor: "#d8cbb7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f2e7d9", floor: "#d9d2c5", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -94,7 +94,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 2.28, fill: 0.14, hemi: 0.14, bounce: 0.48, wash: 0.26, exposure: 0.82, keyColor: "#ffd09b", fillColor: "#a8cdd1" },
+  "civic-ivory": { key: 2.18, fill: 0.2, hemi: 0.22, bounce: 0.56, wash: 0.32, exposure: 0.86, keyColor: "#ffddb7", fillColor: "#b7d6d8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -439,7 +439,7 @@ function ensureLayer() {
 
   // A camera-side fill is restricted to the actor layer. It keeps eyes and
   // expressions readable at every orbit angle without flattening the room.
-  actorFaceLight = new THREE.PointLight(0xffead9, 0.82, 12, 1.7);
+  actorFaceLight = new THREE.PointLight(0xffeee0, 1.08, 12, 1.65);
   actorFaceLight.layers.set(2);
   scene.add(actorFaceLight);
 
@@ -1502,8 +1502,8 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.18 : 0;
-    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.28 : 0;
+    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffdaa9");
   }
   if (coolReflectionLight) {
     coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.22) : 0;
@@ -1511,8 +1511,8 @@ function applyLightingPreset(theme = {}) {
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.82 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.68 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 1.08 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
   if (keyLight?.shadow) {
@@ -2785,9 +2785,9 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     surface: "wood",
     bumpScale: 0.012
   });
-  const trim = createToonMaterial("#5b4437", {
+  const trim = createToonMaterial("#755946", {
     roughness: 0.82,
-    envMapIntensity: 0.4,
+    envMapIntensity: 0.48,
     surface: "wood",
     bumpScale: 0.01
   });
@@ -3482,10 +3482,12 @@ function addCivicThresholdFlowers(colors) {
   });
 }
 
-function addCivicForegroundTeaTable(colors) {
+function addCivicForegroundTeaTable(colors, layoutProfile = null) {
   const group = new THREE.Group();
-  group.position.set(3.18, 0, 1.72);
-  group.rotation.y = -0.28;
+  const tableProfile = layoutProfile?.props?.find((prop) => prop?.assetIntent === "civic-tea-table");
+  group.position.set(Number(tableProfile?.worldX ?? 3.08), 0, Number(tableProfile?.worldZ ?? -0.62));
+  group.rotation.y = Number(tableProfile?.rotationY ?? -0.28);
+  group.scale.setScalar(Number(tableProfile?.displayScale ?? 0.94));
   roomRoot.add(group);
   const rug = new THREE.Mesh(
     new THREE.CircleGeometry(0.92, 48),
@@ -3497,9 +3499,10 @@ function addCivicForegroundTeaTable(colors) {
   rug.receiveShadow = true;
   group.add(rug);
   const top = new THREE.Mesh(
-    new RoundedBoxGeometry(1.28, 0.15, 0.72, 6, 0.18),
+    new THREE.CylinderGeometry(0.66, 0.69, 0.15, 40),
     createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.6, surface: "wood", bumpScale: 0.01 })
   );
+  top.scale.set(1.04, 1, 0.58);
   top.position.y = 0.52;
   group.add(top);
   [-0.43, 0.43].forEach((x) => {
@@ -3523,6 +3526,11 @@ function addCivicForegroundTeaTable(colors) {
     leaf.position.set(0.33 + x, 0.89 + (index % 2) * 0.04, 0.02);
     leaf.rotation.z = (index - 1) * 0.45;
     group.add(leaf);
+  });
+  mergeActorVertexColorMeshes(group, [], {
+    roughness: 0.78,
+    envMapIntensity: 0.56,
+    actorShading: false
   });
 }
 
@@ -3943,6 +3951,7 @@ function addCivicReferenceDressing(theme, colors) {
     addCivicListeningConsole(colors);
   }
   addCivicRecordDesk(colors, theme.layoutProfile);
+  addCivicForegroundTeaTable(colors, theme.layoutProfile);
   if (mobileLod) {
     addCivicHeroNoticeWall(colors);
   }
@@ -5700,11 +5709,43 @@ function getCivicFaceTexture(role = "player") {
   const safeRole = ["player", "listener", "facilitator", "mediator"].includes(role) ? role : "player";
   if (civicFaceTextures.has(safeRole)) return civicFaceTextures.get(safeRole);
   const roleIndex = { player: 0, listener: 1, facilitator: 2, mediator: 3 }[safeRole];
-  const texture = civicFaceAtlasTexture.clone();
+  const atlas = civicFaceAtlasTexture.image;
+  const cellWidth = Math.floor(atlas.width / 2);
+  const cellHeight = Math.floor(atlas.height / 2);
   const column = roleIndex % 2;
   const row = Math.floor(roleIndex / 2);
-  texture.repeat.set(0.5, 0.5);
-  texture.offset.set(column * 0.5, row === 0 ? 0.5 : 0);
+  // Crop the atlas' generous portrait whitespace before applying it to the
+  // curved head carrier. The former full-cell sample reduced the painted eyes
+  // and mouth to a handful of pixels in the story camera. This keeps the
+  // reference's readable illustrated feature scale while remaining a real
+  // head-attached, depth-tested surface instead of a billboard.
+  const cropSize = Math.floor(Math.min(cellWidth, cellHeight) * 0.82);
+  const cropX = column * cellWidth + Math.floor((cellWidth - cropSize) / 2);
+  const cropY = row * cellHeight + Math.floor(cellHeight * 0.075);
+  const canvas = document.createElement("canvas");
+  canvas.width = 640;
+  canvas.height = 640;
+  const context = canvas.getContext("2d");
+  if (!context) return null;
+  context.drawImage(
+    atlas,
+    cropX,
+    cropY,
+    cropSize,
+    cropSize,
+    0,
+    0,
+    canvas.width,
+    canvas.height
+  );
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.wrapS = THREE.ClampToEdgeWrapping;
+  texture.wrapT = THREE.ClampToEdgeWrapping;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.anisotropy = Math.min(8, Number(renderer?.capabilities?.getMaxAnisotropy?.() || 1));
+  texture.generateMipmaps = true;
   texture.needsUpdate = true;
   civicFaceTextures.set(safeRole, texture);
   return texture;
@@ -5847,8 +5888,8 @@ function createCivicFaceDecal(role = "player") {
   // as narrow slits at the story camera even though the source art was open
   // and expressive. The legacy full-volume hybrid keeps its old brow/mouth
   // patch dimensions for QA isolation.
-  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.395;
-  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.35;
+  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.41;
+  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.365;
   const geometry = new THREE.PlaneGeometry(width, height, 36, 24);
   const positions = geometry.attributes.position;
   for (let index = 0; index < positions.count; index += 1) {
@@ -6991,7 +7032,7 @@ function createCivicActorObject(actor, asset) {
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.27,
+      opacity: 0.19,
       depthWrite: false,
       toneMapped: false
     })
@@ -7947,16 +7988,16 @@ function updateCamera(payload = {}) {
     // the player. The room shell has enough clearance for this constant arc;
     // collision resolution still shortens it only when real geometry blocks
     // the ray.
-    ? 5.2
+    ? (portrait ? 5.2 : 5.55)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 2.76 + civicRearArc * 0.38 + civicSideArc * 0.34) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.02 + civicRearArc * 0.34 + civicSideArc * 0.3) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
   // a management-game bird's-eye view: more portal and character silhouette,
   // less undifferentiated floor. Portrait keeps the higher navigation read.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.84) : 0.94)
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.92) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
@@ -7986,22 +8027,22 @@ function updateCamera(payload = {}) {
     // before their world-space centre crosses the exact look ray. A 1.5 m
     // composition corridor corresponds to roughly one body width at the near
     // third of this 48–50° lens and still leaves the camera inside the shell.
-    const corridorRadius = 1.5;
+    const corridorRadius = 1.7;
     actorObjects.forEach((entry) => {
       if (!entry?.group || entry.assetRole === "player") return;
       const actorDx = entry.group.position.x - desiredPosition.x;
       const actorDz = entry.group.position.z - desiredPosition.z;
       const along = (actorDx * directionX + actorDz * directionZ) / viewLength;
-      if (along < 0.1 || along > 0.82) return;
+      if (along < 0.03 || along > 0.92) return;
       const signedAcross = directionX * actorDz - directionZ * actorDx;
       const across = Math.abs(signedAcross);
       if (across >= corridorRadius) return;
-      const depthWeight = Math.sin(Math.PI * THREE.MathUtils.clamp((along - 0.1) / 0.72, 0, 1));
-      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 0.9 * depthWeight;
+      const depthWeight = Math.sin(Math.PI * THREE.MathUtils.clamp((along - 0.03) / 0.89, 0, 1));
+      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 1.2 * depthWeight;
       if (Math.abs(candidate) > Math.abs(targetActorAvoidance)) targetActorAvoidance = candidate;
     });
   }
-  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -0.62, 0.62);
+  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -0.85, 0.85);
   const avoidanceAlpha = zoneChanged ? 1 : 1 - Math.exp(-dt / 0.22);
   cameraActorAvoidanceOffset += (targetActorAvoidance - cameraActorAvoidanceOffset) * avoidanceAlpha;
   const tangentX = -forwardZ;
@@ -8357,13 +8398,13 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v10"
+          ? "mirrorlife-civic-face-volume-v11"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-hybrid-v1"
             : CIVIC_FACE_MODE === "illustrated-cornea"
-              ? "mirrorlife-civic-face-illustrated-cornea-v1"
+              ? "mirrorlife-civic-face-illustrated-cornea-v2"
               : "mirrorlife-civic-face-volume-v2",
         morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
         smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]

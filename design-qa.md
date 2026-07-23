@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v68 illustrated-cornea, civic lounge and orbit-clearance gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v68-final-yaw0.png` (`1600 × 900`, `149 / 269,712`, `48°`, `5.55m` orbit).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v68.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Mandatory focused cast comparison: `tmp/reference-vs-v68-cast.png`; source and implementation character groups are inspected at the same panel scale.
+- Full-orbit evidence: `tmp/v68-final-desktop-yaw90.png` (`150 / 284,604`, `52.41°`) and `tmp/v68-final-desktop-yaw180.png` (`152 / 283,156`, `52°`).
+- Mobile evidence: `tmp/v68-final-mobile-390x844.png` (`390 × 844`, `101 / 228,150`, three-character LOD).
+- Physical exploration evidence: `tmp/v68-character-walk.png`; the browser regression walked `5.37m`, completed action/walk/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / baked head UV reduced role identity at gameplay distance] Production now uses `illustrated-cornea-v2`: each role's existing face atlas is cropped into a higher-density texture and mapped to a curved, head-attached facial surface. The underlying skull, hair and head remain volumetric, while two real clearcoat corneas provide moving highlights, occlusion and orbit parallax. This is not a billboard or sprite fallback.
+- [improved / v67 eyes and head read as narrow, dark toy faces] Sculpt v40 lightens the role skin values, reduces aperture, iris, pupil and glint size, and increases the cranial mass modestly. Brows, blush, nose and mouth remain role-specific while the eye-to-cheek relationship is calmer and closer to the illustrated reference.
+- [improved / opening camera crowded the conversation centre] The desktop civic orbit moves from `5.2m` to `5.55m`; height and focus are raised while the weighted player-led pivot remains intact. Side/reverse actor avoidance expands to a `1.7m` corridor and reaches `0.31m` at `180°`, keeping the player and listening circle readable without teleporting citizens.
+- [improved / public lounge lacked a reference-like middle-ground still life] A physical oval tea table now fills the right lounge with a plant and reading material. Its render transform, collider and interaction anchor come from the same `ZoneLayoutProfile`, preserving the route and removing the possibility of a visual-only obstacle.
+- [improved / room retained orange plastic warmth] Plaster and terrazzo are cooler and more neutral; contact shadows are softened; the portal key, warm bounce, face lift and cool fill establish a clearer daylight hierarchy. The lighter record-desk trim and right-lounge table reduce the previous single-tone furniture field.
+- [checked / complete runtime] Four sculpt-v40 GLBs total `7.58 MB`; character contracts, civic props, 26-zone physics, `78` atomic room transitions, desktop/mobile scene flow, real movement/camera drag, syntax, repository checks and production build remain within the release budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][typography, content, icons and interaction hierarchy] The restrained top HUD, room memory card, desktop action deck and portrait action rail remain legible and functional. No interaction labels collide with the three-character mobile view, and the core listen/propose/guide/leave controls preserve the existing product language.
+- [checked][spacing, layout and viewport resilience] The wider desktop orbit improves foreground/midground/background separation: record furniture frames the foreground, the four-person listening circle owns the middle, and portal/lounge/listening-wall landmarks define the background. At `390 × 844`, the story centre remains walkable and the mobile controls retain practical tap targets.
+- [checked][colour and material hierarchy] Warm neutral architecture remains the dominant field, teal identifies civic furniture and clothing, and coral/gold mark social evidence and actions. Wood, terrazzo, paper, cloth, glass and metal retain distinct roughness responses rather than collapsing into one colour family.
+- [checked][physical and camera continuity] The `1.72m` player walks `5.37m` in the metre-space room, returns to idle, rotates the actual camera `65.3°`, and stays grounded. The new tea table is both rendered and collidable; `90°` and `180°` views preserve the player, active target and at least one authored landmark.
+- [checked][atomic transitions and responsive performance] All `26` interiors completed `78` enter/exit transitions without stale backgrounds, black blocks, duplicate rooms, runtime exceptions or retained physics worlds. Desktop remains at `149–152` calls and `269,712–284,604` triangles; mobile remains `101 / 228,150`.
+- [P1][role-authored character topology and surface finish remain below the source] Illustrated-cornea v2 restores identity and the gameplay face scale, but the same-canvas cast still exposes simpler eyelid-to-cheek flow, hair roots, fingers, shoes, garment construction, cloth compression and hand-object contact. Literal parity needs role-specific head/garment topology, authored UV texture sets and corrective poses rather than another parameter-only sculpt pass.
+- [P1][furniture microdetail and indirect transport remain below the source] The room now has a stronger civic lounge, authored foreground and coherent functional density, but the reference retains finer joinery, denser paper/glass/ceramic/foliage storytelling, softer multi-bounce penumbrae and richer localized colour bleed.
+- [P2][facial integration remains a hybrid surface treatment] The curved carrier follows the real head and survives full orbit with true corneal depth, but extreme close quarter views can still distinguish the illustrated face surface from a fully painted role head. The next character-art pass should bake the final repainted identity directly into role-specific head UVs after the topology is approved.
+
+### Gate result
+
+v68 materially improves role identity at gameplay distance, eye/head proportion, public-room camera clearance, right-lounge density, physical furniture consistency and warm-daylight hierarchy while preserving the complete walkable 3D world, full orbit, mobile controls and atomic room transitions. The required same-canvas comparisons still expose actionable P1 gaps in production character topology/texture finish, furniture microdetail and source-level indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-23 reference-fidelity v67 head-UV identity, volumetric-eye and directional-light gate
 
 ### Evidence inspected together
