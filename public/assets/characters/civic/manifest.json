@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v34",
+  "sculptContract": "mirrorlife-civic-sculpt-v35",
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
     "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -56,7 +56,7 @@
     ]
   },
   "handContract": {
-    "version": "mirrorlife-civic-hand-v2",
+    "version": "mirrorlife-civic-hand-v3",
     "pivots": [
       "Hand_-1",
       "Hand_1"
@@ -89,25 +89,25 @@
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
       "meshes": 97,
-      "triangles": 33612
+      "triangles": 33720
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
       "meshes": 77,
-      "triangles": 29496
+      "triangles": 29604
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 95,
-      "triangles": 33872
+      "triangles": 33980
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
       "meshes": 93,
-      "triangles": 32448
+      "triangles": 32556
     }
   }
 }

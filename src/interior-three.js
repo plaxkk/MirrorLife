@@ -90,7 +90,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 1.9, fill: 0.17, hemi: 0.18, bounce: 0.38, wash: 0.32, exposure: 0.78, keyColor: "#ffd09a", fillColor: "#9fc7cd" },
+  "civic-ivory": { key: 2.12, fill: 0.13, hemi: 0.13, bounce: 0.44, wash: 0.28, exposure: 0.79, keyColor: "#ffd09a", fillColor: "#9fc7cd" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -1497,7 +1497,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.84 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.92 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
@@ -1509,7 +1509,7 @@ function applyLightingPreset(theme = {}) {
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.52 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.19 : 0.26;
   if (keyLight?.shadow) {
     keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 5.5 : 9;
     keyLight.shadow.blurSamples = 24;
@@ -2774,8 +2774,18 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   // Natural open-grain oak replaces the saturated, glossy mahogany that made
   // the reference-like foreground desk read as a toy. The slimmer edge and
   // four tapered legs preserve negative space under the desk from the orbit.
-  const wood = createToonMaterial("#b88759", { roughness: 0.9, envMapIntensity: 0.34 });
-  const trim = createToonMaterial("#6f4c36", { roughness: 0.86, envMapIntensity: 0.34 });
+  const wood = createToonMaterial("#9a7558", {
+    roughness: 0.84,
+    envMapIntensity: 0.42,
+    surface: "wood",
+    bumpScale: 0.012
+  });
+  const trim = createToonMaterial("#5b4437", {
+    roughness: 0.82,
+    envMapIntensity: 0.4,
+    surface: "wood",
+    bumpScale: 0.01
+  });
   const top = new THREE.Mesh(new RoundedBoxGeometry(2.02, 0.12, 0.94, 6, 0.06), wood);
   top.position.y = 0.77;
   group.add(top);
@@ -5782,7 +5792,13 @@ function createCivicFaceDecal(role = "player") {
     alphaTest: 0.025,
     alphaToCoverage: true,
     transparent: false,
-    depthWrite: true,
+    // The volumetric head already owns the physical depth surface. Writing a
+    // second, near-coplanar facial shell made GTAO interpret the decal/head
+    // gap as hundreds of tiny cavities, producing the dirty cross-hatched
+    // cheeks visible in the gameplay crop. Keep normal depth testing so hair
+    // and the skull still occlude the painting from every orbit angle, but do
+    // not contribute the feature carrier to the depth/AO buffer.
+    depthWrite: false,
     polygonOffset: true,
     polygonOffsetFactor: -1,
     polygonOffsetUnits: -1,
@@ -5792,6 +5808,13 @@ function createCivicFaceDecal(role = "player") {
   const decal = new THREE.Mesh(geometry, material);
   decal.updateMorphTargets();
   decal.name = "CivicFaceDecal";
+  // Give the feature carrier a real 12 mm skin clearance. The exported jaw
+  // and cheek shape is role-sculpted, so a mathematically fitted shell only
+  // cleared the base head by 4–8 mm and intermittently intersected it after
+  // expression morphs. Those intersections broke the painted eyes into dark
+  // hatch marks. This offset remains behind the fringe/cornea and is far below
+  // the silhouette threshold at quarter view.
+  decal.position.z = 0.012;
   decal.castShadow = false;
   decal.receiveShadow = false;
   decal.renderOrder = 2;
@@ -6165,7 +6188,52 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       varying float vMirrorLifeWoodMask;
       varying float vMirrorLifePaperMask;
       varying float vMirrorLifeMineralMask;
-      varying vec3 vMirrorLifeSurfacePosition;`
+      varying vec3 vMirrorLifeSurfacePosition;
+      vec3 mirrorLifePerturbSurfaceNormal(
+        vec3 surfacePosition,
+        vec3 surfaceNormal,
+        float surfaceHeight,
+        float strength,
+        float direction
+      ) {
+        vec3 sigmaX = normalize(dFdx(surfacePosition));
+        vec3 sigmaY = normalize(dFdy(surfacePosition));
+        vec3 r1 = cross(sigmaY, surfaceNormal);
+        vec3 r2 = cross(surfaceNormal, sigmaX);
+        float determinant = dot(sigmaX, r1) * direction;
+        vec2 gradient = vec2(dFdx(surfaceHeight), dFdy(surfaceHeight)) * strength;
+        vec3 surfaceGradient = sign(determinant) * (gradient.x * r1 + gradient.y * r2);
+        return normalize(abs(determinant) * surfaceNormal - surfaceGradient);
+      }`
+    ).replace(
+      "#include <normal_fragment_maps>",
+      `#include <normal_fragment_maps>
+      vec2 mirrorLifeFabricBumpUv = fract(vec2(
+        vMirrorLifeSurfacePosition.x * 1.7 + vMirrorLifeSurfacePosition.z * 0.31,
+        vMirrorLifeSurfacePosition.y * 1.9 - vMirrorLifeSurfacePosition.z * 0.22
+      ));
+      vec2 mirrorLifeWoodBumpUv = fract(vec2(
+        vMirrorLifeSurfacePosition.x * 0.42 + vMirrorLifeSurfacePosition.z * 0.18,
+        vMirrorLifeSurfacePosition.y * 0.62 + vMirrorLifeSurfacePosition.z * 0.12
+      ));
+      float mirrorLifeFabricBump = ${fabricSurfaceMaps?.roughness ? "texture2D(mirrorLifeFabricRoughness, mirrorLifeFabricBumpUv).r - 0.5" : "sin(vMirrorLifeSurfacePosition.x * 173.0) * sin(vMirrorLifeSurfacePosition.y * 181.0) * 0.16"};
+      float mirrorLifeWoodBump = ${woodSurfaceMaps?.roughness ? "texture2D(mirrorLifeWoodRoughness, mirrorLifeWoodBumpUv).r - 0.5" : "sin(vMirrorLifeSurfacePosition.x * 47.0 + vMirrorLifeSurfacePosition.z * 13.0) * 0.11"};
+      float mirrorLifePaperBump = sin(
+        vMirrorLifeSurfacePosition.x * 91.0
+        + vMirrorLifeSurfacePosition.y * 43.0
+        - vMirrorLifeSurfacePosition.z * 67.0
+      ) * 0.14;
+      float mirrorLifeCombinedBump =
+          mirrorLifeFabricBump * vMirrorLifeClothMask * 0.78
+        + mirrorLifeWoodBump * vMirrorLifeWoodMask * 0.58
+        + mirrorLifePaperBump * vMirrorLifePaperMask * 0.2;
+      normal = mirrorLifePerturbSurfaceNormal(
+        -vViewPosition,
+        normal,
+        mirrorLifeCombinedBump,
+        ${actorShading ? "0.16" : "0.12"},
+        faceDirection
+      );`
     ).replace(
       "#include <roughnessmap_fragment>",
       `#include <roughnessmap_fragment>
@@ -6240,8 +6308,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v8-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
-    : `mirrorlife-room-vertex-surface-v3-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
+    ? `mirrorlife-actor-material-hierarchy-v9-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    : `mirrorlife-room-vertex-surface-v4-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
   mesh.receiveShadow = true;
@@ -8094,7 +8162,7 @@ function getStats() {
         rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v2",
+        version: "mirrorlife-civic-hand-v3",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,

@@ -76,7 +76,7 @@ try {
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic hybrid face morph set is incomplete");
   assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v1" && actor.cornea?.lensCount === 2), "civic actors did not expose two physically lit cornea lenses");
   assert(opening.actors.every((actor) => actor.cornea?.physicallyLit === true), "civic cornea lenses lost their physical light response");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v2"), "civic actors did not expose independent wrist acting");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v3"), "civic actors did not expose the compact independent-hand contract");
   const attentiveWitnesses = opening.actors.filter((actor) => actor.assetRole !== "player");
   assert(attentiveWitnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35), "civic witness faces did not settle into attentive expression morphs");
   assert(Number(opening.actors.find((actor) => actor.assetRole === "player")?.facial?.smile || 0) > 0.2, "player curved face did not receive the authored warm-smile morph");

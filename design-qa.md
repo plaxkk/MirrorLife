@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v59 face-clearance, compact-hand and surface-response gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v59-final-yaw0.png` (`1600 × 900`, `147 / 260,424`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v59.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Constant-radius orbit evidence: `tmp/v58-desktop-yaw90.png` (`148 / 275,316`, `5.2m`) and `tmp/v58-desktop-yaw180.png` (`150 / 273,868`, `5.2m`). These use the same v59 character, lighting and surface contracts; v59 only lowers the foreground desk's wood saturation.
+- Mobile evidence: `tmp/v58-mobile-390x844.png` (`390 × 844`, `100 / 221,990`, three-character LOD).
+- Physical exploration evidence: `tmp/v59-character-walk.png`; the browser regression walked `2.85m`, completed action/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / curved illustrated face carrier fought the volumetric head] The feature decal now leaves depth ownership to the sculpted head and sits `12mm` above the skin. This removes facial AO cavities and prevents role-specific cheek/jaw morphs from fragmenting the illustrated iris, lash and mouth planes.
+- [improved / fingers still read as separated wire forms] Hand contract v3 clusters and thickens the four articulated digits, shortens their silhouette and reduces splay. The result retains independent finger volume and wrist animation while reading as one compact illustrated hand at gameplay distance.
+- [improved / merged materials flattened cloth, paper and wood] The batched actor and room shaders now perturb the actual surface normal from scanned roughness inputs and semantic masks. Fabric, paper and wood receive restrained micro-relief without increasing draw calls or turning skin, metal and glass into noisy materials.
+- [improved / broad ambient light reduced hierarchy] The civic preset shifts energy from hemisphere/environment fill into the portal key and bounce. Faces, cloth folds, furniture planes and room corners separate more clearly while the listening circle remains friendly rather than theatrical.
+- [improved / foreground desk was too orange and toy-like] The record desk now uses lower-saturation medium wood, darker joinery and the same wood micro-surface contract as the room. It still frames the foreground but competes less with the coral interaction colour.
+- [checked / complete runtime] Four regenerated character assets expose sculpt v35 and hand v3. Character contracts, 26-zone physics, real walking/camera drag, desktop/mobile atomic scene flow, syntax and production build pass inside strict budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][identity and face depth] The listener's eye and the other role-specific atlas features remain intact in the hero frame while the volumetric head, cornea, hair and skull still drive lighting and full-orbit occlusion.
+- [checked][material and light hierarchy] Warm plaster and stone remain the 70% field; teal identity surfaces and coral/gold interaction accents retain the intended hierarchy. Cloth, wood and paper now react with distinct micro-normal response instead of one smooth plastic lobe.
+- [checked][physical and orbit continuity] The player walks in metre space, returns to idle and supports a real `65.3°` drag turn. At `90°` and `180°`, the player, conversation target and authored room landmarks remain readable at the constant `5.2m` orbit.
+- [checked][responsive performance] Desktop stays at `147–150` calls and `260,424–275,316` triangles; mobile is `100 / 221,990`. No sprite fallback, black block, stale room, shader artifact, collider mismatch or runtime exception appeared in final regression.
+- [P1][artist-authored character topology remains below the source] The same-canvas pair still exposes simpler eyelid-to-cheek planes, hair roots, cloth compression, footwear and hand-object contact. Compact hands and cleaner face transfer improve gameplay readability, but literal parity requires role-authored topology, UV textures and corrective animation.
+- [P1][furniture topology and true indirect transport remain below the source] The reference retains denser bevel construction, more specific glass/ceramic/paper/foliage assets, softer multi-bounce penumbrae and richer local shadow colour. Real-time normal perturbation improves material response but cannot reproduce source-level baked or probe-driven transport.
+- [P2][reverse view retains a strong foreground witness crop] Constant radius and actor-aware composition protect the story centre, but the nearest mediator still has substantial lower-frame optical weight. A later staging-volume pass should redistribute the reverse witness without hiding or teleporting actors.
+
+### Gate result
+
+v59 materially improves face stability, compact hand silhouette, real material micro-response, directional hierarchy and foreground wood discipline while preserving the playable physical world, full orbit and responsive budgets. The mandatory same-canvas comparison still exposes actionable P1 gaps in production character/furniture topology and source-level indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v52 illustrated-cornea, editorial-desk and constant-orbit gate
 
 ### Evidence inspected together

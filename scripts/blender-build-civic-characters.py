@@ -648,7 +648,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v2"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v3"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -680,10 +680,14 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # x, length, radius, lateral splay and fingertip curl.  A small
         # fan-and-curl silhouette reads as a relaxed hand instead of four
         # parallel dowels while keeping the same four-ring finger topology.
-        (-0.038, 0.047, 0.0162, -side * 0.002, 0.006),
-        (-0.013, 0.055, 0.0174, -side * 0.0008, 0.008),
-        (0.013, 0.053, 0.0172, side * 0.0008, 0.008),
-        (0.038, 0.045, 0.0156, side * 0.0022, 0.006),
+        # Keep the four real digits, but overlap their root silhouettes like
+        # the reference's soft illustrated hands. The earlier 26 mm spacing
+        # and 16 mm radii resolved as four separate wires at the story camera;
+        # these fuller, closer roots read as one palm with finger articulation.
+        (-0.031, 0.045, 0.0192, -side * 0.0014, 0.005),
+        (-0.010, 0.052, 0.0204, -side * 0.0005, 0.007),
+        (0.010, 0.05, 0.0202, side * 0.0005, 0.007),
+        (0.031, 0.043, 0.0187, side * 0.0015, 0.005),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         finger_pivot = empty(
@@ -704,10 +708,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             f"FingerVolume_{side}_{finger_index}",
             finger_length,
             (
-                (0.5, finger_radius, finger_radius * 0.82),
-                (0.12, finger_radius * 1.04, finger_radius * 0.86, splay * 0.2, curl * 0.08),
-                (-0.28, finger_radius * 0.9, finger_radius * 0.76, splay * 0.58, curl * 0.42),
-                (-0.5, finger_radius * 0.46, finger_radius * 0.42, splay, curl),
+                (0.5, finger_radius, finger_radius * 0.84),
+                (0.12, finger_radius * 1.03, finger_radius * 0.88, splay * 0.18, curl * 0.08),
+                (-0.28, finger_radius * 0.92, finger_radius * 0.79, splay * 0.48, curl * 0.38),
+                (-0.5, finger_radius * 0.52, finger_radius * 0.48, splay * 0.78, curl * 0.8),
             ),
             (0, 0, -finger_length / 2),
             mat,
@@ -2024,7 +2028,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v34",
+        "sculptContract": "mirrorlife-civic-sculpt-v35",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2054,7 +2058,7 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v2",
+            "version": "mirrorlife-civic-hand-v3",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
         },
