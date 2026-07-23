@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v64 editorial-proportion, constructed-upholstery and full-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v64-proportion.png` (`1600 × 900`, `147 / 262,360`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v64.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Mandatory focused cast comparison: `tmp/reference-vs-v64-cast.png`; the source and implementation character groups are inspected at equal panel scale.
+- Full-orbit evidence: `tmp/v64-desktop-yaw90.png` (`148 / 277,252`, `52.41°`) and `tmp/v64-desktop-yaw180.png` (`150 / 275,804`, `52°`).
+- Mobile evidence: `tmp/v64-mobile-390x844.png` (`390 × 844`, `100 / 222,894`, three-character LOD).
+- Physical exploration evidence: `tmp/v64-character-walk.png`; the browser regression walked `5.37m`, completed action/walk/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / illustrated face atlas produced dotted MSAA cutout noise] Civic face identity now uses a transparent curved carrier with low alpha threshold, disabled alpha-to-coverage, higher anisotropy and `18mm` skin clearance. Brows, irises, lashes and mouths remain authored while the former stipple/hatch pattern is absent in the opening and focused-cast evidence.
+- [improved / cast retained stubby toy proportions] Sculpt v37 lengthens and slims the arm, leg and torso rhythm, reduces head and backpack mass, narrows the neck and limbs, and preserves the `1.72m` capsule, sole contact and shared animation pivots. The same-canvas cast comparison is materially closer to the reference's editorial silhouette.
+- [improved / footwear and clothing ended as smooth primitives] Footwear v2 adds midsole, heel counter, toe-cap seam and ankle-collar construction. Listener collar, drawstrings and pocket welt, coat pocket welts and a facilitator notebook grip contact add role-specific silhouette and prop contact without changing gameplay colliders.
+- [fixed / lounge read as beanbag spheres] Hero-prop contract v7 rebuilds the sofa with bevelled compressed seat/back cushions and distinct support structure. The lounge remains soft and friendly while reading as constructed upholstery from front and reverse orbit angles.
+- [improved / broad fill and hard AO retained a plastic realtime look] Civic plaster/floor values, portal bounce, key/fill ratio, GTAO contribution, shadow radius and scene exposure are coordinated into a softer warm-daylight hierarchy. Furniture and actors retain grounding without the former dark outline around every component.
+- [improved / reverse orbit made the closest witness dominate] Opening remains `48°`, while side/reverse views widen continuously to approximately `52°`. The constant `5.2m` orbit and actor-aware offset remain intact, reducing foreground witness scale without moving or hiding any citizen.
+- [checked / complete runtime] Four v37 character GLBs, three v7 hero props, 26-zone physics, real movement/camera drag, desktop/mobile atomic scene flow and strict performance budgets pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][identity, proportion and physical grounding] All four citizens retain the role-specific 2D facial identity on genuinely lit/occluded 3D heads. The slimmer `1.72m` bodies, articulated shoes and continuous skin remain on the physical floor through idle and real walking.
+- [checked][foreground/midground/background composition] The record desk and display create a usable foreground; the cast owns the middle listening circle; the portal, listening wall and constructed lounge define background destinations. Four-way orbit preserves the player, target and a room landmark.
+- [checked][responsive performance] Desktop stays at `147–150` calls and `262,360–277,252` triangles; mobile is `100 / 222,894`. No sprite fallback, black block, stale room, shader cutout noise, collider mismatch or runtime exception appeared in the final regression.
+- [P1][production character surfaces remain visibly below the source] The focused same-canvas pair still exposes simpler hair roots, cheek/eyelid topology, cloth compression, finger contact and texture-space detail. Sculpt v37 fixes the massing, but literal parity still needs role-authored topology, UV texture sets, cloth corrective shapes and hand-object pose correction.
+- [P1][furniture finish and indirect transport remain visibly below the source] The sofa now has credible construction and room materials separate more clearly, but the reference still retains finer joinery, denser glass/ceramic/paper/foliage assets, softer multi-bounce penumbrae and richer localized colour bleed.
+- [P2][side-view face carrier is still detectable at close range] The curved atlas preserves identity and front-view depth, but extreme quarter angles reveal its card-like edge more readily than a fully UV-authored head. A later character-art pass should bake the illustrated features into role head UVs.
+
+### Gate result
+
+v64 closes the visible facial stipple defect, materially improves editorial character proportions, footwear/clothing specificity, sofa construction, warm-light hierarchy and reverse-orbit composition while preserving the playable metre-space world, physical walking and mobile budgets. The mandatory same-canvas comparisons still expose actionable P1 gaps in role-authored character/furniture finish and source-level indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-23 reference-fidelity v59 face-clearance, compact-hand and surface-response gate
 
 ### Evidence inspected together

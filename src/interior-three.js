@@ -90,7 +90,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 2.12, fill: 0.13, hemi: 0.13, bounce: 0.44, wash: 0.28, exposure: 0.79, keyColor: "#ffd09a", fillColor: "#9fc7cd" },
+  "civic-ivory": { key: 2.08, fill: 0.18, hemi: 0.18, bounce: 0.52, wash: 0.32, exposure: 0.83, keyColor: "#ffd3a2", fillColor: "#a8cdd1" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -1497,7 +1497,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.92 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.98 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
@@ -1507,11 +1507,11 @@ function applyLightingPreset(theme = {}) {
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.52 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.19 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 5.5 : 9;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 8 : 9;
     keyLight.shadow.blurSamples = 24;
   }
 }
@@ -3764,13 +3764,13 @@ function addCivicArchitecturalShell(colors) {
   // wings leave the left threshold open and retain a complete 360-degree route.
   // These planes sit just inside the physical boundary; players therefore meet
   // the real shell before they could ever cross the visible architecture.
-  const plaster = createToonMaterial("#eee1cf", {
+  const plaster = createToonMaterial("#f2e8dc", {
     roughness: 0.94,
     surface: "plaster",
     bumpScale: 0.014,
     envMapIntensity: 0.34
   });
-  const lowerPlaster = createToonMaterial("#dfd2bd", {
+  const lowerPlaster = createToonMaterial("#e7dccb", {
     roughness: 0.9,
     surface: "plaster",
     bumpScale: 0.011,
@@ -5140,7 +5140,7 @@ function rebuildRoom(theme = {}) {
 
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
-  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#dfd0bb" : "#d9b98f");
+  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#e8dfd2" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
@@ -5152,7 +5152,7 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#bfc0bd" : floorColor, {
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#cecfca" : floorColor, {
       roughness: theme.zoneId === "public-plaza" ? 0.82 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
@@ -5668,6 +5668,14 @@ function loadCivicFaceAtlas() {
       civicFaceAtlasTexture.wrapT = THREE.ClampToEdgeWrapping;
       civicFaceAtlasTexture.minFilter = THREE.LinearMipmapLinearFilter;
       civicFaceAtlasTexture.magFilter = THREE.LinearFilter;
+      // The face occupies only 55–90 pixels in the authored story camera and
+      // is usually viewed on a curved, oblique carrier. Preserve the painted
+      // lashes/iris through that minification instead of letting the default
+      // single-tap sampling break them into dark stipple.
+      civicFaceAtlasTexture.anisotropy = Math.min(
+        8,
+        Number(renderer?.capabilities?.getMaxAnisotropy?.() || 1)
+      );
       civicFaceAtlasTexture.generateMipmaps = true;
       civicFaceAtlasTexture.needsUpdate = true;
       window.markRenderActive?.(1800);
@@ -5705,8 +5713,8 @@ function createCivicFaceDecal(role = "player") {
   // as narrow slits at the story camera even though the source art was open
   // and expressive. The legacy full-volume hybrid keeps its old brow/mouth
   // patch dimensions for QA isolation.
-  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.365;
-  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.33;
+  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.395;
+  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.35;
   const geometry = new THREE.PlaneGeometry(width, height, 36, 24);
   const positions = geometry.attributes.position;
   for (let index = 0; index < positions.count; index += 1) {
@@ -5789,9 +5797,12 @@ function createCivicFaceDecal(role = "player") {
     emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.13 : 0.09,
     roughness: 0.88,
     metalness: 0,
-    alphaTest: 0.025,
-    alphaToCoverage: true,
-    transparent: false,
+    // Real alpha blending keeps the six-pixel source feather continuous.
+    // alpha-to-coverage turned those partially covered pixels into a visible
+    // checker/stipple pattern once EffectComposer resolved its MSAA target.
+    transparent: true,
+    alphaTest: 0.004,
+    alphaToCoverage: false,
     // The volumetric head already owns the physical depth surface. Writing a
     // second, near-coplanar facial shell made GTAO interpret the decal/head
     // gap as hundreds of tiny cavities, producing the dirty cross-hatched
@@ -5800,8 +5811,8 @@ function createCivicFaceDecal(role = "player") {
     // not contribute the feature carrier to the depth/AO buffer.
     depthWrite: false,
     polygonOffset: true,
-    polygonOffsetFactor: -1,
-    polygonOffsetUnits: -1,
+    polygonOffsetFactor: -2,
+    polygonOffsetUnits: -2,
     side: THREE.FrontSide
   });
   material.envMapIntensity = 0.34;
@@ -5814,7 +5825,7 @@ function createCivicFaceDecal(role = "player") {
   // expression morphs. Those intersections broke the painted eyes into dark
   // hatch marks. This offset remains behind the fringe/cornea and is far below
   // the silhouette threshold at quarter view.
-  decal.position.z = 0.012;
+  decal.position.z = 0.018;
   decal.castShadow = false;
   decal.receiveShadow = false;
   decal.renderOrder = 2;
@@ -7699,7 +7710,11 @@ function updateCamera(payload = {}) {
     ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
     : 0;
   const targetFov = cinematicCivic
-    ? (portrait ? 60 : 48 + civicRearArc * 2 + civicSideArc * 1.5)
+    // Keep the authored 48° opening, then widen only while orbiting into the
+    // witness corridor. The former 50° reverse cap left the nearest head as a
+    // third-frame obstruction even after tangential avoidance; 52–52.5°
+    // retains scale while exposing the player, current target and exit.
+    ? (portrait ? 60 : 48 + civicRearArc * 4 + civicSideArc * 3)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -8062,7 +8077,13 @@ function update(payload = {}) {
     ...actor,
     worldY: actor.worldY ?? 0.05
   })), width, height);
-  if (gtaoPass) gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+  if (gtaoPass) {
+    gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+    // The reference uses broad, warm contact penumbrae. A full-strength GTAO
+    // pass made shoe soles, chair feet and cabinet corners collapse to black
+    // outlines even though the key and bounce were physically plausible.
+    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.64 : 0.82;
+  }
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
     cinematicGradePass.uniforms.strength.value = width >= 760 ? 1 : 0.72;

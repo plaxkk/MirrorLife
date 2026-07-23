@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v35", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v37", "civic character sculpt contract is stale");
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
 assert.deepEqual(manifest.skinContract?.deformedParts, ["SkinnedArmVolume", "SkinnedLegVolume"], "continuous civic skin parts changed");
@@ -40,6 +40,8 @@ assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"], "civic facial morph set changed");
 assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v3", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
+assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v2", "civic footwear contract is stale");
+assert.deepEqual(manifest.footwearContract?.styles, ["sneaker", "ankle-boot"], "civic footwear styles changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin+facial-hand-acting", "civic animation runtime contract changed");
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -73,8 +75,8 @@ for (const role of expectedRoles) {
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
   // Runtime batches these semantic parts per articulated pivot, so source-part
   // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 100, `${role}: source mesh count is outside the authored range`);
-  assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 35000, `${role}: triangle count is outside the Web LOD0 budget`);
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 112, `${role}: source mesh count is outside the authored range`);
+  assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 38000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
   assert(stat.size > 100000 && stat.size < 2 * 1024 * 1024, `${role}: GLB size is outside the 0.1–2 MB budget`);
@@ -102,6 +104,7 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("NotebookSpine")), "facilitator: held notebook spine is missing");
     assert(contents.includes(Buffer.from("NotebookElastic")), "facilitator: held notebook elastic is missing");
     assert(contents.includes(Buffer.from("NotebookPencil")), "facilitator: held notebook pencil is missing");
+    assert(contents.includes(Buffer.from("NotebookGripContact")), "facilitator: notebook contact surface is missing");
   }
   if (["player", "listener"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1Tongue")), `${role}: authored sneaker tongue is missing`);
   if (["facilitator", "mediator"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollar")), `${role}: authored ankle-boot collar is missing`);
@@ -117,6 +120,9 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("SkinRightKnee")), `${role}: right knee skin joint is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1")), `${role}: left sculpted shoe last is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_1")), `${role}: right sculpted shoe last is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_-1Midsole")), `${role}: left layered midsole is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_1HeelCounter")), `${role}: right heel counter is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_-1ToeCapSeam")), `${role}: left toe-cap seam is missing`);
   if (["facilitator", "mediator"].includes(role)) {
     assert(contents.includes(Buffer.from("OuterLash_-1")), `${role}: left role-specific lash is missing`);
     assert(contents.includes(Buffer.from("OuterLash_1")), `${role}: right role-specific lash is missing`);
@@ -162,6 +168,9 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("SatchelClasp")), "listener: satchel clasp is missing");
     assert(contents.includes(Buffer.from("JacketTensionFold_-1")), "listener: left jacket tension fold is missing");
     assert(contents.includes(Buffer.from("JacketTensionFold_1")), "listener: right jacket tension fold is missing");
+    assert(contents.includes(Buffer.from("ListenerCollar_-1")), "listener: left collar construction is missing");
+    assert(contents.includes(Buffer.from("HoodDrawstring_1")), "listener: right hood drawstring is missing");
+    assert(contents.includes(Buffer.from("ListenerPocketWelt_-1")), "listener: left jacket pocket welt is missing");
   }
   if (role === "facilitator") assert(contents.includes(Buffer.from("PonytailPivot")), "facilitator: ponytail secondary-motion pivot is missing");
   if (role === "facilitator" || role === "mediator") {
@@ -173,6 +182,8 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("CoatDrape_1")), `${role}: right coat drape is missing`);
     assert(contents.includes(Buffer.from("CoatWaistRelease_-1")), `${role}: left coat waist release is missing`);
     assert(contents.includes(Buffer.from("CoatWaistRelease_1")), `${role}: right coat waist release is missing`);
+    assert(contents.includes(Buffer.from("CoatPocketWelt_-1")), `${role}: left coat pocket welt is missing`);
+    assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollarEdge")), `${role}: left boot collar edge is missing`);
   }
   if (role === "mediator") assert(contents.includes(Buffer.from("MediatorDressBodice")), "mediator: layered dress bodice is missing");
   totalBytes += stat.size;

@@ -230,14 +230,14 @@ def create_skin_armature(parent):
     root_bone.tail = (0, 0, 0.16)
 
     specifications = (
-        ("SkinLeftArm", (-0.22, 0, 1.2), (-0.22, 0, 0.965), None),
-        ("SkinLeftElbow", (-0.22, 0, 0.965), (-0.22, 0, 0.69), "SkinLeftArm"),
-        ("SkinRightArm", (0.22, 0, 1.2), (0.22, 0, 0.965), None),
-        ("SkinRightElbow", (0.22, 0, 0.965), (0.22, 0, 0.69), "SkinRightArm"),
-        ("SkinLeftLeg", (-0.13, 0, 0.73), (-0.13, 0, 0.445), None),
-        ("SkinLeftKnee", (-0.13, 0, 0.445), (-0.13, 0, 0.14), "SkinLeftLeg"),
-        ("SkinRightLeg", (0.13, 0, 0.73), (0.13, 0, 0.445), None),
-        ("SkinRightKnee", (0.13, 0, 0.445), (0.13, 0, 0.14), "SkinRightLeg"),
+        ("SkinLeftArm", (-0.205, 0, 1.23), (-0.205, 0, 0.975), None),
+        ("SkinLeftElbow", (-0.205, 0, 0.975), (-0.205, 0, 0.675), "SkinLeftArm"),
+        ("SkinRightArm", (0.205, 0, 1.23), (0.205, 0, 0.975), None),
+        ("SkinRightElbow", (0.205, 0, 0.975), (0.205, 0, 0.675), "SkinRightArm"),
+        ("SkinLeftLeg", (-0.115, 0, 0.78), (-0.115, 0, 0.46), None),
+        ("SkinLeftKnee", (-0.115, 0, 0.46), (-0.115, 0, 0.135), "SkinLeftLeg"),
+        ("SkinRightLeg", (0.115, 0, 0.78), (0.115, 0, 0.46), None),
+        ("SkinRightKnee", (0.115, 0, 0.46), (0.115, 0, 0.135), "SkinRightLeg"),
     )
     created = {"SkinRoot": root_bone}
     for name, head, tail, parent_name in specifications:
@@ -828,6 +828,40 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
         radius=0.012,
         segments=3,
     )
+    # A separate welt and heel counter make the foot read as constructed
+    # footwear, not one dark capsule. Both follow the same knee pivot so their
+    # contact remains exact through walk/run/jump clips.
+    rounded_box(
+        f"{name}Midsole",
+        (sole_width * 0.94, sole_length * 0.97, 0.018),
+        (location[0], location[1] + sole_center_y - 0.002, location[2] - 0.035),
+        sole_mat,
+        parent,
+        radius=0.009,
+        segments=2,
+    )
+    rounded_box(
+        f"{name}HeelCounter",
+        (0.108, 0.032, 0.085 if style == "ankle-boot" else 0.07),
+        (location[0], location[1] + 0.064, location[2] + 0.04),
+        upper_mat,
+        parent,
+        radius=0.014,
+        rotation=(math.radians(-8), 0, 0),
+        segments=3,
+    )
+    curve_tube(
+        f"{name}ToeCapSeam",
+        [
+            (-0.064, location[1] - 0.142, location[2] + 0.014),
+            (0, location[1] - 0.166, location[2] + 0.023),
+            (0.064, location[1] - 0.142, location[2] + 0.014),
+        ],
+        0.0035,
+        sole_mat,
+        parent,
+        resolution=2,
+    )
     if style == "ankle-boot":
         cylinder(
             f"{name}AnkleCollar",
@@ -838,6 +872,15 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
             upper_mat,
             parent,
             vertices=22,
+        )
+        torus(
+            f"{name}AnkleCollarEdge",
+            0.057,
+            0.006,
+            (location[0], location[1] + 0.048, location[2] + 0.128),
+            sole_mat,
+            parent,
+            major_segments=24,
         )
     else:
         rounded_box(
@@ -1509,7 +1552,7 @@ def build_body(role, config, mats, visual):
     # the overall height was correct. Broaden the shoulder/chest volume by a
     # few centimetres and add front/back depth while remaining inside the
     # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid("Torso", (0, 0, 1.0), (0.266, 0.164, 0.344), mats["top"], visual, segments=42, rings=30)
+    torso = ellipsoid("Torso", (0, 0, 1.04), (0.238, 0.15, 0.36), mats["top"], visual, segments=42, rings=30)
     # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
     # authored volume in one mesh avoids the ball-jointed toy silhouette while
     # preserving the inexpensive shared-pivot animation contract.
@@ -1550,35 +1593,35 @@ def build_body(role, config, mats, visual):
             visual,
             depth=depth,
         )
-    cylinder("Neck", 0.083, 0.079, 0.12, (0, 0, 1.335), mats["skin"], visual, vertices=20)
-    rounded_box("WaistBand", (0.38, 0.226, 0.048), (0, -0.005, 0.775), mats["accent"], visual, radius=0.022)
+    cylinder("Neck", 0.078, 0.074, 0.12, (0, 0, 1.39), mats["skin"], visual, vertices=20)
+    rounded_box("WaistBand", (0.35, 0.21, 0.046), (0, -0.005, 0.79), mats["accent"], visual, radius=0.021)
 
-    left_arm = empty("LeftArmPivot", visual, (-0.22, 0, 1.2))
-    right_arm = empty("RightArmPivot", visual, (0.22, 0, 1.2))
-    left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.235))
-    right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.235))
-    left_leg = empty("LeftLegPivot", visual, (-0.13, 0, 0.73))
-    right_leg = empty("RightLegPivot", visual, (0.13, 0, 0.73))
-    left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.285))
-    right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.285))
+    left_arm = empty("LeftArmPivot", visual, (-0.205, 0, 1.23))
+    right_arm = empty("RightArmPivot", visual, (0.205, 0, 1.23))
+    left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.255))
+    right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.255))
+    left_leg = empty("LeftLegPivot", visual, (-0.115, 0, 0.78))
+    right_leg = empty("RightLegPivot", visual, (0.115, 0, 0.78))
+    left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.32))
+    right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.32))
 
     sleeve_mat = mats["outer"] if config["costume"] in ("traveler", "facilitator", "mediator") else mats["top"]
     skin_armature = create_skin_armature(visual)
     build_skinned_limb_pair(
         "SkinnedArmVolume",
-        (-0.22, 0.22),
+        (-0.205, 0.205),
         (
-            (1.2, 0.075, 0.069, 0.002),
-            (1.15, 0.081, 0.075, 0.003),
-            (1.07, 0.077, 0.072, 0.004),
-            (1.0, 0.069, 0.064, 0.003),
-            (0.965, 0.063, 0.059, 0),
-            (0.925, 0.064, 0.059, -0.002),
-            (0.85, 0.061, 0.057, -0.004),
-            (0.775, 0.057, 0.052, -0.004),
-            (0.705, 0.05, 0.045, -0.002),
+            (1.23, 0.067, 0.062, 0.002),
+            (1.175, 0.072, 0.067, 0.003),
+            (1.09, 0.069, 0.064, 0.004),
+            (1.015, 0.062, 0.058, 0.003),
+            (0.975, 0.057, 0.053, 0),
+            (0.93, 0.058, 0.054, -0.002),
+            (0.845, 0.055, 0.051, -0.004),
+            (0.76, 0.052, 0.048, -0.004),
+            (0.675, 0.046, 0.042, -0.002),
         ),
-        0.965,
+        0.975,
         sleeve_mat,
         skin_armature,
         (("SkinLeftArm", "SkinLeftElbow"), ("SkinRightArm", "SkinRightElbow")),
@@ -1586,19 +1629,19 @@ def build_body(role, config, mats, visual):
     )
     build_skinned_limb_pair(
         "SkinnedLegVolume",
-        (-0.13, 0.13),
+        (-0.115, 0.115),
         (
-            (0.73, 0.108, 0.1, 0.002),
-            (0.65, 0.111, 0.103, 0.004),
-            (0.55, 0.101, 0.094, 0.006),
-            (0.475, 0.087, 0.081, 0.003),
-            (0.445, 0.079, 0.073, 0),
-            (0.405, 0.081, 0.076, -0.002),
-            (0.33, 0.088, 0.083, -0.005),
-            (0.245, 0.082, 0.077, -0.005),
-            (0.155, 0.064, 0.059, -0.002),
+            (0.78, 0.094, 0.088, 0.002),
+            (0.695, 0.097, 0.091, 0.004),
+            (0.59, 0.09, 0.084, 0.006),
+            (0.505, 0.078, 0.073, 0.003),
+            (0.46, 0.071, 0.066, 0),
+            (0.415, 0.073, 0.069, -0.002),
+            (0.335, 0.078, 0.073, -0.005),
+            (0.245, 0.073, 0.068, -0.005),
+            (0.135, 0.057, 0.053, -0.002),
         ),
-        0.445,
+        0.46,
         mats["lower"],
         skin_armature,
         (("SkinLeftLeg", "SkinLeftKnee"), ("SkinRightLeg", "SkinRightKnee")),
@@ -1649,7 +1692,7 @@ def build_body(role, config, mats, visual):
             hand_rotation = (0.02, side * 0.04, -side * 0.055)
         sculpted_hand(
             f"Hand_{side}",
-            (0, -0.007, -0.313),
+            (0, -0.007, -0.325),
             mats["skin"],
             mats["skin_shadow"],
             elbow,
@@ -1664,16 +1707,16 @@ def build_body(role, config, mats, visual):
         for fold_index, fold_x in enumerate((-0.035, 0.035)):
             cloth_fold_ribbon(
                 f"TrouserFold_{side}_{fold_index + 1}",
-                [(fold_x, -0.087, -0.035), (fold_x * 0.55, -0.095, -0.14), (fold_x * 0.8, -0.087, -0.235)],
+                [(fold_x, -0.078, -0.035), (fold_x * 0.55, -0.086, -0.155), (fold_x * 0.8, -0.078, -0.265)],
                 (0.002, 0.008, 0.002),
                 mats["lower"],
                 knee,
                 depth=0.006,
             )
-        cylinder(f"TrouserCuff_{side}", 0.083, 0.076, 0.06, (0, 0, -0.265), mats["accent"], knee, vertices=20)
+        cylinder(f"TrouserCuff_{side}", 0.075, 0.068, 0.058, (0, 0, -0.29), mats["accent"], knee, vertices=20)
         sculpted_shoe(
             f"ShoeUpper_{side}",
-            (0, 0, -0.365),
+            (0, 0, -0.395),
             mats["shoe"],
             mats["sole"],
             knee,
@@ -1735,12 +1778,12 @@ def build_costume(
             )
         curve_tube("VestCenterSeam", [(0, -0.207, 0.83), (0, -0.215, 1.05), (0, -0.205, 1.24)], 0.006, mats["accent"], visual, resolution=2)
         curve_tube("TravelerCollar", [(-0.17, -0.12, 1.25), (0, -0.205, 1.2), (0.17, -0.12, 1.25)], 0.026, mats["outer"], visual)
-        backpack = empty("BackpackPivot", visual, (0, 0.155, 1.0))
+        backpack = empty("BackpackPivot", visual, (0, 0.148, 1.02))
         # A rounded volume avoids the large rectangular block that dominates
         # the default follow-camera view from behind the player.
-        ellipsoid("Backpack", (0, 0, 0), (0.205, 0.105, 0.235), mats["accent"], backpack, segments=28, rings=18)
-        rounded_box("BackpackFlap", (0.29, 0.04, 0.13), (0, 0.097, 0.105), mats["shoe"], backpack, radius=0.03)
-        rounded_box("BackpackPocket", (0.23, 0.04, 0.14), (0, 0.097, -0.09), mats["outer"], backpack, radius=0.035)
+        ellipsoid("Backpack", (0, 0, 0), (0.178, 0.092, 0.215), mats["accent"], backpack, segments=28, rings=18)
+        rounded_box("BackpackFlap", (0.255, 0.036, 0.116), (0, 0.086, 0.09), mats["shoe"], backpack, radius=0.027)
+        rounded_box("BackpackPocket", (0.2, 0.036, 0.126), (0, 0.086, -0.085), mats["outer"], backpack, radius=0.031)
         curve_tube("BackpackHandle", [(-0.08, 0.02, 0.225), (0, 0.07, 0.26), (0.08, 0.02, 0.225)], 0.014, mats["shoe"], backpack, resolution=2)
         cloth_fold_ribbon(
             "BackpackCenterDrape",
@@ -1751,10 +1794,10 @@ def build_costume(
             depth=0.007,
         )
         for side in (-1, 1):
-            rounded_box(f"BackpackSidePocket_{side}", (0.075, 0.12, 0.16), (side * 0.205, 0.018, -0.08), mats["outer"], backpack, radius=0.025)
+            rounded_box(f"BackpackSidePocket_{side}", (0.066, 0.105, 0.145), (side * 0.178, 0.016, -0.075), mats["outer"], backpack, radius=0.022)
             curve_tube(
                 f"BackpackStrap_{side}",
-                [(side * 0.16, 0.105, 0.25), (side * 0.2, 0.145, 0.02), (side * 0.16, 0.11, -0.22)],
+                [(side * 0.142, 0.094, 0.23), (side * 0.174, 0.128, 0.02), (side * 0.142, 0.098, -0.2)],
                 0.018,
                 mats["shoe"],
                 backpack,
@@ -1786,6 +1829,54 @@ def build_costume(
         curve_tube("Hood", [(-0.19, 0.02, 1.27), (0, 0.11, 1.34), (0.19, 0.02, 1.27)], 0.055, mats["outer"], visual)
         curve_tube("JacketCenterSeam", [(0, -0.205, 0.83), (0, -0.216, 1.04), (0, -0.205, 1.24)], 0.006, mats["outer"], visual, resolution=2)
         curve_tube("JacketHem", [(-0.2, -0.13, 0.79), (0, -0.205, 0.77), (0.2, -0.13, 0.79)], 0.008, mats["outer"], visual, resolution=2)
+        # Give the teal jacket a believable opening, drawstrings and working
+        # pockets. These small construction cues survive the social camera and
+        # replace the former uninterrupted plastic torso.
+        for side in (-1, 1):
+            tailored_panel(
+                f"ListenerCollar_{side}",
+                0.12,
+                0.09,
+                0.045,
+                0.17,
+                0.026,
+                (side * 0.057, -0.202, 1.19),
+                mats["outer"],
+                visual,
+                radius=0.01,
+                rotation=(0, side * 0.05, side * 0.5),
+            )
+            curve_tube(
+                f"HoodDrawstring_{side}",
+                [
+                    (side * 0.095, -0.21, 1.22),
+                    (side * 0.1, -0.224, 1.09),
+                    (side * 0.11, -0.223, 0.995),
+                ],
+                0.006,
+                mats["outer"],
+                visual,
+                resolution=2,
+            )
+            cylinder(
+                f"HoodDrawstringTip_{side}",
+                0.011,
+                0.009,
+                0.035,
+                (side * 0.11, -0.223, 0.975),
+                mats["metal"],
+                visual,
+                vertices=10,
+            )
+            rounded_box(
+                f"ListenerPocketWelt_{side}",
+                (0.12, 0.026, 0.045),
+                (side * 0.125, -0.218, 0.9),
+                mats["outer"],
+                visual,
+                radius=0.009,
+                rotation=(0.04, side * 0.03, side * 0.12),
+            )
         for side in (-1, 1):
             cloth_fold_ribbon(
                 f"JacketTensionFold_{side}",
@@ -1799,9 +1890,9 @@ def build_costume(
                 visual,
                 depth=0.008,
             )
-        rounded_box("Satchel", (0.34, 0.14, 0.27), (0.31, 0.08, 0.78), mats["accent"], visual, radius=0.065)
-        rounded_box("SatchelFlap", (0.27, 0.035, 0.09), (0.31, -0.002, 0.84), mats["shoe"], visual, radius=0.02)
-        rounded_box("SatchelClasp", (0.055, 0.025, 0.065), (0.31, -0.023, 0.8), mats["metal"], visual, radius=0.012)
+        rounded_box("Satchel", (0.29, 0.125, 0.235), (0.28, 0.075, 0.8), mats["accent"], visual, radius=0.057)
+        rounded_box("SatchelFlap", (0.23, 0.032, 0.08), (0.28, -0.002, 0.855), mats["shoe"], visual, radius=0.018)
+        rounded_box("SatchelClasp", (0.05, 0.022, 0.058), (0.28, -0.023, 0.82), mats["metal"], visual, radius=0.011)
         curve_tube("CrossBodyStrap", [(-0.2, -0.17, 1.23), (0.02, -0.19, 1.0), (0.25, -0.12, 0.78)], 0.018, mats["outer"], visual)
         for side, leg in ((-1, left_leg), (1, right_leg)):
             rounded_box(
@@ -1907,6 +1998,15 @@ def build_costume(
                 visual,
                 depth=0.007,
             )
+            rounded_box(
+                f"CoatPocketWelt_{side}",
+                (0.13, 0.026, 0.046),
+                (side * 0.13, -0.224, 0.91),
+                mats["accent"],
+                visual,
+                radius=0.009,
+                rotation=(0.03, side * 0.025, side * 0.09),
+            )
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
         if costume == "facilitator":
@@ -1929,6 +2029,20 @@ def build_costume(
             rounded_box("NotebookSpine", (0.027, 0.052, 0.292), (-0.104, 0, 0), mats["shoe"], notebook, radius=0.008)
             rounded_box("NotebookElastic", (0.018, 0.014, 0.282), (0.083, -0.031, 0), mats["metal"], notebook, radius=0.006)
             cylinder("NotebookPencil", 0.007, 0.005, 0.238, (-0.078, -0.034, 0.008), mats["accent"], notebook, vertices=10, rotation=(0, 0, 0.03))
+            # A visible thumb pad is authored in the same local frame as the
+            # notebook. It bridges the final millimetres between the animated
+            # articulated hand and cover instead of leaving the prop floating
+            # whenever the elbow blend is between listen/gesture poses.
+            ellipsoid(
+                "NotebookGripContact",
+                (0.095, -0.047, 0.035),
+                (0.025, 0.018, 0.058),
+                mats["skin"],
+                notebook,
+                rotation=(0.05, 0.1, -0.08),
+                segments=16,
+                rings=10,
+            )
         else:
             curve_tube("Necklace", [(-0.11, -0.205, 1.2), (0, -0.225, 1.08), (0.11, -0.205, 1.2)], 0.012, mats["metal"], visual)
             ellipsoid("NecklacePendant", (0, -0.24, 1.07), (0.035, 0.012, 0.05), mats["metal"], visual, segments=14, rings=8)
@@ -1954,10 +2068,10 @@ def build_character(role, config):
     # eighty percent of shoulder width. Keep the complete authored hierarchy
     # at that ratio: the earlier 1.02-wide head drifted back toward a toy
     # silhouette once the slimmer torso and full costume were visible.
-    head = empty("HeadPivot", root, (0, 0, 1.438))
+    head = empty("HeadPivot", root, (0, 0, 1.49))
     # This resolves to about 0.46 m wide and 0.48 m tall, yielding the target
     # editorial 1:3.5 rhythm while staying inside the existing 1.72 m capsule.
-    head.scale = (0.96, 0.96, 0.88)
+    head.scale = (0.86, 0.86, 0.84)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -2028,7 +2142,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v35",
+        "sculptContract": "mirrorlife-civic-sculpt-v37",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2061,6 +2175,11 @@ def main():
             "version": "mirrorlife-civic-hand-v3",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
+        },
+        "footwearContract": {
+            "version": "mirrorlife-civic-footwear-v2",
+            "parts": ["Midsole", "HeelCounter", "ToeCapSeam", "AnkleCollarEdge"],
+            "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
             "version": "mirrorlife-civic-clips-v7",

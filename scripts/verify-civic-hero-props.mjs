@@ -10,7 +10,7 @@ const expectations = {
   "civic-lounge-suite": ["LoungeSofaBack", "LoungeCoffeeTop", "LoungeBookcaseBack", "LoungeSeatPiping_1", "LoungeCupHandle"]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v6");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v7");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 

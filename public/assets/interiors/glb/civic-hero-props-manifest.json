@@ -1,5 +1,5 @@
 {
-  "contract": "mirrorlife-civic-hero-props-v6",
+  "contract": "mirrorlife-civic-hero-props-v7",
   "worldUnitMeters": 1,
   "assets": {
     "civic-display-case": {
@@ -15,7 +15,7 @@
     "civic-lounge-suite": {
       "file": "civic-lounge-suite.glb",
       "meshes": 126,
-      "triangles": 18816
+      "triangles": 17360
     }
   }
 }
