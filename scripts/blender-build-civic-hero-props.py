@@ -453,10 +453,57 @@ def build_lounge_suite(mats):
     for x in (-0.82, 0.82):
         for y in (-0.25, 0.25):
             cylinder(f"LoungeFoot_{x}_{y}", 0.045, 0.24, (x, y, 0.12), mats["walnut"], root, 12)
-    sphere("LoungePillowButter", (0.23, 0.09, 0.22), (-0.48, -0.14, 1.01), mats["butter"], root, 22, 14, (0.06, -0.08, -0.08))
-    sphere("LoungePillowCoral", (0.23, 0.09, 0.22), (0.5, -0.14, 1.0), mats["coral"], root, 22, 14, (-0.05, 0.08, 0.08))
-    rounded_box("LoungePillowButterInset", (0.25, 0.018, 0.2), (-0.48, -0.229, 1.01), mats["paper"], root, 0.05, (0.06, -0.08, -0.08), 3)
-    rounded_box("LoungePillowCoralInset", (0.25, 0.018, 0.2), (0.5, -0.229, 1.0), mats["butter"], root, 0.05, (-0.05, 0.08, 0.08), 3)
+    # Cushions need an authored front, side thickness and seams. Flattened
+    # spheres looked like detached candy pieces in the game camera and could
+    # not carry the editorial textile pattern visible in the target.
+    rounded_box(
+        "LoungePillowButter", (0.48, 0.16, 0.42), (-0.48, -0.14, 1.01),
+        mats["butter"], root, 0.12, (0.06, -0.08, -0.08), 6,
+    )
+    rounded_box(
+        "LoungePillowCoral", (0.46, 0.16, 0.4), (0.5, -0.14, 1.0),
+        mats["coral"], root, 0.12, (-0.05, 0.08, 0.08), 6,
+    )
+    rounded_box("LoungePillowButterInset", (0.38, 0.018, 0.32), (-0.48, -0.229, 1.01), mats["paper"], root, 0.085, (0.06, -0.08, -0.08), 4)
+    rounded_box("LoungePillowCoralInset", (0.36, 0.018, 0.3), (0.5, -0.229, 1.0), mats["butter"], root, 0.082, (-0.05, 0.08, 0.08), 4)
+    # Real raised textile bands survive orbit and lighting changes unlike a
+    # camera-facing decal. The two pillows deliberately use different pattern
+    # grammar so the suite feels collected rather than procedurally duplicated.
+    for band_index, band_x in enumerate((-0.09, 0.09)):
+        rounded_box(
+            f"LoungePillowButterBand_{band_index + 1}",
+            (0.075, 0.014, 0.32),
+            (-0.48 + band_x, -0.242, 1.01),
+            mats["teal"],
+            root,
+            0.018,
+            (0.06, -0.08 + (band_index - 0.5) * 0.42, -0.08),
+            3,
+        )
+    for dot_index, (dot_x, dot_z) in enumerate(((-0.09, 0.08), (0.09, 0.08), (-0.09, -0.08), (0.09, -0.08))):
+        sphere(
+            f"LoungePillowCoralDot_{dot_index + 1}",
+            (0.035, 0.012, 0.035),
+            (0.5 + dot_x, -0.243, 1.0 + dot_z),
+            mats["coral"],
+            root,
+            12,
+            7,
+        )
+    # A casually folded throw adds a soft foreground overlap and breaks the
+    # perfect bilateral sofa silhouette without widening its collider.
+    rounded_box("LoungeThrowFold", (0.54, 0.12, 0.18), (0.72, -0.26, 0.67), mats["paper"], root, 0.06, (0.03, 0.12, -0.08), 5)
+    for stripe_index, stripe_x in enumerate((-0.16, 0.0, 0.16)):
+        rounded_box(
+            f"LoungeThrowStripe_{stripe_index + 1}",
+            (0.055, 0.015, 0.16),
+            (0.72 + stripe_x, -0.326, 0.67),
+            mats["blue"] if stripe_index != 1 else mats["teal"],
+            root,
+            0.015,
+            (0.03, 0.12, -0.08),
+            2,
+        )
 
     # Low oval coffee table, ceramics and editorial stack.
     table = rounded_box("LoungeCoffeeTop", (1.35, 0.72, 0.13), (0.1, -1.1, 0.5), mats["oak"], root, 0.16, segments=6)
@@ -468,6 +515,19 @@ def build_lounge_suite(mats):
     add_ceramic(root, mats, "LoungeCup", (0.46, -1.1, 0.68), 0.72, "teal")
     torus("LoungeCupHandle", 0.055, 0.011, (0.53, -1.1, 0.69), mats["ceramic"], root, rotation=(math.pi / 2, 0, 0), major_segments=18, minor_segments=6)
     rounded_box("LoungeBookmark", (0.035, 0.012, 0.2), (-0.12, -1.1, 0.7), mats["coral"], root, 0.008, (0, 0, 0.05), 2)
+    cylinder("LoungeCupCoaster", 0.1, 0.012, (0.46, -1.1, 0.59), mats["cork"], root, 24)
+    rounded_box("LoungeStoryCard", (0.28, 0.018, 0.2), (0.1, -1.12, 0.61), mats["paper"], root, 0.018, (0, 0, -0.08), 3)
+    for line_index in range(3):
+        rounded_box(
+            f"LoungeStoryCardLine_{line_index + 1}",
+            (0.15 + line_index * 0.025, 0.008, 0.012),
+            (0.1, -1.135, 0.64 - line_index * 0.045),
+            mats["ink"] if line_index != 1 else mats["coral"],
+            root,
+            0.004,
+            (0, 0, -0.08),
+            1,
+        )
 
     # Side bookshelf gives the lounge a real back/side silhouette in orbit.
     rounded_box("LoungeBookcaseBack", (0.95, 0.18, 1.65), (1.72, 0.24, 0.9), mats["deep_teal"], root, 0.06)

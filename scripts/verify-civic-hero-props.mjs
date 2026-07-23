@@ -7,7 +7,16 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "civic-hero-props-
 const expectations = {
   "civic-display-case": ["DisplayFrontGlass", "DisplayGlassMullion_-0.28", "DisplayObject_1_Glaze", "DisplayObject_1_Garnish", "DisplayUpperTray_1", "DisplayArchiveToken_1", "DisplayFoldedEvidence_1", "DisplayMenuFrame", "DisplayMenuTitle", "DisplayStoryCard", "DisplayTopVase"],
   "civic-notice-console": ["NoticeFrame", "NoticeTitleText", "NoticeConsoleTop", "NoticeDrawer_-1", "NoticeLampShade_1", "NoticeWitnessCup_body", "NoticeBasketCore", "NoticeBasketLiner"],
-  "civic-lounge-suite": ["LoungeSofaBack", "LoungeCoffeeTop", "LoungeBookcaseBack", "LoungeSeatPiping_1", "LoungeCupHandle"]
+  "civic-lounge-suite": [
+    "LoungeSofaBack",
+    "LoungeCoffeeTop",
+    "LoungeBookcaseBack",
+    "LoungeSeatPiping_1",
+    "LoungeCupHandle",
+    "LoungePillowButterBand_1",
+    "LoungeThrowFold",
+    "LoungeStoryCard"
+  ]
 };
 
 assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v7");
@@ -21,7 +30,7 @@ for (const [assetId, requiredParts] of Object.entries(expectations)) {
   // Blender source-part count may grow as upholstery rails, piping and book
   // details become independently editable. The runtime still batches opaque
   // compatible meshes; triangles and live draw calls remain the release gate.
-  assert(Number(entry.meshes) >= 18 && Number(entry.meshes) <= 140, `${assetId}: authored mesh count outside budget`);
+  assert(Number(entry.meshes) >= 18 && Number(entry.meshes) <= 150, `${assetId}: authored mesh count outside budget`);
   assert(Number(entry.triangles) >= 2500 && Number(entry.triangles) <= 60000, `${assetId}: triangle count outside budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);

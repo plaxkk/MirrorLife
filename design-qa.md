@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v71 broadleaf, textile-joinery and local-bounce gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v71-desktop-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `160 / 277,200`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v71.png`; source and implementation are both rendered as `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Full-orbit evidence: `tmp/v71-desktop-yaw90.png` (`161 / 292,092`, `52.12°`, `5.415m`, actor avoidance `0.354m`) and `tmp/v71-desktop-yaw180.png` (`163 / 290,644`, `52°`, `5.55m`, actor avoidance `0.31m`).
+- Mobile evidence: `tmp/v71-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 237,632`, three-character LOD).
+- Physical exploration evidence: `tmp/v71-character-walk.png`; the browser regression walked `4.29m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop and mobile scene-flow checks passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / mature plants still read as scaled capsules] Civic editorial foliage now uses authored ovate blades with tapered silhouettes, a real central fold, longitudinal bow, visible midrib, varied tilt and wider clustered crowns. Ceramic and woven planters remain against fixed room edges, so the added density does not create a false walkable opening.
+- [improved / lounge textiles looked like detached toy pieces] The Blender-authored sofa now has thick rounded cushions, inset fronts, raised geometric bands and dots, a folded striped throw, piping, seams and compression details. These are real orbit-safe meshes, not a screen-facing decal.
+- [improved / lounge lacked object-level storytelling] The coffee table gains a coaster, readable story card and line hierarchy alongside the cup, books and bookmark. The lounge GLB grows from `126 / 17,360` to `141 / 19,732` authored meshes/triangles while remaining a single normalized hero asset and inside runtime budgets.
+- [improved / right-side rest zone dissolved into the ivory floor] The tea-table zone now sits on a physically thick blue woven oval with two inlaid textile borders. A second ceramic cup, handle and coaster establish human use and make the lounge legible at the opening camera and reverse orbit.
+- [improved / doorway warmth and teal furniture felt disconnected] Two restrained non-shadowing local bounces now return warm portal colour at floor height and cool teal colour around the lounge. They preserve the existing directional key and contact shadows instead of replacing them with a global exposure lift.
+- [checked / budgets and complete runtime] The three civic hero assets total `51,416` authored triangles. Desktop remains below `180` calls / `450k` triangles and mobile below `110` / `250k`; the complete movement, camera, physics, scene-flow and atomic-transition contracts remain intact.
+
+### Required fidelity surfaces and findings
+
+- [improved][first read and composition] The four-person listening circle remains the first read. The portal and broadleaf cluster now provide a warmer left background frame, while the patterned teal lounge and blue rug form a clearer right counterweight. Foreground display/record furniture continues to frame rather than block the player.
+- [improved][material and micro-asset hierarchy] Wood joinery, woven textile, ceramic, paper, brass, glass and foliage now separate more clearly at gameplay distance. The lounge no longer depends on flat colour blocks to imply upholstery or use.
+- [checked][full orbit, movement and affordance] At `0°`, `90°` and `180°`, the player, current social group and at least one authored landmark remain readable. New foliage and lounge details stay outside the main route and do not modify or diverge from the authoritative collider footprint.
+- [checked][responsive behavior and UI] The `390 × 844` composition preserves the listening wall, player and two partners, with practical joystick, jump, chat, interaction and action-rail targets. The environmental detail pass adds no mobile obstruction or over-budget geometry.
+- [P1][character topology and acting remain below the source] The same-canvas comparison still exposes simpler role-specific skulls, hair roots, garment drape, fingers, shoe construction, facial deformation and hand-object contact. The next material leap requires role-authored body/garment topology and corrective poses rather than another shared-primitive pass.
+- [P1][source-level environment finish remains incomplete] The new lounge and plants close the most visible procedural gaps, but the reference still has denser foreground stationery, transparent glass thickness, upholstered deformation, fine joinery, edge wear and a more coherent set of bespoke hero props across the entire room.
+- [P1][indirect transport remains below the source] The localized bounces improve colour continuity, but the reference retains softer multi-bounce penumbrae, more convincing sunlight integration and richer contact colour between skin, cloth, timber, mineral floor and wall reveals.
+- [P2][reverse-orbit foreground actor remains visually heavy] At `180°`, the nearest mediator still occupies a large lower-frame area. The room stays navigable and the central target remains visible, but a later camera pass should use screen-space shoulder avoidance or restrained foreground actor fade.
+
+### Gate result
+
+v71 materially improves the environment layer that was most visibly procedural: broadleaf vegetation, woven/ceramic planters, constructed upholstery, patterned cushions, table storytelling, a real lounge rug and localized portal/lounge colour return. The room remains fully walkable and orbitable, mobile-safe and within strict performance budgets. The normalized comparison still exposes P1 differences in production character topology, complete-room hero-asset density and source-level indirect transport.
+
+final result: blocked
+
+Blocker: role-authored character/garment topology, whole-room bespoke asset finish and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-23 reference-fidelity v70 volumetric-face, intimate-camera and mineral-surface gate
 
 ### Evidence inspected together

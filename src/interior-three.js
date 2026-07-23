@@ -3021,6 +3021,26 @@ function addCivicLocalStoryLights(mobileLod = false) {
     light.castShadow = false;
     roomRoot.add(light, light.target);
   });
+  // Two restrained floor-level bounces make the civic room read as a real
+  // volume: warm daylight travels in from the portal while the teal lounge
+  // returns a cool reflected edge. Both are local, non-shadowing sources so
+  // they preserve the directional key and do not flatten the central cast.
+  const portalFloorBounce = new THREE.PointLight(
+    0xffbc75,
+    mobileLod ? 0.14 : 0.32,
+    4.6,
+    2.3
+  );
+  portalFloorBounce.position.set(-3.25, 0.38, -1.82);
+  roomRoot.add(portalFloorBounce);
+  const loungeColorBounce = new THREE.PointLight(
+    0x86c8bd,
+    mobileLod ? 0.1 : 0.24,
+    3.7,
+    2.35
+  );
+  loungeColorBounce.position.set(3.2, 0.62, -0.72);
+  roomRoot.add(loungeColorBounce);
 }
 
 function addCivicHeroNoticeWall(colors) {
@@ -3188,11 +3208,12 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
   // Keep these clusters behind existing fixed furniture / against the wall so
   // they enrich depth without creating a visual walkable-space promise.
   const leafMaterials = [
-    createToonMaterial("#356f4c", { roughness: 0.86, envMapIntensity: 0.48 }),
-    createToonMaterial("#4f8a5a", { roughness: 0.9, envMapIntensity: 0.44 }),
-    createToonMaterial("#7aa66b", { roughness: 0.94, envMapIntensity: 0.4 })
+    createToonMaterial("#2f6846", { roughness: 0.82, envMapIntensity: 0.58, side: THREE.DoubleSide }),
+    createToonMaterial("#4d8757", { roughness: 0.86, envMapIntensity: 0.54, side: THREE.DoubleSide }),
+    createToonMaterial("#77a069", { roughness: 0.9, envMapIntensity: 0.48, side: THREE.DoubleSide })
   ];
   const stemMaterial = createToonMaterial("#52714a", { roughness: 0.94 });
+  const veinMaterial = createToonMaterial("#9ab479", { roughness: 0.86 });
   const basketMaterial = createToonMaterial("#b78552", {
     roughness: 0.98,
     surface: "fabric",
@@ -3205,17 +3226,19 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
     bumpScale: 0.004,
     envMapIntensity: 0.72
   });
-  const leafGeometry = new THREE.SphereGeometry(1, 16, 12);
+  // Author an ovate, lightly folded blade instead of scaling spheres into
+  // capsules. The wider silhouette and real centre fold catch the key light
+  // like the broad-leaf plants framing the target room.
+  const leafGeometry = new THREE.PlaneGeometry(1, 2, 5, 9);
   const leafPositions = leafGeometry.getAttribute("position");
   for (let index = 0; index < leafPositions.count; index += 1) {
     const x = leafPositions.getX(index);
     const y = leafPositions.getY(index);
-    const z = leafPositions.getZ(index);
-    const belly = Math.max(0, 1 - y * y);
-    // A soft centre fold and a slightly narrower tip preserve curved volume
-    // while avoiding the generic capsule profile of an undeformed sphere.
-    const taper = 0.76 + belly * 0.24;
-    leafPositions.setXYZ(index, x * taper, y, z * taper + belly * 0.12);
+    const normalizedY = THREE.MathUtils.clamp((y + 1) * 0.5, 0, 1);
+    const outline = Math.pow(Math.max(0, Math.sin(normalizedY * Math.PI)), 0.64);
+    const centerFold = Math.abs(x) * 0.105;
+    const longitudinalBow = Math.sin(normalizedY * Math.PI) * 0.09;
+    leafPositions.setXYZ(index, x * outline, y, centerFold + longitudinalBow);
   }
   leafGeometry.computeVertexNormals();
 
@@ -3272,21 +3295,32 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
       stem.rotation.x = leafZ * 0.42;
       group.add(stem);
 
+      const leafPivot = new THREE.Group();
+      leafPivot.position.set(leafX, height, leafZ);
+      leafPivot.rotation.order = "YXZ";
+      leafPivot.rotation.y = angle;
+      leafPivot.rotation.x = -0.32 + (index % 3) * 0.09;
+      leafPivot.rotation.z = Math.sin(angle) * 0.28 + (index % 3 - 1) * 0.08;
+      group.add(leafPivot);
+
+      const leafScale = 0.3 + (index % 3) * 0.024;
       const leaf = new THREE.Mesh(leafGeometry, leafMaterials[(index + seed) % leafMaterials.length]);
-      leaf.scale.set(0.13 + (index % 3) * 0.012, 0.31 + (index % 2) * 0.035, 0.085);
-      leaf.position.set(leafX, height, leafZ);
-      leaf.rotation.order = "YXZ";
-      leaf.rotation.y = angle;
-      leaf.rotation.x = 0.08 + (index % 3) * 0.06;
-      leaf.rotation.z = Math.sin(angle) * 0.28 + (index % 3 - 1) * 0.08;
-      group.add(leaf);
+      leaf.scale.set(leafScale, 0.34 + (index % 2) * 0.035, 1);
+      leafPivot.add(leaf);
+      const vein = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.008, 0.012, 0.58 + (index % 2) * 0.05, 6),
+        veinMaterial
+      );
+      vein.position.z = 0.035;
+      vein.rotation.z = (index % 3 - 1) * 0.025;
+      leafPivot.add(vein);
     }
   };
 
-  addCluster({ x: -3.72, z: -3.42, scale: 0.84, rotation: 0.28, woven: false, seed: 3, leaves: mobileLod ? 7 : 12 });
+  addCluster({ x: -3.72, z: -3.42, scale: 0.9, rotation: 0.28, woven: false, seed: 3, leaves: mobileLod ? 7 : 13 });
   if (!mobileLod) {
-    addCluster({ x: 4.22, z: -2.96, scale: 0.88, rotation: -0.52, woven: false, seed: 8, leaves: 13 });
-    addCluster({ x: 4.62, z: 1.74, scale: 0.76, rotation: -0.86, woven: true, seed: 12, leaves: 10 });
+    addCluster({ x: 4.22, z: -2.96, scale: 0.94, rotation: -0.52, woven: false, seed: 8, leaves: 14 });
+    addCluster({ x: 4.62, z: 1.74, scale: 0.82, rotation: -0.86, woven: true, seed: 12, leaves: 11 });
   }
 }
 
@@ -3495,14 +3529,26 @@ function addCivicForegroundTeaTable(colors, layoutProfile = null) {
   group.scale.setScalar(Number(tableProfile?.displayScale ?? 0.94));
   roomRoot.add(group);
   const rug = new THREE.Mesh(
-    new THREE.CircleGeometry(0.92, 48),
-    createToonMaterial("#d7e1d2", { roughness: 0.98, surface: "fabric", bumpScale: 0.01 })
+    new THREE.CylinderGeometry(0.92, 0.94, 0.026, 56),
+    createToonMaterial("#7699b4", { roughness: 0.98, surface: "fabric", bumpScale: 0.015, envMapIntensity: 0.3 })
   );
-  rug.rotation.x = -Math.PI / 2;
-  rug.scale.set(1.12, 0.78, 1);
-  rug.position.y = 0.022;
+  rug.scale.set(1.12, 1, 0.78);
+  rug.position.y = 0.025;
   rug.receiveShadow = true;
   group.add(rug);
+  [
+    { inner: 0.69, outer: 0.74, color: "#d9e4de" },
+    { inner: 0.79, outer: 0.83, color: "#4d827f" }
+  ].forEach((entry, index) => {
+    const border = new THREE.Mesh(
+      new THREE.RingGeometry(entry.inner, entry.outer, 56),
+      createToonMaterial(entry.color, { roughness: 0.94, surface: "fabric", bumpScale: 0.01 })
+    );
+    border.rotation.x = -Math.PI / 2;
+    border.scale.set(1.12, 0.78, 1);
+    border.position.y = 0.041 + index * 0.001;
+    group.add(border);
+  });
   const top = new THREE.Mesh(
     new THREE.CylinderGeometry(0.66, 0.69, 0.15, 40),
     createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.6, surface: "wood", bumpScale: 0.01 })
@@ -3532,6 +3578,26 @@ function addCivicForegroundTeaTable(colors, layoutProfile = null) {
     leaf.rotation.z = (index - 1) * 0.45;
     group.add(leaf);
   });
+  const cup = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.075, 0.085, 0.13, 20),
+    createToonMaterial("#efe1cd", { roughness: 0.4, surface: "ceramic", bumpScale: 0.003 })
+  );
+  cup.position.set(0.16, 0.68, 0.08);
+  group.add(cup);
+  const cupHandle = new THREE.Mesh(
+    new THREE.TorusGeometry(0.052, 0.011, 7, 18, Math.PI * 1.65),
+    createToonMaterial("#efe1cd", { roughness: 0.4, surface: "ceramic", bumpScale: 0.003 })
+  );
+  cupHandle.rotation.x = Math.PI / 2;
+  cupHandle.rotation.z = -0.34;
+  cupHandle.position.set(0.225, 0.69, 0.08);
+  group.add(cupHandle);
+  const coaster = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.105, 0.105, 0.012, 22),
+    createToonMaterial("#aa7650", { roughness: 0.9, surface: "wood", bumpScale: 0.01 })
+  );
+  coaster.position.set(0.16, 0.605, 0.08);
+  group.add(coaster);
   mergeActorVertexColorMeshes(group, [], {
     roughness: 0.78,
     envMapIntensity: 0.56,
