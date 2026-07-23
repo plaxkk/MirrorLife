@@ -70,12 +70,12 @@ try {
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
-  assert(opening.actors.every((actor) => actor.faceMode === "hybrid-volume"), "civic scene did not use the production curved-identity/volumetric-eye facial contract");
+  assert(opening.actors.every((actor) => actor.faceMode === "illustrated-cornea"), "civic scene did not use the production curved-atlas/cornea facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-hybrid-v1"), "civic actors did not preserve the production curved-identity/volumetric-eye facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-illustrated-cornea-v1"), "civic actors did not preserve the production curved-atlas/cornea facial contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic hybrid face morph set is incomplete");
-  assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v1" && actor.eyes?.count === 2), "civic actors did not expose two animated volumetric eyes");
-  assert(opening.actors.every((actor) => actor.eyes?.blinkAxis === "z" && Number(actor.eyes?.verticalScale || 0) > 0), "civic actors did not expose the authored vertical eyelid axis");
+  assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v1" && actor.cornea?.lensCount === 2), "civic actors did not expose two physically lit cornea lenses");
+  assert(opening.actors.every((actor) => actor.cornea?.physicallyLit === true), "civic cornea lenses lost their physical light response");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v2"), "civic actors did not expose independent wrist acting");
   const attentiveWitnesses = opening.actors.filter((actor) => actor.assetRole !== "player");
   assert(attentiveWitnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35), "civic witness faces did not settle into attentive expression morphs");

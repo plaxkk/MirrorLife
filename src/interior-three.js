@@ -17,7 +17,9 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
   : CIVIC_FACE_MODE_QUERY === "volume"
     ? "sculpted-volume"
-    : "hybrid-volume";
+    : CIVIC_FACE_MODE_QUERY === "hybrid"
+      ? "hybrid-volume"
+      : "illustrated-cornea";
 const MAX_DPR = 1.5;
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
@@ -88,7 +90,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 2.12, fill: 0.17, hemi: 0.2, bounce: 0.44, wash: 0.38, exposure: 0.82, keyColor: "#ffd09a", fillColor: "#9fc7cd" },
+  "civic-ivory": { key: 1.9, fill: 0.17, hemi: 0.18, bounce: 0.38, wash: 0.32, exposure: 0.78, keyColor: "#ffd09a", fillColor: "#9fc7cd" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -454,11 +456,11 @@ function ensureLayer() {
   composer = new EffectComposer(renderer, composerTarget);
   renderPass = new RenderPass(scene, camera);
   gtaoPass = new GTAOPass(scene, camera, 1, 1);
-  gtaoPass.blendIntensity = 0.7;
+  gtaoPass.blendIntensity = 0.82;
   gtaoPass.updateGtaoMaterial({
-    radius: 0.28,
+    radius: 0.32,
     distanceExponent: 1.8,
-    thickness: 1.2,
+    thickness: 1.34,
     distanceFallOff: 1,
     scale: 0.84,
     samples: 12,
@@ -1232,7 +1234,7 @@ function getCivicDappleTexture() {
       rx * size,
       ry * size,
       rotation,
-      "rgba(255,232,177,0.7)",
+      "rgba(255,232,177,0.62)",
       "rgba(255,232,177,0)"
     );
   });
@@ -1252,7 +1254,7 @@ function getCivicDappleTexture() {
       radius * (0.72 + random() * 0.66),
       radius * (0.44 + random() * 0.34),
       (random() - 0.5) * 1.8,
-      "rgba(72,83,55,0.18)",
+      "rgba(72,83,55,0.15)",
       "rgba(72,83,55,0)"
     );
   }
@@ -1495,7 +1497,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.94 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.84 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd09a");
   }
   if (coolReflectionLight) {
@@ -1505,7 +1507,7 @@ function applyLightingPreset(theme = {}) {
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.52 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.26 : 0.26;
   if (keyLight?.shadow) {
@@ -2183,7 +2185,7 @@ function addAmbientWindowBay(angle, colors, night) {
     // EffectComposer applies the output tone map to the whole frame, including
     // unlit materials. Feed the exterior a modest HDR multiplier so it reads
     // as sunlit space beyond the room instead of a dark painting on the wall.
-    outdoorMaterial.color.setRGB(1.55, 1.4, 1.2);
+    outdoorMaterial.color.setRGB(1.26, 1.18, 1.08);
   }
   const outdoor = new THREE.Mesh(createArchPanelGeometry(2.12, 2.08), outdoorMaterial);
   outdoor.position.z = 0.2;
@@ -2811,12 +2813,12 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     new RoundedBoxGeometry(0.44, 0.025, 0.3, 3, 0.022),
     createToonMaterial("#e9dcc8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
   );
-  clipboard.position.set(0.22, 0.872, -0.03);
+  clipboard.position.set(0.18, 0.872, 0.27);
   clipboard.rotation.y = 0.08;
   microProps.add(clipboard);
   [colors.accent, colors.secondary].forEach((color, index) => {
     const note = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.018, 0.09, 2, 0.012), createToonMaterial(color, { roughness: 0.84 }));
-    note.position.set(0.14 + index * 0.14, 0.892 + index * 0.002, -0.055 + index * 0.035);
+    note.position.set(0.1 + index * 0.14, 0.892 + index * 0.002, 0.245 + index * 0.035);
     note.rotation.y = 0.02 + index * 0.12;
     microProps.add(note);
   });
@@ -2844,7 +2846,8 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   // like an easel, hid the editorial props and contradicted the reference's
   // low, layered record-desk silhouette.
   const brief = new THREE.Group();
-  brief.position.set(-0.34, 0.985, 0.12);
+  brief.position.set(-0.48, 0.95, 0.035);
+  brief.scale.setScalar(0.86);
   // The desk itself is angled toward the listening circle. Counter-rotate the
   // brief so its content faces the authored opening camera rather than showing
   // a bright edge-on slab as it did in v92.
@@ -2902,7 +2905,7 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     new RoundedBoxGeometry(0.46, 0.035, 0.32, 3, 0.025),
     createToonMaterial("#f4ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
   );
-  notebook.position.set(0.34, 0.88, 0.12);
+  notebook.position.set(0.34, 0.88, 0.28);
   notebook.rotation.y = 0.1;
   microProps.add(notebook);
   [-0.11, 0, 0.11].forEach((z, index) => {
@@ -2910,7 +2913,7 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
       new RoundedBoxGeometry(0.29 - index * 0.03, 0.009, 0.008, 1, 0.003),
       createToonMaterial(index === 0 ? colors.secondary : "#8e8170", { roughness: 0.84 })
     );
-    line.position.set(0.34, 0.902 + index * 0.0005, 0.12 + z);
+    line.position.set(0.34, 0.902 + index * 0.0005, 0.28 + z);
     line.rotation.y = 0.1;
     microProps.add(line);
   });
@@ -2920,20 +2923,20 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     new THREE.CylinderGeometry(0.095, 0.085, 0.22, 22),
     createToonMaterial("#cde4df", { roughness: 0.3, envMapIntensity: 0.86 })
   );
-  waterGlass.position.set(0.76, 0.965, 0.2);
+  waterGlass.position.set(0.76, 0.965, 0.31);
   microProps.add(waterGlass);
   const glassRim = new THREE.Mesh(
     new THREE.TorusGeometry(0.092, 0.008, 8, 24),
     createToonMaterial("#edf8f3", { roughness: 0.22, envMapIntensity: 0.92 })
   );
   glassRim.rotation.x = Math.PI / 2;
-  glassRim.position.set(0.76, 1.08, 0.2);
+  glassRim.position.set(0.76, 1.08, 0.31);
   microProps.add(glassRim);
   const coaster = new THREE.Mesh(
     new THREE.CylinderGeometry(0.125, 0.125, 0.018, 24),
     createToonMaterial(ATELIER_TOKENS.cork, { roughness: 0.86 })
   );
-  coaster.position.set(0.76, 0.868, 0.2);
+  coaster.position.set(0.76, 0.868, 0.31);
   microProps.add(coaster);
   const penCup = new THREE.Mesh(
     new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20),
@@ -3958,7 +3961,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.62,
+        opacity: theme.night ? 0.1 : 0.48,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -4735,7 +4738,7 @@ function addCivicOpenPortal(theme, colors) {
         toneMapped: false
       })
     : createToonMaterial(theme.night ? "#45637a" : "#badcb7", { side: THREE.DoubleSide, roughness: 0.92 });
-  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(1.78, 1.61, 1.36);
+  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(1.34, 1.25, 1.12);
   // Keep the painted courtyard several metres beyond the threshold. The
   // public room now has a real break in its cylindrical shell, so the view
   // gains parallax from the authored plants, paving and notice stand instead
@@ -5687,8 +5690,13 @@ function getCivicFaceTexture(role = "player") {
 function createCivicFaceDecal(role = "player") {
   const texture = getCivicFaceTexture(role);
   if (!texture) return null;
-  const width = 0.35;
-  const height = 0.285;
+  // Preserve the source atlas' near-square facial proportions. Compressing
+  // the 640×640 role cell into a 0.35×0.285 patch made the painted eyes read
+  // as narrow slits at the story camera even though the source art was open
+  // and expressive. The legacy full-volume hybrid keeps its old brow/mouth
+  // patch dimensions for QA isolation.
+  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.365;
+  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.33;
   const geometry = new THREE.PlaneGeometry(width, height, 36, 24);
   const positions = geometry.attributes.position;
   for (let index = 0; index < positions.count; index += 1) {
@@ -5768,7 +5776,7 @@ function createCivicFaceDecal(role = "player") {
     // continues to receive real shading and occlusion from the hair volume.
     emissive: new THREE.Color(0xffffff),
     emissiveMap: texture,
-    emissiveIntensity: 0.09,
+    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.13 : 0.09,
     roughness: 0.88,
     metalness: 0,
     alphaTest: 0.025,
@@ -5790,6 +5798,46 @@ function createCivicFaceDecal(role = "player") {
   decal.userData.mirrorLifeFaceDecal = true;
   decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v1";
   decal.userData.mirrorLifeFaceMode = CIVIC_FACE_MODE;
+  if (CIVIC_FACE_MODE === "illustrated-cornea") {
+    // Keep the authored eye painting intact and add one true optical surface
+    // above it. The shallow lenses catch the moving room/key lights and retain
+    // real parallax at quarter views, while the curved atlas supplies the
+    // eyelashes, sclera, iris painting and expression quality that primitive
+    // eyeballs could not match.
+    const corneaGeometries = [-1, 1].map((side) => {
+      const lens = new THREE.SphereGeometry(1, 24, 12);
+      lens.applyMatrix4(new THREE.Matrix4().compose(
+        new THREE.Vector3(side * width * 0.215, height * 0.095, 0.191),
+        new THREE.Quaternion(),
+        new THREE.Vector3(width * 0.116, height * 0.082, 0.007)
+      ));
+      return lens;
+    });
+    const corneaGeometry = mergeGeometries?.(corneaGeometries, false);
+    corneaGeometries.forEach((lens) => {
+      if (lens !== corneaGeometry) lens.dispose?.();
+    });
+    if (corneaGeometry) {
+      const corneaMaterial = new THREE.MeshPhysicalMaterial({
+        color: 0xfff9ef,
+        transparent: true,
+        opacity: 0.15,
+        depthWrite: false,
+        roughness: 0.06,
+        metalness: 0,
+        clearcoat: 1,
+        clearcoatRoughness: 0.08,
+        envMapIntensity: 1.08
+      });
+      const cornea = new THREE.Mesh(corneaGeometry, corneaMaterial);
+      cornea.name = "CivicCorneaLenses";
+      cornea.castShadow = false;
+      cornea.receiveShadow = false;
+      cornea.renderOrder = 3;
+      cornea.userData.mirrorLifeCorneaContract = "mirrorlife-civic-cornea-v1";
+      decal.add(cornea);
+    }
+  }
   return decal;
 }
 
@@ -7040,6 +7088,7 @@ function createCivicActorObject(actor, asset) {
     mouthClosedMesh: fullExpressionLod && mouthClosedMesh?.morphTargetDictionary ? mouthClosedMesh : null,
     faceMorphMesh: fullExpressionLod && faceMorphMesh?.morphTargetDictionary ? faceMorphMesh : null,
     faceDecal,
+    faceCornea: faceDecal?.getObjectByName("CivicCorneaLenses") || null,
     skinJoints,
     skinnedMeshes,
     secondaryMotion,
@@ -7642,11 +7691,13 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    // Keep the orbit inside the authored room shell. The former 6.0–6.8 m
-    // civic radius crossed the 5.6 m wall on side views, placing the entrance
-    // arch between the camera and actors as a floating black curve. A tighter
-    // player-follow radius also matches the 3.6–5.2 m camera contract.
-    ? (portrait ? 5.2 : 5.2 - civicRearArc * 0.45 - civicSideArc * 0.72)
+    // Keep the same authored 5.2 m radius through the full orbit. Pulling the
+    // camera inward on the side/rear arcs made the nearest witness fill the
+    // frame and created the impression that the pivot had jumped away from
+    // the player. The room shell has enough clearance for this constant arc;
+    // collision resolution still shortens it only when real geometry blocks
+    // the ray.
+    ? 5.2
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 2.76 + civicRearArc * 0.38 + civicSideArc * 0.34) + pitchOffset * 1.35
@@ -8053,7 +8104,9 @@ function getStats() {
           ? "mirrorlife-civic-face-volume-v10"
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-hybrid-v1"
-            : "mirrorlife-civic-face-volume-v2",
+            : CIVIC_FACE_MODE === "illustrated-cornea"
+              ? "mirrorlife-civic-face-illustrated-cornea-v1"
+              : "mirrorlife-civic-face-volume-v2",
         morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
         smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]
           ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.WarmSmile]
@@ -8065,6 +8118,11 @@ function getStats() {
           ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.Attentive]
           ?? 0).toFixed(4)),
         blink: Number((entry.blinkInfluence || 0).toFixed(4))
+      } : null,
+      cornea: entry.faceCornea ? {
+        version: "mirrorlife-civic-cornea-v1",
+        lensCount: 2,
+        physicallyLit: true
       } : null,
       eyes: entry.eyePivots?.length ? {
         version: "mirrorlife-civic-eye-volume-v1",

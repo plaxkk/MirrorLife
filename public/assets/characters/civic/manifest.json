@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v33",
+  "sculptContract": "mirrorlife-civic-sculpt-v34",
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
     "runtime": "shared-controller-pivots+continuous-limb-skin",

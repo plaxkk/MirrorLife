@@ -1946,15 +1946,14 @@ def build_character(role, config):
     root["identity_role"] = role
 
     torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee = build_body(role, config, mats, root)
-    # The paired story-camera crop shows that the reference head is about
-    # eighty percent of shoulder width, while v77/v78a only reached roughly
-    # seventy percent. Enlarge the complete authored head hierarchy and lower
-    # its pivot by 3.5 cm so the silhouette becomes expressive without growing
-    # beyond the existing 1.72 m capsule or exposing a long toy-like neck.
+    # The final same-canvas story crop puts the reference head at roughly
+    # eighty percent of shoulder width. Keep the complete authored hierarchy
+    # at that ratio: the earlier 1.02-wide head drifted back toward a toy
+    # silhouette once the slimmer torso and full costume were visible.
     head = empty("HeadPivot", root, (0, 0, 1.438))
-    # Preserve the exact height/capsule contract while giving the face a
-    # slightly broader illustrated presence in front and three-quarter views.
-    head.scale = (1.02, 1.015, 0.92)
+    # This resolves to about 0.46 m wide and 0.48 m tall, yielding the target
+    # editorial 1:3.5 rhythm while staying inside the existing 1.72 m capsule.
+    head.scale = (0.96, 0.96, 0.88)
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -2025,7 +2024,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v33",
+        "sculptContract": "mirrorlife-civic-sculpt-v34",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",

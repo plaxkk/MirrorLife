@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-22 reference-fidelity v52 illustrated-cornea, editorial-desk and constant-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v51-desk-yaw0.png` (`1600 × 900`, `147 / 260,424`).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v51.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Constant-radius orbit evidence: `tmp/v52-desktop-yaw90.png` (`148 / 275,316`, `5.2m`) and `tmp/v52-desktop-yaw180.png` (`150 / 273,868`, `5.2m`).
+- Mobile evidence: `tmp/v51-mobile-390x844.png` (`390 × 844`, `100 / 221,990`, three-character LOD).
+- Physical exploration evidence: `tmp/v52-character-walk.png`; the browser regression walked `5.37m`, completed action/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / production face traded identity for plastic eye volume] The default face is now `illustrated-cornea`: the complete role-specific 2D avatar atlas deforms on a curved facial surface while two real clearcoat cornea lenses contribute physical highlights and head/orbit occlusion. Legacy atlas, hybrid and sculpted-volume paths remain explicit QA modes.
+- [improved / cast still read too broad-headed] Sculpt v34 reduces the head mass to a more editorial `1:3.5` rhythm while retaining the `1.72m` player scale, capsule, skeleton, animation and foot contact.
+- [improved / portal and floor clipped into broad yellow-white values] Civic exposure, local bounce, HDR portal colour, floor dapples and GTAO are rebalanced. Exterior foliage and roof detail survive the threshold, terrazzo texture remains readable, and actor/furniture contact depth is stronger.
+- [fixed / foreground agenda hid all lived-in desk detail] The record-desk clipboard is smaller and lower; notebook, writing lines, water glass, coaster, file tray, note cards and lamp now occupy a visible front-right still life without changing the authored desk collider or route.
+- [fixed / side and reverse orbit felt like a moving pivot] The public-room orbit now keeps a constant `5.2m` radius through all yaw angles. Actor-aware tangential avoidance and real shell collision remain active, but the quarter/reverse camera no longer zooms inward around the player.
+- [checked / complete runtime] Character assets, 26-zone physics, syntax, real walking/camera drag, desktop/mobile atomic scene flow and production build pass. The civic room remains below desktop and mobile budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][2D identity carried into 3D] Brows, lashes, irises, blush and mouth retain the existing illustrated identity instead of being replaced with generic procedural eyes; the curved carrier, corneas, skull, hair, lighting and side/reverse occlusion preserve genuine 3D behaviour.
+- [checked][foreground/midground/background composition] The record desk and display frame the foreground; the physical listening circle and cast anchor the middle; the portal, evidence wall and furnished lounge retain a navigable background axis.
+- [checked][physical and orbit continuity] The player walks in metre space, returns to idle and supports a real `65.3°` drag turn. At `90°` and `180°`, the player, conversation target and multiple room landmarks remain readable without hiding actors.
+- [checked][responsive performance] Desktop stays at `147–150` calls and `260,424–275,316` triangles; mobile is `100 / 221,990`. No sprite fallback, black block, stale room, collider mismatch or runtime exception appeared in final regression.
+- [P1][artist-authored character topology remains below the source] The same-canvas pair still exposes simpler eyelid-to-cheek planes, hair roots, cloth compression, fingers, footwear and hand-object contact. Curved identity transfer resolves the generic-face defect, but it cannot replace role-authored UV meshes and corrective poses.
+- [P1][furniture finish and true indirect transport remain below the source] The reference retains finer bevels, denser glass/ceramic/paper/foliage detail, softer multi-bounce penumbrae and richer local shadow colour. The real-time rebuild is coherent and playable but not yet literal source-level production art.
+- [P2][reverse view retains a strong foreground witness crop] The constant radius prevents a camera zoom, and the story centre stays readable, but the nearest mediator still forms a large lower-frame foreground shape. A later staging-volume pass should redistribute the reverse-view witness without breaking reachability.
+
+### Gate result
+
+v52 materially improves avatar identity continuity, character proportion, portal/floor value control, foreground micro-story density and full-orbit stability while preserving the playable physical world and responsive budgets. The mandatory same-canvas comparison still exposes actionable P1 gaps in production topology, prop finish and source-level indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-22 reference-fidelity v47 scanned-surface, daylight and actor-aware-orbit gate
 
 ### Evidence inspected together
