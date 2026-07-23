@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v74 four-person composition and selective-depth gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v74-composition2-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `160 / 286,660`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v74.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Mandatory focused cast comparison: `tmp/reference-vs-v74-cast.png`; source and implementation character groups are inspected at an equal `660 × 460` panel scale.
+- Full-orbit evidence: `tmp/v58-desktop-yaw90.png` (`161 / 301,552`, actor avoidance `0.32m`) and `tmp/v58-desktop-yaw180.png` (`164 / 314,996`, actor avoidance `1.142m`, radial clearance `1.427m`).
+- Mobile evidence: `tmp/v58-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 243,976`, three-character LOD).
+- Physical exploration evidence: `tmp/v74-character-walk.png`; the browser regression walked `5.37m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, character exploration, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / four-person hearing read as three people] The rear mediator previously shared almost the same opening sightline as the player, hiding the mediator's body behind the player's head and backpack. The authored opening moves the mediator `0.76m` laterally from the player onto the source image's right-rear story axis; all four role silhouettes are now visible in the same opening frame.
+- [improved / room-wide fill erased depth] Civic portal bounce drops from `1.42` to `1.22`, camera-side fill from `0.88` to `0.34` and broad rim energy from `0.58` to `0.44`. A small face-material wrap compensates only on the sculpted head, retaining eye/cheek readability while restoring furniture, cloth and floor-plane separation.
+- [checked / authored composition survives movement] A regression assertion now requires at least `0.65m` lateral separation between the player and rear mediator in the QA opening. The actual scene passes at `0.76m`, and the same four real actors continue to walk, gesture, listen and rotate under the shared physical/animation contracts.
+- [checked / side, reverse and mobile behavior] Quarter orbit remains intimate at `6.231m`; reverse orbit expands to `7.4m` rather than hiding a citizen. Portrait mobile retains the three-character LOD, player, target landmark and complete touch controls inside the existing performance gate.
+
+### Required fidelity surfaces and findings
+
+- [fixed][first-read story composition] The opening now communicates a four-role civic hearing without requiring labels. Player anchors the foreground, listener and facilitator define the near left/right dialogue edges, and the mediator supplies a complete right-rear depth layer against the evidence wall.
+- [improved][lighting hierarchy] Lower global fill restores modelling on the notice wall, lounge and character garments. The sculpted skin shader adds restrained facing/shadow wrap so the face does not become the price of recovering room depth.
+- [checked][physics and navigation continuity] Only the authored staging point changed; the physics world still validates each position, keeps citizen capsules separate and preserves the central movement route. The player walks `5.37m` and turns the real camera `65.3°`.
+- [checked][responsive performance] Desktop remains `160–164 / 286,660–314,996`; mobile remains `98 / 243,976`, below `110` calls / `250k` triangles. No new geometry or texture was added in this composition pass.
+- [P1][character production quality remains below the source] The cast comparison is now compositionally honest, but still exposes coarser skull/cheek topology, hair flow, fingers, garment drape and footwear materials than the reference.
+- [P1][environment finish remains below the source] Functional density is present, but furniture proportion, transparent glass, upholstered deformation, stationery/foliage detail and authored wear remain visibly simpler.
+- [P1][indirect light transport remains below the source] Selective depth is better, but the reference retains softer multi-bounce penumbrae, localized colour bleed and more convincing contact integration.
+
+### Gate result
+
+v74 corrects the opening's hidden fourth participant and restores room depth without sacrificing facial readability. The complete scene remains walkable, animated, orbitable, mobile-safe and below performance budgets. Same-canvas evidence still shows production-level gaps in character sculpt/UV/deformation, complete-room bespoke finish and indirect-light transport.
+
+final result: blocked
+
+Blocker: production character sculpt/retopology/UV/deformation, complete-room hero-asset finish and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v73 facial-read, hair-silhouette and character-surface gate
 
 ### Evidence inspected together

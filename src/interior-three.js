@@ -1507,19 +1507,19 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.42 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.22 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffdaa9");
   }
   if (coolReflectionLight) {
     coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.22) : 0;
   }
-  // The old camera-side fill erased the eye-socket, cheek and garment planes
-  // that are now present in the civic sculpts. Shift that energy into a warm
-  // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.88 : 0.34;
+  // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
+  // furniture planes. The sculpted head shader now carries the small facial
+  // wrap, so these room-wide lights can preserve dimensional form.
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.23 : 0.26;
   if (keyLight?.shadow) {
     keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 12 : 9;
     keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 32 : 24;
@@ -7367,12 +7367,13 @@ function createCivicActorObject(actor, asset) {
           float mirrorLifeSkinLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
           float mirrorLifeSkinShadow = 1.0 - smoothstep(0.24, 0.62, mirrorLifeSkinLuma);
           float mirrorLifeSkinVelvet = pow(mirrorLifeSkinFacing, 7.0) * smoothstep(0.42, 0.82, mirrorLifeSkinLuma);
-          gl_FragColor.rgb += vec3(0.064, 0.028, 0.017) * mirrorLifeSkinWrap * 0.44;
-          gl_FragColor.rgb += vec3(0.032, 0.012, 0.007) * mirrorLifeSkinShadow * 0.16;
+          gl_FragColor.rgb += vec3(0.064, 0.028, 0.017) * mirrorLifeSkinWrap * 0.5;
+          gl_FragColor.rgb += vec3(0.032, 0.012, 0.007) * mirrorLifeSkinShadow * 0.22;
+          gl_FragColor.rgb += vec3(0.012, 0.006, 0.004) * (0.35 + mirrorLifeSkinFacing * 0.65);
           gl_FragColor.rgb += vec3(0.018, 0.011, 0.008) * mirrorLifeSkinVelvet * 0.72;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v4";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v5";
       material.needsUpdate = true;
     });
   }
@@ -7500,7 +7501,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v7`,
+    styleKey: `${frame}:${role}:civic-glb-v8`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7516,7 +7517,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v7` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v8` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {

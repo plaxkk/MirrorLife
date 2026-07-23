@@ -7168,7 +7168,10 @@ function stagePublicListeningEnsemble(zone, entries = []) {
   const listeningPoints = qaComposition ? [
     { x: -1.54, z: 0.14 },
     { x: 1.54, z: 0.18 },
-    { x: 0.46, z: -1.42 }
+    // Keep the rear mediator on the source image's right-hand story axis.
+    // Aligning them with the player's back hid the complete role silhouette
+    // and made a four-person hearing read as a three-person triangle.
+    { x: 1.12, z: -1.42 }
   ] : [
     { x: 0.9, z: -1.45 },
     { x: 3.15, z: 0.72 },

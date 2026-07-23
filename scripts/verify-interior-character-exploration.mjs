@@ -82,10 +82,15 @@ try {
   assert(Number(opening.actors.find((actor) => actor.assetRole === "player")?.facial?.smile || 0) > 0.2, "player illustrated head did not receive the authored warm-smile morph");
   const mediator = opening.actors.find((actor) => actor.assetRole === "mediator");
   const facilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
+  const stagedPlayer = opening.actors.find((actor) => actor.assetRole === "player");
+  assert(stagedPlayer, "player actor diagnostics are missing");
+  assert(
+    Number(mediator?.x || 0) - Number(stagedPlayer?.x || 0) >= 0.65,
+    "rear mediator regressed onto the player's opening sightline"
+  );
   assert(Math.abs(Number(mediator?.hands?.rightWristX || 0)) > 0.15, "mediator thoughtful wrist pose did not reach the runtime hand pivot");
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
-  const beforeMove = playerFrom(opening);
-  assert(beforeMove, "player actor diagnostics are missing");
+  const beforeMove = stagedPlayer;
   assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v7", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
