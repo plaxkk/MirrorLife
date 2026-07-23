@@ -48,7 +48,10 @@ ROLE_CONFIGS = {
         "hair_highlight": "#ec796b",
         "eye": "#3d6d5d",
         "top": "#f2eadc",
-        "outer": "#eee5d8",
+        # A warmer oatmeal cardigan preserves the source's cloth hierarchy
+        # under the strong portal key; near-white previously clipped into flat
+        # vertical bars beside the green dress.
+        "outer": "#e4d6c4",
         "lower": "#356e58",
         "accent": "#d98769",
         "shoe": "#5c4031",
@@ -62,7 +65,7 @@ ROLE_CONFIGS = {
         "hair_highlight": "#876457",
         "eye": "#4f6149",
         "top": "#f1e8da",
-        "outer": "#f4ebdd",
+        "outer": "#e8dac7",
         "lower": "#47745d",
         "accent": "#c69455",
         "shoe": "#503b31",
@@ -1003,6 +1006,45 @@ def cloth_fold_ribbon(name, points, widths, mat, parent=None, depth=0.008):
     return obj
 
 
+def embroidered_flower(name, location, mat, parent=None, radius=0.021):
+    """Build one low-profile four-petal dress motif as a single mesh.
+
+    Keeping each embroidered flower in one tiny mesh preserves the garment
+    identity cue without paying four glTF object/material records per petal.
+    """
+    vertices = []
+    faces = []
+    for petal_index in range(4):
+        angle = petal_index * math.pi * 0.5
+        direction_x = math.cos(angle)
+        direction_z = math.sin(angle)
+        tangent_x = -direction_z
+        tangent_z = direction_x
+        inner = radius * 0.18
+        outer = radius
+        half_width = radius * 0.42
+        base = len(vertices)
+        vertices.extend((
+            (direction_x * inner - tangent_x * half_width, 0, direction_z * inner - tangent_z * half_width),
+            (direction_x * outer, -0.003, direction_z * outer),
+            (direction_x * inner + tangent_x * half_width, 0, direction_z * inner + tangent_z * half_width),
+            (0, -0.0015, 0),
+        ))
+        faces.append((base, base + 1, base + 2, base + 3))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    obj.location = location
+    link_material(obj, mat)
+    bevel = obj.modifiers.new("Embroidery softness", "BEVEL")
+    bevel.width = 0.002
+    bevel.segments = 2
+    return obj
+
+
 def facial_lid_surface(
     name,
     width,
@@ -1878,8 +1920,11 @@ def build_costume(
             )
     elif costume == "listener":
         curve_tube("Hood", [(-0.19, 0.02, 1.27), (0, 0.11, 1.34), (0.19, 0.02, 1.27)], 0.055, mats["outer"], visual)
-        curve_tube("JacketCenterSeam", [(0, -0.205, 0.83), (0, -0.216, 1.04), (0, -0.205, 1.24)], 0.006, mats["outer"], visual, resolution=2)
-        curve_tube("JacketHem", [(-0.2, -0.13, 0.79), (0, -0.205, 0.77), (0.2, -0.13, 0.79)], 0.008, mats["outer"], visual, resolution=2)
+        # Construction details belong to the teal shell, not the ivory hood.
+        # The old white seam, hem, drawstrings and cross-body strap intersected
+        # as a bright X and made the jacket read like an exposed mannequin rig.
+        curve_tube("JacketCenterSeam", [(0, -0.205, 0.83), (0, -0.216, 1.04), (0, -0.205, 1.24)], 0.005, mats["shoe"], visual, resolution=2)
+        curve_tube("JacketHem", [(-0.2, -0.13, 0.79), (0, -0.205, 0.77), (0.2, -0.13, 0.79)], 0.006, mats["shoe"], visual, resolution=2)
         # Give the teal jacket a believable opening, drawstrings and working
         # pockets. These small construction cues survive the social camera and
         # replace the former uninterrupted plastic torso.
@@ -1904,8 +1949,8 @@ def build_costume(
                     (side * 0.1, -0.224, 1.09),
                     (side * 0.11, -0.223, 0.995),
                 ],
-                0.006,
-                mats["outer"],
+                0.0048,
+                mats["shoe"],
                 visual,
                 resolution=2,
             )
@@ -1923,7 +1968,7 @@ def build_costume(
                 f"ListenerPocketWelt_{side}",
                 (0.12, 0.026, 0.045),
                 (side * 0.125, -0.218, 0.9),
-                mats["outer"],
+                mats["shoe"],
                 visual,
                 radius=0.009,
                 rotation=(0.04, side * 0.03, side * 0.12),
@@ -1944,7 +1989,7 @@ def build_costume(
         rounded_box("Satchel", (0.29, 0.125, 0.235), (0.28, 0.075, 0.8), mats["accent"], visual, radius=0.057)
         rounded_box("SatchelFlap", (0.23, 0.032, 0.08), (0.28, -0.002, 0.855), mats["shoe"], visual, radius=0.018)
         rounded_box("SatchelClasp", (0.05, 0.022, 0.058), (0.28, -0.023, 0.82), mats["metal"], visual, radius=0.011)
-        curve_tube("CrossBodyStrap", [(-0.2, -0.17, 1.23), (0.02, -0.19, 1.0), (0.25, -0.12, 0.78)], 0.018, mats["outer"], visual)
+        curve_tube("CrossBodyStrap", [(-0.2, -0.17, 1.23), (0.02, -0.19, 1.0), (0.25, -0.12, 0.78)], 0.015, mats["shoe"], visual)
         for side, leg in ((-1, left_leg), (1, right_leg)):
             rounded_box(
                 f"CargoPocket_{side}",
@@ -1986,6 +2031,19 @@ def build_costume(
             visual,
             radius=0.012,
         )
+        # The reference gives each civic role a small garment-level identity
+        # cue rather than relying on hair colour alone. Three shallow petals
+        # sit on the actual dress surface and survive orbit/lighting while
+        # remaining far below collider scale.
+        if costume == "mediator":
+            for flower_index, (flower_x, flower_z) in enumerate(((-0.07, 1.13), (0.055, 1.04), (-0.015, 0.94))):
+                embroidered_flower(
+                    f"DressFlower_{flower_index + 1}",
+                    (flower_x, -0.243, flower_z),
+                    mats["metal"],
+                    visual,
+                    radius=0.021,
+                )
         for side in (-1, 1):
             tailored_panel(
                 f"CoatPanel_{side}",
@@ -2215,7 +2273,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v40",
+        "sculptContract": "mirrorlife-civic-sculpt-v41",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",
@@ -2234,11 +2292,13 @@ def main():
         "faceDecal": {
             "contract": "mirrorlife-civic-face-decal-v1",
             "path": "civic-face-decals.png",
+            "textureContract": "mirrorlife-civic-face-texture-v2",
+            "textureDirection": "soft-premium-sculpted-portrait",
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
             "integrationContract": "mirrorlife-civic-face-volume-v11",
-            "productionIntegrationContract": "mirrorlife-civic-face-illustrated-cornea-v2",
+            "productionIntegrationContract": "mirrorlife-civic-face-illustrated-cornea-v3",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",

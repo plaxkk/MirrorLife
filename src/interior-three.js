@@ -82,7 +82,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f2e7d9", floor: "#d9d2c5", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f0dfcd", floor: "#d5c8b7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -94,7 +94,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 2.18, fill: 0.2, hemi: 0.22, bounce: 0.56, wash: 0.32, exposure: 0.86, keyColor: "#ffddb7", fillColor: "#b7d6d8" },
+  "civic-ivory": { key: 1.95, fill: 0.28, hemi: 0.28, bounce: 0.68, wash: 0.38, exposure: 0.86, keyColor: "#ffddb7", fillColor: "#b7d6d8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -510,7 +510,7 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.102 * strength) + vec3(0.58));
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.07 * strength) + vec3(0.58));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
@@ -520,11 +520,11 @@ function ensureLayer() {
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaDown = dot(texture2D(tDiffuse, vUv - vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float sceneEdge = max(abs(lumaRight - lumaLeft), abs(lumaUp - lumaDown));
-        float editorialInk = smoothstep(0.1, 0.3, sceneEdge) * 0.012 * strength;
+        float editorialInk = smoothstep(0.1, 0.3, sceneEdge) * 0.006 * strength;
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.046 * strength;
+        color *= 1.0 - vignette * 0.032 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1502,7 +1502,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.28 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.42 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffdaa9");
   }
   if (coolReflectionLight) {
@@ -1511,13 +1511,13 @@ function applyLightingPreset(theme = {}) {
   // The old camera-side fill erased the eye-socket, cheek and garment planes
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.68 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 1.08 : 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.88 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.2 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 6.5 : 9;
-    keyLight.shadow.blurSamples = 24;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 12 : 9;
+    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 32 : 24;
   }
 }
 
@@ -5719,9 +5719,15 @@ function getCivicFaceTexture(role = "player") {
   // and mouth to a handful of pixels in the story camera. This keeps the
   // reference's readable illustrated feature scale while remaining a real
   // head-attached, depth-tested surface instead of a billboard.
-  const cropSize = Math.floor(Math.min(cellWidth, cellHeight) * 0.82);
+  // The premium v2 atlas deliberately keeps broad white gutters so the four
+  // generated portraits share one stable cell alignment. Crop those gutters
+  // here instead of shrinking the eyes, brows and mouth inside the physical
+  // 41 cm face carrier. At the authored story camera this resolves each eye
+  // to roughly one fifth of the visible head width, matching the reference
+  // character language without enlarging the actual skull or collider.
+  const cropSize = Math.floor(Math.min(cellWidth, cellHeight) * 0.68);
   const cropX = column * cellWidth + Math.floor((cellWidth - cropSize) / 2);
-  const cropY = row * cellHeight + Math.floor(cellHeight * 0.075);
+  const cropY = row * cellHeight + Math.floor(cellHeight * 0.105);
   const canvas = document.createElement("canvas");
   canvas.width = 640;
   canvas.height = 640;
@@ -5738,6 +5744,44 @@ function getCivicFaceTexture(role = "player") {
     canvas.width,
     canvas.height
   );
+  // Convert the generated white studio field into a clean feature layer.
+  // Border flood-fill removes the literal background from the source atlas,
+  // but soft skin-coloured generation halos are intentionally disconnected
+  // from that border and would otherwise wash the complete 3D head grey. Use
+  // colour distance from white as continuous coverage, while preserving the
+  // warm eye whites inside the two authored eye regions. Nose, blush and lip
+  // transitions stay translucent; brow/iris/line work stays fully opaque.
+  try {
+    const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+    const pixels = imageData.data;
+    for (let pixelIndex = 0; pixelIndex < canvas.width * canvas.height; pixelIndex += 1) {
+      const offset = pixelIndex * 4;
+      const red = pixels[offset];
+      const green = pixels[offset + 1];
+      const blue = pixels[offset + 2];
+      const x = (pixelIndex % canvas.width) / canvas.width;
+      const y = Math.floor(pixelIndex / canvas.width) / canvas.height;
+      const leftEye = ((x - 0.19) / 0.17) ** 2 + ((y - 0.43) / 0.13) ** 2;
+      const rightEye = ((x - 0.81) / 0.17) ** 2 + ((y - 0.43) / 0.13) ** 2;
+      const insideEye = Math.min(leftEye, rightEye) <= 1;
+      const distanceFromWhite = Math.sqrt(
+        (255 - red) ** 2
+        + (255 - green) ** 2
+        + (255 - blue) ** 2
+      );
+      const featureCoverage = THREE.MathUtils.smoothstep(distanceFromWhite, 9, 52);
+      const eyeCoverage = insideEye
+        ? THREE.MathUtils.smoothstep(distanceFromWhite, 3, 22)
+        : 0;
+      pixels[offset + 3] = Math.round(
+        pixels[offset + 3] * Math.max(featureCoverage, eyeCoverage)
+      );
+    }
+    context.putImageData(imageData, 0, 0);
+  } catch {
+    // Same-origin atlas reads are expected. Keep the already flood-cleared
+    // crop if a restrictive browser policy disables canvas pixel access.
+  }
   const texture = new THREE.CanvasTexture(canvas);
   texture.colorSpace = THREE.SRGBColorSpace;
   texture.wrapS = THREE.ClampToEdgeWrapping;
@@ -8290,7 +8334,7 @@ function update(payload = {}) {
     // The reference uses broad, warm contact penumbrae. A full-strength GTAO
     // pass made shoe soles, chair feet and cabinet corners collapse to black
     // outlines even though the key and bounce were physically plausible.
-    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.64 : 0.82;
+    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.5 : 0.82;
   }
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
@@ -8397,6 +8441,9 @@ function getStats() {
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v1",
+        texture: CIVIC_FACE_MODE === "illustrated-cornea"
+          ? "mirrorlife-civic-face-texture-v2"
+          : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
           ? "mirrorlife-civic-face-volume-v11"
           : CIVIC_FACE_MODE === "uv-hybrid"
@@ -8404,7 +8451,7 @@ function getStats() {
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-hybrid-v1"
             : CIVIC_FACE_MODE === "illustrated-cornea"
-              ? "mirrorlife-civic-face-illustrated-cornea-v2"
+              ? "mirrorlife-civic-face-illustrated-cornea-v3"
               : "mirrorlife-civic-face-volume-v2",
         morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
         smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]

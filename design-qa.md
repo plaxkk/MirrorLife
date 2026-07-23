@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v69 premium portrait, garment identity and soft-transport gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v69-final2-desktop-yaw0.png` (`1600 × 900`, `149 / 269,736`, `48°`, `5.55m` orbit).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v69.png`; source and implementation are normalized into equal-width panels in one comparison image.
+- Mandatory focused cast comparison: `tmp/reference-vs-v69-cast.png`; source and implementation character groups are inspected at the same panel scale.
+- Full-orbit evidence: `tmp/v69-final2-desktop-yaw90.png` (`150 / 284,628`, actor avoidance `0.214m`) and `tmp/v69-final2-desktop-yaw180.png` (`152 / 283,180`, actor avoidance `0.31m`).
+- Mobile evidence: `tmp/v69-final2-mobile-390x844.png` (`390 × 844`, `101 / 228,150`, three-character LOD).
+- Physical exploration evidence: `tmp/v69-character-walk.png`; the browser regression walked `5.37m`, completed action/walk/idle transitions and rotated the real user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / inherited atlas retained oversized anime eyes and a pale rectangular face halo] A new four-role premium portrait atlas is grounded directly in the source's softer sculpted character language. Runtime crops the role cell to useful facial density and derives transparency from colour distance while explicitly preserving warm sclera, removing the studio-white carrier field without returning to generic procedural faces.
+- [checked / face remains part of the moving 3D actor] The role texture is mapped onto the curved head-attached face surface, with the volumetric skull, hair and two physically lit corneas retained. It receives depth, occlusion and orbit parallax and does not become a camera-facing sprite or billboard.
+- [improved / listener garment construction read as a white skeleton] Sculpt v41 moves the jacket centre seam, hem, drawstrings, pocket welts and cross-body strap into a narrow dark construction language. The teal jacket remains dominant while the oatmeal hood reads as a separate soft layer.
+- [improved / civic women lacked garment-level role identity] Facilitator and mediator cardigans move from clipped ivory to warmer oatmeal cloth. The mediator gains three low-profile embroidered dress motifs built on the actual garment surface; role distinction no longer relies on hair colour alone.
+- [improved / room light retained hard digital separation] The civic preset redistributes energy from the portal key into warm floor bounce, restrained cool fill and ambient wash. Larger VSM filtering, moderated face lift, stronger localized portal bounce and balanced GTAO create softer penumbrae while preserving grounded character and furniture contact.
+- [checked / complete runtime] Four sculpt-v41 GLBs total `7.60 MB`; the premium face texture and integration contracts, civic hero props, 26-zone metre-space physics, `78` atomic room transitions, desktop/mobile scene flow, real movement/camera drag, repository checks and production build remain within release budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][typography, UI, copy and interaction hierarchy] The restrained HUD, room-memory card, desktop action deck and portrait action rail remain unchanged, readable and operational. The facial and lighting pass introduces no UI collision or gameplay affordance regression.
+- [checked][spacing, layout and viewport resilience] The player-led orbit continues to preserve the entrance, conversation centre and authored foreground/midground/background landmarks. The `390 × 844` layout keeps the social centre walkable and retains practical mobile controls.
+- [improved][colour, material and lighting hierarchy] Warmer plaster, darker mineral terrazzo, teal civic furniture, oatmeal cloth and restrained coral/gold accents move closer to the source's premium editorial warmth. Wood, cloth, paper, glass, terrazzo and metal still receive distinct roughness and light responses.
+- [checked][physical and camera continuity] The `1.72m` player walks `5.37m`, returns to idle and turns the actual camera `65.3°` inside the same metre-space room. At `0°`, `90°` and `180°`, the player, listening target and a designed landmark remain readable without entering furniture.
+- [checked][atomic transitions and responsive performance] All `26` interiors complete `78` enter/exit transitions without stale backgrounds, black blocks, duplicate rooms, runtime exceptions or retained physics worlds. Desktop remains at `149–152` calls and `269,736–284,628` triangles; mobile remains `101 / 228,150`.
+- [P1][character asset fidelity remains below the source] The new atlas and garment pass substantially improve first-read identity, but the focused cast comparison still exposes simpler skull/cheek topology, hair roots, eyelids, fingers, footwear, cloth silhouettes and hand-object contact. Literal parity requires role-authored body, head and garment meshes with final UV texture sets and corrective poses.
+- [P1][environment asset fidelity and indirect transport remain below the source] The room is coherent, dense and playable, but the reference still has finer furniture joinery, richer foliage, transparent glass, paper/ceramic microdetail and stronger localized multi-bounce colour transport.
+- [P2][facial integration remains a hybrid curved surface] The premium atlas follows a real moving head and survives full orbit, but close quarter views can still distinguish the illustrated facial layer from a final role-painted head UV. The approved identity should ultimately be baked into role-specific head textures after topology lock.
+
+### Gate result
+
+v69 improves facial taste, role readability, clothing construction and soft daylight transport while preserving the complete walkable 3D room, full orbit, mobile controls, atomic scene loading and performance budgets. The mandatory same-canvas comparisons still expose P1 gaps in production character topology, environment microdetail and source-level indirect light, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-23 reference-fidelity v68 illustrated-cornea, civic lounge and orbit-clearance gate
 
 ### Evidence inspected together

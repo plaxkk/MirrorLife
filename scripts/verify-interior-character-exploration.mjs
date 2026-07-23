@@ -72,7 +72,8 @@ try {
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   assert(opening.actors.every((actor) => actor.faceMode === "illustrated-cornea"), "civic scene did not use the production curved illustrated/cornea facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-illustrated-cornea-v2"), "civic actors did not preserve the production curved illustrated/cornea facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic actors did not expose the premium face texture contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-illustrated-cornea-v3"), "civic actors did not preserve the production curved illustrated/cornea facial contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic illustrated facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v1" && actor.cornea?.lensCount === 2), "civic actors did not expose two physically lit cornea lenses");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v3"), "civic actors did not expose the compact independent-hand contract");
