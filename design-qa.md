@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v73 facial-read, hair-silhouette and character-surface gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v73a-desktop-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `161 / 286,660`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v73.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Mandatory focused cast comparison: `tmp/reference-vs-v73-cast.png`; source and implementation character groups are inspected at an equal `660 × 460` panel scale.
+- Full-orbit evidence: `tmp/v58-desktop-yaw90.png` (`161 / 301,552`, actor avoidance `0.411m`) and `tmp/v58-desktop-yaw180.png` (`164 / 314,996`, actor avoidance `1.142m`, radial clearance `1.427m`).
+- Mobile evidence: `tmp/v58-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 243,976`, three-character LOD).
+- Physical exploration evidence: `tmp/v73-character-walk.png`; the browser regression walked `5.37m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, metre-space physics, character assets, civic props, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / gameplay faces collapsed at conversation distance] Sculpt v44 increases the four role-specific eye apertures, iris/pupil area, glints and mouth width while preserving physically lit volumetric sclera, lids, gaze and expression morphs. The equal-scale cast comparison now retains eye direction and mouth rhythm without reintroducing a screen-space face card.
+- [improved / hair read as faceted caps in orbit] Crown topology increases from `40 × 26` to `48 × 30`, and fringe, side, spike, rear, ponytail and braid locks receive denser circular profiles. The mediator gains a five-piece nape transition so her bob remains continuous from side and reverse viewpoints.
+- [improved / hands remained featureless mittens] Hand v4 adds shallow physical life-line and heart-line surface geometry to each palm. These details follow the articulated hand pivots and survive real gesture/notebook animation rather than being painted onto the screen.
+- [improved / footwear lacked construction hierarchy] Footwear v3 adds outer quarter panels, toe bumpers, a third lace row and ankle-boot pull tabs. Facilitator and mediator cardigans also gain neck and front-edge ribs, creating clearer cloth layering at gameplay distance.
+- [checked / budgets and complete runtime] Four v44 role GLBs total `7.58 MB`; player/listener/facilitator/mediator contain `36,372 / 34,952 / 40,008 / 39,230` authored triangles. Opening, side, reverse and mobile frames remain below their release budgets.
+
+### Required fidelity surfaces and findings
+
+- [improved][character first read] Enlarged eyes and controlled glints make listening direction clearer in the authored opening, while role-specific hair and garment edges remain readable without depending on colour alone.
+- [checked][360° surface continuity] Hair, palm creases, shoe panels, cardigan ribs and all role props are real meshes attached to the shared articulated hierarchy. Side and reverse orbit reveal no billboard edge, detached detail card or front-only identity swap.
+- [checked][movement and interaction continuity] The `1.72m` player remains grounded while walking and turning the actual camera. Palm and footwear additions preserve the existing wrist, hand-object, ankle and foot-contact contracts; no collider or interaction anchor diverges from the visible actor.
+- [checked][responsive performance] Desktop peaks at `164 / 314,996`; mobile remains `98 / 243,976`, below `110` calls / `250k` triangles. The portrait layout retains the player, two witnesses, target landmark and complete touch controls.
+- [P1][character topology and materials remain below the source] The focused comparison still exposes blockier skull/cheek planes, coarser hair flow, simplified garment drape and rigid hands compared with the reference. Literal parity needs a production sculpt/retopology pass, painted PBR UVs, facial correctives and garment-specific deformation.
+- [P1][environment finish remains below the source] The room has coherent zoning and authored hero furniture, but the source retains subtler furniture proportion, denser hand-authored stationery/foliage, transparent glass thickness, upholstery compression and material aging.
+- [P1][indirect light transport remains below the source] Portal key, local bounce and GTAO preserve hierarchy, but the source still has softer multi-bounce penumbrae, richer skin/cloth colour return and more integrated sunlight.
+
+### Gate result
+
+v73 improves the production actors where the opening and orbit exposed the largest surface gaps: facial readability, hair continuity, palm definition, footwear construction and cardigan finish. The room remains fully walkable, animated, orbitable, mobile-safe and inside strict performance budgets. The required same-canvas comparisons still expose production-level differences in character sculpt/UV/deformation, whole-room bespoke finish and indirect light transport.
+
+final result: blocked
+
+Blocker: production character sculpt/retopology/UV/deformation, complete-room hero-asset finish and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-23 reference-fidelity v72 role-body, garment-silhouette and reverse-orbit gate
 
 ### Evidence inspected together

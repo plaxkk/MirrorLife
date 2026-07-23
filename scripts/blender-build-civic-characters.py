@@ -158,60 +158,60 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0525,
-        "eye_height": 0.032,
-        "iris_width": 0.0238,
-        "iris_height": 0.027,
+        "eye_width": 0.058,
+        "eye_height": 0.0355,
+        "iris_width": 0.026,
+        "iris_height": 0.0295,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
         "brow_inner": -0.002,
-        "mouth_width": 0.037,
+        "mouth_width": 0.0405,
         "mouth_corner": 0.002,
         "mouth_center": -0.003,
         "cheek_forward": 1.0,
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.052,
-        "eye_height": 0.0315,
-        "iris_width": 0.0235,
-        "iris_height": 0.0265,
+        "eye_width": 0.0575,
+        "eye_height": 0.035,
+        "iris_width": 0.0258,
+        "iris_height": 0.029,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
         "brow_inner": -0.001,
-        "mouth_width": 0.038,
+        "mouth_width": 0.0415,
         "mouth_corner": 0.004,
         "mouth_center": -0.002,
         "cheek_forward": 0.94,
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.053,
-        "eye_height": 0.0328,
-        "iris_width": 0.0242,
-        "iris_height": 0.0278,
+        "eye_width": 0.059,
+        "eye_height": 0.0365,
+        "iris_width": 0.0265,
+        "iris_height": 0.0305,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
         "brow_inner": -0.003,
-        "mouth_width": 0.039,
+        "mouth_width": 0.0425,
         "mouth_corner": 0.005,
         "mouth_center": -0.002,
         "cheek_forward": 1.08,
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0522,
-        "eye_height": 0.032,
-        "iris_width": 0.0237,
-        "iris_height": 0.027,
+        "eye_width": 0.058,
+        "eye_height": 0.0355,
+        "iris_width": 0.026,
+        "iris_height": 0.0295,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
         "brow_inner": 0.001,
-        "mouth_width": 0.037,
+        "mouth_width": 0.0405,
         "mouth_corner": 0.002,
         "mouth_center": -0.002,
         "cheek_forward": 0.98,
@@ -728,7 +728,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v3"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v4"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -826,6 +826,33 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         mat,
         thumb_pivot,
         sides=8,
+    )
+    # Two shallow creases restore hand scale and orientation in close social
+    # shots. They sit on the palm surface and merge into the hand draw call,
+    # so the detail survives orbit without becoming a floating line.
+    curve_tube(
+        f"PalmLifeLine_{side}",
+        [
+            (-side * 0.026, -0.043, 0.026),
+            (-side * 0.036, -0.046, 0.0),
+            (-side * 0.027, -0.043, -0.025),
+        ],
+        0.0017,
+        crease_mat,
+        hand_pivot,
+        resolution=2,
+    )
+    curve_tube(
+        f"PalmHeartLine_{side}",
+        [
+            (-side * 0.034, -0.043, -0.035),
+            (0, -0.046, -0.044),
+            (side * 0.03, -0.042, -0.036),
+        ],
+        0.0014,
+        crease_mat,
+        hand_pivot,
+        resolution=2,
     )
     return hand_pivot
 
@@ -930,6 +957,30 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
         rotation=(math.radians(-8), 0, 0),
         segments=3,
     )
+    rounded_box(
+        f"{name}OuterQuarterPanel",
+        (0.018, 0.126, 0.074),
+        (
+            location[0] + side * 0.071,
+            location[1] - 0.054,
+            location[2] + 0.034,
+        ),
+        upper_mat,
+        parent,
+        radius=0.008,
+        rotation=(0, side * 0.04, -side * 0.075),
+        segments=3,
+    )
+    rounded_box(
+        f"{name}ToeBumper",
+        (0.122, 0.042, 0.034),
+        (location[0], location[1] - 0.205, location[2] - 0.006),
+        sole_mat,
+        parent,
+        radius=0.014,
+        rotation=(math.radians(4), 0, 0),
+        segments=3,
+    )
     curve_tube(
         f"{name}ToeCapSeam",
         [
@@ -962,6 +1013,18 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
             parent,
             major_segments=24,
         )
+        curve_tube(
+            f"{name}PullTab",
+            [
+                (-0.018, location[1] + 0.068, location[2] + 0.122),
+                (0, location[1] + 0.078, location[2] + 0.164),
+                (0.018, location[1] + 0.068, location[2] + 0.122),
+            ],
+            0.0045,
+            sole_mat,
+            parent,
+            resolution=2,
+        )
     else:
         rounded_box(
             f"{name}Tongue",
@@ -972,7 +1035,7 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
             radius=0.02,
             rotation=(math.radians(11), 0, 0),
         )
-    for lace_index, lace_y in enumerate((-0.035, -0.068), start=1):
+    for lace_index, lace_y in enumerate((-0.035, -0.068, -0.101), start=1):
         curve_tube(
             f"{name}Lace_{lace_index}",
             [
@@ -1394,7 +1457,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.078, -0.188, 0.037))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.188, 0.037))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -1422,8 +1485,8 @@ def build_face(head, mats, role):
             segments=24,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0078, 0.0022, 0.0108), mats["ink"], eye, segments=20, rings=12)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0163, 0.0065), (0.0038, 0.0011, 0.004), mats["eye_white"], eye, segments=12, rings=8)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0087, 0.0022, 0.0118), mats["ink"], eye, segments=20, rings=12)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0163, 0.007), (0.0042, 0.0011, 0.0045), mats["eye_white"], eye, segments=12, rings=8)
         ellipsoid(f"EyeGlintSmall_{side}", (side * 0.003, -0.0165, -0.0048), (0.0013, 0.0008, 0.0015), mats["eye_white"], eye, segments=10, rings=6)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
@@ -1522,7 +1585,7 @@ def build_hair(head, mats, style):
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
     cap_scale = (0.258, 0.178, 0.226) if style == "spiky" else (0.272, 0.196, 0.238)
-    cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=40, rings=26)
+    cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=48, rings=30)
     # Break the mathematically perfect helmet silhouette without adding a
     # second shell or more triangles. Five broad crown lobes reshape the same
     # cap topology, giving fringe and rear locks a volume to grow from instead
@@ -1588,7 +1651,7 @@ def build_hair(head, mats, style):
             (root_radius * 0.9, root_radius * 1.04, root_radius * 0.88, root_radius * 0.58, 0.006),
             mats["hair_highlight"] if index in (1, 4) else mats["hair"],
             head,
-            sides=10,
+            sides=16,
         )
     for side in (-1, 1):
         side_height = 0.125 if style == "spiky" else 0.17
@@ -1604,7 +1667,7 @@ def build_hair(head, mats, style):
             (0.062, 0.069, 0.052, 0.009),
             mats["hair"],
             head,
-            sides=14,
+            sides=18,
         )
 
     if style == "spiky":
@@ -1622,7 +1685,7 @@ def build_hair(head, mats, style):
                 (0.048, 0.043, 0.026, 0.005),
                 mats["hair_highlight"] if index == 1 else mats["hair"],
                 head,
-                sides=14,
+                sides=18,
             )
         # Break the rear silhouette into swept clumps.  These overlap the cap
         # at their roots, so the gameplay camera sees one authored hairstyle
@@ -1645,7 +1708,7 @@ def build_hair(head, mats, style):
                 (0.044, 0.042, 0.027, 0.006),
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
-                sides=14,
+                sides=18,
             )
     elif style == "coral_ponytail":
         ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.15, 0.13, 0.16), mats["hair"], head, segments=24, rings=14)
@@ -1673,7 +1736,7 @@ def build_hair(head, mats, style):
             (0.13, 0.135, 0.125, 0.112, 0.088, 0.018),
             mats["hair"],
             ponytail,
-            sides=14,
+            sides=18,
         )
         # Layered flyaway locks break the single rubber-hose ponytail into the
         # soft, authored red-hair silhouette visible in the reference.
@@ -1689,7 +1752,7 @@ def build_hair(head, mats, style):
                 (0.052, 0.055, 0.041, 0.007),
                 mats["hair_highlight"] if index == 0 else mats["hair"],
                 ponytail,
-                sides=12,
+                sides=16,
             )
     elif style == "braided_bob":
         for index, x in enumerate((-0.22, -0.11, 0, 0.11, 0.22)):
@@ -1704,7 +1767,7 @@ def build_hair(head, mats, style):
                 (0.052, 0.048, 0.012),
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
-                sides=12,
+                sides=16,
             )
         # Two articulated-looking side braids give the mediator the authored
         # crown-and-bob silhouette from the reference instead of five isolated
@@ -1722,6 +1785,28 @@ def build_hair(head, mats, style):
                     segments=12,
                     rings=8,
                 )
+        # A bob needs a continuous nape silhouette as well as decorative
+        # crown knots. These overlapping rear locks bridge the cap to the neck
+        # and remove the bowl-cut gap exposed by the follow camera.
+        for index, (root_x, tip_x) in enumerate((
+            (-0.18, -0.2),
+            (-0.09, -0.105),
+            (0.0, 0.0),
+            (0.09, 0.105),
+            (0.18, 0.2),
+        )):
+            tapered_lock(
+                f"BobNapeLock_{index + 1}",
+                [
+                    (root_x, 0.13, 0.13 - abs(root_x) * 0.18),
+                    ((root_x + tip_x) * 0.5, 0.2, 0.06 - abs(root_x) * 0.1),
+                    (tip_x, 0.21, -0.055 - abs(tip_x) * 0.08),
+                ],
+                (0.044, 0.04, 0.008),
+                mats["hair_highlight"] if index in (1, 3) else mats["hair"],
+                head,
+                sides=16,
+            )
 
 
 def build_cap(head, mats):
@@ -2286,6 +2371,33 @@ def build_costume(
                 radius=0.009,
                 rotation=(0.03, side * 0.025, side * 0.09),
             )
+        curve_tube(
+            "CardiganNeckRib",
+            [
+                (-0.145, -0.188, 1.25),
+                (-0.078, -0.225, 1.205),
+                (0, -0.235, 1.17),
+                (0.078, -0.225, 1.205),
+                (0.145, -0.188, 1.25),
+            ],
+            0.008,
+            mats["outer"],
+            visual,
+            resolution=2,
+        )
+        for side in (-1, 1):
+            cloth_fold_ribbon(
+                f"CardiganFrontRib_{side}",
+                [
+                    (side * 0.055, -0.235, 1.18),
+                    (side * 0.06, -0.242, 1.02),
+                    (side * 0.068, -0.232, 0.83),
+                ],
+                (0.003, 0.009, 0.003),
+                mats["outer"],
+                visual,
+                depth=0.006,
+            )
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (-0.067, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
         for side, elbow in ((-1, left_elbow), (1, right_elbow)):
@@ -2463,7 +2575,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v43",
+        "sculptContract": "mirrorlife-civic-sculpt-v44",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v1",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2503,13 +2615,14 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v3",
+            "version": "mirrorlife-civic-hand-v4",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
+            "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
         },
         "footwearContract": {
-            "version": "mirrorlife-civic-footwear-v2",
-            "parts": ["Midsole", "HeelCounter", "ToeCapSeam", "AnkleCollarEdge"],
+            "version": "mirrorlife-civic-footwear-v3",
+            "parts": ["Midsole", "HeelCounter", "OuterQuarterPanel", "ToeBumper", "ToeCapSeam", "AnkleCollarEdge"],
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {

@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v43",
+  "sculptContract": "mirrorlife-civic-sculpt-v44",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v1",
     "roles": [
@@ -78,7 +78,7 @@
     ]
   },
   "handContract": {
-    "version": "mirrorlife-civic-hand-v3",
+    "version": "mirrorlife-civic-hand-v4",
     "pivots": [
       "Hand_-1",
       "Hand_1"
@@ -89,13 +89,19 @@
       "notebook-grip",
       "thoughtful",
       "open"
+    ],
+    "surfaceParts": [
+      "PalmLifeLine",
+      "PalmHeartLine"
     ]
   },
   "footwearContract": {
-    "version": "mirrorlife-civic-footwear-v2",
+    "version": "mirrorlife-civic-footwear-v3",
     "parts": [
       "Midsole",
       "HeelCounter",
+      "OuterQuarterPanel",
+      "ToeBumper",
       "ToeCapSeam",
       "AnkleCollarEdge"
     ],
@@ -123,26 +129,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 103,
-      "triangles": 34156
+      "meshes": 107,
+      "triangles": 36372
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 89,
-      "triangles": 32992
+      "meshes": 93,
+      "triangles": 34952
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 110,
-      "triangles": 37904
+      "meshes": 116,
+      "triangles": 40008
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 116,
-      "triangles": 36638
+      "meshes": 127,
+      "triangles": 39230
     }
   }
 }

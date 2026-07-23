@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v43", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v44", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v1", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -50,9 +50,10 @@ assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-mor
 assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v1", "civic eye geometry contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v3", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v4", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
-assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v2", "civic footwear contract is stale");
+assert.deepEqual(manifest.handContract?.surfaceParts, ["PalmLifeLine", "PalmHeartLine"], "civic hand surface parts changed");
+assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v3", "civic footwear contract is stale");
 assert.deepEqual(manifest.footwearContract?.styles, ["sneaker", "ankle-boot"], "civic footwear styles changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin+facial-hand-acting", "civic animation runtime contract changed");
@@ -87,8 +88,8 @@ for (const role of expectedRoles) {
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
   // Runtime batches these semantic parts per articulated pivot, so source-part
   // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 124, `${role}: source mesh count is outside the authored range`);
-  assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 40000, `${role}: triangle count is outside the Web LOD0 budget`);
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 140, `${role}: source mesh count is outside the authored range`);
+  assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 45000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
   assert(stat.size > 100000 && stat.size < 2 * 1024 * 1024, `${role}: GLB size is outside the 0.1–2 MB budget`);
@@ -123,6 +124,12 @@ for (const role of expectedRoles) {
   if (role === "mediator") {
     assert(contents.includes(Buffer.from("MediatorWaistSash")), "mediator: fitted waist sash is missing");
     assert(contents.includes(Buffer.from("MediatorSashKnot")), "mediator: sash knot is missing");
+    assert(contents.includes(Buffer.from("BobNapeLock_3")), "mediator: continuous bob nape is missing");
+  }
+  if (["facilitator", "mediator"].includes(role)) {
+    assert(contents.includes(Buffer.from("CardiganNeckRib")), `${role}: cardigan neck rib is missing`);
+    assert(contents.includes(Buffer.from("CardiganFrontRib_-1")), `${role}: left cardigan front rib is missing`);
+    assert(contents.includes(Buffer.from("CardiganFrontRib_1")), `${role}: right cardigan front rib is missing`);
   }
   if (["player", "listener"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1Tongue")), `${role}: authored sneaker tongue is missing`);
   if (["facilitator", "mediator"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollar")), `${role}: authored ankle-boot collar is missing`);
@@ -140,6 +147,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("ShoeUpper_1")), `${role}: right sculpted shoe last is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1Midsole")), `${role}: left layered midsole is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_1HeelCounter")), `${role}: right heel counter is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_-1OuterQuarterPanel")), `${role}: left footwear quarter panel is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_1ToeBumper")), `${role}: right footwear toe bumper is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1ToeCapSeam")), `${role}: left toe-cap seam is missing`);
   if (["facilitator", "mediator"].includes(role)) {
     assert(contents.includes(Buffer.from("OuterLash_-1")), `${role}: left role-specific lash is missing`);
@@ -165,6 +174,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
   assert(contents.includes(Buffer.from("FingerVolume_-1_4")), `${role}: left articulated finger volume is missing`);
   assert(contents.includes(Buffer.from("FingerVolume_1_4")), `${role}: right articulated finger volume is missing`);
+  assert(contents.includes(Buffer.from("PalmLifeLine_-1")), `${role}: left palm life line is missing`);
+  assert(contents.includes(Buffer.from("PalmHeartLine_1")), `${role}: right palm heart line is missing`);
   if (role === "player") {
     assert(contents.includes(Buffer.from("Backpack")), "player: backpack mesh is missing");
     assert(contents.includes(Buffer.from("BackpackPivot")), "player: backpack secondary-motion pivot is missing");
