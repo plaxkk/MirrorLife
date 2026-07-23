@@ -1507,7 +1507,7 @@ function applyLightingPreset(theme = {}) {
   // that are now present in the civic sculpts. Shift that energy into a warm
   // rim so expressions stay readable but the actors retain dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.52 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.58 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.66 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.24 : 0.26;
   if (keyLight?.shadow) {
@@ -2715,10 +2715,10 @@ function addAmbientSetDressing(theme, colors) {
 }
 
 function addCivicBrassInlay(points, color = "#caa04a") {
-  const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0.048, z)));
+  const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0.035, z)));
   const path = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 20, 0.035, 6, false),
-    createToonMaterial(color, { roughness: 0.32, metalness: 0.64 })
+    new THREE.TubeGeometry(curve, 20, 0.022, 8, false),
+    createToonMaterial(color, { roughness: 0.36, metalness: 0.58, envMapIntensity: 0.72 })
   );
   path.castShadow = false;
   path.receiveShadow = true;
@@ -3971,7 +3971,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.48,
+        opacity: theme.night ? 0.1 : 0.4,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5152,12 +5152,12 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#cecfca" : floorColor, {
-      roughness: theme.zoneId === "public-plaza" ? 0.82 : 0.9,
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#bec1bd" : floorColor, {
+      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
-      bumpScale: theme.zoneId === "public-plaza" ? 0.012 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.38 : 0.48
+      bumpScale: theme.zoneId === "public-plaza" ? 0.016 : 0.026,
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.44 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5794,8 +5794,8 @@ function createCivicFaceDecal(role = "player") {
     // continues to receive real shading and occlusion from the hair volume.
     emissive: new THREE.Color(0xffffff),
     emissiveMap: texture,
-    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.13 : 0.09,
-    roughness: 0.88,
+    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.105 : 0.075,
+    roughness: 0.76,
     metalness: 0,
     // Real alpha blending keeps the six-pixel source feather continuous.
     // alpha-to-coverage turned those partially covered pixels into a visible
@@ -5815,7 +5815,7 @@ function createCivicFaceDecal(role = "player") {
     polygonOffsetUnits: -2,
     side: THREE.FrontSide
   });
-  material.envMapIntensity = 0.34;
+  material.envMapIntensity = 0.31;
   const decal = new THREE.Mesh(geometry, material);
   decal.updateMorphTargets();
   decal.name = "CivicFaceDecal";
@@ -7686,7 +7686,7 @@ function updatePhysicsDebug(physics = {}) {
 function updateCamera(payload = {}) {
   const yaw = Number(payload.yaw || 0);
   const portrait = (lastWidth || window.innerWidth) / Math.max(1, lastHeight || window.innerHeight) < 0.82;
-  const pitch = Math.max(portrait ? 0.49 : 0.42, Math.min(portrait ? 0.77 : 0.66, Number(payload.pitch || 0.58)));
+  const pitch = Math.max(portrait ? 0.49 : 0.42, Math.min(portrait ? 0.77 : 0.66, Number(payload.pitch || 0.5)));
   const playerX = Number(payload.cameraX || 0);
   const playerZ = Number(payload.cameraZ || 0);
   const narrativeX = Number(payload.cameraTargetX || 0);

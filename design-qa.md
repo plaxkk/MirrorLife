@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-23 reference-fidelity v66 editorial-camera, layered-garment and integrated-inlay gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop opening: `tmp/v66-desktop-yaw0.png` (`1600 × 900`, `149 / 267,648`, `48°`, `5.2m` orbit).
+- Mandatory same-canvas evidence: `tmp/reference-vs-v66.png`; source and implementation are normalized to equal `16:9` panels in one comparison image.
+- Mandatory focused cast comparison: `tmp/reference-vs-v66-cast.png`; the source and implementation character groups are inspected at equal panel scale.
+- Full-orbit evidence: `tmp/v66-desktop-yaw90.png` (`150 / 282,540`, `52.41°`) and `tmp/v66-desktop-yaw180.png` (`152 / 281,092`, `52°`).
+- Mobile evidence: `tmp/v66-mobile-390x844.png` (`390 × 844`, `100 / 226,086`, three-character LOD).
+- Physical exploration evidence: `tmp/v66-character-walk.png`; the browser regression walked `5.37m`, completed action/walk/idle transitions and rotated the user camera `65.3°`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / opening retained a management-game pitch] The civic default pitch moves from `0.58` to `0.50`, lowering the authored camera from approximately `2.76m` to `2.652m` while retaining the `5.2m` orbit, `48°` opening lens, weighted player/target pivot, shell collision and user drag. More portal, face and furniture elevation is visible without sacrificing the physical route.
+- [improved / civic choices read as four cramped pills] The wide-screen action rail now occupies a deliberate `720px` editorial deck with four equal choices; the mobile contract remains a compact full-width bottom rail and does not cover the conversation centre.
+- [improved / coats read as opaque white blocks] Sculpt v38 gives facilitator and mediator a coloured dress bodice beneath a narrower open ivory cardigan, plus opening edges and cuffs. The coral facilitator still carries her notebook in authored hand contact, and the mediator keeps a distinct listening silhouette.
+- [improved / hair read as a smooth cap] Five shallow directional hair-flow ridges now break the crown highlight for every role. The facilitator receives a visible ponytail band and layered tail, while the mediator receives side-braid volumes that survive quarter and reverse views.
+- [improved / the previous proportion pass over-thinned the limbs] Arm and leg cross-sections recover restrained illustrated volume while staying inside the authoritative capsule and preserving the `1.72m` scale, continuous skinned deformation and sole contact.
+- [improved / brass floor paths floated like glowing rails] Civic inlays are thinner, lower, rougher and less reflective; terrazzo response receives a slightly stronger mineral bump and darker neutral base. The navigation language remains legible but reads as embedded joinery instead of a raised obstacle.
+- [checked / complete runtime] Four sculpt-v38 GLBs total `7.59 MB`; civic assets, hero props, 26-zone physics, desktop/mobile atomic scene flow, real movement/camera drag, syntax and production build pass inside strict budgets.
+
+### Required fidelity surfaces and findings
+
+- [checked][camera, composition and action hierarchy] The opening reads closer to the source's eye-level editorial frame, with one middle conversation circle, a functional foreground desk/display layer and portal/listening-wall/lounge destinations behind it. The action deck is visually subordinate to the cast and keeps its four working narrative controls.
+- [checked][full-orbit and physical continuity] At `0°`, `90°` and `180°`, the player, social target and a designed room landmark remain readable. The player walks on the metre-space floor, returns to idle and supports a real `65.3°` camera turn without crossing furniture or falling back to a sprite.
+- [checked][responsive performance] Desktop stays at `149–152` calls and `267,648–282,540` triangles; mobile is `100 / 226,086`. No stale background, black block, duplicate room, collider mismatch, runtime exception or camera reset appeared in final evidence.
+- [P1][role-authored character surfaces remain visibly below the source] The focused same-canvas pair still exposes simpler eyelid-to-cheek topology, hair roots, cloth drape, hand-object contact and texture-space detail. Sculpt v38 improves layering and silhouette, but literal parity requires role-specific UV head/garment meshes, cloth corrective shapes and baked skin/hair/fabric maps.
+- [P1][furniture microdetail and indirect transport remain visibly below the source] The room now has coherent functional density and better floor integration, but the reference retains finer joinery, denser paper/glass/ceramic/foliage storytelling, softer multi-bounce penumbrae and richer localized colour bleed.
+- [P2][the curved face carrier remains detectable at extreme quarter angles] The illustrated atlas preserves the existing 2D avatar identity and participates in depth, light and occlusion, but a close side view can still reveal the carrier edge more readily than a fully UV-authored head.
+
+### Gate result
+
+v66 materially improves the authored eye line, action-deck hierarchy, cardigan/dress construction, hair-role silhouettes, limb balance and embedded floor navigation while preserving the complete playable physical room, full orbit, mobile layout and performance budgets. The mandatory same-canvas comparisons still expose actionable P1 gaps in role-authored character topology/UVs, furniture microdetail and source-level indirect-light transport, so literal reference-quality parity is not yet proven.
+
+final result: blocked
+
+Blocker: role-authored character/furniture surfaces and source-level indirect-light transport remain visibly below the reference.
+
 ## 2026-07-23 reference-fidelity v64 editorial-proportion, constructed-upholstery and full-orbit gate
 
 ### Evidence inspected together

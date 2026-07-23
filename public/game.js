@@ -52,7 +52,8 @@ let followedCitizenId = null;
 let followZoomUntil = 0;
 let lastFollowBannerAt = 0;
 let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
-let interiorOrbit = { yaw: 0.18, pitch: 0.58, x: 0, z: 0, lastMoveAt: 0, drag: false, lastX: 0, lastY: 0 };
+const INTERIOR_DEFAULT_PITCH = 0.5;
+let interiorOrbit = { yaw: 0.18, pitch: INTERIOR_DEFAULT_PITCH, x: 0, z: 0, lastMoveAt: 0, drag: false, lastX: 0, lastY: 0 };
 let interiorMoveKeys = new Set();
 let interiorExitRect = null;
 let interiorAnimations = {};
@@ -6061,7 +6062,7 @@ function getInteriorLayout(W, H) {
   const doorW = 66;
   const doorH = 92;
   const yaw = Number(interiorOrbit?.yaw || 0);
-  const pitch = Number(interiorOrbit?.pitch || 0.58);
+  const pitch = Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH);
   return {
     wallTop, floorTop, floorBottom, left, right,
     centerX: W / 2,
@@ -6407,7 +6408,7 @@ function interiorAngleDelta(angle, yaw) {
 
 function projectInteriorPanoramaPoint(W, H, angle, distance = 0.66, height = 0) {
   const yaw = Number(interiorOrbit?.yaw || 0);
-  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const pitch = clamp(Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH), 0.36, 0.76);
   const delta = interiorAngleDelta(angle, yaw);
   const halfFov = INTERIOR_PANORAMA_FOV / 2;
   const visible = Math.abs(delta) <= halfFov * 1.08;
@@ -6847,7 +6848,7 @@ function startQuietPresenceRitual() {
   focus();
   window.setTimeout(focus, 140);
   ritual.lastYaw = Number(interiorOrbit.yaw || 0);
-  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPitch = Number(interiorOrbit.pitch || INTERIOR_DEFAULT_PITCH);
   ritual.lastPlayerX = Number(interiorOrbit.x || 0);
   ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
   if (!alreadyActive) {
@@ -6951,7 +6952,7 @@ function updateQuietPresenceRitual(now) {
   const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
   const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
   const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)))
-    + Math.abs(Number(interiorOrbit.pitch || 0.58) - Number(ritual.lastPitch || 0.58)) * 0.75;
+    + Math.abs(Number(interiorOrbit.pitch || INTERIOR_DEFAULT_PITCH) - Number(ritual.lastPitch || INTERIOR_DEFAULT_PITCH)) * 0.75;
   const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX || playerX), playerZ - Number(ritual.lastPlayerZ || playerZ));
   const aligned = gazeDelta <= QUIET_PRESENCE_GAZE_TOLERANCE;
   const respectfulDistance = distance >= QUIET_PRESENCE_MIN_DISTANCE && distance <= QUIET_PRESENCE_MAX_DISTANCE;
@@ -6969,7 +6970,7 @@ function updateQuietPresenceRitual(now) {
   }
   ritual.lastUpdatedAt = now;
   ritual.lastYaw = Number(interiorOrbit.yaw || 0);
-  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPitch = Number(interiorOrbit.pitch || INTERIOR_DEFAULT_PITCH);
   ritual.lastPlayerX = playerX;
   ritual.lastPlayerZ = playerZ;
   ritual.gazeDelta = gazeDelta;
@@ -12219,7 +12220,7 @@ function exploreInteriorHotspot(propIndex) {
 }
 
 function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
-  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const pitch = clamp(Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH), 0.36, 0.76);
   const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
   const ceiling = ctx.createLinearGradient(0, 0, 0, horizon);
   ceiling.addColorStop(0, isNight ? "#111827" : "#dff3f6");
@@ -13572,7 +13573,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     width: W,
     height: H,
     yaw: Number(interiorOrbit?.yaw || 0),
-    pitch: Number(interiorOrbit?.pitch || 0.58),
+    pitch: Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
     cameraX: Number(interiorOrbit?.x || 0),
     cameraZ: Number(interiorOrbit?.z || 0),
     cameraTargetX: cameraFocus.x,
@@ -13989,7 +13990,7 @@ function enterInteriorView(zone, source = "manual") {
       until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
   };
-  interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
+  interiorOrbit = { yaw: 0, pitch: INTERIOR_DEFAULT_PITCH, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
   interiorPhysicsWorld = null;
   disposeInteriorRapierRuntime();
   const physicsWorld = ensureInteriorPhysicsWorld(blueprint);

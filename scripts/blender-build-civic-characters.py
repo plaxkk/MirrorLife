@@ -1407,6 +1407,31 @@ def build_hair(head, mats, style):
         vertex.co.x += x / radial * lobe
         vertex.co.y += y / radial * lobe * 0.72
         vertex.co.z += max(0.0, math.cos(angle * 3 - style_phase)) * crown * 0.009
+    # Fine, low-relief flow ridges make the cap read as grouped hair rather
+    # than a single glossy helmet. They follow the same head pivot and are
+    # batched with the cap at runtime, so the richer orbit silhouette does not
+    # add live draw calls.
+    flow_specs = (
+        (-0.15, -0.12),
+        (-0.075, -0.055),
+        (0.0, 0.012),
+        (0.075, 0.08),
+        (0.15, 0.145),
+    )
+    for index, (front_x, rear_x) in enumerate(flow_specs):
+        curve_tube(
+            f"HairFlowRidge_{index + 1}",
+            [
+                (front_x, -0.184, 0.185 - abs(front_x) * 0.08),
+                ((front_x * 2 + rear_x) / 3, -0.105, 0.255 - abs(front_x) * 0.03),
+                ((front_x + rear_x * 2) / 3, 0.025, 0.292 - abs(rear_x) * 0.045),
+                (rear_x, 0.15, 0.185 - abs(rear_x) * 0.08),
+            ],
+            0.0038,
+            mats["hair_highlight"],
+            head,
+            resolution=2,
+        )
     # Six overlapping, wider locks replace the comb-like row of eight narrow
     # points. The silhouette reads as deliberately grouped hair at the story
     # camera while retaining complete side/back volume.
@@ -1493,6 +1518,16 @@ def build_hair(head, mats, style):
     elif style == "coral_ponytail":
         ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.15, 0.13, 0.16), mats["hair"], head, segments=24, rings=14)
         ponytail = empty("PonytailPivot", head, (0.2, 0.12, 0.15))
+        torus(
+            "PonytailBand",
+            0.116,
+            0.014,
+            (0.01, 0.0, -0.018),
+            mats["accent"],
+            ponytail,
+            rotation=(math.pi / 2, 0, 0),
+            major_segments=28,
+        )
         tapered_lock(
             "Ponytail_Main",
             [
@@ -1539,6 +1574,22 @@ def build_hair(head, mats, style):
                 head,
                 sides=12,
             )
+        # Two articulated-looking side braids give the mediator the authored
+        # crown-and-bob silhouette from the reference instead of five isolated
+        # crown knots. The overlapping beads remain static within the head
+        # pivot and therefore stay stable through every camera orbit.
+        for side in (-1, 1):
+            for bead_index, (z, scale) in enumerate(((0.105, 1.0), (0.035, 0.92), (-0.035, 0.82))):
+                ellipsoid(
+                    f"SideBraidBead_{side}_{bead_index + 1}",
+                    (side * (0.225 + bead_index * 0.004), 0.014, z),
+                    (0.048 * scale, 0.042 * scale, 0.052 * scale),
+                    mats["hair_highlight"] if bead_index == 1 else mats["hair"],
+                    head,
+                    rotation=(0.08, side * 0.05, side * 0.18),
+                    segments=12,
+                    rings=8,
+                )
 
 
 def build_cap(head, mats):
@@ -1611,15 +1662,15 @@ def build_body(role, config, mats, visual):
         "SkinnedArmVolume",
         (-0.205, 0.205),
         (
-            (1.23, 0.067, 0.062, 0.002),
-            (1.175, 0.072, 0.067, 0.003),
-            (1.09, 0.069, 0.064, 0.004),
-            (1.015, 0.062, 0.058, 0.003),
-            (0.975, 0.057, 0.053, 0),
-            (0.93, 0.058, 0.054, -0.002),
-            (0.845, 0.055, 0.051, -0.004),
-            (0.76, 0.052, 0.048, -0.004),
-            (0.675, 0.046, 0.042, -0.002),
+            (1.23, 0.071, 0.066, 0.002),
+            (1.175, 0.076, 0.071, 0.003),
+            (1.09, 0.073, 0.068, 0.004),
+            (1.015, 0.066, 0.062, 0.003),
+            (0.975, 0.061, 0.057, 0),
+            (0.93, 0.062, 0.058, -0.002),
+            (0.845, 0.059, 0.055, -0.004),
+            (0.76, 0.056, 0.052, -0.004),
+            (0.675, 0.05, 0.046, -0.002),
         ),
         0.975,
         sleeve_mat,
@@ -1631,15 +1682,15 @@ def build_body(role, config, mats, visual):
         "SkinnedLegVolume",
         (-0.115, 0.115),
         (
-            (0.78, 0.094, 0.088, 0.002),
-            (0.695, 0.097, 0.091, 0.004),
-            (0.59, 0.09, 0.084, 0.006),
-            (0.505, 0.078, 0.073, 0.003),
-            (0.46, 0.071, 0.066, 0),
-            (0.415, 0.073, 0.069, -0.002),
-            (0.335, 0.078, 0.073, -0.005),
-            (0.245, 0.073, 0.068, -0.005),
-            (0.135, 0.057, 0.053, -0.002),
+            (0.78, 0.101, 0.095, 0.002),
+            (0.695, 0.104, 0.098, 0.004),
+            (0.59, 0.097, 0.091, 0.006),
+            (0.505, 0.084, 0.079, 0.003),
+            (0.46, 0.077, 0.072, 0),
+            (0.415, 0.079, 0.075, -0.002),
+            (0.335, 0.084, 0.079, -0.005),
+            (0.245, 0.079, 0.074, -0.005),
+            (0.135, 0.062, 0.058, -0.002),
         ),
         0.46,
         mats["lower"],
@@ -1919,35 +1970,34 @@ def build_costume(
                 skirt_pivot,
                 depth=0.008,
             )
-        if costume == "mediator":
-            # The reference mediator wears an unmistakable green dress under
-            # a warm ivory coat. A separate fitted bodice restores that
-            # readable two-layer silhouette instead of leaving one white
-            # tubular torso from neck to skirt.
-            tailored_panel(
-                "MediatorDressBodice",
-                0.3,
-                0.235,
-                0.272,
-                0.39,
-                0.058,
-                (0, -0.182, 1.04),
-                mats["lower"],
-                visual,
-                radius=0.012,
-            )
+        # Both civic women wear a coloured dress under an open warm-ivory
+        # cardigan in the reference. Keeping the fitted bodice visible through
+        # a real centre opening removes the former white rectangular torso and
+        # gives the coat, dress and waist three readable depth layers.
+        tailored_panel(
+            "CivicDressBodice",
+            0.29,
+            0.225,
+            0.265,
+            0.39,
+            0.056,
+            (0, -0.182, 1.04),
+            mats["lower"],
+            visual,
+            radius=0.012,
+        )
         for side in (-1, 1):
             tailored_panel(
                 f"CoatPanel_{side}",
                 # The reference coat is fitted through the waist and releases
                 # over the skirt.  A near-rectangular panel made the civic
                 # women read as boxy toys from the three-quarter story camera.
-                0.185,
-                0.132,
-                0.205,
+                0.158,
+                0.112,
+                0.176,
                 0.48,
                 0.048,
-                (side * 0.088, -0.172, 1.025),
+                (side * 0.105, -0.172, 1.025),
                 mats["outer"],
                 visual,
                 radius=0.012,
@@ -1998,6 +2048,18 @@ def build_costume(
                 visual,
                 depth=0.007,
             )
+            curve_tube(
+                f"CoatOpeningEdge_{side}",
+                [
+                    (side * 0.037, -0.229, 1.245),
+                    (side * 0.042, -0.235, 1.055),
+                    (side * 0.052, -0.228, 0.81),
+                ],
+                0.005,
+                mats["accent"],
+                visual,
+                resolution=2,
+            )
             rounded_box(
                 f"CoatPocketWelt_{side}",
                 (0.13, 0.026, 0.046),
@@ -2009,6 +2071,17 @@ def build_costume(
             )
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (0, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
+        for side, elbow in ((-1, left_elbow), (1, right_elbow)):
+            cylinder(
+                f"CoatCuff_{side}",
+                0.056,
+                0.052,
+                0.055,
+                (0, -0.001, -0.282),
+                mats["accent"],
+                elbow,
+                vertices=18,
+            )
         if costume == "facilitator":
             # Seat the story notebook inside the authored palm volume. The old
             # centre was 12 cm from the hand and read as a floating prop in the
@@ -2142,7 +2215,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v37",
+        "sculptContract": "mirrorlife-civic-sculpt-v38",
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
             "runtime": "shared-controller-pivots+continuous-limb-skin",

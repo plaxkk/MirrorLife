@@ -159,6 +159,18 @@ body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicAction
 #interiorCinematicActions button:active { transform: translateY(1px); }
 #interiorCinematicActions button.primary { background: #ee775f; color: #fff; }
 
+/* Match the civic room's editorial reference: on wide canvases the four
+   choices read as one deliberate action deck instead of four cramped pills. */
+@media (min-width: 1024px) {
+  body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions {
+    width: min(720px, calc(100vw - 520px));
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
 /* Final mobile contract for the civic room. This block intentionally lives
    after the general interior rules so the scene never inherits the desktop
    HUD widths or pushes the WebGL viewport sideways. */
