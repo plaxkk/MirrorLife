@@ -2071,6 +2071,26 @@ def build_body(role, config, mats, visual):
         sides=24,
     )
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
+        sleeve_compression = empty(f"SleeveCompressionPivot_{side}", elbow)
+        sleeve_compression["corrective_contract"] = "mirrorlife-civic-cloth-correctives-v1"
+        # This lower-bone corrective occupies the elbow's collapsing volume.
+        # It is mostly hidden inside the continuous skin while straight, then
+        # the runtime broadens it with bend angle so linear skinning cannot
+        # pinch the sleeve into a narrow drinking straw.
+        organic_limb(
+            f"ElbowCorrectiveVolume_{side}",
+            0.15,
+            (
+                (0.5, 0.061 * arm_width, 0.057 * arm_depth, 0, 0.002),
+                (0.18, 0.071 * arm_width, 0.068 * arm_depth, -side * 0.0015, -0.004),
+                (-0.18, 0.071 * arm_width, 0.068 * arm_depth, side * 0.0015, -0.004),
+                (-0.5, 0.06 * arm_width, 0.056 * arm_depth, 0, 0.001),
+            ),
+            (0, 0, 0),
+            sleeve_mat,
+            sleeve_compression,
+            sides=14,
+        )
         if config["costume"] == "traveler":
             # A separately surfaced forearm remains parented to the elbow, so
             # it follows the real walk/listen/gesture rig rather than becoming
@@ -2101,7 +2121,7 @@ def build_body(role, config, mats, visual):
                 elbow,
                 vertices=20,
             )
-        if config["costume"] in ("traveler", "facilitator", "mediator"):
+        if config["costume"] in ("traveler", "listener", "facilitator", "mediator"):
             # Two shallow diagonal compression ridges follow the bending
             # elbow. They catch the warm key as cloth folds and disappear at
             # both ends, avoiding the hard plastic sleeve read of a plain
@@ -2115,7 +2135,7 @@ def build_body(role, config, mats, visual):
                 ],
                 (0.002, 0.009, 0.002),
                 sleeve_mat,
-                elbow,
+                sleeve_compression,
                 depth=0.007,
             )
             cloth_fold_ribbon(
@@ -2127,7 +2147,7 @@ def build_body(role, config, mats, visual):
                 ],
                 (0.002, 0.007, 0.002),
                 sleeve_mat,
-                elbow,
+                sleeve_compression,
                 depth=0.006,
             )
         cylinder(
@@ -2169,6 +2189,22 @@ def build_body(role, config, mats, visual):
         )
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
+        trouser_compression = empty(f"TrouserCompressionPivot_{side}", knee)
+        trouser_compression["corrective_contract"] = "mirrorlife-civic-cloth-correctives-v1"
+        organic_limb(
+            f"KneeCorrectiveVolume_{side}",
+            0.17,
+            (
+                (0.5, 0.076 * leg_width, 0.071 * leg_depth, 0, 0.001),
+                (0.17, 0.088 * leg_width, 0.084 * leg_depth, -side * 0.001, -0.005),
+                (-0.17, 0.088 * leg_width, 0.084 * leg_depth, side * 0.001, -0.005),
+                (-0.5, 0.073 * leg_width, 0.068 * leg_depth, 0, 0.001),
+            ),
+            (0, 0, 0),
+            mats["lower"],
+            trouser_compression,
+            sides=16,
+        )
         # Two shallow same-material ribbons catch the warm key light like cloth
         # tension instead of reading as cords glued onto the trousers.
         for fold_index, fold_x in enumerate((-0.035, 0.035)):
@@ -2177,7 +2213,7 @@ def build_body(role, config, mats, visual):
                 [(fold_x, -0.078, -0.035), (fold_x * 0.55, -0.086, -0.155), (fold_x * 0.8, -0.078, -0.265)],
                 (0.002, 0.008, 0.002),
                 mats["lower"],
-                knee,
+                trouser_compression,
                 depth=0.006,
             )
         cylinder(
@@ -2733,7 +2769,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v55",
+        "sculptContract": "mirrorlife-civic-sculpt-v56",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2754,6 +2790,17 @@ def main():
                 "SkinRightKnee",
             ],
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
+        },
+        "clothCorrectiveContract": {
+            "version": "mirrorlife-civic-cloth-correctives-v1",
+            "runtime": "bend-angle-driven-volume+compression-folds",
+            "pivots": [
+                "SleeveCompressionPivot_-1",
+                "SleeveCompressionPivot_1",
+                "TrouserCompressionPivot_-1",
+                "TrouserCompressionPivot_1",
+            ],
+            "volumes": ["ElbowCorrectiveVolume", "KneeCorrectiveVolume"],
         },
         "faceDecal": {
             "contract": "mirrorlife-civic-face-decal-v1",

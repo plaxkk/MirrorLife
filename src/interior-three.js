@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v55";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v56";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -7452,6 +7452,24 @@ function applyCivicAnimationPose(entry, animationPose) {
     // controller pose over the skin bone in local space.
     state.node.quaternion.copy(state.restQuaternion).multiply(state.deltaQuaternion);
   });
+  Object.values(entry.clothCorrectives || {}).forEach((state) => {
+    const rotation = animationPose[state.joint];
+    if (!state?.node || !rotation) return;
+    const bend = THREE.MathUtils.clamp(Math.abs(Number(rotation[0] || 0)) / state.fullBend, 0, 1);
+    const eased = bend * bend * (3 - 2 * bend);
+    state.node.visible = eased > state.activationThreshold;
+    // Linear blend skinning loses circumference at a sharp elbow or knee.
+    // Expand the hidden joint carrier across the bend, compress it slightly
+    // along the limb and push the folds toward the outside of the crease.
+    state.node.scale.set(
+      state.restScale.x * (1 + state.widthGain * eased),
+      state.restScale.y * (1 + state.depthGain * eased),
+      state.restScale.z * (1 - state.lengthCompression * eased)
+    );
+    state.node.position.copy(state.restPosition);
+    state.node.position.y -= state.outsideShift * eased;
+    state.bend = eased;
+  });
 }
 
 function createCivicActorObject(actor, asset) {
@@ -7487,10 +7505,14 @@ function createCivicActorObject(actor, asset) {
   const rightElbow = rightArm?.getObjectByName("RightElbowPivot");
   const leftHand = leftElbow?.getObjectByName("Hand_-1") || null;
   const rightHand = rightElbow?.getObjectByName("Hand_1") || null;
+  const leftSleeveCompression = leftElbow?.getObjectByName("SleeveCompressionPivot_-1") || null;
+  const rightSleeveCompression = rightElbow?.getObjectByName("SleeveCompressionPivot_1") || null;
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
   const rightLeg = visual?.getObjectByName("RightLegPivot");
   const leftKnee = leftLeg?.getObjectByName("LeftKneePivot");
   const rightKnee = rightLeg?.getObjectByName("RightKneePivot");
+  const leftTrouserCompression = leftKnee?.getObjectByName("TrouserCompressionPivot_-1") || null;
+  const rightTrouserCompression = rightKnee?.getObjectByName("TrouserCompressionPivot_1") || null;
   let eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
   let browPivots = [headGroup?.getObjectByName("BrowPivot_-1"), headGroup?.getObjectByName("BrowPivot_1")].filter(Boolean);
   let mouthPivot = headGroup?.getObjectByName("MouthPivot");
@@ -7632,6 +7654,10 @@ function createCivicActorObject(actor, asset) {
       "EyeGlint_",
       "OuterLash_",
       "HairRibbon_",
+      "ElbowCorrectiveVolume_",
+      "KneeCorrectiveVolume_",
+      "SleeveCompression_",
+      "TrouserFold_",
       "CoatButton_",
       "Thumb_"
     ];
@@ -7769,12 +7795,35 @@ function createCivicActorObject(actor, asset) {
   mergeActorVertexColorMeshes(rightArm, [rightElbow], { roughness: 0.67, envMapIntensity: 0.72 });
   mergeActorVertexColorMeshes(leftLeg, [leftKnee], { roughness: 0.67, envMapIntensity: 0.72 });
   mergeActorVertexColorMeshes(rightLeg, [rightKnee], { roughness: 0.67, envMapIntensity: 0.72 });
-  mergeActorVertexColorMeshes(leftElbow, fullExpressionLod ? [leftHand] : [], { roughness: 0.67, envMapIntensity: 0.72 });
-  mergeActorVertexColorMeshes(rightElbow, fullExpressionLod ? [rightHand] : [], { roughness: 0.67, envMapIntensity: 0.72 });
-  [leftKnee, rightKnee].forEach((limb) => {
-    mergeActorVertexColorMeshes(limb, [], { roughness: 0.67, envMapIntensity: 0.72 });
-  });
+  mergeActorVertexColorMeshes(
+    leftElbow,
+    fullExpressionLod ? [leftHand, leftSleeveCompression].filter(Boolean) : [],
+    { roughness: 0.67, envMapIntensity: 0.72 }
+  );
+  mergeActorVertexColorMeshes(
+    rightElbow,
+    fullExpressionLod ? [rightHand, rightSleeveCompression].filter(Boolean) : [],
+    { roughness: 0.67, envMapIntensity: 0.72 }
+  );
+  mergeActorVertexColorMeshes(
+    leftKnee,
+    fullExpressionLod ? [leftTrouserCompression].filter(Boolean) : [],
+    { roughness: 0.67, envMapIntensity: 0.72 }
+  );
+  mergeActorVertexColorMeshes(
+    rightKnee,
+    fullExpressionLod ? [rightTrouserCompression].filter(Boolean) : [],
+    { roughness: 0.67, envMapIntensity: 0.72 }
+  );
   if (fullExpressionLod) {
+    [
+      leftSleeveCompression,
+      rightSleeveCompression,
+      leftTrouserCompression,
+      rightTrouserCompression
+    ].filter(Boolean).forEach((corrective) => {
+      mergeActorVertexColorMeshes(corrective, [], { roughness: 0.76, envMapIntensity: 0.58 });
+    });
     mergeActorVertexColorMeshes(leftHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
     mergeActorVertexColorMeshes(rightHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
   }
@@ -7802,6 +7851,37 @@ function createCivicActorObject(actor, asset) {
   if (skirtPivot?.parent) {
     secondaryMotion.skirt = createCivicSecondaryMotionState("skirt", skirtPivot);
   }
+  const correctiveDefinitions = fullExpressionLod ? {
+    leftSleeve: [leftSleeveCompression, "leftElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
+    rightSleeve: [rightSleeveCompression, "rightElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
+    leftTrouser: [leftTrouserCompression, "leftKnee", 0.82, 0.1, 0.16, 0.045, 0.009],
+    rightTrouser: [rightTrouserCompression, "rightKnee", 0.82, 0.1, 0.16, 0.045, 0.009]
+  } : {};
+  const clothCorrectives = Object.fromEntries(Object.entries(correctiveDefinitions)
+    .filter(([, definition]) => definition[0]?.parent)
+    .map(([key, [node, joint, fullBend, widthGain, depthGain, lengthCompression, outsideShift]]) => [
+      key,
+      {
+        node,
+        joint,
+        fullBend,
+        widthGain,
+        depthGain,
+        lengthCompression,
+        outsideShift,
+        restScale: node.scale.clone(),
+        restPosition: node.position.clone(),
+        activationThreshold: joint.includes("Knee") ? 0.12 : 0.035,
+        bend: 0
+      }
+    ]));
+  Object.values(clothCorrectives).forEach((state) => {
+    // The carrier only exists to restore volume while a joint is bending.
+    // Keeping every carrier visible at rest spent sixteen additional draw
+    // calls across the four-person cast on geometry fully hidden inside the
+    // limb. Activate it only once the authored pose needs the correction.
+    state.node.visible = false;
+  });
   actorRoot.add(group);
   const entry = {
     group,
@@ -7832,9 +7912,13 @@ function createCivicActorObject(actor, asset) {
     controllerJoints,
     skinJoints,
     skinnedMeshes,
+    clothCorrectives,
+    clothCorrectiveVersion: Object.keys(clothCorrectives).length
+      ? "mirrorlife-civic-cloth-correctives-v1"
+      : null,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v16`,
+    styleKey: `${frame}:${role}:civic-glb-v17`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7855,7 +7939,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v16` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v17` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8880,6 +8964,14 @@ function getStats() {
         rightArmX: Number((entry.skinJoints?.rightArm?.deltaEuler.x || 0).toFixed(4)),
         leftLegX: Number((entry.skinJoints?.leftLeg?.deltaEuler.x || 0).toFixed(4)),
         rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
+      } : null,
+      clothCorrectives: entry.clothCorrectiveVersion ? {
+        version: entry.clothCorrectiveVersion,
+        count: Object.keys(entry.clothCorrectives || {}).length,
+        bends: Object.fromEntries(Object.entries(entry.clothCorrectives || {}).map(([key, state]) => [
+          key,
+          Number((state.bend || 0).toFixed(4))
+        ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
         version: "mirrorlife-civic-hand-v5",

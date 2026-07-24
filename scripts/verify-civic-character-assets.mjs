@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v55", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v56", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v3", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -39,6 +39,14 @@ assert.deepEqual(manifest.skinContract?.joints, [
   "SkinRightLeg",
   "SkinRightKnee"
 ], "continuous civic skin joint map changed");
+assert.equal(manifest.clothCorrectiveContract?.version, "mirrorlife-civic-cloth-correctives-v1", "civic cloth corrective contract is stale");
+assert.equal(manifest.clothCorrectiveContract?.runtime, "bend-angle-driven-volume+compression-folds", "civic cloth corrective runtime changed");
+assert.deepEqual(manifest.clothCorrectiveContract?.pivots, [
+  "SleeveCompressionPivot_-1",
+  "SleeveCompressionPivot_1",
+  "TrouserCompressionPivot_-1",
+  "TrouserCompressionPivot_1"
+], "civic cloth corrective pivot map changed");
 assert.equal(manifest.faceDecal?.contract, "mirrorlife-civic-face-decal-v1", "civic face decal contract is stale");
 assert.equal(manifest.faceDecal?.path, "civic-face-decals.png", "civic face decal path is invalid");
 assert.equal(manifest.faceDecal?.textureContract, "mirrorlife-civic-face-texture-v2", "civic face texture contract is stale");
@@ -117,6 +125,12 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("EyeGlint_1")), `${role}: right eye catchlight is missing`);
   assert(contents.includes(Buffer.from("HairFlowRidge_3")), `${role}: authored crown hair-flow ridge is missing`);
   assert(contents.includes(Buffer.from("HairRibbon_2")), `${role}: broad authored crown hair ribbon is missing`);
+  assert(contents.includes(Buffer.from("SleeveCompressionPivot_-1")), `${role}: left bend-driven sleeve corrective is missing`);
+  assert(contents.includes(Buffer.from("SleeveCompressionPivot_1")), `${role}: right bend-driven sleeve corrective is missing`);
+  assert(contents.includes(Buffer.from("TrouserCompressionPivot_-1")), `${role}: left bend-driven trouser corrective is missing`);
+  assert(contents.includes(Buffer.from("TrouserCompressionPivot_1")), `${role}: right bend-driven trouser corrective is missing`);
+  assert(contents.includes(Buffer.from("ElbowCorrectiveVolume_-1")), `${role}: left elbow volume preservation mesh is missing`);
+  assert(contents.includes(Buffer.from("KneeCorrectiveVolume_1")), `${role}: right knee volume preservation mesh is missing`);
   assert(contents.includes(Buffer.from("NoseBridge")), `${role}: sculpted nose bridge is missing`);
   assert(contents.includes(Buffer.from("NoseTip")), `${role}: sculpted nose tip is missing`);
   if (role === "facilitator") {

@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v101 bend-driven joint volume and cloth-compression gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v101-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza story state).
+- Mandatory full-view comparison: `tmp/reference-vs-v101-full.png`; source and runtime are adjacent at identical scale. Focused comparisons are `tmp/reference-vs-v101-cast-focus.png` and `tmp/v100-vs-v101-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v101-final-yaw90.png` and `tmp/v101-final-yaw180.png`; the same articulated actors, clothing carriers and room assets remain coherent through the perspective orbit.
+- Responsive evidence: `tmp/v101-final-mobile.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `175 / 284,856`, side `178 / 295,964`, reverse `179 / 302,092`; mobile `100 / 243,464`. The player walked `4.77m`, rotated the real camera `65.3°`, passed all `26` physical layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / sharp bends lost volume at elbows and knees] Sculpt v56 adds four authored compression pivots per character and hidden elbow/knee volume carriers. Runtime derives correction strength from each joint's real bend angle, expands across the crease and compresses along the limb instead of leaving a uniform tube.
+- [improved / clothing stayed equally smooth through every pose] Sleeve and trouser fold groups now live under the corrective pivots. Their width, depth and outside-crease offset respond continuously to walk, idle and listen clips while remaining parented to the actual articulated joint.
+- [fixed / live corrective pivots initially exceeded the desktop draw-call gate] Corrective carriers now become visible only after a meaningful bend. Sub-threshold knee geometry no longer spends draw calls while fully hidden inside the limb; the three settled desktop angles finish at `175–179`, below the `180` hard ceiling.
+- [fixed / phone LOD would have paid for sub-pixel fold geometry] Mobile removes the corrective volumes and micro-fold meshes before batching. It remains `100 / 243,464`, below the `110 / 250k` mobile ceiling.
+- [checked / correction is not a camera-facing visual trick] The volume and compression meshes are exported GLB geometry with side/back continuity, read by the same animation pose that drives the shared skeleton, and remain depth-tested and lit through real movement and orbit.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] No HUD type, hierarchy, wrapping or Chinese copy changed. Desktop and portrait controls remain legible and retain the prior truncation contract.
+- [checked][spacing and layout rhythm] Story-circle staging, foreground desk, middle-ground cast and background portal remain stable. Corrective activation does not shift actor roots, interaction anchors or camera-safe composition.
+- [checked][colors and visual tokens] Corrective meshes inherit the authored garment/skin vertex colours and the same PBR material hierarchy; no new saturation or token drift is introduced.
+- [improved][image quality and asset fidelity] Elbows and sleeves no longer collapse as severely under the notebook, thoughtful-hand and listening poses. The static opening delta is intentionally restrained; the largest improvement appears during walk/run and strong role-authored bends.
+- [checked][copy and content] Location, story-memory title, current action and mobile controls still describe the selected listening scene without placeholder or contradictory text.
+- [P1][production deformation remains below the source] Bend-driven carriers improve volume truth, but the source still has cleaner anatomical topology, painted blend weights, shoulder/hip correctives and cloth wrinkles distributed across complete garments.
+- [P1][facial, hand and hair acting remain below the source] The live cast retains real eyes, morphs, fingers and crown volumes; gaze asymmetry, hand posing, strand density and cheek/lip deformation remain visibly simpler.
+- [P1][offline material and indirect light remain below the source] Runtime maintains physical material separation and a coherent portal key, while the selected image retains richer bounced colour, contact penumbrae and surface microvariation.
+
+### Gate result
+
+v101 closes a real deformation-system gap: every desktop actor now owns bend-angle-driven elbow/knee volume and garment-compression correctives, while mobile keeps the lightweight LOD and every settled orbit stays inside budget. The literal same-size comparison and dynamic physical tests are improved, but the reference remains visibly ahead in production topology/weights, complete cloth authoring, facial/hand acting and offline light transport.
+
+final result: blocked
+
+Blocker: production character retopology and painted weights, shoulder/hip/full-garment corrective shapes, remaining facial/hand/hair authoring, and source-level indirect-light construction remain below the selected reference.
+
 ## 2026-07-25 reference-fidelity v100 facial hierarchy, hair volume and story-camera gate
 
 ### Evidence inspected together
