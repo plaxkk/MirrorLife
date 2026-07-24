@@ -1,5 +1,42 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v97 rectilinear room shell and entry-axis gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v97-yaw0.png` (`1672 × 941`, `166 / 282,984`, renderer pixel ratio `1.2`, `4×` MSAA).
+- Mandatory source/runtime comparison: `tmp/reference-vs-v97-full.png`; the unmodified reference and final runtime frame sit side by side at identical size.
+- Full-orbit evidence: `tmp/v97-orbits.png`, containing settled `0°`, `90°`, `180°` and `270°` frames (`166–170 / 282,984–296,428`).
+- Mobile evidence: `tmp/v97-mobile.png` (`390 × 844`, `100 / 243,280`, renderer pixel ratio `1`, three-character LOD).
+- Physical/runtime evidence: the browser regression moved the same volumetric GLB player `4.77m`, rotated the real perspective camera `65.3°`, passed metre-space physics and desktop/mobile scene flow, and completed `78` transitions across all `26` rooms without failure or runtime exception.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / public room still read as a circular template or fishbowl] The visible cylindrical navigation shell is replaced by a quiet rectilinear plaster envelope. Rapier retains the existing circular movement boundary, but no longer exposes that implementation detail as the room's architecture.
+- [fixed / removing the cylinder initially exposed clear-colour voids at side orbits] A large back-sided square shell now closes every reverse sightline while remaining behind the authored wall panels, entry portal and courtyard parallax. All four orbit directions retain a continuous floor-to-wall composition.
+- [improved / entrance read as a window pasted into a curved room] The open timber portal now sits against a planar architectural field and becomes a real entrance axis. The exterior courtyard remains visible and supplies the same warm daylight direction at `0°`, `90°` and `270°`.
+- [improved / broad plaster surfaces lacked middle-ground depth] Authored wall groups gain restrained recessed plaster bays and a clearer warm-value hierarchy. The bay geometry is merged into the existing orbit-aware wall batch, so the refinement adds no draw call.
+- [improved / wall, floor and furniture collapsed into one beige value] Public plaster shifts warmer while the terrazzo base shifts slightly cooler and darker. The listening rug, oak joinery, teal lounge and brass path retain separate readable material bands.
+- [checked / lower cost than v96] The final opening frame is `166 / 282,984`, side views peak at `170 / 296,428`, and mobile is `100 / 243,280`; all remain below the `180 / 450k` desktop and `110 / 250k` mobile gates.
+
+### Required fidelity surfaces and findings
+
+- [improved][architectural silhouette] The room now reads as a built community interior instead of a decorated circular arena. Straight walls, a planar hero field and the courtyard threshold establish foreground, middle ground and background.
+- [improved][360-degree spatial continuity] No orbit angle reveals the scene background, a missing wall or the former cylindrical shell. The player, social circle and at least one story landmark remain readable in every settled cardinal view.
+- [checked][movement, physics and loading] Visual architecture changed without splitting render and physics sources. The player remains grounded, walks `4.77m`, rotates the perspective camera `65.3°`, and all `26 × 3` atomic transition passes remain green.
+- [P1][room dressing density remains below the source] The entrance and hero wall are coherent, while reverse wall sectors, paper ephemera, foliage layering and custom millwork remain materially less dense than the reference.
+- [P1][character production quality remains below the source] The live cast still lacks production retopology, layered cloth deformation, dense hair grouping and source-level facial acting.
+- [P1][indirect-light transport remains below the source] Portal direction and material separation improve, but the reference retains richer bounce light, contact shadow softness and local colour interaction.
+
+### Gate result
+
+v97 removes the largest room-scale mismatch: the public interior no longer exposes a circular template shell, the portal becomes a credible architectural axis, and every orbit closes cleanly within budget. Literal source parity is still not reached because character deformation, reverse-wall dressing density and offline-quality light transport remain visibly ahead in the reference.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining reverse-wall bespoke dressing and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v96 facial contrast and orbit-light gate
 
 ### Evidence inspected together

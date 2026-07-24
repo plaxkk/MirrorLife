@@ -3897,17 +3897,23 @@ function addCivicArchitecturalShell(colors) {
   // wings leave the left threshold open and retain a complete 360-degree route.
   // These planes sit just inside the physical boundary; players therefore meet
   // the real shell before they could ever cross the visible architecture.
-  const plaster = createToonMaterial("#f2e8dc", {
+  const plaster = createToonMaterial("#eadac8", {
     roughness: 0.94,
     surface: "plaster",
     bumpScale: 0.014,
     envMapIntensity: 0.34
   });
-  const lowerPlaster = createToonMaterial("#e7dccb", {
+  const lowerPlaster = createToonMaterial("#dfcfbc", {
     roughness: 0.9,
     surface: "plaster",
     bumpScale: 0.011,
     envMapIntensity: 0.38
+  });
+  const recessedPlaster = createToonMaterial("#e4d3c1", {
+    roughness: 0.95,
+    surface: "plaster",
+    bumpScale: 0.01,
+    envMapIntensity: 0.32
   });
   const oak = createToonMaterial("#a97148", {
     roughness: 0.64,
@@ -3976,6 +3982,21 @@ function addCivicArchitecturalShell(colors) {
     reveal.position.set(0, 0.84, 0.175);
     reveal.castShadow = false;
     group.add(reveal);
+
+    // A shallow, warm plaster bay gives every orbit a designed architectural
+    // middle ground. It is deliberately quieter than the evidence furniture:
+    // the value step reads as a real recess at game distance without becoming
+    // another competing UI-like frame.
+    const bayWidth = Math.max(3.6, entry.width - 0.62);
+    const bay = new THREE.Mesh(
+      architecturalBox(bayWidth, entry.name === "back" ? 3.08 : 2.86, 0.045, 5, 0.11),
+      recessedPlaster
+    );
+    bay.position.set(0, entry.name === "back" ? 2.62 : 2.5, 0.105);
+    bay.castShadow = false;
+    bay.receiveShadow = true;
+    group.add(bay);
+
     // Each wall must remain an independently hideable orbit surface, but its
     // plaster, dado, base and brass reveal do not need four live draw calls.
     // Collapse the opaque construction into one vertex-surfaced batch before
@@ -5156,52 +5177,23 @@ function addCivicOpenPortal(theme, colors) {
 }
 
 function addCivicPortalWallShell(theme, wallHeight, wallMaterial) {
-  const door = theme.layoutProfile?.shell?.door || { angle: -0.88, width: 2.08, height: 3.02 };
-  const doorAngle = Number(door.angle ?? -0.88);
-  const doorWidth = Math.max(1.18, Number(door.width || 2.08));
-  const doorHeight = Math.max(2.25, Number(door.height || 3.02));
-  const centerTheta = ((Math.PI - doorAngle) % (Math.PI * 2) + Math.PI * 2) % (Math.PI * 2);
-  const halfOpening = Math.min(0.34, doorWidth / (ROOM_RADIUS * 2) + 0.045);
-  const arcRanges = [
-    [0, Math.max(0.02, centerTheta - halfOpening)],
-    [Math.min(Math.PI * 2 - 0.02, centerTheta + halfOpening), Math.PI * 2]
-  ];
-
-  arcRanges.forEach(([start, end], index) => {
-    const length = end - start;
-    if (length <= 0.02) return;
-    const geometry = new THREE.CylinderGeometry(
-      ROOM_RADIUS,
-      ROOM_RADIUS,
-      wallHeight,
-      Math.max(18, Math.ceil(64 * length / (Math.PI * 2))),
-      1,
-      true,
-      start,
-      length
-    );
-    const wallArc = new THREE.Mesh(geometry, wallMaterial);
-    wallArc.name = `civic-architectural-wall-arc-${index + 1}`;
-    wallArc.position.y = wallHeight / 2;
-    wallArc.receiveShadow = true;
-    roomRoot.add(wallArc);
-  });
-
-  // The skipped cylinder wedge forms the true walk-out opening. Fill only the
-  // area above the door so the arch reads as part of a continuous wall rather
-  // than a full-height theatrical slit.
-  const overdoorHeight = Math.max(0.5, wallHeight - doorHeight);
-  const [x, , z] = wallPosition(doorAngle, ROOM_RADIUS - 0.05, doorHeight + overdoorHeight / 2);
-  const overdoor = new THREE.Mesh(
-    new RoundedBoxGeometry(doorWidth + 0.52, overdoorHeight + 0.16, 0.14, 4, 0.08),
+  // The circular boundary remains an invisible navigation constraint, but the
+  // visual fallback shell is a square room. It closes reverse-orbit sightlines
+  // without reintroducing the fishbowl silhouette of the legacy cylinder. The
+  // authored wall panels, joinery and portal remain in front of this quiet
+  // plaster envelope and carry the room's actual identity.
+  const shellSize = ROOM_RADIUS * 2.46;
+  const shell = new THREE.Mesh(
+    new THREE.BoxGeometry(shellSize, wallHeight, shellSize),
     wallMaterial
   );
-  overdoor.name = "civic-portal-overdoor-wall";
-  overdoor.position.set(x, doorHeight + overdoorHeight / 2, z);
-  overdoor.rotation.y = -doorAngle;
-  overdoor.castShadow = false;
-  overdoor.receiveShadow = true;
-  roomRoot.add(overdoor);
+  shell.name = "civic-rectilinear-navigation-shell";
+  shell.position.y = wallHeight / 2;
+  shell.castShadow = false;
+  shell.receiveShadow = true;
+  roomRoot.add(shell);
+
+  void theme;
 }
 
 function addExitPortal(theme, colors) {
@@ -5284,7 +5276,7 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#c9bfb2" : floorColor, {
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#bdb7b0" : floorColor, {
       // A softly honed mineral surface matches the reference better than the
       // former cold grey, high-contrast chip field. The colour map still
       // supplies real terrazzo variation, while reduced bump and stronger
@@ -5313,7 +5305,7 @@ function rebuildRoom(theme = {}) {
   }
 
   const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
-  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#f0dfcd" : wallColor, {
+  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#ead7c3" : wallColor, {
     side: THREE.BackSide,
     roughness: 0.94,
     surface: "plaster",
