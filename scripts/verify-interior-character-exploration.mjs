@@ -129,6 +129,35 @@ try {
   const facilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
   const stagedPlayer = opening.actors.find((actor) => actor.assetRole === "player");
   assert(stagedPlayer, "player actor diagnostics are missing");
+  await page.waitForFunction((actorId) => {
+    const beacon = document.querySelector("#interiorSpeakerBeacon");
+    return beacon?.classList.contains("visible")
+      && beacon.dataset.actorId === actorId
+      && [...beacon.querySelectorAll("img")].every((image) => image.complete && image.naturalWidth > 0);
+  }, { polling: 50, timeout: 2500 }, mediator?.id);
+  const openingBeacon = await page.$eval("#interiorSpeakerBeacon", (beacon) => ({
+    actorId: beacon.dataset.actorId,
+    left: Number.parseFloat(beacon.style.left),
+    top: Number.parseFloat(beacon.style.top),
+    ariaLabel: beacon.getAttribute("aria-label"),
+    imageCount: beacon.querySelectorAll("img").length
+  }));
+  assert.equal(openingBeacon.actorId, mediator?.id, "opening listening beacon did not follow the mediator");
+  assert.equal(openingBeacon.ariaLabel, "当前发言者", "listening beacon lost its accessible speaker label");
+  assert.equal(openingBeacon.imageCount, 2, "listening beacon did not use the two licensed icon assets");
+  const expectedMediatorBeacon = await page.evaluate(({ x, z }) => {
+    return window.MirrorLifeInterior3D?.projectWorldPoints?.([{
+      worldX: x,
+      worldY: 2.1,
+      worldZ: z
+    }], window.innerWidth, window.innerHeight)?.[0] || null;
+  }, { x: Number(mediator?.x || 0), z: Number(mediator?.z || 0) });
+  assert(expectedMediatorBeacon?.visible, "mediator head projection is not visible in the opening composition");
+  assert(
+    Math.abs(openingBeacon.left - Number(expectedMediatorBeacon.x || 0)) <= 2
+      && Math.abs(openingBeacon.top - Number(expectedMediatorBeacon.y || 0)) <= 2,
+    "listening beacon is not anchored to the speaker's projected world position"
+  );
   assert(
     Number(mediator?.x || 0) - Number(stagedPlayer?.x || 0) >= 0.65,
     "rear mediator regressed onto the player's opening sightline"
@@ -289,6 +318,24 @@ try {
   const afterYaw = Number(afterOrbitStats.camera?.yaw || 0);
   assert(angularDistance(afterYaw, beforeYaw) > 0.45, "drag orbit did not rotate the 3D camera");
   assert.equal(await page.$eval("#interiorThreeLayer", (layer) => layer.dataset.sceneReady), "true", "scene became unready after movement/orbit");
+  await page.click('[data-civic-action="guide"]');
+  await page.waitForFunction((actorId) => {
+    const beacon = document.querySelector("#interiorSpeakerBeacon");
+    return beacon?.dataset.actorId === actorId;
+  }, { polling: 50, timeout: 2500 }, facilitator?.id);
+  const guidedBeacon = await page.$eval("#interiorSpeakerBeacon", (beacon) => ({
+    actorId: beacon.dataset.actorId,
+    visible: beacon.classList.contains("visible"),
+    left: Number.parseFloat(beacon.style.left),
+    top: Number.parseFloat(beacon.style.top)
+  }));
+  assert.equal(guidedBeacon.actorId, facilitator?.id, "guide action did not transfer the listening beacon to the facilitator");
+  if (guidedBeacon.visible) {
+    assert(
+      Math.hypot(guidedBeacon.left - openingBeacon.left, guidedBeacon.top - openingBeacon.top) > 20,
+      "speaker beacon did not visibly follow the new world-space speaker"
+    );
+  }
 
   await page.goto(`${BASE_URL}/game.html?qaInterior=public-plaza&qaInteriorScene=1&qaBlink=1`, {
     waitUntil: "domcontentloaded",

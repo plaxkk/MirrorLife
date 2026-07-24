@@ -2820,6 +2820,18 @@ function addCivicListeningConsole(colors) {
   const basket = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.42, 0.46, 5, 0.12), createToonMaterial("#b18459", { roughness: 0.94, surface: "fabric", bumpScale: 0.02 }));
   basket.position.set(0, 0.27, 0);
   group.add(basket);
+  const basketWeave = createToonMaterial("#8f6845", { roughness: 0.98, surface: "fabric", bumpScale: 0.018 });
+  [-0.14, -0.04, 0.06, 0.16].forEach((y) => {
+    const band = new THREE.Mesh(new THREE.BoxGeometry(0.68, 0.018, 0.475), basketWeave);
+    band.position.set(0, 0.27 + y, 0);
+    group.add(band);
+  });
+  [-0.27, -0.16, -0.05, 0.06, 0.17, 0.28].forEach((x, index) => {
+    const rib = new THREE.Mesh(new THREE.BoxGeometry(0.018, 0.36, 0.478), basketWeave);
+    rib.position.set(x, 0.27, 0);
+    rib.rotation.z = (index % 2 ? 1 : -1) * 0.025;
+    group.add(rib);
+  });
   const bookColors = [colors.secondary, ATELIER_TOKENS.butter, ATELIER_TOKENS.apricot, ATELIER_TOKENS.linen];
   bookColors.forEach((color, index) => {
     const book = new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.34 + (index % 2) * 0.08, 0.24, 2, 0.025), createToonMaterial(color, { roughness: 0.82 }));
@@ -2837,6 +2849,37 @@ function addCivicListeningConsole(colors) {
     leaf.rotation.z = (index - 1) * 0.42;
     group.add(leaf);
   });
+  const witnessCard = new THREE.Group();
+  witnessCard.position.set(0.28, 1.04, 0.035);
+  witnessCard.rotation.x = -0.08;
+  witnessCard.rotation.y = -0.05;
+  group.add(witnessCard);
+  const witnessCardFrame = new THREE.Mesh(
+    new THREE.BoxGeometry(0.34, 0.27, 0.035),
+    createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.8, surface: "wood", bumpScale: 0.007 })
+  );
+  witnessCard.add(witnessCardFrame);
+  const witnessCardPaper = new THREE.Mesh(
+    new THREE.BoxGeometry(0.29, 0.22, 0.014),
+    createToonMaterial("#f3ead9", { roughness: 0.96, surface: "paper", bumpScale: 0.004 })
+  );
+  witnessCardPaper.position.z = 0.027;
+  witnessCard.add(witnessCardPaper);
+  [0.055, 0, -0.055].forEach((y, index) => {
+    const line = new THREE.Mesh(
+      new THREE.BoxGeometry(index === 0 ? 0.14 : 0.2, 0.012, 0.008),
+      createToonMaterial(index === 0 ? colors.accent : "#8b806e", { roughness: 0.84 })
+    );
+    line.position.set(index === 0 ? -0.045 : 0, y, 0.039);
+    witnessCard.add(line);
+  });
+  const witnessSeal = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.065, 0.065, 0.018, 20),
+    createToonMaterial(ATELIER_TOKENS.brass, { roughness: 0.34, metalness: 0.7, envMapIntensity: 0.88 })
+  );
+  witnessSeal.rotation.x = Math.PI / 2;
+  witnessSeal.position.set(0.46, 0.91, 0.25);
+  group.add(witnessSeal);
 }
 
 function addCivicRecordDesk(colors, layoutProfile = null) {

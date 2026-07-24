@@ -14036,6 +14036,7 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
   ensureInteriorCinematicActionRail(zone);
+  ensureInteriorSpeakerBeacon(zone);
   // Enter the civic room in medias res: the teal listener is already sharing
   // a testimony, so the first frame communicates a social scene rather than
   // four mannequins waiting for UI input. Player actions can immediately
@@ -14082,6 +14083,7 @@ function exitInteriorView() {
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorCinematicActions")?.remove();
+  document.getElementById("interiorSpeakerBeacon")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
   document.getElementById("interiorDiscoveryCard")?.remove();
   document.getElementById("interiorContextAction")?.remove();
@@ -14173,6 +14175,53 @@ function ensureInteriorMovePad() {
     else showToast("再靠近一点，就能听见这段故事。", "listen");
   });
   document.getElementById("gameShell")?.appendChild(pad);
+}
+
+function ensureInteriorSpeakerBeacon(zone) {
+  document.getElementById("interiorSpeakerBeacon")?.remove();
+  if (zone?.id !== "public-plaza") return null;
+  const beacon = document.createElement("div");
+  beacon.id = "interiorSpeakerBeacon";
+  beacon.setAttribute("role", "img");
+  beacon.setAttribute("aria-label", "当前发言者");
+  beacon.innerHTML = `
+    <img class="speaker-beacon-pin" src="/assets/ui/fa-location-pin-coral.svg" alt="" />
+    <img class="speaker-beacon-icon" src="/assets/ui/fa-ear-listen-white.svg" alt="" />`;
+  document.getElementById("gameShell")?.appendChild(beacon);
+  return beacon;
+}
+
+function syncInteriorSpeakerBeacon(actors = [], W = window.innerWidth, H = window.innerHeight) {
+  const beacon = document.getElementById("interiorSpeakerBeacon");
+  if (!beacon || interiorView?.zone?.id !== "public-plaza") return;
+  const speaker = actors.find((actor) => ["talking", "doing", "interact"].includes(String(actor?.state || "")));
+  if (!speaker || !window.MirrorLifeInterior3D?.projectWorldPoints) {
+    beacon.classList.remove("visible");
+    beacon.removeAttribute("data-actor-id");
+    return;
+  }
+  const actorScale = clamp(Number(speaker.scale || 1), 0.72, 1.38);
+  const projected = window.MirrorLifeInterior3D.projectWorldPoints([{
+    id: speaker.id,
+    worldX: Number(speaker.worldX || 0),
+    worldY: Number(speaker.worldY || 0) + actorScale * (W <= 720 ? 2.02 : 2.1),
+    worldZ: Number(speaker.worldZ || 0)
+  }], W, H)?.[0];
+  const visible = !!projected?.visible
+    && Number(projected.x) > 18
+    && Number(projected.x) < W - 18
+    && Number(projected.y) > 76
+    && Number(projected.y) < H - 84;
+  beacon.dataset.actorId = String(speaker.id || "");
+  if (!visible) {
+    beacon.classList.remove("visible");
+    return;
+  }
+  const scale = clamp(Number(projected.scale || 1) * 1.14, 0.82, 1.08);
+  beacon.style.left = `${Number(projected.x).toFixed(1)}px`;
+  beacon.style.top = `${Number(projected.y).toFixed(1)}px`;
+  beacon.style.setProperty("--speaker-beacon-scale", scale.toFixed(3));
+  beacon.classList.add("visible");
 }
 
 function ensureInteriorCinematicActionRail(zone) {
@@ -14741,6 +14790,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     interiorExitRect = null;
     syncInteriorHotspotLayer([], blueprint);
     syncInteriorContextAction([]);
+    syncInteriorSpeakerBeacon([], W, H);
     syncInteriorJourneyHud(blueprint);
     syncInteriorDiscoveryCard(now);
     drawInteriorLoadingCurtain(ctx, W, H, roomStyle, blueprint, isNight, now);
@@ -14762,6 +14812,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     markRenderActive(360);
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
+  syncInteriorSpeakerBeacon(actorPayload, W, H);
   const socialParallaxPending = zone.id === SOCIAL_PARALLAX_ZONE_ID
     && getSocialParallaxRitual(zone.id)?.status !== "complete"
     && !getInteriorExplorationRecord(zone.id).completed;

@@ -1,0 +1,9 @@
+Font Awesome Free 7.3.1
+Copyright (c) 2026 Fonticons, Inc. (https://fontawesome.com)
+
+The ear-listen and location-pin icon SVG paths in this directory are from
+Font Awesome Free and are licensed under CC BY 4.0:
+https://creativecommons.org/licenses/by/4.0/
+
+Full license:
+https://fontawesome.com/license/free

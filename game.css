@@ -5142,6 +5142,58 @@ body.detail-open .event-log:focus-within {
   pointer-events: none;
 }
 
+#interiorSpeakerBeacon {
+  --speaker-beacon-scale: 1;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 15;
+  width: 68px;
+  height: 84px;
+  transform: translate(-50%, -74%) scale(var(--speaker-beacon-scale));
+  transform-origin: 50% 78%;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 9px 13px rgba(83, 45, 31, .24));
+  transition: opacity 150ms ease, transform 180ms ease;
+  will-change: left, top, transform, opacity;
+}
+
+#interiorSpeakerBeacon.visible {
+  opacity: 1;
+  animation: interior-speaker-beacon-float 2.4s ease-in-out infinite;
+}
+
+#interiorSpeakerBeacon .speaker-beacon-pin,
+#interiorSpeakerBeacon .speaker-beacon-icon {
+  position: absolute;
+  display: block;
+  user-select: none;
+}
+
+#interiorSpeakerBeacon .speaker-beacon-pin {
+  inset: 0;
+  width: 68px;
+  height: 84px;
+}
+
+#interiorSpeakerBeacon .speaker-beacon-icon {
+  left: 21px;
+  top: 13px;
+  width: 29px;
+  height: 29px;
+  object-fit: contain;
+}
+
+@keyframes interior-speaker-beacon-float {
+  0%, 100% {
+    transform: translate(-50%, -74%) scale(var(--speaker-beacon-scale));
+  }
+  50% {
+    transform: translate(-50%, -80%) scale(var(--speaker-beacon-scale));
+  }
+}
+
 .interior-hotspot {
   --hotspot-scale: 1;
   position: absolute;
@@ -6896,6 +6948,23 @@ body.counterfactual-finale-active #interiorDiscoveryCard {
 }
 
 @media (max-width: 720px) {
+  #interiorSpeakerBeacon {
+    width: 56px;
+    height: 69px;
+  }
+
+  #interiorSpeakerBeacon .speaker-beacon-pin {
+    width: 56px;
+    height: 69px;
+  }
+
+  #interiorSpeakerBeacon .speaker-beacon-icon {
+    left: 17px;
+    top: 11px;
+    width: 24px;
+    height: 24px;
+  }
+
   body.interior-active .hud-top {
     top: 8px;
     left: 8px;

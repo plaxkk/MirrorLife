@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v112 world-projected speaker-beacon gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v112-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v112-full.png`; focused cast/performance comparison: `tmp/reference-vs-v112-cast-focus.png`; implementation delta: `tmp/v111-vs-v112-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v112-final-desktop-yaw90.png` and `tmp/v112-final-desktop-yaw180.png`. The speaker beacon remains tied to the mediator's projected head position while the real camera orbits; the room, cast and new listening-console detail remain perspective-correct.
+- Responsive evidence: `tmp/v112-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD with a smaller beacon following the visible notebook facilitator).
+- Runtime evidence: desktop opening `171 / 290,656`, side `174 / 301,764`, reverse `175 / 307,892`; mobile `100 / 249,256`. The player walked `4.13m`, rotated the real camera `65.3°`, retained vertex eyelid closure, and passed the authored speaker-role/icon/projection assertions.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / focal speaker lacked the source's coral listening pin] The room now uses the licensed Font Awesome `location-pin` and `ear-listen` production assets. The coral pin, white ear and shadow reproduce the reference's compact focal language without a handwritten SVG, CSS-drawn ear or text glyph.
+- [fixed / a screen-fixed marker would detach during movement or orbit] Each render resolves the active `talking`, `doing` or `interact` actor, projects a point above that actor's world-space head through the live Three.js camera, scales it by camera distance and hides it outside the safe viewport. The exact projected `left/top` relationship is covered by browser verification.
+- [fixed / the marker needed to communicate the changing conversation] The opening mediator owns the desktop marker; the visible facilitator owns it in the mobile LOD; selecting “引导对话” transfers the beacon's actor binding to the facilitator. The marker is non-interactive and has the accessible label “当前发言者”.
+- [improved / listening console lacked source-like small authored evidence] The console basket gains low-cost weave bands and ribs; the surface gains a framed witness card, paper lines and a brass seal. These details remain within the existing furniture footprint and do not alter collision or circulation.
+- [fixed / first density draft exceeded the phone triangle gate] Decorative basket/card strips moved from repeated rounded-box tessellation to small real box meshes. Final mobile complexity falls to `249,256`, below the `250k` gate, while preserving the visible small-scale construction.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Existing Chinese HUD hierarchy, line height, truncation, action labels and target copy remain stable. The beacon communicates through a real icon asset and an ARIA label rather than adding small floating text.
+- [improved][spacing and layout rhythm] The marker sits above the active head at the source-relative scale, moves with perspective and hides near viewport edges; it does not cover the player's route or persistent controls at desktop or `390 × 844`.
+- [improved][colors and visual tokens] Coral becomes the single active-speaker accent against warm ivory, teal, walnut and brass, matching the source's semantic hierarchy without adding a competing palette.
+- [improved][image quality and asset fidelity] The marker uses two attributable vector assets with crisp desktop/mobile rendering. Characters, room props and new console detail remain real geometry; the marker is intentionally the same world-projected UI/3D hybrid used by the source rather than a fake replacement for scene content.
+- [checked][copy and content] “倾听线索”, “引导对话” and “当前发言者” now describe the visible conversation state coherently.
+- [P1][character topology and acting finesse remain below the source] The selected frame still has finer facial planes, eyelid/lip deformation, finger contact, shoulder compression, cloth folds and individual silhouette polish.
+- [P1][environment density and scale nuance remain below the source] The added witness card and weave improve one high-pixel cluster, but the reference still has substantially denser small documents, shelf contents, botanicals, textiles, curved joinery and object-to-object scale variation.
+- [P1][offline light transport remains ahead] The real-time scene has coherent daylight and contact, while the source retains softer multi-bounce penumbrae, localized sun flecks, richer skin/cloth response and broader highlight roll-off.
+
+### Gate result
+
+v112 closes the explicit focal-language gap: the currently speaking person is now identified by a licensed, source-matched listening beacon that is genuinely attached to the 3D performance and survives desktop, mobile and orbit changes. The furniture detail pass also improves one foreground/background evidence cluster without violating the strict mobile budget. The literal same-size comparison is clearer in narrative focus, but source-level character construction, bespoke set-dressing density and offline light transport remain visibly ahead.
+
+final result: blocked
+
+Blocker: production character topology/acting, room-wide bespoke micro-prop and material density, and offline-quality localized indirect light remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v111 social-performance and contrast gate
 
 ### Evidence inspected together
