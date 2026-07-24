@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v94 authored lounge and single-table spatial-truth gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v94-final-yaw0.png` (`1672 × 941`, `166 / 284,052`, `48°`, `5.6m` opening orbit).
+- Mandatory same-canvas comparison: `tmp/reference-vs-v94-final.png`; the unmodified source and runtime frame sit side by side at identical size. `tmp/reference-vs-v94-lounge-final.png` compares the source and runtime lounge crops together at equal height.
+- Full-orbit evidence: `tmp/v94-final-yaw90.png` (`169 / 295,160`) and `tmp/v94-final-yaw180.png` (`170 / 297,496`).
+- Mobile evidence: `tmp/v94-final-mobile.png` (`390 × 844`, device scale factor `1`, `100 / 244,348`, three-character LOD).
+- Physical exploration evidence: the browser regression moved the same GLB player `2.85m`, exercised authored movement states and rotated the perspective camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / sofa read as two thin chairs instead of the source's substantial lounge] The authored sofa now has a wider oak load-bearing frame, continuous front rail, deeper teal seat/back upholstery, visible edge piping and grounded feet. Its post-normalization silhouette remains close to a credible two-metre sofa even though the same suite contains a tall side bookcase.
+- [improved / textile hierarchy was flat and toy-like] Seat and back cushions now use visibly compressed volumes, inset seams and restrained tufts. The two accent pillows carry different raised pattern grammars, while a folded striped throw breaks the former bilateral procedural symmetry.
+- [fixed / two coffee tables occupied the same conversation bay] The GLB contained one table while `ZoneLayoutProfile` rendered another table with the actual Rapier collider and interaction anchor. The duplicate GLB table and its dressing are removed. The final frame has one readable oval table on one rug, and render, collision and interaction again share one metre-space source of truth.
+- [improved / detail increase threatened the mobile ceiling] Low-value subdivision was removed from arm pads and decorative pillows while keeping their rounded silhouette. The final lounge falls to `120` authored meshes / `19,572` triangles and the three-prop suite to `51,632` triangles; portrait mobile is `244,348`, safely under `250k`.
+- [checked / orbit and movement remained real 3D] The lounge keeps full back/side geometry and stays coherent at `0°`, `90°` and `180°`. The same volumetric character still walks through Rapier space, changes animation state and drives the real orbit camera; no room billboard, sprite or angle-specific replacement was introduced.
+
+### Required fidelity surfaces and findings
+
+- [improved][lounge scale and composition] The right-side conversation bay now has one dominant teal sofa, one oval table, one textile rug and a supporting bookcase. The source remains richer, but the implementation no longer reads as a pile of unrelated miniature props.
+- [improved][visual/physical consistency] Removing the duplicate table eliminates a visible overlap and a contradictory non-colliding obstacle. The remaining table owns the authoritative collider and reachable interaction point.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `166–170 / 284,052–297,496`; portrait mobile remains `100 / 244,348`, below `110` calls / `250k` triangles.
+- [checked][movement and atomic continuity] The player moves `2.85m`, rotates the perspective camera `65.3°`, retains grounded contact and shares authoritative render/physics/interaction transforms. All `26` rooms complete `78` transitions without runtime failures.
+- [P1][lounge construction still remains below the source] The sofa/table family and spacing now align, while source-level upholstery compression, woven textile micro-detail, timber joinery, object wear and foliage density remain absent.
+- [P1][character production quality remains visibly below the source] The live cast still has simplified fingers, cloth deformation, hair strand grouping, facial correctives and footwear construction.
+- [P1][indirect-light transport remains visibly below the source] Portal direction and contact depth remain coherent, but the source still has richer colour bounce, softer local penumbrae and stronger character/environment integration.
+
+### Gate result
+
+v94 fixes the largest furniture-scale mismatch in the lounge and removes a real render/physics duplication while lowering geometry below v93. The literal crop comparison is cleaner and the complete movement, orbit, physics, mobile and atomic-loading contracts pass, but source-level upholstery/material construction, production character deformation and indirect-light transport are not yet reached.
+
+final result: blocked
+
+Blocker: production upholstery/material authoring, character retopology/UV/deformation and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v93 player identity and facial-read gate
 
 ### Evidence inspected together

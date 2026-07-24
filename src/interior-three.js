@@ -975,7 +975,9 @@ function loadModel(type) {
   };
   const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
-    const assetUrl = `${ASSET_BASE}${type}.glb${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
+    const authoredAssetRevision = type === "civic-lounge-suite" ? "hero-v9" : "";
+    const assetRevision = ASSET_REVISION || authoredAssetRevision;
+    const assetUrl = `${ASSET_BASE}${type}.glb${assetRevision ? `?v=${encodeURIComponent(assetRevision)}` : ""}`;
     loader.load(
       assetUrl,
       (gltf) => {

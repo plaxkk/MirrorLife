@@ -9,17 +9,16 @@ const expectations = {
   "civic-notice-console": ["NoticeFrame", "NoticeTitleText", "NoticeConsoleTop", "NoticeDrawer_-1", "NoticeLampShade_1", "NoticeWitnessCup_body", "NoticeBasketCore", "NoticeBasketLiner"],
   "civic-lounge-suite": [
     "LoungeSofaBack",
-    "LoungeCoffeeTop",
+    "LoungeSofaFrontRail",
     "LoungeBookcaseBack",
     "LoungeSeatPiping_1",
-    "LoungeCupHandle",
     "LoungePillowButterBand_1",
     "LoungeThrowFold",
-    "LoungeStoryCard"
+    "LoungeShelfPlant_pot"
   ]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v8");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v9");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 
