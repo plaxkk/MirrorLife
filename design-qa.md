@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v85 side-orbit lightwell and face-path decision gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v85-release-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `160 / 286,660`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v85.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Side-orbit before/after comparison: `tmp/orbit-v79-vs-v85.png`; both `90°` states are rendered as equal `934 × 525` panels on one canvas.
+- Full-orbit evidence: `tmp/v85-release-desktop-yaw90.png` (`164 / 312,660`, actor avoidance `0.32m`) and `tmp/v85-release-desktop-yaw180.png` (`165 / 314,996`, actor avoidance `1.142m`, radial clearance `1.427m`).
+- Mobile evidence: `tmp/v85-release-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 243,976`, three-character LOD).
+- Physical exploration evidence: `tmp/v85-character-walk.png`; the browser regression walked `2.37m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, character exploration, metre-space physics, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [rejected / raster face routes looked superficially detailed but broke volume] The existing illustrated-cornea, UV-hybrid, hybrid-volume and curved-atlas modes were captured at the same `1600 × 900` state (`tmp/v80-illustrated-yaw0.png`, `tmp/v80-uv-yaw0.png`, `tmp/v80-hybrid-yaw0.png`, `tmp/v80-atlas-yaw0.png`). All four introduced eye-position drift, pale carrier seams, mask-like expression or weak quarter-view continuity. Production therefore remains on the genuinely sculpted, lit and morphable volume path rather than trading 3D integrity for a sharper front-only image.
+- [fixed / 90° orbit exposed a broad undecided plaster sector] A glazed civic side lightwell now occupies the far side wall only through the relevant orbit arc. It reuses the real authored courtyard texture and adds a physical oak arch, plaster reveal, mullions, glass, sill and upholstered pads, so the secondary view gains outdoor depth and a functional pause landmark rather than generic wall decoration.
+- [fixed / orbit-only landmark risked polluting the hero and reverse views] The lightwell uses an authored camera reveal arc centred on the `90°` side view. It remains hidden at the `0°` hero composition and `180°` witness composition, preserving the existing story hierarchy while making the intermediate rotation intentional.
+- [fixed / first lightwell pass left no draw-call headroom] Its opaque construction is vertex-surface batched while the real courtyard texture and glass remain independent materials. The final side view falls from the unbatched `179` calls to `164`, with the visual result preserved.
+
+### Required fidelity surfaces and findings
+
+- [improved][360° spatial depth] The quarter orbit now carries near record furniture, middle-ground citizens and a bright exterior background. The former full-height empty plane no longer flattens the room or makes the circular shell obvious.
+- [checked][truthful affordance] The new element reads as a glazed sitting window, not a second exit: mullions, glass and cushions visually block traversal, it adds no false interaction marker, and it does not alter the authoritative navigation or collider profile.
+- [checked][camera-state isolation] `0°` remains `160 / 286,660`; `90°` becomes `164 / 312,660`; `180°` remains inside budget at `165 / 314,996`. The landmark appears only when it provides the far background and never becomes a near-camera obstruction.
+- [checked][movement and mobile continuity] The player still walks in the metre-space physics world and turns the real camera. Mobile retains its `98 / 243,976` LOD and does not pay for the desktop-only side landmark.
+- [P1][character production quality remains visibly below the source] The face-path comparison confirms that a raster shortcut is not sufficient. Source parity still needs production retopology, painted PBR UVs, facial correctives, more natural hair flow, fingers and garment deformation on the actual moving 3D actors.
+- [P1][whole-room construction remains below the source] The side lightwell materially improves one orbit sector, but furniture proportion, transparent thickness, upholstery compression, paper/foliage density, joinery and authored wear remain simpler than the reference.
+- [P1][lighting transport remains below the source] The exterior now supplies stronger side-view depth, but the source still has softer multi-bounce penumbrae, richer skin/cloth colour return and more convincing contact integration.
+
+### Gate result
+
+v85 resolves the most obvious secondary-camera emptiness with a functional, textured and performance-safe architectural landmark while explicitly rejecting four face paths that would compromise real 3D movement and orbit continuity. The room remains fully walkable, animated, orbitable and mobile-safe. Same-canvas evidence still shows production-level gaps in character topology/UV/deformation, complete-room bespoke finish and indirect-light transport.
+
+final result: blocked
+
+Blocker: production character sculpt/retopology/UV/deformation, complete-room hero-asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v79 authored-plaster and friendlier-sculpt gate
 
 ### Evidence inspected together

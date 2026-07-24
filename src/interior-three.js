@@ -2133,12 +2133,21 @@ function addSunlightPatches(night) {
   });
 }
 
-function addAmbientWindowBay(angle, colors, night) {
+function addAmbientWindowBay(angle, colors, night, options = {}) {
   const windowViewTexture = getAtelierWindowViewTexture();
   const [x, y, z] = wallPosition(angle, ROOM_RADIUS - 0.18, 1.82);
   const group = new THREE.Group();
+  group.name = options.name || "ambient-window-bay";
   group.position.set(x, y, z);
   group.rotation.y = -angle;
+  if (options.dynamicWallDecor) {
+    group.userData.dynamicWallDecor = true;
+    group.userData.wallAngle = angle;
+    if (Number.isFinite(options.revealCameraAngle)) {
+      group.userData.revealCameraAngle = Number(options.revealCameraAngle);
+      group.userData.revealCameraArc = Number(options.revealCameraArc || 0.92);
+    }
+  }
   roomRoot.add(group);
 
   const plasterReveal = new THREE.Mesh(
@@ -2263,6 +2272,20 @@ function addAmbientWindowBay(angle, colors, night) {
     daylightWash.target.position.set(0.35, -1.25, 4.2);
     daylightWash.castShadow = false;
     group.add(daylightWash, daylightWash.target);
+  }
+  if (options.batchOpaque) {
+    const batchMaterials = new Set();
+    group.traverse((node) => {
+      if (!node.isMesh || node === glass || node === outdoor) return;
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      materials.filter(Boolean).forEach((material) => batchMaterials.add(material));
+    });
+    mergeActorVertexColorMeshes(group, [glass, outdoor], {
+      roughness: 0.76,
+      envMapIntensity: 0.64,
+      actorShading: false
+    });
+    batchMaterials.forEach((material) => material.dispose?.());
   }
 }
 
@@ -4037,6 +4060,17 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicReverseWitnessWall(colors, mobileLod);
   if (!mobileLod) {
     addCivicResponseAlcove(colors);
+    // The 90° orbit previously ended in a broad undecided plaster sector.
+    // Reuse the same real courtyard asset as a glazed civic lightwell on that
+    // far wall: it supplies depth, daylight and a functional landmark without
+    // pretending to be a walkable door or changing the navigation contract.
+    addAmbientWindowBay(2.42, colors, !!theme.night, {
+      name: "civic-side-lightwell",
+      dynamicWallDecor: true,
+      revealCameraAngle: -Math.PI / 2,
+      revealCameraArc: 1.02,
+      batchOpaque: true
+    });
     addCivicOrbitFrames(colors);
     addCivicDomesticDetails(colors);
   }
@@ -8238,6 +8272,15 @@ function updateDynamicWallDecorVisibility() {
   const cameraAngle = Math.atan2(camera.position.x, -camera.position.z);
   roomRoot.children.forEach((object) => {
     if (!object.userData?.dynamicWallDecor) return;
+    const revealCameraAngle = Number(object.userData.revealCameraAngle);
+    if (Number.isFinite(revealCameraAngle)) {
+      const revealDelta = Math.atan2(
+        Math.sin(revealCameraAngle - cameraAngle),
+        Math.cos(revealCameraAngle - cameraAngle)
+      );
+      object.visible = Math.abs(revealDelta) < Number(object.userData.revealCameraArc || 0.92);
+      return;
+    }
     const wallAngle = Number(object.userData.wallAngle || 0);
     const delta = Math.atan2(Math.sin(wallAngle - cameraAngle), Math.cos(wallAngle - cameraAngle));
     // Only expose decor on the deep far hemisphere. A generous hidden arc is
