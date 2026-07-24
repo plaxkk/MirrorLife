@@ -13,13 +13,18 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v46", "civic character sculpt contract is stale");
-assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v1", "civic body identity contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v47", "civic character sculpt contract is stale");
+assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v2", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
   manifest.bodyIdentityContract?.dimensions,
-  ["torso", "shoulder", "waist", "limb", "head", "garment-silhouette"],
+  ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
   "civic body identity dimensions changed"
+);
+assert.deepEqual(
+  manifest.bodyIdentityContract?.continuityParts,
+  ["SkinnedArmVolume", "TrouserSeat"],
+  "civic body continuity parts changed"
 );
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
@@ -135,6 +140,9 @@ for (const role of expectedRoles) {
   if (["facilitator", "mediator"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollar")), `${role}: authored ankle-boot collar is missing`);
   assert(contents.includes(Buffer.from("SkinnedArmVolume")), `${role}: continuous skinned arm volume is missing`);
   assert(contents.includes(Buffer.from("SkinnedLegVolume")), `${role}: continuous skinned leg volume is missing`);
+  if (["player", "listener"].includes(role)) {
+    assert(contents.includes(Buffer.from("TrouserSeat")), `${role}: trouser pelvis continuity is missing`);
+  }
   assert(contents.includes(Buffer.from("SkinLeftArm")), `${role}: left upper-arm skin joint is missing`);
   assert(contents.includes(Buffer.from("SkinLeftElbow")), `${role}: left elbow skin joint is missing`);
   assert(contents.includes(Buffer.from("SkinRightArm")), `${role}: right upper-arm skin joint is missing`);

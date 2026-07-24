@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v7";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v8";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -274,7 +274,7 @@ const ROLE_OFFSETS = Object.freeze({
       leftArm: v(0.04, 0, 0.035), rightArm: v(-0.035, 0, -0.025),
       leftElbow: v(-0.06), rightElbow: v(0.04),
       leftHand: v(-0.04, 0.02, 0.04), rightHand: v(0.025, -0.015, -0.035),
-      leftLeg: v(0, 0, 0.055), rightLeg: v(0, 0, -0.04), leftKnee: v(0.075)
+      leftLeg: v(0, -0.048, 0.055), rightLeg: v(0, 0.052, -0.04), leftKnee: v(0.075)
     })
   },
   mediator: {
@@ -286,7 +286,7 @@ const ROLE_OFFSETS = Object.freeze({
       leftArm: v(0.18, 0, 0.035), rightArm: v(0.12, 0, -0.12),
       leftElbow: v(0.46), rightElbow: v(-0.82, 0, -0.16),
       leftHand: v(-0.12, 0.08, 0.16), rightHand: v(0.22, -0.18, -0.3),
-      leftLeg: v(0, 0, 0.035), rightLeg: v(0, 0, -0.025), leftKnee: v(0.055)
+      leftLeg: v(0, -0.035, 0.035), rightLeg: v(0, 0.042, -0.025), leftKnee: v(0.055)
     })
   },
   facilitator: {
@@ -298,7 +298,7 @@ const ROLE_OFFSETS = Object.freeze({
       leftArm: v(-0.1, 0, 0.16), rightArm: v(0.025, 0, -0.085),
       leftElbow: v(-0.62, 0, 0.18), rightElbow: v(-0.4, 0, -0.08),
       leftHand: v(-0.12, 0.16, 0.18), rightHand: v(-0.08, -0.14, -0.2),
-      leftLeg: v(0, 0, -0.065), rightLeg: v(0, 0, 0.085), rightKnee: v(0.07)
+      leftLeg: v(0, -0.042, -0.065), rightLeg: v(0, 0.052, 0.085), rightKnee: v(0.07)
     })
   },
   listener: {
@@ -310,7 +310,7 @@ const ROLE_OFFSETS = Object.freeze({
       leftArm: v(0.12, 0, 0.12), rightArm: v(0.14, 0, -0.035),
       leftElbow: v(0.38), rightElbow: v(0.7),
       leftHand: v(-0.1, 0.06, 0.14), rightHand: v(0.08, -0.04, -0.1),
-      leftLeg: v(0, 0, 0.055), rightLeg: v(0, 0, -0.05), leftKnee: v(0.055)
+      leftLeg: v(0, -0.045, 0.055), rightLeg: v(0, 0.055, -0.05), leftKnee: v(0.055)
     })
   }
 });

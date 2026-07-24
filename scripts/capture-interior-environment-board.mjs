@@ -79,11 +79,18 @@ try {
         && getComputedStyle(layer).visibility !== "hidden";
     }, { timeout: READY_TIMEOUT_MS });
     // Give the atomic reveal, camera damping, shadow maps and late material
-    // uploads two settled frames before taking evidence. Fixed sleeps could
-    // otherwise capture the loading shell on a cold asset cache.
-    await page.evaluate(() => new Promise((resolve) => {
-      requestAnimationFrame(() => requestAnimationFrame(resolve));
-    }));
+    // uploads settled frames before taking evidence. Orbit captures also need
+    // to traverse the authored 180–240ms occlusion fade; otherwise the QA
+    // image records the first opaque frame instead of the view players see
+    // after the camera has finished rotating.
+    await page.evaluate((settleDuration) => new Promise((resolve) => {
+      const startedAt = performance.now();
+      const settle = (now) => {
+        if (now - startedAt >= settleDuration) resolve();
+        else requestAnimationFrame(settle);
+      };
+      requestAnimationFrame(settle);
+    }), REVIEW_YAW ? 420 : 32);
     if (SHOW_REVIEW_LABEL) {
       await page.evaluate(({ label, archetype }) => {
         document.getElementById("mirrorlife-environment-review-label")?.remove();

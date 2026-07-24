@@ -7718,7 +7718,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v11`,
+    styleKey: `${frame}:${role}:civic-glb-v12`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7739,7 +7739,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v11` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v12` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8515,11 +8515,14 @@ function updateCameraOcclusion(payload = {}) {
   // Test both the torso and face lines of sight.  The original pair of rays
   // ended around chest height, so a near-wall cove could remain fully opaque
   // while cutting straight across every actor's face in side-orbit views.
-  // Keeping the same two semantic targets at eye height makes the fade match
-  // what the player actually needs to read, without hiding distant set pieces.
+  // Sample lower body, torso and face for both semantic targets so a near
+  // counter cannot hide grounded movement while leaving the head readable.
+  // The distance clamp below still protects unrelated distant set pieces.
   const targets = [
+    new THREE.Vector3(Number(payload.cameraX || 0), 0.45, Number(payload.cameraZ || 0)),
     new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
     new THREE.Vector3(Number(payload.cameraX || 0), 1.68, Number(payload.cameraZ || 0)),
+    new THREE.Vector3(Number(payload.cameraTargetX || 0), 0.45, Number(payload.cameraTargetZ || 0.2)),
     new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2)),
     new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.68, Number(payload.cameraTargetZ || 0.2))
   ];

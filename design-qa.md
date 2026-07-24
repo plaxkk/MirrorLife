@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v89 continuous-shoulder and grounded-pelvis gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v89-final-reference-viewport.png` (`1672 × 941`, `161 / 287,748`, `48°`, `5.6m` opening orbit).
+- Mandatory literal same-canvas comparison: `tmp/reference-vs-v89-final.png`; the unmodified source and final runtime frame sit side by side in one `3344 × 941` comparison image.
+- Full-orbit evidence: `tmp/v89-final-yaw90.png` (`165 / 313,748`, actor avoidance `0.448m`) and `tmp/v89-final-yaw180.png` (`165 / 316,084`, actor avoidance `1.6m`, radial clearance `1.55m`).
+- Mobile evidence: `tmp/v89-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 244,788`, three-character LOD).
+- Physical exploration evidence: `tmp/v89-final-character-walk.png`; the browser regression walked `4.77m`, changed authored movement states and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / arm volumes met the torso as narrow vertical tubes] Sculpt v47 reshapes the top ring of the continuously skinned arm mesh into a broader shoulder transition. The same weighted surface now rolls from torso to sleeve through idle, walk, listen and gesture poses without adding a detached shoulder shell.
+- [improved / trouser roles separated into two peg-like columns] Player and listener gain a restrained pelvis/trouser-seat bridge inside the existing garment silhouette. It closes the artificial daylight gap at the hips while keeping both leg pivots, the authoritative capsule and foot contact unchanged.
+- [improved / neck read as a toy peg] All four roles use a shorter, slimmer neck transition. The visible head-to-torso gap is reduced without changing the `1.72m` world-scale contract or the volumetric face hierarchy.
+- [improved / neutral stance remained mechanically parallel] Animation contract v8 adds role-specific outward leg yaw to idle/listen staging, so the social circle reads as planted weight rather than four parallel columns.
+- [rejected / separate shoulder-cap experiment] The first pass improved roundness but added eight desktop and six mobile draw calls; a higher second pass also produced an unacceptable raised-shoulder silhouette. Both were removed. The released continuous-skin solution restores the original `161 / 98` draw-call levels and is lower in triangles than v88.
+- [improved / orbit QA captured the first opaque frame] Non-zero-yaw captures now settle across the authored occlusion transition before evidence is recorded, and runtime occlusion also samples lower-body sightlines. This makes full-orbit review representative of the view after the real camera completes its movement.
+
+### Required fidelity surfaces and findings
+
+- [improved][character silhouette continuity] Shoulder, neck and pelvis transitions are less segmented in the same-canvas and walking evidence. The changes are real weighted geometry, remain visible from every orbit angle and do not use a billboard or screen-space replacement.
+- [checked][movement and physics truth] The player walks `4.77m`, rotates the real camera `65.3°`, retains foot contact and uses the same capsule, metre scale and interaction anchors. Four GLBs remain below `2 MiB` each and total `7.66 MB`.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `161–165 / 287,748–316,084`; portrait mobile remains `98 / 244,788`, below `110` calls / `250k` triangles.
+- [P1][character production quality remains visibly below the source] Continuous joints remove a distracting construction defect, but the same-canvas comparison still exposes blockier head/torso proportions, simplified hands and footwear, weak cloth folds and less authored material identity.
+- [P1][room asset construction remains visibly below the source] The implementation retains the same story families and walkable composition, while the source still has subtler joinery, curved furniture profiles, richer paper/foliage density, more convincing glass and less procedural edge language.
+- [P1][lighting transport remains visibly below the source] Directional portal light and contact depth are coherent, but the source still has softer multi-bounce penumbrae, richer colour return and more unified skin/cloth/floor integration.
+
+### Gate result
+
+v89 removes three visibly mechanical body transitions without increasing draw calls, preserves the complete real-time movement/orbit/physics stack and stays inside stricter mobile budgets. The literal same-canvas comparison is cleaner at the shoulder and pelvis, but it still does not reach source-level character topology/materials, complete-room bespoke construction or indirect-light transport.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v88 inertial-character and wider-story-camera gate
 
 ### Evidence inspected together

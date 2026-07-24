@@ -1880,7 +1880,11 @@ def build_body(role, config, mats, visual):
             visual,
             depth=depth,
         )
-    cylinder("Neck", 0.078, 0.074, 0.12, (0, 0, 1.39), mats["skin"], visual, vertices=20)
+    # Keep the neck subordinate to the face and collar. The previous 15 cm
+    # diameter cylinder remained visible as a toy peg whenever the actor
+    # turned three-quarter; a slimmer, shorter volume gives the jaw and
+    # shoulder line a continuous illustrated transition.
+    cylinder("Neck", 0.066, 0.061, 0.092, (0, 0, 1.402), mats["skin"], visual, vertices=20)
     rounded_box(
         "WaistBand",
         (0.35 * profile["waist_width"], 0.21 * profile["torso_depth"], 0.046),
@@ -1902,6 +1906,27 @@ def build_body(role, config, mats, visual):
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.32))
 
     sleeve_mat = mats["outer"] if config["costume"] in ("traveler", "facilitator", "mediator") else mats["top"]
+    # Trousers previously began as two independent columns under a narrow
+    # rectangular belt. A single soft pelvis volume restores believable hip
+    # weight and removes the daylight slit between the legs without changing
+    # either leg pivot or the authoritative capsule. Skirts already provide
+    # this bridge for the two civic dress silhouettes.
+    if config["costume"] in ("traveler", "listener"):
+        trouser_seat = ellipsoid(
+            "TrouserSeat",
+            (0, 0.008, 0.775),
+            (
+                0.212 * profile["waist_width"],
+                0.135 * profile["torso_depth"],
+                0.142,
+            ),
+            mats["lower"],
+            visual,
+            segments=14,
+            rings=8,
+        )
+        trouser_seat["garment_contract"] = "mirrorlife-civic-pelvis-continuity-v1"
+
     skin_armature = create_skin_armature(visual, shoulder_x, hip_x)
     arm_width = profile["arm_width"]
     arm_depth = profile["arm_depth"]
@@ -1913,7 +1938,7 @@ def build_body(role, config, mats, visual):
         tuple(
             (z, radius_x * arm_width, radius_y * arm_depth, centre_y)
             for z, radius_x, radius_y, centre_y in (
-                (1.23, 0.075, 0.07, 0.002),
+                (1.245, 0.09, 0.082, 0.001),
                 (1.175, 0.08, 0.075, 0.003),
                 (1.09, 0.077, 0.072, 0.004),
                 (1.015, 0.07, 0.066, 0.003),
@@ -1928,7 +1953,7 @@ def build_body(role, config, mats, visual):
         sleeve_mat,
         skin_armature,
         (("SkinLeftArm", "SkinLeftElbow"), ("SkinRightArm", "SkinRightElbow")),
-        sides=24,
+        sides=18,
     )
     build_skinned_limb_pair(
         "SkinnedLegVolume",
@@ -2581,11 +2606,12 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v46",
+        "sculptContract": "mirrorlife-civic-sculpt-v47",
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v1",
+            "version": "mirrorlife-civic-body-identity-v2",
             "roles": ["player", "listener", "facilitator", "mediator"],
-            "dimensions": ["torso", "shoulder", "waist", "limb", "head", "garment-silhouette"],
+            "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
+            "continuityParts": ["SkinnedArmVolume", "TrouserSeat"],
         },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
@@ -2632,7 +2658,7 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v7",
+            "version": "mirrorlife-civic-clips-v8",
             "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
