@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v93 player identity and facial-read gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v93-final-yaw0.png` (`1672 × 941`, `166 / 284,932`, `48°`, `5.6m` opening orbit).
+- Mandatory literal same-canvas comparison: `tmp/reference-vs-v93-final.png`; the complete source and final runtime frame sit side by side in one `3344 × 941` image. `tmp/reference-vs-v93-final-cast.png` compares both four-person circles at equal crop size.
+- Front-facing character evidence: `tmp/v93-player-front2-crop.png`; the same live player is seen from the reverse orbit with the reconstructed vest, short sleeves, forearms, hands and face.
+- Full-orbit evidence: `tmp/v93-final-yaw90.png` (`169 / 296,040`) and `tmp/v93-character2-yaw180.png` (`170 / 298,376`).
+- Mobile evidence: `tmp/v93-final-mobile.png` (`390 × 844`, device scale factor `1`, `100 / 245,228`, three-character LOD).
+- Physical exploration evidence: the browser regression walked `4.21m`, completed authored movement states and rotated the perspective camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / player costume contradicted the selected 2D-to-3D identity] The reference player's most readable clothing structure is a cream short-sleeve shirt under an olive vest with bare forearms. The earlier GLB built both arms from the green outer layer and read as an unrelated long-sleeve character. Sculpt v50 uses the cream continuous arm beneath real elbow-parented skin forearms, adds a green sleeve edge and widens the two fitted vest panels.
+- [fixed / bare-arm colour could remain buried inside the deformation sleeve] The first v50 build placed the skin overlay at almost the same radius as the continuous sleeve. Front-orbit evidence still read as cream to the wrist. The released pass expands the forearm by a few millimetres, preserving the gap-free hidden sleeve while making the warm skin surface visible from front, side and motion poses.
+- [improved / faces remained round and their gaze collapsed at story distance] All four roles share a narrower, shallower cranial volume with stronger lower-jaw taper and a restrained chin point. Role-specific eye apertures increase by roughly `5–6%`, while irises rise only enough to preserve the warm sclera and avoid the earlier white-disc doll look.
+- [improved / facial features drifted after the head volume changed] Eyes, ears, nose and mouth are moved onto the revised real surface rather than left floating at the old sphere depth. The complete feature hierarchy remains lit, depth-tested, morphable and readable through the `180°` front view.
+- [checked / identity reconstruction did not change gameplay truth] Forearms are children of the real elbow pivots, not static colour cards. They follow idle, walk, run, listen and gesture; the capsule, real-world height, interaction anchors and camera target are unchanged.
+
+### Required fidelity surfaces and findings
+
+- [improved][2D-to-3D character identity] The controlled character now carries the source's cream/olive/bare-arm hierarchy from both follow and front views. Vest panels, cargo trousers, backpack and shoes remain separate physical volumes rather than a recoloured mannequin.
+- [improved][facial hierarchy] Eyes survive the wide story camera more consistently; the tighter jaw and shallower skull reduce the generic spherical-toy read without increasing head scale.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `166–170 / 284,932–298,376`; portrait mobile remains `100 / 245,228`, below `110` calls / `250k` triangles.
+- [checked][movement and orbit continuity] The same v50 GLB player walks `4.21m`, changes real animation states, rotates the perspective camera `65.3°` and preserves the authoritative metre-space capsule and grounded feet.
+- [P1][character deformation and close detail remain below the source] The costume mapping is more faithful, but the focused comparison still exposes simplified finger articulation, cloth compression, hair strand grouping, facial correctives and footwear construction.
+- [P1][remaining room construction remains visibly below the source] Cabinet joinery, foliage density, paper dressing, curved furniture profiles and object-level wear remain more procedural and less densely art-directed.
+- [P1][indirect-light transport remains visibly below the source] The scene keeps coherent portal light and soft fill, but the source still has richer multi-bounce colour return, finer contact penumbrae and more unified character/environment integration.
+
+### Gate result
+
+v93 repairs the largest role-identity mismatch on the controlled character and makes the real volumetric faces more legible without changing head scale, draw-call count, movement, physics, camera or atomic-loading behavior. The selected reference remains visibly ahead in production character deformation, complete-room bespoke construction and offline-quality indirect light.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v92 authored textile and soft-surface gate
 
 ### Evidence inspected together

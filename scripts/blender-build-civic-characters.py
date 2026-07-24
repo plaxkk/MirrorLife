@@ -161,10 +161,10 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.056,
-        "eye_height": 0.0325,
-        "iris_width": 0.0245,
-        "iris_height": 0.027,
+        "eye_width": 0.059,
+        "eye_height": 0.0345,
+        "iris_width": 0.0255,
+        "iris_height": 0.0285,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -176,10 +176,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.0555,
-        "eye_height": 0.032,
-        "iris_width": 0.0242,
-        "iris_height": 0.0265,
+        "eye_width": 0.0585,
+        "eye_height": 0.034,
+        "iris_width": 0.0252,
+        "iris_height": 0.028,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -191,10 +191,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.057,
-        "eye_height": 0.0335,
-        "iris_width": 0.025,
-        "iris_height": 0.0278,
+        "eye_width": 0.06,
+        "eye_height": 0.0355,
+        "iris_width": 0.026,
+        "iris_height": 0.0293,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -206,10 +206,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.056,
-        "eye_height": 0.0325,
-        "iris_width": 0.0245,
-        "iris_height": 0.027,
+        "eye_width": 0.059,
+        "eye_height": 0.0345,
+        "iris_width": 0.0255,
+        "iris_height": 0.0285,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1367,7 +1367,7 @@ def build_face(head, mats, role):
     # Four facial morph targets multiply every head vertex in the exported
     # GLB. A 48×34 surface remains visually smooth at the 46 cm gameplay head
     # scale while keeping all four roles inside the strict 2 MiB asset gate.
-    face = ellipsoid("Head", (0, 0, 0), (0.24, 0.194, 0.272), mats["skin"], head, segments=48, rings=34)
+    face = ellipsoid("Head", (0, 0, 0), (0.236, 0.188, 0.27), mats["skin"], head, segments=48, rings=34)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -1375,7 +1375,7 @@ def build_face(head, mats, role):
         x, y, z = vertex.co
         lower = max(0.0, min(1.0, (-z - 0.012) / 0.22))
         front = max(0.0, min(1.0, (-y - 0.015) / 0.17))
-        vertex.co.x *= 1.0 - lower * 0.19
+        vertex.co.x *= 1.0 - lower * 0.235
         if front > 0 and z < -0.02:
             vertex.co.y += lower * front * 0.006
         # Model a shallow cheek plane instead of relying on circular blush
@@ -1403,8 +1403,8 @@ def build_face(head, mats, role):
         # an authored illustrated head rather than a uniformly round sphere.
         temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
         vertex.co.x *= 1.0 - temple * 0.025
-        chin = max(0.0, min(1.0, (-z - 0.12) / 0.13))
-        vertex.co.z -= chin * front * 0.004
+        chin = max(0.0, min(1.0, (-z - 0.115) / 0.135))
+        vertex.co.z -= chin * front * 0.007
     # Keep the facial volume itself expressive. The previous rig swapped
     # mouth meshes but left the cheeks and jaw completely rigid, which read as
     # a toy mask in close conversational framing. These sparse, authored shape
@@ -1454,7 +1454,7 @@ def build_face(head, mats, role):
     for side in (-1, 1):
         sculpted_ear_shell(
             f"EarShell_{side}",
-            (side * 0.236, 0.004, -0.014),
+            (side * 0.231, 0.004, -0.014),
             mats["skin"],
             mats["blush"],
             head,
@@ -1463,7 +1463,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.084, -0.188, 0.043))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.083, -0.183, 0.042))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -1554,10 +1554,10 @@ def build_face(head, mats, role):
     # The gameplay camera sees the nose at only a few pixels.  Keep genuine
     # volume for three-quarter lighting, but reduce the former bead-like tip
     # and red underline that made the face feel assembled from primitives.
-    ellipsoid("NoseBridge", (0, -0.189, 0.002), (0.0065, 0.0052, 0.019), mats["skin"], head, segments=18, rings=10)
-    ellipsoid("NoseTip", (0, -0.1965, -0.019), (0.0095, 0.0065, 0.0095), mats["skin"], head, segments=18, rings=10)
-    ellipsoid("NoseShadow", (0, -0.2035, -0.0295), (0.0062, 0.0012, 0.0021), mats["skin_shadow"], head, segments=14, rings=8)
-    mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
+    ellipsoid("NoseBridge", (0, -0.183, 0.002), (0.0065, 0.0052, 0.019), mats["skin"], head, segments=18, rings=10)
+    ellipsoid("NoseTip", (0, -0.1905, -0.019), (0.0095, 0.0065, 0.0095), mats["skin"], head, segments=18, rings=10)
+    ellipsoid("NoseShadow", (0, -0.1975, -0.0295), (0.0058, 0.0011, 0.0019), mats["skin_shadow"], head, segments=14, rings=8)
+    mouth = empty("MouthPivot", head, (0, -0.201, -0.09))
     closed = empty("MouthClosedPivot", mouth)
     mouth_width = face_profile["mouth_width"]
     mouth_corner = face_profile["mouth_corner"]
@@ -1908,7 +1908,12 @@ def build_body(role, config, mats, visual):
     left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.32))
     right_knee = empty("RightKneePivot", right_leg, (0, 0, -0.32))
 
-    sleeve_mat = mats["outer"] if config["costume"] in ("traveler", "facilitator", "mediator") else mats["top"]
+    # The reference player's cream short-sleeve shirt is a defining identity
+    # cue around the green vest.  Building the whole arm from the vest material
+    # turned the player into a green long-sleeve toy and broke the 2D-to-3D
+    # costume mapping. Keep the continuous deformation mesh cream for the
+    # traveler; a real skin forearm below covers its lower section.
+    sleeve_mat = mats["outer"] if config["costume"] in ("facilitator", "mediator") else mats["top"]
     # Trousers previously began as two independent columns under a narrow
     # rectangular belt. A single soft pelvis volume restores believable hip
     # weight and removes the daylight slit between the legs without changing
@@ -1982,6 +1987,36 @@ def build_body(role, config, mats, visual):
         sides=24,
     )
     for side, pivot, elbow in ((-1, left_arm, left_elbow), (1, right_arm, right_elbow)):
+        if config["costume"] == "traveler":
+            # A separately surfaced forearm remains parented to the elbow, so
+            # it follows the real walk/listen/gesture rig rather than becoming
+            # a static colour patch. It sits a few millimetres above the
+            # continuous cream deformation volume and therefore preserves a
+            # gap-free elbow while restoring the source's bare-arm read.
+            organic_limb(
+                f"TravelerForearmSkin_{side}",
+                0.245,
+                (
+                    (0.5, 0.071 * arm_width, 0.066 * arm_depth),
+                    (0.22, 0.069 * arm_width, 0.064 * arm_depth, -side * 0.0015, -0.001),
+                    (-0.12, 0.063 * arm_width, 0.059 * arm_depth, -side * 0.0025, -0.002),
+                    (-0.5, 0.057 * arm_width, 0.053 * arm_depth, -side * 0.001, 0),
+                ),
+                (0, -0.001, -0.145),
+                mats["skin"],
+                elbow,
+                sides=18,
+            )
+            cylinder(
+                f"TravelerShortSleeveHem_{side}",
+                0.068 * arm_width,
+                0.064 * arm_width,
+                0.038,
+                (0, 0, -0.018),
+                mats["outer"],
+                elbow,
+                vertices=20,
+            )
         if config["costume"] in ("traveler", "facilitator", "mediator"):
             # Two shallow diagonal compression ridges follow the bending
             # elbow. They catch the warm key as cloth folds and disappear at
@@ -2101,12 +2136,12 @@ def build_costume(
         for side in (-1, 1):
             tailored_panel(
                 f"Vest_{side}",
-                0.126,
-                0.102,
-                0.119,
+                0.151,
+                0.116,
+                0.142,
                 0.315,
                 0.043,
-                (side * 0.071, -0.17, 1.055),
+                (side * 0.081, -0.184, 1.055),
                 mats["outer"],
                 visual,
                 radius=0.013,
@@ -2612,7 +2647,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v49",
+        "sculptContract": "mirrorlife-civic-sculpt-v50",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],

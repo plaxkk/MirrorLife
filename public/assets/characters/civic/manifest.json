@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v49",
+  "sculptContract": "mirrorlife-civic-sculpt-v50",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v3",
     "roles": [
@@ -135,8 +135,8 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 106,
-      "triangles": 36468
+      "meshes": 110,
+      "triangles": 37676
     },
     "listener": {
       "file": "listener.glb",
