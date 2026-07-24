@@ -99,7 +99,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // collapsed plaster, skin and timber into one pale value. Concentrate energy
   // in the doorway key and keep the cool/global fills restrained so the room
   // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 1.95, fill: 0.28, hemi: 0.28, bounce: 0.68, wash: 0.38, exposure: 0.86, keyColor: "#ffddb7", fillColor: "#b7d6d8" },
+  "civic-ivory": { key: 2.12, fill: 0.24, hemi: 0.24, bounce: 0.62, wash: 0.34, exposure: 0.84, keyColor: "#ffd6a9", fillColor: "#b5d2d4" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -515,11 +515,11 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.07 * strength) + vec3(0.58));
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.09 * strength) + vec3(0.58));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
-        color += vec3(0.022, 0.01, -0.006) * highlightTone * strength;
+        color += vec3(0.02, 0.01, -0.004) * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -656,6 +656,7 @@ function upgradeModelMaterials(source, type = "") {
           ? atelierGradeColor(material.color, 0.08).offsetHSL(0, -0.025, 0.008)
           : nearestAtelierColor(material.color);
       const glassName = /glass|glazing|windowpane/.test(materialName);
+      const displayIllumination = /display illumination|display glow/.test(materialName);
       const next = glassName
         ? new THREE.MeshPhysicalMaterial()
         : hasSurfaceMap && (material.isMeshStandardMaterial || material.isMeshPhysicalMaterial)
@@ -708,6 +709,20 @@ function upgradeModelMaterials(source, type = "") {
       }
       next.emissive?.set?.(0x000000);
       next.emissiveIntensity = 0;
+      if (displayIllumination) {
+        // Keep the two concealed shelf strips as one real emissive GLB batch.
+        // They lift the curated objects through the physical glass without
+        // adding a room-wide point light or flattening nearby character faces.
+        next.color.set("#ffd9a0");
+        next.emissive?.set?.("#ffbf70");
+        next.emissiveIntensity = 0.52;
+        next.transparent = true;
+        next.opacity = 0.985;
+        next.depthWrite = false;
+        next.roughness = 0.34;
+        next.metalness = 0;
+        next.envMapIntensity = 0.42;
+      }
       next.needsUpdate = true;
       return next;
     });

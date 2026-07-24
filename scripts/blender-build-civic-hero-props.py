@@ -94,6 +94,10 @@ def materials():
         "ceramic_coral": material("Civic coral glaze", PALETTE["coral"], 0.32),
         "ceramic_blue": material("Civic blue glaze", PALETTE["blue"], 0.3),
         "glass": material("Civic display glass", PALETTE["glass"], 0.18, 0.0, 0.28),
+        # Kept microscopically translucent so the runtime preserves it as one
+        # dedicated emissive batch instead of flattening it into the opaque
+        # vertex-colour furniture batch.
+        "display_glow": material("Civic display illumination", "#ffd9a0", 0.34, 0.0, 0.995),
     }
 
 
@@ -135,6 +139,56 @@ def rounded_box(name, size, location, mat, parent, radius=0.04, rotation=(0, 0, 
     bevel.segments = segments
     bevel.limit_method = "ANGLE"
     link(obj, mat)
+    return obj
+
+
+def apply_modifiers(obj):
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    for modifier in list(obj.modifiers):
+        bpy.ops.object.modifier_apply(modifier=modifier.name)
+    obj.select_set(False)
+
+
+def sculpted_cushion(name, size, location, mat, parent, radius=0.08, rotation=(0, 0, 0), segments=5):
+    """Create an upholstered volume with compression and a soft centre bulge.
+
+    A rounded cube keeps believable furniture edges but remains mechanically
+    flat across its broad faces. Applying the bevel, adding a simple topology
+    subdivision and then displacing the local surface produces the subtle
+    tension/sag visible in sewn cushions without changing the authored world
+    footprint or relying on a camera-facing normal trick.
+    """
+    obj = rounded_box(name, size, location, mat, parent, radius, rotation, segments)
+    apply_modifiers(obj)
+    bpy.context.view_layer.objects.active = obj
+    obj.select_set(True)
+    subdivision = obj.modifiers.new("Upholstery topology", "SUBSURF")
+    subdivision.subdivision_type = "SIMPLE"
+    subdivision.levels = 1
+    subdivision.render_levels = 1
+    bpy.ops.object.modifier_apply(modifier=subdivision.name)
+    obj.select_set(False)
+
+    half_x = max(0.001, size[0] * 0.5)
+    half_y = max(0.001, size[1] * 0.5)
+    half_z = max(0.001, size[2] * 0.5)
+    for vertex in obj.data.vertices:
+        x, y, z = vertex.co
+        nx = min(1.0, abs(x) / half_x)
+        ny = min(1.0, abs(y) / half_y)
+        nz = min(1.0, abs(z) / half_z)
+        face_tension = max(0.0, 1.0 - nx * nx) * max(0.0, 1.0 - nz * nz)
+        if abs(y) > half_y * 0.28:
+            vertex.co.y += math.copysign(half_y * 0.075 * face_tension, y)
+        if z > 0:
+            top_sag = max(0.0, 1.0 - nx * nx) * max(0.0, 1.0 - ny * ny)
+            vertex.co.z -= half_z * 0.055 * top_sag
+        # Pull the corners gently toward their seams. The broad face stays
+        # generous while the perimeter reads as fabric under tension.
+        vertex.co.x *= 1.0 - 0.024 * nz * nz
+        vertex.co.z *= 1.0 - 0.026 * nx * nx
+    obj.data.update()
     return obj
 
 
@@ -278,15 +332,30 @@ def build_display_case(mats):
     rounded_box("DisplayCaseFloor", (1.78, 0.66, 0.09), (0, 0, 0.8), mats["oak"], root, 0.03)
     rounded_box("DisplayCaseBack", (1.78, 0.08, 0.68), (0, 0.29, 1.13), mats["walnut"], root, 0.035)
     rounded_box("DisplayCaseTop", (1.82, 0.72, 0.1), (0, 0, 1.5), mats["walnut"], root, 0.035)
+    # A lightly raked front plane gives the case a furniture-maker silhouette
+    # instead of a vertical aquarium box. Glass, posts and mullions share the
+    # exact tilt, so side orbit never exposes detached trim.
+    display_front_tilt = -0.115
     for x in (-0.86, 0.86):
-        rounded_box(f"DisplayPost_{x}", (0.07, 0.07, 0.7), (x, -0.3, 1.14), mats["walnut"], root, 0.025)
-    rounded_box("DisplayFrontGlass", (1.68, 0.026, 0.58), (0, -0.345, 1.16), mats["glass"], root, 0.012)
+        rounded_box(
+            f"DisplayPost_{x}", (0.07, 0.07, 0.7), (x, -0.3, 1.14),
+            mats["walnut"], root, 0.025, (display_front_tilt, 0, 0),
+        )
+    rounded_box(
+        "DisplayFrontGlass", (1.68, 0.026, 0.58), (0, -0.345, 1.16),
+        mats["glass"], root, 0.012, (display_front_tilt, 0, 0),
+    )
     for x in (-0.28, 0.28):
-        rounded_box(f"DisplayGlassMullion_{x}", (0.028, 0.034, 0.62), (x, -0.36, 1.16), mats["brass"], root, 0.009)
+        rounded_box(
+            f"DisplayGlassMullion_{x}", (0.028, 0.034, 0.62), (x, -0.36, 1.16),
+            mats["brass"], root, 0.009, (display_front_tilt, 0, 0),
+        )
     for x in (-0.84, 0.84):
         rounded_box(f"DisplaySideGlass_{x}", (0.026, 0.58, 0.58), (x, -0.01, 1.16), mats["glass"], root, 0.012)
     rounded_box("DisplayShelf", (1.68, 0.55, 0.035), (0, -0.02, 1.1), mats["glass"], root, 0.01)
     rounded_box("DisplayShelfBrassRail", (1.68, 0.025, 0.025), (0, -0.31, 1.1), mats["brass"], root, 0.008)
+    rounded_box("DisplayIlluminationTop", (1.55, 0.035, 0.028), (0, 0.16, 1.43), mats["display_glow"], root, 0.01)
+    rounded_box("DisplayIlluminationShelf", (1.5, 0.028, 0.022), (0, 0.18, 1.08), mats["display_glow"], root, 0.009)
 
     # The lower shelf must read as a curated community pastry/ceramic display,
     # not four anonymous colour blobs. Layer trays, feet, glazed domes and a
@@ -417,7 +486,7 @@ def build_lounge_suite(mats):
         # spheres. The latter read as detached beanbags once the complete
         # suite was normalized in Three.js; these retain a believable seat
         # edge, seam and contact plane from front and reverse orbit views.
-        seat = rounded_box(
+        seat = sculpted_cushion(
             f"LoungeSeat_{side}",
             (0.92, 0.58, 0.24),
             (side * 0.5, -0.03, 0.52),
@@ -425,9 +494,9 @@ def build_lounge_suite(mats):
             root,
             0.11,
             rotation=(0.02, 0, side * 0.012),
-            segments=6,
+            segments=3,
         )
-        back = rounded_box(
+        back = sculpted_cushion(
             f"LoungeBackCushion_{side}",
             (0.88, 0.22, 0.58),
             (side * 0.49, 0.2, 0.9),
@@ -435,7 +504,7 @@ def build_lounge_suite(mats):
             root,
             0.12,
             rotation=(0.06, 0, side * 0.015),
-            segments=6,
+            segments=3,
         )
         # Shallow inset seams catch the warm side light and stop the two large
         # upholstered planes from reading as featureless rounded boxes.
@@ -609,7 +678,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v7",
+        "contract": "mirrorlife-civic-hero-props-v8",
         "worldUnitMeters": 1,
         "assets": {},
     }

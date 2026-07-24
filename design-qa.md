@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v87 crafted-glass and upholstery gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v87-light-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `161 / 288,220`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v87.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Full-orbit evidence: `tmp/v87-final2-desktop-yaw90.png` (`166 / 314,220`, actor avoidance `0.32m`) and `tmp/v87-final2-desktop-yaw180.png` (`165 / 316,556`, actor avoidance `1.362m`, radial clearance `1.55m`).
+- Mobile evidence: `tmp/v87-final2-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 245,044`, three-character LOD).
+- Physical exploration evidence: `tmp/v87-character-walk.png`; the browser regression walked `4.13m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, character exploration, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / foreground display read as a vertical glass box] Hero-prop contract v8 gives the display case a shared `-0.115rad` raked front across its physical glass, walnut posts and brass mullions. Two concealed shelf illumination strips remain a single emissive GLB batch, lifting the curated ceramics/evidence through the glass without adding room-wide fill.
+- [improved / sofa cushions remained rounded cuboids] The two seats and two back cushions now use applied bevel topology plus authored local fabric tension: broad faces bulge gently, top surfaces sag and corners pull toward their seams. The visible footprint and authoritative lounge collider remain unchanged.
+- [fixed / first sculpt pass exceeded mobile geometry budget] Applying the same dense topology to pillows and throw pushed portrait mobile to `256,208` triangles. That pass was rejected. Decorative textiles returned to lightweight rounded construction, cushion edge segmentation was reduced from `6` to `3`, and the released mobile frame is `245,044`, below the `250k` gate.
+- [improved / room light remained broad and chalky] Civic lighting now concentrates more energy in the warm portal key while lowering hemisphere, fill, bounce and wash. Exposure moves from `0.86` to `0.84`, with a restrained contrast lift in the civic grade; faces remain readable through their actor-only fill and volumetric skin response.
+- [checked / authored-source and runtime budgets] The editable display, notice and lounge masters remain available as `.blend` sources. Their final GLBs total `52,512` authored triangles; the public room remains below every desktop/mobile draw-call and geometry gate.
+
+### Required fidelity surfaces and findings
+
+- [improved][foreground material hierarchy] Raked glass, brass rails, oak/walnut joinery, emissive shelf light, glazed objects and paper labels now separate by geometry and physical response instead of merging into one pale cabinet block.
+- [improved][soft-furniture read] The lounge keeps open timber rails and now gains visible upholstery compression on the surfaces that occupy the most pixels. Lower-value pillows and throw retain their pattern hierarchy without consuming mobile headroom.
+- [checked][360° and collision truth] Display trim follows the glass tilt through side orbit; lounge deformation stays inside the existing visual/collider footprint. No new surface changes walkable space, and the player still completes metre-space movement and camera rotation.
+- [checked][responsive performance] Opening, side and reverse desktop views remain `161–166 / 288,220–316,556`; portrait mobile is `98 / 245,044`. The first over-budget version was not retained.
+- [P1][character production quality remains visibly below the source] Same-canvas comparison still exposes coarse facial planes, rigid limb/hand acting, simplified garment drape and flatter PBR identity than the reference.
+- [P1][remaining furniture construction remains below the source] The hero display and lounge improve, but the record desk, reverse bench, smaller cabinetry, foliage, papers and accessories still lack the source's joinery, thickness, compression and authored wear.
+- [P1][indirect light transport remains below the source] Directional hierarchy is stronger, yet the implementation still lacks the reference's soft multi-bounce penumbrae, localized colour bleed and unified skin/cloth/floor integration.
+
+### Gate result
+
+v87 replaces two prominent procedural furniture reads with authored glass/joinery and real soft-surface deformation, then recovers mobile budget without discarding the visible improvement. Walking, orbit, collision truth, atomic loading and responsive performance remain intact. Same-canvas evidence is closer but still not literal production parity in character deformation, complete-room asset finish or indirect-light transport.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide hero-asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v86 restrained volumetric-face gate
 
 ### Evidence inspected together
