@@ -653,21 +653,51 @@ def curve_tube(name, points, radius, mat, parent=None, cyclic=False, resolution=
     return obj
 
 
-def morphable_mouth_curve(name, points, radius, mat, parent=None):
-    """Create one lit mouth line whose corners deform with the face rig.
+def morphable_mouth_surface(name, width, corner_height, centre_height, mat, parent=None, segments=14):
+    """Create one concave, morphable upper/lower lip surface.
 
-    Scaling a static tube made the cheek smile move underneath an unmoving
-    mouth, which was the strongest mask-like cue in the story-camera crop.
-    Converting the tiny curve to one mesh preserves the existing single draw
-    call while giving the corners real WarmSmile/Concern deformation.
+    The former tube plus separate lower-lip bead consumed two draw calls and
+    still read as a line pasted onto a spherical face. Four authored rows form
+    a shallow cupid bow, recessed mouth seam and lower-lip shelf in one mesh.
+    The same vertices carry every expression, so the lips remain attached to
+    the cheek/jaw morphs while talking and orbiting.
     """
-    obj = curve_tube(name, points, radius, mat, parent, resolution=3, bevel_resolution=3)
-    bpy.context.view_layer.objects.active = obj
-    obj.select_set(True)
-    bpy.ops.object.convert(target="MESH")
-    obj = bpy.context.object
-    obj.name = name
-    obj.select_set(False)
+    vertices = []
+    for index in range(segments + 1):
+        factor = index / segments
+        normalized_x = factor * 2 - 1
+        edge = abs(normalized_x)
+        volume = max(0.0, 1.0 - edge ** 2) ** 0.54
+        centre_line = centre_height + (corner_height - centre_height) * edge ** 1.55
+        cupid = max(0.0, 1.0 - abs(normalized_x) / 0.42)
+        x = normalized_x * width
+        vertices.extend((
+            (x, 0.0006, centre_line + volume * 0.0051 + cupid * 0.0011),
+            (x, -0.0039, centre_line + volume * 0.0008),
+            (x, -0.0047, centre_line - volume * 0.0011),
+            (x, -0.0002, centre_line - volume * 0.0055),
+        ))
+    faces = []
+    for index in range(segments):
+        current = index * 4
+        following = current + 4
+        faces.extend((
+            (current, following, following + 1, current + 1),
+            (current + 1, following + 1, following + 2, current + 2),
+            (current + 2, following + 2, following + 3, current + 3),
+        ))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Lip edge softness", "BEVEL")
+    bevel.width = 0.0008
+    bevel.segments = 2
     obj.shape_key_add(name="Basis")
     smile = obj.shape_key_add(name="WarmSmile")
     speech = obj.shape_key_add(name="SpeechJaw")
@@ -679,10 +709,12 @@ def morphable_mouth_curve(name, points, radius, mat, parent=None):
         x = vertex.co.x
         edge = max(0.0, min(1.0, (abs(x) / max(extent, 1e-5) - 0.34) / 0.66))
         centre = max(0.0, 1.0 - abs(x) / max(extent * 0.72, 1e-5))
-        smile.data[index].co.z += edge * 0.011 - centre * 0.0015
+        row = index % 4
+        lower_weight = 1.0 if row >= 2 else 0.26
+        smile.data[index].co.z += edge * 0.011 - centre * 0.0012 * lower_weight
         smile.data[index].co.x *= 1.0 + edge * 0.035
-        speech.data[index].co.z -= centre * 0.004
-        speech.data[index].co.y -= centre * 0.0015
+        speech.data[index].co.z -= centre * (0.003 + lower_weight * 0.007)
+        speech.data[index].co.y -= centre * (0.001 + lower_weight * 0.002)
         concern.data[index].co.z -= edge * 0.008
         concern.data[index].co.x *= 1.0 - edge * 0.018
         attentive.data[index].co.z += edge * 0.0025
@@ -693,7 +725,7 @@ def morphable_mouth_curve(name, points, radius, mat, parent=None):
         asymmetry.data[index].co.z += edge * side * 0.006
         asymmetry.data[index].co.x *= 1.0 + edge * side * 0.012
         asymmetry.data[index].co.y -= centre * (1.0 - side) * 0.0007
-    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v2"
+    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v3"
     return obj
 
 
@@ -1620,27 +1652,13 @@ def build_face(head, mats, role):
     mouth_width = face_profile["mouth_width"]
     mouth_corner = face_profile["mouth_corner"]
     mouth_center = face_profile["mouth_center"]
-    morphable_mouth_curve(
+    morphable_mouth_surface(
         "MouthClosed",
-        [
-            (-mouth_width, 0.001, mouth_corner),
-            (-mouth_width * 0.48, -0.003, mouth_center * 0.6),
-            (0, -0.004, mouth_center),
-            (mouth_width * 0.48, -0.003, mouth_center * 0.6),
-            (mouth_width, 0.001, mouth_corner),
-        ],
-        0.00335,
-        mats["skin_shadow"],
-        closed,
-    )
-    ellipsoid(
-        "LowerLip",
-        (0, -0.0065, -0.011),
-        (mouth_width * 0.58, 0.0018, 0.0038),
+        mouth_width,
+        mouth_corner,
+        mouth_center,
         mats["lip"],
         closed,
-        segments=18,
-        rings=9,
     )
     open_mouth = empty("MouthOpenPivot", mouth)
     ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.024, 0.0055, 0.018), mats["ink"], open_mouth, segments=20, rings=12)
@@ -2826,7 +2844,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v58",
+        "sculptContract": "mirrorlife-civic-sculpt-v59",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2867,13 +2885,15 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-volume-v13",
+            "integrationContract": "mirrorlife-civic-face-volume-v14",
             "productionFaceMode": "sculpted-volume",
-            "productionIntegrationContract": "mirrorlife-civic-face-volume-v13",
+            "productionIntegrationContract": "mirrorlife-civic-face-volume-v14",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
-            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v2",
-            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
+            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v3",
+            "lipVolumeContract": "mirrorlife-civic-lip-volume-v1",
+            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v2",
+            "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },

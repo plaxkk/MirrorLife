@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v104 volumetric lips and vertex-driven eyelid gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v104-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v104-full.png`; focused comparison: `tmp/reference-vs-v104-cast-focus.png`; implementation delta: `tmp/v103-vs-v104-cast-focus.png`.
+- Facial motion evidence: `tmp/v104-open-vs-blink-final.png` compares the settled open-eye state with the forced vertex-eyelid closure state. This QA state drives the same live shader uniforms as gameplay blinking.
+- Full 3D orbit evidence: `tmp/v104-final-yaw90.png` and `tmp/v104-final-yaw180.png`; responsive evidence: `tmp/v104-final-mobile.png` (`390 × 844`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 281,448`, side `174 / 292,556`, reverse `175 / 298,684`; mobile `100 / 240,236`; forced-blink capture `171 / 281,448`. The player walked `4.61m`, rotated the camera `65.3°`, verified all four actors' live eyelid closure, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without browser runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / blinking flattened the entire eyeball like a rubber sticker] Eye volume v2 preserves the spherical eyeball and deforms separately weighted upper and lower eyelid vertices over it. The runtime reports live uniform readiness plus non-zero upper/lower lid weights for every role, and the forced-blink evidence shows real aperture closure instead of eye-object scaling.
+- [fixed / the lower lip was a detached bead] Mouth morph v3 replaces the separate lower-lip object with one concave four-row lip surface. The cupid bow, recessed seam, lower cushion and five acting morphs now share one continuous mesh and material response.
+- [improved / mouth volume read as a flat coloured mark] Lip volume v1 shades the authored local depth into a restrained crease and cushion response while preserving role-specific smile, speech, concern, attention and social-asymmetry blends.
+- [fixed / eyelid QA could regress without a visible proof state] The capture path now accepts a deterministic `qaBlink=1` state, and the exploration verifier asserts `uniformBlink >= 0.9` across player, listener, facilitator and mediator after a real reload.
+- [improved / facial refinement increased complexity] Removing the detached lower lip reduces settled desktop draw calls by five relative to v103. All four GLBs remain below `2 MiB`; total civic character assets are `7.47 MB`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, weights, Chinese hierarchy, line breaks and action labels remain readable at desktop and portrait sizes; the character-only upgrade does not disturb the stable UI contract.
+- [checked][spacing and layout rhythm] The central four-person conflict, foreground work surface, middle-ground story circle and background civic landmark retain the source-aligned composition. No face or eyelid change moves actor staging, interaction anchors or the camera-safe area.
+- [checked][colors and visual tokens] Skin, dark hair, oatmeal outerwear, green cloth, oak, plaster, teal textile and brass remain separated. The new lip shading uses authored surface depth rather than an unrelated colour token or screen-space overlay.
+- [improved][image quality and asset fidelity] Eyes retain true volume while lids close over them; lips form a single shaped surface with a recessed seam. Both changes are lit, depth-tested and continuous through `0°`, `90°`, `180°`, movement and portrait LOD.
+- [checked][copy and content] Location, scene-memory title, current target and all four listening actions remain coherent with the visible public-room sequence.
+- [P1][character anatomy and garment construction remain below the source] Runtime bodies preserve metre scale, skeleton motion and corrective volume, but the source still has more resolved shoulder/hip anatomy, garment topology and hand-painted weighting.
+- [P1][facial performance remains below the source] Volumetric lips and independent lids remove two synthetic cues; the reference still carries finer lid thickness, inner-corner anatomy, cheek compression, lip edge topology and authored gaze timing.
+- [P1][hair, material and light transport remain below the source] Face framing and ribbon response remain coherent through orbit, while strand density, painted roughness, contact penumbrae and multi-bounce colour remain visibly simpler than the selected offline frame.
+
+### Gate result
+
+v104 replaces two conspicuously synthetic facial shortcuts with physically coherent, runtime-driven 3D systems: eyelids now close independently over volumetric eyes, and the mouth is one morphable concave lip surface with depth-aware crease shading. The build is smaller and cheaper than v103, and the new deterministic blink proof protects the result in regression tests. The literal same-size comparison still does not reach the reference's production anatomy, garment construction, strand density or offline material/light transport.
+
+final result: blocked
+
+Blocker: production character topology and painted weighting, finer facial anatomy and acting, denser layered hair construction, bespoke surface variation and source-level indirect-light construction remain below the selected reference.
+
 ## 2026-07-25 reference-fidelity v103 asymmetric facial acting and face-framing hair gate
 
 ### Evidence inspected together

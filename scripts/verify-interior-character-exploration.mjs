@@ -73,9 +73,13 @@ try {
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
   assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic production face unexpectedly fell back to a texture layer");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v13"), "civic actors did not preserve the production volumetric facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v14"), "civic actors did not preserve the production volumetric facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.lipVolume === "mirrorlife-civic-lip-volume-v1"), "civic actors did not expose the volumetric lip contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic volumetric facial morph set is incomplete");
-  assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v1" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
+  assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v2" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
+  assert(opening.actors.every((actor) => actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v1"), "civic actors did not expose vertex-driven eyelids");
+  assert(opening.actors.every((actor) => actor.eyes?.uniformReady === true), "civic eyelid shader uniforms did not compile");
+  assert(opening.actors.every((actor) => Number(actor.eyes?.upperLidWeight || 0) > 250 && Number(actor.eyes?.lowerLidWeight || 0) > 25), "civic eyelid vertex weights are incomplete");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v6"), "civic actors did not expose the role-authored independent-hand contract");
   assert(opening.actors.every((actor) => actor.proximalVolume?.version === "mirrorlife-civic-proximal-volume-v1"), "civic actors did not expose shoulder/hip volume preservation");
   assert(
@@ -248,7 +252,24 @@ try {
   assert(angularDistance(afterYaw, beforeYaw) > 0.45, "drag orbit did not rotate the 3D camera");
   assert.equal(await page.$eval("#interiorThreeLayer", (layer) => layer.dataset.sceneReady), "true", "scene became unready after movement/orbit");
 
-  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°.`);
+  await page.goto(`${BASE_URL}/game.html?qaInterior=public-plaza&qaInteriorScene=1&qaBlink=1`, {
+    waitUntil: "domcontentloaded",
+    timeout: 30000
+  });
+  await page.waitForFunction(() => {
+    const layer = document.querySelector("#interiorThreeLayer");
+    const stats = window.MirrorLifeInterior3D?.getStats?.();
+    return layer?.dataset.sceneReady === "true"
+      && stats?.actors?.length === 4
+      && stats.actors.every((actor) => Number(actor.eyes?.uniformBlink || 0) >= 0.9);
+  }, { polling: 50, timeout: 45000 });
+  const forcedBlinkStats = await readStats(page);
+  assert(
+    forcedBlinkStats.actors.every((actor) => Number(actor.eyes?.uniformBlink || 0) >= 0.9),
+    "forced-blink QA state did not drive both authored eyelid sheets"
+  );
+
+  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified vertex eyelid closure.`);
 } finally {
   await browser.close();
 }

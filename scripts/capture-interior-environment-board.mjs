@@ -9,13 +9,15 @@ const execFileAsync = promisify(execFile);
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const MOBILE = process.env.MIRRORLIFE_CAPTURE_MOBILE === "1";
+const FORCE_BLINK = process.env.MIRRORLIFE_CAPTURE_BLINK === "1";
 const REVIEW_YAW = Number(process.env.MIRRORLIFE_CAPTURE_YAW || 0);
 const CAPTURE_WIDTH = Number(process.env.MIRRORLIFE_CAPTURE_WIDTH || 1280);
 const CAPTURE_HEIGHT = Number(process.env.MIRRORLIFE_CAPTURE_HEIGHT || 720);
 const SHOW_REVIEW_LABEL = process.env.MIRRORLIFE_CAPTURE_LABEL !== "0";
 const READY_TIMEOUT_MS = Number(process.env.MIRRORLIFE_CAPTURE_READY_TIMEOUT || 45000);
 const YAW_SUFFIX = REVIEW_YAW ? `-yaw-${String(REVIEW_YAW).replace(/[^0-9-]/g, "")}` : "";
-const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}`);
+const BLINK_SUFFIX = FORCE_BLINK ? "-blink" : "";
+const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}${BLINK_SUFFIX}`);
 const VIEWPORT = MOBILE
   ? { width: 390, height: 844, deviceScaleFactor: 1 }
   : { width: CAPTURE_WIDTH, height: CAPTURE_HEIGHT, deviceScaleFactor: 1 };
@@ -69,7 +71,7 @@ try {
   await page.setViewport(VIEWPORT);
   for (let index = 0; index < CAPTURE_SCENES.length; index += 1) {
     const scene = CAPTURE_SCENES[index];
-    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
+    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}${FORCE_BLINK ? "&qaBlink=1" : ""}`;
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForFunction(() => {
       const layer = document.querySelector("#interiorThreeLayer");
@@ -225,6 +227,7 @@ await fs.writeFile(path.join(OUTPUT_ROOT, "manifest.json"), `${JSON.stringify({
   baseUrl: BASE_URL,
   viewport: VIEWPORT,
   yaw: REVIEW_YAW,
+  forceBlink: FORCE_BLINK,
   performanceBudget: PERFORMANCE_BUDGET,
   contactSheet: "contact-sheet.png",
   scenes: results

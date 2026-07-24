@@ -12,7 +12,8 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v58";
+const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v59";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -6468,6 +6469,9 @@ function createActorSkirt(material, y = 0.66) {
 function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions = {}) {
   if (!target || !mergeGeometries) return;
   const actorShading = materialOptions.actorShading !== false;
+  const eyeDeformationState = materialOptions.eyeDeformation
+    ? { blink: 0, warmth: 0, asymmetry: 0 }
+    : null;
   target.updateMatrixWorld(true);
   const excluded = new Set(excludedRoots);
   const targetInverse = target.matrixWorld.clone().invert();
@@ -6509,6 +6513,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const woodMaskValues = new Float32Array(count);
     const paperMaskValues = new Float32Array(count);
     const mineralMaskValues = new Float32Array(count);
+    const upperLidMaskValues = eyeDeformationState ? new Float32Array(count) : null;
+    const lowerLidMaskValues = eyeDeformationState ? new Float32Array(count) : null;
     const sourceRoughness = THREE.MathUtils.clamp(Number(node.material?.roughness ?? materialOptions.roughness ?? 0.72), 0.04, 1);
     const sourceMetalness = THREE.MathUtils.clamp(Number(node.material?.metalness ?? 0), 0, 1);
     const materialName = String(node.material?.name || "").toLowerCase();
@@ -6520,6 +6526,10 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const sourceWoodMask = surfaceName === "wood" || /oak|walnut|wood/.test(materialName) ? 1 : 0;
     const sourcePaperMask = surfaceName === "paper" || /paper|card|cork/.test(materialName) ? 1 : 0;
     const sourceMineralMask = /plaster|terrazzo|ceramic/.test(surfaceName) ? 1 : 0;
+    const nodeName = String(node.name || "");
+    const sourceUpperLid = eyeDeformationState && (/^UpperLid/.test(nodeName) || /^OuterLash/.test(nodeName));
+    const sourceLowerLid = eyeDeformationState && /^LowerLid/.test(nodeName);
+    const positionAttribute = geometry.getAttribute("position");
     for (let index = 0; index < count; index += 1) {
       colors[index * 3] = color.r;
       colors[index * 3 + 1] = color.g;
@@ -6533,6 +6543,17 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       woodMaskValues[index] = sourceWoodMask;
       paperMaskValues[index] = sourcePaperMask;
       mineralMaskValues[index] = sourceMineralMask;
+      // Lid sheets must stretch from a fixed orbital crease toward the eye
+      // centre. Translating the whole sheet exposed sclera above it during a
+      // blink. After glTF's Y-up conversion, local Z separates the forward
+      // inner edge from the stationary outer skin edge.
+      const lidTravelWeight = THREE.MathUtils.clamp(
+        (Number(positionAttribute?.getZ(index) || 0) - 0.0065) / 0.0115,
+        0,
+        1
+      );
+      if (upperLidMaskValues) upperLidMaskValues[index] = sourceUpperLid ? lidTravelWeight : 0;
+      if (lowerLidMaskValues) lowerLidMaskValues[index] = sourceLowerLid ? lidTravelWeight : 0;
     }
     geometry.setAttribute("color", new THREE.BufferAttribute(colors, 3));
     geometry.setAttribute("mirrorLifeRoughness", new THREE.BufferAttribute(roughnessValues, 1));
@@ -6544,6 +6565,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     geometry.setAttribute("mirrorLifeWoodMask", new THREE.BufferAttribute(woodMaskValues, 1));
     geometry.setAttribute("mirrorLifePaperMask", new THREE.BufferAttribute(paperMaskValues, 1));
     geometry.setAttribute("mirrorLifeMineralMask", new THREE.BufferAttribute(mineralMaskValues, 1));
+    if (upperLidMaskValues) geometry.setAttribute("mirrorLifeUpperLidMask", new THREE.BufferAttribute(upperLidMaskValues, 1));
+    if (lowerLidMaskValues) geometry.setAttribute("mirrorLifeLowerLidMask", new THREE.BufferAttribute(lowerLidMaskValues, 1));
     geometries.push(geometry);
     sources.push(node);
   });
@@ -6556,6 +6579,16 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
   geometries.forEach((candidate) => {
     if (candidate !== geometry) candidate.dispose();
   });
+  if (eyeDeformationState) {
+    const upperAttribute = geometry.getAttribute("mirrorLifeUpperLidMask");
+    const lowerAttribute = geometry.getAttribute("mirrorLifeLowerLidMask");
+    eyeDeformationState.upperWeight = upperAttribute
+      ? Array.from(upperAttribute.array).reduce((sum, value) => sum + Number(value || 0), 0)
+      : 0;
+    eyeDeformationState.lowerWeight = lowerAttribute
+      ? Array.from(lowerAttribute.array).reduce((sum, value) => sum + Number(value || 0), 0)
+      : 0;
+  }
   sources.forEach((node) => {
     node.removeFromParent();
     node.geometry?.dispose?.();
@@ -6572,6 +6605,16 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
   // character ink rim, skin wrap or cloth sheen; those effects are reserved
   // for the living cast.
   material.onBeforeCompile = (shader) => {
+    if (eyeDeformationState) {
+      shader.uniforms.mirrorLifeBlink = { value: eyeDeformationState.blink };
+      shader.uniforms.mirrorLifeEyeWarmth = { value: eyeDeformationState.warmth };
+      shader.uniforms.mirrorLifeEyeAsymmetry = { value: eyeDeformationState.asymmetry };
+      eyeDeformationState.uniforms = {
+        blink: shader.uniforms.mirrorLifeBlink,
+        warmth: shader.uniforms.mirrorLifeEyeWarmth,
+        asymmetry: shader.uniforms.mirrorLifeEyeAsymmetry
+      };
+    }
     if (fabricSurfaceMaps?.roughness) shader.uniforms.mirrorLifeFabricRoughness = { value: fabricSurfaceMaps.roughness };
     if (woodSurfaceMaps?.map) shader.uniforms.mirrorLifeWoodColor = { value: woodSurfaceMaps.map };
     if (woodSurfaceMaps?.roughness) shader.uniforms.mirrorLifeWoodRoughness = { value: woodSurfaceMaps.roughness };
@@ -6593,6 +6636,11 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         attribute float mirrorLifeWoodMask;
         attribute float mirrorLifePaperMask;
         attribute float mirrorLifeMineralMask;
+        ${eyeDeformationState ? `attribute float mirrorLifeUpperLidMask;
+        attribute float mirrorLifeLowerLidMask;
+        uniform float mirrorLifeBlink;
+        uniform float mirrorLifeEyeWarmth;
+        uniform float mirrorLifeEyeAsymmetry;` : ""}
         varying float vMirrorLifeRoughness;
         varying float vMirrorLifeMetalness;
         varying float vMirrorLifeSkinMask;
@@ -6616,6 +6664,18 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeWoodMask = mirrorLifeWoodMask;
         vMirrorLifePaperMask = mirrorLifePaperMask;
         vMirrorLifeMineralMask = mirrorLifeMineralMask;
+        ${eyeDeformationState ? `float mirrorLifeUpperClose =
+          mirrorLifeBlink * 0.029
+          + mirrorLifeEyeWarmth * 0.0048
+          + max(0.0, mirrorLifeEyeAsymmetry) * 0.0022;
+        float mirrorLifeLowerClose =
+          mirrorLifeBlink * 0.0165
+          + mirrorLifeEyeWarmth * 0.0024
+          + max(0.0, -mirrorLifeEyeAsymmetry) * 0.0018;
+        transformed.y -= mirrorLifeUpperLidMask * mirrorLifeUpperClose;
+        transformed.y += mirrorLifeLowerLidMask * mirrorLifeLowerClose;
+        transformed.z += (mirrorLifeUpperLidMask + mirrorLifeLowerLidMask)
+          * mirrorLifeBlink * 0.0018;` : ""}
         vMirrorLifeSurfacePosition = transformed;`
       );
     shader.fragmentShader = shader.fragmentShader.replace(
@@ -6758,12 +6818,54 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v10-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v11-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
+  if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   target.add(mesh);
+  return mesh;
+}
+
+function installCivicLipShading(mesh) {
+  if (!mesh?.isMesh) return null;
+  const materials = Array.isArray(mesh.material) ? mesh.material : [mesh.material];
+  materials.filter(Boolean).forEach((material) => {
+    material.roughness = 0.78;
+    material.metalness = 0;
+    material.envMapIntensity = 0.48;
+    material.onBeforeCompile = (shader) => {
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          "#include <common>",
+          `#include <common>
+          varying float vMirrorLifeLipDepth;`
+        )
+        .replace(
+          "#include <morphtarget_vertex>",
+          `#include <morphtarget_vertex>
+          vMirrorLifeLipDepth = transformed.z;`
+        );
+      shader.fragmentShader = shader.fragmentShader
+        .replace(
+          "#include <common>",
+          `#include <common>
+          varying float vMirrorLifeLipDepth;`
+        )
+        .replace(
+          "#include <opaque_fragment>",
+          `#include <opaque_fragment>
+          float mirrorLifeLipCrease = smoothstep(0.0024, 0.0045, vMirrorLifeLipDepth);
+          float mirrorLifeLipCushion = 1.0 - smoothstep(0.0004, 0.0034, abs(vMirrorLifeLipDepth));
+          gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.19, 0.105, 0.102), mirrorLifeLipCrease * 0.54);
+          gl_FragColor.rgb += vec3(0.034, 0.018, 0.017) * mirrorLifeLipCushion * 0.26;`
+        );
+    };
+    material.customProgramCacheKey = () => "mirrorlife-civic-lip-volume-v1";
+    material.needsUpdate = true;
+  });
+  mesh.userData.mirrorLifeLipVolume = "mirrorlife-civic-lip-volume-v1";
   return mesh;
 }
 
@@ -7910,11 +8012,19 @@ function createCivicActorObject(actor, asset) {
     ? mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 })
     : null;
   const skirtDeformation = installCivicSkirtDeformation(skirtSurfaceMesh);
+  const eyeSurfaceMeshes = [];
   if (fullExpressionLod) {
-    eyePivots.forEach((eyePivot) => softenFacialShadowing(mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.46, envMapIntensity: 0.78 })));
+    eyePivots.forEach((eyePivot) => {
+      const eyeSurface = softenFacialShadowing(mergeActorVertexColorMeshes(eyePivot, [], {
+        roughness: 0.46,
+        envMapIntensity: 0.78,
+        eyeDeformation: true
+      }));
+      if (eyeSurface) eyeSurfaceMeshes.push(eyeSurface);
+    });
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
     if (mouthClosedPivot && mouthOpenPivot) {
-      softenFacialShadowing(mouthClosedMesh);
+      installCivicLipShading(softenFacialShadowing(mouthClosedMesh));
       // Sculpt v28 exports the closed mouth as one morphable curve. Keeping
       // that one mesh intact costs the same draw call as the former static
       // mouth batch, but lets its corners follow the cheek expression instead
@@ -8057,6 +8167,7 @@ function createCivicActorObject(actor, asset) {
     leftKnee,
     rightKnee,
     eyePivots: fullExpressionLod ? eyePivots : [],
+    eyeSurfaceMeshes: fullExpressionLod ? eyeSurfaceMeshes : [],
     browPivots: fullExpressionLod ? browPivots : [],
     mouthPivot: fullExpressionLod ? mouthPivot : null,
     mouthClosedPivot: fullExpressionLod ? mouthClosedPivot : null,
@@ -8232,7 +8343,9 @@ function updateActors(actors = [], now = performance.now()) {
       ? THREE.MathUtils.clamp(Number(smileInfluences?.[asymmetryIndexForFeatures] || 0), 0, 1)
       : 0;
     const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
-    const blinkScale = blinkCycle > 4.58
+    const blinkScale = CIVIC_FORCE_BLINK
+      ? 0.08
+      : blinkCycle > 4.58
       ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
       : 1;
     const blinkInfluence = 1 - blinkScale;
@@ -8255,18 +8368,38 @@ function updateActors(actors = [], now = performance.now()) {
         const restEyeX = Number(eyePivot.userData.mirrorLifeRestRotationX || 0);
         const restEyeY = Number(eyePivot.userData.mirrorLifeRestRotationY || 0);
         const restEyeZ = Number(eyePivot.userData.mirrorLifeRestRotationZ || 0);
-        const roleSquintBias = {
-          player: 0.015,
-          listener: 0.032,
-          facilitator: 0.024,
-          mediator: 0.04
-        }[entry.assetRole] || 0;
-        eyePivot.scale.z = blinkScale * (
-          1
-          - smileInfluenceForFeatures * 0.075
-          - attentiveInfluenceForFeatures * 0.09
-          - eyeSide * asymmetryInfluenceForFeatures * roleSquintBias
-        );
+        const eyeDeformation = entry.eyeSurfaceMeshes?.[eyeIndex]?.userData?.mirrorLifeEyeDeformation;
+        if (eyeDeformation) {
+          const eyeWarmth = THREE.MathUtils.clamp(
+            smileInfluenceForFeatures * 0.58 + attentiveInfluenceForFeatures * 0.52,
+            0,
+            1
+          );
+          const roleAsymmetryScale = {
+            player: 0.62,
+            listener: 0.9,
+            facilitator: 0.76,
+            mediator: 1
+          }[entry.assetRole] || 0.72;
+          eyeDeformation.blink = blinkInfluence;
+          eyeDeformation.warmth = eyeWarmth;
+          eyeDeformation.asymmetry = eyeSide * asymmetryInfluenceForFeatures * roleAsymmetryScale;
+          if (eyeDeformation.uniforms) {
+            eyeDeformation.uniforms.blink.value = eyeDeformation.blink;
+            eyeDeformation.uniforms.warmth.value = eyeDeformation.warmth;
+            eyeDeformation.uniforms.asymmetry.value = eyeDeformation.asymmetry;
+          }
+          // The eyeball retains its true volume while upper and lower lid
+          // vertices travel over it. Scaling the whole eye flattened the iris
+          // and sclera during every blink, which read as a rubber sticker.
+          eyePivot.scale.z = 1;
+        } else {
+          eyePivot.scale.z = blinkScale * (
+            1
+            - smileInfluenceForFeatures * 0.075
+            - attentiveInfluenceForFeatures * 0.09
+          );
+        }
         if (playerActor && actor.id !== playerActor.id && !walking) {
           const microSaccade = Math.sin(now * 0.0021 + frame * 1.37 + eyeIndex * 0.31) * 0.008;
           const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22 + microSaccade, -0.09, 0.09);
@@ -9196,7 +9329,7 @@ function getStats() {
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v13"
+          ? "mirrorlife-civic-face-volume-v14"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"
@@ -9204,6 +9337,7 @@ function getStats() {
             : CIVIC_FACE_MODE === "illustrated-cornea"
               ? "mirrorlife-civic-face-illustrated-cornea-v3"
               : "mirrorlife-civic-face-volume-v2",
+        lipVolume: entry.mouthClosedMesh?.userData?.mirrorLifeLipVolume || null,
         morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
         smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]
           ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.WarmSmile]
@@ -9225,13 +9359,23 @@ function getStats() {
         physicallyLit: true
       } : null,
       eyes: entry.eyePivots?.length ? {
-        version: "mirrorlife-civic-eye-volume-v1",
+        version: "mirrorlife-civic-eye-volume-v2",
         count: entry.eyePivots.length,
-        blinkAxis: "z",
-        verticalScale: Number((entry.eyePivots.reduce(
-          (sum, eyePivot) => sum + Number(eyePivot.scale.z || 0),
+        eyelidDeformation: "mirrorlife-civic-eyelid-vertex-v1",
+        blink: Number((entry.blinkInfluence || 0).toFixed(4)),
+        uniformReady: entry.eyeSurfaceMeshes?.every((mesh) => !!mesh.userData?.mirrorLifeEyeDeformation?.uniforms) || false,
+        uniformBlink: Number(((entry.eyeSurfaceMeshes || []).reduce(
+          (sum, mesh) => sum + Number(mesh.userData?.mirrorLifeEyeDeformation?.uniforms?.blink?.value || 0),
           0
-        ) / entry.eyePivots.length).toFixed(4))
+        ) / Math.max(1, entry.eyeSurfaceMeshes?.length || 0)).toFixed(4)),
+        upperLidWeight: Number(((entry.eyeSurfaceMeshes || []).reduce(
+          (sum, mesh) => sum + Number(mesh.userData?.mirrorLifeEyeDeformation?.upperWeight || 0),
+          0
+        ) / Math.max(1, entry.eyeSurfaceMeshes?.length || 0)).toFixed(2)),
+        lowerLidWeight: Number(((entry.eyeSurfaceMeshes || []).reduce(
+          (sum, mesh) => sum + Number(mesh.userData?.mirrorLifeEyeDeformation?.lowerWeight || 0),
+          0
+        ) / Math.max(1, entry.eyeSurfaceMeshes?.length || 0)).toFixed(2))
       } : null,
       secondaryMotionVersion: entry.secondaryMotionVersion || null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
