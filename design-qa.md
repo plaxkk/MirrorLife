@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v107 facial layering and grouped-hair gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v107-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v107-full.png`; focused cast comparison: `tmp/reference-vs-v107-cast-focus.png`; implementation delta: `tmp/v106-vs-v107-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v107-final-yaw90.png` and `tmp/v107-final-yaw180.png`. The same layered eyes, volumetric lips and grouped hair remain perspective-lit, depth-tested and attached to the complete actors rather than camera-facing substitutes.
+- Responsive evidence: `tmp/v107-final-mobile.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 280,808`, side `174 / 291,916`, reverse `175 / 298,044`; mobile `100 / 239,480`. The player walked `4.61m`, rotated the real camera `65.3°`, retained vertex-driven eyelid closure, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / eyes read as one dark bead without readable anatomy] Eye volume v3 adds independently modeled warm sclera, role-coloured iris ring, darker iris core, pupil, restrained glint and warm inner canthus. The existing weighted upper and lower eyelids continue to close over this stack instead of flattening the complete eye.
+- [improved / facial colour and mouth volume were harsher than the reference] Role skin palettes move toward lighter warm neutrals, and mouth morph v4 / lip volume v2 increase the continuous upper/lower lip thickness and widen the contour without adding a detached lower-lip bead.
+- [improved / hair read as repeated round tubes] Crown ribbons, fringe, face frames, back locks, ponytail layers, braid knots, temple waves and bob nape now use role-specific flattened oval sections and narrower style caps. This produces grouped planar locks that remain true 3D geometry through the side and reverse orbit.
+- [fixed / the first facial palette pass made the facilitator and mediator irises too bright] Their iris rings were darkened before the final capture, restoring eye contact without a startled teal halo.
+- [checked / facial detail remains Web-sized] Total civic GLBs are `7.10 MB`; every role remains below `2 MiB`. The opening frame remains at `171` draw calls and all desktop/mobile triangle gates remain satisfied.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, optical weights, one-line truncation and action labels remain stable at desktop and portrait sizes; the character-asset changes do not alter the UI layer.
+- [improved][spacing and layout rhythm] Narrower hair caps and flatter locks reduce repeated balloon-like silhouettes inside the listening circle while preserving actor roots, interaction anchors, metre-space paths and camera-safe framing.
+- [improved][colors and visual tokens] Lighter warm skin, darker iris cores and stronger hair highlight separation move the cast toward the reference while retaining the established teal, green, oatmeal, coral, oak, plaster, terrazzo and brass hierarchy.
+- [improved][image quality and asset fidelity] Facial anatomy and hair grouping are authored GLB meshes with real depth, material response and skeleton/head attachment. They survive movement plus `0°`, `90°`, `180°` views; no sprite, billboard, CSS avatar or camera-facing cover is used.
+- [checked][copy and content] Location, story-memory title, interaction target and four listening actions remain coherent with the visible civic sequence.
+- [P1][facial surface construction remains below the source] The reference still has finer eyelid rims, cheek compression, nose-to-mouth planes, lip-edge definition, brow deformation and expression weighting than the runtime cast.
+- [P1][hair construction remains below the source] The new grouped locks remove much of the tube repetition, but root breakup, strand density, silhouette flyaways and anisotropic material variation remain visibly simpler.
+- [P1][room dressing, materials and indirect light remain below the source] The implementation is a coherent playable room, while the selected offline frame still has denser bespoke props, softer contact penumbrae, richer bounce colour and more local surface variation.
+
+### Gate result
+
+v107 replaces the remaining single-layer eye shortcut with readable volumetric anatomy, strengthens the continuous lip surface and converts repeated round locks into flatter grouped hair while preserving skeleton animation, movement, physics, orbit, mobile LOD and performance gates. The literal same-size comparison is closer in facial readability and character separation, but it does not yet equal the selected offline image's face topology, hair authoring or light transport.
+
+final result: blocked
+
+Blocker: source-level facial topology and expression weighting, denser root-authored hair with material variation, bespoke prop/material density and offline-quality indirect-light construction remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v106 authored garment topology gate
 
 ### Evidence inspected together

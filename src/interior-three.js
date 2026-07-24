@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v61";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v62";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -6862,10 +6862,10 @@ function installCivicLipShading(mesh) {
           gl_FragColor.rgb += vec3(0.034, 0.018, 0.017) * mirrorLifeLipCushion * 0.26;`
         );
     };
-    material.customProgramCacheKey = () => "mirrorlife-civic-lip-volume-v1";
+    material.customProgramCacheKey = () => "mirrorlife-civic-lip-volume-v2";
     material.needsUpdate = true;
   });
-  mesh.userData.mirrorLifeLipVolume = "mirrorlife-civic-lip-volume-v1";
+  mesh.userData.mirrorLifeLipVolume = "mirrorlife-civic-lip-volume-v2";
   return mesh;
 }
 
@@ -8196,7 +8196,7 @@ function createCivicActorObject(actor, asset) {
     secondaryMotion,
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v1",
-    styleKey: `${frame}:${role}:civic-glb-v20`,
+    styleKey: `${frame}:${role}:civic-glb-v21`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -8217,7 +8217,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v20` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v21` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -9349,7 +9349,7 @@ function getStats() {
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v14"
+          ? "mirrorlife-civic-face-volume-v15"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"
@@ -9379,7 +9379,7 @@ function getStats() {
         physicallyLit: true
       } : null,
       eyes: entry.eyePivots?.length ? {
-        version: "mirrorlife-civic-eye-volume-v2",
+        version: "mirrorlife-civic-eye-volume-v3",
         count: entry.eyePivots.length,
         eyelidDeformation: "mirrorlife-civic-eyelid-vertex-v1",
         blink: Number((entry.blinkInfluence || 0).toFixed(4)),

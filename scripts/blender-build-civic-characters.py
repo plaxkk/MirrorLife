@@ -10,10 +10,11 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#efb184",
+        "skin": "#f2bc96",
         "hair": "#3b3947",
-        "hair_highlight": "#5b5865",
+        "hair_highlight": "#706d78",
         "eye": "#3f342d",
+        "eye_ring": "#776153",
         "top": "#e6dbc9",
         "outer": "#71825a",
         # Lift the trousers out of near-black so folds, cargo pockets and knee
@@ -29,10 +30,11 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#edac80",
+        "skin": "#f1b991",
         "hair": "#303744",
-        "hair_highlight": "#46515e",
+        "hair_highlight": "#596675",
         "eye": "#3a312b",
+        "eye_ring": "#716153",
         "top": "#258b82",
         "outer": "#eee4d3",
         "lower": "#aa9270",
@@ -43,13 +45,14 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f1b58a",
+        "skin": "#f3bf9a",
         "hair": "#d45f52",
-        "hair_highlight": "#df6c60",
+        "hair_highlight": "#ed786b",
         # Keep role tint in the iris, but anchor it in the same near-charcoal
         # value family as the reference cast. The lighter green read as glass
         # beads once the face was reduced to gameplay size.
         "eye": "#294c43",
+        "eye_ring": "#45685f",
         "top": "#eadfce",
         # A warmer oatmeal cardigan preserves the source's cloth hierarchy
         # under the strong portal key; near-white previously clipped into flat
@@ -63,10 +66,11 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#efae83",
+        "skin": "#f1ba93",
         "hair": "#6b4a3c",
-        "hair_highlight": "#795a4d",
+        "hair_highlight": "#8b6959",
         "eye": "#354334",
+        "eye_ring": "#4f654d",
         "top": "#e9decd",
         "outer": "#ccb79a",
         "lower": "#47745d",
@@ -159,60 +163,60 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0575,
-        "eye_height": 0.0328,
-        "iris_width": 0.0288,
-        "iris_height": 0.0303,
+        "eye_width": 0.0615,
+        "eye_height": 0.0365,
+        "iris_width": 0.027,
+        "iris_height": 0.0295,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
         "brow_inner": -0.002,
-        "mouth_width": 0.0405,
+        "mouth_width": 0.0435,
         "mouth_corner": 0.002,
         "mouth_center": -0.003,
         "cheek_forward": 1.0,
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.057,
-        "eye_height": 0.0324,
-        "iris_width": 0.0285,
-        "iris_height": 0.0298,
+        "eye_width": 0.061,
+        "eye_height": 0.036,
+        "iris_width": 0.0265,
+        "iris_height": 0.029,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
         "brow_inner": -0.001,
-        "mouth_width": 0.0415,
+        "mouth_width": 0.0445,
         "mouth_corner": 0.004,
         "mouth_center": -0.002,
         "cheek_forward": 0.94,
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.0585,
-        "eye_height": 0.0335,
-        "iris_width": 0.0293,
-        "iris_height": 0.031,
+        "eye_width": 0.0625,
+        "eye_height": 0.037,
+        "iris_width": 0.0275,
+        "iris_height": 0.0305,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
         "brow_inner": -0.003,
-        "mouth_width": 0.0425,
+        "mouth_width": 0.0455,
         "mouth_corner": 0.005,
         "mouth_center": -0.002,
         "cheek_forward": 1.08,
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0575,
-        "eye_height": 0.0328,
-        "iris_width": 0.0288,
-        "iris_height": 0.0303,
+        "eye_width": 0.0615,
+        "eye_height": 0.0365,
+        "iris_width": 0.027,
+        "iris_height": 0.0295,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
         "brow_inner": 0.001,
-        "mouth_width": 0.0405,
+        "mouth_width": 0.0435,
         "mouth_corner": 0.002,
         "mouth_center": -0.002,
         "cheek_forward": 0.98,
@@ -775,10 +779,10 @@ def morphable_mouth_surface(name, width, corner_height, centre_height, mat, pare
         cupid = max(0.0, 1.0 - abs(normalized_x) / 0.42)
         x = normalized_x * width
         vertices.extend((
-            (x, 0.0006, centre_line + volume * 0.0051 + cupid * 0.0011),
-            (x, -0.0039, centre_line + volume * 0.0008),
-            (x, -0.0047, centre_line - volume * 0.0011),
-            (x, -0.0002, centre_line - volume * 0.0055),
+            (x, 0.0005, centre_line + volume * 0.0072 + cupid * 0.0015),
+            (x, -0.0044, centre_line + volume * 0.001),
+            (x, -0.0055, centre_line - volume * 0.0014),
+            (x, -0.0004, centre_line - volume * 0.0076),
         ))
     faces = []
     for index in range(segments):
@@ -828,11 +832,11 @@ def morphable_mouth_surface(name, width, corner_height, centre_height, mat, pare
         asymmetry.data[index].co.z += edge * side * 0.006
         asymmetry.data[index].co.x *= 1.0 + edge * side * 0.012
         asymmetry.data[index].co.y -= centre * (1.0 - side) * 0.0007
-    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v3"
+    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v4"
     return obj
 
 
-def tapered_lock(name, points, radii, mat, parent=None, sides=10):
+def tapered_lock(name, points, radii, mat, parent=None, sides=10, oval_ratio=0.72):
     """Build a light, curved and tapered hair lock instead of a capsule fringe."""
     if len(points) != len(radii) or len(points) < 2:
         raise ValueError("tapered_lock requires matching point/radius arrays")
@@ -850,7 +854,7 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10):
             angle = math.tau * side / sides
             # A path-aligned oval prevents the sheared, stacked-cylinder look
             # that the old horizontal rings produced on curved fringe locks.
-            coordinate = point + normal * (math.cos(angle) * radius) + binormal * (math.sin(angle) * radius * 0.72)
+            coordinate = point + normal * (math.cos(angle) * radius) + binormal * (math.sin(angle) * radius * oval_ratio)
             vertices.append(tuple(coordinate))
     for ring in range(len(points) - 1):
         base = ring * sides
@@ -1518,6 +1522,7 @@ def build_materials(role, config):
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
         "eye_white": material(f"{role} eye white", "#efe6dc", 0.52, clearcoat=0.07),
+        "eye_ring": material(f"{role} iris ring", config["eye_ring"], 0.43, clearcoat=0.11),
         "iris": material(f"{role} iris", config["eye"], 0.38, clearcoat=0.2),
         # Warm charcoal keeps the illustrated eye and lash language while
         # avoiding the pure-black sticker effect visible in the v77 paired
@@ -1667,7 +1672,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.083, -0.183, 0.042))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.085, -0.186, 0.044))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -1685,18 +1690,42 @@ def build_face(head, mats, role):
         outer_lift = face_profile["outer_eye_lift"]
         eye.rotation_euler.y = side * outer_lift * 2.8
         eye.rotation_euler.z = -side * outer_lift * 3.2
-        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0088, eye_height), mats["eye_white"], eye, segments=30, rings=18)
+        ellipsoid(f"EyeWhite_{side}", (0, -0.001, 0), (eye_width, 0.0092, eye_height), mats["eye_white"], eye, segments=30, rings=18)
         ellipsoid(
             f"Iris_{side}",
-            (-side * 0.001, -0.0092, -0.002),
+            (-side * 0.001, -0.0095, -0.001),
             (face_profile["iris_width"], 0.0052, face_profile["iris_height"]),
-            mats["iris"],
+            mats["eye_ring"],
             eye,
             segments=24,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0112, 0.0022, 0.0142), mats["ink"], eye, segments=20, rings=12)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0163, 0.006), (0.0028, 0.001, 0.003), mats["eye_white"], eye, segments=12, rings=8)
+        # A lighter outer iris and darker core retain role colour while keeping
+        # the pupil distinct at the gameplay camera. The former single dark
+        # ellipse collapsed into a black slit once lids and shadows were
+        # composited.
+        ellipsoid(
+            f"IrisCore_{side}",
+            (-side * 0.001, -0.014, -0.002),
+            (face_profile["iris_width"] * 0.72, 0.0028, face_profile["iris_height"] * 0.76),
+            mats["iris"],
+            eye,
+            segments=18,
+            rings=10,
+        )
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0162, -0.003), (0.0088, 0.0018, 0.0115), mats["ink"], eye, segments=16, rings=10)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0065, -0.0181, 0.007), (0.0034, 0.0009, 0.0037), mats["eye_white"], eye, segments=10, rings=6)
+        # A warm inner canthus connects the sclera to the nose/cheek plane and
+        # removes the synthetic appearance of two ellipsoids pasted on skin.
+        ellipsoid(
+            f"EyeCanthus_{side}",
+            (-side * (eye_width - 0.004), -0.0176, -0.002),
+            (0.0062, 0.0015, 0.0044),
+            mats["blush"],
+            eye,
+            segments=12,
+            rings=8,
+        )
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -1730,7 +1759,7 @@ def build_face(head, mats, role):
             # Strong illustrated linework is a defining part of the source.
             # The former sub-two-millimetre tube vanished after perspective
             # projection and left two bead-like irises floating on the face.
-            0.0023 if feminine else 0.00215,
+            0.00205 if feminine else 0.0019,
             mats["ink"],
             eye,
             resolution=2,
@@ -1757,7 +1786,7 @@ def build_face(head, mats, role):
             brow,
         )
         # Blush is a low-contrast cheek tint, not a graphic face sticker.
-        ellipsoid(f"Blush_{side}", (side * 0.146, -0.194, -0.047), (0.024, 0.002, 0.0065), mats["blush"], head, segments=16, rings=8)
+        ellipsoid(f"Blush_{side}", (side * 0.146, -0.194, -0.047), (0.026, 0.002, 0.007), mats["blush"], head, segments=16, rings=8)
     # The gameplay camera sees the nose at only a few pixels.  Keep genuine
     # volume for three-quarter lighting, but reduce the former bead-like tip
     # and red underline that made the face feel assembled from primitives.
@@ -1786,7 +1815,12 @@ def build_hair(head, mats, style):
     # Keep the cap inside the face silhouette.  A wide full sphere reads like a
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
-    cap_scale = (0.258, 0.178, 0.226) if style == "spiky" else (0.272, 0.196, 0.238)
+    cap_scale = {
+        "spiky": (0.258, 0.178, 0.226),
+        "cap": (0.262, 0.188, 0.23),
+        "coral_ponytail": (0.258, 0.19, 0.232),
+        "braided_bob": (0.26, 0.19, 0.23),
+    }.get(style, (0.262, 0.19, 0.232))
     cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=50, rings=32)
     # Break the mathematically perfect helmet silhouette without adding a
     # second shell or more triangles. Five broad crown lobes reshape the same
@@ -1848,10 +1882,11 @@ def build_hair(head, mats, style):
                 ((front_x + rear_x) * 0.5, 0.015, 0.286 - abs(rear_x) * 0.035),
                 (rear_x, 0.132, 0.19 - abs(rear_x) * 0.065),
             ],
-            (0.014, 0.012, 0.009, 0.003),
+            (0.026, 0.023, 0.017, 0.003),
             mats["hair_highlight"],
             head,
-            sides=8,
+            sides=10,
+            oval_ratio=0.34,
         )
     # Six overlapping, wider locks replace the comb-like row of eight narrow
     # points. The silhouette reads as deliberately grouped hair at the story
@@ -1878,6 +1913,7 @@ def build_hair(head, mats, style):
             mats["hair_highlight"] if index in (1, 4) else mats["hair"],
             head,
             sides=16,
+            oval_ratio=0.5,
         )
     for side in (-1, 1):
         side_height = 0.125 if style == "spiky" else 0.17
@@ -1894,6 +1930,7 @@ def build_hair(head, mats, style):
             mats["hair"],
             head,
             sides=18,
+            oval_ratio=0.6,
         )
         # A broad front-to-temple lock bridges the crown, fringe and side
         # volume. Without it, the large cap remained a helmet with decorative
@@ -1923,6 +1960,7 @@ def build_hair(head, mats, style):
             mats["hair_highlight"] if side == -1 else mats["hair"],
             head,
             sides=14,
+            oval_ratio=0.48,
         )
 
     if style == "spiky":
@@ -1941,6 +1979,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"] if index == 1 else mats["hair"],
                 head,
                 sides=18,
+                oval_ratio=0.48,
             )
         # Break the rear silhouette into swept clumps.  These overlap the cap
         # at their roots, so the gameplay camera sees one authored hairstyle
@@ -1964,6 +2003,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
                 sides=18,
+                oval_ratio=0.44,
             )
     elif style == "coral_ponytail":
         ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.15, 0.13, 0.16), mats["hair"], head, segments=24, rings=14)
@@ -2015,6 +2055,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"] if index != 1 else mats["hair"],
                 ponytail,
                 sides=16,
+                oval_ratio=0.5,
             )
     elif style == "braided_bob":
         for index, x in enumerate((-0.22, -0.11, 0, 0.11, 0.22)):
@@ -2030,6 +2071,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
                 sides=12,
+                oval_ratio=0.5,
             )
         # Two articulated-looking side braids give the mediator the authored
         # crown-and-bob silhouette from the reference instead of five isolated
@@ -2059,6 +2101,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"],
                 head,
                 sides=10,
+                oval_ratio=0.48,
             )
         # A bob needs a continuous nape silhouette as well as decorative
         # crown knots. These overlapping rear locks bridge the cap to the neck
@@ -2081,6 +2124,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
                 sides=16,
+                oval_ratio=0.44,
             )
 
 
@@ -2983,7 +3027,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v61",
+        "sculptContract": "mirrorlife-civic-sculpt-v62",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v4",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -3039,14 +3083,14 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-volume-v14",
+            "integrationContract": "mirrorlife-civic-face-volume-v15",
             "productionFaceMode": "sculpted-volume",
-            "productionIntegrationContract": "mirrorlife-civic-face-volume-v14",
+            "productionIntegrationContract": "mirrorlife-civic-face-volume-v15",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
-            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v3",
-            "lipVolumeContract": "mirrorlife-civic-lip-volume-v1",
-            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v2",
+            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
+            "lipVolumeContract": "mirrorlife-civic-lip-volume-v2",
+            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v3",
             "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],

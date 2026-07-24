@@ -73,10 +73,10 @@ try {
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
   assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic production face unexpectedly fell back to a texture layer");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v14"), "civic actors did not preserve the production volumetric facial contract");
-  assert(opening.actors.every((actor) => actor.facial?.lipVolume === "mirrorlife-civic-lip-volume-v1"), "civic actors did not expose the volumetric lip contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v15"), "civic actors did not preserve the production volumetric facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.lipVolume === "mirrorlife-civic-lip-volume-v2"), "civic actors did not expose the volumetric lip contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic volumetric facial morph set is incomplete");
-  assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v2" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
+  assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v3" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
   assert(opening.actors.every((actor) => actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v1"), "civic actors did not expose vertex-driven eyelids");
   assert(opening.actors.every((actor) => actor.eyes?.uniformReady === true), "civic eyelid shader uniforms did not compile");
   assert(opening.actors.every((actor) => Number(actor.eyes?.upperLidWeight || 0) > 250 && Number(actor.eyes?.lowerLidWeight || 0) > 25), "civic eyelid vertex weights are incomplete");

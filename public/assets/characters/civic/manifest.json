@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v61",
+  "sculptContract": "mirrorlife-civic-sculpt-v62",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v4",
     "roles": [
@@ -98,9 +98,9 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-volume-v14",
+    "integrationContract": "mirrorlife-civic-face-volume-v15",
     "productionFaceMode": "sculpted-volume",
-    "productionIntegrationContract": "mirrorlife-civic-face-volume-v14",
+    "productionIntegrationContract": "mirrorlife-civic-face-volume-v15",
     "uvContract": "mirrorlife-civic-head-uv-v1",
     "preservedSculptParts": [
       "Head",
@@ -109,9 +109,9 @@
       "EyePivot_-1",
       "EyePivot_1"
     ],
-    "mouthMorphContract": "mirrorlife-civic-mouth-morph-v3",
-    "lipVolumeContract": "mirrorlife-civic-lip-volume-v1",
-    "eyeGeometryContract": "mirrorlife-civic-eye-volume-v2",
+    "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
+    "lipVolumeContract": "mirrorlife-civic-lip-volume-v2",
+    "eyeGeometryContract": "mirrorlife-civic-eye-volume-v3",
     "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v1",
     "eyeGeometryParts": [
       "EyePivot_-1",
@@ -180,26 +180,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 119,
-      "triangles": 37948
+      "meshes": 123,
+      "triangles": 38556
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 105,
-      "triangles": 35456
+      "meshes": 109,
+      "triangles": 36064
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 127,
-      "triangles": 41478
+      "meshes": 131,
+      "triangles": 42086
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 139,
-      "triangles": 40072
+      "meshes": 143,
+      "triangles": 40680
     }
   }
 }
