@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v53";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v54";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -107,7 +107,7 @@ const LIGHTING_PRESETS = Object.freeze({
   // by broad cream-wall and terrazzo bounce rather than falling into the hard
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
-  "civic-ivory": { key: 1.84, fill: 0.31, hemi: 0.34, bounce: 0.78, wash: 0.48, exposure: 0.9, keyColor: "#ffdbb7", fillColor: "#bed9d8" },
+  "civic-ivory": { key: 1.74, fill: 0.29, hemi: 0.32, bounce: 0.72, wash: 0.44, exposure: 0.87, keyColor: "#ffdbb7", fillColor: "#bed9d8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -524,7 +524,7 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.045 * strength) + vec3(0.58));
+        color = max(vec3(0.0), (color - vec3(0.56)) * (1.0 + 0.065 * strength) + vec3(0.56));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
@@ -538,7 +538,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.02 * strength;
+        color *= 1.0 - vignette * 0.028 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -3454,6 +3454,67 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
       group.add(line);
     });
   }
+
+  // The reverse wall must feel authored when the player completes a 180°
+  // orbit, not like the unfinished back of a film set. A shallow oak picture
+  // rail and two low-glare sconces establish the same warm vertical rhythm as
+  // the reference's arched threshold and pendant lights without taking any
+  // walkable floor area.
+  const pictureRail = new THREE.Mesh(
+    new RoundedBoxGeometry(5.72, 0.12, 0.12, 3, 0.035),
+    oak
+  );
+  pictureRail.position.set(0, 3.42, 0.08);
+  group.add(pictureRail);
+  const pictureRailReveal = new THREE.Mesh(
+    new RoundedBoxGeometry(5.48, 0.025, 0.035, 2, 0.009),
+    createToonMaterial("#d2a64c", {
+      roughness: 0.32,
+      metalness: 0.62,
+      envMapIntensity: 0.92
+    })
+  );
+  pictureRailReveal.position.set(0, 3.33, 0.155);
+  group.add(pictureRailReveal);
+  [-2.48, 2.48].forEach((sconceX) => {
+    const backplate = new THREE.Mesh(
+      new RoundedBoxGeometry(0.18, 0.46, 0.075, 4, 0.065),
+      walnut
+    );
+    backplate.position.set(sconceX, 2.6, 0.15);
+    group.add(backplate);
+    const stem = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.026, 0.28, 10),
+      createToonMaterial("#c89b43", {
+        roughness: 0.3,
+        metalness: 0.68,
+        envMapIntensity: 0.96
+      })
+    );
+    stem.position.set(sconceX, 2.6, 0.29);
+    stem.rotation.x = Math.PI / 2;
+    group.add(stem);
+    const globe = new THREE.Mesh(
+      new THREE.SphereGeometry(0.14, 20, 12),
+      createToonMaterial("#f5dfb7", {
+        roughness: 0.34,
+        emissive: 0xffc977,
+        emissiveIntensity: 0.24,
+        envMapIntensity: 0.72
+      })
+    );
+    globe.scale.set(0.86, 1.14, 0.82);
+    globe.position.set(sconceX, 2.6, 0.46);
+    group.add(globe);
+    const wash = new THREE.PointLight(
+      0xffc987,
+      mobileLod ? 0.18 : 0.34,
+      2.45,
+      2.25
+    );
+    wash.position.set(sconceX, 2.52, 0.58);
+    group.add(wash);
+  });
 
   // Keep the low witness bench as an independent foreground assembly. At the
   // 180° orbit the camera sits directly behind it; merging it into the wall
@@ -7363,8 +7424,24 @@ function applyCivicAnimationPose(entry, animationPose) {
     const node = entry[joint];
     const rotation = animationPose[joint];
     if (!node || !rotation) return;
-    const preservedYaw = joint === "visual" ? node.rotation.y : rotation[1];
-    node.rotation.set(rotation[0], preservedYaw, rotation[2]);
+    if (joint === "visual") {
+      const preservedYaw = node.rotation.y;
+      node.rotation.set(rotation[0], preservedYaw, rotation[2]);
+      return;
+    }
+    const state = entry.controllerJoints?.[joint];
+    if (!state) {
+      node.rotation.set(rotation[0], rotation[1], rotation[2]);
+      return;
+    }
+    state.deltaEuler.set(rotation[0], rotation[1], rotation[2], "XYZ");
+    state.deltaQuaternion.setFromEuler(state.deltaEuler);
+    // Hand pivots carry a role-authored grip orientation in the exported
+    // asset. Replacing their quaternion with the animation delta flattened
+    // the facilitator's fingers through the notebook and turned the
+    // mediator's thoughtful hand edge-on. Compose the clip over every
+    // controller's rest pose just as we already do for the deformation rig.
+    state.node.quaternion.copy(state.restQuaternion).multiply(state.deltaQuaternion);
   });
   Object.entries(entry.skinJoints || {}).forEach(([joint, state]) => {
     const rotation = animationPose[joint];
@@ -7445,6 +7522,28 @@ function createCivicActorObject(actor, asset) {
       deltaQuaternion: new THREE.Quaternion()
     } : null];
   }));
+  const controllerJointNodes = {
+    headGroup,
+    leftArm,
+    rightArm,
+    leftElbow,
+    rightElbow,
+    leftHand,
+    rightHand,
+    leftLeg,
+    rightLeg,
+    leftKnee,
+    rightKnee
+  };
+  const controllerJoints = Object.fromEntries(Object.entries(controllerJointNodes).map(([track, node]) => [
+    track,
+    node ? {
+      node,
+      restQuaternion: node.quaternion.clone(),
+      deltaEuler: new THREE.Euler(),
+      deltaQuaternion: new THREE.Quaternion()
+    } : null
+  ]));
   const skinnedMeshes = [];
   assetScene.traverse((node) => {
     if (node.isSkinnedMesh) skinnedMeshes.push(node);
@@ -7729,11 +7828,12 @@ function createCivicActorObject(actor, asset) {
     faceDecal,
     faceCornea: faceDecal?.getObjectByName("CivicCorneaLenses") || null,
     faceMode: CIVIC_FACE_MODE,
+    controllerJoints,
     skinJoints,
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v14`,
+    styleKey: `${frame}:${role}:civic-glb-v15`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7754,7 +7854,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v14` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v15` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8327,7 +8427,7 @@ function updateCamera(payload = {}) {
     // frame height, leaving visible floor language around the social circle.
     // This distance still supports readable faces while preventing the player
     // and backpack from becoming a foreground wall.
-    ? (portrait ? 5.2 : 5.6 + civicRearArc * 0.72 + civicSideArc * 0.34)
+    ? (portrait ? 5.2 : 5.42 + civicRearArc * 0.8 + civicSideArc * 0.42)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 3.18 + civicRearArc * 0.46 + civicSideArc * 0.38) + pitchOffset * 1.35
@@ -8781,7 +8881,7 @@ function getStats() {
         rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v4",
+        version: "mirrorlife-civic-hand-v5",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,

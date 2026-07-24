@@ -359,6 +359,8 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
         for ring_index, ring in enumerate(rings):
             z, radius_x, radius_y = ring[:3]
             centre_y = ring[3] if len(ring) > 3 else 0
+            inward_offset = ring[4] if len(ring) > 4 else 0
+            ring_centre_x = centre_x + (-1 if centre_x > 0 else 1) * inward_offset
             # Cosine smoothstep across a 15 cm elbow/knee band gives the
             # illustrated soft bend missing from the former hard seam.
             lower_weight = max(0.0, min(1.0, (joint_z + blend_half - z) / (blend_half * 2)))
@@ -366,7 +368,7 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
             for side_index in range(sides):
                 angle = math.tau * side_index / sides
                 vertices.append((
-                    centre_x + math.cos(angle) * radius_x,
+                    ring_centre_x + math.cos(angle) * radius_x,
                     centre_y + math.sin(angle) * radius_y,
                     z,
                 ))
@@ -742,7 +744,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v4"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v5"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -766,7 +768,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         "relaxed": {"curl": 0.38, "splay": 1.0, "thumb": 0.34},
         "open": {"curl": 0.12, "splay": 1.28, "thumb": 0.18},
         "soft-cup": {"curl": 0.56, "splay": 0.72, "thumb": 0.5},
-        "notebook-grip": {"curl": 0.86, "splay": 0.42, "thumb": 0.72},
+        "notebook-grip": {"curl": 0.92, "splay": 0.36, "thumb": 0.82},
         "thoughtful": {"curl": 0.64, "splay": 0.58, "thumb": 0.6},
     }
     profile = pose_profiles.get(pose_style, pose_profiles["relaxed"])
@@ -778,10 +780,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # the reference's soft illustrated hands. The earlier 26 mm spacing
         # and 16 mm radii resolved as four separate wires at the story camera;
         # these fuller, closer roots read as one palm with finger articulation.
-        (-0.031, 0.045, 0.0192, -side * 0.0014, 0.005),
-        (-0.010, 0.052, 0.0204, -side * 0.0005, 0.007),
-        (0.010, 0.05, 0.0202, side * 0.0005, 0.007),
-        (0.031, 0.043, 0.0187, side * 0.0015, 0.005),
+        (-0.031, 0.044, 0.0192, -side * 0.0014, 0.005),
+        (-0.010, 0.054, 0.0204, -side * 0.0005, 0.007),
+        (0.010, 0.051, 0.0202, side * 0.0005, 0.007),
+        (0.031, 0.041, 0.0187, side * 0.0015, 0.005),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         finger_pivot = empty(
@@ -1972,17 +1974,23 @@ def build_body(role, config, mats, visual):
         "SkinnedArmVolume",
         (-shoulder_x, shoulder_x),
         tuple(
-            (z, radius_x * arm_width, radius_y * arm_depth, centre_y)
-            for z, radius_x, radius_y, centre_y in (
-                (1.245, 0.09, 0.082, 0.001),
-                (1.175, 0.08, 0.075, 0.003),
-                (1.09, 0.077, 0.072, 0.004),
-                (1.015, 0.07, 0.066, 0.003),
-                (0.975, 0.065, 0.061, 0),
-                (0.93, 0.066, 0.062, -0.002),
-                (0.845, 0.063, 0.059, -0.004),
-                (0.76, 0.06, 0.056, -0.004),
-                (0.675, 0.054, 0.05, -0.002),
+            (z, radius_x * arm_width, radius_y * arm_depth, centre_y, inward_offset)
+            for z, radius_x, radius_y, centre_y, inward_offset in (
+                # Pull the upper rings into the shoulder line before releasing
+                # them toward the elbow. A perfectly vertical tube exposed
+                # the rig as a mannequin at three-quarter angles; this
+                # centimetre-scale S profile gives the sleeve a believable
+                # deltoid-to-bicep transition while preserving the collider.
+                (1.245, 0.096, 0.088, 0.001, 0.018),
+                (1.19, 0.092, 0.084, 0.004, 0.012),
+                (1.12, 0.082, 0.076, 0.006, 0.005),
+                (1.05, 0.077, 0.071, 0.005, 0.001),
+                (1.015, 0.071, 0.067, 0.003, 0),
+                (0.975, 0.066, 0.062, 0, 0),
+                (0.93, 0.068, 0.064, -0.004, 0),
+                (0.845, 0.064, 0.06, -0.006, 0),
+                (0.76, 0.06, 0.056, -0.004, 0),
+                (0.675, 0.054, 0.05, -0.002, 0),
             )
         ),
         0.975,
@@ -2677,7 +2685,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v53",
+        "sculptContract": "mirrorlife-civic-sculpt-v54",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2718,7 +2726,7 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v4",
+            "version": "mirrorlife-civic-hand-v5",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
             "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
@@ -2729,7 +2737,7 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v10",
+            "version": "mirrorlife-civic-clips-v11",
             "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

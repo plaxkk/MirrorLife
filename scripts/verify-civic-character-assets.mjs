@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v53", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v54", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v3", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -55,7 +55,7 @@ assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-mor
 assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v1", "civic eye geometry contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v4", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v5", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.deepEqual(manifest.handContract?.surfaceParts, ["PalmLifeLine", "PalmHeartLine"], "civic hand surface parts changed");
 assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v4", "civic footwear contract is stale");

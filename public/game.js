@@ -7165,13 +7165,14 @@ function stagePublicListeningEnsemble(zone, entries = []) {
   const staged = qaComposition ? [] : entries
     .filter((entry) => witnessIds.has(entry.id))
     .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
+  const compactCivicComposition = qaComposition && window.innerWidth <= 720;
   const listeningPoints = qaComposition ? [
-    { x: -1.54, z: 0.14 },
-    { x: 1.54, z: 0.18 },
-    // Keep the rear mediator on the source image's right-hand story axis.
-    // Aligning them with the player's back hid the complete role silhouette
-    // and made a four-person hearing read as a three-person triangle.
-    { x: 1.12, z: -1.42 }
+    { x: compactCivicComposition ? -1.36 : -1.54, z: compactCivicComposition ? 0.32 : 0.14 },
+    { x: compactCivicComposition ? 1.36 : 1.54, z: compactCivicComposition ? 0.34 : 0.18 },
+    // Portrait framing needs the rear mediator closer to the centreline;
+    // leaving the desktop offset unchanged placed them exactly behind the
+    // facilitator and made a four-person hearing read as a three-person scene.
+    { x: compactCivicComposition ? 0.42 : 1.12, z: compactCivicComposition ? -1.52 : -1.42 }
   ] : [
     { x: 0.9, z: -1.45 },
     { x: 3.15, z: 0.72 },

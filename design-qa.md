@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v99 hand acting, reverse-orbit and tonal-depth gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport and story state: `tmp/v99-final-yaw0.png` (`1672 × 941`, `166 / 283,272`, renderer pixel ratio `1.2`, `4×` MSAA).
+- Mandatory full-view comparison: `tmp/reference-vs-v99-full.png`; source and runtime are adjacent at their unscaled native size.
+- Mandatory focused comparison: `tmp/reference-vs-v99-cast-focus.png`; the social-circle crops isolate shoulder, elbow, wrist, hand, gaze and costume relationships.
+- Full-orbit evidence: `tmp/v99-final-yaw90.png` and `tmp/v99-final-yaw180.png`; the reverse wall now retains an authored picture rail, paired sconces and local warm washes instead of exposing a blank shell.
+- Responsive evidence: `tmp/v99-final-mobile.png` (`390 × 844`, `100 / 243,496`, three-character performance LOD). Mobile retains the player, listener and active facilitator inside the story circle while remaining below the `110 / 250k` hard ceiling.
+- Physical/runtime evidence: the same volumetric GLB player walked `4.25m`, rotated the real perspective camera `65.3°`, passed metre-space physics and desktop/mobile scene flow, and completed `78` transitions across all `26` rooms without failure or runtime exception.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / exported wrist poses disappeared at runtime] Controller-joint animation previously replaced each exported wrist quaternion with a delta rotation, erasing the facilitator's notebook grip and the mediator's thoughtful-hand orientation. Runtime now composes `restQuaternion × animationDelta`, matching the skinned-joint contract and preserving role-authored wrist poses through idle/listen blending.
+- [improved / upper limbs still read as straight toy tubes] Arm ring profiles gain a restrained inward shoulder and outward bicep curve with a tapered forearm transition. The silhouette is softer without increasing character height, capsule size or adding disconnected overlay geometry.
+- [improved / facilitator fingers intersected the notebook] Hand contract v5 differentiates finger lengths and adjusts curl, splay and thumb opposition around the held prop. The book remains a real articulated accessory and follows both wrist controllers during animation.
+- [improved / opening cast remained too small] The public-room hero orbit moves from `5.60m` to `5.42m`; the story group grows by roughly `3–4%` while the entrance, listener wall and lounge remain inside the opening composition.
+- [fixed / reverse orbit exposed an undirected blank wall] A continuous oak picture rail, brass reveal and two low-glare frosted sconces establish scale and warm hierarchy at `180°`. These are real room volumes and local lights, not a camera-facing backdrop.
+- [improved / room values remained washed and material bands collapsed] Civic light levels are restrained, exposure moves from `0.90` to `0.87`, bounce/wash are reduced and the cinematic grade gains modest contrast and edge falloff. Ivory plaster, terrazzo, oak, teal textile and the cast now separate more clearly without crushing mobile faces.
+- [checked / no gameplay or budget regression] Desktop opening is `166 / 283,272`; settled side/reverse views remain below `180 / 450k`; portrait mobile is `100 / 243,496`. Civic assets total `7.67 MB` and pass sculpt v54, animation v11, hand v5, skin and footwear contracts.
+
+### Required fidelity surfaces and findings
+
+- [improved][social acting] The notebook grip, mediator hand, listener arm separation and role-specific torso openings survive the real animation layer instead of reverting to a shared mannequin pose.
+- [improved][spatial composition] The tighter opening frame strengthens the cast as the primary subject; the portal, wall console and lounge still supply foreground/middle/background navigation cues.
+- [improved][orbit continuity and lighting] Front, side and reverse views retain built architecture and readable warm/cool material layers. The reverse wall now behaves like part of the authored room rather than hidden implementation space.
+- [checked][responsive and interaction truth] Desktop shows the complete four-person discussion; mobile uses an intentional three-character LOD to preserve readable controls and the hard render budget. The player, NPC staging, interaction anchors and Rapier geometry remain in the same metre-space world.
+- [P1][production character deformation remains below the source] The new shoulder and wrist contract improves posing, but elbows, garment compression, fingers and knees still lack production retopology, corrective shapes and authored weight painting.
+- [P1][facial and hair performance remain below the source] Real eyes, mouths and hair volumes survive orbit, while cheek/lip deformation, strand rhythm and expression specificity remain visibly simpler than the reference.
+- [P1][material construction and indirect light remain below the source] Tonal separation is better, but the selected image still has denser foliage/paper dressing, finer joinery, richer surface response and offline-quality multi-bounce illumination.
+
+### Gate result
+
+v99 fixes a genuine animation-space defect, improves role-specific hand acting, gives the reverse orbit an authored destination and deepens the room's tonal hierarchy while keeping physical exploration, atomic loading and responsive budgets intact. The literal same-size comparison is closer, but the reference remains visibly ahead in production deformation, facial/hair authoring and material/light transport.
+
+final result: blocked
+
+Blocker: production character retopology/weight painting/corrective deformation, remaining facial and hair authoring, and source-level material/indirect-light construction remain below the selected reference.
+
 ## 2026-07-25 reference-fidelity v98 character proportion and social-staging gate
 
 ### Evidence inspected together
