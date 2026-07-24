@@ -12,7 +12,8 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v48";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v49";
+const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
@@ -96,11 +97,11 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
-  // The public room is intentionally warm, but broad ambient fill previously
-  // collapsed plaster, skin and timber into one pale value. Concentrate energy
-  // in the doorway key and keep the cool/global fills restrained so the room
-  // preserves the reference's directional value grouping.
-  "civic-ivory": { key: 2.12, fill: 0.24, hemi: 0.24, bounce: 0.62, wash: 0.34, exposure: 0.84, keyColor: "#ffd6a9", fillColor: "#b5d2d4" },
+  // The reference keeps a legible doorway key, but its shadow side is lifted
+  // by broad cream-wall and terrazzo bounce rather than falling into the hard
+  // sepia contrast of a single sun source. Preserve direction while giving
+  // skin, ivory cloth and timber their own soft mid-tone values.
+  "civic-ivory": { key: 1.84, fill: 0.31, hemi: 0.34, bounce: 0.78, wash: 0.48, exposure: 0.9, keyColor: "#ffdbb7", fillColor: "#bed9d8" },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -250,6 +251,7 @@ let lastSceneReady = false;
 let contactShadowTexture;
 let civicDappleTexture;
 let civicRugTexture;
+let civicRugBumpTexture;
 let civicBriefTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
@@ -516,7 +518,7 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.09 * strength) + vec3(0.58));
+        color = max(vec3(0.0), (color - vec3(0.58)) * (1.0 + 0.045 * strength) + vec3(0.58));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
@@ -530,7 +532,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.032 * strength;
+        color *= 1.0 - vignette * 0.02 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1134,7 +1136,7 @@ async function preloadPhysicalSurfaceMaps() {
   physicalSurfaceLoading = (async () => {
     const textureLoader = new THREE.TextureLoader();
     const sources = getPhysicalSurfaceSources();
-    await Promise.all(Object.entries(sources).map(async ([kind, source]) => {
+    const physicalMapTasks = Object.entries(sources).map(async ([kind, source]) => {
       if (window.innerWidth <= 720 && !["terrazzo", "plaster"].includes(kind)) return;
       // The civic floor's authored base color is part of the atomic scene load
       // on every device. Heavier scanned normal/roughness maps stay desktop-only.
@@ -1160,10 +1162,30 @@ async function preloadPhysicalSurfaceMaps() {
         texture.needsUpdate = true;
       });
       physicalSurfaceMaps.set(kind, { map, normal, roughness });
-    }));
+    });
+    // The listening rug is a high-pixel storytelling surface, not a late
+    // decorative swap. Load it inside the same Three.js readiness gate as the
+    // plaster and terrazzo so the room is revealed once with its final floor
+    // hierarchy on desktop and mobile.
+    const civicRugTask = textureLoader.loadAsync(
+      `/assets/interiors/textures/civic-listening-rug-embossed-v1.jpg?v=${encodeURIComponent(CIVIC_RUG_ASSET_REVISION)}`
+    ).then((texture) => {
+      texture.colorSpace = THREE.SRGBColorSpace;
+      texture.wrapS = THREE.ClampToEdgeWrapping;
+      texture.wrapT = THREE.ClampToEdgeWrapping;
+      texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+      texture.needsUpdate = true;
+      civicRugTexture = texture;
+      civicRugBumpTexture = texture.clone();
+      civicRugBumpTexture.colorSpace = THREE.NoColorSpace;
+      civicRugBumpTexture.needsUpdate = true;
+    });
+    await Promise.all([...physicalMapTasks, civicRugTask]);
   })().catch((error) => {
     console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
     physicalSurfaceMaps.clear();
+    civicRugTexture = null;
+    civicRugBumpTexture = null;
   });
   return physicalSurfaceLoading;
 }
@@ -1297,84 +1319,7 @@ function getCivicDappleTexture() {
 }
 
 function getCivicRugTexture() {
-  if (civicRugTexture) return civicRugTexture;
-  const size = lastWidth <= 720 ? 256 : 512;
-  const rugCanvas = document.createElement("canvas");
-  rugCanvas.width = size;
-  rugCanvas.height = size;
-  const context = rugCanvas.getContext("2d");
-  if (!context) return null;
-  const ground = context.createRadialGradient(size * 0.45, size * 0.42, size * 0.03, size / 2, size / 2, size * 0.56);
-  ground.addColorStop(0, "#f7efe2");
-  ground.addColorStop(0.72, "#eee3d1");
-  ground.addColorStop(1, "#e1d1ba");
-  context.fillStyle = ground;
-  context.fillRect(0, 0, size, size);
-  // A real woven ground is especially important at the lower story camera:
-  // it gives the social circle a tactile scale cue instead of reading as a
-  // flat UI decal painted over the terrazzo. Two restrained thread directions
-  // keep the pattern legible without introducing high-frequency shimmer.
-  context.save();
-  context.globalAlpha = 0.11;
-  context.lineWidth = Math.max(1, size / 512);
-  for (let line = 0; line <= size; line += Math.max(4, Math.round(size / 96))) {
-    context.strokeStyle = line % 12 ? "#9c866d" : "#fffaf1";
-    context.beginPath();
-    context.moveTo(0, line + Math.sin(line * 0.11) * 0.8);
-    context.lineTo(size, line + Math.cos(line * 0.09) * 0.8);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(line + Math.cos(line * 0.1) * 0.8, 0);
-    context.lineTo(line + Math.sin(line * 0.08) * 0.8, size);
-    context.stroke();
-  }
-  context.restore();
-  context.save();
-  context.translate(size / 2, size / 2);
-  context.lineCap = "round";
-  context.lineJoin = "round";
-  context.strokeStyle = "rgba(151,126,91,0.19)";
-  context.lineWidth = size * 0.008;
-  for (let petalIndex = 0; petalIndex < 12; petalIndex += 1) {
-    const angle = petalIndex / 12 * Math.PI * 2;
-    context.save();
-    context.rotate(angle);
-    context.beginPath();
-    context.moveTo(0, size * 0.055);
-    context.bezierCurveTo(size * 0.028, size * 0.095, size * 0.12, size * 0.11, size * 0.155, size * 0.205);
-    context.bezierCurveTo(size * 0.09, size * 0.195, size * 0.038, size * 0.16, 0, size * 0.055);
-    context.stroke();
-    context.beginPath();
-    context.moveTo(size * 0.04, size * 0.14);
-    context.quadraticCurveTo(size * 0.12, size * 0.18, size * 0.19, size * 0.13);
-    context.stroke();
-    context.restore();
-  }
-  context.strokeStyle = "rgba(78,130,121,0.11)";
-  context.lineWidth = size * 0.006;
-  [0.115, 0.285, 0.39].forEach((radius) => {
-    context.beginPath();
-    context.arc(0, 0, size * radius, 0, Math.PI * 2);
-    context.stroke();
-  });
-  context.restore();
-  let seed = 0x5eed123;
-  for (let index = 0; index < 720; index += 1) {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    const x = seed / 4294967296 * size;
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    const y = seed / 4294967296 * size;
-    context.fillStyle = index % 3 ? "rgba(118,98,75,0.035)" : "rgba(255,255,255,0.09)";
-    context.fillRect(x, y, 1, 1);
-  }
-  civicRugTexture = new THREE.CanvasTexture(rugCanvas);
-  civicRugTexture.colorSpace = THREE.SRGBColorSpace;
-  civicRugTexture.minFilter = THREE.LinearMipmapLinearFilter;
-  civicRugTexture.magFilter = THREE.LinearFilter;
-  civicRugTexture.generateMipmaps = true;
-  civicRugTexture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
-  civicRugTexture.needsUpdate = true;
-  return civicRugTexture;
+  return civicRugTexture || null;
 }
 
 function getCivicBriefTexture() {
@@ -1536,8 +1481,8 @@ function applyLightingPreset(theme = {}) {
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = 0.34;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.36 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.34;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.23 : 0.26;
   if (keyLight?.shadow) {
@@ -4052,39 +3997,25 @@ function addCivicReferenceDressing(theme, colors) {
   // Give the listening rug a truthful textile edge. The old zero-thickness
   // circle disappeared into the floor at player eye level and made the story
   // space feel like a painted target marker rather than a furnished room.
+  const civicRugMaterial = createToonMaterial("#f3ead9", {
+    roughness: 0.96,
+    surface: "fabric",
+    bumpScale: 0.014,
+    map: getCivicRugTexture(),
+    envMapIntensity: 0.25
+  });
+  if (civicRugBumpTexture) {
+    civicRugMaterial.bumpMap = civicRugBumpTexture;
+    civicRugMaterial.bumpScale = 0.018;
+    civicRugMaterial.needsUpdate = true;
+  }
   const center = new THREE.Mesh(
     new THREE.CylinderGeometry(1.48, 1.49, 0.026, 64, 1, false),
-    createToonMaterial("#eadfc9", {
-      roughness: 0.94,
-      surface: "fabric",
-      bumpScale: 0.014,
-      map: getCivicRugTexture(),
-      envMapIntensity: 0.3
-    })
+    civicRugMaterial
   );
   center.position.set(0, 0.028, 0.18);
   center.receiveShadow = true;
   roomRoot.add(center);
-  if (!mobileLod) {
-    const embossMaterial = createToonMaterial("#d4c2a5", {
-      roughness: 0.88,
-      metalness: 0.02,
-      transparent: true,
-      opacity: 0.62,
-      surface: "fabric",
-      bumpScale: 0.008
-    });
-    for (let index = 0; index < 16; index += 1) {
-      const angle = index / 16 * Math.PI * 2;
-      const petal = new THREE.Mesh(new THREE.SphereGeometry(0.12, 14, 8), embossMaterial);
-      petal.scale.set(1.55, 0.026, 0.46);
-      petal.rotation.y = -angle;
-      petal.position.set(Math.sin(angle) * 0.58, 0.045, 0.18 - Math.cos(angle) * 0.58);
-      petal.castShadow = false;
-      petal.receiveShadow = true;
-      roomRoot.add(petal);
-    }
-  }
   [
     [1.5, 1.62, "#4c948c", 0.82],
     [1.7, 1.79, "#c89d43", 0.94],
@@ -7455,7 +7386,7 @@ function createCivicActorObject(actor, asset) {
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.19,
+      opacity: 0.23,
       depthWrite: false,
       toneMapped: false
     })
@@ -7658,9 +7589,9 @@ function createCivicActorObject(actor, asset) {
       // the broad subsurface wrap of the reference without a second face mesh
       // or a screen-space portrait card.
       material.color?.offsetHSL?.(0.002, 0.012, 0.008);
-      material.roughness = 0.66;
+      material.roughness = 0.74;
       material.metalness = 0;
-      material.envMapIntensity = 0.64;
+      material.envMapIntensity = 0.52;
       material.onBeforeCompile = (shader) => {
         shader.fragmentShader = shader.fragmentShader.replace(
           "#include <opaque_fragment>",
@@ -7676,7 +7607,7 @@ function createCivicActorObject(actor, asset) {
           gl_FragColor.rgb += vec3(0.014, 0.011, 0.009) * mirrorLifeSkinVelvet * 0.58;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v6";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v7";
       material.needsUpdate = true;
     });
   }
@@ -7796,7 +7727,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v13`,
+    styleKey: `${frame}:${role}:civic-glb-v14`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7817,7 +7748,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v13` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v14` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8738,7 +8669,7 @@ function update(payload = {}) {
     // The reference uses broad, warm contact penumbrae. A full-strength GTAO
     // pass made shoe soles, chair feet and cabinet corners collapse to black
     // outlines even though the key and bounce were physically plausible.
-    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.58 : 0.82;
+    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.46 : 0.82;
   }
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";

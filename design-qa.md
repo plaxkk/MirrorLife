@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v92 authored textile and soft-surface gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v92-final-yaw0.png` (`1672 × 941`, `166 / 284,492`, `48°`, `5.6m` opening orbit).
+- Mandatory literal same-canvas comparison: `tmp/reference-vs-v92-final.png`; the complete source and final runtime frame sit side by side in one `3344 × 941` image. `tmp/reference-vs-v92-final-cast.png` isolates the two social circles at equal crop size.
+- Full-orbit evidence: `tmp/v92-final-yaw90.png` (`169 / 295,600`) and `tmp/v92-final-yaw180.png` (`170 / 297,936`).
+- Mobile evidence: `tmp/v92-final-mobile.png` (`390 × 844`, device scale factor `1`, `100 / 244,788`, three-character LOD).
+- Physical exploration evidence: the browser regression walked `4.13m`, completed the real character movement states and rotated the perspective camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / central story surface remained a flat code-drawn motif] The listening circle now uses a project-bound, authored `1024 × 1024` warm-ivory textile asset at `public/assets/interiors/textures/civic-listening-rug-embossed-v1.jpg`. It supplies both colour and restrained bump response, so the botanical relief reads under orbiting light rather than staying a screen-flat ornament.
+- [fixed / texture could have appeared after the room became visible] The rug colour and bump maps join the same atomic physical-surface preload as plaster and terrazzo. Failure falls back before scene reveal; there is no late image swap or second final-looking background.
+- [improved / civic light was contrasty and skin separated from the room] Civic key energy is lower while hemisphere, fill, floor bounce and portal wash are broader. GTAO and the post-grade are restrained; actor face fill is slightly higher. The opening frame has softer penumbrae and better face/floor continuity without losing the portal direction.
+- [improved / pale skin and matte-black hair read as unlit toy parts] Sculpt v49 warms the four role skin families, raises skin roughness, lowers skin clearcoat and gives dark hair a narrower readable highlight response. Runtime face wrapping and contact shadows were recalibrated to preserve grounding without plastic glare.
+- [improved / procedural rug relief consumed geometry] Sixteen separate decorative relief meshes were removed after the real textile asset replaced them. The opening falls from v91's `167 / 287,628` to `166 / 284,492`; side and reverse views also remain lower than v91.
+
+### Required fidelity surfaces and findings
+
+- [improved][story focal surface] The circular listening area now has visible fibre-scale relief and a quiet botanical identity close to the reference's embossed centre, while preserving the authoritative walkable plane and collision truth.
+- [improved][soft-light hierarchy] Warm portal light, cool fill and floor return separate skin, cloth, plaster and terrazzo more gently. Four-orbit inspection shows no washed-out reverse angle or dark face failure.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `166–170 / 284,492–297,936`; portrait mobile remains `100 / 244,788`, below `110` calls / `250k` triangles.
+- [checked][physical and loading continuity] The same GLB player walks `4.13m`, rotates the real camera `65.3°`, retains grounded contact and shares authoritative render/physics/interaction transforms. All room textures are ready before atomic reveal.
+- [P1][character production quality remains visibly below the source] Surface response is less chalky, but the focused literal comparison still exposes simplified facial topology, fingers, cloth folds, hair construction, stance acting and footwear.
+- [P1][remaining room construction remains visibly below the source] The authored rug closes one prominent surface gap; cabinetry joinery, foliage density, paper dressing, curved furniture profiles and object-level wear remain more procedural.
+- [P1][indirect-light transport remains visibly below the source] The balance is softer, but the source still has materially richer multi-bounce colour return, finer contact penumbrae and more unified character/environment integration.
+
+### Gate result
+
+v92 replaces the most visible flat procedural surface with a real authored textile asset, softens the public-room light/material stack and improves character skin/hair response while reducing geometry and preserving the complete movement, orbit, physics and atomic-loading contracts. The literal source comparison is closer, but source-level character topology, complete-room bespoke construction and offline-quality indirect light are not yet reached.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v91 proportion and full-orbit foreground gate
 
 ### Evidence inspected together

@@ -10,7 +10,7 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#f2bd96",
+        "skin": "#efb184",
         "hair": "#3b3947",
         "hair_highlight": "#474653",
         "eye": "#3f342d",
@@ -29,7 +29,7 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#efb88f",
+        "skin": "#edac80",
         "hair": "#303744",
         "hair_highlight": "#46515e",
         "eye": "#3a312b",
@@ -43,7 +43,7 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f3bf99",
+        "skin": "#f1b58a",
         "hair": "#d45f52",
         "hair_highlight": "#df6c60",
         # Keep role tint in the iris, but anchor it in the same near-charcoal
@@ -63,7 +63,7 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#f0b992",
+        "skin": "#efae83",
         "hair": "#6b4a3c",
         "hair_highlight": "#795a4d",
         "eye": "#354334",
@@ -1318,12 +1318,15 @@ def sculpted_ear_shell(name, location, skin_mat, concha_mat, parent=None, side=1
 
 def build_materials(role, config):
     return {
-        "skin": material(f"{role} skin", config["skin"], 0.66, clearcoat=0.018),
+        # Warm, high-roughness skin holds the target's peach value under the
+        # portal key without becoming a pale clear-coated toy surface. Runtime
+        # adds a restrained velvet wrap to the same real head geometry.
+        "skin": material(f"{role} skin", config["skin"], 0.74, clearcoat=0.006),
         "skin_shadow": material(f"{role} hand crease", "#a96f67", 0.87),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
-        "hair": material(f"{role} hair", config["hair"], 0.69, clearcoat=0.012),
-        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.67, clearcoat=0.016),
+        "hair": material(f"{role} hair", config["hair"], 0.62, clearcoat=0.014),
+        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.58, clearcoat=0.018),
         # The reference uses a warm, softly reflective sclera and a large dark
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
@@ -2609,7 +2612,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v48",
+        "sculptContract": "mirrorlife-civic-sculpt-v49",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
