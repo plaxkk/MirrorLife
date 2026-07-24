@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v110 facial-proportion and cloth-grounding gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v110-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory normalized comparison: `tmp/reference-vs-v110-full.png`; focused cast comparison: `tmp/reference-vs-v110-cast-focus.png`; implementation delta: `tmp/v109-vs-v110-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v110-final-desktop-yaw90.png` and `tmp/v110-final-desktop-yaw180.png`. The same faces, garments, contact shadows and complete actors remain perspective-correct and depth-tested through the real room orbit.
+- Responsive evidence: `tmp/v110-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 290,104`, side `174 / 301,212`, reverse `175 / 307,340`; mobile `96 / 248,996`. The player walked `4.41m`, rotated the real camera `65.3°`, verified vertex-driven eyelid closure, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / eyes remained too large, round and widely separated] Civic sculpt v63 narrows the sclera, iris, pupil and glint volumes, reduces the eye-pivot spacing and preserves independently deforming lids. The final focused comparison reads less like four identical bead-eyed dolls while retaining gaze and blink behavior.
+- [improved / the eye-to-cheek transition ended abruptly] Face volume v16 adds restrained lower-lid crease geometry plus a short philtrum plane, giving the warm face shell an orbital and nose-to-mouth transition that remains physical through side and reverse views.
+- [improved / pale skin and inflated hair caps flattened identity] Role skin palettes move to warmer mid-values, the base face narrows slightly and all four hair caps lose excess lateral/depth volume. Hair ribbons, fringe, ponytail, braids and face frames remain separate real geometry.
+- [improved / cloth surfaces showed only micro-weave noise] Actor material hierarchy v12 layers broad low-frequency drape variation under the existing scan-scale weave and construction seams. The response follows world-space light rather than acting as a screen filter.
+- [improved / feet still appeared lightly pasted onto the terrazzo] Resting contact opacity/scale increase to `0.32 / 0.96`, with walking contact at `0.25 / 0.84`. Contact remains softer than cast shadows and follows each actor root during movement.
+- [checked / added facial construction stays within Web budgets] The four role assets total `7.18 MB`; every role remains below `2 MiB`. Desktop and phone captures remain inside the `180 / 450k` and `110 / 250k` gates.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, weights, line height, truncation and action labels remain readable at desktop and portrait sizes; the character-only change does not alter the stable UI layer.
+- [checked][spacing and layout rhythm] Actor roots, metre-scale interaction anchors, the listening-circle opening, foreground/middle/background staging and camera-safe composition remain unchanged.
+- [improved][colors and visual tokens] Warmer differentiated skin, controlled dark-eye values, teal/green/oatmeal cloth and neutral terrazzo separate more naturally without adding a new decorative palette.
+- [improved][image quality and asset fidelity] Eye, lid-crease, philtrum, hair and garment changes are authored GLB geometry or live PBR material response. They remain attached to bone-driven actors through movement and orbit; no sprite, billboard, CSS avatar, custom SVG or camera-facing cover is used.
+- [checked][copy and content] Location, story-memory title, current target and four listening actions remain coherent with the visible civic sequence.
+- [P1][facial topology and acting remain below the source] The reference has finer eyelid rims, cheek compression, jaw variation, lip-edge definition, gaze nuance and expression weighting. The implementation still reads somewhat mannequin-like in close or reverse views.
+- [P1][hair and garment finish remain below the source] The runtime cast has real layered hair and sewn-form garments, but strand breakup, flyaways, anisotropic response, layered hems and contact-fold deformation remain visibly simpler.
+- [P1][offline scene rendering remains ahead] The reference still has denser bounce light, softer multi-bounce penumbrae, richer local exposure roll-off and more nuanced skin/cloth subsurface response.
+
+### Gate result
+
+v110 reduces the most conspicuous remaining doll cues by correcting eye proportion, face width, hair-cap mass and facial transitions, then strengthens broad cloth drape and actor-floor contact without sacrificing skeleton animation, movement, orbit, mobile LOD or performance budgets. The literal same-size comparison is closer in facial restraint and grounding, but the selected offline frame remains ahead in production topology, facial acting, hair/garment simulation and renderer-level light transport.
+
+final result: blocked
+
+Blocker: source-level facial deformation and expression weighting, production hair/garment surface authoring, and offline-quality skin/cloth/indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v109 furniture construction gate
 
 ### Evidence inspected together

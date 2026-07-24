@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v62";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v63";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v2";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
@@ -6899,9 +6899,20 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       float mirrorLifeWeaveA = sin(vMirrorLifeSurfacePosition.x * 228.0 + vMirrorLifeSurfacePosition.z * 29.0);
       float mirrorLifeWeaveB = sin(vMirrorLifeSurfacePosition.y * 244.0 - vMirrorLifeSurfacePosition.z * 41.0);
       float mirrorLifeWeave = mirrorLifeWeaveA * mirrorLifeWeaveB * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.1);
+      float mirrorLifeDrape = sin(
+        vMirrorLifeSurfacePosition.y * 10.5
+        + vMirrorLifeSurfacePosition.x * 4.2
+        - vMirrorLifeSurfacePosition.z * 6.4
+      ) * sin(
+        vMirrorLifeSurfacePosition.y * 3.1
+        - vMirrorLifeSurfacePosition.x * 2.4
+      ) * mirrorLifeClothMask;
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.07);
       gl_FragColor.rgb += vec3(0.058, 0.047, 0.035) * mirrorLifeClothSheen * 0.24;
-      gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.012 + mirrorLifeFabricScan * 0.045 * mirrorLifeClothMask;
+      gl_FragColor.rgb *= 1.0
+        + mirrorLifeWeave * 0.01
+        + mirrorLifeDrape * 0.016
+        + mirrorLifeFabricScan * 0.05 * mirrorLifeClothMask;
       gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.24;
       gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.16;
       gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.13;
@@ -6926,7 +6937,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v11-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v12-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
@@ -8006,6 +8017,7 @@ function createCivicActorObject(actor, asset) {
     const mobileDetailNames = new Set([
       "NoseBridge",
       "NoseTip",
+      "Philtrum",
       "NotebookElastic",
       "NotebookPencil"
     ]);
@@ -8013,6 +8025,7 @@ function createCivicActorObject(actor, asset) {
       "FingerCrease_",
       "EarConcha_",
       "EyeGlint_",
+      "LowerLidCrease_",
       "OuterLash_",
       "HairRibbon_",
       "FaceFrameLock_",
@@ -8102,7 +8115,7 @@ function createCivicActorObject(actor, asset) {
           gl_FragColor.rgb += vec3(0.014, 0.011, 0.009) * mirrorLifeSkinVelvet * 0.58;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v7";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v8";
       material.needsUpdate = true;
     });
   }
@@ -8770,8 +8783,8 @@ function updateActors(actors = [], now = performance.now()) {
     });
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.05 : 0.16)
-      : (cameraZoneId === "public-plaza" ? (walking ? 0.24 : 0.3) : 0.28);
-    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.8 : 0.9) : (walking ? 0.92 : 1));
+      : (cameraZoneId === "public-plaza" ? (walking ? 0.25 : 0.32) : 0.28);
+    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.84 : 0.96) : (walking ? 0.92 : 1));
     entry.shadow.visible = true;
     entry.group.visible = actor.visible !== false;
   });
@@ -9457,7 +9470,7 @@ function getStats() {
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v15"
+          ? "mirrorlife-civic-face-volume-v16"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"

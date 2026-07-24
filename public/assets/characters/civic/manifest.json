@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v62",
+  "sculptContract": "mirrorlife-civic-sculpt-v63",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v4",
     "roles": [
@@ -98,9 +98,9 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-volume-v15",
+    "integrationContract": "mirrorlife-civic-face-volume-v16",
     "productionFaceMode": "sculpted-volume",
-    "productionIntegrationContract": "mirrorlife-civic-face-volume-v15",
+    "productionIntegrationContract": "mirrorlife-civic-face-volume-v16",
     "uvContract": "mirrorlife-civic-head-uv-v1",
     "preservedSculptParts": [
       "Head",

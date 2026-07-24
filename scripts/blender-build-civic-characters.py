@@ -10,7 +10,7 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#f2bc96",
+        "skin": "#efb58d",
         "hair": "#3b3947",
         "hair_highlight": "#706d78",
         "eye": "#3f342d",
@@ -30,7 +30,7 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#f1b991",
+        "skin": "#edb087",
         "hair": "#303744",
         "hair_highlight": "#596675",
         "eye": "#3a312b",
@@ -45,7 +45,7 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f3bf9a",
+        "skin": "#f0b790",
         "hair": "#d45f52",
         "hair_highlight": "#ed786b",
         # Keep role tint in the iris, but anchor it in the same near-charcoal
@@ -66,7 +66,7 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#f1ba93",
+        "skin": "#eeb28a",
         "hair": "#6b4a3c",
         "hair_highlight": "#8b6959",
         "eye": "#354334",
@@ -163,10 +163,10 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0615,
-        "eye_height": 0.0365,
-        "iris_width": 0.027,
-        "iris_height": 0.0295,
+        "eye_width": 0.0575,
+        "eye_height": 0.0325,
+        "iris_width": 0.0245,
+        "iris_height": 0.026,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -178,10 +178,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.061,
-        "eye_height": 0.036,
-        "iris_width": 0.0265,
-        "iris_height": 0.029,
+        "eye_width": 0.057,
+        "eye_height": 0.032,
+        "iris_width": 0.024,
+        "iris_height": 0.0255,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -193,10 +193,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.0625,
-        "eye_height": 0.037,
-        "iris_width": 0.0275,
-        "iris_height": 0.0305,
+        "eye_width": 0.0585,
+        "eye_height": 0.033,
+        "iris_width": 0.025,
+        "iris_height": 0.027,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -208,10 +208,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0615,
-        "eye_height": 0.0365,
-        "iris_width": 0.027,
-        "iris_height": 0.0295,
+        "eye_width": 0.0575,
+        "eye_height": 0.0325,
+        "iris_width": 0.0245,
+        "iris_height": 0.026,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1559,7 +1559,7 @@ def build_face(head, mats, role):
     # Five facial morph targets multiply every head vertex in the exported
     # GLB. A 44×30 surface remains visually smooth at the 46 cm gameplay head
     # scale while keeping all four roles inside the strict 2 MiB asset gate.
-    face = ellipsoid("Head", (0, 0, 0), (0.236, 0.188, 0.27), mats["skin"], head, segments=44, rings=30)
+    face = ellipsoid("Head", (0, 0, 0), (0.228, 0.188, 0.27), mats["skin"], head, segments=44, rings=30)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -1672,7 +1672,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.085, -0.186, 0.044))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.186, 0.044))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -1713,8 +1713,8 @@ def build_face(head, mats, role):
             segments=18,
             rings=10,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0162, -0.003), (0.0088, 0.0018, 0.0115), mats["ink"], eye, segments=16, rings=10)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0065, -0.0181, 0.007), (0.0034, 0.0009, 0.0037), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0162, -0.003), (0.0078, 0.0018, 0.0102), mats["ink"], eye, segments=16, rings=10)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0058, -0.0181, 0.0062), (0.003, 0.0009, 0.0032), mats["eye_white"], eye, segments=10, rings=6)
         # A warm inner canthus connects the sclera to the nose/cheek plane and
         # removes the synthetic appearance of two ellipsoids pasted on skin.
         ellipsoid(
@@ -1773,7 +1773,22 @@ def build_face(head, mats, role):
                 eye,
                 resolution=2,
             )
-        brow = empty(f"BrowPivot_{side}", head, (side * 0.084, -0.204, 0.102))
+        # A short, skin-toned lower-orbit crease gives the eye a socket and a
+        # cheek transition without adding the dark circular outline that made
+        # the previous face read as a plastic doll.
+        curve_tube(
+            f"LowerLidCrease_{side}",
+            [
+                (-side * eye_width * 0.06, -0.014, -eye_height * 0.82),
+                (side * eye_width * 0.38, -0.0145, -eye_height * 0.96),
+                (side * eye_width * 0.72, -0.013, -eye_height * 0.72),
+            ],
+            0.00115,
+            mats["skin_shadow"],
+            eye,
+            resolution=2,
+        )
+        brow = empty(f"BrowPivot_{side}", head, (side * 0.081, -0.204, 0.102))
         curve_tube(
             f"Brow_{side}",
             [
@@ -1786,13 +1801,21 @@ def build_face(head, mats, role):
             brow,
         )
         # Blush is a low-contrast cheek tint, not a graphic face sticker.
-        ellipsoid(f"Blush_{side}", (side * 0.146, -0.194, -0.047), (0.026, 0.002, 0.007), mats["blush"], head, segments=16, rings=8)
+        ellipsoid(f"Blush_{side}", (side * 0.14, -0.194, -0.047), (0.022, 0.0017, 0.006), mats["blush"], head, segments=16, rings=8)
     # The gameplay camera sees the nose at only a few pixels.  Keep genuine
     # volume for three-quarter lighting, but reduce the former bead-like tip
     # and red underline that made the face feel assembled from primitives.
     ellipsoid("NoseBridge", (0, -0.183, 0.002), (0.0065, 0.0052, 0.019), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.1905, -0.019), (0.0095, 0.0065, 0.0095), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseShadow", (0, -0.1975, -0.0295), (0.0058, 0.0011, 0.0019), mats["skin_shadow"], head, segments=14, rings=8)
+    curve_tube(
+        "Philtrum",
+        [(0, -0.1965, -0.038), (0, -0.199, -0.056), (0, -0.2, -0.071)],
+        0.0011,
+        mats["skin_shadow"],
+        head,
+        resolution=2,
+    )
     mouth = empty("MouthPivot", head, (0, -0.201, -0.09))
     closed = empty("MouthClosedPivot", mouth)
     mouth_width = face_profile["mouth_width"]
@@ -1816,11 +1839,11 @@ def build_hair(head, mats, style):
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
     cap_scale = {
-        "spiky": (0.258, 0.178, 0.226),
-        "cap": (0.262, 0.188, 0.23),
-        "coral_ponytail": (0.258, 0.19, 0.232),
-        "braided_bob": (0.26, 0.19, 0.23),
-    }.get(style, (0.262, 0.19, 0.232))
+        "spiky": (0.252, 0.176, 0.226),
+        "cap": (0.255, 0.185, 0.23),
+        "coral_ponytail": (0.252, 0.187, 0.232),
+        "braided_bob": (0.254, 0.187, 0.23),
+    }.get(style, (0.255, 0.187, 0.232))
     cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=50, rings=32)
     # Break the mathematically perfect helmet silhouette without adding a
     # second shell or more triangles. Five broad crown lobes reshape the same
@@ -3027,7 +3050,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v62",
+        "sculptContract": "mirrorlife-civic-sculpt-v63",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v4",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -3083,9 +3106,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-volume-v15",
+            "integrationContract": "mirrorlife-civic-face-volume-v16",
             "productionFaceMode": "sculpted-volume",
-            "productionIntegrationContract": "mirrorlife-civic-face-volume-v15",
+            "productionIntegrationContract": "mirrorlife-civic-face-volume-v16",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
