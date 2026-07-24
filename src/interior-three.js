@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v52";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v53";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -7384,12 +7384,15 @@ function createCivicActorObject(actor, asset) {
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.62, 0.34),
+    new THREE.PlaneGeometry(0.66, 0.36),
     new THREE.MeshBasicMaterial({
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.23,
+      // The warm terrazzo and actor fill previously erased the last contact
+      // cue under the feet. A firmer but still soft footprint restores the
+      // source's grounded weight without becoming a graphic oval.
+      opacity: 0.32,
       depthWrite: false,
       toneMapped: false
     })
@@ -7830,7 +7833,12 @@ function updateActors(actors = [], now = performance.now()) {
       // actors still face the player, but a stronger three-quarter bias keeps
       // both eyes, garment construction and hand acting readable instead of
       // presenting three near-profile silhouettes.
-      bodyYaw += cameraDelta * 0.38;
+      const cameraOpeningWeight = {
+        listener: 0.28,
+        facilitator: 0.12,
+        mediator: 0.32
+      }[entry.assetRole] ?? 0.24;
+      bodyYaw += cameraDelta * cameraOpeningWeight;
     }
     entry.visual.rotation.y = bodyYaw;
     const stride = walking ? Math.sin(phase) * (running ? 0.78 : 0.58) : 0;

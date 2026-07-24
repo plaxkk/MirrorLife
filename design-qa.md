@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v98 character proportion and social-staging gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v98-final-yaw0.png` (`1672 × 941`, `166 / 282,984`, renderer pixel ratio `1.2`, `4×` MSAA).
+- Mandatory full-view comparison: `tmp/reference-vs-v98-full.png`; source and runtime are placed together at identical size and state.
+- Mandatory focused comparison: `tmp/reference-vs-v98-cast-focus.png`; both four-person social circles are normalized to the same `760 × 610` review area so head-to-body rhythm, costume silhouette, gaze and stance can be judged rather than inferred from code.
+- Full-orbit evidence: `tmp/v98-final-board.png`, containing settled `0°`, `90°`, `180°` and portrait mobile frames. Desktop views remain `166–171 / 282,984–296,428`; mobile remains `100 / 243,280`.
+- Physical/runtime evidence: the same volumetric GLB player walked `4.65m`, rotated the real perspective camera `65.3°`, passed metre-space physics and desktop/mobile scene flow, and completed `78` transitions across all `26` rooms without failure or runtime exception.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / cast retained a long 1:4 mannequin rhythm] All four role profiles enlarge the complete authored head downward into the shoulder line while preserving the same `1.72m` capsule and top height. Hair, ears, eyes, lids, mouth and facial morphs inherit one real local scale, avoiding a detached oversized face.
+- [improved / arms and legs read as narrow tubes beside the source's softer illustrated volumes] Per-role arm and leg width/depth increase by a restrained `4–7%`. The existing continuous skin meshes still deform through the shared shoulder, elbow, hip and knee joints.
+- [improved / two civic dresses were rigid columns] Facilitator and mediator skirts gain a wider, longer asymmetric pleated silhouette, while cardigan panels narrow and move outward to expose a readable coloured dress/waist layer.
+- [improved / facilitator ponytail read as one vertical rubber hose] The primary tail becomes a narrower S-curve and the two overlapping highlight locks carry more of the visible silhouette. The complete tail remains under `PonytailPivot` and retains delayed secondary motion.
+- [fixed / every NPC opened equally toward the camera] Story staging now uses role-authored camera opening: the facilitator returns to the source's side-profile notebook pose, the mediator stays readable in three-quarter view and the listener remains open without abandoning the social circle.
+- [fixed / listener's hands met at the centre like an invisible tray] Animation contract v10 separates both arms, relaxes the elbows and keeps the palms near their own sides. This removes the clasped mannequin cue while preserving the same procedural clip blending.
+- [improved / feet visually floated on the bright terrazzo] Civic contact shadows grow slightly and deepen from `0.23` to `0.32`, restoring a soft weight cue without changing Rapier grounding or drawing a hard oval.
+- [checked / no render-budget regression] Opening remains `166 / 282,984`, side and reverse views peak at `171 / 296,428`, and portrait mobile remains `100 / 243,280`. Character source assets remain `7.67 MB` total and pass sculpt v53, animation v10, skin, hand and footwear contracts.
+
+### Required fidelity surfaces and findings
+
+- [improved][character proportion and silhouette] Heads, limbs, skirt hems and footwear now sit in a more coherent illustrated rhythm; the focused comparison no longer reads as four thin adults wearing oversized prop parts.
+- [improved][social acting and spatial intent] Gaze, torso angle, hands and held notebook form a readable conversation rather than four independent characters displaying themselves to the camera.
+- [checked][true 3D continuity] Every change belongs to lit, depth-tested GLB geometry or authored joint rotation. Front, side, reverse and mobile views retain the same character meshes; no billboard, portrait swap or camera-specific replacement was introduced.
+- [checked][movement, physics and loading] The player remains inside the authoritative metre-space capsule, walks `4.65m`, rotates `65.3°`, and all `26 × 3` atomic transition passes remain green.
+- [P1][production deformation remains below the source] The silhouette and staging are closer, but elbows, shoulders, skirt compression and fingers still lack production retopology, corrective shapes and authored weight painting.
+- [P1][hair and facial acting remain below the source] Hair now has clearer grouped silhouettes, while strand rhythm, eyelid deformation, lip volume and cheek expression remain visibly simpler than the selected image.
+- [P1][room-wide light transport and bespoke density remain below the source] The reference retains richer bounce light, paper/foliage density and subtler material transitions around the cast.
+
+### Gate result
+
+v98 corrects the largest character-scale and staging mismatch while preserving genuine walking, orbit, physical grounding, mobile performance and atomic room transitions. The literal focused comparison is materially closer, but production deformation, facial/hair construction and source-level indirect light still remain visibly ahead.
+
+final result: blocked
+
+Blocker: production character retopology/weight painting/corrective deformation, remaining facial and hair authoring, and source-level indirect-light transport remain below the selected reference.
+
 ## 2026-07-24 reference-fidelity v97 rectilinear room shell and entry-axis gate
 
 ### Evidence inspected together

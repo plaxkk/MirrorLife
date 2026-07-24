@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v9";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v10";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -304,11 +304,12 @@ const ROLE_OFFSETS = Object.freeze({
   listener: {
     listen: pose(0, {
       // The reference listener attends with relaxed hands rather than
-      // presenting an invisible tray. Keep one palm subtly open, lower the
-      // strap-side elbow and let the shoulders counter-rotate toward centre.
+      // presenting an invisible tray. Open both arms away from the centreline,
+      // keep one palm subtly open and let the shoulders counter-rotate toward
+      // the social circle.
       visual: v(-0.012, 0, 0.048), headGroup: v(0.006, 0.018, 0.046),
-      leftArm: v(0.12, 0, 0.12), rightArm: v(0.14, 0, -0.035),
-      leftElbow: v(0.16, 0, 0.08), rightElbow: v(0.88, 0, -0.08),
+      leftArm: v(0.12, 0, -0.1), rightArm: v(0.14, 0, 0.15),
+      leftElbow: v(0.42, 0, 0.04), rightElbow: v(0.82, 0, -0.04),
       leftHand: v(-0.14, 0.06, 0.19), rightHand: v(0.04, -0.04, -0.06),
       leftLeg: v(0, -0.045, 0.055), rightLeg: v(0, 0.055, -0.05), leftKnee: v(0.055)
     })
