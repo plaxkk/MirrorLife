@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v105 contoured body and garment-continuity gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v105-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v105-full.png`; focused character comparison: `tmp/reference-vs-v105-cast-focus.png`; implementation delta: `tmp/v104-vs-v105-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v105-final-yaw90.png` and `tmp/v105-final-yaw180.png`. The same contoured torsos, bone-weighted shoulder overlaps, pelvis shells, garments and complete actors remain perspective-lit and depth-tested.
+- Responsive evidence: `tmp/v105-final-mobile.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 275,368`, side `174 / 286,476`, reverse `175 / 292,604`; mobile `100 / 235,728`. The player walked `4.73m`, rotated the real camera `65.3°`, retained vertex-driven eyelid closure, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / every torso was still a scaled UV-sphere capsule] Body identity v4 replaces the point-tapered sphere with one closed, asymmetric ring shell containing a lower abdomen, waist, rib cage, chest, shoulder shelf and neck transition. Front and back depth are independently authored, so the body keeps a designed silhouette through the side and reverse orbit.
+- [fixed / upper arms read as balls or tubes attached beside the torso] The continuous skinned arm gains two bone-weighted upper rings that overlap the real shoulder shelf. They follow the existing shoulder skeleton through walk, gesture and orbit instead of using a camera-facing cover.
+- [fixed / trousers began from a round diaper-like ellipsoid] Traveler and listener now use a five-ring tailored pelvis shell with separate front/back depth and a controlled transition into the two skinned legs.
+- [improved / heads remained one proportion larger than the selected cast] All four complete head hierarchies shrink by roughly `8%` while their centres rise to preserve the `1.72m` top height. Hair, ears, eyes, lips, morphs and gaze remain one coherent hierarchy; the focused comparison shows a closer head-to-shoulder and head-to-height ratio.
+- [improved / role profiles repeated narrow torsos with thick tubular sleeves] Listener, facilitator and mediator receive broader chest/shoulder rhythms and slimmer role-specific arm profiles; the player keeps a sturdier traveler silhouette with a less inflated limb width.
+- [fixed / the first shoulder-cap implementation exceeded the orbit draw-call gate] Two separate moving caps per actor reached `182` draw calls at `90°`. Their volume was folded into the existing skinned arm mesh, restoring the final orbit to `174` calls while retaining the overlap.
+- [checked / higher body fidelity reduces rather than increases the Web payload] The simpler contoured base shells reduce total civic character assets from `7.47 MB` to `6.86 MB`; all four GLBs remain below `2 MiB`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, weight, Chinese hierarchy, one-line truncation and action labels remain readable at the normalized desktop and portrait viewports. No body-system change leaks into the stable UI layer.
+- [improved][spacing and layout rhythm] Smaller heads and broader shoulder shelves move the cast toward the reference's editorial proportion while preserving the four-person listening circle, metre-space staging, interaction anchors and foreground/middle/background composition.
+- [checked][colors and visual tokens] The established skin, dark hair, oatmeal, green, teal, oak, plaster, terrazzo and brass hierarchy remains intact. New geometry inherits the existing scanned-fabric mask and does not add unrelated colours or screen-space effects.
+- [improved][image quality and asset fidelity] Torso, shoulder and pelvis continuity are real closed GLB geometry and remain coherent in the `0°`, `90°`, `180°`, movement and portrait captures. No sprite, billboard, CSS avatar or camera-specific substitute is used.
+- [checked][copy and content] Location, scene-memory title, current target and listening actions remain coherent with the visible civic sequence.
+- [P1][character surface construction remains below the source] Silhouette and body continuity are closer, but the reference still has production garment topology, stitched seams, layered hems, wrinkle flow and hand-painted deformation weights.
+- [P1][facial and hair detail remain below the source] Independent lids, volumetric lips and corrected head ratio survive orbit, while inner-eye anatomy, cheek compression, lip edge definition, strand density and hair material variation remain visibly simpler.
+- [P1][room material and indirect-light richness remain below the source] Runtime architecture is spatially functional and rotatable; the selected offline image still has denser bespoke dressing, softer contact penumbrae, richer bounce colour and finer material microvariation.
+
+### Gate result
+
+v105 removes the dominant capsule-body construction: the cast now uses designed torso anatomy, bone-weighted shoulder continuity, tailored pelvis volume and reference-closer head proportions while preserving a real skeleton, movement, physics, full orbit and mobile LOD. The same-size source comparison is materially closer in silhouette and character rhythm, but it remains below the reference in production garment topology, painted deformation, facial/hair authoring and offline material/light transport.
+
+final result: blocked
+
+Blocker: production garment topology and weight painting, finer facial and layered-hair authoring, bespoke material variation and source-level indirect-light construction remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v104 volumetric lips and vertex-driven eyelid gate
 
 ### Evidence inspected together

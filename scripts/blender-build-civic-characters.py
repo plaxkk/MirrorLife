@@ -85,83 +85,70 @@ ROLE_CONFIGS = {
 # and orbit without making collision or authored hand poses dishonest.
 BODY_PROFILES = {
     "player": {
-        "torso_width": 1.03,
+        "torso_width": 1.06,
         "torso_depth": 1.0,
-        "torso_height": 1.0,
-        "shoulder_x": 0.222,
+        "shoulder_x": 0.226,
         "hip_x": 0.118,
-        "arm_width": 1.08,
-        "arm_depth": 1.05,
-        "leg_width": 1.12,
-        "leg_depth": 1.06,
-        "waist_width": 1.02,
+        "arm_width": 1.01,
+        "arm_depth": 1.0,
+        "leg_width": 1.07,
+        "leg_depth": 1.03,
+        "waist_width": 1.04,
         "hand_scale": 0.96,
         "foot_scale": 1.12,
         "toe_out": 0.075,
-        # Enlarge the illustrated head downward into the shoulder line while
-        # preserving the same 1.75 m top. The previous technically correct
-        # height still read as a long 1:4 mannequin beside the 1:3.5 source.
-        "head_scale": (1.005, 0.97, 0.98),
-        "head_z": 1.488,
-        "shoulder_slope": 0.08,
-        "waist_taper": 0.16,
+        # Keep the complete illustrated head hierarchy at the literal
+        # reference ratio while preserving the same 1.75 m top height.
+        "head_scale": (0.925, 0.9, 0.92),
+        "head_z": 1.506,
     },
     "listener": {
-        "torso_width": 0.96,
-        "torso_depth": 0.95,
-        "torso_height": 1.01,
-        "shoulder_x": 0.21,
+        "torso_width": 1.02,
+        "torso_depth": 0.97,
+        "shoulder_x": 0.218,
         "hip_x": 0.118,
-        "arm_width": 1.05,
-        "arm_depth": 1.01,
-        "leg_width": 1.06,
+        "arm_width": 0.96,
+        "arm_depth": 0.97,
+        "leg_width": 1.03,
         "leg_depth": 1.01,
-        "waist_width": 0.96,
+        "waist_width": 1.0,
         "hand_scale": 0.95,
         "foot_scale": 1.1,
         "toe_out": 0.065,
-        "head_scale": (0.998, 0.966, 0.98),
-        "head_z": 1.483,
-        "shoulder_slope": 0.055,
-        "waist_taper": 0.19,
+        "head_scale": (0.918, 0.895, 0.92),
+        "head_z": 1.501,
     },
     "facilitator": {
-        "torso_width": 0.92,
-        "torso_depth": 0.92,
-        "torso_height": 1.02,
-        "shoulder_x": 0.202,
+        "torso_width": 1.0,
+        "torso_depth": 0.95,
+        "shoulder_x": 0.214,
         "hip_x": 0.106,
-        "arm_width": 1.0,
-        "arm_depth": 0.98,
-        "leg_width": 1.0,
+        "arm_width": 0.9,
+        "arm_depth": 0.92,
+        "leg_width": 0.95,
         "leg_depth": 0.98,
-        "waist_width": 0.9,
+        "waist_width": 0.95,
         "hand_scale": 0.94,
         "foot_scale": 1.04,
         "toe_out": 0.055,
-        "head_scale": (0.998, 0.966, 0.98),
-        "head_z": 1.493,
-        "shoulder_slope": 0.035,
-        "waist_taper": 0.24,
+        "head_scale": (0.92, 0.895, 0.92),
+        "head_z": 1.511,
     },
     "mediator": {
-        "torso_width": 0.95,
-        "torso_depth": 0.94,
-        "torso_height": 0.99,
-        "shoulder_x": 0.207,
+        "torso_width": 1.0,
+        "torso_depth": 0.96,
+        "shoulder_x": 0.216,
         "hip_x": 0.108,
-        "arm_width": 1.02,
-        "arm_depth": 1.0,
-        "leg_width": 1.02,
+        "arm_width": 0.92,
+        "arm_depth": 0.94,
+        "leg_width": 0.96,
         "leg_depth": 1.0,
-        "waist_width": 0.93,
+        "waist_width": 0.96,
         "hand_scale": 0.95,
         "foot_scale": 1.04,
         "toe_out": 0.055,
-        "head_scale": (1.005, 0.972, 0.98),
-        "head_z": 1.483,
-        "shoulder_slope": 0.045,
-        "waist_taper": 0.21,
+        "head_scale": (0.927, 0.9, 0.92),
+        "head_z": 1.501,
     },
 }
 
@@ -404,6 +391,8 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     modifier.use_deform_preserve_volume = True
     obj["semantic_part"] = name
     obj["skin_contract"] = "mirrorlife-civic-skin-v1"
+    if name == "SkinnedArmVolume":
+        obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v1"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     return obj
@@ -519,6 +508,78 @@ def tailored_panel(
     smooth = obj.modifiers.new("Tailored cloth normals", "WEIGHTED_NORMAL")
     smooth.keep_sharp = True
     link_material(obj, mat)
+    return obj
+
+
+def contoured_elliptical_shell(
+    name,
+    rings,
+    mat,
+    parent=None,
+    segments=36,
+    contract=None,
+):
+    """Build one authored torso/pelvis shell from asymmetric elliptical rings.
+
+    A scaled UV sphere collapses to a point at the neck and pelvis and gives
+    every role the same rubber-capsule silhouette. These rings keep a real
+    shoulder shelf, rib cage, waist and pelvis while allowing the chest and
+    back to carry different depth. The closed shell remains one inexpensive,
+    orbit-safe mesh and can still be merged into the runtime vertex-colour
+    batch.
+    """
+    if len(rings) < 3:
+        raise ValueError("contoured_elliptical_shell requires at least three rings")
+    vertices = []
+    faces = []
+    for z, radius_x, radius_y, front_bulge, back_bulge in rings:
+        for segment in range(segments):
+            angle = math.tau * segment / segments
+            cosine = math.cos(angle)
+            sine = math.sin(angle)
+            front = max(0.0, -sine) ** 1.65
+            back = max(0.0, sine) ** 1.8
+            vertices.append((
+                cosine * radius_x,
+                sine * radius_y - front * front_bulge + back * back_bulge,
+                z,
+            ))
+    for ring_index in range(len(rings) - 1):
+        row = ring_index * segments
+        following_row = row + segments
+        for segment in range(segments):
+            following = (segment + 1) % segments
+            faces.append((
+                row + segment,
+                row + following,
+                following_row + following,
+                following_row + segment,
+            ))
+    bottom_center = len(vertices)
+    top_center = bottom_center + 1
+    vertices.extend((
+        (0, 0, rings[0][0]),
+        (0, 0, rings[-1][0]),
+    ))
+    top_row = (len(rings) - 1) * segments
+    for segment in range(segments):
+        following = (segment + 1) % segments
+        faces.append((bottom_center, following, segment))
+        faces.append((top_center, top_row + segment, top_row + following))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Anatomical shell softness", "BEVEL")
+    bevel.width = 0.0045
+    bevel.segments = 2
+    if contract:
+        obj["body_contract"] = contract
     return obj
 
 
@@ -1975,42 +2036,29 @@ def build_cap(head, mats):
 
 def build_body(role, config, mats, visual):
     profile = BODY_PROFILES[role]
-    # The story-camera comparison showed a narrow mannequin torso even though
-    # the overall height was correct. Broaden the shoulder/chest volume by a
-    # few centimetres and add front/back depth while remaining inside the
-    # authoritative 0.32 m capsule at the limbs.
-    torso = ellipsoid(
+    # The body now owns explicit neck, shoulder, rib, waist and lower-abdomen
+    # rings. The former scaled sphere tapered to points at both ends and made
+    # the shoulders read like disconnected toy arms under a floating head.
+    torso_width = profile["torso_width"]
+    torso_depth = profile["torso_depth"]
+    torso = contoured_elliptical_shell(
         "Torso",
-        (0, 0, 1.04),
         (
-            0.252 * profile["torso_width"],
-            0.154 * profile["torso_depth"],
-            0.36 * profile["torso_height"],
+            (0.76, 0.152 * profile["waist_width"], 0.108 * torso_depth, 0.005, 0.004),
+            (0.81, 0.18 * profile["waist_width"], 0.126 * torso_depth, 0.008, 0.005),
+            (0.9, 0.194 * torso_width, 0.139 * torso_depth, 0.012, 0.006),
+            (1.02, 0.218 * torso_width, 0.151 * torso_depth, 0.018, 0.008),
+            (1.13, 0.242 * torso_width, 0.157 * torso_depth, 0.021, 0.009),
+            (1.22, 0.266 * torso_width, 0.153 * torso_depth, 0.016, 0.008),
+            (1.285, 0.218 * torso_width, 0.137 * torso_depth, 0.01, 0.006),
+            (1.34, 0.128 * torso_width, 0.096 * torso_depth, 0.004, 0.004),
+            (1.38, 0.071, 0.066, 0.001, 0.001),
         ),
         mats["top"],
         visual,
-        segments=42,
-        rings=30,
+        segments=40,
+        contract="mirrorlife-civic-body-identity-v4",
     )
-    # Sculpt the base torso into a soft shoulder-to-waist taper.  Keeping the
-    # authored volume in one mesh avoids the ball-jointed toy silhouette while
-    # preserving the inexpensive shared-pivot animation contract.
-    for vertex in torso.data.vertices:
-        x, y, z = vertex.co
-        normalized = max(-1.0, min(1.0, z / 0.332))
-        shoulder = max(0.0, min(1.0, (normalized - 0.2) / 0.8))
-        waist = max(0.0, 1.0 - abs(normalized + 0.48) / 0.52)
-        vertex.co.x *= 1.0 + shoulder * profile["shoulder_slope"] - waist * profile["waist_taper"]
-        vertex.co.y *= 1.0 - waist * 0.12
-        # Put the garment volume in the mesh rather than drawing crease cords
-        # on top. A shallow central drape and two diagonal tension valleys
-        # catch the key light differently as the actor turns, while the back
-        # and side silhouette remain unchanged.
-        front = max(0.0, min(1.0, (-y - 0.008) / 0.13))
-        centre_drape = max(0.0, 1.0 - abs(x) / 0.15) * max(0.0, 1.0 - abs(normalized + 0.02) / 0.86)
-        diagonal_tension = max(0.0, 1.0 - abs(abs(x) - (0.09 + normalized * 0.035)) / 0.045)
-        vertex.co.y -= front * centre_drape * 0.006
-        vertex.co.y += front * diagonal_tension * 0.0035
     # Three tapered fabric planes turn the broad torso highlight into cloth
     # tension radiating from collar and shoulder toward the waist. They share
     # the base fabric material and fade to a two-millimetre tip, so they read as
@@ -2036,7 +2084,7 @@ def build_body(role, config, mats, visual):
     # diameter cylinder remained visible as a toy peg whenever the actor
     # turned three-quarter; a slimmer, shorter volume gives the jaw and
     # shoulder line a continuous illustrated transition.
-    cylinder("Neck", 0.066, 0.061, 0.092, (0, 0, 1.402), mats["skin"], visual, vertices=20)
+    cylinder("Neck", 0.064, 0.059, 0.105, (0, 0, 1.405), mats["skin"], visual, vertices=20)
     rounded_box(
         "WaistBand",
         (0.35 * profile["waist_width"], 0.21 * profile["torso_depth"], 0.046),
@@ -2069,20 +2117,21 @@ def build_body(role, config, mats, visual):
     # either leg pivot or the authoritative capsule. Skirts already provide
     # this bridge for the two civic dress silhouettes.
     if config["costume"] in ("traveler", "listener"):
-        trouser_seat = ellipsoid(
+        trouser_seat = contoured_elliptical_shell(
             "TrouserSeat",
-            (0, 0.008, 0.775),
             (
-                0.212 * profile["waist_width"],
-                0.135 * profile["torso_depth"],
-                0.142,
+                (0.66, 0.158 * profile["waist_width"], 0.105 * profile["torso_depth"], 0.004, 0.008),
+                (0.705, 0.19 * profile["waist_width"], 0.125 * profile["torso_depth"], 0.008, 0.012),
+                (0.765, 0.218 * profile["waist_width"], 0.14 * profile["torso_depth"], 0.01, 0.014),
+                (0.82, 0.205 * profile["waist_width"], 0.132 * profile["torso_depth"], 0.007, 0.012),
+                (0.845, 0.182 * profile["waist_width"], 0.118 * profile["torso_depth"], 0.004, 0.008),
             ),
             mats["lower"],
             visual,
-            segments=14,
-            rings=8,
+            segments=30,
+            contract="mirrorlife-civic-pelvis-continuity-v2",
         )
-        trouser_seat["garment_contract"] = "mirrorlife-civic-pelvis-continuity-v1"
+        trouser_seat["garment_contract"] = "mirrorlife-civic-pelvis-continuity-v2"
 
     skin_armature = create_skin_armature(visual, shoulder_x, hip_x)
     arm_width = profile["arm_width"]
@@ -2100,7 +2149,13 @@ def build_body(role, config, mats, visual):
                 # the rig as a mannequin at three-quarter angles; this
                 # centimetre-scale S profile gives the sleeve a believable
                 # deltoid-to-bicep transition while preserving the collider.
-                (1.245, 0.096, 0.088, 0.001, 0.018),
+                # The two high rings overlap the contoured torso shoulder
+                # shelf and are weighted to the same real shoulder bone. This
+                # closes the toy ball-joint seam without adding eight runtime
+                # draw calls for separate cap objects.
+                (1.315, 0.111, 0.102, 0.002, 0.032),
+                (1.275, 0.108, 0.098, 0.002, 0.026),
+                (1.245, 0.099, 0.09, 0.001, 0.018),
                 (1.19, 0.092, 0.084, 0.004, 0.012),
                 (1.12, 0.082, 0.076, 0.006, 0.005),
                 (1.05, 0.077, 0.071, 0.005, 0.001),
@@ -2529,12 +2584,12 @@ def build_costume(
         # gives the coat, dress and waist three readable depth layers.
         tailored_panel(
             "CivicDressBodice",
-            0.29,
-            0.225,
-            0.265,
+            0.31,
+            0.235,
+            0.275,
             0.39,
-            0.056,
-            (0, -0.182, 1.04),
+            0.05,
+            (0, -0.178, 1.04),
             mats["lower"],
             visual,
             radius=0.012,
@@ -2560,12 +2615,12 @@ def build_costume(
                 # The reference coat is fitted through the waist and releases
                 # over the skirt.  A near-rectangular panel made the civic
                 # women read as boxy toys from the three-quarter story camera.
-                0.132 if is_facilitator else 0.13,
-                0.078 if is_facilitator else 0.094,
-                0.148 if is_facilitator else 0.128,
+                0.126 if is_facilitator else 0.124,
+                0.071 if is_facilitator else 0.085,
+                0.142 if is_facilitator else 0.124,
                 coat_height,
-                0.048,
-                (side * (0.14 if is_facilitator else 0.132), -0.172, coat_z),
+                0.041,
+                (side * (0.137 if is_facilitator else 0.13), -0.17, coat_z),
                 mats["outer"],
                 visual,
                 radius=0.012,
@@ -2761,6 +2816,9 @@ def build_character(role, config):
     root["asset"] = f"civic-{role}"
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
+    root["body_contract"] = "mirrorlife-civic-body-identity-v4"
+    root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v1"
+    root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v2"
     root["real_world_unit"] = "meter"
     root["identity_role"] = role
 
@@ -2771,8 +2829,10 @@ def build_character(role, config):
     # silhouette once the slimmer torso and full costume were visible.
     body_profile = BODY_PROFILES[role]
     head = empty("HeadPivot", root, (0, 0, body_profile["head_z"]))
-    # This resolves to about 0.46 m wide and 0.48 m tall, yielding the target
-    # editorial 1:3.5 rhythm while staying inside the existing 1.72 m capsule.
+    # This resolves to roughly 0.42 m wide and 0.45 m tall. The literal
+    # same-canvas comparison showed the previous 0.46 m head reading a full
+    # proportion larger than the reference cast even though the top height was
+    # correct; raise the smaller head so the 1.72 m silhouette stays stable.
     head.scale = body_profile["head_scale"]
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
@@ -2844,12 +2904,15 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v59",
+        "sculptContract": "mirrorlife-civic-sculpt-v60",
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v3",
+            "version": "mirrorlife-civic-body-identity-v4",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
-            "continuityParts": ["SkinnedArmVolume", "TrouserSeat"],
+            "continuityParts": ["Torso", "SkinnedArmVolume", "TrouserSeat"],
+            "shoulderContract": "mirrorlife-civic-shoulder-continuity-v1",
+            "pelvisContract": "mirrorlife-civic-pelvis-continuity-v2",
+            "runtime": "contoured-shell+bone-weighted-shoulder-overlap+continuous-limb-skin",
         },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",

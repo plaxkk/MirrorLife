@@ -13,8 +13,8 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v59", "civic character sculpt contract is stale");
-assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v3", "civic body identity contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v60", "civic character sculpt contract is stale");
+assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v4", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
   manifest.bodyIdentityContract?.dimensions,
@@ -23,8 +23,15 @@ assert.deepEqual(
 );
 assert.deepEqual(
   manifest.bodyIdentityContract?.continuityParts,
-  ["SkinnedArmVolume", "TrouserSeat"],
+  ["Torso", "SkinnedArmVolume", "TrouserSeat"],
   "civic body continuity parts changed"
+);
+assert.equal(manifest.bodyIdentityContract?.shoulderContract, "mirrorlife-civic-shoulder-continuity-v1", "civic shoulder continuity contract is stale");
+assert.equal(manifest.bodyIdentityContract?.pelvisContract, "mirrorlife-civic-pelvis-continuity-v2", "civic pelvis continuity contract is stale");
+assert.equal(
+  manifest.bodyIdentityContract?.runtime,
+  "contoured-shell+bone-weighted-shoulder-overlap+continuous-limb-skin",
+  "civic body continuity runtime changed"
 );
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
 assert.equal(manifest.skinContract?.runtime, "shared-controller-pivots+continuous-limb-skin", "continuous civic skin runtime changed");
