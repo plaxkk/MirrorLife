@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v108 indirect-light and material-separation gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v108-light-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v108-full.png`; focused cast/material comparison: `tmp/reference-vs-v108-cast-focus.png`; implementation delta: `tmp/v107-vs-v108-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v108-final-desktop-yaw90.png` and `tmp/v108-final-desktop-yaw180.png`. The same light rig, physical materials, cast, props and contact treatment remain perspective-correct through the complete room orbit.
+- Responsive evidence: `tmp/v108-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD and reduced local-light budget).
+- Runtime evidence: desktop opening `171 / 280,808`, side `174 / 291,916`, reverse `175 / 298,044`; mobile `100 / 239,480`. The player walked `4.05m`, rotated the real camera `65.3°`, retained the lighting and vertex-eyelid contracts, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / the room collapsed into a sepia key with dark corners] `mirrorlife-civic-light-transport-v2` separates a neutral warm window key, cool directional fill, hemisphere lift, portal bounce, ceiling return, rear-wall return and lounge reflection. The final frame keeps a readable daylight direction while lifting ivory plaster and white clothing out of brown shadow.
+- [fixed / the first v108 indirect-light pass became too flat] The first draft used a `0.46` ceiling return, `0.25` rear return and softer `14 / 40` VSM shadow. The final pass restores a stronger neutral key, reduces indirect energy to `0.31 / 0.18`, tightens the shadow to `10 / 28` and retains `0.46` contact AO; cast and furniture regain grounded form without returning to the v107 yellow cast.
+- [improved / floor, plaster and pale cloth shared one warm value] Civic terrazzo moves to a cooler honed base with controlled scanned bump and stronger environment response; shell plaster moves to layered warm ivory values with lower bump amplitude. Wood, fabric, paper, mineral and brass continue to retain separate per-vertex roughness/metalness or scanned maps after batching.
+- [improved / people floated above the pale rug] Resting civic contact footprints increase from `0.22 / 0.84` opacity/scale to `0.30 / 0.90`; walking remains softer at `0.24 / 0.80`. This is a real floor-plane contact cue that follows each actor, not a camera-facing character shadow.
+- [improved / grading exaggerated yellow highlights and edge darkening] The civic grade uses a gentler contrast shoulder, reduced warm highlight addition and restrained vignette. Sun dapples remain visible but no longer carry the entire lighting hierarchy.
+- [checked / the richer lighting does not increase geometry cost] Two scene-level bounce sources and revised PBR parameters add no mesh draw calls or triangles. All four desktop/phone views remain inside the `180 / 450k` and `110 / 250k` gates.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD font family, Chinese hierarchy, optical weights, one-line truncation and action labels remain readable at desktop and portrait sizes; the lighting/material change does not alter the UI layer.
+- [improved][spacing and layout rhythm] Light now reinforces the portal foreground, listening-circle middle ground and furnished back wall without changing metre-space staging, interaction anchors, safe camera composition or clear walk routes.
+- [improved][colors and visual tokens] Warm ivory plaster, neutral terrazzo, teal textile, oak/walnut and restrained brass separate more clearly. The implementation no longer relies on one yellow source to create warmth.
+- [improved][image quality and asset fidelity] Scanned terrazzo/wood/fabric responses, PMREM reflections, physical roughness/metalness, real shadow receivers, VSM sun shadow, GTAO contact and layered local lights remain attached to the live 3D world through movement and orbit.
+- [checked][copy and content] Location, story-memory title, current target and four listening actions remain coherent with the visible civic sequence.
+- [P1][light transport remains below the offline source] The source still has denser bounced colour, softer multi-bounce penumbrae, localized window caustics and finer exposure roll-off than a compact real-time WebGL light rig.
+- [P1][environment geometry and material density remain below the source] The implementation has a playable authored layout, but the source contains more bespoke joinery, textiles, glass thickness, micro-props, bevel resolution and per-object texture variation.
+- [P1][character finish remains below the source] v107 facial and hair layering survives the new lighting, while production facial deformation, hair-root density and garment seam/weight detail remain visibly simpler.
+
+### Gate result
+
+v108 materially improves the room-wide first read: light is more neutral and layered, pale surfaces retain separation, character contact is stronger and the same physical response survives movement, orbit and mobile LOD at unchanged geometry cost. The exact same-size comparison is closer in exposure and material readability, but the selected offline frame remains ahead in multi-bounce light transport, environmental asset density and character surface finish.
+
+final result: blocked
+
+Blocker: offline-quality multi-bounce lighting and exposure roll-off, denser bespoke room geometry/material variation, and production-level character face/hair/garment authoring remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v107 facial layering and grouped-hair gate
 
 ### Evidence inspected together

@@ -15,6 +15,7 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v62";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
+const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v2";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
@@ -108,7 +109,16 @@ const LIGHTING_PRESETS = Object.freeze({
   // by broad cream-wall and terrazzo bounce rather than falling into the hard
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
-  "civic-ivory": { key: 1.74, fill: 0.29, hemi: 0.32, bounce: 0.72, wash: 0.44, exposure: 0.87, keyColor: "#ffdbb7", fillColor: "#bed9d8" },
+  "civic-ivory": {
+    key: 1.72,
+    fill: 0.35,
+    hemi: 0.34,
+    bounce: 0.7,
+    wash: 0.56,
+    exposure: 0.88,
+    keyColor: "#ffe5cc",
+    fillColor: "#c5dfdf"
+  },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
@@ -241,6 +251,8 @@ let warmBounceLight;
 let windowWashLight;
 let portalBounceLight;
 let coolReflectionLight;
+let civicCeilingBounceLight;
+let civicBackWallBounceLight;
 let actorRimLight;
 let actorFaceLight;
 let roomRoot;
@@ -444,6 +456,27 @@ function ensureLayer() {
   coolReflectionLight.position.set(3.75, 1.15, -1.1);
   scene.add(coolReflectionLight);
 
+  // Two broad non-shadowing sources approximate the large-area transport in
+  // the selected offline frame. The overhead source returns warm ivory from
+  // the ceiling and terrazzo; the rear source lifts shelves and silhouettes
+  // without erasing the portal-side sun direction.
+  civicCeilingBounceLight = new THREE.SpotLight(
+    0xfff0d8,
+    0,
+    12,
+    Math.PI * 0.47,
+    0.96,
+    1.28
+  );
+  civicCeilingBounceLight.position.set(0.25, 4.72, 0.35);
+  civicCeilingBounceLight.target.position.set(-0.15, 0.35, -0.45);
+  civicCeilingBounceLight.castShadow = false;
+  scene.add(civicCeilingBounceLight, civicCeilingBounceLight.target);
+
+  civicBackWallBounceLight = new THREE.PointLight(0xffdfc2, 0, 7.6, 2.15);
+  civicBackWallBounceLight.position.set(0.1, 2.18, -3.75);
+  scene.add(civicBackWallBounceLight);
+
   // A dedicated layer-only rim light gives the small stylised citizens the
   // same warm edge separation as the reference without bleaching the room.
   // Actors keep layer 0 for the room lighting and additionally enable layer 1.
@@ -525,11 +558,11 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.56)) * (1.0 + 0.065 * strength) + vec3(0.56));
+        color = max(vec3(0.0), (color - vec3(0.56)) * (1.0 + 0.048 * strength) + vec3(0.56));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
-        color += vec3(0.02, 0.01, -0.004) * highlightTone * strength;
+        color += vec3(0.016, 0.009, -0.0025) * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -539,7 +572,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.028 * strength;
+        color *= 1.0 - vignette * 0.022 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1484,22 +1517,32 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1.22 : 0;
-    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffdaa9");
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1 : 0;
+    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffe0ba");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.22) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.26) : 0;
+  }
+  if (civicCeilingBounceLight) {
+    civicCeilingBounceLight.intensity = theme.zoneId === "public-plaza"
+      ? (lastWidth <= 720 ? 0.2 : 0.31)
+      : 0;
+  }
+  if (civicBackWallBounceLight) {
+    civicBackWallBounceLight.intensity = theme.zoneId === "public-plaza"
+      ? (lastWidth <= 720 ? 0.1 : 0.18)
+      : 0;
   }
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.36 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.68 : 0.38;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.48 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.23 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
   if (keyLight?.shadow) {
-    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 12 : 9;
-    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 32 : 24;
+    keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 10 : 9;
+    keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 28 : 24;
   }
 }
 
@@ -3040,8 +3083,8 @@ function addCivicLocalStoryLights(mobileLod = false) {
   const lightXs = mobileLod ? [0] : [-0.92, 0.92];
   lightXs.forEach((x) => {
     const light = new THREE.SpotLight(
-      0xffc77a,
-      mobileLod ? 0.32 : 0.56,
+      0xffd6a2,
+      mobileLod ? 0.27 : 0.44,
       4.2,
       Math.PI * 0.23,
       0.9,
@@ -3057,8 +3100,8 @@ function addCivicLocalStoryLights(mobileLod = false) {
   // returns a cool reflected edge. Both are local, non-shadowing sources so
   // they preserve the directional key and do not flatten the central cast.
   const portalFloorBounce = new THREE.PointLight(
-    0xffbc75,
-    mobileLod ? 0.14 : 0.32,
+    0xffd0a0,
+    mobileLod ? 0.12 : 0.27,
     4.6,
     2.3
   );
@@ -3066,7 +3109,7 @@ function addCivicLocalStoryLights(mobileLod = false) {
   roomRoot.add(portalFloorBounce);
   const loungeColorBounce = new THREE.PointLight(
     0x86c8bd,
-    mobileLod ? 0.1 : 0.24,
+    mobileLod ? 0.08 : 0.2,
     3.7,
     2.35
   );
@@ -3959,23 +4002,23 @@ function addCivicArchitecturalShell(colors) {
   // wings leave the left threshold open and retain a complete 360-degree route.
   // These planes sit just inside the physical boundary; players therefore meet
   // the real shell before they could ever cross the visible architecture.
-  const plaster = createToonMaterial("#eadac8", {
-    roughness: 0.94,
-    surface: "plaster",
-    bumpScale: 0.014,
-    envMapIntensity: 0.34
-  });
-  const lowerPlaster = createToonMaterial("#dfcfbc", {
+  const plaster = createToonMaterial("#f0e2d2", {
     roughness: 0.9,
     surface: "plaster",
-    bumpScale: 0.011,
-    envMapIntensity: 0.38
+    bumpScale: 0.009,
+    envMapIntensity: 0.44
   });
-  const recessedPlaster = createToonMaterial("#e4d3c1", {
-    roughness: 0.95,
+  const lowerPlaster = createToonMaterial("#e7d9c8", {
+    roughness: 0.88,
     surface: "plaster",
-    bumpScale: 0.01,
-    envMapIntensity: 0.32
+    bumpScale: 0.008,
+    envMapIntensity: 0.46
+  });
+  const recessedPlaster = createToonMaterial("#ede0d0", {
+    roughness: 0.92,
+    surface: "plaster",
+    bumpScale: 0.008,
+    envMapIntensity: 0.4
   });
   const oak = createToonMaterial("#a97148", {
     roughness: 0.64,
@@ -4186,7 +4229,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.58,
+        opacity: theme.night ? 0.08 : 0.54,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5326,7 +5369,7 @@ function rebuildRoom(theme = {}) {
 
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
-  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#e8dfd2" : "#d9b98f");
+  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
@@ -5338,17 +5381,17 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#bdb7b0" : floorColor, {
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#c4beb7" : floorColor, {
       // A softly honed mineral surface matches the reference better than the
       // former cold grey, high-contrast chip field. The colour map still
       // supplies real terrazzo variation, while reduced bump and stronger
       // environment response keep faces and furniture from competing with a
       // noisy floor at the intimate 46° story lens.
-      roughness: theme.zoneId === "public-plaza" ? 0.7 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.66 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
-      bumpScale: theme.zoneId === "public-plaza" ? 0.007 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.6 : 0.48
+      bumpScale: theme.zoneId === "public-plaza" ? 0.0055 : 0.026,
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.68 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5367,12 +5410,12 @@ function rebuildRoom(theme = {}) {
   }
 
   const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
-  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#ead7c3" : wallColor, {
+  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#f1e3d2" : wallColor, {
     side: THREE.BackSide,
-    roughness: 0.94,
+    roughness: theme.zoneId === "public-plaza" ? 0.9 : 0.94,
     surface: "plaster",
-    bumpScale: 0.014,
-    envMapIntensity: theme.zoneId === "public-plaza" ? 0.3 : 0.54
+    bumpScale: theme.zoneId === "public-plaza" ? 0.009 : 0.014,
+    envMapIntensity: theme.zoneId === "public-plaza" ? 0.42 : 0.54
   });
   if (theme.zoneId === "public-plaza") {
     addCivicPortalWallShell(theme, wallHeight, wallMaterial);
@@ -8662,8 +8705,8 @@ function updateActors(actors = [], now = performance.now()) {
     });
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.05 : 0.16)
-      : (cameraZoneId === "public-plaza" ? 0.22 : 0.28);
-    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.76 : 0.84) : (walking ? 0.92 : 1));
+      : (cameraZoneId === "public-plaza" ? (walking ? 0.24 : 0.3) : 0.28);
+    entry.shadow.scale.setScalar(cameraZoneId === "public-plaza" ? (walking ? 0.8 : 0.9) : (walking ? 0.92 : 1));
     entry.shadow.visible = true;
     entry.group.visible = actor.visible !== false;
   });
@@ -9417,6 +9460,18 @@ function getStats() {
     textures: Number(memory.textures || 0),
     pixelRatio: renderer?.getPixelRatio?.() || 1,
     msaaSamples: Number(composer?.renderTarget1?.samples || 0),
+    lighting: cameraZoneId === "public-plaza" ? {
+      version: CIVIC_LIGHT_TRANSPORT_CONTRACT,
+      key: Number((keyLight?.intensity || 0).toFixed(3)),
+      fill: Number((fillLight?.intensity || 0).toFixed(3)),
+      hemisphere: Number((hemisphereLight?.intensity || 0).toFixed(3)),
+      portalBounce: Number((portalBounceLight?.intensity || 0).toFixed(3)),
+      ceilingBounce: Number((civicCeilingBounceLight?.intensity || 0).toFixed(3)),
+      backWallBounce: Number((civicBackWallBounceLight?.intensity || 0).toFixed(3)),
+      environment: Number((scene?.environmentIntensity || 0).toFixed(3)),
+      exposure: Number((renderer?.toneMappingExposure || 0).toFixed(3)),
+      contactAo: Number((gtaoPass?.blendIntensity || 0).toFixed(3))
+    } : null,
     camera: lastCameraState
   };
 }

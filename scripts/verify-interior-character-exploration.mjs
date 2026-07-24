@@ -69,6 +69,11 @@ try {
   const opening = await readStats(page);
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
+  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v2", "civic room did not expose the authored indirect-light contract");
+  assert(Number(opening.lighting?.ceilingBounce || 0) >= 0.28, "civic ceiling bounce did not lift the room volume");
+  assert(Number(opening.lighting?.backWallBounce || 0) >= 0.16, "civic rear-wall bounce did not separate the cast");
+  assert(Number(opening.lighting?.environment || 0) >= 0.29, "civic environment response did not preserve material separation");
+  assert(Number(opening.lighting?.contactAo || 1) <= 0.48, "civic contact AO is too strong for the broad reference penumbrae");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
