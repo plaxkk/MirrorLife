@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v57",
+  "sculptContract": "mirrorlife-civic-sculpt-v58",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v3",
     "roles": [
@@ -71,7 +71,7 @@
       "facilitator",
       "mediator"
     ],
-    "morphContract": "mirrorlife-civic-face-morph-v1",
+    "morphContract": "mirrorlife-civic-face-morph-v2",
     "integrationContract": "mirrorlife-civic-face-volume-v13",
     "productionFaceMode": "sculpted-volume",
     "productionIntegrationContract": "mirrorlife-civic-face-volume-v13",
@@ -83,7 +83,7 @@
       "EyePivot_-1",
       "EyePivot_1"
     ],
-    "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
+    "mouthMorphContract": "mirrorlife-civic-mouth-morph-v2",
     "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
     "eyeGeometryParts": [
       "EyePivot_-1",
@@ -94,6 +94,7 @@
       "SpeechJaw",
       "Concern",
       "Attentive",
+      "SocialAsymmetry",
       "Blink"
     ]
   },
@@ -151,26 +152,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 118,
-      "triangles": 38996
+      "meshes": 120,
+      "triangles": 38604
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 104,
-      "triangles": 36472
+      "meshes": 106,
+      "triangles": 36080
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 123,
-      "triangles": 41388
+      "meshes": 125,
+      "triangles": 40996
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 135,
-      "triangles": 40052
+      "meshes": 137,
+      "triangles": 39660
     }
   }
 }

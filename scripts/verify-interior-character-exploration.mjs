@@ -71,10 +71,10 @@ try {
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
-  assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
+  assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
   assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic production face unexpectedly fell back to a texture layer");
   assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v13"), "civic actors did not preserve the production volumetric facial contract");
-  assert(opening.actors.every((actor) => actor.facial?.morphCount === 4), "civic volumetric facial morph set is incomplete");
+  assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic volumetric facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v1" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v6"), "civic actors did not expose the role-authored independent-hand contract");
   assert(opening.actors.every((actor) => actor.proximalVolume?.version === "mirrorlife-civic-proximal-volume-v1"), "civic actors did not expose shoulder/hip volume preservation");
@@ -86,6 +86,7 @@ try {
   assert(opening.actors.every((actor) => actor.clothCorrectives?.version === "mirrorlife-civic-cloth-correctives-v1" && actor.clothCorrectives?.count === 4), "civic actors did not expose four bend-driven cloth correctives");
   const attentiveWitnesses = opening.actors.filter((actor) => actor.assetRole !== "player");
   assert(attentiveWitnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35), "civic witness faces did not settle into attentive expression morphs");
+  assert(attentiveWitnesses.every((actor) => Number(actor.facial?.asymmetry || 0) >= 0.14), "civic witness faces did not settle into role-specific asymmetric expressions");
   assert(Number(opening.actors.find((actor) => actor.assetRole === "player")?.facial?.smile || 0) > 0.2, "player illustrated head did not receive the authored warm-smile morph");
   const mediator = opening.actors.find((actor) => actor.assetRole === "mediator");
   const facilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");

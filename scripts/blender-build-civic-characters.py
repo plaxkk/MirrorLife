@@ -673,6 +673,7 @@ def morphable_mouth_curve(name, points, radius, mat, parent=None):
     speech = obj.shape_key_add(name="SpeechJaw")
     concern = obj.shape_key_add(name="Concern")
     attentive = obj.shape_key_add(name="Attentive")
+    asymmetry = obj.shape_key_add(name="SocialAsymmetry")
     extent = max((abs(vertex.co.x) for vertex in obj.data.vertices), default=0.03)
     for index, vertex in enumerate(obj.data.vertices):
         x = vertex.co.x
@@ -685,7 +686,14 @@ def morphable_mouth_curve(name, points, radius, mat, parent=None):
         concern.data[index].co.z -= edge * 0.008
         concern.data[index].co.x *= 1.0 - edge * 0.018
         attentive.data[index].co.z += edge * 0.0025
-    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v1"
+        # One corner carries slightly more intention than the other. The
+        # reference avoids perfectly mirrored emoji smiles; this authored
+        # delta lets listening and speaking keep a human, role-specific bias.
+        side = max(-1.0, min(1.0, x / max(extent, 1e-5)))
+        asymmetry.data[index].co.z += edge * side * 0.006
+        asymmetry.data[index].co.x *= 1.0 + edge * side * 0.012
+        asymmetry.data[index].co.y -= centre * (1.0 - side) * 0.0007
+    obj["face_morph_contract"] = "mirrorlife-civic-mouth-morph-v2"
     return obj
 
 
@@ -1394,10 +1402,10 @@ def build_face(head, mats, role):
     # oversized toy-doll head of the early assets. The narrower depth and
     # slightly slimmer jaw leave more silhouette room for hair, costume and
     # hand acting, matching the reference's editorial 1:3.5 proportion.
-    # Four facial morph targets multiply every head vertex in the exported
-    # GLB. A 48×34 surface remains visually smooth at the 46 cm gameplay head
+    # Five facial morph targets multiply every head vertex in the exported
+    # GLB. A 44×30 surface remains visually smooth at the 46 cm gameplay head
     # scale while keeping all four roles inside the strict 2 MiB asset gate.
-    face = ellipsoid("Head", (0, 0, 0), (0.236, 0.188, 0.27), mats["skin"], head, segments=48, rings=34)
+    face = ellipsoid("Head", (0, 0, 0), (0.236, 0.188, 0.27), mats["skin"], head, segments=44, rings=30)
     # Narrow the lower third into an illustrated jaw rather than leaving the
     # UV sphere's toy-like circular chin. The change is deliberately subtle so
     # all existing facial pivots and expression shape keys stay aligned.
@@ -1449,6 +1457,7 @@ def build_face(head, mats, role):
     speech = face.shape_key_add(name="SpeechJaw")
     concern = face.shape_key_add(name="Concern")
     attentive = face.shape_key_add(name="Attentive")
+    asymmetry = face.shape_key_add(name="SocialAsymmetry")
     for index, vertex in enumerate(face.data.vertices):
         x, y, z = vertex.co
         front = max(0.0, min(1.0, (-y - 0.035) / 0.155))
@@ -1485,6 +1494,18 @@ def build_face(head, mats, role):
         attentive_co.z += attentive_band * 0.009
         if z < -0.08:
             attentive_co.z += front * lower * 0.003
+
+        # Human social expressions rarely resolve as two perfectly mirrored
+        # cheeks. Lift one cheek/eye band while relaxing the opposite mouth
+        # corner; runtime blends this gently by role and conversation phase.
+        asymmetry_co = asymmetry.data[index].co
+        side_bias = max(-1.0, min(1.0, x / 0.18))
+        asymmetric_cheek = cheek * front * (0.35 + abs(side_bias) * 0.65)
+        asymmetry_co.y -= asymmetric_cheek * side_bias * 0.006
+        asymmetry_co.z += asymmetric_cheek * side_bias * 0.009
+        if z < -0.035:
+            asymmetry_co.z += front * lower * side_bias * 0.0055
+            asymmetry_co.x *= 1.0 + front * lower * side_bias * 0.006
     for side in (-1, 1):
         sculpted_ear_shell(
             f"EarShell_{side}",
@@ -1738,6 +1759,35 @@ def build_hair(head, mats, style):
             mats["hair"],
             head,
             sides=18,
+        )
+        # A broad front-to-temple lock bridges the crown, fringe and side
+        # volume. Without it, the large cap remained a helmet with decorative
+        # spikes attached; the reference frames each face with two readable
+        # clumps that continue naturally into the side silhouette.
+        frame_tip_z = {
+            "spiky": -0.005,
+            "cap": -0.035,
+            "coral_ponytail": -0.105,
+            "braided_bob": -0.085,
+        }.get(style, -0.04)
+        frame_drift = {
+            "spiky": 0.015,
+            "cap": 0.008,
+            "coral_ponytail": 0.028,
+            "braided_bob": 0.018,
+        }.get(style, 0.012)
+        tapered_lock(
+            f"FaceFrameLock_{side}",
+            [
+                (side * 0.125, -0.105, 0.238),
+                (side * 0.178, -0.165, 0.175),
+                (side * (0.215 + frame_drift), -0.202, 0.085),
+                (side * (0.218 + frame_drift), -0.194, frame_tip_z),
+            ],
+            (0.043, 0.047, 0.035, 0.006),
+            mats["hair_highlight"] if side == -1 else mats["hair"],
+            head,
+            sides=14,
         )
 
     if style == "spiky":
@@ -2776,7 +2826,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v57",
+        "sculptContract": "mirrorlife-civic-sculpt-v58",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2816,16 +2866,16 @@ def main():
             "textureDirection": "soft-premium-sculpted-portrait",
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
-            "morphContract": "mirrorlife-civic-face-morph-v1",
+            "morphContract": "mirrorlife-civic-face-morph-v2",
             "integrationContract": "mirrorlife-civic-face-volume-v13",
             "productionFaceMode": "sculpted-volume",
             "productionIntegrationContract": "mirrorlife-civic-face-volume-v13",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
-            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",
+            "mouthMorphContract": "mirrorlife-civic-mouth-morph-v2",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
-            "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
+            "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },
         "handContract": {
             "version": "mirrorlife-civic-hand-v6",

@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v57";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v58";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -6184,6 +6184,17 @@ function createCivicFaceDecal(role = "player") {
       }
     },
     {
+      name: "SocialAsymmetry",
+      deform(x, y) {
+        const side = THREE.MathUtils.clamp(x / 0.18, -1, 1);
+        const cheek = Math.max(0, 1 - Math.abs(y + 0.012) / 0.075)
+          * Math.max(0, 1 - Math.abs(Math.abs(x) - 0.09) / 0.08);
+        const mouth = Math.max(0, 1 - Math.abs(y + 0.08) / 0.05)
+          * Math.max(0, 1 - Math.abs(x) / 0.14);
+        return [side * cheek * 0.0015, side * (cheek * 0.006 + mouth * 0.004), cheek * 0.002];
+      }
+    },
+    {
       name: "Blink",
       deform(x, y) {
         const eyeCenterY = 0.018;
@@ -6251,7 +6262,7 @@ function createCivicFaceDecal(role = "player") {
   decal.receiveShadow = false;
   decal.renderOrder = 2;
   decal.userData.mirrorLifeFaceDecal = true;
-  decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v1";
+  decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v2";
   decal.userData.mirrorLifeFaceMode = CIVIC_FACE_MODE;
   if (CIVIC_FACE_MODE === "illustrated-cornea") {
     // Keep the authored eye painting intact and add one true optical surface
@@ -6700,11 +6711,18 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
       float mirrorLifeSkinWrap = pow(mirrorLifeViewWrap, 1.72) * vMirrorLifeSkinMask;
       float mirrorLifeHairSheen = pow(mirrorLifeViewWrap, 2.45) * vMirrorLifeHairMask;
-      float mirrorLifeHairStrand = pow(0.5 + 0.5 * sin(
-        vMirrorLifeSurfacePosition.y * 92.0
-        + vMirrorLifeSurfacePosition.x * 31.0
-        - vMirrorLifeSurfacePosition.z * 19.0
-      ), 8.0) * vMirrorLifeHairMask;
+      float mirrorLifeHairRibbon = pow(0.5 + 0.5 * sin(
+        vMirrorLifeSurfacePosition.y * 42.0
+        + vMirrorLifeSurfacePosition.x * 17.0
+        - vMirrorLifeSurfacePosition.z * 11.0
+      ), 5.5);
+      float mirrorLifeHairMicro = pow(0.5 + 0.5 * sin(
+        vMirrorLifeSurfacePosition.y * 103.0
+        + vMirrorLifeSurfacePosition.x * 37.0
+        - vMirrorLifeSurfacePosition.z * 23.0
+      ), 9.0);
+      float mirrorLifeHairStrand = mix(mirrorLifeHairRibbon, mirrorLifeHairMicro, 0.24)
+        * vMirrorLifeHairMask;
       float mirrorLifeLeatherSheen = pow(mirrorLifeViewWrap, 3.8) * vMirrorLifeLeatherMask;
       // Resolve broad single-colour garments into a very restrained woven
       // surface. The crossed frequencies are small enough to disappear at
@@ -6718,7 +6736,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       gl_FragColor.rgb *= 1.0 + mirrorLifeWeave * 0.012 + mirrorLifeFabricScan * 0.045 * mirrorLifeClothMask;
       gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.24;
       gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.16;
-      gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.16;
+      gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.13;
       gl_FragColor.rgb += vec3(0.042, 0.031, 0.022) * mirrorLifeLeatherSheen * 0.2;`
       );
     } else {
@@ -6740,7 +6758,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v9-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v10-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   mesh.castShadow = true;
@@ -7787,6 +7805,7 @@ function createCivicActorObject(actor, asset) {
       "EyeGlint_",
       "OuterLash_",
       "HairRibbon_",
+      "FaceFrameLock_",
       "ElbowCorrectiveVolume_",
       "KneeCorrectiveVolume_",
       "SleeveCompression_",
@@ -7914,10 +7933,10 @@ function createCivicActorObject(actor, asset) {
       // frames look like a model swap before the normal expression lerp had
       // time to converge.
       const initialExpression = {
-        player: { WarmSmile: 0.18, Attentive: 0.08 },
-        listener: { WarmSmile: 0.4, Attentive: 0.46 },
-        facilitator: { WarmSmile: 0.56, Attentive: 0.38 },
-        mediator: { WarmSmile: 0.26, Attentive: 0.52, Concern: 0.22 }
+        player: { WarmSmile: 0.18, Attentive: 0.08, SocialAsymmetry: 0.1 },
+        listener: { WarmSmile: 0.4, Attentive: 0.46, SocialAsymmetry: 0.24 },
+        facilitator: { WarmSmile: 0.56, Attentive: 0.38, SocialAsymmetry: 0.16 },
+        mediator: { WarmSmile: 0.26, Attentive: 0.52, Concern: 0.22, SocialAsymmetry: 0.3 }
       }[role] || {};
       Object.entries(initialExpression).forEach(([morphName, value]) => {
         const faceIndex = faceMorphMesh.morphTargetDictionary[morphName];
@@ -8202,11 +8221,15 @@ function updateActors(actors = [], now = performance.now()) {
     const smileInfluences = entry.faceMorphMesh?.morphTargetInfluences;
     const smileIndexForFeatures = smileDictionary?.WarmSmile;
     const attentiveIndexForFeatures = smileDictionary?.Attentive;
+    const asymmetryIndexForFeatures = smileDictionary?.SocialAsymmetry;
     const smileInfluenceForFeatures = Number.isInteger(smileIndexForFeatures)
       ? THREE.MathUtils.clamp(Number(smileInfluences?.[smileIndexForFeatures] || 0), 0, 1)
       : 0;
     const attentiveInfluenceForFeatures = Number.isInteger(attentiveIndexForFeatures)
       ? THREE.MathUtils.clamp(Number(smileInfluences?.[attentiveIndexForFeatures] || 0), 0, 1)
+      : 0;
+    const asymmetryInfluenceForFeatures = Number.isInteger(asymmetryIndexForFeatures)
+      ? THREE.MathUtils.clamp(Number(smileInfluences?.[asymmetryIndexForFeatures] || 0), 0, 1)
       : 0;
     const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
     const blinkScale = blinkCycle > 4.58
@@ -8223,16 +8246,37 @@ function updateActors(actors = [], now = performance.now()) {
         // flattened corneal depth and never actually closed the lid aperture,
         // leaving a rigid doll stare during smiles and blinks.
         eyePivot.scale.y = 1;
+        const eyeSide = eyeIndex ? 1 : -1;
+        if (!Number.isFinite(eyePivot.userData.mirrorLifeRestRotationY)) {
+          eyePivot.userData.mirrorLifeRestRotationX = eyePivot.rotation.x;
+          eyePivot.userData.mirrorLifeRestRotationY = eyePivot.rotation.y;
+          eyePivot.userData.mirrorLifeRestRotationZ = eyePivot.rotation.z;
+        }
+        const restEyeX = Number(eyePivot.userData.mirrorLifeRestRotationX || 0);
+        const restEyeY = Number(eyePivot.userData.mirrorLifeRestRotationY || 0);
+        const restEyeZ = Number(eyePivot.userData.mirrorLifeRestRotationZ || 0);
+        const roleSquintBias = {
+          player: 0.015,
+          listener: 0.032,
+          facilitator: 0.024,
+          mediator: 0.04
+        }[entry.assetRole] || 0;
         eyePivot.scale.z = blinkScale * (
-          1 - smileInfluenceForFeatures * 0.075 - attentiveInfluenceForFeatures * 0.09
+          1
+          - smileInfluenceForFeatures * 0.075
+          - attentiveInfluenceForFeatures * 0.09
+          - eyeSide * asymmetryInfluenceForFeatures * roleSquintBias
         );
         if (playerActor && actor.id !== playerActor.id && !walking) {
-          const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22, -0.09, 0.09);
-          eyePivot.rotation.y = gaze;
-          eyePivot.rotation.z = (eyeIndex ? 1 : -1) * gaze * 0.08;
+          const microSaccade = Math.sin(now * 0.0021 + frame * 1.37 + eyeIndex * 0.31) * 0.008;
+          const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22 + microSaccade, -0.09, 0.09);
+          eyePivot.rotation.y = restEyeY + gaze;
+          eyePivot.rotation.x = restEyeX + attentiveInfluenceForFeatures * 0.012 + microSaccade * 0.32;
+          eyePivot.rotation.z = restEyeZ + eyeSide * gaze * 0.08;
         } else {
-          eyePivot.rotation.y = 0;
-          eyePivot.rotation.z = 0;
+          eyePivot.rotation.y = restEyeY;
+          eyePivot.rotation.x = restEyeX;
+          eyePivot.rotation.z = restEyeZ;
         }
       });
     }
@@ -8279,6 +8323,7 @@ function updateActors(actors = [], now = performance.now()) {
       const speechIndex = dictionary.SpeechJaw;
       const concernIndex = dictionary.Concern;
       const attentiveIndex = dictionary.Attentive;
+      const asymmetryIndex = dictionary.SocialAsymmetry;
       if (Number.isInteger(smileIndex)) {
         const roleWarmth = actor.civicRole === "facilitator" ? 0.62 : actor.civicRole === "listener" ? 0.42 : 0.28;
         influences[smileIndex] = THREE.MathUtils.lerp(
@@ -8310,11 +8355,28 @@ function updateActors(actors = [], now = performance.now()) {
           0.13
         );
       }
+      if (Number.isInteger(asymmetryIndex)) {
+        const roleAsymmetry = actor.civicRole === "mediator"
+          ? 0.34
+          : actor.civicRole === "listener"
+            ? 0.26
+            : actor.civicRole === "facilitator"
+              ? 0.18
+              : 0.1;
+        const asymmetryTarget = roleAsymmetry
+          + socialBreath * (speaking ? 0.08 : 0.035)
+          + (speaking ? 0.08 : 0);
+        influences[asymmetryIndex] = THREE.MathUtils.lerp(
+          Number(influences[asymmetryIndex] || 0),
+          THREE.MathUtils.clamp(asymmetryTarget, 0, 0.58),
+          0.1
+        );
+      }
     }
     if (entry.mouthClosedMesh?.morphTargetDictionary && entry.mouthClosedMesh?.morphTargetInfluences) {
       const mouthDictionary = entry.mouthClosedMesh.morphTargetDictionary;
       const mouthInfluences = entry.mouthClosedMesh.morphTargetInfluences;
-      ["WarmSmile", "SpeechJaw", "Concern", "Attentive"].forEach((morphName) => {
+      ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry"].forEach((morphName) => {
         const mouthIndex = mouthDictionary[morphName];
         const faceIndex = entry.faceMorphMesh?.morphTargetDictionary?.[morphName];
         if (!Number.isInteger(mouthIndex)) return;
@@ -8326,7 +8388,7 @@ function updateActors(actors = [], now = performance.now()) {
     if (entry.faceDecal?.morphTargetDictionary && entry.faceDecal?.morphTargetInfluences) {
       const decalDictionary = entry.faceDecal.morphTargetDictionary;
       const decalInfluences = entry.faceDecal.morphTargetInfluences;
-      ["WarmSmile", "SpeechJaw", "Concern", "Attentive"].forEach((morphName) => {
+      ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry"].forEach((morphName) => {
         const decalIndex = decalDictionary[morphName];
         if (!Number.isInteger(decalIndex)) return;
         const sourceIndex = entry.faceMorphMesh?.morphTargetDictionary?.[morphName];
@@ -9129,7 +9191,7 @@ function getStats() {
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
-        version: "mirrorlife-civic-face-morph-v1",
+        version: "mirrorlife-civic-face-morph-v2",
         texture: CIVIC_FACE_MODE === "illustrated-cornea"
           ? "mirrorlife-civic-face-texture-v2"
           : null,
@@ -9151,6 +9213,9 @@ function getStats() {
           ?? 0).toFixed(4)),
         attentive: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.Attentive]
           ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.Attentive]
+          ?? 0).toFixed(4)),
+        asymmetry: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.SocialAsymmetry]
+          ?? entry.faceMorphMesh?.morphTargetInfluences?.[entry.faceMorphMesh?.morphTargetDictionary?.SocialAsymmetry]
           ?? 0).toFixed(4)),
         blink: Number((entry.blinkInfluence || 0).toFixed(4))
       } : null,

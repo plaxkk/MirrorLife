@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v103 asymmetric facial acting and face-framing hair gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v103-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v103-full.png`; both native frames are adjacent at identical scale. Focused evidence is `tmp/reference-vs-v103-cast-focus.png`; `tmp/v102-vs-v103-cast-focus.png` records the implementation delta.
+- Full 3D orbit evidence: `tmp/v103-final-yaw90.png` and `tmp/v103-final-yaw180.png`. The same head morphs, eyes, hair volumes, bodies and room assets remain lit and depth-tested through the real perspective orbit.
+- Responsive evidence: `tmp/v103-final-mobile.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `176 / 283,288`, side `178 / 294,396`, reverse `179 / 300,524`; mobile `100 / 241,616`. The player walked `4.53m`, rotated the camera `65.3°`, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without browser runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / exported eye rest pose was discarded] Runtime previously replaced each authored eye pivot rotation with gaze or zero. It now composes micro-saccade and social gaze over the exported rest rotation, so role-specific lid/eye direction survives animation and orbit.
+- [improved / expressions were bilaterally mirrored] Sculpt v58 adds a fifth `SocialAsymmetry` morph to the head and closed mouth. Player, listener, facilitator and mediator blend different cheek, lower-lid and mouth-corner biases, reported in settled runtime evidence rather than baked into one camera view.
+- [improved / crown cap ended abruptly beside the face] Each role gains two real front-to-temple `FaceFrameLock` volumes that bridge crown, fringe and side silhouette. They are parented to `HeadPivot`, batched on desktop and removed by the intentional phone micro-detail LOD.
+- [improved / hair response looked like high-frequency shader noise] Actor material hierarchy v10 replaces the dominant thin stripe with a broader ribbon response plus a restrained micro-strand component. The focused v102/v103 comparison shows calmer large-form highlights.
+- [fixed / fifth morph exceeded the strict character download budget] Head topology was retuned from `48 × 34` to `44 × 30`, preserving the gameplay silhouette while keeping all four GLBs below `2 MiB`; total civic character assets are `7.60 MB`.
+- [checked / facial and hair refinement remains physically coherent and within budget] All settled desktop views remain `176–179` draw calls and `283,288–300,524` triangles; portrait mobile remains `100 / 241,616`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, optical weights, Chinese hierarchy, single-line wrapping and action labels remain legible at desktop and portrait sizes; no reference-fidelity change was attempted in the stable UI layer.
+- [checked][spacing and layout rhythm] The source and implementation share a central four-person story circle, foreground work surface, middle-ground conflict and background civic landmark. The new face-side volumes do not shift interaction anchors, metre-space staging or camera-safe composition.
+- [checked][colors and visual tokens] Skin, dark hair, oatmeal outerwear, green cloth, oak, plaster, teal textile and brass remain separated by the existing material hierarchy; the v10 hair sheen reduces local highlight noise without palette drift.
+- [improved][image quality and asset fidelity] Eyes preserve authored direction, faces carry role-specific asymmetry and hair now frames the cheek-to-temple transition. These are genuine GLB/morph/shader changes with side and reverse continuity, not sprites, cards or camera-facing replacements.
+- [checked][copy and content] Location, scene-memory title, interaction target and four listening actions remain coherent with the visible public-room sequence on desktop and mobile.
+- [P1][facial anatomy and performance remain below the source] The fifth morph breaks mirrored expression, but the reference still has finer eyelid thickness, lip topology, cheek compression, gaze specificity and production facial weighting.
+- [P1][hair construction remains below the source] Face framing and broad ribbon highlights improve the silhouette; strand grouping, flyaway rhythm, layered occlusion and painted roughness remain materially simpler.
+- [P1][character materials and light transport remain below the source] Runtime fabric and hair hierarchy is coherent, while the selected offline frame retains denser bespoke surface variation, softer contact penumbrae and richer multi-bounce colour.
+
+### Gate result
+
+v103 closes two concrete character-presentation defects: authored eye orientation is no longer erased, and social expression now has role-specific asymmetry across the head, mouth and eye aperture. Real face-framing hair volumes and calmer ribbon highlights improve the cast without breaking movement, full orbit, mobile LOD, asset or render budgets. The same-size source comparison is still visibly short of production facial anatomy, dense hair authoring and offline material/light transport.
+
+final result: blocked
+
+Blocker: production facial topology and weighting, denser layered hair construction, painted character materials and source-level indirect-light construction remain below the selected reference.
+
 ## 2026-07-25 reference-fidelity v102 proximal-volume, skirt-flex and role-hand gate
 
 ### Evidence inspected together
