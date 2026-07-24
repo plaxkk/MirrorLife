@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v56";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v57";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -7184,6 +7184,117 @@ function cloneCivicActorScene(source) {
   return clone;
 }
 
+function installCivicJointVolumeDeformation(skinnedMeshes = []) {
+  const states = {};
+  skinnedMeshes.forEach((mesh) => {
+    const semanticPart = String(mesh.userData?.semantic_part || mesh.name || "");
+    const kind = semanticPart.includes("Arm") ? "shoulders" : semanticPart.includes("Leg") ? "hips" : "";
+    if (!kind || !mesh.material || Array.isArray(mesh.material)) return;
+    const isShoulder = kind === "shoulders";
+    const uniforms = {
+      leftBend: { value: 0 },
+      rightBend: { value: 0 },
+      jointCenterX: { value: isShoulder ? 0.205 : 0.115 }
+    };
+    const material = mesh.material;
+    const baseOnBeforeCompile = material.onBeforeCompile;
+    material.onBeforeCompile = (shader) => {
+      baseOnBeforeCompile?.(shader);
+      shader.uniforms.mirrorLifeLeftJointBend = uniforms.leftBend;
+      shader.uniforms.mirrorLifeRightJointBend = uniforms.rightBend;
+      shader.uniforms.mirrorLifeJointCenterX = uniforms.jointCenterX;
+      shader.vertexShader = shader.vertexShader
+        .replace(
+          "#include <common>",
+          `#include <common>
+          uniform float mirrorLifeLeftJointBend;
+          uniform float mirrorLifeRightJointBend;
+          uniform float mirrorLifeJointCenterX;`
+        )
+        .replace(
+          "#include <skinning_vertex>",
+          `#include <skinning_vertex>
+          float mirrorLifeJointSide = step(0.0, position.x);
+          float mirrorLifeJointBend = mix(
+            mirrorLifeLeftJointBend,
+            mirrorLifeRightJointBend,
+            mirrorLifeJointSide
+          );
+          float mirrorLifeJointMask = ${isShoulder
+            ? "smoothstep(0.965, 1.215, position.y)"
+            : "smoothstep(0.545, 0.765, position.y)"};
+          float mirrorLifeJointCenter = mix(
+            -mirrorLifeJointCenterX,
+            mirrorLifeJointCenterX,
+            mirrorLifeJointSide
+          );
+          float mirrorLifeJointExpansion = 1.0
+            + mirrorLifeJointBend * mirrorLifeJointMask * ${isShoulder ? "0.115" : "0.09"};
+          transformed.x = mirrorLifeJointCenter
+            + (transformed.x - mirrorLifeJointCenter) * mirrorLifeJointExpansion;
+          transformed.z *= 1.0
+            + mirrorLifeJointBend * mirrorLifeJointMask * ${isShoulder ? "0.095" : "0.075"};
+          transformed.y += mirrorLifeJointBend * mirrorLifeJointMask * ${isShoulder ? "0.006" : "0.0045"};`
+        );
+    };
+    material.customProgramCacheKey = () => `mirrorlife-civic-${kind}-volume-v1`;
+    material.needsUpdate = true;
+    states[kind] = {
+      mesh,
+      uniforms,
+      version: "mirrorlife-civic-proximal-volume-v1",
+      leftBend: 0,
+      rightBend: 0
+    };
+  });
+  return states;
+}
+
+function installCivicSkirtDeformation(mesh) {
+  if (!mesh?.material || Array.isArray(mesh.material)) return null;
+  const uniforms = {
+    swayX: { value: 0 },
+    swayZ: { value: 0 },
+    lift: { value: 0 }
+  };
+  const material = mesh.material;
+  const baseOnBeforeCompile = material.onBeforeCompile;
+  material.onBeforeCompile = (shader) => {
+    baseOnBeforeCompile?.(shader);
+    shader.uniforms.mirrorLifeSkirtSwayX = uniforms.swayX;
+    shader.uniforms.mirrorLifeSkirtSwayZ = uniforms.swayZ;
+    shader.uniforms.mirrorLifeSkirtLift = uniforms.lift;
+    shader.vertexShader = shader.vertexShader
+      .replace(
+        "#include <common>",
+        `#include <common>
+        uniform float mirrorLifeSkirtSwayX;
+        uniform float mirrorLifeSkirtSwayZ;
+        uniform float mirrorLifeSkirtLift;`
+      )
+      .replace(
+        "#include <begin_vertex>",
+        `#include <begin_vertex>
+        float mirrorLifeSkirtHem = smoothstep(0.08, 0.52, -position.y);
+        float mirrorLifeSkirtHemSoft = mirrorLifeSkirtHem * mirrorLifeSkirtHem;
+        transformed.x += mirrorLifeSkirtSwayZ * mirrorLifeSkirtHemSoft * 0.26;
+        transformed.z += mirrorLifeSkirtSwayX * mirrorLifeSkirtHemSoft * 0.28;
+        transformed.y += mirrorLifeSkirtLift * mirrorLifeSkirtHemSoft;
+        float mirrorLifeSkirtRelease = 1.0
+          + (abs(mirrorLifeSkirtSwayX) + abs(mirrorLifeSkirtSwayZ))
+          * mirrorLifeSkirtHemSoft * 0.07;
+        transformed.x *= mirrorLifeSkirtRelease;`
+      );
+  };
+  material.customProgramCacheKey = () => "mirrorlife-civic-skirt-flex-v1";
+  material.needsUpdate = true;
+  return {
+    mesh,
+    uniforms,
+    version: "mirrorlife-civic-skirt-flex-v1"
+  };
+}
+
 function civicMotionSeed(actorId = "") {
   return [...String(actorId)].reduce((sum, character, index) => sum + character.charCodeAt(0) * (index + 3), 0) % 997;
 }
@@ -7351,6 +7462,13 @@ function updateCivicSecondaryMotion(entry, {
     motion.node.position.y += motion.lift;
     motion.node.rotation.x += motion.angleX;
     motion.node.rotation.z += motion.angleZ;
+    if (motion.deformation?.uniforms) {
+      // The waist pivot provides broad follow-through; these uniforms bend
+      // only the lower hem, so the skirt no longer moves as one rigid cone.
+      motion.deformation.uniforms.swayX.value = motion.angleX;
+      motion.deformation.uniforms.swayZ.value = motion.angleZ;
+      motion.deformation.uniforms.lift.value = motion.lift;
+    }
   });
 
   entry.secondaryMotionUpdatedAt = now;
@@ -7451,6 +7569,21 @@ function applyCivicAnimationPose(entry, animationPose) {
     // Preserve Blender/glTF's rest orientation, then layer the same authored
     // controller pose over the skin bone in local space.
     state.node.quaternion.copy(state.restQuaternion).multiply(state.deltaQuaternion);
+  });
+  Object.entries(entry.jointVolumeDeformation || {}).forEach(([kind, state]) => {
+    const leftTrack = kind === "shoulders" ? "leftArm" : "leftLeg";
+    const rightTrack = kind === "shoulders" ? "rightArm" : "rightLeg";
+    const denominator = kind === "shoulders" ? 0.82 : 0.74;
+    const bendFor = (rotation = []) => {
+      const x = Number(rotation[0] || 0);
+      const z = Number(rotation[2] || 0);
+      const normalized = THREE.MathUtils.clamp(Math.hypot(x, z) / denominator, 0, 1);
+      return normalized * normalized * (3 - 2 * normalized);
+    };
+    state.leftBend = bendFor(animationPose[leftTrack]);
+    state.rightBend = bendFor(animationPose[rightTrack]);
+    state.uniforms.leftBend.value = state.leftBend;
+    state.uniforms.rightBend.value = state.rightBend;
   });
   Object.values(entry.clothCorrectives || {}).forEach((state) => {
     const rotation = animationPose[state.joint];
@@ -7754,7 +7887,10 @@ function createCivicActorObject(actor, asset) {
     ...(fullExpressionLod ? [backpackNode, satchelNode].filter(Boolean) : [])
   ];
   mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.69, envMapIntensity: 0.7 });
-  if (skirtPivot) mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 });
+  const skirtSurfaceMesh = skirtPivot
+    ? mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 })
+    : null;
+  const skirtDeformation = installCivicSkirtDeformation(skirtSurfaceMesh);
   if (fullExpressionLod) {
     eyePivots.forEach((eyePivot) => softenFacialShadowing(mergeActorVertexColorMeshes(eyePivot, [], { roughness: 0.46, envMapIntensity: 0.78 })));
     browPivots.forEach((browPivot) => mergeActorVertexColorMeshes(browPivot, [], { roughness: 0.58, envMapIntensity: 0.68 }));
@@ -7836,6 +7972,7 @@ function createCivicActorObject(actor, asset) {
   importedMaterials.forEach((material) => {
     if (!retainedMaterials.has(material)) material.dispose?.();
   });
+  const jointVolumeDeformation = installCivicJointVolumeDeformation(skinnedMeshes);
   group.traverse((node) => node.layers?.enable?.(1));
   const secondaryMotion = {};
   if (fullExpressionLod) {
@@ -7850,6 +7987,7 @@ function createCivicActorObject(actor, asset) {
   }
   if (skirtPivot?.parent) {
     secondaryMotion.skirt = createCivicSecondaryMotionState("skirt", skirtPivot);
+    secondaryMotion.skirt.deformation = skirtDeformation;
   }
   const correctiveDefinitions = fullExpressionLod ? {
     leftSleeve: [leftSleeveCompression, "leftElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
@@ -7912,13 +8050,14 @@ function createCivicActorObject(actor, asset) {
     controllerJoints,
     skinJoints,
     skinnedMeshes,
+    jointVolumeDeformation,
     clothCorrectives,
     clothCorrectiveVersion: Object.keys(clothCorrectives).length
       ? "mirrorlife-civic-cloth-correctives-v1"
       : null,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v17`,
+    styleKey: `${frame}:${role}:civic-glb-v18`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7939,7 +8078,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v17` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v18` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8965,6 +9104,17 @@ function getStats() {
         leftLegX: Number((entry.skinJoints?.leftLeg?.deltaEuler.x || 0).toFixed(4)),
         rightLegX: Number((entry.skinJoints?.rightLeg?.deltaEuler.x || 0).toFixed(4))
       } : null,
+      proximalVolume: Object.keys(entry.jointVolumeDeformation || {}).length ? {
+        version: "mirrorlife-civic-proximal-volume-v1",
+        shoulders: entry.jointVolumeDeformation.shoulders ? {
+          left: Number((entry.jointVolumeDeformation.shoulders.leftBend || 0).toFixed(4)),
+          right: Number((entry.jointVolumeDeformation.shoulders.rightBend || 0).toFixed(4))
+        } : null,
+        hips: entry.jointVolumeDeformation.hips ? {
+          left: Number((entry.jointVolumeDeformation.hips.leftBend || 0).toFixed(4)),
+          right: Number((entry.jointVolumeDeformation.hips.rightBend || 0).toFixed(4))
+        } : null
+      } : null,
       clothCorrectives: entry.clothCorrectiveVersion ? {
         version: entry.clothCorrectiveVersion,
         count: Object.keys(entry.clothCorrectives || {}).length,
@@ -8974,7 +9124,7 @@ function getStats() {
         ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v5",
+        version: "mirrorlife-civic-hand-v6",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
@@ -9026,7 +9176,8 @@ function getStats() {
           z: Number((motion.node.rotation.z - motion.baseRotation.z).toFixed(4)),
           lift: Number((motion.node.position.y - motion.basePosition.y).toFixed(4)),
           velocityX: Number((motion.angularVelocityX || 0).toFixed(4)),
-          velocityZ: Number((motion.angularVelocityZ || 0).toFixed(4))
+          velocityZ: Number((motion.angularVelocityZ || 0).toFixed(4)),
+          deformation: motion.deformation?.version || null
         }
       ])))
     })),

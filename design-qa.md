@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v102 proximal-volume, skirt-flex and role-hand gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v102-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v102-full.png`; source and runtime are adjacent at identical scale. Focused evidence is `tmp/reference-vs-v102-cast-focus.png`, with `tmp/v101-vs-v102-cast-focus.png` recording the iteration delta.
+- Full 3D orbit evidence: `tmp/v102-final-yaw90.png` and `tmp/v102-final-yaw180.png`; shoulder/hip volume, role-authored hands and skirt geometry remain coherent through the real perspective orbit.
+- Responsive evidence: `tmp/v102-final-mobile.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `175 / 284,856`, side `178 / 295,964`, reverse `179 / 302,092`; mobile `100 / 243,464`. The player walked `4.37m`, rotated the perspective camera `65.3°`, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / shoulder and hip rings narrowed under bone rotation] Both continuous skinned limb meshes now receive bend-driven proximal-volume correction inside their existing vertex shaders. Shoulder and hip circumference expands only around the rotating joint, with no extra mesh, draw call, collider or camera-specific replacement.
+- [fixed / skirt moved as one rigid cone] The existing waist spring still supplies broad inertial follow-through, while a second GPU deformation bends only the lower hem, adds delayed lateral release and retains the planted waist. Facilitator and mediator expose `mirrorlife-civic-skirt-flex-v1` in runtime evidence.
+- [improved / facilitator repeated the same fist on both sides of the notebook] Hand contract v6 separates a supporting hand from a guiding hand with different finger curl, splay, thumb opposition and wrist orientation. The prop remains inside the articulated elbow/hand hierarchy through orbit.
+- [improved / listener leaned like a hinged mannequin] Animation contract v12 reduces the role's torso and head roll while preserving the asymmetrical open hands and attention toward the social circle. The v101/v102 crop shows a calmer, more upright silhouette.
+- [checked / higher-fidelity deformation does not cost the room budget] Proximal and skirt corrections run in the existing arm, leg and skirt draw calls. Every settled desktop angle remains `175–179 / 284,856–302,092`; portrait mobile remains `100 / 243,464`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD font choice, optical hierarchy, line breaks and Chinese copy are unchanged and remain readable at desktop and portrait sizes.
+- [improved][spacing and layout rhythm] The more upright listener and clearer facilitator hand silhouette reduce local character overlap without moving the story circle, interaction anchors, doorway or camera-safe composition.
+- [checked][colors and visual tokens] All deformation uses existing garment vertex colours and material response. No new palette, saturation or semantic-token drift appears.
+- [improved][image quality and asset fidelity] Shoulder/hip bends retain more mass; the skirt lower edge can flex independently; the notebook interaction uses role-specific fingers. These are genuine lit, depth-tested 3D changes and persist at `0°`, `90°` and `180°`.
+- [checked][copy and content] Location, scene memory and all four listening actions remain consistent with the visible public-room interaction.
+- [P1][body construction remains below the source] The shader correctives improve motion, but the source still has more anatomical shoulder blades, clavicle/hip planes, hand-painted weights and complete garment topology.
+- [P1][facial and hair acting remain below the source] Runtime faces and hair survive orbit and animation, yet the selected frame retains substantially finer eyelids, lips, gaze asymmetry, strand grouping and role-specific expression.
+- [P1][surface and light transport remain below the source] The room keeps coherent oak, plaster, fabric and terrazzo bands, while the reference has denser bespoke texture variation, softer contact penumbrae and richer multi-bounce colour.
+
+### Gate result
+
+v102 materially improves deformation during movement without spending additional draw calls: shoulders and hips retain volume, skirt hems flex beneath the waist spring, the facilitator owns two distinct notebook-hand shapes, and the listener no longer reads as a strongly tilted mannequin. The same-size source comparison remains visibly short of production character anatomy, complete cloth topology, facial/hair acting and offline light transport.
+
+final result: blocked
+
+Blocker: production retopology and painted weights, complete garment and hand deformation, remaining facial/hair authoring, and source-level material/indirect-light construction remain below the selected reference.
+
 ## 2026-07-25 reference-fidelity v101 bend-driven joint volume and cloth-compression gate
 
 ### Evidence inspected together

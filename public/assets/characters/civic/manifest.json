@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v56",
+  "sculptContract": "mirrorlife-civic-sculpt-v57",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v3",
     "roles": [
@@ -98,7 +98,7 @@
     ]
   },
   "handContract": {
-    "version": "mirrorlife-civic-hand-v5",
+    "version": "mirrorlife-civic-hand-v6",
     "pivots": [
       "Hand_-1",
       "Hand_1"
@@ -106,7 +106,8 @@
     "poseStyles": [
       "relaxed",
       "soft-cup",
-      "notebook-grip",
+      "notebook-support",
+      "notebook-guide",
       "thoughtful",
       "open"
     ],
@@ -132,8 +133,8 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v11",
-    "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
+    "version": "mirrorlife-civic-clips-v12",
+    "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
     "clips": [
       "idle",
       "walk",

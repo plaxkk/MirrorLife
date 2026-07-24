@@ -76,7 +76,13 @@ try {
   assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v13"), "civic actors did not preserve the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 4), "civic volumetric facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v1" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v5"), "civic actors did not expose the compact independent-hand contract");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v6"), "civic actors did not expose the role-authored independent-hand contract");
+  assert(opening.actors.every((actor) => actor.proximalVolume?.version === "mirrorlife-civic-proximal-volume-v1"), "civic actors did not expose shoulder/hip volume preservation");
+  assert(
+    opening.actors.filter((actor) => ["facilitator", "mediator"].includes(actor.assetRole))
+      .every((actor) => actor.secondaryMotion?.skirt?.deformation === "mirrorlife-civic-skirt-flex-v1"),
+    "civic skirt roles did not expose lower-hem flex deformation"
+  );
   assert(opening.actors.every((actor) => actor.clothCorrectives?.version === "mirrorlife-civic-cloth-correctives-v1" && actor.clothCorrectives?.count === 4), "civic actors did not expose four bend-driven cloth correctives");
   const attentiveWitnesses = opening.actors.filter((actor) => actor.assetRole !== "player");
   assert(attentiveWitnesses.every((actor) => Number(actor.facial?.attentive || 0) >= 0.35), "civic witness faces did not settle into attentive expression morphs");
@@ -92,7 +98,7 @@ try {
   assert(Math.abs(Number(mediator?.hands?.rightWristX || 0)) > 0.15, "mediator thoughtful wrist pose did not reach the runtime hand pivot");
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v11", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v12", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");

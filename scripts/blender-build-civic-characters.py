@@ -744,7 +744,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v5"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v6"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -765,11 +765,14 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         sides=16,
     )
     pose_profiles = {
-        "relaxed": {"curl": 0.38, "splay": 1.0, "thumb": 0.34},
-        "open": {"curl": 0.12, "splay": 1.28, "thumb": 0.18},
-        "soft-cup": {"curl": 0.56, "splay": 0.72, "thumb": 0.5},
-        "notebook-grip": {"curl": 0.92, "splay": 0.36, "thumb": 0.82},
-        "thoughtful": {"curl": 0.64, "splay": 0.58, "thumb": 0.6},
+        "relaxed": {"curl": (0.31, 0.36, 0.4, 0.45), "splay": 1.0, "thumb": 0.34},
+        "open": {"curl": (0.08, 0.1, 0.13, 0.17), "splay": 1.28, "thumb": 0.18},
+        "soft-cup": {"curl": (0.42, 0.52, 0.6, 0.67), "splay": 0.72, "thumb": 0.5},
+        # The notebook hand now has a supporting palm and a separate guiding
+        # hand instead of mirroring one generic fist on both wrists.
+        "notebook-support": {"curl": (0.72, 0.82, 0.9, 0.95), "splay": 0.3, "thumb": 0.9},
+        "notebook-guide": {"curl": (0.36, 0.5, 0.64, 0.76), "splay": 0.44, "thumb": 0.84},
+        "thoughtful": {"curl": (0.48, 0.61, 0.69, 0.77), "splay": 0.58, "thumb": 0.6},
     }
     profile = pose_profiles.get(pose_style, pose_profiles["relaxed"])
     finger_specs = (
@@ -795,7 +798,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
                 -0.025,
             ),
             (
-                -profile["curl"] * (0.72 + finger_index * 0.055),
+                -profile["curl"][finger_index - 1],
                 side * splay * profile["splay"] * 1.35,
                 -side * splay * profile["splay"] * 0.9,
             ),
@@ -2161,8 +2164,12 @@ def build_body(role, config, mats, visual):
             vertices=22,
         )
         if config["costume"] == "facilitator":
-            hand_pose = "notebook-grip"
-            hand_rotation = (0.02, side * 0.2, -side * 0.2)
+            hand_pose = "notebook-support" if side == -1 else "notebook-guide"
+            hand_rotation = (
+                0.035 if side == -1 else -0.025,
+                side * (0.17 if side == -1 else 0.23),
+                -side * (0.18 if side == -1 else 0.28),
+            )
         elif config["costume"] == "mediator":
             hand_pose = "thoughtful" if side == 1 else "open"
             hand_rotation = (0.08 if side == 1 else -0.03, -side * 0.13, -side * 0.16)
@@ -2769,7 +2776,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v56",
+        "sculptContract": "mirrorlife-civic-sculpt-v57",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2821,9 +2828,9 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v5",
+            "version": "mirrorlife-civic-hand-v6",
             "pivots": ["Hand_-1", "Hand_1"],
-            "poseStyles": ["relaxed", "soft-cup", "notebook-grip", "thoughtful", "open"],
+            "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
             "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
         },
         "footwearContract": {
@@ -2832,8 +2839,8 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v11",
-            "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
+            "version": "mirrorlife-civic-clips-v12",
+            "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
         "worldUnitMeters": 1,
