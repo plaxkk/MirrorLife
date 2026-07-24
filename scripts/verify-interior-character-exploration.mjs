@@ -99,14 +99,14 @@ try {
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
   assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic production face unexpectedly fell back to a texture layer");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v16"), "civic actors did not preserve the production volumetric facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v17"), "civic actors did not preserve the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.lipVolume === "mirrorlife-civic-lip-volume-v2"), "civic actors did not expose the volumetric lip contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic volumetric facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v3" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
   assert(opening.actors.every((actor) => actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v1"), "civic actors did not expose vertex-driven eyelids");
   assert(opening.actors.every((actor) => actor.eyes?.uniformReady === true), "civic eyelid shader uniforms did not compile");
   assert(opening.actors.every((actor) => Number(actor.eyes?.upperLidWeight || 0) > 250 && Number(actor.eyes?.lowerLidWeight || 0) > 25), "civic eyelid vertex weights are incomplete");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v6"), "civic actors did not expose the role-authored independent-hand contract");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v7"), "civic actors did not expose the role-authored independent-hand contract");
   assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v4" && actor.body?.realGeometry === true), "civic actors did not expose the contoured body shell contract");
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v1"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v2"), "civic actors did not expose the authored pelvis continuity contract");
@@ -162,10 +162,13 @@ try {
     Number(mediator?.x || 0) - Number(stagedPlayer?.x || 0) >= 0.65,
     "rear mediator regressed onto the player's opening sightline"
   );
-  assert(Math.abs(Number(mediator?.hands?.rightWristX || 0)) > 0.15, "mediator thoughtful wrist pose did not reach the runtime hand pivot");
+  assert(
+    Number(mediator?.hands?.rightWristX || 0) > 0.1,
+    "mediator relaxed wrist regressed into the face-obscuring negative fold"
+  );
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v13", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v14", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "listen", "player did not join the authored opening testimony");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");

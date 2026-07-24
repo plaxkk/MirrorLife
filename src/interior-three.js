@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v63";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v64";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v2";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
@@ -8360,7 +8360,7 @@ function createCivicActorObject(actor, asset) {
     secondaryMotion,
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v1",
-    styleKey: `${frame}:${role}:civic-glb-v21`,
+    styleKey: `${frame}:${role}:civic-glb-v22`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -8381,7 +8381,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v21` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v22` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8628,7 +8628,10 @@ function updateActors(actors = [], now = performance.now()) {
       const speaking = actor.state === "talking" || actor.state === "interact" || actor.state === "doing";
       const talkPulse = speaking ? 0.78 + Math.abs(Math.sin(now * 0.009 + frame)) * 0.5 : 1;
       if (entry.mouthClosedPivot && entry.mouthOpenPivot) {
-        const open = speaking && Math.sin(now * 0.011 + frame) > -0.22;
+        // Most source dialogue is carried by cheek, jaw and lip motion, with
+        // only brief open-mouth syllables. The former 57% duty cycle froze
+        // screenshots on a dark mouth hole and made every speaker shout.
+        const open = speaking && Math.sin(now * 0.011 + frame) > 0.68;
         entry.mouthClosedPivot.visible = !open;
         entry.mouthOpenPivot.visible = open;
         entry.mouthClosedPivot.scale.set(
@@ -8636,7 +8639,7 @@ function updateActors(actors = [], now = performance.now()) {
           1,
           1 + smileInfluenceForFeatures * 0.14
         );
-        entry.mouthOpenPivot.scale.set(1, 0.72 + talkPulse * 0.32, 1);
+        entry.mouthOpenPivot.scale.set(1, 1, 0.78 + talkPulse * 0.22);
         entry.mouthPivot.scale.set(1, 1, 1);
       } else {
         entry.mouthPivot.scale.set(1, talkPulse, 1);
@@ -9526,7 +9529,7 @@ function getStats() {
         ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v6",
+        version: "mirrorlife-civic-hand-v7",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
@@ -9536,7 +9539,7 @@ function getStats() {
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v16"
+          ? "mirrorlife-civic-face-volume-v17"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"

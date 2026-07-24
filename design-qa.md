@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v113 facial-readability and gesture-clearance gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v113-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v113-full.png`; focused cast/performance comparison: `tmp/reference-vs-v113-cast-focus.png`; implementation delta: `tmp/v112-vs-v113-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v113-final-desktop-yaw90.png` and `tmp/v113-final-desktop-yaw180.png`. The revised head proportions, lips, eyes, hands and role-authored gesture remain genuine depth-tested geometry through the real camera orbit.
+- Responsive evidence: `tmp/v113-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 289,992`, side `174 / 301,804`, reverse `175 / 307,228`; mobile `100 / 249,172`. Four v64 character GLBs total `7.20 MB`; the player walked `4.45m`, rotated the camera `65.3°`, retained vertex eyelid closure, passed all `26` metre-space layouts and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / mediator's hand crossed the mouth and read like a moustache or broken face] Animation contract v14 makes the open left palm own the statement and keeps the right wrist below the sternum. The final 0° and 90° frames preserve the complete face; browser verification now rejects the earlier negative face-obscuring wrist fold.
+- [fixed / centred nose shadow plus philtrum formed a horizontal dark bar] Face volume v17 replaces the centred bead with a small asymmetric nose-wing shadow and reduces the philtrum line. The nose reads through actual three-quarter volume without creating an artificial moustache.
+- [improved / female eye apertures remained too small for the selected illustrated cast] Facilitator and mediator receive modestly wider/taller real sclera, lid and iris stacks while preserving smaller irises and independently deforming upper/lower eyelids. This restores expression readability without returning to the early circular doll-eye proportions.
+- [improved / open-mouth frames became dark punched holes] Speech now uses a `26%`-range open-syllable duty cycle instead of roughly `57%`; the smaller mouth cavity has real upper/lower warm lip rims, while cheek, jaw and the unified closed-lip surface continue carrying most dialogue motion.
+- [improved / hands had compact equal-length toy fingers] Hand contract v7 narrows the palm, establishes a clearer index-middle-ring-little length rhythm and refines root/tip taper. The full four-finger/thumb geometry remains independently posed and merged per hand for Web rendering.
+- [checked / higher facial and hand authorship remains within Web budgets] The four GLBs increase only from `7.18 MB` to `7.20 MB`. All three desktop views stay below `180 / 450k`; the phone stays below `110 / 250k`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD hierarchy, line height, truncation, action labels and speaker-icon treatment remain stable at identical desktop and portrait sizes.
+- [improved][spacing and layout rhythm] The active mediator's face is no longer visually crowded by her own wrist, so the intended player–speaker–witness triangle reads before the surrounding UI. Actor roots, circulation widths and camera-safe framing are unchanged.
+- [improved][colors and visual tokens] Warm skin, brown/coral hair, oatmeal cloth and green civic costumes retain the source palette; softer lip/nose values remove the isolated near-black facial bar.
+- [improved][image quality and asset fidelity] Revised heads, eye apertures, nose wing, lips, palms and fingers are authored GLB geometry with real materials, morph targets and skeleton pivots. They survive movement and `0°/90°/180°` views; no sprite, billboard or camera-facing character substitute is used.
+- [checked][copy and content] “倾听线索”, the active-speaker beacon, story-memory title and action rail remain coherent with the visible testimony performance.
+- [P1][production facial and garment topology still remain below the source] v113 removes the most distracting face occlusion and dark-bar artifact, but the selected frame still has finer eyelid rims, cheek/jaw compression, finger contacts, sewn folds and hand-painted deformation weights.
+- [P1][environment micro-density and curved joinery remain below the source] The functional zones match, while the source still contains substantially more individual documents, shelf objects, botanical variation, upholstery compression, curved timber and foreground evidence.
+- [P1][offline light transport remains ahead] The live room has consistent daylight and contact through orbit, but the source still has localized leaf shadows, softer multi-bounce penumbrae, richer skin/cloth transport and a broader highlight roll-off.
+
+### Gate result
+
+v113 materially improves the first-read character performance: the focal speaker keeps a complete, readable face; her eyes, nose, lips and hand silhouette are closer to the selected stylized cast; and the same authored geometry survives walking, orbit, mobile LOD and the strict performance gates. The exact same-size comparison is cleaner and less mannequin-like, but source-level facial/garment finishing, room-wide bespoke set dressing and offline light transport still remain visibly ahead.
+
+final result: blocked
+
+Blocker: production facial/garment topology and deformation, room-wide bespoke micro-prop/material density, and offline-quality localized indirect light remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v112 world-projected speaker-beacon gate
 
 ### Evidence inspected together

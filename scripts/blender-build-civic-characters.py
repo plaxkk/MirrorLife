@@ -135,7 +135,7 @@ BODY_PROFILES = {
         "hand_scale": 0.94,
         "foot_scale": 1.04,
         "toe_out": 0.055,
-        "head_scale": (0.92, 0.895, 0.92),
+        "head_scale": (0.915, 0.895, 0.92),
         "head_z": 1.511,
     },
     "mediator": {
@@ -151,7 +151,7 @@ BODY_PROFILES = {
         "hand_scale": 0.95,
         "foot_scale": 1.04,
         "toe_out": 0.055,
-        "head_scale": (0.927, 0.9, 0.92),
+        "head_scale": (0.91, 0.895, 0.92),
         "head_z": 1.501,
     },
 }
@@ -193,10 +193,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.0585,
-        "eye_height": 0.033,
-        "iris_width": 0.025,
-        "iris_height": 0.027,
+        "eye_width": 0.0605,
+        "eye_height": 0.035,
+        "iris_width": 0.0255,
+        "iris_height": 0.0278,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -208,10 +208,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.0575,
-        "eye_height": 0.0325,
-        "iris_width": 0.0245,
-        "iris_height": 0.026,
+        "eye_width": 0.0595,
+        "eye_height": 0.0345,
+        "iris_width": 0.025,
+        "iris_height": 0.0272,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -891,17 +891,17 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v6"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v7"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
-        0.118,
+        0.112,
         (
-            (0.5, 0.041, 0.031, 0, 0),
-            (0.28, 0.056, 0.038, -side * 0.002, 0),
-            (0.02, 0.066, 0.042, -side * 0.004, -0.003),
-            (-0.26, 0.063, 0.04, -side * 0.004, -0.006),
-            (-0.5, 0.055, 0.034, 0, -0.005),
+            (0.5, 0.039, 0.029, 0, 0),
+            (0.28, 0.053, 0.036, -side * 0.002, 0),
+            (0.02, 0.062, 0.04, -side * 0.004, -0.003),
+            (-0.26, 0.059, 0.038, -side * 0.004, -0.006),
+            (-0.5, 0.052, 0.032, 0, -0.005),
         ),
         (0, 0, 0),
         mat,
@@ -930,10 +930,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # the reference's soft illustrated hands. The earlier 26 mm spacing
         # and 16 mm radii resolved as four separate wires at the story camera;
         # these fuller, closer roots read as one palm with finger articulation.
-        (-0.031, 0.044, 0.0192, -side * 0.0014, 0.005),
-        (-0.010, 0.054, 0.0204, -side * 0.0005, 0.007),
-        (0.010, 0.051, 0.0202, side * 0.0005, 0.007),
-        (0.031, 0.041, 0.0187, side * 0.0015, 0.005),
+        (-0.03, 0.047, 0.0182, -side * 0.0014, 0.005),
+        (-0.01, 0.057, 0.0194, -side * 0.0005, 0.007),
+        (0.01, 0.053, 0.0192, side * 0.0005, 0.007),
+        (0.03, 0.043, 0.0177, side * 0.0015, 0.005),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         finger_pivot = empty(
@@ -1807,11 +1807,23 @@ def build_face(head, mats, role):
     # and red underline that made the face feel assembled from primitives.
     ellipsoid("NoseBridge", (0, -0.183, 0.002), (0.0065, 0.0052, 0.019), mats["skin"], head, segments=18, rings=10)
     ellipsoid("NoseTip", (0, -0.1905, -0.019), (0.0095, 0.0065, 0.0095), mats["skin"], head, segments=18, rings=10)
-    ellipsoid("NoseShadow", (0, -0.1975, -0.0295), (0.0058, 0.0011, 0.0019), mats["skin_shadow"], head, segments=14, rings=8)
+    # One off-centre wing shadow reads as a softly turned nose. The previous
+    # centred horizontal bead aligned with the philtrum and lip and became a
+    # moustache-like bar at the gameplay camera.
+    ellipsoid(
+        "NoseWingShadow",
+        (0.0042, -0.1975, -0.029),
+        (0.0038, 0.0009, 0.00155),
+        mats["skin_shadow"],
+        head,
+        rotation=(0, 0.06, -0.08),
+        segments=12,
+        rings=8,
+    )
     curve_tube(
         "Philtrum",
         [(0, -0.1965, -0.038), (0, -0.199, -0.056), (0, -0.2, -0.071)],
-        0.0011,
+        0.00075,
         mats["skin_shadow"],
         head,
         resolution=2,
@@ -1830,8 +1842,29 @@ def build_face(head, mats, role):
         closed,
     )
     open_mouth = empty("MouthOpenPivot", mouth)
-    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.024, 0.0055, 0.018), mats["ink"], open_mouth, segments=20, rings=12)
-    ellipsoid("Tongue", (0, -0.01, -0.009), (0.013, 0.003, 0.005), mats["lip"], open_mouth, segments=14, rings=8)
+    ellipsoid("MouthOpen", (0, -0.004, -0.002), (0.021, 0.0048, 0.014), mats["ink"], open_mouth, segments=20, rings=12)
+    ellipsoid("Tongue", (0, -0.0087, -0.008), (0.0115, 0.0026, 0.0042), mats["lip"], open_mouth, segments=14, rings=8)
+    # A real upper and lower lip rim preserves the reference's warm mouth
+    # colour during speech. A naked charcoal ellipsoid looked like a punched
+    # hole whenever the open-mouth swap happened to coincide with a capture.
+    curve_tube(
+        "MouthOpenUpperRim",
+        [(-0.021, -0.009, 0), (0, -0.011, 0.011), (0.021, -0.009, 0)],
+        0.00215,
+        mats["lip"],
+        open_mouth,
+        resolution=2,
+        bevel_resolution=2,
+    )
+    curve_tube(
+        "MouthOpenLowerRim",
+        [(-0.019, -0.009, -0.002), (0, -0.011, -0.013), (0.019, -0.009, -0.002)],
+        0.00205,
+        mats["lip"],
+        open_mouth,
+        resolution=2,
+        bevel_resolution=2,
+    )
 
 
 def build_hair(head, mats, style):
@@ -3050,7 +3083,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v63",
+        "sculptContract": "mirrorlife-civic-sculpt-v64",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v4",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -3106,9 +3139,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-volume-v16",
+            "integrationContract": "mirrorlife-civic-face-volume-v17",
             "productionFaceMode": "sculpted-volume",
-            "productionIntegrationContract": "mirrorlife-civic-face-volume-v16",
+            "productionIntegrationContract": "mirrorlife-civic-face-volume-v17",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
@@ -3119,7 +3152,7 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v6",
+            "version": "mirrorlife-civic-hand-v7",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
             "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
@@ -3130,7 +3163,7 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v13",
+            "version": "mirrorlife-civic-clips-v14",
             "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v13";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v14";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -290,12 +290,15 @@ const ROLE_OFFSETS = Object.freeze({
     }),
     gesture: pose(0, {
       // The mediator answers with one measured palm while the other hand
-      // remains near the chest. This avoids the mirrored "two arms forward"
-      // gesture shared by the original generic clip.
+      // remains below the sternum. The earlier thoughtful-hand offset added
+      // to the already folded generic gesture and carried the right palm
+      // directly across the mouth at the key pose, obscuring the face and
+      // reading like a moustache in the story camera. The open left hand now
+      // owns the statement while the right arm stays visibly relaxed.
       visual: v(0.012, 0, 0.035), headGroup: v(-0.022, 0.035, 0.038),
-      leftArm: v(0.16, 0, 0.08), rightArm: v(-0.08, 0, -0.18),
-      leftElbow: v(0.32, 0, 0.08), rightElbow: v(-0.54, 0, -0.18),
-      leftHand: v(-0.1, 0.1, 0.18), rightHand: v(0.16, -0.12, -0.24),
+      leftArm: v(0.16, 0, 0.08), rightArm: v(0.22, 0, -0.1),
+      leftElbow: v(0.32, 0, 0.08), rightElbow: v(0.42, 0, -0.08),
+      leftHand: v(-0.1, 0.1, 0.18), rightHand: v(0.08, -0.06, -0.12),
       leftLeg: v(0, -0.04, 0.04), rightLeg: v(0, 0.046, -0.03), leftKnee: v(0.06)
     })
   },
