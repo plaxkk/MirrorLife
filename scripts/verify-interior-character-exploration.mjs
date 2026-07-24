@@ -84,6 +84,10 @@ try {
   assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v4" && actor.body?.realGeometry === true), "civic actors did not expose the contoured body shell contract");
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v1"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v2"), "civic actors did not expose the authored pelvis continuity contract");
+  assert(
+    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v1" && actor.garmentTopology?.realGeometry === true),
+    "civic actors did not expose the authored garment topology contract"
+  );
   assert(opening.actors.every((actor) => actor.proximalVolume?.version === "mirrorlife-civic-proximal-volume-v1"), "civic actors did not expose shoulder/hip volume preservation");
   assert(
     opening.actors.filter((actor) => ["facilitator", "mediator"].includes(actor.assetRole))
@@ -170,6 +174,11 @@ try {
     const inMotionStats = await readStats(page);
     const inMotionPlayer = playerFrom(inMotionStats);
     if (inMotionPlayer?.animation?.state !== "walk") continue;
+    assert.equal(
+      inMotionPlayer.garmentTopology?.version,
+      "mirrorlife-civic-garment-topology-v1",
+      "walking player lost the bone-weighted garment topology contract"
+    );
     walkSamples += 1;
     const stride = Math.abs(Number(inMotionPlayer.animation.leftLegX) - Number(inMotionPlayer.animation.rightLegX));
     const skinStride = Math.abs(Number(inMotionPlayer.skin?.leftLegX) - Number(inMotionPlayer.skin?.rightLegX));

@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v106 authored garment topology gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v106-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory full-view comparison: `tmp/reference-vs-v106-full.png`; focused cast comparison: `tmp/reference-vs-v106-cast-focus.png`; implementation delta: `tmp/v105-vs-v106-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v106-final-yaw90.png` and `tmp/v106-final-yaw180.png`. The same bone-weighted trousers and sleeves, seven-ring skirts, tailored panels and complete actors remain perspective-lit, depth-tested and physically staged.
+- Responsive evidence: `tmp/v106-final-mobile.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 278,376`, side `174 / 289,484`, reverse `175 / 295,612`; mobile `100 / 237,440`. The player walked `4.57m`, rotated the real camera `65.3°`, retained the garment topology contract throughout the walk, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / trousers and sleeves retained a circular mannequin cross-section] Garment topology v1 reshapes the continuously skinned arm and leg meshes into rounded superellipses with pressed fronts, restrained rear fall and actual side-seam planes. The front crease changes direction gradually along each bone, so cloth flow is part of the deforming mesh rather than a line placed over it.
+- [fixed / skirt silhouettes repeated like rigid cones] Both civic skirts now use seven vertical rings, alternating deep/shallow channels, asymmetric radial release and a non-uniform hem drop. A real waistband and side-release folds live under the existing skirt motion pivot.
+- [improved / vests, dress bodices and cardigans read as shallow slabs] Tailored panels move from `5 × 7` to `7 × 9` authored samples, adding separate chest bow, waist tension, opening-edge roll and hip release while remaining one mergeable garment surface.
+- [fixed / first permanent-fold implementation exceeded the desktop draw-call gate] Separate standing wrinkle ribbons reached `183–187` calls. Their flow was folded into the skinned limb topology, returning the final three desktop views to `171–175` calls without losing true 3D cloth section or movement continuity.
+- [checked / garment construction remains Web-sized] Total civic GLBs are `6.94 MB`; every role remains below `2 MiB`. The new geometry adds only `3,008` triangles in the opening frame and `1,712` in the phone LOD relative to v105.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, optical weights, one-line truncation and action labels remain stable at desktop and portrait sizes; the character-asset change does not leak into the UI layer.
+- [improved][spacing and layout rhythm] More controlled trouser, sleeve, cardigan and skirt silhouettes improve separation inside the four-person circle without shifting actor roots, interaction anchors, metre-space paths or camera-safe framing.
+- [checked][colors and visual tokens] Existing teal, green, oatmeal, coral, oak, plaster, terrazzo and brass tokens remain intact. New cloth topology inherits the existing fabric mask, roughness hierarchy and role palette instead of adding procedural accent colours.
+- [improved][image quality and asset fidelity] Clothing construction is real GLB topology tied to the skeleton and skirt pivot. It survives movement plus `0°`, `90°`, `180°` views; no billboard, sprite, CSS avatar or camera-facing cover is used.
+- [checked][copy and content] Location, story-memory title, interaction target and four listening actions remain coherent with the visible civic scene.
+- [P1][garment surface resolution still remains below the source] The reference carries production retopology, sewn panel thickness, cargo seams, layered hems, contact folds and hand-painted wrinkle weighting at a finer scale than the runtime cast.
+- [P1][facial and hair fidelity remains below the source] Current volumetric eyes/lips and layered hair survive orbit, but inner-corner anatomy, cheek compression, lip contour, strand density and material variation remain visibly simpler.
+- [P1][room dressing and indirect light remain below the source] The implementation is a coherent playable room, while the selected offline frame still has denser bespoke props, softer contact penumbrae, richer bounce colour and more local material microvariation.
+
+### Gate result
+
+v106 closes the largest remaining garment-system shortcut: trousers and sleeves now have authored cut-cloth sections and flowing creases inside their bone-weighted topology; skirts and tailored outerwear receive materially richer drape without exceeding draw-call, triangle, download or mobile gates. The literal same-size comparison is improved in clothing construction, but the selected offline image remains ahead in sewn detail, facial/hair finish and light transport.
+
+final result: blocked
+
+Blocker: source-level sewn garment retopology and painted wrinkle weights, finer facial and layered-hair authoring, bespoke prop/material density and offline indirect-light construction remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v105 contoured body and garment-continuity gate
 
 ### Evidence inspected together

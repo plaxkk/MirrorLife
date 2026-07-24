@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v60";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v61";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -7912,6 +7912,7 @@ function createCivicActorObject(actor, asset) {
       "KneeCorrectiveVolume_",
       "SleeveCompression_",
       "TrouserFold_",
+      "SkirtSideRelease_",
       "CoatButton_",
       "Thumb_"
     ];
@@ -8012,6 +8013,7 @@ function createCivicActorObject(actor, asset) {
     bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v4";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v1";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v2";
+    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v1";
   }
   const skirtSurfaceMesh = skirtPivot
     ? mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 })
@@ -8193,7 +8195,8 @@ function createCivicActorObject(actor, asset) {
       : null,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v19`,
+    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v1",
+    styleKey: `${frame}:${role}:civic-glb-v20`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -8214,7 +8217,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v19` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v20` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -9309,6 +9312,11 @@ function getStats() {
         version: entry.bodySurfaceMesh.userData?.mirrorLifeBodyIdentity || null,
         shoulderContinuity: entry.bodySurfaceMesh.userData?.mirrorLifeShoulderContinuity || null,
         pelvisContinuity: entry.bodySurfaceMesh.userData?.mirrorLifePelvisContinuity || null,
+        realGeometry: true
+      } : null,
+      garmentTopology: entry.garmentTopologyVersion ? {
+        version: entry.garmentTopologyVersion,
+        runtime: "bone-weighted-superellipse+topology-flow-creases+asymmetric-drape",
         realGeometry: true
       } : null,
       proximalVolume: Object.keys(entry.jointVolumeDeformation || {}).length ? {

@@ -335,11 +335,20 @@ def create_skin_armature(parent, shoulder_x=0.216, hip_x=0.115):
 
 
 def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, armature, bone_names, sides=22):
-    """Build two continuously weighted limbs in one Web-friendly skin mesh."""
+    """Build two continuously weighted limbs in one Web-friendly skin mesh.
+
+    Civic clothes should not inherit the perfectly lathed cross-section of a
+    mannequin.  The authored ring positions still define the reliable skin
+    weights, while the final cross-section adds a restrained pressed front,
+    side seam and centre crease.  These details therefore bend with the real
+    skeleton instead of floating above it as decoration.
+    """
     vertices = []
     faces = []
     weights = []
     blend_half = 0.075
+    is_leg = name == "SkinnedLegVolume"
+    is_arm = name == "SkinnedArmVolume"
     for limb_index, centre_x in enumerate(side_centres):
         upper_name, lower_name = bone_names[limb_index]
         vertex_start = len(vertices)
@@ -354,9 +363,39 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
             lower_weight = lower_weight * lower_weight * (3.0 - 2.0 * lower_weight)
             for side_index in range(sides):
                 angle = math.tau * side_index / sides
+                cosine = math.cos(angle)
+                sine = math.sin(angle)
+                if is_leg:
+                    # A rounded superellipse gives trousers a cut-cloth
+                    # section rather than the toy-like drinking-straw section
+                    # of a cylinder. The central front crease and restrained
+                    # outer seam are modelled into the silhouette itself.
+                    shaped_x = math.copysign(abs(cosine) ** 0.86, cosine)
+                    shaped_y = math.copysign(abs(sine) ** 0.9, sine)
+                    side_seam = abs(cosine) ** 10
+                    flow_turn = math.sin(max(0.0, min(1.0, (z - 0.13) / 0.65)) * math.pi) * 0.16
+                    crease_direction = -math.pi / 2 + math.copysign(flow_turn, centre_x)
+                    crease = max(0.0, math.cos(angle - crease_direction)) ** 12
+                    local_x = shaped_x * radius_x + math.copysign(side_seam * 0.0025, cosine)
+                    local_y = shaped_y * radius_y - crease * 0.0055
+                elif is_arm:
+                    # Sleeves keep a softer section, but a shallow rear fall
+                    # and front press stop the full arm from reading as bare
+                    # rubber when the actor turns in profile.
+                    shaped_x = math.copysign(abs(cosine) ** 0.94, cosine)
+                    shaped_y = math.copysign(abs(sine) ** 0.96, sine)
+                    rear = max(0.0, sine)
+                    flow_turn = math.sin(max(0.0, min(1.0, (z - 0.675) / 0.64)) * math.pi) * 0.11
+                    press_direction = -math.pi / 2 - math.copysign(flow_turn, centre_x)
+                    front_press = max(0.0, math.cos(angle - press_direction)) ** 10
+                    local_x = shaped_x * radius_x
+                    local_y = shaped_y * radius_y - front_press * 0.0025 + rear ** 5 * 0.0015
+                else:
+                    local_x = cosine * radius_x
+                    local_y = sine * radius_y
                 vertices.append((
-                    ring_centre_x + math.cos(angle) * radius_x,
-                    centre_y + math.sin(angle) * radius_y,
+                    ring_centre_x + local_x,
+                    centre_y + local_y,
                     z,
                 ))
                 weights.append((upper_name, lower_name, 1.0 - lower_weight, lower_weight))
@@ -391,6 +430,7 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     modifier.use_deform_preserve_volume = True
     obj["semantic_part"] = name
     obj["skin_contract"] = "mirrorlife-civic-skin-v1"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v1"
     if name == "SkinnedArmVolume":
         obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v1"
     for polygon in mesh.polygons:
@@ -454,13 +494,13 @@ def tailored_panel(
     """Create a fitted fabric panel with authored drape in the base topology.
 
     Earlier panels used three box-like rings and then relied on decorative
-    strips for every fold.  Five height rings and seven width samples now bow
-    the cloth over the chest, relax it at the waist and break the front into
-    broad alternating planes.  The result reads as one garment from every
+    strips for every fold. Seven height rings and nine width samples now bow
+    the cloth over the chest, pinch it at the waist, release it over the hip
+    and roll the opening edge. The result reads as one garment from every
     orbit angle while retaining one inexpensive mesh and the existing rig.
     """
-    ring_factors = (0.0, 0.24, 0.5, 0.76, 1.0)
-    column_factors = (-1.0, -0.66, -0.33, 0.0, 0.33, 0.66, 1.0)
+    ring_factors = (0.0, 0.14, 0.3, 0.5, 0.68, 0.84, 1.0)
+    column_factors = (-1.0, -0.76, -0.5, -0.24, 0.0, 0.24, 0.5, 0.76, 1.0)
     vertices = []
     for height_factor in ring_factors:
         if height_factor <= 0.5:
@@ -471,9 +511,11 @@ def tailored_panel(
         body_roll = math.sin(math.pi * height_factor)
         for column in column_factors:
             x = column * width / 2
-            broad_fold = math.cos(column * math.pi * 2.5) * depth * 0.075 * body_roll
-            centre_bow = (1.0 - abs(column)) * depth * 0.13 * body_roll
-            vertices.append((x, -depth / 2 - broad_fold - centre_bow, z))
+            broad_fold = math.cos(column * math.pi * 2.5) * depth * 0.078 * body_roll
+            centre_bow = (1.0 - abs(column)) * depth * 0.14 * body_roll
+            edge_roll = max(0.0, abs(column) - 0.7) / 0.3 * depth * 0.06
+            waist_tension = math.sin(column * math.pi) * depth * 0.045 * max(0.0, 1.0 - abs(height_factor - 0.5) * 4.0)
+            vertices.append((x, -depth / 2 - broad_fold - centre_bow - edge_roll - waist_tension, z))
         for column in column_factors:
             vertices.append((column * width / 2, depth / 2, z))
     columns = len(column_factors)
@@ -1188,14 +1230,16 @@ def sculpted_shoe(
 def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=None, pleats=10, segments=40):
     """Create a conical skirt whose folds belong to its silhouette."""
     middle_radius = (waist_radius + hem_radius) * 0.5
-    # Five rings let the fabric settle over the hip before opening into the
-    # hem. The earlier three-ring cone read as a rigid lampshade, especially
-    # beside the softly draped garments in the visual target.
+    # Seven rings let the fabric settle over the hip, hang under gravity and
+    # only then release into an asymmetric hem. This avoids the rigid
+    # lampshade read visible in the earlier five-ring silhouette.
     rings = (
         (0.5, waist_radius, 0.05),
-        (0.27, waist_radius * 1.045, 0.3),
-        (0.02, middle_radius * 0.94, 0.62),
-        (-0.25, middle_radius * 1.08, 0.84),
+        (0.36, waist_radius * 1.025, 0.16),
+        (0.2, waist_radius * 1.08, 0.36),
+        (0.02, middle_radius * 0.93, 0.58),
+        (-0.16, middle_radius * 1.0, 0.74),
+        (-0.34, middle_radius * 1.1, 0.9),
         (-0.5, hem_radius, 1.0),
     )
     vertices = []
@@ -1203,11 +1247,22 @@ def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=N
     for z_factor, radius, fold_strength in rings:
         for segment in range(segments):
             angle = math.tau * segment / segments
-            fold = math.cos(angle * pleats) * 0.014 * fold_strength
+            # Alternate deep and shallow channels so the hem does not repeat
+            # like a procedural cog wheel.
+            fold = (
+                math.cos(angle * pleats) * 0.012
+                + math.cos(angle * (pleats // 2) + 0.48) * 0.006
+            ) * fold_strength
             front_bias = max(0.0, -math.sin(angle)) * 0.009 * fold_strength
-            asymmetric_drape = math.sin(angle + 0.7) * 0.009 * fold_strength
+            asymmetric_drape = (
+                math.sin(angle + 0.7) * 0.008
+                + math.sin(angle * 2.0 - 0.35) * 0.004
+            ) * fold_strength
             current_radius = radius + fold + front_bias + asymmetric_drape
-            hem_drop = -max(0.0, math.sin(angle + 0.42)) * 0.018 * fold_strength
+            hem_drop = (
+                -max(0.0, math.sin(angle + 0.42)) * 0.018
+                -max(0.0, math.cos(angle * 2.0 - 0.2)) * 0.007
+            ) * fold_strength
             vertices.append((math.cos(angle) * current_radius, math.sin(angle) * current_radius, depth * z_factor + hem_drop))
     for ring in range(len(rings) - 1):
         current = ring * segments
@@ -1231,6 +1286,7 @@ def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=N
     obj.parent = parent
     obj.location = location
     link_material(obj, mat)
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v1"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     bevel = obj.modifiers.new("Pleated hem softness", "BEVEL")
@@ -2560,6 +2616,15 @@ def build_costume(
         skirt_hem = 0.34 if is_facilitator else 0.32
         skirt_depth = 0.54 if is_facilitator else 0.5
         pleated_skirt("Skirt", skirt_waist, skirt_hem, skirt_depth, (0, 0, -0.23), mats["lower"], skirt_pivot, pleats=12, segments=48)
+        torus(
+            "SkirtWaistband",
+            skirt_waist * 0.985,
+            0.012,
+            (0, 0, 0.038),
+            mats["accent"],
+            skirt_pivot,
+            major_segments=32,
+        )
         hem_x = skirt_hem * 0.93
         curve_tube(
             "SkirtHem",
@@ -2577,6 +2642,19 @@ def build_costume(
                 mats["lower"],
                 skirt_pivot,
                 depth=0.008,
+            )
+        for side in (-1, 1):
+            cloth_fold_ribbon(
+                f"SkirtSideRelease_{side}",
+                [
+                    (side * 0.165, -0.13, -0.04),
+                    (side * 0.22, -0.18, -0.24),
+                    (side * 0.275, -0.14, -0.47),
+                ],
+                (0.002, 0.01, 0.002),
+                mats["lower"],
+                skirt_pivot,
+                depth=0.007,
             )
         # Both civic women wear a coloured dress under an open warm-ivory
         # cardigan in the reference. Keeping the fitted bodice visible through
@@ -2817,6 +2895,7 @@ def build_character(role, config):
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
     root["body_contract"] = "mirrorlife-civic-body-identity-v4"
+    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v1"
     root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v1"
     root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v2"
     root["real_world_unit"] = "meter"
@@ -2904,7 +2983,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v60",
+        "sculptContract": "mirrorlife-civic-sculpt-v61",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v4",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2928,6 +3007,18 @@ def main():
                 "SkinRightKnee",
             ],
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
+        },
+        "garmentTopologyContract": {
+            "version": "mirrorlife-civic-garment-topology-v1",
+            "runtime": "bone-weighted-superellipse+topology-flow-creases+asymmetric-drape",
+            "garments": ["sleeve", "trouser", "skirt", "vest", "cardigan"],
+            "standingParts": [
+                "SkinnedArmVolume",
+                "SkinnedLegVolume",
+                "Skirt",
+                "CoatPanel",
+            ],
+            "deformingParts": ["SkinnedArmVolume", "SkinnedLegVolume", "Skirt"],
         },
         "clothCorrectiveContract": {
             "version": "mirrorlife-civic-cloth-correctives-v1",

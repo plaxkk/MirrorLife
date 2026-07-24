@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v60", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v61", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v4", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -46,6 +46,22 @@ assert.deepEqual(manifest.skinContract?.joints, [
   "SkinRightLeg",
   "SkinRightKnee"
 ], "continuous civic skin joint map changed");
+assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v1", "civic garment topology contract is stale");
+assert.equal(
+  manifest.garmentTopologyContract?.runtime,
+  "bone-weighted-superellipse+topology-flow-creases+asymmetric-drape",
+  "civic garment topology runtime changed"
+);
+assert.deepEqual(
+  manifest.garmentTopologyContract?.garments,
+  ["sleeve", "trouser", "skirt", "vest", "cardigan"],
+  "civic garment topology set changed"
+);
+assert.deepEqual(
+  manifest.garmentTopologyContract?.deformingParts,
+  ["SkinnedArmVolume", "SkinnedLegVolume", "Skirt"],
+  "civic deforming garment topology changed"
+);
 assert.equal(manifest.clothCorrectiveContract?.version, "mirrorlife-civic-cloth-correctives-v1", "civic cloth corrective contract is stale");
 assert.equal(manifest.clothCorrectiveContract?.runtime, "bend-angle-driven-volume+compression-folds", "civic cloth corrective runtime changed");
 assert.deepEqual(manifest.clothCorrectiveContract?.pivots, [
@@ -119,7 +135,7 @@ for (const role of expectedRoles) {
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
   // Runtime batches these semantic parts per articulated pivot, so source-part
   // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 140, `${role}: source mesh count is outside the authored range`);
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 145, `${role}: source mesh count is outside the authored range`);
   assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 45000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
@@ -170,6 +186,9 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("CardiganNeckRib")), `${role}: cardigan neck rib is missing`);
     assert(contents.includes(Buffer.from("CardiganFrontRib_-1")), `${role}: left cardigan front rib is missing`);
     assert(contents.includes(Buffer.from("CardiganFrontRib_1")), `${role}: right cardigan front rib is missing`);
+    assert(contents.includes(Buffer.from("SkirtWaistband")), `${role}: skirt waistband topology is missing`);
+    assert(contents.includes(Buffer.from("SkirtSideRelease_-1")), `${role}: left asymmetric skirt release is missing`);
+    assert(contents.includes(Buffer.from("SkirtSideRelease_1")), `${role}: right asymmetric skirt release is missing`);
   }
   if (["player", "listener"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1Tongue")), `${role}: authored sneaker tongue is missing`);
   if (["facilitator", "mediator"].includes(role)) assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollar")), `${role}: authored ankle-boot collar is missing`);
