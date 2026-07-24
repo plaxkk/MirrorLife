@@ -72,11 +72,30 @@ try {
   assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v2", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v10", "civic room did not expose the authored furniture-detail contract");
   assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");
-  assert(Number(opening.lighting?.ceilingBounce || 0) >= 0.28, "civic ceiling bounce did not lift the room volume");
-  assert(Number(opening.lighting?.backWallBounce || 0) >= 0.16, "civic rear-wall bounce did not separate the cast");
+  assert(
+    Number(opening.lighting?.ceilingBounce || 0) >= 0.24
+      && Number(opening.lighting?.ceilingBounce || 0) <= 0.27,
+    "civic ceiling bounce did not preserve the authored contrast range"
+  );
+  assert(
+    Number(opening.lighting?.backWallBounce || 0) >= 0.13
+      && Number(opening.lighting?.backWallBounce || 0) <= 0.15,
+    "civic rear-wall bounce did not preserve the authored contrast range"
+  );
   assert(Number(opening.lighting?.environment || 0) >= 0.29, "civic environment response did not preserve material separation");
   assert(Number(opening.lighting?.contactAo || 1) <= 0.48, "civic contact AO is too strong for the broad reference penumbrae");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
+  assert.equal(
+    opening.actors.find((actor) => actor.assetRole === "mediator")?.animation?.state,
+    "gesture",
+    "desktop civic opening did not stage the mediator testimony"
+  );
+  assert(
+    opening.actors
+      .filter((actor) => ["listener", "facilitator"].includes(actor.assetRole))
+      .every((actor) => actor.animation?.state === "listen"),
+    "desktop civic witnesses did not attend to the opening testimony"
+  );
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
   assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic production face unexpectedly fell back to a texture layer");
@@ -117,8 +136,8 @@ try {
   assert(Math.abs(Number(mediator?.hands?.rightWristX || 0)) > 0.15, "mediator thoughtful wrist pose did not reach the runtime hand pivot");
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v12", "player did not use the authored animation contract");
-  assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v13", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.state, "listen", "player did not join the authored opening testimony");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");
   assert.equal(

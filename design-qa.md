@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v111 social-performance and contrast gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v111-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v111-full.png`; focused cast/performance comparison: `tmp/reference-vs-v111-cast-focus.png`; implementation delta: `tmp/v110-vs-v111-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v111-final-desktop-yaw90.png` and `tmp/v111-final-desktop-yaw180.png`. The same active testimony, body/head attention chain, PBR room and complete actors remain perspective-correct through the real orbit.
+- Responsive evidence: `tmp/v111-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD with the notebook facilitator taking the mobile focal beat).
+- Runtime evidence: desktop opening `171 / 290,656`, side `174 / 301,212`, reverse `175 / 307,892`; mobile `96 / 248,996`. The player walked `4.57m`, rotated the real camera `65.3°`, retained vertex eyelid closure, passed all `26` metre-space layouts and desktop/mobile scene flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / the four-person opening still read as static mannequins] Entering the civic room now starts an authoritative testimony beat. On desktop the brunette mediator uses the `gesture` clip while the teal listener and notebook facilitator use `listen`; the player also settles into the listening performance until movement takes control.
+- [fixed / every witness looked only at the player] The runtime resolves the active speaker, turns stationary witnesses toward that world-space target with time-independent damping, then applies a role-specific camera-opening bias so the social relationship and both eyes remain readable together.
+- [improved / generic gesture made every role present two arms symmetrically] Animation contract v13 adds separate mediator, facilitator and listener gesture offsets: measured palm-and-chest mediation, notebook-supported facilitation and one-hand-to-chest testimony. These are composed over the same skeleton and garment correctives used by movement.
+- [improved / mobile removed the desktop speaker with its three-character LOD] The focal testimony falls back to the visible notebook facilitator below `720px`, preserving an active speaker and two-person attention chain without reintroducing the hidden fourth actor.
+- [fixed / room luminance was measurably too bright and compressed] In the normalized room crop, v110 measured mean luminance `0.608`, standard deviation `0.191`, median `0.676`; the source measured `0.522 / 0.209 / 0.547`. v111 moves to `0.566 / 0.207 / 0.639` by reducing ambient ceiling/rear lift, lowering civic exposure, strengthening directional key/rim separation and applying a warmer, steeper civic-only grade.
+- [checked / stronger performance and contrast retain Web budgets] No new scene meshes are required. The animation state, gaze resolution and grade remain below `180 / 450k` desktop and `110 / 250k` mobile.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, optical weights, line height, truncation and action copy remain readable at desktop and portrait sizes. No runtime performance state causes label wrap or HUD collision.
+- [improved][spacing and layout rhythm] The opening now has a readable action triangle—foreground player, speaking rear mediator and two attending witnesses—while preserving the `≥1.4m` circulation loop, interaction anchors and three-depth composition.
+- [improved][colors and visual tokens] Warm ivory, walnut, teal, coral, dark cloth and brass retain identity while the flatter pale mid-tone field gains source-closer contrast and warmth. The adjustment is a civic-only live shader/light treatment, not a baked screenshot.
+- [improved][image quality and asset fidelity] Gesture, attention, lighting and contact remain attached to real GLB actors, bones, PBR surfaces, lights and shadow receivers through movement plus `0°/90°/180°` views. No sprite, billboard, CSS drawing, custom SVG or camera-facing scene substitute is used.
+- [checked][copy and content] “倾听线索” now corresponds to a visibly active testimony; the location, story-memory title, interaction prompt and four actions remain coherent with the scene.
+- [P1][character topology and acting finesse remain below the source] The social intent is now readable, but the reference still has finer shoulder/hand posing, finger contact, eye-line nuance, facial compression and production deformation weights.
+- [P1][environment density and scale nuance remain below the source] The implementation has the same functional zones, but shelves, plants, small documents, upholstery and foreground objects remain fewer, chunkier and less individually authored.
+- [P1][offline light transport remains ahead] Histogram contrast is closer, while the reference still has localized sun shafts, softer multi-bounce penumbrae, richer skin/cloth response and a broader highlight roll-off than the real-time WebGL rig.
+- [P2][desktop focal speaker lacks the reference listening beacon] The mediator is identified through staging, gaze and motion, but the selected source also uses a coral listening pin. A future pass should add a production icon asset with true world projection and occlusion-safe UI placement rather than a code-drawn approximation.
+
+### Gate result
+
+v111 converts the room from a posed diorama into an authored social beat: a visible person speaks, the other actors attend to her, each role uses a different body language, and the relationship remains coherent while the player moves or orbits the room. Measured luminance and contrast also move materially toward the selected frame. The same-size comparison is closer in narrative focus and tonal range, but production character deformation, dense bespoke set dressing and offline light transport still prevent reference-level parity.
+
+final result: blocked
+
+Blocker: source-level character topology/acting, bespoke environment density and offline-quality localized light transport remain visibly below the selected reference; the desktop focal speaker also lacks the reference's production listening-beacon asset.
+
 ## 2026-07-25 reference-fidelity v110 facial-proportion and cloth-grounding gate
 
 ### Evidence inspected together

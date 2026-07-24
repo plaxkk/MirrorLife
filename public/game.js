@@ -14036,6 +14036,13 @@ function enterInteriorView(zone, source = "manual") {
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
   ensureInteriorCinematicActionRail(zone);
+  // Enter the civic room in medias res: the teal listener is already sharing
+  // a testimony, so the first frame communicates a social scene rather than
+  // four mannequins waiting for UI input. Player actions can immediately
+  // replace this beat through the same authoritative acting state.
+  if (zone.id === "public-plaza") {
+    startInteriorCivicActing("listen", source === "qa" ? 15000 : 6200);
+  }
   if (source === "manual") seedInteriorOccupants(zone);
   stageQuietPresenceWitness(zone);
   stageSocialParallaxWitnesses(zone);
@@ -14244,7 +14251,14 @@ function getInteriorCivicActingState(role, baseState, now = performance.now()) {
   const action = interiorCivicActing.action;
   if (action === "suggest") return role === "player" ? "talking" : "listen";
   if (action === "guide") return role === "facilitator" ? "talking" : "listen";
-  if (action === "listen") return role === "listener" ? "talking" : "listen";
+  // The opening reference beat belongs to the brunette mediator: she carries
+  // the testimony while the teal resident and notebook facilitator attend.
+  // Keeping the speaking role tied to the visual focal actor makes the room
+  // readable before the player parses labels or controls.
+  if (action === "listen") {
+    const focalRole = window.innerWidth <= 720 ? "facilitator" : "mediator";
+    return role === focalRole ? "talking" : "listen";
+  }
   return movementState;
 }
 

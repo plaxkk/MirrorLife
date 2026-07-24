@@ -111,12 +111,12 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.72,
-    fill: 0.35,
-    hemi: 0.34,
+    key: 1.82,
+    fill: 0.3,
+    hemi: 0.26,
     bounce: 0.7,
-    wash: 0.56,
-    exposure: 0.88,
+    wash: 0.5,
+    exposure: 0.79,
     keyColor: "#ffe5cc",
     fillColor: "#c5dfdf"
   },
@@ -558,12 +558,12 @@ function ensureLayer() {
         // carried by light and material response. Strength is an effect
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
-        color = mix(vec3(luma), color, 1.0 + 0.018 * strength);
-        color = max(vec3(0.0), (color - vec3(0.56)) * (1.0 + 0.048 * strength) + vec3(0.56));
+        color = mix(vec3(luma), color, 1.0 + 0.026 * strength);
+        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.096 * strength) + vec3(0.54));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
-        color *= mix(vec3(1.0), vec3(0.982, 1.0, 1.022), shadowTone * 0.42 * strength);
-        color += vec3(0.016, 0.009, -0.0025) * highlightTone * strength;
+        color *= mix(vec3(1.0), vec3(1.025, 0.99, 0.945), (0.34 + shadowTone * 0.38) * strength);
+        color += vec3(0.014, 0.006, -0.004) * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -1530,19 +1530,19 @@ function applyLightingPreset(theme = {}) {
   }
   if (civicCeilingBounceLight) {
     civicCeilingBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.2 : 0.31)
+      ? (lastWidth <= 720 ? 0.17 : 0.25)
       : 0;
   }
   if (civicBackWallBounceLight) {
     civicBackWallBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.1 : 0.18)
+      ? (lastWidth <= 720 ? 0.08 : 0.14)
       : 0;
   }
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.48 : 0.38;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
   if (keyLight?.shadow) {
@@ -8353,6 +8353,7 @@ function updateActors(actors = [], now = performance.now()) {
   if (!actorRoot) return false;
   actorRoot.visible = true;
   const playerActor = actors.find((actor) => actor?.role === "player" || actor?.id === "player") || null;
+  const speakingActor = actors.find((actor) => ["talking", "doing", "interact"].includes(String(actor?.state || ""))) || null;
   const activeIds = new Set();
   let ready = true;
   actors.forEach((actor) => {
@@ -8405,6 +8406,24 @@ function updateActors(actors = [], now = performance.now()) {
     entry.shadow.position.y = 0.025 - (y + bob);
     entry.visual.scale.setScalar(baseScale);
     let bodyYaw = entry.facingYaw;
+    let socialTargetActor = null;
+    if (cameraZoneId === "public-plaza" && actor.id !== playerActor?.id && !walking) {
+      socialTargetActor = speakingActor && speakingActor.id !== actor.id ? speakingActor : playerActor;
+      if (socialTargetActor) {
+        const socialTargetYaw = Math.atan2(
+          Number(socialTargetActor.worldX || 0) - x,
+          Number(socialTargetActor.worldZ || 0) - z
+        );
+        if (!Number.isFinite(entry.socialBodyYaw)) entry.socialBodyYaw = bodyYaw;
+        const socialYawDelta = Math.atan2(
+          Math.sin(socialTargetYaw - entry.socialBodyYaw),
+          Math.cos(socialTargetYaw - entry.socialBodyYaw)
+        );
+        const socialTurnAlpha = 1 - Math.exp(-frameDeltaSeconds / 0.28);
+        entry.socialBodyYaw += socialYawDelta * socialTurnAlpha;
+        bodyYaw = entry.socialBodyYaw;
+      }
+    }
     if (cameraZoneId === "public-plaza" && actor.id !== playerActor?.id && !walking && camera) {
       const cameraFacingYaw = Math.atan2(camera.position.x - x, camera.position.z - z);
       const cameraDelta = Math.atan2(
@@ -8418,10 +8437,10 @@ function updateActors(actors = [], now = performance.now()) {
       // both eyes, garment construction and hand acting readable instead of
       // presenting three near-profile silhouettes.
       const cameraOpeningWeight = {
-        listener: 0.28,
-        facilitator: 0.12,
-        mediator: 0.32
-      }[entry.assetRole] ?? 0.24;
+        listener: 0.52,
+        facilitator: 0.34,
+        mediator: 0.42
+      }[entry.assetRole] ?? 0.34;
       bodyYaw += cameraDelta * cameraOpeningWeight;
     }
     entry.visual.rotation.y = bodyYaw;
@@ -8448,8 +8467,12 @@ function updateActors(actors = [], now = performance.now()) {
       entry.rightElbow.rotation.z = 0;
     }
     let headLookYaw = 0;
-    if (cameraZoneId === "public-plaza" && playerActor && actor.id !== playerActor.id && !walking) {
-      const lookWorldYaw = Math.atan2(Number(playerActor.worldX || 0) - x, Number(playerActor.worldZ || 0) - z);
+    if (cameraZoneId === "public-plaza" && actor.id !== playerActor?.id && !walking) {
+      const headTargetActor = socialTargetActor || playerActor;
+      const lookWorldYaw = Math.atan2(
+        Number(headTargetActor?.worldX || 0) - x,
+        Number(headTargetActor?.worldZ || 0) - z
+      );
       const localLookYaw = Math.atan2(
         Math.sin(lookWorldYaw - bodyYaw),
         Math.cos(lookWorldYaw - bodyYaw)
