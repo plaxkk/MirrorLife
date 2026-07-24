@@ -42,6 +42,7 @@
     "verify:narrative-runtime": "node scripts/verify-narrative-runtime.mjs",
     "verify:social-twin-episode": "node scripts/verify-social-twin-episode.mjs",
     "verify:interior-physics": "node scripts/verify-interior-physics.mjs",
+    "report:interior-readiness": "node scripts/verify-interior-physics.mjs && node scripts/report-interior-building-readiness.mjs",
     "package:interior-3d-web": "node scripts/package-interior-3d-web-batch.mjs",
     "place:interior-3d": "node scripts/place-interior-3d-model.mjs",
     "import:interior-3d": "node scripts/import-interior-3d-models.mjs",
