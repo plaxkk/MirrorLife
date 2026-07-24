@@ -1,5 +1,41 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v90 material hierarchy and side-wall integrity gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v90-final-reference-viewport.png` (`1672 × 941`, `163 / 287,748`, `48°`, `5.6m` opening orbit).
+- Mandatory literal same-canvas comparison: `tmp/reference-vs-v90-final.png`; the unmodified source and final runtime frame sit side by side in one `3352 × 941` comparison image.
+- Full-orbit evidence: `tmp/v90-final-yaw90.png` (`166 / 298,856`, actor avoidance `0.448m`) and `tmp/v90-final-yaw180.png` (`167 / 301,192`, actor avoidance `1.6m`, radial clearance `1.55m`).
+- Mobile evidence: `tmp/v90-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `100 / 244,788`, three-character LOD).
+- Physical exploration evidence: the browser regression walked `1.09m`, changed authored movement states and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / public-room shell read as a near-white generic cylinder] The civic shell now uses the same warm `terrazzo-teal-brass` plaster family already selected by its authored layout profile. Wall, floor, timber and skin regain separate value families instead of collapsing into a pale grey backdrop.
+- [improved / foreground record desk remained a flat vertex-colour block] The two broad oak planes and walnut edge/drawer family are now separately batched with the existing scanned wood colour, normal and roughness maps. Tiny editorial props remain in the economical vertex-colour batch, limiting the material improvement to two additional calls.
+- [fixed / side orbit exposed a detached black arch] The obsolete response-alcove assembly occupied the same wall as the newer glazed lightwell. During camera fading it could leave only its dark torus visible above the window. The duplicate assembly is removed; the complete lightwell is now the single side-wall landmark and the `90°` frame falls to `298,856` triangles.
+- [checked / render and physics stayed co-authored] Record-desk footprint, transform, collider and interaction anchor are unchanged; the material split changes no walkable space. The removed alcove was decorative and inaccessible, so navigation and scene contracts remain identical.
+
+### Required fidelity surfaces and findings
+
+- [improved][material hierarchy] The opening frame now distinguishes warm lime plaster, honed terrazzo, mapped oak/walnut, brass, paper, fabric and ceramic at gameplay distance. The foreground desk no longer reads as a uniform orange primitive.
+- [improved][full-orbit architectural integrity] The side frame contains one complete window/lightwell assembly instead of overlapping wall stories. The black floating arc visible in the first `90°` review is absent from the final evidence.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `163–167 / 287,748–301,192`; portrait mobile remains `100 / 244,788`, below `110` calls / `250k` triangles.
+- [P1][character production quality remains visibly below the source] The exact same-canvas comparison still exposes simplified cranial/cheek topology, hands, footwear, cloth folds and role-specific material identity.
+- [P1][remaining room asset construction remains visibly below the source] Material response is richer, but several cabinetry, foliage and paper groups retain obvious rounded-primitive construction and less authored wear/joinery.
+- [P1][lighting transport remains visibly below the source] Directional daylight, dapple and contact depth are coherent, while the source still has softer multi-bounce penumbrae, localized colour return and stronger skin/cloth/floor integration.
+
+### Gate result
+
+v90 removes a visible full-orbit construction failure and gives the highest-pixel foreground furniture real material response without changing its physical truth or exceeding mobile budgets. The literal same-canvas comparison is materially cleaner, but it still does not reach source-level character topology, complete-room bespoke construction or indirect-light transport.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v89 continuous-shoulder and grounded-pelvis gate
 
 ### Evidence inspected together

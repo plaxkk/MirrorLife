@@ -2826,13 +2826,13 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   // Natural open-grain oak replaces the saturated, glossy mahogany that made
   // the reference-like foreground desk read as a toy. The slimmer edge and
   // four tapered legs preserve negative space under the desk from the orbit.
-  const wood = createToonMaterial("#9a7558", {
-    roughness: 0.84,
-    envMapIntensity: 0.42,
+  const wood = createToonMaterial("#c99768", {
+    roughness: 0.8,
+    envMapIntensity: 0.5,
     surface: "wood",
     bumpScale: 0.012
   });
-  const trim = createToonMaterial("#755946", {
+  const trim = createToonMaterial("#8f6148", {
     roughness: 0.82,
     envMapIntensity: 0.48,
     surface: "wood",
@@ -2849,7 +2849,7 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   group.add(apron);
   const drawerFront = new THREE.Mesh(
     new RoundedBoxGeometry(0.62, 0.14, 0.035, 3, 0.025),
-    createToonMaterial("#8c593d", { roughness: 0.64, surface: "wood", bumpScale: 0.009 })
+    trim
   );
   drawerFront.position.set(0.34, 0.64, 0.415);
   group.add(drawerFront);
@@ -3034,10 +3034,41 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   brassClip.rotation.set(Math.PI / 2, 0, -0.2);
   brassClip.position.set(-0.17, 0.924, 0.17);
   microProps.add(brassClip);
+  // Keep the two broad furniture surfaces on real scanned oak instead of
+  // baking them into the flat vertex-colour prop batch. These planes occupy
+  // most of the foreground pixels in the reference, so directional grain,
+  // normal response and roughness variation provide far more material value
+  // than another handful of tiny stationery meshes. Merge each colour family
+  // to one draw call before excluding it from the room-wide batching pass.
+  const mergeDeskSurfaceFamily = (meshes, surfaceMaterial, name) => {
+    if (!mergeGeometries || !meshes.length) return null;
+    const geometries = meshes.map((mesh) => {
+      mesh.updateMatrix();
+      const geometry = mesh.geometry.clone();
+      geometry.applyMatrix4(mesh.matrix);
+      return geometry;
+    });
+    const geometry = mergeGeometries(geometries, false);
+    geometries.forEach((entry) => entry.dispose());
+    if (!geometry) return null;
+    meshes.forEach((mesh) => {
+      group.remove(mesh);
+      mesh.geometry.dispose();
+    });
+    const surface = new THREE.Mesh(geometry, surfaceMaterial);
+    surface.name = name;
+    surface.castShadow = true;
+    surface.receiveShadow = true;
+    group.add(surface);
+    return surface;
+  };
+  const oakSurface = mergeDeskSurfaceFamily([top, apron], wood, "CivicRecordDeskScannedOak");
+  const walnutSurface = mergeDeskSurfaceFamily([frontEdge, drawerFront], trim, "CivicRecordDeskScannedWalnut");
   // Collapse the complete opaque desk and stationery suite into one vertex-
-  // surfaced batch. Keep only the mapped agenda face separate, preserving the
-  // Chinese content while recovering enough budget for all four orbit views.
-  mergeActorVertexColorMeshes(group, [briefArtwork], {
+  // surfaced batch. Keep the mapped agenda and two scanned wood families
+  // separate, preserving Chinese content and real material response while
+  // staying well below the four-view draw-call budget.
+  mergeActorVertexColorMeshes(group, [briefArtwork, oakSurface, walnutSurface].filter(Boolean), {
     roughness: 0.82,
     envMapIntensity: 0.42,
     actorShading: false
@@ -4074,11 +4105,12 @@ function addCivicReferenceDressing(theme, colors) {
   addCivicCovenantPanel(colors);
   addCivicReverseWitnessWall(colors, mobileLod);
   if (!mobileLod) {
-    addCivicResponseAlcove(colors);
     // The 90° orbit previously ended in a broad undecided plaster sector.
-    // Reuse the same real courtyard asset as a glazed civic lightwell on that
-    // far wall: it supplies depth, daylight and a functional landmark without
-    // pretending to be a walkable door or changing the navigation contract.
+    // The glazed civic lightwell is now the single authored landmark on that
+    // wall. The older response-alcove layer duplicated the same location and,
+    // after occlusion fading, could leave a detached dark arch floating above
+    // the window. Keeping one complete assembly restores a believable wall
+    // hierarchy and removes a false interaction silhouette.
     addAmbientWindowBay(2.42, colors, !!theme.night, {
       name: "civic-side-lightwell",
       dynamicWallDecor: true,
@@ -5319,7 +5351,7 @@ function rebuildRoom(theme = {}) {
   }
 
   const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
-  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#fff9ef" : wallColor, {
+  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#f0dfcd" : wallColor, {
     side: THREE.BackSide,
     roughness: 0.94,
     surface: "plaster",
