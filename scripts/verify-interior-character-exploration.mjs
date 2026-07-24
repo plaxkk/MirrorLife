@@ -91,7 +91,7 @@ try {
   assert(Math.abs(Number(mediator?.hands?.rightWristX || 0)) > 0.15, "mediator thoughtful wrist pose did not reach the runtime hand pivot");
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v8", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v9", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");

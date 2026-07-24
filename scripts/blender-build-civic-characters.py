@@ -12,7 +12,7 @@ ROLE_CONFIGS = {
     "player": {
         "skin": "#efb184",
         "hair": "#3b3947",
-        "hair_highlight": "#474653",
+        "hair_highlight": "#5b5865",
         "eye": "#3f342d",
         "top": "#e6dbc9",
         "outer": "#71825a",
@@ -96,6 +96,8 @@ BODY_PROFILES = {
         "leg_depth": 1.03,
         "waist_width": 1.02,
         "hand_scale": 0.96,
+        "foot_scale": 1.12,
+        "toe_out": 0.075,
         "head_scale": (0.925, 0.895, 0.905),
         "head_z": 1.508,
         "shoulder_slope": 0.08,
@@ -106,13 +108,15 @@ BODY_PROFILES = {
         "torso_depth": 0.95,
         "torso_height": 1.01,
         "shoulder_x": 0.21,
-        "hip_x": 0.109,
+        "hip_x": 0.118,
         "arm_width": 1.0,
         "arm_depth": 0.95,
         "leg_width": 1.02,
         "leg_depth": 0.97,
         "waist_width": 0.96,
         "hand_scale": 0.95,
+        "foot_scale": 1.1,
+        "toe_out": 0.065,
         "head_scale": (0.918, 0.89, 0.905),
         "head_z": 1.503,
         "shoulder_slope": 0.055,
@@ -130,6 +134,8 @@ BODY_PROFILES = {
         "leg_depth": 0.93,
         "waist_width": 0.9,
         "hand_scale": 0.94,
+        "foot_scale": 1.09,
+        "toe_out": 0.055,
         "head_scale": (0.918, 0.89, 0.905),
         "head_z": 1.513,
         "shoulder_slope": 0.035,
@@ -147,6 +153,8 @@ BODY_PROFILES = {
         "leg_depth": 0.95,
         "waist_width": 0.93,
         "hand_scale": 0.95,
+        "foot_scale": 1.09,
+        "toe_out": 0.055,
         "head_scale": (0.925, 0.895, 0.905),
         "head_z": 1.503,
         "shoulder_slope": 0.045,
@@ -161,8 +169,8 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.059,
-        "eye_height": 0.0345,
+        "eye_width": 0.0575,
+        "eye_height": 0.0328,
         "iris_width": 0.0255,
         "iris_height": 0.0285,
         "outer_eye_lift": 0.001,
@@ -176,8 +184,8 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.0585,
-        "eye_height": 0.034,
+        "eye_width": 0.057,
+        "eye_height": 0.0324,
         "iris_width": 0.0252,
         "iris_height": 0.028,
         "outer_eye_lift": -0.001,
@@ -191,8 +199,8 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.06,
-        "eye_height": 0.0355,
+        "eye_width": 0.0585,
+        "eye_height": 0.0335,
         "iris_width": 0.026,
         "iris_height": 0.0293,
         "outer_eye_lift": 0.003,
@@ -206,8 +214,8 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.059,
-        "eye_height": 0.0345,
+        "eye_width": 0.0575,
+        "eye_height": 0.0328,
         "iris_width": 0.0255,
         "iris_height": 0.0285,
         "outer_eye_lift": 0.001,
@@ -860,13 +868,31 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     return hand_pivot
 
 
-def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, style="sneaker"):
+def sculpted_shoe(
+    name,
+    location,
+    upper_mat,
+    sole_mat,
+    parent=None,
+    side=1,
+    style="sneaker",
+    scale=1.0,
+    toe_out=0.0,
+):
     """Create a compact illustrated shoe last with a tapered toe and heel.
 
     The old sphere-on-box construction made every foot read as an oversized
     toy capsule. Seven authored cross-sections now form a single upper whose
     toe, instep and heel remain readable in all four orbit views.
     """
+    shoe_pivot = empty(
+        f"{name}Pivot",
+        parent,
+        location,
+        (0, 0, -side * toe_out),
+    )
+    shoe_pivot.scale = (scale, scale, scale)
+
     stations = (
         # y, half-width, lower surface, upper surface. The terminal toe ring
         # closes down in both width and height, producing a true rounded last
@@ -917,8 +943,8 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     mesh.update()
     shoe = bpy.data.objects.new(name, mesh)
     bpy.context.collection.objects.link(shoe)
-    shoe.parent = parent
-    shoe.location = location
+    shoe.parent = shoe_pivot
+    shoe.location = (0, 0, 0)
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     bevel = shoe.modifiers.new("Sculpted shoe edge", "BEVEL")
@@ -932,9 +958,9 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     rounded_box(
         f"{name}Sole",
         (sole_width, sole_length, 0.024),
-        (location[0], location[1] + sole_center_y, location[2] - 0.049),
+        (0, sole_center_y, -0.049),
         sole_mat,
-        parent,
+        shoe_pivot,
         radius=0.012,
         segments=3,
     )
@@ -944,18 +970,18 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     rounded_box(
         f"{name}Midsole",
         (sole_width * 0.94, sole_length * 0.97, 0.018),
-        (location[0], location[1] + sole_center_y - 0.002, location[2] - 0.035),
+        (0, sole_center_y - 0.002, -0.035),
         sole_mat,
-        parent,
+        shoe_pivot,
         radius=0.009,
         segments=2,
     )
     rounded_box(
         f"{name}HeelCounter",
         (0.108, 0.032, 0.085 if style == "ankle-boot" else 0.07),
-        (location[0], location[1] + 0.064, location[2] + 0.04),
+        (0, 0.064, 0.04),
         upper_mat,
-        parent,
+        shoe_pivot,
         radius=0.014,
         rotation=(math.radians(-8), 0, 0),
         segments=3,
@@ -963,13 +989,9 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     rounded_box(
         f"{name}OuterQuarterPanel",
         (0.018, 0.126, 0.074),
-        (
-            location[0] + side * 0.071,
-            location[1] - 0.054,
-            location[2] + 0.034,
-        ),
+        (side * 0.071, -0.054, 0.034),
         upper_mat,
-        parent,
+        shoe_pivot,
         radius=0.008,
         rotation=(0, side * 0.04, -side * 0.075),
         segments=3,
@@ -977,9 +999,9 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     rounded_box(
         f"{name}ToeBumper",
         (0.122, 0.042, 0.034),
-        (location[0], location[1] - 0.205, location[2] - 0.006),
+        (0, -0.205, -0.006),
         sole_mat,
-        parent,
+        shoe_pivot,
         radius=0.014,
         rotation=(math.radians(4), 0, 0),
         segments=3,
@@ -987,13 +1009,13 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
     curve_tube(
         f"{name}ToeCapSeam",
         [
-            (-0.064, location[1] - 0.142, location[2] + 0.014),
-            (0, location[1] - 0.166, location[2] + 0.023),
-            (0.064, location[1] - 0.142, location[2] + 0.014),
+            (-0.064, -0.142, 0.014),
+            (0, -0.166, 0.023),
+            (0.064, -0.142, 0.014),
         ],
         0.0035,
         sole_mat,
-        parent,
+        shoe_pivot,
         resolution=2,
     )
     if style == "ankle-boot":
@@ -1002,39 +1024,39 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
             0.064,
             0.059,
             0.098,
-            (location[0], location[1] + 0.048, location[2] + 0.078),
+            (0, 0.048, 0.078),
             upper_mat,
-            parent,
+            shoe_pivot,
             vertices=22,
         )
         torus(
             f"{name}AnkleCollarEdge",
             0.057,
             0.006,
-            (location[0], location[1] + 0.048, location[2] + 0.128),
+            (0, 0.048, 0.128),
             sole_mat,
-            parent,
+            shoe_pivot,
             major_segments=24,
         )
         curve_tube(
             f"{name}PullTab",
             [
-                (-0.018, location[1] + 0.068, location[2] + 0.122),
-                (0, location[1] + 0.078, location[2] + 0.164),
-                (0.018, location[1] + 0.068, location[2] + 0.122),
+                (-0.018, 0.068, 0.122),
+                (0, 0.078, 0.164),
+                (0.018, 0.068, 0.122),
             ],
             0.0045,
             sole_mat,
-            parent,
+            shoe_pivot,
             resolution=2,
         )
     else:
         rounded_box(
             f"{name}Tongue",
             (0.094, 0.032, 0.098),
-            (location[0], location[1] - 0.018, location[2] + 0.072),
+            (0, -0.018, 0.072),
             upper_mat,
-            parent,
+            shoe_pivot,
             radius=0.02,
             rotation=(math.radians(11), 0, 0),
         )
@@ -1042,16 +1064,16 @@ def sculpted_shoe(name, location, upper_mat, sole_mat, parent=None, side=1, styl
         curve_tube(
             f"{name}Lace_{lace_index}",
             [
-                (-0.038, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
-                (0, lace_y - 0.006, location[2] + 0.058 - (lace_index - 1) * 0.008),
-                (0.038, lace_y, location[2] + 0.052 - (lace_index - 1) * 0.008),
+                (-0.038, lace_y, 0.052 - (lace_index - 1) * 0.008),
+                (0, lace_y - 0.006, 0.058 - (lace_index - 1) * 0.008),
+                (0.038, lace_y, 0.052 - (lace_index - 1) * 0.008),
             ],
             0.0045,
             sole_mat,
-            parent,
+            shoe_pivot,
             resolution=2,
         )
-    return shoe
+    return shoe_pivot
 
 
 def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=None, pleats=10, segments=40):
@@ -2114,6 +2136,8 @@ def build_body(role, config, mats, visual):
             knee,
             side=side,
             style="ankle-boot" if config["costume"] in ("facilitator", "mediator") else "sneaker",
+            scale=profile["foot_scale"],
+            toe_out=profile["toe_out"],
         )
 
     return torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee
@@ -2647,7 +2671,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v50",
+        "sculptContract": "mirrorlife-civic-sculpt-v51",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2694,12 +2718,12 @@ def main():
             "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
         },
         "footwearContract": {
-            "version": "mirrorlife-civic-footwear-v3",
-            "parts": ["Midsole", "HeelCounter", "OuterQuarterPanel", "ToeBumper", "ToeCapSeam", "AnkleCollarEdge"],
+            "version": "mirrorlife-civic-footwear-v4",
+            "parts": ["Pivot", "Midsole", "HeelCounter", "OuterQuarterPanel", "ToeBumper", "ToeCapSeam", "AnkleCollarEdge"],
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v8",
+            "version": "mirrorlife-civic-clips-v9",
             "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v95 character stance, footwear and render-resolution gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v95-character-yaw0.png` (`1672 × 941`, `166 / 284,052`, renderer pixel ratio `1.2`, `4×` MSAA).
+- Mandatory same-canvas character comparison: `tmp/reference-vs-v95-cast-focus.png`; source and runtime social circles are cropped to the same `680 × 570` review area and inspected together. `tmp/v94-vs-v95-cast-focus.png` isolates the before/after change at the same crop.
+- Full-orbit evidence: `tmp/v95-character-yaw90.png` (`169 / 295,160`) and `tmp/v95-character-yaw180.png` (`170 / 297,496`), both rendered at pixel ratio `1.2`.
+- Mobile evidence: `tmp/v95-character-mobile.png` (`390 × 844`, device scale factor `1`, `100 / 244,348`, `2×` MSAA, three-character LOD).
+- Physical exploration evidence: the browser regression moved the same v51 GLB player `5.09m`, exercised authored movement states and rotated the real perspective camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and the production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / footwear pieces did not share one authored local transform] Shoe upper, sole, midsole, toe bumper, quarter panel, laces and boot collar now live under a single per-foot pivot. Scale and toe-out apply to the complete constructed shoe rather than rotating only one visible piece and leaving seams or soles behind.
+- [improved / planted feet disappeared into a narrow peg stance] Role-specific foot scale increases by `9–12%`, while restrained outward yaw, stronger player weight transfer and wider listener hip spacing make left/right ground contact readable in follow, front and side views. The player keeps the same `1.72m` world-space contract and authoritative capsule.
+- [improved / four social poses repeated the same vertical mannequin rhythm] Animation contract v9 adds stronger player weight transfer and an asymmetric listener hand/elbow relationship. Hands, forearms, shoes and secondary costume pieces remain parented to their real articulated pivots through idle, walk, run and listen.
+- [improved / eyes and dark hair dominated the face at story distance] Eye apertures are slightly restrained per role and the player's hair highlight is lifted within the existing mineral-charcoal family. The result reduces the white-disc/toy contrast without adding a face billboard or unlit decal.
+- [improved / exact desktop captures undersampled fine geometry] Desktop interiors now render at a minimum `1.2×` internal pixel ratio (`1.1×` for intermediate widths); portrait mobile remains `1×`. The real composer follows the same ratio and retains `4×/2×` MSAA, so shoe edges, fingers, hair ridges and terrazzo stay cleaner without changing camera framing.
+
+### Required fidelity surfaces and findings
+
+- [improved][footwear construction and contact] The complete shoe now scales and rotates as one authored object. All four roles preserve soles, laces, seams and collars through full orbit with no floating subpart, sunken heel or mismatched transform.
+- [improved][character acting silhouette] The cast has clearer role asymmetry and less repeated parallel-leg staging. The player and listener remain recognisable from back, front and profile, and the real animated joints continue to drive their accessories.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `166–170 / 284,052–297,496`; portrait mobile remains `100 / 244,348`, below `110` calls / `250k` triangles despite the sharper desktop raster.
+- [checked][movement and atomic continuity] The player moves `5.09m`, rotates the perspective camera `65.3°`, stays grounded and uses the same render/physics/interaction space. All `26` rooms complete `78` transitions without runtime failures.
+- [P1][production character deformation remains below the source] The source still has softer elbow/knee deformation, stronger facial anatomy, denser hair grouping, more natural finger acting and substantially richer cloth compression.
+- [P1][complete-room bespoke construction remains below the source] The spatial story and hero families are coherent, while cabinetry joinery, object wear, foliage density and paper dressing still expose more procedural construction.
+- [P1][indirect-light transport remains below the source] Supersampling improves edge clarity, not light transport; the source still has richer bounce colour, softer local penumbrae and stronger skin/cloth/environment integration.
+
+### Gate result
+
+v95 makes footwear transforms physically coherent, strengthens character stance acting and raises desktop raster quality while preserving metre-space physics, real movement, orbit, mobile performance and atomic room transitions. The literal character comparison is cleaner, but the source remains visibly ahead in deformation, facial construction, bespoke room assets and offline-quality indirect light.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v94 authored lounge and single-table spatial-truth gate
 
 ### Evidence inspected together

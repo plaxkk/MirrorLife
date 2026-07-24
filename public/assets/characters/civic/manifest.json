@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v50",
+  "sculptContract": "mirrorlife-civic-sculpt-v51",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v3",
     "roles": [
@@ -102,8 +102,9 @@
     ]
   },
   "footwearContract": {
-    "version": "mirrorlife-civic-footwear-v3",
+    "version": "mirrorlife-civic-footwear-v4",
     "parts": [
+      "Pivot",
       "Midsole",
       "HeelCounter",
       "OuterQuarterPanel",
@@ -117,7 +118,7 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v8",
+    "version": "mirrorlife-civic-clips-v9",
     "runtime": "authored-keyframe-blend+continuous-skin+facial-hand-acting",
     "clips": [
       "idle",

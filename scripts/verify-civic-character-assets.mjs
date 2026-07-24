@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v50", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v51", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v3", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -58,7 +58,7 @@ assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern
 assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v4", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.deepEqual(manifest.handContract?.surfaceParts, ["PalmLifeLine", "PalmHeartLine"], "civic hand surface parts changed");
-assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v3", "civic footwear contract is stale");
+assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v4", "civic footwear contract is stale");
 assert.deepEqual(manifest.footwearContract?.styles, ["sneaker", "ankle-boot"], "civic footwear styles changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(manifest.animationContract?.runtime, "authored-keyframe-blend+continuous-skin+facial-hand-acting", "civic animation runtime contract changed");
@@ -153,6 +153,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("SkinRightKnee")), `${role}: right knee skin joint is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1")), `${role}: left sculpted shoe last is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_1")), `${role}: right sculpted shoe last is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_-1Pivot")), `${role}: left full-shoe transform pivot is missing`);
+  assert(contents.includes(Buffer.from("ShoeUpper_1Pivot")), `${role}: right full-shoe transform pivot is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1Midsole")), `${role}: left layered midsole is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_1HeelCounter")), `${role}: right heel counter is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1OuterQuarterPanel")), `${role}: left footwear quarter panel is missing`);

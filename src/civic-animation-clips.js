@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v8";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v9";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -272,9 +272,9 @@ const ROLE_OFFSETS = Object.freeze({
       // was technically animated but still read like a centred mannequin.
       visual: v(0, 0, 0.028), headGroup: v(-0.008, -0.014, -0.024),
       leftArm: v(0.04, 0, 0.035), rightArm: v(-0.035, 0, -0.025),
-      leftElbow: v(-0.06), rightElbow: v(0.04),
+      leftElbow: v(-0.16, 0, 0.04), rightElbow: v(-0.12, 0, -0.035),
       leftHand: v(-0.04, 0.02, 0.04), rightHand: v(0.025, -0.015, -0.035),
-      leftLeg: v(0, -0.048, 0.055), rightLeg: v(0, 0.052, -0.04), leftKnee: v(0.075)
+      leftLeg: v(0, -0.075, 0.068), rightLeg: v(0, 0.08, -0.056), leftKnee: v(0.085)
     })
   },
   mediator: {
@@ -308,8 +308,8 @@ const ROLE_OFFSETS = Object.freeze({
       // strap-side elbow and let the shoulders counter-rotate toward centre.
       visual: v(-0.012, 0, 0.048), headGroup: v(0.006, 0.018, 0.046),
       leftArm: v(0.12, 0, 0.12), rightArm: v(0.14, 0, -0.035),
-      leftElbow: v(0.38), rightElbow: v(0.7),
-      leftHand: v(-0.1, 0.06, 0.14), rightHand: v(0.08, -0.04, -0.1),
+      leftElbow: v(0.16, 0, 0.08), rightElbow: v(0.88, 0, -0.08),
+      leftHand: v(-0.14, 0.06, 0.19), rightHand: v(0.04, -0.04, -0.06),
       leftLeg: v(0, -0.045, 0.055), rightLeg: v(0, 0.055, -0.05), leftKnee: v(0.055)
     })
   }

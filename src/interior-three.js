@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v50";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v51";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -32,6 +32,12 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
           // mouth that survive every camera angle without a pale face mask.
           : "sculpted-volume";
 const MAX_DPR = 1.5;
+const resolveInteriorPixelRatio = (width = window.innerWidth) => {
+  const deviceRatio = Math.min(Number(window.devicePixelRatio || 1), MAX_DPR);
+  if (width >= 1280) return Math.min(MAX_DPR, Math.max(deviceRatio, 1.2));
+  if (width > 720) return Math.min(MAX_DPR, Math.max(deviceRatio, 1.1));
+  return deviceRatio;
+};
 const ROOM_RADIUS = 5.4;
 const ROOM_HEIGHT = 3.72;
 const CAMERA_ORBIT_RADIUS = 5.2;
@@ -357,7 +363,7 @@ function ensureLayer() {
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.86;
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, MAX_DPR));
+  renderer.setPixelRatio(resolveInteriorPixelRatio(window.innerWidth));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
   physicalSurfaceMaps.forEach((maps) => {
@@ -550,6 +556,9 @@ function resize(width, height) {
   if (!renderer || (width === lastWidth && height === lastHeight)) return;
   lastWidth = width;
   lastHeight = height;
+  const pixelRatio = resolveInteriorPixelRatio(width);
+  renderer.setPixelRatio(pixelRatio);
+  composer?.setPixelRatio?.(pixelRatio);
   renderer.setSize(width, height, false);
   composer?.setSize(width, height);
   if (composer && renderer?.capabilities?.isWebGL2) {
