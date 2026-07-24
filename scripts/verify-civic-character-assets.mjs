@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v45", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v46", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v1", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -108,8 +108,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("UpperLidSkin_1")), `${role}: right integrated upper lid surface is missing`);
   assert(contents.includes(Buffer.from("LowerLidSkin_-1")), `${role}: left integrated lower lid surface is missing`);
   assert(contents.includes(Buffer.from("LowerLidSkin_1")), `${role}: right integrated lower lid surface is missing`);
-  assert(contents.includes(Buffer.from("EyeGlintSmall_-1")), `${role}: left secondary eye catchlight is missing`);
-  assert(contents.includes(Buffer.from("EyeGlintSmall_1")), `${role}: right secondary eye catchlight is missing`);
+  assert(contents.includes(Buffer.from("EyeGlint_-1")), `${role}: left eye catchlight is missing`);
+  assert(contents.includes(Buffer.from("EyeGlint_1")), `${role}: right eye catchlight is missing`);
   assert(contents.includes(Buffer.from("HairFlowRidge_3")), `${role}: authored crown hair-flow ridge is missing`);
   assert(contents.includes(Buffer.from("NoseBridge")), `${role}: sculpted nose bridge is missing`);
   assert(contents.includes(Buffer.from("NoseTip")), `${role}: sculpted nose tip is missing`);

@@ -12,7 +12,7 @@ ROLE_CONFIGS = {
     "player": {
         "skin": "#f2bd96",
         "hair": "#3b3947",
-        "hair_highlight": "#504c5a",
+        "hair_highlight": "#474653",
         "eye": "#3f342d",
         "top": "#e6dbc9",
         "outer": "#71825a",
@@ -31,7 +31,7 @@ ROLE_CONFIGS = {
     "listener": {
         "skin": "#efb88f",
         "hair": "#303744",
-        "hair_highlight": "#536070",
+        "hair_highlight": "#46515e",
         "eye": "#3a312b",
         "top": "#258b82",
         "outer": "#eee4d3",
@@ -45,8 +45,11 @@ ROLE_CONFIGS = {
     "facilitator": {
         "skin": "#f3bf99",
         "hair": "#d45f52",
-        "hair_highlight": "#ec796b",
-        "eye": "#3d6d5d",
+        "hair_highlight": "#df6c60",
+        # Keep role tint in the iris, but anchor it in the same near-charcoal
+        # value family as the reference cast. The lighter green read as glass
+        # beads once the face was reduced to gameplay size.
+        "eye": "#294c43",
         "top": "#f2eadc",
         # A warmer oatmeal cardigan preserves the source's cloth hierarchy
         # under the strong portal key; near-white previously clipped into flat
@@ -62,8 +65,8 @@ ROLE_CONFIGS = {
     "mediator": {
         "skin": "#f0b992",
         "hair": "#6b4a3c",
-        "hair_highlight": "#876457",
-        "eye": "#4f6149",
+        "hair_highlight": "#795a4d",
+        "eye": "#354334",
         "top": "#f1e8da",
         "outer": "#dbc7ae",
         "lower": "#47745d",
@@ -158,10 +161,10 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.058,
-        "eye_height": 0.0355,
-        "iris_width": 0.026,
-        "iris_height": 0.0295,
+        "eye_width": 0.056,
+        "eye_height": 0.0325,
+        "iris_width": 0.0245,
+        "iris_height": 0.027,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -173,10 +176,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.0,
     },
     "listener": {
-        "eye_width": 0.0575,
-        "eye_height": 0.035,
-        "iris_width": 0.0258,
-        "iris_height": 0.029,
+        "eye_width": 0.0555,
+        "eye_height": 0.032,
+        "iris_width": 0.0242,
+        "iris_height": 0.0265,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -188,10 +191,10 @@ FACE_PROFILES = {
         "muzzle_forward": 0.96,
     },
     "facilitator": {
-        "eye_width": 0.059,
-        "eye_height": 0.0365,
-        "iris_width": 0.0265,
-        "iris_height": 0.0305,
+        "eye_width": 0.057,
+        "eye_height": 0.0335,
+        "iris_width": 0.025,
+        "iris_height": 0.0278,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -203,10 +206,10 @@ FACE_PROFILES = {
         "muzzle_forward": 1.03,
     },
     "mediator": {
-        "eye_width": 0.058,
-        "eye_height": 0.0355,
-        "iris_width": 0.026,
-        "iris_height": 0.0295,
+        "eye_width": 0.056,
+        "eye_height": 0.0325,
+        "iris_width": 0.0245,
+        "iris_height": 0.027,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1315,24 +1318,24 @@ def sculpted_ear_shell(name, location, skin_mat, concha_mat, parent=None, side=1
 
 def build_materials(role, config):
     return {
-        "skin": material(f"{role} skin", config["skin"], 0.7, clearcoat=0.025),
-        "skin_shadow": material(f"{role} hand crease", "#a95d55", 0.84),
+        "skin": material(f"{role} skin", config["skin"], 0.66, clearcoat=0.018),
+        "skin_shadow": material(f"{role} hand crease", "#a96f67", 0.87),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
-        "hair": material(f"{role} hair", config["hair"], 0.74, clearcoat=0.015),
-        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.7, clearcoat=0.02),
+        "hair": material(f"{role} hair", config["hair"], 0.69, clearcoat=0.012),
+        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.67, clearcoat=0.016),
         # The reference uses a warm, softly reflective sclera and a large dark
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
-        "eye_white": material(f"{role} eye white", "#f4eee5", 0.55, clearcoat=0.08),
-        "iris": material(f"{role} iris", config["eye"], 0.46, clearcoat=0.14),
+        "eye_white": material(f"{role} eye white", "#f5eee5", 0.48, clearcoat=0.1),
+        "iris": material(f"{role} iris", config["eye"], 0.38, clearcoat=0.2),
         # Warm charcoal keeps the illustrated eye and lash language while
         # avoiding the pure-black sticker effect visible in the v77 paired
         # crop. The reference uses brown-violet linework that participates in
         # the room light rather than swallowing it.
-        "ink": material(f"{role} ink", "#342b30", 0.64),
-        "blush": material(f"{role} blush", "#d9887b", 0.9),
-        "lip": material(f"{role} lip", "#a95f5e", 0.82, clearcoat=0.025),
+        "ink": material(f"{role} ink", "#44343a", 0.62),
+        "blush": material(f"{role} blush", "#dc9b91", 0.94),
+        "lip": material(f"{role} lip", "#ad716c", 0.86, clearcoat=0.018),
         "top": material(f"{role} top fabric", config["top"], 0.91),
         "outer": material(f"{role} outer fabric", config["outer"], 0.9),
         "lower": material(f"{role} lower fabric", config["lower"], 0.88),
@@ -1457,7 +1460,7 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.188, 0.037))
+        eye = empty(f"EyePivot_{side}", head, (side * 0.084, -0.188, 0.043))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -1468,8 +1471,8 @@ def build_face(head, mats, role):
         # lid, iris and glint now sit inside a compressed, reference-like eye.
         # The previous iris filled almost the entire sclera and collapsed to a
         # black bead in the story camera. Preserve a generous almond-shaped
-        # white, then layer a smaller coloured iris, pupil and two catchlights
-        # so gaze remains readable from both front and three-quarter views.
+        # white, then layer a smaller coloured iris, pupil and one restrained
+        # catchlight so gaze remains readable without the sparkly toy-eye look.
         eye_width = face_profile["eye_width"]
         eye_height = face_profile["eye_height"]
         outer_lift = face_profile["outer_eye_lift"]
@@ -1485,9 +1488,8 @@ def build_face(head, mats, role):
             segments=24,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0087, 0.0022, 0.0118), mats["ink"], eye, segments=20, rings=12)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0163, 0.007), (0.0042, 0.0011, 0.0045), mats["eye_white"], eye, segments=12, rings=8)
-        ellipsoid(f"EyeGlintSmall_{side}", (side * 0.003, -0.0165, -0.0048), (0.0013, 0.0008, 0.0015), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0088, 0.0022, 0.0118), mats["ink"], eye, segments=20, rings=12)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0055, -0.0163, 0.006), (0.0038, 0.0011, 0.004), mats["eye_white"], eye, segments=12, rings=8)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -1518,7 +1520,7 @@ def build_face(head, mats, role):
                 (0, -0.019, eye_height - 0.001),
                 (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
             ],
-            0.0019 if feminine else 0.00175,
+            0.0015 if feminine else 0.0014,
             mats["ink"],
             eye,
             resolution=2,
@@ -1527,7 +1529,7 @@ def build_face(head, mats, role):
             curve_tube(
                 f"OuterLash_{side}",
                 [(side * 0.041, -0.012, 0.027), (side * 0.057, -0.014, 0.039)],
-                0.0021,
+                0.0016,
                 mats["ink"],
                 eye,
                 resolution=2,
@@ -1540,14 +1542,18 @@ def build_face(head, mats, role):
                 (0, -0.007, face_profile["brow_apex"]),
                 (-side * 0.052, 0.003, face_profile["brow_inner"]),
             ],
-            0.003 if feminine else 0.0031,
+            0.00265 if feminine else 0.00275,
             mats["hair"],
             brow,
         )
-        ellipsoid(f"Blush_{side}", (side * 0.148, -0.194, -0.046), (0.022, 0.0027, 0.006), mats["blush"], head, segments=16, rings=8)
-    ellipsoid("NoseBridge", (0, -0.19, 0.004), (0.009, 0.007, 0.025), mats["skin"], head, segments=18, rings=10)
-    ellipsoid("NoseTip", (0, -0.199, -0.02), (0.013, 0.009, 0.014), mats["skin"], head, segments=18, rings=10)
-    ellipsoid("NoseShadow", (0, -0.2085, -0.033), (0.009, 0.0017, 0.0032), mats["skin_shadow"], head, segments=14, rings=8)
+        # Blush is a low-contrast cheek tint, not a graphic face sticker.
+        ellipsoid(f"Blush_{side}", (side * 0.148, -0.194, -0.047), (0.018, 0.0021, 0.0045), mats["blush"], head, segments=16, rings=8)
+    # The gameplay camera sees the nose at only a few pixels.  Keep genuine
+    # volume for three-quarter lighting, but reduce the former bead-like tip
+    # and red underline that made the face feel assembled from primitives.
+    ellipsoid("NoseBridge", (0, -0.189, 0.002), (0.0065, 0.0052, 0.019), mats["skin"], head, segments=18, rings=10)
+    ellipsoid("NoseTip", (0, -0.1965, -0.019), (0.0095, 0.0065, 0.0095), mats["skin"], head, segments=18, rings=10)
+    ellipsoid("NoseShadow", (0, -0.2035, -0.0295), (0.0062, 0.0012, 0.0021), mats["skin_shadow"], head, segments=14, rings=8)
     mouth = empty("MouthPivot", head, (0, -0.207, -0.09))
     closed = empty("MouthClosedPivot", mouth)
     mouth_width = face_profile["mouth_width"]
@@ -1562,14 +1568,14 @@ def build_face(head, mats, role):
             (mouth_width * 0.48, -0.003, mouth_center * 0.6),
             (mouth_width, 0.001, mouth_corner),
         ],
-        0.0032,
+        0.00255,
         mats["skin_shadow"],
         closed,
     )
     ellipsoid(
         "LowerLip",
         (0, -0.0065, -0.011),
-        (mouth_width * 0.58, 0.0022, 0.0042),
+        (mouth_width * 0.54, 0.0017, 0.0032),
         mats["lip"],
         closed,
         segments=18,
@@ -1585,7 +1591,7 @@ def build_hair(head, mats, style):
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
     cap_scale = (0.258, 0.178, 0.226) if style == "spiky" else (0.272, 0.196, 0.238)
-    cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=48, rings=30)
+    cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=50, rings=32)
     # Break the mathematically perfect helmet silhouette without adding a
     # second shell or more triangles. Five broad crown lobes reshape the same
     # cap topology, giving fringe and rear locks a volume to grow from instead
@@ -1622,7 +1628,7 @@ def build_hair(head, mats, style):
                 ((front_x + rear_x * 2) / 3, 0.025, 0.292 - abs(rear_x) * 0.045),
                 (rear_x, 0.15, 0.185 - abs(rear_x) * 0.08),
             ],
-            0.0038,
+            0.0028,
             mats["hair_highlight"],
             head,
             resolution=2,
@@ -2575,7 +2581,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v45",
+        "sculptContract": "mirrorlife-civic-sculpt-v46",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v1",
             "roles": ["player", "listener", "facilitator", "mediator"],

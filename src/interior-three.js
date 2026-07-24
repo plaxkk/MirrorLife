@@ -7392,8 +7392,8 @@ function createCivicActorObject(actor, asset) {
       // A slightly softer roughness plus a restrained warm view-rim emulates
       // the broad subsurface wrap of the reference without a second face mesh
       // or a screen-space portrait card.
-      material.color?.offsetHSL?.(0.005, 0.028, 0.002);
-      material.roughness = 0.68;
+      material.color?.offsetHSL?.(0.002, 0.012, 0.008);
+      material.roughness = 0.66;
       material.metalness = 0;
       material.envMapIntensity = 0.64;
       material.onBeforeCompile = (shader) => {
@@ -7401,17 +7401,17 @@ function createCivicActorObject(actor, asset) {
           "#include <opaque_fragment>",
           `#include <opaque_fragment>
           float mirrorLifeSkinFacing = clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
-          float mirrorLifeSkinWrap = pow(1.0 - mirrorLifeSkinFacing, 1.86);
+          float mirrorLifeSkinWrap = pow(1.0 - mirrorLifeSkinFacing, 1.92);
           float mirrorLifeSkinLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
           float mirrorLifeSkinShadow = 1.0 - smoothstep(0.24, 0.62, mirrorLifeSkinLuma);
           float mirrorLifeSkinVelvet = pow(mirrorLifeSkinFacing, 7.0) * smoothstep(0.42, 0.82, mirrorLifeSkinLuma);
-          gl_FragColor.rgb += vec3(0.064, 0.028, 0.017) * mirrorLifeSkinWrap * 0.5;
-          gl_FragColor.rgb += vec3(0.032, 0.012, 0.007) * mirrorLifeSkinShadow * 0.22;
-          gl_FragColor.rgb += vec3(0.012, 0.006, 0.004) * (0.35 + mirrorLifeSkinFacing * 0.65);
-          gl_FragColor.rgb += vec3(0.018, 0.011, 0.008) * mirrorLifeSkinVelvet * 0.72;`
+          gl_FragColor.rgb += vec3(0.046, 0.029, 0.023) * mirrorLifeSkinWrap * 0.42;
+          gl_FragColor.rgb += vec3(0.022, 0.014, 0.011) * mirrorLifeSkinShadow * 0.16;
+          gl_FragColor.rgb += vec3(0.008, 0.006, 0.005) * (0.32 + mirrorLifeSkinFacing * 0.68);
+          gl_FragColor.rgb += vec3(0.014, 0.011, 0.009) * mirrorLifeSkinVelvet * 0.58;`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v5";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v6";
       material.needsUpdate = true;
     });
   }
@@ -7539,7 +7539,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v9`,
+    styleKey: `${frame}:${role}:civic-glb-v10`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7555,7 +7555,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v9` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v10` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {

@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v86 restrained volumetric-face gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v86-release-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `160 / 287,124`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v86.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Mandatory focused cast comparison: `tmp/reference-vs-v86-cast.png`; source and implementation character groups are inspected at equal `660 × 460` panel scale.
+- Full-orbit evidence: `tmp/v86-release-desktop-yaw90.png` (`164 / 313,124`, actor avoidance `0.32m`) and `tmp/v86-release-desktop-yaw180.png` (`165 / 315,460`, actor avoidance `1.142m`, radial clearance `1.427m`).
+- Mobile evidence: `tmp/v86-release-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 244,324`, three-character LOD).
+- Physical exploration evidence: `tmp/v86-character-walk.png`; the browser regression walked `5.37m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, character exploration, metre-space physics, asset verification, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / faces read as bright toy assemblies] Sculpt v46 compresses the four role-specific eye apertures, removes the second catchlight, softens lid/brow weights and changes the line family from black to warm charcoal. The final pass restores a larger dark pupil and deeper role-tinted iris so gaze survives minification without returning to pale glass-bead eyes.
+- [improved / nose, blush and mouth competed with the eyes] Nose bridge/tip volume and the nose shadow are reduced, blush becomes smaller and lower contrast, and the closed mouth/lower lip use thinner, softer geometry. Three-quarter lighting remains truthful while the opening frame reads as one face rather than stacked primitives.
+- [improved / warm wrap made skin orange and plastic] The head material now uses a less saturated, lower-amplitude facing/shadow wrap with reduced velvet highlight and a cooler hand-crease family. Skin remains genuinely lit, morphable geometry and does not depend on a front-only decal.
+- [improved / hair highlight ridges looked synthetic] Role highlights are pulled closer to their base hair values, the crown cap gains modestly smoother topology and the five flow ridges become lower-relief. All four GLBs remain under the `2 MiB` per-role budget and total `7.60 MB`.
+- [rejected / illustrated face shortcut] `tmp/v86-illustrated-yaw0.png` confirms the atlas-cornea route still produces pale mask seams and broken identity at conversation distance. Production remains on the fully volumetric path.
+
+### Required fidelity surfaces and findings
+
+- [improved][facial hierarchy] Dark iris/pupil values, one restrained glint and thinner secondary marks establish the eyes as the first read while nose, blush and lips stay subordinate.
+- [checked][360° character continuity] Every facial surface remains head-attached geometry with real parallax, room light, depth occlusion, gaze and expression morphs. Side and reverse orbit expose no billboard edge or face-card swap.
+- [checked][movement, physics and mobile continuity] The `1.72m` player walks `5.37m`, turns the real 3D camera `65.3°`, stays grounded by the authoritative capsule and preserves the same role/collider contract on mobile.
+- [checked][responsive performance] Desktop remains `160–165 / 287,124–315,460`; portrait mobile remains `98 / 244,324`, below the `110` calls / `250k` triangle gate.
+- [P1][character production quality remains visibly below the source] Same-canvas cast comparison still exposes coarse facial planes, rigid limb/hand acting, simplified garment drape, weaker footwear construction and flatter painted-material identity. Literal parity requires production retopology, role-authored PBR UV sets, facial correctives and garment deformation.
+- [P1][whole-room construction remains below the source] The functional composition, real lightwell and material hierarchy are established, but furniture proportions, glass thickness, upholstery compression, paper/foliage density, joinery and authored wear remain simpler.
+- [P1][lighting transport remains below the source] The scene has directional portal light, local bounce, contact depth and floor dapple, but still lacks the source's soft multi-bounce penumbrae, localized colour bleed and skin/cloth integration.
+
+### Gate result
+
+v86 improves the most distracting character-surface cues while preserving real 3D movement, full orbit, animation, physics, mobile controls and strict budgets. The mandatory same-canvas comparison is materially closer in hierarchy but still not production-parity in character topology/UV/deformation, bespoke room assets or indirect-light transport.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, complete-room hero-asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v85 side-orbit lightwell and face-path decision gate
 
 ### Evidence inspected together
