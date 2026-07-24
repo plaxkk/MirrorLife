@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v79 authored-plaster and friendlier-sculpt gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation: `tmp/v79-plaster-yaw0.png` (`1600 × 900` CSS pixels, device scale factor `1`, `160 / 286,660`, `46°`, `4.8m` opening orbit).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v79.png`; source and implementation are rendered as equal `934 × 525` content panels in one `1900 × 585` comparison canvas.
+- Mandatory focused cast comparison: `tmp/reference-vs-v79-cast.png`; source and implementation character groups are inspected at an equal `660 × 460` panel scale.
+- Full-orbit evidence: `tmp/v58-desktop-yaw90.png` (`161 / 301,552`, actor avoidance `0.32m`) and `tmp/v58-desktop-yaw180.png` (`164 / 314,996`, actor avoidance `1.362m`, radial clearance `1.55m`).
+- Mobile evidence: `tmp/v58-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 243,976`, three-character LOD).
+- Physical exploration evidence: `tmp/v79-character-walk.png`; the browser regression walked `3.97m`, completed the movement state transition and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, character exploration, metre-space physics, asset verification, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / civic shell read as a flat procedural colour] The public room now atomically loads a real authored lime-plaster base-colour surface (`atelier-lime-plaster-basecolor-v1.jpg`) on desktop and mobile. Fine mineral variation remains visible across opening, side and reverse orbit without becoming a camera-facing overlay.
+- [improved / floor light lacked the reference's warm exterior rhythm] The deterministic sun-dapple field now uses a denser but softer warm/cool leaf mask. The honed floor base and contact response were rebalanced so the light pattern reads as outdoor foliage rather than a dark decal.
+- [improved / faces were narrow, dark and mask-like] Sculpt v45 widens and rounds the role heads, reduces the jaw pinch, lightens four role-specific skin values and softens eyelid/brow line weight. Arms, legs and hands gain more readable illustrated volume without changing the authoritative `1.72m / 1.68m` character scale.
+- [checked / runtime cache invalidation] Civic actors move to the `civic-glb-v9` style key, preventing an already-open room from reusing v44 visuals after the new GLBs are available.
+- [checked / performance and movement continuity] Four role assets total `7.61 MB`; opening, side, reverse and mobile frames remain below release budgets. The player still walks in the metre-space Rapier room and rotates the real 3D camera.
+
+### Required fidelity surfaces and findings
+
+- [improved][material hierarchy] The architecture now separates plaster, terrazzo, timber, fabric, paper, ceramic and brass through both authored colour variation and distinct roughness response. The wall no longer depends on a single uniform ivory value.
+- [improved][character first read] Broader heads, warmer skin and heavier limb volumes reduce the toy-mask impression and keep role silhouettes readable at the intimate opening lens.
+- [checked][360° continuity] The new plaster surface, volumetric faces, hair, garments and role props remain actual room/actor geometry at `0°`, `90°` and `180°`; no billboard replacement or front-only texture card is introduced.
+- [checked][mobile and atomic loading] Portrait mobile loads the plaster surface as part of the same ready gate and retains the player, two witnesses, target landmark and complete touch controls at `98 / 243,976`.
+- [P1][character production quality remains visibly below the source] Equal-scale cast comparison still exposes rigid mouth/cheek acting, simplified hands, planar garment drape, coarse hair flow and weaker material separation. Source parity requires production retopology, painted UV sets, role-specific facial correctives and garment deformation.
+- [P1][whole-room asset construction remains below the source] The implementation now has tactile walls and a coherent functional layout, but the source retains more realistic furniture proportion, glass thickness, upholstery compression, fine stationery/foliage, joinery and authored wear.
+- [P1][lighting transport remains below the source] Directional dapple and local bounce are readable, but the source still has softer multi-bounce penumbrae, richer skin/cloth colour return and more convincing contact integration.
+- [P2][quarter orbit exposes an under-authored wall sector] At `90°`, the citizen group remains legible but the right third becomes a broad undecorated plaster plane. A later room-shell pass should add a functional wall landmark or architectural reveal without filling it with generic decoration.
+
+### Gate result
+
+v79 replaces another major procedural surface with an authored plaster asset and moves the four playable characters toward the reference's friendly illustrated proportions while preserving real walking, full orbit, atomic room loading, mobile controls and strict budgets. Same-canvas evidence still shows production-level gaps in character topology/UV/deformation, complete-room bespoke finish and indirect-light transport.
+
+final result: blocked
+
+Blocker: production character sculpt/retopology/UV/deformation, complete-room hero-asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v74 four-person composition and selective-depth gate
 
 ### Evidence inspected together

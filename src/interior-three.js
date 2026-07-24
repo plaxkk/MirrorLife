@@ -1094,6 +1094,10 @@ function getPhysicalSurfaceSources() {
       map: "/assets/interiors/textures/civic-terrazzo-basecolor-v1.png",
       repeat: [4.8, 4.8]
     },
+    plaster: {
+      map: "/assets/interiors/textures/atelier-lime-plaster-basecolor-v1.jpg",
+      repeat: [2.6, 2.15]
+    },
     wood: {
       map: "/assets/interiors/textures/wood-table-001-diffuse-neutral-1k.jpg",
       normal: "/assets/interiors/textures/wood-table-001-normal-gl-1k.jpg",
@@ -1115,7 +1119,7 @@ async function preloadPhysicalSurfaceMaps() {
     const textureLoader = new THREE.TextureLoader();
     const sources = getPhysicalSurfaceSources();
     await Promise.all(Object.entries(sources).map(async ([kind, source]) => {
-      if (window.innerWidth <= 720 && kind !== "terrazzo") return;
+      if (window.innerWidth <= 720 && !["terrazzo", "plaster"].includes(kind)) return;
       // The civic floor's authored base color is part of the atomic scene load
       // on every device. Heavier scanned normal/roughness maps stay desktop-only.
       const map = source.map ? await textureLoader.loadAsync(source.map) : null;
@@ -1149,8 +1153,8 @@ async function preloadPhysicalSurfaceMaps() {
 }
 
 function getPhysicalSurfaceMaps(kind) {
-  if (!["wood", "fabric", "terrazzo"].includes(kind)) return null;
-  if (lastWidth <= 720 && kind !== "terrazzo") return null;
+  if (!["wood", "fabric", "terrazzo", "plaster"].includes(kind)) return null;
+  if (lastWidth <= 720 && !["terrazzo", "plaster"].includes(kind)) return null;
   const maps = physicalSurfaceMaps.get(kind);
   if (maps) {
     [maps.map, maps.normal, maps.roughness].forEach((texture) => {
@@ -1244,7 +1248,7 @@ function getCivicDappleTexture() {
       rx * size,
       ry * size,
       rotation,
-      "rgba(255,232,177,0.62)",
+      "rgba(255,232,177,0.44)",
       "rgba(255,232,177,0)"
     );
   });
@@ -1253,7 +1257,7 @@ function getCivicDappleTexture() {
     seed = (seed * 1664525 + 1013904223) >>> 0;
     return seed / 4294967296;
   };
-  for (let index = 0; index < 54; index += 1) {
+  for (let index = 0; index < 64; index += 1) {
     const t = random();
     const x = (0.12 + t * 0.78 + (random() - 0.5) * 0.08) * size;
     const y = (0.18 + t * 0.68 + (random() - 0.5) * 0.16) * size;
@@ -1264,8 +1268,8 @@ function getCivicDappleTexture() {
       radius * (0.72 + random() * 0.66),
       radius * (0.44 + random() * 0.34),
       (random() - 0.5) * 1.8,
-      "rgba(72,83,55,0.15)",
-      "rgba(72,83,55,0)"
+      "rgba(92,76,58,0.2)",
+      "rgba(92,76,58,0)"
     );
   }
   civicDappleTexture = new THREE.CanvasTexture(lightCanvas);
@@ -4056,7 +4060,7 @@ function addCivicReferenceDressing(theme, colors) {
       new THREE.MeshBasicMaterial({
         map: dappleTexture,
         transparent: true,
-        opacity: theme.night ? 0.1 : 0.46,
+        opacity: theme.night ? 0.1 : 0.58,
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
@@ -5237,7 +5241,7 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#d7d0c5" : floorColor, {
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#c9bfb2" : floorColor, {
       // A softly honed mineral surface matches the reference better than the
       // former cold grey, high-contrast chip field. The colour map still
       // supplies real terrazzo variation, while reduced bump and stronger
@@ -5266,7 +5270,7 @@ function rebuildRoom(theme = {}) {
   }
 
   const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
-  const wallMaterial = createToonMaterial(wallColor, {
+  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#fff9ef" : wallColor, {
     side: THREE.BackSide,
     roughness: 0.94,
     surface: "plaster",
@@ -7501,7 +7505,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v8`,
+    styleKey: `${frame}:${role}:civic-glb-v9`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7517,7 +7521,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v8` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v9` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8426,7 +8430,7 @@ function update(payload = {}) {
     // The reference uses broad, warm contact penumbrae. A full-strength GTAO
     // pass made shoe soles, chair feet and cabinet corners collapse to black
     // outlines even though the key and bounce were physically plausible.
-    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.5 : 0.82;
+    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.58 : 0.82;
   }
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";

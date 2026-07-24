@@ -10,7 +10,7 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#eeb389",
+        "skin": "#f2bd96",
         "hair": "#3b3947",
         "hair_highlight": "#504c5a",
         "eye": "#3f342d",
@@ -29,7 +29,7 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#e9ab82",
+        "skin": "#efb88f",
         "hair": "#303744",
         "hair_highlight": "#536070",
         "eye": "#3a312b",
@@ -43,7 +43,7 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#efb68e",
+        "skin": "#f3bf99",
         "hair": "#d45f52",
         "hair_highlight": "#ec796b",
         "eye": "#3d6d5d",
@@ -60,7 +60,7 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#ecb087",
+        "skin": "#f0b992",
         "hair": "#6b4a3c",
         "hair_highlight": "#876457",
         "eye": "#4f6149",
@@ -87,13 +87,13 @@ BODY_PROFILES = {
         "torso_height": 1.0,
         "shoulder_x": 0.222,
         "hip_x": 0.118,
-        "arm_width": 1.0,
+        "arm_width": 1.04,
         "arm_depth": 1.02,
-        "leg_width": 1.02,
+        "leg_width": 1.08,
         "leg_depth": 1.03,
         "waist_width": 1.02,
-        "hand_scale": 0.92,
-        "head_scale": (0.925, 0.91, 0.91),
+        "hand_scale": 0.96,
+        "head_scale": (0.97, 0.93, 0.94),
         "head_z": 1.495,
         "shoulder_slope": 0.08,
         "waist_taper": 0.16,
@@ -104,13 +104,13 @@ BODY_PROFILES = {
         "torso_height": 1.01,
         "shoulder_x": 0.21,
         "hip_x": 0.109,
-        "arm_width": 0.94,
+        "arm_width": 1.0,
         "arm_depth": 0.95,
-        "leg_width": 0.96,
+        "leg_width": 1.02,
         "leg_depth": 0.97,
         "waist_width": 0.96,
-        "hand_scale": 0.9,
-        "head_scale": (0.91, 0.9, 0.9),
+        "hand_scale": 0.95,
+        "head_scale": (0.96, 0.925, 0.94),
         "head_z": 1.49,
         "shoulder_slope": 0.055,
         "waist_taper": 0.19,
@@ -121,13 +121,13 @@ BODY_PROFILES = {
         "torso_height": 1.02,
         "shoulder_x": 0.202,
         "hip_x": 0.106,
-        "arm_width": 0.9,
+        "arm_width": 0.95,
         "arm_depth": 0.92,
-        "leg_width": 0.91,
+        "leg_width": 0.96,
         "leg_depth": 0.93,
         "waist_width": 0.9,
-        "hand_scale": 0.88,
-        "head_scale": (0.91, 0.9, 0.9),
+        "hand_scale": 0.94,
+        "head_scale": (0.96, 0.925, 0.94),
         "head_z": 1.5,
         "shoulder_slope": 0.035,
         "waist_taper": 0.24,
@@ -138,13 +138,13 @@ BODY_PROFILES = {
         "torso_height": 0.99,
         "shoulder_x": 0.207,
         "hip_x": 0.108,
-        "arm_width": 0.92,
+        "arm_width": 0.97,
         "arm_depth": 0.94,
-        "leg_width": 0.93,
+        "leg_width": 0.98,
         "leg_depth": 0.95,
         "waist_width": 0.93,
-        "hand_scale": 0.89,
-        "head_scale": (0.925, 0.91, 0.91),
+        "hand_scale": 0.95,
+        "head_scale": (0.97, 0.93, 0.94),
         "head_z": 1.49,
         "shoulder_slope": 0.045,
         "waist_taper": 0.21,
@@ -1369,7 +1369,7 @@ def build_face(head, mats, role):
         x, y, z = vertex.co
         lower = max(0.0, min(1.0, (-z - 0.012) / 0.22))
         front = max(0.0, min(1.0, (-y - 0.015) / 0.17))
-        vertex.co.x *= 1.0 - lower * 0.275
+        vertex.co.x *= 1.0 - lower * 0.19
         if front > 0 and z < -0.02:
             vertex.co.y += lower * front * 0.006
         # Model a shallow cheek plane instead of relying on circular blush
@@ -1396,9 +1396,9 @@ def build_face(head, mats, role):
         # Slightly compress the temple/forehead corners so the face reads as
         # an authored illustrated head rather than a uniformly round sphere.
         temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
-        vertex.co.x *= 1.0 - temple * 0.045
+        vertex.co.x *= 1.0 - temple * 0.025
         chin = max(0.0, min(1.0, (-z - 0.12) / 0.13))
-        vertex.co.z -= chin * front * 0.009
+        vertex.co.z -= chin * front * 0.004
     # Keep the facial volume itself expressive. The previous rig swapped
     # mouth meshes but left the cheeks and jaw completely rigid, which read as
     # a toy mask in close conversational framing. These sparse, authored shape
@@ -1518,7 +1518,7 @@ def build_face(head, mats, role):
                 (0, -0.019, eye_height - 0.001),
                 (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
             ],
-            0.00235 if feminine else 0.00215,
+            0.0019 if feminine else 0.00175,
             mats["ink"],
             eye,
             resolution=2,
@@ -1540,7 +1540,7 @@ def build_face(head, mats, role):
                 (0, -0.007, face_profile["brow_apex"]),
                 (-side * 0.052, 0.003, face_profile["brow_inner"]),
             ],
-            0.00365 if feminine else 0.0038,
+            0.003 if feminine else 0.0031,
             mats["hair"],
             brow,
         )
@@ -2575,7 +2575,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v44",
+        "sculptContract": "mirrorlife-civic-sculpt-v45",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v1",
             "roles": ["player", "listener", "facilitator", "mediator"],
