@@ -16,6 +16,7 @@ const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBli
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v62";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v2";
+const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
@@ -1018,7 +1019,11 @@ function loadModel(type) {
   };
   const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
-    const authoredAssetRevision = type === "civic-lounge-suite" ? "hero-v9" : "";
+    const authoredAssetRevision = [
+      "civic-display-case",
+      "civic-notice-console",
+      "civic-lounge-suite"
+    ].includes(type) ? "hero-v10" : "";
     const assetRevision = ASSET_REVISION || authoredAssetRevision;
     const assetUrl = `${ASSET_BASE}${type}.glb${assetRevision ? `?v=${encodeURIComponent(assetRevision)}` : ""}`;
     loader.load(
@@ -2393,6 +2398,16 @@ function addAtelierDisplayCabinet(theme, colors) {
   const frontInset = new THREE.Mesh(new RoundedBoxGeometry(1.24, 0.38, 0.045, 5, 0.075), cream);
   frontInset.position.set(0, 0.36, 0.414);
   group.add(frontInset);
+  [-0.59, 0, 0.59].forEach((x) => {
+    const stile = new THREE.Mesh(new RoundedBoxGeometry(0.045, 0.42, 0.045, 3, 0.015), wood);
+    stile.position.set(x, 0.36, 0.446);
+    group.add(stile);
+  });
+  [0.17, 0.55].forEach((y) => {
+    const rail = new THREE.Mesh(new RoundedBoxGeometry(1.24, 0.045, 0.045, 3, 0.015), wood);
+    rail.position.set(0, y, 0.446);
+    group.add(rail);
+  });
   const drawer = new THREE.Mesh(new RoundedBoxGeometry(0.58, 0.25, 0.055, 4, 0.055), createToonMaterial(colors.secondary));
   drawer.position.set(0.28, 0.36, 0.445);
   group.add(drawer);
@@ -2434,6 +2449,11 @@ function addAtelierDisplayCabinet(theme, colors) {
     const rail = new THREE.Mesh(new RoundedBoxGeometry(1.5, 0.045, 0.055, 3, 0.018), wood);
     rail.position.set(0, railY, 0.385);
     group.add(rail);
+  });
+  [-0.24, 0.24].forEach((railX) => {
+    const mullion = new THREE.Mesh(new RoundedBoxGeometry(0.026, 0.51, 0.045, 3, 0.01), createToonMaterial("#c89b43", { roughness: 0.32, metalness: 0.58 }));
+    mullion.position.set(railX, 1.16, 0.402);
+    group.add(mullion);
   });
   [-0.72, 0.72].forEach((railX) => {
     const rail = new THREE.Mesh(new RoundedBoxGeometry(0.045, 0.56, 0.055, 3, 0.018), wood);
@@ -2482,6 +2502,11 @@ function addAtelierDisplayCabinet(theme, colors) {
   const displayLight = new THREE.PointLight(0xffd8a0, colors.night ? 1.25 : 0.82, 2.7, 2.1);
   displayLight.position.set(0, 1.35, 0.34);
   group.add(displayLight);
+  mergeActorVertexColorMeshes(group, [canopy, frontGlass], {
+    roughness: 0.78,
+    envMapIntensity: 0.52,
+    actorShading: false
+  });
 }
 
 function addAmbientHangingPlant(angle, colors) {
@@ -2848,6 +2873,24 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   const apron = new THREE.Mesh(new RoundedBoxGeometry(1.72, 0.18, 0.12, 4, 0.038), wood);
   apron.position.set(0, 0.63, 0.38);
   group.add(apron);
+  // The desk is seen from every side during orbit. Complete the underside
+  // joinery instead of presenting a decorated top with four disconnected
+  // sticks: side aprons, a rear rail and a low stretcher make its load path
+  // legible while remaining inside the existing physical footprint.
+  [-0.76, 0.76].forEach((x) => {
+    const sideApron = new THREE.Mesh(
+      new RoundedBoxGeometry(0.1, 0.16, 0.62, 4, 0.032),
+      wood
+    );
+    sideApron.position.set(x, 0.62, 0);
+    group.add(sideApron);
+  });
+  const rearApron = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.15, 0.1, 4, 0.03), wood);
+  rearApron.position.set(0, 0.61, -0.36);
+  group.add(rearApron);
+  const stretcher = new THREE.Mesh(new RoundedBoxGeometry(1.48, 0.075, 0.09, 3, 0.025), trim);
+  stretcher.position.set(0, 0.25, -0.04);
+  group.add(stretcher);
   const drawerFront = new THREE.Mesh(
     new RoundedBoxGeometry(0.62, 0.14, 0.035, 3, 0.025),
     trim
@@ -2868,6 +2911,15 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
       leg.rotation.z = x * 0.028;
       group.add(leg);
     });
+  });
+  [-0.74, 0.74].forEach((x) => {
+    const joineryPin = new THREE.Mesh(
+      new THREE.CylinderGeometry(0.022, 0.022, 0.018, 12),
+      createToonMaterial("#c89a66", { roughness: 0.78, surface: "wood", bumpScale: 0.006 })
+    );
+    joineryPin.rotation.x = Math.PI / 2;
+    joineryPin.position.set(x, 0.635, 0.449);
+    group.add(joineryPin);
   });
   const microProps = new THREE.Group();
   microProps.name = "CivicRecordDeskMicroProps";
@@ -3063,8 +3115,21 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     group.add(surface);
     return surface;
   };
-  const oakSurface = mergeDeskSurfaceFamily([top, apron], wood, "CivicRecordDeskScannedOak");
-  const walnutSurface = mergeDeskSurfaceFamily([frontEdge, drawerFront], trim, "CivicRecordDeskScannedWalnut");
+  const oakSurface = mergeDeskSurfaceFamily(
+    [top, apron, ...group.children.filter((child) => (
+      child.isMesh
+      && child.material === wood
+      && child !== top
+      && child !== apron
+    ))],
+    wood,
+    "CivicRecordDeskScannedOak"
+  );
+  const walnutSurface = mergeDeskSurfaceFamily(
+    [frontEdge, drawerFront, stretcher],
+    trim,
+    "CivicRecordDeskScannedWalnut"
+  );
   // Collapse the complete opaque desk and stationery suite into one vertex-
   // surfaced batch. Keep the mapped agenda and two scanned wood families
   // separate, preserving Chinese content and real material response while
@@ -9471,6 +9536,11 @@ function getStats() {
       environment: Number((scene?.environmentIntensity || 0).toFixed(3)),
       exposure: Number((renderer?.toneMappingExposure || 0).toFixed(3)),
       contactAo: Number((gtaoPass?.blendIntensity || 0).toFixed(3))
+    } : null,
+    furniture: cameraZoneId === "public-plaza" ? {
+      version: CIVIC_FURNITURE_DETAIL_CONTRACT,
+      authoredHeroAssets: lastWidth <= 720 ? 0 : 3,
+      mobileProceduralFallback: lastWidth <= 720
     } : null,
     camera: lastCameraState
   };

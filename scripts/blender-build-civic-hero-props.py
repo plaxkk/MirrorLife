@@ -323,7 +323,27 @@ def build_display_case(mats):
     rounded_box("DisplayWalnutPlinth", (1.96, 0.12, 0.78), (0, 0, 0.73), mats["walnut"], root, 0.045)
     for side in (-1, 1):
         rounded_box(f"DisplayInset_{side}", (0.68, 0.035, 0.37), (side * 0.41, -0.357, 0.38), mats["deep_teal"], root, 0.045)
+        # A real face-frame and recessed panel reveal keep the lower cabinet
+        # from reading as two stickers on a single rounded toy block.
+        for rail_z in (0.19, 0.57):
+            rounded_box(
+                f"DisplayDoorRail_{side}_{rail_z}",
+                (0.74, 0.045, 0.055),
+                (side * 0.41, -0.382, rail_z),
+                mats["walnut"], root, 0.014, segments=2,
+            )
+        for stile_x in (side * 0.75, side * 0.07):
+            rounded_box(
+                f"DisplayDoorStile_{side}_{stile_x}",
+                (0.055, 0.045, 0.42),
+                (stile_x, -0.382, 0.38),
+                mats["walnut"], root, 0.014, segments=2,
+            )
         cylinder(f"DisplayKnob_{side}", 0.035, 0.045, (side * 0.12, -0.392, 0.39), mats["brass"], root, 14, (math.pi / 2, 0, 0))
+        rounded_box(
+            f"DisplayKnobBackplate_{side}", (0.11, 0.018, 0.075),
+            (side * 0.12, -0.407, 0.39), mats["brass"], root, 0.018, segments=3,
+        )
     rounded_box("DisplayBrassToeRail", (1.68, 0.03, 0.035), (0, -0.382, 0.11), mats["brass"], root, 0.012)
     for x in (-0.78, 0.78):
         cylinder(f"DisplayFoot_{x}", 0.055, 0.22, (x, 0, 0.11), mats["walnut"], root, 14)
@@ -332,6 +352,7 @@ def build_display_case(mats):
     rounded_box("DisplayCaseFloor", (1.78, 0.66, 0.09), (0, 0, 0.8), mats["oak"], root, 0.03)
     rounded_box("DisplayCaseBack", (1.78, 0.08, 0.68), (0, 0.29, 1.13), mats["walnut"], root, 0.035)
     rounded_box("DisplayCaseTop", (1.82, 0.72, 0.1), (0, 0, 1.5), mats["walnut"], root, 0.035)
+    rounded_box("DisplayTopOakReveal", (1.68, 0.04, 0.045), (0, -0.375, 1.47), mats["oak"], root, 0.014)
     # A lightly raked front plane gives the case a furniture-maker silhouette
     # instead of a vertical aquarium box. Glass, posts and mullions share the
     # exact tilt, so side orbit never exposes detached trim.
@@ -340,6 +361,10 @@ def build_display_case(mats):
         rounded_box(
             f"DisplayPost_{x}", (0.07, 0.07, 0.7), (x, -0.3, 1.14),
             mats["walnut"], root, 0.025, (display_front_tilt, 0, 0),
+        )
+        rounded_box(
+            f"DisplayPostCap_{x}", (0.12, 0.105, 0.06), (x, -0.315, 1.49),
+            mats["brass"], root, 0.018, (display_front_tilt, 0, 0), 3,
         )
     rounded_box(
         "DisplayFrontGlass", (1.68, 0.026, 0.58), (0, -0.345, 1.16),
@@ -354,6 +379,7 @@ def build_display_case(mats):
         rounded_box(f"DisplaySideGlass_{x}", (0.026, 0.58, 0.58), (x, -0.01, 1.16), mats["glass"], root, 0.012)
     rounded_box("DisplayShelf", (1.68, 0.55, 0.035), (0, -0.02, 1.1), mats["glass"], root, 0.01)
     rounded_box("DisplayShelfBrassRail", (1.68, 0.025, 0.025), (0, -0.31, 1.1), mats["brass"], root, 0.008)
+    rounded_box("DisplayShelfOakLip", (1.72, 0.035, 0.055), (0, -0.332, 1.08), mats["oak"], root, 0.012)
     rounded_box("DisplayIlluminationTop", (1.55, 0.035, 0.028), (0, 0.16, 1.43), mats["display_glow"], root, 0.01)
     rounded_box("DisplayIlluminationShelf", (1.5, 0.028, 0.022), (0, 0.18, 1.08), mats["display_glow"], root, 0.009)
 
@@ -363,6 +389,7 @@ def build_display_case(mats):
     display_materials = ("butter", "ceramic", "coral", "teal")
     for index, x in enumerate((-0.55, -0.18, 0.2, 0.56)):
         rounded_box(f"DisplayTray_{index + 1}", (0.28, 0.35, 0.035), (x, -0.04, 0.87), mats["oak"], root, 0.025)
+        rounded_box(f"DisplayTrayRim_{index + 1}", (0.24, 0.03, 0.025), (x, -0.215, 0.9), mats["brass"], root, 0.008)
         cylinder(f"DisplayObject_{index + 1}_Base", 0.105, 0.035, (x, -0.05, 0.925), mats["ivory"], root, 20)
         sphere(f"DisplayObject_{index + 1}_Glaze", (0.105, 0.105, 0.07 + (index % 2) * 0.022), (x, -0.05, 0.985), mats[display_materials[index]], root, 18, 10)
         sphere(f"DisplayObject_{index + 1}_Garnish", (0.03, 0.03, 0.018), (x + 0.028, -0.073, 1.055), mats["leaf" if index % 2 == 0 else "brass"], root, 12, 7)
@@ -485,6 +512,7 @@ def build_lounge_suite(mats):
     # close to two metres and it can anchor the lounge like the reference.
     rounded_box("LoungeSofaLowerRail", (2.72, 0.7, 0.13), (0, 0.1, 0.27), mats["oak"], root, 0.047, segments=4)
     rounded_box("LoungeSofaFrontRail", (2.66, 0.11, 0.22), (0, -0.28, 0.35), mats["walnut"], root, 0.04, segments=4)
+    rounded_box("LoungeSofaFrontReveal", (2.48, 0.025, 0.045), (0, -0.342, 0.38), mats["brass"], root, 0.01, segments=2)
     rounded_box("LoungeSofaBack", (2.68, 0.15, 0.88), (0, 0.4, 0.79), mats["oak"], root, 0.05, (0.035, 0, 0), 4)
     for side in (-1, 1):
         # Upholstery uses compressed rounded cushions instead of scaled
@@ -518,6 +546,18 @@ def build_lounge_suite(mats):
         cylinder(f"LoungeSeatPiping_{side}", 0.012, 1.08, (side * 0.68, -0.417, 0.635), mats["sage"], root, 10, (0, math.pi / 2, 0))
         cylinder(f"LoungeBackPiping_{side}", 0.011, 1.02, (side * 0.67, -0.012, 1.075), mats["butter"], root, 10, (0, math.pi / 2, 0))
         sphere(f"LoungeBackTuft_{side}", (0.036, 0.02, 0.036), (side * 0.67, 0.012, 0.94), mats["deep_teal"], root, 14, 8)
+        # Side boxing and a low welt line give each cushion an upholstered
+        # perimeter under glancing light instead of one uninterrupted volume.
+        rounded_box(
+            f"LoungeSeatSideBoxing_{side}", (0.035, 0.6, 0.2),
+            (side * 1.295, -0.055, 0.54), mats["deep_teal"], root, 0.014,
+            (0.02, 0, side * 0.012), 2,
+        )
+        rounded_box(
+            f"LoungeBackSideBoxing_{side}", (0.035, 0.25, 0.52),
+            (side * 1.275, 0.175, 0.94), mats["deep_teal"], root, 0.014,
+            (0.075, 0, side * 0.015), 2,
+        )
     for x in (-1.4, 1.4):
         # Reference-like ladder arms keep the room visible through the frame.
         rounded_box(f"LoungeArmPostFront_{x}", (0.1, 0.1, 0.68), (x, -0.24, 0.5), mats["oak"], root, 0.032)
@@ -587,21 +627,34 @@ def build_lounge_suite(mats):
 
     # Side bookshelf gives the lounge a real back/side silhouette in orbit.
     rounded_box("LoungeBookcaseBack", (0.95, 0.18, 1.65), (1.72, 0.24, 0.9), mats["deep_teal"], root, 0.06)
+    rounded_box("LoungeBookcaseCrown", (1.12, 0.58, 0.1), (1.72, 0.02, 1.79), mats["walnut"], root, 0.035)
+    rounded_box("LoungeBookcaseToeKick", (0.98, 0.48, 0.11), (1.72, 0.04, 0.09), mats["walnut"], root, 0.032)
     for x in (1.25, 2.19):
         rounded_box(f"LoungeBookcaseSide_{x}", (0.08, 0.52, 1.72), (x, 0, 0.88), mats["oak"], root, 0.035)
     for shelf_index, z in enumerate((0.16, 0.62, 1.08, 1.52)):
         rounded_box(f"LoungeShelf_{shelf_index + 1}", (1.02, 0.5, 0.075), (1.72, 0.02, z), mats["oak"], root, 0.035)
+        rounded_box(
+            f"LoungeShelfLip_{shelf_index + 1}", (0.94, 0.035, 0.045),
+            (1.72, -0.248, z + 0.005), mats["walnut"], root, 0.012,
+        )
     book_palette = ("paper", "blue", "butter", "coral", "teal")
     for row in range(3):
         for column in range(5):
             height = 0.22 + ((row * 5 + column) % 3) * 0.035
             add_book(
                 root, mats, f"LoungeShelfBook_{row}_{column}",
-                (1.38 + column * 0.16, -0.04, 0.29 + row * 0.46 + height / 2),
+                (1.38 + column * 0.16, -0.055 + (column % 3) * 0.018, 0.29 + row * 0.46 + height / 2),
                 (0.11 + (column % 2) * 0.02, 0.22, height),
                 book_palette[(row + column) % len(book_palette)],
                 (0, 0, ((column % 3) - 1) * 0.025),
             )
+        # Alternating brass/wood bookends introduce small structural pauses;
+        # the shelves now read as curated bays rather than repeated grids.
+        cylinder(
+            f"LoungeBookend_{row + 1}", 0.025, 0.2,
+            (2.12 if row % 2 else 1.3, -0.17, 0.36 + row * 0.46),
+            mats["brass"] if row == 1 else mats["walnut"], root, 12,
+        )
     add_plant(root, mats, "LoungeShelfPlant", (1.74, 0, 1.67), 0.72)
     add_ceramic(root, mats, "LoungeShelfVase", (2.0, 0.02, 1.71), 0.62, "butter")
     return root
@@ -665,7 +718,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v9",
+        "contract": "mirrorlife-civic-hero-props-v10",
         "worldUnitMeters": 1,
         "assets": {},
     }

@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v109 furniture construction gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v109-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza listening state).
+- Mandatory normalized comparison: `tmp/reference-vs-v109-full.png`; focused foreground-furniture comparison: `tmp/reference-vs-v109-furniture-focus.png`; implementation delta: `tmp/v108-vs-v109-furniture-focus.png`.
+- Full 3D orbit evidence: `tmp/v109-final-desktop-yaw90.png` and `tmp/v109-final-desktop-yaw180.png`. The same furniture remains perspective-correct, materially lit and physically staged through the real orbit.
+- Responsive evidence: `tmp/v109-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD and procedural glass-case fallback).
+- Runtime evidence: desktop opening `171 / 288,952`, side `174 / 300,060`, reverse `175 / 306,188`; mobile `96 / 248,996`. The player walked `4.25m`, rotated the real camera `65.3°`, loaded all three v10 desktop hero assets, passed all `26` metre-space layouts and desktop/mobile flow, and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / the display cabinet read as a glass box over a painted base] Hero asset v10 adds real lower door rails/stiles, inset reveals, handle backplates, shelf lips, raked glass posts, mullion caps and tray rims. The mobile fallback receives the same face-frame and brass mullion grammar while retaining a single merged opaque batch.
+- [fixed / the record desk looked finished only from the opening camera] The desk now has side and rear aprons, a low stretcher and visible joinery pins, all inside the existing render/physics footprint. The back and side remain structurally credible at `90°` and `180°` rather than exposing four disconnected legs.
+- [improved / sofa upholstery remained broad rounded slabs] The lounge suite adds cushion side boxing, contrasting welt/seam lines, a restrained brass front reveal and clearer timber rails. These are authored geometry rather than screen-facing decoration and remain attached through orbit.
+- [improved / bookcase shelves repeated as an undifferentiated grid] A crown, toe kick, shelf-front lips, varied book depth and alternating bookends introduce readable cabinet construction and curated pauses without moving its collider.
+- [checked / higher construction density stays inside Web budgets] The rebuilt three-asset suite totals `56,176` authored triangles. Scene peaks remain below `180` draw calls / `450k` desktop triangles and `110` / `250k` mobile.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, weights, truncation and action labels remain readable at desktop and portrait sizes; the asset rebuild does not alter the UI layer.
+- [improved][spacing and layout rhythm] Furniture footprints and interaction anchors are unchanged, preserving the `≥1.4m` loop and open hearing centre while adding detail to foreground, middle-ground lounge and background storage.
+- [improved][colors and visual tokens] Oak, walnut, teal textile, paper, ceramic, glass and brass now break at meaningful construction seams instead of occupying large undifferentiated blocks.
+- [improved][image quality and asset fidelity] The four high-pixel furniture families use authored GLB or real Three.js geometry with bevels, thickness, joinery, glass, PBR surface response and physical depth. No sprite, CSS substitute, fake SVG or camera-facing cover is used.
+- [checked][copy and content] Location, story-memory title, current target, evidence-board title and four listening actions remain coherent with the civic scene.
+- [P1][furniture form and surface density remain below the offline source] The source still has finer curved wood profiles, softer upholstery compression, richer glass refraction, denser shelf contents and per-object texture variation.
+- [P1][character finish remains below the source] Existing volumetric face, layered hair and authored garments remain functional, but facial topology, expression weighting, strand breakup and sewn-detail resolution are visibly simpler.
+- [P1][offline rendering remains ahead] v108 light transport remains coherent, while the source has deeper multi-bounce colour, softer contact penumbrae and more localized exposure variation.
+
+### Gate result
+
+v109 removes several conspicuous “programmatic block furniture” cues while keeping visual meshes, physical footprints, interaction anchors, orbit behaviour and mobile budgets aligned. The same-size comparison is closer in cabinet joinery, desk structure, upholstery separation and storage detail, but the selected offline frame remains ahead in furniture sculpting, character finish and renderer-level light transport.
+
+final result: blocked
+
+Blocker: source-level furniture sculpting and per-object material variation, production character topology/acting, and offline-quality indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v108 indirect-light and material-separation gate
 
 ### Evidence inspected together

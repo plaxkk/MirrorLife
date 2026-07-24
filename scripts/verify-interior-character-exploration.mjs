@@ -70,6 +70,8 @@ try {
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v2", "civic room did not expose the authored indirect-light contract");
+  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v10", "civic room did not expose the authored furniture-detail contract");
+  assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");
   assert(Number(opening.lighting?.ceilingBounce || 0) >= 0.28, "civic ceiling bounce did not lift the room volume");
   assert(Number(opening.lighting?.backWallBounce || 0) >= 0.16, "civic rear-wall bounce did not separate the cast");
   assert(Number(opening.lighting?.environment || 0) >= 0.29, "civic environment response did not preserve material separation");
