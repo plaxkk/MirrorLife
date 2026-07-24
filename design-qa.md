@@ -1,5 +1,42 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v88 inertial-character and wider-story-camera gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v88-final-desktop-reference-viewport.png` (`1672 × 941`, `161 / 288,220`, `48°`, `5.6m` opening orbit).
+- Mandatory literal same-canvas comparison: `tmp/reference-vs-v88-final.png`; the unmodified `1672 × 941` source and the unmodified `1672 × 941` runtime frame sit side by side in one `3344 × 941` comparison image.
+- Full-orbit evidence: `tmp/v88-final-desktop-yaw90.png` (`165 / 314,220`, actor avoidance `0.448m`) and `tmp/v88-final-desktop-yaw180.png` (`165 / 316,556`, actor avoidance `1.6m`, radial clearance `1.55m`).
+- Mobile evidence: `tmp/v88-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, `98 / 245,044`, three-character LOD).
+- Physical exploration evidence: `tmp/v88-final-character-walk.png`; the browser regression walked `5.37m`, produced independently measured accessory motion, preserved a settling impulse after key release and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene-flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / accessories moved as rigid sine-driven attachments] Backpack, satchel, ponytail and skirt now use deterministic damped springs driven by gait, world velocity, forward/lateral acceleration and turn rate. Each piece has an authored stiffness, damping, angular envelope and vertical lift envelope; braking produces a visible opposite impulse instead of snapping straight back to rest.
+- [fixed / secondary motion was not regression-tested] Runtime diagnostics expose the `mirrorlife-civic-secondary-motion-v2` contract, per-piece rotation/lift and angular velocity. The physical exploration test now requires readable motion across a full walk cycle and residual settling energy after key release.
+- [improved / reference-resolution opening was too intimate] The desktop civic story camera moves from `46° / 4.8m / 2.78m` to `48° / 5.6m / 3.18m`. The player now occupies roughly one third of frame height, the complete listening ring remains visible and the entrance, evidence wall and lounge share the opening without turning the backpack into a foreground wall.
+- [checked / wider opening did not weaken orbit protection] Side and reverse arcs retain responsive FOV, tangent actor avoidance and radial pullback. All four actors remain visible at `0°`, `90°` and `180°`; the room remains inside `180` calls / `450k` triangles and portrait mobile remains inside `110` calls / `250k` triangles.
+
+### Required fidelity surfaces and findings
+
+- [improved][embodied character response] Garments and carried props now lag acceleration, swing through turns and settle after stopping. This adds a layer of weight and material response without changing the authoritative capsule, metre scale, foot contact or animation clips.
+- [improved][first-read composition] At the exact source viewport, player scale and scene coverage are materially closer to the reference. The social circle has readable negative space and the public-room function is visible without relying on the title chip.
+- [checked][3D exploration continuity] The same real character asset moves `5.37m`, changes idle/walk states, drives continuous skin, retains accessory inertia and rotates the perspective camera `65.3°`; there is no sprite, camera-facing replacement or pre-rendered-room swap.
+- [checked][responsive performance] Opening, side and reverse desktop views remain `161–165 / 288,220–316,556`; portrait mobile remains `98 / 245,044`.
+- [P1][character production quality remains visibly below the source] The exact same-canvas comparison still exposes blockier cranial/cheek topology, simplified hands and footwear, coarser cloth construction and weaker painted-material identity. Motion is more believable, but the meshes and deformation quality are not yet source-level.
+- [P1][room asset construction remains visibly below the source] The implementation has the same functional families and composition, but the source still carries subtler joinery, curved furniture profiles, denser paper/foliage storytelling, more convincing glass and less procedural edge language.
+- [P1][lighting transport remains visibly below the source] Portal direction, actor fill and contact shadows are coherent, yet the source retains softer multi-bounce penumbrae, richer colour bleed and more unified skin/cloth/floor integration.
+
+### Gate result
+
+v88 makes character movement materially less rigid and corrects the opening camera at the literal reference viewport while preserving real movement, 360° orbit, physics truth, mobile controls, atomic loading and performance budgets. The required same-canvas review is closer in scale and staging but still not literal production parity in character topology/deformation, complete-room bespoke assets or indirect-light transport.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v87 crafted-glass and upholstery gate
 
 ### Evidence inspected together

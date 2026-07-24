@@ -95,6 +95,15 @@ try {
   assert.equal(beforeMove.animation?.state, "idle", "player did not settle into the authored idle clip");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");
+  assert.equal(
+    beforeMove.secondaryMotionVersion,
+    "mirrorlife-civic-secondary-motion-v2",
+    "player did not expose the inertial garment motion contract"
+  );
+  assert(
+    Object.keys(beforeMove.secondaryMotion || {}).length >= 1,
+    "player asset did not retain an independently moving garment or accessory"
+  );
 
   await page.click('[data-civic-action="suggest"]');
   await page.waitForFunction(() => {
@@ -136,6 +145,7 @@ try {
   }, { polling: 40, timeout: 2000 });
   let stridePeak = 0;
   let skinStridePeak = 0;
+  let secondaryMotionPeak = 0;
   let walkSamples = 0;
   let screenshotCaptured = false;
   // Cover at least one complete 0.72s walk cycle so the check cannot land
@@ -150,6 +160,13 @@ try {
     const skinStride = Math.abs(Number(inMotionPlayer.skin?.leftLegX) - Number(inMotionPlayer.skin?.rightLegX));
     stridePeak = Math.max(stridePeak, stride);
     skinStridePeak = Math.max(skinStridePeak, skinStride);
+    Object.values(inMotionPlayer.secondaryMotion || {}).forEach((motion) => {
+      secondaryMotionPeak = Math.max(
+        secondaryMotionPeak,
+        Math.abs(Number(motion.x || 0)),
+        Math.abs(Number(motion.z || 0))
+      );
+    });
     if (WALK_SCREENSHOT && !screenshotCaptured && stride > 0.22) {
       const screenshotPath = path.resolve(WALK_SCREENSHOT);
       await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
@@ -161,6 +178,10 @@ try {
   assert(stridePeak > 0.22, `walk clip did not produce a readable alternating stride (${stridePeak.toFixed(3)}rad)`);
   assert(skinStridePeak > 0.22, `walk clip did not drive the continuous leg skin (${skinStridePeak.toFixed(3)}rad)`);
   assert(Math.abs(stridePeak - skinStridePeak) < 0.035, `controller and skin stride diverged (${stridePeak.toFixed(3)} vs ${skinStridePeak.toFixed(3)}rad)`);
+  assert(
+    secondaryMotionPeak > 0.008,
+    `walking did not produce readable inertial garment motion (${secondaryMotionPeak.toFixed(4)}rad)`
+  );
   if (WALK_SCREENSHOT && !screenshotCaptured) {
     const screenshotPath = path.resolve(WALK_SCREENSHOT);
     await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
@@ -168,6 +189,23 @@ try {
   }
   await new Promise((resolve) => setTimeout(resolve, 710));
   await page.keyboard.up("w");
+  await new Promise((resolve) => setTimeout(resolve, 80));
+  const stoppingStats = await readStats(page);
+  const stoppingPlayer = playerFrom(stoppingStats);
+  const stoppingSecondaryEnergy = Object.values(stoppingPlayer?.secondaryMotion || {}).reduce(
+    (peak, motion) => Math.max(
+      peak,
+      Math.abs(Number(motion.x || 0)),
+      Math.abs(Number(motion.z || 0)),
+      Math.abs(Number(motion.velocityX || 0)) * 0.05,
+      Math.abs(Number(motion.velocityZ || 0)) * 0.05
+    ),
+    0
+  );
+  assert(
+    stoppingSecondaryEnergy > 0.003,
+    `garments snapped rigid on stop instead of preserving a settling impulse (${stoppingSecondaryEnergy.toFixed(4)})`
+  );
   // The authored blend is short, but a full civic frame can be delayed while
   // headless Chrome compiles the skin-wrap shader and updates four GLBs. Wait
   // on the observable animation contract instead of sampling one arbitrary

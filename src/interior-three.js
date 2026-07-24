@@ -7115,6 +7115,178 @@ function civicMotionSeed(actorId = "") {
   return [...String(actorId)].reduce((sum, character, index) => sum + character.charCodeAt(0) * (index + 3), 0) % 997;
 }
 
+const CIVIC_SECONDARY_MOTION_VERSION = "mirrorlife-civic-secondary-motion-v2";
+const CIVIC_SECONDARY_MOTION_PRESETS = Object.freeze({
+  backpack: Object.freeze({
+    stiffness: 58,
+    damping: 11.8,
+    liftStiffness: 72,
+    liftDamping: 14.5,
+    maxX: 0.11,
+    maxZ: 0.13,
+    maxLift: 0.018
+  }),
+  satchel: Object.freeze({
+    stiffness: 44,
+    damping: 9.6,
+    liftStiffness: 62,
+    liftDamping: 12.5,
+    maxX: 0.18,
+    maxZ: 0.24,
+    maxLift: 0.022
+  }),
+  ponytail: Object.freeze({
+    stiffness: 36,
+    damping: 8.2,
+    liftStiffness: 54,
+    liftDamping: 10.8,
+    maxX: 0.26,
+    maxZ: 0.32,
+    maxLift: 0.014
+  }),
+  skirt: Object.freeze({
+    stiffness: 50,
+    damping: 10.8,
+    liftStiffness: 68,
+    liftDamping: 13.4,
+    maxX: 0.13,
+    maxZ: 0.16,
+    maxLift: 0.012
+  })
+});
+
+function createCivicSecondaryMotionState(kind, node) {
+  const preset = CIVIC_SECONDARY_MOTION_PRESETS[kind] || CIVIC_SECONDARY_MOTION_PRESETS.backpack;
+  return {
+    node,
+    basePosition: node.position.clone(),
+    baseRotation: node.rotation.clone(),
+    angleX: 0,
+    angleZ: 0,
+    angularVelocityX: 0,
+    angularVelocityZ: 0,
+    lift: 0,
+    liftVelocity: 0,
+    targetX: 0,
+    targetZ: 0,
+    targetLift: 0,
+    ...preset
+  };
+}
+
+function stepCivicSecondarySpring(value, velocity, target, stiffness, damping, deltaSeconds) {
+  const dt = THREE.MathUtils.clamp(Number(deltaSeconds) || 0, 1 / 240, 1 / 20);
+  const nextVelocity = (velocity + (target - value) * stiffness * dt) * Math.exp(-damping * dt);
+  return {
+    value: value + nextVelocity * dt,
+    velocity: nextVelocity
+  };
+}
+
+function updateCivicSecondaryMotion(entry, {
+  now,
+  walking,
+  running,
+  phase,
+  socialBreath,
+  velocityX,
+  velocityZ
+}) {
+  const pieces = entry.secondaryMotion;
+  if (!pieces || Object.keys(pieces).length === 0) return;
+  const previousAt = Number(entry.secondaryMotionUpdatedAt || now - 1000 / 60);
+  const deltaSeconds = THREE.MathUtils.clamp((now - previousAt) / 1000, 1 / 240, 1 / 20);
+  const previousVelocityX = Number(entry.secondaryVelocityX || 0);
+  const previousVelocityZ = Number(entry.secondaryVelocityZ || 0);
+  const accelerationX = THREE.MathUtils.clamp((velocityX - previousVelocityX) / deltaSeconds, -16, 16);
+  const accelerationZ = THREE.MathUtils.clamp((velocityZ - previousVelocityZ) / deltaSeconds, -16, 16);
+  const facingYaw = Number(entry.facingYaw || 0);
+  const previousYaw = Number(entry.secondaryFacingYaw ?? facingYaw);
+  const yawDelta = Math.atan2(Math.sin(facingYaw - previousYaw), Math.cos(facingYaw - previousYaw));
+  const yawRate = THREE.MathUtils.clamp(yawDelta / deltaSeconds, -7.5, 7.5);
+  const forwardX = Math.sin(facingYaw);
+  const forwardZ = Math.cos(facingYaw);
+  const rightX = Math.cos(facingYaw);
+  const rightZ = -Math.sin(facingYaw);
+  const forwardAcceleration = accelerationX * forwardX + accelerationZ * forwardZ;
+  const lateralAcceleration = accelerationX * rightX + accelerationZ * rightZ;
+  const gait = walking ? Math.sin(phase) : 0;
+  const gaitLift = walking ? Math.abs(Math.cos(phase)) : 0;
+  const runScale = running ? 1.42 : 1;
+  const idle = walking ? 0 : socialBreath;
+
+  const targets = {
+    backpack: {
+      x: idle * 0.0035 + (-0.019 - gaitLift * 0.014) * (walking ? runScale : 0) - forwardAcceleration * 0.004,
+      z: gait * 0.019 * runScale - lateralAcceleration * 0.0055 - yawRate * 0.004,
+      lift: gaitLift * 0.008 * runScale + Math.max(0, -forwardAcceleration) * 0.0005
+    },
+    satchel: {
+      x: idle * 0.008 + gait * 0.028 * runScale - forwardAcceleration * 0.0075,
+      z: idle * 0.012 + gait * 0.048 * runScale - lateralAcceleration * 0.011 - yawRate * 0.008,
+      lift: gaitLift * 0.009 * runScale + Math.abs(lateralAcceleration) * 0.00045
+    },
+    ponytail: {
+      x: idle * 0.02 - gait * 0.075 * runScale - forwardAcceleration * 0.011,
+      z: idle * 0.026 + gait * 0.1 * runScale - lateralAcceleration * 0.017 - yawRate * 0.012,
+      lift: gaitLift * 0.005 * runScale + Math.max(0, -forwardAcceleration) * 0.0004
+    },
+    skirt: {
+      x: idle * 0.007 - gait * 0.038 * runScale - forwardAcceleration * 0.0035,
+      z: idle * 0.01 - gait * 0.05 * runScale - lateralAcceleration * 0.006 - yawRate * 0.0045,
+      lift: gaitLift * 0.0035 * runScale
+    }
+  };
+
+  Object.entries(pieces).forEach(([kind, motion]) => {
+    const target = targets[kind] || targets.backpack;
+    motion.targetX = THREE.MathUtils.clamp(target.x, -motion.maxX, motion.maxX);
+    motion.targetZ = THREE.MathUtils.clamp(target.z, -motion.maxZ, motion.maxZ);
+    motion.targetLift = THREE.MathUtils.clamp(target.lift, 0, motion.maxLift);
+    const springX = stepCivicSecondarySpring(
+      motion.angleX,
+      motion.angularVelocityX,
+      motion.targetX,
+      motion.stiffness,
+      motion.damping,
+      deltaSeconds
+    );
+    const springZ = stepCivicSecondarySpring(
+      motion.angleZ,
+      motion.angularVelocityZ,
+      motion.targetZ,
+      motion.stiffness,
+      motion.damping,
+      deltaSeconds
+    );
+    const springLift = stepCivicSecondarySpring(
+      motion.lift,
+      motion.liftVelocity,
+      motion.targetLift,
+      motion.liftStiffness,
+      motion.liftDamping,
+      deltaSeconds
+    );
+    motion.angleX = THREE.MathUtils.clamp(springX.value, -motion.maxX, motion.maxX);
+    motion.angleZ = THREE.MathUtils.clamp(springZ.value, -motion.maxZ, motion.maxZ);
+    motion.angularVelocityX = springX.velocity;
+    motion.angularVelocityZ = springZ.velocity;
+    motion.lift = THREE.MathUtils.clamp(springLift.value, 0, motion.maxLift);
+    motion.liftVelocity = springLift.velocity;
+    motion.node.position.copy(motion.basePosition);
+    motion.node.rotation.copy(motion.baseRotation);
+    motion.node.position.y += motion.lift;
+    motion.node.rotation.x += motion.angleX;
+    motion.node.rotation.z += motion.angleZ;
+  });
+
+  entry.secondaryMotionUpdatedAt = now;
+  entry.secondaryVelocityX = velocityX;
+  entry.secondaryVelocityZ = velocityZ;
+  entry.secondaryFacingYaw = facingYaw;
+  entry.secondaryMotionVersion = CIVIC_SECONDARY_MOTION_VERSION;
+}
+
 function updateCivicAnimation(entry, actor, now, walking, running) {
   if (!entry.assetRole) return null;
   const nextState = resolveCivicAnimationState(actor, {
@@ -7509,19 +7681,11 @@ function createCivicActorObject(actor, asset) {
       ["ponytail", ponytailPivot]
     ].forEach(([key, node]) => {
       if (!node?.parent) return;
-      secondaryMotion[key] = {
-        node,
-        basePosition: node.position.clone(),
-        baseRotation: node.rotation.clone()
-      };
+      secondaryMotion[key] = createCivicSecondaryMotionState(key, node);
     });
   }
   if (skirtPivot?.parent) {
-    secondaryMotion.skirt = {
-      node: skirtPivot,
-      basePosition: skirtPivot.position.clone(),
-      baseRotation: skirtPivot.rotation.clone()
-    };
+    secondaryMotion.skirt = createCivicSecondaryMotionState("skirt", skirtPivot);
   }
   actorRoot.add(group);
   const entry = {
@@ -7554,13 +7718,18 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v10`,
+    styleKey: `${frame}:${role}:civic-glb-v11`,
     identity: style.identity,
     assetRole: role,
     animation: null,
     lastX: Number(actor.worldX || 0),
     lastZ: Number(actor.worldZ || 0),
-    facingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0))
+    facingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0)),
+    secondaryMotionUpdatedAt: performance.now(),
+    secondaryVelocityX: 0,
+    secondaryVelocityZ: 0,
+    secondaryFacingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0)),
+    secondaryMotionVersion: CIVIC_SECONDARY_MOTION_VERSION
   };
   actorObjects.set(actor.id, entry);
   return entry;
@@ -7570,7 +7739,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v10` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v11` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -7617,8 +7786,13 @@ function updateActors(actors = [], now = performance.now()) {
     const x = Number(actor.worldX || 0);
     const z = Number(actor.worldZ || 0);
     const y = Number(actor.worldY || 0);
-    const dx = Number(actor.velocity?.x ?? x - entry.lastX);
-    const dz = Number(actor.velocity?.z ?? z - entry.lastZ);
+    const frameDeltaSeconds = THREE.MathUtils.clamp(
+      (now - Number(entry.secondaryMotionUpdatedAt || now - 1000 / 60)) / 1000,
+      1 / 240,
+      1 / 20
+    );
+    const dx = Number(actor.velocity?.x ?? (x - entry.lastX) / frameDeltaSeconds);
+    const dz = Number(actor.velocity?.z ?? (z - entry.lastZ) / frameDeltaSeconds);
     if (Math.hypot(dx, dz) > 0.015) entry.facingYaw = Math.atan2(dx, dz);
     entry.lastX = x;
     entry.lastZ = z;
@@ -7929,42 +8103,15 @@ function updateActors(actors = [], now = performance.now()) {
         entry.visual.rotation.z = -0.01 + idleShift * 0.4;
       }
     }
-    if (entry.secondaryMotion) {
-      const travelSway = walking ? Math.sin(phase) : socialBreath * 0.22;
-      const travelLift = walking ? Math.abs(Math.cos(phase)) : (socialBreath + 1) * 0.18;
-      const backpack = entry.secondaryMotion.backpack;
-      if (backpack) {
-        backpack.node.position.copy(backpack.basePosition);
-        backpack.node.rotation.copy(backpack.baseRotation);
-        backpack.node.position.y += travelLift * (running ? 0.016 : 0.009);
-        backpack.node.rotation.x += walking ? -0.022 - travelLift * 0.018 : socialBreath * 0.004;
-        backpack.node.rotation.z += travelSway * (running ? 0.04 : 0.024);
-      }
-      const satchel = entry.secondaryMotion.satchel;
-      if (satchel) {
-        satchel.node.position.copy(satchel.basePosition);
-        satchel.node.rotation.copy(satchel.baseRotation);
-        satchel.node.position.y += travelLift * 0.008;
-        satchel.node.rotation.x += travelSway * (running ? 0.055 : 0.032);
-        satchel.node.rotation.z += travelSway * (running ? 0.08 : 0.045);
-      }
-      const ponytail = entry.secondaryMotion.ponytail;
-      if (ponytail) {
-        ponytail.node.position.copy(ponytail.basePosition);
-        ponytail.node.rotation.copy(ponytail.baseRotation);
-        ponytail.node.rotation.x += walking ? -travelSway * (running ? 0.13 : 0.08) : socialBreath * 0.018;
-        ponytail.node.rotation.z += walking ? travelSway * (running ? 0.16 : 0.1) : socialBreath * 0.025;
-      }
-      const skirt = entry.secondaryMotion.skirt;
-      if (skirt) {
-        skirt.node.position.copy(skirt.basePosition);
-        skirt.node.rotation.copy(skirt.baseRotation);
-        // The hem trails the pelvis instead of moving as a rigid cone. Keep
-        // the amplitude restrained so feet and collision still read planted.
-        skirt.node.rotation.x += walking ? -travelSway * (running ? 0.07 : 0.045) : socialBreath * 0.007;
-        skirt.node.rotation.z += walking ? -travelSway * (running ? 0.085 : 0.052) : socialBreath * 0.01;
-      }
-    }
+    updateCivicSecondaryMotion(entry, {
+      now,
+      walking,
+      running,
+      phase,
+      socialBreath,
+      velocityX: dx,
+      velocityZ: dz
+    });
     entry.shadow.material.opacity = actor.grounded === false
       ? (cameraZoneId === "public-plaza" ? 0.05 : 0.16)
       : (cameraZoneId === "public-plaza" ? 0.22 : 0.28);
@@ -8092,11 +8239,11 @@ function updateCamera(payload = {}) {
     ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
     : 0;
   const targetFov = cinematicCivic
-    // Match the reference's more intimate editorial lens in the opening
-    // conversation, then widen only while orbiting into the witness corridor.
-    // The 46° hero lens makes faces and hand acting readable without changing
-    // world scale; the reverse arc still reaches 52° for spatial clarity.
-    ? (portrait ? 60 : 46 + civicRearArc * 6 + civicSideArc * 4)
+    // Keep the complete listening circle, entrance and hero props in the same
+    // authored frame. The previous 46° opening made the controlled character
+    // eclipse the mediator at reference resolution; 48° preserves facial
+    // readability while matching the wider editorial composition.
+    ? (portrait ? 60 : 48 + civicRearArc * 6 + civicSideArc * 4)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -8156,14 +8303,14 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    // The reference's cast occupies roughly two thirds of the story frame;
-    // the former 5.55 m opening made the citizens read as miniature props.
-    // Start at an intimate 4.8 m, then ease back through side/rear arcs so a
-    // full drag orbit retains the existing obstruction-safe composition.
-    ? (portrait ? 5.2 : 4.8 + civicRearArc * 0.75 + civicSideArc * 0.35)
+    // At the reference viewport the hero should occupy about one third of the
+    // frame height, leaving visible floor language around the social circle.
+    // This distance still supports readable faces while preventing the player
+    // and backpack from becoming a foreground wall.
+    ? (portrait ? 5.2 : 5.6 + civicRearArc * 0.72 + civicSideArc * 0.34)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 2.78 + civicRearArc * 0.48 + civicSideArc * 0.4) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.18 + civicRearArc * 0.46 + civicSideArc * 0.38) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
@@ -8352,7 +8499,12 @@ function updateCameraOcclusion(payload = {}) {
       cameraForegroundObjects.delete(object);
       return;
     }
-    object.getWorldPosition(foregroundPosition);
+    if (object.geometry) {
+      if (!object.geometry.boundingSphere) object.geometry.computeBoundingSphere();
+      foregroundPosition.copy(object.geometry.boundingSphere?.center || object.position).applyMatrix4(object.matrixWorld);
+    } else {
+      object.getWorldPosition(foregroundPosition);
+    }
     if (foregroundPosition.distanceTo(camera.position) > 3.15) return;
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     materials.forEach((material, materialIndex) => {
@@ -8633,11 +8785,15 @@ function getStats() {
           0
         ) / entry.eyePivots.length).toFixed(4))
       } : null,
+      secondaryMotionVersion: entry.secondaryMotionVersion || null,
       secondaryMotion: Object.fromEntries(Object.entries(entry.secondaryMotion || {}).map(([key, motion]) => ([
         key,
         {
           x: Number((motion.node.rotation.x - motion.baseRotation.x).toFixed(4)),
-          z: Number((motion.node.rotation.z - motion.baseRotation.z).toFixed(4))
+          z: Number((motion.node.rotation.z - motion.baseRotation.z).toFixed(4)),
+          lift: Number((motion.node.position.y - motion.basePosition.y).toFixed(4)),
+          velocityX: Number((motion.angularVelocityX || 0).toFixed(4)),
+          velocityZ: Number((motion.angularVelocityZ || 0).toFixed(4))
         }
       ])))
     })),
