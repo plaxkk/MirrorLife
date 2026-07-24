@@ -12,6 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v48";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
@@ -1001,7 +1002,7 @@ function loadCivicActorAsset(role) {
   if (civicActorAssets.has(role)) return Promise.resolve(civicActorAssets.get(role));
   if (civicActorLoading.has(role)) return civicActorLoading.get(role);
   const promise = new Promise((resolve) => {
-    const assetUrl = `${CIVIC_CHARACTER_ASSET_BASE}${role}.glb${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
+    const assetUrl = `${CIVIC_CHARACTER_ASSET_BASE}${role}.glb?v=${encodeURIComponent(CIVIC_CHARACTER_ASSET_REVISION)}`;
     loader.load(
       assetUrl,
       (gltf) => {
@@ -3498,16 +3499,23 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     });
   }
 
+  // Keep the low witness bench as an independent foreground assembly. At the
+  // 180° orbit the camera sits directly behind it; merging it into the wall
+  // batch made the backrest an opaque lower-third mask that could not fade
+  // without also dissolving the evidence board and plants.
+  const benchGroup = new THREE.Group();
+  benchGroup.name = "civic-reverse-witness-bench";
+  group.add(benchGroup);
   const benchBase = new THREE.Mesh(new RoundedBoxGeometry(2.46, 0.36, 0.7, 3, 0.14), oak);
   benchBase.position.set(0, 0.28, 0.54);
-  group.add(benchBase);
+  benchGroup.add(benchBase);
   const benchSeat = new THREE.Mesh(new RoundedBoxGeometry(2.34, 0.22, 0.72, 3, 0.14), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
   benchSeat.position.set(0, 0.58, 0.56);
-  group.add(benchSeat);
+  benchGroup.add(benchSeat);
   const benchBack = new THREE.Mesh(new RoundedBoxGeometry(2.28, 0.72, 0.22, 3, 0.13), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
   benchBack.position.set(0, 0.91, 0.29);
   benchBack.rotation.x = -0.08;
-  group.add(benchBack);
+  benchGroup.add(benchBack);
   [-0.62, 0.62].forEach((x, index) => {
     const cushion = new THREE.Mesh(
       new RoundedBoxGeometry(0.46, 0.38, 0.18, 3, 0.11),
@@ -3515,7 +3523,7 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     );
     cushion.position.set(x, 0.92, 0.54);
     cushion.rotation.z = index ? -0.07 : 0.07;
-    group.add(cushion);
+    benchGroup.add(cushion);
   });
 
   [-2.05, 2.05].forEach((x, plantIndex) => {
@@ -3552,7 +3560,19 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => sourceMaterials.add(material));
   });
-  mergeActorVertexColorMeshes(group, [pendantShade], {
+  mergeActorVertexColorMeshes(benchGroup, [], {
+    roughness: 0.82,
+    envMapIntensity: 0.58,
+    actorShading: false
+  });
+  benchGroup.children.forEach((object) => {
+    if (!object.isMesh) return;
+    object.userData.cameraForegroundFade = true;
+    object.userData.cameraForegroundOpacity = 0.14;
+    object.userData.cameraForegroundNearDistance = 3.6;
+    cameraForegroundObjects.add(object);
+  });
+  mergeActorVertexColorMeshes(group, [pendantShade, benchGroup], {
     roughness: 0.76,
     envMapIntensity: 0.66,
     actorShading: false
@@ -5619,6 +5639,13 @@ function rebuildModels(items) {
   dynamicModelObjects.clear();
 
   const stagedModels = new THREE.Group();
+  // Keep large civic hero furniture in independent material batches on
+  // desktop. These assemblies occupy the near orbit hemisphere, so flattening
+  // them into the room-wide model batch made selective camera fading
+  // impossible: either the complete furniture layer vanished or a counter
+  // stayed as an opaque foreground wall. Dedicated merged stages cost only
+  // their material families and preserve authored per-assembly occlusion.
+  const foregroundStages = [];
 
   renderItems.forEach((item) => {
     const source = item.mobileProxy ? null : cache.get(item.model);
@@ -5665,11 +5692,30 @@ function rebuildModels(items) {
       contactShadow.position.set(item.worldX || 0, 0.027, item.worldZ || 0);
       model.position.set(item.worldX || 0, item.worldY || 0.03, item.worldZ || 0);
       model.rotation.y = Number(item.rotationY ?? faceCenter + profile.rotationY);
-      stagedModels.add(contactShadow, model);
+      const isCameraForegroundHero = ["civic-lounge-suite", "civic-notice-console"].includes(item.model);
+      if (!item.mobileProxy && isCameraForegroundHero && lastWidth > 720) {
+        const foregroundStage = new THREE.Group();
+        foregroundStage.name = `foreground-${item.key}`;
+        foregroundStage.add(contactShadow, model);
+        foregroundStages.push(foregroundStage);
+      } else {
+        stagedModels.add(contactShadow, model);
+      }
     }
   });
   const mergedModels = mergePlacedModelMeshes(stagedModels);
   if (mergedModels.children.length) modelRoot.add(...mergedModels.children);
+  foregroundStages.forEach((stage) => {
+    const foreground = mergePlacedModelMeshes(stage);
+    foreground.name = `${stage.name}-merged`;
+    foreground.children.forEach((object) => {
+      object.userData.cameraForegroundFade = true;
+      object.userData.cameraForegroundOpacity = 0.14;
+      object.userData.cameraForegroundNearDistance = 3.6;
+      cameraForegroundObjects.add(object);
+    });
+    if (foreground.children.length) modelRoot.add(foreground);
+  });
   return true;
 }
 
@@ -7750,7 +7796,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v12`,
+    styleKey: `${frame}:${role}:civic-glb-v13`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7771,7 +7817,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v12` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v13` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8531,17 +8577,34 @@ function updateCameraOcclusion(payload = {}) {
       cameraForegroundObjects.delete(object);
       return;
     }
+    let foregroundRadius = 0;
     if (object.geometry) {
       if (!object.geometry.boundingSphere) object.geometry.computeBoundingSphere();
       foregroundPosition.copy(object.geometry.boundingSphere?.center || object.position).applyMatrix4(object.matrixWorld);
+      foregroundRadius = Number(object.geometry.boundingSphere?.radius || 0)
+        * object.matrixWorld.getMaxScaleOnAxis();
     } else {
       object.getWorldPosition(foregroundPosition);
     }
-    if (foregroundPosition.distanceTo(camera.position) > 3.15) return;
+    // Large couches and counters can touch the near plane while their origin
+    // remains several metres away. Measure camera clearance to the visible
+    // bounding surface rather than to the object's centre; otherwise the
+    // exact furniture most likely to become a foreground wall never fades.
+    const surfaceDistance = Math.max(
+      0,
+      foregroundPosition.distanceTo(camera.position) - foregroundRadius
+    );
+    const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
+    if (surfaceDistance > nearDistance) return;
+    const targetOpacity = THREE.MathUtils.clamp(
+      Number(object.userData?.cameraForegroundOpacity ?? 0.06),
+      0.04,
+      0.24
+    );
     const materials = Array.isArray(object.material) ? object.material : [object.material];
     materials.forEach((material, materialIndex) => {
       if (!material) return;
-      setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), 0.06);
+      setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), targetOpacity);
     });
   });
   // Test both the torso and face lines of sight.  The original pair of rays

@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v91 proportion and full-orbit foreground gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v91-proportions-yaw0.png` (`1672 × 941`, `167 / 287,628`, `48°`, `5.6m` opening orbit).
+- Mandatory literal same-canvas comparison: `tmp/reference-vs-v91.png`; the unmodified source and final runtime frame sit side by side in one `3344 × 941` comparison image.
+- Full-orbit evidence: `tmp/v91-yaw90.png` (`170 / 298,736`, actor avoidance `0.448m`) and `tmp/v91-yaw180.png` (`171 / 301,072`, actor avoidance `1.6m`, radial clearance `1.55m`).
+- Mobile evidence: `tmp/v91-mobile.png` (`390 × 844`, device scale factor `1`, `100 / 244,788`, three-character LOD).
+- Physical exploration evidence: the browser regression walked `1.41m`, changed authored movement states and rotated the real camera `65.3°`.
+- Runtime evidence: all `26` interiors completed `78` atomic transitions with no stale room, black block, duplicate scene, retained physics world or runtime exception. Desktop/mobile scene flow, metre-space physics, both civic asset suites, repository checks and production build passed.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / cast still read as oversized toy heads] Sculpt v48 reduces all four head volumes by roughly `4–5%`, raises the head pivots to preserve the neck transition and keeps the `1.72m` metre-space contract unchanged. The same-canvas frame has a calmer head-to-shoulder relationship without weakening eye direction at gameplay distance.
+- [improved / female silhouettes flared like broad toy cones] Facilitator and mediator skirts use narrower waists, hems and depth. The garment remains a real articulated skirt surface with secondary motion, but its standing silhouette is closer to the fitted dresses in the source.
+- [fixed / large hero furniture could only fade as part of the complete room batch] Lounge and notice assemblies now keep independent desktop material batches. Camera proximity is measured against their visible bounding surface rather than a distant object origin, so a near counter can be selectively faded without dissolving unrelated furniture, evidence or walls.
+- [fixed / reverse witness bench could become an inseparable lower-third mask] The bench is now its own foreground assembly while the evidence board, pendant and plants remain in the architectural batch. The `180°` frame keeps the four-person circle readable and stays below the desktop budget.
+- [checked / asset budget remained strict] The mediator sash knot drops imperceptible sub-five-centimetre curvature instead of relaxing the file-size gate. All four GLBs remain below `2 MiB`, total `7.65 MB`, and retain the same rig, face, hand, footwear and animation contracts.
+
+### Required fidelity surfaces and findings
+
+- [improved][character proportion] Player, listener, facilitator and mediator now have less top-heavy silhouettes; the tighter skirts expose leg stance and foot contact more clearly in opening, side and reverse views.
+- [improved][full-orbit composition] Foreground furniture can be hidden independently when it actually crosses the camera near field. The actor circle and current objective remain readable through `0°`, `90°` and `180°` without a room-wide transparency artifact.
+- [checked][responsive performance] Opening, side and reverse desktop frames remain `167–171 / 287,628–301,072`; portrait mobile remains `100 / 244,788`, below `110` calls / `250k` triangles.
+- [checked][physical continuity] The same GLB player walks `1.41m`, turns the perspective camera `65.3°`, retains grounded contact and shares the authoritative render/physics/interaction transforms.
+- [P1][character production quality remains visibly below the source] Proportion is closer, but literal comparison still exposes simplified facial topology, fingers, cloth deformation, hair strand construction and material micro-response.
+- [P1][remaining room asset construction remains visibly below the source] The functional families and composition are established, while cabinetry joinery, foliage density, paper dressing and curved furniture profiles still reveal more procedural construction than the reference.
+- [P1][lighting transport remains visibly below the source] Directional portal light, dapple and contact depth are coherent, while the source still has softer multi-bounce penumbrae, localized colour return and stronger skin/cloth/floor integration.
+
+### Gate result
+
+v91 improves the most visible cast proportion and gives near-camera hero furniture a selective full-orbit occlusion contract without changing metre-space physics, interaction anchors or mobile LOD. The literal same-canvas comparison is closer and all runtime gates pass, but source-level character topology, bespoke room construction and indirect-light transport are not yet reached.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v90 material hierarchy and side-wall integrity gate
 
 ### Evidence inspected together

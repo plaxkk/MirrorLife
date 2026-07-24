@@ -96,8 +96,8 @@ BODY_PROFILES = {
         "leg_depth": 1.03,
         "waist_width": 1.02,
         "hand_scale": 0.96,
-        "head_scale": (0.97, 0.93, 0.94),
-        "head_z": 1.495,
+        "head_scale": (0.925, 0.895, 0.905),
+        "head_z": 1.508,
         "shoulder_slope": 0.08,
         "waist_taper": 0.16,
     },
@@ -113,8 +113,8 @@ BODY_PROFILES = {
         "leg_depth": 0.97,
         "waist_width": 0.96,
         "hand_scale": 0.95,
-        "head_scale": (0.96, 0.925, 0.94),
-        "head_z": 1.49,
+        "head_scale": (0.918, 0.89, 0.905),
+        "head_z": 1.503,
         "shoulder_slope": 0.055,
         "waist_taper": 0.19,
     },
@@ -130,8 +130,8 @@ BODY_PROFILES = {
         "leg_depth": 0.93,
         "waist_width": 0.9,
         "hand_scale": 0.94,
-        "head_scale": (0.96, 0.925, 0.94),
-        "head_z": 1.5,
+        "head_scale": (0.918, 0.89, 0.905),
+        "head_z": 1.513,
         "shoulder_slope": 0.035,
         "waist_taper": 0.24,
     },
@@ -147,8 +147,8 @@ BODY_PROFILES = {
         "leg_depth": 0.95,
         "waist_width": 0.93,
         "hand_scale": 0.95,
-        "head_scale": (0.97, 0.93, 0.94),
-        "head_z": 1.49,
+        "head_scale": (0.925, 0.895, 0.905),
+        "head_z": 1.503,
         "shoulder_slope": 0.045,
         "waist_taper": 0.21,
     },
@@ -2266,9 +2266,9 @@ def build_costume(
         # amount of delayed cloth follow-through without deforming the torso.
         # Coordinates below are local to the 0.94 m waist pivot.
         skirt_pivot = empty("SkirtPivot", visual, (0, 0, 0.94))
-        skirt_waist = 0.205 if is_facilitator else 0.215
-        skirt_hem = 0.34 if is_facilitator else 0.31
-        skirt_depth = 0.54 if is_facilitator else 0.49
+        skirt_waist = 0.2 if is_facilitator else 0.208
+        skirt_hem = 0.315 if is_facilitator else 0.295
+        skirt_depth = 0.51 if is_facilitator else 0.47
         pleated_skirt("Skirt", skirt_waist, skirt_hem, skirt_depth, (0, 0, -0.23), mats["lower"], skirt_pivot, pleats=12, segments=48)
         hem_x = skirt_hem * 0.93
         curve_tube(
@@ -2504,8 +2504,11 @@ def build_costume(
                 (0.045, 0.025, 0.04),
                 mats["metal"],
                 visual,
-                segments=16,
-                rings=10,
+                # This is a sub-five-centimetre accent at gameplay distance;
+                # keep its silhouette but avoid spending the final kilobytes
+                # of the Web LOD0 budget on invisible curvature.
+                segments=12,
+                rings=8,
             )
             curve_tube("Necklace", [(-0.11, -0.205, 1.2), (0, -0.225, 1.08), (0.11, -0.205, 1.2)], 0.012, mats["metal"], visual)
             ellipsoid("NecklacePendant", (0, -0.24, 1.07), (0.035, 0.012, 0.05), mats["metal"], visual, segments=14, rings=8)
@@ -2606,9 +2609,9 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v47",
+        "sculptContract": "mirrorlife-civic-sculpt-v48",
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v2",
+            "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
             "continuityParts": ["SkinnedArmVolume", "TrouserSeat"],
