@@ -73,7 +73,7 @@ try {
   assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "civic scene did not use the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v1"), "civic facial identity did not expose the authored morph contract");
   assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic production face unexpectedly fell back to a texture layer");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v12"), "civic actors did not preserve the production volumetric facial contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v13"), "civic actors did not preserve the production volumetric facial contract");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 4), "civic volumetric facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.eyes?.version === "mirrorlife-civic-eye-volume-v1" && actor.eyes?.count === 2), "civic actors did not expose two physically lit volumetric eyes");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v5"), "civic actors did not expose the compact independent-hand contract");

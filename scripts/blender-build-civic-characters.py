@@ -50,11 +50,11 @@ ROLE_CONFIGS = {
         # value family as the reference cast. The lighter green read as glass
         # beads once the face was reduced to gameplay size.
         "eye": "#294c43",
-        "top": "#f2eadc",
+        "top": "#eadfce",
         # A warmer oatmeal cardigan preserves the source's cloth hierarchy
         # under the strong portal key; near-white previously clipped into flat
         # vertical bars beside the green dress.
-        "outer": "#d6c2a9",
+        "outer": "#c9b397",
         "lower": "#356e58",
         "accent": "#d98769",
         "shoe": "#5c4031",
@@ -67,8 +67,8 @@ ROLE_CONFIGS = {
         "hair": "#6b4a3c",
         "hair_highlight": "#795a4d",
         "eye": "#354334",
-        "top": "#f1e8da",
-        "outer": "#dbc7ae",
+        "top": "#e9decd",
+        "outer": "#ccb79a",
         "lower": "#47745d",
         "accent": "#c69455",
         "shoe": "#503b31",
@@ -137,7 +137,7 @@ BODY_PROFILES = {
         "leg_depth": 0.98,
         "waist_width": 0.9,
         "hand_scale": 0.94,
-        "foot_scale": 1.09,
+        "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (0.998, 0.966, 0.98),
         "head_z": 1.493,
@@ -156,7 +156,7 @@ BODY_PROFILES = {
         "leg_depth": 1.0,
         "waist_width": 0.93,
         "hand_scale": 0.95,
-        "foot_scale": 1.09,
+        "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (1.005, 0.972, 0.98),
         "head_z": 1.483,
@@ -1400,9 +1400,13 @@ def build_face(head, mats, role):
     # all existing facial pivots and expression shape keys stay aligned.
     for vertex in face.data.vertices:
         x, y, z = vertex.co
-        lower = max(0.0, min(1.0, (-z - 0.012) / 0.22))
+        lower = max(0.0, min(1.0, (-z - 0.006) / 0.225))
         front = max(0.0, min(1.0, (-y - 0.015) / 0.17))
-        vertex.co.x *= 1.0 - lower * 0.235
+        # The previous taper was visible in profile but still resolved as a
+        # circular doll face in the story camera. Pull the jaw in more firmly
+        # while keeping the cheek band broad, matching the reference's soft
+        # triangular lower face instead of shrinking the complete head.
+        vertex.co.x *= 1.0 - lower * 0.275
         if front > 0 and z < -0.02:
             vertex.co.y += lower * front * 0.006
         # Model a shallow cheek plane instead of relying on circular blush
@@ -1411,7 +1415,7 @@ def build_face(head, mats, role):
         cheek_height = max(0.0, min(1.0, 1.0 - abs(z + 0.035) / 0.095))
         cheek_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.118) / 0.075))
         if front > 0:
-            vertex.co.y -= cheek_height * cheek_width * front * 0.017 * face_profile["cheek_forward"]
+            vertex.co.y -= cheek_height * cheek_width * front * 0.0195 * face_profile["cheek_forward"]
         # Recess the eye socket and let the upper cheek transition forward
         # underneath it. This creates a continuous brow/eye/cheek plane under
         # moving light instead of a sphere with eye pieces pasted on top.
@@ -1431,7 +1435,7 @@ def build_face(head, mats, role):
         temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
         vertex.co.x *= 1.0 - temple * 0.025
         chin = max(0.0, min(1.0, (-z - 0.115) / 0.135))
-        vertex.co.z -= chin * front * 0.007
+        vertex.co.z -= chin * front * 0.009
     # Keep the facial volume itself expressive. The previous rig swapped
     # mouth meshes but left the cheeks and jaw completely rigid, which read as
     # a toy mask in close conversational framing. These sparse, authored shape
@@ -1518,8 +1522,8 @@ def build_face(head, mats, role):
             segments=24,
             rings=14,
         )
-        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0088, 0.0022, 0.0118), mats["ink"], eye, segments=20, rings=12)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0055, -0.0163, 0.006), (0.0032, 0.0011, 0.0034), mats["eye_white"], eye, segments=12, rings=8)
+        ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0112, 0.0022, 0.0142), mats["ink"], eye, segments=20, rings=12)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.006, -0.0163, 0.006), (0.0028, 0.001, 0.003), mats["eye_white"], eye, segments=12, rings=8)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -1550,7 +1554,10 @@ def build_face(head, mats, role):
                 (0, -0.019, eye_height - 0.001),
                 (eye_width - 0.001, -0.018, 0.011 + side * outer_lift),
             ],
-            0.0015 if feminine else 0.0014,
+            # Strong illustrated linework is a defining part of the source.
+            # The former sub-two-millimetre tube vanished after perspective
+            # projection and left two bead-like irises floating on the face.
+            0.0023 if feminine else 0.00215,
             mats["ink"],
             eye,
             resolution=2,
@@ -1572,12 +1579,12 @@ def build_face(head, mats, role):
                 (0, -0.007, face_profile["brow_apex"]),
                 (-side * 0.052, 0.003, face_profile["brow_inner"]),
             ],
-            0.00265 if feminine else 0.00275,
+            0.0039 if feminine else 0.0041,
             mats["hair"],
             brow,
         )
         # Blush is a low-contrast cheek tint, not a graphic face sticker.
-        ellipsoid(f"Blush_{side}", (side * 0.148, -0.194, -0.047), (0.018, 0.0021, 0.0045), mats["blush"], head, segments=16, rings=8)
+        ellipsoid(f"Blush_{side}", (side * 0.146, -0.194, -0.047), (0.024, 0.002, 0.0065), mats["blush"], head, segments=16, rings=8)
     # The gameplay camera sees the nose at only a few pixels.  Keep genuine
     # volume for three-quarter lighting, but reduce the former bead-like tip
     # and red underline that made the face feel assembled from primitives.
@@ -1598,14 +1605,14 @@ def build_face(head, mats, role):
             (mouth_width * 0.48, -0.003, mouth_center * 0.6),
             (mouth_width, 0.001, mouth_corner),
         ],
-        0.00255,
+        0.00335,
         mats["skin_shadow"],
         closed,
     )
     ellipsoid(
         "LowerLip",
         (0, -0.0065, -0.011),
-        (mouth_width * 0.54, 0.0017, 0.0032),
+        (mouth_width * 0.58, 0.0018, 0.0038),
         mats["lip"],
         closed,
         segments=18,
@@ -1662,6 +1669,30 @@ def build_hair(head, mats, style):
             mats["hair_highlight"],
             head,
             resolution=2,
+        )
+    # Broad, shallow ribbons create actual grouped strand planes rather than
+    # relying on hair-colour noise in the runtime shader. They stay attached
+    # to the same head pivot and are explicitly removed by the phone LOD,
+    # where their projected width would be sub-pixel.
+    ribbon_specs = (
+        (-0.17, -0.13, 0.006),
+        (-0.06, -0.035, 0.009),
+        (0.055, 0.08, 0.008),
+        (0.17, 0.145, 0.005),
+    )
+    for index, (front_x, rear_x, drift) in enumerate(ribbon_specs):
+        tapered_lock(
+            f"HairRibbon_{index + 1}",
+            [
+                (front_x, -0.178, 0.19 - abs(front_x) * 0.05),
+                (front_x + drift, -0.11, 0.255 - abs(front_x) * 0.025),
+                ((front_x + rear_x) * 0.5, 0.015, 0.286 - abs(rear_x) * 0.035),
+                (rear_x, 0.132, 0.19 - abs(rear_x) * 0.065),
+            ],
+            (0.014, 0.012, 0.009, 0.003),
+            mats["hair_highlight"],
+            head,
+            sides=8,
         )
     # Six overlapping, wider locks replace the comb-like row of eight narrow
     # points. The silhouette reads as deliberately grouped hair at the story
@@ -1779,17 +1810,21 @@ def build_hair(head, mats, style):
         )
         # Layered flyaway locks break the single rubber-hose ponytail into the
         # soft, authored red-hair silhouette visible in the reference.
-        for index, (offset_x, offset_y, tip_x) in enumerate(((-0.045, -0.018, 0.0), (0.045, 0.012, 0.105))):
+        for index, (offset_x, offset_y, tip_x) in enumerate((
+            (-0.065, -0.018, -0.015),
+            (0.012, 0.014, 0.072),
+            (0.075, -0.006, 0.14),
+        )):
             tapered_lock(
                 f"PonytailLayer_{index + 1}",
                 [
                     (0.01 + offset_x, offset_y, -0.08),
                     (0.07 + offset_x, 0.018 + offset_y, -0.22),
-                    (0.065 + offset_x, -0.002 + offset_y, -0.4),
+                    (0.045 + offset_x, -0.002 + offset_y, -0.4),
                     (tip_x, -0.03 + offset_y, -0.6),
                 ],
-                (0.058, 0.061, 0.046, 0.007),
-                mats["hair_highlight"] if index == 0 else mats["hair"],
+                (0.055, 0.058, 0.043, 0.007),
+                mats["hair_highlight"] if index != 1 else mats["hair"],
                 ponytail,
                 sides=16,
             )
@@ -1806,7 +1841,7 @@ def build_hair(head, mats, style):
                 (0.052, 0.048, 0.012),
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
-                sides=16,
+                sides=12,
             )
         # Two articulated-looking side braids give the mediator the authored
         # crown-and-bob silhouette from the reference instead of five isolated
@@ -1821,9 +1856,22 @@ def build_hair(head, mats, style):
                     mats["hair_highlight"] if bead_index == 1 else mats["hair"],
                     head,
                     rotation=(0.08, side * 0.05, side * 0.18),
-                    segments=12,
-                    rings=8,
+                    segments=10,
+                    rings=6,
                 )
+            tapered_lock(
+                f"TempleWave_{side}",
+                [
+                    (side * 0.185, -0.055, 0.17),
+                    (side * 0.235, -0.09, 0.105),
+                    (side * 0.248, -0.065, 0.025),
+                    (side * 0.22, -0.025, -0.075),
+                ],
+                (0.046, 0.052, 0.039, 0.007),
+                mats["hair_highlight"],
+                head,
+                sides=10,
+            )
         # A bob needs a continuous nape silhouette as well as decorative
         # crown knots. These overlapping rear locks bridge the cap to the neck
         # and remove the bowl-cut gap exposed by the follow camera.
@@ -2685,7 +2733,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v54",
+        "sculptContract": "mirrorlife-civic-sculpt-v55",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -2715,9 +2763,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v1",
-            "integrationContract": "mirrorlife-civic-face-volume-v12",
+            "integrationContract": "mirrorlife-civic-face-volume-v13",
             "productionFaceMode": "sculpted-volume",
-            "productionIntegrationContract": "mirrorlife-civic-face-volume-v12",
+            "productionIntegrationContract": "mirrorlife-civic-face-volume-v13",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v1",

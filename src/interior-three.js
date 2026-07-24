@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v54";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v55";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -1493,7 +1493,7 @@ function applyLightingPreset(theme = {}) {
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.36 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.38;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.68 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.23 : 0.26;
   if (keyLight?.shadow) {
@@ -7461,7 +7461,7 @@ function createCivicActorObject(actor, asset) {
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.66, 0.36),
+    new THREE.PlaneGeometry(0.72, 0.4),
     new THREE.MeshBasicMaterial({
       color: 0x4d3528,
       map: getContactShadowTexture(),
@@ -7469,7 +7469,7 @@ function createCivicActorObject(actor, asset) {
       // The warm terrazzo and actor fill previously erased the last contact
       // cue under the feet. A firmer but still soft footprint restores the
       // source's grounded weight without becoming a graphic oval.
-      opacity: 0.32,
+      opacity: 0.36,
       depthWrite: false,
       toneMapped: false
     })
@@ -7631,6 +7631,7 @@ function createCivicActorObject(actor, asset) {
       "EarConcha_",
       "EyeGlint_",
       "OuterLash_",
+      "HairRibbon_",
       "CoatButton_",
       "Thumb_"
     ];
@@ -7833,7 +7834,7 @@ function createCivicActorObject(actor, asset) {
     skinnedMeshes,
     secondaryMotion,
     frame,
-    styleKey: `${frame}:${role}:civic-glb-v15`,
+    styleKey: `${frame}:${role}:civic-glb-v16`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -7854,7 +7855,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v15` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v16` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8427,7 +8428,7 @@ function updateCamera(payload = {}) {
     // frame height, leaving visible floor language around the social circle.
     // This distance still supports readable faces while preventing the player
     // and backpack from becoming a foreground wall.
-    ? (portrait ? 5.2 : 5.42 + civicRearArc * 0.8 + civicSideArc * 0.42)
+    ? (portrait ? 5.2 : 5.24 + civicRearArc * 0.84 + civicSideArc * 0.46)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 3.18 + civicRearArc * 0.46 + civicSideArc * 0.38) + pitchOffset * 1.35
@@ -8891,7 +8892,7 @@ function getStats() {
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
-          ? "mirrorlife-civic-face-volume-v12"
+          ? "mirrorlife-civic-face-volume-v13"
           : CIVIC_FACE_MODE === "uv-hybrid"
             ? "mirrorlife-civic-face-uv-hybrid-v1"
           : CIVIC_FACE_MODE === "hybrid-volume"

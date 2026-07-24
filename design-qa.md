@@ -1,5 +1,47 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v100 facial hierarchy, hair volume and story-camera gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, source density normalized to the same native pixel canvas).
+- Final desktop implementation: `tmp/v100-final-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, identical public-plaza story state).
+- Mandatory full-view comparison: `tmp/reference-vs-v100-full.png`; both complete native-size frames are adjacent without scaling.
+- Mandatory focused comparison: `tmp/reference-vs-v100-cast-focus.png`; the four-person story circles are cropped into one review image so face shape, eye hierarchy, hair grouping, footwear and social pose can be judged directly.
+- Before/after evidence: `tmp/v99-vs-v100-full.png` and `tmp/v99-vs-v100-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v100-final-yaw90.png` and `tmp/v100-final-yaw180.png`. The same characters, expressions, hair volumes and room assets remain coherent through the real perspective orbit.
+- Responsive evidence: `tmp/v100-final-mobile.png` (`390 × 844`, device scale factor `1`, three-character phone LOD).
+- Runtime evidence: desktop opening `167 / 284,056`, side `170 / 295,164`, reverse `171 / 301,292`; mobile `100 / 243,624`. The player walked `4.89m`, rotated the perspective camera `65.3°`, passed all `26` physical layouts and desktop/mobile scene flow, and completed `78` atomic room transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / faces remained circular and toy-like] Sculpt v55 strengthens the lower-face taper, broadens the actual cheek plane and extends the chin inside the existing head/capsule contract. The focused post-fix crop shows a clearer cheek-to-jaw transition without enlarging the complete head.
+- [fixed / brows and lids disappeared after perspective projection] Upper-eye contours, brows and the closed mouth receive a measured physical-width increase; the pupil grows while the catchlight shrinks. Eyes now read as illustrated attention rather than two isolated coloured beads.
+- [improved / hair detail existed only as shader noise and hairline tubes] Four shallow `HairRibbon` volumes travel over every crown, the facilitator ponytail gains a three-lock fan and the mediator gains real temple waves. These are lit, depth-tested volumes attached to `HeadPivot`, not screen-space marks.
+- [fixed / added strand volume threatened the phone geometry ceiling] Phone LOD removes `HairRibbon_*` before batching; desktop retains the authored crown layer. Mobile finishes at `243,624` triangles, still below the `250,000` hard limit.
+- [improved / pale cardigans clipped into flat white bars] Facilitator and mediator garments move toward warmer oatmeal values, preserving the source's cream/green material hierarchy under the portal key. Their boot scale drops from `1.09` to `1.04`, reducing the oversized toy-foot cue.
+- [improved / the cast was still visually secondary to the room] The desktop hero orbit moves from `5.42m` to `5.24m` while side/reverse safety arcs remain active. Character scale rises without sacrificing the portal, hero wall or lounge navigation landmarks.
+- [improved / faces and feet lacked environment contact] Actor-only facial fill rises from `0.62` to `0.68`; the soft footprint grows from `0.66 × 0.36m / 0.32` opacity to `0.72 × 0.40m / 0.36`. The player and witnesses remain grounded without a hard graphic oval.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] The compact Chinese HUD retains the established project type hierarchy, weight and one-line truncation across `1672 × 941` and `390 × 844`; no new wrapping, clipping or optical-weight regression is visible. The source still has finer offline-rendered label antialiasing, but this is not the dominant visual gap.
+- [improved][spacing and layout rhythm] The closer camera gives the social circle stronger priority while maintaining clear foreground desk, middle-ground cast and background portal/wall. Desktop action controls and portrait controls remain unobstructed.
+- [improved][colors and visual tokens] Warmer cardigan values, restrained face fill and darker contact depth better separate skin, ivory fabric, green cloth, timber and terrazzo. The reference still retains richer bounced colour and more local value variation.
+- [improved][image quality and asset fidelity] All new face and hair cues are real GLB geometry with complete side/back continuity. No billboard, sprite, CSS drawing or camera-specific replacement is introduced; source-level strand density, cloth compression and facial anatomy remain visibly ahead.
+- [checked][copy and content] The location, objective and four action labels remain coherent with the selected listening scene; mobile preserves the same current action instead of exposing placeholder copy.
+- [P1][production deformation remains below the source] The real shared skeleton and continuous limb skin preserve walking/orbit truth, but shoulders, elbows, wrists, skirt compression and knees still lack production retopology, corrective shapes and hand-painted weights.
+- [P1][facial performance remains below the source] Features are clearer, yet the selected image still has more expressive eyelids, cheek/lip volume, gaze specificity and role-authored asymmetry.
+- [P1][hair/material/light transport remain below the source] Crown ribbons and role silhouettes improve, while the reference retains denser strand grouping, bespoke texture variation and offline-quality indirect illumination/contact penumbrae.
+
+### Gate result
+
+v100 materially improves the story-camera hierarchy, facial read, hair grouping, garment colour separation and physical contact while retaining real movement, full orbit, metre-space physics, responsive LOD and atomic room transitions. The literal same-size comparison is closer, but the reference remains visibly ahead in production deformation, facial acting, hair density and multi-bounce material rendering.
+
+final result: blocked
+
+Blocker: production character retopology/weight painting/corrective deformation, remaining facial and hair authoring, and source-level material/indirect-light construction remain below the selected reference.
+
 ## 2026-07-25 reference-fidelity v99 hand acting, reverse-orbit and tonal-depth gate
 
 ### Evidence inspected together
