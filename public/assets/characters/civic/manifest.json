@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v51",
+  "sculptContract": "mirrorlife-civic-sculpt-v52",
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v3",
     "roles": [

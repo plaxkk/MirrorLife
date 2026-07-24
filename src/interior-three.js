@@ -12,7 +12,7 @@ const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v51";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v52";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -1493,7 +1493,7 @@ function applyLightingPreset(theme = {}) {
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.36 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.34;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.62 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.23 : 0.26;
   if (keyLight?.shadow) {

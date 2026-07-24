@@ -1,5 +1,40 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-24 reference-fidelity v96 facial contrast and orbit-light gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Final desktop implementation at the identical viewport: `tmp/v96-face-yaw0.png` (`1672 × 941`, `166 / 284,052`, renderer pixel ratio `1.2`, `4×` MSAA).
+- Mandatory source/runtime comparison: `tmp/reference-vs-v96-cast-focus.png`; both four-person circles are inspected in one same-size crop. `tmp/v95-vs-v96-face-read.png` isolates the actual eye and face-light delta.
+- Full-orbit evidence: `tmp/v96-face-yaw90.png` (`169 / 295,160`) and the settled reverse view `tmp/v96-face-yaw180b.png` (`170 / 297,496`).
+- Mobile evidence: `tmp/v96-face-mobile.png` (`390 × 844`, `100 / 244,348`, renderer pixel ratio `1`, three-character LOD).
+- Physical/runtime evidence: the browser regression moved the same volumetric GLB player `2.37m`, rotated the perspective camera `65.3°`, passed desktop/mobile scene flow and completed `78` transitions across all `26` rooms with no failure or runtime exception.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved / bright sclera and small dark centres read as toy eyes] The four role profiles now use larger role-tinted irises, a warmer lower-value sclera and smaller catchlights. Gaze remains visible at story distance, but the eye reads as one illustrated expression rather than white discs carrying black beads.
+- [improved / faces lost too much value when a role turned across the portal key] The camera-side actor-only fill rises from `0.46` to `0.62` in the civic room and remains restricted to head geometry. Side-facing skin and eyes retain readable mid-tones without lifting furniture, walls or the floor.
+- [checked / facial revision remains genuine 3D] Head, lids, sclera, iris, pupil and glint remain lit, depth-tested geometry under real hair occlusion. No portrait card, emissive face layer or view-specific replacement was introduced.
+- [checked / no render-budget cost] All desktop orbit views retain v95's `166–170` calls and `284,052–297,496` triangles; portrait mobile remains `100 / 244,348`.
+
+### Required fidelity surfaces and findings
+
+- [improved][facial hierarchy] Dark iris area now dominates the small eye aperture and the reduced glint no longer competes with the pupil. Listener, facilitator and mediator maintain readable gaze across front and three-quarter views.
+- [improved][character/environment integration] Camera-side fill restores face value while preserving the warm portal direction and clothing shadows; heads no longer collapse as abruptly against dark hair on the portal-opposite side.
+- [checked][movement, physics and loading] The same v52 assets retain the v4 shoe pivots, v9 authored motion, metre-space capsule and atomic room lifecycle. Desktop/mobile flow and all `26 × 3` transition passes remain green.
+- [P1][facial anatomy still remains below the source] Eye hierarchy is calmer, while the source retains more authored cheek, lip, eyelid and nose planes plus higher-quality expression deformation.
+- [P1][hair and cloth deformation remain below the source] The real volumes survive orbit, but strand grouping, cloth compression and joint deformation still lack production DCC retopology and authored normal/texture maps.
+- [P1][room-wide asset and light transport remain below the source] The reference still has denser bespoke dressing, finer joinery and materially richer multi-bounce illumination.
+
+### Gate result
+
+v96 removes the strongest white-disc eye cue and improves side-orbit facial readability without changing the real 3D, movement, physics, mobile or performance contracts. The source comparison is calmer and more legible, but production facial anatomy, deformation, bespoke room construction and indirect-light transport remain ahead.
+
+final result: blocked
+
+Blocker: production character retopology/UV/deformation, remaining room-wide asset construction and source-level indirect-light transport remain visibly below the selected reference.
+
 ## 2026-07-24 reference-fidelity v95 character stance, footwear and render-resolution gate
 
 ### Evidence inspected together

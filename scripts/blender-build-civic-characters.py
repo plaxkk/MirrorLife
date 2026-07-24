@@ -171,8 +171,8 @@ FACE_PROFILES = {
     "player": {
         "eye_width": 0.0575,
         "eye_height": 0.0328,
-        "iris_width": 0.0255,
-        "iris_height": 0.0285,
+        "iris_width": 0.0288,
+        "iris_height": 0.0303,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -186,8 +186,8 @@ FACE_PROFILES = {
     "listener": {
         "eye_width": 0.057,
         "eye_height": 0.0324,
-        "iris_width": 0.0252,
-        "iris_height": 0.028,
+        "iris_width": 0.0285,
+        "iris_height": 0.0298,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -201,8 +201,8 @@ FACE_PROFILES = {
     "facilitator": {
         "eye_width": 0.0585,
         "eye_height": 0.0335,
-        "iris_width": 0.026,
-        "iris_height": 0.0293,
+        "iris_width": 0.0293,
+        "iris_height": 0.031,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -216,8 +216,8 @@ FACE_PROFILES = {
     "mediator": {
         "eye_width": 0.0575,
         "eye_height": 0.0328,
-        "iris_width": 0.0255,
-        "iris_height": 0.0285,
+        "iris_width": 0.0288,
+        "iris_height": 0.0303,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1352,7 +1352,7 @@ def build_materials(role, config):
         # The reference uses a warm, softly reflective sclera and a large dark
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
-        "eye_white": material(f"{role} eye white", "#f5eee5", 0.48, clearcoat=0.1),
+        "eye_white": material(f"{role} eye white", "#efe6dc", 0.52, clearcoat=0.07),
         "iris": material(f"{role} iris", config["eye"], 0.38, clearcoat=0.2),
         # Warm charcoal keeps the illustrated eye and lash language while
         # avoiding the pure-black sticker effect visible in the v77 paired
@@ -1514,7 +1514,7 @@ def build_face(head, mats, role):
             rings=14,
         )
         ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.014, -0.003), (0.0088, 0.0022, 0.0118), mats["ink"], eye, segments=20, rings=12)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0055, -0.0163, 0.006), (0.0038, 0.0011, 0.004), mats["eye_white"], eye, segments=12, rings=8)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0055, -0.0163, 0.006), (0.0032, 0.0011, 0.0034), mats["eye_white"], eye, segments=12, rings=8)
         facial_lid_surface(
             f"UpperLidSkin_{side}",
             eye_width + 0.002,
@@ -2671,7 +2671,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v51",
+        "sculptContract": "mirrorlife-civic-sculpt-v52",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v3",
             "roles": ["player", "listener", "facilitator", "mediator"],
