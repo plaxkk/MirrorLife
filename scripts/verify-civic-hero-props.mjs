@@ -21,12 +21,15 @@ const expectations = {
     "LoungeBookcaseCrown",
     "LoungeShelfLip_1",
     "LoungeBookend_2",
+    "LoungeReadingStack_1_1",
+    "LoungeArchiveBox",
+    "LoungeWitnessPortraitFrame",
     "LoungeArchivePacketSheet_1",
     "LoungeArchivePacketClip"
   ]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v13");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v14");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 

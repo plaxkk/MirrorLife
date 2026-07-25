@@ -112,26 +112,26 @@ try {
   );
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
-  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v4", "civic room did not expose the authored indirect-light contract");
+  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v5", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
-  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v13", "civic room did not expose the authored furniture-detail contract");
+  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v14", "civic room did not expose the authored furniture-detail contract");
   assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v4", "civic room did not expose the scanned furniture-surface contract");
   assert.equal(opening.furniture?.reverseWallVersion, "mirrorlife-civic-reverse-wall-v3", "civic room did not expose the authored reverse witness-wall contract");
   assert.ok(opening.furniture?.scannedSurfaceBatches >= 3, "placed civic hero furniture lost its scanned surface shader");
   assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");
   assert(
-    Number(opening.lighting?.ceilingBounce || 0) >= 0.18
-      && Number(opening.lighting?.ceilingBounce || 0) <= 0.2,
+    Number(opening.lighting?.ceilingBounce || 0) >= 0.26
+      && Number(opening.lighting?.ceilingBounce || 0) <= 0.3,
     "civic ceiling bounce did not preserve the authored contrast range"
   );
   assert(
-    Number(opening.lighting?.backWallBounce || 0) >= 0.09
-      && Number(opening.lighting?.backWallBounce || 0) <= 0.11,
+    Number(opening.lighting?.backWallBounce || 0) >= 0.15
+      && Number(opening.lighting?.backWallBounce || 0) <= 0.19,
     "civic rear-wall bounce did not preserve the authored contrast range"
   );
   assert(
-    Number(opening.lighting?.environment || 0) >= 0.28
-      && Number(opening.lighting?.environment || 0) <= 0.3,
+    Number(opening.lighting?.environment || 0) >= 0.31
+      && Number(opening.lighting?.environment || 0) <= 0.35,
     "civic environment response did not preserve material separation"
   );
   assert(Number(opening.lighting?.contactAo || 1) <= 0.48, "civic contact AO is too strong for the broad reference penumbrae");

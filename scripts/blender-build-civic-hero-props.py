@@ -953,22 +953,90 @@ def build_lounge_suite(mats):
             f"LoungeShelfLip_{shelf_index + 1}", (0.94, 0.035, 0.045),
             (1.72, -0.248, z + 0.005), mats["walnut"], root, 0.012,
         )
-    book_palette = ("paper", "blue", "butter", "coral", "teal")
-    for row in range(3):
-        for column in range(5):
-            height = 0.22 + ((row * 5 + column) % 3) * 0.035
+    # Curate each shelf as a different lived-in vignette. The previous 3x5
+    # procedural book grid was one of the largest remaining "generated room"
+    # tells in the hero camera. Upright folios, horizontal reading stacks,
+    # archive boxes, a framed witness portrait and open negative space now
+    # create the collected rhythm visible in the reference.
+    upright_books = (
+        ("LoungeShelfBook_0_0", 1.34, 0.33, 0.27, 0.105, "paper", -0.045),
+        ("LoungeShelfBook_0_1", 1.48, 0.34, 0.29, 0.12, "blue", 0.018),
+        ("LoungeShelfBook_0_2", 1.64, 0.32, 0.25, 0.11, "teal", 0.055),
+        ("LoungeShelfBook_0_3", 1.79, 0.35, 0.31, 0.13, "paper_warm", -0.025),
+        ("LoungeShelfBook_1_0", 1.31, 0.79, 0.28, 0.115, "coral", -0.055),
+        ("LoungeShelfBook_1_1", 1.47, 0.78, 0.26, 0.105, "paper", 0.012),
+        ("LoungeShelfBook_1_2", 1.61, 0.8, 0.3, 0.12, "butter", 0.048),
+        ("LoungeShelfBook_2_0", 1.89, 1.25, 0.31, 0.12, "teal", -0.04),
+        ("LoungeShelfBook_2_1", 2.04, 1.24, 0.28, 0.11, "paper_cool", 0.025),
+    )
+    for name, x, z, height, width, color, lean in upright_books:
+        add_book(
+            root,
+            mats,
+            name,
+            (x, -0.055 + (x % 0.07), z),
+            (width, 0.22, height),
+            color,
+            (0, 0, lean),
+        )
+
+    for stack_index, (z, x, colors) in enumerate((
+        (0.28, 2.02, ("paper_warm", "blue", "paper")),
+        (0.73, 1.98, ("paper", "teal")),
+    )):
+        for layer, color in enumerate(colors):
             add_book(
-                root, mats, f"LoungeShelfBook_{row}_{column}",
-                (1.38 + column * 0.16, -0.055 + (column % 3) * 0.018, 0.29 + row * 0.46 + height / 2),
-                (0.11 + (column % 2) * 0.02, 0.22, height),
-                book_palette[(row + column) % len(book_palette)],
-                (0, 0, ((column % 3) - 1) * 0.025),
+                root,
+                mats,
+                f"LoungeReadingStack_{stack_index + 1}_{layer + 1}",
+                (x + layer * 0.012, -0.04, z + layer * 0.045),
+                (0.31 - layer * 0.018, 0.23, 0.038),
+                color,
+                (0, 0, (layer - 1) * 0.018),
             )
-        # Alternating brass/wood bookends introduce small structural pauses;
-        # the shelves now read as curated bays rather than repeated grids.
+
+    rounded_box(
+        "LoungeArchiveBox",
+        (0.42, 0.31, 0.29),
+        (1.45, 0.02, 1.26),
+        mats["paper_warm"],
+        root,
+        0.045,
+        (0, 0, -0.025),
+        4,
+    )
+    rounded_box(
+        "LoungeArchiveBoxLid",
+        (0.45, 0.33, 0.06),
+        (1.45, -0.005, 1.425),
+        mats["oak_light"],
+        root,
+        0.025,
+        (0, 0, -0.025),
+        3,
+    )
+    rounded_box(
+        "LoungeArchiveBoxLabel",
+        (0.2, 0.018, 0.09),
+        (1.45, -0.155, 1.27),
+        mats["paper"],
+        root,
+        0.014,
+        (0, 0, -0.025),
+        2,
+    )
+
+    portrait = empty("LoungeWitnessPortrait", root, (1.77, -0.14, 0.85), (0.055, 0, 0.055))
+    rounded_box("LoungeWitnessPortraitFrame", (0.34, 0.035, 0.28), (0, 0, 0), mats["walnut"], portrait, 0.035, segments=4)
+    rounded_box("LoungeWitnessPortraitPaper", (0.27, 0.018, 0.21), (0, -0.022, 0), mats["paper_cool"], portrait, 0.025, segments=3)
+    sphere("LoungeWitnessPortraitMark", (0.065, 0.012, 0.065), (0, -0.036, 0.025), mats["coral"], portrait, 14, 8)
+    rounded_box("LoungeWitnessPortraitCaption", (0.16, 0.012, 0.018), (0, -0.038, -0.075), mats["teal"], portrait, 0.006, segments=1)
+
+    # Alternating brass/wood bookends preserve shelf load and create pauses.
+    for row in range(3):
         cylinder(
             f"LoungeBookend_{row + 1}", 0.025, 0.2,
-            (2.12 if row % 2 else 1.3, -0.17, 0.36 + row * 0.46),
+            (2.12 if row % 2 else 1.27, -0.17, 0.36 + row * 0.46),
             mats["brass"] if row == 1 else mats["walnut"], root, 12,
         )
     add_document_packet(
@@ -1044,7 +1112,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v13",
+        "contract": "mirrorlife-civic-hero-props-v14",
         "worldUnitMeters": 1,
         "assets": {},
     }

@@ -15,8 +15,8 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v78";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
-const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
-const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v13";
+const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v5";
+const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v14";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v4";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
 const CIVIC_WEST_WITNESS_LIBRARY_CONTRACT = "mirrorlife-civic-west-witness-library-v1";
@@ -135,14 +135,14 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.78,
-    fill: 0.38,
-    hemi: 0.37,
-    bounce: 0.72,
-    wash: 0.54,
-    exposure: 0.88,
-    keyColor: "#ffe5cc",
-    fillColor: "#c5dfdf"
+    key: 1.68,
+    fill: 0.34,
+    hemi: 0.4,
+    bounce: 0.58,
+    wash: 0.44,
+    exposure: 0.9,
+    keyColor: "#fff0df",
+    fillColor: "#cce1df"
   },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
@@ -1587,7 +1587,15 @@ function applyLightingPreset(theme = {}) {
     fillLight.intensity = preset.fill;
     fillLight.color.set(preset.fillColor);
   }
-  if (hemisphereLight) hemisphereLight.intensity = preset.hemi;
+  if (hemisphereLight) {
+    hemisphereLight.intensity = preset.hemi;
+    // Use a pale ceiling and muted terrazzo return for the civic room. The
+    // earlier brown ground hemisphere multiplied the warm key into a sepia
+    // wash; the source instead keeps shadowed plaster, skin and ivory cloth
+    // bright while retaining a clear daylight direction.
+    hemisphereLight.color.set(theme.zoneId === "public-plaza" ? "#fff8ed" : "#fff8eb");
+    hemisphereLight.groundColor.set(theme.zoneId === "public-plaza" ? "#a7b5a8" : "#6d5645");
+  }
   if (warmBounceLight) {
     warmBounceLight.intensity = preset.bounce;
     if (theme.zoneId === "public-plaza") warmBounceLight.position.set(-1.15, 0.64, -0.35);
@@ -1599,21 +1607,23 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.9 : 0;
-    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffe0ba");
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.76 : 0;
+    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffe8d2");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.3) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.14 : 0.2) : 0;
   }
   if (civicCeilingBounceLight) {
     civicCeilingBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.14 : 0.19)
+      ? (lastWidth <= 720 ? 0.18 : 0.28)
       : 0;
+    civicCeilingBounceLight.color.set(theme.night ? "#abc1d3" : "#fff6e8");
   }
   if (civicBackWallBounceLight) {
     civicBackWallBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.06 : 0.1)
+      ? (lastWidth <= 720 ? 0.1 : 0.17)
       : 0;
+    civicBackWallBounceLight.color.set(theme.night ? "#9db2ca" : "#f8e6d6");
   }
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
@@ -1621,7 +1631,12 @@ function applyLightingPreset(theme = {}) {
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.42 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.29 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.33 : 0.26;
+  if (gtaoPass) {
+    gtaoPass.blendIntensity = theme.zoneId === "public-plaza"
+      ? (lastWidth <= 720 ? 0.76 : 0.9)
+      : 0.82;
+  }
   if (keyLight?.shadow) {
     keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 10 : 9;
     keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 28 : 24;
@@ -3303,16 +3318,16 @@ function addCivicLocalStoryLights(theme, mobileLod = false) {
   // returns a cool reflected edge. Both are local, non-shadowing sources so
   // they preserve the directional key and do not flatten the central cast.
   const portalFloorBounce = new THREE.PointLight(
-    0xffd0a0,
-    mobileLod ? 0.12 : 0.27,
+    0xffe2c7,
+    mobileLod ? 0.11 : 0.22,
     4.6,
     2.3
   );
   portalFloorBounce.position.set(-3.25, 0.38, -1.82);
   roomRoot.add(portalFloorBounce);
   const loungeColorBounce = new THREE.PointLight(
-    0x86c8bd,
-    mobileLod ? 0.08 : 0.2,
+    0xa1cec5,
+    mobileLod ? 0.07 : 0.14,
     3.7,
     2.35
   );
@@ -3541,7 +3556,16 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
   }
   leafGeometry.computeVertexNormals();
 
-  const addCluster = ({ x, z, scale, rotation = 0, woven = false, seed = 0, leaves = 14 }) => {
+  const addCluster = ({
+    x,
+    z,
+    scale,
+    rotation = 0,
+    woven = false,
+    seed = 0,
+    leaves = 14,
+    species = "broad"
+  }) => {
     const group = new THREE.Group();
     group.position.set(x, 0, z);
     group.rotation.y = rotation;
@@ -3581,33 +3605,78 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
     }
 
     for (let index = 0; index < leaves; index += 1) {
-      const band = Math.floor(index / 4);
+      const band = Math.floor(index / (species === "ficus" ? 5 : 4));
       const angle = index * 2.39996 + seed * 0.51;
-      const radius = 0.2 + band * 0.07 + (index % 3) * 0.035;
-      const height = 0.86 + band * 0.19 + (index % 2) * 0.08;
+      const radius = species === "snake"
+        ? 0.09 + (index % 3) * 0.045
+        : species === "ficus"
+          ? 0.18 + band * 0.095 + (index % 3) * 0.028
+          : 0.2 + band * 0.07 + (index % 3) * 0.035;
+      const height = species === "snake"
+        ? 0.78 + (index % 4) * 0.19 + band * 0.07
+        : species === "ficus"
+          ? 0.8 + band * 0.16 + (index % 2) * 0.05
+          : 0.86 + band * 0.19 + (index % 2) * 0.08;
       const leafX = Math.cos(angle) * radius;
-      const leafZ = Math.sin(angle) * radius * 0.62;
+      const leafZ = Math.sin(angle) * radius * (species === "snake" ? 0.42 : 0.62);
       const stemHeight = height - 0.57;
-      const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.015, 0.023, stemHeight, 7), stemMaterial);
-      stem.position.set(leafX * 0.42, 0.57 + stemHeight / 2, leafZ * 0.42);
-      stem.rotation.z = -leafX * 0.55;
-      stem.rotation.x = leafZ * 0.42;
-      group.add(stem);
+      if (species !== "snake") {
+        const stem = new THREE.Mesh(
+          new THREE.CylinderGeometry(
+            species === "ficus" ? 0.012 : 0.015,
+            species === "ficus" ? 0.02 : 0.023,
+            stemHeight,
+            7
+          ),
+          stemMaterial
+        );
+        stem.position.set(leafX * 0.42, 0.57 + stemHeight / 2, leafZ * 0.42);
+        stem.rotation.z = -leafX * (species === "ficus" ? 0.72 : 0.55);
+        stem.rotation.x = leafZ * 0.42;
+        group.add(stem);
+      }
 
       const leafPivot = new THREE.Group();
       leafPivot.position.set(leafX, height, leafZ);
       leafPivot.rotation.order = "YXZ";
       leafPivot.rotation.y = angle;
-      leafPivot.rotation.x = -0.32 + (index % 3) * 0.09;
-      leafPivot.rotation.z = Math.sin(angle) * 0.28 + (index % 3 - 1) * 0.08;
+      leafPivot.rotation.x = species === "snake"
+        ? -0.08 + (index % 3 - 1) * 0.05
+        : species === "ficus"
+          ? -0.66 + (index % 3) * 0.18
+          : -0.32 + (index % 3) * 0.09;
+      leafPivot.rotation.z = Math.sin(angle) * (species === "snake" ? 0.1 : 0.28)
+        + (index % 3 - 1) * (species === "snake" ? 0.04 : 0.08);
       group.add(leafPivot);
 
-      const leafScale = 0.3 + (index % 3) * 0.024;
+      const leafScale = species === "snake"
+        ? 0.105 + (index % 2) * 0.012
+        : species === "ficus"
+          ? 0.2 + (index % 3) * 0.018
+          : 0.3 + (index % 3) * 0.024;
       const leaf = new THREE.Mesh(leafGeometry, leafMaterials[(index + seed) % leafMaterials.length]);
-      leaf.scale.set(leafScale, 0.34 + (index % 2) * 0.035, 1);
+      leaf.scale.set(
+        leafScale,
+        species === "snake"
+          ? 0.52 + (index % 4) * 0.045
+          : species === "ficus"
+            ? 0.21 + (index % 2) * 0.025
+            : 0.34 + (index % 2) * 0.035,
+        1
+      );
       leafPivot.add(leaf);
+      const veinLength = species === "snake"
+        ? 0.92 + (index % 4) * 0.08
+        : species === "ficus"
+          ? 0.36 + (index % 2) * 0.04
+          : 0.58 + (index % 2) * 0.05;
       const vein = new THREE.Mesh(
-        new THREE.CylinderGeometry(0.008, 0.012, 0.58 + (index % 2) * 0.05, 6),
+        new THREE.CylinderGeometry(
+          species === "snake" ? 0.006 : 0.008,
+          species === "snake" ? 0.009 : 0.012,
+          veinLength,
+          6
+        ),
         veinMaterial
       );
       vein.position.z = 0.035;
@@ -3616,10 +3685,27 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
     }
   };
 
-  addCluster({ x: -3.72, z: -3.42, scale: 0.9, rotation: 0.28, woven: false, seed: 3, leaves: mobileLod ? 7 : 13 });
+  addCluster({
+    x: -3.72,
+    z: -3.42,
+    scale: 0.9,
+    rotation: 0.28,
+    woven: false,
+    seed: 3,
+    leaves: mobileLod ? 7 : 13,
+    species: "broad"
+  });
   if (!mobileLod) {
-    addCluster({ x: 4.22, z: -2.96, scale: 0.94, rotation: -0.52, woven: false, seed: 8, leaves: 14 });
-    addCluster({ x: 4.62, z: 1.74, scale: 0.82, rotation: -0.86, woven: true, seed: 12, leaves: 11 });
+    addCluster({
+      x: 4.22,
+      z: -2.96,
+      scale: 1.02,
+      rotation: -0.52,
+      woven: false,
+      seed: 8,
+      leaves: 17,
+      species: "ficus"
+    });
   }
 }
 
@@ -4725,8 +4811,11 @@ function addCivicReferenceDressing(theme, colors) {
     inner: "#b88b67",
     shelves: 3
   });
-  addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
-  addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
+  // Desktop already carries three authored botanical species above. Keeping
+  // the generic sphere-leaf planters as well doubled the same silhouette at
+  // both frame edges and made the room look procedurally scattered. Mobile
+  // retains one inexpensive proxy to preserve the right-hand depth cue.
+  if (mobileLod) addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
   const foliageShadowTexture = getCivicFoliageShadowTexture();
   if (foliageShadowTexture) {
     const foliageShadowMaterial = new THREE.MeshBasicMaterial({

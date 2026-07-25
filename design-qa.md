@@ -1,5 +1,58 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v137 curated civic detail and indirect-light gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state, device scale factor `1`).
+- Mandatory normalized full-view comparison: `tmp/v137-reference-full-pair.png` (`2560 × 720`); the source and implementation are normalized to equal `1280 × 720` frames and were inspected together on one canvas.
+- Mandatory lounge/detail comparison: `tmp/v137-lounge-focus-pair.png` (`1024 × 450`); equal-size `512 × 450` source and implementation crops expose book rhythm, paper depth, ceramics, plants, lounge joinery and negative space.
+- Full 3D evidence: `tmp/v137-four-direction-board.png` (`1280 × 720`) contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `174 / 279,984 / 177`, side `177 / 291,092 / 168`, reverse `178 / 331,816 / 174`, fourth orbit `176 / 316,848 / 175` for draw calls / triangles / geometries; mobile is `106 / 241,124 / 80`. Every final view reports zero shader errors and remains inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Camera evidence: the opening retains `49.4° / 5.84m`; side views widen to `52.95° / 6.475m`; reverse uses `55.2° / 6.9m` plus `1.6m` actor avoidance and `1.55m` clearance. The four-heading board retains the cast and current target while near furniture fades instead of becoming an opaque camera block.
+- Interaction evidence: the real Rapier-controlled player walked `3.49m`, rotated the camera `65.3°` and retained curved identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions across all `26` zones completed with no failures or runtime errors.
+- Asset evidence: furniture contract v14 contains three authored civic GLBs and `68,710` authored triangles: display case `16,504`, notice console `21,832`, lounge suite `30,374`, all below the shared `95k` asset budget.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v136 P1 / the lounge shelf repeated a uniform fifteen-book grid] The lounge suite now uses nine differently scaled upright books, two horizontal reading stacks, an archive box with lid and label, and a framed witness portrait. Deliberate shelf gaps replace the generated supermarket-row rhythm while preserving one authored asset and the draw-call gate.
+- [improved from v136 P1 / public-room plants repeated the same generic sculpt] The duplicate desktop floor-plant pair was removed. The opening now separates a broad-leaf portal specimen, a rear-right ficus, the lounge asset's trailing plant and small ceramic greenery by silhouette, height and narrative zone; mobile retains a single low-cost depth proxy.
+- [improved from v136 P1 / secondary paper and archive language was too generic] Reading stacks, archive storage, witness portrait, document packet and bookends now tell a civic-record story rather than filling shelves with interchangeable blocks.
+- [fixed during v137 / the first indirect-light pass over-lifted oak and reduced contact hierarchy] Civic light transport v5 rebalances direct key to `1.68`, adds neutral ceiling/rear bounce at `0.28 / 0.17`, sets environment contribution to `0.33`, and keeps GTAO strong enough to ground cabinet feet, citizens and the story circle. Final exposure remains `0.90`.
+- [checked / the denser source-like opening must remain a truthful traversable room] All new details live inside existing authored hero assets or behind wall/furniture footprints. Navigation surfaces, furniture colliders, interaction anchors and actor capsules remain unchanged and authoritative in every heading.
+- [checked / 360° staging does not manufacture a single front-only set] Side and reverse headings retain readable architecture, characters and destination cues. Near furniture becomes translucent, while the door, evidence surfaces and current speaker stay visible.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Place memory, status counters, action rail and interaction prompt remain readable at desktop and portrait sizes. The source still has finer icon drawing, tighter optical spacing and more convincing layered glass.
+- [improved][spacing and layout rhythm] The lounge shelves now alternate upright, stacked, framed and open intervals; the opening has clearer foreground desk, story-circle midground and window/notice-wall background layers. The source remains denser and more naturally irregular across the complete room.
+- [improved][colors and visual tokens] Neutral warm key, cool fill, teal textiles, oak, brass, ivory and coral are more evenly separated. The implementation still has stronger local saturation and less organic colour bleeding than the source.
+- [improved][image quality and asset fidelity] Book, archive, portrait and botanical silhouettes are less repetitive, and v5 light transport restores contact while lifting the room. The source still owns richer joinery, paper thickness, material wear, glass transmission, botanical leaf variation and small-scale craft.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory state and contextual interaction remain coherent; no private-memory content or unsupported public statistics were introduced.
+- [checked][icons and interaction states] Action selection, keyboard movement, camera drag, phone controls, blink, prop contact and atomic room warmup remain functional.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; furniture render transforms and colliders remain aligned; player and NPC capsules cannot stand on or pass through authored props. Mobile retains 44px+ controls, no horizontal overflow and the strict render budget.
+- [P1][complete production-character craft remains behind] v137 preserves the continuous anatomy and asymmetric stance work, but the source still has subtler garment compression, hand contact, hair clumps, facial planes and character-specific indirect light.
+- [P1][complete-room asset craft remains behind] The most obvious lounge repetition is removed, but source-level bespoke joinery, ceramics, desk objects, plant species, paper edges and lived-in wear are not yet present across every visible wall and foreground surface.
+- [P1][offline-quality light transport remains ahead] Budgeted hemisphere, portal, ceiling and rear-wall bounce improve hierarchy, yet the source retains broader colour bounce, softer penumbrae, richer foliage/glass transmission and more flattering face-to-garment separation.
+- [P2][orbit composition remains uneven] All headings are playable and preserve key cues, but side/reverse views are intentionally quieter and contain translucent foreground geometry during camera avoidance.
+- [P2][HUD optical finish remains behind] Interaction coverage passes, while icon family, compact counter rhythm, translucent depth and button-edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve furniture v14 and light transport v5; do not regress to repeated shelf grids, duplicate generic floor plants or a direct-light-only room.
+- Upgrade the remaining display-case and notice-console paper, ceramic and hardware families with real thickness, back faces, wear masks and source-specific silhouettes.
+- Continue characters through role-specific hair/garment secondary forms and softer face/cloth indirect response.
+- Keep all future detail behind the current `174–178` desktop and `106` mobile draw-call envelope, or recover cost through static batching and LOD before adding it.
+
+### Gate result
+
+v137 removes the most visible procedural repetition, gives the lounge a civic archive narrative, differentiates botanical silhouettes and introduces a deliberately budgeted indirect-light hierarchy while preserving metre-scale physics, real movement, complete 360° camera rotation, responsive controls and release performance. The mandatory same-canvas evidence still contains actionable P1 gaps in source-level complete-room asset craftsmanship, production character nuance and offline-quality indirect transport.
+
+final result: blocked
+
+Blocker: source-level bespoke room-wide secondary assets, production character finish and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v136 continuous upper-arm anatomy and asymmetric stance gate
 
 ### Evidence inspected together
