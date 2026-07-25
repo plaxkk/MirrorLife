@@ -5,12 +5,15 @@ import os
 import sys
 
 import bpy
+from mathutils import Vector
 
 
 PALETTE = {
     "ivory": "#f4ead9",
     "paper": "#f7f0e3",
     "oak": "#9a6240",
+    "oak_light": "#b8794e",
+    "oak_dark": "#75462f",
     "walnut": "#573725",
     "cork": "#c69062",
     "coral": "#df8066",
@@ -18,6 +21,8 @@ PALETTE = {
     "deep_teal": "#286b65",
     "sage": "#6f9a70",
     "leaf": "#477b50",
+    "leaf_light": "#76a768",
+    "leaf_deep": "#285f42",
     "butter": "#efc85d",
     "blue": "#6f9fd1",
     "brass": "#c29a48",
@@ -77,6 +82,8 @@ def materials():
         "ivory": material("Civic plaster ivory", PALETTE["ivory"], 0.94),
         "paper": material("Civic paper", PALETTE["paper"], 0.92),
         "oak": material("Civic oak", PALETTE["oak"], 0.54),
+        "oak_light": material("Civic honey oak", PALETTE["oak_light"], 0.5),
+        "oak_dark": material("Civic smoked oak", PALETTE["oak_dark"], 0.59),
         "walnut": material("Civic walnut", PALETTE["walnut"], 0.66),
         "cork": material("Civic cork", PALETTE["cork"], 0.88),
         "coral": material("Civic coral paint", PALETTE["coral"], 0.7),
@@ -84,6 +91,8 @@ def materials():
         "deep_teal": material("Civic deep teal", PALETTE["deep_teal"], 0.86),
         "sage": material("Civic sage textile", PALETTE["sage"], 0.92),
         "leaf": material("Civic foliage", PALETTE["leaf"], 0.96),
+        "leaf_light": material("Civic young foliage", PALETTE["leaf_light"], 0.94),
+        "leaf_deep": material("Civic deep foliage", PALETTE["leaf_deep"], 0.97),
         "butter": material("Civic butter textile", PALETTE["butter"], 0.9),
         "blue": material("Civic cornflower paper", PALETTE["blue"], 0.86),
         "brass": material("Civic brushed brass", PALETTE["brass"], 0.3, 0.7),
@@ -94,6 +103,11 @@ def materials():
         "ceramic_coral": material("Civic coral glaze", PALETTE["coral"], 0.32),
         "ceramic_blue": material("Civic blue glaze", PALETTE["blue"], 0.3),
         "glass": material("Civic display glass", PALETTE["glass"], 0.18, 0.0, 0.28),
+        # A glass pane's cut edge reads denser than its broad face because the
+        # viewer looks through more material. Keep this rim opaque and narrow
+        # so the runtime can batch it with the furniture while the large pane
+        # retains physical transmission.
+        "glass_edge": material("Civic vitrified rim", "#79a99e", 0.32),
         # Kept microscopically translucent so the runtime preserves it as one
         # dedicated emissive batch instead of flattening it into the opaque
         # vertex-colour furniture batch.
@@ -150,7 +164,18 @@ def apply_modifiers(obj):
     obj.select_set(False)
 
 
-def sculpted_cushion(name, size, location, mat, parent, radius=0.08, rotation=(0, 0, 0), segments=5):
+def sculpted_cushion(
+    name,
+    size,
+    location,
+    mat,
+    parent,
+    radius=0.08,
+    rotation=(0, 0, 0),
+    segments=5,
+    compression=0.1,
+    compression_bias=0.0,
+):
     """Create an upholstered volume with compression and a soft centre bulge.
 
     A rounded cube keeps believable furniture edges but remains mechanically
@@ -184,6 +209,15 @@ def sculpted_cushion(name, size, location, mat, parent, radius=0.08, rotation=(0
         if z > 0:
             top_sag = max(0.0, 1.0 - nx * nx) * max(0.0, 1.0 - ny * ny)
             vertex.co.z -= half_z * 0.055 * top_sag
+            # Build the sit/contact impression into the cushion silhouette.
+            # A shallow off-centre Gaussian trough reads as occupied fabric
+            # from any orbit angle and avoids a pristine rounded-cube finish.
+            normalized_bias = max(-0.55, min(0.55, compression_bias))
+            contact_x = (x / half_x) - normalized_bias
+            contact_y = (y / half_y) + 0.08
+            contact = math.exp(-(contact_x * contact_x * 2.7 + contact_y * contact_y * 3.6))
+            vertex.co.z -= half_z * max(0.0, compression) * contact
+            vertex.co.x += half_x * 0.018 * normalized_bias * contact
         # Pull the corners gently toward their seams. The broad face stays
         # generous while the perimeter reads as fabric under tension.
         vertex.co.x *= 1.0 - 0.024 * nz * nz
@@ -206,6 +240,25 @@ def cylinder(name, radius, depth, location, mat, parent, vertices=20, rotation=(
     obj.location = location
     obj.rotation_euler = rotation
     return link(obj, mat)
+
+
+def cylinder_between(name, start, end, radius, mat, parent, vertices=10, radius_top=None):
+    start_vector = Vector(start)
+    end_vector = Vector(end)
+    direction = end_vector - start_vector
+    midpoint = (start_vector + end_vector) * 0.5
+    obj = cylinder(
+        name,
+        radius,
+        max(0.001, direction.length),
+        tuple(midpoint),
+        mat,
+        parent,
+        vertices,
+        radius_top=radius if radius_top is None else radius_top,
+    )
+    obj.rotation_euler = direction.to_track_quat("Z", "Y").to_euler()
+    return obj
 
 
 def sphere(name, scale, location, mat, parent, segments=18, rings=12, rotation=(0, 0, 0)):
@@ -290,18 +343,80 @@ def add_book(parent, mats, name, location, size=(0.18, 0.05, 0.26), color="blue"
     )
 
 
-def add_plant(parent, mats, name, location, scale=1.0):
+def add_plant(parent, mats, name, location, scale=1.0, variety="upright"):
+    """Author recognisable botanical silhouettes instead of one repeated tuft."""
+    x0, y0, z0 = location
     cylinder(f"{name}_pot", 0.14 * scale, 0.22 * scale, location, mats["ceramic"], parent, 18, radius_top=0.17 * scale)
-    for index, angle in enumerate((-1.0, -0.48, 0.05, 0.55, 1.06)):
+    torus(f"{name}_pot_rim", 0.15 * scale, 0.018 * scale, (x0, y0, z0 + 0.11 * scale), mats["oak_light"], parent, major_segments=20, minor_segments=6)
+    cylinder(f"{name}_soil", 0.135 * scale, 0.018 * scale, (x0, y0, z0 + 0.116 * scale), mats["walnut"], parent, 18)
+
+    if variety == "trailing":
+        # A shelf plant with three real hanging vines. Its downward rhythm is
+        # deliberately distinct from the upright witness-console plant.
+        vines = (
+            (-0.09, -0.02, 0.31, -0.17, -0.04, -0.17),
+            (0.02, -0.06, 0.34, 0.06, -0.09, -0.23),
+            (0.1, 0.01, 0.29, 0.18, -0.02, -0.12),
+        )
+        for vine_index, (sx, sy, sz, ex, ey, ez) in enumerate(vines):
+            start = (x0 + sx * scale, y0 + sy * scale, z0 + sz * scale)
+            end = (x0 + ex * scale, y0 + ey * scale, z0 + ez * scale)
+            cylinder_between(f"{name}_vine_{vine_index + 1}", start, end, 0.009 * scale, mats["leaf_deep"], parent, 7)
+            for leaf_index, t in enumerate((0.18, 0.42, 0.68, 0.9)):
+                px = start[0] + (end[0] - start[0]) * t
+                py = start[1] + (end[1] - start[1]) * t
+                pz = start[2] + (end[2] - start[2]) * t
+                side = -1 if (leaf_index + vine_index) % 2 else 1
+                leaf = sphere(
+                    f"{name}_leaf_{vine_index + 1}_{leaf_index + 1}",
+                    (0.055 * scale, 0.021 * scale, 0.085 * scale),
+                    (px + side * 0.035 * scale, py - 0.006 * scale, pz),
+                    mats["leaf_light"] if leaf_index % 3 == 0 else mats["leaf"],
+                    parent,
+                    12,
+                    7,
+                    (0.2, side * 0.48, side * 0.65),
+                )
+                leaf["semantic_part"] = "foliage"
+        for crown_index, angle in enumerate((-0.9, -0.3, 0.32, 0.88)):
+            leaf = sphere(
+                f"{name}_crown_leaf_{crown_index + 1}",
+                (0.072 * scale, 0.028 * scale, 0.14 * scale),
+                (x0 + math.sin(angle) * 0.1 * scale, y0, z0 + 0.24 * scale + math.cos(angle) * 0.08 * scale),
+                mats["leaf_light"] if crown_index % 2 else mats["leaf"],
+                parent,
+                12,
+                8,
+                (0.18, angle * 0.3, -angle * 0.62),
+            )
+            leaf["semantic_part"] = "foliage"
+        return
+
+    leaf_specs = (
+        (-0.18, 0.03, 0.32, 0.16, 0.09, 0.52),
+        (0.14, -0.02, 0.34, -0.13, 0.02, 0.56),
+        (-0.08, 0.04, 0.44, 0.05, -0.02, 0.66),
+        (0.2, 0.03, 0.48, -0.08, 0.05, 0.71),
+        (-0.22, -0.01, 0.5, 0.12, -0.04, 0.74),
+        (0.06, 0.01, 0.58, -0.03, 0.02, 0.82),
+        (0.0, 0.0, 0.68, 0.0, 0.0, 0.91),
+    )
+    base = (x0, y0, z0 + 0.11 * scale)
+    for index, (dx, dy, dz, tx, ty, tz) in enumerate(leaf_specs):
+        shoulder = (x0 + dx * scale, y0 + dy * scale, z0 + dz * scale)
+        tip = (x0 + tx * scale, y0 + ty * scale, z0 + tz * scale)
+        cylinder_between(f"{name}_stem_{index + 1}", base, shoulder, 0.009 * scale, mats["leaf_deep"], parent, 7, 0.006 * scale)
+        cylinder_between(f"{name}_petiole_{index + 1}", shoulder, tip, 0.006 * scale, mats["leaf_deep"], parent, 7, 0.004 * scale)
+        direction_x = tx - dx
         leaf = sphere(
             f"{name}_leaf_{index + 1}",
-            (0.075 * scale, 0.032 * scale, 0.22 * scale),
-            (location[0] + math.sin(angle) * 0.12 * scale, location[1] - 0.015 * scale, location[2] + 0.23 * scale + math.cos(angle) * 0.13 * scale),
-            mats["leaf"] if index % 2 else mats["sage"],
+            (0.09 * scale, 0.026 * scale, (0.18 + (index % 3) * 0.018) * scale),
+            tip,
+            mats[("leaf", "leaf_light", "leaf_deep")[index % 3]],
             parent,
             14,
-            9,
-            (0.15, angle * 0.28, -angle * 0.42),
+            8,
+            (0.13 + (index % 2) * 0.08, direction_x * 1.2, -direction_x * 0.9),
         )
         leaf["semantic_part"] = "foliage"
 
@@ -319,7 +434,7 @@ def build_display_case(mats):
     root = empty("CivicDisplayCase")
     root["asset"] = "civic-display-case"
     # Low cabinet with real joinery, inset doors and a brass toe rail.
-    rounded_box("DisplayOakBase", (1.86, 0.65, 0.7), (0, 0, 0.38), mats["oak"], root, 0.1, segments=5)
+    rounded_box("DisplayOakBase", (1.86, 0.65, 0.7), (0, 0, 0.38), mats["oak_light"], root, 0.1, segments=5)
     rounded_box("DisplayWalnutPlinth", (1.96, 0.12, 0.78), (0, 0, 0.73), mats["walnut"], root, 0.045)
     for side in (-1, 1):
         rounded_box(f"DisplayInset_{side}", (0.68, 0.035, 0.37), (side * 0.41, -0.357, 0.38), mats["deep_teal"], root, 0.045)
@@ -330,14 +445,14 @@ def build_display_case(mats):
                 f"DisplayDoorRail_{side}_{rail_z}",
                 (0.74, 0.045, 0.055),
                 (side * 0.41, -0.382, rail_z),
-                mats["walnut"], root, 0.014, segments=2,
+                mats["oak_dark"], root, 0.014, segments=2,
             )
         for stile_x in (side * 0.75, side * 0.07):
             rounded_box(
                 f"DisplayDoorStile_{side}_{stile_x}",
                 (0.055, 0.045, 0.42),
                 (stile_x, -0.382, 0.38),
-                mats["walnut"], root, 0.014, segments=2,
+                mats["oak_dark"], root, 0.014, segments=2,
             )
         cylinder(f"DisplayKnob_{side}", 0.035, 0.045, (side * 0.12, -0.392, 0.39), mats["brass"], root, 14, (math.pi / 2, 0, 0))
         rounded_box(
@@ -370,6 +485,18 @@ def build_display_case(mats):
         "DisplayFrontGlass", (1.68, 0.026, 0.58), (0, -0.345, 1.16),
         mats["glass"], root, 0.012, (display_front_tilt, 0, 0),
     )
+    # Real glass edge rails establish pane thickness under side light and stop
+    # the sheet disappearing at 90° without making the whole panel opaque.
+    for x in (-0.835, 0.835):
+        rounded_box(
+            f"DisplayGlassEdgeVertical_{x}", (0.018, 0.041, 0.56), (x, -0.35, 1.16),
+            mats["glass_edge"], root, 0.008, (display_front_tilt, 0, 0), 2,
+        )
+    for z in (0.885, 1.435):
+        rounded_box(
+            f"DisplayGlassEdgeHorizontal_{z}", (1.64, 0.041, 0.018), (0, -0.35, z),
+            mats["glass_edge"], root, 0.008, (display_front_tilt, 0, 0), 2,
+        )
     for x in (-0.28, 0.28):
         rounded_box(
             f"DisplayGlassMullion_{x}", (0.028, 0.034, 0.62), (x, -0.36, 1.16),
@@ -475,7 +602,7 @@ def build_notice_console(mats):
         cylinder(f"NoticeConsoleLeg_{x}", 0.055, 0.8, (x, 0.08, 0.45), mats["walnut"], root, 16, radius_top=0.045)
     for index, x in enumerate((-0.64, -0.48, 0.38)):
         add_book(root, mats, f"NoticeBook_{index + 1}", (x, -0.08 + index * 0.015, 1.04 + index * 0.045), (0.28, 0.05, 0.2), ("teal", "paper", "blue")[index], (0, 0, (index - 1) * 0.04))
-    add_plant(root, mats, "NoticePlant", (0.72, 0, 1.05), 0.72)
+    add_plant(root, mats, "NoticePlant", (0.72, 0, 1.05), 0.72, "upright")
     add_ceramic(root, mats, "NoticeWitnessCup", (0.34, -0.08, 1.05), 0.58, "teal")
     cylinder("NoticeBasketCore", 0.33, 0.5, (0, 0.05, 0.3), mats["cork"], root, 24, radius_top=0.38)
     for ring_index in range(7):
@@ -528,6 +655,8 @@ def build_lounge_suite(mats):
             0.125,
             rotation=(0.02, 0, side * 0.012),
             segments=4,
+            compression=0.14,
+            compression_bias=-0.16 * side,
         )
         back = sculpted_cushion(
             f"LoungeBackCushion_{side}",
@@ -538,6 +667,8 @@ def build_lounge_suite(mats):
             0.14,
             rotation=(0.075, 0, side * 0.015),
             segments=4,
+            compression=0.075,
+            compression_bias=0.12 * side,
         )
         # Shallow inset seams catch the warm side light and stop the two large
         # upholstered planes from reading as featureless rounded boxes.
@@ -607,6 +738,7 @@ def build_lounge_suite(mats):
     # A casually folded throw adds a soft foreground overlap and breaks the
     # perfect bilateral sofa silhouette without widening its collider.
     rounded_box("LoungeThrowFold", (0.54, 0.12, 0.18), (0.72, -0.26, 0.67), mats["paper"], root, 0.06, (0.03, 0.12, -0.08), 5)
+    rounded_box("LoungeThrowDrape", (0.48, 0.07, 0.34), (0.78, -0.335, 0.52), mats["paper"], root, 0.055, (0.08, 0.12, -0.07), 5)
     for stripe_index, stripe_x in enumerate((-0.16, 0.0, 0.16)):
         rounded_box(
             f"LoungeThrowStripe_{stripe_index + 1}",
@@ -655,7 +787,7 @@ def build_lounge_suite(mats):
             (2.12 if row % 2 else 1.3, -0.17, 0.36 + row * 0.46),
             mats["brass"] if row == 1 else mats["walnut"], root, 12,
         )
-    add_plant(root, mats, "LoungeShelfPlant", (1.74, 0, 1.67), 0.72)
+    add_plant(root, mats, "LoungeShelfPlant", (1.74, 0, 1.67), 0.72, "trailing")
     add_ceramic(root, mats, "LoungeShelfVase", (2.0, 0.02, 1.71), 0.62, "butter")
     return root
 
@@ -718,7 +850,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v10",
+        "contract": "mirrorlife-civic-hero-props-v11",
         "worldUnitMeters": 1,
         "assets": {},
     }

@@ -16,8 +16,8 @@ const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBli
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v67";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
-const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
-const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v2";
+const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
+const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v3";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
 const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v3";
 const CIVIC_HERO_PROP_TYPES = new Set([
@@ -757,14 +757,14 @@ function upgradeModelMaterials(source, type = "") {
         // opaque mint panel and hid the pastries, labels and shelf depth.
         next.color.lerp(new THREE.Color("#f3fbf7"), 0.52);
         next.transparent = true;
-        next.opacity = Math.min(0.24, Number(material.opacity ?? 0.28));
+        next.opacity = Math.min(0.2, Number(material.opacity ?? 0.28));
         next.depthWrite = false;
-        next.roughness = 0.16;
+        next.roughness = 0.12;
         next.metalness = 0;
-        next.transmission = 0.34;
-        next.thickness = 0.025;
+        next.transmission = 0.52;
+        next.thickness = 0.055;
         next.ior = 1.45;
-        next.envMapIntensity = 1.12;
+        next.envMapIntensity = 1.22;
       }
       next.emissive?.set?.(0x000000);
       next.emissiveIntensity = 0;
@@ -840,7 +840,12 @@ function prepareRuntimeModel(type, source) {
     roughness: 0.72,
     envMapIntensity: 0.76
   });
-  return prepareModel(type, source, { materialsUpgraded: true });
+  // The opaque suite above is one scanned-surface batch, but transmitted
+  // glass and concealed illumination intentionally stay outside it. Collapse
+  // those compatible transparent parts per asset as a second pass so adding
+  // real pane edges and shelf lighting does not spend one draw call per rail.
+  const runtimeBatchedSource = mergeSemanticModelMeshes(source);
+  return prepareModel(type, runtimeBatchedSource, { materialsUpgraded: true });
 }
 
 function modelMaterialKey(material, geometry) {
@@ -1065,7 +1070,7 @@ function loadModel(type) {
   };
   const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
-    const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v10" : "";
+    const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v11" : "";
     const assetRevision = ASSET_REVISION || authoredAssetRevision;
     const assetUrl = `${ASSET_BASE}${type}.glb${assetRevision ? `?v=${encodeURIComponent(assetRevision)}` : ""}`;
     loader.load(

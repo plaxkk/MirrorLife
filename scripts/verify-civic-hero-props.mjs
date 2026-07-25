@@ -5,8 +5,8 @@ import path from "node:path";
 const ROOT = path.resolve("public/assets/interiors/glb");
 const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "civic-hero-props-manifest.json"), "utf8"));
 const expectations = {
-  "civic-display-case": ["DisplayFrontGlass", "DisplayGlassMullion_-0.28", "DisplayIlluminationTop", "DisplayIlluminationShelf", "DisplayObject_1_Glaze", "DisplayObject_1_Garnish", "DisplayUpperTray_1", "DisplayArchiveToken_1", "DisplayFoldedEvidence_1", "DisplayMenuFrame", "DisplayMenuTitle", "DisplayStoryCard", "DisplayTopVase", "DisplayDoorRail_-1_0.19", "DisplayKnobBackplate_1", "DisplayShelfOakLip"],
-  "civic-notice-console": ["NoticeFrame", "NoticeTitleText", "NoticeConsoleTop", "NoticeDrawer_-1", "NoticeLampShade_1", "NoticeWitnessCup_body", "NoticeBasketCore", "NoticeBasketLiner"],
+  "civic-display-case": ["DisplayFrontGlass", "DisplayGlassEdgeVertical_-0.835", "DisplayGlassMullion_-0.28", "DisplayIlluminationTop", "DisplayIlluminationShelf", "DisplayObject_1_Glaze", "DisplayObject_1_Garnish", "DisplayUpperTray_1", "DisplayArchiveToken_1", "DisplayFoldedEvidence_1", "DisplayMenuFrame", "DisplayMenuTitle", "DisplayStoryCard", "DisplayTopVase", "DisplayDoorRail_-1_0.19", "DisplayKnobBackplate_1", "DisplayShelfOakLip"],
+  "civic-notice-console": ["NoticeFrame", "NoticeTitleText", "NoticeConsoleTop", "NoticeDrawer_-1", "NoticeLampShade_1", "NoticeWitnessCup_body", "NoticeBasketCore", "NoticeBasketLiner", "NoticePlant_stem_1", "NoticePlant_pot_rim"],
   "civic-lounge-suite": [
     "LoungeSofaBack",
     "LoungeSofaFrontRail",
@@ -14,7 +14,9 @@ const expectations = {
     "LoungeSeatPiping_1",
     "LoungePillowButterBand_1",
     "LoungeThrowFold",
+    "LoungeThrowDrape",
     "LoungeShelfPlant_pot",
+    "LoungeShelfPlant_vine_1",
     "LoungeSeatSideBoxing_1",
     "LoungeBookcaseCrown",
     "LoungeShelfLip_1",
@@ -22,7 +24,7 @@ const expectations = {
   ]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v10");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v11");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 
@@ -33,7 +35,7 @@ for (const [assetId, requiredParts] of Object.entries(expectations)) {
   // Blender source-part count may grow as upholstery rails, piping and book
   // details become independently editable. The runtime still batches opaque
   // compatible meshes; triangles and live draw calls remain the release gate.
-  assert(Number(entry.meshes) >= 18 && Number(entry.meshes) <= 150, `${assetId}: authored mesh count outside budget`);
+  assert(Number(entry.meshes) >= 18 && Number(entry.meshes) <= 160, `${assetId}: authored mesh count outside budget`);
   assert(Number(entry.triangles) >= 2500 && Number(entry.triangles) <= 60000, `${assetId}: triangle count outside budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);

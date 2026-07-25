@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v120 civic material-construction gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v120-final-desktop-yaw0.png` (`1672 × 941`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas source/implementation comparison: `tmp/reference-vs-v120-final-full.png`; both frames use the same output size, equivalent social state and complete uncropped room composition.
+- Full 3D and responsive evidence: `tmp/v120-final-desktop-yaw90.png`, `tmp/v120-final-desktop-yaw180.png`, `tmp/v120-final-mobile-390x844.png` and the consolidated `tmp/v120-orbit-and-mobile-board.png`.
+- Runtime evidence: opening desktop `163 / 278,664`, side `166 / 289,772`, reverse `167 / 330,496`; mobile `103 / 241,168`. Every view remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets. The three authored civic hero assets contain `59,592` source triangles.
+- Interaction evidence: the exploration regression moved the player `3.17m`, rotated the physical camera `65.3°`, retained the curved identity-surface blink and completed desktop/mobile scene flow. The transition stress run completed `26` zones and `78` transitions with zero failures or runtime errors.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v119 P1 / both tabletop plants repeated one generic five-leaf tuft] Hero-prop contract v11 gives the notice console a seven-stem upright botanical construction and the lounge shelf a separate crown plus three hanging vines. Pots now include soil and a fired-rim transition. The forms are real GLB geometry and remain species-distinct through side/reverse orbit.
+- [improved / upholstery still read as pristine rounded boxes] Sofa seats and backs now carry different off-centre compression fields; the folded throw gains a real vertical drape. Existing piping, boxing, tufts and pillow pattern geometry remain attached, so the suite reads as assembled upholstery rather than one teal plastic volume.
+- [improved / the display case lost its pane thickness and timber hierarchy at side angles] The front glazing gains dense cut-edge rails while the physical face uses higher transmission, lower roughness and greater optical thickness. Honey-oak carcass, smoked-oak door joinery, walnut structure and brass mullions preserve a four-level furniture hierarchy without adding a screen-space trick.
+- [fixed / duplicated transparent display shelf existed in the authored source] The accidental overlapping shelf is removed before regeneration; labels and evidence objects remain readable through the single transmitted pane.
+- [checked / upgraded detail remains inside the authoritative physical world] Furniture transforms, colliders, interaction anchors, metre scale and navigation remain unchanged. Visual and physical placement still share the same `ZoneLayoutProfile`; no new leaf, pane or textile detail creates a false walkable surface.
+- [checked / transition and performance contracts remain intact] Hero-prop v11 and surface v3 are asserted after the atomic ready state. Assets, full build, 26-zone physics, movement/orbit, desktop/mobile scene flow and transition stress all pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese top HUD, location label, testimony state and bottom action rail remain stable at exact desktop size and in `390 × 844` portrait.
+- [improved][spacing and layout rhythm] Material hierarchy strengthens the intended portal–testimony–lounge triangle without changing the clear central circulation or four-person social staging.
+- [improved][colors and visual tokens] Warm ivory remains dominant; honey oak, smoked oak, walnut and brass now separate structural depth while teal/coral/green stay reserved for furniture identity, actors and interaction.
+- [improved][image quality and asset fidelity] New stems, vines, pane edges, cushion compression and throw drape are authored, lit, orbit-safe 3D geometry. No sprite, billboard, CSS/SVG drawing or screenshot projection substitutes for the environment assets.
+- [checked][copy and content] “倾听线索”, “倾听墙”, the current-speaker marker and the four civic actions remain coherent with the visible public testimony.
+- [P1][production character skinning and contact remain visibly behind the source] The combined comparison still exposes simpler clavicle/upper-arm deformation, hand articulation, notebook grip and weight transfer.
+- [P1][room-wide asset construction remains below the source] The three hero suites improve, but surrounding procedural shelving, secondary decor, timber profiles and document variation still lack the target's production-level irregularity and craftsmanship.
+- [P1][offline global illumination remains visibly ahead] The source retains softer multi-bounce penumbrae, richer contact colour, subtler glass reflections and more natural skin/cloth light transport.
+- [P2][HUD optical finish remains behind] Responsive coverage and hierarchy pass; icons, glass-panel depth, micro-spacing and the compact location treatment still read more functional than cinematic.
+
+### Gate result
+
+v120 closes a meaningful part of the previous environment-finish blocker with real botanical species, compressed upholstery, layered timber and optically legible glazing that survive movement and full orbit. The exact-size source comparison still contains actionable P1 gaps in production skinning/contact, secondary room-asset craftsmanship and offline-quality indirect light.
+
+final result: blocked
+
+Blocker: source-level character deformation/contact, room-wide bespoke asset finish and offline-quality global illumination remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v119 load-bearing character-construction gate
 
 ### Evidence inspected together
