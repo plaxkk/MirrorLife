@@ -907,7 +907,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v8"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v9"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -917,10 +917,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             # collapsing into a peg when the hand turns edge-on.
             (0.5, 0.043, 0.031, 0, 0.002),
             (0.36, 0.049, 0.034, -side * 0.001, 0.001),
-            (0.22, 0.055, 0.037, -side * 0.002, 0),
-            (0.02, 0.062, 0.04, -side * 0.004, -0.003),
-            (-0.26, 0.059, 0.038, -side * 0.004, -0.006),
-            (-0.5, 0.052, 0.032, 0, -0.005),
+            (0.22, 0.054, 0.037, -side * 0.002, 0),
+            (0.02, 0.059, 0.04, -side * 0.004, -0.003),
+            (-0.26, 0.057, 0.037, -side * 0.004, -0.006),
+            (-0.5, 0.049, 0.031, 0, -0.005),
         ),
         (0, 0, 0),
         mat,
@@ -931,9 +931,9 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         sides=16,
     )
     pose_profiles = {
-        "relaxed": {"curl": (0.31, 0.36, 0.4, 0.45), "splay": 1.0, "thumb": 0.34},
-        "open": {"curl": (0.08, 0.1, 0.13, 0.17), "splay": 1.28, "thumb": 0.18},
-        "soft-cup": {"curl": (0.42, 0.52, 0.6, 0.67), "splay": 0.72, "thumb": 0.5},
+        "relaxed": {"curl": (0.29, 0.34, 0.39, 0.45), "splay": 1.12, "thumb": 0.34},
+        "open": {"curl": (0.07, 0.09, 0.12, 0.17), "splay": 1.42, "thumb": 0.18},
+        "soft-cup": {"curl": (0.4, 0.5, 0.59, 0.67), "splay": 0.82, "thumb": 0.5},
         # The notebook hand now has a supporting palm and a separate guiding
         # hand instead of mirroring one generic fist on both wrists.
         "notebook-support": {"curl": (0.72, 0.82, 0.9, 0.95), "splay": 0.3, "thumb": 0.9},
@@ -944,15 +944,15 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     finger_specs = (
         # x, length, radius, lateral splay and fingertip curl.  A small
         # fan-and-curl silhouette reads as a relaxed hand instead of four
-        # parallel dowels while keeping the same four-ring finger topology.
+        # parallel dowels while keeping one compact merged finger topology.
         # Keep the four real digits, but overlap their root silhouettes like
         # the reference's soft illustrated hands. The earlier 26 mm spacing
         # and 16 mm radii resolved as four separate wires at the story camera;
         # these fuller, closer roots read as one palm with finger articulation.
-        (-0.03, 0.047, 0.0182, -side * 0.0014, 0.005),
-        (-0.01, 0.057, 0.0194, -side * 0.0005, 0.007),
-        (0.01, 0.053, 0.0192, side * 0.0005, 0.007),
-        (0.03, 0.043, 0.0177, side * 0.0015, 0.005),
+        (-0.033, 0.055, 0.0164, -side * 0.0018, 0.006),
+        (-0.011, 0.065, 0.0176, -side * 0.0006, 0.008),
+        (0.011, 0.061, 0.0173, side * 0.0006, 0.008),
+        (0.033, 0.05, 0.0158, side * 0.0019, 0.006),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         finger_pivot = empty(
@@ -974,16 +974,19 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             finger_length,
             (
                 (0.5, finger_radius, finger_radius * 0.84),
-                (0.12, finger_radius * 1.03, finger_radius * 0.88, splay * 0.18, curl * 0.08),
-                (-0.28, finger_radius * 0.92, finger_radius * 0.79, splay * 0.48, curl * 0.38),
-                (-0.5, finger_radius * 0.52, finger_radius * 0.48, splay * 0.78, curl * 0.8),
+                (0.22, finger_radius * 1.04, finger_radius * 0.9, splay * 0.12, curl * 0.05),
+                (-0.05, finger_radius * 0.98, finger_radius * 0.84, splay * 0.32, curl * 0.22),
+                (-0.31, finger_radius * 0.84, finger_radius * 0.72, splay * 0.58, curl * 0.52),
+                (-0.5, finger_radius * 0.5, finger_radius * 0.46, splay * 0.82, curl * 0.92),
             ),
             (0, 0, -finger_length / 2),
             mat,
             finger_pivot,
-            # Eight sides keep the fuller fingertip silhouette smooth in the
-            # tighter social camera while remaining negligible in the budget.
-            sides=8,
+            # Ten sides and a five-ring profile retain distinct knuckles and a
+            # tapered pad after the four digits are merged into the animated
+            # hand batch. This is still far cheaper than four runtime finger
+            # draw calls, but no longer resolves as one round mitten.
+            sides=10,
         )
     # A tapered, two-joint thumb shares the palm volume and follows the same
     # relaxed curl.  Replacing the former isolated ellipsoid fixes the
@@ -3088,19 +3091,21 @@ def build_costume(
             rounded_box("NotebookSpine", (0.023, 0.048, 0.225), (-0.083, 0, 0), mats["notebook_cover"], notebook, radius=0.007)
             rounded_box("NotebookElastic", (0.016, 0.013, 0.218), (0.066, -0.029, 0), mats["metal"], notebook, radius=0.005)
             cylinder("NotebookPencil", 0.006, 0.004, 0.19, (-0.062, -0.031, 0.008), mats["accent"], notebook, vertices=10, rotation=(0, 0, 0.03))
-            # A visible thumb pad is authored in the same local frame as the
-            # notebook. It bridges the final millimetres between the animated
-            # articulated hand and cover instead of leaving the prop floating
-            # whenever the elbow blend is between listen/gesture poses.
-            ellipsoid(
+            # A curved thumb now wraps from the book edge onto the cover. The
+            # former ellipsoid looked like an orange sticker and could not
+            # communicate which side of the prop carried the grip.
+            curve_tube(
                 "NotebookGripContact",
-                (0.074, -0.043, 0.027),
-                (0.022, 0.016, 0.046),
+                [
+                    (0.091, 0.012, 0.014),
+                    (0.083, -0.031, 0.025),
+                    (0.058, -0.046, 0.048),
+                ],
+                0.011,
                 mats["skin"],
                 notebook,
-                rotation=(0.05, 0.1, -0.08),
-                segments=16,
-                rings=10,
+                resolution=2,
+                bevel_resolution=1,
             )
             # A shallow palm ledge links the two compressed fingertip pads.
             # It is deliberately skin-coloured and sits behind the cover edge,
@@ -3116,21 +3121,40 @@ def build_costume(
                 rotation=(0.05, 0, -0.035),
                 segments=2,
             )
-            notebook["contact_contract"] = "mirrorlife-civic-notebook-contact-v2"
-            # A second compressed fingertip pad sits on the opposite cover
-            # edge. Together with the independently animated guiding hand this
-            # maintains a readable two-hand contact silhouette through listen
-            # and gesture blends instead of leaving the notebook suspended.
-            ellipsoid(
+            # Three compact support fingers curl around the lower cover edge.
+            # They share the notebook pivot, so their front/back relationship
+            # remains correct throughout the elbow animation and through a
+            # full camera orbit.
+            for contact_index, contact_x in enumerate((-0.041, -0.006, 0.029), start=1):
+                curve_tube(
+                    f"NotebookSupportFinger_{contact_index}",
+                    [
+                        (contact_x, 0.014, -0.118),
+                        (contact_x + 0.002, -0.026, -0.116),
+                        (contact_x + 0.004, -0.033, -0.108),
+                    ],
+                    0.0068,
+                    mats["skin"],
+                    notebook,
+                    resolution=2,
+                    bevel_resolution=1,
+                )
+            # The guiding index finger wraps around the opposite long edge
+            # instead of appearing as a second unrelated fingertip decal.
+            curve_tube(
                 "NotebookGuideContact",
-                (-0.069, -0.043, -0.018),
-                (0.021, 0.015, 0.041),
+                [
+                    (-0.095, 0.011, -0.046),
+                    (-0.087, -0.029, -0.038),
+                    (-0.082, -0.033, -0.024),
+                ],
+                0.008,
                 mats["skin"],
                 notebook,
-                rotation=(-0.04, -0.12, 0.11),
-                segments=16,
-                rings=10,
+                resolution=2,
+                bevel_resolution=1,
             )
+            notebook["contact_contract"] = "mirrorlife-civic-notebook-contact-v3"
         else:
             # A fitted sash and offset knot make the mediator readable as a
             # distinct civic role even when her face is in profile.
@@ -3260,7 +3284,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v69",
+        "sculptContract": "mirrorlife-civic-sculpt-v70",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v4",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3348,14 +3372,14 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v8",
+            "version": "mirrorlife-civic-hand-v9",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
-            "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
+            "surfaceParts": ["PalmLifeLine", "PalmHeartLine", "five-ring-tapered-digits"],
         },
         "notebookContactContract": {
-            "version": "mirrorlife-civic-notebook-contact-v2",
-            "parts": ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport"],
+            "version": "mirrorlife-civic-notebook-contact-v3",
+            "parts": ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport", "NotebookSupportFinger"],
             "parent": "NotebookPivot",
         },
         "footwearContract": {
@@ -3364,8 +3388,8 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v16",
-            "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
+            "version": "mirrorlife-civic-clips-v17",
+            "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
         "worldUnitMeters": 1,

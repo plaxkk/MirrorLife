@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v69",
+  "sculptContract": "mirrorlife-civic-sculpt-v70",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v4",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -154,7 +154,7 @@
     ]
   },
   "handContract": {
-    "version": "mirrorlife-civic-hand-v8",
+    "version": "mirrorlife-civic-hand-v9",
     "pivots": [
       "Hand_-1",
       "Hand_1"
@@ -169,15 +169,17 @@
     ],
     "surfaceParts": [
       "PalmLifeLine",
-      "PalmHeartLine"
+      "PalmHeartLine",
+      "five-ring-tapered-digits"
     ]
   },
   "notebookContactContract": {
-    "version": "mirrorlife-civic-notebook-contact-v2",
+    "version": "mirrorlife-civic-notebook-contact-v3",
     "parts": [
       "NotebookGripContact",
       "NotebookGuideContact",
-      "NotebookPalmSupport"
+      "NotebookPalmSupport",
+      "NotebookSupportFinger"
     ],
     "parent": "NotebookPivot"
   },
@@ -198,8 +200,8 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v16",
-    "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
+    "version": "mirrorlife-civic-clips-v17",
+    "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
     "clips": [
       "idle",
       "walk",
@@ -217,25 +219,25 @@
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
       "meshes": 131,
-      "triangles": 39764
+      "triangles": 40796
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
       "meshes": 117,
-      "triangles": 37224
+      "triangles": 38256
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 147,
-      "triangles": 44092
+      "meshes": 145,
+      "triangles": 44548
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
       "meshes": 159,
-      "triangles": 42752
+      "triangles": 43784
     }
   }
 }

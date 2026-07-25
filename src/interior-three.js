@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v69";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v70";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
@@ -7232,7 +7232,11 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         "#include <opaque_fragment>",
         `#include <opaque_fragment>
       float mirrorLifeViewWrap = 1.0 - clamp(abs(dot(normalize(normal), normalize(vViewPosition))), 0.0, 1.0);
-      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 5.1);
+      // The reference cast keeps a restrained warm illustrated contour at
+      // the silhouette and around foreshortened hands. Widen the existing
+      // physically derived grazing-angle band instead of adding an inverted
+      // hull, which would double actor triangles and break the phone budget.
+      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 4.15);
       float mirrorLifeClothMask = vMirrorLifeClothMask;
       float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
       float mirrorLifeSkinWrap = pow(mirrorLifeViewWrap, 1.72) * vMirrorLifeSkinMask;
@@ -7265,7 +7269,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeSurfacePosition.y * 3.1
         - vMirrorLifeSurfacePosition.x * 2.4
       ) * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.105, 0.085, 0.105), mirrorLifeInkRim * 0.07);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.12, 0.088, 0.105), mirrorLifeInkRim * 0.12);
       gl_FragColor.rgb += vec3(0.058, 0.047, 0.035) * mirrorLifeClothSheen * 0.24;
       gl_FragColor.rgb *= 1.0
         + mirrorLifeWeave * 0.01
@@ -7299,7 +7303,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v14-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v15-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
@@ -8114,6 +8118,7 @@ function updateCivicAnimation(entry, actor, now, walking, running) {
     ? normalizedWalkPhase(actor.walkPhase)
     : ((now - runtime.startedAt) / 1000 / clip.duration)
       + (["idle", "listen"].includes(runtime.state) ? (seed % 83) / 83 : 0);
+  runtime.normalizedTime = normalizedTime;
   const targetPose = sampleCivicAnimationPose(runtime.state, normalizedTime, entry.assetRole);
   const transitionAlpha = runtime.transitionMs > 0
     ? THREE.MathUtils.clamp((now - runtime.startedAt) / runtime.transitionMs, 0, 1)
@@ -8684,7 +8689,7 @@ function createCivicActorObject(actor, asset) {
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v4",
     garmentMaterialVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentMaterial || "mirrorlife-civic-garment-material-v1",
-    styleKey: `${frame}:${role}:civic-glb-v23`,
+    styleKey: `${frame}:${role}:civic-glb-v24`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -8705,7 +8710,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v23` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v24` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -9877,6 +9882,7 @@ function getStats() {
         version: entry.animation.version,
         state: entry.animation.state,
         transitioning: !!entry.animation.fromPose,
+        normalizedTime: Number((entry.animation.normalizedTime || 0).toFixed(4)),
         rootY: Number((entry.animation.currentPose?.rootY || 0).toFixed(4)),
         leftLegX: Number((entry.leftLeg?.rotation.x || 0).toFixed(4)),
         rightLegX: Number((entry.rightLeg?.rotation.x || 0).toFixed(4)),
@@ -9927,7 +9933,7 @@ function getStats() {
         ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v8",
+        version: "mirrorlife-civic-hand-v9",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,

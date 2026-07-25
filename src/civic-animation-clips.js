@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v16";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v17";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -289,16 +289,14 @@ const ROLE_OFFSETS = Object.freeze({
       leftLeg: v(0, -0.035, 0.035), rightLeg: v(0, 0.042, -0.025), leftKnee: v(0.055)
     }),
     gesture: pose(0, {
-      // The mediator answers with one measured palm while the other hand
-      // remains below the sternum. The earlier thoughtful-hand offset added
-      // to the already folded generic gesture and carried the right palm
-      // directly across the mouth at the key pose, obscuring the face and
-      // reading like a moustache in the story camera. The open left hand now
-      // owns the statement while the right arm stays visibly relaxed.
+      // Keep the thoughtful right hand close to the jaw while the left palm
+      // opens into the circle. The v16 offset relaxed both elbows over the
+      // generic gesture and left two hands hovering at waist height instead
+      // of the reference's readable speaker/listener silhouette.
       visual: v(0.012, 0, 0.035), headGroup: v(-0.022, 0.035, 0.038),
-      leftArm: v(0.16, 0, 0.08), rightArm: v(0.22, 0, -0.1),
-      leftElbow: v(0.32, 0, 0.08), rightElbow: v(0.42, 0, -0.08),
-      leftHand: v(-0.1, 0.1, 0.18), rightHand: v(0.08, -0.06, -0.12),
+      leftArm: v(0.18, 0, 0.1), rightArm: v(0.34, 0, 0.14),
+      leftElbow: v(0.34, 0, 0.1), rightElbow: v(-0.3, 0, 0.16),
+      leftHand: v(-0.12, 0.11, 0.2), rightHand: v(0.24, -0.12, 0.18),
       leftLeg: v(0, -0.04, 0.04), rightLeg: v(0, 0.046, -0.03), leftKnee: v(0.06)
     })
   },

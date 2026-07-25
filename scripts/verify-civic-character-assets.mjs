@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v69", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v70", "civic character sculpt contract is stale");
 assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v4", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
@@ -111,18 +111,22 @@ assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volu
 assert.equal(manifest.faceDecal?.eyelidDeformationContract, "mirrorlife-civic-eyelid-vertex-v1", "civic eyelid deformation contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v8", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v9", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.deepEqual(
   manifest.handContract?.poseStyles,
   ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
   "civic hand role-specific pose set changed"
 );
-assert.deepEqual(manifest.handContract?.surfaceParts, ["PalmLifeLine", "PalmHeartLine"], "civic hand surface parts changed");
-assert.equal(manifest.notebookContactContract?.version, "mirrorlife-civic-notebook-contact-v2", "civic notebook contact contract is stale");
+assert.deepEqual(
+  manifest.handContract?.surfaceParts,
+  ["PalmLifeLine", "PalmHeartLine", "five-ring-tapered-digits"],
+  "civic hand surface parts changed"
+);
+assert.equal(manifest.notebookContactContract?.version, "mirrorlife-civic-notebook-contact-v3", "civic notebook contact contract is stale");
 assert.deepEqual(
   manifest.notebookContactContract?.parts,
-  ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport"],
+  ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport", "NotebookSupportFinger"],
   "civic notebook contact parts changed"
 );
 assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v4", "civic footwear contract is stale");
@@ -130,7 +134,7 @@ assert.deepEqual(manifest.footwearContract?.styles, ["sneaker", "ankle-boot"], "
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(
   manifest.animationContract?.runtime,
-  "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
+  "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
   "civic animation runtime contract changed"
 );
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -157,6 +161,9 @@ assert.equal(resolveCivicAnimationState({ state: "walking", civicRole: "player" 
 assert.equal(resolveCivicAnimationState({ state: "run", civicRole: "player" }, { walking: true, running: true }), "run");
 assert.equal(resolveCivicAnimationState({ state: "listen", civicRole: "listener" }, { publicRoom: true }), "listen");
 assert.equal(resolveCivicAnimationState({ state: "talking", civicRole: "facilitator" }, { publicRoom: true }), "gesture");
+const mediatorContactPose = sampleCivicAnimationPose("gesture", 0.37, "mediator");
+assert(mediatorContactPose.rightElbow[0] < -1.35, "mediator contact pose lost the jaw-side elbow fold");
+assert(mediatorContactPose.rightHand[0] > 0.2, "mediator contact pose lost the thoughtful wrist turn");
 
 let totalBytes = 0;
 for (const role of expectedRoles) {
@@ -215,6 +222,8 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("NotebookGripContact")), "facilitator: notebook contact surface is missing");
     assert(contents.includes(Buffer.from("NotebookGuideContact")), "facilitator: notebook guide contact surface is missing");
     assert(contents.includes(Buffer.from("NotebookPalmSupport")), "facilitator: notebook palm support is missing");
+    assert(contents.includes(Buffer.from("NotebookSupportFinger_1")), "facilitator: first notebook support finger is missing");
+    assert(contents.includes(Buffer.from("NotebookSupportFinger_3")), "facilitator: third notebook support finger is missing");
     assert(contents.includes(Buffer.from("FacilitatorShoulderYoke")), "facilitator: tailored shoulder yoke is missing");
   }
   assert(contents.includes(Buffer.from("ShoulderMantle_-1")), `${role}: left tailored shoulder plane is missing`);

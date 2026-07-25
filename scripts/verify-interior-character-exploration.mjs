@@ -117,7 +117,7 @@ try {
   assert(opening.actors.every((actor) => actor.eyes === null), "civic identity surface retained duplicate primitive eye geometry");
   assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v2"), "civic production faces did not expose physically lit corneal lenses");
   assert(opening.actors.every((actor) => actor.cornea?.lensCount === 2 && actor.cornea?.physicallyLit === true), "civic corneal lens contract is incomplete");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v8"), "civic actors did not expose the role-authored independent-hand contract");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v9"), "civic actors did not expose the role-authored independent-hand contract");
   assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v6" && actor.body?.realGeometry === true), "civic actors did not expose the reference-weighted body shell contract");
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
@@ -179,12 +179,12 @@ try {
     "rear mediator regressed onto the player's opening sightline"
   );
   assert(
-    Number(mediator?.hands?.rightWristX || 0) > 0.1,
+    Number(mediator?.hands?.rightWristX || 0) > 0.2,
     "mediator relaxed wrist regressed into the face-obscuring negative fold"
   );
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v16", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v17", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "listen", "player did not join the authored opening testimony");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");
@@ -240,39 +240,81 @@ try {
   let skinStridePeak = 0;
   let secondaryMotionPeak = 0;
   let walkSamples = 0;
+  let walkPhaseTravel = 0;
   let screenshotCaptured = false;
-  // Cover at least one complete 0.72s walk cycle so the check cannot land
-  // exclusively around the two passing poses where both legs are near zero.
-  for (let sample = 0; sample < 10; sample += 1) {
-    await new Promise((resolve) => setTimeout(resolve, 80));
-    const inMotionStats = await readStats(page);
-    const inMotionPlayer = playerFrom(inMotionStats);
-    if (inMotionPlayer?.animation?.state !== "walk") continue;
-    assert.equal(
-      inMotionPlayer.garmentTopology?.version,
-      "mirrorlife-civic-garment-topology-v4",
-      "walking player lost the bone-weighted garment topology contract"
-    );
-    walkSamples += 1;
-    const stride = Math.abs(Number(inMotionPlayer.animation.leftLegX) - Number(inMotionPlayer.animation.rightLegX));
-    const skinStride = Math.abs(Number(inMotionPlayer.skin?.leftLegX) - Number(inMotionPlayer.skin?.rightLegX));
-    stridePeak = Math.max(stridePeak, stride);
-    skinStridePeak = Math.max(skinStridePeak, skinStride);
-    Object.values(inMotionPlayer.secondaryMotion || {}).forEach((motion) => {
-      secondaryMotionPeak = Math.max(
-        secondaryMotionPeak,
-        Math.abs(Number(motion.x || 0)),
-        Math.abs(Number(motion.z || 0))
-      );
-    });
-    if (WALK_SCREENSHOT && !screenshotCaptured && stride > 0.22) {
-      const screenshotPath = path.resolve(WALK_SCREENSHOT);
-      await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
-      await page.screenshot({ path: screenshotPath, type: "png" });
-      screenshotCaptured = true;
-    }
+  // Collect on the page's animation frames rather than ten wall-clock
+  // intervals. A cold headless renderer can advance only a handful of frames
+  // while Node sleeps, causing every sample to land around the same passing
+  // pose. Requiring an observed authored phase cycle keeps the strict stride
+  // threshold while making the gate independent of shader/render latency.
+  const walkCycle = await page.evaluate(() => new Promise((resolve, reject) => {
+    const startedAt = performance.now();
+    let previousPhase = null;
+    let phaseTravel = 0;
+    let samples = 0;
+    let stride = 0;
+    let skinStride = 0;
+    let secondary = 0;
+    const sampleFrame = () => {
+      const stats = window.MirrorLifeInterior3D?.getStats?.();
+      const player = stats?.actors?.find((actor) => actor.id === "player");
+      if (player?.animation?.state === "walk") {
+        samples += 1;
+        const phase = Number(player.animation.normalizedTime || 0);
+        if (previousPhase !== null) {
+          const rawDelta = Math.abs(phase - previousPhase);
+          phaseTravel += Math.min(rawDelta, 1 - rawDelta);
+        }
+        previousPhase = phase;
+        stride = Math.max(
+          stride,
+          Math.abs(Number(player.animation.leftLegX) - Number(player.animation.rightLegX))
+        );
+        skinStride = Math.max(
+          skinStride,
+          Math.abs(Number(player.skin?.leftLegX) - Number(player.skin?.rightLegX))
+        );
+        Object.values(player.secondaryMotion || {}).forEach((motion) => {
+          secondary = Math.max(
+            secondary,
+            Math.abs(Number(motion.x || 0)),
+            Math.abs(Number(motion.z || 0))
+          );
+        });
+      }
+      if (samples >= 7 && phaseTravel >= 0.8) {
+        resolve({ samples, phaseTravel, stride, skinStride, secondary });
+        return;
+      }
+      if (performance.now() - startedAt > 5000) {
+        reject(new Error(
+          `walk cycle did not advance (${samples} samples, ${phaseTravel.toFixed(3)} cycle)`
+        ));
+        return;
+      }
+      requestAnimationFrame(sampleFrame);
+    };
+    requestAnimationFrame(sampleFrame);
+  }));
+  walkSamples = walkCycle.samples;
+  walkPhaseTravel = walkCycle.phaseTravel;
+  stridePeak = walkCycle.stride;
+  skinStridePeak = walkCycle.skinStride;
+  secondaryMotionPeak = walkCycle.secondary;
+  if (WALK_SCREENSHOT) {
+    await page.waitForFunction(() => {
+      const stats = window.MirrorLifeInterior3D?.getStats?.();
+      const player = stats?.actors?.find((actor) => actor.id === "player");
+      return player?.animation?.state === "walk"
+        && Math.abs(Number(player.animation.leftLegX) - Number(player.animation.rightLegX)) > 0.22;
+    }, { polling: "raf", timeout: 2000 });
+    const screenshotPath = path.resolve(WALK_SCREENSHOT);
+    await fs.mkdir(path.dirname(screenshotPath), { recursive: true });
+    await page.screenshot({ path: screenshotPath, type: "png" });
+    screenshotCaptured = true;
   }
-  assert(walkSamples >= 7, `player locomotion did not remain in the authored walk clip (${walkSamples}/10 samples)`);
+  assert(walkSamples >= 7, `player locomotion did not remain in the authored walk clip (${walkSamples} samples)`);
+  assert(walkPhaseTravel >= 0.8, `walk verification did not observe a complete authored cycle (${walkPhaseTravel.toFixed(3)})`);
   assert(stridePeak > 0.22, `walk clip did not produce a readable alternating stride (${stridePeak.toFixed(3)}rad)`);
   assert(skinStridePeak > 0.22, `walk clip did not drive the continuous leg skin (${skinStridePeak.toFixed(3)}rad)`);
   assert(Math.abs(stridePeak - skinStridePeak) < 0.035, `controller and skin stride diverged (${stridePeak.toFixed(3)} vs ${skinStridePeak.toFixed(3)}rad)`);

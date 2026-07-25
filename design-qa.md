@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v123 hand acting and role-contact gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v123-final-desktop-yaw0.png` (`1672 × 941`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas source/implementation comparison: `tmp/reference-vs-v123-final-full.png`; both frames preserve the complete room at the same output size and an equivalent four-person social state. The implementation delta is isolated in `tmp/v122-vs-v123-final-full.png`.
+- Full 3D and responsive evidence: `tmp/v123-final-desktop-yaw90.png`, `tmp/v123-final-desktop-yaw180.png`, `tmp/v123-final-mobile-390x844.png` and the consolidated `tmp/v123-orbit-and-mobile-board.png`.
+- Runtime evidence: opening desktop `167 / 284,596`, side `171 / 295,704`, reverse `172 / 336,428`; mobile `106 / 245,336`. Every view completes the hidden two-frame atomic warmup with zero shader errors and remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: three consecutive browser regressions moved the player `2.85m`, `2.69m` and `2.85m`, rotated the physical camera `65.3°` and retained the animated curved identity surface. The four regenerated role assets total `7.30 MB`; every asset remains below `45k` triangles and `2 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v122 P1 / fingers collapsed into a short mitten read] Hand contract v9 narrows the palm, lengthens and separates all five digits, increases tapered ring resolution and preserves the wrist heel. The new silhouette survives the front, side and reverse gameplay cameras as real rig-attached geometry.
+- [fixed / notebook contact used flattened ellipsoids that read as surface stickers] Notebook contract v3 replaces the two edge contacts with curved tubes that wrap the cover and adds three real support fingers below the lower edge. Their final endpoints were pulled behind the book face after visual review so the support reads as grip rather than orange decoration.
+- [improved / the mediator's testimony pose did not clearly read as a deliberate social action] Animation v17 brings the right hand into a thoughtful lower-face/chest gesture and opens the left hand toward the listening circle. An over-folded elbow candidate hid the wrist from the gameplay camera and was rejected before the final pose.
+- [rejected experiment / listener hand-to-satchel contact reduced silhouette clarity] The proposed contact created a visibly floating hand at the default camera. The production listener pose therefore remains on the stable v16 contact while the asset keeps the new independent fingers.
+- [improved / character contours lost separation against similarly valued room surfaces] The physically derived actor ink rim is slightly broader and darker, with no duplicated shell mesh or screen-space outline. Hair, sleeves and hands separate more clearly without breaking room lighting.
+- [fixed / movement QA depended on ten wall-clock samples] The exploration gate now observes real browser animation frames and requires at least `0.8` of an authored walk cycle while retaining the strict `>0.22rad` stride and skin-deformation thresholds. Three consecutive cold runs pass, eliminating the former low-frame-rate false negative without weakening the physical contract.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD hierarchy, action labels, testimony title and responsive truncation remain stable at exact desktop size and `390 × 844`.
+- [improved][spacing and layout rhythm] The clearer mediator gesture and notebook grip strengthen the four-person listening circle without moving its metre-scale circulation, colliders or camera-safe area.
+- [checked][colors and visual tokens] Warm ivory, teal, coral, green, walnut and brass remain the hierarchy; hand and contour changes add no competing decorative colour.
+- [improved][image quality and asset fidelity] All hand digits, curved grip contacts, support fingers and role poses are lit, animated, orbit-safe 3D construction. No sprite, billboard, CSS/SVG drawing or screenshot projection substitutes for the visible actor volume.
+- [checked][physical truth] Actor roots, Rapier capsules, furniture colliders, interaction anchors and authoritative movement remain unchanged. The movement test now proves an observed animation cycle rather than elapsed wall time.
+- [P1][production deformation and true hand IK remain visibly behind the source] The same-canvas comparison still exposes simpler clavicle/upper-arm deformation, finger curling, prop pressure, cloth compression and whole-body weight transfer.
+- [P1][room-wide secondary asset finish remains behind] Supporting documents, botanical species, bespoke joinery and small object variation still lack the source's production-level density and irregularity.
+- [P1][offline global illumination remains visibly ahead] The reference retains softer multi-bounce penumbrae, richer contact colour, subtler glass transport and more natural skin/cloth response.
+- [P2][HUD optical finish remains behind] Coverage and hierarchy pass, but icon drawing, glass-panel depth and compact micro-spacing remain less cinematic than the source.
+
+### Gate result
+
+v123 closes a visible part of the hand silhouette, notebook grip and role-acting gap while keeping the required room fully walkable, rotatable and physically staged. The stricter frame-observed movement gate now passes repeatedly under the same render load. The same-canvas comparison still contains actionable P1 gaps in production deformation/IK, complete-room bespoke asset finish and offline-quality indirect light.
+
+final result: blocked
+
+Blocker: source-level character deformation and true hand/prop IK, complete-room production asset finish and offline-quality global illumination remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v122 garment material and atomic-reveal gate
 
 ### Evidence inspected together
