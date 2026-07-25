@@ -13,8 +13,8 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v66", "civic character sculpt contract is stale");
-assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v5", "civic body identity contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v67", "civic character sculpt contract is stale");
+assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v6", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
   manifest.bodyIdentityContract?.dimensions,
@@ -23,14 +23,14 @@ assert.deepEqual(
 );
 assert.deepEqual(
   manifest.bodyIdentityContract?.continuityParts,
-  ["Torso", "SkinnedArmVolume", "TrouserSeat"],
+  ["Torso", "ShoulderMantle", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
   "civic body continuity parts changed"
 );
-assert.equal(manifest.bodyIdentityContract?.shoulderContract, "mirrorlife-civic-shoulder-continuity-v1", "civic shoulder continuity contract is stale");
-assert.equal(manifest.bodyIdentityContract?.pelvisContract, "mirrorlife-civic-pelvis-continuity-v2", "civic pelvis continuity contract is stale");
+assert.equal(manifest.bodyIdentityContract?.shoulderContract, "mirrorlife-civic-shoulder-continuity-v2", "civic shoulder continuity contract is stale");
+assert.equal(manifest.bodyIdentityContract?.pelvisContract, "mirrorlife-civic-pelvis-continuity-v3", "civic pelvis continuity contract is stale");
 assert.equal(
   manifest.bodyIdentityContract?.runtime,
-  "contoured-shell+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+continuous-limb-skin",
+  "contoured-shell+tailored-shoulder-plane+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
   "civic body continuity runtime changed"
 );
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
@@ -46,10 +46,10 @@ assert.deepEqual(manifest.skinContract?.joints, [
   "SkinRightLeg",
   "SkinRightKnee"
 ], "continuous civic skin joint map changed");
-assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v2", "civic garment topology contract is stale");
+assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v3", "civic garment topology contract is stale");
 assert.equal(
   manifest.garmentTopologyContract?.runtime,
-  "bone-weighted-superellipse+reference-weighted-silhouette+topology-flow-creases+asymmetric-drape",
+  "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape",
   "civic garment topology runtime changed"
 );
 assert.deepEqual(
@@ -88,7 +88,7 @@ assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volu
 assert.equal(manifest.faceDecal?.eyelidDeformationContract, "mirrorlife-civic-eyelid-vertex-v1", "civic eyelid deformation contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v7", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v8", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.deepEqual(
   manifest.handContract?.poseStyles,
@@ -135,7 +135,7 @@ for (const role of expectedRoles) {
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
   // Runtime batches these semantic parts per articulated pivot, so source-part
   // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 145, `${role}: source mesh count is outside the authored range`);
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 160, `${role}: source mesh count is outside the authored range`);
   assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 45000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
@@ -182,7 +182,15 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("NotebookElastic")), "facilitator: held notebook elastic is missing");
     assert(contents.includes(Buffer.from("NotebookPencil")), "facilitator: held notebook pencil is missing");
     assert(contents.includes(Buffer.from("NotebookGripContact")), "facilitator: notebook contact surface is missing");
+    assert(contents.includes(Buffer.from("NotebookGuideContact")), "facilitator: notebook guide contact surface is missing");
     assert(contents.includes(Buffer.from("FacilitatorShoulderYoke")), "facilitator: tailored shoulder yoke is missing");
+  }
+  assert(contents.includes(Buffer.from("ShoulderMantle_-1")), `${role}: left tailored shoulder plane is missing`);
+  assert(contents.includes(Buffer.from("ShoulderMantle_1")), `${role}: right tailored shoulder plane is missing`);
+  assert(contents.includes(Buffer.from("HipLoadFold_-1")), `${role}: left load-bearing hip fold is missing`);
+  assert(contents.includes(Buffer.from("HipLoadFold_1")), `${role}: right load-bearing hip fold is missing`);
+  if (["facilitator", "mediator"].includes(role)) {
+    assert(contents.includes(Buffer.from("SkirtHipFoundation")), `${role}: skirt hip foundation is missing`);
   }
   if (role === "mediator") {
     assert(contents.includes(Buffer.from("MediatorWaistSash")), "mediator: fitted waist sash is missing");

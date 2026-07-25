@@ -1,5 +1,46 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v119 load-bearing character-construction gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v119-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas comparisons: `tmp/reference-vs-v119-final-full.png` and `tmp/reference-vs-v119-final-cast-focus.png`; source and implementation use the same viewport, equivalent social state and equal crop. `tmp/v118-vs-v119-cast-focus.png` isolates the implementation delta.
+- Full 3D orbit evidence: `tmp/v119-final-desktop-yaw90.png` and `tmp/v119-final-desktop-yaw180.png`. Shoulder mantles, pelvis foundations, wrist volumes, notebook contacts and garment topology remain attached to the animated cast through real camera rotation.
+- Movement evidence: `tmp/v119-walk-parallel.png`; the browser regression moved the player `4.61m`, rotated the camera `65.3°`, retained continuous limb skin and verified the curved identity-surface blink.
+- Responsive evidence: `tmp/v119-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `163 / 275,248`, side `167 / 286,356`, reverse `167 / 327,080`; mobile `103 / 239,080`. Every view remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets. Four regenerated role assets total `7.27 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v118 P1 / shoulder-to-arm connection still read as a toy ball joint] Body identity v6 adds shallow, role-scaled `ShoulderMantle` geometry and diagonal load folds between the clavicle shelf and weighted arm volume. The v118/v119 focused comparison shows a broader authored shoulder plane without changing the metre-scale capsule or movement pivots.
+- [fixed / skirted roles depended on a floating cone for their hip silhouette] Pelvis continuity v3 gives every costume a load-bearing foundation. Player and listener retain a fuller trouser seat; facilitator and mediator gain a hidden `SkirtHipFoundation`, so skirt flex no longer exposes two disconnected legs below a narrow waistband.
+- [improved / coat and vest fronts carried repeated surface ribbons] Garment topology v3 moves shoulder-to-waist tension into the panel vertices using diagonal, multi-frequency displacement. Existing seam geometry remains restrained, while the lit silhouette now carries cloth pull instead of relying only on decorative strips.
+- [improved / wrists collapsed into thin pegs at cuff and prop contact] Hand v8 enlarges the gameplay-scale hand by a few percent and adds a continuous wrist heel before the palm. The facilitator receives a second compressed notebook contact and animation v16 preserves the grip through listen/gesture blending.
+- [fixed / cold or parallel QA could outlive the deterministic testimony pose] The QA-only opening observation window now survives four-GLB and post-processing shader compilation under concurrent checks. Player-facing timing remains `6.2s`; the isolated and parallel exploration regressions both pass.
+- [checked / character construction remains physically honest] Actor roots, 1m world units, Rapier capsules, furniture colliders, interaction anchors and authoritative movement stay unchanged. The four GLBs remain below `45k` triangles each and the live room remains within every orbit/mobile budget.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD hierarchy, action labels, testimony title, current-speaker beacon and responsive truncation remain stable in the exact-size desktop and portrait captures.
+- [improved][spacing and layout rhythm] The cast keeps the same portal–circle–lounge composition, while clearer shoulder, waist, hip, hand and footwear breaks make the four social roles easier to separate at gameplay distance.
+- [checked][colors and visual tokens] Warm ivory, teal, coral, forest green, walnut and brass are unchanged; added construction is expressed through form and light rather than extra decorative colours.
+- [improved][image quality and asset fidelity] The new shoulder, pelvis, hand and cloth structures are actual lit GLB geometry driven by the existing rig and animation state. No sprite, billboard, screenshot projection, CSS drawing or custom SVG substitutes for character construction.
+- [checked][copy and content] “倾听线索”, the deterministic mediator testimony, place-memory title and all four civic actions remain coherent with the visible social scene.
+- [P1][production skinning and contact still remain below the source] The comparison now has a more credible load path, but the reference still shows finer clavicle/upper-arm deformation, true finger-to-prop IK, softer elbow compression and more natural seated/standing weight transfer.
+- [P1][hair and garment microconstruction remain visibly behind] The source retains finer hair strand grouping, stitched hems, fabric thickness, buttonholes, cuff compression and role-specific material response.
+- [P1][room-wide asset and global-light finish remain ahead] The implementation is truthful through orbit, while the source still has richer botanical breakup, thinner bespoke joinery, more varied documents, softer multi-bounce penumbrae and subtler skin/cloth transport.
+- [P2][HUD optical finish remains behind] Functional density and responsive coverage pass, but icon drawing, translucent panel depth, micro-spacing and the compact location treatment remain less polished than the source.
+
+### Gate result
+
+v119 closes the most visible body-connection defects from v118: shoulders now carry into arms through a tailored plane, skirts have a real hip foundation, wrists retain volume and the notebook has a stable two-point contact read. These are real animated 3D improvements that survive walking, orbit and mobile LOD within the established budgets. The mandatory same-canvas comparison still exposes actionable P1 gaps in production skinning/IK, garment and hair microconstruction, bespoke environment finish and offline-quality light transport.
+
+final result: blocked
+
+Blocker: source-level character skinning/contact, hair/garment microconstruction, room-wide production asset finish and offline-quality indirect light remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v118 reverse witness-archive gate
 
 ### Evidence inspected together

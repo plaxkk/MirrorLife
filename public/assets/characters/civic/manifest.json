@@ -1,8 +1,8 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v66",
+  "sculptContract": "mirrorlife-civic-sculpt-v67",
   "bodyIdentityContract": {
-    "version": "mirrorlife-civic-body-identity-v5",
+    "version": "mirrorlife-civic-body-identity-v6",
     "roles": [
       "player",
       "listener",
@@ -21,12 +21,14 @@
     ],
     "continuityParts": [
       "Torso",
+      "ShoulderMantle",
       "SkinnedArmVolume",
-      "TrouserSeat"
+      "TrouserSeat",
+      "SkirtHipFoundation"
     ],
-    "shoulderContract": "mirrorlife-civic-shoulder-continuity-v1",
-    "pelvisContract": "mirrorlife-civic-pelvis-continuity-v2",
-    "runtime": "contoured-shell+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+continuous-limb-skin"
+    "shoulderContract": "mirrorlife-civic-shoulder-continuity-v2",
+    "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
+    "runtime": "contoured-shell+tailored-shoulder-plane+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
   },
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
@@ -47,8 +49,8 @@
     ]
   },
   "garmentTopologyContract": {
-    "version": "mirrorlife-civic-garment-topology-v2",
-    "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+topology-flow-creases+asymmetric-drape",
+    "version": "mirrorlife-civic-garment-topology-v3",
+    "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape",
     "garments": [
       "sleeve",
       "trouser",
@@ -127,7 +129,7 @@
     ]
   },
   "handContract": {
-    "version": "mirrorlife-civic-hand-v7",
+    "version": "mirrorlife-civic-hand-v8",
     "pivots": [
       "Hand_-1",
       "Hand_1"
@@ -162,7 +164,7 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v15",
+    "version": "mirrorlife-civic-clips-v16",
     "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
     "clips": [
       "idle",
@@ -180,26 +182,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 123,
-      "triangles": 38400
+      "meshes": 129,
+      "triangles": 40636
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 109,
-      "triangles": 35908
+      "meshes": 115,
+      "triangles": 38088
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 131,
-      "triangles": 41904
+      "meshes": 139,
+      "triangles": 44992
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 145,
-      "triangles": 40992
+      "meshes": 152,
+      "triangles": 43752
     }
   }
 }

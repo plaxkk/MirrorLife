@@ -14042,7 +14042,11 @@ function enterInteriorView(zone, source = "manual") {
   // four mannequins waiting for UI input. Player actions can immediately
   // replace this beat through the same authoritative acting state.
   if (zone.id === "public-plaza") {
-    startInteriorCivicActing("listen", source === "qa" ? 15000 : 6200);
+    // QA browsers may compile four GLBs, skinning shaders and post-processing
+    // in parallel with other viewport checks. Keep the deterministic opening
+    // beat alive for the complete QA observation window; player-facing timing
+    // remains the authored 6.2 seconds.
+    startInteriorCivicActing("listen", source === "qa" ? 60000 : 6200);
   }
   if (source === "manual") seedInteriorOccupants(zone);
   stageQuietPresenceWitness(zone);

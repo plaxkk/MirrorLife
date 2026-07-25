@@ -100,7 +100,7 @@ BODY_PROFILES = {
         "leg_width": 1.03,
         "leg_depth": 0.99,
         "waist_width": 1.04,
-        "hand_scale": 0.91,
+        "hand_scale": 0.94,
         "foot_scale": 1.18,
         "toe_out": 0.075,
         # Keep the complete illustrated head hierarchy at the literal
@@ -118,7 +118,7 @@ BODY_PROFILES = {
         "leg_width": 0.99,
         "leg_depth": 0.98,
         "waist_width": 1.0,
-        "hand_scale": 0.9,
+        "hand_scale": 0.93,
         "foot_scale": 1.14,
         "toe_out": 0.065,
         "head_scale": (0.918, 0.895, 0.92),
@@ -134,7 +134,7 @@ BODY_PROFILES = {
         "leg_width": 0.87,
         "leg_depth": 0.92,
         "waist_width": 0.95,
-        "hand_scale": 0.88,
+        "hand_scale": 0.92,
         "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (0.915, 0.895, 0.92),
@@ -150,7 +150,7 @@ BODY_PROFILES = {
         "leg_width": 0.89,
         "leg_depth": 0.94,
         "waist_width": 0.96,
-        "hand_scale": 0.89,
+        "hand_scale": 0.92,
         "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (0.91, 0.895, 0.92),
@@ -436,9 +436,9 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     modifier.use_deform_preserve_volume = True
     obj["semantic_part"] = name
     obj["skin_contract"] = "mirrorlife-civic-skin-v1"
-    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v2"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v3"
     if name == "SkinnedArmVolume":
-        obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v1"
+        obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     return obj
@@ -517,11 +517,19 @@ def tailored_panel(
         body_roll = math.sin(math.pi * height_factor)
         for column in column_factors:
             x = column * width / 2
-            broad_fold = math.cos(column * math.pi * 2.5) * depth * 0.078 * body_roll
-            centre_bow = (1.0 - abs(column)) * depth * 0.14 * body_roll
+            # Combine vertical drape with a diagonal pull from shoulder/opening
+            # to waist. The previous perfectly repeated cosine read as piping
+            # laid on top of a flat panel; this displacement changes the
+            # silhouette itself and lets the key light reveal cloth tension.
+            diagonal_pull = math.sin((column * 1.7 + height_factor * 1.35) * math.pi) * depth * 0.052 * body_roll
+            broad_fold = (
+                math.cos(column * math.pi * 2.35) * depth * 0.064
+                + math.cos(column * math.pi * 4.4 + height_factor * 2.1) * depth * 0.024
+            ) * body_roll
+            centre_bow = (1.0 - abs(column)) * depth * 0.12 * body_roll
             edge_roll = max(0.0, abs(column) - 0.7) / 0.3 * depth * 0.06
             waist_tension = math.sin(column * math.pi) * depth * 0.045 * max(0.0, 1.0 - abs(height_factor - 0.5) * 4.0)
-            vertices.append((x, -depth / 2 - broad_fold - centre_bow - edge_roll - waist_tension, z))
+            vertices.append((x, -depth / 2 - broad_fold - diagonal_pull - centre_bow - edge_roll - waist_tension, z))
         for column in column_factors:
             vertices.append((column * width / 2, depth / 2, z))
     columns = len(column_factors)
@@ -893,14 +901,17 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v7"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v8"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
         0.112,
         (
-            (0.5, 0.039, 0.029, 0, 0),
-            (0.28, 0.053, 0.036, -side * 0.002, 0),
+            # A defined wrist heel keeps the cuff-to-palm transition from
+            # collapsing into a peg when the hand turns edge-on.
+            (0.5, 0.043, 0.031, 0, 0.002),
+            (0.36, 0.049, 0.034, -side * 0.001, 0.001),
+            (0.22, 0.055, 0.037, -side * 0.002, 0),
             (0.02, 0.062, 0.04, -side * 0.004, -0.003),
             (-0.26, 0.059, 0.038, -side * 0.004, -0.006),
             (-0.5, 0.052, 0.032, 0, -0.005),
@@ -1292,7 +1303,7 @@ def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=N
     obj.parent = parent
     obj.location = location
     link_material(obj, mat)
-    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v2"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v3"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     bevel = obj.modifiers.new("Pleated hem softness", "BEVEL")
@@ -2232,8 +2243,38 @@ def build_body(role, config, mats, visual):
         mats["top"],
         visual,
         segments=40,
-        contract="mirrorlife-civic-body-identity-v5",
+        contract="mirrorlife-civic-body-identity-v6",
     )
+    # A garment-level shoulder mantle bridges the clavicle shelf and the real
+    # arm deformation volume. It is deliberately shallow and asymmetric in
+    # depth: from three-quarter and reverse views this reads as a tailored
+    # shoulder plane, not a sphere glued to a tube.
+    for side in (-1, 1):
+        tailored_panel(
+            f"ShoulderMantle_{side}",
+            0.196 * torso_width,
+            0.158 * torso_width,
+            0.112 * torso_width,
+            0.18,
+            0.052 * torso_depth,
+            (side * 0.168 * torso_width, -0.114 * torso_depth, 1.216),
+            mats["top"],
+            visual,
+            radius=0.014,
+            rotation=(0.035, side * 0.075, side * 0.12),
+        )
+        cloth_fold_ribbon(
+            f"ShoulderLoadFold_{side}",
+            [
+                (side * 0.245 * torso_width, -0.151 * torso_depth, 1.252),
+                (side * 0.192 * torso_width, -0.171 * torso_depth, 1.17),
+                (side * 0.135 * torso_width, -0.169 * torso_depth, 1.07),
+            ],
+            (0.002, 0.01, 0.002),
+            mats["top"],
+            visual,
+            depth=0.007,
+        )
     # Three tapered fabric planes turn the broad torso highlight into cloth
     # tension radiating from collar and shoulder toward the waist. They share
     # the base fabric material and fade to a two-millimetre tip, so they read as
@@ -2286,27 +2327,41 @@ def build_body(role, config, mats, visual):
     # costume mapping. Keep the continuous deformation mesh cream for the
     # traveler; a real skin forearm below covers its lower section.
     sleeve_mat = mats["outer"] if config["costume"] in ("facilitator", "mediator") else mats["top"]
-    # Trousers previously began as two independent columns under a narrow
-    # rectangular belt. A single soft pelvis volume restores believable hip
-    # weight and removes the daylight slit between the legs without changing
-    # either leg pivot or the authoritative capsule. Skirts already provide
-    # this bridge for the two civic dress silhouettes.
-    if config["costume"] in ("traveler", "listener"):
-        trouser_seat = contoured_elliptical_shell(
-            "TrouserSeat",
+    # Every costume now owns a pelvis foundation. The skirted roles previously
+    # depended on the skirt cone alone, so the waist appeared to float above
+    # two legs whenever the hem moved. The shared foundation creates a real
+    # load-bearing hip plane while remaining hidden beneath each outer layer.
+    pelvis_name = "TrouserSeat" if config["costume"] in ("traveler", "listener") else "SkirtHipFoundation"
+    pelvis_material = mats["lower"]
+    trouser_seat = contoured_elliptical_shell(
+            pelvis_name,
             (
-                (0.66, 0.158 * profile["waist_width"], 0.105 * profile["torso_depth"], 0.004, 0.008),
-                (0.705, 0.19 * profile["waist_width"], 0.125 * profile["torso_depth"], 0.008, 0.012),
-                (0.765, 0.218 * profile["waist_width"], 0.14 * profile["torso_depth"], 0.01, 0.014),
-                (0.82, 0.205 * profile["waist_width"], 0.132 * profile["torso_depth"], 0.007, 0.012),
-                (0.845, 0.182 * profile["waist_width"], 0.118 * profile["torso_depth"], 0.004, 0.008),
+                (0.655, 0.154 * profile["waist_width"], 0.105 * profile["torso_depth"], 0.004, 0.008),
+                (0.695, 0.186 * profile["waist_width"], 0.124 * profile["torso_depth"], 0.008, 0.013),
+                (0.745, 0.215 * profile["waist_width"], 0.143 * profile["torso_depth"], 0.012, 0.017),
+                (0.79, 0.224 * profile["waist_width"], 0.149 * profile["torso_depth"], 0.013, 0.019),
+                (0.825, 0.205 * profile["waist_width"], 0.136 * profile["torso_depth"], 0.008, 0.014),
+                (0.852, 0.176 * profile["waist_width"], 0.116 * profile["torso_depth"], 0.004, 0.008),
             ),
-            mats["lower"],
+            pelvis_material,
             visual,
             segments=30,
-            contract="mirrorlife-civic-pelvis-continuity-v2",
+            contract="mirrorlife-civic-pelvis-continuity-v3",
         )
-        trouser_seat["garment_contract"] = "mirrorlife-civic-pelvis-continuity-v2"
+    trouser_seat["garment_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
+    for side in (-1, 1):
+        cloth_fold_ribbon(
+            f"HipLoadFold_{side}",
+            [
+                (side * 0.115, -0.145, 0.825),
+                (side * 0.158, -0.162, 0.765),
+                (side * 0.142, -0.15, 0.69),
+            ],
+            (0.002, 0.009, 0.002),
+            pelvis_material,
+            visual,
+            depth=0.006,
+        )
 
     skin_armature = create_skin_armature(visual, shoulder_x, hip_x)
     arm_width = profile["arm_width"]
@@ -2976,6 +3031,20 @@ def build_costume(
                 segments=16,
                 rings=10,
             )
+            # A second compressed fingertip pad sits on the opposite cover
+            # edge. Together with the independently animated guiding hand this
+            # maintains a readable two-hand contact silhouette through listen
+            # and gesture blends instead of leaving the notebook suspended.
+            ellipsoid(
+                "NotebookGuideContact",
+                (-0.069, -0.043, -0.018),
+                (0.021, 0.015, 0.041),
+                mats["skin"],
+                notebook,
+                rotation=(-0.04, -0.12, 0.11),
+                segments=16,
+                rings=10,
+            )
         else:
             # A fitted sash and offset knot make the mediator readable as a
             # distinct civic role even when her face is in profile.
@@ -3016,10 +3085,10 @@ def build_character(role, config):
     root["asset"] = f"civic-{role}"
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
-    root["body_contract"] = "mirrorlife-civic-body-identity-v5"
-    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v2"
-    root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v1"
-    root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v2"
+    root["body_contract"] = "mirrorlife-civic-body-identity-v6"
+    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v3"
+    root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
+    root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
     root["real_world_unit"] = "meter"
     root["identity_role"] = role
 
@@ -3105,15 +3174,15 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v66",
+        "sculptContract": "mirrorlife-civic-sculpt-v67",
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v5",
+            "version": "mirrorlife-civic-body-identity-v6",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
-            "continuityParts": ["Torso", "SkinnedArmVolume", "TrouserSeat"],
-            "shoulderContract": "mirrorlife-civic-shoulder-continuity-v1",
-            "pelvisContract": "mirrorlife-civic-pelvis-continuity-v2",
-            "runtime": "contoured-shell+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+continuous-limb-skin",
+            "continuityParts": ["Torso", "ShoulderMantle", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
+            "shoulderContract": "mirrorlife-civic-shoulder-continuity-v2",
+            "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
+            "runtime": "contoured-shell+tailored-shoulder-plane+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
         },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
@@ -3131,8 +3200,8 @@ def main():
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
         },
         "garmentTopologyContract": {
-            "version": "mirrorlife-civic-garment-topology-v2",
-            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+topology-flow-creases+asymmetric-drape",
+            "version": "mirrorlife-civic-garment-topology-v3",
+            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape",
             "garments": ["sleeve", "trouser", "skirt", "vest", "cardigan"],
             "standingParts": [
                 "SkinnedArmVolume",
@@ -3174,7 +3243,7 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v7",
+            "version": "mirrorlife-civic-hand-v8",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
             "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
@@ -3185,7 +3254,7 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v15",
+            "version": "mirrorlife-civic-clips-v16",
             "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

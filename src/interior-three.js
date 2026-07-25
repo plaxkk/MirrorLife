@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v66";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v67";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
@@ -8426,10 +8426,10 @@ function createCivicActorObject(actor, asset) {
   ];
   const bodySurfaceMesh = mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.71, envMapIntensity: 0.66 });
   if (bodySurfaceMesh) {
-    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v5";
-    bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v1";
-    bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v2";
-    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v2";
+    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v6";
+    bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
+    bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
+    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v3";
   }
   const skirtSurfaceMesh = skirtPivot
     ? mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 })
@@ -8611,7 +8611,7 @@ function createCivicActorObject(actor, asset) {
       : null,
     secondaryMotion,
     frame,
-    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v2",
+    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v3",
     styleKey: `${frame}:${role}:civic-glb-v22`,
     identity: style.identity,
     assetRole: role,
@@ -9789,7 +9789,7 @@ function getStats() {
       } : null,
       garmentTopology: entry.garmentTopologyVersion ? {
         version: entry.garmentTopologyVersion,
-        runtime: "bone-weighted-superellipse+topology-flow-creases+asymmetric-drape",
+        runtime: "bone-weighted-superellipse+diagonal-tension-topology+asymmetric-drape",
         realGeometry: true
       } : null,
       proximalVolume: Object.keys(entry.jointVolumeDeformation || {}).length ? {
@@ -9812,7 +9812,7 @@ function getStats() {
         ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v7",
+        version: "mirrorlife-civic-hand-v8",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,

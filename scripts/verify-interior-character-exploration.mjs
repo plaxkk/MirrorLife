@@ -108,12 +108,12 @@ try {
   assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic identity surface retained duplicate volumetric lips");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 6), "civic identity-surface facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.eyes === null), "civic identity surface retained duplicate primitive eye geometry");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v7"), "civic actors did not expose the role-authored independent-hand contract");
-  assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v5" && actor.body?.realGeometry === true), "civic actors did not expose the reference-weighted body shell contract");
-  assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v1"), "civic actors did not expose bone-weighted shoulder continuity");
-  assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v2"), "civic actors did not expose the authored pelvis continuity contract");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v8"), "civic actors did not expose the role-authored independent-hand contract");
+  assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v6" && actor.body?.realGeometry === true), "civic actors did not expose the reference-weighted body shell contract");
+  assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
+  assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
   assert(
-    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v2" && actor.garmentTopology?.realGeometry === true),
+    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v3" && actor.garmentTopology?.realGeometry === true),
     "civic actors did not expose the authored garment topology contract"
   );
   assert(opening.actors.every((actor) => actor.proximalVolume?.version === "mirrorlife-civic-proximal-volume-v1"), "civic actors did not expose shoulder/hip volume preservation");
@@ -170,7 +170,7 @@ try {
   );
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v15", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v16", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "listen", "player did not join the authored opening testimony");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");
@@ -236,7 +236,7 @@ try {
     if (inMotionPlayer?.animation?.state !== "walk") continue;
     assert.equal(
       inMotionPlayer.garmentTopology?.version,
-      "mirrorlife-civic-garment-topology-v2",
+      "mirrorlife-civic-garment-topology-v3",
       "walking player lost the bone-weighted garment topology contract"
     );
     walkSamples += 1;

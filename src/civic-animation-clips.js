@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v15";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v16";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -308,18 +308,18 @@ const ROLE_OFFSETS = Object.freeze({
       // legs in opposite directions so the stance reads as a human response
       // rather than a symmetrical display pose.
       visual: v(-0.012, 0, -0.046), headGroup: v(0, -0.016, -0.066),
-      leftArm: v(-0.1, 0, 0.16), rightArm: v(0.025, 0, -0.085),
-      leftElbow: v(-0.44, 0, 0.16), rightElbow: v(-0.18, 0, -0.07),
-      leftHand: v(-0.1, 0.13, 0.14), rightHand: v(-0.06, -0.11, -0.15),
+      leftArm: v(-0.12, 0.035, 0.17), rightArm: v(0.02, -0.04, -0.1),
+      leftElbow: v(-0.46, 0.025, 0.17), rightElbow: v(-0.23, -0.035, -0.09),
+      leftHand: v(-0.12, 0.11, 0.12), rightHand: v(-0.04, -0.08, -0.12),
       leftLeg: v(0, -0.042, -0.065), rightLeg: v(0, 0.052, 0.085), rightKnee: v(0.07)
     }),
     gesture: pose(0, {
       // Keep the notebook supported against the torso while the free hand
       // opens toward the current listener.
       visual: v(-0.015, 0, -0.038), headGroup: v(-0.006, -0.028, -0.052),
-      leftArm: v(-0.12, 0, 0.18), rightArm: v(0.2, 0, -0.12),
-      leftElbow: v(-0.44, 0, 0.16), rightElbow: v(0.3, 0, -0.1),
-      leftHand: v(-0.1, 0.13, 0.14), rightHand: v(0.07, -0.07, -0.1),
+      leftArm: v(-0.14, 0.035, 0.19), rightArm: v(0.2, -0.025, -0.13),
+      leftElbow: v(-0.46, 0.025, 0.17), rightElbow: v(0.26, -0.02, -0.1),
+      leftHand: v(-0.12, 0.11, 0.12), rightHand: v(0.06, -0.06, -0.08),
       leftLeg: v(0, -0.05, -0.06), rightLeg: v(0, 0.056, 0.08), rightKnee: v(0.075)
     })
   },
