@@ -1,5 +1,56 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v136 continuous upper-arm anatomy and asymmetric stance gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state, device scale factor `1`).
+- Mandatory normalized full-view comparison: `tmp/v136-reference-full-pair.png` (`2560 × 720`); the source is resampled to the implementation's exact `1280 × 720` content viewport and both frames are judged on one canvas.
+- Mandatory actor-focused comparison: `tmp/v136-character-focus-pair.png` (`1520 × 520`); equal-size source/implementation crops expose shoulder flow, elbow volume, forearm taper, hand rhythm, stance and prop contact.
+- Full 3D evidence: `tmp/v136-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 298,500`, side `179 / 309,608`, reverse `180 / 350,332`, fourth orbit `178 / 335,364`; mobile `106 / 248,312`. Every final view reports zero shader errors and remains inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the real Rapier-controlled player walked `3.33m`, rotated the camera `65.3°` and retained curved identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions across all `26` zones completed with no failures or runtime errors.
+- Asset evidence: all four GLBs use sculpt contract v78, shoulder continuity v3, arm anatomy v1 and animation clips v19. The complete set is `7.42 MB`; the largest role stays below `45k` triangles and every file stays below `2 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v135 P1 / upper limbs still read as straight tubes joined at a hinge] The continuous skin now follows fourteen authored rings through clavicle overlap, deltoid cap, bicep turn, broad elbow transition, forearm flexor flare and wrist taper. Elbow skin weights expand from a `15cm` to `21cm` falloff, so shoulder and lower arm share the bend instead of collapsing at one ring.
+- [improved from v135 P1 / the elbow had volume but no readable compression language] Each arm now owns an inner elbow fold and outside tension plane driven by the existing bend corrective. The traveler receives a six-ring bare forearm overlay that follows the same controller instead of a uniform four-ring tube.
+- [fixed during v136 / first animation pass still produced identical player upper-arm angles] The first capture exposed `left=-0.152 / right=-0.152`. The role listen offset was corrected and the post-fix capture reports `left=-0.211 / right=-0.061`, with distinct wrist, elbow, leg yaw and support-foot rhythm.
+- [improved from v135 P2 / every witness stood almost square to the circle] Role-authored foot yaw now drives a wider but still restrained pelvis spiral (`±0.065rad`) and stronger upper-body counter twist. Listener, facilitator and mediator preserve different support legs, shoulder banks and arm narratives rather than sharing the player's stance.
+- [fixed during v136 / new desktop anatomy could have broken the phone gate] Phone LOD explicitly removes elbow crease/tension micro-surfaces while retaining the revised continuous limb silhouette. Final phone cost is `248,312 / 250,000` triangles with the same real metre scale and physical capsule.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Place memory, top status, action rail and interaction prompt remain readable across desktop and portrait captures. The source still has finer icon drawing, tighter optical spacing and more refined translucent panel depth.
+- [improved][spacing and layout rhythm] Four characters now form less repetitive shoulder/arm and load-bearing leg rhythms. The source still stages them with richer overlap, more varied gesture height and tighter editorial grouping.
+- [improved][colors and visual tokens] Warm ivory, teal, forest, coral, oak and brass remain coherent through every heading. The implementation still has flatter local colour and stronger saturation than the source's warm multi-bounce grade.
+- [improved][image quality and asset fidelity] Real deltoid-to-forearm flow, broader elbow deformation and role-separated poses reduce the assembled mannequin read. The source still has finer hand/arm anatomy, more credible garment compression, richer facial planes, denser hair clumps and materially more bespoke secondary objects.
+- [checked][copy and content] Testimony, place memory, action language and interaction prompt remain coherent; no private-memory content or unsupported public statistics were added.
+- [checked][icons and interaction states] Action selection, keyboard movement, camera drag, phone controls, blink, prop contact and atomic room warmup remain functional.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; visual limb changes do not alter the Rapier capsule, furniture collision, interaction radius or navigation surface. Mobile keeps 44px+ controls, no horizontal overflow and the continuous arm silhouette.
+- [P1][complete production-character anatomy remains behind] The new upper-arm chain fixes the largest straight-tube and symmetric-pose defects, but the source still owns continuous cloth-to-skin transitions, knuckle/nail planes, natural shoulder blade response, subtler hand contact and more nuanced facial volume.
+- [P1][complete-room asset craft remains behind] The source has materially denser and more silhouette-distinct plants, papers, books, glassware, joinery and foreground framing. The implementation still repeats secondary families and exposes simplified cabinetry.
+- [P1][offline-quality light transport remains ahead] Real-time key/fill, foliage projection and contact AO remain stable, but the source retains broader colour bounce, softer penumbrae, stronger glass/foliage transmission and more flattering indirect facial light.
+- [P2][orbit composition remains uneven] The opening is readable and all headings preserve the cast, yet `270°` still exposes a broad quiet plaster/floor field while the fixed source frame keeps almost every edge narratively dressed.
+- [P2][HUD optical finish remains behind] Coverage and interaction pass, while the icon family, typographic counters, glass layers and compact control edges remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve v78/v19 upper-arm and stance contracts; do not regress to a narrow elbow blend or identical player arm angles.
+- Continue the next character pass through scapula/cloth response, knuckle/nail planes and role-specific shoulder-to-hand contact.
+- Replace the three most repeated foreground plant/book/paper families with silhouette-distinct authored variants.
+- Add restrained probe/lightmap colour bounce only if every heading and the `248,312`-triangle phone gate remain green.
+
+### Gate result
+
+v136 replaces the straight upper-arm hinge with a continuous deltoid–bicep–elbow–forearm flow and gives the four citizens genuinely different load-bearing and conversational poses while preserving real movement, camera rotation, responsive controls, contact constraints, physics and release budgets. The same-canvas evidence still contains actionable P1 gaps in complete production anatomy, room-wide secondary craft and offline-quality indirect transport.
+
+final result: blocked
+
+Blocker: source-level complete character anatomy, bespoke room-wide secondary asset craftsmanship and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v135 continuous hands and constructed garment-edge gate
 
 ### Evidence inspected together

@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v77", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v78", "civic character sculpt contract is stale");
 assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v6", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
@@ -37,12 +37,13 @@ assert.deepEqual(
   ["Torso", "ShoulderMantle", "Neck", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
   "civic body continuity parts changed"
 );
-assert.equal(manifest.bodyIdentityContract?.shoulderContract, "mirrorlife-civic-shoulder-continuity-v2", "civic shoulder continuity contract is stale");
+assert.equal(manifest.bodyIdentityContract?.shoulderContract, "mirrorlife-civic-shoulder-continuity-v3", "civic shoulder continuity contract is stale");
+assert.equal(manifest.bodyIdentityContract?.armAnatomyContract, "mirrorlife-civic-arm-anatomy-v1", "civic arm anatomy contract is stale");
 assert.equal(manifest.bodyIdentityContract?.neckContract, "mirrorlife-civic-neck-continuity-v2", "civic neck continuity contract is stale");
 assert.equal(manifest.bodyIdentityContract?.pelvisContract, "mirrorlife-civic-pelvis-continuity-v3", "civic pelvis continuity contract is stale");
 assert.equal(
   manifest.bodyIdentityContract?.runtime,
-  "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
+  "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
   "civic body continuity runtime changed"
 );
 assert.equal(manifest.skinContract?.version, "mirrorlife-civic-skin-v1", "continuous civic skin contract is stale");
@@ -152,7 +153,7 @@ assert.deepEqual(manifest.footwearContract?.styles, ["sneaker", "ankle-boot"], "
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
 assert.equal(
   manifest.animationContract?.runtime,
-  "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
+  "authored-keyframe-blend+role-contact-poses+continuous-skin+wide-elbow-volume+asymmetric-weight-transfer+skirt-flex+facial-hand-acting",
   "civic animation runtime contract changed"
 );
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
@@ -189,7 +190,7 @@ for (const role of expectedRoles) {
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
   // Runtime batches these semantic parts per articulated pivot, so source-part
   // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 160, `${role}: source mesh count is outside the authored range`);
+  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 165, `${role}: source mesh count is outside the authored range`);
   assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 45000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
   const stat = await fs.stat(file);
@@ -198,6 +199,8 @@ for (const role of expectedRoles) {
   const header = contents.subarray(0, 4);
   assert.equal(header.toString("utf8"), "glTF", `${role}: invalid GLB header`);
   assert(contents.includes(Buffer.from("EyePivot_-1")), `${role}: left blink pivot is missing`);
+  assert(contents.includes(Buffer.from("ArmInnerElbowFold_-1")), `${role}: inner elbow fold is missing`);
+  assert(contents.includes(Buffer.from("ArmOuterTensionPlane_1")), `${role}: outer elbow tension plane is missing`);
   assert(contents.includes(Buffer.from("EyePivot_1")), `${role}: right blink pivot is missing`);
   assert(contents.includes(Buffer.from("UpperLid_-1")), `${role}: left illustrated eye contour is missing`);
   assert(contents.includes(Buffer.from("UpperLid_1")), `${role}: right illustrated eye contour is missing`);

@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v75";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v78";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v13";
@@ -7558,7 +7558,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
             objectNormal,
             vec3(0.0),
             mirrorLifeBodyPelvisPose.x * mirrorLifePelvisNormal
-              - mirrorLifeBodyPelvisPose.x * mirrorLifeSpineNormal * 0.46
+              - mirrorLifeBodyPelvisPose.x * mirrorLifeSpineNormal * 0.62
           );
           objectNormal = mirrorLifeRotateBodyX(
             objectNormal,
@@ -7639,7 +7639,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vec3 mirrorLifeSpinePoint = mirrorLifeRotateBodyY(
           transformed,
           mirrorLifeSpinePivot,
-          -mirrorLifeBodyPelvisPose.x * 0.46
+          -mirrorLifeBodyPelvisPose.x * 0.62
         );
         transformed = mix(transformed, mirrorLifeSpinePoint, mirrorLifeBodyChain.z);
         vec3 mirrorLifeNeckPoint = mirrorLifeRotateBodyX(
@@ -8838,8 +8838,13 @@ function applyCivicAnimationPose(entry, animationPose) {
     const legYawDifference = Number(rightLegPose[1] || 0) - Number(leftLegPose[1] || 0);
     const legBankDifference = Number(rightLegPose[2] || 0) - Number(leftLegPose[2] || 0);
     const supportBias = Number(bodyState.supportSide || 0) * Number(bodyState.weight || 0);
-    const pelvisYaw = THREE.MathUtils.clamp(legYawDifference * 0.16 + supportBias * 0.012, -0.045, 0.045);
-    const pelvisBank = THREE.MathUtils.clamp(legBankDifference * 0.11 - supportBias * 0.018, -0.048, 0.048);
+    // Role-authored foot angles now drive a visible but restrained pelvis
+    // spiral.  The former 2.6° clamp kept every witness almost square to the
+    // camera, even though their arms and heads were asymmetrical.  The wider
+    // range remains far below the capsule tolerance but lets the shoulders
+    // counter-rotate through the existing body-chain shader.
+    const pelvisYaw = THREE.MathUtils.clamp(legYawDifference * 0.2 + supportBias * 0.016, -0.065, 0.065);
+    const pelvisBank = THREE.MathUtils.clamp(legBankDifference * 0.14 - supportBias * 0.022, -0.06, 0.06);
     bodyState.chainPose.set(
       leftClavicleX,
       leftClavicleZ,
@@ -9541,6 +9546,8 @@ function createCivicActorObject(actor, asset) {
       "ElbowCorrectiveVolume_",
       "KneeCorrectiveVolume_",
       "SleeveCompression_",
+      "ArmInnerElbowFold_",
+      "ArmOuterTensionPlane_",
       "TrouserFold_",
       "SkirtSideRelease_",
       "SkirtBackHem",
@@ -9646,7 +9653,8 @@ function createCivicActorObject(actor, asset) {
   });
   if (bodySurfaceMesh) {
     bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v8";
-    bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
+    bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v3";
+    bodySurfaceMesh.userData.mirrorLifeArmAnatomy = "mirrorlife-civic-arm-anatomy-v1";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
     bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v5";
     bodySurfaceMesh.userData.mirrorLifeGarmentMaterial = "mirrorlife-civic-garment-material-v1";
@@ -9872,7 +9880,7 @@ function createCivicActorObject(actor, asset) {
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v5",
     garmentMaterialVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentMaterial || "mirrorlife-civic-garment-material-v1",
-    styleKey: `${frame}:${role}:civic-glb-v27`,
+    styleKey: `${frame}:${role}:civic-glb-v28`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -9893,7 +9901,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v27` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v28` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -11114,6 +11122,7 @@ function getStats() {
       body: entry.bodySurfaceMesh ? {
         version: entry.bodySurfaceMesh.userData?.mirrorLifeBodyIdentity || null,
         shoulderContinuity: entry.bodySurfaceMesh.userData?.mirrorLifeShoulderContinuity || null,
+        armAnatomy: entry.bodySurfaceMesh.userData?.mirrorLifeArmAnatomy || null,
         pelvisContinuity: entry.bodySurfaceMesh.userData?.mirrorLifePelvisContinuity || null,
         realGeometry: true
       } : null,

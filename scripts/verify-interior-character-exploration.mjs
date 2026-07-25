@@ -206,7 +206,8 @@ try {
   assert(Number(openingFacilitator?.contactConstraint?.after ?? 1) <= 0.03, "facilitator fingertip did not close onto the notebook edge");
   assert(Number(openingMediator?.contactConstraint?.after ?? 1) <= 0.03, "mediator thoughtful hand did not close onto the jaw target");
   assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v8" && actor.body?.realGeometry === true), "civic actors did not expose the role-authored facial/body silhouette contract");
-  assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
+  assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v3"), "civic actors did not expose bone-weighted shoulder continuity");
+  assert(opening.actors.every((actor) => actor.body?.armAnatomy === "mirrorlife-civic-arm-anatomy-v1"), "civic actors did not expose the authored deltoid-elbow-forearm chain");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
   assert(
     opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v5" && actor.garmentTopology?.realGeometry === true),
@@ -271,7 +272,7 @@ try {
   );
   assert(Math.abs(Number(facilitator?.hands?.leftWristX || 0)) > 0.08, "facilitator notebook-grip wrist pose did not reach the runtime hand pivot");
   const beforeMove = stagedPlayer;
-  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v18", "player did not use the authored animation contract");
+  assert.equal(beforeMove.animation?.version, "mirrorlife-civic-clips-v19", "player did not use the authored animation contract");
   assert.equal(beforeMove.animation?.state, "listen", "player did not join the authored opening testimony");
   assert.equal(beforeMove.skin?.version, "mirrorlife-civic-skin-v1", "player did not use the continuous skin contract");
   assert.equal(beforeMove.skin?.meshCount, 2, "player continuous limb skin mesh count changed");

@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v18";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v19";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -32,34 +32,34 @@ export const CIVIC_ANIMATION_CLIPS = Object.freeze({
     loop: true,
     keys: [
       [0, pose(0, {
-        visual: v(0, 0, -0.012), headGroup: v(-0.018, 0, -0.012),
-        leftArm: v(-0.15, 0, 0.095), rightArm: v(0.1, 0, -0.065),
-        leftElbow: v(-0.3), rightElbow: v(-0.18),
-        leftLeg: v(0, 0, 0.03), rightLeg: v(0, 0, -0.018), leftKnee: v(0.045)
+        visual: v(-0.004, 0, -0.018), headGroup: v(-0.022, 0, -0.016),
+        leftArm: v(-0.18, -0.018, 0.112), rightArm: v(0.07, 0.016, -0.074),
+        leftElbow: v(-0.36, 0.012, 0.028), rightElbow: v(-0.24, -0.01, -0.018),
+        leftLeg: v(0.006, -0.025, 0.044), rightLeg: v(-0.004, 0.03, -0.028), leftKnee: v(0.065)
       })],
       [0.25, pose(0.009, {
-        visual: v(-0.006, 0, -0.006), headGroup: v(-0.01, 0.018, -0.004),
-        leftArm: v(-0.14, 0, 0.105), rightArm: v(0.085, 0, -0.075),
-        leftElbow: v(-0.32), rightElbow: v(-0.17),
-        leftLeg: v(0.006, 0, 0.034), rightLeg: v(-0.004, 0, -0.02), leftKnee: v(0.052)
+        visual: v(-0.009, 0, -0.011), headGroup: v(-0.014, 0.018, -0.006),
+        leftArm: v(-0.17, -0.016, 0.122), rightArm: v(0.055, 0.014, -0.084),
+        leftElbow: v(-0.38, 0.014, 0.032), rightElbow: v(-0.23, -0.012, -0.02),
+        leftLeg: v(0.012, -0.022, 0.048), rightLeg: v(-0.008, 0.027, -0.03), leftKnee: v(0.072)
       })],
       [0.5, pose(0.003, {
-        visual: v(0.004, 0, 0.005), headGroup: v(-0.02, -0.012, 0.006),
-        leftArm: v(-0.155, 0, 0.09), rightArm: v(0.11, 0, -0.06),
-        leftElbow: v(-0.29), rightElbow: v(-0.19),
-        leftLeg: v(-0.004, 0, 0.026), rightLeg: v(0.004, 0, -0.016), leftKnee: v(0.04)
+        visual: v(0, 0, -0.002), headGroup: v(-0.024, -0.012, 0.004),
+        leftArm: v(-0.185, -0.02, 0.107), rightArm: v(0.08, 0.018, -0.069),
+        leftElbow: v(-0.35, 0.01, 0.026), rightElbow: v(-0.25, -0.008, -0.016),
+        leftLeg: v(0.002, -0.028, 0.04), rightLeg: v(0, 0.032, -0.026), leftKnee: v(0.06)
       })],
       [0.75, pose(0.011, {
-        visual: v(-0.004, 0, -0.015), headGroup: v(-0.012, 0.01, -0.008),
-        leftArm: v(-0.145, 0, 0.102), rightArm: v(0.09, 0, -0.071),
-        leftElbow: v(-0.31), rightElbow: v(-0.175),
-        leftLeg: v(0.004, 0, 0.032), rightLeg: v(-0.002, 0, -0.019), leftKnee: v(0.049)
+        visual: v(-0.008, 0, -0.021), headGroup: v(-0.016, 0.01, -0.012),
+        leftArm: v(-0.175, -0.017, 0.12), rightArm: v(0.06, 0.015, -0.081),
+        leftElbow: v(-0.37, 0.013, 0.03), rightElbow: v(-0.235, -0.011, -0.019),
+        leftLeg: v(0.01, -0.023, 0.046), rightLeg: v(-0.006, 0.028, -0.029), leftKnee: v(0.069)
       })],
       [1, pose(0, {
-        visual: v(0, 0, -0.012), headGroup: v(-0.018, 0, -0.012),
-        leftArm: v(-0.15, 0, 0.095), rightArm: v(0.1, 0, -0.065),
-        leftElbow: v(-0.3), rightElbow: v(-0.18),
-        leftLeg: v(0, 0, 0.03), rightLeg: v(0, 0, -0.018), leftKnee: v(0.045)
+        visual: v(-0.004, 0, -0.018), headGroup: v(-0.022, 0, -0.016),
+        leftArm: v(-0.18, -0.018, 0.112), rightArm: v(0.07, 0.016, -0.074),
+        leftElbow: v(-0.36, 0.012, 0.028), rightElbow: v(-0.24, -0.01, -0.018),
+        leftLeg: v(0.006, -0.025, 0.044), rightLeg: v(-0.004, 0.03, -0.028), leftKnee: v(0.065)
       })]
     ]
   },
@@ -270,22 +270,26 @@ const ROLE_OFFSETS = Object.freeze({
       // the player moves: weight rests on one leg, shoulders counter-rotate
       // and the head leans subtly toward the civic circle. The v77 hero frame
       // was technically animated but still read like a centred mannequin.
-      visual: v(0, 0, 0.028), headGroup: v(-0.008, -0.014, -0.024),
-      leftArm: v(0.04, 0, 0.035), rightArm: v(-0.035, 0, -0.025),
-      leftElbow: v(-0.16, 0, 0.04), rightElbow: v(-0.12, 0, -0.035),
-      leftHand: v(-0.04, 0.02, 0.04), rightHand: v(0.025, -0.015, -0.035),
-      leftLeg: v(0, -0.075, 0.068), rightLeg: v(0, 0.08, -0.056), leftKnee: v(0.085)
+      visual: v(-0.006, 0, 0.038), headGroup: v(-0.006, -0.02, -0.032),
+      leftArm: v(0.035, -0.018, 0.052), rightArm: v(-0.055, 0.022, -0.036),
+      leftElbow: v(-0.18, 0.015, 0.055), rightElbow: v(-0.14, -0.014, -0.045),
+      leftHand: v(-0.055, 0.025, 0.055), rightHand: v(0.038, -0.022, -0.048),
+      leftLeg: v(0.015, -0.11, 0.086), rightLeg: v(-0.008, 0.12, -0.072), leftKnee: v(0.11)
     }),
     listen: pose(0, {
       // The public-room player is already the foreground anchor. Relax the
       // generic listening clip's deep elbow fold so the silhouette matches
       // the reference's planted, open stance instead of looking as if both
       // hands are clasped invisibly in front of the pelvis.
-      visual: v(-0.006, 0, 0.018), headGroup: v(0.014, -0.012, -0.026),
-      leftArm: v(0.1, 0, -0.022), rightArm: v(0.18, 0, 0.018),
-      leftElbow: v(0.42, 0, 0.02), rightElbow: v(0.78, 0, -0.025),
+      visual: v(-0.008, 0, 0.032), headGroup: v(0.018, -0.018, -0.036),
+      // Keep one hand close to the backpack strap and let the opposite arm
+      // hang more freely.  The earlier offsets cancelled the generic clip
+      // into identical -0.152 rad upper-arm angles, recreating the exact
+      // mannequin symmetry this role pass was meant to remove.
+      leftArm: v(0.015, -0.024, -0.018), rightArm: v(0.245, 0.026, 0.022),
+      leftElbow: v(0.24, 0.016, 0.045), rightElbow: v(0.8, -0.014, -0.046),
       leftHand: v(-0.02, 0.012, 0.025), rightHand: v(0.018, -0.01, -0.02),
-      leftLeg: v(0, -0.055, 0.052), rightLeg: v(0, 0.064, -0.045), leftKnee: v(0.06)
+      leftLeg: v(0.012, -0.085, 0.072), rightLeg: v(-0.006, 0.094, -0.061), leftKnee: v(0.085)
     })
   },
   mediator: {
@@ -293,11 +297,11 @@ const ROLE_OFFSETS = Object.freeze({
       // Put one hand at the chin while the opposite arm hangs softly. The
       // previous offset bent both elbows and produced the same "holding an
       // invisible tray" silhouette as the other two civic roles.
-      visual: v(0.018, 0, 0.042), headGroup: v(-0.012, 0.018, 0.042),
-      leftArm: v(0.18, 0, 0.035), rightArm: v(0.12, 0, -0.12),
-      leftElbow: v(0.46), rightElbow: v(-0.82, 0, -0.16),
+      visual: v(0.022, 0, 0.055), headGroup: v(-0.016, 0.026, 0.052),
+      leftArm: v(0.16, -0.018, 0.05), rightArm: v(0.1, 0.025, -0.14),
+      leftElbow: v(0.4, 0.015, 0.03), rightElbow: v(-0.78, -0.02, -0.19),
       leftHand: v(-0.12, 0.08, 0.16), rightHand: v(0.22, -0.18, -0.3),
-      leftLeg: v(0, -0.035, 0.035), rightLeg: v(0, 0.042, -0.025), leftKnee: v(0.055)
+      leftLeg: v(0.01, -0.065, 0.052), rightLeg: v(-0.005, 0.074, -0.038), leftKnee: v(0.078)
     }),
     gesture: pose(0, {
       // Keep the thoughtful right hand close to the jaw while the left palm
@@ -316,11 +320,11 @@ const ROLE_OFFSETS = Object.freeze({
       // Keep the notebook supported by both palms, then shift the ribcage and
       // legs in opposite directions so the stance reads as a human response
       // rather than a symmetrical display pose.
-      visual: v(-0.012, 0, -0.046), headGroup: v(0, -0.016, -0.066),
-      leftArm: v(-0.12, 0.035, 0.17), rightArm: v(0.02, -0.04, -0.1),
-      leftElbow: v(-0.46, 0.025, 0.17), rightElbow: v(-0.23, -0.035, -0.09),
+      visual: v(-0.016, 0, -0.058), headGroup: v(0.004, -0.022, -0.078),
+      leftArm: v(-0.14, 0.05, 0.19), rightArm: v(0.0, -0.055, -0.118),
+      leftElbow: v(-0.5, 0.04, 0.2), rightElbow: v(-0.27, -0.05, -0.112),
       leftHand: v(-0.12, 0.11, 0.12), rightHand: v(-0.04, -0.08, -0.12),
-      leftLeg: v(0, -0.042, -0.065), rightLeg: v(0, 0.052, 0.085), rightKnee: v(0.07)
+      leftLeg: v(-0.006, -0.075, -0.082), rightLeg: v(0.012, 0.086, 0.105), rightKnee: v(0.095)
     }),
     gesture: pose(0, {
       // Keep the notebook supported against the torso while the free hand
@@ -338,11 +342,11 @@ const ROLE_OFFSETS = Object.freeze({
       // presenting an invisible tray. Open both arms away from the centreline,
       // keep one palm subtly open and let the shoulders counter-rotate toward
       // the social circle.
-      visual: v(-0.012, 0, 0.026), headGroup: v(0.006, 0.018, 0.025),
-      leftArm: v(0.12, 0, -0.1), rightArm: v(0.14, 0, 0.15),
-      leftElbow: v(0.42, 0, 0.04), rightElbow: v(0.82, 0, -0.04),
+      visual: v(-0.016, 0, 0.041), headGroup: v(0.01, 0.026, 0.036),
+      leftArm: v(0.1, -0.02, -0.118), rightArm: v(0.12, 0.024, 0.17),
+      leftElbow: v(0.34, 0.016, 0.058), rightElbow: v(0.68, -0.015, -0.058),
       leftHand: v(-0.14, 0.06, 0.19), rightHand: v(0.04, -0.04, -0.06),
-      leftLeg: v(0, -0.045, 0.055), rightLeg: v(0, 0.055, -0.05), leftKnee: v(0.055)
+      leftLeg: v(0.012, -0.078, 0.074), rightLeg: v(-0.008, 0.09, -0.068), leftKnee: v(0.082)
     }),
     gesture: pose(0, {
       // The first speaker keeps one hand close to the sternum and offers the

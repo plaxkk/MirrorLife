@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v77",
+  "sculptContract": "mirrorlife-civic-sculpt-v78",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v6",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -38,10 +38,11 @@
       "TrouserSeat",
       "SkirtHipFoundation"
     ],
-    "shoulderContract": "mirrorlife-civic-shoulder-continuity-v2",
+    "shoulderContract": "mirrorlife-civic-shoulder-continuity-v3",
+    "armAnatomyContract": "mirrorlife-civic-arm-anatomy-v1",
     "neckContract": "mirrorlife-civic-neck-continuity-v2",
     "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
-    "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
+    "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
   },
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
@@ -220,8 +221,8 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v18",
-    "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
+    "version": "mirrorlife-civic-clips-v19",
+    "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+wide-elbow-volume+asymmetric-weight-transfer+skirt-flex+facial-hand-acting",
     "clips": [
       "idle",
       "walk",
@@ -238,26 +239,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 130,
-      "triangles": 40744
+      "meshes": 134,
+      "triangles": 41096
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 119,
-      "triangles": 38916
+      "meshes": 123,
+      "triangles": 39124
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 145,
-      "triangles": 44640
+      "meshes": 149,
+      "triangles": 44848
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 157,
-      "triangles": 43732
+      "meshes": 161,
+      "triangles": 43940
     }
   }
 }

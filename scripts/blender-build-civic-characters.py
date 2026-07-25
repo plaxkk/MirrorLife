@@ -371,9 +371,14 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     vertices = []
     faces = []
     weights = []
-    blend_half = 0.075
     is_leg = name == "SkinnedLegVolume"
     is_arm = name == "SkinnedArmVolume"
+    # The elbow needs a broader deformation falloff than the knee.  A narrow
+    # 15 cm blend made the two arm bones technically continuous, but the
+    # quarter-view silhouette still collapsed into a hard hinge.  Spreading
+    # the weights across 21 cm lets the deltoid/bicep and forearm rings carry
+    # the bend together, preserving the soft illustrated S-curve.
+    blend_half = 0.105 if is_arm else 0.075
     for limb_index, centre_x in enumerate(side_centres):
         upper_name, lower_name = bone_names[limb_index]
         vertex_start = len(vertices)
@@ -457,7 +462,8 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     obj["skin_contract"] = "mirrorlife-civic-skin-v1"
     obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v5"
     if name == "SkinnedArmVolume":
-        obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
+        obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v3"
+        obj["arm_anatomy_contract"] = "mirrorlife-civic-arm-anatomy-v1"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     return obj
@@ -2580,18 +2586,25 @@ def build_body(role, config, mats, visual):
                 # shelf and are weighted to the same real shoulder bone. This
                 # closes the toy ball-joint seam without adding eight runtime
                 # draw calls for separate cap objects.
-                (1.315, 0.111, 0.102, 0.002, 0.032),
-                (1.275, 0.108, 0.098, 0.002, 0.026),
-                (1.245, 0.099, 0.09, 0.001, 0.018),
-                (1.19, 0.092, 0.084, 0.004, 0.012),
-                (1.12, 0.082, 0.076, 0.006, 0.005),
-                (1.05, 0.077, 0.071, 0.005, 0.001),
-                (1.015, 0.071, 0.067, 0.003, 0),
-                (0.995, 0.066, 0.062, 0, 0),
-                (0.93, 0.068, 0.064, -0.004, 0),
-                (0.845, 0.064, 0.06, -0.006, 0),
-                (0.76, 0.06, 0.056, -0.004, 0),
-                (0.705, 0.054, 0.05, -0.002, 0),
+                # A real shoulder is not the narrow end of a tube.  The first
+                # three rings form a shallow deltoid cap that overlaps the
+                # clavicle mantle, then the bicep turns slightly forward before
+                # narrowing into the elbow.  Below the hinge, a second small
+                # flare carries the forearm flexor mass into the wrist.
+                (1.315, 0.116, 0.106, 0.001, 0.029),
+                (1.286, 0.119, 0.109, 0.001, 0.025),
+                (1.252, 0.112, 0.102, 0.0, 0.019),
+                (1.205, 0.101, 0.092, -0.002, 0.013),
+                (1.145, 0.092, 0.084, -0.005, 0.008),
+                (1.085, 0.086, 0.078, -0.007, 0.004),
+                (1.035, 0.079, 0.073, -0.008, 0.001),
+                (1.005, 0.073, 0.068, -0.006, 0),
+                (0.982, 0.069, 0.065, -0.004, 0),
+                (0.945, 0.071, 0.067, -0.002, 0),
+                (0.895, 0.073, 0.068, 0.001, 0),
+                (0.83, 0.069, 0.064, 0.003, 0),
+                (0.76, 0.061, 0.057, 0.004, 0),
+                (0.705, 0.053, 0.049, 0.002, 0),
             )
         ),
         0.995,
@@ -2654,10 +2667,12 @@ def build_body(role, config, mats, visual):
                 f"TravelerForearmSkin_{side}",
                 0.245,
                 (
-                    (0.5, 0.071 * arm_width, 0.066 * arm_depth),
-                    (0.22, 0.069 * arm_width, 0.064 * arm_depth, -side * 0.0015, -0.001),
-                    (-0.12, 0.063 * arm_width, 0.059 * arm_depth, -side * 0.0025, -0.002),
-                    (-0.5, 0.057 * arm_width, 0.053 * arm_depth, -side * 0.001, 0),
+                    (0.5, 0.075 * arm_width, 0.069 * arm_depth, side * 0.001, -0.002),
+                    (0.31, 0.074 * arm_width, 0.068 * arm_depth, -side * 0.001, -0.003),
+                    (0.08, 0.071 * arm_width, 0.065 * arm_depth, -side * 0.002, -0.004),
+                    (-0.16, 0.066 * arm_width, 0.061 * arm_depth, -side * 0.0025, -0.003),
+                    (-0.36, 0.061 * arm_width, 0.057 * arm_depth, -side * 0.0015, -0.001),
+                    (-0.5, 0.056 * arm_width, 0.052 * arm_depth, 0, 0),
                 ),
                 (0, -0.001, -0.145),
                 mats["skin"],
@@ -2702,6 +2717,34 @@ def build_body(role, config, mats, visual):
                     (side * 0.024, -0.059, -0.204),
                 ],
                 (0.002, 0.007, 0.002),
+                sleeve_mat,
+                sleeve_compression,
+                depth=0.006,
+            )
+            # A soft inner elbow fold and a broader outside tension plane make
+            # the bend legible without a hard seam.  Both live on the lower
+            # controller and are scaled by the existing bend corrective, so
+            # they appear only when the arm actually flexes.
+            cloth_fold_ribbon(
+                f"ArmInnerElbowFold_{side}",
+                [
+                    (-side * 0.044, -0.069, -0.058),
+                    (-side * 0.012, -0.078, -0.094),
+                    (side * 0.032, -0.067, -0.132),
+                ],
+                (0.002, 0.011, 0.002),
+                mats["skin"] if config["costume"] == "traveler" else sleeve_mat,
+                sleeve_compression,
+                depth=0.008,
+            )
+            cloth_fold_ribbon(
+                f"ArmOuterTensionPlane_{side}",
+                [
+                    (side * 0.052, 0.048, -0.04),
+                    (side * 0.062, 0.055, -0.108),
+                    (side * 0.046, 0.045, -0.176),
+                ],
+                (0.002, 0.009, 0.002),
                 sleeve_mat,
                 sleeve_compression,
                 depth=0.006,
@@ -3417,7 +3460,8 @@ def build_character(role, config):
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
     root["body_contract"] = "mirrorlife-civic-body-identity-v8"
     root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v5"
-    root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
+    root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v3"
+    root["arm_anatomy_contract"] = "mirrorlife-civic-arm-anatomy-v1"
     root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
     root["real_world_unit"] = "meter"
     root["identity_role"] = role
@@ -3515,7 +3559,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v77",
+        "sculptContract": "mirrorlife-civic-sculpt-v78",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3526,10 +3570,11 @@ def main():
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
             "continuityParts": ["Torso", "ShoulderMantle", "Neck", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
-            "shoulderContract": "mirrorlife-civic-shoulder-continuity-v2",
+            "shoulderContract": "mirrorlife-civic-shoulder-continuity-v3",
+            "armAnatomyContract": "mirrorlife-civic-arm-anatomy-v1",
             "neckContract": "mirrorlife-civic-neck-continuity-v2",
             "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
-            "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
+            "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
         },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
@@ -3628,8 +3673,8 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v18",
-            "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
+            "version": "mirrorlife-civic-clips-v19",
+            "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+wide-elbow-volume+asymmetric-weight-transfer+skirt-flex+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },
         "worldUnitMeters": 1,
