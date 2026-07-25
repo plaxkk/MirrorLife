@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v114 source-derived foliage-light gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v114-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v114-full.png`; focused cast/lighting comparison: `tmp/reference-vs-v114-cast-focus.png`; implementation delta: `tmp/v113-vs-v114-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v114-final-desktop-yaw90.png` and `tmp/v114-final-desktop-yaw180.png`. The foliage light and shadow stay anchored to the metre-space room while the real camera rotates; furniture, actors, exit glazing and reverse witness wall remain perspective-correct.
+- Responsive evidence: `tmp/v114-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 289,992`, side `174 / 301,100`, reverse `175 / 307,228`; mobile `100 / 249,172`. The player walked `3.49m`, rotated the camera `65.3°`, retained vertex eyelid closure, passed all `26` metre-space layouts and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v113 P1 / procedural ellipses read as a decorative floor overlay] The former runtime `CanvasTexture` light painting is removed. A reproducible asset build extracts the leaf/branch silhouette from the committed `atelier-window-view.png`, converts it into a linear transmission gobo and a softened receiver texture, and stores both as real source-derived PNG assets.
+- [fixed / foliage effect affected only an unlit floor plane] Light contract `mirrorlife-civic-light-transport-v3` projects the transmission map through a real Three.js `SpotLight` from the open threshold, so warm variation reaches terrazzo, furniture, clothing and moving actors. The existing invisible 3D canopy continues contributing truthful directional shadow-map occlusion.
+- [fixed / a late texture load could have recreated the old two-stage room reveal] Gobo and receiver now preload inside the same atomic Three.js readiness gate as terrazzo, plaster and the listening rug; the final room is exposed once with its completed light state.
+- [fixed / literal photographic edges looked cut out on the first draft] The asset builder applies a deterministic four-pixel separable blur before export. The final 0°, 90° and 180° frames retain recognizable botanical breakup without hard sticker edges.
+- [fixed / visual light could silently disappear after an asset-loading regression] Browser exploration verification now asserts both the v3 transport contract and a live `civic-foliage-projection` object after ready-state loading.
+- [checked / source-derived projection stays within Web budgets] Replacing the generated ellipse plane with one source-derived receiver keeps the opening at `171` calls; desktop remains below `180 / 450k`, and mobile remains below `110 / 250k`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD hierarchy, line height, truncation, action labels and world-projected speaker icon remain stable at identical desktop and portrait sizes.
+- [improved][spacing and layout rhythm] Irregular light now reinforces the open threshold, listening-circle middle ground and evidence-desk foreground without moving furniture, colliders, interaction anchors or the `≥1.4m` circulation loop.
+- [improved][colors and visual tokens] Warm ivory, teal, walnut, coral and brass retain their hierarchy; olive-grey leaf shadow and amber transmitted light add localized variation without introducing another decorative palette.
+- [improved][image quality and asset fidelity] The new gobo is derived from the committed real window-view asset rather than code-drawn ellipses, gradients, CSS art or a custom SVG. The projected light participates in the live 3D scene, and the receiver remains perspective-correct through orbit.
+- [checked][copy and content] “倾听线索”, current-speaker beacon, place-memory title and action rail remain coherent with the testimony scene.
+- [P1][production character topology and deformation remain below the source] The reference still has finer facial planes, eyelid and lip deformation, finger contact, sewn folds, hair breakup and pose-specific cloth compression.
+- [P1][environment asset density and scale nuance remain below the source] Functional zones and narrative landmarks match, but the reference has more bespoke papers, shelf objects, botanical species, curved joinery, glass thickness, upholstery compression and object-to-object scale variation.
+- [P1][offline global illumination and material response remain ahead] v114 closes the most artificial localized-light gap, but the selected frame still has richer multi-bounce colour, skin/cloth subsurface response, softer contact penumbrae and broader highlight roll-off than the real-time WebGL renderer.
+- [P2][HUD optical finish and captured state differ from the source] Controls are functional and responsive, but icon weight, translucent depth and exact state density remain visibly less refined than the selected frame.
+
+### Gate result
+
+v114 removes a conspicuous programmatic-light artifact and replaces it with source-derived botanical transmission that is reproducible, physically anchored and verified through movement, orbit and mobile LOD. The side and reverse frames now gain the localized window/leaf rhythm that was absent in v113. The same-size comparison is materially closer in environmental light authorship, but reference-level character construction, bespoke environment density and offline global illumination still remain visibly ahead.
+
+final result: blocked
+
+Blocker: production character topology/deformation, room-wide bespoke prop/material density, and offline-quality global illumination remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v113 facial-readability and gesture-clearance gate
 
 ### Evidence inspected together

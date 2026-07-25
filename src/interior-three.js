@@ -15,7 +15,7 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v64";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
-const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v2";
+const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
@@ -269,7 +269,10 @@ let activeItems = [];
 let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
 let contactShadowTexture;
-let civicDappleTexture;
+let civicFoliageGoboTexture;
+let civicFoliageGoboTextureLoading;
+let civicFoliageShadowTexture;
+let civicFoliageShadowTextureLoading;
 let civicRugTexture;
 let civicRugBumpTexture;
 let civicBriefTexture;
@@ -1230,12 +1233,36 @@ async function preloadPhysicalSurfaceMaps() {
       civicRugBumpTexture.colorSpace = THREE.NoColorSpace;
       civicRugBumpTexture.needsUpdate = true;
     });
-    await Promise.all([...physicalMapTasks, civicRugTask]);
+    // The foliage light is part of the final room state, not a late cosmetic
+    // swap. Preload both the projected-light gobo and its softened floor
+    // receiver inside the same atomic reveal gate as the rug and terrazzo.
+    const foliageRevision = ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : "";
+    const civicFoliageProjectionTask = Promise.all([
+      textureLoader.loadAsync(`/assets/interiors/textures/civic-foliage-gobo-v1.png${foliageRevision}`),
+      textureLoader.loadAsync(`/assets/interiors/textures/civic-foliage-shadow-v1.png${foliageRevision}`)
+    ]).then(([gobo, shadow]) => {
+      gobo.colorSpace = THREE.NoColorSpace;
+      shadow.colorSpace = THREE.SRGBColorSpace;
+      [gobo, shadow].forEach((texture) => {
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+      });
+      civicFoliageGoboTexture = gobo;
+      civicFoliageShadowTexture = shadow;
+    });
+    await Promise.all([...physicalMapTasks, civicRugTask, civicFoliageProjectionTask]);
   })().catch((error) => {
     console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
     physicalSurfaceMaps.clear();
     civicRugTexture = null;
     civicRugBumpTexture = null;
+    civicFoliageGoboTexture = null;
+    civicFoliageShadowTexture = null;
   });
   return physicalSurfaceLoading;
 }
@@ -1295,77 +1322,60 @@ function getContactShadowTexture() {
   return contactShadowTexture;
 }
 
-function getCivicDappleTexture() {
-  if (civicDappleTexture) return civicDappleTexture;
-  const size = lastWidth <= 720 ? 256 : 512;
-  const lightCanvas = document.createElement("canvas");
-  lightCanvas.width = size;
-  lightCanvas.height = size;
-  const context = lightCanvas.getContext("2d");
-  if (!context) return null;
-  context.clearRect(0, 0, size, size);
-
-  const paintSoftEllipse = (x, y, radiusX, radiusY, rotation, inner, outer) => {
-    context.save();
-    context.translate(x, y);
-    context.rotate(rotation);
-    context.scale(radiusX, radiusY);
-    const gradient = context.createRadialGradient(0, 0, 0.05, 0, 0, 1);
-    gradient.addColorStop(0, inner);
-    gradient.addColorStop(0.62, inner);
-    gradient.addColorStop(1, outer);
-    context.fillStyle = gradient;
-    context.beginPath();
-    context.arc(0, 0, 1, 0, Math.PI * 2);
-    context.fill();
-    context.restore();
-  };
-
-  // Broad warm window pools establish the same late-afternoon direction as
-  // the reference. Smaller cool olive ellipses behave as soft leaf shadows;
-  // all marks live in one transparent texture and cost one draw call.
-  [
-    [0.2, 0.28, 0.24, 0.12, -0.28],
-    [0.43, 0.42, 0.31, 0.15, 0.18],
-    [0.65, 0.58, 0.28, 0.14, -0.12],
-    [0.78, 0.76, 0.22, 0.11, 0.34]
-  ].forEach(([x, y, rx, ry, rotation]) => {
-    paintSoftEllipse(
-      x * size,
-      y * size,
-      rx * size,
-      ry * size,
-      rotation,
-      "rgba(255,232,177,0.44)",
-      "rgba(255,232,177,0)"
-    );
-  });
-  let seed = 0xc1a0f5;
-  const random = () => {
-    seed = (seed * 1664525 + 1013904223) >>> 0;
-    return seed / 4294967296;
-  };
-  for (let index = 0; index < 64; index += 1) {
-    const t = random();
-    const x = (0.12 + t * 0.78 + (random() - 0.5) * 0.08) * size;
-    const y = (0.18 + t * 0.68 + (random() - 0.5) * 0.16) * size;
-    const radius = (0.009 + random() * 0.019) * size;
-    paintSoftEllipse(
-      x,
-      y,
-      radius * (0.72 + random() * 0.66),
-      radius * (0.44 + random() * 0.34),
-      (random() - 0.5) * 1.8,
-      "rgba(92,76,58,0.2)",
-      "rgba(92,76,58,0)"
+function getCivicFoliageGoboTexture() {
+  if (civicFoliageGoboTexture) return civicFoliageGoboTexture;
+  if (!civicFoliageGoboTextureLoading && THREE) {
+    civicFoliageGoboTextureLoading = new THREE.TextureLoader().load(
+      `/assets/interiors/textures/civic-foliage-gobo-v1.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
+      (texture) => {
+        // This is a transmission mask for SpotLight.map, not colour imagery.
+        // Keeping it linear preserves the photographed leaf-edge contrast.
+        texture.colorSpace = THREE.NoColorSpace;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+        civicFoliageGoboTexture = texture;
+        roomSignature = "";
+        window.markRenderActive?.(1800);
+      },
+      undefined,
+      () => {
+        civicFoliageGoboTextureLoading = null;
+      }
     );
   }
-  civicDappleTexture = new THREE.CanvasTexture(lightCanvas);
-  civicDappleTexture.colorSpace = THREE.SRGBColorSpace;
-  civicDappleTexture.minFilter = THREE.LinearFilter;
-  civicDappleTexture.magFilter = THREE.LinearFilter;
-  civicDappleTexture.needsUpdate = true;
-  return civicDappleTexture;
+  return civicFoliageGoboTexture || null;
+}
+
+function getCivicFoliageShadowTexture() {
+  if (civicFoliageShadowTexture) return civicFoliageShadowTexture;
+  if (!civicFoliageShadowTextureLoading && THREE) {
+    civicFoliageShadowTextureLoading = new THREE.TextureLoader().load(
+      `/assets/interiors/textures/civic-foliage-shadow-v1.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.minFilter = THREE.LinearMipmapLinearFilter;
+        texture.magFilter = THREE.LinearFilter;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.generateMipmaps = true;
+        texture.needsUpdate = true;
+        civicFoliageShadowTexture = texture;
+        roomSignature = "";
+        window.markRenderActive?.(1800);
+      },
+      undefined,
+      () => {
+        civicFoliageShadowTextureLoading = null;
+      }
+    );
+  }
+  return civicFoliageShadowTexture || null;
 }
 
 function getCivicRugTexture() {
@@ -3184,7 +3194,7 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   });
 }
 
-function addCivicLocalStoryLights(mobileLod = false) {
+function addCivicLocalStoryLights(theme, mobileLod = false) {
   // Local picture-light pools articulate the evidence wall and console. The
   // GLB deliberately contains only geometry, so these non-shadow-casting
   // lights remain a room concern and can be reduced on mobile independently.
@@ -3223,6 +3233,28 @@ function addCivicLocalStoryLights(mobileLod = false) {
   );
   loungeColorBounce.position.set(3.2, 0.62, -0.72);
   roomRoot.add(loungeColorBounce);
+
+  // Project a real, source-derived foliage transmission mask from the open
+  // threshold. Unlike the former floor decal, this light reaches terrazzo,
+  // furniture, clothing and moving actors in the same physical coordinate
+  // system, so it remains truthful while the player walks and orbits.
+  const foliageGobo = getCivicFoliageGoboTexture();
+  if (foliageGobo) {
+    const foliageSun = new THREE.SpotLight(
+      0xffd8a0,
+      theme?.night ? 0.08 : (mobileLod ? 0.64 : 1.12),
+      13,
+      Math.PI * 0.31,
+      0.68,
+      1.28
+    );
+    foliageSun.name = "civic-foliage-projection";
+    foliageSun.position.set(-4.65, 5.35, -2.58);
+    foliageSun.target.position.set(0.72, 0.02, 1.02);
+    foliageSun.map = foliageGobo;
+    foliageSun.castShadow = false;
+    roomRoot.add(foliageSun, foliageSun.target);
+  }
 }
 
 function addCivicHeroNoticeWall(colors) {
@@ -4295,7 +4327,7 @@ function addCivicReferenceDressing(theme, colors) {
   if (mobileLod) {
     addCivicHeroNoticeWall(colors);
   }
-  addCivicLocalStoryLights(mobileLod);
+  addCivicLocalStoryLights(theme, mobileLod);
   addCivicHeroPendant(colors);
   addCivicThresholdFlowers(colors);
   addCivicCovenantPanel(colors);
@@ -4330,27 +4362,27 @@ function addCivicReferenceDressing(theme, colors) {
   });
   addSculptedFloorPlant(-4.08, 0.68, 0.94, colors, 4);
   addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
-  const dappleTexture = getCivicDappleTexture();
-  if (dappleTexture) {
-    const dapple = new THREE.Mesh(
-      new THREE.PlaneGeometry(8.8, 6.7),
+  const foliageShadowTexture = getCivicFoliageShadowTexture();
+  if (foliageShadowTexture) {
+    const foliageShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.4, 6.2),
       new THREE.MeshBasicMaterial({
-        map: dappleTexture,
+        map: foliageShadowTexture,
         transparent: true,
-        opacity: theme.night ? 0.08 : 0.54,
+        opacity: theme.night ? 0.08 : (mobileLod ? 0.46 : 0.88),
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
       })
     );
-    dapple.name = "civic-window-dapple";
-    dapple.rotation.x = -Math.PI / 2;
-    dapple.rotation.z = -0.18;
-    dapple.position.set(-0.35, 0.062, 0.52);
-    dapple.renderOrder = 1;
-    dapple.castShadow = false;
-    dapple.receiveShadow = false;
-    roomRoot.add(dapple);
+    foliageShadow.name = "civic-foliage-shadow-receiver";
+    foliageShadow.rotation.x = -Math.PI / 2;
+    foliageShadow.rotation.z = -0.24;
+    foliageShadow.position.set(-0.52, 0.064, 0.68);
+    foliageShadow.renderOrder = 1;
+    foliageShadow.castShadow = false;
+    foliageShadow.receiveShadow = false;
+    roomRoot.add(foliageShadow);
   }
 }
 
@@ -9615,6 +9647,7 @@ function getStats() {
       portalBounce: Number((portalBounceLight?.intensity || 0).toFixed(3)),
       ceilingBounce: Number((civicCeilingBounceLight?.intensity || 0).toFixed(3)),
       backWallBounce: Number((civicBackWallBounceLight?.intensity || 0).toFixed(3)),
+      foliageProjection: !!roomRoot?.getObjectByName?.("civic-foliage-projection"),
       environment: Number((scene?.environmentIntensity || 0).toFixed(3)),
       exposure: Number((renderer?.toneMappingExposure || 0).toFixed(3)),
       contactAo: Number((gtaoPass?.blendIntensity || 0).toFixed(3))
