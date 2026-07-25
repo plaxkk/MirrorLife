@@ -1,8 +1,8 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v73",
+  "sculptContract": "mirrorlife-civic-sculpt-v74",
   "hairConstructionContract": {
-    "version": "mirrorlife-civic-hair-construction-v4",
+    "version": "mirrorlife-civic-hair-construction-v5",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
     "parts": [
       "HairCap",
@@ -215,7 +215,7 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v17",
+    "version": "mirrorlife-civic-clips-v18",
     "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
     "clips": [
       "idle",

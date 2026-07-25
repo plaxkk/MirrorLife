@@ -11,11 +11,11 @@ from mathutils import Vector
 ROLE_CONFIGS = {
     "player": {
         "skin": "#efb58d",
-        "hair": "#3b3947",
+        "hair": "#454452",
         # Keep the clump separation inside the near-charcoal family. The
         # previous pale lavender highlight resolved as hard plastic panels
         # across the player's crown under the portal key.
-        "hair_highlight": "#565866",
+        "hair_highlight": "#666775",
         "eye": "#3f342d",
         "eye_ring": "#776153",
         "top": "#e6dbc9",
@@ -96,8 +96,8 @@ BODY_PROFILES = {
         "torso_depth": 1.0,
         "shoulder_x": 0.226,
         "hip_x": 0.118,
-        "arm_width": 0.9,
-        "arm_depth": 0.92,
+        "arm_width": 0.92,
+        "arm_depth": 0.94,
         # Preserve the reference's loose cargo thigh while the authored ring
         # stack still tapers decisively into the ankle.
         "leg_width": 1.03,
@@ -116,8 +116,8 @@ BODY_PROFILES = {
         "torso_depth": 0.97,
         "shoulder_x": 0.218,
         "hip_x": 0.118,
-        "arm_width": 0.86,
-        "arm_depth": 0.9,
+        "arm_width": 0.9,
+        "arm_depth": 0.93,
         "leg_width": 0.99,
         "leg_depth": 0.98,
         "waist_width": 1.0,
@@ -132,8 +132,8 @@ BODY_PROFILES = {
         "torso_depth": 0.95,
         "shoulder_x": 0.214,
         "hip_x": 0.106,
-        "arm_width": 0.83,
-        "arm_depth": 0.87,
+        "arm_width": 0.87,
+        "arm_depth": 0.91,
         "leg_width": 0.87,
         "leg_depth": 0.92,
         "waist_width": 0.95,
@@ -148,8 +148,8 @@ BODY_PROFILES = {
         "torso_depth": 0.96,
         "shoulder_x": 0.216,
         "hip_x": 0.108,
-        "arm_width": 0.85,
-        "arm_depth": 0.89,
+        "arm_width": 0.89,
+        "arm_depth": 0.92,
         "leg_width": 0.89,
         "leg_depth": 0.94,
         "waist_width": 0.96,
@@ -320,10 +320,10 @@ def create_skin_armature(parent, shoulder_x=0.216, hip_x=0.115):
 
     skin_shoulder_x = shoulder_x * 0.95
     specifications = (
-        ("SkinLeftArm", (-skin_shoulder_x, 0, 1.23), (-skin_shoulder_x, 0, 0.975), None),
-        ("SkinLeftElbow", (-skin_shoulder_x, 0, 0.975), (-skin_shoulder_x, 0, 0.675), "SkinLeftArm"),
-        ("SkinRightArm", (skin_shoulder_x, 0, 1.23), (skin_shoulder_x, 0, 0.975), None),
-        ("SkinRightElbow", (skin_shoulder_x, 0, 0.975), (skin_shoulder_x, 0, 0.675), "SkinRightArm"),
+        ("SkinLeftArm", (-skin_shoulder_x, 0, 1.23), (-skin_shoulder_x, 0, 0.995), None),
+        ("SkinLeftElbow", (-skin_shoulder_x, 0, 0.995), (-skin_shoulder_x, 0, 0.705), "SkinLeftArm"),
+        ("SkinRightArm", (skin_shoulder_x, 0, 1.23), (skin_shoulder_x, 0, 0.995), None),
+        ("SkinRightElbow", (skin_shoulder_x, 0, 0.995), (skin_shoulder_x, 0, 0.705), "SkinRightArm"),
         ("SkinLeftLeg", (-hip_x, 0, 0.78), (-hip_x, 0, 0.46), None),
         ("SkinLeftKnee", (-hip_x, 0, 0.46), (-hip_x, 0, 0.135), "SkinLeftLeg"),
         ("SkinRightLeg", (hip_x, 0, 0.78), (hip_x, 0, 0.46), None),
@@ -394,7 +394,7 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
                     shaped_x = math.copysign(abs(cosine) ** 0.94, cosine)
                     shaped_y = math.copysign(abs(sine) ** 0.96, sine)
                     rear = max(0.0, sine)
-                    flow_turn = math.sin(max(0.0, min(1.0, (z - 0.675) / 0.64)) * math.pi) * 0.11
+                    flow_turn = math.sin(max(0.0, min(1.0, (z - 0.705) / 0.525)) * math.pi) * 0.11
                     press_direction = -math.pi / 2 - math.copysign(flow_turn, centre_x)
                     front_press = max(0.0, math.cos(angle - press_direction)) ** 10
                     local_x = shaped_x * radius_x
@@ -2390,8 +2390,8 @@ def build_body(role, config, mats, visual):
     hip_x = profile["hip_x"]
     left_arm = empty("LeftArmPivot", visual, (-shoulder_x, 0, 1.23))
     right_arm = empty("RightArmPivot", visual, (shoulder_x, 0, 1.23))
-    left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.255))
-    right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.255))
+    left_elbow = empty("LeftElbowPivot", left_arm, (0, 0, -0.235))
+    right_elbow = empty("RightElbowPivot", right_arm, (0, 0, -0.235))
     left_leg = empty("LeftLegPivot", visual, (-hip_x, 0, 0.78))
     right_leg = empty("RightLegPivot", visual, (hip_x, 0, 0.78))
     left_knee = empty("LeftKneePivot", left_leg, (0, 0, -0.32))
@@ -2466,14 +2466,14 @@ def build_body(role, config, mats, visual):
                 (1.12, 0.082, 0.076, 0.006, 0.005),
                 (1.05, 0.077, 0.071, 0.005, 0.001),
                 (1.015, 0.071, 0.067, 0.003, 0),
-                (0.975, 0.066, 0.062, 0, 0),
+                (0.995, 0.066, 0.062, 0, 0),
                 (0.93, 0.068, 0.064, -0.004, 0),
                 (0.845, 0.064, 0.06, -0.006, 0),
                 (0.76, 0.06, 0.056, -0.004, 0),
-                (0.675, 0.054, 0.05, -0.002, 0),
+                (0.705, 0.054, 0.05, -0.002, 0),
             )
         ),
-        0.975,
+        0.995,
         sleeve_mat,
         skin_armature,
         (("SkinLeftArm", "SkinLeftElbow"), ("SkinRightArm", "SkinRightElbow")),
@@ -2587,7 +2587,7 @@ def build_body(role, config, mats, visual):
             0.059 * arm_width,
             0.054 * arm_width,
             0.042,
-            (0, 0, -0.248),
+            (0, 0, -0.228),
             mats["accent"],
             elbow,
             vertices=22,
@@ -2610,7 +2610,7 @@ def build_body(role, config, mats, visual):
             hand_rotation = (0.02, side * 0.04, -side * 0.055)
         hand = sculpted_hand(
             f"Hand_{side}",
-            (0, -0.007, -0.325),
+            (0, -0.007, -0.305),
             mats["skin"],
             mats["skin_shadow"],
             elbow,
@@ -3346,9 +3346,9 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v73",
+        "sculptContract": "mirrorlife-civic-sculpt-v74",
         "hairConstructionContract": {
-            "version": "mirrorlife-civic-hair-construction-v4",
+            "version": "mirrorlife-civic-hair-construction-v5",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
             "parts": ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
         },
@@ -3456,7 +3456,7 @@ def main():
             "styles": ["sneaker", "ankle-boot"],
         },
         "animationContract": {
-            "version": "mirrorlife-civic-clips-v17",
+            "version": "mirrorlife-civic-clips-v18",
             "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
             "clips": ["idle", "walk", "run", "listen", "gesture", "jump", "fall"],
         },

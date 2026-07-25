@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v17";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v18";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -275,6 +275,17 @@ const ROLE_OFFSETS = Object.freeze({
       leftElbow: v(-0.16, 0, 0.04), rightElbow: v(-0.12, 0, -0.035),
       leftHand: v(-0.04, 0.02, 0.04), rightHand: v(0.025, -0.015, -0.035),
       leftLeg: v(0, -0.075, 0.068), rightLeg: v(0, 0.08, -0.056), leftKnee: v(0.085)
+    }),
+    listen: pose(0, {
+      // The public-room player is already the foreground anchor. Relax the
+      // generic listening clip's deep elbow fold so the silhouette matches
+      // the reference's planted, open stance instead of looking as if both
+      // hands are clasped invisibly in front of the pelvis.
+      visual: v(-0.006, 0, 0.018), headGroup: v(0.014, -0.012, -0.026),
+      leftArm: v(0.1, 0, -0.022), rightArm: v(0.18, 0, 0.018),
+      leftElbow: v(0.42, 0, 0.02), rightElbow: v(0.78, 0, -0.025),
+      leftHand: v(-0.02, 0.012, 0.025), rightHand: v(0.018, -0.01, -0.02),
+      leftLeg: v(0, -0.055, 0.052), rightLeg: v(0, 0.064, -0.045), leftKnee: v(0.06)
     })
   },
   mediator: {

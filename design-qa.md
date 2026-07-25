@@ -1,5 +1,56 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v131 embodied cast proportion and acting gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/v131-reference-full-pair.png` (`2560 × 720`); source and implementation are aspect-fit to the same `1280 × 720` viewport and judged on one canvas.
+- Mandatory character/story-centre comparison: `tmp/v131-character-focus-pair-after.png` (`1520 × 520`); equal crops expose arm length, face scale, planted stance, notebook contact and four-character silhouette separation.
+- Full 3D evidence: `dist/interior-3d-work/environment-review/00-public.png` plus yaw `90°`, `180°` and `270°` captures under the corresponding `environment-review-yaw-*` folders; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 289,298`, side `179 / 300,406`, reverse `180 / 341,130`, fourth orbit `178 / 308,606`; mobile `106 / 245,734`. All reviewed views report zero shader errors and remain inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the browser regression moved the physical player `3.45m`, rotated the real camera `65.3°`, verified the curved identity-surface blink, preserved planted feet and kept the facilitator's notebook and mediator's thoughtful-hand contacts after the shortened-arm rebuild.
+- Asset evidence: all four role GLBs were rebuilt from the Blender source under sculpt contract v74, hair-construction contract v5 and animation contract v18; the resulting shared character set is `7.38 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v129 P1 / arms read too long and narrow at gameplay distance] All four role rigs now use shorter shoulder-to-elbow and elbow-to-wrist spans, broader sleeve cross-sections and matching controller/cuff/hand offsets. Side and reverse views retain a readable elbow break without letting hands hang below the intended silhouette.
+- [improved / the player's generic listening pose looked folded and passive] The player owns a role-specific listen offset that opens the elbows and lowers excessive wrist compression. The stance now reads as present and grounded while the three NPC gestures keep distinct social roles.
+- [improved / faces and dark hair collapsed at the story-camera distance] The curved face carrier is larger, the dark actor rim is restrained and low-energy cloth/hair/skin fragments receive a small physically bounded lift. Eyes, hair masses, trouser folds and joint seams survive the opening lens without becoming emissive or screen-space effects.
+- [fixed / shortening the facilitator's arm initially broke the notebook hold] Contact solving now uses four closure iterations and a larger authored angle response. Runtime verification requires the hand-to-notebook distance to settle below the same hard contact threshold; the test failed before this correction and passes after it.
+- [checked / the improvement remains a truthful moving 3D cast] All visible changes are authored geometry, rig offsets or lit material response. No sprite, billboard, screenshot projection, CSS/SVG drawing or front-view-only prop substitutes for character volume, and the real controller still walks and orbits the room.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese state, place identity, active story memory, action rail and keyboard prompt remain legible at desktop and portrait sizes. The source still has finer icon/type optical alignment and more refined translucent-panel depth.
+- [improved][spacing and layout rhythm] The shorter arms and open player stance reduce silhouette tangles in the listening circle. Foreground record desk, mid-ground cast and background threshold remain distinct, although the source still uses denser irregular prop spacing and a stronger lower-right continuation path.
+- [improved][colors and visual tokens] Warm mineral ivory, walnut, teal, coral, forest green and brass remain coherent; dark hair and garments now retain form instead of falling into black graphic patches.
+- [improved][image quality and asset fidelity] Larger facial surfaces, role-specific acting and corrected arm proportions make the cast more readable in the actual gameplay lens. The focused comparison still exposes simpler eyelids, mouths, hair clumps, hand anatomy, garment edges and cloth response than the source.
+- [checked][copy and content] “倾听线索”, “倾听墙”, the public-place memory and current speaker remain coherent with the visible encounter; no private source text enters runtime state.
+- [checked][icons and interaction states] Speaker beacon, contextual prompt, action selection, joystick and jump/interact controls remain functional; the atomic warmup still prevents incomplete actor or material state from becoming visible.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; actor roots, Rapier capsules, floor contacts, furniture colliders and interaction anchors are unchanged. The phone frame stays within its hard draw/triangle budget and retains usable touch targets.
+- [P1][character production topology remains visibly behind] The source has dedicated facial topology, softer eyelid and lip volume, anatomically continuous shoulders and hands, finer hair massing and garment-specific deformation. v131 improves proportion and acting but remains a parameterized low-poly cast rather than source-level production character art.
+- [P1][room-wide secondary craft remains behind] The source contains more specific glassware, botanical species, upholstery seams, baskets, paper stacks, trim profiles and material wear. The implementation's hero suites are coherent but its secondary families still repeat broad procedural forms.
+- [P1][light transport remains behind offline reference quality] The source retains richer multi-bounce colour, softer contact penumbrae, better foliage/glass transmission and more differentiated skin, cloth and wood response.
+- [P2][complete orbit exposes gameplay/cinematic trade-offs] All headings remain usable, but side and reverse views reveal quieter shell planes and more navigation clearance than the fixed editorial source shot.
+- [P2][HUD optical finish remains behind] Coverage and responsiveness pass, while icon family, compact typography, panel depth and edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve the shortened role rigs, role-specific player listen pose and hard prop-contact checks; move the next character increment into role-authored face/hair/garment topology rather than stronger shader contrast.
+- Replace the most visible procedural secondary prop families and add room-specific textile, glass, paper and botanical variants before increasing decorative density.
+- Pursue probe/lightmap-assisted colour bounce and softer contact response while preserving the current mobile and four-orbit performance budgets.
+- Keep the current truthful locomotion, Rapier capsules and interaction anchors as hard constraints for every art-quality upgrade.
+
+### Gate result
+
+v131 materially improves the four-character encounter's arm proportions, role differentiation, face readability and gesture contact while preserving real walking, camera orbit, physics, responsive controls and release budgets. The mandatory same-canvas comparisons still contain actionable P1 gaps in source-level character topology, complete-room secondary asset craftsmanship and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: authored face/hair/garment topology, complete-room secondary asset craftsmanship and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v129 face matte, neck chain and editorial-space gate
 
 ### Evidence inspected together

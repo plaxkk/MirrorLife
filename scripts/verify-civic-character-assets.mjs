@@ -13,8 +13,8 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v73", "civic character sculpt contract is stale");
-assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v4", "civic hair construction contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v74", "civic character sculpt contract is stale");
+assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v5", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
   "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",

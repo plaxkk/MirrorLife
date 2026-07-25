@@ -6642,8 +6642,8 @@ function createCivicFaceDecal(role = "player") {
   // as narrow slits at the story camera even though the source art was open
   // and expressive. The legacy full-volume hybrid keeps its old brow/mouth
   // patch dimensions for QA isolation.
-  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.41;
-  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.365;
+  const width = CIVIC_FACE_MODE === "hybrid-volume" ? 0.35 : 0.425;
+  const height = CIVIC_FACE_MODE === "hybrid-volume" ? 0.285 : 0.38;
   const geometry = new THREE.PlaneGeometry(width, height, 36, 24);
   const positions = geometry.attributes.position;
   for (let index = 0; index < positions.count; index += 1) {
@@ -7747,7 +7747,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeSurfacePosition.y * 3.1
         - vMirrorLifeSurfacePosition.x * 2.4
       ) * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.12, 0.088, 0.105), mirrorLifeInkRim * 0.12);
+      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.12, 0.088, 0.105), mirrorLifeInkRim * 0.085);
       gl_FragColor.rgb += vec3(0.058, 0.047, 0.035) * mirrorLifeClothSheen * 0.24;
       gl_FragColor.rgb *= 1.0
         + mirrorLifeWeave * 0.01
@@ -7757,6 +7757,16 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         sin(vMirrorLifeSurfacePosition.x * 17.0 + vMirrorLifeSurfacePosition.y * 8.0)
         * sin(vMirrorLifeSurfacePosition.z * 13.0 - vMirrorLifeSurfacePosition.y * 6.0)
       ) * vMirrorLifeHairMask;
+      // Preserve authored garment and hair hue through the warm room key.
+      // Deep folds previously collapsed to near-black seams between the
+      // shortened limbs, making continuous skinning look like disconnected
+      // toy parts. This low-energy bounce only lifts already-dark fragments;
+      // lit planes and contact shadows retain their directional contrast.
+      float mirrorLifeActorLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
+      float mirrorLifeShadowLift = 1.0 - smoothstep(0.09, 0.29, mirrorLifeActorLuma);
+      gl_FragColor.rgb += vec3(0.026, 0.021, 0.018)
+        * mirrorLifeShadowLift
+        * clamp(vMirrorLifeClothMask + vMirrorLifeHairMask * 0.58 + vMirrorLifeSkinMask * 0.34, 0.0, 1.0);
       gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.29;
       gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.14;
       gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.15;
@@ -8878,8 +8888,12 @@ function applyCivicContactConstraints(entry, frameDeltaSeconds = 1 / 60) {
   // shorten a nearly collinear arm. A short distal CCD finish then closes
   // remaining centimetres without disturbing the authored wrist orientation.
   let solverMetrics = null;
-  const solverIterations = contactSpec.role === "mediator" ? 2 : 3;
-  const angleScale = contactSpec.role === "mediator" ? 10 : 1;
+  const solverIterations = contactSpec.role === "mediator" ? 2 : 4;
+  // The v74 arm rhythm is intentionally shorter, so the facilitator's
+  // notebook reach needs a wider authored shoulder/elbow solve than the old
+  // long-limbed rig. The target remains inside the true two-bone reach and
+  // the CCD finish still preserves the wrist's notebook-guide orientation.
+  const angleScale = contactSpec.role === "mediator" ? 10 : 3;
   for (let iteration = 0; iteration < solverIterations; iteration += 1) {
     solverMetrics = solveCivicTwoBoneContact(
       entry.rightArm,
