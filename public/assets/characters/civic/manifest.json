@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v70",
+  "sculptContract": "mirrorlife-civic-sculpt-v72",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v4",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -182,6 +182,19 @@
       "NotebookSupportFinger"
     ],
     "parent": "NotebookPivot"
+  },
+  "contactConstraintContract": {
+    "version": "mirrorlife-civic-contact-constraint-v2",
+    "effectors": [
+      "HandContactAnchor_-1",
+      "HandContactAnchor_1"
+    ],
+    "targets": [
+      "NotebookSupportTarget",
+      "NotebookGuideTarget",
+      "ThoughtfulJawTarget"
+    ],
+    "runtime": "frame-observed-two-bone-ccd+deformation-rig-mirroring"
   },
   "footwearContract": {
     "version": "mirrorlife-civic-footwear-v4",

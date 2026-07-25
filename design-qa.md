@@ -1,5 +1,56 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v124 physical hand-contact and composition gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Final desktop implementation: `tmp/v124-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v124-final-full.png` (`1672 × 471`); source and implementation are each downsampled to `836 × 471` without crop, then placed on the same canvas.
+- Mandatory focused comparison: `tmp/reference-vs-v124-final-character-focus.png` (`1800 × 540`); equal `900 × 540` native-pixel crops expose the four-person circle, hands, props, stance and character/environment integration together.
+- Full 3D and responsive evidence: `tmp/v124-final-desktop-yaw90.png`, `tmp/v124-final-desktop-yaw180.png`, `tmp/v124-final-mobile-yaw0.png` and `tmp/v124-orbit-and-mobile-board.png`.
+- Runtime evidence: opening desktop `168 / 284,598`, side `172 / 295,706`, reverse `172 / 336,430`; mobile `106 / 245,336`. All scenes complete the hidden two-frame atomic warmup with zero shader errors and remain below the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: two fresh browser runs moved the player `1.73m` and `2.05m`, rotated the physical camera `65.3°`, retained the curved identity-surface blink and preserved both contact constraints after movement. Desktop/mobile scene flow passes; the transition stress run covers `26` zones and `78` transitions with zero failures or runtime errors.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v123 P1 / role hands only approximated story-prop contact] Every civic hand now exports a named contact effector, while the notebook and mediator head export authored targets. Runtime constraint v2 applies animation first, then solves the shoulder/elbow chain and mirrors the final joint deltas into the continuous skin rig.
+- [fixed / the facilitator's guide hand visibly floated beside the notebook] The final front, side and reverse captures all retain a physical guide-hand/notebook relationship. Runtime measurement reduces the fingertip-to-guide distance from about `0.153m` to `0.000m` without moving the notebook off its authored hand pivot.
+- [fixed / the mediator's thoughtful pose stopped at the chest instead of the face] The mediator now uses a head-attached jaw target, so the right hand follows the animated head rather than a static room coordinate. The opening capture reduces the hand-to-jaw error from about `0.683m` to `0.000m`; the focused comparison shows the intended listening/thinking read.
+- [fixed / several simultaneous interaction stars competed with the testimony] The public room still exposes the same keyboard interactions and compass targets, but the world renders only the nearest/focused interaction star. The four-person relationship is now the primary mid-ground read.
+- [improved / floor light breakup ended abruptly before the right foreground] A second rotated foliage receiver extends the portal-shadow language across the foreground at a cost of one draw call and two triangles.
+- [rejected camera experiment / a `5.56m`, `3.28m` opening camera exposed too much empty floor] Exact-size review showed a smaller cast and weaker social focus. Production remains at the better `5.24m`, `3.18m` editorial camera, with the existing rear/side orbit allowances and no change to physical movement.
+- [checked / all visible changes survive an actual orbit] At `90°` and `180°`, the notebook remains held, the jaw gesture remains anatomically legible, the cast stays inside the furnished shell and no front-only sprite or screen-space substitute is exposed.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese status, place-memory title, four civic actions and responsive truncation are stable at the exact desktop viewport and `390 × 844`. The reference still uses slightly more optically balanced small-text weights.
+- [improved][spacing and layout rhythm] Removing three redundant world markers and rejecting the wider pullback restores a single mid-ground social focus. The source still has a calmer foreground path and more intentional negative space around the cast.
+- [checked][colors and visual tokens] Warm ivory, walnut, teal, forest green, coral and brass remain coherent. The implementation is materially brighter and more uniformly saturated than the reference's softer bounced-light hierarchy.
+- [improved][image quality and asset fidelity] Hand effectors, jaw/notebook targets and final contacts are real lit, animated 3D structures. No sprite, billboard, CSS/SVG drawing or screenshot projection substitutes for the visible hands and props.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory status and the four civic actions all describe the visible social scene. No reference-private text has been copied into game state.
+- [checked][physical truth and responsiveness] The same actor roots, Rapier capsules, furniture colliders, interaction anchors and authoritative movement remain intact. Portrait keeps the practical joystick/action layout and a three-character performance LOD under its hard budget.
+- [P1][whole-body deformation and contact pressure remain behind the source] The focused same-canvas comparison now matches the narrative intent of hand-to-jaw and hand-to-notebook contact, but the source still has finer shoulder rotation, elbow compression, finger curl, cloth reaction and planted weight transfer.
+- [P1][environment asset craft remains visibly behind] The current room is spatially coherent and fully modeled through orbit, yet documents, joinery, glassware, plant species and furniture edge treatment remain broader and more procedural than the source.
+- [P1][lighting/material integration remains visibly behind] The reference has softer multi-bounce penumbrae, richer contact colour, less uniform floor exposure, subtler glass transport and more natural skin/cloth response.
+- [P2][camera is gameplay-correct but not yet cinematically matched] The production camera preserves movement and 360° readability, while the reference can use a denser fixed shot with a lower apparent horizon and more foreground framing. A literal camera match would currently reduce navigation clarity, so this remains an authored gameplay/cinematic trade-off rather than an accepted fidelity pass.
+- [P2][HUD optical finish remains behind] Functional hierarchy, safe areas and interactions pass; icon drawing, translucent-panel depth, micro-spacing and compact type treatment remain less refined than the source.
+
+### Implementation checklist
+
+- Preserve contact constraint v2 as the base for future finger curl and prop-pressure correctives.
+- Replace the remaining broad procedural room forms with a small authored secondary-prop kit before adding more decorative geometry.
+- Add lightmapped or probe-assisted indirect colour and material-specific response without exceeding the established mobile budget.
+- Revisit camera and HUD optical polish only after character/environment density is closer to the source; the wider opening-camera candidate has already been rejected.
+
+### Gate result
+
+v124 closes a genuine physical storytelling gap: the facilitator now holds the evidence book and the mediator maintains a head-relative thoughtful gesture through the live animation stack, rather than merely resembling those contacts from one frame. Marker cleanup and the retained tighter camera improve the first read without compromising movement, orbit or performance. The mandatory full and focused comparisons still contain actionable P1 differences in whole-body deformation, authored environment finish and offline-quality light/material integration.
+
+final result: blocked
+
+Blocker: source-level whole-body deformation/contact pressure, complete-room production asset craft and offline-quality indirect light/material integration remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v123 hand acting and role-contact gate
 
 ### Evidence inspected together

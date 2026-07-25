@@ -65,6 +65,25 @@ try {
   // expression lerps to settle. Keep this tied to the observable authored
   // expression contract without turning shader warm-up into a false failure.
   }, { polling: 50, timeout: 8000 });
+  try {
+    await page.waitForFunction(() => {
+      const stats = window.MirrorLifeInterior3D?.getStats?.();
+      const actors = stats?.actors || [];
+      const facilitator = actors.find((actor) => actor.assetRole === "facilitator");
+      const mediator = actors.find((actor) => actor.assetRole === "mediator");
+      return [facilitator, mediator].every((actor) => (
+        actor?.contactConstraint?.version === "mirrorlife-civic-contact-constraint-v2"
+        && Number(actor.contactConstraint.weight || 0) >= 0.95
+        && Number(actor.contactConstraint.after ?? 1) <= 0.03
+      ));
+    }, { polling: "raf", timeout: 5000 });
+  } catch (error) {
+    const stats = await readStats(page);
+    const contacts = (stats.actors || [])
+      .filter((actor) => ["facilitator", "mediator"].includes(actor.assetRole))
+      .map((actor) => ({ role: actor.assetRole, state: actor.animation?.state, contact: actor.contactConstraint }));
+    throw new Error(`civic contact constraints did not settle: ${JSON.stringify(contacts)}`, { cause: error });
+  }
 
   const opening = await readStats(page);
   assert.deepEqual(opening.shaderErrors || [], [], "civic scene exposed a WebGL shader compilation failure");
@@ -118,6 +137,12 @@ try {
   assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v2"), "civic production faces did not expose physically lit corneal lenses");
   assert(opening.actors.every((actor) => actor.cornea?.lensCount === 2 && actor.cornea?.physicallyLit === true), "civic corneal lens contract is incomplete");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v9"), "civic actors did not expose the role-authored independent-hand contract");
+  const openingFacilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
+  const openingMediator = opening.actors.find((actor) => actor.assetRole === "mediator");
+  assert.equal(openingFacilitator?.contactConstraint?.target, "notebook-guide", "facilitator lost the notebook guide contact target");
+  assert.equal(openingMediator?.contactConstraint?.target, "thoughtful-jaw", "mediator lost the head-attached thoughtful contact target");
+  assert(Number(openingFacilitator?.contactConstraint?.after ?? 1) <= 0.03, "facilitator fingertip did not close onto the notebook edge");
+  assert(Number(openingMediator?.contactConstraint?.after ?? 1) <= 0.03, "mediator thoughtful hand did not close onto the jaw target");
   assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v6" && actor.body?.realGeometry === true), "civic actors did not expose the reference-weighted body shell contract");
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
@@ -362,6 +387,13 @@ try {
   assert(walked > 0.45, `WASD movement did not move the 3D player far enough (${walked.toFixed(3)}m)`);
   assert.equal(afterMove.animation?.state, "idle", "player did not blend back to the authored idle clip after stopping");
   assert.equal(afterMove.animation?.transitioning, false, "player idle transition did not settle within the blend window");
+  ["facilitator", "mediator"].forEach((role) => {
+    const contactActor = afterMoveStats.actors?.find((actor) => actor.assetRole === role);
+    assert(
+      Number(contactActor?.contactConstraint?.after ?? 1) <= 0.03,
+      `${role} contact constraint drifted after player movement`
+    );
+  });
 
   const beforeYaw = Number(afterMoveStats.camera?.yaw || 0);
   const canvas = await page.$("#gameCanvas");

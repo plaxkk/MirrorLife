@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v70";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v72";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
@@ -4573,16 +4573,17 @@ function addCivicReferenceDressing(theme, colors) {
   addSculptedFloorPlant(4.48, 2.72, 0.8, colors, 12);
   const foliageShadowTexture = getCivicFoliageShadowTexture();
   if (foliageShadowTexture) {
-    const foliageShadow = new THREE.Mesh(
-      new THREE.PlaneGeometry(8.4, 6.2),
-      new THREE.MeshBasicMaterial({
+    const foliageShadowMaterial = new THREE.MeshBasicMaterial({
         map: foliageShadowTexture,
         transparent: true,
         opacity: theme.night ? 0.08 : (mobileLod ? 0.46 : 0.88),
         depthWrite: false,
         toneMapped: true,
         side: THREE.DoubleSide
-      })
+      });
+    const foliageShadow = new THREE.Mesh(
+      new THREE.PlaneGeometry(8.4, 6.2),
+      foliageShadowMaterial
     );
     foliageShadow.name = "civic-foliage-shadow-receiver";
     foliageShadow.rotation.x = -Math.PI / 2;
@@ -4592,6 +4593,32 @@ function addCivicReferenceDressing(theme, colors) {
     foliageShadow.castShadow = false;
     foliageShadow.receiveShadow = false;
     roomRoot.add(foliageShadow);
+    if (!mobileLod && !theme.night) {
+      // The source daylight crosses both the testimony ring and the lounge.
+      // One extracted mask left the right foreground clinically uniform, so a
+      // smaller rotated receiver carries a second, lower-energy canopy break
+      // across that empty field. It remains floor-bound and non-interactive;
+      // the real sun canopy above still casts onto actors and furniture.
+      const secondaryFoliageShadow = new THREE.Mesh(
+        new THREE.PlaneGeometry(5.8, 4.25),
+        new THREE.MeshBasicMaterial({
+          map: foliageShadowTexture,
+          transparent: true,
+          opacity: 0.36,
+          depthWrite: false,
+          toneMapped: true,
+          side: THREE.DoubleSide
+        })
+      );
+      secondaryFoliageShadow.name = "civic-foliage-secondary-shadow-receiver";
+      secondaryFoliageShadow.rotation.x = -Math.PI / 2;
+      secondaryFoliageShadow.rotation.z = 1.02;
+      secondaryFoliageShadow.position.set(1.78, 0.063, 0.32);
+      secondaryFoliageShadow.renderOrder = 1;
+      secondaryFoliageShadow.castShadow = false;
+      secondaryFoliageShadow.receiveShadow = false;
+      roomRoot.add(secondaryFoliageShadow);
+    }
   }
 }
 
@@ -8211,6 +8238,197 @@ function applyCivicAnimationPose(entry, animationPose) {
   });
 }
 
+function rotateCivicJointTowardWorldPoint(joint, effector, targetWorld, maxRadians = 0.22) {
+  if (!joint?.parent || !effector || !targetWorld || maxRadians <= 0) return false;
+  joint.updateMatrixWorld(true);
+  const jointWorld = joint.getWorldPosition(new THREE.Vector3());
+  const effectorDirection = effector.getWorldPosition(new THREE.Vector3()).sub(jointWorld);
+  const targetDirection = targetWorld.clone().sub(jointWorld);
+  if (effectorDirection.lengthSq() < 1e-8 || targetDirection.lengthSq() < 1e-8) return false;
+  effectorDirection.normalize();
+  targetDirection.normalize();
+  const worldDelta = new THREE.Quaternion().setFromUnitVectors(effectorDirection, targetDirection);
+  const deltaAngle = 2 * Math.acos(THREE.MathUtils.clamp(Math.abs(worldDelta.w), -1, 1));
+  if (deltaAngle > maxRadians) {
+    worldDelta.slerpQuaternions(
+      new THREE.Quaternion(),
+      worldDelta,
+      maxRadians / Math.max(1e-6, deltaAngle)
+    );
+  }
+  const parentWorld = joint.parent.getWorldQuaternion(new THREE.Quaternion());
+  const localDelta = parentWorld.clone().invert()
+    .multiply(worldDelta)
+    .multiply(parentWorld);
+  joint.quaternion.premultiply(localDelta).normalize();
+  joint.updateMatrixWorld(true);
+  return true;
+}
+
+function solveCivicTwoBoneContact(shoulder, elbow, effector, target, weight = 1, angleScale = 1) {
+  if (!shoulder || !elbow || !effector || !target || weight <= 0) return null;
+  shoulder.updateMatrixWorld(true);
+  target.updateMatrixWorld(true);
+  const shoulderWorld = shoulder.getWorldPosition(new THREE.Vector3());
+  const elbowWorld = elbow.getWorldPosition(new THREE.Vector3());
+  const effectorWorld = effector.getWorldPosition(new THREE.Vector3());
+  const targetWorld = target.getWorldPosition(new THREE.Vector3());
+  const upperLength = shoulderWorld.distanceTo(elbowWorld);
+  const lowerLength = elbowWorld.distanceTo(effectorWorld);
+  const targetVector = targetWorld.clone().sub(shoulderWorld);
+  const rawDistance = targetVector.length();
+  if (upperLength < 1e-5 || lowerLength < 1e-5 || rawDistance < 1e-5) return null;
+  const direction = targetVector.normalize();
+  const reachableDistance = THREE.MathUtils.clamp(
+    rawDistance,
+    Math.abs(upperLength - lowerLength) + 0.002,
+    upperLength + lowerLength - 0.002
+  );
+  const projectedUpper = (
+    reachableDistance * reachableDistance
+    + upperLength * upperLength
+    - lowerLength * lowerLength
+  ) / (2 * reachableDistance);
+  const bendHeight = Math.sqrt(Math.max(
+    0,
+    upperLength * upperLength - projectedUpper * projectedUpper
+  ));
+  let pole = elbowWorld.clone()
+    .sub(shoulderWorld)
+    .addScaledVector(direction, -elbowWorld.clone().sub(shoulderWorld).dot(direction));
+  if (pole.lengthSq() < 1e-7) {
+    pole = new THREE.Vector3(0, 1, 0).cross(direction);
+    if (pole.lengthSq() < 1e-7) pole.set(1, 0, 0);
+  }
+  pole.normalize();
+  const solvedTargetWorld = shoulderWorld.clone().addScaledVector(direction, reachableDistance);
+  const desiredElbowWorld = shoulderWorld.clone()
+    .addScaledVector(direction, projectedUpper)
+    .addScaledVector(pole, bendHeight);
+  const currentElbowWorld = elbowWorld.clone();
+  const blendedElbowWorld = currentElbowWorld.lerp(desiredElbowWorld, weight);
+  rotateCivicJointTowardWorldPoint(
+    shoulder,
+    elbow,
+    blendedElbowWorld,
+    0.42 * weight * angleScale
+  );
+  shoulder.updateMatrixWorld(true);
+  rotateCivicJointTowardWorldPoint(
+    elbow,
+    effector,
+    solvedTargetWorld,
+    0.52 * weight * angleScale
+  );
+  return {
+    upperLength,
+    lowerLength,
+    rawDistance,
+    reachableDistance,
+    bendHeight
+  };
+}
+
+function mirrorCivicContactJointToSkin(entry, jointName) {
+  const controller = entry.controllerJoints?.[jointName];
+  const skin = entry.skinJoints?.[jointName];
+  if (!controller?.node || !skin?.node) return;
+  // Both controller and deformation bones are exported from the same rest
+  // axes. Transfer the solved controller delta over the skin rest transform,
+  // so prop contact cannot reopen a rigid sleeve gap after CCD closes it.
+  const solvedDelta = controller.restQuaternion.clone()
+    .invert()
+    .multiply(controller.node.quaternion);
+  skin.node.quaternion.copy(skin.restQuaternion).multiply(solvedDelta).normalize();
+  skin.deltaQuaternion.copy(solvedDelta);
+  skin.deltaEuler.setFromQuaternion(solvedDelta, "XYZ");
+}
+
+function applyCivicContactConstraints(entry, frameDeltaSeconds = 1 / 60) {
+  const authoredState = String(entry.animation?.state || "");
+  const contactSpec = entry.assetRole === "facilitator"
+    && ["listen", "gesture"].includes(authoredState)
+    && entry.notebookGuideTarget
+    && entry.rightHandContactAnchor
+    ? {
+      role: "facilitator",
+      effector: entry.rightHandContactAnchor,
+      effectorLabel: "right-hand",
+      target: entry.notebookGuideTarget,
+      targetLabel: "notebook-guide"
+    }
+    : entry.assetRole === "mediator"
+      && ["listen", "gesture"].includes(authoredState)
+      && entry.thoughtfulJawTarget
+      && entry.rightHandContactAnchor
+      ? {
+        role: "mediator",
+        effector: entry.rightHandContactAnchor,
+        effectorLabel: "right-hand",
+        target: entry.thoughtfulJawTarget,
+        targetLabel: "thoughtful-jaw"
+      }
+      : null;
+  const targetWeight = contactSpec ? 1 : 0;
+  if (!Number.isFinite(entry.contactConstraintWeight)) {
+    // The opening testimony is assembled behind the atomic reveal. Start its
+    // already-authored contacts fully solved so the first visible frame never
+    // shows a hand gliding from the waist to its prop or jaw.
+    entry.contactConstraintWeight = targetWeight;
+  }
+  const currentWeight = Number(entry.contactConstraintWeight || 0);
+  const blendSeconds = targetWeight > currentWeight ? 0.16 : 0.1;
+  const alpha = 1 - Math.exp(-frameDeltaSeconds / blendSeconds);
+  entry.contactConstraintWeight = currentWeight + (targetWeight - currentWeight) * alpha;
+  if (!contactSpec || entry.contactConstraintWeight < 0.04) {
+    entry.contactConstraintState = null;
+    return;
+  }
+  entry.visual.updateMatrixWorld(true);
+  const { effector, target } = contactSpec;
+  const before = effector.getWorldPosition(new THREE.Vector3())
+    .distanceTo(target.getWorldPosition(new THREE.Vector3()));
+  const weight = THREE.MathUtils.smoothstep(entry.contactConstraintWeight, 0, 1);
+  // Solve the human two-bone reach first, including elbow bend needed to
+  // shorten a nearly collinear arm. A short distal CCD finish then closes
+  // remaining centimetres without disturbing the authored wrist orientation.
+  let solverMetrics = null;
+  const solverIterations = contactSpec.role === "mediator" ? 2 : 3;
+  const angleScale = contactSpec.role === "mediator" ? 10 : 1;
+  for (let iteration = 0; iteration < solverIterations; iteration += 1) {
+    solverMetrics = solveCivicTwoBoneContact(
+      entry.rightArm,
+      entry.rightElbow,
+      effector,
+      target,
+      weight,
+      angleScale
+    );
+    entry.visual.updateMatrixWorld(true);
+    rotateCivicJointTowardWorldPoint(
+      entry.rightElbow,
+      effector,
+      target.getWorldPosition(new THREE.Vector3()),
+      0.18 * weight * angleScale
+    );
+  }
+  mirrorCivicContactJointToSkin(entry, "rightArm");
+  mirrorCivicContactJointToSkin(entry, "rightElbow");
+  entry.visual.updateMatrixWorld(true);
+  const after = effector.getWorldPosition(new THREE.Vector3())
+    .distanceTo(target.getWorldPosition(new THREE.Vector3()));
+  entry.contactConstraintState = {
+    version: "mirrorlife-civic-contact-constraint-v2",
+    role: contactSpec.role,
+    effector: contactSpec.effectorLabel,
+    target: contactSpec.targetLabel,
+    weight,
+    before,
+    after,
+    solverMetrics
+  };
+}
+
 function createCivicActorObject(actor, asset) {
   const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
   const style = resolveActorStyle(actor, frame);
@@ -8245,6 +8463,11 @@ function createCivicActorObject(actor, asset) {
   const leftHand = leftElbow?.getObjectByName("Hand_-1") || null;
   const rightHand = rightElbow?.getObjectByName("Hand_1") || null;
   const notebookPivot = leftElbow?.getObjectByName("NotebookPivot") || null;
+  const leftHandContactAnchor = leftHand?.getObjectByName("HandContactAnchor_-1") || null;
+  const rightHandContactAnchor = rightHand?.getObjectByName("HandContactAnchor_1") || null;
+  const notebookSupportTarget = notebookPivot?.getObjectByName("NotebookSupportTarget") || null;
+  const notebookGuideTarget = notebookPivot?.getObjectByName("NotebookGuideTarget") || null;
+  const thoughtfulJawTarget = headGroup?.getObjectByName("ThoughtfulJawTarget") || null;
   const leftSleeveCompression = leftElbow?.getObjectByName("SleeveCompressionPivot_-1") || null;
   const rightSleeveCompression = rightElbow?.getObjectByName("SleeveCompressionPivot_1") || null;
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
@@ -8661,6 +8884,11 @@ function createCivicActorObject(actor, asset) {
     leftHand: fullExpressionLod ? leftHand : null,
     rightHand: fullExpressionLod ? rightHand : null,
     notebookPivot: fullExpressionLod ? notebookPivot : null,
+    leftHandContactAnchor: fullExpressionLod ? leftHandContactAnchor : null,
+    rightHandContactAnchor: fullExpressionLod ? rightHandContactAnchor : null,
+    notebookSupportTarget: fullExpressionLod ? notebookSupportTarget : null,
+    notebookGuideTarget: fullExpressionLod ? notebookGuideTarget : null,
+    thoughtfulJawTarget: fullExpressionLod ? thoughtfulJawTarget : null,
     leftLeg,
     rightLeg,
     leftKnee,
@@ -8689,7 +8917,7 @@ function createCivicActorObject(actor, asset) {
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v4",
     garmentMaterialVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentMaterial || "mirrorlife-civic-garment-material-v1",
-    styleKey: `${frame}:${role}:civic-glb-v24`,
+    styleKey: `${frame}:${role}:civic-glb-v26`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -8710,7 +8938,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v24` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v26` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -8853,6 +9081,7 @@ function updateActors(actors = [], now = performance.now()) {
     }
     const animatedHead = animationPose?.headGroup || [0, 0, 0];
     entry.headGroup.rotation.set(animatedHead[0], animatedHead[1] + headLookYaw, animatedHead[2]);
+    applyCivicContactConstraints(entry, frameDeltaSeconds);
     const smileDictionary = entry.faceMorphMesh?.morphTargetDictionary;
     const smileInfluences = entry.faceMorphMesh?.morphTargetInfluences;
     const smileIndexForFeatures = smileDictionary?.WarmSmile;
@@ -9936,6 +10165,21 @@ function getStats() {
         version: "mirrorlife-civic-hand-v9",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
+      } : null,
+      contactConstraint: entry.contactConstraintState ? {
+        version: entry.contactConstraintState.version,
+        role: entry.contactConstraintState.role,
+        effector: entry.contactConstraintState.effector,
+        target: entry.contactConstraintState.target,
+        weight: Number(entry.contactConstraintState.weight.toFixed(4)),
+        before: Number(entry.contactConstraintState.before.toFixed(4)),
+        after: Number(entry.contactConstraintState.after.toFixed(4)),
+        solver: entry.contactConstraintState.solverMetrics
+          ? Object.fromEntries(Object.entries(entry.contactConstraintState.solverMetrics).map(([key, value]) => [
+            key,
+            Number(value.toFixed(4))
+          ]))
+          : null
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v2",

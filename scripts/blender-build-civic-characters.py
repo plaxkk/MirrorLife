@@ -2594,6 +2594,16 @@ def build_body(role, config, mats, visual):
             profile["hand_scale"],
             profile["hand_scale"],
         )
+        # A real child transform at the fingertip gives the runtime a stable
+        # effector for prop contact. Solving against the wrist pivot made the
+        # entire palm disappear into the notebook because the renderer had no
+        # authored knowledge of where the curled fingers actually end.
+        hand_contact = empty(
+            f"HandContactAnchor_{side}",
+            hand,
+            (0, -0.002, -0.078 if config["costume"] == "facilitator" else -0.072),
+        )
+        hand_contact["contact_contract"] = "mirrorlife-civic-contact-anchor-v1"
 
     for side, pivot, knee in ((-1, left_leg, left_knee), (1, right_leg, right_knee)):
         trouser_compression = empty(f"TrouserCompressionPivot_{side}", knee)
@@ -3155,6 +3165,18 @@ def build_costume(
                 bevel_resolution=1,
             )
             notebook["contact_contract"] = "mirrorlife-civic-notebook-contact-v3"
+            notebook_support_target = empty(
+                "NotebookSupportTarget",
+                notebook,
+                (0.058, -0.046, 0.048),
+            )
+            notebook_guide_target = empty(
+                "NotebookGuideTarget",
+                notebook,
+                (-0.082, -0.033, -0.024),
+            )
+            notebook_support_target["contact_contract"] = "mirrorlife-civic-contact-anchor-v1"
+            notebook_guide_target["contact_contract"] = "mirrorlife-civic-contact-anchor-v1"
         else:
             # A fitted sash and offset knot make the mediator readable as a
             # distinct civic role even when her face is in profile.
@@ -3214,6 +3236,17 @@ def build_character(role, config):
     # proportion larger than the reference cast even though the top height was
     # correct; raise the smaller head so the 1.72 m silhouette stays stable.
     head.scale = body_profile["head_scale"]
+    if role == "mediator":
+        # A head-attached target gives the thoughtful hand a semantic place to
+        # land even while social look-at rotates the face. The target sits just
+        # outside the jaw volume, so the solved fingers read as a listening
+        # gesture instead of clipping through the mouth.
+        thoughtful_target = empty(
+            "ThoughtfulJawTarget",
+            head,
+            (0.145, -0.195, -0.075),
+        )
+        thoughtful_target["contact_contract"] = "mirrorlife-civic-contact-anchor-v2"
     build_face(head, mats, role)
     build_hair(head, mats, config["hair_style"])
     if config["hair_style"] == "cap":
@@ -3284,7 +3317,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v70",
+        "sculptContract": "mirrorlife-civic-sculpt-v72",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v4",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3381,6 +3414,12 @@ def main():
             "version": "mirrorlife-civic-notebook-contact-v3",
             "parts": ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport", "NotebookSupportFinger"],
             "parent": "NotebookPivot",
+        },
+        "contactConstraintContract": {
+            "version": "mirrorlife-civic-contact-constraint-v2",
+            "effectors": ["HandContactAnchor_-1", "HandContactAnchor_1"],
+            "targets": ["NotebookSupportTarget", "NotebookGuideTarget", "ThoughtfulJawTarget"],
+            "runtime": "frame-observed-two-bone-ccd+deformation-rig-mirroring",
         },
         "footwearContract": {
             "version": "mirrorlife-civic-footwear-v4",

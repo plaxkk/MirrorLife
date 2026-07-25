@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v70", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v72", "civic character sculpt contract is stale");
 assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v4", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
@@ -129,6 +129,21 @@ assert.deepEqual(
   ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport", "NotebookSupportFinger"],
   "civic notebook contact parts changed"
 );
+assert.equal(
+  manifest.contactConstraintContract?.version,
+  "mirrorlife-civic-contact-constraint-v2",
+  "civic contact constraint contract is stale"
+);
+assert.deepEqual(
+  manifest.contactConstraintContract?.effectors,
+  ["HandContactAnchor_-1", "HandContactAnchor_1"],
+  "civic contact effectors changed"
+);
+assert.deepEqual(
+  manifest.contactConstraintContract?.targets,
+  ["NotebookSupportTarget", "NotebookGuideTarget", "ThoughtfulJawTarget"],
+  "civic contact targets changed"
+);
 assert.equal(manifest.footwearContract?.version, "mirrorlife-civic-footwear-v4", "civic footwear contract is stale");
 assert.deepEqual(manifest.footwearContract?.styles, ["sneaker", "ankle-boot"], "civic footwear styles changed");
 assert.equal(manifest.animationContract?.version, CIVIC_ANIMATION_CLIP_VERSION, "civic animation contract is stale");
@@ -224,8 +239,12 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("NotebookPalmSupport")), "facilitator: notebook palm support is missing");
     assert(contents.includes(Buffer.from("NotebookSupportFinger_1")), "facilitator: first notebook support finger is missing");
     assert(contents.includes(Buffer.from("NotebookSupportFinger_3")), "facilitator: third notebook support finger is missing");
+    assert(contents.includes(Buffer.from("NotebookSupportTarget")), "facilitator: notebook support target is missing");
+    assert(contents.includes(Buffer.from("NotebookGuideTarget")), "facilitator: notebook guide target is missing");
     assert(contents.includes(Buffer.from("FacilitatorShoulderYoke")), "facilitator: tailored shoulder yoke is missing");
   }
+  assert(contents.includes(Buffer.from("HandContactAnchor_-1")), `${role}: left hand contact anchor is missing`);
+  assert(contents.includes(Buffer.from("HandContactAnchor_1")), `${role}: right hand contact anchor is missing`);
   assert(contents.includes(Buffer.from("ShoulderMantle_-1")), `${role}: left tailored shoulder plane is missing`);
   assert(contents.includes(Buffer.from("ShoulderMantle_1")), `${role}: right tailored shoulder plane is missing`);
   assert(contents.includes(Buffer.from("HipLoadFold_-1")), `${role}: left load-bearing hip fold is missing`);
@@ -234,6 +253,7 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("SkirtHipFoundation")), `${role}: skirt hip foundation is missing`);
   }
   if (role === "mediator") {
+    assert(contents.includes(Buffer.from("ThoughtfulJawTarget")), "mediator: head-attached thoughtful contact target is missing");
     assert(contents.includes(Buffer.from("MediatorWaistSash")), "mediator: fitted waist sash is missing");
     assert(contents.includes(Buffer.from("MediatorSashKnot")), "mediator: sash knot is missing");
     assert(contents.includes(Buffer.from("BobNapeLock_3")), "mediator: continuous bob nape is missing");

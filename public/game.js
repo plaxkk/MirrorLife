@@ -9910,12 +9910,27 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
   interiorHotspots = socialParallaxPending || empathyCalibrationPending || memoryAuthorizationPending
     ? []
     : (anchors || []).filter((anchor) => anchor.visible);
+  // The civic testimony is staged like the selected reference: one social
+  // cue and one contextual action, not a constellation of identical sparkles
+  // floating over every piece of furniture. Keep the complete anchor set for
+  // keyboard/context interaction and navigation, but render only the focused
+  // or physically nearby prop in the cinematic room.
+  const visibleHotspots = interiorView.zone?.id === "public-plaza"
+    ? interiorHotspots
+      .filter((anchor) => anchor.index === interiorFocusPropIndex || isInteriorAnchorNearby(anchor))
+      .sort((a, b) => {
+        const aFocused = a.index === interiorFocusPropIndex ? 1 : 0;
+        const bFocused = b.index === interiorFocusPropIndex ? 1 : 0;
+        return bFocused - aFocused || getInteriorAnchorDistance(a) - getInteriorAnchorDistance(b);
+      })
+      .slice(0, 1)
+    : interiorHotspots;
   const layer = ensureInteriorHotspotLayer();
   const record = getInteriorExplorationRecord(interiorView.zone.id);
-  const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
+  const signature = visibleHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
   if (layer.dataset.signature !== signature) {
     layer.dataset.signature = signature;
-    layer.innerHTML = interiorHotspots.map((anchor) => {
+    layer.innerHTML = visibleHotspots.map((anchor) => {
       const found = record.found.includes(anchor.label);
       return `<button class="interior-hotspot${found ? " discovered" : ""}" type="button" data-interior-hotspot="${anchor.index}" aria-label="探索${escapeHtml(anchor.label)}" title="探索${escapeHtml(anchor.label)}"><span class="interior-hotspot-mark" aria-hidden="true">✦</span><span class="interior-hotspot-label">${escapeHtml(anchor.label)}</span></button>`;
     }).join("");
@@ -9923,7 +9938,7 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
   const buttons = [...layer.querySelectorAll("[data-interior-hotspot]")];
   buttons.forEach((button) => {
     const index = Number(button.dataset.interiorHotspot);
-    const anchor = interiorHotspots.find((item) => item.index === index);
+    const anchor = visibleHotspots.find((item) => item.index === index);
     if (!anchor) {
       button.hidden = true;
       return;
