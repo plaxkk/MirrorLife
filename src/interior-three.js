@@ -134,12 +134,12 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.9,
-    fill: 0.24,
-    hemi: 0.21,
-    bounce: 0.6,
-    wash: 0.44,
-    exposure: 0.77,
+    key: 1.78,
+    fill: 0.28,
+    hemi: 0.26,
+    bounce: 0.57,
+    wash: 0.42,
+    exposure: 0.8,
     keyColor: "#ffe5cc",
     fillColor: "#c5dfdf"
   },
@@ -6734,7 +6734,10 @@ function createCivicFaceDecal(role = "player") {
     // continues to receive real shading and occlusion from the hair volume.
     emissive: new THREE.Color(0xffffff),
     emissiveMap: texture,
-    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.048 : 0.034,
+    // The role-coloured face matte now prevents the former white mask. A
+    // small lift restores iris/lash readability at the 48-degree gameplay
+    // camera without flattening the real head or producing neon eyes.
+    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.048 : 0.041,
     roughness: 0.76,
     metalness: 0,
     // Real alpha blending keeps the six-pixel source feather continuous.
@@ -7750,9 +7753,14 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         + mirrorLifeWeave * 0.01
         + mirrorLifeDrape * 0.016
         + mirrorLifeFabricScan * 0.05 * mirrorLifeClothMask;
-      gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.24;
-      gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.16;
-      gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.13;
+      float mirrorLifeHairClump = (
+        sin(vMirrorLifeSurfacePosition.x * 17.0 + vMirrorLifeSurfacePosition.y * 8.0)
+        * sin(vMirrorLifeSurfacePosition.z * 13.0 - vMirrorLifeSurfacePosition.y * 6.0)
+      ) * vMirrorLifeHairMask;
+      gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.29;
+      gl_FragColor.rgb += vec3(0.06, 0.049, 0.041) * mirrorLifeHairSheen * 0.14;
+      gl_FragColor.rgb += vec3(0.055, 0.044, 0.038) * mirrorLifeHairStrand * 0.15;
+      gl_FragColor.rgb *= 1.0 + mirrorLifeHairClump * 0.018;
       gl_FragColor.rgb += vec3(0.042, 0.031, 0.022) * mirrorLifeLeatherSheen * 0.2;`
       );
     } else {
@@ -10338,11 +10346,10 @@ function updateCamera(payload = {}) {
     ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
     : 0;
   const targetFov = cinematicCivic
-    // Keep the complete listening circle, entrance and hero props in the same
-    // authored frame. The previous 46° opening made the controlled character
-    // eclipse the mediator at reference resolution; 50° preserves facial
-    // readability while matching the wider editorial composition.
-    ? (portrait ? 60 : 50 + civicRearArc * 5 + civicSideArc)
+    // The opening uses a slightly longer editorial lens so people carry more
+    // visual weight, then widens through side/reverse arcs to retain the full
+    // listening circle and prevent a near witness becoming a foreground wall.
+    ? (portrait ? 60 : 49 + civicRearArc * 6 + civicSideArc * 1.5)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10419,14 +10426,13 @@ function updateCamera(payload = {}) {
   // witnesses and the furnished back wall to share one readable composition.
   // Other rooms retain the more elevated exploration camera.
   const playerFollowDistance = cinematicCivic
-    // At the reference viewport the hero should occupy about one third of the
-    // frame height, leaving visible floor language around the social circle.
-    // This distance still supports readable faces while preventing the player
-    // and backpack from becoming a foreground wall.
-    ? (portrait ? 5.2 : 6.15 + civicRearArc * 0.72 + civicSideArc * 0.16)
+    // Pull the authored opening close enough for faces and garment silhouettes
+    // to read like the reference, while progressively restoring the wider
+    // collision-safe exploration orbit through side and rear hemispheres.
+    ? (portrait ? 5.2 : 5.72 + civicRearArc * 1.15 + civicSideArc * 0.25)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.46 + civicRearArc * 0.4 + civicSideArc * 0.12) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.24 + civicRearArc * 0.51 + civicSideArc * 0.18) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than

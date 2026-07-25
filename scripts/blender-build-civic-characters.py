@@ -1576,8 +1576,8 @@ def build_materials(role, config):
         "skin_shadow": material(f"{role} hand crease", "#a96f67", 0.87),
         # Matte hair keeps the warm key light broad and painterly.  The older
         # clear-coated finish exposed every low-poly facet in the game camera.
-        "hair": material(f"{role} hair", config["hair"], 0.62, clearcoat=0.014),
-        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.58, clearcoat=0.018),
+        "hair": material(f"{role} hair", config["hair"], 0.67, clearcoat=0.008),
+        "hair_highlight": material(f"{role} hair highlight", config["hair_highlight"], 0.63, clearcoat=0.011),
         # The reference uses a warm, softly reflective sclera and a large dark
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
@@ -2125,29 +2125,30 @@ def build_hair(head, mats, style):
                 sides=18,
                 oval_ratio=0.48,
             )
-        # Break the rear silhouette into swept clumps.  These overlap the cap
-        # at their roots, so the gameplay camera sees one authored hairstyle
-        # rather than a sphere with a few decorative spikes on top.
-        for index, (root_x, tip_x, tip_z) in enumerate((
-            (-0.2, -0.24, 0.08),
-            (-0.1, -0.15, 0.015),
-            (0.0, 0.02, -0.04),
-            (0.1, 0.16, 0.01),
-            (0.2, 0.25, 0.085),
+        # Four broad, flattened overlapping ribbons build one continuous rear
+        # hair mass. The previous five round tubes produced a broccoli/bead
+        # silhouette from the follow camera even though their roots touched.
+        # Alternating sweeps now expose large painterly planes and one clean
+        # asymmetrical contour through a complete 360-degree orbit.
+        for index, (root_x, shoulder_x, tip_x, tip_z) in enumerate((
+            (-0.205, -0.225, -0.265, 0.055),
+            (-0.072, -0.12, -0.145, -0.055),
+            (0.07, 0.125, 0.155, -0.045),
+            (0.205, 0.23, 0.27, 0.072),
         )):
             tapered_lock(
                 f"BackHairLock_{index + 1}",
                 [
-                    (root_x, 0.125, 0.185 - abs(root_x) * 0.14),
-                    ((root_x * 2 + tip_x) / 3, 0.195, 0.13 - abs(root_x) * 0.08),
-                    ((root_x + tip_x * 2) / 3, 0.228, tip_z + 0.045),
-                    (tip_x, 0.215, tip_z),
+                    (root_x, 0.105, 0.198 - abs(root_x) * 0.1),
+                    (shoulder_x, 0.174, 0.145 - abs(root_x) * 0.06),
+                    ((shoulder_x + tip_x) * 0.5, 0.224, tip_z + 0.065),
+                    (tip_x, 0.205, tip_z),
                 ],
-                (0.044, 0.042, 0.027, 0.006),
-                mats["hair_highlight"] if index in (1, 3) else mats["hair"],
+                (0.061, 0.064, 0.044, 0.007),
+                mats["hair_highlight"] if index in (1, 2) else mats["hair"],
                 head,
-                sides=18,
-                oval_ratio=0.44,
+                sides=20,
+                oval_ratio=0.31,
             )
     elif style == "coral_ponytail":
         # Keep a visible tied crown without the oversized spherical mass that
@@ -2208,24 +2209,24 @@ def build_hair(head, mats, style):
         # vertical knots resolved as a row of brown teeth; these overlapping
         # horizontal locks follow the skull arc and alternate depth/material,
         # preserving a readable braid through front, side and reverse orbit.
-        crown_centres = (-0.18, -0.12, -0.06, 0.0, 0.06, 0.12, 0.18)
+        crown_centres = (-0.175, -0.0875, 0.0, 0.0875, 0.175)
         for index, centre_x in enumerate(crown_centres):
             arch = max(0.0, 1.0 - (centre_x / 0.225) ** 2)
-            crown_z = 0.176 + arch * 0.072
+            crown_z = 0.172 + arch * 0.076
             weave = -1 if index % 2 == 0 else 1
             tapered_lock(
                 f"BraidedCrownLock_{index + 1}",
                 [
-                    (centre_x - 0.043, -0.064 + weave * 0.006, crown_z - 0.012),
-                    (centre_x - 0.018, -0.096 - weave * 0.005, crown_z + 0.016),
-                    (centre_x + 0.018, -0.098 + weave * 0.004, crown_z - 0.01),
-                    (centre_x + 0.043, -0.066 - weave * 0.006, crown_z + 0.005),
+                    (centre_x - 0.061, -0.058 + weave * 0.007, crown_z - 0.014),
+                    (centre_x - 0.027, -0.104 - weave * 0.006, crown_z + 0.019),
+                    (centre_x + 0.027, -0.108 + weave * 0.006, crown_z - 0.013),
+                    (centre_x + 0.061, -0.061 - weave * 0.007, crown_z + 0.006),
                 ],
-                (0.037, 0.043, 0.038, 0.008),
+                (0.052, 0.059, 0.051, 0.009),
                 mats["hair_highlight"] if index % 2 else mats["hair"],
                 head,
-                sides=14,
-                oval_ratio=0.56,
+                sides=16,
+                oval_ratio=0.34,
             )
         # Layered side locks replace the bead stack that made the bob look
         # assembled from toy balls. Each lock has a distinct sweep and tapered

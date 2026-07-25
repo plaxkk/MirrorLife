@@ -233,8 +233,8 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 131,
-      "triangles": 40796
+      "meshes": 130,
+      "triangles": 40716
     },
     "listener": {
       "file": "listener.glb",
@@ -251,8 +251,8 @@
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 159,
-      "triangles": 43784
+      "meshes": 157,
+      "triangles": 43640
     }
   }
 }
