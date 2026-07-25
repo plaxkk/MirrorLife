@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v134 west witness library and facial-continuity gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/v134-reference-full-pair.png` (`2560 × 720`); the source is resampled to the implementation's exact `1280 × 720` content viewport and both frames are judged on one canvas.
+- Full 3D evidence: `tmp/v134-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 294,812`, side `179 / 305,920`, reverse `180 / 346,644`, fourth orbit `178 / 331,676`; mobile `106 / 249,952`. Every final view reports zero shader errors and remains inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the browser regression moved the real Rapier-controlled player `2.85m`, rotated the camera `65.3°`, verified curved identity-surface blinking and retained body, foot and facial contracts. Physics passed for all `26` zones / `10` archetypes; desktop/mobile scene flow passed; transition stress completed `78` transitions across `26` zones with no failures or runtime errors.
+- Asset evidence: all four role GLBs were rebuilt under sculpt contract v76, body-identity contract v8, face-identity contract v6 and a new orbital/lip-bed continuity contract. The complete set remains `7.40 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v133 P2 / the 270° wall was one floating notice panel] The west quarter now owns a `4.15m` built-in witness library with floor-connected walnut cabinetry, four resident-response cards, open archive bays, authorization drawers, brass seals, books, ceramic vase, foliage and architectural reveals. The whole assembly remains behind the collision shell and is merged into one opaque runtime batch.
+- [improved from v133 P1 / eyelids and lips floated over a spherical face] The real head topology now contains an orbital rim that bridges brow, lid and upper cheek plus a tapered lip bed that disappears into cheek and chin. Existing illustrated contours remain expressive, but profile light no longer exposes the same feature-to-head gap.
+- [improved from v133 P1 / the neck read as a straight toy peg] A four-ring elliptical neck/clavicle transition replaces the cylinder. Its lower ring overlaps the tailored shoulder plane and its upper ring disappears beneath the jaw, preserving a continuous silhouette under head turns.
+- [fixed during v134 / the first neck rebuild exceeded the phone budget by 144 triangles] The 6–9cm neck surface uses a visually equivalent 16-side web LOD. Four actors recover `192` triangles and return the final phone frame to `249,952 / 250,000` without weakening the metre scale, physical capsule or desktop geometry contract.
+- [checked / the new wall does not manufacture a front-view-only set] The witness library has a real world transform, participates in wall-hemisphere visibility and survives the complete four-heading capture. It is deliberately hidden by the existing phone scene LOD, where portrait framing does not expose that wall and the hard triangle budget takes priority.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese place state, story-memory label, action rail and interaction prompt remain readable in desktop and portrait frames. The source still has a tighter icon/type family, finer counters and more refined translucent depth.
+- [improved][spacing and layout rhythm] The west wall now has a vertical cap, four-card rhythm, functional ledge and floor-connected cabinet instead of a small floating rectangle. The source still achieves denser controlled irregularity, more continuous foreground dressing and less quiet walkable floor.
+- [improved][colors and visual tokens] Paper, felt, oak, walnut, teal, coral, butter and brass keep the west library inside the established advanced-dopamine palette. The implementation remains more saturated in costumes and foliage than the source's softly bounced photographic palette.
+- [improved][image quality and asset fidelity] Real facial orbital/lip-bed shaping, contoured neck topology and a narrative-specific archive wall materially reduce the modular-toy and template-room cues. The source still has finer hands, hair grouping, garment construction, botanical species, joinery and secondary-object wear.
+- [checked][copy and content] Resident-response cards, authorization drawers and sealed testimony reinforce the public listening-room story without exposing raw private memory or adding unsupported global statistics.
+- [checked][icons and interaction states] Speaker beacon, action selection, keyboard controls, phone joystick/buttons and atomic scene warmup remain functional.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; the library stays behind the wall contact plane, so it creates no false walkable gap or new obstruction. Player/NPC capsules, anchors, 1.4m circulation and furniture colliders remain authoritative.
+- [P1][production character topology remains visibly behind] v134 closes the most obvious eyelid/lip/neck attachment gaps, but the source still owns continuous hand anatomy, richer eye sockets, role-specific mouth topology, finer hair masses and garment deformation.
+- [P1][complete-room asset craft remains behind] The west wall is now authored and useful, but the same-canvas pair still exposes simplified foreground joinery, repeated plants/books, lower secondary density and less convincing small-scale material wear.
+- [P1][offline light transport remains ahead] The implementation preserves warm key/fill and contact AO, yet still lacks the source's multi-bounce colour, broad contact penumbrae, foliage/glass transmission and soft indirect facial light.
+- [P2][complete-orbit framing remains uneven] Every heading is readable and playable, but the 270° camera still exposes more negative floor/plaster than the fixed editorial reference; further density must preserve the navigation loop rather than filling it with obstacles.
+- [P2][HUD optical finish remains behind] Coverage, state and responsiveness pass, while icon family, compact type spacing, glass depth and button-edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve west witness library v1 and facial/body contracts v6/v8; do not regress to floating wall cards or straight neck primitives.
+- Continue the next character pass with continuous palms/digits, role-specific garment hems and restrained eye-socket topology rather than larger decals.
+- Replace the most visible repeated foreground plant/book/paper families with three silhouette-distinct authored families.
+- Add probe/lightmap-assisted colour bounce only if all four desktop headings and the `249,952`-triangle phone gate remain green.
+
+### Gate result
+
+v134 gives the fourth orbit a narrative-specific architectural destination, replaces the remaining straight neck peg, roots the eyelids and lips into real facial volume, and preserves real walking, camera rotation, physics, responsive controls and strict release budgets. The mandatory same-canvas comparison still contains actionable P1 gaps in continuous hand/garment topology, complete-room bespoke secondary craft and offline-quality indirect transport.
+
+final result: blocked
+
+Blocker: source-level hand/garment production topology, complete-room bespoke secondary asset craftsmanship and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v133 elevated editorial camera, woven lounge and glass-material gate
 
 ### Evidence inspected together

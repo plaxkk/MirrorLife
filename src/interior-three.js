@@ -19,6 +19,7 @@ const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v13";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v4";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
+const CIVIC_WEST_WITNESS_LIBRARY_CONTRACT = "mirrorlife-civic-west-witness-library-v1";
 const CIVIC_WEIGHT_TRANSFER_CONTRACT = "mirrorlife-civic-weight-transfer-v1";
 const CIVIC_CONTACT_PRESSURE_CONTRACT = "mirrorlife-civic-contact-pressure-v1";
 const CIVIC_FOOT_CONTACT_CONTRACT = "mirrorlife-civic-foot-contact-v2";
@@ -26,7 +27,7 @@ const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
 const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
 const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
-const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v5";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v6";
 const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v2";
 const CIVIC_FACE_SKIN_TONES = Object.freeze({
   player: "#efb58d",
@@ -4221,6 +4222,7 @@ function addCivicResponseAlcove(colors, options = {}) {
   group.rotation.y = -angle;
   group.userData.dynamicWallDecor = true;
   group.userData.wallAngle = angle;
+  group.userData.westWitnessLibraryContract = CIVIC_WEST_WITNESS_LIBRARY_CONTRACT;
   if (Number.isFinite(Number(options.revealCameraAngle))) {
     group.userData.revealCameraAngle = Number(options.revealCameraAngle);
     group.userData.revealCameraArc = Number(options.revealCameraArc || 0.92);
@@ -4253,74 +4255,169 @@ function addCivicResponseAlcove(colors, options = {}) {
     envMapIntensity: 0.92
   });
 
-  const backing = new THREE.Mesh(new RoundedBoxGeometry(2.82, 2.34, 0.055, 7, 0.18), felt);
-  backing.position.z = 0.025;
+  // Treat the whole west wall as one piece of built-in civic joinery. The
+  // former 2.8 m notice panel floated in a 7 m plaster field; a 4.15 m field,
+  // floor-connected cabinets and a continuous picture rail now give the
+  // quarter-orbit shot a foreground/midground/background hierarchy.
+  const backing = new THREE.Mesh(new RoundedBoxGeometry(4.15, 3.18, 0.055, 7, 0.2), felt);
+  backing.position.set(0, 0.18, 0.025);
   group.add(backing);
-  const innerField = new THREE.Mesh(new RoundedBoxGeometry(2.42, 1.94, 0.045, 6, 0.14), paper);
-  innerField.position.set(0, -0.03, 0.073);
+  const innerField = new THREE.Mesh(new RoundedBoxGeometry(3.77, 2.8, 0.045, 6, 0.15), paper);
+  innerField.position.set(0, 0.2, 0.073);
   group.add(innerField);
 
-  [-1.34, 1.34].forEach((postX) => {
-    const post = new THREE.Mesh(new RoundedBoxGeometry(0.13, 1.62, 0.11, 4, 0.055), walnut);
-    post.position.set(postX, -0.36, 0.1);
+  [-1.98, 1.98].forEach((postX) => {
+    const post = new THREE.Mesh(new RoundedBoxGeometry(0.15, 2.48, 0.12, 4, 0.055), walnut);
+    post.position.set(postX, -0.04, 0.1);
     group.add(post);
+    const brassReveal = new THREE.Mesh(new RoundedBoxGeometry(0.025, 2.2, 0.024, 2, 0.009), brass);
+    brassReveal.position.set(postX - Math.sign(postX) * 0.055, -0.02, 0.171);
+    group.add(brassReveal);
   });
   if (options.showArch !== false) {
-    const arch = new THREE.Mesh(new THREE.TorusGeometry(1.34, 0.066, 10, 48, Math.PI), walnut);
-    arch.position.set(0, 0.45, 0.1);
+    const arch = new THREE.Mesh(new THREE.TorusGeometry(1.98, 0.066, 10, 56, Math.PI), walnut);
+    arch.position.set(0, 0.75, 0.1);
     group.add(arch);
   } else {
-    const capRail = new THREE.Mesh(new RoundedBoxGeometry(2.56, 0.13, 0.13, 5, 0.055), oak);
-    capRail.position.set(0, 1.05, 0.105);
+    const capRail = new THREE.Mesh(new RoundedBoxGeometry(3.92, 0.15, 0.15, 5, 0.055), oak);
+    capRail.position.set(0, 1.5, 0.105);
     group.add(capRail);
+    const capReveal = new THREE.Mesh(new RoundedBoxGeometry(3.62, 0.026, 0.035, 2, 0.009), brass);
+    capReveal.position.set(0, 1.39, 0.18);
+    group.add(capReveal);
   }
-  const ledge = new THREE.Mesh(new RoundedBoxGeometry(2.56, 0.13, 0.13, 5, 0.055), oak);
-  ledge.position.set(0, -1.05, 0.105);
+  const ledge = new THREE.Mesh(new RoundedBoxGeometry(3.92, 0.14, 0.42, 5, 0.055), oak);
+  ledge.position.set(0, -0.55, 0.24);
   group.add(ledge);
 
-  const heading = new THREE.Mesh(new RoundedBoxGeometry(1.1, 0.19, 0.035, 4, 0.05), oak);
-  heading.position.set(0, 0.68, 0.118);
+  const heading = new THREE.Mesh(new RoundedBoxGeometry(1.32, 0.19, 0.035, 4, 0.05), oak);
+  heading.position.set(0, 1.11, 0.118);
   group.add(heading);
   [-0.32, -0.12, 0.12, 0.32].forEach((lineX, index) => {
     const line = new THREE.Mesh(
       new RoundedBoxGeometry(index % 2 ? 0.12 : 0.16, 0.025, 0.018, 2, 0.008),
       index === 1 ? brass : walnut
     );
-    line.position.set(lineX, 0.68, 0.143);
+    line.position.set(lineX, 1.11, 0.143);
     group.add(line);
   });
 
-  const cardColors = ["#e8a080", "#73a69b", "#edc968"];
-  [-0.72, 0, 0.72].forEach((cardX, index) => {
+  const cardColors = ["#e8a080", "#73a69b", "#edc968", "#738aa6"];
+  [-1.24, -0.42, 0.42, 1.24].forEach((cardX, index) => {
     const card = new THREE.Mesh(
-      new RoundedBoxGeometry(0.52, 0.72, 0.035, 4, 0.08),
-      createToonMaterial(index === 1 ? "#edf1e8" : "#f5ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
+      new RoundedBoxGeometry(0.62, 0.82, 0.035, 4, 0.08),
+      createToonMaterial(index % 2 ? "#edf1e8" : "#f5ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
     );
-    card.position.set(cardX, -0.12 + (index === 1 ? 0.05 : 0), 0.12);
-    card.rotation.z = (index - 1) * 0.025;
+    card.position.set(cardX, 0.35 + (index % 2 ? 0.04 : 0), 0.12);
+    card.rotation.z = (index - 1.5) * 0.018;
     group.add(card);
     const response = new THREE.Mesh(
       new THREE.CircleGeometry(0.115, 24),
       createToonMaterial(cardColors[index], { roughness: 0.62 })
     );
-    response.position.set(cardX, 0.04 + (index === 1 ? 0.05 : 0), 0.145);
+    response.position.set(cardX, 0.53 + (index % 2 ? 0.04 : 0), 0.145);
     response.rotation.z = card.rotation.z;
     group.add(response);
-    [-0.19, -0.31].forEach((lineY, lineIndex) => {
+    [0.23, 0.09].forEach((lineY, lineIndex) => {
       const copyLine = new THREE.Mesh(
-        new RoundedBoxGeometry(lineIndex ? 0.23 : 0.3, 0.018, 0.012, 1, 0.006),
+        new RoundedBoxGeometry(lineIndex ? 0.27 : 0.36, 0.018, 0.012, 1, 0.006),
         createToonMaterial("#887a69", { roughness: 0.84 })
       );
-      copyLine.position.set(cardX, lineY + (index === 1 ? 0.05 : 0), 0.147);
+      copyLine.position.set(cardX, lineY + (index % 2 ? 0.04 : 0), 0.147);
       copyLine.rotation.z = card.rotation.z;
       group.add(copyLine);
     });
   });
 
+  // The lower third is a real witness library rather than a decorative
+  // footer: sealed testimony travels from open pigeonholes to the central
+  // authorization drawer. Everything remains behind the collision shell, so
+  // the visual affordance and walkable contract stay honest.
+  const cabinet = new THREE.Mesh(new RoundedBoxGeometry(3.68, 0.72, 0.58, 6, 0.1), walnut);
+  cabinet.position.set(0, -1.03, 0.29);
+  group.add(cabinet);
+  const cabinetField = new THREE.Mesh(
+    new RoundedBoxGeometry(3.42, 0.52, 0.06, 5, 0.07),
+    createToonMaterial("#d4aa76", { roughness: 0.77, surface: "wood", bumpScale: 0.01 })
+  );
+  cabinetField.position.set(0, -1.03, 0.59);
+  group.add(cabinetField);
+  [-1.27, -0.42, 0.42, 1.27].forEach((bayX, bayIndex) => {
+    const recess = new THREE.Mesh(
+      new RoundedBoxGeometry(0.68, 0.34, 0.045, 4, 0.045),
+      createToonMaterial(bayIndex % 2 ? "#567f78" : "#76523d", { roughness: 0.82, surface: "wood", bumpScale: 0.008 })
+    );
+    recess.position.set(bayX, -1.06, 0.634);
+    group.add(recess);
+    const packetPalette = ["#f2dfbd", "#d8e4d8", "#e6a07d", "#ddc56f"];
+    for (let packetIndex = 0; packetIndex < 3; packetIndex += 1) {
+      const packet = new THREE.Mesh(
+        new RoundedBoxGeometry(0.11 + packetIndex * 0.018, 0.2 + (packetIndex % 2) * 0.055, 0.028, 2, 0.012),
+        createToonMaterial(packetPalette[(bayIndex + packetIndex) % packetPalette.length], {
+          roughness: 0.95,
+          surface: "paper",
+          bumpScale: 0.004
+        })
+      );
+      packet.position.set(bayX - 0.19 + packetIndex * 0.18, -1.08, 0.668);
+      packet.rotation.z = (packetIndex - 1) * 0.055;
+      group.add(packet);
+    }
+  });
+  [-0.86, 0, 0.86].forEach((drawerX, index) => {
+    const pull = new THREE.Mesh(new THREE.TorusGeometry(0.055, 0.012, 7, 18, Math.PI), brass);
+    pull.position.set(drawerX, -0.79, 0.645);
+    pull.rotation.x = Math.PI / 2;
+    group.add(pull);
+    if (index !== 1) return;
+    const seal = new THREE.Mesh(new THREE.CylinderGeometry(0.055, 0.055, 0.018, 18), brass);
+    seal.position.set(drawerX, -0.79, 0.666);
+    seal.rotation.x = Math.PI / 2;
+    group.add(seal);
+  });
+
+  // A restrained still-life on the ledge gives the wall human scale and
+  // creates a warm light/material counterpoint to the paper records.
+  const bookPalette = ["#557f77", "#d9966b", "#e2c76e", "#6f5960"];
+  [-1.45, -1.27, -1.08, 0.95, 1.13].forEach((bookX, index) => {
+    const book = new THREE.Mesh(
+      new RoundedBoxGeometry(0.13, 0.34 + (index % 3) * 0.045, 0.22, 3, 0.018),
+      createToonMaterial(bookPalette[index % bookPalette.length], { roughness: 0.86, surface: "paper", bumpScale: 0.004 })
+    );
+    book.position.set(bookX, -0.31 + (index % 3) * 0.02, 0.34);
+    book.rotation.z = (index - 2) * 0.025;
+    group.add(book);
+  });
+  const vase = new THREE.Mesh(
+    new THREE.LatheGeometry([
+      new THREE.Vector2(0.12, 0),
+      new THREE.Vector2(0.18, 0.08),
+      new THREE.Vector2(0.19, 0.3),
+      new THREE.Vector2(0.1, 0.43)
+    ], 20),
+    createToonMaterial("#efe0c5", { roughness: 0.48, surface: "ceramic", bumpScale: 0.005 })
+  );
+  vase.position.set(0.2, -0.48, 0.37);
+  group.add(vase);
+  [-0.12, 0.05, 0.2].forEach((leafX, index) => {
+    const stem = new THREE.Mesh(new THREE.CylinderGeometry(0.009, 0.012, 0.48 + index * 0.06, 7), walnut);
+    stem.position.set(0.2 + leafX * 0.24, -0.05 + index * 0.035, 0.37);
+    stem.rotation.z = leafX * 0.9;
+    group.add(stem);
+    const leaf = new THREE.Mesh(
+      new THREE.SphereGeometry(0.13, 12, 8),
+      createToonMaterial(index % 2 ? "#6e9a6c" : "#4f835b", { roughness: 0.96 })
+    );
+    leaf.scale.set(0.55, 1.35, 0.42);
+    leaf.position.set(0.2 + leafX, 0.19 + index * 0.08, 0.37);
+    leaf.rotation.z = leafX * 1.4;
+    group.add(leaf);
+  });
+
   // A warm architectural wash separates this landmark from the empty plaster
   // while remaining subtle enough not to compete with the listening circle.
-  const light = new THREE.PointLight(0xffc87b, lastWidth <= 720 ? 0.22 : 0.48, 2.8, 2.15);
-  light.position.set(0, 0.62, 0.75);
+  const light = new THREE.PointLight(0xffc87b, lastWidth <= 720 ? 0.22 : 0.5, 3.6, 2.15);
+  light.position.set(0, 0.72, 0.82);
   group.add(light);
 
   const sourceMaterials = new Set();
@@ -7899,10 +7996,10 @@ function installCivicLipShading(mesh) {
           gl_FragColor.rgb += vec3(0.034, 0.018, 0.017) * mirrorLifeLipCushion * 0.26;`
         );
     };
-    material.customProgramCacheKey = () => "mirrorlife-civic-lip-volume-v2";
+    material.customProgramCacheKey = () => "mirrorlife-civic-lip-volume-v3";
     material.needsUpdate = true;
   });
-  mesh.userData.mirrorLifeLipVolume = "mirrorlife-civic-lip-volume-v2";
+  mesh.userData.mirrorLifeLipVolume = "mirrorlife-civic-lip-volume-v3";
   return mesh;
 }
 
@@ -9540,7 +9637,7 @@ function createCivicActorObject(actor, asset) {
     bodyDeformation: fullExpressionLod
   });
   if (bodySurfaceMesh) {
-    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v7";
+    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v8";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
     bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v4";
@@ -11153,7 +11250,7 @@ function getStats() {
       eyes: entry.eyePivots?.length ? {
         version: "mirrorlife-civic-eye-volume-v3",
         count: entry.eyePivots.length,
-        eyelidDeformation: "mirrorlife-civic-eyelid-vertex-v1",
+        eyelidDeformation: "mirrorlife-civic-eyelid-vertex-v2",
         blink: Number((entry.blinkInfluence || 0).toFixed(4)),
         uniformReady: entry.eyeSurfaceMeshes?.every((mesh) => !!mesh.userData?.mirrorLifeEyeDeformation?.uniforms) || false,
         uniformBlink: Number(((entry.eyeSurfaceMeshes || []).reduce(
@@ -11206,6 +11303,7 @@ function getStats() {
       version: CIVIC_FURNITURE_DETAIL_CONTRACT,
       surfaceVersion: CIVIC_FURNITURE_SURFACE_CONTRACT,
       reverseWallVersion: roomRoot?.children?.find((entry) => entry.userData?.reverseWallContract)?.userData?.reverseWallContract || null,
+      westWitnessLibraryVersion: roomRoot?.children?.find((entry) => entry.userData?.westWitnessLibraryContract)?.userData?.westWitnessLibraryContract || null,
       scannedSurfaceBatches: civicHeroSurfaceBatches,
       semanticSurfaceBatches: civicHeroSurfaceSemanticBatches,
       authoredHeroAssets: lastWidth <= 720 ? 0 : 3,

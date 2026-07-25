@@ -1669,6 +1669,17 @@ def build_face(head, mats, role):
         socket_height = max(0.0, min(1.0, 1.0 - abs(z - 0.04) / 0.075))
         socket_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.083) / 0.07))
         vertex.co.y += socket_height * socket_width * front * 0.01
+        # Build the eyelid root into the head topology. The visible lid meshes
+        # still provide the clean illustrated edge, but this soft orbital ring
+        # means they grow out of a continuous brow/cheek plane instead of
+        # hovering over a spherical mask when seen in profile.
+        eye_dx = abs(abs(x) - 0.081)
+        eye_dz = abs(z - 0.04)
+        orbital_radius = math.sqrt((eye_dx / 0.072) ** 2 + (eye_dz / 0.058) ** 2)
+        orbital_rim = max(0.0, 1.0 - abs(orbital_radius - 0.78) / 0.3) * front
+        upper_lid_root = max(0.0, min(1.0, (z - 0.018) / 0.07))
+        lower_lid_root = max(0.0, min(1.0, (0.058 - z) / 0.07))
+        vertex.co.y -= orbital_rim * (0.0045 + upper_lid_root * 0.002 + lower_lid_root * 0.001)
         upper_cheek = max(0.0, min(1.0, 1.0 - abs(z + 0.018) / 0.06)) * cheek_width
         vertex.co.y -= upper_cheek * front * 0.009
         # A restrained muzzle plane connects nose, philtrum and lips. Without
@@ -1677,6 +1688,14 @@ def build_face(head, mats, role):
         muzzle_height = max(0.0, min(1.0, 1.0 - abs(z + 0.075) / 0.065))
         muzzle_width = max(0.0, min(1.0, 1.0 - abs(x) / 0.105))
         vertex.co.y -= muzzle_height * muzzle_width * front * 0.007 * face_profile["muzzle_forward"]
+        # Give the lip surface a real vermilion bed in the same head mesh.
+        # This shallow forward shelf disappears into the cheeks at the corners
+        # and into the chin below, eliminating the sticker-like shadow gap that
+        # appeared during speech and quarter-orbit captures.
+        lip_height = max(0.0, min(1.0, 1.0 - abs(z + 0.09) / 0.042))
+        lip_width = max(0.0, min(1.0, 1.0 - abs(x) / 0.082))
+        lip_bed = lip_height * lip_width * front
+        vertex.co.y -= lip_bed * 0.0048
         # Slightly compress the temple/forehead corners so the face reads as
         # an authored illustrated head rather than a uniformly round sphere.
         temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
@@ -2396,7 +2415,25 @@ def build_body(role, config, mats, visual):
     # diameter cylinder remained visible as a toy peg whenever the actor
     # turned three-quarter; a slimmer, shorter volume gives the jaw and
     # shoulder line a continuous illustrated transition.
-    cylinder("Neck", 0.064, 0.059, 0.105, (0, 0, 1.405), mats["skin"], visual, vertices=20)
+    # A four-ring neck/clavicle transition replaces the old straight
+    # cylinder. Its lower ring overlaps the tailored shoulder plane, the middle
+    # ring carries the visible neck, and the upper ring disappears under the
+    # jaw. This keeps the silhouette continuous while the head turns.
+    contoured_elliptical_shell(
+        "Neck",
+        (
+            (1.335, 0.092, 0.074, 0.0, 0.004),
+            (1.37, 0.071, 0.062, 0.0, 0.002),
+            (1.43, 0.062, 0.057, 0.0, 0.0),
+            (1.465, 0.068, 0.061, 0.0, -0.001),
+        ),
+        mats["skin"],
+        visual,
+        # Sixteen sides are visually smooth at a 6–9 cm radius and keep the
+        # mobile scene under its strict 250k triangle budget.
+        segments=16,
+        contract="mirrorlife-civic-neck-continuity-v2",
+    )
     rounded_box(
         "WaistBand",
         (0.35 * profile["waist_width"], 0.21 * profile["torso_depth"], 0.046),
@@ -3266,7 +3303,7 @@ def build_character(role, config):
     root["asset"] = f"civic-{role}"
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
-    root["body_contract"] = "mirrorlife-civic-body-identity-v7"
+    root["body_contract"] = "mirrorlife-civic-body-identity-v8"
     root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
     root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
@@ -3366,20 +3403,21 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v75",
+        "sculptContract": "mirrorlife-civic-sculpt-v76",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
             "parts": ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
         },
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v7",
+            "version": "mirrorlife-civic-body-identity-v8",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
-            "continuityParts": ["Torso", "ShoulderMantle", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
+            "continuityParts": ["Torso", "ShoulderMantle", "Neck", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
             "shoulderContract": "mirrorlife-civic-shoulder-continuity-v2",
+            "neckContract": "mirrorlife-civic-neck-continuity-v2",
             "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
-            "runtime": "contoured-shell+tailored-shoulder-plane+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
+            "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
         },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
@@ -3440,16 +3478,17 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-identity-v5",
+            "integrationContract": "mirrorlife-civic-face-identity-v6",
             "productionFaceMode": "curved-atlas",
-            "productionIntegrationContract": "mirrorlife-civic-face-identity-v5",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v6",
             "corneaContract": "mirrorlife-civic-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
-            "lipVolumeContract": "mirrorlife-civic-lip-volume-v2",
+            "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",
             "eyeGeometryContract": "mirrorlife-civic-eye-volume-v3",
-            "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v1",
+            "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v2",
+            "facialContinuityContract": "mirrorlife-civic-orbital-lip-bed-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },

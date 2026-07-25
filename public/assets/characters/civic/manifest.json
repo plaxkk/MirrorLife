@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v75",
+  "sculptContract": "mirrorlife-civic-sculpt-v76",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v6",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -13,7 +13,7 @@
     ]
   },
   "bodyIdentityContract": {
-    "version": "mirrorlife-civic-body-identity-v7",
+    "version": "mirrorlife-civic-body-identity-v8",
     "roles": [
       "player",
       "listener",
@@ -33,13 +33,15 @@
     "continuityParts": [
       "Torso",
       "ShoulderMantle",
+      "Neck",
       "SkinnedArmVolume",
       "TrouserSeat",
       "SkirtHipFoundation"
     ],
     "shoulderContract": "mirrorlife-civic-shoulder-continuity-v2",
+    "neckContract": "mirrorlife-civic-neck-continuity-v2",
     "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
-    "runtime": "contoured-shell+tailored-shoulder-plane+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
+    "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
   },
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
@@ -124,9 +126,9 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-identity-v5",
+    "integrationContract": "mirrorlife-civic-face-identity-v6",
     "productionFaceMode": "curved-atlas",
-    "productionIntegrationContract": "mirrorlife-civic-face-identity-v5",
+    "productionIntegrationContract": "mirrorlife-civic-face-identity-v6",
     "corneaContract": "mirrorlife-civic-cornea-v2",
     "uvContract": "mirrorlife-civic-head-uv-v1",
     "preservedSculptParts": [
@@ -137,9 +139,10 @@
       "EyePivot_1"
     ],
     "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
-    "lipVolumeContract": "mirrorlife-civic-lip-volume-v2",
+    "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",
     "eyeGeometryContract": "mirrorlife-civic-eye-volume-v3",
-    "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v1",
+    "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v2",
+    "facialContinuityContract": "mirrorlife-civic-orbital-lip-bed-v1",
     "eyeGeometryParts": [
       "EyePivot_-1",
       "EyePivot_1"
@@ -234,25 +237,25 @@
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
       "meshes": 130,
-      "triangles": 40716
+      "triangles": 40656
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
       "meshes": 117,
-      "triangles": 38256
+      "triangles": 38196
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 145,
-      "triangles": 44548
+      "triangles": 44488
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
       "meshes": 157,
-      "triangles": 43640
+      "triangles": 43580
     }
   }
 }
