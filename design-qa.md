@@ -1,5 +1,59 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v133 elevated editorial camera, woven lounge and glass-material gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/v133-reference-full-pair.png` (`2560 × 720`); the source is bilinear-resampled to the implementation's exact `1280 × 720` content viewport and both frames are judged on one canvas.
+- Mandatory material/detail comparison: `tmp/v133-material-focus-pair.png` (`2080 × 420`); equal-density left and right crops compare the display/record desk and lounge/bookcase regions.
+- Full 3D evidence: `tmp/v133-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 294,604`, side `179 / 305,712`, reverse `180 / 346,436`, fourth orbit `178 / 313,912`; mobile `106 / 249,796`. Every reviewed view reports zero shader errors and remains inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Camera evidence: the opening now uses `49.4°`, a `5.84m` orbit and `3.332m` camera height. Side/reverse arcs widen to `52.95–55.2°`, `6.475–6.9m` and `3.682–3.812m` so the elevated composition still supports a complete orbit.
+- Interaction evidence: the final browser regression moved the real Rapier-controlled player `3.65m`, rotated the camera `65.3°`, verified curved identity-surface blinking and preserved the four 3D citizens' foot, hand/prop and body-deformation contracts.
+- Asset evidence: furniture contract v13 contains three authored GLBs and `67,690` triangles. The lounge suite now owns sculpted cushions, sewn edge treatment and a topology-based draped throw; the record desk owns a one-draw-call transmitted glass assembly.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v132 P1 / the low close camera compressed the room into one horizontal strip] The opening changes from `48.5° / 5.5m / 2.972m` to `49.4° / 5.84m / 3.332m`. The final full-view comparison restores a visible foreground desk surface, complete story rug, lounge zone and back-wall landmark while keeping the player readable.
+- [improved from v132 P1 / lounge textiles still read as rounded plastic blocks] Furniture v13 gives seat and back cushions off-centre compression, perimeter boxing and piping; ivory pillows use real sculpted volumes; the throw bends from seat to front face using a solidified grid rather than two cuboids.
+- [improved from v132 P1 / foreground glassware and paper lacked material hierarchy] The record-desk tumbler is now an open wall, base and dense rim merged into one physical glass mesh. Layered paper, mapped agenda, scanned oak, vertex-masked walnut and glass remain separate material classes without breaking the draw-call gate.
+- [improved from v132 P1 / civic plaster and floor remained grey and under-filled] Warmer plaster values, broader fill/hemisphere/bounce energy and a restrained environment lift move the implementation toward the source's cream daylight. Contact shadows increase without changing any physical floor or capsule positions.
+- [fixed during v133 / the real glass pass pushed reverse orbit to 181 calls] Narrow walnut desk rails rejoin the shared vertex-surface batch, preserving their colour/roughness masks and returning the reverse view to the hard `180`-call limit.
+- [fixed during v133 / the elevated mobile composition reached 251,136 triangles] Phone-only brass inlay, rug and tumbler radial segments now use authored LODs. The final portrait capture is `249,796` triangles with no visible route or interaction loss.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese place state, action rail and interaction prompt remain readable in desktop and portrait frames. The source still uses a tighter icon/type family, more compact counters and finer optical spacing.
+- [improved][spacing and layout rhythm] Foreground desk, display case, cast, lounge and story wall now form a more source-like layered composition. The source retains denser irregular clustering, a stronger lower-right brass continuation and less unused shell in the fourth orbit.
+- [improved][colors and visual tokens] Warm ivory, mineral terrazzo, honey oak, walnut, teal textile, coral and brass now separate more clearly. The implementation still has brighter costume/foliage saturation and less natural colour bleeding.
+- [improved][image quality and asset fidelity] The material crop proves real glass thickness, layered paper, mapped oak, sewn cushions and a hanging textile silhouette. The source still has finer botanical species, glass refraction, fabric weave, carved joinery, book variation and small-scale wear.
+- [checked][copy and content] “倾听线索”, “倾听墙”, current-place memory and contextual interaction remain coherent with the encounter and contain no private source text.
+- [checked][icons and interaction states] Speaker beacon, action selection, interaction prompt, keyboard movement, camera drag, phone controls and atomic warmup continue to work.
+- [checked][physical truth, accessibility and responsiveness] Visual transforms, colliders, Rapier actor capsules and interaction anchors remain unchanged. The higher camera does not move geometry or permit furniture traversal; all four headings and the phone LOD pass their performance gates.
+- [P1][production character topology remains visibly behind] The source still has continuous shoulder/neck anatomy, dedicated eyelid/lip topology, softer hands, finer hair masses and more garment-specific deformation.
+- [P1][complete-room asset craft remains behind] v133 materially improves the high-pixel lounge and desk, but the focused comparison still exposes simplified shelves, pottery, botanicals, joinery, paper edges and repeated secondary prop families.
+- [P1][offline light transport remains ahead] The implementation has stronger material separation and grounding, but still lacks the source's multi-bounce colour, broad contact penumbrae, glass/foliage transmission and soft indirect facial light.
+- [P2][fourth orbit is under-authored] The 270° view remains functional and collision-safe but shows a large quiet plaster/floor field compared with the source's deliberately dressed hero angle.
+- [P2][HUD optical finish remains behind] Coverage and responsiveness pass, while icons, compact typography, translucent depth and button-edge treatment remain more utilitarian.
+
+### Implementation checklist
+
+- Preserve the v133 elevated camera, physical glass and woven lounge; do not trade them back for lower quality to regain performance.
+- Author the west/270° wall as a complete low witness-library composition while keeping the 1.4m circulation loop and current fade/collision rules.
+- Replace repeated shelf vessels, books and botanical clumps with three bespoke, silhouette-distinct secondary families.
+- Move the next character pass into continuous eyelid/lip/hand/neck topology and role-specific garment edges.
+- Pursue probe/lightmap-assisted colour bounce only if all five captured performance budgets remain green.
+
+### Gate result
+
+v133 delivers a more faithful elevated composition, real material hierarchy for glass/paper/wood, visibly softer lounge upholstery, stronger grounding and budgeted phone LOD while preserving true walking and 360° orbit. The same-canvas comparisons still contain actionable P1 gaps in source-level character topology, room-wide bespoke secondary craft and offline-quality light transport.
+
+final result: blocked
+
+Blocker: continuous production character topology, complete-room bespoke secondary assets and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v132 role-authored silhouette, feature-island face and intimate-camera gate
 
 ### Evidence inspected together

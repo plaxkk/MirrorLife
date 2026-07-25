@@ -14,6 +14,7 @@ PALETTE = {
     "paper_warm": "#f0dfc5",
     "paper_cool": "#e7eceb",
     "paper_edge": "#cdb28e",
+    "linen": "#e8dfd2",
     "oak": "#9a6240",
     "oak_light": "#b8794e",
     "oak_dark": "#75462f",
@@ -87,6 +88,7 @@ def materials():
         "paper_warm": material("Civic warm cotton paper", PALETTE["paper_warm"], 0.96),
         "paper_cool": material("Civic cool archive paper", PALETTE["paper_cool"], 0.9),
         "paper_edge": material("Civic paper edge", PALETTE["paper_edge"], 0.98),
+        "linen": material("Civic woven ivory textile", PALETTE["linen"], 0.96),
         "oak": material("Civic oak", PALETTE["oak"], 0.54),
         "oak_light": material("Civic honey oak", PALETTE["oak_light"], 0.5),
         "oak_dark": material("Civic smoked oak", PALETTE["oak_dark"], 0.59),
@@ -229,6 +231,60 @@ def sculpted_cushion(
         vertex.co.x *= 1.0 - 0.024 * nz * nz
         vertex.co.z *= 1.0 - 0.026 * nx * nx
     obj.data.update()
+    return obj
+
+
+def draped_textile(
+    name,
+    width,
+    location,
+    mat,
+    parent,
+    depth_offset=0.0,
+    height_offset=0.0,
+    columns=10,
+    rows=12,
+):
+    """Create a thin woven throw that bends from the seat over its front edge."""
+    x0, y0, z0 = location
+    vertices = []
+    faces = []
+    for row in range(rows + 1):
+        t = row / rows
+        if t <= 0.34:
+            local_t = t / 0.34
+            y = y0 - local_t * 0.22 - depth_offset
+            z = z0 - math.sin(local_t * math.pi) * 0.018 + height_offset
+        else:
+            local_t = (t - 0.34) / 0.66
+            y = y0 - 0.22 - local_t * 0.035 - depth_offset
+            z = z0 - local_t * 0.43 + math.sin(local_t * math.pi) * 0.012 + height_offset
+        for column in range(columns + 1):
+            u = column / columns
+            x = x0 + (u - 0.5) * width
+            ripple = math.sin(u * math.pi * 5 + t * 1.7) * 0.009
+            edge_softening = math.sin(u * math.pi) * 0.006
+            vertices.append((x, y - edge_softening, z + ripple))
+    stride = columns + 1
+    for row in range(rows):
+        for column in range(columns):
+            a = row * stride + column
+            b = a + 1
+            c = a + stride + 1
+            d = a + stride
+            faces.append((a, b, c, d))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    link(obj, mat, parent)
+    solidify = obj.modifiers.new("Woven textile thickness", "SOLIDIFY")
+    solidify.thickness = 0.012
+    solidify.offset = 0
+    bevel = obj.modifiers.new("Soft textile edge", "BEVEL")
+    bevel.width = 0.007
+    bevel.segments = 2
     return obj
 
 
@@ -822,16 +878,16 @@ def build_lounge_suite(mats):
     # Cushions need an authored front, side thickness and seams. Flattened
     # spheres looked like detached candy pieces in the game camera and could
     # not carry the editorial textile pattern visible in the target.
-    rounded_box(
+    sculpted_cushion(
         "LoungePillowButter", (0.5, 0.22, 0.44), (-0.48, -0.14, 1.035),
-        mats["butter"], root, 0.13, (0.06, -0.08, -0.08), 5,
+        mats["linen"], root, 0.13, (0.06, -0.08, -0.08), 5, 0.045, -0.08,
     )
-    rounded_box(
+    sculpted_cushion(
         "LoungePillowCoral", (0.48, 0.21, 0.42), (0.5, -0.14, 1.02),
-        mats["coral"], root, 0.13, (-0.05, 0.08, 0.08), 5,
+        mats["linen"], root, 0.13, (-0.05, 0.08, 0.08), 5, 0.05, 0.08,
     )
-    rounded_box("LoungePillowButterInset", (0.4, 0.02, 0.34), (-0.48, -0.261, 1.035), mats["paper"], root, 0.09, (0.06, -0.08, -0.08), 4)
-    rounded_box("LoungePillowCoralInset", (0.38, 0.02, 0.32), (0.5, -0.256, 1.02), mats["butter"], root, 0.087, (-0.05, 0.08, 0.08), 4)
+    rounded_box("LoungePillowButterInset", (0.4, 0.02, 0.34), (-0.48, -0.261, 1.035), mats["linen"], root, 0.09, (0.06, -0.08, -0.08), 4)
+    rounded_box("LoungePillowCoralInset", (0.38, 0.02, 0.32), (0.5, -0.256, 1.02), mats["linen"], root, 0.087, (-0.05, 0.08, 0.08), 4)
     # Real raised textile bands survive orbit and lighting changes unlike a
     # camera-facing decal. The two pillows deliberately use different pattern
     # grammar so the suite feels collected rather than procedurally duplicated.
@@ -858,18 +914,25 @@ def build_lounge_suite(mats):
         )
     # A casually folded throw adds a soft foreground overlap and breaks the
     # perfect bilateral sofa silhouette without widening its collider.
-    rounded_box("LoungeThrowFold", (0.54, 0.12, 0.18), (0.72, -0.26, 0.67), mats["paper"], root, 0.06, (0.03, 0.12, -0.08), 5)
-    rounded_box("LoungeThrowDrape", (0.48, 0.07, 0.34), (0.78, -0.335, 0.52), mats["paper"], root, 0.055, (0.08, 0.12, -0.07), 5)
+    sculpted_cushion(
+        "LoungeThrowFold", (0.58, 0.14, 0.17), (0.72, -0.24, 0.69),
+        mats["linen"], root, 0.055, (0.025, 0.1, -0.06), 4, 0.025, 0.12,
+    )
+    draped_textile(
+        "LoungeThrowDrape", 0.54, (0.76, -0.16, 0.69),
+        mats["linen"], root,
+    )
     for stripe_index, stripe_x in enumerate((-0.16, 0.0, 0.16)):
-        rounded_box(
+        draped_textile(
             f"LoungeThrowStripe_{stripe_index + 1}",
-            (0.055, 0.015, 0.16),
-            (0.72 + stripe_x, -0.326, 0.67),
+            0.055,
+            (0.76 + stripe_x, -0.16, 0.69),
             mats["blue"] if stripe_index != 1 else mats["teal"],
             root,
-            0.015,
-            (0.03, 0.12, -0.08),
-            2,
+            depth_offset=0.008,
+            height_offset=0.008,
+            columns=3,
+            rows=12,
         )
 
     # The coffee table is a separate layout prop with its own metre-space
@@ -981,7 +1044,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v12",
+        "contract": "mirrorlife-civic-hero-props-v13",
         "worldUnitMeters": 1,
         "assets": {},
     }

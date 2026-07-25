@@ -26,7 +26,7 @@ const expectations = {
   ]
 };
 
-assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v12");
+assert.equal(manifest.contract, "mirrorlife-civic-hero-props-v13");
 assert.equal(manifest.worldUnitMeters, 1);
 assert.deepEqual(Object.keys(manifest.assets).sort(), Object.keys(expectations).sort());
 

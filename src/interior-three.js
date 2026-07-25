@@ -16,12 +16,12 @@ const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBli
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v75";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
-const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v12";
-const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v3";
+const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v13";
+const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v4";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
 const CIVIC_WEIGHT_TRANSFER_CONTRACT = "mirrorlife-civic-weight-transfer-v1";
 const CIVIC_CONTACT_PRESSURE_CONTRACT = "mirrorlife-civic-contact-pressure-v1";
-const CIVIC_FOOT_CONTACT_CONTRACT = "mirrorlife-civic-foot-contact-v1";
+const CIVIC_FOOT_CONTACT_CONTRACT = "mirrorlife-civic-foot-contact-v2";
 const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
 const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
@@ -134,12 +134,12 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.68,
-    fill: 0.35,
-    hemi: 0.33,
-    bounce: 0.64,
-    wash: 0.48,
-    exposure: 0.84,
+    key: 1.78,
+    fill: 0.38,
+    hemi: 0.37,
+    bounce: 0.72,
+    wash: 0.54,
+    exposure: 0.88,
     keyColor: "#ffe5cc",
     fillColor: "#c5dfdf"
   },
@@ -1092,7 +1092,7 @@ function loadModel(type) {
   };
   const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
-    const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v12" : "";
+    const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v13" : "";
     const assetRevision = ASSET_REVISION || authoredAssetRevision;
     const assetUrl = `${ASSET_BASE}${type}.glb${assetRevision ? `?v=${encodeURIComponent(assetRevision)}` : ""}`;
     loader.load(
@@ -1620,7 +1620,7 @@ function applyLightingPreset(theme = {}) {
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.42 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.25 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.29 : 0.26;
   if (keyLight?.shadow) {
     keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 10 : 9;
     keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 28 : 24;
@@ -2870,8 +2870,9 @@ function addAmbientSetDressing(theme, colors) {
 
 function addCivicBrassInlay(points, color = "#caa04a") {
   const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0.035, z)));
+  const mobileLod = lastWidth <= 720;
   const path = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, 20, 0.022, 8, false),
+    new THREE.TubeGeometry(curve, mobileLod ? 8 : 20, 0.022, mobileLod ? 5 : 8, false),
     createToonMaterial(color, { roughness: 0.36, metalness: 0.58, envMapIntensity: 0.72 })
   );
   path.castShadow = false;
@@ -3151,21 +3152,37 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     line.rotation.y = 0.1;
     microProps.add(line);
   });
-  // At gameplay distance a single cool ceramic-glass silhouette reads more
-  // cleanly than two transparent passes and keeps the mobile hero at budget.
-  const waterGlass = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.095, 0.085, 0.22, 22),
-    createToonMaterial("#cde4df", { roughness: 0.3, envMapIntensity: 0.86 })
-  );
+  // The reference foreground uses a real clear tumbler as its brightest
+  // material contrast. Build the open wall, base and dense cut rim into one
+  // transmitted mesh so it remains a single draw call and reads as glass
+  // rather than the former opaque blue ceramic cylinder.
+  const waterGlassRadialSegments = lastWidth <= 720 ? 12 : 24;
+  const waterGlassParts = [
+    new THREE.CylinderGeometry(0.095, 0.085, 0.22, waterGlassRadialSegments, 1, true),
+    new THREE.CircleGeometry(0.084, waterGlassRadialSegments),
+    new THREE.TorusGeometry(0.094, 0.007, 6, waterGlassRadialSegments)
+  ];
+  waterGlassParts[1].rotateX(-Math.PI / 2);
+  waterGlassParts[1].translate(0, -0.11, 0);
+  waterGlassParts[2].rotateX(Math.PI / 2);
+  waterGlassParts[2].translate(0, 0.11, 0);
+  const waterGlassGeometry = mergeGeometries
+    ? mergeGeometries(waterGlassParts, false)
+    : waterGlassParts[0];
+  waterGlassParts.forEach((geometry) => {
+    if (geometry !== waterGlassGeometry) geometry.dispose();
+  });
+  const waterGlassMaterial = createGlassMaterial("#d8eee8", {
+    opacity: 0.34,
+    depthWrite: false
+  });
+  waterGlassMaterial.transmission = 0.28;
+  waterGlassMaterial.thickness = 0.045;
+  waterGlassMaterial.envMapIntensity = 1.18;
+  const waterGlass = new THREE.Mesh(waterGlassGeometry, waterGlassMaterial);
+  waterGlass.name = "CivicRecordDeskWaterGlass";
   waterGlass.position.set(0.76, 0.965, 0.31);
   microProps.add(waterGlass);
-  const glassRim = new THREE.Mesh(
-    new THREE.TorusGeometry(0.092, 0.008, 8, 24),
-    createToonMaterial("#edf8f3", { roughness: 0.22, envMapIntensity: 0.92 })
-  );
-  glassRim.rotation.x = Math.PI / 2;
-  glassRim.position.set(0.76, 1.08, 0.31);
-  microProps.add(glassRim);
   const coaster = new THREE.Mesh(
     new THREE.CylinderGeometry(0.125, 0.125, 0.018, 24),
     createToonMaterial(ATELIER_TOKENS.cork, { roughness: 0.86 })
@@ -3250,10 +3267,11 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     "CivicRecordDeskScannedWalnut"
   );
   // Collapse the complete opaque desk and stationery suite into one vertex-
-  // surfaced batch. Keep the mapped agenda and two scanned wood families
-  // separate, preserving Chinese content and real material response while
-  // staying well below the four-view draw-call budget.
-  mergeActorVertexColorMeshes(group, [briefArtwork, oakSurface, walnutSurface].filter(Boolean), {
+  // surfaced batch. Keep the mapped agenda, transmitted tumbler and broad oak
+  // top separate. The narrow walnut rails retain their colour/roughness masks
+  // inside the shared batch, buying back the one draw call used by real glass
+  // while preserving the strict four-view performance gate.
+  mergeActorVertexColorMeshes(group, [briefArtwork, waterGlass, oakSurface].filter(Boolean), {
     roughness: 0.82,
     envMapIntensity: 0.42,
     actorShading: false
@@ -4379,19 +4397,19 @@ function addCivicArchitecturalShell(colors) {
   // wings leave the left threshold open and retain a complete 360-degree route.
   // These planes sit just inside the physical boundary; players therefore meet
   // the real shell before they could ever cross the visible architecture.
-  const plaster = createToonMaterial("#f0e2d2", {
+  const plaster = createToonMaterial("#ead7c3", {
     roughness: 0.9,
     surface: "plaster",
     bumpScale: 0.009,
     envMapIntensity: 0.44
   });
-  const lowerPlaster = createToonMaterial("#e7d9c8", {
+  const lowerPlaster = createToonMaterial("#ddcdbb", {
     roughness: 0.88,
     surface: "plaster",
     bumpScale: 0.008,
     envMapIntensity: 0.46
   });
-  const recessedPlaster = createToonMaterial("#ede0d0", {
+  const recessedPlaster = createToonMaterial("#e6d3bf", {
     roughness: 0.92,
     surface: "plaster",
     bumpScale: 0.008,
@@ -4524,7 +4542,7 @@ function addCivicReferenceDressing(theme, colors) {
     civicRugMaterial.needsUpdate = true;
   }
   const center = new THREE.Mesh(
-    new THREE.CylinderGeometry(1.48, 1.49, 0.026, 64, 1, false),
+    new THREE.CylinderGeometry(1.48, 1.49, 0.026, mobileLod ? 32 : 64, 1, false),
     civicRugMaterial
   );
   center.position.set(0, 0.028, 0.18);
@@ -4536,7 +4554,7 @@ function addCivicReferenceDressing(theme, colors) {
     [2.02, 2.09, "#c89d43", 0.62]
   ].forEach(([inner, outer, color, opacity], index) => {
     const ring = new THREE.Mesh(
-      new THREE.RingGeometry(inner, outer, 72),
+      new THREE.RingGeometry(inner, outer, mobileLod ? 36 : 72),
       createToonMaterial(color, { roughness: index === 1 ? 0.34 : 0.72, metalness: index === 1 ? 0.55 : 0.08, transparent: opacity < 1, opacity })
     );
     ring.rotation.x = -Math.PI / 2;
@@ -8109,7 +8127,7 @@ function createProceduralActorObject(actor) {
       color: 0x4d3528,
       map: getContactShadowTexture(),
       transparent: true,
-      opacity: 0.36,
+      opacity: 0.41,
       depthWrite: false,
       toneMapped: false
     })
@@ -10402,7 +10420,7 @@ function updateCamera(payload = {}) {
     // The opening uses a slightly longer editorial lens so people carry more
     // visual weight, then widens through side/reverse arcs to retain the full
     // listening circle and prevent a near witness becoming a foreground wall.
-    ? (portrait ? 60 : 48.5 + civicRearArc * 6.5 + civicSideArc * 1.7)
+    ? (portrait ? 60 : 49.4 + civicRearArc * 5.8 + civicSideArc * 1.5)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10474,24 +10492,24 @@ function updateCamera(payload = {}) {
     cameraPivotZ += (targetPivotZ - cameraPivotZ) * focusAlpha;
   }
   const pitchOffset = Math.max(-0.22, Math.min(0.2, pitch - 0.58));
-  // The civic room uses a lower, 35–40 mm editorial camera. It keeps the
-  // player as the foreground anchor while allowing the listening circle,
-  // witnesses and the furnished back wall to share one readable composition.
-  // Other rooms retain the more elevated exploration camera.
+  // The civic room uses an elevated illustrated-diorama camera. The target
+  // composition shows the complete brass route, foreground desk, lounge and
+  // cast in one frame; the previous low lens compressed those layers into a
+  // crowded eye-level strip and hid the authored tabletop details.
   const playerFollowDistance = cinematicCivic
     // Pull the authored opening close enough for faces and garment silhouettes
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 5.2 : 5.5 + civicRearArc * 1.37 + civicSideArc * 0.32)
+    ? (portrait ? 5.2 : 5.84 + civicRearArc * 1.06 + civicSideArc * 0.26)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.08 + civicRearArc * 0.67 + civicSideArc * 0.24) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.44 + civicRearArc * 0.48 + civicSideArc * 0.18) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
-  // The desktop civic shot sits closer to an illustrated 35mm eye line than
-  // a management-game bird's-eye view: more portal and character silhouette,
-  // less undifferentiated floor. Portrait keeps the higher navigation read.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.86) : 0.94)
+  // Keep the sightline below shoulder height so the extra elevation reveals
+  // floor circulation without making the room read as an abstract strategy
+  // board. Portrait keeps its navigation-first framing.
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.92) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
