@@ -1,21 +1,21 @@
 {
-  "contract": "mirrorlife-civic-hero-props-v11",
+  "contract": "mirrorlife-civic-hero-props-v12",
   "worldUnitMeters": 1,
   "assets": {
     "civic-display-case": {
       "file": "civic-display-case.glb",
-      "meshes": 101,
-      "triangles": 15436
+      "meshes": 110,
+      "triangles": 16504
     },
     "civic-notice-console": {
       "file": "civic-notice-console.glb",
-      "meshes": 127,
-      "triangles": 20696
+      "meshes": 147,
+      "triangles": 21832
     },
     "civic-lounge-suite": {
       "file": "civic-lounge-suite.glb",
-      "meshes": 151,
-      "triangles": 23460
+      "meshes": 156,
+      "triangles": 23936
     }
   }
 }

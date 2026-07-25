@@ -1,5 +1,58 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v128 weighted body chain and civic archive craft gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720` CSS/pixels, device scale factor `1`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v128-final-full.png` (`2560 × 720`); the source is aspect-fit to `1280 × 720` and paired with the native `1280 × 720` implementation on the same canvas.
+- Mandatory focused comparison: `tmp/reference-vs-v128-final-character-focus.png` (`1120 × 520`); equal `560 × 520` crops compare the four-person ring, shoulder/pelvis continuity, floor contact, gesture props and facial integration.
+- Full 3D evidence: `tmp/v128-four-direction-board.png` plus the source captures in `dist/interior-3d-work/environment-review-yaw-90/00-public.png`, `environment-review-yaw-180/00-public.png` and `environment-review-yaw-270/00-public.png`.
+- Responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening desktop `176 / 289,522`, side `179 / 300,630`, reverse `180 / 341,354`, fourth orbit `178 / 308,830`; mobile `106 / 245,814`. All five views report zero shader errors and remain inside the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Deformation evidence: the player exposes `7,758` weighted body vertices, including `4,338` clavicle and `2,208` pelvis vertices. Live animation drives independent left/right clavicle pitch-bank, pelvis yaw-bank and spine counter-rotation under `mirrorlife-civic-body-chain-v1`.
+- Asset evidence: hero furniture contract v12 contains three authored Blender assets and `62,272` source triangles. Layered files, folded corners, consent seals, clips and paper edges are real geometry, then merged into semantic runtime batches.
+- Interaction evidence: the final browser regression moved the player `5.09m`, rotated the physical camera `65.3°`, verified the curved identity-surface blink and retained the body-chain contract after locomotion. Desktop/mobile scene flow and the `26`-zone, `78`-transition stress pass report no runtime failures.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v127 P1 / shoulder and pelvis deformation used broad positional fields] The merged body now carries one per-vertex four-channel chain attribute for left clavicle, right clavicle, spine and pelvis. The vertex and normal shaders rotate each region about authored anatomical pivots, while the existing planted-weight offsets remain a lower-amplitude corrective.
+- [improved / gestures animated arms but not their proximal body chain] Listen, gesture and locomotion tracks now derive clavicle pitch/bank and pelvis yaw/bank every frame. Runtime verification requires non-zero chain motion both before and after a physical walk instead of accepting static exported weights.
+- [improved from v127 P1 / hero suites still read as broad furniture blocks] Display, notice and lounge assets now include layered witness packets, archive folders, clips, paper edges, real folded wedges and consent seals. Wood, paper and glass remain separately authored material families before semantic batching.
+- [fixed / the fourth orbit exposed an uncomposed plaster sector] The civic shell is now four independently fadeable wall planes rather than one shared box. A shallow resident-response ledger is revealed only in the `270°` camera arc; it fills the dead wall without taking walkable space or appearing in the opening composition.
+- [checked / additions remain truthful to the spatial contract] The archive panel is inaccessible wall furniture, all floor props keep their existing colliders and interaction anchors, and four-direction screenshots show no intersecting furniture, detached paper or camera-wall takeover.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese status labels, place-memory title, interaction prompt and the four actions remain legible at desktop and portrait sizes. The reference still has finer icon/type optical alignment, less utilitarian numeric spacing and more deliberate translucent-panel text contrast.
+- [improved][spacing and layout rhythm] The opening keeps one readable four-person story centre; the fourth orbit now has a civic landmark instead of a broad undecided wall. The source remains denser in foreground framing and distributes secondary props with more irregular but controlled rhythm.
+- [checked][colors and visual tokens] Warm mineral ivory, walnut, teal, coral, green and brass remain coherent. New paper layers use warm/cool whites and muted edge values rather than introducing competing saturated accents.
+- [improved][image quality and asset fidelity] Chain weights, document layers, folded corners and seals are lit orbit-safe 3D geometry. No sprite, billboard, CSS/SVG drawing, emoji or screenshot projection substitutes for visible character or room volume.
+- [checked][copy and content] “倾听线索”, “倾听墙”, the place-memory state and response ledger fit the visible civic testimony. No private source text or unapproved memory is rendered.
+- [checked][icons and interaction states] The nearest contextual marker, keyboard prompt, action selection and portrait touch controls remain functional; loading uses the atomic two-frame warmup and all reviewed captures report a ready scene.
+- [checked][physical truth, accessibility and responsiveness] Actor roots, Rapier capsules, floor contact, interaction anchors and furniture colliders remain authoritative. Portrait keeps joystick and action targets usable while staying within its hard performance budget.
+- [P1][character silhouette and facial production quality remain visibly behind] The focused comparison proves real clavicle/pelvis motion, but the source still has more continuous scapular volume, per-joint hand articulation, softer fabric compression, more expressive faces and finer hair/skin integration. The implementation remains recognizably lower-poly and more rigid at the head-neck and hand-prop contacts.
+- [P1][room-wide secondary craft remains behind despite the v12 hero upgrade] The new documents improve the three hero suites, while the source still has richer glassware, varied botanical species, textiles, basketry, trim profiles and irregular shelf dressing across the entire frame.
+- [P1][offline indirect lighting and material transport remain visibly ahead] The same-canvas full view shows flatter wall/floor value separation, harder contact shadows and less colour bounce in the implementation. The source retains softer penumbrae, natural skin/cloth response and more convincing glass and foliage transmission.
+- [P2][gameplay camera cannot yet match the source's fixed cinematic density] Movement and a complete orbit require more open floor and safer silhouettes. The opening is readable, but it does not yet achieve the source's lower horizon, stronger foreground crop and compressed story tableau without compromising rear-view navigation.
+- [P2][HUD optical finish remains behind] Coverage and responsive behavior pass, but panel translucency, icon family, control grouping, compact typography and edge treatment remain visibly more generic than the reference.
+
+### Implementation checklist
+
+- Preserve the four-channel body-chain attribute and move the next character increment into authored scapula/neck weights, facial topology and garment-specific compression rather than larger procedural offsets.
+- Extend the v12 archive-paper craft into the foreground desk, lounge textiles, glassware and botanical families while keeping the current semantic batching budgets.
+- Introduce probe/lightmap-assisted indirect colour and softer contact response before adding more direct-light intensity.
+- Refine the HUD icon family and translucent surfaces only after the character and indirect-light P1 gaps are reduced.
+
+### Gate result
+
+v128 adds real per-vertex clavicle/spine/pelvis deformation, animation-driven proximal motion, more specific civic archive craft and a composed fourth-orbit wall while preserving physical movement, atomic loading, mobile controls and performance budgets. The mandatory same-canvas comparison still contains actionable P1 gaps in character/facial production quality, room-wide secondary asset craft and offline-quality indirect light/material transport.
+
+final result: blocked
+
+Blocker: source-level character and facial deformation, complete-room secondary asset craftsmanship and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v127 continuous body and digit deformation gate
 
 ### Evidence inspected together

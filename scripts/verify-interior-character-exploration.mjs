@@ -97,7 +97,7 @@ try {
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v4", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
-  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v11", "civic room did not expose the authored furniture-detail contract");
+  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v12", "civic room did not expose the authored furniture-detail contract");
   assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v3", "civic room did not expose the scanned furniture-surface contract");
   assert.equal(opening.furniture?.reverseWallVersion, "mirrorlife-civic-reverse-wall-v3", "civic room did not expose the authored reverse witness-wall contract");
   assert.ok(opening.furniture?.scannedSurfaceBatches >= 3, "placed civic hero furniture lost its scanned surface shader");
@@ -121,10 +121,16 @@ try {
       && Number(actor.weightTransfer.weight || 0) >= 0.95
       && Number(actor.weightTransfer.leftUpError ?? 1) <= 0.04
       && Number(actor.weightTransfer.rightUpError ?? 1) <= 0.04
-      && actor.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v1"
+      && actor.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v2"
+      && actor.continuousDeformation?.chainVersion === "mirrorlife-civic-body-chain-v1"
       && Number(actor.continuousDeformation.weight || 0) >= 0.95
       && Math.abs(Number(actor.continuousDeformation.shoulderCounterShift || 0) - 0.009) <= 0.0002
       && Number(actor.continuousDeformation.clothTension || 0) >= 0.0017
+      && Number(actor.continuousDeformation.bodyWeightedVertexCount || 0) >= 1000
+      && Number(actor.continuousDeformation.clavicleVertexCount || 0) >= 100
+      && Number(actor.continuousDeformation.pelvisVertexCount || 0) >= 100
+      && Object.values(actor.continuousDeformation.chainPose || {})
+        .some((value) => Math.abs(Number(value || 0)) >= 0.004)
       && actor.continuousDeformation.digitVersion === "mirrorlife-civic-digit-deformation-v1"
       && Object.values(actor.continuousDeformation.digitVertexCounts || {})
         .every((count) => Number(count || 0) >= 500)
@@ -427,8 +433,12 @@ try {
     "player did not settle back onto level planted feet after locomotion"
   );
   assert(
-    afterMove.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v1"
+    afterMove.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v2"
+      && afterMove.continuousDeformation?.chainVersion === "mirrorlife-civic-body-chain-v1"
       && Number(afterMove.continuousDeformation.weight || 0) >= 0.95
+      && Number(afterMove.continuousDeformation.bodyWeightedVertexCount || 0) >= 1000
+      && Object.values(afterMove.continuousDeformation.chainPose || {})
+        .some((value) => Math.abs(Number(value || 0)) >= 0.004)
       && afterMove.continuousDeformation.digitVersion === "mirrorlife-civic-digit-deformation-v1"
       && Object.values(afterMove.continuousDeformation.digitCurls || {})
         .every((curl) => Number(curl || 0) >= 0.035),

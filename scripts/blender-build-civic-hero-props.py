@@ -11,6 +11,9 @@ from mathutils import Vector
 PALETTE = {
     "ivory": "#f4ead9",
     "paper": "#f7f0e3",
+    "paper_warm": "#f0dfc5",
+    "paper_cool": "#e7eceb",
+    "paper_edge": "#cdb28e",
     "oak": "#9a6240",
     "oak_light": "#b8794e",
     "oak_dark": "#75462f",
@@ -81,6 +84,9 @@ def materials():
     return {
         "ivory": material("Civic plaster ivory", PALETTE["ivory"], 0.94),
         "paper": material("Civic paper", PALETTE["paper"], 0.92),
+        "paper_warm": material("Civic warm cotton paper", PALETTE["paper_warm"], 0.96),
+        "paper_cool": material("Civic cool archive paper", PALETTE["paper_cool"], 0.9),
+        "paper_edge": material("Civic paper edge", PALETTE["paper_edge"], 0.98),
         "oak": material("Civic oak", PALETTE["oak"], 0.54),
         "oak_light": material("Civic honey oak", PALETTE["oak_light"], 0.5),
         "oak_dark": material("Civic smoked oak", PALETTE["oak_dark"], 0.59),
@@ -259,6 +265,74 @@ def cylinder_between(name, start, end, radius, mat, parent, vertices=10, radius_
     )
     obj.rotation_euler = direction.to_track_quat("Z", "Y").to_euler()
     return obj
+
+
+def triangular_prism(name, points_xz, depth, center_y, mat, parent):
+    """Create a tiny orbit-safe folded-paper wedge with real thickness."""
+    front_y = center_y - depth * 0.5
+    back_y = center_y + depth * 0.5
+    vertices = [(x, front_y, z) for x, z in points_xz] + [(x, back_y, z) for x, z in points_xz]
+    faces = [
+        (0, 1, 2),
+        (5, 4, 3),
+        (0, 3, 4, 1),
+        (1, 4, 5, 2),
+        (2, 5, 3, 0),
+    ]
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    return link(obj, mat, parent)
+
+
+def add_document_packet(
+    parent,
+    mats,
+    name,
+    location,
+    size=(0.34, 0.24),
+    rotation=0,
+    accent="teal",
+    sheets=4,
+):
+    """Build a layered file packet instead of one blank rounded cuboid."""
+    width, depth = size
+    x, y, z = location
+    for sheet_index in range(sheets):
+        offset_x = (sheet_index - (sheets - 1) * 0.5) * 0.008
+        offset_y = ((sheet_index % 2) - 0.5) * 0.009
+        rounded_box(
+            f"{name}Sheet_{sheet_index + 1}",
+            (width - sheet_index * 0.006, depth, 0.009),
+            (x + offset_x, y + offset_y, z + sheet_index * 0.009),
+            mats["paper_warm" if sheet_index % 2 == 0 else "paper_cool"],
+            parent,
+            0.012,
+            (0, 0, rotation + (sheet_index - 1.5) * 0.009),
+            2,
+        )
+    rounded_box(
+        f"{name}Rule",
+        (width * 0.58, depth * 0.055, 0.012),
+        (x - width * 0.06, y - depth * 0.17, z + sheets * 0.009 + 0.006),
+        mats[accent],
+        parent,
+        0.005,
+        (0, 0, rotation),
+        1,
+    )
+    rounded_box(
+        f"{name}Clip",
+        (width * 0.16, depth * 0.09, 0.022),
+        (x - width * 0.3, y + depth * 0.32, z + sheets * 0.009 + 0.012),
+        mats["brass"],
+        parent,
+        0.012,
+        (0, 0, rotation),
+        2,
+    )
 
 
 def sphere(name, scale, location, mat, parent, segments=18, rings=12, rotation=(0, 0, 0)):
@@ -537,6 +611,7 @@ def build_display_case(mats):
     # pale slab: warm wood frame, cream paper, title, three response rows and
     # a brass clip, all authored on the front face for orbit-safe lighting.
     rounded_box("DisplayMenuFrame", (0.72, 0.075, 0.72), (-0.58, -0.03, 1.82), mats["walnut"], root, 0.055, (0.12, 0, 0))
+    rounded_box("DisplayMenuPaperEdge", (0.615, 0.022, 0.605), (-0.575, -0.058, 1.805), mats["paper_edge"], root, 0.04, (0.12, 0, 0))
     rounded_box("DisplayMenuPaper", (0.6, 0.03, 0.59), (-0.58, -0.072, 1.82), mats["ivory"], root, 0.04, (0.12, 0, 0))
     rounded_box("DisplayMenuTitle", (0.34, 0.018, 0.042), (-0.61, -0.095, 2.04), mats["walnut"], root, 0.009, (0.12, 0, 0), 1)
     for row_index, (z, color) in enumerate(((1.92, "teal"), (1.78, "coral"), (1.64, "brass"))):
@@ -546,6 +621,18 @@ def build_display_case(mats):
     add_ceramic(root, mats, "DisplayTopVase", (0.53, -0.03, 1.66), 0.95)
     rounded_box("DisplayStoryCard", (0.3, 0.028, 0.22), (0.08, -0.07, 1.68), mats["paper"], root, 0.026, (-0.08, 0.04, 0.03), 2)
     rounded_box("DisplayStoryCardRule", (0.18, 0.012, 0.018), (0.08, -0.091, 1.7), mats["teal"], root, 0.005, (-0.08, 0.04, 0.03), 1)
+    add_document_packet(
+        root,
+        mats,
+        "DisplayWitnessPacket",
+        (0.1, 0.0, 1.565),
+        (0.36, 0.24),
+        -0.08,
+        "coral",
+        4,
+    )
+    rounded_box("DisplayArchiveFolder", (0.3, 0.09, 0.42), (-0.18, 0.08, 1.77), mats["paper_warm"], root, 0.025, (0.02, -0.1, -0.08), 3)
+    rounded_box("DisplayArchiveFolderTab", (0.14, 0.095, 0.07), (-0.25, 0.08, 1.995), mats["teal"], root, 0.016, (0.02, -0.1, -0.08), 2)
     for index, angle in enumerate((-0.75, -0.24, 0.24, 0.78)):
         cylinder(f"DisplayFlowerStem_{index}", 0.009, 0.38 + index * 0.03, (0.53 + angle * 0.08, -0.03, 1.9), mats["leaf"], root, 7, (0, angle * 0.2, -angle * 0.24))
         sphere(f"DisplayFlower_{index}", (0.07, 0.07, 0.055), (0.53 + angle * 0.16, -0.03, 2.08 + index * 0.025), mats[("coral", "butter", "blue", "teal")[index]], root, 14, 9)
@@ -575,6 +662,16 @@ def build_notice_console(mats):
         (0.32, 1.49, 0.46, 0.3, "butter"), (0.9, 1.48, 0.27, 0.24, "teal"),
     )):
         rotation = (0, 0, ((index % 3) - 1) * 0.035)
+        rounded_box(
+            f"NoticePaperShadow_{index + 1}",
+            (width + 0.018, 0.012, height + 0.018),
+            (x + 0.018, -0.052, z - 0.018),
+            mats["paper_edge"],
+            root,
+            0.018,
+            rotation,
+            2,
+        )
         rounded_box(f"NoticePaper_{index + 1}", (width, 0.02, height), (x, -0.075 - index * 0.0005, z), mats[color], root, 0.018, rotation, 2)
         cylinder(f"NoticePin_{index + 1}", 0.018, 0.028, (x - width * 0.32, -0.095, z + height * 0.36), mats[("brass", "coral", "teal")[index % 3]], root, 10, (math.pi / 2, 0, 0))
         for line_index in range(2 if height < 0.35 else 3):
@@ -583,6 +680,30 @@ def build_notice_console(mats):
                 (width * (0.52 + 0.12 * (line_index % 2)), 0.012, 0.018),
                 (x, -0.09, z + height * 0.12 - line_index * 0.075),
                 mats["ink"], root, 0.006, rotation, 1,
+            )
+        fold_size = min(width, height) * 0.18
+        triangular_prism(
+            f"NoticePaperFold_{index + 1}",
+            (
+                (x + width * 0.5 - fold_size, z - height * 0.5),
+                (x + width * 0.5, z - height * 0.5),
+                (x + width * 0.5, z - height * 0.5 + fold_size),
+            ),
+            0.018,
+            -0.091,
+            mats["paper_warm" if index % 2 else "paper_cool"],
+            root,
+        )
+        if index in (0, 3, 5, 7):
+            cylinder(
+                f"NoticeConsentSeal_{index + 1}",
+                min(width, height) * 0.085,
+                0.014,
+                (x + width * 0.28, -0.098, z - height * 0.28),
+                mats[("coral", "teal", "brass", "blue")[index % 4]],
+                root,
+                14,
+                (math.pi / 2, 0, 0),
             )
     for side in (-1, 1):
         # Proper picture lamps project from wall plates. The previous cones
@@ -787,6 +908,16 @@ def build_lounge_suite(mats):
             (2.12 if row % 2 else 1.3, -0.17, 0.36 + row * 0.46),
             mats["brass"] if row == 1 else mats["walnut"], root, 12,
         )
+    add_document_packet(
+        root,
+        mats,
+        "LoungeArchivePacket",
+        (1.72, -0.06, 1.59),
+        (0.38, 0.28),
+        0.035,
+        "blue",
+        3,
+    )
     add_plant(root, mats, "LoungeShelfPlant", (1.74, 0, 1.67), 0.72, "trailing")
     add_ceramic(root, mats, "LoungeShelfVase", (2.0, 0.02, 1.71), 0.62, "butter")
     return root
@@ -850,7 +981,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v11",
+        "contract": "mirrorlife-civic-hero-props-v12",
         "worldUnitMeters": 1,
         "assets": {},
     }
