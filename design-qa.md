@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v115 scanned hero-furniture surface gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v115-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v115-full.png`; focused source/implementation furniture comparison: `tmp/reference-vs-v115-furniture-focus.png`; implementation delta: `tmp/v114-vs-v115-furniture-focus.png`; cast check: `tmp/reference-vs-v115-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v115-final-desktop-yaw90.png` and `tmp/v115-final-desktop-yaw180.png`. Wood, fabric, paper, glass and emissive separation remains attached to the actual hero furniture while the camera rotates around the metre-space room.
+- Responsive evidence: `tmp/v115-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `171 / 289,992`, side `174 / 301,100`, reverse `175 / 307,228`; mobile `100 / 249,172`. The final regression walked the player `3.49m`, rotated the real camera `65.3°`, retained vertex eyelid closure, passed all `26` metre-space layouts and completed `78` atomic transitions without runtime error.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / hero furniture lost semantic materials before the final renderer] The earlier path merged each imported or semantic model into a generic vertex-colour batch before classifying oak, textile, paper, mineral and metal surfaces. v115 classifies and upgrades the three civic hero assets first, then creates a performance-safe opaque batch with persistent per-vertex surface masks.
+- [fixed / Three.js material cloning silently removed the scanned-surface shader] The final room-placement and camera-occlusion merge cloned materials after preparation. Native `Material.clone()` intentionally resets `onBeforeCompile`, so the correctly classified scan shader disappeared in the live room. Runtime cloning now preserves both the compiler hook and its program cache key through placement, merge and occlusion-fade ownership.
+- [improved / timber and upholstery still read as single painted blocks] Hero-specific shading increases scan frequency, real wood luminance/chroma breakup and restrained bump response while keeping fabric rough and low-specular. Paper, mineral, brass, glass and emissive materials remain separately legible instead of inheriting the wood treatment.
+- [fixed / material programs with different surface semantics could enter the same batch] The geometry material key now includes the custom shader program cache key, preventing incompatible actor, architecture and hero-furniture programs from being collapsed together.
+- [checked / the improvement is present in the final live room, not only configuration] Exploration verification asserts `mirrorlife-civic-hero-surface-v2` and at least three placed hero-furniture scan batches after the atomic ready state. The final `0°`, `90°`, `180°` and mobile captures retain the treatment.
+- [checked / richer surfaces do not spend geometry or draw-call budget] Colliders, transforms, interaction anchors and mesh topology are unchanged. The opening remains at `171` calls; every desktop view stays below `180 / 450k`, and mobile remains below `110 / 250k`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, line height, truncation, action labels, place-memory title and projected speaker icon remain stable at identical desktop and portrait sizes.
+- [checked][spacing and layout rhythm] Furniture footprints, the `≥1.4m` circulation loop, interaction clearances, central listening circle and camera-safe staging remain unchanged; the pass improves material reading without moving visual or physical space.
+- [improved][colors and visual tokens] The established warm ivory, teal, walnut, coral and brass hierarchy remains intact. Wood gains localized amber/brown variation and cloth retains a calmer matte response instead of every opaque surface sharing one flat colour behavior.
+- [improved][image quality and asset fidelity] The final placed display case, notice console and lounge suite now use the committed physical wood/fabric scan maps through real live PBR shader hooks. Glass and emissive layers remain independent; no screenshot projection, CSS drawing, custom SVG or camera-facing furniture substitute is used.
+- [checked][copy and content] “倾听线索”, current-speaker beacon, place-memory title and the four civic actions remain coherent with the visible testimony scene.
+- [P1][production character topology and deformation remain below the source] The reference still has substantially finer face planes, eyelid/lip performance, hand contacts, stitched garments, hair breakup and pose-specific cloth compression.
+- [P1][bespoke environment density and curved joinery remain below the source] v115 restores surface semantics, but the source still has more individual papers, pastry/display detail, botanical species, woven storage, curved furniture profiles, upholstery compression and finer scale variation.
+- [P1][offline global illumination and material transport remain ahead] The live WebGL materials now react more credibly, while the selected source still has richer multi-bounce colour, softer contact penumbrae, skin/cloth subsurface response and broader highlight roll-off.
+- [P2][HUD optical finish remains less authored] Interaction hierarchy is functional and responsive, but icon weight, translucent depth, spacing nuance and exact captured-state density remain visibly behind the selected frame.
+
+### Gate result
+
+v115 fixes a hidden production-pipeline defect rather than painting over the screenshot: the three hero-furniture assets preserve their classified scanned wood, fabric and paper response through normalization, final batching, placement, camera fading, movement and real 3D orbit. The focused v114/v115 comparison is deliberately subtle because geometry, lighting and palette remain stable, but the display case, console and lounge timber now have less uniform colour and stronger surface separation at no performance cost. The same-size source comparison still shows a material gap driven chiefly by source-level topology, bespoke prop density and offline light transport.
+
+final result: blocked
+
+Blocker: production character topology/deformation, room-wide bespoke prop and curved-joinery density, and offline-quality global illumination remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v114 source-derived foliage-light gate
 
 ### Evidence inspected together

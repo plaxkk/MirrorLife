@@ -17,6 +17,12 @@ const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v64";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
+const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v2";
+const CIVIC_HERO_PROP_TYPES = new Set([
+  "civic-display-case",
+  "civic-notice-console",
+  "civic-lounge-suite"
+]);
 const CIVIC_FACE_MODE_QUERY = new URLSearchParams(window.location.search).get("civicFaceMode");
 const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
   ? "curved-atlas"
@@ -780,11 +786,11 @@ function upgradeModelMaterials(source, type = "") {
   });
 }
 
-function prepareModel(type, source) {
+function prepareModel(type, source, { materialsUpgraded = false } = {}) {
   const wrapper = new THREE.Group();
   wrapper.name = `interior-${type}`;
   wrapper.add(source);
-  upgradeModelMaterials(source, type);
+  if (!materialsUpgraded) upgradeModelMaterials(source, type);
   source.updateMatrixWorld(true);
 
   const box = new THREE.Box3().setFromObject(source);
@@ -814,10 +820,31 @@ function prepareModel(type, source) {
   return wrapper;
 }
 
+function prepareRuntimeModel(type, source) {
+  if (!CIVIC_HERO_PROP_TYPES.has(type)) {
+    return prepareModel(type, mergeSemanticModelMeshes(source));
+  }
+  // Preserve authored material names until surface classification has run.
+  // The former order merged every opaque part into a generic vertex-colour
+  // material first, erasing "oak", "textile", "paper" and "brass" before
+  // the scanned-map shader could assign its masks. Upgrade the transparent
+  // glass/glow surfaces, then collapse the opaque suite with explicit surface
+  // masks into one draw call.
+  upgradeModelMaterials(source, type);
+  mergeActorVertexColorMeshes(source, [], {
+    actorShading: false,
+    surfaceProfile: "hero-furniture",
+    roughness: 0.72,
+    envMapIntensity: 0.76
+  });
+  return prepareModel(type, source, { materialsUpgraded: true });
+}
+
 function modelMaterialKey(material, geometry) {
   const attributeSignature = Object.keys(geometry.attributes).sort().join(",");
   return [
     material.type,
+    material.customProgramCacheKey?.() || "default-program",
     material.color?.getHexString?.() || "none",
     material.map?.uuid || "none",
     material.normalMap?.uuid || "none",
@@ -832,6 +859,19 @@ function modelMaterialKey(material, geometry) {
     Number(material.metalness ?? 0).toFixed(3),
     attributeSignature
   ].join(":");
+}
+
+function cloneRuntimeMaterial(material) {
+  const clone = material.clone();
+  // Three.js intentionally resets custom shader hooks during Material.clone().
+  // Model placement performs one final geometry merge, so failing to carry
+  // these hooks forward silently removed the scanned wood/fabric shader after
+  // it had been classified correctly. Preserve both the compiler callback and
+  // its cache key on the final live material.
+  clone.onBeforeCompile = material.onBeforeCompile;
+  clone.customProgramCacheKey = material.customProgramCacheKey;
+  clone.needsUpdate = true;
+  return clone;
 }
 
 function canUseVertexColorBatch(material) {
@@ -1015,24 +1055,20 @@ function loadModel(type) {
   const loadSemanticFallback = () => {
     if (!hasSemanticInteriorModel(type)) return null;
     const semanticSource = createSemanticInteriorModel(type, { THREE, RoundedBoxGeometry });
-    const prepared = prepareModel(type, mergeSemanticModelMeshes(semanticSource));
+    const prepared = prepareRuntimeModel(type, semanticSource);
     cache.set(type, prepared);
     itemSignature = "";
     return prepared;
   };
   const fallback = loadSemanticFallback();
   const promise = new Promise((resolve) => {
-    const authoredAssetRevision = [
-      "civic-display-case",
-      "civic-notice-console",
-      "civic-lounge-suite"
-    ].includes(type) ? "hero-v10" : "";
+    const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v10" : "";
     const assetRevision = ASSET_REVISION || authoredAssetRevision;
     const assetUrl = `${ASSET_BASE}${type}.glb${assetRevision ? `?v=${encodeURIComponent(assetRevision)}` : ""}`;
     loader.load(
       assetUrl,
       (gltf) => {
-        const prepared = prepareModel(type, mergeSemanticModelMeshes(gltf.scene));
+        const prepared = prepareRuntimeModel(type, gltf.scene);
         cache.set(type, prepared);
         loading.delete(type);
         itemSignature = "";
@@ -4729,7 +4765,7 @@ function mergeRoomArchitectureMeshes() {
     geometry.userData.castShadow = !!node.castShadow;
     const key = roomMaterialKey(node.material, geometry);
     const batch = batches.get(key) || {
-      material: node.material.clone(),
+      material: cloneRuntimeMaterial(node.material),
       geometries: [],
       castShadow: false,
       receiveShadow: false
@@ -5714,7 +5750,7 @@ function mergePlacedModelMeshes(source) {
     const batches = node.isLineSegments ? lineBatches : meshBatches;
     const key = modelMaterialKey(node.material, geometry);
     const batch = batches.get(key) || {
-      material: node.material.clone(),
+      material: cloneRuntimeMaterial(node.material),
       geometries: [],
       castShadow: false,
       receiveShadow: false
@@ -6652,6 +6688,7 @@ function createActorSkirt(material, y = 0.66) {
 function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions = {}) {
   if (!target || !mergeGeometries) return;
   const actorShading = materialOptions.actorShading !== false;
+  const heroFurnitureSurface = materialOptions.surfaceProfile === "hero-furniture";
   const eyeDeformationState = materialOptions.eyeDeformation
     ? { blink: 0, warmth: 0, asymmetry: 0 }
     : null;
@@ -6704,11 +6741,14 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const surfaceName = String(node.material?.userData?.mirrorLifeSurface || "").toLowerCase();
     const sourceSkinMask = materialName.endsWith(" skin") ? 1 : 0;
     const sourceHairMask = materialName.includes(" hair") ? 1 : 0;
-    const sourceClothMask = /fabric|cloth/.test(materialName) || surfaceName === "fabric" ? 1 : 0;
+    const sourceClothMask = /fabric|cloth|textile|cushion|upholstery/.test(materialName) || surfaceName === "fabric" ? 1 : 0;
     const sourceLeatherMask = /shoes|soles/.test(materialName) ? 1 : 0;
     const sourceWoodMask = surfaceName === "wood" || /oak|walnut|wood/.test(materialName) ? 1 : 0;
     const sourcePaperMask = surfaceName === "paper" || /paper|card|cork/.test(materialName) ? 1 : 0;
-    const sourceMineralMask = /plaster|terrazzo|ceramic/.test(surfaceName) ? 1 : 0;
+    const sourceMineralMask = /plaster|terrazzo|ceramic/.test(surfaceName)
+      || /plaster|terrazzo|ceramic|glaze/.test(materialName)
+      ? 1
+      : 0;
     const nodeName = String(node.name || "");
     const sourceUpperLid = eyeDeformationState && (/^UpperLid/.test(nodeName) || /^OuterLash/.test(nodeName));
     const sourceLowerLid = eyeDeformationState && /^LowerLid/.test(nodeName);
@@ -6899,8 +6939,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeSurfacePosition.y * 1.9 - vMirrorLifeSurfacePosition.z * 0.22
       ));
       vec2 mirrorLifeWoodBumpUv = fract(vec2(
-        vMirrorLifeSurfacePosition.x * 0.42 + vMirrorLifeSurfacePosition.z * 0.18,
-        vMirrorLifeSurfacePosition.y * 0.62 + vMirrorLifeSurfacePosition.z * 0.12
+        vMirrorLifeSurfacePosition.x * ${heroFurnitureSurface ? "0.68" : "0.42"} + vMirrorLifeSurfacePosition.z * ${heroFurnitureSurface ? "0.24" : "0.18"},
+        vMirrorLifeSurfacePosition.y * ${heroFurnitureSurface ? "0.96" : "0.62"} + vMirrorLifeSurfacePosition.z * ${heroFurnitureSurface ? "0.18" : "0.12"}
       ));
       float mirrorLifeFabricBump = ${fabricSurfaceMaps?.roughness ? "texture2D(mirrorLifeFabricRoughness, mirrorLifeFabricBumpUv).r - 0.5" : "sin(vMirrorLifeSurfacePosition.x * 173.0) * sin(vMirrorLifeSurfacePosition.y * 181.0) * 0.16"};
       float mirrorLifeWoodBump = ${woodSurfaceMaps?.roughness ? "texture2D(mirrorLifeWoodRoughness, mirrorLifeWoodBumpUv).r - 0.5" : "sin(vMirrorLifeSurfacePosition.x * 47.0 + vMirrorLifeSurfacePosition.z * 13.0) * 0.11"};
@@ -6917,14 +6957,17 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         -vViewPosition,
         normal,
         mirrorLifeCombinedBump,
-        ${actorShading ? "0.16" : "0.12"},
+        ${actorShading ? "0.16" : heroFurnitureSurface ? "0.19" : "0.12"},
         faceDirection
       );`
     ).replace(
       "#include <roughnessmap_fragment>",
       `#include <roughnessmap_fragment>
       vec2 mirrorLifeFabricUv = fract(vec2(vMirrorLifeSurfacePosition.x * 1.7 + vMirrorLifeSurfacePosition.z * 0.31, vMirrorLifeSurfacePosition.y * 1.9 - vMirrorLifeSurfacePosition.z * 0.22));
-      vec2 mirrorLifeWoodUv = fract(vec2(vMirrorLifeSurfacePosition.x * 0.42 + vMirrorLifeSurfacePosition.z * 0.18, vMirrorLifeSurfacePosition.y * 0.62 + vMirrorLifeSurfacePosition.z * 0.12));
+      vec2 mirrorLifeWoodUv = fract(vec2(
+        vMirrorLifeSurfacePosition.x * ${heroFurnitureSurface ? "0.68" : "0.42"} + vMirrorLifeSurfacePosition.z * ${heroFurnitureSurface ? "0.24" : "0.18"},
+        vMirrorLifeSurfacePosition.y * ${heroFurnitureSurface ? "0.96" : "0.62"} + vMirrorLifeSurfacePosition.z * ${heroFurnitureSurface ? "0.18" : "0.12"}
+      ));
       float mirrorLifeThreadA = sin(vMirrorLifeSurfacePosition.x * 228.0 + vMirrorLifeSurfacePosition.z * 29.0);
       float mirrorLifeThreadB = sin(vMirrorLifeSurfacePosition.y * 244.0 - vMirrorLifeSurfacePosition.z * 41.0);
       float mirrorLifeThread = mirrorLifeThreadA * mirrorLifeThreadB;
@@ -6999,21 +7042,25 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         `#include <opaque_fragment>
         float mirrorLifeSurfaceGrain = sin(vMirrorLifeSurfacePosition.x * 41.0 + vMirrorLifeSurfacePosition.z * 17.0)
           * sin(vMirrorLifeSurfacePosition.y * 47.0 - vMirrorLifeSurfacePosition.z * 13.0);
-        float mirrorLifeWoodLuma = ${woodSurfaceMaps?.map ? "dot(texture2D(mirrorLifeWoodColor, mirrorLifeWoodUv).rgb, vec3(0.2126, 0.7152, 0.0722)) - 0.5" : "0.0"};
+        vec3 mirrorLifeWoodSample = ${woodSurfaceMaps?.map ? "texture2D(mirrorLifeWoodColor, mirrorLifeWoodUv).rgb" : "vec3(0.5)"};
+        float mirrorLifeWoodSampleLuma = dot(mirrorLifeWoodSample, vec3(0.2126, 0.7152, 0.0722));
+        float mirrorLifeWoodLuma = mirrorLifeWoodSampleLuma - 0.5;
+        vec3 mirrorLifeWoodChroma = mirrorLifeWoodSample - vec3(mirrorLifeWoodSampleLuma);
         float mirrorLifePaperFibre = sin(vMirrorLifeSurfacePosition.x * 93.0 + vMirrorLifeSurfacePosition.y * 41.0)
           * sin(vMirrorLifeSurfacePosition.z * 77.0 - vMirrorLifeSurfacePosition.y * 31.0);
         gl_FragColor.rgb *= 1.0
           + mirrorLifeSurfaceGrain * 0.006
-          + mirrorLifeWoodLuma * 0.11 * vMirrorLifeWoodMask
-          + mirrorLifeFabricScan * 0.052 * vMirrorLifeClothMask
+          + mirrorLifeWoodLuma * ${heroFurnitureSurface ? "0.17" : "0.11"} * vMirrorLifeWoodMask
+          + mirrorLifeFabricScan * ${heroFurnitureSurface ? "0.082" : "0.052"} * vMirrorLifeClothMask
           + mirrorLifePaperFibre * 0.014 * vMirrorLifePaperMask;
+        gl_FragColor.rgb += mirrorLifeWoodChroma * ${heroFurnitureSurface ? "0.12" : "0.06"} * vMirrorLifeWoodMask;
         gl_FragColor.rgb += vec3(0.014, 0.01, 0.006) * (1.0 - abs(mirrorLifeSurfaceGrain)) * vMirrorLifeMineralMask;`
       );
     }
   };
   material.customProgramCacheKey = () => actorShading
     ? `mirrorlife-actor-material-hierarchy-v12-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
-    : `mirrorlife-room-vertex-surface-v4-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
+    : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
   mesh.castShadow = true;
@@ -9239,7 +9286,7 @@ function getObjectOcclusionMaterial(object, materialIndex = 0) {
   const source = Array.isArray(object.material) ? object.material[materialIndex] : object.material;
   if (!source) return null;
   if (source.userData?.interiorOcclusionOwned) return source;
-  const owned = source.clone();
+  const owned = cloneRuntimeMaterial(source);
   owned.userData = { ...source.userData, interiorOcclusionOwned: true };
   if (Array.isArray(object.material)) {
     const materials = [...object.material];
@@ -9492,6 +9539,20 @@ function getSceneComplexity() {
 function getStats() {
   const render = renderer?.info?.render || {};
   const memory = renderer?.info?.memory || {};
+  let civicHeroSurfaceBatches = 0;
+  let civicHeroSurfaceSemanticBatches = 0;
+  modelRoot?.traverse?.((node) => {
+    if (!node.isMesh || !node.material) return;
+    if (node.geometry?.getAttribute?.("mirrorLifeWoodMask")) {
+      civicHeroSurfaceSemanticBatches += 1;
+    }
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.filter(Boolean).forEach((material) => {
+      if (String(material.customProgramCacheKey?.() || "").includes("hero-")) {
+        civicHeroSurfaceBatches += 1;
+      }
+    });
+  });
   // Keep the budget diagnostic renderer-independent. Mobile browsers can
   // intentionally skip the post-processing composer; falling back to
   // renderer.info in that mode counted shadow/auxiliary passes and made the
@@ -9654,6 +9715,9 @@ function getStats() {
     } : null,
     furniture: cameraZoneId === "public-plaza" ? {
       version: CIVIC_FURNITURE_DETAIL_CONTRACT,
+      surfaceVersion: CIVIC_FURNITURE_SURFACE_CONTRACT,
+      scannedSurfaceBatches: civicHeroSurfaceBatches,
+      semanticSurfaceBatches: civicHeroSurfaceSemanticBatches,
       authoredHeroAssets: lastWidth <= 720 ? 0 : 3,
       mobileProceduralFallback: lastWidth <= 720
     } : null,
