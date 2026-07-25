@@ -19,6 +19,9 @@ const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v3";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
+const CIVIC_WEIGHT_TRANSFER_CONTRACT = "mirrorlife-civic-weight-transfer-v1";
+const CIVIC_CONTACT_PRESSURE_CONTRACT = "mirrorlife-civic-contact-pressure-v1";
+const CIVIC_FOOT_CONTACT_CONTRACT = "mirrorlife-civic-foot-contact-v1";
 const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v4";
 const CIVIC_HERO_PROP_TYPES = new Set([
   "civic-display-case",
@@ -8431,6 +8434,155 @@ function applyCivicContactConstraints(entry, frameDeltaSeconds = 1 / 60) {
   };
 }
 
+function levelCivicFootPivot(footState, weight = 1, compression = 0) {
+  if (!footState?.node?.parent) return null;
+  const node = footState.node;
+  node.quaternion.copy(footState.restQuaternion);
+  node.scale.copy(footState.restScale);
+  const plantedWeight = THREE.MathUtils.clamp(Number(weight) || 0, 0, 1);
+  if (plantedWeight > 0.001) {
+    node.updateWorldMatrix(true, true);
+    const currentWorld = node.getWorldQuaternion(new THREE.Quaternion());
+    const currentUp = new THREE.Vector3(0, 1, 0).applyQuaternion(currentWorld).normalize();
+    const worldUp = new THREE.Vector3(0, 1, 0);
+    const worldCorrection = new THREE.Quaternion().setFromUnitVectors(currentUp, worldUp);
+    const parentWorld = node.parent.getWorldQuaternion(new THREE.Quaternion());
+    const localCorrection = parentWorld.clone().invert()
+      .multiply(worldCorrection)
+      .multiply(parentWorld);
+    const blendedCorrection = new THREE.Quaternion().slerp(localCorrection, plantedWeight);
+    node.quaternion.premultiply(blendedCorrection).normalize();
+  }
+  const pressure = THREE.MathUtils.clamp(Number(compression) || 0, 0, 1);
+  node.scale.set(
+    footState.restScale.x * (1 + pressure * 0.018),
+    footState.restScale.y * (1 - pressure * 0.012),
+    footState.restScale.z * (1 + pressure * 0.01)
+  );
+  node.updateWorldMatrix(true, true);
+  const plantedUp = new THREE.Vector3(0, 1, 0)
+    .applyQuaternion(node.getWorldQuaternion(new THREE.Quaternion()))
+    .normalize();
+  return Math.acos(THREE.MathUtils.clamp(plantedUp.dot(new THREE.Vector3(0, 1, 0)), -1, 1));
+}
+
+function applyCivicWeightTransfer(entry, {
+  walking = false,
+  running = false,
+  grounded = true,
+  frameDeltaSeconds = 1 / 60
+} = {}) {
+  if (!entry?.visual || !entry.assetRole || !entry.footPlant) {
+    entry.weightTransferState = null;
+    return;
+  }
+  const supportFoot = {
+    player: "left",
+    listener: "left",
+    facilitator: "right",
+    mediator: "left"
+  }[entry.assetRole] || "left";
+  const standing = cameraZoneId === "public-plaza"
+    && !walking
+    && !running
+    && grounded !== false;
+  const targetWeight = standing ? 1 : 0;
+  if (!Number.isFinite(entry.weightTransferBlend)) entry.weightTransferBlend = targetWeight;
+  const blendSeconds = targetWeight > entry.weightTransferBlend ? 0.18 : 0.1;
+  const alpha = 1 - Math.exp(-THREE.MathUtils.clamp(frameDeltaSeconds, 1 / 240, 1 / 20) / blendSeconds);
+  entry.weightTransferBlend += (targetWeight - entry.weightTransferBlend) * alpha;
+  const weight = THREE.MathUtils.smoothstep(
+    THREE.MathUtils.clamp(entry.weightTransferBlend, 0, 1),
+    0,
+    1
+  );
+  // A planted stance is not a larger idle sway. The ribcage leans a few
+  // centimetres over one load-bearing leg, while both shoe lasts counter the
+  // accumulated root/hip/knee rotation and keep their soles parallel to the
+  // physical floor. This creates the same readable S-curve and grounded
+  // weight seen in the reference without moving the Rapier capsule.
+  const supportDirection = supportFoot === "left" ? 1 : -1;
+  const extraRoll = supportDirection * 0.018 * weight;
+  entry.visual.rotation.z += extraRoll;
+  entry.visual.updateMatrixWorld(true);
+  const leftError = levelCivicFootPivot(
+    entry.footPlant.left,
+    weight,
+    supportFoot === "left" ? weight : weight * 0.2
+  );
+  const rightError = levelCivicFootPivot(
+    entry.footPlant.right,
+    weight,
+    supportFoot === "right" ? weight : weight * 0.2
+  );
+  entry.weightTransferState = {
+    version: CIVIC_WEIGHT_TRANSFER_CONTRACT,
+    supportFoot,
+    weight,
+    extraRoll,
+    bodyRoll: entry.visual.rotation.z,
+    leftUpError: Number(leftError || 0),
+    rightUpError: Number(rightError || 0)
+  };
+}
+
+function applyCivicContactPressure(entry) {
+  const handStates = entry?.contactPressureHands || {};
+  Object.values(handStates).forEach((state) => {
+    if (!state?.node) return;
+    state.node.scale.copy(state.restScale);
+  });
+  const contact = entry?.contactConstraintState;
+  if (!contact || Number(contact.weight || 0) < 0.04) {
+    entry.contactPressureState = null;
+    return;
+  }
+  const pressure = THREE.MathUtils.clamp(Number(contact.weight) || 0, 0, 1);
+  const rightHand = handStates.right;
+  const leftHand = handStates.left;
+  if (rightHand?.node) {
+    const compression = contact.role === "facilitator" ? 0.034 : 0.018;
+    rightHand.node.scale.set(
+      rightHand.restScale.x * (1 + pressure * compression),
+      rightHand.restScale.y * (1 - pressure * compression * 0.82),
+      rightHand.restScale.z * (1 + pressure * compression * 0.42)
+    );
+  }
+  if (contact.role === "facilitator" && leftHand?.node) {
+    leftHand.node.scale.set(
+      leftHand.restScale.x * (1 + pressure * 0.016),
+      leftHand.restScale.y * (1 - pressure * 0.014),
+      leftHand.restScale.z * (1 + pressure * 0.008)
+    );
+  }
+  const sleeve = entry.clothCorrectives?.rightSleeve;
+  if (sleeve?.node) {
+    sleeve.node.visible = true;
+    sleeve.node.scale.x *= 1 + pressure * 0.038;
+    sleeve.node.scale.y *= 1 + pressure * 0.052;
+    sleeve.node.scale.z *= 1 - pressure * 0.028;
+  }
+  entry.contactPressureState = {
+    version: CIVIC_CONTACT_PRESSURE_CONTRACT,
+    role: contact.role,
+    pressure,
+    handCompression: contact.role === "facilitator" ? 0.034 * pressure : 0.018 * pressure,
+    sleeveCompression: sleeve?.node ? 0.052 * pressure : 0
+  };
+}
+
+function createCivicFootContactGeometry() {
+  if (!mergeGeometries) return new THREE.PlaneGeometry(0.58, 0.24);
+  const left = new THREE.PlaneGeometry(0.34, 0.2);
+  const right = new THREE.PlaneGeometry(0.34, 0.2);
+  left.translate(-0.115, 0.012, 0);
+  right.translate(0.115, -0.012, 0);
+  const geometry = mergeGeometries([left, right], false);
+  left.dispose();
+  right.dispose();
+  return geometry || new THREE.PlaneGeometry(0.58, 0.24);
+}
+
 function createCivicActorObject(actor, asset) {
   const frame = Math.max(0, Math.min(7, Math.round(Number(actor.frame) || 0)));
   const style = resolveActorStyle(actor, frame);
@@ -8438,7 +8590,7 @@ function createCivicActorObject(actor, asset) {
   const group = new THREE.Group();
   group.name = `actor-${actor.id}`;
   const shadow = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.72, 0.4),
+    createCivicFootContactGeometry(),
     new THREE.MeshBasicMaterial({
       color: 0x4d3528,
       map: getContactShadowTexture(),
@@ -8453,6 +8605,7 @@ function createCivicActorObject(actor, asset) {
   );
   shadow.rotation.x = -Math.PI / 2;
   shadow.position.y = 0.025;
+  shadow.userData.mirrorLifeGrounding = CIVIC_FOOT_CONTACT_CONTRACT;
   group.add(shadow);
 
   const assetScene = cloneCivicActorScene(asset);
@@ -8476,6 +8629,8 @@ function createCivicActorObject(actor, asset) {
   const rightLeg = visual?.getObjectByName("RightLegPivot");
   const leftKnee = leftLeg?.getObjectByName("LeftKneePivot");
   const rightKnee = rightLeg?.getObjectByName("RightKneePivot");
+  const leftFoot = leftKnee?.getObjectByName("ShoeUpper_-1Pivot") || null;
+  const rightFoot = rightKnee?.getObjectByName("ShoeUpper_1Pivot") || null;
   const leftTrouserCompression = leftKnee?.getObjectByName("TrouserCompressionPivot_-1") || null;
   const rightTrouserCompression = rightKnee?.getObjectByName("TrouserCompressionPivot_1") || null;
   let eyePivots = [headGroup?.getObjectByName("EyePivot_-1"), headGroup?.getObjectByName("EyePivot_1")].filter(Boolean);
@@ -8795,14 +8950,16 @@ function createCivicActorObject(actor, asset) {
   );
   mergeActorVertexColorMeshes(
     leftKnee,
-    fullExpressionLod ? [leftTrouserCompression].filter(Boolean) : [],
+    fullExpressionLod ? [leftTrouserCompression, leftFoot].filter(Boolean) : [],
     { roughness: 0.67, envMapIntensity: 0.72 }
   );
   mergeActorVertexColorMeshes(
     rightKnee,
-    fullExpressionLod ? [rightTrouserCompression].filter(Boolean) : [],
+    fullExpressionLod ? [rightTrouserCompression, rightFoot].filter(Boolean) : [],
     { roughness: 0.67, envMapIntensity: 0.72 }
   );
+  let leftHandSurface = null;
+  let rightHandSurface = null;
   if (fullExpressionLod) {
     [
       leftSleeveCompression,
@@ -8812,8 +8969,10 @@ function createCivicActorObject(actor, asset) {
     ].filter(Boolean).forEach((corrective) => {
       mergeActorVertexColorMeshes(corrective, [], { roughness: 0.76, envMapIntensity: 0.58 });
     });
-    mergeActorVertexColorMeshes(leftHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
-    mergeActorVertexColorMeshes(rightHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
+    leftHandSurface = mergeActorVertexColorMeshes(leftHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
+    rightHandSurface = mergeActorVertexColorMeshes(rightHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
+    if (leftFoot) mergeActorVertexColorMeshes(leftFoot, [], { roughness: 0.63, envMapIntensity: 0.7 });
+    if (rightFoot) mergeActorVertexColorMeshes(rightFoot, [], { roughness: 0.63, envMapIntensity: 0.7 });
   }
   const retainedMaterials = new Set();
   assetScene.traverse((node) => {
@@ -8895,6 +9054,18 @@ function createCivicActorObject(actor, asset) {
     rightLeg,
     leftKnee,
     rightKnee,
+    footPlant: fullExpressionLod && leftFoot && rightFoot ? {
+      left: {
+        node: leftFoot,
+        restQuaternion: leftFoot.quaternion.clone(),
+        restScale: leftFoot.scale.clone()
+      },
+      right: {
+        node: rightFoot,
+        restQuaternion: rightFoot.quaternion.clone(),
+        restScale: rightFoot.scale.clone()
+      }
+    } : null,
     eyePivots: fullExpressionLod ? eyePivots : [],
     eyeSurfaceMeshes: fullExpressionLod ? eyeSurfaceMeshes : [],
     browPivots: fullExpressionLod ? browPivots : [],
@@ -8916,6 +9087,10 @@ function createCivicActorObject(actor, asset) {
       ? "mirrorlife-civic-cloth-correctives-v1"
       : null,
     secondaryMotion,
+    contactPressureHands: fullExpressionLod ? {
+      left: leftHandSurface ? { node: leftHandSurface, restScale: leftHandSurface.scale.clone() } : null,
+      right: rightHandSurface ? { node: rightHandSurface, restScale: rightHandSurface.scale.clone() } : null
+    } : null,
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v4",
     garmentMaterialVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentMaterial || "mirrorlife-civic-garment-material-v1",
@@ -9068,6 +9243,12 @@ function updateActors(actors = [], now = performance.now()) {
       entry.leftElbow.rotation.z = 0;
       entry.rightElbow.rotation.z = 0;
     }
+    applyCivicWeightTransfer(entry, {
+      walking,
+      running,
+      grounded: actor.grounded,
+      frameDeltaSeconds
+    });
     let headLookYaw = 0;
     if (cameraZoneId === "public-plaza" && actor.id !== playerActor?.id && !walking) {
       const headTargetActor = socialTargetActor || playerActor;
@@ -9082,8 +9263,13 @@ function updateActors(actors = [], now = performance.now()) {
       headLookYaw = THREE.MathUtils.clamp(localLookYaw, -0.5, 0.5) * 0.82;
     }
     const animatedHead = animationPose?.headGroup || [0, 0, 0];
-    entry.headGroup.rotation.set(animatedHead[0], animatedHead[1] + headLookYaw, animatedHead[2]);
+    entry.headGroup.rotation.set(
+      animatedHead[0],
+      animatedHead[1] + headLookYaw,
+      animatedHead[2] - Number(entry.weightTransferState?.extraRoll || 0) * 0.38
+    );
     applyCivicContactConstraints(entry, frameDeltaSeconds);
+    applyCivicContactPressure(entry);
     const smileDictionary = entry.faceMorphMesh?.morphTargetDictionary;
     const smileInfluences = entry.faceMorphMesh?.morphTargetInfluences;
     const smileIndexForFeatures = smileDictionary?.WarmSmile;
@@ -10168,6 +10354,19 @@ function getStats() {
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
+      weightTransfer: entry.weightTransferState ? {
+        version: entry.weightTransferState.version,
+        supportFoot: entry.weightTransferState.supportFoot,
+        weight: Number(entry.weightTransferState.weight.toFixed(4)),
+        bodyRoll: Number(entry.weightTransferState.bodyRoll.toFixed(4)),
+        extraRoll: Number(entry.weightTransferState.extraRoll.toFixed(4)),
+        leftUpError: Number(entry.weightTransferState.leftUpError.toFixed(4)),
+        rightUpError: Number(entry.weightTransferState.rightUpError.toFixed(4))
+      } : null,
+      grounding: entry.shadow?.userData?.mirrorLifeGrounding ? {
+        version: entry.shadow.userData.mirrorLifeGrounding,
+        physicalFloorY: Number((entry.shadow.position.y + entry.group.position.y).toFixed(4))
+      } : null,
       contactConstraint: entry.contactConstraintState ? {
         version: entry.contactConstraintState.version,
         role: entry.contactConstraintState.role,
@@ -10182,6 +10381,13 @@ function getStats() {
             Number(value.toFixed(4))
           ]))
           : null
+      } : null,
+      contactPressure: entry.contactPressureState ? {
+        version: entry.contactPressureState.version,
+        role: entry.contactPressureState.role,
+        pressure: Number(entry.contactPressureState.pressure.toFixed(4)),
+        handCompression: Number(entry.contactPressureState.handCompression.toFixed(4)),
+        sleeveCompression: Number(entry.contactPressureState.sleeveCompression.toFixed(4))
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v2",

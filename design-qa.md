@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v126 planted weight and contact-pressure gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Final desktop implementation: `tmp/v126-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v126-final-full.png` (`2880 × 900`); the source and implementation are each aspect-fit to `1440 × 900` and placed at equal density on one canvas.
+- Mandatory focused comparison: `tmp/reference-vs-v126-final-character-focus.png` (`1640 × 600`); equal native-pixel `820 × 600` crops expose the four-person ring, support legs, shoe soles, notebook/jaw contacts and cast-to-floor relationship.
+- Full 3D and responsive evidence: `tmp/v126-final-desktop-yaw90.png`, `tmp/v126-final-desktop-yaw180.png`, `tmp/v126-final-desktop-yaw270.png`, `tmp/v126-final-mobile-yaw0.png`, `tmp/v126-four-direction-board.png` and the post-movement state `tmp/v126-final-walk.png`.
+- Runtime evidence: opening desktop `176 / 284,606`, side `179 / 295,714`, reverse `180 / 336,438`, fourth orbit `177 / 288,530`; mobile `106 / 245,342`. All reviewed views report zero shader errors and remain within the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: two fresh browser regressions moved the player `4.93m` and `3.33m`, rotated the physical camera `65.3°`, then re-established the level-foot contract after locomotion. Civic assets, 26-zone physics, desktop/mobile scene flow and `78` atomic transitions all pass with zero failures or runtime errors.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v125 P1 / characters stood symmetrically with no authored load-bearing side] Each public-room role now owns an explicit support foot. The ribcage shifts over that leg while the head counterbalances part of the roll, creating a restrained S-curve without moving the Rapier capsule or authored actor root.
+- [fixed / shoe lasts inherited body, hip and knee roll and could visually tilt away from the floor] Desktop character assembly preserves both shoe pivots as independent lit geometry. A world-up correction levels each sole after animation, and runtime QA requires both foot-up errors to remain below `0.04rad`.
+- [improved / one broad oval shadow implied hovering rather than two grounded feet] The civic contact receiver is now a single-call, two-lobe foot-sized geometry. It remains a world-space floor contact, not a screen-space decal, and matches the unchanged physical floor height at `0.025m`.
+- [improved / correct notebook and jaw contacts lacked visible pressure] The final contact solve now drives a subtle hand-surface squash and sleeve corrective. Pressure is applied to the visible merged surface after the contact anchor has been solved, so it cannot pull the hand away from the notebook or jaw.
+- [checked / the static improvement survives movement] The post-movement frame shows the player in a real translated position; after the walk blend settles, both shoe pivots return to the planted contract. The role-specific notebook and jaw constraints remain valid.
+- [checked / no front-view-only fix] Four-direction evidence shows level soles and readable weight transfer at `0°`, `90°`, `180°` and `270°`; portrait retains its three-character performance LOD and unchanged touch controls.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese status, place-memory title, four civic actions and portrait truncation remain stable. The source continues to have more refined icon/type optical balance and denser small-text spacing.
+- [improved][spacing and layout rhythm] Asymmetrical stances strengthen the social circle without changing the `1.4m` circulation path, story-center clearance or interaction anchors. The source still has richer foreground framing and a more deliberately compressed fixed-shot composition.
+- [checked][colors and visual tokens] Warm mineral ivory, walnut, teal, forest green, coral and brass remain coherent; the new deformation adds no decorative colour or competing highlight.
+- [improved][image quality and asset fidelity] Support-foot correction, shoe compression, two-lobe grounding and hand/sleeve pressure are live, lit, orbit-safe 3D structures. No sprite, billboard, CSS/SVG drawing or screenshot projection substitutes for actor volume.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory status and the four civic actions remain coherent with the visible testimony. No private source text enters the runtime.
+- [checked][physical truth and responsiveness] Actor roots, metre scale, Rapier capsules, furniture colliders, navigation and authoritative movement are unchanged. The rendered shoes, contact receivers and runtime floor contract now make that physical truth more legible.
+- [P1][source-level deformation remains visibly ahead] The focused same-canvas comparison shows a more believable planted stance than v125, but the source still has continuous clavicle/hip skinning, finger curl, fabric folds and local compression rather than the implementation's deliberately limited corrective pivots.
+- [P1][room-wide secondary asset craft remains visibly behind] Documents, timber joinery, glassware, botanical species and shelf irregularity remain broader and more procedural than the source despite the complete orbit-safe hero suites.
+- [P1][offline indirect light and material transport remain visibly ahead] The implementation now has real mineral response and world-space canopy breakup, while the source retains softer multi-bounce colour, subtler skin/cloth response and more convincing glass transport.
+- [P2][camera is gameplay-correct but not cinematically identical] Movement and full orbit require more open negative space than the target's fixed editorial shot. Rear quadrants remain readable but expose simpler wall composition.
+- [P2][HUD optical finish remains behind] Coverage and responsive behavior pass; icon craft, panel translucency, micro-spacing and compact typography remain less refined than the target.
+
+### Implementation checklist
+
+- Preserve the post-animation support-foot solve and keep it independent from the physical actor root.
+- Extend deformation through authored shoulder, pelvis, finger and cloth-corrective channels instead of increasing the current body roll.
+- Replace only the highest-salience secondary props, keeping the reverse camera at or below its current `180` draw-call ceiling.
+- Pursue probe/lightmap-assisted indirect colour before adding more direct-light intensity.
+
+### Gate result
+
+v126 closes a specific character-grounding gap with role-authored load-bearing sides, level shoe soles, two-foot contact geometry and visible hand/sleeve pressure that persist through movement and a complete orbit. The mandatory same-canvas comparison still contains actionable P1 differences in continuous character deformation, bespoke secondary asset craft and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: source-level continuous body/cloth/finger deformation, complete-room secondary asset craftsmanship and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v125 mineral floor and source-derived daylight gate
 
 ### Evidence inspected together

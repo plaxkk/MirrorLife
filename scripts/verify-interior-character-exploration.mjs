@@ -115,6 +115,27 @@ try {
   assert(Number(opening.lighting?.environment || 0) >= 0.29, "civic environment response did not preserve material separation");
   assert(Number(opening.lighting?.contactAo || 1) <= 0.48, "civic contact AO is too strong for the broad reference penumbrae");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
+  assert(
+    opening.actors.every((actor) => (
+      actor.weightTransfer?.version === "mirrorlife-civic-weight-transfer-v1"
+      && Number(actor.weightTransfer.weight || 0) >= 0.95
+      && Number(actor.weightTransfer.leftUpError ?? 1) <= 0.04
+      && Number(actor.weightTransfer.rightUpError ?? 1) <= 0.04
+      && actor.grounding?.version === "mirrorlife-civic-foot-contact-v1"
+      && Math.abs(Number(actor.grounding.physicalFloorY ?? 1) - 0.025) <= 0.004
+    )),
+    "civic standing cast did not preserve the authored planted-weight contract"
+  );
+  assert(
+    opening.actors
+      .filter((actor) => ["facilitator", "mediator"].includes(actor.assetRole))
+      .every((actor) => (
+        actor.contactPressure?.version === "mirrorlife-civic-contact-pressure-v1"
+        && Number(actor.contactPressure.pressure || 0) >= 0.95
+        && Number(actor.contactPressure.handCompression || 0) > 0
+      )),
+    "civic contact roles did not expose hand and sleeve pressure feedback"
+  );
   assert.equal(
     opening.actors.find((actor) => actor.assetRole === "mediator")?.animation?.state,
     "gesture",
@@ -379,7 +400,9 @@ try {
     const live = window.MirrorLifeInterior3D?.getStats?.();
     const stored = JSON.parse(document.querySelector("#interiorThreeLayer")?.dataset.renderStats || "{}");
     const player = (live || stored)?.actors?.find((actor) => actor.id === "player");
-    return player?.animation?.state === "idle" && player.animation.transitioning === false;
+    return player?.animation?.state === "idle"
+      && player.animation.transitioning === false
+      && Number(player.weightTransfer?.weight || 0) >= 0.95;
   }, { polling: 50, timeout: 2500 });
   const afterMoveStats = await readStats(page);
   const afterMove = playerFrom(afterMoveStats);
@@ -387,6 +410,13 @@ try {
   assert(walked > 0.45, `WASD movement did not move the 3D player far enough (${walked.toFixed(3)}m)`);
   assert.equal(afterMove.animation?.state, "idle", "player did not blend back to the authored idle clip after stopping");
   assert.equal(afterMove.animation?.transitioning, false, "player idle transition did not settle within the blend window");
+  assert(
+    afterMove.weightTransfer?.version === "mirrorlife-civic-weight-transfer-v1"
+      && Number(afterMove.weightTransfer.weight || 0) >= 0.95
+      && Number(afterMove.weightTransfer.leftUpError ?? 1) <= 0.04
+      && Number(afterMove.weightTransfer.rightUpError ?? 1) <= 0.04,
+    "player did not settle back onto level planted feet after locomotion"
+  );
   ["facilitator", "mediator"].forEach((role) => {
     const contactActor = afterMoveStats.actors?.find((actor) => actor.assetRole === role);
     assert(
