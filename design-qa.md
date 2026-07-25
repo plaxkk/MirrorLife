@@ -1,5 +1,46 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v116 curved identity-surface gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v116-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v116-full.png`; focused source/implementation cast comparison: `tmp/reference-vs-v116-cast-focus.png`; implementation delta: `tmp/v115-vs-v116-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v116-final-desktop-yaw90.png` and `tmp/v116-final-desktop-yaw180.png`. The identity surface remains curved around the authored head, depth-tested beneath the real hair volume and attached to head motion rather than facing the camera.
+- Responsive evidence: `tmp/v116-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `163 / 271,752`, side `167 / 282,860`, reverse `167 / 288,988`; mobile `103 / 236,536`. The final character regression walked the player `3.65m`, rotated the real camera `65.3°` and verified the curved identity-surface blink.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / geometric facial pieces became bead-like and illegible at gameplay distance] A five-mode same-state comparison (`volume`, `atlas`, `hybrid`, `uv`, `illustrated`) showed that the role-authored facial atlas retained eyes, brows and mouth hierarchy more reliably than the former production sculpted-volume mode at the actual camera distance.
+- [fixed / the role-authored face was only a QA alternative] The selected v2 facial atlas is now the production `mirrorlife-civic-face-identity-v3` integration. It is projected on a dense `36 × 24` curved mesh parented to the physical head pivot, so the actual head remains real geometry and the facial surface receives morphs, depth testing, hair occlusion and full 3D orbit. It is not a billboard or camera-facing plane.
+- [fixed / broad pale source tones initially produced a white facial mask] Dual source-white coverage suppression removes the studio field and pale nose halo while preserving the dark identity marks. The final face blends into the role's authored three-dimensional skin shell instead of reading as a pasted white patch.
+- [fixed / mediator hair read as pointed teeth and a bead stack] Five vertical braid spikes and spherical side beads are replaced by seven interwoven crown locks plus tapered overlapping bob locks. The reverse and side captures now retain a layered skull-following silhouette.
+- [improved / coral ponytail dominated the focal cast] The bun, main ponytail and layered flyaways are narrower and slightly smaller while retaining the coral role identity.
+- [checked / facial identity remains animated and spatially honest] Browser verification asserts six expression morphs, including blink, plus the v3 identity contract on every visible actor. Duplicate primitive eye and volumetric-lip stacks are absent in the production mode.
+- [checked / identity readability costs less geometry] The four rebuilt role assets total `7.17 MB`; opening complexity falls to `163 / 271,752`. Desktop remains below `180 / 450k` and mobile remains below `110 / 250k`.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] HUD family, Chinese hierarchy, line height, action labels, place-memory title and current-speaker icon remain unchanged at the matched desktop and portrait sizes.
+- [checked][spacing and layout rhythm] Actor roots, furniture transforms, colliders, central listening circle, interaction clearances and the `≥1.4m` circulation loop remain unchanged.
+- [improved][colors and visual tokens] Role-authored brows, eyes, mouths and warm facial modelling restore the four identities without adding a competing screen-space treatment. Hair refinement preserves the existing teal, coral, oatmeal, green and walnut hierarchy.
+- [improved][image quality and asset fidelity] Existing committed role atlases are filtered onto true curved 3D facial surfaces with live morphing, depth testing and hair occlusion. No CSS drawing, generated SVG, camera-facing sprite, billboard or screenshot projection replaces the character.
+- [checked][copy and content] “倾听线索”, the current-speaker beacon, place-memory title and four civic actions remain coherent with the testimony state.
+- [P1][body, limb and garment topology/deformation remain below the source] Face identity is clearer, but the reference still has finer shoulder/hip planes, cloth folds, finger contact, footwear construction, pose compression and deformation weights.
+- [P1][bespoke environment density and curved joinery remain below the source] The reference still carries more individual documents, botanical species, woven storage, upholstery compression, curved timber profiles and object-to-object scale nuance.
+- [P1][offline global illumination and material transport remain ahead] The live renderer preserves spatially truthful light through orbit, while the source still has softer multi-bounce penumbrae, richer skin/cloth transport and broader highlight roll-off.
+- [P2][HUD optical finish remains less authored] Interaction hierarchy is usable and responsive, but icon weight, translucent depth, spacing nuance and captured-state density remain behind the selected frame.
+
+### Gate result
+
+v116 resolves a high-pixel character-readability failure with a spatially truthful production technique: role identity is now legible at gameplay distance on a curved, animated, head-attached surface, and remains correct from the side, reverse and mobile views. Mediator and facilitator hair silhouettes also lose their most procedural bead-and-spike artifacts. The normalized source comparison is materially closer in facial identity, but full reference parity remains blocked by source-level body/garment construction, room-wide bespoke set dressing and offline light transport.
+
+final result: blocked
+
+Blocker: production body/garment topology and deformation, bespoke environment/curved-joinery density, and offline-quality global illumination remain visibly below the selected reference.
+
 ## 2026-07-25 reference-fidelity v115 scanned hero-furniture surface gate
 
 ### Evidence inspected together

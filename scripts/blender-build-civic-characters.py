@@ -2062,7 +2062,9 @@ def build_hair(head, mats, style):
                 oval_ratio=0.44,
             )
     elif style == "coral_ponytail":
-        ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.15, 0.13, 0.16), mats["hair"], head, segments=24, rings=14)
+        # Keep a visible tied crown without the oversized spherical mass that
+        # previously read as a second plastic head in the story camera.
+        ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.13, 0.11, 0.135), mats["hair"], head, segments=24, rings=14)
         ponytail = empty("PonytailPivot", head, (0.2, 0.12, 0.15))
         torus(
             "PonytailBand",
@@ -2087,7 +2089,7 @@ def build_hair(head, mats, style):
             # A narrower S-curve exposes the layered locks and reads as tied
             # hair rather than the single vertical rubber hose visible in the
             # v97 cast comparison.
-            (0.11, 0.118, 0.105, 0.09, 0.07, 0.015),
+            (0.086, 0.093, 0.082, 0.069, 0.052, 0.012),
             mats["hair"],
             ponytail,
             sides=18,
@@ -2107,43 +2109,58 @@ def build_hair(head, mats, style):
                     (0.045 + offset_x, -0.002 + offset_y, -0.4),
                     (tip_x, -0.03 + offset_y, -0.6),
                 ],
-                (0.055, 0.058, 0.043, 0.007),
+                (0.047, 0.049, 0.036, 0.006),
                 mats["hair_highlight"] if index != 1 else mats["hair"],
                 ponytail,
                 sides=16,
                 oval_ratio=0.5,
             )
     elif style == "braided_bob":
-        for index, x in enumerate((-0.22, -0.11, 0, 0.11, 0.22)):
-            side = -1 if x < 0 else 1
+        # Build one continuous interwoven crown. The former five pointed
+        # vertical knots resolved as a row of brown teeth; these overlapping
+        # horizontal locks follow the skull arc and alternate depth/material,
+        # preserving a readable braid through front, side and reverse orbit.
+        crown_centres = (-0.18, -0.12, -0.06, 0.0, 0.06, 0.12, 0.18)
+        for index, centre_x in enumerate(crown_centres):
+            arch = max(0.0, 1.0 - (centre_x / 0.225) ** 2)
+            crown_z = 0.176 + arch * 0.072
+            weave = -1 if index % 2 == 0 else 1
             tapered_lock(
-                f"BraidKnot_{index + 1}",
+                f"BraidedCrownLock_{index + 1}",
                 [
-                    (x * 0.72, 0.015, 0.245 - abs(x) * 0.2),
-                    (x, -0.02, 0.205 - abs(x) * 0.28),
-                    (x + side * 0.025, -0.055, 0.155 - abs(x) * 0.36),
+                    (centre_x - 0.043, -0.064 + weave * 0.006, crown_z - 0.012),
+                    (centre_x - 0.018, -0.096 - weave * 0.005, crown_z + 0.016),
+                    (centre_x + 0.018, -0.098 + weave * 0.004, crown_z - 0.01),
+                    (centre_x + 0.043, -0.066 - weave * 0.006, crown_z + 0.005),
                 ],
-                (0.052, 0.048, 0.012),
-                mats["hair_highlight"] if index in (1, 3) else mats["hair"],
+                (0.037, 0.043, 0.038, 0.008),
+                mats["hair_highlight"] if index % 2 else mats["hair"],
                 head,
-                sides=12,
-                oval_ratio=0.5,
+                sides=14,
+                oval_ratio=0.56,
             )
-        # Two articulated-looking side braids give the mediator the authored
-        # crown-and-bob silhouette from the reference instead of five isolated
-        # crown knots. The overlapping beads remain static within the head
-        # pivot and therefore stay stable through every camera orbit.
+        # Layered side locks replace the bead stack that made the bob look
+        # assembled from toy balls. Each lock has a distinct sweep and tapered
+        # end, while remaining fully volumetric and head-attached.
         for side in (-1, 1):
-            for bead_index, (z, scale) in enumerate(((0.105, 1.0), (0.035, 0.92), (-0.035, 0.82))):
-                ellipsoid(
-                    f"SideBraidBead_{side}_{bead_index + 1}",
-                    (side * (0.225 + bead_index * 0.004), 0.014, z),
-                    (0.048 * scale, 0.042 * scale, 0.052 * scale),
-                    mats["hair_highlight"] if bead_index == 1 else mats["hair"],
+            for layer_index, (root_x, drift, tip_z) in enumerate((
+                (0.16, 0.048, -0.04),
+                (0.19, 0.056, -0.085),
+                (0.215, 0.038, -0.12),
+            )):
+                tapered_lock(
+                    f"BobSideLock_{side}_{layer_index + 1}",
+                    [
+                        (side * root_x, -0.045 + layer_index * 0.012, 0.175 - layer_index * 0.025),
+                        (side * (root_x + drift), -0.086, 0.105 - layer_index * 0.03),
+                        (side * (root_x + drift + 0.012), -0.082, 0.02 - layer_index * 0.025),
+                        (side * (root_x + 0.018), -0.046, tip_z),
+                    ],
+                    (0.044, 0.052, 0.039, 0.007),
+                    mats["hair_highlight"] if layer_index == 1 else mats["hair"],
                     head,
-                    rotation=(0.08, side * 0.05, side * 0.18),
-                    segments=10,
-                    rings=6,
+                    sides=12,
+                    oval_ratio=0.54,
                 )
             tapered_lock(
                 f"TempleWave_{side}",
@@ -3083,7 +3100,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v64",
+        "sculptContract": "mirrorlife-civic-sculpt-v65",
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v4",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -3139,9 +3156,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-volume-v17",
-            "productionFaceMode": "sculpted-volume",
-            "productionIntegrationContract": "mirrorlife-civic-face-volume-v17",
+            "integrationContract": "mirrorlife-civic-face-identity-v3",
+            "productionFaceMode": "curved-atlas",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v3",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",

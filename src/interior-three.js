@@ -13,11 +13,12 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "sculpt-v64";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "identity-v65";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v2";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v3";
 const CIVIC_HERO_PROP_TYPES = new Set([
   "civic-display-case",
   "civic-notice-console",
@@ -34,12 +35,13 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
         ? "uv-hybrid"
         : CIVIC_FACE_MODE_QUERY === "illustrated"
           ? "illustrated-cornea"
-          // The default production face must be a lit part of the character,
-          // not a photographed feature layer hovering above it. The curved
-          // atlas remains available as an explicit comparison mode, while
-          // gameplay now uses the authored head, eyelids, irises, brows and
-          // mouth that survive every camera angle without a pale face mask.
-          : "sculpted-volume";
+          // The selected visual target uses production character practice:
+          // a sculpted, lit head carries a role-authored colour/feature layer.
+          // The identity carrier below conforms to the actual face curvature,
+          // morphs with speech and blink, depth-tests against the head and is
+          // occluded by real hair. It is therefore a rotatable 3D face surface,
+          // not a billboard or camera-facing portrait card.
+          : "curved-atlas";
 const MAX_DPR = 1.5;
 const resolveInteriorPixelRatio = (width = window.innerWidth) => {
   const deviceRatio = Math.min(Number(window.devicePixelRatio || 1), MAX_DPR);
@@ -6191,7 +6193,13 @@ function getCivicFaceTexture(role = "player") {
         + (255 - green) ** 2
         + (255 - blue) ** 2
       );
-      const featureCoverage = THREE.MathUtils.smoothstep(distanceFromWhite, 9, 52);
+      // The atlas was authored on a white studio field. Dark linework and
+      // irises should remain crisp, but light peach modelling must blend into
+      // the actual role skin instead of becoming the pale nose/cheek mask
+      // visible in the comparison mode. A wider threshold keeps the painted
+      // identity while letting the lit 3D head own broad skin value.
+      const featureCoverage = THREE.MathUtils.smoothstep(distanceFromWhite, 18, 78)
+        * THREE.MathUtils.smoothstep(distanceFromWhite, 32, 112);
       const eyeCoverage = insideEye
         ? THREE.MathUtils.smoothstep(distanceFromWhite, 3, 22)
         : 0;
@@ -6483,6 +6491,7 @@ function createCivicFaceDecal(role = "player") {
   decal.renderOrder = 2;
   decal.userData.mirrorLifeFaceDecal = true;
   decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v2";
+  decal.userData.mirrorLifeFaceIdentityContract = CIVIC_FACE_IDENTITY_CONTRACT;
   decal.userData.mirrorLifeFaceMode = CIVIC_FACE_MODE;
   if (CIVIC_FACE_MODE === "illustrated-cornea") {
     // Keep the authored eye painting intact and add one true optical surface
@@ -9628,7 +9637,8 @@ function getStats() {
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v2",
-        texture: CIVIC_FACE_MODE === "illustrated-cornea"
+        identity: entry.faceDecal?.userData?.mirrorLifeFaceIdentityContract || null,
+        texture: entry.faceDecal
           ? "mirrorlife-civic-face-texture-v2"
           : null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
@@ -9639,7 +9649,7 @@ function getStats() {
             ? "mirrorlife-civic-face-hybrid-v1"
             : CIVIC_FACE_MODE === "illustrated-cornea"
               ? "mirrorlife-civic-face-illustrated-cornea-v3"
-              : "mirrorlife-civic-face-volume-v2",
+              : CIVIC_FACE_IDENTITY_CONTRACT,
         lipVolume: entry.mouthClosedMesh?.userData?.mirrorLifeLipVolume || null,
         morphCount: Object.keys(entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary || {}).length,
         smile: Number((entry.faceDecal?.morphTargetInfluences?.[entry.faceDecal?.morphTargetDictionary?.WarmSmile]

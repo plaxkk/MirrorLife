@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v64", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v65", "civic character sculpt contract is stale");
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v4", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -77,9 +77,9 @@ assert.equal(manifest.faceDecal?.textureDirection, "soft-premium-sculpted-portra
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v2", "civic facial morph contract is stale");
-assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-volume-v17", "civic facial volume integration contract is stale");
-assert.equal(manifest.faceDecal?.productionFaceMode, "sculpted-volume", "civic production face mode changed");
-assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-volume-v17", "civic production facial integration contract is stale");
+assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-identity-v3", "civic facial identity integration contract is stale");
+assert.equal(manifest.faceDecal?.productionFaceMode, "curved-atlas", "civic production face mode changed");
+assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-identity-v3", "civic production facial identity contract is stale");
 assert.equal(manifest.faceDecal?.uvContract, "mirrorlife-civic-head-uv-v1", "civic head UV contract is stale");
 assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"], "civic hybrid facial parts changed");
 assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-morph-v4", "civic mouth morph contract is stale");
@@ -295,7 +295,10 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("CivicDressBodice")), `${role}: layered civic dress bodice is missing`);
     assert(contents.includes(Buffer.from("ShoeUpper_-1AnkleCollarEdge")), `${role}: left boot collar edge is missing`);
   }
-  if (role === "mediator") assert(contents.includes(Buffer.from("SideBraidBead_1_2")), "mediator: authored side braid chain is missing");
+  if (role === "mediator") {
+    assert(contents.includes(Buffer.from("BraidedCrownLock_4")), "mediator: interwoven crown braid is missing");
+    assert(contents.includes(Buffer.from("BobSideLock_1_2")), "mediator: layered side-bob silhouette is missing");
+  }
   totalBytes += stat.size;
 }
 
