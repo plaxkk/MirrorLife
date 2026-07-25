@@ -1,8 +1,8 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v74",
+  "sculptContract": "mirrorlife-civic-sculpt-v75",
   "hairConstructionContract": {
-    "version": "mirrorlife-civic-hair-construction-v5",
+    "version": "mirrorlife-civic-hair-construction-v6",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
     "parts": [
       "HairCap",
@@ -13,7 +13,7 @@
     ]
   },
   "bodyIdentityContract": {
-    "version": "mirrorlife-civic-body-identity-v6",
+    "version": "mirrorlife-civic-body-identity-v7",
     "roles": [
       "player",
       "listener",
@@ -124,9 +124,9 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-identity-v4",
+    "integrationContract": "mirrorlife-civic-face-identity-v5",
     "productionFaceMode": "curved-atlas",
-    "productionIntegrationContract": "mirrorlife-civic-face-identity-v4",
+    "productionIntegrationContract": "mirrorlife-civic-face-identity-v5",
     "corneaContract": "mirrorlife-civic-cornea-v2",
     "uvContract": "mirrorlife-civic-head-uv-v1",
     "preservedSculptParts": [

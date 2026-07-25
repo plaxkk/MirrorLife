@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v72";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v75";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v12";
@@ -26,8 +26,8 @@ const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
 const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
 const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
-const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v4";
-const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v1";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v5";
+const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v2";
 const CIVIC_FACE_SKIN_TONES = Object.freeze({
   player: "#efb58d",
   listener: "#edb087",
@@ -121,7 +121,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f0dfcd", floor: "#d5c8b7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#f3e9dc", floor: "#d8d2c7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -134,12 +134,12 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.78,
-    fill: 0.28,
-    hemi: 0.26,
-    bounce: 0.57,
-    wash: 0.42,
-    exposure: 0.8,
+    key: 1.68,
+    fill: 0.35,
+    hemi: 0.33,
+    bounce: 0.64,
+    wash: 0.48,
+    exposure: 0.84,
     keyColor: "#ffe5cc",
     fillColor: "#c5dfdf"
   },
@@ -588,8 +588,12 @@ function ensureLayer() {
         // carried by light and material response. Strength is an effect
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
-        color = mix(vec3(luma), color, 1.0 + 0.026 * strength);
-        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.118 * strength) + vec3(0.54));
+        color = mix(vec3(luma), color, 1.0 + 0.012 * strength);
+        // Preserve the photographed target's soft mid-tones. The stronger
+        // editorial S-curve made hair seams, trouser folds and timber edges
+        // read like black outlines even after the underlying materials were
+        // physically correct.
+        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.068 * strength) + vec3(0.54));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(1.025, 0.99, 0.945), (0.34 + shadowTone * 0.38) * strength);
@@ -603,7 +607,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.052 * strength;
+        color *= 1.0 - vignette * 0.036 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -6437,6 +6441,13 @@ function getCivicFaceTexture(role = "player") {
   try {
     const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
     const pixels = imageData.data;
+    const ellipseMask = (x, y, centreX, centreY, radiusX, radiusY, featherStart = 0.76) => {
+      const radius = Math.sqrt(
+        ((x - centreX) / radiusX) ** 2
+        + ((y - centreY) / radiusY) ** 2
+      );
+      return 1 - THREE.MathUtils.smoothstep(radius, featherStart, 1.12);
+    };
     for (let pixelIndex = 0; pixelIndex < canvas.width * canvas.height; pixelIndex += 1) {
       const offset = pixelIndex * 4;
       const red = pixels[offset];
@@ -6452,13 +6463,41 @@ function getCivicFaceTexture(role = "player") {
         + (255 - green) ** 2
         + (255 - blue) ** 2
       );
+      // Retain only the authored identity features, not the generated studio
+      // portrait's broad peach face wash. That wash was physically plausible
+      // in the source atlas but became a second rectangular skin material
+      // once laid over the lit 3D cheek. Compact feathered islands let the
+      // actual role-sculpted head own forehead, cheek and jaw response while
+      // preserving eyes, brows, nose, blush and lips at full source quality.
+      const browRegion = Math.max(
+        ellipseMask(x, y, 0.2, 0.265, 0.22, 0.13, 0.72),
+        ellipseMask(x, y, 0.8, 0.265, 0.22, 0.13, 0.72)
+      );
+      const eyeRegion = Math.max(
+        ellipseMask(x, y, 0.19, 0.43, 0.205, 0.155, 0.76),
+        ellipseMask(x, y, 0.81, 0.43, 0.205, 0.155, 0.76)
+      );
+      const noseRegion = ellipseMask(x, y, 0.5, 0.59, 0.155, 0.22, 0.72);
+      const mouthRegion = ellipseMask(x, y, 0.5, 0.775, 0.285, 0.135, 0.7);
+      const cheekRegion = Math.max(
+        ellipseMask(x, y, 0.22, 0.62, 0.22, 0.16, 0.68),
+        ellipseMask(x, y, 0.78, 0.62, 0.22, 0.16, 0.68)
+      ) * 0.34;
+      const identityRegion = Math.max(
+        browRegion,
+        eyeRegion,
+        noseRegion,
+        mouthRegion,
+        cheekRegion
+      );
       // The atlas was authored on a white studio field. Dark linework and
       // irises should remain crisp, but light peach modelling must blend into
       // the actual role skin instead of becoming the pale nose/cheek mask
       // visible in the comparison mode. A wider threshold keeps the painted
       // identity while letting the lit 3D head own broad skin value.
       const featureCoverage = THREE.MathUtils.smoothstep(distanceFromWhite, 18, 78)
-        * THREE.MathUtils.smoothstep(distanceFromWhite, 32, 112);
+        * THREE.MathUtils.smoothstep(distanceFromWhite, 32, 112)
+        * identityRegion;
       const eyeCoverage = insideEye
         ? THREE.MathUtils.smoothstep(distanceFromWhite, 3, 22)
         : 0;
@@ -9483,7 +9522,7 @@ function createCivicActorObject(actor, asset) {
     bodyDeformation: fullExpressionLod
   });
   if (bodySurfaceMesh) {
-    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v6";
+    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v7";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
     bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v4";
@@ -10363,7 +10402,7 @@ function updateCamera(payload = {}) {
     // The opening uses a slightly longer editorial lens so people carry more
     // visual weight, then widens through side/reverse arcs to retain the full
     // listening circle and prevent a near witness becoming a foreground wall.
-    ? (portrait ? 60 : 49 + civicRearArc * 6 + civicSideArc * 1.5)
+    ? (portrait ? 60 : 48.5 + civicRearArc * 6.5 + civicSideArc * 1.7)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10443,16 +10482,16 @@ function updateCamera(payload = {}) {
     // Pull the authored opening close enough for faces and garment silhouettes
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 5.2 : 5.72 + civicRearArc * 1.15 + civicSideArc * 0.25)
+    ? (portrait ? 5.2 : 5.5 + civicRearArc * 1.37 + civicSideArc * 0.32)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.24 + civicRearArc * 0.51 + civicSideArc * 0.18) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.08 + civicRearArc * 0.67 + civicSideArc * 0.24) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
   // a management-game bird's-eye view: more portal and character silhouette,
   // less undifferentiated floor. Portrait keeps the higher navigation read.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.82) : 0.94)
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.86) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,

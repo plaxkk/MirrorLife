@@ -181,6 +181,10 @@ FACE_PROFILES = {
         "mouth_center": -0.003,
         "cheek_forward": 1.0,
         "muzzle_forward": 1.0,
+        "jaw_taper": 0.262,
+        "chin_length": 0.008,
+        "cheek_spread": 0.98,
+        "temple_taper": 0.024,
     },
     "listener": {
         "eye_width": 0.057,
@@ -196,6 +200,10 @@ FACE_PROFILES = {
         "mouth_center": -0.002,
         "cheek_forward": 0.94,
         "muzzle_forward": 0.96,
+        "jaw_taper": 0.274,
+        "chin_length": 0.006,
+        "cheek_spread": 0.95,
+        "temple_taper": 0.027,
     },
     "facilitator": {
         "eye_width": 0.0605,
@@ -211,6 +219,10 @@ FACE_PROFILES = {
         "mouth_center": -0.002,
         "cheek_forward": 1.08,
         "muzzle_forward": 1.03,
+        "jaw_taper": 0.304,
+        "chin_length": 0.013,
+        "cheek_spread": 1.06,
+        "temple_taper": 0.032,
     },
     "mediator": {
         "eye_width": 0.0595,
@@ -226,6 +238,10 @@ FACE_PROFILES = {
         "mouth_center": -0.002,
         "cheek_forward": 0.98,
         "muzzle_forward": 0.98,
+        "jaw_taper": 0.29,
+        "chin_length": 0.01,
+        "cheek_spread": 1.015,
+        "temple_taper": 0.029,
     },
 }
 
@@ -1636,14 +1652,15 @@ def build_face(head, mats, role):
         # circular doll face in the story camera. Pull the jaw in more firmly
         # while keeping the cheek band broad, matching the reference's soft
         # triangular lower face instead of shrinking the complete head.
-        vertex.co.x *= 1.0 - lower * 0.275
+        vertex.co.x *= 1.0 - lower * face_profile["jaw_taper"]
         if front > 0 and z < -0.02:
             vertex.co.y += lower * front * 0.006
         # Model a shallow cheek plane instead of relying on circular blush
         # stickers to imply the whole mid-face. The forward volume catches the
         # portal key and face fill differently as the camera orbits.
         cheek_height = max(0.0, min(1.0, 1.0 - abs(z + 0.035) / 0.095))
-        cheek_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - 0.118) / 0.075))
+        cheek_centre = 0.118 * face_profile["cheek_spread"]
+        cheek_width = max(0.0, min(1.0, 1.0 - abs(abs(x) - cheek_centre) / 0.075))
         if front > 0:
             vertex.co.y -= cheek_height * cheek_width * front * 0.0195 * face_profile["cheek_forward"]
         # Recess the eye socket and let the upper cheek transition forward
@@ -1663,9 +1680,9 @@ def build_face(head, mats, role):
         # Slightly compress the temple/forehead corners so the face reads as
         # an authored illustrated head rather than a uniformly round sphere.
         temple = max(0.0, min(1.0, (z - 0.08) / 0.16)) * max(0.0, min(1.0, (abs(x) - 0.12) / 0.1))
-        vertex.co.x *= 1.0 - temple * 0.025
+        vertex.co.x *= 1.0 - temple * face_profile["temple_taper"]
         chin = max(0.0, min(1.0, (-z - 0.115) / 0.135))
-        vertex.co.z -= chin * front * 0.009
+        vertex.co.z -= chin * front * face_profile["chin_length"]
     # Keep the facial volume itself expressive. The previous rig swapped
     # mouth meshes but left the cheeks and jaw completely rigid, which read as
     # a toy mask in close conversational framing. These sparse, authored shape
@@ -1937,11 +1954,14 @@ def build_hair(head, mats, style):
     # plastic helmet from the follow camera, especially on the player whose
     # back faces the camera for most conversations.
     cap_scale = {
-        "spiky": (0.252, 0.176, 0.226),
-        "cap": (0.255, 0.185, 0.23),
-        "coral_ponytail": (0.252, 0.187, 0.232),
-        "braided_bob": (0.254, 0.187, 0.23),
-    }.get(style, (0.255, 0.187, 0.232))
+        # The source cast keeps the skull readable beneath grouped hair. The
+        # former cap widths overhung the jaw by almost four centimetres per
+        # side and turned every rear view into one toy helmet.
+        "spiky": (0.239, 0.169, 0.219),
+        "cap": (0.245, 0.178, 0.223),
+        "coral_ponytail": (0.241, 0.179, 0.224),
+        "braided_bob": (0.244, 0.18, 0.222),
+    }.get(style, (0.244, 0.18, 0.224))
     cap = ellipsoid("HairCap", (0, 0.03, 0.08), cap_scale, mats["hair"], head, segments=50, rings=32)
     # Break the mathematically perfect helmet silhouette without adding a
     # second shell or more triangles. Five broad crown lobes reshape the same
@@ -2144,7 +2164,7 @@ def build_hair(head, mats, style):
                     ((shoulder_x + tip_x) * 0.5, 0.224, tip_z + 0.065),
                     (tip_x, 0.205, tip_z),
                 ],
-                (0.061, 0.064, 0.044, 0.007),
+                (0.052, 0.055, 0.038, 0.006),
                 mats["hair_highlight"] if index in (1, 2) else mats["hair"],
                 head,
                 sides=20,
@@ -2153,12 +2173,12 @@ def build_hair(head, mats, style):
     elif style == "coral_ponytail":
         # Keep a visible tied crown without the oversized spherical mass that
         # previously read as a second plastic head in the story camera.
-        ellipsoid("HairBun", (0.19, 0.12, 0.18), (0.13, 0.11, 0.135), mats["hair"], head, segments=24, rings=14)
-        ponytail = empty("PonytailPivot", head, (0.2, 0.12, 0.15))
+        ellipsoid("HairBun", (0.185, 0.115, 0.18), (0.116, 0.098, 0.122), mats["hair"], head, segments=24, rings=14)
+        ponytail = empty("PonytailPivot", head, (0.19, 0.115, 0.15))
         torus(
             "PonytailBand",
-            0.116,
-            0.014,
+            0.102,
+            0.012,
             (0.01, 0.0, -0.018),
             mats["accent"],
             ponytail,
@@ -2178,7 +2198,7 @@ def build_hair(head, mats, style):
             # A narrower S-curve exposes the layered locks and reads as tied
             # hair rather than the single vertical rubber hose visible in the
             # v97 cast comparison.
-            (0.086, 0.093, 0.082, 0.069, 0.052, 0.012),
+            (0.075, 0.081, 0.071, 0.06, 0.045, 0.01),
             mats["hair"],
             ponytail,
             sides=18,
@@ -2198,7 +2218,7 @@ def build_hair(head, mats, style):
                     (0.045 + offset_x, -0.002 + offset_y, -0.4),
                     (tip_x, -0.03 + offset_y, -0.6),
                 ],
-                (0.047, 0.049, 0.036, 0.006),
+                (0.041, 0.043, 0.032, 0.005),
                 mats["hair_highlight"] if index != 1 else mats["hair"],
                 ponytail,
                 sides=16,
@@ -2222,7 +2242,7 @@ def build_hair(head, mats, style):
                     (centre_x + 0.027, -0.108 + weave * 0.006, crown_z - 0.013),
                     (centre_x + 0.061, -0.061 - weave * 0.007, crown_z + 0.006),
                 ],
-                (0.052, 0.059, 0.051, 0.009),
+                (0.045, 0.051, 0.044, 0.008),
                 mats["hair_highlight"] if index % 2 else mats["hair"],
                 head,
                 sides=16,
@@ -2741,10 +2761,10 @@ def build_costume(
         backpack = empty("BackpackPivot", visual, (0, 0.148, 1.02))
         # A rounded volume avoids the large rectangular block that dominates
         # the default follow-camera view from behind the player.
-        ellipsoid("Backpack", (0, 0, 0), (0.178, 0.092, 0.215), mats["accent"], backpack, segments=28, rings=18)
-        rounded_box("BackpackFlap", (0.255, 0.036, 0.116), (0, 0.086, 0.09), mats["shoe"], backpack, radius=0.027)
-        rounded_box("BackpackPocket", (0.2, 0.036, 0.126), (0, 0.086, -0.085), mats["outer"], backpack, radius=0.031)
-        curve_tube("BackpackHandle", [(-0.08, 0.02, 0.225), (0, 0.07, 0.26), (0.08, 0.02, 0.225)], 0.014, mats["shoe"], backpack, resolution=2)
+        ellipsoid("Backpack", (0, 0, 0), (0.163, 0.086, 0.202), mats["accent"], backpack, segments=28, rings=18)
+        rounded_box("BackpackFlap", (0.232, 0.034, 0.108), (0, 0.08, 0.086), mats["shoe"], backpack, radius=0.025)
+        rounded_box("BackpackPocket", (0.184, 0.034, 0.116), (0, 0.08, -0.081), mats["outer"], backpack, radius=0.028)
+        curve_tube("BackpackHandle", [(-0.072, 0.02, 0.21), (0, 0.064, 0.244), (0.072, 0.02, 0.21)], 0.012, mats["shoe"], backpack, resolution=2)
         cloth_fold_ribbon(
             "BackpackCenterDrape",
             [(0, 0.106, 0.08), (0.012, 0.112, -0.02), (0, 0.106, -0.16)],
@@ -2754,15 +2774,15 @@ def build_costume(
             depth=0.007,
         )
         for side in (-1, 1):
-            rounded_box(f"BackpackSidePocket_{side}", (0.066, 0.105, 0.145), (side * 0.178, 0.016, -0.075), mats["outer"], backpack, radius=0.022)
+            rounded_box(f"BackpackSidePocket_{side}", (0.058, 0.096, 0.132), (side * 0.163, 0.014, -0.07), mats["outer"], backpack, radius=0.02)
             curve_tube(
                 f"BackpackStrap_{side}",
-                [(side * 0.142, 0.094, 0.23), (side * 0.174, 0.128, 0.02), (side * 0.142, 0.098, -0.2)],
-                0.018,
+                [(side * 0.132, 0.087, 0.216), (side * 0.16, 0.118, 0.018), (side * 0.132, 0.091, -0.188)],
+                0.016,
                 mats["shoe"],
                 backpack,
             )
-            rounded_box(f"BackpackBuckle_{side}", (0.055, 0.025, 0.065), (side * 0.16, 0.125, -0.04), mats["metal"], backpack, radius=0.012)
+            rounded_box(f"BackpackBuckle_{side}", (0.05, 0.023, 0.058), (side * 0.148, 0.115, -0.036), mats["metal"], backpack, radius=0.011)
         curve_tube("Scarf", [(-0.16, -0.005, 1.275), (0, -0.105, 1.255), (0.16, -0.005, 1.275)], 0.027, mats["accent"], visual)
         for side, leg in ((-1, left_leg), (1, right_leg)):
             # Cargo pockets belong to the moving thigh, not the static torso.
@@ -3246,7 +3266,7 @@ def build_character(role, config):
     root["asset"] = f"civic-{role}"
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
-    root["body_contract"] = "mirrorlife-civic-body-identity-v6"
+    root["body_contract"] = "mirrorlife-civic-body-identity-v7"
     root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
     root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
@@ -3346,14 +3366,14 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v74",
+        "sculptContract": "mirrorlife-civic-sculpt-v75",
         "hairConstructionContract": {
-            "version": "mirrorlife-civic-hair-construction-v5",
+            "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
             "parts": ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
         },
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v6",
+            "version": "mirrorlife-civic-body-identity-v7",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
             "continuityParts": ["Torso", "ShoulderMantle", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
@@ -3420,9 +3440,9 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-identity-v4",
+            "integrationContract": "mirrorlife-civic-face-identity-v5",
             "productionFaceMode": "curved-atlas",
-            "productionIntegrationContract": "mirrorlife-civic-face-identity-v4",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v5",
             "corneaContract": "mirrorlife-civic-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],

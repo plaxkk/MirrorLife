@@ -1,5 +1,59 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v132 role-authored silhouette, feature-island face and intimate-camera gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/v132-reference-full-pair.png` (`2560 × 720`); source and implementation are aspect-fit to the same `1280 × 720` viewport and judged on one canvas.
+- Mandatory character/story-centre comparison: `tmp/v132-character-focus-pair.png` (`1520 × 520`); equal-density crops expose head-to-body ratio, hair massing, garment silhouettes, prop contact, face integration and story-circle scale.
+- Iteration evidence: `tmp/v132-character-before-after.png` compares the prior v129 implementation with the final v132 browser frame; `tmp/v132-before-after-full.png` records the room-wide material and light change.
+- Full 3D evidence: `tmp/v132-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 289,298`, side `179 / 300,406`, reverse `180 / 341,130`, fourth orbit `178 / 308,606`; mobile `106 / 245,734`. All reviewed views report zero shader errors and remain inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Camera evidence: the opening now uses `48.5°`, a `5.5m` orbit and `2.972m` camera height. Side/reverse arcs progressively restore `52.5–55°`, `6.304–6.87m` and `3.449–3.642m`, preventing the more intimate hero angle from clipping witnesses or furniture.
+- Interaction evidence: the final browser regression moved the physical player `3.17m`, rotated the real camera `65.3°`, verified the curved identity-surface blink, preserved planted feet and retained facilitator notebook and mediator jaw contacts.
+- Asset evidence: all four role GLBs were rebuilt under sculpt contract v75, hair-construction contract v6 and body-identity contract v7; the complete set is `7.36 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v131 P1 / the generated portrait wash remained a second rectangular skin layer] Face matte v2 decomposes each atlas cell into feathered brow, eye, nose, cheek and mouth islands. Broad studio-face shading is removed, so the real morphable head owns forehead, cheek and jaw lighting while the supplied portrait features retain their source resolution.
+- [improved from v131 P1 / every skull still shared one doll-like lower-face rhythm] Body identity v7 gives each role an authored jaw taper, chin length, cheek spread and temple compression without changing the physical capsule or head pivot. The differences remain visible at three-quarter angles and survive the same expression morphs.
+- [improved / player and civic hair dominated rear and profile silhouettes] Hair construction v6 reduces helmet-cap overhang, narrows the player's rear clumps, turns the facilitator's bun/ponytail into a lighter layered mass and flattens the mediator's crown braid. The player backpack was reduced and re-fitted so it no longer merges into one head-to-pelvis block.
+- [improved / the implementation remained darker, yellower and more outline-heavy than the source] Civic wall/floor values move toward neutral ivory and warm-grey terrazzo; fill, hemisphere and bounce energy increase while direct key and grade contrast decrease. Hair seams, trouser folds and timber edges retain form without collapsing to black.
+- [improved / the social cast remained too small inside a wide management-game view] The opening orbit moves from `5.72m / 49° / 3.132m` to `5.5m / 48.5° / 2.972m`, increasing facial and garment readability and cropping the foreground desk more like the source. Dynamic side/rear lens expansion keeps the full 360° room usable.
+- [checked / the closer composition remains a truthful playable 3D camera] Four-heading evidence preserves the player and social group, and the movement regression uses the real Rapier-controlled actor and camera. No actor, prop or wall is hidden to manufacture the opening frame.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese place state, action rail and contextual prompt remain readable at desktop and portrait sizes. The source still has finer icon/type optical alignment, more compact status spacing and more refined translucent-panel depth.
+- [improved][spacing and layout rhythm] The opening now gives the cast more visual weight and a clearer foreground/mid-ground/background progression. The source still achieves richer controlled irregularity, tighter secondary prop clusters and a stronger continuation path along the lower-right brass floor line.
+- [improved][colors and visual tokens] Ivory, neutral terrazzo, walnut, teal, coral, forest green and brass now occupy softer value bands. The implementation remains more saturated in foliage and costume accents than the source's multi-bounce photographic palette.
+- [improved][image quality and asset fidelity] Feature-island faces, role-specific skull shaping, lighter hair silhouettes and the reduced backpack remove several visible toy/overlay defects. The focused comparison still exposes simpler eyelids, mouths, hands, garment edges, footwear and hair strand grouping.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory state and current speaker remain coherent with the visible encounter; no private source text enters runtime state.
+- [checked][icons and interaction states] Speaker beacon, contextual prompt, action selection, joystick and jump/interact controls remain functional; atomic warmup prevents incomplete actor, face or material state from becoming visible.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; character roots, Rapier capsules, floor contacts, colliders and interaction anchors are unchanged. Portrait retains three-character performance LOD, usable touch targets and the hard mobile render budget.
+- [P1][production character topology remains visibly behind] v132 differentiates skulls and silhouettes, but the source still has continuous shoulder/neck anatomy, dedicated eyelid and lip topology, softer hands, role-specific garment construction and more natural hair strand masses.
+- [P1][room-wide secondary craft remains behind] The source contains finer glassware, botanicals, upholstery seams, baskets, layered paper, wall trim and small-scale wear. The implementation's secondary families still repeat broad procedural forms and expose simpler shelves in side/reverse views.
+- [P1][offline light transport remains ahead] The softer grade closes the value gap, but the source retains richer multi-bounce colour, larger contact penumbrae, better foliage/glass transmission and more differentiated skin, textile and wood response.
+- [P2][complete orbit remains less art-directed than the fixed source] Every heading is playable and readable, but rear quadrants necessarily expose more shell and navigation clearance than the single editorial target.
+- [P2][HUD optical finish remains behind] Coverage and interaction pass, while icon family, compact typography, panel translucency and button-edge treatment remain more utilitarian.
+
+### Implementation checklist
+
+- Preserve face matte v2 and the role-authored skull/hair silhouettes; move the next character pass into continuous shoulder/neck, eyelid/lip and garment-edge topology rather than larger feature textures.
+- Replace the most visible repeated secondary families—foreground paperwork/glassware, lounge textiles and bookcase dressing—before adding low-salience clutter.
+- Introduce probe/lightmap-assisted colour bounce and softer contact response without increasing direct-key intensity or exceeding the current mobile budget.
+- Keep the `48.5° / 5.5m / 2.972m` hero angle only while four-heading movement, camera collision and actor visibility continue to pass.
+
+### Gate result
+
+v132 makes the hero view more intimate and materially softer, removes the residual face-patch wash, differentiates role skulls and hair silhouettes, and reduces the player's backpack block while preserving real walking, orbit, physics, mobile controls and performance. The mandatory same-canvas comparisons still contain actionable P1 gaps in production character topology, complete-room secondary asset craftsmanship and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: source-level continuous character topology, complete-room bespoke secondary assets and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v131 embodied cast proportion and acting gate
 
 ### Evidence inspected together
