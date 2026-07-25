@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v122 garment material and atomic-reveal gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v122-final-desktop-yaw0.png` (`1672 × 941`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas source/implementation comparison: `tmp/reference-vs-v122-final-full.png`; both frames retain their complete room composition at the same output size and comparable four-person social state.
+- Full 3D and responsive evidence: `tmp/v122-final-desktop-yaw90.png`, `tmp/v122-final-desktop-yaw180.png`, `tmp/v122-final-mobile-390x844.png` and the consolidated `tmp/v122-orbit-and-mobile-board.png`.
+- Runtime evidence: opening desktop `167 / 283,740`, side `170 / 294,848`, reverse `171 / 335,572`; mobile `106 / 244,768`. Every view completes the two-frame atomic warmup with zero shader errors and remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the final browser regression moved the player `3.33m`, rotated the physical camera `65.3°` and retained the animated curved identity surface. Desktop/mobile scene flow passes, while the transition stress run completes `26` zones and `78` transitions with zero failures or runtime errors. The rebuilt four-role asset set is `7.34 MB`; every individual role remains below `45k` source triangles.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v121 P1 / cardigan construction stopped at decorative seams] Facilitator and mediator now carry real raised cuff ribbing and separate buttonhole geometry. The additions survive side and reverse orbit as authored GLB volume rather than a screen-space texture or line.
+- [fixed / all civic clothing inherited one generic plastic response] Garment material contract v1 authors poplin, jersey knit, waxed/weathered canvas and utility/pleated twill families. The merged actor shader packs those four identities into one vertex attribute and applies family-specific micro-normal and roughness response without exceeding WebGL attribute limits.
+- [fixed / the story notebook read as a floating generic board] Cover and spine now use a restrained leather surface, while the facilitator gains a real palm-support contact mesh. Notebook contact contract v2 keeps the book, support and animated hand in the same authored pivot.
+- [fixed / the first material-family implementation exceeded the runtime vertex-attribute budget] Four scalar flags were replaced by a single packed `vec4` attribute. All four merged actors now compile and render with zero recorded shader errors.
+- [fixed / the room could declare itself ready before the merged actors completed their first heavy material frames] The final scene now renders two complete hidden frames after assets, physics, camera and UI are ready, then reveals atomically. A capture only `32ms` after the ready signal contains the complete cast and room; the old half-built actor flash no longer appears.
+- [checked / physical and performance contracts remain intact] Garment topology v4, material contract v1 and notebook contact v2 are asserted by the asset and browser regressions. Visual transforms, Rapier colliders, navigation and interaction anchors remain unchanged.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD hierarchy, testimony title, action labels and responsive truncation remain stable at exact desktop size and `390 × 844`.
+- [improved][spacing and layout rhythm] More legible cloth families and stable hand-prop contact reinforce the four-person listening circle without changing its metre-scale circulation.
+- [improved][colors and visual tokens] Knit, canvas, twill, poplin and leather now separate through light response instead of additional noisy colours; warm ivory, teal, coral, green, walnut and brass remain the room hierarchy.
+- [improved][image quality and asset fidelity] Buttonholes, cuff ribs, palm support and fabric response are real lit, animated 3D construction. No sprite, billboard, CSS/SVG drawing or screenshot projection substitutes for the authored volume.
+- [checked][atomic presentation] The visible room is never used as a shader-compilation surface. The player sees one complete final state rather than a temporary background or incomplete cast.
+- [P1][production body deformation and hand contact remain visibly behind the source] The same-canvas comparison still exposes simpler clavicle/upper-arm deformation, finger articulation, cloth compression and weight transfer.
+- [P1][room-wide secondary asset finish remains behind] Supporting documents, botanical species, bespoke joinery and small object variation still lack the source's production-level density and irregularity.
+- [P1][offline global illumination remains visibly ahead] The reference retains softer multi-bounce penumbrae, richer contact colour, subtler glass transport and more natural skin/cloth light response.
+- [P2][HUD optical finish remains behind] Coverage and hierarchy pass, but icon drawing, glass-panel depth and compact micro-spacing remain less cinematic than the source.
+
+### Gate result
+
+v122 closes a visible portion of the garment/material/contact gap and fixes a player-facing atomic reveal defect uncovered by the new shader path. The deliverable remains a genuinely walkable, rotatable, physically staged 3D room, and every reviewed camera direction compiles inside the release budgets. The same-canvas comparison still contains actionable P1 gaps in production deformation, room-wide bespoke asset finish and offline-quality indirect light.
+
+final result: blocked
+
+Blocker: source-level character deformation/contact, complete-room production asset finish and offline-quality global illumination remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v121 face optics and hair-construction gate
 
 ### Evidence inspected together

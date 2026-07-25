@@ -67,6 +67,13 @@ try {
   }, { polling: 50, timeout: 8000 });
 
   const opening = await readStats(page);
+  assert.deepEqual(opening.shaderErrors || [], [], "civic scene exposed a WebGL shader compilation failure");
+  assert(
+    opening.sceneWarmup?.version === "mirrorlife-atomic-scene-warmup-v1"
+      && opening.sceneWarmup?.complete === true
+      && Number(opening.sceneWarmup?.frames || 0) >= 2,
+    "civic scene became visible before its hidden shader/material warmup completed"
+  );
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v3", "civic room did not expose the authored indirect-light contract");
@@ -115,8 +122,13 @@ try {
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
   assert(
-    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v3" && actor.garmentTopology?.realGeometry === true),
+    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v4" && actor.garmentTopology?.realGeometry === true),
     "civic actors did not expose the authored garment topology contract"
+  );
+  assert(
+    opening.actors.every((actor) => actor.garmentMaterial?.version === "mirrorlife-civic-garment-material-v1"
+      && actor.garmentMaterial?.physicallyLit === true),
+    "civic actors did not expose role-authored physically lit garment materials"
   );
   assert(opening.actors.every((actor) => actor.proximalVolume?.version === "mirrorlife-civic-proximal-volume-v1"), "civic actors did not expose shoulder/hip volume preservation");
   assert(
@@ -238,7 +250,7 @@ try {
     if (inMotionPlayer?.animation?.state !== "walk") continue;
     assert.equal(
       inMotionPlayer.garmentTopology?.version,
-      "mirrorlife-civic-garment-topology-v3",
+      "mirrorlife-civic-garment-topology-v4",
       "walking player lost the bone-weighted garment topology contract"
     );
     walkSamples += 1;

@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v68";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v69";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
@@ -277,6 +277,8 @@ let itemSignature = "";
 let activeItems = [];
 let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
+let sceneWarmupSignature = "";
+let sceneWarmupFrames = 0;
 let contactShadowTexture;
 let civicFoliageGoboTexture;
 let civicFoliageGoboTextureLoading;
@@ -6910,6 +6912,11 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const skinMaskValues = new Float32Array(count);
     const hairMaskValues = new Float32Array(count);
     const clothMaskValues = new Float32Array(count);
+    // Pack the four fabric families into one vec4 attribute. Mobile/WebGL2
+    // implementations commonly expose only 16 vertex slots; four additional
+    // scalar attributes would make the merged body shader fail to link and
+    // leave only unmerged heads/hands visible.
+    const fabricKindValues = new Float32Array(count * 4);
     const leatherMaskValues = new Float32Array(count);
     const woodMaskValues = new Float32Array(count);
     const paperMaskValues = new Float32Array(count);
@@ -6923,6 +6930,10 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const sourceSkinMask = materialName.endsWith(" skin") ? 1 : 0;
     const sourceHairMask = materialName.includes(" hair") ? 1 : 0;
     const sourceClothMask = /fabric|cloth|textile|cushion|upholstery/.test(materialName) || surfaceName === "fabric" ? 1 : 0;
+    const sourceKnitMask = /knit|cardigan/.test(materialName) ? 1 : 0;
+    const sourceCanvasMask = /canvas|weathered shell/.test(materialName) ? 1 : 0;
+    const sourceTwillMask = /twill/.test(materialName) ? 1 : 0;
+    const sourcePoplinMask = /poplin/.test(materialName) ? 1 : 0;
     const sourceLeatherMask = /shoes|soles/.test(materialName) ? 1 : 0;
     const sourceWoodMask = surfaceName === "wood" || /oak|walnut|wood/.test(materialName) ? 1 : 0;
     const sourcePaperMask = surfaceName === "paper" || /paper|card|cork/.test(materialName) ? 1 : 0;
@@ -6943,6 +6954,10 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       skinMaskValues[index] = sourceSkinMask;
       hairMaskValues[index] = sourceHairMask;
       clothMaskValues[index] = sourceClothMask;
+      fabricKindValues[index * 4] = sourceKnitMask;
+      fabricKindValues[index * 4 + 1] = sourceCanvasMask;
+      fabricKindValues[index * 4 + 2] = sourceTwillMask;
+      fabricKindValues[index * 4 + 3] = sourcePoplinMask;
       leatherMaskValues[index] = sourceLeatherMask;
       woodMaskValues[index] = sourceWoodMask;
       paperMaskValues[index] = sourcePaperMask;
@@ -6965,6 +6980,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     geometry.setAttribute("mirrorLifeSkinMask", new THREE.BufferAttribute(skinMaskValues, 1));
     geometry.setAttribute("mirrorLifeHairMask", new THREE.BufferAttribute(hairMaskValues, 1));
     geometry.setAttribute("mirrorLifeClothMask", new THREE.BufferAttribute(clothMaskValues, 1));
+    geometry.setAttribute("mirrorLifeFabricKind", new THREE.BufferAttribute(fabricKindValues, 4));
     geometry.setAttribute("mirrorLifeLeatherMask", new THREE.BufferAttribute(leatherMaskValues, 1));
     geometry.setAttribute("mirrorLifeWoodMask", new THREE.BufferAttribute(woodMaskValues, 1));
     geometry.setAttribute("mirrorLifePaperMask", new THREE.BufferAttribute(paperMaskValues, 1));
@@ -7036,6 +7052,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         attribute float mirrorLifeSkinMask;
         attribute float mirrorLifeHairMask;
         attribute float mirrorLifeClothMask;
+        attribute vec4 mirrorLifeFabricKind;
         attribute float mirrorLifeLeatherMask;
         attribute float mirrorLifeWoodMask;
         attribute float mirrorLifePaperMask;
@@ -7050,6 +7067,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         varying float vMirrorLifeSkinMask;
         varying float vMirrorLifeHairMask;
         varying float vMirrorLifeClothMask;
+        varying vec4 vMirrorLifeFabricKind;
         varying float vMirrorLifeLeatherMask;
         varying float vMirrorLifeWoodMask;
         varying float vMirrorLifePaperMask;
@@ -7064,6 +7082,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeSkinMask = mirrorLifeSkinMask;
         vMirrorLifeHairMask = mirrorLifeHairMask;
         vMirrorLifeClothMask = mirrorLifeClothMask;
+        vMirrorLifeFabricKind = mirrorLifeFabricKind;
         vMirrorLifeLeatherMask = mirrorLifeLeatherMask;
         vMirrorLifeWoodMask = mirrorLifeWoodMask;
         vMirrorLifePaperMask = mirrorLifePaperMask;
@@ -7091,6 +7110,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       varying float vMirrorLifeSkinMask;
       varying float vMirrorLifeHairMask;
       varying float vMirrorLifeClothMask;
+      varying vec4 vMirrorLifeFabricKind;
       varying float vMirrorLifeLeatherMask;
       varying float vMirrorLifeWoodMask;
       varying float vMirrorLifePaperMask;
@@ -7124,6 +7144,25 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeSurfacePosition.y * ${heroFurnitureSurface ? "0.96" : "0.62"} + vMirrorLifeSurfacePosition.z * ${heroFurnitureSurface ? "0.18" : "0.12"}
       ));
       float mirrorLifeFabricBump = ${fabricSurfaceMaps?.roughness ? "texture2D(mirrorLifeFabricRoughness, mirrorLifeFabricBumpUv).r - 0.5" : "sin(vMirrorLifeSurfacePosition.x * 173.0) * sin(vMirrorLifeSurfacePosition.y * 181.0) * 0.16"};
+      float mirrorLifeKnitRib = (
+        sin(vMirrorLifeSurfacePosition.y * 214.0 + vMirrorLifeSurfacePosition.x * 18.0)
+        * 0.62
+        + sin(vMirrorLifeSurfacePosition.y * 428.0 - vMirrorLifeSurfacePosition.z * 31.0)
+        * 0.18
+      ) * vMirrorLifeFabricKind.x;
+      float mirrorLifeCanvasCross = (
+        sin((vMirrorLifeSurfacePosition.x + vMirrorLifeSurfacePosition.y) * 286.0)
+        * sin((vMirrorLifeSurfacePosition.x - vMirrorLifeSurfacePosition.y) * 272.0)
+      ) * vMirrorLifeFabricKind.y;
+      float mirrorLifeTwillDiagonal = sin(
+        vMirrorLifeSurfacePosition.x * 246.0
+        + vMirrorLifeSurfacePosition.y * 318.0
+        - vMirrorLifeSurfacePosition.z * 54.0
+      ) * vMirrorLifeFabricKind.z;
+      float mirrorLifePoplinGrain = (
+        sin(vMirrorLifeSurfacePosition.x * 362.0)
+        * sin(vMirrorLifeSurfacePosition.y * 386.0)
+      ) * vMirrorLifeFabricKind.w;
       float mirrorLifeWoodBump = ${woodSurfaceMaps?.roughness ? "texture2D(mirrorLifeWoodRoughness, mirrorLifeWoodBumpUv).r - 0.5" : "sin(vMirrorLifeSurfacePosition.x * 47.0 + vMirrorLifeSurfacePosition.z * 13.0) * 0.11"};
       float mirrorLifePaperBump = sin(
         vMirrorLifeSurfacePosition.x * 91.0
@@ -7131,7 +7170,11 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         - vMirrorLifeSurfacePosition.z * 67.0
       ) * 0.14;
       float mirrorLifeCombinedBump =
-          mirrorLifeFabricBump * vMirrorLifeClothMask * 0.78
+          mirrorLifeFabricBump * vMirrorLifeClothMask * 0.46
+        + mirrorLifeKnitRib * 0.31
+        + mirrorLifeCanvasCross * 0.16
+        + mirrorLifeTwillDiagonal * 0.13
+        + mirrorLifePoplinGrain * 0.08
         + mirrorLifeWoodBump * vMirrorLifeWoodMask * 0.58
         + mirrorLifePaperBump * vMirrorLifePaperMask * 0.2;
       normal = mirrorLifePerturbSurfaceNormal(
@@ -7152,11 +7195,27 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       float mirrorLifeThreadA = sin(vMirrorLifeSurfacePosition.x * 228.0 + vMirrorLifeSurfacePosition.z * 29.0);
       float mirrorLifeThreadB = sin(vMirrorLifeSurfacePosition.y * 244.0 - vMirrorLifeSurfacePosition.z * 41.0);
       float mirrorLifeThread = mirrorLifeThreadA * mirrorLifeThreadB;
+      float mirrorLifeKnitRoughness = (
+        sin(vMirrorLifeSurfacePosition.y * 214.0 + vMirrorLifeSurfacePosition.x * 18.0)
+        + sin(vMirrorLifeSurfacePosition.y * 428.0 - vMirrorLifeSurfacePosition.z * 31.0) * 0.28
+      ) * vMirrorLifeFabricKind.x;
+      float mirrorLifeCanvasRoughness = (
+        sin((vMirrorLifeSurfacePosition.x + vMirrorLifeSurfacePosition.y) * 286.0)
+        * sin((vMirrorLifeSurfacePosition.x - vMirrorLifeSurfacePosition.y) * 272.0)
+      ) * vMirrorLifeFabricKind.y;
+      float mirrorLifeTwillRoughness = sin(
+        vMirrorLifeSurfacePosition.x * 246.0
+        + vMirrorLifeSurfacePosition.y * 318.0
+        - vMirrorLifeSurfacePosition.z * 54.0
+      ) * vMirrorLifeFabricKind.z;
       float mirrorLifeFabricScan = ${fabricSurfaceMaps?.roughness ? "texture2D(mirrorLifeFabricRoughness, mirrorLifeFabricUv).r - 0.5" : "0.0"};
       float mirrorLifeWoodScan = ${woodSurfaceMaps?.roughness ? "texture2D(mirrorLifeWoodRoughness, mirrorLifeWoodUv).r - 0.5" : "0.0"};
       roughnessFactor = clamp(
         vMirrorLifeRoughness
           + (mirrorLifeThread * 0.024 + mirrorLifeFabricScan * 0.16) * vMirrorLifeClothMask
+          + mirrorLifeKnitRoughness * 0.024
+          + mirrorLifeCanvasRoughness * 0.014
+          + mirrorLifeTwillRoughness * 0.011
           + mirrorLifeWoodScan * 0.12 * vMirrorLifeWoodMask
           + mirrorLifeThread * 0.018 * vMirrorLifePaperMask
           - 0.045 * vMirrorLifeLeatherMask,
@@ -7240,7 +7299,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v13-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v14-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
@@ -8180,6 +8239,7 @@ function createCivicActorObject(actor, asset) {
   const rightElbow = rightArm?.getObjectByName("RightElbowPivot");
   const leftHand = leftElbow?.getObjectByName("Hand_-1") || null;
   const rightHand = rightElbow?.getObjectByName("Hand_1") || null;
+  const notebookPivot = leftElbow?.getObjectByName("NotebookPivot") || null;
   const leftSleeveCompression = leftElbow?.getObjectByName("SleeveCompressionPivot_-1") || null;
   const rightSleeveCompression = rightElbow?.getObjectByName("SleeveCompressionPivot_1") || null;
   const leftLeg = visual?.getObjectByName("LeftLegPivot");
@@ -8438,7 +8498,8 @@ function createCivicActorObject(actor, asset) {
     bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v6";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
-    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v3";
+    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v4";
+    bodySurfaceMesh.userData.mirrorLifeGarmentMaterial = "mirrorlife-civic-garment-material-v1";
   }
   const skirtSurfaceMesh = skirtPivot
     ? mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 })
@@ -8594,6 +8655,7 @@ function createCivicActorObject(actor, asset) {
     rightElbow,
     leftHand: fullExpressionLod ? leftHand : null,
     rightHand: fullExpressionLod ? rightHand : null,
+    notebookPivot: fullExpressionLod ? notebookPivot : null,
     leftLeg,
     rightLeg,
     leftKnee,
@@ -8620,8 +8682,9 @@ function createCivicActorObject(actor, asset) {
       : null,
     secondaryMotion,
     frame,
-    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v3",
-    styleKey: `${frame}:${role}:civic-glb-v22`,
+    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v4",
+    garmentMaterialVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentMaterial || "mirrorlife-civic-garment-material-v1",
+    styleKey: `${frame}:${role}:civic-glb-v23`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -8642,7 +8705,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v22` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v23` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -9659,7 +9722,25 @@ function update(payload = {}) {
   updatePhysicsDebug(payload.physics || {});
 
   const visible = payload.visible !== false;
-  const ready = modelsReady && actorsReady;
+  const assetsReady = modelsReady && actorsReady;
+  const nextWarmupSignature = assetsReady
+    ? [
+      String(payload.theme?.zoneId || ""),
+      roomSignature,
+      itemSignature,
+      width <= 720 ? "mobile" : "desktop",
+      (payload.actors || []).map((actor) => `${actor.id}:${actor.civicRole || actor.frame || ""}`).join("|")
+    ].join("::")
+    : "";
+  if (!assetsReady || nextWarmupSignature !== sceneWarmupSignature) {
+    sceneWarmupSignature = nextWarmupSignature;
+    sceneWarmupFrames = 0;
+  }
+  // First-time PBR/shadow/post-processing programs may compile over several
+  // frames. Render two complete hidden frames before declaring the room ready,
+  // so the loading curtain gives way to one final scene instead of briefly
+  // exposing heads/hands while merged clothing and hair programs catch up.
+  const ready = assetsReady && sceneWarmupFrames >= 2;
   if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
   lastSceneReady = ready;
   canvas.style.display = visible ? "block" : "none";
@@ -9687,6 +9768,10 @@ function update(payload = {}) {
     if (composer) composer.render();
     else renderer.render(scene, camera);
   }
+  if (assetsReady && !ready) {
+    sceneWarmupFrames += 1;
+    window.markRenderActive?.(180);
+  }
   const now = Date.now();
   if (now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
@@ -9701,6 +9786,8 @@ function hide() {
   canvas.style.opacity = "0";
   canvas.style.visibility = "hidden";
   canvas.dataset.sceneReady = "false";
+  sceneWarmupSignature = "";
+  sceneWarmupFrames = 0;
   if (actorRoot) actorRoot.visible = false;
   if (physicsDebugRoot) physicsDebugRoot.visible = false;
   projectedItems.clear();
@@ -9738,6 +9825,14 @@ function getSceneComplexity() {
 function getStats() {
   const render = renderer?.info?.render || {};
   const memory = renderer?.info?.memory || {};
+  const shaderErrors = (renderer?.info?.programs || [])
+    .filter((program) => program?.diagnostics?.runnable === false)
+    .map((program) => ({
+      name: program?.name || "unnamed",
+      programLog: String(program?.diagnostics?.programLog || "").slice(0, 1200),
+      vertexLog: String(program?.diagnostics?.vertexShader?.log || "").slice(0, 1200),
+      fragmentLog: String(program?.diagnostics?.fragmentShader?.log || "").slice(0, 1200)
+    }));
   let civicHeroSurfaceBatches = 0;
   let civicHeroSurfaceSemanticBatches = 0;
   modelRoot?.traverse?.((node) => {
@@ -9759,6 +9854,12 @@ function getStats() {
   const sceneComplexity = getSceneComplexity();
   return {
     ready: !!renderer,
+    shaderErrors,
+    sceneWarmup: {
+      version: "mirrorlife-atomic-scene-warmup-v1",
+      frames: sceneWarmupFrames,
+      complete: lastSceneReady && sceneWarmupFrames >= 2
+    },
     portal: activeCivicPortalContract ? { version: activeCivicPortalContract } : null,
     activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,
     activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
@@ -9798,8 +9899,13 @@ function getStats() {
       } : null,
       garmentTopology: entry.garmentTopologyVersion ? {
         version: entry.garmentTopologyVersion,
-        runtime: "bone-weighted-superellipse+diagonal-tension-topology+asymmetric-drape",
+        runtime: "bone-weighted-superellipse+diagonal-tension-topology+asymmetric-drape+constructed-ribs",
         realGeometry: true
+      } : null,
+      garmentMaterial: entry.garmentMaterialVersion ? {
+        version: entry.garmentMaterialVersion,
+        runtime: "role-authored-poplin+knit+canvas+twill",
+        physicallyLit: true
       } : null,
       proximalVolume: Object.keys(entry.jointVolumeDeformation || {}).length ? {
         version: "mirrorlife-civic-proximal-volume-v1",

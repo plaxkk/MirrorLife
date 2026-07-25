@@ -439,7 +439,7 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     modifier.use_deform_preserve_volume = True
     obj["semantic_part"] = name
     obj["skin_contract"] = "mirrorlife-civic-skin-v1"
-    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v3"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
     if name == "SkinnedArmVolume":
         obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     for polygon in mesh.polygons:
@@ -563,7 +563,10 @@ def tailored_panel(
     obj.rotation_euler = rotation
     bevel = obj.modifiers.new("Tailored cloth edge", "BEVEL")
     bevel.width = min(radius, depth * 0.42, min(width_top, width_waist, width_bottom) * 0.18)
-    bevel.segments = 4
+    # Three bevel segments keep the soft tailored highlight while leaving
+    # enough of the per-role triangle budget for visible construction details
+    # such as real ribs, buttonholes and hand contact.
+    bevel.segments = 3
     smooth = obj.modifiers.new("Tailored cloth normals", "WEIGHTED_NORMAL")
     smooth.keep_sharp = True
     link_material(obj, mat)
@@ -1306,7 +1309,7 @@ def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=N
     obj.parent = parent
     obj.location = location
     link_material(obj, mat)
-    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v3"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     bevel = obj.modifiers.new("Pleated hem softness", "BEVEL")
@@ -1524,6 +1527,16 @@ def sculpted_ear_shell(name, location, skin_mat, concha_mat, parent=None, side=1
 
 
 def build_materials(role, config):
+    costume = config["costume"]
+    outer_surface = (
+        "waxed canvas fabric"
+        if costume == "traveler"
+        else "weathered shell fabric"
+        if costume == "listener"
+        else "cardigan knit fabric"
+    )
+    top_surface = "fine poplin fabric" if costume in ("traveler", "facilitator", "mediator") else "jersey knit fabric"
+    lower_surface = "pleated twill fabric" if costume in ("facilitator", "mediator") else "utility twill fabric"
     return {
         # Warm, high-roughness skin holds the target's peach value under the
         # portal key without becoming a pale clear-coated toy surface. Runtime
@@ -1547,14 +1560,19 @@ def build_materials(role, config):
         "ink": material(f"{role} ink", "#44343a", 0.62),
         "blush": material(f"{role} blush", "#dc9b91", 0.94),
         "lip": material(f"{role} lip", "#ad716c", 0.86, clearcoat=0.018),
-        "top": material(f"{role} top fabric", config["top"], 0.91),
-        "outer": material(f"{role} outer fabric", config["outer"], 0.9),
-        "lower": material(f"{role} lower fabric", config["lower"], 0.88),
-        "accent": material(f"{role} accent", config["accent"], 0.72),
+        # Material names are part of the runtime surface contract. The
+        # vertex-colour batcher keeps these authored categories as masks, so
+        # poplin, knit, canvas and twill retain different micro-normal and
+        # grazing-light responses after the source draw calls are merged.
+        "top": material(f"{role} {top_surface}", config["top"], 0.91),
+        "outer": material(f"{role} {outer_surface}", config["outer"], 0.9),
+        "lower": material(f"{role} {lower_surface}", config["lower"], 0.88),
+        "accent": material(f"{role} trim textile", config["accent"], 0.76),
         "shoe": material(f"{role} shoes", config["shoe"], 0.68),
         "sole": material(f"{role} soles", config["sole"], 0.8),
         "metal": material(f"{role} metal", "#c69b4a", 0.34, metallic=0.62),
         "paper": material(f"{role} paper", "#f5ead6", 0.93),
+        "notebook_cover": material(f"{role} notebook leather", config["accent"], 0.64, clearcoat=0.012),
     }
 
 
@@ -3002,6 +3020,19 @@ def build_costume(
             )
         for index in range(3):
             ellipsoid(f"CoatButton_{index + 1}", (-0.067, -0.236, 1.1 - index * 0.12), (0.014, 0.008, 0.014), mats["accent"], visual, segments=12, rings=8)
+            # A button without a receiving opening read like three dots glued
+            # to a plastic panel. These recessed, horizontal cloth slots sit
+            # on the opposite cardigan edge and establish an actual fastening
+            # rhythm at the gameplay camera.
+            rounded_box(
+                f"CoatButtonhole_{index + 1}",
+                (0.038, 0.008, 0.009),
+                (0.052, -0.242, 1.1 - index * 0.12),
+                mats["accent"],
+                visual,
+                radius=0.004,
+                segments=1,
+            )
         for side, elbow in ((-1, left_elbow), (1, right_elbow)):
             cylinder(
                 f"CoatCuff_{side}",
@@ -3013,6 +3044,20 @@ def build_costume(
                 elbow,
                 vertices=18,
             )
+            # A real raised knit rib breaks the uninterrupted cylindrical cuff
+            # and holds a believable thickness where cardigan meets hand.
+            # They stay parented to the animated lower arm and therefore keep
+            # their contact through listen and gesture poses.
+            for rib_index, rib_z in enumerate((-0.282,), start=1):
+                torus(
+                    f"CoatCuffRib_{side}_{rib_index}",
+                    0.053,
+                    0.0028,
+                    (0, -0.001, rib_z),
+                    mats["outer"],
+                    elbow,
+                    major_segments=12,
+                )
         if costume == "facilitator":
             # A shallow shoulder yoke gives the long cardigan a tailored
             # upper silhouette distinct from the mediator's cropped jacket.
@@ -3038,9 +3083,9 @@ def build_costume(
             # The previous components repeated the rotation around different
             # world-space centres, which separated them into orange bars once
             # the listening elbow folded.
-            rounded_box("StoryNotebook", (0.19, 0.038, 0.24), (0, 0, 0), mats["accent"], notebook, radius=0.026)
+            rounded_box("StoryNotebook", (0.19, 0.038, 0.24), (0, 0, 0), mats["notebook_cover"], notebook, radius=0.026)
             rounded_box("NotebookPaper", (0.164, 0.011, 0.214), (0, -0.024, 0), mats["paper"], notebook, radius=0.017)
-            rounded_box("NotebookSpine", (0.023, 0.048, 0.225), (-0.083, 0, 0), mats["shoe"], notebook, radius=0.007)
+            rounded_box("NotebookSpine", (0.023, 0.048, 0.225), (-0.083, 0, 0), mats["notebook_cover"], notebook, radius=0.007)
             rounded_box("NotebookElastic", (0.016, 0.013, 0.218), (0.066, -0.029, 0), mats["metal"], notebook, radius=0.005)
             cylinder("NotebookPencil", 0.006, 0.004, 0.19, (-0.062, -0.031, 0.008), mats["accent"], notebook, vertices=10, rotation=(0, 0, 0.03))
             # A visible thumb pad is authored in the same local frame as the
@@ -3057,6 +3102,21 @@ def build_costume(
                 segments=16,
                 rings=10,
             )
+            # A shallow palm ledge links the two compressed fingertip pads.
+            # It is deliberately skin-coloured and sits behind the cover edge,
+            # so the book reads as resting in a hand rather than suspended
+            # between two unrelated orange marks.
+            rounded_box(
+                "NotebookPalmSupport",
+                (0.128, 0.018, 0.032),
+                (0.002, -0.041, -0.105),
+                mats["skin"],
+                notebook,
+                radius=0.009,
+                rotation=(0.05, 0, -0.035),
+                segments=2,
+            )
+            notebook["contact_contract"] = "mirrorlife-civic-notebook-contact-v2"
             # A second compressed fingertip pad sits on the opposite cover
             # edge. Together with the independently animated guiding hand this
             # maintains a readable two-hand contact silhouette through listen
@@ -3112,7 +3172,7 @@ def build_character(role, config):
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
     root["body_contract"] = "mirrorlife-civic-body-identity-v6"
-    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v3"
+    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
     root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
     root["real_world_unit"] = "meter"
@@ -3200,7 +3260,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v68",
+        "sculptContract": "mirrorlife-civic-sculpt-v69",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v4",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3231,8 +3291,8 @@ def main():
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
         },
         "garmentTopologyContract": {
-            "version": "mirrorlife-civic-garment-topology-v3",
-            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape",
+            "version": "mirrorlife-civic-garment-topology-v4",
+            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs",
             "garments": ["sleeve", "trouser", "skirt", "vest", "cardigan"],
             "standingParts": [
                 "SkinnedArmVolume",
@@ -3241,6 +3301,19 @@ def main():
                 "CoatPanel",
             ],
             "deformingParts": ["SkinnedArmVolume", "SkinnedLegVolume", "Skirt"],
+        },
+        "garmentMaterialContract": {
+            "version": "mirrorlife-civic-garment-material-v1",
+            "runtime": "role-authored-poplin+knit+canvas+twill",
+            "surfaces": [
+                "fine-poplin",
+                "jersey-knit",
+                "cardigan-knit",
+                "waxed-canvas",
+                "weathered-shell",
+                "utility-twill",
+                "pleated-twill",
+            ],
         },
         "clothCorrectiveContract": {
             "version": "mirrorlife-civic-cloth-correctives-v1",
@@ -3279,6 +3352,11 @@ def main():
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
             "surfaceParts": ["PalmLifeLine", "PalmHeartLine"],
+        },
+        "notebookContactContract": {
+            "version": "mirrorlife-civic-notebook-contact-v2",
+            "parts": ["NotebookGripContact", "NotebookGuideContact", "NotebookPalmSupport"],
+            "parent": "NotebookPivot",
         },
         "footwearContract": {
             "version": "mirrorlife-civic-footwear-v4",

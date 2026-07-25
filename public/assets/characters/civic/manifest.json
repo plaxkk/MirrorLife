@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v68",
+  "sculptContract": "mirrorlife-civic-sculpt-v69",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v4",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -60,8 +60,8 @@
     ]
   },
   "garmentTopologyContract": {
-    "version": "mirrorlife-civic-garment-topology-v3",
-    "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape",
+    "version": "mirrorlife-civic-garment-topology-v4",
+    "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs",
     "garments": [
       "sleeve",
       "trouser",
@@ -79,6 +79,19 @@
       "SkinnedArmVolume",
       "SkinnedLegVolume",
       "Skirt"
+    ]
+  },
+  "garmentMaterialContract": {
+    "version": "mirrorlife-civic-garment-material-v1",
+    "runtime": "role-authored-poplin+knit+canvas+twill",
+    "surfaces": [
+      "fine-poplin",
+      "jersey-knit",
+      "cardigan-knit",
+      "waxed-canvas",
+      "weathered-shell",
+      "utility-twill",
+      "pleated-twill"
     ]
   },
   "clothCorrectiveContract": {
@@ -159,6 +172,15 @@
       "PalmHeartLine"
     ]
   },
+  "notebookContactContract": {
+    "version": "mirrorlife-civic-notebook-contact-v2",
+    "parts": [
+      "NotebookGripContact",
+      "NotebookGuideContact",
+      "NotebookPalmSupport"
+    ],
+    "parent": "NotebookPivot"
+  },
   "footwearContract": {
     "version": "mirrorlife-civic-footwear-v4",
     "parts": [
@@ -195,25 +217,25 @@
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
       "meshes": 131,
-      "triangles": 40636
+      "triangles": 39764
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
       "meshes": 117,
-      "triangles": 38088
+      "triangles": 37224
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 141,
-      "triangles": 44992
+      "meshes": 147,
+      "triangles": 44092
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 154,
-      "triangles": 43752
+      "meshes": 159,
+      "triangles": 42752
     }
   }
 }
