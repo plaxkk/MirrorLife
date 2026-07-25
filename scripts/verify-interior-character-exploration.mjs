@@ -73,6 +73,7 @@ try {
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
   assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v10", "civic room did not expose the authored furniture-detail contract");
   assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v2", "civic room did not expose the scanned furniture-surface contract");
+  assert.equal(opening.furniture?.reverseWallVersion, "mirrorlife-civic-reverse-wall-v3", "civic room did not expose the authored reverse witness-wall contract");
   assert.ok(opening.furniture?.scannedSurfaceBatches >= 3, "placed civic hero furniture lost its scanned surface shader");
   assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");
   assert(
@@ -311,8 +312,30 @@ try {
   assert(canvas, "game canvas is missing");
   const bounds = await canvas.boundingBox();
   assert(bounds, "game canvas bounds are unavailable");
-  const startX = bounds.x + bounds.width * 0.52;
-  const startY = bounds.y + bounds.height * 0.52;
+  // Hotspots are deliberately interactive DOM buttons layered over the WebGL
+  // canvas. A fixed centre coordinate can land on one after the player walks,
+  // correctly routing mousedown to the button instead of starting a camera
+  // drag. Resolve a genuinely exposed canvas point so this assertion tests the
+  // orbit control rather than the current projection of an interaction pin.
+  const orbitStart = await page.evaluate((canvasBounds) => {
+    const candidates = [
+      [0.52, 0.52],
+      [0.42, 0.58],
+      [0.62, 0.58],
+      [0.34, 0.48],
+      [0.7, 0.48],
+      [0.5, 0.68]
+    ];
+    for (const [ratioX, ratioY] of candidates) {
+      const x = canvasBounds.x + canvasBounds.width * ratioX;
+      const y = canvasBounds.y + canvasBounds.height * ratioY;
+      if (document.elementFromPoint(x, y)?.id === "gameCanvas") return { x, y };
+    }
+    return null;
+  }, bounds);
+  assert(orbitStart, "no unobstructed game-canvas point was available for drag-orbit verification");
+  const startX = orbitStart.x;
+  const startY = orbitStart.y;
   await page.mouse.move(startX, startY);
   await page.mouse.down();
   await page.mouse.move(startX + 190, startY - 24, { steps: 12 });

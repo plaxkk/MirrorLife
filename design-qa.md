@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v118 reverse witness-archive gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v118-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full comparison: `tmp/reference-vs-v118-full.png`; focused equal-crop comparison: `tmp/reference-vs-v118-room-focus.png`. Both preserve source and implementation at the same route, time, room, testimony state, viewport and density before comparison.
+- Full 3D orbit evidence: `tmp/v118-final-desktop-yaw90.png`, `tmp/v118-final-desktop-yaw180.png` and `tmp/v118-yaw0-vs-yaw180.png`. The new witness archive is wall-mounted, depth-tested and visible only on the correct far hemisphere while the real camera rotates.
+- Responsive evidence: `tmp/v118-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `163 / 271,752`, side `166 / 282,860`, reverse `168 / 323,584`; mobile `103 / 236,536`. Every view remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v117 P2 / reverse wall looked like a small temporary board in a blank rectangular recess] The opposite hemisphere is now a complete floor-to-cove witness archive with a continuous oak arch, walnut outer line, brass inner reveal, matching posts and plinths. `tmp/v118-yaw0-vs-yaw180.png` proves the room owns two intentional story faces instead of one dressed angle and one film-set back.
+- [fixed / first v118 arch draft read as a pale inflated plaster ring] The thick pale torus was visually reviewed at `1672 × 941`, then replaced by a materially thinner warm-oak band with dark edge and restrained brass inner line. The final `180°` evidence reads as joinery rather than a balloon-like graphic.
+- [fixed / testimony evidence was too sparse to imply a working civic archive] The centre field now carries eight pinned statements, readable colour marks, line hierarchy and individual pins. Paired authorization shelves add ledgers, sealed boxes and brass seals, while a continuous testimony ledge adds stacked records and a woven archive basket.
+- [fixed / sconces and plants collided visually with the wider archive] Both are moved beyond the arch posts, preserving the evidence hierarchy and a clean central sofa/board silhouette without changing any collider or walkable path.
+- [checked / reverse enrichment remains physically honest] The complete assembly is mounted behind the navigation boundary and adds no false walkable gaps, new floor obstacles or interaction promises. Player, NPC, furniture and Rapier transforms remain unchanged.
+- [checked / authored reverse detail survives batching and LOD] Desktop geometry is merged into the orbit-aware wall group; mobile retains a reduced three-card, no-side-cabinet composition. The runtime exposes `mirrorlife-civic-reverse-wall-v3` after the same atomic ready gate.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD family, hierarchy, line height, truncation, action labels and place-memory title remain stable in the exact-size desktop comparison and the `390 × 844` portrait capture.
+- [improved][spacing and layout rhythm] The opening keeps its portal–cast–lounge triangle; the reverse view now has an arch–evidence–bench hierarchy at matching human scale. All four actors remain readable at `0°`, `90°` and `180°`, and the mobile action rail stays within the viewport.
+- [improved][colors and visual tokens] Warm oak, dark walnut, matte cork, teal upholstery, coral/green testimony marks and narrow brass accents reuse the source-derived civic palette. The corrected arch no longer creates a broad near-white competing shape.
+- [improved][image quality and asset fidelity] Arch, shelves, ledgers, pins, seals, woven basket and statement cards are real lit 3D geometry with front/side/reverse depth. No screenshot projection, sprite, CSS drawing, custom SVG or billboard is used.
+- [checked][copy and content] “倾听线索”, “场所回声”, current-speaker beacon and the four civic actions remain coherent with the visible testimony/archive scene.
+- [P1][production character construction remains visibly below the source] The equal-crop comparison still shows lower-resolution shoulder/hip planes, blockier hair, simplified hands, limited garment compression and weaker footwear/fabric construction.
+- [P1][room-wide asset and material finish remains below the source] v118 closes the weakest reverse-wall hierarchy, but the source still has denser bespoke object variation, thinner timber profiles, upholstered compression, richer glass construction and more production-quality botanical breakup across the complete room.
+- [P1][offline global illumination remains visibly ahead] The implementation preserves truthful 3D lighting through orbit, while the source retains softer multi-bounce penumbrae, more natural skin/cloth transport, subtler highlight roll-off and richer contact colour.
+- [P2][HUD optical finish remains behind] Functional layout and mobile responsiveness pass, but icon drawing, translucent depth, fine padding and the source's compact upper-right location treatment remain more polished.
+
+### Gate result
+
+v118 resolves the previous reverse-wall P2 with a genuine orbit-safe architectural composition. Completing a half-turn now reveals a coherent civic witness archive rather than an unfinished neutral wall, and the added evidence density remains inside all desktop/mobile geometry and draw-call budgets. The exact same-size source comparison still contains actionable P1 gaps in production character construction, room-wide asset finish and offline-quality light transport.
+
+final result: blocked
+
+Blocker: source-level character/garment construction, room-wide production asset finish and offline-quality indirect light remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v117 body-silhouette and orbit-composition gate
 
 ### Evidence inspected together
