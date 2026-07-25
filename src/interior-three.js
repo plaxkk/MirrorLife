@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "identity-v65";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v66";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v10";
@@ -8262,10 +8262,10 @@ function createCivicActorObject(actor, asset) {
   ];
   const bodySurfaceMesh = mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.71, envMapIntensity: 0.66 });
   if (bodySurfaceMesh) {
-    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v4";
+    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v5";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v1";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v2";
-    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v1";
+    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v2";
   }
   const skirtSurfaceMesh = skirtPivot
     ? mergeActorVertexColorMeshes(skirtPivot, [], { roughness: 0.78, envMapIntensity: 0.58 })
@@ -8447,7 +8447,7 @@ function createCivicActorObject(actor, asset) {
       : null,
     secondaryMotion,
     frame,
-    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v1",
+    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v2",
     styleKey: `${frame}:${role}:civic-glb-v22`,
     identity: style.identity,
     assetRole: role,
@@ -9069,7 +9069,7 @@ function updateCamera(payload = {}) {
     // authored frame. The previous 46° opening made the controlled character
     // eclipse the mediator at reference resolution; 48° preserves facial
     // readability while matching the wider editorial composition.
-    ? (portrait ? 60 : 48 + civicRearArc * 6 + civicSideArc * 4)
+    ? (portrait ? 60 : 48 + civicRearArc * 6 + civicSideArc * 1.2)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -9082,9 +9082,26 @@ function updateCamera(payload = {}) {
   // Portrait play has much less horizontal breathing room. Keep the player
   // dominant there while desktop can spend more of the frame on the current
   // social target and authored path composition.
-  const playerWeight = portrait ? 0.8 : cinematicCivic ? 0.65 : CAMERA_PIVOT_PLAYER_WEIGHT;
-  const narrativeWeight = portrait ? 0.15 : cinematicCivic ? 0.25 : CAMERA_PIVOT_NARRATIVE_WEIGHT;
-  const pathWeight = portrait ? 0.05 : cinematicCivic ? 0.1 : CAMERA_PIVOT_PATH_WEIGHT;
+  // At a quarter turn the screen's horizontal axis aligns with room depth.
+  // Keeping the hero-only 65% pivot there pushed the complete witness group
+  // to one edge and exposed a large unused floor field. Ease only the side
+  // arcs toward the current speaker and path centre; the opening and reverse
+  // hero compositions retain their established player priority.
+  const playerWeight = portrait
+    ? 0.8
+    : cinematicCivic
+      ? 0.65 - civicSideArc * 0.1
+      : CAMERA_PIVOT_PLAYER_WEIGHT;
+  const narrativeWeight = portrait
+    ? 0.15
+    : cinematicCivic
+      ? 0.25 + civicSideArc * 0.07
+      : CAMERA_PIVOT_NARRATIVE_WEIGHT;
+  const pathWeight = portrait
+    ? 0.05
+    : cinematicCivic
+      ? 0.1 + civicSideArc * 0.03
+      : CAMERA_PIVOT_PATH_WEIGHT;
   let targetPivotX = playerX * playerWeight
     + narrativeX * narrativeWeight
     + pathX * pathWeight;
@@ -9133,10 +9150,10 @@ function updateCamera(payload = {}) {
     // frame height, leaving visible floor language around the social circle.
     // This distance still supports readable faces while preventing the player
     // and backpack from becoming a foreground wall.
-    ? (portrait ? 5.2 : 5.24 + civicRearArc * 0.84 + civicSideArc * 0.46)
+    ? (portrait ? 5.2 : 5.24 + civicRearArc * 0.84 + civicSideArc * 0.18)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.18 + civicRearArc * 0.46 + civicSideArc * 0.38) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.18 + civicRearArc * 0.46 + civicSideArc * 0.14) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than

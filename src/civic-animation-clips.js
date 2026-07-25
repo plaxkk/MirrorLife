@@ -1,6 +1,6 @@
 const TAU = Math.PI * 2;
 
-export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v14";
+export const CIVIC_ANIMATION_CLIP_VERSION = "mirrorlife-civic-clips-v15";
 
 const TRACKS = Object.freeze([
   "visual",
@@ -309,8 +309,8 @@ const ROLE_OFFSETS = Object.freeze({
       // rather than a symmetrical display pose.
       visual: v(-0.012, 0, -0.046), headGroup: v(0, -0.016, -0.066),
       leftArm: v(-0.1, 0, 0.16), rightArm: v(0.025, 0, -0.085),
-      leftElbow: v(-0.62, 0, 0.18), rightElbow: v(-0.4, 0, -0.08),
-      leftHand: v(-0.12, 0.16, 0.18), rightHand: v(-0.08, -0.14, -0.2),
+      leftElbow: v(-0.44, 0, 0.16), rightElbow: v(-0.18, 0, -0.07),
+      leftHand: v(-0.1, 0.13, 0.14), rightHand: v(-0.06, -0.11, -0.15),
       leftLeg: v(0, -0.042, -0.065), rightLeg: v(0, 0.052, 0.085), rightKnee: v(0.07)
     }),
     gesture: pose(0, {
@@ -318,8 +318,8 @@ const ROLE_OFFSETS = Object.freeze({
       // opens toward the current listener.
       visual: v(-0.015, 0, -0.038), headGroup: v(-0.006, -0.028, -0.052),
       leftArm: v(-0.12, 0, 0.18), rightArm: v(0.2, 0, -0.12),
-      leftElbow: v(-0.62, 0, 0.2), rightElbow: v(0.36, 0, -0.12),
-      leftHand: v(-0.12, 0.16, 0.18), rightHand: v(0.08, -0.08, -0.12),
+      leftElbow: v(-0.44, 0, 0.16), rightElbow: v(0.3, 0, -0.1),
+      leftHand: v(-0.1, 0.13, 0.14), rightHand: v(0.07, -0.07, -0.1),
       leftLeg: v(0, -0.05, -0.06), rightLeg: v(0, 0.056, 0.08), rightKnee: v(0.075)
     })
   },

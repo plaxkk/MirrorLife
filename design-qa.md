@@ -1,5 +1,48 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v117 body-silhouette and orbit-composition gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v117-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, WebGL internal pixel ratio `1.2`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/reference-vs-v117-full.png`; focused source/implementation cast comparison: `tmp/reference-vs-v117-cast-focus.png`; implementation delta: `tmp/v116-vs-v117-cast-focus.png`.
+- Full 3D orbit evidence: `tmp/v117-final-desktop-yaw90.png` and `tmp/v117-final-desktop-yaw180.png`. The side view uses a tighter `51.32°` lens and a narrative-aware pivot; shortened skirts, tapered limbs, footwear, notebook contact and curved facial identity remain attached to the real animated actors throughout orbit.
+- Responsive evidence: `tmp/v117-final-mobile-390x844.png` (`390 × 844`, device scale factor `1`, intentional three-character phone LOD).
+- Runtime evidence: desktop opening `163 / 271,752`, side `166 / 282,860`, reverse `167 / 288,988`; mobile `103 / 236,536`. Four regenerated role assets total `7.17 MB`. Final browser exploration walked the player `3.61m`, rotated the real camera `65.3°` and retained the animated curved identity surface.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed / all four limbs used an inflated near-uniform tube scale] Body identity v5 introduces reference-weighted arm taper for every role while preserving deliberately fuller cargo thighs on the player and listener. The focused v116/v117 comparison shows less rubber-limb mass without turning the two trouser roles into pencil legs.
+- [fixed / both civic dresses read as ankle-length green cylinders] Garment topology v2 moves the skirt top and hem together, shortens the two silhouettes to below-knee length, reduces radial flare and repositions every authored hem/pleat/release ridge. The final front, side, reverse and mobile captures expose a readable cardigan–skirt–leg–boot sequence.
+- [fixed / cream cardigan panels formed two broad rectangular bars] Facilitator and mediator coat panels are shorter, narrower, shallower and fitted closer to the torso. Their lapels, opening edges, waist release, pocket welts and cuffs remain real geometry rather than flat colour patches.
+- [fixed / the story notebook hid both hands and read as a notice board] Cover, paper, spine, elastic, pencil and grip contact are rescaled together around the existing unified notebook pivot. Facilitator animation v15 reduces the excessive elbow fold and keeps the smaller book supported near the waist.
+- [improved / player and listener feet disappeared under straight trouser columns] Cargo-leg fullness is preserved through the thigh while larger role footwear restores a clear ankle, sole and toe rhythm at the gameplay camera.
+- [fixed / quarter-turn camera exposed a large unused floor field] The `90°` civic composition no longer spends four extra FOV degrees and almost half a metre of unnecessary pullback. Side-arc pivot weights ease toward the speaker/path centre only at quarter turns, reducing FOV from `54.12°` to `51.32°`, orbit radius from `5.997m` to `5.717m`, camera height from `3.615m` to `3.375m`, and pivot Z from `1.077m` to `0.939m`.
+- [checked / silhouette changes do not break the authoritative world] Collider, actor root, metre scale, interaction anchors and Rapier capsule remain unchanged. The four assets retain continuous weighted skin, skirt flex, cloth correctives, facial morphs and the same movement contract.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD family, weight hierarchy, line height, action labels, place-memory title and current-speaker icon remain stable at the matched desktop and portrait sizes.
+- [improved][spacing and layout rhythm] The front cast keeps the player–speaker–witness triangle while shorter silhouettes reveal footwear and floor contact. The side orbit now frames the social group and window landmark more deliberately instead of leaving the actors stranded at one edge.
+- [checked][colors and visual tokens] Warm ivory, teal, walnut, coral, green and brass remain unchanged; the pass improves colour separation by exposing garment layers rather than adding new hues.
+- [improved][image quality and asset fidelity] The revised bodies, skirts, coats, notebook and shoes are regenerated GLB geometry driven by the shared animation and physical world. No sprite, billboard, CSS/SVG drawing or screenshot projection replaces the 3D character.
+- [checked][copy and content] “倾听线索”, current-speaker beacon, place-memory title and the four civic actions remain coherent with the visible testimony scene.
+- [P1][body and garment construction still remain visibly below the source] v117 corrects mass and length, but the reference still has finer shoulder/hip planes, stitched garment edges, cloth compression, independent fingers, fitted cuffs and role-specific deformation weights.
+- [P1][facilitator notebook contact remains less natural than the source] The prop is now correctly scaled, but the wide gameplay pose still reads as a held board in some side phases; a production pass needs true wrist/forearm IK or a baked contact clip.
+- [P1][bespoke environment density and curved joinery remain below the source] The selected source contains more documents, botanical species, woven storage, upholstered compression, curved timber profiles, glass thickness and object-scale variation.
+- [P1][offline global illumination and material transport remain ahead] The WebGL scene remains spatially correct through orbit, while the source has softer multi-bounce penumbrae, richer cloth/skin response and more restrained highlight roll-off.
+- [P2][reverse wall still has weaker authored hierarchy] The reverse view is functional and populated, but its white witness wall and rectilinear furniture remain flatter and more generic than the portal/listening-wall hero angle.
+- [P2][HUD optical finish remains behind] Icon weight, translucent depth, spacing nuance and captured-state density remain less authored than the selected frame.
+
+### Gate result
+
+v117 materially improves the characters at the actual gameplay scale: sleeves and hands no longer dominate the silhouettes, civic skirts stop at a credible below-knee line, footwear and legs separate, the notebook becomes a personal prop, and the quarter-turn camera retains a designed social composition. All changes remain real, animated 3D geometry inside the same physical world. The normalized comparison still shows actionable P1 gaps in production garment deformation, hand-prop contact, bespoke environment construction and offline light transport.
+
+final result: blocked
+
+Blocker: source-level body/garment deformation and contact, room-wide bespoke environment density, and offline-quality global illumination remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v116 curved identity-surface gate
 
 ### Evidence inspected together

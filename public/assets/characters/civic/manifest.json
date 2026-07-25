@@ -1,8 +1,8 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v65",
+  "sculptContract": "mirrorlife-civic-sculpt-v66",
   "bodyIdentityContract": {
-    "version": "mirrorlife-civic-body-identity-v4",
+    "version": "mirrorlife-civic-body-identity-v5",
     "roles": [
       "player",
       "listener",
@@ -26,7 +26,7 @@
     ],
     "shoulderContract": "mirrorlife-civic-shoulder-continuity-v1",
     "pelvisContract": "mirrorlife-civic-pelvis-continuity-v2",
-    "runtime": "contoured-shell+bone-weighted-shoulder-overlap+continuous-limb-skin"
+    "runtime": "contoured-shell+reference-weighted-limb-taper+bone-weighted-shoulder-overlap+continuous-limb-skin"
   },
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
@@ -47,8 +47,8 @@
     ]
   },
   "garmentTopologyContract": {
-    "version": "mirrorlife-civic-garment-topology-v1",
-    "runtime": "bone-weighted-superellipse+topology-flow-creases+asymmetric-drape",
+    "version": "mirrorlife-civic-garment-topology-v2",
+    "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+topology-flow-creases+asymmetric-drape",
     "garments": [
       "sleeve",
       "trouser",
@@ -162,7 +162,7 @@
     ]
   },
   "animationContract": {
-    "version": "mirrorlife-civic-clips-v14",
+    "version": "mirrorlife-civic-clips-v15",
     "runtime": "authored-keyframe-blend+continuous-skin+proximal-volume+skirt-flex+facial-hand-acting",
     "clips": [
       "idle",
@@ -193,13 +193,13 @@
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 131,
-      "triangles": 41930
+      "triangles": 41904
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
       "meshes": 145,
-      "triangles": 40924
+      "triangles": 40992
     }
   }
 }
