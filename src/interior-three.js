@@ -13,13 +13,13 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v67";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v68";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v3";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
-const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v3";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v4";
 const CIVIC_HERO_PROP_TYPES = new Set([
   "civic-display-case",
   "civic-notice-console",
@@ -6623,7 +6623,7 @@ function createCivicFaceDecal(role = "player") {
     // continues to receive real shading and occlusion from the hair volume.
     emissive: new THREE.Color(0xffffff),
     emissiveMap: texture,
-    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.105 : 0.075,
+    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.105 : 0.086,
     roughness: 0.76,
     metalness: 0,
     // Real alpha blending keeps the six-pixel source feather continuous.
@@ -6662,7 +6662,7 @@ function createCivicFaceDecal(role = "player") {
   decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v2";
   decal.userData.mirrorLifeFaceIdentityContract = CIVIC_FACE_IDENTITY_CONTRACT;
   decal.userData.mirrorLifeFaceMode = CIVIC_FACE_MODE;
-  if (CIVIC_FACE_MODE === "illustrated-cornea") {
+  if (CIVIC_FACE_MODE === "illustrated-cornea" || CIVIC_FACE_MODE === "curved-atlas") {
     // Keep the authored eye painting intact and add one true optical surface
     // above it. The shallow lenses catch the moving room/key lights and retain
     // real parallax at quarter views, while the curved atlas supplies the
@@ -6685,20 +6685,23 @@ function createCivicFaceDecal(role = "player") {
       const corneaMaterial = new THREE.MeshPhysicalMaterial({
         color: 0xfff9ef,
         transparent: true,
-        opacity: 0.15,
+        opacity: 0.12,
         depthWrite: false,
-        roughness: 0.06,
+        roughness: 0.055,
         metalness: 0,
+        transmission: 0.16,
+        thickness: 0.012,
+        ior: 1.38,
         clearcoat: 1,
-        clearcoatRoughness: 0.08,
-        envMapIntensity: 1.08
+        clearcoatRoughness: 0.065,
+        envMapIntensity: 1.18
       });
       const cornea = new THREE.Mesh(corneaGeometry, corneaMaterial);
       cornea.name = "CivicCorneaLenses";
       cornea.castShadow = false;
       cornea.receiveShadow = false;
       cornea.renderOrder = 3;
-      cornea.userData.mirrorLifeCorneaContract = "mirrorlife-civic-cornea-v1";
+      cornea.userData.mirrorLifeCorneaContract = "mirrorlife-civic-cornea-v2";
       decal.add(cornea);
     }
   }
@@ -7237,7 +7240,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v12-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v13-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
@@ -8329,6 +8332,7 @@ function createCivicActorObject(actor, asset) {
       "OuterLash_",
       "HairRibbon_",
       "FaceFrameLock_",
+      "HairTempleWisp_",
       "ElbowCorrectiveVolume_",
       "KneeCorrectiveVolume_",
       "SleeveCompression_",
@@ -9853,7 +9857,7 @@ function getStats() {
         blink: Number((entry.blinkInfluence || 0).toFixed(4))
       } : null,
       cornea: entry.faceCornea ? {
-        version: "mirrorlife-civic-cornea-v1",
+        version: entry.faceCornea?.userData?.mirrorLifeCorneaContract || "mirrorlife-civic-cornea-v2",
         lensCount: 2,
         physicallyLit: true
       } : null,

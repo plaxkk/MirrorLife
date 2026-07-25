@@ -13,7 +13,18 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v67", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v68", "civic character sculpt contract is stale");
+assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v4", "civic hair construction contract is stale");
+assert.equal(
+  manifest.hairConstructionContract?.runtime,
+  "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
+  "civic hair construction runtime changed"
+);
+assert.deepEqual(
+  manifest.hairConstructionContract?.parts,
+  ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
+  "civic hair construction parts changed"
+);
 assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v6", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
@@ -77,9 +88,10 @@ assert.equal(manifest.faceDecal?.textureDirection, "soft-premium-sculpted-portra
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v2", "civic facial morph contract is stale");
-assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-identity-v3", "civic facial identity integration contract is stale");
+assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-identity-v4", "civic facial identity integration contract is stale");
 assert.equal(manifest.faceDecal?.productionFaceMode, "curved-atlas", "civic production face mode changed");
-assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-identity-v3", "civic production facial identity contract is stale");
+assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-identity-v4", "civic production facial identity contract is stale");
+assert.equal(manifest.faceDecal?.corneaContract, "mirrorlife-civic-cornea-v2", "civic production cornea contract is stale");
 assert.equal(manifest.faceDecal?.uvContract, "mirrorlife-civic-head-uv-v1", "civic head UV contract is stale");
 assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"], "civic hybrid facial parts changed");
 assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-morph-v4", "civic mouth morph contract is stale");
@@ -168,6 +180,8 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("HairRibbon_2")), `${role}: broad authored crown hair ribbon is missing`);
   assert(contents.includes(Buffer.from("FaceFrameLock_-1")), `${role}: left face-framing hair lock is missing`);
   assert(contents.includes(Buffer.from("FaceFrameLock_1")), `${role}: right face-framing hair lock is missing`);
+  assert(contents.includes(Buffer.from("HairTempleWisp_-1")), `${role}: left secondary temple wisp is missing`);
+  assert(contents.includes(Buffer.from("HairTempleWisp_1")), `${role}: right secondary temple wisp is missing`);
   assert(contents.includes(Buffer.from("SleeveCompressionPivot_-1")), `${role}: left bend-driven sleeve corrective is missing`);
   assert(contents.includes(Buffer.from("SleeveCompressionPivot_1")), `${role}: right bend-driven sleeve corrective is missing`);
   assert(contents.includes(Buffer.from("TrouserCompressionPivot_-1")), `${role}: left bend-driven trouser corrective is missing`);

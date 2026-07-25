@@ -1,6 +1,17 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v67",
+  "sculptContract": "mirrorlife-civic-sculpt-v68",
+  "hairConstructionContract": {
+    "version": "mirrorlife-civic-hair-construction-v4",
+    "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
+    "parts": [
+      "HairCap",
+      "HairFlowRidge",
+      "HairRibbon",
+      "FaceFrameLock",
+      "HairTempleWisp"
+    ]
+  },
   "bodyIdentityContract": {
     "version": "mirrorlife-civic-body-identity-v6",
     "roles": [
@@ -100,9 +111,10 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-identity-v3",
+    "integrationContract": "mirrorlife-civic-face-identity-v4",
     "productionFaceMode": "curved-atlas",
-    "productionIntegrationContract": "mirrorlife-civic-face-identity-v3",
+    "productionIntegrationContract": "mirrorlife-civic-face-identity-v4",
+    "corneaContract": "mirrorlife-civic-cornea-v2",
     "uvContract": "mirrorlife-civic-head-uv-v1",
     "preservedSculptParts": [
       "Head",
@@ -182,25 +194,25 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 129,
+      "meshes": 131,
       "triangles": 40636
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 115,
+      "meshes": 117,
       "triangles": 38088
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 139,
+      "meshes": 141,
       "triangles": 44992
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 152,
+      "meshes": 154,
       "triangles": 43752
     }
   }

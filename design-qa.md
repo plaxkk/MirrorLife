@@ -1,5 +1,46 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v121 face optics and hair-construction gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB).
+- Final desktop implementation: `tmp/v121-final-desktop-yaw0.png` (`1672 × 941`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas source/implementation comparison: `tmp/reference-vs-v121-final-full.png`; both frames use the same output size, equivalent social state and complete uncropped room composition.
+- Full 3D and responsive evidence: `tmp/v121-final-desktop-yaw90.png`, `tmp/v121-final-desktop-yaw180.png`, `tmp/v121-final-mobile-390x844.png` and the consolidated `tmp/v121-orbit-and-mobile-board.png`.
+- Runtime evidence: opening desktop `167 / 282,888`, side `170 / 293,996`, reverse `171 / 334,720`; mobile `106 / 244,336`. Every view remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the exploration regression moved the player `3.33m`, rotated the physical camera `65.3°`, retained the curved identity-surface blink and completed desktop/mobile scene flow. The transition stress run completed `26` zones and `78` transitions with zero failures or runtime errors.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v120 P1 / eyes retained a flat luminous decal read] The production curved identity surface now carries a separate pair of physically lit corneal lenses. Cornea v2 uses low-opacity transmission, restrained clearcoat and a shallow head-attached optical shell; it responds to the room rather than glowing independently.
+- [fixed / experimental full-volume eyes became bead-like at gameplay distance] A three-mode same-state comparison (`curved-atlas`, `illustrated`, `uv`) showed that replacing the role-authored iris/eyelid hierarchy with primitive volume geometry reduced identity and created a plastic bead read. Production therefore keeps the curved role atlas and adds only the optical lens layer.
+- [improved / pale hair highlight slabs competed with the faces] Player, listener, facilitator and mediator hair highlights are darker and closer to their authored base hue. The new value structure separates cap, flow ridge and role silhouette without creating ivory plastic chunks above the forehead.
+- [fixed / temples ended in abrupt cap-to-face seams] All four GLBs gain real tapered `HairTempleWisp` geometry, alongside the existing cap, flow ridge, ribbon and face-frame locks. These head-attached locks survive side and reverse orbit and remain under the per-role `45k` triangle asset ceiling.
+- [checked / identity optics remain spatially honest] The role atlas remains a dense, curved, head-attached surface with live expression morphs, depth testing and hair occlusion. The corneas and temple wisps are actual 3D geometry; no billboard, sprite, CSS/SVG drawing or screenshot projection is used.
+- [checked / transition, movement and performance contracts remain intact] Face identity v4, cornea v2 and hair construction v4 are asserted after the atomic ready state. Assets, full build, 26-zone physics, movement/orbit, desktop/mobile scene flow and transition stress all pass.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese top HUD, location label, testimony state and bottom action rail remain stable at exact desktop size and in `390 × 844` portrait.
+- [improved][spacing and layout rhythm] Clearer face/hair separation strengthens the four-person testimony ring while preserving the portal–listening-wall–lounge composition and circulation.
+- [improved][colors and visual tokens] Hair values now remain inside the teal, coral, oatmeal, green and walnut hierarchy instead of introducing pale plastic highlights; the face optics borrow only room light.
+- [improved][image quality and asset fidelity] Corneal response, temple wisps and layered role hair are authored, lit, animated and orbit-safe 3D geometry. The exact-size comparison shows more legible identity and less procedural cap construction.
+- [checked][copy and content] “倾听线索”, “倾听墙”, the current-speaker marker and four civic actions remain coherent with the visible public testimony.
+- [P1][production character skinning and contact remain visibly behind the source] The combined comparison still exposes simpler clavicle/upper-arm deformation, hand articulation, notebook grip and weight transfer.
+- [P1][garment microconstruction and material response remain below the source] Hems, cuffs, knit/cloth differentiation, hardware and role-specific fabric compression are still less resolved.
+- [P1][room-wide secondary asset finish remains below the source] The hero suites are coherent, but supporting shelves, documents, botanical variation and timber joinery still lack the source's production-level irregularity and craftsmanship.
+- [P1][offline global illumination remains visibly ahead] The source retains softer multi-bounce penumbrae, richer contact colour, subtler glass reflections and more natural skin/cloth light transport.
+- [P2][HUD optical finish remains behind] Responsive coverage and hierarchy pass; icons, glass-panel depth, micro-spacing and compact location treatment still read more functional than cinematic.
+
+### Gate result
+
+v121 improves the gameplay-distance character read without sacrificing the required walkable, rotatable 3D world: each role keeps a recognizable illustrated identity on a curved animated face, gains real light-responsive corneas and receives a more restrained layered hair construction. The exact-size source comparison still contains actionable P1 gaps in production skinning/contact, garment construction, secondary room assets and offline-quality indirect light.
+
+final result: blocked
+
+Blocker: source-level character deformation/contact, garment microconstruction, room-wide bespoke asset finish and offline-quality global illumination remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v120 civic material-construction gate
 
 ### Evidence inspected together

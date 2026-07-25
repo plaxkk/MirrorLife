@@ -12,7 +12,10 @@ ROLE_CONFIGS = {
     "player": {
         "skin": "#efb58d",
         "hair": "#3b3947",
-        "hair_highlight": "#706d78",
+        # Keep the clump separation inside the near-charcoal family. The
+        # previous pale lavender highlight resolved as hard plastic panels
+        # across the player's crown under the portal key.
+        "hair_highlight": "#565866",
         "eye": "#3f342d",
         "eye_ring": "#776153",
         "top": "#e6dbc9",
@@ -32,7 +35,7 @@ ROLE_CONFIGS = {
     "listener": {
         "skin": "#edb087",
         "hair": "#303744",
-        "hair_highlight": "#596675",
+        "hair_highlight": "#465869",
         "eye": "#3a312b",
         "eye_ring": "#716153",
         "top": "#258b82",
@@ -47,7 +50,7 @@ ROLE_CONFIGS = {
     "facilitator": {
         "skin": "#f0b790",
         "hair": "#d45f52",
-        "hair_highlight": "#ed786b",
+        "hair_highlight": "#e27063",
         # Keep role tint in the iris, but anchor it in the same near-charcoal
         # value family as the reference cast. The lighter green read as glass
         # beads once the face was reduced to gameplay size.
@@ -68,7 +71,7 @@ ROLE_CONFIGS = {
     "mediator": {
         "skin": "#eeb28a",
         "hair": "#6b4a3c",
-        "hair_highlight": "#8b6959",
+        "hair_highlight": "#7b5c50",
         "eye": "#354334",
         "eye_ring": "#4f654d",
         "top": "#e9decd",
@@ -1954,7 +1957,7 @@ def build_hair(head, mats, style):
             (0.026, 0.023, 0.017, 0.003),
             mats["hair_highlight"],
             head,
-            sides=10,
+            sides=6,
             oval_ratio=0.34,
         )
     # Six overlapping, wider locks replace the comb-like row of eight narrow
@@ -2030,6 +2033,29 @@ def build_hair(head, mats, style):
             head,
             sides=14,
             oval_ratio=0.48,
+        )
+        # A fine secondary wisp gives the face frame an intentional taper and
+        # catches one restrained highlight beside the cheek. This is genuine
+        # head-attached geometry, not a camera-facing painted strand.
+        wisp_tip_z = {
+            "spiky": 0.018,
+            "cap": -0.008,
+            "coral_ponytail": -0.078,
+            "braided_bob": -0.062,
+        }.get(style, -0.02)
+        tapered_lock(
+            f"HairTempleWisp_{side}",
+            [
+                (side * 0.173, -0.155, 0.17),
+                (side * 0.206, -0.205, 0.11),
+                (side * 0.218, -0.221, 0.045),
+                (side * 0.205, -0.218, wisp_tip_z),
+            ],
+            (0.017, 0.015, 0.009, 0.0028),
+            mats["hair_highlight"],
+            head,
+            sides=8,
+            oval_ratio=0.42,
         )
 
     if style == "spiky":
@@ -3174,7 +3200,12 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v67",
+        "sculptContract": "mirrorlife-civic-sculpt-v68",
+        "hairConstructionContract": {
+            "version": "mirrorlife-civic-hair-construction-v4",
+            "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
+            "parts": ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
+        },
         "bodyIdentityContract": {
             "version": "mirrorlife-civic-body-identity-v6",
             "roles": ["player", "listener", "facilitator", "mediator"],
@@ -3230,9 +3261,10 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-identity-v3",
+            "integrationContract": "mirrorlife-civic-face-identity-v4",
             "productionFaceMode": "curved-atlas",
-            "productionIntegrationContract": "mirrorlife-civic-face-identity-v3",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v4",
+            "corneaContract": "mirrorlife-civic-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",

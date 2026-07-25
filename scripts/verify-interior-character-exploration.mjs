@@ -102,12 +102,14 @@ try {
   );
   assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the production curved identity surface");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v3"), "civic actors did not expose the production facial identity surface");
+  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v4"), "civic actors did not expose the production facial identity surface");
   assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v3"), "civic actors did not preserve the production facial identity contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v4"), "civic actors did not preserve the production facial identity contract");
   assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic identity surface retained duplicate volumetric lips");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 6), "civic identity-surface facial morph set is incomplete");
   assert(opening.actors.every((actor) => actor.eyes === null), "civic identity surface retained duplicate primitive eye geometry");
+  assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v2"), "civic production faces did not expose physically lit corneal lenses");
+  assert(opening.actors.every((actor) => actor.cornea?.lensCount === 2 && actor.cornea?.physicallyLit === true), "civic corneal lens contract is incomplete");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v8"), "civic actors did not expose the role-authored independent-hand contract");
   assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v6" && actor.body?.realGeometry === true), "civic actors did not expose the reference-weighted body shell contract");
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
