@@ -15,7 +15,7 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v72";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
-const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v3";
+const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v4";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v11";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v3";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
@@ -245,6 +245,7 @@ let OutputPass;
 let cloneSkeleton;
 let loader;
 let threeLoading;
+let threeAssetsReady = false;
 let canvas;
 let renderer;
 let composer;
@@ -361,12 +362,13 @@ async function loadThree() {
   }
   await threeLoading;
   await preloadPhysicalSurfaceMaps();
+  threeAssetsReady = true;
   return true;
 }
 
 function ensureLayer() {
   if (renderer) return true;
-  if (!THREE || !GLTFLoader) {
+  if (!THREE || !GLTFLoader || !threeAssetsReady) {
     loadThree().then(() => window.markRenderActive?.(1800));
     return false;
   }
@@ -1208,8 +1210,8 @@ function getSurfaceBumpTexture(kind = "plaster") {
 function getPhysicalSurfaceSources() {
   return {
     terrazzo: {
-      map: "/assets/interiors/textures/civic-terrazzo-basecolor-v1.png",
-      repeat: [4.8, 4.8]
+      map: "/assets/interiors/textures/civic-terrazzo-basecolor-v2.png",
+      repeat: [3.7, 3.7]
     },
     plaster: {
       map: "/assets/interiors/textures/atelier-lime-plaster-basecolor-v1.jpg",
@@ -1284,7 +1286,7 @@ async function preloadPhysicalSurfaceMaps() {
     // receiver inside the same atomic reveal gate as the rug and terrazzo.
     const foliageRevision = ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : "";
     const civicFoliageProjectionTask = Promise.all([
-      textureLoader.loadAsync(`/assets/interiors/textures/civic-foliage-gobo-v1.png${foliageRevision}`),
+      textureLoader.loadAsync(`/assets/interiors/textures/civic-foliage-gobo-v2.png${foliageRevision}`),
       textureLoader.loadAsync(`/assets/interiors/textures/civic-foliage-shadow-v1.png${foliageRevision}`)
     ]).then(([gobo, shadow]) => {
       gobo.colorSpace = THREE.NoColorSpace;
@@ -1372,7 +1374,7 @@ function getCivicFoliageGoboTexture() {
   if (civicFoliageGoboTexture) return civicFoliageGoboTexture;
   if (!civicFoliageGoboTextureLoading && THREE) {
     civicFoliageGoboTextureLoading = new THREE.TextureLoader().load(
-      `/assets/interiors/textures/civic-foliage-gobo-v1.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
+      `/assets/interiors/textures/civic-foliage-gobo-v2.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
       (texture) => {
         // This is a transmission mask for SpotLight.map, not colour imagery.
         // Keeping it linear preserves the photographed leaf-edge contrast.
@@ -3288,10 +3290,10 @@ function addCivicLocalStoryLights(theme, mobileLod = false) {
   if (foliageGobo) {
     const foliageSun = new THREE.SpotLight(
       0xffd8a0,
-      theme?.night ? 0.08 : (mobileLod ? 0.64 : 1.12),
+      theme?.night ? 0.08 : (mobileLod ? 32 : 60),
       13,
-      Math.PI * 0.31,
-      0.68,
+      Math.PI * 0.33,
+      0.74,
       1.28
     );
     foliageSun.name = "civic-foliage-projection";
@@ -5757,13 +5759,13 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#c4beb7" : floorColor, {
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#c8c1b9" : floorColor, {
       // A softly honed mineral surface matches the reference better than the
       // former cold grey, high-contrast chip field. The colour map still
       // supplies real terrazzo variation, while reduced bump and stronger
       // environment response keep faces and furniture from competing with a
       // noisy floor at the intimate 46° story lens.
-      roughness: theme.zoneId === "public-plaza" ? 0.66 : 0.9,
+      roughness: theme.zoneId === "public-plaza" ? 0.72 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
       bumpScale: theme.zoneId === "public-plaza" ? 0.0055 : 0.026,

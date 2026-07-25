@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v125 mineral floor and source-derived daylight gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Final desktop implementation: `tmp/v125-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v125-final-full.png` (`3344 × 941`); the complete source and implementation are preserved at equal native pixel dimensions on one canvas.
+- Mandatory focused comparison: `tmp/reference-vs-v125-floor-focus.png` (`3344 × 480`); equal-height native-pixel crops expose terrazzo scale, mineral colour separation, foliage breakup, rug/inlay response and furniture grounding.
+- Full 3D and responsive evidence: `tmp/v125-final-desktop-yaw90.png`, `tmp/v125-final-desktop-yaw180.png`, `tmp/v125-final-desktop-yaw270.png`, `tmp/v125-final-mobile-yaw0.png` and `tmp/v125-four-direction-board.png`.
+- Runtime evidence: opening desktop `168 / 284,598`, side `171 / 295,706`, reverse `172 / 336,430`, fourth orbit `169 / 288,522`; mobile `106 / 245,336`. Every capture completes the hidden two-frame atomic warmup with zero shader errors and remains below the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: two fresh browser regressions moved the player `3.33m` and `3.33m`, rotated the physical camera `65.3°`, preserved the curved identity-surface blink and retained both role contact constraints. Desktop/mobile scene flow passes; the transition stress run covers `26` zones and `78` transitions with zero failures or runtime errors.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v124 P1 / floor read as a uniform procedural beige slab] The civic floor now uses a source-directed `1024 × 1024` warm mineral terrazzo asset with muted teal, coral and umber aggregate, a larger authored repeat and a honed roughness response. The focused same-canvas comparison shows materially clearer aggregate hierarchy without turning the floor into gameplay noise.
+- [improved / foliage light had broad value change but little canopy identity] A new source-derived linear gobo supplies irregular leaf breaks to the physical civic spotlight. The projector affects real room surfaces and moving actors rather than a screen-space overlay.
+- [fixed / Three could construct the visible room while physical surface assets were still loading] Layer construction now waits for the full Three dependency-and-surface gate. The final map, gobo, rug, physics, camera and two-frame shader warmup therefore participate in one atomic reveal instead of relying on a later signature rebuild.
+- [rejected visual experiment / additive sun receiver created a hard floor edge in rear orbit] The `90°–270°` review exposed oversized white leaf masses and a visible rectangular cutoff. The additive receiver and its asset were removed; production keeps the physical gobo plus the existing low-energy world-space foliage shadow receivers.
+- [rejected exposure candidate / lighter floor tint and stronger projector flattened the room] Exact-size comparison showed an overly white lower frame and reduced furniture grounding. Production uses the darker `#c8c1b9` mineral tint, `0.72` roughness and `60/32` desktop/mobile projector intensity.
+- [checked / the material change remains true through movement and orbit] The floor map, brass navigation lines, rug and foliage breakup remain metre-scale world surfaces at all four camera headings. No generated raster is used as a room screenshot, billboard or replacement for geometry.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese status, place-memory title, four civic actions and mobile truncation remain stable at the exact desktop and `390 × 844` viewports. The source still has more optically refined icon/type balance.
+- [improved][spacing and layout rhythm] Material breakup gives the open foreground a navigable floor cadence without adding props to the `1.4m` circulation path. The source still has stronger asymmetrical foreground framing and a denser fixed-shot composition.
+- [improved][colors and visual tokens] Warm ivory, walnut, teal, forest green, coral and brass now sit on a quieter mineral base; teal/coral aggregate connects the floor to the room palette without competing with testimony markers.
+- [improved][image quality and asset fidelity] The terrazzo and gobo are real, source-directed raster assets with repeat/filtering and physically lit integration. The rejected additive receiver is not present in production, avoiding the raster edge exposed by orbit QA.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory status and the four civic actions remain coherent with the visible testimony. No reference-private text is copied into runtime state.
+- [checked][physical truth and responsiveness] The visual floor remains the same Rapier walk surface; actor capsules, furniture colliders, interaction anchors and authoritative movement are unchanged. Phone keeps the three-character performance LOD and practical joystick/action layout.
+- [P1][whole-body deformation and contact pressure remain behind the source] The source still has finer clavicle rotation, elbow compression, finger curl, cloth reaction and planted weight transfer. The implementation's physical contacts are correct but mechanically cleaner and more toy-like.
+- [P1][room-wide secondary asset craft remains visibly behind] Hero furniture is complete and orbit-safe, but documents, joinery, glassware, botanical species and shelf irregularity remain broader and more procedural than the source.
+- [P1][offline indirect light and material transport remain visibly ahead] The new mineral/light separation closes part of the gap, but the source retains softer multi-bounce penumbrae, richer contact colour, subtler glass transport and more natural skin/cloth response.
+- [P2][camera is gameplay-correct but not cinematically identical] Full orbit, movement and objective readability pass; the target can use a lower, denser fixed composition with richer foreground occlusion. Literal replication would currently compromise navigation in the rear quadrants.
+- [P2][HUD optical finish remains behind] Coverage, hierarchy and responsive behavior pass, while icon craft, translucent-panel depth, micro-spacing and compact type treatment remain less refined than the target.
+
+### Implementation checklist
+
+- Preserve the new dependency-and-surface ready gate as part of the atomic scene contract.
+- Retain the world-space physical gobo; do not reintroduce the rejected additive floor receiver.
+- Build the next character-quality increment around full-body weight transfer and fabric/hand pressure rather than additional surface decoration.
+- Replace the most visible broad secondary props only when they contribute a unique civic function and remain inside the established orbit/mobile budgets.
+
+### Gate result
+
+v125 improves the material and light foundation with a quieter, more specific mineral floor, source-derived physical canopy breakup and a stricter pre-render asset gate. The four-direction review also caught and removed a visually attractive front-view shortcut that failed the actual 3D orbit. The room remains genuinely walkable, rotatable and physically staged, but the mandatory same-canvas comparison still contains actionable P1 differences in character deformation, secondary environment craft and offline-quality light transport.
+
+final result: blocked
+
+Blocker: source-level whole-body deformation/contact pressure, complete-room bespoke secondary asset craft and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v124 physical hand-contact and composition gate
 
 ### Evidence inspected together

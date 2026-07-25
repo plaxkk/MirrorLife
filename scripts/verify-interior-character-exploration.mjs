@@ -95,7 +95,7 @@ try {
   );
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
-  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v3", "civic room did not expose the authored indirect-light contract");
+  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v4", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
   assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v11", "civic room did not expose the authored furniture-detail contract");
   assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v3", "civic room did not expose the scanned furniture-surface contract");
