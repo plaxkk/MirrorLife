@@ -7167,12 +7167,15 @@ function stagePublicListeningEnsemble(zone, entries = []) {
     .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
   const compactCivicComposition = qaComposition && window.innerWidth <= 720;
   const listeningPoints = qaComposition ? [
-    { x: compactCivicComposition ? -1.36 : -1.54, z: compactCivicComposition ? 0.32 : 0.14 },
-    { x: compactCivicComposition ? 1.36 : 1.54, z: compactCivicComposition ? 0.34 : 0.18 },
+    { x: compactCivicComposition ? -1.36 : -1.78, z: compactCivicComposition ? 0.32 : 0.2 },
+    { x: compactCivicComposition ? 1.36 : 1.96, z: compactCivicComposition ? 0.34 : 0.32 },
     // Portrait framing needs the rear mediator closer to the centreline;
     // leaving the desktop offset unchanged placed them exactly behind the
     // facilitator and made a four-person hearing read as a three-person scene.
-    { x: compactCivicComposition ? 0.42 : 1.12, z: compactCivicComposition ? -1.52 : -1.42 }
+    // Desktop also keeps the witness off the facilitator's silhouette. The
+    // asymmetric open triangle matches the reference's conversational staging
+    // and gives the player a readable lane toward the testimony wall.
+    { x: compactCivicComposition ? 0.42 : 1.08, z: compactCivicComposition ? -1.52 : -1.86 }
   ] : [
     { x: 0.9, z: -1.45 },
     { x: 3.15, z: 0.72 },

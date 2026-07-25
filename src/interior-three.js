@@ -24,8 +24,16 @@ const CIVIC_CONTACT_PRESSURE_CONTRACT = "mirrorlife-civic-contact-pressure-v1";
 const CIVIC_FOOT_CONTACT_CONTRACT = "mirrorlife-civic-foot-contact-v1";
 const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
+const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
 const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
 const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v4";
+const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v1";
+const CIVIC_FACE_SKIN_TONES = Object.freeze({
+  player: "#efb58d",
+  listener: "#edb087",
+  facilitator: "#f0b790",
+  mediator: "#eeb28a"
+});
 const CIVIC_HERO_PROP_TYPES = new Set([
   "civic-display-case",
   "civic-notice-console",
@@ -126,12 +134,12 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.82,
-    fill: 0.3,
-    hemi: 0.26,
-    bounce: 0.7,
-    wash: 0.5,
-    exposure: 0.79,
+    key: 1.9,
+    fill: 0.24,
+    hemi: 0.21,
+    bounce: 0.6,
+    wash: 0.44,
+    exposure: 0.77,
     keyColor: "#ffe5cc",
     fillColor: "#c5dfdf"
   },
@@ -581,7 +589,7 @@ function ensureLayer() {
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
         color = mix(vec3(luma), color, 1.0 + 0.026 * strength);
-        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.096 * strength) + vec3(0.54));
+        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.118 * strength) + vec3(0.54));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
         color *= mix(vec3(1.0), vec3(1.025, 0.99, 0.945), (0.34 + shadowTone * 0.38) * strength);
@@ -595,7 +603,7 @@ function ensureLayer() {
         color *= 1.0 - editorialInk;
         vec2 centred = (vUv - 0.5) * vec2(0.88, 1.0);
         float vignette = smoothstep(0.34, 0.73, length(centred));
-        color *= 1.0 - vignette * 0.022 * strength;
+        color *= 1.0 - vignette * 0.052 * strength;
         gl_FragColor = vec4(color, texel.a);
       }
     `
@@ -1216,7 +1224,7 @@ function getSurfaceBumpTexture(kind = "plaster") {
 function getPhysicalSurfaceSources() {
   return {
     terrazzo: {
-      map: "/assets/interiors/textures/civic-terrazzo-basecolor-v2.png",
+      map: "/assets/interiors/textures/civic-terrazzo-tiles-basecolor-v3.png",
       repeat: [3.7, 3.7]
     },
     plaster: {
@@ -1586,29 +1594,29 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 1 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.9 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffe0ba");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.26) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.16 : 0.3) : 0;
   }
   if (civicCeilingBounceLight) {
     civicCeilingBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.17 : 0.25)
+      ? (lastWidth <= 720 ? 0.14 : 0.19)
       : 0;
   }
   if (civicBackWallBounceLight) {
     civicBackWallBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.08 : 0.14)
+      ? (lastWidth <= 720 ? 0.06 : 0.1)
       : 0;
   }
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.38;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.42 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.25 : 0.26;
   if (keyLight?.shadow) {
     keyLight.shadow.radius = theme.zoneId === "public-plaza" ? 10 : 9;
     keyLight.shadow.blurSamples = theme.zoneId === "public-plaza" ? 28 : 24;
@@ -5806,17 +5814,17 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#c8c1b9" : floorColor, {
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#bcb8b2" : floorColor, {
       // A softly honed mineral surface matches the reference better than the
       // former cold grey, high-contrast chip field. The colour map still
       // supplies real terrazzo variation, while reduced bump and stronger
       // environment response keep faces and furniture from competing with a
-      // noisy floor at the intimate 46° story lens.
-      roughness: theme.zoneId === "public-plaza" ? 0.72 : 0.9,
+      // noisy floor at the editorial 50° story lens.
+      roughness: theme.zoneId === "public-plaza" ? 0.78 : 0.9,
       surface: "terrazzo",
       useSurfaceMap: theme.zoneId === "public-plaza",
-      bumpScale: theme.zoneId === "public-plaza" ? 0.0055 : 0.026,
-      envMapIntensity: theme.zoneId === "public-plaza" ? 0.68 : 0.48
+      bumpScale: theme.zoneId === "public-plaza" ? 0.0045 : 0.026,
+      envMapIntensity: theme.zoneId === "public-plaza" ? 0.56 : 0.48
     })
   );
   floor.rotation.x = -Math.PI / 2;
@@ -5835,7 +5843,7 @@ function rebuildRoom(theme = {}) {
   }
 
   const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
-  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#f1e3d2" : wallColor, {
+  const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#ecddcb" : wallColor, {
     side: THREE.BackSide,
     roughness: theme.zoneId === "public-plaza" ? 0.9 : 0.94,
     surface: "plaster",
@@ -6379,6 +6387,10 @@ function getCivicFaceTexture(role = "player") {
   if (!civicFaceAtlasTexture) return null;
   const safeRole = ["player", "listener", "facilitator", "mediator"].includes(role) ? role : "player";
   if (civicFaceTextures.has(safeRole)) return civicFaceTextures.get(safeRole);
+  const skinHex = CIVIC_FACE_SKIN_TONES[safeRole] || CIVIC_FACE_SKIN_TONES.player;
+  const skinRed = Number.parseInt(skinHex.slice(1, 3), 16);
+  const skinGreen = Number.parseInt(skinHex.slice(3, 5), 16);
+  const skinBlue = Number.parseInt(skinHex.slice(5, 7), 16);
   const roleIndex = { player: 0, listener: 1, facilitator: 2, mediator: 3 }[safeRole];
   const atlas = civicFaceAtlasTexture.image;
   const cellWidth = Math.floor(atlas.width / 2);
@@ -6450,9 +6462,29 @@ function getCivicFaceTexture(role = "player") {
       const eyeCoverage = insideEye
         ? THREE.MathUtils.smoothstep(distanceFromWhite, 3, 22)
         : 0;
-      pixels[offset + 3] = Math.round(
-        pixels[offset + 3] * Math.max(featureCoverage, eyeCoverage)
-      );
+      const coverage = Math.max(featureCoverage, eyeCoverage);
+      const resolvedAlpha = Math.round(pixels[offset + 3] * coverage);
+      pixels[offset + 3] = resolvedAlpha;
+      // Transparent studio-white texels were still present in the mip chain.
+      // At gameplay distance those texels bled into the curved carrier and
+      // produced the pale rectangular "face mask" visible around the eyes and
+      // cheeks. Bleed every low-coverage texel toward the actual role skin,
+      // while preserving the painted cornea, iris, lash and high-contrast
+      // mouth/nose marks. Mip filtering now resolves to skin instead of white.
+      const preservePaint = insideEye
+        ? 1
+        : THREE.MathUtils.smoothstep(distanceFromWhite, 92, 148);
+      const skinBlend = insideEye
+        ? 0
+        : THREE.MathUtils.clamp(1 - preservePaint, 0, 1);
+      pixels[offset] = Math.round(THREE.MathUtils.lerp(red, skinRed, skinBlend));
+      pixels[offset + 1] = Math.round(THREE.MathUtils.lerp(green, skinGreen, skinBlend));
+      pixels[offset + 2] = Math.round(THREE.MathUtils.lerp(blue, skinBlue, skinBlend));
+      if (resolvedAlpha <= 2) {
+        pixels[offset] = skinRed;
+        pixels[offset + 1] = skinGreen;
+        pixels[offset + 2] = skinBlue;
+      }
     }
     context.putImageData(imageData, 0, 0);
   } catch {
@@ -6467,6 +6499,7 @@ function getCivicFaceTexture(role = "player") {
   texture.magFilter = THREE.LinearFilter;
   texture.anisotropy = Math.min(8, Number(renderer?.capabilities?.getMaxAnisotropy?.() || 1));
   texture.generateMipmaps = true;
+  texture.userData.mirrorLifeCivicFaceMatteContract = CIVIC_FACE_MATTE_CONTRACT;
   texture.needsUpdate = true;
   civicFaceTextures.set(safeRole, texture);
   return texture;
@@ -6701,7 +6734,7 @@ function createCivicFaceDecal(role = "player") {
     // continues to receive real shading and occlusion from the hair volume.
     emissive: new THREE.Color(0xffffff),
     emissiveMap: texture,
-    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.105 : 0.086,
+    emissiveIntensity: CIVIC_FACE_MODE === "illustrated-cornea" ? 0.048 : 0.034,
     roughness: 0.76,
     metalness: 0,
     // Real alpha blending keeps the six-pixel source feather continuous.
@@ -6739,6 +6772,7 @@ function createCivicFaceDecal(role = "player") {
   decal.userData.mirrorLifeFaceDecal = true;
   decal.userData.mirrorLifeFaceMorphContract = "mirrorlife-civic-face-morph-v2";
   decal.userData.mirrorLifeFaceIdentityContract = CIVIC_FACE_IDENTITY_CONTRACT;
+  decal.userData.mirrorLifeFaceMatteContract = CIVIC_FACE_MATTE_CONTRACT;
   decal.userData.mirrorLifeFaceMode = CIVIC_FACE_MODE;
   if (CIVIC_FACE_MODE === "illustrated-cornea" || CIVIC_FACE_MODE === "curved-atlas") {
     // Keep the authored eye painting intact and add one true optical surface
@@ -6960,9 +6994,11 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         breath: 0,
         chainPose: new THREE.Vector4(),
         pelvisPose: new THREE.Vector2(),
+        neckPose: new THREE.Vector3(),
         weightedVertexCount: 0,
         clavicleVertexCount: 0,
         pelvisVertexCount: 0,
+        neckVertexCount: 0,
         uniforms: null
       }
     : null;
@@ -7023,6 +7059,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const paperMaskValues = new Float32Array(count);
     const mineralMaskValues = new Float32Array(count);
     const bodyChainValues = bodyDeformationState ? new Float32Array(count * 4) : null;
+    const neckChainValues = bodyDeformationState ? new Float32Array(count) : null;
     const digitPivotValues = digitDeformationState ? new Float32Array(count * 4) : null;
     const digitFrameValues = digitDeformationState ? new Float32Array(count * 4) : null;
     const upperLidMaskValues = eyeDeformationState ? new Float32Array(count) : null;
@@ -7046,6 +7083,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       ? 1
       : 0;
     const nodeName = String(node.name || "");
+    const sourceNeckChain = bodyDeformationState && nodeName === "Neck";
     let digitPivot = null;
     let digitFrame = new THREE.Quaternion();
     let digitAmplitude = 0;
@@ -7104,6 +7142,14 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         if (Math.max(leftClavicle, rightClavicle) > 0.08) bodyDeformationState.clavicleVertexCount += 1;
         if (pelvisWeight > 0.08) bodyDeformationState.pelvisVertexCount += 1;
       }
+      if (neckChainValues) {
+        const y = Number(positionAttribute?.getY(index) || 0);
+        const neckWeight = sourceNeckChain
+          ? THREE.MathUtils.smoothstep(y, 1.35, 1.455)
+          : 0;
+        neckChainValues[index] = neckWeight;
+        if (neckWeight > 0.08) bodyDeformationState.neckVertexCount += 1;
+      }
       if (digitPivotValues && digitFrameValues) {
         digitPivotValues[index * 4] = Number(digitPivot?.x || 0);
         digitPivotValues[index * 4 + 1] = Number(digitPivot?.y || 0);
@@ -7138,6 +7184,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     geometry.setAttribute("mirrorLifePaperMask", new THREE.BufferAttribute(paperMaskValues, 1));
     geometry.setAttribute("mirrorLifeMineralMask", new THREE.BufferAttribute(mineralMaskValues, 1));
     if (bodyChainValues) geometry.setAttribute("mirrorLifeBodyChain", new THREE.BufferAttribute(bodyChainValues, 4));
+    if (neckChainValues) geometry.setAttribute("mirrorLifeNeckChain", new THREE.BufferAttribute(neckChainValues, 1));
     if (digitPivotValues && digitFrameValues) {
       geometry.setAttribute("mirrorLifeDigitPivot", new THREE.BufferAttribute(digitPivotValues, 4));
       geometry.setAttribute("mirrorLifeDigitFrame", new THREE.BufferAttribute(digitFrameValues, 4));
@@ -7198,12 +7245,14 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       shader.uniforms.mirrorLifeBodyBreath = { value: bodyDeformationState.breath };
       shader.uniforms.mirrorLifeBodyChainPose = { value: bodyDeformationState.chainPose };
       shader.uniforms.mirrorLifeBodyPelvisPose = { value: bodyDeformationState.pelvisPose };
+      shader.uniforms.mirrorLifeBodyNeckPose = { value: bodyDeformationState.neckPose };
       bodyDeformationState.uniforms = {
         weight: shader.uniforms.mirrorLifeBodyWeight,
         supportSide: shader.uniforms.mirrorLifeBodySupportSide,
         breath: shader.uniforms.mirrorLifeBodyBreath,
         chainPose: shader.uniforms.mirrorLifeBodyChainPose,
-        pelvisPose: shader.uniforms.mirrorLifeBodyPelvisPose
+        pelvisPose: shader.uniforms.mirrorLifeBodyPelvisPose,
+        neckPose: shader.uniforms.mirrorLifeBodyNeckPose
       };
     }
     if (digitDeformationState) {
@@ -7235,11 +7284,13 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         attribute float mirrorLifePaperMask;
         attribute float mirrorLifeMineralMask;
         ${bodyDeformationState ? `attribute vec4 mirrorLifeBodyChain;
+        attribute float mirrorLifeNeckChain;
         uniform float mirrorLifeBodyWeight;
         uniform float mirrorLifeBodySupportSide;
         uniform float mirrorLifeBodyBreath;
         uniform vec4 mirrorLifeBodyChainPose;
         uniform vec2 mirrorLifeBodyPelvisPose;
+        uniform vec3 mirrorLifeBodyNeckPose;
         vec3 mirrorLifeRotateBodyX(vec3 pointValue, vec3 pivotValue, float angleValue) {
           vec3 localPoint = pointValue - pivotValue;
           float cosineValue = cos(angleValue);
@@ -7351,6 +7402,21 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
             vec3(0.0),
             mirrorLifeBodyPelvisPose.x * mirrorLifePelvisNormal
               - mirrorLifeBodyPelvisPose.x * mirrorLifeSpineNormal * 0.46
+          );
+          objectNormal = mirrorLifeRotateBodyX(
+            objectNormal,
+            vec3(0.0),
+            mirrorLifeBodyNeckPose.x * mirrorLifeNeckChain
+          );
+          objectNormal = mirrorLifeRotateBodyY(
+            objectNormal,
+            vec3(0.0),
+            mirrorLifeBodyNeckPose.y * mirrorLifeNeckChain
+          );
+          objectNormal = mirrorLifeRotateBodyZ(
+            objectNormal,
+            vec3(0.0),
+            mirrorLifeBodyNeckPose.z * mirrorLifeNeckChain
           );` : ""}
         ${digitDeformationState ? `if (mirrorLifeDigitPivot.w > 0.001) {
           vec4 mirrorLifeNormalFrame = normalize(mirrorLifeDigitFrame);
@@ -7379,6 +7445,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vec3 mirrorLifeRightClaviclePivot = vec3(0.105, 1.225, 0.0);
         vec3 mirrorLifePelvisPivot = vec3(0.0, 0.765, 0.0);
         vec3 mirrorLifeSpinePivot = vec3(0.0, 1.015, 0.0);
+        vec3 mirrorLifeNeckPivot = vec3(0.0, 1.35, 0.0);
         vec3 mirrorLifeLeftShoulderPoint = mirrorLifeRotateBodyX(
           transformed,
           mirrorLifeLeftClaviclePivot,
@@ -7418,6 +7485,22 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
           -mirrorLifeBodyPelvisPose.x * 0.46
         );
         transformed = mix(transformed, mirrorLifeSpinePoint, mirrorLifeBodyChain.z);
+        vec3 mirrorLifeNeckPoint = mirrorLifeRotateBodyX(
+          transformed,
+          mirrorLifeNeckPivot,
+          mirrorLifeBodyNeckPose.x
+        );
+        mirrorLifeNeckPoint = mirrorLifeRotateBodyY(
+          mirrorLifeNeckPoint,
+          mirrorLifeNeckPivot,
+          mirrorLifeBodyNeckPose.y
+        );
+        mirrorLifeNeckPoint = mirrorLifeRotateBodyZ(
+          mirrorLifeNeckPoint,
+          mirrorLifeNeckPivot,
+          mirrorLifeBodyNeckPose.z
+        );
+        transformed = mix(transformed, mirrorLifeNeckPoint, mirrorLifeNeckChain);
         float mirrorLifeBodyTorsoMask =
           smoothstep(0.62, 0.82, position.y)
           * (1.0 - smoothstep(1.35, 1.43, position.y));
@@ -7695,7 +7778,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v17-${eyeDeformationState ? "eyelid" : "static"}-${bodyDeformationState ? "body-chain" : "body-static"}-${digitDeformationState ? "digit-deform" : "digit-static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v18-${eyeDeformationState ? "eyelid" : "static"}-${bodyDeformationState ? "body-neck-chain" : "body-static"}-${digitDeformationState ? "digit-deform" : "digit-static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
@@ -9027,6 +9110,7 @@ function applyCivicContinuousDeformation(entry, {
   entry.continuousDeformationState = {
     version: CIVIC_BODY_DEFORMATION_CONTRACT,
     chainVersion: bodyState?.chainVersion || null,
+    neckVersion: bodyState ? CIVIC_NECK_CHAIN_CONTRACT : null,
     weight: plantedWeight,
     supportSide,
     shoulderCounterShift: plantedWeight * 0.009,
@@ -9035,6 +9119,7 @@ function applyCivicContinuousDeformation(entry, {
     bodyWeightedVertexCount: Number(bodyState?.weightedVertexCount || 0),
     clavicleVertexCount: Number(bodyState?.clavicleVertexCount || 0),
     pelvisVertexCount: Number(bodyState?.pelvisVertexCount || 0),
+    neckVertexCount: Number(bodyState?.neckVertexCount || 0),
     chainPose: bodyState ? {
       leftX: bodyState.chainPose.x,
       leftZ: bodyState.chainPose.y,
@@ -9042,6 +9127,11 @@ function applyCivicContinuousDeformation(entry, {
       rightZ: bodyState.chainPose.w,
       pelvisYaw: bodyState.pelvisPose.x,
       pelvisBank: bodyState.pelvisPose.y
+    } : null,
+    neckPose: bodyState ? {
+      pitch: bodyState.neckPose.x,
+      yaw: bodyState.neckPose.y,
+      roll: bodyState.neckPose.z
     } : null,
     digitVersion: Object.values(digitHands).some(Boolean)
       ? CIVIC_DIGIT_DEFORMATION_CONTRACT
@@ -9772,6 +9862,20 @@ function updateActors(actors = [], now = performance.now()) {
       animatedHead[1] + headLookYaw,
       animatedHead[2] - Number(entry.weightTransferState?.extraRoll || 0) * 0.38
     );
+    if (entry.bodyDeformation) {
+      // The head remains the expressive end joint; the real neck vertices in
+      // the merged body now absorb a restrained share of that motion. This
+      // removes the rigid "head spinning above a stationary peg" read while
+      // keeping the collar and shoulder line planted in the physical body.
+      entry.bodyDeformation.neckPose.set(
+        THREE.MathUtils.clamp(entry.headGroup.rotation.x * 0.34, -0.12, 0.12),
+        THREE.MathUtils.clamp(entry.headGroup.rotation.y * 0.42, -0.22, 0.22),
+        THREE.MathUtils.clamp(entry.headGroup.rotation.z * 0.38, -0.11, 0.11)
+      );
+      if (entry.bodyDeformation.uniforms?.neckPose) {
+        entry.bodyDeformation.uniforms.neckPose.value.copy(entry.bodyDeformation.neckPose);
+      }
+    }
     applyCivicContactConstraints(entry, frameDeltaSeconds);
     applyCivicContactPressure(entry);
     const smileDictionary = entry.faceMorphMesh?.morphTargetDictionary;
@@ -10236,9 +10340,9 @@ function updateCamera(payload = {}) {
   const targetFov = cinematicCivic
     // Keep the complete listening circle, entrance and hero props in the same
     // authored frame. The previous 46° opening made the controlled character
-    // eclipse the mediator at reference resolution; 48° preserves facial
+    // eclipse the mediator at reference resolution; 50° preserves facial
     // readability while matching the wider editorial composition.
-    ? (portrait ? 60 : 48 + civicRearArc * 6 + civicSideArc * 1.2)
+    ? (portrait ? 60 : 50 + civicRearArc * 5 + civicSideArc)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10319,16 +10423,16 @@ function updateCamera(payload = {}) {
     // frame height, leaving visible floor language around the social circle.
     // This distance still supports readable faces while preventing the player
     // and backpack from becoming a foreground wall.
-    ? (portrait ? 5.2 : 5.24 + civicRearArc * 0.84 + civicSideArc * 0.18)
+    ? (portrait ? 5.2 : 6.15 + civicRearArc * 0.72 + civicSideArc * 0.16)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.18 + civicRearArc * 0.46 + civicSideArc * 0.14) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.46 + civicRearArc * 0.4 + civicSideArc * 0.12) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // The desktop civic shot sits closer to an illustrated 35mm eye line than
   // a management-game bird's-eye view: more portal and character silhouette,
   // less undifferentiated floor. Portrait keeps the higher navigation read.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.92) : 0.94)
+  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.82) : 0.94)
     + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
@@ -10877,6 +10981,7 @@ function getStats() {
       continuousDeformation: entry.continuousDeformationState ? {
         version: entry.continuousDeformationState.version,
         chainVersion: entry.continuousDeformationState.chainVersion,
+        neckVersion: entry.continuousDeformationState.neckVersion,
         weight: Number(entry.continuousDeformationState.weight.toFixed(4)),
         supportSide: entry.continuousDeformationState.supportSide,
         shoulderCounterShift: Number(entry.continuousDeformationState.shoulderCounterShift.toFixed(4)),
@@ -10885,8 +10990,15 @@ function getStats() {
         bodyWeightedVertexCount: entry.continuousDeformationState.bodyWeightedVertexCount,
         clavicleVertexCount: entry.continuousDeformationState.clavicleVertexCount,
         pelvisVertexCount: entry.continuousDeformationState.pelvisVertexCount,
+        neckVertexCount: entry.continuousDeformationState.neckVertexCount,
         chainPose: entry.continuousDeformationState.chainPose
           ? Object.fromEntries(Object.entries(entry.continuousDeformationState.chainPose).map(([key, value]) => ([
+              key,
+              Number(Number(value || 0).toFixed(4))
+            ])))
+          : null,
+        neckPose: entry.continuousDeformationState.neckPose
+          ? Object.fromEntries(Object.entries(entry.continuousDeformationState.neckPose).map(([key, value]) => ([
               key,
               Number(Number(value || 0).toFixed(4))
             ])))
@@ -10927,6 +11039,7 @@ function getStats() {
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v2",
         identity: entry.faceDecal?.userData?.mirrorLifeFaceIdentityContract || null,
+        matte: entry.faceDecal?.userData?.mirrorLifeFaceMatteContract || null,
         texture: entry.faceDecal
           ? "mirrorlife-civic-face-texture-v2"
           : null,

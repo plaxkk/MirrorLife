@@ -84,6 +84,23 @@ try {
       .map((actor) => ({ role: actor.assetRole, state: actor.animation?.state, contact: actor.contactConstraint }));
     throw new Error(`civic contact constraints did not settle: ${JSON.stringify(contacts)}`, { cause: error });
   }
+  // The pressure deformation is published one rendered pose after the contact
+  // solver closes its fingertip error. Cold shader compilation can otherwise
+  // let the constraint wait resolve on the exact frame before the sleeve and
+  // digit pressure state is observable. Wait for the authored output itself
+  // instead of weakening the pressure assertions below.
+  await page.waitForFunction(() => {
+    const actors = window.MirrorLifeInterior3D?.getStats?.()?.actors || [];
+    return actors
+      .filter((actor) => ["facilitator", "mediator"].includes(actor.assetRole))
+      .every((actor) => (
+        actor.contactPressure?.version === "mirrorlife-civic-contact-pressure-v1"
+        && Number(actor.contactPressure.pressure || 0) >= 0.95
+        && Number(actor.contactPressure.handCompression || 0) > 0
+        && Object.values(actor.continuousDeformation?.digitCurls || {})
+          .some((curl) => Number(curl || 0) >= 0.14)
+      ));
+  }, { polling: "raf", timeout: 3500 });
 
   const opening = await readStats(page);
   assert.deepEqual(opening.shaderErrors || [], [], "civic scene exposed a WebGL shader compilation failure");
@@ -103,16 +120,20 @@ try {
   assert.ok(opening.furniture?.scannedSurfaceBatches >= 3, "placed civic hero furniture lost its scanned surface shader");
   assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");
   assert(
-    Number(opening.lighting?.ceilingBounce || 0) >= 0.24
-      && Number(opening.lighting?.ceilingBounce || 0) <= 0.27,
+    Number(opening.lighting?.ceilingBounce || 0) >= 0.18
+      && Number(opening.lighting?.ceilingBounce || 0) <= 0.2,
     "civic ceiling bounce did not preserve the authored contrast range"
   );
   assert(
-    Number(opening.lighting?.backWallBounce || 0) >= 0.13
-      && Number(opening.lighting?.backWallBounce || 0) <= 0.15,
+    Number(opening.lighting?.backWallBounce || 0) >= 0.09
+      && Number(opening.lighting?.backWallBounce || 0) <= 0.11,
     "civic rear-wall bounce did not preserve the authored contrast range"
   );
-  assert(Number(opening.lighting?.environment || 0) >= 0.29, "civic environment response did not preserve material separation");
+  assert(
+    Number(opening.lighting?.environment || 0) >= 0.24
+      && Number(opening.lighting?.environment || 0) <= 0.26,
+    "civic environment response did not preserve material separation"
+  );
   assert(Number(opening.lighting?.contactAo || 1) <= 0.48, "civic contact AO is too strong for the broad reference penumbrae");
   assert(opening.actors.every((actor) => actor.assetRole !== "procedural"), "civic scene fell back to procedural actors");
   assert(
@@ -123,13 +144,17 @@ try {
       && Number(actor.weightTransfer.rightUpError ?? 1) <= 0.04
       && actor.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v2"
       && actor.continuousDeformation?.chainVersion === "mirrorlife-civic-body-chain-v1"
+      && actor.continuousDeformation?.neckVersion === "mirrorlife-civic-neck-chain-v1"
       && Number(actor.continuousDeformation.weight || 0) >= 0.95
       && Math.abs(Number(actor.continuousDeformation.shoulderCounterShift || 0) - 0.009) <= 0.0002
       && Number(actor.continuousDeformation.clothTension || 0) >= 0.0017
       && Number(actor.continuousDeformation.bodyWeightedVertexCount || 0) >= 1000
       && Number(actor.continuousDeformation.clavicleVertexCount || 0) >= 100
       && Number(actor.continuousDeformation.pelvisVertexCount || 0) >= 100
+      && Number(actor.continuousDeformation.neckVertexCount || 0) >= 40
       && Object.values(actor.continuousDeformation.chainPose || {})
+        .some((value) => Math.abs(Number(value || 0)) >= 0.004)
+      && Object.values(actor.continuousDeformation.neckPose || {})
         .some((value) => Math.abs(Number(value || 0)) >= 0.004)
       && actor.continuousDeformation.digitVersion === "mirrorlife-civic-digit-deformation-v1"
       && Object.values(actor.continuousDeformation.digitVertexCounts || {})
@@ -164,6 +189,7 @@ try {
   );
   assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the production curved identity surface");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
+  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-face-matte-v1"), "civic face texture lost its role-skin matte contract");
   assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v4"), "civic actors did not expose the production facial identity surface");
   assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
   assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v4"), "civic actors did not preserve the production facial identity contract");
@@ -435,8 +461,10 @@ try {
   assert(
     afterMove.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v2"
       && afterMove.continuousDeformation?.chainVersion === "mirrorlife-civic-body-chain-v1"
+      && afterMove.continuousDeformation?.neckVersion === "mirrorlife-civic-neck-chain-v1"
       && Number(afterMove.continuousDeformation.weight || 0) >= 0.95
       && Number(afterMove.continuousDeformation.bodyWeightedVertexCount || 0) >= 1000
+      && Number(afterMove.continuousDeformation.neckVertexCount || 0) >= 40
       && Object.values(afterMove.continuousDeformation.chainPose || {})
         .some((value) => Math.abs(Number(value || 0)) >= 0.004)
       && afterMove.continuousDeformation.digitVersion === "mirrorlife-civic-digit-deformation-v1"

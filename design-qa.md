@@ -1,5 +1,58 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v129 face matte, neck chain and editorial-space gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `tmp/v129-public-yaw-0.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/v129-reference-comparison-final.png` (`2560 × 720`); source and implementation are aspect-fit to the same `1280 × 720` viewport and judged on one canvas.
+- Mandatory character/story-centre comparison: `tmp/v129-character-focus-comparison.png` (`1520 × 520`); equal crops expose facial integration, head/neck continuity, cast scale, staging, floor cadence and foreground/mid-ground hierarchy.
+- Full 3D evidence: `tmp/v129-public-orbit-board.png` with yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `tmp/v129-public-mobile.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 289,516`, side `179 / 300,624`, reverse `180 / 341,348`, fourth orbit `178 / 308,824`; mobile `106 / 245,814`. All reviewed views report zero shader errors and remain inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the browser regression moved the physical player `5.09m`, rotated the actual camera `65.3°`, verified the curved identity-surface blink, preserved planted feet and restored every body/neck/digit deformation contract after locomotion.
+- Asset evidence: `public/assets/interiors/textures/civic-terrazzo-tiles-basecolor-v3.png` is a real `1024 × 1024` diffuse terrazzo tile asset generated from the prior mineral source, inspected before use and integrated as the physically lit floor map rather than a screen-space overlay.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v128 P1 / face atlas bled a pale rectangular mask into the head] The role-authored face atlas now mattes low-contrast pale pixels toward each exact role skin tone while preserving the high-contrast eyes and line work. Fully transparent texels also carry skin colour, so mipmaps no longer bleed white around the curved facial surface.
+- [improved / the head still rotated above a largely static collar seam] The merged body now carries a dedicated neck-chain vertex field. Pitch, yaw and roll rotate the neck region about an authored anatomical pivot at restrained fractions of head motion, including matching normal rotation; all four actors expose `114` live neck vertices and a non-zero pose.
+- [fixed from v128 P1 / undifferentiated beige floor weakened metre scale] The new floor asset adds low-contrast architectural tile joints while preserving the quiet warm-grey aggregate. At the authored repeat the room now reads in roughly `1.2–1.4m` slabs, improving path distance, furniture scale and foreground depth without introducing a busy checkerboard.
+- [improved / broad fill flattened plaster, floor, cloth and faces into one value] Civic fill, hemisphere, ceiling and rear-wall energy were reduced; the directional key and cool lounge return were retained. A restrained contrast curve and edge vignette now keep the bright threshold, story circle and darker foreground in separate value bands.
+- [fixed / opening cast and furniture read too large and crowded] The desktop story lens now uses `50°`, a `6.15m` follow distance and a lower focus height. Listener, facilitator and mediator form a wider asymmetric triangle, preventing the rear speaker and facilitator from sharing one silhouette while retaining the player's walkable approach lane.
+- [fixed / cold-browser contact-pressure QA sampled the solver one frame too early] The browser check now waits for the authored pressure output after contact closure, then keeps the same hard sleeve-compression and digit-curl assertions. This removes a sampling race without relaxing the animation or physics contract.
+- [checked / all changes remain truthful in a moving, orbitable room] Tile joints, light gradients, face surfaces and head/neck deformation are world-space and physically lit. No screenshot, billboard, CSS/SVG drawing or front-view-only prop substitutes for volume; all four headings retain the player and active story group.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese state, building identity, current speaker, action rail and interaction prompt remain readable at desktop and portrait sizes. The reference still has finer compact typography and more refined translucent-panel optical alignment.
+- [improved][spacing and layout rhythm] The opening now has a clear foreground record desk, a single mid-ground listening circle and a background evidence wall/threshold axis. The source still achieves more purposeful irregularity, softer prop spacing and a stronger lower-right continuation path.
+- [improved][colors and visual tokens] Warm mineral grey, ivory plaster, walnut, teal, coral, forest green and brass now occupy clearer value layers. The implementation remains somewhat more saturated and graphic than the reference's softer bounced-light palette.
+- [improved][image quality and asset fidelity] The mineral tile scale, role-skin face matte and head/neck continuity close three visible gaps with real assets and geometry-aware shading. The focused comparison still exposes simpler hair clumps, facial anatomy, garment edges and hand forms.
+- [checked][copy and content] “倾听线索”, “倾听墙”, the public-place memory and the active speaker remain coherent with the visible testimony; no private source text enters runtime state.
+- [checked][icons and interaction states] Speaker beacon, keyboard prompt, action selection, joystick and jump/interact controls remain functional; atomic warmup prevents incomplete material or actor states from becoming visible.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; actor roots, capsules, floor contacts, furniture colliders and interaction anchors are unchanged. The phone frame stays under its hard draw/triangle budget with usable touch targets.
+- [P1][character production quality remains visibly behind] The source has authored facial topology, softer eyelids/lips, finer hair massing, subtler skin response and cloth-specific deformation. The implementation's curved face atlas and neck field remove the mask/hinge defects but do not equal source-level character art.
+- [P1][room-wide secondary craft remains behind] The source contains more specific glassware, botanicals, upholstery seams, baskets, paper stacks, trim profiles and small-scale wear. The implementation has strong hero suites but still repeats broad procedural secondary forms.
+- [P1][light transport remains behind offline reference quality] Direction and value hierarchy improved, yet the source retains richer multi-bounce colour, larger and softer contact penumbrae, better glass/foliage transmission and less uniform skin/fabric response.
+- [P2][complete orbit exposes gameplay/cinematic trade-offs] All headings remain usable, but side/reverse views necessarily reveal quieter shell planes and wider negative space than the fixed source shot. Near-wall framing is readable and does not hide the cast, but it is not equally art-directed in every quadrant.
+- [P2][HUD optical finish remains behind] Coverage and responsiveness pass, while icon family, compact type spacing, panel depth and button edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve the role-skin matte and neck-chain contracts; move the next character increment into authored facial topology, eyelid/lip volume and hair/skin material response rather than stronger atlas emission.
+- Keep the `50° / 6.15m` opening lens and wider triangle unless player testing shows reduced speaker readability; story-camera changes must continue to pass real walking and four-heading review.
+- Extend the new architectural tile scale and restrained light hierarchy to the remaining five vertical-slice rooms before adding low-salience decorative clutter.
+- Replace the most visible repeated secondary prop families and pursue probe/lightmap-assisted bounce while preserving the current mobile budget.
+
+### Gate result
+
+v129 materially improves first-read spatial credibility, reference-like story framing, face/head integration and indirect-light hierarchy while preserving actual player movement, camera rotation, physics and mobile controls. The mandatory same-canvas comparisons still contain actionable P1 gaps in source-level character art, room-wide bespoke secondary craft and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: authored facial/hair/garment production quality, complete-room secondary asset craftsmanship and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v128 weighted body chain and civic archive craft gate
 
 ### Evidence inspected together
