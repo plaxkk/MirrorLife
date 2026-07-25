@@ -907,7 +907,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v9"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v10"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -988,6 +988,22 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             # draw calls, but no longer resolves as one round mitten.
             sides=10,
         )
+        # A single shallow knuckle crescent gives each real digit a readable
+        # articulation cue at the gameplay camera. It is parented to the same
+        # finger pivot and merged into the one-hand runtime batch, so the line
+        # follows shader-driven curl instead of floating over the skin.
+        curve_tube(
+            f"FingerCrease_{side}_{finger_index}",
+            [
+                (-finger_radius * 0.52, -finger_radius * 0.78, -finger_length * 0.45),
+                (0, -finger_radius * 0.96, -finger_length * 0.49),
+                (finger_radius * 0.52, -finger_radius * 0.78, -finger_length * 0.45),
+            ],
+            0.00115,
+            crease_mat,
+            finger_pivot,
+            resolution=1,
+        )
     # A tapered, two-joint thumb shares the palm volume and follows the same
     # relaxed curl.  Replacing the former isolated ellipsoid fixes the
     # ball-jointed silhouette in side and notebook-holding views.
@@ -1014,6 +1030,18 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         mat,
         thumb_pivot,
         sides=8,
+    )
+    curve_tube(
+        f"ThumbCrease_{side}",
+        [
+            (-0.008, -0.014, -0.029),
+            (0, -0.018, -0.035),
+            (0.008, -0.014, -0.029),
+        ],
+        0.0012,
+        crease_mat,
+        thumb_pivot,
+        resolution=1,
     )
     # Two shallow creases restore hand scale and orientation in close social
     # shots. They sit on the palm surface and merge into the hand draw call,
@@ -3317,7 +3345,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v72",
+        "sculptContract": "mirrorlife-civic-sculpt-v73",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v4",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3405,10 +3433,10 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v9",
+            "version": "mirrorlife-civic-hand-v10",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
-            "surfaceParts": ["PalmLifeLine", "PalmHeartLine", "five-ring-tapered-digits"],
+            "surfaceParts": ["PalmLifeLine", "PalmHeartLine", "FingerCrease", "ThumbCrease", "five-ring-tapered-digits"],
         },
         "notebookContactContract": {
             "version": "mirrorlife-civic-notebook-contact-v3",

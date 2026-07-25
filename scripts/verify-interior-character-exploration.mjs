@@ -121,6 +121,13 @@ try {
       && Number(actor.weightTransfer.weight || 0) >= 0.95
       && Number(actor.weightTransfer.leftUpError ?? 1) <= 0.04
       && Number(actor.weightTransfer.rightUpError ?? 1) <= 0.04
+      && actor.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v1"
+      && Number(actor.continuousDeformation.weight || 0) >= 0.95
+      && Math.abs(Number(actor.continuousDeformation.shoulderCounterShift || 0) - 0.009) <= 0.0002
+      && Number(actor.continuousDeformation.clothTension || 0) >= 0.0017
+      && actor.continuousDeformation.digitVersion === "mirrorlife-civic-digit-deformation-v1"
+      && Object.values(actor.continuousDeformation.digitVertexCounts || {})
+        .every((count) => Number(count || 0) >= 500)
       && actor.grounding?.version === "mirrorlife-civic-foot-contact-v1"
       && Math.abs(Number(actor.grounding.physicalFloorY ?? 1) - 0.025) <= 0.004
     )),
@@ -133,6 +140,8 @@ try {
         actor.contactPressure?.version === "mirrorlife-civic-contact-pressure-v1"
         && Number(actor.contactPressure.pressure || 0) >= 0.95
         && Number(actor.contactPressure.handCompression || 0) > 0
+        && Object.values(actor.continuousDeformation?.digitCurls || {})
+          .some((curl) => Number(curl || 0) >= 0.14)
       )),
     "civic contact roles did not expose hand and sleeve pressure feedback"
   );
@@ -157,7 +166,7 @@ try {
   assert(opening.actors.every((actor) => actor.eyes === null), "civic identity surface retained duplicate primitive eye geometry");
   assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v2"), "civic production faces did not expose physically lit corneal lenses");
   assert(opening.actors.every((actor) => actor.cornea?.lensCount === 2 && actor.cornea?.physicallyLit === true), "civic corneal lens contract is incomplete");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v9"), "civic actors did not expose the role-authored independent-hand contract");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v10"), "civic actors did not expose the role-authored independent-hand contract");
   const openingFacilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
   const openingMediator = opening.actors.find((actor) => actor.assetRole === "mediator");
   assert.equal(openingFacilitator?.contactConstraint?.target, "notebook-guide", "facilitator lost the notebook guide contact target");
@@ -416,6 +425,14 @@ try {
       && Number(afterMove.weightTransfer.leftUpError ?? 1) <= 0.04
       && Number(afterMove.weightTransfer.rightUpError ?? 1) <= 0.04,
     "player did not settle back onto level planted feet after locomotion"
+  );
+  assert(
+    afterMove.continuousDeformation?.version === "mirrorlife-civic-body-deformation-v1"
+      && Number(afterMove.continuousDeformation.weight || 0) >= 0.95
+      && afterMove.continuousDeformation.digitVersion === "mirrorlife-civic-digit-deformation-v1"
+      && Object.values(afterMove.continuousDeformation.digitCurls || {})
+        .every((curl) => Number(curl || 0) >= 0.035),
+    "player did not restore continuous body and finger deformation after locomotion"
   );
   ["facilitator", "mediator"].forEach((role) => {
     const contactActor = afterMoveStats.actors?.find((actor) => actor.assetRole === role);

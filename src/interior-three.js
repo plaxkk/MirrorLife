@@ -22,6 +22,8 @@ const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
 const CIVIC_WEIGHT_TRANSFER_CONTRACT = "mirrorlife-civic-weight-transfer-v1";
 const CIVIC_CONTACT_PRESSURE_CONTRACT = "mirrorlife-civic-contact-pressure-v1";
 const CIVIC_FOOT_CONTACT_CONTRACT = "mirrorlife-civic-foot-contact-v1";
+const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v1";
+const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
 const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v4";
 const CIVIC_HERO_PROP_TYPES = new Set([
   "civic-display-case",
@@ -6907,9 +6909,28 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
   const eyeDeformationState = materialOptions.eyeDeformation
     ? { blink: 0, warmth: 0, asymmetry: 0 }
     : null;
+  const bodyDeformationState = materialOptions.bodyDeformation
+    ? {
+        version: CIVIC_BODY_DEFORMATION_CONTRACT,
+        weight: 0,
+        supportSide: 0,
+        breath: 0,
+        uniforms: null
+      }
+    : null;
+  const digitDeformationState = materialOptions.digitDeformation
+    ? {
+        version: CIVIC_DIGIT_DEFORMATION_CONTRACT,
+        curl: 0,
+        targetCurl: 0,
+        digitVertexCount: 0,
+        uniforms: null
+      }
+    : null;
   target.updateMatrixWorld(true);
   const excluded = new Set(excludedRoots);
   const targetInverse = target.matrixWorld.clone().invert();
+  const targetWorldQuaternionInverse = target.getWorldQuaternion(new THREE.Quaternion()).invert();
   const geometries = [];
   const sources = [];
   const fabricSurfaceMaps = getPhysicalSurfaceMaps("fabric");
@@ -6953,6 +6974,8 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     const woodMaskValues = new Float32Array(count);
     const paperMaskValues = new Float32Array(count);
     const mineralMaskValues = new Float32Array(count);
+    const digitPivotValues = digitDeformationState ? new Float32Array(count * 4) : null;
+    const digitFrameValues = digitDeformationState ? new Float32Array(count * 4) : null;
     const upperLidMaskValues = eyeDeformationState ? new Float32Array(count) : null;
     const lowerLidMaskValues = eyeDeformationState ? new Float32Array(count) : null;
     const sourceRoughness = THREE.MathUtils.clamp(Number(node.material?.roughness ?? materialOptions.roughness ?? 0.72), 0.04, 1);
@@ -6974,6 +6997,21 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       ? 1
       : 0;
     const nodeName = String(node.name || "");
+    let digitPivot = null;
+    let digitFrame = new THREE.Quaternion();
+    let digitAmplitude = 0;
+    if (
+      digitDeformationState
+      && /^(FingerVolume_|ThumbVolume_|FingerCrease_|ThumbCrease_)/.test(nodeName)
+      && node.parent
+    ) {
+      digitPivot = node.parent.getWorldPosition(new THREE.Vector3()).applyMatrix4(targetInverse);
+      digitFrame = targetWorldQuaternionInverse.clone()
+        .multiply(node.parent.getWorldQuaternion(new THREE.Quaternion()))
+        .normalize();
+      digitAmplitude = nodeName.startsWith("ThumbVolume_") ? 0.72 : 1;
+      digitDeformationState.digitVertexCount += count;
+    }
     const sourceUpperLid = eyeDeformationState && (/^UpperLid/.test(nodeName) || /^OuterLash/.test(nodeName));
     const sourceLowerLid = eyeDeformationState && /^LowerLid/.test(nodeName);
     const positionAttribute = geometry.getAttribute("position");
@@ -6994,6 +7032,16 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       woodMaskValues[index] = sourceWoodMask;
       paperMaskValues[index] = sourcePaperMask;
       mineralMaskValues[index] = sourceMineralMask;
+      if (digitPivotValues && digitFrameValues) {
+        digitPivotValues[index * 4] = Number(digitPivot?.x || 0);
+        digitPivotValues[index * 4 + 1] = Number(digitPivot?.y || 0);
+        digitPivotValues[index * 4 + 2] = Number(digitPivot?.z || 0);
+        digitPivotValues[index * 4 + 3] = digitAmplitude;
+        digitFrameValues[index * 4] = digitFrame.x;
+        digitFrameValues[index * 4 + 1] = digitFrame.y;
+        digitFrameValues[index * 4 + 2] = digitFrame.z;
+        digitFrameValues[index * 4 + 3] = digitFrame.w;
+      }
       // Lid sheets must stretch from a fixed orbital crease toward the eye
       // centre. Translating the whole sheet exposed sclera above it during a
       // blink. After glTF's Y-up conversion, local Z separates the forward
@@ -7017,6 +7065,10 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     geometry.setAttribute("mirrorLifeWoodMask", new THREE.BufferAttribute(woodMaskValues, 1));
     geometry.setAttribute("mirrorLifePaperMask", new THREE.BufferAttribute(paperMaskValues, 1));
     geometry.setAttribute("mirrorLifeMineralMask", new THREE.BufferAttribute(mineralMaskValues, 1));
+    if (digitPivotValues && digitFrameValues) {
+      geometry.setAttribute("mirrorLifeDigitPivot", new THREE.BufferAttribute(digitPivotValues, 4));
+      geometry.setAttribute("mirrorLifeDigitFrame", new THREE.BufferAttribute(digitFrameValues, 4));
+    }
     if (upperLidMaskValues) geometry.setAttribute("mirrorLifeUpperLidMask", new THREE.BufferAttribute(upperLidMaskValues, 1));
     if (lowerLidMaskValues) geometry.setAttribute("mirrorLifeLowerLidMask", new THREE.BufferAttribute(lowerLidMaskValues, 1));
     geometries.push(geometry);
@@ -7067,6 +7119,22 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         asymmetry: shader.uniforms.mirrorLifeEyeAsymmetry
       };
     }
+    if (bodyDeformationState) {
+      shader.uniforms.mirrorLifeBodyWeight = { value: bodyDeformationState.weight };
+      shader.uniforms.mirrorLifeBodySupportSide = { value: bodyDeformationState.supportSide };
+      shader.uniforms.mirrorLifeBodyBreath = { value: bodyDeformationState.breath };
+      bodyDeformationState.uniforms = {
+        weight: shader.uniforms.mirrorLifeBodyWeight,
+        supportSide: shader.uniforms.mirrorLifeBodySupportSide,
+        breath: shader.uniforms.mirrorLifeBodyBreath
+      };
+    }
+    if (digitDeformationState) {
+      shader.uniforms.mirrorLifeDigitCurl = { value: digitDeformationState.curl };
+      digitDeformationState.uniforms = {
+        curl: shader.uniforms.mirrorLifeDigitCurl
+      };
+    }
     if (fabricSurfaceMaps?.roughness) shader.uniforms.mirrorLifeFabricRoughness = { value: fabricSurfaceMaps.roughness };
     if (woodSurfaceMaps?.map) shader.uniforms.mirrorLifeWoodColor = { value: woodSurfaceMaps.map };
     if (woodSurfaceMaps?.roughness) shader.uniforms.mirrorLifeWoodRoughness = { value: woodSurfaceMaps.roughness };
@@ -7089,6 +7157,45 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         attribute float mirrorLifeWoodMask;
         attribute float mirrorLifePaperMask;
         attribute float mirrorLifeMineralMask;
+        ${bodyDeformationState ? `uniform float mirrorLifeBodyWeight;
+        uniform float mirrorLifeBodySupportSide;
+        uniform float mirrorLifeBodyBreath;` : ""}
+        ${digitDeformationState ? `attribute vec4 mirrorLifeDigitPivot;
+        attribute vec4 mirrorLifeDigitFrame;
+        uniform float mirrorLifeDigitCurl;
+        vec3 mirrorLifeRotateByQuaternion(vec4 rotation, vec3 vectorValue) {
+          return vectorValue + 2.0 * cross(
+            rotation.xyz,
+            cross(rotation.xyz, vectorValue) + rotation.w * vectorValue
+          );
+        }
+        vec3 mirrorLifeDigitLocalPoint(vec3 pointValue) {
+          vec4 frame = normalize(mirrorLifeDigitFrame);
+          return mirrorLifeRotateByQuaternion(
+            vec4(-frame.xyz, frame.w),
+            pointValue - mirrorLifeDigitPivot.xyz
+          );
+        }
+        float mirrorLifeDigitCurlAngle(vec3 pointValue) {
+          vec3 localPoint = mirrorLifeDigitLocalPoint(pointValue);
+          float travel = smoothstep(0.004, 0.073, -localPoint.z);
+          return -mirrorLifeDigitCurl
+            * mirrorLifeDigitPivot.w
+            * travel * travel;
+        }
+        vec3 mirrorLifeBendDigitPosition(vec3 pointValue) {
+          if (mirrorLifeDigitPivot.w <= 0.001) return pointValue;
+          vec4 frame = normalize(mirrorLifeDigitFrame);
+          vec3 localPoint = mirrorLifeDigitLocalPoint(pointValue);
+          float angle = mirrorLifeDigitCurlAngle(pointValue);
+          float cosineValue = cos(angle);
+          float sineValue = sin(angle);
+          float nextY = cosineValue * localPoint.y - sineValue * localPoint.z;
+          float nextZ = sineValue * localPoint.y + cosineValue * localPoint.z;
+          localPoint.y = nextY;
+          localPoint.z = nextZ;
+          return mirrorLifeDigitPivot.xyz + mirrorLifeRotateByQuaternion(frame, localPoint);
+        }` : ""}
         ${eyeDeformationState ? `attribute float mirrorLifeUpperLidMask;
         attribute float mirrorLifeLowerLidMask;
         uniform float mirrorLifeBlink;
@@ -7107,8 +7214,82 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         varying vec3 vMirrorLifeSurfacePosition;`
       )
       .replace(
+        "#include <beginnormal_vertex>",
+        `#include <beginnormal_vertex>
+        ${digitDeformationState ? `if (mirrorLifeDigitPivot.w > 0.001) {
+          vec4 mirrorLifeNormalFrame = normalize(mirrorLifeDigitFrame);
+          vec3 mirrorLifeLocalNormal = mirrorLifeRotateByQuaternion(
+            vec4(-mirrorLifeNormalFrame.xyz, mirrorLifeNormalFrame.w),
+            objectNormal
+          );
+          float mirrorLifeNormalAngle = mirrorLifeDigitCurlAngle(position);
+          float mirrorLifeNormalCosine = cos(mirrorLifeNormalAngle);
+          float mirrorLifeNormalSine = sin(mirrorLifeNormalAngle);
+          float mirrorLifeNormalY =
+            mirrorLifeNormalCosine * mirrorLifeLocalNormal.y
+            - mirrorLifeNormalSine * mirrorLifeLocalNormal.z;
+          float mirrorLifeNormalZ =
+            mirrorLifeNormalSine * mirrorLifeLocalNormal.y
+            + mirrorLifeNormalCosine * mirrorLifeLocalNormal.z;
+          mirrorLifeLocalNormal.y = mirrorLifeNormalY;
+          mirrorLifeLocalNormal.z = mirrorLifeNormalZ;
+          objectNormal = mirrorLifeRotateByQuaternion(mirrorLifeNormalFrame, mirrorLifeLocalNormal);
+        }` : ""}`
+      )
+      .replace(
         "#include <begin_vertex>",
         `#include <begin_vertex>
+        ${bodyDeformationState ? `float mirrorLifeBodyTorsoMask =
+          smoothstep(0.62, 0.82, position.y)
+          * (1.0 - smoothstep(1.35, 1.43, position.y));
+        float mirrorLifeBodyPelvisMask =
+          smoothstep(0.58, 0.69, position.y)
+          * (1.0 - smoothstep(0.84, 0.92, position.y));
+        float mirrorLifeBodyShoulderMask =
+          smoothstep(1.04, 1.17, position.y)
+          * (1.0 - smoothstep(1.29, 1.38, position.y));
+        float mirrorLifeBodyWaistPhase = clamp(
+          (position.y - 0.72) / 0.62,
+          0.0,
+          1.0
+        );
+        float mirrorLifeBodySCurve =
+          (1.0 - mirrorLifeBodyWaistPhase) * 0.018
+          - mirrorLifeBodyWaistPhase * 0.011;
+        float mirrorLifeBodySupportMask = 0.5 + 0.5 * clamp(
+          mirrorLifeBodySupportSide * sign(position.x),
+          -1.0,
+          1.0
+        );
+        transformed.x += mirrorLifeBodySupportSide
+          * mirrorLifeBodyWeight
+          * mirrorLifeBodyTorsoMask
+          * mirrorLifeBodySCurve;
+        transformed.x -= mirrorLifeBodySupportSide
+          * mirrorLifeBodyWeight
+          * mirrorLifeBodyShoulderMask
+          * 0.009;
+        transformed.y -= mirrorLifeBodyWeight
+          * mirrorLifeBodyPelvisMask
+          * mirrorLifeBodySupportMask
+          * 0.01;
+        transformed.y += mirrorLifeBodyWeight
+          * mirrorLifeBodyShoulderMask
+          * (0.003 - mirrorLifeBodySupportMask * 0.01);
+        float mirrorLifeBodyTensionFold = sin(
+          position.y * 31.0
+          + position.x * mirrorLifeBodySupportSide * 19.0
+          - position.z * 13.0
+        );
+        transformed.z += mirrorLifeBodyTensionFold
+          * mirrorLifeClothMask
+          * mirrorLifeBodyWeight
+          * (mirrorLifeBodyShoulderMask + mirrorLifeBodyPelvisMask)
+          * 0.0018;
+        transformed.z += mirrorLifeBodyBreath
+          * mirrorLifeBodyTorsoMask
+          * (0.0028 + mirrorLifeBodyShoulderMask * 0.0022);` : ""}
+        ${digitDeformationState ? `transformed = mirrorLifeBendDigitPosition(transformed);` : ""}
         vMirrorLifeRoughness = mirrorLifeRoughness;
         vMirrorLifeMetalness = mirrorLifeMetalness;
         vMirrorLifeSkinMask = mirrorLifeSkinMask;
@@ -7335,10 +7516,12 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v15-${eyeDeformationState ? "eyelid" : "static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v16-${eyeDeformationState ? "eyelid" : "static"}-${bodyDeformationState ? "body-deform" : "body-static"}-${digitDeformationState ? "digit-deform" : "digit-static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
+  if (bodyDeformationState) mesh.userData.mirrorLifeBodyDeformation = bodyDeformationState;
+  if (digitDeformationState) mesh.userData.mirrorLifeDigitDeformation = digitDeformationState;
   mesh.castShadow = true;
   mesh.receiveShadow = true;
   target.add(mesh);
@@ -8571,6 +8754,91 @@ function applyCivicContactPressure(entry) {
   };
 }
 
+function applyCivicContinuousDeformation(entry, {
+  walking = false,
+  running = false,
+  phase = 0,
+  socialBreath = 0,
+  frameDeltaSeconds = 1 / 60
+} = {}) {
+  const bodyState = entry?.bodyDeformation;
+  const digitHands = entry?.digitDeformationHands || {};
+  if (!bodyState && !Object.values(digitHands).some(Boolean)) {
+    entry.continuousDeformationState = null;
+    return;
+  }
+  const plantedWeight = THREE.MathUtils.clamp(
+    Number(entry?.weightTransferState?.weight || 0),
+    0,
+    1
+  );
+  const supportFoot = entry?.weightTransferState?.supportFoot || "left";
+  const supportSide = supportFoot === "left" ? -1 : 1;
+  if (bodyState) {
+    bodyState.weight = plantedWeight;
+    bodyState.supportSide = supportSide;
+    bodyState.breath = walking ? 0 : Number(socialBreath || 0);
+    if (bodyState.uniforms) {
+      bodyState.uniforms.weight.value = bodyState.weight;
+      bodyState.uniforms.supportSide.value = bodyState.supportSide;
+      bodyState.uniforms.breath.value = bodyState.breath;
+    }
+  }
+
+  const roleTargets = {
+    player: { left: 0.055, right: 0.042 },
+    listener: { left: 0.105, right: 0.128 },
+    facilitator: { left: 0.16, right: 0.115 },
+    mediator: { left: 0.028, right: 0.17 }
+  }[entry?.assetRole] || { left: 0.04, right: 0.04 };
+  const contactPressure = THREE.MathUtils.clamp(
+    Number(entry?.contactPressureState?.pressure || 0),
+    0,
+    1
+  );
+  const gaitCurl = walking
+    ? 0.025 + Math.abs(Math.sin(Number(phase || 0))) * (running ? 0.075 : 0.045)
+    : 0;
+  Object.entries(digitHands).forEach(([hand, state]) => {
+    if (!state) return;
+    const contactCurl = entry.assetRole === "facilitator"
+      ? (hand === "left" ? 0.045 : 0.028) * contactPressure
+      : entry.assetRole === "mediator" && hand === "right"
+        ? 0.035 * contactPressure
+        : 0;
+    const targetCurl = walking
+      ? gaitCurl
+      : Number(roleTargets[hand] || 0) + contactCurl;
+    if (!Number.isFinite(state.curl)) state.curl = targetCurl;
+    const responseSeconds = walking ? 0.09 : 0.16;
+    const alpha = 1 - Math.exp(
+      -THREE.MathUtils.clamp(frameDeltaSeconds, 1 / 240, 1 / 20) / responseSeconds
+    );
+    state.targetCurl = targetCurl;
+    state.curl += (targetCurl - state.curl) * alpha;
+    if (state.uniforms?.curl) state.uniforms.curl.value = state.curl;
+  });
+  entry.continuousDeformationState = {
+    version: CIVIC_BODY_DEFORMATION_CONTRACT,
+    weight: plantedWeight,
+    supportSide,
+    shoulderCounterShift: plantedWeight * 0.009,
+    pelvisDrop: plantedWeight * 0.01,
+    clothTension: plantedWeight * 0.0018,
+    digitVersion: Object.values(digitHands).some(Boolean)
+      ? CIVIC_DIGIT_DEFORMATION_CONTRACT
+      : null,
+    digitVertexCounts: Object.fromEntries(Object.entries(digitHands).map(([hand, state]) => ([
+      hand,
+      Number(state?.digitVertexCount || 0)
+    ]))),
+    digitCurls: Object.fromEntries(Object.entries(digitHands).map(([hand, state]) => ([
+      hand,
+      Number(state?.curl || 0)
+    ])))
+  };
+}
+
 function createCivicFootContactGeometry() {
   if (!mergeGeometries) return new THREE.PlaneGeometry(0.58, 0.24);
   const left = new THREE.PlaneGeometry(0.34, 0.2);
@@ -8771,6 +9039,7 @@ function createCivicActorObject(actor, asset) {
     ]);
     const mobileDetailPrefixes = [
       "FingerCrease_",
+      "ThumbCrease_",
       "EarConcha_",
       "EyeGlint_",
       "LowerLidCrease_",
@@ -8878,7 +9147,11 @@ function createCivicActorObject(actor, asset) {
     skirtPivot,
     ...(fullExpressionLod ? [backpackNode, satchelNode].filter(Boolean) : [])
   ];
-  const bodySurfaceMesh = mergeActorVertexColorMeshes(visual, bodyMergeExclusions, { roughness: 0.71, envMapIntensity: 0.66 });
+  const bodySurfaceMesh = mergeActorVertexColorMeshes(visual, bodyMergeExclusions, {
+    roughness: 0.71,
+    envMapIntensity: 0.66,
+    bodyDeformation: fullExpressionLod
+  });
   if (bodySurfaceMesh) {
     bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v6";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
@@ -8969,8 +9242,16 @@ function createCivicActorObject(actor, asset) {
     ].filter(Boolean).forEach((corrective) => {
       mergeActorVertexColorMeshes(corrective, [], { roughness: 0.76, envMapIntensity: 0.58 });
     });
-    leftHandSurface = mergeActorVertexColorMeshes(leftHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
-    rightHandSurface = mergeActorVertexColorMeshes(rightHand, [], { roughness: 0.61, envMapIntensity: 0.75 });
+    leftHandSurface = mergeActorVertexColorMeshes(leftHand, [], {
+      roughness: 0.61,
+      envMapIntensity: 0.75,
+      digitDeformation: true
+    });
+    rightHandSurface = mergeActorVertexColorMeshes(rightHand, [], {
+      roughness: 0.61,
+      envMapIntensity: 0.75,
+      digitDeformation: true
+    });
     if (leftFoot) mergeActorVertexColorMeshes(leftFoot, [], { roughness: 0.63, envMapIntensity: 0.7 });
     if (rightFoot) mergeActorVertexColorMeshes(rightFoot, [], { roughness: 0.63, envMapIntensity: 0.7 });
   }
@@ -9090,6 +9371,11 @@ function createCivicActorObject(actor, asset) {
     contactPressureHands: fullExpressionLod ? {
       left: leftHandSurface ? { node: leftHandSurface, restScale: leftHandSurface.scale.clone() } : null,
       right: rightHandSurface ? { node: rightHandSurface, restScale: rightHandSurface.scale.clone() } : null
+    } : null,
+    bodyDeformation: bodySurfaceMesh?.userData?.mirrorLifeBodyDeformation || null,
+    digitDeformationHands: fullExpressionLod ? {
+      left: leftHandSurface?.userData?.mirrorLifeDigitDeformation || null,
+      right: rightHandSurface?.userData?.mirrorLifeDigitDeformation || null
     } : null,
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v4",
@@ -9587,6 +9873,13 @@ function updateActors(actors = [], now = performance.now()) {
         entry.visual.rotation.z = -0.01 + idleShift * 0.4;
       }
     }
+    applyCivicContinuousDeformation(entry, {
+      walking,
+      running,
+      phase,
+      socialBreath,
+      frameDeltaSeconds
+    });
     updateCivicSecondaryMotion(entry, {
       now,
       walking,
@@ -10350,7 +10643,7 @@ function getStats() {
         ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v9",
+        version: "mirrorlife-civic-hand-v10",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,
@@ -10362,6 +10655,20 @@ function getStats() {
         extraRoll: Number(entry.weightTransferState.extraRoll.toFixed(4)),
         leftUpError: Number(entry.weightTransferState.leftUpError.toFixed(4)),
         rightUpError: Number(entry.weightTransferState.rightUpError.toFixed(4))
+      } : null,
+      continuousDeformation: entry.continuousDeformationState ? {
+        version: entry.continuousDeformationState.version,
+        weight: Number(entry.continuousDeformationState.weight.toFixed(4)),
+        supportSide: entry.continuousDeformationState.supportSide,
+        shoulderCounterShift: Number(entry.continuousDeformationState.shoulderCounterShift.toFixed(4)),
+        pelvisDrop: Number(entry.continuousDeformationState.pelvisDrop.toFixed(4)),
+        clothTension: Number(entry.continuousDeformationState.clothTension.toFixed(4)),
+        digitVersion: entry.continuousDeformationState.digitVersion,
+        digitVertexCounts: entry.continuousDeformationState.digitVertexCounts,
+        digitCurls: Object.fromEntries(Object.entries(entry.continuousDeformationState.digitCurls || {}).map(([hand, value]) => ([
+          hand,
+          Number(Number(value || 0).toFixed(4))
+        ])))
       } : null,
       grounding: entry.shadow?.userData?.mirrorLifeGrounding ? {
         version: entry.shadow.userData.mirrorLifeGrounding,

@@ -1,5 +1,57 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-25 reference-fidelity v127 continuous body and digit deformation gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Final desktop implementation: `tmp/v127-final-desktop-yaw0.png` (`1672 × 941` CSS/pixels, device scale factor `1`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/reference-vs-v127-final-full.png` (`2880 × 900`); source and implementation are each aspect-fit to `1440 × 900` on the same canvas.
+- Mandatory focused comparison: `tmp/reference-vs-v127-final-character-focus.png` (`1640 × 600`); equal native-pixel `820 × 600` crops expose shoulder slope, pelvis loading, finger silhouettes, notebook/jaw contacts and floor planting.
+- Iteration evidence: `tmp/v126-vs-v127-final-character-focus.png` isolates the character change; `tmp/v127-before-after-finger-creases.png` checks the authored crease pass at close range.
+- Full 3D and responsive evidence: `tmp/v127-final-desktop-yaw90.png`, `tmp/v127-final-desktop-yaw180.png`, `tmp/v127-final-desktop-yaw270.png`, `tmp/v127-final-mobile-yaw0.png` and `tmp/v127-four-direction-board.png`.
+- Runtime evidence: opening desktop `176 / 286,846`, side `179 / 297,954`, reverse `180 / 338,678`, fourth orbit `177 / 290,770`; mobile `106 / 245,342`. Every reviewed view reports zero shader errors and remains inside the desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Deformation evidence: every desktop hand exposes `2,232` participating digit vertices while remaining one draw call. Role curls settle between `0.0275–0.2016rad`; all four bodies report the same planted-weight, shoulder-countershift, pelvis-drop and cloth-tension contract. The rebuilt four-role asset set is `7.40 MB`.
+- Interaction evidence: two fresh browser regressions moved the player `5.01m` and `3.33m`, rotated the physical camera `65.3°`, released the fingers into gait curl and restored the planted body/digit contract after stopping. Desktop/mobile scene flow passes; the transition stress run covers `26` zones and `78` transitions with zero failures or runtime errors.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v126 P1 / real finger source meshes were baked into a static runtime hand] The hand batcher now preserves a per-vertex pivot and orientation frame for every finger and thumb. One shader bends each digit progressively from root to tip and rotates its normals, so hands remain one draw call rather than expanding into forty live finger batches.
+- [improved / role poses changed wrists but not finger tension] Player, listener, facilitator and mediator now have different curl targets. Notebook and thoughtful-hand contacts add pressure-dependent curl after contact solving; walking temporarily releases into a gait curl and settles back after locomotion.
+- [improved / whole-body weight transfer stopped at a rigid root roll] The torso batch now adds a support-side pelvis shift/drop, counter-moving shoulder shelf, shoulder-height difference and restrained breathing volume. All values read the same support foot as the level-sole contract without moving the actor root or Rapier capsule.
+- [improved / cloth folds were static decorations outside elbow/knee correctives] Garment vertices at shoulder and pelvis receive a low-amplitude diagonal tension field coupled to the planted side. Existing elbow/knee volumes and sleeve pressure remain intact.
+- [improved / small digits still merged into one skin-colour blob at gameplay distance] Hand contract v10 adds real finger and thumb crease geometry. The marks share the finger pivot and deformation frame, so they bend with the skin rather than floating as a screen-space line.
+- [checked / deformation remains spatially honest] Four-direction review shows no inverted fingers, detached creases, collapsed shoulders or cloth spikes. The implementation adds no draw calls, changes no collider, and keeps the existing movement, interaction-anchor and camera contracts.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese HUD hierarchy, place-memory title, four civic actions and portrait truncation remain stable. The source still has more optically refined icon/type balance.
+- [improved][spacing and layout rhythm] Shoulder and pelvis asymmetry reinforces the four-person ring without reducing the story-centre clearance or `1.4m` circulation path. The source retains stronger foreground framing and a denser fixed-shot composition.
+- [checked][colors and visual tokens] Warm mineral ivory, walnut, teal, green, coral and brass remain coherent. Finger creases reuse the existing warm skin-shadow value instead of adding black graphic noise.
+- [improved][image quality and asset fidelity] Body loading, cloth tension, progressive finger curl and crease marks are live, lit and orbit-safe 3D surfaces. No sprite, billboard, CSS/SVG art or screenshot projection substitutes for the deformation.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory state and civic actions remain coherent with the visible testimony; no private source copy enters runtime state.
+- [checked][physical truth and responsiveness] Desktop deformation uses the same authoritative roots, capsules, floor, contacts and movement. Portrait intentionally keeps the static compact hand LOD because the extra crease/digit vertices are sub-pixel; its touch layout and performance remain unchanged.
+- [P1][source-level skeletal and cloth deformation remains ahead] v127 replaces static fingers and rigid torso loading, but the source still has per-phalanx knuckles, continuous clavicle/scapula skinning, garment-specific folds and softer contact compression. The current shader uses one progressive curl field per hand and centimetre-scale torso correctives.
+- [P1][room-wide secondary asset craft remains visibly behind] Documents, joinery, glassware, botanical species and shelf irregularity remain broader and more procedural than the source.
+- [P1][offline indirect light and material transport remain visibly ahead] The source retains richer multi-bounce colour, subtler skin/cloth response, softer penumbrae and more convincing glass transport.
+- [P2][camera is gameplay-correct but not cinematically identical] Full movement and orbit need more open negative space than the source's fixed editorial composition; reverse quadrants expose simpler wall staging.
+- [P2][HUD optical finish remains behind] Coverage and responsive behavior pass, but icon craft, translucent-panel depth, micro-spacing and compact typography remain less refined.
+
+### Implementation checklist
+
+- Preserve the packed one-draw-call digit deformation path; extend it with per-phalanx bend only when it can stay within the current attribute and draw-call budgets.
+- Move the next body increment into authored clavicle/scapula and pelvis skin weights rather than amplifying the current shader offsets.
+- Replace the most visible secondary documents and joinery before adding low-salience decor.
+- Add probe/lightmap-assisted indirect colour without increasing direct-light intensity.
+
+### Gate result
+
+v127 makes the standing cast more physically continuous: shoulders and pelvis respond to the same planted side, garment surfaces carry restrained tension, and `2,232` real digit vertices per hand now bend with authored contact pressure while retaining one draw call. The mandatory same-canvas comparison still contains actionable P1 gaps in per-joint character deformation, complete-room secondary asset craft and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: source-level per-phalanx/clavicle/cloth deformation, complete-room secondary asset craftsmanship and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-25 reference-fidelity v126 planted weight and contact-pressure gate
 
 ### Evidence inspected together

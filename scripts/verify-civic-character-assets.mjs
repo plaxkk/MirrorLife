@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v72", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v73", "civic character sculpt contract is stale");
 assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v4", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
@@ -111,7 +111,7 @@ assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volu
 assert.equal(manifest.faceDecal?.eyelidDeformationContract, "mirrorlife-civic-eyelid-vertex-v1", "civic eyelid deformation contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v9", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v10", "civic hand contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.deepEqual(
   manifest.handContract?.poseStyles,
@@ -120,7 +120,7 @@ assert.deepEqual(
 );
 assert.deepEqual(
   manifest.handContract?.surfaceParts,
-  ["PalmLifeLine", "PalmHeartLine", "five-ring-tapered-digits"],
+  ["PalmLifeLine", "PalmHeartLine", "FingerCrease", "ThumbCrease", "five-ring-tapered-digits"],
   "civic hand surface parts changed"
 );
 assert.equal(manifest.notebookContactContract?.version, "mirrorlife-civic-notebook-contact-v3", "civic notebook contact contract is stale");
