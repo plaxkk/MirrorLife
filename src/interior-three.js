@@ -9522,8 +9522,15 @@ function createCivicActorObject(actor, asset) {
       "NotebookPencil"
     ]);
     const mobileDetailPrefixes = [
+      // The new connected hand web becomes the phone-scale fingertip
+      // silhouette. Individual six-ring digits and palm creases are below a
+      // pixel in portrait gameplay and would spend roughly two thousand
+      // triangles across the visible cast.
+      "FingerVolume_",
       "FingerCrease_",
       "ThumbCrease_",
+      "PalmLifeLine_",
+      "PalmHeartLine_",
       "EarConcha_",
       "EyeGlint_",
       "LowerLidCrease_",
@@ -9536,6 +9543,7 @@ function createCivicActorObject(actor, asset) {
       "SleeveCompression_",
       "TrouserFold_",
       "SkirtSideRelease_",
+      "SkirtBackHem",
       "CoatButton_",
       "Thumb_"
     ];
@@ -9640,7 +9648,7 @@ function createCivicActorObject(actor, asset) {
     bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v8";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v2";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
-    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v4";
+    bodySurfaceMesh.userData.mirrorLifeGarmentTopology = "mirrorlife-civic-garment-topology-v5";
     bodySurfaceMesh.userData.mirrorLifeGarmentMaterial = "mirrorlife-civic-garment-material-v1";
   }
   const skirtSurfaceMesh = skirtPivot
@@ -9862,9 +9870,9 @@ function createCivicActorObject(actor, asset) {
       right: rightHandSurface?.userData?.mirrorLifeDigitDeformation || null
     } : null,
     frame,
-    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v4",
+    garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v5",
     garmentMaterialVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentMaterial || "mirrorlife-civic-garment-material-v1",
-    styleKey: `${frame}:${role}:civic-glb-v26`,
+    styleKey: `${frame}:${role}:civic-glb-v27`,
     identity: style.identity,
     assetRole: role,
     animation: null,
@@ -9885,7 +9893,7 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v26` : `${frame}:${role || style.identity}:procedural`;
+  return usesAsset ? `${frame}:${role}:civic-glb-v27` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -11139,7 +11147,7 @@ function getStats() {
         ]))
       } : null,
       hands: entry.leftHand && entry.rightHand ? {
-        version: "mirrorlife-civic-hand-v10",
+        version: "mirrorlife-civic-hand-v11",
         leftWristX: Number((entry.leftHand.rotation.x || 0).toFixed(4)),
         rightWristX: Number((entry.rightHand.rotation.x || 0).toFixed(4))
       } : null,

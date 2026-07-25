@@ -198,7 +198,7 @@ try {
   assert(opening.actors.every((actor) => actor.eyes === null), "civic identity surface retained duplicate primitive eye geometry");
   assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v2"), "civic production faces did not expose physically lit corneal lenses");
   assert(opening.actors.every((actor) => actor.cornea?.lensCount === 2 && actor.cornea?.physicallyLit === true), "civic corneal lens contract is incomplete");
-  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v10"), "civic actors did not expose the role-authored independent-hand contract");
+  assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v11"), "civic actors did not expose the role-authored independent-hand contract");
   const openingFacilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
   const openingMediator = opening.actors.find((actor) => actor.assetRole === "mediator");
   assert.equal(openingFacilitator?.contactConstraint?.target, "notebook-guide", "facilitator lost the notebook guide contact target");
@@ -209,7 +209,7 @@ try {
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v2"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
   assert(
-    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v4" && actor.garmentTopology?.realGeometry === true),
+    opening.actors.every((actor) => actor.garmentTopology?.version === "mirrorlife-civic-garment-topology-v5" && actor.garmentTopology?.realGeometry === true),
     "civic actors did not expose the authored garment topology contract"
   );
   assert(

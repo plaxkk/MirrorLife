@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v76", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v77", "civic character sculpt contract is stale");
 assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v6", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
@@ -58,10 +58,10 @@ assert.deepEqual(manifest.skinContract?.joints, [
   "SkinRightLeg",
   "SkinRightKnee"
 ], "continuous civic skin joint map changed");
-assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v4", "civic garment topology contract is stale");
+assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v5", "civic garment topology contract is stale");
 assert.equal(
   manifest.garmentTopologyContract?.runtime,
-  "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs",
+  "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
   "civic garment topology runtime changed"
 );
 assert.deepEqual(
@@ -113,7 +113,8 @@ assert.equal(manifest.faceDecal?.eyelidDeformationContract, "mirrorlife-civic-ey
 assert.equal(manifest.faceDecal?.facialContinuityContract, "mirrorlife-civic-orbital-lip-bed-v1", "civic facial continuity contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");
 assert.deepEqual(manifest.faceDecal?.morphs, ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"], "civic facial morph set changed");
-assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v10", "civic hand contract is stale");
+assert.equal(manifest.handContract?.version, "mirrorlife-civic-hand-v11", "civic hand contract is stale");
+assert.equal(manifest.handContract?.continuityContract, "mirrorlife-civic-hand-continuity-v1", "civic hand continuity contract is stale");
 assert.deepEqual(manifest.handContract?.pivots, ["Hand_-1", "Hand_1"], "civic hand pivot map changed");
 assert.deepEqual(
   manifest.handContract?.poseStyles,
@@ -122,7 +123,7 @@ assert.deepEqual(
 );
 assert.deepEqual(
   manifest.handContract?.surfaceParts,
-  ["PalmLifeLine", "PalmHeartLine", "FingerCrease", "ThumbCrease", "five-ring-tapered-digits"],
+  ["HandWebSurface", "PalmLifeLine", "PalmHeartLine", "FingerCrease", "ThumbCrease", "six-ring-tapered-digits"],
   "civic hand surface parts changed"
 );
 assert.equal(manifest.notebookContactContract?.version, "mirrorlife-civic-notebook-contact-v3", "civic notebook contact contract is stale");
@@ -323,8 +324,12 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("RightKneePivot")), `${role}: right knee articulation is missing`);
   assert(contents.includes(Buffer.from("FingerVolume_-1_4")), `${role}: left articulated finger volume is missing`);
   assert(contents.includes(Buffer.from("FingerVolume_1_4")), `${role}: right articulated finger volume is missing`);
+  assert(contents.includes(Buffer.from("HandWebSurface_-1")), `${role}: left continuous hand web is missing`);
+  assert(contents.includes(Buffer.from("HandWebSurface_1")), `${role}: right continuous hand web is missing`);
   assert(contents.includes(Buffer.from("PalmLifeLine_-1")), `${role}: left palm life line is missing`);
   assert(contents.includes(Buffer.from("PalmHeartLine_1")), `${role}: right palm heart line is missing`);
+  assert(contents.includes(Buffer.from("TrouserCuff_-1")), `${role}: left contoured ankle transition is missing`);
+  assert(contents.includes(Buffer.from("TrouserCuff_1")), `${role}: right contoured ankle transition is missing`);
   if (role === "player") {
     assert(contents.includes(Buffer.from("Backpack")), "player: backpack mesh is missing");
     assert(contents.includes(Buffer.from("BackpackPivot")), "player: backpack secondary-motion pivot is missing");
@@ -339,6 +344,7 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("TravelerCargoPocket_1")), "player: right moving cargo pocket is missing");
     assert(contents.includes(Buffer.from("TravelerCargoFlap_-1")), "player: left cargo pocket flap is missing");
     assert(contents.includes(Buffer.from("TravelerCargoFlap_1")), "player: right cargo pocket flap is missing");
+    assert(contents.includes(Buffer.from("TravelerShortSleeveHem_-1")), "player: left contoured short-sleeve hem is missing");
   }
   if (role === "listener") {
     assert(contents.includes(Buffer.from("Satchel")), "listener: satchel secondary-motion node is missing");
@@ -349,6 +355,7 @@ for (const role of expectedRoles) {
     assert(contents.includes(Buffer.from("ListenerCollar_-1")), "listener: left collar construction is missing");
     assert(contents.includes(Buffer.from("HoodDrawstring_1")), "listener: right hood drawstring is missing");
     assert(contents.includes(Buffer.from("ListenerPocketWelt_-1")), "listener: left jacket pocket welt is missing");
+    assert(contents.includes(Buffer.from("ListenerCuff_-1")), "listener: left contoured jacket cuff is missing");
   }
   if (role === "facilitator") {
     assert(contents.includes(Buffer.from("PonytailPivot")), "facilitator: ponytail secondary-motion pivot is missing");
@@ -357,6 +364,7 @@ for (const role of expectedRoles) {
   if (role === "facilitator" || role === "mediator") {
     assert(contents.includes(Buffer.from("SkirtPivot")), `${role}: skirt secondary-motion pivot is missing`);
     assert(contents.includes(Buffer.from("SkirtHem")), `${role}: skirt hem detail is missing`);
+    assert(contents.includes(Buffer.from("SkirtBackHem")), `${role}: complete rear skirt hem is missing`);
     assert(contents.includes(Buffer.from("CoatHem_-1")), `${role}: left coat hem detail is missing`);
     assert(contents.includes(Buffer.from("CoatHem_1")), `${role}: right coat hem detail is missing`);
     assert(contents.includes(Buffer.from("CoatDrape_-1")), `${role}: left coat drape is missing`);

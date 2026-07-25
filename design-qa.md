@@ -1,5 +1,56 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v135 continuous hands and constructed garment-edge gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, RGB, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized full-view comparison: `tmp/v135-reference-full-pair.png` (`2560 × 720`); the source is resampled to the implementation's exact `1280 × 720` content viewport and both frames are judged on one canvas.
+- Mandatory actor-focused comparison: `tmp/v135-character-focus-pair.png` (`1520 × 520`); equivalent source/implementation crops expose palm-to-finger continuity, cuff/ankle construction, skirt silhouette, prop contact and character scale.
+- Full 3D evidence: `tmp/v135-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 297,652`, side `179 / 308,760`, reverse `180 / 349,484`, fourth orbit `178 / 334,516`; mobile `106 / 247,736`. Every final view reports zero shader errors and remains inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the browser regression moved the real Rapier-controlled player `3.49m`, rotated the camera `65.3°` and verified the curved identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions across all `26` zones completed without failures or runtime errors.
+- Asset evidence: the four role GLBs use sculpt contract v77, hand contract v11 and garment-topology contract v5. The complete set remains `7.38 MB`; no source asset exceeds the existing `2 MB / 45k` Web LOD0 limits.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v134 P1 / fingers still emerged as four independent cylinders] Each hand now owns a watertight metacarpal fan with real thickness and variable interdigital webs. Enlarged six-ring finger roots disappear into this shared skin volume; the authored pivots and shader-driven curl remain independent after runtime batching.
+- [improved from v134 P1 / cuffs and ankle transitions read as uniform plastic bracelets] The traveler short sleeve, listener jacket cuff, both civic cardigan cuffs and every trouser/boot transition now use four authored elliptical rings with small side/depth offsets. The focused and four-heading comparisons retain those connections during quarter and reverse views.
+- [improved from v134 P1 / skirt construction disappeared outside the opening angle] Civic skirts now have separately authored front and rear hems, five-point height variation and preserved side-release folds. Coat hems receive role/side-specific height differences instead of one mirrored three-point arc.
+- [improved / hands remained visually subordinate at the real story lens] Role hand scales increase by roughly four percent, matching the source's soft illustrated proportion while keeping the same wrist pivots, physical capsules and interaction anchors.
+- [fixed during v135 / complete desktop topology pushed phone to `251,944` triangles] Phone LOD now uses the connected palm/web as a coherent mitten silhouette and removes sub-pixel six-ring digits, palm creases and rear-only skirt trim. The final phone capture is `247,736` triangles; desktop keeps the full articulated geometry and hand v11 deformation.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Chinese place state, story memory, action rail and interaction prompt remain readable in full-view and portrait captures. The source still has a finer icon/type family, tighter optical spacing and more refined translucent depth.
+- [improved][spacing and layout rhythm] The actor crop preserves four separated silhouettes, readable prop contact and a clearer lower-body rhythm. The source still stages the cast with more natural shoulder/hand overlap and denser controlled room dressing.
+- [improved][colors and visual tokens] Skin, warm ivory, forest/teal cloth, coral hair and brown footwear remain coherent under the civic light preset. The implementation still has stronger saturation and flatter local colour than the source's multi-bounce palette.
+- [improved][image quality and asset fidelity] Hands now read as one connected organic form, and clothing terminates through constructed hems/cuffs rather than geometric rings. The source still has more natural palm anatomy, finer facial planes, role-specific tailoring, richer hair grouping and subtle textile compression.
+- [checked][copy and content] The visible testimony state, speaker beacon and action language remain coherent; no new private-memory text or unsupported social statistics were introduced.
+- [checked][icons and interaction states] Action selection, keyboard movement, camera drag, phone controls, blinking, hand/prop contact and atomic scene warmup remain functional.
+- [checked][physical truth, accessibility and responsiveness] Visual hand and garment changes do not alter the Rapier capsule, metre scale, collision map, interaction radius or floor contact. Phone LOD removes only sub-pixel cosmetic topology and preserves the complete actor silhouette.
+- [P1][production character anatomy remains visibly behind] v135 removes the largest palm/finger and cuff/hem assembly defects, but the source still owns continuous elbow/hand skin transitions, authored nails/knuckles, richer eye sockets, softer jaw planes and more natural garment compression.
+- [P1][complete-room asset craft remains behind] The same-canvas pair still exposes simpler foreground cabinetry, repeated plant/book families, lower paper/glass variation and less convincing surface wear than the reference.
+- [P1][offline light transport remains ahead] Warm key/fill and contact AO remain coherent, but the source retains broader colour bounce, softer contact penumbrae, stronger foliage/glass transmission and more flattering indirect actor light.
+- [P2][actor staging remains more game-board-like] The source gives each citizen more organic stance and conversational asymmetry; the implementation's authored circle remains readable but more evenly distributed and upright.
+- [P2][HUD optical finish remains behind] Functional coverage passes, while icon language, compact typography, panel depth and button-edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve hand v11 and garment topology v5; do not trade the connected web or asymmetric hems back for primitive rings.
+- Continue the next character pass through elbow-to-wrist skin continuity, role-authored stance asymmetry and garment compression around hips/knees.
+- Replace the three most repeated foreground prop families with silhouette-distinct authored variants.
+- Add probe/lightmap-assisted colour bounce only if all desktop headings and the `247,736`-triangle phone gate remain green.
+
+### Gate result
+
+v135 replaces the most visible assembled-toy hand, cuff and hem relationships with connected organic and constructed clothing topology while preserving real walking, camera rotation, prop contact, responsive controls, physics and strict release budgets. The mandatory same-canvas comparisons still contain actionable P1 gaps in production anatomy/garment deformation, complete-room secondary craft and offline-quality indirect transport.
+
+final result: blocked
+
+Blocker: source-level continuous elbow/hand anatomy, room-wide bespoke secondary assets and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v134 west witness library and facial-continuity gate
 
 ### Evidence inspected together

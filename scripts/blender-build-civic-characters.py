@@ -103,7 +103,7 @@ BODY_PROFILES = {
         "leg_width": 1.03,
         "leg_depth": 0.99,
         "waist_width": 1.04,
-        "hand_scale": 0.94,
+        "hand_scale": 0.98,
         "foot_scale": 1.18,
         "toe_out": 0.075,
         # Keep the complete illustrated head hierarchy at the literal
@@ -121,7 +121,7 @@ BODY_PROFILES = {
         "leg_width": 0.99,
         "leg_depth": 0.98,
         "waist_width": 1.0,
-        "hand_scale": 0.93,
+        "hand_scale": 0.97,
         "foot_scale": 1.14,
         "toe_out": 0.065,
         "head_scale": (0.918, 0.895, 0.92),
@@ -137,7 +137,7 @@ BODY_PROFILES = {
         "leg_width": 0.87,
         "leg_depth": 0.92,
         "waist_width": 0.95,
-        "hand_scale": 0.92,
+        "hand_scale": 0.96,
         "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (0.915, 0.895, 0.92),
@@ -153,7 +153,7 @@ BODY_PROFILES = {
         "leg_width": 0.89,
         "leg_depth": 0.94,
         "waist_width": 0.96,
-        "hand_scale": 0.92,
+        "hand_scale": 0.96,
         "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (0.91, 0.895, 0.92),
@@ -455,7 +455,7 @@ def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, 
     modifier.use_deform_preserve_volume = True
     obj["semantic_part"] = name
     obj["skin_contract"] = "mirrorlife-civic-skin-v1"
-    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v5"
     if name == "SkinnedArmVolume":
         obj["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     for polygon in mesh.polygons:
@@ -914,6 +914,65 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10, oval_ratio=0.7
     return obj
 
 
+def hand_web_surface(name, mat, parent=None):
+    """Create a watertight metacarpal fan between palm and finger roots.
+
+    The animated digits remain independent deformation islands, but their
+    proximal rings now disappear into one real skin volume. This is the
+    illustrated equivalent of a connected dorsal plate and interdigital webs,
+    eliminating the four-dowels-in-a-mitten silhouette without increasing the
+    runtime draw-call count.
+    """
+    x_positions = (-0.052, -0.043, -0.033, -0.022, -0.011, 0.0, 0.011, 0.022, 0.033, 0.043, 0.052)
+    outer_z = (-0.04, -0.048, -0.054, -0.043, -0.058, -0.045, -0.056, -0.042, -0.053, -0.046, -0.038)
+    front_y = -0.039
+    back_y = 0.025
+    inner_z = -0.008
+    vertices = []
+    # Two z rows on both palm faces give the bridge real thickness. The
+    # variable distal edge rises between fingers and falls beneath each root.
+    for y in (front_y, back_y):
+        for row in range(2):
+            for index, x in enumerate(x_positions):
+                z = inner_z if row == 0 else outer_z[index]
+                crown = max(0.0, 1.0 - abs(x) / 0.055)
+                vertices.append((x, y + (0.0025 * crown if y > 0 else -0.0015 * crown), z))
+    count = len(x_positions)
+    faces = []
+    front_inner = 0
+    front_outer = count
+    back_inner = count * 2
+    back_outer = count * 3
+    for index in range(count - 1):
+        following = index + 1
+        faces.extend((
+            (front_inner + index, front_inner + following, front_outer + following, front_outer + index),
+            (back_inner + index, back_outer + index, back_outer + following, back_inner + following),
+            (front_outer + index, front_outer + following, back_outer + following, back_outer + index),
+            (front_inner + index, back_inner + index, back_inner + following, front_inner + following),
+        ))
+    faces.extend((
+        (front_inner, front_outer, back_outer, back_inner),
+        (front_inner + count - 1, back_inner + count - 1, back_outer + count - 1, front_outer + count - 1),
+    ))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = parent
+    link_material(obj, mat)
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    bevel = obj.modifiers.new("Interdigital softness", "BEVEL")
+    bevel.width = 0.0022
+    # One bevel segment is sufficient at a 2.2 mm radius and prevents the
+    # connected web from spending more triangles than the articulated digits.
+    bevel.segments = 1
+    obj["hand_continuity_contract"] = "mirrorlife-civic-hand-continuity-v1"
+    return obj
+
+
 def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 0), side=1, pose_style="relaxed"):
     """Build a compact illustrated hand that stays legible at story distance.
 
@@ -923,7 +982,8 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
     used by the reference cast.
     """
     hand_pivot = empty(name, parent, location, rotation)
-    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v10"
+    hand_pivot["hand_contract"] = "mirrorlife-civic-hand-v11"
+    hand_pivot["hand_continuity_contract"] = "mirrorlife-civic-hand-continuity-v1"
     hand_pivot["pose_style"] = pose_style
     hand = organic_limb(
         f"{name}Palm",
@@ -931,12 +991,14 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         (
             # A defined wrist heel keeps the cuff-to-palm transition from
             # collapsing into a peg when the hand turns edge-on.
-            (0.5, 0.043, 0.031, 0, 0.002),
-            (0.36, 0.049, 0.034, -side * 0.001, 0.001),
-            (0.22, 0.054, 0.037, -side * 0.002, 0),
-            (0.02, 0.059, 0.04, -side * 0.004, -0.003),
-            (-0.26, 0.057, 0.037, -side * 0.004, -0.006),
-            (-0.5, 0.049, 0.031, 0, -0.005),
+            (0.5, 0.041, 0.029, 0, 0.002),
+            (0.39, 0.047, 0.033, -side * 0.001, 0.002),
+            (0.27, 0.053, 0.037, -side * 0.002, 0.001),
+            (0.11, 0.059, 0.041, -side * 0.004, -0.002),
+            (-0.08, 0.061, 0.042, -side * 0.005, -0.004),
+            (-0.27, 0.059, 0.039, -side * 0.004, -0.006),
+            (-0.41, 0.055, 0.035, -side * 0.002, -0.006),
+            (-0.5, 0.05, 0.031, 0, -0.005),
         ),
         (0, 0, 0),
         mat,
@@ -946,6 +1008,7 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # spending full face-sculpt density on a tiny extremity.
         sides=16,
     )
+    hand_web_surface(f"HandWebSurface_{side}", mat, hand_pivot)
     pose_profiles = {
         "relaxed": {"curl": (0.29, 0.34, 0.39, 0.45), "splay": 1.12, "thumb": 0.34},
         "open": {"curl": (0.07, 0.09, 0.12, 0.17), "splay": 1.42, "thumb": 0.18},
@@ -965,10 +1028,10 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
         # the reference's soft illustrated hands. The earlier 26 mm spacing
         # and 16 mm radii resolved as four separate wires at the story camera;
         # these fuller, closer roots read as one palm with finger articulation.
-        (-0.033, 0.055, 0.0164, -side * 0.0018, 0.006),
-        (-0.011, 0.065, 0.0176, -side * 0.0006, 0.008),
-        (0.011, 0.061, 0.0173, side * 0.0006, 0.008),
-        (0.033, 0.05, 0.0158, side * 0.0019, 0.006),
+        (-0.033, 0.057, 0.0168, -side * 0.0018, 0.006),
+        (-0.011, 0.068, 0.0182, -side * 0.0006, 0.008),
+        (0.011, 0.064, 0.0179, side * 0.0006, 0.008),
+        (0.033, 0.052, 0.0162, side * 0.0019, 0.006),
     )
     for finger_index, (finger_x, finger_length, finger_radius, splay, curl) in enumerate(finger_specs, start=1):
         finger_pivot = empty(
@@ -989,16 +1052,17 @@ def sculpted_hand(name, location, mat, crease_mat, parent=None, rotation=(0, 0, 
             f"FingerVolume_{side}_{finger_index}",
             finger_length,
             (
-                (0.5, finger_radius, finger_radius * 0.84),
-                (0.22, finger_radius * 1.04, finger_radius * 0.9, splay * 0.12, curl * 0.05),
-                (-0.05, finger_radius * 0.98, finger_radius * 0.84, splay * 0.32, curl * 0.22),
-                (-0.31, finger_radius * 0.84, finger_radius * 0.72, splay * 0.58, curl * 0.52),
-                (-0.5, finger_radius * 0.5, finger_radius * 0.46, splay * 0.82, curl * 0.92),
+                (0.5, finger_radius * 1.08, finger_radius * 0.9),
+                (0.3, finger_radius * 1.08, finger_radius * 0.92, splay * 0.08, curl * 0.03),
+                (0.08, finger_radius, finger_radius * 0.86, splay * 0.24, curl * 0.16),
+                (-0.14, finger_radius * 0.92, finger_radius * 0.79, splay * 0.42, curl * 0.36),
+                (-0.34, finger_radius * 0.76, finger_radius * 0.66, splay * 0.64, curl * 0.64),
+                (-0.5, finger_radius * 0.48, finger_radius * 0.44, splay * 0.82, curl * 0.92),
             ),
             (0, 0, -finger_length / 2),
             mat,
             finger_pivot,
-            # Ten sides and a five-ring profile retain distinct knuckles and a
+            # Ten sides and a six-ring profile retain distinct knuckles and a
             # tapered pad after the four digits are merged into the animated
             # hand batch. This is still far cheaper than four runtime finger
             # draw calls, but no longer resolves as one round mitten.
@@ -1356,7 +1420,7 @@ def pleated_skirt(name, waist_radius, hem_radius, depth, location, mat, parent=N
     obj.parent = parent
     obj.location = location
     link_material(obj, mat)
-    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
+    obj["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v5"
     for polygon in mesh.polygons:
         polygon.use_smooth = True
     bevel = obj.modifiers.new("Pleated hem softness", "BEVEL")
@@ -2600,15 +2664,18 @@ def build_body(role, config, mats, visual):
                 elbow,
                 sides=18,
             )
-            cylinder(
+            contoured_elliptical_shell(
                 f"TravelerShortSleeveHem_{side}",
-                0.068 * arm_width,
-                0.064 * arm_width,
-                0.038,
-                (0, 0, -0.018),
+                (
+                    (-0.056, 0.065 * arm_width, 0.059 * arm_depth, side * 0.001, 0),
+                    (-0.037, 0.072 * arm_width, 0.065 * arm_depth, side * 0.002, -0.002),
+                    (-0.012, 0.074 * arm_width, 0.067 * arm_depth, -side * 0.001, -0.003),
+                    (0.01, 0.068 * arm_width, 0.061 * arm_depth, -side * 0.002, -0.001),
+                ),
                 mats["outer"],
                 elbow,
-                vertices=20,
+                segments=16,
+                contract="mirrorlife-civic-garment-topology-v5",
             )
         if config["costume"] in ("traveler", "listener", "facilitator", "mediator"):
             # Two shallow diagonal compression ridges follow the bending
@@ -2639,16 +2706,23 @@ def build_body(role, config, mats, visual):
                 sleeve_compression,
                 depth=0.006,
             )
-        cylinder(
-            f"Cuff_{side}",
-            0.059 * arm_width,
-            0.054 * arm_width,
-            0.042,
-            (0, 0, -0.228),
-            mats["accent"],
-            elbow,
-            vertices=22,
-        )
+        if config["costume"] == "listener":
+            # The weather shell owns a soft, tapered cuff. The old perfectly
+            # round bracelet severed the forearm from the hand and remained
+            # visible as a hard toy ring from every orbit.
+            contoured_elliptical_shell(
+                f"ListenerCuff_{side}",
+                (
+                    (-0.296, 0.052 * arm_width, 0.048 * arm_depth, 0, 0),
+                    (-0.278, 0.059 * arm_width, 0.054 * arm_depth, 0, -0.001),
+                    (-0.252, 0.062 * arm_width, 0.057 * arm_depth, 0, -0.001),
+                    (-0.232, 0.057 * arm_width, 0.052 * arm_depth, 0, 0),
+                ),
+                mats["accent"],
+                elbow,
+                segments=16,
+                contract="mirrorlife-civic-garment-topology-v5",
+            )
         if config["costume"] == "facilitator":
             hand_pose = "notebook-support" if side == -1 else "notebook-guide"
             hand_rotation = (
@@ -2719,15 +2793,21 @@ def build_body(role, config, mats, visual):
                 trouser_compression,
                 depth=0.006,
             )
-        cylinder(
+        # A folded, asymmetric ankle transition connects trouser/skirt leg to
+        # the shoe collar. Four rings replace the uniform cylinder that read as
+        # a plastic bracelet around every ankle.
+        contoured_elliptical_shell(
             f"TrouserCuff_{side}",
-            0.075 * leg_width,
-            0.068 * leg_width,
-            0.058,
-            (0, 0, -0.29),
+            (
+                (-0.332, 0.063 * leg_width, 0.057 * leg_depth, side * 0.001, 0),
+                (-0.31, 0.076 * leg_width, 0.068 * leg_depth, side * 0.002, -0.002),
+                (-0.278, 0.079 * leg_width, 0.071 * leg_depth, -side * 0.001, -0.003),
+                (-0.252, 0.07 * leg_width, 0.063 * leg_depth, -side * 0.002, -0.001),
+            ),
             mats["accent"],
             knee,
-            vertices=20,
+            segments=16,
+            contract="mirrorlife-civic-garment-topology-v5",
         )
         sculpted_shoe(
             f"ShoeUpper_{side}",
@@ -2948,8 +3028,32 @@ def build_costume(
         hem_x = skirt_hem * 0.93
         curve_tube(
             "SkirtHem",
-            [(-hem_x, -0.09, -0.388), (0, -skirt_hem * 0.97, -0.405), (hem_x, -0.09, -0.388)],
+            [
+                (-hem_x, -0.075, -0.382),
+                (-hem_x * 0.54, -skirt_hem * 0.78, -0.405),
+                (0, -skirt_hem * 0.98, -0.394),
+                (hem_x * 0.52, -skirt_hem * 0.8, -0.414),
+                (hem_x, -0.07, -0.386),
+            ],
             0.007,
+            mats["accent"],
+            skirt_pivot,
+            resolution=2,
+        )
+        # The rear hem is authored separately so the garment remains
+        # constructed during a complete orbit instead of revealing a single
+        # front-facing curve. Its restrained height difference communicates
+        # cloth weight without changing the physical capsule or floor contact.
+        curve_tube(
+            "SkirtBackHem",
+            [
+                (-hem_x, 0.07, -0.382),
+                (-hem_x * 0.5, skirt_hem * 0.72, -0.397),
+                (0, skirt_hem * 0.9, -0.405),
+                (hem_x * 0.52, skirt_hem * 0.74, -0.391),
+                (hem_x, 0.068, -0.386),
+            ],
+            0.0065,
             mats["accent"],
             skirt_pivot,
             resolution=2,
@@ -3039,7 +3143,12 @@ def build_costume(
             )
             curve_tube(
                 f"CoatHem_{side}",
-                [(side * 0.02, -0.214, 0.83), (side * 0.095, -0.222, 0.835), (side * 0.178, -0.18, 0.84)],
+                [
+                    (side * 0.02, -0.214, 0.838 if is_facilitator else 0.85),
+                    (side * 0.088, -0.226, 0.829 if side < 0 else 0.842),
+                    (side * 0.142, -0.21, 0.836 if is_facilitator else 0.846),
+                    (side * 0.178, -0.18, 0.847 if side < 0 else 0.835),
+                ],
                 0.006,
                 mats["accent"],
                 visual,
@@ -3133,15 +3242,18 @@ def build_costume(
                 segments=1,
             )
         for side, elbow in ((-1, left_elbow), (1, right_elbow)):
-            cylinder(
+            contoured_elliptical_shell(
                 f"CoatCuff_{side}",
-                0.056,
-                0.052,
-                0.055,
-                (0, -0.001, -0.282),
+                (
+                    (-0.314, 0.049, 0.045, side * 0.001, 0),
+                    (-0.296, 0.056, 0.051, side * 0.002, -0.002),
+                    (-0.272, 0.059, 0.054, -side * 0.001, -0.003),
+                    (-0.25, 0.053, 0.049, -side * 0.002, -0.001),
+                ),
                 mats["accent"],
                 elbow,
-                vertices=18,
+                segments=16,
+                contract="mirrorlife-civic-garment-topology-v5",
             )
             # A real raised knit rib breaks the uninterrupted cylindrical cuff
             # and holds a believable thickness where cardigan meets hand.
@@ -3150,9 +3262,9 @@ def build_costume(
             for rib_index, rib_z in enumerate((-0.282,), start=1):
                 torus(
                     f"CoatCuffRib_{side}_{rib_index}",
-                    0.053,
+                    0.052,
                     0.0028,
-                    (0, -0.001, rib_z),
+                    (side * 0.001, -0.001, rib_z),
                     mats["outer"],
                     elbow,
                     major_segments=12,
@@ -3304,7 +3416,7 @@ def build_character(role, config):
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
     root["body_contract"] = "mirrorlife-civic-body-identity-v8"
-    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v4"
+    root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v5"
     root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v2"
     root["pelvis_contract"] = "mirrorlife-civic-pelvis-continuity-v3"
     root["real_world_unit"] = "meter"
@@ -3403,7 +3515,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v76",
+        "sculptContract": "mirrorlife-civic-sculpt-v77",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3435,8 +3547,8 @@ def main():
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
         },
         "garmentTopologyContract": {
-            "version": "mirrorlife-civic-garment-topology-v4",
-            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs",
+            "version": "mirrorlife-civic-garment-topology-v5",
+            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
             "garments": ["sleeve", "trouser", "skirt", "vest", "cardigan"],
             "standingParts": [
                 "SkinnedArmVolume",
@@ -3493,10 +3605,11 @@ def main():
             "morphs": ["WarmSmile", "SpeechJaw", "Concern", "Attentive", "SocialAsymmetry", "Blink"],
         },
         "handContract": {
-            "version": "mirrorlife-civic-hand-v10",
+            "version": "mirrorlife-civic-hand-v11",
+            "continuityContract": "mirrorlife-civic-hand-continuity-v1",
             "pivots": ["Hand_-1", "Hand_1"],
             "poseStyles": ["relaxed", "soft-cup", "notebook-support", "notebook-guide", "thoughtful", "open"],
-            "surfaceParts": ["PalmLifeLine", "PalmHeartLine", "FingerCrease", "ThumbCrease", "five-ring-tapered-digits"],
+            "surfaceParts": ["HandWebSurface", "PalmLifeLine", "PalmHeartLine", "FingerCrease", "ThumbCrease", "six-ring-tapered-digits"],
         },
         "notebookContactContract": {
             "version": "mirrorlife-civic-notebook-contact-v3",
