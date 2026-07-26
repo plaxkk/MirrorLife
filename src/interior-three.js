@@ -6118,6 +6118,12 @@ function addCivicPortalWallShell(theme, wallHeight, wallMaterial) {
     plane.rotation.y = side.yaw;
     plane.castShadow = false;
     plane.receiveShadow = true;
+    // Keep each visual shell plane addressable after the room's static
+    // geometry batching pass. Merely adding the pre-merge mesh to
+    // cameraForegroundObjects left a stale reference, so quarter-orbit views
+    // could still be covered by an opaque near wall even though the occlusion
+    // system was running. Rapier owns the solid boundary separately.
+    plane.userData.cameraForegroundFade = true;
     plane.userData.cameraForegroundNearDistance = 1.42;
     // A near wall can fill most of a quarter-orbit frame. At that point it is
     // a camera obstruction rather than useful architecture, so dissolve the
@@ -10370,7 +10376,11 @@ function updateActors(actors = [], now = performance.now()) {
       // presenting three near-profile silhouettes.
       const cameraOpeningWeight = {
         listener: 0.72,
-        facilitator: 0.58,
+        // The facilitator's asymmetric ponytail is a strong silhouette cue,
+        // but at the former angle its near face-frame lock covered the eyes.
+        // Open her further toward the authored story camera so expression and
+        // listening pose remain readable without breaking the social circle.
+        facilitator: 0.76,
         mediator: 0.4
       }[entry.assetRole] ?? 0.34;
       bodyYaw += cameraDelta * cameraOpeningWeight;

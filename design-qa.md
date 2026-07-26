@@ -1,5 +1,44 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v145 fuller actor silhouette, readable facilitator face and durable shell-fade gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory equal-size comparison: `tmp/v145-reference-full-pair.png` places the source and browser output together at `1672 × 941` per side; `tmp/v145-character-focus-pair.png` compares the four-person story group at equal visual scale.
+- Full 3D evidence: `tmp/v145-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence is `tmp/v145-mobile.png` at `390 × 844`; forced blink is recorded in `dist/interior-3d-work/environment-review-blink/00-public.png`.
+- Runtime evidence: opening `170 / 277,819 / 173`, side `173 / 288,927 / 167`, reverse `174 / 329,651 / 170`, fourth orbit `175 / 314,683 / 174` for draw calls / triangles / geometries. Mobile remains `106 / 236,775 / 81`; all captures report zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `2.69m`, rotated the camera `65.3°` and retained the curved illustrated identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four rebuilt civic GLBs pass at `7.42 MB`; every role remains below `45k` triangles. The generated manifest now preserves the production `illustrated-cornea-desktop+curved-atlas-mobile` face contract.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v144 P1 / limbs read as narrow tubes] Role-specific body profiles add restrained shoulder, arm, hand and leg volume while retaining the shared metre-scale skeleton, `1.72m` capsule contract and existing animation clips. The player cargo silhouette, listener sleeves and skirted roles now carry weight through elbow, knee and shoe contact instead of resolving as thin sticks.
+- [fixed from v144 P1 / red facilitator's near hair lock obscured the face] The coral face frame moves outward, tapers earlier and uses a slimmer cross-section. Her authored opening weight increases from `0.58` to `0.76`, preserving eye contact with the player while exposing both the illustrated eye plane and notebook gesture in the actual story camera.
+- [fixed during v145 / fourth-orbit navigation wall bypassed fading] Each rectilinear visual shell plane now declares `cameraForegroundFade` before room batching. The occlusion system therefore retains a live mesh/material reference instead of a stale pre-merge object; yaw `270°` dissolves the near wall while the separate Rapier boundary remains solid.
+- [fixed during v145 / character rebuild rewrote the release face contract] The Blender generator now emits the same illustrated-cornea desktop / curved-atlas mobile contract enforced by runtime and verification. Rebuilding characters no longer silently changes the production face mode.
+- [checked / silhouette work must remain playable] Four headings preserve the full social group and at least one portal, target or authored destination. The mobile render stays below `110` draw calls and `250k` triangles; desktop remains below `180 / 450k`.
+
+### Required fidelity surfaces and findings
+
+- [improved][character silhouette and expression access] Arms, hands, cargo legs and shoes carry more coherent mass, while the facilitator's face is no longer replaced by a vertical coral hair column at the opening. Real head tracking, notebook contact, blink, locomotion and physical floor contact remain live.
+- [improved][360° camera and spatial truth] The fourth orbit no longer loses a large foreground quadrant to an opaque navigation shell. This is a visual-only fade: walkability, wall collision, furniture collision and camera collision remain driven by the same physical room.
+- [checked][first-look hierarchy and responsive layout] Portal, testimony ring, four citizens, listening wall and teal lounge remain the opening hierarchy; portrait keeps the player, social target and action controls visible without horizontal overflow.
+- [P1][production character surface finish remains behind] The source still has finer cheek/lip planes, softer hair taper, more natural shoulder/hand anatomy, denser garment seams and less uniform material response than the current real-time cast.
+- [P1][complete-room secondary craft remains behind] Joinery, paper wear, botanical species detail, glass transmission, textile weave and irregular prop clustering remain less authored outside the three hero assemblies.
+- [P1][source-level light transport remains behind] Direction, exposure and foliage projection are coherent, but the reference still owns softer portal penumbrae, richer warm/cool bounce, skin subsurface impression and more continuous foreground sunlight.
+- [P2][fourth-orbit left edge remains visually quiet] The obstruction is fixed, but the revealed west shell has less authored dressing than the source-quality opening and reverse walls.
+- [P2][HUD optical finish remains behind] Coverage and interaction hierarchy pass; icon drawing, panel edge treatment and compact type rhythm remain more utilitarian than the reference.
+
+### Gate result
+
+v145 improves the most visible character silhouette and face-access defects, fixes an actual fourth-orbit occlusion ownership bug, and makes the generated release contract reproducible. Walking, 360° rotation, blink, metre-space physics, all-zone transitions, mobile LOD and performance budgets remain green. The mandatory same-canvas comparison still contains actionable P1 gaps in character surface craft, room-wide bespoke secondary detail and source-level indirect light transport.
+
+final result: blocked
+
+Blocker: the requested reference level is not yet fully proven; source character sculpt/material nuance, complete-room secondary craftsmanship and offline-quality indirect lighting remain visibly ahead.
+
 ## 2026-07-26 reference-fidelity v144 closer story lens, social three-quarter staging and material/light hierarchy gate
 
 ### Evidence inspected together

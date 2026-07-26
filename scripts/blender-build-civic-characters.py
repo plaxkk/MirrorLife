@@ -96,14 +96,17 @@ BODY_PROFILES = {
         "torso_depth": 1.0,
         "shoulder_x": 0.226,
         "hip_x": 0.118,
-        "arm_width": 0.92,
-        "arm_depth": 0.94,
+        # The reference keeps compact, softly weighted limbs. The former
+        # narrow sleeve volume survived the rig but read like a thin tube
+        # beside the broad illustrated head and cargo silhouette.
+        "arm_width": 1.02,
+        "arm_depth": 1.03,
         # Preserve the reference's loose cargo thigh while the authored ring
         # stack still tapers decisively into the ankle.
         "leg_width": 1.03,
         "leg_depth": 0.99,
         "waist_width": 1.04,
-        "hand_scale": 0.98,
+        "hand_scale": 1.02,
         "foot_scale": 1.18,
         "toe_out": 0.075,
         # The normalized story-camera comparison measures the source cast at
@@ -119,12 +122,12 @@ BODY_PROFILES = {
         "torso_depth": 0.97,
         "shoulder_x": 0.218,
         "hip_x": 0.118,
-        "arm_width": 0.9,
-        "arm_depth": 0.93,
-        "leg_width": 0.99,
-        "leg_depth": 0.98,
+        "arm_width": 1.03,
+        "arm_depth": 1.04,
+        "leg_width": 1.04,
+        "leg_depth": 1.02,
         "waist_width": 1.0,
-        "hand_scale": 0.97,
+        "hand_scale": 1.02,
         "foot_scale": 1.14,
         "toe_out": 0.065,
         "head_scale": (1.005, 0.955, 0.95),
@@ -135,12 +138,12 @@ BODY_PROFILES = {
         "torso_depth": 0.95,
         "shoulder_x": 0.214,
         "hip_x": 0.106,
-        "arm_width": 0.87,
-        "arm_depth": 0.91,
-        "leg_width": 0.87,
-        "leg_depth": 0.92,
+        "arm_width": 1.0,
+        "arm_depth": 1.0,
+        "leg_width": 0.93,
+        "leg_depth": 0.96,
         "waist_width": 0.95,
-        "hand_scale": 0.96,
+        "hand_scale": 1.0,
         "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (1.0, 0.955, 0.95),
@@ -151,12 +154,12 @@ BODY_PROFILES = {
         "torso_depth": 0.96,
         "shoulder_x": 0.216,
         "hip_x": 0.108,
-        "arm_width": 0.89,
-        "arm_depth": 0.92,
-        "leg_width": 0.89,
-        "leg_depth": 0.94,
+        "arm_width": 1.0,
+        "arm_depth": 1.0,
+        "leg_width": 0.94,
+        "leg_depth": 0.98,
         "waist_width": 0.96,
-        "hand_scale": 0.96,
+        "hand_scale": 1.0,
         "foot_scale": 1.04,
         "toe_out": 0.055,
         "head_scale": (1.0, 0.955, 0.95),
@@ -2177,24 +2180,34 @@ def build_hair(head, mats, style):
         frame_tip_z = {
             "spiky": -0.005,
             "cap": -0.035,
-            "coral_ponytail": -0.105,
+            # Preserve the source's face-framing red lock without letting it
+            # cross the painted iris at the authored three-quarter camera.
+            # The former chin-length strip made the facilitator read as a
+            # faceless hair column whenever she turned toward the player.
+            "coral_ponytail": -0.045,
             "braided_bob": -0.085,
         }.get(style, -0.04)
         frame_drift = {
             "spiky": 0.015,
             "cap": 0.008,
-            "coral_ponytail": 0.028,
+            "coral_ponytail": 0.038,
             "braided_bob": 0.018,
         }.get(style, 0.012)
+        frame_root_x = 0.15 if style == "coral_ponytail" else 0.125
+        frame_radii = (
+            (0.034, 0.037, 0.027, 0.0045)
+            if style == "coral_ponytail"
+            else (0.043, 0.047, 0.035, 0.006)
+        )
         tapered_lock(
             f"FaceFrameLock_{side}",
             [
-                (side * 0.125, -0.105, 0.238),
-                (side * 0.178, -0.165, 0.175),
+                (side * frame_root_x, -0.105, 0.238),
+                (side * (0.19 if style == "coral_ponytail" else 0.178), -0.165, 0.175),
                 (side * (0.215 + frame_drift), -0.202, 0.085),
                 (side * (0.218 + frame_drift), -0.194, frame_tip_z),
             ],
-            (0.043, 0.047, 0.035, 0.006),
+            frame_radii,
             mats["hair_highlight"] if side == -1 else mats["hair"],
             head,
             sides=14,
@@ -2206,7 +2219,7 @@ def build_hair(head, mats, style):
         wisp_tip_z = {
             "spiky": 0.018,
             "cap": -0.008,
-            "coral_ponytail": -0.078,
+            "coral_ponytail": -0.028,
             "braided_bob": -0.062,
         }.get(style, -0.02)
         tapered_lock(
@@ -3643,7 +3656,7 @@ def main():
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
             "integrationContract": "mirrorlife-civic-face-identity-v9",
-            "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
+            "productionFaceMode": "illustrated-cornea-desktop+curved-atlas-mobile",
             "productionIntegrationContract": "mirrorlife-civic-face-identity-v9",
             "corneaContract": "mirrorlife-civic-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v3",
