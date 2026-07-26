@@ -16,8 +16,8 @@ const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBli
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v78";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v5";
-const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v14";
-const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v4";
+const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
+const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v5";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
 const CIVIC_WEST_WITNESS_LIBRARY_CONTRACT = "mirrorlife-civic-west-witness-library-v1";
 const CIVIC_WEIGHT_TRANSFER_CONTRACT = "mirrorlife-civic-weight-transfer-v1";
@@ -3060,19 +3060,61 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   const microProps = new THREE.Group();
   microProps.name = "CivicRecordDeskMicroProps";
   group.add(microProps);
-  const clipboard = new THREE.Mesh(
-    new RoundedBoxGeometry(0.44, 0.025, 0.3, 3, 0.022),
-    createToonMaterial("#e9dcc8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
+  // One open witness ledger replaces the overlapping clipboard/notebook pair.
+  // A shared cover, page block, centre gutter and lifted corner make the paper
+  // read as a bound object from front, side and reverse gameplay cameras.
+  const ledgerCover = new THREE.Mesh(
+    new RoundedBoxGeometry(0.63, 0.035, 0.38, 4, 0.026),
+    createToonMaterial("#557f77", { roughness: 0.82, surface: "fabric", bumpScale: 0.006 })
   );
-  clipboard.position.set(0.18, 0.872, 0.27);
-  clipboard.rotation.y = 0.08;
-  microProps.add(clipboard);
-  [colors.accent, colors.secondary].forEach((color, index) => {
-    const note = new THREE.Mesh(new RoundedBoxGeometry(0.12, 0.018, 0.09, 2, 0.012), createToonMaterial(color, { roughness: 0.84 }));
-    note.position.set(0.1 + index * 0.14, 0.892 + index * 0.002, 0.245 + index * 0.035);
-    note.rotation.y = 0.02 + index * 0.12;
-    microProps.add(note);
+  ledgerCover.position.set(0.25, 0.872, 0.25);
+  ledgerCover.rotation.y = 0.1;
+  microProps.add(ledgerCover);
+  const ledgerPageMaterial = createToonMaterial("#f4ead9", {
+    roughness: 0.96,
+    surface: "paper",
+    bumpScale: 0.005
   });
+  [-1, 1].forEach((side) => {
+    const pageBlock = new THREE.Mesh(
+      new RoundedBoxGeometry(0.285, 0.028, 0.34, 3, 0.018),
+      ledgerPageMaterial
+    );
+    pageBlock.position.set(0.25 + side * 0.153, 0.905, 0.25);
+    pageBlock.rotation.y = 0.1 + side * 0.035;
+    pageBlock.rotation.z = side * -0.012;
+    microProps.add(pageBlock);
+    [0.08, 0, -0.08].forEach((lineZ, lineIndex) => {
+      const line = new THREE.Mesh(
+        new RoundedBoxGeometry(0.19 - lineIndex * 0.018, 0.009, 0.008, 1, 0.003),
+        createToonMaterial(lineIndex === 0 ? colors.secondary : "#8e8170", { roughness: 0.84 })
+      );
+      line.position.set(0.25 + side * 0.153, 0.923 + lineIndex * 0.0005, 0.25 + lineZ);
+      line.rotation.y = 0.1 + side * 0.035;
+      microProps.add(line);
+    });
+  });
+  const ledgerGutter = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.012, 0.33, 10),
+    createToonMaterial("#b18b65", { roughness: 0.86, surface: "paper", bumpScale: 0.003 })
+  );
+  ledgerGutter.rotation.x = Math.PI / 2;
+  ledgerGutter.rotation.z = -0.1;
+  ledgerGutter.position.set(0.25, 0.928, 0.25);
+  microProps.add(ledgerGutter);
+  const ledgerCorner = new THREE.Mesh(
+    new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(0, 0, 0),
+      new THREE.Vector3(-0.09, 0, 0),
+      new THREE.Vector3(0, 0.035, -0.09)
+    ]),
+    ledgerPageMaterial
+  );
+  ledgerCorner.geometry.setIndex([0, 1, 2, 0, 2, 1]);
+  ledgerCorner.geometry.computeVertexNormals();
+  ledgerCorner.position.set(0.535, 0.924, 0.42);
+  ledgerCorner.rotation.y = 0.1;
+  microProps.add(ledgerCorner);
   const lampBase = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.13, 0.052, 18), trim);
   lampBase.position.set(-0.84, 0.855, -0.2);
   group.add(lampBase);
@@ -3150,24 +3192,22 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     brief.add(rest);
   });
 
-  // Editorial micro-props give the foreground the lived-in density of the
-  // reference while staying inside the authored desk footprint/collider.
-  const notebook = new THREE.Mesh(
-    new RoundedBoxGeometry(0.46, 0.035, 0.32, 3, 0.025),
-    createToonMaterial("#f4ead8", { roughness: 0.94, surface: "paper", bumpScale: 0.004 })
+  // A real pencil bridges the gutter and makes the open ledger read as the
+  // active work surface instead of another static prop cluster.
+  const ledgerPencil = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.012, 0.012, 0.46, 8),
+    createToonMaterial("#3d8179", { roughness: 0.58 })
   );
-  notebook.position.set(0.34, 0.88, 0.28);
-  notebook.rotation.y = 0.1;
-  microProps.add(notebook);
-  [-0.11, 0, 0.11].forEach((z, index) => {
-    const line = new THREE.Mesh(
-      new RoundedBoxGeometry(0.29 - index * 0.03, 0.009, 0.008, 1, 0.003),
-      createToonMaterial(index === 0 ? colors.secondary : "#8e8170", { roughness: 0.84 })
-    );
-    line.position.set(0.34, 0.902 + index * 0.0005, 0.28 + z);
-    line.rotation.y = 0.1;
-    microProps.add(line);
-  });
+  ledgerPencil.rotation.set(Math.PI / 2, 0, -0.36);
+  ledgerPencil.position.set(0.27, 0.95, 0.19);
+  microProps.add(ledgerPencil);
+  const pencilTip = new THREE.Mesh(
+    new THREE.ConeGeometry(0.013, 0.055, 8),
+    createToonMaterial("#d5aa79", { roughness: 0.84, surface: "wood", bumpScale: 0.003 })
+  );
+  pencilTip.rotation.copy(ledgerPencil.rotation);
+  pencilTip.position.set(0.345, 0.955, -0.005);
+  microProps.add(pencilTip);
   // The reference foreground uses a real clear tumbler as its brightest
   // material contrast. Build the open wall, base and dense cut rim into one
   // transmitted mesh so it remains a single draw call and reads as glass
@@ -3176,12 +3216,18 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   const waterGlassParts = [
     new THREE.CylinderGeometry(0.095, 0.085, 0.22, waterGlassRadialSegments, 1, true),
     new THREE.CircleGeometry(0.084, waterGlassRadialSegments),
-    new THREE.TorusGeometry(0.094, 0.007, 6, waterGlassRadialSegments)
+    new THREE.TorusGeometry(0.094, 0.007, 6, waterGlassRadialSegments),
+    new THREE.CircleGeometry(0.083, waterGlassRadialSegments),
+    new THREE.TorusGeometry(0.083, 0.004, 5, waterGlassRadialSegments)
   ];
   waterGlassParts[1].rotateX(-Math.PI / 2);
   waterGlassParts[1].translate(0, -0.11, 0);
   waterGlassParts[2].rotateX(Math.PI / 2);
   waterGlassParts[2].translate(0, 0.11, 0);
+  waterGlassParts[3].rotateX(Math.PI / 2);
+  waterGlassParts[3].translate(0, 0.045, 0);
+  waterGlassParts[4].rotateX(Math.PI / 2);
+  waterGlassParts[4].translate(0, 0.045, 0);
   const waterGlassGeometry = mergeGeometries
     ? mergeGeometries(waterGlassParts, false)
     : waterGlassParts[0];
@@ -3205,24 +3251,55 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
   );
   coaster.position.set(0.76, 0.868, 0.31);
   microProps.add(coaster);
+  const penCupMaterial = createToonMaterial("#4d8b83", { roughness: 0.46 });
   const penCup = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20),
-    createToonMaterial("#4d8b83", { roughness: 0.46 })
+    new THREE.CylinderGeometry(0.095, 0.11, 0.2, 20, 1, true),
+    penCupMaterial
   );
   penCup.position.set(0.64, 0.93, -0.18);
   microProps.add(penCup);
+  const penCupBase = new THREE.Mesh(new THREE.CircleGeometry(0.098, 20), penCupMaterial);
+  penCupBase.rotation.x = -Math.PI / 2;
+  penCupBase.position.set(0.64, 0.83, -0.18);
+  microProps.add(penCupBase);
+  const penCupRim = new THREE.Mesh(new THREE.TorusGeometry(0.096, 0.008, 6, 20), penCupMaterial);
+  penCupRim.rotation.x = Math.PI / 2;
+  penCupRim.position.set(0.64, 1.03, -0.18);
+  microProps.add(penCupRim);
+  const penCupOpening = new THREE.Mesh(
+    new THREE.CircleGeometry(0.083, 20),
+    createToonMaterial("#224843", { roughness: 0.96 })
+  );
+  penCupOpening.rotation.x = -Math.PI / 2;
+  penCupOpening.position.set(0.64, 1.023, -0.18);
+  microProps.add(penCupOpening);
   [colors.accent, "#476e91", "#b45f51"].forEach((color, index) => {
     const pen = new THREE.Mesh(new THREE.CylinderGeometry(0.012, 0.014, 0.31, 8), createToonMaterial(color, { roughness: 0.58 }));
     pen.position.set(0.6 + index * 0.04, 1.09 + index * 0.015, -0.18);
     pen.rotation.z = (index - 1) * 0.1;
     microProps.add(pen);
   });
-  const fileTray = new THREE.Mesh(
-    new RoundedBoxGeometry(0.34, 0.07, 0.24, 3, 0.025),
-    createToonMaterial("#5f8d82", { roughness: 0.62 })
+  const fileTrayMaterial = createToonMaterial("#5f8d82", { roughness: 0.62 });
+  const fileTrayBase = new THREE.Mesh(
+    new RoundedBoxGeometry(0.34, 0.035, 0.24, 3, 0.018),
+    fileTrayMaterial
   );
-  fileTray.position.set(0.08, 0.9, -0.2);
-  microProps.add(fileTray);
+  fileTrayBase.position.set(0.08, 0.878, -0.2);
+  microProps.add(fileTrayBase);
+  [-1, 1].forEach((side) => {
+    const trayWall = new THREE.Mesh(
+      new RoundedBoxGeometry(0.025, 0.13, 0.24, 2, 0.009),
+      fileTrayMaterial
+    );
+    trayWall.position.set(0.08 + side * 0.16, 0.93, -0.2);
+    microProps.add(trayWall);
+  });
+  const trayBack = new THREE.Mesh(
+    new RoundedBoxGeometry(0.34, 0.13, 0.025, 2, 0.009),
+    fileTrayMaterial
+  );
+  trayBack.position.set(0.08, 0.93, -0.31);
+  microProps.add(trayBack);
   ["#f2e2bf", "#d4e4dc", "#edbd92", "#e9d6c0"].forEach((color, index) => {
     const card = new THREE.Mesh(
       new RoundedBoxGeometry(0.046, 0.115 + index * 0.006, 0.16, 2, 0.01),
@@ -8028,19 +8105,39 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vec3 mirrorLifeWoodChroma = mirrorLifeWoodSample - vec3(mirrorLifeWoodSampleLuma);
         float mirrorLifePaperFibre = sin(vMirrorLifeSurfacePosition.x * 93.0 + vMirrorLifeSurfacePosition.y * 41.0)
           * sin(vMirrorLifeSurfacePosition.z * 77.0 - vMirrorLifeSurfacePosition.y * 31.0);
+        // Subtle rubbed high points and deckled paper variation keep the
+        // authored props clean and premium while removing the perfectly
+        // uniform "freshly generated primitive" finish. The effect is
+        // material-masked, view-independent and survives every orbit.
+        float mirrorLifeTouchPatina = pow(
+          0.5 + 0.5 * sin(
+            vMirrorLifeSurfacePosition.x * 8.7
+            + vMirrorLifeSurfacePosition.y * 13.1
+            - vMirrorLifeSurfacePosition.z * 6.3
+          ),
+          10.0
+        ) * vMirrorLifeWoodMask;
+        float mirrorLifePaperDeckle = (
+          sin(vMirrorLifeSurfacePosition.x * 211.0)
+          * sin(vMirrorLifeSurfacePosition.z * 193.0)
+        ) * vMirrorLifePaperMask;
         gl_FragColor.rgb *= 1.0
           + mirrorLifeSurfaceGrain * 0.006
           + mirrorLifeWoodLuma * ${heroFurnitureSurface ? "0.17" : "0.11"} * vMirrorLifeWoodMask
           + mirrorLifeFabricScan * ${heroFurnitureSurface ? "0.082" : "0.052"} * vMirrorLifeClothMask
-          + mirrorLifePaperFibre * 0.014 * vMirrorLifePaperMask;
+          + mirrorLifePaperFibre * 0.014 * vMirrorLifePaperMask
+          + mirrorLifePaperDeckle * 0.008;
         gl_FragColor.rgb += mirrorLifeWoodChroma * ${heroFurnitureSurface ? "0.12" : "0.06"} * vMirrorLifeWoodMask;
+        gl_FragColor.rgb += vec3(0.028, 0.019, 0.011)
+          * mirrorLifeTouchPatina
+          * ${heroFurnitureSurface ? "0.34" : "0.2"};
         gl_FragColor.rgb += vec3(0.014, 0.01, 0.006) * (1.0 - abs(mirrorLifeSurfaceGrain)) * vMirrorLifeMineralMask;`
       );
     }
   };
   material.customProgramCacheKey = () => actorShading
     ? `mirrorlife-actor-material-hierarchy-v18-${eyeDeformationState ? "eyelid" : "static"}-${bodyDeformationState ? "body-neck-chain" : "body-static"}-${digitDeformationState ? "digit-deform" : "digit-static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
-    : `mirrorlife-room-vertex-surface-v4-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
+    : `mirrorlife-room-vertex-surface-v5-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
   if (bodyDeformationState) mesh.userData.mirrorLifeBodyDeformation = bodyDeformationState;

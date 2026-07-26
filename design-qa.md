@@ -1,5 +1,59 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v139 authored foreground object families and physical desk-detail gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state, device scale factor `1`).
+- Mandatory normalized full-view comparison: `tmp/v139-reference-full-pair.png` (`2560 × 720`); source and implementation are normalized to equal `1280 × 720` frames and were inspected together on one canvas.
+- Mandatory foreground comparison: `tmp/v139-foreground-detail-pair.png` (`1240 × 540`); equal-size crops expose the display case, record desk, paper construction, vessel silhouettes and foreground-to-story-circle proportion.
+- Full 3D evidence: `tmp/v139-four-direction-board.png` (`1280 × 720`) contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence: `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `174 / 287,394 / 177`, side `177 / 298,502 / 168`, reverse `178 / 339,226 / 174`, fourth orbit `176 / 324,258 / 175` for draw calls / triangles / geometries; mobile is `106 / 244,054 / 80`. Every final view reports zero shader errors and remains inside desktop `180 / 450k` and phone `110 / 250k` release budgets.
+- Interaction evidence: the Rapier-controlled player walked `3.45m`, rotated the camera `65.3°` and retained curved identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions across all `26` zones completed without failures or runtime errors.
+- Asset evidence: furniture contract v15 contains three authored civic GLBs and `73,930` authored triangles: display case `20,528`, notice console `22,156`, lounge suite `31,246`, all below the shared `95k` asset budget. Surface contract v5 is active in every captured desktop heading.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v137 P1 / the display shelf repeated four nearly identical pale domes] The lower shelf now contains a listening pastry, handled teal witness cup, berry tart and sealed memory parcel. Each family owns a distinct silhouette, material role and civic-story use rather than changing only colour.
+- [fixed during v139 / the display case competed with the real “今日议题” desk board] The oversized duplicate white board is now a small counter certificate. The record desk remains the single readable foreground agenda surface.
+- [improved from v137 P1 / vessels were solid rounded primitives] Pottery now uses authored lathed profiles with restrained asymmetry, real mouth openings, dark interiors, feet and glaze bands. The display bouquet uses petal-and-centre flower construction instead of spherical lollipop heads.
+- [improved from v137 P1 / paper and archive objects had no reverse-side construction] Document packets gain curled three-dimensional paper corners; the lounge archive box gains a real handle and four corner protectors; aged-oak frame sections separate load-bearing structure from lighter display surfaces.
+- [improved from v137 P1 / the record desk still looked like stacked blocks] The desk now carries an open witness ledger with two page blocks, gutter, ruled pages and lifted corner; a laid pencil; a water plane and meniscus inside the glass; an open pen cup; and a file tray with base, side walls and rear wall.
+- [improved from v137 P1 / hero furniture read too small and detached from the editorial frame] Display case, record desk and lounge suite were enlarged and moved into a source-like foreground/midground rhythm. Their visual transforms, colliders and interaction anchors were updated together, so the denser framing does not create false walkable gaps.
+- [improved][material variation] Surface contract v5 adds restrained hand patina to scanned wood and a low-amplitude deckle response to paper while preserving the authored wood/paper semantics and current batching envelope.
+- [checked / the richer opening must remain a real rotating room] The four-heading board retains the complete cast and current target. Near furniture fades in the fourth view; the door, evidence wall and target remain visible rather than being removed for the screenshot.
+
+### Required fidelity surfaces and findings
+
+- [checked][fonts and typography] Place memory, status rail, action rail and interaction prompt remain readable at desktop and portrait sizes. The source still has finer icons, tighter counter spacing and more convincing layered glass.
+- [improved][spacing and layout rhythm] The implementation now owns a cropped foreground record desk, a substantial display case, a readable central testimony ring and a distinct lounge zone. The source still has denser controlled asymmetry and more continuous room-edge dressing.
+- [improved][colors and visual tokens] Ivory, aged oak, walnut, teal, coral, butter, brass and mineral floor remain coherent; the differentiated display objects prevent the former pale monochrome shelf. The implementation still has stronger costume saturation and less natural colour bleeding.
+- [improved][image quality and asset fidelity] Real vessel openings, paper curls, tray walls, glass water, archive hardware, differentiated food/parcel silhouettes and flower petals materially reduce the generated-block read. The source still owns finer joinery, fabric weave, glass transmission, botanical anatomy, paper wear and small hardware.
+- [checked][copy and content] “倾听线索”, “倾听墙”, place-memory state and contextual interaction remain coherent; no raw private-memory text or unsupported public statistics were introduced.
+- [checked][icons and interaction states] Action selection, keyboard movement, camera drag, phone controls, blink, hand/prop contact and atomic room warmup remain functional.
+- [checked][physical truth, accessibility and responsiveness] One world unit remains one metre; enlarged hero-prop visual transforms and colliders share the same authored coordinates; player/NPC capsules cannot pass through or stand on the display case, desk or lounge. Mobile retains 44px+ controls, no horizontal overflow and the strict render budget.
+- [P1][complete production-character craft remains behind] The citizens are fully 3D, walkable, lit and animated, but the source still has subtler face planes, hair clumping, garment compression, hand contact and character-specific indirect response.
+- [P1][complete-room asset craft remains behind] v139 resolves the clearest foreground repetition and hollow-object defects, but the source still has more bespoke wall-wide joinery, textiles, botanical species, wear variation and naturally irregular small-object clustering.
+- [P1][offline-quality light and material transport remains ahead] Real-time key/fill, portal bounce, foliage projection and contact AO preserve readability, but the source retains broader colour bounce, softer penumbrae, richer glass/leaf transmission and more flattering facial light.
+- [P2][orbit composition remains uneven] Every heading is playable, but side/reverse views are necessarily quieter and the `270°` camera exposes translucent foreground furniture during collision/occlusion avoidance.
+- [P2][HUD optical finish remains behind] Coverage and responsiveness pass, while icon family, compact counters, layered translucency and button-edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve furniture v15 and surface v5; do not regress to four identical display domes, solid pottery, flat paper corners, closed storage primitives or the duplicate large white board.
+- Continue character work through role-specific face/hair/garment secondary forms and more natural hand-to-prop compression.
+- Add the next room-wide craft pass through textile weave, botanical species, wall joinery and restrained wear rather than filling circulation with more obstacles.
+- Keep every future detail inside the current `174–178` desktop and `106` mobile draw-call envelope, or recover cost through batching/LOD before adding it.
+
+### Gate result
+
+v139 gives the reference-facing foreground distinct civic object families, physically constructed desk accessories, hollow/asymmetric ceramics, source-like prop scale and a materially denser editorial frame while preserving metre-scale physics, real character movement, complete 360° camera rotation, responsive controls and release performance. The mandatory same-canvas evidence still contains actionable P1 gaps in source-level complete-room asset craftsmanship, production character nuance and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: source-level bespoke room-wide secondary assets, production character finish and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v137 curated civic detail and indirect-light gate
 
 ### Evidence inspected together

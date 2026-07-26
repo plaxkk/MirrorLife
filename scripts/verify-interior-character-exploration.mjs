@@ -114,8 +114,8 @@ try {
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
   assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v5", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
-  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v14", "civic room did not expose the authored furniture-detail contract");
-  assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v4", "civic room did not expose the scanned furniture-surface contract");
+  assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v15", "civic room did not expose the authored furniture-detail contract");
+  assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v5", "civic room did not expose the scanned furniture-surface contract");
   assert.equal(opening.furniture?.reverseWallVersion, "mirrorlife-civic-reverse-wall-v3", "civic room did not expose the authored reverse witness-wall contract");
   assert.ok(opening.furniture?.scannedSurfaceBatches >= 3, "placed civic hero furniture lost its scanned surface shader");
   assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");

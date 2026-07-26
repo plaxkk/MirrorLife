@@ -18,6 +18,7 @@ PALETTE = {
     "oak": "#9a6240",
     "oak_light": "#b8794e",
     "oak_dark": "#75462f",
+    "oak_aged": "#66402f",
     "walnut": "#573725",
     "cork": "#c69062",
     "coral": "#df8066",
@@ -92,6 +93,7 @@ def materials():
         "oak": material("Civic oak", PALETTE["oak"], 0.54),
         "oak_light": material("Civic honey oak", PALETTE["oak_light"], 0.5),
         "oak_dark": material("Civic smoked oak", PALETTE["oak_dark"], 0.59),
+        "oak_aged": material("Civic aged oak", PALETTE["oak_aged"], 0.64),
         "walnut": material("Civic walnut", PALETTE["walnut"], 0.66),
         "cork": material("Civic cork", PALETTE["cork"], 0.88),
         "coral": material("Civic coral paint", PALETTE["coral"], 0.7),
@@ -343,6 +345,46 @@ def triangular_prism(name, points_xz, depth, center_y, mat, parent):
     return link(obj, mat, parent)
 
 
+def curled_paper_corner(name, location, size, lift, mat, parent, rotation=0):
+    """Create a folded paper corner with a real underside and thickness."""
+    x0, y0, z0 = location
+    thickness = 0.006
+    cosine = math.cos(rotation)
+    sine = math.sin(rotation)
+
+    def rotate_xy(x, y, z):
+        dx = x - x0
+        dy = y - y0
+        return (
+            x0 + dx * cosine - dy * sine,
+            y0 + dx * sine + dy * cosine,
+            z,
+        )
+
+    top = [
+        rotate_xy(x0 - size, y0, z0),
+        rotate_xy(x0, y0 - size, z0),
+        rotate_xy(x0, y0, z0 + lift),
+    ]
+    bottom = [(x, y, z - thickness) for x, y, z in top]
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(
+        top + bottom,
+        [],
+        [
+            (0, 1, 2),
+            (5, 4, 3),
+            (0, 3, 4, 1),
+            (1, 4, 5, 2),
+            (2, 5, 3, 0),
+        ],
+    )
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    return link(obj, mat, parent)
+
+
 def add_document_packet(
     parent,
     mats,
@@ -389,6 +431,19 @@ def add_document_packet(
         (0, 0, rotation),
         2,
     )
+    curled_paper_corner(
+        f"{name}CornerCurl",
+        (
+            x + width * 0.47,
+            y + depth * 0.47,
+            z + sheets * 0.009 + 0.008,
+        ),
+        min(width, depth) * 0.18,
+        min(width, depth) * 0.07,
+        mats["paper_cool"],
+        parent,
+        rotation,
+    )
 
 
 def sphere(name, scale, location, mat, parent, segments=18, rings=12, rotation=(0, 0, 0)):
@@ -417,6 +472,43 @@ def torus(name, major, minor, location, mat, parent, rotation=(0, 0, 0), major_s
     obj.location = location
     obj.rotation_euler = rotation
     return link(obj, mat)
+
+
+def lathed_profile(name, profile, location, mat, parent, segments=24, rotation=(0, 0, 0)):
+    """Turn an authored radius/height profile into a closed handmade vessel."""
+    x0, y0, z0 = location
+    vertices = []
+    faces = []
+    for radius, height in profile:
+        for segment in range(segments):
+            angle = segment / segments * math.pi * 2
+            # The restrained oval is deliberate: perfectly radial pottery is
+            # one of the clearest remaining primitive/model-generator tells.
+            oval = 1.0 + math.cos(angle * 2) * 0.018
+            vertices.append((
+                x0 + math.cos(angle) * radius * oval,
+                y0 + math.sin(angle) * radius / oval,
+                z0 + height,
+            ))
+    rings = len(profile)
+    for ring in range(rings - 1):
+        for segment in range(segments):
+            next_segment = (segment + 1) % segments
+            a = ring * segments + segment
+            b = ring * segments + next_segment
+            c = (ring + 1) * segments + next_segment
+            d = (ring + 1) * segments + segment
+            faces.append((a, b, c, d))
+    faces.append(tuple(reversed(range(segments))))
+    top_offset = (rings - 1) * segments
+    faces.append(tuple(top_offset + segment for segment in range(segments)))
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.rotation_euler = rotation
+    return link(obj, mat, parent)
 
 
 def text_mesh(name, body, location, size, mat, parent, extrude=0.006):
@@ -554,17 +646,69 @@ def add_plant(parent, mats, name, location, scale=1.0, variety="upright"):
 def add_ceramic(parent, mats, name, location, scale=1.0, accent=None):
     glaze_key = f"ceramic_{accent}" if accent in ("teal", "butter", "coral", "blue") else "ceramic"
     glaze = mats[glaze_key]
-    cylinder(f"{name}_body", 0.1 * scale, 0.2 * scale, location, glaze, parent, 22, radius_top=0.075 * scale)
-    torus(f"{name}_rim", 0.072 * scale, 0.012 * scale, (location[0], location[1], location[2] + 0.105 * scale), mats["brass"] if accent else glaze, parent)
-    torus(f"{name}_glaze_band", 0.086 * scale, 0.009 * scale, (location[0], location[1], location[2] + 0.02 * scale), mats["brass"] if accent else mats["oak"], parent, major_segments=20, minor_segments=6)
-    cylinder(f"{name}_foot", 0.062 * scale, 0.026 * scale, (location[0], location[1], location[2] - 0.112 * scale), mats["walnut"], parent, 18, radius_top=0.068 * scale)
+    body_height = 0.22 * scale
+    lathed_profile(
+        f"{name}_body",
+        (
+            (0.055 * scale, -body_height * 0.5),
+            (0.082 * scale, -body_height * 0.46),
+            (0.105 * scale, -body_height * 0.28),
+            (0.112 * scale, body_height * 0.04),
+            (0.101 * scale, body_height * 0.3),
+            (0.078 * scale, body_height * 0.46),
+            (0.072 * scale, body_height * 0.5),
+        ),
+        location,
+        glaze,
+        parent,
+        24,
+    )
+    torus(
+        f"{name}_rim",
+        0.073 * scale,
+        0.012 * scale,
+        (location[0], location[1], location[2] + body_height * 0.52),
+        mats["brass"] if accent else glaze,
+        parent,
+    )
+    # A dark inner glaze makes the opening and wall thickness readable from
+    # elevated/reverse cameras; the old capped cone looked like a chess pawn.
+    cylinder(
+        f"{name}_inner",
+        0.061 * scale,
+        0.008 * scale,
+        (location[0], location[1], location[2] + body_height * 0.505),
+        mats["deep_teal"] if accent else mats["walnut"],
+        parent,
+        20,
+    )
+    torus(
+        f"{name}_glaze_band",
+        0.099 * scale,
+        0.008 * scale,
+        (location[0], location[1], location[2] + body_height * 0.02),
+        mats["brass"] if accent else mats["oak"],
+        parent,
+        major_segments=20,
+        minor_segments=6,
+    )
+    cylinder(
+        f"{name}_foot",
+        0.061 * scale,
+        0.026 * scale,
+        (location[0], location[1], location[2] - body_height * 0.57),
+        mats["walnut"],
+        parent,
+        18,
+        radius_top=0.069 * scale,
+    )
 
 
 def build_display_case(mats):
     root = empty("CivicDisplayCase")
     root["asset"] = "civic-display-case"
     # Low cabinet with real joinery, inset doors and a brass toe rail.
-    rounded_box("DisplayOakBase", (1.86, 0.65, 0.7), (0, 0, 0.38), mats["oak_light"], root, 0.1, segments=5)
+    rounded_box("DisplayOakBase", (1.86, 0.65, 0.7), (0, 0, 0.38), mats["oak"], root, 0.1, segments=5)
     rounded_box("DisplayWalnutPlinth", (1.96, 0.12, 0.78), (0, 0, 0.73), mats["walnut"], root, 0.045)
     for side in (-1, 1):
         rounded_box(f"DisplayInset_{side}", (0.68, 0.035, 0.37), (side * 0.41, -0.357, 0.38), mats["deep_teal"], root, 0.045)
@@ -595,8 +739,8 @@ def build_display_case(mats):
 
     # The upper glass case has a complete back, shelf, wood frame and side panes.
     rounded_box("DisplayCaseFloor", (1.78, 0.66, 0.09), (0, 0, 0.8), mats["oak"], root, 0.03)
-    rounded_box("DisplayCaseBack", (1.78, 0.08, 0.68), (0, 0.29, 1.13), mats["walnut"], root, 0.035)
-    rounded_box("DisplayCaseTop", (1.82, 0.72, 0.1), (0, 0, 1.5), mats["walnut"], root, 0.035)
+    rounded_box("DisplayCaseBack", (1.78, 0.08, 0.68), (0, 0.29, 1.13), mats["oak_aged"], root, 0.035)
+    rounded_box("DisplayCaseTop", (1.82, 0.72, 0.1), (0, 0, 1.5), mats["oak_aged"], root, 0.035)
     rounded_box("DisplayTopOakReveal", (1.68, 0.04, 0.045), (0, -0.375, 1.47), mats["oak"], root, 0.014)
     # A lightly raked front plane gives the case a furniture-maker silhouette
     # instead of a vertical aquarium box. Glass, posts and mullions share the
@@ -605,7 +749,7 @@ def build_display_case(mats):
     for x in (-0.86, 0.86):
         rounded_box(
             f"DisplayPost_{x}", (0.07, 0.07, 0.7), (x, -0.3, 1.14),
-            mats["walnut"], root, 0.025, (display_front_tilt, 0, 0),
+            mats["oak_aged"], root, 0.025, (display_front_tilt, 0, 0),
         )
         rounded_box(
             f"DisplayPostCap_{x}", (0.12, 0.105, 0.06), (x, -0.315, 1.49),
@@ -640,17 +784,51 @@ def build_display_case(mats):
     rounded_box("DisplayIlluminationTop", (1.55, 0.035, 0.028), (0, 0.16, 1.43), mats["display_glow"], root, 0.01)
     rounded_box("DisplayIlluminationShelf", (1.5, 0.028, 0.022), (0, 0.18, 1.08), mats["display_glow"], root, 0.009)
 
-    # The lower shelf must read as a curated community pastry/ceramic display,
-    # not four anonymous colour blobs. Layer trays, feet, glazed domes and a
-    # contrasting garnish so their silhouettes survive the gameplay camera.
-    display_materials = ("butter", "ceramic", "coral", "teal")
+    # The lower shelf is a true curated counter, not four recoloured domes.
+    # Each bay has a different silhouette and civic meaning: listening pastry,
+    # handled witness cup, berry tart and sealed memory parcel.
     for index, x in enumerate((-0.55, -0.18, 0.2, 0.56)):
         rounded_box(f"DisplayTray_{index + 1}", (0.28, 0.35, 0.035), (x, -0.04, 0.87), mats["oak"], root, 0.025)
         rounded_box(f"DisplayTrayRim_{index + 1}", (0.24, 0.03, 0.025), (x, -0.215, 0.9), mats["brass"], root, 0.008)
-        cylinder(f"DisplayObject_{index + 1}_Base", 0.105, 0.035, (x, -0.05, 0.925), mats["ivory"], root, 20)
-        sphere(f"DisplayObject_{index + 1}_Glaze", (0.105, 0.105, 0.07 + (index % 2) * 0.022), (x, -0.05, 0.985), mats[display_materials[index]], root, 18, 10)
-        sphere(f"DisplayObject_{index + 1}_Garnish", (0.03, 0.03, 0.018), (x + 0.028, -0.073, 1.055), mats["leaf" if index % 2 == 0 else "brass"], root, 12, 7)
         rounded_box(f"DisplayLabel_{index + 1}", (0.16, 0.012, 0.075), (x, -0.225, 0.9), mats["paper"], root, 0.008, (-0.22, 0, 0))
+        if index == 0:
+            cylinder("DisplayObject_1_Base", 0.108, 0.034, (x, -0.05, 0.925), mats["ivory"], root, 20)
+            torus("DisplayObject_1_PastryFold", 0.078, 0.035, (x, -0.05, 0.975), mats["butter"], root, major_segments=20, minor_segments=8)
+            sphere("DisplayObject_1_Glaze", (0.07, 0.07, 0.055), (x, -0.05, 1.015), mats["ceramic"], root, 18, 10)
+            sphere("DisplayObject_1_Garnish", (0.026, 0.026, 0.02), (x + 0.025, -0.073, 1.06), mats["leaf"], root, 12, 7)
+        elif index == 1:
+            add_ceramic(root, mats, "DisplayObject_2", (x, -0.05, 0.99), 0.72, "teal")
+            torus(
+                "DisplayObject_2_Handle",
+                0.07,
+                0.015,
+                (x + 0.092, -0.05, 1.0),
+                mats["ceramic_teal"],
+                root,
+                (0, math.pi / 2, 0),
+                18,
+                7,
+            )
+        elif index == 2:
+            cylinder("DisplayObject_3_Base", 0.11, 0.035, (x, -0.05, 0.925), mats["ivory"], root, 20)
+            torus("DisplayObject_3_Crust", 0.078, 0.028, (x, -0.05, 0.965), mats["oak_light"], root, major_segments=20, minor_segments=7)
+            sphere("DisplayObject_3_Glaze", (0.082, 0.082, 0.055), (x, -0.05, 0.995), mats["coral"], root, 18, 10)
+            for berry_index, angle in enumerate((0, 2.1, 4.2)):
+                sphere(
+                    f"DisplayObject_3_Berry_{berry_index + 1}",
+                    (0.025, 0.025, 0.022),
+                    (x + math.cos(angle) * 0.032, -0.065 + math.sin(angle) * 0.016, 1.045),
+                    mats["blue" if berry_index == 1 else "leaf_deep"],
+                    root,
+                    12,
+                    7,
+                )
+        else:
+            rounded_box("DisplayObject_4_Base", (0.2, 0.16, 0.035), (x, -0.05, 0.93), mats["paper_warm"], root, 0.018, (0, 0, -0.05), 2)
+            rounded_box("DisplayObject_4_Parcel", (0.17, 0.14, 0.085), (x, -0.05, 0.985), mats["paper_cool"], root, 0.025, (0, 0, -0.05), 3)
+            rounded_box("DisplayObject_4_RibbonX", (0.035, 0.15, 0.09), (x, -0.05, 0.99), mats["teal"], root, 0.009, (0, 0, -0.05), 1)
+            rounded_box("DisplayObject_4_RibbonY", (0.175, 0.035, 0.09), (x, -0.05, 0.99), mats["teal"], root, 0.009, (0, 0, -0.05), 1)
+            cylinder("DisplayObject_4_Seal", 0.032, 0.014, (x + 0.035, -0.125, 1.025), mats["coral"], root, 14, (math.pi / 2, 0, 0))
 
     # A second evidence tier adds the small-scale narrative density visible in
     # the reference: archive tokens, folded response cards and individual
@@ -661,19 +839,18 @@ def build_display_case(mats):
         rounded_box(f"DisplayFoldedEvidence_{index + 1}", (0.13, 0.1, 0.1), (x + 0.07, -0.015, 1.245), mats[("paper", "blue", "ivory")[index]], root, 0.018, (0, 0, -0.1 + index * 0.1))
         rounded_box(f"DisplayUpperLabel_{index + 1}", (0.14, 0.012, 0.058), (x, -0.2, 1.19), mats["paper"], root, 0.007, (-0.18, 0, 0))
 
-    # Top still life gives the foreground silhouette the authored density of the target.
-    # The foreground menu is the target composition's "today's topic"
-    # clipboard. Give it a readable editorial hierarchy instead of a blank
-    # pale slab: warm wood frame, cream paper, title, three response rows and
-    # a brass clip, all authored on the front face for orbit-safe lighting.
-    rounded_box("DisplayMenuFrame", (0.72, 0.075, 0.72), (-0.58, -0.03, 1.82), mats["walnut"], root, 0.055, (0.12, 0, 0))
-    rounded_box("DisplayMenuPaperEdge", (0.615, 0.022, 0.605), (-0.575, -0.058, 1.805), mats["paper_edge"], root, 0.04, (0.12, 0, 0))
-    rounded_box("DisplayMenuPaper", (0.6, 0.03, 0.59), (-0.58, -0.072, 1.82), mats["ivory"], root, 0.04, (0.12, 0, 0))
-    rounded_box("DisplayMenuTitle", (0.34, 0.018, 0.042), (-0.61, -0.095, 2.04), mats["walnut"], root, 0.009, (0.12, 0, 0), 1)
-    for row_index, (z, color) in enumerate(((1.92, "teal"), (1.78, "coral"), (1.64, "brass"))):
-        cylinder(f"DisplayMenuMark_{row_index + 1}", 0.023, 0.012, (-0.77, -0.098, z), mats[color], root, 10, (math.pi / 2, 0, 0))
-        rounded_box(f"DisplayMenuLine_{row_index + 1}", (0.28 - row_index * 0.022, 0.012, 0.021), (-0.53, -0.1, z), mats["ink"], root, 0.006, (0.12, 0, 0), 1)
-    rounded_box("DisplayMenuClip", (0.14, 0.025, 0.04), (-0.58, -0.1, 2.15), mats["brass"], root, 0.013, (0.12, 0, 0), 2)
+    # The full "today's topic" clipboard belongs on the foreground record
+    # desk. A second large board on the cabinet duplicated the same white
+    # rectangle and exposed the old procedural composition. This is now the
+    # source-like small counter certificate beside the flowers.
+    rounded_box("DisplayMenuFrame", (0.38, 0.065, 0.32), (-0.42, -0.03, 1.7), mats["oak_aged"], root, 0.042, (0.12, 0, 0), 4)
+    rounded_box("DisplayMenuPaperEdge", (0.315, 0.02, 0.255), (-0.416, -0.058, 1.695), mats["paper_edge"], root, 0.03, (0.12, 0, 0), 3)
+    rounded_box("DisplayMenuPaper", (0.3, 0.028, 0.24), (-0.42, -0.072, 1.7), mats["ivory"], root, 0.028, (0.12, 0, 0), 3)
+    rounded_box("DisplayMenuTitle", (0.18, 0.016, 0.026), (-0.43, -0.095, 1.775), mats["walnut"], root, 0.007, (0.12, 0, 0), 1)
+    for row_index, (z, color) in enumerate(((1.72, "teal"), (1.665, "coral"))):
+        cylinder(f"DisplayMenuMark_{row_index + 1}", 0.014, 0.011, (-0.52, -0.098, z), mats[color], root, 9, (math.pi / 2, 0, 0))
+        rounded_box(f"DisplayMenuLine_{row_index + 1}", (0.14 - row_index * 0.015, 0.01, 0.012), (-0.405, -0.1, z), mats["ink"], root, 0.004, (0.12, 0, 0), 1)
+    rounded_box("DisplayMenuClip", (0.09, 0.022, 0.027), (-0.42, -0.1, 1.835), mats["brass"], root, 0.009, (0.12, 0, 0), 2)
     add_ceramic(root, mats, "DisplayTopVase", (0.53, -0.03, 1.66), 0.95)
     rounded_box("DisplayStoryCard", (0.3, 0.028, 0.22), (0.08, -0.07, 1.68), mats["paper"], root, 0.026, (-0.08, 0.04, 0.03), 2)
     rounded_box("DisplayStoryCardRule", (0.18, 0.012, 0.018), (0.08, -0.091, 1.7), mats["teal"], root, 0.005, (-0.08, 0.04, 0.03), 1)
@@ -690,8 +867,27 @@ def build_display_case(mats):
     rounded_box("DisplayArchiveFolder", (0.3, 0.09, 0.42), (-0.18, 0.08, 1.77), mats["paper_warm"], root, 0.025, (0.02, -0.1, -0.08), 3)
     rounded_box("DisplayArchiveFolderTab", (0.14, 0.095, 0.07), (-0.25, 0.08, 1.995), mats["teal"], root, 0.016, (0.02, -0.1, -0.08), 2)
     for index, angle in enumerate((-0.75, -0.24, 0.24, 0.78)):
+        flower_x = 0.53 + angle * 0.16
+        flower_z = 2.08 + index * 0.025
         cylinder(f"DisplayFlowerStem_{index}", 0.009, 0.38 + index * 0.03, (0.53 + angle * 0.08, -0.03, 1.9), mats["leaf"], root, 7, (0, angle * 0.2, -angle * 0.24))
-        sphere(f"DisplayFlower_{index}", (0.07, 0.07, 0.055), (0.53 + angle * 0.16, -0.03, 2.08 + index * 0.025), mats[("coral", "butter", "blue", "teal")[index]], root, 14, 9)
+        sphere(f"DisplayFlower_{index}", (0.032, 0.026, 0.026), (flower_x, -0.03, flower_z), mats["brass"], root, 12, 7)
+        petal_material = mats[("coral", "butter", "paper", "coral")[index]]
+        for petal_index in range(6):
+            petal_angle = petal_index / 6 * math.pi * 2
+            sphere(
+                f"DisplayFlower_{index}_Petal_{petal_index + 1}",
+                (0.052, 0.018, 0.028),
+                (
+                    flower_x + math.cos(petal_angle) * 0.064,
+                    -0.032,
+                    flower_z + math.sin(petal_angle) * 0.058,
+                ),
+                petal_material,
+                root,
+                10,
+                6,
+                (0, petal_angle * 0.1, petal_angle),
+            )
     return root
 
 
@@ -1025,6 +1221,32 @@ def build_lounge_suite(mats):
         (0, 0, -0.025),
         2,
     )
+    rounded_box(
+        "LoungeArchiveBoxHandle",
+        (0.14, 0.025, 0.045),
+        (1.45, -0.174, 1.34),
+        mats["brass"],
+        root,
+        0.012,
+        (0, 0, -0.025),
+        2,
+    )
+    for corner_index, (corner_x, corner_z) in enumerate((
+        (1.255, 1.14),
+        (1.645, 1.14),
+        (1.255, 1.38),
+        (1.645, 1.38),
+    )):
+        rounded_box(
+            f"LoungeArchiveBoxCorner_{corner_index + 1}",
+            (0.04, 0.025, 0.055),
+            (corner_x, -0.165, corner_z),
+            mats["oak_dark"],
+            root,
+            0.012,
+            (0, 0, -0.025),
+            2,
+        )
 
     portrait = empty("LoungeWitnessPortrait", root, (1.77, -0.14, 0.85), (0.055, 0, 0.055))
     rounded_box("LoungeWitnessPortraitFrame", (0.34, 0.035, 0.28), (0, 0, 0), mats["walnut"], portrait, 0.035, segments=4)
@@ -1112,7 +1334,7 @@ def export_asset(asset_id, output_root, master_root):
 def main():
     args = parse_args()
     manifest = {
-        "contract": "mirrorlife-civic-hero-props-v14",
+        "contract": "mirrorlife-civic-hero-props-v15",
         "worldUnitMeters": 1,
         "assets": {},
     }

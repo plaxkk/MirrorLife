@@ -5700,7 +5700,24 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "pause", label: "情绪缓冲", x: 3.45, z: 1.85, radius: 0.78, color: "#ed9164" }
     ],
     props: [
-      { model: "civic-display-case", assetIntent: "civic-display-case", renderModel: true, physicsSolid: true, worldX: -3.28, worldZ: 0.56, rotationY: 0.28, displayScale: 1, collider: { shape: "box", halfX: 0.9, halfY: 0.94, halfZ: 0.52, rotation: 0 }, interactionWorldX: -2.18, interactionWorldZ: 0.72 },
+      {
+        model: "civic-display-case",
+        assetIntent: "civic-display-case",
+        renderModel: true,
+        physicsSolid: true,
+        // Pull the display into the left foreground layer used by the source.
+        // Its larger collider is derived from the same transform and remains
+        // separate from both the threshold and record desk.
+        worldX: -3.45,
+        worldZ: 1.25,
+        rotationY: 0.28,
+        displayScale: 1.12,
+        // `rotationY` supplies the world yaw; collider.rotation is a local
+        // offset and must stay zero or Rapier would apply the angle twice.
+        collider: { shape: "box", halfX: 1.02, halfY: 1.05, halfZ: 0.58, rotation: 0 },
+        interactionWorldX: -2.28,
+        interactionWorldZ: 1.25
+      },
       {
         model: "civic-notice-console",
         assetIntent: "civic-notice-console",
@@ -5722,14 +5739,14 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         assetIntent: "civic-lounge",
         renderModel: true,
         physicsSolid: true,
-        worldX: 3.58,
-        worldZ: -1.72,
+        worldX: 3.62,
+        worldZ: -1.56,
         rotationY: -1.12,
         // The reference lounge reads as a real two-seat conversation bay.
         // Keep its authored sofa/table transform and its collider footprint in
         // the same metre-scale contract so the player never hits empty space.
-        displayScale: 1,
-        collider: { shape: "box", halfX: 1.25, halfY: 0.9, halfZ: 0.92, rotation: 0 },
+        displayScale: 1.08,
+        collider: { shape: "box", halfX: 1.35, halfY: 0.97, halfZ: 0.99, rotation: 0 },
         interactionWorldX: 2.35,
         interactionWorldZ: -1.02
       },
@@ -5740,16 +5757,16 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         assetIntent: "civic-record-desk",
         renderModel: false,
         physicsSolid: true,
-        worldX: -2.56,
-        worldZ: 2.7,
+        worldX: -2.82,
+        worldZ: 3.42,
         rotationY: 2.12,
-        // Keep the foreground frame readable without letting it dominate the
-        // listening circle. The collider includes the tapered legs and brief,
-        // while staying within 10cm of the rendered tabletop footprint.
-        displayScale: 1.08,
-        collider: { shape: "box", halfX: 1.1, halfY: 0.84, halfZ: 0.52, rotation: 2.12 },
-        interactionWorldX: -1.58,
-        interactionWorldZ: 1.82
+        // The reference uses this desk as a cropped foreground frame, not a
+        // mid-room miniature. The collider grows from the same transform and
+        // remains outside the 1.4m testimony loop.
+        displayScale: 1.2,
+        collider: { shape: "box", halfX: 1.22, halfY: 0.93, halfZ: 0.58, rotation: 0 },
+        interactionWorldX: -1.78,
+        interactionWorldZ: 2.32
       },
       {
         // A low lounge table completes the sofa conversation bay visible in
