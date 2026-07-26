@@ -13,7 +13,7 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v79", "civic character sculpt contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v81", "civic character sculpt contract is stale");
 assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v6", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
@@ -101,16 +101,16 @@ assert.equal(manifest.faceDecal?.textureDirection, "soft-premium-sculpted-portra
 assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid changed");
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v2", "civic facial morph contract is stale");
-assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-identity-v7", "civic facial identity integration contract is stale");
+assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-identity-v8", "civic facial identity integration contract is stale");
 assert.equal(manifest.faceDecal?.productionFaceMode, "uv-hybrid-desktop+curved-atlas-mobile", "civic production face mode changed");
-assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-identity-v7", "civic production facial identity contract is stale");
+assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-identity-v8", "civic production facial identity contract is stale");
 assert.equal(manifest.faceDecal?.corneaContract, "mirrorlife-civic-cornea-v2", "civic production cornea contract is stale");
-assert.equal(manifest.faceDecal?.uvContract, "mirrorlife-civic-head-uv-v2", "civic head UV contract is stale");
-assert.equal(manifest.faceDecal?.uvMatteContract, "mirrorlife-civic-head-uv-matte-v1", "civic head UV matte contract is stale");
+assert.equal(manifest.faceDecal?.uvContract, "mirrorlife-civic-head-uv-v3", "civic head UV contract is stale");
+assert.equal(manifest.faceDecal?.uvMatteContract, "mirrorlife-civic-head-uv-matte-v2", "civic head UV matte contract is stale");
 assert.deepEqual(manifest.faceDecal?.preservedSculptParts, ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"], "civic hybrid facial parts changed");
 assert.equal(manifest.faceDecal?.mouthMorphContract, "mirrorlife-civic-mouth-morph-v4", "civic mouth morph contract is stale");
 assert.equal(manifest.faceDecal?.lipVolumeContract, "mirrorlife-civic-lip-volume-v3", "civic lip volume contract is stale");
-assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v3", "civic eye geometry contract is stale");
+assert.equal(manifest.faceDecal?.eyeGeometryContract, "mirrorlife-civic-eye-volume-v5", "civic eye geometry contract is stale");
 assert.equal(manifest.faceDecal?.eyelidDeformationContract, "mirrorlife-civic-eyelid-vertex-v2", "civic eyelid deformation contract is stale");
 assert.equal(manifest.faceDecal?.facialContinuityContract, "mirrorlife-civic-orbital-lip-bed-v1", "civic facial continuity contract is stale");
 assert.deepEqual(manifest.faceDecal?.eyeGeometryParts, ["EyePivot_-1", "EyePivot_1"], "civic eye geometry parts changed");

@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v79";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v81";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v5";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
@@ -27,10 +27,10 @@ const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
 const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
 const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
-const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v7";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v8";
 const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v2";
-const CIVIC_HEAD_UV_CONTRACT = "mirrorlife-civic-head-uv-v2";
-const CIVIC_HEAD_UV_MATTE_CONTRACT = "mirrorlife-civic-head-uv-matte-v1";
+const CIVIC_HEAD_UV_CONTRACT = "mirrorlife-civic-head-uv-v3";
+const CIVIC_HEAD_UV_MATTE_CONTRACT = "mirrorlife-civic-head-uv-matte-v2";
 const CIVIC_FACE_SKIN_TONES = Object.freeze({
   player: "#efb58d",
   listener: "#edb087",
@@ -2889,12 +2889,75 @@ function addAmbientSetDressing(theme, colors) {
 }
 
 function addCivicBrassInlay(points, color = "#caa04a") {
-  const curve = new THREE.CatmullRomCurve3(points.map(([x, z]) => new THREE.Vector3(x, 0.035, z)));
   const mobileLod = lastWidth <= 720;
-  const path = new THREE.Mesh(
-    new THREE.TubeGeometry(curve, mobileLod ? 8 : 20, 0.022, mobileLod ? 5 : 8, false),
-    createToonMaterial(color, { roughness: 0.36, metalness: 0.58, envMapIntensity: 0.72 })
+  const curve = new THREE.CatmullRomCurve3(
+    points.map(([x, z]) => new THREE.Vector3(x, 0, z)),
+    false,
+    "centripetal",
+    0.42
   );
+  const segmentCount = mobileLod ? 14 : 32;
+  const width = mobileLod ? 0.09 : 0.128;
+  const edgeInset = mobileLod ? 0.013 : 0.018;
+  const baseY = 0.008;
+  const crownY = mobileLod ? 0.013 : 0.016;
+  const crossSection = [
+    { offset: -width / 2, y: baseY },
+    { offset: -width / 2 + edgeInset, y: crownY },
+    { offset: width / 2 - edgeInset, y: crownY },
+    { offset: width / 2, y: baseY }
+  ];
+  const positions = [];
+  const uvs = [];
+  const indices = [];
+  for (let segment = 0; segment <= segmentCount; segment += 1) {
+    const t = segment / segmentCount;
+    const point = curve.getPointAt(t);
+    const tangent = curve.getTangentAt(t).normalize();
+    const sideX = -tangent.z;
+    const sideZ = tangent.x;
+    crossSection.forEach((section, sectionIndex) => {
+      positions.push(
+        point.x + sideX * section.offset,
+        section.y,
+        point.z + sideZ * section.offset
+      );
+      uvs.push(t, sectionIndex / (crossSection.length - 1));
+    });
+  }
+  const ringSize = crossSection.length;
+  for (let segment = 0; segment < segmentCount; segment += 1) {
+    const current = segment * ringSize;
+    const next = (segment + 1) * ringSize;
+    for (let side = 0; side < ringSize - 1; side += 1) {
+      const a = current + side;
+      const b = current + side + 1;
+      const c = next + side;
+      const d = next + side + 1;
+      // The strip is authored for a Y-up room. Keep the winding counter-
+      // clockwise from above so the brass crown is visible with FrontSide
+      // materials instead of being culled into the terrazzo.
+      indices.push(a, b, c, b, d, c);
+    }
+  }
+  // Close the strip ends so an orbit never exposes a hollow ribbon.
+  indices.push(0, 2, 1, 0, 3, 2);
+  const end = segmentCount * ringSize;
+  indices.push(end, end + 1, end + 2, end, end + 2, end + 3);
+  const geometry = new THREE.BufferGeometry();
+  geometry.setAttribute("position", new THREE.Float32BufferAttribute(positions, 3));
+  geometry.setAttribute("uv", new THREE.Float32BufferAttribute(uvs, 2));
+  geometry.setIndex(indices);
+  geometry.computeVertexNormals();
+  const path = new THREE.Mesh(
+    geometry,
+    createToonMaterial(color, {
+      roughness: 0.3,
+      metalness: 0.68,
+      envMapIntensity: 0.94
+    })
+  );
+  path.name = "civic-inlaid-brass-route";
   path.castShadow = false;
   path.receiveShadow = true;
   roomRoot.add(path);
@@ -4828,14 +4891,26 @@ function addCivicReferenceDressing(theme, colors) {
     ring.position.set(0, 0.047 + index * 0.003, 0.18);
     roomRoot.add(ring);
   });
-  addCivicBrassInlay([[-4.45, -2.45], [-3.35, -1.45], [-2.2, -0.55], [-1.78, 0.05]]);
-  addCivicBrassInlay([[4.35, -2.15], [3.2, -1.22], [2.25, -0.35], [1.76, 0.14]]);
-  addCivicBrassInlay([[0.1, 4.92], [0.08, 3.72], [0.04, 2.55], [0.02, 2.02]]);
-  // Continue the listening ring toward the lower-right pause/exit axis. The
-  // source uses this brass sweep to give the open foreground direction and
-  // story purpose; unlike a decorative rug, it remains truthful walkable
-  // floor and reads correctly from every orbit angle.
-  if (!mobileLod) addCivicBrassInlay([[1.74, 0.28], [2.38, 0.86], [3.18, 1.5], [4.02, 2.22], [4.72, 3.16]]);
+  // The reference uses two authored floor routes rather than radial spokes:
+  // one carries the player from the open threshold into the conversation,
+  // the other leaves the circle toward the pause/exit edge. Keeping their
+  // endpoints tangent to the rug makes the brass feel installed in terrazzo,
+  // not like loose electrical cable laid across the gameplay floor.
+  addCivicBrassInlay([
+    [-4.62, -2.72],
+    [-3.92, -2.38],
+    [-3.18, -1.76],
+    [-2.46, -0.92],
+    [-1.78, 0.02]
+  ]);
+  addCivicBrassInlay([
+    [1.73, 0.3],
+    [2.22, 0.74],
+    [2.78, 1.34],
+    [3.46, 2.12],
+    [4.24, 3.16],
+    [4.68, 4.18]
+  ]);
 
   // Desktop uses authored Blender hero assets for the three highest-salience
   // furniture groups. Mobile keeps the existing baked room batches so the
@@ -6839,10 +6914,15 @@ function clearCivicFaceCellEyes(context, width, height) {
   context.save();
   context.globalCompositeOperation = "destination-out";
   [-1, 1].forEach((side) => {
-    const centreX = width * (side < 0 ? 0.285 : 0.715);
-    const centreY = height * 0.49;
-    const radiusX = width * 0.16;
-    const radiusY = height * 0.13;
+    // The atlas cell includes generous white space below the face. Its eye
+    // line sits around 39% of the cell height, not at the geometric centre.
+    // The old 49% mask erased most of the painted nose while leaving the
+    // upper eyelids behind, which made the hybrid face look both flat and
+    // strangely unfinished at gameplay distance.
+    const centreX = width * (side < 0 ? 0.305 : 0.695);
+    const centreY = height * 0.39;
+    const radiusX = width * 0.15;
+    const radiusY = height * 0.105;
     context.save();
     context.translate(centreX, centreY);
     context.scale(radiusX, radiusY);
@@ -6857,6 +6937,60 @@ function clearCivicFaceCellEyes(context, width, height) {
     context.restore();
   });
   context.restore();
+}
+
+function integrateCivicFaceCellWithSkin(context, width, height, skinColor) {
+  const skinRed = Math.round(THREE.MathUtils.clamp(skinColor.r, 0, 1) * 255);
+  const skinGreen = Math.round(THREE.MathUtils.clamp(skinColor.g, 0, 1) * 255);
+  const skinBlue = Math.round(THREE.MathUtils.clamp(skinColor.b, 0, 1) * 255);
+  try {
+    const imageData = context.getImageData(0, 0, width, height);
+    const pixels = imageData.data;
+    for (let y = 0; y < height; y += 1) {
+      const normalizedY = y / Math.max(1, height - 1);
+      const isBrowBand = normalizedY >= 0.22 && normalizedY <= 0.34;
+      const isNoseBand = normalizedY >= 0.45 && normalizedY <= 0.64;
+      const isMouthBand = normalizedY >= 0.64 && normalizedY <= 0.79;
+      for (let x = 0; x < width; x += 1) {
+        const offset = (y * width + x) * 4;
+        if (pixels[offset + 3] <= 2) {
+          pixels[offset] = skinRed;
+          pixels[offset + 1] = skinGreen;
+          pixels[offset + 2] = skinBlue;
+          pixels[offset + 3] = 255;
+          continue;
+        }
+        const red = pixels[offset];
+        const green = pixels[offset + 1];
+        const blue = pixels[offset + 2];
+        const distanceFromWhite = Math.hypot(255 - red, 255 - green, 255 - blue);
+        // The source atlas was painted on a white studio ground. Baking the
+        // unprocessed crop onto the head made that ground wash the face pale
+        // and reduced the authored mouth/brow to a faint smudge. Convert the
+        // studio ground into the role's real skin colour while retaining
+        // actual pigment. Feature bands receive a slightly earlier ramp so
+        // subtle nose and lip modelling survives texture minification.
+        const featureBand = isBrowBand || isNoseBand || isMouthBand;
+        const pigment = THREE.MathUtils.smoothstep(
+          distanceFromWhite,
+          featureBand ? 7 : 16,
+          featureBand ? 70 : 96
+        );
+        const boostedPigment = isMouthBand
+          ? THREE.MathUtils.clamp(pigment * 1.14, 0, 1)
+          : pigment;
+        pixels[offset] = Math.round(THREE.MathUtils.lerp(skinRed, red, boostedPigment));
+        pixels[offset + 1] = Math.round(THREE.MathUtils.lerp(skinGreen, green, boostedPigment));
+        pixels[offset + 2] = Math.round(THREE.MathUtils.lerp(skinBlue, blue, boostedPigment));
+        pixels[offset + 3] = 255;
+      }
+    }
+    context.putImageData(imageData, 0, 0);
+  } catch {
+    // Same-origin atlas reads are expected. If a restrictive browser policy
+    // blocks pixel access, the solid skin field below still prevents a hard
+    // rectangular decal edge.
+  }
 }
 
 function getCivicHeadUvTexture(role = "player", skinColor = new THREE.Color("#efb489")) {
@@ -6892,6 +7026,7 @@ function getCivicHeadUvTexture(role = "player", skinColor = new THREE.Color("#ef
   // while the exported cornea, iris and eyelids remain real geometry with
   // gaze and blink animation. Remove the painted eye pair before baking.
   clearCivicFaceCellEyes(faceContext, cellWidth, cellHeight);
+  integrateCivicFaceCellWithSkin(faceContext, cellWidth, cellHeight, resolvedSkin);
 
   const size = 1024;
   const canvas = document.createElement("canvas");
@@ -10732,7 +10867,7 @@ function updateCamera(payload = {}) {
     // The opening uses a slightly longer editorial lens so people carry more
     // visual weight, then widens through side/reverse arcs to retain the full
     // listening circle and prevent a near witness becoming a foreground wall.
-    ? (portrait ? 60 : 49.4 + civicRearArc * 5.8 + civicSideArc * 1.5)
+    ? (portrait ? 60 : 47.8 + civicRearArc * 7.4 + civicSideArc * 2.2)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10812,10 +10947,10 @@ function updateCamera(payload = {}) {
     // Pull the authored opening close enough for faces and garment silhouettes
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 5.2 : 5.84 + civicRearArc * 1.06 + civicSideArc * 0.26)
+    ? (portrait ? 5.2 : 5.58 + civicRearArc * 1.32 + civicSideArc * 0.44)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.44 + civicRearArc * 0.48 + civicSideArc * 0.18) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.3 + civicRearArc * 0.62 + civicSideArc * 0.26) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // Keep the sightline below shoulder height so the extra elevation reveals
@@ -11468,7 +11603,7 @@ function getStats() {
         physicallyLit: true
       } : null,
       eyes: entry.eyePivots?.length ? {
-        version: "mirrorlife-civic-eye-volume-v3",
+        version: "mirrorlife-civic-eye-volume-v5",
         count: entry.eyePivots.length,
         eyelidDeformation: "mirrorlife-civic-eyelid-vertex-v2",
         blink: Number((entry.blinkInfluence || 0).toFixed(4)),

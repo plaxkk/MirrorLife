@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v141 authored circulation inlay, story-camera framing and eye/UV integration gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/v141-reference-full-pair.png` (`2560 × 720`) places source and browser implementation at equal `1280 × 720` size on one canvas. The actor crop is `tmp/v141-character-focus-pair.png`.
+- Full 3D evidence: `tmp/v141-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; mobile evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`; forced eyelid deformation is recorded in `dist/interior-3d-work/environment-review-blink/00-public.png`.
+- Runtime evidence: opening `174 / 297,706 / 177`, side `177 / 308,814 / 168`, reverse `178 / 349,538 / 174`, fourth orbit `176 / 334,570 / 175` for draw calls / triangles / geometries. Mobile remains `106 / 243,990 / 80`, below the strict `110 / 250k` phone gate. All five captures report zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `3.17m`, rotated the camera `65.3°` and retained desktop UV-hybrid blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four role GLBs use sculpt contract v81 and eye-volume contract v5. The complete cast remains `7.42 MB`; every role stays below `45k` triangles and `2 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v140 P1 / circulation read as four thin electrical cables] The story circle now owns two authored, flat, bevel-crowned brass inlays: one carries the entrance threshold into the testimony circle and one carries the pause/exit route outward. Both follow the room's real circulation instead of radiating decoratively through furniture zones.
+- [improved from v140 P1 / the story group was too distant in the opening] The public-plaza opening lens moves from `49.4° / 5.84m / 3.44m` to `47.8° / 5.58m / 3.30m`. Side and reverse headings retain their wider collision-safe recovery, so the closer opening does not sacrifice the 360° room.
+- [fixed during v141 / the atlas eye mask targeted the wrong vertical band] The former `49%` eye-mask centre partially erased the painted nose while retaining upper eye residue. Atlas analysis places the eye line at `39%`; v3 head UV now removes the painted eyes there and leaves the real, deforming eye pair as the single gaze source.
+- [fixed during v141 / white atlas ground washed the face pale] Head-UV matte v2 converts the studio-white atlas ground into each role's exported skin tone, then retains brow, nose and mouth pigment with feature-band-aware contrast. The real head remains the only shaded/occluding facial surface.
+- [improved from v140 P1 / eyes collapsed to dark pixels, then briefly read as white discs] Eye volume v5 keeps the enlarged readable almond aperture but increases role-authored iris occupancy and warms/roughens the sclera. The final story view exposes an iris, restrained scleral crescent and deforming lid instead of a black bead or white toy eye.
+- [checked / the tighter composition must remain playable] Four-heading captures keep the cast, current testimony target and at least one circulation cue readable. The fourth heading still uses foreground fade instead of removing the wall or furniture from the physical room.
+
+### Required fidelity surfaces and findings
+
+- [improved][first-look hierarchy and navigation] The entrance, testimony circle, current speaker and exit/pause route now form one readable sequence. The source still has a stronger single brass path, richer foreground frame and more deliberate threshold-to-circle light gradient.
+- [improved][character identity and image quality] Desktop faces now integrate the real role skin, retain authored brow/nose/mouth pigment and use larger role-coloured irises with real gaze/blink. The source remains ahead in eyelid fold nuance, mouth-corner readability, hair strand grouping and face-to-hair colour bounce.
+- [checked][spatial truth and camera behavior] The new inlays are non-colliding floor finishes and do not create false affordances. Camera changes preserve collision avoidance, weighted player/target focus and the same metre-scale actor/furniture physics.
+- [checked][responsive behavior] Portrait mobile retains coherent actor scale, 44px+ controls, no horizontal overflow and its release render budget. It intentionally keeps the curved-atlas face LOD and therefore has less convincing profile integration than desktop.
+- [checked][colors and material hierarchy] Brass, mineral terrazzo, aged oak, teal textile and coral accents remain coherent. The source still owns softer indirect colour, less orange facial skin and materially richer textile/leaf/glass transmission.
+- [P1][source-level character finish remains behind] v141 fixes the face-pipeline errors and eye readability, but lips remain faint at gameplay distance, some front faces retain a slightly mask-like orange value, and role-specific lashes/hairlines still lack the source's authored subtlety.
+- [P1][complete-room light/material transport remains behind] The source has softer portal penumbrae, stronger warm/cool bounce, more flattering face light, better foliage transmission and more convincing glass/textile micro-response.
+- [P1][room-edge asset craft remains behind] Current hero props are physically authored and story-specific, but the source still has denser bespoke joinery, botanical anatomy, paper wear, asymmetric clutter and more continuous edge dressing.
+- [P2][fourth-heading foreground is compositionally heavy] Collision-safe fading preserves playability, but yaw `270°` still places a broad pale near-wall mass on the left edge. This should be solved through shell/camera-volume art direction rather than hiding additional physical geometry.
+- [P2][HUD optical finish remains behind] Coverage and interaction pass; icon drawing, counter rhythm, panel translucency and button edges remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve v3 head UV, v2 skin-integrated matte and v5 eye volume; do not regress to a white atlas rectangle, duplicate painted eyes, dark bead irises or large white toy discs.
+- Preserve the two-route circulation logic and tighter opening lens; do not reintroduce radial floor cables or trade away orbit collision safety.
+- Continue character work through role-specific mouth/brow contrast, hairline transitions, skin-value calibration and subtler face light.
+- Spend the next environment pass on portal bounce, wall-wide joinery, textiles and botanical species rather than adding more circulation obstacles.
+
+### Gate result
+
+v141 removes the cable-like floor language, brings the opening closer to the social conflict, repairs the facial atlas coordinate/matte pipeline and gives the real 3D eyes a more reference-like iris-to-sclera ratio while preserving movement, 360° rotation, mobile LOD, physics and release budgets. The mandatory same-canvas comparison still contains actionable P1 gaps in source-level character finish, complete-room indirect light/material transport and room-edge asset craftsmanship.
+
+final result: blocked
+
+Blocker: source-level face/hair finish, offline-quality indirect light/material response and bespoke room-wide secondary craft remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v140 real head-UV identity, reference head ratio and reverse-orbit visibility gate
 
 ### Evidence inspected together

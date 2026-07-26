@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v79",
+  "sculptContract": "mirrorlife-civic-sculpt-v81",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v6",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -127,12 +127,12 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-identity-v7",
+    "integrationContract": "mirrorlife-civic-face-identity-v8",
     "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
-    "productionIntegrationContract": "mirrorlife-civic-face-identity-v7",
+    "productionIntegrationContract": "mirrorlife-civic-face-identity-v8",
     "corneaContract": "mirrorlife-civic-cornea-v2",
-    "uvContract": "mirrorlife-civic-head-uv-v2",
-    "uvMatteContract": "mirrorlife-civic-head-uv-matte-v1",
+    "uvContract": "mirrorlife-civic-head-uv-v3",
+    "uvMatteContract": "mirrorlife-civic-head-uv-matte-v2",
     "preservedSculptParts": [
       "Head",
       "NoseBridge",
@@ -142,7 +142,7 @@
     ],
     "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
     "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",
-    "eyeGeometryContract": "mirrorlife-civic-eye-volume-v3",
+    "eyeGeometryContract": "mirrorlife-civic-eye-volume-v5",
     "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v2",
     "facialContinuityContract": "mirrorlife-civic-orbital-lip-bed-v1",
     "eyeGeometryParts": [

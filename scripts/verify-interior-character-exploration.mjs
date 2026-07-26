@@ -189,14 +189,14 @@ try {
   );
   assert(opening.actors.every((actor) => actor.faceMode === "uv-hybrid"), "desktop civic scene did not use the production UV-hybrid identity surface");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-head-uv-matte-v1"), "civic face texture lost its head-UV matte contract");
-  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v7"), "civic actors did not expose the production facial identity surface");
+  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-head-uv-matte-v2"), "civic face texture lost its head-UV matte contract");
+  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v8"), "civic actors did not expose the production facial identity surface");
   assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v7"), "civic actors did not preserve the production facial identity contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v8"), "civic actors did not preserve the production facial identity contract");
   assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic UV identity surface retained duplicate volumetric lips");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic morphable head facial set is incomplete");
   assert(opening.actors.every((actor) => (
-    actor.eyes?.version === "mirrorlife-civic-eye-volume-v3"
+    actor.eyes?.version === "mirrorlife-civic-eye-volume-v5"
       && actor.eyes?.count === 2
       && actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v2"
       && actor.eyes?.uniformReady === true

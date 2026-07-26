@@ -171,10 +171,10 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.0575,
-        "eye_height": 0.0325,
-        "iris_width": 0.0245,
-        "iris_height": 0.026,
+        "eye_width": 0.063,
+        "eye_height": 0.0368,
+        "iris_width": 0.033,
+        "iris_height": 0.029,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -190,10 +190,10 @@ FACE_PROFILES = {
         "temple_taper": 0.024,
     },
     "listener": {
-        "eye_width": 0.057,
-        "eye_height": 0.032,
-        "iris_width": 0.024,
-        "iris_height": 0.0255,
+        "eye_width": 0.062,
+        "eye_height": 0.0362,
+        "iris_width": 0.0325,
+        "iris_height": 0.0285,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -209,10 +209,10 @@ FACE_PROFILES = {
         "temple_taper": 0.027,
     },
     "facilitator": {
-        "eye_width": 0.0605,
-        "eye_height": 0.035,
-        "iris_width": 0.0255,
-        "iris_height": 0.0278,
+        "eye_width": 0.0665,
+        "eye_height": 0.0392,
+        "iris_width": 0.035,
+        "iris_height": 0.031,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -228,10 +228,10 @@ FACE_PROFILES = {
         "temple_taper": 0.032,
     },
     "mediator": {
-        "eye_width": 0.0595,
-        "eye_height": 0.0345,
-        "iris_width": 0.025,
-        "iris_height": 0.0272,
+        "eye_width": 0.065,
+        "eye_height": 0.0385,
+        "iris_width": 0.034,
+        "iris_height": 0.0305,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -1670,7 +1670,7 @@ def build_materials(role, config):
         # The reference uses a warm, softly reflective sclera and a large dark
         # iris.  Pure white with a tiny pupil read as a startled plastic doll
         # under the strong portal key.
-        "eye_white": material(f"{role} eye white", "#efe6dc", 0.52, clearcoat=0.07),
+        "eye_white": material(f"{role} eye white", "#f8eadf", 0.54, clearcoat=0.06),
         "eye_ring": material(f"{role} iris ring", config["eye_ring"], 0.43, clearcoat=0.11),
         "iris": material(f"{role} iris", config["eye"], 0.38, clearcoat=0.2),
         # Warm charcoal keeps the illustrated eye and lash language while
@@ -1888,7 +1888,7 @@ def build_face(head, mats, role):
             rings=10,
         )
         ellipsoid(f"Pupil_{side}", (-side * 0.001, -0.0162, -0.003), (0.0078, 0.0018, 0.0102), mats["ink"], eye, segments=16, rings=10)
-        ellipsoid(f"EyeGlint_{side}", (-side * 0.0058, -0.0181, 0.0062), (0.003, 0.0009, 0.0032), mats["eye_white"], eye, segments=10, rings=6)
+        ellipsoid(f"EyeGlint_{side}", (-side * 0.0058, -0.0181, 0.0064), (0.0035, 0.0009, 0.0037), mats["eye_white"], eye, segments=10, rings=6)
         # A warm inner canthus connects the sclera to the nose/cheek plane and
         # removes the synthetic appearance of two ellipsoids pasted on skin.
         ellipsoid(
@@ -3561,7 +3561,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v79",
+        "sculptContract": "mirrorlife-civic-sculpt-v81",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3637,16 +3637,16 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-identity-v7",
+            "integrationContract": "mirrorlife-civic-face-identity-v8",
             "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
-            "productionIntegrationContract": "mirrorlife-civic-face-identity-v7",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v8",
             "corneaContract": "mirrorlife-civic-cornea-v2",
-            "uvContract": "mirrorlife-civic-head-uv-v2",
-            "uvMatteContract": "mirrorlife-civic-head-uv-matte-v1",
+            "uvContract": "mirrorlife-civic-head-uv-v3",
+            "uvMatteContract": "mirrorlife-civic-head-uv-matte-v2",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
             "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",
-            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v3",
+            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v5",
             "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v2",
             "facialContinuityContract": "mirrorlife-civic-orbital-lip-bed-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],
