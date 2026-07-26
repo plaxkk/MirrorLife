@@ -5690,7 +5690,7 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     // foreground obstruction instead of one participant in the discussion.
     // A slight off-axis entrance avoids the rigid, perfectly symmetrical back
     // view while keeping the player on the listening circle and fully walkable.
-    spawn: { x: 0.36, y: 0.86, z: 1.56 },
+    spawn: { x: 0.22, y: 0.86, z: 1.38 },
     lightingPreset: "civic-ivory",
     materialPreset: "terrazzo-teal-brass",
     functionalZones: [
@@ -7184,15 +7184,15 @@ function stagePublicListeningEnsemble(zone, entries = []) {
     .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
   const compactCivicComposition = qaComposition && window.innerWidth <= 720;
   const listeningPoints = qaComposition ? [
-    { x: compactCivicComposition ? -1.36 : -1.78, z: compactCivicComposition ? 0.32 : 0.2 },
-    { x: compactCivicComposition ? 1.36 : 1.96, z: compactCivicComposition ? 0.34 : 0.32 },
+    { x: compactCivicComposition ? -1.28 : -1.5, z: compactCivicComposition ? 0.3 : 0.22 },
+    { x: compactCivicComposition ? 1.28 : 1.58, z: compactCivicComposition ? 0.32 : 0.28 },
     // Portrait framing needs the rear mediator closer to the centreline;
     // leaving the desktop offset unchanged placed them exactly behind the
     // facilitator and made a four-person hearing read as a three-person scene.
     // Desktop also keeps the witness off the facilitator's silhouette. The
     // asymmetric open triangle matches the reference's conversational staging
     // and gives the player a readable lane toward the testimony wall.
-    { x: compactCivicComposition ? 0.42 : 1.08, z: compactCivicComposition ? -1.52 : -1.86 }
+    { x: compactCivicComposition ? 0.52 : 1.12, z: compactCivicComposition ? -1.48 : -1.58 }
   ] : [
     { x: 0.9, z: -1.45 },
     { x: 3.15, z: 0.72 },

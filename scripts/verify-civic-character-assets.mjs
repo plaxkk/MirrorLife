@@ -13,11 +13,11 @@ const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), 
 const expectedRoles = ["player", "listener", "facilitator", "mediator"];
 
 assert.equal(manifest.contract, "mirrorlife-shared-pivot-v1", "unexpected civic character rig contract");
-assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v82", "civic character sculpt contract is stale");
-assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v6", "civic hair construction contract is stale");
+assert.equal(manifest.sculptContract, "mirrorlife-civic-sculpt-v83", "civic character sculpt contract is stale");
+assert.equal(manifest.hairConstructionContract?.version, "mirrorlife-civic-hair-construction-v7", "civic hair construction contract is stale");
 assert.equal(
   manifest.hairConstructionContract?.runtime,
-  "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
+  "role-authored-swept-superellipse-planes+temple-wisps+restrained-anisotropic-sheen",
   "civic hair construction runtime changed"
 );
 assert.deepEqual(
@@ -25,7 +25,7 @@ assert.deepEqual(
   ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
   "civic hair construction parts changed"
 );
-assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v9", "civic body identity contract is stale");
+assert.equal(manifest.bodyIdentityContract?.version, "mirrorlife-civic-body-identity-v10", "civic body identity contract is stale");
 assert.deepEqual(manifest.bodyIdentityContract?.roles, expectedRoles, "civic body identity roles changed");
 assert.deepEqual(
   manifest.bodyIdentityContract?.dimensions,
@@ -59,10 +59,10 @@ assert.deepEqual(manifest.skinContract?.joints, [
   "SkinRightLeg",
   "SkinRightKnee"
 ], "continuous civic skin joint map changed");
-assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v5", "civic garment topology contract is stale");
+assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v6", "civic garment topology contract is stale");
 assert.equal(
   manifest.garmentTopologyContract?.runtime,
-  "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
+  "bone-weighted-superellipse+reference-slimmed-limb-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
   "civic garment topology runtime changed"
 );
 assert.deepEqual(

@@ -3056,6 +3056,12 @@ function addCivicListeningConsole(colors) {
 
 function addCivicRecordDesk(colors, layoutProfile = null) {
   const group = new THREE.Group();
+  // This large authored desk is a foreground frame at the opening angle but
+  // becomes a full-height wall during a quarter orbit. Keep the complete
+  // assembly addressable after room batching so the camera can ghost it
+  // without fading unrelated furniture or the current testimony target.
+  const cameraManagedDesk = lastWidth > 720;
+  if (cameraManagedDesk) group.userData.cameraForegroundFade = true;
   // Stage the desk as a deliberate foreground frame, matching the reference
   // composition while leaving the main listening route unobstructed. This is
   // the exact authored transform used by ZoneLayoutProfile and Rapier.
@@ -3448,6 +3454,15 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
     envMapIntensity: 0.42,
     actorShading: false
   });
+  if (cameraManagedDesk) {
+    group.traverse((object) => {
+      if (!object.isMesh) return;
+      object.userData.cameraForegroundFade = true;
+      object.userData.cameraForegroundOpacity = 0.045;
+      object.userData.cameraForegroundNearDistance = 3.85;
+      cameraForegroundObjects.add(object);
+    });
+  }
 }
 
 function addCivicLocalStoryLights(theme, mobileLod = false) {
@@ -6580,7 +6595,11 @@ function rebuildModels(items) {
       contactShadow.position.set(item.worldX || 0, 0.027, item.worldZ || 0);
       model.position.set(item.worldX || 0, item.worldY || 0.03, item.worldZ || 0);
       model.rotation.y = Number(item.rotationY ?? faceCenter + profile.rotationY);
-      const isCameraForegroundHero = ["civic-lounge-suite", "civic-notice-console"].includes(item.model);
+      const isCameraForegroundHero = [
+        "civic-display-case",
+        "civic-lounge-suite",
+        "civic-notice-console"
+      ].includes(item.model);
       if (!item.mobileProxy && isCameraForegroundHero && lastWidth > 720) {
         const foregroundStage = new THREE.Group();
         foregroundStage.name = `foreground-${item.key}`;
@@ -10801,6 +10820,12 @@ function updateActors(actors = [], now = performance.now()) {
         entry.headGroup.rotation.x = -0.018;
         entry.headGroup.rotation.z = -0.012;
         entry.visual.rotation.z = -0.01 + idleShift * 0.4;
+        // Keep the protagonist socially oriented toward the group while
+        // exposing a sliver of cheek, cap brim and chest silhouette to the
+        // opening camera. A perfectly square back view flattened the hero
+        // into a backpack-and-hair block even though the character is fully
+        // volumetric and can rotate during play.
+        entry.visual.rotation.y += 0.11;
       }
     }
     applyCivicContinuousDeformation(entry, {

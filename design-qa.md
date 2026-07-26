@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v149 sculpted hair planes, editorial body silhouette and obstruction-safe orbit
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory equal-canvas comparisons: `tmp/v149-reference-full-pair.png` normalizes both complete frames to `640 × 360`; `tmp/v149-character-focus-pair.png` compares the four-person group at equal visual scale; `tmp/v149-character-before-after.png` records the v148-to-v149 silhouette and staging change.
+- Full 3D evidence: `tmp/v149-four-orbit.png` covers yaw `0°`, `90°`, `180°` and `270°`; portrait evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `176 / 289,015 / 179`, side `179 / 300,123 / 173`, reverse `180 / 341,551 / 171`, fourth orbit `178 / 325,879 / 175` for draw calls / triangles / geometries. Mobile is `108 / 234,559 / 84`; every capture reports zero shader errors and no horizontal overflow.
+- Interaction evidence: the Rapier-controlled player walked `2.69m`, rotated the camera `65.3°` and retained verified sculpted volumetric eyelid blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed.
+- Asset evidence: all four rebuilt civic GLBs pass at `7.37 MB`. Their release manifest now records sculpt v83, swept-superellipse hair construction v7, body identity v10 and garment topology v6.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v148 P1 / hair read as tubes and bead chains] Every authored fringe, face-frame, crown, ponytail, bob and nape lock now uses a swept superellipse with a broad lit plane, narrow shadow side, asymmetric crown and restrained path twist. Role-authored clump paths remain fully volumetric through the four-orbit board; triangle count falls rather than increasing.
+- [improved from v148 P1 / cylindrical limbs and broad skirt silhouette] Four role profiles receive slimmer arm depth/width and smaller hand scale while preserving the real shared skin, contact anchors and animation pivots. Facilitator and mediator skirts use a calmer A-line release rather than a wide procedural bell.
+- [fixed / opening cast was spaced like separate exhibits] The listening ensemble now occupies one readable social circle; the player enters closer to its edge and settles with a slight three-quarter body opening. All four identities are visible in the opening comparison without sacrificing the 1.4m navigation loop.
+- [fixed P1 found during this iteration / 90° orbit became a furniture wall] The record desk and civic display case now remain independent camera-managed foreground assemblies on desktop. At the side orbit they fade as complete stacks rather than leaving an opaque counter across the player and testimony target. Mobile retains batching and remains at `108` draw calls.
+- [checked / visual changes must retain gameplay] The final browser run proves physical walking, camera rotation, facial blink, 26-zone physics and responsive scene flow against the rebuilt assets and revised staging.
+
+### Required fidelity surfaces and findings
+
+- [improved][image quality and character silhouette] Hair now contributes designed planes and readable tips instead of uniformly round strands. Arms, hands and skirt hems carry a closer editorial rhythm, and the opening social group reads as one authored scene.
+- [improved][spacing, composition and behavior] The main conflict is more legible at first glance, while every orbit heading preserves the controlled player and at least two witnesses. The quarter-turn foreground no longer blocks the action.
+- [checked][colors and materials] The warm ivory, teal, coral, oak and brass hierarchy remains consistent; hair and cloth still respond to the same physical key/fill system rather than screen-space paint.
+- [checked][fonts, copy and icons] Existing Chinese hierarchy, action labels, counters and interaction icons remain complete; no copy, wrapping or icon-family regression is visible in the desktop or portrait captures.
+- [P1][facial acting and anatomy remain below source] The source owns subtler eyelid thickness, cheek-to-mouth transitions, smaller catchlights and more role-specific expression. Current volume faces remain readable but can still feel doll-like in close three-quarter views.
+- [P1][hair groom still lacks source-level secondary flow] The new broad clumps fix tube construction, but the target has finer nested strand groups, softer root transitions and more convincing tied-hair compression.
+- [P1][room-wide secondary asset craft remains below source] Botanical anatomy, cabinet joinery, textile weave, paper wear, glass transmission and irregular small-prop clusters are still visibly more bespoke in the target.
+- [P1][light transport remains below source] The implementation retains readable direction and floor contact, while the source has softer portal penumbrae, richer warm/cool bounce, better skin subsurface impression and less uniform ambient fill.
+- [P2][HUD optical finish remains below source] Coverage and action priority pass, but compact typography, icon construction, panel-edge treatment and glass blur are still more utilitarian than the reference.
+
+### Gate result
+
+v149 materially improves the production character silhouette and makes the requested 360° orbit more reliable by removing a real quarter-turn occlusion failure. The result remains an interactive, physically grounded 3D scene rather than a fixed beauty render, but the equal-canvas comparison still contains actionable P1 gaps in facial acting, secondary hair flow, room-wide asset specificity and indirect lighting.
+
+final result: blocked
+
+Blocker: the requested reference-image implementation level is not yet fully proven; source-level facial acting/groom, bespoke secondary dressing and offline-quality light transport remain visibly ahead.
+
 ## 2026-07-26 reference-fidelity v148 production sculpted face, deforming eyelids and real 3D identity gate
 
 ### Evidence inspected together

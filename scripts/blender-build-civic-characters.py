@@ -100,14 +100,14 @@ BODY_PROFILES = {
         # editorial 1:3.5 silhouette. The previous v145 correction fixed the
         # tube read but over-expanded the shoulder-to-hand column in the
         # equal-scale actor crop.
-        "arm_width": 0.79,
-        "arm_depth": 0.84,
+        "arm_width": 0.76,
+        "arm_depth": 0.79,
         # Preserve the reference's loose cargo thigh while the authored ring
         # stack still tapers decisively into the ankle.
         "leg_width": 0.96,
         "leg_depth": 0.94,
         "waist_width": 1.0,
-        "hand_scale": 0.86,
+        "hand_scale": 0.82,
         "foot_scale": 1.04,
         "toe_out": 0.075,
         # The normalized story-camera comparison measures the source cast at
@@ -123,12 +123,12 @@ BODY_PROFILES = {
         "torso_depth": 0.95,
         "shoulder_x": 0.198,
         "hip_x": 0.118,
-        "arm_width": 0.8,
-        "arm_depth": 0.85,
+        "arm_width": 0.77,
+        "arm_depth": 0.8,
         "leg_width": 0.94,
         "leg_depth": 0.93,
         "waist_width": 0.98,
-        "hand_scale": 0.86,
+        "hand_scale": 0.82,
         "foot_scale": 1.02,
         "toe_out": 0.065,
         "head_scale": (1.005, 0.955, 0.95),
@@ -139,12 +139,12 @@ BODY_PROFILES = {
         "torso_depth": 0.92,
         "shoulder_x": 0.19,
         "hip_x": 0.106,
-        "arm_width": 0.75,
-        "arm_depth": 0.8,
+        "arm_width": 0.71,
+        "arm_depth": 0.74,
         "leg_width": 0.8,
         "leg_depth": 0.85,
         "waist_width": 0.92,
-        "hand_scale": 0.82,
+        "hand_scale": 0.79,
         "foot_scale": 0.96,
         "toe_out": 0.055,
         "head_scale": (1.0, 0.955, 0.95),
@@ -155,12 +155,12 @@ BODY_PROFILES = {
         "torso_depth": 0.93,
         "shoulder_x": 0.194,
         "hip_x": 0.108,
-        "arm_width": 0.76,
-        "arm_depth": 0.81,
+        "arm_width": 0.72,
+        "arm_depth": 0.75,
         "leg_width": 0.81,
         "leg_depth": 0.86,
         "waist_width": 0.93,
-        "hand_scale": 0.82,
+        "hand_scale": 0.79,
         "foot_scale": 0.96,
         "toe_out": 0.055,
         "head_scale": (1.0, 0.955, 0.95),
@@ -882,12 +882,20 @@ def morphable_mouth_surface(name, width, corner_height, centre_height, mat, pare
 
 
 def tapered_lock(name, points, radii, mat, parent=None, sides=10, oval_ratio=0.72):
-    """Build a light, curved and tapered hair lock instead of a capsule fringe."""
+    """Build a broad, turning sculpted hair clump instead of a round tube.
+
+    Hair in the source is designed as grouped planes: a wide illuminated face,
+    a narrow shadow side and a pinched tip.  A regular ellipse remains round
+    even when flattened, which made fringe read as sausages and rear hair as a
+    bead chain.  This swept superellipse keeps real volume for a full orbit but
+    gives every lock a dominant plane and a restrained twist along its path.
+    """
     if len(points) != len(radii) or len(points) < 2:
         raise ValueError("tapered_lock requires matching point/radius arrays")
     vertices = []
     faces = []
     vectors = [Vector(point) for point in points]
+    ring_sides = max(6, min(12, sides))
     for index, (point, radius) in enumerate(zip(vectors, radii)):
         before = vectors[max(0, index - 1)]
         after = vectors[min(len(vectors) - 1, index + 1)]
@@ -895,25 +903,36 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10, oval_ratio=0.7
         reference = Vector((0, 1, 0)) if abs(tangent.dot(Vector((0, 1, 0)))) < 0.9 else Vector((1, 0, 0))
         normal = tangent.cross(reference).normalized()
         binormal = tangent.cross(normal).normalized()
-        for side in range(sides):
-            angle = math.tau * side / sides
-            # A path-aligned oval prevents the sheared, stacked-cylinder look
-            # that the old horizontal rings produced on curved fringe locks.
-            coordinate = point + normal * (math.cos(angle) * radius) + binormal * (math.sin(angle) * radius * oval_ratio)
+        path_factor = index / max(1, len(vectors) - 1)
+        roll = (path_factor - 0.5) * 0.16
+        rolled_normal = normal * math.cos(roll) + binormal * math.sin(roll)
+        rolled_binormal = binormal * math.cos(roll) - normal * math.sin(roll)
+        thickness = radius * oval_ratio * 0.76
+        for side in range(ring_sides):
+            angle = math.tau * side / ring_sides
+            cosine = math.cos(angle)
+            sine = math.sin(angle)
+            # A superellipse produces broad front/back planes and narrow side
+            # planes.  The slight asymmetric crown moves a clean highlight
+            # across the clump without adding a painted strand or extra mesh.
+            width_coordinate = math.copysign(abs(cosine) ** 0.62, cosine) * radius
+            depth_coordinate = math.copysign(abs(sine) ** 0.78, sine) * thickness
+            crown = max(0.0, sine) * radius * 0.055 * (1.0 - path_factor * 0.35)
+            coordinate = point + rolled_normal * (width_coordinate + crown) + rolled_binormal * depth_coordinate
             vertices.append(tuple(coordinate))
     for ring in range(len(points) - 1):
-        base = ring * sides
-        next_base = (ring + 1) * sides
-        for side in range(sides):
-            following = (side + 1) % sides
+        base = ring * ring_sides
+        next_base = (ring + 1) * ring_sides
+        for side in range(ring_sides):
+            following = (side + 1) % ring_sides
             faces.append((base + side, base + following, next_base + following, next_base + side))
     vertices.extend([tuple(vectors[0]), tuple(vectors[-1])])
     start_center = len(vertices) - 2
     end_center = len(vertices) - 1
-    for side in range(sides):
-        following = (side + 1) % sides
+    for side in range(ring_sides):
+        following = (side + 1) % ring_sides
         faces.append((start_center, following, side))
-        last = (len(points) - 1) * sides
+        last = (len(points) - 1) * ring_sides
         faces.append((end_center, last + side, last + following))
     mesh = bpy.data.meshes.new(f"{name}Mesh")
     mesh.from_pydata(vertices, [], faces)
@@ -924,6 +943,7 @@ def tapered_lock(name, points, radii, mat, parent=None, sides=10, oval_ratio=0.7
     link_material(obj, mat)
     for polygon in mesh.polygons:
         polygon.use_smooth = True
+    obj["hair_clump_contract"] = "mirrorlife-civic-hair-clump-v1"
     return obj
 
 
@@ -2127,8 +2147,8 @@ def build_hair(head, mats, style):
             (0.026, 0.023, 0.017, 0.003),
             mats["hair_highlight"],
             head,
-            sides=6,
-            oval_ratio=0.34,
+            sides=8,
+            oval_ratio=0.26,
         )
     # Six overlapping, wider locks replace the comb-like row of eight narrow
     # points. The silhouette reads as deliberately grouped hair at the story
@@ -2154,8 +2174,8 @@ def build_hair(head, mats, style):
             (root_radius * 0.82, root_radius * 0.96, root_radius * 0.72, root_radius * 0.42, 0.0032),
             mats["hair_highlight"] if index in (1, 4) else mats["hair"],
             head,
-            sides=16,
-            oval_ratio=0.5,
+            sides=10,
+            oval_ratio=0.31,
         )
     for side in (-1, 1):
         side_height = 0.125 if style == "spiky" else 0.17
@@ -2171,8 +2191,8 @@ def build_hair(head, mats, style):
             (0.054, 0.058, 0.041, 0.006),
             mats["hair"],
             head,
-            sides=18,
-            oval_ratio=0.6,
+            sides=10,
+            oval_ratio=0.34,
         )
         # A broad front-to-temple lock bridges the crown, fringe and side
         # volume. Without it, the large cap remained a helmet with decorative
@@ -2211,8 +2231,8 @@ def build_hair(head, mats, style):
             frame_radii,
             mats["hair_highlight"] if side == -1 else mats["hair"],
             head,
-            sides=14,
-            oval_ratio=0.48,
+            sides=10,
+            oval_ratio=0.3,
         )
         # A fine secondary wisp gives the face frame an intentional taper and
         # catches one restrained highlight beside the cheek. This is genuine
@@ -2235,7 +2255,7 @@ def build_hair(head, mats, style):
             mats["hair_highlight"],
             head,
             sides=8,
-            oval_ratio=0.42,
+            oval_ratio=0.26,
         )
 
     if style == "spiky":
@@ -2253,8 +2273,8 @@ def build_hair(head, mats, style):
                 (0.048, 0.043, 0.026, 0.005),
                 mats["hair_highlight"] if index == 1 else mats["hair"],
                 head,
-                sides=18,
-                oval_ratio=0.48,
+                sides=10,
+                oval_ratio=0.27,
             )
         # Four broad, flattened overlapping ribbons build one continuous rear
         # hair mass. The previous five round tubes produced a broccoli/bead
@@ -2278,8 +2298,8 @@ def build_hair(head, mats, style):
                 (0.052, 0.055, 0.038, 0.006),
                 mats["hair_highlight"] if index in (1, 2) else mats["hair"],
                 head,
-                sides=20,
-                oval_ratio=0.31,
+                sides=10,
+                oval_ratio=0.22,
             )
     elif style == "coral_ponytail":
         # Keep a visible tied crown without the oversized spherical mass that
@@ -2312,7 +2332,8 @@ def build_hair(head, mats, style):
             (0.075, 0.081, 0.071, 0.06, 0.045, 0.01),
             mats["hair"],
             ponytail,
-            sides=18,
+            sides=10,
+            oval_ratio=0.38,
         )
         # Layered flyaway locks break the single rubber-hose ponytail into the
         # soft, authored red-hair silhouette visible in the reference.
@@ -2332,8 +2353,8 @@ def build_hair(head, mats, style):
                 (0.041, 0.043, 0.032, 0.005),
                 mats["hair_highlight"] if index != 1 else mats["hair"],
                 ponytail,
-                sides=16,
-                oval_ratio=0.5,
+                sides=10,
+                oval_ratio=0.3,
             )
     elif style == "braided_bob":
         # Build one continuous interwoven crown. The former five pointed
@@ -2356,8 +2377,8 @@ def build_hair(head, mats, style):
                 (0.045, 0.051, 0.044, 0.008),
                 mats["hair_highlight"] if index % 2 else mats["hair"],
                 head,
-                sides=16,
-                oval_ratio=0.34,
+                sides=10,
+                oval_ratio=0.25,
             )
         # Layered side locks replace the bead stack that made the bob look
         # assembled from toy balls. Each lock has a distinct sweep and tapered
@@ -2379,8 +2400,8 @@ def build_hair(head, mats, style):
                     (0.044, 0.052, 0.039, 0.007),
                     mats["hair_highlight"] if layer_index == 1 else mats["hair"],
                     head,
-                    sides=12,
-                    oval_ratio=0.54,
+                    sides=10,
+                    oval_ratio=0.32,
                 )
             tapered_lock(
                 f"TempleWave_{side}",
@@ -2394,7 +2415,7 @@ def build_hair(head, mats, style):
                 mats["hair_highlight"],
                 head,
                 sides=10,
-                oval_ratio=0.48,
+                oval_ratio=0.3,
             )
         # A bob needs a continuous nape silhouette as well as decorative
         # crown knots. These overlapping rear locks bridge the cap to the neck
@@ -2416,8 +2437,8 @@ def build_hair(head, mats, style):
                 (0.044, 0.04, 0.008),
                 mats["hair_highlight"] if index in (1, 3) else mats["hair"],
                 head,
-                sides=16,
-                oval_ratio=0.44,
+                sides=10,
+                oval_ratio=0.28,
             )
 
 
@@ -3077,8 +3098,8 @@ def build_costume(
         # The reference hem finishes below the knee and exposes a complete
         # boot/leg rhythm. The former half-metre cone reached toward the ankle
         # and turned both civic roles into one broad green cylinder.
-        skirt_waist = 0.188 if is_facilitator else 0.194
-        skirt_hem = 0.292 if is_facilitator else 0.282
+        skirt_waist = 0.184 if is_facilitator else 0.19
+        skirt_hem = 0.268 if is_facilitator else 0.262
         skirt_depth = 0.44 if is_facilitator else 0.42
         pleated_skirt("Skirt", skirt_waist, skirt_hem, skirt_depth, (0, 0, -0.18), mats["lower"], skirt_pivot, pleats=12, segments=48)
         torus(
@@ -3580,14 +3601,14 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v82",
+        "sculptContract": "mirrorlife-civic-sculpt-v83",
         "hairConstructionContract": {
-            "version": "mirrorlife-civic-hair-construction-v6",
-            "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
+            "version": "mirrorlife-civic-hair-construction-v7",
+            "runtime": "role-authored-swept-superellipse-planes+temple-wisps+restrained-anisotropic-sheen",
             "parts": ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
         },
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v9",
+            "version": "mirrorlife-civic-body-identity-v10",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
             "continuityParts": ["Torso", "ShoulderMantle", "Neck", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
@@ -3613,8 +3634,8 @@ def main():
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
         },
         "garmentTopologyContract": {
-            "version": "mirrorlife-civic-garment-topology-v5",
-            "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
+            "version": "mirrorlife-civic-garment-topology-v6",
+            "runtime": "bone-weighted-superellipse+reference-slimmed-limb-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
             "garments": ["sleeve", "trouser", "skirt", "vest", "cardigan"],
             "standingParts": [
                 "SkinnedArmVolume",

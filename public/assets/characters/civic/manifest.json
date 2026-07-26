@@ -1,9 +1,9 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v82",
+  "sculptContract": "mirrorlife-civic-sculpt-v83",
   "hairConstructionContract": {
-    "version": "mirrorlife-civic-hair-construction-v6",
-    "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
+    "version": "mirrorlife-civic-hair-construction-v7",
+    "runtime": "role-authored-swept-superellipse-planes+temple-wisps+restrained-anisotropic-sheen",
     "parts": [
       "HairCap",
       "HairFlowRidge",
@@ -13,7 +13,7 @@
     ]
   },
   "bodyIdentityContract": {
-    "version": "mirrorlife-civic-body-identity-v9",
+    "version": "mirrorlife-civic-body-identity-v10",
     "roles": [
       "player",
       "listener",
@@ -63,8 +63,8 @@
     ]
   },
   "garmentTopologyContract": {
-    "version": "mirrorlife-civic-garment-topology-v5",
-    "runtime": "bone-weighted-superellipse+reference-weighted-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
+    "version": "mirrorlife-civic-garment-topology-v6",
+    "runtime": "bone-weighted-superellipse+reference-slimmed-limb-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
     "garments": [
       "sleeve",
       "trouser",
@@ -241,25 +241,25 @@
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
       "meshes": 134,
-      "triangles": 41096
+      "triangles": 40096
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
       "meshes": 123,
-      "triangles": 39116
+      "triangles": 38628
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 149,
-      "triangles": 44840
+      "triangles": 44186
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
       "meshes": 161,
-      "triangles": 43932
+      "triangles": 42988
     }
   }
 }
