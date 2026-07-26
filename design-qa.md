@@ -1,5 +1,53 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v144 closer story lens, social three-quarter staging and material/light hierarchy gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, normalized to `1280 × 720` at device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/v144-reference-full-pair.png` (`2560 × 720`) places source and browser implementation at equal size. Actor- and furniture-focused evidence is `tmp/v144-character-focus-pair.png` and `tmp/v144-furniture-focus-pair.png`.
+- Full 3D evidence: `tmp/v144-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`; forced blink is recorded in `dist/interior-3d-work/environment-review-blink/00-public.png`.
+- Runtime evidence: opening `170 / 277,819 / 173`, side `173 / 288,927 / 167`, reverse `174 / 329,651 / 170`, fourth orbit `172 / 314,683 / 171` for draw calls / triangles / geometries. Mobile is `106 / 236,775 / 81`; all captures report zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `3.01m`, rotated the camera `65.3°` and retained the curved illustrated identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four civic role GLBs pass at `7.42 MB`; all three civic hero props pass at `73,930` authored triangles.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v143 P1 / cast and ring remained too distant] The authored opening changes from `47.8° / 5.58m / 3.30m` to `45.2° / 5.28m / 3.16m`. Side and reverse arcs progressively recover to `51.58–54.2° / 6.49–6.96m`, so the story opening gains reference-like human scale without sacrificing collision-safe 360° exploration.
+- [improved from v143 P1 / side actors presented profile silhouettes] The listener and notebook facilitator now open their torsos further toward the story camera while their heads continue tracking the player/speaker. Gameplay evidence exposes both the teal listener's illustrated face and the facilitator's notebook acting instead of hiding identity behind hair and profile.
+- [improved from v143 P1 / hero furniture collapsed into one pale clay value] The authored display case, notice console and lounge retain their scanned surface maps while receiving role-specific walnut/honey-oak grading. The foreground display now anchors the frame with darker joinery and preserved glass/teal hierarchy rather than blending into the terrazzo.
+- [improved from v143 P1 / broad ivory fill erased the foliage rhythm] The real projected foliage mask receives more local daylight energy, while civic exposure reduces from `0.80` to `0.76` and the editorial grade restores restrained colour separation. Full-frame luma is `137.19` against the normalized source's `128.56`; average saturation is `0.382` against `0.423`.
+- [improved from v143 P2 / interface competed with the floor composition] The public discovery card reduces to `224 × 72px` and the four-action rail from `720px` to `606px`. All four actions and the contextual prompt remain available while the front-right floor and route carry more visual air.
+- [checked / identity-mode choice at real gameplay distance] `tmp/v144-inspection/face-mode-board.png` compares illustrated-cornea, UV-hybrid and curved-atlas at the identical camera. The heavier alternatives do not produce a visible gameplay-scale advantage, so illustrated-cornea remains the desktop production path and curved-atlas remains the mobile LOD.
+
+### Required fidelity surfaces and findings
+
+- [improved][first-look hierarchy and depth] The portal, central testimony ring, four citizens, right lounge and cropped foreground evidence desk now occupy proportions closer to the source. The opening reads as one designed social tableau rather than a wide room overview.
+- [improved][character staging and behavior] NPC torsos form a camera-legible three-quarter listening circle while head look-at, hand-to-notebook contact, hand-to-jaw contact, weight transfer, facial morphs, blink and locomotion remain fully live 3D behaviors.
+- [improved][materials, colour and lighting] Darker hero joinery, stronger teal/coral separation, local foliage projection and lower global exposure create a more photographic material hierarchy without changing colliders or adding fake floor affordances.
+- [checked][spatial truth and responsive play] The tighter opening is presentation-only. Rapier capsules, metre scale, prop colliders, interaction anchors, camera collision, near-shell fading and mobile controls remain intact across movement and all four headings.
+- [P1][production character finish remains behind] At the correct on-screen scale, the source still has visibly finer eyelid/lip planes, hair clump taper, finger anatomy, garment seam compression and more natural expression asymmetry than the current real-time GLBs.
+- [P1][complete-room secondary craft remains behind] The three hero assets now separate better, but source-level botanical anatomy, paper wear, glass refraction, timber edge wear and irregular small-object clustering are not yet consistent across every room edge.
+- [P1][light transport remains behind] The local foliage pattern and warm/cool hierarchy are stronger, yet the source still owns softer penumbrae, richer indirect bounce, better skin subsurface impression and more continuous sunlight travel from threshold to foreground.
+- [P2][fourth-orbit foreground remains compositionally heavy] Near-shell fading keeps the yaw `270°` view playable, but its left foreground plaster mass is still broader than an authored source-quality frame.
+- [P2][HUD optical craft remains behind] Coverage and scale improve, while icon completeness, glass-edge treatment and type rhythm remain more utilitarian than the reference.
+
+### Implementation checklist
+
+- Preserve the `45.2° / 5.28m / 3.16m` opening and progressive wide-orbit recovery; future camera work must retain the same walk/rotation and four-heading gates.
+- Preserve the three-quarter social staging and real head tracking; do not restore pure profile blocking or camera-facing character sprites.
+- Preserve hero-specific wood grading, exposure `0.76`, projected foliage and the compact `606px` action rail unless a same-canvas replacement wins visibly.
+- Continue with role-specific production face/hair/hand/garment authoring, then extend bespoke joinery, botanical, paper, textile and glass craft through the complete frame.
+
+### Gate result
+
+v144 makes the opening materially closer to the reference at the actual game camera: the cast is larger, side identities are readable, hero wood no longer washes into clay, foliage light carries more depth and the interaction deck gives the floor more room. Walking, 360° camera rotation, blink, physical scale, all-zone transitions, desktop/mobile flow and release budgets remain green. The mandatory same-canvas comparison still contains actionable P1 gaps in production character craft, complete-room secondary detail and source-level indirect material/light transport.
+
+final result: blocked
+
+Blocker: the requested reference level is not yet fully proven; source character sculpt/animation nuance, room-wide bespoke secondary craftsmanship and offline-quality indirect light remain visibly ahead.
+
 ## 2026-07-26 reference-fidelity v143 broad threshold, illustrated face and clear-orbit gate
 
 ### Evidence inspected together

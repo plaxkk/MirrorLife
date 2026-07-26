@@ -145,7 +145,7 @@ const LIGHTING_PRESETS = Object.freeze({
     hemi: 0.34,
     bounce: 0.48,
     wash: 0.34,
-    exposure: 0.8,
+    exposure: 0.76,
     keyColor: "#fff0df",
     fillColor: "#cce1df"
   },
@@ -594,7 +594,7 @@ function ensureLayer() {
         // carried by light and material response. Strength is an effect
         // amount, not a direct saturation multiplier: the former expression
         // accidentally removed 28% of mobile colour at 0.72.
-        color = mix(vec3(luma), color, 1.0 + 0.012 * strength);
+        color = mix(vec3(luma), color, 1.0 + 0.032 * strength);
         // Preserve the photographed target's soft mid-tones. The stronger
         // editorial S-curve made hair seams, trouser folds and timber edges
         // read like black outlines even after the underlying materials were
@@ -742,6 +742,17 @@ function upgradeModelMaterials(source, type = "") {
         : preserveAuthoredCivicPalette
           ? atelierGradeColor(material.color, 0.08).offsetHSL(0, -0.025, 0.008)
           : nearestAtelierColor(material.color);
+      if (physicalKind === "wood") {
+        // Keep the hero furniture in the same walnut / honey-oak hierarchy as
+        // the authored GLBs. Environment fill and the shared physical albedo
+        // were lifting every civic wood into one pale beige, which erased the
+        // foreground frame and made the room read like unfinished clay.
+        if (type === "civic-display-case") {
+          color.offsetHSL(0.004, 0.075, -0.135);
+        } else if (type === "civic-notice-console" || type === "civic-lounge-suite") {
+          color.offsetHSL(0.003, 0.045, -0.05);
+        }
+      }
       const glassName = /glass|glazing|windowpane/.test(materialName);
       const displayIllumination = /display illumination|display glow/.test(materialName);
       const next = glassName
@@ -1634,7 +1645,7 @@ function applyLightingPreset(theme = {}) {
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.36 : 0.38;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.4;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
   if (gtaoPass) {
@@ -3487,7 +3498,12 @@ function addCivicLocalStoryLights(theme, mobileLod = false) {
   if (foliageGobo) {
     const foliageSun = new THREE.SpotLight(
       0xffd8a0,
-      theme?.night ? 0.08 : (mobileLod ? 32 : 60),
+      // The photographed reference is defined by sunlight broken through the
+      // threshold foliage. At the former physical intensity the mask existed
+      // in the scene graph but disappeared beneath the broad ivory fill,
+      // leaving the terrazzo clinically uniform. Keep mobile restrained while
+      // restoring a readable 15–20% daylight rhythm on desktop receivers.
+      theme?.night ? 0.08 : (mobileLod ? 48 : 118),
       13,
       Math.PI * 0.33,
       0.74,
@@ -10353,9 +10369,9 @@ function updateActors(actors = [], now = performance.now()) {
       // both eyes, garment construction and hand acting readable instead of
       // presenting three near-profile silhouettes.
       const cameraOpeningWeight = {
-        listener: 0.52,
-        facilitator: 0.34,
-        mediator: 0.42
+        listener: 0.72,
+        facilitator: 0.58,
+        mediator: 0.4
       }[entry.assetRole] ?? 0.34;
       bodyYaw += cameraDelta * cameraOpeningWeight;
     }
@@ -10886,7 +10902,7 @@ function updateCamera(payload = {}) {
     // The opening uses a slightly longer editorial lens so people carry more
     // visual weight, then widens through side/reverse arcs to retain the full
     // listening circle and prevent a near witness becoming a foreground wall.
-    ? (portrait ? 60 : 47.8 + civicRearArc * 7.4 + civicSideArc * 2.2)
+    ? (portrait ? 60 : 45.2 + civicRearArc * 9.0 + civicSideArc * 3.2)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10966,10 +10982,10 @@ function updateCamera(payload = {}) {
     // Pull the authored opening close enough for faces and garment silhouettes
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 5.2 : 5.58 + civicRearArc * 1.32 + civicSideArc * 0.44)
+    ? (portrait ? 5.2 : 5.28 + civicRearArc * 1.68 + civicSideArc * 0.62)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.3 + civicRearArc * 0.62 + civicSideArc * 0.26) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.16 + civicRearArc * 0.78 + civicSideArc * 0.32) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // Keep the sightline below shoulder height so the extra elevation reveals
