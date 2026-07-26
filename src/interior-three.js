@@ -15,7 +15,7 @@ const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRev
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v82";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
-const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v6";
+const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v7";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v5";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
@@ -139,14 +139,14 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.54,
-    fill: 0.3,
-    hemi: 0.34,
-    bounce: 0.48,
-    wash: 0.34,
-    exposure: 0.76,
-    keyColor: "#fff0df",
-    fillColor: "#cce1df"
+    key: 1.68,
+    fill: 0.25,
+    hemi: 0.24,
+    bounce: 0.36,
+    wash: 0.22,
+    exposure: 0.78,
+    keyColor: "#ffddb5",
+    fillColor: "#acd7d3"
   },
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
@@ -599,10 +599,10 @@ function ensureLayer() {
         // editorial S-curve made hair seams, trouser folds and timber edges
         // read like black outlines even after the underlying materials were
         // physically correct.
-        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.068 * strength) + vec3(0.54));
+        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.082 * strength) + vec3(0.54));
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
         float highlightTone = smoothstep(0.5, 0.92, luma);
-        color *= mix(vec3(1.0), vec3(1.025, 0.99, 0.945), (0.34 + shadowTone * 0.38) * strength);
+        color *= mix(vec3(1.0), vec3(1.034, 0.992, 0.938), (0.34 + shadowTone * 0.4) * strength);
         color += vec3(0.014, 0.006, -0.004) * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -1623,29 +1623,29 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.62 : 0;
-    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffe8d2");
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.74 : 0;
+    portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffd8b2");
   }
   if (coolReflectionLight) {
-    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.14 : 0.2) : 0;
+    coolReflectionLight.intensity = theme.zoneId === "public-plaza" ? (theme.night ? 0.14 : 0.18) : 0;
   }
   if (civicCeilingBounceLight) {
     civicCeilingBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.15 : 0.22)
+      ? (lastWidth <= 720 ? 0.24 : 0.4)
       : 0;
-    civicCeilingBounceLight.color.set(theme.night ? "#abc1d3" : "#fff6e8");
+    civicCeilingBounceLight.color.set(theme.night ? "#abc1d3" : "#fff0dc");
   }
   if (civicBackWallBounceLight) {
     civicBackWallBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.08 : 0.13)
+      ? (lastWidth <= 720 ? 0.04 : 0.06)
       : 0;
-    civicBackWallBounceLight.color.set(theme.night ? "#9db2ca" : "#f8e6d6");
+    civicBackWallBounceLight.color.set(theme.night ? "#9db2ca" : "#f3d8bf");
   }
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.46 : 0.4;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.54 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.4;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
   if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
   if (gtaoPass) {
@@ -3473,7 +3473,7 @@ function addCivicLocalStoryLights(theme, mobileLod = false) {
   lightXs.forEach((x) => {
     const light = new THREE.SpotLight(
       0xffd6a2,
-      mobileLod ? 0.27 : 0.44,
+      mobileLod ? 0.23 : 0.36,
       4.2,
       Math.PI * 0.23,
       0.9,
@@ -3489,16 +3489,16 @@ function addCivicLocalStoryLights(theme, mobileLod = false) {
   // returns a cool reflected edge. Both are local, non-shadowing sources so
   // they preserve the directional key and do not flatten the central cast.
   const portalFloorBounce = new THREE.PointLight(
-    0xffe2c7,
-    mobileLod ? 0.11 : 0.22,
+    0xffd8b8,
+    mobileLod ? 0.14 : 0.28,
     4.6,
     2.3
   );
   portalFloorBounce.position.set(-3.25, 0.38, -1.82);
   roomRoot.add(portalFloorBounce);
   const loungeColorBounce = new THREE.PointLight(
-    0xa1cec5,
-    mobileLod ? 0.07 : 0.14,
+    0x91c9c3,
+    mobileLod ? 0.08 : 0.16,
     3.7,
     2.35
   );
@@ -3518,7 +3518,7 @@ function addCivicLocalStoryLights(theme, mobileLod = false) {
       // in the scene graph but disappeared beneath the broad ivory fill,
       // leaving the terrazzo clinically uniform. Keep mobile restrained while
       // restoring a readable 15–20% daylight rhythm on desktop receivers.
-      theme?.night ? 0.08 : (mobileLod ? 48 : 118),
+      theme?.night ? 0.08 : (mobileLod ? 54 : 132),
       13,
       Math.PI * 0.33,
       0.74,
@@ -4708,13 +4708,15 @@ function addCivicResponseAlcove(colors, options = {}) {
 }
 
 function addCivicOrbitFrames(colors) {
-  // These two shallow wall pieces live on the side that becomes the far wall
-  // after the player orbits. They are culled while they sit on the camera's
-  // near hemisphere, so they enrich secondary views without floating across
-  // the hero composition.
+  // This shallow response frame lives on the side that becomes the far wall
+  // after the player orbits. It is culled while it sits on the camera's near
+  // hemisphere, enriching the secondary view without floating across the
+  // hero composition.
   [
-    { angle: -1.72, accent: colors.secondary, width: 1.3 },
-    { angle: -2.46, accent: ATELIER_TOKENS.apricot, width: 1.12 }
+    // One authored response frame is enough beside the larger west ledger.
+    // The former second card added a room draw call at the reverse budget
+    // limit and made the wall read like repeated procedural decoration.
+    { angle: -1.72, accent: colors.secondary, width: 1.3 }
   ].forEach((panel, panelIndex) => {
     const [x, y, z] = wallPosition(panel.angle, ROOM_RADIUS - 0.16, 2.12 - panelIndex * 0.08);
     const group = new THREE.Group();
@@ -6124,6 +6126,35 @@ function addCivicPortalWallShell(theme, wallHeight, wallMaterial) {
   // a true foreground wall, preserving the far backdrop and the authored props.
   const shellSize = ROOM_RADIUS * 2.46;
   const half = shellSize / 2;
+  // A quiet outer lightwell is the final visual safety net for the cutaway.
+  // The four authored planes remain the room the player reads and collides
+  // with; this larger shell only occupies pixels revealed beyond their edges
+  // while a near wall is transparent. It keeps a genuine 360° orbit inside a
+  // coherent plaster volume instead of exposing the renderer background.
+  const lightwellMaterial = wallMaterial.clone();
+  // Flip the shell geometry and keep a front-side material so the lightwell
+  // can join the room's existing static vertex-colour batch. A separate
+  // back-side material cost one extra draw call in the reverse story view.
+  lightwellMaterial.side = THREE.FrontSide;
+  lightwellMaterial.color.offsetHSL(0, -0.03, -0.045);
+  const lightwell = new THREE.Mesh(
+    new THREE.CylinderGeometry(
+      ROOM_RADIUS * 1.72,
+      ROOM_RADIUS * 1.72,
+      wallHeight * 1.18,
+      48,
+      1,
+      true
+    ),
+    lightwellMaterial
+  );
+  lightwell.name = "civic-outer-lightwell-backdrop";
+  lightwell.position.y = wallHeight * 0.59;
+  lightwell.scale.x = -1;
+  lightwell.castShadow = false;
+  lightwell.receiveShadow = true;
+  lightwell.userData.neverFade = true;
+  roomRoot.add(lightwell);
   [
     { name: "north", x: 0, z: -half, yaw: 0 },
     { name: "south", x: 0, z: half, yaw: Math.PI },
@@ -6133,7 +6164,12 @@ function addCivicPortalWallShell(theme, wallHeight, wallMaterial) {
     const planeMaterial = wallMaterial.clone();
     planeMaterial.side = THREE.FrontSide;
     const plane = new THREE.Mesh(
-      new THREE.PlaneGeometry(shellSize, wallHeight),
+      // The side-orbit lens can see past the mathematical corner of a
+      // one-room-wide plane after the near wall dissolves. Overscan each far
+      // backdrop so adjacent planes overlap outside the playable volume; the
+      // physical room dimensions stay unchanged, but 90°/270° views no longer
+      // reveal the renderer clear colour as a white studio void.
+      new THREE.PlaneGeometry(shellSize * 1.44, wallHeight),
       planeMaterial
     );
     plane.name = `civic-rectilinear-navigation-shell-${side.name}`;
@@ -6238,7 +6274,11 @@ function rebuildRoom(theme = {}) {
 
   const floor = new THREE.Mesh(
     theme.zoneId === "public-plaza"
-      ? new THREE.PlaneGeometry(ROOM_RADIUS * 2.62, ROOM_RADIUS * 2.48)
+      // Overscan the visual terrazzo beneath the navigation shell. The
+      // quarter-orbit camera dissolves its near wall, so a floor that stopped
+      // exactly at the playable bounds exposed clear-colour wedges along the
+      // far corners even though collision remained correct.
+      ? new THREE.PlaneGeometry(ROOM_RADIUS * 3.18, ROOM_RADIUS * 3.18)
       : new THREE.CircleGeometry(ROOM_RADIUS, 64),
     // The civic floor owns a photographed neutral terrazzo base colour. Do
     // not multiply it by the beige fallback palette: that previously erased
@@ -10322,7 +10362,15 @@ function createCivicActorObject(actor, asset) {
     secondaryVelocityX: 0,
     secondaryVelocityZ: 0,
     secondaryFacingYaw: Math.atan2(-Number(actor.worldX || 0), -Number(actor.worldZ || 0)),
-    secondaryMotionVersion: CIVIC_SECONDARY_MOTION_VERSION
+    secondaryMotionVersion: CIVIC_SECONDARY_MOTION_VERSION,
+    // Give each social double a stable performance clock. Sharing one global
+    // blink and saccade phase made the whole discussion circle move like a
+    // duplicated prefab; a deterministic identity seed keeps the performance
+    // repeatable for saves and QA while restoring individual presence.
+    socialTimingSeed: Array.from(String(actor.id || role || "citizen")).reduce(
+      (seed, character, index) => (seed + character.charCodeAt(0) * (index + 3) * 0.173) % 17,
+      0
+    )
   };
   actorObjects.set(actor.id, entry);
   return entry;
@@ -10519,11 +10567,14 @@ function updateActors(actors = [], now = performance.now()) {
     const asymmetryInfluenceForFeatures = Number.isInteger(asymmetryIndexForFeatures)
       ? THREE.MathUtils.clamp(Number(smileInfluences?.[asymmetryIndexForFeatures] || 0), 0, 1)
       : 0;
-    const blinkCycle = (now * 0.001 + frame * 0.73) % 4.8;
+    const socialTimingSeed = Number(entry.socialTimingSeed || 0);
+    const blinkCadence = 4.15 + (socialTimingSeed % 1.4);
+    const blinkCycle = (now * 0.001 + socialTimingSeed * 1.713 + frame * 0.37) % blinkCadence;
+    const blinkCloseAt = blinkCadence - 0.11;
     const blinkScale = CIVIC_FORCE_BLINK
       ? 0.08
-      : blinkCycle > 4.58
-      ? THREE.MathUtils.clamp(Math.abs(blinkCycle - 4.69) / 0.11, 0.08, 1)
+      : blinkCycle > blinkCadence - 0.22
+      ? THREE.MathUtils.clamp(Math.abs(blinkCycle - blinkCloseAt) / 0.11, 0.08, 1)
       : 1;
     const blinkInfluence = 1 - blinkScale;
     entry.blinkInfluence = blinkInfluence;
@@ -10578,7 +10629,12 @@ function updateActors(actors = [], now = performance.now()) {
           );
         }
         if (playerActor && actor.id !== playerActor.id && !walking) {
-          const microSaccade = Math.sin(now * 0.0021 + frame * 1.37 + eyeIndex * 0.31) * 0.008;
+          const microSaccade = Math.sin(
+            now * (0.00185 + (socialTimingSeed % 0.42) * 0.0005)
+            + frame * 1.37
+            + eyeIndex * 0.31
+            + socialTimingSeed * 2.19
+          ) * 0.008;
           const gaze = THREE.MathUtils.clamp(headLookYaw * 0.22 + microSaccade, -0.09, 0.09);
           eyePivot.rotation.y = restEyeY + gaze;
           eyePivot.rotation.x = restEyeX + attentiveInfluenceForFeatures * 0.012 + microSaccade * 0.32;
@@ -10597,12 +10653,16 @@ function updateActors(actors = [], now = performance.now()) {
         if (!Number.isFinite(browPivot.userData.mirrorLifeBaseY)) {
           browPivot.userData.mirrorLifeBaseY = browPivot.position.y;
         }
+        const browSide = browIndex ? 1 : -1;
+        const socialAsymmetryLift = browSide * asymmetryInfluenceForFeatures * 0.012;
         browPivot.position.y = browPivot.userData.mirrorLifeBaseY
           + attentiveLift
           + attentiveInfluenceForFeatures * 0.012
-          + socialBreath * 0.003;
+          + socialBreath * 0.003
+          + socialAsymmetryLift;
         browPivot.rotation.y = 0;
-        browPivot.rotation.z = (browIndex ? -1 : 1) * attentiveLift * 0.9;
+        browPivot.rotation.z = -browSide * attentiveLift * 0.9
+          + browSide * asymmetryInfluenceForFeatures * 0.045;
       });
     }
     if (entry.mouthPivot) {
@@ -10625,7 +10685,8 @@ function updateActors(actors = [], now = performance.now()) {
       } else {
         entry.mouthPivot.scale.set(1, talkPulse, 1);
       }
-      entry.mouthPivot.rotation.z = socialBreath * 0.018;
+      entry.mouthPivot.rotation.z = socialBreath * 0.018
+        + asymmetryInfluenceForFeatures * 0.038;
     }
     if (entry.faceMorphMesh?.morphTargetDictionary && entry.faceMorphMesh?.morphTargetInfluences) {
       const dictionary = entry.faceMorphMesh.morphTargetDictionary;

@@ -1,5 +1,43 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v150 shaped civic light transport, individual facial timing and sealed 360° cutaway
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `tmp/v150-public-opening.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory equal-canvas comparison: `tmp/v150-reference-full-pair.png` places the full source and final browser frame together at `1280 × 720` per side.
+- Full 3D evidence: `tmp/v150-four-orbit.png` covers yaw `0°`, `90°`, `180°` and `270°`; portrait evidence is `tmp/v150-public-mobile.png` at `390 × 844`.
+- Runtime evidence: opening `177 / 289,111 / 181`, side `180 / 300,219 / 174`, reverse `180 / 337,723 / 171`, fourth orbit `179 / 325,975 / 176` for draw calls / triangles / geometries. Mobile is `109 / 234,655 / 85`; every capture reports zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `2.85m`, rotated the camera `65.3°` and retained verified sculpted volumetric eyelid blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed.
+- Whole-frame colour evidence: source `128.6` luma / `0.423` mean saturation / `60.1` red-blue warmth; v150 is `136.8 / 0.407 / 53.7`, improved from v149's `138.7 / 0.375 / 49.0`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v149 P1 / ambient fill flattened the room] Civic light transport v7 lowers hemisphere, rear-wall and camera-side actor fill while strengthening the portal key, floor-local bounce, ceiling return and restrained teal lounge reflection. The final frame is darker, more chromatically separated and closer to the source without replacing physical lighting with a fixed screen-space paint.
+- [improved / floor and cast did not receive one continuous daylight story] The foliage projection, portal floor return and warm ceiling bounce now carry the threshold light through terrazzo, moving actors and furniture. The rear wall remains quieter, so the testimony ring reads before the prop field.
+- [fixed P1 found during this iteration / four citizens blinked and scanned in synchrony] Every civic actor now owns a deterministic identity timing seed. Blink cadence, saccade phase, brow imbalance and mouth cant remain reproducible for saves and QA, but no longer expose duplicated-prefab timing.
+- [fixed P1 found during four-orbit review / side views exposed a white studio void] The square gameplay shell gains an oversized visual floor and a non-colliding outer plaster lightwell behind its camera-managed cutaway planes. At `90°` and `270°`, fading the near wall now reveals a coherent room volume rather than the renderer clear colour; Rapier walls and walkable bounds are unchanged.
+- [optimized / safety lightwell raised reverse view to 181 draw calls] The redundant second orbit card was removed beside the larger resident-response ledger. The quieter wall is less procedural and all desktop headings return to the `180 / 450k` release gate.
+
+### Required fidelity surfaces and findings
+
+- [improved][lighting, colour and depth] Doorway warmth, cool lounge separation, floor contact and actor rim hierarchy are materially closer to the source. The same-canvas frame closes the measured luma, saturation and warmth gap while preserving real orbit response.
+- [improved][facial acting] Citizens no longer share a mechanical global blink or gaze phase. Role morphs, real eyelids and stable individual timing produce a more believable listening ensemble.
+- [fixed][360° spatial continuity] All four headings keep the player and social tableau inside a visually closed interior. No quarter-turn exposes a white gap, old scene, black tile or camera-facing replacement.
+- [checked][physical and responsive behavior] The outer lightwell is presentation-only. Player, NPCs, furniture, portal, navigation and interaction anchors remain in the authoritative metre-scale Rapier world; portrait keeps joystick, jump, interaction and four story actions under the phone budget.
+- [P1][character sculpt and secondary asset craft remain below source] The target still owns finer fingers, cloth compression, nested hair flow, botanical anatomy, joinery, glass transmission, paper wear and irregular prop placement.
+- [P1][offline-quality skin and penumbra remain below source] Light direction and bounce are now coherent, but the reference retains subtler skin scattering, softer contact penumbrae and more continuous global illumination.
+- [P2][HUD optical finish remains below source] Coverage and action hierarchy pass, while icon construction, compact typography, blur and edge treatment remain more utilitarian than the reference.
+
+### Gate result
+
+v150 closes the previous light-transport and synchronized-performance defects and removes an actual 360° cutaway continuity failure while staying inside desktop and mobile performance budgets. The result is a real walkable, rotatable 3D scene with materially stronger authored lighting and individual social acting. The equal-canvas comparison still contains actionable production gaps in character micro-sculpt, complete-room secondary asset specificity and offline-quality skin/material transport.
+
+final result: blocked
+
+Blocker: the requested reference-image implementation level is not yet fully proven; source-level character/prop micro-craft and offline global illumination remain visibly ahead.
+
 ## 2026-07-26 reference-fidelity v149 sculpted hair planes, editorial body silhouette and obstruction-safe orbit
 
 ### Evidence inspected together
