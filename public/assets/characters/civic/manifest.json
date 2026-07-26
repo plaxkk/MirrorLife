@@ -1,6 +1,6 @@
 {
   "contract": "mirrorlife-shared-pivot-v1",
-  "sculptContract": "mirrorlife-civic-sculpt-v78",
+  "sculptContract": "mirrorlife-civic-sculpt-v79",
   "hairConstructionContract": {
     "version": "mirrorlife-civic-hair-construction-v6",
     "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -13,7 +13,7 @@
     ]
   },
   "bodyIdentityContract": {
-    "version": "mirrorlife-civic-body-identity-v8",
+    "version": "mirrorlife-civic-body-identity-v9",
     "roles": [
       "player",
       "listener",
@@ -42,7 +42,7 @@
     "armAnatomyContract": "mirrorlife-civic-arm-anatomy-v1",
     "neckContract": "mirrorlife-civic-neck-continuity-v2",
     "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
-    "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
+    "runtime": "contoured-shell+tailored-shoulder-plane+reference-head-ratio+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
   },
   "skinContract": {
     "version": "mirrorlife-civic-skin-v1",
@@ -127,11 +127,12 @@
       "mediator"
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
-    "integrationContract": "mirrorlife-civic-face-identity-v6",
-    "productionFaceMode": "curved-atlas",
-    "productionIntegrationContract": "mirrorlife-civic-face-identity-v6",
+    "integrationContract": "mirrorlife-civic-face-identity-v7",
+    "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
+    "productionIntegrationContract": "mirrorlife-civic-face-identity-v7",
     "corneaContract": "mirrorlife-civic-cornea-v2",
-    "uvContract": "mirrorlife-civic-head-uv-v1",
+    "uvContract": "mirrorlife-civic-head-uv-v2",
+    "uvMatteContract": "mirrorlife-civic-head-uv-matte-v1",
     "preservedSculptParts": [
       "Head",
       "NoseBridge",

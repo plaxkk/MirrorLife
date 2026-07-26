@@ -1,5 +1,55 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v140 real head-UV identity, reference head ratio and reverse-orbit visibility gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/v140-reference-full-pair.png` (`2560 × 720`) places the source and implementation at equal `1280 × 720` size on one canvas. Actor-focused evidence is `tmp/v140-character-focus-pair.png`.
+- Face-mode audit: `tmp/v140-face-mode-audit-board.png` and `tmp/v140-face-mode-close-board.png` compare curved-atlas, sculpted-volume, UV-hybrid and illustrated modes in the same room/camera. UV-hybrid is the only tested mode that preserves source-like illustrated identity while retaining the real head, volumetric eyes, gaze and blink.
+- Full 3D evidence: `tmp/v140-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; mobile evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`; forced eye deformation is recorded in `dist/interior-3d-work/environment-review-blink/00-public.png`.
+- Runtime evidence: desktop headings remain `174–178` draw calls, `298,594–350,426` triangles and `168–177` geometries. Mobile uses the curved-atlas LOD at `106 / 244,054 / 80`, inside the strict `110 / 250k` phone budget. Every captured view reports zero shader errors.
+- Interaction evidence: the final Rapier-controlled regression moved the player `2.53m`, rotated the camera `65.3°` and retained UV-hybrid identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions across all `26` zones completed without failures or runtime errors.
+- Asset evidence: all four role GLBs now use sculpt contract v79 and body-identity contract v9. The set remains `7.42 MB`; every role stays below `45k` triangles and `2 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v139 P1 / desktop faces were faint curved cards laid over the head] Desktop production now paints each role's authored identity through the real head UVs. The real morphable head remains the occluding and shaded surface; no rectangular face card or camera-facing sprite is present.
+- [fixed from v139 P1 / volumetric face mode looked like an undifferentiated doll] The selected UV-hybrid combines role-specific brow, eye and mouth identity with two real eye volumes, gaze tracking, shader-driven eyelid deformation and existing smile/speech/attention/asymmetry morphs.
+- [improved from v139 P1 / the source cast's heads were visibly broader at gameplay distance] The source comparison measures roughly `0.46m` across the complete skull/hair silhouette. Body contract v9 widens role-authored heads while preserving the `1.75m` top height and authoritative actor capsule.
+- [checked / UV identity must survive a real orbit] Four-heading evidence exposes front, profile and reverse silhouettes without a rectangular seam. Hair and skull continue to occlude the identity surface naturally.
+- [fixed during v140 / mobile UV identity exceeded the phone triangle gate] Production selection is now responsive: desktop uses UV-hybrid; phone uses the existing curved-atlas identity LOD. Mobile finishes at `244,054 / 250,000` triangles instead of failing at `251,110`.
+- [fixed during v140 / reverse orbit was covered by an apparently opaque foreground asset] Bench and multi-material hero assets now fade each material layer to the occlusion floor. The former compounded `14%` layers no longer form a solid lower-third wall at `180°`; the complete cast, story ring and reverse-wall destination remain readable.
+
+### Required fidelity surfaces and findings
+
+- [improved][character identity and image quality] Desktop citizens now have readable role-specific facial identity on real 3D head topology, broader source-weighted head proportions, volumetric eyes and real blink deformation. The source remains ahead in individual facial planes, iris craft, hair strand grouping, mouth corners and expression nuance.
+- [checked][spatial truth and camera behavior] The character scale change does not alter metre-space capsules, foot contact, interaction anchors or navigation. All four headings retain the cast and current target; reverse-orbit foreground furniture now performs as a translucent frame instead of a camera block.
+- [checked][responsive behavior] Desktop receives the higher-fidelity identity path; portrait mobile retains a coherent character silhouette, 44px+ controls, no horizontal overflow and its release performance budget.
+- [checked][fonts, typography and copy] Place memory, counters, action rail, story state and contextual interaction remain readable. No private-memory text or unsupported public statistics were introduced.
+- [checked][colors and material hierarchy] Ivory, oak, teal, coral, butter, brass and mineral floor remain coherent. The source still owns subtler face/garment colour bounce, lower costume saturation and richer transmission through hair, plants and glass.
+- [P1][role-specific production face craft remains behind] The UV system is now structurally correct, but the four identities still need individually authored iris scale, eyelid fold, cheek/nose planes, hairline integration and expression-specific texture variation to reach the source.
+- [P1][complete-room asset craft remains behind] The source continues to have denser bespoke joinery, textiles, botanical species, paper wear, glass behavior and irregular small-object clustering across the complete frame.
+- [P1][offline-quality light transport remains ahead] Real-time key/fill, portal bounce, foliage projection and contact AO are stable, while the source retains softer penumbrae, broader indirect colour, more flattering facial light and materially richer translucency.
+- [P2][mobile identity is intentionally lower fidelity] The phone LOD meets the release budget but returns to the curved-atlas face and therefore has less convincing profile integration than desktop.
+- [P2][HUD optical finish remains behind] Coverage and interaction pass, while the source still has finer icons, tighter counters, more coherent glass layering and higher-quality button-edge treatment.
+
+### Implementation checklist
+
+- Preserve desktop UV-hybrid and mobile curved-atlas production selection; do not regress desktop to a camera-facing face card or push the phone over `250k` triangles.
+- Continue through four separately authored face/iris/hairline sets and expression texture variation on the existing real UV/morph/eye foundation.
+- Keep foreground multi-material occlusion at the `0.04` per-layer floor unless the assembly is first consolidated into a single transparency layer.
+- Spend the next room pass on wall-wide joinery, textiles, plant species and transmission rather than adding more circulation obstacles.
+
+### Gate result
+
+v140 replaces the desktop's faint identity card with a real UV-painted, morphable and fully orbitable 3D head; restores the reference's broader illustrated head proportion; preserves volumetric gaze/blink; keeps the phone under its hard render budget; and removes the most disruptive reverse-camera block. The mandatory same-canvas comparison still contains actionable P1 gaps in per-character face/hair craft, complete-room secondary asset craftsmanship and offline-quality light/material transport.
+
+final result: blocked
+
+Blocker: source-level role-specific face/hair finish, bespoke room-wide asset craft and offline-quality indirect light/material transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v139 authored foreground object families and physical desk-detail gate
 
 ### Evidence inspected together

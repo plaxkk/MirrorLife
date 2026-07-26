@@ -13,7 +13,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v78";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v79";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v5";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
@@ -27,8 +27,10 @@ const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
 const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
 const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
-const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v6";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v7";
 const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v2";
+const CIVIC_HEAD_UV_CONTRACT = "mirrorlife-civic-head-uv-v2";
+const CIVIC_HEAD_UV_MATTE_CONTRACT = "mirrorlife-civic-head-uv-matte-v1";
 const CIVIC_FACE_SKIN_TONES = Object.freeze({
   player: "#efb58d",
   listener: "#edb087",
@@ -51,13 +53,15 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
         ? "uv-hybrid"
         : CIVIC_FACE_MODE_QUERY === "illustrated"
           ? "illustrated-cornea"
-          // The selected visual target uses production character practice:
-          // a sculpted, lit head carries a role-authored colour/feature layer.
-          // The identity carrier below conforms to the actual face curvature,
-          // morphs with speech and blink, depth-tests against the head and is
-          // occluded by real hair. It is therefore a rotatable 3D face surface,
-          // not a billboard or camera-facing portrait card.
-          : "curved-atlas";
+          // Desktop uses the most faithful existing conversion path: the
+          // role-authored 2D identity is baked into the real morphable head UV,
+          // while volumetric eyes retain gaze, blink, light and occlusion.
+          // Phone keeps the curved identity carrier because the eye geometry
+          // is sub-pixel there and would exceed the strict 250k triangle gate.
+          // Neither path is a billboard or camera-facing portrait card.
+          : window.innerWidth <= 720
+            ? "curved-atlas"
+            : "uv-hybrid";
 const MAX_DPR = 1.5;
 const resolveInteriorPixelRatio = (width = window.innerWidth) => {
   const deviceRatio = Math.min(Number(window.devicePixelRatio || 1), MAX_DPR);
@@ -4180,7 +4184,10 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   benchGroup.children.forEach((object) => {
     if (!object.isMesh) return;
     object.userData.cameraForegroundFade = true;
-    object.userData.cameraForegroundOpacity = 0.14;
+    // This assembly contains several overlapping material layers. A 14%
+    // per-material target compounded into an almost opaque lower-third from
+    // the reverse orbit, so use the occlusion floor for the complete stack.
+    object.userData.cameraForegroundOpacity = 0.04;
     object.userData.cameraForegroundNearDistance = 3.6;
     cameraForegroundObjects.add(object);
   });
@@ -6467,7 +6474,10 @@ function rebuildModels(items) {
     foreground.name = `${stage.name}-merged`;
     foreground.children.forEach((object) => {
       object.userData.cameraForegroundFade = true;
-      object.userData.cameraForegroundOpacity = 0.14;
+      // Authored hero assets are split into several material batches. Keep the
+      // complete stack readable as a ghosted foreground frame instead of
+      // accumulating multiple 14% layers into an opaque camera block.
+      object.userData.cameraForegroundOpacity = 0.04;
       object.userData.cameraForegroundNearDistance = 3.6;
       cameraForegroundObjects.add(object);
     });
@@ -6918,7 +6928,7 @@ function getCivicHeadUvTexture(role = "player", skinColor = new THREE.Color("#ef
   texture.anisotropy = Math.min(8, Number(renderer?.capabilities?.getMaxAnisotropy?.() || 1));
   texture.generateMipmaps = true;
   texture.needsUpdate = true;
-  texture.userData.mirrorLifeCivicHeadUvContract = "mirrorlife-civic-head-uv-v1";
+  texture.userData.mirrorLifeCivicHeadUvContract = CIVIC_HEAD_UV_CONTRACT;
   civicHeadUvTextures.set(cacheKey, texture);
   return texture;
 }
@@ -6943,14 +6953,17 @@ function applyCivicHeadUvIdentity(headMesh, role) {
     material.name = `${sourceMaterial.name || role} UV identity`;
     material.userData = {
       ...(material.userData || {}),
-      mirrorLifeCivicHeadUvContract: "mirrorlife-civic-head-uv-v1"
+      mirrorLifeCivicHeadUvContract: CIVIC_HEAD_UV_CONTRACT
     };
     material.needsUpdate = true;
     applied = true;
     return material;
   });
   headMesh.material = Array.isArray(headMesh.material) ? materials : materials[0];
-  headMesh.userData.mirrorLifeCivicHeadUvContract = applied ? "mirrorlife-civic-head-uv-v1" : "";
+  headMesh.userData.mirrorLifeCivicHeadUvContract = applied ? CIVIC_HEAD_UV_CONTRACT : "";
+  headMesh.userData.mirrorLifeFaceIdentityContract = applied ? CIVIC_FACE_IDENTITY_CONTRACT : "";
+  headMesh.userData.mirrorLifeFaceMatteContract = applied ? CIVIC_HEAD_UV_MATTE_CONTRACT : "";
+  headMesh.userData.mirrorLifeFaceTextureContract = applied ? "mirrorlife-civic-face-texture-v2" : "";
   return applied;
 }
 
@@ -9838,7 +9851,7 @@ function createCivicActorObject(actor, asset) {
     bodyDeformation: fullExpressionLod
   });
   if (bodySurfaceMesh) {
-    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v8";
+    bodySurfaceMesh.userData.mirrorLifeBodyIdentity = "mirrorlife-civic-body-identity-v9";
     bodySurfaceMesh.userData.mirrorLifeShoulderContinuity = "mirrorlife-civic-shoulder-continuity-v3";
     bodySurfaceMesh.userData.mirrorLifeArmAnatomy = "mirrorlife-civic-arm-anatomy-v1";
     bodySurfaceMesh.userData.mirrorLifePelvisContinuity = "mirrorlife-civic-pelvis-continuity-v3";
@@ -11415,15 +11428,19 @@ function getStats() {
       } : null,
       facial: (entry.faceDecal?.morphTargetDictionary || entry.faceMorphMesh?.morphTargetDictionary) ? {
         version: "mirrorlife-civic-face-morph-v2",
-        identity: entry.faceDecal?.userData?.mirrorLifeFaceIdentityContract || null,
-        matte: entry.faceDecal?.userData?.mirrorLifeFaceMatteContract || null,
+        identity: entry.faceDecal?.userData?.mirrorLifeFaceIdentityContract
+          || entry.faceMorphMesh?.userData?.mirrorLifeFaceIdentityContract
+          || null,
+        matte: entry.faceDecal?.userData?.mirrorLifeFaceMatteContract
+          || entry.faceMorphMesh?.userData?.mirrorLifeFaceMatteContract
+          || null,
         texture: entry.faceDecal
           ? "mirrorlife-civic-face-texture-v2"
-          : null,
+          : entry.faceMorphMesh?.userData?.mirrorLifeFaceTextureContract || null,
         integration: CIVIC_FACE_MODE === "sculpted-volume"
           ? "mirrorlife-civic-face-volume-v17"
           : CIVIC_FACE_MODE === "uv-hybrid"
-            ? "mirrorlife-civic-face-uv-hybrid-v1"
+            ? CIVIC_FACE_IDENTITY_CONTRACT
           : CIVIC_FACE_MODE === "hybrid-volume"
             ? "mirrorlife-civic-face-hybrid-v1"
             : CIVIC_FACE_MODE === "illustrated-cornea"

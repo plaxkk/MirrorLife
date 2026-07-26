@@ -106,10 +106,13 @@ BODY_PROFILES = {
         "hand_scale": 0.98,
         "foot_scale": 1.18,
         "toe_out": 0.075,
-        # Keep the complete illustrated head hierarchy at the literal
-        # reference ratio while preserving the same 1.75 m top height.
-        "head_scale": (0.925, 0.9, 0.92),
-        "head_z": 1.506,
+        # The normalized story-camera comparison measures the source cast at
+        # roughly 46 cm across the complete skull/hair silhouette. Widen the
+        # authored head without raising the 1.75 m top height; the former
+        # 42 cm face made the 2D identity features unreadable at gameplay
+        # distance even though the body and camera scale were correct.
+        "head_scale": (1.015, 0.96, 0.95),
+        "head_z": 1.496,
     },
     "listener": {
         "torso_width": 1.02,
@@ -124,8 +127,8 @@ BODY_PROFILES = {
         "hand_scale": 0.97,
         "foot_scale": 1.14,
         "toe_out": 0.065,
-        "head_scale": (0.918, 0.895, 0.92),
-        "head_z": 1.501,
+        "head_scale": (1.005, 0.955, 0.95),
+        "head_z": 1.491,
     },
     "facilitator": {
         "torso_width": 1.0,
@@ -140,8 +143,8 @@ BODY_PROFILES = {
         "hand_scale": 0.96,
         "foot_scale": 1.04,
         "toe_out": 0.055,
-        "head_scale": (0.915, 0.895, 0.92),
-        "head_z": 1.511,
+        "head_scale": (1.0, 0.955, 0.95),
+        "head_z": 1.501,
     },
     "mediator": {
         "torso_width": 1.0,
@@ -156,8 +159,8 @@ BODY_PROFILES = {
         "hand_scale": 0.96,
         "foot_scale": 1.04,
         "toe_out": 0.055,
-        "head_scale": (0.91, 0.895, 0.92),
-        "head_z": 1.501,
+        "head_scale": (1.0, 0.955, 0.95),
+        "head_z": 1.491,
     },
 }
 
@@ -3458,7 +3461,7 @@ def build_character(role, config):
     root["asset"] = f"civic-{role}"
     root["rig_contract"] = "mirrorlife-shared-pivot-v1"
     root["skin_contract"] = "mirrorlife-civic-skin-v1"
-    root["body_contract"] = "mirrorlife-civic-body-identity-v8"
+    root["body_contract"] = "mirrorlife-civic-body-identity-v9"
     root["garment_topology_contract"] = "mirrorlife-civic-garment-topology-v5"
     root["shoulder_contract"] = "mirrorlife-civic-shoulder-continuity-v3"
     root["arm_anatomy_contract"] = "mirrorlife-civic-arm-anatomy-v1"
@@ -3467,16 +3470,15 @@ def build_character(role, config):
     root["identity_role"] = role
 
     torso, left_arm, right_arm, left_elbow, right_elbow, left_leg, right_leg, left_knee, right_knee = build_body(role, config, mats, root)
-    # The final same-canvas story crop puts the reference head at roughly
-    # eighty percent of shoulder width. Keep the complete authored hierarchy
-    # at that ratio: the earlier 1.02-wide head drifted back toward a toy
-    # silhouette once the slimmer torso and full costume were visible.
+    # The normalized same-canvas crop puts the complete reference skull/hair
+    # silhouette slightly wider than the tailored shoulder core. Keep that
+    # measured 1:3.5 editorial proportion here; earlier 42 cm heads preserved
+    # total height but made eyes and expression disappear at the story lens.
     body_profile = BODY_PROFILES[role]
     head = empty("HeadPivot", root, (0, 0, body_profile["head_z"]))
-    # This resolves to roughly 0.42 m wide and 0.45 m tall. The literal
-    # same-canvas comparison showed the previous 0.46 m head reading a full
-    # proportion larger than the reference cast even though the top height was
-    # correct; raise the smaller head so the 1.72 m silhouette stays stable.
+    # This resolves to roughly 0.46 m wide and 0.51 m tall including the hair
+    # hierarchy. The pivot moves down with the scale change, preserving the
+    # same top height, eye line, capsule and metre-space interaction anchors.
     head.scale = body_profile["head_scale"]
     if role == "mediator":
         # A head-attached target gives the thoughtful hand a semantic place to
@@ -3559,14 +3561,14 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v78",
+        "sculptContract": "mirrorlife-civic-sculpt-v79",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
             "parts": ["HairCap", "HairFlowRidge", "HairRibbon", "FaceFrameLock", "HairTempleWisp"],
         },
         "bodyIdentityContract": {
-            "version": "mirrorlife-civic-body-identity-v8",
+            "version": "mirrorlife-civic-body-identity-v9",
             "roles": ["player", "listener", "facilitator", "mediator"],
             "dimensions": ["torso", "shoulder", "neck", "waist", "pelvis", "limb", "head", "garment-silhouette"],
             "continuityParts": ["Torso", "ShoulderMantle", "Neck", "SkinnedArmVolume", "TrouserSeat", "SkirtHipFoundation"],
@@ -3574,7 +3576,7 @@ def main():
             "armAnatomyContract": "mirrorlife-civic-arm-anatomy-v1",
             "neckContract": "mirrorlife-civic-neck-continuity-v2",
             "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
-            "runtime": "contoured-shell+tailored-shoulder-plane+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
+            "runtime": "contoured-shell+tailored-shoulder-plane+reference-head-ratio+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin",
         },
         "skinContract": {
             "version": "mirrorlife-civic-skin-v1",
@@ -3635,11 +3637,12 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-identity-v6",
-            "productionFaceMode": "curved-atlas",
-            "productionIntegrationContract": "mirrorlife-civic-face-identity-v6",
+            "integrationContract": "mirrorlife-civic-face-identity-v7",
+            "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v7",
             "corneaContract": "mirrorlife-civic-cornea-v2",
-            "uvContract": "mirrorlife-civic-head-uv-v1",
+            "uvContract": "mirrorlife-civic-head-uv-v2",
+            "uvMatteContract": "mirrorlife-civic-head-uv-matte-v1",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
             "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",

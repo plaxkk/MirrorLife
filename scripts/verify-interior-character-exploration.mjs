@@ -187,17 +187,21 @@ try {
       .every((actor) => actor.animation?.state === "listen"),
     "desktop civic witnesses did not attend to the opening testimony"
   );
-  assert(opening.actors.every((actor) => actor.faceMode === "curved-atlas"), "civic scene did not use the production curved identity surface");
+  assert(opening.actors.every((actor) => actor.faceMode === "uv-hybrid"), "desktop civic scene did not use the production UV-hybrid identity surface");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-face-matte-v2"), "civic face texture lost its feature-island matte contract");
-  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v6"), "civic actors did not expose the production facial identity surface");
+  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-head-uv-matte-v1"), "civic face texture lost its head-UV matte contract");
+  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v7"), "civic actors did not expose the production facial identity surface");
   assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v6"), "civic actors did not preserve the production facial identity contract");
-  assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic identity surface retained duplicate volumetric lips");
-  assert(opening.actors.every((actor) => actor.facial?.morphCount === 6), "civic identity-surface facial morph set is incomplete");
-  assert(opening.actors.every((actor) => actor.eyes === null), "civic identity surface retained duplicate primitive eye geometry");
-  assert(opening.actors.every((actor) => actor.cornea?.version === "mirrorlife-civic-cornea-v2"), "civic production faces did not expose physically lit corneal lenses");
-  assert(opening.actors.every((actor) => actor.cornea?.lensCount === 2 && actor.cornea?.physicallyLit === true), "civic corneal lens contract is incomplete");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v7"), "civic actors did not preserve the production facial identity contract");
+  assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic UV identity surface retained duplicate volumetric lips");
+  assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic morphable head facial set is incomplete");
+  assert(opening.actors.every((actor) => (
+    actor.eyes?.version === "mirrorlife-civic-eye-volume-v3"
+      && actor.eyes?.count === 2
+      && actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v2"
+      && actor.eyes?.uniformReady === true
+  )), "civic UV identity surface did not retain two deforming volumetric eyes");
+  assert(opening.actors.every((actor) => actor.cornea === null), "civic UV identity surface retained duplicate curved-atlas corneal lenses");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v11"), "civic actors did not expose the role-authored independent-hand contract");
   const openingFacilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
   const openingMediator = opening.actors.find((actor) => actor.assetRole === "mediator");
@@ -205,7 +209,7 @@ try {
   assert.equal(openingMediator?.contactConstraint?.target, "thoughtful-jaw", "mediator lost the head-attached thoughtful contact target");
   assert(Number(openingFacilitator?.contactConstraint?.after ?? 1) <= 0.03, "facilitator fingertip did not close onto the notebook edge");
   assert(Number(openingMediator?.contactConstraint?.after ?? 1) <= 0.03, "mediator thoughtful hand did not close onto the jaw target");
-  assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v8" && actor.body?.realGeometry === true), "civic actors did not expose the role-authored facial/body silhouette contract");
+  assert(opening.actors.every((actor) => actor.body?.version === "mirrorlife-civic-body-identity-v9" && actor.body?.realGeometry === true), "civic actors did not expose the role-authored facial/body silhouette contract");
   assert(opening.actors.every((actor) => actor.body?.shoulderContinuity === "mirrorlife-civic-shoulder-continuity-v3"), "civic actors did not expose bone-weighted shoulder continuity");
   assert(opening.actors.every((actor) => actor.body?.armAnatomy === "mirrorlife-civic-arm-anatomy-v1"), "civic actors did not expose the authored deltoid-elbow-forearm chain");
   assert(opening.actors.every((actor) => actor.body?.pelvisContinuity === "mirrorlife-civic-pelvis-continuity-v3"), "civic actors did not expose the authored pelvis continuity contract");
@@ -552,10 +556,10 @@ try {
   const forcedBlinkStats = await readStats(page);
   assert(
     forcedBlinkStats.actors.every((actor) => Number(actor.facial?.blink || 0) >= 0.9),
-    "forced-blink QA state did not drive every curved identity surface"
+    "forced-blink QA state did not drive every UV-hybrid identity surface"
   );
 
-  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified curved identity-surface blink.`);
+  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified UV-hybrid identity-surface blink.`);
 } finally {
   await browser.close();
 }
