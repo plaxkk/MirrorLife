@@ -1,5 +1,81 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-27 reference-fidelity v152 measured floor grounding and four killed hypotheses (Claude takeover)
+
+Worked in an isolated worktree (`claude/reference-fidelity-takeover`, from `aa99628`) because the
+Codex loop was still committing to `codex/bone-animation-rig-from-sprite` every ~40 minutes.
+
+### What changed the picture
+
+- Civic terrazzo base `#bcb8b2` → `#96938e` (proportional ×0.80). The unoccluded near floor had been
+  the brightest surface in frame, which is backwards for a room lit from the far portal. Measured
+  axes within tolerance went 3/7 → 5/7; full-frame luma `0.552 → 0.514` against the reference's
+  `0.524`; vertical light spread `0.094 → 0.039`, from 3.7× over tolerance to inside it. It also
+  revealed the dappled portal light already present on the floor, which the washed base had erased —
+  visible at yaw 90°.
+- The one surface loader that never applied anisotropy now does. Preload can resolve before the
+  renderer exists and `getMaxAnisotropy` is a renderer capability, so the intent was silently
+  dropped. Consistency fix with the five other loaders; it moved no measured axis and is not claimed
+  as a visual win.
+
+### New instrument
+
+`scripts/measure-reference-gap.mjs` reports a signed per-axis gap against the reference. Built
+because v1–v146 were judged by eye, which is why the same three P1s were re-worded 20 times while
+exposure oscillated in a fixed band without converging. Two flaws surfaced in its own first outputs
+and are fixed: a coarse resample box-filters away the detail it claims to measure, and a grid larger
+than either source's sampled band turns nearest-neighbour blockiness into fake edges. Detail is now
+read at 1024×428, tone at 320×180.
+
+### Hypotheses tested and killed — do not re-try without new evidence
+
+- [killed] Finer terrazzo repeat. 3.7 → 5.5 / 7.4 / 11.1 makes local contrast monotonically worse;
+  chips fall below the floor's on-screen sampling rate and mipmap back to flat cream. 3.7 was
+  already optimal.
+- [killed] Lower opening camera. 3.16 → 2.95 / 2.70 makes vertical light spread worse, not better.
+- [killed] Inverted-hull character outline. Costs ~25 draw calls per actor against 3 of headroom
+  (177/180 at the opening). Not viable without first reducing the 99 draw calls the four actors
+  spend.
+- [killed for now] Darkening civic wood. The measurement is real and unresolved: sampled against the
+  reference the display-case frame runs `+0.163` luma hot and the foreground desk `+0.058`. Pushing
+  `offsetHSL` lightness to `-0.20`/`-0.26` matches those samples but costs global saturation, which
+  the floor change already leaves at the tolerance edge. Compensating in `cinematicGradePass`
+  (`+0.032 → -0.030`) fixes saturation and breaks warmth instead (1.7× low). Net 3/7 versus the
+  committed 5/7, so it was reverted rather than left half-tuned. Any retry needs the wood and the
+  grade solved together, not in sequence.
+
+### Verified
+
+`npm run check`, `npm run build`, physics 26 zones / 10 archetypes, exploration (walked 3.17m,
+rotated 65.3°, volumetric blink), desktop + mobile scene flow, transition stress 0 failures / 0
+runtime errors. Draw calls 177 / 180 / 180 / 179 across the four orbits and 109 on mobile — unchanged,
+as expected for a material colour change. Four-orbit board and same-canvas reference pair recaptured.
+
+### Asset gate correctness
+
+The civic asset gate was range-checking `manifest.meshes` and `manifest.triangles` — hand-maintained
+JSON — and never opening the binaries. The manifest overstated triangles by ~40% and understated
+mesh counts by ~30%; real counts (167–211) sat outside the range the gate claimed to enforce
+(20–165), and `heightMeters` declared 1.72m against real models of 1.787–1.845m. The gate now reads
+the shipped GLB, asserts the manifest agrees with it, and adds two physical gates: lowest vertex
+inside a 0–0.02m floor-contact band, and per-role height within 3% of contract.
+
+### Remaining P1, unchanged and honestly still open
+
+- [P1] Character craft. 204 meshes per actor, only 2 skinned; head, hands, shoes and garment panels
+  are rigid parts bolted to bones, which is why the cast reads as assembly rather than sculpture.
+  Measured head-to-body ratio is *not* the problem — 4.28 heads against the reference's 4.07.
+- [P1] Detail density 3.8× below tolerance and local contrast 2.1× below. The reference fills its
+  foreground with a large dark desk and dense small props; ours leaves the lower third as open floor.
+- [P1] Civic wood hierarchy, as measured above.
+
+final result: blocked
+
+Blocker: character sculpt craft and room-wide secondary detail remain visibly behind the reference.
+The floor now grounds the frame and five of seven measured axes are in tolerance, but the two that
+are not — detail density and local contrast — are exactly the axes that need authored geometry, and
+the draw-call budget has 3 of 180 left to spend on it.
+
 ## 2026-07-26 reference-fidelity v150 shaped civic light transport, individual facial timing and sealed 360° cutaway
 
 ### Evidence inspected together
