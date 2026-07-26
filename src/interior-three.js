@@ -1242,9 +1242,26 @@ function getSurfaceBumpTexture(kind = "plaster") {
   return texture;
 }
 
+// Shared by every repeating architectural surface. Mipmaps plus 8× anisotropy
+// are what keep an authored material legible on a floor or wall that the story
+// camera only ever sees at a shallow angle.
+function applyGrazingAngleFiltering(texture) {
+  if (!texture) return texture;
+  texture.minFilter = THREE.LinearMipmapLinearFilter;
+  texture.magFilter = THREE.LinearFilter;
+  texture.generateMipmaps = true;
+  texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+  return texture;
+}
+
 function getPhysicalSurfaceSources() {
   return {
     terrazzo: {
+      // 3.7 is measured-optimal, not arbitrary: a sweep of 3.7 / 5.5 / 7.4 /
+      // 11.1 against the reference showed local contrast falling monotonically
+      // as the repeat rises, because finer chips drop below the floor's
+      // on-screen sampling rate and mipmap back into flat cream. Raise this
+      // only with a measurement that shows it helping.
       map: "/assets/interiors/textures/civic-terrazzo-tiles-basecolor-v3.png",
       repeat: [3.7, 3.7]
     },
@@ -1282,6 +1299,11 @@ async function preloadPhysicalSurfaceMaps() {
         map.wrapS = THREE.RepeatWrapping;
         map.wrapT = THREE.RepeatWrapping;
         map.repeat.set(...source.repeat);
+        // The floor is read at a 23° grazing angle, which is precisely where
+        // isotropic filtering collapses. This was the only surface loader that
+        // left anisotropy at the default 1, so the authored terrazzo chips
+        // dissolved into flat cream past the middle distance.
+        applyGrazingAngleFiltering(map);
         map.needsUpdate = true;
       }
       const [normal, roughness] = source.normal && source.roughness
@@ -1295,6 +1317,7 @@ async function preloadPhysicalSurfaceMaps() {
         texture.wrapS = THREE.RepeatWrapping;
         texture.wrapT = THREE.RepeatWrapping;
         texture.repeat.set(...source.repeat);
+        applyGrazingAngleFiltering(texture);
         texture.needsUpdate = true;
       });
       physicalSurfaceMaps.set(kind, { map, normal, roughness });
@@ -1357,6 +1380,12 @@ function getPhysicalSurfaceMaps(kind) {
   if (maps) {
     [maps.map, maps.normal, maps.roughness].forEach((texture) => {
       if (!texture) return;
+      // Preload can resolve before the renderer exists, and getMaxAnisotropy
+      // is a renderer capability — so applying it at load time silently left
+      // these textures at anisotropy 1. Re-apply here, where the renderer is
+      // guaranteed, or the floor stays isotropically blurred at its 23°
+      // grazing angle no matter what the loader asked for.
+      applyGrazingAngleFiltering(texture);
       texture.needsUpdate = true;
     });
   }
@@ -6291,7 +6320,18 @@ function rebuildRoom(theme = {}) {
     // the cool stone chips and collapsed floor, plaster and skin into one
     // warm value. Lighting supplies the room warmth while the material keeps
     // its authored mineral colour separation.
-    createToonMaterial(theme.zoneId === "public-plaza" ? "#bcb8b2" : floorColor, {
+    //
+    // #96938e is the former #bcb8b2 scaled proportionally by 0.80. The old
+    // value made the unoccluded near floor the brightest thing in frame, which
+    // is backwards for a room lit from the far portal: measured against the
+    // reference the bottom two sixths of the image ran +0.07 to +0.08 luma hot
+    // while every other band matched. Scaling rather than subtracting keeps
+    // (max-min)/max constant, so the floor loses brightness without gaining
+    // the colour cast that equal-step darkening introduced. Sweeping 1.00 /
+    // 0.86 / 0.83 / 0.80 moved axes within tolerance from 3/7 to 5/7, with
+    // full-frame luma landing on 0.514 against the reference's 0.524 and
+    // vertical light spread falling from 3.7× over tolerance to inside it.
+    createToonMaterial(theme.zoneId === "public-plaza" ? "#96938e" : floorColor, {
       // A softly honed mineral surface matches the reference better than the
       // former cold grey, high-contrast chip field. The colour map still
       // supplies real terrazzo variation, while reduced bump and stronger
