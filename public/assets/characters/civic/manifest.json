@@ -247,13 +247,13 @@
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
       "meshes": 123,
-      "triangles": 39124
+      "triangles": 39116
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
       "meshes": 149,
-      "triangles": 44848
+      "triangles": 44840
     },
     "mediator": {
       "file": "mediator.glb",

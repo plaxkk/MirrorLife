@@ -92,23 +92,23 @@ ROLE_CONFIGS = {
 # and orbit without making collision or authored hand poses dishonest.
 BODY_PROFILES = {
     "player": {
-        "torso_width": 1.06,
-        "torso_depth": 1.0,
-        "shoulder_x": 0.226,
+        "torso_width": 1.01,
+        "torso_depth": 0.97,
+        "shoulder_x": 0.205,
         "hip_x": 0.118,
         # Keep a softly weighted sleeve without losing the reference's long,
         # editorial 1:3.5 silhouette. The previous v145 correction fixed the
         # tube read but over-expanded the shoulder-to-hand column in the
         # equal-scale actor crop.
-        "arm_width": 0.97,
-        "arm_depth": 0.99,
+        "arm_width": 0.79,
+        "arm_depth": 0.84,
         # Preserve the reference's loose cargo thigh while the authored ring
         # stack still tapers decisively into the ankle.
-        "leg_width": 1.03,
-        "leg_depth": 0.99,
-        "waist_width": 1.04,
-        "hand_scale": 1.0,
-        "foot_scale": 1.18,
+        "leg_width": 0.96,
+        "leg_depth": 0.94,
+        "waist_width": 1.0,
+        "hand_scale": 0.86,
+        "foot_scale": 1.04,
         "toe_out": 0.075,
         # The normalized story-camera comparison measures the source cast at
         # roughly 46 cm across the complete skull/hair silhouette. Widen the
@@ -119,49 +119,49 @@ BODY_PROFILES = {
         "head_z": 1.496,
     },
     "listener": {
-        "torso_width": 1.02,
-        "torso_depth": 0.97,
-        "shoulder_x": 0.218,
+        "torso_width": 0.99,
+        "torso_depth": 0.95,
+        "shoulder_x": 0.198,
         "hip_x": 0.118,
-        "arm_width": 0.97,
-        "arm_depth": 0.99,
-        "leg_width": 1.01,
-        "leg_depth": 1.0,
-        "waist_width": 1.0,
-        "hand_scale": 1.0,
-        "foot_scale": 1.14,
+        "arm_width": 0.8,
+        "arm_depth": 0.85,
+        "leg_width": 0.94,
+        "leg_depth": 0.93,
+        "waist_width": 0.98,
+        "hand_scale": 0.86,
+        "foot_scale": 1.02,
         "toe_out": 0.065,
         "head_scale": (1.005, 0.955, 0.95),
         "head_z": 1.491,
     },
     "facilitator": {
-        "torso_width": 0.97,
-        "torso_depth": 0.95,
-        "shoulder_x": 0.208,
+        "torso_width": 0.93,
+        "torso_depth": 0.92,
+        "shoulder_x": 0.19,
         "hip_x": 0.106,
-        "arm_width": 0.93,
-        "arm_depth": 0.95,
-        "leg_width": 0.9,
-        "leg_depth": 0.94,
-        "waist_width": 0.95,
-        "hand_scale": 1.0,
-        "foot_scale": 1.04,
+        "arm_width": 0.75,
+        "arm_depth": 0.8,
+        "leg_width": 0.8,
+        "leg_depth": 0.85,
+        "waist_width": 0.92,
+        "hand_scale": 0.82,
+        "foot_scale": 0.96,
         "toe_out": 0.055,
         "head_scale": (1.0, 0.955, 0.95),
         "head_z": 1.501,
     },
     "mediator": {
-        "torso_width": 0.98,
-        "torso_depth": 0.96,
-        "shoulder_x": 0.211,
+        "torso_width": 0.95,
+        "torso_depth": 0.93,
+        "shoulder_x": 0.194,
         "hip_x": 0.108,
-        "arm_width": 0.94,
-        "arm_depth": 0.96,
-        "leg_width": 0.91,
-        "leg_depth": 0.96,
-        "waist_width": 0.96,
-        "hand_scale": 1.0,
-        "foot_scale": 1.04,
+        "arm_width": 0.76,
+        "arm_depth": 0.81,
+        "leg_width": 0.81,
+        "leg_depth": 0.86,
+        "waist_width": 0.93,
+        "hand_scale": 0.82,
+        "foot_scale": 0.96,
         "toe_out": 0.055,
         "head_scale": (1.0, 0.955, 0.95),
         "head_z": 1.491,
@@ -2134,12 +2134,12 @@ def build_hair(head, mats, style):
     # points. The silhouette reads as deliberately grouped hair at the story
     # camera while retaining complete side/back volume.
     fringe_specs = (
-        (-0.19, -0.145, 0.205, 0.036),
-        (-0.12, -0.058, 0.18, 0.04),
-        (-0.045, 0.012, 0.16, 0.042),
-        (0.035, 0.092, 0.168, 0.041),
-        (0.115, 0.17, 0.19, 0.038),
-        (0.19, 0.15, 0.21, 0.034),
+        (-0.19, -0.145, 0.205, 0.031),
+        (-0.12, -0.058, 0.18, 0.035),
+        (-0.045, 0.012, 0.16, 0.036),
+        (0.035, 0.092, 0.168, 0.035),
+        (0.115, 0.17, 0.19, 0.033),
+        (0.19, 0.15, 0.21, 0.03),
     )
     for index, (root_x, tip_x, tip_z, root_radius) in enumerate(fringe_specs):
         tapered_lock(
@@ -2151,7 +2151,7 @@ def build_hair(head, mats, style):
                 ((root_x + tip_x * 3) / 4, -0.223, 0.148),
                 (tip_x, -0.229, tip_z),
             ],
-            (root_radius * 0.9, root_radius * 1.04, root_radius * 0.88, root_radius * 0.58, 0.006),
+            (root_radius * 0.82, root_radius * 0.96, root_radius * 0.72, root_radius * 0.42, 0.0032),
             mats["hair_highlight"] if index in (1, 4) else mats["hair"],
             head,
             sides=16,
@@ -2168,7 +2168,7 @@ def build_hair(head, mats, style):
                 (side * 0.262, -0.005, side_z + side_height * 0.18),
                 (side * 0.23, -0.052, side_z - side_height * 0.55),
             ],
-            (0.062, 0.069, 0.052, 0.009),
+            (0.054, 0.058, 0.041, 0.006),
             mats["hair"],
             head,
             sides=18,
@@ -2196,9 +2196,9 @@ def build_hair(head, mats, style):
         }.get(style, 0.012)
         frame_root_x = 0.15 if style == "coral_ponytail" else 0.125
         frame_radii = (
-            (0.034, 0.037, 0.027, 0.0045)
+            (0.03, 0.033, 0.023, 0.0035)
             if style == "coral_ponytail"
-            else (0.043, 0.047, 0.035, 0.006)
+            else (0.038, 0.041, 0.028, 0.004)
         )
         tapered_lock(
             f"FaceFrameLock_{side}",
@@ -2231,7 +2231,7 @@ def build_hair(head, mats, style):
                 (side * 0.218, -0.221, 0.045),
                 (side * 0.205, -0.218, wisp_tip_z),
             ],
-            (0.017, 0.015, 0.009, 0.0028),
+            (0.014, 0.012, 0.007, 0.0022),
             mats["hair_highlight"],
             head,
             sides=8,

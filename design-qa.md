@@ -1,5 +1,42 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v147 avatar-derived face language, tapered anatomy and cold-cache transition gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas comparisons: `tmp/v147-reference-full-pair.png` for the complete frame, `tmp/v147-character-focus-pair.png` for the four-person story group, and `tmp/v147-character-before-after.png` for the production actor change against v146.
+- Full 3D evidence: `tmp/v147-four-orbit.png` covers yaw `0°`, `90°`, `180°` and `270°`; portrait evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`.
+- Runtime evidence: opening `172 / 277,819 / 175`, side `175 / 288,927 / 167`, reverse `176 / 329,651 / 166`, fourth orbit `174 / 314,683 / 170` for draw calls / triangles / geometries. Mobile is `108 / 236,775 / 85`; every capture reports zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `3.01m`, rotated the camera `65.3°` and retained curved illustrated identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four rebuilt civic GLBs pass at `7.41 MB`; the three civic hero assets pass at `73,930` authored triangles.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v146 P1 / face texture mixed beauty-render realism with a toy-like body] The four-role atlas is re-authored from the existing MirrorLife citizen identity language: larger simplified irises, compact brows, reduced nose bridge shading and a matte illustrated finish. The texture remains on the real curved head, under physical light and hair occlusion; it does not turn the actors back into camera-facing sprites.
+- [improved from v146 P1 / arms, hands, shoes and skirted-role legs remained visually heavy] Role-specific metre-scale profiles narrow the shoulder-to-hand chain, reduce palm and shoe volume and restore a cleaner `1:3.5–1:3.7` editorial rhythm. Capsules, floor contact, notebook and thoughtful-jaw effectors remain authoritative and pass the real movement test.
+- [improved from v146 P1 / hair ended in rounded toy blocks] Fringe, side locks, face frames and temple wisps now use smaller roots and materially sharper terminal radii. This preserves full orbit volume while reducing the bead/sausage silhouette around cheeks and temples.
+- [fixed / cold-cache transition stress could fail in Puppeteer's CDP layer before returning game assertions] The 26-room, three-round verifier now owns an explicit `300s` protocol timeout. A full rerun completed all `78` transitions with no gameplay failure or runtime exception.
+
+### Required fidelity surfaces and findings
+
+- [improved][character proportions and identity continuity] The cast now aligns more closely with the project's existing 2D citizens while remaining real rigged 3D. Limbs are less toy-heavy, facial features survive story distance more clearly and the same character system still supports gaze, blink, weight transfer, hand contacts and locomotion.
+- [checked][360° composition and physical truth] All four headings retain the social group and a portal, evidence wall or authored destination. The player moves under Rapier, stands on the physical floor and does not inherit any 2D billboard behavior.
+- [checked][responsive and performance contract] Portrait preserves joystick, jump, interaction and story actions without overflow. Desktop peaks at `176` draw calls and `329,651` triangles; mobile remains below `110 / 250k`.
+- [P1][source character sculpt remains visibly ahead] The target still has authored eyelid thickness, cheek and lip planes, strand-group hair flow, articulated fingers, cloth compression and more natural pose asymmetry. The new atlas reduces style conflict but cannot substitute for a production face sculpt and groom.
+- [P1][complete-room secondary craft remains behind] Cabinet joinery, botanical anatomy, paper wear, glass transmission, textile weave and small-prop irregularity are still less specific outside the hero assemblies.
+- [P1][light transport remains behind] The real-time room retains coherent direction and readable material separation, while the source has softer portal penumbrae, richer warm/cool bounce and a more flattering skin-subsurface impression.
+- [P2][HUD optical finish remains behind] Coverage and action priority pass, but icon construction, compact typography and panel-edge treatment remain more utilitarian than the reference.
+
+### Gate result
+
+v147 removes another layer of style conflict between MirrorLife's 2D citizens and its real 3D cast, improves limb/hair taper, preserves authored contacts and proves the result under four orbit headings, portrait controls, Rapier movement and all-zone transitions. The same-canvas comparison still contains actionable P1 gaps in production face/hair/hand/garment sculpt, room-wide secondary craft and source-level indirect light/material transport.
+
+final result: blocked
+
+Blocker: the requested reference level is not yet fully proven; source character sculpt/groom, complete-frame bespoke dressing and offline-quality indirect lighting remain visibly ahead.
+
 ## 2026-07-26 reference-fidelity v146 editorial actor proportions, material contour and tighter orbit gate
 
 ### Evidence inspected together
