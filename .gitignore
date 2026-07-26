@@ -10,3 +10,5 @@ __pycache__/
 *.pyc
 .vercel
 docs/private/
+tmp/
+.review-tools/

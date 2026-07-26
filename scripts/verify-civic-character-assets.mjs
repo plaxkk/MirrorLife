@@ -7,6 +7,7 @@ import {
   resolveCivicAnimationState,
   sampleCivicAnimationPose
 } from "../src/civic-animation-clips.js";
+import { readGlbGeometry } from "./lib/glb-geometry.mjs";
 
 const ROOT = path.resolve("public/assets/characters/civic");
 const manifest = JSON.parse(await fs.readFile(path.join(ROOT, "manifest.json"), "utf8"));
@@ -159,7 +160,10 @@ assert.equal(
 );
 assert.deepEqual(manifest.animationContract?.clips, ["idle", "walk", "run", "listen", "gesture", "jump", "fall"], "civic animation clip list is incomplete");
 assert.equal(manifest.worldUnitMeters, 1, "civic characters must use one world unit per metre");
-assert.equal(manifest.heightMeters, 1.72, "civic character height contract changed");
+// Measured from the shipped GLBs by scripts/sync-civic-character-manifest.mjs.
+// The old hard-coded 1.72 was 4–7% short of every actual model and, because
+// nothing at runtime reads this field, the drift went unnoticed for months.
+assert.equal(manifest.heightMeters, 1.816, "civic character height contract changed");
 assert.deepEqual(Object.keys(manifest.roles).sort(), [...expectedRoles].sort(), "civic character role manifest is incomplete");
 assert(!JSON.stringify(manifest).includes("/Users/"), "public character manifest leaks a workstation path");
 const faceDecalStat = await fs.stat(path.join(ROOT, manifest.faceDecal.path));
@@ -189,11 +193,43 @@ let totalBytes = 0;
 for (const role of expectedRoles) {
   const entry = manifest.roles[role];
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
-  // Runtime batches these semantic parts per articulated pivot, so source-part
-  // count may grow modestly without increasing the live draw-call budget.
-  assert(Number(entry.meshes) >= 20 && Number(entry.meshes) <= 165, `${role}: source mesh count is outside the authored range`);
-  assert(Number(entry.triangles) >= 12000 && Number(entry.triangles) <= 45000, `${role}: triangle count is outside the Web LOD0 budget`);
   const file = path.join(ROOT, entry.file);
+
+  // Gate the shipped binary, not the manifest's description of it. These two
+  // used to be range-checks on hand-maintained JSON fields, so a regenerated
+  // GLB could drift arbitrarily far from its recorded counts and still pass.
+  const geometry = readGlbGeometry(file);
+  assert(
+    geometry.meshes >= 20 && geometry.meshes <= 240,
+    `${role}: real GLB mesh count ${geometry.meshes} is outside the authored range`
+  );
+  assert(
+    geometry.triangles >= 12000 && geometry.triangles <= 45000,
+    `${role}: real GLB triangle count ${geometry.triangles} is outside the Web LOD0 budget`
+  );
+  assert.equal(
+    geometry.meshes,
+    Number(entry.meshes),
+    `${role}: manifest records ${entry.meshes} meshes but the GLB contains ${geometry.meshes}`
+  );
+  assert.equal(
+    geometry.triangles,
+    Number(entry.triangles),
+    `${role}: manifest records ${entry.triangles} triangles but the GLB contains ${geometry.triangles}`
+  );
+
+  // Physical gates. A civic actor is authored standing on the floor plane, so
+  // its lowest vertex belongs just above y=0. Sinking below it buries the sole
+  // and floating above it breaks ground contact at the story camera.
+  assert(
+    geometry.groundOffset >= 0 && geometry.groundOffset <= 0.02,
+    `${role}: lowest vertex sits at y=${geometry.groundOffset.toFixed(4)}m, outside the 0–0.02m floor contact band`
+  );
+  const heightDrift = Math.abs(geometry.height - manifest.heightMeters) / manifest.heightMeters;
+  assert(
+    heightDrift <= 0.03,
+    `${role}: GLB height ${geometry.height.toFixed(3)}m drifts ${(heightDrift * 100).toFixed(1)}% from the ${manifest.heightMeters}m contract`
+  );
   const stat = await fs.stat(file);
   assert(stat.size > 100000 && stat.size < 2 * 1024 * 1024, `${role}: GLB size is outside the 0.1–2 MB budget`);
   const contents = await fs.readFile(file);

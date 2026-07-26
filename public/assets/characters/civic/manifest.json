@@ -235,31 +235,31 @@
     ]
   },
   "worldUnitMeters": 1,
-  "heightMeters": 1.72,
+  "heightMeters": 1.816,
   "roles": {
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 134,
-      "triangles": 40096
+      "meshes": 178,
+      "triangles": 28376
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 123,
-      "triangles": 38628
+      "meshes": 167,
+      "triangles": 27416
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 149,
-      "triangles": 44186
+      "meshes": 204,
+      "triangles": 32604
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 161,
-      "triangles": 42988
+      "meshes": 211,
+      "triangles": 32576
     }
   }
 }
