@@ -53,16 +53,15 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
         ? "uv-hybrid"
         : CIVIC_FACE_MODE_QUERY === "illustrated"
           ? "illustrated-cornea"
-          // The gameplay camera showed that the UV bake compressed the source
-          // brow/eye separation into a dark mask on front-facing citizens.
-          // Desktop therefore uses the curved illustrated identity carrier
-          // with two physically lit corneal lenses. It follows the real head,
-          // expressions and occlusion in 3D but preserves the source avatar's
-          // painted proportions. Phone keeps the lighter curved-atlas LOD.
-          // Neither path is a billboard or camera-facing portrait card.
+          // Same-canvas reference testing now favours the fully sculpted
+          // desktop face: real eye volumes, lids, lips and cheek morphs retain
+          // their depth under orbit and room light, while the previous curved
+          // identity carrier read as enlarged painted eyes pasted over a toy
+          // head. Phone keeps the lighter curved-atlas LOD. Neither path is a
+          // billboard or camera-facing portrait card.
           : window.innerWidth <= 720
             ? "curved-atlas"
-            : "illustrated-cornea";
+            : "sculpted-volume";
 const MAX_DPR = 1.5;
 const resolveInteriorPixelRatio = (width = window.innerWidth) => {
   const deviceRatio = Math.min(Number(window.devicePixelRatio || 1), MAX_DPR);
@@ -8091,12 +8090,15 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeMineralMask = mirrorLifeMineralMask;
         ${eyeDeformationState ? `float mirrorLifeUpperClose =
           mirrorLifeBlink * 0.029
-          + mirrorLifeEyeWarmth * 0.0048
+          + mirrorLifeEyeWarmth * 0.0036
           + max(0.0, mirrorLifeEyeAsymmetry) * 0.0022;
         float mirrorLifeLowerClose =
           mirrorLifeBlink * 0.0165
-          + mirrorLifeEyeWarmth * 0.0024
+          + mirrorLifeEyeWarmth * 0.0018
           + max(0.0, -mirrorLifeEyeAsymmetry) * 0.0018;
+        // Blender's Z-up face is converted to Three.js Y-up by glTF. Travel
+        // over the eyeball on local Y, then add a restrained forward cushion
+        // on Z so the closed lid keeps contact with the corneal surface.
         transformed.y -= mirrorLifeUpperLidMask * mirrorLifeUpperClose;
         transformed.y += mirrorLifeLowerLidMask * mirrorLifeLowerClose;
         transformed.z += (mirrorLifeUpperLidMask + mirrorLifeLowerLidMask)
@@ -8349,7 +8351,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
     }
   };
   material.customProgramCacheKey = () => actorShading
-    ? `mirrorlife-actor-material-hierarchy-v18-${eyeDeformationState ? "eyelid" : "static"}-${bodyDeformationState ? "body-neck-chain" : "body-static"}-${digitDeformationState ? "digit-deform" : "digit-static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
+    ? `mirrorlife-actor-material-hierarchy-v19-${eyeDeformationState ? "eyelid-y" : "static"}-${bodyDeformationState ? "body-neck-chain" : "body-static"}-${digitDeformationState ? "digit-deform" : "digit-static"}-${fabricSurfaceMaps?.roughness ? "scan" : "procedural"}`
     : `mirrorlife-room-vertex-surface-v5-${heroFurnitureSurface ? "hero" : "room"}-${fabricSurfaceMaps?.roughness ? "fabric" : "plain"}-${woodSurfaceMaps?.map ? "wood" : "plain"}`;
   const mesh = new THREE.Mesh(geometry, material);
   if (eyeDeformationState) mesh.userData.mirrorLifeEyeDeformation = eyeDeformationState;
@@ -9856,6 +9858,11 @@ function createCivicActorObject(actor, asset) {
   // Legacy curved carriers remain available as explicit comparison modes.
   const usesHeadUvIdentity = CIVIC_FACE_MODE === "uv-hybrid";
   if (usesHeadUvIdentity) applyCivicHeadUvIdentity(faceMorphMesh, role);
+  if (CIVIC_FACE_MODE === "sculpted-volume" && faceMorphMesh) {
+    faceMorphMesh.userData.mirrorLifeFaceIdentityContract = "mirrorlife-civic-face-sculpt-identity-v1";
+    faceMorphMesh.userData.mirrorLifeFaceMatteContract = "mirrorlife-civic-face-skin-material-v1";
+    faceMorphMesh.userData.mirrorLifeFaceTextureContract = "";
+  }
   const faceDecal = CIVIC_FACE_MODE === "sculpted-volume" || usesHeadUvIdentity
     ? null
     : createCivicFaceDecal(role);

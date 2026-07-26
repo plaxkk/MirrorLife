@@ -10,7 +10,7 @@ from mathutils import Vector
 
 ROLE_CONFIGS = {
     "player": {
-        "skin": "#efb58d",
+        "skin": "#e9aa7d",
         "hair": "#454452",
         # Keep the clump separation inside the near-charcoal family. The
         # previous pale lavender highlight resolved as hard plastic panels
@@ -33,7 +33,7 @@ ROLE_CONFIGS = {
         "costume": "traveler",
     },
     "listener": {
-        "skin": "#edb087",
+        "skin": "#e6a478",
         "hair": "#303744",
         "hair_highlight": "#465869",
         "eye": "#3a312b",
@@ -48,7 +48,7 @@ ROLE_CONFIGS = {
         "costume": "listener",
     },
     "facilitator": {
-        "skin": "#f0b790",
+        "skin": "#ebaa7e",
         "hair": "#d45f52",
         "hair_highlight": "#e27063",
         # Keep role tint in the iris, but anchor it in the same near-charcoal
@@ -69,7 +69,7 @@ ROLE_CONFIGS = {
         "costume": "facilitator",
     },
     "mediator": {
-        "skin": "#eeb28a",
+        "skin": "#e7a477",
         "hair": "#6b4a3c",
         "hair_highlight": "#7b5c50",
         "eye": "#354334",
@@ -175,10 +175,10 @@ BODY_PROFILES = {
 # rig, collider and animation contract.
 FACE_PROFILES = {
     "player": {
-        "eye_width": 0.063,
-        "eye_height": 0.0368,
-        "iris_width": 0.033,
-        "iris_height": 0.029,
+        "eye_width": 0.066,
+        "eye_height": 0.04,
+        "iris_width": 0.034,
+        "iris_height": 0.031,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.004,
         "brow_apex": 0.008,
@@ -194,10 +194,10 @@ FACE_PROFILES = {
         "temple_taper": 0.024,
     },
     "listener": {
-        "eye_width": 0.062,
-        "eye_height": 0.0362,
-        "iris_width": 0.0325,
-        "iris_height": 0.0285,
+        "eye_width": 0.065,
+        "eye_height": 0.0395,
+        "iris_width": 0.0335,
+        "iris_height": 0.0305,
         "outer_eye_lift": -0.001,
         "brow_outer": -0.006,
         "brow_apex": 0.006,
@@ -213,10 +213,10 @@ FACE_PROFILES = {
         "temple_taper": 0.027,
     },
     "facilitator": {
-        "eye_width": 0.0665,
-        "eye_height": 0.0392,
-        "iris_width": 0.035,
-        "iris_height": 0.031,
+        "eye_width": 0.068,
+        "eye_height": 0.0415,
+        "iris_width": 0.036,
+        "iris_height": 0.0325,
         "outer_eye_lift": 0.003,
         "brow_outer": 0.001,
         "brow_apex": 0.011,
@@ -232,10 +232,10 @@ FACE_PROFILES = {
         "temple_taper": 0.032,
     },
     "mediator": {
-        "eye_width": 0.065,
-        "eye_height": 0.0385,
-        "iris_width": 0.034,
-        "iris_height": 0.0305,
+        "eye_width": 0.067,
+        "eye_height": 0.041,
+        "iris_width": 0.035,
+        "iris_height": 0.032,
         "outer_eye_lift": 0.001,
         "brow_outer": -0.003,
         "brow_apex": 0.009,
@@ -3657,7 +3657,7 @@ def main():
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
             "integrationContract": "mirrorlife-civic-face-identity-v9",
-            "productionFaceMode": "illustrated-cornea-desktop+curved-atlas-mobile",
+            "productionFaceMode": "sculpted-volume-desktop+curved-atlas-mobile",
             "productionIntegrationContract": "mirrorlife-civic-face-identity-v9",
             "corneaContract": "mirrorlife-civic-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v3",

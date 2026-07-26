@@ -187,20 +187,23 @@ try {
       .every((actor) => actor.animation?.state === "listen"),
     "desktop civic witnesses did not attend to the opening testimony"
   );
-  assert(opening.actors.every((actor) => actor.faceMode === "illustrated-cornea"), "desktop civic scene did not use the production curved illustrated identity surface");
+  assert(opening.actors.every((actor) => actor.faceMode === "sculpted-volume"), "desktop civic scene did not use the production sculpted face volume");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-face-matte-v2"), "civic face texture lost its illustrated matte contract");
-  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v9"), "civic actors did not expose the production facial identity surface");
-  assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-illustrated-cornea-v3"), "civic actors did not preserve the illustrated-cornea integration contract");
-  assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic illustrated identity surface retained duplicate volumetric lips");
-  assert(opening.actors.every((actor) => actor.facial?.morphCount === 6), "civic illustrated facial morph set is incomplete");
-  assert(opening.actors.every((actor) => actor.eyes === null), "civic illustrated identity surface retained duplicate volumetric eyes");
+  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-face-skin-material-v1"), "civic sculpt lost its production skin material contract");
+  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-sculpt-identity-v1"), "civic actors did not expose the production facial sculpt identity");
+  assert(opening.actors.every((actor) => actor.facial?.texture === null), "civic sculpted face retained a duplicate identity texture");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-volume-v17"), "civic actors did not preserve the sculpted face integration contract");
+  assert(opening.actors.every((actor) => actor.facial?.lipVolume === "mirrorlife-civic-lip-volume-v3"), "civic sculpted face lost its volumetric lip surface");
+  assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic sculpted facial morph set is incomplete");
   assert(opening.actors.every((actor) => (
-    actor.cornea?.version === "mirrorlife-civic-cornea-v2"
-      && actor.cornea?.lensCount === 2
-      && actor.cornea?.physicallyLit === true
-  )), "civic illustrated identity surface did not retain two physically lit corneal lenses");
+    actor.eyes?.version === "mirrorlife-civic-eye-volume-v6"
+      && actor.eyes?.count === 2
+      && actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v2"
+      && actor.eyes?.uniformReady === true
+      && Number(actor.eyes?.upperLidWeight || 0) > 0
+      && Number(actor.eyes?.lowerLidWeight || 0) > 0
+  )), "civic sculpted identity did not retain two deforming volumetric eyes");
+  assert(opening.actors.every((actor) => actor.cornea === null), "civic sculpt retained the legacy illustrated cornea overlay");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v11"), "civic actors did not expose the role-authored independent-hand contract");
   const openingFacilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
   const openingMediator = opening.actors.find((actor) => actor.assetRole === "mediator");
@@ -555,10 +558,17 @@ try {
   const forcedBlinkStats = await readStats(page);
   assert(
     forcedBlinkStats.actors.every((actor) => Number(actor.facial?.blink || 0) >= 0.9),
-    "forced-blink QA state did not drive every curved illustrated identity surface"
+    "forced-blink QA state did not drive every sculpted eye surface"
+  );
+  assert(
+    forcedBlinkStats.actors.every((actor) => (
+      actor.eyes?.uniformReady === true
+      && Number(actor.eyes?.uniformBlink || 0) >= 0.9
+    )),
+    "forced-blink QA state did not reach the volumetric eyelid shader"
   );
 
-  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified curved illustrated identity-surface blink.`);
+  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified sculpted volumetric eyelid blink.`);
 } finally {
   await browser.close();
 }

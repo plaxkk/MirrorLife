@@ -1,5 +1,45 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v148 production sculpted face, deforming eyelids and real 3D identity gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory same-canvas comparison: `tmp/v148-reference-full-pair.png` normalizes both complete frames to `640 × 360`; `tmp/v148-character-focus-pair.png` compares the four-person story group at equal visual scale. `tmp/v148-source-volume-illustrated.png` and `tmp/v148-character-before-after.png` record the selected real-volume route against v147's illustrated carrier.
+- Full 3D evidence: `tmp/v148-four-orbit.png` covers yaw `0°`, `90°`, `180°` and `270°`; `tmp/v148-default-blink-mobile.png` compares the open sculpt, forced volumetric blink and portrait release LOD.
+- Runtime evidence: opening `176 / 292,235 / 180`, side `179 / 303,343 / 172`, reverse `180 / 344,067 / 171`, fourth orbit `178 / 329,099 / 175` for draw calls / triangles / geometries. Mobile remains `108 / 236,775 / 85`; every capture reports zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `2.85m`, rotated the camera `65.3°` and drove every real eyelid to a verified `0.92` blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four rebuilt civic GLBs pass at `7.42 MB`; the three civic hero assets still pass at `73,930` authored triangles.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v147 P1 / painted features conflicted with the real head] The desktop release path now uses `sculpted-volume`: two physical eyes, upper/lower lid surfaces, role-authored brows, a volumetric nose, morphable lips and cheek/jaw shape keys. The former illustrated carrier remains an explicit QA mode, while portrait keeps the lighter curved-atlas LOD.
+- [fixed / volumetric blink data existed but the release path never proved a closed physical eye] Eye vertices now travel across the actual corneal aperture on Three.js's Y-up facial axis. The forced-blink capture visibly closes all witnesses, and runtime evidence verifies uniform readiness, upper/lower lid weights and `0.92` shader blink.
+- [improved / real eye apertures became too small beside the avatar-derived route] Each role receives a modestly wider and taller almond aperture with a restrained iris-to-sclera ratio. The result keeps the reference's youthful attention without returning to oversized painted eyes.
+- [improved / uncovered sculpted skin was lighter and greyer than the target] Role skin values shift toward a deeper warm peach across face, ears and hands, so the same physical key/fill hierarchy retains material continuity instead of exposing an atlas-shaped colour jump.
+- [checked / production 3D identity must retain behavior] The real face carries five social shape keys, lip-volume v3, eye-volume v6, eyelid deformation v2, gaze, blink and physical hair occlusion. Walking, camera orbit, hand contacts, floor contact and every room transition remain active.
+
+### Required fidelity surfaces and findings
+
+- [improved][image quality and character identity] The implementation no longer relies on a desktop face painting to supply expression. Eyes, lids, lips, nose, cheeks and jaw now contribute real silhouette, parallax and light response through the full orbit; the 2D avatar identity survives as measured eye/brow/colour language rather than a billboard.
+- [improved][colors and material hierarchy] Warmer role skin reduces the pale toy-mask read while retaining coherent teal, coral, oak and brass separation. No new emission or flat screen-space face treatment was introduced.
+- [checked][spacing, layout and responsive behavior] The social circle, threshold and action hierarchy are unchanged. Portrait retains the lighter face LOD, joystick, jump, interaction and four story actions below the `110 / 250k` phone gate.
+- [checked][copy, typography and icons] Scene labels, counters, action copy and interaction prompts remain complete and readable; this pass does not introduce copy or icon drift.
+- [P1][source hair and facial sculpt remain ahead] The target still owns finer eyelid thickness, cheek-to-mouth anatomy, eyebrow hair rhythm and longer, layered hair planes. Current crown/side locks remain visibly chunkier and more uniformly tubular at close story scale.
+- [P1][hands and garment construction remain ahead] The reference has cleaner finger silhouettes, cuff compression, layered hems, fabric folds and less cylindrical arms. Current geometry is functional and animated but still reads more like a polished game prototype than production character art.
+- [P1][complete-room secondary craft remains behind] Botanical species detail, paper wear, glass transmission, textile weave, cabinet joinery and irregular small-prop clusters remain less bespoke outside the three hero assemblies.
+- [P1][light transport remains behind] The real-time key/fill hierarchy is readable, while the source still has softer portal penumbrae, richer warm/cool bounce, stronger skin subsurface impression and more continuous foliage light.
+- [P2][HUD optical finish remains behind] Coverage and action priority pass, but compact type rhythm, icon construction and glass-edge treatment remain more utilitarian than the reference.
+
+### Gate result
+
+v148 makes the desktop character identity genuinely volumetric and proves it under open/closed expressions, movement, four orbit headings, physical contacts and the release performance budgets. This materially closes the flat-face contradiction in the previous build. The same-canvas comparison still contains actionable P1 gaps in production hair/hand/garment sculpt, room-wide secondary assets and source-level indirect light/material transport.
+
+final result: blocked
+
+Blocker: the requested reference level is not yet fully proven; production hair and garment sculpt, complete-frame bespoke dressing and offline-quality indirect lighting remain visibly ahead in the source.
+
 ## 2026-07-26 reference-fidelity v147 avatar-derived face language, tapered anatomy and cold-cache transition gate
 
 ### Evidence inspected together
