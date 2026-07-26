@@ -324,6 +324,7 @@ let lastCameraState = null;
 let cameraLastUpdateAt = 0;
 let cameraRaycaster;
 const occludedMaterials = new Map();
+let cameraOcclusionWarmupFrames = 0;
 const cameraForegroundObjects = new Set();
 const surfaceBumpTextures = new Map();
 const physicalSurfaceMaps = new Map();
@@ -4432,6 +4433,14 @@ function addCivicHeroPendant(colors) {
   const light = new THREE.PointLight(0xffc97d, lastWidth <= 720 ? 0.38 : 0.72, 3.4, 2.15);
   light.position.set(0, 2.22, 0.04);
   group.add(light);
+  // The fixed canopy, cord and shade share one transform and never animate.
+  // Bake them into a single vertex-colour surface; the emissive bulb remains
+  // independent so its glow is preserved while orbit shots save two calls.
+  mergeActorVertexColorMeshes(group, [bulb], {
+    roughness: 0.56,
+    envMapIntensity: 0.7,
+    actorShading: false
+  });
 }
 
 function addCivicCovenantPanel(colors) {
@@ -6192,6 +6201,12 @@ function rebuildRoom(theme = {}) {
   roomSignature = signature;
   activeCivicPortalContract = "";
   cameraForegroundObjects.clear();
+  occludedMaterials.clear();
+  // The room is revealed atomically after only a short GPU warm-up. Seed the
+  // first few occlusion solves directly at their resolved opacity so a near
+  // shell cannot flash as an opaque white slab before the normal 180 ms orbit
+  // transition takes over.
+  cameraOcclusionWarmupFrames = 4;
   disposeOwnedGroup(roomRoot);
 
   if (keyLight) {
@@ -8223,7 +8238,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       // the silhouette and around foreshortened hands. Widen the existing
       // physically derived grazing-angle band instead of adding an inverted
       // hull, which would double actor triangles and break the phone budget.
-      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 4.15);
+      float mirrorLifeInkRim = pow(mirrorLifeViewWrap, 3.2);
       float mirrorLifeClothMask = vMirrorLifeClothMask;
       float mirrorLifeClothSheen = pow(mirrorLifeViewWrap, 2.15) * mirrorLifeClothMask;
       float mirrorLifeSkinWrap = pow(mirrorLifeViewWrap, 1.72) * vMirrorLifeSkinMask;
@@ -8256,7 +8271,16 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
         vMirrorLifeSurfacePosition.y * 3.1
         - vMirrorLifeSurfacePosition.x * 2.4
       ) * mirrorLifeClothMask;
-      gl_FragColor.rgb = mix(gl_FragColor.rgb, vec3(0.12, 0.088, 0.105), mirrorLifeInkRim * 0.085);
+      // The target character art keeps a narrow cocoa-violet contour around
+      // skin, hair and cloth. A view-normal band preserves that identity cue
+      // through a real orbit without an inverted hull, extra draw calls or a
+      // camera-facing sprite. The prior 8.5% mix was effectively invisible at
+      // gameplay distance and left the cast reading as smooth plastic.
+      gl_FragColor.rgb = mix(
+        gl_FragColor.rgb,
+        vec3(0.086, 0.052, 0.066),
+        mirrorLifeInkRim * 0.19
+      );
       gl_FragColor.rgb += vec3(0.058, 0.047, 0.035) * mirrorLifeClothSheen * 0.24;
       gl_FragColor.rgb *= 1.0
         + mirrorLifeWeave * 0.01
@@ -8273,7 +8297,7 @@ function mergeActorVertexColorMeshes(target, excludedRoots = [], materialOptions
       // lit planes and contact shadows retain their directional contrast.
       float mirrorLifeActorLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
       float mirrorLifeShadowLift = 1.0 - smoothstep(0.09, 0.29, mirrorLifeActorLuma);
-      gl_FragColor.rgb += vec3(0.026, 0.021, 0.018)
+      gl_FragColor.rgb += vec3(0.032, 0.026, 0.022)
         * mirrorLifeShadowLift
         * clamp(vMirrorLifeClothMask + vMirrorLifeHairMask * 0.58 + vMirrorLifeSkinMask * 0.34, 0.0, 1.0);
       gl_FragColor.rgb += vec3(0.052, 0.027, 0.019) * mirrorLifeSkinWrap * 0.29;
@@ -10001,13 +10025,19 @@ function createCivicActorObject(actor, asset) {
           float mirrorLifeSkinLuma = dot(gl_FragColor.rgb, vec3(0.2126, 0.7152, 0.0722));
           float mirrorLifeSkinShadow = 1.0 - smoothstep(0.24, 0.62, mirrorLifeSkinLuma);
           float mirrorLifeSkinVelvet = pow(mirrorLifeSkinFacing, 7.0) * smoothstep(0.42, 0.82, mirrorLifeSkinLuma);
+          float mirrorLifeFaceInk = pow(1.0 - mirrorLifeSkinFacing, 3.45);
           gl_FragColor.rgb += vec3(0.046, 0.029, 0.023) * mirrorLifeSkinWrap * 0.42;
           gl_FragColor.rgb += vec3(0.022, 0.014, 0.011) * mirrorLifeSkinShadow * 0.16;
           gl_FragColor.rgb += vec3(0.008, 0.006, 0.005) * (0.32 + mirrorLifeSkinFacing * 0.68);
-          gl_FragColor.rgb += vec3(0.014, 0.011, 0.009) * mirrorLifeSkinVelvet * 0.58;`
+          gl_FragColor.rgb += vec3(0.014, 0.011, 0.009) * mirrorLifeSkinVelvet * 0.58;
+          gl_FragColor.rgb = mix(
+            gl_FragColor.rgb,
+            vec3(0.12, 0.071, 0.075),
+            mirrorLifeFaceInk * 0.095
+          );`
         );
       };
-      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v8";
+      material.customProgramCacheKey = () => "mirrorlife-civic-skin-wrap-v9";
       material.needsUpdate = true;
     });
   }
@@ -10375,13 +10405,13 @@ function updateActors(actors = [], now = performance.now()) {
       // both eyes, garment construction and hand acting readable instead of
       // presenting three near-profile silhouettes.
       const cameraOpeningWeight = {
-        listener: 0.72,
+        listener: 0.78,
         // The facilitator's asymmetric ponytail is a strong silhouette cue,
         // but at the former angle its near face-frame lock covered the eyes.
         // Open her further toward the authored story camera so expression and
         // listening pose remain readable without breaking the social circle.
-        facilitator: 0.76,
-        mediator: 0.4
+        facilitator: 0.86,
+        mediator: 0.56
       }[entry.assetRole] ?? 0.34;
       bodyYaw += cameraDelta * cameraOpeningWeight;
     }
@@ -10912,7 +10942,7 @@ function updateCamera(payload = {}) {
     // The opening uses a slightly longer editorial lens so people carry more
     // visual weight, then widens through side/reverse arcs to retain the full
     // listening circle and prevent a near witness becoming a foreground wall.
-    ? (portrait ? 60 : 45.2 + civicRearArc * 9.0 + civicSideArc * 3.2)
+    ? (portrait ? 60 : 45.2 + civicRearArc * 4.2 + civicSideArc * 1.4)
     : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
@@ -10992,10 +11022,10 @@ function updateCamera(payload = {}) {
     // Pull the authored opening close enough for faces and garment silhouettes
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 5.2 : 5.28 + civicRearArc * 1.68 + civicSideArc * 0.62)
+    ? (portrait ? 5.2 : 5.28 + civicRearArc * 1.0 + civicSideArc * 0.36)
     : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
   const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.16 + civicRearArc * 0.78 + civicSideArc * 0.32) + pitchOffset * 1.35
+    ? (portrait ? 4.12 : 3.16 + civicRearArc * 0.5 + civicSideArc * 0.22) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
   const focusDistance = cinematicCivic ? 0.46 : 0.22;
   // Keep the sightline below shoulder height so the extra elevation reveals
@@ -11031,7 +11061,7 @@ function updateCamera(payload = {}) {
     // before their world-space centre crosses the exact look ray. A 1.5 m
     // composition corridor corresponds to roughly one body width at the near
     // third of this 48–50° lens and still leaves the camera inside the shell.
-    const corridorRadius = 1.7;
+    const corridorRadius = 1.5;
     actorObjects.forEach((entry) => {
       if (!entry?.group || entry.assetRole === "player") return;
       const actorDx = entry.group.position.x - desiredPosition.x;
@@ -11042,11 +11072,11 @@ function updateCamera(payload = {}) {
       const across = Math.abs(signedAcross);
       if (across >= corridorRadius) return;
       const depthWeight = Math.sin(Math.PI * THREE.MathUtils.clamp((along - 0.03) / 0.89, 0, 1));
-      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 4.8 * depthWeight;
+      const candidate = -Math.sign(signedAcross || 1) * (corridorRadius - across) * 3.2 * depthWeight;
       if (Math.abs(candidate) > Math.abs(targetActorAvoidance)) targetActorAvoidance = candidate;
     });
   }
-  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -1.6, 1.6);
+  targetActorAvoidance = THREE.MathUtils.clamp(targetActorAvoidance, -1.1, 1.1);
   const reverseOrbitWeight = Math.abs(Math.cos(yaw));
   targetActorAvoidance *= 0.28 + reverseOrbitWeight * 0.72;
   const avoidanceAlpha = zoneChanged ? 1 : 1 - Math.exp(-dt / 0.08);
@@ -11060,7 +11090,7 @@ function updateCamera(payload = {}) {
   // their shoulder into a full-screen wall. This preserves all participants
   // in a true 360° view without relying on character disappearance.
   const actorClearanceDistance = cinematicCivic
-    ? THREE.MathUtils.clamp(Math.abs(cameraActorAvoidanceOffset) * 1.25 * reverseOrbitWeight, 0, 1.55)
+    ? THREE.MathUtils.clamp(Math.abs(cameraActorAvoidanceOffset) * 0.76 * reverseOrbitWeight, 0, 0.75)
     : 0;
   if (actorClearanceDistance > 0.01) {
     const radialX = desiredPosition.x - focus.x;
@@ -11253,7 +11283,18 @@ function updateCameraOcclusion(payload = {}) {
   const now = performance.now();
   const dt = Math.min(0.1, Math.max(1 / 240, (now - (updateCameraOcclusion.lastAt || now - 16)) / 1000));
   updateCameraOcclusion.lastAt = now;
+  const snapOcclusion = cameraOcclusionWarmupFrames > 0;
+  if (cameraOcclusionWarmupFrames > 0) cameraOcclusionWarmupFrames -= 1;
   occludedMaterials.forEach((state, material) => {
+    if (snapOcclusion) {
+      material.opacity = state.targetOpacity;
+      const restored = state.targetOpacity === state.baseOpacity;
+      material.transparent = restored ? state.baseTransparent : true;
+      material.depthWrite = restored && !state.baseTransparent;
+      material.needsUpdate = true;
+      if (restored) occludedMaterials.delete(material);
+      return;
+    }
     const fading = state.targetOpacity < material.opacity;
     const duration = fading ? 0.18 : 0.24;
     const alpha = 1 - Math.exp(-dt / duration);
@@ -11708,6 +11749,20 @@ function getStats() {
       semanticSurfaceBatches: civicHeroSurfaceSemanticBatches,
       authoredHeroAssets: lastWidth <= 720 ? 0 : 3,
       mobileProceduralFallback: lastWidth <= 720
+    } : null,
+    occlusion: cameraZoneId === "public-plaza" ? {
+      warmupFrames: cameraOcclusionWarmupFrames,
+      shellPlanes: [...cameraForegroundObjects]
+        .filter((object) => String(object?.name || "").startsWith("civic-rectilinear-navigation-shell-"))
+        .map((object) => {
+          const materials = Array.isArray(object.material) ? object.material : [object.material];
+          return {
+            name: object.name,
+            visible: object.visible,
+            opacity: Number(Math.min(...materials.filter(Boolean).map((material) => Number(material.opacity ?? 1))).toFixed(4)),
+            transparent: materials.filter(Boolean).every((material) => !!material.transparent)
+          };
+        })
     } : null,
     camera: lastCameraState
   };

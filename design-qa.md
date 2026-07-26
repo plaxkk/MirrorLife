@@ -1,5 +1,46 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v146 editorial actor proportions, material contour and tighter orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory equal-canvas comparison: `tmp/v146-reference-full-pair.png` places the complete source and browser render side by side; `tmp/v146-character-focus-pair.png` compares the four-person story group at equal visual scale.
+- Full 3D evidence: `tmp/v146-four-orbit.png` and the later post-fix `tmp/v146-camera-tight-90-180-270.png` cover yaw `0°`, `90°`, `180°` and `270°`; responsive and forced-blink evidence is `tmp/v146-mobile-blink.png`.
+- Runtime evidence: opening `172 / 277,819 / 175`, side `175 / 288,927 / 169`, reverse `176 / 329,651 / 172`, fourth orbit `174 / 314,683 / 173` for draw calls / triangles / geometries. Mobile is `108 / 236,775 / 85`; every final capture reports zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `3.17m`, rotated the camera `65.3°` and retained the curved illustrated identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four rebuilt civic GLBs pass at `7.41 MB`; all three civic hero assets still pass at `73,930` authored triangles.
+
+### Comparison history, fixes and post-fix evidence
+
+- [improved from v145 P1 / actor silhouettes became too stout after the volume correction] Role profiles return to the source's approximately `1:3.5` editorial rhythm: narrower shoulder-to-hand columns, cleaner skirted-role legs and less uniform body width. This retains the real shared skeleton, metre-space capsule and authored hand-contact anchors instead of scaling a 2D cutout.
+- [improved from v145 P1 / cast still read as uniformly lit plastic] The existing vertex-colour actor shader now carries a restrained cocoa-violet grazing-angle contour, broader cloth sheen and warmer shadow recovery. The face material receives a softer skin wrap and silhouette tint; the effect follows real normals through orbit and adds no inverted-hull geometry or actor draw calls.
+- [improved / opening identities were hidden by profile poses] Listener, facilitator and mediator opening weights move farther into readable three-quarter views. Hair remains physically attached and occluding, while eyes, notebook acting and the mediator's thoughtful gesture are visible in the actual story camera.
+- [fixed / rear orbit widened into a distant surveillance view] Reverse framing contracts from `54.2° / 9.13m` focus distance to `49.4° / 7.57m`; side views contract from `51.58° / 6.49m` to `48.08° / 5.99m` orbit distance. The cast remains the subject at all four headings instead of shrinking inside unused plaster.
+- [fixed / atomic reveal could show an opaque near shell before the 180ms fade converged] The first four camera-occlusion solves now seed resolved opacity immediately after a room rebuild, then return to the normal smooth fade for player-driven orbit changes. Debug stats expose all four shell-plane opacity states for deterministic regression checks.
+- [optimized / tighter views still had a one-call budget overrun in the stale build] Static civic pendant joinery is vertex-colour batched while its emissive bulb remains separate. After rebuilding the actual production bundle, all four headings stay below `180 / 450k`.
+
+### Required fidelity surfaces and findings
+
+- [improved][character proportions and material read] The current cast is slimmer, faces the social centre more clearly and gains a real view-dependent contour instead of a pasted outline. Skin, hair and cloth separate more reliably under the same physical civic lighting.
+- [improved][camera hierarchy and 360° play] The opening remains the closest source-like story angle, while side/rear shots now preserve human scale, every participant and at least one portal, evidence wall or authored destination.
+- [checked][spatial and animation truth] Body-profile changes remain inside the authoritative actor capsules; feet contact the physical floor, props and interaction anchors are unchanged, and walking, camera rotation, blink, scene entry and all-zone transitions remain live.
+- [checked][responsive and performance contract] Portrait retains joystick, jump, interaction and the four story actions without overflow. Desktop peaks at `176` draw calls and `329,651` triangles; mobile remains below `110 / 250k`.
+- [P1][source character sculpt and acting remain visibly ahead] The equal-scale crop still shows finer eyelid/lip planes, tapered hair clumps, articulated fingers, shoulder anatomy, garment seams and subtler stance asymmetry in the source.
+- [P1][room-wide secondary craft remains behind] The implementation has strong hero furniture and a coherent testimony route, but botanical anatomy, paper wear, glass transmission, textile weave and irregular small-prop clustering are not yet source-level across the complete frame.
+- [P1][light transport remains behind] Direction and material separation are coherent, while the source still owns softer portal penumbrae, richer warm/cool bounce and a more convincing skin-subsurface impression.
+- [P2][quarter/reverse edges still expose quiet plaster wedges] The tighter lens reduces them substantially and they no longer cover the cast, but those edge fields need authored wall dressing or a stronger cutaway-shell composition before the full orbit can be called reference quality.
+- [P2][HUD optical craft remains behind] Coverage and action priority pass; icon construction, compact type rhythm and panel-edge finish remain more utilitarian than the target.
+
+### Gate result
+
+v146 restores the more elegant source-weighted actor proportion, adds a low-cost real-3D contour/material pass, makes the opening cast easier to read, removes the surveillance-like rear lens and hardens first-frame shell occlusion. Walking, 360° rotation, blink, metre-space physics, all-zone transitions, responsive controls and performance budgets remain green. The mandatory same-canvas comparison still contains actionable P1 gaps in character sculpt/acting, complete-room secondary detail and source-level indirect light/material transport.
+
+final result: blocked
+
+Blocker: the requested reference level is not yet fully proven; production face/hair/hand/garment craft, complete-frame bespoke dressing and offline-quality indirect lighting remain visibly ahead in the source.
+
 ## 2026-07-26 reference-fidelity v145 fuller actor silhouette, readable facilitator face and durable shell-fade gate
 
 ### Evidence inspected together
