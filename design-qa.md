@@ -1,5 +1,54 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v142 colour-managed face, eye seating and reference-weighted light gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, normalized to `1280 × 720` at device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/v142-reference-full-pair.png` (`2560 × 720`) places source and browser implementation at the same `1280 × 720` size on one canvas. Actor-focused evidence is `tmp/v142-character-focus-pair.png`; threshold-focused evidence is `tmp/v142-portal-focus-pair.png`.
+- Full 3D evidence: `tmp/v142-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; mobile evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`; forced eyelid deformation is recorded in `dist/interior-3d-work/environment-review-blink/00-public.png`.
+- Runtime evidence: opening `174 / 297,422 / 177`, side `177 / 308,530 / 168`, reverse `178 / 349,254 / 174`, fourth orbit `176 / 334,286 / 175` for draw calls / triangles / geometries. Mobile remains `106 / 243,990 / 80`, below the strict `110 / 250k` phone gate. Every final capture reports zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `2.69m`, rotated the camera `65.3°` and retained UV-hybrid identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four role GLBs use sculpt contract v82, face identity v9, head-UV matte v3 and eye-volume v6. The set remains `7.42 MB`; every role stays below `45k` triangles and `2 MB`.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v141 P1 / faces retained a saturated orange mask] Three.js material colours live in linear working space, while CanvasTexture pixels are sRGB. The previous head-UV bake wrote linear skin channels directly into the canvas, turning the mediator's soft peach into roughly `#da7241`. Matte v3 converts the material colour back to display sRGB before compositing the role-authored brow, nose and mouth; head, neck and hands now resolve as one skin material.
+- [fixed during v142 / correctly removing the painted eyes exposed only dark slits] The real eye pivots were seated behind the morphable face plane at `-0.186m`. Eye volume v6 places the volumetric cornea/iris stack at `-0.202m`, aligned with the sculpted orbital surface. Real sclera, role-coloured iris, gaze and blink remain visible without restoring duplicate painted eyes.
+- [improved from v141 P1 / room was substantially brighter and greyer than the target] Civic light transport v6 reduces broad fill, portal bounce and environment energy while preserving the doorway key. Measured full-frame luma moves from `150.2` to `136.7`, toward the normalized source's `128.7`; floor luma is now `143.9` against the source's `145.2`. Saturation rises from `0.332` to `0.367` against the source's `0.422`.
+- [improved from v141 P1 / the doorway competed with a large plant and over-bright exterior] The portal exterior multiplier is reduced, the broad-leaf threshold plant is smaller and shifted against the jamb, and the full open door leaf/courtyard view is readable again. This preserves the same real wall gap and exit instead of adding a false decorative door.
+- [improved from v141 P2 / the right foreground read as a bright orange block] The edge sideboard now uses a darker oak family, giving the frame a quieter source-like wood anchor without changing its physical footprint or player path.
+- [checked / colour and eye fixes must survive the real 3D system] Four headings preserve player, target, exit/path cues and physically occluding hair/head relationships. Forced blink closes the real deforming lids; mobile retains its lighter curved-atlas identity LOD.
+
+### Required fidelity surfaces and findings
+
+- [improved][colors and material hierarchy] The implementation now has source-weighted exposure, stronger warm/cool separation, unified skin colour, darker oak framing and preserved teal/brass accents. The source still carries richer indirect colour, softer highlight rolloff and more saturated natural materials.
+- [improved][character identity and image quality] Faces no longer carry an orange decal mask and real eyes sit on the facial plane. Role hair, costume, silhouette, gaze and blink remain fully three-dimensional. The source still has finer eyelid folds, mouth corners, hair strand grouping, fabric seams and expression nuance.
+- [improved][spacing and layout rhythm] The threshold is less crowded, the testimony circle remains the dominant midground, and the right edge no longer competes through a bright block. The source still uses a broader rectangular threshold, a more legible single open door leaf and denser controlled asymmetry around every wall.
+- [checked][fonts, typography and copy] Place memory, counters, action rail and contextual prompt remain readable across desktop and portrait captures. No private-memory text or unsupported public statistic was introduced.
+- [checked][physical truth, behavior and responsiveness] Lighting, colour and cosmetic actor changes do not alter metre scale, Rapier capsules, prop colliders, interaction anchors or navigation. Mobile retains 44px+ controls, no horizontal overflow and its release performance budget.
+- [P1][production character finish remains behind] Correct colour management and eye seating remove two pipeline defects, but the source still owns substantially more authored facial planes, natural hair clumps, hand/garment compression and individual expression polish.
+- [P1][complete-room secondary craft remains behind] Hero props are physically authored and materially separated, but source-level bespoke joinery, paper wear, botanical anatomy, glass transmission, textile weave and small hardware are not yet present across the full frame.
+- [P1][offline-quality indirect transport remains ahead] Luminance is materially closer, yet the source retains broader warm bounce, softer portal penumbrae, richer foliage transmission and more flattering face-to-garment separation.
+- [P2][threshold architecture is still not a literal match] The implementation's arched opening remains more symmetrical than the source's broad threshold plus dominant open leaf. The next portal pass should change the authored shell/leaf relationship while preserving the real exit aperture.
+- [P2][HUD optical finish remains behind] Coverage and interaction pass, while icon drawing, counter rhythm, panel translucency and button-edge treatment remain more utilitarian than the target.
+
+### Implementation checklist
+
+- Preserve sRGB-aware matte v3 and eye seating v6; do not regress to a linear-colour face mask, duplicate painted eyes or eyes buried behind the head surface.
+- Preserve light transport v6's directional contrast and measured floor luminance; future light work should add local colour bounce rather than restoring broad grey fill.
+- Re-author the portal as a broader threshold with one dominant open leaf while retaining the same wall gap, Rapier exit and camera-safe visibility.
+- Continue characters through role-specific eyelid/mouth/hairline craft, then spend the next environment pass on joinery, textiles, plant species and glass response.
+
+### Gate result
+
+v142 repairs a colour-management error that visibly separated every face from its body, seats the real 3D eyes on the facial plane, brings luminance and saturation materially closer to the reference, and clarifies the entrance frame while preserving walking, 360° rotation, blink, physics, responsive controls and performance budgets. The mandatory same-canvas comparison still contains actionable P1 gaps in production character finish, complete-room secondary asset craft and offline-quality indirect light/material transport.
+
+final result: blocked
+
+Blocker: source-level face/hair/garment finish, bespoke room-wide secondary craft and offline-quality indirect transport remain visibly ahead of the real-time implementation.
+
 ## 2026-07-26 reference-fidelity v141 authored circulation inlay, story-camera framing and eye/UV integration gate
 
 ### Evidence inspected together

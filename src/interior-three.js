@@ -13,9 +13,9 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v81";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v82";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
-const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v5";
+const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v6";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
 const CIVIC_FURNITURE_SURFACE_CONTRACT = "mirrorlife-civic-hero-surface-v5";
 const CIVIC_REVERSE_WALL_CONTRACT = "mirrorlife-civic-reverse-wall-v3";
@@ -27,10 +27,10 @@ const CIVIC_BODY_DEFORMATION_CONTRACT = "mirrorlife-civic-body-deformation-v2";
 const CIVIC_BODY_CHAIN_CONTRACT = "mirrorlife-civic-body-chain-v1";
 const CIVIC_NECK_CHAIN_CONTRACT = "mirrorlife-civic-neck-chain-v1";
 const CIVIC_DIGIT_DEFORMATION_CONTRACT = "mirrorlife-civic-digit-deformation-v1";
-const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v8";
+const CIVIC_FACE_IDENTITY_CONTRACT = "mirrorlife-civic-face-identity-v9";
 const CIVIC_FACE_MATTE_CONTRACT = "mirrorlife-civic-face-matte-v2";
 const CIVIC_HEAD_UV_CONTRACT = "mirrorlife-civic-head-uv-v3";
-const CIVIC_HEAD_UV_MATTE_CONTRACT = "mirrorlife-civic-head-uv-matte-v2";
+const CIVIC_HEAD_UV_MATTE_CONTRACT = "mirrorlife-civic-head-uv-matte-v3";
 const CIVIC_FACE_SKIN_TONES = Object.freeze({
   player: "#efb58d",
   listener: "#edb087",
@@ -126,7 +126,7 @@ const INTERIOR_ENVIRONMENT_PALETTES = {
 const MATERIAL_PRESET_PALETTES = Object.freeze({
   "linen-oak-coral": { wall: "#f4e9d9", floor: "#dfc8a7", accent: "#df8066", secondary: "#6c9eb0", trim: "#8c5b3d" },
   "glass-metal-cork": { wall: "#eee8dc", floor: "#d7c7ae", accent: "#5a9b90", secondary: "#d9ae4f", trim: "#6d6258" },
-  "terrazzo-teal-brass": { wall: "#f3e9dc", floor: "#d8d2c7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
+  "terrazzo-teal-brass": { wall: "#e8dac5", floor: "#d8d2c7", accent: "#c79b43", secondary: "#357f79", trim: "#765038" },
   "textile-glass-ash": { wall: "#e7eeeb", floor: "#d3d9d2", accent: "#55aaa8", secondary: "#d9869d", trim: "#66706d" },
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
@@ -139,12 +139,12 @@ const LIGHTING_PRESETS = Object.freeze({
   // sepia contrast of a single sun source. Preserve direction while giving
   // skin, ivory cloth and timber their own soft mid-tone values.
   "civic-ivory": {
-    key: 1.68,
-    fill: 0.34,
-    hemi: 0.4,
-    bounce: 0.58,
-    wash: 0.44,
-    exposure: 0.9,
+    key: 1.54,
+    fill: 0.3,
+    hemi: 0.34,
+    bounce: 0.48,
+    wash: 0.34,
+    exposure: 0.8,
     keyColor: "#fff0df",
     fillColor: "#cce1df"
   },
@@ -1611,7 +1611,7 @@ function applyLightingPreset(theme = {}) {
     else windowWashLight.position.set(-5.8, 4.4, 1.8);
   }
   if (portalBounceLight) {
-    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.76 : 0;
+    portalBounceLight.intensity = theme.zoneId === "public-plaza" && !theme.night ? 0.62 : 0;
     portalBounceLight.color.set(theme.night ? "#8caed0" : "#ffe8d2");
   }
   if (coolReflectionLight) {
@@ -1619,23 +1619,23 @@ function applyLightingPreset(theme = {}) {
   }
   if (civicCeilingBounceLight) {
     civicCeilingBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.18 : 0.28)
+      ? (lastWidth <= 720 ? 0.15 : 0.22)
       : 0;
     civicCeilingBounceLight.color.set(theme.night ? "#abc1d3" : "#fff6e8");
   }
   if (civicBackWallBounceLight) {
     civicBackWallBounceLight.intensity = theme.zoneId === "public-plaza"
-      ? (lastWidth <= 720 ? 0.1 : 0.17)
+      ? (lastWidth <= 720 ? 0.08 : 0.13)
       : 0;
     civicBackWallBounceLight.color.set(theme.night ? "#9db2ca" : "#f8e6d6");
   }
   // Broad camera-side and rim energy erased the eye-socket, cheek, garment and
   // furniture planes. The sculpted head shader now carries the small facial
   // wrap, so these room-wide lights can preserve dimensional form.
-  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.5 : 0.42;
-  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.42 : 0.38;
+  if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.44 : 0.42;
+  if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.36 : 0.38;
   if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.33 : 0.26;
+  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
   if (gtaoPass) {
     gtaoPass.blendIntensity = theme.zoneId === "public-plaza"
       ? (lastWidth <= 720 ? 0.76 : 0.9)
@@ -3830,13 +3830,13 @@ function addCivicEditorialFoliage(colors, mobileLod = false) {
   };
 
   addCluster({
-    x: -3.72,
-    z: -3.42,
-    scale: 0.9,
+    x: -4.04,
+    z: -3.25,
+    scale: 0.82,
     rotation: 0.28,
     woven: false,
     seed: 3,
-    leaves: mobileLod ? 7 : 13,
+    leaves: mobileLod ? 7 : 11,
     species: "broad"
   });
   if (!mobileLod) {
@@ -4961,7 +4961,7 @@ function addCivicReferenceDressing(theme, colors) {
   }
   addCivicEditorialFoliage(colors, mobileLod);
   addAmbientFloorLamp(1.38, { ...colors, accent: "#efc86a" });
-  addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 2);
+  addAmbientSideboard(2.16, { ...colors, secondary: "#4b9189" }, 1);
   addBuiltInArchNiche(0.62, colors, {
     width: 1.22,
     height: 2.12,
@@ -5786,7 +5786,7 @@ function addCivicOpenPortal(theme, colors) {
         toneMapped: false
       })
     : createToonMaterial(theme.night ? "#45637a" : "#badcb7", { side: THREE.DoubleSide, roughness: 0.92 });
-  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(1.34, 1.25, 1.12);
+  if (outdoorTexture && !theme.night) outdoorMaterial.color.setRGB(1.18, 1.12, 1.04);
   // Keep the painted courtyard several metres beyond the threshold. The
   // public room now has a real break in its cylindrical shell, so the view
   // gains parallax from the authored plants, paving and notice stand instead
@@ -6940,9 +6940,15 @@ function clearCivicFaceCellEyes(context, width, height) {
 }
 
 function integrateCivicFaceCellWithSkin(context, width, height, skinColor) {
-  const skinRed = Math.round(THREE.MathUtils.clamp(skinColor.r, 0, 1) * 255);
-  const skinGreen = Math.round(THREE.MathUtils.clamp(skinColor.g, 0, 1) * 255);
-  const skinBlue = Math.round(THREE.MathUtils.clamp(skinColor.b, 0, 1) * 255);
+  // THREE keeps material colours in linear working space, while CanvasTexture
+  // pixels are authored in sRGB. Writing the linear channels straight into
+  // the canvas turned a soft peach skin (#eeb28a) into an orange-red
+  // (roughly #da7241) face mask. Convert back to display sRGB before baking
+  // the atlas so head, neck and hands resolve to the same physical material.
+  const displaySkin = skinColor.clone().convertLinearToSRGB();
+  const skinRed = Math.round(THREE.MathUtils.clamp(displaySkin.r, 0, 1) * 255);
+  const skinGreen = Math.round(THREE.MathUtils.clamp(displaySkin.g, 0, 1) * 255);
+  const skinBlue = Math.round(THREE.MathUtils.clamp(displaySkin.b, 0, 1) * 255);
   try {
     const imageData = context.getImageData(0, 0, width, height);
     const pixels = imageData.data;
@@ -11603,7 +11609,7 @@ function getStats() {
         physicallyLit: true
       } : null,
       eyes: entry.eyePivots?.length ? {
-        version: "mirrorlife-civic-eye-volume-v5",
+        version: "mirrorlife-civic-eye-volume-v6",
         count: entry.eyePivots.length,
         eyelidDeformation: "mirrorlife-civic-eyelid-vertex-v2",
         blink: Number((entry.blinkInfluence || 0).toFixed(4)),

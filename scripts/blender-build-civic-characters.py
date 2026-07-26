@@ -1846,7 +1846,12 @@ def build_face(head, mats, role):
         # Keep the eyes readable without letting two protruding white spheres
         # dominate the face.  A flatter corneal stack and a slightly narrower
         # sclera read much closer to the painted reference at gameplay scale.
-        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.186, 0.044))
+        # The sculpted face reaches roughly 20 cm forward at the orbital band.
+        # The former -0.186 m pivot left most of the real cornea behind the
+        # morphable head surface; once the duplicate painted eye was correctly
+        # removed, only a dark slit remained. Seat the eye stack at the actual
+        # facial plane so sclera, iris and gaze remain volumetric and visible.
+        eye = empty(f"EyePivot_{side}", head, (side * 0.081, -0.202, 0.044))
         # At the authored story camera the v10 eyes collapsed into two dark
         # pixels. Enlarge the complete corneal stack, but let the iris occupy
         # most of the sclera so the result reads as illustrated attention
@@ -3561,7 +3566,7 @@ def main():
     master_root = os.path.abspath(args.master_root)
     manifest = {
         "contract": "mirrorlife-shared-pivot-v1",
-        "sculptContract": "mirrorlife-civic-sculpt-v81",
+        "sculptContract": "mirrorlife-civic-sculpt-v82",
         "hairConstructionContract": {
             "version": "mirrorlife-civic-hair-construction-v6",
             "runtime": "role-authored-clumps+temple-wisps+restrained-anisotropic-sheen",
@@ -3637,16 +3642,16 @@ def main():
             "grid": [2, 2],
             "mapping": ["player", "listener", "facilitator", "mediator"],
             "morphContract": "mirrorlife-civic-face-morph-v2",
-            "integrationContract": "mirrorlife-civic-face-identity-v8",
+            "integrationContract": "mirrorlife-civic-face-identity-v9",
             "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
-            "productionIntegrationContract": "mirrorlife-civic-face-identity-v8",
+            "productionIntegrationContract": "mirrorlife-civic-face-identity-v9",
             "corneaContract": "mirrorlife-civic-cornea-v2",
             "uvContract": "mirrorlife-civic-head-uv-v3",
-            "uvMatteContract": "mirrorlife-civic-head-uv-matte-v2",
+            "uvMatteContract": "mirrorlife-civic-head-uv-matte-v3",
             "preservedSculptParts": ["Head", "NoseBridge", "NoseTip", "EyePivot_-1", "EyePivot_1"],
             "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
             "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",
-            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v5",
+            "eyeGeometryContract": "mirrorlife-civic-eye-volume-v6",
             "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v2",
             "facialContinuityContract": "mirrorlife-civic-orbital-lip-bed-v1",
             "eyeGeometryParts": ["EyePivot_-1", "EyePivot_1"],

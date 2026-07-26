@@ -112,7 +112,7 @@ try {
   );
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
   assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
-  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v5", "civic room did not expose the authored indirect-light contract");
+  assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v6", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
   assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v15", "civic room did not expose the authored furniture-detail contract");
   assert.equal(opening.furniture?.surfaceVersion, "mirrorlife-civic-hero-surface-v5", "civic room did not expose the scanned furniture-surface contract");
@@ -120,18 +120,18 @@ try {
   assert.ok(opening.furniture?.scannedSurfaceBatches >= 3, "placed civic hero furniture lost its scanned surface shader");
   assert.equal(opening.furniture?.authoredHeroAssets, 3, "desktop civic room did not load all three authored hero furniture assets");
   assert(
-    Number(opening.lighting?.ceilingBounce || 0) >= 0.26
-      && Number(opening.lighting?.ceilingBounce || 0) <= 0.3,
+    Number(opening.lighting?.ceilingBounce || 0) >= 0.2
+      && Number(opening.lighting?.ceilingBounce || 0) <= 0.24,
     "civic ceiling bounce did not preserve the authored contrast range"
   );
   assert(
-    Number(opening.lighting?.backWallBounce || 0) >= 0.15
-      && Number(opening.lighting?.backWallBounce || 0) <= 0.19,
+    Number(opening.lighting?.backWallBounce || 0) >= 0.11
+      && Number(opening.lighting?.backWallBounce || 0) <= 0.15,
     "civic rear-wall bounce did not preserve the authored contrast range"
   );
   assert(
-    Number(opening.lighting?.environment || 0) >= 0.31
-      && Number(opening.lighting?.environment || 0) <= 0.35,
+    Number(opening.lighting?.environment || 0) >= 0.28
+      && Number(opening.lighting?.environment || 0) <= 0.32,
     "civic environment response did not preserve material separation"
   );
   assert(Number(opening.lighting?.contactAo || 1) <= 0.48, "civic contact AO is too strong for the broad reference penumbrae");
@@ -189,14 +189,14 @@ try {
   );
   assert(opening.actors.every((actor) => actor.faceMode === "uv-hybrid"), "desktop civic scene did not use the production UV-hybrid identity surface");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-head-uv-matte-v2"), "civic face texture lost its head-UV matte contract");
-  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v8"), "civic actors did not expose the production facial identity surface");
+  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-head-uv-matte-v3"), "civic face texture lost its head-UV matte contract");
+  assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v9"), "civic actors did not expose the production facial identity surface");
   assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v8"), "civic actors did not preserve the production facial identity contract");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v9"), "civic actors did not preserve the production facial identity contract");
   assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic UV identity surface retained duplicate volumetric lips");
   assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic morphable head facial set is incomplete");
   assert(opening.actors.every((actor) => (
-    actor.eyes?.version === "mirrorlife-civic-eye-volume-v5"
+    actor.eyes?.version === "mirrorlife-civic-eye-volume-v6"
       && actor.eyes?.count === 2
       && actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v2"
       && actor.eyes?.uniformReady === true
