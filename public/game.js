@@ -5705,17 +5705,18 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         assetIntent: "civic-display-case",
         renderModel: true,
         physicsSolid: true,
-        // Pull the display into the left foreground layer used by the source.
-        // Its larger collider is derived from the same transform and remains
-        // separate from both the threshold and record desk.
+        // Keep the glass case as a low left-foreground layer rather than a
+        // second wall. The source preserves the doorway, flower table and
+        // social ring above it; the earlier 1.12 scale reached the HUD and
+        // made the room feel smaller than its metre-space plan.
         worldX: -3.45,
         worldZ: 1.25,
         rotationY: 0.28,
-        displayScale: 1.12,
+        displayScale: 0.88,
         // `rotationY` supplies the world yaw; collider.rotation is a local
         // offset and must stay zero or Rapier would apply the angle twice.
-        collider: { shape: "box", halfX: 1.02, halfY: 1.05, halfZ: 0.58, rotation: 0 },
-        interactionWorldX: -2.28,
+        collider: { shape: "box", halfX: 0.82, halfY: 0.84, halfZ: 0.47, rotation: 0 },
+        interactionWorldX: -2.42,
         interactionWorldZ: 1.25
       },
       {

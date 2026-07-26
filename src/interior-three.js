@@ -3460,6 +3460,12 @@ function addCivicRecordDesk(colors, layoutProfile = null) {
       object.userData.cameraForegroundFade = true;
       object.userData.cameraForegroundOpacity = 0.045;
       object.userData.cameraForegroundNearDistance = 3.85;
+      // The source deliberately uses the record desk as an opaque cropped
+      // foreground frame in the authored opening. Preserve that composition
+      // at yaw 0, then restore normal proximity/ray fading as soon as the
+      // player orbits away from the story camera.
+      object.userData.cameraForegroundKeepOpaqueYaw = 0;
+      object.userData.cameraForegroundKeepOpaqueArc = 0.48;
       cameraForegroundObjects.add(object);
     });
   }
@@ -11324,6 +11330,15 @@ function updateCameraOcclusion(payload = {}) {
       0,
       foregroundPosition.distanceTo(camera.position) - foregroundRadius
     );
+    const keepOpaqueYaw = Number(object.userData?.cameraForegroundKeepOpaqueYaw);
+    if (Number.isFinite(keepOpaqueYaw)) {
+      const currentYaw = Number(lastCameraState?.yaw || 0);
+      const yawDelta = Math.atan2(
+        Math.sin(currentYaw - keepOpaqueYaw),
+        Math.cos(currentYaw - keepOpaqueYaw)
+      );
+      if (Math.abs(yawDelta) <= Number(object.userData?.cameraForegroundKeepOpaqueArc || 0.42)) return;
+    }
     const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
     if (surfaceDistance > nearDistance) return;
     const targetOpacity = THREE.MathUtils.clamp(
