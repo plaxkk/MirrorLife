@@ -1,5 +1,51 @@
 # Design QA — Civic Room Reference Rebuild / 2D Avatar Identity to 3D
 
+## 2026-07-26 reference-fidelity v143 broad threshold, illustrated face and clear-orbit gate
+
+### Evidence inspected together
+
+- Source visual truth: `/Users/kk/.codex/attachments/55b8618b-e6ef-4659-ab0f-fd58a438f921/image-1.png` (`1672 × 941`, normalized to `1280 × 720` at device scale factor `1`).
+- Browser-rendered implementation: `dist/interior-3d-work/environment-review/00-public.png` (`1280 × 720`, deterministic 06:00 public-plaza testimony state).
+- Mandatory normalized comparison: `tmp/v143-reference-full-pair.png` (`2560 × 720`) places source and browser implementation at equal size. Actor-focused evidence is `tmp/v143-character-focus-pair.png`; threshold-focused evidence is `tmp/v143-portal-focus-pair.png`.
+- Full 3D evidence: `tmp/v143-four-direction-board.png` contains yaw `0°`, `90°`, `180°` and `270°`; responsive evidence is `dist/interior-3d-work/environment-review-mobile/00-public.png` at `390 × 844`; forced blink is recorded in `dist/interior-3d-work/environment-review-blink/00-public.png`.
+- Runtime evidence: opening `170 / 277,819 / 173`, side `173 / 288,927 / 167`, reverse `174 / 329,651 / 170`, fourth orbit `172 / 314,683 / 171` for draw calls / triangles / geometries. Mobile is `106 / 236,775 / 81`; all captures report zero shader errors.
+- Interaction evidence: the Rapier-controlled player walked `3.17m`, rotated the camera `65.3°` and retained the curved illustrated identity-surface blink. Physics passed for `26` zones / `10` archetypes; desktop/mobile scene flow passed; `78` transitions completed without failures or runtime errors.
+- Asset evidence: all four civic role GLBs pass at `7.42 MB`; all three civic hero props pass at `73,930` authored triangles.
+
+### Comparison history, fixes and post-fix evidence
+
+- [fixed from v142 P2 / threshold read as a symmetric arched window] Portal contract v3 replaces the twin arched leaves and fanlight with a broad plaster threshold, rectilinear oak casing, continuous brass stop and one dominant arched timber leaf folded to the right. The centre route remains visually open and the exterior courtyard gains a wider, legible threshold-to-path view.
+- [improved from v142 P1 / UV identity compressed the frontal face into a dark eye-brow mask] Desktop production now uses the role-authored illustrated face on a genuinely curved, morphable head carrier with two physically lit corneal lenses. It rotates and occludes with the 3D skull, receives expression and blink deformation, and is never a camera-facing billboard. At the gameplay distance the facilitator's eyes, mouth and skin field read more calmly and closer to the reference.
+- [fixed during v143 / fourth orbit retained a wall-sized translucent block] Near civic shell planes can now dissolve to `1.2%` visual opacity while the physical boundary remains unchanged. The yaw `270°` evidence keeps the full cast, target, portal and reverse furnishings instead of losing a quadrant to a pale foreground slab.
+- [checked / portal and face changes remain affordable] Moving from duplicate volumetric eyes to the illustrated-cornea surface reduces the opening scene from `174 / 297,422 / 177` to `170 / 277,819 / 173`. Mobile remains on the lighter curved-atlas path under `110` draw calls and `250k` triangles.
+- [checked / colour remains inside the v142 target range] Full-frame luma is `136.5` against the normalized source's `128.5`; average saturation is `0.368` against `0.423`. The pass does not restore the earlier grey overexposure.
+
+### Required fidelity surfaces and findings
+
+- [improved][spacing, hierarchy and navigation] The source and implementation now share a broad left-third exterior threshold, a central four-person testimony ring, a right-side teal lounge and a cropped foreground evidence desk. The opening route is immediately legible and the single leaf no longer competes with the path.
+- [improved][character identity] The curved illustrated face preserves the existing 2D role identity more faithfully at real gameplay size, while the exported head, ears, hair, body, clothing, hands and animation remain real 3D geometry. The source still owns substantially finer facial planes, eyelid edges, hair clumps, hand anatomy, garment construction and natural stance.
+- [improved][360° composition] Four headings preserve the player, current social target and at least one navigation/story landmark. The former yaw-270 wall obstruction is removed; foreground furniture continues to ghost rather than disappear physically.
+- [checked][physical truth and responsiveness] Portal dressing, face rendering and camera occlusion do not change metre scale, actor capsules, prop colliders, interaction anchors, movement or story state. Desktop and portrait controls remain usable without horizontal overflow.
+- [P1][production character finish remains behind] The identity conversion is cleaner, but the current GLBs still read as coarse low-poly figures beside the source's authored cheeks, lips, fingers, layered hair and cloth folds.
+- [P1][complete-room secondary craft remains behind] The source has richer cabinet joinery, botanical anatomy, paper wear, translucent glass, textile weave and hardware throughout the frame. Current secondary props still repeat simplified primitives and uniform edge treatment.
+- [P1][light and material transport remain behind] Luminance and directional key are close enough for comparison, but source-level warm bounce, soft foliage penumbrae, skin/fabric separation and glass response are not yet matched.
+- [P2][HUD optical finish remains behind] The interaction hierarchy works, but top-bar spacing, icon craft, panel translucency and compact type rhythm remain more utilitarian than the source.
+
+### Implementation checklist
+
+- Preserve portal contract v3's broad threshold, single dominant leaf and clear centre route; future portal work should add reveal depth and exterior craft without rebuilding a symmetric arch.
+- Preserve the illustrated-cornea production face unless a replacement wins at the same gameplay crop; do not restore the visibly heavier UV eye-brow mask.
+- Preserve the `1.2%` near-shell fade floor and recheck all four headings whenever room-scale wall geometry changes.
+- Continue with role-specific face/hair/garment asset refinement, then complete the room-wide joinery, textile, plant, paper and glass pass.
+
+### Gate result
+
+v143 closes the remaining literal-threshold mismatch, chooses the visibly stronger 2D-to-3D identity path at gameplay distance, removes the fourth-orbit foreground-wall failure, and keeps walking, camera rotation, blink, physics, responsive controls and performance gates green. The mandatory same-canvas comparison still contains actionable P1 gaps in production character finish, room-wide secondary craft and real-time material/light transport.
+
+final result: blocked
+
+Blocker: source-level face/hair/garment craft, bespoke secondary assets and offline-quality indirect light/material response remain visibly ahead of the implementation.
+
 ## 2026-07-26 reference-fidelity v142 colour-managed face, eye seating and reference-weighted light gate
 
 ### Evidence inspected together

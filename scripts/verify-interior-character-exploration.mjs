@@ -111,7 +111,7 @@ try {
     "civic scene became visible before its hidden shader/material warmup completed"
   );
   assert.equal(opening.activeActorCount, 4, "civic scene did not stage four citizens");
-  assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v2", "civic room did not build the authored layered threshold");
+  assert.equal(opening.portal?.version, "mirrorlife-civic-portal-v3", "civic room did not build the authored broad threshold and dominant door leaf");
   assert.equal(opening.lighting?.version, "mirrorlife-civic-light-transport-v6", "civic room did not expose the authored indirect-light contract");
   assert.equal(opening.lighting?.foliageProjection, true, "civic room did not expose the source-derived foliage projection");
   assert.equal(opening.furniture?.version, "mirrorlife-civic-hero-props-v15", "civic room did not expose the authored furniture-detail contract");
@@ -187,21 +187,20 @@ try {
       .every((actor) => actor.animation?.state === "listen"),
     "desktop civic witnesses did not attend to the opening testimony"
   );
-  assert(opening.actors.every((actor) => actor.faceMode === "uv-hybrid"), "desktop civic scene did not use the production UV-hybrid identity surface");
+  assert(opening.actors.every((actor) => actor.faceMode === "illustrated-cornea"), "desktop civic scene did not use the production curved illustrated identity surface");
   assert(opening.actors.every((actor) => actor.facial?.version === "mirrorlife-civic-face-morph-v2"), "civic facial identity did not expose the authored morph contract");
-  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-head-uv-matte-v3"), "civic face texture lost its head-UV matte contract");
+  assert(opening.actors.every((actor) => actor.facial?.matte === "mirrorlife-civic-face-matte-v2"), "civic face texture lost its illustrated matte contract");
   assert(opening.actors.every((actor) => actor.facial?.identity === "mirrorlife-civic-face-identity-v9"), "civic actors did not expose the production facial identity surface");
   assert(opening.actors.every((actor) => actor.facial?.texture === "mirrorlife-civic-face-texture-v2"), "civic production face did not retain the role-authored identity texture");
-  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-identity-v9"), "civic actors did not preserve the production facial identity contract");
-  assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic UV identity surface retained duplicate volumetric lips");
-  assert(opening.actors.every((actor) => actor.facial?.morphCount === 5), "civic morphable head facial set is incomplete");
+  assert(opening.actors.every((actor) => actor.facial?.integration === "mirrorlife-civic-face-illustrated-cornea-v3"), "civic actors did not preserve the illustrated-cornea integration contract");
+  assert(opening.actors.every((actor) => actor.facial?.lipVolume === null), "civic illustrated identity surface retained duplicate volumetric lips");
+  assert(opening.actors.every((actor) => actor.facial?.morphCount === 6), "civic illustrated facial morph set is incomplete");
+  assert(opening.actors.every((actor) => actor.eyes === null), "civic illustrated identity surface retained duplicate volumetric eyes");
   assert(opening.actors.every((actor) => (
-    actor.eyes?.version === "mirrorlife-civic-eye-volume-v6"
-      && actor.eyes?.count === 2
-      && actor.eyes?.eyelidDeformation === "mirrorlife-civic-eyelid-vertex-v2"
-      && actor.eyes?.uniformReady === true
-  )), "civic UV identity surface did not retain two deforming volumetric eyes");
-  assert(opening.actors.every((actor) => actor.cornea === null), "civic UV identity surface retained duplicate curved-atlas corneal lenses");
+    actor.cornea?.version === "mirrorlife-civic-cornea-v2"
+      && actor.cornea?.lensCount === 2
+      && actor.cornea?.physicallyLit === true
+  )), "civic illustrated identity surface did not retain two physically lit corneal lenses");
   assert(opening.actors.every((actor) => actor.hands?.version === "mirrorlife-civic-hand-v11"), "civic actors did not expose the role-authored independent-hand contract");
   const openingFacilitator = opening.actors.find((actor) => actor.assetRole === "facilitator");
   const openingMediator = opening.actors.find((actor) => actor.assetRole === "mediator");
@@ -556,10 +555,10 @@ try {
   const forcedBlinkStats = await readStats(page);
   assert(
     forcedBlinkStats.actors.every((actor) => Number(actor.facial?.blink || 0) >= 0.9),
-    "forced-blink QA state did not drive every UV-hybrid identity surface"
+    "forced-blink QA state did not drive every curved illustrated identity surface"
   );
 
-  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified UV-hybrid identity-surface blink.`);
+  console.log(`Interior character exploration passed: walked ${walked.toFixed(2)}m, rotated ${(angularDistance(afterYaw, beforeYaw) * 180 / Math.PI).toFixed(1)}°, verified curved illustrated identity-surface blink.`);
 } finally {
   await browser.close();
 }

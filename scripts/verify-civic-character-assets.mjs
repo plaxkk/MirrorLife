@@ -102,7 +102,7 @@ assert.deepEqual(manifest.faceDecal?.grid, [2, 2], "civic face decal atlas grid 
 assert.deepEqual(manifest.faceDecal?.mapping, expectedRoles, "civic face decal role mapping changed");
 assert.equal(manifest.faceDecal?.morphContract, "mirrorlife-civic-face-morph-v2", "civic facial morph contract is stale");
 assert.equal(manifest.faceDecal?.integrationContract, "mirrorlife-civic-face-identity-v9", "civic facial identity integration contract is stale");
-assert.equal(manifest.faceDecal?.productionFaceMode, "uv-hybrid-desktop+curved-atlas-mobile", "civic production face mode changed");
+assert.equal(manifest.faceDecal?.productionFaceMode, "illustrated-cornea-desktop+curved-atlas-mobile", "civic production face mode changed");
 assert.equal(manifest.faceDecal?.productionIntegrationContract, "mirrorlife-civic-face-identity-v9", "civic production facial identity contract is stale");
 assert.equal(manifest.faceDecal?.corneaContract, "mirrorlife-civic-cornea-v2", "civic production cornea contract is stale");
 assert.equal(manifest.faceDecal?.uvContract, "mirrorlife-civic-head-uv-v3", "civic head UV contract is stale");

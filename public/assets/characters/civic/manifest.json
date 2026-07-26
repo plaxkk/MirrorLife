@@ -128,7 +128,7 @@
     ],
     "morphContract": "mirrorlife-civic-face-morph-v2",
     "integrationContract": "mirrorlife-civic-face-identity-v9",
-    "productionFaceMode": "uv-hybrid-desktop+curved-atlas-mobile",
+    "productionFaceMode": "illustrated-cornea-desktop+curved-atlas-mobile",
     "productionIntegrationContract": "mirrorlife-civic-face-identity-v9",
     "corneaContract": "mirrorlife-civic-cornea-v2",
     "uvContract": "mirrorlife-civic-head-uv-v3",
