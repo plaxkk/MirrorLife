@@ -167,13 +167,18 @@ node scripts/measure-reference-gap.mjs <角色裁切.png> <参考角色裁切.pn
 
 ## 当前进度（2026-07-27 接管复核）
 
-- 阶段零 ✅ v3 运行时合同已建立；现有结构未过统一门槛，因此角色结构仍关闭
-- 阶段二 ▢ 未开始
-- 阶段三 ▢ 未开始（已量化，陷阱已记录）
-- 阶段四 ⛔ 等待每角色 `≤2` articulation batch、`0` 刚性 articulation surface、
-  `≥12` 个承载可见顶点的 articulation bone 同时成立
-- 硬约束 ✅ 当前全绿
-- 七轴 4/7（在隔离的 Claude 工作树、独立 4183 预览服务上重捕；历史 5/7 不能复现）
+- 阶段零 ✅ v3 运行时合同已建立并由浏览器实际加载的 GLB、可见 render graph 与同构建
+  fingerprint 判定
+- 阶段一 ✅ 角色结构统一门槛已完成：opening actor layer `55`、opening 总 draw call
+  `133`、移动端 `90 / 249,475`，blink / contact / elbow / footPlant / cloth compression 全绿
+- 阶段二 ⛔ `BLOCKED_STOP_RULE`：三次不同的前景实体/细节密度尝试均未同时达到
+  `detail density ≥0.317` 与 `local contrast ≥0.0676`；第三次还使七轴从 `4/7` 降至
+  `2/7`，已按停止规则回退全部实现
+- 阶段三 ⏸ 未进入
+- 阶段四 ⏸ 未进入
+- 硬约束 ✅ 回退后的基线全绿
+- 七轴 `4/7`（回退后同构建重捕；Stage 2 未保留任何半完成状态）
 
-停止证据与三次尝试的量化结果见
+Stage 2 的精确三次尝试、回退状态、证据路径与后续独立范围建议见
+`docs/REFERENCE_FIDELITY_STAGE2_BLOCKER_2026-07-27.md`。此前角色结构阶段的停止证据见
 `docs/REFERENCE_FIDELITY_SKINNING_BLOCKER_2026-07-27.md`。
