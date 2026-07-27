@@ -5,6 +5,42 @@ const CITIZEN_RADIUS = 0.28;
 const NAV_CELL_SIZE = 0.32;
 const EPSILON = 1e-6;
 
+const INTERIOR_PHYSICS_CONFIG = Object.freeze({
+  worldScaleMeters: 1,
+  gravity: -18,
+  fixedTimeStep: 1 / 60,
+  maxSubSteps: 4,
+  playerHeight: 1.72,
+  playerCapsuleHalfHeight: 0.54,
+  citizenHeight: 1.68,
+  citizenCapsuleHalfHeight: 0.54,
+  walkSpeed: 2.4,
+  runSpeed: 4,
+  jumpSpeed: 6.2,
+  groundAcceleration: 22,
+  brakingAcceleration: 28,
+  airControl: 0.35,
+  maxStepHeight: 0.22,
+  maxSlopeRadians: Math.PI / 4,
+  snapToGround: 0.12,
+  controllerOffset: 0.02,
+  characterFriction: 0.6,
+  defaultRestitution: 0.02,
+  ballRestitution: 0.35
+});
+
+const MATERIAL_PHYSICS = Object.freeze({
+  wood: Object.freeze({ friction: 0.55, restitution: 0.02 }),
+  textile: Object.freeze({ friction: 0.85, restitution: 0.01 }),
+  terrazzo: Object.freeze({ friction: 0.7, restitution: 0.02 }),
+  metal: Object.freeze({ friction: 0.42, restitution: 0.04 }),
+  glass: Object.freeze({ friction: 0.34, restitution: 0.03 }),
+  ball: Object.freeze({ friction: 0.48, restitution: 0.35 })
+});
+
+let rapierModule = null;
+let rapierLoading = null;
+
 // World-space footprints of the models after interior-three normalizes and
 // applies its prop render profile. These include complete furniture sets (for
 // example the chairs around a round table), not just the semantic centrepiece.
@@ -14,6 +50,10 @@ const MODEL_FOOTPRINTS = {
   counter: { shape: "box", halfX: 0.86, halfZ: 0.48, rotation: -0.2 },
   desk: { shape: "box", halfX: 0.92, halfZ: 0.62, rotation: -0.48 },
   seating: { shape: "box", halfX: 1.08, halfZ: 0.64, rotation: -0.35 },
+  "civic-seating": { shape: "box", halfX: 1.08, halfZ: 0.64, rotation: -0.35 },
+  "civic-display-case": { shape: "box", halfX: 0.9, halfZ: 0.52, rotation: 0 },
+  "civic-notice-console": { shape: "box", halfX: 1.12, halfZ: 0.34, rotation: 0 },
+  "civic-lounge-suite": { shape: "box", halfX: 1.25, halfZ: 0.92, rotation: 0 },
   shelf: { shape: "box", halfX: 0.72, halfZ: 0.36 },
   "wall-board": { shape: "box", halfX: 0.96, halfZ: 0.24 },
   "round-table": { shape: "circle", radius: 1.14 },
@@ -55,6 +95,36 @@ const MODEL_FOOTPRINTS = {
   "memory-book": { shape: "box", halfX: 1.0, halfZ: 1.0, rotation: -0.18 }
 };
 
+const MODEL_HALF_HEIGHTS = Object.freeze({
+  bed: 0.42,
+  "home-bed": 0.48,
+  counter: 0.48,
+  "service-counter": 0.48,
+  "hot-food-counter": 0.48,
+  desk: 0.38,
+  "record-desk": 0.42,
+  "office-workstation": 0.46,
+  seating: 0.46,
+  "civic-seating": 0.46,
+  "civic-display-case": 0.94,
+  "civic-notice-console": 1.34,
+  "civic-lounge-suite": 0.9,
+  "waiting-chair": 0.5,
+  "calming-chair": 0.5,
+  shelf: 0.92,
+  bookcase: 1.08,
+  "archive-cabinet": 0.96,
+  "retail-shelf": 0.94,
+  "wall-board": 0.82,
+  "collaboration-board": 0.82,
+  "gallery-wall": 0.86,
+  "notice-board": 0.72,
+  "exchange-board": 0.72,
+  "plant-zone": 0.62,
+  "garden-tool-shed": 0.86,
+  default: 0.56
+});
+
 function finite(value, fallback = 0) {
   const number = Number(value);
   return Number.isFinite(number) ? number : fallback;
@@ -91,14 +161,20 @@ function makeBox(id, x, z, halfX, halfZ, rotation = 0, options = {}) {
     id,
     shape: "box",
     x: finite(x),
+    y: Math.max(0, finite(options.y, finite(options.halfY, 0.5))),
     z: finite(z),
     halfX: Math.max(0.04, finite(halfX, 0.4)),
+    halfY: Math.max(0.04, finite(options.halfY, 0.5)),
     halfZ: Math.max(0.04, finite(halfZ, 0.4)),
     rotation: finite(rotation),
     source: options.source || "environment",
     model: options.model || "",
     itemKey: options.itemKey || "",
-    label: options.label || ""
+    label: options.label || "",
+    material: options.material || "wood",
+    rigidBody: options.rigidBody || "fixed",
+    mass: Math.max(0.05, finite(options.mass, 4)),
+    persistent: !!options.persistent
   };
 }
 
@@ -107,12 +183,18 @@ function makeCircle(id, x, z, radius, options = {}) {
     id,
     shape: "circle",
     x: finite(x),
+    y: Math.max(0, finite(options.y, finite(options.halfY, 0.5))),
     z: finite(z),
     radius: Math.max(0.04, finite(radius, 0.35)),
+    halfY: Math.max(0.04, finite(options.halfY, 0.5)),
     source: options.source || "environment",
     model: options.model || "",
     itemKey: options.itemKey || "",
-    label: options.label || ""
+    label: options.label || "",
+    material: options.material || "wood",
+    rigidBody: options.rigidBody || "fixed",
+    mass: Math.max(0.05, finite(options.mass, 4)),
+    persistent: !!options.persistent
   };
 }
 
@@ -146,31 +228,44 @@ function createAmbientColliders(archetype, variant = 0) {
 }
 
 function createItemCollider(item) {
-  if (!item || item.renderModel === false || item.physicsSolid === false) return null;
-  const profile = MODEL_FOOTPRINTS[item.model] || { shape: "circle", radius: 0.58 };
+  // Some authored hero furnishings are rendered as part of the room shell so
+  // they can be batched with lighting and trim, while their semantic prop still
+  // owns interaction and collision. `renderModel: false` must not make those
+  // visible furnishings intangible; `physicsSolid` is the explicit contract.
+  if (!item || item.physicsSolid === false) return null;
+  const authored = item.collider && typeof item.collider === "object" ? item.collider : null;
+  const profile = authored || MODEL_FOOTPRINTS[item.model] || { shape: "circle", radius: 0.58 };
   if (profile.sensorOnly) return null;
   const scale = clamp(finite(item.modelScale, 1), 0.68, 1.72);
+  const rigidBody = item.rigidBody && typeof item.rigidBody === "object" ? item.rigidBody : {};
+  const halfY = Math.max(0.06, finite(profile.halfY, MODEL_HALF_HEIGHTS[item.model] || MODEL_HALF_HEIGHTS.default) * scale);
   const options = {
     source: "prop",
     model: item.model || "",
     itemKey: item.key || "",
-    label: item.label || ""
+    label: item.label || "",
+    y: finite(item.worldY, halfY) + finite(profile.offsetY),
+    halfY,
+    material: rigidBody.material || item.material || profile.material || "wood",
+    rigidBody: rigidBody.type || profile.rigidBody || "fixed",
+    mass: rigidBody.mass ?? profile.mass ?? 4,
+    persistent: rigidBody.persistence === "episode" || rigidBody.persistent === true
   };
   if (profile.shape === "box") {
     return makeBox(
       `prop:${item.key || item.model}`,
-      item.worldX,
-      item.worldZ,
+      finite(item.worldX) + finite(profile.offsetX),
+      finite(item.worldZ) + finite(profile.offsetZ),
       profile.halfX * scale,
       profile.halfZ * scale,
-      -finite(item.angle) + finite(profile.rotation),
+      finite(item.rotationY, -finite(item.angle)) + finite(profile.rotation),
       options
     );
   }
   return makeCircle(
     `prop:${item.key || item.model}`,
-    item.worldX,
-    item.worldZ,
+    finite(item.worldX) + finite(profile.offsetX),
+    finite(item.worldZ) + finite(profile.offsetZ),
     profile.radius * scale,
     options
   );
@@ -380,13 +475,17 @@ function findInteractionPoint(world, item, collider, radius = CITIZEN_RADIUS, re
 function createPhysicsWorld(options = {}) {
   const archetype = options.archetype || "home";
   const variant = finite(options.variant);
-  const ambient = createAmbientColliders(archetype, variant);
+  const layoutProfile = options.layoutProfile || null;
+  const useAuthoredShell = Number(layoutProfile?.version || 0) >= 2;
+  const ambient = useAuthoredShell ? [] : createAmbientColliders(archetype, variant);
   const itemColliders = (options.items || []).map(createItemCollider).filter(Boolean);
   const colliders = [...ambient, ...itemColliders];
   const world = {
     id: options.id || `${archetype}:${variant}`,
     archetype,
     variant,
+    layoutProfile,
+    worldScaleMeters: finite(layoutProfile?.worldScaleMeters, INTERIOR_PHYSICS_CONFIG.worldScaleMeters),
     roomRadius: ROOM_RADIUS,
     walkableRadius: WALKABLE_RADIUS,
     colliders,
@@ -395,6 +494,7 @@ function createPhysicsWorld(options = {}) {
     navCache: new Map()
   };
   world.spawn = findNearestWalkable(world, options.spawn || { x: 0, z: 3.72 }, PLAYER_RADIUS);
+  world.spawn.y = Math.max(INTERIOR_PHYSICS_CONFIG.playerHeight / 2, finite(options.spawn?.y, INTERIOR_PHYSICS_CONFIG.playerHeight / 2));
   (options.items || []).forEach((item) => {
     const directCollider = world.itemColliders.get(item.key);
     const nearestAmbientMatch = colliders
@@ -559,6 +659,275 @@ function sampleWalkablePoint(world, seed = 0, radius = CITIZEN_RADIUS) {
   return findNearestWalkable(world, { x: 0, z: 0 }, radius);
 }
 
+async function prepareRapier() {
+  if (rapierModule) return rapierModule;
+  if (!rapierLoading) {
+    rapierLoading = (async () => {
+      // rapier3d-compat 0.19.3 currently forwards its bundled WASM bytes through
+      // wasm-bindgen's legacy overload and emits a misleading deprecation warning.
+      // Keep unrelated warnings visible while silencing only that upstream message.
+      const originalWarn = console.warn;
+      console.warn = (...args) => {
+        if (String(args[0] || "").startsWith("using deprecated parameters for the initialization function")) return;
+        originalWarn(...args);
+      };
+      try {
+        const module = await import("@dimforge/rapier3d-compat");
+        const RAPIER = module.default || module;
+        if (typeof RAPIER.init === "function") {
+          try {
+            await RAPIER.init({});
+          } finally {
+            console.warn = originalWarn;
+          }
+        }
+        rapierModule = RAPIER;
+        return RAPIER;
+      } finally {
+        console.warn = originalWarn;
+      }
+    })().catch((error) => {
+      rapierLoading = null;
+      throw error;
+    });
+  }
+  return rapierLoading;
+}
+
+function quaternionFromYaw(yaw = 0) {
+  const half = finite(yaw) / 2;
+  return { x: 0, y: Math.sin(half), z: 0, w: Math.cos(half) };
+}
+
+function approach(current, target, maxDelta) {
+  if (current < target) return Math.min(target, current + maxDelta);
+  if (current > target) return Math.max(target, current - maxDelta);
+  return target;
+}
+
+function colliderMaterial(collider) {
+  return MATERIAL_PHYSICS[collider?.material] || MATERIAL_PHYSICS.wood;
+}
+
+function createRapierColliderDesc(RAPIER, collider) {
+  if (collider.shape === "circle") {
+    return RAPIER.ColliderDesc.cylinder(collider.halfY, collider.radius);
+  }
+  return RAPIER.ColliderDesc.cuboid(collider.halfX, collider.halfY, collider.halfZ);
+}
+
+function createRapierEnvironmentBody(runtime, collider) {
+  const { RAPIER, world } = runtime;
+  const dynamic = collider.rigidBody === "dynamic";
+  const descriptor = dynamic
+    ? RAPIER.RigidBodyDesc.dynamic()
+      .setTranslation(collider.x, collider.y, collider.z)
+      .setRotation(quaternionFromYaw(collider.rotation))
+      .setLinearDamping(0.6)
+      .setAngularDamping(1.2)
+      .setCcdEnabled(true)
+    : RAPIER.RigidBodyDesc.fixed()
+      .setTranslation(collider.x, collider.y, collider.z)
+      .setRotation(quaternionFromYaw(collider.rotation));
+  const body = world.createRigidBody(descriptor);
+  body.userData = { id: collider.id, itemKey: collider.itemKey, persistent: collider.persistent };
+  const surface = colliderMaterial(collider);
+  const shape = createRapierColliderDesc(RAPIER, collider)
+    .setFriction(surface.friction)
+    .setRestitution(surface.restitution)
+    .setMass(dynamic ? collider.mass : 0);
+  const rapierCollider = world.createCollider(shape, body);
+  rapierCollider.userData = { id: collider.id, itemKey: collider.itemKey };
+  runtime.environmentBodies.set(collider.id, { body, collider: rapierCollider, source: collider });
+}
+
+function addCircularRoomShell(runtime, radius) {
+  const { RAPIER, world } = runtime;
+  const floorBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0, -0.1, 0));
+  floorBody.userData = { id: "shell:floor" };
+  world.createCollider(
+    RAPIER.ColliderDesc.cylinder(0.1, radius)
+      .setFriction(MATERIAL_PHYSICS.terrazzo.friction)
+      .setRestitution(MATERIAL_PHYSICS.terrazzo.restitution),
+    floorBody
+  );
+
+  const segments = 28;
+  const segmentLength = 2 * radius * Math.tan(Math.PI / segments) + 0.08;
+  for (let index = 0; index < segments; index += 1) {
+    const angle = index / segments * Math.PI * 2;
+    const wallRadius = radius + 0.08;
+    const x = Math.sin(angle) * wallRadius;
+    const z = -Math.cos(angle) * wallRadius;
+    const body = world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(x, 1.86, z)
+        .setRotation(quaternionFromYaw(-angle))
+    );
+    body.userData = { id: `shell:wall:${index}` };
+    world.createCollider(
+      RAPIER.ColliderDesc.cuboid(segmentLength / 2, 1.86, 0.11)
+        .setFriction(MATERIAL_PHYSICS.terrazzo.friction)
+        .setRestitution(0.01),
+      body
+    );
+  }
+}
+
+async function createRapierRuntime(options = {}) {
+  const RAPIER = await prepareRapier();
+  const sourceWorld = options.world || createPhysicsWorld(options);
+  const world = new RAPIER.World({ x: 0, y: INTERIOR_PHYSICS_CONFIG.gravity, z: 0 });
+  world.integrationParameters.dt = INTERIOR_PHYSICS_CONFIG.fixedTimeStep;
+  const runtime = {
+    RAPIER,
+    world,
+    sourceWorld,
+    environmentBodies: new Map(),
+    accumulator: 0,
+    elapsed: 0,
+    velocity: { x: 0, y: 0, z: 0 },
+    grounded: true,
+    jumpQueued: false,
+    lastContacts: [],
+    disposed: false
+  };
+  addCircularRoomShell(runtime, finite(sourceWorld.roomRadius, ROOM_RADIUS));
+  sourceWorld.colliders.forEach((collider) => createRapierEnvironmentBody(runtime, collider));
+
+  const spawn = sourceWorld.spawn || { x: 0, y: INTERIOR_PHYSICS_CONFIG.playerHeight / 2, z: 3.72 };
+  runtime.playerBody = world.createRigidBody(
+    RAPIER.RigidBodyDesc.kinematicPositionBased()
+      .setTranslation(spawn.x, finite(spawn.y, INTERIOR_PHYSICS_CONFIG.playerHeight / 2), spawn.z)
+      .setCcdEnabled(true)
+  );
+  runtime.playerBody.userData = { id: "player" };
+  runtime.playerCollider = world.createCollider(
+    RAPIER.ColliderDesc.capsule(INTERIOR_PHYSICS_CONFIG.playerCapsuleHalfHeight, PLAYER_RADIUS)
+      .setFriction(INTERIOR_PHYSICS_CONFIG.characterFriction)
+      .setRestitution(0),
+    runtime.playerBody
+  );
+  runtime.playerCollider.userData = { id: "player" };
+  runtime.controller = world.createCharacterController(INTERIOR_PHYSICS_CONFIG.controllerOffset);
+  runtime.controller.setUp({ x: 0, y: 1, z: 0 });
+  runtime.controller.setSlideEnabled(true);
+  runtime.controller.enableAutostep(INTERIOR_PHYSICS_CONFIG.maxStepHeight, 0.18, true);
+  runtime.controller.enableSnapToGround(INTERIOR_PHYSICS_CONFIG.snapToGround);
+  runtime.controller.setMaxSlopeClimbAngle(INTERIOR_PHYSICS_CONFIG.maxSlopeRadians);
+  runtime.controller.setMinSlopeSlideAngle(INTERIOR_PHYSICS_CONFIG.maxSlopeRadians + 0.08);
+  runtime.controller.setApplyImpulsesToDynamicBodies(true);
+  runtime.controller.setCharacterMass(64);
+  return runtime;
+}
+
+function queueRapierJump(runtime) {
+  if (runtime && !runtime.disposed) runtime.jumpQueued = true;
+}
+
+function collectRapierContacts(runtime) {
+  const contacts = [];
+  const count = runtime.controller.numComputedCollisions();
+  for (let index = 0; index < count; index += 1) {
+    const collision = runtime.controller.computedCollision(index);
+    const id = collision?.collider?.userData?.id || collision?.collider?.parent?.()?.userData?.id;
+    if (id) contacts.push(id);
+  }
+  return [...new Set(contacts)];
+}
+
+function stepRapierCharacter(runtime, input = {}, frameDelta = INTERIOR_PHYSICS_CONFIG.fixedTimeStep) {
+  if (!runtime || runtime.disposed) return null;
+  runtime.accumulator += clamp(finite(frameDelta), 0, 0.1);
+  const config = INTERIOR_PHYSICS_CONFIG;
+  let subSteps = 0;
+  while (runtime.accumulator >= config.fixedTimeStep && subSteps < config.maxSubSteps) {
+    const dt = config.fixedTimeStep;
+    const inputX = finite(input.x);
+    const inputZ = finite(input.z);
+    const inputLength = Math.hypot(inputX, inputZ);
+    const normalizedX = inputLength > 1 ? inputX / inputLength : inputX;
+    const normalizedZ = inputLength > 1 ? inputZ / inputLength : inputZ;
+    const maxSpeed = input.run ? config.runSpeed : config.walkSpeed;
+    const targetX = normalizedX * maxSpeed;
+    const targetZ = normalizedZ * maxSpeed;
+    const acceleration = runtime.grounded
+      ? (inputLength > 0.01 ? config.groundAcceleration : config.brakingAcceleration)
+      : config.groundAcceleration * config.airControl;
+    runtime.velocity.x = approach(runtime.velocity.x, targetX, acceleration * dt);
+    runtime.velocity.z = approach(runtime.velocity.z, targetZ, acceleration * dt);
+    if (runtime.jumpQueued && runtime.grounded) {
+      runtime.velocity.y = config.jumpSpeed;
+      runtime.grounded = false;
+    } else if (!runtime.grounded) {
+      runtime.velocity.y += config.gravity * dt;
+    } else {
+      runtime.velocity.y = Math.min(0, runtime.velocity.y);
+    }
+    runtime.jumpQueued = false;
+
+    runtime.controller.computeColliderMovement(runtime.playerCollider, {
+      x: runtime.velocity.x * dt,
+      y: runtime.velocity.y * dt,
+      z: runtime.velocity.z * dt
+    });
+    const movement = runtime.controller.computedMovement();
+    const translation = runtime.playerBody.translation();
+    runtime.playerBody.setNextKinematicTranslation({
+      x: translation.x + movement.x,
+      y: Math.max(PLAYER_RADIUS + config.playerCapsuleHalfHeight, translation.y + movement.y),
+      z: translation.z + movement.z
+    });
+    runtime.grounded = runtime.controller.computedGrounded();
+    if (runtime.grounded && runtime.velocity.y < 0) runtime.velocity.y = 0;
+    runtime.lastContacts = collectRapierContacts(runtime);
+    runtime.world.step();
+    runtime.elapsed += dt;
+    runtime.accumulator -= dt;
+    subSteps += 1;
+  }
+  if (subSteps === config.maxSubSteps && runtime.accumulator > config.fixedTimeStep) {
+    runtime.accumulator = config.fixedTimeStep;
+  }
+  const position = runtime.playerBody.translation();
+  return {
+    x: position.x,
+    y: position.y,
+    z: position.z,
+    grounded: runtime.grounded,
+    velocity: { ...runtime.velocity },
+    contacts: [...runtime.lastContacts],
+    interpolationAlpha: clamp(runtime.accumulator / config.fixedTimeStep, 0, 1),
+    subSteps
+  };
+}
+
+function getRapierDynamicTransforms(runtime) {
+  if (!runtime || runtime.disposed) return [];
+  return [...runtime.environmentBodies.values()]
+    .filter((entry) => entry.source.rigidBody === "dynamic")
+    .map((entry) => ({
+      id: entry.source.id,
+      itemKey: entry.source.itemKey,
+      position: {
+        x: entry.body.translation().x,
+        y: entry.body.translation().y - entry.source.halfY,
+        z: entry.body.translation().z
+      },
+      rotation: { ...entry.body.rotation() },
+      persistent: entry.source.persistent,
+      moving: entry.body.isMoving()
+    }));
+}
+
+function disposeRapierRuntime(runtime) {
+  if (!runtime || runtime.disposed) return;
+  runtime.disposed = true;
+  runtime.controller?.free?.();
+  runtime.world?.free?.();
+  runtime.environmentBodies?.clear?.();
+}
+
 function getDebugSnapshot(world) {
   return {
     id: world?.id || "",
@@ -577,7 +946,15 @@ const InteriorPhysics = {
   WALKABLE_RADIUS,
   PLAYER_RADIUS,
   CITIZEN_RADIUS,
+  CONFIG: INTERIOR_PHYSICS_CONFIG,
+  MATERIALS: MATERIAL_PHYSICS,
   MODEL_FOOTPRINTS,
+  prepareRapier,
+  createRapierRuntime,
+  stepRapierCharacter,
+  queueRapierJump,
+  getRapierDynamicTransforms,
+  disposeRapierRuntime,
   createWorld: createPhysicsWorld,
   isWalkable,
   moveCircle,
@@ -595,7 +972,15 @@ export {
   WALKABLE_RADIUS,
   PLAYER_RADIUS,
   CITIZEN_RADIUS,
+  INTERIOR_PHYSICS_CONFIG,
+  MATERIAL_PHYSICS,
   MODEL_FOOTPRINTS,
+  prepareRapier,
+  createRapierRuntime,
+  stepRapierCharacter,
+  queueRapierJump,
+  getRapierDynamicTransforms,
+  disposeRapierRuntime,
   createPhysicsWorld,
   isWalkable,
   moveCircle,

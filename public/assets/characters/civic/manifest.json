@@ -1,0 +1,298 @@
+{
+  "contract": "mirrorlife-shared-pivot-v1",
+  "sculptContract": "mirrorlife-civic-sculpt-v83",
+  "hairConstructionContract": {
+    "version": "mirrorlife-civic-hair-construction-v7",
+    "runtime": "role-authored-swept-superellipse-planes+temple-wisps+restrained-anisotropic-sheen",
+    "parts": [
+      "HairCap",
+      "HairFlowRidge",
+      "HairRibbon",
+      "FaceFrameLock",
+      "HairTempleWisp"
+    ]
+  },
+  "bodyIdentityContract": {
+    "version": "mirrorlife-civic-body-identity-v10",
+    "roles": [
+      "player",
+      "listener",
+      "facilitator",
+      "mediator"
+    ],
+    "dimensions": [
+      "torso",
+      "shoulder",
+      "neck",
+      "waist",
+      "pelvis",
+      "limb",
+      "head",
+      "garment-silhouette"
+    ],
+    "continuityParts": [
+      "Torso",
+      "ShoulderMantle",
+      "Neck",
+      "SkinnedArmVolume",
+      "TrouserSeat",
+      "SkirtHipFoundation"
+    ],
+    "shoulderContract": "mirrorlife-civic-shoulder-continuity-v3",
+    "armAnatomyContract": "mirrorlife-civic-arm-anatomy-v1",
+    "neckContract": "mirrorlife-civic-neck-continuity-v2",
+    "pelvisContract": "mirrorlife-civic-pelvis-continuity-v3",
+    "runtime": "contoured-shell+tailored-shoulder-plane+reference-head-ratio+contoured-neck-clavicle-transition+deltoid-bicep-forearm-ring-flow+wide-elbow-skin-weights+bone-weighted-shoulder-overlap+load-bearing-pelvis+continuous-limb-skin"
+  },
+  "skinContract": {
+    "version": "mirrorlife-civic-skin-v1",
+    "runtime": "shared-controller-pivots+continuous-limb-skin",
+    "joints": [
+      "SkinLeftArm",
+      "SkinLeftElbow",
+      "SkinRightArm",
+      "SkinRightElbow",
+      "SkinLeftLeg",
+      "SkinLeftKnee",
+      "SkinRightLeg",
+      "SkinRightKnee"
+    ],
+    "deformedParts": [
+      "SkinnedArmVolume",
+      "SkinnedLegVolume"
+    ]
+  },
+  "articulationSkinContract": {
+    "version": "mirrorlife-civic-articulation-skin-v2",
+    "runtime": "shared-controller-pivots+two-batch-vertex-colour-skin",
+    "batches": [
+      "SkinnedArticulationCore",
+      "SkinnedArticulationDetail"
+    ],
+    "joints": [
+      "SkinLeftArm",
+      "SkinLeftElbow",
+      "SkinRightArm",
+      "SkinRightElbow",
+      "SkinLeftLeg",
+      "SkinLeftKnee",
+      "SkinRightLeg",
+      "SkinRightKnee",
+      "SkinLeftElbowRigid",
+      "SkinRightElbowRigid",
+      "SkinLeftKneeRigid",
+      "SkinRightKneeRigid",
+      "SkinLeftHand",
+      "SkinRightHand",
+      "SkinLeftSleeveCorrective",
+      "SkinRightSleeveCorrective",
+      "SkinLeftTrouserCorrective",
+      "SkinRightTrouserCorrective",
+      "SkinLeftFoot",
+      "SkinRightFoot"
+    ],
+    "mobileRemovableBatches": [
+      "SkinnedArticulationDetail"
+    ]
+  },
+  "garmentTopologyContract": {
+    "version": "mirrorlife-civic-garment-topology-v6",
+    "runtime": "bone-weighted-superellipse+reference-slimmed-limb-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
+    "garments": [
+      "sleeve",
+      "trouser",
+      "skirt",
+      "vest",
+      "cardigan"
+    ],
+    "standingParts": [
+      "SkinnedArmVolume",
+      "SkinnedLegVolume",
+      "Skirt",
+      "CoatPanel"
+    ],
+    "deformingParts": [
+      "SkinnedArmVolume",
+      "SkinnedLegVolume",
+      "Skirt"
+    ]
+  },
+  "garmentMaterialContract": {
+    "version": "mirrorlife-civic-garment-material-v1",
+    "runtime": "role-authored-poplin+knit+canvas+twill",
+    "surfaces": [
+      "fine-poplin",
+      "jersey-knit",
+      "cardigan-knit",
+      "waxed-canvas",
+      "weathered-shell",
+      "utility-twill",
+      "pleated-twill"
+    ]
+  },
+  "clothCorrectiveContract": {
+    "version": "mirrorlife-civic-cloth-correctives-v1",
+    "runtime": "bend-angle-driven-volume+compression-folds",
+    "pivots": [
+      "SleeveCompressionPivot_-1",
+      "SleeveCompressionPivot_1",
+      "TrouserCompressionPivot_-1",
+      "TrouserCompressionPivot_1"
+    ],
+    "volumes": [
+      "ElbowCorrectiveVolume",
+      "KneeCorrectiveVolume"
+    ]
+  },
+  "faceDecal": {
+    "contract": "mirrorlife-civic-face-decal-v1",
+    "path": "civic-face-decals.png",
+    "textureContract": "mirrorlife-civic-face-texture-v2",
+    "textureDirection": "soft-premium-sculpted-portrait",
+    "grid": [
+      2,
+      2
+    ],
+    "mapping": [
+      "player",
+      "listener",
+      "facilitator",
+      "mediator"
+    ],
+    "morphContract": "mirrorlife-civic-face-morph-v2",
+    "integrationContract": "mirrorlife-civic-face-identity-v9",
+    "productionFaceMode": "sculpted-volume-desktop+curved-atlas-mobile",
+    "productionIntegrationContract": "mirrorlife-civic-face-identity-v9",
+    "corneaContract": "mirrorlife-civic-cornea-v2",
+    "uvContract": "mirrorlife-civic-head-uv-v3",
+    "uvMatteContract": "mirrorlife-civic-head-uv-matte-v3",
+    "preservedSculptParts": [
+      "Head",
+      "NoseBridge",
+      "NoseTip",
+      "EyePivot_-1",
+      "EyePivot_1"
+    ],
+    "mouthMorphContract": "mirrorlife-civic-mouth-morph-v4",
+    "lipVolumeContract": "mirrorlife-civic-lip-volume-v3",
+    "eyeGeometryContract": "mirrorlife-civic-eye-volume-v6",
+    "eyelidDeformationContract": "mirrorlife-civic-eyelid-vertex-v2",
+    "facialContinuityContract": "mirrorlife-civic-orbital-lip-bed-v1",
+    "eyeGeometryParts": [
+      "EyePivot_-1",
+      "EyePivot_1"
+    ],
+    "morphs": [
+      "WarmSmile",
+      "SpeechJaw",
+      "Concern",
+      "Attentive",
+      "SocialAsymmetry",
+      "Blink"
+    ]
+  },
+  "handContract": {
+    "version": "mirrorlife-civic-hand-v11",
+    "continuityContract": "mirrorlife-civic-hand-continuity-v1",
+    "pivots": [
+      "Hand_-1",
+      "Hand_1"
+    ],
+    "poseStyles": [
+      "relaxed",
+      "soft-cup",
+      "notebook-support",
+      "notebook-guide",
+      "thoughtful",
+      "open"
+    ],
+    "surfaceParts": [
+      "HandWebSurface",
+      "PalmLifeLine",
+      "PalmHeartLine",
+      "FingerCrease",
+      "ThumbCrease",
+      "six-ring-tapered-digits"
+    ]
+  },
+  "notebookContactContract": {
+    "version": "mirrorlife-civic-notebook-contact-v3",
+    "parts": [
+      "NotebookGripContact",
+      "NotebookGuideContact",
+      "NotebookPalmSupport",
+      "NotebookSupportFinger"
+    ],
+    "parent": "NotebookPivot"
+  },
+  "contactConstraintContract": {
+    "version": "mirrorlife-civic-contact-constraint-v2",
+    "effectors": [
+      "HandContactAnchor_-1",
+      "HandContactAnchor_1"
+    ],
+    "targets": [
+      "NotebookSupportTarget",
+      "NotebookGuideTarget",
+      "ThoughtfulJawTarget"
+    ],
+    "runtime": "frame-observed-two-bone-ccd+deformation-rig-mirroring"
+  },
+  "footwearContract": {
+    "version": "mirrorlife-civic-footwear-v4",
+    "parts": [
+      "Pivot",
+      "Midsole",
+      "HeelCounter",
+      "OuterQuarterPanel",
+      "ToeBumper",
+      "ToeCapSeam",
+      "AnkleCollarEdge"
+    ],
+    "styles": [
+      "sneaker",
+      "ankle-boot"
+    ]
+  },
+  "animationContract": {
+    "version": "mirrorlife-civic-clips-v19",
+    "runtime": "authored-keyframe-blend+role-contact-poses+continuous-skin+wide-elbow-volume+asymmetric-weight-transfer+skirt-flex+facial-hand-acting",
+    "clips": [
+      "idle",
+      "walk",
+      "run",
+      "listen",
+      "gesture",
+      "jump",
+      "fall"
+    ]
+  },
+  "worldUnitMeters": 1,
+  "heightMeters": 1.816,
+  "roles": {
+    "player": {
+      "file": "player.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
+      "meshes": 102,
+      "triangles": 37900
+    },
+    "listener": {
+      "file": "listener.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
+      "meshes": 95,
+      "triangles": 36076
+    },
+    "facilitator": {
+      "file": "facilitator.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
+      "meshes": 117,
+      "triangles": 42272
+    },
+    "mediator": {
+      "file": "mediator.glb",
+      "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
+      "meshes": 135,
+      "triangles": 40556
+    }
+  }
+}

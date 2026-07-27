@@ -4,13 +4,23 @@ import puppeteer from "puppeteer-core";
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
-const browser = await puppeteer.launch({ executablePath: CHROME, headless: true, args: ["--no-sandbox", "--disable-background-networking", "--disable-component-update"] });
+const browser = await puppeteer.launch({
+  executablePath: CHROME,
+  headless: true,
+  // The test intentionally streams 26 GLB-backed interiors through three
+  // complete enter/exit rounds inside one page.evaluate call.  Puppeteer's
+  // default CDP timeout can expire before the game contract does on a cold
+  // local cache, which reports a false gameplay failure without returning the
+  // accumulated transition assertions.
+  protocolTimeout: 300000,
+  args: ["--no-sandbox", "--disable-background-networking", "--disable-component-update"],
+});
 const page = await browser.newPage();
 const pageErrors = [];
 page.on("pageerror", (error) => pageErrors.push(String(error?.message || error)));
 
 try {
-  await page.goto(`${BASE_URL}/game.html?qaFresh=1`, { waitUntil: "networkidle0", timeout: 30000 });
+  await page.goto(`${BASE_URL}/game.html?qaFresh=1`, { waitUntil: "domcontentloaded", timeout: 30000 });
   await page.waitForFunction(() => !!state?.society && typeof enterInteriorView === "function", { timeout: 12000 });
   const report = await page.evaluate(async () => {
     const zoneIds = Object.keys(INTERIOR_ZONE_PROFILES);

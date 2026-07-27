@@ -52,7 +52,8 @@ let followedCitizenId = null;
 let followZoomUntil = 0;
 let lastFollowBannerAt = 0;
 let interiorView = null; // { zone, source: "manual" | "follow", enteredAt, nextArrivalCheckAt }
-let interiorOrbit = { yaw: 0.18, pitch: 0.58, x: 0, z: 0, lastMoveAt: 0, drag: false, lastX: 0, lastY: 0 };
+const INTERIOR_DEFAULT_PITCH = 0.5;
+let interiorOrbit = { yaw: 0.18, pitch: INTERIOR_DEFAULT_PITCH, x: 0, z: 0, lastMoveAt: 0, drag: false, lastX: 0, lastY: 0 };
 let interiorMoveKeys = new Set();
 let interiorExitRect = null;
 let interiorAnimations = {};
@@ -60,6 +61,11 @@ let interiorHotspots = [];
 let interiorNearbyAnchor = null;
 let interiorFocusPropIndex = null;
 let interiorPhysicsWorld = null;
+let interiorRapierRuntime = null;
+let interiorRapierLoading = null;
+let interiorRunHeld = false;
+let interiorJoystick = { x: 0, z: 0, pointerId: null };
+let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
 let interiorPhysicsDebugVisible = new URLSearchParams(window.location.search).get("debugPhysics") === "1";
 let activeEncounters = [];
 let encounterCooldowns = {};
@@ -83,7 +89,8 @@ const MAX_RELATION_LINES_PER_ZONE = 6;
 const MAX_AMBIENT_INTERACTION_LINES = 2;
 const INTERIOR_PANORAMA_FOV = Math.PI * 0.38;
 const INTERIOR_PANORAMA_TAU = Math.PI * 2;
-const INTERIOR_PLAYER_SPEED = 1.55;
+const INTERIOR_PLAYER_SPEED = 2.4;
+const INTERIOR_PLAYER_RUN_SPEED = 4;
 const INTERIOR_INTERACTION_RADIUS = 2.05;
 const INTERIOR_FALLBACK_PLAYER_RADIUS = 0.32;
 const INTERIOR_FALLBACK_CITIZEN_RADIUS = 0.28;
@@ -193,6 +200,13 @@ const ENCOUNTER_RADIUS = 30;
 const ENCOUNTER_COOLDOWN_MS = 26000;
 const INDOOR_ENTER_CHANCE = 0.09;
 const MAX_INTERIOR_OCCUPANTS = 4;
+const CORE_INTERIOR_STORY_ZONES = new Set(["residential", "office-district", "public-plaza", "empathy-lab", "story-archive", "legal-court"]);
+const getInteriorOccupantCap = (zoneId) => {
+  const mobile = typeof window !== "undefined" && window.innerWidth <= 720;
+  if (zoneId === "public-plaza") return mobile ? 2 : 3;
+  if (mobile) return CORE_INTERIOR_STORY_ZONES.has(zoneId) ? 2 : 1;
+  return CORE_INTERIOR_STORY_ZONES.has(zoneId) ? MAX_INTERIOR_OCCUPANTS : 2;
+};
 const IMMERSION_NEAR_RADIUS = 150; // 跟随模式下的注意力半径(px,世界坐标)
 
 const ENCOUNTER_GREETINGS = ["你好呀", "嗨,好久不见", "今天过得怎么样?", "又见面啦", "早啊"];
@@ -2820,7 +2834,7 @@ async function showSavePanel() {
       <p style="opacity:0.8">${memory.enabled
         ? `已连接代理 · 已同步 ${memory.synced} 条 · 待同步 ${memory.pending} 条${memory.lastError ? ` · ⚠ ${h(memory.lastError)}` : ""}`
         : "未配置。记忆当前只保存在这台设备上；填入代理地址后，可以同步到你自己的云端记忆库。"}</p>
-      <input type="text" id="memoryProxyInput" placeholder="http://localhost:8787/api/memory"
+      <input type="text" id="memoryProxyInput" placeholder="${h(typeof getDefaultMemoryProxyUrl === "function" ? getDefaultMemoryProxyUrl() : "http://127.0.0.1:8797/api/memory")}"
         value="${h(typeof getMemoryProxyUrl === "function" ? getMemoryProxyUrl() : "")}"
         style="width:100%;box-sizing:border-box;padding:6px 8px;border:2px solid #1a1a2e;border-radius:8px;font-size:12px;margin:4px 0" />
       <div style="display:flex;gap:4px">
@@ -5575,15 +5589,15 @@ const INTERIOR_ZONE_PROFILES = {
     completion: "你发现，告别不是把一个人放下，而是为这段关系找到新的存在方式。"
   },
   "empathy-lab": {
-    blueprint: "care", title: "谈心和解屋共情室", intro: "在这里，理解不代表同意，但每句话都会被完整听完。",
-    labels: ["安全休息床", "倾听护理站", "平行等候椅", "匿名档案柜", "情绪安抚角", "复原植物窗"],
-    clues: ["倾听台上有两只计时器，确保沉默也属于对话的一部分。", "匿名档案只记录需求，不保存对人的判断。", "安抚角准备了不同重量的毯子，让身体先于语言找到安全。"],
+    blueprint: "care", title: "谈心和解屋共情室", intro: "在这里，理解不代表同意；距离、目光和边界都可以被重新校准。",
+    labels: ["距离校准椅", "对话校准台", "平行目光位", "边界授权柜", "身体安定席", "呼吸光窗"],
+    clues: ["对话校准台上有两只计时器，确保沉默也属于对话的一部分。", "边界授权柜只记录需求，不保存对人的判断。", "身体安定席提供不同支撑，让身体先于语言找到安全。"],
     completion: "你看见，共情不是猜中别人，而是持续确认自己有没有听错。"
   },
   "story-archive": {
     blueprint: "creative", title: "街坊故事馆口述室", intro: "城市的历史不只属于大事件，也属于普通人没来得及说完的一天。",
-    labels: ["记忆画架", "街坊作品墙", "口述排练角", "故事索引桌", "声音档案角"],
-    clues: ["故事墙按情绪而不是年份排列，相隔几十年的人因此成为邻居。", "索引桌保留“我记不清了”这样的句子，没有替讲述者补全。", "声音角能听见背景里的锅碗、风声和停顿，它们也被当作历史。"],
+    labels: ["公开故事柜", "授权范围墙", "封存缓冲门", "见证索引桌", "声音封存匣"],
+    clues: ["公开故事柜按情绪而不是年份排列，相隔几十年的人因此成为邻居。", "授权范围墙保留“我记不清了”这样的句子，没有替讲述者补全。", "声音封存匣能听见背景里的锅碗、风声和停顿；带出封存区之前，讲述者必须再次确认。"],
     completion: "你发现，一座城市真正的档案，是人们愿意把不完整的自己交给彼此。"
   },
   "commons-workshop": {
@@ -5661,6 +5675,22 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
   }),
   "public-plaza": Object.freeze({
     shellId: "civic-listening-ring-v1",
+    shell: {
+      shape: "round-cutaway",
+      radius: 5.4,
+      height: 3.72,
+      floorY: 0,
+      // Place the sunlit threshold on the left-third story axis visible in
+      // the reference composition. This metre-space transform is shared by
+      // the visible reveal, route affordance and exit interaction.
+      door: { id: "exit", angle: -0.88, width: 2.32, height: 3.08, depth: 0.18 }
+    },
+    // Enter directly at the edge of the listening circle. The earlier spawn
+    // lived near the cutaway wall, which made the player read as a giant
+    // foreground obstruction instead of one participant in the discussion.
+    // A slight off-axis entrance avoids the rigid, perfectly symmetrical back
+    // view while keeping the player on the listening circle and fully walkable.
+    spawn: { x: 0.22, y: 0.86, z: 1.38 },
     lightingPreset: "civic-ivory",
     materialPreset: "terrazzo-teal-brass",
     functionalZones: [
@@ -5670,16 +5700,104 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "pause", label: "情绪缓冲", x: 3.45, z: 1.85, radius: 0.78, color: "#ed9164" }
     ],
     props: [
-      { renderModel: true, worldX: -3.15, worldZ: -1.4, displayScale: 0.72, interactionWorldX: -2.15, interactionWorldZ: -0.95 },
-      { renderModel: true, worldX: 0, worldZ: -4.22, displayScale: 0.72, interactionWorldX: 0, interactionWorldZ: -3.12 },
-      { renderModel: true, worldX: 3.25, worldZ: -1.52, displayScale: 0.66, interactionWorldX: 2.18, interactionWorldZ: -1.0 },
-      { worldX: -3.2, worldZ: 1.45, displayScale: 0.68, interactionWorldX: -2.1, interactionWorldZ: 1.15 },
+      {
+        model: "civic-display-case",
+        assetIntent: "civic-display-case",
+        renderModel: true,
+        physicsSolid: true,
+        // Keep the glass case as a low left-foreground layer rather than a
+        // second wall. The source preserves the doorway, flower table and
+        // social ring above it; the earlier 1.12 scale reached the HUD and
+        // made the room feel smaller than its metre-space plan.
+        worldX: -3.45,
+        worldZ: 1.25,
+        rotationY: 0.28,
+        displayScale: 0.88,
+        // `rotationY` supplies the world yaw; collider.rotation is a local
+        // offset and must stay zero or Rapier would apply the angle twice.
+        collider: { shape: "box", halfX: 0.82, halfY: 0.84, halfZ: 0.47, rotation: 0 },
+        interactionWorldX: -2.42,
+        interactionWorldZ: 1.25
+      },
+      {
+        model: "civic-notice-console",
+        assetIntent: "civic-notice-console",
+        renderModel: true,
+        physicsSolid: true,
+        worldX: 0,
+        worldZ: -4.56,
+        rotationY: 0,
+        displayScale: 1,
+        // v93 enlarges the crafted evidence wall and console together. Keep
+        // the collider within the visible oak frame while leaving a full metre
+        // of reachable standing space in front of the drawers.
+        collider: { shape: "box", halfX: 1.33, halfY: 1.48, halfZ: 0.4, rotation: 0 },
+        interactionWorldX: 0,
+        interactionWorldZ: -3.46
+      },
+      {
+        model: "civic-lounge-suite",
+        assetIntent: "civic-lounge",
+        renderModel: true,
+        physicsSolid: true,
+        worldX: 3.62,
+        worldZ: -1.56,
+        rotationY: -1.12,
+        // The reference lounge reads as a real two-seat conversation bay.
+        // Keep its authored sofa/table transform and its collider footprint in
+        // the same metre-scale contract so the player never hits empty space.
+        displayScale: 1.08,
+        collider: { shape: "box", halfX: 1.35, halfY: 0.97, halfZ: 0.99, rotation: 0 },
+        interactionWorldX: 2.35,
+        interactionWorldZ: -1.02
+      },
+      {
+        // The civic foreground desk is authored directly in the room renderer
+        // so its lamp, water glass, paper and stationery can match the hero
+        // composition. Physics reads the same metre-space transform.
+        assetIntent: "civic-record-desk",
+        renderModel: false,
+        physicsSolid: true,
+        worldX: -2.82,
+        worldZ: 3.42,
+        rotationY: 2.12,
+        // The reference uses this desk as a cropped foreground frame, not a
+        // mid-room miniature. The collider grows from the same transform and
+        // remains outside the 1.4m testimony loop.
+        displayScale: 1.2,
+        collider: { shape: "box", halfX: 1.22, halfY: 0.93, halfZ: 0.58, rotation: 0 },
+        interactionWorldX: -1.78,
+        interactionWorldZ: 2.32
+      },
+      {
+        // A low lounge table completes the sofa conversation bay visible in
+        // the reference. The procedural renderer and Rapier both read this
+        // exact metre-space transform, so the books and plant never become a
+        // visual-only obstacle that the player can walk through.
+        assetIntent: "civic-tea-table",
+        renderModel: false,
+        physicsSolid: true,
+        worldX: 3.08,
+        worldZ: -0.62,
+        rotationY: -0.28,
+        displayScale: 0.94,
+        collider: { shape: "box", halfX: 0.69, halfY: 0.64, halfZ: 0.42, rotation: -0.28 },
+        interactionWorldX: 2.14,
+        interactionWorldZ: -0.12
+      },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
-      { worldX: 3.55, worldZ: 1.92, displayScale: 0.62, interactionWorldX: 2.62, interactionWorldZ: 1.55 }
+      { renderModel: false, physicsSolid: false, focal: false, worldX: 4.08, worldZ: -0.64, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
+    ],
+    extraColliders: [
+      { id: "civic-library-wall", x: 4.66, z: -2.76, collider: { shape: "box", halfX: 0.72, halfY: 1.26, halfZ: 0.36, rotation: -1.03 }, material: "wood" },
+      { id: "civic-threshold-flowers", x: -4.05, z: -1.25, collider: { shape: "circle", radius: 0.5, halfY: 0.82 }, material: "wood" },
+      { id: "civic-reverse-witness-bench", x: 0, z: 4.28, collider: { shape: "box", halfX: 1.3, halfY: 0.62, halfZ: 0.48, rotation: 0 }, material: "fabric" },
+      { id: "civic-reverse-planter-left", x: -2.05, z: 4.48, collider: { shape: "circle", radius: 0.34, halfY: 0.76 }, material: "terrazzo" },
+      { id: "civic-reverse-planter-right", x: 2.05, z: 4.48, collider: { shape: "circle", radius: 0.34, halfY: 0.76 }, material: "terrazzo" }
     ],
     actorStagingPoints: [{ x: -1.6, z: 0.15 }, { x: 1.6, z: 0.15 }, { x: -0.8, z: 1.45 }, { x: 0.85, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
-    cameraTargets: [{ id: "hearing", x: 0, z: 0.15 }, { id: "evidence", x: -1.25, z: -0.8 }]
+    cameraTargets: [{ id: "hearing", x: -0.18, z: 0.15 }, { id: "evidence", x: -1.25, z: -0.8 }]
   }),
   "empathy-lab": Object.freeze({
     shellId: "calibration-circle-v1",
@@ -5749,20 +5867,56 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
 function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
   const zoneId = String(zone?.id || "unknown-room");
   const authored = INTERIOR_ZONE_LAYOUT_PROFILES[zoneId] || {};
+  const defaultIdentity = INTERIOR_ZONE_PROFILES[zoneId] || {};
+  const defaultDoorAngle = 0;
   return {
-    version: 1,
+    version: 2,
     zoneId,
+    worldScaleMeters: 1,
     shellId: authored.shellId || `${zoneId}-shell-v1`,
+    spawn: {
+      x: Number(authored.spawn?.x || 0),
+      y: Number(authored.spawn?.y || 0.86),
+      z: Number(authored.spawn?.z ?? 3.72)
+    },
+    shell: {
+      ...(authored.shell || {}),
+      shape: "round-cutaway",
+      radius: Number(authored.shell?.radius || 5.4),
+      height: Number(authored.shell?.height || 3.72),
+      floorY: Number(authored.shell?.floorY || 0),
+      door: { id: "exit", angle: defaultDoorAngle, width: 0.95, height: 2.15, depth: 0.16, ...(authored.shell?.door || {}) },
+      levels: [{ id: "ground", y: 0, walkable: true }]
+    },
     lightingPreset: authored.lightingPreset || `${blueprintKey}-soft-daylight`,
     materialPreset: authored.materialPreset || `${blueprintKey}-layered-dopamine`,
     functionalZones: Array.isArray(authored.functionalZones) ? authored.functionalZones.map((item) => ({ ...item })) : [],
-    props: Array.isArray(authored.props) ? authored.props.map((item) => ({ ...item })) : [],
+    props: Array.isArray(authored.props) ? authored.props.map((item, index) => ({
+      ...item,
+      id: item.id || `prop-${index}`,
+      transform: {
+        position: { x: Number(item.worldX || 0), y: Number(item.worldY || 0), z: Number(item.worldZ || 0) },
+        rotation: { x: 0, y: Number(item.rotationY || 0), z: 0 },
+        scale: Number(item.displayScale || 1)
+      },
+      collider: item.collider || { shape: "model-bounds", source: "render-transform" },
+      rigidBody: item.rigidBody || { type: "fixed", material: "wood", persistence: "room-reset" },
+      interactionAnchor: {
+        position: { x: Number(item.interactionWorldX ?? item.worldX ?? 0), y: 0, z: Number(item.interactionWorldZ ?? item.worldZ ?? 0) },
+        facing: Number(item.interactionFacing || 0),
+        reach: 0.9
+      }
+    })) : [],
     actorStagingPoints: Array.isArray(authored.actorStagingPoints)
-      ? authored.actorStagingPoints.map((point) => ({ x: Number(point.x || 0), z: Number(point.z || 0) }))
-      : [{ x: -0.9, z: 0.8 }, { x: 0.9, z: 0.8 }, { x: 0, z: -0.9 }],
+      ? authored.actorStagingPoints.map((point) => ({ x: Number(point.x || 0), y: Number(point.y || 0), z: Number(point.z || 0), facing: Number(point.facing || 0) }))
+      : [{ x: -0.9, y: 0, z: 0.8 }, { x: 0.9, y: 0, z: 0.8 }, { x: 0, y: 0, z: -0.9 }],
     cameraSafeArea: { x: 0, z: 0.3, radius: 2.1, ...(authored.cameraSafeArea || {}) },
     cameraTargets: Array.isArray(authored.cameraTargets) ? authored.cameraTargets.map((item) => ({ ...item })) : [{ id: "center", x: 0, z: 0.2 }],
-    standards: { mainCirculation: 1.4, interactionClearance: 0.9, spawnClearance: 1, narrativeClearRadius: 1.5 }
+    cameraVolumes: [{ id: "main", center: { x: 0, y: 1.1, z: 0.3 }, radius: 4.85, minDistance: 1.35, maxDistance: 5.2 }],
+    navSurfaces: [{ id: "ground", shape: "disc", radius: 4.86, y: 0, maxSlope: 45, maxStep: 0.22 }],
+    interactionAnchors: [],
+    standards: { mainCirculation: 1.4, interactionClearance: 0.9, spawnClearance: 1, narrativeClearRadius: 1.5 },
+    identity: { title: defaultIdentity.title || zone?.name || zoneId, blueprintKey }
   };
 }
 
@@ -5942,7 +6096,7 @@ function getInteriorLayout(W, H) {
   const doorW = 66;
   const doorH = 92;
   const yaw = Number(interiorOrbit?.yaw || 0);
-  const pitch = Number(interiorOrbit?.pitch || 0.58);
+  const pitch = Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH);
   return {
     wallTop, floorTop, floorBottom, left, right,
     centerX: W / 2,
@@ -5968,16 +6122,42 @@ function getInteriorPhysicsVariant(blueprint) {
 }
 
 function getInteriorPhysicsItems(blueprint) {
-  return (blueprint?.props || []).map((prop, index, props) => {
+  const propItems = (blueprint?.props || []).map((prop, index, props) => {
     if (prop.render3d === false) return null;
     const placement = getInteriorPropWorldPlacement(prop, index, props.length);
+    const model = interiorThreeModel(interiorPropModel(prop, blueprint));
+    const physics = getInteriorPhysicsApi();
+    const authoredCollider = prop.collider?.shape && prop.collider.shape !== "model-bounds"
+      ? prop.collider
+      : physics?.MODEL_FOOTPRINTS?.[model] || null;
+    // Only genuinely hand-sized props may become free dynamic bodies. The
+    // meditation seat is full-size furniture; making it dynamic caused the
+    // tilted chair / floating dowel failure visible in production rooms.
+    const dynamicModel = model === "supply-crate";
+    const rigidBody = prop.rigidBody?.type && prop.rigidBody.type !== "fixed"
+      ? prop.rigidBody
+      : dynamicModel
+        ? { type: "dynamic", material: "wood", mass: 8, persistence: "room-reset" }
+        : prop.rigidBody || { type: "fixed", material: "wood", persistence: "room-reset" };
+    const position = prop.transform?.position || {};
+    const rotation = prop.transform?.rotation || {};
+    const interaction = prop.interactionAnchor?.position || {};
     return {
       ...placement,
+      worldX: Number.isFinite(Number(position.x)) ? Number(position.x) : placement.worldX,
+      worldY: Number.isFinite(Number(position.y)) ? Number(position.y) : 0,
+      worldZ: Number.isFinite(Number(position.z)) ? Number(position.z) : placement.worldZ,
+      rotationY: Number.isFinite(Number(rotation.y)) ? Number(rotation.y) : -placement.angle,
+      interactionWorldX: Number.isFinite(Number(interaction.x)) ? Number(interaction.x) : placement.interactionWorldX,
+      interactionWorldZ: Number.isFinite(Number(interaction.z)) ? Number(interaction.z) : placement.interactionWorldZ,
       key: `prop-${index}`,
       index,
-      model: interiorThreeModel(interiorPropModel(prop, blueprint)),
+      model,
       renderModel: prop.renderModel !== false,
       physicsSolid: prop.physicsSolid !== false,
+      collider: authoredCollider,
+      rigidBody,
+      material: rigidBody.material || "wood",
       label: prop.label || "",
       kind: "prop",
       anchorHeight: 1.18,
@@ -5985,6 +6165,28 @@ function getInteriorPhysicsItems(blueprint) {
       visible: true
     };
   }).filter(Boolean);
+  const extraColliders = (blueprint?.layoutProfile?.extraColliders || []).map((entry, extraIndex) => ({
+    key: `shell-${entry.id || extraIndex}`,
+    index: propItems.length + extraIndex,
+    model: "shell-collider",
+    renderModel: false,
+    physicsSolid: true,
+    worldX: Number(entry.x || 0),
+    worldY: Number(entry.y || 0),
+    worldZ: Number(entry.z || 0),
+    rotationY: Number(entry.collider?.rotation || 0),
+    interactionWorldX: Number(entry.x || 0),
+    interactionWorldZ: Number(entry.z || 0),
+    collider: entry.collider,
+    rigidBody: { type: "fixed", material: entry.material || "wood", persistence: "room-reset" },
+    material: entry.material || "wood",
+    label: "",
+    kind: "shell",
+    anchorHeight: 1,
+    modelScale: 1,
+    visible: true
+  }));
+  return [...propItems, ...extraColliders];
 }
 
 function ensureInteriorPhysicsWorld(blueprint) {
@@ -6000,7 +6202,8 @@ function ensureInteriorPhysicsWorld(blueprint) {
     archetype: blueprint.key,
     variant,
     items,
-    spawn: { x: 0, z: 3.72 }
+    layoutProfile,
+    spawn: layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 }
   });
   world.signature = signature;
   world.layoutProfile = layoutProfile;
@@ -6050,6 +6253,47 @@ function ensureInteriorPhysicsWorld(blueprint) {
     }
   };
   return world;
+}
+
+function disposeInteriorRapierRuntime() {
+  const physics = getInteriorPhysicsApi();
+  if (interiorRapierRuntime) physics?.disposeRapierRuntime?.(interiorRapierRuntime);
+  interiorRapierRuntime = null;
+  interiorRapierLoading = null;
+}
+
+function ensureInteriorRapierRuntime(blueprint) {
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(blueprint);
+  if (!physics?.createRapierRuntime || !world || !interiorView) return null;
+  if (interiorRapierRuntime?.signature === world.signature && !interiorRapierRuntime.disposed) return interiorRapierRuntime;
+  if (interiorRapierLoading?.signature === world.signature) return null;
+  disposeInteriorRapierRuntime();
+  const loading = physics.createRapierRuntime({ world }).then((runtime) => {
+    if (!interiorView || interiorPhysicsWorld?.signature !== world.signature) {
+      physics.disposeRapierRuntime?.(runtime);
+      return null;
+    }
+    runtime.signature = world.signature;
+    interiorRapierRuntime = runtime;
+    interiorRapierLoading = null;
+    const position = runtime.playerBody.translation();
+    interiorOrbit.x = position.x;
+    interiorOrbit.y = position.y;
+    interiorOrbit.z = position.z;
+    interiorOrbit.grounded = true;
+    interiorView.physicsReadyAt = performance.now();
+    markRenderActive(1800);
+    return runtime;
+  }).catch((error) => {
+    console.error("Rapier interior physics failed to initialize", error);
+    interiorRapierLoading = null;
+    if (interiorView) interiorView.physicsError = String(error?.message || error);
+    markRenderActive(1000);
+    return null;
+  });
+  interiorRapierLoading = { signature: world.signature, promise: loading };
+  return null;
 }
 
 function getInteriorInteractionPoint(index, fallback) {
@@ -6129,6 +6373,7 @@ function moveInteriorPlayer(forward, strafe, distance) {
 }
 
 function nudgeInteriorPlayer(direction, distance = 0.11) {
+  if (interiorRapierRuntime) return;
   if (direction === "forward") moveInteriorPlayer(1, 0, distance);
   else if (direction === "back") moveInteriorPlayer(-1, 0, distance);
   else if (direction === "left") moveInteriorPlayer(0, -1, distance);
@@ -6137,23 +6382,57 @@ function nudgeInteriorPlayer(direction, distance = 0.11) {
 
 function updateInteriorPlayerMovement(now) {
   if (!interiorView) return;
+  const blueprint = getInteriorBlueprint(interiorView.zone);
+  ensureInteriorRapierRuntime(blueprint);
   const previous = Number(interiorOrbit.lastMoveAt || now);
-  const dt = Math.min(0.05, Math.max(0, (now - previous) / 1000));
+  const dt = Math.min(0.1, Math.max(0, (now - previous) / 1000));
   interiorOrbit.lastMoveAt = now;
-  if (!interiorMoveKeys.size || dt <= 0) return;
+  if (dt <= 0) return;
 
-  let forward = 0;
-  let strafe = 0;
+  let forward = Number(interiorJoystick.z || 0);
+  let strafe = Number(interiorJoystick.x || 0);
   if (interiorMoveKeys.has("forward")) forward += 1;
   if (interiorMoveKeys.has("back")) forward -= 1;
   if (interiorMoveKeys.has("left")) strafe -= 1;
   if (interiorMoveKeys.has("right")) strafe += 1;
   const magnitude = Math.hypot(forward, strafe);
-  if (!magnitude) return;
-  forward /= magnitude;
-  strafe /= magnitude;
+  if (magnitude > 1) {
+    forward /= magnitude;
+    strafe /= magnitude;
+  }
 
-  moveInteriorPlayer(forward, strafe, INTERIOR_PLAYER_SPEED * dt);
+  if (interiorRapierRuntime) {
+    const yaw = Number(interiorOrbit.yaw || 0);
+    const forwardX = Math.sin(yaw);
+    const forwardZ = -Math.cos(yaw);
+    const rightX = Math.cos(yaw);
+    const rightZ = Math.sin(yaw);
+    const result = getInteriorPhysicsApi()?.stepRapierCharacter?.(interiorRapierRuntime, {
+      x: forwardX * forward + rightX * strafe,
+      z: forwardZ * forward + rightZ * strafe,
+      run: interiorRunHeld
+    }, dt);
+    if (result) {
+      const movedDistance = Math.hypot(result.x - Number(interiorOrbit.x || 0), result.z - Number(interiorOrbit.z || 0));
+      interiorOrbit.x = result.x;
+      interiorOrbit.y = result.y;
+      interiorOrbit.z = result.z;
+      interiorOrbit.grounded = result.grounded;
+      interiorOrbit.velocity = result.velocity;
+      interiorOrbit.contacts = result.contacts;
+      interiorOrbit.blocked = result.contacts.length > 0;
+      interiorOrbit.motionState = !result.grounded
+        ? result.velocity.y > 0.1 ? "jump" : "fall"
+        : magnitude > 0.05 ? interiorRunHeld ? "run" : "walk" : "idle";
+      interiorOrbit.walkPhase = Number(interiorOrbit.walkPhase || 0) + movedDistance * (interiorRunHeld ? 12 : 8.5);
+    }
+    if (magnitude > 0.01 || !result?.grounded) markRenderActive(220);
+    return;
+  }
+
+  if (!magnitude) return;
+
+  moveInteriorPlayer(forward, strafe, (interiorRunHeld ? INTERIOR_PLAYER_RUN_SPEED : INTERIOR_PLAYER_SPEED) * dt);
   markRenderActive(220);
 }
 
@@ -6163,7 +6442,7 @@ function interiorAngleDelta(angle, yaw) {
 
 function projectInteriorPanoramaPoint(W, H, angle, distance = 0.66, height = 0) {
   const yaw = Number(interiorOrbit?.yaw || 0);
-  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const pitch = clamp(Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH), 0.36, 0.76);
   const delta = interiorAngleDelta(angle, yaw);
   const halfFov = INTERIOR_PANORAMA_FOV / 2;
   const visible = Math.abs(delta) <= halfFov * 1.08;
@@ -6603,7 +6882,7 @@ function startQuietPresenceRitual() {
   focus();
   window.setTimeout(focus, 140);
   ritual.lastYaw = Number(interiorOrbit.yaw || 0);
-  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPitch = Number(interiorOrbit.pitch || INTERIOR_DEFAULT_PITCH);
   ritual.lastPlayerX = Number(interiorOrbit.x || 0);
   ritual.lastPlayerZ = Number(interiorOrbit.z || 0);
   if (!alreadyActive) {
@@ -6707,7 +6986,7 @@ function updateQuietPresenceRitual(now) {
   const gazeDelta = Math.abs(interiorAngleDelta(targetYaw, Number(interiorOrbit.yaw || 0)));
   const dt = clamp(now - Number(ritual.lastUpdatedAt || now), 0, 120);
   const cameraDelta = Math.abs(interiorAngleDelta(Number(interiorOrbit.yaw || 0), Number(ritual.lastYaw || 0)))
-    + Math.abs(Number(interiorOrbit.pitch || 0.58) - Number(ritual.lastPitch || 0.58)) * 0.75;
+    + Math.abs(Number(interiorOrbit.pitch || INTERIOR_DEFAULT_PITCH) - Number(ritual.lastPitch || INTERIOR_DEFAULT_PITCH)) * 0.75;
   const playerDelta = Math.hypot(playerX - Number(ritual.lastPlayerX || playerX), playerZ - Number(ritual.lastPlayerZ || playerZ));
   const aligned = gazeDelta <= QUIET_PRESENCE_GAZE_TOLERANCE;
   const respectfulDistance = distance >= QUIET_PRESENCE_MIN_DISTANCE && distance <= QUIET_PRESENCE_MAX_DISTANCE;
@@ -6725,7 +7004,7 @@ function updateQuietPresenceRitual(now) {
   }
   ritual.lastUpdatedAt = now;
   ritual.lastYaw = Number(interiorOrbit.yaw || 0);
-  ritual.lastPitch = Number(interiorOrbit.pitch || 0.58);
+  ritual.lastPitch = Number(interiorOrbit.pitch || INTERIOR_DEFAULT_PITCH);
   ritual.lastPlayerX = playerX;
   ritual.lastPlayerZ = playerZ;
   ritual.gazeDelta = gazeDelta;
@@ -6887,6 +7166,61 @@ function holdSocialParallaxActors(zone, entries = []) {
     : desiredCenter);
   interiorView.socialParallaxPositions = { witnesses: positions, center: { x: center.x, z: center.z } };
   return interiorView.socialParallaxPositions;
+}
+
+function stagePublicListeningEnsemble(zone, entries = []) {
+  const qaComposition = zone?.id === "public-plaza" && isLocalInteriorSceneQaEnabled();
+  if ((!qaComposition && zone?.id !== SOCIAL_PARALLAX_ZONE_ID) || interiorView?.zone?.id !== zone.id) return;
+  const ritual = getSocialParallaxRitual(zone.id);
+  if ((!ritual || ritual.status === "complete") && !qaComposition) return;
+  const witnessIds = new Set(qaComposition ? entries.map((entry) => entry.id) : (ritual?.witnessIds || []));
+  const extras = entries.filter((entry) => !witnessIds.has(entry.id));
+  const ensemble = qaComposition ? entries : extras;
+  if (!ensemble.length) return;
+  const physics = getInteriorPhysicsApi();
+  const world = ensureInteriorPhysicsWorld(getInteriorBlueprint(zone));
+  const citizenRadius = Number(physics?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS);
+  const staged = qaComposition ? [] : entries
+    .filter((entry) => witnessIds.has(entry.id))
+    .map((entry) => ({ id: entry.id, x: entry.worldX, z: entry.worldZ, radius: citizenRadius }));
+  const compactCivicComposition = qaComposition && window.innerWidth <= 720;
+  const listeningPoints = qaComposition ? [
+    { x: compactCivicComposition ? -1.28 : -1.5, z: compactCivicComposition ? 0.3 : 0.22 },
+    { x: compactCivicComposition ? 1.28 : 1.58, z: compactCivicComposition ? 0.32 : 0.28 },
+    // Portrait framing needs the rear mediator closer to the centreline;
+    // leaving the desktop offset unchanged placed them exactly behind the
+    // facilitator and made a four-person hearing read as a three-person scene.
+    // Desktop also keeps the witness off the facilitator's silhouette. The
+    // asymmetric open triangle matches the reference's conversational staging
+    // and gives the player a readable lane toward the testimony wall.
+    { x: compactCivicComposition ? 0.52 : 1.12, z: compactCivicComposition ? -1.48 : -1.58 }
+  ] : [
+    { x: 0.9, z: -1.45 },
+    { x: 3.15, z: 0.72 },
+    { x: -3.05, z: -0.35 }
+  ];
+  ensemble.forEach((entry, index) => {
+    const ia = interiorAnimations[entry.id];
+    if (!ia) return;
+    const desired = listeningPoints[index] || listeningPoints[listeningPoints.length - 1];
+    const point = physics?.findNearestWalkable && world
+      ? physics.findNearestWalkable(world, desired, citizenRadius, { dynamic: staged, selfId: entry.id })
+      : desired;
+    ia.worldX = point.x;
+    ia.worldZ = point.z;
+    ia.targetWorldX = point.x;
+    ia.targetWorldZ = point.z;
+    ia.path = [];
+    ia.pathIndex = 0;
+    ia.nextTargetAt = Number.POSITIVE_INFINITY;
+    ia.nextBehaviorAt = Number.POSITIVE_INFINITY;
+    ia.state = "listen";
+    entry.worldX = point.x;
+    entry.worldZ = point.z;
+    entry.state = ia.state;
+    entry.moveAnim = ia;
+    staged.push({ id: entry.id, x: point.x, z: point.z, radius: citizenRadius });
+  });
 }
 
 function focusSocialParallaxTarget() {
@@ -9597,12 +9931,27 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
   interiorHotspots = socialParallaxPending || empathyCalibrationPending || memoryAuthorizationPending
     ? []
     : (anchors || []).filter((anchor) => anchor.visible);
+  // The civic testimony is staged like the selected reference: one social
+  // cue and one contextual action, not a constellation of identical sparkles
+  // floating over every piece of furniture. Keep the complete anchor set for
+  // keyboard/context interaction and navigation, but render only the focused
+  // or physically nearby prop in the cinematic room.
+  const visibleHotspots = interiorView.zone?.id === "public-plaza"
+    ? interiorHotspots
+      .filter((anchor) => anchor.index === interiorFocusPropIndex || isInteriorAnchorNearby(anchor))
+      .sort((a, b) => {
+        const aFocused = a.index === interiorFocusPropIndex ? 1 : 0;
+        const bFocused = b.index === interiorFocusPropIndex ? 1 : 0;
+        return bFocused - aFocused || getInteriorAnchorDistance(a) - getInteriorAnchorDistance(b);
+      })
+      .slice(0, 1)
+    : interiorHotspots;
   const layer = ensureInteriorHotspotLayer();
   const record = getInteriorExplorationRecord(interiorView.zone.id);
-  const signature = interiorHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
+  const signature = visibleHotspots.map((anchor) => `${anchor.index}:${anchor.label}`).join("|");
   if (layer.dataset.signature !== signature) {
     layer.dataset.signature = signature;
-    layer.innerHTML = interiorHotspots.map((anchor) => {
+    layer.innerHTML = visibleHotspots.map((anchor) => {
       const found = record.found.includes(anchor.label);
       return `<button class="interior-hotspot${found ? " discovered" : ""}" type="button" data-interior-hotspot="${anchor.index}" aria-label="探索${escapeHtml(anchor.label)}" title="探索${escapeHtml(anchor.label)}"><span class="interior-hotspot-mark" aria-hidden="true">✦</span><span class="interior-hotspot-label">${escapeHtml(anchor.label)}</span></button>`;
     }).join("");
@@ -9610,7 +9959,7 @@ function syncInteriorHotspotLayer(anchors, blueprint) {
   const buttons = [...layer.querySelectorAll("[data-interior-hotspot]")];
   buttons.forEach((button) => {
     const index = Number(button.dataset.interiorHotspot);
-    const anchor = interiorHotspots.find((item) => item.index === index);
+    const anchor = visibleHotspots.find((item) => item.index === index);
     if (!anchor) {
       button.hidden = true;
       return;
@@ -11927,7 +12276,7 @@ function exploreInteriorHotspot(propIndex) {
 }
 
 function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
-  const pitch = clamp(Number(interiorOrbit?.pitch || 0.58), 0.36, 0.76);
+  const pitch = clamp(Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH), 0.36, 0.76);
   const horizon = H * (0.39 + (0.58 - pitch) * 0.2);
   const ceiling = ctx.createLinearGradient(0, 0, 0, horizon);
   ceiling.addColorStop(0, isNight ? "#111827" : "#dff3f6");
@@ -13272,7 +13621,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
   const items = getInteriorThreeItems(blueprint, W, H);
   const cameraFocus = getInteriorCameraFocus(blueprint, actors);
   const physicsActors = [
-    { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
+    { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), y: Number(interiorOrbit?.y || 0.86), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
     ...actors.map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
   ];
   return api.update({
@@ -13280,7 +13629,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     width: W,
     height: H,
     yaw: Number(interiorOrbit?.yaw || 0),
-    pitch: Number(interiorOrbit?.pitch || 0.58),
+    pitch: Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
     cameraX: Number(interiorOrbit?.x || 0),
     cameraZ: Number(interiorOrbit?.z || 0),
     cameraTargetX: cameraFocus.x,
@@ -13302,7 +13651,9 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     physics: {
       enabled: interiorPhysicsDebugVisible,
       colliders: interiorPhysicsWorld?.colliders || [],
-      actors: physicsActors
+      actors: physicsActors,
+      ready: !!interiorRapierRuntime,
+      dynamics: getInteriorPhysicsApi()?.getRapierDynamicTransforms?.(interiorRapierRuntime) || []
     }
   });
 }
@@ -13695,25 +14046,44 @@ function enterInteriorView(zone, source = "manual") {
       until: explorationRecord.completed && !explorationRecord.scenePlayed ? Number.POSITIVE_INFINITY : enteredAt + 7200
     }
   };
-  interiorOrbit = { yaw: 0, pitch: 0.58, x: 0, z: 0, lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
+  interiorOrbit = { yaw: 0, pitch: INTERIOR_DEFAULT_PITCH, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
   interiorPhysicsWorld = null;
+  disposeInteriorRapierRuntime();
   const physicsWorld = ensureInteriorPhysicsWorld(blueprint);
   if (physicsWorld?.spawn) {
     interiorOrbit.x = physicsWorld.spawn.x;
+    interiorOrbit.y = physicsWorld.spawn.y || 0.86;
     interiorOrbit.z = physicsWorld.spawn.z;
   }
+  ensureInteriorRapierRuntime(blueprint);
   interiorMoveKeys.clear();
+  interiorRunHeld = false;
+  interiorJoystick = { x: 0, z: 0, pointerId: null };
   interiorNearbyAnchor = null;
   interiorFocusPropIndex = null;
   interiorExitRect = null;
   hideDetail();
   document.body.classList.add("interior-active");
+  document.body.dataset.interiorZone = zone.id;
   if (!questPanelCollapsed) {
     questPanelCollapsed = true;
     renderFirstLoopPanel();
   }
   ensureInteriorChip(zone);
   ensureInteriorMovePad();
+  ensureInteriorCinematicActionRail(zone);
+  ensureInteriorSpeakerBeacon(zone);
+  // Enter the civic room in medias res: the teal listener is already sharing
+  // a testimony, so the first frame communicates a social scene rather than
+  // four mannequins waiting for UI input. Player actions can immediately
+  // replace this beat through the same authoritative acting state.
+  if (zone.id === "public-plaza") {
+    // QA browsers may compile four GLBs, skinning shaders and post-processing
+    // in parallel with other viewport checks. Keep the deterministic opening
+    // beat alive for the complete QA observation window; player-facing timing
+    // remains the authored 6.2 seconds.
+    startInteriorCivicActing("listen", source === "qa" ? 60000 : 6200);
+  }
   if (source === "manual") seedInteriorOccupants(zone);
   stageQuietPresenceWitness(zone);
   stageSocialParallaxWitnesses(zone);
@@ -13737,15 +14107,23 @@ function exitInteriorView() {
   interiorExitRect = null;
   interiorHotspots = [];
   interiorPhysicsWorld = null;
+  disposeInteriorRapierRuntime();
+  interiorRunHeld = false;
+  interiorJoystick = { x: 0, z: 0, pointerId: null };
+  interiorCivicActing = { action: "", startedAt: 0, until: 0 };
+  delete document.body.dataset.civicActing;
   window.__mirrorLifeInteriorPhysics = null;
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
+  delete document.body.dataset.interiorZone;
   document.body.classList.remove("quiet-presence-active");
   document.body.classList.remove("social-parallax-active");
   document.body.classList.remove("empathy-calibration-active");
   document.body.classList.remove("memory-authorization-active");
   document.getElementById("interiorChip")?.remove();
   document.getElementById("interiorMovePad")?.remove();
+  document.getElementById("interiorCinematicActions")?.remove();
+  document.getElementById("interiorSpeakerBeacon")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
   document.getElementById("interiorDiscoveryCard")?.remove();
   document.getElementById("interiorContextAction")?.remove();
@@ -13777,32 +14155,200 @@ function ensureInteriorMovePad() {
   document.getElementById("interiorMovePad")?.remove();
   const pad = document.createElement("nav");
   pad.id = "interiorMovePad";
-  pad.setAttribute("aria-label", "室内移动");
+  pad.setAttribute("aria-label", "室内移动与动作");
   pad.innerHTML = `
-    <button type="button" data-interior-move="forward" aria-label="向前移动" title="向前">↑</button>
-    <button type="button" data-interior-move="left" aria-label="向左移动" title="向左">←</button>
-    <span aria-hidden="true">●</span>
-    <button type="button" data-interior-move="right" aria-label="向右移动" title="向右">→</button>
-    <button type="button" data-interior-move="back" aria-label="向后移动" title="向后">↓</button>`;
-  const stop = (direction) => {
-    interiorMoveKeys.delete(direction);
+    <div class="interior-joystick" data-interior-joystick role="application" aria-label="拖动移动">
+      <span class="interior-joystick-knob" aria-hidden="true"></span>
+    </div>
+    <div class="interior-action-buttons">
+      <button type="button" data-interior-action="interact" aria-label="互动" title="互动">聊</button>
+      <button type="button" data-interior-action="jump" aria-label="跳跃" title="跳跃">跃</button>
+    </div>`;
+  const joystick = pad.querySelector("[data-interior-joystick]");
+  const knob = pad.querySelector(".interior-joystick-knob");
+  const updateJoystick = (event) => {
+    const rect = joystick.getBoundingClientRect();
+    const centerX = rect.left + rect.width / 2;
+    const centerY = rect.top + rect.height / 2;
+    const dx = event.clientX - centerX;
+    const dy = event.clientY - centerY;
+    const radius = Math.max(1, rect.width * 0.32);
+    const distance = Math.hypot(dx, dy);
+    const scale = distance > radius ? radius / distance : 1;
+    const x = dx * scale;
+    const y = dy * scale;
+    interiorJoystick.x = clamp(x / radius, -1, 1);
+    interiorJoystick.z = clamp(-y / radius, -1, 1);
+    knob.style.transform = `translate(${x}px, ${y}px)`;
+    markRenderActive(400);
+  };
+  const stop = (event) => {
+    if (interiorJoystick.pointerId !== null && event?.pointerId !== undefined && event.pointerId !== interiorJoystick.pointerId) return;
+    interiorJoystick = { x: 0, z: 0, pointerId: null };
+    knob.style.transform = "translate(0, 0)";
     markRenderActive(300);
   };
-  pad.querySelectorAll("[data-interior-move]").forEach((button) => {
-    const direction = button.dataset.interiorMove;
-    button.addEventListener("pointerdown", (event) => {
-      event.preventDefault();
-      event.stopPropagation();
-      button.setPointerCapture?.(event.pointerId);
-      interiorMoveKeys.add(direction);
-      nudgeInteriorPlayer(direction, 0.08);
-      markRenderActive(1200);
-    });
-    ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => {
-      button.addEventListener(eventName, () => stop(direction));
-    });
+  joystick.addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    interiorJoystick.pointerId = event.pointerId;
+    joystick.setPointerCapture?.(event.pointerId);
+    updateJoystick(event);
+  });
+  joystick.addEventListener("pointermove", (event) => {
+    if (event.pointerId !== interiorJoystick.pointerId) return;
+    event.preventDefault();
+    updateJoystick(event);
+  });
+  ["pointerup", "pointercancel", "lostpointercapture"].forEach((eventName) => joystick.addEventListener(eventName, stop));
+  pad.querySelector('[data-interior-action="jump"]').addEventListener("pointerdown", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    getInteriorPhysicsApi()?.queueRapierJump?.(interiorRapierRuntime);
+    interiorOrbit.motionState = "jump";
+    markRenderActive(1600);
+  });
+  pad.querySelector('[data-interior-action="interact"]').addEventListener("click", (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if (interiorNearbyAnchor) exploreInteriorHotspot(interiorNearbyAnchor.index);
+    else showToast("再靠近一点，就能听见这段故事。", "listen");
   });
   document.getElementById("gameShell")?.appendChild(pad);
+}
+
+function ensureInteriorSpeakerBeacon(zone) {
+  document.getElementById("interiorSpeakerBeacon")?.remove();
+  if (zone?.id !== "public-plaza") return null;
+  const beacon = document.createElement("div");
+  beacon.id = "interiorSpeakerBeacon";
+  beacon.setAttribute("role", "img");
+  beacon.setAttribute("aria-label", "当前发言者");
+  beacon.innerHTML = `
+    <img class="speaker-beacon-pin" src="/assets/ui/fa-location-pin-coral.svg" alt="" />
+    <img class="speaker-beacon-icon" src="/assets/ui/fa-ear-listen-white.svg" alt="" />`;
+  document.getElementById("gameShell")?.appendChild(beacon);
+  return beacon;
+}
+
+function syncInteriorSpeakerBeacon(actors = [], W = window.innerWidth, H = window.innerHeight) {
+  const beacon = document.getElementById("interiorSpeakerBeacon");
+  if (!beacon || interiorView?.zone?.id !== "public-plaza") return;
+  const speaker = actors.find((actor) => ["talking", "doing", "interact"].includes(String(actor?.state || "")));
+  if (!speaker || !window.MirrorLifeInterior3D?.projectWorldPoints) {
+    beacon.classList.remove("visible");
+    beacon.removeAttribute("data-actor-id");
+    return;
+  }
+  const actorScale = clamp(Number(speaker.scale || 1), 0.72, 1.38);
+  const projected = window.MirrorLifeInterior3D.projectWorldPoints([{
+    id: speaker.id,
+    worldX: Number(speaker.worldX || 0),
+    worldY: Number(speaker.worldY || 0) + actorScale * (W <= 720 ? 2.02 : 2.1),
+    worldZ: Number(speaker.worldZ || 0)
+  }], W, H)?.[0];
+  const visible = !!projected?.visible
+    && Number(projected.x) > 18
+    && Number(projected.x) < W - 18
+    && Number(projected.y) > 76
+    && Number(projected.y) < H - 84;
+  beacon.dataset.actorId = String(speaker.id || "");
+  if (!visible) {
+    beacon.classList.remove("visible");
+    return;
+  }
+  const scale = clamp(Number(projected.scale || 1) * 1.14, 0.82, 1.08);
+  beacon.style.left = `${Number(projected.x).toFixed(1)}px`;
+  beacon.style.top = `${Number(projected.y).toFixed(1)}px`;
+  beacon.style.setProperty("--speaker-beacon-scale", scale.toFixed(3));
+  beacon.classList.add("visible");
+}
+
+function ensureInteriorCinematicActionRail(zone) {
+  document.getElementById("interiorCinematicActions")?.remove();
+  if (zone?.id !== "public-plaza") return;
+  const rail = document.createElement("nav");
+  rail.id = "interiorCinematicActions";
+  rail.setAttribute("aria-label", "邻里议事行动");
+  rail.innerHTML = `
+    <button type="button" data-civic-action="listen" class="primary">倾听线索</button>
+    <button type="button" data-civic-action="suggest">提出建议</button>
+    <button type="button" data-civic-action="guide">引导对话</button>
+    <button type="button" data-civic-action="leave">暂时离开</button>`;
+  rail.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-civic-action]");
+    if (!button) return;
+    const action = button.dataset.civicAction;
+    if (action === "leave") {
+      exitInteriorView();
+      return;
+    }
+    if (action === "listen") {
+      startInteriorCivicActing("listen", 2600);
+      if (interiorNearbyAnchor) exploreInteriorHotspot(interiorNearbyAnchor.index);
+      else document.querySelector("#interiorJourneyPanel footer button, #interiorDiscoveryCard button")?.click();
+      return;
+    }
+    if (action === "suggest") {
+      startInteriorCivicActing("suggest", 2900);
+      interiorFocusPropIndex = 0;
+      showToast("先走近居民提案台，让建议拥有具体的听众。", "listen");
+      return;
+    }
+    if (action === "guide") {
+      startInteriorCivicActing("guide", 2900);
+      const ritual = getSocialParallaxRitual(zone.id);
+      if (ritual && ritual.status !== "complete") focusSocialParallaxTarget();
+      else document.querySelector("#interiorDiscoveryCard button, #interiorJourneyPanel footer button")?.click();
+    }
+  });
+  document.getElementById("gameShell")?.appendChild(rail);
+}
+
+function startInteriorCivicActing(action, durationMs = 2800) {
+  if (interiorView?.zone?.id !== "public-plaza") return;
+  const now = performance.now();
+  interiorCivicActing = {
+    action: String(action || ""),
+    startedAt: now,
+    until: now + Math.max(900, Number(durationMs) || 2800)
+  };
+  const rail = document.getElementById("interiorCinematicActions");
+  rail?.querySelectorAll("[data-civic-action]").forEach((button) => {
+    button.classList.toggle("primary", button.dataset.civicAction === action);
+    button.setAttribute("aria-pressed", button.dataset.civicAction === action ? "true" : "false");
+  });
+  document.body.dataset.civicActing = String(action || "");
+  markRenderActive(durationMs + 500);
+}
+
+function getInteriorCivicActingState(role, baseState, now = performance.now()) {
+  const movementState = String(baseState || "idle");
+  if (["walking", "walk", "run", "jump", "fall"].includes(movementState)) return movementState;
+  if (interiorView?.zone?.id !== "public-plaza" || now >= Number(interiorCivicActing.until || 0)) {
+    if (interiorCivicActing.action) {
+      interiorCivicActing = { action: "", startedAt: 0, until: 0 };
+      delete document.body.dataset.civicActing;
+      const rail = document.getElementById("interiorCinematicActions");
+      rail?.querySelectorAll("[data-civic-action]").forEach((button) => {
+        button.classList.toggle("primary", button.dataset.civicAction === "listen");
+        button.setAttribute("aria-pressed", button.dataset.civicAction === "listen" ? "true" : "false");
+      });
+    }
+    return movementState;
+  }
+  const action = interiorCivicActing.action;
+  if (action === "suggest") return role === "player" ? "talking" : "listen";
+  if (action === "guide") return role === "facilitator" ? "talking" : "listen";
+  // The opening reference beat belongs to the brunette mediator: she carries
+  // the testimony while the teal resident and notebook facilitator attend.
+  // Keeping the speaking role tied to the visual focal actor makes the room
+  // readable before the player parses labels or controls.
+  if (action === "listen") {
+    const focalRole = window.innerWidth <= 720 ? "facilitator" : "mediator";
+    return role === focalRole ? "talking" : "listen";
+  }
+  return movementState;
 }
 
 // When the player walks in on their own, a couple of citizens are "already inside".
@@ -13816,7 +14362,7 @@ function seedInteriorOccupants(zone) {
   const passersBy = alive
     .filter((citizen) => !candidateIds.has(citizen.id))
     .sort((a, b) => hashCommunitySeed(a.id, seed) - hashCommunitySeed(b.id, seed));
-  candidates = [...candidates, ...passersBy].slice(0, Math.min(3, MAX_INTERIOR_OCCUPANTS));
+  candidates = [...candidates, ...passersBy].slice(0, Math.min(3, getInteriorOccupantCap(zone.id)));
   candidates.forEach((citizen, i) => {
     const anim = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
     anim.indoor = {
@@ -13832,7 +14378,7 @@ function seedInteriorOccupants(zone) {
 function manageInteriorArrivals(society, zone, indoorCount, now) {
   if (!interiorView || now < (interiorView.nextArrivalCheckAt || 0)) return;
   interiorView.nextArrivalCheckAt = now + 4200;
-  if (indoorCount >= MAX_INTERIOR_OCCUPANTS) return;
+  if (indoorCount >= getInteriorOccupantCap(zone.id)) return;
   const alive = getAliveCitizens(society)
     .filter(c => c.id !== "avatar" && !citizenAnimations[c.id]?.indoor);
   const inZone = alive.filter(c => c.zoneId === zone.id);
@@ -14055,7 +14601,7 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
         + Number(socialWitnessIds.includes(citizen.id)) * 3;
       return priority(b) - priority(a);
     })
-    .slice(0, MAX_INTERIOR_OCCUPANTS);
+    .slice(0, getInteriorOccupantCap(zone.id));
   manageInteriorArrivals(society, zone, indoorCitizens.length, now);
 
   const entries = [];
@@ -14212,21 +14758,55 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const physicsAnchors = getInteriorPhysicsAnchors(blueprint);
   const entries = prepareInteriorOccupants(society, zone, blueprint, physicsAnchors, now);
   holdSocialParallaxActors(zone, entries);
+  stagePublicListeningEnsemble(zone, entries);
   holdEmpathyCalibrationActor(zone, entries);
   holdMemoryAuthorizationActor(zone, entries);
-  const actorPayload = entries.map((entry) => ({
-    id: entry.id,
-    worldX: entry.worldX,
-    worldZ: entry.worldZ,
-    frame: entry.frame,
-    facing: entry.facing,
-    state: entry.state,
-    walkPhase: entry.walkPhase,
-    scale: entry.scale
-  }));
+  const avatarCitizen = getAliveCitizens(society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
+  // Civic GLBs are authored to the same 1.68–1.72m contract as their Rapier
+  // capsules. Rendering them at 0.92 made the cast visibly undersized against
+  // desks and sofas and broke mesh/collider scale parity. Keep one metre equal
+  // to one world unit here; the tighter authored staging provides calm spacing.
+  const civicActorScale = 1;
+  const playerPayload = {
+    id: "player",
+    identityId: "avatar",
+    role: "player",
+    worldX: Number(interiorOrbit.x || 0),
+    worldY: Math.max(0, Number(interiorOrbit.y || 0.86) - 0.86),
+    worldZ: Number(interiorOrbit.z || 0),
+    frame: getCitizenSpriteFrame(avatarCitizen),
+    facing: Number(interiorOrbit.velocity?.x || 0) >= 0 ? 1 : -1,
+    state: getInteriorCivicActingState("player", interiorOrbit.motionState || "idle", now),
+    velocity: interiorOrbit.velocity || { x: 0, y: 0, z: 0 },
+    grounded: interiorOrbit.grounded !== false,
+    walkPhase: Number(interiorOrbit.walkPhase || 0),
+    civicRole: zone.id === "public-plaza" ? "player" : "",
+    scale: (avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1) * civicActorScale
+  };
+  // The deterministic review cast mirrors the selected art target: a teal-cap
+  // listener, a coral-haired facilitator and a brunette civic mediator.
+  const qaCivicFrames = [4, 2, 3];
+  const qaCivicRoles = ["listener", "facilitator", "mediator"];
+  const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => {
+    const civicRole = zone.id === "public-plaza" ? qaCivicRoles[entryIndex % qaCivicRoles.length] : "";
+    return {
+      id: entry.id,
+      worldX: entry.worldX,
+      worldY: 0,
+      worldZ: entry.worldZ,
+      frame: isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
+        ? qaCivicFrames[entryIndex % qaCivicFrames.length]
+        : entry.frame,
+      facing: entry.facing,
+      state: getInteriorCivicActingState(civicRole, entry.state, now),
+      walkPhase: entry.walkPhase,
+      civicRole,
+      scale: entry.scale * civicActorScale
+    };
+  })];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
   const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);
-  const useThreeModels = !!threeState?.ready;
+  const useThreeModels = !!threeState?.ready && !!interiorRapierRuntime;
   const projectedProps = new Map((threeState?.projections || [])
     .filter((item) => String(item.key || "").startsWith("prop-"))
     .map((item) => [item.index, item]));
@@ -14250,6 +14830,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     interiorExitRect = null;
     syncInteriorHotspotLayer([], blueprint);
     syncInteriorContextAction([]);
+    syncInteriorSpeakerBeacon([], W, H);
     syncInteriorJourneyHud(blueprint);
     syncInteriorDiscoveryCard(now);
     drawInteriorLoadingCurtain(ctx, W, H, roomStyle, blueprint, isNight, now);
@@ -14271,6 +14852,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     markRenderActive(360);
   }
   syncInteriorHotspotLayer(panoramaAnchors, blueprint);
+  syncInteriorSpeakerBeacon(actorPayload, W, H);
   const socialParallaxPending = zone.id === SOCIAL_PARALLAX_ZONE_ID
     && getSocialParallaxRitual(zone.id)?.status !== "complete"
     && !getInteriorExplorationRecord(zone.id).completed;
@@ -14288,54 +14870,9 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   syncInteriorJourneyHud(blueprint);
   syncInteriorDiscoveryCard(now);
 
-  const finaleActive = document.body.classList.contains("counterfactual-finale-active");
-  if (finaleActive) {
-    interiorExitRect = null;
-  } else {
-    const exitW = Math.min(150, Math.max(110, W * 0.14));
-    const exitH = 34;
-    interiorExitRect = { x: W - exitW - 24, y: H - exitH - 24, w: exitW, h: exitH };
-    ctx.save();
-    ctx.fillStyle = isNight ? "rgba(18,18,34,0.86)" : "rgba(250,250,245,0.92)";
-    ctx.strokeStyle = "#1a1a2e";
-    ctx.lineWidth = 2.5;
-    roundRect(ctx, interiorExitRect.x, interiorExitRect.y, interiorExitRect.w, interiorExitRect.h, 10);
-    ctx.fill();
-    ctx.stroke();
-    ctx.fillStyle = "#1a1a2e";
-    ctx.font = `bold 13px "Noto Sans SC", sans-serif`;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.fillText("回到街道", interiorExitRect.x + interiorExitRect.w / 2, interiorExitRect.y + interiorExitRect.h / 2 + 1);
-    ctx.restore();
-  }
-
-  // Header
-  ctx.fillStyle = "rgba(250,250,245,0.94)";
-  const headerText = `${ZONE_ICONS?.[zone.id] || "🏠"} ${zone.name} · 室内`;
-  ctx.font = `bold 15px "Noto Sans SC", sans-serif`;
-  const headerW = ctx.measureText(headerText).width + 34;
-  roundRect(ctx, W / 2 - headerW / 2, 14, headerW, 30, 15);
-  ctx.fill();
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = 2;
-  roundRect(ctx, W / 2 - headerW / 2, 14, headerW, 30, 15);
-  ctx.stroke();
-  ctx.fillStyle = "#1a1a2e";
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.fillText(headerText, W / 2, 29 + 1);
-  ctx.textBaseline = "alphabetic";
-  ctx.font = `11px "Noto Sans SC", sans-serif`;
-  ctx.fillStyle = isNight ? "rgba(250,250,245,0.75)" : "rgba(26,26,46,0.6)";
-  const explorationRecord = getInteriorExplorationRecord(zone.id);
-  const explorationProgress = getInteriorExplorationProgress(zone, blueprint, explorationRecord);
-  const interiorStatus = explorationRecord.scenePlayed
-    ? "共同经历已留下"
-    : explorationRecord.completed
-      ? "场所回声已解锁"
-      : `${explorationProgress.count}/${explorationProgress.goal} 段场所记忆`;
-  ctx.fillText(`${blueprint.title} · ${interiorStatus}`, W / 2, 58);
+  // The DOM chip is the single exit affordance in the 3D renderer. Duplicating
+  // a canvas exit/header competes with touch controls and the compact HUD.
+  interiorExitRect = null;
 
   // Occupants live in the same X/Z coordinate system as the furniture. Three.js
   // returns their floor projection for hit testing and provides real depth
@@ -16320,6 +16857,9 @@ function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
 }
 
 function getCitizenSpriteFrame(citizen) {
+  if (Number.isFinite(Number(citizen?.avatarFrame))) {
+    return clamp(Math.round(Number(citizen.avatarFrame)), 0, CITIZEN_FRAME_COUNT - 1);
+  }
   const professionId = citizen?.professionId || "";
   const role = `${citizen?.role || ""} ${citizen?.profession || ""} ${citizen?.personaLabel || ""}`;
   const age = Number(citizen?.age || 30);
@@ -16661,6 +17201,20 @@ function bindGameEvents() {
       return;
     }
     if (interiorView) {
+      if (e.code === "Space") {
+        e.preventDefault();
+        if (!e.repeat) {
+          getInteriorPhysicsApi()?.queueRapierJump?.(interiorRapierRuntime);
+          interiorOrbit.motionState = "jump";
+          markRenderActive(1600);
+        }
+        return;
+      }
+      if (e.key === "Shift") {
+        interiorRunHeld = true;
+        markRenderActive(600);
+        return;
+      }
       if (e.key.toLowerCase() === "p" && !e.metaKey && !e.ctrlKey && !e.altKey) {
         e.preventDefault();
         if (!e.repeat) {
@@ -16696,6 +17250,7 @@ function bindGameEvents() {
     showToast(graphDebugVisible ? "因果图调试已显示" : "因果图调试已隐藏", "support");
   });
   document.addEventListener("keyup", (e) => {
+    if (e.key === "Shift") interiorRunHeld = false;
     const movementByKey = {
       w: "forward", arrowup: "forward",
       s: "back", arrowdown: "back",
@@ -16705,7 +17260,11 @@ function bindGameEvents() {
     const direction = movementByKey[e.key.toLowerCase()];
     if (direction) interiorMoveKeys.delete(direction);
   });
-  window.addEventListener("blur", () => interiorMoveKeys.clear());
+  window.addEventListener("blur", () => {
+    interiorMoveKeys.clear();
+    interiorRunHeld = false;
+    interiorJoystick = { x: 0, z: 0, pointerId: null };
+  });
 
   // ── Canvas click ──
   if (canvas) {
@@ -17429,17 +17988,46 @@ function openLocalInteriorQa(zoneId) {
       console.warn(`MirrorLife interior QA zone not found: ${zoneId}`);
       return;
     }
+    const deterministicSceneQa = isLocalInteriorSceneQaEnabled();
+    if (deterministicSceneQa) {
+      // Visual comparisons must not inherit however many simulation ticks a
+      // previous reload happened to accumulate.  Freeze the selected room at
+      // the reference's clear 06:00 state so lighting, HUD copy and character
+      // staging are reproducible across yaw/mobile captures.
+      state.society.turn = 0;
+      state.society.phaseId = WORLD_PHASES[0]?.id || state.society.phaseId;
+      state.society.phaseTurn = 0;
+      state.society.clock = {
+        ...(state.society.clock || {}),
+        day: 1,
+        hour: 6,
+        minute: 0,
+        tick: 0,
+        weather: "fine"
+      };
+      state.society.lifeWeek = {
+        ...buildLifeWeekSystem(),
+        ...(state.society.lifeWeek || {}),
+        week: 1,
+        stage: "plan",
+        stageTurn: 0
+      };
+    }
     pauseSocietyRun();
     state.society.speed = 0.5;
     const slider = document.getElementById("hudSpeed");
     const sliderVal = document.getElementById("hudSpeedVal");
     if (slider) slider.value = "0.5";
     if (sliderVal) sliderVal.textContent = "0.5x";
+    if (deterministicSceneQa) updateHUD();
     enterInteriorView(zone, "qa");
-    if (isLocalInteriorSceneQaEnabled()) {
+    if (deterministicSceneQa) {
       seedInteriorOccupants(zone);
       Object.values(citizenAnimations).forEach((animation) => {
-        if (animation?.indoor?.zoneId === zone.id) animation.indoor.until = performance.now() + 60000;
+        // Visual QA sessions must remain deterministic long enough for four-way
+        // camera, movement and responsive captures; normal gameplay schedules
+        // still use their authored departure times.
+        if (animation?.indoor?.zoneId === zone.id) animation.indoor.until = Number.POSITIVE_INFINITY;
       });
       const blueprint = getInteriorBlueprint(zone);
       const record = getInteriorExplorationRecord(zone.id);

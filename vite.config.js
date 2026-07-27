@@ -1,9 +1,18 @@
 import { defineConfig } from 'vite';
 import { resolve } from 'path';
+import {
+  computeReferenceFidelityBuildFingerprint
+} from './scripts/lib/reference-fidelity-build-fingerprint.mjs';
+
+const referenceFidelityBuildFingerprint =
+  computeReferenceFidelityBuildFingerprint(__dirname);
 
 export default defineConfig({
   root: '.',
   base: './',
+  define: {
+    __MIRRORLIFE_BUILD_FINGERPRINT__: JSON.stringify(referenceFidelityBuildFingerprint),
+  },
   build: {
     outDir: 'dist',
     emptyOutDir: false,

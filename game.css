@@ -20,6 +20,276 @@
   color-scheme: dark;
 }
 
+/* Civic listening room: match the cinematic, warm editorial reference while
+   preserving the same live controls and simulation state. */
+body.interior-active[data-interior-zone="public-plaza"] .hud-top {
+  top: 18px;
+  left: 26px;
+  right: 26px;
+  min-height: 58px;
+  padding: 0;
+  gap: 12px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+body.interior-active[data-interior-zone="public-plaza"] .hud-brand,
+body.interior-active[data-interior-zone="public-plaza"] .hud-stats,
+body.interior-active[data-interior-zone="public-plaza"] .hud-scores,
+body.interior-active[data-interior-zone="public-plaza"] .hud-controls {
+  min-height: 54px;
+  border: 1px solid rgba(255, 240, 214, .16);
+  border-radius: 15px;
+  background: rgba(58, 50, 44, .78);
+  color: #fff7e7;
+  box-shadow: 0 12px 30px rgba(41, 28, 18, .2);
+  backdrop-filter: blur(20px) saturate(.96);
+}
+
+body.interior-active[data-interior-zone="public-plaza"] .hud-brand {
+  flex: 0 0 142px;
+  padding: 6px 13px;
+  background: rgba(58, 50, 44, .82);
+}
+body.interior-active[data-interior-zone="public-plaza"] .hud-stats { flex: 0 0 218px; }
+body.interior-active[data-interior-zone="public-plaza"] .hud-scores { flex: 0 1 520px; }
+body.interior-active[data-interior-zone="public-plaza"] .hud-controls { flex: 0 0 310px; }
+body.interior-active[data-interior-zone="public-plaza"] .hud-title,
+body.interior-active[data-interior-zone="public-plaza"] .hud-stat-value { color: #fff8e9; }
+body.interior-active[data-interior-zone="public-plaza"] .hud-stat-label { color: #ef9a83; }
+body.interior-active[data-interior-zone="public-plaza"] .hud-logo {
+  color: #fff7e8;
+  background: #e86f55;
+  border-color: rgba(255,255,255,.38);
+}
+body.interior-active[data-interior-zone="public-plaza"] .hud-score { color: #f5ead9; }
+body.interior-active[data-interior-zone="public-plaza"] .score-bar { border-color: rgba(255,255,255,.35); background: rgba(19,17,15,.42); }
+body.interior-active[data-interior-zone="public-plaza"] .hud-btn {
+  border-color: rgba(255,255,255,.18);
+  background: rgba(104, 86, 78, .78);
+  color: #fff5df;
+}
+body.interior-active[data-interior-zone="public-plaza"] .hud-btn:first-child {
+  background: #f1a83c;
+  color: #fff;
+}
+body.interior-active[data-interior-zone="public-plaza"] .speed-control { color: #f7ead8; }
+
+body.interior-active[data-interior-zone="public-plaza"] #interiorChip {
+  top: 96px;
+  left: 28px;
+  border-color: rgba(255,255,255,.14);
+  background: rgba(58, 50, 44, .76);
+  color: #fff7e8;
+  box-shadow: 0 10px 28px rgba(41, 28, 18, .2);
+}
+
+body.interior-active[data-interior-zone="public-plaza"] #interiorJourneyPanel,
+body.interior-active[data-interior-zone="public-plaza"] #interiorCompass { display: none; }
+
+body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard {
+  top: 98px;
+  right: 28px;
+  bottom: auto;
+  width: 224px;
+  max-height: 72px;
+  padding: 9px 13px;
+  overflow: hidden;
+  border-color: rgba(255,255,255,.15);
+  border-radius: 16px;
+  background: rgba(58, 50, 44, .78);
+  color: #fff7e8;
+  box-shadow: 0 12px 30px rgba(41, 28, 18, .22);
+  backdrop-filter: blur(20px) saturate(.96);
+}
+body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard span { color: #f4b58f; }
+body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard strong { color: #fff9eb; }
+body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard p,
+body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard button { display: none; }
+
+/* The cinematic action rail owns the lower-left quadrant. Keep the local
+   interaction prompt on the opposite editorial edge so 1280px desktop
+   layouts never stack two independent controls over one another. */
+@media (min-width: 721px) {
+  body.interior-active[data-interior-zone="public-plaza"] #interiorContextAction {
+    right: 28px;
+    bottom: 24px;
+    left: auto;
+    max-width: min(300px, 34vw);
+    transform: none;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorContextAction:active {
+    transform: translate(2px, 2px);
+  }
+}
+
+#interiorCinematicActions {
+  position: absolute;
+  left: 44px;
+  bottom: 34px;
+  z-index: 24;
+  display: none;
+  min-height: 58px;
+  padding: 5px;
+  align-items: center;
+  gap: 4px;
+  border: 1px solid rgba(255,255,255,.16);
+  border-radius: 18px;
+  background: rgba(58, 50, 44, .78);
+  box-shadow: 0 14px 34px rgba(41, 28, 18, .24);
+  backdrop-filter: blur(20px) saturate(.96);
+}
+body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions { display: flex; }
+#interiorCinematicActions button {
+  min-width: 138px;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 14px;
+  background: transparent;
+  color: #fff7e8;
+  font: 800 14px/1 var(--font);
+  cursor: pointer;
+  transition: background 150ms ease, transform 150ms ease;
+}
+#interiorCinematicActions button:hover,
+#interiorCinematicActions button:focus-visible { background: rgba(255,255,255,.1); outline: none; }
+#interiorCinematicActions button:active { transform: translateY(1px); }
+#interiorCinematicActions button.primary { background: #ee775f; color: #fff; }
+
+/* Match the civic room's editorial reference: on wide canvases the four
+   choices read as one deliberate action deck instead of four cramped pills. */
+@media (min-width: 1024px) {
+  body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions {
+    width: min(606px, calc(100vw - 520px));
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions button {
+    flex: 1 1 0;
+    min-width: 0;
+  }
+}
+
+/* Final mobile contract for the civic room. This block intentionally lives
+   after the general interior rules so the scene never inherits the desktop
+   HUD widths or pushes the WebGL viewport sideways. */
+@media (max-width: 720px) {
+  body.interior-active[data-interior-zone="public-plaza"] {
+    overflow: hidden;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .hud-top {
+    top: max(8px, env(safe-area-inset-top));
+    left: 8px;
+    right: auto;
+    width: 160px;
+    min-width: 0;
+    min-height: 46px;
+    padding: 0;
+    display: block;
+    overflow: hidden;
+    border: 1px solid rgba(255, 240, 214, .16);
+    border-radius: 15px;
+    background: rgba(58, 50, 44, .82);
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .hud-brand {
+    width: 160px;
+    min-width: 0;
+    min-height: 46px;
+    padding: 5px 10px;
+    gap: 8px;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .hud-title {
+    width: auto;
+    max-width: none;
+    overflow: visible;
+    font-size: 14px;
+    white-space: nowrap;
+    text-overflow: clip;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .hud-subtitle { display: none; }
+  body.interior-active[data-interior-zone="public-plaza"] .hud-logo {
+    width: 34px;
+    height: 34px;
+    min-width: 34px;
+    font-size: 15px;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .hud-stats,
+  body.interior-active[data-interior-zone="public-plaza"] .hud-scores,
+  body.interior-active[data-interior-zone="public-plaza"] .hud-controls {
+    display: none !important;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorChip {
+    top: calc(max(8px, env(safe-area-inset-top)) + 54px);
+    left: 8px;
+    right: auto;
+    width: 142px;
+    max-width: 142px;
+    min-height: 42px;
+    padding: 8px 10px;
+    overflow: hidden;
+    font-size: 11px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard {
+    top: max(8px, env(safe-area-inset-top));
+    right: 8px;
+    left: auto;
+    width: 170px;
+    max-width: 170px;
+    max-height: 74px;
+    padding: 9px 11px;
+    overflow: hidden;
+    border-radius: 14px;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard span {
+    font-size: 9px;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorDiscoveryCard strong {
+    display: block;
+    overflow: hidden;
+    font-size: 13px;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions {
+    left: 8px;
+    right: 8px;
+    bottom: max(10px, env(safe-area-inset-bottom));
+    width: auto;
+    min-height: 48px;
+    padding: 4px;
+    gap: 2px;
+    overflow: hidden;
+    transform: none;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicActions button {
+    flex: 1 1 0;
+    min-width: 0;
+    min-height: 40px;
+    padding: 0 3px;
+    font-size: 10px;
+    white-space: nowrap;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .interior-joystick {
+    left: 14px;
+    bottom: max(72px, calc(env(safe-area-inset-bottom) + 64px));
+    width: 92px;
+    height: 92px;
+    background: radial-gradient(circle, rgba(255,255,255,.42) 0 20%, rgba(58,50,44,.72) 21% 100%);
+    border-color: rgba(255, 240, 214, .28);
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .interior-joystick-knob {
+    width: 39px;
+    height: 39px;
+  }
+  body.interior-active[data-interior-zone="public-plaza"] .interior-action-buttons {
+    right: 14px;
+    bottom: max(76px, calc(env(safe-area-inset-bottom) + 68px));
+  }
+}
+
 body.social-twin-hearing-active .hud-top,
 body.social-twin-hearing-active #interiorChip,
 body.social-twin-hearing-active #interiorMovePad,
@@ -793,6 +1063,13 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
 body.interior-active #gameCanvas {
   background: transparent;
   z-index: 2;
+}
+
+/* The civic hero room renders every resident and prop in the Three scene.
+   Keeping the legacy 2D canvas above it adds a pale redraw veil on narrow
+   viewports, so place that compatibility layer behind the authored room. */
+body.interior-active[data-interior-zone="public-plaza"] #gameCanvas {
+  z-index: 0;
 }
 
 /* ── HUD Top Bar ── */
@@ -4865,6 +5142,58 @@ body.detail-open .event-log:focus-within {
   pointer-events: none;
 }
 
+#interiorSpeakerBeacon {
+  --speaker-beacon-scale: 1;
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 15;
+  width: 68px;
+  height: 84px;
+  transform: translate(-50%, -74%) scale(var(--speaker-beacon-scale));
+  transform-origin: 50% 78%;
+  opacity: 0;
+  pointer-events: none;
+  filter: drop-shadow(0 9px 13px rgba(83, 45, 31, .24));
+  transition: opacity 150ms ease, transform 180ms ease;
+  will-change: left, top, transform, opacity;
+}
+
+#interiorSpeakerBeacon.visible {
+  opacity: 1;
+  animation: interior-speaker-beacon-float 2.4s ease-in-out infinite;
+}
+
+#interiorSpeakerBeacon .speaker-beacon-pin,
+#interiorSpeakerBeacon .speaker-beacon-icon {
+  position: absolute;
+  display: block;
+  user-select: none;
+}
+
+#interiorSpeakerBeacon .speaker-beacon-pin {
+  inset: 0;
+  width: 68px;
+  height: 84px;
+}
+
+#interiorSpeakerBeacon .speaker-beacon-icon {
+  left: 21px;
+  top: 13px;
+  width: 29px;
+  height: 29px;
+  object-fit: contain;
+}
+
+@keyframes interior-speaker-beacon-float {
+  0%, 100% {
+    transform: translate(-50%, -74%) scale(var(--speaker-beacon-scale));
+  }
+  50% {
+    transform: translate(-50%, -80%) scale(var(--speaker-beacon-scale));
+  }
+}
+
 .interior-hotspot {
   --hotspot-scale: 1;
   position: absolute;
@@ -6619,6 +6948,23 @@ body.counterfactual-finale-active #interiorDiscoveryCard {
 }
 
 @media (max-width: 720px) {
+  #interiorSpeakerBeacon {
+    width: 56px;
+    height: 69px;
+  }
+
+  #interiorSpeakerBeacon .speaker-beacon-pin {
+    width: 56px;
+    height: 69px;
+  }
+
+  #interiorSpeakerBeacon .speaker-beacon-icon {
+    left: 17px;
+    top: 11px;
+    width: 24px;
+    height: 24px;
+  }
+
   body.interior-active .hud-top {
     top: 8px;
     left: 8px;
@@ -6922,4 +7268,331 @@ body.interior-active #interiorCompass { width: 104px; height: 104px; }
 @media (max-width: 700px) {
   body.interior-active #interiorJourneyPanel { left: 10px; bottom: 10px; width: min(210px,54vw); max-height: 28vh; }
   body.interior-active #interiorDiscoveryCard { left: 12px; right: auto; bottom: 152px; width: calc(100vw - 24px); }
+}
+
+/* ── Interior v2: editorial 3D HUD, compact enough to preserve the room ── */
+body.interior-active .hud-top {
+  top: 10px;
+  left: 12px;
+  right: 12px;
+  min-height: 48px;
+  padding: 3px 6px;
+  gap: 7px;
+  border: 1px solid rgba(48, 54, 78, 0.3);
+  border-radius: 17px;
+  background: rgba(255, 252, 245, 0.88);
+  box-shadow: 0 10px 28px rgba(42, 48, 66, 0.11);
+  backdrop-filter: blur(18px) saturate(1.08);
+}
+
+body.interior-active .hud-brand,
+body.interior-active .hud-stats,
+body.interior-active .hud-scores,
+body.interior-active .hud-controls {
+  min-height: 38px;
+  padding: 3px 7px;
+  border: 1px solid rgba(48, 54, 78, 0.22);
+  border-radius: 12px;
+  box-shadow: none;
+  background: rgba(255, 255, 255, 0.58);
+}
+
+body.interior-active .hud-brand {
+  background: linear-gradient(135deg, rgba(255, 225, 129, 0.62), rgba(255, 246, 212, 0.72));
+}
+
+body.interior-active .hud-logo {
+  width: 29px;
+  height: 29px;
+  border-width: 1px;
+  border-radius: 9px;
+  box-shadow: none;
+  font-size: 13px;
+}
+
+body.interior-active .hud-title { font-size: 13px; text-shadow: none; }
+body.interior-active .hud-stats { gap: 11px; margin: 0; }
+body.interior-active .hud-stat-label { font-size: 8px; letter-spacing: .06em; }
+body.interior-active .hud-stat-value { font-size: 12px; text-shadow: none; }
+body.interior-active .hud-scores { opacity: .82; }
+body.interior-active .score-bar { width: 52px; height: 7px; border-width: 1px; border-radius: 999px; }
+body.interior-active .hud-controls { gap: 5px; }
+body.interior-active .hud-btn {
+  width: 30px;
+  height: 30px;
+  border-width: 1px;
+  border-radius: 9px;
+  box-shadow: none;
+  font-size: 12px;
+}
+body.interior-active .speed-control { border: 0; box-shadow: none; background: transparent; padding: 0 2px; }
+
+#interiorChip {
+  top: 74px;
+  left: 18px;
+  min-height: 38px;
+  padding: 7px 13px;
+  border: 1px solid rgba(48, 54, 78, 0.5);
+  border-radius: 12px;
+  background: rgba(255, 252, 245, 0.9);
+  box-shadow: 0 8px 22px rgba(42, 48, 66, 0.12);
+  backdrop-filter: blur(14px);
+  font-size: 11px;
+}
+
+body.interior-active #interiorJourneyPanel {
+  left: 18px;
+  bottom: 18px;
+  width: 286px;
+  max-height: 142px;
+  padding: 10px 11px;
+  overflow: hidden;
+  border: 1px solid rgba(48, 54, 78, 0.5);
+  border-radius: 15px;
+  background: rgba(255, 252, 245, 0.9);
+  box-shadow: 0 14px 32px rgba(42, 48, 66, 0.13);
+  backdrop-filter: blur(16px) saturate(1.08);
+}
+
+body.interior-active #interiorJourneyPanel header {
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: baseline;
+  gap: 6px;
+  padding-bottom: 6px;
+  border-bottom-width: 1px;
+}
+body.interior-active #interiorJourneyPanel header span { font-size: 8px; }
+body.interior-active #interiorJourneyPanel header strong { overflow: hidden; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
+body.interior-active #interiorJourneyPanel > p { display: none; }
+body.interior-active #interiorJourneyPanel ol { margin-top: 6px; }
+body.interior-active #interiorJourneyPanel li { display: none; }
+body.interior-active #interiorJourneyPanel li.current {
+  display: grid;
+  min-height: 37px;
+  grid-template-columns: 24px minmax(0, 1fr);
+  padding: 4px 6px;
+  border-width: 1px;
+  border-color: rgba(48, 54, 78, 0.34);
+  background: linear-gradient(135deg, rgba(255, 225, 129, .58), rgba(255, 246, 212, .76));
+}
+body.interior-active #interiorJourneyPanel li.current b { width: 21px; height: 21px; border-width: 1px; font-size: 9px; }
+body.interior-active #interiorJourneyPanel li.current span { font-size: 10px; }
+body.interior-active #interiorJourneyPanel li.current small { overflow: hidden; font-size: 8px; text-overflow: ellipsis; white-space: nowrap; }
+body.interior-active #interiorJourneyPanel footer {
+  grid-template-columns: 1fr;
+  align-items: center;
+  gap: 5px 8px;
+  margin-top: 6px;
+  font-size: 8px;
+}
+body.interior-active #interiorJourneyPanel footer > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+body.interior-active #interiorJourneyPanel footer em { font-size: 8px; }
+body.interior-active #interiorJourneyPanel footer > span,
+body.interior-active #interiorJourneyPanel footer > em { display: none; }
+body.interior-active #interiorJourneyPanel footer button {
+  grid-column: 1 / -1;
+  min-height: 31px;
+  padding: 6px 8px;
+  border-width: 1px;
+  border-radius: 9px;
+  box-shadow: none;
+  font-size: 9px;
+}
+
+body.interior-active #interiorCompass {
+  top: 76px;
+  right: 18px;
+  width: 84px;
+  height: 84px;
+  border: 1px solid rgba(48, 54, 78, 0.5);
+  background: rgba(255, 252, 245, 0.85);
+  box-shadow: 0 10px 26px rgba(42, 48, 66, 0.12);
+}
+body.interior-active #interiorCompass button {
+  left: calc(50% - 8px);
+  top: calc(50% - 8px);
+  width: 16px;
+  height: 16px;
+  transform: rotate(var(--compass-angle)) translateY(-31px) rotate(calc(-1 * var(--compass-angle)));
+  border-width: 1px;
+  box-shadow: none;
+  font-size: 8px;
+}
+body.interior-active #interiorCompass > strong { width: 25px; height: 25px; border-width: 1px; font-size: 8px; }
+body.interior-active .interior-compass-cone { height: 28px; width: 2px; }
+
+body.interior-active #interiorDiscoveryCard {
+  right: 18px;
+  bottom: 18px;
+  width: min(340px, 30vw);
+  max-height: min(32vh, 276px);
+  overflow: auto;
+  padding: 12px 14px;
+  border: 1px solid rgba(48, 54, 78, .52);
+  border-radius: 15px;
+  background: rgba(255, 252, 245, .94);
+  box-shadow: 0 16px 36px rgba(42, 48, 66, .14);
+  backdrop-filter: blur(16px);
+}
+
+body.interior-active #interiorContextAction {
+  bottom: 20px;
+  min-width: 198px;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-width: 1px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #f2c85b, #ffe48f);
+  box-shadow: 0 10px 24px rgba(42, 48, 66, .16);
+}
+body.interior-active #interiorContextAction kbd { width: 25px; height: 25px; border-width: 1px; box-shadow: none; }
+body.interior-active #interiorContextAction strong { font-size: 12px; }
+
+#interiorMovePad { display: none; }
+
+@media (max-width: 720px) {
+  body.interior-active .hud-top {
+    top: 7px;
+    left: 7px;
+    right: 7px;
+    display: flex;
+    min-height: 42px;
+    padding: 3px;
+  }
+  body.interior-active .hud-brand { min-width: 96px; min-height: 35px; padding: 3px 5px; }
+  body.interior-active .hud-logo { width: 27px; height: 27px; }
+  body.interior-active .hud-title { max-width: 58px; overflow: hidden; font-size: 11px; text-overflow: ellipsis; }
+  body.interior-active .hud-stats { flex: 1; min-height: 35px; padding: 3px 6px; justify-content: space-evenly; }
+  body.interior-active .hud-stat:nth-child(1),
+  body.interior-active .hud-stat:nth-child(4),
+  body.interior-active .hud-scores,
+  body.interior-active .hud-controls { display: none; }
+  body.interior-active .hud-stat-value { font-size: 11px; }
+
+  #interiorChip {
+    top: 60px;
+    left: 10px;
+    min-height: 34px;
+    max-width: 44vw;
+    padding: 6px 9px;
+    font-size: 9px;
+  }
+
+  body.interior-active #interiorJourneyPanel {
+    top: 60px;
+    right: 10px;
+    bottom: auto;
+    left: auto;
+    width: min(51vw, 218px);
+    max-height: 64px;
+    padding: 6px 7px;
+  }
+  body.interior-active #interiorJourneyPanel header { display: block; padding-bottom: 4px; }
+  body.interior-active #interiorJourneyPanel header span { display: none; }
+  body.interior-active #interiorJourneyPanel header strong { display: block; font-size: 10px; }
+  body.interior-active #interiorJourneyPanel ol { margin-top: 4px; }
+  body.interior-active #interiorJourneyPanel li.current {
+    min-height: 31px;
+    grid-template-columns: 19px minmax(0, 1fr);
+    gap: 4px;
+    padding: 2px 4px;
+  }
+  body.interior-active #interiorJourneyPanel li.current b { width: 17px; height: 17px; font-size: 7px; }
+  body.interior-active #interiorJourneyPanel li.current span { font-size: 8px; }
+  body.interior-active #interiorJourneyPanel li.current small { font-size: 7px; }
+  body.interior-active #interiorJourneyPanel footer { display: none; }
+  body.interior-active #interiorCompass { display: none; }
+
+  #interiorMovePad { display: contents; }
+  .interior-joystick {
+    position: absolute;
+    left: 20px;
+    bottom: max(20px, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: grid;
+    width: 108px;
+    height: 108px;
+    place-items: center;
+    border: 1px solid rgba(48, 54, 78, .42);
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,255,255,.55) 0 20%, rgba(255,252,245,.76) 21% 100%);
+    box-shadow: 0 12px 28px rgba(42, 48, 66, .14), inset 0 0 0 10px rgba(112,199,192,.08);
+    touch-action: none;
+    pointer-events: auto;
+    backdrop-filter: blur(10px);
+  }
+  .interior-joystick-knob {
+    width: 43px;
+    height: 43px;
+    border: 1px solid rgba(48, 54, 78, .56);
+    border-radius: 50%;
+    background: linear-gradient(145deg, #65bcb5, #9ce0d7);
+    box-shadow: 0 7px 16px rgba(42, 48, 66, .18);
+    transition: transform 40ms linear;
+  }
+  .interior-action-buttons {
+    position: absolute;
+    right: 18px;
+    bottom: max(22px, env(safe-area-inset-bottom));
+    z-index: 20;
+    display: flex;
+    align-items: flex-end;
+    gap: 10px;
+    pointer-events: auto;
+  }
+  #interiorMovePad .interior-action-buttons button {
+    display: grid;
+    width: 54px;
+    height: 54px;
+    place-items: center;
+    border: 1px solid rgba(48, 54, 78, .56);
+    border-radius: 50%;
+    background: linear-gradient(145deg, #f5c85a, #ffe58f);
+    color: #30364e;
+    box-shadow: 0 8px 20px rgba(42, 48, 66, .16);
+    font: 900 14px/1 inherit;
+  }
+  #interiorMovePad .interior-action-buttons button:first-child {
+    width: 62px;
+    height: 62px;
+    background: linear-gradient(145deg, #ef7188, #ff9cab);
+    color: #fff;
+  }
+
+  body.interior-active #interiorContextAction {
+    right: 91px;
+    bottom: max(92px, calc(env(safe-area-inset-bottom) + 84px));
+    left: auto;
+    width: min(50vw, 205px);
+    min-height: 43px;
+    transform: none;
+  }
+  body.interior-active #interiorContextAction:active { transform: translate(1px, 1px); }
+
+  body.interior-active #interiorDiscoveryCard {
+    right: 12px;
+    bottom: 151px;
+    left: 12px;
+    width: auto;
+    max-height: 27vh;
+    padding: 8px 10px;
+  }
+  body.interior-active #interiorDiscoveryCard span { margin-bottom: 2px; font-size: 8px; }
+  body.interior-active #interiorDiscoveryCard strong { margin-bottom: 2px; font-size: 12px; }
+  body.interior-active #interiorDiscoveryCard p {
+    display: -webkit-box;
+    overflow: hidden;
+    margin: 0;
+    font-size: 9px;
+    line-height: 1.35;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+  body.interior-active #interiorDiscoveryCard button { margin-top: 6px; min-height: 34px; padding: 6px 8px; font-size: 10px; }
+
+  body.interior-active:not([data-interior-zone="public-plaza"]):has(#interiorDiscoveryCard.has-action) .interior-joystick,
+  body.interior-active:not([data-interior-zone="public-plaza"]):has(#interiorDiscoveryCard.has-action) .interior-action-buttons {
+    opacity: 0;
+    pointer-events: none;
+  }
 }

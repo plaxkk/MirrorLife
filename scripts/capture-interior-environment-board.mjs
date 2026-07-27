@@ -9,18 +9,23 @@ const execFileAsync = promisify(execFile);
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const MOBILE = process.env.MIRRORLIFE_CAPTURE_MOBILE === "1";
+const FORCE_BLINK = process.env.MIRRORLIFE_CAPTURE_BLINK === "1";
 const REVIEW_YAW = Number(process.env.MIRRORLIFE_CAPTURE_YAW || 0);
+const FACE_MODE = String(process.env.MIRRORLIFE_CAPTURE_FACE_MODE || "").trim();
 const CAPTURE_WIDTH = Number(process.env.MIRRORLIFE_CAPTURE_WIDTH || 1280);
 const CAPTURE_HEIGHT = Number(process.env.MIRRORLIFE_CAPTURE_HEIGHT || 720);
 const SHOW_REVIEW_LABEL = process.env.MIRRORLIFE_CAPTURE_LABEL !== "0";
+const READY_TIMEOUT_MS = Number(process.env.MIRRORLIFE_CAPTURE_READY_TIMEOUT || 45000);
 const YAW_SUFFIX = REVIEW_YAW ? `-yaw-${String(REVIEW_YAW).replace(/[^0-9-]/g, "")}` : "";
-const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}`);
+const BLINK_SUFFIX = FORCE_BLINK ? "-blink" : "";
+const FACE_MODE_SUFFIX = FACE_MODE ? `-face-${FACE_MODE.replace(/[^a-z0-9-]/gi, "")}` : "";
+const OUTPUT_ROOT = path.resolve(`dist/interior-3d-work/environment-review${MOBILE ? "-mobile" : ""}${YAW_SUFFIX}${BLINK_SUFFIX}${FACE_MODE_SUFFIX}`);
 const VIEWPORT = MOBILE
   ? { width: 390, height: 844, deviceScaleFactor: 1 }
   : { width: CAPTURE_WIDTH, height: CAPTURE_HEIGHT, deviceScaleFactor: 1 };
 const PERFORMANCE_BUDGET = {
-  drawCalls: Number(process.env.MIRRORLIFE_MAX_INTERIOR_DRAW_CALLS || 180),
-  triangles: Number(process.env.MIRRORLIFE_MAX_INTERIOR_TRIANGLES || 500000),
+  drawCalls: Number(process.env.MIRRORLIFE_MAX_INTERIOR_DRAW_CALLS || (MOBILE ? 110 : 180)),
+  triangles: Number(process.env.MIRRORLIFE_MAX_INTERIOR_TRIANGLES || (MOBILE ? 250000 : 450000)),
   geometries: Number(process.env.MIRRORLIFE_MAX_INTERIOR_GEOMETRIES || 220)
 };
 const SCENES = [
@@ -68,9 +73,28 @@ try {
   await page.setViewport(VIEWPORT);
   for (let index = 0; index < CAPTURE_SCENES.length; index += 1) {
     const scene = CAPTURE_SCENES[index];
-    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}`;
-    await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
-    await new Promise((resolve) => setTimeout(resolve, index === 0 ? 6500 : 4200));
+    const url = `${BASE_URL}/game.html?qaInterior=${encodeURIComponent(scene.zone)}&qaInteriorScene=1&qaYaw=${encodeURIComponent(REVIEW_YAW)}${FORCE_BLINK ? "&qaBlink=1" : ""}${FACE_MODE ? `&civicFaceMode=${encodeURIComponent(FACE_MODE)}` : ""}`;
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
+    await page.waitForFunction(() => {
+      const layer = document.querySelector("#interiorThreeLayer");
+      return document.body.classList.contains("interior-active")
+        && layer?.dataset.sceneReady === "true"
+        && document.body.dataset.interiorRenderPhase === "ready"
+        && getComputedStyle(layer).visibility !== "hidden";
+    }, { timeout: READY_TIMEOUT_MS });
+    // Give the atomic reveal, camera damping, shadow maps and late material
+    // uploads settled frames before taking evidence. Orbit captures also need
+    // to traverse the authored 180–240ms occlusion fade; otherwise the QA
+    // image records the first opaque frame instead of the view players see
+    // after the camera has finished rotating.
+    await page.evaluate((settleDuration) => new Promise((resolve) => {
+      const startedAt = performance.now();
+      const settle = (now) => {
+        if (now - startedAt >= settleDuration) resolve();
+        else requestAnimationFrame(settle);
+      };
+      requestAnimationFrame(settle);
+    }), REVIEW_YAW ? 420 : 32);
     if (SHOW_REVIEW_LABEL) {
       await page.evaluate(({ label, archetype }) => {
         document.getElementById("mirrorlife-environment-review-label")?.remove();
@@ -103,19 +127,39 @@ try {
       } catch {
         stats = {};
       }
+      const physicsItems = typeof getInteriorPhysicsItems === "function" && typeof getInteriorBlueprint === "function" && interiorView?.zone
+        ? getInteriorPhysicsItems(getInteriorBlueprint(interiorView.zone))
+        : [];
+      const unsupportedStructuralDynamics = physicsItems
+        .filter((item) => item.renderModel !== false && item.rigidBody?.type === "dynamic" && item.model !== "supply-crate")
+        .map((item) => ({ key: item.key, model: item.model }));
       return {
         stats,
+        propIntegrity: {
+          unsupportedStructuralDynamics,
+          dynamicModels: physicsItems.filter((item) => item.rigidBody?.type === "dynamic").map((item) => item.model)
+        },
         layout: {
           interiorActive: document.body.classList.contains("interior-active"),
           overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth
         }
       };
     });
-    results.push({ ...scene, file, stats: runtime.stats, layout: runtime.layout });
+    results.push({ ...scene, file, stats: runtime.stats, layout: runtime.layout, propIntegrity: runtime.propIntegrity });
     console.log(`Captured ${scene.archetype}: ${scene.zone}`);
   }
 } finally {
-  await browser.close();
+  // Headless Chrome can occasionally finish the capture but never resolve
+  // its DevTools shutdown handshake (notably after WebGL/WASM scenes). Keep
+  // visual QA deterministic and avoid leaving orphaned browser processes.
+  const browserProcess = browser.process();
+  await Promise.race([
+    browser.close(),
+    new Promise((resolve) => setTimeout(resolve, 4000))
+  ]);
+  if (browserProcess && browserProcess.exitCode == null && !browserProcess.killed) {
+    browserProcess.kill("SIGTERM");
+  }
 }
 
 function sampleNearest(source, target, targetX, targetY, targetWidth, targetHeight) {
@@ -180,11 +224,24 @@ try {
   console.warn("ffmpeg is unavailable; built the review board with pngjs instead.");
 }
 
+const capturedBuildFingerprints = [...new Set(
+  results.map((result) => result.stats?.buildFingerprint).filter(Boolean)
+)];
+if (capturedBuildFingerprints.length !== 1) {
+  throw new Error(
+    `Interior capture build fingerprint is missing or mixed: `
+    + `${capturedBuildFingerprints.join(", ") || "none"}`
+  );
+}
+const buildFingerprint = capturedBuildFingerprints[0];
 await fs.writeFile(path.join(OUTPUT_ROOT, "manifest.json"), `${JSON.stringify({
   generatedAt: new Date().toISOString(),
+  buildFingerprint,
   baseUrl: BASE_URL,
   viewport: VIEWPORT,
   yaw: REVIEW_YAW,
+  faceMode: FACE_MODE || "default",
+  forceBlink: FORCE_BLINK,
   performanceBudget: PERFORMANCE_BUDGET,
   contactSheet: "contact-sheet.png",
   scenes: results
@@ -196,6 +253,9 @@ const performanceFailures = results.flatMap((result) => {
   if (result.stats.ready !== true) failures.push("renderer not ready");
   if (result.layout?.interiorActive !== true) failures.push("interior mode not active");
   if (result.layout?.overflowX === true) failures.push("horizontal overflow");
+  if (result.propIntegrity?.unsupportedStructuralDynamics?.length) {
+    failures.push(`unstable structural props ${result.propIntegrity.unsupportedStructuralDynamics.map((item) => item.model).join(", ")}`);
+  }
   for (const key of ["drawCalls", "triangles", "geometries"]) {
     if (Number(result.stats[key] || 0) > PERFORMANCE_BUDGET[key]) {
       failures.push(`${key} ${result.stats[key]}/${PERFORMANCE_BUDGET[key]}`);

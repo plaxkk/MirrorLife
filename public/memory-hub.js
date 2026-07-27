@@ -8,6 +8,11 @@
    ═══════════════════════════════════════════════════════════════ */
 
 const MEMORY_PROXY_STORAGE_KEY = "mirror-life-memory-proxy";
+const MEMORY_PROXY_DEFAULT_URL = "http://127.0.0.1:8797/api/memory";
+const MEMORY_PROXY_LEGACY_URLS = new Set([
+  "http://localhost:8787/api/memory",
+  "http://127.0.0.1:8787/api/memory"
+]);
 const MEMORY_FLUSH_INTERVAL_MS = 8000;
 const MEMORY_FLUSH_BATCH = 20;
 const MEMORY_MAX_RETRY = 3;
@@ -25,9 +30,21 @@ let memoryHub = {
   syncedCount: 0
 };
 
+function normalizeMemoryProxyUrl(url) {
+  const normalized = String(url || "").trim().replace(/\/$/, "");
+  return MEMORY_PROXY_LEGACY_URLS.has(normalized) ? MEMORY_PROXY_DEFAULT_URL : normalized;
+}
+
+function getDefaultMemoryProxyUrl() {
+  return MEMORY_PROXY_DEFAULT_URL;
+}
+
 function getMemoryProxyUrl() {
   try {
-    return (localStorage.getItem(MEMORY_PROXY_STORAGE_KEY) || "").trim();
+    const stored = (localStorage.getItem(MEMORY_PROXY_STORAGE_KEY) || "").trim();
+    const normalized = normalizeMemoryProxyUrl(stored);
+    if (stored && normalized !== stored) localStorage.setItem(MEMORY_PROXY_STORAGE_KEY, normalized);
+    return normalized;
   } catch {
     return "";
   }
@@ -35,7 +52,8 @@ function getMemoryProxyUrl() {
 
 function setMemoryProxyUrl(url) {
   try {
-    if (url && url.trim()) localStorage.setItem(MEMORY_PROXY_STORAGE_KEY, url.trim());
+    const normalized = normalizeMemoryProxyUrl(url);
+    if (normalized) localStorage.setItem(MEMORY_PROXY_STORAGE_KEY, normalized);
     else localStorage.removeItem(MEMORY_PROXY_STORAGE_KEY);
   } catch { /* private mode */ }
 }

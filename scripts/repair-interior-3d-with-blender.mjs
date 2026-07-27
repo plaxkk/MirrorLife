@@ -9,7 +9,7 @@ const BLENDER_CANDIDATES = [
 ].filter(Boolean);
 
 function parseArgs(argv) {
-  const args = { input: "", output: "", report: "", targetTriangles: 78000, textureSize: 1024 };
+  const args = { input: "", output: "", report: "", targetTriangles: 78000, textureSize: 1024, allowOpen: false };
   for (let index = 0; index < argv.length; index += 1) {
     const arg = argv[index];
     if (arg === "--input") args.input = argv[++index];
@@ -17,8 +17,9 @@ function parseArgs(argv) {
     else if (arg === "--report") args.report = argv[++index];
     else if (arg === "--target-triangles") args.targetTriangles = Number(argv[++index]);
     else if (arg === "--texture-size") args.textureSize = Number(argv[++index]);
+    else if (arg === "--allow-open") args.allowOpen = true;
     else if (arg === "--help" || arg === "-h") {
-      console.log(`Create a closed Web LOD with Blender.\n\nUsage:\n  npm run repair:interior-3d:blender -- --input master.glb --output web.glb --report audit.json [--target-triangles 78000 --texture-size 1024]`);
+      console.log(`Create a Web LOD with Blender.\n\nUsage:\n  npm run repair:interior-3d:blender -- --input master.glb --output web.glb --report audit.json [--target-triangles 78000 --texture-size 1024 --allow-open]`);
       process.exit(0);
     } else throw new Error(`Unknown argument: ${arg}`);
   }
@@ -78,5 +79,6 @@ await run(blender, [
   "--output", path.resolve(args.output),
   "--report", path.resolve(args.report),
   "--target-triangles", String(args.targetTriangles),
-  "--texture-size", String(args.textureSize)
+  "--texture-size", String(args.textureSize),
+  ...(args.allowOpen ? ["--allow-open"] : [])
 ]);

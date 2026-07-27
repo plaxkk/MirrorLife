@@ -5,6 +5,7 @@ import puppeteer from "puppeteer-core";
 const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
 const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const OUTPUT_ROOT = path.resolve("dist/interior-3d-work/scene-flow-review");
+const READY_TIMEOUT_MS = Number(process.env.MIRRORLIFE_SCENE_READY_TIMEOUT || 45000);
 
 async function inspectScene(page) {
   return page.evaluate(() => {
@@ -51,8 +52,10 @@ async function verifyViewport(browser, viewport, label) {
   await page.setViewport(viewport);
   try {
     const url = `${BASE_URL}/game.html?qaInterior=university&qaInteriorScene=1&qaFresh=1`;
-    await page.goto(url, { waitUntil: "networkidle0", timeout: 30000 });
+    await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector("#interiorDiscoveryCard [data-interior-scene-action]", { visible: true, timeout: 20000 });
+    await page.waitForFunction(() => document.body.dataset.interiorRenderPhase === "ready"
+      && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true", { timeout: READY_TIMEOUT_MS });
 
     const opening = await inspectScene(page);
     if (!opening.interiorActive || opening.actionCount !== 1 || opening.choiceCount !== 0) {
@@ -65,12 +68,19 @@ async function verifyViewport(browser, viewport, label) {
     if (opening.renderPhase !== "ready" || phaseNames.some((phase) => !["loading", "ready"].includes(phase))) {
       throw new Error(`${label}: interior used a non-atomic render phase (${phaseNames.join(" -> ") || "none"}).`);
     }
-    if (!opening.renderStats.camera || opening.renderStats.camera.height >= 4.2) {
+    const maximumCameraHeight = label === "mobile" ? 4.8 : 4.2;
+    if (!opening.renderStats.camera || opening.renderStats.camera.height >= maximumCameraHeight) {
       throw new Error(`${label}: room-centered interior camera diagnostics are missing or too top-down.`);
     }
     const camera = opening.renderStats.camera;
-    if (Math.hypot(camera.pivotX, camera.pivotZ) >= Math.max(0.01, Math.hypot(camera.playerX, camera.playerZ) * 0.5)) {
-      throw new Error(`${label}: interior camera pivot follows the doorway/player too strongly.`);
+    const pivotToPlayer = Math.hypot(camera.pivotX - camera.playerX, camera.pivotZ - camera.playerZ);
+    const originToPlayer = Math.hypot(camera.playerX, camera.playerZ);
+    if (originToPlayer > 0.5 && pivotToPlayer >= originToPlayer) {
+      throw new Error(`${label}: interior camera pivot does not prioritize the player.`);
+    }
+    const expectedFov = label === "mobile" ? 56 : 48;
+    if (Math.abs(Number(camera.fov || 0) - expectedFov) > 0.5 || typeof camera.collisionAdjusted !== "boolean") {
+      throw new Error(`${label}: responsive FOV or camera collision diagnostics are missing.`);
     }
 
     await page.click("#interiorDiscoveryCard [data-interior-scene-action]");
