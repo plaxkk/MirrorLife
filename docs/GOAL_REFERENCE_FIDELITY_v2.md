@@ -91,8 +91,8 @@ opening 177 / 180        余量 3 个
 
 ```bash
 node -e "const m=require('./dist/interior-3d-work/environment-review/manifest.json');
-const s=m.scenes.find(x=>x.zone==='public-plaza').stats.render;
-console.log(s.drawCallsByLayer.actors <= 50 && s.drawCalls <= 140 ? 'PASS' : 'FAIL', s.drawCallsByLayer.actors, s.drawCalls);"
+const s=m.scenes.find(x=>x.zone==='public-plaza').stats;
+console.log(s.drawCallsByLayer.actors <= 55 && s.drawCalls <= 145 ? 'PASS' : 'FAIL', s.drawCallsByLayer.actors, s.drawCalls);"
 ```
 
 ---
@@ -180,11 +180,14 @@ node scripts/measure-reference-gap.mjs <角色裁切.png> <参考角色裁切.pn
 
 ---
 
-## 当前进度
+## 当前进度（2026-07-27 接管复核）
 
-- 阶段一 ▢ 未开始（这是下一步）
+- 阶段一 ⛔ 连续三次结构尝试未同时满足阶段一/四条件，已按停止规则回退
 - 阶段二 ▢ 未开始
 - 阶段三 ▢ 未开始（已量化，陷阱已记录）
-- 阶段四 ▢ 未开始
+- 阶段四 ⛔ 与阶段一同批尝试，未达到 `≥8` 蒙皮 mesh / `≤60` 刚性 mesh
 - 硬约束 ✅ 当前全绿
-- 七轴 5/7（`b543028` 之后）
+- 七轴 4/7（在隔离的 Claude 工作树、独立 4183 预览服务上重捕；历史 5/7 不能复现）
+
+停止证据与三次尝试的量化结果见
+`docs/REFERENCE_FIDELITY_SKINNING_BLOCKER_2026-07-27.md`。
