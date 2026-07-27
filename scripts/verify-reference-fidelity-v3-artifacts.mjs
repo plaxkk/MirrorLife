@@ -12,12 +12,24 @@ const writeJson = (name, value) => {
   fs.writeFileSync(file, `${JSON.stringify(value, null, 2)}\n`);
   return file;
 };
-const actor = (role) => ({
+const actor = (role, mobile = false) => ({
   assetRole: role,
   actorDrawCalls: 10,
-  articulationBatchCount: 2,
+  articulationBatchCount: mobile ? 1 : 2,
   drivenRigidSurfaceCount: 0,
-  skinnedArticulationBoneCount: 12
+  skinnedArticulationBoneCount: mobile ? 16 : 12,
+  ...(mobile ? {
+    mobileArticulationStructure: {
+      coreIdentity: "SkinnedArticulationCore",
+      coreBatchCount: 1,
+      detailIdentity: "SkinnedArticulationDetail",
+      detailSemantic: "detail",
+      detailSharesCoreSkeleton: true,
+      detailRemoved: true,
+      removedDetailBatchCount: 1,
+      renderedDetailBatchCount: 0
+    }
+  } : {})
 });
 const greenState = {
   blink: { applicable: true, green: true, value: 1 },
@@ -32,7 +44,9 @@ const stats = (roles, fingerprint, mobile = false) => ({
   drawCalls: mobile ? 110 : 145,
   triangles: mobile ? 250000 : 320000,
   drawCallsByLayer: { actors: 55 },
-  actorArticulationBreakdown: Object.fromEntries(roles.map((role) => [role, actor(role)])),
+  actorArticulationBreakdown: Object.fromEntries(
+    roles.map((role) => [role, actor(role, mobile)])
+  ),
   actorContractStates: Object.fromEntries(roles.map((role) => [role, greenState]))
 });
 const manifest = (profileStats, fingerprint) => ({

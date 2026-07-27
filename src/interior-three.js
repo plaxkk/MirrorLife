@@ -8,9 +8,12 @@ import {
   sampleCivicAnimationPose
 } from "./civic-animation-clips.js";
 import {
+  CIVIC_ARTICULATION_BINDING_SPECS,
   REFERENCE_FIDELITY_V3,
+  createCivicArticulationBinding,
   measureActorContractState,
-  measureActorRuntimeGraph
+  measureActorRuntimeGraph,
+  syncCivicArticulationBinding
 } from "./reference-fidelity-runtime-contract.js";
 
 // Vite injects a deterministic SHA-256 over runtime/config inputs and every
@@ -9884,11 +9887,9 @@ function createCivicSkinnedDigitState(meshes, bone) {
 }
 
 function syncCivicRigidSkinBones(entry) {
-  const joints = entry?.rigidSkinJoints;
+  const joints = entry?.articulationBindings;
   if (!joints?.length || !entry.visual) return;
   entry.visual.updateMatrixWorld(true);
-  const parentInverse = new THREE.Matrix4();
-  const relativeMatrix = new THREE.Matrix4();
   const digitCurlAxis = new THREE.Vector3(1, 0, 0);
   const digitCurlQuaternion = new THREE.Quaternion();
   const pressureScale = new THREE.Vector3();
@@ -9902,13 +9903,9 @@ function syncCivicRigidSkinBones(entry) {
     0,
     1
   );
-  joints.forEach(({ boneName, controller, bone, controllerToBoneRest }) => {
-    if (!controller || !bone?.parent) return;
-    parentInverse.copy(bone.parent.matrixWorld).invert();
-    relativeMatrix
-      .multiplyMatrices(parentInverse, controller.matrixWorld)
-      .multiply(controllerToBoneRest);
-    relativeMatrix.decompose(bone.position, bone.quaternion, bone.scale);
+  joints.forEach((binding) => {
+    const { boneName, bone } = binding;
+    if (!syncCivicArticulationBinding(binding)) return;
     const digitState = digitStateByBone.get(bone);
     if (digitState) {
       // The hand and digit source meshes now live in the shared articulation
@@ -9932,6 +9929,7 @@ function syncCivicRigidSkinBones(entry) {
       );
       bone.scale.multiply(pressureScale);
     }
+    bone.updateMatrix();
     bone.updateMatrixWorld(true);
   });
 }
@@ -10116,74 +10114,6 @@ function createCivicActorObject(actor, asset) {
   const skinRig = visual?.getObjectByName("CivicSkinRig") || null;
   const articulationCoreSkin = skinRig?.getObjectByName("SkinnedArticulationCore") || null;
   const articulationDetailSkin = skinRig?.getObjectByName("SkinnedArticulationDetail") || null;
-  const skinJointNames = {
-    leftArm: "SkinLeftArm",
-    rightArm: "SkinRightArm",
-    leftElbow: "SkinLeftElbow",
-    rightElbow: "SkinRightElbow",
-    leftLeg: "SkinLeftLeg",
-    rightLeg: "SkinRightLeg",
-    leftKnee: "SkinLeftKnee",
-    rightKnee: "SkinRightKnee",
-    leftHand: "SkinLeftHand",
-    rightHand: "SkinRightHand",
-    leftFoot: "SkinLeftFoot",
-    rightFoot: "SkinRightFoot",
-    leftSleeveCompression: "SkinLeftSleeveCorrective",
-    rightSleeveCompression: "SkinRightSleeveCorrective",
-    leftTrouserCompression: "SkinLeftTrouserCorrective",
-    rightTrouserCompression: "SkinRightTrouserCorrective"
-  };
-  const skinJoints = Object.fromEntries(Object.entries(skinJointNames).map(([track, nodeName]) => {
-    const node = visual?.getObjectByName(nodeName) || null;
-    return [track, node ? {
-      node,
-      restQuaternion: node.quaternion.clone(),
-      deltaEuler: new THREE.Euler(),
-      deltaQuaternion: new THREE.Quaternion()
-    } : null];
-  }));
-  const rigidSkinJointNames = {
-    SkinLeftElbowRigid: leftElbow,
-    SkinRightElbowRigid: rightElbow,
-    SkinLeftKneeRigid: leftKnee,
-    SkinRightKneeRigid: rightKnee,
-    SkinLeftHand: leftHand,
-    SkinRightHand: rightHand,
-    SkinLeftSleeveCorrective: leftSleeveCompression,
-    SkinRightSleeveCorrective: rightSleeveCompression,
-    SkinLeftTrouserCorrective: leftTrouserCompression,
-    SkinRightTrouserCorrective: rightTrouserCompression,
-    SkinLeftFoot: leftFoot,
-    SkinRightFoot: rightFoot
-  };
-  visual?.updateMatrixWorld(true);
-  const rigidSkinJoints = Object.entries(rigidSkinJointNames)
-    .map(([boneName, controller]) => {
-      const bone = visual?.getObjectByName(boneName) || null;
-      if (!controller || !bone?.parent) return null;
-      controller.updateMatrixWorld(true);
-      bone.parent.updateMatrixWorld(true);
-      bone.updateMatrix();
-      const controllerRelative = new THREE.Matrix4().multiplyMatrices(
-        new THREE.Matrix4().copy(bone.parent.matrixWorld).invert(),
-        controller.matrixWorld
-      );
-      return {
-        boneName,
-        controller,
-        bone,
-        // Controller pivots retain authored scale/orientation that an edit
-        // bone cannot encode identically. Preserve the rest offset so the
-        // first synchronization is a strict no-op, then apply only controller
-        // deltas on later frames.
-        controllerToBoneRest: controllerRelative
-          .clone()
-          .invert()
-          .multiply(bone.matrix.clone())
-      };
-    })
-    .filter(Boolean);
   const controllerJointNodes = {
     headGroup,
     leftArm,
@@ -10203,6 +10133,18 @@ function createCivicActorObject(actor, asset) {
     leftTrouserCompression,
     rightTrouserCompression
   };
+  const skinJointNames = Object.fromEntries(
+    CIVIC_ARTICULATION_BINDING_SPECS.map(({ boneKey, boneName }) => [boneKey, boneName])
+  );
+  const skinJoints = Object.fromEntries(Object.entries(skinJointNames).map(([boneKey, nodeName]) => {
+    const node = visual?.getObjectByName(nodeName) || null;
+    return [boneKey, node ? {
+      node,
+      restQuaternion: node.quaternion.clone(),
+      deltaEuler: new THREE.Euler(),
+      deltaQuaternion: new THREE.Quaternion()
+    } : null];
+  }));
   const controllerJoints = Object.fromEntries(Object.entries(controllerJointNodes).map(([track, node]) => [
     track,
     node ? {
@@ -10212,6 +10154,18 @@ function createCivicActorObject(actor, asset) {
       deltaQuaternion: new THREE.Quaternion()
     } : null
   ]));
+  visual?.updateMatrixWorld(true);
+  const articulationBindings = CIVIC_ARTICULATION_BINDING_SPECS
+    .map(({ controlKey, boneKey, boneName }) => {
+      const binding = createCivicArticulationBinding({
+        controlKey,
+        boneKey,
+        controller: controllerJointNodes[controlKey],
+        bone: skinJoints[boneKey]?.node
+      });
+      return binding ? { ...binding, boneName } : null;
+    })
+    .filter(Boolean);
   const skinnedMeshes = [];
   assetScene.traverse((node) => {
     if (node.isSkinnedMesh) skinnedMeshes.push(node);
@@ -10706,7 +10660,7 @@ function createCivicActorObject(actor, asset) {
     faceMode: CIVIC_FACE_MODE,
     controllerJoints,
     skinJoints,
-    rigidSkinJoints,
+    articulationBindings,
     articulationSkinBatches: {
       core: articulationCoreSkin,
       detail: articulationDetailSkin

@@ -14,11 +14,40 @@ try {
 
 assert(runtimeContract, "runtime reference-fidelity contract module is missing");
 const {
+  CIVIC_ARTICULATION_BINDING_SPECS,
   REFERENCE_FIDELITY_V3,
+  createCivicArticulationBinding,
   evaluateReferenceFidelityV3,
   measureActorContractState,
-  measureActorRuntimeGraph
+  measureActorRuntimeGraph,
+  syncCivicArticulationBinding
 } = runtimeContract;
+assert.equal(
+  CIVIC_ARTICULATION_BINDING_SPECS?.length,
+  20,
+  "canonical civic articulation binding roster must cover all weighted bones"
+);
+assert.equal(
+  new Set(CIVIC_ARTICULATION_BINDING_SPECS?.map(({ boneKey }) => boneKey)).size,
+  20,
+  "canonical civic articulation bone keys must be unique"
+);
+assert(
+  CIVIC_ARTICULATION_BINDING_SPECS?.every(({ controlKey, boneKey, boneName }) => (
+    controlKey && boneKey && boneName
+  )),
+  "canonical civic articulation binding metadata is incomplete"
+);
+assert.equal(
+  typeof createCivicArticulationBinding,
+  "function",
+  "canonical civic articulation binding factory is missing"
+);
+assert.equal(
+  typeof syncCivicArticulationBinding,
+  "function",
+  "canonical civic articulation binding synchronizer is missing"
+);
 
 // Break caught: every shipped desktop role must carry at least twelve real
 // positive-weight articulation bones while remaining in the two-batch
@@ -37,6 +66,63 @@ for (const role of REFERENCE_FIDELITY_V3.openingActorRoles) {
     REFERENCE_FIDELITY_V3.desktopArticulationBatchesPerActor,
     `${role}: shipped skin batches exceed the desktop articulation budget`
   );
+}
+
+const assertMatrixNear = (actual, expected, label) => {
+  actual.elements.forEach((value, index) => {
+    assert(
+      Math.abs(value - expected.elements[index]) <= 1e-6,
+      `${label}: matrix element ${index} differs (${value} vs ${expected.elements[index]})`
+    );
+  });
+};
+
+// Break caught: synchronization and measurement must consume the same
+// explicit controller→bone binding, including its authored rest offset.
+{
+  const visual = new THREE.Group();
+  visual.position.set(0.4, -0.2, 0.7);
+  visual.rotation.set(0.08, -0.16, 0.04);
+  const controllerParent = new THREE.Group();
+  const controller = new THREE.Group();
+  controllerParent.position.set(0.2, 0.3, -0.1);
+  controller.position.set(-0.15, 0.25, 0.32);
+  controller.rotation.set(0.12, -0.08, 0.19);
+  controller.scale.set(1.04, 0.97, 1.02);
+  controllerParent.add(controller);
+  visual.add(controllerParent);
+
+  const boneParent = new THREE.Bone();
+  const bone = new THREE.Bone();
+  boneParent.position.set(-0.3, 0.1, 0.2);
+  bone.position.set(0.06, 0.44, -0.18);
+  bone.rotation.set(-0.05, 0.14, -0.09);
+  boneParent.add(bone);
+  visual.add(boneParent);
+  visual.updateMatrixWorld(true);
+
+  const binding = createCivicArticulationBinding({
+    controlKey: "leftArm",
+    boneKey: "leftArm",
+    controller,
+    bone
+  });
+  assert.equal(binding.controlKey, "leftArm");
+  assert.equal(binding.boneKey, "leftArm");
+  assert(binding.controllerToBoneRest?.isMatrix4, "binding rest offset is missing");
+  const restLocal = bone.matrix.clone();
+  syncCivicArticulationBinding(binding);
+  assertMatrixNear(bone.matrix, restLocal, "rest-pose synchronization");
+
+  controller.position.add(new THREE.Vector3(0.13, -0.04, 0.09));
+  controller.rotation.z += 0.23;
+  visual.updateMatrixWorld(true);
+  const expectedLocal = bone.parent.matrixWorld.clone()
+    .invert()
+    .multiply(controller.matrixWorld)
+    .multiply(binding.controllerToBoneRest);
+  syncCivicArticulationBinding(binding);
+  assertMatrixNear(bone.matrix, expectedLocal, "controller-driven synchronization");
 }
 
 // Break caught: a visible rigid surface beneath a driven controller must not
@@ -103,10 +189,20 @@ for (const role of REFERENCE_FIDELITY_V3.openingActorRoles) {
   skinnedSurface.add(bones[0]);
   skinnedSurface.bind(new THREE.Skeleton(bones));
   visual.add(skinnedSurface);
+  visual.updateMatrixWorld(true);
+  const leftArmBinding = createCivicArticulationBinding({
+    controlKey: "leftArm",
+    boneKey: "leftArm",
+    controller: leftArm,
+    bone: bones[0]
+  });
 
-  const measured = measureActorRuntimeGraph({
+  const graphEntry = {
     group: actor,
     visual,
+    articulationBindings: [leftArmBinding],
+    // Deliberately retain same-key independent maps. Measurement must ignore
+    // them and consume only the binding that the synchronizer executes.
     controllerJoints: {
       leftArm: { node: leftArm },
       rightArm: { node: rightArm },
@@ -116,13 +212,18 @@ for (const role of REFERENCE_FIDELITY_V3.openingActorRoles) {
       leftArm: { node: bones[0] }
     },
     mobileRemovableDetailBatches: 2
-  }, "desktop");
+  };
+  const measured = measureActorRuntimeGraph(graphEntry, "desktop");
 
   assert.equal(measured.actorDrawCalls, 4);
   assert.equal(measured.articulationBatchCount, 1);
   assert.equal(measured.drivenRigidSurfaceCount, 1);
   assert.equal(measured.skinnedArticulationBoneCount, 1);
-  assert.equal(measured.mobileRemovableDetailBatches, 2);
+  assert.equal(
+    measured.mobileRemovableDetailBatches,
+    0,
+    "desktop fixture accepted a fabricated removable-detail count"
+  );
   assert.deepEqual(measured.controlPivots.leftArm, {
     rigidDrawCalls: 1,
     rigidSurfaceCount: 1,
@@ -130,6 +231,118 @@ for (const role of REFERENCE_FIDELITY_V3.openingActorRoles) {
   });
   assert(!("rightArm" in measured.controlPivots));
   assert(!("headGroup" in measured.controlPivots));
+
+  const unbound = measureActorRuntimeGraph({
+    ...graphEntry,
+    articulationBindings: []
+  }, "desktop");
+  assert.equal(
+    unbound.skinnedArticulationBoneCount,
+    0,
+    "unbound same-key controller/bone pair counted as synchronized"
+  );
+  assert.equal(unbound.drivenRigidSurfaceCount, 0);
+
+  const brokenBinding = measureActorRuntimeGraph({
+    ...graphEntry,
+    articulationBindings: [{
+      ...leftArmBinding,
+      controllerToBoneRest: null
+    }]
+  }, "desktop");
+  assert.equal(
+    brokenBinding.skinnedArticulationBoneCount,
+    0,
+    "binding without its rest offset still satisfied the articulation gate"
+  );
+}
+
+// Break caught: mobile structure is measured from the loaded core/detail
+// SkinnedMesh references after the detail node is actually removed.
+{
+  const actor = new THREE.Group();
+  const visual = new THREE.Group();
+  const skinRig = new THREE.Group();
+  actor.add(visual);
+  visual.add(skinRig);
+  const bones = Array.from({ length: 16 }, (_, index) => {
+    const bone = new THREE.Bone();
+    bone.name = `BoundBone${index}`;
+    return bone;
+  });
+  bones.slice(1).forEach((bone) => bones[0].add(bone));
+  const skeleton = new THREE.Skeleton(bones);
+  const weightedGeometry = new THREE.BufferGeometry();
+  weightedGeometry.setAttribute(
+    "position",
+    new THREE.Float32BufferAttribute(
+      bones.flatMap((_, index) => [index * 0.01, 0, 0]),
+      3
+    )
+  );
+  weightedGeometry.setAttribute(
+    "skinIndex",
+    new THREE.Uint16BufferAttribute(
+      bones.flatMap((_, index) => [index, 0, 0, 0]),
+      4
+    )
+  );
+  weightedGeometry.setAttribute(
+    "skinWeight",
+    new THREE.Float32BufferAttribute(bones.flatMap(() => [1, 0, 0, 0]), 4)
+  );
+  const core = new THREE.SkinnedMesh(
+    weightedGeometry,
+    new THREE.MeshBasicMaterial()
+  );
+  core.name = "SkinnedArticulationCore";
+  core.userData.articulation_batch = "core";
+  core.add(bones[0]);
+  core.bind(skeleton);
+  skinRig.add(core);
+  const detail = new THREE.SkinnedMesh(
+    weightedGeometry.clone(),
+    new THREE.MeshBasicMaterial()
+  );
+  detail.name = "SkinnedArticulationDetail";
+  detail.userData.articulation_batch = "detail";
+  detail.bind(skeleton);
+  skinRig.add(detail);
+
+  const controllers = bones.map((_, index) => {
+    const controller = new THREE.Group();
+    controller.name = `BoundController${index}`;
+    visual.add(controller);
+    return controller;
+  });
+  visual.updateMatrixWorld(true);
+  const articulationBindings = bones.map((bone, index) => (
+    createCivicArticulationBinding({
+      controlKey: `control${index}`,
+      boneKey: `bone${index}`,
+      controller: controllers[index],
+      bone
+    })
+  ));
+  detail.removeFromParent();
+  const measured = measureActorRuntimeGraph({
+    group: actor,
+    visual,
+    articulationBindings,
+    articulationSkinBatches: { core, detail }
+  }, "mobile");
+  assert.equal(measured.articulationBatchCount, 1);
+  assert.equal(measured.skinnedArticulationBoneCount, 16);
+  assert.deepEqual(measured.mobileArticulationStructure, {
+    coreIdentity: "SkinnedArticulationCore",
+    coreBatchCount: 1,
+    detailIdentity: "SkinnedArticulationDetail",
+    detailSemantic: "detail",
+    detailSharesCoreSkeleton: true,
+    detailRemoved: true,
+    removedDetailBatchCount: 1,
+    renderedDetailBatchCount: 0
+  });
 }
 
 // Break caught: elbow-volume health must observe a visible corrective surface
@@ -192,6 +405,22 @@ const passingActor = {
   drivenRigidSurfaceCount: 0,
   skinnedArticulationBoneCount: 12
 };
+const passingMobileActor = {
+  ...passingActor,
+  actorDrawCalls: 10,
+  articulationBatchCount: 1,
+  skinnedArticulationBoneCount: 16,
+  mobileArticulationStructure: {
+    coreIdentity: "SkinnedArticulationCore",
+    coreBatchCount: 1,
+    detailIdentity: "SkinnedArticulationDetail",
+    detailSemantic: "detail",
+    detailSharesCoreSkeleton: true,
+    detailRemoved: true,
+    removedDetailBatchCount: 1,
+    renderedDetailBatchCount: 0
+  }
+};
 const BUILD_FINGERPRINT_A =
   "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
 const BUILD_FINGERPRINT_B =
@@ -222,9 +451,9 @@ const passingInput = {
     drawCalls: 110,
     triangles: 250000,
     actorArticulationBreakdown: {
-      player: { ...passingActor, assetRole: "player", actorDrawCalls: 10 },
-      listener: { ...passingActor, assetRole: "listener", actorDrawCalls: 10 },
-      facilitator: { ...passingActor, assetRole: "facilitator", actorDrawCalls: 10 }
+      player: { ...passingMobileActor, assetRole: "player" },
+      listener: { ...passingMobileActor, assetRole: "listener" },
+      facilitator: { ...passingMobileActor, assetRole: "facilitator" }
     }
   },
   blinkStats: {
@@ -259,7 +488,62 @@ const passingInput = {
   assert.equal(REFERENCE_FIDELITY_V3.desktopArticulationBatchesPerActor, 2);
   assert.equal(REFERENCE_FIDELITY_V3.drivenRigidSurfacesPerActor, 0);
   assert.equal(REFERENCE_FIDELITY_V3.skinnedArticulationBonesPerActor, 12);
+  assert.equal(REFERENCE_FIDELITY_V3.mobileArticulationBatchesPerActor, 1);
+  assert.equal(REFERENCE_FIDELITY_V3.mobileSkinnedArticulationBonesPerActor, 16);
+  assert.equal(
+    REFERENCE_FIDELITY_V3.mobileCoreArticulationBatchIdentity,
+    "SkinnedArticulationCore"
+  );
+  assert.equal(
+    REFERENCE_FIDELITY_V3.mobileDetailArticulationBatchIdentity,
+    "SkinnedArticulationDetail"
+  );
   assert.equal(REFERENCE_FIDELITY_V3.sevenAxisBaseline, 4);
+}
+
+// Break caught: mobile acceptance must enforce the actual loaded core/detail
+// graph, not merely the mobile role roster and global frame budgets.
+for (const [label, mutate, expectedFailure] of [
+  [
+    "wrong detail identity",
+    (actor) => {
+      actor.mobileArticulationStructure.detailIdentity = "FabricatedDetail";
+    },
+    "detail identity"
+  ],
+  [
+    "detail not removed",
+    (actor) => {
+      actor.mobileArticulationStructure.detailRemoved = false;
+      actor.mobileArticulationStructure.removedDetailBatchCount = 0;
+      actor.mobileArticulationStructure.renderedDetailBatchCount = 1;
+    },
+    "removed detail"
+  ],
+  [
+    "excess core batch",
+    (actor) => {
+      actor.articulationBatchCount = 2;
+      actor.mobileArticulationStructure.coreBatchCount = 2;
+    },
+    "articulation batch"
+  ],
+  [
+    "missing weighted bones",
+    (actor) => {
+      actor.skinnedArticulationBoneCount = 15;
+    },
+    "weighted articulation bone"
+  ]
+]) {
+  const fixture = structuredClone(passingInput);
+  mutate(fixture.mobileStats.actorArticulationBreakdown.player);
+  const result = evaluateReferenceFidelityV3(fixture);
+  assert.equal(result.pass, false, `${label}: invalid mobile graph passed`);
+  assert(
+    result.failures.some((failure) => failure.includes(expectedFailure)),
+    `${label}: expected mobile structural failure was not reported`
+  );
 }
 
 // Break caught: removing a required opening role from every artifact must not

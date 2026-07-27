@@ -92,6 +92,34 @@ function assertSparsePayloadsPreserved(before, after) {
   });
 }
 
+function quantizeNormalizedWeights(values, start, componentCount) {
+  const normalized = Array.from({ length: componentCount }, (_, component) => (
+    Math.max(0, Math.min(1, Number(values[start + component] || 0)))
+  ));
+  const total = normalized.reduce((sum, value) => sum + value, 0);
+  assert(total > 0, `WEIGHTS_0 vertex ${start / componentCount} has zero total weight`);
+  const scaled = normalized.map((value) => (value / total) * 255);
+  const quantized = scaled.map(Math.floor);
+  let residual = 255 - quantized.reduce((sum, value) => sum + value, 0);
+  const residualOrder = scaled
+    .map((value, component) => ({
+      component,
+      fraction: value - quantized[component]
+    }))
+    .sort((left, right) => (
+      right.fraction - left.fraction || left.component - right.component
+    ));
+  for (let index = 0; index < residual; index += 1) {
+    quantized[residualOrder[index % componentCount].component] += 1;
+  }
+  assert.equal(
+    quantized.reduce((sum, value) => sum + value, 0),
+    255,
+    `WEIGHTS_0 vertex ${start / componentCount} raw sum drifted during quantization`
+  );
+  return quantized;
+}
+
 async function quantizeFile(file) {
   const original = await fs.readFile(file);
   const { json, binary } = parseGlb(original);
@@ -104,6 +132,7 @@ async function quantizeFile(file) {
         if (accessor?.componentType !== 5126 || accessor.sparse) continue;
         if (semantic === "NORMAL") {
           targets.set(accessorIndex, {
+            semantic,
             componentType: 5122,
             bytes: 2,
             scale: 32767
@@ -111,6 +140,7 @@ async function quantizeFile(file) {
         }
         if (semantic === "COLOR_0" || semantic === "WEIGHTS_0") {
           targets.set(accessorIndex, {
+            semantic,
             componentType: 5121,
             bytes: 1,
             scale: 255
@@ -137,12 +167,17 @@ async function quantizeFile(file) {
     const byteStride = align4(elementBytes);
     const packed = Buffer.alloc(accessor.count * byteStride);
     for (let vertex = 0; vertex < accessor.count; vertex += 1) {
+      const weightBytes = target.semantic === "WEIGHTS_0"
+        ? quantizeNormalizedWeights(values, vertex * componentCount, componentCount)
+        : null;
       for (let component = 0; component < componentCount; component += 1) {
         const valueIndex = vertex * componentCount + component;
         const minimum = target.componentType === 5122 ? -1 : 0;
-        const value = Math.round(
-          Math.max(minimum, Math.min(1, values[valueIndex])) * target.scale
-        );
+        const value = weightBytes
+          ? weightBytes[component]
+          : Math.round(
+            Math.max(minimum, Math.min(1, values[valueIndex])) * target.scale
+          );
         const writeOffset = vertex * byteStride + component * target.bytes;
         if (target.componentType === 5122) packed.writeInt16LE(value, writeOffset);
         else packed.writeUInt8(value, writeOffset);

@@ -1,3 +1,42 @@
+export const CIVIC_ARTICULATION_BINDING_SPECS = Object.freeze([
+  { controlKey: "leftArm", boneKey: "leftArm", boneName: "SkinLeftArm" },
+  { controlKey: "leftElbow", boneKey: "leftElbow", boneName: "SkinLeftElbow" },
+  { controlKey: "rightArm", boneKey: "rightArm", boneName: "SkinRightArm" },
+  { controlKey: "rightElbow", boneKey: "rightElbow", boneName: "SkinRightElbow" },
+  { controlKey: "leftLeg", boneKey: "leftLeg", boneName: "SkinLeftLeg" },
+  { controlKey: "leftKnee", boneKey: "leftKnee", boneName: "SkinLeftKnee" },
+  { controlKey: "rightLeg", boneKey: "rightLeg", boneName: "SkinRightLeg" },
+  { controlKey: "rightKnee", boneKey: "rightKnee", boneName: "SkinRightKnee" },
+  { controlKey: "leftElbow", boneKey: "leftElbowRigid", boneName: "SkinLeftElbowRigid" },
+  { controlKey: "rightElbow", boneKey: "rightElbowRigid", boneName: "SkinRightElbowRigid" },
+  { controlKey: "leftKnee", boneKey: "leftKneeRigid", boneName: "SkinLeftKneeRigid" },
+  { controlKey: "rightKnee", boneKey: "rightKneeRigid", boneName: "SkinRightKneeRigid" },
+  { controlKey: "leftHand", boneKey: "leftHand", boneName: "SkinLeftHand" },
+  { controlKey: "rightHand", boneKey: "rightHand", boneName: "SkinRightHand" },
+  {
+    controlKey: "leftSleeveCompression",
+    boneKey: "leftSleeveCompression",
+    boneName: "SkinLeftSleeveCorrective"
+  },
+  {
+    controlKey: "rightSleeveCompression",
+    boneKey: "rightSleeveCompression",
+    boneName: "SkinRightSleeveCorrective"
+  },
+  {
+    controlKey: "leftTrouserCompression",
+    boneKey: "leftTrouserCompression",
+    boneName: "SkinLeftTrouserCorrective"
+  },
+  {
+    controlKey: "rightTrouserCompression",
+    boneKey: "rightTrouserCompression",
+    boneName: "SkinRightTrouserCorrective"
+  },
+  { controlKey: "leftFoot", boneKey: "leftFoot", boneName: "SkinLeftFoot" },
+  { controlKey: "rightFoot", boneKey: "rightFoot", boneName: "SkinRightFoot" }
+].map((binding) => Object.freeze(binding)));
+
 export const REFERENCE_FIDELITY_V3 = Object.freeze({
   version: "mirrorlife-reference-fidelity-v3",
   openingActorRoles: Object.freeze(["player", "listener", "facilitator", "mediator"]),
@@ -7,11 +46,59 @@ export const REFERENCE_FIDELITY_V3 = Object.freeze({
   desktopArticulationBatchesPerActor: 2,
   drivenRigidSurfacesPerActor: 0,
   skinnedArticulationBonesPerActor: 12,
+  mobileArticulationBatchesPerActor: 1,
+  mobileSkinnedArticulationBonesPerActor: 16,
+  mobileCoreArticulationBatchIdentity: "SkinnedArticulationCore",
+  mobileDetailArticulationBatchIdentity: "SkinnedArticulationDetail",
   mobileDrawCalls: 110,
   mobileTriangles: 250000,
   sevenAxisBaseline: 4,
   sevenAxisTotal: 7
 });
+
+export function createCivicArticulationBinding({
+  controlKey,
+  boneKey,
+  controller,
+  bone
+} = {}) {
+  if (!controlKey || !boneKey || !controller || !bone?.parent) return null;
+  controller.updateWorldMatrix?.(true, false);
+  bone.parent.updateWorldMatrix?.(true, false);
+  bone.updateMatrix?.();
+  const controllerRelative = bone.parent.matrixWorld.clone()
+    .invert()
+    .multiply(controller.matrixWorld);
+  return {
+    controlKey,
+    boneKey,
+    controller,
+    bone,
+    controllerToBoneRest: controllerRelative
+      .clone()
+      .invert()
+      .multiply(bone.matrix.clone())
+  };
+}
+
+export function syncCivicArticulationBinding(binding) {
+  const {
+    controller,
+    bone,
+    controllerToBoneRest
+  } = binding || {};
+  if (!controller || !bone?.parent || !controllerToBoneRest?.isMatrix4) return false;
+  controller.updateWorldMatrix?.(true, false);
+  bone.parent.updateWorldMatrix?.(true, false);
+  const relativeMatrix = bone.parent.matrixWorld.clone()
+    .invert()
+    .multiply(controller.matrixWorld)
+    .multiply(controllerToBoneRest);
+  relativeMatrix.decompose(bone.position, bone.quaternion, bone.scale);
+  bone.updateMatrix?.();
+  bone.updateMatrixWorld?.(true);
+  return true;
+}
 
 function isVisibleInGraph(node, root) {
   let current = node;
@@ -67,25 +154,30 @@ function nearestControlKey(node, controlKeyByNode, visual) {
 export function measureActorRuntimeGraph(entry, profile = "desktop") {
   const group = entry?.group;
   const visual = entry?.visual || group;
-  const skinJointEntries = Object.entries(entry?.skinJoints || {})
-    .filter(([, state]) => state?.node);
-  const skinControlKeys = new Set(skinJointEntries.map(([key]) => key));
-  const controls = Object.entries(entry?.controllerJoints || {})
-    .filter(([key, state]) => (
-      skinControlKeys.has(key)
-      && state?.node
-      && isVisibleInGraph(state.node, group)
+  const activeBindings = (entry?.articulationBindings || [])
+    .filter((binding) => (
+      binding?.controlKey
+      && binding?.boneKey
+      && binding?.controller
+      && binding?.bone
+      && binding?.controllerToBoneRest?.isMatrix4
+      && isVisibleInGraph(binding.controller, group)
     ));
-  const controlKeyByNode = new Map(controls.map(([key, state]) => [state.node, key]));
+  const controlKeyByNode = new Map(
+    activeBindings.map((binding) => [binding.controller, binding.controlKey])
+  );
   const skinControlKeyByBone = new Map(
-    skinJointEntries
-      .map(([key, state]) => [state.node, key])
+    activeBindings.map((binding) => [binding.bone, binding.controlKey])
   );
   const controlPivots = {};
   const weightedBones = new Set();
+  const articulationCore = entry?.articulationSkinBatches?.core || null;
+  const articulationDetail = entry?.articulationSkinBatches?.detail || null;
   let actorDrawCalls = 0;
   let articulationBatchCount = 0;
   let drivenRigidSurfaceCount = 0;
+  let renderedCoreBatchCount = 0;
+  let renderedDetailBatchCount = 0;
 
   group?.traverse?.((node) => {
     if (!node?.isMesh || !isVisibleInGraph(node, group)) return;
@@ -101,6 +193,8 @@ export function measureActorRuntimeGraph(entry, profile = "desktop") {
       );
       if (!touchedControls.size) return;
       articulationBatchCount += calls;
+      if (node === articulationCore) renderedCoreBatchCount += calls;
+      if (node === articulationDetail) renderedDetailBatchCount += calls;
       meshBones.forEach((bone) => {
         if (skinControlKeyByBone.has(bone)) weightedBones.add(bone);
       });
@@ -126,13 +220,40 @@ export function measureActorRuntimeGraph(entry, profile = "desktop") {
     drivenRigidSurfaceCount += 1;
   });
 
+  const coreBones = articulationCore?.skeleton?.bones || [];
+  const detailBones = articulationDetail?.skeleton?.bones || [];
+  const detailSharesCoreSkeleton = coreBones.length > 0
+    && detailBones.length === coreBones.length
+    && detailBones.every((bone, index) => bone === coreBones[index]);
+  const detailRemoved = !!articulationDetail
+    && !isVisibleInGraph(articulationDetail, group);
+  const detailIdentityValid = articulationDetail?.isSkinnedMesh
+    && articulationDetail.name === "SkinnedArticulationDetail"
+    && articulationDetail.userData?.articulation_batch === "detail"
+    && detailSharesCoreSkeleton;
+  const removedDetailBatchCount = profile === "mobile"
+    && detailRemoved
+    && detailIdentityValid
+    ? 1
+    : 0;
+
   return {
     profile,
     actorDrawCalls,
     articulationBatchCount,
     drivenRigidSurfaceCount,
     skinnedArticulationBoneCount: weightedBones.size,
-    mobileRemovableDetailBatches: Number(entry?.mobileRemovableDetailBatches || 0),
+    mobileRemovableDetailBatches: removedDetailBatchCount,
+    mobileArticulationStructure: {
+      coreIdentity: articulationCore?.name || null,
+      coreBatchCount: renderedCoreBatchCount,
+      detailIdentity: articulationDetail?.name || null,
+      detailSemantic: articulationDetail?.userData?.articulation_batch || null,
+      detailSharesCoreSkeleton,
+      detailRemoved,
+      removedDetailBatchCount,
+      renderedDetailBatchCount
+    },
     controlPivots
   };
 }
@@ -371,7 +492,7 @@ export function evaluateReferenceFidelityV3({
     return byRole;
   };
   const desktopActors = requiredActors(desktopStats, "desktop", limits.openingActorRoles);
-  requiredActors(mobileStats, "mobile", limits.mobileActorRoles);
+  const mobileActors = requiredActors(mobileStats, "mobile", limits.mobileActorRoles);
   const blinkActors = requiredActors(blinkStats, "blink", limits.openingActorRoles);
   for (const [role, [, actor]] of desktopActors) {
     failAbove(
@@ -394,6 +515,52 @@ export function evaluateReferenceFidelityV3({
         `${role} skinned articulation bone count ${actor?.skinnedArticulationBoneCount ?? "missing"}`
         + ` is below ${limits.skinnedArticulationBonesPerActor}`
       );
+    }
+  }
+  for (const [role, [, actor]] of mobileActors) {
+    if (Number(actor?.articulationBatchCount) !== limits.mobileArticulationBatchesPerActor) {
+      failures.push(
+        `${role} mobile articulation batch ${actor?.articulationBatchCount ?? "missing"}`
+        + ` must equal ${limits.mobileArticulationBatchesPerActor}`
+      );
+    }
+    if (
+      Number(actor?.skinnedArticulationBoneCount)
+      !== limits.mobileSkinnedArticulationBonesPerActor
+    ) {
+      failures.push(
+        `${role} mobile weighted articulation bone count`
+        + ` ${actor?.skinnedArticulationBoneCount ?? "missing"}`
+        + ` must equal ${limits.mobileSkinnedArticulationBonesPerActor}`
+      );
+    }
+    const structure = actor?.mobileArticulationStructure;
+    if (
+      structure?.coreIdentity !== limits.mobileCoreArticulationBatchIdentity
+      || Number(structure?.coreBatchCount) !== limits.mobileArticulationBatchesPerActor
+    ) {
+      failures.push(
+        `${role} mobile core articulation batch identity/count is invalid`
+      );
+    }
+    if (structure?.detailIdentity !== limits.mobileDetailArticulationBatchIdentity) {
+      failures.push(
+        `${role} mobile detail identity ${structure?.detailIdentity ?? "missing"}`
+        + ` must equal ${limits.mobileDetailArticulationBatchIdentity}`
+      );
+    }
+    if (
+      structure?.detailSemantic !== "detail"
+      || structure?.detailSharesCoreSkeleton !== true
+    ) {
+      failures.push(`${role} mobile detail batch is not tied to the loaded articulation skin`);
+    }
+    if (
+      structure?.detailRemoved !== true
+      || Number(structure?.removedDetailBatchCount) !== 1
+      || Number(structure?.renderedDetailBatchCount) !== 0
+    ) {
+      failures.push(`${role} mobile removed detail batch state is invalid`);
     }
   }
 

@@ -236,8 +236,55 @@ const mediatorContactPose = sampleCivicAnimationPose("gesture", 0.37, "mediator"
 assert(mediatorContactPose.rightElbow[0] < -1.35, "mediator contact pose lost the jaw-side elbow fold");
 assert(mediatorContactPose.rightHand[0] > 0.2, "mediator contact pose lost the thoughtful wrist turn");
 
+function readGlbDocument(contents) {
+  const jsonLength = contents.readUInt32LE(12);
+  const json = JSON.parse(contents.subarray(20, 20 + jsonLength).toString("utf8"));
+  const binaryHeader = 20 + ((jsonLength + 3) & ~3);
+  const binaryLength = contents.readUInt32LE(binaryHeader);
+  return {
+    json,
+    binary: contents.subarray(binaryHeader + 8, binaryHeader + 8 + binaryLength)
+  };
+}
+
+function assertRawSkinWeightSums(role, gltf, binary) {
+  const verifiedAccessors = new Set();
+  let verifiedVertices = 0;
+  for (const mesh of gltf.meshes || []) {
+    for (const primitive of mesh.primitives || []) {
+      const accessorIndex = primitive.attributes?.WEIGHTS_0;
+      if (!Number.isInteger(accessorIndex) || verifiedAccessors.has(accessorIndex)) continue;
+      verifiedAccessors.add(accessorIndex);
+      const accessor = gltf.accessors?.[accessorIndex];
+      const view = gltf.bufferViews?.[accessor?.bufferView];
+      assert.equal(accessor?.componentType, 5121, `${role}: WEIGHTS_0 must use raw UBYTE storage`);
+      assert.equal(accessor?.type, "VEC4", `${role}: WEIGHTS_0 must remain VEC4`);
+      assert.equal(accessor?.normalized, true, `${role}: WEIGHTS_0 must be normalized`);
+      assert(view, `${role}: WEIGHTS_0 bufferView is missing`);
+      const stride = Number(view.byteStride || 4);
+      const start = Number(view.byteOffset || 0) + Number(accessor.byteOffset || 0);
+      verifiedVertices += Number(accessor.count || 0);
+      for (let vertex = 0; vertex < Number(accessor.count || 0); vertex += 1) {
+        const offset = start + vertex * stride;
+        const rawSum = binary[offset]
+          + binary[offset + 1]
+          + binary[offset + 2]
+          + binary[offset + 3];
+        assert.equal(
+          rawSum,
+          255,
+          `${role}: WEIGHTS_0 accessor ${accessorIndex} vertex ${vertex} raw UBYTE sum is ${rawSum}, expected 255`
+        );
+      }
+    }
+  }
+  assert(verifiedAccessors.size > 0, `${role}: no WEIGHTS_0 accessor was verified`);
+  return verifiedVertices;
+}
+
 let totalBytes = 0;
 const runtimeSkinMeasurements = [];
+const rawSkinWeightVertices = {};
 for (const role of expectedRoles) {
   const entry = manifest.roles[role];
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
@@ -297,8 +344,8 @@ for (const role of expectedRoles) {
   const contents = await fs.readFile(file);
   const header = contents.subarray(0, 4);
   assert.equal(header.toString("utf8"), "glTF", `${role}: invalid GLB header`);
-  const jsonLength = contents.readUInt32LE(12);
-  const gltf = JSON.parse(contents.subarray(20, 20 + jsonLength).toString("utf8"));
+  const { json: gltf, binary } = readGlbDocument(contents);
+  rawSkinWeightVertices[role] = assertRawSkinWeightSums(role, gltf, binary);
   assert(
     gltf.extensionsRequired?.includes("KHR_mesh_quantization"),
     `${role}: quantized vertex data does not require KHR_mesh_quantization`
@@ -512,4 +559,5 @@ for (const role of expectedRoles) {
 console.log(
   `Civic character assets passed: ${expectedRoles.length} roles, ${(totalBytes / 1024 / 1024).toFixed(2)} MB total.`
 );
+console.log(`Raw UBYTE WEIGHTS_0 sums verified at 255: ${JSON.stringify(rawSkinWeightVertices)}`);
 console.log(`Loaded GLB skin measurements: ${JSON.stringify(runtimeSkinMeasurements)}`);
