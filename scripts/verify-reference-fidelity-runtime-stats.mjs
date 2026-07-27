@@ -166,9 +166,13 @@ const passingActor = {
   drivenRigidSurfaceCount: 0,
   skinnedArticulationBoneCount: 12
 };
+const BUILD_FINGERPRINT_A =
+  "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
+const BUILD_FINGERPRINT_B =
+  "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
 const passingInput = {
   desktopStats: {
-    buildFingerprint: "game-fixture-a.js",
+    buildFingerprint: BUILD_FINGERPRINT_A,
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
     drawCalls: 145,
     triangles: 320000,
@@ -187,7 +191,7 @@ const passingInput = {
     }
   },
   mobileStats: {
-    buildFingerprint: "game-fixture-a.js",
+    buildFingerprint: BUILD_FINGERPRINT_A,
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
     drawCalls: 110,
     triangles: 250000,
@@ -198,7 +202,7 @@ const passingInput = {
     }
   },
   blinkStats: {
-    buildFingerprint: "game-fixture-a.js",
+    buildFingerprint: BUILD_FINGERPRINT_A,
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
     actorArticulationBreakdown: {
       player: { ...passingActor, assetRole: "player" },
@@ -213,7 +217,7 @@ const passingInput = {
       mediator: greenState
     }
   },
-  sevenAxis: { buildFingerprint: "game-fixture-a.js", within: 4, total: 7 }
+  sevenAxis: { buildFingerprint: BUILD_FINGERPRINT_A, within: 4, total: 7 }
 };
 
 // Break caught: every v3 boundary is inclusive and the isolated seven-axis
@@ -268,8 +272,21 @@ for (const metric of ["handContact", "elbowVolume", "footPlant", "clothCompressi
 // runtime builds must not be combined into one acceptance verdict.
 {
   const mixedBuild = structuredClone(passingInput);
-  mixedBuild.mobileStats.buildFingerprint = "game-fixture-b.js";
+  mixedBuild.mobileStats.buildFingerprint = BUILD_FINGERPRINT_B;
   const result = evaluateReferenceFidelityV3(mixedBuild);
+  assert.equal(result.pass, false);
+  assert(result.failures.some((failure) => failure.includes("build fingerprint")));
+}
+
+// Break caught: the old chunk pathname is not a build-wide content identifier
+// and must not be accepted even when every artifact repeats it.
+{
+  const legacyPathBuild = structuredClone(passingInput);
+  legacyPathBuild.desktopStats.buildFingerprint = "/assets/game-fixture.js";
+  legacyPathBuild.mobileStats.buildFingerprint = "/assets/game-fixture.js";
+  legacyPathBuild.blinkStats.buildFingerprint = "/assets/game-fixture.js";
+  legacyPathBuild.sevenAxis.buildFingerprint = "/assets/game-fixture.js";
+  const result = evaluateReferenceFidelityV3(legacyPathBuild);
   assert.equal(result.pass, false);
   assert(result.failures.some((failure) => failure.includes("build fingerprint")));
 }

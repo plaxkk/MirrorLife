@@ -71,8 +71,10 @@ npm run verify:reference-fidelity:v3
 肘实际可见 corrective surface 的 x/y 扩张、z 压缩和体积比变化，不得由 shoulder/hip
 夹紧标量代替。
 
-桌面、移动端、强制 blink manifest 和七轴 JSON 必须携带同一个 Vite 内容哈希运行时
-`buildFingerprint`。混用不同构建或缺少指纹的证据直接失败。
+桌面、移动端、强制 blink manifest 和七轴 JSON 必须携带同一个确定性 SHA-256
+`buildFingerprint`。该标识在 Vite 启动/构建时根据运行时源码与配置、顶层公共运行时脚本，
+以及 `public/assets/characters` 下全部发布角色资产计算，并编译进运行时统计；源码、配置或任一
+发布角色 GLB 字节变化都会生成不同标识。混用不同构建或缺少指纹的证据直接失败。
 
 ### v3 阶段一 / 角色结构统一门槛
 

@@ -286,8 +286,11 @@ export function evaluateReferenceFidelityV3({
     blinkStats?.buildFingerprint,
     sevenAxis?.buildFingerprint
   ];
+  const contentFingerprint = /^sha256:[a-f0-9]{64}$/;
   if (
-    buildFingerprints.some((fingerprint) => typeof fingerprint !== "string" || !fingerprint)
+    buildFingerprints.some((fingerprint) => (
+      typeof fingerprint !== "string" || !contentFingerprint.test(fingerprint)
+    ))
     || new Set(buildFingerprints).size !== 1
   ) {
     failures.push(

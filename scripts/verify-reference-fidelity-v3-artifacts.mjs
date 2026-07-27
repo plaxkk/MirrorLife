@@ -56,7 +56,8 @@ const runVerifier = ({ desktop, mobile, blink, gap }) => spawnSync(
 );
 
 try {
-  const fingerprint = "/assets/game-fixture-a.js";
+  const fingerprint =
+    "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa";
   const desktopStats = stats(REFERENCE_FIDELITY_V3.openingActorRoles, fingerprint);
   const mobileStats = stats(REFERENCE_FIDELITY_V3.mobileActorRoles, fingerprint, true);
   const blinkStats = stats(REFERENCE_FIDELITY_V3.openingActorRoles, fingerprint);
@@ -73,7 +74,8 @@ try {
   assert.equal(sameBuild.status, 0, sameBuild.stderr || sameBuild.stdout);
   assert.match(sameBuild.stdout, /Reference fidelity v3 passed/);
 
-  const mixedFingerprint = "/assets/game-fixture-b.js";
+  const mixedFingerprint =
+    "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb";
   const mixedMobile = writeJson(
     "mobile-mixed.json",
     manifest(
