@@ -63,6 +63,9 @@ let interiorFocusPropIndex = null;
 let interiorPhysicsWorld = null;
 let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
+let interiorPrewarmScheduled = false;
+let interiorPrewarmZoneId = "";
+let interiorIntentPrewarmTimer = null;
 let interiorRunHeld = false;
 let interiorJoystick = { x: 0, z: 0, pointerId: null };
 let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -2381,6 +2384,7 @@ function createAndEnterWorld(profileData) {
     setTimeout(() => splash.style.display = "none", 600);
   }
   document.body?.classList.remove("splash-active");
+  requestInteriorPrewarm("public-plaza", "idle");
 
   // New user: set slow speed and show tutorial
   const slider = document.getElementById("hudSpeed");
@@ -6125,6 +6129,45 @@ function getInteriorPhysicsApi() {
   return window.MirrorLifeInteriorPhysics || null;
 }
 
+function requestInteriorPrewarm(zoneId = "public-plaza", trigger = "idle") {
+  const targetZoneId = String(zoneId || "public-plaza");
+  interiorPrewarmZoneId = targetZoneId;
+  const run = () => {
+    const three = window.MirrorLifeInterior3D;
+    const physics = getInteriorPhysicsApi();
+    const zone = findRenderZoneById(targetZoneId)
+      || state.society?.zones?.find((candidate) => candidate.id === targetZoneId)
+      || null;
+    physics?.prepareRapier?.().catch?.(() => {});
+    return three?.prewarm?.({
+      zoneId: targetZoneId,
+      trigger,
+      scenePayload: ["entry", "splash"].includes(trigger)
+        ? null
+        : createInteriorPrewarmPayload(zone)
+    });
+  };
+  if (["entry", "intent"].includes(trigger)) return run();
+  if (interiorPrewarmScheduled) return null;
+  interiorPrewarmScheduled = true;
+  const scheduleWhenIdle = () => {
+    const begin = () => {
+      interiorPrewarmScheduled = false;
+      if (interiorView) return;
+      run();
+    };
+    if ("requestIdleCallback" in window) {
+      window.requestIdleCallback(begin, { timeout: 2800 });
+    } else {
+      window.setTimeout(begin, 120);
+    }
+  };
+  // Let the city, HUD and first-session state settle before allocating the
+  // WebGL context and parsing interior assets in the background.
+  window.setTimeout(scheduleWhenIdle, trigger === "splash" ? 800 : 1800);
+  return null;
+}
+
 function getInteriorPhysicsVariant(blueprint) {
   return hashCommunitySeed(interiorView?.zone?.id || blueprint?.key || "home", "interior-room") % 4;
 }
@@ -6291,6 +6334,7 @@ function ensureInteriorRapierRuntime(blueprint) {
     interiorOrbit.z = position.z;
     interiorOrbit.grounded = true;
     interiorView.physicsReadyAt = performance.now();
+    window.MirrorLifeInterior3D?.markEntryPhase?.("physics");
     markRenderActive(1800);
     return runtime;
   }).catch((error) => {
@@ -13623,6 +13667,68 @@ function getInteriorCameraFocus(blueprint, actors = []) {
   return { x, z, safeArea };
 }
 
+function createInteriorPrewarmPayload(zone) {
+  if (!zone) return null;
+  const blueprint = getInteriorBlueprint(zone);
+  const roomStyle = getInteriorMaterialStyle(zone, blueprint);
+  const layoutProfile = blueprint.layoutProfile || getInteriorZoneLayoutProfile(zone, blueprint.key);
+  const spawn = layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 };
+  const staging = layoutProfile.actorStagingPoints || [];
+  const roles = ["listener", "facilitator", "mediator"];
+  const actors = [
+    {
+      id: "player",
+      role: "player",
+      worldX: Number(spawn.x || 0),
+      worldY: Math.max(0, Number(spawn.y || 0.86) - 0.86),
+      worldZ: Number(spawn.z || 0),
+      frame: 0,
+      state: "idle",
+      civicRole: zone.id === "public-plaza" ? "player" : "",
+      scale: 1
+    },
+    ...roles.map((role, index) => ({
+      id: `prewarm-${role}`,
+      worldX: Number(staging[index]?.x ?? [-0.9, 0.85, 1.7][index]),
+      worldY: 0,
+      worldZ: Number(staging[index]?.z ?? [0.05, -0.35, 0.75][index]),
+      frame: [4, 2, 3][index],
+      state: "idle",
+      civicRole: zone.id === "public-plaza" ? role : "",
+      scale: 1
+    }))
+  ];
+  const isNight = !!getWorldTimeState(state.society).isNight;
+  return {
+    visible: false,
+    warmup: true,
+    interactionActive: false,
+    width: Math.max(1, window.innerWidth),
+    height: Math.max(1, window.innerHeight),
+    yaw: 0,
+    pitch: INTERIOR_DEFAULT_PITCH,
+    cameraX: Number(spawn.x || 0),
+    cameraZ: Number(spawn.z || 0),
+    cameraTargetX: Number(layoutProfile.cameraTargets?.[0]?.x || 0),
+    cameraTargetZ: Number(layoutProfile.cameraTargets?.[0]?.z || 0),
+    cameraSafeArea: layoutProfile.cameraSafeArea,
+    theme: {
+      wall: roomStyle.wall,
+      floor: roomStyle.floor,
+      accent: roomStyle.accent,
+      trim: roomStyle.trim,
+      archetype: blueprint.key,
+      zoneId: zone.id,
+      variant: hashCommunitySeed(zone.id, "interior-room") % 4,
+      layoutProfile,
+      night: isNight
+    },
+    items: getInteriorThreeItems(blueprint, window.innerWidth, window.innerHeight),
+    actors,
+    physics: { enabled: false, colliders: [], actors: [], ready: false, dynamics: [] }
+  };
+}
+
 function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []) {
   const api = window.MirrorLifeInterior3D;
   if (!api?.update) return false;
@@ -14020,6 +14126,12 @@ function findRenderZoneById(zoneId) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
+  if (interiorIntentPrewarmTimer) {
+    window.clearTimeout(interiorIntentPrewarmTimer);
+    interiorIntentPrewarmTimer = null;
+  }
+  window.MirrorLifeInterior3D?.beginEntry?.(source, zone.id);
+  requestInteriorPrewarm(zone.id, "entry");
   window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
@@ -17361,9 +17473,21 @@ function bindGameEvents() {
       const zone = hitTestZone(mx, my);
       if (zone) {
         hoveredZone = zone.id;
+        if (interiorPrewarmZoneId !== zone.id && !interiorIntentPrewarmTimer) {
+          interiorIntentPrewarmTimer = window.setTimeout(() => {
+            interiorIntentPrewarmTimer = null;
+            if (!interiorView && hoveredZone === zone.id) {
+              requestInteriorPrewarm(zone.id, "intent");
+            }
+          }, 180);
+        }
         canvas.style.cursor = "pointer";
       } else {
         hoveredZone = null;
+        if (interiorIntentPrewarmTimer) {
+          window.clearTimeout(interiorIntentPrewarmTimer);
+          interiorIntentPrewarmTimer = null;
+        }
         canvas.style.cursor = camera.drag ? "grabbing" : "grab";
       }
     });
@@ -17430,6 +17554,14 @@ function bindGameEvents() {
     canvas.addEventListener("touchstart", (e) => {
       markRenderActive();
       if (e.touches.length === 1) {
+        if (!interiorView) {
+          const rect = canvas.getBoundingClientRect();
+          const zone = hitTestZone(
+            e.touches[0].clientX - rect.left,
+            e.touches[0].clientY - rect.top
+          );
+          if (zone) requestInteriorPrewarm(zone.id, "intent");
+        }
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
@@ -18219,6 +18351,7 @@ function gameInit() {
     renderFirstLoopPanel();
     persist();
     openLocalInteriorQa(interiorQaZoneId);
+    if (!interiorQaZoneId) requestInteriorPrewarm("public-plaza", "idle");
   } else {
     // Show splash / avatar creation
     hydrateSocietyState();
@@ -18231,6 +18364,7 @@ function gameInit() {
     updateHUD();
     renderFirstLoopPanel();
     openLocalInteriorQa(interiorQaZoneId);
+    if (!interiorQaZoneId) requestInteriorPrewarm("public-plaza", "splash");
   }
 
   ensureMirrorRelayGuests();
