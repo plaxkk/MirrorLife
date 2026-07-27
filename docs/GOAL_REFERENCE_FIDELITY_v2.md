@@ -1,4 +1,4 @@
-# MirrorLife 室内参考图目标 v2 —— 可判定完成版
+# MirrorLife 室内参考图目标 v3 —— 运行时可判定合同
 
 替代目标：`对标这个图片的实现水准，并且是可以跟随人物视角走动以及旋转的 3d 效果`
 
@@ -12,13 +12,19 @@
 
 **在不降低可行走、可 360° 旋转和性能预算的前提下，让邻里议事厅开场画面的七根量化轴全部进入容差，并让角色近景的细节密度达到参考图同区域水准。**
 
-判定命令：
+完整判定需要桌面、移动端、强制眨眼和七轴四份同一构建的证据：
 
 ```bash
-npm run build && npm run capture:interior-environments && node scripts/measure-reference-gap.mjs
+npm run build
+npm run preview -- --host 127.0.0.1 --port 4183
+MIRRORLIFE_BASE_URL=http://127.0.0.1:4183 MIRRORLIFE_CAPTURE_ZONE=public-plaza npm run capture:interior-environments
+MIRRORLIFE_BASE_URL=http://127.0.0.1:4183 MIRRORLIFE_CAPTURE_ZONE=public-plaza npm run capture:interior-environments:mobile
+MIRRORLIFE_BASE_URL=http://127.0.0.1:4183 MIRRORLIFE_CAPTURE_ZONE=public-plaza MIRRORLIFE_CAPTURE_BLINK=1 npm run capture:interior-environments
+MIRRORLIFE_GAP_JSON=dist/interior-3d-work/reference-gap.json node scripts/measure-reference-gap.mjs
+npm run verify:reference-fidelity:v3
 ```
 
-达成条件：`7/7 轴在容差内`，且下面所有硬约束同时成立。
+达成条件：v3 统一门槛与下面所有既有硬约束同时成立。
 
 ---
 
@@ -41,59 +47,43 @@ npm run build && npm run capture:interior-environments && node scripts/measure-r
 
 ---
 
-## 阶段一：释放 draw call 预算
+## 阶段零：v3 运行时验收合同
 
-**这是所有后续工作的前置条件，不是可选项。**
+**这是重新开启角色结构实现的前置条件，不算新一轮蒙皮尝试。**
 
-> **2026-07-27 修正。** 本阶段原写"把 17–19 个材质图集化到 ≤6 个"，那是基于错误模型。
-> 加了逐部件分解后实测（`stats.actorMaterialBreakdown`）：99 个 draw call **不是** 70 个
-> GLB 材质，而是**每角色约 24.8 个、一个可动枢轴一个**——眼、头、手、袖口压缩、肘、膝、
-> 脚、裙、躯干。每个枢轴都真的被驱动（肘膝来自 `animationPose`，袖口来自接触压力，
-> 脚来自 `footPlant`），各自需要独立变换，所以无法共批。图集化材质动不了这个数。
->
-> 两个我一度以为是浪费的，查证后不是：`ShoeUpper_*Pivot` 就是脚节点本身（我漏了侧向中缀），
-> 29 个命名材质 draw call 是蒙皮或半透明网格，顶点色合并**正确地**拒绝把它们并进刚性批次。
->
-> 移动端能做到 9.5/角色，但代价是平面贴图脸，而项目已刻意从贴图脸迁移到体积脸，
-> 不能为预算换回去。按距离分级也不行——角色站在镜头以 5.3m 环绕的圆环上，任何距离阈值都会
-> 反复翻转导致跳变。
->
-> **结论：这里没有免费的 draw call。99 是"204 块刚性件拴骨骼"这个架构的诚实成本，
-> 和"人物看起来像拼装玩具"是同一个病。阶段一和阶段四是同一件事。**
+所有结构指标来自浏览器里实际加载的 GLB 和可见 render graph：
 
-现状：
+- `actorArticulationBreakdown` 按实际角色与公共控制枢轴列出渲染 draw call；
+- `drivenRigidSurfaceCount` 只数公共控制枢轴下仍独立渲染的可见非蒙皮表面；
+- `skinnedArticulationBoneCount` 从 `JOINTS_0` / `WEIGHTS_0` 和 Three.js skeleton
+  统计真正承载可见顶点的骨；
+- `mobileRemovableDetailBatches` 数移动 LOD 实际从已加载 GLB 删除的 primitive batch；
+- `actorDrawCallsByProfile` 分别记录桌面和移动端当前实际渲染的每个角色；
+- `actorContractStates` 数值记录 blink、handContact、elbowVolume、footPlant 和
+  sleeve/trouser clothCompression，并给出绿/红状态。
 
-```
-opening 177 / 180        余量 3 个
-  room 70 | models 8 | actors 99 | other 0
-每角色 24.8（桌面完整绑定） / 9.5（移动端简化绑定）
-```
+不得用 manifest 声明、文件名、对象名或 GLB 总 mesh 数替代以上运行时测量。
 
-**做法（修正后）**：把刚性枢轴articulation 改成蒙皮形变。一个顶点 100% 权重绑到某骨骼，
-运动与"作为该骨骼的刚性子节点"完全等价——所以可以把挂在每个枢轴下的刚性件按 100% 权重
-焊进该肢体的蒙皮网格，视觉运动不变，但 N 个 draw call 变 1 个。
+### v3 阶段一 / 角色结构统一门槛
 
-需要配套改动：`footPlant` 现在对脚**节点**施加四元数和缩放，袖口/裤口压缩同理。
-改造后这些必须改成驱动**骨骼**，因此要给骨架补 foot / sleeve / trouser 三组骨。
+| 指标 | 目标 |
+|---|---:|
+| opening actors draw call | **≤ 55** |
+| opening 总 draw call | **≤ 145** |
+| 每角色桌面 articulation batch | **≤ 2** |
+| 每角色仍独立渲染的刚性 articulation surface | **0** |
+| 每角色承载可见顶点的 articulation bone | **≥ 12** |
+| 移动端 | **≤ 110 draw / 250k tri** |
+| 七轴 | **≥ 隔离重捕基线 4/7** |
+| blink / contact / elbow / footPlant / cloth compression | **全绿** |
 
-**验收条件（修正后）**
+唯一数字源是 `src/reference-fidelity-runtime-contract.js` 中的
+`REFERENCE_FIDELITY_V3`；判定脚本直接导入它。`≤55 / ≤145` 和移动预算不得为了
+已有实验过关而降低。
 
-| 指标 | 当前 | 目标 |
-|---|---:|---:|
-| `drawCallsByLayer.actors` | 99 | **≤ 55** |
-| opening 总 draw call | 177 | **≤ 145** |
-| 每角色蒙皮 mesh 数 | 2 | **≥ 6** |
-| 七轴达标数 | 5/7 | **不低于 5/7** |
-| 动画契约（blink / 手部接触 / 肘部体积） | 绿 | 绿 |
-| 硬约束 | 全绿 | 全绿 |
-
-**判定**：
-
-```bash
-node -e "const m=require('./dist/interior-3d-work/environment-review/manifest.json');
-const s=m.scenes.find(x=>x.zone==='public-plaza').stats;
-console.log(s.drawCallsByLayer.actors <= 55 && s.drawCalls <= 145 ? 'PASS' : 'FAIL', s.drawCallsByLayer.actors, s.drawCalls);"
-```
+明确删除两条反向指标：不再奖励拆出更多蒙皮 mesh，也不再用真实 GLB 总 mesh 数判断
+玩家看到的 articulation 拼块数。前者增加 draw call；后者混入会被运行时安全合批的
+头发、脸部和静态服装源件。
 
 ---
 
@@ -131,31 +121,14 @@ console.log(s.drawCallsByLayer.actors <= 55 && s.drawCalls <= 145 ? 'PASS' : 'FA
 
 ---
 
-## 阶段四：角色结构（与阶段一合并执行）
+## 阶段四：角色成品检查
 
-> **2026-07-27 修正。** 阶段一的实测把这两阶段证明为同一件事：draw call 成本和"拼装感"
-> 同源，都来自"204 块刚性件拴骨骼"。蒙皮化同时解决两者，所以按一个改动推进，
-> 两组验收条件同时判定。
-
-现状：每个角色 167–211 个 mesh，**只有 2 个是蒙皮的**。头、手、鞋、服装面片全是刚性小块拴在骨骼上。它看起来像拼装玩具，因为它就是。
-
-这不是面数问题——三角面还有 55% 余量（289k / 450k）。也不是比例问题——头身比 4.28，参考图 4.07，已经一致。**是结构方式问题。**
-
-**验收条件**
-
-| 指标 | 当前 | 目标 |
-|---|---:|---:|
-| 每角色蒙皮 mesh 数 | 2 | **≥ 8**（头颈、双手、双脚并入蒙皮链） |
-| 每角色刚性小块数 | 167–211 | **≤ 60** |
-| 角色近景七轴细节密度 | 待测 | **进入容差** |
-
-最后一条的判定方式：对角色区域裁切跑同一套指标，和参考图同一角色区域比。
+角色结构是否允许进入本阶段，只由阶段零的统一运行时门槛决定。近景仍对同一角色区域运行
+七轴测量；blink、手部接触、肘部体积、footPlant 和袖口/裤口压缩必须继续全绿。
 
 ```bash
 node scripts/measure-reference-gap.mjs <角色裁切.png> <参考角色裁切.png>
 ```
-
-**约束**：蒙皮改造后动画契约不得回归——`verify:characters:civic` 的 blink / 手部接触 / 肘部体积断言全部保持绿。
 
 ---
 
@@ -182,10 +155,11 @@ node scripts/measure-reference-gap.mjs <角色裁切.png> <参考角色裁切.pn
 
 ## 当前进度（2026-07-27 接管复核）
 
-- 阶段一 ⛔ 连续三次结构尝试未同时满足阶段一/四条件，已按停止规则回退
+- 阶段零 ✅ v3 运行时合同已建立；现有结构未过统一门槛，因此角色结构仍关闭
 - 阶段二 ▢ 未开始
 - 阶段三 ▢ 未开始（已量化，陷阱已记录）
-- 阶段四 ⛔ 与阶段一同批尝试，未达到 `≥8` 蒙皮 mesh / `≤60` 刚性 mesh
+- 阶段四 ⛔ 等待每角色 `≤2` articulation batch、`0` 刚性 articulation surface、
+  `≥12` 个承载可见顶点的 articulation bone 同时成立
 - 硬约束 ✅ 当前全绿
 - 七轴 4/7（在隔离的 Claude 工作树、独立 4183 预览服务上重捕；历史 5/7 不能复现）
 

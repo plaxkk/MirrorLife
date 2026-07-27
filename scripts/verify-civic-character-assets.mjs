@@ -190,6 +190,7 @@ assert(mediatorContactPose.rightElbow[0] < -1.35, "mediator contact pose lost th
 assert(mediatorContactPose.rightHand[0] > 0.2, "mediator contact pose lost the thoughtful wrist turn");
 
 let totalBytes = 0;
+const runtimeSkinMeasurements = [];
 for (const role of expectedRoles) {
   const entry = manifest.roles[role];
   assert(entry?.file === `${role}.glb`, `${role}: file mapping is invalid`);
@@ -207,6 +208,19 @@ for (const role of expectedRoles) {
     geometry.triangles >= 12000 && geometry.triangles <= 45000,
     `${role}: real GLB triangle count ${geometry.triangles} is outside the Web LOD0 budget`
   );
+  assert(
+    geometry.skinnedArticulationBoneCount >= 8,
+    `${role}: shipped GLB has only ${geometry.skinnedArticulationBoneCount} bones carrying visible vertices`
+  );
+  assert(
+    geometry.skinnedArticulationBatches >= 1,
+    `${role}: shipped GLB has no skinned articulation primitive batch`
+  );
+  runtimeSkinMeasurements.push({
+    role,
+    skinnedArticulationBoneCount: geometry.skinnedArticulationBoneCount,
+    skinnedArticulationBatches: geometry.skinnedArticulationBatches
+  });
   assert.equal(
     geometry.meshes,
     Number(entry.meshes),
@@ -424,4 +438,7 @@ for (const role of expectedRoles) {
   totalBytes += stat.size;
 }
 
-console.log(`Civic character assets passed: ${expectedRoles.length} roles, ${(totalBytes / 1024 / 1024).toFixed(2)} MB total.`);
+console.log(
+  `Civic character assets passed: ${expectedRoles.length} roles, ${(totalBytes / 1024 / 1024).toFixed(2)} MB total.`
+);
+console.log(`Loaded GLB skin measurements: ${JSON.stringify(runtimeSkinMeasurements)}`);

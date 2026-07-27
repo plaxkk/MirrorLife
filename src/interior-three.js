@@ -7,6 +7,11 @@ import {
   resolveCivicAnimationState,
   sampleCivicAnimationPose
 } from "./civic-animation-clips.js";
+import {
+  REFERENCE_FIDELITY_V3,
+  measureActorContractState,
+  measureActorRuntimeGraph
+} from "./reference-fidelity-runtime-contract.js";
 
 const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
@@ -9938,7 +9943,13 @@ function createCivicActorObject(actor, asset) {
     leftLeg,
     rightLeg,
     leftKnee,
-    rightKnee
+    rightKnee,
+    leftFoot,
+    rightFoot,
+    leftSleeveCompression,
+    rightSleeveCompression,
+    leftTrouserCompression,
+    rightTrouserCompression
   };
   const controllerJoints = Object.fromEntries(Object.entries(controllerJointNodes).map(([track, node]) => [
     track,
@@ -10024,11 +10035,28 @@ function createCivicActorObject(actor, asset) {
     mouthClosedMesh = null;
   }
   const fullExpressionLod = lastWidth > 720;
+  let mobileRemovableDetailBatches = 0;
   if (!fullExpressionLod) {
     // Keep the silhouette and articulated elbows on mobile, but fold tiny
     // fingers into a simpler mitten profile and merge facial parts into the
     // head batch. At phone scale those extra meshes are sub-pixel while five
     // additional actor batches materially affect the 30fps budget.
+    const countLoadedGlbBatches = (root) => {
+      let batches = 0;
+      root?.traverseVisible?.((node) => {
+        if (!node.isMesh || !node.geometry || !node.material) return;
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        const groups = node.geometry.groups || [];
+        batches += Array.isArray(node.material) && groups.length
+          ? groups.filter((group) => (
+            Number(group.count || 0) > 0
+            && node.material[Number(group.materialIndex || 0)]
+          )).length
+          : materials.filter(Boolean).length;
+      });
+      return batches;
+    };
+    const loadedGlbBatchesBeforeMobileLod = countLoadedGlbBatches(assetScene);
     const mobileDetailNodes = [];
     const mobileDetailNames = new Set([
       "NoseBridge",
@@ -10078,6 +10106,13 @@ function createCivicActorObject(actor, asset) {
       const materials = Array.isArray(node.material) ? node.material : [node.material];
       materials.filter(Boolean).forEach((material) => material.dispose?.());
     });
+    // Derive the metric from the actual before/after loaded GLB graph. The
+    // phone LOD implementation chooses what to remove, but the reported batch
+    // delta does not infer cost from names, manifest declarations or files.
+    mobileRemovableDetailBatches = Math.max(
+      0,
+      loadedGlbBatchesBeforeMobileLod - countLoadedGlbBatches(assetScene)
+    );
     // Mobile keeps the closed expression in the head batch. Merging the open
     // alternative too would show overlapping lips and waste sub-pixel faces.
     if (mouthOpenPivot) {
@@ -10378,6 +10413,7 @@ function createCivicActorObject(actor, asset) {
     controllerJoints,
     skinJoints,
     skinnedMeshes,
+    mobileRemovableDetailBatches,
     bodySurfaceMesh,
     jointVolumeDeformation,
     clothCorrectives,
@@ -11679,8 +11715,22 @@ function getStats() {
   // renderer.info in that mode counted shadow/auxiliary passes and made the
   // same scene look four times more expensive than its actual draw graph.
   const sceneComplexity = getSceneComplexity();
+  const renderProfile = lastWidth <= 720 ? "mobile" : "desktop";
+  const actorArticulationBreakdown = Object.fromEntries(
+    [...actorObjects.entries()].map(([id, entry]) => [
+      id,
+      {
+        assetRole: entry.assetRole || "procedural",
+        ...measureActorRuntimeGraph(entry, renderProfile)
+      }
+    ])
+  );
+  const actorContractStates = Object.fromEntries(
+    [...actorObjects.entries()].map(([id, entry]) => [id, measureActorContractState(entry)])
+  );
   return {
     ready: !!renderer,
+    referenceFidelityContract: REFERENCE_FIDELITY_V3,
     shaderErrors,
     sceneWarmup: {
       version: "mirrorlife-atomic-scene-warmup-v1",
@@ -11692,6 +11742,26 @@ function getStats() {
     activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
     cachedModelCount: cache.size,
     activeActorCount: actorObjects.size,
+    actorArticulationBreakdown,
+    drivenRigidSurfaceCount: Object.fromEntries(
+      Object.entries(actorArticulationBreakdown)
+        .map(([id, actor]) => [id, actor.drivenRigidSurfaceCount])
+    ),
+    skinnedArticulationBoneCount: Object.fromEntries(
+      Object.entries(actorArticulationBreakdown)
+        .map(([id, actor]) => [id, actor.skinnedArticulationBoneCount])
+    ),
+    mobileRemovableDetailBatches: Object.fromEntries(
+      Object.entries(actorArticulationBreakdown)
+        .map(([id, actor]) => [id, actor.mobileRemovableDetailBatches])
+    ),
+    actorDrawCallsByProfile: {
+      [renderProfile]: Object.fromEntries(
+        Object.entries(actorArticulationBreakdown)
+          .map(([id, actor]) => [id, actor.actorDrawCalls])
+      )
+    },
+    actorContractStates,
     actors: [...actorObjects.entries()].map(([id, entry]) => ({
       id,
       frame: entry.frame,

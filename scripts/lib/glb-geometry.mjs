@@ -55,7 +55,61 @@ export function readGlbGeometry(file) {
   if (buffer.subarray(0, 4).toString("utf8") !== "glTF") {
     throw new Error(`${file}: not a GLB container`);
   }
-  const gltf = JSON.parse(buffer.subarray(20, 20 + buffer.readUInt32LE(12)).toString("utf8"));
+  const jsonLength = buffer.readUInt32LE(12);
+  const gltf = JSON.parse(buffer.subarray(20, 20 + jsonLength).toString("utf8"));
+  const binaryStart = 20 + jsonLength + 8;
+  const binary = buffer.subarray(binaryStart);
+
+  const componentReaders = {
+    5120: { bytes: 1, read: (view, offset) => view.getInt8(offset) },
+    5121: { bytes: 1, read: (view, offset) => view.getUint8(offset) },
+    5122: { bytes: 2, read: (view, offset) => view.getInt16(offset, true) },
+    5123: { bytes: 2, read: (view, offset) => view.getUint16(offset, true) },
+    5125: { bytes: 4, read: (view, offset) => view.getUint32(offset, true) },
+    5126: { bytes: 4, read: (view, offset) => view.getFloat32(offset, true) }
+  };
+  const componentCounts = { SCALAR: 1, VEC2: 2, VEC3: 3, VEC4: 4, MAT4: 16 };
+  const readAccessor = (accessorIndex) => {
+    const accessor = gltf.accessors?.[accessorIndex];
+    const bufferView = gltf.bufferViews?.[accessor?.bufferView];
+    const reader = componentReaders[accessor?.componentType];
+    const components = componentCounts[accessor?.type];
+    if (!accessor || !bufferView || !reader || !components || accessor.sparse) return null;
+    const view = new DataView(binary.buffer, binary.byteOffset, binary.byteLength);
+    const stride = Number(bufferView.byteStride || reader.bytes * components);
+    const start = Number(bufferView.byteOffset || 0) + Number(accessor.byteOffset || 0);
+    return {
+      count: accessor.count,
+      components,
+      get(index, component) {
+        return reader.read(view, start + index * stride + component * reader.bytes);
+      }
+    };
+  };
+
+  const weightedJointNodes = new Set();
+  let skinnedArticulationBatches = 0;
+  for (const node of gltf.nodes || []) {
+    if (node.skin == null || node.mesh == null) continue;
+    const skin = gltf.skins?.[node.skin];
+    const mesh = gltf.meshes?.[node.mesh];
+    if (!skin || !mesh) continue;
+    for (const primitive of mesh.primitives || []) {
+      const joints = readAccessor(primitive.attributes?.JOINTS_0);
+      const weights = readAccessor(primitive.attributes?.WEIGHTS_0);
+      if (!joints || !weights) continue;
+      skinnedArticulationBatches += 1;
+      const count = Math.min(joints.count, weights.count);
+      const components = Math.min(joints.components, weights.components);
+      for (let vertex = 0; vertex < count; vertex += 1) {
+        for (let component = 0; component < components; component += 1) {
+          if (Number(weights.get(vertex, component) || 0) <= 1e-6) continue;
+          const jointNode = skin.joints?.[Number(joints.get(vertex, component))];
+          if (jointNode != null) weightedJointNodes.add(jointNode);
+        }
+      }
+    }
+  }
 
   let triangles = 0;
   for (const mesh of gltf.meshes || []) {
@@ -111,6 +165,8 @@ export function readGlbGeometry(file) {
     bytes: buffer.length,
     meshes: (gltf.meshes || []).length,
     materials: (gltf.materials || []).length,
+    skinnedArticulationBoneCount: weightedJointNodes.size,
+    skinnedArticulationBatches,
     triangles,
     parts,
     bounds: { low, high },
