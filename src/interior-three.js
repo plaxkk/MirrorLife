@@ -15,6 +15,11 @@ import {
   measureActorRuntimeGraph,
   syncCivicArticulationBinding
 } from "./reference-fidelity-runtime-contract.js";
+import {
+  createInteriorEntryPhaseTracker,
+  getInteriorPrewarmDecision,
+  getInteriorResourcePlan
+} from "./interior-entry-plan.js";
 
 // Vite injects a deterministic SHA-256 over runtime/config inputs and every
 // shipped character asset, including public GLBs.
@@ -361,9 +366,49 @@ const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
 const actorRuntimeGraphMeasurements = new WeakMap();
 const dynamicModelObjects = new Map();
+const entryPhaseTracker = createInteriorEntryPhaseTracker();
+let prewarmPromise = null;
+let prewarmState = {
+  status: "idle",
+  zoneId: "",
+  trigger: "",
+  level: "none",
+  reason: "",
+  startedAt: 0,
+  completedAt: 0,
+  scenePrepared: false
+};
+
+function publishEntryTelemetry() {
+  window.__mirrorLifeInteriorEntry = {
+    ...entryPhaseTracker.snapshot(),
+    prewarm: { ...prewarmState }
+  };
+}
+
+function markEntryPhase(phase) {
+  entryPhaseTracker.mark(phase);
+  publishEntryTelemetry();
+}
+
+function beginEntry(trigger = "manual", zoneId = "") {
+  entryPhaseTracker.start(trigger);
+  if (THREE && GLTFLoader) entryPhaseTracker.mark("modules");
+  if (threeAssetsReady) entryPhaseTracker.mark("textures");
+  if (renderer) entryPhaseTracker.mark("renderer");
+  if (prewarmState.status === "ready" && prewarmState.zoneId === zoneId) {
+    entryPhaseTracker.mark("models");
+    entryPhaseTracker.mark("actors");
+  }
+  publishEntryTelemetry();
+}
 
 async function loadThree() {
-  if (THREE && GLTFLoader) return true;
+  if (THREE && GLTFLoader && threeAssetsReady) {
+    markEntryPhase("modules");
+    markEntryPhase("textures");
+    return true;
+  }
   if (!threeLoading) {
     threeLoading = Promise.all([
       import("three"),
@@ -410,7 +455,9 @@ async function loadThree() {
     });
   }
   await threeLoading;
+  markEntryPhase("modules");
   await preloadPhysicalSurfaceMaps();
+  markEntryPhase("textures");
   threeAssetsReady = true;
   return true;
 }
@@ -427,6 +474,11 @@ function ensureLayer() {
   canvas = document.createElement("canvas");
   canvas.id = "interiorThreeLayer";
   canvas.setAttribute("aria-hidden", "true");
+  // Renderer prewarming happens while the city is still visible. Keep the
+  // backing canvas out of composition until update() has a complete room.
+  canvas.style.display = "none";
+  canvas.style.opacity = "0";
+  canvas.style.visibility = "hidden";
   shell.appendChild(canvas);
 
   renderer = new THREE.WebGLRenderer({
@@ -439,6 +491,7 @@ function ensureLayer() {
     preserveDrawingBuffer: true,
     powerPreference: "high-performance"
   });
+  markEntryPhase("renderer");
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.debug.checkShaderErrors = ENABLE_SHADER_DIAGNOSTICS;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -1138,7 +1191,13 @@ function loadModel(type) {
     itemSignature = "";
     return prepared;
   };
-  const fallback = loadSemanticFallback();
+  // Public hero furniture has a real authored asset and is part of the atomic
+  // reveal. Building a semantic fallback first, then swapping three staggered
+  // GLBs into the live cache, paid for several full model rebuilds during the
+  // loading curtain. Wait for the authored desktop asset and use the fallback
+  // only on an actual load failure. Mobile keeps its existing proxy path.
+  const waitsForAuthoredAsset = CIVIC_HERO_PROP_TYPES.has(type) && window.innerWidth > 720;
+  const fallback = waitsForAuthoredAsset ? null : loadSemanticFallback();
   const promise = new Promise((resolve) => {
     const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v13" : "";
     const assetRevision = ASSET_REVISION || authoredAssetRevision;
@@ -1236,6 +1295,116 @@ function loadCivicActorAsset(role) {
   });
   civicActorLoading.set(role, promise);
   return promise;
+}
+
+async function prewarm({
+  zoneId = "public-plaza",
+  trigger = "idle",
+  force = false,
+  scenePayload = null
+} = {}) {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection || {};
+  const decision = force
+    ? { allowed: true, level: trigger === "intent" ? "scene" : "assets", reason: "forced" }
+    : getInteriorPrewarmDecision({
+      trigger,
+      visibilityState: document.visibilityState,
+      saveData: !!connection.saveData,
+      effectiveType: connection.effectiveType || "",
+      deviceMemory: navigator.deviceMemory || 8
+    });
+  if (!decision.allowed) {
+    prewarmState = {
+      ...prewarmState,
+      status: "skipped",
+      zoneId,
+      trigger,
+      level: decision.level,
+      reason: decision.reason
+    };
+    publishEntryTelemetry();
+    return { ...prewarmState };
+  }
+  if (
+    prewarmState.status === "ready"
+    && prewarmState.zoneId === zoneId
+    && (!scenePayload || prewarmState.scenePrepared)
+  ) {
+    return { ...prewarmState };
+  }
+  if (prewarmPromise) {
+    if (scenePayload) {
+      return prewarmPromise.then(() => prewarm({
+        zoneId,
+        trigger,
+        force,
+        scenePayload
+      }));
+    }
+    return prewarmPromise;
+  }
+
+  prewarmState = {
+    status: "warming",
+    zoneId,
+    trigger,
+    level: decision.level,
+    reason: decision.reason,
+    startedAt: performance.now(),
+    completedAt: 0,
+    scenePrepared: false
+  };
+  publishEntryTelemetry();
+  prewarmPromise = (async () => {
+    await loadThree();
+    ensureLayer();
+    if (canvas) {
+      canvas.style.display = "none";
+      canvas.style.opacity = "0";
+      canvas.style.visibility = "hidden";
+    }
+    const plan = getInteriorResourcePlan(zoneId, { mobile: window.innerWidth <= 720 });
+    await Promise.all(plan.heroModels.map((type) => loadModel(type)));
+    if (plan.heroModels.length) markEntryPhase("models");
+    await Promise.all(plan.actorRoles.map((role) => loadCivicActorAsset(role)));
+    if (plan.actorRoles.length) markEntryPhase("actors");
+    if (scenePayload) {
+      // Build the same metre-space scene and compile its complete
+      // post-processing/shadow program set before the player clicks. Rendering
+      // into a display:none canvas still exercises the real WebGL pipeline
+      // without covering or replacing the live city canvas.
+      for (let frame = 0; frame < SCENE_WARMUP_FRAME_COUNT + 1; frame += 1) {
+        update({ ...scenePayload, visible: false, warmup: true });
+        await new Promise((resolve) => window.requestAnimationFrame(resolve));
+      }
+      if (canvas) {
+        canvas.style.display = "none";
+        canvas.style.opacity = "0";
+        canvas.style.visibility = "hidden";
+        canvas.dataset.sceneReady = "false";
+      }
+    }
+    prewarmState = {
+      ...prewarmState,
+      status: "ready",
+      completedAt: performance.now(),
+      scenePrepared: !!scenePayload
+    };
+    publishEntryTelemetry();
+    return { ...prewarmState };
+  })().catch((error) => {
+    prewarmState = {
+      ...prewarmState,
+      status: "failed",
+      reason: String(error?.message || error),
+      completedAt: performance.now()
+    };
+    publishEntryTelemetry();
+    return { ...prewarmState };
+  }).finally(() => {
+    prewarmPromise = null;
+  });
+  return prewarmPromise;
 }
 
 function clearGroup(group) {
@@ -1406,7 +1575,34 @@ async function preloadPhysicalSurfaceMaps() {
       civicFoliageGoboTexture = gobo;
       civicFoliageShadowTexture = shadow;
     });
-    await Promise.all([...physicalMapTasks, civicRugTask, civicFoliageProjectionTask]);
+    // The portal view is visible in both the atelier bay and the civic room.
+    // Loading it after the first room build used to invalidate roomSignature
+    // and rebuild the complete procedural room a second time. Keep it inside
+    // the atomic texture gate so the first build already contains final art.
+    const publicPlan = getInteriorResourcePlan("public-plaza", {
+      mobile: window.innerWidth <= 720
+    });
+    const atelierWindowPath = publicPlan.blockingTextures[0];
+    const atelierWindowTask = atelierWindowPath
+      ? textureLoader.loadAsync(
+        `${atelierWindowPath}${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`
+      ).then((texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.needsUpdate = true;
+        atelierWindowViewTexture = texture;
+      })
+      : Promise.resolve();
+    atelierWindowViewTextureLoading = atelierWindowTask;
+    await Promise.all([
+      ...physicalMapTasks,
+      civicRugTask,
+      civicFoliageProjectionTask,
+      atelierWindowTask
+    ]);
+    atelierWindowViewTextureLoading = null;
   })().catch((error) => {
     console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
     physicalSurfaceMaps.clear();
@@ -1414,6 +1610,7 @@ async function preloadPhysicalSurfaceMaps() {
     civicRugBumpTexture = null;
     civicFoliageGoboTexture = null;
     civicFoliageShadowTexture = null;
+    atelierWindowViewTextureLoading = null;
   });
   return physicalSurfaceLoading;
 }
@@ -1440,9 +1637,9 @@ function getPhysicalSurfaceMaps(kind) {
 function getAtelierWindowViewTexture() {
   if (atelierWindowViewTexture) return atelierWindowViewTexture;
   if (!atelierWindowViewTextureLoading && THREE) {
-    atelierWindowViewTextureLoading = new THREE.TextureLoader().load(
+    atelierWindowViewTextureLoading = new THREE.TextureLoader().loadAsync(
       `/assets/interiors/textures/atelier-window-view.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
-      (texture) => {
+    ).then((texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.wrapS = THREE.ClampToEdgeWrapping;
         texture.wrapT = THREE.ClampToEdgeWrapping;
@@ -1451,12 +1648,11 @@ function getAtelierWindowViewTexture() {
         atelierWindowViewTexture = texture;
         roomSignature = "";
         window.markRenderActive?.(1800);
-      },
-      undefined,
-      () => {
+        return texture;
+      }).catch(() => {
         atelierWindowViewTextureLoading = null;
-      }
-    );
+        return null;
+      });
   }
   return atelierWindowViewTexture || null;
 }
@@ -6327,7 +6523,7 @@ function addExitPortal(theme, colors) {
 
 function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
-  if (signature === roomSignature) return;
+  if (signature === roomSignature) return false;
   roomSignature = signature;
   activeCivicPortalContract = "";
   cameraForegroundObjects.clear();
@@ -6489,6 +6685,7 @@ function rebuildRoom(theme = {}) {
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
   mergeRoomArchitectureMeshes();
   addCivicSunShadowCasters(theme);
+  return true;
 }
 
 function getItemSignature(items) {
@@ -11943,10 +12140,12 @@ function update(payload = {}) {
   );
   const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false && !item.mobileProxy).map((item) => item.model))];
   needed.forEach(loadModel);
-  rebuildRoom(payload.theme || {});
+  if (rebuildRoom(payload.theme || {})) markEntryPhase("room");
   const modelsReady = rebuildModels(activeItems);
+  if (modelsReady) markEntryPhase("models");
   if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
   const actorsReady = updateActors(payload.actors || [], performance.now());
+  if (actorsReady) markEntryPhase("actors");
   const assetsReady = modelsReady && actorsReady;
   const nextWarmupSignature = assetsReady
     ? [
@@ -11970,6 +12169,10 @@ function update(payload = {}) {
   // First-time PBR/shadow/post-processing programs may compile over several
   // frames. Render two hidden frames before declaring the room ready.
   const ready = assetsReady && sceneWarmupFrames >= SCENE_WARMUP_FRAME_COUNT;
+  if (ready) {
+    markEntryPhase("shaders");
+    markEntryPhase("ready");
+  }
   if (ready) scheduleBackgroundProgramWarmup(nextWarmupSignature);
   if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
   lastSceneReady = ready;
@@ -12005,7 +12208,7 @@ function update(payload = {}) {
     cinematicGradePass.uniforms.strength.value = (width >= 760 ? 1 : 0.72) * aoRestoreProgress;
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
   }
-  if (visible) {
+  if (visible || payload.warmup) {
     updateShadowSchedule(payload);
     if (composer) composer.render();
     else renderer.render(scene, camera);
@@ -12153,6 +12356,10 @@ function getStats() {
     ready: !!renderer,
     buildFingerprint: RUNTIME_BUILD_FINGERPRINT,
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
+    entryPerformance: {
+      ...entryPhaseTracker.snapshot(),
+      prewarm: { ...prewarmState }
+    },
     shaderErrors,
     sceneWarmup: {
       version: "mirrorlife-atomic-scene-warmup-v1",
@@ -12450,6 +12657,9 @@ window.MirrorLifeInterior3D = {
   hide,
   isReady,
   loadModel,
+  prewarm,
+  beginEntry,
+  markEntryPhase,
   getProjections,
   projectWorldPoints,
   getStats
