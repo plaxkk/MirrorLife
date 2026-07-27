@@ -279,11 +279,9 @@ The roadmap communicates direction, not dates. Priorities are driven by whether 
 
 ## Contributing
 
-Issues and pull requests are welcome. Before submitting:
+Issues and pull requests are welcome. See the [contributing guide](CONTRIBUTING.md#english) for setup, branch and commit conventions, the verification matrix, 3D asset requirements, and the PR checklist.
 
-1. Follow the principles of game before dashboards, actions before dialogue, and rules before models.
-2. Never commit production API keys, real user data, or unsanitized research material.
-3. Pass at least `npm run check`, `npm run build`, and the checks relevant to your change.
+Before submitting, make sure the change follows game before dashboards, actions before dialogue, and rules before models; contains no production secrets or real user data; and passes the checks relevant to its scope.
 
 ## License
 
