@@ -24,6 +24,12 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
+const SHADER_DIAGNOSTICS_QUERY = new URLSearchParams(window.location.search).get("qaShaderDiagnostics");
+const ENABLE_SHADER_DIAGNOSTICS = SHADER_DIAGNOSTICS_QUERY === "1"
+  || (
+    SHADER_DIAGNOSTICS_QUERY !== "0"
+    && (import.meta.env.DEV || new URLSearchParams(window.location.search).has("qaInterior"))
+  );
 const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "articulation-skin-v2";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v7";
@@ -74,6 +80,12 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
             ? "curved-atlas"
             : "sculpted-volume";
 const MAX_DPR = 1.5;
+const CAMERA_OCCLUSION_SOLVE_INTERVAL_MS = 80;
+const ACTIVE_SHADOW_UPDATE_INTERVAL_MS = 120;
+const IDLE_SHADOW_UPDATE_INTERVAL_MS = 240;
+const INTERACTION_AO_RESTORE_DELAY_MS = 280;
+const INTERACTION_AO_FADE_MS = 180;
+const SCENE_WARMUP_FRAME_COUNT = 2;
 const resolveInteriorPixelRatio = (width = window.innerWidth) => {
   const deviceRatio = Math.min(Number(window.devicePixelRatio || 1), MAX_DPR);
   if (width >= 1280) return Math.min(MAX_DPR, Math.max(deviceRatio, 1.2));
@@ -310,6 +322,9 @@ let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
 let sceneWarmupSignature = "";
 let sceneWarmupFrames = 0;
+let backgroundProgramWarmupSignature = "";
+let backgroundProgramWarmupState = "idle";
+let backgroundProgramWarmupScheduledSignature = "";
 let contactShadowTexture;
 let civicFoliageGoboTexture;
 let civicFoliageGoboTextureLoading;
@@ -332,6 +347,8 @@ let cameraZoneId = "";
 let cameraActorAvoidanceOffset = 0;
 let lastCameraState = null;
 let cameraLastUpdateAt = 0;
+let lastShadowMapUpdatedAt = 0;
+let lastInteriorInteractionAt = Number.NEGATIVE_INFINITY;
 let cameraRaycaster;
 const occludedMaterials = new Map();
 let cameraOcclusionWarmupFrames = 0;
@@ -342,6 +359,7 @@ const actorFrameTextures = new Map();
 const civicFaceTextures = new Map();
 const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
+const actorRuntimeGraphMeasurements = new WeakMap();
 const dynamicModelObjects = new Map();
 
 async function loadThree() {
@@ -422,11 +440,13 @@ function ensureLayer() {
     powerPreference: "high-performance"
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.debug.checkShaderErrors = ENABLE_SHADER_DIAGNOSTICS;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.86;
   renderer.setPixelRatio(resolveInteriorPixelRatio(window.innerWidth));
   renderer.shadowMap.enabled = true;
   renderer.shadowMap.type = THREE.VSMShadowMap;
+  renderer.shadowMap.autoUpdate = false;
   physicalSurfaceMaps.forEach((maps) => {
     [maps.map, maps.normal, maps.roughness].forEach((texture) => {
       if (!texture) return;
@@ -552,7 +572,7 @@ function ensureLayer() {
     type: THREE.HalfFloatType,
     depthBuffer: true,
     stencilBuffer: false,
-    samples: renderer.capabilities.isWebGL2 ? (window.innerWidth < 720 ? 2 : 4) : 0
+    samples: renderer.capabilities.isWebGL2 ? 2 : 0
   });
   composerTarget.texture.name = "MirrorLife interior MSAA HDR";
   composer = new EffectComposer(renderer, composerTarget);
@@ -648,7 +668,7 @@ function resize(width, height) {
   renderer.setSize(width, height, false);
   composer?.setSize(width, height);
   if (composer && renderer?.capabilities?.isWebGL2) {
-    const samples = width < 720 ? 2 : 4;
+    const samples = 2;
     composer.renderTarget1.samples = samples;
     composer.renderTarget2.samples = samples;
   }
@@ -6324,6 +6344,7 @@ function rebuildRoom(theme = {}) {
       && REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home")
       && !["factory", "farm", "legal-court"].includes(theme.zoneId);
     keyLight.shadow.needsUpdate = true;
+    if (renderer?.shadowMap) renderer.shadowMap.needsUpdate = true;
   }
   applyLightingPreset(theme);
 
@@ -11629,98 +11650,132 @@ function getObjectOcclusionMaterial(object, materialIndex = 0) {
 
 function updateCameraOcclusion(payload = {}) {
   if (!cameraRaycaster || !camera || !modelRoot) return;
-  occludedMaterials.forEach((state) => {
-    state.targetOpacity = state.baseOpacity;
-  });
-  // Architectural coves are intentionally above the actor rays, but at a
-  // side orbit the camera can sit almost level with a wing beam and project it
-  // as a full-width bar across the frame and HUD.  Fade only authored
-  // foreground candidates when the camera enters their near field.  This is
-  // complementary to ray occlusion: it protects the composition without
-  // dissolving distant walls or evidence props.
-  const foregroundPosition = updateCameraOcclusion.foregroundPosition
-    || (updateCameraOcclusion.foregroundPosition = new THREE.Vector3());
-  cameraForegroundObjects.forEach((object) => {
-    if (!object?.parent) {
-      cameraForegroundObjects.delete(object);
-      return;
-    }
-    let foregroundRadius = 0;
-    if (object.geometry) {
-      if (!object.geometry.boundingSphere) object.geometry.computeBoundingSphere();
-      foregroundPosition.copy(object.geometry.boundingSphere?.center || object.position).applyMatrix4(object.matrixWorld);
-      foregroundRadius = Number(object.geometry.boundingSphere?.radius || 0)
-        * object.matrixWorld.getMaxScaleOnAxis();
-    } else {
-      object.getWorldPosition(foregroundPosition);
-    }
-    // Large couches and counters can touch the near plane while their origin
-    // remains several metres away. Measure camera clearance to the visible
-    // bounding surface rather than to the object's centre; otherwise the
-    // exact furniture most likely to become a foreground wall never fades.
-    const surfaceDistance = Math.max(
-      0,
-      foregroundPosition.distanceTo(camera.position) - foregroundRadius
+  const now = performance.now();
+  const solveSignature = [
+    camera.position.x,
+    camera.position.y,
+    camera.position.z,
+    Number(payload.cameraX || 0),
+    Number(payload.cameraZ || 0),
+    Number(payload.cameraTargetX || 0),
+    Number(payload.cameraTargetZ || 0.2),
+    Number(lastCameraState?.yaw || 0)
+  ].map((value) => Number(value).toFixed(2)).join("|");
+  const shouldSolve = cameraOcclusionWarmupFrames > 0
+    || (
+      solveSignature !== updateCameraOcclusion.lastSolveSignature
+      && now - Number(updateCameraOcclusion.lastSolveAt || 0) >= CAMERA_OCCLUSION_SOLVE_INTERVAL_MS
     );
-    const keepOpaqueYaw = Number(object.userData?.cameraForegroundKeepOpaqueYaw);
-    if (Number.isFinite(keepOpaqueYaw)) {
-      const currentYaw = Number(lastCameraState?.yaw || 0);
-      const yawDelta = Math.atan2(
-        Math.sin(currentYaw - keepOpaqueYaw),
-        Math.cos(currentYaw - keepOpaqueYaw)
-      );
-      if (Math.abs(yawDelta) <= Number(object.userData?.cameraForegroundKeepOpaqueArc || 0.42)) return;
-    }
-    const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
-    if (surfaceDistance > nearDistance) return;
-    const targetOpacity = THREE.MathUtils.clamp(
-      Number(object.userData?.cameraForegroundOpacity ?? 0.06),
-      0.012,
-      0.24
-    );
-    const materials = Array.isArray(object.material) ? object.material : [object.material];
-    materials.forEach((material, materialIndex) => {
-      if (!material) return;
-      setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), targetOpacity);
+  if (shouldSolve) {
+    updateCameraOcclusion.lastSolveAt = now;
+    updateCameraOcclusion.lastSolveSignature = solveSignature;
+    occludedMaterials.forEach((state) => {
+      state.targetOpacity = state.baseOpacity;
     });
-  });
-  // Test both the torso and face lines of sight.  The original pair of rays
-  // ended around chest height, so a near-wall cove could remain fully opaque
-  // while cutting straight across every actor's face in side-orbit views.
-  // Sample lower body, torso and face for both semantic targets so a near
-  // counter cannot hide grounded movement while leaving the head readable.
-  // The distance clamp below still protects unrelated distant set pieces.
-  const targets = [
-    new THREE.Vector3(Number(payload.cameraX || 0), 0.45, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraX || 0), 1.68, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 0.45, Number(payload.cameraTargetZ || 0.2)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.68, Number(payload.cameraTargetZ || 0.2))
-  ];
-  targets.forEach((target) => {
-    const direction = target.clone().sub(camera.position);
-    const distance = direction.length();
-    if (distance < 0.4) return;
-    direction.normalize();
-    cameraRaycaster.set(camera.position, direction);
-    cameraRaycaster.near = 0.18;
-    cameraRaycaster.far = distance - 0.18;
-    const hits = cameraRaycaster.intersectObjects([roomRoot, modelRoot], true)
-      .filter((hit) => hit.distance < distance - 0.2 && hit.point?.y > 0.35 && !hit.object?.userData?.neverFade);
-    const nearestDistance = hits[0]?.distance ?? Number.POSITIVE_INFINITY;
-    hits.forEach((hit) => {
-      // Fade the complete near-wall assembly (crown, cove and wall skin), but do
-      // not dissolve unrelated furniture deeper in the room along the same ray.
-      if (hit.distance > nearestDistance + 1.15) return;
-      const materials = Array.isArray(hit.object?.material) ? hit.object.material : [hit.object?.material];
+    // Architectural coves are intentionally above the actor rays, but at a
+    // side orbit the camera can sit almost level with a wing beam and project it
+    // as a full-width bar across the frame and HUD. Fade only the authored
+    // foreground candidates when the camera enters their near field.
+    const foregroundPosition = updateCameraOcclusion.foregroundPosition
+      || (updateCameraOcclusion.foregroundPosition = new THREE.Vector3());
+    const raycastObjects = [];
+    cameraForegroundObjects.forEach((object) => {
+      if (!object?.parent) {
+        cameraForegroundObjects.delete(object);
+        return;
+      }
+      raycastObjects.push(object);
+      let foregroundRadius = 0;
+      if (object.geometry) {
+        if (!object.geometry.boundingSphere) object.geometry.computeBoundingSphere();
+        foregroundPosition.copy(object.geometry.boundingSphere?.center || object.position).applyMatrix4(object.matrixWorld);
+        foregroundRadius = Number(object.geometry.boundingSphere?.radius || 0)
+          * object.matrixWorld.getMaxScaleOnAxis();
+      } else {
+        object.getWorldPosition(foregroundPosition);
+      }
+      // Large couches and counters can touch the near plane while their origin
+      // remains several metres away. Measure camera clearance to the visible
+      // bounding surface rather than to the object's centre.
+      const surfaceDistance = Math.max(
+        0,
+        foregroundPosition.distanceTo(camera.position) - foregroundRadius
+      );
+      const keepOpaqueYaw = Number(object.userData?.cameraForegroundKeepOpaqueYaw);
+      if (Number.isFinite(keepOpaqueYaw)) {
+        const currentYaw = Number(lastCameraState?.yaw || 0);
+        const yawDelta = Math.atan2(
+          Math.sin(currentYaw - keepOpaqueYaw),
+          Math.cos(currentYaw - keepOpaqueYaw)
+        );
+        if (Math.abs(yawDelta) <= Number(object.userData?.cameraForegroundKeepOpaqueArc || 0.42)) return;
+      }
+      const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
+      if (surfaceDistance > nearDistance) return;
+      const targetOpacity = THREE.MathUtils.clamp(
+        Number(object.userData?.cameraForegroundOpacity ?? 0.06),
+        0.012,
+        0.24
+      );
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
       materials.forEach((material, materialIndex) => {
         if (!material) return;
-        setMaterialOcclusionTarget(getObjectOcclusionMaterial(hit.object, materialIndex), 0.18);
+        setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), targetOpacity);
       });
     });
-  });
-  const now = performance.now();
+    // Sample lower body, torso and face for both semantic targets. Restrict
+    // triangle tests to the explicit fade candidates: unrelated room and hero
+    // furniture geometry can never be faded, so intersecting it was pure work.
+    const raycastEntries = raycastObjects.map((object) => {
+      if (!object.geometry?.boundingBox) object.geometry?.computeBoundingBox?.();
+      return {
+        object,
+        box: object.geometry?.boundingBox || null,
+        inverseWorld: object.matrixWorld.clone().invert()
+      };
+    }).filter((entry) => entry.box);
+    const localRay = updateCameraOcclusion.localRay
+      || (updateCameraOcclusion.localRay = new THREE.Ray());
+    const localHit = updateCameraOcclusion.localHit
+      || (updateCameraOcclusion.localHit = new THREE.Vector3());
+    const worldHit = updateCameraOcclusion.worldHit
+      || (updateCameraOcclusion.worldHit = new THREE.Vector3());
+    const targets = [
+      new THREE.Vector3(Number(payload.cameraX || 0), 0.45, Number(payload.cameraZ || 0)),
+      new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
+      new THREE.Vector3(Number(payload.cameraX || 0), 1.68, Number(payload.cameraZ || 0)),
+      new THREE.Vector3(Number(payload.cameraTargetX || 0), 0.45, Number(payload.cameraTargetZ || 0.2)),
+      new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2)),
+      new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.68, Number(payload.cameraTargetZ || 0.2))
+    ];
+    targets.forEach((target) => {
+      const direction = target.clone().sub(camera.position);
+      const distance = direction.length();
+      if (distance < 0.4) return;
+      direction.normalize();
+      cameraRaycaster.set(camera.position, direction);
+      cameraRaycaster.near = 0.18;
+      cameraRaycaster.far = distance - 0.18;
+      const hits = raycastEntries.flatMap(({ object, box, inverseWorld }) => {
+        localRay.copy(cameraRaycaster.ray).applyMatrix4(inverseWorld);
+        const point = localRay.intersectBox(box, localHit);
+        if (!point) return [];
+        worldHit.copy(point).applyMatrix4(object.matrixWorld);
+        const hitDistance = worldHit.distanceTo(camera.position);
+        if (hitDistance >= distance - 0.2 || worldHit.y <= 0.35 || object.userData?.neverFade) return [];
+        return [{ object, distance: hitDistance }];
+      }).sort((left, right) => left.distance - right.distance);
+      const nearestDistance = hits[0]?.distance ?? Number.POSITIVE_INFINITY;
+      hits.forEach((hit) => {
+        if (hit.distance > nearestDistance + 1.15) return;
+        const materials = Array.isArray(hit.object?.material) ? hit.object.material : [hit.object?.material];
+        materials.forEach((material, materialIndex) => {
+          if (!material) return;
+          setMaterialOcclusionTarget(getObjectOcclusionMaterial(hit.object, materialIndex), 0.18);
+        });
+      });
+    });
+  }
   const dt = Math.min(0.1, Math.max(1 / 240, (now - (updateCameraOcclusion.lastAt || now - 16)) / 1000));
   updateCameraOcclusion.lastAt = now;
   const snapOcclusion = cameraOcclusionWarmupFrames > 0;
@@ -11729,9 +11784,12 @@ function updateCameraOcclusion(payload = {}) {
     if (snapOcclusion) {
       material.opacity = state.targetOpacity;
       const restored = state.targetOpacity === state.baseOpacity;
-      material.transparent = restored ? state.baseTransparent : true;
-      material.depthWrite = restored && !state.baseTransparent;
-      material.needsUpdate = true;
+      const nextTransparent = restored ? state.baseTransparent : true;
+      const nextDepthWrite = restored && !state.baseTransparent;
+      if (material.transparent !== nextTransparent || material.depthWrite !== nextDepthWrite) {
+        material.transparent = nextTransparent;
+        material.depthWrite = nextDepthWrite;
+      }
       if (restored) occludedMaterials.delete(material);
       return;
     }
@@ -11740,9 +11798,12 @@ function updateCameraOcclusion(payload = {}) {
     const alpha = 1 - Math.exp(-dt / duration);
     material.opacity += (state.targetOpacity - material.opacity) * alpha;
     const restored = Math.abs(material.opacity - state.baseOpacity) < 0.01 && state.targetOpacity === state.baseOpacity;
-    material.transparent = restored ? state.baseTransparent : true;
-    material.depthWrite = restored && !state.baseTransparent;
-    material.needsUpdate = true;
+    const nextTransparent = restored ? state.baseTransparent : true;
+    const nextDepthWrite = restored && !state.baseTransparent;
+    if (material.transparent !== nextTransparent || material.depthWrite !== nextDepthWrite) {
+      material.transparent = nextTransparent;
+      material.depthWrite = nextDepthWrite;
+    }
     if (restored) occludedMaterials.delete(material);
   });
 }
@@ -11786,10 +11847,93 @@ function updateProjections(items, width, height) {
   });
 }
 
+function updateShadowSchedule(payload = {}, now = performance.now()) {
+  if (!renderer?.shadowMap || !keyLight?.castShadow) return;
+  const actorsMoving = (payload.actors || []).some((actor) => (
+    ["walking", "walk", "run", "jump", "fall"].includes(String(actor?.state || ""))
+  ));
+  const dynamicsMoving = (payload.physics?.dynamics || []).length > 0;
+  // Orbiting changes only the camera. The directional-light shadow map is
+  // world-space, so rebuilding it while an idle player drags the view spends a
+  // full extra scene pass without changing a single texel.
+  if (payload.interactionActive && !actorsMoving && !dynamicsMoving) return;
+  const interval = actorsMoving || dynamicsMoving
+    ? ACTIVE_SHADOW_UPDATE_INTERVAL_MS
+    : IDLE_SHADOW_UPDATE_INTERVAL_MS;
+  if (sceneWarmupFrames < SCENE_WARMUP_FRAME_COUNT || now - lastShadowMapUpdatedAt >= interval) {
+    renderer.shadowMap.needsUpdate = true;
+    lastShadowMapUpdatedAt = now;
+  }
+}
+
+function scheduleBackgroundProgramWarmup(signature) {
+  if (
+    !renderer?.compileAsync
+    || !scene
+    || !signature
+    || signature === backgroundProgramWarmupSignature
+    || signature === backgroundProgramWarmupScheduledSignature
+    || backgroundProgramWarmupState === "warming"
+  ) {
+    return;
+  }
+  backgroundProgramWarmupScheduledSignature = signature;
+  backgroundProgramWarmupState = "scheduled";
+  const beginWarmup = () => {
+    if (backgroundProgramWarmupScheduledSignature !== signature) return;
+    backgroundProgramWarmupScheduledSignature = "";
+    backgroundProgramWarmupSignature = signature;
+    backgroundProgramWarmupState = "warming";
+    cameraForegroundObjects.forEach((object) => {
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach((material, materialIndex) => {
+        if (material) getObjectOcclusionMaterial(object, materialIndex);
+      });
+    });
+    const visibility = new Map();
+    scene.traverse((node) => {
+      if (!node.isMesh && !node.isLine && !node.isLineSegments && !node.isPoints) return;
+      let current = node;
+      while (current && current !== scene) {
+        if (!visibility.has(current)) visibility.set(current, current.visible);
+        current.visible = true;
+        current = current.parent;
+      }
+    });
+    let warmup;
+    try {
+      warmup = renderer.compileAsync(scene, camera);
+    } catch {
+      backgroundProgramWarmupState = "failed";
+      return;
+    } finally {
+      visibility.forEach((visible, node) => {
+        node.visible = visible;
+      });
+    }
+    Promise.resolve(warmup).then(() => {
+      if (backgroundProgramWarmupSignature === signature) {
+        backgroundProgramWarmupState = "ready";
+      }
+    }).catch(() => {
+      if (backgroundProgramWarmupSignature === signature) {
+        backgroundProgramWarmupState = "failed";
+      }
+    });
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(beginWarmup, { timeout: 800 });
+  } else {
+    window.setTimeout(beginWarmup, 0);
+  }
+}
+
 function update(payload = {}) {
   if (!ensureLayer()) return { ready: false, projections: [] };
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
+  const updateNow = performance.now();
+  if (payload.interactionActive) lastInteriorInteractionAt = updateNow;
   resize(width, height);
 
   activeItems = applyMobileModelLod(
@@ -11803,12 +11947,6 @@ function update(payload = {}) {
   const modelsReady = rebuildModels(activeItems);
   if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
   const actorsReady = updateActors(payload.actors || [], performance.now());
-  updateCamera(payload);
-  updateDynamicWallDecorVisibility();
-  updateCameraOcclusion(payload);
-  updatePhysicsDebug(payload.physics || {});
-
-  const visible = payload.visible !== false;
   const assetsReady = modelsReady && actorsReady;
   const nextWarmupSignature = assetsReady
     ? [
@@ -11823,11 +11961,16 @@ function update(payload = {}) {
     sceneWarmupSignature = nextWarmupSignature;
     sceneWarmupFrames = 0;
   }
+  updateCamera(payload);
+  updateDynamicWallDecorVisibility();
+  updateCameraOcclusion(payload);
+  updatePhysicsDebug(payload.physics || {});
+
+  const visible = payload.visible !== false;
   // First-time PBR/shadow/post-processing programs may compile over several
-  // frames. Render two complete hidden frames before declaring the room ready,
-  // so the loading curtain gives way to one final scene instead of briefly
-  // exposing heads/hands while merged clothing and hair programs catch up.
-  const ready = assetsReady && sceneWarmupFrames >= 2;
+  // frames. Render two hidden frames before declaring the room ready.
+  const ready = assetsReady && sceneWarmupFrames >= SCENE_WARMUP_FRAME_COUNT;
+  if (ready) scheduleBackgroundProgramWarmup(nextWarmupSignature);
   if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
   lastSceneReady = ready;
   canvas.style.display = visible ? "block" : "none";
@@ -11839,19 +11982,31 @@ function update(payload = {}) {
     ...actor,
     worldY: actor.worldY ?? 0.05
   })), width, height);
+  const renderNow = performance.now();
+  const aoRestoreProgress = THREE.MathUtils.clamp(
+    (renderNow - lastInteriorInteractionAt - INTERACTION_AO_RESTORE_DELAY_MS) / INTERACTION_AO_FADE_MS,
+    0,
+    1
+  );
   if (gtaoPass) {
-    gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+    gtaoPass.enabled = payload.theme?.zoneId === "public-plaza"
+      && width >= 760
+      && !payload.interactionActive
+      && aoRestoreProgress > 0;
     // The reference uses broad, warm contact penumbrae. A full-strength GTAO
     // pass made shoe soles, chair feet and cabinet corners collapse to black
     // outlines even though the key and bounce were physically plausible.
-    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.46 : 0.82;
+    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza"
+      ? 0.46 * aoRestoreProgress
+      : 0.82;
   }
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
-    cinematicGradePass.uniforms.strength.value = width >= 760 ? 1 : 0.72;
+    cinematicGradePass.uniforms.strength.value = (width >= 760 ? 1 : 0.72) * aoRestoreProgress;
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
   }
   if (visible) {
+    updateShadowSchedule(payload);
     if (composer) composer.render();
     else renderer.render(scene, camera);
   }
@@ -11860,7 +12015,7 @@ function update(payload = {}) {
     window.markRenderActive?.(180);
   }
   const now = Date.now();
-  if (now - lastStatsPublishedAt >= 1000) {
+  if (!payload.interactionActive && now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
     canvas.dataset.renderStats = JSON.stringify(getStats());
   }
@@ -11973,13 +12128,23 @@ function getStats() {
   const sceneComplexity = getSceneComplexity();
   const renderProfile = lastWidth <= 720 ? "mobile" : "desktop";
   const actorArticulationBreakdown = Object.fromEntries(
-    [...actorObjects.entries()].map(([id, entry]) => [
-      id,
-      {
-        assetRole: entry.assetRole || "procedural",
-        ...measureActorRuntimeGraph(entry, renderProfile)
+    [...actorObjects.entries()].map(([id, entry]) => {
+      let profileMeasurements = actorRuntimeGraphMeasurements.get(entry);
+      if (!profileMeasurements) {
+        profileMeasurements = new Map();
+        actorRuntimeGraphMeasurements.set(entry, profileMeasurements);
       }
-    ])
+      if (!profileMeasurements.has(renderProfile)) {
+        profileMeasurements.set(renderProfile, measureActorRuntimeGraph(entry, renderProfile));
+      }
+      return [
+        id,
+        {
+          assetRole: entry.assetRole || "procedural",
+          ...profileMeasurements.get(renderProfile)
+        }
+      ];
+    })
   );
   const actorContractStates = Object.fromEntries(
     [...actorObjects.entries()].map(([id, entry]) => [id, measureActorContractState(entry)])
@@ -11993,6 +12158,10 @@ function getStats() {
       version: "mirrorlife-atomic-scene-warmup-v1",
       frames: sceneWarmupFrames,
       complete: lastSceneReady && sceneWarmupFrames >= 2
+    },
+    backgroundProgramWarmup: {
+      signature: backgroundProgramWarmupSignature,
+      state: backgroundProgramWarmupState
     },
     portal: activeCivicPortalContract ? { version: activeCivicPortalContract } : null,
     activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,

@@ -71,7 +71,9 @@ let activeEncounters = [];
 let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
 
-const ACTIVE_FRAME_MS = 34;
+// Keep the 30 fps tier below two 60 Hz refresh intervals. A 34 ms threshold
+// misses both 16.7 ms and 33.3 ms rAF ticks and therefore falls to 20 fps.
+const ACTIVE_FRAME_MS = 30;
 const DRAG_FRAME_MS = 16;
 const IDLE_FRAME_MS = 90;
 const INTERACTION_BOOST_MS = 2200;
@@ -4101,7 +4103,13 @@ function shouldRenderAtActiveRate(now) {
 }
 
 function getRenderFrameBudget(now) {
-  if (camera.drag) return DRAG_FRAME_MS;
+  const interiorRealtimeInput = !!interiorView && (
+    interiorOrbit?.drag
+    || interiorMoveKeys.size > 0
+    || Math.hypot(Number(interiorJoystick?.x || 0), Number(interiorJoystick?.z || 0)) > 0.01
+    || !["", "idle"].includes(String(interiorOrbit?.motionState || "idle"))
+  );
+  if (camera.drag || interiorRealtimeInput) return DRAG_FRAME_MS;
   return shouldRenderAtActiveRate(now) ? ACTIVE_FRAME_MS : IDLE_FRAME_MS;
 }
 
@@ -13626,6 +13634,13 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
   ];
   return api.update({
     visible: true,
+    interactionActive: !!(
+      camera.drag
+      || interiorOrbit?.drag
+      || interiorMoveKeys.size > 0
+      || Math.hypot(Number(interiorJoystick?.x || 0), Number(interiorJoystick?.z || 0)) > 0.01
+      || !["", "idle"].includes(String(interiorOrbit?.motionState || "idle"))
+    ),
     width: W,
     height: H,
     yaw: Number(interiorOrbit?.yaw || 0),
