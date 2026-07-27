@@ -81,13 +81,23 @@ export function createCivicArticulationBinding({
   };
 }
 
+export function isCivicArticulationBindingSynchronizable(binding) {
+  return !!(
+    binding?.controlKey
+    && binding?.boneKey
+    && binding?.controller
+    && binding?.bone?.parent
+    && binding?.controllerToBoneRest?.isMatrix4
+  );
+}
+
 export function syncCivicArticulationBinding(binding) {
   const {
     controller,
     bone,
     controllerToBoneRest
   } = binding || {};
-  if (!controller || !bone?.parent || !controllerToBoneRest?.isMatrix4) return false;
+  if (!isCivicArticulationBindingSynchronizable(binding)) return false;
   controller.updateWorldMatrix?.(true, false);
   bone.parent.updateWorldMatrix?.(true, false);
   const relativeMatrix = bone.parent.matrixWorld.clone()
@@ -104,6 +114,15 @@ function isVisibleInGraph(node, root) {
   let current = node;
   while (current) {
     if (current.visible === false) return false;
+    if (current === root) return true;
+    current = current.parent;
+  }
+  return false;
+}
+
+function isAttachedInGraph(node, root) {
+  let current = node;
+  while (current) {
     if (current === root) return true;
     current = current.parent;
   }
@@ -156,11 +175,7 @@ export function measureActorRuntimeGraph(entry, profile = "desktop") {
   const visual = entry?.visual || group;
   const activeBindings = (entry?.articulationBindings || [])
     .filter((binding) => (
-      binding?.controlKey
-      && binding?.boneKey
-      && binding?.controller
-      && binding?.bone
-      && binding?.controllerToBoneRest?.isMatrix4
+      isCivicArticulationBindingSynchronizable(binding)
       && isVisibleInGraph(binding.controller, group)
     ));
   const controlKeyByNode = new Map(
@@ -225,8 +240,10 @@ export function measureActorRuntimeGraph(entry, profile = "desktop") {
   const detailSharesCoreSkeleton = coreBones.length > 0
     && detailBones.length === coreBones.length
     && detailBones.every((bone, index) => bone === coreBones[index]);
+  const detailVisible = !!articulationDetail
+    && isVisibleInGraph(articulationDetail, group);
   const detailRemoved = !!articulationDetail
-    && !isVisibleInGraph(articulationDetail, group);
+    && !isAttachedInGraph(articulationDetail, group);
   const detailIdentityValid = articulationDetail?.isSkinnedMesh
     && articulationDetail.name === "SkinnedArticulationDetail"
     && articulationDetail.userData?.articulation_batch === "detail"
@@ -250,6 +267,7 @@ export function measureActorRuntimeGraph(entry, profile = "desktop") {
       detailIdentity: articulationDetail?.name || null,
       detailSemantic: articulationDetail?.userData?.articulation_batch || null,
       detailSharesCoreSkeleton,
+      detailVisible,
       detailRemoved,
       removedDetailBatchCount,
       renderedDetailBatchCount
@@ -557,6 +575,7 @@ export function evaluateReferenceFidelityV3({
     }
     if (
       structure?.detailRemoved !== true
+      || structure?.detailVisible !== false
       || Number(structure?.removedDetailBatchCount) !== 1
       || Number(structure?.renderedDetailBatchCount) !== 0
     ) {

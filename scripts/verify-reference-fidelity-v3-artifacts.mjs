@@ -25,6 +25,7 @@ const actor = (role, mobile = false) => ({
       detailIdentity: "SkinnedArticulationDetail",
       detailSemantic: "detail",
       detailSharesCoreSkeleton: true,
+      detailVisible: false,
       detailRemoved: true,
       removedDetailBatchCount: 1,
       renderedDetailBatchCount: 0

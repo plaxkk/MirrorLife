@@ -18,6 +18,7 @@ const {
   REFERENCE_FIDELITY_V3,
   createCivicArticulationBinding,
   evaluateReferenceFidelityV3,
+  isCivicArticulationBindingSynchronizable,
   measureActorContractState,
   measureActorRuntimeGraph,
   syncCivicArticulationBinding
@@ -47,6 +48,11 @@ assert.equal(
   typeof syncCivicArticulationBinding,
   "function",
   "canonical civic articulation binding synchronizer is missing"
+);
+assert.equal(
+  typeof isCivicArticulationBindingSynchronizable,
+  "function",
+  "shared civic articulation synchronizability predicate is missing"
 );
 
 // Break caught: every shipped desktop role must carry at least twelve real
@@ -255,6 +261,20 @@ const assertMatrixNear = (actual, expected, label) => {
     0,
     "binding without its rest offset still satisfied the articulation gate"
   );
+
+  bones[0].removeFromParent();
+  assert.equal(isCivicArticulationBindingSynchronizable(leftArmBinding), false);
+  const detachedBone = measureActorRuntimeGraph(graphEntry, "desktop");
+  assert.equal(
+    detachedBone.skinnedArticulationBoneCount,
+    0,
+    "detached skeleton bone counted despite being unsynchronizable"
+  );
+  assert.equal(
+    detachedBone.drivenRigidSurfaceCount,
+    0,
+    "detached skeleton bone left its controller eligible for rigid surfaces"
+  );
 }
 
 // Break caught: mobile structure is measured from the loaded core/detail
@@ -339,10 +359,28 @@ const assertMatrixNear = (actual, expected, label) => {
     detailIdentity: "SkinnedArticulationDetail",
     detailSemantic: "detail",
     detailSharesCoreSkeleton: true,
+    detailVisible: false,
     detailRemoved: true,
     removedDetailBatchCount: 1,
     renderedDetailBatchCount: 0
   });
+
+  skinRig.add(detail);
+  detail.visible = false;
+  const hiddenAttached = measureActorRuntimeGraph({
+    group: actor,
+    visual,
+    articulationBindings,
+    articulationSkinBatches: { core, detail }
+  }, "mobile");
+  assert.equal(
+    hiddenAttached.mobileArticulationStructure.detailRemoved,
+    false,
+    "attached but hidden detail was misreported as removed"
+  );
+  assert.equal(hiddenAttached.mobileArticulationStructure.detailVisible, false);
+  assert.equal(hiddenAttached.mobileArticulationStructure.renderedDetailBatchCount, 0);
+  assert.equal(hiddenAttached.mobileArticulationStructure.removedDetailBatchCount, 0);
 }
 
 // Break caught: elbow-volume health must observe a visible corrective surface
@@ -416,6 +454,7 @@ const passingMobileActor = {
     detailIdentity: "SkinnedArticulationDetail",
     detailSemantic: "detail",
     detailSharesCoreSkeleton: true,
+    detailVisible: false,
     detailRemoved: true,
     removedDetailBatchCount: 1,
     renderedDetailBatchCount: 0
@@ -514,9 +553,20 @@ for (const [label, mutate, expectedFailure] of [
   [
     "detail not removed",
     (actor) => {
+      actor.mobileArticulationStructure.detailVisible = true;
       actor.mobileArticulationStructure.detailRemoved = false;
       actor.mobileArticulationStructure.removedDetailBatchCount = 0;
       actor.mobileArticulationStructure.renderedDetailBatchCount = 1;
+    },
+    "removed detail"
+  ],
+  [
+    "hidden attached detail",
+    (actor) => {
+      actor.mobileArticulationStructure.detailVisible = false;
+      actor.mobileArticulationStructure.detailRemoved = false;
+      actor.mobileArticulationStructure.removedDetailBatchCount = 0;
+      actor.mobileArticulationStructure.renderedDetailBatchCount = 0;
     },
     "removed detail"
   ],
