@@ -279,11 +279,9 @@ npm run benchmark:interior
 
 ## 参与贡献
 
-欢迎通过 Issue 或 Pull Request 参与。提交前请确保：
+欢迎通过 Issue 或 Pull Request 参与。开发环境、分支与提交约定、验证矩阵、3D 资产要求以及 PR 清单，请阅读[贡献指南](CONTRIBUTING.md#中文)。
 
-1. 改动遵循“游戏先于面板、行动先于台词、规则先于模型”的原则。
-2. 不提交生产 API key、真实用户数据或未脱敏材料。
-3. 至少通过 `npm run check`、`npm run build` 与相关专项验证。
+开始提交前，请至少确保改动遵循“游戏先于面板、行动先于台词、规则先于模型”的原则，不包含生产密钥或真实用户数据，并通过与改动范围对应的验证。
 
 ## License
 
