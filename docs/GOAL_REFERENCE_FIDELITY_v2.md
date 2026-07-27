@@ -56,13 +56,23 @@ npm run verify:reference-fidelity:v3
 - `actorArticulationBreakdown` 按实际角色与公共控制枢轴列出渲染 draw call；
 - `drivenRigidSurfaceCount` 只数公共控制枢轴下仍独立渲染的可见非蒙皮表面；
 - `skinnedArticulationBoneCount` 从 `JOINTS_0` / `WEIGHTS_0` 和 Three.js skeleton
-  统计真正承载可见顶点的骨；
+  统计真正承载可见顶点且映射到公共 articulation control 的骨；脸部/附件骨不计入；
 - `mobileRemovableDetailBatches` 数移动 LOD 实际从已加载 GLB 删除的 primitive batch；
 - `actorDrawCallsByProfile` 分别记录桌面和移动端当前实际渲染的每个角色；
 - `actorContractStates` 数值记录 blink、handContact、elbowVolume、footPlant 和
   sleeve/trouser clothCompression，并给出绿/红状态。
 
 不得用 manifest 声明、文件名、对象名或 GLB 总 mesh 数替代以上运行时测量。
+
+开场桌面和强制 blink 证据必须各包含
+`player / listener / facilitator / mediator` 四个角色且每角色唯一；既定移动构图必须包含
+`player / listener / facilitator` 三个实际渲染角色，不得把未渲染的 mediator 合成成
+`0 draw` 记录。所有必需角色都必须逐角色提供对应数值状态。`elbowVolume` 的绿灯来自左右
+肘实际可见 corrective surface 的 x/y 扩张、z 压缩和体积比变化，不得由 shoulder/hip
+夹紧标量代替。
+
+桌面、移动端、强制 blink manifest 和七轴 JSON 必须携带同一个 Vite 内容哈希运行时
+`buildFingerprint`。混用不同构建或缺少指纹的证据直接失败。
 
 ### v3 阶段一 / 角色结构统一门槛
 

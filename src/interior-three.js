@@ -13,6 +13,10 @@ import {
   measureActorRuntimeGraph
 } from "./reference-fidelity-runtime-contract.js";
 
+// Vite emits this module inside a content-hashed runtime chunk. The pathname
+// therefore identifies the exact served build without trusting capture time,
+// the source worktree, or a caller-provided label.
+const RUNTIME_BUILD_FINGERPRINT = new URL(import.meta.url).pathname;
 const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
@@ -11730,6 +11734,7 @@ function getStats() {
   );
   return {
     ready: !!renderer,
+    buildFingerprint: RUNTIME_BUILD_FINGERPRINT,
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
     shaderErrors,
     sceneWarmup: {

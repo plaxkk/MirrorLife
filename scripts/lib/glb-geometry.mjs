@@ -88,7 +88,7 @@ export function readGlbGeometry(file) {
   };
 
   const weightedJointNodes = new Set();
-  let skinnedArticulationBatches = 0;
+  let skinnedPrimitiveBatches = 0;
   for (const node of gltf.nodes || []) {
     if (node.skin == null || node.mesh == null) continue;
     const skin = gltf.skins?.[node.skin];
@@ -98,7 +98,7 @@ export function readGlbGeometry(file) {
       const joints = readAccessor(primitive.attributes?.JOINTS_0);
       const weights = readAccessor(primitive.attributes?.WEIGHTS_0);
       if (!joints || !weights) continue;
-      skinnedArticulationBatches += 1;
+      skinnedPrimitiveBatches += 1;
       const count = Math.min(joints.count, weights.count);
       const components = Math.min(joints.components, weights.components);
       for (let vertex = 0; vertex < count; vertex += 1) {
@@ -165,8 +165,8 @@ export function readGlbGeometry(file) {
     bytes: buffer.length,
     meshes: (gltf.meshes || []).length,
     materials: (gltf.materials || []).length,
-    skinnedArticulationBoneCount: weightedJointNodes.size,
-    skinnedArticulationBatches,
+    weightedSkinBoneCount: weightedJointNodes.size,
+    skinnedPrimitiveBatches,
     triangles,
     parts,
     bounds: { low, high },

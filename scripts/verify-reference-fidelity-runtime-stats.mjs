@@ -16,6 +16,7 @@ assert(runtimeContract, "runtime reference-fidelity contract module is missing")
 const {
   REFERENCE_FIDELITY_V3,
   evaluateReferenceFidelityV3,
+  measureActorContractState,
   measureActorRuntimeGraph
 } = runtimeContract;
 
@@ -23,8 +24,8 @@ const {
 // JOINTS_0/WEIGHTS_0 data in the shipped GLB, not copied from its manifest.
 {
   const glb = readGlbGeometry(path.resolve("public/assets/characters/civic/player.glb"));
-  assert.equal(glb.skinnedArticulationBoneCount, 8);
-  assert.equal(glb.skinnedArticulationBatches, 2);
+  assert.equal(glb.weightedSkinBoneCount, 8);
+  assert.equal(glb.skinnedPrimitiveBatches, 2);
 }
 
 // Break caught: a visible rigid surface beneath a driven controller must not
@@ -89,20 +90,67 @@ const {
       leftArm: { node: leftArm },
       rightArm: { node: rightArm }
     },
+    skinJoints: {
+      leftArm: { node: bones[0] }
+    },
     mobileRemovableDetailBatches: 2
   }, "desktop");
 
   assert.equal(measured.actorDrawCalls, 3);
   assert.equal(measured.articulationBatchCount, 1);
   assert.equal(measured.drivenRigidSurfaceCount, 1);
-  assert.equal(measured.skinnedArticulationBoneCount, 2);
+  assert.equal(measured.skinnedArticulationBoneCount, 1);
   assert.equal(measured.mobileRemovableDetailBatches, 2);
   assert.deepEqual(measured.controlPivots.leftArm, {
     rigidDrawCalls: 1,
     rigidSurfaceCount: 1,
-    skinnedDrawCalls: 0
+    skinnedDrawCalls: 1
   });
   assert(!("rightArm" in measured.controlPivots));
+}
+
+// Break caught: elbow-volume health must observe a visible corrective surface
+// changing volume at each elbow. A clamped shoulder/hip scalar or a no-op
+// corrective transform must not report green.
+{
+  const corrective = () => {
+    const node = new THREE.Group();
+    node.add(new THREE.Mesh(
+      new THREE.BoxGeometry(0.1, 0.1, 0.1),
+      new THREE.MeshBasicMaterial()
+    ));
+    node.scale.set(1.16, 1.22, 0.94);
+    return {
+      node,
+      restScale: new THREE.Vector3(1, 1, 1),
+      bend: 1,
+      activationThreshold: 0.035
+    };
+  };
+  const leftSleeve = corrective();
+  const rightSleeve = corrective();
+  const leftElbow = new THREE.Group();
+  const rightElbow = new THREE.Group();
+  leftElbow.add(leftSleeve.node);
+  rightElbow.add(rightSleeve.node);
+  const entry = {
+    leftElbow,
+    rightElbow,
+    clothCorrectives: { leftSleeve, rightSleeve }
+  };
+  const active = measureActorContractState(entry);
+  assert.equal(active.elbowVolume.green, true);
+  assert(active.elbowVolume.left.volumeRatio > 1);
+  assert(active.elbowVolume.right.visibleSurfaceCount > 0);
+
+  rightSleeve.node.scale.copy(rightSleeve.restScale);
+  const noOp = measureActorContractState(entry);
+  assert.equal(noOp.elbowVolume.green, false);
+
+  rightSleeve.node.scale.set(1.16, 1.22, 0.94);
+  rightElbow.remove(rightSleeve.node);
+  const disconnected = measureActorContractState(entry);
+  assert.equal(disconnected.elbowVolume.green, false);
 }
 
 const greenState = {
@@ -120,15 +168,16 @@ const passingActor = {
 };
 const passingInput = {
   desktopStats: {
+    buildFingerprint: "game-fixture-a.js",
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
     drawCalls: 145,
     triangles: 320000,
     drawCallsByLayer: { actors: 55 },
     actorArticulationBreakdown: {
-      player: passingActor,
-      listener: passingActor,
-      facilitator: passingActor,
-      mediator: passingActor
+      player: { ...passingActor, assetRole: "player" },
+      listener: { ...passingActor, assetRole: "listener" },
+      facilitator: { ...passingActor, assetRole: "facilitator" },
+      mediator: { ...passingActor, assetRole: "mediator" }
     },
     actorContractStates: {
       player: greenState,
@@ -138,15 +187,25 @@ const passingInput = {
     }
   },
   mobileStats: {
+    buildFingerprint: "game-fixture-a.js",
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
     drawCalls: 110,
     triangles: 250000,
     actorArticulationBreakdown: {
-      player: { ...passingActor, actorDrawCalls: 10 }
+      player: { ...passingActor, assetRole: "player", actorDrawCalls: 10 },
+      listener: { ...passingActor, assetRole: "listener", actorDrawCalls: 10 },
+      facilitator: { ...passingActor, assetRole: "facilitator", actorDrawCalls: 10 }
     }
   },
   blinkStats: {
+    buildFingerprint: "game-fixture-a.js",
     referenceFidelityContract: REFERENCE_FIDELITY_V3,
+    actorArticulationBreakdown: {
+      player: { ...passingActor, assetRole: "player" },
+      listener: { ...passingActor, assetRole: "listener" },
+      facilitator: { ...passingActor, assetRole: "facilitator" },
+      mediator: { ...passingActor, assetRole: "mediator" }
+    },
     actorContractStates: {
       player: greenState,
       listener: greenState,
@@ -154,7 +213,7 @@ const passingInput = {
       mediator: greenState
     }
   },
-  sevenAxis: { within: 4, total: 7 }
+  sevenAxis: { buildFingerprint: "game-fixture-a.js", within: 4, total: 7 }
 };
 
 // Break caught: every v3 boundary is inclusive and the isolated seven-axis
@@ -171,6 +230,48 @@ const passingInput = {
   assert.equal(REFERENCE_FIDELITY_V3.drivenRigidSurfacesPerActor, 0);
   assert.equal(REFERENCE_FIDELITY_V3.skinnedArticulationBonesPerActor, 12);
   assert.equal(REFERENCE_FIDELITY_V3.sevenAxisBaseline, 4);
+}
+
+// Break caught: removing a required opening role from every artifact must not
+// lower draw calls and leave the v3 gate green.
+{
+  const missingRole = structuredClone(passingInput);
+  for (const stats of [
+    missingRole.desktopStats,
+    missingRole.mobileStats,
+    missingRole.blinkStats
+  ]) {
+    delete stats.actorArticulationBreakdown.facilitator;
+    delete stats.actorContractStates?.facilitator;
+  }
+  const result = evaluateReferenceFidelityV3(missingRole);
+  assert.equal(result.pass, false);
+  assert(result.failures.some((failure) => failure.includes("facilitator")));
+}
+
+// Break caught: keeping one applicable state cannot mask missing numeric
+// contract state on the other required roles.
+for (const metric of ["handContact", "elbowVolume", "footPlant", "clothCompression"]) {
+  const missingStates = structuredClone(passingInput);
+  for (const role of ["player", "listener", "facilitator"]) {
+    delete missingStates.desktopStats.actorContractStates[role][metric];
+  }
+  const result = evaluateReferenceFidelityV3(missingStates);
+  assert.equal(result.pass, false, `${metric}: missing per-role states passed`);
+  assert(
+    result.failures.some((failure) => failure.includes(`player ${metric}`)),
+    `${metric}: missing player state was not reported`
+  );
+}
+
+// Break caught: otherwise valid artifacts from different content-hashed
+// runtime builds must not be combined into one acceptance verdict.
+{
+  const mixedBuild = structuredClone(passingInput);
+  mixedBuild.mobileStats.buildFingerprint = "game-fixture-b.js";
+  const result = evaluateReferenceFidelityV3(mixedBuild);
+  assert.equal(result.pass, false);
+  assert(result.failures.some((failure) => failure.includes("build fingerprint")));
 }
 
 // Break caught: relaxing either inverse structural gate or accepting a red

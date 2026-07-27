@@ -11,6 +11,12 @@ const openingStats = (file) => {
   const manifest = readJson(file);
   const scene = manifest.scenes?.find((entry) => entry.zone === "public-plaza");
   if (!scene?.stats) throw new Error(`${file}: public-plaza runtime stats are missing`);
+  if (
+    !manifest.buildFingerprint
+    || manifest.buildFingerprint !== scene.stats.buildFingerprint
+  ) {
+    throw new Error(`${file}: manifest/runtime build fingerprint is missing or inconsistent`);
+  }
   return scene.stats;
 };
 
@@ -50,11 +56,6 @@ for (const [profile, stats] of [["desktop", desktopStats], ["mobile", mobileStat
     actorProfiles[key][profile] = actor.actorDrawCalls;
   }
 }
-for (const profile of Object.values(actorProfiles)) {
-  profile.desktop ??= 0;
-  profile.mobile ??= 0;
-}
-
 console.log(`Reference fidelity contract: ${REFERENCE_FIDELITY_V3.version}`);
 console.log(`Actor draw calls by loaded runtime profile: ${JSON.stringify(actorProfiles)}`);
 console.log(

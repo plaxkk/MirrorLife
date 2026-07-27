@@ -1,5 +1,7 @@
 export const REFERENCE_FIDELITY_V3 = Object.freeze({
   version: "mirrorlife-reference-fidelity-v3",
+  openingActorRoles: Object.freeze(["player", "listener", "facilitator", "mediator"]),
+  mobileActorRoles: Object.freeze(["player", "listener", "facilitator"]),
   openingActorDrawCalls: 55,
   openingDrawCalls: 145,
   desktopArticulationBatchesPerActor: 2,
@@ -85,14 +87,17 @@ export function measureActorRuntimeGraph(entry, profile = "desktop") {
     if (calls <= 0) return;
     actorDrawCalls += calls;
     if (node.isSkinnedMesh) {
-      articulationBatchCount += calls;
       const meshBones = weightedBonesForMesh(node);
-      meshBones.forEach((bone) => weightedBones.add(bone));
       const touchedControls = new Set(
         [...meshBones]
           .map((bone) => skinControlKeyByBone.get(bone))
           .filter(Boolean)
       );
+      if (!touchedControls.size) return;
+      articulationBatchCount += calls;
+      meshBones.forEach((bone) => {
+        if (skinControlKeyByBone.has(bone)) weightedBones.add(bone);
+      });
       touchedControls.forEach((key) => {
         controlPivots[key] ||= {
           rigidDrawCalls: 0,
@@ -146,8 +151,55 @@ export function measureActorContractState(entry) {
   const contactBefore = Number(contact?.before);
   const contactApplicable = !!contact;
 
-  const elbowValues = Object.values(entry?.jointVolumeDeformation || {})
-    .flatMap((state) => [Number(state?.leftBend), Number(state?.rightBend)]);
+  const elbowCorrection = (state, controller) => {
+    if (!state?.node || !state?.restScale) return null;
+    let current = state.node;
+    let attachedToController = false;
+    while (current) {
+      if (current === controller) {
+        attachedToController = true;
+        break;
+      }
+      current = current.parent;
+    }
+    let visibleSurfaceCount = 0;
+    state.node.traverseVisible?.((node) => {
+      if (node.isMesh && node.geometry && node.material) visibleSurfaceCount += 1;
+    });
+    const safeRatio = (axis) => Number(state.node.scale?.[axis] || 0)
+      / Math.max(1e-8, Number(state.restScale?.[axis] || 0));
+    const widthRatio = safeRatio("x");
+    const depthRatio = safeRatio("y");
+    const lengthRatio = safeRatio("z");
+    const volumeRatio = widthRatio * depthRatio * lengthRatio;
+    const bend = Number(state.bend);
+    return {
+      bend,
+      widthRatio,
+      depthRatio,
+      lengthRatio,
+      volumeRatio,
+      visibleSurfaceCount,
+      attachedToController,
+      green: Number.isFinite(bend)
+        && bend > Number(state.activationThreshold || 0)
+        && attachedToController
+        && state.node.visible !== false
+        && visibleSurfaceCount > 0
+        && widthRatio > 1.001
+        && depthRatio > 1.001
+        && lengthRatio < 0.999
+        && volumeRatio > 1.001
+    };
+  };
+  const leftElbowVolume = elbowCorrection(
+    entry?.clothCorrectives?.leftSleeve,
+    entry?.leftElbow
+  );
+  const rightElbowVolume = elbowCorrection(
+    entry?.clothCorrectives?.rightSleeve,
+    entry?.rightElbow
+  );
 
   const footPlant = entry?.weightTransferState || null;
   const footError = footPlant
@@ -177,9 +229,13 @@ export function measureActorContractState(entry) {
       )
     },
     elbowVolume: {
-      applicable: elbowValues.length > 0,
-      value: elbowValues.length ? Number(Math.max(...elbowValues).toFixed(4)) : null,
-      green: finiteUnitInterval(elbowValues)
+      applicable: !!leftElbowVolume && !!rightElbowVolume,
+      value: leftElbowVolume && rightElbowVolume
+        ? Number(Math.min(leftElbowVolume.volumeRatio, rightElbowVolume.volumeRatio).toFixed(4))
+        : null,
+      left: leftElbowVolume,
+      right: rightElbowVolume,
+      green: !!leftElbowVolume?.green && !!rightElbowVolume?.green
     },
     footPlant: {
       applicable: !!footPlant,
@@ -224,13 +280,31 @@ export function evaluateReferenceFidelityV3({
 } = {}) {
   const failures = [];
   const limits = REFERENCE_FIDELITY_V3;
+  const buildFingerprints = [
+    desktopStats?.buildFingerprint,
+    mobileStats?.buildFingerprint,
+    blinkStats?.buildFingerprint,
+    sevenAxis?.buildFingerprint
+  ];
+  if (
+    buildFingerprints.some((fingerprint) => typeof fingerprint !== "string" || !fingerprint)
+    || new Set(buildFingerprints).size !== 1
+  ) {
+    failures.push(
+      `artifact build fingerprint mismatch: ${buildFingerprints
+        .map((fingerprint) => fingerprint || "missing")
+        .join(" / ")}`
+    );
+  }
   for (const [profile, stats] of [
     ["desktop", desktopStats],
     ["mobile", mobileStats],
     ["blink", blinkStats]
   ]) {
     const embedded = stats?.referenceFidelityContract;
-    if (!Object.entries(limits).every(([key, value]) => embedded?.[key] === value)) {
+    if (!Object.entries(limits).every(([key, value]) => (
+      JSON.stringify(embedded?.[key]) === JSON.stringify(value)
+    ))) {
       failures.push(`${profile} capture embedded v3 contract is missing or stale`);
     }
   }
@@ -244,18 +318,43 @@ export function evaluateReferenceFidelityV3({
   failAbove(failures, "mobile draw call", mobileStats?.drawCalls, limits.mobileDrawCalls);
   failAbove(failures, "mobile triangles", mobileStats?.triangles, limits.mobileTriangles);
 
-  const actors = Object.entries(desktopStats?.actorArticulationBreakdown || {});
-  if (!actors.length) failures.push("desktop actor articulation breakdown is missing");
-  actors.forEach(([actorId, actor]) => {
+  const requiredActors = (stats, profile, requiredRoles) => {
+    const actorEntries = Object.entries(stats?.actorArticulationBreakdown || {});
+    const byRole = new Map();
+    for (const role of requiredRoles) {
+      const matches = actorEntries.filter(([, actor]) => actor?.assetRole === role);
+      if (matches.length !== 1) {
+        failures.push(
+          `${profile} required role ${role} has ${matches.length} runtime actors; expected exactly 1`
+        );
+      } else {
+        byRole.set(role, matches[0]);
+      }
+    }
+    const unexpected = actorEntries.filter(([, actor]) => (
+      !requiredRoles.includes(actor?.assetRole)
+    ));
+    if (unexpected.length) {
+      failures.push(
+        `${profile} has unexpected runtime actor roles: `
+        + unexpected.map(([, actor]) => actor?.assetRole || "missing").join(", ")
+      );
+    }
+    return byRole;
+  };
+  const desktopActors = requiredActors(desktopStats, "desktop", limits.openingActorRoles);
+  requiredActors(mobileStats, "mobile", limits.mobileActorRoles);
+  const blinkActors = requiredActors(blinkStats, "blink", limits.openingActorRoles);
+  for (const [role, [, actor]] of desktopActors) {
     failAbove(
       failures,
-      `${actorId} desktop articulation batch`,
+      `${role} desktop articulation batch`,
       actor?.articulationBatchCount,
       limits.desktopArticulationBatchesPerActor
     );
     if (Number(actor?.drivenRigidSurfaceCount) !== limits.drivenRigidSurfacesPerActor) {
       failures.push(
-        `${actorId} driven rigid articulation surface ${actor?.drivenRigidSurfaceCount ?? "missing"}`
+        `${role} driven rigid articulation surface ${actor?.drivenRigidSurfaceCount ?? "missing"}`
         + ` must equal ${limits.drivenRigidSurfacesPerActor}`
       );
     }
@@ -264,26 +363,40 @@ export function evaluateReferenceFidelityV3({
       || Number(actor.skinnedArticulationBoneCount) < limits.skinnedArticulationBonesPerActor
     ) {
       failures.push(
-        `${actorId} skinned articulation bone count ${actor?.skinnedArticulationBoneCount ?? "missing"}`
+        `${role} skinned articulation bone count ${actor?.skinnedArticulationBoneCount ?? "missing"}`
         + ` is below ${limits.skinnedArticulationBonesPerActor}`
       );
     }
-  });
-
-  const desktopStates = Object.entries(desktopStats?.actorContractStates || {});
-  for (const metric of ["handContact", "elbowVolume", "footPlant", "clothCompression"]) {
-    const applicable = desktopStates.filter(([, state]) => state?.[metric]?.applicable);
-    if (!applicable.length) failures.push(`${metric} numeric runtime state is missing`);
-    applicable.forEach(([actorId, state]) => {
-      if (state[metric].green !== true) failures.push(`${actorId} ${metric} state is red`);
-    });
   }
 
-  const blinkStates = Object.entries(blinkStats?.actorContractStates || {});
-  if (!blinkStates.length) failures.push("forced-blink numeric runtime state is missing");
-  blinkStates.forEach(([actorId, state]) => {
-    if (state?.blink?.green !== true) failures.push(`${actorId} blink state is red`);
-  });
+  const desktopStates = desktopStats?.actorContractStates || {};
+  for (const [role, [actorId]] of desktopActors) {
+    for (const metric of ["handContact", "elbowVolume", "footPlant", "clothCompression"]) {
+      const state = desktopStates?.[actorId]?.[metric];
+      if (!state) {
+        failures.push(`${role} ${metric} numeric runtime state is missing`);
+        continue;
+      }
+      const mustApply = metric !== "handContact"
+        || role === "facilitator"
+        || role === "mediator";
+      if (mustApply && state.applicable !== true) {
+        failures.push(`${role} ${metric} numeric runtime state is not applicable`);
+      }
+      if (state.green !== true) failures.push(`${role} ${metric} state is red`);
+    }
+  }
+
+  const blinkStates = blinkStats?.actorContractStates || {};
+  for (const [role, [actorId]] of blinkActors) {
+    const state = blinkStates?.[actorId]?.blink;
+    if (!state) {
+      failures.push(`${role} blink numeric runtime state is missing`);
+      continue;
+    }
+    if (state.applicable !== true) failures.push(`${role} blink state is not applicable`);
+    if (state.green !== true) failures.push(`${role} blink state is red`);
+  }
 
   if (
     Number(sevenAxis?.total) !== limits.sevenAxisTotal
