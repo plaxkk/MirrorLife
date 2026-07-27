@@ -142,7 +142,17 @@ function renderedDrawCalls(node) {
   return node.material.filter(Boolean).length;
 }
 
+const weightedBonesByMesh = new WeakMap();
+
 function weightedBonesForMesh(mesh) {
+  const cached = weightedBonesByMesh.get(mesh);
+  if (
+    cached
+    && cached.geometry === mesh?.geometry
+    && cached.skeleton === mesh?.skeleton
+  ) {
+    return cached.weighted;
+  }
   const skinIndex = mesh?.geometry?.getAttribute?.("skinIndex");
   const skinWeight = mesh?.geometry?.getAttribute?.("skinWeight");
   const bones = mesh?.skeleton?.bones || [];
@@ -157,6 +167,11 @@ function weightedBonesForMesh(mesh) {
       if (bone) weighted.add(bone);
     }
   }
+  weightedBonesByMesh.set(mesh, {
+    geometry: mesh.geometry,
+    skeleton: mesh.skeleton,
+    weighted
+  });
   return weighted;
 }
 
