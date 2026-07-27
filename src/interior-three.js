@@ -11600,21 +11600,53 @@ function getSceneComplexity() {
   let drawCalls = 0;
   let triangles = 0;
   const drawCallsByLayer = { room: 0, models: 0, actors: 0, other: 0 };
+  // Actors are the single largest layer and the one gating any further
+  // authored detail, since the opening sits within a few calls of budget.
+  // Breaking their cost down per material name says exactly which authored
+  // materials to fold together, instead of guessing from the GLB.
+  const actorMaterialCalls = new Map();
   scene?.traverseVisible?.((node) => {
     if (!node.isMesh || !node.geometry) return;
     const geometry = node.geometry;
-    const materialCount = Array.isArray(node.material) ? Math.max(1, node.material.length) : 1;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    const materialCount = Math.max(1, materials.length);
     drawCalls += materialCount;
     let root = node;
     while (root?.parent && root.parent !== scene) root = root.parent;
     const layer = root === roomRoot ? "room" : root === modelRoot ? "models" : root === actorRoot ? "actors" : "other";
     drawCallsByLayer[layer] += materialCount;
+    if (layer === "actors") {
+      // Runtime-merged batches get a fresh unnamed material, so a material-name
+      // histogram collapses most of the layer into one "unnamed" bucket. Fall
+      // back to the nearest named ancestor, which is what actually identifies
+      // the assembly a batch came from.
+      let namedAncestor = node;
+      while (namedAncestor && namedAncestor !== actorRoot && !namedAncestor.name) {
+        namedAncestor = namedAncestor.parent;
+      }
+      const ancestorLabel = namedAncestor && namedAncestor !== actorRoot
+        ? `<${namedAncestor.name}>`
+        : "<unlabelled>";
+      materials.filter(Boolean).forEach((material) => {
+        const named = String(material.name || "").replace(/^(player|listener|facilitator|mediator)\s+/, "");
+        const key = named || `${ancestorLabel} ${node.name || "mesh"}`;
+        actorMaterialCalls.set(key, (actorMaterialCalls.get(key) || 0) + 1);
+      });
+    }
     const indexCount = Number(geometry.index?.count || 0);
     const vertexCount = Number(geometry.attributes?.position?.count || 0);
     const primitiveTriangles = indexCount > 0 ? indexCount / 3 : vertexCount / 3;
     triangles += primitiveTriangles * Math.max(1, Number(node.count || 1));
   });
-  return { drawCalls: Math.round(drawCalls), triangles: Math.round(triangles), drawCallsByLayer };
+  const actorMaterialBreakdown = Object.fromEntries(
+    [...actorMaterialCalls.entries()].sort((a, b) => b[1] - a[1])
+  );
+  return {
+    drawCalls: Math.round(drawCalls),
+    triangles: Math.round(triangles),
+    drawCallsByLayer,
+    actorMaterialBreakdown
+  };
 }
 
 function getStats() {
@@ -11870,6 +11902,7 @@ function getStats() {
     })),
     drawCalls: sceneComplexity?.drawCalls ?? Number(render.calls || 0),
     drawCallsByLayer: sceneComplexity?.drawCallsByLayer || null,
+    actorMaterialBreakdown: sceneComplexity?.actorMaterialBreakdown || null,
     triangles: sceneComplexity?.triangles ?? Number(render.triangles || 0),
     geometries: Number(memory.geometries || 0),
     textures: Number(memory.textures || 0),
