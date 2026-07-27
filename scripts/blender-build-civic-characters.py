@@ -366,6 +366,167 @@ def create_skin_armature(parent, shoulder_x=0.216, hip_x=0.115):
     return armature
 
 
+def add_rigid_skin_bone(armature, controller, name):
+    """Add a bind bone whose rest matrix matches a public control pivot."""
+    bpy.context.view_layer.objects.active = armature
+    armature.select_set(True)
+    bpy.ops.object.mode_set(mode="EDIT")
+    bone = armature.data.edit_bones.new(name)
+    bone.matrix = armature.matrix_world.inverted() @ controller.matrix_world
+    bone.length = 0.08
+    bone.parent = armature.data.edit_bones.get("SkinRoot")
+    bone.use_connect = False
+    bpy.ops.object.mode_set(mode="OBJECT")
+    armature.select_set(False)
+    return bone
+
+
+def build_articulation_skin_batch(
+    name,
+    armature,
+    controller_bones,
+    excluded_roots=(),
+    weighted_sources=(),
+    source_filter=lambda source: True,
+):
+    """Bake controller-owned surfaces into one vertex-colour skin batch.
+
+    Rigid source vertices receive a 100% weight for the bone mirroring their
+    nearest public control pivot. Existing continuously weighted limb sources
+    retain their authored vertex groups. Public controls themselves stay in
+    the hierarchy as the animation, contact, and semantic API.
+    """
+    excluded = set(excluded_roots)
+    source_bones = {}
+    sources = []
+    for controller, bone_name in controller_bones:
+        for child in controller.children_recursive:
+            if child.type not in ("MESH", "CURVE"):
+                continue
+            parent = child
+            blocked = False
+            while parent and parent != controller:
+                if parent in excluded:
+                    blocked = True
+                    break
+                parent = parent.parent
+            if blocked or not source_filter(child):
+                continue
+            sources.append(child)
+            # The controller list is ordered broad-to-specific. A later,
+            # deeper control therefore owns descendants discovered earlier.
+            source_bones[child] = bone_name
+    for source in weighted_sources:
+        if source:
+            sources.append(source)
+            source_bones[source] = None
+    sources = list(dict.fromkeys(sources))
+    if not sources:
+        return None
+
+    armature_inverse = armature.matrix_world.inverted()
+    vertices = []
+    faces = []
+    colours = []
+    weights = []
+    depsgraph = bpy.context.evaluated_depsgraph_get()
+    for source in sources:
+        is_weighted_source = source_bones[source] is None
+        evaluated = None if is_weighted_source else source.evaluated_get(depsgraph)
+        mesh = source.data if is_weighted_source else evaluated.to_mesh()
+        mesh.calc_loop_triangles()
+        transform = armature_inverse @ source.matrix_world
+        material_slots = list(source.data.materials)
+        vertex_map = {}
+        for triangle in mesh.loop_triangles:
+            face = []
+            material_index = mesh.polygons[triangle.polygon_index].material_index
+            material = material_slots[material_index] if material_index < len(material_slots) else None
+            colour = tuple((material.diffuse_color if material else (1, 1, 1, 1))[:4])
+            for loop_index in triangle.loops:
+                source_vertex_index = mesh.loops[loop_index].vertex_index
+                vertex_key = (source_vertex_index, material_index)
+                vertex_index = vertex_map.get(vertex_key)
+                if vertex_index is None:
+                    source_vertex = mesh.vertices[source_vertex_index]
+                    position = transform @ source_vertex.co
+                    vertex_index = len(vertices)
+                    vertex_map[vertex_key] = vertex_index
+                    vertices.append(tuple(position))
+                    colours.append(colour)
+                    if is_weighted_source:
+                        source_groups = mesh.vertices[source_vertex_index].groups
+                        vertex_weights = [
+                            (source.vertex_groups[group.group].name, group.weight)
+                            for group in source_groups
+                            if group.weight > 0.0001
+                        ]
+                        weights.append(vertex_weights)
+                    else:
+                        weights.append([(source_bones[source], 1.0)])
+                face.append(vertex_index)
+            faces.append(tuple(face))
+        if evaluated:
+            evaluated.to_mesh_clear()
+
+    mesh = bpy.data.meshes.new(f"{name}Mesh")
+    mesh.from_pydata(vertices, [], faces)
+    mesh.update()
+    colour_attribute = mesh.color_attributes.new(
+        name="Color",
+        type="BYTE_COLOR",
+        domain="POINT",
+    )
+    for index, colour in enumerate(colours):
+        colour_attribute.data[index].color = colour
+    mesh.color_attributes.active_color = colour_attribute
+
+    obj = bpy.data.objects.new(name, mesh)
+    bpy.context.collection.objects.link(obj)
+    obj.parent = armature
+    obj.location = (0, 0, 0)
+    material = bpy.data.materials.new(f"{name} Vertex Surface")
+    material.diffuse_color = (1, 1, 1, 1)
+    material.use_nodes = True
+    nodes = material.node_tree.nodes
+    links = material.node_tree.links
+    principled = nodes.get("Principled BSDF")
+    vertex_colour = nodes.new("ShaderNodeVertexColor")
+    vertex_colour.layer_name = "Color"
+    links.new(vertex_colour.outputs["Color"], principled.inputs["Base Color"])
+    principled.inputs["Roughness"].default_value = 0.68
+    link_material(obj, material)
+
+    bone_names = {
+        bone_name
+        for vertex_weights in weights
+        for bone_name, _ in vertex_weights
+    }
+    for bone_name in bone_names:
+        obj.vertex_groups.new(name=bone_name)
+    grouped_indices = {}
+    for vertex_index, vertex_weights in enumerate(weights):
+        for bone_name, weight in vertex_weights:
+            grouped_indices.setdefault((bone_name, weight), []).append(vertex_index)
+    for (bone_name, weight), indices in grouped_indices.items():
+        obj.vertex_groups[bone_name].add(indices, weight, "REPLACE")
+    modifier = obj.modifiers.new("Civic articulation skin", "ARMATURE")
+    modifier.object = armature
+    obj["semantic_part"] = name
+    obj["skin_contract"] = "mirrorlife-civic-articulation-skin-v2"
+    obj["articulation_batch"] = "detail" if name.endswith("Detail") else "core"
+    obj["source_mesh_count"] = len(sources)
+    # Preserve semantic provenance after draw-call consolidation. The public
+    # node hierarchy no longer pays for one surface node per authored detail,
+    # while asset checks and archaeology can still identify every source.
+    obj["rigid_source_parts"] = ",".join(sorted(source.name for source in sources))
+    for polygon in mesh.polygons:
+        polygon.use_smooth = True
+    for source in sources:
+        bpy.data.objects.remove(source, do_unlink=True)
+    return obj
+
+
 def build_skinned_limb_pair(name, side_centres, rings, joint_z, material_value, armature, bone_names, sides=22):
     """Build two continuously weighted limbs in one Web-friendly skin mesh.
 
@@ -3548,6 +3709,91 @@ def build_character(role, config):
         right_leg,
     )
 
+    child_named = lambda parent, name: next(
+        (child for child in parent.children if child.name == name),
+        None,
+    )
+    skin_armature = child_named(root, "CivicSkinRig")
+    left_hand = child_named(left_elbow, "Hand_-1")
+    right_hand = child_named(right_elbow, "Hand_1")
+    left_sleeve = child_named(left_elbow, "SleeveCompressionPivot_-1")
+    right_sleeve = child_named(right_elbow, "SleeveCompressionPivot_1")
+    left_trouser = child_named(left_knee, "TrouserCompressionPivot_-1")
+    right_trouser = child_named(right_knee, "TrouserCompressionPivot_1")
+    left_foot = child_named(left_knee, "ShoeUpper_-1Pivot")
+    right_foot = child_named(right_knee, "ShoeUpper_1Pivot")
+    controller_bones = [
+        (left_arm, "SkinLeftArm"),
+        (right_arm, "SkinRightArm"),
+        (left_leg, "SkinLeftLeg"),
+        (right_leg, "SkinRightLeg"),
+        (left_elbow, "SkinLeftElbowRigid"),
+        (right_elbow, "SkinRightElbowRigid"),
+        (left_knee, "SkinLeftKneeRigid"),
+        (right_knee, "SkinRightKneeRigid"),
+        (left_hand, "SkinLeftHand"),
+        (right_hand, "SkinRightHand"),
+        (left_sleeve, "SkinLeftSleeveCorrective"),
+        (right_sleeve, "SkinRightSleeveCorrective"),
+        (left_trouser, "SkinLeftTrouserCorrective"),
+        (right_trouser, "SkinRightTrouserCorrective"),
+        (left_foot, "SkinLeftFoot"),
+        (right_foot, "SkinRightFoot"),
+    ]
+    controller_bones = [
+        (controller, bone_name)
+        for controller, bone_name in controller_bones
+        if controller
+    ]
+    bpy.context.view_layer.update()
+    for controller, bone_name in controller_bones:
+        if not skin_armature.data.bones.get(bone_name):
+            add_rigid_skin_bone(skin_armature, controller, bone_name)
+
+    mobile_detail_prefixes = (
+        "FingerVolume_",
+        "ThumbVolume_",
+        "FingerCrease_",
+        "ThumbCrease_",
+        "PalmLifeLine_",
+        "PalmHeartLine_",
+        "ElbowCorrectiveVolume_",
+        "KneeCorrectiveVolume_",
+        "SleeveCompression_",
+        "ArmInnerElbowFold_",
+        "ArmOuterTensionPlane_",
+        "TrouserFold_",
+        "Thumb_",
+    )
+    contact_anchors = [
+        child
+        for child in (
+            child_named(left_hand, "HandContactAnchor_-1") if left_hand else None,
+            child_named(right_hand, "HandContactAnchor_1") if right_hand else None,
+        )
+        if child
+    ]
+    detail_skin = build_articulation_skin_batch(
+        "SkinnedArticulationDetail",
+        skin_armature,
+        controller_bones,
+        excluded_roots=contact_anchors,
+        source_filter=lambda source: source.name.startswith(mobile_detail_prefixes),
+    )
+    core_skin = build_articulation_skin_batch(
+        "SkinnedArticulationCore",
+        skin_armature,
+        controller_bones,
+        excluded_roots=contact_anchors,
+        weighted_sources=[
+            child_named(skin_armature, "SkinnedArmVolume"),
+            child_named(skin_armature, "SkinnedLegVolume"),
+        ],
+        source_filter=lambda source: not source.name.startswith(mobile_detail_prefixes),
+    )
+    if core_skin and detail_skin:
+        root["articulation_skin_contract"] = "mirrorlife-civic-articulation-skin-v2"
+
     for obj in bpy.context.scene.objects:
         if obj.type == "MESH":
             obj["semantic_part"] = obj.name
@@ -3572,6 +3818,7 @@ def export_character(role, output_root, master_root):
         export_normals=True,
         export_tangents=False,
         export_attributes=True,
+        export_extras=True,
         export_cameras=False,
         export_lights=False,
         export_animations=False,
@@ -3632,6 +3879,34 @@ def main():
                 "SkinRightKnee",
             ],
             "deformedParts": ["SkinnedArmVolume", "SkinnedLegVolume"],
+        },
+        "articulationSkinContract": {
+            "version": "mirrorlife-civic-articulation-skin-v2",
+            "runtime": "shared-controller-pivots+two-batch-vertex-colour-skin",
+            "batches": ["SkinnedArticulationCore", "SkinnedArticulationDetail"],
+            "joints": [
+                "SkinLeftArm",
+                "SkinLeftElbow",
+                "SkinRightArm",
+                "SkinRightElbow",
+                "SkinLeftLeg",
+                "SkinLeftKnee",
+                "SkinRightLeg",
+                "SkinRightKnee",
+                "SkinLeftElbowRigid",
+                "SkinRightElbowRigid",
+                "SkinLeftKneeRigid",
+                "SkinRightKneeRigid",
+                "SkinLeftHand",
+                "SkinRightHand",
+                "SkinLeftSleeveCorrective",
+                "SkinRightSleeveCorrective",
+                "SkinLeftTrouserCorrective",
+                "SkinRightTrouserCorrective",
+                "SkinLeftFoot",
+                "SkinRightFoot",
+            ],
+            "mobileRemovableBatches": ["SkinnedArticulationDetail"],
         },
         "garmentTopologyContract": {
             "version": "mirrorlife-civic-garment-topology-v6",

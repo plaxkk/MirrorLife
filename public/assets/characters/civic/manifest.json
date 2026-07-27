@@ -62,6 +62,39 @@
       "SkinnedLegVolume"
     ]
   },
+  "articulationSkinContract": {
+    "version": "mirrorlife-civic-articulation-skin-v2",
+    "runtime": "shared-controller-pivots+two-batch-vertex-colour-skin",
+    "batches": [
+      "SkinnedArticulationCore",
+      "SkinnedArticulationDetail"
+    ],
+    "joints": [
+      "SkinLeftArm",
+      "SkinLeftElbow",
+      "SkinRightArm",
+      "SkinRightElbow",
+      "SkinLeftLeg",
+      "SkinLeftKnee",
+      "SkinRightLeg",
+      "SkinRightKnee",
+      "SkinLeftElbowRigid",
+      "SkinRightElbowRigid",
+      "SkinLeftKneeRigid",
+      "SkinRightKneeRigid",
+      "SkinLeftHand",
+      "SkinRightHand",
+      "SkinLeftSleeveCorrective",
+      "SkinRightSleeveCorrective",
+      "SkinLeftTrouserCorrective",
+      "SkinRightTrouserCorrective",
+      "SkinLeftFoot",
+      "SkinRightFoot"
+    ],
+    "mobileRemovableBatches": [
+      "SkinnedArticulationDetail"
+    ]
+  },
   "garmentTopologyContract": {
     "version": "mirrorlife-civic-garment-topology-v6",
     "runtime": "bone-weighted-superellipse+reference-slimmed-limb-silhouette+diagonal-tension-topology+asymmetric-drape+constructed-ribs+layered-asymmetric-hems+contoured-cuffs",
@@ -240,26 +273,26 @@
     "player": {
       "file": "player.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/player.blend",
-      "meshes": 178,
-      "triangles": 28376
+      "meshes": 102,
+      "triangles": 37900
     },
     "listener": {
       "file": "listener.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/listener.blend",
-      "meshes": 167,
-      "triangles": 27416
+      "meshes": 95,
+      "triangles": 36076
     },
     "facilitator": {
       "file": "facilitator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/facilitator.blend",
-      "meshes": 204,
-      "triangles": 32604
+      "meshes": 117,
+      "triangles": 42272
     },
     "mediator": {
       "file": "mediator.glb",
       "editableSource": "dist/interior-3d-work/characters/civic/master/mediator.blend",
-      "meshes": 211,
-      "triangles": 32576
+      "meshes": 135,
+      "triangles": 40556
     }
   }
 }

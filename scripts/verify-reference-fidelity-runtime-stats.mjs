@@ -20,12 +20,23 @@ const {
   measureActorRuntimeGraph
 } = runtimeContract;
 
-// Break caught: the asset-side articulation count must be read from positive
-// JOINTS_0/WEIGHTS_0 data in the shipped GLB, not copied from its manifest.
-{
-  const glb = readGlbGeometry(path.resolve("public/assets/characters/civic/player.glb"));
-  assert.equal(glb.weightedSkinBoneCount, 8);
-  assert.equal(glb.skinnedPrimitiveBatches, 2);
+// Break caught: every shipped desktop role must carry at least twelve real
+// positive-weight articulation bones while remaining in the two-batch
+// core/detail skin budget. Manifest declarations do not satisfy this gate.
+for (const role of REFERENCE_FIDELITY_V3.openingActorRoles) {
+  const glb = readGlbGeometry(
+    path.resolve(`public/assets/characters/civic/${role}.glb`)
+  );
+  assert(
+    glb.weightedSkinBoneCount >= REFERENCE_FIDELITY_V3.skinnedArticulationBonesPerActor,
+    `${role}: ${glb.weightedSkinBoneCount} positive-weight skin bones is below `
+      + REFERENCE_FIDELITY_V3.skinnedArticulationBonesPerActor
+  );
+  assert.equal(
+    glb.skinnedPrimitiveBatches,
+    REFERENCE_FIDELITY_V3.desktopArticulationBatchesPerActor,
+    `${role}: shipped skin batches exceed the desktop articulation budget`
+  );
 }
 
 // Break caught: a visible rigid surface beneath a driven controller must not
@@ -54,6 +65,16 @@ const {
   visual.add(rightArm);
   rightArm.add(new THREE.Mesh(
     new THREE.BoxGeometry(0.2, 0.6, 0.2),
+    new THREE.MeshBasicMaterial()
+  ));
+
+  // Facial and secondary controls are animated, but they are not mapped
+  // articulation controls. Their rigid expression surfaces still contribute
+  // actor draw calls without polluting the limb-articulation gate.
+  const headGroup = new THREE.Group();
+  visual.add(headGroup);
+  headGroup.add(new THREE.Mesh(
+    new THREE.BoxGeometry(0.3, 0.3, 0.3),
     new THREE.MeshBasicMaterial()
   ));
 
@@ -88,7 +109,8 @@ const {
     visual,
     controllerJoints: {
       leftArm: { node: leftArm },
-      rightArm: { node: rightArm }
+      rightArm: { node: rightArm },
+      headGroup: { node: headGroup }
     },
     skinJoints: {
       leftArm: { node: bones[0] }
@@ -96,7 +118,7 @@ const {
     mobileRemovableDetailBatches: 2
   }, "desktop");
 
-  assert.equal(measured.actorDrawCalls, 3);
+  assert.equal(measured.actorDrawCalls, 4);
   assert.equal(measured.articulationBatchCount, 1);
   assert.equal(measured.drivenRigidSurfaceCount, 1);
   assert.equal(measured.skinnedArticulationBoneCount, 1);
@@ -107,6 +129,7 @@ const {
     skinnedDrawCalls: 1
   });
   assert(!("rightArm" in measured.controlPivots));
+  assert(!("headGroup" in measured.controlPivots));
 }
 
 // Break caught: elbow-volume health must observe a visible corrective surface
@@ -129,11 +152,14 @@ const {
   };
   const leftSleeve = corrective();
   const rightSleeve = corrective();
+  const group = new THREE.Group();
   const leftElbow = new THREE.Group();
   const rightElbow = new THREE.Group();
+  group.add(leftElbow, rightElbow);
   leftElbow.add(leftSleeve.node);
   rightElbow.add(rightSleeve.node);
   const entry = {
+    group,
     leftElbow,
     rightElbow,
     clothCorrectives: { leftSleeve, rightSleeve }

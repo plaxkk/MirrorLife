@@ -21,7 +21,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v82";
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "articulation-skin-v2";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v7";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
@@ -1162,11 +1162,25 @@ function loadCivicActorAsset(role) {
           "SkinLeftLeg",
           "SkinLeftKnee",
           "SkinRightLeg",
-          "SkinRightKnee"
+          "SkinRightKnee",
+          "SkinLeftElbowRigid",
+          "SkinRightElbowRigid",
+          "SkinLeftKneeRigid",
+          "SkinRightKneeRigid",
+          "SkinLeftHand",
+          "SkinRightHand",
+          "SkinLeftSleeveCorrective",
+          "SkinRightSleeveCorrective",
+          "SkinLeftTrouserCorrective",
+          "SkinRightTrouserCorrective",
+          "SkinLeftFoot",
+          "SkinRightFoot"
         ];
         const contractValid = visual
           && requiredPivots.every((name) => visual.getObjectByName(name))
-          && requiredSkinJoints.every((name) => visual.getObjectByName(name));
+          && requiredSkinJoints.every((name) => visual.getObjectByName(name))
+          && ["SkinnedArticulationCore", "SkinnedArticulationDetail"]
+            .every((name) => visual.getObjectByName(name));
         if (!contractValid) {
           civicActorFailures.add(role);
           civicActorLoading.delete(role);
@@ -8956,6 +8970,104 @@ function installCivicJointVolumeDeformation(skinnedMeshes = []) {
   const states = {};
   skinnedMeshes.forEach((mesh) => {
     const semanticPart = String(mesh.userData?.semantic_part || mesh.name || "");
+    const isSharedArticulationCore = semanticPart === "SkinnedArticulationCore"
+      || mesh.userData?.articulation_batch === "core";
+    if (isSharedArticulationCore && mesh.material && !Array.isArray(mesh.material)) {
+      const uniforms = {
+        leftShoulderBend: { value: 0 },
+        rightShoulderBend: { value: 0 },
+        leftHipBend: { value: 0 },
+        rightHipBend: { value: 0 }
+      };
+      const material = mesh.material;
+      const baseOnBeforeCompile = material.onBeforeCompile;
+      material.onBeforeCompile = (shader) => {
+        baseOnBeforeCompile?.(shader);
+        shader.uniforms.mirrorLifeLeftShoulderBend = uniforms.leftShoulderBend;
+        shader.uniforms.mirrorLifeRightShoulderBend = uniforms.rightShoulderBend;
+        shader.uniforms.mirrorLifeLeftHipBend = uniforms.leftHipBend;
+        shader.uniforms.mirrorLifeRightHipBend = uniforms.rightHipBend;
+        shader.vertexShader = shader.vertexShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+            uniform float mirrorLifeLeftShoulderBend;
+            uniform float mirrorLifeRightShoulderBend;
+            uniform float mirrorLifeLeftHipBend;
+            uniform float mirrorLifeRightHipBend;`
+          )
+          .replace(
+            "#include <skinning_vertex>",
+            `#include <skinning_vertex>
+            float mirrorLifeJointSide = step(0.0, position.x);
+            float mirrorLifeShoulderBend = mix(
+              mirrorLifeLeftShoulderBend,
+              mirrorLifeRightShoulderBend,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeHipBend = mix(
+              mirrorLifeLeftHipBend,
+              mirrorLifeRightHipBend,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeShoulderMask =
+              smoothstep(0.965, 1.215, position.y)
+              * (1.0 - smoothstep(1.34, 1.48, position.y));
+            float mirrorLifeHipMask =
+              smoothstep(0.545, 0.765, position.y)
+              * (1.0 - smoothstep(0.86, 1.02, position.y));
+            float mirrorLifeShoulderCenter = mix(
+              -0.205,
+              0.205,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeHipCenter = mix(
+              -0.115,
+              0.115,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeShoulderExpansion =
+              1.0 + mirrorLifeShoulderBend * mirrorLifeShoulderMask * 0.115;
+            float mirrorLifeHipExpansion =
+              1.0 + mirrorLifeHipBend * mirrorLifeHipMask * 0.09;
+            transformed.x = mirrorLifeShoulderCenter
+              + (transformed.x - mirrorLifeShoulderCenter)
+              * mirrorLifeShoulderExpansion;
+            transformed.x = mirrorLifeHipCenter
+              + (transformed.x - mirrorLifeHipCenter)
+              * mirrorLifeHipExpansion;
+            transformed.z *= 1.0
+              + mirrorLifeShoulderBend * mirrorLifeShoulderMask * 0.095
+              + mirrorLifeHipBend * mirrorLifeHipMask * 0.075;
+            transformed.y +=
+              mirrorLifeShoulderBend * mirrorLifeShoulderMask * 0.006
+              + mirrorLifeHipBend * mirrorLifeHipMask * 0.0045;`
+          );
+      };
+      material.customProgramCacheKey = () => "mirrorlife-civic-shared-proximal-volume-v2";
+      material.needsUpdate = true;
+      states.shoulders = {
+        mesh,
+        uniforms: {
+          leftBend: uniforms.leftShoulderBend,
+          rightBend: uniforms.rightShoulderBend
+        },
+        version: "mirrorlife-civic-proximal-volume-v1",
+        leftBend: 0,
+        rightBend: 0
+      };
+      states.hips = {
+        mesh,
+        uniforms: {
+          leftBend: uniforms.leftHipBend,
+          rightBend: uniforms.rightHipBend
+        },
+        version: "mirrorlife-civic-proximal-volume-v1",
+        leftBend: 0,
+        rightBend: 0
+      };
+      return;
+    }
     const kind = semanticPart.includes("Arm") ? "shoulders" : semanticPart.includes("Leg") ? "hips" : "";
     if (!kind || !mesh.material || Array.isArray(mesh.material)) return;
     const isShoulder = kind === "shoulders";
@@ -9738,6 +9850,92 @@ function applyCivicContactPressure(entry) {
   };
 }
 
+function createCivicSkinnedDigitState(meshes, bone) {
+  if (!bone) return null;
+  let digitVertexCount = 0;
+  (meshes || []).forEach((mesh) => {
+    const skinIndex = mesh?.geometry?.getAttribute?.("skinIndex");
+    const skinWeight = mesh?.geometry?.getAttribute?.("skinWeight");
+    const bones = mesh?.skeleton?.bones || [];
+    if (!skinIndex || !skinWeight || !bones.length) return;
+    const vertexCount = Math.min(skinIndex.count, skinWeight.count);
+    const componentCount = Math.min(skinIndex.itemSize, skinWeight.itemSize);
+    for (let vertex = 0; vertex < vertexCount; vertex += 1) {
+      let carriesDigitBone = false;
+      for (let component = 0; component < componentCount; component += 1) {
+        if (Number(skinWeight.getComponent(vertex, component) || 0) <= 1e-6) continue;
+        if (bones[Number(skinIndex.getComponent(vertex, component))] === bone) {
+          carriesDigitBone = true;
+          break;
+        }
+      }
+      if (carriesDigitBone) digitVertexCount += 1;
+    }
+  });
+  if (!digitVertexCount) return null;
+  return {
+    version: CIVIC_DIGIT_DEFORMATION_CONTRACT,
+    bone,
+    curl: 0,
+    targetCurl: 0,
+    digitVertexCount,
+    uniforms: null
+  };
+}
+
+function syncCivicRigidSkinBones(entry) {
+  const joints = entry?.rigidSkinJoints;
+  if (!joints?.length || !entry.visual) return;
+  entry.visual.updateMatrixWorld(true);
+  const parentInverse = new THREE.Matrix4();
+  const relativeMatrix = new THREE.Matrix4();
+  const digitCurlAxis = new THREE.Vector3(1, 0, 0);
+  const digitCurlQuaternion = new THREE.Quaternion();
+  const pressureScale = new THREE.Vector3();
+  const digitStateByBone = new Map(
+    Object.values(entry?.digitDeformationHands || {})
+      .filter((state) => state?.bone)
+      .map((state) => [state.bone, state])
+  );
+  const pressure = THREE.MathUtils.clamp(
+    Number(entry?.contactPressureState?.pressure || 0),
+    0,
+    1
+  );
+  joints.forEach(({ boneName, controller, bone, controllerToBoneRest }) => {
+    if (!controller || !bone?.parent) return;
+    parentInverse.copy(bone.parent.matrixWorld).invert();
+    relativeMatrix
+      .multiplyMatrices(parentInverse, controller.matrixWorld)
+      .multiply(controllerToBoneRest);
+    relativeMatrix.decompose(bone.position, bone.quaternion, bone.scale);
+    const digitState = digitStateByBone.get(bone);
+    if (digitState) {
+      // The hand and digit source meshes now live in the shared articulation
+      // skin. Preserve the authored curl as a real bone deformation instead
+      // of reporting a shader state for a rigid helper mesh that no longer
+      // renders.
+      digitCurlQuaternion.setFromAxisAngle(
+        digitCurlAxis,
+        Number(digitState.curl || 0) * 0.22
+      );
+      bone.quaternion.multiply(digitCurlQuaternion);
+    }
+    if (boneName === "SkinLeftHand" || boneName === "SkinRightHand") {
+      const facilitator = entry.assetRole === "facilitator";
+      const active = boneName === "SkinRightHand" || facilitator;
+      const compression = active ? (facilitator ? 0.034 : 0.018) * pressure : 0;
+      pressureScale.set(
+        1 + compression,
+        1 - compression * 0.82,
+        1 + compression * 0.42
+      );
+      bone.scale.multiply(pressureScale);
+    }
+    bone.updateMatrixWorld(true);
+  });
+}
+
 function applyCivicContinuousDeformation(entry, {
   walking = false,
   running = false,
@@ -9916,6 +10114,8 @@ function createCivicActorObject(actor, asset) {
   const ponytailPivot = headGroup?.getObjectByName("PonytailPivot") || null;
   const skirtPivot = visual?.getObjectByName("SkirtPivot") || null;
   const skinRig = visual?.getObjectByName("CivicSkinRig") || null;
+  const articulationCoreSkin = skinRig?.getObjectByName("SkinnedArticulationCore") || null;
+  const articulationDetailSkin = skinRig?.getObjectByName("SkinnedArticulationDetail") || null;
   const skinJointNames = {
     leftArm: "SkinLeftArm",
     rightArm: "SkinRightArm",
@@ -9924,7 +10124,15 @@ function createCivicActorObject(actor, asset) {
     leftLeg: "SkinLeftLeg",
     rightLeg: "SkinRightLeg",
     leftKnee: "SkinLeftKnee",
-    rightKnee: "SkinRightKnee"
+    rightKnee: "SkinRightKnee",
+    leftHand: "SkinLeftHand",
+    rightHand: "SkinRightHand",
+    leftFoot: "SkinLeftFoot",
+    rightFoot: "SkinRightFoot",
+    leftSleeveCompression: "SkinLeftSleeveCorrective",
+    rightSleeveCompression: "SkinRightSleeveCorrective",
+    leftTrouserCompression: "SkinLeftTrouserCorrective",
+    rightTrouserCompression: "SkinRightTrouserCorrective"
   };
   const skinJoints = Object.fromEntries(Object.entries(skinJointNames).map(([track, nodeName]) => {
     const node = visual?.getObjectByName(nodeName) || null;
@@ -9935,6 +10143,47 @@ function createCivicActorObject(actor, asset) {
       deltaQuaternion: new THREE.Quaternion()
     } : null];
   }));
+  const rigidSkinJointNames = {
+    SkinLeftElbowRigid: leftElbow,
+    SkinRightElbowRigid: rightElbow,
+    SkinLeftKneeRigid: leftKnee,
+    SkinRightKneeRigid: rightKnee,
+    SkinLeftHand: leftHand,
+    SkinRightHand: rightHand,
+    SkinLeftSleeveCorrective: leftSleeveCompression,
+    SkinRightSleeveCorrective: rightSleeveCompression,
+    SkinLeftTrouserCorrective: leftTrouserCompression,
+    SkinRightTrouserCorrective: rightTrouserCompression,
+    SkinLeftFoot: leftFoot,
+    SkinRightFoot: rightFoot
+  };
+  visual?.updateMatrixWorld(true);
+  const rigidSkinJoints = Object.entries(rigidSkinJointNames)
+    .map(([boneName, controller]) => {
+      const bone = visual?.getObjectByName(boneName) || null;
+      if (!controller || !bone?.parent) return null;
+      controller.updateMatrixWorld(true);
+      bone.parent.updateMatrixWorld(true);
+      bone.updateMatrix();
+      const controllerRelative = new THREE.Matrix4().multiplyMatrices(
+        new THREE.Matrix4().copy(bone.parent.matrixWorld).invert(),
+        controller.matrixWorld
+      );
+      return {
+        boneName,
+        controller,
+        bone,
+        // Controller pivots retain authored scale/orientation that an edit
+        // bone cannot encode identically. Preserve the rest offset so the
+        // first synchronization is a strict no-op, then apply only controller
+        // deltas on later frames.
+        controllerToBoneRest: controllerRelative
+          .clone()
+          .invert()
+          .multiply(bone.matrix.clone())
+      };
+    })
+    .filter(Boolean);
   const controllerJointNodes = {
     headGroup,
     leftArm,
@@ -9967,6 +10216,16 @@ function createCivicActorObject(actor, asset) {
   assetScene.traverse((node) => {
     if (node.isSkinnedMesh) skinnedMeshes.push(node);
   });
+  const skinnedDigitDeformationHands = {
+    left: createCivicSkinnedDigitState(
+      skinnedMeshes,
+      skinJoints.leftHand?.node
+    ),
+    right: createCivicSkinnedDigitState(
+      skinnedMeshes,
+      skinJoints.rightHand?.node
+    )
+  };
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftHand || !rightHand || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -10066,7 +10325,8 @@ function createCivicActorObject(actor, asset) {
       "NoseTip",
       "Philtrum",
       "NotebookElastic",
-      "NotebookPencil"
+      "NotebookPencil",
+      "SkinnedArticulationDetail"
     ]);
     const mobileDetailPrefixes = [
       // The new connected hand web becomes the phone-scale fingertip
@@ -10337,18 +10597,49 @@ function createCivicActorObject(actor, asset) {
     secondaryMotion.skirt.deformation = skirtDeformation;
   }
   const correctiveDefinitions = fullExpressionLod ? {
-    leftSleeve: [leftSleeveCompression, "leftElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
-    rightSleeve: [rightSleeveCompression, "rightElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
-    leftTrouser: [leftTrouserCompression, "leftKnee", 0.82, 0.1, 0.16, 0.045, 0.009],
-    rightTrouser: [rightTrouserCompression, "rightKnee", 0.82, 0.1, 0.16, 0.045, 0.009]
+    leftSleeve: [
+      leftSleeveCompression,
+      "leftElbow",
+      skinJoints.leftSleeveCompression?.node,
+      1.16, 0.14, 0.22, 0.06, 0.012
+    ],
+    rightSleeve: [
+      rightSleeveCompression,
+      "rightElbow",
+      skinJoints.rightSleeveCompression?.node,
+      1.16, 0.14, 0.22, 0.06, 0.012
+    ],
+    leftTrouser: [
+      leftTrouserCompression,
+      "leftKnee",
+      skinJoints.leftTrouserCompression?.node,
+      0.82, 0.1, 0.16, 0.045, 0.009
+    ],
+    rightTrouser: [
+      rightTrouserCompression,
+      "rightKnee",
+      skinJoints.rightTrouserCompression?.node,
+      0.82, 0.1, 0.16, 0.045, 0.009
+    ]
   } : {};
   const clothCorrectives = Object.fromEntries(Object.entries(correctiveDefinitions)
     .filter(([, definition]) => definition[0]?.parent)
-    .map(([key, [node, joint, fullBend, widthGain, depthGain, lengthCompression, outsideShift]]) => [
+    .map(([key, [
+      node,
+      joint,
+      surfaceBone,
+      fullBend,
+      widthGain,
+      depthGain,
+      lengthCompression,
+      outsideShift
+    ]]) => [
       key,
       {
         node,
         joint,
+        surfaceNodes: [articulationDetailSkin].filter(Boolean),
+        surfaceBone,
         fullBend,
         widthGain,
         depthGain,
@@ -10415,6 +10706,11 @@ function createCivicActorObject(actor, asset) {
     faceMode: CIVIC_FACE_MODE,
     controllerJoints,
     skinJoints,
+    rigidSkinJoints,
+    articulationSkinBatches: {
+      core: articulationCoreSkin,
+      detail: articulationDetailSkin
+    },
     skinnedMeshes,
     mobileRemovableDetailBatches,
     bodySurfaceMesh,
@@ -10430,8 +10726,10 @@ function createCivicActorObject(actor, asset) {
     } : null,
     bodyDeformation: bodySurfaceMesh?.userData?.mirrorLifeBodyDeformation || null,
     digitDeformationHands: fullExpressionLod ? {
-      left: leftHandSurface?.userData?.mirrorLifeDigitDeformation || null,
-      right: rightHandSurface?.userData?.mirrorLifeDigitDeformation || null
+      left: leftHandSurface?.userData?.mirrorLifeDigitDeformation
+        || skinnedDigitDeformationHands.left,
+      right: rightHandSurface?.userData?.mirrorLifeDigitDeformation
+        || skinnedDigitDeformationHands.right
     } : null,
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v5",
@@ -10981,6 +11279,7 @@ function updateActors(actors = [], now = performance.now()) {
       socialBreath,
       frameDeltaSeconds
     });
+    syncCivicRigidSkinBones(entry);
     updateCivicSecondaryMotion(entry, {
       now,
       walking,

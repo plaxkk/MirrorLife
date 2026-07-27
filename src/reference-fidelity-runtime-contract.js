@@ -67,12 +67,18 @@ function nearestControlKey(node, controlKeyByNode, visual) {
 export function measureActorRuntimeGraph(entry, profile = "desktop") {
   const group = entry?.group;
   const visual = entry?.visual || group;
+  const skinJointEntries = Object.entries(entry?.skinJoints || {})
+    .filter(([, state]) => state?.node);
+  const skinControlKeys = new Set(skinJointEntries.map(([key]) => key));
   const controls = Object.entries(entry?.controllerJoints || {})
-    .filter(([, state]) => state?.node && isVisibleInGraph(state.node, group));
+    .filter(([key, state]) => (
+      skinControlKeys.has(key)
+      && state?.node
+      && isVisibleInGraph(state.node, group)
+    ));
   const controlKeyByNode = new Map(controls.map(([key, state]) => [state.node, key]));
   const skinControlKeyByBone = new Map(
-    Object.entries(entry?.skinJoints || {})
-      .filter(([, state]) => state?.node)
+    skinJointEntries
       .map(([key, state]) => [state.node, key])
   );
   const controlPivots = {};
@@ -162,9 +168,26 @@ export function measureActorContractState(entry) {
       }
       current = current.parent;
     }
+    const surfaceNodes = state.surfaceNodes?.filter(Boolean)?.length
+      ? state.surfaceNodes.filter(Boolean)
+      : [state.node];
+    const visibleSurfaceNodes = surfaceNodes.filter((surfaceNode) => (
+      isVisibleInGraph(surfaceNode, entry?.group)
+    ));
     let visibleSurfaceCount = 0;
-    state.node.traverseVisible?.((node) => {
-      if (node.isMesh && node.geometry && node.material) visibleSurfaceCount += 1;
+    visibleSurfaceNodes.forEach((surfaceNode) => {
+      surfaceNode.traverseVisible?.((node) => {
+        if (node.isMesh && node.geometry && node.material) visibleSurfaceCount += 1;
+      });
+    });
+    const surfaceWeighted = !state.surfaceBone || visibleSurfaceNodes.some((surfaceNode) => {
+      let carriesBone = false;
+      surfaceNode.traverseVisible?.((node) => {
+        if (node.isSkinnedMesh && weightedBonesForMesh(node).has(state.surfaceBone)) {
+          carriesBone = true;
+        }
+      });
+      return carriesBone;
     });
     const safeRatio = (axis) => Number(state.node.scale?.[axis] || 0)
       / Math.max(1e-8, Number(state.restScale?.[axis] || 0));
@@ -180,12 +203,14 @@ export function measureActorContractState(entry) {
       lengthRatio,
       volumeRatio,
       visibleSurfaceCount,
+      surfaceWeighted,
       attachedToController,
       green: Number.isFinite(bend)
         && bend > Number(state.activationThreshold || 0)
         && attachedToController
         && state.node.visible !== false
         && visibleSurfaceCount > 0
+        && surfaceWeighted
         && widthRatio > 1.001
         && depthRatio > 1.001
         && lengthRatio < 0.999

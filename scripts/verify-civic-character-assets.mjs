@@ -60,6 +60,53 @@ assert.deepEqual(manifest.skinContract?.joints, [
   "SkinRightLeg",
   "SkinRightKnee"
 ], "continuous civic skin joint map changed");
+const articulationSkinJoints = [
+  "SkinLeftArm",
+  "SkinLeftElbow",
+  "SkinRightArm",
+  "SkinRightElbow",
+  "SkinLeftLeg",
+  "SkinLeftKnee",
+  "SkinRightLeg",
+  "SkinRightKnee",
+  "SkinLeftElbowRigid",
+  "SkinRightElbowRigid",
+  "SkinLeftKneeRigid",
+  "SkinRightKneeRigid",
+  "SkinLeftHand",
+  "SkinRightHand",
+  "SkinLeftSleeveCorrective",
+  "SkinRightSleeveCorrective",
+  "SkinLeftTrouserCorrective",
+  "SkinRightTrouserCorrective",
+  "SkinLeftFoot",
+  "SkinRightFoot"
+];
+assert.equal(
+  manifest.articulationSkinContract?.version,
+  "mirrorlife-civic-articulation-skin-v2",
+  "consolidated articulation skin contract is stale"
+);
+assert.equal(
+  manifest.articulationSkinContract?.runtime,
+  "shared-controller-pivots+two-batch-vertex-colour-skin",
+  "consolidated articulation skin runtime changed"
+);
+assert.deepEqual(
+  manifest.articulationSkinContract?.batches,
+  ["SkinnedArticulationCore", "SkinnedArticulationDetail"],
+  "consolidated articulation batch map changed"
+);
+assert.deepEqual(
+  manifest.articulationSkinContract?.joints,
+  articulationSkinJoints,
+  "consolidated articulation joint map changed"
+);
+assert.deepEqual(
+  manifest.articulationSkinContract?.mobileRemovableBatches,
+  ["SkinnedArticulationDetail"],
+  "mobile articulation detail budget changed"
+);
 assert.equal(manifest.garmentTopologyContract?.version, "mirrorlife-civic-garment-topology-v6", "civic garment topology contract is stale");
 assert.equal(
   manifest.garmentTopologyContract?.runtime,
@@ -213,6 +260,15 @@ for (const role of expectedRoles) {
     weightedSkinBoneCount: geometry.weightedSkinBoneCount,
     skinnedPrimitiveBatches: geometry.skinnedPrimitiveBatches
   });
+  assert(
+    geometry.weightedSkinBoneCount >= 12,
+    `${role}: real GLB has only ${geometry.weightedSkinBoneCount} positive-weight skin bones`
+  );
+  assert.equal(
+    geometry.skinnedPrimitiveBatches,
+    2,
+    `${role}: real GLB must ship exactly two skinned primitive batches`
+  );
   assert.equal(
     geometry.meshes,
     Number(entry.meshes),
@@ -241,6 +297,24 @@ for (const role of expectedRoles) {
   const contents = await fs.readFile(file);
   const header = contents.subarray(0, 4);
   assert.equal(header.toString("utf8"), "glTF", `${role}: invalid GLB header`);
+  const jsonLength = contents.readUInt32LE(12);
+  const gltf = JSON.parse(contents.subarray(20, 20 + jsonLength).toString("utf8"));
+  assert(
+    gltf.extensionsRequired?.includes("KHR_mesh_quantization"),
+    `${role}: quantized vertex data does not require KHR_mesh_quantization`
+  );
+  for (const mesh of gltf.meshes || []) {
+    for (const primitive of mesh.primitives || []) {
+      const normal = gltf.accessors?.[primitive.attributes?.NORMAL];
+      if (normal?.componentType !== 5122 || normal.type !== "VEC3") continue;
+      const view = gltf.bufferViews?.[normal.bufferView];
+      assert.equal(
+        Number(view?.byteStride || 0),
+        8,
+        `${role}: SHORT VEC3 normal data must use an 8-byte aligned stride`
+      );
+    }
+  }
   assert(contents.includes(Buffer.from("EyePivot_-1")), `${role}: left blink pivot is missing`);
   assert(contents.includes(Buffer.from("ArmInnerElbowFold_-1")), `${role}: inner elbow fold is missing`);
   assert(contents.includes(Buffer.from("ArmOuterTensionPlane_1")), `${role}: outer elbow tension plane is missing`);
@@ -333,6 +407,11 @@ for (const role of expectedRoles) {
   assert(contents.includes(Buffer.from("SkinLeftKnee")), `${role}: left knee skin joint is missing`);
   assert(contents.includes(Buffer.from("SkinRightLeg")), `${role}: right upper-leg skin joint is missing`);
   assert(contents.includes(Buffer.from("SkinRightKnee")), `${role}: right knee skin joint is missing`);
+  assert(contents.includes(Buffer.from("SkinnedArticulationCore")), `${role}: consolidated articulation core batch is missing`);
+  assert(contents.includes(Buffer.from("SkinnedArticulationDetail")), `${role}: removable articulation detail batch is missing`);
+  for (const joint of articulationSkinJoints.slice(8)) {
+    assert(contents.includes(Buffer.from(joint)), `${role}: ${joint} articulation joint is missing`);
+  }
   assert(contents.includes(Buffer.from("ShoeUpper_-1")), `${role}: left sculpted shoe last is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_1")), `${role}: right sculpted shoe last is missing`);
   assert(contents.includes(Buffer.from("ShoeUpper_-1Pivot")), `${role}: left full-shoe transform pivot is missing`);
