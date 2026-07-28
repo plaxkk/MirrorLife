@@ -329,6 +329,13 @@ async function verifyInteriorPrefetchPolicy() {
       ));
       assert.deepEqual(civicOnlySurfaceRequests, [],
         `Non-public ${nonPublicSurfaceResources.zoneId} prewarm must not request public-plaza civic surface textures.`);
+      assert.deepEqual(
+        ["atelier-lime-plaster-basecolor", "wood-table-001-diffuse", "terlenka-normal"].filter((asset) => (
+          !nonPublicSurfaceResources.resources.some((name) => name.includes(asset))
+        )),
+        [],
+        "Non-public prewarm must still load shared authored physical surface maps."
+      );
     } finally {
       await nonPublicSurfacePage.close();
     }
@@ -341,17 +348,19 @@ async function verifyInteriorPrefetchPolicy() {
           .find((zone) => zone.id && zone.id !== first?.id && zone.interior !== false);
         if (!first || !second) throw new Error("Expected distinct A/B interior targets for stale prewarm coverage.");
         await window.MirrorLifeInteriorRuntime.load({ reason: "qa", zoneId: first.id });
-        const originalPrewarmScene = window.MirrorLifeInterior3D?.prewarmScene;
-        if (typeof originalPrewarmScene !== "function") throw new Error("Three prewarm scene API was unavailable.");
         let release;
         window.__mirrorLifeReleaseStalePrewarm = () => release?.();
         window.__mirrorLifeStalePrewarmStarted = false;
-        window.MirrorLifeInterior3D.prewarmScene = async (payload, manifest) => {
-          if (payload?.theme?.zoneId === first.id) {
+        window.__mirrorLifeRapierCacheEvents = [];
+        window.__MirrorLifeInteriorRapierTestHooks = {
+          onCacheEvent(event) { window.__mirrorLifeRapierCacheEvents.push(event); }
+        };
+        window.__MirrorLifeInteriorThreeTestHooks = {
+          beforePrewarmCompile({ zoneId }) {
+            if (zoneId !== first.id) return Promise.resolve();
             window.__mirrorLifeStalePrewarmStarted = true;
-            await new Promise((resolve) => { release = resolve; });
+            return new Promise((resolve) => { release = resolve; });
           }
-          return originalPrewarmScene(payload, manifest);
         };
         window.__mirrorLifeStalePrewarmPromise = prefetchInteriorZone(first, "hover");
         return { first: first.id, second: second.id };
@@ -392,6 +401,7 @@ async function verifyInteriorPrefetchPolicy() {
           sceneReady: layer?.dataset.sceneReady || ""
         };
       });
+      const staleRapierEvents = await stalePrewarmPage.evaluate(() => window.__mirrorLifeRapierCacheEvents);
       assert.equal(afterRelease.zoneId, targets.second, "Releasing stale A prewarm must preserve the active B zone.");
       assert.equal(afterRelease.phase, "ready", "Releasing stale A prewarm must not return B to the loading phase.");
       assert.notEqual(afterRelease.display, "none", "Releasing stale A prewarm must not hide B's visible canvas.");
@@ -400,6 +410,8 @@ async function verifyInteriorPrefetchPolicy() {
         "Releasing stale A prewarm must not replace B's active actors.");
       assert.deepEqual(afterRelease.camera, beforeRelease.camera,
         "Releasing stale A prewarm must not replace B's active camera state.");
+      assert.ok(staleRapierEvents.some((event) => event.event === "disposed" && event.reason === "entry-signature-mismatch"),
+        `Entering B must dispose a prefetched A Rapier cache with a mismatched signature: ${JSON.stringify(staleRapierEvents)}`);
     } finally {
       await stalePrewarmPage.close();
     }
@@ -407,28 +419,101 @@ async function verifyInteriorPrefetchPolicy() {
 
     const warmEntryPage = await openPrefetchPage(browser);
     try {
-      const point = await getCanvasHoverPoint(warmEntryPage, [], "public-plaza");
+      const zoneId = "public-plaza";
+      await warmEntryPage.waitForFunction(() => typeof window.MirrorLifeInteriorRuntime?.load === "function", { timeout: 30_000 });
       const beforePrefetchResources = await warmEntryPage.evaluate(() => performance.getEntriesByType("resource").map((entry) => entry.name));
-      const hoverStartedAt = await warmEntryPage.evaluate(() => performance.now());
-      await moveCanvasPointer(warmEntryPage, point);
-      await warmEntryPage.waitForFunction(() => window.MirrorLifeInteriorRuntime?.getStatus?.().phase === "ready", { timeout: 30_000 });
+      await warmEntryPage.evaluate(() => {
+        window.__mirrorLifePrewarmCompiled = false;
+        window.__mirrorLifePrewarmUpdates = [];
+        window.__mirrorLifePrewarmGpuFences = [];
+        window.__mirrorLifeWarmupSignatures = [];
+        window.__mirrorLifeUpdateActors = [];
+        window.__mirrorLifeUpdateStages = [];
+        window.__mirrorLifeActorRigSignatures = null;
+        window.__mirrorLifeRapierCacheEvents = [];
+        window.__MirrorLifeInteriorRapierTestHooks = {
+          onCacheEvent(event) { window.__mirrorLifeRapierCacheEvents.push(event); }
+        };
+        window.__MirrorLifeInteriorThreeTestHooks = {
+          beforePrewarmCompile() { window.__mirrorLifePrewarmCompiled = true; },
+          afterPrewarmUpdate(result) {
+            window.__mirrorLifePrewarmUpdates.push({
+              modelsReady: !!result?.modelsReady,
+              actorsReady: !!result?.actorsReady
+            });
+          },
+          onPrewarmGpuFence(result) {
+            window.__mirrorLifePrewarmGpuFences.push(result);
+          },
+          onActorRigSignature({ signature, actors, getSignature }) {
+            const changedFrames = actors.map((actor, index) => ({ ...actor, frame: index + 37, state: "run" }));
+            const removedRole = actors.slice(1);
+            window.__mirrorLifeActorRigSignatures = {
+              original: signature,
+              changedFrames: getSignature(changedFrames),
+              removedRole: getSignature(removedRole)
+            };
+          },
+          onWarmupSignature(record) {
+            window.__mirrorLifeWarmupSignatures.push(record);
+          },
+          onUpdateActors(record) {
+            window.__mirrorLifeUpdateActors.push(record);
+          },
+          onUpdateStage(record) {
+            window.__mirrorLifeUpdateStages.push(record);
+          }
+        };
+      });
       const prewarm = await warmEntryPage.evaluate(async (zoneId) => {
         const zone = window.findRenderZoneById(zoneId);
+        const startedAt = performance.now();
         await window.prefetchInteriorZone(zone, "hover");
         return {
           manifest: getInteriorPrefetchManifest(zone),
           layer: (() => {
             const layer = document.getElementById("interiorThreeLayer");
-            return layer ? { display: getComputedStyle(layer).display, sceneReady: layer.dataset.sceneReady || "" } : null;
+            return layer ? {
+              display: getComputedStyle(layer).display,
+              opacity: getComputedStyle(layer).opacity,
+              visibility: getComputedStyle(layer).visibility,
+              pointerEvents: getComputedStyle(layer).pointerEvents,
+              ariaHidden: layer.getAttribute("aria-hidden"),
+              sceneReady: layer.dataset.sceneReady || ""
+            } : null;
           })(),
           interiorActive: document.body.classList.contains("interior-active"),
+          compiled: window.__mirrorLifePrewarmCompiled,
+          updates: window.__mirrorLifePrewarmUpdates,
+          gpuFences: window.__mirrorLifePrewarmGpuFences,
+          actorRigSignatures: window.__mirrorLifeActorRigSignatures,
+          startedAt,
+          sceneWarmup: window.MirrorLifeInterior3D?.getStats?.()?.sceneWarmup || null,
+          rapierCacheEvents: window.__mirrorLifeRapierCacheEvents,
           completedAt: performance.now(),
           resources: performance.getEntriesByType("resource").map((entry) => entry.name)
         };
-      }, point.zoneId);
+      }, zoneId);
       assert.equal(prewarm.interiorActive, false, "Prewarm must not activate the interior before entry.");
-      assert.ok(!prewarm.layer || (prewarm.layer.display === "none" && prewarm.layer.sceneReady !== "true"),
-        "Prewarm must leave its scene canvas hidden and not scene-ready before entry.");
+      assert.equal(prewarm.compiled, true,
+        `Hidden prewarm must build the target scene before compiling it: ${JSON.stringify(prewarm.updates)}`);
+      assert.ok(!prewarm.layer || (
+        prewarm.layer.opacity === "0"
+        && prewarm.layer.pointerEvents === "none"
+        && prewarm.layer.ariaHidden === "true"
+        && prewarm.layer.sceneReady !== "true"
+      ), "Prewarm must leave its scene canvas invisible, non-interactive, and not scene-ready before entry.");
+      assert.equal(prewarm.sceneWarmup?.complete, true,
+        "Hidden prewarm must retain a complete warm scene state for the same-target entry.");
+      assert.ok(prewarm.gpuFences.some((result) => !result.supported || result.settled),
+        `A supported prewarm GPU fence must settle before the prefetch resolves: ${JSON.stringify(prewarm.gpuFences)}`);
+      const storedRapier = prewarm.rapierCacheEvents.find((event) => event.event === "stored");
+      assert.ok(storedRapier,
+        `Hidden prewarm must cache its target Rapier runtime: ${JSON.stringify(prewarm.rapierCacheEvents)}`);
+      assert.equal(prewarm.actorRigSignatures?.original, prewarm.actorRigSignatures?.changedFrames,
+        "Frame and animation state changes on the same civic rigs must reuse the hidden warm scene.");
+      assert.notEqual(prewarm.actorRigSignatures?.original, prewarm.actorRigSignatures?.removedRole,
+        "A changed civic-role multiplicity must invalidate the hidden warm scene.");
       const newResources = prewarm.resources.filter((name) => !beforePrefetchResources.includes(name));
       const unexpectedModels = newResources.filter((name) => name.includes("/assets/interiors/glb/")
         && !prewarm.manifest.models.some((model) => name.includes(`/assets/interiors/glb/${model}.glb`)));
@@ -436,7 +521,7 @@ async function verifyInteriorPrefetchPolicy() {
         && !prewarm.manifest.civicRoles.some((role) => name.includes(`/assets/characters/civic/${role}.glb`)));
       assert.deepEqual(unexpectedModels, [], "Prewarm must request only target-room models.");
       assert.deepEqual(unexpectedActors, [], "Prewarm must request only target-room civic actors.");
-      if (point.zoneId === "public-plaza") {
+      if (zoneId === "public-plaza") {
         assert.deepEqual(
           ["civic-listening-rug-embossed", "civic-foliage-gobo", "civic-foliage-shadow"].filter((asset) => (
             !newResources.some((name) => name.includes(asset))
@@ -445,28 +530,63 @@ async function verifyInteriorPrefetchPolicy() {
           "Public-plaza prewarm must retain its complete civic surface texture set."
         );
       }
-      const startedAt = await warmEntryPage.evaluate((zoneId) => {
+      const entry = await warmEntryPage.evaluate((zoneId) => {
         window.enterInteriorView(window.findRenderZoneById(zoneId), "manual");
-        return performance.now();
-      }, point.zoneId);
-      await warmEntryPage.waitForFunction(() => document.body.dataset.interiorRenderPhase === "ready", { timeout: 5_000 });
-      const warmReadyMs = await warmEntryPage.evaluate((started) => performance.now() - started, startedAt);
-
-      const before = await warmEntryPage.evaluate(() => window.MirrorLifeInterior3D?.getStats?.()?.camera || null);
+        return {
+          startedAt: performance.now(),
+          camera: window.MirrorLifeInterior3D?.getStats?.()?.camera || null,
+          physicsPlayer: window.__mirrorLifeInteriorPhysics?.runtime?.player || null
+        };
+      }, zoneId);
+      const { startedAt, camera: before, physicsPlayer: beforePhysicsPlayer } = entry;
+      assert.ok(Number.isFinite(beforePhysicsPlayer?.x) && Number.isFinite(beforePhysicsPlayer?.z),
+        `Entry must expose the authoritative transferred physics player: ${JSON.stringify(beforePhysicsPlayer)}`);
       await warmEntryPage.keyboard.down("w");
+      const readyWait = warmEntryPage.waitForFunction((started) => (
+        document.body.dataset.interiorRenderPhase === "ready" ? performance.now() - started : false
+      ), { timeout: 5_000 }, startedAt);
+      const movementWait = warmEntryPage.waitForFunction(({ player, started }) => {
+        const current = window.__mirrorLifeInteriorPhysics?.runtime?.player;
+        return Number.isFinite(current?.x) && Number.isFinite(current?.z)
+          && Math.hypot(current.x - player.x, current.z - player.z) > 0.01
+          ? performance.now() - started
+          : false;
+      }, { timeout: 5_000 }, { player: beforePhysicsPlayer, started: startedAt });
+      let readyHandle;
+      let movementHandle;
       try {
-        await warmEntryPage.waitForFunction((camera) => {
-          const current = window.MirrorLifeInterior3D?.getStats?.()?.camera;
-          return Number.isFinite(current?.playerX) && Number.isFinite(current?.playerZ)
-            && Math.hypot(current.playerX - camera.playerX, current.playerZ - camera.playerZ) > 0.01;
-        }, { timeout: 5_000 }, before);
+        [readyHandle, movementHandle] = await Promise.all([readyWait, movementWait]);
       } finally {
         await warmEntryPage.keyboard.up("w");
       }
-      const warmControllableMs = await warmEntryPage.evaluate((started) => performance.now() - started, startedAt);
-      const prewarmMs = prewarm.completedAt - hoverStartedAt;
+      const warmReadyMs = await readyHandle.jsonValue();
+      const warmControllableMs = await movementHandle.jsonValue();
+      const movedPhysicsPlayer = await warmEntryPage.evaluate(() => window.__mirrorLifeInteriorPhysics?.runtime?.player || null);
+      await warmEntryPage.waitForFunction((physicsPlayer) => {
+        const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+        return Number.isFinite(camera?.playerX) && Number.isFinite(camera?.playerZ)
+          && Math.hypot(camera.playerX - physicsPlayer.x, camera.playerZ - physicsPlayer.z) < 0.2;
+      }, { timeout: 5_000 }, movedPhysicsPlayer);
+      const warmupSignatures = await warmEntryPage.evaluate(() => window.__mirrorLifeWarmupSignatures);
+      const warmupActors = await warmEntryPage.evaluate(() => window.__mirrorLifeUpdateActors);
+      const warmupStages = await warmEntryPage.evaluate(() => window.__mirrorLifeUpdateStages);
+      const rapierCacheEvents = await warmEntryPage.evaluate(() => window.__mirrorLifeRapierCacheEvents);
+      const prewarmSignature = warmupSignatures.find((record) => record.phase === "prewarm" && record.signature);
+      const firstRealSignature = warmupSignatures.find((record) => record.phase === "real" && record.signature);
+      const prewarmActors = warmupActors.find((record) => record.phase === "prewarm");
+      const firstRealActors = warmupActors.find((record) => record.phase === "real");
+      assert.deepEqual(firstRealActors?.actors, prewarmActors?.actors,
+        `Same-target entry must reuse exact actor render objects: ${JSON.stringify({ prewarmActors, firstRealActors })}`);
+      assert.deepEqual(firstRealSignature?.descriptor, prewarmSignature?.descriptor,
+        `Same-target entry must reuse the exact hidden scene descriptor: ${JSON.stringify({ prewarmSignature, firstRealSignature })}`);
+      assert.ok(rapierCacheEvents.some((event) => event.event === "transferred" && event.signature === storedRapier.signature),
+        `Same-target entry must transfer the prefetched Rapier runtime instead of recreating it: ${JSON.stringify(rapierCacheEvents)}`);
+      const firstRealStage = warmupStages.find((record) => record.phase === "real" && record.stage === "ensureLayer");
+      assert.ok(firstRealStage,
+        "Resolved prefetch must enter the real Three update path before readiness is accepted.");
+      const prewarmMs = prewarm.completedAt - prewarm.startedAt;
       assert.ok(warmReadyMs <= 800 && warmControllableMs <= 800,
-        `Hover prewarm ${prewarmMs.toFixed(1)}ms; entry render ready ${warmReadyMs.toFixed(1)}ms; entry controllable ${warmControllableMs.toFixed(1)}ms (budget 800ms).`);
+        `Hover prewarm ${prewarmMs.toFixed(1)}ms; entry render ready ${warmReadyMs.toFixed(1)}ms; entry controllable ${warmControllableMs.toFixed(1)}ms (budget 800ms). First real stages: ${JSON.stringify(warmupStages.filter((record) => record.phase === "real"))}`);
       measurements.push({ prewarmMs, warmReadyMs, warmControllableMs, resourceCount: newResources.length });
     } finally {
       await warmEntryPage.close();
@@ -492,6 +612,7 @@ async function verifyInteriorPrefetchPolicy() {
           window.enterInteriorView(zone, "manual");
         }, point.zoneId);
         await constrainedPage.waitForFunction(() => window.MirrorLifeInteriorRuntime?.getStatus?.().phase === "ready", { timeout: 30_000 });
+        await constrainedPage.waitForFunction(() => document.body.classList.contains("interior-active"), { timeout: 5_000 });
         const manualStatus = await constrainedPage.evaluate(() => window.MirrorLifeInteriorRuntime.getStatus());
         assert.equal(manualStatus.reason, "manual", "Manual interior entry must bypass connection-based prefetch suppression.");
       } finally {
