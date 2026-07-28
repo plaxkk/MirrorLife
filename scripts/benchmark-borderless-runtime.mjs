@@ -5,7 +5,7 @@ import puppeteer from "puppeteer-core";
 export const DEFAULT_CHROME = "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 
 /**
- * Return the nearest-rank percentile used by the performance gates.
+ * Return the brief-defined sorted floor-index quantile used by the gates.
  *
  * @param {number[]} values
  * @param {number} ratio
@@ -123,6 +123,17 @@ async function enterMap(page) {
     const canvas = document.querySelector("#gameCanvas");
     return typeof state !== "undefined" && !!state?.society && !!canvas && canvas.getBoundingClientRect().width > 0;
   }, { timeout: 20_000 });
+}
+
+export async function assertMapMode(page) {
+  const mode = await page.evaluate(() => ({
+    interiorActive: document.body.classList.contains("interior-active"),
+    interiorZone: document.body.dataset.interiorZone || "",
+    interiorChipPresent: !!document.querySelector("#interiorChip")
+  }));
+  if (mode.interiorActive || mode.interiorZone || mode.interiorChipPresent) {
+    throw new Error(`Interior cleanup did not restore map mode: ${JSON.stringify(mode)}`);
+  }
 }
 
 async function installDrawInstrumentation(page) {
@@ -294,7 +305,7 @@ async function runMapSweep(page, session, sweepCount, useTouch) {
   });
 }
 
-async function measurePublicPlazaInterior(page) {
+export async function measurePublicPlazaInterior(page) {
   const beforeCount = await page.evaluate(() => performance.getEntriesByType("resource").length);
   const ready = async () => page.waitForFunction(() => {
     const layer = document.querySelector("#interiorThreeLayer");
@@ -339,6 +350,7 @@ async function measurePublicPlazaInterior(page) {
     }
   };
 
+  let measurementError = null;
   try {
     let started = performance.now();
     progress("entering public-plaza cold path");
@@ -362,8 +374,21 @@ async function measurePublicPlazaInterior(page) {
       .slice(resourceStart)
       .reduce((total, resource) => total + Number(resource.transferSize || 0), 0), beforeCount);
     return { coldReadyMs, warmReadyMs, transferBytes };
+  } catch (error) {
+    measurementError = error;
+    throw error;
   } finally {
-    await exitAndWait().catch(() => {});
+    try {
+      await exitAndWait();
+    } catch (cleanupError) {
+      if (measurementError) {
+        throw new AggregateError(
+          [measurementError, cleanupError],
+          "Public-plaza measurement and interior cleanup both failed."
+        );
+      }
+      throw cleanupError;
+    }
   }
 }
 
@@ -488,13 +513,10 @@ export async function runBorderlessBenchmark({
     let interior = { coldReadyMs: null, warmReadyMs: null, transferBytes: null };
     if (measureInterior) {
       progress("measuring cold and warm public-plaza readiness");
-      try {
-        interior = await measurePublicPlazaInterior(page);
-      } catch (error) {
-        errors.push(`interior: ${String(error?.message || error)}`);
-      }
+      interior = await measurePublicPlazaInterior(page);
     }
 
+    await assertMapMode(page);
     progress(`measuring ${Math.max(1, Number(sweepCount) || 250)} live map teleports`);
     await installDrawInstrumentation(page);
     await session.send("HeapProfiler.collectGarbage");
