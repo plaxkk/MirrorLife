@@ -70,9 +70,6 @@ let interiorPhysicsDebugVisible = new URLSearchParams(window.location.search).ge
 let activeEncounters = [];
 let encounterCooldowns = {};
 let lastEncounterCheckAt = 0;
-const INTERIOR_PREFETCH_DELAY_MS = 300;
-let interiorPrefetchTimer = null;
-let interiorPrefetchZoneId = "";
 
 const ACTIVE_FRAME_MS = 34;
 const DRAG_FRAME_MS = 16;
@@ -5206,59 +5203,6 @@ function greetCitizen(targetId) {
 
 // ── Building enter / leave (street level) ──
 
-function canPrefetchInterior() {
-  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
-  if (connection?.saveData) return false;
-  return !["slow-2g", "2g"].includes(String(connection?.effectiveType || ""));
-}
-
-function isInteriorPrefetchCandidate(zone) {
-  return !!zone?.id && zone.interior !== false;
-}
-
-function cancelInteriorPrefetch() {
-  if (interiorPrefetchTimer) clearTimeout(interiorPrefetchTimer);
-  interiorPrefetchTimer = null;
-  interiorPrefetchZoneId = "";
-}
-
-function prefetchInteriorZone(zone, reason = "hover") {
-  if (!isInteriorPrefetchCandidate(zone) || !canPrefetchInterior()) return Promise.resolve();
-  const options = { reason, zoneId: zone.id };
-  try {
-    if (window.MirrorLifeInteriorRuntime?.load) {
-      return Promise.resolve(window.MirrorLifeInteriorRuntime.load(options));
-    }
-    if (typeof window.MirrorLifeInteriorRuntimeReady?.then === "function") {
-      return window.MirrorLifeInteriorRuntimeReady.then((readyRuntime) => {
-        const runtime = readyRuntime || window.MirrorLifeInteriorRuntime;
-        return runtime?.load?.(options);
-      });
-    }
-  } catch (error) {
-    return Promise.reject(error);
-  }
-  return Promise.resolve();
-}
-
-function scheduleInteriorPrefetch(zone, reason = "hover") {
-  if (!isInteriorPrefetchCandidate(zone) || !canPrefetchInterior()) {
-    cancelInteriorPrefetch();
-    return;
-  }
-  if (interiorPrefetchZoneId === zone.id && interiorPrefetchTimer) return;
-  cancelInteriorPrefetch();
-  const targetZoneId = zone.id;
-  interiorPrefetchZoneId = targetZoneId;
-  interiorPrefetchTimer = setTimeout(() => {
-    interiorPrefetchTimer = null;
-    if (interiorPrefetchZoneId !== targetZoneId) return;
-    prefetchInteriorZone(zone, reason).catch((error) => {
-      console.warn("Interior prefetch skipped", error);
-    });
-  }, INTERIOR_PREFETCH_DELAY_MS);
-}
-
 function enterBuilding(citizen, anim, zone, now) {
   anim.pendingEnterZone = null;
   anim.pendingEnterZoneName = null;
@@ -5267,7 +5211,6 @@ function enterBuilding(citizen, anim, zone, now) {
   anim.state = "indoor";
   delete interiorAnimations[citizen.id];
   if (followedCitizenId === citizen.id) {
-    prefetchInteriorZone(zone, "follow");
     enterInteriorView(zone, "follow");
   }
   markRenderActive(1400);
@@ -5315,10 +5258,7 @@ function startFollowCitizen(citizenId) {
   const anim = citizenAnimations[citizenId];
   if (anim?.indoor) {
     const zone = findRenderZoneById(anim.indoor.zoneId);
-    if (zone) {
-      prefetchInteriorZone(zone, "follow");
-      enterInteriorView(zone, "follow");
-    }
+    if (zone) enterInteriorView(zone, "follow");
   }
   showToast(`正在以 ${citizen.name} 的视角观察(拖动镜头或按 Esc 退出)`, "support");
   markRenderActive(4000);
@@ -8778,7 +8718,6 @@ function focusEpisodeTrailZone(zoneId) {
   episodeTrailFocusZoneId = zoneId;
   episodeTrailFocusUntil = performance.now() + EPISODE_TRAIL_FOCUS_MS;
   markRenderActive(EPISODE_TRAIL_FOCUS_MS + 600);
-  prefetchInteriorZone(zone, "task");
   syncEpisodeTrailHud();
   showToast(`余波正在通往${zone.name}，点击发光的建筑进入下一章`, "listen");
   return true;
@@ -17402,7 +17341,6 @@ function bindGameEvents() {
       if (camera.drag) {
         hoveredCitizen = null;
         hoveredZone = null;
-        cancelInteriorPrefetch();
         canvas.style.cursor = "grabbing";
         return;
       }
@@ -17415,7 +17353,6 @@ function bindGameEvents() {
       const my = e.clientY - rect.top;
 
       if (interiorView) {
-        cancelInteriorPrefetch();
         const indoorCitizen = hitTestInteriorCitizen(mx, my);
         if (indoorCitizen) {
           hoveredCitizen = indoorCitizen.id;
@@ -17431,7 +17368,6 @@ function bindGameEvents() {
       if (citizen) {
         hoveredCitizen = citizen.id;
         hoveredZone = null;
-        cancelInteriorPrefetch();
         canvas.style.cursor = "pointer";
         return;
       }
@@ -17440,19 +17376,11 @@ function bindGameEvents() {
       const zone = hitTestZone(mx, my);
       if (zone) {
         hoveredZone = zone.id;
-        scheduleInteriorPrefetch(zone, "hover");
         canvas.style.cursor = "pointer";
       } else {
         hoveredZone = null;
-        cancelInteriorPrefetch();
         canvas.style.cursor = camera.drag ? "grabbing" : "grab";
       }
-    });
-    canvas.addEventListener("mouseleave", () => {
-      hoveredCitizen = null;
-      hoveredZone = null;
-      cancelInteriorPrefetch();
-      canvas.style.cursor = camera.drag ? "grabbing" : "grab";
     });
 
     // ── Canvas drag (camera pan) ──
@@ -17468,7 +17396,6 @@ function bindGameEvents() {
         interiorOrbit.lastY = e.clientY;
         hoveredCitizen = null;
         hoveredZone = null;
-        cancelInteriorPrefetch();
         canvas.style.cursor = "grabbing";
       }
     });
