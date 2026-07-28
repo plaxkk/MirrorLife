@@ -5322,9 +5322,9 @@ function prefetchInteriorZone(zone, reason = "hover") {
       window.MirrorLifeInteriorPhysics?.prepareRapier?.()
     ]));
     interiorPrefetchRequests.set(zone.id, request);
-    void request.finally(() => {
+    request.catch(() => {
       if (interiorPrefetchRequests.get(zone.id) === request) interiorPrefetchRequests.delete(zone.id);
-    }).catch(() => {});
+    });
     return request;
   } catch (error) {
     return Promise.reject(error);

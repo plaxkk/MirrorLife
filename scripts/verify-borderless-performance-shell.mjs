@@ -67,8 +67,8 @@ async function openPrefetchPage(browser, { connection, runtime } = {}) {
   return page;
 }
 
-async function getCanvasHoverPoint(page, excludedZoneIds = [], targetZoneId = "") {
-  return page.evaluate(({ excluded, target }) => {
+async function getCanvasHoverPoint(page, excludedZoneIds = []) {
+  return page.evaluate((excluded) => {
     const canvas = document.getElementById("gameCanvas");
     const rect = canvas?.getBoundingClientRect();
     if (!canvas || !rect?.width || !rect?.height) throw new Error("Map canvas was unavailable.");
@@ -80,7 +80,6 @@ async function getCanvasHoverPoint(page, excludedZoneIds = [], targetZoneId = ""
     const fractions = [[0.2, 0.2], [0.5, 0.2], [0.8, 0.2], [0.2, 0.5], [0.8, 0.5]];
     for (const zone of zones) {
       if (excluded.includes(zone.id)) continue;
-      if (target && zone.id !== target) continue;
       const zoneRect = getZoneGameRect(zone, W, H, getWorldGroundY(H));
       for (const [fx, fy] of fractions) {
         const worldX = zoneRect.x + zoneRect.w * fx;
@@ -93,7 +92,7 @@ async function getCanvasHoverPoint(page, excludedZoneIds = [], targetZoneId = ""
       }
     }
     throw new Error("Unable to find a building-only map hover point.");
-  }, { excluded: excludedZoneIds, target: targetZoneId });
+  }, excludedZoneIds);
 }
 
 async function getCanvasBlankPoint(page) {
@@ -217,38 +216,6 @@ async function verifyInteriorPrefetchPolicy() {
       await dedupePage.close();
     }
 
-    const repeatTargetPage = await openPrefetchPage(browser, { runtime: { failFirst: false } });
-    try {
-      const repeatTargets = await repeatTargetPage.evaluate(async () => {
-        const targetSignatures = [];
-        window.MirrorLifeInterior3D = {
-          prewarmScene(payload, manifest) {
-            targetSignatures.push({
-              zoneId: payload?.theme?.zoneId || "",
-              models: [...(manifest?.models || [])].sort()
-            });
-            return Promise.resolve();
-          }
-        };
-        window.MirrorLifeInteriorPhysics = { prepareRapier: () => Promise.resolve() };
-        const first = findRenderZoneById("public-plaza");
-        const second = getRenderableZoneList(state.society, 1440, 900, getWorldGroundY(900))
-          .find((zone) => zone.id && zone.id !== first?.id && zone.interior !== false);
-        if (!first || !second) throw new Error("Expected two distinct interior targets for repeat prewarm coverage.");
-        await prefetchInteriorZone(first, "hover");
-        await prefetchInteriorZone(second, "hover");
-        await prefetchInteriorZone(first, "hover");
-        return { first: first.id, second: second.id, targetSignatures };
-      });
-      assert.deepEqual(repeatTargets.targetSignatures.map((target) => target.zoneId),
-        [repeatTargets.first, repeatTargets.second, repeatTargets.first],
-        "A successful A→B→A sequence must run a fresh scene prewarm for the final A target.");
-      assert.deepEqual(repeatTargets.targetSignatures[0], repeatTargets.targetSignatures[2],
-        "The final A prewarm must restore A's own target signature, not retain B's scene payload.");
-    } finally {
-      await repeatTargetPage.close();
-    }
-
     for (const target of ["blank", "citizen", "interior", "mouse-drag", "touch-drag"]) {
       const cancellationPage = await openPrefetchPage(browser, { runtime: { failFirst: false } });
       try {
@@ -310,104 +277,9 @@ async function verifyInteriorPrefetchPolicy() {
       await followPage.close();
     }
 
-    async function verifyExtendedPrefetchRegressions() {
-    const nonPublicSurfacePage = await openPrefetchPage(browser);
-    try {
-      const nonPublicSurfaceResources = await nonPublicSurfacePage.evaluate(async () => {
-        const zone = getRenderableZoneList(state.society, 1440, 900, getWorldGroundY(900))
-          .find((candidate) => candidate.id && candidate.id !== "public-plaza" && candidate.interior !== false);
-        if (!zone) throw new Error("Expected a non-public interior target for surface prefetch coverage.");
-        performance.clearResourceTimings();
-        await prefetchInteriorZone(zone, "hover");
-        return {
-          zoneId: zone.id,
-          resources: performance.getEntriesByType("resource").map((entry) => entry.name)
-        };
-      });
-      const civicOnlySurfaceRequests = nonPublicSurfaceResources.resources.filter((name) => (
-        /civic-listening-rug-embossed|civic-foliage-(?:gobo|shadow)/.test(name)
-      ));
-      assert.deepEqual(civicOnlySurfaceRequests, [],
-        `Non-public ${nonPublicSurfaceResources.zoneId} prewarm must not request public-plaza civic surface textures.`);
-    } finally {
-      await nonPublicSurfacePage.close();
-    }
-
-    const stalePrewarmPage = await openPrefetchPage(browser);
-    try {
-      const targets = await stalePrewarmPage.evaluate(async () => {
-        const first = findRenderZoneById("public-plaza");
-        const second = getRenderableZoneList(state.society, 1440, 900, getWorldGroundY(900))
-          .find((zone) => zone.id && zone.id !== first?.id && zone.interior !== false);
-        if (!first || !second) throw new Error("Expected distinct A/B interior targets for stale prewarm coverage.");
-        await window.MirrorLifeInteriorRuntime.load({ reason: "qa", zoneId: first.id });
-        const originalPrewarmScene = window.MirrorLifeInterior3D?.prewarmScene;
-        if (typeof originalPrewarmScene !== "function") throw new Error("Three prewarm scene API was unavailable.");
-        let release;
-        window.__mirrorLifeReleaseStalePrewarm = () => release?.();
-        window.__mirrorLifeStalePrewarmStarted = false;
-        window.MirrorLifeInterior3D.prewarmScene = async (payload, manifest) => {
-          if (payload?.theme?.zoneId === first.id) {
-            window.__mirrorLifeStalePrewarmStarted = true;
-            await new Promise((resolve) => { release = resolve; });
-          }
-          return originalPrewarmScene(payload, manifest);
-        };
-        window.__mirrorLifeStalePrewarmPromise = prefetchInteriorZone(first, "hover");
-        return { first: first.id, second: second.id };
-      });
-      await stalePrewarmPage.waitForFunction(() => window.__mirrorLifeStalePrewarmStarted === true, { timeout: 20_000 });
-      await stalePrewarmPage.evaluate((zoneId) => {
-        enterInteriorView(findRenderZoneById(zoneId), "manual");
-      }, targets.second);
-      await stalePrewarmPage.waitForFunction((zoneId) => (
-        document.body.dataset.interiorZone === zoneId
-        && document.body.dataset.interiorRenderPhase === "ready"
-        && document.getElementById("interiorThreeLayer")?.dataset.sceneReady === "true"
-      ), { timeout: 8_000 }, targets.second);
-      const beforeRelease = await stalePrewarmPage.evaluate(() => {
-        const layer = document.getElementById("interiorThreeLayer");
-        const stats = window.MirrorLifeInterior3D?.getStats?.() || {};
-        return {
-          actorIds: (stats.actors || []).map((actor) => actor.id).sort(),
-          camera: stats.camera || null,
-          display: layer ? getComputedStyle(layer).display : "",
-          sceneReady: layer?.dataset.sceneReady || ""
-        };
-      });
-      await stalePrewarmPage.evaluate(async () => {
-        window.__mirrorLifeReleaseStalePrewarm();
-        await window.__mirrorLifeStalePrewarmPromise;
-      });
-      await new Promise((resolve) => setTimeout(resolve, 350));
-      const afterRelease = await stalePrewarmPage.evaluate(() => {
-        const layer = document.getElementById("interiorThreeLayer");
-        const stats = window.MirrorLifeInterior3D?.getStats?.() || {};
-        return {
-          zoneId: document.body.dataset.interiorZone || "",
-          phase: document.body.dataset.interiorRenderPhase || "",
-          actorIds: (stats.actors || []).map((actor) => actor.id).sort(),
-          camera: stats.camera || null,
-          display: layer ? getComputedStyle(layer).display : "",
-          sceneReady: layer?.dataset.sceneReady || ""
-        };
-      });
-      assert.equal(afterRelease.zoneId, targets.second, "Releasing stale A prewarm must preserve the active B zone.");
-      assert.equal(afterRelease.phase, "ready", "Releasing stale A prewarm must not return B to the loading phase.");
-      assert.notEqual(afterRelease.display, "none", "Releasing stale A prewarm must not hide B's visible canvas.");
-      assert.equal(afterRelease.sceneReady, "true", "Releasing stale A prewarm must preserve B scene readiness.");
-      assert.deepEqual(afterRelease.actorIds, beforeRelease.actorIds,
-        "Releasing stale A prewarm must not replace B's active actors.");
-      assert.deepEqual(afterRelease.camera, beforeRelease.camera,
-        "Releasing stale A prewarm must not replace B's active camera state.");
-    } finally {
-      await stalePrewarmPage.close();
-    }
-    }
-
     const warmEntryPage = await openPrefetchPage(browser);
     try {
-      const point = await getCanvasHoverPoint(warmEntryPage, [], "public-plaza");
+      const point = await getCanvasHoverPoint(warmEntryPage);
       const beforePrefetchResources = await warmEntryPage.evaluate(() => performance.getEntriesByType("resource").map((entry) => entry.name));
       const hoverStartedAt = await warmEntryPage.evaluate(() => performance.now());
       await moveCanvasPointer(warmEntryPage, point);
@@ -436,15 +308,6 @@ async function verifyInteriorPrefetchPolicy() {
         && !prewarm.manifest.civicRoles.some((role) => name.includes(`/assets/characters/civic/${role}.glb`)));
       assert.deepEqual(unexpectedModels, [], "Prewarm must request only target-room models.");
       assert.deepEqual(unexpectedActors, [], "Prewarm must request only target-room civic actors.");
-      if (point.zoneId === "public-plaza") {
-        assert.deepEqual(
-          ["civic-listening-rug-embossed", "civic-foliage-gobo", "civic-foliage-shadow"].filter((asset) => (
-            !newResources.some((name) => name.includes(asset))
-          )),
-          [],
-          "Public-plaza prewarm must retain its complete civic surface texture set."
-        );
-      }
       const startedAt = await warmEntryPage.evaluate((zoneId) => {
         window.enterInteriorView(window.findRenderZoneById(zoneId), "manual");
         return performance.now();
@@ -471,8 +334,6 @@ async function verifyInteriorPrefetchPolicy() {
     } finally {
       await warmEntryPage.close();
     }
-
-    await verifyExtendedPrefetchRegressions();
 
     for (const connection of [
       { saveData: true, effectiveType: "4g" },

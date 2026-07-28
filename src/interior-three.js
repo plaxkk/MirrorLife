@@ -314,10 +314,6 @@ let actorAtlasTexture;
 let civicFaceAtlasLoading;
 let civicFaceAtlasTexture;
 let physicalSurfaceLoading;
-let physicalSurfaceAssetsReady = false;
-let sceneMutationGeneration = 0;
-let prewarmGeneration = 0;
-let latestPrewarmGeneration = 0;
 let physicsDebugSignature = "";
 let cameraPivotX = 0;
 let cameraPivotZ = 0;
@@ -337,7 +333,8 @@ const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
 const dynamicModelObjects = new Map();
 
-async function loadThree({ includeCivicSurfaces = false } = {}) {
+async function loadThree() {
+  if (THREE && GLTFLoader) return true;
   if (!threeLoading) {
     threeLoading = Promise.all([
       import("three"),
@@ -384,21 +381,17 @@ async function loadThree({ includeCivicSurfaces = false } = {}) {
     });
   }
   await threeLoading;
-  if (includeCivicSurfaces && !physicalSurfaceAssetsReady) {
-    await preloadPhysicalSurfaceMaps();
-    physicalSurfaceAssetsReady = true;
-  }
+  await preloadPhysicalSurfaceMaps();
   threeAssetsReady = true;
   return true;
 }
 
-function ensureLayer(zoneId = "") {
-  const includeCivicSurfaces = zoneId === "public-plaza";
-  if (!THREE || !GLTFLoader || !threeAssetsReady || (includeCivicSurfaces && !physicalSurfaceAssetsReady)) {
-    loadThree({ includeCivicSurfaces }).then(() => window.markRenderActive?.(1800));
+function ensureLayer() {
+  if (renderer) return true;
+  if (!THREE || !GLTFLoader || !threeAssetsReady) {
+    loadThree().then(() => window.markRenderActive?.(1800));
     return false;
   }
-  if (renderer) return true;
   const shell = document.getElementById("gameShell");
   if (!shell) return false;
 
@@ -1207,29 +1200,8 @@ function loadCivicActorAsset(role) {
   return promise;
 }
 
-function beginPrewarmScene() {
-  const owner = {
-    generation: ++prewarmGeneration,
-    mutationGeneration: sceneMutationGeneration
-  };
-  latestPrewarmGeneration = owner.generation;
-  return owner;
-}
-
-function isCurrentPrewarmScene(owner) {
-  return !!owner
-    && owner.generation === latestPrewarmGeneration
-    && owner.mutationGeneration === sceneMutationGeneration
-    && !document.body?.classList.contains("interior-active");
-}
-
-function invalidatePrewarmScenes() {
-  sceneMutationGeneration += 1;
-  latestPrewarmGeneration = 0;
-}
-
 async function prewarm(options = {}) {
-  await loadThree({ includeCivicSurfaces: !!options.includeCivicSurfaces });
+  await loadThree();
   const models = [...new Set((options.models || []).filter(Boolean))];
   const civicRoles = [...new Set((options.civicRoles || []).filter(Boolean))];
   await Promise.all([
@@ -1240,35 +1212,23 @@ async function prewarm(options = {}) {
 }
 
 async function prewarmScene(payload = {}, options = {}) {
-  const owner = beginPrewarmScene();
-  const zoneId = String(payload.theme?.zoneId || "");
-  const includeCivicSurfaces = zoneId === "public-plaza";
-  try {
-    const warmed = await prewarm({ ...options, includeCivicSurfaces });
-    if (!isCurrentPrewarmScene(owner)) return warmed;
-    if (!ensureLayer(zoneId)) {
-      await loadThree({ includeCivicSurfaces });
-      if (!isCurrentPrewarmScene(owner)) return warmed;
-      if (!ensureLayer(zoneId)) throw new Error("MirrorLife interior layer could not initialize for prewarm.");
-    }
-    if (!isCurrentPrewarmScene(owner)) return warmed;
-    const prewarmedScene = update({ ...payload, visible: false }, owner);
-    if (prewarmedScene.stale || !isCurrentPrewarmScene(owner)) return warmed;
-    if (typeof renderer.compileAsync === "function") {
-      await renderer.compileAsync(scene, camera);
-      if (!isCurrentPrewarmScene(owner)) return warmed;
-    } else {
-      renderer.compile(scene, camera);
-    }
-    if (!isCurrentPrewarmScene(owner)) return warmed;
-    for (let index = 0; index < 2; index += 1) {
-      if (composer) composer.render();
-      else renderer.render(scene, camera);
-    }
-    return warmed;
-  } finally {
-    if (isCurrentPrewarmScene(owner)) hide(owner);
+  const warmed = await prewarm(options);
+  if (!ensureLayer()) {
+    await loadThree();
+    if (!ensureLayer()) throw new Error("MirrorLife interior layer could not initialize for prewarm.");
   }
+  update({ ...payload, visible: false });
+  if (typeof renderer.compileAsync === "function") {
+    await renderer.compileAsync(scene, camera);
+  } else {
+    renderer.compile(scene, camera);
+  }
+  for (let index = 0; index < 2; index += 1) {
+    if (composer) composer.render();
+    else renderer.render(scene, camera);
+  }
+  hide();
+  return warmed;
 }
 
 function clearGroup(group) {
@@ -11572,13 +11532,8 @@ function updateProjections(items, width, height) {
   });
 }
 
-function update(payload = {}, prewarmOwner = null) {
-  if (prewarmOwner && !isCurrentPrewarmScene(prewarmOwner)) {
-    return { ready: false, stale: true, projections: [] };
-  }
-  if (!prewarmOwner) invalidatePrewarmScenes();
-  const zoneId = String(payload.theme?.zoneId || "");
-  if (!ensureLayer(zoneId)) return { ready: false, projections: [] };
+function update(payload = {}) {
+  if (!ensureLayer()) return { ready: false, projections: [] };
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
   resize(width, height);
@@ -11658,9 +11613,7 @@ function update(payload = {}, prewarmOwner = null) {
   return { ready, modelsReady, actorsReady, projections: [...projectedItems.values()], actorProjections };
 }
 
-function hide(prewarmOwner = null) {
-  if (prewarmOwner && !isCurrentPrewarmScene(prewarmOwner)) return;
-  if (!prewarmOwner) invalidatePrewarmScenes();
+function hide() {
   if (!canvas || !renderer) return;
   canvas.style.display = "none";
   canvas.style.opacity = "0";
