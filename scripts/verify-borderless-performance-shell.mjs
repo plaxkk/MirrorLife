@@ -30,11 +30,13 @@ async function verifyInteriorRuntimeBoundary() {
     }
 
     const beforeInterior = await page.evaluate(() => ({
+      ready: typeof window.MirrorLifeInteriorRuntimeReady?.then === "function",
       loader: window.MirrorLifeInteriorRuntime?.getStatus?.() || null,
       three: !!window.MirrorLifeInterior3D,
       physics: !!window.MirrorLifeInteriorPhysics
     }));
 
+    assert.equal(beforeInterior.ready, true);
     assert.equal(beforeInterior.loader.phase, "idle");
     assert.equal(beforeInterior.three, false);
     assert.equal(beforeInterior.physics, false);

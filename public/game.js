@@ -14003,15 +14003,38 @@ function findRenderZoneById(zoneId) {
     || null;
 }
 
-function enterInteriorView(zone, source = "manual") {
-  if (!zone) return;
-  window.MirrorLifeInteriorRuntime?.load?.({
+function loadInteriorRuntimeForEntry(zone, source) {
+  const options = {
     reason: source || "manual",
     zoneId: zone.id
-  }).catch((error) => {
+  };
+  let request;
+  try {
+    if (window.MirrorLifeInteriorRuntime?.load) {
+      request = window.MirrorLifeInteriorRuntime.load(options);
+    } else if (typeof window.MirrorLifeInteriorRuntimeReady?.then === "function") {
+      request = window.MirrorLifeInteriorRuntimeReady.then((readyRuntime) => {
+        const runtime = readyRuntime || window.MirrorLifeInteriorRuntime;
+        if (!runtime?.load) {
+          throw new Error("MirrorLife interior runtime became ready without a load API");
+        }
+        return runtime.load(options);
+      });
+    } else {
+      request = Promise.reject(new Error("MirrorLife interior runtime readiness bootstrap is unavailable"));
+    }
+  } catch (error) {
+    request = Promise.reject(error);
+  }
+  Promise.resolve(request).catch((error) => {
     console.warn("MirrorLife interior runtime failed to load", error);
     showToast("室内仍在准备，可以稍后重试", "conflict");
   });
+}
+
+function enterInteriorView(zone, source = "manual") {
+  if (!zone) return;
+  loadInteriorRuntimeForEntry(zone, source);
   window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;

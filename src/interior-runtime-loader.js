@@ -48,7 +48,11 @@ async function load(options = {}) {
   return loadPromise;
 }
 
-window.MirrorLifeInteriorRuntime = {
+const runtime = window.MirrorLifeInteriorRuntime || {
   load,
   getStatus: () => ({ ...status })
 };
+window.MirrorLifeInteriorRuntime = runtime;
+window.dispatchEvent(new CustomEvent("mirrorlife:interior-runtime-ready", {
+  detail: runtime
+}));

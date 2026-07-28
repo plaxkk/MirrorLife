@@ -261,6 +261,18 @@
     <script src="story-engine.js"></script>
     <script src="narrative.js"></script>
     <script src="causal-graph.js"></script>
+    <script>
+      (() => {
+        if (window.MirrorLifeInteriorRuntimeReady) return;
+        window.MirrorLifeInteriorRuntimeReady = window.MirrorLifeInteriorRuntime
+          ? Promise.resolve(window.MirrorLifeInteriorRuntime)
+          : new Promise((resolve) => {
+              window.addEventListener("mirrorlife:interior-runtime-ready", (event) => {
+                resolve(event.detail || window.MirrorLifeInteriorRuntime);
+              }, { once: true });
+            });
+      })();
+    </script>
     <script type="module" src="/src/interior-runtime-loader.js"></script>
     <script src="game.js"></script>
   </body>
