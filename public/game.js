@@ -73,7 +73,6 @@ let lastEncounterCheckAt = 0;
 const INTERIOR_PREFETCH_DELAY_MS = 300;
 let interiorPrefetchTimer = null;
 let interiorPrefetchZoneId = "";
-const interiorPrefetchRequests = new Map();
 
 const ACTIVE_FRAME_MS = 34;
 const DRAG_FRAME_MS = 16;
@@ -5210,7 +5209,7 @@ function greetCitizen(targetId) {
 function canPrefetchInterior() {
   const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
   if (connection?.saveData) return false;
-  return !["slow-2g", "2g"].includes(String(connection?.effectiveType || "").toLowerCase());
+  return !["slow-2g", "2g"].includes(String(connection?.effectiveType || ""));
 }
 
 function isInteriorPrefetchCandidate(zone) {
@@ -5223,109 +5222,19 @@ function cancelInteriorPrefetch() {
   interiorPrefetchZoneId = "";
 }
 
-function getInteriorPrefetchManifest(zone) {
-  const blueprint = getInteriorBlueprint(zone);
-  return {
-    models: [...new Set((blueprint?.props || [])
-      .filter((prop) => prop?.render3d !== false && prop?.renderModel !== false)
-      .map((prop) => interiorThreeModel(interiorPropModel(prop, blueprint)))
-      .filter(Boolean))],
-    civicRoles: zone.id === "public-plaza" ? ["player", "listener", "facilitator", "mediator"] : []
-  };
-}
-
-function getInteriorPrewarmPayload(zone) {
-  const canvas = document.getElementById("gameCanvas");
-  const rect = canvas?.getBoundingClientRect();
-  const width = Math.max(1, Math.round(rect?.width || window.innerWidth));
-  const height = Math.max(1, Math.round(rect?.height || window.innerHeight));
-  const blueprint = getInteriorBlueprint(zone);
-  const roomStyle = getInteriorMaterialStyle(zone, blueprint);
-  const cameraFocus = getInteriorCameraFocus(blueprint);
-  const publicRoles = zone.id === "public-plaza" ? ["player", "listener", "facilitator", "mediator"] : [];
-  const publicPositions = [
-    [0, 3.72],
-    [-2.35, 0.72],
-    [0.64, -2.84],
-    [3.34, -2.02]
-  ];
-  const actors = publicRoles.map((civicRole, index) => ({
-    id: `prewarm-${civicRole}`,
-    role: civicRole === "player" ? "player" : "citizen",
-    civicRole,
-    worldX: publicPositions[index][0],
-    worldY: 0,
-    worldZ: publicPositions[index][1],
-    frame: [0, 4, 2, 3][index],
-    state: civicRole === "listener" ? "talking" : "idle",
-    facing: 1,
-    scale: 1
-  }));
-  const physicsActors = actors.map((actor) => ({
-    id: actor.id,
-    kind: actor.role === "player" ? "player" : "citizen",
-    x: actor.worldX,
-    y: actor.worldY,
-    z: actor.worldZ,
-    radius: Number(actor.role === "player"
-      ? getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS
-      : getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS)
-  }));
-  return {
-    visible: false,
-    width,
-    height,
-    yaw: 0,
-    pitch: INTERIOR_DEFAULT_PITCH,
-    cameraX: 0,
-    cameraZ: 3.72,
-    cameraTargetX: cameraFocus.x,
-    cameraTargetZ: cameraFocus.z,
-    cameraSafeArea: cameraFocus.safeArea,
-    theme: {
-      wall: roomStyle.wall,
-      floor: roomStyle.floor,
-      accent: roomStyle.accent,
-      trim: roomStyle.trim,
-      archetype: blueprint.key,
-      zoneId: zone.id,
-      variant: hashCommunitySeed(zone.id, "interior-room") % 4,
-      layoutProfile: blueprint.layoutProfile,
-      night: !!getWorldTimeState(state.society).isNight
-    },
-    items: getInteriorThreeItems(blueprint, width, height),
-    actors,
-    physics: { enabled: false, colliders: [], actors: physicsActors, ready: false, dynamics: [] }
-  };
-}
-
 function prefetchInteriorZone(zone, reason = "hover") {
   if (!isInteriorPrefetchCandidate(zone) || !canPrefetchInterior()) return Promise.resolve();
-  const existing = interiorPrefetchRequests.get(zone.id);
-  if (existing) return existing;
   const options = { reason, zoneId: zone.id };
-  const manifest = getInteriorPrefetchManifest(zone);
   try {
-    let runtimeLoad;
     if (window.MirrorLifeInteriorRuntime?.load) {
-      runtimeLoad = window.MirrorLifeInteriorRuntime.load(options);
-    } else if (typeof window.MirrorLifeInteriorRuntimeReady?.then === "function") {
-      runtimeLoad = window.MirrorLifeInteriorRuntimeReady.then((readyRuntime) => {
+      return Promise.resolve(window.MirrorLifeInteriorRuntime.load(options));
+    }
+    if (typeof window.MirrorLifeInteriorRuntimeReady?.then === "function") {
+      return window.MirrorLifeInteriorRuntimeReady.then((readyRuntime) => {
         const runtime = readyRuntime || window.MirrorLifeInteriorRuntime;
         return runtime?.load?.(options);
       });
     }
-    if (!runtimeLoad) return Promise.resolve();
-    const request = Promise.resolve(runtimeLoad).then(() => Promise.all([
-      window.MirrorLifeInterior3D?.prewarmScene?.(getInteriorPrewarmPayload(zone), manifest)
-        || window.MirrorLifeInterior3D?.prewarm?.(manifest),
-      window.MirrorLifeInteriorPhysics?.prepareRapier?.()
-    ]));
-    interiorPrefetchRequests.set(zone.id, request);
-    request.catch(() => {
-      if (interiorPrefetchRequests.get(zone.id) === request) interiorPrefetchRequests.delete(zone.id);
-    });
-    return request;
   } catch (error) {
     return Promise.reject(error);
   }
@@ -5337,7 +5246,7 @@ function scheduleInteriorPrefetch(zone, reason = "hover") {
     cancelInteriorPrefetch();
     return;
   }
-  if (interiorPrefetchZoneId === zone.id) return;
+  if (interiorPrefetchZoneId === zone.id && interiorPrefetchTimer) return;
   cancelInteriorPrefetch();
   const targetZoneId = zone.id;
   interiorPrefetchZoneId = targetZoneId;
@@ -5350,17 +5259,6 @@ function scheduleInteriorPrefetch(zone, reason = "hover") {
   }, INTERIOR_PREFETCH_DELAY_MS);
 }
 
-function setCitizenPendingInteriorEntry(citizen, anim, zone) {
-  if (!isInteriorPrefetchCandidate(zone)) {
-    anim.pendingEnterZone = null;
-    anim.pendingEnterZoneName = null;
-    return;
-  }
-  anim.pendingEnterZone = zone.id;
-  anim.pendingEnterZoneName = zone.name;
-  if (followedCitizenId === citizen.id) prefetchInteriorZone(zone, "follow");
-}
-
 function enterBuilding(citizen, anim, zone, now) {
   anim.pendingEnterZone = null;
   anim.pendingEnterZoneName = null;
@@ -5369,6 +5267,7 @@ function enterBuilding(citizen, anim, zone, now) {
   anim.state = "indoor";
   delete interiorAnimations[citizen.id];
   if (followedCitizenId === citizen.id) {
+    prefetchInteriorZone(zone, "follow");
     enterInteriorView(zone, "follow");
   }
   markRenderActive(1400);
@@ -5417,6 +5316,7 @@ function startFollowCitizen(citizenId) {
   if (anim?.indoor) {
     const zone = findRenderZoneById(anim.indoor.zoneId);
     if (zone) {
+      prefetchInteriorZone(zone, "follow");
       enterInteriorView(zone, "follow");
     }
   }
@@ -16402,7 +16302,8 @@ function drawGameWorld() {
           if (!isAvatar && now > (anim.noEnterUntil || 0) && enterRoll < INDOOR_ENTER_CHANCE) {
             anim.targetX = zr.cx;
             anim.targetY = zr.cy + zr.h * 0.18;
-            setCitizenPendingInteriorEntry(citizen, anim, zone);
+            anim.pendingEnterZone = zone.id;
+            anim.pendingEnterZoneName = zone.name;
           } else {
             const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
             anim.targetX = target.x;
@@ -17506,10 +17407,9 @@ function bindGameEvents() {
         return;
       }
       const now = performance.now();
-      if (now - hoverCheckAt >= 33) {
-        hoverCheckAt = now;
-        markRenderActive(800);
-      }
+      if (now - hoverCheckAt < 33) return;
+      hoverCheckAt = now;
+      markRenderActive(800);
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -17616,7 +17516,6 @@ function bindGameEvents() {
     let touchStartDist = 0, touchStartZoom = 1;
 
     canvas.addEventListener("touchstart", (e) => {
-      cancelInteriorPrefetch();
       markRenderActive();
       if (e.touches.length === 1) {
         touchStartX = e.touches[0].clientX;

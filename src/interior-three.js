@@ -1135,13 +1135,6 @@ function loadModel(type) {
   return fallback ? Promise.resolve(fallback) : promise;
 }
 
-function loadModelForPrewarm(type) {
-  if (!type) return Promise.resolve(null);
-  if (loading.has(type)) return loading.get(type);
-  const requested = loadModel(type);
-  return loading.get(type) || requested;
-}
-
 function loadCivicActorAsset(role) {
   if (!role || civicActorFailures.has(role)) return Promise.resolve(null);
   if (civicActorAssets.has(role)) return Promise.resolve(civicActorAssets.get(role));
@@ -1198,37 +1191,6 @@ function loadCivicActorAsset(role) {
   });
   civicActorLoading.set(role, promise);
   return promise;
-}
-
-async function prewarm(options = {}) {
-  await loadThree();
-  const models = [...new Set((options.models || []).filter(Boolean))];
-  const civicRoles = [...new Set((options.civicRoles || []).filter(Boolean))];
-  await Promise.all([
-    ...models.map((type) => loadModelForPrewarm(type)),
-    ...civicRoles.map((role) => loadCivicActorAsset(role))
-  ]);
-  return { models, civicRoles };
-}
-
-async function prewarmScene(payload = {}, options = {}) {
-  const warmed = await prewarm(options);
-  if (!ensureLayer()) {
-    await loadThree();
-    if (!ensureLayer()) throw new Error("MirrorLife interior layer could not initialize for prewarm.");
-  }
-  update({ ...payload, visible: false });
-  if (typeof renderer.compileAsync === "function") {
-    await renderer.compileAsync(scene, camera);
-  } else {
-    renderer.compile(scene, camera);
-  }
-  for (let index = 0; index < 2; index += 1) {
-    if (composer) composer.render();
-    else renderer.render(scene, camera);
-  }
-  hide();
-  return warmed;
 }
 
 function clearGroup(group) {
@@ -11992,8 +11954,6 @@ window.MirrorLifeInterior3D = {
   hide,
   isReady,
   loadModel,
-  prewarm,
-  prewarmScene,
   getProjections,
   projectWorldPoints,
   getStats
