@@ -24,6 +24,67 @@ function sumResourceBytes(resources, predicate = () => true) {
     .reduce((total, resource) => total + Number(resource.transferSize || 0), 0);
 }
 
+function isVercelInsightsUrl(rawUrl) {
+  try {
+    return new URL(rawUrl).pathname === "/_vercel/insights/script.js";
+  } catch {
+    return false;
+  }
+}
+
+function createNetworkTracker(session, errors) {
+  const requests = new Map();
+  const finished = new Map();
+  const inFlight = new Set();
+  let lastActivityAt = Date.now();
+  const touch = () => { lastActivityAt = Date.now(); };
+  session.on("Network.requestWillBeSent", (event) => {
+    requests.set(event.requestId, { url: event.request.url, type: event.type, status: null });
+    inFlight.add(event.requestId);
+    touch();
+  });
+  session.on("Network.responseReceived", (event) => {
+    const request = requests.get(event.requestId) || { url: event.response.url, type: event.type };
+    request.url = event.response.url;
+    request.status = event.response.status;
+    request.type = event.type;
+    requests.set(event.requestId, request);
+    if ((event.response.status < 200 || event.response.status >= 400)
+      && event.type !== "Preflight" && !isVercelInsightsUrl(request.url)) {
+      errors.push(`response ${event.response.status}: ${request.url}`);
+    }
+    touch();
+  });
+  session.on("Network.loadingFinished", (event) => {
+    const request = requests.get(event.requestId);
+    if (request) finished.set(event.requestId, { ...request, encodedDataLength: Number(event.encodedDataLength || 0) });
+    inFlight.delete(event.requestId);
+    touch();
+  });
+  session.on("Network.loadingFailed", (event) => {
+    const request = requests.get(event.requestId);
+    inFlight.delete(event.requestId);
+    if (request && !(event.canceled && request.type === "Document") && !isVercelInsightsUrl(request.url)) {
+      errors.push(`request failed ${event.errorText || "unknown"}: ${request.url}`);
+    }
+    touch();
+  });
+  return {
+    finished,
+    get inFlightCount() { return inFlight.size; },
+    get lastActivityAt() { return lastActivityAt; }
+  };
+}
+
+async function waitForNetworkIdle(tracker, { idleMs = 500, timeoutMs = 12_000 } = {}) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    if (tracker.inFlightCount === 0 && Date.now() - tracker.lastActivityAt >= idleMs) return;
+    await delay(50);
+  }
+  throw new Error(`Initial network did not become idle within ${timeoutMs}ms (${tracker.inFlightCount} requests in flight).`);
+}
+
 function normalizeBaseUrl(baseUrl) {
   if (!baseUrl) throw new Error("runBorderlessBenchmark requires baseUrl.");
   return String(baseUrl);
@@ -69,7 +130,7 @@ async function installDrawInstrumentation(page) {
     const existing = window.__mirrorLifeBorderlessBenchmark;
     existing?.restore?.();
 
-    const samples = { draw: [], generation: [], geometry: [] };
+    const samples = { draw: [], drag: [], generation: [], geometry: [] };
     const originals = {
       drawGameWorld: window.drawGameWorld,
       getRenderableZoneList: window.getRenderableZoneList,
@@ -95,22 +156,35 @@ async function installDrawInstrumentation(page) {
     if (typeof originals.getWorldGeometry === "function") {
       window.getWorldGeometry = timed("geometry", originals.getWorldGeometry);
     }
-    window.drawGameWorld = timed("draw", originals.drawGameWorld);
-
     window.__mirrorLifeBorderlessBenchmark = {
       samples,
-      draw() {
+      cancelPendingFrame() {
+        if (gameFrame) cancelAnimationFrame(gameFrame);
+        gameFrame = null;
+      },
+      draw(bucket = "draw") {
         // Clear the frame-throttle timestamp so every sample traverses the real
         // map renderer, including chunk generation and geometry cache lookups.
         if (typeof renderCache === "object") renderCache.lastFrameAt = 0;
-        window.drawGameWorld();
+        const started = performance.now();
+        try {
+          // This is the game runtime's actual drawGameWorld implementation.
+          originals.drawGameWorld();
+        } finally {
+          samples[bucket].push(performance.now() - started);
+        }
         // Direct benchmark calls ask the renderer to schedule its normal next
         // frame. Cancel that one here so 250 samples do not accumulate 250
         // queued rAF callbacks and starve the following interior readiness.
-        if (gameFrame) {
-          cancelAnimationFrame(gameFrame);
-          gameFrame = null;
-        }
+        this.cancelPendingFrame();
+      },
+      beginDrag() {
+        this.cancelPendingFrame();
+        samples.drag.length = 0;
+      },
+      recordDragInput() {
+        this.cancelPendingFrame();
+        this.draw("drag");
       },
       teleport(index, drawStride = 1) {
         const phase = index * 0.61803398875;
@@ -152,21 +226,52 @@ async function installDrawInstrumentation(page) {
   });
 }
 
-async function runMapSweep(page, sweepCount) {
+function assertFiniteSamples(name, values, exactCount = null) {
+  if (!Array.isArray(values) || !values.length || (exactCount !== null && values.length !== exactCount)) {
+    throw new Error(`${name} requires ${exactCount ?? "at least one"} samples; received ${values?.length ?? 0}.`);
+  }
+  if (values.some((value) => !Number.isFinite(value))) {
+    throw new Error(`${name} contains a non-finite sample.`);
+  }
+}
+
+async function runMapSweep(page, session, sweepCount, useTouch) {
   const canvas = await page.$("#gameCanvas");
   const box = await canvas.boundingBox();
   if (!box) throw new Error("MirrorLife map canvas has no measurable bounds.");
 
-  // Exercise the actual pointer-drag path before recording each renderer call.
-  await page.mouse.move(box.x + box.width * 0.35, box.y + box.height * 0.58);
-  await page.mouse.down();
+  // Isolate exactly 24 input-associated drag draws from any automatic rAF.
+  await page.evaluate(() => window.__mirrorLifeBorderlessBenchmark.beginDrag());
+  const startX = box.x + box.width * 0.35;
+  const startY = box.y + box.height * 0.58;
+  if (useTouch) {
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x: startX, y: startY, id: 1 }]
+    });
+  } else {
+    await page.mouse.move(startX, startY);
+    await page.mouse.down();
+  }
   for (let index = 0; index < 24; index += 1) {
     const x = box.x + box.width * (0.2 + (index % 5) * 0.14);
     const y = box.y + box.height * (0.24 + (index % 4) * 0.13);
-    await page.mouse.move(x, y);
-    await page.evaluate(() => window.__mirrorLifeBorderlessBenchmark.draw());
+    if (useTouch) {
+      await session.send("Input.dispatchTouchEvent", {
+        type: "touchMove",
+        touchPoints: [{ x, y, id: 1 }]
+      });
+    } else {
+      await page.mouse.move(x, y);
+    }
+    await page.evaluate(() => window.__mirrorLifeBorderlessBenchmark.recordDragInput());
   }
-  await page.mouse.up();
+  if (useTouch) {
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+  } else {
+    await page.mouse.up();
+  }
+  await page.evaluate(() => window.__mirrorLifeBorderlessBenchmark.cancelPendingFrame());
 
   await page.evaluate((count) => {
     const drawStride = Math.max(1, Math.ceil(count / 32));
@@ -176,11 +281,17 @@ async function runMapSweep(page, sweepCount) {
   }, sweepCount);
 
   return page.evaluate(() => ({
+    drag: [...window.__mirrorLifeBorderlessBenchmark.samples.drag],
     draw: [...window.__mirrorLifeBorderlessBenchmark.samples.draw],
     generation: [...window.__mirrorLifeBorderlessBenchmark.samples.generation],
     geometry: [...window.__mirrorLifeBorderlessBenchmark.samples.geometry],
     ...window.__mirrorLifeBorderlessBenchmark.readMap()
-  }));
+  })).then((result) => {
+    assertFiniteSamples("drag draw", result.drag, 24);
+    assertFiniteSamples("generation", result.generation);
+    assertFiniteSamples("geometry", result.geometry);
+    return result;
+  });
 }
 
 async function measurePublicPlazaInterior(page) {
@@ -198,30 +309,62 @@ async function measurePublicPlazaInterior(page) {
     }
     window.enterInteriorView(zone, "qa");
   });
+  const exitAndWait = async () => {
+    await page.evaluate(() => window.exitInteriorView?.());
+    await page.waitForFunction(() => !document.body.classList.contains("interior-active"), { timeout: 10_000 });
+  };
+  const playerPosition = () => page.evaluate(() => {
+    const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+    return {
+      x: Number(camera?.playerX),
+      z: Number(camera?.playerZ),
+      yaw: Number(camera?.yaw)
+    };
+  });
+  const proveControllable = async () => {
+    const before = await playerPosition();
+    if (![before.x, before.z, before.yaw].every(Number.isFinite)) {
+      throw new Error("Interior controllability baseline is not observable.");
+    }
+    await page.keyboard.down("w");
+    try {
+      await page.waitForFunction((baseline) => {
+        const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+        if (![camera?.playerX, camera?.playerZ, camera?.yaw].every(Number.isFinite)) return false;
+        return Math.hypot(camera.playerX - baseline.x, camera.playerZ - baseline.z) > 0.01
+          || Math.abs(camera.yaw - baseline.yaw) > 0.01;
+      }, { timeout: 5_000 }, before);
+    } finally {
+      await page.keyboard.up("w");
+    }
+  };
 
-  let started = performance.now();
-  progress("entering public-plaza cold path");
-  await enterPublicPlaza();
-  await ready();
-  const coldReadyMs = performance.now() - started;
-  progress(`public-plaza cold path ready in ${Math.round(coldReadyMs)}ms`);
-  await capture(page, "borderless-interior-cold.png");
+  try {
+    let started = performance.now();
+    progress("entering public-plaza cold path");
+    await enterPublicPlaza();
+    await ready();
+    const coldReadyMs = performance.now() - started;
+    progress(`public-plaza cold path ready in ${Math.round(coldReadyMs)}ms`);
+    await capture(page, "borderless-interior-cold.png");
 
-  await page.evaluate(() => window.exitInteriorView?.());
-  await page.waitForFunction(() => !document.body.classList.contains("interior-active"), { timeout: 10_000 });
-  started = performance.now();
-  progress("entering public-plaza warm path");
-  await enterPublicPlaza();
-  await ready();
-  const warmReadyMs = performance.now() - started;
-  progress(`public-plaza warm path ready in ${Math.round(warmReadyMs)}ms`);
+    await exitAndWait();
+    started = performance.now();
+    progress("entering public-plaza warm path");
+    await enterPublicPlaza();
+    await ready();
+    await proveControllable();
+    const warmReadyMs = performance.now() - started;
+    progress(`public-plaza warm controllable in ${Math.round(warmReadyMs)}ms`);
 
-  const transferBytes = await page.evaluate((resourceStart) => performance
-    .getEntriesByType("resource")
-    .slice(resourceStart)
-    .reduce((total, resource) => total + Number(resource.transferSize || 0), 0), beforeCount);
-  await page.evaluate(() => window.exitInteriorView?.());
-  return { coldReadyMs, warmReadyMs, transferBytes };
+    const transferBytes = await page.evaluate((resourceStart) => performance
+      .getEntriesByType("resource")
+      .slice(resourceStart)
+      .reduce((total, resource) => total + Number(resource.transferSize || 0), 0), beforeCount);
+    return { coldReadyMs, warmReadyMs, transferBytes };
+  } finally {
+    await exitAndWait().catch(() => {});
+  }
 }
 
 /**
@@ -270,6 +413,7 @@ export async function runBorderlessBenchmark({
     const session = await page.target().createCDPSession();
     await session.send("Network.enable");
     await session.send("Network.setCacheDisabled", { cacheDisabled: true });
+    const network = createNetworkTracker(session, errors);
     await page.evaluateOnNewDocument(() => {
       window.__mirrorLifeBorderlessLongTasks = [];
       try {
@@ -284,11 +428,24 @@ export async function runBorderlessBenchmark({
     });
     page.on("pageerror", (error) => errors.push(`page: ${String(error?.message || error)}`));
     page.on("console", (message) => {
-      // Vite preview intentionally has no /_vercel/insights endpoint. Keep
-      // transport-only browser diagnostics out of the application-error gate;
-      // page errors and JavaScript console errors remain recorded.
-      if (message.type() === "error" && !/^Failed to load resource:/.test(message.text())) {
+      const url = message.location()?.url || "";
+      // Vite preview intentionally lacks exactly this optional analytics URL.
+      if (message.type() === "error" && !isVercelInsightsUrl(url)) {
         errors.push(`console: ${message.text()}`);
+      }
+    });
+    page.on("requestfailed", (request) => {
+      const failure = request.failure();
+      const url = request.url();
+      if (!(failure?.errorText === "net::ERR_ABORTED" && request.isNavigationRequest()) && !isVercelInsightsUrl(url)) {
+        errors.push(`request failed ${failure?.errorText || "unknown"}: ${url}`);
+      }
+    });
+    page.on("response", (response) => {
+      const status = response.status();
+      const url = response.url();
+      if ((status < 200 || status >= 400) && !isVercelInsightsUrl(url)) {
+        errors.push(`response ${status}: ${url}`);
       }
     });
 
@@ -296,12 +453,19 @@ export async function runBorderlessBenchmark({
     await page.goto(normalizeBaseUrl(baseUrl), { waitUntil: "domcontentloaded", timeout: 45_000 });
     progress("entering map through splash");
     await enterMap(page);
-    await delay(900);
+    progress("waiting for initial network idle");
+    await waitForNetworkIdle(network);
     await capture(page, "borderless-map.png");
 
     const resourcesBeforeInterior = await page.evaluate(() => performance
       .getEntriesByType("resource")
       .map((entry) => entry.name));
+    const eagerInteriorRuntime = await page.evaluate(() => ({
+      three: !!window.MirrorLifeInterior3D,
+      physics: !!window.MirrorLifeInteriorPhysics
+    }));
+    if (eagerInteriorRuntime.three) resourcesBeforeInterior.push("runtime:interior-three");
+    if (eagerInteriorRuntime.physics) resourcesBeforeInterior.push("runtime:interior-physics");
     const navigation = await page.evaluate(() => {
       const navigationEntry = performance.getEntriesByType("navigation")[0];
       const paints = performance.getEntriesByType("paint");
@@ -314,10 +478,10 @@ export async function runBorderlessBenchmark({
       return {
         fcpMs: Number(fcp?.startTime || 0),
         domCompleteMs: Number(navigationEntry?.domComplete || 0),
-        navigationTransferBytes: Number(navigationEntry?.transferSize || 0),
         resources
       };
     });
+    const initialNetworkResources = [...network.finished.values()];
 
     // Measure the fresh public-plaza page before stressing the map. This keeps
     // cold/warm readiness independent from the 250-position chunk sweep.
@@ -335,7 +499,7 @@ export async function runBorderlessBenchmark({
     await installDrawInstrumentation(page);
     await session.send("HeapProfiler.collectGarbage");
     const heapBefore = await session.send("Runtime.getHeapUsage");
-    const mapSamples = await runMapSweep(page, Math.max(1, Number(sweepCount) || 250));
+    const mapSamples = await runMapSweep(page, session, Math.max(1, Number(sweepCount) || 250), !!viewport?.hasTouch);
     await session.send("HeapProfiler.collectGarbage");
     const heapAfter = await session.send("Runtime.getHeapUsage");
     // Restore the live renderer before entering WebGL. The sweep only needs
@@ -347,13 +511,13 @@ export async function runBorderlessBenchmark({
     }));
     errors.push(...runtime.windowErrors.map((message) => `window: ${message}`));
 
-    const dragSamples = mapSamples.draw.slice(0, 24);
-    const generationSamples = mapSamples.generation.length ? mapSamples.generation : mapSamples.draw;
-    const geometrySamples = mapSamples.geometry.length ? mapSamples.geometry : mapSamples.draw;
-    const transferBytes = navigation.navigationTransferBytes + sumResourceBytes(navigation.resources);
-    const imageBytes = sumResourceBytes(navigation.resources, (resource) => (
-      resource.initiatorType === "img" || /\.(png|jpe?g|webp|gif|avif|svg)(?:\?|$)/i.test(resource.name)
-    ));
+    const dragSamples = mapSamples.drag;
+    const generationSamples = mapSamples.generation;
+    const geometrySamples = mapSamples.geometry;
+    const transferBytes = initialNetworkResources.reduce((total, resource) => total + resource.encodedDataLength, 0);
+    const imageBytes = initialNetworkResources
+      .filter((resource) => resource.type === "Image" || /\.(png|jpe?g|webp|gif|avif|svg)(?:\?|$)/i.test(resource.url))
+      .reduce((total, resource) => total + resource.encodedDataLength, 0);
     progress("assembling result");
     return {
       navigation: {
