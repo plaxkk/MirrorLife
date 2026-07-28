@@ -67,6 +67,8 @@ The source PNG files remain unchanged until the new WebP files pass visual compa
 
 ### Task 1: Create and Verify the Four-Layer Backup
 
+> **Approved execution note (2026-07-28):** User authorized a narrowly scoped lockfile-only correction after the original `fceef14` snapshot failed the required clean dependency restore. The original visual/site snapshot and its refs remain immutable: `codex/backup-pre-borderless-20260728` and `pre-borderless-site-2026-07-28` point to `fceef14`. The reproducible baseline is `94f8c05` (`fix: synchronize dependency lockfile`) with independent refs `codex/backup-pre-borderless-restorable-20260728` and `pre-borderless-site-restorable-2026-07-28`. This approved deviation adds no performance-budget change.
+
 **Files:**
 - Create: `docs/backups/2026-07-28-pre-borderless-backup.md`
 - Do not modify website implementation files in this task.
