@@ -299,8 +299,6 @@ let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
 let sceneWarmupSignature = "";
 let sceneWarmupFrames = 0;
-let sceneWarmupDescriptor = null;
-let hiddenSceneWarmup = null;
 let contactShadowTexture;
 let civicFoliageGoboTexture;
 let civicFoliageGoboTextureLoading;
@@ -311,15 +309,12 @@ let civicRugBumpTexture;
 let civicBriefTexture;
 let atelierWindowViewTexture;
 let atelierWindowViewTextureLoading;
-let sharedSceneTextureLoading;
 let actorTextureLoading;
 let actorAtlasTexture;
 let civicFaceAtlasLoading;
 let civicFaceAtlasTexture;
 let physicalSurfaceLoading;
 let physicalSurfaceAssetsReady = false;
-let civicSurfaceLoading;
-let civicSurfaceAssetsReady = false;
 let sceneMutationGeneration = 0;
 let prewarmGeneration = 0;
 let latestPrewarmGeneration = 0;
@@ -389,14 +384,9 @@ async function loadThree({ includeCivicSurfaces = false } = {}) {
     });
   }
   await threeLoading;
-  if (!physicalSurfaceAssetsReady) {
+  if (includeCivicSurfaces && !physicalSurfaceAssetsReady) {
     await preloadPhysicalSurfaceMaps();
     physicalSurfaceAssetsReady = true;
-  }
-  await preloadSharedSceneTextures();
-  if (includeCivicSurfaces && !civicSurfaceAssetsReady) {
-    await preloadCivicSurfaceMaps();
-    civicSurfaceAssetsReady = true;
   }
   threeAssetsReady = true;
   return true;
@@ -404,8 +394,7 @@ async function loadThree({ includeCivicSurfaces = false } = {}) {
 
 function ensureLayer(zoneId = "") {
   const includeCivicSurfaces = zoneId === "public-plaza";
-  if (!THREE || !GLTFLoader || !threeAssetsReady || !physicalSurfaceAssetsReady
-    || (includeCivicSurfaces && !civicSurfaceAssetsReady)) {
+  if (!THREE || !GLTFLoader || !threeAssetsReady || (includeCivicSurfaces && !physicalSurfaceAssetsReady)) {
     loadThree({ includeCivicSurfaces }).then(() => window.markRenderActive?.(1800));
     return false;
   }
@@ -1239,39 +1228,6 @@ function invalidatePrewarmScenes() {
   latestPrewarmGeneration = 0;
 }
 
-function getActorRigSignature(actors = []) {
-  return actors
-    .map((actor) => {
-      const civicRole = String(actor.civicRole || "");
-      if (civicRole) return `civic:${civicRole}`;
-      return `fallback:${String(actor.renderClass || actor.role || "sprite")}`;
-    })
-    .sort()
-    .join("|");
-}
-
-function getSceneWarmupDescriptor(payload, assetsReady, width) {
-  if (!assetsReady) return null;
-  return {
-    zoneId: String(payload.theme?.zoneId || ""),
-    roomSignature,
-    itemSignature,
-    viewport: width <= 720 ? "mobile" : "desktop",
-    actorRigSignature: getActorRigSignature(payload.actors || [])
-  };
-}
-
-function getSceneWarmupSignature(descriptor) {
-  if (!descriptor) return "";
-  return [
-    descriptor.zoneId,
-    descriptor.roomSignature,
-    descriptor.itemSignature,
-    descriptor.viewport,
-    descriptor.actorRigSignature
-  ].join("::");
-}
-
 async function prewarm(options = {}) {
   await loadThree({ includeCivicSurfaces: !!options.includeCivicSurfaces });
   const models = [...new Set((options.models || []).filter(Boolean))];
@@ -1283,42 +1239,10 @@ async function prewarm(options = {}) {
   return { models, civicRoles };
 }
 
-async function settlePrewarmGpu(owner, timeoutMs = 1200) {
-  const gl = renderer?.getContext?.();
-  if (!gl?.fenceSync || !gl?.clientWaitSync || !gl?.deleteSync) {
-    return { supported: false, settled: true };
-  }
-  let sync = null;
-  try {
-    sync = gl.fenceSync(gl.SYNC_GPU_COMMANDS_COMPLETE, 0);
-    gl.flush();
-    const deadline = performance.now() + timeoutMs;
-    while (isCurrentPrewarmScene(owner) && performance.now() < deadline) {
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      if (!isCurrentPrewarmScene(owner)) return { supported: true, settled: false, stale: true };
-      const status = gl.clientWaitSync(sync, 0, 0);
-      if (status === gl.ALREADY_SIGNALED || status === gl.CONDITION_SATISFIED) {
-        return { supported: true, settled: true };
-      }
-    }
-    return { supported: true, settled: false, timedOut: true };
-  } catch (error) {
-    return { supported: true, settled: false, error: String(error?.message || error) };
-  } finally {
-    if (sync) gl.deleteSync(sync);
-  }
-}
-
 async function prewarmScene(payload = {}, options = {}) {
   const owner = beginPrewarmScene();
   const zoneId = String(payload.theme?.zoneId || "");
   const includeCivicSurfaces = zoneId === "public-plaza";
-  window.__MirrorLifeInteriorThreeTestHooks?.onActorRigSignature?.({
-    zoneId,
-    signature: getActorRigSignature(payload.actors || []),
-    actors: payload.actors || [],
-    getSignature: getActorRigSignature
-  });
   try {
     const warmed = await prewarm({ ...options, includeCivicSurfaces });
     if (!isCurrentPrewarmScene(owner)) return warmed;
@@ -1328,19 +1252,8 @@ async function prewarmScene(payload = {}, options = {}) {
       if (!ensureLayer(zoneId)) throw new Error("MirrorLife interior layer could not initialize for prewarm.");
     }
     if (!isCurrentPrewarmScene(owner)) return warmed;
-    let prewarmedScene = update({ ...payload, visible: false }, owner);
-    window.__MirrorLifeInteriorThreeTestHooks?.afterPrewarmUpdate?.(prewarmedScene);
+    const prewarmedScene = update({ ...payload, visible: false }, owner);
     if (prewarmedScene.stale || !isCurrentPrewarmScene(owner)) return warmed;
-    for (let frame = 0; frame < 4 && (!prewarmedScene.modelsReady || !prewarmedScene.actorsReady); frame += 1) {
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      if (!isCurrentPrewarmScene(owner)) return warmed;
-      prewarmedScene = update({ ...payload, visible: false }, owner);
-      window.__MirrorLifeInteriorThreeTestHooks?.afterPrewarmUpdate?.(prewarmedScene);
-      if (prewarmedScene.stale) return warmed;
-    }
-    if (!prewarmedScene.modelsReady || !prewarmedScene.actorsReady) return warmed;
-    await window.__MirrorLifeInteriorThreeTestHooks?.beforePrewarmCompile?.({ zoneId });
-    if (!isCurrentPrewarmScene(owner)) return warmed;
     if (typeof renderer.compileAsync === "function") {
       await renderer.compileAsync(scene, camera);
       if (!isCurrentPrewarmScene(owner)) return warmed;
@@ -1351,19 +1264,6 @@ async function prewarmScene(payload = {}, options = {}) {
     for (let index = 0; index < 2; index += 1) {
       if (composer) composer.render();
       else renderer.render(scene, camera);
-      // Let shader linking and texture upload retire on real animation frames
-      // before the prefetch resolves; otherwise the first visible entry frame
-      // inherits this queued GPU work.
-      await new Promise((resolve) => requestAnimationFrame(resolve));
-      if (!isCurrentPrewarmScene(owner)) return warmed;
-    }
-    const gpuFence = await settlePrewarmGpu(owner);
-    window.__MirrorLifeInteriorThreeTestHooks?.onPrewarmGpuFence?.(gpuFence);
-    if (!isCurrentPrewarmScene(owner) || (gpuFence.supported && !gpuFence.settled)) return warmed;
-    if (isCurrentPrewarmScene(owner) && sceneWarmupSignature) {
-      sceneWarmupFrames = Math.max(sceneWarmupFrames, 2);
-      lastSceneReady = true;
-      hiddenSceneWarmup = { zoneId, signature: sceneWarmupSignature, descriptor: sceneWarmupDescriptor };
     }
     return warmed;
   } finally {
@@ -1500,21 +1400,10 @@ async function preloadPhysicalSurfaceMaps() {
       });
       physicalSurfaceMaps.set(kind, { map, normal, roughness });
     });
-    await Promise.all(physicalMapTasks);
-  })().catch((error) => {
-    console.warn("MirrorLife shared physical surface maps failed to preload; using procedural micro-surfaces.", error);
-    physicalSurfaceMaps.clear();
-  });
-  return physicalSurfaceLoading;
-}
-
-async function preloadCivicSurfaceMaps() {
-  if (!THREE) return;
-  if (civicSurfaceLoading) return civicSurfaceLoading;
-  civicSurfaceLoading = (async () => {
-    const textureLoader = new THREE.TextureLoader();
-    // These are public-plaza-only storytelling surfaces. Keep them out of
-    // general room prefetches while retaining their atomic civic reveal.
+    // The listening rug is a high-pixel storytelling surface, not a late
+    // decorative swap. Load it inside the same Three.js readiness gate as the
+    // plaster and terrazzo so the room is revealed once with its final floor
+    // hierarchy on desktop and mobile.
     const civicRugTask = textureLoader.loadAsync(
       `/assets/interiors/textures/civic-listening-rug-embossed-v1.jpg?v=${encodeURIComponent(CIVIC_RUG_ASSET_REVISION)}`
     ).then((texture) => {
@@ -1550,15 +1439,16 @@ async function preloadCivicSurfaceMaps() {
       civicFoliageGoboTexture = gobo;
       civicFoliageShadowTexture = shadow;
     });
-    await Promise.all([civicRugTask, civicFoliageProjectionTask]);
+    await Promise.all([...physicalMapTasks, civicRugTask, civicFoliageProjectionTask]);
   })().catch((error) => {
-    console.warn("MirrorLife civic surface maps failed to preload; using procedural civic surfaces.", error);
+    console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
+    physicalSurfaceMaps.clear();
     civicRugTexture = null;
     civicRugBumpTexture = null;
     civicFoliageGoboTexture = null;
     civicFoliageShadowTexture = null;
   });
-  return civicSurfaceLoading;
+  return physicalSurfaceLoading;
 }
 
 function getPhysicalSurfaceMaps(kind) {
@@ -1580,39 +1470,26 @@ function getPhysicalSurfaceMaps(kind) {
   return maps || null;
 }
 
-async function preloadSharedSceneTextures() {
-  if (atelierWindowViewTexture) return atelierWindowViewTexture;
-  if (sharedSceneTextureLoading) return sharedSceneTextureLoading;
-  if (!THREE) return null;
-  sharedSceneTextureLoading = new THREE.TextureLoader().loadAsync(
-    `/assets/interiors/textures/atelier-window-view.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`
-  ).then((texture) => {
-    texture.colorSpace = THREE.SRGBColorSpace;
-    texture.wrapS = THREE.ClampToEdgeWrapping;
-    texture.wrapT = THREE.ClampToEdgeWrapping;
-    texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
-    texture.needsUpdate = true;
-    atelierWindowViewTexture = texture;
-    // Direct, non-prefetched entry may have already built a fallback room.
-    // A completed hidden prewarm must keep its exact compiled room instead.
-    if (!hiddenSceneWarmup && roomSignature) roomSignature = "";
-    return texture;
-  }).catch((error) => {
-    console.warn("MirrorLife shared atelier window texture failed to preload; using the ambient fallback.", error);
-    return null;
-  }).finally(() => {
-    sharedSceneTextureLoading = null;
-  });
-  return sharedSceneTextureLoading;
-}
-
 function getAtelierWindowViewTexture() {
   if (atelierWindowViewTexture) return atelierWindowViewTexture;
-  if (!sharedSceneTextureLoading && !atelierWindowViewTextureLoading) {
-    atelierWindowViewTextureLoading = preloadSharedSceneTextures().finally(() => {
-      atelierWindowViewTextureLoading = null;
-      window.markRenderActive?.(1800);
-    });
+  if (!atelierWindowViewTextureLoading && THREE) {
+    atelierWindowViewTextureLoading = new THREE.TextureLoader().load(
+      `/assets/interiors/textures/atelier-window-view.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
+      (texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.needsUpdate = true;
+        atelierWindowViewTexture = texture;
+        roomSignature = "";
+        window.markRenderActive?.(1800);
+      },
+      undefined,
+      () => {
+        atelierWindowViewTextureLoading = null;
+      }
+    );
   }
   return atelierWindowViewTexture || null;
 }
@@ -1637,10 +1514,6 @@ function getContactShadowTexture() {
 
 function getCivicFoliageGoboTexture() {
   if (civicFoliageGoboTexture) return civicFoliageGoboTexture;
-  // preloadCivicSurfaceMaps owns these two public-only textures atomically.
-  // Do not race it with the legacy lazy loader: its late callback clears the
-  // room signature after the hidden scene is compiled and defeats reuse.
-  if (civicSurfaceLoading) return null;
   if (!civicFoliageGoboTextureLoading && THREE) {
     civicFoliageGoboTextureLoading = new THREE.TextureLoader().load(
       `/assets/interiors/textures/civic-foliage-gobo-v2.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
@@ -1670,7 +1543,6 @@ function getCivicFoliageGoboTexture() {
 
 function getCivicFoliageShadowTexture() {
   if (civicFoliageShadowTexture) return civicFoliageShadowTexture;
-  if (civicSurfaceLoading) return null;
   if (!civicFoliageShadowTextureLoading && THREE) {
     civicFoliageShadowTextureLoading = new THREE.TextureLoader().load(
       `/assets/interiors/textures/civic-foliage-shadow-v1.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
@@ -6489,7 +6361,6 @@ function addExitPortal(theme, colors) {
 function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
   if (signature === roomSignature) return;
-  window.__MirrorLifeInteriorThreeTestHooks?.onRoomRebuild?.({ previousSignature: roomSignature, signature });
   roomSignature = signature;
   activeCivicPortalContract = "";
   cameraForegroundObjects.clear();
@@ -11702,103 +11573,58 @@ function updateProjections(items, width, height) {
 }
 
 function update(payload = {}, prewarmOwner = null) {
-  const timingHook = window.__MirrorLifeInteriorThreeTestHooks?.onUpdateStage;
-  const updateStartedAt = timingHook ? performance.now() : 0;
-  const reportStage = (stage, details = {}) => timingHook?.({
-    phase: prewarmOwner ? "prewarm" : "real",
-    stage,
-    at: performance.now(),
-    elapsedMs: performance.now() - updateStartedAt,
-    ...details
-  });
   if (prewarmOwner && !isCurrentPrewarmScene(prewarmOwner)) {
     return { ready: false, stale: true, projections: [] };
   }
   if (!prewarmOwner) invalidatePrewarmScenes();
   const zoneId = String(payload.theme?.zoneId || "");
-  window.__MirrorLifeInteriorThreeTestHooks?.onUpdateActors?.({
-    phase: prewarmOwner ? "prewarm" : "real",
-    actors: (payload.actors || []).map((actor) => ({
-      id: actor.id,
-      civicRole: actor.civicRole || "",
-      frame: actor.frame ?? null,
-      role: actor.role || "",
-      styleKey: `${actor.frame ?? 0}:${actor.civicRole || actor.role || "sprite"}`
-    })),
-    hiddenSignature: hiddenSceneWarmup?.signature || "",
-    hiddenDescriptor: hiddenSceneWarmup?.descriptor || null
-  });
   if (!ensureLayer(zoneId)) return { ready: false, projections: [] };
-  reportStage("ensureLayer");
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
   resize(width, height);
-  reportStage("resize");
 
   activeItems = applyMobileModelLod(
     (payload.items || []).filter((item) => item?.model),
     String(payload.theme?.zoneId || ""),
     width
   );
-  reportStage("items");
   const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false && !item.mobileProxy).map((item) => item.model))];
   needed.forEach(loadModel);
   rebuildRoom(payload.theme || {});
-  reportStage("rebuildRoom");
   const modelsReady = rebuildModels(activeItems);
-  reportStage("rebuildModels");
   if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
-  reportStage("updateDynamicModels");
   const actorsReady = updateActors(payload.actors || [], performance.now());
-  reportStage("updateActors");
   updateCamera(payload);
-  reportStage("updateCamera");
-  const assetsReady = modelsReady && actorsReady;
-  const nextWarmupDescriptor = getSceneWarmupDescriptor(payload, assetsReady, width);
-  const nextWarmupSignature = getSceneWarmupSignature(nextWarmupDescriptor);
-  const reuseHiddenWarmup = !prewarmOwner
-    && hiddenSceneWarmup?.zoneId === zoneId
-    && hiddenSceneWarmup.signature === nextWarmupSignature;
   updateDynamicWallDecorVisibility();
-  reportStage("updateDynamicWallDecorVisibility");
-  if (reuseHiddenWarmup) {
-    reportStage("updateCameraOcclusionReused");
-  } else {
-    updateCameraOcclusion(payload);
-    reportStage("updateCameraOcclusion");
-  }
+  updateCameraOcclusion(payload);
   updatePhysicsDebug(payload.physics || {});
-  reportStage("updatePhysicsDebug");
 
   const visible = payload.visible !== false;
-  sceneWarmupDescriptor = nextWarmupDescriptor;
-  window.__MirrorLifeInteriorThreeTestHooks?.onWarmupSignature?.({
-    phase: prewarmOwner ? "prewarm" : "real",
-    descriptor: nextWarmupDescriptor,
-    signature: nextWarmupSignature,
-    hiddenSignature: hiddenSceneWarmup?.signature || "",
-    hiddenDescriptor: hiddenSceneWarmup?.descriptor || null
-  });
-  if (hiddenSceneWarmup && hiddenSceneWarmup.zoneId !== zoneId) hiddenSceneWarmup = null;
+  const assetsReady = modelsReady && actorsReady;
+  const nextWarmupSignature = assetsReady
+    ? [
+      String(payload.theme?.zoneId || ""),
+      roomSignature,
+      itemSignature,
+      width <= 720 ? "mobile" : "desktop",
+      (payload.actors || []).map((actor) => `${actor.id}:${actor.civicRole || actor.frame || ""}`).join("|")
+    ].join("::")
+    : "";
   if (!assetsReady || nextWarmupSignature !== sceneWarmupSignature) {
     sceneWarmupSignature = nextWarmupSignature;
-    sceneWarmupFrames = reuseHiddenWarmup ? 2 : 0;
+    sceneWarmupFrames = 0;
   }
   // First-time PBR/shadow/post-processing programs may compile over several
   // frames. Render two complete hidden frames before declaring the room ready,
   // so the loading curtain gives way to one final scene instead of briefly
   // exposing heads/hands while merged clothing and hair programs catch up.
-  const ready = assetsReady && (reuseHiddenWarmup || sceneWarmupFrames >= 2);
+  const ready = assetsReady && sceneWarmupFrames >= 2;
   if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
   lastSceneReady = ready;
-  const compositorResident = !!prewarmOwner;
-  canvas.style.display = visible || compositorResident ? "block" : "none";
-  canvas.style.opacity = visible && ready ? "1" : "0";
-  canvas.style.visibility = visible || compositorResident ? "visible" : "hidden";
-  canvas.style.pointerEvents = "none";
-  canvas.setAttribute("aria-hidden", visible && ready ? "false" : "true");
+  canvas.style.display = visible ? "block" : "none";
+  canvas.style.opacity = ready ? "1" : "0";
+  canvas.style.visibility = ready ? "visible" : "hidden";
   canvas.dataset.sceneReady = ready ? "true" : "false";
-  reportStage("canvasVisibilityAndProjections");
   updateProjections(activeItems, width, height);
   const actorProjections = projectWorldPoints((payload.actors || []).map((actor) => ({
     ...actor,
@@ -11816,18 +11642,14 @@ function update(payload = {}, prewarmOwner = null) {
     cinematicGradePass.uniforms.strength.value = width >= 760 ? 1 : 0.72;
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
   }
-  reportStage("passSetup");
-  const programsBeforeRender = renderer?.info?.programs?.length || 0;
   if (visible) {
     if (composer) composer.render();
     else renderer.render(scene, camera);
   }
-  reportStage("render", { programsBeforeRender, programsAfterRender: renderer?.info?.programs?.length || 0 });
   if (assetsReady && !ready) {
     sceneWarmupFrames += 1;
     window.markRenderActive?.(180);
   }
-  if (reuseHiddenWarmup) hiddenSceneWarmup = null;
   const now = Date.now();
   if (now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
@@ -11836,33 +11658,16 @@ function update(payload = {}, prewarmOwner = null) {
   return { ready, modelsReady, actorsReady, projections: [...projectedItems.values()], actorProjections };
 }
 
-function hide(options = null) {
-  const prewarmOwner = options?.generation ? options : null;
-  const preserveWarmupForZone = String(options?.preserveWarmupForZone || "");
-  const preservePrewarm = !!options?.preservePrewarm;
+function hide(prewarmOwner = null) {
   if (prewarmOwner && !isCurrentPrewarmScene(prewarmOwner)) return;
-  if (!prewarmOwner && !preservePrewarm) invalidatePrewarmScenes();
+  if (!prewarmOwner) invalidatePrewarmScenes();
   if (!canvas || !renderer) return;
-  const preserveHiddenWarmup = !!prewarmOwner
-    || preservePrewarm
-    || (preserveWarmupForZone && hiddenSceneWarmup?.zoneId === preserveWarmupForZone);
-  canvas.style.display = preserveHiddenWarmup ? "block" : "none";
+  canvas.style.display = "none";
   canvas.style.opacity = "0";
-  canvas.style.visibility = preserveHiddenWarmup ? "visible" : "hidden";
-  canvas.style.pointerEvents = "none";
-  canvas.setAttribute("aria-hidden", "true");
+  canvas.style.visibility = "hidden";
   canvas.dataset.sceneReady = "false";
-  if (!preserveHiddenWarmup) {
-    sceneWarmupSignature = "";
-    sceneWarmupFrames = 0;
-    hiddenSceneWarmup = null;
-    lastSceneReady = false;
-  }
-  // The world renderer hides the overlay every map frame. An owned prewarm has
-  // already compiled and rendered its complete scene, so hiding it must not
-  // mutate root visibility and force the first real frame to re-specialize
-  // programs. Only the canvas visibility belongs to either prewarm path.
-  if (prewarmOwner || preservePrewarm) return;
+  sceneWarmupSignature = "";
+  sceneWarmupFrames = 0;
   if (actorRoot) actorRoot.visible = false;
   if (physicsDebugRoot) physicsDebugRoot.visible = false;
   projectedItems.clear();

@@ -63,9 +63,6 @@ let interiorFocusPropIndex = null;
 let interiorPhysicsWorld = null;
 let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
-let prefetchedInteriorRapier = null;
-let interiorRapierPrefetchGeneration = 0;
-let interiorRapierPrefetchTarget = "";
 let interiorRunHeld = false;
 let interiorJoystick = { x: 0, z: 0, pointerId: null };
 let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -5237,7 +5234,7 @@ function getInteriorPrefetchManifest(zone) {
   };
 }
 
-function getInteriorPrewarmPayload(zone, { includeManualSeed = false } = {}) {
+function getInteriorPrewarmPayload(zone) {
   const canvas = document.getElementById("gameCanvas");
   const rect = canvas?.getBoundingClientRect();
   const width = Math.max(1, Math.round(rect?.width || window.innerWidth));
@@ -5252,56 +5249,18 @@ function getInteriorPrewarmPayload(zone, { includeManualSeed = false } = {}) {
     [0.64, -2.84],
     [3.34, -2.02]
   ];
-  const currentPublicOccupants = zone.id === "public-plaza"
-    ? getAliveCitizens(state.society)
-      .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone.id)
-      .filter((citizen) => !interiorAnimations[citizen.id]?.counterfactualHidden)
-      .sort((a, b) => {
-        const witnessIds = getSocialParallaxRitual(zone.id)?.witnessIds || [];
-        const priority = (citizen) => Number(citizen.id === interiorView?.aftermathWitnessId) * 2
-          + Number(citizen.id === interiorView?.quietPresenceWitnessId)
-          + Number(witnessIds.includes(citizen.id)) * 3;
-        return priority(b) - priority(a);
-      })
-      .slice(0, getInteriorOccupantCap(zone.id))
-    : [];
-  const plannedOccupantIds = includeManualSeed && zone.id === "public-plaza"
-    ? new Set(getInteriorSeedOccupantCandidates(zone).map((citizen) => citizen.id))
-    : new Set();
-  const publicOccupants = includeManualSeed && zone.id === "public-plaza"
-    ? getAliveCitizens(state.society)
-      .filter((citizen) => currentPublicOccupants.some((current) => current.id === citizen.id) || plannedOccupantIds.has(citizen.id))
-      .sort((a, b) => {
-        const witnessIds = getSocialParallaxRitual(zone.id)?.witnessIds || [];
-        const priority = (citizen) => Number(citizen.id === interiorView?.aftermathWitnessId) * 2
-          + Number(citizen.id === interiorView?.quietPresenceWitnessId)
-          + Number(witnessIds.includes(citizen.id)) * 3;
-        return priority(b) - priority(a);
-      })
-      .slice(0, getInteriorOccupantCap(zone.id))
-    : currentPublicOccupants;
-  const avatarCitizen = getAliveCitizens(state.society).find((citizen) => citizen.id === "avatar") || { id: "avatar", avatarShape: "soft" };
-  const actors = publicRoles.length ? [
-    {
-      id: "player", role: "player", civicRole: "player",
-      worldX: 0, worldY: 0, worldZ: 3.72,
-      frame: getCitizenSpriteFrame(avatarCitizen), state: "idle", facing: 1, scale: 1
-    },
-    ...publicOccupants.map((citizen, index) => {
-      const position = interiorAnimations[citizen.id] || {};
-      return {
-        id: citizen.id,
-        civicRole: ["listener", "facilitator", "mediator"][index],
-        worldX: Number(position.worldX ?? publicPositions[index + 1]?.[0] ?? 0),
-        worldY: 0,
-        worldZ: Number(position.worldZ ?? publicPositions[index + 1]?.[1] ?? 0),
-        frame: getCitizenSpriteFrame(citizen),
-        state: index === 0 ? "talking" : "idle",
-        facing: Number(position.facing ?? 1),
-        scale: Number(citizen.scale || 1)
-      };
-    })
-  ] : [];
+  const actors = publicRoles.map((civicRole, index) => ({
+    id: `prewarm-${civicRole}`,
+    role: civicRole === "player" ? "player" : "citizen",
+    civicRole,
+    worldX: publicPositions[index][0],
+    worldY: 0,
+    worldZ: publicPositions[index][1],
+    frame: [0, 4, 2, 3][index],
+    state: civicRole === "listener" ? "talking" : "idle",
+    facing: 1,
+    scale: 1
+  }));
   const physicsActors = actors.map((actor) => ({
     id: actor.id,
     kind: actor.role === "player" ? "player" : "citizen",
@@ -5344,8 +5303,6 @@ function prefetchInteriorZone(zone, reason = "hover") {
   if (!isInteriorPrefetchCandidate(zone) || !canPrefetchInterior()) return Promise.resolve();
   const existing = interiorPrefetchRequests.get(zone.id);
   if (existing) return existing;
-  const rapierPrefetchGeneration = ++interiorRapierPrefetchGeneration;
-  interiorRapierPrefetchTarget = zone.id;
   const options = { reason, zoneId: zone.id };
   const manifest = getInteriorPrefetchManifest(zone);
   try {
@@ -5359,16 +5316,11 @@ function prefetchInteriorZone(zone, reason = "hover") {
       });
     }
     if (!runtimeLoad) return Promise.resolve();
-    const request = Promise.resolve(runtimeLoad).then((runtime) => {
-      const three = runtime?.three || window.MirrorLifeInterior3D;
-      const physics = runtime?.physics || window.MirrorLifeInteriorPhysics;
-      return Promise.all([
-        three?.prewarm?.(manifest),
-        physics?.prepareRapier?.()
-      ]).then(() => prefetchInteriorRapierRuntime(zone, getInteriorBlueprint(zone), rapierPrefetchGeneration)).then(() => three?.prewarmScene?.(getInteriorPrewarmPayload(zone, {
-        includeManualSeed: reason !== "follow"
-      }), manifest));
-    });
+    const request = Promise.resolve(runtimeLoad).then(() => Promise.all([
+      window.MirrorLifeInterior3D?.prewarmScene?.(getInteriorPrewarmPayload(zone), manifest)
+        || window.MirrorLifeInterior3D?.prewarm?.(manifest),
+      window.MirrorLifeInteriorPhysics?.prepareRapier?.()
+    ]));
     interiorPrefetchRequests.set(zone.id, request);
     void request.finally(() => {
       if (interiorPrefetchRequests.get(zone.id) === request) interiorPrefetchRequests.delete(zone.id);
@@ -6397,15 +6349,16 @@ function getInteriorPhysicsItems(blueprint) {
   return [...propItems, ...extraColliders];
 }
 
-function createInteriorPhysicsWorldForZone(zone, blueprint) {
+function ensureInteriorPhysicsWorld(blueprint) {
   const physics = getInteriorPhysicsApi();
-  if (!physics?.createWorld || !zone || !blueprint) return null;
-  const variant = hashCommunitySeed(zone.id || blueprint.key || "home", "interior-room") % 4;
-  const layoutProfile = blueprint.layoutProfile || getInteriorZoneLayoutProfile(zone, blueprint.key);
-  const signature = `${zone.id}|${blueprint.key}|${layoutProfile.shellId}|${variant}`;
+  if (!physics?.createWorld || !interiorView || !blueprint) return null;
+  const variant = getInteriorPhysicsVariant(blueprint);
+  const layoutProfile = blueprint.layoutProfile || getInteriorZoneLayoutProfile(interiorView.zone, blueprint.key);
+  const signature = `${interiorView.zone.id}|${blueprint.key}|${layoutProfile.shellId}|${variant}`;
+  if (interiorPhysicsWorld?.signature === signature) return interiorPhysicsWorld;
   const items = getInteriorPhysicsItems(blueprint);
   const world = physics.createWorld({
-    id: zone.id,
+    id: interiorView.zone.id,
     archetype: blueprint.key,
     variant,
     items,
@@ -6414,18 +6367,8 @@ function createInteriorPhysicsWorldForZone(zone, blueprint) {
   });
   world.signature = signature;
   world.layoutProfile = layoutProfile;
-  return world;
-}
-
-function ensureInteriorPhysicsWorld(blueprint) {
-  const physics = getInteriorPhysicsApi();
-  if (!physics?.createWorld || !interiorView || !blueprint) return null;
-  const expected = `${interiorView.zone.id}|${blueprint.key}|${(blueprint.layoutProfile || getInteriorZoneLayoutProfile(interiorView.zone, blueprint.key)).shellId}|${getInteriorPhysicsVariant(blueprint)}`;
-  if (interiorPhysicsWorld?.signature === expected) return interiorPhysicsWorld;
-  const world = createInteriorPhysicsWorldForZone(interiorView.zone, blueprint);
-  if (!world) return null;
   interiorPhysicsWorld = world;
-  interiorView.physicsSignature = world.signature;
+  interiorView.physicsSignature = signature;
   if (!interiorView.physicsSpawnApplied && world.spawn) {
     interiorOrbit.x = world.spawn.x;
     interiorOrbit.z = world.spawn.z;
@@ -6477,39 +6420,6 @@ function disposeInteriorRapierRuntime() {
   if (interiorRapierRuntime) physics?.disposeRapierRuntime?.(interiorRapierRuntime);
   interiorRapierRuntime = null;
   interiorRapierLoading = null;
-}
-
-function notifyInteriorRapierPrefetch(event, details = {}) {
-  window.__MirrorLifeInteriorRapierTestHooks?.onCacheEvent?.({ event, ...details });
-}
-
-function disposePrefetchedInteriorRapier(reason = "discarded") {
-  const physics = getInteriorPhysicsApi();
-  const cached = prefetchedInteriorRapier;
-  if (cached?.runtime) physics?.disposeRapierRuntime?.(cached.runtime);
-  prefetchedInteriorRapier = null;
-  if (cached) notifyInteriorRapierPrefetch("disposed", { reason, signature: cached.signature, zoneId: cached.world?.id || "" });
-}
-
-async function prefetchInteriorRapierRuntime(zone, blueprint, generation = interiorRapierPrefetchGeneration) {
-  const physics = getInteriorPhysicsApi();
-  const world = createInteriorPhysicsWorldForZone(zone, blueprint);
-  if (!physics?.createRapierRuntime || !world) return null;
-  if (prefetchedInteriorRapier?.signature === world.signature && !prefetchedInteriorRapier.runtime?.disposed) return prefetchedInteriorRapier;
-  disposePrefetchedInteriorRapier("signature-mismatch");
-  const runtime = await physics.createRapierRuntime({ world });
-  runtime.signature = world.signature;
-  const stale = generation !== interiorRapierPrefetchGeneration
-    || interiorRapierPrefetchTarget !== zone.id
-    || document.body.classList.contains("interior-active");
-  if (stale) {
-    physics.disposeRapierRuntime?.(runtime);
-    notifyInteriorRapierPrefetch("disposed", { reason: "stale", signature: world.signature, zoneId: zone.id });
-    return null;
-  }
-  prefetchedInteriorRapier = { signature: world.signature, world, runtime };
-  notifyInteriorRapierPrefetch("stored", { signature: world.signature, zoneId: zone.id });
-  return prefetchedInteriorRapier;
 }
 
 function ensureInteriorRapierRuntime(blueprint) {
@@ -14285,10 +14195,8 @@ function loadInteriorRuntimeForEntry(zone, source) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
-  interiorRapierPrefetchTarget = zone.id;
-  interiorRapierPrefetchGeneration += 1;
   loadInteriorRuntimeForEntry(zone, source);
-  window.MirrorLifeInterior3D?.hide?.({ preserveWarmupForZone: zone.id });
+  window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
   const blueprint = getInteriorBlueprint(zone);
@@ -14337,22 +14245,6 @@ function enterInteriorView(zone, source = "manual") {
     interiorOrbit.x = physicsWorld.spawn.x;
     interiorOrbit.y = physicsWorld.spawn.y || 0.86;
     interiorOrbit.z = physicsWorld.spawn.z;
-  }
-  const cachedRapier = prefetchedInteriorRapier;
-  if (cachedRapier?.runtime
-    && cachedRapier.signature === physicsWorld?.signature
-    && !cachedRapier.runtime.disposed) {
-    interiorRapierRuntime = cachedRapier.runtime;
-    prefetchedInteriorRapier = null;
-    notifyInteriorRapierPrefetch("transferred", { signature: interiorRapierRuntime.signature, zoneId: zone.id });
-    const position = interiorRapierRuntime.playerBody.translation();
-    interiorOrbit.x = position.x;
-    interiorOrbit.y = position.y;
-    interiorOrbit.z = position.z;
-    interiorOrbit.grounded = true;
-    interiorView.physicsReadyAt = performance.now();
-  } else if (cachedRapier) {
-    disposePrefetchedInteriorRapier("entry-signature-mismatch");
   }
   ensureInteriorRapierRuntime(blueprint);
   interiorMoveKeys.clear();
@@ -14407,8 +14299,6 @@ function exitInteriorView() {
   interiorHotspots = [];
   interiorPhysicsWorld = null;
   disposeInteriorRapierRuntime();
-  interiorRapierPrefetchTarget = "";
-  disposePrefetchedInteriorRapier("exit");
   interiorRunHeld = false;
   interiorJoystick = { x: 0, z: 0, pointerId: null };
   interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -14653,7 +14543,8 @@ function getInteriorCivicActingState(role, baseState, now = performance.now()) {
 }
 
 // When the player walks in on their own, a couple of citizens are "already inside".
-function getInteriorSeedOccupantCandidates(zone) {
+function seedInteriorOccupants(zone) {
+  const now = performance.now();
   const alive = getAliveCitizens(state.society)
     .filter(c => c.id !== "avatar" && !citizenAnimations[c.id]?.indoor);
   let candidates = alive.filter(c => c.zoneId === zone.id);
@@ -14662,12 +14553,7 @@ function getInteriorSeedOccupantCandidates(zone) {
   const passersBy = alive
     .filter((citizen) => !candidateIds.has(citizen.id))
     .sort((a, b) => hashCommunitySeed(a.id, seed) - hashCommunitySeed(b.id, seed));
-  return [...candidates, ...passersBy].slice(0, Math.min(3, getInteriorOccupantCap(zone.id)));
-}
-
-function seedInteriorOccupants(zone) {
-  const now = performance.now();
-  const candidates = getInteriorSeedOccupantCandidates(zone);
+  candidates = [...candidates, ...passersBy].slice(0, Math.min(3, getInteriorOccupantCap(zone.id)));
   candidates.forEach((citizen, i) => {
     const anim = citizenAnimations[citizen.id] = citizenAnimations[citizen.id] || {};
     anim.indoor = {
@@ -16357,7 +16243,7 @@ function drawGameWorld() {
     ensureGameRenderLoop();
     return;
   }
-  window.MirrorLifeInterior3D?.hide?.({ preservePrewarm: true });
+  window.MirrorLifeInterior3D?.hide?.();
   syncEpisodeTrailHud();
 
   const zoneOccupancy = new Map();
