@@ -14005,6 +14005,13 @@ function findRenderZoneById(zoneId) {
 
 function enterInteriorView(zone, source = "manual") {
   if (!zone) return;
+  window.MirrorLifeInteriorRuntime?.load?.({
+    reason: source || "manual",
+    zoneId: zone.id
+  }).catch((error) => {
+    console.warn("MirrorLife interior runtime failed to load", error);
+    showToast("室内仍在准备，可以稍后重试", "conflict");
+  });
   window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
