@@ -81,7 +81,7 @@ try {
     const drawWidth = Math.min(zoneRect.w * 1.12, 132);
     const drawHeight = Math.min(zoneRect.h * 1.78, 110);
     const drawLeft = zoneRect.cx - drawWidth / 2;
-    const drawTop = zoneRect.y - drawHeight * 1.08;
+    const drawTop = zoneRect.y - drawHeight * 0.62;
     const toScreen = (worldX, worldY) => worldToScreenPoint(worldX, worldY, bounds.width, bounds.height);
     const visibleTopLeft = toScreen(
       drawLeft + opaque.left / safe.source.width * drawWidth,

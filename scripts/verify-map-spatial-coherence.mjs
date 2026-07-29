@@ -64,7 +64,7 @@ async function sampleProfile(page, profile) {
           { rect: toRect, toward: fromRect }
         ].forEach(({ rect, toward }) => {
           const gate = getRoadEndpoint(rect, toward);
-          const junction = { x: rect.cx, y: rect.cy + rect.h * 0.18 };
+          const junction = getZonePedestrianJunctionPoint(rect);
           const connectorSteps = Math.max(
             1,
             Math.ceil(Math.hypot(junction.x - gate.x, junction.y - gate.y) / 8)

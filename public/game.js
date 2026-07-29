@@ -4243,10 +4243,12 @@ function ensureGameRenderLoop() {
 
 function getRoadEndpoint(rect, toward) {
   const dx = toward.cx - rect.cx;
-  const dy = toward.cy - rect.cy;
   return {
     x: rect.cx + Math.sign(dx || 1) * Math.min(rect.w * 0.24, 28),
-    y: rect.cy + Math.sign(dy || 1) * Math.min(rect.h * 0.18, 18) + rect.h * 0.18
+    // All streets meet the same lower curb line. Letting vertical neighbours
+    // pull the endpoint back toward the parcel made routes cut through a
+    // lowered building before reaching its entrance path.
+    y: getZoneRoadJunctionPoint(rect).y
   };
 }
 
@@ -4310,7 +4312,7 @@ function getRoadSamplePoints(roadPairs, maxSpacing = 8) {
       { zoneRect: toRect, towardRect: fromRect, progress: 1 }
     ].flatMap(({ zoneRect, towardRect, progress }) => {
       const gate = getRoadEndpoint(zoneRect, towardRect);
-      const junction = getZoneRoadJunctionPoint(zoneRect);
+      const junction = getZonePedestrianJunctionPoint(zoneRect);
       const connectorSteps = Math.max(1, Math.ceil(Math.hypot(junction.x - gate.x, junction.y - gate.y) / maxSpacing));
       return Array.from({ length: connectorSteps + 1 }, (_, index) => {
         const connectorProgress = index / connectorSteps;
@@ -4330,7 +4332,11 @@ function getRoadSamplePoints(roadPairs, maxSpacing = 8) {
 }
 
 function getZoneRoadJunctionPoint(zoneRect) {
-  return { x: zoneRect.cx, y: zoneRect.cy + zoneRect.h * 0.18 };
+  return { x: zoneRect.cx, y: zoneRect.cy + zoneRect.h * 1.12 };
+}
+
+function getZonePedestrianJunctionPoint(zoneRect) {
+  return getZoneRoadJunctionPoint(zoneRect);
 }
 
 function appendMapPathLine(path, start, end, maxSpacing = 7) {
@@ -4389,7 +4395,7 @@ function buildMapZoneTransitionPath(fromZoneId, toZoneId, current, roadPairs, ro
     currentEndProgress,
     laneOffset
   );
-  const junction = getZoneRoadJunctionPoint(zoneRect);
+  const junction = getZonePedestrianJunctionPoint(zoneRect);
   appendMapPathLine(path, currentGate, junction);
 
   const destinationPair = roadPairs[destinationPairIndex];
@@ -16815,10 +16821,10 @@ function getZoneBuildingLayoutGeometry(zone, r, requestedKind = "") {
   const drawHeight = Math.min(r.h * spec.heightScale, spec.maxHeight);
   const drawRect = {
     x: r.cx - drawWidth / 2,
-    // The logical zone node belongs to the street network. Lift the building
-    // far enough above that node for a full-height pedestrian plus the 8px
-    // visual clearance contract; selection and attachments reuse this rect.
-    y: r.y - drawHeight * 1.08,
+    // Keep the entrance inside its authored parcel. Pedestrians use a distinct
+    // lower sidewalk junction, so façade clearance no longer requires lifting
+    // the whole building away from the road.
+    y: r.y - drawHeight * 0.62,
     width: drawWidth,
     height: drawHeight
   };
@@ -16850,6 +16856,21 @@ function getZoneBuildingVisualGeometry(zone, r, requestedKind = "") {
     height: Math.max(1, (opaque.bottom - opaque.top + 1) / source.height * drawRect.height)
   };
   return { spec, safeFrame, source, drawRect, visibleBounds };
+}
+
+function getZoneBuildingEntrancePoint(zone, r) {
+  const geometry = getZoneBuildingVisualGeometry(zone, r);
+  const visible = geometry?.visibleBounds;
+  if (visible) {
+    return {
+      x: visible.x + visible.width / 2,
+      y: visible.y + visible.height
+    };
+  }
+  const drawRect = geometry?.drawRect || getZoneBuildingLayoutGeometry(zone, r)?.drawRect;
+  return drawRect
+    ? { x: drawRect.x + drawRect.width / 2, y: drawRect.y + drawRect.height }
+    : getZoneRoadJunctionPoint(r);
 }
 
 function isPointInMapRect(point, rect, margin = 0) {
@@ -16919,11 +16940,43 @@ function drawZoneFootprint(ctx, zone, r, color, isHovered) {
   ctx.restore();
 }
 
+function drawZoneEntrancePath(ctx, zone, r) {
+  const junction = getZoneRoadJunctionPoint(r);
+  const entrance = getZoneBuildingEntrancePoint(zone, r);
+  if (Math.hypot(junction.x - entrance.x, junction.y - entrance.y) < 1) return;
+  if (Array.isArray(window.__mirrorLifeMapBuildingRoadContracts)) {
+    window.__mirrorLifeMapBuildingRoadContracts.push({
+      zoneId: zone.id,
+      entrance: { ...entrance },
+      junction: { ...junction },
+      length: Math.hypot(junction.x - entrance.x, junction.y - entrance.y)
+    });
+  }
+  [
+    { color: RUNTIME_ART_BIBLE.ink, width: 14 },
+    { color: "#f6d75d", width: 10 },
+    { color: "#fff4b8", width: 6 }
+  ].forEach((layer) => {
+    ctx.save();
+    ctx.strokeStyle = layer.color;
+    ctx.lineWidth = layer.width;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(junction.x, junction.y);
+    ctx.lineTo(entrance.x, entrance.y);
+    ctx.stroke();
+    ctx.restore();
+  });
+}
+
 function drawZoneNameTag(ctx, zone, r, color, isHovered) {
   const labelW = Math.min(112, Math.max(48, zone.name.length * 11 + 24));
   const labelH = isHovered ? 20 : 18;
-  const labelX = r.cx - labelW / 2;
-  const labelY = r.cy + r.h * 0.78;
+  const building = getZoneBuildingVisualGeometry(zone, r);
+  const labelX = (building?.visibleBounds.x + building?.visibleBounds.width / 2 || r.cx) - labelW / 2;
+  const labelY = building
+    ? building.visibleBounds.y - labelH - 6
+    : r.y - labelH - 6;
   ctx.save();
   ctx.fillStyle = RUNTIME_ART_BIBLE.paper;
   roundRect(ctx, labelX, labelY, labelW, labelH, 9);
@@ -17224,6 +17277,7 @@ function drawSemanticZoneBuilding(ctx, zone, r, isHovered) {
 
 function drawZonePlace(ctx, zone, r, color, count, isHovered, options = {}) {
   drawZoneFootprint(ctx, zone, r, color, isHovered);
+  drawZoneEntrancePath(ctx, zone, r);
   if (!drawSemanticZoneBuilding(ctx, zone, r, isHovered) && !drawZoneBuildingSprite(ctx, zone, r, isHovered)) {
     drawFallbackZoneBuilding(ctx, zone, r, color, isHovered);
   }
@@ -17376,7 +17430,7 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
     });
     return;
   }
-  const maxCorrectionDistance = 20;
+  const maxCorrectionDistance = 28;
   const roadSpatialIndex = getRoadSampleSpatialIndex(roadSamples);
   const buildingRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
     const zone = state.society.zones.find((candidate) => candidate.id === zoneId)
@@ -17391,7 +17445,14 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
     const zone = state.society.zones.find((candidate) => candidate.id === zoneId)
       || renderWorldCache.zones?.find((candidate) => candidate.id === zoneId);
     const width = Math.min(112, Math.max(48, String(zone?.name || "").length * 11 + 24));
-    return { zoneId, x: rect.cx - width / 2, y: rect.cy + rect.h * 0.78, width, height: 18 };
+    const building = zone ? getZoneBuildingVisualGeometry(zone, rect)?.visibleBounds : null;
+    return {
+      zoneId,
+      x: (building ? building.x + building.width / 2 : rect.cx) - width / 2,
+      y: building ? building.y - 24 : rect.y - 24,
+      width,
+      height: 18
+    };
   });
   const obstacles = [...buildingRects, ...labelRects];
   const isVisiblePoint = (x, y, margin = 0) => {
@@ -17431,6 +17492,10 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
     return entries.every((other) => {
       const reservation = other === entry ? null : other.moveAnim?.spatialReservation;
       if (!reservation || reservation.until <= now) return true;
+      // A stale reservation that is itself inside a moved building or label
+      // cannot keep blocking every valid street candidate. Ignore it here so
+      // that its owner and the current actor can both be restaged this frame.
+      if (!candidateAvoidsStaticObstacles(other, reservation)) return true;
       return !mapRectsWithinGap(
         rect,
         getVisualRectAt(other, reservation.x, reservation.y),
@@ -17447,9 +17512,13 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
       : null;
     const previousAvoidsSettled = previousStatic
       && settled.every((item) => !mapRectsWithinGap(previousStatic.rect, item.rect, 8));
-    const correctionLimit = entry.moveAnim?.spatialStageReady
-      ? maxCorrectionDistance
-      : Number.POSITIVE_INFINITY;
+    const needsStructuralRestage = !entry.moveAnim?.spatialStageReady
+      || !previousReservation
+      || !previousStatic;
+    if (needsStructuralRestage) entry.moveAnim.spatialStageReady = false;
+    const correctionLimit = needsStructuralRestage
+      ? Number.POSITIVE_INFINITY
+      : maxCorrectionDistance;
     const roadCandidates = roadSamples
       .filter((candidate) => (
         candidate.fromZoneId === entry.mapZoneId
@@ -17541,14 +17610,35 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
     .map((entry) => ({ entry, rect: getMapCitizenVisualRect(entry) }));
   const avatar = actorRects.find((item) => item.entry.isAvatar);
   const buildingOverlaps = [];
+  const buildingOverlapDetails = [];
   const labelOverlaps = [];
+  const labelOverlapDetails = [];
   const avatarClearanceViolations = [];
   actorRects.forEach(({ entry, rect }) => {
     buildingRects.forEach((building) => {
-      if (mapRectsWithinGap(rect, building, 8)) buildingOverlaps.push(`${entry.citizen.id}:${building.zoneId}`);
+      if (mapRectsWithinGap(rect, building, 8)) {
+        buildingOverlaps.push(`${entry.citizen.id}:${building.zoneId}`);
+        buildingOverlapDetails.push({
+          citizenId: entry.citizen.id,
+          mapZoneId: entry.mapZoneId,
+          actor: { ...rect },
+          obstacle: { ...building },
+          reservation: entry.moveAnim?.spatialReservation
+            ? { ...entry.moveAnim.spatialReservation }
+            : null
+        });
+      }
     });
     labelRects.forEach((label) => {
-      if (mapRectsWithinGap(rect, label, 8)) labelOverlaps.push(`${entry.citizen.id}:${label.zoneId}`);
+      if (mapRectsWithinGap(rect, label, 8)) {
+        labelOverlaps.push(`${entry.citizen.id}:${label.zoneId}`);
+        labelOverlapDetails.push({
+          citizenId: entry.citizen.id,
+          mapZoneId: entry.mapZoneId,
+          actor: { ...rect },
+          obstacle: { ...label }
+        });
+      }
     });
     if (avatar && !entry.isAvatar && mapRectsWithinGap(rect, avatar.rect, 8)) {
       avatarClearanceViolations.push(entry.citizen.id);
@@ -17565,7 +17655,9 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
   window.__mirrorLifeMapClearance = {
     version: "mirrorlife-map-clearance-v1",
     buildingOverlaps: [...new Set(buildingOverlaps)],
+    buildingOverlapDetails,
     labelOverlaps: [...new Set(labelOverlaps)],
+    labelOverlapDetails,
     avatarClearanceViolations: [...new Set(avatarClearanceViolations)],
     maxLocalCluster,
     maxCorrection
@@ -17679,6 +17771,7 @@ function drawGameWorld() {
   const focusZoneIdForDim = followedCitizenId
     ? (state.society.citizens.find((c) => c.id === followedCitizenId)?.zoneId || null)
     : null;
+  window.__mirrorLifeMapBuildingRoadContracts = [];
   drawableZones.forEach(({ zone, rect: r }) => {
     const color = ZONE_COLORS[zone.role] || ZONE_COLORS[zone.archetype] || "#a0a0a0";
     const isTrailFocus = episodeTrailFocusZoneId === zone.id && episodeTrailFocusUntil > now;
