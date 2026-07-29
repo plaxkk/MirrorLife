@@ -16332,17 +16332,104 @@ function drawRoleDot(ctx, x, y, color) {
   ctx.stroke();
 }
 
+function getZoneBuildingRenderSpec(zone, requestedKind = "") {
+  const hasSemanticFrame = !!zone
+    && Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zone.id);
+  if (requestedKind !== "standard" && hasSemanticFrame) {
+    return {
+      kind: "semantic",
+      image: semanticBuildingSpriteImage,
+      columns: SEMANTIC_BUILDING_SPRITE_COLUMNS,
+      rows: SEMANTIC_BUILDING_SPRITE_ROWS,
+      frame: SEMANTIC_ZONE_BUILDING_FRAMES[zone.id],
+      widthScale: 1.12,
+      heightScale: 1.78,
+      maxWidth: 132,
+      maxHeight: 110
+    };
+  }
+  if (requestedKind === "semantic") return null;
+  return {
+    kind: "standard",
+    image: buildingSpriteImage,
+    columns: BUILDING_SPRITE_COLUMNS,
+    rows: BUILDING_SPRITE_ROWS,
+    frame: getZoneBuildingFrame(zone),
+    widthScale: 1.02,
+    heightScale: 1.7,
+    maxWidth: 126,
+    maxHeight: 104
+  };
+}
+
+function getZoneBuildingVisualGeometry(zone, r, requestedKind = "") {
+  const spec = getZoneBuildingRenderSpec(zone, requestedKind);
+  if (!spec) return null;
+  const safeFrame = getSafeSpriteFrameSource(spec.image, spec.columns, spec.rows, spec.frame);
+  const source = safeFrame.source;
+  if (!safeFrame.sprite || !source?.width || !source?.height) return null;
+  const drawWidth = Math.min(r.w * spec.widthScale, spec.maxWidth);
+  const drawHeight = Math.min(r.h * spec.heightScale, spec.maxHeight);
+  const drawRect = {
+    x: r.cx - drawWidth / 2,
+    y: r.y - drawHeight * 0.82,
+    width: drawWidth,
+    height: drawHeight
+  };
+  const opaque = safeFrame.opaqueBounds || {
+    left: 0,
+    top: 0,
+    right: source.width - 1,
+    bottom: source.height - 1
+  };
+  const visibleBounds = {
+    x: drawRect.x + opaque.left / source.width * drawWidth,
+    y: drawRect.y + opaque.top / source.height * drawHeight,
+    width: Math.max(1, (opaque.right - opaque.left + 1) / source.width * drawWidth),
+    height: Math.max(1, (opaque.bottom - opaque.top + 1) / source.height * drawHeight)
+  };
+  return { spec, safeFrame, source, drawRect, visibleBounds };
+}
+
+function isPointInMapRect(point, rect, margin = 0) {
+  return !!rect
+    && point.x >= rect.x - margin
+    && point.x <= rect.x + rect.width + margin
+    && point.y >= rect.y - margin
+    && point.y <= rect.y + rect.height + margin;
+}
+
+function isPointOnZoneBuilding(zone, r, point) {
+  const geometry = getZoneBuildingVisualGeometry(zone, r);
+  if (!geometry || !isPointInMapRect(point, geometry.visibleBounds, 3)) return false;
+  const { drawRect, source } = geometry;
+  if (typeof source.getContext !== "function") return true;
+  const sourceX = clamp(Math.floor((point.x - drawRect.x) / drawRect.width * source.width), 0, source.width - 1);
+  const sourceY = clamp(Math.floor((point.y - drawRect.y) / drawRect.height * source.height), 0, source.height - 1);
+  try {
+    return source.getContext("2d", { willReadFrequently: true }).getImageData(sourceX, sourceY, 1, 1).data[3] > 12;
+  } catch {
+    return true;
+  }
+}
+
 function drawZoneFootprint(ctx, zone, r, color, isHovered) {
+  const building = getZoneBuildingVisualGeometry(zone, r);
+  const visible = building?.visibleBounds || null;
+  const footprintX = visible ? visible.x + visible.width / 2 : r.cx;
+  const footprintY = visible ? visible.y + visible.height + 3 : r.cy + r.h * 0.3;
+  const footprintWidth = visible ? visible.width : r.w;
+  const footprintHeight = visible ? visible.height : r.h;
   ctx.save();
   ctx.fillStyle = "rgba(26, 26, 46, 0.13)";
   ctx.beginPath();
-  ctx.ellipse(r.cx + 5, r.cy + r.h * 0.34, r.w * 0.36, Math.max(7, r.h * 0.11), 0, 0, Math.PI * 2);
+  ctx.ellipse(footprintX + 5, footprintY, footprintWidth * 0.36, Math.max(7, footprintHeight * 0.11), 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.globalAlpha = isHovered ? 0.22 : 0.12;
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.ellipse(r.cx, r.cy + r.h * 0.3, r.w * 0.42, Math.max(10, r.h * 0.15), 0, 0, Math.PI * 2);
+  ctx.ellipse(footprintX, footprintY - 2, footprintWidth * 0.42, Math.max(10, footprintHeight * 0.15), 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
@@ -16350,8 +16437,21 @@ function drawZoneFootprint(ctx, zone, r, color, isHovered) {
     ctx.strokeStyle = "#e63946";
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -performance.now() * 0.012;
     ctx.beginPath();
-    ctx.ellipse(r.cx, r.cy + r.h * 0.02, r.w * 0.52, r.h * 0.58, 0, 0, Math.PI * 2);
+    if (visible) {
+      const margin = 6;
+      roundRect(
+        ctx,
+        visible.x - margin,
+        visible.y - margin,
+        visible.width + margin * 2,
+        visible.height + margin * 2,
+        14
+      );
+    } else {
+      ctx.ellipse(r.cx, r.cy + r.h * 0.02, r.w * 0.52, r.h * 0.58, 0, 0, Math.PI * 2);
+    }
     ctx.stroke();
     ctx.setLineDash([]);
   }
@@ -16652,19 +16752,13 @@ function drawSemanticAnimalCare(ctx, r, isHovered) {
 }
 
 function drawSemanticZoneBuilding(ctx, zone, r, isHovered) {
-  if (!zone || !Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zone.id)) return false;
-  const frame = SEMANTIC_ZONE_BUILDING_FRAMES[zone.id];
-  const safeFrame = getSafeSpriteFrameSource(semanticBuildingSpriteImage, SEMANTIC_BUILDING_SPRITE_COLUMNS, SEMANTIC_BUILDING_SPRITE_ROWS, frame);
-  if (!safeFrame.sprite) return false;
-  const spriteSource = safeFrame.source;
-  const drawW = Math.min(r.w * 1.12, 132);
-  const drawH = Math.min(r.h * 1.78, 110);
-  const dx = r.cx - drawW / 2;
-  const dy = r.y - drawH * 0.82;
+  const geometry = getZoneBuildingVisualGeometry(zone, r, "semantic");
+  if (!geometry) return false;
+  const { source, drawRect } = geometry;
 
   ctx.save();
   ctx.globalAlpha = isHovered ? 1 : 0.97;
-  ctx.drawImage(spriteSource, 0, 0, spriteSource.width, spriteSource.height, dx, dy, drawW, drawH);
+  ctx.drawImage(source, 0, 0, source.width, source.height, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
   ctx.restore();
   return true;
 }
@@ -16776,10 +16870,13 @@ function mapRectsWithinGap(first, second, gap = 0) {
 
 function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportHeight) {
   const buildingRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
-    const semantic = Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zoneId);
-    const width = semantic ? Math.min(rect.w * 1.12, 132) : Math.min(rect.w * 1.02, 126);
-    const height = semantic ? Math.min(rect.h * 1.78, 110) : Math.min(rect.h * 1.7, 104);
-    return { zoneId, x: rect.cx - width / 2, y: rect.y - height * 0.82, width, height };
+    const zone = state.society.zones.find((candidate) => candidate.id === zoneId)
+      || lastWorldFrame.zones?.find((candidate) => candidate.id === zoneId)
+      || { id: zoneId };
+    const visual = getZoneBuildingVisualGeometry(zone, rect)?.visibleBounds;
+    return visual
+      ? { zoneId, ...visual }
+      : { zoneId, x: rect.x, y: rect.y, width: rect.w, height: rect.h };
   });
   const labelRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
     const zone = state.society.zones.find((candidate) => candidate.id === zoneId);
@@ -17744,7 +17841,16 @@ function getSafeSpriteFrameSource(image, columns, rows, frame) {
   const result = {
     source: canvas,
     sprite: { sx: padding, sy: padding, sw: sourceWidth, sh: sourceHeight },
-    padding
+    padding,
+    // The transparent cell boundary is the interaction envelope. Pixel-level
+    // alpha is sampled only for the handful of pointer candidates below; a
+    // full-frame alpha scan here would add avoidable work to first render.
+    opaqueBounds: Object.freeze({
+      left: padding,
+      top: padding,
+      right: padding + sourceWidth - 1,
+      bottom: padding + sourceHeight - 1
+    })
   };
   imageCache.set(cacheKey, result);
   return result;
@@ -17767,18 +17873,13 @@ function getZoneBuildingFrame(zone) {
 }
 
 function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
-  const frame = getZoneBuildingFrame(zone);
-  const safeFrame = getSafeSpriteFrameSource(buildingSpriteImage, BUILDING_SPRITE_COLUMNS, BUILDING_SPRITE_ROWS, frame);
-  if (!safeFrame.sprite) return false;
-  const spriteSource = safeFrame.source;
-  const drawW = Math.min(r.w * 1.02, 126);
-  const drawH = Math.min(r.h * 1.7, 104);
-  const dx = r.cx - drawW / 2;
-  const dy = r.y - drawH * 0.82;
+  const geometry = getZoneBuildingVisualGeometry(zone, r, "standard");
+  if (!geometry) return false;
+  const { source, drawRect } = geometry;
 
   ctx.save();
   ctx.globalAlpha = isHovered ? 1 : 0.96;
-  ctx.drawImage(spriteSource, 0, 0, spriteSource.width, spriteSource.height, dx, dy, drawW, drawH);
+  ctx.drawImage(source, 0, 0, source.width, source.height, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
   ctx.restore();
   return true;
 }
@@ -18059,6 +18160,13 @@ function hitTestZone(mx, my) {
   const hasFrameCache = lastWorldFrame.zones?.length && Math.abs(lastWorldFrame.W - W) < 2 && Math.abs(lastWorldFrame.H - H) < 2;
   const zones = hasFrameCache ? lastWorldFrame.zones : getRenderableZoneList(state.society, W, H, groundY);
   const rects = hasFrameCache ? lastWorldFrame.zoneRects : getWorldGeometry(zones, W, H, groundY).zoneRects;
+  const visualOrder = zones
+    .map((zone) => ({ zone, rect: rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY) }))
+    .sort((first, second) => first.rect.cy - second.rect.cy);
+  for (let index = visualOrder.length - 1; index >= 0; index -= 1) {
+    const { zone, rect: zoneRect } = visualOrder[index];
+    if (isPointOnZoneBuilding(zone, zoneRect, point)) return zone;
+  }
   for (const zone of zones) {
     const r = rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY);
     if (point.x >= r.x && point.x <= r.x + r.w && point.y >= r.y && point.y <= r.y + r.h) {
@@ -18088,16 +18196,26 @@ function getMapBuildingInteractionPoint(zoneId) {
     ? lastWorldFrame.zoneRects
     : getWorldGeometry(zones, W, H, groundY).zoneRects;
   const zoneRect = rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY);
+  const visual = getZoneBuildingVisualGeometry(zone, zoneRect)?.visibleBounds;
+  if (!visual) return null;
   const candidates = [
-    [0.5, 0.22],
-    [0.32, 0.28],
-    [0.68, 0.28],
-    [0.5, 0.38]
+    [0.5, 0.55],
+    [0.5, 0.72],
+    [0.34, 0.62],
+    [0.66, 0.62],
+    [0.5, 0.38],
+    [0.25, 0.75],
+    [0.75, 0.75]
   ];
   for (const [xRatio, yRatio] of candidates) {
+    const worldPoint = {
+      x: visual.x + visual.width * xRatio,
+      y: visual.y + visual.height * yRatio
+    };
+    if (!isPointOnZoneBuilding(zone, zoneRect, worldPoint)) continue;
     const screen = worldToScreenPoint(
-      zoneRect.x + zoneRect.w * xRatio,
-      zoneRect.y + zoneRect.h * yRatio,
+      worldPoint.x,
+      worldPoint.y,
       W,
       H
     );
