@@ -80,12 +80,19 @@ finite(result.map.dragP95Ms, "map.dragP95Ms");
 finite(result.sweep.generationP95Ms, "sweep.generationP95Ms");
 finite(result.sweep.cacheSize, "sweep.cacheSize");
 assert.notEqual(result.interior.warmReadyMs, null, "interior.warmReadyMs must not be null.");
+assert.notEqual(result.interior.coldReadyMs, null, "interior.coldReadyMs must not be null.");
+finite(result.interior.coldReadyMs, "interior.coldReadyMs");
 finite(result.interior.warmReadyMs, "interior.warmReadyMs");
 assert.ok(result.navigation.transferBytes <= (mobile ? 2_200_000 : 2_800_000));
 assert.ok(result.map.dragP95Ms <= (mobile ? 25 : 16.7));
 assert.ok(result.sweep.generationP95Ms <= (mobile ? 12 : 8));
 assert.equal(result.sweep.cacheSize, 72);
+assert.ok(result.interior.coldReadyMs <= (mobile ? 4000 : 2500));
 assert.ok(result.interior.warmReadyMs <= (mobile ? 1200 : 800));
+assert.equal(result.interior.cold.zoneId, "public-plaza");
+assert.equal(result.interior.warm.zoneId, "public-plaza");
+assert.equal(result.interior.cold.fingerprint, result.interior.warm.fingerprint);
+assert.ok(result.interior.warm.generation > result.interior.cold.generation);
 assert.equal(result.resourcesBeforeInterior.some((name) =>
   /three\.module|rapier|GLTFLoader|interior-three|interior-physics/.test(name)
 ), false);

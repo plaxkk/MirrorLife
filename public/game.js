@@ -65,6 +65,7 @@ let interiorPreparedPhysics = null;
 let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
 let interiorWarmCache = null;
+let mapBuildingPointerIntent = null;
 let interiorRunHeld = false;
 let interiorJoystick = { x: 0, z: 0, pointerId: null };
 let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -17599,6 +17600,15 @@ function screenToWorldPoint(mx, my, W, H) {
   };
 }
 
+function worldToScreenPoint(x, y, W, H) {
+  const cx = W / 2 + camera.x;
+  const cy = H / 2 + camera.y + 40;
+  return {
+    x: (x - W / 2) * camera.zoom + cx,
+    y: (y - H / 2) * camera.zoom + cy
+  };
+}
+
 function hitTestZone(mx, my) {
   const canvas = document.getElementById("gameCanvas");
   if (!canvas) return null;
@@ -17617,6 +17627,107 @@ function hitTestZone(mx, my) {
     }
   }
   return null;
+}
+
+function getMapBuildingInteractionPoint(zoneId) {
+  if (interiorView) return null;
+  const canvas = document.getElementById("gameCanvas");
+  if (!canvas) return null;
+  const canvasRect = canvas.getBoundingClientRect();
+  const W = canvasRect.width;
+  const H = canvasRect.height;
+  const groundY = getWorldGroundY(H);
+  const hasFrameCache = lastWorldFrame.zones?.length
+    && Math.abs(lastWorldFrame.W - W) < 2
+    && Math.abs(lastWorldFrame.H - H) < 2;
+  const zones = hasFrameCache
+    ? lastWorldFrame.zones
+    : getRenderableZoneList(state.society, W, H, groundY);
+  const zone = zones.find((candidate) => candidate.id === zoneId);
+  if (!zone) return null;
+  const rects = hasFrameCache
+    ? lastWorldFrame.zoneRects
+    : getWorldGeometry(zones, W, H, groundY).zoneRects;
+  const zoneRect = rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY);
+  const candidates = [
+    [0.5, 0.22],
+    [0.32, 0.28],
+    [0.68, 0.28],
+    [0.5, 0.38]
+  ];
+  for (const [xRatio, yRatio] of candidates) {
+    const screen = worldToScreenPoint(
+      zoneRect.x + zoneRect.w * xRatio,
+      zoneRect.y + zoneRect.h * yRatio,
+      W,
+      H
+    );
+    const clientX = canvasRect.left + screen.x;
+    const clientY = canvasRect.top + screen.y;
+    if (
+      screen.x < 0
+      || screen.y < 0
+      || screen.x > W
+      || screen.y > H
+      || document.elementFromPoint(clientX, clientY) !== canvas
+      || hitTestZone(screen.x, screen.y)?.id !== zone.id
+      || hitTestCitizen(screen.x, screen.y)
+    ) continue;
+    return Object.freeze({
+      zoneId: zone.id,
+      x: screen.x,
+      y: screen.y,
+      clientX,
+      clientY
+    });
+  }
+  return null;
+}
+
+window.getMapBuildingInteractionPoint = getMapBuildingInteractionPoint;
+
+function rememberMapBuildingPointerIntent(clientX, clientY, pointerId = null) {
+  if (interiorView) {
+    mapBuildingPointerIntent = null;
+    return null;
+  }
+  const canvas = document.getElementById("gameCanvas");
+  if (!canvas) return null;
+  const rect = canvas.getBoundingClientRect();
+  const mx = clientX - rect.left;
+  const my = clientY - rect.top;
+  const zone = hitTestCitizen(mx, my) ? null : hitTestZone(mx, my);
+  mapBuildingPointerIntent = zone
+    ? {
+        zoneId: zone.id,
+        requestedAt: performance.now(),
+        clientX,
+        clientY,
+        pointerId,
+        moved: false
+      }
+    : null;
+  return mapBuildingPointerIntent;
+}
+
+function trackMapBuildingPointerIntent(clientX, clientY, pointerId = null) {
+  const intent = mapBuildingPointerIntent;
+  if (!intent || (intent.pointerId !== null && pointerId !== null && intent.pointerId !== pointerId)) return;
+  if (Math.hypot(clientX - intent.clientX, clientY - intent.clientY) > 10) {
+    intent.moved = true;
+  }
+}
+
+function consumeMapBuildingPointerIntent(zoneId) {
+  const intent = mapBuildingPointerIntent;
+  mapBuildingPointerIntent = null;
+  if (
+    !intent
+    || intent.moved
+    || intent.zoneId !== zoneId
+    || (camera.dragTravel || 0) > 10
+  ) return null;
+  return intent.requestedAt;
 }
 
 function hitTestCitizen(mx, my) {
@@ -17756,9 +17867,26 @@ function bindGameEvents() {
 
   // ── Canvas click ──
   if (canvas) {
+    canvas.addEventListener("pointerdown", (event) => {
+      if (event.isPrimary === false) {
+        mapBuildingPointerIntent = null;
+        return;
+      }
+      rememberMapBuildingPointerIntent(event.clientX, event.clientY, event.pointerId);
+    });
+    window.addEventListener("pointermove", (event) => {
+      trackMapBuildingPointerIntent(event.clientX, event.clientY, event.pointerId);
+    });
+    window.addEventListener("pointercancel", () => {
+      mapBuildingPointerIntent = null;
+    });
+
     canvas.addEventListener("click", (e) => {
       markRenderActive();
-      if ((camera.dragTravel || 0) > 10) return;
+      if ((camera.dragTravel || 0) > 10) {
+        mapBuildingPointerIntent = null;
+        return;
+      }
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -17782,15 +17910,20 @@ function bindGameEvents() {
 
       const citizen = hitTestCitizen(mx, my);
       if (citizen) {
+        mapBuildingPointerIntent = null;
         showCitizenInteraction(citizen);
         return;
       }
       const zone = hitTestZone(mx, my);
       if (zone) {
+        const requestedAt = consumeMapBuildingPointerIntent(zone.id);
         if (e.shiftKey || e.altKey) showZoneDetail(zone);
-        else enterInteriorView(zone, "manual");
+        else enterInteriorView(zone, "manual", {
+          requestedAt: requestedAt ?? performance.now()
+        });
         return;
       }
+      mapBuildingPointerIntent = null;
       hideDetail();
     });
 
@@ -17911,8 +18044,16 @@ function bindGameEvents() {
         interiorOrbit.drag = !!interiorView;
         camera.lastX = e.touches[0].clientX;
         camera.lastY = e.touches[0].clientY;
+        if (!mapBuildingPointerIntent) {
+          rememberMapBuildingPointerIntent(
+            e.touches[0].clientX,
+            e.touches[0].clientY,
+            e.touches[0].identifier
+          );
+        }
       } else if (e.touches.length === 2) {
         camera.drag = false;
+        mapBuildingPointerIntent = null;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         touchStartDist = Math.sqrt(dx * dx + dy * dy);
@@ -17924,6 +18065,11 @@ function bindGameEvents() {
     canvas.addEventListener("touchmove", (e) => {
       markRenderActive();
       if (e.touches.length === 1 && camera.drag) {
+        trackMapBuildingPointerIntent(
+          e.touches[0].clientX,
+          e.touches[0].clientY,
+          e.touches[0].identifier
+        );
         const dx = e.touches[0].clientX - camera.lastX;
         const dy = e.touches[0].clientY - camera.lastY;
         if (interiorView && interiorOrbit.drag) {
@@ -17974,10 +18120,16 @@ function bindGameEvents() {
           showCitizenInteraction(citizen);
         } else {
           const zone = hitTestZone(mx, my);
-          if (zone) enterInteriorView(zone, "manual");
+          if (zone) {
+            const requestedAt = consumeMapBuildingPointerIntent(zone.id);
+            enterInteriorView(zone, "manual", {
+              requestedAt: requestedAt ?? performance.now()
+            });
+          }
           else hideDetail();
         }
       }
+      mapBuildingPointerIntent = null;
       camera.drag = false;
       interiorOrbit.drag = false;
     });

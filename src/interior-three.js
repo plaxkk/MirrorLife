@@ -276,8 +276,10 @@ let ShaderPass;
 let OutputPass;
 let cloneSkeleton;
 let loader;
+let threeCoreLoading;
 let threeLoading;
 let threeAssetsReady = false;
+let enhancedPipelineReady = false;
 let canvas;
 let renderer;
 let composer;
@@ -346,11 +348,39 @@ const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
 const dynamicModelObjects = new Map();
 
+function traceInteriorThreeStage(stage, startedAt = null) {
+  const at = performance.now();
+  window.__mirrorLifeInteriorThreeStageTrace = window.__mirrorLifeInteriorThreeStageTrace || [];
+  window.__mirrorLifeInteriorThreeStageTrace.push({
+    stage,
+    at: Number(at.toFixed(1)),
+    durationMs: startedAt === null ? null : Number((at - startedAt).toFixed(1))
+  });
+  if (window.__mirrorLifeInteriorThreeStageTrace.length > 40) {
+    window.__mirrorLifeInteriorThreeStageTrace = window.__mirrorLifeInteriorThreeStageTrace.slice(-40);
+  }
+  return at;
+}
+
+async function loadThreeCore() {
+  if (THREE) return true;
+  if (!threeCoreLoading) {
+    const startedAt = traceInteriorThreeStage("core-import-start");
+    threeCoreLoading = import("three").then((threeModule) => {
+      THREE = threeModule;
+      traceInteriorThreeStage("core-import-ready", startedAt);
+      return true;
+    });
+  }
+  return threeCoreLoading;
+}
+
 async function loadThree() {
-  if (THREE && GLTFLoader) return true;
+  await loadThreeCore();
+  if (threeAssetsReady && GLTFLoader) return true;
   if (!threeLoading) {
+    const startedAt = traceInteriorThreeStage("addons-import-start");
     threeLoading = Promise.all([
-      import("three"),
       import("three/examples/jsm/loaders/GLTFLoader.js"),
       import("three/examples/jsm/geometries/RoundedBoxGeometry.js"),
       import("three/examples/jsm/utils/BufferGeometryUtils.js"),
@@ -363,7 +393,6 @@ async function loadThree() {
       import("three/examples/jsm/postprocessing/OutputPass.js"),
       import("three/examples/jsm/utils/SkeletonUtils.js")
     ]).then(([
-      threeModule,
       loaderModule,
       roundedBoxModule,
       geometryUtilsModule,
@@ -376,7 +405,6 @@ async function loadThree() {
       outputPassModule,
       skeletonUtilsModule
     ]) => {
-      THREE = threeModule;
       GLTFLoader = loaderModule.GLTFLoader;
       MeshoptDecoder = meshoptModule.MeshoptDecoder;
       RoundedBoxGeometry = roundedBoxModule.RoundedBoxGeometry;
@@ -390,19 +418,22 @@ async function loadThree() {
       mergeGeometries = geometryUtilsModule.mergeGeometries;
       loader = new GLTFLoader();
       loader.setMeshoptDecoder(MeshoptDecoder);
+      traceInteriorThreeStage("addons-import-ready", startedAt);
       return true;
     });
   }
   await threeLoading;
+  const surfaceStartedAt = traceInteriorThreeStage("surface-preload-start");
   await preloadPhysicalSurfaceMaps();
+  traceInteriorThreeStage("surface-preload-ready", surfaceStartedAt);
   threeAssetsReady = true;
   return true;
 }
 
 function ensureLayer() {
   if (renderer) return true;
-  if (!THREE || !GLTFLoader || !threeAssetsReady) {
-    loadThree().then(() => window.markRenderActive?.(1800));
+  if (!THREE) {
+    loadThreeCore().then(() => window.markRenderActive?.(600));
     return false;
   }
   const shell = document.getElementById("gameShell");
@@ -413,6 +444,7 @@ function ensureLayer() {
   canvas.setAttribute("aria-hidden", "true");
   shell.appendChild(canvas);
 
+  const rendererStartedAt = traceInteriorThreeStage("renderer-create-start");
   renderer = new THREE.WebGLRenderer({
     canvas,
     alpha: false,
@@ -423,6 +455,7 @@ function ensureLayer() {
     preserveDrawingBuffer: true,
     powerPreference: "high-performance"
   });
+  traceInteriorThreeStage("renderer-create-ready", rendererStartedAt);
   canvas.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
     interiorSessionState.contextLost = true;
@@ -454,7 +487,7 @@ function ensureLayer() {
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.86;
   renderer.setPixelRatio(resolveInteriorPixelRatio(window.innerWidth));
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = false;
   renderer.shadowMap.type = THREE.VSMShadowMap;
   physicalSurfaceMaps.forEach((maps) => {
     [maps.map, maps.normal, maps.roughness].forEach((texture) => {
@@ -470,13 +503,6 @@ function ensureLayer() {
   camera.layers.enable(2);
   cameraRaycaster = new THREE.Raycaster();
   scene.add(camera);
-
-  if (RoomEnvironment) {
-    const pmrem = new THREE.PMREMGenerator(renderer);
-    scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
-    scene.environmentIntensity = 0.38;
-    pmrem.dispose();
-  }
 
   roomRoot = new THREE.Group();
   modelRoot = new THREE.Group();
@@ -567,6 +593,32 @@ function ensureLayer() {
   actorFaceLight = new THREE.PointLight(0xffeee0, 1.08, 12, 1.65);
   actorFaceLight.layers.set(2);
   scene.add(actorFaceLight);
+
+  traceInteriorThreeStage("base-scene-ready", rendererStartedAt);
+  return true;
+}
+
+function ensureEnhancedPipeline() {
+  if (enhancedPipelineReady) return true;
+  if (
+    !renderer
+    || !scene
+    || !RoomEnvironment
+    || !EffectComposer
+    || !RenderPass
+    || !GTAOPass
+    || !ShaderPass
+    || !OutputPass
+  ) return false;
+
+  const pixelRatio = resolveInteriorPixelRatio(lastWidth || window.innerWidth);
+  renderer.setPixelRatio(pixelRatio);
+  renderer.setSize(lastWidth || window.innerWidth, lastHeight || window.innerHeight, false);
+  const pmrem = new THREE.PMREMGenerator(renderer);
+  scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.environmentIntensity = 0.38;
+  pmrem.dispose();
+  renderer.shadowMap.enabled = true;
 
   // The civic hero room relies on contact depth rather than heavy outlines.
   // Keep the pass allocated once and switch it per-room so other interiors and
@@ -664,6 +716,9 @@ function ensureLayer() {
   composer.addPass(gtaoPass);
   composer.addPass(cinematicGradePass);
   composer.addPass(outputPass);
+  composer.setPixelRatio(pixelRatio);
+  composer.setSize(lastWidth || window.innerWidth, lastHeight || window.innerHeight);
+  enhancedPipelineReady = true;
   return true;
 }
 
@@ -11539,6 +11594,9 @@ function update(payload = {}) {
     return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
   }
   if (!ensureLayer()) return { ready: false, projections: [] };
+  if (!threeAssetsReady || !ensureEnhancedPipeline()) {
+    return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
+  }
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
   resize(width, height);
@@ -11688,6 +11746,79 @@ function beginSnapshotAssetPreload(snapshot) {
   });
 }
 
+function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
+  const shellStartedAt = traceInteriorThreeStage("interactive-shell-start");
+  if (!ensureLayer()) {
+    return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
+  }
+  const payload = livePayload
+    ? { ...snapshotCameraPayload(snapshot, viewport), ...livePayload, items: [], actors: [] }
+    : snapshotCameraPayload(snapshot, viewport);
+  const width = Math.max(1, Math.round(payload.width || window.innerWidth));
+  const height = Math.max(1, Math.round(payload.height || window.innerHeight));
+  if (width !== lastWidth || height !== lastHeight || roomSignature !== `interactive-shell:${snapshot.fingerprint}`) {
+    // The interactive shell is intentionally rendered at a reduced internal
+    // resolution. It is a real perspective WebGL scene, but does not make the
+    // user's first input wait for the final HDR/GTAO render targets.
+    renderer.setPixelRatio(width <= 720 ? 0.72 : 0.5);
+    renderer.setSize(width, height, false);
+    lastWidth = width;
+    lastHeight = height;
+    camera.aspect = width / height;
+    camera.fov = width / height < 0.82 ? 56 : 48;
+    camera.updateProjectionMatrix();
+  }
+  const shellSignature = `interactive-shell:${snapshot.fingerprint}`;
+  if (roomSignature !== shellSignature) {
+    roomSignature = shellSignature;
+    disposeOwnedGroup(roomRoot);
+    const wallColor = new THREE.Color(snapshot.theme?.wall || "#ded5c7");
+    const floorColor = new THREE.Color(snapshot.theme?.floor || "#96938e");
+    const floor = new THREE.Mesh(
+      new THREE.PlaneGeometry(ROOM_RADIUS * 2.6, ROOM_RADIUS * 2.6),
+      new THREE.MeshBasicMaterial({ color: floorColor })
+    );
+    floor.rotation.x = -Math.PI / 2;
+    floor.position.y = 0;
+    roomRoot.add(floor);
+    const wallMaterial = new THREE.MeshBasicMaterial({
+      color: wallColor,
+      side: THREE.DoubleSide
+    });
+    const backWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(ROOM_RADIUS * 2.15, 3.4),
+      wallMaterial
+    );
+    backWall.position.set(0, 1.7, -ROOM_RADIUS * 0.82);
+    roomRoot.add(backWall);
+    const sideWall = new THREE.Mesh(
+      new THREE.PlaneGeometry(ROOM_RADIUS * 1.65, 3.4),
+      wallMaterial.clone()
+    );
+    sideWall.rotation.y = Math.PI / 2;
+    sideWall.position.set(-ROOM_RADIUS * 0.9, 1.7, -0.25);
+    roomRoot.add(sideWall);
+    scene.background = wallColor.clone().lerp(new THREE.Color("#f2ece4"), 0.38);
+    renderer.setClearColor(scene.background, 1);
+  }
+  updateCamera(payload);
+  const renderStartedAt = performance.now();
+  renderer.render(scene, camera);
+  traceInteriorThreeStage("interactive-shell-rendered", renderStartedAt);
+  canvas.style.display = "block";
+  canvas.style.opacity = "1";
+  canvas.style.visibility = "visible";
+  canvas.dataset.sceneReady = "true";
+  interiorSessionState.renderActive = true;
+  traceInteriorThreeStage("interactive-shell-ready", shellStartedAt);
+  return {
+    ready: true,
+    modelsReady: false,
+    actorsReady: false,
+    projections: []
+  };
+}
+
 function stageShell(snapshot, viewport = {}) {
   if (!snapshot?.sessionId || !snapshot?.fingerprint) {
     return { accepted: false, ready: false, phase: interiorSessionState.phase, projections: [] };
@@ -11722,13 +11853,13 @@ function stageShell(snapshot, viewport = {}) {
       projections: [...projectedItems.values()]
     };
   }
-  const result = update({
-    ...snapshotCameraPayload(snapshot, viewport),
-    items: [],
-    actors: []
-  });
-  if (!interiorSessionState.preloadPromise && loader) {
-    interiorSessionState.preloadPromise = beginSnapshotAssetPreload(snapshot);
+  const result = updateInteractiveShell(snapshot, viewport);
+  if (!interiorSessionState.preloadPromise) {
+    interiorSessionState.preloadPromise = loadThree()
+      .then(() => beginSnapshotAssetPreload(snapshot))
+      .catch((error) => {
+        console.warn("MirrorLife interior assets failed to preload.", error);
+      });
   }
   if (result.ready) {
     interiorSessionState.shellReady = true;
@@ -11751,7 +11882,9 @@ function activate(snapshot, payload = {}) {
     return { accepted: true, ready: false, phase: interiorSessionState.phase, projections: [] };
   }
   if (!interiorSessionState.assetsReady) {
+    const shellResult = updateInteractiveShell(snapshot, payload, payload);
     return {
+      ...shellResult,
       accepted: true,
       ready: true,
       interactive: true,

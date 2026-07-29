@@ -309,17 +309,45 @@ export async function measurePublicPlazaInterior(page) {
   const beforeCount = await page.evaluate(() => performance.getEntriesByType("resource").length);
   const ready = async () => page.waitForFunction(() => {
     const layer = document.querySelector("#interiorThreeLayer");
+    const status = window.MirrorLifeInteriorSession?.getStatus?.();
     return document.body.classList.contains("interior-active")
+      && ["interactive", "gameplay-ready", "full-ready"].includes(status?.phase)
       && layer?.dataset.sceneReady === "true"
+      && getComputedStyle(layer).visibility === "visible"
       && !!window.MirrorLifeInterior3D;
   }, { timeout: 30_000 });
-  const enterPublicPlaza = async () => page.evaluate(() => {
-    const zone = window.findRenderZoneById?.("public-plaza");
-    if (!zone || typeof window.enterInteriorView !== "function") {
-      throw new Error("MirrorLife public-plaza interior entry was not available.");
+  const enterPublicPlaza = async () => {
+    if (
+      page.viewport()?.hasTouch
+      && !await page.evaluate(() => !!window.getMapBuildingInteractionPoint?.("public-plaza"))
+    ) {
+      const session = await page.target().createCDPSession();
+      const viewport = page.viewport();
+      const x = Math.round(viewport.width * 0.5);
+      for (let attempt = 0; attempt < 3; attempt += 1) {
+        const startY = Math.round(viewport.height * 0.21);
+        const endY = Math.round(viewport.height * 0.05);
+        await session.send("Input.dispatchTouchEvent", {
+          type: "touchStart",
+          touchPoints: [{ x, y: startY, id: 1, radiusX: 2, radiusY: 2, force: 1 }]
+        });
+        await session.send("Input.dispatchTouchEvent", {
+          type: "touchMove",
+          touchPoints: [{ x, y: endY, id: 1, radiusX: 2, radiusY: 2, force: 1 }]
+        });
+        await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+        await delay(120);
+        if (await page.evaluate(() => !!window.getMapBuildingInteractionPoint?.("public-plaza"))) break;
+      }
     }
-    window.enterInteriorView(zone, "qa");
-  });
+    await page.waitForFunction(() => !!window.getMapBuildingInteractionPoint?.("public-plaza"), {
+      timeout: 10_000
+    });
+    const point = await page.evaluate(() => window.getMapBuildingInteractionPoint("public-plaza"));
+    if (!point) throw new Error("MirrorLife public-plaza rendered interaction point was not available.");
+    if (page.viewport()?.hasTouch) await page.touchscreen.tap(point.clientX, point.clientY);
+    else await page.mouse.click(point.clientX, point.clientY);
+  };
   const exitAndWait = async () => {
     await page.evaluate(() => window.exitInteriorView?.());
     await page.waitForFunction(() => !document.body.classList.contains("interior-active"), { timeout: 10_000 });
@@ -349,31 +377,57 @@ export async function measurePublicPlazaInterior(page) {
       await page.keyboard.up("w");
     }
   };
+  const readEntryEvidence = () => page.evaluate(() => {
+    const status = window.MirrorLifeInteriorSession?.getStatus?.();
+    const interactiveAt = Number(status?.timestamps?.interactive);
+    const requestedAt = Number(status?.requestedAt);
+    return {
+      zoneId: status?.zoneId || "",
+      generation: Number(status?.generation || 0),
+      fingerprint: status?.snapshot?.fingerprint || "",
+      phase: status?.phase || "",
+      requestedAt,
+      interactiveAt,
+      readyMs: interactiveAt - requestedAt,
+      timestamps: status?.timestamps || {},
+      renderPhases: window.__mirrorLifeInteriorRenderPhases || [],
+      threeStages: window.__mirrorLifeInteriorThreeStageTrace || [],
+      heapBytes: Number(performance.memory?.usedJSHeapSize || 0)
+    };
+  });
 
   let measurementError = null;
   try {
-    let started = performance.now();
     progress("entering public-plaza cold path");
     await enterPublicPlaza();
     await ready();
-    const coldReadyMs = performance.now() - started;
+    await proveControllable();
+    const cold = await readEntryEvidence();
+    const coldReadyMs = cold.readyMs;
     progress(`public-plaza cold path ready in ${Math.round(coldReadyMs)}ms`);
     await capture(page, "borderless-interior-cold.png");
 
     await exitAndWait();
-    started = performance.now();
     progress("entering public-plaza warm path");
     await enterPublicPlaza();
     await ready();
     await proveControllable();
-    const warmReadyMs = performance.now() - started;
+    const warm = await readEntryEvidence();
+    const warmReadyMs = warm.readyMs;
     progress(`public-plaza warm controllable in ${Math.round(warmReadyMs)}ms`);
 
     const transferBytes = await page.evaluate((resourceStart) => performance
       .getEntriesByType("resource")
       .slice(resourceStart)
       .reduce((total, resource) => total + Number(resource.transferSize || 0), 0), beforeCount);
-    return { coldReadyMs, warmReadyMs, transferBytes };
+    return {
+      coldReadyMs,
+      warmReadyMs,
+      transferBytes,
+      cold,
+      warm,
+      peakHeapBytes: Math.max(cold.heapBytes, warm.heapBytes)
+    };
   } catch (error) {
     measurementError = error;
     throw error;
@@ -397,7 +451,7 @@ export async function measurePublicPlazaInterior(page) {
  * @property {{fcpMs:number, domCompleteMs:number, transferBytes:number, imageBytes:number}} navigation
  * @property {{activeChunks:number, activeZones:number, dragP95Ms:number, dragMaxMs:number}} map
  * @property {{generationP95Ms:number, generationMaxMs:number, geometryP95Ms:number, cacheSize:number, heapDeltaBytes:number}} sweep
- * @property {{coldReadyMs:number|null, warmReadyMs:number|null, transferBytes:number|null}} interior
+ * @property {{coldReadyMs:number|null, warmReadyMs:number|null, transferBytes:number|null, peakHeapBytes?:number}} interior
  * @property {string[]} resourcesBeforeInterior
  * @property {Array<{duration:number,start:number}>} longTasks
  * @property {string[]} errors
