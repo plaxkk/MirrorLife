@@ -166,6 +166,18 @@ test("指纹和档位匹配时恢复暂停会话并创建新 generation", () => 
   assert.equal(controller.getStatus().phase, INTERIOR_SESSION_PHASES.INTERACTIVE);
   assert.equal(controller.getStatus().requestedAt, 500);
   assert.equal(clock.timerCount, 0);
+
+  const resumedSnapshot = Object.freeze({
+    fingerprint: "fp-a",
+    sessionId: result.token.sessionId,
+    generation: result.token.generation
+  });
+  controller.acceptSnapshot(result.token, resumedSnapshot);
+  assert.deepEqual(controller.getStatus().snapshot, resumedSnapshot);
+  assert.throws(
+    () => controller.acceptSnapshot(result.token, Object.freeze({ fingerprint: "fp-b" })),
+    /恢复快照指纹/
+  );
 });
 
 test("任一缓存身份不匹配都会释放旧会话并开始冷 generation", () => {

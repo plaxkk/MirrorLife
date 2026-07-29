@@ -23,6 +23,16 @@ try {
     ]
   });
   const page = await browser.newPage();
+  await page.evaluateOnNewDocument(() => {
+    Object.defineProperty(navigator, "deviceMemory", {
+      configurable: true,
+      get: () => 8
+    });
+    Object.defineProperty(performance, "memory", {
+      configurable: true,
+      value: { usedJSHeapSize: 80 * 1024 * 1024 }
+    });
+  });
   await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
   await page.goto(targetUrl.href, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await page.waitForFunction(() => (
@@ -169,6 +179,111 @@ try {
   assert.equal(staleOwnership.wrongDispose, false);
   assert.deepEqual(staleOwnership.after, staleOwnership.before);
   assert.equal(staleOwnership.canvasVisible, "visible");
+  const cacheExit = await page.evaluate(() => {
+    window.__mirrorLifePreparedBeforeCache = window.__mirrorLifeInteriorPhysics?.preparedSession;
+    const before = window.MirrorLifeInteriorSession.getStatus();
+    window.exitInteriorView();
+    return {
+      before,
+      after: window.MirrorLifeInteriorSession.getStatus(),
+      three: window.MirrorLifeInterior3D.getSessionStatus(),
+      estimate: window.MirrorLifeInterior3D.getResourceEstimate(),
+      policy: window.__mirrorLifeInteriorCachePolicy,
+      rapierElapsed: window.__mirrorLifePreparedBeforeCache?.rapierRuntime?.elapsed || 0
+    };
+  });
+  assert.equal(
+    cacheExit.after.phase,
+    "suspended",
+    `Warm cache rejected: ${JSON.stringify(cacheExit)}`
+  );
+  assert.equal(cacheExit.three.phase, "suspended");
+  assert.equal(cacheExit.three.renderActive, false);
+  assert.ok(cacheExit.estimate.estimatedBytes > 0);
+  await new Promise((resolve) => setTimeout(resolve, 200));
+  const suspendedIdle = await page.evaluate(() => ({
+    rapierElapsed: window.__mirrorLifePreparedBeforeCache?.rapierRuntime?.elapsed || 0,
+    renderActive: window.MirrorLifeInterior3D.getSessionStatus().renderActive,
+    projectionCount: window.MirrorLifeInterior3D.getProjections().length
+  }));
+  assert.equal(suspendedIdle.rapierElapsed, cacheExit.rapierElapsed);
+  assert.equal(suspendedIdle.renderActive, false);
+  assert.equal(suspendedIdle.projectionCount, 0);
+  await page.evaluate(() => {
+    window.enterInteriorView(
+      window.findRenderZoneById("public-plaza"),
+      "manual",
+      { requestedAt: 700 }
+    );
+  });
+  await page.waitForFunction((generation) => (
+    window.MirrorLifeInteriorSession?.getStatus?.().generation > generation
+    && window.MirrorLifeInteriorSession?.getStatus?.().phase === "full-ready"
+    && window.MirrorLifeInterior3D?.getSessionStatus?.().phase === "full-ready"
+  ), { timeout: 45_000 }, cacheExit.before.generation);
+  const cacheResume = await page.evaluate(() => ({
+    session: window.MirrorLifeInteriorSession.getStatus(),
+    three: window.MirrorLifeInterior3D.getSessionStatus(),
+    samePrepared: window.__mirrorLifePreparedBeforeCache
+      === window.__mirrorLifeInteriorPhysics?.preparedSession,
+    fingerprint: window.__mirrorLifeInteriorSession?.snapshot?.fingerprint || ""
+  }));
+  assert.equal(cacheResume.session.requestedAt, 700);
+  assert.ok(cacheResume.session.timestamps.resumed > 0);
+  assert.equal(cacheResume.samePrepared, true);
+  assert.equal(cacheResume.fingerprint, cacheExit.before.snapshot.fingerprint);
+  assert.equal(cacheResume.three.fingerprint, cacheExit.before.snapshot.fingerprint);
+  const invalidationRequest = await page.evaluate(() => {
+    window.__mirrorLifePreparedBeforeInvalidation = window.__mirrorLifeInteriorPhysics?.preparedSession;
+    const previous = window.MirrorLifeInteriorSession.getStatus();
+    window.exitInteriorView();
+    window.enterInteriorView(
+      window.findRenderZoneById("maternity-hospital"),
+      "manual",
+      { requestedAt: 800 }
+    );
+    return {
+      previous,
+      requested: window.MirrorLifeInteriorSession.getStatus()
+    };
+  });
+  await page.waitForFunction(() => (
+    window.MirrorLifeInteriorSession?.getStatus?.().zoneId === "maternity-hospital"
+    && window.MirrorLifeInteriorSession?.getStatus?.().phase === "full-ready"
+    && window.MirrorLifeInterior3D?.getSessionStatus?.().phase === "full-ready"
+  ), { timeout: 45_000 });
+  const invalidation = await page.evaluate(() => ({
+    session: window.MirrorLifeInteriorSession.getStatus(),
+    oldPreparedDisposed: window.__mirrorLifePreparedBeforeInvalidation?.disposed === true,
+    replacedPrepared: window.__mirrorLifePreparedBeforeInvalidation
+      !== window.__mirrorLifeInteriorPhysics?.preparedSession
+  }));
+  assert.equal(invalidationRequest.requested.zoneId, "maternity-hospital");
+  assert.notEqual(invalidation.session.sessionId, invalidationRequest.previous.sessionId);
+  assert.equal(invalidation.session.requestedAt, 800);
+  assert.equal("resumed" in invalidation.session.timestamps, false);
+  assert.equal(invalidation.oldPreparedDisposed, true);
+  assert.equal(invalidation.replacedPrepared, true);
+  const contextLoss = await page.evaluate(() => {
+    const canvas = document.querySelector("#interiorThreeLayer");
+    canvas.dispatchEvent(new Event("webglcontextlost", { cancelable: true }));
+    return {
+      status: window.MirrorLifeInterior3D.getSessionStatus(),
+      visibility: getComputedStyle(canvas).visibility
+    };
+  });
+  assert.equal(contextLoss.status.contextLost, true);
+  assert.equal(contextLoss.status.renderActive, false);
+  assert.equal(contextLoss.visibility, "hidden");
+  await page.evaluate(() => {
+    document.querySelector("#interiorThreeLayer")
+      .dispatchEvent(new Event("webglcontextrestored"));
+  });
+  await page.waitForFunction(() => (
+    window.MirrorLifeInterior3D?.getSessionStatus?.().contextLost === false
+    && window.MirrorLifeInterior3D?.getSessionStatus?.().phase === "full-ready"
+    && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true"
+  ), { timeout: 45_000 });
   const suspension = await page.evaluate(() => {
     const api = window.MirrorLifeInterior3D;
     const sessionId = api.getSessionStatus().sessionId;

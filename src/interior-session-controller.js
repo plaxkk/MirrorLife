@@ -183,13 +183,22 @@ function createInteriorSessionController(options = {}) {
 
   function acceptSnapshot(token, snapshot) {
     assertCurrent(token);
-    assertLegal("acceptSnapshot");
+    const resumed = state.phase === INTERIOR_SESSION_PHASES.INTERACTIVE
+      && Number.isFinite(state.timestamps.resumed);
+    if (!resumed) {
+      assertLegal("acceptSnapshot");
+    } else if (
+      !snapshot?.fingerprint
+      || snapshot.fingerprint !== state.snapshot?.fingerprint
+    ) {
+      throw new Error("恢复快照指纹必须与暂停会话一致");
+    }
     publish({
       ...state,
       snapshot,
       timestamps: {
         ...state.timestamps,
-        snapshotAccepted: now()
+        [resumed ? "resumedSnapshotAccepted" : "snapshotAccepted"]: now()
       }
     });
     return createToken();

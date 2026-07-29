@@ -164,7 +164,8 @@ let interiorSessionState = {
   assetsReady: false,
   actorContract: [],
   preloadPromise: null,
-  renderActive: false
+  renderActive: false,
+  contextLost: false
 };
 
 const INTERIOR_ZONE_ENVIRONMENT_STYLES = {
@@ -421,6 +422,33 @@ function ensureLayer() {
     // render loop becomes idle, without changing scene content or physics.
     preserveDrawingBuffer: true,
     powerPreference: "high-performance"
+  });
+  canvas.addEventListener("webglcontextlost", (event) => {
+    event.preventDefault();
+    interiorSessionState.contextLost = true;
+    interiorSessionState.renderActive = false;
+    hide();
+    window.dispatchEvent(new CustomEvent("mirrorlife:interior-webgl-context-lost", {
+      detail: getSessionStatus()
+    }));
+  });
+  canvas.addEventListener("webglcontextrestored", () => {
+    interiorSessionState.contextLost = false;
+    interiorSessionState.shellReady = false;
+    if (interiorSessionState.sessionId && interiorSessionState.phase !== "disposed") {
+      interiorSessionState.phase = "shell-loading";
+    }
+    roomSignature = "";
+    itemSignature = "";
+    sceneWarmupSignature = "";
+    sceneWarmupFrames = 0;
+    if (roomRoot) roomRoot.visible = true;
+    if (modelRoot) modelRoot.visible = true;
+    if (actorRoot) actorRoot.visible = true;
+    window.markRenderActive?.(2200);
+    window.dispatchEvent(new CustomEvent("mirrorlife:interior-webgl-context-restored", {
+      detail: getSessionStatus()
+    }));
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -11507,6 +11535,9 @@ function updateProjections(items, width, height) {
 }
 
 function update(payload = {}) {
+  if (interiorSessionState.contextLost) {
+    return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
+  }
   if (!ensureLayer()) return { ready: false, projections: [] };
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
@@ -11678,7 +11709,8 @@ function stageShell(snapshot, viewport = {}) {
       assetsReady: false,
       actorContract: getSnapshotActorContract(snapshot),
       preloadPromise: null,
-      renderActive: false
+      renderActive: false,
+      contextLost: false
     };
   }
   if (interiorSessionState.shellReady) {
@@ -11762,6 +11794,28 @@ function suspend(sessionId) {
   return true;
 }
 
+function resumeSession(snapshot) {
+  if (
+    interiorSessionState.phase !== "suspended"
+    || snapshot?.sessionId !== interiorSessionState.sessionId
+    || snapshot?.fingerprint !== interiorSessionState.fingerprint
+    || Number(snapshot?.generation) <= Number(interiorSessionState.generation)
+  ) return false;
+  interiorSessionState.generation = snapshot.generation;
+  interiorSessionState.actorContract = getSnapshotActorContract(snapshot);
+  interiorSessionState.phase = interiorSessionState.assetsReady ? "full-ready" : "interactive";
+  interiorSessionState.renderActive = true;
+  if (canvas) {
+    canvas.style.display = "block";
+    canvas.style.opacity = "1";
+    canvas.style.visibility = "visible";
+  }
+  if (roomRoot) roomRoot.visible = true;
+  if (modelRoot) modelRoot.visible = true;
+  if (actorRoot) actorRoot.visible = true;
+  return true;
+}
+
 function disposeSession(sessionId) {
   if (!sessionId || sessionId !== interiorSessionState.sessionId) return false;
   if (interiorSessionState.phase === "disposed") return true;
@@ -11783,7 +11837,8 @@ function getSessionStatus() {
     shellReady: interiorSessionState.shellReady,
     assetsReady: interiorSessionState.assetsReady,
     actorContract: interiorSessionState.actorContract.map((actor) => ({ ...actor })),
-    renderActive: interiorSessionState.renderActive
+    renderActive: interiorSessionState.renderActive,
+    contextLost: interiorSessionState.contextLost
   };
 }
 
@@ -12161,14 +12216,35 @@ function getStats() {
   };
 }
 
+function getResourceEstimate() {
+  const complexity = getSceneComplexity();
+  const memory = renderer?.info?.memory || {};
+  // Most room textures are small generated swatches/decals, while the actor
+  // geometry is indexed and shares immutable source buffers. A per-object
+  // megabyte estimate rejected a 7.37 MB cast as a 54 MB retained scene.
+  // Account for indexed vertex attributes plus a measured small-texture
+  // average; the policy still compares the result against a hard 48/24 MB cap.
+  const geometryBytes = complexity.triangles * 24
+    + Number(memory.geometries || 0) * 32 * 1024;
+  const textureBytes = Number(memory.textures || 0) * 256 * 1024;
+  return {
+    estimatedBytes: Math.max(1, Math.round(4 * 1024 * 1024 + geometryBytes + textureBytes)),
+    geometries: Number(memory.geometries || 0),
+    textures: Number(memory.textures || 0),
+    triangles: complexity.triangles
+  };
+}
+
 window.MirrorLifeInterior3D = {
   update,
   stageShell,
   activate,
   complete,
   suspend,
+  resumeSession,
   disposeSession,
   getSessionStatus,
+  getResourceEstimate,
   hide,
   isReady,
   loadModel,

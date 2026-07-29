@@ -64,6 +64,7 @@ let interiorPhysicsWorld = null;
 let interiorPreparedPhysics = null;
 let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
+let interiorWarmCache = null;
 let interiorRunHeld = false;
 let interiorJoystick = { x: 0, z: 0, pointerId: null };
 let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -14180,6 +14181,24 @@ function findRenderZoneById(zoneId) {
 
 let interiorSessionRequestSequence = 0;
 
+function getInteriorWarmCacheRevision(zone) {
+  const citizens = getAliveCitizens(state.society)
+    .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone?.id)
+    .map((citizen) => ({
+      id: citizen.id,
+      frame: getCitizenSpriteFrame(citizen),
+      until: citizenAnimations[citizen.id]?.indoor?.until || 0
+    }))
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  return JSON.stringify({
+    zoneId: zone?.id || "",
+    role: zone?.role || "",
+    archetype: zone?.archetype || "",
+    revision: zone?.zoneRevision ?? zone?.revision ?? 0,
+    citizens
+  });
+}
+
 function getInteriorSessionIntent(zone, source, requestedAt) {
   return {
     zoneId: zone.id,
@@ -14198,22 +14217,40 @@ function beginInteriorSession(zone, source, requestedAt) {
       throw new Error("MirrorLife interior session became ready without a request API");
     }
     if (requestId !== interiorSessionRequestSequence) return null;
-    const token = controller.request(intent);
+    const canTryWarmResume = Boolean(
+      interiorWarmCache
+      && controller.getStatus?.().phase === "suspended"
+    );
+    const warmFingerprint = canTryWarmResume
+      && interiorWarmCache.revision === getInteriorWarmCacheRevision(zone)
+      ? interiorWarmCache.snapshot.fingerprint
+      : "";
+    const outcome = canTryWarmResume
+      ? controller.resume(intent, warmFingerprint)
+      : { token: controller.request(intent), reused: false };
+    const token = outcome.token;
     if (interiorView?.sessionRequestId === requestId) {
       interiorView.sessionToken = token;
     }
-    return token;
+    return outcome;
   };
 
   if (window.MirrorLifeInteriorSession?.request) {
-    const token = requestFrom(window.MirrorLifeInteriorSession);
-    return { requestId, token, ready: Promise.resolve(token) };
+    const outcome = requestFrom(window.MirrorLifeInteriorSession);
+    return {
+      requestId,
+      token: outcome?.token || null,
+      reused: outcome?.reused === true,
+      ready: Promise.resolve(outcome?.token || null)
+    };
   }
   if (typeof window.MirrorLifeInteriorSessionReady?.then === "function") {
+    const outcomeReady = window.MirrorLifeInteriorSessionReady.then(requestFrom);
     return {
       requestId,
       token: null,
-      ready: window.MirrorLifeInteriorSessionReady.then(requestFrom)
+      reused: false,
+      ready: outcomeReady.then((outcome) => outcome?.token || null)
     };
   }
   return {
@@ -14251,7 +14288,11 @@ function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
     Promise.resolve(request)
   ]).then(([token, runtime]) => {
     const controller = window.MirrorLifeInteriorSession;
-    if (token && controller?.isCurrent?.(token)) {
+    if (
+      token
+      && controller?.isCurrent?.(token)
+      && controller.getStatus().phase === "runtime-loading"
+    ) {
       controller.markRuntimeReady(token);
     }
     return runtime;
@@ -14263,18 +14304,159 @@ function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
   return trackedRequest;
 }
 
+function disposeInteriorWarmCache(reason = "manual") {
+  const cached = interiorWarmCache;
+  if (!cached) return false;
+  interiorWarmCache = null;
+  window.MirrorLifeInterior3D?.disposeSession?.(cached.snapshot.sessionId);
+  getInteriorPhysicsApi()?.disposePreparedSession?.(cached.preparedPhysics);
+  if (interiorPreparedPhysics === cached.preparedPhysics) {
+    interiorPreparedPhysics = null;
+    interiorPhysicsWorld = null;
+    interiorRapierRuntime = null;
+    interiorRapierLoading = null;
+  }
+  window.dispatchEvent(new CustomEvent("mirrorlife:interior-warm-cache-disposed", {
+    detail: { reason, zoneId: cached.snapshot.zoneId }
+  }));
+  return true;
+}
+
+function cacheInteriorSessionForExit() {
+  const snapshot = interiorView?.entrySnapshot;
+  const token = interiorView?.sessionToken;
+  const controller = window.MirrorLifeInteriorSession;
+  const three = window.MirrorLifeInterior3D;
+  if (
+    !snapshot
+    || !token
+    || !controller?.isCurrent?.(token)
+    || !["interactive", "gameplay-ready", "full-ready"].includes(controller.getStatus().phase)
+    || !interiorPreparedPhysics
+  ) return false;
+
+  const mobile = snapshot.qualityProfile === "mobile";
+  const estimate = three?.getResourceEstimate?.() || { estimatedBytes: Number.POSITIVE_INFINITY };
+  const heapBytes = Number(performance.memory?.usedJSHeapSize);
+  interiorWarmCache = {
+    snapshot,
+    revision: getInteriorWarmCacheRevision(interiorView.zone),
+    preparedPhysics: interiorPreparedPhysics,
+    physicsWorld: interiorPhysicsWorld,
+    rapierRuntime: interiorRapierRuntime,
+    physicsEvidence: window.__mirrorLifeInteriorPhysics,
+    orbit: {
+      ...interiorOrbit,
+      velocity: { ...(interiorOrbit.velocity || { x: 0, y: 0, z: 0 }) },
+      drag: false
+    },
+    firstThreeInput: interiorView.firstThreeInput || null
+  };
+  const policy = {
+    fingerprint: snapshot.fingerprint,
+    qualityProfile: snapshot.qualityProfile,
+    styleKey: controller.getStatus().styleKey,
+    ttlMs: mobile ? 20_000 : 60_000,
+    deviceMemory: Number(navigator.deviceMemory || 8),
+    saveData: navigator.connection?.saveData === true,
+    estimatedBytes: estimate.estimatedBytes,
+    maxBytes: (mobile ? 24 : 48) * 1024 * 1024,
+    heapBytes: Number.isFinite(heapBytes) ? heapBytes : undefined,
+    maxHeapBytes: (mobile ? 105 : 160) * 1024 * 1024
+  };
+  window.__mirrorLifeInteriorCachePolicy = Object.freeze({ ...policy });
+  const result = controller.suspend(token, policy);
+  if (!result.cached) {
+    disposeInteriorWarmCache(result.reason || "cache-policy");
+    return false;
+  }
+  three?.suspend?.(snapshot.sessionId);
+  interiorPreparedPhysics = null;
+  interiorPhysicsWorld = null;
+  interiorRapierRuntime = null;
+  interiorRapierLoading = null;
+  return true;
+}
+
+function restoreInteriorWarmSession(zone, source, requestedAt, token) {
+  const cached = interiorWarmCache;
+  const controller = window.MirrorLifeInteriorSession;
+  const factory = window.MirrorLifeInteriorEntrySnapshot;
+  if (
+    !cached
+    || !token
+    || !controller?.isCurrent?.(token)
+    || cached.snapshot.zoneId !== zone.id
+    || cached.revision !== getInteriorWarmCacheRevision(zone)
+    || !factory?.create
+  ) return false;
+  const status = controller.getStatus();
+  const snapshot = factory.create({
+    ...cached.snapshot,
+    sessionId: token.sessionId,
+    generation: token.generation,
+    source: source || "manual",
+    requestedAt,
+    qualityProfile: status.qualityProfile
+  });
+  if (snapshot.fingerprint !== cached.snapshot.fingerprint) return false;
+  controller.acceptSnapshot(token, snapshot);
+  if (!window.MirrorLifeInterior3D?.resumeSession?.(snapshot)) return false;
+
+  interiorPreparedPhysics = cached.preparedPhysics;
+  interiorPhysicsWorld = cached.physicsWorld;
+  interiorRapierRuntime = cached.rapierRuntime;
+  interiorRapierLoading = null;
+  interiorOrbit = {
+    ...cached.orbit,
+    velocity: { ...(cached.orbit.velocity || { x: 0, y: 0, z: 0 }) },
+    lastMoveAt: performance.now(),
+    drag: false
+  };
+  interiorView.physicsSession = interiorPreparedPhysics;
+  interiorView.physicsSignature = interiorPhysicsWorld?.signature || "";
+  interiorView.physicsSpawnApplied = true;
+  interiorView.entrySnapshot = snapshot;
+  interiorView.firstThreeInput = cached.firstThreeInput;
+  window.__mirrorLifeInteriorPhysics = cached.physicsEvidence;
+  const owningView = interiorView;
+  window.__mirrorLifeInteriorSession = Object.freeze({
+    snapshot,
+    get firstThreeInput() {
+      return owningView.firstThreeInput || null;
+    },
+    get runtimePatch() {
+      return owningView.runtimePatch || null;
+    }
+  });
+  interiorWarmCache = null;
+  return true;
+}
+
+window.addEventListener("mirrorlife:interior-session-dispose", (event) => {
+  disposeInteriorWarmCache(event.detail?.reason || "controller-dispose");
+});
+window.addEventListener("mirrorlife:interior-webgl-context-lost", () => {
+  const controller = window.MirrorLifeInteriorSession;
+  if (controller?.getStatus?.().phase === "suspended") {
+    controller.evict("webgl-context-lost");
+  }
+});
+
 function enterInteriorView(zone, source = "manual", options = {}) {
   if (!zone) return;
-  if (interiorView?.entrySnapshot?.sessionId) {
-    window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
-  }
-  disposeInteriorPhysicsSession();
   const requestedAt = Number.isFinite(Number(options.requestedAt))
     ? Number(options.requestedAt)
     : performance.now();
   const sessionRequest = beginInteriorSession(zone, source, requestedAt);
+  if (!sessionRequest.reused) {
+    if (interiorView?.entrySnapshot?.sessionId) {
+      window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+    }
+    disposeInteriorPhysicsSession();
+  }
   loadInteriorRuntimeForEntry(zone, source, sessionRequest.ready);
-  window.MirrorLifeInterior3D?.hide?.();
+  if (!sessionRequest.reused) window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
   const blueprint = getInteriorBlueprint(zone);
@@ -14319,13 +14501,16 @@ function enterInteriorView(zone, source = "manual", options = {}) {
     }
   };
   interiorOrbit = { yaw: 0, pitch: INTERIOR_DEFAULT_PITCH, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
-  const physicsWorld = ensureInteriorPhysicsWorld(blueprint);
-  if (physicsWorld?.spawn) {
+  const resumed = sessionRequest.reused
+    ? restoreInteriorWarmSession(zone, source, requestedAt, sessionRequest.token)
+    : false;
+  const physicsWorld = resumed ? interiorPhysicsWorld : ensureInteriorPhysicsWorld(blueprint);
+  if (!resumed && physicsWorld?.spawn) {
     interiorOrbit.x = physicsWorld.spawn.x;
     interiorOrbit.y = physicsWorld.spawn.y || 0.86;
     interiorOrbit.z = physicsWorld.spawn.z;
   }
-  ensureInteriorRapierRuntime(blueprint);
+  if (!resumed) ensureInteriorRapierRuntime(blueprint);
   interiorMoveKeys.clear();
   interiorRunHeld = false;
   interiorJoystick = { x: 0, z: 0, pointerId: null };
@@ -14368,13 +14553,16 @@ function enterInteriorView(zone, source = "manual", options = {}) {
 function exitInteriorView() {
   if (!interiorView) return;
   interiorSessionRequestSequence += 1;
-  window.MirrorLifeInteriorSession?.cancel?.("exit");
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
-  if (interiorView.entrySnapshot?.sessionId) {
-    window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+  const cached = cacheInteriorSessionForExit();
+  if (!cached) {
+    window.MirrorLifeInteriorSession?.cancel?.("exit");
+    if (interiorView.entrySnapshot?.sessionId) {
+      window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+    }
+    disposeInteriorPhysicsSession();
   }
-  disposeInteriorPhysicsSession();
   interiorView = null;
   interiorOrbit.drag = false;
   interiorMoveKeys.clear();

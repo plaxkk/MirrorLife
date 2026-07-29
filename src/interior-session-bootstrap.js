@@ -9,6 +9,11 @@ const session = window.MirrorLifeInteriorSession || createInteriorSessionControl
     window.dispatchEvent(new CustomEvent("mirrorlife:interior-session-transition", {
       detail: status
     }));
+  },
+  onDispose(record, reason) {
+    window.dispatchEvent(new CustomEvent("mirrorlife:interior-session-dispose", {
+      detail: { record, reason }
+    }));
   }
 });
 

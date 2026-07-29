@@ -189,6 +189,29 @@ try {
   assert.equal(await page.evaluate(() => window.__mirrorLifeRuntimeReadyResolved), false);
   assert.equal(requestsBeforeRelease.some((url) => interiorResourcePattern.test(url)), false);
 
+  const loadingLeave = await page.evaluate(() => {
+    const beforeExit = window.MirrorLifeInteriorSession.getStatus();
+    window.exitInteriorView();
+    const afterExit = window.MirrorLifeInteriorSession.getStatus();
+    const inactive = !document.body.classList.contains("interior-active");
+    window.enterInteriorView(
+      window.findRenderZoneById("public-plaza"),
+      "qa",
+      { requestedAt: 333 }
+    );
+    return {
+      beforeExit,
+      afterExit,
+      inactive,
+      reentry: window.MirrorLifeInteriorSession.getStatus()
+    };
+  });
+  assert.equal(loadingLeave.afterExit.phase, "evicted");
+  assert.equal(loadingLeave.inactive, true);
+  assert.equal(loadingLeave.reentry.zoneId, "public-plaza");
+  assert.equal(loadingLeave.reentry.requestedAt, 333);
+  assert.ok(loadingLeave.reentry.generation > loadingLeave.beforeExit.generation);
+
   const heldRequestUrl = heldLoaderRequest.url();
   await heldLoaderRequest.continue();
   await navigation;
@@ -210,8 +233,12 @@ try {
   assert.equal(afterRelease.loader.reason, "qa");
   assert.equal(afterRelease.loader.zoneId, "public-plaza");
   assert.equal(afterRelease.session.zoneId, "public-plaza");
-  assert.equal(afterRelease.session.requestedAt, 222);
-  assert.equal(afterRelease.session.phase, "snapshot-building");
+  assert.equal(afterRelease.session.requestedAt, 333);
+  assert.ok(
+    ["snapshot-building", "shell-loading", "interactive", "gameplay-ready", "full-ready"]
+      .includes(afterRelease.session.phase),
+    `Latest re-entry did not progress after loader release: ${afterRelease.session.phase}`
+  );
   assert.equal(afterRelease.three, true);
   assert.equal(afterRelease.physics, true);
   assert.equal(afterRelease.renderPhase, "ready");
@@ -226,6 +253,8 @@ try {
       zoneId: beforeRelease.zoneId,
       firstGeneration: beforeRelease.firstSession.generation,
       finalGeneration: beforeRelease.finalSession.generation,
+      leaveGeneration: loadingLeave.afterExit.generation,
+      reentryGeneration: loadingLeave.reentry.generation,
       eagerInteriorResources: []
     },
     afterRelease: {
