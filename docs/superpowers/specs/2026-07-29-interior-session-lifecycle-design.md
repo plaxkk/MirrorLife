@@ -70,6 +70,7 @@ Phase 0 不恢复已经回退的隐藏完整场景预热。后续可以根据预
  * @property {string} sessionId
  * @property {number} generation
  * @property {string} zoneId
+ * @property {number} zoneRevision
  * @property {string} source
  * @property {number} requestedAt
  * @property {"desktop"|"mobile"} qualityProfile
