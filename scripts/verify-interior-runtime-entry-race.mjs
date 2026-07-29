@@ -134,6 +134,8 @@ try {
   await page.waitForFunction(() => (
     typeof window.drawGameWorld === "function"
     && typeof window.enterInteriorView === "function"
+    && typeof window.MirrorLifeInteriorSessionReady?.then === "function"
+    && !!window.MirrorLifeInteriorSession
     && typeof window.MirrorLifeInteriorRuntimeReady?.then === "function"
     && !!window.findRenderZoneById?.("public-plaza")
   ), { timeout: 20_000 });
@@ -153,14 +155,19 @@ try {
     window.MirrorLifeInteriorRuntimeReady.then(() => {
       window.__mirrorLifeRuntimeReadyResolved = true;
     });
-    const zone = window.findRenderZoneById("public-plaza");
-    window.enterInteriorView(zone, "qa");
+    const firstZone = window.findRenderZoneById("maternity-hospital");
+    const finalZone = window.findRenderZoneById("public-plaza");
+    window.enterInteriorView(firstZone, "qa", { requestedAt: 111 });
+    const firstSession = window.MirrorLifeInteriorSession.getStatus();
+    window.enterInteriorView(finalZone, "qa", { requestedAt: 222 });
     return {
       runtime: !!window.MirrorLifeInteriorRuntime,
       three: !!window.MirrorLifeInterior3D,
       physics: !!window.MirrorLifeInteriorPhysics,
       interiorActive: document.body.classList.contains("interior-active"),
-      zoneId: document.body.dataset.interiorZone || ""
+      zoneId: document.body.dataset.interiorZone || "",
+      firstSession,
+      finalSession: window.MirrorLifeInteriorSession.getStatus()
     };
   });
   await page.waitForFunction(() => document.body.dataset.interiorRenderPhase === "loading", { timeout: 5_000 });
@@ -171,6 +178,14 @@ try {
   assert.equal(beforeRelease.physics, false);
   assert.equal(beforeRelease.interiorActive, true);
   assert.equal(beforeRelease.zoneId, "public-plaza");
+  assert.equal(beforeRelease.firstSession.zoneId, "maternity-hospital");
+  assert.equal(beforeRelease.finalSession.zoneId, "public-plaza");
+  assert.equal(beforeRelease.finalSession.requestedAt, 222);
+  assert.ok(
+    beforeRelease.finalSession.generation > beforeRelease.firstSession.generation,
+    "A→B entry must transfer ownership to a newer session generation."
+  );
+  assert.equal(beforeRelease.finalSession.phase, "runtime-loading");
   assert.equal(await page.evaluate(() => window.__mirrorLifeRuntimeReadyResolved), false);
   assert.equal(requestsBeforeRelease.some((url) => interiorResourcePattern.test(url)), false);
 
@@ -187,12 +202,16 @@ try {
 
   const afterRelease = await page.evaluate(() => ({
     loader: window.MirrorLifeInteriorRuntime.getStatus(),
+    session: window.MirrorLifeInteriorSession.getStatus(),
     three: !!window.MirrorLifeInterior3D,
     physics: !!window.MirrorLifeInteriorPhysics,
     renderPhase: document.body.dataset.interiorRenderPhase || ""
   }));
   assert.equal(afterRelease.loader.reason, "qa");
   assert.equal(afterRelease.loader.zoneId, "public-plaza");
+  assert.equal(afterRelease.session.zoneId, "public-plaza");
+  assert.equal(afterRelease.session.requestedAt, 222);
+  assert.equal(afterRelease.session.phase, "snapshot-building");
   assert.equal(afterRelease.three, true);
   assert.equal(afterRelease.physics, true);
   assert.equal(afterRelease.renderPhase, "ready");
@@ -205,10 +224,13 @@ try {
       readyPromisePending: true,
       interiorActive: beforeRelease.interiorActive,
       zoneId: beforeRelease.zoneId,
+      firstGeneration: beforeRelease.firstSession.generation,
+      finalGeneration: beforeRelease.finalSession.generation,
       eagerInteriorResources: []
     },
     afterRelease: {
       phase: afterRelease.loader.phase,
+      sessionPhase: afterRelease.session.phase,
       reason: afterRelease.loader.reason,
       zoneId: afterRelease.loader.zoneId,
       three: afterRelease.three,

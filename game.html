@@ -263,6 +263,19 @@
     <script src="causal-graph.js"></script>
     <script>
       (() => {
+        if (window.MirrorLifeInteriorSessionReady) return;
+        window.MirrorLifeInteriorSessionReady = window.MirrorLifeInteriorSession
+          ? Promise.resolve(window.MirrorLifeInteriorSession)
+          : new Promise((resolve) => {
+              window.addEventListener("mirrorlife:interior-session-ready", (event) => {
+                resolve(event.detail || window.MirrorLifeInteriorSession);
+              }, { once: true });
+            });
+      })();
+    </script>
+    <script type="module" src="/src/interior-session-bootstrap.js"></script>
+    <script>
+      (() => {
         if (window.MirrorLifeInteriorRuntimeReady) return;
         window.MirrorLifeInteriorRuntimeReady = window.MirrorLifeInteriorRuntime
           ? Promise.resolve(window.MirrorLifeInteriorRuntime)

@@ -14003,7 +14003,52 @@ function findRenderZoneById(zoneId) {
     || null;
 }
 
-function loadInteriorRuntimeForEntry(zone, source) {
+let interiorSessionRequestSequence = 0;
+
+function getInteriorSessionIntent(zone, source, requestedAt) {
+  return {
+    zoneId: zone.id,
+    source: source || "manual",
+    requestedAt,
+    qualityProfile: window.matchMedia?.("(max-width: 720px)")?.matches ? "mobile" : "desktop",
+    styleKey: "sunweave-d"
+  };
+}
+
+function beginInteriorSession(zone, source, requestedAt) {
+  const requestId = ++interiorSessionRequestSequence;
+  const intent = getInteriorSessionIntent(zone, source, requestedAt);
+  const requestFrom = (controller) => {
+    if (!controller?.request) {
+      throw new Error("MirrorLife interior session became ready without a request API");
+    }
+    if (requestId !== interiorSessionRequestSequence) return null;
+    const token = controller.request(intent);
+    if (interiorView?.sessionRequestId === requestId) {
+      interiorView.sessionToken = token;
+    }
+    return token;
+  };
+
+  if (window.MirrorLifeInteriorSession?.request) {
+    const token = requestFrom(window.MirrorLifeInteriorSession);
+    return { requestId, token, ready: Promise.resolve(token) };
+  }
+  if (typeof window.MirrorLifeInteriorSessionReady?.then === "function") {
+    return {
+      requestId,
+      token: null,
+      ready: window.MirrorLifeInteriorSessionReady.then(requestFrom)
+    };
+  }
+  return {
+    requestId,
+    token: null,
+    ready: Promise.reject(new Error("MirrorLife interior session bootstrap is unavailable"))
+  };
+}
+
+function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
   const options = {
     reason: source || "manual",
     zoneId: zone.id
@@ -14026,15 +14071,30 @@ function loadInteriorRuntimeForEntry(zone, source) {
   } catch (error) {
     request = Promise.reject(error);
   }
-  Promise.resolve(request).catch((error) => {
+  const trackedRequest = Promise.all([
+    Promise.resolve(sessionTokenReady),
+    Promise.resolve(request)
+  ]).then(([token, runtime]) => {
+    const controller = window.MirrorLifeInteriorSession;
+    if (token && controller?.isCurrent?.(token)) {
+      controller.markRuntimeReady(token);
+    }
+    return runtime;
+  });
+  trackedRequest.catch((error) => {
     console.warn("MirrorLife interior runtime failed to load", error);
     showToast("室内仍在准备，可以稍后重试", "conflict");
   });
+  return trackedRequest;
 }
 
-function enterInteriorView(zone, source = "manual") {
+function enterInteriorView(zone, source = "manual", options = {}) {
   if (!zone) return;
-  loadInteriorRuntimeForEntry(zone, source);
+  const requestedAt = Number.isFinite(Number(options.requestedAt))
+    ? Number(options.requestedAt)
+    : performance.now();
+  const sessionRequest = beginInteriorSession(zone, source, requestedAt);
+  loadInteriorRuntimeForEntry(zone, source, sessionRequest.ready);
   window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
@@ -14055,6 +14115,9 @@ function enterInteriorView(zone, source = "manual") {
     zone,
     source,
     enteredAt,
+    requestedAt,
+    sessionRequestId: sessionRequest.requestId,
+    sessionToken: sessionRequest.token,
     nextArrivalCheckAt: 0,
     discovery: {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
@@ -14127,6 +14190,8 @@ function enterInteriorView(zone, source = "manual") {
 
 function exitInteriorView() {
   if (!interiorView) return;
+  interiorSessionRequestSequence += 1;
+  window.MirrorLifeInteriorSession?.cancel?.("exit");
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
   interiorView = null;

@@ -9,18 +9,25 @@ let status = {
 };
 
 async function load(options = {}) {
+  const requestMetadata = {
+    reason: String(options.reason || "manual"),
+    zoneId: String(options.zoneId || "")
+  };
   if (status.phase === "ready") {
+    status = { ...status, ...requestMetadata };
     return {
       physics: window.MirrorLifeInteriorPhysics,
       three: window.MirrorLifeInterior3D
     };
   }
-  if (loadPromise) return loadPromise;
+  if (loadPromise) {
+    status = { ...status, ...requestMetadata };
+    return loadPromise;
+  }
 
   status = {
     phase: "loading",
-    reason: String(options.reason || "manual"),
-    zoneId: String(options.zoneId || ""),
+    ...requestMetadata,
     startedAt: performance.now(),
     readyAt: 0,
     error: ""
