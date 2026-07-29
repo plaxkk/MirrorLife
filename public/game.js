@@ -13615,27 +13615,124 @@ function getInteriorCameraFocus(blueprint, actors = []) {
   return { x, z, safeArea };
 }
 
-function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []) {
+function buildInteriorEntrySnapshot(zone, source, token, input) {
+  const factory = window.MirrorLifeInteriorEntrySnapshot;
+  const controller = window.MirrorLifeInteriorSession;
+  if (!factory?.create || !controller?.isCurrent?.(token)) return null;
+  const status = controller.getStatus();
+  const world = input.world;
+  const spawn = {
+    x: Number(world?.spawn?.x || 0),
+    y: Number(world?.spawn?.y || 0.86),
+    z: Number(world?.spawn?.z || 0)
+  };
+  const cameraFocus = getInteriorCameraFocus(input.blueprint, input.actors);
+  const revision = Number(zone?.zoneRevision ?? zone?.revision ?? 0);
+  const criticalModels = [...new Set(input.items
+    .filter((item) => item.renderModel !== false && item.model)
+    .map((item) => item.model))];
+  return factory.create({
+    sessionId: token.sessionId,
+    generation: token.generation,
+    zoneId: zone.id,
+    zoneRevision: Number.isFinite(revision) ? revision : 0,
+    source: source || "manual",
+    requestedAt: status.requestedAt,
+    qualityProfile: status.qualityProfile,
+    blueprintKey: input.blueprint.key,
+    variant: getInteriorPhysicsVariant(input.blueprint),
+    theme: {
+      wall: input.roomStyle.wall,
+      floor: input.roomStyle.floor,
+      accent: input.roomStyle.accent,
+      trim: input.roomStyle.trim,
+      archetype: input.blueprint.key,
+      zoneId: zone.id,
+      variant: getInteriorPhysicsVariant(input.blueprint),
+      layoutProfile: input.blueprint.layoutProfile,
+      night: !!input.isNight
+    },
+    layoutProfile: input.blueprint.layoutProfile,
+    items: input.items,
+    actors: input.actors,
+    spawn,
+    camera: {
+      yaw: Number(interiorOrbit?.yaw || 0),
+      pitch: Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
+      x: spawn.x,
+      z: spawn.z,
+      targetX: cameraFocus.x,
+      targetZ: cameraFocus.z,
+      safeArea: cameraFocus.safeArea
+    },
+    criticalModels,
+    deferredModels: []
+  });
+}
+
+function applyInteriorRuntimePatch(snapshot, patch = {}) {
+  if (
+    !snapshot
+    || interiorView?.entrySnapshot?.fingerprint !== snapshot.fingerprint
+    || interiorView?.entrySnapshot?.generation !== snapshot.generation
+  ) return false;
+  interiorView.runtimePatch = Object.freeze({
+    ...(interiorView.runtimePatch || {}),
+    ...patch
+  });
+  return true;
+}
+
+function ensureInteriorEntrySnapshot(zone, source, token, input) {
+  if (interiorView?.entrySnapshot) return interiorView.entrySnapshot;
+  const controller = window.MirrorLifeInteriorSession;
+  if (
+    !token
+    || !controller?.isCurrent?.(token)
+    || controller.getStatus().phase !== "snapshot-building"
+  ) return null;
+  const snapshot = buildInteriorEntrySnapshot(zone, source, token, input);
+  if (!snapshot) return null;
+  controller.acceptSnapshot(token, snapshot);
+  interiorView.entrySnapshot = snapshot;
+  const owningView = interiorView;
+  window.__mirrorLifeInteriorSession = Object.freeze({
+    snapshot,
+    get firstThreeInput() {
+      return owningView.firstThreeInput || null;
+    },
+    get runtimePatch() {
+      return owningView.runtimePatch || null;
+    }
+  });
+  return snapshot;
+}
+
+function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = [], snapshot = null) {
   const api = window.MirrorLifeInterior3D;
   if (!api?.update) return false;
-  const items = getInteriorThreeItems(blueprint, W, H);
+  const useSnapshotOpening = Boolean(snapshot && !interiorView?.firstThreeInput);
+  const items = snapshot?.items || getInteriorThreeItems(blueprint, W, H);
+  const renderActors = useSnapshotOpening ? snapshot.actors : actors;
   const cameraFocus = getInteriorCameraFocus(blueprint, actors);
   const physicsActors = [
     { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), y: Number(interiorOrbit?.y || 0.86), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
-    ...actors.map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
+    ...renderActors
+      .filter((actor) => actor.id !== "player")
+      .map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
   ];
-  return api.update({
+  const payload = {
     visible: true,
     width: W,
     height: H,
-    yaw: Number(interiorOrbit?.yaw || 0),
-    pitch: Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
-    cameraX: Number(interiorOrbit?.x || 0),
-    cameraZ: Number(interiorOrbit?.z || 0),
-    cameraTargetX: cameraFocus.x,
-    cameraTargetZ: cameraFocus.z,
-    cameraSafeArea: cameraFocus.safeArea,
-    theme: {
+    yaw: useSnapshotOpening ? snapshot.camera.yaw : Number(interiorOrbit?.yaw || 0),
+    pitch: useSnapshotOpening ? snapshot.camera.pitch : Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
+    cameraX: useSnapshotOpening ? snapshot.camera.x : Number(interiorOrbit?.x || 0),
+    cameraZ: useSnapshotOpening ? snapshot.camera.z : Number(interiorOrbit?.z || 0),
+    cameraTargetX: useSnapshotOpening ? snapshot.camera.targetX : cameraFocus.x,
+    cameraTargetZ: useSnapshotOpening ? snapshot.camera.targetZ : cameraFocus.z,
+    cameraSafeArea: useSnapshotOpening ? snapshot.camera.safeArea : cameraFocus.safeArea,
+    theme: snapshot?.theme || {
       wall: roomStyle.wall,
       floor: roomStyle.floor,
       accent: roomStyle.accent,
@@ -13647,7 +13744,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
       night: !!isNight
     },
     items,
-    actors,
+    actors: renderActors,
     physics: {
       enabled: interiorPhysicsDebugVisible,
       colliders: interiorPhysicsWorld?.colliders || [],
@@ -13655,7 +13752,17 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
       ready: !!interiorRapierRuntime,
       dynamics: getInteriorPhysicsApi()?.getRapierDynamicTransforms?.(interiorRapierRuntime) || []
     }
-  });
+  };
+  if (useSnapshotOpening) {
+    interiorView.firstThreeInput = Object.freeze({
+      items: snapshot.items,
+      actors: snapshot.actors,
+      theme: snapshot.theme,
+      camera: snapshot.camera
+    });
+    applyInteriorRuntimePatch(snapshot, { firstThreeInputAcceptedAt: performance.now() });
+  }
+  return api.update(payload);
 }
 
 function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
@@ -14876,6 +14983,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     grounded: interiorOrbit.grounded !== false,
     walkPhase: Number(interiorOrbit.walkPhase || 0),
     civicRole: zone.id === "public-plaza" ? "player" : "",
+    style: `frame-${getCitizenSpriteFrame(avatarCitizen)}:player`,
     scale: (avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1) * civicActorScale
   };
   // The deterministic review cast mirrors the selected art target: a teal-cap
@@ -14884,23 +14992,48 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const qaCivicRoles = ["listener", "facilitator", "mediator"];
   const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => {
     const civicRole = zone.id === "public-plaza" ? qaCivicRoles[entryIndex % qaCivicRoles.length] : "";
+    const frame = isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
+      ? qaCivicFrames[entryIndex % qaCivicFrames.length]
+      : entry.frame;
     return {
       id: entry.id,
+      role: "citizen",
       worldX: entry.worldX,
       worldY: 0,
       worldZ: entry.worldZ,
-      frame: isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
-        ? qaCivicFrames[entryIndex % qaCivicFrames.length]
-        : entry.frame,
+      frame,
       facing: entry.facing,
       state: getInteriorCivicActingState(civicRole, entry.state, now),
       walkPhase: entry.walkPhase,
       civicRole,
+      style: `frame-${frame}:${civicRole || "citizen"}`,
       scale: entry.scale * civicActorScale
     };
   })];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
-  const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);
+  const snapshotItems = getInteriorThreeItems(blueprint, W, H);
+  const entrySnapshot = ensureInteriorEntrySnapshot(
+    zone,
+    interiorView.source,
+    interiorView.sessionToken,
+    {
+      blueprint,
+      roomStyle,
+      isNight,
+      actors: actorPayload,
+      items: snapshotItems,
+      world: interiorPhysicsWorld
+    }
+  );
+  const threeState = syncInteriorThreeLayer(
+    W,
+    H,
+    blueprint,
+    roomStyle,
+    isNight,
+    actorPayload,
+    entrySnapshot
+  );
   const useThreeModels = !!threeState?.ready && !!interiorRapierRuntime;
   const projectedProps = new Map((threeState?.projections || [])
     .filter((item) => String(item.key || "").startsWith("prop-"))
