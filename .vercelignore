@@ -1,6 +1,6 @@
 # Local build output and dependency caches are recreated by Vercel.
 dist/
-node_modules/
+node_modules
 .git/
 .vercel/
 

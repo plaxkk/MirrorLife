@@ -228,8 +228,19 @@ try {
   console.warn("ffmpeg is unavailable; built the review board with pngjs instead.");
 }
 
+const capturedBuildFingerprints = [...new Set(
+  results.map((result) => result.stats?.buildFingerprint).filter(Boolean)
+)];
+if (capturedBuildFingerprints.length !== 1) {
+  throw new Error(
+    `Interior capture build fingerprint is missing or mixed: `
+    + `${capturedBuildFingerprints.join(", ") || "none"}`
+  );
+}
+const buildFingerprint = capturedBuildFingerprints[0];
 await fs.writeFile(path.join(OUTPUT_ROOT, "manifest.json"), `${JSON.stringify({
   generatedAt: new Date().toISOString(),
+  buildFingerprint,
   baseUrl: BASE_URL,
   viewport: VIEWPORT,
   yaw: REVIEW_YAW,

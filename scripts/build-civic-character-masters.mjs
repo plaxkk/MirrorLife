@@ -55,3 +55,6 @@ await run(blender, [
   "--master-root",
   path.resolve("dist/interior-3d-work/characters/civic/master")
 ]);
+await run(process.execPath, [
+  path.resolve("scripts/quantize-civic-character-glbs.mjs")
+]);

@@ -9,6 +9,7 @@
 //
 // usage: node scripts/measure-reference-gap.mjs [current.png] [reference.png]
 import fs from "node:fs";
+import path from "node:path";
 import { PNG } from "pngjs";
 
 const HUD_BANDS = [
@@ -178,5 +179,25 @@ console.log("-".repeat(66));
 console.log(`${within}/${AXES.length} 轴在容差内`);
 
 if (process.env.MIRRORLIFE_GAP_JSON) {
-  fs.writeFileSync(process.env.MIRRORLIFE_GAP_JSON, `${JSON.stringify({ current: currentFile, gaps, within, total: AXES.length }, null, 2)}\n`);
+  const captureManifestFile = process.env.MIRRORLIFE_CAPTURE_MANIFEST
+    || path.join(path.dirname(currentFile), "manifest.json");
+  const captureManifest = JSON.parse(fs.readFileSync(captureManifestFile, "utf8"));
+  const capturedScene = captureManifest.scenes?.find((scene) => (
+    path.resolve(path.dirname(captureManifestFile), scene.file) === path.resolve(currentFile)
+  ));
+  if (!capturedScene) {
+    throw new Error(`${captureManifestFile}: no captured scene matches ${currentFile}`);
+  }
+  const buildFingerprint = captureManifest.buildFingerprint
+    || capturedScene.stats?.buildFingerprint;
+  if (!buildFingerprint) {
+    throw new Error(`${captureManifestFile}: capture build fingerprint is missing`);
+  }
+  fs.writeFileSync(process.env.MIRRORLIFE_GAP_JSON, `${JSON.stringify({
+    buildFingerprint,
+    current: currentFile,
+    gaps,
+    within,
+    total: AXES.length
+  }, null, 2)}\n`);
 }

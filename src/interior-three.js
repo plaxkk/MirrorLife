@@ -7,13 +7,34 @@ import {
   resolveCivicAnimationState,
   sampleCivicAnimationPose
 } from "./civic-animation-clips.js";
+import {
+  CIVIC_ARTICULATION_BINDING_SPECS,
+  REFERENCE_FIDELITY_V3,
+  createCivicArticulationBinding,
+  measureActorContractState,
+  measureActorRuntimeGraph,
+  syncCivicArticulationBinding
+} from "./reference-fidelity-runtime-contract.js";
+import {
+  createInteriorEntryPhaseTracker,
+  getInteriorResourcePlan
+} from "./interior-entry-plan.js";
 
+// Vite injects a deterministic SHA-256 over runtime/config inputs and every
+// shipped character asset, including public GLBs.
+const RUNTIME_BUILD_FINGERPRINT = __MIRRORLIFE_BUILD_FINGERPRINT__;
 const ASSET_BASE = "/assets/interiors/glb/";
 const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
-const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "silhouette-v82";
+const SHADER_DIAGNOSTICS_QUERY = new URLSearchParams(window.location.search).get("qaShaderDiagnostics");
+const ENABLE_SHADER_DIAGNOSTICS = SHADER_DIAGNOSTICS_QUERY === "1"
+  || (
+    SHADER_DIAGNOSTICS_QUERY !== "0"
+    && (import.meta.env.DEV || new URLSearchParams(window.location.search).has("qaInterior"))
+  );
+const CIVIC_CHARACTER_ASSET_REVISION = ASSET_REVISION || "articulation-skin-v2";
 const CIVIC_RUG_ASSET_REVISION = ASSET_REVISION || "embossed-v1";
 const CIVIC_LIGHT_TRANSPORT_CONTRACT = "mirrorlife-civic-light-transport-v7";
 const CIVIC_FURNITURE_DETAIL_CONTRACT = "mirrorlife-civic-hero-props-v15";
@@ -63,6 +84,12 @@ const CIVIC_FACE_MODE = CIVIC_FACE_MODE_QUERY === "atlas"
             ? "curved-atlas"
             : "sculpted-volume";
 const MAX_DPR = 1.5;
+const CAMERA_OCCLUSION_SOLVE_INTERVAL_MS = 80;
+const ACTIVE_SHADOW_UPDATE_INTERVAL_MS = 120;
+const IDLE_SHADOW_UPDATE_INTERVAL_MS = 240;
+const INTERACTION_AO_RESTORE_DELAY_MS = 280;
+const INTERACTION_AO_FADE_MS = 180;
+const SCENE_WARMUP_FRAME_COUNT = 2;
 const resolveInteriorPixelRatio = (width = window.innerWidth) => {
   const deviceRatio = Math.min(Number(window.devicePixelRatio || 1), MAX_DPR);
   if (width >= 1280) return Math.min(MAX_DPR, Math.max(deviceRatio, 1.2));
@@ -321,6 +348,9 @@ let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
 let sceneWarmupSignature = "";
 let sceneWarmupFrames = 0;
+let backgroundProgramWarmupSignature = "";
+let backgroundProgramWarmupState = "idle";
+let backgroundProgramWarmupScheduledSignature = "";
 let contactShadowTexture;
 let civicFoliageGoboTexture;
 let civicFoliageGoboTextureLoading;
@@ -343,6 +373,8 @@ let cameraZoneId = "";
 let cameraActorAvoidanceOffset = 0;
 let lastCameraState = null;
 let cameraLastUpdateAt = 0;
+let lastShadowMapUpdatedAt = 0;
+let lastInteriorInteractionAt = Number.NEGATIVE_INFINITY;
 let cameraRaycaster;
 const occludedMaterials = new Map();
 let cameraOcclusionWarmupFrames = 0;
@@ -353,7 +385,26 @@ const actorFrameTextures = new Map();
 const civicFaceTextures = new Map();
 const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
+const actorRuntimeGraphMeasurements = new WeakMap();
 const dynamicModelObjects = new Map();
+const entryPhaseTracker = createInteriorEntryPhaseTracker();
+
+function publishEntryTelemetry() {
+  window.__mirrorLifeInteriorEntry = entryPhaseTracker.snapshot();
+}
+
+function markEntryPhase(phase) {
+  entryPhaseTracker.mark(phase);
+  publishEntryTelemetry();
+}
+
+function beginEntry(trigger = "manual", zoneId = "") {
+  entryPhaseTracker.start(trigger);
+  if (THREE && GLTFLoader) entryPhaseTracker.mark("modules");
+  if (threeAssetsReady) entryPhaseTracker.mark("textures");
+  if (renderer) entryPhaseTracker.mark("renderer");
+  publishEntryTelemetry();
+}
 
 function traceInteriorThreeStage(stage, startedAt = null) {
   const at = performance.now();
@@ -384,7 +435,11 @@ async function loadThreeCore() {
 
 async function loadThree() {
   await loadThreeCore();
-  if (threeAssetsReady && GLTFLoader) return true;
+  if (threeAssetsReady && GLTFLoader) {
+    markEntryPhase("modules");
+    markEntryPhase("textures");
+    return true;
+  }
   if (!threeLoading) {
     const startedAt = traceInteriorThreeStage("addons-import-start");
     threeLoading = Promise.all([
@@ -430,9 +485,11 @@ async function loadThree() {
     });
   }
   await threeLoading;
+  markEntryPhase("modules");
   const surfaceStartedAt = traceInteriorThreeStage("surface-preload-start");
   await preloadPhysicalSurfaceMaps();
   traceInteriorThreeStage("surface-preload-ready", surfaceStartedAt);
+  markEntryPhase("textures");
   threeAssetsReady = true;
   return true;
 }
@@ -449,6 +506,11 @@ function ensureLayer() {
   canvas = document.createElement("canvas");
   canvas.id = "interiorThreeLayer";
   canvas.setAttribute("aria-hidden", "true");
+  // The renderer is created only after an authorized interior entry. Keep the
+  // backing canvas out of composition until the authored shell has rendered.
+  canvas.style.display = "none";
+  canvas.style.opacity = "0";
+  canvas.style.visibility = "hidden";
   shell.appendChild(canvas);
 
   const rendererStartedAt = traceInteriorThreeStage("renderer-create-start");
@@ -463,6 +525,7 @@ function ensureLayer() {
     powerPreference: "high-performance"
   });
   traceInteriorThreeStage("renderer-create-ready", rendererStartedAt);
+  markEntryPhase("renderer");
   canvas.addEventListener("webglcontextlost", (event) => {
     event.preventDefault();
     interiorSessionState.contextLost = true;
@@ -495,11 +558,13 @@ function ensureLayer() {
     }));
   });
   renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.debug.checkShaderErrors = ENABLE_SHADER_DIAGNOSTICS;
   renderer.toneMapping = THREE.ACESFilmicToneMapping;
   renderer.toneMappingExposure = 0.86;
   renderer.setPixelRatio(resolveInteriorPixelRatio(window.innerWidth));
   renderer.shadowMap.enabled = false;
   renderer.shadowMap.type = THREE.VSMShadowMap;
+  renderer.shadowMap.autoUpdate = false;
   physicalSurfaceMaps.forEach((maps) => {
     [maps.map, maps.normal, maps.roughness].forEach((texture) => {
       if (!texture) return;
@@ -653,7 +718,7 @@ function ensureEnhancedPipeline() {
     type: THREE.HalfFloatType,
     depthBuffer: true,
     stencilBuffer: false,
-    samples: renderer.capabilities.isWebGL2 ? (window.innerWidth < 720 ? 2 : 4) : 0
+    samples: renderer.capabilities.isWebGL2 ? 2 : 0
   });
   composerTarget.texture.name = "MirrorLife interior MSAA HDR";
   composer = new EffectComposer(renderer, composerTarget);
@@ -752,7 +817,7 @@ function resize(width, height) {
   renderer.setSize(width, height, false);
   composer?.setSize(width, height);
   if (composer && renderer?.capabilities?.isWebGL2) {
-    const samples = width < 720 ? 2 : 4;
+    const samples = 2;
     composer.renderTarget1.samples = samples;
     composer.renderTarget2.samples = samples;
   }
@@ -1222,7 +1287,13 @@ function loadModel(type) {
     itemSignature = "";
     return prepared;
   };
-  const fallback = loadSemanticFallback();
+  // Public hero furniture has a real authored asset and is part of the atomic
+  // reveal. Building a semantic fallback first, then swapping three staggered
+  // GLBs into the live cache, paid for several full model rebuilds during the
+  // loading curtain. Wait for the authored desktop asset and use the fallback
+  // only on an actual load failure. Mobile keeps its existing proxy path.
+  const waitsForAuthoredAsset = CIVIC_HERO_PROP_TYPES.has(type) && window.innerWidth > 720;
+  const fallback = waitsForAuthoredAsset ? null : loadSemanticFallback();
   const promise = new Promise((resolve) => {
     const authoredAssetRevision = CIVIC_HERO_PROP_TYPES.has(type) ? "hero-v13" : "";
     const assetRevision = ASSET_REVISION || authoredAssetRevision;
@@ -1269,11 +1340,25 @@ function loadCivicActorAsset(role) {
           "SkinLeftLeg",
           "SkinLeftKnee",
           "SkinRightLeg",
-          "SkinRightKnee"
+          "SkinRightKnee",
+          "SkinLeftElbowRigid",
+          "SkinRightElbowRigid",
+          "SkinLeftKneeRigid",
+          "SkinRightKneeRigid",
+          "SkinLeftHand",
+          "SkinRightHand",
+          "SkinLeftSleeveCorrective",
+          "SkinRightSleeveCorrective",
+          "SkinLeftTrouserCorrective",
+          "SkinRightTrouserCorrective",
+          "SkinLeftFoot",
+          "SkinRightFoot"
         ];
         const contractValid = visual
           && requiredPivots.every((name) => visual.getObjectByName(name))
-          && requiredSkinJoints.every((name) => visual.getObjectByName(name));
+          && requiredSkinJoints.every((name) => visual.getObjectByName(name))
+          && ["SkinnedArticulationCore", "SkinnedArticulationDetail"]
+            .every((name) => visual.getObjectByName(name));
         if (!contractValid) {
           civicActorFailures.add(role);
           civicActorLoading.delete(role);
@@ -1476,7 +1561,34 @@ async function preloadPhysicalSurfaceMaps() {
       civicFoliageGoboTexture = gobo;
       civicFoliageShadowTexture = shadow;
     });
-    await Promise.all([...physicalMapTasks, civicRugTask, civicFoliageProjectionTask]);
+    // The portal view is visible in both the atelier bay and the civic room.
+    // Loading it after the first room build used to invalidate roomSignature
+    // and rebuild the complete procedural room a second time. Keep it inside
+    // the atomic texture gate so the first build already contains final art.
+    const publicPlan = getInteriorResourcePlan("public-plaza", {
+      mobile: window.innerWidth <= 720
+    });
+    const atelierWindowPath = publicPlan.blockingTextures[0];
+    const atelierWindowTask = atelierWindowPath
+      ? textureLoader.loadAsync(
+        `${atelierWindowPath}${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`
+      ).then((texture) => {
+        texture.colorSpace = THREE.SRGBColorSpace;
+        texture.wrapS = THREE.ClampToEdgeWrapping;
+        texture.wrapT = THREE.ClampToEdgeWrapping;
+        texture.anisotropy = Math.min(8, renderer?.capabilities?.getMaxAnisotropy?.() || 1);
+        texture.needsUpdate = true;
+        atelierWindowViewTexture = texture;
+      })
+      : Promise.resolve();
+    atelierWindowViewTextureLoading = atelierWindowTask;
+    await Promise.all([
+      ...physicalMapTasks,
+      civicRugTask,
+      civicFoliageProjectionTask,
+      atelierWindowTask
+    ]);
+    atelierWindowViewTextureLoading = null;
   })().catch((error) => {
     console.warn("MirrorLife physical surface maps failed to preload; using procedural micro-surfaces.", error);
     physicalSurfaceMaps.clear();
@@ -1484,6 +1596,7 @@ async function preloadPhysicalSurfaceMaps() {
     civicRugBumpTexture = null;
     civicFoliageGoboTexture = null;
     civicFoliageShadowTexture = null;
+    atelierWindowViewTextureLoading = null;
   });
   return physicalSurfaceLoading;
 }
@@ -1510,9 +1623,9 @@ function getPhysicalSurfaceMaps(kind) {
 function getAtelierWindowViewTexture() {
   if (atelierWindowViewTexture) return atelierWindowViewTexture;
   if (!atelierWindowViewTextureLoading && THREE) {
-    atelierWindowViewTextureLoading = new THREE.TextureLoader().load(
+    atelierWindowViewTextureLoading = new THREE.TextureLoader().loadAsync(
       `/assets/interiors/textures/atelier-window-view.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`,
-      (texture) => {
+    ).then((texture) => {
         texture.colorSpace = THREE.SRGBColorSpace;
         texture.wrapS = THREE.ClampToEdgeWrapping;
         texture.wrapT = THREE.ClampToEdgeWrapping;
@@ -1521,12 +1634,11 @@ function getAtelierWindowViewTexture() {
         atelierWindowViewTexture = texture;
         roomSignature = "";
         window.markRenderActive?.(1800);
-      },
-      undefined,
-      () => {
+        return texture;
+      }).catch(() => {
         atelierWindowViewTextureLoading = null;
-      }
-    );
+        return null;
+      });
   }
   return atelierWindowViewTexture || null;
 }
@@ -4129,23 +4241,25 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   const archCenterY = 1.62;
   const archRadius = 2.86;
   const archField = new THREE.Mesh(
-    new THREE.TorusGeometry(archRadius - 0.18, 0.18, mobileLod ? 7 : 12, mobileLod ? 36 : 72, Math.PI),
+    new THREE.TorusGeometry(archRadius - 0.18, 0.18, mobileLod ? 3 : 12, mobileLod ? 8 : 72, Math.PI),
     archOak
   );
   archField.position.set(0, archCenterY, 0.08);
   group.add(archField);
-  const arch = new THREE.Mesh(
-    new THREE.TorusGeometry(archRadius, 0.065, mobileLod ? 7 : 12, mobileLod ? 40 : 80, Math.PI),
-    walnut
-  );
-  arch.position.set(0, archCenterY, 0.125);
-  group.add(arch);
-  const archHighlight = new THREE.Mesh(
-    new THREE.TorusGeometry(archRadius - 0.38, 0.027, 7, mobileLod ? 36 : 72, Math.PI),
-    brass
-  );
-  archHighlight.position.set(0, archCenterY, 0.205);
-  group.add(archHighlight);
+  if (!mobileLod) {
+    const arch = new THREE.Mesh(
+      new THREE.TorusGeometry(archRadius, 0.065, 12, 80, Math.PI),
+      walnut
+    );
+    arch.position.set(0, archCenterY, 0.125);
+    group.add(arch);
+    const archHighlight = new THREE.Mesh(
+      new THREE.TorusGeometry(archRadius - 0.38, 0.027, 7, 72, Math.PI),
+      brass
+    );
+    archHighlight.position.set(0, archCenterY, 0.205);
+    group.add(archHighlight);
+  }
   [-archRadius, archRadius].forEach((x) => {
     const post = new THREE.Mesh(
       witnessBox(0.24, 1.56, 0.18, 4, 0.065),
@@ -4153,18 +4267,20 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     );
     post.position.set(x, 0.84, 0.09);
     group.add(post);
-    const postInset = new THREE.Mesh(
-      witnessBox(0.075, 1.38, 0.035, 3, 0.018),
-      brass
-    );
-    postInset.position.set(x + Math.sign(x) * -0.03, 0.84, 0.195);
-    group.add(postInset);
-    const plinth = new THREE.Mesh(
-      witnessBox(0.42, 0.19, 0.28, 4, 0.06),
-      oak
-    );
-    plinth.position.set(x, 0.14, 0.15);
-    group.add(plinth);
+    if (!mobileLod) {
+      const postInset = new THREE.Mesh(
+        witnessBox(0.075, 1.38, 0.035, 3, 0.018),
+        brass
+      );
+      postInset.position.set(x + Math.sign(x) * -0.03, 0.84, 0.195);
+      group.add(postInset);
+      const plinth = new THREE.Mesh(
+        witnessBox(0.42, 0.19, 0.28, 4, 0.06),
+        oak
+      );
+      plinth.position.set(x, 0.14, 0.15);
+      group.add(plinth);
+    }
   });
 
   const frame = new THREE.Mesh(witnessBox(3.28, 1.56, 0.16, 4, 0.1), walnut);
@@ -4176,14 +4292,16 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   const heading = new THREE.Mesh(witnessBox(1.18, 0.22, 0.05, 4, 0.055), createToonMaterial("#efd69a", { roughness: 0.72 }));
   heading.position.set(0, 2.74, 0.17);
   group.add(heading);
-  [-0.35, -0.12, 0.12, 0.35].forEach((x, index) => {
-    const headingMark = new THREE.Mesh(
-      witnessBox(index % 2 ? 0.15 : 0.19, 0.028, 0.018, 2, 0.008),
-      index === 1 ? brass : walnut
-    );
-    headingMark.position.set(x, 2.74, 0.205);
-    group.add(headingMark);
-  });
+  if (!mobileLod) {
+    [-0.35, -0.12, 0.12, 0.35].forEach((x, index) => {
+      const headingMark = new THREE.Mesh(
+        witnessBox(index % 2 ? 0.15 : 0.19, 0.028, 0.018, 2, 0.008),
+        index === 1 ? brass : walnut
+      );
+      headingMark.position.set(x, 2.74, 0.205);
+      group.add(headingMark);
+    });
+  }
   const responseColors = [colors.secondary, ATELIER_TOKENS.apricot, ATELIER_TOKENS.pistachio, ATELIER_TOKENS.butter];
   const responseCount = mobileLod ? 3 : 8;
   const responseColumns = mobileLod ? 3 : 4;
@@ -4192,27 +4310,32 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     const row = Math.floor(index / responseColumns);
     const card = new THREE.Mesh(
       witnessBox(mobileLod ? 0.58 : 0.56, mobileLod ? 0.38 : 0.36, 0.025, 2, 0.025),
-      createToonMaterial(index % 2 ? "#f8edd9" : "#e8efe7", { roughness: 0.94 })
+      createToonMaterial(
+        mobileLod ? responseColors[index % responseColors.length] : index % 2 ? "#f8edd9" : "#e8efe7",
+        { roughness: 0.94 }
+      )
     );
     card.position.set((column - (responseColumns - 1) / 2) * (mobileLod ? 0.72 : 0.68), 2.39 - row * 0.43, 0.17);
     card.rotation.z = (column - (responseColumns - 1) / 2) * 0.035;
     group.add(card);
-    const mark = new THREE.Mesh(witnessBox(0.11, 0.18, 0.018, 2, 0.018), createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.76 }));
-    mark.position.set(card.position.x - 0.16, card.position.y, 0.192);
-    mark.rotation.z = card.rotation.z;
-    group.add(mark);
-    [0.06, -0.055].forEach((lineY, lineIndex) => {
-      const line = new THREE.Mesh(witnessBox(lineIndex ? 0.18 : 0.23, 0.016, 0.012, 1, 0.006), createToonMaterial("#7e766a", { roughness: 0.84 }));
-      line.position.set(card.position.x + 0.09, card.position.y + lineY, 0.193);
-      line.rotation.z = card.rotation.z;
-      group.add(line);
-    });
-    const pin = new THREE.Mesh(
-      new THREE.SphereGeometry(0.025, 10, 7),
-      index % 3 === 0 ? brass : createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.48 })
-    );
-    pin.position.set(card.position.x, card.position.y + 0.14, 0.207);
-    group.add(pin);
+    if (!mobileLod) {
+      const mark = new THREE.Mesh(witnessBox(0.11, 0.18, 0.018, 2, 0.018), createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.76 }));
+      mark.position.set(card.position.x - 0.16, card.position.y, 0.192);
+      mark.rotation.z = card.rotation.z;
+      group.add(mark);
+      [0.06, -0.055].forEach((lineY, lineIndex) => {
+        const line = new THREE.Mesh(witnessBox(lineIndex ? 0.18 : 0.23, 0.016, 0.012, 1, 0.006), createToonMaterial("#7e766a", { roughness: 0.84 }));
+        line.position.set(card.position.x + 0.09, card.position.y + lineY, 0.193);
+        line.rotation.z = card.rotation.z;
+        group.add(line);
+      });
+      const pin = new THREE.Mesh(
+        new THREE.SphereGeometry(0.025, 10, 7),
+        index % 3 === 0 ? brass : createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.48 })
+      );
+      pin.position.set(card.position.x, card.position.y + 0.14, 0.207);
+      group.add(pin);
+    }
   }
 
   if (!mobileLod) {
@@ -4317,46 +4440,61 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   );
   pictureRail.position.set(0, 3.42, 0.08);
   group.add(pictureRail);
-  const pictureRailReveal = new THREE.Mesh(
-    witnessBox(5.48, 0.025, 0.035, 2, 0.009),
-    createToonMaterial("#d2a64c", {
-      roughness: 0.32,
-      metalness: 0.62,
-      envMapIntensity: 0.92
-    })
-  );
-  pictureRailReveal.position.set(0, 3.33, 0.155);
-  group.add(pictureRailReveal);
+  if (!mobileLod) {
+    const pictureRailReveal = new THREE.Mesh(
+      witnessBox(5.48, 0.025, 0.035, 2, 0.009),
+      createToonMaterial("#d2a64c", {
+        roughness: 0.32,
+        metalness: 0.62,
+        envMapIntensity: 0.92
+      })
+    );
+    pictureRailReveal.position.set(0, 3.33, 0.155);
+    group.add(pictureRailReveal);
+  }
   [-3.28, 3.28].forEach((sconceX) => {
-    const backplate = new THREE.Mesh(
-      witnessBox(0.18, 0.46, 0.075, 4, 0.065),
-      walnut
-    );
-    backplate.position.set(sconceX, 2.6, 0.15);
-    group.add(backplate);
-    const stem = new THREE.Mesh(
-      new THREE.CylinderGeometry(0.022, 0.026, 0.28, 10),
-      createToonMaterial("#c89b43", {
-        roughness: 0.3,
-        metalness: 0.68,
-        envMapIntensity: 0.96
-      })
-    );
-    stem.position.set(sconceX, 2.6, 0.29);
-    stem.rotation.x = Math.PI / 2;
-    group.add(stem);
-    const globe = new THREE.Mesh(
-      new THREE.SphereGeometry(0.14, 20, 12),
-      createToonMaterial("#f5dfb7", {
-        roughness: 0.34,
-        emissive: 0xffc977,
-        emissiveIntensity: 0.24,
-        envMapIntensity: 0.72
-      })
-    );
-    globe.scale.set(0.86, 1.14, 0.82);
-    globe.position.set(sconceX, 2.6, 0.46);
-    group.add(globe);
+    if (mobileLod) {
+      const mobileSconce = new THREE.Mesh(
+        witnessBox(0.16, 0.34, 0.08, 1, 0),
+        createToonMaterial("#f5dfb7", {
+          roughness: 0.42,
+          emissive: 0xffc977,
+          emissiveIntensity: 0.18
+        })
+      );
+      mobileSconce.position.set(sconceX, 2.6, 0.22);
+      group.add(mobileSconce);
+    } else {
+      const backplate = new THREE.Mesh(
+        witnessBox(0.18, 0.46, 0.075, 4, 0.065),
+        walnut
+      );
+      backplate.position.set(sconceX, 2.6, 0.15);
+      group.add(backplate);
+      const stem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.022, 0.026, 0.28, 10),
+        createToonMaterial("#c89b43", {
+          roughness: 0.3,
+          metalness: 0.68,
+          envMapIntensity: 0.96
+        })
+      );
+      stem.position.set(sconceX, 2.6, 0.29);
+      stem.rotation.x = Math.PI / 2;
+      group.add(stem);
+      const globe = new THREE.Mesh(
+        new THREE.SphereGeometry(0.14, 20, 12),
+        createToonMaterial("#f5dfb7", {
+          roughness: 0.34,
+          emissive: 0xffc977,
+          emissiveIntensity: 0.24,
+          envMapIntensity: 0.72
+        })
+      );
+      globe.scale.set(0.86, 1.14, 0.82);
+      globe.position.set(sconceX, 2.6, 0.46);
+      group.add(globe);
+    }
     const wash = new THREE.PointLight(
       0xffc987,
       mobileLod ? 0.18 : 0.34,
@@ -4395,12 +4533,15 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   });
 
   [-3.34, 3.34].forEach((x, plantIndex) => {
-    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 0.54, 18), createToonMaterial(plantIndex ? "#e6d4ba" : "#d9a557", { roughness: 0.72 }));
+    const pot = new THREE.Mesh(new THREE.CylinderGeometry(0.26, 0.32, 0.54, mobileLod ? 5 : 18), createToonMaterial(plantIndex ? "#e6d4ba" : "#d9a557", { roughness: 0.72 }));
     pot.position.set(x, 0.27, 0.34);
     group.add(pot);
-    const leafCount = 4;
+    const leafCount = mobileLod ? 2 : 4;
     for (let leafIndex = 0; leafIndex < leafCount; leafIndex += 1) {
-      const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8), createToonMaterial(leafIndex % 2 ? "#4d865c" : "#6ca36b", { roughness: 0.95 }));
+      const leaf = new THREE.Mesh(
+        new THREE.SphereGeometry(0.2, mobileLod ? 5 : 12, mobileLod ? 3 : 8),
+        createToonMaterial(leafIndex % 2 ? "#4d865c" : "#6ca36b", { roughness: 0.95 })
+      );
       leaf.scale.set(0.5, 1.32, 0.42);
       leaf.position.set(x + (leafIndex - (leafCount - 1) / 2) * 0.11, 0.67 + (leafIndex % 2) * 0.22, 0.34);
       leaf.rotation.z = (leafIndex - (leafCount - 1) / 2) * 0.24;
@@ -4408,10 +4549,15 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     }
   });
 
-  const pendantCord = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.02, 10), walnut);
-  pendantCord.position.set(0, 3.58, 0.62);
-  group.add(pendantCord);
-  const pendantShade = new THREE.Mesh(new THREE.ConeGeometry(0.34, 0.28, 24, 1, true), createToonMaterial("#f0c969", { roughness: 0.5, side: THREE.DoubleSide }));
+  if (!mobileLod) {
+    const pendantCord = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, 1.02, 10), walnut);
+    pendantCord.position.set(0, 3.58, 0.62);
+    group.add(pendantCord);
+  }
+  const pendantShade = new THREE.Mesh(
+    new THREE.ConeGeometry(0.34, 0.28, mobileLod ? 6 : 24, 1, true),
+    createToonMaterial("#f0c969", { roughness: 0.5, side: THREE.DoubleSide })
+  );
   pendantShade.position.set(0, 3.04, 0.62);
   pendantShade.rotation.x = Math.PI;
   group.add(pendantShade);
@@ -6421,7 +6567,7 @@ function addExitPortal(theme, colors) {
 
 function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
-  if (signature === roomSignature) return;
+  if (signature === roomSignature) return false;
   roomSignature = signature;
   activeCivicPortalContract = "";
   cameraForegroundObjects.clear();
@@ -6438,6 +6584,7 @@ function rebuildRoom(theme = {}) {
       && REALTIME_SHADOW_ARCHETYPES.has(theme.archetype || "home")
       && !["factory", "farm", "legal-court"].includes(theme.zoneId);
     keyLight.shadow.needsUpdate = true;
+    if (renderer?.shadowMap) renderer.shadowMap.needsUpdate = true;
   }
   applyLightingPreset(theme);
 
@@ -6582,6 +6729,7 @@ function rebuildRoom(theme = {}) {
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
   mergeRoomArchitectureMeshes();
   addCivicSunShadowCasters(theme);
+  return true;
 }
 
 function getItemSignature(items) {
@@ -9087,6 +9235,104 @@ function installCivicJointVolumeDeformation(skinnedMeshes = []) {
   const states = {};
   skinnedMeshes.forEach((mesh) => {
     const semanticPart = String(mesh.userData?.semantic_part || mesh.name || "");
+    const isSharedArticulationCore = semanticPart === "SkinnedArticulationCore"
+      || mesh.userData?.articulation_batch === "core";
+    if (isSharedArticulationCore && mesh.material && !Array.isArray(mesh.material)) {
+      const uniforms = {
+        leftShoulderBend: { value: 0 },
+        rightShoulderBend: { value: 0 },
+        leftHipBend: { value: 0 },
+        rightHipBend: { value: 0 }
+      };
+      const material = mesh.material;
+      const baseOnBeforeCompile = material.onBeforeCompile;
+      material.onBeforeCompile = (shader) => {
+        baseOnBeforeCompile?.(shader);
+        shader.uniforms.mirrorLifeLeftShoulderBend = uniforms.leftShoulderBend;
+        shader.uniforms.mirrorLifeRightShoulderBend = uniforms.rightShoulderBend;
+        shader.uniforms.mirrorLifeLeftHipBend = uniforms.leftHipBend;
+        shader.uniforms.mirrorLifeRightHipBend = uniforms.rightHipBend;
+        shader.vertexShader = shader.vertexShader
+          .replace(
+            "#include <common>",
+            `#include <common>
+            uniform float mirrorLifeLeftShoulderBend;
+            uniform float mirrorLifeRightShoulderBend;
+            uniform float mirrorLifeLeftHipBend;
+            uniform float mirrorLifeRightHipBend;`
+          )
+          .replace(
+            "#include <skinning_vertex>",
+            `#include <skinning_vertex>
+            float mirrorLifeJointSide = step(0.0, position.x);
+            float mirrorLifeShoulderBend = mix(
+              mirrorLifeLeftShoulderBend,
+              mirrorLifeRightShoulderBend,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeHipBend = mix(
+              mirrorLifeLeftHipBend,
+              mirrorLifeRightHipBend,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeShoulderMask =
+              smoothstep(0.965, 1.215, position.y)
+              * (1.0 - smoothstep(1.34, 1.48, position.y));
+            float mirrorLifeHipMask =
+              smoothstep(0.545, 0.765, position.y)
+              * (1.0 - smoothstep(0.86, 1.02, position.y));
+            float mirrorLifeShoulderCenter = mix(
+              -0.205,
+              0.205,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeHipCenter = mix(
+              -0.115,
+              0.115,
+              mirrorLifeJointSide
+            );
+            float mirrorLifeShoulderExpansion =
+              1.0 + mirrorLifeShoulderBend * mirrorLifeShoulderMask * 0.115;
+            float mirrorLifeHipExpansion =
+              1.0 + mirrorLifeHipBend * mirrorLifeHipMask * 0.09;
+            transformed.x = mirrorLifeShoulderCenter
+              + (transformed.x - mirrorLifeShoulderCenter)
+              * mirrorLifeShoulderExpansion;
+            transformed.x = mirrorLifeHipCenter
+              + (transformed.x - mirrorLifeHipCenter)
+              * mirrorLifeHipExpansion;
+            transformed.z *= 1.0
+              + mirrorLifeShoulderBend * mirrorLifeShoulderMask * 0.095
+              + mirrorLifeHipBend * mirrorLifeHipMask * 0.075;
+            transformed.y +=
+              mirrorLifeShoulderBend * mirrorLifeShoulderMask * 0.006
+              + mirrorLifeHipBend * mirrorLifeHipMask * 0.0045;`
+          );
+      };
+      material.customProgramCacheKey = () => "mirrorlife-civic-shared-proximal-volume-v2";
+      material.needsUpdate = true;
+      states.shoulders = {
+        mesh,
+        uniforms: {
+          leftBend: uniforms.leftShoulderBend,
+          rightBend: uniforms.rightShoulderBend
+        },
+        version: "mirrorlife-civic-proximal-volume-v1",
+        leftBend: 0,
+        rightBend: 0
+      };
+      states.hips = {
+        mesh,
+        uniforms: {
+          leftBend: uniforms.leftHipBend,
+          rightBend: uniforms.rightHipBend
+        },
+        version: "mirrorlife-civic-proximal-volume-v1",
+        leftBend: 0,
+        rightBend: 0
+      };
+      return;
+    }
     const kind = semanticPart.includes("Arm") ? "shoulders" : semanticPart.includes("Leg") ? "hips" : "";
     if (!kind || !mesh.material || Array.isArray(mesh.material)) return;
     const isShoulder = kind === "shoulders";
@@ -9869,6 +10115,87 @@ function applyCivicContactPressure(entry) {
   };
 }
 
+function createCivicSkinnedDigitState(meshes, bone) {
+  if (!bone) return null;
+  let digitVertexCount = 0;
+  (meshes || []).forEach((mesh) => {
+    const skinIndex = mesh?.geometry?.getAttribute?.("skinIndex");
+    const skinWeight = mesh?.geometry?.getAttribute?.("skinWeight");
+    const bones = mesh?.skeleton?.bones || [];
+    if (!skinIndex || !skinWeight || !bones.length) return;
+    const vertexCount = Math.min(skinIndex.count, skinWeight.count);
+    const componentCount = Math.min(skinIndex.itemSize, skinWeight.itemSize);
+    for (let vertex = 0; vertex < vertexCount; vertex += 1) {
+      let carriesDigitBone = false;
+      for (let component = 0; component < componentCount; component += 1) {
+        if (Number(skinWeight.getComponent(vertex, component) || 0) <= 1e-6) continue;
+        if (bones[Number(skinIndex.getComponent(vertex, component))] === bone) {
+          carriesDigitBone = true;
+          break;
+        }
+      }
+      if (carriesDigitBone) digitVertexCount += 1;
+    }
+  });
+  if (!digitVertexCount) return null;
+  return {
+    version: CIVIC_DIGIT_DEFORMATION_CONTRACT,
+    bone,
+    curl: 0,
+    targetCurl: 0,
+    digitVertexCount,
+    uniforms: null
+  };
+}
+
+function syncCivicRigidSkinBones(entry) {
+  const joints = entry?.articulationBindings;
+  if (!joints?.length || !entry.visual) return;
+  entry.visual.updateMatrixWorld(true);
+  const digitCurlAxis = new THREE.Vector3(1, 0, 0);
+  const digitCurlQuaternion = new THREE.Quaternion();
+  const pressureScale = new THREE.Vector3();
+  const digitStateByBone = new Map(
+    Object.values(entry?.digitDeformationHands || {})
+      .filter((state) => state?.bone)
+      .map((state) => [state.bone, state])
+  );
+  const pressure = THREE.MathUtils.clamp(
+    Number(entry?.contactPressureState?.pressure || 0),
+    0,
+    1
+  );
+  joints.forEach((binding) => {
+    const { boneName, bone } = binding;
+    if (!syncCivicArticulationBinding(binding)) return;
+    const digitState = digitStateByBone.get(bone);
+    if (digitState) {
+      // The hand and digit source meshes now live in the shared articulation
+      // skin. Preserve the authored curl as a real bone deformation instead
+      // of reporting a shader state for a rigid helper mesh that no longer
+      // renders.
+      digitCurlQuaternion.setFromAxisAngle(
+        digitCurlAxis,
+        Number(digitState.curl || 0) * 0.22
+      );
+      bone.quaternion.multiply(digitCurlQuaternion);
+    }
+    if (boneName === "SkinLeftHand" || boneName === "SkinRightHand") {
+      const facilitator = entry.assetRole === "facilitator";
+      const active = boneName === "SkinRightHand" || facilitator;
+      const compression = active ? (facilitator ? 0.034 : 0.018) * pressure : 0;
+      pressureScale.set(
+        1 + compression,
+        1 - compression * 0.82,
+        1 + compression * 0.42
+      );
+      bone.scale.multiply(pressureScale);
+    }
+    bone.updateMatrix();
+    bone.updateMatrixWorld(true);
+  });
+}
+
 function applyCivicContinuousDeformation(entry, {
   walking = false,
   running = false,
@@ -10047,25 +10374,8 @@ function createCivicActorObject(actor, asset) {
   const ponytailPivot = headGroup?.getObjectByName("PonytailPivot") || null;
   const skirtPivot = visual?.getObjectByName("SkirtPivot") || null;
   const skinRig = visual?.getObjectByName("CivicSkinRig") || null;
-  const skinJointNames = {
-    leftArm: "SkinLeftArm",
-    rightArm: "SkinRightArm",
-    leftElbow: "SkinLeftElbow",
-    rightElbow: "SkinRightElbow",
-    leftLeg: "SkinLeftLeg",
-    rightLeg: "SkinRightLeg",
-    leftKnee: "SkinLeftKnee",
-    rightKnee: "SkinRightKnee"
-  };
-  const skinJoints = Object.fromEntries(Object.entries(skinJointNames).map(([track, nodeName]) => {
-    const node = visual?.getObjectByName(nodeName) || null;
-    return [track, node ? {
-      node,
-      restQuaternion: node.quaternion.clone(),
-      deltaEuler: new THREE.Euler(),
-      deltaQuaternion: new THREE.Quaternion()
-    } : null];
-  }));
+  const articulationCoreSkin = skinRig?.getObjectByName("SkinnedArticulationCore") || null;
+  const articulationDetailSkin = skinRig?.getObjectByName("SkinnedArticulationDetail") || null;
   const controllerJointNodes = {
     headGroup,
     leftArm,
@@ -10077,8 +10387,26 @@ function createCivicActorObject(actor, asset) {
     leftLeg,
     rightLeg,
     leftKnee,
-    rightKnee
+    rightKnee,
+    leftFoot,
+    rightFoot,
+    leftSleeveCompression,
+    rightSleeveCompression,
+    leftTrouserCompression,
+    rightTrouserCompression
   };
+  const skinJointNames = Object.fromEntries(
+    CIVIC_ARTICULATION_BINDING_SPECS.map(({ boneKey, boneName }) => [boneKey, boneName])
+  );
+  const skinJoints = Object.fromEntries(Object.entries(skinJointNames).map(([boneKey, nodeName]) => {
+    const node = visual?.getObjectByName(nodeName) || null;
+    return [boneKey, node ? {
+      node,
+      restQuaternion: node.quaternion.clone(),
+      deltaEuler: new THREE.Euler(),
+      deltaQuaternion: new THREE.Quaternion()
+    } : null];
+  }));
   const controllerJoints = Object.fromEntries(Object.entries(controllerJointNodes).map(([track, node]) => [
     track,
     node ? {
@@ -10088,10 +10416,32 @@ function createCivicActorObject(actor, asset) {
       deltaQuaternion: new THREE.Quaternion()
     } : null
   ]));
+  visual?.updateMatrixWorld(true);
+  const articulationBindings = CIVIC_ARTICULATION_BINDING_SPECS
+    .map(({ controlKey, boneKey, boneName }) => {
+      const binding = createCivicArticulationBinding({
+        controlKey,
+        boneKey,
+        controller: controllerJointNodes[controlKey],
+        bone: skinJoints[boneKey]?.node
+      });
+      return binding ? { ...binding, boneName } : null;
+    })
+    .filter(Boolean);
   const skinnedMeshes = [];
   assetScene.traverse((node) => {
     if (node.isSkinnedMesh) skinnedMeshes.push(node);
   });
+  const skinnedDigitDeformationHands = {
+    left: createCivicSkinnedDigitState(
+      skinnedMeshes,
+      skinJoints.leftHand?.node
+    ),
+    right: createCivicSkinnedDigitState(
+      skinnedMeshes,
+      skinJoints.rightHand?.node
+    )
+  };
   if (!visual || !headGroup || !leftArm || !rightArm || !leftElbow || !rightElbow || !leftHand || !rightHand || !leftLeg || !rightLeg || !leftKnee || !rightKnee || !mouthPivot) {
     disposeOwnedGroup(assetScene);
     return null;
@@ -10163,18 +10513,36 @@ function createCivicActorObject(actor, asset) {
     mouthClosedMesh = null;
   }
   const fullExpressionLod = lastWidth > 720;
+  let mobileRemovableDetailBatches = 0;
   if (!fullExpressionLod) {
     // Keep the silhouette and articulated elbows on mobile, but fold tiny
     // fingers into a simpler mitten profile and merge facial parts into the
     // head batch. At phone scale those extra meshes are sub-pixel while five
     // additional actor batches materially affect the 30fps budget.
+    const countLoadedGlbBatches = (root) => {
+      let batches = 0;
+      root?.traverseVisible?.((node) => {
+        if (!node.isMesh || !node.geometry || !node.material) return;
+        const materials = Array.isArray(node.material) ? node.material : [node.material];
+        const groups = node.geometry.groups || [];
+        batches += Array.isArray(node.material) && groups.length
+          ? groups.filter((group) => (
+            Number(group.count || 0) > 0
+            && node.material[Number(group.materialIndex || 0)]
+          )).length
+          : materials.filter(Boolean).length;
+      });
+      return batches;
+    };
+    const loadedGlbBatchesBeforeMobileLod = countLoadedGlbBatches(assetScene);
     const mobileDetailNodes = [];
     const mobileDetailNames = new Set([
       "NoseBridge",
       "NoseTip",
       "Philtrum",
       "NotebookElastic",
-      "NotebookPencil"
+      "NotebookPencil",
+      "SkinnedArticulationDetail"
     ]);
     const mobileDetailPrefixes = [
       // The new connected hand web becomes the phone-scale fingertip
@@ -10217,6 +10585,13 @@ function createCivicActorObject(actor, asset) {
       const materials = Array.isArray(node.material) ? node.material : [node.material];
       materials.filter(Boolean).forEach((material) => material.dispose?.());
     });
+    // Derive the metric from the actual before/after loaded GLB graph. The
+    // phone LOD implementation chooses what to remove, but the reported batch
+    // delta does not infer cost from names, manifest declarations or files.
+    mobileRemovableDetailBatches = Math.max(
+      0,
+      loadedGlbBatchesBeforeMobileLod - countLoadedGlbBatches(assetScene)
+    );
     // Mobile keeps the closed expression in the head batch. Merging the open
     // alternative too would show overlapping lips and waste sub-pixel faces.
     if (mouthOpenPivot) {
@@ -10438,18 +10813,49 @@ function createCivicActorObject(actor, asset) {
     secondaryMotion.skirt.deformation = skirtDeformation;
   }
   const correctiveDefinitions = fullExpressionLod ? {
-    leftSleeve: [leftSleeveCompression, "leftElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
-    rightSleeve: [rightSleeveCompression, "rightElbow", 1.16, 0.14, 0.22, 0.06, 0.012],
-    leftTrouser: [leftTrouserCompression, "leftKnee", 0.82, 0.1, 0.16, 0.045, 0.009],
-    rightTrouser: [rightTrouserCompression, "rightKnee", 0.82, 0.1, 0.16, 0.045, 0.009]
+    leftSleeve: [
+      leftSleeveCompression,
+      "leftElbow",
+      skinJoints.leftSleeveCompression?.node,
+      1.16, 0.14, 0.22, 0.06, 0.012
+    ],
+    rightSleeve: [
+      rightSleeveCompression,
+      "rightElbow",
+      skinJoints.rightSleeveCompression?.node,
+      1.16, 0.14, 0.22, 0.06, 0.012
+    ],
+    leftTrouser: [
+      leftTrouserCompression,
+      "leftKnee",
+      skinJoints.leftTrouserCompression?.node,
+      0.82, 0.1, 0.16, 0.045, 0.009
+    ],
+    rightTrouser: [
+      rightTrouserCompression,
+      "rightKnee",
+      skinJoints.rightTrouserCompression?.node,
+      0.82, 0.1, 0.16, 0.045, 0.009
+    ]
   } : {};
   const clothCorrectives = Object.fromEntries(Object.entries(correctiveDefinitions)
     .filter(([, definition]) => definition[0]?.parent)
-    .map(([key, [node, joint, fullBend, widthGain, depthGain, lengthCompression, outsideShift]]) => [
+    .map(([key, [
+      node,
+      joint,
+      surfaceBone,
+      fullBend,
+      widthGain,
+      depthGain,
+      lengthCompression,
+      outsideShift
+    ]]) => [
       key,
       {
         node,
         joint,
+        surfaceNodes: [articulationDetailSkin].filter(Boolean),
+        surfaceBone,
         fullBend,
         widthGain,
         depthGain,
@@ -10516,7 +10922,13 @@ function createCivicActorObject(actor, asset) {
     faceMode: CIVIC_FACE_MODE,
     controllerJoints,
     skinJoints,
+    articulationBindings,
+    articulationSkinBatches: {
+      core: articulationCoreSkin,
+      detail: articulationDetailSkin
+    },
     skinnedMeshes,
+    mobileRemovableDetailBatches,
     bodySurfaceMesh,
     jointVolumeDeformation,
     clothCorrectives,
@@ -10530,8 +10942,10 @@ function createCivicActorObject(actor, asset) {
     } : null,
     bodyDeformation: bodySurfaceMesh?.userData?.mirrorLifeBodyDeformation || null,
     digitDeformationHands: fullExpressionLod ? {
-      left: leftHandSurface?.userData?.mirrorLifeDigitDeformation || null,
-      right: rightHandSurface?.userData?.mirrorLifeDigitDeformation || null
+      left: leftHandSurface?.userData?.mirrorLifeDigitDeformation
+        || skinnedDigitDeformationHands.left,
+      right: rightHandSurface?.userData?.mirrorLifeDigitDeformation
+        || skinnedDigitDeformationHands.right
     } : null,
     frame,
     garmentTopologyVersion: bodySurfaceMesh?.userData?.mirrorLifeGarmentTopology || "mirrorlife-civic-garment-topology-v5",
@@ -11081,6 +11495,7 @@ function updateActors(actors = [], now = performance.now()) {
       socialBreath,
       frameDeltaSeconds
     });
+    syncCivicRigidSkinBones(entry);
     updateCivicSecondaryMotion(entry, {
       now,
       walking,
@@ -11476,98 +11891,132 @@ function getObjectOcclusionMaterial(object, materialIndex = 0) {
 
 function updateCameraOcclusion(payload = {}) {
   if (!cameraRaycaster || !camera || !modelRoot) return;
-  occludedMaterials.forEach((state) => {
-    state.targetOpacity = state.baseOpacity;
-  });
-  // Architectural coves are intentionally above the actor rays, but at a
-  // side orbit the camera can sit almost level with a wing beam and project it
-  // as a full-width bar across the frame and HUD.  Fade only authored
-  // foreground candidates when the camera enters their near field.  This is
-  // complementary to ray occlusion: it protects the composition without
-  // dissolving distant walls or evidence props.
-  const foregroundPosition = updateCameraOcclusion.foregroundPosition
-    || (updateCameraOcclusion.foregroundPosition = new THREE.Vector3());
-  cameraForegroundObjects.forEach((object) => {
-    if (!object?.parent) {
-      cameraForegroundObjects.delete(object);
-      return;
-    }
-    let foregroundRadius = 0;
-    if (object.geometry) {
-      if (!object.geometry.boundingSphere) object.geometry.computeBoundingSphere();
-      foregroundPosition.copy(object.geometry.boundingSphere?.center || object.position).applyMatrix4(object.matrixWorld);
-      foregroundRadius = Number(object.geometry.boundingSphere?.radius || 0)
-        * object.matrixWorld.getMaxScaleOnAxis();
-    } else {
-      object.getWorldPosition(foregroundPosition);
-    }
-    // Large couches and counters can touch the near plane while their origin
-    // remains several metres away. Measure camera clearance to the visible
-    // bounding surface rather than to the object's centre; otherwise the
-    // exact furniture most likely to become a foreground wall never fades.
-    const surfaceDistance = Math.max(
-      0,
-      foregroundPosition.distanceTo(camera.position) - foregroundRadius
+  const now = performance.now();
+  const solveSignature = [
+    camera.position.x,
+    camera.position.y,
+    camera.position.z,
+    Number(payload.cameraX || 0),
+    Number(payload.cameraZ || 0),
+    Number(payload.cameraTargetX || 0),
+    Number(payload.cameraTargetZ || 0.2),
+    Number(lastCameraState?.yaw || 0)
+  ].map((value) => Number(value).toFixed(2)).join("|");
+  const shouldSolve = cameraOcclusionWarmupFrames > 0
+    || (
+      solveSignature !== updateCameraOcclusion.lastSolveSignature
+      && now - Number(updateCameraOcclusion.lastSolveAt || 0) >= CAMERA_OCCLUSION_SOLVE_INTERVAL_MS
     );
-    const keepOpaqueYaw = Number(object.userData?.cameraForegroundKeepOpaqueYaw);
-    if (Number.isFinite(keepOpaqueYaw)) {
-      const currentYaw = Number(lastCameraState?.yaw || 0);
-      const yawDelta = Math.atan2(
-        Math.sin(currentYaw - keepOpaqueYaw),
-        Math.cos(currentYaw - keepOpaqueYaw)
-      );
-      if (Math.abs(yawDelta) <= Number(object.userData?.cameraForegroundKeepOpaqueArc || 0.42)) return;
-    }
-    const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
-    if (surfaceDistance > nearDistance) return;
-    const targetOpacity = THREE.MathUtils.clamp(
-      Number(object.userData?.cameraForegroundOpacity ?? 0.06),
-      0.012,
-      0.24
-    );
-    const materials = Array.isArray(object.material) ? object.material : [object.material];
-    materials.forEach((material, materialIndex) => {
-      if (!material) return;
-      setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), targetOpacity);
+  if (shouldSolve) {
+    updateCameraOcclusion.lastSolveAt = now;
+    updateCameraOcclusion.lastSolveSignature = solveSignature;
+    occludedMaterials.forEach((state) => {
+      state.targetOpacity = state.baseOpacity;
     });
-  });
-  // Test both the torso and face lines of sight.  The original pair of rays
-  // ended around chest height, so a near-wall cove could remain fully opaque
-  // while cutting straight across every actor's face in side-orbit views.
-  // Sample lower body, torso and face for both semantic targets so a near
-  // counter cannot hide grounded movement while leaving the head readable.
-  // The distance clamp below still protects unrelated distant set pieces.
-  const targets = [
-    new THREE.Vector3(Number(payload.cameraX || 0), 0.45, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraX || 0), 1.68, Number(payload.cameraZ || 0)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 0.45, Number(payload.cameraTargetZ || 0.2)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2)),
-    new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.68, Number(payload.cameraTargetZ || 0.2))
-  ];
-  targets.forEach((target) => {
-    const direction = target.clone().sub(camera.position);
-    const distance = direction.length();
-    if (distance < 0.4) return;
-    direction.normalize();
-    cameraRaycaster.set(camera.position, direction);
-    cameraRaycaster.near = 0.18;
-    cameraRaycaster.far = distance - 0.18;
-    const hits = cameraRaycaster.intersectObjects([roomRoot, modelRoot], true)
-      .filter((hit) => hit.distance < distance - 0.2 && hit.point?.y > 0.35 && !hit.object?.userData?.neverFade);
-    const nearestDistance = hits[0]?.distance ?? Number.POSITIVE_INFINITY;
-    hits.forEach((hit) => {
-      // Fade the complete near-wall assembly (crown, cove and wall skin), but do
-      // not dissolve unrelated furniture deeper in the room along the same ray.
-      if (hit.distance > nearestDistance + 1.15) return;
-      const materials = Array.isArray(hit.object?.material) ? hit.object.material : [hit.object?.material];
+    // Architectural coves are intentionally above the actor rays, but at a
+    // side orbit the camera can sit almost level with a wing beam and project it
+    // as a full-width bar across the frame and HUD. Fade only the authored
+    // foreground candidates when the camera enters their near field.
+    const foregroundPosition = updateCameraOcclusion.foregroundPosition
+      || (updateCameraOcclusion.foregroundPosition = new THREE.Vector3());
+    const raycastObjects = [];
+    cameraForegroundObjects.forEach((object) => {
+      if (!object?.parent) {
+        cameraForegroundObjects.delete(object);
+        return;
+      }
+      raycastObjects.push(object);
+      let foregroundRadius = 0;
+      if (object.geometry) {
+        if (!object.geometry.boundingSphere) object.geometry.computeBoundingSphere();
+        foregroundPosition.copy(object.geometry.boundingSphere?.center || object.position).applyMatrix4(object.matrixWorld);
+        foregroundRadius = Number(object.geometry.boundingSphere?.radius || 0)
+          * object.matrixWorld.getMaxScaleOnAxis();
+      } else {
+        object.getWorldPosition(foregroundPosition);
+      }
+      // Large couches and counters can touch the near plane while their origin
+      // remains several metres away. Measure camera clearance to the visible
+      // bounding surface rather than to the object's centre.
+      const surfaceDistance = Math.max(
+        0,
+        foregroundPosition.distanceTo(camera.position) - foregroundRadius
+      );
+      const keepOpaqueYaw = Number(object.userData?.cameraForegroundKeepOpaqueYaw);
+      if (Number.isFinite(keepOpaqueYaw)) {
+        const currentYaw = Number(lastCameraState?.yaw || 0);
+        const yawDelta = Math.atan2(
+          Math.sin(currentYaw - keepOpaqueYaw),
+          Math.cos(currentYaw - keepOpaqueYaw)
+        );
+        if (Math.abs(yawDelta) <= Number(object.userData?.cameraForegroundKeepOpaqueArc || 0.42)) return;
+      }
+      const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
+      if (surfaceDistance > nearDistance) return;
+      const targetOpacity = THREE.MathUtils.clamp(
+        Number(object.userData?.cameraForegroundOpacity ?? 0.06),
+        0.012,
+        0.24
+      );
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
       materials.forEach((material, materialIndex) => {
         if (!material) return;
-        setMaterialOcclusionTarget(getObjectOcclusionMaterial(hit.object, materialIndex), 0.18);
+        setMaterialOcclusionTarget(getObjectOcclusionMaterial(object, materialIndex), targetOpacity);
       });
     });
-  });
-  const now = performance.now();
+    // Sample lower body, torso and face for both semantic targets. Restrict
+    // triangle tests to the explicit fade candidates: unrelated room and hero
+    // furniture geometry can never be faded, so intersecting it was pure work.
+    const raycastEntries = raycastObjects.map((object) => {
+      if (!object.geometry?.boundingBox) object.geometry?.computeBoundingBox?.();
+      return {
+        object,
+        box: object.geometry?.boundingBox || null,
+        inverseWorld: object.matrixWorld.clone().invert()
+      };
+    }).filter((entry) => entry.box);
+    const localRay = updateCameraOcclusion.localRay
+      || (updateCameraOcclusion.localRay = new THREE.Ray());
+    const localHit = updateCameraOcclusion.localHit
+      || (updateCameraOcclusion.localHit = new THREE.Vector3());
+    const worldHit = updateCameraOcclusion.worldHit
+      || (updateCameraOcclusion.worldHit = new THREE.Vector3());
+    const targets = [
+      new THREE.Vector3(Number(payload.cameraX || 0), 0.45, Number(payload.cameraZ || 0)),
+      new THREE.Vector3(Number(payload.cameraX || 0), 1.0, Number(payload.cameraZ || 0)),
+      new THREE.Vector3(Number(payload.cameraX || 0), 1.68, Number(payload.cameraZ || 0)),
+      new THREE.Vector3(Number(payload.cameraTargetX || 0), 0.45, Number(payload.cameraTargetZ || 0.2)),
+      new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.05, Number(payload.cameraTargetZ || 0.2)),
+      new THREE.Vector3(Number(payload.cameraTargetX || 0), 1.68, Number(payload.cameraTargetZ || 0.2))
+    ];
+    targets.forEach((target) => {
+      const direction = target.clone().sub(camera.position);
+      const distance = direction.length();
+      if (distance < 0.4) return;
+      direction.normalize();
+      cameraRaycaster.set(camera.position, direction);
+      cameraRaycaster.near = 0.18;
+      cameraRaycaster.far = distance - 0.18;
+      const hits = raycastEntries.flatMap(({ object, box, inverseWorld }) => {
+        localRay.copy(cameraRaycaster.ray).applyMatrix4(inverseWorld);
+        const point = localRay.intersectBox(box, localHit);
+        if (!point) return [];
+        worldHit.copy(point).applyMatrix4(object.matrixWorld);
+        const hitDistance = worldHit.distanceTo(camera.position);
+        if (hitDistance >= distance - 0.2 || worldHit.y <= 0.35 || object.userData?.neverFade) return [];
+        return [{ object, distance: hitDistance }];
+      }).sort((left, right) => left.distance - right.distance);
+      const nearestDistance = hits[0]?.distance ?? Number.POSITIVE_INFINITY;
+      hits.forEach((hit) => {
+        if (hit.distance > nearestDistance + 1.15) return;
+        const materials = Array.isArray(hit.object?.material) ? hit.object.material : [hit.object?.material];
+        materials.forEach((material, materialIndex) => {
+          if (!material) return;
+          setMaterialOcclusionTarget(getObjectOcclusionMaterial(hit.object, materialIndex), 0.18);
+        });
+      });
+    });
+  }
   const dt = Math.min(0.1, Math.max(1 / 240, (now - (updateCameraOcclusion.lastAt || now - 16)) / 1000));
   updateCameraOcclusion.lastAt = now;
   const snapOcclusion = cameraOcclusionWarmupFrames > 0;
@@ -11576,9 +12025,12 @@ function updateCameraOcclusion(payload = {}) {
     if (snapOcclusion) {
       material.opacity = state.targetOpacity;
       const restored = state.targetOpacity === state.baseOpacity;
-      material.transparent = restored ? state.baseTransparent : true;
-      material.depthWrite = restored && !state.baseTransparent;
-      material.needsUpdate = true;
+      const nextTransparent = restored ? state.baseTransparent : true;
+      const nextDepthWrite = restored && !state.baseTransparent;
+      if (material.transparent !== nextTransparent || material.depthWrite !== nextDepthWrite) {
+        material.transparent = nextTransparent;
+        material.depthWrite = nextDepthWrite;
+      }
       if (restored) occludedMaterials.delete(material);
       return;
     }
@@ -11587,9 +12039,12 @@ function updateCameraOcclusion(payload = {}) {
     const alpha = 1 - Math.exp(-dt / duration);
     material.opacity += (state.targetOpacity - material.opacity) * alpha;
     const restored = Math.abs(material.opacity - state.baseOpacity) < 0.01 && state.targetOpacity === state.baseOpacity;
-    material.transparent = restored ? state.baseTransparent : true;
-    material.depthWrite = restored && !state.baseTransparent;
-    material.needsUpdate = true;
+    const nextTransparent = restored ? state.baseTransparent : true;
+    const nextDepthWrite = restored && !state.baseTransparent;
+    if (material.transparent !== nextTransparent || material.depthWrite !== nextDepthWrite) {
+      material.transparent = nextTransparent;
+      material.depthWrite = nextDepthWrite;
+    }
     if (restored) occludedMaterials.delete(material);
   });
 }
@@ -11633,6 +12088,87 @@ function updateProjections(items, width, height) {
   });
 }
 
+function updateShadowSchedule(payload = {}, now = performance.now()) {
+  if (!renderer?.shadowMap || !keyLight?.castShadow) return;
+  const actorsMoving = (payload.actors || []).some((actor) => (
+    ["walking", "walk", "run", "jump", "fall"].includes(String(actor?.state || ""))
+  ));
+  const dynamicsMoving = (payload.physics?.dynamics || []).length > 0;
+  // Orbiting changes only the camera. The directional-light shadow map is
+  // world-space, so rebuilding it while an idle player drags the view spends a
+  // full extra scene pass without changing a single texel.
+  if (payload.interactionActive && !actorsMoving && !dynamicsMoving) return;
+  const interval = actorsMoving || dynamicsMoving
+    ? ACTIVE_SHADOW_UPDATE_INTERVAL_MS
+    : IDLE_SHADOW_UPDATE_INTERVAL_MS;
+  if (sceneWarmupFrames < SCENE_WARMUP_FRAME_COUNT || now - lastShadowMapUpdatedAt >= interval) {
+    renderer.shadowMap.needsUpdate = true;
+    lastShadowMapUpdatedAt = now;
+  }
+}
+
+function scheduleBackgroundProgramWarmup(signature) {
+  if (
+    !renderer?.compileAsync
+    || !scene
+    || !signature
+    || signature === backgroundProgramWarmupSignature
+    || signature === backgroundProgramWarmupScheduledSignature
+    || backgroundProgramWarmupState === "warming"
+  ) {
+    return;
+  }
+  backgroundProgramWarmupScheduledSignature = signature;
+  backgroundProgramWarmupState = "scheduled";
+  const beginWarmup = () => {
+    if (backgroundProgramWarmupScheduledSignature !== signature) return;
+    backgroundProgramWarmupScheduledSignature = "";
+    backgroundProgramWarmupSignature = signature;
+    backgroundProgramWarmupState = "warming";
+    cameraForegroundObjects.forEach((object) => {
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      materials.forEach((material, materialIndex) => {
+        if (material) getObjectOcclusionMaterial(object, materialIndex);
+      });
+    });
+    const visibility = new Map();
+    scene.traverse((node) => {
+      if (!node.isMesh && !node.isLine && !node.isLineSegments && !node.isPoints) return;
+      let current = node;
+      while (current && current !== scene) {
+        if (!visibility.has(current)) visibility.set(current, current.visible);
+        current.visible = true;
+        current = current.parent;
+      }
+    });
+    let warmup;
+    try {
+      warmup = renderer.compileAsync(scene, camera);
+    } catch {
+      backgroundProgramWarmupState = "failed";
+      return;
+    } finally {
+      visibility.forEach((visible, node) => {
+        node.visible = visible;
+      });
+    }
+    Promise.resolve(warmup).then(() => {
+      if (backgroundProgramWarmupSignature === signature) {
+        backgroundProgramWarmupState = "ready";
+      }
+    }).catch(() => {
+      if (backgroundProgramWarmupSignature === signature) {
+        backgroundProgramWarmupState = "failed";
+      }
+    });
+  };
+  if ("requestIdleCallback" in window) {
+    window.requestIdleCallback(beginWarmup, { timeout: 800 });
+  } else {
+    window.setTimeout(beginWarmup, 0);
+  }
+}
+
 function update(payload = {}) {
   if (interiorSessionState.contextLost) {
     return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
@@ -11645,6 +12181,8 @@ function update(payload = {}) {
   traceInteriorThreeStage("enhanced-pipeline-ready", pipelineStartedAt);
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
+  const updateNow = performance.now();
+  if (payload.interactionActive) lastInteriorInteractionAt = updateNow;
   resize(width, height);
 
   activeItems = applyMobileModelLod(
@@ -11655,15 +12193,18 @@ function update(payload = {}) {
   const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false && !item.mobileProxy).map((item) => item.model))];
   needed.forEach(loadModel);
   const roomStartedAt = performance.now();
-  rebuildRoom(payload.theme || {});
+  const roomReady = rebuildRoom(payload.theme || {});
   traceInteriorThreeStage("full-room-ready", roomStartedAt);
+  if (roomReady) markEntryPhase("room");
   const modelsStartedAt = performance.now();
   const modelsReady = rebuildModels(activeItems);
   traceInteriorThreeStage("full-models-ready", modelsStartedAt);
+  if (modelsReady) markEntryPhase("models");
   if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
   const actorsStartedAt = performance.now();
   const actorsReady = updateActors(payload.actors || [], performance.now());
   traceInteriorThreeStage("full-actors-ready", actorsStartedAt);
+  if (actorsReady) markEntryPhase("actors");
   updateCamera(payload);
   updateDynamicWallDecorVisibility();
   updateCameraOcclusion(payload);
@@ -11747,11 +12288,19 @@ function update(payload = {}) {
     sceneWarmupSignature = nextWarmupSignature;
     sceneWarmupFrames = 0;
   }
+  updateCamera(payload);
+  updateDynamicWallDecorVisibility();
+  updateCameraOcclusion(payload);
+  updatePhysicsDebug(payload.physics || {});
+
   // First-time PBR/shadow/post-processing programs may compile over several
-  // frames. Render two complete hidden frames before declaring the room ready,
-  // so the loading curtain gives way to one final scene instead of briefly
-  // exposing heads/hands while merged clothing and hair programs catch up.
-  const ready = assetsReady && sceneWarmupFrames >= 2;
+  // frames. Render two hidden frames before declaring the room ready.
+  const ready = assetsReady && sceneWarmupFrames >= SCENE_WARMUP_FRAME_COUNT;
+  if (ready) {
+    markEntryPhase("shaders");
+    markEntryPhase("ready");
+  }
+  if (ready) scheduleBackgroundProgramWarmup(nextWarmupSignature);
   if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
   lastSceneReady = ready;
   const presentable = ready || payload.preserveVisible === true;
@@ -11764,20 +12313,32 @@ function update(payload = {}) {
     ...actor,
     worldY: actor.worldY ?? 0.05
   })), width, height);
+  const renderNow = performance.now();
+  const aoRestoreProgress = THREE.MathUtils.clamp(
+    (renderNow - lastInteriorInteractionAt - INTERACTION_AO_RESTORE_DELAY_MS) / INTERACTION_AO_FADE_MS,
+    0,
+    1
+  );
   if (gtaoPass) {
-    gtaoPass.enabled = payload.theme?.zoneId === "public-plaza" && width >= 760;
+    gtaoPass.enabled = payload.theme?.zoneId === "public-plaza"
+      && width >= 760
+      && !payload.interactionActive
+      && aoRestoreProgress > 0;
     // The reference uses broad, warm contact penumbrae. A full-strength GTAO
     // pass made shoe soles, chair feet and cabinet corners collapse to black
     // outlines even though the key and bounce were physically plausible.
-    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza" ? 0.46 : 0.82;
+    gtaoPass.blendIntensity = payload.theme?.zoneId === "public-plaza"
+      ? 0.46 * aoRestoreProgress
+      : 0.82;
   }
   if (cinematicGradePass) {
     cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
-    cinematicGradePass.uniforms.strength.value = width >= 760 ? 1 : 0.72;
+    cinematicGradePass.uniforms.strength.value = (width >= 760 ? 1 : 0.72) * aoRestoreProgress;
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
   }
   if (visible) {
     const renderStartedAt = performance.now();
+    updateShadowSchedule(payload);
     if (composer) composer.render();
     else renderer.render(scene, camera);
     traceInteriorThreeStage("full-frame-rendered", renderStartedAt);
@@ -11787,7 +12348,7 @@ function update(payload = {}) {
     window.markRenderActive?.(180);
   }
   const now = Date.now();
-  if (now - lastStatsPublishedAt >= 1000) {
+  if (!payload.interactionActive && now - lastStatsPublishedAt >= 1000) {
     lastStatsPublishedAt = now;
     canvas.dataset.renderStats = JSON.stringify(getStats());
   }
@@ -12271,19 +12832,69 @@ function getStats() {
   // renderer.info in that mode counted shadow/auxiliary passes and made the
   // same scene look four times more expensive than its actual draw graph.
   const sceneComplexity = getSceneComplexity();
+  const renderProfile = lastWidth <= 720 ? "mobile" : "desktop";
+  const actorArticulationBreakdown = Object.fromEntries(
+    [...actorObjects.entries()].map(([id, entry]) => {
+      let profileMeasurements = actorRuntimeGraphMeasurements.get(entry);
+      if (!profileMeasurements) {
+        profileMeasurements = new Map();
+        actorRuntimeGraphMeasurements.set(entry, profileMeasurements);
+      }
+      if (!profileMeasurements.has(renderProfile)) {
+        profileMeasurements.set(renderProfile, measureActorRuntimeGraph(entry, renderProfile));
+      }
+      return [
+        id,
+        {
+          assetRole: entry.assetRole || "procedural",
+          ...profileMeasurements.get(renderProfile)
+        }
+      ];
+    })
+  );
+  const actorContractStates = Object.fromEntries(
+    [...actorObjects.entries()].map(([id, entry]) => [id, measureActorContractState(entry)])
+  );
   return {
     ready: !!renderer,
+    buildFingerprint: RUNTIME_BUILD_FINGERPRINT,
+    referenceFidelityContract: REFERENCE_FIDELITY_V3,
+    entryPerformance: entryPhaseTracker.snapshot(),
     shaderErrors,
     sceneWarmup: {
       version: "mirrorlife-atomic-scene-warmup-v1",
       frames: sceneWarmupFrames,
       complete: lastSceneReady && sceneWarmupFrames >= 2
     },
+    backgroundProgramWarmup: {
+      signature: backgroundProgramWarmupSignature,
+      state: backgroundProgramWarmupState
+    },
     portal: activeCivicPortalContract ? { version: activeCivicPortalContract } : null,
     activeModelCount: activeItems.filter((item) => item.renderModel !== false).length,
     activeModels: [...new Set(activeItems.filter((item) => item.renderModel !== false).map((item) => item.model))],
     cachedModelCount: cache.size,
     activeActorCount: actorObjects.size,
+    actorArticulationBreakdown,
+    drivenRigidSurfaceCount: Object.fromEntries(
+      Object.entries(actorArticulationBreakdown)
+        .map(([id, actor]) => [id, actor.drivenRigidSurfaceCount])
+    ),
+    skinnedArticulationBoneCount: Object.fromEntries(
+      Object.entries(actorArticulationBreakdown)
+        .map(([id, actor]) => [id, actor.skinnedArticulationBoneCount])
+    ),
+    mobileRemovableDetailBatches: Object.fromEntries(
+      Object.entries(actorArticulationBreakdown)
+        .map(([id, actor]) => [id, actor.mobileRemovableDetailBatches])
+    ),
+    actorDrawCallsByProfile: {
+      [renderProfile]: Object.fromEntries(
+        Object.entries(actorArticulationBreakdown)
+          .map(([id, actor]) => [id, actor.actorDrawCalls])
+      )
+    },
+    actorContractStates,
     actors: [...actorObjects.entries()].map(([id, entry]) => ({
       id,
       frame: entry.frame,
@@ -12574,6 +13185,8 @@ window.MirrorLifeInterior3D = {
   hide,
   isReady,
   loadModel,
+  beginEntry,
+  markEntryPhase,
   getProjections,
   projectWorldPoints,
   getStats
