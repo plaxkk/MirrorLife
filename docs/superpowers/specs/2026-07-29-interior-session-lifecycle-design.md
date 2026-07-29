@@ -1,7 +1,7 @@
 # MirrorLife Interior Session Lifecycle Design
 
-**Date:** 2026-07-29  
-**Status:** Proposed for user review  
+**Date:** 2026-07-29
+**Status:** Proposed for user review
 **Supersedes:** The target-scene speculative prewarm approach reverted in
 `docs/BORDERLESS_PHASE0_STOP_REPORT_2026-07-29.md`
 
