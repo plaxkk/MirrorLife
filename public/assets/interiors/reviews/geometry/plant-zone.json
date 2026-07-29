@@ -1,0 +1,33 @@
+{
+  "auditedAt": "2026-07-29T07:59:52.886Z",
+  "epsilon": 0.00001,
+  "closedMeshes": true,
+  "nonManifoldEdges": 0,
+  "openBoundaryEdges": 0,
+  "masterTriangleCount": 127540,
+  "webTriangleCount": 48188,
+  "master": {
+    "file": "assets/interior-masters/plant-zone/plant-zone.glb",
+    "primitiveCount": 203,
+    "trianglePrimitiveCount": 203,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 127540,
+    "vertexCount": 255392,
+    "weldedVertexCount": 64144,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  },
+  "web": {
+    "file": "public/assets/interiors/glb/plant-zone.glb",
+    "primitiveCount": 203,
+    "trianglePrimitiveCount": 203,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 48188,
+    "vertexCount": 97902,
+    "weldedVertexCount": 24468,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  }
+}

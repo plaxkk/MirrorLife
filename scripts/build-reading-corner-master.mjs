@@ -42,6 +42,8 @@ function run(command, argv) {
 }
 
 const blender = await findBlender();
+const masterRoot = path.resolve("assets/interior-masters/reading-corner");
+const runtimeFile = path.resolve("public/assets/interiors/glb/reading-corner.glb");
 await run(blender, [
   "--background",
   "--factory-startup",
@@ -51,5 +53,8 @@ await run(blender, [
   path.resolve("scripts/blender-build-reading-corner.py"),
   "--",
   "--output-root",
-  path.resolve("dist/interior-3d-work/fidelity-packets/reading-corner/master")
+  masterRoot,
+  "--web-output",
+  runtimeFile
 ]);
+console.log(`Installed Web GLB: ${runtimeFile}`);

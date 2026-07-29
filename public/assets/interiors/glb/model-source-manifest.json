@@ -1,5 +1,5 @@
 {
-  "updatedAt": "2026-07-14T01:07:21.345Z",
+  "updatedAt": "2026-07-29T09:58:26.874Z",
   "provider": "threejs-manual",
   "sourceDir": "dist/interior-3d-work/threejs-manual/generated-glb",
   "backupDir": "dist/interior-3d-work/backups/2026-07-12T04-38-36-418Z",
@@ -7,11 +7,11 @@
     {
       "slot": "bed",
       "label": "休息床",
-      "provider": "tripo",
-      "source": "dist/interior-3d-work/tripo/optimized-glb/bed.glb",
+      "provider": "blender-manual",
+      "source": "assets/interior-masters/bed/bed.glb",
       "target": "public/assets/interiors/glb/bed.glb",
-      "bytes": 1275196,
-      "importedAt": "2026-07-09T16:05:40.987Z",
+      "bytes": 757016,
+      "importedAt": "2026-07-29T09:58:26.874Z",
       "qualityTier": "development",
       "runtimeLod": {
         "installedAt": "2026-07-10T15:55:43.781Z",
@@ -25,32 +25,47 @@
         "vertexCount": 29502
       },
       "geometryAudit": {
-        "auditedAt": "2026-07-10T15:55:43.998Z",
+        "auditedAt": "2026-07-29T07:59:52.053Z",
         "epsilon": 0.00001,
-        "closedMeshes": false,
-        "nonManifoldEdges": 6,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
         "openBoundaryEdges": 0,
-        "webTriangleCount": 41360,
+        "masterTriangleCount": 12056,
+        "webTriangleCount": 7460,
+        "master": {
+          "file": "assets/interior-masters/bed/bed.glb",
+          "primitiveCount": 30,
+          "trianglePrimitiveCount": 30,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 12056,
+          "vertexCount": 23056,
+          "weldedVertexCount": 6080,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
         "web": {
           "file": "public/assets/interiors/glb/bed.glb",
-          "primitiveCount": 1,
-          "trianglePrimitiveCount": 1,
+          "primitiveCount": 30,
+          "trianglePrimitiveCount": 30,
           "outlinePrimitiveCount": 0,
-          "problemPrimitives": [
-            {
-              "meshIndex": 0,
-              "primitiveIndex": 0,
-              "openBoundaryEdges": 0,
-              "nonManifoldEdges": 6
-            }
-          ],
-          "triangleCount": 41360,
-          "vertexCount": 29502,
-          "weldedVertexCount": 20658,
+          "problemPrimitives": [],
+          "triangleCount": 7460,
+          "vertexCount": 21951,
+          "weldedVertexCount": 3782,
           "openBoundaryEdges": 0,
-          "nonManifoldEdges": 6
+          "nonManifoldEdges": 0
         }
-      }
+      },
+      "masterFile": "assets/interior-masters/bed/bed.glb",
+      "masterBytes": 785676,
+      "editableMasterFile": "assets/interior-masters/bed/bed.blend",
+      "editableMasterBytes": 1079380,
+      "sourceScripts": [
+        "scripts/build-core-interior-prop.mjs",
+        "scripts/blender-build-core-prop.py"
+      ],
+      "releaseEligibleProvider": true
     },
     {
       "slot": "counter",
@@ -355,10 +370,10 @@
       "slot": "plant-zone",
       "label": "植物照料区",
       "provider": "blender-manual",
-      "source": "dist/interior-3d-work/fidelity-packets/plant-zone/web/plant-zone.glb",
+      "source": "assets/interior-masters/plant-zone/plant-zone.glb",
       "target": "public/assets/interiors/glb/plant-zone.glb",
-      "bytes": 3334252,
-      "importedAt": "2026-07-10T04:11:26.472Z",
+      "bytes": 3337412,
+      "importedAt": "2026-07-29T09:58:26.874Z",
       "masterSource": "dist/interior-3d-work/fidelity-packets/plant-zone/master/plant-zone.blend",
       "sourceReference": "dist/assets/interior-props-image2/greenhouse_garden/plant_shelf.png",
       "qualityTier": "development",
@@ -374,12 +389,25 @@
         "vertexCount": 97902
       },
       "geometryAudit": {
-        "auditedAt": "2026-07-13T12:50:46.213Z",
+        "auditedAt": "2026-07-29T07:59:52.886Z",
         "epsilon": 0.00001,
         "closedMeshes": true,
         "nonManifoldEdges": 0,
         "openBoundaryEdges": 0,
+        "masterTriangleCount": 127540,
         "webTriangleCount": 48188,
+        "master": {
+          "file": "assets/interior-masters/plant-zone/plant-zone.glb",
+          "primitiveCount": 203,
+          "trianglePrimitiveCount": 203,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 127540,
+          "vertexCount": 255392,
+          "weldedVertexCount": 64144,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
         "web": {
           "file": "public/assets/interiors/glb/plant-zone.glb",
           "primitiveCount": 203,
@@ -392,16 +420,68 @@
           "openBoundaryEdges": 0,
           "nonManifoldEdges": 0
         }
-      }
+      },
+      "masterFile": "assets/interior-masters/plant-zone/plant-zone.glb",
+      "masterBytes": 8464660,
+      "editableMasterFile": "assets/interior-masters/plant-zone/plant-zone.blend",
+      "editableMasterBytes": 7209440,
+      "sourceScripts": [
+        "scripts/build-plant-zone-master.mjs",
+        "scripts/blender-build-plant-zone.py"
+      ],
+      "releaseEligibleProvider": true
     },
     {
       "slot": "workbench",
       "label": "工具台",
-      "provider": "procedural-threejs",
-      "source": "dist/interior-3d-work/procedural-threejs/generated-glb/workbench.glb",
+      "provider": "blender-manual",
+      "source": "assets/interior-masters/workbench/workbench.glb",
       "target": "public/assets/interiors/glb/workbench.glb",
-      "bytes": 950824,
-      "importedAt": "2026-07-10T04:11:26.475Z"
+      "bytes": 693512,
+      "importedAt": "2026-07-29T09:58:26.874Z",
+      "qualityTier": "development",
+      "masterFile": "assets/interior-masters/workbench/workbench.glb",
+      "masterBytes": 727896,
+      "editableMasterFile": "assets/interior-masters/workbench/workbench.blend",
+      "editableMasterBytes": 902472,
+      "sourceScripts": [
+        "scripts/build-core-interior-prop.mjs",
+        "scripts/blender-build-core-prop.py"
+      ],
+      "releaseEligibleProvider": true,
+      "geometryAudit": {
+        "auditedAt": "2026-07-29T07:59:51.969Z",
+        "epsilon": 0.00001,
+        "closedMeshes": true,
+        "nonManifoldEdges": 0,
+        "openBoundaryEdges": 0,
+        "masterTriangleCount": 10936,
+        "webTriangleCount": 6764,
+        "master": {
+          "file": "assets/interior-masters/workbench/workbench.glb",
+          "primitiveCount": 31,
+          "trianglePrimitiveCount": 31,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 10936,
+          "vertexCount": 21244,
+          "weldedVertexCount": 5528,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        },
+        "web": {
+          "file": "public/assets/interiors/glb/workbench.glb",
+          "primitiveCount": 31,
+          "trianglePrimitiveCount": 31,
+          "outlinePrimitiveCount": 0,
+          "problemPrimitives": [],
+          "triangleCount": 6764,
+          "vertexCount": 19952,
+          "weldedVertexCount": 3442,
+          "openBoundaryEdges": 0,
+          "nonManifoldEdges": 0
+        }
+      }
     },
     {
       "slot": "easel",
@@ -529,10 +609,10 @@
     {
       "slot": "reading-corner",
       "label": "阅读角",
-      "provider": "hunyuan-multiview",
-      "source": "dist/interior-3d-work/hunyuan-multiview/generated-glb/reading-corner.glb",
+      "provider": "blender-manual",
+      "source": "assets/interior-masters/reading-corner/reading-corner.glb",
       "target": "public/assets/interiors/glb/reading-corner.glb",
-      "bytes": 5820688,
+      "bytes": 2537228,
       "qualityTier": "development",
       "referenceViews": [
         "front",
@@ -552,46 +632,52 @@
         "public/assets/interiors/references/multiview/reading-corner/bottom.png",
         "public/assets/interiors/references/multiview/reading-corner/isometric.png"
       ],
-      "masterFile": "",
-      "masterBytes": 0,
+      "masterFile": "assets/interior-masters/reading-corner/reading-corner.glb",
+      "masterBytes": 2640604,
       "candidateSourceFile": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
       "candidateSourceBytes": 82172896,
       "releaseEligibleProvider": true,
       "reviewReport": "",
       "geometryAudit": {
-        "auditedAt": "2026-07-12T03:16:05.490Z",
+        "auditedAt": "2026-07-29T07:59:52.535Z",
         "epsilon": 0.00001,
         "closedMeshes": true,
         "nonManifoldEdges": 0,
         "openBoundaryEdges": 0,
-        "masterTriangleCount": 1500000,
-        "webTriangleCount": 78000,
+        "masterTriangleCount": 40420,
+        "webTriangleCount": 27940,
         "master": {
-          "file": "dist/interior-3d-work/hunyuan-multiview/master-glb/reading-corner.glb",
-          "primitiveCount": 1,
-          "trianglePrimitiveCount": 1,
+          "file": "assets/interior-masters/reading-corner/reading-corner.glb",
+          "primitiveCount": 52,
+          "trianglePrimitiveCount": 52,
           "outlinePrimitiveCount": 0,
           "problemPrimitives": [],
-          "triangleCount": 1500000,
-          "vertexCount": 873701,
-          "weldedVertexCount": 749996,
+          "triangleCount": 40420,
+          "vertexCount": 78391,
+          "weldedVertexCount": 20304,
           "openBoundaryEdges": 0,
           "nonManifoldEdges": 0
         },
         "web": {
-          "file": "dist/interior-3d-work/hunyuan-multiview/candidate-glb/reading-corner.glb",
-          "primitiveCount": 1,
-          "trianglePrimitiveCount": 1,
+          "file": "public/assets/interiors/glb/reading-corner.glb",
+          "primitiveCount": 52,
+          "trianglePrimitiveCount": 52,
           "outlinePrimitiveCount": 0,
           "problemPrimitives": [],
-          "triangleCount": 78000,
-          "vertexCount": 65108,
-          "weldedVertexCount": 38996,
+          "triangleCount": 27940,
+          "vertexCount": 73735,
+          "weldedVertexCount": 14064,
           "openBoundaryEdges": 0,
           "nonManifoldEdges": 0
         }
       },
-      "importedAt": "2026-07-12T03:51:28.118Z"
+      "importedAt": "2026-07-29T09:58:26.874Z",
+      "editableMasterFile": "assets/interior-masters/reading-corner/reading-corner.blend",
+      "editableMasterBytes": 2214368,
+      "sourceScripts": [
+        "scripts/build-reading-corner-master.mjs",
+        "scripts/blender-build-reading-corner.py"
+      ]
     },
     {
       "slot": "teacher-podium",

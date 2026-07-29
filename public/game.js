@@ -20,6 +20,7 @@ let recentInteractionEvents = [];
 let interactionVisualSeq = 0;
 let renderCache = { canvas: null, ctx: null, cssW: 0, cssH: 0, dpr: 0, lastFrameAt: 0, lastPruneAt: 0 };
 let transparentSpriteCache = new WeakMap();
+let safeSpriteFrameCache = new WeakMap();
 let communityChunkCache = new Map();
 let renderWorldCache = {
   zoneListKey: "",
@@ -47,6 +48,9 @@ let demoResetInProgress = false;
 let renderActivityUntil = 0;
 let resumeSocietyAfterVisibilityPause = false;
 let lifecycleBound = false;
+const worldClockHoldReasons = new Set();
+let worldClockResumeAfterHolds = false;
+let activeModalClockHold = "";
 let streamedCommunityStats = { activeChunkCount: 0, activeZoneCount: 0, syntax: null };
 let followedCitizenId = null;
 let followZoomUntil = 0;
@@ -85,6 +89,19 @@ const MAX_PARTICLES = 120;
 const MAX_MOBILE_PARTICLES = 54;
 const MAX_INTERACTION_VISUALS = 5;
 const MAX_RECENT_INTERACTIONS = 8;
+const RUNTIME_ART_BIBLE = Object.freeze({
+  version: "mirrorlife-runtime-art-bible-v1",
+  ink: "#30364e",
+  paper: "#fff8e8",
+  teal: "#4e9b8f",
+  tealDeep: "#23665f",
+  coral: "#ee775f",
+  gold: "#efc65a",
+  outlinePx: 2,
+  cardRadius: 14,
+  font: '"Noto Sans SC", "PingFang SC", sans-serif'
+});
+window.MirrorLifeRuntimeArtBible = RUNTIME_ART_BIBLE;
 const INTERACTION_VISUAL_DURATION = 4400;
 const MINOR_INTERACTION_VISUAL_DURATION = 2400;
 const MAX_CONCURRENT_SPEECH_BUBBLES = 4;
@@ -3015,6 +3032,12 @@ function showWorldBanner(text) {
 // ── Society Controls ──
 
 function startSocietyRun() {
+  if (worldClockHoldReasons.size) {
+    worldClockResumeAfterHolds = true;
+    state.society.running = false;
+    updateHUD();
+    return;
+  }
   const speed = clamp(state.society.speed || 1, 0.5, 3);
   state.society.running = true;
   markRenderActive(4000);
@@ -3027,12 +3050,48 @@ function startSocietyRun() {
   updateHUD();
 }
 
-function pauseSocietyRun() {
+function pauseSocietyRun({ preserveHeldResume = false } = {}) {
+  if (!preserveHeldResume && worldClockHoldReasons.size) worldClockResumeAfterHolds = false;
   state.society.running = false;
   markRenderActive(1200);
   if (societyTimer) { clearInterval(societyTimer); societyTimer = null; }
   updateHUD();
 }
+
+function acquireWorldClockHold(reason) {
+  const normalized = String(reason || "").trim();
+  if (!normalized || worldClockHoldReasons.has(normalized)) return;
+  if (!worldClockHoldReasons.size) {
+    worldClockResumeAfterHolds = !!state.society.running;
+  }
+  worldClockHoldReasons.add(normalized);
+  pauseSocietyRun({ preserveHeldResume: true });
+  document.body.dataset.worldClockHeld = "true";
+  document.body.dataset.worldClockHoldReason = [...worldClockHoldReasons].join(",");
+}
+
+function releaseWorldClockHold(reason) {
+  worldClockHoldReasons.delete(String(reason || "").trim());
+  if (worldClockHoldReasons.size) {
+    document.body.dataset.worldClockHoldReason = [...worldClockHoldReasons].join(",");
+    return;
+  }
+  delete document.body.dataset.worldClockHeld;
+  delete document.body.dataset.worldClockHoldReason;
+  const shouldResume = worldClockResumeAfterHolds;
+  worldClockResumeAfterHolds = false;
+  if (shouldResume) startSocietyRun();
+  else updateHUD();
+}
+
+window.MirrorLifeWorldClock = {
+  getStatus: () => ({
+    held: worldClockHoldReasons.size > 0,
+    reasons: [...worldClockHoldReasons],
+    resumesAfterHold: worldClockResumeAfterHolds,
+    running: !!state?.society?.running
+  })
+};
 
 function toggleSocietyRun() {
   if (state.society.running) pauseSocietyRun(); else startSocietyRun();
@@ -3154,7 +3213,12 @@ function updateHUD() {
   setStyle("scoreOpenness", "width", `${m.openness}%`);
 
   const pauseBtn = el("hudPause");
-  if (pauseBtn) pauseBtn.textContent = s.running ? "⏸" : "▶";
+  if (pauseBtn) {
+    pauseBtn.textContent = s.running ? "⏸" : "▶";
+    pauseBtn.title = worldClockHoldReasons.size
+      ? `时间已冻结：${[...worldClockHoldReasons].join("、")}`
+      : (s.running ? "暂停世界" : "继续世界");
+  }
 
   renderWorldPulseSummary();
 }
@@ -3261,6 +3325,16 @@ function openModal(type) {
   const content = document.getElementById("modalContent");
   if (!overlay || !content) return;
 
+  const nextModalClockHold = `modal:${String(type || "unknown")}`;
+  if (activeModalClockHold) {
+    worldClockHoldReasons.delete(activeModalClockHold);
+    activeModalClockHold = nextModalClockHold;
+    worldClockHoldReasons.add(activeModalClockHold);
+    document.body.dataset.worldClockHoldReason = [...worldClockHoldReasons].join(",");
+  } else {
+    activeModalClockHold = nextModalClockHold;
+    acquireWorldClockHold(activeModalClockHold);
+  }
   content.innerHTML = buildModalHTML(type);
   overlay.classList.add("open");
 
@@ -3278,6 +3352,11 @@ function openModal(type) {
 function closeModal() {
   const overlay = document.getElementById("modalOverlay");
   if (overlay) overlay.classList.remove("open");
+  if (activeModalClockHold) {
+    const reason = activeModalClockHold;
+    activeModalClockHold = "";
+    releaseWorldClockHold(reason);
+  }
 }
 
 function buildModalHTML(type) {
@@ -5651,16 +5730,16 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "message", label: "消息与承诺", x: -0.15, z: -3.25, radius: 1.0, color: "#f2cb61" }
     ],
     props: [
-      { worldX: -3.05, worldZ: 0.8, displayScale: 0.78, interactionWorldX: -2.0, interactionWorldZ: 0.72 },
-      { worldX: -0.95, worldZ: 0.35, displayScale: 0.78, focal: false, interactionWorldX: -0.1, interactionWorldZ: 1.05 },
-      { worldX: 2.82, worldZ: -1.28, displayScale: 0.72, interactionWorldX: 1.78, interactionWorldZ: -0.55 },
-      { worldX: 3.52, worldZ: 1.18, displayScale: 0.68, interactionWorldX: 2.58, interactionWorldZ: 1.28 },
-      { worldX: -0.18, worldZ: -3.76, displayScale: 0.78, interactionWorldX: -0.15, interactionWorldZ: -2.62 },
-      { worldX: -3.65, worldZ: -1.65, displayScale: 0.66, interactionWorldX: -2.72, interactionWorldZ: -1.28 }
+      { worldX: -3.5, worldZ: -1.5, displayScale: 0.8, interactionWorldX: -1.8, interactionWorldZ: -0.8 },
+      { worldX: 0, worldZ: -4.18, displayScale: 0.72, focal: false, interactionWorldX: 0, interactionWorldZ: -2.78 },
+      { worldX: 3.5, worldZ: -1.5, displayScale: 0.82, interactionWorldX: 1.75, interactionWorldZ: -0.8 },
+      { worldX: 3.4, worldZ: 1.3, displayScale: 0.86, interactionWorldX: 2.1, interactionWorldZ: 0.88 },
+      { worldX: 2.3, worldZ: 3.6, displayScale: 0.84, interactionWorldX: 1.45, interactionWorldZ: 2.42 },
+      { worldX: -2.3, worldZ: 3.6, displayScale: 0.82, interactionWorldX: -1.45, interactionWorldZ: 2.42 }
     ],
     actorStagingPoints: [{ x: -0.2, z: 1.65 }, { x: 1.35, z: 0.6 }, { x: -1.6, z: -1.25 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 2.15 },
-    cameraTargets: [{ id: "living", x: -0.65, z: 0.35 }, { id: "private", x: 1.45, z: -0.7 }]
+    cameraTargets: [{ id: "living", x: -0.55, z: 0.25 }, { id: "private", x: 0.85, z: -0.35 }]
   }),
   "office-district": Object.freeze({
     shellId: "studio-workflow-v1",
@@ -5673,15 +5752,15 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "breathing", label: "喘息缓冲", x: 3.35, z: 1.65, radius: 0.8, color: "#ef916d" }
     ],
     props: [
-      { worldX: -2.8, worldZ: -1.65, displayScale: 0.72, interactionWorldX: -1.65, interactionWorldZ: -1.2 },
-      { worldX: 3.58, worldZ: -1.55, displayScale: 0.62, interactionWorldX: 2.55, interactionWorldZ: -1.15 },
-      { worldX: 0.1, worldZ: -4.18, displayScale: 0.74, interactionWorldX: 0.1, interactionWorldZ: -3.08 },
-      { worldX: 1.1, worldZ: 0.55, displayScale: 0.78, focal: false, interactionWorldX: 0.1, interactionWorldZ: 1.28 },
-      { worldX: -3.55, worldZ: 1.7, displayScale: 0.6, interactionWorldX: -2.48, interactionWorldZ: 1.48 }
+      { worldX: -3.55, worldZ: -1.55, displayScale: 0.86, interactionWorldX: -1.83, interactionWorldZ: -0.8 },
+      { worldX: 0, worldZ: -4.18, displayScale: 0.82, interactionWorldX: 0, interactionWorldZ: -2.3 },
+      { worldX: 3.55, worldZ: -1.55, displayScale: 0.86, interactionWorldX: 2.12, interactionWorldZ: -1.02 },
+      { worldX: 3.18, worldZ: 1.85, displayScale: 0.72, focal: false, interactionWorldX: 1.55, interactionWorldZ: 0.9 },
+      { worldX: -3.18, worldZ: 1.85, displayScale: 0.82, interactionWorldX: -1.9, interactionWorldZ: 1.16 }
     ],
-    actorStagingPoints: [{ x: -1.4, z: 0.72 }, { x: 1.55, z: -0.65 }, { x: 2.55, z: 1.45 }],
+    actorStagingPoints: [{ x: -1.2, z: 0.2 }, { x: 0, z: 1.8 }, { x: -0.8, z: -1.8 }],
     cameraSafeArea: { x: 0.05, z: 0.1, radius: 2.05 },
-    cameraTargets: [{ id: "promise", x: 0.1, z: -1.45 }, { id: "collaboration", x: 0.85, z: 0.35 }]
+    cameraTargets: [{ id: "promise", x: 0, z: -0.8 }, { id: "collaboration", x: 0.65, z: 0.25 }]
   }),
   "public-plaza": Object.freeze({
     shellId: "civic-listening-ring-v1",
@@ -5726,8 +5805,8 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         // `rotationY` supplies the world yaw; collider.rotation is a local
         // offset and must stay zero or Rapier would apply the angle twice.
         collider: { shape: "box", halfX: 0.82, halfY: 0.84, halfZ: 0.47, rotation: 0 },
-        interactionWorldX: -2.42,
-        interactionWorldZ: 1.25
+        interactionWorldX: -2.12,
+        interactionWorldZ: 0.77
       },
       {
         model: "civic-notice-console",
@@ -5758,8 +5837,8 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         // the same metre-scale contract so the player never hits empty space.
         displayScale: 1.08,
         collider: { shape: "box", halfX: 1.35, halfY: 0.97, halfZ: 0.99, rotation: 0 },
-        interactionWorldX: 2.35,
-        interactionWorldZ: -1.02
+        interactionWorldX: 1.65,
+        interactionWorldZ: -0.71
       },
       {
         // The civic foreground desk is authored directly in the room renderer
@@ -5776,8 +5855,8 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         // remains outside the 1.4m testimony loop.
         displayScale: 1.2,
         collider: { shape: "box", halfX: 1.22, halfY: 0.93, halfZ: 0.58, rotation: 0 },
-        interactionWorldX: -1.78,
-        interactionWorldZ: 2.32
+        interactionWorldX: -1.69,
+        interactionWorldZ: 2.06
       },
       {
         // A low lounge table completes the sofa conversation bay visible in
@@ -5792,8 +5871,8 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
         rotationY: -0.28,
         displayScale: 0.94,
         collider: { shape: "box", halfX: 0.69, halfY: 0.64, halfZ: 0.42, rotation: -0.28 },
-        interactionWorldX: 2.14,
-        interactionWorldZ: -0.12
+        interactionWorldX: 1.78,
+        interactionWorldZ: 0.34
       },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 0, worldZ: 0.05, interactionWorldX: 0, interactionWorldZ: 1.05 },
       { renderModel: false, physicsSolid: false, focal: false, worldX: 4.08, worldZ: -0.64, interactionWorldX: 3.15, interactionWorldZ: -0.15 }
@@ -5819,12 +5898,12 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "boundary", label: "边界确认", x: 2.75, z: -1.72, radius: 1.0, color: "#8aa8d8" }
     ],
     props: [
-      { model: "calming-chair", assetIntent: "calibration-chair", focal: false, worldX: -3.25, worldZ: 0.75, displayScale: 0.62, interactionWorldX: -2.18, interactionWorldZ: 0.55 },
-      { model: "record-desk", assetIntent: "dialogue-console", worldX: -2.55, worldZ: -2.25, displayScale: 0.66, interactionWorldX: -1.55, interactionWorldZ: -1.62 },
-      { worldX: 3.15, worldZ: -1.9, displayScale: 0.62, interactionWorldX: 2.12, interactionWorldZ: -1.32 },
+      { model: "calming-chair", assetIntent: "calibration-chair", focal: false, worldX: -3.25, worldZ: 0.75, displayScale: 0.62, interactionWorldX: -1.66, interactionWorldZ: 0.38 },
+      { model: "record-desk", assetIntent: "dialogue-console", worldX: -2.55, worldZ: -2.25, displayScale: 0.66, interactionWorldX: -1.2, interactionWorldZ: -1.06 },
+      { worldX: 3.15, worldZ: -1.9, displayScale: 0.62, interactionWorldX: 1.84, interactionWorldZ: -1.11 },
       { model: "archive-cabinet", assetIntent: "consent-cabinet", worldX: 0.12, worldZ: -4.1, displayScale: 0.72, interactionWorldX: 0.12, interactionWorldZ: -3.05 },
-      { model: "meditation-seat", assetIntent: "grounding-seat", worldX: 3.28, worldZ: 1.42, displayScale: 0.6, interactionWorldX: 2.18, interactionWorldZ: 1.15 },
-      { worldX: -3.45, worldZ: -1.35, displayScale: 0.58, interactionWorldX: -2.55, interactionWorldZ: -1.05 }
+      { model: "meditation-seat", assetIntent: "grounding-seat", worldX: 3.28, worldZ: 1.42, displayScale: 0.6, interactionWorldX: 1.89, interactionWorldZ: 0.82 },
+      { worldX: -3.45, worldZ: -1.35, displayScale: 0.58, interactionWorldX: -2.14, interactionWorldZ: -0.84 }
     ],
     actorStagingPoints: [{ x: -1.05, z: 0.2 }, { x: 1.05, z: 0.2 }, { x: 0, z: 1.45 }],
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.85 },
@@ -5841,15 +5920,15 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "witness", label: "圆形见证台", x: 1.9, z: 1.75, radius: 0.9, color: "#b9de62" }
     ],
     props: [
-      { model: "archive-cabinet", assetIntent: "public-archive-cabinet", worldX: -3.35, worldZ: -1.25, displayScale: 0.66, interactionWorldX: -2.25, interactionWorldZ: -0.85 },
+      { model: "archive-cabinet", assetIntent: "public-archive-cabinet", worldX: -3.35, worldZ: -1.25, displayScale: 0.66, interactionWorldX: -1.92, interactionWorldZ: -0.7 },
       { worldX: -0.95, worldZ: -4.12, displayScale: 0.7, interactionWorldX: -0.82, interactionWorldZ: -3.02 },
       { model: "mediation-podium", assetIntent: "consent-threshold", physicsSolid: false, worldX: 0.35, worldZ: -1.15, displayScale: 0.58, interactionWorldX: 0.2, interactionWorldZ: 0.2 },
-      { worldX: -2.65, worldZ: 1.65, displayScale: 0.68, focal: false, interactionWorldX: -1.55, interactionWorldZ: 1.35 },
-      { model: "memory-book", assetIntent: "sealed-memory-vault", worldX: 2.92, worldZ: -1.32, displayScale: 0.66, interactionWorldX: 1.88, interactionWorldZ: -0.82 }
+      { worldX: -2.65, worldZ: 1.65, displayScale: 0.68, focal: false, interactionWorldX: -1.15, interactionWorldZ: 0.72 },
+      { model: "memory-book", assetIntent: "sealed-memory-vault", worldX: 2.92, worldZ: -1.32, displayScale: 0.66, interactionWorldX: 1.38, interactionWorldZ: -0.62 }
     ],
     actorStagingPoints: [{ x: -0.8, z: 0.75 }, { x: 0.9, z: 0.75 }, { x: 1.85, z: 1.55 }],
     cameraSafeArea: { x: 0, z: 0.35, radius: 1.95 },
-    cameraTargets: [{ id: "consent", x: 0, z: 0.15 }, { id: "sealed", x: 1.4, z: -0.65 }]
+    cameraTargets: [{ id: "consent", x: 0, z: 0.15 }, { id: "sealed", x: 1.02, z: -0.42 }]
   }),
   "legal-court": Object.freeze({
     shellId: "mirror-hearing-v1",
@@ -5862,26 +5941,146 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
       { id: "evidence", label: "双侧证据", x: 0, z: -3.65, radius: 1.1, color: "#8aa8d8" }
     ],
     props: [
-      { worldX: 0, worldZ: -4.05, displayScale: 0.7, interactionWorldX: 0, interactionWorldZ: -2.95 },
-      { worldX: -2.05, worldZ: 1.15, displayScale: 0.64, focal: false, interactionWorldX: -1.05, interactionWorldZ: 0.82 },
-      { worldX: 2.65, worldZ: -2.2, displayScale: 0.66, interactionWorldX: 1.65, interactionWorldZ: -1.55 },
-      { worldX: 3.55, worldZ: 0.65, displayScale: 0.62, interactionWorldX: 2.52, interactionWorldZ: 0.48 },
-      { worldX: -3.5, worldZ: -1.05, displayScale: 0.6, interactionWorldX: -2.45, interactionWorldZ: -0.78 }
+      { worldX: -3.45, worldZ: -1.45, displayScale: 0.82, interactionWorldX: -1.8, interactionWorldZ: -0.72 },
+      { worldX: 0, worldZ: -4.12, displayScale: 0.68, focal: false, interactionWorldX: 0, interactionWorldZ: -2.38 },
+      { worldX: 3.45, worldZ: -1.45, displayScale: 0.82, interactionWorldX: 1.78, interactionWorldZ: -0.72 },
+      { worldX: 3.1, worldZ: 1.85, displayScale: 0.82, interactionWorldX: 1.55, interactionWorldZ: 0.92 },
+      { worldX: -3.1, worldZ: 1.85, displayScale: 0.78, interactionWorldX: -1.48, interactionWorldZ: 0.88 }
     ],
-    actorStagingPoints: [{ x: -1.2, z: 0.3 }, { x: 1.2, z: 0.3 }, { x: -2.1, z: 1.55 }, { x: 2.1, z: 1.55 }],
+    actorStagingPoints: [{ x: 0, z: 0.8 }, { x: 1.8, z: -0.6 }, { x: -1.8, z: -0.8 }, { x: 0, z: 2 }],
     cameraSafeArea: { x: 0, z: 0.2, radius: 1.75 },
-    cameraTargets: [{ id: "seam", x: 0, z: 0.2 }, { id: "evidence", x: 0, z: -1.25 }]
+    cameraTargets: [{ id: "seam", x: 0, z: 0.2 }, { id: "evidence", x: 0, z: -0.72 }]
+  })
+});
+
+// Each remaining room owns an explicit walkable social constellation. These
+// are metre-space authoring decisions, not a runtime ring fallback; all four
+// sets were checked against the actual collider graphs of every room.
+const INTERIOR_AUTHORED_STAGING_POINTS = Object.freeze({
+  "maternity-hospital": [{ x: 0, z: 0.8 }, { x: -1.2, z: 0.2 }, { x: 1.2, z: 0.4 }],
+  kindergarten: [{ x: -2, z: 0 }, { x: 0, z: 1.8 }, { x: 2, z: 0 }],
+  "primary-school": [{ x: -1.8, z: -0.8 }, { x: 1.8, z: -0.6 }, { x: 0, z: 2 }],
+  "middle-school": [{ x: -1.8, z: 1 }, { x: 0.8, z: 1.6 }, { x: -0.8, z: -1.8 }],
+  university: [{ x: 0, z: 0.8 }, { x: -1.2, z: 0.2 }, { x: 1.2, z: 0.4 }],
+  factory: [{ x: -1.1, z: 1.35 }, { x: 0.55, z: 1.55 }, { x: 1.55, z: 0.15 }],
+  "creative-studio": [{ x: -1.8, z: -0.8 }, { x: 1.8, z: -0.6 }, { x: 0, z: 2 }],
+  "commercial-zone": [{ x: -1.1, z: 1.4 }, { x: 0.3, z: 1.55 }, { x: -0.8, z: -1.8 }],
+  farm: [{ x: 0, z: 0.8 }, { x: -1.2, z: 0.2 }, { x: 1.2, z: 0.4 }],
+  park: [{ x: -2, z: 0 }, { x: 0, z: 1.8 }, { x: 2, z: 0 }],
+  zoo: [{ x: -1.8, z: -0.8 }, { x: 1.8, z: -0.6 }, { x: 0, z: 2 }],
+  "botanical-garden": [{ x: -1.8, z: 1 }, { x: 0.8, z: 1.6 }, { x: -0.8, z: -1.8 }],
+  "night-market": [{ x: 0, z: 0.8 }, { x: -1.2, z: 0.2 }, { x: 1.2, z: 0.4 }],
+  "quiet-nook": [{ x: -2, z: 0 }, { x: 0, z: 1.8 }, { x: 2, z: 0 }],
+  "repair-station": [{ x: -1.8, z: -0.8 }, { x: 1.8, z: -0.6 }, { x: 0, z: 2 }],
+  cemetery: [{ x: -1.8, z: 1 }, { x: 0.8, z: 1.6 }, { x: -0.8, z: -1.8 }],
+  "commons-workshop": [{ x: 0, z: 0.8 }, { x: -1.2, z: 0.2 }, { x: 1.2, z: 0.4 }],
+  "rest-courtyard": [{ x: -2, z: 0 }, { x: 0, z: 1.8 }, { x: 2, z: 0 }],
+  "mentor-hall": [{ x: -1.8, z: -0.8 }, { x: 1.8, z: -0.6 }, { x: 0, z: 2 }],
+  "resource-kitchen": [{ x: -1.8, z: 1 }, { x: 0.8, z: 1.6 }, { x: -0.8, z: -1.8 }]
+});
+
+// Rooms without a hero-specific floor plan use an authored metre-space
+// contract for their gameplay archetype. This replaces the former panorama
+// ring synthesis: furniture now stays on the perimeter, the entrance-to-center
+// axis remains at least 1.4 m wide, and every interaction anchor is authored on
+// the inward-facing side of its prop.
+const INTERIOR_ARCHETYPE_SPATIAL_CONTRACTS = Object.freeze({
+  care: Object.freeze({
+    props: [
+      { worldX: -3.55, worldZ: -1.55, displayScale: 0.74, interactionWorldX: -1.9, interactionWorldZ: -0.9 },
+      { worldX: 0, worldZ: -4.18, displayScale: 0.88, interactionWorldX: 0, interactionWorldZ: -2.86 },
+      { worldX: 3.55, worldZ: -1.55, displayScale: 0.88, interactionWorldX: 2.05, interactionWorldZ: -0.95 },
+      { worldX: 3.48, worldZ: 1.28, displayScale: 0.86, interactionWorldX: 2.16, interactionWorldZ: 0.9 },
+      { worldX: 2.35, worldZ: 3.62, displayScale: 0.82, interactionWorldX: 1.2, interactionWorldZ: 2.15 },
+      { worldX: -3.45, worldZ: 2.35, displayScale: 0.82, interactionWorldX: -2.12, interactionWorldZ: 1.58 }
+    ],
+    cameraTargets: [{ id: "care-center", x: 0, z: 0.25 }]
+  }),
+  learning: Object.freeze({
+    props: [
+      { worldX: -3.5, worldZ: -1.5, displayScale: 0.76, interactionWorldX: -1.91, interactionWorldZ: -0.82 },
+      { worldX: 0, worldZ: -4.2, displayScale: 0.86, interactionWorldX: 0, interactionWorldZ: -2.82 },
+      { worldX: 3.5, worldZ: -1.5, displayScale: 0.9, interactionWorldX: 2.14, interactionWorldZ: -1 },
+      { worldX: 3.42, worldZ: 1.3, displayScale: 0.9, interactionWorldX: 1.75, interactionWorldZ: 0.72 },
+      { worldX: 2.3, worldZ: 3.62, displayScale: 0.84, interactionWorldX: 1.46, interactionWorldZ: 2.44 },
+      { worldX: -2.3, worldZ: 3.62, displayScale: 0.76, interactionWorldX: -1.37, interactionWorldZ: 2.15 }
+    ],
+    cameraTargets: [{ id: "learning-center", x: 0, z: 0.2 }]
+  }),
+  commerce: Object.freeze({
+    props: [
+      { worldX: -3.55, worldZ: -1.55, displayScale: 0.88, interactionWorldX: -1.95, interactionWorldZ: -0.85 },
+      { worldX: 0, worldZ: -4.2, displayScale: 0.86, interactionWorldX: 0, interactionWorldZ: -2.82 },
+      { worldX: 3.52, worldZ: -1.55, displayScale: 0.84, interactionWorldX: 2, interactionWorldZ: -0.95 },
+      { worldX: 3.42, worldZ: 1.3, displayScale: 0.74, interactionWorldX: 1.72, interactionWorldZ: 0.74 },
+      { worldX: 3.35, worldZ: 2.5, displayScale: 0.84, interactionWorldX: 1.75, interactionWorldZ: 1.55 },
+      { worldX: -3.35, worldZ: 2.5, displayScale: 0.86, interactionWorldX: -1.75, interactionWorldZ: 1.55 }
+    ],
+    cameraTargets: [{ id: "exchange-center", x: 0, z: 0.18 }]
+  }),
+  work: Object.freeze({
+    props: [
+      { worldX: -3.55, worldZ: -1.55, displayScale: 0.86, interactionWorldX: -1.83, interactionWorldZ: -0.8 },
+      { worldX: 0, worldZ: -4.18, displayScale: 0.82, interactionWorldX: 0, interactionWorldZ: -2.3 },
+      { worldX: 3.55, worldZ: -1.55, displayScale: 0.86, interactionWorldX: 2.12, interactionWorldZ: -1.02 },
+      { worldX: 3.18, worldZ: 1.85, displayScale: 0.72, interactionWorldX: 1.55, interactionWorldZ: 0.9 },
+      { worldX: -3.18, worldZ: 1.85, displayScale: 0.82, interactionWorldX: -1.9, interactionWorldZ: 1.16 }
+    ],
+    cameraTargets: [{ id: "work-center", x: 0, z: 0.18 }]
+  }),
+  home: Object.freeze({
+    props: [
+      { worldX: -3.5, worldZ: -1.5, displayScale: 0.8, interactionWorldX: -1.8, interactionWorldZ: -0.8 },
+      { worldX: 0, worldZ: -4.18, displayScale: 0.72, interactionWorldX: 0, interactionWorldZ: -2.78 },
+      { worldX: 3.5, worldZ: -1.5, displayScale: 0.82, interactionWorldX: 1.75, interactionWorldZ: -0.8 },
+      { worldX: 3.4, worldZ: 1.3, displayScale: 0.86, interactionWorldX: 2.1, interactionWorldZ: 0.88 },
+      { worldX: 2.3, worldZ: 3.6, displayScale: 0.84, interactionWorldX: 1.45, interactionWorldZ: 2.42 },
+      { worldX: -2.3, worldZ: 3.6, displayScale: 0.82, interactionWorldX: -1.45, interactionWorldZ: 2.42 }
+    ],
+    cameraTargets: [{ id: "home-center", x: 0, z: 0.2 }]
+  }),
+  nature: Object.freeze({
+    props: [
+      { worldX: -3.45, worldZ: -1.45, displayScale: 0.7, interactionWorldX: -2.05, interactionWorldZ: -0.94 },
+      { worldX: 0, worldZ: -4.15, displayScale: 0.84, interactionWorldX: 0, interactionWorldZ: -2.75 },
+      { worldX: 3.45, worldZ: -1.45, displayScale: 0.86, interactionWorldX: 2.08, interactionWorldZ: -0.94 },
+      { worldX: 3.08, worldZ: 1.9, displayScale: 0.86, interactionWorldX: 1.44, interactionWorldZ: 0.89 },
+      { worldX: -3.08, worldZ: 1.9, displayScale: 0.8, interactionWorldX: -1.82, interactionWorldZ: 1.16 }
+    ],
+    cameraTargets: [{ id: "nature-center", x: 0, z: 0.22 }]
+  }),
+  creative: Object.freeze({
+    props: [
+      { worldX: -3.45, worldZ: -1.5, displayScale: 0.86, interactionWorldX: -2.08, interactionWorldZ: -0.98 },
+      { worldX: 0, worldZ: -4.15, displayScale: 0.86, interactionWorldX: 0, interactionWorldZ: -2.76 },
+      { worldX: 3.45, worldZ: -1.5, displayScale: 0.84, interactionWorldX: 1.92, interactionWorldZ: -0.9 },
+      { worldX: 3.08, worldZ: 1.9, displayScale: 0.72, interactionWorldX: 1.42, interactionWorldZ: 0.88 },
+      { worldX: -3.08, worldZ: 1.9, displayScale: 0.84, interactionWorldX: -1.5, interactionWorldZ: 0.9 }
+    ],
+    cameraTargets: [{ id: "creative-center", x: 0, z: 0.2 }]
+  }),
+  memory: Object.freeze({
+    props: [
+      { worldX: -3.35, worldZ: -1.35, displayScale: 0.86, interactionWorldX: -1.58, interactionWorldZ: -0.64 },
+      { worldX: 0, worldZ: -4.12, displayScale: 0.72, interactionWorldX: 0, interactionWorldZ: -2.35 },
+      { worldX: 3.35, worldZ: -1.35, displayScale: 0.86, interactionWorldX: 1.8, interactionWorldZ: -0.75 },
+      { worldX: -2.75, worldZ: 2.1, displayScale: 0.78, interactionWorldX: -1.6, interactionWorldZ: 1.26 }
+    ],
+    cameraTargets: [{ id: "memory-center", x: 0, z: 0.24 }]
   })
 });
 
 function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
   const zoneId = String(zone?.id || "unknown-room");
-  const authored = INTERIOR_ZONE_LAYOUT_PROFILES[zoneId] || {};
+  const heroAuthored = INTERIOR_ZONE_LAYOUT_PROFILES[zoneId] || null;
+  const archetypeAuthored = INTERIOR_ARCHETYPE_SPATIAL_CONTRACTS[blueprintKey] || {};
+  const authored = heroAuthored || archetypeAuthored;
   const defaultIdentity = INTERIOR_ZONE_PROFILES[zoneId] || {};
   const defaultDoorAngle = 0;
   return {
     version: 2,
     zoneId,
+    layoutSource: heroAuthored ? "hero-authored" : "archetype-authored",
     worldScaleMeters: 1,
     shellId: authored.shellId || `${zoneId}-shell-v1`,
     spawn: {
@@ -5917,9 +6116,19 @@ function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
         reach: 0.9
       }
     })) : [],
-    actorStagingPoints: Array.isArray(authored.actorStagingPoints)
-      ? authored.actorStagingPoints.map((point) => ({ x: Number(point.x || 0), y: Number(point.y || 0), z: Number(point.z || 0), facing: Number(point.facing || 0) }))
-      : [{ x: -0.9, y: 0, z: 0.8 }, { x: 0.9, y: 0, z: 0.8 }, { x: 0, y: 0, z: -0.9 }],
+    actorStagingPoints: (Array.isArray(authored.actorStagingPoints)
+      ? authored.actorStagingPoints
+      : INTERIOR_AUTHORED_STAGING_POINTS[zoneId] || [{ x: -0.9, z: 0.8 }, { x: 0.9, z: 0.8 }, { x: 0, z: -0.9 }])
+      .map((point) => ({ x: Number(point.x || 0), y: Number(point.y || 0), z: Number(point.z || 0), facing: Number(point.facing || 0) })),
+    extraColliders: Array.isArray(authored.extraColliders)
+      ? authored.extraColliders.map((entry) => ({
+        ...entry,
+        x: Number(entry.x || 0),
+        y: Number(entry.y || 0),
+        z: Number(entry.z || 0),
+        collider: entry.collider ? { ...entry.collider } : null
+      }))
+      : [],
     cameraSafeArea: { x: 0, z: 0.3, radius: 2.1, ...(authored.cameraSafeArea || {}) },
     cameraTargets: Array.isArray(authored.cameraTargets) ? authored.cameraTargets.map((item) => ({ ...item })) : [{ id: "center", x: 0, z: 0.2 }],
     cameraVolumes: [{ id: "main", center: { x: 0, y: 1.1, z: 0.3 }, radius: 4.85, minDistance: 1.35, maxDistance: 5.2 }],
@@ -6181,6 +6390,7 @@ function getInteriorPhysicsItems(blueprint) {
     model: "shell-collider",
     renderModel: false,
     physicsSolid: true,
+    interactionEnabled: false,
     worldX: Number(entry.x || 0),
     worldY: Number(entry.y || 0),
     worldZ: Number(entry.z || 0),
@@ -12459,33 +12669,33 @@ function drawInteriorPanoramaBackground(ctx, W, H, style, blueprint, isNight) {
 function getInteriorMaterialStyle(zone, blueprint) {
   const hint = `${zone?.id || ""} ${zone?.role || ""} ${zone?.archetype || ""} ${blueprint?.title || ""}`;
   if (/照护|hospital|maternity|care|repair/.test(hint)) {
-    return { wall: "#f5e9d8", floor: "#e7d7bd", accent: "#74a9c5", trim: "#30364e", motif: "cross" };
+    return { wall: "#f5e9d8", floor: "#e7d7bd", accent: "#74a9c5", trim: RUNTIME_ART_BIBLE.ink, motif: "cross" };
   }
   if (/学习|school|university|kinder|learn|mentor/.test(hint)) {
-    return { wall: "#f6e8d1", floor: "#ead5b3", accent: "#6f9fd1", trim: "#30364e", motif: "books" };
+    return { wall: "#f6e8d1", floor: "#ead5b3", accent: "#6f9fd1", trim: RUNTIME_ART_BIBLE.ink, motif: "books" };
   }
   if (/交易|commercial|market|shop|kitchen|resource/.test(hint)) {
-    return { wall: "#f6e6cf", floor: "#e8d0ac", accent: "#df6b58", trim: "#30364e", motif: "awning" };
+    return { wall: "#f6e6cf", floor: "#e8d0ac", accent: RUNTIME_ART_BIBLE.coral, trim: RUNTIME_ART_BIBLE.ink, motif: "awning" };
   }
   if (/公共|plaza|forum|civic/.test(hint)) {
-    return { wall: "#f5e7d1", floor: "#ead7b8", accent: "#efc85d", trim: "#30364e", motif: "circle" };
+    return { wall: "#f5e7d1", floor: "#ead7b8", accent: RUNTIME_ART_BIBLE.gold, trim: RUNTIME_ART_BIBLE.ink, motif: "circle" };
   }
   if (/调停|legal|court|justice/.test(hint)) {
-    return { wall: "#f3e7d7", floor: "#e5d4ba", accent: "#d98273", trim: "#30364e", motif: "columns" };
+    return { wall: "#f3e7d7", floor: "#e5d4ba", accent: "#d98273", trim: RUNTIME_ART_BIBLE.ink, motif: "columns" };
   }
   if (/协作|work|office|factory|craft|commons/.test(hint)) {
-    return { wall: "#f2e7d5", floor: "#dfd2bd", accent: "#6e9d91", trim: "#30364e", motif: "grid" };
+    return { wall: "#f2e7d5", floor: "#dfd2bd", accent: RUNTIME_ART_BIBLE.teal, trim: RUNTIME_ART_BIBLE.ink, motif: "grid" };
   }
   if (/表达|creative|studio|story|archive/.test(hint)) {
-    return { wall: "#f6e6d4", floor: "#ead1b9", accent: "#dc6355", trim: "#30364e", motif: "frames" };
+    return { wall: "#f6e6d4", floor: "#ead1b9", accent: RUNTIME_ART_BIBLE.coral, trim: RUNTIME_ART_BIBLE.ink, motif: "frames" };
   }
   if (/生态|park|garden|farm|nature|zoo|botanical/.test(hint)) {
-    return { wall: "#f3e9d5", floor: "#dfd5b9", accent: "#6f9a6d", trim: "#30364e", motif: "leaf" };
+    return { wall: "#f3e9d5", floor: "#dfd5b9", accent: "#6f9a6d", trim: RUNTIME_ART_BIBLE.ink, motif: "leaf" };
   }
   if (/安宁|memory|cemetery|quiet/.test(hint)) {
-    return { wall: "#f1e6d6", floor: "#ddd2bf", accent: "#c38e5b", trim: "#30364e", motif: "candle" };
+    return { wall: "#f1e6d6", floor: "#ddd2bf", accent: "#c38e5b", trim: RUNTIME_ART_BIBLE.ink, motif: "candle" };
   }
-  return { wall: "#f7e9d4", floor: "#ead2af", accent: "#e98860", trim: "#30364e", motif: "home" };
+  return { wall: "#f7e9d4", floor: "#ead2af", accent: RUNTIME_ART_BIBLE.coral, trim: RUNTIME_ART_BIBLE.ink, motif: "home" };
 }
 
 function projectInteriorPoint(layout, nx, nz, height = 0) {
@@ -13646,8 +13856,27 @@ function getInteriorCameraFocus(blueprint, actors = []) {
     || getEmpathyCalibrationRitual(interiorView?.zone?.id)
     || getMemoryAuthorizationRitual(interiorView?.zone?.id);
   const focusId = String(interiorView?.focusActorId || ritual?.targetId || ritual?.witnessId || "");
-  const actor = actors.find((candidate) => candidate.id === focusId) || null;
-  const actorWeight = actor ? 0.42 : 0;
+  const explicitActor = actors.find((candidate) => candidate.id === focusId) || null;
+  const activeSpeaker = interiorView?.zone?.id === "public-plaza"
+    ? actors.find((candidate) => ["talking", "doing", "interact"].includes(String(candidate?.state || ""))) || null
+    : null;
+  const player = actors.find((candidate) => candidate.id === "player") || null;
+  const nearestActor = [...actors]
+    .filter((candidate) => candidate.id !== "player")
+    .sort((left, right) => (
+      Math.hypot(
+        Number(left.worldX || 0) - Number(player?.worldX || 0),
+        Number(left.worldZ || 0) - Number(player?.worldZ || 0)
+      )
+      - Math.hypot(
+        Number(right.worldX || 0) - Number(player?.worldX || 0),
+        Number(right.worldZ || 0) - Number(player?.worldZ || 0)
+      )
+    ))[0] || null;
+  const actor = explicitActor || activeSpeaker || nearestActor;
+  const actorWeight = actor
+    ? (activeSpeaker && !explicitActor ? 1 : explicitActor ? 0.42 : 1)
+    : 0;
   const targetWeight = 1 - actorWeight;
   const safeArea = layoutProfile.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   let x = Number(target.x || 0) * targetWeight + Number(actor?.worldX || 0) * actorWeight;
@@ -14461,6 +14690,7 @@ window.addEventListener("mirrorlife:interior-webgl-context-lost", () => {
 
 function enterInteriorView(zone, source = "manual", options = {}) {
   if (!zone) return;
+  acquireWorldClockHold("interior");
   const requestedAt = Number.isFinite(Number(options.requestedAt))
     ? Number(options.requestedAt)
     : performance.now();
@@ -14612,6 +14842,7 @@ function exitInteriorView() {
   document.getElementById("empathyCalibrationRitual")?.remove();
   document.getElementById("memoryAuthorizationRitual")?.remove();
   syncEpisodeTrailHud();
+  releaseWorldClockHold("interior");
   markRenderActive(2200);
 }
 
@@ -15127,6 +15358,11 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
       ia = interiorAnimations[citizen.id] = {
         worldX: spawn.x,
         worldZ: spawn.z,
+        spawnRequestedX: desired.x,
+        spawnRequestedZ: desired.z,
+        spawnResolvedX: spawn.x,
+        spawnResolvedZ: spawn.z,
+        spawnCorrection: Math.hypot(spawn.x - desired.x, spawn.z - desired.z),
         targetWorldX: spawn.x,
         targetWorldZ: spawn.z,
         x: 0,
@@ -16091,7 +16327,7 @@ function drawRoleDot(ctx, x, y, color) {
   ctx.beginPath();
   ctx.arc(x, y, 4, 0, Math.PI * 2);
   ctx.fill();
-  ctx.strokeStyle = "#1a1a2e";
+  ctx.strokeStyle = RUNTIME_ART_BIBLE.ink;
   ctx.lineWidth = 1.5;
   ctx.stroke();
 }
@@ -16126,19 +16362,21 @@ function drawZoneNameTag(ctx, zone, r, color, isHovered) {
   const labelW = Math.min(112, Math.max(48, zone.name.length * 11 + 24));
   const labelH = isHovered ? 20 : 18;
   const labelX = r.cx - labelW / 2;
-  const labelY = r.cy + r.h * 0.42;
+  // Keep labels below the street performer band. The previous 0.42 offset
+  // put every walking body directly through the title pill.
+  const labelY = r.cy + r.h * 0.78;
   ctx.save();
-  ctx.fillStyle = "rgba(250, 250, 245, 0.94)";
+  ctx.fillStyle = RUNTIME_ART_BIBLE.paper;
   roundRect(ctx, labelX, labelY, labelW, labelH, 9);
   ctx.fill();
-  ctx.strokeStyle = "#1a1a2e";
-  ctx.lineWidth = isHovered ? 2.5 : 2;
+  ctx.strokeStyle = RUNTIME_ART_BIBLE.ink;
+  ctx.lineWidth = isHovered ? 2.5 : RUNTIME_ART_BIBLE.outlinePx;
   roundRect(ctx, labelX, labelY, labelW, labelH, 9);
   ctx.stroke();
   drawRoleDot(ctx, labelX + 10, labelY + labelH / 2, color);
-  ctx.fillStyle = "#1a1a2e";
+  ctx.fillStyle = RUNTIME_ART_BIBLE.ink;
   const labelFontSize = getFittedCanvasFontSize(ctx, zone.name, labelW - 26, isHovered ? 11 : 10, 8);
-  ctx.font = `bold ${labelFontSize}px "Noto Sans SC", sans-serif`;
+  ctx.font = `bold ${labelFontSize}px ${RUNTIME_ART_BIBLE.font}`;
   ctx.textAlign = "left";
   ctx.textBaseline = "middle";
   ctx.fillText(zone.name, labelX + 18, labelY + labelH / 2, labelW - 24);
@@ -16416,17 +16654,17 @@ function drawSemanticAnimalCare(ctx, r, isHovered) {
 function drawSemanticZoneBuilding(ctx, zone, r, isHovered) {
   if (!zone || !Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zone.id)) return false;
   const frame = SEMANTIC_ZONE_BUILDING_FRAMES[zone.id];
-  const sprite = getSpriteFrameRect(semanticBuildingSpriteImage, SEMANTIC_BUILDING_SPRITE_COLUMNS, SEMANTIC_BUILDING_SPRITE_ROWS, frame);
-  if (!sprite) return false;
-  const spriteSource = getTransparentSpriteSource(semanticBuildingSpriteImage);
+  const safeFrame = getSafeSpriteFrameSource(semanticBuildingSpriteImage, SEMANTIC_BUILDING_SPRITE_COLUMNS, SEMANTIC_BUILDING_SPRITE_ROWS, frame);
+  if (!safeFrame.sprite) return false;
+  const spriteSource = safeFrame.source;
   const drawW = Math.min(r.w * 1.12, 132);
   const drawH = Math.min(r.h * 1.78, 110);
   const dx = r.cx - drawW / 2;
-  const dy = r.y - drawH * 0.42;
+  const dy = r.y - drawH * 0.82;
 
   ctx.save();
   ctx.globalAlpha = isHovered ? 1 : 0.97;
-  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, dx, dy, drawW, drawH);
+  ctx.drawImage(spriteSource, 0, 0, spriteSource.width, spriteSource.height, dx, dy, drawW, drawH);
   ctx.restore();
   return true;
 }
@@ -16517,6 +16755,142 @@ function getFullCitizenBudget(W) {
 
 function shouldRenderWeatherDetail(W) {
   return W >= 720 && camera.zoom >= 0.8 && !followedCitizenId && !camera.drag;
+}
+
+function getMapCitizenVisualRect(entry) {
+  if (entry.isAvatar) {
+    const size = entry.size * (entry.isHover ? 2.65 : 2.35);
+    return { x: entry.x - size / 2, y: entry.y - size * 0.82, width: size, height: size };
+  }
+  const height = entry.size * (entry.isHover ? 3.7 : 3.1);
+  const width = height * (CITIZEN_SPRITE_COLUMNS / CITIZEN_SPRITE_ROWS) * 0.375;
+  return { x: entry.x - width / 2, y: entry.y - height * 0.8, width, height };
+}
+
+function mapRectsWithinGap(first, second, gap = 0) {
+  return first.x < second.x + second.width + gap
+    && first.x + first.width + gap > second.x
+    && first.y < second.y + second.height + gap
+    && first.y + first.height + gap > second.y;
+}
+
+function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportHeight) {
+  const buildingRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
+    const semantic = Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zoneId);
+    const width = semantic ? Math.min(rect.w * 1.12, 132) : Math.min(rect.w * 1.02, 126);
+    const height = semantic ? Math.min(rect.h * 1.78, 110) : Math.min(rect.h * 1.7, 104);
+    return { zoneId, x: rect.cx - width / 2, y: rect.y - height * 0.82, width, height };
+  });
+  const labelRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
+    const zone = state.society.zones.find((candidate) => candidate.id === zoneId);
+    const width = Math.min(112, Math.max(48, String(zone?.name || "").length * 11 + 24));
+    return { zoneId, x: rect.cx - width / 2, y: rect.cy + rect.h * 0.78, width, height: 18 };
+  });
+  const obstacles = [...buildingRects, ...labelRects];
+  const candidateIsClear = (entry, x, y) => {
+    if (x < 24 || x > viewportWidth - 24 || y < 84 || y > viewportHeight - 24) return false;
+    const previousX = entry.x;
+    const previousY = entry.y;
+    entry.x = x;
+    entry.y = y;
+    const rect = getMapCitizenVisualRect(entry);
+    entry.x = previousX;
+    entry.y = previousY;
+    if (obstacles.some((obstacle) => mapRectsWithinGap(rect, obstacle, 8))) return false;
+    return !entries.some((other) => (
+      other !== entry
+      && mapRectsWithinGap(rect, getMapCitizenVisualRect(other), 8)
+    ));
+  };
+  const moveToNearestClearStreetPoint = (entry) => {
+    if (candidateIsClear(entry, entry.x, entry.y)) return;
+    let resolved = null;
+    for (let radius = 12; radius <= 300 && !resolved; radius += 12) {
+      for (let index = 0; index < 24; index += 1) {
+        const angle = index / 24 * Math.PI * 2;
+        const candidate = {
+          x: entry.x + Math.cos(angle) * radius,
+          y: entry.y + Math.sin(angle) * radius
+        };
+        if (candidateIsClear(entry, candidate.x, candidate.y)) {
+          resolved = candidate;
+          break;
+        }
+      }
+    }
+    if (!resolved) return;
+    entry.x = resolved.x;
+    entry.y = resolved.y;
+    entry.moveAnim.x = resolved.x;
+    entry.moveAnim.y = resolved.y;
+    entry.moveAnim.targetX = resolved.x;
+    entry.moveAnim.targetY = resolved.y;
+    entry.moveAnim.nextTargetAt = performance.now() + 900;
+  };
+  entries.forEach(moveToNearestClearStreetPoint);
+
+  for (let iteration = 0; iteration < 5; iteration += 1) {
+    for (let firstIndex = 0; firstIndex < entries.length; firstIndex += 1) {
+      for (let secondIndex = firstIndex + 1; secondIndex < entries.length; secondIndex += 1) {
+        const first = entries[firstIndex];
+        const second = entries[secondIndex];
+        if (first.citizen.zoneId !== second.citizen.zoneId) continue;
+        const firstRect = getMapCitizenVisualRect(first);
+        const secondRect = getMapCitizenVisualRect(second);
+        if (!mapRectsWithinGap(firstRect, secondRect, 8)) continue;
+        const minimumX = (firstRect.width + secondRect.width) / 2 + 8;
+        const direction = first.x === second.x
+          ? (String(first.citizen.id).localeCompare(String(second.citizen.id)) <= 0 ? -1 : 1)
+          : Math.sign(first.x - second.x);
+        const correction = Math.max(0, minimumX - Math.abs(first.x - second.x));
+        if (first.isAvatar) {
+          second.x -= direction * correction;
+          second.moveAnim.x = second.x;
+        } else if (second.isAvatar) {
+          first.x += direction * correction;
+          first.moveAnim.x = first.x;
+        } else {
+          first.x += direction * correction * 0.5;
+          second.x -= direction * correction * 0.5;
+          first.moveAnim.x = first.x;
+          second.moveAnim.x = second.x;
+        }
+      }
+    }
+  }
+  entries.forEach(moveToNearestClearStreetPoint);
+
+  const actorRects = entries.map((entry) => ({ entry, rect: getMapCitizenVisualRect(entry) }));
+  const avatar = actorRects.find((item) => item.entry.isAvatar);
+  const buildingOverlaps = [];
+  const labelOverlaps = [];
+  const avatarClearanceViolations = [];
+  actorRects.forEach(({ entry, rect }) => {
+    buildingRects.forEach((building) => {
+      if (mapRectsWithinGap(rect, building, 8)) buildingOverlaps.push(`${entry.citizen.id}:${building.zoneId}`);
+    });
+    labelRects.forEach((label) => {
+      if (mapRectsWithinGap(rect, label, 8)) labelOverlaps.push(`${entry.citizen.id}:${label.zoneId}`);
+    });
+    if (avatar && !entry.isAvatar && mapRectsWithinGap(rect, avatar.rect, 8)) {
+      avatarClearanceViolations.push(entry.citizen.id);
+    }
+  });
+  let maxLocalCluster = 0;
+  entries.forEach((entry) => {
+    const cluster = entries.filter((candidate) => (
+      candidate.citizen.zoneId === entry.citizen.zoneId
+      && Math.hypot(candidate.x - entry.x, candidate.y - entry.y) < 40
+    )).length;
+    maxLocalCluster = Math.max(maxLocalCluster, cluster);
+  });
+  window.__mirrorLifeMapClearance = {
+    version: "mirrorlife-map-clearance-v1",
+    buildingOverlaps: [...new Set(buildingOverlaps)],
+    labelOverlaps: [...new Set(labelOverlaps)],
+    avatarClearanceViolations: [...new Set(avatarClearanceViolations)],
+    maxLocalCluster
+  };
 }
 
 function drawGameWorld() {
@@ -16714,7 +17088,9 @@ function drawGameWorld() {
           const enterRoll = seededCommunityValue(hashCommunitySeed(citizen.id || idx, Math.floor(now / 900)), 11);
           if (!isAvatar && now > (anim.noEnterUntil || 0) && enterRoll < INDOOR_ENTER_CHANCE) {
             anim.targetX = zr.cx;
-            anim.targetY = zr.cy + zr.h * 0.18;
+            // Enter at the street threshold. Walking into the centre made the
+            // sprite visibly pass through both the building and its label.
+            anim.targetY = baseY;
             anim.pendingEnterZone = zone.id;
             anim.pendingEnterZoneName = zone.name;
           } else {
@@ -16788,6 +17164,7 @@ function drawGameWorld() {
     streetEntries.push({ citizen, moveAnim: anim, x: cx, y: cy, size, isHover, isAvatar, idx });
   });
 
+  resolveMapCitizenClearance(streetEntries, zoneRects, W, H);
   const attentionContext = { relevantIds, focusZoneId: focusZoneIdForDim, focusAnim };
   const fullBudget = getFullCitizenBudget(W);
   const fullCitizenIds = new Set(
@@ -17327,6 +17704,52 @@ function getTransparentSpriteSource(image) {
   }
 }
 
+function getSafeSpriteFrameSource(image, columns, rows, frame) {
+  if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
+    return { source: image, sprite: getSpriteFrameRect(image, columns, rows, frame), padding: 0 };
+  }
+  let imageCache = safeSpriteFrameCache.get(image);
+  if (!imageCache) {
+    imageCache = new Map();
+    safeSpriteFrameCache.set(image, imageCache);
+  }
+  const safeFrame = Math.max(0, Math.min(columns * rows - 1, Math.round(Number(frame) || 0)));
+  const cacheKey = `${columns}x${rows}:${safeFrame}`;
+  if (imageCache.has(cacheKey)) return imageCache.get(cacheKey);
+  const column = safeFrame % columns;
+  const row = Math.floor(safeFrame / columns);
+  const sourceX = Math.floor(column * image.naturalWidth / columns);
+  const sourceY = Math.floor(row * image.naturalHeight / rows);
+  const sourceRight = Math.floor((column + 1) * image.naturalWidth / columns);
+  const sourceBottom = Math.floor((row + 1) * image.naturalHeight / rows);
+  const sourceWidth = Math.max(1, sourceRight - sourceX);
+  const sourceHeight = Math.max(1, sourceBottom - sourceY);
+  const padding = 12;
+  const canvas = document.createElement("canvas");
+  canvas.width = sourceWidth + padding * 2;
+  canvas.height = sourceHeight + padding * 2;
+  const context = canvas.getContext("2d", { willReadFrequently: true });
+  context.imageSmoothingEnabled = false;
+  context.drawImage(
+    getTransparentSpriteSource(image),
+    sourceX,
+    sourceY,
+    sourceWidth,
+    sourceHeight,
+    padding,
+    padding,
+    sourceWidth,
+    sourceHeight
+  );
+  const result = {
+    source: canvas,
+    sprite: { sx: padding, sy: padding, sw: sourceWidth, sh: sourceHeight },
+    padding
+  };
+  imageCache.set(cacheKey, result);
+  return result;
+}
+
 function getZoneBuildingFrame(zone) {
   if (!zone) return 0;
   if (Object.prototype.hasOwnProperty.call(ZONE_BUILDING_FRAMES, zone.id)) {
@@ -17345,17 +17768,17 @@ function getZoneBuildingFrame(zone) {
 
 function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
   const frame = getZoneBuildingFrame(zone);
-  const sprite = getSpriteFrameRect(buildingSpriteImage, BUILDING_SPRITE_COLUMNS, BUILDING_SPRITE_ROWS, frame);
-  if (!sprite) return false;
-  const spriteSource = getTransparentSpriteSource(buildingSpriteImage);
+  const safeFrame = getSafeSpriteFrameSource(buildingSpriteImage, BUILDING_SPRITE_COLUMNS, BUILDING_SPRITE_ROWS, frame);
+  if (!safeFrame.sprite) return false;
+  const spriteSource = safeFrame.source;
   const drawW = Math.min(r.w * 1.02, 126);
   const drawH = Math.min(r.h * 1.7, 104);
   const dx = r.cx - drawW / 2;
-  const dy = r.y - drawH * 0.38;
+  const dy = r.y - drawH * 0.82;
 
   ctx.save();
   ctx.globalAlpha = isHovered ? 1 : 0.96;
-  ctx.drawImage(spriteSource, sprite.sx, sprite.sy, sprite.sw, sprite.sh, dx, dy, drawW, drawH);
+  ctx.drawImage(spriteSource, 0, 0, spriteSource.width, spriteSource.height, dx, dy, drawW, drawH);
   ctx.restore();
   return true;
 }
@@ -17522,9 +17945,10 @@ function drawCitizenSpriteOnCanvas(ctx, citizen, cx, cy, size, isHover, anim = {
   const frame = Number.isFinite(anim.counterfactualFrame)
     ? anim.counterfactualFrame
     : getCitizenSpriteFrame(citizen);
-  const sprite = getSpriteFrameRect(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
+  const safeFrame = getSafeSpriteFrameSource(citizenSpriteImage, CITIZEN_SPRITE_COLUMNS, CITIZEN_SPRITE_ROWS, frame);
+  const sprite = safeFrame.sprite;
   if (!sprite) return false;
-  const spriteSource = getTransparentSpriteSource(citizenSpriteImage);
+  const spriteSource = safeFrame.source;
   const drawH = size * (isHover ? 3.7 : 3.1);
   const drawW = drawH * (sprite.sw / sprite.sh);
   const gait = Math.sin(anim.walkPhase || 0);

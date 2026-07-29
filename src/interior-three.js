@@ -28,6 +28,7 @@ const CIVIC_CHARACTER_ASSET_BASE = "/assets/characters/civic/";
 const CIVIC_FACE_DECAL_ASSET = `${CIVIC_CHARACTER_ASSET_BASE}civic-face-decals.png`;
 const ASSET_REVISION = new URLSearchParams(window.location.search).get("assetRevision") || "";
 const CIVIC_FORCE_BLINK = new URLSearchParams(window.location.search).get("qaBlink") === "1";
+const RUNTIME_INTEGRITY_DIAGNOSTICS = new URLSearchParams(window.location.search).get("qaRuntimeIntegrity") === "1";
 const SHADER_DIAGNOSTICS_QUERY = new URLSearchParams(window.location.search).get("qaShaderDiagnostics");
 const ENABLE_SHADER_DIAGNOSTICS = SHADER_DIAGNOSTICS_QUERY === "1"
   || (
@@ -351,6 +352,7 @@ let sceneWarmupFrames = 0;
 let backgroundProgramWarmupSignature = "";
 let backgroundProgramWarmupState = "idle";
 let backgroundProgramWarmupScheduledSignature = "";
+let backgroundProgramWarmupPromise = null;
 let contactShadowTexture;
 let civicFoliageGoboTexture;
 let civicFoliageGoboTextureLoading;
@@ -387,6 +389,7 @@ const civicHeadUvTextures = new Map();
 const actorObjects = new Map();
 const actorRuntimeGraphMeasurements = new WeakMap();
 const dynamicModelObjects = new Map();
+const runtimeModelBounds = new Map();
 const entryPhaseTracker = createInteriorEntryPhaseTracker();
 
 function publishEntryTelemetry() {
@@ -2752,30 +2755,34 @@ function addAtelierDisplayCabinet(theme, colors) {
   });
   const body = createToonMaterial(bodyColor, { roughness: 0.68, clearcoat: 0.08 });
   const cream = createToonMaterial(ATELIER_TOKENS.linen, { roughness: 0.78 });
+  const mobileLod = lastWidth <= 720;
+  const semanticBox = (width, height, depth, segments, radius) => mobileLod
+    ? new THREE.BoxGeometry(width, height, depth)
+    : new RoundedBoxGeometry(width, height, depth, segments, radius);
 
-  const base = new THREE.Mesh(new RoundedBoxGeometry(1.62, 0.68, 0.78, 7, 0.16), body);
+  const base = new THREE.Mesh(semanticBox(1.62, 0.68, 0.78, 7, 0.16), body);
   base.position.y = 0.4;
   group.add(base);
-  const plinth = new THREE.Mesh(new RoundedBoxGeometry(1.7, 0.14, 0.86, 6, 0.07), wood);
+  const plinth = new THREE.Mesh(semanticBox(1.7, 0.14, 0.86, 6, 0.07), wood);
   plinth.position.y = 0.76;
   group.add(plinth);
-  const frontInset = new THREE.Mesh(new RoundedBoxGeometry(1.24, 0.38, 0.045, 5, 0.075), cream);
+  const frontInset = new THREE.Mesh(semanticBox(1.24, 0.38, 0.045, 5, 0.075), cream);
   frontInset.position.set(0, 0.36, 0.414);
   group.add(frontInset);
   [-0.59, 0, 0.59].forEach((x) => {
-    const stile = new THREE.Mesh(new RoundedBoxGeometry(0.045, 0.42, 0.045, 3, 0.015), wood);
+    const stile = new THREE.Mesh(semanticBox(0.045, 0.42, 0.045, 3, 0.015), wood);
     stile.position.set(x, 0.36, 0.446);
     group.add(stile);
   });
   [0.17, 0.55].forEach((y) => {
-    const rail = new THREE.Mesh(new RoundedBoxGeometry(1.24, 0.045, 0.045, 3, 0.015), wood);
+    const rail = new THREE.Mesh(semanticBox(1.24, 0.045, 0.045, 3, 0.015), wood);
     rail.position.set(0, y, 0.446);
     group.add(rail);
   });
-  const drawer = new THREE.Mesh(new RoundedBoxGeometry(0.58, 0.25, 0.055, 4, 0.055), createToonMaterial(colors.secondary));
+  const drawer = new THREE.Mesh(semanticBox(0.58, 0.25, 0.055, 4, 0.055), createToonMaterial(colors.secondary));
   drawer.position.set(0.28, 0.36, 0.445);
   group.add(drawer);
-  const plaque = new THREE.Mesh(new RoundedBoxGeometry(0.34, 0.13, 0.03, 3, 0.035), createToonMaterial(colors.accent, { roughness: 0.52 }));
+  const plaque = new THREE.Mesh(semanticBox(0.34, 0.13, 0.03, 3, 0.035), createToonMaterial(colors.accent, { roughness: 0.52 }));
   plaque.position.set(-0.38, 0.36, 0.46);
   group.add(plaque);
   [-0.62, 0.62].forEach((x) => {
@@ -2786,14 +2793,14 @@ function addAtelierDisplayCabinet(theme, colors) {
     });
   });
 
-  const displayFloor = new THREE.Mesh(new RoundedBoxGeometry(1.48, 0.09, 0.68, 5, 0.035), cream);
+  const displayFloor = new THREE.Mesh(semanticBox(1.48, 0.09, 0.68, 5, 0.035), cream);
   displayFloor.position.y = 0.86;
   group.add(displayFloor);
-  const displayBack = new THREE.Mesh(new RoundedBoxGeometry(1.48, 0.66, 0.1, 6, 0.05), body);
+  const displayBack = new THREE.Mesh(semanticBox(1.48, 0.66, 0.1, 6, 0.05), body);
   displayBack.position.set(0, 1.15, -0.31);
   group.add(displayBack);
   const canopy = new THREE.Mesh(
-    new RoundedBoxGeometry(1.5, 0.66, 0.7, 9, 0.18),
+    semanticBox(1.5, 0.66, 0.7, 9, 0.18),
     createGlassMaterial(archetype === "nature" ? "#d5ead3" : "#f7e9dc", {
       roughness: 0.08,
       opacity: 0.3,
@@ -2803,24 +2810,24 @@ function addAtelierDisplayCabinet(theme, colors) {
   canopy.position.set(0, 1.16, 0.01);
   group.add(canopy);
   const frontGlass = new THREE.Mesh(
-    new RoundedBoxGeometry(1.42, 0.54, 0.025, 6, 0.06),
+    semanticBox(1.42, 0.54, 0.025, 6, 0.06),
     createGlassMaterial("#dff0ea", { roughness: 0.08, opacity: 0.42, depthWrite: false })
   );
   frontGlass.position.set(0, 1.16, 0.37);
   frontGlass.rotation.x = -0.04;
   group.add(frontGlass);
   [0.9, 1.43].forEach((railY) => {
-    const rail = new THREE.Mesh(new RoundedBoxGeometry(1.5, 0.045, 0.055, 3, 0.018), wood);
+    const rail = new THREE.Mesh(semanticBox(1.5, 0.045, 0.055, 3, 0.018), wood);
     rail.position.set(0, railY, 0.385);
     group.add(rail);
   });
   [-0.24, 0.24].forEach((railX) => {
-    const mullion = new THREE.Mesh(new RoundedBoxGeometry(0.026, 0.51, 0.045, 3, 0.01), createToonMaterial("#c89b43", { roughness: 0.32, metalness: 0.58 }));
+    const mullion = new THREE.Mesh(semanticBox(0.026, 0.51, 0.045, 3, 0.01), createToonMaterial("#c89b43", { roughness: 0.32, metalness: 0.58 }));
     mullion.position.set(railX, 1.16, 0.402);
     group.add(mullion);
   });
   [-0.72, 0.72].forEach((railX) => {
-    const rail = new THREE.Mesh(new RoundedBoxGeometry(0.045, 0.56, 0.055, 3, 0.018), wood);
+    const rail = new THREE.Mesh(semanticBox(0.045, 0.56, 0.055, 3, 0.018), wood);
     rail.position.set(railX, 1.16, 0.385);
     group.add(rail);
   });
@@ -2834,13 +2841,13 @@ function addAtelierDisplayCabinet(theme, colors) {
   ];
   [-0.52, -0.26, 0, 0.26, 0.52].forEach((x, index) => {
     const tray = new THREE.Mesh(
-      new RoundedBoxGeometry(0.22, 0.08, 0.42, 4, 0.035),
+      semanticBox(0.22, 0.08, 0.42, 4, 0.035),
       createToonMaterial("#d7b58f", { roughness: 0.56 })
     );
     tray.position.set(x, 0.94, 0.02);
     group.add(tray);
     const contents = new THREE.Mesh(
-      new THREE.SphereGeometry(0.13, 20, 14),
+      new THREE.SphereGeometry(0.13, mobileLod ? 8 : 20, mobileLod ? 6 : 14),
       createToonMaterial(contentColors[index], { roughness: 0.72 })
     );
     contents.scale.set(0.78, 0.46, 1.14);
@@ -2848,11 +2855,11 @@ function addAtelierDisplayCabinet(theme, colors) {
     group.add(contents);
   });
 
-  const menuFrame = new THREE.Mesh(new RoundedBoxGeometry(0.48, 0.4, 0.07, 5, 0.055), wood);
+  const menuFrame = new THREE.Mesh(semanticBox(0.48, 0.4, 0.07, 5, 0.055), wood);
   menuFrame.position.set(-0.42, 1.64, 0.02);
   menuFrame.rotation.x = -0.14;
   group.add(menuFrame);
-  const menuCard = new THREE.Mesh(new RoundedBoxGeometry(0.38, 0.3, 0.025, 4, 0.04), cream);
+  const menuCard = new THREE.Mesh(semanticBox(0.38, 0.3, 0.025, 4, 0.04), cream);
   menuCard.position.set(-0.42, 1.64, 0.064);
   menuCard.rotation.x = -0.14;
   group.add(menuCard);
@@ -2881,7 +2888,7 @@ function addAmbientHangingPlant(angle, colors) {
   roomRoot.add(group);
 
   const bracket = new THREE.Mesh(
-    new RoundedBoxGeometry(0.56, 0.12, 0.16, 4, 0.045),
+    semanticBox(0.56, 0.12, 0.16, 4, 0.045),
     createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.72, surface: "wood", bumpScale: 0.008 })
   );
   bracket.position.z = 0.08;
@@ -3237,7 +3244,11 @@ function addCivicListeningConsole(colors) {
   roomRoot.add(group);
   const wood = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.65, surface: "wood", bumpScale: 0.01 });
   const darkWood = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.72, surface: "wood", bumpScale: 0.009 });
-  const top = new THREE.Mesh(new RoundedBoxGeometry(2.18, 0.16, 0.58, 5, 0.075), wood);
+  const mobileLod = lastWidth <= 720;
+  const semanticBox = (width, height, depth, segments, radius) => mobileLod
+    ? new THREE.BoxGeometry(width, height, depth)
+    : new RoundedBoxGeometry(width, height, depth, segments, radius);
+  const top = new THREE.Mesh(semanticBox(2.18, 0.16, 0.58, 5, 0.075), wood);
   top.position.y = 0.78;
   group.add(top);
   [-0.82, 0.82].forEach((x) => {
@@ -3245,7 +3256,7 @@ function addCivicListeningConsole(colors) {
     leg.position.set(x, 0.38, 0);
     group.add(leg);
   });
-  const basket = new THREE.Mesh(new RoundedBoxGeometry(0.72, 0.42, 0.46, 5, 0.12), createToonMaterial("#b18459", { roughness: 0.94, surface: "fabric", bumpScale: 0.02 }));
+  const basket = new THREE.Mesh(semanticBox(0.72, 0.42, 0.46, 5, 0.12), createToonMaterial("#b18459", { roughness: 0.94, surface: "fabric", bumpScale: 0.02 }));
   basket.position.set(0, 0.27, 0);
   group.add(basket);
   const basketWeave = createToonMaterial("#8f6845", { roughness: 0.98, surface: "fabric", bumpScale: 0.018 });
@@ -3262,7 +3273,7 @@ function addCivicListeningConsole(colors) {
   });
   const bookColors = [colors.secondary, ATELIER_TOKENS.butter, ATELIER_TOKENS.apricot, ATELIER_TOKENS.linen];
   bookColors.forEach((color, index) => {
-    const book = new THREE.Mesh(new RoundedBoxGeometry(0.16, 0.34 + (index % 2) * 0.08, 0.24, 2, 0.025), createToonMaterial(color, { roughness: 0.82 }));
+    const book = new THREE.Mesh(semanticBox(0.16, 0.34 + (index % 2) * 0.08, 0.24, 2, 0.025), createToonMaterial(color, { roughness: 0.82 }));
     book.position.set(-0.58 + index * 0.22, 1.02 + (index % 2) * 0.02, 0.02);
     book.rotation.z = (index - 1.5) * 0.035;
     group.add(book);
@@ -3271,7 +3282,7 @@ function addCivicListeningConsole(colors) {
   pot.position.set(0.72, 0.97, 0.02);
   group.add(pot);
   [-0.09, 0.09, 0].forEach((x, index) => {
-    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.11, 14, 10), createToonMaterial(index % 2 ? "#5d8e62" : "#79a26f", { roughness: 0.96 }));
+    const leaf = new THREE.Mesh(new THREE.SphereGeometry(0.11, mobileLod ? 6 : 14, mobileLod ? 4 : 10), createToonMaterial(index % 2 ? "#5d8e62" : "#79a26f", { roughness: 0.96 }));
     leaf.scale.set(0.54, 1.18, 0.42);
     leaf.position.set(0.72 + x, 1.18 + (index % 2) * 0.05, 0.02);
     leaf.rotation.z = (index - 1) * 0.42;
@@ -3803,18 +3814,22 @@ function addCivicHeroNoticeWall(colors) {
   const oak = createToonMaterial(ATELIER_TOKENS.oak, { roughness: 0.58, surface: "wood", bumpScale: 0.014 });
   const darkWood = createToonMaterial(ATELIER_TOKENS.walnut, { roughness: 0.66, surface: "wood", bumpScale: 0.011 });
   const cork = createToonMaterial("#d7b78b", { roughness: 0.97, surface: "fabric", bumpScale: 0.018 });
-  const frame = new THREE.Mesh(new RoundedBoxGeometry(2.9, 1.48, 0.16, 7, 0.09), darkWood);
+  const mobileLod = lastWidth <= 720;
+  const semanticBox = (width, height, depth, segments, radius) => mobileLod
+    ? new THREE.BoxGeometry(width, height, depth)
+    : new RoundedBoxGeometry(width, height, depth, segments, radius);
+  const frame = new THREE.Mesh(semanticBox(2.9, 1.48, 0.16, 7, 0.09), darkWood);
   frame.position.z = 0.01;
   group.add(frame);
-  const board = new THREE.Mesh(new RoundedBoxGeometry(2.64, 1.22, 0.1, 6, 0.06), cork);
+  const board = new THREE.Mesh(semanticBox(2.64, 1.22, 0.1, 6, 0.06), cork);
   board.position.z = 0.1;
   group.add(board);
 
-  const title = new THREE.Mesh(new RoundedBoxGeometry(0.84, 0.24, 0.09, 4, 0.05), createToonMaterial("#f0d49a", { roughness: 0.74 }));
+  const title = new THREE.Mesh(semanticBox(0.84, 0.24, 0.09, 4, 0.05), createToonMaterial("#f0d49a", { roughness: 0.74 }));
   title.position.set(0, 0.47, 0.18);
   group.add(title);
   [-0.24, 0, 0.24].forEach((x) => {
-    const line = new THREE.Mesh(new RoundedBoxGeometry(0.14, 0.025, 0.02, 2, 0.009), darkWood);
+    const line = new THREE.Mesh(semanticBox(0.14, 0.025, 0.02, 2, 0.009), darkWood);
     line.position.set(x, 0.47, 0.232);
     group.add(line);
   });
@@ -3827,23 +3842,23 @@ function addCivicHeroNoticeWall(colors) {
     [0.08, -0.44, 0.62, 0.26, -0.015], [0.81, -0.43, 0.4, 0.28, 0.035]
   ];
   paperLayout.forEach(([x, y, w, h, rz], index) => {
-    const paper = new THREE.Mesh(new RoundedBoxGeometry(w, h, 0.025, 3, 0.025), createToonMaterial(paperColors[index % paperColors.length], { roughness: 0.94 }));
+    const paper = new THREE.Mesh(semanticBox(w, h, 0.025, 3, 0.025), createToonMaterial(paperColors[index % paperColors.length], { roughness: 0.94 }));
     paper.position.set(x, y, 0.18 + index * 0.0005);
     paper.rotation.z = rz;
     group.add(paper);
     for (let lineIndex = 0; lineIndex < 3; lineIndex += 1) {
-      const line = new THREE.Mesh(new RoundedBoxGeometry(w * (0.48 + lineIndex * 0.1), 0.012, 0.012, 1, 0.004), createToonMaterial(index % 2 ? "#8b806e" : colors.secondary, { roughness: 0.8 }));
+      const line = new THREE.Mesh(semanticBox(w * (0.48 + lineIndex * 0.1), 0.012, 0.012, 1, 0.004), createToonMaterial(index % 2 ? "#8b806e" : colors.secondary, { roughness: 0.8 }));
       line.position.set(x, y + h * 0.18 - lineIndex * h * 0.18, 0.201 + index * 0.0005);
       line.rotation.z = rz;
       group.add(line);
     }
-    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.035, 12, 8), createToonMaterial(index % 3 ? "#c99b43" : colors.accent, { metalness: 0.28, roughness: 0.38 }));
+    const pin = new THREE.Mesh(new THREE.SphereGeometry(0.035, mobileLod ? 6 : 12, mobileLod ? 4 : 8), createToonMaterial(index % 3 ? "#c99b43" : colors.accent, { metalness: 0.28, roughness: 0.38 }));
     pin.position.set(x, y + h * 0.4, 0.215);
     group.add(pin);
   });
 
   [-1.22, 1.22].forEach((x) => {
-    const bracket = new THREE.Mesh(new RoundedBoxGeometry(0.09, 0.44, 0.12, 3, 0.03), oak);
+    const bracket = new THREE.Mesh(semanticBox(0.09, 0.44, 0.12, 3, 0.03), oak);
     bracket.position.set(x, 0.92, 0.05);
     group.add(bracket);
     const lamp = new THREE.Mesh(new THREE.SphereGeometry(0.09, 16, 10), createToonMaterial("#f6c968", { emissive: 0xffb84d, emissiveIntensity: 0.7, roughness: 0.35 }));
@@ -6747,7 +6762,7 @@ function getItemSignature(items) {
 
 const MOBILE_HERO_PROP_INDEXES = {
   "public-plaza": [2, 3],
-  residential: [0, 1, 4],
+  residential: [0, 1],
   kindergarten: [0, 2],
   "primary-school": [0, 2],
   "middle-school": [0, 2],
@@ -6782,6 +6797,46 @@ function createMobilePropProxy(item) {
   const halfX = Math.max(0.22, Number(collider.halfX || collider.radius || 0.42));
   const halfZ = Math.max(0.18, Number(collider.halfZ || collider.radius || 0.36));
   const halfY = Math.max(0.2, Number(collider.halfY || 0.42));
+  if (item.model === "bookcase") {
+    const group = new THREE.Group();
+    const timber = createToonMaterial("#b47750", { roughness: 0.82 });
+    const books = createToonMaterial("#e26d67", { roughness: 0.78 });
+    const bookHalfY = Math.max(0.92, halfY);
+    const addBox = (width, height, depth, x, y, z, material) => {
+      const mesh = new THREE.Mesh(new THREE.BoxGeometry(width, height, depth), material);
+      mesh.position.set(x, y, z);
+      mesh.castShadow = false;
+      mesh.receiveShadow = true;
+      group.add(mesh);
+    };
+    const frame = 0.1;
+    const width = halfX * 2;
+    const height = bookHalfY * 2;
+    const depth = halfZ * 2;
+    addBox(frame, height, depth, -halfX + frame / 2, bookHalfY, 0, timber);
+    addBox(frame, height, depth, halfX - frame / 2, bookHalfY, 0, timber);
+    [0.06, 0.38, 0.7, 1].forEach((ratio) => {
+      addBox(width - frame * 2, 0.075, depth, 0, height * ratio, 0, timber);
+    });
+    const shelfHeight = height * 0.26;
+    const bookWidth = Math.max(0.07, (width - 0.34) / 8);
+    for (let shelf = 0; shelf < 3; shelf += 1) {
+      for (let index = 0; index < 6; index += 1) {
+        const bookHeight = shelfHeight * (0.58 + ((index + shelf) % 3) * 0.12);
+        addBox(
+          bookWidth * 0.76,
+          bookHeight,
+          depth * 0.62,
+          -halfX + 0.18 + index * bookWidth,
+          height * (0.09 + shelf * 0.32) + bookHeight / 2,
+          0.025,
+          books
+        );
+      }
+    }
+    group.userData.semanticLod = "bookcase-frame-shelves-spines-v1";
+    return group;
+  }
   const color = item.material === "textile" ? "#78b7ac" : item.material === "metal" ? "#91a4b5" : "#c89862";
   const geometry = collider.shape === "circle"
     ? new THREE.CylinderGeometry(Math.max(halfX, halfZ), Math.max(halfX, halfZ), halfY * 2, 12)
@@ -6913,6 +6968,7 @@ function rebuildModels(items) {
   itemSignature = signature;
   disposeOwnedGroup(modelRoot);
   dynamicModelObjects.clear();
+  runtimeModelBounds.clear();
 
   const stagedModels = new THREE.Group();
   // Keep large civic hero furniture in independent material batches on
@@ -6922,6 +6978,72 @@ function rebuildModels(items) {
   // stayed as an opaque foreground wall. Dedicated merged stages cost only
   // their material families and preserve authored per-assembly occlusion.
   const foregroundStages = [];
+  const measureModel = (item, model) => {
+    const meshBounds = [];
+    const worldPoints = [];
+    const occlusionClusters = new Map();
+    let totalVertexCount = 0;
+    model.traverse((child) => {
+      totalVertexCount += Number(child?.geometry?.getAttribute?.("position")?.count || 0);
+    });
+    const globalSampleStride = Math.max(1, Math.ceil(totalVertexCount / 4096));
+    let globalVertexOffset = 0;
+    model.traverse((child) => {
+      if (!child?.isMesh || child.visible === false) return;
+      const box = new THREE.Box3().setFromObject(child);
+      const serialized = serializeRuntimeBox(box);
+      if (serialized) meshBounds.push(serialized);
+      const positions = child.geometry?.getAttribute?.("position");
+      if (!positions || !RUNTIME_INTEGRITY_DIAGNOSTICS) return;
+      const point = new THREE.Vector3();
+      for (let index = 0; index < positions.count; index += 1) {
+        if ((globalVertexOffset + index) % globalSampleStride !== 0) continue;
+        point.fromBufferAttribute(positions, index).applyMatrix4(child.matrixWorld);
+        worldPoints.push({ x: point.x, y: point.y, z: point.z });
+      }
+      globalVertexOffset += positions.count;
+      const indexAttribute = child.geometry.index;
+      const triangleCount = Math.floor((indexAttribute?.count || positions.count) / 3);
+      const a = new THREE.Vector3();
+      const b = new THREE.Vector3();
+      const c = new THREE.Vector3();
+      for (let triangleIndex = 0; triangleIndex < triangleCount; triangleIndex += 1) {
+        const base = triangleIndex * 3;
+        const aIndex = indexAttribute ? indexAttribute.getX(base) : base;
+        const bIndex = indexAttribute ? indexAttribute.getX(base + 1) : base + 1;
+        const cIndex = indexAttribute ? indexAttribute.getX(base + 2) : base + 2;
+        a.fromBufferAttribute(positions, aIndex).applyMatrix4(child.matrixWorld);
+        b.fromBufferAttribute(positions, bIndex).applyMatrix4(child.matrixWorld);
+        c.fromBufferAttribute(positions, cIndex).applyMatrix4(child.matrixWorld);
+        const centroidX = (a.x + b.x + c.x) / 3;
+        const centroidY = (a.y + b.y + c.y) / 3;
+        const centroidZ = (a.z + b.z + c.z) / 3;
+        const clusterKey = [
+          Math.floor(centroidX / 0.42),
+          Math.floor(centroidY / 0.42),
+          Math.floor(centroidZ / 0.42)
+        ].join(":");
+        let cluster = occlusionClusters.get(clusterKey);
+        if (!cluster) {
+          cluster = new THREE.Box3();
+          occlusionClusters.set(clusterKey, cluster);
+        }
+        cluster.expandByPoint(a);
+        cluster.expandByPoint(b);
+        cluster.expandByPoint(c);
+      }
+    });
+    return {
+      key: item.key,
+      model: item.model,
+      mobileProxy: !!item.mobileProxy,
+      dynamic: item.rigidBody?.type === "dynamic",
+      bounds: serializeRuntimeBox(new THREE.Box3().setFromObject(model)),
+      meshBounds,
+      worldPoints,
+      occlusionBounds: [...occlusionClusters.values()].map(serializeRuntimeBox).filter(Boolean)
+    };
+  };
 
   renderItems.forEach((item) => {
     const source = item.mobileProxy ? null : cache.get(item.model);
@@ -6957,6 +7079,10 @@ function rebuildModels(items) {
       model.rotation.y = profile.rotationY;
       const dynamicStage = new THREE.Group();
       dynamicStage.add(contactShadow, model);
+      dynamicGroup.add(dynamicStage);
+      dynamicGroup.updateMatrixWorld(true);
+      runtimeModelBounds.set(item.key, measureModel(item, model));
+      dynamicGroup.remove(dynamicStage);
       const mergedDynamic = mergePlacedModelMeshes(dynamicStage);
       if (mergedDynamic.children.length) dynamicGroup.add(...mergedDynamic.children);
       contactShadow.geometry.dispose();
@@ -6968,6 +7094,8 @@ function rebuildModels(items) {
       contactShadow.position.set(item.worldX || 0, 0.027, item.worldZ || 0);
       model.position.set(item.worldX || 0, item.worldY || 0.03, item.worldZ || 0);
       model.rotation.y = Number(item.rotationY ?? faceCenter + profile.rotationY);
+      model.updateMatrixWorld(true);
+      runtimeModelBounds.set(item.key, measureModel(item, model));
       const isCameraForegroundHero = [
         "civic-display-case",
         "civic-lounge-suite",
@@ -11654,12 +11782,12 @@ function updateCamera(payload = {}) {
   // arcs toward the current speaker and path centre; the opening and reverse
   // hero compositions retain their established player priority.
   const playerWeight = portrait
-    ? 0.8
+    ? 0.5
     : cinematicCivic
       ? 0.65 - civicSideArc * 0.1
       : CAMERA_PIVOT_PLAYER_WEIGHT;
   const narrativeWeight = portrait
-    ? 0.15
+    ? 0.45
     : cinematicCivic
       ? 0.25 + civicSideArc * 0.07
       : CAMERA_PIVOT_NARRATIVE_WEIGHT;
@@ -11688,7 +11816,11 @@ function updateCamera(payload = {}) {
   const playerFocusDx = targetPivotX - playerX;
   const playerFocusDz = targetPivotZ - playerZ;
   const playerFocusDistance = Math.hypot(playerFocusDx, playerFocusDz);
-  const maxPlayerFocusOffset = portrait ? 0.68 : 1.08;
+  const maxPlayerFocusOffset = portrait
+    ? 1.5
+    : cinematicCivic
+      ? 1.08
+      : 1.35;
   if (playerFocusDistance > maxPlayerFocusOffset) {
     targetPivotX = playerX + playerFocusDx / playerFocusDistance * maxPlayerFocusOffset;
     targetPivotZ = playerZ + playerFocusDz / playerFocusDistance * maxPlayerFocusOffset;
@@ -11715,8 +11847,8 @@ function updateCamera(payload = {}) {
     // Pull the authored opening close enough for faces and garment silhouettes
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 5.2 : 5.28 + civicRearArc * 1.0 + civicSideArc * 0.36)
-    : Math.max(3.6, Math.min(CAMERA_ORBIT_RADIUS, portrait ? 5.2 : 4.8));
+    ? (portrait ? 7 : 5.28 + civicRearArc * 1.0 + civicSideArc * 1)
+    : (portrait ? 9.2 : 7.2);
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 3.16 + civicRearArc * 0.5 + civicSideArc * 0.22) + pitchOffset * 1.35
     : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
@@ -11731,10 +11863,12 @@ function updateCamera(payload = {}) {
     Math.max(0.72, Math.min(1.28, focusHeight)),
     cameraPivotZ + forwardZ * focusDistance
   );
+  const cameraOrbitX = cinematicCivic ? playerX : cameraPivotX;
+  const cameraOrbitZ = cinematicCivic ? playerZ : cameraPivotZ;
   const desiredPosition = new THREE.Vector3(
-    playerX - forwardX * playerFollowDistance,
+    cameraOrbitX - forwardX * playerFollowDistance,
     cameraHeight,
-    playerZ - forwardZ * playerFollowDistance
+    cameraOrbitZ - forwardZ * playerFollowDistance
   );
   // The listening circle intentionally places people around the player. A
   // literal orbit therefore drove the camera straight behind a witness at
@@ -11744,7 +11878,7 @@ function updateCamera(payload = {}) {
   // corridor. This is an authored composition correction, not actor hiding:
   // every witness remains visible and the camera stays inside the room shell.
   let targetActorAvoidance = 0;
-  if (cinematicCivic && !portrait && actorObjects.size > 1) {
+  if (!portrait && actorObjects.size > 1) {
     const viewX = focus.x - desiredPosition.x;
     const viewZ = focus.z - desiredPosition.z;
     const viewLength = Math.max(0.001, Math.hypot(viewX, viewZ));
@@ -11782,8 +11916,14 @@ function updateCamera(payload = {}) {
   // pullback keeps the near witness at a readable scale instead of turning
   // their shoulder into a full-screen wall. This preserves all participants
   // in a true 360° view without relying on character disappearance.
-  const actorClearanceDistance = cinematicCivic
-    ? THREE.MathUtils.clamp(Math.abs(cameraActorAvoidanceOffset) * 0.76 * reverseOrbitWeight, 0, 0.75)
+  const actorClearanceDistance = actorObjects.size > 1
+    ? THREE.MathUtils.clamp(
+      Math.abs(cameraActorAvoidanceOffset)
+        * (cinematicCivic ? 0.76 : 1.35)
+        * reverseOrbitWeight,
+      0,
+      cinematicCivic ? 0.75 : 1.5
+    )
     : 0;
   if (actorClearanceDistance > 0.01) {
     const radialX = desiredPosition.x - focus.x;
@@ -12109,7 +12249,8 @@ function updateShadowSchedule(payload = {}, now = performance.now()) {
 
 function scheduleBackgroundProgramWarmup(signature) {
   if (
-    !renderer?.compileAsync
+    RUNTIME_INTEGRITY_DIAGNOSTICS
+    || !renderer?.compileAsync
     || !scene
     || !signature
     || signature === backgroundProgramWarmupSignature
@@ -12152,13 +12293,17 @@ function scheduleBackgroundProgramWarmup(signature) {
         node.visible = visible;
       });
     }
-    Promise.resolve(warmup).then(() => {
+    backgroundProgramWarmupPromise = Promise.resolve(warmup).then(() => {
       if (backgroundProgramWarmupSignature === signature) {
         backgroundProgramWarmupState = "ready";
       }
     }).catch(() => {
       if (backgroundProgramWarmupSignature === signature) {
         backgroundProgramWarmupState = "failed";
+      }
+    }).finally(() => {
+      if (backgroundProgramWarmupSignature === signature) {
+        backgroundProgramWarmupPromise = null;
       }
     });
   };
@@ -12236,7 +12381,8 @@ function update(payload = {}) {
       Math.cos(Number(payload.yaw || 0))
     );
     sceneCompilePromise = (
-      lastWidth <= 720
+      !RUNTIME_INTEGRITY_DIAGNOSTICS
+        && lastWidth <= 720
         && Math.abs(compileYaw) < 2.7
         && typeof renderer.compileAsync === "function"
         ? renderer.compileAsync(scene, camera)
@@ -12674,9 +12820,17 @@ function disposeSession(sessionId) {
     activeItems = [];
     rebuildModels(activeItems);
   };
-  if (sceneCompilePromise && !sceneCompileReady) {
+  if (backgroundProgramWarmupState === "scheduled") {
+    backgroundProgramWarmupScheduledSignature = "";
+    backgroundProgramWarmupState = "idle";
+  }
+  const pendingCompiles = [
+    sceneCompilePromise && !sceneCompileReady ? sceneCompilePromise : null,
+    backgroundProgramWarmupState === "warming" ? backgroundProgramWarmupPromise : null
+  ].filter(Boolean);
+  if (pendingCompiles.length) {
     const disposedSessionId = sessionId;
-    sceneCompilePromise.finally(() => {
+    Promise.allSettled(pendingCompiles).then(() => {
       if (
         interiorSessionState.phase === "disposed"
         && interiorSessionState.sessionId === disposedSessionId
@@ -13153,6 +13307,278 @@ function getStats() {
   };
 }
 
+function serializeRuntimeBox(box) {
+  if (!box || box.isEmpty()) return null;
+  const size = box.getSize(new THREE.Vector3());
+  const center = box.getCenter(new THREE.Vector3());
+  const serializeVector = (vector) => ({
+    x: Number(vector.x.toFixed(4)),
+    y: Number(vector.y.toFixed(4)),
+    z: Number(vector.z.toFixed(4))
+  });
+  return {
+    min: serializeVector(box.min),
+    max: serializeVector(box.max),
+    center: serializeVector(center),
+    size: serializeVector(size)
+  };
+}
+
+function projectRuntimeBox(box) {
+  if (!box || box.isEmpty() || !camera) return null;
+  const corners = [];
+  [box.min.x, box.max.x].forEach((x) => {
+    [box.min.y, box.max.y].forEach((y) => {
+      [box.min.z, box.max.z].forEach((z) => {
+        const projected = new THREE.Vector3(x, y, z).project(camera);
+        corners.push({
+          x: (projected.x * 0.5 + 0.5) * lastWidth,
+          y: (-projected.y * 0.5 + 0.5) * lastHeight,
+          z: projected.z
+        });
+      });
+    });
+  });
+  const inDepth = corners.filter((corner) => corner.z >= -1 && corner.z <= 1);
+  if (!inDepth.length) return {
+    x: 0,
+    y: 0,
+    width: 0,
+    height: 0,
+    visibleRatio: 0,
+    screenCoverage: 0
+  };
+  const minX = Math.min(...inDepth.map((corner) => corner.x));
+  const maxX = Math.max(...inDepth.map((corner) => corner.x));
+  const minY = Math.min(...inDepth.map((corner) => corner.y));
+  const maxY = Math.max(...inDepth.map((corner) => corner.y));
+  const width = Math.max(0, maxX - minX);
+  const height = Math.max(0, maxY - minY);
+  const area = Math.max(1, width * height);
+  const clippedWidth = Math.max(0, Math.min(lastWidth, maxX) - Math.max(0, minX));
+  const clippedHeight = Math.max(0, Math.min(lastHeight, maxY) - Math.max(0, minY));
+  return {
+    x: Number(minX.toFixed(2)),
+    y: Number(minY.toFixed(2)),
+    width: Number(width.toFixed(2)),
+    height: Number(height.toFixed(2)),
+    visibleRatio: Number(Math.min(1, clippedWidth * clippedHeight / area).toFixed(4)),
+    screenCoverage: Number(Math.min(1, clippedWidth * clippedHeight / Math.max(1, lastWidth * lastHeight)).toFixed(4))
+  };
+}
+
+function measureProjectedBoxUnionCoverage(serializedBoxes = []) {
+  if (!camera || !serializedBoxes.length) return 0;
+  const rectangles = serializedBoxes.map((bounds) => {
+    const rect = projectRuntimeBox(new THREE.Box3(
+      new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
+      new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
+    ));
+    if (!rect || rect.width <= 0 || rect.height <= 0) return null;
+    const minX = Math.max(0, rect.x);
+    const maxX = Math.min(lastWidth, rect.x + rect.width);
+    const minY = Math.max(0, rect.y);
+    const maxY = Math.min(lastHeight, rect.y + rect.height);
+    return maxX > minX && maxY > minY ? { minX, maxX, minY, maxY } : null;
+  }).filter(Boolean);
+  if (!rectangles.length) return 0;
+  const xEdges = [...new Set(rectangles.flatMap((rect) => [rect.minX, rect.maxX]))].sort((a, b) => a - b);
+  let area = 0;
+  for (let index = 1; index < xEdges.length; index += 1) {
+    const minX = xEdges[index - 1];
+    const maxX = xEdges[index];
+    if (maxX <= minX) continue;
+    const intervals = rectangles
+      .filter((rect) => rect.minX < maxX && rect.maxX > minX)
+      .map((rect) => [rect.minY, rect.maxY])
+      .sort((left, right) => left[0] - right[0]);
+    let height = 0;
+    let active = null;
+    intervals.forEach(([minY, maxY]) => {
+      if (!active) {
+        active = [minY, maxY];
+        return;
+      }
+      if (minY <= active[1]) {
+        active[1] = Math.max(active[1], maxY);
+        return;
+      }
+      height += active[1] - active[0];
+      active = [minY, maxY];
+    });
+    if (active) height += active[1] - active[0];
+    area += (maxX - minX) * height;
+  }
+  return Number(Math.min(1, area / Math.max(1, lastWidth * lastHeight)).toFixed(4));
+}
+
+function measureProjectedPointHullCoverage(worldPoints = []) {
+  if (!camera || worldPoints.length < 3) return 0;
+  const projected = worldPoints.map((point) => {
+    const screen = new THREE.Vector3(point.x, point.y, point.z).project(camera);
+    if (screen.z < -1 || screen.z > 1) return null;
+    return {
+      x: (screen.x * 0.5 + 0.5) * lastWidth,
+      y: (-screen.y * 0.5 + 0.5) * lastHeight
+    };
+  }).filter(Boolean).sort((left, right) => left.x - right.x || left.y - right.y);
+  if (projected.length < 3) return 0;
+  const cross = (origin, left, right) => (
+    (left.x - origin.x) * (right.y - origin.y)
+    - (left.y - origin.y) * (right.x - origin.x)
+  );
+  const lower = [];
+  projected.forEach((point) => {
+    while (lower.length >= 2 && cross(lower.at(-2), lower.at(-1), point) <= 0) lower.pop();
+    lower.push(point);
+  });
+  const upper = [];
+  for (let index = projected.length - 1; index >= 0; index -= 1) {
+    const point = projected[index];
+    while (upper.length >= 2 && cross(upper.at(-2), upper.at(-1), point) <= 0) upper.pop();
+    upper.push(point);
+  }
+  let polygon = [...lower.slice(0, -1), ...upper.slice(0, -1)];
+  const clip = (inside, intersect) => {
+    const output = [];
+    polygon.forEach((current, index) => {
+      const previous = polygon[(index + polygon.length - 1) % polygon.length];
+      const currentInside = inside(current);
+      const previousInside = inside(previous);
+      if (currentInside) {
+        if (!previousInside) output.push(intersect(previous, current));
+        output.push(current);
+      } else if (previousInside) {
+        output.push(intersect(previous, current));
+      }
+    });
+    polygon = output;
+  };
+  const verticalIntersection = (x) => (start, end) => {
+    const delta = end.x - start.x;
+    const ratio = (x - start.x) / (Math.abs(delta) < 0.000001 ? 0.000001 : delta);
+    return { x, y: start.y + (end.y - start.y) * ratio };
+  };
+  const horizontalIntersection = (y) => (start, end) => {
+    const delta = end.y - start.y;
+    const ratio = (y - start.y) / (Math.abs(delta) < 0.000001 ? 0.000001 : delta);
+    return { x: start.x + (end.x - start.x) * ratio, y };
+  };
+  clip((point) => point.x >= 0, verticalIntersection(0));
+  clip((point) => point.x <= lastWidth, verticalIntersection(lastWidth));
+  clip((point) => point.y >= 0, horizontalIntersection(0));
+  clip((point) => point.y <= lastHeight, horizontalIntersection(lastHeight));
+  if (polygon.length < 3) return 0;
+  const area = Math.abs(polygon.reduce((sum, point, index) => {
+    const next = polygon[(index + 1) % polygon.length];
+    return sum + point.x * next.y - next.x * point.y;
+  }, 0)) * 0.5;
+  return Number(Math.min(1, area / Math.max(1, lastWidth * lastHeight)).toFixed(4));
+}
+
+function measureRuntimeOcclusion(box) {
+  if (!box || box.isEmpty() || !camera) return 0;
+  const samples = [];
+  [0.07, 0.2, 0.35, 0.5, 0.65, 0.8, 0.93].forEach((yRatio) => {
+    samples.push(new THREE.Vector3(
+      THREE.MathUtils.lerp(box.min.x, box.max.x, 0.5),
+      THREE.MathUtils.lerp(box.min.y, box.max.y, yRatio),
+      THREE.MathUtils.lerp(box.min.z, box.max.z, 0.5)
+    ));
+  });
+  const visualBounds = [...runtimeModelBounds.values()]
+    .flatMap((measurement) => {
+      const foreground = modelRoot?.getObjectByName?.(`foreground-${measurement.key}-merged`);
+      if (foreground) {
+        const materials = [];
+        foreground.traverse((object) => {
+          const source = Array.isArray(object.material) ? object.material : [object.material];
+          source.filter(Boolean).forEach((material) => materials.push(material));
+        });
+        if (materials.length && materials.every((material) => Number(material.opacity ?? 1) < 0.25)) {
+          return [];
+        }
+      }
+      return measurement.occlusionBounds || [];
+    })
+    .map((bounds) => new THREE.Box3(
+      new THREE.Vector3(bounds.min.x, bounds.min.y, bounds.min.z),
+      new THREE.Vector3(bounds.max.x, bounds.max.y, bounds.max.z)
+    ));
+  let visible = 0;
+  samples.forEach((point) => {
+    const projected = point.clone().project(camera);
+    if (projected.z < -1 || projected.z > 1 || Math.abs(projected.x) > 1 || Math.abs(projected.y) > 1) return;
+    const direction = point.clone().sub(camera.position);
+    const distance = direction.length();
+    const ray = new THREE.Ray(camera.position.clone(), direction.normalize());
+    const occluded = visualBounds.some((visualBox) => {
+      const hit = ray.intersectBox(visualBox, new THREE.Vector3());
+      return hit && hit.distanceTo(camera.position) < distance - 0.08;
+    });
+    if (!occluded) visible += 1;
+  });
+  return Number((visible / samples.length).toFixed(4));
+}
+
+function getRuntimeIntegritySnapshot() {
+  const items = activeItems.map((item) => {
+    const measurement = runtimeModelBounds.get(item.key) || null;
+    const box = measurement?.bounds
+      ? new THREE.Box3(
+        new THREE.Vector3(measurement.bounds.min.x, measurement.bounds.min.y, measurement.bounds.min.z),
+        new THREE.Vector3(measurement.bounds.max.x, measurement.bounds.max.y, measurement.bounds.max.z)
+      )
+      : null;
+    return {
+      key: item.key,
+      model: item.model,
+      renderModel: item.renderModel !== false,
+      mobileProxy: !!item.mobileProxy,
+      dynamic: item.rigidBody?.type === "dynamic",
+      worldBounds: measurement?.bounds || null,
+      screenRect: box ? {
+        ...projectRuntimeBox(box),
+        screenCoverage: measureProjectedPointHullCoverage(measurement?.worldPoints || []),
+        boxUnionCoverage: measureProjectedBoxUnionCoverage(measurement?.meshBounds || []),
+        coverageMethod: "sampled-actual-glb-vertex-convex-hull-v1"
+      } : null
+    };
+  });
+  const actors = [...actorObjects.entries()].map(([id, entry]) => {
+    entry.group.updateMatrixWorld(true);
+    const box = new THREE.Box3().setFromObject(entry.group);
+    const screenRect = projectRuntimeBox(box);
+    return {
+      id,
+      assetRole: entry.assetRole || "procedural",
+      frame: entry.frame,
+      worldBounds: serializeRuntimeBox(box),
+      screenRect,
+      bodyVisibleRatio: Number(screenRect?.visibleRatio || 0),
+      occlusionVisibleRatio: measureRuntimeOcclusion(box)
+    };
+  });
+  return {
+    version: "mirrorlife-runtime-integrity-v1",
+    viewport: { width: lastWidth, height: lastHeight },
+    camera: {
+      position: camera
+        ? {
+          x: Number(camera.position.x.toFixed(4)),
+          y: Number(camera.position.y.toFixed(4)),
+          z: Number(camera.position.z.toFixed(4))
+        }
+        : null,
+      ...lastCameraState
+    },
+    items,
+    actors,
+    occlusionMethod: "actual-glb-world-triangle-cluster-aabb-segment-v1",
+    interactions: [...projectedItems.values()].map((item) => ({ ...item }))
+  };
+}
+
 function getResourceEstimate() {
   const complexity = getSceneComplexity();
   const memory = renderer?.info?.memory || {};
@@ -13189,5 +13615,6 @@ window.MirrorLifeInterior3D = {
   markEntryPhase,
   getProjections,
   projectWorldPoints,
-  getStats
+  getStats,
+  getRuntimeIntegritySnapshot
 };

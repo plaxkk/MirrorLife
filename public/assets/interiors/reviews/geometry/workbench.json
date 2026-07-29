@@ -1,0 +1,33 @@
+{
+  "auditedAt": "2026-07-29T07:59:51.969Z",
+  "epsilon": 0.00001,
+  "closedMeshes": true,
+  "nonManifoldEdges": 0,
+  "openBoundaryEdges": 0,
+  "masterTriangleCount": 10936,
+  "webTriangleCount": 6764,
+  "master": {
+    "file": "assets/interior-masters/workbench/workbench.glb",
+    "primitiveCount": 31,
+    "trianglePrimitiveCount": 31,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 10936,
+    "vertexCount": 21244,
+    "weldedVertexCount": 5528,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  },
+  "web": {
+    "file": "public/assets/interiors/glb/workbench.glb",
+    "primitiveCount": 31,
+    "trianglePrimitiveCount": 31,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 6764,
+    "vertexCount": 19952,
+    "weldedVertexCount": 3442,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  }
+}

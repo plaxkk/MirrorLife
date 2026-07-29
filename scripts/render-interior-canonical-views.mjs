@@ -85,7 +85,7 @@ async function main() {
       url.searchParams.set("background", "#ff00ff");
       const page = await browser.newPage();
       await page.setViewport({ width: args.size, height: args.size, deviceScaleFactor: 1 });
-      await page.goto(url.toString(), { waitUntil: "networkidle0", timeout: 20000 });
+      await page.goto(url.toString(), { waitUntil: "domcontentloaded", timeout: 20000 });
       await page.waitForFunction(
         () => document.documentElement.dataset.renderReady === "true",
         { timeout: 20000 }

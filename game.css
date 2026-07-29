@@ -17,6 +17,17 @@
   --shadow: 0 28px 80px rgba(2, 8, 18, 0.42);
   --font: "Noto Sans SC", "PingFang SC", "Hiragino Sans GB", system-ui, sans-serif;
   --font-display: "Noto Serif SC", "Source Han Serif SC", "Songti SC", serif;
+  /* Runtime Art Bible v1: shared by map HUD, interiors and story choices. */
+  --runtime-ink: #30364e;
+  --runtime-paper: #fff8e8;
+  --runtime-teal: #4e9b8f;
+  --runtime-teal-deep: #23665f;
+  --runtime-coral: #ee775f;
+  --runtime-gold: #efc65a;
+  --runtime-outline: 2px solid var(--runtime-ink);
+  --runtime-card-radius: 16px 7px;
+  --runtime-control-radius: 14px;
+  --runtime-offset-shadow: 4px 4px 0 var(--runtime-ink);
   color-scheme: dark;
 }
 
@@ -61,7 +72,7 @@ body.interior-active[data-interior-zone="public-plaza"] .hud-stat-value { color:
 body.interior-active[data-interior-zone="public-plaza"] .hud-stat-label { color: #ef9a83; }
 body.interior-active[data-interior-zone="public-plaza"] .hud-logo {
   color: #fff7e8;
-  background: #e86f55;
+  background: var(--runtime-coral);
   border-color: rgba(255,255,255,.38);
 }
 body.interior-active[data-interior-zone="public-plaza"] .hud-score { color: #f5ead9; }
@@ -157,7 +168,7 @@ body.interior-active[data-interior-zone="public-plaza"] #interiorCinematicAction
 #interiorCinematicActions button:hover,
 #interiorCinematicActions button:focus-visible { background: rgba(255,255,255,.1); outline: none; }
 #interiorCinematicActions button:active { transform: translateY(1px); }
-#interiorCinematicActions button.primary { background: #ee775f; color: #fff; }
+#interiorCinematicActions button.primary { background: var(--runtime-coral); color: #fff; }
 
 /* Match the civic room's editorial reference: on wide canvases the four
    choices read as one deliberate action deck instead of four cramped pills. */
@@ -326,7 +337,7 @@ body.social-twin-hearing-active #interiorDiscoveryCard { visibility: hidden; }
 .social-twin-hearing-card > p { max-width: 700px; margin: 0; color: rgba(48,54,78,.72); font-size: 15px; line-height: 1.7; }
 
 .social-twin-evidence { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin: 26px 0 18px; }
-.social-twin-evidence article { min-height: 132px; padding: 17px 18px; border: 2px solid #30364e; border-radius: 16px 6px; background: #fff0b5; box-shadow: 4px 4px 0 #30364e; }
+.social-twin-evidence article { min-height: 132px; padding: 17px 18px; border: var(--runtime-outline); border-radius: var(--runtime-card-radius); background: #fff0b5; box-shadow: var(--runtime-offset-shadow); }
 .social-twin-evidence article:nth-child(even) { background: #d9f2e9; }
 .social-twin-evidence small { display: block; color: #e95d5d; font-size: 9px; font-weight: 900; }
 .social-twin-evidence strong { display: block; margin-top: 5px; font-size: 16px; }
@@ -335,7 +346,7 @@ body.social-twin-hearing-active #interiorDiscoveryCard { visibility: hidden; }
 .social-twin-ending-grid { display: grid; grid-template-columns: repeat(2,minmax(0,1fr)); gap: 14px; margin-top: 22px; }
 .social-twin-ending-grid button,
 .social-twin-hearing-card footer button,
-.social-twin-hearing-card > button.quiet { min-height: 86px; padding: 14px 16px; border: 2px solid #30364e; border-radius: 14px; background: #ffcf56; color: #30364e; box-shadow: 4px 4px 0 #30364e; text-align: left; cursor: pointer; }
+.social-twin-hearing-card > button.quiet { min-height: 86px; padding: 14px 16px; border: var(--runtime-outline); border-radius: var(--runtime-control-radius); background: var(--runtime-gold); color: var(--runtime-ink); box-shadow: var(--runtime-offset-shadow); text-align: left; cursor: pointer; }
 .social-twin-ending-grid button:nth-child(2) { background: #ff958b; }
 .social-twin-ending-grid button:nth-child(3) { background: #9ed9f2; }
 .social-twin-ending-grid button:nth-child(4) { background: #9be2c5; }
@@ -378,7 +389,7 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
   z-index: 1320;
   overflow: auto;
   color: #17192d;
-  font-family: "PingFang SC", "Microsoft YaHei", system-ui, sans-serif;
+  font-family: var(--font);
   background: linear-gradient(180deg, rgba(19, 22, 42, 0.02), rgba(19, 22, 42, 0.24));
   isolation: isolate;
 }
@@ -429,7 +440,7 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
   font-weight: 900;
 }
 .mirror-relay-brand div { display: grid; }
-.mirror-relay-brand strong { font-family: "Songti SC", serif; font-size: 17px; }
+.mirror-relay-brand strong { font-family: var(--font-display); font-size: 17px; }
 .mirror-relay-brand small { font-size: 8px; letter-spacing: 0.16em; color: #8a7a68; }
 
 .mirror-relay-sheet {
@@ -465,10 +476,10 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
 .mirror-relay-disclosure,
 .mirror-relay-choice-card { align-self: center; position: relative; z-index: 1; }
 .mirror-relay-eyebrow { margin: 0 0 16px; color: #d34d4d; font-size: 12px; font-weight: 900; letter-spacing: 0.12em; text-transform: uppercase; }
-.mirror-relay-copy h1 { max-width: 680px; margin: 0 0 22px; font-family: "Songti SC", "Noto Serif SC", serif; font-size: clamp(31px, 4vw, 56px); line-height: 1.12; letter-spacing: -0.03em; }
+.mirror-relay-copy h1 { max-width: 680px; margin: 0 0 22px; font-family: var(--font-display); font-size: clamp(31px, 4vw, 56px); line-height: 1.12; letter-spacing: -0.03em; }
 .mirror-relay-copy h2 { margin: 24px 0 12px; font-size: 15px; }
 .mirror-relay-copy > p:not(.mirror-relay-eyebrow) { max-width: 580px; color: #625f66; font-size: 14px; line-height: 1.75; }
-.mirror-relay-copy blockquote { margin: 0 0 22px; padding: 18px 20px; border: 0; border-left: 5px solid #d4aa2d; border-radius: 0 16px 16px 0; background: #fff0b7; font-family: "Songti SC", serif; font-size: clamp(20px, 2vw, 28px); line-height: 1.45; }
+.mirror-relay-copy blockquote { margin: 0 0 22px; padding: 18px 20px; border: 0; border-left: 5px solid var(--runtime-gold); border-radius: 0 var(--runtime-control-radius) var(--runtime-control-radius) 0; background: #fff0b7; font-family: var(--font-display); font-size: clamp(20px, 2vw, 28px); line-height: 1.45; }
 .mirror-relay-copy label { display: grid; gap: 7px; max-width: 420px; margin-top: 22px; color: #5e5a61; font-size: 12px; font-weight: 800; }
 .mirror-relay-copy input { min-height: 46px; padding: 0 14px; border: 2px solid #17192d; border-radius: 12px; background: #fffdf6; color: #17192d; font: 700 15px inherit; outline: none; }
 .mirror-relay-copy input:focus { box-shadow: 0 0 0 4px rgba(47, 143, 131, 0.2); }
@@ -476,7 +487,7 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
 .mirror-relay-disclosure,
 .mirror-relay-choice-card { padding: 25px; border: 2px solid #17192d; border-radius: 18px; background: rgba(255, 253, 244, 0.94); box-shadow: 7px 8px 0 rgba(23, 25, 45, 0.12); }
 .mirror-relay-disclosure h2,
-.mirror-relay-choice-card h2 { margin: 0 0 18px; font-family: "Songti SC", serif; font-size: 26px; }
+.mirror-relay-choice-card h2 { margin: 0 0 18px; font-family: var(--font-display); font-size: 26px; }
 .mirror-relay-disclosure > div { margin-top: 12px; padding: 14px 16px; border-radius: 12px; background: #e8f5e9; }
 .mirror-relay-disclosure > div:nth-of-type(2) { background: #f5f0e7; }
 .mirror-relay-disclosure p { margin: 5px 0 0; color: #656167; font-size: 12px; line-height: 1.55; }
@@ -493,12 +504,12 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
 .mirror-relay-choice-card > button b { display: grid; place-items: center; width: 34px; height: 34px; flex: 0 0 auto; border-radius: 50%; background: #f4cb4f; }
 .mirror-relay-choice-card > button span { display: grid; gap: 4px; }
 .mirror-relay-choice-card > button small { color: #716c72; }
-.mirror-relay-choice-card > button.selected { border-color: #ed5d58; background: #fff0e5; box-shadow: inset 0 -5px 0 rgba(237, 93, 88, 0.12); }
+.mirror-relay-choice-card > button.selected { border-color: var(--runtime-coral); background: #fff0e5; box-shadow: inset 0 -5px 0 rgba(237, 93, 88, 0.12); }
 .mirror-relay-avatar-note { margin: 18px 0 0; color: #736f73; font-size: 11px; line-height: 1.55; }
 
 .mirror-relay-actions { grid-column: 1 / -1; display: flex; justify-content: center; gap: 12px; position: relative; z-index: 2; }
 .mirror-relay-actions button { min-width: 230px; min-height: 52px; padding: 12px 22px; border: 2px solid #17192d; border-radius: 13px; background: #fffdf7; color: #17192d; font: 900 14px inherit; cursor: pointer; box-shadow: 4px 5px 0 #17192d; transition: transform 150ms ease, box-shadow 150ms ease; }
-.mirror-relay-actions button.primary { color: #fffdf3; background: #2f8f83; }
+.mirror-relay-actions button.primary { color: #fffdf3; background: var(--runtime-teal); }
 .mirror-relay-actions button:hover,
 .mirror-relay-actions button:focus-visible { transform: translate(-2px, -2px); box-shadow: 6px 7px 0 #17192d; outline: none; }
 .relay-complete-sheet .mirror-relay-actions button.primary,
@@ -513,7 +524,7 @@ body.mirror-relay-active #interiorCompass { opacity: 0; pointer-events: none; }
   word-break: keep-all;
   overflow-wrap: normal;
 }
-.mirror-relay-seam { grid-column: 2; grid-row: 1; display: grid; place-items: center; position: relative; z-index: 1; color: #8d701c; font-family: "Songti SC", serif; font-size: 12px; font-weight: 900; text-align: center; line-height: 1.5; }
+.mirror-relay-seam { grid-column: 2; grid-row: 1; display: grid; place-items: center; position: relative; z-index: 1; color: #8d701c; font-family: var(--font-display); font-size: 12px; font-weight: 900; text-align: center; line-height: 1.5; }
 .mirror-relay-seam::before { content: ""; position: absolute; top: -22px; bottom: -22px; width: 1px; background: #d1a82e; }
 .mirror-relay-seam span { position: relative; padding: 10px; border: 1px solid #d1a82e; border-radius: 50%; background: #fff7d9; }
 .mirror-relay-return-meta { display: flex; gap: 8px; margin: 16px 0; }
@@ -6427,8 +6438,8 @@ body.detail-open .event-log:focus-within {
   padding: 14px 17px;
   border: 1px solid rgba(255, 255, 255, 0.14);
   border-radius: 17px;
-  background: rgba(255, 109, 93, 0.13);
-  color: #f7f2e8;
+  background: #3a2430;
+  color: #fffaf2;
   text-align: left;
   transition: transform 150ms ease, border-color 150ms ease, background 150ms ease;
 }

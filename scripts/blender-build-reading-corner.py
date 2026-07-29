@@ -11,6 +11,7 @@ def parse_args():
     argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
     parser = argparse.ArgumentParser(description="Build the editable MirrorLife reading-corner master.")
     parser.add_argument("--output-root", required=True)
+    parser.add_argument("--web-output", required=True)
     return parser.parse_args(argv)
 
 
@@ -304,7 +305,7 @@ def build_scene():
     return root
 
 
-def export_master(output_root):
+def export_master(output_root, web_output):
     os.makedirs(output_root, exist_ok=True)
     blend_path = os.path.join(output_root, "reading-corner.blend")
     glb_path = os.path.join(output_root, "reading-corner.glb")
@@ -323,15 +324,44 @@ def export_master(output_root):
         export_animations=False,
         export_yup=True,
     )
-    return blend_path, glb_path
+    # Preserve the full-detail GLB and native .blend above. The runtime export
+    # uses a deterministic per-part decimation pass so the release verifier can
+    # compare a genuine high-detail master against a materially smaller Web LOD.
+    for obj in bpy.context.scene.objects:
+        if obj.type != "MESH":
+            continue
+        decimate = obj.modifiers.new("Web LOD decimation", "DECIMATE")
+        decimate.decimate_type = "COLLAPSE"
+        decimate.ratio = 0.68
+        decimate.use_collapse_triangulate = True
+    os.makedirs(os.path.dirname(web_output), exist_ok=True)
+    bpy.ops.export_scene.gltf(
+        filepath=web_output,
+        export_format="GLB",
+        export_apply=True,
+        export_materials="EXPORT",
+        export_texcoords=True,
+        export_normals=True,
+        export_tangents=False,
+        export_attributes=True,
+        export_cameras=False,
+        export_lights=False,
+        export_animations=False,
+        export_yup=True,
+    )
+    return blend_path, glb_path, web_output
 
 
 def main():
     args = parse_args()
     build_scene()
-    blend_path, glb_path = export_master(os.path.abspath(args.output_root))
+    blend_path, glb_path, web_path = export_master(
+        os.path.abspath(args.output_root),
+        os.path.abspath(args.web_output),
+    )
     print(f"Saved editable master: {blend_path}")
     print(f"Exported interchange master: {glb_path}")
+    print(f"Exported Web LOD: {web_path}")
 
 
 if __name__ == "__main__":
