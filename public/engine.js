@@ -3541,7 +3541,7 @@ function syncAvatarInSociety() {
     avatar.age = clamp(Number(avatar.age) || 22, 0, 120);
     avatar.color = state.profile.avatarColor || avatar.color;
     avatar.avatarFrame = Number.isFinite(Number(avatar.avatarFrame)) ? Math.max(0, Math.min(5, Math.round(Number(avatar.avatarFrame)))) : avatarFrame;
-    avatar.avatarSpriteSrc = "/assets/mirrorlife-avatar-sprite.png";
+    avatar.avatarSpriteSrc = "/assets/mirrorlife-avatar-sprite.webp";
     avatar.professionId = avatar.professionId || "white-collar";
     avatar.lifeStage = getLifeStage(avatar.age).id;
     avatar.profession = state.profile.avatarProfessionName || (WORLD_PROFESSIONS.find((profession) => profession.id === avatar.professionId) || WORLD_PROFESSIONS[0]).name;
@@ -3554,7 +3554,7 @@ function syncAvatarInSociety() {
         role: "你的分身",
         color: state.profile.avatarColor || "#174743",
         avatarFrame,
-        avatarSpriteSrc: "/assets/mirrorlife-avatar-sprite.png",
+        avatarSpriteSrc: "/assets/mirrorlife-avatar-sprite.webp",
         x: 0.6,
         y: 0.58,
         purpose: "从真实生活带入选择与体验",
@@ -3592,7 +3592,7 @@ function syncAvatarForSociety(society) {
     avatar.age = clamp(Number(avatar.age) || 26, 0, 120);
     avatar.color = state.profile.avatarColor || avatar.color;
     avatar.avatarFrame = Number.isFinite(Number(avatar.avatarFrame)) ? Math.max(0, Math.min(5, Math.round(Number(avatar.avatarFrame)))) : avatarFrame;
-    avatar.avatarSpriteSrc = "/assets/mirrorlife-avatar-sprite.png";
+    avatar.avatarSpriteSrc = "/assets/mirrorlife-avatar-sprite.webp";
     avatar.professionId = avatar.professionId || "white-collar";
     avatar.profession = state.profile.avatarProfessionName || (WORLD_PROFESSIONS.find((profession) => profession.id === avatar.professionId) || WORLD_PROFESSIONS[0]).name;
     avatar.lifeStage = getLifeStage(avatar.age).id;
@@ -3606,7 +3606,7 @@ function syncAvatarForSociety(society) {
       role: "你的分身",
       color: state.profile.avatarColor || "#174743",
       avatarFrame,
-      avatarSpriteSrc: "/assets/mirrorlife-avatar-sprite.png",
+      avatarSpriteSrc: "/assets/mirrorlife-avatar-sprite.webp",
       x: 0.6,
       y: 0.58,
         purpose: "从真实生活带入选择与体验",

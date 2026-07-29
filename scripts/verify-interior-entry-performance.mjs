@@ -1,193 +1,236 @@
-#!/usr/bin/env node
 import assert from "node:assert/strict";
-import fs from "node:fs/promises";
-import path from "node:path";
 import puppeteer from "puppeteer-core";
+import { DEFAULT_CHROME } from "./benchmark-borderless-runtime.mjs";
 
-const BASE_URL = (process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4182").replace(/\/$/, "");
-const CHROME = process.env.CHROME_BIN || "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
-const RUNS = Math.max(1, Number(process.env.MIRRORLIFE_ENTRY_RUNS || 3));
-const ENFORCE = process.env.MIRRORLIFE_PERF_ENFORCE === "1";
-// Cold-start preserves the pre-optimization ceiling on this reference
-// machine; the product-facing target is the scene-prewarmed click path.
-const COLD_BUDGET_MS = Number(process.env.MIRRORLIFE_COLD_ENTRY_BUDGET_MS || 7000);
-const PREWARMED_BUDGET_MS = Number(process.env.MIRRORLIFE_PREWARMED_ENTRY_BUDGET_MS || 900);
-const OUTPUT_ROOT = path.resolve("dist/interior-entry-performance");
+const baseUrl = process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4173/game.html";
+const profiles = [
+  {
+    name: "desktop",
+    viewport: { width: 1440, height: 900, deviceScaleFactor: 1 },
+    coldBudgetMs: 2500,
+    warmBudgetMs: 800
+  },
+  {
+    name: "mobile",
+    viewport: { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
+    coldBudgetMs: 4000,
+    warmBudgetMs: 1200
+  }
+];
 
-function median(values) {
-  const ordered = [...values].sort((a, b) => a - b);
-  return ordered[Math.floor(ordered.length / 2)] || 0;
-}
-
-async function installProbe(page) {
-  await page.evaluateOnNewDocument(() => {
-    localStorage.clear();
-    window.__entryLongTasks = [];
-    try {
-      new PerformanceObserver((list) => {
-        list.getEntries().forEach((entry) => {
-          window.__entryLongTasks.push({
-            at: entry.startTime,
-            duration: entry.duration
-          });
-        });
-      }).observe({ type: "longtask", buffered: true });
-    } catch {
-      // The report remains useful on browsers without the Long Task API.
-    }
+async function enterMap(page) {
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
+  await page.waitForFunction(() =>
+    typeof window.getMapBuildingInteractionPoint === "function"
+    && typeof window.exitInteriorView === "function", { timeout: 20_000 });
+  const splashVisible = await page.$eval("#splashEnter", (button) => {
+    const style = getComputedStyle(button);
+    const rect = button.getBoundingClientRect();
+    return style.display !== "none"
+      && style.visibility !== "hidden"
+      && rect.width > 0
+      && rect.height > 0;
   });
-}
-
-async function enterCity(page) {
-  await page.waitForFunction(() => (
-    typeof createAndEnterWorld === "function"
-    && !!window.MirrorLifeInterior3D
-    && !!window.MirrorLifeInteriorPhysics
-  ), { timeout: 15000 });
-  await page.evaluate(() => {
-    createAndEnterWorld({
-      name: "入口性能验收员",
-      age: 28,
-      color: "#e76f51",
-      professionId: "designer",
-      professionName: "空间体验设计师",
-      avatarFrame: 0,
-      bio: "验证真实建筑点击路径"
-    });
-  });
-  await page.waitForFunction(() => (
-    typeof state === "object"
-    && state.society?.zones?.some((zone) => zone.id === "public-plaza")
-  ), { timeout: 10000 });
-}
-
-async function runEntry(browser, mode, run) {
-  const page = await browser.newPage();
-  await page.setViewport({ width: 1280, height: 720, deviceScaleFactor: 1 });
-  await installProbe(page);
-  const client = await page.target().createCDPSession();
-  await client.send("Network.setCacheDisabled", { cacheDisabled: true });
-  const assetRevision = `entry-${mode}-${run}-${Date.now()}`;
-  await page.goto(
-    `${BASE_URL}/game.html?qaFresh=1&qaShaderDiagnostics=0&assetRevision=${encodeURIComponent(assetRevision)}`,
-    {
-    waitUntil: "domcontentloaded",
-    timeout: 30000
-    }
-  );
-  await enterCity(page);
-
-  let prewarmMs = 0;
-  if (mode === "prewarmed") {
-    prewarmMs = await page.evaluate(async () => {
-      const startedAt = performance.now();
-      const zone = state.society.zones.find((candidate) => candidate.id === "public-plaza");
-      await Promise.all([
-        window.MirrorLifeInterior3D.prewarm({
-          zoneId: "public-plaza",
-          trigger: "intent",
-          force: true,
-          scenePayload: createInteriorPrewarmPayload(zone)
-        }),
-        window.MirrorLifeInteriorPhysics.prepareRapier()
-      ]);
-      return performance.now() - startedAt;
+  if (splashVisible) {
+    await page.click("#splashEnter");
+    await page.waitForFunction(() => !document.body.classList.contains("splash-active"), {
+      timeout: 12_000
     });
   }
+}
 
-  const startedAt = await page.evaluate(() => {
-    const zone = state.society.zones.find((candidate) => candidate.id === "public-plaza");
-    const at = performance.now();
-    enterInteriorView(zone, "manual");
-    window.__entryBenchmarkStartedAt = at;
-    return at;
-  });
-  await page.waitForFunction(() => (
-    document.body.dataset.interiorRenderPhase === "ready"
-    && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true"
-  ), { timeout: 60000 });
-  const result = await page.evaluate((entryStartedAt) => {
-    const readyAt = performance.now();
-    const resources = performance.getEntriesByType("resource")
-      .filter((entry) => entry.startTime >= entryStartedAt);
-    const longTasks = (window.__entryLongTasks || [])
-      .filter((entry) => entry.at >= entryStartedAt && entry.at <= readyAt);
+async function revealPublicPlazaOnTouchMap(page) {
+  if (await page.evaluate(() => !!window.getMapBuildingInteractionPoint?.("public-plaza"))) return;
+  const session = await page.target().createCDPSession();
+  const viewport = page.viewport();
+  const x = Math.round(viewport.width * 0.5);
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    // The mobile quest HUD owns the lower map. Begin in the exposed canvas
+    // strip, then pan the same live camera until the building is tappable.
+    const startY = Math.round(viewport.height * 0.21);
+    const endY = Math.round(viewport.height * 0.05);
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchStart",
+      touchPoints: [{ x, y: startY, id: 1, radiusX: 2, radiusY: 2, force: 1 }]
+    });
+    await session.send("Input.dispatchTouchEvent", {
+      type: "touchMove",
+      touchPoints: [{ x, y: endY, id: 1, radiusX: 2, radiusY: 2, force: 1 }]
+    });
+    await session.send("Input.dispatchTouchEvent", { type: "touchEnd", touchPoints: [] });
+    await new Promise((resolve) => setTimeout(resolve, 120));
+    if (await page.evaluate(() => !!window.getMapBuildingInteractionPoint?.("public-plaza"))) return;
+  }
+  throw new Error("public-plaza could not be exposed from under the mobile HUD with real map panning");
+}
+
+async function clickPublicPlaza(page, hasTouch) {
+  if (hasTouch) await revealPublicPlazaOnTouchMap(page);
+  await page.waitForFunction(() =>
+    !!window.getMapBuildingInteractionPoint?.("public-plaza"), { timeout: 12_000 });
+  const point = await page.evaluate(() => window.getMapBuildingInteractionPoint("public-plaza"));
+  assert.ok(point, "public-plaza must expose a point from the live rendered geometry");
+  if (hasTouch) await page.touchscreen.tap(point.clientX, point.clientY);
+  else await page.mouse.click(point.clientX, point.clientY);
+}
+
+async function waitForInteractive(page) {
+  await page.waitForFunction(() => {
+    const layer = document.querySelector("#interiorThreeLayer");
+    const status = window.MirrorLifeInteriorSession?.getStatus?.();
+    return document.body.classList.contains("interior-active")
+      && status?.zoneId === "public-plaza"
+      && ["interactive", "gameplay-ready", "full-ready"].includes(status?.phase)
+      && layer?.dataset.sceneReady === "true"
+      && getComputedStyle(layer).visibility === "visible";
+  }, { timeout: 30_000 });
+  return page.evaluate(() => {
+    const status = window.MirrorLifeInteriorSession.getStatus();
+    const stats = window.MirrorLifeInterior3D?.getStats?.();
+    const snapshot = status.snapshot;
     return {
-      entryMs: readyAt - entryStartedAt,
-      transferKbAfterClick: resources.reduce((sum, entry) => sum + Number(entry.transferSize || 0), 0) / 1024,
-      decodedKbAfterClick: resources.reduce((sum, entry) => sum + Number(entry.decodedBodySize || 0), 0) / 1024,
-      longTaskCount: longTasks.length,
-      longestTaskMs: Math.max(0, ...longTasks.map((entry) => entry.duration)),
-      telemetry: window.MirrorLifeInterior3D.getStats()?.entryPerformance || null,
-      drawCalls: window.MirrorLifeInterior3D.getStats()?.drawCalls || 0,
-      triangles: window.MirrorLifeInterior3D.getStats()?.triangles || 0
+      phase: status.phase,
+      generation: status.generation,
+      fingerprint: snapshot?.fingerprint || "",
+      requestedAt: status.requestedAt,
+      interactiveAt: status.timestamps.interactive,
+      readyMs: status.timestamps.interactive - status.requestedAt,
+      timestamps: status.timestamps,
+      camera: stats?.camera || null,
+      snapshotCamera: snapshot?.camera || null,
+      snapshotSpawn: snapshot?.spawn || null,
+      renderPhases: window.__mirrorLifeInteriorRenderPhases || [],
+      threeStages: window.__mirrorLifeInteriorThreeStageTrace || [],
+      transferBytes: performance.getEntriesByType("resource")
+        .reduce((total, entry) => total + Number(entry.transferSize || 0), 0),
+      heapBytes: Number(performance.memory?.usedJSHeapSize || 0)
     };
-  }, startedAt);
-  const screenshot = path.join(OUTPUT_ROOT, `${mode}-${run}.png`);
-  await page.screenshot({ path: screenshot, type: "png" });
-  await page.close();
-  return {
-    mode,
-    run,
-    prewarmMs: Number(prewarmMs.toFixed(1)),
-    entryMs: Number(result.entryMs.toFixed(1)),
-    transferKbAfterClick: Number(result.transferKbAfterClick.toFixed(1)),
-    decodedKbAfterClick: Number(result.decodedKbAfterClick.toFixed(1)),
-    longTaskCount: result.longTaskCount,
-    longestTaskMs: Number(result.longestTaskMs.toFixed(1)),
-    drawCalls: result.drawCalls,
-    triangles: result.triangles,
-    telemetry: result.telemetry,
-    screenshot
-  };
+  });
 }
 
-await fs.mkdir(OUTPUT_ROOT, { recursive: true });
-const browser = await puppeteer.launch({
-  executablePath: CHROME,
-  headless: true,
-  args: [
-    "--no-sandbox",
-    "--disable-background-networking",
-    "--disable-background-timer-throttling",
-    "--disable-renderer-backgrounding",
-    "--disable-component-update"
-  ]
-});
-
-try {
-  const samples = [];
-  for (const mode of ["cold", "prewarmed"]) {
-    for (let run = 1; run <= RUNS; run += 1) {
-      samples.push(await runEntry(browser, mode, run));
-    }
+async function proveRealInputMovesPhysics(page) {
+  const before = await page.evaluate(() => {
+    const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+    return { x: Number(camera?.playerX), z: Number(camera?.playerZ) };
+  });
+  assert.ok(Number.isFinite(before.x) && Number.isFinite(before.z), "camera/player baseline must be observable");
+  await page.keyboard.down("w");
+  try {
+    await page.waitForFunction((baseline) => {
+      const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
+      return Number.isFinite(camera?.playerX)
+        && Number.isFinite(camera?.playerZ)
+        && Math.hypot(camera.playerX - baseline.x, camera.playerZ - baseline.z) > 0.01;
+    }, { timeout: 5000 }, before);
+  } finally {
+    await page.keyboard.up("w");
   }
-  const coldMedianMs = Number(median(samples.filter((sample) => sample.mode === "cold").map((sample) => sample.entryMs)).toFixed(1));
-  const prewarmedMedianMs = Number(median(samples.filter((sample) => sample.mode === "prewarmed").map((sample) => sample.entryMs)).toFixed(1));
-  const report = {
-    generatedAt: new Date().toISOString(),
-    baseUrl: BASE_URL,
-    runs: RUNS,
-    budgets: {
-      coldMedianMs: COLD_BUDGET_MS,
-      prewarmedMedianMs: PREWARMED_BUDGET_MS
-    },
-    summary: {
-      coldMedianMs,
-      prewarmedMedianMs,
-      clickLatencyReductionPercent: Number(((1 - prewarmedMedianMs / Math.max(1, coldMedianMs)) * 100).toFixed(1))
-    },
-    samples
-  };
-  await fs.writeFile(path.join(OUTPUT_ROOT, "report.json"), `${JSON.stringify(report, null, 2)}\n`);
-  process.stdout.write(`${JSON.stringify(report, null, 2)}\n`);
-  if (ENFORCE) {
-    assert.ok(coldMedianMs <= COLD_BUDGET_MS, `cold entry ${coldMedianMs}ms exceeds ${COLD_BUDGET_MS}ms`);
-    assert.ok(
-      prewarmedMedianMs <= PREWARMED_BUDGET_MS,
-      `prewarmed entry ${prewarmedMedianMs}ms exceeds ${PREWARMED_BUDGET_MS}ms`
-    );
-  }
-} finally {
-  await browser.close();
 }
+
+function assertCameraConverged(evidence) {
+  assert.ok(evidence.camera, "Three camera state must be observable at interactive");
+  for (const key of ["playerX", "playerZ", "yaw", "pitch"]) {
+    assert.ok(Number.isFinite(Number(evidence.camera[key])), `camera.${key} must be finite`);
+  }
+  assert.ok(
+    Math.hypot(
+      Number(evidence.camera.playerX) - Number(evidence.snapshotSpawn.x),
+      Number(evidence.camera.playerZ) - Number(evidence.snapshotSpawn.z)
+    ) <= 0.05,
+    "Three camera/player state must converge on the authoritative snapshot spawn before input"
+  );
+}
+
+async function measureSample(profile, sample) {
+  const browser = await puppeteer.launch({
+    executablePath: process.env.MIRRORLIFE_CHROME_PATH || DEFAULT_CHROME,
+    headless: true,
+    protocolTimeout: 120_000,
+    args: [
+      "--no-sandbox",
+      "--disable-background-networking",
+      "--disable-background-timer-throttling",
+      "--disable-component-update",
+      "--disable-renderer-backgrounding"
+    ]
+  });
+  const errors = [];
+  try {
+    const page = await browser.newPage();
+    await page.setViewport(profile.viewport);
+    page.on("pageerror", (error) => errors.push(`page: ${String(error?.message || error)}`));
+    page.on("console", (message) => {
+      const sourceUrl = String(message.location()?.url || "");
+      const isOptionalLocalInsightsMiss = message.text().includes("/_vercel/insights/script.js")
+        || sourceUrl.includes("/_vercel/insights/script.js");
+      if (message.type() === "error" && !isOptionalLocalInsightsMiss) {
+        errors.push(`console: ${message.text()}`);
+      }
+    });
+    await enterMap(page);
+    const mapHeapBytes = await page.evaluate(() => Number(performance.memory?.usedJSHeapSize || 0));
+
+    await clickPublicPlaza(page, !!profile.viewport.hasTouch);
+    const cold = await waitForInteractive(page);
+    assertCameraConverged(cold);
+    await proveRealInputMovesPhysics(page);
+
+    await page.evaluate(() => window.exitInteriorView());
+    await page.waitForFunction(() =>
+      !document.body.classList.contains("interior-active"), {
+      timeout: 10_000
+    });
+    const exitState = await page.evaluate(() => ({
+      phase: window.MirrorLifeInteriorSession?.getStatus?.().phase || "",
+      policy: window.__mirrorLifeInteriorCachePolicy || null
+    }));
+    assert.equal(exitState.phase, "suspended",
+      `warm cache rejected after cold entry: ${JSON.stringify({
+        ...exitState.policy,
+        mapHeapBytes,
+        interiorHeapDelta: Number(exitState.policy?.heapBytes || 0) - mapHeapBytes
+      })}`);
+    await page.waitForFunction(() =>
+      !!window.getMapBuildingInteractionPoint?.("public-plaza"), { timeout: 10_000 });
+
+    await clickPublicPlaza(page, !!profile.viewport.hasTouch);
+    const warm = await waitForInteractive(page);
+    await proveRealInputMovesPhysics(page);
+
+    assert.equal(errors.length, 0, errors.join("\n"));
+    assert.ok(cold.readyMs >= 0 && cold.readyMs <= profile.coldBudgetMs,
+      `${profile.name} sample ${sample} cold ${cold.readyMs.toFixed(1)}ms > ${profile.coldBudgetMs}ms`);
+    assert.ok(warm.readyMs >= 0 && warm.readyMs <= profile.warmBudgetMs,
+      `${profile.name} sample ${sample} warm ${warm.readyMs.toFixed(1)}ms > ${profile.warmBudgetMs}ms`);
+    assert.equal(warm.fingerprint, cold.fingerprint);
+    assert.ok(warm.generation > cold.generation);
+
+    return {
+      profile: profile.name,
+      sample,
+      coldReadyMs: Number(cold.readyMs.toFixed(1)),
+      warmReadyMs: Number(warm.readyMs.toFixed(1)),
+      fingerprint: cold.fingerprint,
+      generations: [cold.generation, warm.generation],
+      transferBytes: warm.transferBytes,
+      mapHeapBytes,
+      peakHeapBytes: Math.max(cold.heapBytes, warm.heapBytes),
+      coldTimestamps: cold.timestamps,
+      warmTimestamps: warm.timestamps,
+      renderPhases: warm.renderPhases,
+      threeStages: cold.threeStages
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
+const results = [];
+for (const profile of profiles) {
+  for (let sample = 1; sample <= 2; sample += 1) {
+    process.stderr.write(`[interior entry] ${profile.name} fresh sample ${sample}/2\n`);
+    results.push(await measureSample(profile, sample));
+  }
+}
+
+process.stdout.write(`${JSON.stringify({ status: "passed", results }, null, 2)}\n`);

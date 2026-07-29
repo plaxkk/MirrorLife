@@ -40,6 +40,8 @@ async function inspectScene(page) {
       counterfactualActive: document.body.classList.contains("counterfactual-active"),
       renderPhase: document.body.dataset.interiorRenderPhase || "",
       renderPhases: [...(window.__mirrorLifeInteriorRenderPhases || [])],
+      sessionPhase: window.MirrorLifeInteriorSession?.getStatus?.().phase || "",
+      threeSessionPhase: window.MirrorLifeInterior3D?.getSessionStatus?.().phase || "",
       renderStats,
       director: gameState?.story?.director || null,
       overflowX: document.documentElement.scrollWidth > document.documentElement.clientWidth
@@ -55,7 +57,9 @@ async function verifyViewport(browser, viewport, label) {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForSelector("#interiorDiscoveryCard [data-interior-scene-action]", { visible: true, timeout: 20000 });
     await page.waitForFunction(() => document.body.dataset.interiorRenderPhase === "ready"
-      && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true", { timeout: READY_TIMEOUT_MS });
+      && document.querySelector("#interiorThreeLayer")?.dataset.sceneReady === "true"
+      && window.MirrorLifeInteriorSession?.getStatus?.().phase === "full-ready"
+      && window.MirrorLifeInterior3D?.getSessionStatus?.().phase === "full-ready", { timeout: READY_TIMEOUT_MS });
 
     const opening = await inspectScene(page);
     if (!opening.interiorActive || opening.actionCount !== 1 || opening.choiceCount !== 0) {
@@ -67,6 +71,9 @@ async function verifyViewport(browser, viewport, label) {
     const phaseNames = opening.renderPhases.map((entry) => entry.phase);
     if (opening.renderPhase !== "ready" || phaseNames.some((phase) => !["loading", "ready"].includes(phase))) {
       throw new Error(`${label}: interior used a non-atomic render phase (${phaseNames.join(" -> ") || "none"}).`);
+    }
+    if (opening.sessionPhase !== "full-ready" || opening.threeSessionPhase !== "full-ready") {
+      throw new Error(`${label}: progressive session did not reach full-ready (${opening.sessionPhase}/${opening.threeSessionPhase}).`);
     }
     const maximumCameraHeight = label === "mobile" ? 4.8 : 4.2;
     if (!opening.renderStats.camera || opening.renderStats.camera.height >= maximumCameraHeight) {

@@ -61,11 +61,11 @@ let interiorHotspots = [];
 let interiorNearbyAnchor = null;
 let interiorFocusPropIndex = null;
 let interiorPhysicsWorld = null;
+let interiorPreparedPhysics = null;
 let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
-let interiorPrewarmScheduled = false;
-let interiorPrewarmZoneId = "";
-let interiorIntentPrewarmTimer = null;
+let interiorWarmCache = null;
+let mapBuildingPointerIntent = null;
 let interiorRunHeld = false;
 let interiorJoystick = { x: 0, z: 0, pointerId: null };
 let interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -240,7 +240,7 @@ const AVATAR_COLORS = [
   "#c18b3d", "#6b7f5f", "#af5f3a", "#7f5c7a"
 ];
 
-const AVATAR_SPRITE_SRC = "/assets/mirrorlife-avatar-sprite.png";
+const AVATAR_SPRITE_SRC = "/assets/mirrorlife-avatar-sprite.webp";
 const AVATAR_SPRITE_COLUMNS = 3;
 const AVATAR_SPRITE_ROWS = 2;
 const AVATAR_FRAME_COUNT = AVATAR_SPRITE_COLUMNS * AVATAR_SPRITE_ROWS;
@@ -248,7 +248,7 @@ const avatarSpriteImage = new Image();
 avatarSpriteImage.decoding = "async";
 avatarSpriteImage.src = AVATAR_SPRITE_SRC;
 
-const BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-sprite.png";
+const BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-sprite.webp";
 const BUILDING_SPRITE_COLUMNS = 4;
 const BUILDING_SPRITE_ROWS = 3;
 const BUILDING_FRAME_COUNT = BUILDING_SPRITE_COLUMNS * BUILDING_SPRITE_ROWS;
@@ -256,14 +256,14 @@ const buildingSpriteImage = new Image();
 buildingSpriteImage.decoding = "async";
 buildingSpriteImage.src = BUILDING_SPRITE_SRC;
 
-const SEMANTIC_BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-semantic-sprite.png";
+const SEMANTIC_BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-semantic-sprite.webp";
 const SEMANTIC_BUILDING_SPRITE_COLUMNS = 3;
 const SEMANTIC_BUILDING_SPRITE_ROWS = 2;
 const semanticBuildingSpriteImage = new Image();
 semanticBuildingSpriteImage.decoding = "async";
 semanticBuildingSpriteImage.src = SEMANTIC_BUILDING_SPRITE_SRC;
 
-const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.png";
+const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.webp";
 const CITIZEN_SPRITE_COLUMNS = 4;
 const CITIZEN_SPRITE_ROWS = 2;
 const CITIZEN_FRAME_COUNT = CITIZEN_SPRITE_COLUMNS * CITIZEN_SPRITE_ROWS;
@@ -2384,8 +2384,6 @@ function createAndEnterWorld(profileData) {
     setTimeout(() => splash.style.display = "none", 600);
   }
   document.body?.classList.remove("splash-active");
-  requestInteriorPrewarm("public-plaza", "idle");
-
   // New user: set slow speed and show tutorial
   const slider = document.getElementById("hudSpeed");
   if (slider) { slider.value = "0.5"; }
@@ -6129,45 +6127,6 @@ function getInteriorPhysicsApi() {
   return window.MirrorLifeInteriorPhysics || null;
 }
 
-function requestInteriorPrewarm(zoneId = "public-plaza", trigger = "idle") {
-  const targetZoneId = String(zoneId || "public-plaza");
-  interiorPrewarmZoneId = targetZoneId;
-  const run = () => {
-    const three = window.MirrorLifeInterior3D;
-    const physics = getInteriorPhysicsApi();
-    const zone = findRenderZoneById(targetZoneId)
-      || state.society?.zones?.find((candidate) => candidate.id === targetZoneId)
-      || null;
-    physics?.prepareRapier?.().catch?.(() => {});
-    return three?.prewarm?.({
-      zoneId: targetZoneId,
-      trigger,
-      scenePayload: ["entry", "splash"].includes(trigger)
-        ? null
-        : createInteriorPrewarmPayload(zone)
-    });
-  };
-  if (["entry", "intent"].includes(trigger)) return run();
-  if (interiorPrewarmScheduled) return null;
-  interiorPrewarmScheduled = true;
-  const scheduleWhenIdle = () => {
-    const begin = () => {
-      interiorPrewarmScheduled = false;
-      if (interiorView) return;
-      run();
-    };
-    if ("requestIdleCallback" in window) {
-      window.requestIdleCallback(begin, { timeout: 2800 });
-    } else {
-      window.setTimeout(begin, 120);
-    }
-  };
-  // Let the city, HUD and first-session state settle before allocating the
-  // WebGL context and parsing interior assets in the background.
-  window.setTimeout(scheduleWhenIdle, trigger === "splash" ? 800 : 1800);
-  return null;
-}
-
 function getInteriorPhysicsVariant(blueprint) {
   return hashCommunitySeed(interiorView?.zone?.id || blueprint?.key || "home", "interior-room") % 4;
 }
@@ -6248,17 +6207,34 @@ function ensureInteriorPhysicsWorld(blueprint) {
   const signature = `${interiorView.zone.id}|${blueprint.key}|${layoutProfile.shellId}|${variant}`;
   if (interiorPhysicsWorld?.signature === signature) return interiorPhysicsWorld;
   const items = getInteriorPhysicsItems(blueprint);
-  const world = physics.createWorld({
-    id: interiorView.zone.id,
-    archetype: blueprint.key,
+  if (interiorPreparedPhysics) {
+    physics.disposePreparedSession?.(interiorPreparedPhysics);
+  }
+  const prepared = physics.prepareSession?.({
+    zoneId: interiorView.zone.id,
+    blueprintKey: blueprint.key,
     variant,
     items,
     layoutProfile,
     spawn: layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 }
-  });
+  }) || {
+    world: physics.createWorld({
+      id: interiorView.zone.id,
+      archetype: blueprint.key,
+      variant,
+      items,
+      layoutProfile,
+      spawn: layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 }
+    }),
+    rapierRuntime: null,
+    disposed: false
+  };
+  const world = prepared.world;
   world.signature = signature;
   world.layoutProfile = layoutProfile;
+  interiorPreparedPhysics = prepared;
   interiorPhysicsWorld = world;
+  interiorView.physicsSession = prepared;
   interiorView.physicsSignature = signature;
   if (!interiorView.physicsSpawnApplied && world.spawn) {
     interiorOrbit.x = world.spawn.x;
@@ -6269,6 +6245,7 @@ function ensureInteriorPhysicsWorld(blueprint) {
   window.__mirrorLifeInteriorPhysics = {
     zoneId: interiorView.zone.id,
     world,
+    preparedSession: prepared,
     get snapshot() {
       return physics.getDebugSnapshot?.(world) || null;
     },
@@ -6309,6 +6286,22 @@ function ensureInteriorPhysicsWorld(blueprint) {
 function disposeInteriorRapierRuntime() {
   const physics = getInteriorPhysicsApi();
   if (interiorRapierRuntime) physics?.disposeRapierRuntime?.(interiorRapierRuntime);
+  if (interiorPreparedPhysics?.rapierRuntime === interiorRapierRuntime) {
+    interiorPreparedPhysics.rapierRuntime = null;
+  }
+  interiorRapierRuntime = null;
+  interiorRapierLoading = null;
+}
+
+function disposeInteriorPhysicsSession() {
+  const physics = getInteriorPhysicsApi();
+  if (interiorPreparedPhysics) {
+    physics?.disposePreparedSession?.(interiorPreparedPhysics);
+  } else {
+    disposeInteriorRapierRuntime();
+  }
+  interiorPreparedPhysics = null;
+  interiorPhysicsWorld = null;
   interiorRapierRuntime = null;
   interiorRapierLoading = null;
 }
@@ -6327,6 +6320,9 @@ function ensureInteriorRapierRuntime(blueprint) {
     }
     runtime.signature = world.signature;
     interiorRapierRuntime = runtime;
+    if (interiorPreparedPhysics?.world === world) {
+      interiorPreparedPhysics.rapierRuntime = runtime;
+    }
     interiorRapierLoading = null;
     const position = runtime.playerBody.translation();
     interiorOrbit.x = position.x;
@@ -13667,78 +13663,114 @@ function getInteriorCameraFocus(blueprint, actors = []) {
   return { x, z, safeArea };
 }
 
-function createInteriorPrewarmPayload(zone) {
-  if (!zone) return null;
-  const blueprint = getInteriorBlueprint(zone);
-  const roomStyle = getInteriorMaterialStyle(zone, blueprint);
-  const layoutProfile = blueprint.layoutProfile || getInteriorZoneLayoutProfile(zone, blueprint.key);
-  const spawn = layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 };
-  const staging = layoutProfile.actorStagingPoints || [];
-  const roles = ["listener", "facilitator", "mediator"];
-  const actors = [
-    {
-      id: "player",
-      role: "player",
-      worldX: Number(spawn.x || 0),
-      worldY: Math.max(0, Number(spawn.y || 0.86) - 0.86),
-      worldZ: Number(spawn.z || 0),
-      frame: 0,
-      state: "idle",
-      civicRole: zone.id === "public-plaza" ? "player" : "",
-      scale: 1
-    },
-    ...roles.map((role, index) => ({
-      id: `prewarm-${role}`,
-      worldX: Number(staging[index]?.x ?? [-0.9, 0.85, 1.7][index]),
-      worldY: 0,
-      worldZ: Number(staging[index]?.z ?? [0.05, -0.35, 0.75][index]),
-      frame: [4, 2, 3][index],
-      state: "idle",
-      civicRole: zone.id === "public-plaza" ? role : "",
-      scale: 1
-    }))
-  ];
-  const isNight = !!getWorldTimeState(state.society).isNight;
-  return {
-    visible: false,
-    warmup: true,
-    interactionActive: false,
-    width: Math.max(1, window.innerWidth),
-    height: Math.max(1, window.innerHeight),
-    yaw: 0,
-    pitch: INTERIOR_DEFAULT_PITCH,
-    cameraX: Number(spawn.x || 0),
-    cameraZ: Number(spawn.z || 0),
-    cameraTargetX: Number(layoutProfile.cameraTargets?.[0]?.x || 0),
-    cameraTargetZ: Number(layoutProfile.cameraTargets?.[0]?.z || 0),
-    cameraSafeArea: layoutProfile.cameraSafeArea,
-    theme: {
-      wall: roomStyle.wall,
-      floor: roomStyle.floor,
-      accent: roomStyle.accent,
-      trim: roomStyle.trim,
-      archetype: blueprint.key,
-      zoneId: zone.id,
-      variant: hashCommunitySeed(zone.id, "interior-room") % 4,
-      layoutProfile,
-      night: isNight
-    },
-    items: getInteriorThreeItems(blueprint, window.innerWidth, window.innerHeight),
-    actors,
-    physics: { enabled: false, colliders: [], actors: [], ready: false, dynamics: [] }
+function buildInteriorEntrySnapshot(zone, source, token, input) {
+  const factory = window.MirrorLifeInteriorEntrySnapshot;
+  const controller = window.MirrorLifeInteriorSession;
+  if (!factory?.create || !controller?.isCurrent?.(token)) return null;
+  const status = controller.getStatus();
+  const world = input.world;
+  const spawn = {
+    x: Number(world?.spawn?.x || 0),
+    y: Number(world?.spawn?.y || 0.86),
+    z: Number(world?.spawn?.z || 0)
   };
+  const cameraFocus = getInteriorCameraFocus(input.blueprint, input.actors);
+  const revision = Number(zone?.zoneRevision ?? zone?.revision ?? 0);
+  const criticalModels = [...new Set(input.items
+    .filter((item) => item.renderModel !== false && item.model)
+    .map((item) => item.model))];
+  return factory.create({
+    sessionId: token.sessionId,
+    generation: token.generation,
+    zoneId: zone.id,
+    zoneRevision: Number.isFinite(revision) ? revision : 0,
+    source: source || "manual",
+    requestedAt: status.requestedAt,
+    qualityProfile: status.qualityProfile,
+    blueprintKey: input.blueprint.key,
+    variant: getInteriorPhysicsVariant(input.blueprint),
+    theme: {
+      wall: input.roomStyle.wall,
+      floor: input.roomStyle.floor,
+      accent: input.roomStyle.accent,
+      trim: input.roomStyle.trim,
+      archetype: input.blueprint.key,
+      zoneId: zone.id,
+      variant: getInteriorPhysicsVariant(input.blueprint),
+      layoutProfile: input.blueprint.layoutProfile,
+      night: !!input.isNight
+    },
+    layoutProfile: input.blueprint.layoutProfile,
+    items: input.items,
+    actors: input.actors,
+    spawn,
+    camera: {
+      yaw: Number(interiorOrbit?.yaw || 0),
+      pitch: Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
+      x: spawn.x,
+      z: spawn.z,
+      targetX: cameraFocus.x,
+      targetZ: cameraFocus.z,
+      safeArea: cameraFocus.safeArea
+    },
+    criticalModels,
+    deferredModels: []
+  });
 }
 
-function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []) {
+function applyInteriorRuntimePatch(snapshot, patch = {}) {
+  if (
+    !snapshot
+    || interiorView?.entrySnapshot?.fingerprint !== snapshot.fingerprint
+    || interiorView?.entrySnapshot?.generation !== snapshot.generation
+  ) return false;
+  interiorView.runtimePatch = Object.freeze({
+    ...(interiorView.runtimePatch || {}),
+    ...patch
+  });
+  return true;
+}
+
+function ensureInteriorEntrySnapshot(zone, source, token, input) {
+  if (interiorView?.entrySnapshot) return interiorView.entrySnapshot;
+  const controller = window.MirrorLifeInteriorSession;
+  if (
+    !token
+    || !controller?.isCurrent?.(token)
+    || controller.getStatus().phase !== "snapshot-building"
+  ) return null;
+  const snapshot = buildInteriorEntrySnapshot(zone, source, token, input);
+  if (!snapshot) return null;
+  controller.acceptSnapshot(token, snapshot);
+  controller.markShellLoading(token);
+  interiorView.entrySnapshot = snapshot;
+  const owningView = interiorView;
+  window.__mirrorLifeInteriorSession = Object.freeze({
+    snapshot,
+    get firstThreeInput() {
+      return owningView.firstThreeInput || null;
+    },
+    get runtimePatch() {
+      return owningView.runtimePatch || null;
+    }
+  });
+  return snapshot;
+}
+
+function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = [], snapshot = null) {
   const api = window.MirrorLifeInterior3D;
   if (!api?.update) return false;
-  const items = getInteriorThreeItems(blueprint, W, H);
+  const useSnapshotOpening = Boolean(snapshot && !interiorView?.firstThreeInput);
+  const items = snapshot?.items || getInteriorThreeItems(blueprint, W, H);
+  const renderActors = useSnapshotOpening ? snapshot.actors : actors;
   const cameraFocus = getInteriorCameraFocus(blueprint, actors);
   const physicsActors = [
     { id: "player", kind: "player", x: Number(interiorOrbit?.x || 0), y: Number(interiorOrbit?.y || 0.86), z: Number(interiorOrbit?.z || 0), radius: Number(getInteriorPhysicsApi()?.PLAYER_RADIUS || INTERIOR_FALLBACK_PLAYER_RADIUS) },
-    ...actors.map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
+    ...renderActors
+      .filter((actor) => actor.id !== "player")
+      .map((actor) => ({ id: actor.id, kind: "citizen", x: actor.worldX, z: actor.worldZ, radius: Number(getInteriorPhysicsApi()?.CITIZEN_RADIUS || INTERIOR_FALLBACK_CITIZEN_RADIUS) }))
   ];
-  return api.update({
+  const payload = {
     visible: true,
     interactionActive: !!(
       camera.drag
@@ -13749,14 +13781,14 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     ),
     width: W,
     height: H,
-    yaw: Number(interiorOrbit?.yaw || 0),
-    pitch: Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
-    cameraX: Number(interiorOrbit?.x || 0),
-    cameraZ: Number(interiorOrbit?.z || 0),
-    cameraTargetX: cameraFocus.x,
-    cameraTargetZ: cameraFocus.z,
-    cameraSafeArea: cameraFocus.safeArea,
-    theme: {
+    yaw: useSnapshotOpening ? snapshot.camera.yaw : Number(interiorOrbit?.yaw || 0),
+    pitch: useSnapshotOpening ? snapshot.camera.pitch : Number(interiorOrbit?.pitch || INTERIOR_DEFAULT_PITCH),
+    cameraX: useSnapshotOpening ? snapshot.camera.x : Number(interiorOrbit?.x || 0),
+    cameraZ: useSnapshotOpening ? snapshot.camera.z : Number(interiorOrbit?.z || 0),
+    cameraTargetX: useSnapshotOpening ? snapshot.camera.targetX : cameraFocus.x,
+    cameraTargetZ: useSnapshotOpening ? snapshot.camera.targetZ : cameraFocus.z,
+    cameraSafeArea: useSnapshotOpening ? snapshot.camera.safeArea : cameraFocus.safeArea,
+    theme: snapshot?.theme || {
       wall: roomStyle.wall,
       floor: roomStyle.floor,
       accent: roomStyle.accent,
@@ -13768,7 +13800,7 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
       night: !!isNight
     },
     items,
-    actors,
+    actors: renderActors,
     physics: {
       enabled: interiorPhysicsDebugVisible,
       colliders: interiorPhysicsWorld?.colliders || [],
@@ -13776,7 +13808,46 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
       ready: !!interiorRapierRuntime,
       dynamics: getInteriorPhysicsApi()?.getRapierDynamicTransforms?.(interiorRapierRuntime) || []
     }
+  };
+  if (useSnapshotOpening) {
+    interiorView.firstThreeInput = Object.freeze({
+      items: snapshot.items,
+      actors: snapshot.actors,
+      theme: snapshot.theme,
+      camera: snapshot.camera
+    });
+    applyInteriorRuntimePatch(snapshot, { firstThreeInputAcceptedAt: performance.now() });
+  }
+  if (!snapshot || typeof api.stageShell !== "function") {
+    return api.update(payload);
+  }
+  const staged = api.stageShell(snapshot, {
+    width: W,
+    height: H,
+    physics: payload.physics
   });
+  const controller = window.MirrorLifeInteriorSession;
+  const token = interiorView?.sessionToken;
+  if (
+    staged.interactive
+    && interiorRapierRuntime
+    && controller?.isCurrent?.(token)
+    && controller.getStatus().phase === "shell-loading"
+  ) {
+    controller.markInteractive(token);
+  }
+  const activated = api.activate(snapshot, payload);
+  if (controller?.isCurrent?.(token) && interiorRapierRuntime) {
+    let phase = controller.getStatus().phase;
+    if (phase === "interactive" && activated.gameplayReady) {
+      controller.markGameplayReady(token);
+      phase = "gameplay-ready";
+    }
+    if (phase === "gameplay-ready" && activated.fullReady) {
+      controller.markFullReady(token);
+    }
+  }
+  return activated.accepted ? activated : staged;
 }
 
 function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
@@ -14124,15 +14195,284 @@ function findRenderZoneById(zoneId) {
     || null;
 }
 
-function enterInteriorView(zone, source = "manual") {
-  if (!zone) return;
-  if (interiorIntentPrewarmTimer) {
-    window.clearTimeout(interiorIntentPrewarmTimer);
-    interiorIntentPrewarmTimer = null;
+let interiorSessionRequestSequence = 0;
+
+function getInteriorWarmCacheRevision(zone) {
+  const citizens = getAliveCitizens(state.society)
+    .filter((citizen) => citizenAnimations[citizen.id]?.indoor?.zoneId === zone?.id)
+    .map((citizen) => ({
+      id: citizen.id,
+      frame: getCitizenSpriteFrame(citizen),
+      until: citizenAnimations[citizen.id]?.indoor?.until || 0
+    }))
+    .sort((a, b) => String(a.id).localeCompare(String(b.id)));
+  return JSON.stringify({
+    zoneId: zone?.id || "",
+    role: zone?.role || "",
+    archetype: zone?.archetype || "",
+    revision: zone?.zoneRevision ?? zone?.revision ?? 0,
+    citizens
+  });
+}
+
+function getInteriorSessionIntent(zone, source, requestedAt) {
+  return {
+    zoneId: zone.id,
+    source: source || "manual",
+    requestedAt,
+    qualityProfile: window.matchMedia?.("(max-width: 720px)")?.matches ? "mobile" : "desktop",
+    styleKey: "sunweave-d"
+  };
+}
+
+function beginInteriorSession(zone, source, requestedAt) {
+  const requestId = ++interiorSessionRequestSequence;
+  const intent = getInteriorSessionIntent(zone, source, requestedAt);
+  const requestFrom = (controller) => {
+    if (!controller?.request) {
+      throw new Error("MirrorLife interior session became ready without a request API");
+    }
+    if (requestId !== interiorSessionRequestSequence) return null;
+    const canTryWarmResume = Boolean(
+      interiorWarmCache
+      && controller.getStatus?.().phase === "suspended"
+    );
+    const warmFingerprint = canTryWarmResume
+      && interiorWarmCache.revision === getInteriorWarmCacheRevision(zone)
+      ? interiorWarmCache.snapshot.fingerprint
+      : "";
+    const outcome = canTryWarmResume
+      ? controller.resume(intent, warmFingerprint)
+      : { token: controller.request(intent), reused: false };
+    const token = outcome.token;
+    if (interiorView?.sessionRequestId === requestId) {
+      interiorView.sessionToken = token;
+    }
+    return outcome;
+  };
+
+  if (window.MirrorLifeInteriorSession?.request) {
+    const outcome = requestFrom(window.MirrorLifeInteriorSession);
+    return {
+      requestId,
+      token: outcome?.token || null,
+      reused: outcome?.reused === true,
+      ready: Promise.resolve(outcome?.token || null)
+    };
   }
-  window.MirrorLifeInterior3D?.beginEntry?.(source, zone.id);
-  requestInteriorPrewarm(zone.id, "entry");
-  window.MirrorLifeInterior3D?.hide?.();
+  if (typeof window.MirrorLifeInteriorSessionReady?.then === "function") {
+    const outcomeReady = window.MirrorLifeInteriorSessionReady.then(requestFrom);
+    return {
+      requestId,
+      token: null,
+      reused: false,
+      ready: outcomeReady.then((outcome) => outcome?.token || null)
+    };
+  }
+  return {
+    requestId,
+    token: null,
+    ready: Promise.reject(new Error("MirrorLife interior session bootstrap is unavailable"))
+  };
+}
+
+function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
+  const options = {
+    reason: source || "manual",
+    zoneId: zone.id
+  };
+  let request;
+  try {
+    if (window.MirrorLifeInteriorRuntime?.load) {
+      request = window.MirrorLifeInteriorRuntime.load(options);
+    } else if (typeof window.MirrorLifeInteriorRuntimeReady?.then === "function") {
+      request = window.MirrorLifeInteriorRuntimeReady.then((readyRuntime) => {
+        const runtime = readyRuntime || window.MirrorLifeInteriorRuntime;
+        if (!runtime?.load) {
+          throw new Error("MirrorLife interior runtime became ready without a load API");
+        }
+        return runtime.load(options);
+      });
+    } else {
+      request = Promise.reject(new Error("MirrorLife interior runtime readiness bootstrap is unavailable"));
+    }
+  } catch (error) {
+    request = Promise.reject(error);
+  }
+  const trackedRequest = Promise.all([
+    Promise.resolve(sessionTokenReady),
+    Promise.resolve(request)
+  ]).then(([token, runtime]) => {
+    const controller = window.MirrorLifeInteriorSession;
+    if (
+      token
+      && controller?.isCurrent?.(token)
+      && controller.getStatus().phase === "runtime-loading"
+    ) {
+      controller.markRuntimeReady(token);
+    }
+    return runtime;
+  });
+  trackedRequest.catch((error) => {
+    console.warn("MirrorLife interior runtime failed to load", error);
+    showToast("室内仍在准备，可以稍后重试", "conflict");
+  });
+  return trackedRequest;
+}
+
+function disposeInteriorWarmCache(reason = "manual") {
+  const cached = interiorWarmCache;
+  if (!cached) return false;
+  interiorWarmCache = null;
+  window.MirrorLifeInterior3D?.disposeSession?.(cached.snapshot.sessionId);
+  getInteriorPhysicsApi()?.disposePreparedSession?.(cached.preparedPhysics);
+  if (interiorPreparedPhysics === cached.preparedPhysics) {
+    interiorPreparedPhysics = null;
+    interiorPhysicsWorld = null;
+    interiorRapierRuntime = null;
+    interiorRapierLoading = null;
+  }
+  window.dispatchEvent(new CustomEvent("mirrorlife:interior-warm-cache-disposed", {
+    detail: { reason, zoneId: cached.snapshot.zoneId }
+  }));
+  return true;
+}
+
+function cacheInteriorSessionForExit() {
+  const snapshot = interiorView?.entrySnapshot;
+  const token = interiorView?.sessionToken;
+  const controller = window.MirrorLifeInteriorSession;
+  const three = window.MirrorLifeInterior3D;
+  if (
+    !snapshot
+    || !token
+    || !controller?.isCurrent?.(token)
+    || !["interactive", "gameplay-ready", "full-ready"].includes(controller.getStatus().phase)
+    || !interiorPreparedPhysics
+  ) return false;
+
+  const mobile = snapshot.qualityProfile === "mobile";
+  const estimate = three?.getResourceEstimate?.() || { estimatedBytes: Number.POSITIVE_INFINITY };
+  const heapBytes = Number(performance.memory?.usedJSHeapSize);
+  interiorWarmCache = {
+    snapshot,
+    revision: getInteriorWarmCacheRevision(interiorView.zone),
+    preparedPhysics: interiorPreparedPhysics,
+    physicsWorld: interiorPhysicsWorld,
+    rapierRuntime: interiorRapierRuntime,
+    physicsEvidence: window.__mirrorLifeInteriorPhysics,
+    orbit: {
+      ...interiorOrbit,
+      velocity: { ...(interiorOrbit.velocity || { x: 0, y: 0, z: 0 }) },
+      drag: false
+    },
+    firstThreeInput: interiorView.firstThreeInput || null
+  };
+  const policy = {
+    fingerprint: snapshot.fingerprint,
+    qualityProfile: snapshot.qualityProfile,
+    styleKey: controller.getStatus().styleKey,
+    ttlMs: mobile ? 20_000 : 60_000,
+    deviceMemory: Number(navigator.deviceMemory || 8),
+    saveData: navigator.connection?.saveData === true,
+    estimatedBytes: estimate.estimatedBytes,
+    maxBytes: (mobile ? 24 : 48) * 1024 * 1024,
+    heapBytes: Number.isFinite(heapBytes) ? heapBytes : undefined,
+    maxHeapBytes: (mobile ? 105 : 160) * 1024 * 1024
+  };
+  window.__mirrorLifeInteriorCachePolicy = Object.freeze({ ...policy });
+  const result = controller.suspend(token, policy);
+  if (!result.cached) {
+    disposeInteriorWarmCache(result.reason || "cache-policy");
+    return false;
+  }
+  three?.suspend?.(snapshot.sessionId);
+  interiorPreparedPhysics = null;
+  interiorPhysicsWorld = null;
+  interiorRapierRuntime = null;
+  interiorRapierLoading = null;
+  return true;
+}
+
+function restoreInteriorWarmSession(zone, source, requestedAt, token) {
+  const cached = interiorWarmCache;
+  const controller = window.MirrorLifeInteriorSession;
+  const factory = window.MirrorLifeInteriorEntrySnapshot;
+  if (
+    !cached
+    || !token
+    || !controller?.isCurrent?.(token)
+    || cached.snapshot.zoneId !== zone.id
+    || cached.revision !== getInteriorWarmCacheRevision(zone)
+    || !factory?.create
+  ) return false;
+  const status = controller.getStatus();
+  const snapshot = factory.create({
+    ...cached.snapshot,
+    sessionId: token.sessionId,
+    generation: token.generation,
+    source: source || "manual",
+    requestedAt,
+    qualityProfile: status.qualityProfile
+  });
+  if (snapshot.fingerprint !== cached.snapshot.fingerprint) return false;
+  controller.acceptSnapshot(token, snapshot);
+  if (!window.MirrorLifeInterior3D?.resumeSession?.(snapshot)) return false;
+
+  interiorPreparedPhysics = cached.preparedPhysics;
+  interiorPhysicsWorld = cached.physicsWorld;
+  interiorRapierRuntime = cached.rapierRuntime;
+  interiorRapierLoading = null;
+  interiorOrbit = {
+    ...cached.orbit,
+    velocity: { ...(cached.orbit.velocity || { x: 0, y: 0, z: 0 }) },
+    lastMoveAt: performance.now(),
+    drag: false
+  };
+  interiorView.physicsSession = interiorPreparedPhysics;
+  interiorView.physicsSignature = interiorPhysicsWorld?.signature || "";
+  interiorView.physicsSpawnApplied = true;
+  interiorView.entrySnapshot = snapshot;
+  interiorView.firstThreeInput = cached.firstThreeInput;
+  window.__mirrorLifeInteriorPhysics = cached.physicsEvidence;
+  const owningView = interiorView;
+  window.__mirrorLifeInteriorSession = Object.freeze({
+    snapshot,
+    get firstThreeInput() {
+      return owningView.firstThreeInput || null;
+    },
+    get runtimePatch() {
+      return owningView.runtimePatch || null;
+    }
+  });
+  interiorWarmCache = null;
+  return true;
+}
+
+window.addEventListener("mirrorlife:interior-session-dispose", (event) => {
+  disposeInteriorWarmCache(event.detail?.reason || "controller-dispose");
+});
+window.addEventListener("mirrorlife:interior-webgl-context-lost", () => {
+  const controller = window.MirrorLifeInteriorSession;
+  if (controller?.getStatus?.().phase === "suspended") {
+    controller.evict("webgl-context-lost");
+  }
+});
+
+function enterInteriorView(zone, source = "manual", options = {}) {
+  if (!zone) return;
+  const requestedAt = Number.isFinite(Number(options.requestedAt))
+    ? Number(options.requestedAt)
+    : performance.now();
+  const sessionRequest = beginInteriorSession(zone, source, requestedAt);
+  if (!sessionRequest.reused) {
+    if (interiorView?.entrySnapshot?.sessionId) {
+      window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+    }
+    disposeInteriorPhysicsSession();
+  }
+  loadInteriorRuntimeForEntry(zone, source, sessionRequest.ready);
+  if (!sessionRequest.reused) window.MirrorLifeInterior3D?.hide?.();
   window.__mirrorLifeInteriorRenderPhases = [];
   delete document.body.dataset.interiorRenderPhase;
   const blueprint = getInteriorBlueprint(zone);
@@ -14152,6 +14492,9 @@ function enterInteriorView(zone, source = "manual") {
     zone,
     source,
     enteredAt,
+    requestedAt,
+    sessionRequestId: sessionRequest.requestId,
+    sessionToken: sessionRequest.token,
     nextArrivalCheckAt: 0,
     discovery: {
       title: explorationRecord.completed && !explorationRecord.scenePlayed ? `${blueprint.title} · 未完现场` : blueprint.title,
@@ -14174,15 +14517,16 @@ function enterInteriorView(zone, source = "manual") {
     }
   };
   interiorOrbit = { yaw: 0, pitch: INTERIOR_DEFAULT_PITCH, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
-  interiorPhysicsWorld = null;
-  disposeInteriorRapierRuntime();
-  const physicsWorld = ensureInteriorPhysicsWorld(blueprint);
-  if (physicsWorld?.spawn) {
+  const resumed = sessionRequest.reused
+    ? restoreInteriorWarmSession(zone, source, requestedAt, sessionRequest.token)
+    : false;
+  const physicsWorld = resumed ? interiorPhysicsWorld : ensureInteriorPhysicsWorld(blueprint);
+  if (!resumed && physicsWorld?.spawn) {
     interiorOrbit.x = physicsWorld.spawn.x;
     interiorOrbit.y = physicsWorld.spawn.y || 0.86;
     interiorOrbit.z = physicsWorld.spawn.z;
   }
-  ensureInteriorRapierRuntime(blueprint);
+  if (!resumed) ensureInteriorRapierRuntime(blueprint);
   interiorMoveKeys.clear();
   interiorRunHeld = false;
   interiorJoystick = { x: 0, z: 0, pointerId: null };
@@ -14224,8 +14568,17 @@ function enterInteriorView(zone, source = "manual") {
 
 function exitInteriorView() {
   if (!interiorView) return;
+  interiorSessionRequestSequence += 1;
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
+  const cached = cacheInteriorSessionForExit();
+  if (!cached) {
+    window.MirrorLifeInteriorSession?.cancel?.("exit");
+    if (interiorView.entrySnapshot?.sessionId) {
+      window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+    }
+    disposeInteriorPhysicsSession();
+  }
   interiorView = null;
   interiorOrbit.drag = false;
   interiorMoveKeys.clear();
@@ -14233,8 +14586,6 @@ function exitInteriorView() {
   interiorFocusPropIndex = null;
   interiorExitRect = null;
   interiorHotspots = [];
-  interiorPhysicsWorld = null;
-  disposeInteriorRapierRuntime();
   interiorRunHeld = false;
   interiorJoystick = { x: 0, z: 0, pointerId: null };
   interiorCivicActing = { action: "", startedAt: 0, until: 0 };
@@ -14908,6 +15259,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     grounded: interiorOrbit.grounded !== false,
     walkPhase: Number(interiorOrbit.walkPhase || 0),
     civicRole: zone.id === "public-plaza" ? "player" : "",
+    style: `frame-${getCitizenSpriteFrame(avatarCitizen)}:player`,
     scale: (avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1) * civicActorScale
   };
   // The deterministic review cast mirrors the selected art target: a teal-cap
@@ -14916,23 +15268,48 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const qaCivicRoles = ["listener", "facilitator", "mediator"];
   const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => {
     const civicRole = zone.id === "public-plaza" ? qaCivicRoles[entryIndex % qaCivicRoles.length] : "";
+    const frame = isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
+      ? qaCivicFrames[entryIndex % qaCivicFrames.length]
+      : entry.frame;
     return {
       id: entry.id,
+      role: "citizen",
       worldX: entry.worldX,
       worldY: 0,
       worldZ: entry.worldZ,
-      frame: isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
-        ? qaCivicFrames[entryIndex % qaCivicFrames.length]
-        : entry.frame,
+      frame,
       facing: entry.facing,
       state: getInteriorCivicActingState(civicRole, entry.state, now),
       walkPhase: entry.walkPhase,
       civicRole,
+      style: `frame-${frame}:${civicRole || "citizen"}`,
       scale: entry.scale * civicActorScale
     };
   })];
   const fallbackAnchors = getInteriorPanoramaAnchors(blueprint, W, H);
-  const threeState = syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actorPayload);
+  const snapshotItems = getInteriorThreeItems(blueprint, W, H);
+  const entrySnapshot = ensureInteriorEntrySnapshot(
+    zone,
+    interiorView.source,
+    interiorView.sessionToken,
+    {
+      blueprint,
+      roomStyle,
+      isNight,
+      actors: actorPayload,
+      items: snapshotItems,
+      world: interiorPhysicsWorld
+    }
+  );
+  const threeState = syncInteriorThreeLayer(
+    W,
+    H,
+    blueprint,
+    roomStyle,
+    isNight,
+    actorPayload,
+    entrySnapshot
+  );
   const useThreeModels = !!threeState?.ready && !!interiorRapierRuntime;
   const projectedProps = new Map((threeState?.projections || [])
     .filter((item) => String(item.key || "").startsWith("prop-"))
@@ -17238,6 +17615,15 @@ function screenToWorldPoint(mx, my, W, H) {
   };
 }
 
+function worldToScreenPoint(x, y, W, H) {
+  const cx = W / 2 + camera.x;
+  const cy = H / 2 + camera.y + 40;
+  return {
+    x: (x - W / 2) * camera.zoom + cx,
+    y: (y - H / 2) * camera.zoom + cy
+  };
+}
+
 function hitTestZone(mx, my) {
   const canvas = document.getElementById("gameCanvas");
   if (!canvas) return null;
@@ -17256,6 +17642,107 @@ function hitTestZone(mx, my) {
     }
   }
   return null;
+}
+
+function getMapBuildingInteractionPoint(zoneId) {
+  if (interiorView) return null;
+  const canvas = document.getElementById("gameCanvas");
+  if (!canvas) return null;
+  const canvasRect = canvas.getBoundingClientRect();
+  const W = canvasRect.width;
+  const H = canvasRect.height;
+  const groundY = getWorldGroundY(H);
+  const hasFrameCache = lastWorldFrame.zones?.length
+    && Math.abs(lastWorldFrame.W - W) < 2
+    && Math.abs(lastWorldFrame.H - H) < 2;
+  const zones = hasFrameCache
+    ? lastWorldFrame.zones
+    : getRenderableZoneList(state.society, W, H, groundY);
+  const zone = zones.find((candidate) => candidate.id === zoneId);
+  if (!zone) return null;
+  const rects = hasFrameCache
+    ? lastWorldFrame.zoneRects
+    : getWorldGeometry(zones, W, H, groundY).zoneRects;
+  const zoneRect = rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY);
+  const candidates = [
+    [0.5, 0.22],
+    [0.32, 0.28],
+    [0.68, 0.28],
+    [0.5, 0.38]
+  ];
+  for (const [xRatio, yRatio] of candidates) {
+    const screen = worldToScreenPoint(
+      zoneRect.x + zoneRect.w * xRatio,
+      zoneRect.y + zoneRect.h * yRatio,
+      W,
+      H
+    );
+    const clientX = canvasRect.left + screen.x;
+    const clientY = canvasRect.top + screen.y;
+    if (
+      screen.x < 0
+      || screen.y < 0
+      || screen.x > W
+      || screen.y > H
+      || document.elementFromPoint(clientX, clientY) !== canvas
+      || hitTestZone(screen.x, screen.y)?.id !== zone.id
+      || hitTestCitizen(screen.x, screen.y)
+    ) continue;
+    return Object.freeze({
+      zoneId: zone.id,
+      x: screen.x,
+      y: screen.y,
+      clientX,
+      clientY
+    });
+  }
+  return null;
+}
+
+window.getMapBuildingInteractionPoint = getMapBuildingInteractionPoint;
+
+function rememberMapBuildingPointerIntent(clientX, clientY, pointerId = null) {
+  if (interiorView) {
+    mapBuildingPointerIntent = null;
+    return null;
+  }
+  const canvas = document.getElementById("gameCanvas");
+  if (!canvas) return null;
+  const rect = canvas.getBoundingClientRect();
+  const mx = clientX - rect.left;
+  const my = clientY - rect.top;
+  const zone = hitTestCitizen(mx, my) ? null : hitTestZone(mx, my);
+  mapBuildingPointerIntent = zone
+    ? {
+        zoneId: zone.id,
+        requestedAt: performance.now(),
+        clientX,
+        clientY,
+        pointerId,
+        moved: false
+      }
+    : null;
+  return mapBuildingPointerIntent;
+}
+
+function trackMapBuildingPointerIntent(clientX, clientY, pointerId = null) {
+  const intent = mapBuildingPointerIntent;
+  if (!intent || (intent.pointerId !== null && pointerId !== null && intent.pointerId !== pointerId)) return;
+  if (Math.hypot(clientX - intent.clientX, clientY - intent.clientY) > 10) {
+    intent.moved = true;
+  }
+}
+
+function consumeMapBuildingPointerIntent(zoneId) {
+  const intent = mapBuildingPointerIntent;
+  mapBuildingPointerIntent = null;
+  if (
+    !intent
+    || intent.moved
+    || intent.zoneId !== zoneId
+    || (camera.dragTravel || 0) > 10
+  ) return null;
+  return intent.requestedAt;
 }
 
 function hitTestCitizen(mx, my) {
@@ -17395,9 +17882,26 @@ function bindGameEvents() {
 
   // ── Canvas click ──
   if (canvas) {
+    canvas.addEventListener("pointerdown", (event) => {
+      if (event.isPrimary === false) {
+        mapBuildingPointerIntent = null;
+        return;
+      }
+      rememberMapBuildingPointerIntent(event.clientX, event.clientY, event.pointerId);
+    });
+    window.addEventListener("pointermove", (event) => {
+      trackMapBuildingPointerIntent(event.clientX, event.clientY, event.pointerId);
+    });
+    window.addEventListener("pointercancel", () => {
+      mapBuildingPointerIntent = null;
+    });
+
     canvas.addEventListener("click", (e) => {
       markRenderActive();
-      if ((camera.dragTravel || 0) > 10) return;
+      if ((camera.dragTravel || 0) > 10) {
+        mapBuildingPointerIntent = null;
+        return;
+      }
       const rect = canvas.getBoundingClientRect();
       const mx = e.clientX - rect.left;
       const my = e.clientY - rect.top;
@@ -17421,15 +17925,20 @@ function bindGameEvents() {
 
       const citizen = hitTestCitizen(mx, my);
       if (citizen) {
+        mapBuildingPointerIntent = null;
         showCitizenInteraction(citizen);
         return;
       }
       const zone = hitTestZone(mx, my);
       if (zone) {
+        const requestedAt = consumeMapBuildingPointerIntent(zone.id);
         if (e.shiftKey || e.altKey) showZoneDetail(zone);
-        else enterInteriorView(zone, "manual");
+        else enterInteriorView(zone, "manual", {
+          requestedAt: requestedAt ?? performance.now()
+        });
         return;
       }
+      mapBuildingPointerIntent = null;
       hideDetail();
     });
 
@@ -17473,21 +17982,9 @@ function bindGameEvents() {
       const zone = hitTestZone(mx, my);
       if (zone) {
         hoveredZone = zone.id;
-        if (interiorPrewarmZoneId !== zone.id && !interiorIntentPrewarmTimer) {
-          interiorIntentPrewarmTimer = window.setTimeout(() => {
-            interiorIntentPrewarmTimer = null;
-            if (!interiorView && hoveredZone === zone.id) {
-              requestInteriorPrewarm(zone.id, "intent");
-            }
-          }, 180);
-        }
         canvas.style.cursor = "pointer";
       } else {
         hoveredZone = null;
-        if (interiorIntentPrewarmTimer) {
-          window.clearTimeout(interiorIntentPrewarmTimer);
-          interiorIntentPrewarmTimer = null;
-        }
         canvas.style.cursor = camera.drag ? "grabbing" : "grab";
       }
     });
@@ -17554,14 +18051,6 @@ function bindGameEvents() {
     canvas.addEventListener("touchstart", (e) => {
       markRenderActive();
       if (e.touches.length === 1) {
-        if (!interiorView) {
-          const rect = canvas.getBoundingClientRect();
-          const zone = hitTestZone(
-            e.touches[0].clientX - rect.left,
-            e.touches[0].clientY - rect.top
-          );
-          if (zone) requestInteriorPrewarm(zone.id, "intent");
-        }
         touchStartX = e.touches[0].clientX;
         touchStartY = e.touches[0].clientY;
         touchStartTime = Date.now();
@@ -17570,8 +18059,16 @@ function bindGameEvents() {
         interiorOrbit.drag = !!interiorView;
         camera.lastX = e.touches[0].clientX;
         camera.lastY = e.touches[0].clientY;
+        if (!mapBuildingPointerIntent) {
+          rememberMapBuildingPointerIntent(
+            e.touches[0].clientX,
+            e.touches[0].clientY,
+            e.touches[0].identifier
+          );
+        }
       } else if (e.touches.length === 2) {
         camera.drag = false;
+        mapBuildingPointerIntent = null;
         const dx = e.touches[0].clientX - e.touches[1].clientX;
         const dy = e.touches[0].clientY - e.touches[1].clientY;
         touchStartDist = Math.sqrt(dx * dx + dy * dy);
@@ -17583,6 +18080,11 @@ function bindGameEvents() {
     canvas.addEventListener("touchmove", (e) => {
       markRenderActive();
       if (e.touches.length === 1 && camera.drag) {
+        trackMapBuildingPointerIntent(
+          e.touches[0].clientX,
+          e.touches[0].clientY,
+          e.touches[0].identifier
+        );
         const dx = e.touches[0].clientX - camera.lastX;
         const dy = e.touches[0].clientY - camera.lastY;
         if (interiorView && interiorOrbit.drag) {
@@ -17633,10 +18135,16 @@ function bindGameEvents() {
           showCitizenInteraction(citizen);
         } else {
           const zone = hitTestZone(mx, my);
-          if (zone) enterInteriorView(zone, "manual");
+          if (zone) {
+            const requestedAt = consumeMapBuildingPointerIntent(zone.id);
+            enterInteriorView(zone, "manual", {
+              requestedAt: requestedAt ?? performance.now()
+            });
+          }
           else hideDetail();
         }
       }
+      mapBuildingPointerIntent = null;
       camera.drag = false;
       interiorOrbit.drag = false;
     });
@@ -18351,7 +18859,6 @@ function gameInit() {
     renderFirstLoopPanel();
     persist();
     openLocalInteriorQa(interiorQaZoneId);
-    if (!interiorQaZoneId) requestInteriorPrewarm("public-plaza", "idle");
   } else {
     // Show splash / avatar creation
     hydrateSocietyState();
@@ -18364,7 +18871,6 @@ function gameInit() {
     updateHUD();
     renderFirstLoopPanel();
     openLocalInteriorQa(interiorQaZoneId);
-    if (!interiorQaZoneId) requestInteriorPrewarm("public-plaza", "splash");
   }
 
   ensureMirrorRelayGuests();
