@@ -21,6 +21,7 @@ let interactionVisualSeq = 0;
 let renderCache = { canvas: null, ctx: null, cssW: 0, cssH: 0, dpr: 0, lastFrameAt: 0, lastPruneAt: 0 };
 let transparentSpriteCache = new WeakMap();
 let safeSpriteFrameCache = new WeakMap();
+let roadSampleSpatialIndexCache = new WeakMap();
 let communityChunkCache = new Map();
 let renderWorldCache = {
   zoneListKey: "",
@@ -29,6 +30,7 @@ let renderWorldCache = {
   geometryKey: "",
   zoneRects: new Map(),
   roadPairs: [],
+  roadSamples: [],
   drawableZones: []
 };
 let lastWorldFrame = {
@@ -2800,7 +2802,20 @@ function interactWithCitizen(actionType, targetId) {
 
   applySocietyActionResult(result, "，由玩家直接互动触发。");
   addSpeechBubble(target.id, ACTION_LABELS[actionType] || actionType, actionType);
-  spawnParticles(target.x * 800, target.y * 600, actionType, 6);
+  const canvas = document.getElementById("gameCanvas");
+  const canvasRect = canvas?.getBoundingClientRect();
+  const targetPoint = canvasRect
+    ? getCitizenCanvasPosition(
+      target,
+      getAliveCitizens(state.society),
+      canvasRect.width,
+      canvasRect.height,
+      getWorldGroundY(canvasRect.height)
+    )
+    : null;
+  if (targetPoint) {
+    spawnParticles(targetPoint.x, targetPoint.y, actionType, 6);
+  }
   showToast(`你对 ${target.name} 执行了 ${ACTION_LABELS[actionType]}`, actionType === "conflict" ? "conflict" : "support");
 
   const actorContext = getCitizenAgentContext(state.society, actor);
@@ -4114,11 +4129,17 @@ function getWorldGeometry(zones, W, H, groundY) {
     return {
       zoneRects: renderWorldCache.zoneRects,
       roadPairs: renderWorldCache.roadPairs,
+      roadSamples: renderWorldCache.roadSamples,
       drawableZones: renderWorldCache.drawableZones
     };
   }
-  const zoneRects = new Map(zones.map(zone => [zone.id, getZoneGameRect(zone, W, H, groundY)]));
+  const zoneRects = new Map(zones.map((zone) => {
+    const rect = getZoneGameRect(zone, W, H, groundY);
+    rect.zoneId = zone.id;
+    return [zone.id, rect];
+  }));
   const roadPairs = getCityRoadPairs(zones, zoneRects);
+  const roadSamples = getRoadSamplePoints(roadPairs);
   const drawableZones = zones
     .map((zone) => ({ zone, rect: zoneRects.get(zone.id) }))
     .filter((item) => item.rect)
@@ -4126,8 +4147,9 @@ function getWorldGeometry(zones, W, H, groundY) {
   renderWorldCache.geometryKey = geometryKey;
   renderWorldCache.zoneRects = zoneRects;
   renderWorldCache.roadPairs = roadPairs;
+  renderWorldCache.roadSamples = roadSamples;
   renderWorldCache.drawableZones = drawableZones;
-  return { zoneRects, roadPairs, drawableZones };
+  return { zoneRects, roadPairs, roadSamples, drawableZones };
 }
 
 function getWorldGroundY(H) {
@@ -4228,18 +4250,184 @@ function getRoadEndpoint(rect, toward) {
   };
 }
 
+function getRoadCurvePoint(fromRect, toRect, progress, laneOffset = 0) {
+  const start = getRoadEndpoint(fromRect, toRect);
+  const end = getRoadEndpoint(toRect, fromRect);
+  const dx = end.x - start.x;
+  const dy = end.y - start.y;
+  const horizontal = Math.abs(dx) > Math.abs(dy);
+  const control1 = horizontal
+    ? { x: start.x + dx * 0.42, y: start.y }
+    : { x: start.x, y: start.y + dy * 0.42 };
+  const control2 = horizontal
+    ? { x: end.x - dx * 0.42, y: end.y }
+    : { x: end.x, y: end.y - dy * 0.42 };
+  const t = clamp(progress, 0, 1);
+  const inverse = 1 - t;
+  const point = {
+    x: inverse ** 3 * start.x
+      + 3 * inverse ** 2 * t * control1.x
+      + 3 * inverse * t ** 2 * control2.x
+      + t ** 3 * end.x,
+    y: inverse ** 3 * start.y
+      + 3 * inverse ** 2 * t * control1.y
+      + 3 * inverse * t ** 2 * control2.y
+      + t ** 3 * end.y
+  };
+  if (!laneOffset) return point;
+  const tangent = {
+    x: 3 * inverse ** 2 * (control1.x - start.x)
+      + 6 * inverse * t * (control2.x - control1.x)
+      + 3 * t ** 2 * (end.x - control2.x),
+    y: 3 * inverse ** 2 * (control1.y - start.y)
+      + 6 * inverse * t * (control2.y - control1.y)
+      + 3 * t ** 2 * (end.y - control2.y)
+  };
+  const tangentLength = Math.max(0.001, Math.hypot(tangent.x, tangent.y));
+  return {
+    x: point.x - tangent.y / tangentLength * laneOffset,
+    y: point.y + tangent.x / tangentLength * laneOffset
+  };
+}
+
+function getRoadSamplePoints(roadPairs, maxSpacing = 8) {
+  return roadPairs.flatMap(([fromRect, toRect], pairIndex) => {
+    const start = getRoadEndpoint(fromRect, toRect);
+    const end = getRoadEndpoint(toRect, fromRect);
+    const steps = Math.max(8, Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / maxSpacing));
+    const curveSamples = Array.from({ length: steps + 1 }, (_, index) => (
+      [0, -10, 10].map((laneOffset) => ({
+        ...getRoadCurvePoint(fromRect, toRect, index / steps, laneOffset),
+        pairIndex,
+        progress: index / steps,
+        laneOffset,
+        fromZoneId: fromRect.zoneId,
+        toZoneId: toRect.zoneId
+      }))
+    )).flat();
+    const connectorSamples = [
+      { zoneRect: fromRect, towardRect: toRect, progress: 0 },
+      { zoneRect: toRect, towardRect: fromRect, progress: 1 }
+    ].flatMap(({ zoneRect, towardRect, progress }) => {
+      const gate = getRoadEndpoint(zoneRect, towardRect);
+      const junction = getZoneRoadJunctionPoint(zoneRect);
+      const connectorSteps = Math.max(1, Math.ceil(Math.hypot(junction.x - gate.x, junction.y - gate.y) / maxSpacing));
+      return Array.from({ length: connectorSteps + 1 }, (_, index) => {
+        const connectorProgress = index / connectorSteps;
+        return {
+          x: gate.x + (junction.x - gate.x) * connectorProgress,
+          y: gate.y + (junction.y - gate.y) * connectorProgress,
+          pairIndex,
+          progress,
+          laneOffset: 0,
+          fromZoneId: fromRect.zoneId,
+          toZoneId: toRect.zoneId
+        };
+      });
+    });
+    return [...curveSamples, ...connectorSamples];
+  });
+}
+
+function getZoneRoadJunctionPoint(zoneRect) {
+  return { x: zoneRect.cx, y: zoneRect.cy + zoneRect.h * 0.18 };
+}
+
+function appendMapPathLine(path, start, end, maxSpacing = 7) {
+  const steps = Math.max(1, Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / maxSpacing));
+  for (let index = 1; index <= steps; index += 1) {
+    const progress = index / steps;
+    path.push({
+      x: start.x + (end.x - start.x) * progress,
+      y: start.y + (end.y - start.y) * progress
+    });
+  }
+}
+
+function appendMapPathCurve(path, fromRect, toRect, startProgress, endProgress, laneOffset = 0) {
+  const start = getRoadCurvePoint(fromRect, toRect, startProgress, laneOffset);
+  const end = getRoadCurvePoint(fromRect, toRect, endProgress, laneOffset);
+  const steps = Math.max(1, Math.ceil(Math.hypot(end.x - start.x, end.y - start.y) / 7));
+  for (let index = 1; index <= steps; index += 1) {
+    const progress = startProgress + (endProgress - startProgress) * (index / steps);
+    path.push(getRoadCurvePoint(fromRect, toRect, progress, laneOffset));
+  }
+}
+
+function buildMapZoneTransitionPath(fromZoneId, toZoneId, current, roadPairs, roadSamples, laneOffset = 0) {
+  const destinationPairIndex = roadPairs.findIndex(([fromRect, toRect]) => (
+    (fromRect.zoneId === fromZoneId && toRect.zoneId === toZoneId)
+    || (fromRect.zoneId === toZoneId && toRect.zoneId === fromZoneId)
+  ));
+  if (destinationPairIndex < 0) return [];
+  const currentSample = roadSamples
+    .filter((sample) => (
+      !sample.laneOffset
+      && (sample.fromZoneId === fromZoneId || sample.toZoneId === fromZoneId)
+    ))
+    .map((sample) => ({ ...sample, distance: Math.hypot(sample.x - current.x, sample.y - current.y) }))
+    .sort((first, second) => first.distance - second.distance)[0];
+  if (!currentSample) return [];
+
+  const path = [];
+  const currentPair = roadPairs[currentSample.pairIndex];
+  const currentZoneAtStart = currentPair[0].zoneId === fromZoneId;
+  const currentEndProgress = currentZoneAtStart ? 0 : 1;
+  appendMapPathCurve(
+    path,
+    currentPair[0],
+    currentPair[1],
+    currentSample.progress,
+    currentEndProgress,
+    laneOffset
+  );
+
+  const zoneRect = currentZoneAtStart ? currentPair[0] : currentPair[1];
+  const currentGate = getRoadCurvePoint(
+    currentPair[0],
+    currentPair[1],
+    currentEndProgress,
+    laneOffset
+  );
+  const junction = getZoneRoadJunctionPoint(zoneRect);
+  appendMapPathLine(path, currentGate, junction);
+
+  const destinationPair = roadPairs[destinationPairIndex];
+  const destinationZoneAtStart = destinationPair[0].zoneId === fromZoneId;
+  const destinationStartProgress = destinationZoneAtStart ? 0 : 1;
+  const destinationEndProgress = destinationZoneAtStart ? 1 : 0;
+  const destinationGate = getRoadCurvePoint(
+    destinationPair[0],
+    destinationPair[1],
+    destinationStartProgress,
+    laneOffset
+  );
+  appendMapPathLine(path, junction, destinationGate);
+  appendMapPathCurve(
+    path,
+    destinationPair[0],
+    destinationPair[1],
+    destinationStartProgress,
+    destinationEndProgress,
+    laneOffset
+  );
+  return path;
+}
+
 function traceRoadSegment(ctx, fromRect, toRect) {
   const start = getRoadEndpoint(fromRect, toRect);
   const end = getRoadEndpoint(toRect, fromRect);
   const dx = end.x - start.x;
   const dy = end.y - start.y;
+  const control1 = Math.abs(dx) > Math.abs(dy)
+    ? { x: start.x + dx * 0.42, y: start.y }
+    : { x: start.x, y: start.y + dy * 0.42 };
+  const control2 = Math.abs(dx) > Math.abs(dy)
+    ? { x: end.x - dx * 0.42, y: end.y }
+    : { x: end.x, y: end.y - dy * 0.42 };
   ctx.beginPath();
   ctx.moveTo(start.x, start.y);
-  if (Math.abs(dx) > Math.abs(dy)) {
-    ctx.bezierCurveTo(start.x + dx * 0.42, start.y, end.x - dx * 0.42, end.y, end.x, end.y);
-  } else {
-    ctx.bezierCurveTo(start.x, start.y + dy * 0.42, end.x, end.y - dy * 0.42, end.x, end.y);
-  }
+  ctx.bezierCurveTo(control1.x, control1.y, control2.x, control2.y, end.x, end.y);
 }
 
 function getCityRoadPairs(zones, zoneRects) {
@@ -4273,6 +4461,17 @@ function drawCityRoadNetwork(ctx, zones, zoneRects, pairs = getCityRoadPairs(zon
     pairs.forEach(([fromRect, toRect]) => {
       traceRoadSegment(ctx, fromRect, toRect);
       ctx.stroke();
+      [
+        [fromRect, toRect],
+        [toRect, fromRect]
+      ].forEach(([zoneRect, towardRect]) => {
+        const gate = getRoadEndpoint(zoneRect, towardRect);
+        const junction = getZoneRoadJunctionPoint(zoneRect);
+        ctx.beginPath();
+        ctx.moveTo(gate.x, gate.y);
+        ctx.lineTo(junction.x, junction.y);
+        ctx.stroke();
+      });
     });
   });
   ctx.setLineDash([]);
@@ -4282,8 +4481,9 @@ function drawCityRoadNetwork(ctx, zones, zoneRects, pairs = getCityRoadPairs(zon
   ctx.lineWidth = 3;
   pairs.forEach(([fromRect, toRect]) => {
     [fromRect, toRect].forEach((rect) => {
+      const junction = getZoneRoadJunctionPoint(rect);
       ctx.beginPath();
-      ctx.arc(rect.cx, rect.cy + rect.h * 0.18, 4.5, 0, Math.PI * 2);
+      ctx.arc(junction.x, junction.y, 4.5, 0, Math.PI * 2);
       ctx.fill();
       ctx.stroke();
     });
@@ -4291,8 +4491,10 @@ function drawCityRoadNetwork(ctx, zones, zoneRects, pairs = getCityRoadPairs(zon
   ctx.restore();
 }
 
-function getCitizenRoadWalkTarget(citizen, zoneRect, roadPairs, now, index) {
-  const options = roadPairs.filter(([fromRect, toRect]) => fromRect === zoneRect || toRect === zoneRect);
+function getCitizenRoadWalkTarget(citizen, zoneRect, roadPairs, now, index, laneOffset = 0, origin = null) {
+  const options = roadPairs
+    .map((pair, pairIndex) => ({ pair, pairIndex }))
+    .filter(({ pair: [fromRect, toRect] }) => fromRect === zoneRect || toRect === zoneRect);
   if (!options.length) {
     return {
       x: zoneRect.cx + Math.sin(now * 0.001 + index) * zoneRect.w * 0.22,
@@ -4300,22 +4502,68 @@ function getCitizenRoadWalkTarget(citizen, zoneRect, roadPairs, now, index) {
     };
   }
   const seed = hashCommunitySeed(citizen.id || citizen.name || "citizen", index, Math.floor(now / 6000));
-  const pair = options[seed % options.length];
+  const sampledOptions = options.map(({ pair, pairIndex }) => {
+    const [fromRect, toRect] = pair;
+    const forward = fromRect === zoneRect;
+    let nearestProgress = 0;
+    let nearestDistance = Infinity;
+    for (let sampleIndex = 0; sampleIndex <= 20; sampleIndex += 1) {
+      const progress = sampleIndex / 20;
+      const point = getRoadCurvePoint(fromRect, toRect, progress, laneOffset);
+      const distance = origin ? Math.hypot(point.x - origin.x, point.y - origin.y) : 0;
+      if (distance < nearestDistance) {
+        nearestDistance = distance;
+        nearestProgress = progress;
+      }
+    }
+    return { pair, pairIndex, forward, nearestProgress, nearestDistance };
+  });
+  // Stay on the closest authored road instead of cutting a straight chord
+  // between two unrelated roads around the same building.
+  const selected = origin
+    ? sampledOptions.sort((first, second) => first.nearestDistance - second.nearestDistance)[0]
+    : sampledOptions[seed % sampledOptions.length];
+  const pair = selected.pair;
   const nextRect = pair[0] === zoneRect ? pair[1] : pair[0];
-  const zoneGate = getRoadEndpoint(zoneRect, nextRect);
-  const nextGate = getRoadEndpoint(nextRect, zoneRect);
-  const routeBias = seededCommunityValue(seed, 5);
-  if (routeBias < 0.38) return zoneGate;
-  if (routeBias < 0.72) {
-    return {
-      x: zoneGate.x + (nextGate.x - zoneGate.x) * 0.42,
-      y: zoneGate.y + (nextGate.y - zoneGate.y) * 0.42
-    };
+  const routeBias = seededCommunityValue(seed, 5) < 0.5 ? -1 : 1;
+  const travel = 0.08 + seededCommunityValue(seed, 17) * 0.12;
+  const currentProgress = selected.forward ? selected.nearestProgress : 1 - selected.nearestProgress;
+  const targetProgress = clamp(currentProgress + routeBias * travel, 0, 0.82);
+  return getRoadCurvePoint(zoneRect, nextRect, targetProgress, laneOffset);
+}
+
+function getZoneStreetBasePoint(zoneRect, roadPairs) {
+  const pair = roadPairs.find(([fromRect, toRect]) => fromRect === zoneRect || toRect === zoneRect);
+  if (!pair) return { x: zoneRect.cx, y: zoneRect.cy + zoneRect.h * 0.18 };
+  const nextRect = pair[0] === zoneRect ? pair[1] : pair[0];
+  return getRoadCurvePoint(zoneRect, nextRect, 0);
+}
+
+function getMapZoneRoute(fromZoneId, toZoneId, roadPairs) {
+  if (!fromZoneId || !toZoneId || fromZoneId === toZoneId) return [fromZoneId].filter(Boolean);
+  const adjacency = new Map();
+  roadPairs.forEach(([fromRect, toRect]) => {
+    if (!fromRect.zoneId || !toRect.zoneId) return;
+    if (!adjacency.has(fromRect.zoneId)) adjacency.set(fromRect.zoneId, []);
+    if (!adjacency.has(toRect.zoneId)) adjacency.set(toRect.zoneId, []);
+    adjacency.get(fromRect.zoneId).push(toRect.zoneId);
+    adjacency.get(toRect.zoneId).push(fromRect.zoneId);
+  });
+  const queue = [fromZoneId];
+  const previous = new Map([[fromZoneId, null]]);
+  while (queue.length) {
+    const current = queue.shift();
+    if (current === toZoneId) break;
+    (adjacency.get(current) || []).forEach((next) => {
+      if (previous.has(next)) return;
+      previous.set(next, current);
+      queue.push(next);
+    });
   }
-  return {
-    x: zoneGate.x + (nextGate.x - zoneGate.x) * 0.72,
-    y: zoneGate.y + (nextGate.y - zoneGate.y) * 0.72
-  };
+  if (!previous.has(toZoneId)) return [fromZoneId];
+  const route = [];
+  for (let current = toZoneId; current; current = previous.get(current)) route.unshift(current);
+  return route;
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -4898,7 +5146,10 @@ function startCitizenBehavior(citizen, anim, behavior, now) {
   };
   anim.state = "doing";
   if (behavior.pose === "move") {
-    anim.nextTargetAt = 0; // jogging picks fresh road targets continuously
+    // Keep the first map staging window stable even if a run/commute behavior
+    // starts immediately after entry. The performer can animate in place,
+    // then begin following the road once every sprite/collision anchor agrees.
+    anim.nextTargetAt = Math.max(0, Number(anim.spatialHoldUntil || 0));
   } else {
     anim.nextTargetAt = now + duration + 400;
   }
@@ -16134,7 +16385,7 @@ function drawBehaviorBodyOverlay(ctx, citizen, anim, x, y, size, now) {
   ctx.restore();
 }
 
-function drawBehaviorPropOverlay(ctx, anim, x, y, size, now) {
+function drawBehaviorPropOverlay(ctx, anim, x, y, size, now, { showMotionPuffs = true } = {}) {
   const behavior = getActiveBehavior(anim, now);
   if (!behavior) return;
   const facing = anim.facing || 1;
@@ -16180,10 +16431,12 @@ function drawBehaviorPropOverlay(ctx, anim, x, y, size, now) {
     ctx.font = `${Math.round(size * 0.5)}px Arial`;
     ctx.fillText("🎣", x + facing * size * 1.02, y - size * 0.08);
   } else if (behavior.pose === "move") {
-    // Jogging: little puffs trailing behind.
-    ctx.globalAlpha = 0.45 + Math.sin(now * 0.02 + seed) * 0.25;
-    ctx.font = `${Math.round(size * 0.55)}px Arial`;
-    ctx.fillText("💨", x - facing * size * 0.95, y + size * 0.4);
+    if (showMotionPuffs) {
+      // Jogging: little puffs trailing behind.
+      ctx.globalAlpha = 0.45 + Math.sin(now * 0.02 + seed) * 0.25;
+      ctx.font = `${Math.round(size * 0.55)}px Arial`;
+      ctx.fillText("💨", x - facing * size * 0.95, y + size * 0.4);
+    }
   } else if (behavior.pose === "reach") {
     const reach = Math.sin(now * 0.012 + seed) * 0.15;
     ctx.font = `${Math.round(size * 0.64)}px Arial`;
@@ -16220,6 +16473,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   const muted = !!opts.muted && !isAvatar;
   const hideTags = !!opts.hideTags;
   const lowDetail = !!opts.lowDetail;
+  const showMotionPuffs = opts.showMotionPuffs !== false;
   if (muted) {
     ctx.save();
     ctx.globalAlpha = 0.32;
@@ -16421,7 +16675,7 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   }
 
   // Speech bubble
-  const bubble = lowDetail ? null : getActiveSpeechBubble(citizen.id);
+  const bubble = lowDetail || muted ? null : getActiveSpeechBubble(citizen.id);
   if (bubble) {
     const bubbleText = bubble.text;
     ctx.font = "bold 9px Arial";
@@ -16464,14 +16718,14 @@ function drawCitizenFigure(ctx, citizen, anim, cx, cy, size, isHover, now, t, op
   }
 
   // Gesture overlays (wave / chat dots)
-  if (!lowDetail) drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
+  if (!lowDetail && !muted) drawCitizenGestureOverlay(ctx, anim, cx, cy, size, now, !!bubble);
 
   // Vector limbs are only a fallback for non-sprite citizens. Sprite citizens
   // are animated by cutting their own image into rigged body parts above.
   if (!lowDetail && !usedCitizenSprite) drawBehaviorBodyOverlay(ctx, citizen, anim, cx, cy, size, now);
 
   // Behavior prop overlays (bowl / book / laptop / ball / zzz …)
-  if (!lowDetail) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now);
+  if (!lowDetail && !muted) drawBehaviorPropOverlay(ctx, anim, cx, cy, size, now, { showMotionPuffs });
 
   // Last action bubble (on hover only, if no speech bubble)
   if (!bubble && citizen.lastAction && isHover) {
@@ -16524,17 +16778,119 @@ function drawRoleDot(ctx, x, y, color) {
   ctx.stroke();
 }
 
+function getZoneBuildingRenderSpec(zone, requestedKind = "") {
+  const hasSemanticFrame = !!zone
+    && Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zone.id);
+  if (requestedKind !== "standard" && hasSemanticFrame) {
+    return {
+      kind: "semantic",
+      image: semanticBuildingSpriteImage,
+      columns: SEMANTIC_BUILDING_SPRITE_COLUMNS,
+      rows: SEMANTIC_BUILDING_SPRITE_ROWS,
+      frame: SEMANTIC_ZONE_BUILDING_FRAMES[zone.id],
+      widthScale: 1.12,
+      heightScale: 1.78,
+      maxWidth: 132,
+      maxHeight: 110
+    };
+  }
+  if (requestedKind === "semantic") return null;
+  return {
+    kind: "standard",
+    image: buildingSpriteImage,
+    columns: BUILDING_SPRITE_COLUMNS,
+    rows: BUILDING_SPRITE_ROWS,
+    frame: getZoneBuildingFrame(zone),
+    widthScale: 1.02,
+    heightScale: 1.7,
+    maxWidth: 126,
+    maxHeight: 104
+  };
+}
+
+function getZoneBuildingLayoutGeometry(zone, r, requestedKind = "") {
+  const spec = getZoneBuildingRenderSpec(zone, requestedKind);
+  if (!spec) return null;
+  const drawWidth = Math.min(r.w * spec.widthScale, spec.maxWidth);
+  const drawHeight = Math.min(r.h * spec.heightScale, spec.maxHeight);
+  const drawRect = {
+    x: r.cx - drawWidth / 2,
+    // The logical zone node belongs to the street network. Lift the building
+    // far enough above that node for a full-height pedestrian plus the 8px
+    // visual clearance contract; selection and attachments reuse this rect.
+    y: r.y - drawHeight * 1.08,
+    width: drawWidth,
+    height: drawHeight
+  };
+  return { spec, drawRect };
+}
+
+function getZoneBuildingCollisionBounds(zone, r) {
+  const layout = getZoneBuildingLayoutGeometry(zone, r);
+  return layout ? { ...layout.drawRect } : null;
+}
+
+function getZoneBuildingVisualGeometry(zone, r, requestedKind = "") {
+  const layout = getZoneBuildingLayoutGeometry(zone, r, requestedKind);
+  if (!layout) return null;
+  const { spec, drawRect } = layout;
+  const safeFrame = getSafeSpriteFrameSource(spec.image, spec.columns, spec.rows, spec.frame);
+  const source = safeFrame.source;
+  if (!safeFrame.sprite || !source?.width || !source?.height) return null;
+  const opaque = safeFrame.opaqueBounds || {
+    left: 0,
+    top: 0,
+    right: source.width - 1,
+    bottom: source.height - 1
+  };
+  const visibleBounds = {
+    x: drawRect.x + opaque.left / source.width * drawRect.width,
+    y: drawRect.y + opaque.top / source.height * drawRect.height,
+    width: Math.max(1, (opaque.right - opaque.left + 1) / source.width * drawRect.width),
+    height: Math.max(1, (opaque.bottom - opaque.top + 1) / source.height * drawRect.height)
+  };
+  return { spec, safeFrame, source, drawRect, visibleBounds };
+}
+
+function isPointInMapRect(point, rect, margin = 0) {
+  return !!rect
+    && point.x >= rect.x - margin
+    && point.x <= rect.x + rect.width + margin
+    && point.y >= rect.y - margin
+    && point.y <= rect.y + rect.height + margin;
+}
+
+function isPointOnZoneBuilding(zone, r, point) {
+  const geometry = getZoneBuildingVisualGeometry(zone, r);
+  if (!geometry || !isPointInMapRect(point, geometry.visibleBounds, 3)) return false;
+  const { drawRect, source } = geometry;
+  if (typeof source.getContext !== "function") return true;
+  const sourceX = clamp(Math.floor((point.x - drawRect.x) / drawRect.width * source.width), 0, source.width - 1);
+  const sourceY = clamp(Math.floor((point.y - drawRect.y) / drawRect.height * source.height), 0, source.height - 1);
+  try {
+    return source.getContext("2d", { willReadFrequently: true }).getImageData(sourceX, sourceY, 1, 1).data[3] > 12;
+  } catch {
+    return true;
+  }
+}
+
 function drawZoneFootprint(ctx, zone, r, color, isHovered) {
+  const building = getZoneBuildingVisualGeometry(zone, r);
+  const visible = building?.visibleBounds || null;
+  const footprintX = visible ? visible.x + visible.width / 2 : r.cx;
+  const footprintY = visible ? visible.y + visible.height + 3 : r.cy + r.h * 0.3;
+  const footprintWidth = visible ? visible.width : r.w;
+  const footprintHeight = visible ? visible.height : r.h;
   ctx.save();
   ctx.fillStyle = "rgba(26, 26, 46, 0.13)";
   ctx.beginPath();
-  ctx.ellipse(r.cx + 5, r.cy + r.h * 0.34, r.w * 0.36, Math.max(7, r.h * 0.11), 0, 0, Math.PI * 2);
+  ctx.ellipse(footprintX + 5, footprintY, footprintWidth * 0.36, Math.max(7, footprintHeight * 0.11), 0, 0, Math.PI * 2);
   ctx.fill();
 
   ctx.globalAlpha = isHovered ? 0.22 : 0.12;
   ctx.fillStyle = color;
   ctx.beginPath();
-  ctx.ellipse(r.cx, r.cy + r.h * 0.3, r.w * 0.42, Math.max(10, r.h * 0.15), 0, 0, Math.PI * 2);
+  ctx.ellipse(footprintX, footprintY - 2, footprintWidth * 0.42, Math.max(10, footprintHeight * 0.15), 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.globalAlpha = 1;
 
@@ -16542,8 +16898,21 @@ function drawZoneFootprint(ctx, zone, r, color, isHovered) {
     ctx.strokeStyle = "#e63946";
     ctx.lineWidth = 3;
     ctx.setLineDash([8, 6]);
+    ctx.lineDashOffset = -performance.now() * 0.012;
     ctx.beginPath();
-    ctx.ellipse(r.cx, r.cy + r.h * 0.02, r.w * 0.52, r.h * 0.58, 0, 0, Math.PI * 2);
+    if (visible) {
+      const margin = 6;
+      roundRect(
+        ctx,
+        visible.x - margin,
+        visible.y - margin,
+        visible.width + margin * 2,
+        visible.height + margin * 2,
+        14
+      );
+    } else {
+      ctx.ellipse(r.cx, r.cy + r.h * 0.02, r.w * 0.52, r.h * 0.58, 0, 0, Math.PI * 2);
+    }
     ctx.stroke();
     ctx.setLineDash([]);
   }
@@ -16554,8 +16923,6 @@ function drawZoneNameTag(ctx, zone, r, color, isHovered) {
   const labelW = Math.min(112, Math.max(48, zone.name.length * 11 + 24));
   const labelH = isHovered ? 20 : 18;
   const labelX = r.cx - labelW / 2;
-  // Keep labels below the street performer band. The previous 0.42 offset
-  // put every walking body directly through the title pill.
   const labelY = r.cy + r.h * 0.78;
   ctx.save();
   ctx.fillStyle = RUNTIME_ART_BIBLE.paper;
@@ -16844,19 +17211,13 @@ function drawSemanticAnimalCare(ctx, r, isHovered) {
 }
 
 function drawSemanticZoneBuilding(ctx, zone, r, isHovered) {
-  if (!zone || !Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zone.id)) return false;
-  const frame = SEMANTIC_ZONE_BUILDING_FRAMES[zone.id];
-  const safeFrame = getSafeSpriteFrameSource(semanticBuildingSpriteImage, SEMANTIC_BUILDING_SPRITE_COLUMNS, SEMANTIC_BUILDING_SPRITE_ROWS, frame);
-  if (!safeFrame.sprite) return false;
-  const spriteSource = safeFrame.source;
-  const drawW = Math.min(r.w * 1.12, 132);
-  const drawH = Math.min(r.h * 1.78, 110);
-  const dx = r.cx - drawW / 2;
-  const dy = r.y - drawH * 0.82;
+  const geometry = getZoneBuildingVisualGeometry(zone, r, "semantic");
+  if (!geometry) return false;
+  const { source, drawRect } = geometry;
 
   ctx.save();
   ctx.globalAlpha = isHovered ? 1 : 0.97;
-  ctx.drawImage(spriteSource, 0, 0, spriteSource.width, spriteSource.height, dx, dy, drawW, drawH);
+  ctx.drawImage(source, 0, 0, source.width, source.height, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
   ctx.restore();
   return true;
 }
@@ -16966,21 +17327,81 @@ function mapRectsWithinGap(first, second, gap = 0) {
     && first.y + first.height + gap > second.y;
 }
 
-function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportHeight) {
+function getRoadSampleSpatialIndex(roadSamples) {
+  if (roadSampleSpatialIndexCache.has(roadSamples)) {
+    return roadSampleSpatialIndexCache.get(roadSamples);
+  }
+  const cellSize = 32;
+  const buckets = new Map();
+  roadSamples.forEach((sample) => {
+    if (sample.laneOffset) return;
+    const key = `${Math.floor(sample.x / cellSize)}:${Math.floor(sample.y / cellSize)}`;
+    if (!buckets.has(key)) buckets.set(key, []);
+    buckets.get(key).push(sample);
+  });
+  const index = {
+    hasPointWithin(point, radius) {
+      const cellX = Math.floor(point.x / cellSize);
+      const cellY = Math.floor(point.y / cellSize);
+      const cellRadius = Math.max(1, Math.ceil(radius / cellSize));
+      const radiusSquared = radius * radius;
+      for (let offsetY = -cellRadius; offsetY <= cellRadius; offsetY += 1) {
+        for (let offsetX = -cellRadius; offsetX <= cellRadius; offsetX += 1) {
+          const samples = buckets.get(`${cellX + offsetX}:${cellY + offsetY}`) || [];
+          if (samples.some((sample) => (
+            (point.x - sample.x) ** 2 + (point.y - sample.y) ** 2 <= radiusSquared
+          ))) return true;
+        }
+      }
+      return false;
+    }
+  };
+  roadSampleSpatialIndexCache.set(roadSamples, index);
+  return index;
+}
+
+function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportHeight, roadSamples = []) {
+  if (camera.drag) {
+    // Camera motion does not alter world-space contracts. Keep actors on the
+    // last verified street reservation while the player pans, then resume the
+    // full resolver on release instead of rebuilding every streamed obstacle
+    // set for each pointer event.
+    entries.forEach((entry) => {
+      const reservation = entry.moveAnim?.spatialReservation;
+      if (!reservation) return;
+      entry.x = reservation.x;
+      entry.y = reservation.y;
+      entry.moveAnim.x = reservation.x;
+      entry.moveAnim.y = reservation.y;
+    });
+    return;
+  }
+  const maxCorrectionDistance = 20;
+  const roadSpatialIndex = getRoadSampleSpatialIndex(roadSamples);
   const buildingRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
-    const semantic = Object.prototype.hasOwnProperty.call(SEMANTIC_ZONE_BUILDING_FRAMES, zoneId);
-    const width = semantic ? Math.min(rect.w * 1.12, 132) : Math.min(rect.w * 1.02, 126);
-    const height = semantic ? Math.min(rect.h * 1.78, 110) : Math.min(rect.h * 1.7, 104);
-    return { zoneId, x: rect.cx - width / 2, y: rect.y - height * 0.82, width, height };
+    const zone = state.society.zones.find((candidate) => candidate.id === zoneId)
+      || renderWorldCache.zones?.find((candidate) => candidate.id === zoneId)
+      || { id: zoneId };
+    const visual = getZoneBuildingCollisionBounds(zone, rect);
+    return visual
+      ? { zoneId, ...visual }
+      : { zoneId, x: rect.x, y: rect.y, width: rect.w, height: rect.h };
   });
   const labelRects = [...zoneRects.entries()].map(([zoneId, rect]) => {
-    const zone = state.society.zones.find((candidate) => candidate.id === zoneId);
+    const zone = state.society.zones.find((candidate) => candidate.id === zoneId)
+      || renderWorldCache.zones?.find((candidate) => candidate.id === zoneId);
     const width = Math.min(112, Math.max(48, String(zone?.name || "").length * 11 + 24));
     return { zoneId, x: rect.cx - width / 2, y: rect.cy + rect.h * 0.78, width, height: 18 };
   });
   const obstacles = [...buildingRects, ...labelRects];
-  const candidateIsClear = (entry, x, y) => {
-    if (x < 24 || x > viewportWidth - 24 || y < 84 || y > viewportHeight - 24) return false;
+  const isVisiblePoint = (x, y, margin = 0) => {
+    const screen = worldToScreenPoint(x, y, viewportWidth, viewportHeight);
+    return screen.x >= -margin
+      && screen.x <= viewportWidth + margin
+      && screen.y >= 64 - margin
+      && screen.y <= viewportHeight + margin;
+  };
+  const getVisualRectAt = (entry, x, y) => {
     const previousX = entry.x;
     const previousY = entry.y;
     entry.x = x;
@@ -16988,71 +17409,136 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
     const rect = getMapCitizenVisualRect(entry);
     entry.x = previousX;
     entry.y = previousY;
-    if (obstacles.some((obstacle) => mapRectsWithinGap(rect, obstacle, 8))) return false;
-    return !entries.some((other) => (
-      other !== entry
-      && mapRectsWithinGap(rect, getMapCitizenVisualRect(other), 8)
-    ));
+    return rect;
   };
+  const settled = [];
+  const candidateAvoidsStaticObstacles = (entry, candidate) => {
+    if (!isVisiblePoint(candidate.x, candidate.y, 20)) return false;
+    if (
+      roadSamples.length
+      && !roadSpatialIndex.hasPointWithin(candidate, 15)
+    ) return false;
+    const rect = getVisualRectAt(entry, candidate.x, candidate.y);
+    if (obstacles.some((obstacle) => mapRectsWithinGap(rect, obstacle, 8))) return false;
+    return { rect };
+  };
+  const candidateIsClear = (entry, candidate) => {
+    const staticResult = candidateAvoidsStaticObstacles(entry, candidate);
+    if (!staticResult) return false;
+    const { rect } = staticResult;
+    if (!settled.every((item) => !mapRectsWithinGap(rect, item.rect, 8))) return false;
+    const now = performance.now();
+    return entries.every((other) => {
+      const reservation = other === entry ? null : other.moveAnim?.spatialReservation;
+      if (!reservation || reservation.until <= now) return true;
+      return !mapRectsWithinGap(
+        rect,
+        getVisualRectAt(other, reservation.x, reservation.y),
+        8
+      );
+    });
+  };
+  let maxCorrection = 0;
   const moveToNearestClearStreetPoint = (entry) => {
-    if (candidateIsClear(entry, entry.x, entry.y)) return;
-    let resolved = null;
-    for (let radius = 12; radius <= 300 && !resolved; radius += 12) {
+    if (candidateIsClear(entry, entry)) return;
+    const previousReservation = entry.moveAnim?.spatialReservation;
+    const previousStatic = previousReservation
+      ? candidateAvoidsStaticObstacles(entry, previousReservation)
+      : null;
+    const previousAvoidsSettled = previousStatic
+      && settled.every((item) => !mapRectsWithinGap(previousStatic.rect, item.rect, 8));
+    const correctionLimit = entry.moveAnim?.spatialStageReady
+      ? maxCorrectionDistance
+      : Number.POSITIVE_INFINITY;
+    const roadCandidates = roadSamples
+      .filter((candidate) => (
+        candidate.fromZoneId === entry.mapZoneId
+        || candidate.toZoneId === entry.mapZoneId
+      ))
+      .map((candidate) => ({
+        ...candidate,
+        distance: Math.hypot(entry.x - candidate.x, entry.y - candidate.y)
+      }))
+      .sort((first, second) => first.distance - second.distance);
+    let resolved = previousReservation
+      && Math.hypot(entry.x - previousReservation.x, entry.y - previousReservation.y) <= maxCorrectionDistance
+      && previousAvoidsSettled
+      ? previousReservation
+      : roadCandidates.find((candidate) => (
+        candidate.distance <= correctionLimit
+        && candidateIsClear(entry, candidate)
+      )) || null;
+    let usedFallbackPlacement = false;
+    if (!resolved) {
+      const nearbyNetworkCandidates = roadSamples
+        .map((candidate) => ({
+          ...candidate,
+          distance: Math.hypot(entry.x - candidate.x, entry.y - candidate.y)
+        }))
+        .sort((first, second) => first.distance - second.distance);
+      resolved = nearbyNetworkCandidates.find((candidate) => (
+        candidate.distance <= correctionLimit
+        && candidateIsClear(entry, candidate)
+      )) || null;
+      usedFallbackPlacement = !!resolved;
+    }
+    // Some dense authored nodes have no collision-free point on their
+    // connected road. Preserve the existing hard 8px clearance contract with
+    // the nearest free plaza/sidewalk point instead of letting the actor cross
+    // a building or label.
+    const radialLimit = entry.moveAnim?.spatialStageReady ? maxCorrectionDistance : 300;
+    for (let radius = 12; radius <= radialLimit && !resolved; radius += 12) {
       for (let index = 0; index < 24; index += 1) {
         const angle = index / 24 * Math.PI * 2;
         const candidate = {
           x: entry.x + Math.cos(angle) * radius,
           y: entry.y + Math.sin(angle) * radius
         };
-        if (candidateIsClear(entry, candidate.x, candidate.y)) {
+        if (candidateIsClear(entry, candidate)) {
           resolved = candidate;
+          usedFallbackPlacement = true;
           break;
         }
       }
     }
+    if (!resolved && previousAvoidsSettled) resolved = previousReservation;
     if (!resolved) return;
+    const correction = Math.hypot(entry.x - resolved.x, entry.y - resolved.y);
+    maxCorrection = Math.max(maxCorrection, correction);
     entry.x = resolved.x;
     entry.y = resolved.y;
     entry.moveAnim.x = resolved.x;
     entry.moveAnim.y = resolved.y;
     entry.moveAnim.targetX = resolved.x;
     entry.moveAnim.targetY = resolved.y;
-    entry.moveAnim.nextTargetAt = performance.now() + 900;
+    entry.moveAnim.roadLaneOffset = Number(resolved.laneOffset || 0);
+    entry.moveAnim.pendingEnterZone = null;
+    entry.moveAnim.pendingEnterZoneName = null;
+    entry.moveAnim.nextTargetAt = performance.now() + (usedFallbackPlacement ? 12000 : 1800);
   };
-  entries.forEach(moveToNearestClearStreetPoint);
 
-  for (let iteration = 0; iteration < 5; iteration += 1) {
-    for (let firstIndex = 0; firstIndex < entries.length; firstIndex += 1) {
-      for (let secondIndex = firstIndex + 1; secondIndex < entries.length; secondIndex += 1) {
-        const first = entries[firstIndex];
-        const second = entries[secondIndex];
-        if (first.citizen.zoneId !== second.citizen.zoneId) continue;
-        const firstRect = getMapCitizenVisualRect(first);
-        const secondRect = getMapCitizenVisualRect(second);
-        if (!mapRectsWithinGap(firstRect, secondRect, 8)) continue;
-        const minimumX = (firstRect.width + secondRect.width) / 2 + 8;
-        const direction = first.x === second.x
-          ? (String(first.citizen.id).localeCompare(String(second.citizen.id)) <= 0 ? -1 : 1)
-          : Math.sign(first.x - second.x);
-        const correction = Math.max(0, minimumX - Math.abs(first.x - second.x));
-        if (first.isAvatar) {
-          second.x -= direction * correction;
-          second.moveAnim.x = second.x;
-        } else if (second.isAvatar) {
-          first.x += direction * correction;
-          first.moveAnim.x = first.x;
-        } else {
-          first.x += direction * correction * 0.5;
-          second.x -= direction * correction * 0.5;
-          first.moveAnim.x = first.x;
-          second.moveAnim.x = second.x;
-        }
+  [...entries]
+    .sort((first, second) => Number(second.isAvatar) - Number(first.isAvatar))
+    .forEach((entry) => {
+      moveToNearestClearStreetPoint(entry);
+      if (!entry.moveAnim.spatialStageReady) {
+        entry.moveAnim.targetX = entry.x;
+        entry.moveAnim.targetY = entry.y;
+        entry.moveAnim.spatialHoldUntil = performance.now() + 1800;
+        entry.moveAnim.nextTargetAt = entry.moveAnim.spatialHoldUntil;
+        entry.moveAnim.spatialStageReady = true;
       }
-    }
-  }
-  entries.forEach(moveToNearestClearStreetPoint);
+      entry.moveAnim.spatialReservation = {
+        x: entry.x,
+        y: entry.y,
+        until: performance.now() + 12000
+      };
+      settled.push({ entry, rect: getMapCitizenVisualRect(entry) });
+    });
 
-  const actorRects = entries.map((entry) => ({ entry, rect: getMapCitizenVisualRect(entry) }));
+  const actorRects = entries
+    .filter((entry) => isVisiblePoint(entry.x, entry.y, 48))
+    .map((entry) => ({ entry, rect: getMapCitizenVisualRect(entry) }));
   const avatar = actorRects.find((item) => item.entry.isAvatar);
   const buildingOverlaps = [];
   const labelOverlaps = [];
@@ -17071,7 +17557,7 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
   let maxLocalCluster = 0;
   entries.forEach((entry) => {
     const cluster = entries.filter((candidate) => (
-      candidate.citizen.zoneId === entry.citizen.zoneId
+      candidate.mapZoneId === entry.mapZoneId
       && Math.hypot(candidate.x - entry.x, candidate.y - entry.y) < 40
     )).length;
     maxLocalCluster = Math.max(maxLocalCluster, cluster);
@@ -17081,7 +17567,8 @@ function resolveMapCitizenClearance(entries, zoneRects, viewportWidth, viewportH
     buildingOverlaps: [...new Set(buildingOverlaps)],
     labelOverlaps: [...new Set(labelOverlaps)],
     avatarClearanceViolations: [...new Set(avatarClearanceViolations)],
-    maxLocalCluster
+    maxLocalCluster,
+    maxCorrection
   };
 }
 
@@ -17105,7 +17592,7 @@ function drawGameWorld() {
   const isNight = ts.isNight;
   const groundY = getWorldGroundY(H);
   const zones = getRenderableZoneList(society, W, H, groundY);
-  const { zoneRects, roadPairs, drawableZones } = getWorldGeometry(zones, W, H, groundY);
+  const { zoneRects, roadPairs, roadSamples, drawableZones } = getWorldGeometry(zones, W, H, groundY);
   const aliveCitizens = getAliveCitizens(society);
   if (!renderCache.lastPruneAt || now - renderCache.lastPruneAt > 2000) {
     pruneRenderState(aliveCitizens);
@@ -17225,14 +17712,20 @@ function drawGameWorld() {
   const relevantIds = getRelevantCitizenIdsForAttention(now);
   const focusAnim = followedCitizenId ? citizenAnimations[followedCitizenId] : null;
   aliveCitizens.forEach((citizen, idx) => {
-    const zone = getCitizenZone(society, citizen);
-    if (!zone) return;
+    const assignedZone = getCitizenZone(society, citizen);
+    if (!assignedZone) return;
+    const existingAnim = citizenAnimations[citizen.id] || null;
+    const displayedZoneId = existingAnim?.mapZoneId && zoneRects.has(existingAnim.mapZoneId)
+      ? existingAnim.mapZoneId
+      : assignedZone.id;
+    const zone = zones.find((candidate) => candidate.id === displayedZoneId) || assignedZone;
     const zr = zoneRects.get(zone.id);
     if (!zr) return;
 
     // Position on the nearby street network, not inside the building footprint.
-    const baseX = zr.cx;
-    const baseY = zr.cy + zr.h * 0.36;
+    const streetBase = getZoneStreetBasePoint(zr, roadPairs);
+    const baseX = streetBase.x;
+    const baseY = streetBase.y;
     const isHover = hoveredCitizen === citizen.id;
     const isAvatar = citizen.id === "avatar";
     const shape = citizen.avatarShape || "soft";
@@ -17241,14 +17734,17 @@ function drawGameWorld() {
     const safeMood = Number.isFinite(Number(citizen.mood)) ? Number(citizen.mood) : 50;
 
     // Walking animation between zones
-    const anim = citizenAnimations[citizen.id] || {
+    const anim = existingAnim || {
       x: baseX,
       y: baseY,
       targetX: baseX,
       targetY: baseY,
-      nextTargetAt: 0
+      nextTargetAt: 0,
+      mapZoneId: zone.id
     };
+    if (!anim.mapZoneId) anim.mapZoneId = zone.id;
     citizenAnimations[citizen.id] = anim;
+    const isMapRelocating = anim.mapZoneId !== assignedZone.id;
 
     // Citizens currently inside a building are drawn by the interior scene instead.
     if (anim.indoor) {
@@ -17259,17 +17755,55 @@ function drawGameWorld() {
       }
     }
 
-    const gesture = getActiveGesture(anim, now);
+    const gesture = isMapRelocating ? null : getActiveGesture(anim, now);
     let distanceToTarget = Math.hypot((anim.targetX || baseX) - (anim.x || baseX), (anim.targetY || baseY) - (anim.y || baseY));
     if (!gesture) {
       if (anim.behavior && now >= anim.behavior.until) {
         finishCitizenBehavior(citizen, anim, now);
       }
-      const activeBehavior = getActiveBehavior(anim, now);
+      const activeBehavior = isMapRelocating ? null : getActiveBehavior(anim, now);
       if (now > (anim.nextTargetAt || 0)) {
-        if (activeBehavior?.pose === "move") {
+        if (isMapRelocating) {
+          const route = getMapZoneRoute(anim.mapZoneId, assignedZone.id, roadPairs);
+          const nextZoneId = route[1] || null;
+          if (nextZoneId) {
+            const routeChanged = anim.mapRouteNextZoneId !== nextZoneId || !Array.isArray(anim.mapRoutePath);
+            if (routeChanged) {
+              anim.mapRoutePath = buildMapZoneTransitionPath(
+                anim.mapZoneId,
+                nextZoneId,
+                { x: anim.x || baseX, y: anim.y || baseY },
+                roadPairs,
+                roadSamples,
+                anim.roadLaneOffset || 0
+              );
+            }
+            // Consume a sampled road waypoint only after reaching the current
+            // one. Advancing the route on a timer made slower actors cut a
+            // long straight chord across buildings on compact/mobile maps.
+            const target = (routeChanged || distanceToTarget <= 8)
+              ? anim.mapRoutePath?.shift() || null
+              : null;
+            if (target) {
+              anim.targetX = target.x;
+              anim.targetY = target.y;
+            }
+            anim.mapRouteNextZoneId = nextZoneId;
+            anim.pendingEnterZone = null;
+            anim.pendingEnterZoneName = null;
+            anim.nextTargetAt = now + 140;
+          }
+        } else if (activeBehavior?.pose === "move") {
           // Jogging: chain road targets at a brisk pace until the run ends.
-          const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
+          const target = getCitizenRoadWalkTarget(
+            citizen,
+            zr,
+            roadPairs,
+            now,
+            idx,
+            anim.roadLaneOffset || 0,
+            { x: anim.x || baseX, y: anim.y || baseY }
+          );
           anim.targetX = target.x;
           anim.targetY = target.y;
           anim.pendingEnterZone = null;
@@ -17286,7 +17820,15 @@ function drawGameWorld() {
             anim.pendingEnterZone = zone.id;
             anim.pendingEnterZoneName = zone.name;
           } else {
-            const target = getCitizenRoadWalkTarget(citizen, zr, roadPairs, now, idx);
+            const target = getCitizenRoadWalkTarget(
+              citizen,
+              zr,
+              roadPairs,
+              now,
+              idx,
+              anim.roadLaneOffset || 0,
+              { x: anim.x || baseX, y: anim.y || baseY }
+            );
             anim.targetX = target.x;
             anim.targetY = target.y;
             anim.pendingEnterZone = null;
@@ -17307,6 +17849,12 @@ function drawGameWorld() {
         anim.y = (anim.y || baseY) + (targetDy / targetDist) * Math.min(walkSpeed, targetDist);
         anim.facing = targetDx >= 0 ? 1 : -1;
         anim.walkPhase = (anim.walkPhase || 0) + walkSpeed * 0.16;
+        anim.state = "walking";
+      } else if (isMapRelocating && anim.mapRouteNextZoneId && !anim.mapRoutePath?.length) {
+        anim.mapZoneId = anim.mapRouteNextZoneId;
+        anim.mapRouteNextZoneId = null;
+        anim.mapRoutePath = null;
+        anim.nextTargetAt = 0;
         anim.state = "walking";
       } else if (!stationaryBehavior && anim.pendingEnterZone) {
         enterBuilding(citizen, anim, zone, now);
@@ -17353,10 +17901,20 @@ function drawGameWorld() {
       : 0;
     const cy = (anim.y || baseY) + bobY + stepBob;
 
-    streetEntries.push({ citizen, moveAnim: anim, x: cx, y: cy, size, isHover, isAvatar, idx });
+    streetEntries.push({
+      citizen,
+      moveAnim: anim,
+      mapZoneId: anim.mapZoneId || zone.id,
+      x: cx,
+      y: cy,
+      size,
+      isHover,
+      isAvatar,
+      idx
+    });
   });
 
-  resolveMapCitizenClearance(streetEntries, zoneRects, W, H);
+  resolveMapCitizenClearance(streetEntries, zoneRects, W, H, roadSamples);
   const attentionContext = { relevantIds, focusZoneId: focusZoneIdForDim, focusAnim };
   const fullBudget = getFullCitizenBudget(W);
   const fullCitizenIds = new Set(
@@ -17377,7 +17935,8 @@ function drawGameWorld() {
     drawCitizenFigure(ctx, citizen, moveAnim, x, y, size, isHover, now, t, {
       muted,
       hideTags,
-      lowDetail: dragRenderMode
+      lowDetail: dragRenderMode,
+      showMotionPuffs: false
     });
     entry.muted = muted;
     if (citizen.id === followedCitizenId) {
@@ -17446,13 +18005,15 @@ function drawGameWorld() {
 
   // ── Draw world entities (animals) ──
   const entities = firstLoopComplete && !dragRenderMode ? (society.entities || []) : [];
+  const mapMetrics = getZoneMapMetrics(W, H, groundY);
   entities.forEach((entity) => {
     const zone = zones.find(z => z.id === entity.zoneId);
     if (!zone) return;
-    const zr = zoneRects.get(zone.id);
-    if (!zr) return;
-    const ex = zr.x + entity.x * zr.w;
-    const ey = zr.y + entity.y * zr.h;
+    // Entity positions are authored in the same normalized world coordinates
+    // as zones. Applying them a second time inside a zone rect caused animals
+    // and other ambient life to drift by tens of pixels.
+    const ex = mapMetrics.margin + entity.x * mapMetrics.mapW - mapMetrics.mobileFocusOffset;
+    const ey = groundY + 10 + entity.y * mapMetrics.mapH;
     const floatY = Math.sin(entity.phase) * 2;
 
     // Shadow
@@ -17472,9 +18033,10 @@ function drawGameWorld() {
   if (factoryZone) {
     const fr = zoneRects.get(factoryZone.id);
     if (fr) {
+      const factoryBuilding = getZoneBuildingLayoutGeometry(factoryZone, fr)?.drawRect;
       for (let s = 0; s < 3; s++) {
-        const smokeX = fr.x + 15 + s * 18;
-        const smokeY = fr.y - 5 - s * 8 - Math.sin(t + s) * 3;
+        const smokeX = factoryBuilding.x + factoryBuilding.width * (0.2 + s * 0.13);
+        const smokeY = factoryBuilding.y + factoryBuilding.height * 0.1 - s * 8 - Math.sin(t + s) * 3;
         const smokeAlpha = 0.2 + Math.sin(t * 0.5 + s) * 0.1;
         ctx.fillStyle = `rgba(180,180,180,${smokeAlpha})`;
         ctx.beginPath();
@@ -17896,6 +18458,28 @@ function getTransparentSpriteSource(image) {
   }
 }
 
+// Authored alpha envelopes for the two building atlases. These remove only
+// disconnected cell bleed while avoiding a flood-fill during camera drag.
+const STANDARD_BUILDING_CLEAN_ENVELOPES = [
+  [20, 108, 323, 392], [27, 98, 316, 404], [18, 105, 312, 403], [12, 108, 312, 392],
+  [20, 23, 318, 350], [25, 57, 325, 350], [31, 70, 297, 339], [12, 61, 307, 353],
+  [27, 12, 309, 306], [16, 12, 310, 322], [12, 13, 304, 312], [12, 12, 314, 320]
+];
+const SEMANTIC_BUILDING_CLEAN_ENVELOPES = [
+  [73, 68, 532, 448], [31, 73, 532, 451], [26, 56, 492, 447],
+  [80, 12, 515, 423], [18, 12, 501, 409], [12, 39, 494, 417]
+];
+
+function clearExternalSpriteIslands(context, width, height, envelope) {
+  if (!envelope) return context.getImageData(0, 0, width, height);
+  const [left, top, right, bottom] = envelope;
+  context.clearRect(0, 0, width, top);
+  context.clearRect(0, bottom + 1, width, Math.max(0, height - bottom - 1));
+  context.clearRect(0, top, left, Math.max(0, bottom - top + 1));
+  context.clearRect(right + 1, top, Math.max(0, width - right - 1), Math.max(0, bottom - top + 1));
+  return context.getImageData(0, 0, width, height);
+}
+
 function getSafeSpriteFrameSource(image, columns, rows, frame) {
   if (!image.complete || !image.naturalWidth || !image.naturalHeight) {
     return { source: image, sprite: getSpriteFrameRect(image, columns, rows, frame), padding: 0 };
@@ -17933,10 +18517,51 @@ function getSafeSpriteFrameSource(image, columns, rows, frame) {
     sourceWidth,
     sourceHeight
   );
+  const opaqueBounds = {
+    left: canvas.width,
+    top: canvas.height,
+    right: -1,
+    bottom: -1
+  };
+  try {
+    const cleanEnvelope = image === buildingSpriteImage
+      ? STANDARD_BUILDING_CLEAN_ENVELOPES[safeFrame]
+      : image === semanticBuildingSpriteImage
+        ? SEMANTIC_BUILDING_CLEAN_ENVELOPES[safeFrame]
+        : null;
+    const pixels = (
+      cleanEnvelope
+        ? clearExternalSpriteIslands(context, canvas.width, canvas.height, cleanEnvelope)
+        : context.getImageData(0, 0, canvas.width, canvas.height)
+    ).data;
+    for (let y = 0; y < canvas.height; y += 1) {
+      for (let x = 0; x < canvas.width; x += 1) {
+        if (pixels[(y * canvas.width + x) * 4 + 3] <= 12) continue;
+        opaqueBounds.left = Math.min(opaqueBounds.left, x);
+        opaqueBounds.top = Math.min(opaqueBounds.top, y);
+        opaqueBounds.right = Math.max(opaqueBounds.right, x);
+        opaqueBounds.bottom = Math.max(opaqueBounds.bottom, y);
+      }
+    }
+  } catch {
+    opaqueBounds.left = padding;
+    opaqueBounds.top = padding;
+    opaqueBounds.right = padding + sourceWidth - 1;
+    opaqueBounds.bottom = padding + sourceHeight - 1;
+  }
+  if (opaqueBounds.right < opaqueBounds.left || opaqueBounds.bottom < opaqueBounds.top) {
+    opaqueBounds.left = padding;
+    opaqueBounds.top = padding;
+    opaqueBounds.right = padding + sourceWidth - 1;
+    opaqueBounds.bottom = padding + sourceHeight - 1;
+  }
   const result = {
     source: canvas,
     sprite: { sx: padding, sy: padding, sw: sourceWidth, sh: sourceHeight },
-    padding
+    padding,
+    // Cache the real alpha envelope once per atlas frame so selection, shadows,
+    // attachments and pedestrian clearance all share the rendered silhouette.
+    opaqueBounds: Object.freeze(opaqueBounds)
   };
   imageCache.set(cacheKey, result);
   return result;
@@ -17959,18 +18584,13 @@ function getZoneBuildingFrame(zone) {
 }
 
 function drawZoneBuildingSprite(ctx, zone, r, isHovered) {
-  const frame = getZoneBuildingFrame(zone);
-  const safeFrame = getSafeSpriteFrameSource(buildingSpriteImage, BUILDING_SPRITE_COLUMNS, BUILDING_SPRITE_ROWS, frame);
-  if (!safeFrame.sprite) return false;
-  const spriteSource = safeFrame.source;
-  const drawW = Math.min(r.w * 1.02, 126);
-  const drawH = Math.min(r.h * 1.7, 104);
-  const dx = r.cx - drawW / 2;
-  const dy = r.y - drawH * 0.82;
+  const geometry = getZoneBuildingVisualGeometry(zone, r, "standard");
+  if (!geometry) return false;
+  const { source, drawRect } = geometry;
 
   ctx.save();
   ctx.globalAlpha = isHovered ? 1 : 0.96;
-  ctx.drawImage(spriteSource, 0, 0, spriteSource.width, spriteSource.height, dx, dy, drawW, drawH);
+  ctx.drawImage(source, 0, 0, source.width, source.height, drawRect.x, drawRect.y, drawRect.width, drawRect.height);
   ctx.restore();
   return true;
 }
@@ -18251,6 +18871,13 @@ function hitTestZone(mx, my) {
   const hasFrameCache = lastWorldFrame.zones?.length && Math.abs(lastWorldFrame.W - W) < 2 && Math.abs(lastWorldFrame.H - H) < 2;
   const zones = hasFrameCache ? lastWorldFrame.zones : getRenderableZoneList(state.society, W, H, groundY);
   const rects = hasFrameCache ? lastWorldFrame.zoneRects : getWorldGeometry(zones, W, H, groundY).zoneRects;
+  const visualOrder = zones
+    .map((zone) => ({ zone, rect: rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY) }))
+    .sort((first, second) => first.rect.cy - second.rect.cy);
+  for (let index = visualOrder.length - 1; index >= 0; index -= 1) {
+    const { zone, rect: zoneRect } = visualOrder[index];
+    if (isPointOnZoneBuilding(zone, zoneRect, point)) return zone;
+  }
   for (const zone of zones) {
     const r = rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY);
     if (point.x >= r.x && point.x <= r.x + r.w && point.y >= r.y && point.y <= r.y + r.h) {
@@ -18280,16 +18907,32 @@ function getMapBuildingInteractionPoint(zoneId) {
     ? lastWorldFrame.zoneRects
     : getWorldGeometry(zones, W, H, groundY).zoneRects;
   const zoneRect = rects.get(zone.id) || getZoneGameRect(zone, W, H, groundY);
+  const visual = getZoneBuildingVisualGeometry(zone, zoneRect)?.visibleBounds;
+  if (!visual) return null;
   const candidates = [
-    [0.5, 0.22],
-    [0.32, 0.28],
-    [0.68, 0.28],
-    [0.5, 0.38]
+    [0.5, 0.55],
+    [0.5, 0.72],
+    [0.34, 0.62],
+    [0.66, 0.62],
+    [0.5, 0.38],
+    [0.25, 0.75],
+    [0.75, 0.75],
+    ...Array.from({ length: 8 }, (_, row) => (
+      Array.from({ length: 9 }, (_, column) => [
+        0.1 + column * 0.1,
+        0.18 + row * 0.1
+      ])
+    )).flat()
   ];
   for (const [xRatio, yRatio] of candidates) {
+    const worldPoint = {
+      x: visual.x + visual.width * xRatio,
+      y: visual.y + visual.height * yRatio
+    };
+    if (!isPointOnZoneBuilding(zone, zoneRect, worldPoint)) continue;
     const screen = worldToScreenPoint(
-      zoneRect.x + zoneRect.w * xRatio,
-      zoneRect.y + zoneRect.h * yRatio,
+      worldPoint.x,
+      worldPoint.y,
       W,
       H
     );
@@ -18302,7 +18945,6 @@ function getMapBuildingInteractionPoint(zoneId) {
       || screen.y > H
       || document.elementFromPoint(clientX, clientY) !== canvas
       || hitTestZone(screen.x, screen.y)?.id !== zone.id
-      || hitTestCitizen(screen.x, screen.y)
     ) continue;
     return Object.freeze({
       zoneId: zone.id,
