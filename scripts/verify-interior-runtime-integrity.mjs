@@ -110,6 +110,11 @@ function evaluateState(state) {
   ));
   const occludedActors = requiredActors.filter((actor) => Math.min(actor.bodyVisibleRatio, actor.occlusionVisibleRatio) < 0.85);
   if (occludedActors.length) failures.push(`${occludedActors.length} player/target actors <85% visible`);
+  const severelyCroppedActors = runtime.integrity.actors.filter((actor) => (
+    Math.min(actor.bodyVisibleRatio, actor.occlusionVisibleRatio) < 0.45
+    && Number(actor.screenRect?.screenCoverage || 0) >= 0.06
+  ));
+  if (severelyCroppedActors.length) failures.push(`${severelyCroppedActors.length} large foreground actors <45% visible`);
   const foregroundOccluders = runtime.integrity.items.filter((item) => Number(item.screenRect?.screenCoverage || 0) >= 0.25);
   if (foregroundOccluders.length) failures.push(`${foregroundOccluders.length} foreground items cover >=25% of screen`);
   const excessiveAnchors = runtime.interactions.filter((entry) => entry.correction > 0.25);
@@ -121,6 +126,10 @@ function evaluateState(state) {
   const severeColliderMismatches = runtime.colliderComparisons.filter((entry) => (
     entry.visualOverlap < 0.35
     || entry.centerDrift > Math.max(0.45, Math.max(entry.visualSize.x, entry.visualSize.z) * 0.45)
+    || entry.colliderSize.x / Math.max(0.001, entry.visualSize.x) > 1.4
+    || entry.colliderSize.z / Math.max(0.001, entry.visualSize.z) > 1.4
+    || entry.colliderSize.x / Math.max(0.001, entry.visualSize.x) < 0.6
+    || entry.colliderSize.z / Math.max(0.001, entry.visualSize.z) < 0.6
   ));
   if (severeColliderMismatches.length) failures.push(`${severeColliderMismatches.length} collider/GLB world-bound mismatches`);
   const hiddenCoreInteractions = runtime.coreInteractions.filter((entry) => entry.current && !entry.visible);
@@ -306,7 +315,8 @@ try {
         );
       };
       const pointClearance = (point, excludedItemKey = "") => Math.min(
-        Number(physics.walkableRadius || 0) - Math.hypot(point.x, point.z),
+        Number(physicsApi.getShellClearance?.(world, point)
+          ?? (Number(physics.walkableRadius || 0) - Math.hypot(point.x, point.z))),
         ...physics.colliders
           .filter((collider) => collider.active !== false && collider.itemKey !== excludedItemKey)
           .map((collider) => distanceToCollider(point, collider))

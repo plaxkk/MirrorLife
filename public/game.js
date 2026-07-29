@@ -6139,6 +6139,105 @@ const INTERIOR_ZONE_LAYOUT_PROFILES = Object.freeze({
     cameraSafeArea: { x: 0, z: 0.25, radius: 1.9 },
     cameraTargets: [{ id: "hearing", x: -0.18, z: 0.15 }, { id: "evidence", x: -1.25, z: -0.8 }]
   }),
+  "primary-school": Object.freeze({
+    shellId: "primary-school-learning-loop-v3",
+    shell: {
+      shape: "polygon",
+      width: 13.5,
+      depth: 10.5,
+      height: 3.9,
+      floorY: 0,
+      walkableInset: 0.18,
+      vertices: [
+        { x: -6.75, z: -5.25 },
+        { x: 6.75, z: -5.25 },
+        { x: 6.75, z: 1.25 },
+        { x: 2.2, z: 1.25 },
+        { x: 2.2, z: 5.25 },
+        { x: -6.75, z: 5.25 }
+      ],
+      door: { id: "exit", edge: 4, offset: 0.22, width: 1.35, height: 2.35, depth: 0.16 }
+    },
+    spawn: { x: -3.2, y: 0.86, z: 4.15 },
+    lightingPreset: "daylight-teal",
+    materialPreset: "linen-oak-cornflower",
+    functionalZones: [
+      { id: "threshold", label: "进门与准备", x: -3.65, z: 3.7, radius: 1.25, color: "#f1c85b" },
+      { id: "shared-study", label: "共同学习", x: 0, z: -0.4, radius: 2.15, color: "#70c7c0" },
+      { id: "reading", label: "阅读与慢答", x: -4.6, z: -2.75, radius: 1.55, color: "#6f9fd1" },
+      { id: "questions", label: "问题与发现", x: 4.55, z: -3.35, radius: 1.35, color: "#ed9164" }
+    ],
+    props: [
+      {
+        worldX: -4.75,
+        worldZ: -2.65,
+        rotationY: 0.18,
+        displayScale: 0.9,
+        interactionWorldX: -3.02,
+        interactionWorldZ: -1.45,
+        collider: { shape: "box", halfX: 1.33, halfY: 0.82, halfZ: 0.86, rotation: 0 }
+      },
+      {
+        worldX: 0.3,
+        worldZ: -4.32,
+        rotationY: 0,
+        displayScale: 0.96,
+        interactionWorldX: 0.3,
+        interactionWorldZ: -3.12,
+        collider: { shape: "box", halfX: 0.52, halfY: 0.9, halfZ: 0.45, rotation: 0 }
+      },
+      {
+        worldX: -1.72,
+        worldZ: -0.72,
+        rotationY: 0,
+        displayScale: 0.92,
+        interactionWorldX: -1.72,
+        interactionWorldZ: 0.52,
+        collider: { shape: "box", halfX: 0.82, halfY: 0.72, halfZ: 0.76, rotation: 0 }
+      },
+      {
+        worldX: 2.25,
+        worldZ: -0.72,
+        rotationY: 0,
+        displayScale: 0.92,
+        interactionWorldX: 2.25,
+        interactionWorldZ: 0.52,
+        collider: { shape: "box", halfX: 0.82, halfY: 0.72, halfZ: 0.76, rotation: 0 }
+      },
+      {
+        worldX: 4.72,
+        worldZ: -4.72,
+        rotationY: 0,
+        displayScale: 1.04,
+        interactionWorldX: 4.72,
+        interactionWorldZ: -3.42,
+        collider: { shape: "box", halfX: 0.98, halfY: 1.05, halfZ: 0.32, rotation: 0 }
+      },
+      {
+        worldX: -5.45,
+        worldZ: 1.72,
+        rotationY: 1.54,
+        displayScale: 0.78,
+        renderModel: false,
+        physicsSolid: false,
+        interactionEnabled: false,
+        focal: false,
+        interactionWorldX: -4.02,
+        interactionWorldZ: 1.72
+      }
+    ],
+    actorStagingPoints: [
+      { x: -2.2, z: 2.0, facing: 0.18 },
+      { x: -3.8, z: 1.5, facing: -0.16 },
+      { x: 3.6, z: -2.4, facing: -0.65 }
+    ],
+    cameraSafeArea: { x: 0, z: 2.25, radius: 4.15 },
+    cameraTargets: [
+      { id: "shared-study", x: 0.18, z: 1.32 },
+      { id: "reading-threshold", x: -3.2, z: 0.8 },
+      { id: "questions-threshold", x: 0.8, z: 0.6 }
+    ]
+  }),
   "empathy-lab": Object.freeze({
     shellId: "calibration-circle-v1",
     lightingPreset: "soft-cyan",
@@ -6328,8 +6427,34 @@ function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
   const authored = heroAuthored || archetypeAuthored;
   const defaultIdentity = INTERIOR_ZONE_PROFILES[zoneId] || {};
   const defaultDoorAngle = 0;
+  const authoredShell = authored.shell || {};
+  const shellShape = String(authoredShell.shape || "round-cutaway");
+  const polygonShell = shellShape === "polygon" || shellShape === "rect" || shellShape === "rectangle";
+  const shellWidth = Number(authoredShell.width || 13.5);
+  const shellDepth = Number(authoredShell.depth || 10.5);
+  const normalizedShell = polygonShell
+    ? {
+      ...authoredShell,
+      shape: shellShape === "polygon" ? "polygon" : "rect",
+      width: shellWidth,
+      depth: shellDepth,
+      height: Number(authoredShell.height || 3.72),
+      floorY: Number(authoredShell.floorY || 0),
+      walkableInset: Number(authoredShell.walkableInset || 0.18),
+      door: { id: "exit", edge: 0, offset: 0.5, width: 1.2, height: 2.2, depth: 0.16, ...(authoredShell.door || {}) },
+      levels: [{ id: "ground", y: 0, walkable: true }]
+    }
+    : {
+      ...authoredShell,
+      shape: "round-cutaway",
+      radius: Number(authoredShell.radius || 5.4),
+      height: Number(authoredShell.height || 3.72),
+      floorY: Number(authoredShell.floorY || 0),
+      door: { id: "exit", angle: defaultDoorAngle, width: 0.95, height: 2.15, depth: 0.16, ...(authoredShell.door || {}) },
+      levels: [{ id: "ground", y: 0, walkable: true }]
+    };
   return {
-    version: 2,
+    version: polygonShell ? 3 : 2,
     zoneId,
     layoutSource: heroAuthored ? "hero-authored" : "archetype-authored",
     worldScaleMeters: 1,
@@ -6339,15 +6464,7 @@ function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
       y: Number(authored.spawn?.y || 0.86),
       z: Number(authored.spawn?.z ?? 3.72)
     },
-    shell: {
-      ...(authored.shell || {}),
-      shape: "round-cutaway",
-      radius: Number(authored.shell?.radius || 5.4),
-      height: Number(authored.shell?.height || 3.72),
-      floorY: Number(authored.shell?.floorY || 0),
-      door: { id: "exit", angle: defaultDoorAngle, width: 0.95, height: 2.15, depth: 0.16, ...(authored.shell?.door || {}) },
-      levels: [{ id: "ground", y: 0, walkable: true }]
-    },
+    shell: normalizedShell,
     lightingPreset: authored.lightingPreset || `${blueprintKey}-soft-daylight`,
     materialPreset: authored.materialPreset || `${blueprintKey}-layered-dopamine`,
     functionalZones: Array.isArray(authored.functionalZones) ? authored.functionalZones.map((item) => ({ ...item })) : [],
@@ -6382,8 +6499,26 @@ function getInteriorZoneLayoutProfile(zone, blueprintKey = "home") {
       : [],
     cameraSafeArea: { x: 0, z: 0.3, radius: 2.1, ...(authored.cameraSafeArea || {}) },
     cameraTargets: Array.isArray(authored.cameraTargets) ? authored.cameraTargets.map((item) => ({ ...item })) : [{ id: "center", x: 0, z: 0.2 }],
-    cameraVolumes: [{ id: "main", center: { x: 0, y: 1.1, z: 0.3 }, radius: 4.85, minDistance: 1.35, maxDistance: 5.2 }],
-    navSurfaces: [{ id: "ground", shape: "disc", radius: 4.86, y: 0, maxSlope: 45, maxStep: 0.22 }],
+    cameraVolumes: polygonShell
+      ? [{
+        id: "main",
+        shape: "polygon",
+        vertices: normalizedShell.vertices?.map((point) => ({ ...point })) || [],
+        center: { x: Number(authored.cameraSafeArea?.x || 0), y: 1.1, z: Number(authored.cameraSafeArea?.z || 0) },
+        minDistance: 1.35,
+        maxDistance: 6.2
+      }]
+      : [{ id: "main", center: { x: 0, y: 1.1, z: 0.3 }, radius: 4.85, minDistance: 1.35, maxDistance: 5.2 }],
+    navSurfaces: polygonShell
+      ? [{
+        id: "ground",
+        shape: "polygon",
+        vertices: normalizedShell.vertices?.map((point) => ({ ...point })) || [],
+        y: 0,
+        maxSlope: 45,
+        maxStep: 0.22
+      }]
+      : [{ id: "ground", shape: "disc", radius: 4.86, y: 0, maxSlope: 45, maxStep: 0.22 }],
     interactionAnchors: [],
     standards: { mainCirculation: 1.4, interactionClearance: 0.9, spawnClearance: 1, narrativeClearRadius: 1.5 },
     identity: { title: defaultIdentity.title || zone?.name || zoneId, blueprintKey }
@@ -6625,6 +6760,7 @@ function getInteriorPhysicsItems(blueprint) {
       model,
       renderModel: prop.renderModel !== false,
       physicsSolid: prop.physicsSolid !== false,
+      interactionEnabled: prop.interactionEnabled !== false,
       collider: authoredCollider,
       rigidBody,
       material: rigidBody.material || "wood",
@@ -6634,7 +6770,14 @@ function getInteriorPhysicsItems(blueprint) {
       modelScale: clamp((prop.size || 30) / 30, 0.82, 1.25) * (prop.focal ? 1.32 : 1) * Number(prop.displayScale || 1),
       visible: true
     };
-  }).filter(Boolean);
+  }).filter((item) => (
+    item
+    && (
+      item.renderModel !== false
+      || item.physicsSolid !== false
+      || item.interactionEnabled !== false
+    )
+  ));
   const extraColliders = (blueprint?.layoutProfile?.extraColliders || []).map((entry, extraIndex) => ({
     key: `shell-${entry.id || extraIndex}`,
     index: propItems.length + extraIndex,
@@ -6774,8 +6917,10 @@ function ensureInteriorRapierRuntime(blueprint) {
   if (interiorRapierRuntime?.signature === world.signature && !interiorRapierRuntime.disposed) return interiorRapierRuntime;
   if (interiorRapierLoading?.signature === world.signature) return null;
   disposeInteriorRapierRuntime();
+  const owningView = interiorView;
+  const sessionToken = owningView.sessionToken;
   const loading = physics.createRapierRuntime({ world }).then((runtime) => {
-    if (!interiorView || interiorPhysicsWorld?.signature !== world.signature) {
+    if (interiorView !== owningView || interiorPhysicsWorld?.signature !== world.signature) {
       physics.disposeRapierRuntime?.(runtime);
       return null;
     }
@@ -6797,7 +6942,17 @@ function ensureInteriorRapierRuntime(blueprint) {
   }).catch((error) => {
     console.error("Rapier interior physics failed to initialize", error);
     interiorRapierLoading = null;
-    if (interiorView) interiorView.physicsError = String(error?.message || error);
+    if (interiorView === owningView) {
+      interiorView.physicsError = String(error?.message || error);
+      const controller = window.MirrorLifeInteriorSession;
+      if (
+        sessionToken
+        && controller?.isCurrent?.(sessionToken)
+        && controller.getStatus().phase !== "failed"
+      ) {
+        controller.fail(sessionToken, "physics", error);
+      }
+    }
     markRenderActive(1000);
     return null;
   });
@@ -6828,6 +6983,7 @@ function getInteriorDynamicBodies(excludeId = "") {
 function getInteriorPhysicsAnchors(blueprint) {
   const props = blueprint?.props || [];
   return props.map((prop, index) => {
+    if (prop.interactionEnabled === false) return null;
     const placement = getInteriorPropWorldPlacement(prop, index, props.length);
     const interaction = getInteriorInteractionPoint(index, placement);
     return {
@@ -6840,7 +6996,7 @@ function getInteriorPhysicsAnchors(blueprint) {
       prop,
       visible: true
     };
-  });
+  }).filter(Boolean);
 }
 
 function moveInteriorPlayer(forward, strafe, distance) {
@@ -7059,6 +7215,7 @@ function getInteriorDecorRadius(item) {
 function getInteriorPanoramaAnchors(blueprint, W, H) {
   const props = blueprint.props || [];
   return props.map((prop, index) => {
+    if (prop.interactionEnabled === false) return null;
     const placement = getInteriorPropWorldPlacement(prop, index, props.length);
     const interaction = getInteriorInteractionPoint(index, placement);
     const { angle, distance } = placement;
@@ -7075,7 +7232,7 @@ function getInteriorPanoramaAnchors(blueprint, W, H) {
       index,
       prop
     };
-  });
+  }).filter(Boolean);
 }
 
 function getInteriorExplorationRecord(zoneId) {
@@ -14793,9 +14950,15 @@ function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
     }
     return runtime;
   });
-  trackedRequest.catch((error) => {
+  trackedRequest.catch(async (error) => {
     console.warn("MirrorLife interior runtime failed to load", error);
+    const token = await Promise.resolve(sessionTokenReady).catch(() => null);
+    const controller = window.MirrorLifeInteriorSession;
+    if (token && controller?.isCurrent?.(token) && controller.getStatus().phase !== "failed") {
+      controller.fail(token, "runtime", error);
+    }
     showToast("室内仍在准备，可以稍后重试", "conflict");
+    markRenderActive(1200);
   });
   return trackedRequest;
 }
@@ -15016,6 +15179,7 @@ function enterInteriorView(zone, source = "manual", options = {}) {
   interiorExitRect = null;
   hideDetail();
   document.body.classList.add("interior-active");
+  document.body.classList.add("interior-loading-visible");
   document.body.dataset.interiorZone = zone.id;
   if (!questPanelCollapsed) {
     questPanelCollapsed = true;
@@ -15074,7 +15238,12 @@ function exitInteriorView() {
   window.__mirrorLifeInteriorPhysics = null;
   delete document.body.dataset.interiorRenderPhase;
   document.body.classList.remove("interior-active");
+  document.body.classList.remove("interior-loading-visible");
   delete document.body.dataset.interiorZone;
+  const loadingOverlay = document.getElementById("interiorLoadingOverlay");
+  loadingOverlay?.classList.remove("is-visible");
+  loadingOverlay?.setAttribute("aria-hidden", "true");
+  if (loadingOverlay) loadingOverlay.dataset.progress = "0";
   document.body.classList.remove("quiet-presence-active");
   document.body.classList.remove("social-parallax-active");
   document.body.classList.remove("empathy-calibration-active");
@@ -15669,37 +15838,59 @@ function prepareInteriorOccupants(society, zone, blueprint, anchors, now) {
   return entries;
 }
 
-function drawInteriorLoadingCurtain(ctx, W, H, roomStyle, blueprint, isNight, now) {
-  ctx.save();
-  const top = isNight ? darken(roomStyle.wall, 54) : roomStyle.wall;
-  const bottom = isNight ? darken(roomStyle.floor, 58) : roomStyle.floor;
-  const gradient = ctx.createLinearGradient(0, 0, 0, H);
-  gradient.addColorStop(0, top);
-  gradient.addColorStop(1, bottom);
-  ctx.fillStyle = gradient;
-  ctx.fillRect(0, 0, W, H);
+function syncInteriorLoadingOverlay(blueprint, roomStyle, now) {
+  const overlay = document.getElementById("interiorLoadingOverlay");
+  const presentationApi = window.MirrorLifeInteriorLoadingPresentation;
+  const controller = window.MirrorLifeInteriorSession;
+  if (!overlay || !presentationApi?.get || !controller?.getStatus) return null;
+  const status = controller.getStatus();
+  const previousProgress = Number(overlay.dataset.progress || 0);
+  const presentation = presentationApi.get(status, now, previousProgress);
+  const pending = ["runtime-loading", "snapshot-building", "shell-loading", "failed"]
+    .includes(String(status.phase || ""));
+  document.body.classList.toggle("interior-loading-visible", pending);
+  overlay.classList.toggle("is-visible", presentation.visible);
+  overlay.setAttribute("aria-hidden", presentation.visible ? "false" : "true");
+  overlay.style.setProperty("--interior-loading-accent", roomStyle.accent);
+  overlay.style.setProperty("--interior-loading-wall", roomStyle.wall);
+  overlay.dataset.progress = String(presentation.progress);
 
-  const pulse = 0.52 + Math.sin(now * 0.006) * 0.18;
-  const centerX = W / 2;
-  const centerY = H * 0.47;
-  ctx.globalAlpha = 0.15;
-  ctx.strokeStyle = roomStyle.accent;
-  ctx.lineWidth = 2;
-  for (let index = 0; index < 3; index += 1) {
-    ctx.beginPath();
-    ctx.arc(centerX, centerY, 52 + index * 42 + pulse * 8, Math.PI * 1.08, Math.PI * 1.92);
-    ctx.stroke();
+  const title = document.getElementById("interiorLoadingTitle");
+  const stage = document.getElementById("interiorLoadingStage");
+  const detail = document.getElementById("interiorLoadingDetail");
+  const progress = document.getElementById("interiorLoadingProgress");
+  const fill = document.getElementById("interiorLoadingProgressFill");
+  const slow = document.getElementById("interiorLoadingSlow");
+  const actions = document.getElementById("interiorLoadingActions");
+  if (title) title.textContent = blueprint.title;
+  if (stage) stage.textContent = presentation.stageLabel;
+  if (detail) detail.textContent = presentation.failed
+    ? "关键资源未能完成，可以重新尝试或返回城市。"
+    : presentation.detail;
+  progress?.classList.toggle("is-visible", presentation.showProgress);
+  progress?.setAttribute("aria-valuenow", String(Math.round(presentation.progress * 100)));
+  if (fill) fill.style.transform = `scaleX(${presentation.progress})`;
+  slow?.classList.toggle("is-visible", presentation.showSlowHint && !presentation.failed);
+  actions?.classList.toggle("is-visible", presentation.showActions);
+
+  if (overlay.dataset.actionsBound !== "true") {
+    overlay.dataset.actionsBound = "true";
+    overlay.addEventListener("click", (event) => {
+      const action = event.target.closest?.("[data-interior-loading-action]")?.dataset.interiorLoadingAction;
+      if (!action || !interiorView) return;
+      if (action === "back") {
+        exitInteriorView();
+        return;
+      }
+      if (action === "retry") {
+        const zone = interiorView.zone;
+        const source = interiorView.source;
+        exitInteriorView();
+        window.setTimeout(() => enterInteriorView(zone, source), 0);
+      }
+    });
   }
-  ctx.globalAlpha = 1;
-  ctx.fillStyle = isNight ? "rgba(250,250,245,0.94)" : "rgba(26,26,46,0.88)";
-  ctx.textAlign = "center";
-  ctx.font = `800 18px "Noto Sans SC", sans-serif`;
-  ctx.fillText(`正在打开${blueprint.title}`, centerX, centerY + 28);
-  ctx.font = `12px "Noto Sans SC", sans-serif`;
-  ctx.globalAlpha = 0.64;
-  ctx.fillText("陈设、人物与故事正在同一空间里就位", centerX, centerY + 52);
-  ctx.globalAlpha = 1;
-  ctx.restore();
+  return presentation;
 }
 
 function setInteriorRenderPhase(phase) {
@@ -15797,6 +15988,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     actorPayload,
     entrySnapshot
   );
+  const loadingPresentation = syncInteriorLoadingOverlay(blueprint, roomStyle, now);
   const useThreeModels = !!threeState?.ready && !!interiorRapierRuntime;
   const projectedProps = new Map((threeState?.projections || [])
     .filter((item) => String(item.key || "").startsWith("prop-"))
@@ -15824,7 +16016,7 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     syncInteriorSpeakerBeacon([], W, H);
     syncInteriorJourneyHud(blueprint);
     syncInteriorDiscoveryCard(now);
-    drawInteriorLoadingCurtain(ctx, W, H, roomStyle, blueprint, isNight, now);
+    if (!loadingPresentation?.visible) markRenderActive(180);
     return;
   }
 

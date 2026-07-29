@@ -1,3 +1,12 @@
+import {
+  findNearestPointInShell,
+  getPointShellClearance,
+  getShellBounds,
+  getShellEdges,
+  isPointWithinShell,
+  normalizeRoomShell
+} from "./interior-room-shell.js";
+
 const ROOM_RADIUS = 5.4;
 const WALKABLE_RADIUS = 4.86;
 const PLAYER_RADIUS = 0.32;
@@ -320,11 +329,11 @@ function getCirclePenetration(point, radius, collider) {
 }
 
 function clampToRoom(world, point, radius) {
-  const limit = Math.max(0.1, finite(world?.walkableRadius, WALKABLE_RADIUS) - radius);
-  const distance = Math.hypot(point.x, point.z);
-  if (distance <= limit) return { x: point.x, z: point.z, corrected: false };
-  const divisor = Math.max(distance, EPSILON);
-  return { x: point.x / divisor * limit, z: point.z / divisor * limit, corrected: true };
+  return findNearestPointInShell(
+    world?.shell || normalizeRoomShell({ radius: finite(world?.roomRadius, ROOM_RADIUS) }),
+    point,
+    radius
+  );
 }
 
 function collectDynamicColliders(dynamic = [], selfId = "") {
@@ -362,13 +371,23 @@ function resolvePosition(world, point, radius, dynamic = [], selfId = "") {
 }
 
 function isWalkable(world, point, radius = CITIZEN_RADIUS, dynamic = [], selfId = "") {
-  const roomLimit = finite(world?.walkableRadius, WALKABLE_RADIUS) - radius;
-  if (Math.hypot(finite(point?.x), finite(point?.z)) > roomLimit + EPSILON) return false;
+  if (!isPointWithinShell(
+    world?.shell || normalizeRoomShell({ radius: finite(world?.roomRadius, ROOM_RADIUS) }),
+    point,
+    radius
+  )) return false;
   const colliders = [
     ...(world?.colliders || []).filter((collider) => collider.active !== false),
     ...collectDynamicColliders(dynamic, selfId)
   ];
   return !colliders.some((collider) => getCirclePenetration({ x: finite(point?.x), z: finite(point?.z) }, radius, collider));
+}
+
+function getShellClearance(world, point) {
+  return getPointShellClearance(
+    world?.shell || normalizeRoomShell({ radius: finite(world?.roomRadius, ROOM_RADIUS) }),
+    point
+  );
 }
 
 function moveCircle(world, from, delta, radius = PLAYER_RADIUS, options = {}) {
@@ -492,6 +511,12 @@ function createPhysicsWorld(options = {}) {
   const ambient = useAuthoredShell ? [] : createAmbientColliders(archetype, variant);
   const itemColliders = (options.items || []).map(createItemCollider).filter(Boolean);
   const colliders = [...ambient, ...itemColliders];
+  const shell = normalizeRoomShell(layoutProfile?.shell || {
+    shape: "circle",
+    radius: ROOM_RADIUS,
+    walkableRadius: WALKABLE_RADIUS
+  });
+  const shellBounds = getShellBounds(shell);
   const world = {
     id: options.id || `${archetype}:${variant}`,
     archetype,
@@ -499,7 +524,9 @@ function createPhysicsWorld(options = {}) {
     layoutProfile,
     worldScaleMeters: finite(layoutProfile?.worldScaleMeters, INTERIOR_PHYSICS_CONFIG.worldScaleMeters),
     roomRadius: ROOM_RADIUS,
-    walkableRadius: WALKABLE_RADIUS,
+    walkableRadius: shell.shape === "circle" ? shell.walkableRadius : Math.max(shell.width, shell.depth) / 2,
+    shell,
+    shellBounds,
     colliders,
     interactions: new Map(),
     itemColliders: new Map(itemColliders.filter((item) => item.itemKey).map((item) => [item.itemKey, item])),
@@ -597,21 +624,29 @@ function buildNavGrid(world, radius = CITIZEN_RADIUS) {
   const cacheKey = radius.toFixed(3);
   if (world.navCache.has(cacheKey)) return world.navCache.get(cacheKey);
   const cellSize = NAV_CELL_SIZE;
-  const limit = world.walkableRadius - radius;
+  const inset = radius + finite(world.shell?.walkableInset);
+  const bounds = world.shellBounds || getShellBounds(world.shell);
+  const minX = bounds.minX + inset;
+  const maxX = bounds.maxX - inset;
+  const minZ = bounds.minZ + inset;
+  const maxZ = bounds.maxZ - inset;
+  const limit = Math.max(Math.abs(minX), Math.abs(maxX), Math.abs(minZ), Math.abs(maxZ));
   const cells = [];
   const lookup = new Map();
-  const dimension = Math.floor((limit * 2) / cellSize) + 1;
-  for (let row = 0; row < dimension; row += 1) {
-    for (let column = 0; column < dimension; column += 1) {
-      const x = -limit + column * cellSize;
-      const z = -limit + row * cellSize;
+  const columns = Math.floor((maxX - minX) / cellSize) + 1;
+  const rows = Math.floor((maxZ - minZ) / cellSize) + 1;
+  const dimension = Math.max(columns, rows);
+  for (let row = 0; row < rows; row += 1) {
+    for (let column = 0; column < columns; column += 1) {
+      const x = minX + column * cellSize;
+      const z = minZ + row * cellSize;
       if (!isWalkable(world, { x, z }, radius)) continue;
       const cell = { column, row, x, z, key: navKey(column, row) };
       cells.push(cell);
       lookup.set(cell.key, cell);
     }
   }
-  const grid = { cellSize, limit, dimension, cells, lookup };
+  const grid = { cellSize, limit, minX, minZ, columns, rows, dimension, cells, lookup };
   world.navCache.set(cacheKey, grid);
   return grid;
 }
@@ -619,8 +654,8 @@ function buildNavGrid(world, radius = CITIZEN_RADIUS) {
 function nearestNavCell(grid, point) {
   let best = null;
   let bestDistance = Number.POSITIVE_INFINITY;
-  const column = Math.round((finite(point?.x) + grid.limit) / grid.cellSize);
-  const row = Math.round((finite(point?.z) + grid.limit) / grid.cellSize);
+  const column = Math.round((finite(point?.x) - grid.minX) / grid.cellSize);
+  const row = Math.round((finite(point?.z) - grid.minZ) / grid.cellSize);
   for (let ring = 0; ring < grid.dimension; ring += 1) {
     for (let dz = -ring; dz <= ring; dz += 1) {
       for (let dx = -ring; dx <= ring; dx += 1) {
@@ -724,11 +759,14 @@ function findPath(world, start, goal, radius = CITIZEN_RADIUS) {
 
 function sampleWalkablePoint(world, seed = 0, radius = CITIZEN_RADIUS) {
   const numericSeed = Math.abs(Math.floor(finite(seed)));
+  const bounds = world.shellBounds || getShellBounds(world.shell);
   for (let index = 0; index < 96; index += 1) {
-    const angle = ((numericSeed * 0.6180339 + index * 2.399963) % (Math.PI * 2));
-    const unit = ((numericSeed * 37 + index * 61) % 997) / 997;
-    const distance = Math.sqrt(unit) * (world.walkableRadius - radius - 0.18);
-    const candidate = { x: Math.cos(angle) * distance, z: Math.sin(angle) * distance };
+    const unitX = ((numericSeed * 37 + index * 61) % 997) / 997;
+    const unitZ = ((numericSeed * 53 + index * 89) % 991) / 991;
+    const candidate = {
+      x: bounds.minX + (bounds.maxX - bounds.minX) * unitX,
+      z: bounds.minZ + (bounds.maxZ - bounds.minZ) * unitZ
+    };
     if (isWalkable(world, candidate, radius)) return candidate;
   }
   return findNearestWalkable(world, { x: 0, z: 0 }, radius);
@@ -850,6 +888,58 @@ function addCircularRoomShell(runtime, radius) {
   }
 }
 
+function addPolygonRoomShell(runtime, shell) {
+  const { RAPIER, world } = runtime;
+  const bounds = getShellBounds(shell);
+  const twiceSignedArea = shell.vertices.reduce((sum, point, index, vertices) => {
+    const next = vertices[(index + 1) % vertices.length];
+    return sum + point.x * next.z - next.x * point.z;
+  }, 0);
+  const interiorNormalSign = twiceSignedArea >= 0 ? 1 : -1;
+  const wallHalfDepth = 0.11;
+  const wallCenterInset = finite(shell.walkableInset) - wallHalfDepth;
+  const floorBody = world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(
+    (bounds.minX + bounds.maxX) / 2,
+    -0.1,
+    (bounds.minZ + bounds.maxZ) / 2
+  ));
+  floorBody.userData = { id: "shell:floor" };
+  world.createCollider(
+    RAPIER.ColliderDesc.cuboid(
+      (bounds.maxX - bounds.minX) / 2,
+      0.1,
+      (bounds.maxZ - bounds.minZ) / 2
+    )
+      .setFriction(MATERIAL_PHYSICS.terrazzo.friction)
+      .setRestitution(MATERIAL_PHYSICS.terrazzo.restitution),
+    floorBody
+  );
+
+  getShellEdges(shell).forEach(({ start, end }, index) => {
+    const dx = end.x - start.x;
+    const dz = end.z - start.z;
+    const length = Math.hypot(dx, dz);
+    const interiorNormalX = -dz / length * interiorNormalSign;
+    const interiorNormalZ = dx / length * interiorNormalSign;
+    const body = world.createRigidBody(
+      RAPIER.RigidBodyDesc.fixed()
+        .setTranslation(
+          (start.x + end.x) / 2 + interiorNormalX * wallCenterInset,
+          shell.height / 2,
+          (start.z + end.z) / 2 + interiorNormalZ * wallCenterInset
+        )
+        .setRotation(quaternionFromYaw(-Math.atan2(dz, dx)))
+    );
+    body.userData = { id: `shell:wall:${index}` };
+    world.createCollider(
+      RAPIER.ColliderDesc.cuboid(length / 2, shell.height / 2, wallHalfDepth)
+        .setFriction(MATERIAL_PHYSICS.terrazzo.friction)
+        .setRestitution(0.01),
+      body
+    );
+  });
+}
+
 async function createRapierRuntime(options = {}) {
   const RAPIER = await prepareRapier();
   const sourceWorld = options.world || createPhysicsWorld(options);
@@ -868,7 +958,11 @@ async function createRapierRuntime(options = {}) {
     lastContacts: [],
     disposed: false
   };
-  addCircularRoomShell(runtime, finite(sourceWorld.roomRadius, ROOM_RADIUS));
+  if (sourceWorld.shell?.shape === "polygon") {
+    addPolygonRoomShell(runtime, sourceWorld.shell);
+  } else {
+    addCircularRoomShell(runtime, finite(sourceWorld.shell?.radius, sourceWorld.roomRadius || ROOM_RADIUS));
+  }
   sourceWorld.colliders.forEach((collider) => createRapierEnvironmentBody(runtime, collider));
 
   const spawn = sourceWorld.spawn || { x: 0, y: INTERIOR_PHYSICS_CONFIG.playerHeight / 2, z: 3.72 };
@@ -1010,6 +1104,10 @@ function getDebugSnapshot(world) {
     archetype: world?.archetype || "",
     roomRadius: world?.roomRadius || ROOM_RADIUS,
     walkableRadius: world?.walkableRadius || WALKABLE_RADIUS,
+    shell: world?.shell ? {
+      ...world.shell,
+      vertices: world.shell.vertices?.map((point) => ({ ...point }))
+    } : null,
     colliderCount: world?.colliders?.length || 0,
     colliders: (world?.colliders || []).map((collider) => ({ ...collider })),
     interactions: [...(world?.interactions || new Map()).entries()].map(([key, point]) => ({ key, ...point })),
@@ -1035,6 +1133,7 @@ const InteriorPhysics = {
   setSessionColliderActive,
   disposePreparedSession,
   createWorld: createPhysicsWorld,
+  getShellClearance,
   isWalkable,
   moveCircle,
   resolvePosition,
@@ -1064,6 +1163,7 @@ export {
   setSessionColliderActive,
   disposePreparedSession,
   createPhysicsWorld,
+  getShellClearance,
   isWalkable,
   moveCircle,
   resolvePosition,

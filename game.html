@@ -14,6 +14,34 @@
       <!-- Full-screen game canvas -->
       <canvas id="gameCanvas"></canvas>
 
+      <section id="interiorLoadingOverlay" class="interior-loading-overlay" aria-live="polite" aria-hidden="true">
+        <div class="interior-loading-card">
+          <div class="interior-loading-mark" aria-hidden="true">
+            <span></span>
+            <i></i>
+          </div>
+          <div class="interior-loading-copy">
+            <p>正在进入</p>
+            <h2 id="interiorLoadingTitle">准备室内空间</h2>
+            <div class="interior-loading-stage">
+              <strong id="interiorLoadingStage">建立空间</strong>
+              <span id="interiorLoadingDetail">准备渲染与物理环境</span>
+            </div>
+          </div>
+          <div class="interior-loading-progress" id="interiorLoadingProgress" role="progressbar" aria-label="室内场景加载进度" aria-valuemin="0" aria-valuemax="100">
+            <div class="interior-loading-track"><i id="interiorLoadingProgressFill"></i></div>
+            <div class="interior-loading-milestones" aria-hidden="true">
+              <span></span><span></span><span></span><span></span>
+            </div>
+          </div>
+          <p class="interior-loading-slow" id="interiorLoadingSlow">网络有些慢，当前阶段仍在继续。</p>
+          <div class="interior-loading-actions" id="interiorLoadingActions">
+            <button type="button" data-interior-loading-action="retry">重新尝试</button>
+            <button type="button" data-interior-loading-action="back">返回城市</button>
+          </div>
+        </div>
+      </section>
+
       <!-- Top HUD bar -->
       <div class="hud-top">
         <div class="hud-brand">

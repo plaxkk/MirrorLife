@@ -1071,6 +1071,232 @@ button { cursor: pointer; border: none; background: none; color: inherit; }
   z-index: 1;
 }
 
+.interior-loading-overlay {
+  --interior-loading-accent: #e9785d;
+  --interior-loading-wall: #ead8bd;
+  position: absolute;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: clamp(20px, 4vw, 56px);
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--interior-loading-wall) 88%, white 12%), rgba(246, 237, 223, 0.94)),
+    rgba(235, 221, 199, 0.96);
+  backdrop-filter: blur(12px) saturate(0.72);
+  -webkit-backdrop-filter: blur(12px) saturate(0.72);
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transition: opacity 320ms ease, visibility 0s linear 320ms;
+}
+
+.interior-loading-overlay.is-visible {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transition: opacity 220ms ease, visibility 0s linear 0s;
+}
+
+.interior-loading-card {
+  width: min(560px, 100%);
+  padding: clamp(24px, 4vw, 38px);
+  border: 1px solid rgba(91, 67, 48, 0.13);
+  border-radius: 28px;
+  background: rgba(255, 252, 246, 0.9);
+  box-shadow: 0 26px 70px rgba(83, 59, 38, 0.16);
+  color: #372b24;
+}
+
+.interior-loading-mark {
+  position: relative;
+  width: 54px;
+  height: 54px;
+  margin-bottom: 22px;
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--interior-loading-accent) 18%, white 82%);
+  overflow: hidden;
+}
+
+.interior-loading-mark span {
+  position: absolute;
+  left: 14px;
+  bottom: 10px;
+  width: 26px;
+  height: 31px;
+  border: 3px solid var(--interior-loading-accent);
+  border-bottom: 0;
+  border-radius: 10px 10px 0 0;
+}
+
+.interior-loading-mark i {
+  position: absolute;
+  right: 18px;
+  bottom: 10px;
+  width: 3px;
+  height: 20px;
+  border-radius: 3px;
+  background: var(--interior-loading-accent);
+  transform-origin: bottom;
+  animation: interior-door-open 1.8s ease-in-out infinite alternate;
+}
+
+@keyframes interior-door-open {
+  from { transform: rotate(0); }
+  to { transform: rotate(-16deg); }
+}
+
+.interior-loading-copy > p {
+  margin-bottom: 6px;
+  color: var(--interior-loading-accent);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+}
+
+.interior-loading-copy h2 {
+  font-size: clamp(23px, 3vw, 32px);
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.interior-loading-stage {
+  display: grid;
+  gap: 4px;
+  margin-top: 18px;
+}
+
+.interior-loading-stage strong {
+  font-size: 15px;
+}
+
+.interior-loading-stage span {
+  color: rgba(55, 43, 36, 0.62);
+  font-size: 13px;
+}
+
+.interior-loading-progress {
+  display: none;
+  margin-top: 26px;
+}
+
+.interior-loading-progress.is-visible {
+  display: block;
+}
+
+.interior-loading-track {
+  height: 7px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(77, 60, 46, 0.1);
+}
+
+.interior-loading-track i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--interior-loading-accent), #f0bb62);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 360ms cubic-bezier(.22, .8, .25, 1);
+}
+
+.interior-loading-track i::after {
+  content: "";
+  display: block;
+  width: 28%;
+  height: 100%;
+  margin-left: auto;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,.72));
+  animation: interior-loading-sheen 1.4s ease-in-out infinite;
+}
+
+@keyframes interior-loading-sheen {
+  0% { transform: translateX(-240%); }
+  100% { transform: translateX(80%); }
+}
+
+.interior-loading-milestones {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 7px;
+  margin-top: 9px;
+}
+
+.interior-loading-milestones span {
+  height: 3px;
+  border-radius: 999px;
+  background: rgba(77, 60, 46, 0.12);
+}
+
+.interior-loading-slow {
+  display: none;
+  margin-top: 18px;
+  color: rgba(55, 43, 36, 0.66);
+  font-size: 12px;
+}
+
+.interior-loading-slow.is-visible {
+  display: block;
+}
+
+.interior-loading-actions {
+  display: none;
+  gap: 10px;
+  margin-top: 22px;
+}
+
+.interior-loading-actions.is-visible {
+  display: flex;
+}
+
+.interior-loading-actions button {
+  min-height: 42px;
+  padding: 0 18px;
+  border-radius: 13px;
+  background: var(--interior-loading-accent);
+  color: white;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.interior-loading-actions button:last-child {
+  background: rgba(55, 43, 36, 0.08);
+  color: #49382e;
+}
+
+body.interior-loading-visible .hud-top,
+body.interior-loading-visible #interiorChip,
+body.interior-loading-visible #interiorMovePad,
+body.interior-loading-visible #interiorCinematicActions,
+body.interior-loading-visible #interiorSpeakerBeacon,
+body.interior-loading-visible #interiorDiscoveryCard,
+body.interior-loading-visible #interiorContextAction,
+body.interior-loading-visible #interiorJourneyPanel,
+body.interior-loading-visible #interiorCompass {
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+@media (max-width: 720px) {
+  .interior-loading-overlay {
+    place-items: end center;
+    padding: 16px;
+  }
+
+  .interior-loading-card {
+    padding: 24px;
+    border-radius: 24px;
+  }
+
+  .interior-loading-mark {
+    width: 46px;
+    height: 46px;
+    margin-bottom: 16px;
+  }
+}
+
 body.interior-active #gameCanvas {
   background: transparent;
   z-index: 2;
@@ -7605,5 +7831,10 @@ body.interior-active #interiorContextAction strong { font-size: 12px; }
   body.interior-active:not([data-interior-zone="public-plaza"]):has(#interiorDiscoveryCard.has-action) .interior-action-buttons {
     opacity: 0;
     pointer-events: none;
+  }
+
+  body.interior-active:not([data-interior-zone="public-plaza"]):has(#interiorDiscoveryCard.has-action) #interiorDiscoveryCard {
+    bottom: max(12px, env(safe-area-inset-bottom));
+    max-height: 112px;
   }
 }
