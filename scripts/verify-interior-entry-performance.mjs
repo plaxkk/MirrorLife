@@ -1,20 +1,25 @@
 import assert from "node:assert/strict";
 import puppeteer from "puppeteer-core";
-import { DEFAULT_CHROME } from "./benchmark-borderless-runtime.mjs";
+import { DEFAULT_CHROME, percentile } from "./benchmark-borderless-runtime.mjs";
 
 const baseUrl = process.env.MIRRORLIFE_BASE_URL || "http://127.0.0.1:4173/game.html";
+const sampleCount = Math.max(1, Number(process.env.MIRRORLIFE_INTERIOR_ENTRY_SAMPLES || 2));
 const profiles = [
   {
     name: "desktop",
     viewport: { width: 1440, height: 900, deviceScaleFactor: 1 },
     coldBudgetMs: 2500,
-    warmBudgetMs: 800
+    warmBudgetMs: 800,
+    fullBudgetMs: 6000,
+    fullTransferBudgetBytes: 8 * 1024 * 1024
   },
   {
     name: "mobile",
     viewport: { width: 390, height: 844, deviceScaleFactor: 2, isMobile: true, hasTouch: true },
     coldBudgetMs: 4000,
-    warmBudgetMs: 1200
+    warmBudgetMs: 1200,
+    fullBudgetMs: 8000,
+    fullTransferBudgetBytes: 6 * 1024 * 1024
   }
 ];
 
@@ -127,6 +132,29 @@ async function proveRealInputMovesPhysics(page) {
   }
 }
 
+async function waitForFullReady(page, interactive) {
+  await page.waitForFunction(() => {
+    const status = window.MirrorLifeInteriorSession?.getStatus?.();
+    return status?.phase === "full-ready"
+      && Number(status.timestamps?.fullReady || 0) > 0;
+  }, { timeout: 30_000 });
+  return page.evaluate((interactiveEvidence) => {
+    const status = window.MirrorLifeInteriorSession.getStatus();
+    const resources = performance.getEntriesByType("resource")
+      .filter((entry) => Number(entry.responseEnd || 0) >= Number(interactiveEvidence.interactiveAt || 0));
+    return {
+      fullReadyAt: Number(status.timestamps.fullReady),
+      fullReadyMs: Number(status.timestamps.fullReady) - Number(status.requestedAt),
+      afterInteractiveMs: Number(status.timestamps.fullReady) - Number(interactiveEvidence.interactiveAt),
+      transferBytesAfterInteractive: resources
+        .reduce((total, entry) => total + Number(entry.transferSize || 0), 0),
+      requestsAfterInteractive: resources.length,
+      triangles: Number(window.MirrorLifeInterior3D?.getStats?.()?.triangles || 0),
+      drawCalls: Number(window.MirrorLifeInterior3D?.getStats?.()?.drawCalls || 0)
+    };
+  }, interactive);
+}
+
 function assertCameraConverged(evidence) {
   assert.ok(evidence.camera, "Three camera state must be observable at interactive");
   for (const key of ["playerX", "playerZ", "yaw", "pitch"]) {
@@ -174,6 +202,7 @@ async function measureSample(profile, sample) {
     const cold = await waitForInteractive(page);
     assertCameraConverged(cold);
     await proveRealInputMovesPhysics(page);
+    const coldFull = await waitForFullReady(page, cold);
 
     await page.evaluate(() => window.exitInteriorView());
     await page.waitForFunction(() =>
@@ -196,12 +225,19 @@ async function measureSample(profile, sample) {
     await clickPublicPlaza(page, !!profile.viewport.hasTouch);
     const warm = await waitForInteractive(page);
     await proveRealInputMovesPhysics(page);
+    const warmFull = await waitForFullReady(page, warm);
 
     assert.equal(errors.length, 0, errors.join("\n"));
     assert.ok(cold.readyMs >= 0 && cold.readyMs <= profile.coldBudgetMs,
       `${profile.name} sample ${sample} cold ${cold.readyMs.toFixed(1)}ms > ${profile.coldBudgetMs}ms`);
     assert.ok(warm.readyMs >= 0 && warm.readyMs <= profile.warmBudgetMs,
       `${profile.name} sample ${sample} warm ${warm.readyMs.toFixed(1)}ms > ${profile.warmBudgetMs}ms`);
+    assert.ok(coldFull.fullReadyMs >= 0 && coldFull.fullReadyMs <= profile.fullBudgetMs,
+      `${profile.name} sample ${sample} Full Ready ${coldFull.fullReadyMs.toFixed(1)}ms > ${profile.fullBudgetMs}ms`);
+    assert.ok(coldFull.transferBytesAfterInteractive <= profile.fullTransferBudgetBytes,
+      `${profile.name} sample ${sample} post-interactive transfer ${coldFull.transferBytesAfterInteractive} > ${profile.fullTransferBudgetBytes}`);
+    assert.ok(coldFull.requestsAfterInteractive <= 40,
+      `${profile.name} sample ${sample} post-interactive requests ${coldFull.requestsAfterInteractive} > 40`);
     assert.equal(warm.fingerprint, cold.fingerprint);
     assert.ok(warm.generation > cold.generation);
 
@@ -210,6 +246,8 @@ async function measureSample(profile, sample) {
       sample,
       coldReadyMs: Number(cold.readyMs.toFixed(1)),
       warmReadyMs: Number(warm.readyMs.toFixed(1)),
+      coldFull,
+      warmFull,
       fingerprint: cold.fingerprint,
       generations: [cold.generation, warm.generation],
       transferBytes: warm.transferBytes,
@@ -227,10 +265,25 @@ async function measureSample(profile, sample) {
 
 const results = [];
 for (const profile of profiles) {
-  for (let sample = 1; sample <= 2; sample += 1) {
-    process.stderr.write(`[interior entry] ${profile.name} fresh sample ${sample}/2\n`);
+  for (let sample = 1; sample <= sampleCount; sample += 1) {
+    process.stderr.write(`[interior entry] ${profile.name} fresh sample ${sample}/${sampleCount}\n`);
     results.push(await measureSample(profile, sample));
   }
 }
 
-process.stdout.write(`${JSON.stringify({ status: "passed", results }, null, 2)}\n`);
+const summary = Object.fromEntries(profiles.map((profile) => {
+  const samples = results.filter((result) => result.profile === profile.name);
+  const summarize = (values) => ({
+    p50: Number(percentile(values, 0.5).toFixed(1)),
+    p95: Number(percentile(values, 0.95).toFixed(1))
+  });
+  return [profile.name, {
+    coldInteractiveMs: summarize(samples.map((sample) => sample.coldReadyMs)),
+    warmInteractiveMs: summarize(samples.map((sample) => sample.warmReadyMs)),
+    fullReadyMs: summarize(samples.map((sample) => sample.coldFull.fullReadyMs)),
+    postInteractiveTransferBytes: summarize(samples.map((sample) => sample.coldFull.transferBytesAfterInteractive)),
+    postInteractiveRequests: summarize(samples.map((sample) => sample.coldFull.requestsAfterInteractive))
+  }];
+}));
+
+process.stdout.write(`${JSON.stringify({ status: "passed", sampleCount, summary, results }, null, 2)}\n`);

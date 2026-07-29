@@ -1,0 +1,33 @@
+{
+  "auditedAt": "2026-07-29T07:59:52.053Z",
+  "epsilon": 0.00001,
+  "closedMeshes": true,
+  "nonManifoldEdges": 0,
+  "openBoundaryEdges": 0,
+  "masterTriangleCount": 12056,
+  "webTriangleCount": 7460,
+  "master": {
+    "file": "assets/interior-masters/bed/bed.glb",
+    "primitiveCount": 30,
+    "trianglePrimitiveCount": 30,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 12056,
+    "vertexCount": 23056,
+    "weldedVertexCount": 6080,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  },
+  "web": {
+    "file": "public/assets/interiors/glb/bed.glb",
+    "primitiveCount": 30,
+    "trianglePrimitiveCount": 30,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 7460,
+    "vertexCount": 21951,
+    "weldedVertexCount": 3782,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  }
+}

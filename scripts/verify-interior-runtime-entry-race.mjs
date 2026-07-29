@@ -14,46 +14,6 @@ function withTimeout(promise, timeoutMs, label) {
   return Promise.race([promise, timeout]).finally(() => clearTimeout(timeoutId));
 }
 
-async function fetchWithTimeout(url, label) {
-  try {
-    return await fetch(url, { signal: AbortSignal.timeout(10_000) });
-  } catch (error) {
-    if (error?.name === "TimeoutError") {
-      throw new Error(`${label} timed out after 10000ms: ${url}`);
-    }
-    throw error;
-  }
-}
-
-async function resolveRuntimeLoaderUrl() {
-  const response = await fetchWithTimeout(baseUrl, "Game page request");
-  if (!response.ok) {
-    throw new Error(`Game page returned ${response.status}: ${baseUrl}`);
-  }
-  const html = await response.text();
-  const moduleSources = (html.match(/<script\b[^>]*>/gi) || []).flatMap((tag) => {
-    if (!/\btype=["']module["']/i.test(tag)) return [];
-    const source = tag.match(/\bsrc=["']([^"']+)["']/i)?.[1];
-    return source ? [new URL(source, baseUrl).href] : [];
-  });
-  const namedLoader = moduleSources.find((url) => new URL(url).pathname.endsWith("/src/interior-runtime-loader.js"));
-  if (namedLoader) return namedLoader;
-
-  for (const url of moduleSources) {
-    const moduleResponse = await fetchWithTimeout(url, "Module entry request");
-    if (!moduleResponse.ok) continue;
-    const source = await moduleResponse.text();
-    if (source.includes("MirrorLifeInteriorRuntime") && source.includes("mirrorlife:interior-runtime-ready")) {
-      return url;
-    }
-  }
-  throw new Error(`Unable to identify the interior runtime loader module from ${baseUrl}.`);
-}
-
-function sameRequestPath(requestUrl, targetUrl) {
-  return new URL(requestUrl).pathname === new URL(targetUrl).pathname;
-}
-
 async function readPlayerPosition(page) {
   return page.evaluate(() => {
     const camera = window.MirrorLifeInterior3D?.getStats?.()?.camera;
@@ -86,12 +46,10 @@ async function proveControllable(page) {
   };
 }
 
-const runtimeLoaderUrl = await resolveRuntimeLoaderUrl();
 let browser = null;
 let page = null;
-let heldLoaderRequest = null;
-let navigation = null;
-let navigationError = null;
+const heldRuntimeRequests = [];
+let holdRuntimeRequests = false;
 
 try {
   browser = await puppeteer.launch({
@@ -111,26 +69,25 @@ try {
   await page.setRequestInterception(true);
 
   const requestsBeforeRelease = [];
-  let resolveLoaderRequest;
-  const loaderRequestSeen = new Promise((resolve) => {
-    resolveLoaderRequest = resolve;
+  let resolveRuntimeRequests;
+  const runtimeRequestsSeen = new Promise((resolve) => {
+    resolveRuntimeRequests = resolve;
   });
   page.on("request", (request) => {
     requestsBeforeRelease.push(request.url());
-    if (!heldLoaderRequest
+    if (
+      holdRuntimeRequests
       && request.resourceType() === "script"
-      && sameRequestPath(request.url(), runtimeLoaderUrl)) {
-      heldLoaderRequest = request;
-      resolveLoaderRequest();
+      && /interior-(?:physics|three)-/.test(new URL(request.url()).pathname)
+    ) {
+      heldRuntimeRequests.push(request);
+      if (heldRuntimeRequests.length >= 2) resolveRuntimeRequests();
       return;
     }
     void request.continue().catch(() => {});
   });
 
-  navigation = page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 45_000 }).catch((error) => {
-    navigationError = error;
-  });
-  await withTimeout(loaderRequestSeen, 10_000, "Interior runtime loader request");
+  await page.goto(baseUrl, { waitUntil: "domcontentloaded", timeout: 45_000 });
   await page.waitForFunction(() => (
     typeof window.drawGameWorld === "function"
     && typeof window.enterInteriorView === "function"
@@ -139,6 +96,11 @@ try {
     && typeof window.MirrorLifeInteriorRuntimeReady?.then === "function"
     && !!window.findRenderZoneById?.("public-plaza")
   ), { timeout: 20_000 });
+  assert.equal(
+    requestsBeforeRelease.some((url) => interiorResourcePattern.test(url)),
+    false,
+    "Heavy interior resources loaded before an interior entry intent."
+  );
 
   const splashVisible = await page.$eval("#splashEnter", (button) => {
     const style = getComputedStyle(button);
@@ -150,6 +112,7 @@ try {
     await page.waitForFunction(() => !document.body.classList.contains("splash-active"), { timeout: 12_000 });
   }
 
+  holdRuntimeRequests = true;
   const beforeRelease = await page.evaluate(() => {
     window.__mirrorLifeRuntimeReadyResolved = false;
     window.MirrorLifeInteriorRuntimeReady.then(() => {
@@ -162,6 +125,7 @@ try {
     window.enterInteriorView(finalZone, "qa", { requestedAt: 222 });
     return {
       runtime: !!window.MirrorLifeInteriorRuntime,
+      loader: window.MirrorLifeInteriorRuntime?.getStatus?.() || null,
       three: !!window.MirrorLifeInterior3D,
       physics: !!window.MirrorLifeInteriorPhysics,
       interiorActive: document.body.classList.contains("interior-active"),
@@ -170,10 +134,12 @@ try {
       finalSession: window.MirrorLifeInteriorSession.getStatus()
     };
   });
+  await withTimeout(runtimeRequestsSeen, 10_000, "Interior runtime chunk requests");
   await page.waitForFunction(() => document.body.dataset.interiorRenderPhase === "loading", { timeout: 5_000 });
   await new Promise((resolve) => setTimeout(resolve, 75));
 
-  assert.equal(beforeRelease.runtime, false);
+  assert.equal(beforeRelease.runtime, true);
+  assert.equal(beforeRelease.loader?.phase, "loading");
   assert.equal(beforeRelease.three, false);
   assert.equal(beforeRelease.physics, false);
   assert.equal(beforeRelease.interiorActive, true);
@@ -186,8 +152,8 @@ try {
     "A→B entry must transfer ownership to a newer session generation."
   );
   assert.equal(beforeRelease.finalSession.phase, "runtime-loading");
-  assert.equal(await page.evaluate(() => window.__mirrorLifeRuntimeReadyResolved), false);
-  assert.equal(requestsBeforeRelease.some((url) => interiorResourcePattern.test(url)), false);
+  assert.equal(await page.evaluate(() => window.__mirrorLifeRuntimeReadyResolved), true);
+  assert.equal(heldRuntimeRequests.length, 2, "Both physics and Three runtime chunks must be held.");
 
   const loadingLeave = await page.evaluate(() => {
     const beforeExit = window.MirrorLifeInteriorSession.getStatus();
@@ -212,10 +178,9 @@ try {
   assert.equal(loadingLeave.reentry.requestedAt, 333);
   assert.ok(loadingLeave.reentry.generation > loadingLeave.beforeExit.generation);
 
-  const heldRequestUrl = heldLoaderRequest.url();
-  await heldLoaderRequest.continue();
-  await navigation;
-  if (navigationError) throw navigationError;
+  const heldRequestUrls = heldRuntimeRequests.map((request) => request.url());
+  holdRuntimeRequests = false;
+  await Promise.all(heldRuntimeRequests.map((request) => request.continue()));
   await page.waitForFunction(() => (
     window.MirrorLifeInteriorRuntime?.getStatus?.().phase === "ready"
     && !!window.MirrorLifeInterior3D
@@ -246,9 +211,10 @@ try {
   const movement = await proveControllable(page);
   process.stdout.write(`${JSON.stringify({
     status: "passed",
-    heldLoaderRequest: heldRequestUrl,
+    heldRuntimeRequests: heldRequestUrls,
     beforeRelease: {
-      readyPromisePending: true,
+      loaderInstalled: beforeRelease.runtime,
+      loaderPhase: beforeRelease.loader.phase,
       interiorActive: beforeRelease.interiorActive,
       zoneId: beforeRelease.zoneId,
       firstGeneration: beforeRelease.firstSession.generation,
@@ -269,10 +235,9 @@ try {
     movement
   }, null, 2)}\n`);
 } finally {
-  if (heldLoaderRequest && !heldLoaderRequest.isInterceptResolutionHandled()) {
-    await heldLoaderRequest.abort().catch(() => {});
-  }
+  await Promise.all(heldRuntimeRequests.map(async (request) => {
+    if (!request.isInterceptResolutionHandled()) await request.abort().catch(() => {});
+  }));
   await page?.close().catch(() => {});
-  await navigation?.catch(() => {});
   await browser?.close().catch(() => {});
 }

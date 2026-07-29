@@ -1,16 +1,17 @@
 {
   "model": "reading-corner",
+  "sourceModel": "/assets/interiors/glb/reading-corner.glb",
   "sourceSheet": "public/assets/interiors/references/multiview/reading-corner/source-sheet.png",
-  "generatedAt": "2026-07-11T04:12:06.683Z",
+  "generatedAt": "2026-07-29T09:57:07.143Z",
   "grid": {
-    "columns": 4,
-    "rows": 2
+    "mode": "deterministic-glb-orthographic"
   },
-  "chromaKey": "#f705ed",
+  "chromaKey": "#ff00ff",
   "outputSize": [
-    1024,
-    1024
+    512,
+    512
   ],
+  "uniqueRenderCount": 8,
   "views": [
     {
       "view": "front",

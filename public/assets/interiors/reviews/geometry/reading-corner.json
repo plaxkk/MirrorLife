@@ -1,0 +1,33 @@
+{
+  "auditedAt": "2026-07-29T07:59:52.535Z",
+  "epsilon": 0.00001,
+  "closedMeshes": true,
+  "nonManifoldEdges": 0,
+  "openBoundaryEdges": 0,
+  "masterTriangleCount": 40420,
+  "webTriangleCount": 27940,
+  "master": {
+    "file": "assets/interior-masters/reading-corner/reading-corner.glb",
+    "primitiveCount": 52,
+    "trianglePrimitiveCount": 52,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 40420,
+    "vertexCount": 78391,
+    "weldedVertexCount": 20304,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  },
+  "web": {
+    "file": "public/assets/interiors/glb/reading-corner.glb",
+    "primitiveCount": 52,
+    "trianglePrimitiveCount": 52,
+    "outlinePrimitiveCount": 0,
+    "problemPrimitives": [],
+    "triangleCount": 27940,
+    "vertexCount": 73735,
+    "weldedVertexCount": 14064,
+    "openBoundaryEdges": 0,
+    "nonManifoldEdges": 0
+  }
+}

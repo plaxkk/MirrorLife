@@ -238,7 +238,10 @@ function createItemCollider(item) {
   const authored = item.collider && typeof item.collider === "object" ? item.collider : null;
   const profile = authored || MODEL_FOOTPRINTS[item.model] || { shape: "circle", radius: 0.58 };
   if (profile.sensorOnly) return null;
-  const scale = clamp(finite(item.modelScale, 1), 0.68, 1.72);
+  // Explicit authored colliders are already metre-space dimensions for the
+  // placed visual. Only inferred model footprints need the display/model
+  // scale; applying it twice made valid interaction anchors silently drift.
+  const scale = authored ? 1 : clamp(finite(item.modelScale, 1), 0.68, 1.72);
   const rigidBody = item.rigidBody && typeof item.rigidBody === "object" ? item.rigidBody : {};
   const halfY = Math.max(0.06, finite(profile.halfY, MODEL_HALF_HEIGHTS[item.model] || MODEL_HALF_HEIGHTS.default) * scale);
   const options = {
@@ -505,6 +508,7 @@ function createPhysicsWorld(options = {}) {
   world.spawn = findNearestWalkable(world, options.spawn || { x: 0, z: 3.72 }, PLAYER_RADIUS);
   world.spawn.y = Math.max(INTERIOR_PHYSICS_CONFIG.playerHeight / 2, finite(options.spawn?.y, INTERIOR_PHYSICS_CONFIG.playerHeight / 2));
   (options.items || []).forEach((item) => {
+    if (item.interactionEnabled === false) return;
     const directCollider = world.itemColliders.get(item.key);
     const nearestAmbientMatch = colliders
       .filter((collider) => collider.source === "environment" && collider.active !== false)
@@ -514,8 +518,13 @@ function createPhysicsWorld(options = {}) {
     const authoredInteraction = Number.isFinite(Number(item.interactionWorldX)) && Number.isFinite(Number(item.interactionWorldZ))
       ? { x: Number(item.interactionWorldX), z: Number(item.interactionWorldZ) }
       : null;
-    const interaction = authoredInteraction && isWalkable(world, authoredInteraction, CITIZEN_RADIUS)
-      && segmentWalkable(world, world.spawn, authoredInteraction, CITIZEN_RADIUS)
+    const authoredPath = authoredInteraction && isWalkable(world, authoredInteraction, CITIZEN_RADIUS)
+      ? findPath(world, world.spawn, authoredInteraction, CITIZEN_RADIUS)
+      : [];
+    const authoredPathEnd = authoredPath.at(-1);
+    const interaction = authoredInteraction
+      && authoredPathEnd
+      && Math.hypot(authoredPathEnd.x - authoredInteraction.x, authoredPathEnd.z - authoredInteraction.z) < 0.46
       ? authoredInteraction
       : findInteractionPoint(world, item, nearestAmbient, CITIZEN_RADIUS, world.spawn);
     world.interactions.set(item.key, interaction);

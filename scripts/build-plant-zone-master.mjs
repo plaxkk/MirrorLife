@@ -43,7 +43,10 @@ function run(command, argv) {
 
 const blender = await findBlender();
 const script = path.resolve("scripts/blender-build-plant-zone.py");
-const packetRoot = path.resolve("dist/interior-3d-work/fidelity-packets/plant-zone");
+const outputRoots = {
+  master: path.resolve("assets/interior-masters/plant-zone"),
+  web: path.resolve("public/assets/interiors/glb")
+};
 
 for (const lod of ["master", "web"]) {
   await run(blender, [
@@ -57,6 +60,6 @@ for (const lod of ["master", "web"]) {
     "--lod",
     lod,
     "--output-root",
-    path.join(packetRoot, lod)
+    outputRoots[lod]
   ]);
 }
