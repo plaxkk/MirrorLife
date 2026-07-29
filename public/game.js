@@ -61,6 +61,7 @@ let interiorHotspots = [];
 let interiorNearbyAnchor = null;
 let interiorFocusPropIndex = null;
 let interiorPhysicsWorld = null;
+let interiorPreparedPhysics = null;
 let interiorRapierRuntime = null;
 let interiorRapierLoading = null;
 let interiorRunHeld = false;
@@ -6197,17 +6198,34 @@ function ensureInteriorPhysicsWorld(blueprint) {
   const signature = `${interiorView.zone.id}|${blueprint.key}|${layoutProfile.shellId}|${variant}`;
   if (interiorPhysicsWorld?.signature === signature) return interiorPhysicsWorld;
   const items = getInteriorPhysicsItems(blueprint);
-  const world = physics.createWorld({
-    id: interiorView.zone.id,
-    archetype: blueprint.key,
+  if (interiorPreparedPhysics) {
+    physics.disposePreparedSession?.(interiorPreparedPhysics);
+  }
+  const prepared = physics.prepareSession?.({
+    zoneId: interiorView.zone.id,
+    blueprintKey: blueprint.key,
     variant,
     items,
     layoutProfile,
     spawn: layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 }
-  });
+  }) || {
+    world: physics.createWorld({
+      id: interiorView.zone.id,
+      archetype: blueprint.key,
+      variant,
+      items,
+      layoutProfile,
+      spawn: layoutProfile.spawn || { x: 0, y: 0.86, z: 3.72 }
+    }),
+    rapierRuntime: null,
+    disposed: false
+  };
+  const world = prepared.world;
   world.signature = signature;
   world.layoutProfile = layoutProfile;
+  interiorPreparedPhysics = prepared;
   interiorPhysicsWorld = world;
+  interiorView.physicsSession = prepared;
   interiorView.physicsSignature = signature;
   if (!interiorView.physicsSpawnApplied && world.spawn) {
     interiorOrbit.x = world.spawn.x;
@@ -6218,6 +6236,7 @@ function ensureInteriorPhysicsWorld(blueprint) {
   window.__mirrorLifeInteriorPhysics = {
     zoneId: interiorView.zone.id,
     world,
+    preparedSession: prepared,
     get snapshot() {
       return physics.getDebugSnapshot?.(world) || null;
     },
@@ -6258,6 +6277,22 @@ function ensureInteriorPhysicsWorld(blueprint) {
 function disposeInteriorRapierRuntime() {
   const physics = getInteriorPhysicsApi();
   if (interiorRapierRuntime) physics?.disposeRapierRuntime?.(interiorRapierRuntime);
+  if (interiorPreparedPhysics?.rapierRuntime === interiorRapierRuntime) {
+    interiorPreparedPhysics.rapierRuntime = null;
+  }
+  interiorRapierRuntime = null;
+  interiorRapierLoading = null;
+}
+
+function disposeInteriorPhysicsSession() {
+  const physics = getInteriorPhysicsApi();
+  if (interiorPreparedPhysics) {
+    physics?.disposePreparedSession?.(interiorPreparedPhysics);
+  } else {
+    disposeInteriorRapierRuntime();
+  }
+  interiorPreparedPhysics = null;
+  interiorPhysicsWorld = null;
   interiorRapierRuntime = null;
   interiorRapierLoading = null;
 }
@@ -6276,6 +6311,9 @@ function ensureInteriorRapierRuntime(blueprint) {
     }
     runtime.signature = world.signature;
     interiorRapierRuntime = runtime;
+    if (interiorPreparedPhysics?.world === world) {
+      interiorPreparedPhysics.rapierRuntime = runtime;
+    }
     interiorRapierLoading = null;
     const position = runtime.playerBody.translation();
     interiorOrbit.x = position.x;
@@ -14197,6 +14235,7 @@ function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
 
 function enterInteriorView(zone, source = "manual", options = {}) {
   if (!zone) return;
+  disposeInteriorPhysicsSession();
   const requestedAt = Number.isFinite(Number(options.requestedAt))
     ? Number(options.requestedAt)
     : performance.now();
@@ -14247,8 +14286,6 @@ function enterInteriorView(zone, source = "manual", options = {}) {
     }
   };
   interiorOrbit = { yaw: 0, pitch: INTERIOR_DEFAULT_PITCH, x: 0, y: 0.86, z: 0, grounded: true, velocity: { x: 0, y: 0, z: 0 }, motionState: "idle", lastMoveAt: enteredAt, drag: false, lastX: 0, lastY: 0 };
-  interiorPhysicsWorld = null;
-  disposeInteriorRapierRuntime();
   const physicsWorld = ensureInteriorPhysicsWorld(blueprint);
   if (physicsWorld?.spawn) {
     interiorOrbit.x = physicsWorld.spawn.x;
@@ -14301,6 +14338,7 @@ function exitInteriorView() {
   window.MirrorLifeInteriorSession?.cancel?.("exit");
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
+  disposeInteriorPhysicsSession();
   interiorView = null;
   interiorOrbit.drag = false;
   interiorMoveKeys.clear();
@@ -14308,8 +14346,6 @@ function exitInteriorView() {
   interiorFocusPropIndex = null;
   interiorExitRect = null;
   interiorHotspots = [];
-  interiorPhysicsWorld = null;
-  disposeInteriorRapierRuntime();
   interiorRunHeld = false;
   interiorJoystick = { x: 0, z: 0, pointerId: null };
   interiorCivicActing = { action: "", startedAt: 0, until: 0 };

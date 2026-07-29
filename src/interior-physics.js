@@ -174,7 +174,8 @@ function makeBox(id, x, z, halfX, halfZ, rotation = 0, options = {}) {
     material: options.material || "wood",
     rigidBody: options.rigidBody || "fixed",
     mass: Math.max(0.05, finite(options.mass, 4)),
-    persistent: !!options.persistent
+    persistent: !!options.persistent,
+    active: options.active !== false
   };
 }
 
@@ -194,7 +195,8 @@ function makeCircle(id, x, z, radius, options = {}) {
     material: options.material || "wood",
     rigidBody: options.rigidBody || "fixed",
     mass: Math.max(0.05, finite(options.mass, 4)),
-    persistent: !!options.persistent
+    persistent: !!options.persistent,
+    active: options.active !== false
   };
 }
 
@@ -249,7 +251,8 @@ function createItemCollider(item) {
     material: rigidBody.material || item.material || profile.material || "wood",
     rigidBody: rigidBody.type || profile.rigidBody || "fixed",
     mass: rigidBody.mass ?? profile.mass ?? 4,
-    persistent: rigidBody.persistence === "episode" || rigidBody.persistent === true
+    persistent: rigidBody.persistence === "episode" || rigidBody.persistent === true,
+    active: item.colliderActive !== false && item.visible !== false && item.deferred !== true
   };
   if (profile.shape === "box") {
     return makeBox(
@@ -333,7 +336,10 @@ function resolvePosition(world, point, radius, dynamic = [], selfId = "") {
   let z = next.z;
   let corrected = next.corrected;
   const contacts = [];
-  const colliders = [...(world?.colliders || []), ...collectDynamicColliders(dynamic, selfId)];
+  const colliders = [
+    ...(world?.colliders || []).filter((collider) => collider.active !== false),
+    ...collectDynamicColliders(dynamic, selfId)
+  ];
   for (let iteration = 0; iteration < 7; iteration += 1) {
     let deepest = null;
     for (const collider of colliders) {
@@ -355,7 +361,10 @@ function resolvePosition(world, point, radius, dynamic = [], selfId = "") {
 function isWalkable(world, point, radius = CITIZEN_RADIUS, dynamic = [], selfId = "") {
   const roomLimit = finite(world?.walkableRadius, WALKABLE_RADIUS) - radius;
   if (Math.hypot(finite(point?.x), finite(point?.z)) > roomLimit + EPSILON) return false;
-  const colliders = [...(world?.colliders || []), ...collectDynamicColliders(dynamic, selfId)];
+  const colliders = [
+    ...(world?.colliders || []).filter((collider) => collider.active !== false),
+    ...collectDynamicColliders(dynamic, selfId)
+  ];
   return !colliders.some((collider) => getCirclePenetration({ x: finite(point?.x), z: finite(point?.z) }, radius, collider));
 }
 
@@ -498,7 +507,7 @@ function createPhysicsWorld(options = {}) {
   (options.items || []).forEach((item) => {
     const directCollider = world.itemColliders.get(item.key);
     const nearestAmbientMatch = colliders
-      .filter((collider) => collider.source === "environment")
+      .filter((collider) => collider.source === "environment" && collider.active !== false)
       .map((collider) => ({ collider, distance: Math.hypot(collider.x - finite(item.worldX), collider.z - finite(item.worldZ)) }))
       .sort((a, b) => a.distance - b.distance)[0];
     const nearestAmbient = directCollider || (nearestAmbientMatch?.distance < 1.4 ? nearestAmbientMatch.collider : null);
@@ -512,6 +521,63 @@ function createPhysicsWorld(options = {}) {
     world.interactions.set(item.key, interaction);
   });
   return world;
+}
+
+function prepareSession(input = {}) {
+  const items = Array.isArray(input.items) ? input.items : [];
+  const world = createPhysicsWorld({
+    id: input.zoneId || input.id,
+    archetype: input.blueprintKey || input.archetype,
+    variant: input.variant,
+    items,
+    layoutProfile: input.layoutProfile,
+    spawn: input.spawn || input.layoutProfile?.spawn
+  });
+  const structuralColliderKeys = [];
+  const deferredColliderKeys = [];
+  items.forEach((item) => {
+    if (!world.itemColliders.has(item.key)) return;
+    if (item.deferred === true || item.visible === false || item.colliderActive === false) {
+      deferredColliderKeys.push(item.key);
+    } else {
+      structuralColliderKeys.push(item.key);
+    }
+  });
+  return {
+    world,
+    spawn: { ...world.spawn },
+    structuralColliderKeys,
+    deferredColliderKeys,
+    rapierRuntime: null,
+    disposed: false
+  };
+}
+
+function setSessionColliderActive(prepared, key, active) {
+  if (!prepared || prepared.disposed) return false;
+  const sourceWorld = prepared.world || prepared.sourceWorld;
+  const collider = sourceWorld?.itemColliders?.get?.(key);
+  if (!collider) return false;
+  const enabled = active !== false;
+  collider.active = enabled;
+  sourceWorld.navCache?.clear?.();
+  const runtime = prepared.rapierRuntime || (
+    prepared.environmentBodies && prepared.sourceWorld ? prepared : null
+  );
+  if (runtime && !runtime.disposed) {
+    const entry = [...runtime.environmentBodies.values()]
+      .find((candidate) => candidate.source?.itemKey === key);
+    entry?.collider?.setEnabled?.(enabled);
+  }
+  return true;
+}
+
+function disposePreparedSession(prepared) {
+  if (!prepared || prepared.disposed) return false;
+  prepared.disposed = true;
+  if (prepared.rapierRuntime) disposeRapierRuntime(prepared.rapierRuntime);
+  prepared.world?.navCache?.clear?.();
+  return true;
 }
 
 function navKey(x, z) {
@@ -738,6 +804,7 @@ function createRapierEnvironmentBody(runtime, collider) {
     .setMass(dynamic ? collider.mass : 0);
   const rapierCollider = world.createCollider(shape, body);
   rapierCollider.userData = { id: collider.id, itemKey: collider.itemKey };
+  rapierCollider.setEnabled(collider.active !== false);
   runtime.environmentBodies.set(collider.id, { body, collider: rapierCollider, source: collider });
 }
 
@@ -955,6 +1022,9 @@ const InteriorPhysics = {
   queueRapierJump,
   getRapierDynamicTransforms,
   disposeRapierRuntime,
+  prepareSession,
+  setSessionColliderActive,
+  disposePreparedSession,
   createWorld: createPhysicsWorld,
   isWalkable,
   moveCircle,
@@ -981,6 +1051,9 @@ export {
   queueRapierJump,
   getRapierDynamicTransforms,
   disposeRapierRuntime,
+  prepareSession,
+  setSessionColliderActive,
+  disposePreparedSession,
   createPhysicsWorld,
   isWalkable,
   moveCircle,

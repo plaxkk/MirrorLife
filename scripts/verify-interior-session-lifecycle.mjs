@@ -66,6 +66,8 @@ try {
         && snapshot.actors.every(Object.isFrozen),
       sameSessionSnapshot: window.MirrorLifeInteriorSession.getStatus().snapshot.fingerprint
         === snapshot.fingerprint,
+      samePreparedWorld: window.__mirrorLifeInteriorPhysics?.preparedSession?.world
+        === window.__mirrorLifeInteriorPhysics?.world,
       session,
       snapshot,
       physicsSpawn: window.__mirrorLifeInteriorPhysics?.world?.spawn || null,
@@ -75,6 +77,7 @@ try {
 
   assert.equal(evidence.frozen, true, "Authoritative entry snapshot must be deeply frozen.");
   assert.equal(evidence.sameSessionSnapshot, true, "Controller and renderer must expose the same snapshot fingerprint.");
+  assert.equal(evidence.samePreparedWorld, true, "Session preparation and gameplay must share one physics world.");
   assert.equal(evidence.session.generation, evidence.snapshot.generation);
   assert.equal(evidence.session.zoneId, evidence.snapshot.zoneId);
   assert.deepEqual(evidence.physicsSpawn, evidence.snapshot.spawn);

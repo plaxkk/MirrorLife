@@ -14,12 +14,74 @@ import {
   moveCircle,
   findPath,
   sampleWalkablePoint,
-  getDebugSnapshot
+  getDebugSnapshot,
+  prepareSession,
+  setSessionColliderActive,
+  disposePreparedSession
 } from "../src/interior-physics.js";
 
 assert.equal(INTERIOR_PHYSICS_CONFIG.worldScaleMeters, 1, "v2 physics must use one world unit per meter");
 assert.equal(INTERIOR_PHYSICS_CONFIG.gravity, -18, "v2 gravity contract changed unexpectedly");
 assert.equal(INTERIOR_PHYSICS_CONFIG.fixedTimeStep, 1 / 60, "v2 physics must use a fixed 60Hz step");
+
+const preparedSession = prepareSession({
+  zoneId: "session-ownership",
+  blueprintKey: "public",
+  variant: 0,
+  layoutProfile: { version: 2, spawn: { x: 0, y: 0.86, z: 1.4 } },
+  spawn: { x: 0, y: 0.86, z: 1.4 },
+  items: [
+    {
+      key: "structural",
+      kind: "shell",
+      model: "shell-collider",
+      worldX: -1.2,
+      worldZ: 0,
+      collider: { shape: "box", halfX: 0.4, halfZ: 0.4 }
+    },
+    {
+      key: "deferred",
+      kind: "prop",
+      model: "supply-crate",
+      worldX: 1.2,
+      worldZ: 0,
+      deferred: true,
+      collider: { shape: "box", halfX: 0.4, halfZ: 0.4 }
+    }
+  ]
+});
+assert.deepEqual(preparedSession.spawn, preparedSession.world.spawn, "prepared spawn must be the world-corrected spawn");
+assert.deepEqual(preparedSession.structuralColliderKeys, ["structural"]);
+assert.deepEqual(preparedSession.deferredColliderKeys, ["deferred"]);
+assert.equal(preparedSession.world.itemColliders.get("structural").active, true);
+assert.equal(preparedSession.world.itemColliders.get("deferred").active, false);
+assert.equal(
+  isWalkable(preparedSession.world, { x: 1.2, z: 0 }, CITIZEN_RADIUS),
+  true,
+  "disabled deferred collider must not affect geometric movement"
+);
+assert.equal(setSessionColliderActive(preparedSession, "deferred", true), true);
+assert.equal(
+  isWalkable(preparedSession.world, { x: 1.2, z: 0 }, CITIZEN_RADIUS),
+  false,
+  "activated deferred collider must become solid atomically"
+);
+let enabledState = null;
+preparedSession.rapierRuntime = {
+  disposed: false,
+  environmentBodies: new Map([[
+    "prop:deferred",
+    {
+      source: { itemKey: "deferred" },
+      collider: { setEnabled(value) { enabledState = value; } }
+    }
+  ]])
+};
+assert.equal(setSessionColliderActive(preparedSession, "deferred", false), true);
+assert.equal(enabledState, false, "Rapier collider must follow the same active transaction");
+disposePreparedSession(preparedSession);
+disposePreparedSession(preparedSession);
+assert.equal(preparedSession.disposed, true, "prepared session disposal must be idempotent");
 
 const SOLID_MODEL_TYPES = [
   "bed", "counter", "desk", "seating", "civic-seating", "civic-display-case", "civic-notice-console", "civic-lounge-suite", "shelf", "wall-board", "round-table", "table",
