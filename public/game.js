@@ -13732,6 +13732,7 @@ function ensureInteriorEntrySnapshot(zone, source, token, input) {
   const snapshot = buildInteriorEntrySnapshot(zone, source, token, input);
   if (!snapshot) return null;
   controller.acceptSnapshot(token, snapshot);
+  controller.markShellLoading(token);
   interiorView.entrySnapshot = snapshot;
   const owningView = interiorView;
   window.__mirrorLifeInteriorSession = Object.freeze({
@@ -13800,7 +13801,36 @@ function syncInteriorThreeLayer(W, H, blueprint, roomStyle, isNight, actors = []
     });
     applyInteriorRuntimePatch(snapshot, { firstThreeInputAcceptedAt: performance.now() });
   }
-  return api.update(payload);
+  if (!snapshot || typeof api.stageShell !== "function") {
+    return api.update(payload);
+  }
+  const staged = api.stageShell(snapshot, {
+    width: W,
+    height: H,
+    physics: payload.physics
+  });
+  const controller = window.MirrorLifeInteriorSession;
+  const token = interiorView?.sessionToken;
+  if (
+    staged.interactive
+    && interiorRapierRuntime
+    && controller?.isCurrent?.(token)
+    && controller.getStatus().phase === "shell-loading"
+  ) {
+    controller.markInteractive(token);
+  }
+  const activated = api.activate(snapshot, payload);
+  if (controller?.isCurrent?.(token) && interiorRapierRuntime) {
+    let phase = controller.getStatus().phase;
+    if (phase === "interactive" && activated.gameplayReady) {
+      controller.markGameplayReady(token);
+      phase = "gameplay-ready";
+    }
+    if (phase === "gameplay-ready" && activated.fullReady) {
+      controller.markFullReady(token);
+    }
+  }
+  return activated.accepted ? activated : staged;
 }
 
 function drawInteriorRoomShell(ctx, W, H, layout, style, isNight) {
@@ -14235,6 +14265,9 @@ function loadInteriorRuntimeForEntry(zone, source, sessionTokenReady) {
 
 function enterInteriorView(zone, source = "manual", options = {}) {
   if (!zone) return;
+  if (interiorView?.entrySnapshot?.sessionId) {
+    window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+  }
   disposeInteriorPhysicsSession();
   const requestedAt = Number.isFinite(Number(options.requestedAt))
     ? Number(options.requestedAt)
@@ -14338,6 +14371,9 @@ function exitInteriorView() {
   window.MirrorLifeInteriorSession?.cancel?.("exit");
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
+  if (interiorView.entrySnapshot?.sessionId) {
+    window.MirrorLifeInterior3D?.disposeSession?.(interiorView.entrySnapshot.sessionId);
+  }
   disposeInteriorPhysicsSession();
   interiorView = null;
   interiorOrbit.drag = false;

@@ -52,6 +52,9 @@ try {
     document.body.dataset.interiorRenderPhase === "ready"
     && window.MirrorLifeInteriorSession?.getStatus?.().snapshot
     && window.__mirrorLifeInteriorSession?.firstThreeInput
+    && typeof window.MirrorLifeInterior3D?.stageShell === "function"
+    && window.MirrorLifeInteriorSession?.getStatus?.().phase === "full-ready"
+    && window.MirrorLifeInterior3D?.getSessionStatus?.().phase === "full-ready"
   ), { timeout: 45_000 });
 
   const evidence = await page.evaluate(() => {
@@ -71,7 +74,8 @@ try {
       session,
       snapshot,
       physicsSpawn: window.__mirrorLifeInteriorPhysics?.world?.spawn || null,
-      firstThreeInput: qa.firstThreeInput
+      firstThreeInput: qa.firstThreeInput,
+      threeSession: window.MirrorLifeInterior3D.getSessionStatus()
     };
   });
 
@@ -87,6 +91,21 @@ try {
   assert.deepEqual(evidence.firstThreeInput.actors, evidence.snapshot.actors);
   assert.deepEqual(evidence.firstThreeInput.theme, evidence.snapshot.theme);
   assert.deepEqual(evidence.firstThreeInput.camera, evidence.snapshot.camera);
+  assert.equal(evidence.threeSession.sessionId, evidence.snapshot.sessionId);
+  assert.equal(evidence.threeSession.generation, evidence.snapshot.generation);
+  assert.equal(evidence.threeSession.fingerprint, evidence.snapshot.fingerprint);
+  assert.equal(evidence.threeSession.phase, "full-ready");
+  assert.ok(
+    evidence.session.timestamps.interactive <= evidence.session.timestamps.gameplayReady
+    && evidence.session.timestamps.gameplayReady <= evidence.session.timestamps.fullReady,
+    "Interactive, gameplay-ready and full-ready timestamps must be monotonic."
+  );
+  assert.deepEqual(
+    evidence.threeSession.actorContract,
+    evidence.snapshot.actors.map(({ id, frame, role, civicRole, style, worldX, worldY, worldZ }) => ({
+      id, frame, role, civicRole, style, worldX, worldY, worldZ
+    }))
+  );
 
   const reentry = await page.evaluate(() => {
     const before = window.MirrorLifeInteriorSession.getStatus();
@@ -112,17 +131,63 @@ try {
   await page.waitForFunction((generation) => (
     window.__mirrorLifeInteriorSession?.snapshot?.generation === generation
     && window.MirrorLifeInteriorSession?.getStatus?.().snapshot?.generation === generation
+    && window.MirrorLifeInteriorSession?.getStatus?.().phase === "full-ready"
+    && window.MirrorLifeInterior3D?.getSessionStatus?.().phase === "full-ready"
     && document.body.dataset.interiorRenderPhase === "ready"
   ), { timeout: 45_000 }, reentry.finalRequest.generation);
   const finalStatus = await page.evaluate(() => ({
     session: window.MirrorLifeInteriorSession.getStatus(),
     snapshotGeneration: window.__mirrorLifeInteriorSession.snapshot.generation,
-    snapshotZoneId: window.__mirrorLifeInteriorSession.snapshot.zoneId
+    snapshotZoneId: window.__mirrorLifeInteriorSession.snapshot.zoneId,
+    three: window.MirrorLifeInterior3D.getSessionStatus()
   }));
   assert.equal(finalStatus.session.generation, reentry.finalRequest.generation);
   assert.equal(finalStatus.session.requestedAt, 500);
   assert.equal(finalStatus.snapshotGeneration, reentry.finalRequest.generation);
   assert.equal(finalStatus.snapshotZoneId, "public-plaza");
+  assert.equal(finalStatus.three.generation, reentry.finalRequest.generation);
+  assert.equal(finalStatus.three.phase, "full-ready");
+  const staleOwnership = await page.evaluate((staleSnapshot) => {
+    const api = window.MirrorLifeInterior3D;
+    const before = api.getSessionStatus();
+    const staleComplete = api.complete(staleSnapshot, {});
+    const staleSuspend = api.suspend(staleSnapshot.sessionId);
+    const wrongDispose = api.disposeSession("not-the-current-session");
+    const after = api.getSessionStatus();
+    return {
+      before,
+      staleComplete,
+      staleSuspend,
+      wrongDispose,
+      after,
+      canvasVisible: getComputedStyle(document.querySelector("#interiorThreeLayer")).visibility,
+      projectionCount: api.getProjections().length
+    };
+  }, evidence.snapshot);
+  assert.equal(staleOwnership.staleComplete.accepted, false);
+  assert.equal(staleOwnership.staleSuspend, false);
+  assert.equal(staleOwnership.wrongDispose, false);
+  assert.deepEqual(staleOwnership.after, staleOwnership.before);
+  assert.equal(staleOwnership.canvasVisible, "visible");
+  const suspension = await page.evaluate(() => {
+    const api = window.MirrorLifeInterior3D;
+    const sessionId = api.getSessionStatus().sessionId;
+    const suspended = api.suspend(sessionId);
+    const status = api.getSessionStatus();
+    const canvas = document.querySelector("#interiorThreeLayer");
+    const visibility = getComputedStyle(canvas).visibility;
+    const projectionCount = api.getProjections().length;
+    const disposed = api.disposeSession(sessionId);
+    const disposedAgain = api.disposeSession(sessionId);
+    return { suspended, status, visibility, projectionCount, disposed, disposedAgain };
+  });
+  assert.equal(suspension.suspended, true);
+  assert.equal(suspension.status.phase, "suspended");
+  assert.equal(suspension.status.renderActive, false);
+  assert.equal(suspension.visibility, "hidden");
+  assert.equal(suspension.projectionCount, 0);
+  assert.equal(suspension.disposed, true);
+  assert.equal(suspension.disposedAgain, true);
 
   process.stdout.write(`${JSON.stringify({
     status: "passed",

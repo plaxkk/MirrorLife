@@ -155,6 +155,18 @@ const LIGHTING_PRESETS = Object.freeze({
 });
 const REALTIME_SHADOW_ARCHETYPES = new Set(["public", "work", "justice", "nature", "creative", "memory"]);
 
+let interiorSessionState = {
+  sessionId: "",
+  generation: 0,
+  fingerprint: "",
+  phase: "idle",
+  shellReady: false,
+  assetsReady: false,
+  actorContract: [],
+  preloadPromise: null,
+  renderActive: false
+};
+
 const INTERIOR_ZONE_ENVIRONMENT_STYLES = {
   "public-plaza": { motif: "voices", accent: "#f1c40f", secondary: "#4ea8de", panel: "#fffdf4" },
   "maternity-hospital": { motif: "newborn", accent: "#ff8fa3", secondary: "#56cfe1", panel: "#fff5f7" },
@@ -11538,9 +11550,10 @@ function update(payload = {}) {
   const ready = assetsReady && sceneWarmupFrames >= 2;
   if (ready && !lastSceneReady) lastStatsPublishedAt = 0;
   lastSceneReady = ready;
+  const presentable = ready || payload.preserveVisible === true;
   canvas.style.display = visible ? "block" : "none";
-  canvas.style.opacity = ready ? "1" : "0";
-  canvas.style.visibility = ready ? "visible" : "hidden";
+  canvas.style.opacity = visible && presentable ? "1" : "0";
+  canvas.style.visibility = visible && presentable ? "visible" : "hidden";
   canvas.dataset.sceneReady = ready ? "true" : "false";
   updateProjections(activeItems, width, height);
   const actorProjections = projectWorldPoints((payload.actors || []).map((actor) => ({
@@ -11573,6 +11586,205 @@ function update(payload = {}) {
     canvas.dataset.renderStats = JSON.stringify(getStats());
   }
   return { ready, modelsReady, actorsReady, projections: [...projectedItems.values()], actorProjections };
+}
+
+function getSnapshotActorContract(snapshot) {
+  return (snapshot?.actors || []).map((actor) => ({
+    id: actor.id,
+    frame: actor.frame,
+    role: actor.role,
+    civicRole: actor.civicRole,
+    style: actor.style,
+    worldX: actor.worldX,
+    worldY: actor.worldY,
+    worldZ: actor.worldZ
+  }));
+}
+
+function ownsInteriorSnapshot(snapshot) {
+  return Boolean(snapshot)
+    && snapshot.sessionId === interiorSessionState.sessionId
+    && snapshot.generation === interiorSessionState.generation
+    && snapshot.fingerprint === interiorSessionState.fingerprint;
+}
+
+function snapshotCameraPayload(snapshot, viewport = {}) {
+  return {
+    visible: true,
+    width: Number(viewport.width || window.innerWidth),
+    height: Number(viewport.height || window.innerHeight),
+    yaw: snapshot.camera.yaw,
+    pitch: snapshot.camera.pitch,
+    cameraX: snapshot.camera.x,
+    cameraZ: snapshot.camera.z,
+    cameraTargetX: snapshot.camera.targetX,
+    cameraTargetZ: snapshot.camera.targetZ,
+    cameraSafeArea: snapshot.camera.safeArea,
+    theme: snapshot.theme,
+    physics: viewport.physics || {
+      enabled: false,
+      colliders: [],
+      actors: [],
+      ready: false,
+      dynamics: []
+    }
+  };
+}
+
+function beginSnapshotAssetPreload(snapshot) {
+  const ownership = {
+    sessionId: snapshot.sessionId,
+    generation: snapshot.generation,
+    fingerprint: snapshot.fingerprint
+  };
+  const modelTasks = [...new Set((snapshot.items || [])
+    .filter((item) => item.renderModel !== false && item.model)
+    .map((item) => item.model))]
+    .map((model) => loadModel(model));
+  const actorTasks = [...new Set((snapshot.actors || [])
+    .map((actor) => String(actor.civicRole || ""))
+    .filter(Boolean))]
+    .map((role) => loadCivicActorAsset(role));
+  return Promise.all([...modelTasks, ...actorTasks]).then(() => {
+    if (
+      interiorSessionState.sessionId === ownership.sessionId
+      && interiorSessionState.generation === ownership.generation
+      && interiorSessionState.fingerprint === ownership.fingerprint
+    ) {
+      interiorSessionState.assetsReady = true;
+      window.markRenderActive?.(1200);
+    }
+  });
+}
+
+function stageShell(snapshot, viewport = {}) {
+  if (!snapshot?.sessionId || !snapshot?.fingerprint) {
+    return { accepted: false, ready: false, phase: interiorSessionState.phase, projections: [] };
+  }
+  if (!ownsInteriorSnapshot(snapshot)) {
+    if (
+      interiorSessionState.sessionId
+      && Number(snapshot.generation) <= Number(interiorSessionState.generation)
+    ) {
+      return { accepted: false, ready: false, phase: interiorSessionState.phase, projections: [] };
+    }
+    hide();
+    interiorSessionState = {
+      sessionId: snapshot.sessionId,
+      generation: snapshot.generation,
+      fingerprint: snapshot.fingerprint,
+      phase: "shell-loading",
+      shellReady: false,
+      assetsReady: false,
+      actorContract: getSnapshotActorContract(snapshot),
+      preloadPromise: null,
+      renderActive: false
+    };
+  }
+  if (interiorSessionState.shellReady) {
+    return {
+      accepted: true,
+      ready: true,
+      interactive: true,
+      phase: interiorSessionState.phase,
+      projections: [...projectedItems.values()]
+    };
+  }
+  const result = update({
+    ...snapshotCameraPayload(snapshot, viewport),
+    items: [],
+    actors: []
+  });
+  if (!interiorSessionState.preloadPromise && loader) {
+    interiorSessionState.preloadPromise = beginSnapshotAssetPreload(snapshot);
+  }
+  if (result.ready) {
+    interiorSessionState.shellReady = true;
+    interiorSessionState.phase = "interactive";
+    interiorSessionState.renderActive = true;
+  }
+  return {
+    ...result,
+    accepted: true,
+    interactive: interiorSessionState.shellReady,
+    phase: interiorSessionState.phase
+  };
+}
+
+function activate(snapshot, payload = {}) {
+  if (!ownsInteriorSnapshot(snapshot)) {
+    return { accepted: false, ready: false, phase: interiorSessionState.phase, projections: [] };
+  }
+  if (!interiorSessionState.shellReady) {
+    return { accepted: true, ready: false, phase: interiorSessionState.phase, projections: [] };
+  }
+  if (!interiorSessionState.assetsReady) {
+    return {
+      accepted: true,
+      ready: true,
+      interactive: true,
+      gameplayReady: false,
+      fullReady: false,
+      phase: interiorSessionState.phase,
+      projections: [...projectedItems.values()]
+    };
+  }
+  const result = update({
+    ...payload,
+    preserveVisible: true
+  });
+  const gameplayReady = result.modelsReady && result.actorsReady;
+  if (gameplayReady && interiorSessionState.phase === "interactive") {
+    interiorSessionState.phase = "gameplay-ready";
+  }
+  if (result.ready) interiorSessionState.phase = "full-ready";
+  interiorSessionState.renderActive = true;
+  return {
+    ...result,
+    accepted: true,
+    ready: true,
+    interactive: true,
+    gameplayReady,
+    fullReady: interiorSessionState.phase === "full-ready",
+    phase: interiorSessionState.phase
+  };
+}
+
+function complete(snapshot, payload = {}) {
+  return activate(snapshot, payload);
+}
+
+function suspend(sessionId) {
+  if (!sessionId || sessionId !== interiorSessionState.sessionId) return false;
+  hide();
+  interiorSessionState.phase = "suspended";
+  interiorSessionState.renderActive = false;
+  return true;
+}
+
+function disposeSession(sessionId) {
+  if (!sessionId || sessionId !== interiorSessionState.sessionId) return false;
+  if (interiorSessionState.phase === "disposed") return true;
+  updateActors([], performance.now());
+  activeItems = [];
+  rebuildModels(activeItems);
+  hide();
+  interiorSessionState.phase = "disposed";
+  interiorSessionState.renderActive = false;
+  return true;
+}
+
+function getSessionStatus() {
+  return {
+    sessionId: interiorSessionState.sessionId,
+    generation: interiorSessionState.generation,
+    fingerprint: interiorSessionState.fingerprint,
+    phase: interiorSessionState.phase,
+    shellReady: interiorSessionState.shellReady,
+    assetsReady: interiorSessionState.assetsReady,
+    actorContract: interiorSessionState.actorContract.map((actor) => ({ ...actor })),
+    renderActive: interiorSessionState.renderActive
+  };
 }
 
 function hide() {
@@ -11951,6 +12163,12 @@ function getStats() {
 
 window.MirrorLifeInterior3D = {
   update,
+  stageShell,
+  activate,
+  complete,
+  suspend,
+  disposeSession,
+  getSessionStatus,
   hide,
   isReady,
   loadModel,
