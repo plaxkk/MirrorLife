@@ -238,7 +238,7 @@ const AVATAR_COLORS = [
   "#c18b3d", "#6b7f5f", "#af5f3a", "#7f5c7a"
 ];
 
-const AVATAR_SPRITE_SRC = "/assets/mirrorlife-avatar-sprite.png";
+const AVATAR_SPRITE_SRC = "/assets/mirrorlife-avatar-sprite.webp";
 const AVATAR_SPRITE_COLUMNS = 3;
 const AVATAR_SPRITE_ROWS = 2;
 const AVATAR_FRAME_COUNT = AVATAR_SPRITE_COLUMNS * AVATAR_SPRITE_ROWS;
@@ -246,7 +246,7 @@ const avatarSpriteImage = new Image();
 avatarSpriteImage.decoding = "async";
 avatarSpriteImage.src = AVATAR_SPRITE_SRC;
 
-const BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-sprite.png";
+const BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-sprite.webp";
 const BUILDING_SPRITE_COLUMNS = 4;
 const BUILDING_SPRITE_ROWS = 3;
 const BUILDING_FRAME_COUNT = BUILDING_SPRITE_COLUMNS * BUILDING_SPRITE_ROWS;
@@ -254,14 +254,14 @@ const buildingSpriteImage = new Image();
 buildingSpriteImage.decoding = "async";
 buildingSpriteImage.src = BUILDING_SPRITE_SRC;
 
-const SEMANTIC_BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-semantic-sprite.png";
+const SEMANTIC_BUILDING_SPRITE_SRC = "/assets/mirrorlife-building-semantic-sprite.webp";
 const SEMANTIC_BUILDING_SPRITE_COLUMNS = 3;
 const SEMANTIC_BUILDING_SPRITE_ROWS = 2;
 const semanticBuildingSpriteImage = new Image();
 semanticBuildingSpriteImage.decoding = "async";
 semanticBuildingSpriteImage.src = SEMANTIC_BUILDING_SPRITE_SRC;
 
-const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.png";
+const CITIZEN_SPRITE_SRC = "/assets/mirrorlife-citizen-sprite.webp";
 const CITIZEN_SPRITE_COLUMNS = 4;
 const CITIZEN_SPRITE_ROWS = 2;
 const CITIZEN_FRAME_COUNT = CITIZEN_SPRITE_COLUMNS * CITIZEN_SPRITE_ROWS;

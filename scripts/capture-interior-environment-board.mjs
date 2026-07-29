@@ -77,7 +77,11 @@ try {
     await page.goto(url, { waitUntil: "domcontentloaded", timeout: 30000 });
     await page.waitForFunction(() => {
       const layer = document.querySelector("#interiorThreeLayer");
+      const session = window.MirrorLifeInteriorSession?.getStatus?.();
+      const stats = window.MirrorLifeInterior3D?.getStats?.();
       return document.body.classList.contains("interior-active")
+        && session?.phase === "full-ready"
+        && stats?.ready === true
         && layer?.dataset.sceneReady === "true"
         && document.body.dataset.interiorRenderPhase === "ready"
         && getComputedStyle(layer).visibility !== "hidden";

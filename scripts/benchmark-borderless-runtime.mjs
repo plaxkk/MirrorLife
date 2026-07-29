@@ -392,6 +392,7 @@ export async function measurePublicPlazaInterior(page) {
       timestamps: status?.timestamps || {},
       renderPhases: window.__mirrorLifeInteriorRenderPhases || [],
       threeStages: window.__mirrorLifeInteriorThreeStageTrace || [],
+      cachePolicy: window.__mirrorLifeInteriorCachePolicy || null,
       heapBytes: Number(performance.memory?.usedJSHeapSize || 0)
     };
   });

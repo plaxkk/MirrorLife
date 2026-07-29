@@ -161,6 +161,7 @@ let interiorSessionState = {
   fingerprint: "",
   phase: "idle",
   shellReady: false,
+  shellReadyAt: 0,
   assetsReady: false,
   actorContract: [],
   preloadPromise: null,
@@ -303,12 +304,18 @@ let actorFaceLight;
 let roomRoot;
 let modelRoot;
 let actorRoot;
+let interactiveShellRoot;
 let physicsDebugRoot;
 let lastWidth = 0;
 let lastHeight = 0;
 let roomSignature = "";
+let interactiveShellSignature = "";
 let activeCivicPortalContract = "";
 let itemSignature = "";
+let sceneCompileSignature = "";
+let sceneCompilePromise = null;
+let sceneCompileReady = false;
+let sceneCompileOwnerFingerprint = "";
 let activeItems = [];
 let lastStatsPublishedAt = 0;
 let lastSceneReady = false;
@@ -473,6 +480,10 @@ function ensureLayer() {
     }
     roomSignature = "";
     itemSignature = "";
+    sceneCompileSignature = "";
+    sceneCompilePromise = null;
+    sceneCompileReady = false;
+    sceneCompileOwnerFingerprint = "";
     sceneWarmupSignature = "";
     sceneWarmupFrames = 0;
     if (roomRoot) roomRoot.visible = true;
@@ -507,10 +518,11 @@ function ensureLayer() {
   roomRoot = new THREE.Group();
   modelRoot = new THREE.Group();
   actorRoot = new THREE.Group();
+  interactiveShellRoot = new THREE.Group();
   physicsDebugRoot = new THREE.Group();
   actorRoot.name = "interior-actors";
   physicsDebugRoot.name = "interior-physics-debug";
-  scene.add(roomRoot, modelRoot, actorRoot, physicsDebugRoot);
+  scene.add(roomRoot, modelRoot, actorRoot, interactiveShellRoot, physicsDebugRoot);
 
   hemisphereLight = new THREE.HemisphereLight(0xfff8eb, 0x6d5645, 0.44);
   scene.add(hemisphereLight);
@@ -614,6 +626,14 @@ function ensureEnhancedPipeline() {
   const pixelRatio = resolveInteriorPixelRatio(lastWidth || window.innerWidth);
   renderer.setPixelRatio(pixelRatio);
   renderer.setSize(lastWidth || window.innerWidth, lastHeight || window.innerHeight, false);
+  if ((lastWidth || window.innerWidth) <= 720) {
+    // Mobile already uses the authored low-LOD models and has no GTAO. Keeping
+    // the desktop HDR composer here only allocates two multisampled full-screen
+    // targets and compiles passes that never contribute to the mobile frame.
+    renderer.shadowMap.enabled = false;
+    enhancedPipelineReady = true;
+    return true;
+  }
   const pmrem = new THREE.PMREMGenerator(renderer);
   scene.environment = pmrem.fromScene(new RoomEnvironment(), 0.04).texture;
   scene.environmentIntensity = 0.38;
@@ -4094,6 +4114,13 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     bumpScale: 0.012,
     envMapIntensity: 0.52
   });
+  // At a 390px viewport these relief pieces are only a handful of pixels
+  // wide. Preserve the authored silhouette and colour blocking, but use flat
+  // joinery on mobile instead of spending most of the rear-view triangle
+  // budget on sub-pixel bevel rings.
+  const witnessBox = (width, height, depth, segments, radius) => mobileLod
+    ? new THREE.BoxGeometry(width, height, depth)
+    : new RoundedBoxGeometry(width, height, depth, segments, radius);
   // A continuous oak arch now turns the reverse wall into real built-in
   // joinery. The previous small board floated inside a broad rectangular bay,
   // so completing a 180° orbit still exposed the back of a film set. These
@@ -4121,37 +4148,37 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   group.add(archHighlight);
   [-archRadius, archRadius].forEach((x) => {
     const post = new THREE.Mesh(
-      new RoundedBoxGeometry(0.24, 1.56, 0.18, 4, 0.065),
+      witnessBox(0.24, 1.56, 0.18, 4, 0.065),
       walnut
     );
     post.position.set(x, 0.84, 0.09);
     group.add(post);
     const postInset = new THREE.Mesh(
-      new RoundedBoxGeometry(0.075, 1.38, 0.035, 3, 0.018),
+      witnessBox(0.075, 1.38, 0.035, 3, 0.018),
       brass
     );
     postInset.position.set(x + Math.sign(x) * -0.03, 0.84, 0.195);
     group.add(postInset);
     const plinth = new THREE.Mesh(
-      new RoundedBoxGeometry(0.42, 0.19, 0.28, 4, 0.06),
+      witnessBox(0.42, 0.19, 0.28, 4, 0.06),
       oak
     );
     plinth.position.set(x, 0.14, 0.15);
     group.add(plinth);
   });
 
-  const frame = new THREE.Mesh(new RoundedBoxGeometry(3.28, 1.56, 0.16, 4, 0.1), walnut);
+  const frame = new THREE.Mesh(witnessBox(3.28, 1.56, 0.16, 4, 0.1), walnut);
   frame.position.set(0, 2.28, 0.02);
   group.add(frame);
-  const field = new THREE.Mesh(new RoundedBoxGeometry(3.02, 1.3, 0.055, 4, 0.065), cork);
+  const field = new THREE.Mesh(witnessBox(3.02, 1.3, 0.055, 4, 0.065), cork);
   field.position.set(0, 2.28, 0.12);
   group.add(field);
-  const heading = new THREE.Mesh(new RoundedBoxGeometry(1.18, 0.22, 0.05, 4, 0.055), createToonMaterial("#efd69a", { roughness: 0.72 }));
+  const heading = new THREE.Mesh(witnessBox(1.18, 0.22, 0.05, 4, 0.055), createToonMaterial("#efd69a", { roughness: 0.72 }));
   heading.position.set(0, 2.74, 0.17);
   group.add(heading);
   [-0.35, -0.12, 0.12, 0.35].forEach((x, index) => {
     const headingMark = new THREE.Mesh(
-      new RoundedBoxGeometry(index % 2 ? 0.15 : 0.19, 0.028, 0.018, 2, 0.008),
+      witnessBox(index % 2 ? 0.15 : 0.19, 0.028, 0.018, 2, 0.008),
       index === 1 ? brass : walnut
     );
     headingMark.position.set(x, 2.74, 0.205);
@@ -4164,18 +4191,18 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     const column = index % responseColumns;
     const row = Math.floor(index / responseColumns);
     const card = new THREE.Mesh(
-      new RoundedBoxGeometry(mobileLod ? 0.58 : 0.56, mobileLod ? 0.38 : 0.36, 0.025, 2, 0.025),
+      witnessBox(mobileLod ? 0.58 : 0.56, mobileLod ? 0.38 : 0.36, 0.025, 2, 0.025),
       createToonMaterial(index % 2 ? "#f8edd9" : "#e8efe7", { roughness: 0.94 })
     );
     card.position.set((column - (responseColumns - 1) / 2) * (mobileLod ? 0.72 : 0.68), 2.39 - row * 0.43, 0.17);
     card.rotation.z = (column - (responseColumns - 1) / 2) * 0.035;
     group.add(card);
-    const mark = new THREE.Mesh(new RoundedBoxGeometry(0.11, 0.18, 0.018, 2, 0.018), createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.76 }));
+    const mark = new THREE.Mesh(witnessBox(0.11, 0.18, 0.018, 2, 0.018), createToonMaterial(responseColors[index % responseColors.length], { roughness: 0.76 }));
     mark.position.set(card.position.x - 0.16, card.position.y, 0.192);
     mark.rotation.z = card.rotation.z;
     group.add(mark);
     [0.06, -0.055].forEach((lineY, lineIndex) => {
-      const line = new THREE.Mesh(new RoundedBoxGeometry(lineIndex ? 0.18 : 0.23, 0.016, 0.012, 1, 0.006), createToonMaterial("#7e766a", { roughness: 0.84 }));
+      const line = new THREE.Mesh(witnessBox(lineIndex ? 0.18 : 0.23, 0.016, 0.012, 1, 0.006), createToonMaterial("#7e766a", { roughness: 0.84 }));
       line.position.set(card.position.x + 0.09, card.position.y + lineY, 0.193);
       line.rotation.z = card.rotation.z;
       group.add(line);
@@ -4243,13 +4270,13 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   }
 
   const testimonyLedge = new THREE.Mesh(
-    new RoundedBoxGeometry(3.76, 0.14, 0.38, 4, 0.055),
+    witnessBox(3.76, 0.14, 0.38, 4, 0.055),
     oak
   );
   testimonyLedge.position.set(0, 1.38, 0.26);
   group.add(testimonyLedge);
   const testimonyApron = new THREE.Mesh(
-    new RoundedBoxGeometry(3.42, 0.22, 0.09, 4, 0.035),
+    witnessBox(3.42, 0.22, 0.09, 4, 0.035),
     walnut
   );
   testimonyApron.position.set(0, 1.24, 0.2);
@@ -4285,13 +4312,13 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   // the reference's arched threshold and pendant lights without taking any
   // walkable floor area.
   const pictureRail = new THREE.Mesh(
-    new RoundedBoxGeometry(5.72, 0.12, 0.12, 3, 0.035),
+    witnessBox(5.72, 0.12, 0.12, 3, 0.035),
     oak
   );
   pictureRail.position.set(0, 3.42, 0.08);
   group.add(pictureRail);
   const pictureRailReveal = new THREE.Mesh(
-    new RoundedBoxGeometry(5.48, 0.025, 0.035, 2, 0.009),
+    witnessBox(5.48, 0.025, 0.035, 2, 0.009),
     createToonMaterial("#d2a64c", {
       roughness: 0.32,
       metalness: 0.62,
@@ -4302,7 +4329,7 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   group.add(pictureRailReveal);
   [-3.28, 3.28].forEach((sconceX) => {
     const backplate = new THREE.Mesh(
-      new RoundedBoxGeometry(0.18, 0.46, 0.075, 4, 0.065),
+      witnessBox(0.18, 0.46, 0.075, 4, 0.065),
       walnut
     );
     backplate.position.set(sconceX, 2.6, 0.15);
@@ -4347,19 +4374,19 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   const benchGroup = new THREE.Group();
   benchGroup.name = "civic-reverse-witness-bench";
   group.add(benchGroup);
-  const benchBase = new THREE.Mesh(new RoundedBoxGeometry(2.46, 0.36, 0.7, 3, 0.14), oak);
+  const benchBase = new THREE.Mesh(witnessBox(2.46, 0.36, 0.7, 3, 0.14), oak);
   benchBase.position.set(0, 0.28, 0.54);
   benchGroup.add(benchBase);
-  const benchSeat = new THREE.Mesh(new RoundedBoxGeometry(2.34, 0.22, 0.72, 3, 0.14), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
+  const benchSeat = new THREE.Mesh(witnessBox(2.34, 0.22, 0.72, 3, 0.14), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
   benchSeat.position.set(0, 0.58, 0.56);
   benchGroup.add(benchSeat);
-  const benchBack = new THREE.Mesh(new RoundedBoxGeometry(2.28, 0.72, 0.22, 3, 0.13), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
+  const benchBack = new THREE.Mesh(witnessBox(2.28, 0.72, 0.22, 3, 0.13), createToonMaterial("#4d8f84", { roughness: 0.96, surface: "fabric", bumpScale: 0.01 }));
   benchBack.position.set(0, 0.91, 0.29);
   benchBack.rotation.x = -0.08;
   benchGroup.add(benchBack);
   [-0.62, 0.62].forEach((x, index) => {
     const cushion = new THREE.Mesh(
-      new RoundedBoxGeometry(0.46, 0.38, 0.18, 3, 0.11),
+      witnessBox(0.46, 0.38, 0.18, 3, 0.11),
       createToonMaterial(index ? ATELIER_TOKENS.apricot : ATELIER_TOKENS.butter, { roughness: 0.98, surface: "fabric", bumpScale: 0.012 })
     );
     cushion.position.set(x, 0.92, 0.54);
@@ -4401,26 +4428,38 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
     const materials = Array.isArray(node.material) ? node.material : [node.material];
     materials.filter(Boolean).forEach((material) => sourceMaterials.add(material));
   });
-  mergeActorVertexColorMeshes(benchGroup, [], {
-    roughness: 0.82,
-    envMapIntensity: 0.58,
-    actorShading: false
-  });
-  benchGroup.children.forEach((object) => {
-    if (!object.isMesh) return;
-    object.userData.cameraForegroundFade = true;
-    // This assembly contains several overlapping material layers. A 14%
-    // per-material target compounded into an almost opaque lower-third from
-    // the reverse orbit, so use the occlusion floor for the complete stack.
-    object.userData.cameraForegroundOpacity = 0.04;
-    object.userData.cameraForegroundNearDistance = 3.6;
-    cameraForegroundObjects.add(object);
-  });
-  mergeActorVertexColorMeshes(group, [pendantShade, benchGroup], {
-    roughness: 0.76,
-    envMapIntensity: 0.66,
-    actorShading: false
-  });
+  if (mobileLod) {
+    // In the mobile camera the bench remains against the far wall and never
+    // becomes a foreground occluder. Bake the complete composition into one
+    // vertex-colour surface: this removes two draw calls while preserving the
+    // exact same authored layout, palette, lighting and orbit visibility.
+    mergeActorVertexColorMeshes(group, [], {
+      roughness: 0.76,
+      envMapIntensity: 0.66,
+      actorShading: false
+    });
+  } else {
+    mergeActorVertexColorMeshes(benchGroup, [], {
+      roughness: 0.82,
+      envMapIntensity: 0.58,
+      actorShading: false
+    });
+    benchGroup.children.forEach((object) => {
+      if (!object.isMesh) return;
+      object.userData.cameraForegroundFade = true;
+      // This assembly contains several overlapping material layers. A 14%
+      // per-material target compounded into an almost opaque lower-third from
+      // the reverse orbit, so use the occlusion floor for the complete stack.
+      object.userData.cameraForegroundOpacity = 0.04;
+      object.userData.cameraForegroundNearDistance = 3.6;
+      cameraForegroundObjects.add(object);
+    });
+    mergeActorVertexColorMeshes(group, [pendantShade, benchGroup], {
+      roughness: 0.76,
+      envMapIntensity: 0.66,
+      actorShading: false
+    });
+  }
   sourceMaterials.forEach((material) => material.dispose?.());
 }
 
@@ -5555,6 +5594,7 @@ function mergeRoomArchitectureMeshes() {
   });
 
   const mergedMeshes = [];
+  let colorBatchIndex = 0;
   colorBatches.forEach((batch) => {
     const geometry = batch.geometries.length === 1
       ? batch.geometries[0]
@@ -5567,10 +5607,12 @@ function mergeRoomArchitectureMeshes() {
       if (candidate !== geometry) candidate.dispose();
     });
     const mesh = new THREE.Mesh(geometry, createVertexSurfaceMaterial({ envMapIntensity: 0.58 }));
+    mesh.name = `room-vertex-batch-${colorBatchIndex += 1}`;
     mesh.castShadow = batch.castShadow;
     mesh.receiveShadow = batch.receiveShadow;
     mergedMeshes.push(mesh);
   });
+  let materialBatchIndex = 0;
   batches.forEach((batch) => {
     const geometry = batch.geometries.length === 1
       ? batch.geometries[0]
@@ -5584,6 +5626,8 @@ function mergeRoomArchitectureMeshes() {
       if (candidate !== geometry) candidate.dispose();
     });
     const mesh = new THREE.Mesh(geometry, batch.material);
+    const materialColor = batch.material.color?.getHexString?.() || "none";
+    mesh.name = `room-material-batch-${materialBatchIndex += 1}-${materialColor}`;
     mesh.castShadow = batch.castShadow;
     mesh.receiveShadow = batch.receiveShadow;
     mergedMeshes.push(mesh);
@@ -7594,7 +7638,7 @@ function loadActorTextureAtlas() {
       actorTextureLoading = null;
       resolve(null);
     };
-    image.src = `/assets/mirrorlife-citizen-sprite.png${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
+    image.src = `/assets/mirrorlife-citizen-sprite.webp${ASSET_REVISION ? `?v=${encodeURIComponent(ASSET_REVISION)}` : ""}`;
   });
   return actorTextureLoading;
 }
@@ -11594,9 +11638,11 @@ function update(payload = {}) {
     return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
   }
   if (!ensureLayer()) return { ready: false, projections: [] };
+  const pipelineStartedAt = performance.now();
   if (!threeAssetsReady || !ensureEnhancedPipeline()) {
     return { ready: false, modelsReady: false, actorsReady: false, projections: [] };
   }
+  traceInteriorThreeStage("enhanced-pipeline-ready", pipelineStartedAt);
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
   resize(width, height);
@@ -11608,10 +11654,16 @@ function update(payload = {}) {
   );
   const needed = [...new Set(activeItems.filter((item) => item.renderModel !== false && !item.mobileProxy).map((item) => item.model))];
   needed.forEach(loadModel);
+  const roomStartedAt = performance.now();
   rebuildRoom(payload.theme || {});
+  traceInteriorThreeStage("full-room-ready", roomStartedAt);
+  const modelsStartedAt = performance.now();
   const modelsReady = rebuildModels(activeItems);
+  traceInteriorThreeStage("full-models-ready", modelsStartedAt);
   if (modelsReady) updateDynamicModels(payload.physics?.dynamics || []);
+  const actorsStartedAt = performance.now();
   const actorsReady = updateActors(payload.actors || [], performance.now());
+  traceInteriorThreeStage("full-actors-ready", actorsStartedAt);
   updateCamera(payload);
   updateDynamicWallDecorVisibility();
   updateCameraOcclusion(payload);
@@ -11619,6 +11671,69 @@ function update(payload = {}) {
 
   const visible = payload.visible !== false;
   const assetsReady = modelsReady && actorsReady;
+  const compileSignature = assetsReady
+    ? [
+        roomSignature,
+        itemSignature,
+        width <= 720 ? "mobile" : "desktop",
+        (payload.actors || [])
+          .map((actor) => `${actor.id}:${actor.civicRole || ""}:${actor.frame || 0}`)
+          .join("|")
+      ].join("::")
+    : "";
+  if (assetsReady && compileSignature !== sceneCompileSignature) {
+    sceneCompileSignature = compileSignature;
+    sceneCompileReady = false;
+    sceneCompileOwnerFingerprint = interiorSessionState.fingerprint;
+    interactiveShellRoot.visible = false;
+    roomRoot.visible = true;
+    modelRoot.visible = true;
+    actorRoot.visible = true;
+    const compileStartedAt = traceInteriorThreeStage("full-scene-compile-start");
+    const compileYaw = Math.atan2(
+      Math.sin(Number(payload.yaw || 0)),
+      Math.cos(Number(payload.yaw || 0))
+    );
+    sceneCompilePromise = (
+      lastWidth <= 720
+        && Math.abs(compileYaw) < 2.7
+        && typeof renderer.compileAsync === "function"
+        ? renderer.compileAsync(scene, camera)
+        : Promise.resolve()
+    ).then(() => {
+      if (sceneCompileSignature !== compileSignature) return;
+      sceneCompileReady = true;
+      traceInteriorThreeStage("full-scene-compile-ready", compileStartedAt);
+      window.markRenderActive?.(1200);
+    }).catch((error) => {
+      if (sceneCompileSignature !== compileSignature) return;
+      sceneCompileReady = true;
+      console.warn("MirrorLife parallel scene compile fell back to first render.", error);
+      window.markRenderActive?.(1200);
+    });
+  }
+  if (assetsReady && !sceneCompileReady) {
+    roomRoot.visible = false;
+    modelRoot.visible = false;
+    actorRoot.visible = false;
+    interactiveShellRoot.visible = true;
+    if (visible) renderer.render(scene, camera);
+    canvas.style.display = visible ? "block" : "none";
+    canvas.style.opacity = visible ? "1" : "0";
+    canvas.style.visibility = visible ? "visible" : "hidden";
+    canvas.dataset.sceneReady = "true";
+    return {
+      ready: false,
+      modelsReady: false,
+      actorsReady: false,
+      projections: [],
+      actorProjections: []
+    };
+  }
+  interactiveShellRoot.visible = false;
+  roomRoot.visible = true;
+  modelRoot.visible = true;
+  actorRoot.visible = true;
   const nextWarmupSignature = assetsReady
     ? [
       String(payload.theme?.zoneId || ""),
@@ -11662,8 +11777,10 @@ function update(payload = {}) {
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
   }
   if (visible) {
+    const renderStartedAt = performance.now();
     if (composer) composer.render();
     else renderer.render(scene, camera);
+    traceInteriorThreeStage("full-frame-rendered", renderStartedAt);
   }
   if (assetsReady && !ready) {
     sceneWarmupFrames += 1;
@@ -11756,7 +11873,11 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     : snapshotCameraPayload(snapshot, viewport);
   const width = Math.max(1, Math.round(payload.width || window.innerWidth));
   const height = Math.max(1, Math.round(payload.height || window.innerHeight));
-  if (width !== lastWidth || height !== lastHeight || roomSignature !== `interactive-shell:${snapshot.fingerprint}`) {
+  if (
+    width !== lastWidth
+    || height !== lastHeight
+    || interactiveShellSignature !== `interactive-shell:${snapshot.fingerprint}`
+  ) {
     // The interactive shell is intentionally rendered at a reduced internal
     // resolution. It is a real perspective WebGL scene, but does not make the
     // user's first input wait for the final HDR/GTAO render targets.
@@ -11769,38 +11890,61 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     camera.updateProjectionMatrix();
   }
   const shellSignature = `interactive-shell:${snapshot.fingerprint}`;
-  if (roomSignature !== shellSignature) {
-    roomSignature = shellSignature;
-    disposeOwnedGroup(roomRoot);
-    const wallColor = new THREE.Color(snapshot.theme?.wall || "#ded5c7");
-    const floorColor = new THREE.Color(snapshot.theme?.floor || "#96938e");
+  if (interactiveShellSignature !== shellSignature) {
+    interactiveShellSignature = shellSignature;
+    disposeOwnedGroup(interactiveShellRoot);
+    const theme = snapshot.theme || {};
+    const palette = resolveEnvironmentPalette(theme);
+    const { wallColor, floorColor } = palette;
+    const sceneColor = new THREE.Color(
+      theme.night
+        ? "#9da5a7"
+        : theme.zoneId === "public-plaza"
+          ? "#eee6dc"
+          : "#d9b98f"
+    );
+    scene.background = sceneColor;
+    renderer.setClearColor(sceneColor, 1);
+    // This is the same authored floor geometry and palette used by
+    // rebuildRoom(), not a semantic proxy. Physical surface maps and their
+    // final lighting shader remain deferred until the asset stage.
     const floor = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROOM_RADIUS * 2.6, ROOM_RADIUS * 2.6),
-      new THREE.MeshBasicMaterial({ color: floorColor })
+      theme.zoneId === "public-plaza"
+        ? new THREE.PlaneGeometry(ROOM_RADIUS * 3.18, ROOM_RADIUS * 3.18)
+        : new THREE.CircleGeometry(ROOM_RADIUS, 64),
+      new THREE.MeshBasicMaterial({
+        color: theme.zoneId === "public-plaza" ? "#96938e" : floorColor
+      })
     );
     floor.rotation.x = -Math.PI / 2;
     floor.position.y = 0;
-    roomRoot.add(floor);
+    floor.receiveShadow = true;
+    interactiveShellRoot.add(floor);
+    const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
     const wallMaterial = new THREE.MeshBasicMaterial({
-      color: wallColor,
-      side: THREE.DoubleSide
+      color: theme.zoneId === "public-plaza" ? "#ecddcb" : wallColor,
+      side: THREE.BackSide,
+      toneMapped: true
     });
-    const backWall = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROOM_RADIUS * 2.15, 3.4),
-      wallMaterial
-    );
-    backWall.position.set(0, 1.7, -ROOM_RADIUS * 0.82);
-    roomRoot.add(backWall);
-    const sideWall = new THREE.Mesh(
-      new THREE.PlaneGeometry(ROOM_RADIUS * 1.65, 3.4),
-      wallMaterial.clone()
-    );
-    sideWall.rotation.y = Math.PI / 2;
-    sideWall.position.set(-ROOM_RADIUS * 0.9, 1.7, -0.25);
-    roomRoot.add(sideWall);
-    scene.background = wallColor.clone().lerp(new THREE.Color("#f2ece4"), 0.38);
-    renderer.setClearColor(scene.background, 1);
+    if (theme.zoneId === "public-plaza") {
+      const fullRoomRoot = roomRoot;
+      roomRoot = interactiveShellRoot;
+      addCivicPortalWallShell(theme, wallHeight, wallMaterial);
+      roomRoot = fullRoomRoot;
+    } else {
+      const wall = new THREE.Mesh(
+        new THREE.CylinderGeometry(ROOM_RADIUS, ROOM_RADIUS, wallHeight, 64, 1, true),
+        wallMaterial
+      );
+      wall.position.y = wallHeight / 2;
+      wall.receiveShadow = true;
+      interactiveShellRoot.add(wall);
+    }
   }
+  interactiveShellRoot.visible = true;
+  roomRoot.visible = false;
+  modelRoot.visible = false;
+  actorRoot.visible = false;
   updateCamera(payload);
   const renderStartedAt = performance.now();
   renderer.render(scene, camera);
@@ -11837,6 +11981,7 @@ function stageShell(snapshot, viewport = {}) {
       fingerprint: snapshot.fingerprint,
       phase: "shell-loading",
       shellReady: false,
+      shellReadyAt: 0,
       assetsReady: false,
       actorContract: getSnapshotActorContract(snapshot),
       preloadPromise: null,
@@ -11854,7 +11999,7 @@ function stageShell(snapshot, viewport = {}) {
     };
   }
   const result = updateInteractiveShell(snapshot, viewport);
-  if (!interiorSessionState.preloadPromise) {
+  if (result.ready && !interiorSessionState.preloadPromise) {
     interiorSessionState.preloadPromise = loadThree()
       .then(() => beginSnapshotAssetPreload(snapshot))
       .catch((error) => {
@@ -11863,6 +12008,7 @@ function stageShell(snapshot, viewport = {}) {
   }
   if (result.ready) {
     interiorSessionState.shellReady = true;
+    interiorSessionState.shellReadyAt = performance.now();
     interiorSessionState.phase = "interactive";
     interiorSessionState.renderActive = true;
   }
@@ -11881,7 +12027,13 @@ function activate(snapshot, payload = {}) {
   if (!interiorSessionState.shellReady) {
     return { accepted: true, ready: false, phase: interiorSessionState.phase, projections: [] };
   }
-  if (!interiorSessionState.assetsReady) {
+  const shellGraceActive = performance.now() - Number(interiorSessionState.shellReadyAt || 0) < 900;
+  const anotherSessionCompiling = Boolean(
+    sceneCompilePromise
+    && !sceneCompileReady
+    && sceneCompileOwnerFingerprint !== snapshot.fingerprint
+  );
+  if (!interiorSessionState.assetsReady || shellGraceActive || anotherSessionCompiling) {
     const shellResult = updateInteractiveShell(snapshot, payload, payload);
     return {
       ...shellResult,
@@ -11936,25 +12088,42 @@ function resumeSession(snapshot) {
   ) return false;
   interiorSessionState.generation = snapshot.generation;
   interiorSessionState.actorContract = getSnapshotActorContract(snapshot);
-  interiorSessionState.phase = interiorSessionState.assetsReady ? "full-ready" : "interactive";
+  interiorSessionState.phase = interiorSessionState.assetsReady && sceneCompileReady
+    ? "full-ready"
+    : "interactive";
   interiorSessionState.renderActive = true;
   if (canvas) {
     canvas.style.display = "block";
     canvas.style.opacity = "1";
     canvas.style.visibility = "visible";
   }
-  if (roomRoot) roomRoot.visible = true;
-  if (modelRoot) modelRoot.visible = true;
-  if (actorRoot) actorRoot.visible = true;
+  const showFullScene = interiorSessionState.phase === "full-ready";
+  if (roomRoot) roomRoot.visible = showFullScene;
+  if (modelRoot) modelRoot.visible = showFullScene;
+  if (actorRoot) actorRoot.visible = showFullScene;
+  if (interactiveShellRoot) interactiveShellRoot.visible = !showFullScene;
   return true;
 }
 
 function disposeSession(sessionId) {
   if (!sessionId || sessionId !== interiorSessionState.sessionId) return false;
   if (interiorSessionState.phase === "disposed") return true;
-  updateActors([], performance.now());
-  activeItems = [];
-  rebuildModels(activeItems);
+  const disposeOwnedScene = () => {
+    updateActors([], performance.now());
+    activeItems = [];
+    rebuildModels(activeItems);
+  };
+  if (sceneCompilePromise && !sceneCompileReady) {
+    const disposedSessionId = sessionId;
+    sceneCompilePromise.finally(() => {
+      if (
+        interiorSessionState.phase === "disposed"
+        && interiorSessionState.sessionId === disposedSessionId
+      ) disposeOwnedScene();
+    });
+  } else {
+    disposeOwnedScene();
+  }
   hide();
   interiorSessionState.phase = "disposed";
   interiorSessionState.renderActive = false;
@@ -11984,6 +12153,7 @@ function hide() {
   sceneWarmupSignature = "";
   sceneWarmupFrames = 0;
   if (actorRoot) actorRoot.visible = false;
+  if (interactiveShellRoot) interactiveShellRoot.visible = false;
   if (physicsDebugRoot) physicsDebugRoot.visible = false;
   projectedItems.clear();
 }
@@ -12005,6 +12175,7 @@ function getSceneComplexity() {
   // Breaking their cost down per material name says exactly which authored
   // materials to fold together, instead of guessing from the GLB.
   const actorMaterialCalls = new Map();
+  const roomObjectCosts = new Map();
   scene?.traverseVisible?.((node) => {
     if (!node.isMesh || !node.geometry) return;
     const geometry = node.geometry;
@@ -12015,6 +12186,18 @@ function getSceneComplexity() {
     while (root?.parent && root.parent !== scene) root = root.parent;
     const layer = root === roomRoot ? "room" : root === modelRoot ? "models" : root === actorRoot ? "actors" : "other";
     drawCallsByLayer[layer] += materialCount;
+    if (layer === "room") {
+      let roomObject = node;
+      while (roomObject?.parent && roomObject.parent !== roomRoot) roomObject = roomObject.parent;
+      const key = String(roomObject?.name || node.name || "<unnamed-room-object>");
+      const cost = roomObjectCosts.get(key) || { drawCalls: 0, triangles: 0 };
+      cost.drawCalls += materialCount;
+      const roomIndexCount = Number(geometry.index?.count || 0);
+      const roomVertexCount = Number(geometry.attributes?.position?.count || 0);
+      cost.triangles += (roomIndexCount > 0 ? roomIndexCount / 3 : roomVertexCount / 3)
+        * Math.max(1, Number(node.count || 1));
+      roomObjectCosts.set(key, cost);
+    }
     if (layer === "actors") {
       // Runtime-merged batches get a fresh unnamed material, so a material-name
       // histogram collapses most of the layer into one "unnamed" bucket. Fall
@@ -12041,11 +12224,20 @@ function getSceneComplexity() {
   const actorMaterialBreakdown = Object.fromEntries(
     [...actorMaterialCalls.entries()].sort((a, b) => b[1] - a[1])
   );
+  const roomObjectBreakdown = Object.fromEntries(
+    [...roomObjectCosts.entries()]
+      .sort((a, b) => b[1].triangles - a[1].triangles)
+      .map(([key, value]) => [key, {
+        drawCalls: value.drawCalls,
+        triangles: Math.round(value.triangles)
+      }])
+  );
   return {
     drawCalls: Math.round(drawCalls),
     triangles: Math.round(triangles),
     drawCallsByLayer,
-    actorMaterialBreakdown
+    actorMaterialBreakdown,
+    roomObjectBreakdown
   };
 }
 
@@ -12303,6 +12495,7 @@ function getStats() {
     drawCalls: sceneComplexity?.drawCalls ?? Number(render.calls || 0),
     drawCallsByLayer: sceneComplexity?.drawCallsByLayer || null,
     actorMaterialBreakdown: sceneComplexity?.actorMaterialBreakdown || null,
+    roomObjectBreakdown: sceneComplexity?.roomObjectBreakdown || null,
     triangles: sceneComplexity?.triangles ?? Number(render.triangles || 0),
     geometries: Number(memory.geometries || 0),
     textures: Number(memory.textures || 0),

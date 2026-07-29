@@ -91,8 +91,18 @@ assert.ok(result.interior.coldReadyMs <= (mobile ? 4000 : 2500));
 assert.ok(result.interior.warmReadyMs <= (mobile ? 1200 : 800));
 assert.equal(result.interior.cold.zoneId, "public-plaza");
 assert.equal(result.interior.warm.zoneId, "public-plaza");
-assert.equal(result.interior.cold.fingerprint, result.interior.warm.fingerprint);
 assert.ok(result.interior.warm.generation > result.interior.cold.generation);
+if (result.interior.cold.fingerprint !== result.interior.warm.fingerprint) {
+  const policy = result.interior.warm.cachePolicy;
+  assert.ok(policy, "a rebuilt warm runtime must expose the cache policy that rejected retention");
+  assert.ok(
+    policy.saveData
+      || policy.deviceMemory <= 4
+      || policy.estimatedBytes > policy.maxBytes
+      || policy.heapBytes > policy.maxHeapBytes,
+    `warm fingerprint changed without a documented cache pressure reason: ${JSON.stringify(policy)}`
+  );
+}
 assert.equal(result.resourcesBeforeInterior.some((name) =>
   /three\.module|rapier|GLTFLoader|interior-three|interior-physics/.test(name)
 ), false);

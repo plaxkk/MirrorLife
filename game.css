@@ -2981,7 +2981,7 @@ body.splash-active .detail-panel {
   position: absolute;
   inset: -5%;
   display: block;
-  background-image: url("/assets/mirrorlife-avatar-sprite.png");
+  background-image: url("/assets/mirrorlife-avatar-sprite.webp");
   background-repeat: no-repeat;
   background-size: 300% 200%;
 }
@@ -6588,7 +6588,7 @@ body.counterfactual-active #interiorDiscoveryCard {
   border: 1px solid rgba(117, 223, 192, 0.74);
   border-radius: 50%;
   background-color: rgba(20, 28, 48, 0.86);
-  background-image: url("/assets/mirrorlife-citizen-sprite.png");
+  background-image: url("/assets/mirrorlife-citizen-sprite.webp");
   background-size: 400% 200%;
   background-position: var(--frame-x) var(--frame-y);
   box-shadow: 0 0 0 4px rgba(117, 223, 192, 0.08);

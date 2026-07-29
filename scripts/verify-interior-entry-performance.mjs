@@ -160,11 +160,15 @@ async function measureSample(profile, sample) {
     await page.setViewport(profile.viewport);
     page.on("pageerror", (error) => errors.push(`page: ${String(error?.message || error)}`));
     page.on("console", (message) => {
-      if (message.type() === "error" && !message.text().includes("/_vercel/insights/script.js")) {
+      const sourceUrl = String(message.location()?.url || "");
+      const isOptionalLocalInsightsMiss = message.text().includes("/_vercel/insights/script.js")
+        || sourceUrl.includes("/_vercel/insights/script.js");
+      if (message.type() === "error" && !isOptionalLocalInsightsMiss) {
         errors.push(`console: ${message.text()}`);
       }
     });
     await enterMap(page);
+    const mapHeapBytes = await page.evaluate(() => Number(performance.memory?.usedJSHeapSize || 0));
 
     await clickPublicPlaza(page, !!profile.viewport.hasTouch);
     const cold = await waitForInteractive(page);
@@ -181,7 +185,11 @@ async function measureSample(profile, sample) {
       policy: window.__mirrorLifeInteriorCachePolicy || null
     }));
     assert.equal(exitState.phase, "suspended",
-      `warm cache rejected after cold entry: ${JSON.stringify(exitState.policy)}`);
+      `warm cache rejected after cold entry: ${JSON.stringify({
+        ...exitState.policy,
+        mapHeapBytes,
+        interiorHeapDelta: Number(exitState.policy?.heapBytes || 0) - mapHeapBytes
+      })}`);
     await page.waitForFunction(() =>
       !!window.getMapBuildingInteractionPoint?.("public-plaza"), { timeout: 10_000 });
 
@@ -205,6 +213,7 @@ async function measureSample(profile, sample) {
       fingerprint: cold.fingerprint,
       generations: [cold.generation, warm.generation],
       transferBytes: warm.transferBytes,
+      mapHeapBytes,
       peakHeapBytes: Math.max(cold.heapBytes, warm.heapBytes),
       coldTimestamps: cold.timestamps,
       warmTimestamps: warm.timestamps,
