@@ -19,6 +19,10 @@ import {
   createInteriorEntryPhaseTracker,
   getInteriorResourcePlan
 } from "./interior-entry-plan.js";
+import {
+  getShellEdges,
+  normalizeRoomShell
+} from "./interior-room-shell.js";
 
 // Vite injects a deterministic SHA-256 over runtime/config inputs and every
 // shipped character asset, including public GLBs.
@@ -5807,6 +5811,11 @@ function addRoomArchitecture(theme, colors) {
   const variantOffset = (Number(theme.variant || 0) % 4) * (Math.PI / 18);
   const { accent, secondary, trim, wallColor, floorColor, night } = colors;
 
+  if (theme.zoneId === "primary-school" && Number(theme.layoutProfile?.version || 0) >= 3) {
+    addPrimarySchoolArchitectureV3(colors);
+    return;
+  }
+
   if (archetype === "care") {
     addWainscot("#d8f3eb", 1.16);
     addFloorPath("#dff7ff", 2.05, 4.9, -1.45, "#56cfe1");
@@ -6048,6 +6057,330 @@ function addRoomArchitecture(theme, colors) {
   homeRug.position.y = 0.024;
   roomRoot.add(homeRug);
   [variantOffset - 0.48, variantOffset + 0.48].forEach((angle) => addPendant(angle, 2.95, "#ffd166", 2.72));
+}
+
+function addPrimarySchoolArchitectureV3(colors) {
+  const registerForegroundComposition = (
+    object,
+    nearDistance = 3.2,
+    opacity = 0.04,
+    keepOpaqueYaw = null
+  ) => {
+    object.traverse((node) => {
+      if (!node.isMesh) return;
+      node.userData.cameraForegroundFade = true;
+      node.userData.cameraForegroundNearDistance = nearDistance;
+      node.userData.cameraForegroundOpacity = opacity;
+      if (Number.isFinite(keepOpaqueYaw)) {
+        node.userData.cameraForegroundKeepOpaqueYaw = keepOpaqueYaw;
+        node.userData.cameraForegroundKeepOpaqueArc = 0.72;
+        // Wall-mounted school landmarks must disappear together with the wall
+        // outside their authored face-on arc. A distance-only fade left
+        // noticeboards floating in space after the cutaway wall dissolved.
+        node.userData.cameraForegroundDirectionalFade = true;
+      }
+      cameraForegroundObjects.add(node);
+    });
+  };
+  const addFloorZone = (name, x, z, width, depth, color, opacity = 1) => {
+    const material = createToonMaterial(color, {
+      roughness: 0.82,
+      transparent: opacity < 1,
+      opacity,
+      depthWrite: opacity >= 1
+    });
+    const zone = new THREE.Mesh(
+      new RoundedBoxGeometry(width, 0.035, depth, 2, 0.12),
+      material
+    );
+    zone.name = name;
+    zone.position.set(x, 0.026, z);
+    zone.receiveShadow = true;
+    roomRoot.add(zone);
+  };
+
+  addFloorZone("primary-school-entry-inlay", -3.55, 3.55, 2.65, 2.35, "#f6d77a", 0.92);
+  addFloorZone("primary-school-shared-study-rug", 0.05, -0.25, 5.35, 3.15, "#b9ded5", 0.96);
+  addFloorZone("primary-school-reading-rug", -4.62, -2.78, 2.8, 3.15, "#c8d9ef", 0.94);
+
+  const wallZ = -5.11;
+  const windowGroup = new THREE.Group();
+  windowGroup.name = "primary-school-daylight-window";
+  windowGroup.position.set(-2.65, 2.28, wallZ);
+  const windowFrame = new THREE.Mesh(
+    new RoundedBoxGeometry(2.55, 1.42, 0.14, 3, 0.08),
+    createToonMaterial(colors.trim, { roughness: 0.68, surface: "wood", bumpScale: 0.008 })
+  );
+  windowGroup.add(windowFrame);
+  const windowLight = new THREE.Mesh(
+    new RoundedBoxGeometry(2.25, 1.15, 0.06, 2, 0.05),
+    createToonMaterial(colors.night ? "#7d98bb" : "#bfe6ee", {
+      roughness: 0.45,
+      envMapIntensity: 0.72
+    })
+  );
+  windowLight.position.z = 0.09;
+  windowGroup.add(windowLight);
+  [-0.58, 0.58].forEach((x) => {
+    const mullion = new THREE.Mesh(
+      new THREE.BoxGeometry(0.055, 1.15, 0.08),
+      createToonMaterial("#f8efe1", { roughness: 0.82 })
+    );
+    mullion.position.set(x, 0, 0.14);
+    windowGroup.add(mullion);
+  });
+  const crossbar = new THREE.Mesh(
+    new THREE.BoxGeometry(2.25, 0.055, 0.08),
+    createToonMaterial("#f8efe1", { roughness: 0.82 })
+  );
+  crossbar.position.z = 0.14;
+  windowGroup.add(crossbar);
+  roomRoot.add(windowGroup);
+  registerForegroundComposition(windowGroup, 2.6, 0.04, 0);
+
+  const questionRail = new THREE.Mesh(
+    new RoundedBoxGeometry(3.1, 0.12, 0.12, 2, 0.035),
+    createToonMaterial(colors.trim, { roughness: 0.72, surface: "wood", bumpScale: 0.008 })
+  );
+  questionRail.name = "primary-school-question-rail";
+  questionRail.position.set(3.95, 1.38, wallZ + 0.02);
+  roomRoot.add(questionRail);
+  ["#f1c85b", "#70c7c0", "#6f9fd1", "#ed9164", "#f5efe5"].forEach((color, index) => {
+    const card = new THREE.Mesh(
+      new RoundedBoxGeometry(0.42, 0.62 + (index % 2) * 0.12, 0.055, 2, 0.025),
+      createToonMaterial(color, { roughness: 0.86 })
+    );
+    card.position.set(3.1 + index * 0.46, 1.78 + (index % 2) * 0.08, wallZ + 0.12);
+    card.rotation.z = (index % 2 ? 1 : -1) * 0.025;
+    roomRoot.add(card);
+  });
+
+  const entryWallX = -6.6;
+  const entryPanel = new THREE.Mesh(
+    new RoundedBoxGeometry(1.55, 1.05, 0.12, 3, 0.07),
+    createToonMaterial("#f7e5b1", { roughness: 0.9 })
+  );
+  entryPanel.name = "primary-school-entry-wayfinding";
+  entryPanel.position.set(entryWallX, 1.62, 3.3);
+  entryPanel.rotation.y = Math.PI / 2;
+  roomRoot.add(entryPanel);
+  registerForegroundComposition(entryPanel, 2.8, 0.04, -Math.PI / 2);
+
+  const leftWallDisplay = new THREE.Group();
+  leftWallDisplay.name = "primary-school-left-wall-memory-line";
+  leftWallDisplay.position.set(-6.6, 1.85, -0.55);
+  leftWallDisplay.rotation.y = Math.PI / 2;
+  const leftDisplayBacking = new THREE.Mesh(
+    new RoundedBoxGeometry(3.35, 1.18, 0.12, 3, 0.07),
+    createToonMaterial("#f4e6cf", { roughness: 0.9 })
+  );
+  leftWallDisplay.add(leftDisplayBacking);
+  ["#6f9fd1", "#70c7c0", "#f1c85b", "#ed9164"].forEach((color, index) => {
+    const sheet = new THREE.Mesh(
+      new RoundedBoxGeometry(0.54, 0.72 + (index % 2) * 0.12, 0.04, 2, 0.025),
+      createToonMaterial(color, { roughness: 0.86 })
+    );
+    sheet.position.set(-1.08 + index * 0.72, 0.02 + (index % 2) * 0.06, 0.09);
+    sheet.rotation.z = (index - 1.5) * 0.02;
+    leftWallDisplay.add(sheet);
+  });
+  roomRoot.add(leftWallDisplay);
+  registerForegroundComposition(leftWallDisplay, 2.8, 0.04, -Math.PI / 2);
+
+  const thresholdBench = new THREE.Mesh(
+    new RoundedBoxGeometry(2.35, 0.54, 0.48, 3, 0.08),
+    createToonMaterial("#d39a62", { roughness: 0.72, surface: "wood", bumpScale: 0.01 })
+  );
+  thresholdBench.name = "primary-school-threshold-bench";
+  thresholdBench.position.set(-5.2, 0.27, 4.72);
+  roomRoot.add(thresholdBench);
+  registerForegroundComposition(thresholdBench, 3.2, 0.04, Math.PI);
+
+  const entryDoor = new THREE.Group();
+  entryDoor.name = "primary-school-entry-door";
+  entryDoor.position.set(-3.18, 1.35, 5.12);
+  const doorFrame = new THREE.Mesh(
+    new RoundedBoxGeometry(1.72, 2.7, 0.16, 3, 0.08),
+    createToonMaterial("#8a5b3d", { roughness: 0.7, surface: "wood", bumpScale: 0.009 })
+  );
+  entryDoor.add(doorFrame);
+  const doorLeaf = new THREE.Mesh(
+    new RoundedBoxGeometry(1.46, 2.42, 0.08, 3, 0.06),
+    createToonMaterial("#e7bd69", { roughness: 0.76, surface: "wood", bumpScale: 0.008 })
+  );
+  doorLeaf.position.z = -0.1;
+  entryDoor.add(doorLeaf);
+  const doorWindow = new THREE.Mesh(
+    new RoundedBoxGeometry(0.82, 0.56, 0.04, 2, 0.05),
+    createToonMaterial(colors.night ? "#6782a4" : "#bfe6ee", { roughness: 0.48 })
+  );
+  doorWindow.position.set(0, 0.55, -0.15);
+  entryDoor.add(doorWindow);
+  const doorHandle = new THREE.Mesh(
+    new THREE.SphereGeometry(0.065, 12, 8),
+    createToonMaterial("#d79a44", { roughness: 0.42, metalness: 0.25 })
+  );
+  doorHandle.position.set(0.52, -0.18, -0.16);
+  entryDoor.add(doorHandle);
+  roomRoot.add(entryDoor);
+  registerForegroundComposition(entryDoor, 3.4, 0.04, Math.PI);
+
+  const entryCubbies = new THREE.Group();
+  entryCubbies.name = "primary-school-entry-cubbies";
+  entryCubbies.position.set(-0.72, 1.02, 5.1);
+  const cubbyBacking = new THREE.Mesh(
+    new RoundedBoxGeometry(2.15, 1.62, 0.14, 3, 0.06),
+    createToonMaterial("#d39a62", { roughness: 0.76, surface: "wood", bumpScale: 0.01 })
+  );
+  entryCubbies.add(cubbyBacking);
+  ["#6f9fd1", "#70c7c0", "#f1c85b", "#ed9164"].forEach((color, index) => {
+    const door = new THREE.Mesh(
+      new RoundedBoxGeometry(0.42, 0.58, 0.045, 2, 0.025),
+      createToonMaterial(color, { roughness: 0.82 })
+    );
+    door.position.set(-0.72 + (index % 2) * 0.92, 0.38 - Math.floor(index / 2) * 0.72, -0.1);
+    entryCubbies.add(door);
+  });
+  roomRoot.add(entryCubbies);
+  registerForegroundComposition(entryCubbies, 3.4, 0.04, Math.PI);
+
+  const returnWallBoard = new THREE.Group();
+  returnWallBoard.name = "primary-school-return-wall-board";
+  // Pull the board clear of the 16 cm structural wall. At the portrait
+  // quarter-turn the previous centre sat inside the wall depth, so the entire
+  // authored landmark failed depth testing and left a featureless full-screen
+  // plaster plane.
+  returnWallBoard.position.set(1.96, 1.95, 3.25);
+  returnWallBoard.rotation.y = -Math.PI / 2;
+  const returnBacking = new THREE.Mesh(
+    new RoundedBoxGeometry(2.9, 1.42, 0.12, 3, 0.07),
+    createToonMaterial("#d5e8e3", { roughness: 0.88 })
+  );
+  returnWallBoard.add(returnBacking);
+  for (let index = 0; index < 5; index += 1) {
+    const line = new THREE.Mesh(
+      new RoundedBoxGeometry(2.02 - index * 0.2, 0.07, 0.035, 2, 0.02),
+      createToonMaterial(index % 2 ? "#70c7c0" : "#6f9fd1", { roughness: 0.8 })
+    );
+    line.position.set(-0.22 + index * 0.05, 0.38 - index * 0.18, 0.09);
+    returnWallBoard.add(line);
+  }
+  roomRoot.add(returnWallBoard);
+  registerForegroundComposition(returnWallBoard, 3.4, 0.04, Math.PI / 2);
+
+  const lowDivider = new THREE.Mesh(
+    new RoundedBoxGeometry(0.18, 0.62, 2.1, 2, 0.055),
+    createToonMaterial("#d9b383", { roughness: 0.78, surface: "wood", bumpScale: 0.01 })
+  );
+  lowDivider.name = "primary-school-learning-nook-divider";
+  lowDivider.position.set(2.08, 0.31, 3.85);
+  lowDivider.userData.cameraForegroundFade = true;
+  lowDivider.userData.cameraForegroundNearDistance = 1.5;
+  lowDivider.userData.cameraForegroundOpacity = 0.1;
+  cameraForegroundObjects.add(lowDivider);
+  roomRoot.add(lowDivider);
+}
+
+function createPolygonFloorGeometry(shell) {
+  const shape = new THREE.Shape();
+  shell.vertices.forEach((point, index) => {
+    const method = index === 0 ? "moveTo" : "lineTo";
+    shape[method](point.x, -point.z);
+  });
+  shape.closePath();
+  return new THREE.ShapeGeometry(shape);
+}
+
+function addPolygonWallShell(shell, wallMaterial, targetRoot, options = {}) {
+  const signedArea = shell.vertices.reduce((sum, point, index, vertices) => {
+    const next = vertices[(index + 1) % vertices.length];
+    return sum + point.x * next.z - next.x * point.z;
+  }, 0) / 2;
+  const windingSign = signedArea >= 0 ? 1 : -1;
+  getShellEdges(shell).forEach(({ start, end }, index) => {
+    const dx = end.x - start.x;
+    const dz = end.z - start.z;
+    const length = Math.hypot(dx, dz);
+    const interiorNormalX = -dz / Math.max(0.001, length) * windingSign;
+    const interiorNormalZ = dx / Math.max(0.001, length) * windingSign;
+    const material = options.cloneMaterial === false ? wallMaterial : wallMaterial.clone();
+    const wall = new THREE.Mesh(
+      new THREE.BoxGeometry(length + 0.04, shell.height, 0.16),
+      material
+    );
+    wall.name = `room-shell-v3-wall-${index}`;
+    wall.position.set((start.x + end.x) / 2, shell.height / 2, (start.z + end.z) / 2);
+    wall.rotation.y = -Math.atan2(dz, dx);
+    wall.receiveShadow = true;
+    wall.userData.cameraForegroundFade = true;
+    wall.userData.cameraForegroundNearDistance = 1.35;
+    wall.userData.cameraForegroundOpacity = 0.045;
+    wall.userData.cameraForegroundInteriorNormalX = interiorNormalX;
+    wall.userData.cameraForegroundInteriorNormalZ = interiorNormalZ;
+    targetRoot.add(wall);
+    if (targetRoot === roomRoot) cameraForegroundObjects.add(wall);
+
+    const baseboard = new THREE.Mesh(
+      new THREE.BoxGeometry(length + 0.06, 0.12, 0.08),
+      createToonMaterial("#8a5b3d", { roughness: 0.72, surface: "wood", bumpScale: 0.006 })
+    );
+    baseboard.name = `room-shell-v3-baseboard-${index}`;
+    baseboard.position.set((start.x + end.x) / 2, 0.12, (start.z + end.z) / 2);
+    baseboard.rotation.y = wall.rotation.y;
+    baseboard.userData.cameraForegroundFade = true;
+    baseboard.userData.cameraForegroundNearDistance = 1.35;
+    baseboard.userData.cameraForegroundOpacity = 0.04;
+    baseboard.userData.cameraForegroundInteriorNormalX = interiorNormalX;
+    baseboard.userData.cameraForegroundInteriorNormalZ = interiorNormalZ;
+    targetRoot.add(baseboard);
+    if (targetRoot === roomRoot) cameraForegroundObjects.add(baseboard);
+
+    // The concave return wall is the dominant far plane in the portrait
+    // quarter-turn. Give it an architectural learning panel at shell level so
+    // it survives material consolidation and never falls behind the wall's
+    // depth buffer like a loosely placed prop.
+    if (index === 3 && targetRoot === roomRoot) {
+      const learningPanel = new THREE.Mesh(
+        new RoundedBoxGeometry(Math.max(2.4, length - 0.72), 1.46, 0.075, 3, 0.07),
+        createToonMaterial("#d5e8e3", { roughness: 0.88 })
+      );
+      learningPanel.name = "room-shell-v3-learning-panel";
+      learningPanel.position.set(
+        (start.x + end.x) / 2 + interiorNormalX * 0.22,
+        2.05,
+        (start.z + end.z) / 2 + interiorNormalZ * 0.22
+      );
+      learningPanel.rotation.y = wall.rotation.y;
+      learningPanel.userData.cameraForegroundFade = true;
+      learningPanel.userData.cameraForegroundNearDistance = 1.35;
+      learningPanel.userData.cameraForegroundOpacity = 0.04;
+      learningPanel.userData.cameraForegroundInteriorNormalX = interiorNormalX;
+      learningPanel.userData.cameraForegroundInteriorNormalZ = interiorNormalZ;
+      targetRoot.add(learningPanel);
+      cameraForegroundObjects.add(learningPanel);
+      ["#6f9fd1", "#70c7c0", "#f1c85b", "#ed9164"].forEach((color, noteIndex) => {
+        const note = new THREE.Mesh(
+          new RoundedBoxGeometry(0.46, 0.62 - (noteIndex % 2) * 0.08, 0.035, 2, 0.025),
+          createToonMaterial(color, { roughness: 0.86 })
+        );
+        note.name = `room-shell-v3-learning-note-${noteIndex}`;
+        note.position.set(
+          learningPanel.position.x + interiorNormalX * 0.065,
+          2.05 + (noteIndex % 2 ? 0.12 : -0.04),
+          learningPanel.position.z - 1.02 + noteIndex * 0.68
+        );
+        note.rotation.y = wall.rotation.y;
+        note.rotation.z = (noteIndex - 1.5) * 0.018;
+        note.userData.cameraForegroundFade = true;
+        note.userData.cameraForegroundNearDistance = 1.35;
+        note.userData.cameraForegroundOpacity = 0.04;
+        note.userData.cameraForegroundInteriorNormalX = interiorNormalX;
+        note.userData.cameraForegroundInteriorNormalZ = interiorNormalZ;
+        targetRoot.add(note);
+        cameraForegroundObjects.add(note);
+      });
+    }
+  });
 }
 
 function addZoneLayoutArchitecture(theme, colors) {
@@ -6605,11 +6938,19 @@ function rebuildRoom(theme = {}) {
 
   const palette = resolveEnvironmentPalette(theme);
   const { night, wallColor, floorColor, accent, secondary, trim } = palette;
+  const roomShell = normalizeRoomShell(theme.layoutProfile?.shell || {
+    shape: "circle",
+    radius: ROOM_RADIUS,
+    height: ROOM_HEIGHT
+  });
+  const polygonShell = Number(theme.layoutProfile?.version || 0) >= 3 && roomShell.shape === "polygon";
   scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
 
   const floor = new THREE.Mesh(
-    theme.zoneId === "public-plaza"
+    polygonShell
+      ? createPolygonFloorGeometry(roomShell)
+      : theme.zoneId === "public-plaza"
       // Overscan the visual terrazzo beneath the navigation shell. The
       // quarter-orbit camera dissolves its near wall, so a floor that stopped
       // exactly at the playable bounds exposed clear-colour wedges along the
@@ -6647,9 +6988,97 @@ function rebuildRoom(theme = {}) {
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
+  if (polygonShell) {
+    const visualFoundation = new THREE.Mesh(
+      new THREE.PlaneGeometry(roomShell.width * 2.7, roomShell.depth * 2.7),
+      createToonMaterial(floorColor, {
+        roughness: 0.94,
+        surface: "terrazzo",
+        bumpScale: 0.01,
+        envMapIntensity: 0.38
+      })
+    );
+    visualFoundation.name = "room-shell-v3-visual-foundation";
+    visualFoundation.rotation.x = -Math.PI / 2;
+    visualFoundation.position.y = -0.045;
+    visualFoundation.receiveShadow = false;
+    roomRoot.add(visualFoundation);
+
+    // Pixels beyond the cutaway are an authored school circulation zone, not
+    // an unbounded copy of the classroom floor. These underlays stay beneath
+    // the playable polygon, so they only appear where an orbit looks past an
+    // open wall and give the exterior a legible door-hall/cross-hall edge.
+    const exteriorHallMaterial = createToonMaterial("#d8c9ad", {
+      roughness: 0.96,
+      surface: "terrazzo",
+      bumpScale: 0.006,
+      envMapIntensity: 0.3
+    });
+    const addExteriorHall = (name, width, depth, x, z, material = exteriorHallMaterial) => {
+      const hall = new THREE.Mesh(new THREE.PlaneGeometry(width, depth), material);
+      hall.name = name;
+      hall.rotation.x = -Math.PI / 2;
+      hall.position.set(x, -0.034, z);
+      hall.receiveShadow = false;
+      roomRoot.add(hall);
+    };
+    addExteriorHall(
+      "primary-school-exterior-door-hall",
+      roomShell.width * 2.45,
+      2.55,
+      0,
+      4.35
+    );
+    addExteriorHall(
+      "primary-school-exterior-cross-hall",
+      2.45,
+      roomShell.depth * 2.45,
+      5.15,
+      0
+    );
+    addExteriorHall(
+      "primary-school-exterior-left-hall",
+      2.45,
+      roomShell.depth * 2.45,
+      -5.55,
+      0
+    );
+    const hallLineMaterial = createToonMaterial("#b79e79", {
+      roughness: 0.9,
+      transparent: true,
+      opacity: 0.72,
+      depthWrite: false
+    });
+    [-1, 1].forEach((side) => {
+      addExteriorHall(
+        `primary-school-exterior-door-hall-line-${side}`,
+        roomShell.width * 2.45,
+        0.07,
+        0,
+        4.35 + side * 1.02,
+        hallLineMaterial
+      );
+      addExteriorHall(
+        `primary-school-exterior-cross-hall-line-${side}`,
+        0.07,
+        roomShell.depth * 2.45,
+        5.15 + side * 0.96,
+        0,
+        hallLineMaterial
+      );
+      addExteriorHall(
+        `primary-school-exterior-left-hall-line-${side}`,
+        0.07,
+        roomShell.depth * 2.45,
+        -5.55 + side * 0.96,
+        0,
+        hallLineMaterial
+      );
+    });
+  }
   roomRoot.add(floor);
 
-  if (!INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
+  if (!polygonShell && !INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     const rug = new THREE.Mesh(
       new THREE.CircleGeometry(1.65, 48),
       createToonMaterial(night ? secondary : "#fff0a8")
@@ -6660,7 +7089,7 @@ function rebuildRoom(theme = {}) {
     roomRoot.add(rug);
   }
 
-  const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
+  const wallHeight = polygonShell ? roomShell.height : theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
   const wallMaterial = createToonMaterial(theme.zoneId === "public-plaza" ? "#ecddcb" : wallColor, {
     side: THREE.BackSide,
     roughness: theme.zoneId === "public-plaza" ? 0.9 : 0.94,
@@ -6668,7 +7097,9 @@ function rebuildRoom(theme = {}) {
     bumpScale: theme.zoneId === "public-plaza" ? 0.009 : 0.014,
     envMapIntensity: theme.zoneId === "public-plaza" ? 0.42 : 0.54
   });
-  if (theme.zoneId === "public-plaza") {
+  if (polygonShell) {
+    addPolygonWallShell(roomShell, wallMaterial, roomRoot);
+  } else if (theme.zoneId === "public-plaza") {
     addCivicPortalWallShell(theme, wallHeight, wallMaterial);
   } else {
     const wall = new THREE.Mesh(
@@ -6680,7 +7111,7 @@ function rebuildRoom(theme = {}) {
     roomRoot.add(wall);
   }
 
-  if (theme.zoneId !== "public-plaza") {
+  if (!polygonShell && theme.zoneId !== "public-plaza") {
     const baseboard = new THREE.Mesh(
       new THREE.TorusGeometry(ROOM_RADIUS - 0.03, 0.055, 8, 64),
       createToonMaterial(trim, { roughness: 0.7, surface: "wood", bumpScale: 0.008 })
@@ -6726,7 +7157,7 @@ function rebuildRoom(theme = {}) {
     roomRoot.add(lowerCove);
   }
 
-  if (!INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
+  if (!polygonShell && !INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     for (let i = 0; i < 12; i += 1) {
       const angle = (i / 12) * Math.PI * 2;
       addWallPanel(angle, i % 3 === 0 ? "#bfe3f2" : accent, i % 3 === 0, i);
@@ -11744,6 +12175,16 @@ function updateCamera(payload = {}) {
   const safeArea = payload.cameraSafeArea || { x: 0, z: 0.2, radius: 2.1 };
   const zoneId = String(payload.theme?.zoneId || "");
   const cinematicCivic = zoneId === "public-plaza";
+  const architecturalSchool = zoneId === "primary-school"
+    && Number(payload.theme?.layoutProfile?.version || 0) >= 3;
+  const playerNarrativeDistance = Math.hypot(narrativeX - playerX, narrativeZ - playerZ);
+  // In portrait exploration the current guide can keep walking while the
+  // player pauses. Widen this room's lens progressively with their separation
+  // so a quarter-turn orbit keeps both bodies inside the usable viewport.
+  // Nearby conversations retain the more intimate authored framing.
+  const schoolPortraitSpread = architecturalSchool && portrait
+    ? THREE.MathUtils.clamp(playerNarrativeDistance - 1.8, 0, 3.4)
+    : 0;
   // The hero angle can stay intimate, but a constant close orbit made the
   // opposite witness become a cropped foreground wall at 180 degrees. Ease
   // back to the wider exploration lens only across the rear hemisphere so a
@@ -11764,7 +12205,9 @@ function updateCamera(payload = {}) {
     // visual weight, then widens through side/reverse arcs to retain the full
     // listening circle and prevent a near witness becoming a foreground wall.
     ? (portrait ? 60 : 45.2 + civicRearArc * 4.2 + civicSideArc * 1.4)
-    : (portrait ? 56 : 48);
+    : architecturalSchool
+      ? (portrait ? 57 + schoolPortraitSpread * 3.5 : 50)
+      : (portrait ? 56 : 48);
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
     camera.updateProjectionMatrix();
@@ -11817,7 +12260,9 @@ function updateCamera(payload = {}) {
   const playerFocusDz = targetPivotZ - playerZ;
   const playerFocusDistance = Math.hypot(playerFocusDx, playerFocusDz);
   const maxPlayerFocusOffset = portrait
-    ? 1.5
+    ? architecturalSchool
+      ? THREE.MathUtils.clamp(playerNarrativeDistance * 0.48, 1.5, 2.6)
+      : 1.5
     : cinematicCivic
       ? 1.08
       : 1.35;
@@ -11848,16 +12293,25 @@ function updateCamera(payload = {}) {
     // to read like the reference, while progressively restoring the wider
     // collision-safe exploration orbit through side and rear hemispheres.
     ? (portrait ? 7 : 5.28 + civicRearArc * 1.0 + civicSideArc * 1)
-    : (portrait ? 9.2 : 7.2);
+    : architecturalSchool
+      ? (portrait ? 6.8 + schoolPortraitSpread * 1.2 : 5.7)
+      : (portrait ? 9.2 : 7.2);
   const cameraHeight = cinematicCivic
     ? (portrait ? 4.12 : 3.16 + civicRearArc * 0.5 + civicSideArc * 0.22) + pitchOffset * 1.35
-    : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
-  const focusDistance = cinematicCivic ? 0.46 : 0.22;
+    : architecturalSchool
+      ? (portrait ? 3.75 : 3.12) + pitchOffset * 1.55
+      : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
+  const focusDistance = cinematicCivic ? 0.46 : architecturalSchool ? 0.34 : 0.22;
   // Keep the sightline below shoulder height so the extra elevation reveals
   // floor circulation without making the room read as an abstract strategy
   // board. Portrait keeps its navigation-first framing.
-  const focusHeight = (cinematicCivic ? (portrait ? 1.03 : 0.92) : 0.94)
-    + pitchOffset * (cinematicCivic ? 0.68 : 1.05);
+  const focusHeight = (
+    cinematicCivic
+      ? (portrait ? 1.03 : 0.92)
+      : architecturalSchool
+        ? (portrait ? 1.02 : 0.94)
+        : 0.94
+  ) + pitchOffset * (cinematicCivic ? 0.68 : architecturalSchool ? 0.82 : 1.05);
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
     Math.max(0.72, Math.min(1.28, focusHeight)),
@@ -12092,7 +12546,18 @@ function updateCameraOcclusion(payload = {}) {
         if (Math.abs(yawDelta) <= Number(object.userData?.cameraForegroundKeepOpaqueArc || 0.42)) return;
       }
       const nearDistance = Number(object.userData?.cameraForegroundNearDistance ?? 1.1);
-      if (surfaceDistance > nearDistance) return;
+      const interiorNormalX = Number(object.userData?.cameraForegroundInteriorNormalX);
+      const interiorNormalZ = Number(object.userData?.cameraForegroundInteriorNormalZ);
+      const exteriorCutaway = Number.isFinite(interiorNormalX) && Number.isFinite(interiorNormalZ)
+        && (
+          (camera.position.x - foregroundPosition.x) * interiorNormalX
+          + (camera.position.z - foregroundPosition.z) * interiorNormalZ
+        ) < 0.18;
+      if (
+        !object.userData?.cameraForegroundDirectionalFade
+        && !exteriorCutaway
+        && surfaceDistance > nearDistance
+      ) return;
       const targetOpacity = THREE.MathUtils.clamp(
         Number(object.userData?.cameraForegroundOpacity ?? 0.06),
         0.012,
@@ -12603,6 +13068,12 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     const theme = snapshot.theme || {};
     const palette = resolveEnvironmentPalette(theme);
     const { wallColor, floorColor } = palette;
+    const roomShell = normalizeRoomShell(theme.layoutProfile?.shell || {
+      shape: "circle",
+      radius: ROOM_RADIUS,
+      height: ROOM_HEIGHT
+    });
+    const polygonShell = Number(theme.layoutProfile?.version || 0) >= 3 && roomShell.shape === "polygon";
     const sceneColor = new THREE.Color(
       theme.night
         ? "#9da5a7"
@@ -12616,7 +13087,9 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     // rebuildRoom(), not a semantic proxy. Physical surface maps and their
     // final lighting shader remain deferred until the asset stage.
     const floor = new THREE.Mesh(
-      theme.zoneId === "public-plaza"
+      polygonShell
+        ? createPolygonFloorGeometry(roomShell)
+        : theme.zoneId === "public-plaza"
         ? new THREE.PlaneGeometry(ROOM_RADIUS * 3.18, ROOM_RADIUS * 3.18)
         : new THREE.CircleGeometry(ROOM_RADIUS, 64),
       new THREE.MeshBasicMaterial({
@@ -12627,13 +13100,15 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     floor.position.y = 0;
     floor.receiveShadow = true;
     interactiveShellRoot.add(floor);
-    const wallHeight = theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
+    const wallHeight = polygonShell ? roomShell.height : theme.zoneId === "public-plaza" ? ROOM_HEIGHT + 2.2 : ROOM_HEIGHT;
     const wallMaterial = new THREE.MeshBasicMaterial({
       color: theme.zoneId === "public-plaza" ? "#ecddcb" : wallColor,
       side: THREE.BackSide,
       toneMapped: true
     });
-    if (theme.zoneId === "public-plaza") {
+    if (polygonShell) {
+      addPolygonWallShell(roomShell, wallMaterial, interactiveShellRoot, { cloneMaterial: true });
+    } else if (theme.zoneId === "public-plaza") {
       const fullRoomRoot = roomRoot;
       roomRoot = interactiveShellRoot;
       addCivicPortalWallShell(theme, wallHeight, wallMaterial);
@@ -13261,6 +13736,20 @@ function getStats() {
     drawCallsByLayer: sceneComplexity?.drawCallsByLayer || null,
     actorMaterialBreakdown: sceneComplexity?.actorMaterialBreakdown || null,
     roomObjectBreakdown: sceneComplexity?.roomObjectBreakdown || null,
+    shellPlanes: [...cameraForegroundObjects]
+      .filter((object) => String(object?.name || "").startsWith("room-shell-v3-"))
+      .map((object) => {
+        const material = Array.isArray(object.material) ? object.material[0] : object.material;
+        const position = object.getWorldPosition(new THREE.Vector3());
+        return {
+          name: object.name,
+          x: Number(position.x.toFixed(3)),
+          z: Number(position.z.toFixed(3)),
+          opacity: Number((material?.opacity ?? 1).toFixed(3)),
+          interiorNormalX: Number(object.userData?.cameraForegroundInteriorNormalX || 0),
+          interiorNormalZ: Number(object.userData?.cameraForegroundInteriorNormalZ || 0)
+        };
+      }),
     triangles: sceneComplexity?.triangles ?? Number(render.triangles || 0),
     geometries: Number(memory.geometries || 0),
     textures: Number(memory.textures || 0),
