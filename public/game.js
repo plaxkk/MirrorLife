@@ -15688,8 +15688,10 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
     // Every interior room now casts the authored civic GLB masters instead of
     // reserving them for the plaza. The procedural blocky actors remain only
     // as an asset-failure fallback, so the cast players meet inside matches
-    // the identity art established by the flagship room.
-    civicRole: "player",
+    // the identity art established by the flagship room. On mobile the GLB
+    // cast is reserved for the plaza until the non-plaza skinning pipeline
+    // is stable on smaller GPUs.
+    civicRole: W > 720 || zone.id === "public-plaza" ? "player" : "",
     style: `frame-${getCitizenSpriteFrame(avatarCitizen)}:player`,
     scale: (avatarCitizen.avatarShape === "bold" ? 1.05 : avatarCitizen.avatarShape === "compact" ? 0.94 : 1) * civicActorScale
   };
@@ -15698,7 +15700,9 @@ function drawInteriorScene(ctx, W, H, now, t, society, isNight) {
   const qaCivicFrames = [4, 2, 3];
   const qaCivicRoles = ["listener", "facilitator", "mediator"];
   const actorPayload = [playerPayload, ...entries.map((entry, entryIndex) => {
-    const civicRole = qaCivicRoles[entryIndex % qaCivicRoles.length];
+    const civicRole = W > 720 || zone.id === "public-plaza"
+      ? qaCivicRoles[entryIndex % qaCivicRoles.length]
+      : "";
     const frame = isLocalInteriorSceneQaEnabled() && zone.id === "public-plaza"
       ? qaCivicFrames[entryIndex % qaCivicFrames.length]
       : entry.frame;
