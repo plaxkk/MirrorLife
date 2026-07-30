@@ -109,6 +109,48 @@ const CAMERA_COLLISION_RADIUS = 0.22;
 const CAMERA_PIVOT_PLAYER_WEIGHT = 0.65;
 const CAMERA_PIVOT_NARRATIVE_WEIGHT = 0.25;
 const CAMERA_PIVOT_PATH_WEIGHT = 0.1;
+// Data-driven camera grammar. Rooms resolve their lens from this table
+// instead of accreting zone ternaries inside updateCamera; tuples are
+// [landscape, portrait]. The default rig now shares the plaza's follow-the-
+// player orbit so every interior fills the frame like the flagship room,
+// instead of hovering outside the shell on a distant diorama pivot.
+const INTERIOR_CAMERA_PROFILES = Object.freeze({
+  "public-plaza": {
+    fov: [45.2, 60],
+    followDistance: [5.28, 7],
+    height: [3.16, 4.12],
+    pitchHeightGain: 1.35,
+    focusDistance: 0.46,
+    focusHeight: [0.92, 1.03],
+    pitchFocusGain: 0.68,
+    orbitPlayer: true
+  },
+  "primary-school": {
+    fov: [50, 57],
+    followDistance: [5.7, 6.8],
+    height: [3.12, 3.75],
+    pitchHeightGain: 1.55,
+    focusDistance: 0.34,
+    focusHeight: [0.94, 1.02],
+    pitchFocusGain: 0.82,
+    orbitPlayer: false
+  },
+  default: {
+    fov: [48, 56],
+    followDistance: [6.05, 7.9],
+    height: [3.3, 4.1],
+    pitchHeightGain: 1.8,
+    focusDistance: 0.3,
+    focusHeight: [0.94, 0.98],
+    pitchFocusGain: 0.95,
+    orbitPlayer: true
+  }
+});
+// Entering a room opens on a pulled-back establishing view of the whole
+// space, then dollies into the follow orbit over a few seconds — the same
+// arrival grammar open-world titles use when stepping through a doorway.
+const CAMERA_ESTABLISH_DURATION_MS = 3200;
+let cameraIntroStartAt = 0;
 const CIVIC_PORTAL_CONTRACT_VERSION = "mirrorlife-civic-portal-v3";
 const ATELIER_TOKENS = {
   ivory: "#f4e5cf",
@@ -6913,6 +6955,44 @@ function addExitPortal(theme, colors) {
   group.add(threshold);
 }
 
+// Any orbit angle that slips past an open wall used to hit the renderer's
+// flat clear colour, reading as a hollow void around the diorama. A soft
+// vertical-gradient dome plus matching distance fog turns that spill into
+// ambient studio atmosphere in every room, whatever the shell shape.
+function createInteriorBackdropDome(palette, backgroundColor) {
+  const canvas = document.createElement("canvas");
+  canvas.width = 2;
+  canvas.height = 256;
+  const ctx = canvas.getContext("2d");
+  const horizon = new THREE.Color(backgroundColor);
+  const upper = horizon.clone()
+    .lerp(new THREE.Color(palette.wallColor), 0.4)
+    .lerp(new THREE.Color("#ffffff"), 0.14);
+  const lower = horizon.clone()
+    .lerp(new THREE.Color(palette.floorColor), 0.55)
+    .multiplyScalar(0.84);
+  const gradient = ctx.createLinearGradient(0, 0, 0, canvas.height);
+  gradient.addColorStop(0, `#${upper.getHexString()}`);
+  gradient.addColorStop(0.52, `#${horizon.getHexString()}`);
+  gradient.addColorStop(1, `#${lower.getHexString()}`);
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  const dome = new THREE.Mesh(
+    new THREE.SphereGeometry(46, 24, 18),
+    new THREE.MeshBasicMaterial({
+      map: texture,
+      side: THREE.BackSide,
+      fog: false,
+      depthWrite: false
+    })
+  );
+  dome.name = "interior-backdrop-dome";
+  dome.renderOrder = -40;
+  return dome;
+}
+
 function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
   if (signature === roomSignature) return false;
@@ -6946,6 +7026,11 @@ function rebuildRoom(theme = {}) {
   const polygonShell = Number(theme.layoutProfile?.version || 0) >= 3 && roomShell.shape === "polygon";
   scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
+  roomRoot.add(createInteriorBackdropDome(palette, scene.background));
+  // Distance fog eases shell edges and exterior underlays into the backdrop
+  // gradient instead of cutting off against it. Interior content sits well
+  // inside the near plane, so the room itself stays crisp.
+  scene.fog = new THREE.Fog(scene.background.clone(), ROOM_RADIUS * 2.7, 44);
 
   const floor = new THREE.Mesh(
     polygonShell
@@ -6988,6 +7073,26 @@ function rebuildRoom(theme = {}) {
   );
   floor.rotation.x = -Math.PI / 2;
   floor.receiveShadow = true;
+  if (!polygonShell && theme.zoneId !== "public-plaza") {
+    // Generic rooms stopped their floor exactly at the playable circle, so
+    // any orbit past the dissolved near wall exposed raw backdrop under the
+    // furniture line. The same overscan cure the plaza and school received:
+    // a quiet foundation disc that reads as surrounding building slab.
+    const foundation = new THREE.Mesh(
+      new THREE.CircleGeometry(ROOM_RADIUS * 3.1, 48),
+      createToonMaterial(floorColor, {
+        roughness: 0.96,
+        surface: "terrazzo",
+        bumpScale: 0.008,
+        envMapIntensity: 0.32
+      })
+    );
+    foundation.name = "interior-generic-foundation";
+    foundation.rotation.x = -Math.PI / 2;
+    foundation.position.y = -0.045;
+    foundation.receiveShadow = false;
+    roomRoot.add(foundation);
+  }
   if (polygonShell) {
     const visualFoundation = new THREE.Mesh(
       new THREE.PlaneGeometry(roomShell.width * 2.7, roomShell.depth * 2.7),
@@ -9773,6 +9878,39 @@ function createProceduralActorObject(actor) {
   return entry;
 }
 
+// Rooms outside the flagship plaza re-dress the four authored civic masters
+// toward their own environment palette, so the same GLBs read as local
+// residents (school teachers, market keepers…) instead of plaza staff on
+// tour. Only garment fabrics shift — skin, hair and face identity stay the
+// authored portraits, and the player keeps their identity outfit everywhere.
+function applyCivicWardrobeTint(assetScene, role, zoneId) {
+  if (!assetScene || role === "player") return;
+  if (!zoneId || zoneId === "public-plaza") return;
+  const palette = INTERIOR_ZONE_ENVIRONMENT_STYLES[zoneId];
+  if (!palette) return;
+  const accent = new THREE.Color(palette.accent);
+  const secondary = new THREE.Color(palette.secondary);
+  const baseHSL = { h: 0, s: 0, l: 0 };
+  const tintedHSL = { h: 0, s: 0, l: 0 };
+  assetScene.traverse((node) => {
+    if (!node.isMesh || !node.material) return;
+    const materials = Array.isArray(node.material) ? node.material : [node.material];
+    materials.forEach((material) => {
+      if (!material?.color || !material.name) return;
+      const name = material.name.toLowerCase();
+      const isFabric = name.includes("fabric");
+      const isTrim = name.includes("trim textile");
+      if (!isFabric && !isTrim) return;
+      // Blend toward the zone colour but restore the authored lightness so
+      // the fabric shading (folds, weave highlights) survives the re-dress.
+      material.color.getHSL(baseHSL);
+      const tinted = material.color.clone().lerp(isTrim ? secondary : accent, isTrim ? 0.5 : 0.4);
+      tinted.getHSL(tintedHSL);
+      material.color.setHSL(tintedHSL.h, Math.max(tintedHSL.s, baseHSL.s * 0.72), baseHSL.l);
+    });
+  });
+}
+
 function cloneCivicActorScene(source) {
   // SkeletonUtils remaps bones for every citizen instance. A normal deep
   // clone leaves SkinnedMesh.skeleton pointing at the cached source bones,
@@ -10897,6 +11035,7 @@ function createCivicActorObject(actor, asset) {
   group.add(shadow);
 
   const assetScene = cloneCivicActorScene(asset);
+  applyCivicWardrobeTint(assetScene, role, cameraZoneId);
   const visual = assetScene.getObjectByName("VisualRoot");
   const headGroup = visual?.getObjectByName("HeadPivot");
   const leftArm = visual?.getObjectByName("LeftArmPivot");
@@ -11538,7 +11677,9 @@ function getActorStyleKey(actor, frame) {
   const style = resolveActorStyle(actor, frame);
   const role = String(actor.civicRole || "");
   const usesAsset = role && civicActorAssets.has(role) && !civicActorFailures.has(role);
-  return usesAsset ? `${frame}:${role}:civic-glb-v28` : `${frame}:${role || style.identity}:procedural`;
+  // Zone id participates in the key so the wardrobe tint rebuilds whenever
+  // the cast walks into a differently-dressed building.
+  return usesAsset ? `${frame}:${role}:${cameraZoneId || "zone"}:civic-glb-v28` : `${frame}:${role || style.identity}:procedural`;
 }
 
 function createActorObject(actor) {
@@ -12200,14 +12341,26 @@ function updateCamera(payload = {}) {
   const civicSideArc = cinematicCivic && !portrait
     ? Math.pow(Math.abs(Math.sin(yaw)), 1.5)
     : 0;
-  const targetFov = cinematicCivic
-    // The opening uses a slightly longer editorial lens so people carry more
-    // visual weight, then widens through side/reverse arcs to retain the full
-    // listening circle and prevent a near witness becoming a foreground wall.
-    ? (portrait ? 60 : 45.2 + civicRearArc * 4.2 + civicSideArc * 1.4)
+  const cameraProfile = cinematicCivic
+    ? INTERIOR_CAMERA_PROFILES["public-plaza"]
     : architecturalSchool
-      ? (portrait ? 57 + schoolPortraitSpread * 3.5 : 50)
-      : (portrait ? 56 : 48);
+      ? INTERIOR_CAMERA_PROFILES["primary-school"]
+      : INTERIOR_CAMERA_PROFILES.default;
+  const lensIndex = portrait ? 1 : 0;
+  const introNow = performance.now();
+  const zoneChanged = cameraZoneId !== zoneId;
+  if (zoneChanged) cameraIntroStartAt = introNow;
+  const establishing = 1 - THREE.MathUtils.smootherstep(
+    (introNow - cameraIntroStartAt) / CAMERA_ESTABLISH_DURATION_MS,
+    0,
+    1
+  );
+  const targetFov = cameraProfile.fov[lensIndex]
+    + (cinematicCivic && !portrait ? civicRearArc * 4.2 + civicSideArc * 1.4 : 0)
+    + (architecturalSchool && portrait ? schoolPortraitSpread * 3.5 : 0)
+    // Widen slightly during the establishing beat so the whole room reads
+    // before the lens settles into its follow framing.
+    + establishing * 4;
   if (Math.abs(camera.fov - targetFov) > 0.01) {
     camera.fov = targetFov;
     camera.updateProjectionMatrix();
@@ -12273,7 +12426,6 @@ function updateCamera(payload = {}) {
   const now = performance.now();
   const dt = Math.min(0.1, Math.max(1 / 240, (now - (cameraLastUpdateAt || now - 16)) / 1000));
   cameraLastUpdateAt = now;
-  const zoneChanged = cameraZoneId !== zoneId;
   if (zoneChanged) {
     cameraZoneId = zoneId;
     cameraPivotX = targetPivotX;
@@ -12288,37 +12440,37 @@ function updateCamera(payload = {}) {
   // composition shows the complete brass route, foreground desk, lounge and
   // cast in one frame; the previous low lens compressed those layers into a
   // crowded eye-level strip and hid the authored tabletop details.
-  const playerFollowDistance = cinematicCivic
-    // Pull the authored opening close enough for faces and garment silhouettes
-    // to read like the reference, while progressively restoring the wider
-    // collision-safe exploration orbit through side and rear hemispheres.
-    ? (portrait ? 7 : 5.28 + civicRearArc * 1.0 + civicSideArc * 1)
-    : architecturalSchool
-      ? (portrait ? 6.8 + schoolPortraitSpread * 1.2 : 5.7)
-      : (portrait ? 9.2 : 7.2);
-  const cameraHeight = cinematicCivic
-    ? (portrait ? 4.12 : 3.16 + civicRearArc * 0.5 + civicSideArc * 0.22) + pitchOffset * 1.35
-    : architecturalSchool
-      ? (portrait ? 3.75 : 3.12) + pitchOffset * 1.55
-      : (portrait ? 4.45 : 3.72) + pitchOffset * 2.05;
-  const focusDistance = cinematicCivic ? 0.46 : architecturalSchool ? 0.34 : 0.22;
+  const playerFollowDistance = (
+    cameraProfile.followDistance[lensIndex]
+      + (cinematicCivic && !portrait ? civicRearArc * 1.0 + civicSideArc * 1 : 0)
+      + (architecturalSchool && portrait ? schoolPortraitSpread * 1.2 : 0)
+  )
+    // The arrival beat pulls the rig back for a full-room establishing view,
+    // then eases into the follow orbit as the player takes control.
+    * (1 + establishing * 0.55);
+  const cameraHeight = (
+    cameraProfile.height[lensIndex]
+      + (cinematicCivic && !portrait ? civicRearArc * 0.5 + civicSideArc * 0.22 : 0)
+  )
+    * (1 + establishing * 0.42)
+    + pitchOffset * cameraProfile.pitchHeightGain;
+  const focusDistance = cameraProfile.focusDistance;
   // Keep the sightline below shoulder height so the extra elevation reveals
   // floor circulation without making the room read as an abstract strategy
   // board. Portrait keeps its navigation-first framing.
-  const focusHeight = (
-    cinematicCivic
-      ? (portrait ? 1.03 : 0.92)
-      : architecturalSchool
-        ? (portrait ? 1.02 : 0.94)
-        : 0.94
-  ) + pitchOffset * (cinematicCivic ? 0.68 : architecturalSchool ? 0.82 : 1.05);
+  const focusHeight = cameraProfile.focusHeight[lensIndex]
+    + pitchOffset * cameraProfile.pitchFocusGain;
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
     Math.max(0.72, Math.min(1.28, focusHeight)),
     cameraPivotZ + forwardZ * focusDistance
   );
-  const cameraOrbitX = cinematicCivic ? playerX : cameraPivotX;
-  const cameraOrbitZ = cinematicCivic ? playerZ : cameraPivotZ;
+  // During the establishing beat the orbit stays on the room's composed
+  // pivot for a stable overview, then hands off to the player for the
+  // open-world follow orbit.
+  const orbitPlayerBlend = cameraProfile.orbitPlayer ? 1 - establishing : 0;
+  const cameraOrbitX = THREE.MathUtils.lerp(cameraPivotX, playerX, orbitPlayerBlend);
+  const cameraOrbitZ = THREE.MathUtils.lerp(cameraPivotZ, playerZ, orbitPlayerBlend);
   const desiredPosition = new THREE.Vector3(
     cameraOrbitX - forwardX * playerFollowDistance,
     cameraHeight,
@@ -13083,6 +13235,11 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     );
     scene.background = sceneColor;
     renderer.setClearColor(sceneColor, 1);
+    // The very first interactive frame deserves the same atmosphere
+    // insurance as the full room: no raw clear-colour wedges while assets
+    // still stream in.
+    interactiveShellRoot.add(createInteriorBackdropDome(palette, sceneColor));
+    scene.fog = new THREE.Fog(sceneColor.clone(), ROOM_RADIUS * 2.7, 44);
     // This is the same authored floor geometry and palette used by
     // rebuildRoom(), not a semantic proxy. Physical surface maps and their
     // final lighting shader remain deferred until the asset stage.
