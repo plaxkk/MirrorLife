@@ -116,33 +116,38 @@ const CAMERA_PIVOT_PATH_WEIGHT = 0.1;
 // Genshin-style arrival where stepping through a doorway means the world
 // around you becomes the room, not a diorama hovering in empty space.
 const INTERIOR_CAMERA_PROFILES = Object.freeze({
+  // Portrait rigs sit farther back and focus a touch higher than landscape:
+  // at 390px wide the over-shoulder distance that feels intimate on desktop
+  // filled ~40% of the frame with the player's own back, hiding the room
+  // ahead. The pulled-back portrait distances keep the character an anchor
+  // (~25% of frame) while the room stays full-screen.
   "public-plaza": {
     fov: [58, 66],
-    followDistance: [3.1, 3.6],
-    height: [1.95, 2.1],
+    followDistance: [3.1, 4.2],
+    height: [1.95, 2.2],
     pitchHeightGain: 1.1,
     focusDistance: 0.42,
-    focusHeight: [1.38, 1.42],
+    focusHeight: [1.38, 1.5],
     pitchFocusGain: 0.55,
     orbitPlayer: true
   },
   "primary-school": {
     fov: [56, 64],
-    followDistance: [3.2, 3.5],
-    height: [1.9, 2.05],
+    followDistance: [3.2, 4.0],
+    height: [1.9, 2.15],
     pitchHeightGain: 1.25,
     focusDistance: 0.32,
-    focusHeight: [1.36, 1.4],
+    focusHeight: [1.36, 1.48],
     pitchFocusGain: 0.65,
     orbitPlayer: false
   },
   default: {
     fov: [55, 62],
-    followDistance: [3.3, 3.8],
-    height: [2.0, 2.15],
+    followDistance: [3.3, 4.3],
+    height: [2.0, 2.25],
     pitchHeightGain: 1.4,
     focusDistance: 0.28,
-    focusHeight: [1.35, 1.38],
+    focusHeight: [1.35, 1.5],
     pitchFocusGain: 0.75,
     orbitPlayer: true
   }
