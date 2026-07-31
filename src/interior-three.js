@@ -213,6 +213,12 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
 });
+// Per-preset colour grading for the cinematic pass. Values are deltas around
+// a neutral image: saturation/contrast nudge amounts, warmth shifts the white
+// balance (+ warm, − cool), liftColor/liftBase tint shadows and mids,
+// highlightTint pushes highs, shadowTint+shadowTintAmount recolour darkness
+// (the "film stock" of the room). public-plaza reproduces the original
+// hardcoded civic grade exactly.
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
@@ -233,8 +239,60 @@ const LIGHTING_PRESETS = Object.freeze({
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
+  // 灯火夜市: permanent warm-evening identity. 2900K lantern key, cool dusk
+  // fill, purple-dark shadows, string lights around the ring. The room must
+  // read as night at any game-clock hour — its name is the promise.
+  "night-lantern": {
+    key: 1.18, fill: 0.24, hemi: 0.3, bounce: 0.34, wash: 0.3, exposure: 0.74,
+    keyColor: "#ffb066", fillColor: "#5a7bb8",
+    hemiColor: "#4a4870", hemiGround: "#5a3a2e", envIntensity: 0.16,
+    sceneBackground: "#241d33",
+    stringLights: true,
+    grading: {
+      saturation: 0.06, contrast: 0.11, warmth: 0.85,
+      liftColor: [1.05, 0.94, 0.82], liftBase: 0.12,
+      highlightTint: [0.02, 0.01, -0.006],
+      shadowTint: [0.16, 0.11, 0.24], shadowTintAmount: 0.38
+    }
+  },
+  // 守夜病房: cool early-morning calm. Slightly desaturated, lifted airy
+  // shadows, cool highlights — quiet, clean, hopeful rather than clinical.
+  "dawn-care": {
+    key: 1.75, fill: 0.55, hemi: 0.58, bounce: 0.4, wash: 0.85, exposure: 0.9,
+    keyColor: "#eef3fb", fillColor: "#c9dbe8",
+    hemiColor: "#f4f8fa", hemiGround: "#6a6a62",
+    grading: {
+      saturation: 0.015, contrast: 0.045, warmth: -0.18,
+      liftColor: [0.97, 0.99, 1.03], liftBase: 0.18,
+      highlightTint: [-0.004, 0.002, 0.008],
+      shadowTint: [0.75, 0.82, 0.88], shadowTintAmount: 0.12
+    }
+  },
   default: { key: 1.92, fill: 0.42, hemi: 0.5, bounce: 0.5, wash: 0.82, exposure: 0.86, keyColor: "#ffe2be", fillColor: "#c6dce6" }
 });
+// Zones whose authored layout profile omits a lighting preset resolve here
+// before falling back to the neutral default. The preset is the room's
+// lighting identity, not a per-clock state.
+const ZONE_LIGHTING_PRESET_FALLBACK = Object.freeze({
+  "night-market": "night-lantern",
+  "maternity-hospital": "dawn-care"
+});
+// Baseline grade applied to every room so the whole game shares one film
+// stock; per-preset entries override per-field.
+const DEFAULT_GRADING = Object.freeze({
+  saturation: 0.025, contrast: 0.05, warmth: 0.05,
+  liftColor: [1.02, 0.995, 0.965], liftBase: 0.2,
+  highlightTint: [0.008, 0.004, -0.002],
+  shadowTint: [0.2, 0.16, 0.24], shadowTintAmount: 0
+});
+// The civic room keeps the exact editorial grade it was art-directed with.
+const CIVIC_GRADING = Object.freeze({
+  saturation: 0.032, contrast: 0.082, warmth: 0,
+  liftColor: [1.034, 0.992, 0.938], liftBase: 0.34,
+  highlightTint: [0.014, 0.006, -0.004],
+  shadowTint: [0.2, 0.16, 0.24], shadowTintAmount: 0
+});
+let activeGrading = { ...DEFAULT_GRADING };
 const REALTIME_SHADOW_ARCHETYPES = new Set(["public", "work", "justice", "nature", "creative", "memory"]);
 
 let interiorSessionState = {
@@ -816,11 +874,24 @@ function ensureEnhancedPipeline() {
     samples: 12
   });
   gtaoPass.enabled = false;
+  // The cinematic grade pass is the room's "film stock". Uniforms are pushed
+  // from `activeGrading` (resolved in applyLightingPreset) so every room can
+  // share one shader while keeping its own colour identity. Civic reproduces
+  // the original hardcoded editorial grade exactly; night-lantern layers warm
+  // white-balance and purple shadow tint; dawn-care lifts airy cool mids.
   cinematicGradePass = new ShaderPass({
     uniforms: {
       tDiffuse: { value: null },
       strength: { value: 1 },
-      texelSize: { value: new THREE.Vector2(1 / 1280, 1 / 720) }
+      texelSize: { value: new THREE.Vector2(1 / 1280, 1 / 720) },
+      uSaturation: { value: CIVIC_GRADING.saturation },
+      uContrast: { value: CIVIC_GRADING.contrast },
+      uWarmth: { value: CIVIC_GRADING.warmth },
+      uLiftColor: { value: new THREE.Vector3().fromArray(CIVIC_GRADING.liftColor) },
+      uLiftBase: { value: CIVIC_GRADING.liftBase },
+      uHighlightTint: { value: new THREE.Vector3().fromArray(CIVIC_GRADING.highlightTint) },
+      uShadowTint: { value: new THREE.Vector3().fromArray(CIVIC_GRADING.shadowTint) },
+      uShadowTintAmount: { value: CIVIC_GRADING.shadowTintAmount }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -833,26 +904,41 @@ function ensureEnhancedPipeline() {
       uniform sampler2D tDiffuse;
       uniform float strength;
       uniform vec2 texelSize;
+      uniform float uSaturation;
+      uniform float uContrast;
+      uniform float uWarmth;
+      uniform vec3 uLiftColor;
+      uniform float uLiftBase;
+      uniform vec3 uHighlightTint;
+      uniform vec3 uShadowTint;
+      uniform float uShadowTintAmount;
       varying vec2 vUv;
       void main() {
         vec4 texel = texture2D(tDiffuse, vUv);
         vec3 color = texel.rgb;
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-        // Keep the target's warm daylight without the yellow cast that made
-        // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
-        // carried by light and material response. Strength is an effect
-        // amount, not a direct saturation multiplier: the former expression
-        // accidentally removed 28% of mobile colour at 0.72.
-        color = mix(vec3(luma), color, 1.0 + 0.032 * strength);
-        // Preserve the photographed target's soft mid-tones. The stronger
-        // editorial S-curve made hair seams, trouser folds and timber edges
-        // read like black outlines even after the underlying materials were
-        // physically correct.
-        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.082 * strength) + vec3(0.54));
+        // Saturation: strength-modulated nudge around luma. The former
+        // expression accidentally removed 28% of mobile colour at 0.72, so
+        // strength is an effect amount, not a direct multiplier.
+        color = mix(vec3(luma), color, 1.0 + uSaturation * strength);
+        // Contrast: S-curve pivoted at 0.54 to preserve photographed
+        // mid-tones. Stronger curves made hair seams and timber edges read
+        // like black outlines even after materials were physically correct.
+        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + uContrast * strength) + vec3(0.54));
+        // White-balance warmth: +warm pushes R/G up and B down (lantern
+        // evening); -warm cools toward dawn. A small delta keeps skin and
+        // plaster from collapsing into one hue.
+        color = mix(color, color * vec3(1.0 + 0.08 * uWarmth, 1.0 + 0.02 * uWarmth, 1.0 - 0.10 * uWarmth), strength);
+        // Lift: tint shadows and mids by liftColor, gated by liftBase so the
+        // editorial grade keeps its authored warm Ivory midrange.
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
+        color *= mix(vec3(1.0), uLiftColor, (uLiftBase + shadowTone * 0.4) * strength);
+        // Shadow tint: explicit film-stock recolour of darkness. Civic sets
+        // amount 0 (no-op); night-lantern pushes purple dusk into shadows.
+        color = mix(color, color * uShadowTint, uShadowTintAmount * shadowTone * strength);
+        // Highlight tint: subtle cool/warm push on the upper luma band.
         float highlightTone = smoothstep(0.5, 0.92, luma);
-        color *= mix(vec3(1.0), vec3(1.034, 0.992, 0.938), (0.34 + shadowTone * 0.4) * strength);
-        color += vec3(0.014, 0.006, -0.004) * highlightTone * strength;
+        color += uHighlightTint * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -1919,8 +2005,38 @@ function resolveEnvironmentPalette(theme = {}) {
   };
 }
 
+function resolveLightingPreset(theme = {}) {
+  return LIGHTING_PRESETS[theme.layoutProfile?.lightingPreset]
+    || LIGHTING_PRESETS[ZONE_LIGHTING_PRESET_FALLBACK[theme.zoneId]]
+    || LIGHTING_PRESETS.default;
+}
+
+function commitGradingUniforms() {
+  if (!cinematicGradePass) return;
+  const uniforms = cinematicGradePass.uniforms;
+  const grade = activeGrading;
+  uniforms.uSaturation.value = grade.saturation;
+  uniforms.uContrast.value = grade.contrast;
+  uniforms.uWarmth.value = grade.warmth;
+  uniforms.uLiftColor.value.set(grade.liftColor[0], grade.liftColor[1], grade.liftColor[2]);
+  uniforms.uLiftBase.value = grade.liftBase;
+  uniforms.uHighlightTint.value.set(grade.highlightTint[0], grade.highlightTint[1], grade.highlightTint[2]);
+  uniforms.uShadowTint.value.set(grade.shadowTint[0], grade.shadowTint[1], grade.shadowTint[2]);
+  uniforms.uShadowTintAmount.value = grade.shadowTintAmount;
+}
+
+function resolveActiveGrading(theme, preset) {
+  // Civic keeps its exact art-directed editorial film stock. Other rooms
+  // layer the preset's grading deltas over the shared DEFAULT_GRADING
+  // baseline; rooms without a preset grade fall back to the baseline alone.
+  if (theme?.zoneId === "public-plaza") return { ...CIVIC_GRADING };
+  if (preset?.grading) return { ...DEFAULT_GRADING, ...preset.grading };
+  return { ...DEFAULT_GRADING };
+}
+
 function applyLightingPreset(theme = {}) {
-  const preset = LIGHTING_PRESETS[theme.layoutProfile?.lightingPreset] || LIGHTING_PRESETS.default;
+  const preset = resolveLightingPreset(theme);
+  activeGrading = resolveActiveGrading(theme, preset);
   if (keyLight) {
     keyLight.intensity = preset.key;
     keyLight.color.set(preset.keyColor);
@@ -1936,9 +2052,10 @@ function applyLightingPreset(theme = {}) {
     // Use a pale ceiling and muted terrazzo return for the civic room. The
     // earlier brown ground hemisphere multiplied the warm key into a sepia
     // wash; the source instead keeps shadowed plaster, skin and ivory cloth
-    // bright while retaining a clear daylight direction.
-    hemisphereLight.color.set(theme.zoneId === "public-plaza" ? "#fff8ed" : "#fff8eb");
-    hemisphereLight.groundColor.set(theme.zoneId === "public-plaza" ? "#a7b5a8" : "#6d5645");
+    // bright while retaining a clear daylight direction. Presets may now own
+    // the hemisphere outright (night-lantern dusk sky, dawn-care morning).
+    hemisphereLight.color.set(preset.hemiColor || (theme.zoneId === "public-plaza" ? "#fff8ed" : "#fff8eb"));
+    hemisphereLight.groundColor.set(preset.hemiGround || (theme.zoneId === "public-plaza" ? "#a7b5a8" : "#6d5645"));
   }
   if (warmBounceLight) {
     warmBounceLight.intensity = preset.bounce;
@@ -1974,8 +2091,21 @@ function applyLightingPreset(theme = {}) {
   // wrap, so these room-wide lights can preserve dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.54 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.4;
-  if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
+  // Mobile has no composer, so the data-driven ShaderPass cannot run. The
+  // preset's keyColor/fillColor/sceneBackground already carry the colour
+  // temperature; a small warmth→exposure nudge (warm dims, cool lifts) is the
+  // simplified mobile grade that keeps night-market reading as night without
+  // the full film-stock pass. Desktop ignores this nudge because the grade
+  // pass handles warmth as a white-balance shift instead.
+  const mobileWarmthExposure = lastWidth <= 720 ? 1 - activeGrading.warmth * 0.04 : 1;
+  if (renderer) renderer.toneMappingExposure = preset.exposure * mobileWarmthExposure;
+  // Presets may own the environment intensity outright (night-lantern drops
+  // it to 0.16 so the PMREM environment stops washing out the lantern key).
+  if (scene) {
+    scene.environmentIntensity = preset.envIntensity != null
+      ? preset.envIntensity
+      : (theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26);
+  }
   if (gtaoPass) {
     gtaoPass.blendIntensity = theme.zoneId === "public-plaza"
       ? (lastWidth <= 720 ? 0.76 : 0.9)
@@ -5545,6 +5675,380 @@ function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
   group.add(light);
 }
 
+// ── T4 environmental motion system ──────────────────────────────────────
+// A single time uniform drives every shader-injected animation so the whole
+// room breathes from one value, updated once per frame (zero per-element CPU
+// cost). Motion is injected via onBeforeCompile into existing materials, so
+// it animates geometry on the GPU without adding draw calls (DoD-2 "≥2 motion
+// elements per frame" met without touching the draw-call budget).
+const motionTimeUniform = { value: 0 };
+let motionStartTime = 0;
+function tickMotionTime() {
+  if (!motionStartTime) motionStartTime = performance.now();
+  motionTimeUniform.value = (performance.now() - motionStartTime) / 1000;
+}
+
+// Dust light shaft: an additive plane angled as a god-ray, with scrolling
+// vertical streaks that read as drifting motes. One shared ShaderMaterial
+// batches every shaft in a room into a single draw call regardless of count.
+// Additive blending + depthWrite=false keeps it cheap and order-independent.
+let dustShaftMaterial = null;
+function ensureDustShaftMaterial() {
+  if (dustShaftMaterial) return dustShaftMaterial;
+  dustShaftMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    fog: false,
+    uniforms: {
+      uTime: motionTimeUniform,
+      uColor: { value: new THREE.Color("#fff1cf") },
+      uOpacity: { value: 0.16 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        pos.x += sin(uTime * 0.5 + pos.y * 1.6) * 0.035;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      void main() {
+        float band = smoothstep(0.0, 0.5, vUv.x) * smoothstep(1.0, 0.5, vUv.x);
+        float streak = sin(vUv.y * 9.0 + uTime * 0.7) * 0.5 + 0.5;
+        streak = mix(0.55, 1.0, streak);
+        float verticalFade = smoothstep(0.0, 0.22, vUv.y) * smoothstep(1.0, 0.65, vUv.y);
+        gl_FragColor = vec4(uColor, band * streak * verticalFade * uOpacity);
+      }
+    `
+  });
+  return dustShaftMaterial;
+}
+
+// Place a dust shaft from an upper-wall origin toward the floor, oriented to
+// read as light pouring through a high window. Warm tint by default; night
+// rooms pass a cooler/dimmer color via the material's shared uniform.
+function addDustShaft(x, y, z, length = 2.6, width = 1.1, tilt = 0.32) {
+  const mat = ensureDustShaftMaterial();
+  const geo = new THREE.PlaneGeometry(width, length, 1, 5);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = Math.PI / 4;
+  mesh.rotation.z = tilt;
+  mesh.renderOrder = -1;
+  roomRoot.add(mesh);
+  return mesh;
+}
+
+// Curtain sway: injects a sin-based horizontal displacement into a standard
+// material's vertex shader. The curtain hangs from a top anchor (high y), so
+// sway weight grows toward the hem (low y) — the rod stays put, the fabric
+// flutters. Returns the same material so callers can chain configuration.
+function applyCurtainSway(material, options = {}) {
+  const amplitude = options.amplitude ?? 0.05;
+  const frequency = options.frequency ?? 1.1;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uMotionTime = motionTimeUniform;
+    shader.uniforms.uSwayAmp = { value: amplitude };
+    shader.uniforms.uSwayFreq = { value: frequency };
+    shader.vertexShader = "uniform float uMotionTime; uniform float uSwayAmp; uniform float uSwayFreq;\n" + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace(
+      "#include <begin_vertex>",
+      `#include <begin_vertex>
+       float swayWeight = clamp(-position.y * 0.45, 0.0, 1.0);
+       transformed.x += sin(uMotionTime * uSwayFreq + position.y * 1.8) * uSwayAmp * swayWeight;
+       transformed.z += cos(uMotionTime * uSwayFreq * 0.8 + position.y * 1.4) * uSwayAmp * 0.55 * swayWeight;`
+    );
+  };
+  material.customProgramCacheKey = () => "ml-curtain-sway";
+  return material;
+}
+
+// Pendant/lamp breathing: oscillates brightness in the fragment shader so a
+// bulb reads as a living flame rather than a static CG sphere. Standard
+// materials modulate emissive radiance; basic materials (the night-market
+// string-light bulbs) modulate diffuse colour. Either way no new geometry or
+// draw calls are introduced — the injection rides on the existing material.
+function applyPendantBreathing(material, options = {}) {
+  const amplitude = options.amplitude ?? 0.22;
+  const frequency = options.frequency ?? 0.85;
+  const isBasic = !!material.isMeshBasicMaterial;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uMotionTime = motionTimeUniform;
+    shader.uniforms.uBreathAmp = { value: amplitude };
+    shader.uniforms.uBreathFreq = { value: frequency };
+    shader.fragmentShader = "uniform float uMotionTime; uniform float uBreathAmp; uniform float uBreathFreq;\n" + shader.fragmentShader;
+    if (isBasic) {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+         diffuseColor.rgb *= 1.0 + sin(uMotionTime * uBreathFreq) * uBreathAmp;`
+      );
+    } else {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <emissivemap_fragment>",
+        `#include <emissivemap_fragment>
+         totalEmissiveRadiance *= 1.0 + sin(uMotionTime * uBreathFreq) * uBreathAmp;`
+      );
+    }
+  };
+  material.customProgramCacheKey = () => "ml-pendant-breath";
+  return material;
+}
+
+// Per-room motion dressing. Adds 3-5 shader-driven motion elements so every
+// room satisfies DoD-2 (≥2 motion elements per frame) the moment the player
+// walks in, without adding draw calls. Configured by zoneId so each room gets
+// motion that matches its identity (dust in daylit rooms, breathing bulbs in
+// night rooms, curtains in residential/office).
+function addEnvironmentalMotion(theme, colors, mobileLod = false) {
+  const zoneId = theme.zoneId;
+  const night = !!theme.night;
+  // Skip on low-end mobile to protect the frame budget (roadmap risk 2: M2
+  // content uses the lastWidth<=720 de-grade strategy — motion is retained
+  // but dust shafts drop to one and curtains stay, since they are shader-
+  // cheap; only the densest rooms reduce).
+  const motionLod = mobileLod;
+
+  // Dust shafts: warm in daylit rooms, faint cool in night rooms. Placed
+  // near two wall azimuths so the player sees drifting motes on orbit.
+  const dustColor = night ? "#9a8fb4" : "#fff1cf";
+  const dustOpacity = night ? 0.1 : 0.16;
+  const shaftMat = ensureDustShaftMaterial();
+  shaftMat.uniforms.uColor.value.set(dustColor);
+  shaftMat.uniforms.uOpacity.value = dustOpacity;
+  const shaftCount = motionLod ? 1 : 2;
+  for (let i = 0; i < shaftCount; i += 1) {
+    const angle = i === 0 ? 0.9 : -1.4;
+    const x = Math.sin(angle) * (ROOM_RADIUS - 0.6);
+    const z = -Math.cos(angle) * (ROOM_RADIUS - 0.6);
+    addDustShaft(x, 1.7, z, 2.7, 1.0, i === 0 ? 0.3 : -0.26);
+  }
+
+  // Curtains: two fabric planes flanking a wall, vertex-animated. Residential
+  // and office read as "someone lives/works here" with curtains; other rooms
+  // get them in the accent color so the sway is present without a window.
+  const curtainZones = new Set(["residential", "office-district", "primary-school", "public-plaza"]);
+  if (curtainZones.has(zoneId)) {
+    const curtainColor = zoneId === "public-plaza" ? colors.accent : colors.secondary;
+    const curtainMat = applyCurtainSway(new THREE.MeshStandardMaterial({
+      color: new THREE.Color(curtainColor),
+      roughness: 0.88,
+      metalness: 0.0,
+      side: THREE.DoubleSide,
+      emissive: new THREE.Color(curtainColor).multiplyScalar(0.04),
+      emissiveIntensity: 0.3
+    }), { amplitude: 0.045, frequency: 1.0 });
+    [-0.9, 0.9].forEach((offset) => {
+      const angle = -2.2;
+      const x = Math.sin(angle) * (ROOM_RADIUS - 0.18) + offset * 0.4;
+      const z = -Math.cos(angle) * (ROOM_RADIUS - 0.18);
+      const curtain = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 1.8, 1, 6), curtainMat);
+      curtain.position.set(x, 1.35, z);
+      curtain.rotation.y = angle + Math.PI / 2;
+      roomRoot.add(curtain);
+    });
+  }
+
+  // Pendant breathing for night-market bulbs is applied inside
+  // addNightMarketStringLights (where the shared bulb material lives), so
+  // nothing to do here — the dust shafts above already carry the night tint.
+}
+
+// ── T5 mini-props generator + InstancedMesh ─────────────────────────────
+// Low-poly procedural props (potted plants, book stacks, cups, notes) that
+// add content density to otherwise empty surfaces and corners. Each prop is
+// <100 triangles. Repeated props share one InstancedMesh per type so N props
+// cost 1 draw call (DoD-6 budget relief: plaza 134→target ≤110). InstancedMesh
+// is added AFTER mergeRoomArchitectureMeshes because the merge step traverses
+// isMesh nodes and would bake the instance base geometry into a static batch,
+// destroying the instancing.
+const MINI_PROP_PALETTE = ["#c94f3a", "#3a6ec9", "#e0a93a", "#3aa56e", "#8a5f8f"];
+
+function buildMiniPropGeometries() {
+  // Potted plant: a terracotta pot + a foliage sphere. ~48 triangles.
+  // Returned as a merged geometry so a single InstancedMesh draws both parts.
+  const pot = new THREE.CylinderGeometry(0.07, 0.055, 0.09, 10, 1);
+  pot.translate(0, 0.045, 0);
+  const foliage = new THREE.IcosahedronGeometry(0.12, 0);
+  foliage.translate(0, 0.16, 0);
+  // Book stack: three flat boxes of decreasing size. ~36 triangles.
+  const bookA = new THREE.BoxGeometry(0.18, 0.028, 0.13);
+  bookA.translate(0, 0.014, 0);
+  const bookB = new THREE.BoxGeometry(0.16, 0.026, 0.12);
+  bookB.translate(0, 0.04, 0.001);
+  const bookC = new THREE.BoxGeometry(0.17, 0.024, 0.125);
+  bookC.translate(0, 0.064, -0.002);
+  // Cup: a short open cylinder. ~30 triangles.
+  const cup = new THREE.CylinderGeometry(0.045, 0.038, 0.085, 12, 1, true);
+  cup.translate(0, 0.043, 0);
+  return { pot, foliage, bookA, bookB, bookC, cup };
+}
+
+function addMiniProps(theme, colors, mobileLod = false) {
+  const profile = theme.layoutProfile;
+  if (!profile) return;
+  // Surface height for clustered tabletop props. Most interactive furniture
+  // (counter/desk/table) sits around 0.46-0.5; using 0.48 reads as "on a
+  // table" without requiring the per-prop model lookup that lives in game.js.
+  const surfaceY = 0.48;
+  const geos = buildMiniPropGeometries();
+  const dummy = new THREE.Object3D();
+  const color = new THREE.Color();
+
+  // ── Potted plants at room perimeter corners (floor, y=0). Plants read
+  // naturally on the floor and soften the wall-to-floor seam. 4 on desktop,
+  // 2 on mobile.
+  const plantPositions = [];
+  const plantCount = mobileLod ? 2 : 4;
+  for (let i = 0; i < plantCount; i += 1) {
+    const angle = (i / plantCount) * Math.PI * 2 + 0.4;
+    const r = ROOM_RADIUS - 0.35;
+    plantPositions.push({
+      x: Math.sin(angle) * r,
+      z: -Math.cos(angle) * r,
+      rot: angle + Math.PI / 2,
+      scale: 0.85 + (i % 2) * 0.2
+    });
+  }
+  // Pot + foliage are two InstancedMeshes sharing the same matrices, so a
+  // plant costs 2 draw calls total regardless of count (vs 2×N for plain
+  // meshes). Pot material is shared terracotta; foliage varies per instance
+  // via instanceColor for organic variety.
+  const potMat = new THREE.MeshStandardMaterial({ color: "#b5604a", roughness: 0.9, metalness: 0 });
+  const foliageMat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.8, metalness: 0, vertexColors: false });
+  const potInst = new THREE.InstancedMesh(geos.pot, potMat, plantPositions.length);
+  const foliageInst = new THREE.InstancedMesh(geos.foliage, foliageMat, plantPositions.length);
+  potInst.castShadow = false;
+  foliageInst.castShadow = false;
+  plantPositions.forEach((p, i) => {
+    dummy.position.set(p.x, 0, p.z);
+    dummy.rotation.set(0, p.rot, 0);
+    dummy.scale.setScalar(p.scale);
+    dummy.updateMatrix();
+    potInst.setMatrixAt(i, dummy.matrix);
+    foliageInst.setMatrixAt(i, dummy.matrix);
+    // Greens from teal-yellow to deep green; nights get a duskier green.
+    const hue = 0.28 + (i % 3) * 0.04;
+    color.setHSL(hue, 0.45, 0.32 + (i % 2) * 0.06);
+    foliageInst.setColorAt(i, color);
+  });
+  potInst.instanceMatrix.needsUpdate = true;
+  foliageInst.instanceMatrix.needsUpdate = true;
+  if (foliageInst.instanceColor) foliageInst.instanceColor.needsUpdate = true;
+  roomRoot.add(potInst, foliageInst);
+
+  // ── Book stacks + cups on functional-zone centers (tabletop height).
+  // Each zone gets a small still-life cluster; this is where "someone lives
+  // here" reads. Skip on mobile to protect the draw-call budget (roadmap
+  // risk 2: micro-props halve on mobile).
+  if (mobileLod) return;
+  const zones = Array.isArray(profile.functionalZones) ? profile.functionalZones : [];
+  if (!zones.length) return;
+  const bookMats = MINI_PROP_PALETTE.slice(0, 3).map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.82, metalness: 0 }));
+  const cupMat = new THREE.MeshStandardMaterial({ color: "#eae6dd", roughness: 0.5, metalness: 0.05, side: THREE.DoubleSide });
+  // Gather one book-stack (3 books) + one cup per zone. Book stack uses one
+  // InstancedMesh per book layer (3 layers × N zones = 3 draw calls for all
+  // books in the room); cup uses one InstancedMesh for all cups.
+  const bookGeos = [geos.bookA, geos.bookB, geos.bookC];
+  const zoneCount = zones.length;
+  const bookInsts = bookGeos.map((g, layer) => new THREE.InstancedMesh(g, bookMats[layer], zoneCount));
+  const cupInst = new THREE.InstancedMesh(geos.cup, cupMat, zoneCount);
+  bookInsts.forEach((b) => { b.castShadow = false; });
+  cupInst.castShadow = false;
+  zones.forEach((zone, i) => {
+    const zx = Number(zone.x) || 0;
+    const zz = Number(zone.z) || 0;
+    // Offset the cluster slightly inside the zone so it doesn't sit on the
+    // exact center where the player might stand.
+    const ox = zx * 0.7;
+    const oz = zz * 0.7;
+    // Book stack
+    dummy.position.set(ox, surfaceY, oz);
+    dummy.rotation.set(0, (i * 1.3) % (Math.PI * 2), 0);
+    dummy.scale.setScalar(1);
+    dummy.updateMatrix();
+    bookInsts.forEach((inst) => inst.setMatrixAt(i, dummy.matrix));
+    // Cup, offset to the side of the book stack
+    dummy.position.set(ox + 0.16, surfaceY, oz + 0.05);
+    dummy.rotation.set(0, (i * 0.7) % (Math.PI * 2), 0);
+    dummy.updateMatrix();
+    cupInst.setMatrixAt(i, dummy.matrix);
+  });
+  bookInsts.forEach((inst) => {
+    inst.instanceMatrix.needsUpdate = true;
+    roomRoot.add(inst);
+  });
+  cupInst.instanceMatrix.needsUpdate = true;
+  roomRoot.add(cupInst);
+}
+
+function addNightMarketStringLights(theme, mobileLod = false) {
+  // Garland of warm bulbs strung around the upper ring. The lantern key
+  // already paints the room warm; these add the read of market stalls under
+  // awnings — visible emissive bulbs plus a few non-shadowing point lights so
+  // the night budget stays inside DoD-6 (mobile ≤80 drawCalls, ≤5 dynamic
+  // lights per room). Bulbs share one MeshBasicMaterial so they batch in the
+  // opaque pass regardless of the merge step.
+  const ringRadius = ROOM_RADIUS - 0.22;
+  const ringY = 2.74;
+  const wireMat = new THREE.MeshBasicMaterial({ color: 0x2a1f1a, fog: false, toneMapped: true });
+  // T4: bulbs breathe like flames via the shared motion time uniform. The
+  // injection rides on this one material, so all bulbs animate in lockstep
+  // for a single draw call (no per-bulb cost).
+  const bulbMat = applyPendantBreathing(
+    new THREE.MeshBasicMaterial({ color: 0xffd6a0, fog: false, toneMapped: true }),
+    { amplitude: 0.26, frequency: 1.2 }
+  );
+  const bulbGeo = new THREE.SphereGeometry(0.04, 8, 6);
+  // One slack wire ring on mobile, three stacked rings on desktop for a
+  // denser garland read. Each ring is a thin torus — one draw call each.
+  const ringCount = mobileLod ? 1 : 3;
+  for (let ring = 0; ring < ringCount; ring += 1) {
+    const y = ringY - ring * 0.16;
+    const radius = ringRadius - ring * 0.05;
+    const wire = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, 0.006, 5, 48),
+      wireMat
+    );
+    wire.position.y = y;
+    wire.rotation.x = Math.PI / 2;
+    roomRoot.add(wire);
+  }
+  // Bulbs along the top ring only; the lower two rings are slack wire so the
+  // garland reads as drape rather than three parallel light strips.
+  const bulbCount = mobileLod ? 8 : 16;
+  for (let i = 0; i < bulbCount; i += 1) {
+    const angle = (i / bulbCount) * Math.PI * 2;
+    const x = Math.sin(angle) * ringRadius;
+    const z = -Math.cos(angle) * ringRadius;
+    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+    bulb.position.set(x, ringY, z);
+    roomRoot.add(bulb);
+  }
+  // Warm point lights: 3 on mobile, 5 on desktop. Non-shadowing, short range
+  // so each reads as a stall lantern rather than a room-wide wash that would
+  // flatten the lantern key's directional read.
+  const lightCount = mobileLod ? 3 : 5;
+  for (let i = 0; i < lightCount; i += 1) {
+    const angle = (i / lightCount) * Math.PI * 2 + 0.3;
+    const x = Math.sin(angle) * (ringRadius - 0.45);
+    const z = -Math.cos(angle) * (ringRadius - 0.45);
+    const light = new THREE.PointLight(0xffb066, mobileLod ? 0.24 : 0.34, 3.4, 2);
+    light.position.set(x, 2.35, z);
+    light.castShadow = false;
+    roomRoot.add(light);
+  }
+}
+
 function addIdentityBox(group, color, x, y, width, height, rotation = 0) {
   const mesh = new THREE.Mesh(
     new RoundedBoxGeometry(width, height, 0.065, 3, Math.min(0.055, width * 0.18, height * 0.18)),
@@ -7047,7 +7551,13 @@ function rebuildRoom(theme = {}) {
     height: ROOM_HEIGHT
   });
   const polygonShell = Number(theme.layoutProfile?.version || 0) >= 3 && roomShell.shape === "polygon";
-  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
+  // A preset may own the scene background outright (night-lantern's dusk
+  // purple-blue) so the room reads as night at any game-clock hour. Otherwise
+  // keep the authored daylight/civic/neutral fallbacks.
+  const resolvedPreset = resolveLightingPreset(theme);
+  const backgroundHex = resolvedPreset.sceneBackground
+    || (night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
+  scene.background = new THREE.Color(backgroundHex);
   renderer.setClearColor(scene.background, 1);
   // Backdrop dome and distance fog prevent raw clear-colour voids when orbit
   // angles expose open walls. Skip on mobile GPUs where the CanvasTexture
@@ -7304,8 +7814,25 @@ function rebuildRoom(theme = {}) {
   addZoneLayoutArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  // Preset-flagged night dressing (string lights). Triggered by the lighting
+  // preset rather than the archetype so future night rooms opt in by setting
+  // `stringLights: true` on their preset, no archetype branch needed.
+  if (resolvedPreset.stringLights) {
+    addNightMarketStringLights(theme, lastWidth <= 720);
+  }
   mergeRoomArchitectureMeshes();
   addCivicSunShadowCasters(theme);
+  // T4 environmental motion is added AFTER the architecture merge so the
+  // shader-animated meshes (dust shafts, curtains) keep their own materials
+  // and local-space vertex coordinates — merging would bake world space into
+  // the geometry and break the curtain's anchor-relative sway. Cost is 1-2
+  // draw calls per room (shared dust material + shared curtain material),
+  // well inside the DoD-6 budget.
+  addEnvironmentalMotion(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
+  // T5 mini-props (InstancedMesh) also added post-merge: the merge step
+  // traverses isMesh nodes and would flatten InstancedMesh base geometry
+  // into a static batch, destroying the per-instance transforms.
+  addMiniProps(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
   return true;
 }
 
@@ -13134,13 +13661,21 @@ function update(payload = {}) {
       : 0.82;
   }
   if (cinematicGradePass) {
-    cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
-    cinematicGradePass.uniforms.strength.value = (width >= 760 ? 1 : 0.72) * aoRestoreProgress;
+    // The grade pass is now data-driven by activeGrading, so it runs on every
+    // desktop room rather than only civic. Mobile never allocates a composer
+    // (see ensureEnhancedPipeline), so the width gate keeps it off there.
+    cinematicGradePass.enabled = width >= 760;
+    cinematicGradePass.uniforms.strength.value = aoRestoreProgress;
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
+    commitGradingUniforms();
   }
   if (visible) {
     const renderStartedAt = performance.now();
     updateShadowSchedule(payload);
+    // T4: advance the shared motion clock once per frame so every
+    // shader-injected animation (dust, curtains, breathing bulbs) reads
+    // from a single value — zero per-element CPU cost.
+    tickMotionTime();
     if (composer) composer.render();
     else renderer.render(scene, camera);
     traceInteriorThreeStage("full-frame-rendered", renderStartedAt);
