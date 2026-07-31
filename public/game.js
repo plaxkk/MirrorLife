@@ -12910,6 +12910,9 @@ function exploreInteriorHotspot(propIndex) {
   };
 
   if (!alreadyFound) {
+    // T3 audio: bright sparkle the first time a place memory is uncovered —
+    // the sound reinforces that something was learned, not just clicked.
+    window.MirrorLifeInteriorAudio?.playSfx?.("discover");
     const primaryBehavior = prop.behaviors?.[0] || "think";
     const avatar = state.society?.citizens?.find((citizen) => citizen.id === "avatar");
     if (avatar) {
@@ -15195,6 +15198,7 @@ function enterInteriorView(zone, source = "manual", options = {}) {
   ensureInteriorMovePad();
   ensureInteriorCinematicActionRail(zone);
   ensureInteriorSpeakerBeacon(zone);
+  ensureInteriorAudioToggle();
   // Enter the civic room in medias res: the teal listener is already sharing
   // a testimony, so the first frame communicates a social scene rather than
   // four mannequins waiting for UI input. Player actions can immediately
@@ -15214,11 +15218,18 @@ function enterInteriorView(zone, source = "manual", options = {}) {
   stageInteriorAftermathWitness(zone);
   if (storyThread) startEpisodeExperience(storyThread.id, zone.id);
   enterSocialTwinEpisodeRoom(zone);
+  // T3 audio: crossfade into the room's ambient bed. enterRoom also resumes
+  // the AudioContext (gesture-gated by the click that triggered entry) and
+  // fires the soft "enter" whoosh. No-op until the lazy audio module loads.
+  window.MirrorLifeInteriorAudio?.enterRoom?.(zone.id);
   markRenderActive(3200);
 }
 
 function exitInteriorView() {
   if (!interiorView) return;
+  // Fade the ambient bed out before tearing the session down so the exit
+  // reads as "leaving" rather than a hard cut to silence. BGM continues.
+  window.MirrorLifeInteriorAudio?.exitRoom?.();
   interiorSessionRequestSequence += 1;
   closeInteriorCounterfactualStage();
   closeCounterfactualEpisodeFinale();
@@ -15258,6 +15269,7 @@ function exitInteriorView() {
   document.getElementById("interiorMovePad")?.remove();
   document.getElementById("interiorCinematicActions")?.remove();
   document.getElementById("interiorSpeakerBeacon")?.remove();
+  document.getElementById("interiorAudioToggle")?.remove();
   document.getElementById("interiorHotspotLayer")?.remove();
   document.getElementById("interiorDiscoveryCard")?.remove();
   document.getElementById("interiorContextAction")?.remove();
@@ -15282,6 +15294,36 @@ function ensureInteriorChip(zone) {
     const wasFollow = interiorView?.source === "follow";
     exitInteriorView();
     if (wasFollow) stopFollowCitizen(false);
+  });
+  document.getElementById("gameShell")?.appendChild(el);
+}
+
+function syncInteriorAudioToggleIcon(el) {
+  if (!el) return;
+  const muted = window.MirrorLifeInteriorAudio?.isMuted?.() ?? false;
+  el.textContent = muted ? "🔇" : "🔊";
+  el.setAttribute("aria-pressed", String(muted));
+  el.title = muted ? "声音已关 — 点击开启" : "点击静音";
+}
+
+function ensureInteriorAudioToggle() {
+  // T3 audio mute switch. Lives top-right during interior scenes so it is
+  // always reachable without opening a settings modal; state persists via
+  // the audio engine's localStorage key and survives room changes.
+  document.getElementById("interiorAudioToggle")?.remove();
+  const el = document.createElement("button");
+  el.id = "interiorAudioToggle";
+  el.type = "button";
+  el.setAttribute("aria-label", "切换声音");
+  syncInteriorAudioToggleIcon(el);
+  el.addEventListener("click", () => {
+    const audio = window.MirrorLifeInteriorAudio;
+    if (!audio) return;
+    const next = !audio.isMuted();
+    audio.setMuted(next);
+    // If unmuting from a cold state, resume the context on this gesture.
+    if (!next) audio.resume?.();
+    syncInteriorAudioToggleIcon(el);
   });
   document.getElementById("gameShell")?.appendChild(el);
 }
@@ -19592,6 +19634,7 @@ function bindGameEvents() {
       }
       const choiceBtn = e.target.closest("[data-quest-choice]");
       if (choiceBtn) {
+        window.MirrorLifeInteriorAudio?.playSfx?.("choice");
         commitLifeChoice(choiceBtn.dataset.questChoice);
         return;
       }
@@ -19824,7 +19867,7 @@ function bindGameEvents() {
       if (lifeCard) { selectLifeCapsule(lifeCard.dataset.lifeCapsule); return; }
 
       const lifeChoice = target.closest("[data-life-choice]");
-      if (lifeChoice) { playLifeChoice(lifeChoice.dataset.lifeChoice); return; }
+      if (lifeChoice) { window.MirrorLifeInteriorAudio?.playSfx?.("choice"); playLifeChoice(lifeChoice.dataset.lifeChoice); return; }
 
       const revokeBtn = target.closest("[data-revoke-fragment]");
       if (revokeBtn) { revokeLifeFragment(revokeBtn.dataset.revokeFragment); return; }

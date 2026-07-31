@@ -35,7 +35,11 @@ async function load(options = {}) {
 
   loadPromise = Promise.all([
     import("./interior-physics.js"),
-    import("./interior-three.js")
+    import("./interior-three.js"),
+    // Audio is loaded alongside the 3D runtime so it stays out of the first
+    // bundle (DoD-3). It installs window.MirrorLifeInteriorAudio, which game.js
+    // calls defensively — if this import fails the game still runs, just muted.
+    import("./interior-audio.js").catch(() => {})
   ]).then(() => {
     if (!window.MirrorLifeInteriorPhysics || !window.MirrorLifeInterior3D) {
       throw new Error("Interior runtime modules loaded without installing APIs");
