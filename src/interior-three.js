@@ -5863,6 +5863,134 @@ function addEnvironmentalMotion(theme, colors, mobileLod = false) {
   // nothing to do here — the dust shafts above already carry the night tint.
 }
 
+// ── T5 mini-props generator + InstancedMesh ─────────────────────────────
+// Low-poly procedural props (potted plants, book stacks, cups, notes) that
+// add content density to otherwise empty surfaces and corners. Each prop is
+// <100 triangles. Repeated props share one InstancedMesh per type so N props
+// cost 1 draw call (DoD-6 budget relief: plaza 134→target ≤110). InstancedMesh
+// is added AFTER mergeRoomArchitectureMeshes because the merge step traverses
+// isMesh nodes and would bake the instance base geometry into a static batch,
+// destroying the instancing.
+const MINI_PROP_PALETTE = ["#c94f3a", "#3a6ec9", "#e0a93a", "#3aa56e", "#8a5f8f"];
+
+function buildMiniPropGeometries() {
+  // Potted plant: a terracotta pot + a foliage sphere. ~48 triangles.
+  // Returned as a merged geometry so a single InstancedMesh draws both parts.
+  const pot = new THREE.CylinderGeometry(0.07, 0.055, 0.09, 10, 1);
+  pot.translate(0, 0.045, 0);
+  const foliage = new THREE.IcosahedronGeometry(0.12, 0);
+  foliage.translate(0, 0.16, 0);
+  // Book stack: three flat boxes of decreasing size. ~36 triangles.
+  const bookA = new THREE.BoxGeometry(0.18, 0.028, 0.13);
+  bookA.translate(0, 0.014, 0);
+  const bookB = new THREE.BoxGeometry(0.16, 0.026, 0.12);
+  bookB.translate(0, 0.04, 0.001);
+  const bookC = new THREE.BoxGeometry(0.17, 0.024, 0.125);
+  bookC.translate(0, 0.064, -0.002);
+  // Cup: a short open cylinder. ~30 triangles.
+  const cup = new THREE.CylinderGeometry(0.045, 0.038, 0.085, 12, 1, true);
+  cup.translate(0, 0.043, 0);
+  return { pot, foliage, bookA, bookB, bookC, cup };
+}
+
+function addMiniProps(theme, colors, mobileLod = false) {
+  const profile = theme.layoutProfile;
+  if (!profile) return;
+  // Surface height for clustered tabletop props. Most interactive furniture
+  // (counter/desk/table) sits around 0.46-0.5; using 0.48 reads as "on a
+  // table" without requiring the per-prop model lookup that lives in game.js.
+  const surfaceY = 0.48;
+  const geos = buildMiniPropGeometries();
+  const dummy = new THREE.Object3D();
+  const color = new THREE.Color();
+
+  // ── Potted plants at room perimeter corners (floor, y=0). Plants read
+  // naturally on the floor and soften the wall-to-floor seam. 4 on desktop,
+  // 2 on mobile.
+  const plantPositions = [];
+  const plantCount = mobileLod ? 2 : 4;
+  for (let i = 0; i < plantCount; i += 1) {
+    const angle = (i / plantCount) * Math.PI * 2 + 0.4;
+    const r = ROOM_RADIUS - 0.35;
+    plantPositions.push({
+      x: Math.sin(angle) * r,
+      z: -Math.cos(angle) * r,
+      rot: angle + Math.PI / 2,
+      scale: 0.85 + (i % 2) * 0.2
+    });
+  }
+  // Pot + foliage are two InstancedMeshes sharing the same matrices, so a
+  // plant costs 2 draw calls total regardless of count (vs 2×N for plain
+  // meshes). Pot material is shared terracotta; foliage varies per instance
+  // via instanceColor for organic variety.
+  const potMat = new THREE.MeshStandardMaterial({ color: "#b5604a", roughness: 0.9, metalness: 0 });
+  const foliageMat = new THREE.MeshStandardMaterial({ color: "#ffffff", roughness: 0.8, metalness: 0, vertexColors: false });
+  const potInst = new THREE.InstancedMesh(geos.pot, potMat, plantPositions.length);
+  const foliageInst = new THREE.InstancedMesh(geos.foliage, foliageMat, plantPositions.length);
+  potInst.castShadow = false;
+  foliageInst.castShadow = false;
+  plantPositions.forEach((p, i) => {
+    dummy.position.set(p.x, 0, p.z);
+    dummy.rotation.set(0, p.rot, 0);
+    dummy.scale.setScalar(p.scale);
+    dummy.updateMatrix();
+    potInst.setMatrixAt(i, dummy.matrix);
+    foliageInst.setMatrixAt(i, dummy.matrix);
+    // Greens from teal-yellow to deep green; nights get a duskier green.
+    const hue = 0.28 + (i % 3) * 0.04;
+    color.setHSL(hue, 0.45, 0.32 + (i % 2) * 0.06);
+    foliageInst.setColorAt(i, color);
+  });
+  potInst.instanceMatrix.needsUpdate = true;
+  foliageInst.instanceMatrix.needsUpdate = true;
+  if (foliageInst.instanceColor) foliageInst.instanceColor.needsUpdate = true;
+  roomRoot.add(potInst, foliageInst);
+
+  // ── Book stacks + cups on functional-zone centers (tabletop height).
+  // Each zone gets a small still-life cluster; this is where "someone lives
+  // here" reads. Skip on mobile to protect the draw-call budget (roadmap
+  // risk 2: micro-props halve on mobile).
+  if (mobileLod) return;
+  const zones = Array.isArray(profile.functionalZones) ? profile.functionalZones : [];
+  if (!zones.length) return;
+  const bookMats = MINI_PROP_PALETTE.slice(0, 3).map((c) => new THREE.MeshStandardMaterial({ color: c, roughness: 0.82, metalness: 0 }));
+  const cupMat = new THREE.MeshStandardMaterial({ color: "#eae6dd", roughness: 0.5, metalness: 0.05, side: THREE.DoubleSide });
+  // Gather one book-stack (3 books) + one cup per zone. Book stack uses one
+  // InstancedMesh per book layer (3 layers × N zones = 3 draw calls for all
+  // books in the room); cup uses one InstancedMesh for all cups.
+  const bookGeos = [geos.bookA, geos.bookB, geos.bookC];
+  const zoneCount = zones.length;
+  const bookInsts = bookGeos.map((g, layer) => new THREE.InstancedMesh(g, bookMats[layer], zoneCount));
+  const cupInst = new THREE.InstancedMesh(geos.cup, cupMat, zoneCount);
+  bookInsts.forEach((b) => { b.castShadow = false; });
+  cupInst.castShadow = false;
+  zones.forEach((zone, i) => {
+    const zx = Number(zone.x) || 0;
+    const zz = Number(zone.z) || 0;
+    // Offset the cluster slightly inside the zone so it doesn't sit on the
+    // exact center where the player might stand.
+    const ox = zx * 0.7;
+    const oz = zz * 0.7;
+    // Book stack
+    dummy.position.set(ox, surfaceY, oz);
+    dummy.rotation.set(0, (i * 1.3) % (Math.PI * 2), 0);
+    dummy.scale.setScalar(1);
+    dummy.updateMatrix();
+    bookInsts.forEach((inst) => inst.setMatrixAt(i, dummy.matrix));
+    // Cup, offset to the side of the book stack
+    dummy.position.set(ox + 0.16, surfaceY, oz + 0.05);
+    dummy.rotation.set(0, (i * 0.7) % (Math.PI * 2), 0);
+    dummy.updateMatrix();
+    cupInst.setMatrixAt(i, dummy.matrix);
+  });
+  bookInsts.forEach((inst) => {
+    inst.instanceMatrix.needsUpdate = true;
+    roomRoot.add(inst);
+  });
+  cupInst.instanceMatrix.needsUpdate = true;
+  roomRoot.add(cupInst);
+}
+
 function addNightMarketStringLights(theme, mobileLod = false) {
   // Garland of warm bulbs strung around the upper ring. The lantern key
   // already paints the room warm; these add the read of market stalls under
@@ -7701,6 +7829,10 @@ function rebuildRoom(theme = {}) {
   // draw calls per room (shared dust material + shared curtain material),
   // well inside the DoD-6 budget.
   addEnvironmentalMotion(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
+  // T5 mini-props (InstancedMesh) also added post-merge: the merge step
+  // traverses isMesh nodes and would flatten InstancedMesh base geometry
+  // into a static batch, destroying the per-instance transforms.
+  addMiniProps(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
   return true;
 }
 
