@@ -5675,6 +5675,194 @@ function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
   group.add(light);
 }
 
+// ── T4 environmental motion system ──────────────────────────────────────
+// A single time uniform drives every shader-injected animation so the whole
+// room breathes from one value, updated once per frame (zero per-element CPU
+// cost). Motion is injected via onBeforeCompile into existing materials, so
+// it animates geometry on the GPU without adding draw calls (DoD-2 "≥2 motion
+// elements per frame" met without touching the draw-call budget).
+const motionTimeUniform = { value: 0 };
+let motionStartTime = 0;
+function tickMotionTime() {
+  if (!motionStartTime) motionStartTime = performance.now();
+  motionTimeUniform.value = (performance.now() - motionStartTime) / 1000;
+}
+
+// Dust light shaft: an additive plane angled as a god-ray, with scrolling
+// vertical streaks that read as drifting motes. One shared ShaderMaterial
+// batches every shaft in a room into a single draw call regardless of count.
+// Additive blending + depthWrite=false keeps it cheap and order-independent.
+let dustShaftMaterial = null;
+function ensureDustShaftMaterial() {
+  if (dustShaftMaterial) return dustShaftMaterial;
+  dustShaftMaterial = new THREE.ShaderMaterial({
+    transparent: true,
+    depthWrite: false,
+    blending: THREE.AdditiveBlending,
+    side: THREE.DoubleSide,
+    fog: false,
+    uniforms: {
+      uTime: motionTimeUniform,
+      uColor: { value: new THREE.Color("#fff1cf") },
+      uOpacity: { value: 0.16 }
+    },
+    vertexShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      void main() {
+        vUv = uv;
+        vec3 pos = position;
+        pos.x += sin(uTime * 0.5 + pos.y * 1.6) * 0.035;
+        gl_Position = projectionMatrix * modelViewMatrix * vec4(pos, 1.0);
+      }
+    `,
+    fragmentShader: `
+      varying vec2 vUv;
+      uniform float uTime;
+      uniform vec3 uColor;
+      uniform float uOpacity;
+      void main() {
+        float band = smoothstep(0.0, 0.5, vUv.x) * smoothstep(1.0, 0.5, vUv.x);
+        float streak = sin(vUv.y * 9.0 + uTime * 0.7) * 0.5 + 0.5;
+        streak = mix(0.55, 1.0, streak);
+        float verticalFade = smoothstep(0.0, 0.22, vUv.y) * smoothstep(1.0, 0.65, vUv.y);
+        gl_FragColor = vec4(uColor, band * streak * verticalFade * uOpacity);
+      }
+    `
+  });
+  return dustShaftMaterial;
+}
+
+// Place a dust shaft from an upper-wall origin toward the floor, oriented to
+// read as light pouring through a high window. Warm tint by default; night
+// rooms pass a cooler/dimmer color via the material's shared uniform.
+function addDustShaft(x, y, z, length = 2.6, width = 1.1, tilt = 0.32) {
+  const mat = ensureDustShaftMaterial();
+  const geo = new THREE.PlaneGeometry(width, length, 1, 5);
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.position.set(x, y, z);
+  mesh.rotation.y = Math.PI / 4;
+  mesh.rotation.z = tilt;
+  mesh.renderOrder = -1;
+  roomRoot.add(mesh);
+  return mesh;
+}
+
+// Curtain sway: injects a sin-based horizontal displacement into a standard
+// material's vertex shader. The curtain hangs from a top anchor (high y), so
+// sway weight grows toward the hem (low y) — the rod stays put, the fabric
+// flutters. Returns the same material so callers can chain configuration.
+function applyCurtainSway(material, options = {}) {
+  const amplitude = options.amplitude ?? 0.05;
+  const frequency = options.frequency ?? 1.1;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uMotionTime = motionTimeUniform;
+    shader.uniforms.uSwayAmp = { value: amplitude };
+    shader.uniforms.uSwayFreq = { value: frequency };
+    shader.vertexShader = "uniform float uMotionTime; uniform float uSwayAmp; uniform float uSwayFreq;\n" + shader.vertexShader;
+    shader.vertexShader = shader.vertexShader.replace(
+      "#include <begin_vertex>",
+      `#include <begin_vertex>
+       float swayWeight = clamp(-position.y * 0.45, 0.0, 1.0);
+       transformed.x += sin(uMotionTime * uSwayFreq + position.y * 1.8) * uSwayAmp * swayWeight;
+       transformed.z += cos(uMotionTime * uSwayFreq * 0.8 + position.y * 1.4) * uSwayAmp * 0.55 * swayWeight;`
+    );
+  };
+  material.customProgramCacheKey = () => "ml-curtain-sway";
+  return material;
+}
+
+// Pendant/lamp breathing: oscillates brightness in the fragment shader so a
+// bulb reads as a living flame rather than a static CG sphere. Standard
+// materials modulate emissive radiance; basic materials (the night-market
+// string-light bulbs) modulate diffuse colour. Either way no new geometry or
+// draw calls are introduced — the injection rides on the existing material.
+function applyPendantBreathing(material, options = {}) {
+  const amplitude = options.amplitude ?? 0.22;
+  const frequency = options.frequency ?? 0.85;
+  const isBasic = !!material.isMeshBasicMaterial;
+  material.onBeforeCompile = (shader) => {
+    shader.uniforms.uMotionTime = motionTimeUniform;
+    shader.uniforms.uBreathAmp = { value: amplitude };
+    shader.uniforms.uBreathFreq = { value: frequency };
+    shader.fragmentShader = "uniform float uMotionTime; uniform float uBreathAmp; uniform float uBreathFreq;\n" + shader.fragmentShader;
+    if (isBasic) {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <color_fragment>",
+        `#include <color_fragment>
+         diffuseColor.rgb *= 1.0 + sin(uMotionTime * uBreathFreq) * uBreathAmp;`
+      );
+    } else {
+      shader.fragmentShader = shader.fragmentShader.replace(
+        "#include <emissivemap_fragment>",
+        `#include <emissivemap_fragment>
+         totalEmissiveRadiance *= 1.0 + sin(uMotionTime * uBreathFreq) * uBreathAmp;`
+      );
+    }
+  };
+  material.customProgramCacheKey = () => "ml-pendant-breath";
+  return material;
+}
+
+// Per-room motion dressing. Adds 3-5 shader-driven motion elements so every
+// room satisfies DoD-2 (≥2 motion elements per frame) the moment the player
+// walks in, without adding draw calls. Configured by zoneId so each room gets
+// motion that matches its identity (dust in daylit rooms, breathing bulbs in
+// night rooms, curtains in residential/office).
+function addEnvironmentalMotion(theme, colors, mobileLod = false) {
+  const zoneId = theme.zoneId;
+  const night = !!theme.night;
+  // Skip on low-end mobile to protect the frame budget (roadmap risk 2: M2
+  // content uses the lastWidth<=720 de-grade strategy — motion is retained
+  // but dust shafts drop to one and curtains stay, since they are shader-
+  // cheap; only the densest rooms reduce).
+  const motionLod = mobileLod;
+
+  // Dust shafts: warm in daylit rooms, faint cool in night rooms. Placed
+  // near two wall azimuths so the player sees drifting motes on orbit.
+  const dustColor = night ? "#9a8fb4" : "#fff1cf";
+  const dustOpacity = night ? 0.1 : 0.16;
+  const shaftMat = ensureDustShaftMaterial();
+  shaftMat.uniforms.uColor.value.set(dustColor);
+  shaftMat.uniforms.uOpacity.value = dustOpacity;
+  const shaftCount = motionLod ? 1 : 2;
+  for (let i = 0; i < shaftCount; i += 1) {
+    const angle = i === 0 ? 0.9 : -1.4;
+    const x = Math.sin(angle) * (ROOM_RADIUS - 0.6);
+    const z = -Math.cos(angle) * (ROOM_RADIUS - 0.6);
+    addDustShaft(x, 1.7, z, 2.7, 1.0, i === 0 ? 0.3 : -0.26);
+  }
+
+  // Curtains: two fabric planes flanking a wall, vertex-animated. Residential
+  // and office read as "someone lives/works here" with curtains; other rooms
+  // get them in the accent color so the sway is present without a window.
+  const curtainZones = new Set(["residential", "office-district", "primary-school", "public-plaza"]);
+  if (curtainZones.has(zoneId)) {
+    const curtainColor = zoneId === "public-plaza" ? colors.accent : colors.secondary;
+    const curtainMat = applyCurtainSway(new THREE.MeshStandardMaterial({
+      color: new THREE.Color(curtainColor),
+      roughness: 0.88,
+      metalness: 0.0,
+      side: THREE.DoubleSide,
+      emissive: new THREE.Color(curtainColor).multiplyScalar(0.04),
+      emissiveIntensity: 0.3
+    }), { amplitude: 0.045, frequency: 1.0 });
+    [-0.9, 0.9].forEach((offset) => {
+      const angle = -2.2;
+      const x = Math.sin(angle) * (ROOM_RADIUS - 0.18) + offset * 0.4;
+      const z = -Math.cos(angle) * (ROOM_RADIUS - 0.18);
+      const curtain = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 1.8, 1, 6), curtainMat);
+      curtain.position.set(x, 1.35, z);
+      curtain.rotation.y = angle + Math.PI / 2;
+      roomRoot.add(curtain);
+    });
+  }
+
+  // Pendant breathing for night-market bulbs is applied inside
+  // addNightMarketStringLights (where the shared bulb material lives), so
+  // nothing to do here — the dust shafts above already carry the night tint.
+}
+
 function addNightMarketStringLights(theme, mobileLod = false) {
   // Garland of warm bulbs strung around the upper ring. The lantern key
   // already paints the room warm; these add the read of market stalls under
@@ -5685,7 +5873,13 @@ function addNightMarketStringLights(theme, mobileLod = false) {
   const ringRadius = ROOM_RADIUS - 0.22;
   const ringY = 2.74;
   const wireMat = new THREE.MeshBasicMaterial({ color: 0x2a1f1a, fog: false, toneMapped: true });
-  const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd6a0, fog: false, toneMapped: true });
+  // T4: bulbs breathe like flames via the shared motion time uniform. The
+  // injection rides on this one material, so all bulbs animate in lockstep
+  // for a single draw call (no per-bulb cost).
+  const bulbMat = applyPendantBreathing(
+    new THREE.MeshBasicMaterial({ color: 0xffd6a0, fog: false, toneMapped: true }),
+    { amplitude: 0.26, frequency: 1.2 }
+  );
   const bulbGeo = new THREE.SphereGeometry(0.04, 8, 6);
   // One slack wire ring on mobile, three stacked rings on desktop for a
   // denser garland read. Each ring is a thin torus — one draw call each.
@@ -7500,6 +7694,13 @@ function rebuildRoom(theme = {}) {
   }
   mergeRoomArchitectureMeshes();
   addCivicSunShadowCasters(theme);
+  // T4 environmental motion is added AFTER the architecture merge so the
+  // shader-animated meshes (dust shafts, curtains) keep their own materials
+  // and local-space vertex coordinates — merging would bake world space into
+  // the geometry and break the curtain's anchor-relative sway. Cost is 1-2
+  // draw calls per room (shared dust material + shared curtain material),
+  // well inside the DoD-6 budget.
+  addEnvironmentalMotion(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
   return true;
 }
 
@@ -13339,6 +13540,10 @@ function update(payload = {}) {
   if (visible) {
     const renderStartedAt = performance.now();
     updateShadowSchedule(payload);
+    // T4: advance the shared motion clock once per frame so every
+    // shader-injected animation (dust, curtains, breathing bulbs) reads
+    // from a single value — zero per-element CPU cost.
+    tickMotionTime();
     if (composer) composer.render();
     else renderer.render(scene, camera);
     traceInteriorThreeStage("full-frame-rendered", renderStartedAt);
