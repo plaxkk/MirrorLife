@@ -213,6 +213,12 @@ const MATERIAL_PRESET_PALETTES = Object.freeze({
   "paper-glass-plum": { wall: "#e8e8ef", floor: "#d7d2df", accent: "#526fa8", secondary: "#8a5f8f", trim: "#51445c" },
   "terrazzo-glass-walnut": { wall: "#e6e7ec", floor: "#cfd0d8", accent: "#c9913e", secondary: "#425c87", trim: "#4a332d" }
 });
+// Per-preset colour grading for the cinematic pass. Values are deltas around
+// a neutral image: saturation/contrast nudge amounts, warmth shifts the white
+// balance (+ warm, − cool), liftColor/liftBase tint shadows and mids,
+// highlightTint pushes highs, shadowTint+shadowTintAmount recolour darkness
+// (the "film stock" of the room). public-plaza reproduces the original
+// hardcoded civic grade exactly.
 const LIGHTING_PRESETS = Object.freeze({
   "window-coral": { key: 2.05, fill: 0.42, hemi: 0.52, bounce: 0.62, wash: 0.84, exposure: 0.88, keyColor: "#ffe0bd", fillColor: "#bddbea" },
   "daylight-teal": { key: 1.9, fill: 0.48, hemi: 0.56, bounce: 0.42, wash: 0.92, exposure: 0.86, keyColor: "#f7e2c2", fillColor: "#b9deda" },
@@ -233,8 +239,60 @@ const LIGHTING_PRESETS = Object.freeze({
   "soft-cyan": { key: 1.72, fill: 0.62, hemi: 0.6, bounce: 0.36, wash: 0.76, exposure: 0.88, keyColor: "#f5e7cf", fillColor: "#b8e5e2" },
   "cobalt-paper": { key: 1.82, fill: 0.56, hemi: 0.48, bounce: 0.32, wash: 0.7, exposure: 0.84, keyColor: "#f0dfc4", fillColor: "#b7c8ef" },
   "navy-brass": { key: 2.2, fill: 0.36, hemi: 0.38, bounce: 0.48, wash: 0.58, exposure: 0.82, keyColor: "#ffd594", fillColor: "#9db6de" },
+  // 灯火夜市: permanent warm-evening identity. 2900K lantern key, cool dusk
+  // fill, purple-dark shadows, string lights around the ring. The room must
+  // read as night at any game-clock hour — its name is the promise.
+  "night-lantern": {
+    key: 1.18, fill: 0.24, hemi: 0.3, bounce: 0.34, wash: 0.3, exposure: 0.74,
+    keyColor: "#ffb066", fillColor: "#5a7bb8",
+    hemiColor: "#4a4870", hemiGround: "#5a3a2e", envIntensity: 0.16,
+    sceneBackground: "#241d33",
+    stringLights: true,
+    grading: {
+      saturation: 0.06, contrast: 0.11, warmth: 0.85,
+      liftColor: [1.05, 0.94, 0.82], liftBase: 0.12,
+      highlightTint: [0.02, 0.01, -0.006],
+      shadowTint: [0.16, 0.11, 0.24], shadowTintAmount: 0.38
+    }
+  },
+  // 守夜病房: cool early-morning calm. Slightly desaturated, lifted airy
+  // shadows, cool highlights — quiet, clean, hopeful rather than clinical.
+  "dawn-care": {
+    key: 1.75, fill: 0.55, hemi: 0.58, bounce: 0.4, wash: 0.85, exposure: 0.9,
+    keyColor: "#eef3fb", fillColor: "#c9dbe8",
+    hemiColor: "#f4f8fa", hemiGround: "#6a6a62",
+    grading: {
+      saturation: 0.015, contrast: 0.045, warmth: -0.18,
+      liftColor: [0.97, 0.99, 1.03], liftBase: 0.18,
+      highlightTint: [-0.004, 0.002, 0.008],
+      shadowTint: [0.75, 0.82, 0.88], shadowTintAmount: 0.12
+    }
+  },
   default: { key: 1.92, fill: 0.42, hemi: 0.5, bounce: 0.5, wash: 0.82, exposure: 0.86, keyColor: "#ffe2be", fillColor: "#c6dce6" }
 });
+// Zones whose authored layout profile omits a lighting preset resolve here
+// before falling back to the neutral default. The preset is the room's
+// lighting identity, not a per-clock state.
+const ZONE_LIGHTING_PRESET_FALLBACK = Object.freeze({
+  "night-market": "night-lantern",
+  "maternity-hospital": "dawn-care"
+});
+// Baseline grade applied to every room so the whole game shares one film
+// stock; per-preset entries override per-field.
+const DEFAULT_GRADING = Object.freeze({
+  saturation: 0.025, contrast: 0.05, warmth: 0.05,
+  liftColor: [1.02, 0.995, 0.965], liftBase: 0.2,
+  highlightTint: [0.008, 0.004, -0.002],
+  shadowTint: [0.2, 0.16, 0.24], shadowTintAmount: 0
+});
+// The civic room keeps the exact editorial grade it was art-directed with.
+const CIVIC_GRADING = Object.freeze({
+  saturation: 0.032, contrast: 0.082, warmth: 0,
+  liftColor: [1.034, 0.992, 0.938], liftBase: 0.34,
+  highlightTint: [0.014, 0.006, -0.004],
+  shadowTint: [0.2, 0.16, 0.24], shadowTintAmount: 0
+});
+let activeGrading = { ...DEFAULT_GRADING };
 const REALTIME_SHADOW_ARCHETYPES = new Set(["public", "work", "justice", "nature", "creative", "memory"]);
 
 let interiorSessionState = {
@@ -816,11 +874,24 @@ function ensureEnhancedPipeline() {
     samples: 12
   });
   gtaoPass.enabled = false;
+  // The cinematic grade pass is the room's "film stock". Uniforms are pushed
+  // from `activeGrading` (resolved in applyLightingPreset) so every room can
+  // share one shader while keeping its own colour identity. Civic reproduces
+  // the original hardcoded editorial grade exactly; night-lantern layers warm
+  // white-balance and purple shadow tint; dawn-care lifts airy cool mids.
   cinematicGradePass = new ShaderPass({
     uniforms: {
       tDiffuse: { value: null },
       strength: { value: 1 },
-      texelSize: { value: new THREE.Vector2(1 / 1280, 1 / 720) }
+      texelSize: { value: new THREE.Vector2(1 / 1280, 1 / 720) },
+      uSaturation: { value: CIVIC_GRADING.saturation },
+      uContrast: { value: CIVIC_GRADING.contrast },
+      uWarmth: { value: CIVIC_GRADING.warmth },
+      uLiftColor: { value: new THREE.Vector3().fromArray(CIVIC_GRADING.liftColor) },
+      uLiftBase: { value: CIVIC_GRADING.liftBase },
+      uHighlightTint: { value: new THREE.Vector3().fromArray(CIVIC_GRADING.highlightTint) },
+      uShadowTint: { value: new THREE.Vector3().fromArray(CIVIC_GRADING.shadowTint) },
+      uShadowTintAmount: { value: CIVIC_GRADING.shadowTintAmount }
     },
     vertexShader: `
       varying vec2 vUv;
@@ -833,26 +904,41 @@ function ensureEnhancedPipeline() {
       uniform sampler2D tDiffuse;
       uniform float strength;
       uniform vec2 texelSize;
+      uniform float uSaturation;
+      uniform float uContrast;
+      uniform float uWarmth;
+      uniform vec3 uLiftColor;
+      uniform float uLiftBase;
+      uniform vec3 uHighlightTint;
+      uniform vec3 uShadowTint;
+      uniform float uShadowTintAmount;
       varying vec2 vUv;
       void main() {
         vec4 texel = texture2D(tDiffuse, vUv);
         vec3 color = texel.rgb;
         float luma = dot(color, vec3(0.2126, 0.7152, 0.0722));
-        // Keep the target's warm daylight without the yellow cast that made
-        // ivory plaster, skin and terrazzo collapse into one hue. Contrast is
-        // carried by light and material response. Strength is an effect
-        // amount, not a direct saturation multiplier: the former expression
-        // accidentally removed 28% of mobile colour at 0.72.
-        color = mix(vec3(luma), color, 1.0 + 0.032 * strength);
-        // Preserve the photographed target's soft mid-tones. The stronger
-        // editorial S-curve made hair seams, trouser folds and timber edges
-        // read like black outlines even after the underlying materials were
-        // physically correct.
-        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + 0.082 * strength) + vec3(0.54));
+        // Saturation: strength-modulated nudge around luma. The former
+        // expression accidentally removed 28% of mobile colour at 0.72, so
+        // strength is an effect amount, not a direct multiplier.
+        color = mix(vec3(luma), color, 1.0 + uSaturation * strength);
+        // Contrast: S-curve pivoted at 0.54 to preserve photographed
+        // mid-tones. Stronger curves made hair seams and timber edges read
+        // like black outlines even after materials were physically correct.
+        color = max(vec3(0.0), (color - vec3(0.54)) * (1.0 + uContrast * strength) + vec3(0.54));
+        // White-balance warmth: +warm pushes R/G up and B down (lantern
+        // evening); -warm cools toward dawn. A small delta keeps skin and
+        // plaster from collapsing into one hue.
+        color = mix(color, color * vec3(1.0 + 0.08 * uWarmth, 1.0 + 0.02 * uWarmth, 1.0 - 0.10 * uWarmth), strength);
+        // Lift: tint shadows and mids by liftColor, gated by liftBase so the
+        // editorial grade keeps its authored warm Ivory midrange.
         float shadowTone = 1.0 - smoothstep(0.18, 0.58, luma);
+        color *= mix(vec3(1.0), uLiftColor, (uLiftBase + shadowTone * 0.4) * strength);
+        // Shadow tint: explicit film-stock recolour of darkness. Civic sets
+        // amount 0 (no-op); night-lantern pushes purple dusk into shadows.
+        color = mix(color, color * uShadowTint, uShadowTintAmount * shadowTone * strength);
+        // Highlight tint: subtle cool/warm push on the upper luma band.
         float highlightTone = smoothstep(0.5, 0.92, luma);
-        color *= mix(vec3(1.0), vec3(1.034, 0.992, 0.938), (0.34 + shadowTone * 0.4) * strength);
-        color += vec3(0.014, 0.006, -0.004) * highlightTone * strength;
+        color += uHighlightTint * highlightTone * strength;
         float lumaRight = dot(texture2D(tDiffuse, vUv + vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaLeft = dot(texture2D(tDiffuse, vUv - vec2(texelSize.x, 0.0)).rgb, vec3(0.2126, 0.7152, 0.0722));
         float lumaUp = dot(texture2D(tDiffuse, vUv + vec2(0.0, texelSize.y)).rgb, vec3(0.2126, 0.7152, 0.0722));
@@ -1919,8 +2005,38 @@ function resolveEnvironmentPalette(theme = {}) {
   };
 }
 
+function resolveLightingPreset(theme = {}) {
+  return LIGHTING_PRESETS[theme.layoutProfile?.lightingPreset]
+    || LIGHTING_PRESETS[ZONE_LIGHTING_PRESET_FALLBACK[theme.zoneId]]
+    || LIGHTING_PRESETS.default;
+}
+
+function commitGradingUniforms() {
+  if (!cinematicGradePass) return;
+  const uniforms = cinematicGradePass.uniforms;
+  const grade = activeGrading;
+  uniforms.uSaturation.value = grade.saturation;
+  uniforms.uContrast.value = grade.contrast;
+  uniforms.uWarmth.value = grade.warmth;
+  uniforms.uLiftColor.value.set(grade.liftColor[0], grade.liftColor[1], grade.liftColor[2]);
+  uniforms.uLiftBase.value = grade.liftBase;
+  uniforms.uHighlightTint.value.set(grade.highlightTint[0], grade.highlightTint[1], grade.highlightTint[2]);
+  uniforms.uShadowTint.value.set(grade.shadowTint[0], grade.shadowTint[1], grade.shadowTint[2]);
+  uniforms.uShadowTintAmount.value = grade.shadowTintAmount;
+}
+
+function resolveActiveGrading(theme, preset) {
+  // Civic keeps its exact art-directed editorial film stock. Other rooms
+  // layer the preset's grading deltas over the shared DEFAULT_GRADING
+  // baseline; rooms without a preset grade fall back to the baseline alone.
+  if (theme?.zoneId === "public-plaza") return { ...CIVIC_GRADING };
+  if (preset?.grading) return { ...DEFAULT_GRADING, ...preset.grading };
+  return { ...DEFAULT_GRADING };
+}
+
 function applyLightingPreset(theme = {}) {
-  const preset = LIGHTING_PRESETS[theme.layoutProfile?.lightingPreset] || LIGHTING_PRESETS.default;
+  const preset = resolveLightingPreset(theme);
+  activeGrading = resolveActiveGrading(theme, preset);
   if (keyLight) {
     keyLight.intensity = preset.key;
     keyLight.color.set(preset.keyColor);
@@ -1936,9 +2052,10 @@ function applyLightingPreset(theme = {}) {
     // Use a pale ceiling and muted terrazzo return for the civic room. The
     // earlier brown ground hemisphere multiplied the warm key into a sepia
     // wash; the source instead keeps shadowed plaster, skin and ivory cloth
-    // bright while retaining a clear daylight direction.
-    hemisphereLight.color.set(theme.zoneId === "public-plaza" ? "#fff8ed" : "#fff8eb");
-    hemisphereLight.groundColor.set(theme.zoneId === "public-plaza" ? "#a7b5a8" : "#6d5645");
+    // bright while retaining a clear daylight direction. Presets may now own
+    // the hemisphere outright (night-lantern dusk sky, dawn-care morning).
+    hemisphereLight.color.set(preset.hemiColor || (theme.zoneId === "public-plaza" ? "#fff8ed" : "#fff8eb"));
+    hemisphereLight.groundColor.set(preset.hemiGround || (theme.zoneId === "public-plaza" ? "#a7b5a8" : "#6d5645"));
   }
   if (warmBounceLight) {
     warmBounceLight.intensity = preset.bounce;
@@ -1974,8 +2091,21 @@ function applyLightingPreset(theme = {}) {
   // wrap, so these room-wide lights can preserve dimensional form.
   if (actorRimLight) actorRimLight.intensity = theme.zoneId === "public-plaza" ? 0.54 : 0.42;
   if (actorFaceLight) actorFaceLight.intensity = theme.zoneId === "public-plaza" ? 0.38 : 0.4;
-  if (renderer) renderer.toneMappingExposure = preset.exposure;
-  if (scene) scene.environmentIntensity = theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26;
+  // Mobile has no composer, so the data-driven ShaderPass cannot run. The
+  // preset's keyColor/fillColor/sceneBackground already carry the colour
+  // temperature; a small warmth→exposure nudge (warm dims, cool lifts) is the
+  // simplified mobile grade that keeps night-market reading as night without
+  // the full film-stock pass. Desktop ignores this nudge because the grade
+  // pass handles warmth as a white-balance shift instead.
+  const mobileWarmthExposure = lastWidth <= 720 ? 1 - activeGrading.warmth * 0.04 : 1;
+  if (renderer) renderer.toneMappingExposure = preset.exposure * mobileWarmthExposure;
+  // Presets may own the environment intensity outright (night-lantern drops
+  // it to 0.16 so the PMREM environment stops washing out the lantern key).
+  if (scene) {
+    scene.environmentIntensity = preset.envIntensity != null
+      ? preset.envIntensity
+      : (theme.night ? 0.24 : theme.zoneId === "public-plaza" ? 0.3 : 0.26);
+  }
   if (gtaoPass) {
     gtaoPass.blendIntensity = theme.zoneId === "public-plaza"
       ? (lastWidth <= 720 ? 0.76 : 0.9)
@@ -5545,6 +5675,58 @@ function addLantern(angle, radius = 4.65, color = "#ffd166", y = 1.72) {
   group.add(light);
 }
 
+function addNightMarketStringLights(theme, mobileLod = false) {
+  // Garland of warm bulbs strung around the upper ring. The lantern key
+  // already paints the room warm; these add the read of market stalls under
+  // awnings — visible emissive bulbs plus a few non-shadowing point lights so
+  // the night budget stays inside DoD-6 (mobile ≤80 drawCalls, ≤5 dynamic
+  // lights per room). Bulbs share one MeshBasicMaterial so they batch in the
+  // opaque pass regardless of the merge step.
+  const ringRadius = ROOM_RADIUS - 0.22;
+  const ringY = 2.74;
+  const wireMat = new THREE.MeshBasicMaterial({ color: 0x2a1f1a, fog: false, toneMapped: true });
+  const bulbMat = new THREE.MeshBasicMaterial({ color: 0xffd6a0, fog: false, toneMapped: true });
+  const bulbGeo = new THREE.SphereGeometry(0.04, 8, 6);
+  // One slack wire ring on mobile, three stacked rings on desktop for a
+  // denser garland read. Each ring is a thin torus — one draw call each.
+  const ringCount = mobileLod ? 1 : 3;
+  for (let ring = 0; ring < ringCount; ring += 1) {
+    const y = ringY - ring * 0.16;
+    const radius = ringRadius - ring * 0.05;
+    const wire = new THREE.Mesh(
+      new THREE.TorusGeometry(radius, 0.006, 5, 48),
+      wireMat
+    );
+    wire.position.y = y;
+    wire.rotation.x = Math.PI / 2;
+    roomRoot.add(wire);
+  }
+  // Bulbs along the top ring only; the lower two rings are slack wire so the
+  // garland reads as drape rather than three parallel light strips.
+  const bulbCount = mobileLod ? 8 : 16;
+  for (let i = 0; i < bulbCount; i += 1) {
+    const angle = (i / bulbCount) * Math.PI * 2;
+    const x = Math.sin(angle) * ringRadius;
+    const z = -Math.cos(angle) * ringRadius;
+    const bulb = new THREE.Mesh(bulbGeo, bulbMat);
+    bulb.position.set(x, ringY, z);
+    roomRoot.add(bulb);
+  }
+  // Warm point lights: 3 on mobile, 5 on desktop. Non-shadowing, short range
+  // so each reads as a stall lantern rather than a room-wide wash that would
+  // flatten the lantern key's directional read.
+  const lightCount = mobileLod ? 3 : 5;
+  for (let i = 0; i < lightCount; i += 1) {
+    const angle = (i / lightCount) * Math.PI * 2 + 0.3;
+    const x = Math.sin(angle) * (ringRadius - 0.45);
+    const z = -Math.cos(angle) * (ringRadius - 0.45);
+    const light = new THREE.PointLight(0xffb066, mobileLod ? 0.24 : 0.34, 3.4, 2);
+    light.position.set(x, 2.35, z);
+    light.castShadow = false;
+    roomRoot.add(light);
+  }
+}
+
 function addIdentityBox(group, color, x, y, width, height, rotation = 0) {
   const mesh = new THREE.Mesh(
     new RoundedBoxGeometry(width, height, 0.065, 3, Math.min(0.055, width * 0.18, height * 0.18)),
@@ -7047,7 +7229,13 @@ function rebuildRoom(theme = {}) {
     height: ROOM_HEIGHT
   });
   const polygonShell = Number(theme.layoutProfile?.version || 0) >= 3 && roomShell.shape === "polygon";
-  scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
+  // A preset may own the scene background outright (night-lantern's dusk
+  // purple-blue) so the room reads as night at any game-clock hour. Otherwise
+  // keep the authored daylight/civic/neutral fallbacks.
+  const resolvedPreset = resolveLightingPreset(theme);
+  const backgroundHex = resolvedPreset.sceneBackground
+    || (night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
+  scene.background = new THREE.Color(backgroundHex);
   renderer.setClearColor(scene.background, 1);
   // Backdrop dome and distance fog prevent raw clear-colour voids when orbit
   // angles expose open walls. Skip on mobile GPUs where the CanvasTexture
@@ -7304,6 +7492,12 @@ function rebuildRoom(theme = {}) {
   addZoneLayoutArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  // Preset-flagged night dressing (string lights). Triggered by the lighting
+  // preset rather than the archetype so future night rooms opt in by setting
+  // `stringLights: true` on their preset, no archetype branch needed.
+  if (resolvedPreset.stringLights) {
+    addNightMarketStringLights(theme, lastWidth <= 720);
+  }
   mergeRoomArchitectureMeshes();
   addCivicSunShadowCasters(theme);
   return true;
@@ -13134,9 +13328,13 @@ function update(payload = {}) {
       : 0.82;
   }
   if (cinematicGradePass) {
-    cinematicGradePass.enabled = payload.theme?.zoneId === "public-plaza";
-    cinematicGradePass.uniforms.strength.value = (width >= 760 ? 1 : 0.72) * aoRestoreProgress;
+    // The grade pass is now data-driven by activeGrading, so it runs on every
+    // desktop room rather than only civic. Mobile never allocates a composer
+    // (see ensureEnhancedPipeline), so the width gate keeps it off there.
+    cinematicGradePass.enabled = width >= 760;
+    cinematicGradePass.uniforms.strength.value = aoRestoreProgress;
     cinematicGradePass.uniforms.texelSize.value.set(1 / Math.max(1, width), 1 / Math.max(1, height));
+    commitGradingUniforms();
   }
   if (visible) {
     const renderStartedAt = performance.now();
