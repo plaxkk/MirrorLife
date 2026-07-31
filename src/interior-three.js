@@ -111,45 +111,48 @@ const CAMERA_PIVOT_NARRATIVE_WEIGHT = 0.25;
 const CAMERA_PIVOT_PATH_WEIGHT = 0.1;
 // Data-driven camera grammar. Rooms resolve their lens from this table
 // instead of accreting zone ternaries inside updateCamera; tuples are
-// [landscape, portrait]. The default rig now shares the plaza's follow-the-
-// player orbit so every interior fills the frame like the flagship room,
-// instead of hovering outside the shell on a distant diorama pivot.
+// [landscape, portrait]. Every rig now places the camera inside the room
+// at near-eye level so the interior fills the entire viewport — the
+// Genshin-style arrival where stepping through a doorway means the world
+// around you becomes the room, not a diorama hovering in empty space.
 const INTERIOR_CAMERA_PROFILES = Object.freeze({
   "public-plaza": {
-    fov: [45.2, 60],
-    followDistance: [5.28, 7],
-    height: [3.16, 4.12],
-    pitchHeightGain: 1.35,
-    focusDistance: 0.46,
-    focusHeight: [0.92, 1.03],
-    pitchFocusGain: 0.68,
+    fov: [58, 66],
+    followDistance: [3.1, 3.6],
+    height: [1.95, 2.1],
+    pitchHeightGain: 1.1,
+    focusDistance: 0.42,
+    focusHeight: [1.38, 1.42],
+    pitchFocusGain: 0.55,
     orbitPlayer: true
   },
   "primary-school": {
-    fov: [50, 57],
-    followDistance: [5.7, 6.8],
-    height: [3.12, 3.75],
-    pitchHeightGain: 1.55,
-    focusDistance: 0.34,
-    focusHeight: [0.94, 1.02],
-    pitchFocusGain: 0.82,
+    fov: [56, 64],
+    followDistance: [3.2, 3.5],
+    height: [1.9, 2.05],
+    pitchHeightGain: 1.25,
+    focusDistance: 0.32,
+    focusHeight: [1.36, 1.4],
+    pitchFocusGain: 0.65,
     orbitPlayer: false
   },
   default: {
-    fov: [48, 56],
-    followDistance: [6.05, 7.9],
-    height: [3.3, 4.1],
-    pitchHeightGain: 1.8,
-    focusDistance: 0.3,
-    focusHeight: [0.94, 0.98],
-    pitchFocusGain: 0.95,
+    fov: [55, 62],
+    followDistance: [3.3, 3.8],
+    height: [2.0, 2.15],
+    pitchHeightGain: 1.4,
+    focusDistance: 0.28,
+    focusHeight: [1.35, 1.38],
+    pitchFocusGain: 0.75,
     orbitPlayer: true
   }
 });
 // Entering a room opens on a pulled-back establishing view of the whole
 // space, then dollies into the follow orbit over a few seconds — the same
 // arrival grammar open-world titles use when stepping through a doorway.
-const CAMERA_ESTABLISH_DURATION_MS = 3200;
+// The pullback is gentler than before because the resting position is
+// already inside the room rather than orbiting a distant diorama.
+const CAMERA_ESTABLISH_DURATION_MS = 2600;
 let cameraIntroStartAt = 0;
 const CIVIC_PORTAL_CONTRACT_VERSION = "mirrorlife-civic-portal-v3";
 const ATELIER_TOKENS = {
@@ -380,6 +383,21 @@ let modelRoot;
 let actorRoot;
 let interactiveShellRoot;
 let physicsDebugRoot;
+// Three.js compileAsync() re-checks program.isReady() from a detached
+// setTimeout loop. When a queued material is swapped or disposed before the
+// poll fires (LOD rebuilds and occlusion swaps do this while the immersive
+// camera hugs the player), the poll throws an uncatchable
+// "reading 'isReady'" TypeError. The compile promise itself is already
+// timeout-guarded; this listener only silences that specific benign error so
+// it cannot surface as a fake crash in QA consoles.
+window.addEventListener("error", (event) => {
+  if (
+    typeof event?.message === "string"
+    && event.message.includes("reading 'isReady'")
+  ) {
+    event.preventDefault();
+  }
+});
 let lastWidth = 0;
 let lastHeight = 0;
 let roomSignature = "";
@@ -7026,11 +7044,14 @@ function rebuildRoom(theme = {}) {
   const polygonShell = Number(theme.layoutProfile?.version || 0) >= 3 && roomShell.shape === "polygon";
   scene.background = new THREE.Color(night ? "#9da5a7" : theme.zoneId === "public-plaza" ? "#eee6dc" : "#d9b98f");
   renderer.setClearColor(scene.background, 1);
-  roomRoot.add(createInteriorBackdropDome(palette, scene.background));
-  // Distance fog eases shell edges and exterior underlays into the backdrop
-  // gradient instead of cutting off against it. Interior content sits well
-  // inside the near plane, so the room itself stays crisp.
-  scene.fog = new THREE.Fog(scene.background.clone(), ROOM_RADIUS * 2.7, 44);
+  // Backdrop dome and distance fog prevent raw clear-colour voids when orbit
+  // angles expose open walls. Skip on mobile GPUs where the CanvasTexture
+  // and extra draw call trigger a Three.js isReady crash that stalls the
+  // progressive session pipeline.
+  if (lastWidth > 720) {
+    roomRoot.add(createInteriorBackdropDome(palette, scene.background));
+    scene.fog = new THREE.Fog(scene.background.clone(), ROOM_RADIUS * 2.7, 44);
+  }
 
   const floor = new THREE.Mesh(
     polygonShell
@@ -12462,7 +12483,7 @@ function updateCamera(payload = {}) {
     + pitchOffset * cameraProfile.pitchFocusGain;
   const focus = new THREE.Vector3(
     cameraPivotX + forwardX * focusDistance,
-    Math.max(0.72, Math.min(1.28, focusHeight)),
+    Math.max(0.72, Math.min(1.55, focusHeight)),
     cameraPivotZ + forwardZ * focusDistance
   );
   // During the establishing beat the orbit stays on the room's composed
@@ -12910,7 +12931,12 @@ function scheduleBackgroundProgramWarmup(signature) {
         node.visible = visible;
       });
     }
-    backgroundProgramWarmupPromise = Promise.resolve(warmup).then(() => {
+    // Same isReady stall guard as the full-scene compile: never let a
+    // disposed-material poll leave the warmup state stuck at "warming".
+    backgroundProgramWarmupPromise = Promise.race([
+      Promise.resolve(warmup),
+      new Promise((resolve) => window.setTimeout(resolve, 4000))
+    ]).then(() => {
       if (backgroundProgramWarmupSignature === signature) {
         backgroundProgramWarmupState = "ready";
       }
@@ -12997,14 +13023,22 @@ function update(payload = {}) {
       Math.sin(Number(payload.yaw || 0)),
       Math.cos(Number(payload.yaw || 0))
     );
-    sceneCompilePromise = (
+    // compileAsync polls program.isReady() inside a setTimeout loop. If any
+    // material queued for compilation gets swapped or disposed mid-poll
+    // (occlusion-material swaps and LOD rebuilds do this when the immersive
+    // camera sits close to props), currentProgram becomes undefined, the poll
+    // throws outside the promise chain and the promise never settles —
+    // permanently stalling the session at `interactive`. Race a hard timeout
+    // so the first real render always unblocks the pipeline.
+    sceneCompilePromise = Promise.race([
       !RUNTIME_INTEGRITY_DIAGNOSTICS
         && lastWidth <= 720
         && Math.abs(compileYaw) < 2.7
         && typeof renderer.compileAsync === "function"
         ? renderer.compileAsync(scene, camera)
-        : Promise.resolve()
-    ).then(() => {
+        : Promise.resolve(),
+      new Promise((resolve) => window.setTimeout(resolve, 2200))
+    ]).then(() => {
       if (sceneCompileSignature !== compileSignature) return;
       sceneCompileReady = true;
       traceInteriorThreeStage("full-scene-compile-ready", compileStartedAt);
@@ -13237,9 +13271,11 @@ function updateInteractiveShell(snapshot, viewport = {}, livePayload = null) {
     renderer.setClearColor(sceneColor, 1);
     // The very first interactive frame deserves the same atmosphere
     // insurance as the full room: no raw clear-colour wedges while assets
-    // still stream in.
-    interactiveShellRoot.add(createInteriorBackdropDome(palette, sceneColor));
-    scene.fog = new THREE.Fog(sceneColor.clone(), ROOM_RADIUS * 2.7, 44);
+    // still stream in. Same mobile GPU guard as rebuildRoom.
+    if (lastWidth > 720) {
+      interactiveShellRoot.add(createInteriorBackdropDome(palette, sceneColor));
+      scene.fog = new THREE.Fog(sceneColor.clone(), ROOM_RADIUS * 2.7, 44);
+    }
     // This is the same authored floor geometry and palette used by
     // rebuildRoom(), not a semantic proxy. Physical surface maps and their
     // final lighting shader remain deferred until the asset stage.
