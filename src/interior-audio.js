@@ -293,6 +293,11 @@ class InteriorAudioEngine {
   // murmur) plus any drone oscillators, plus scheduled one-shot events.
   buildBed(config) {
     if (!this.ctx || !this.ambientBus) return null;
+    // Rooms without an authored ambient bed crossfade to silence via
+    // crossfadeTo(null). Tolerate that here so config.noise doesn't throw —
+    // returning null leaves the bed empty, which is the intended "better
+    // silence than a mismatched bed" fallback (DoD-8: zero pageerror).
+    if (!config) return null;
     const nodes = [];
     const timers = [];
     const inputGain = this.ctx.createGain();
