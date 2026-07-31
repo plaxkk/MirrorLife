@@ -7520,6 +7520,182 @@ function createInteriorBackdropDome(palette, backgroundColor) {
   return dome;
 }
 
+// ── T6 墙面活化系统 (wall activation) ────────────────────────────────────
+// addRoomArchitecture dresses only the front ~120° (hero feature + two side
+// panels at variantOffset ± 0.3). The back ~240° above the wainscot is bare
+// plaster, so orbiting past the side walls exposes a blank field — the P0-1
+// "空白墙" crisis. This pass fills the remaining ring so DoD-1 holds at any
+// azimuth (≥2 upper-wall anchors, <30% blank):
+//   (a) two quarter-wall features at ±90° — the angles maximally distant from
+//       both the front composition and the back door,
+//   (b) one back-wall feature opposite the hero, dodging the exit door,
+//   (c) a full-circumference upper picture-rail that splits every wall's
+//       upper register into two banded fields (the "护墙板分界线上移" lever).
+// V2+ polygon cutaways and the civic plaza own full-wall compositions and
+// are skipped. All pieces reuse addWallFeature / addWallCards / addBackWallBand
+// so they batch with the pre-merge architecture pass (DoD-6 draw-call budget).
+const WALL_ACTIVATION_PALETTES = Object.freeze({
+  care: { fill: "#e0f7f1", alt: "#ffe2e8", frame: "#30364e", cards: ["#56cfe1", "#2ecc71", "#ff8fa3"] },
+  learning: { fill: "#fbf3e5", alt: "#dceeff", frame: "#7e4a32", cards: ["#f1c40f", "#4ea8de", "#2ecc71"] },
+  commerce: { fill: "#fff7df", alt: "#dff7e8", frame: "#30364e", cards: ["#e63946", "#4ea8de", "#f1c40f"] },
+  public: { fill: "#fbf3e5", alt: "#fff0b8", frame: "#7e4a32", cards: ["#efb94f", "#618fc4", "#e99483"] },
+  justice: { fill: "#fafaf5", alt: "#eef4fb", frame: "#30364e", cards: ["#7aa5c9", "#ef7188", "#fafaf5"] },
+  work: { fill: "#dce8e5", alt: "#fff2b8", frame: "#1a1a2e", cards: ["#f1c40f", "#4ea8de", "#2ecc71"] },
+  home: { fill: "#fff0b8", alt: "#dceeff", frame: "#7e4a32", cards: ["#e98860", "#6f9fd1", "#fafaf5"] },
+  nature: { fill: "#dff7e8", alt: "#dceeff", frame: "#6f8f63", cards: ["#2ecc71", "#7bdff2", "#f1c40f"] },
+  creative: { fill: "#fffaf2", alt: "#fff0b8", frame: "#30364e", cards: ["#e63946", "#4ea8de", "#f1c40f", "#ff7aa2"] },
+  memory: { fill: "#f3e8d4", alt: "#e2ece4", frame: "#6f5645", cards: ["#d8a45d", "#9d8189", "#7aa5c9"] }
+});
+
+function smallestAngleDelta(a, b) {
+  let delta = (a - b) % (Math.PI * 2);
+  if (delta > Math.PI) delta -= Math.PI * 2;
+  if (delta < -Math.PI) delta += Math.PI * 2;
+  return Math.abs(delta);
+}
+
+function addWallActivation(theme, colors, mobileLod = false) {
+  // V2+ cutaways and the civic plaza author their own full-wall compositions;
+  // stacking the generic kit here would float panels over evidence walls.
+  if (Number(theme.layoutProfile?.version || 0) >= 2) return;
+  if (theme.zoneId === "public-plaza") return;
+
+  const archetype = theme.archetype || "home";
+  const variantOffset = (Number(theme.variant || 0) % 4) * (Math.PI / 18);
+  const palette = WALL_ACTIVATION_PALETTES[archetype] || WALL_ACTIVATION_PALETTES.home;
+  const night = !!colors.night;
+  const doorAngle = Number(theme.layoutProfile?.shell?.door?.angle);
+
+  // (c) Upper picture-rail — a thin full-circumference band at y≈2.55, between
+  // the wainscot (~1.0) and the crown (3.54). Alone it removes the single
+  // undifferentiated plaster field read on every wall; post-merge it costs
+  // one batched strip.
+  addBackWallBand(palette.frame, 2.55, ROOM_RADIUS - 0.06, {
+    height: 0.05,
+    depth: 0.07,
+    start: -Math.PI,
+    end: Math.PI,
+    segmentCount: 18,
+    castShadow: false,
+    roughness: 0.9
+  });
+
+  // (a) Two quarter-wall features at ±90°. Skipped on mobile (the rail + back
+  // feature already carry DoD-1; the quarter pair is the lowest-payoff pair
+  // under the lastWidth<=720 de-grade strategy, risk 2).
+  if (!mobileLod) {
+    [variantOffset + Math.PI / 2, variantOffset - Math.PI / 2].forEach((angle, index) => {
+      if (Number.isFinite(doorAngle) && smallestAngleDelta(angle, doorAngle) < 0.45) return;
+      const feature = addWallFeature(angle, {
+        width: 1.0,
+        height: 0.86,
+        y: 2.02,
+        fill: index ? palette.fill : palette.alt,
+        frame: palette.frame,
+        dividers: false
+      });
+      addWallCards(feature, palette.cards, 2, 2, 0.66);
+    });
+  }
+
+  // (b) Back-wall feature opposite the hero. If the exit door sits at the back
+  // (common: door.angle ≈ variantOffset + π), split into two flanking features
+  // so the doorway stays clear; otherwise one centred feature.
+  const backBase = variantOffset + Math.PI;
+  const doorAtBack = Number.isFinite(doorAngle) && smallestAngleDelta(backBase, doorAngle) < 0.55;
+  const backOffsets = doorAtBack ? [-0.72, 0.72] : [0];
+  backOffsets.forEach((offset, index) => {
+    const feature = addWallFeature(backBase + offset, {
+      width: backOffsets.length > 1 ? 0.92 : 1.5,
+      height: 0.96,
+      y: 2.06,
+      fill: night ? "#3a4a6a" : (index ? palette.alt : palette.fill),
+      frame: palette.frame,
+      dividers: false
+    });
+    addWallCards(feature, palette.cards, 2, backOffsets.length > 1 ? 2 : 3, 0.7);
+    // A readable accent motif so the back silhouette registers at orbit
+    // distance even before the cards resolve.
+    const motif = new THREE.Mesh(
+      new THREE.CircleGeometry(0.12, 20),
+      createToonMaterial(index ? palette.cards[0] : palette.cards[1])
+    );
+    motif.position.set(0, 0.26, 0.2);
+    feature.add(motif);
+  });
+}
+
+// ── T7 天花三件套 (ceiling triad) ────────────────────────────────────────
+// V1 closed rooms have a crown torus and a front cove band but no overhead
+// centre — looking up hits a bare void ("罐子盖"). Three emissive pieces fill
+// it at zero light cost (DoD-6): (1) a perimeter ring light strip at the
+// wall/ceiling joint, (2) 3 radial beams, (3) a central skylight disc with a
+// hanging pennant. V2+ rooms are intentionally ceilingless cutaways — skipped.
+function addCeilingTriad(theme, colors, mobileLod = false) {
+  if (Number(theme.layoutProfile?.version || 0) >= 2) return;
+  if (theme.zoneId === "public-plaza") return;
+
+  const night = !!colors.night;
+  // Warm cove glow by day, cooler lantern glow at night — the same fixture
+  // reads coherently under different presets (DoD-4 atmosphere distinction).
+  const stripColor = night ? "#ffd27d" : "#fff0d0";
+  const beamColor = colors.trim || "#30364e";
+  const skyColor = night ? "#5a7bb8" : "#dbeaff";
+
+  // (1) Perimeter ring light strip — emissive torus just inside the crown,
+  // reads as a cove uplight. Emissive scalar > 0.4 so it visibly glows
+  // without adding a PointLight (zero light cost).
+  const ring = new THREE.Mesh(
+    new THREE.TorusGeometry(ROOM_RADIUS - 0.18, 0.04, 10, 80),
+    createToonMaterial(stripColor, { emissive: 0.55, roughness: 0.6 })
+  );
+  ring.rotation.x = Math.PI / 2;
+  ring.position.y = ROOM_HEIGHT - 0.1;
+  ring.castShadow = false;
+  roomRoot.add(ring);
+
+  // (2) Radial beams — 3 thin boxes from near-centre to the ring, 120° apart.
+  // Skipped on mobile: three long boxes cost fill-rate for the smallest
+  // payoff once the ring already defines the ceiling perimeter.
+  if (!mobileLod) {
+    const beamGeo = new THREE.BoxGeometry(ROOM_RADIUS - 0.3, 0.06, 0.12);
+    const beamMat = createToonMaterial(beamColor, { roughness: 0.82, surface: "wood", bumpScale: 0.006 });
+    for (let index = 0; index < 3; index += 1) {
+      const angle = (index / 3) * Math.PI * 2 + Math.PI / 6;
+      const beam = new THREE.Mesh(beamGeo, beamMat);
+      const reach = (ROOM_RADIUS - 0.3) / 2;
+      beam.position.set(Math.sin(angle) * reach, ROOM_HEIGHT - 0.16, -Math.cos(angle) * reach);
+      beam.rotation.y = angle;
+      beam.castShadow = false;
+      roomRoot.add(beam);
+    }
+  }
+
+  // (3) Central skylight — a glowing downward disc closing the overhead
+  // centre, plus a small pennant on a thread so the ceiling has a vertical
+  // element visible at orbit angles below the ring.
+  const skylight = new THREE.Mesh(
+    new THREE.CircleGeometry(0.62, 36),
+    createToonMaterial(skyColor, { emissive: 0.5, roughness: 0.4, side: THREE.DoubleSide })
+  );
+  skylight.rotation.x = Math.PI / 2;
+  skylight.position.y = ROOM_HEIGHT - 0.02;
+  roomRoot.add(skylight);
+
+  const thread = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.004, 0.004, 0.34, 6),
+    createToonMaterial("#1a1a2e")
+  );
+  thread.position.set(0, ROOM_HEIGHT - 0.19, 0);
+  roomRoot.add(thread);
+  const pennant = new THREE.Mesh(
+    new THREE.PlaneGeometry(0.22, 0.16),
+    createToonMaterial(colors.accent || stripColor, { emissive: 0.12, side: THREE.DoubleSide })
+  );
+  pennant.position.set(0.11, ROOM_HEIGHT - 0.4, 0);
+  roomRoot.add(pennant);
+}
+
 function rebuildRoom(theme = {}) {
   const signature = [theme.wall, theme.floor, theme.accent, theme.trim, theme.night, theme.archetype, theme.zoneId, theme.variant, theme.layoutProfile?.shellId, theme.layoutProfile?.lightingPreset, theme.layoutProfile?.materialPreset].join("|");
   if (signature === roomSignature) return false;
@@ -7797,6 +7973,10 @@ function rebuildRoom(theme = {}) {
     lowerCove.castShadow = false;
     roomRoot.add(lowerCove);
   }
+  // T7 ceiling triad (emissive ring + beams + skylight) closes the overhead
+  // void for V1 closed rooms. Same version guard as the crown above; plaza
+  // and V2+ cutaways are skipped inside the function.
+  addCeilingTriad(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
 
   if (!polygonShell && !INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
     for (let i = 0; i < 12; i += 1) {
@@ -7814,6 +7994,10 @@ function rebuildRoom(theme = {}) {
   addZoneLayoutArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
+  // T6 wall activation fills the back ~240° (quarter walls + back wall +
+  // full-circumference picture rail) so no orbit angle stares at blank plaster
+  // (DoD-1). Pre-merge so the pieces batch with the architecture pass.
+  addWallActivation(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
   // Preset-flagged night dressing (string lights). Triggered by the lighting
   // preset rather than the archetype so future night rooms opt in by setting
   // `stringLights: true` on their preset, no archetype branch needed.
