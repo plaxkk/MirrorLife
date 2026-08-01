@@ -464,6 +464,7 @@ window.addEventListener("error", (event) => {
 let lastWidth = 0;
 let lastHeight = 0;
 let roomSignature = "";
+const runtimeEnvironmentFeatureAnchors = new Map();
 let interactiveShellSignature = "";
 let activeCivicPortalContract = "";
 let itemSignature = "";
@@ -2327,9 +2328,10 @@ function addBackWallBand(color, y, radius = 5.0, options = {}) {
   const start = options.start ?? -1.42;
   const end = options.end ?? 1.42;
   const step = (end - start) / Math.max(1, segmentCount - 1);
+  const segments = [];
   for (let index = 0; index < segmentCount; index += 1) {
     const angle = start + index * step;
-    addRingBox(
+    segments.push(addRingBox(
       angle,
       radius,
       options.width || radius * step * 1.08,
@@ -2338,8 +2340,26 @@ function addBackWallBand(color, y, radius = 5.0, options = {}) {
       color,
       y,
       { ...options, castShadow: options.castShadow ?? false }
-    );
+    ));
   }
+  return segments;
+}
+
+function addCutawayWallRail(center, color, y = 2.55, radius = ROOM_RADIUS - 0.06, mobileLod = false) {
+  const pointCount = mobileLod ? 11 : 17;
+  const points = Array.from({ length: pointCount }, (_, index) => {
+    const angle = center - 0.62 + (index / (pointCount - 1)) * 1.24;
+    return new THREE.Vector3(Math.sin(angle) * radius, y, -Math.cos(angle) * radius);
+  });
+  const curve = new THREE.CatmullRomCurve3(points, false, "centripetal");
+  const rail = new THREE.Mesh(
+    new THREE.TubeGeometry(curve, mobileLod ? 16 : 28, 0.035, 6, false),
+    createToonMaterial(color, { roughness: 0.9 })
+  );
+  rail.castShadow = false;
+  rail.receiveShadow = true;
+  roomRoot.add(rail);
+  return rail;
 }
 
 function addPendant(angle, radius, color, y = 2.78) {
@@ -4379,6 +4399,10 @@ function addCivicArchitecturalCove(colors) {
     emissive: 0.025,
     envMapIntensity: 0.84
   });
+  const mobileLod = lastWidth <= 720;
+  const coveBox = (width, height, depth, segments, radius) => mobileLod
+    ? new THREE.BoxGeometry(width, height, depth)
+    : new RoundedBoxGeometry(width, height, depth, segments, radius);
   const beams = [
     { x: 0.55, z: -5.02, width: 7.72, depth: 0.15, rotation: 0 },
     { x: 5.02, z: -0.42, width: 7.45, depth: 0.15, rotation: Math.PI / 2 },
@@ -4386,7 +4410,7 @@ function addCivicArchitecturalCove(colors) {
   ];
   beams.forEach((entry, index) => {
     const beam = new THREE.Mesh(
-      new RoundedBoxGeometry(entry.width, 0.17, entry.depth, 4, 0.055),
+      coveBox(entry.width, 0.17, entry.depth, 4, 0.055),
       beamMaterial
     );
     beam.name = `civic-straight-cove-${index + 1}`;
@@ -4399,9 +4423,14 @@ function addCivicArchitecturalCove(colors) {
     beam.userData.cameraForegroundFade = true;
     cameraForegroundObjects.add(beam);
     roomRoot.add(beam);
+    registerEnvironmentFeatureMeshes(beam, {
+      id: `plaza-ceiling-cove-${index + 1}`,
+      type: "ceiling",
+      source: "civic-authored-architecture"
+    });
 
     const reveal = new THREE.Mesh(
-      new RoundedBoxGeometry(entry.width - 0.16, 0.035, 0.035, 3, 0.014),
+      coveBox(entry.width - 0.16, 0.035, 0.035, 3, 0.014),
       brass
     );
     reveal.position.set(entry.x, 4.42, entry.z + (entry.rotation ? 0 : 0.1));
@@ -4419,6 +4448,7 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   // wall, low bench and paired plants give the 180-degree view its own focal
   // hierarchy instead of exposing an empty cylinder.
   const group = new THREE.Group();
+  group.name = "civic-reverse-witness-wall";
   group.position.set(0, 0, 4.82);
   group.rotation.y = Math.PI;
   group.userData.dynamicWallDecor = true;
@@ -4775,6 +4805,8 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
   pendantShade.position.set(0, 3.04, 0.62);
   pendantShade.rotation.x = Math.PI;
   group.add(pendantShade);
+  pendantShade.updateWorldMatrix(true, true);
+  const reversePendantBounds = new THREE.Box3().setFromObject(pendantShade);
   const pendantLight = new THREE.PointLight(0xffc879, mobileLod ? 0.46 : 0.78, 3.2, 2.1);
   pendantLight.position.set(0, 2.88, 0.7);
   group.add(pendantLight);
@@ -4820,6 +4852,12 @@ function addCivicReverseWitnessWall(colors, mobileLod = false) {
       actorShading: false
     });
   }
+  registerEnvironmentFeatureMeshes(group, {
+    id: "plaza-ceiling-reverse-pendant",
+    type: "ceiling",
+    source: "civic-authored-architecture",
+    bounds: reversePendantBounds
+  });
   sourceMaterials.forEach((material) => material.dispose?.());
 }
 
@@ -4945,6 +4983,7 @@ function addCivicHeroPendant(colors) {
   // A real overhead fixture gives the lounge a warm secondary focal point like
   // the reference without consuming floor space or changing the physics map.
   const group = new THREE.Group();
+  group.name = "civic-hero-pendant";
   group.position.set(3.18, 0, -2.34);
   group.rotation.y = -0.12;
   group.userData.neverFade = true;
@@ -4983,6 +5022,11 @@ function addCivicHeroPendant(colors) {
     roughness: 0.56,
     envMapIntensity: 0.7,
     actorShading: false
+  });
+  registerEnvironmentFeatureMeshes(group, {
+    id: "plaza-ceiling-hero-pendant",
+    type: "ceiling",
+    source: "civic-authored-architecture"
   });
 }
 
@@ -5407,6 +5451,11 @@ function addCivicArchitecturalShell(colors) {
       envMapIntensity: 0.46,
       actorShading: false
     });
+    registerEnvironmentFeatureMeshes(group, {
+      id: `plaza-wall-${entry.name}`,
+      type: "wall",
+      source: "civic-authored-architecture"
+    });
   });
 
   // Two vertical oak posts frame the civic listening wall. They provide human
@@ -5425,7 +5474,7 @@ function addCivicArchitecturalShell(colors) {
 function addCivicReferenceDressing(theme, colors) {
   const mobileLod = lastWidth <= 720;
   addCivicArchitecturalShell(colors);
-  if (!mobileLod) addCivicArchitecturalCove(colors);
+  addCivicArchitecturalCove(colors);
   addAtelierTerrazzo(theme);
   // Give the listening rug a truthful textile edge. The old zero-thickness
   // circle disappeared into the floor at player eye level and made the story
@@ -5847,13 +5896,28 @@ function addEnvironmentalMotion(theme, colors, mobileLod = false) {
       emissive: new THREE.Color(curtainColor).multiplyScalar(0.04),
       emissiveIntensity: 0.3
     }), { amplitude: 0.045, frequency: 1.0 });
-    [-0.9, 0.9].forEach((offset) => {
-      const angle = -2.2;
-      const x = Math.sin(angle) * (ROOM_RADIUS - 0.18) + offset * 0.4;
-      const z = -Math.cos(angle) * (ROOM_RADIUS - 0.18);
-      const curtain = new THREE.Mesh(new THREE.PlaneGeometry(0.7, 1.8, 1, 6), curtainMat);
+    const polygonSchool = zoneId === "primary-school"
+      && Number(theme.layoutProfile?.version || 0) >= 3;
+    [-0.9, 0.9].forEach((offset, index) => {
+      const angle = polygonSchool ? 0 : -2.2;
+      const x = polygonSchool
+        ? -2.65 + offset * 1.45
+        : Math.sin(angle) * (ROOM_RADIUS - 0.18) + offset * 0.4;
+      const z = polygonSchool ? -5.0 : -Math.cos(angle) * (ROOM_RADIUS - 0.18);
+      // A thin segmented box keeps real side depth through the orbit. The old
+      // PlaneGeometry became a full-height blue billboard when the polygon
+      // school camera crossed its hard-coded circular-room anchor.
+      const curtain = new THREE.Mesh(new THREE.BoxGeometry(0.7, 1.8, 0.055, 1, 6, 1), curtainMat);
+      curtain.name = `environment-curtain-${index}`;
       curtain.position.set(x, 1.35, z);
-      curtain.rotation.y = angle + Math.PI / 2;
+      curtain.rotation.y = polygonSchool ? 0 : angle + Math.PI / 2;
+      curtain.userData.cameraForegroundFade = true;
+      curtain.userData.cameraForegroundNearDistance = 2.8;
+      curtain.userData.cameraForegroundOpacity = 0.035;
+      curtain.userData.cameraForegroundKeepOpaqueYaw = angle;
+      curtain.userData.cameraForegroundKeepOpaqueArc = 0.82;
+      curtain.userData.cameraForegroundDirectionalFade = true;
+      cameraForegroundObjects.add(curtain);
       roomRoot.add(curtain);
     });
   }
@@ -6265,6 +6329,55 @@ function canBatchRoomVertexColors(material) {
   return material.isMeshStandardMaterial || material.isMeshPhysicalMaterial;
 }
 
+function registerEnvironmentFeatureMeshes(objects, metadata = {}) {
+  const id = String(metadata.id || "").trim();
+  const type = metadata.type === "ceiling" ? "ceiling" : "wall";
+  const sources = (Array.isArray(objects) ? objects : [objects]).filter(Boolean);
+  if (!id || !sources.length) return;
+  const bounds = metadata.bounds?.isBox3 ? metadata.bounds.clone() : new THREE.Box3();
+  sources.forEach((source) => {
+    source.updateWorldMatrix?.(true, true);
+    if (!metadata.bounds?.isBox3) bounds.union(new THREE.Box3().setFromObject(source));
+    source.traverse?.((node) => {
+      if (!node.isMesh) return;
+      const anchorIds = new Set(node.userData.environmentFeatureAnchors || []);
+      anchorIds.add(id);
+      node.userData.environmentFeatureAnchors = [...anchorIds];
+    });
+  });
+  runtimeEnvironmentFeatureAnchors.set(id, {
+    id,
+    type,
+    source: String(metadata.source || "activation-kit"),
+    bounds: bounds.isEmpty() ? null : bounds.clone()
+  });
+}
+
+function getNodeEnvironmentFeatureAnchors(node) {
+  return Array.isArray(node?.userData?.environmentFeatureAnchors)
+    ? node.userData.environmentFeatureAnchors
+    : [];
+}
+
+function isSceneObjectEffectivelyVisible(object) {
+  let current = object;
+  while (current) {
+    if (current.visible === false) return false;
+    current = current.parent;
+  }
+  return true;
+}
+
+function getRenderedMaterialOpacity(material) {
+  if (!material) return 0;
+  // Three.js only blends material.opacity when transparency is enabled. An
+  // opaque material with a stale transition opacity still renders fully
+  // opaque, so treating that numeric field as visual alpha creates a false
+  // negative that contradicts the captured frame.
+  if (material.transparent !== true) return 1;
+  return THREE.MathUtils.clamp(Number(material.opacity ?? 1), 0, 1);
+}
+
 function mergeRoomArchitectureMeshes() {
   if (!roomRoot || !mergeGeometries) return;
   roomRoot.updateMatrixWorld(true);
@@ -6301,9 +6414,11 @@ function mergeRoomArchitectureMeshes() {
       const batch = colorBatches.get(batchKey) || {
         geometries: [],
         castShadow: !!node.castShadow,
-        receiveShadow: !!node.receiveShadow
+        receiveShadow: !!node.receiveShadow,
+        environmentFeatureAnchors: new Set()
       };
       batch.geometries.push(geometryWithSolidVertexColor(node));
+      getNodeEnvironmentFeatureAnchors(node).forEach((id) => batch.environmentFeatureAnchors.add(id));
       colorBatches.set(batchKey, batch);
       sourceGeometries.add(node.geometry);
       sourceMaterials.add(node.material);
@@ -6317,9 +6432,11 @@ function mergeRoomArchitectureMeshes() {
       material: cloneRuntimeMaterial(node.material),
       geometries: [],
       castShadow: false,
-      receiveShadow: false
+      receiveShadow: false,
+      environmentFeatureAnchors: new Set()
     };
     batch.geometries.push(geometry);
+    getNodeEnvironmentFeatureAnchors(node).forEach((id) => batch.environmentFeatureAnchors.add(id));
     batch.castShadow ||= node.castShadow;
     batch.receiveShadow ||= node.receiveShadow;
     batches.set(key, batch);
@@ -6344,6 +6461,7 @@ function mergeRoomArchitectureMeshes() {
     mesh.name = `room-vertex-batch-${colorBatchIndex += 1}`;
     mesh.castShadow = batch.castShadow;
     mesh.receiveShadow = batch.receiveShadow;
+    mesh.userData.environmentFeatureAnchors = [...batch.environmentFeatureAnchors];
     mergedMeshes.push(mesh);
   });
   let materialBatchIndex = 0;
@@ -6364,6 +6482,7 @@ function mergeRoomArchitectureMeshes() {
     mesh.name = `room-material-batch-${materialBatchIndex += 1}-${materialColor}`;
     mesh.castShadow = batch.castShadow;
     mesh.receiveShadow = batch.receiveShadow;
+    mesh.userData.environmentFeatureAnchors = [...batch.environmentFeatureAnchors];
     mergedMeshes.push(mesh);
   });
 
@@ -6635,6 +6754,14 @@ function addPrimarySchoolArchitectureV3(colors) {
     opacity = 0.04,
     keepOpaqueYaw = null
   ) => {
+    if (object?.isGroup) {
+      mergeActorVertexColorMeshes(object, [], {
+        roughness: 0.82,
+        envMapIntensity: 0.46,
+        actorShading: false
+      });
+    }
+    object.userData.cameraForegroundFade = true;
     object.traverse((node) => {
       if (!node.isMesh) return;
       node.userData.cameraForegroundFade = true;
@@ -6706,6 +6833,11 @@ function addPrimarySchoolArchitectureV3(colors) {
   windowGroup.add(crossbar);
   roomRoot.add(windowGroup);
   registerForegroundComposition(windowGroup, 2.6, 0.04, 0);
+  registerEnvironmentFeatureMeshes(windowGroup, {
+    id: "school-wall-window",
+    type: "wall",
+    source: "polygon-authored-architecture"
+  });
 
   const questionRail = new THREE.Mesh(
     new RoundedBoxGeometry(3.1, 0.12, 0.12, 2, 0.035),
@@ -6734,6 +6866,11 @@ function addPrimarySchoolArchitectureV3(colors) {
   entryPanel.rotation.y = Math.PI / 2;
   roomRoot.add(entryPanel);
   registerForegroundComposition(entryPanel, 2.8, 0.04, -Math.PI / 2);
+  registerEnvironmentFeatureMeshes(entryPanel, {
+    id: "school-wall-wayfinding",
+    type: "wall",
+    source: "polygon-authored-architecture"
+  });
 
   const leftWallDisplay = new THREE.Group();
   leftWallDisplay.name = "primary-school-left-wall-memory-line";
@@ -6755,6 +6892,11 @@ function addPrimarySchoolArchitectureV3(colors) {
   });
   roomRoot.add(leftWallDisplay);
   registerForegroundComposition(leftWallDisplay, 2.8, 0.04, -Math.PI / 2);
+  registerEnvironmentFeatureMeshes(leftWallDisplay, {
+    id: "school-wall-memory-line",
+    type: "wall",
+    source: "polygon-authored-architecture"
+  });
 
   const thresholdBench = new THREE.Mesh(
     new RoundedBoxGeometry(2.35, 0.54, 0.48, 3, 0.08),
@@ -6793,6 +6935,11 @@ function addPrimarySchoolArchitectureV3(colors) {
   entryDoor.add(doorHandle);
   roomRoot.add(entryDoor);
   registerForegroundComposition(entryDoor, 3.4, 0.04, Math.PI);
+  registerEnvironmentFeatureMeshes(entryDoor, {
+    id: "school-wall-entry-door",
+    type: "wall",
+    source: "polygon-authored-architecture"
+  });
 
   const entryCubbies = new THREE.Group();
   entryCubbies.name = "primary-school-entry-cubbies";
@@ -6812,6 +6959,11 @@ function addPrimarySchoolArchitectureV3(colors) {
   });
   roomRoot.add(entryCubbies);
   registerForegroundComposition(entryCubbies, 3.4, 0.04, Math.PI);
+  registerEnvironmentFeatureMeshes(entryCubbies, {
+    id: "school-wall-entry-cubbies",
+    type: "wall",
+    source: "polygon-authored-architecture"
+  });
 
   const returnWallBoard = new THREE.Group();
   returnWallBoard.name = "primary-school-return-wall-board";
@@ -6836,6 +6988,11 @@ function addPrimarySchoolArchitectureV3(colors) {
   }
   roomRoot.add(returnWallBoard);
   registerForegroundComposition(returnWallBoard, 3.4, 0.04, Math.PI / 2);
+  registerEnvironmentFeatureMeshes(returnWallBoard, {
+    id: "school-wall-return-board",
+    type: "wall",
+    source: "polygon-authored-architecture"
+  });
 
   const lowDivider = new THREE.Mesh(
     new RoundedBoxGeometry(0.18, 0.62, 2.1, 2, 0.055),
@@ -7521,19 +7678,12 @@ function createInteriorBackdropDome(palette, backgroundColor) {
 }
 
 // ── T6 墙面活化系统 (wall activation) ────────────────────────────────────
-// addRoomArchitecture dresses only the front ~120° (hero feature + two side
-// panels at variantOffset ± 0.3). The back ~240° above the wainscot is bare
-// plaster, so orbiting past the side walls exposes a blank field — the P0-1
-// "空白墙" crisis. This pass fills the remaining ring so DoD-1 holds at any
-// azimuth (≥2 upper-wall anchors, <30% blank):
-//   (a) two quarter-wall features at ±90° — the angles maximally distant from
-//       both the front composition and the back door,
-//   (b) one back-wall feature opposite the hero, dodging the exit door,
-//   (c) a full-circumference upper picture-rail that splits every wall's
-//       upper register into two banded fields (the "护墙板分界线上移" lever).
-// V2+ polygon cutaways and the civic plaza own full-wall compositions and
-// are skipped. All pieces reuse addWallFeature / addWallCards / addBackWallBand
-// so they batch with the pre-merge architecture pass (DoD-6 draw-call budget).
+// addRoomArchitecture concentrates detail around the hero-facing wall. Round
+// V2 cutaways therefore expose untreated plaster at quarter/reverse yaws. This
+// pass adds bounded picture-rail arcs plus compact side/back panels, each tied
+// to a real wall bay and camera-faded before it can become a foreground slab.
+// V3 polygon rooms and the civic plaza register their authored wall assemblies
+// instead. Every registered anchor must survive the real architecture merge.
 const WALL_ACTIVATION_PALETTES = Object.freeze({
   care: { fill: "#e0f7f1", alt: "#ffe2e8", frame: "#30364e", cards: ["#56cfe1", "#2ecc71", "#ff8fa3"] },
   learning: { fill: "#fbf3e5", alt: "#dceeff", frame: "#7e4a32", cards: ["#f1c40f", "#4ea8de", "#2ecc71"] },
@@ -7554,11 +7704,44 @@ function smallestAngleDelta(a, b) {
   return Math.abs(delta);
 }
 
+function prepareCutawayWallAnchor(source, faceYaw, name) {
+  const group = Array.isArray(source) ? new THREE.Group() : source;
+  if (Array.isArray(source)) {
+    group.name = name;
+    roomRoot.add(group);
+    source.filter(Boolean).forEach((mesh) => group.attach(mesh));
+  }
+  mergeActorVertexColorMeshes(group, [], {
+    roughness: 0.84,
+    envMapIntensity: 0.46,
+    actorShading: false
+  });
+  group.name = name;
+  // Preserve one pre-merged draw unit so its opacity can follow the wall face
+  // instead of being baked into a global material batch. The group flag is
+  // for the architecture merger; individual meshes are the actual camera
+  // occlusion candidates.
+  group.userData.cameraForegroundFade = true;
+  group.traverse((node) => {
+    if (!node.isMesh) return;
+    node.name = `${name}-surface`;
+    node.userData.cameraForegroundFade = true;
+    node.userData.cameraForegroundNearDistance = 2.8;
+    node.userData.cameraForegroundOpacity = 0.035;
+    node.userData.cameraForegroundKeepOpaqueYaw = faceYaw;
+    node.userData.cameraForegroundKeepOpaqueArc = 0.82;
+    node.userData.cameraForegroundDirectionalFade = true;
+    cameraForegroundObjects.add(node);
+  });
+  return group;
+}
+
 function addWallActivation(theme, colors, mobileLod = false) {
-  // V2+ cutaways and the civic plaza author their own full-wall compositions;
-  // stacking the generic kit here would float panels over evidence walls.
-  if (Number(theme.layoutProfile?.version || 0) >= 2) return;
+  const layoutVersion = Number(theme.layoutProfile?.version || 0);
+  // The civic plaza and V3 polygon school have authored rectilinear walls;
+  // their compatible anchors are registered alongside those assemblies.
   if (theme.zoneId === "public-plaza") return;
+  if (layoutVersion >= 3) return;
 
   const archetype = theme.archetype || "home";
   const variantOffset = (Number(theme.variant || 0) % 4) * (Math.PI / 18);
@@ -7566,73 +7749,64 @@ function addWallActivation(theme, colors, mobileLod = false) {
   const night = !!colors.night;
   const doorAngle = Number(theme.layoutProfile?.shell?.door?.angle);
 
-  // (c) Upper picture-rail — a thin full-circumference band at y≈2.55, between
-  // the wainscot (~1.0) and the crown (3.54). Alone it removes the single
-  // undifferentiated plaster field read on every wall; post-merge it costs
-  // one batched strip.
-  addBackWallBand(palette.frame, 2.55, ROOM_RADIUS - 0.06, {
-    height: 0.05,
-    depth: 0.07,
-    start: -Math.PI,
-    end: Math.PI,
-    segmentCount: 18,
-    castShadow: false,
-    roughness: 0.9
-  });
+  // V2 is a camera-cut cylinder, not a closed room. Three bounded rail arcs
+  // split the untreated side/back plaster without creating the floating 360°
+  // bars that a full torus produces as the camera orbits outside the shell.
+  const activationSections = [
+    { center: variantOffset, panels: false },
+    { center: variantOffset + Math.PI / 2, panels: true },
+    { center: variantOffset + Math.PI, panels: true },
+    { center: variantOffset - Math.PI / 2, panels: true }
+  ];
+  activationSections.forEach(({ center, panels }, sectionIndex) => {
+    const rail = prepareCutawayWallAnchor(
+      addCutawayWallRail(center, palette.frame, 2.55, ROOM_RADIUS - 0.06, mobileLod),
+      center,
+      `wall-rail-${sectionIndex}`
+    );
+    registerEnvironmentFeatureMeshes(rail, {
+      id: `wall-rail-${sectionIndex}`,
+      type: "wall",
+      source: layoutVersion >= 2 ? "round-cutaway-activation-kit" : "closed-room-activation-kit"
+    });
 
-  // (a) Two quarter-wall features at ±90°. Skipped on mobile (the rail + back
-  // feature already carry DoD-1; the quarter pair is the lowest-payoff pair
-  // under the lastWidth<=720 de-grade strategy, risk 2).
-  if (!mobileLod) {
-    [variantOffset + Math.PI / 2, variantOffset - Math.PI / 2].forEach((angle, index) => {
-      if (Number.isFinite(doorAngle) && smallestAngleDelta(angle, doorAngle) < 0.45) return;
+    if (!panels) return;
+
+    const doorAtSection = Number.isFinite(doorAngle) && smallestAngleDelta(center, doorAngle) < 0.55;
+    const offsets = doorAtSection ? [-0.68, 0.68] : [-0.34, 0.34];
+    offsets.forEach((offset, panelIndex) => {
+      const angle = center + offset;
+      if (Number.isFinite(doorAngle) && smallestAngleDelta(angle, doorAngle) < 0.3) return;
       const feature = addWallFeature(angle, {
-        width: 1.0,
-        height: 0.86,
-        y: 2.02,
-        fill: index ? palette.fill : palette.alt,
+        width: mobileLod ? 0.78 : 0.88,
+        height: mobileLod ? 0.72 : 0.82,
+        y: 2.03,
+        fill: night ? "#3a4a6a" : ((sectionIndex + panelIndex) % 2 ? palette.alt : palette.fill),
         frame: palette.frame,
         dividers: false
       });
-      addWallCards(feature, palette.cards, 2, 2, 0.66);
+      addWallCards(feature, palette.cards, 2, 2, mobileLod ? 0.54 : 0.6);
+      const preparedFeature = prepareCutawayWallAnchor(
+        feature,
+        angle,
+        `wall-panel-${sectionIndex}-${panelIndex}`
+      );
+      registerEnvironmentFeatureMeshes(preparedFeature, {
+        id: `wall-panel-${sectionIndex}-${panelIndex}`,
+        type: "wall",
+        source: layoutVersion >= 2 ? "round-cutaway-activation-kit" : "closed-room-activation-kit"
+      });
     });
-  }
-
-  // (b) Back-wall feature opposite the hero. If the exit door sits at the back
-  // (common: door.angle ≈ variantOffset + π), split into two flanking features
-  // so the doorway stays clear; otherwise one centred feature.
-  const backBase = variantOffset + Math.PI;
-  const doorAtBack = Number.isFinite(doorAngle) && smallestAngleDelta(backBase, doorAngle) < 0.55;
-  const backOffsets = doorAtBack ? [-0.72, 0.72] : [0];
-  backOffsets.forEach((offset, index) => {
-    const feature = addWallFeature(backBase + offset, {
-      width: backOffsets.length > 1 ? 0.92 : 1.5,
-      height: 0.96,
-      y: 2.06,
-      fill: night ? "#3a4a6a" : (index ? palette.alt : palette.fill),
-      frame: palette.frame,
-      dividers: false
-    });
-    addWallCards(feature, palette.cards, 2, backOffsets.length > 1 ? 2 : 3, 0.7);
-    // A readable accent motif so the back silhouette registers at orbit
-    // distance even before the cards resolve.
-    const motif = new THREE.Mesh(
-      new THREE.CircleGeometry(0.12, 20),
-      createToonMaterial(index ? palette.cards[0] : palette.cards[1])
-    );
-    motif.position.set(0, 0.26, 0.2);
-    feature.add(motif);
   });
 }
 
 // ── T7 天花三件套 (ceiling triad) ────────────────────────────────────────
-// V1 closed rooms have a crown torus and a front cove band but no overhead
-// centre — looking up hits a bare void ("罐子盖"). Three emissive pieces fill
-// it at zero light cost (DoD-6): (1) a perimeter ring light strip at the
-// wall/ceiling joint, (2) 3 radial beams, (3) a central skylight disc with a
-// hanging pennant. V2+ rooms are intentionally ceilingless cutaways — skipped.
+// V1 closed rooms use a ring/beams/skylight triad. V2/V3 cutaways cannot carry
+// a full ceiling ring without turning it into a floating bar during orbit, so
+// they use four compact bay pendants. The civic plaza registers its bespoke
+// cove and pendant assemblies instead of receiving generic geometry.
 function addCeilingTriad(theme, colors, mobileLod = false) {
-  if (Number(theme.layoutProfile?.version || 0) >= 2) return;
+  const layoutVersion = Number(theme.layoutProfile?.version || 0);
   if (theme.zoneId === "public-plaza") return;
 
   const night = !!colors.night;
@@ -7641,6 +7815,133 @@ function addCeilingTriad(theme, colors, mobileLod = false) {
   const stripColor = night ? "#ffd27d" : "#fff0d0";
   const beamColor = colors.trim || "#30364e";
   const skyColor = night ? "#5a7bb8" : "#dbeaff";
+
+  if (layoutVersion >= 2) {
+    const shell = normalizeRoomShell(theme.layoutProfile?.shell || {
+      shape: "circle",
+      radius: ROOM_RADIUS,
+      height: ROOM_HEIGHT
+    });
+    if (layoutVersion >= 3 && shell.shape === "polygon") {
+      const signedArea = shell.vertices.reduce((sum, point, index, vertices) => {
+        const next = vertices[(index + 1) % vertices.length];
+        return sum + point.x * next.z - next.x * point.z;
+      }, 0) / 2;
+      const windingSign = signedArea >= 0 ? 1 : -1;
+      getShellEdges(shell).forEach(({ start, end }, index) => {
+        const dx = end.x - start.x;
+        const dz = end.z - start.z;
+        const length = Math.hypot(dx, dz);
+        const interiorNormalX = -dz / Math.max(0.001, length) * windingSign;
+        const interiorNormalZ = dx / Math.max(0.001, length) * windingSign;
+        const cove = new THREE.Mesh(
+          new THREE.BoxGeometry(length + 0.04, 0.1, 0.18),
+          createToonMaterial(beamColor, { roughness: 0.86, surface: "wood", bumpScale: 0.004 })
+        );
+        cove.name = `polygon-ceiling-cove-${index}`;
+        cove.position.set(
+          (start.x + end.x) / 2 + interiorNormalX * 0.1,
+          shell.height - 0.2,
+          (start.z + end.z) / 2 + interiorNormalZ * 0.1
+        );
+        cove.rotation.y = -Math.atan2(dz, dx);
+        cove.castShadow = false;
+        cove.userData.cameraForegroundFade = true;
+        cove.userData.cameraForegroundNearDistance = 1.35;
+        cove.userData.cameraForegroundOpacity = 0.035;
+        cove.userData.cameraForegroundInteriorNormalX = interiorNormalX;
+        cove.userData.cameraForegroundInteriorNormalZ = interiorNormalZ;
+        roomRoot.add(cove);
+        cameraForegroundObjects.add(cove);
+        registerEnvironmentFeatureMeshes(cove, {
+          id: `ceiling-cove-${index}`,
+          type: "ceiling",
+          source: "polygon-cutaway-ceiling-cove"
+        });
+      });
+    }
+
+    // A round cutaway cannot support a wall-to-wall ceiling ring: from the
+    // exterior half of the orbit it becomes a floating horizontal bar. Use
+    // four compact, wall-bay lanterns instead. Each fixture is physically tied
+    // to a small ceiling plate, stays above actor clearance and follows the
+    // same camera-facing contract as its wall bay.
+    const radius = layoutVersion >= 3
+      ? (mobileLod ? 3.8 : 4.35)
+      : (mobileLod ? 4.35 : 4.15);
+    // Ceiling infrastructure follows the room's cardinal bays, not the
+    // decorative variant rotation. A 30° variant offset pushed the only far
+    // pendant outside a 390 px portrait frame at the reverse orbit.
+    const variantOffset = 0;
+    for (let index = 0; index < 4; index += 1) {
+      const angle = variantOffset + (index / 4) * Math.PI * 2;
+      const fixture = new THREE.Group();
+      fixture.name = `cutaway-ceiling-fixture-${index}`;
+      fixture.position.set(Math.sin(angle) * radius, 0, -Math.cos(angle) * radius);
+
+      const plate = new THREE.Mesh(
+        new RoundedBoxGeometry(0.42, 0.055, 0.3, 2, 0.04),
+        createToonMaterial(beamColor, { roughness: 0.82, surface: "wood", bumpScale: 0.006 })
+      );
+      plate.position.y = ROOM_HEIGHT - 0.18;
+      plate.rotation.y = angle;
+      fixture.add(plate);
+
+      // Keep the shade inside the upper frame even when a close narrative
+      // target pulls the reverse-orbit camera forward. The fixture remains at
+      // the perimeter, so a ~2.05m lowest lens clears actors and circulation.
+      const cableLength = (mobileLod ? 1.18 : 1.28) + index * 0.035;
+      const cable = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.012, 0.012, cableLength, 8),
+        createToonMaterial("#30364e", { roughness: 0.74 })
+      );
+      cable.position.y = ROOM_HEIGHT - 0.22 - cableLength / 2;
+      fixture.add(cable);
+
+      const shade = new THREE.Mesh(
+        new THREE.ConeGeometry(0.18, 0.16, mobileLod ? 12 : 18, 1, true),
+        createToonMaterial(index % 2 ? stripColor : colors.accent, {
+          emissive: night ? 0.26 : 0.12,
+          roughness: 0.62,
+          side: THREE.DoubleSide
+        })
+      );
+      shade.position.y = ROOM_HEIGHT - 0.24 - cableLength;
+      shade.rotation.x = Math.PI;
+      fixture.add(shade);
+
+      const lens = new THREE.Mesh(
+        new THREE.CircleGeometry(0.105, mobileLod ? 12 : 18),
+        createToonMaterial(stripColor, { emissive: 0.48, roughness: 0.36, side: THREE.DoubleSide })
+      );
+      lens.position.y = shade.position.y - 0.075;
+      lens.rotation.x = Math.PI / 2;
+      fixture.add(lens);
+
+      roomRoot.add(fixture);
+      fixture.updateWorldMatrix(true, true);
+      // Visibility is judged by the recognisable light source, not the full
+      // ceiling-to-shade suspension span. Keep survival tied to the complete
+      // merged fixture while projecting the shade + lens semantic bounds.
+      const semanticBounds = new THREE.Box3()
+        .setFromObject(shade)
+        .union(new THREE.Box3().setFromObject(lens));
+      const preparedFixture = prepareCutawayWallAnchor(
+        fixture,
+        angle,
+        `cutaway-ceiling-fixture-${index}`
+      );
+      registerEnvironmentFeatureMeshes(preparedFixture, {
+        id: `ceiling-fixture-${index}`,
+        type: "ceiling",
+        source: layoutVersion >= 3
+          ? "polygon-cutaway-ceiling-kit"
+          : "round-cutaway-ceiling-kit",
+        bounds: semanticBounds
+      });
+    }
+    return;
+  }
 
   // (1) Perimeter ring light strip — emissive torus just inside the crown,
   // reads as a cove uplight. Emissive scalar > 0.4 so it visibly glows
@@ -7653,6 +7954,11 @@ function addCeilingTriad(theme, colors, mobileLod = false) {
   ring.position.y = ROOM_HEIGHT - 0.1;
   ring.castShadow = false;
   roomRoot.add(ring);
+  registerEnvironmentFeatureMeshes(ring, {
+    id: "ceiling-ring",
+    type: "ceiling",
+    source: "closed-room-ceiling-kit"
+  });
 
   // (2) Radial beams — 3 thin boxes from near-centre to the ring, 120° apart.
   // Skipped on mobile: three long boxes cost fill-rate for the smallest
@@ -7660,6 +7966,7 @@ function addCeilingTriad(theme, colors, mobileLod = false) {
   if (!mobileLod) {
     const beamGeo = new THREE.BoxGeometry(ROOM_RADIUS - 0.3, 0.06, 0.12);
     const beamMat = createToonMaterial(beamColor, { roughness: 0.82, surface: "wood", bumpScale: 0.006 });
+    const beams = [];
     for (let index = 0; index < 3; index += 1) {
       const angle = (index / 3) * Math.PI * 2 + Math.PI / 6;
       const beam = new THREE.Mesh(beamGeo, beamMat);
@@ -7668,7 +7975,13 @@ function addCeilingTriad(theme, colors, mobileLod = false) {
       beam.rotation.y = angle;
       beam.castShadow = false;
       roomRoot.add(beam);
+      beams.push(beam);
     }
+    registerEnvironmentFeatureMeshes(beams, {
+      id: "ceiling-beams",
+      type: "ceiling",
+      source: "closed-room-ceiling-kit"
+    });
   }
 
   // (3) Central skylight — a glowing downward disc closing the overhead
@@ -7694,6 +8007,11 @@ function addCeilingTriad(theme, colors, mobileLod = false) {
   );
   pennant.position.set(0.11, ROOM_HEIGHT - 0.4, 0);
   roomRoot.add(pennant);
+  registerEnvironmentFeatureMeshes([skylight, thread, pennant], {
+    id: "ceiling-skylight",
+    type: "ceiling",
+    source: "closed-room-ceiling-kit"
+  });
 }
 
 function rebuildRoom(theme = {}) {
@@ -7701,6 +8019,7 @@ function rebuildRoom(theme = {}) {
   if (signature === roomSignature) return false;
   roomSignature = signature;
   activeCivicPortalContract = "";
+  runtimeEnvironmentFeatureAnchors.clear();
   cameraForegroundObjects.clear();
   occludedMaterials.clear();
   // The room is revealed atomically after only a short GPU warm-up. Seed the
@@ -7973,9 +8292,8 @@ function rebuildRoom(theme = {}) {
     lowerCove.castShadow = false;
     roomRoot.add(lowerCove);
   }
-  // T7 ceiling triad (emissive ring + beams + skylight) closes the overhead
-  // void for V1 closed rooms. Same version guard as the crown above; plaza
-  // and V2+ cutaways are skipped inside the function.
+  // T7 closes the upper frame with a ring/beams/skylight in V1 or compact bay
+  // pendants in V2/V3. The plaza keeps and registers its bespoke ceiling kit.
   addCeilingTriad(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
 
   if (!polygonShell && !INTERIOR_ENVIRONMENT_PALETTES[theme.archetype || "home"]) {
@@ -7994,9 +8312,9 @@ function rebuildRoom(theme = {}) {
   addZoneLayoutArchitecture(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addZoneIdentity(theme, { accent, secondary, trim, wallColor, floorColor, night });
   addExitPortal(theme, { accent, secondary, trim, wallColor, floorColor, night });
-  // T6 wall activation fills the back ~240° (quarter walls + back wall +
-  // full-circumference picture rail) so no orbit angle stares at blank plaster
-  // (DoD-1). Pre-merge so the pieces batch with the architecture pass.
+  // T6 activates round-room side/back bays with bounded rails and panels.
+  // Authored polygon/plaza walls register their own anchors. Run pre-merge so
+  // the verifier proves those meshes survive the runtime architecture pass.
   addWallActivation(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
   // Preset-flagged night dressing (string lights). Triggered by the lighting
   // preset rather than the archetype so future night rooms opt in by setting
@@ -14927,6 +15245,64 @@ function measureRuntimeOcclusion(box) {
   return Number((visible / samples.length).toFixed(4));
 }
 
+function getRuntimeEnvironmentFeatureSnapshot() {
+  const survivingMeshes = new Map();
+  roomRoot?.traverse?.((node) => {
+    if (!node.isMesh) return;
+    getNodeEnvironmentFeatureAnchors(node).forEach((id) => {
+      const entry = survivingMeshes.get(id) || { count: 0, names: new Set(), opacities: [] };
+      entry.count += 1;
+      entry.names.add(String(node.name || "unnamed-environment-mesh"));
+      const materials = Array.isArray(node.material) ? node.material : [node.material];
+      materials.filter(Boolean).forEach((material) => {
+        entry.opacities.push(isSceneObjectEffectivelyVisible(node) ? getRenderedMaterialOpacity(material) : 0);
+      });
+      survivingMeshes.set(id, entry);
+    });
+  });
+  return {
+    version: "mirrorlife-environment-features-v1",
+    anchors: [...runtimeEnvironmentFeatureAnchors.values()].map((anchor) => {
+      const surviving = survivingMeshes.get(anchor.id);
+      return {
+        id: anchor.id,
+        type: anchor.type,
+        source: anchor.source,
+        survivingMeshCount: surviving?.count || 0,
+        survivingMeshNames: [...(surviving?.names || [])],
+        effectiveOpacity: Number(Math.max(0, ...(surviving?.opacities || [0])).toFixed(4)),
+        worldBounds: serializeRuntimeBox(anchor.bounds),
+        screenRect: projectRuntimeBox(anchor.bounds)
+      };
+    })
+  };
+}
+
+function getRuntimeForegroundArchitectureSnapshot() {
+  if (!camera) return [];
+  return [...cameraForegroundObjects]
+    .filter((object) => object?.parent && object.isMesh)
+    .map((object) => {
+      object.updateWorldMatrix(true, false);
+      const box = new THREE.Box3().setFromObject(object);
+      const materials = Array.isArray(object.material) ? object.material : [object.material];
+      const effectiveOpacity = !isSceneObjectEffectivelyVisible(object)
+        ? 0
+        : Math.max(0, ...materials.filter(Boolean).map((material) => getRenderedMaterialOpacity(material)));
+      const surfaceDistance = box.isEmpty() ? Number.POSITIVE_INFINITY : box.distanceToPoint(camera.position);
+      const focusDistance = Number(lastCameraState?.focusDistance || 0);
+      return {
+        name: String(object.name || object.parent?.name || "unnamed-foreground-architecture"),
+        effectiveOpacity: Number(effectiveOpacity.toFixed(4)),
+        cameraSurfaceDistance: Number.isFinite(surfaceDistance) ? Number(surfaceDistance.toFixed(4)) : null,
+        focusDistance: Number(focusDistance.toFixed(4)),
+        inFrontOfFocus: Number.isFinite(surfaceDistance) && focusDistance > 0 && surfaceDistance < focusDistance,
+        worldBounds: serializeRuntimeBox(box),
+        screenRect: projectRuntimeBox(box)
+      };
+    });
+}
+
 function getRuntimeIntegritySnapshot() {
   const items = activeItems.map((item) => {
     const measurement = runtimeModelBounds.get(item.key) || null;
@@ -14980,6 +15356,8 @@ function getRuntimeIntegritySnapshot() {
     },
     items,
     actors,
+    environmentFeatures: getRuntimeEnvironmentFeatureSnapshot(),
+    foregroundArchitecture: getRuntimeForegroundArchitectureSnapshot(),
     occlusionMethod: "actual-glb-world-triangle-cluster-aabb-segment-v1",
     interactions: [...projectedItems.values()].map((item) => ({ ...item }))
   };
