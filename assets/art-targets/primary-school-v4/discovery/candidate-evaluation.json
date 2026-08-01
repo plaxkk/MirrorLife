@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "reviewer": "Codex cross-review; directional only",
+  "decision": "user-review-required",
+  "recommendedCandidate": "05-sculpted-storybook",
+  "categoryWeights": {
+    "spatialComposition": 20,
+    "shapeUnity": 20,
+    "materialColorLighting": 20,
+    "characterAppeal": 20,
+    "actionContact": 10,
+    "mobileReadability": 10
+  },
+  "candidates": {
+    "01-morning-paper-glow": {
+      "scores": { "spatialComposition": 80, "shapeUnity": 76, "materialColorLighting": 86, "characterAppeal": 72, "actionContact": 55, "mobileReadability": 72 },
+      "weightedTotal": 75.5,
+      "hardFailures": ["five people", "three graybox figures", "character floor below 75"]
+    },
+    "02-cornflower-quiet": {
+      "scores": { "spatialComposition": 83, "shapeUnity": 82, "materialColorLighting": 87, "characterAppeal": 78, "actionContact": 66, "mobileReadability": 80 },
+      "weightedTotal": 80.6,
+      "hardFailures": ["six people", "continuous colored wall paneling", "action/contact floor below 75"]
+    },
+    "03-coral-answer": {
+      "scores": { "spatialComposition": 88, "shapeUnity": 86, "materialColorLighting": 90, "characterAppeal": 81, "actionContact": 72, "mobileReadability": 84 },
+      "weightedTotal": 84.6,
+      "hardFailures": ["seven people", "continuous colored wall paneling", "action/contact floor below 75"]
+    },
+    "04-four-person-clarity": {
+      "scores": { "spatialComposition": 89, "shapeUnity": 87, "materialColorLighting": 89, "characterAppeal": 79, "actionContact": 84, "mobileReadability": 88 },
+      "weightedTotal": 86.0,
+      "hardFailures": [],
+      "residualRisk": "Characters remain too close to editorial realism."
+    },
+    "05-sculpted-storybook": {
+      "scores": { "spatialComposition": 88, "shapeUnity": 90, "materialColorLighting": 91, "characterAppeal": 83, "actionContact": 86, "mobileReadability": 89 },
+      "weightedTotal": 87.9,
+      "hardFailures": [],
+      "residualRisk": "Final character sheets must push authored proportions and facial planes further from realism."
+    },
+    "06-golden-pause": {
+      "scores": { "spatialComposition": 85, "shapeUnity": 89, "materialColorLighting": 93, "characterAppeal": 82, "actionContact": 79, "mobileReadability": 86 },
+      "weightedTotal": 86.3,
+      "hardFailures": [],
+      "residualRisk": "People cluster to the center-right and weaken the reading-zone invitation."
+    }
+  },
+  "artGate": {
+    "decision": "pending",
+    "reason": "Only the user can approve the final direction; the complete multiview packet and editable paint-over sources remain absent."
+  }
+}

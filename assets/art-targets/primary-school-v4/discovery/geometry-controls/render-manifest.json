@@ -1,0 +1,253 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "styleId": "mirrorlife-storybook-cinematic-v1",
+  "generatedAt": "2026-08-01T11:42:55.617Z",
+  "source": {
+    "file": "public/game.js",
+    "fileSha256": "a0d43ac2128d1f79f6308f3871d83963ea2c7cab592b870414abfdb25d474cbe",
+    "fragmentSha256": "d5f60fc35a87e3318f48e72320e6ec082f9652c745d8b74fcb16d336833adb76",
+    "shellId": "primary-school-learning-loop-v3"
+  },
+  "geometryInputContract": "dist/interior-3d-work/primary-school-v4/art-target-input/input-contract.json",
+  "geometryInputManifestHash": "b7539bfad43e181ab051c7e6131946690f00c8ecd89be0861a2663ebf561f5b6",
+  "render": {
+    "engine": "BLENDER_EEVEE_NEXT",
+    "blenderVersion": "4.3.2",
+    "size": 1024,
+    "views": [
+      "hero",
+      "yaw-0",
+      "yaw-90",
+      "yaw-180",
+      "yaw-270",
+      "top"
+    ],
+    "passes": [
+      "beauty-gray",
+      "depth",
+      "normal",
+      "line",
+      "object-id",
+      "material-id"
+    ]
+  },
+  "renders": [
+    {
+      "id": "hero:beauty-gray",
+      "file": "hero/beauty-gray.png",
+      "sha256": "36146ff6436389f3d70cc17543c049589170e0f7be007be64e27dddcdc457ad1",
+      "bytes": 892237
+    },
+    {
+      "id": "hero:depth",
+      "file": "hero/depth.png",
+      "sha256": "c1ca2016aad38a44ab1ee6784f3c0af057b1455e89a2513fcf62ff1cf0d2f721",
+      "bytes": 516555
+    },
+    {
+      "id": "hero:normal",
+      "file": "hero/normal.png",
+      "sha256": "7fa686d8a11157d4e07a96b0e087a588cd154a6113183d49aa6f0c906eb80b96",
+      "bytes": 726731
+    },
+    {
+      "id": "hero:line",
+      "file": "hero/line.png",
+      "sha256": "cbb6fc30b13aee357aa466e90cda4515cfce94f4e172befa790e2279f56be18b",
+      "bytes": 548790
+    },
+    {
+      "id": "hero:object-id",
+      "file": "hero/object-id.png",
+      "sha256": "f09d1df27d5cccf2e14118cc8973c3dd5be38ed493dff491dade6a76a8c5a2e2",
+      "bytes": 657177
+    },
+    {
+      "id": "hero:material-id",
+      "file": "hero/material-id.png",
+      "sha256": "878ed74254c92adfb5e43accf45dd1bb5f1c46363c6c63d161219d6dbc7f875b",
+      "bytes": 719292
+    },
+    {
+      "id": "yaw-0:beauty-gray",
+      "file": "yaw-0/beauty-gray.png",
+      "sha256": "a468ed39983c8da4fd6b02983aabb5f9ab13868b47422270bf15106448bfbf3b",
+      "bytes": 881479
+    },
+    {
+      "id": "yaw-0:depth",
+      "file": "yaw-0/depth.png",
+      "sha256": "ceb082dc827075e2175f33315a237a34220cca30a5263348df427ebb4e0490b8",
+      "bytes": 523939
+    },
+    {
+      "id": "yaw-0:normal",
+      "file": "yaw-0/normal.png",
+      "sha256": "0cd3a795630c243ab580c20414fdee92b96ac7954eaf40d722dccd1e252027e7",
+      "bytes": 751209
+    },
+    {
+      "id": "yaw-0:line",
+      "file": "yaw-0/line.png",
+      "sha256": "ed355c6782fefecc0fcb95a02e6a47e1632804c7c0d59dba06de7dc18708a9cd",
+      "bytes": 534467
+    },
+    {
+      "id": "yaw-0:object-id",
+      "file": "yaw-0/object-id.png",
+      "sha256": "a11db6199ecb49766b8ff01801d86c5d87dd840200a437cef1ef35ec9e4d6d11",
+      "bytes": 691607
+    },
+    {
+      "id": "yaw-0:material-id",
+      "file": "yaw-0/material-id.png",
+      "sha256": "bd3aa32e4929c8605210ef7b47a413840e60eb40dfe94dce2587ef73bc47712d",
+      "bytes": 746869
+    },
+    {
+      "id": "yaw-90:beauty-gray",
+      "file": "yaw-90/beauty-gray.png",
+      "sha256": "0547c6a76a7072ed6ac3a74d1a277276ac413df65c887cf9011d9f076ec1f4bb",
+      "bytes": 900692
+    },
+    {
+      "id": "yaw-90:depth",
+      "file": "yaw-90/depth.png",
+      "sha256": "e35c2fabe2001b1adc94e4d75b5713db1ee3da2d6217882d8b4b64a4e7d806ea",
+      "bytes": 532048
+    },
+    {
+      "id": "yaw-90:normal",
+      "file": "yaw-90/normal.png",
+      "sha256": "8de191b0f0e6393a0d57fd1a3b7eee09df57681c19ae4fa97fa2baeaba84727a",
+      "bytes": 798322
+    },
+    {
+      "id": "yaw-90:line",
+      "file": "yaw-90/line.png",
+      "sha256": "6154cbfbe701a5da988bea1c340092145b09d0166b1ea499e4483735d33d36ab",
+      "bytes": 563934
+    },
+    {
+      "id": "yaw-90:object-id",
+      "file": "yaw-90/object-id.png",
+      "sha256": "c7791b97a3b89c990da74ff3b3e5da991e6f25642bfcff46b90b6f1751d582e6",
+      "bytes": 708532
+    },
+    {
+      "id": "yaw-90:material-id",
+      "file": "yaw-90/material-id.png",
+      "sha256": "9ce73d52b5bfd29d2a0e2c092c7f74c212c05836dfeb1c96e7b9594616232045",
+      "bytes": 783449
+    },
+    {
+      "id": "yaw-180:beauty-gray",
+      "file": "yaw-180/beauty-gray.png",
+      "sha256": "6b2693c843f0e5af3f4c6bf1e98dcf358dc19f1dc3a28426d2aa0bed1e9ed9e3",
+      "bytes": 888387
+    },
+    {
+      "id": "yaw-180:depth",
+      "file": "yaw-180/depth.png",
+      "sha256": "a055952c86976728b60f036c048ba9873a725c10e10dd825cd42f98667bce8dc",
+      "bytes": 527664
+    },
+    {
+      "id": "yaw-180:normal",
+      "file": "yaw-180/normal.png",
+      "sha256": "c597271751ca7a5ac367f407d849b658d74dd6fd7cdef909a73fc1501711378e",
+      "bytes": 766120
+    },
+    {
+      "id": "yaw-180:line",
+      "file": "yaw-180/line.png",
+      "sha256": "85f3a7edab41f35105e70526d97a33393168125f728a9e4401f4053a32879734",
+      "bytes": 551134
+    },
+    {
+      "id": "yaw-180:object-id",
+      "file": "yaw-180/object-id.png",
+      "sha256": "c378022ba294e6fd55d098823348b505688a33011c42ae09bbdb1c8b1707b558",
+      "bytes": 712369
+    },
+    {
+      "id": "yaw-180:material-id",
+      "file": "yaw-180/material-id.png",
+      "sha256": "acebce45eebe1cf521ff2ce327521cf1e586144ce747e3008e2f3c24b8292a68",
+      "bytes": 754807
+    },
+    {
+      "id": "yaw-270:beauty-gray",
+      "file": "yaw-270/beauty-gray.png",
+      "sha256": "0952a1892ee58922c97124ccd41f31c3d7ab905a33b7624965220325dab30b60",
+      "bytes": 909562
+    },
+    {
+      "id": "yaw-270:depth",
+      "file": "yaw-270/depth.png",
+      "sha256": "afe2255fe7f514788f88a846d8fd6d5d71c26e44a8f280f7d35a1066261a2e23",
+      "bytes": 535380
+    },
+    {
+      "id": "yaw-270:normal",
+      "file": "yaw-270/normal.png",
+      "sha256": "26d659cf57eb25c426f70432e51496180b4a88b883e68a4f043283088bc735a0",
+      "bytes": 815172
+    },
+    {
+      "id": "yaw-270:line",
+      "file": "yaw-270/line.png",
+      "sha256": "7da4542c93ef6f7ba5d7cb3e0d9be2e5d6e1274752d3ed5d3f074a42f17f1055",
+      "bytes": 572530
+    },
+    {
+      "id": "yaw-270:object-id",
+      "file": "yaw-270/object-id.png",
+      "sha256": "76f9126cab555f4e6c0f4fb263b026dbe122db2c58bff1a0b1698fc09b681b91",
+      "bytes": 754333
+    },
+    {
+      "id": "yaw-270:material-id",
+      "file": "yaw-270/material-id.png",
+      "sha256": "f4349ab10e3bdbaa2bf83d0f3d280956e0737bf9ed9cba98d9e8aa360ef590ad",
+      "bytes": 801214
+    },
+    {
+      "id": "top:beauty-gray",
+      "file": "top/beauty-gray.png",
+      "sha256": "8da8c3d581fe37e7ad624373d7c414a2c1fc93a578ed9a4cfc4cd90fe81c8b1f",
+      "bytes": 887543
+    },
+    {
+      "id": "top:depth",
+      "file": "top/depth.png",
+      "sha256": "f78f16a3ae86ebb7c0f606f2a7d0b487a534dac26f9c9fe68463e5e057e84e97",
+      "bytes": 516736
+    },
+    {
+      "id": "top:normal",
+      "file": "top/normal.png",
+      "sha256": "c5314dd5f8a0328f4daac4ffe82ba2f4a09721b1dc784be9be3226454666b668",
+      "bytes": 676650
+    },
+    {
+      "id": "top:line",
+      "file": "top/line.png",
+      "sha256": "884c33fc222c197f39f081ab002d9624b2fba3565028d745fa136c6c8406e422",
+      "bytes": 536728
+    },
+    {
+      "id": "top:object-id",
+      "file": "top/object-id.png",
+      "sha256": "8378e0f20654c9677b75939390a1a2f5b1d82b4a78c75d84ee1258ed4e5d0269",
+      "bytes": 633972
+    },
+    {
+      "id": "top:material-id",
+      "file": "top/material-id.png",
+      "sha256": "733aec2d27ad0e6a0c44e771ea33706203ade3359c7287c1dde192a06c76a49a",
+      "bytes": 680168
+    }
+  ]
+}

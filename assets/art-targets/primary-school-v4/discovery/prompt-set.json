@@ -1,0 +1,57 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "styleId": "mirrorlife-storybook-cinematic-v1",
+  "useCase": "stylized-concept",
+  "assetType": "geometry-controlled 3D game environment Art Target",
+  "geometryInputs": [
+    "geometry-controls/hero/beauty-gray.png",
+    "geometry-controls/hero/line.png",
+    "geometry-controls/hero/depth.png",
+    "geometry-controls/top/beauty-gray.png"
+  ],
+  "basePrompt": [
+    "Redesign the exact primary-school classroom graybox as a beautiful, cohesive warm storybook cinematic interior; this is geometry-controlled art direction, not free-form architecture.",
+    "Preserve the exact hero camera, L-shaped room boundary, door, four functional zones, six furniture anchors, four character guide positions and walkable negative space.",
+    "The central slow-answer table is the focal point; reading nook and question wall are secondary; preserve a 1.4m main aisle and 0.9m interaction clearances.",
+    "Use 60% warm paper/oak, 30% teal/cornflower and 10% coral/gold with matte plaster, open-grain oak, woven textile, cork, paper, ceramic and sparse brushed metal.",
+    "Use polished authored stylized 3D, soft trapezoids, rounded rectangles, slight asymmetry and a 70/20/10 detail hierarchy; not chibi, toy-like, photoreal or flat illustration.",
+    "Show exactly four grounded, approachable people: child player, child listener, adult facilitator and adult mediator; no extra people or graybox guides.",
+    "No continuous colored wall paneling, billboard, inverted-hull outline, generic plastic, shell hair, oversized bevel, duplicate object, malformed hand, fused prop, text, logo or watermark."
+  ],
+  "candidates": [
+    {
+      "id": "01-morning-paper-glow",
+      "variation": "Balanced neutral morning daylight, strongest material separation and minimal decorative density.",
+      "operation": "generate"
+    },
+    {
+      "id": "02-cornflower-quiet",
+      "variation": "Cooler clear morning light and a restrained cornflower reading-nook emphasis.",
+      "operation": "generate"
+    },
+    {
+      "id": "03-coral-answer",
+      "variation": "One restrained coral action cue on the question wall; make the evidence-to-table-to-wall route legible.",
+      "operation": "generate"
+    },
+    {
+      "id": "04-four-person-clarity",
+      "variation": "Correct candidate 03 to exactly four people, remove wall paneling and maximize causal grouping readability.",
+      "operation": "precise-object-edit",
+      "editTarget": "candidate-03-coral-answer.png"
+    },
+    {
+      "id": "05-sculpted-storybook",
+      "variation": "Keep exactly four people and make character/surface treatment more clearly authored stylized 3D.",
+      "operation": "precise-object-edit",
+      "editTarget": "candidate-03-coral-answer.png"
+    },
+    {
+      "id": "06-golden-pause",
+      "variation": "Keep geometry and four people; change only daylight toward a golden late-morning pause with cornflower shadow fill.",
+      "operation": "precise-object-edit",
+      "editTarget": "candidate-03-coral-answer.png"
+    }
+  ]
+}

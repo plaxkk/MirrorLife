@@ -1,0 +1,243 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "styleId": "mirrorlife-storybook-cinematic-v1",
+  "source": {
+    "file": "public/game.js",
+    "fileSha256": "a0d43ac2128d1f79f6308f3871d83963ea2c7cab592b870414abfdb25d474cbe",
+    "fragmentSha256": "d5f60fc35a87e3318f48e72320e6ec082f9652c745d8b74fcb16d336833adb76",
+    "shellId": "primary-school-learning-loop-v3"
+  },
+  "geometry": {
+    "shell": {
+      "shape": "polygon",
+      "width": 13.5,
+      "depth": 10.5,
+      "height": 3.9,
+      "floorY": 0,
+      "walkableInset": 0.18,
+      "vertices": [
+        {
+          "x": -6.75,
+          "z": -5.25
+        },
+        {
+          "x": 6.75,
+          "z": -5.25
+        },
+        {
+          "x": 6.75,
+          "z": 1.25
+        },
+        {
+          "x": 2.2,
+          "z": 1.25
+        },
+        {
+          "x": 2.2,
+          "z": 5.25
+        },
+        {
+          "x": -6.75,
+          "z": 5.25
+        }
+      ],
+      "door": {
+        "id": "exit",
+        "edge": 4,
+        "offset": 0.22,
+        "width": 1.35,
+        "height": 2.35,
+        "depth": 0.16
+      }
+    },
+    "spawn": {
+      "x": -3.2,
+      "y": 0.86,
+      "z": 4.15
+    },
+    "functionalZones": [
+      {
+        "id": "threshold",
+        "label": "进门与准备",
+        "x": -3.65,
+        "z": 3.7,
+        "radius": 1.25,
+        "color": "#f1c85b"
+      },
+      {
+        "id": "shared-study",
+        "label": "共同学习",
+        "x": 0,
+        "z": -0.4,
+        "radius": 2.15,
+        "color": "#70c7c0"
+      },
+      {
+        "id": "reading",
+        "label": "阅读与慢答",
+        "x": -4.6,
+        "z": -2.75,
+        "radius": 1.55,
+        "color": "#6f9fd1"
+      },
+      {
+        "id": "questions",
+        "label": "问题与发现",
+        "x": 4.55,
+        "z": -3.35,
+        "radius": 1.35,
+        "color": "#ed9164"
+      }
+    ],
+    "props": [
+      {
+        "worldX": -4.75,
+        "worldZ": -2.65,
+        "rotationY": 0.18,
+        "displayScale": 0.9,
+        "interactionWorldX": -3.02,
+        "interactionWorldZ": -1.45,
+        "collider": {
+          "shape": "box",
+          "halfX": 1.33,
+          "halfY": 0.82,
+          "halfZ": 0.86,
+          "rotation": 0
+        }
+      },
+      {
+        "worldX": 0.3,
+        "worldZ": -4.32,
+        "rotationY": 0,
+        "displayScale": 0.96,
+        "interactionWorldX": 0.3,
+        "interactionWorldZ": -3.12,
+        "collider": {
+          "shape": "box",
+          "halfX": 0.52,
+          "halfY": 0.9,
+          "halfZ": 0.45,
+          "rotation": 0
+        }
+      },
+      {
+        "worldX": -1.72,
+        "worldZ": -0.72,
+        "rotationY": 0,
+        "displayScale": 0.92,
+        "interactionWorldX": -1.72,
+        "interactionWorldZ": 0.52,
+        "collider": {
+          "shape": "box",
+          "halfX": 0.82,
+          "halfY": 0.72,
+          "halfZ": 0.76,
+          "rotation": 0
+        }
+      },
+      {
+        "worldX": 2.25,
+        "worldZ": -0.72,
+        "rotationY": 0,
+        "displayScale": 0.92,
+        "interactionWorldX": 2.25,
+        "interactionWorldZ": 0.52,
+        "collider": {
+          "shape": "box",
+          "halfX": 0.82,
+          "halfY": 0.72,
+          "halfZ": 0.76,
+          "rotation": 0
+        }
+      },
+      {
+        "worldX": 4.72,
+        "worldZ": -4.72,
+        "rotationY": 0,
+        "displayScale": 1.04,
+        "interactionWorldX": 4.72,
+        "interactionWorldZ": -3.42,
+        "collider": {
+          "shape": "box",
+          "halfX": 0.98,
+          "halfY": 1.05,
+          "halfZ": 0.32,
+          "rotation": 0
+        }
+      },
+      {
+        "worldX": -5.45,
+        "worldZ": 1.72,
+        "rotationY": 1.54,
+        "displayScale": 0.78,
+        "renderModel": false,
+        "physicsSolid": false,
+        "interactionEnabled": false,
+        "focal": false,
+        "interactionWorldX": -4.02,
+        "interactionWorldZ": 1.72
+      }
+    ],
+    "actorStagingPoints": [
+      {
+        "x": -2.2,
+        "z": 2,
+        "facing": 0.18
+      },
+      {
+        "x": -3.8,
+        "z": 1.5,
+        "facing": -0.16
+      },
+      {
+        "x": 3.6,
+        "z": -2.4,
+        "facing": -0.65
+      }
+    ],
+    "cameraSafeArea": {
+      "x": 0,
+      "z": 2.25,
+      "radius": 4.15
+    },
+    "cameraTargets": [
+      {
+        "id": "shared-study",
+        "x": 0.18,
+        "z": 1.32
+      },
+      {
+        "id": "reading-threshold",
+        "x": -3.2,
+        "z": 0.8
+      },
+      {
+        "id": "questions-threshold",
+        "x": 0.8,
+        "z": 0.6
+      }
+    ]
+  },
+  "render": {
+    "engine": "BLENDER_EEVEE_NEXT",
+    "blenderVersion": "4.3.2",
+    "size": 1024,
+    "views": [
+      "hero",
+      "yaw-0",
+      "yaw-90",
+      "yaw-180",
+      "yaw-270",
+      "top"
+    ],
+    "passes": [
+      "beauty-gray",
+      "depth",
+      "normal",
+      "line",
+      "object-id",
+      "material-id"
+    ]
+  }
+}

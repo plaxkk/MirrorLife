@@ -1,0 +1,45 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "generatedAt": "2026-08-01T12:13:15Z",
+  "generator": {
+    "name": "OpenAI built-in image generation",
+    "mode": "geometry-referenced generate and precise-object-edit",
+    "modelName": null,
+    "modelSha256": null,
+    "seed": null,
+    "reason": "The built-in tool does not expose model identity, checkpoint hash or seed."
+  },
+  "promotionEligible": false,
+  "promotionBlockers": [
+    "No pinned FLUX.2 klein 4B checkpoint hash.",
+    "No editable Krita paint-over source.",
+    "User has not selected or approved a candidate.",
+    "Complete room, prop and character multiview packet is not yet produced."
+  ],
+  "runtimeGeometry": {
+    "sourceFile": "public/game.js",
+    "shellId": "primary-school-learning-loop-v3",
+    "inputContract": "geometry-controls/input-contract.json",
+    "inputContractSha256": "b7539bfad43e181ab051c7e6131946690f00c8ecd89be0861a2663ebf561f5b6",
+    "renderManifest": "geometry-controls/render-manifest.json",
+    "renderManifestSha256": "c27af530eb80eaa9f01bf8546eccd58b21427795f5da5abddc801bd4ab53b387"
+  },
+  "candidateSha256": {
+    "01-morning-paper-glow": "6f0790cf3e62dd2c206c1811a80f5b3e5a8fa608cb3cba2f13337db68dbabfc3",
+    "02-cornflower-quiet": "72661172722f2dd9c3bb557e4953f560462d8dcfbe864fa5681f719658463f07",
+    "03-coral-answer": "77382a2b4c835e78f1ce581a57ece4f632264201b7f0bef9608a1fd8a70c3c30",
+    "04-four-person-clarity": "9aa7d18e50e0761d81891513a3bcff2988e0b1da71e9cd631e71e8d52ef4467f",
+    "05-sculpted-storybook": "469fd39a40f9f9f37ba80049e120e25fc00e28f432be759da5776487c205c659",
+    "06-golden-pause": "5f81c39483174a19a88dc60c4aed99443a581ba6603070bccac8369ccf46dde0"
+  },
+  "reviewCropSha256": {
+    "01-morning-paper-glow": "08f1d4b8af9ee35596511247561d36a6a4d87492c06f1a720a2c09be4b89ac15",
+    "02-cornflower-quiet": "4e53889dd88d46bdc73e8b8f3d3ed0ae8deef73711c4ef27d8591a3d8c30c9e8",
+    "03-coral-answer": "849a28228cc32902c914dbef13232ac95b4ee32d41814ff69e3c3c4d95079f8b",
+    "04-four-person-clarity": "f27877b4117eeec2492acdd97edbb51a0107fbf75fb1428db034642f87618dd3",
+    "05-sculpted-storybook": "62dc6deaa05237db9383b529f6da03195e80b638ff89ea91fcbeb762519a4d57",
+    "06-golden-pause": "b95697e30845640b84bc8d6177523d8d545fd98fd688c5b3605f841f349e7a5a"
+  },
+  "contactSheetSha256": "a005a74692b228835d0403ac96b2c10035dfa4022709b9ea3a97eefd3bfcdfd3"
+}
