@@ -36,6 +36,7 @@
     "benchmark:interior": "node scripts/benchmark-interior-performance.mjs",
     "verify:interior-entry-performance": "node scripts/verify-interior-entry-performance.mjs",
     "verify:interior-runtime-integrity": "node scripts/verify-interior-runtime-integrity.mjs",
+    "verify:interior-environment-features": "MIRRORLIFE_RUNTIME_INTEGRITY_ENVIRONMENT_ONLY=1 node scripts/verify-interior-runtime-integrity.mjs",
     "verify:world-clock-causality": "node scripts/verify-world-clock-causality.mjs",
     "verify:mobile-choice-ergonomics": "node scripts/verify-mobile-choice-ergonomics.mjs",
     "verify:map-sprite-safety": "node scripts/verify-map-sprite-safety.mjs",
