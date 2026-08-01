@@ -6,6 +6,11 @@
 
 **Promotion status:** blocked from final Art Gate and img2threejs
 
+**Follow-up evidence:** a six-view room-direction packet has been prepared
+from candidate 05 as a reversible provisional anchor. Review it in
+[`../room/README.md`](../room/README.md); it remains pending explicit user
+approval and is not promotion eligible.
+
 This packet is the first visual checkpoint for the `primary-school-v4` pilot. It
 contains six geometry-controlled hero candidates, their exact 16:9 review
 crops, and the runtime-derived Blender graybox inputs that constrained them.

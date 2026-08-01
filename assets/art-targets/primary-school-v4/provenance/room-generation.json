@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "generatedAt": "2026-08-01",
+  "generator": {
+    "name": "OpenAI built-in image generation",
+    "modelName": null,
+    "modelSha256": null,
+    "seed": null,
+    "editableSource": null
+  },
+  "promotionEligible": false,
+  "geometryInputs": {
+    "inputContract": "discovery/geometry-controls/input-contract.json",
+    "inputContractSha256": "b7539bfad43e181ab051c7e6131946690f00c8ecd89be0861a2663ebf561f5b6",
+    "yaw90BeautySha256": "0547c6a76a7072ed6ac3a74d1a277276ac413df65c887cf9011d9f076ec1f4bb",
+    "yaw90LineSha256": "6154cbfbe701a5da988bea1c340092145b09d0166b1ea499e4483735d33d36ab",
+    "yaw90DepthSha256": "e35c2fabe2001b1adc94e4d75b5713db1ee3da2d6217882d8b4b64a4e7d806ea"
+  },
+  "transformations": [
+    {
+      "artifact": "room/hero.png",
+      "operation": "copied from discovery review candidate 05 without pixel changes"
+    },
+    {
+      "artifact": "room/top.png",
+      "operation": "rotated 180 degrees with lossless frame re-encode to align the L-shaped notch with the runtime top control"
+    },
+    {
+      "artifact": "review/room-contact-sheet.png",
+      "operation": "six review images scaled with aspect preservation and padded into a 3-by-2 sheet using ffmpeg"
+    }
+  ],
+  "unavailableEvidence": [
+    "The service does not expose checkpoint identity or SHA-256.",
+    "The service does not expose deterministic seeds.",
+    "No editable Krita .kra source exists for these generated views."
+  ]
+}

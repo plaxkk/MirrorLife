@@ -80,7 +80,7 @@ export function validateInteriorArtDirection(profile)
 export function resolveInteriorPilotProfile(pilotId, { enabled })
 ```
 
-- `resolveInteriorPilotProfile()` returns `{ pilotId, styleId, assetManifest, scenarioId, fallbackShellId }` or the V3 fallback profile.
+- `resolveInteriorPilotProfile()` returns `{ pilotId, styleId, assetManifest, scenarioId, fallbackShellId, performanceBudgets }` or the V3 fallback profile. The budgets are immutable and become the authority for the pre-promotion Chrome gate in Task 9.
 
 - [ ] **Step 1: Write the failing Art Direction contract test**
 

@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "anchor": "05-sculpted-storybook",
+  "records": [
+    {
+      "id": "room-yaw-series",
+      "artifacts": ["yaw-0", "yaw-180", "yaw-270", "top"],
+      "record": "Generated from the runtime-derived beauty/depth/normal/line controls and candidate 05 style reference. The image service did not export the exact submitted prompt payload."
+    },
+    {
+      "id": "room-yaw-90-attempt-3",
+      "artifact": "yaw-90",
+      "mode": "precise-object-edit",
+      "locked": [
+        "camera angle and crop",
+        "L-shaped floor notch",
+        "wall and door positions",
+        "rug and furniture footprints",
+        "exactly four people and their poses"
+      ],
+      "edit": "Convert only primitive blocks into two rounded open-leg oak activity desks, a teal reading/storage bench, a slim oak question podium and matching low storage, using the candidate 05 material language."
+    }
+  ]
+}

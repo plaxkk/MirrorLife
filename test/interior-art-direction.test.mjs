@@ -47,9 +47,40 @@ test("enabled pilot resolves as one frozen V4 profile without V3 asset merging",
     shellId: "primary-school-learning-loop-v4",
     assetManifest: "public/assets/interiors/pilots/primary-school-v4/manifest.json",
     scenarioId: "primary-school-slow-answer-v1",
-    fallbackShellId: "primary-school-learning-loop-v3"
+    fallbackShellId: "primary-school-learning-loop-v3",
+    performanceBudgets: {
+      desktop: {
+        trianglesMax: 400000,
+        drawCallsMax: 145,
+        interactiveReadyP95Ms: 2500,
+        warmReadyP95Ms: 800,
+        fullReadyP95Ms: 6000,
+        additionalTransferBytesMax: 8388608,
+        frameTimeP95Ms: 20
+      },
+      mobile: {
+        trianglesSoftMax: 225000,
+        trianglesMax: 250000,
+        drawCallsMax: 110,
+        interactiveReadyP95Ms: 4000,
+        warmReadyP95Ms: 1200,
+        fullReadyP95Ms: 8000,
+        additionalTransferBytesMax: 6291456,
+        frameTimeP95Ms: 25
+      },
+      shared: {
+        freshSamples: 10,
+        warmSamples: 10,
+        additionalRequestsMax: 40,
+        slowFrameThresholdMs: 33,
+        slowFrameRatioMax: 0.01,
+        longTaskMaxMs: 200,
+        preInteractiveBlockingMaxMs: 500
+      }
+    }
   });
   assert(Object.isFrozen(profile));
+  assert(Object.isFrozen(profile.performanceBudgets.mobile));
 });
 
 test("invalid material and lighting contracts are rejected", () => {

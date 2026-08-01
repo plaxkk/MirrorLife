@@ -127,8 +127,42 @@ function createFallbackProfile(fallbackShellId = DEFAULT_FALLBACK_SHELL_ID) {
     shellId: fallbackShellId,
     assetManifest: null,
     scenarioId: null,
-    fallbackShellId
+    fallbackShellId,
+    performanceBudgets: null
   });
+}
+
+function validatePerformanceBudgets(budgets) {
+  const required = {
+    desktop: [
+      "trianglesMax", "drawCallsMax", "interactiveReadyP95Ms", "warmReadyP95Ms",
+      "fullReadyP95Ms", "additionalTransferBytesMax", "frameTimeP95Ms"
+    ],
+    mobile: [
+      "trianglesSoftMax", "trianglesMax", "drawCallsMax", "interactiveReadyP95Ms",
+      "warmReadyP95Ms", "fullReadyP95Ms", "additionalTransferBytesMax", "frameTimeP95Ms"
+    ],
+    shared: [
+      "freshSamples", "warmSamples", "additionalRequestsMax", "slowFrameThresholdMs",
+      "slowFrameRatioMax", "longTaskMaxMs", "preInteractiveBlockingMaxMs"
+    ]
+  };
+  for (const [profile, keys] of Object.entries(required)) {
+    assertExactKeys(budgets?.[profile], keys, `pilot performance ${profile}`);
+    for (const key of keys) {
+      const value = budgets[profile][key];
+      if (!Number.isFinite(value) || value <= 0) {
+        throw new TypeError(`pilot performance ${profile}.${key} is invalid`);
+      }
+    }
+  }
+  if (budgets.mobile.trianglesSoftMax > budgets.mobile.trianglesMax) {
+    throw new TypeError("pilot mobile triangle soft budget exceeds hard budget");
+  }
+  if (budgets.shared.slowFrameRatioMax > 1) {
+    throw new TypeError("pilot slow frame ratio is invalid");
+  }
+  return budgets;
 }
 
 function validatePilotProfile(profile) {
@@ -141,6 +175,7 @@ function validatePilotProfile(profile) {
     }
   }
   getInteriorArtDirection(profile.styleId);
+  validatePerformanceBudgets(profile.performanceBudgets);
   return profile;
 }
 
@@ -156,7 +191,8 @@ function resolveInteriorPilotProfile(pilotId, { enabled = false } = {}) {
       shellId: source.shellId,
       assetManifest: source.assetManifest,
       scenarioId: source.scenarioId,
-      fallbackShellId: source.fallbackShellId
+      fallbackShellId: source.fallbackShellId,
+      performanceBudgets: cloneSerializable(source.performanceBudgets)
     });
   } catch {
     return createFallbackProfile(PRIMARY_SCHOOL_V4_CONFIG.fallbackShellId);

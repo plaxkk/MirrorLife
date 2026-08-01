@@ -1,0 +1,100 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "styleId": "mirrorlife-storybook-cinematic-v1",
+  "status": "pending-user-review",
+  "promotionEligible": false,
+  "provisionalAnchor": {
+    "id": "05-sculpted-storybook",
+    "sha256": "62dc6deaa05237db9383b529f6da03195e80b638ff89ea91fcbeb762519a4d57"
+  },
+  "geometry": {
+    "runtimeSource": "public/game.js",
+    "shellId": "primary-school-learning-loop-v3",
+    "widthMeters": 13.5,
+    "depthMeters": 10.5,
+    "heightMeters": 3.9,
+    "doorWidthMeters": 1.35,
+    "inputContractSha256": "b7539bfad43e181ab051c7e6131946690f00c8ecd89be0861a2663ebf561f5b6"
+  },
+  "artifacts": {
+    "hero": {
+      "file": "room/hero.png",
+      "sha256": "62dc6deaa05237db9383b529f6da03195e80b638ff89ea91fcbeb762519a4d57",
+      "width": 1536,
+      "height": 864
+    },
+    "yaw-0": {
+      "file": "room/yaw-0.png",
+      "sha256": "9525d1025f885345708369e199f25b66cf3ea331091a99810a69d3ddac3983f2",
+      "width": 1672,
+      "height": 941
+    },
+    "yaw-90": {
+      "file": "room/yaw-90.png",
+      "sha256": "a2c07d4672859a3bdc99473368f4508689fb69ead2f3af161464d2bf3774dbae",
+      "width": 1672,
+      "height": 941
+    },
+    "yaw-180": {
+      "file": "room/yaw-180.png",
+      "sha256": "38d02dc43f8652a4e1f1830299a1a82827196d95c92744fd3b6fa7b8df98a547",
+      "width": 1672,
+      "height": 941
+    },
+    "yaw-270": {
+      "file": "room/yaw-270.png",
+      "sha256": "1d5a303df294b6527190161b0aa5f7d477c7d1945e9943a7177f930909e2156e",
+      "width": 1672,
+      "height": 941
+    },
+    "top": {
+      "file": "room/top.png",
+      "sha256": "9f5175480805cc72e2a3a0c8639134fe8828b840c057437487bf6b2d505e178c",
+      "width": 1369,
+      "height": 1149
+    }
+  },
+  "yawEvidence": {
+    "exactlyFourPeople": true,
+    "lShapeVisible": true,
+    "doorVisibleInAtLeastTwoViews": true,
+    "circulationReadable": true,
+    "heroAndYaw0NearDuplicateDeclared": true
+  },
+  "structuralAttempts": [
+    {
+      "subject": "yaw-90",
+      "attempt": 1,
+      "sha256": "5c786d32b8c17c7fed6b49c69ee3d96dbeb1db402c1ee07ffe65c886a6942884",
+      "result": "rejected",
+      "reason": "presentation angle remained too close to the hero and did not prove a quarter turn"
+    },
+    {
+      "subject": "yaw-90",
+      "attempt": 2,
+      "sha256": "810ebd0d5d207b9ac51f969252371e23f7b85d2d88383a3e443ce2a3ac21c379",
+      "result": "rejected",
+      "reason": "camera and shell matched the graybox, but large primitive blocks broke the furniture language"
+    },
+    {
+      "subject": "yaw-90",
+      "attempt": 3,
+      "sha256": "a2c07d4672859a3bdc99473368f4508689fb69ead2f3af161464d2bf3774dbae",
+      "result": "accepted-for-user-review",
+      "reason": "quarter-turn evidence retained while primitive blocks became one authored furniture family"
+    }
+  ],
+  "crossReview": {
+    "playerProduct": "The four-person learning group reads clearly, but still images cannot prove the slow-answer consequence loop.",
+    "gameDesign": "The shared table is an obvious social focus; runtime interaction and question-wall state changes remain unproven.",
+    "art": "Palette and rounded shape language are coherent; character-specific model sheets and prop backsides remain mandatory.",
+    "engineeringPerformance": "The images do not authorize geometry density. Runtime promotion remains bound to the profile performance budgets.",
+    "qa": "Six room images and hashes are complete; final packet and user Art Gate remain intentionally incomplete."
+  },
+  "userReview": {
+    "decision": "pending",
+    "reviewer": null,
+    "reviewedAt": null
+  }
+}
