@@ -1,0 +1,70 @@
+{
+  "version": 1,
+  "profiles": {
+    "mirrorlife-storybook-cinematic-v1": {
+      "palette": {
+        "paper": "#FFF4DE",
+        "ink": "#30364E",
+        "teal": "#4E9B8F",
+        "coral": "#EE775F",
+        "gold": "#EFC65A",
+        "cornflower": "#6F9FD1",
+        "oak": "#9B673E"
+      },
+      "shapeRules": {
+        "bevelMeters": [0.02, 0.06],
+        "detailRatio": [70, 20, 10]
+      },
+      "materials": {
+        "plaster": {
+          "roughness": [0.78, 0.92],
+          "metalness": [0, 0],
+          "microSurface": "fine-limewash"
+        },
+        "oak": {
+          "roughness": [0.48, 0.68],
+          "metalness": [0, 0],
+          "microSurface": "directional-open-grain"
+        },
+        "textile": {
+          "roughness": [0.82, 0.96],
+          "metalness": [0, 0],
+          "microSurface": "woven-fiber"
+        },
+        "cork": {
+          "roughness": [0.72, 0.9],
+          "metalness": [0, 0],
+          "microSurface": "granular-cork"
+        },
+        "paper": {
+          "roughness": [0.74, 0.9],
+          "metalness": [0, 0],
+          "microSurface": "pressed-fiber"
+        },
+        "ceramic": {
+          "roughness": [0.28, 0.48],
+          "metalness": [0, 0],
+          "microSurface": "soft-glaze"
+        },
+        "metal": {
+          "roughness": [0.38, 0.58],
+          "metalness": [0.72, 1],
+          "microSurface": "brushed-matte"
+        }
+      },
+      "lighting": {
+        "faceSceneMedianRatio": 0.75
+      },
+      "characters": {
+        "adultHeads": 5.25,
+        "childHeads": 4.25
+      },
+      "forbidden": [
+        "billboard",
+        "inverted-hull",
+        "generic-plastic",
+        "shell-hair"
+      ]
+    }
+  }
+}

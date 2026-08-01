@@ -1,0 +1,9 @@
+{
+  "version": 1,
+  "pilotId": "primary-school-v4",
+  "styleId": "mirrorlife-storybook-cinematic-v1",
+  "shellId": "primary-school-learning-loop-v4",
+  "assetManifest": "public/assets/interiors/pilots/primary-school-v4/manifest.json",
+  "scenarioId": "primary-school-slow-answer-v1",
+  "fallbackShellId": "primary-school-learning-loop-v3"
+}

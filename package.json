@@ -11,6 +11,7 @@
     "verify:borderless:performance-shell": "node scripts/verify-borderless-performance-shell.mjs",
     "verify:borderless:interior-entry-race": "node scripts/verify-interior-runtime-entry-race.mjs",
     "test:interior-session": "node --test test/interior-session-controller.test.mjs test/interior-entry-snapshot.test.mjs test/interior-room-shell.test.mjs test/interior-loading-presentation.test.mjs",
+    "test:interior-art-direction": "node --test test/interior-art-direction.test.mjs",
     "verify:interior-session": "node scripts/verify-interior-session-lifecycle.mjs",
     "check:copy": "node scripts/review-copy.mjs",
     "check:stable-references": "node scripts/verify-stable-project-references.mjs",
