@@ -1,0 +1,381 @@
+{
+  "error": "Error: Walk timeout Chen",
+  "trace": [
+    {
+      "label": "entry",
+      "position": {
+        "x": -4.301163673400879,
+        "y": 0.02008906364440921,
+        "z": 3.706916570663452
+      }
+    },
+    {
+      "label": "west of table",
+      "position": {
+        "x": -4.324481964111328,
+        "y": 0.020092401504516633,
+        "z": -2.6277945041656494
+      }
+    },
+    {
+      "label": "Lin",
+      "position": {
+        "x": -2.6712260246276855,
+        "y": 0.020099315643310578,
+        "z": -2.6358189582824707
+      }
+    }
+  ],
+  "state": {
+    "version": 1,
+    "discovered": [],
+    "talked": [
+      "lin"
+    ],
+    "relations": {
+      "lin": 1
+    },
+    "decision": null,
+    "journal": [
+      {
+        "id": "meet-lin",
+        "text": "和林晓交流：今晚想给大家留一个安静的位置。",
+        "ts": 1788971644193
+      }
+    ],
+    "position": [
+      1.3251709938049316,
+      0.020499560832977326,
+      -2.629957437515259
+    ]
+  },
+  "stats": {
+    "ready": true,
+    "active": true,
+    "profile": "desktop",
+    "device": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/152.0.0.0 Safari/537.36",
+      "gpu": "ANGLE (AMD, ANGLE Metal Renderer: AMD Radeon Pro 5300M, Unspecified Version)",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "dpr": 1,
+      "renderPixelRatio": 1
+    },
+    "loadingMs": 1550.2999999998137,
+    "navigationToReadyMs": 1983.4000000003725,
+    "enterToActiveMs": 189.6000000005588,
+    "sessionMs": 121620.40000000037,
+    "frames": 1319,
+    "frameMs": {
+      "p50": 99.70000000000073,
+      "p95": 133.29999999999563,
+      "p99": 135.1999999999971
+    },
+    "cpuMs": {
+      "script": {
+        "p50": 2.5,
+        "p95": 3.6000000005587935
+      },
+      "render": {
+        "p50": 2.900000000372529,
+        "p95": 4.2999999998137355
+      }
+    },
+    "render": {
+      "frame": 1385,
+      "calls": 59,
+      "triangles": 386270,
+      "points": 0,
+      "lines": 0
+    },
+    "renderPeaks": {
+      "calls": 87,
+      "triangles": 454523,
+      "geometries": 77
+    },
+    "memory": {
+      "geometries": 77,
+      "textures": 17,
+      "jsHeapBytes": 40613330
+    },
+    "resources": [
+      {
+        "url": "/assets/atrium-DpBlt0Ka.js",
+        "transferBytes": 18789,
+        "decodedBytes": 42962,
+        "durationMs": 67.29999999981374
+      },
+      {
+        "url": "/assets/modulepreload-polyfill-Dezn_h7o.js",
+        "transferBytes": 998,
+        "decodedBytes": 698,
+        "durationMs": 50.200000000186265
+      },
+      {
+        "url": "/assets/rolldown-runtime-DK3Fl9T5.js",
+        "transferBytes": 458,
+        "decodedBytes": 158,
+        "durationMs": 58.39999999944121
+      },
+      {
+        "url": "/assets/three.module-BSoOMsqw.js",
+        "transferBytes": 184002,
+        "decodedBytes": 725401,
+        "durationMs": 160.40000000037253
+      },
+      {
+        "url": "/assets/BufferGeometryUtils-C0smkfaU.js",
+        "transferBytes": 4604,
+        "decodedBytes": 13131,
+        "durationMs": 83.70000000018626
+      },
+      {
+        "url": "/assets/SkeletonUtils-C4LTQRMy.js",
+        "transferBytes": 1890,
+        "decodedBytes": 4084,
+        "durationMs": 96.3999999994412
+      },
+      {
+        "url": "/assets/GLTFLoader-BnnIG0gd.js",
+        "transferBytes": 13006,
+        "decodedBytes": 43046,
+        "durationMs": 105
+      },
+      {
+        "url": "/assets/RoomEnvironment-DzTcpP5r.js",
+        "transferBytes": 1232,
+        "decodedBytes": 2129,
+        "durationMs": 100
+      },
+      {
+        "url": "/assets/rapier-CMw4H3UB.js",
+        "transferBytes": 830513,
+        "decodedBytes": 2236835,
+        "durationMs": 381.79999999981374
+      },
+      {
+        "url": "/assets/reference-fidelity-runtime-contract-jYf20sii.js",
+        "transferBytes": 5659,
+        "decodedBytes": 18787,
+        "durationMs": 115.5
+      },
+      {
+        "url": "/assets/atrium-fQ-SjGxM.css",
+        "transferBytes": 2823,
+        "decodedBytes": 7985,
+        "durationMs": 90
+      },
+      {
+        "url": "/storage.js",
+        "transferBytes": 3355,
+        "decodedBytes": 8902,
+        "durationMs": 115.79999999981374
+      },
+      {
+        "url": "/assets/atrium/atrium-desktop.glb",
+        "transferBytes": 2878404,
+        "decodedBytes": 2878104,
+        "durationMs": 121.09999999962747
+      },
+      {
+        "url": "/assets/atrium/collision.json",
+        "transferBytes": 2747,
+        "decodedBytes": 29187,
+        "durationMs": 48.09999999962747
+      },
+      {
+        "url": "/assets/atrium/draco/draco_wasm_wrapper.js",
+        "transferBytes": 12048,
+        "decodedBytes": 58456,
+        "durationMs": 10.799999999813735
+      },
+      {
+        "url": "/assets/atrium/draco/draco_decoder.wasm",
+        "transferBytes": 192720,
+        "decodedBytes": 192420,
+        "durationMs": 9.799999999813735
+      },
+      {
+        "url": "/assets/atrium/residents/you.glb",
+        "transferBytes": 164788,
+        "decodedBytes": 164488,
+        "durationMs": 11.200000000186265
+      },
+      {
+        "url": "/assets/atrium/life-props.glb",
+        "transferBytes": 23676,
+        "decodedBytes": 23376,
+        "durationMs": 5.7999999998137355
+      },
+      {
+        "url": "/assets/atrium/residents/lin.glb",
+        "transferBytes": 160700,
+        "decodedBytes": 160400,
+        "durationMs": 11.099999999627471
+      },
+      {
+        "url": "/assets/atrium/residents/chen.glb",
+        "transferBytes": 154296,
+        "decodedBytes": 153996,
+        "durationMs": 12.200000000186265
+      },
+      {
+        "url": "/assets/atrium/residents/xu.glb",
+        "transferBytes": 157196,
+        "decodedBytes": 156896,
+        "durationMs": 11.299999999813735
+      },
+      {
+        "url": "/assets/atrium/residents/zhou.glb",
+        "transferBytes": 162544,
+        "decodedBytes": 162244,
+        "durationMs": 11.299999999813735
+      },
+      {
+        "url": "/assets/atrium/residents/he.glb",
+        "transferBytes": 174152,
+        "decodedBytes": 173852,
+        "durationMs": 9.100000000558794
+      },
+      {
+        "url": "/assets/atrium/residents/tang.glb",
+        "transferBytes": 168680,
+        "decodedBytes": 168380,
+        "durationMs": 9.5
+      }
+    ],
+    "actors": 7,
+    "bindings": [
+      {
+        "id": "lin",
+        "count": 20
+      },
+      {
+        "id": "chen",
+        "count": 20
+      },
+      {
+        "id": "xu",
+        "count": 20
+      },
+      {
+        "id": "zhou",
+        "count": 20
+      },
+      {
+        "id": "he",
+        "count": 20
+      },
+      {
+        "id": "tang",
+        "count": 20
+      }
+    ],
+    "position": {
+      "x": 1.7741285562515259,
+      "y": 0.019571754932403596,
+      "z": -2.6318747997283936
+    },
+    "camera": [
+      1.7845653537460813,
+      2.068005762600481,
+      0.6445121865624279
+    ],
+    "distanceWalked": 207.7984526971339,
+    "visitedPositions": [
+      {
+        "x": -4.300529479980469,
+        "y": 0.02008429527282718,
+        "z": 3.976301431655884,
+        "t": 8.033470000000001
+      },
+      {
+        "x": -4.304586410522461,
+        "y": 0.020329389572143586,
+        "z": 3.9014105796813965,
+        "t": 16.101770000000023
+      },
+      {
+        "x": -4.305484294891357,
+        "y": 0.019780251979827912,
+        "z": 2.9984936714172363,
+        "t": 24.166970000000024
+      },
+      {
+        "x": -4.300675868988037,
+        "y": 0.021476361751556428,
+        "z": 3.1455881595611572,
+        "t": 32.20037000000003
+      },
+      {
+        "x": -4.301165580749512,
+        "y": 0.01987830162048343,
+        "z": 3.706913948059082,
+        "t": 40.200469999999996
+      },
+      {
+        "x": -4.323380947113037,
+        "y": 0.02008918285369876,
+        "z": -2.3641602993011475,
+        "t": 48.20226999999997
+      },
+      {
+        "x": -3.010117769241333,
+        "y": 0.020095322132110627,
+        "z": -2.6299967765808105,
+        "t": 56.21707
+      },
+      {
+        "x": -2.671225070953369,
+        "y": 0.02009335517883304,
+        "z": -2.635822057723999,
+        "t": 64.30127
+      },
+      {
+        "x": -0.054966457188129425,
+        "y": 0.023920032978057892,
+        "z": -2.6428537368774414,
+        "t": 72.33447000000005
+      },
+      {
+        "x": 0.6183584928512573,
+        "y": 0.019870851039886506,
+        "z": -2.642937183380127,
+        "t": 80.43387000000004
+      },
+      {
+        "x": 1.0667849779129028,
+        "y": 0.01998290777206424,
+        "z": -2.637174367904663,
+        "t": 88.50166999999996
+      },
+      {
+        "x": 1.0917022228240967,
+        "y": 0.020447227954864533,
+        "z": -2.6325554847717285,
+        "t": 96.50256999999996
+      },
+      {
+        "x": 0.44725340604782104,
+        "y": 0.020271096229553254,
+        "z": -2.6311564445495605,
+        "t": 104.5673699999999
+      },
+      {
+        "x": 0.46821120381355286,
+        "y": 0.01996776819229129,
+        "z": -2.6304264068603516,
+        "t": 112.63606999999989
+      },
+      {
+        "x": 1.3251709938049316,
+        "y": 0.020499560832977326,
+        "z": -2.629957437515259,
+        "t": 120.66736999999992
+      }
+    ],
+    "errors": []
+  }
+}

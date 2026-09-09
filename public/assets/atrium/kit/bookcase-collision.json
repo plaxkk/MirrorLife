@@ -1,0 +1,16 @@
+[
+  {
+    "type": "box",
+    "name": "Living library",
+    "position": [
+      0.0,
+      1.15,
+      0.0
+    ],
+    "size": [
+      2.5,
+      2.3,
+      0.5
+    ]
+  }
+]

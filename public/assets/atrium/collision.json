@@ -1,0 +1,2072 @@
+[
+  {
+    "type": "box",
+    "name": "Ground slab",
+    "position": [
+      0,
+      -0.16,
+      0
+    ],
+    "size": [
+      22,
+      0.32,
+      16
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Back gallery",
+    "position": [
+      0,
+      3.34,
+      -6.35
+    ],
+    "size": [
+      22,
+      0.32,
+      3.3
+    ]
+  },
+  {
+    "type": "box",
+    "name": "West gallery",
+    "position": [
+      -7.85,
+      3.34,
+      1.05
+    ],
+    "size": [
+      2.3,
+      0.32,
+      11.5
+    ]
+  },
+  {
+    "type": "box",
+    "name": "West stair landing",
+    "position": [
+      -9.2,
+      3.34,
+      6.3
+    ],
+    "size": [
+      3.6,
+      0.32,
+      1.45
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East gallery",
+    "position": [
+      9.25,
+      3.34,
+      1.05
+    ],
+    "size": [
+      3.5,
+      0.32,
+      11.5
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade jamb",
+    "position": [
+      -6.815,
+      1.56,
+      -4.68
+    ],
+    "size": [
+      0.27,
+      3.12,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade jamb",
+    "position": [
+      -2.4850000000000003,
+      1.56,
+      -4.68
+    ],
+    "size": [
+      0.27,
+      3.12,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade lintel",
+    "position": [
+      -4.65,
+      2.94,
+      -4.68
+    ],
+    "size": [
+      4.6,
+      0.36,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade jamb",
+    "position": [
+      -2.165,
+      1.56,
+      -4.68
+    ],
+    "size": [
+      0.27,
+      3.12,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade jamb",
+    "position": [
+      2.165,
+      1.56,
+      -4.68
+    ],
+    "size": [
+      0.27,
+      3.12,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade lintel",
+    "position": [
+      0,
+      2.94,
+      -4.68
+    ],
+    "size": [
+      4.6,
+      0.36,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade jamb",
+    "position": [
+      2.4850000000000003,
+      1.56,
+      -4.68
+    ],
+    "size": [
+      0.27,
+      3.12,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade jamb",
+    "position": [
+      6.815,
+      1.56,
+      -4.68
+    ],
+    "size": [
+      0.27,
+      3.12,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Ground rear arcade lintel",
+    "position": [
+      4.65,
+      2.94,
+      -4.68
+    ],
+    "size": [
+      4.6,
+      0.36,
+      0.48
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      1.57,
+      -4.365
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      1.57,
+      -0.03500000000000014
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening lintel",
+    "position": [
+      7.5,
+      2.96,
+      -2.2
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.6
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      1.47,
+      -4.140000000000001
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      1.47,
+      -0.26
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal lintel",
+    "position": [
+      7.62,
+      2.76,
+      -2.2
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      1.57,
+      0.43500000000000005
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      1.57,
+      4.765000000000001
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening lintel",
+    "position": [
+      7.5,
+      2.96,
+      2.6
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.6
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      1.47,
+      0.6599999999999999
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      1.47,
+      4.54
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal lintel",
+    "position": [
+      7.62,
+      2.76,
+      2.6
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      5.07,
+      -4.365
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      5.07,
+      -0.03500000000000014
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening lintel",
+    "position": [
+      7.5,
+      6.460000000000001,
+      -2.2
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.6
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      4.97,
+      -4.140000000000001
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      4.97,
+      -0.26
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal lintel",
+    "position": [
+      7.62,
+      6.26,
+      -2.2
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      5.07,
+      0.43500000000000005
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening jamb",
+    "position": [
+      7.5,
+      5.07,
+      4.765000000000001
+    ],
+    "size": [
+      0.48,
+      3.14,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room opening lintel",
+    "position": [
+      7.5,
+      6.460000000000001,
+      2.6
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.6
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      4.97,
+      0.6599999999999999
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal jamb",
+    "position": [
+      7.62,
+      4.97,
+      4.54
+    ],
+    "size": [
+      0.48,
+      2.94,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "East room colour reveal lintel",
+    "position": [
+      7.62,
+      6.26,
+      2.6
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Reading and tea threshold jamb",
+    "position": [
+      -6.7,
+      1.575,
+      -2.5650000000000004
+    ],
+    "size": [
+      0.48,
+      3.15,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Reading and tea threshold jamb",
+    "position": [
+      -6.7,
+      1.575,
+      1.5650000000000004
+    ],
+    "size": [
+      0.48,
+      3.15,
+      0.27
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Reading and tea threshold lintel",
+    "position": [
+      -6.7,
+      2.9699999999999998,
+      -0.5
+    ],
+    "size": [
+      0.48,
+      0.36,
+      4.4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (0, 0) glazing",
+    "position": [
+      -8.8,
+      1.75,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (0, 1) glazing",
+    "position": [
+      -4.4,
+      1.75,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (0, 2) glazing",
+    "position": [
+      0.0,
+      1.75,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (0, 3) glazing",
+    "position": [
+      4.4,
+      1.75,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (0, 4) glazing",
+    "position": [
+      8.8,
+      1.75,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, -1, 0) glazing",
+    "position": [
+      -11,
+      1.75,
+      -6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, -1, 1) glazing",
+    "position": [
+      -11,
+      1.75,
+      -2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, -1, 2) glazing",
+    "position": [
+      -11,
+      1.75,
+      2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, -1, 3) glazing",
+    "position": [
+      -11,
+      1.75,
+      6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, 1, 0) glazing",
+    "position": [
+      11,
+      1.75,
+      -6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, 1, 1) glazing",
+    "position": [
+      11,
+      1.75,
+      -2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, 1, 2) glazing",
+    "position": [
+      11,
+      1.75,
+      2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (0, 1, 3) glazing",
+    "position": [
+      11,
+      1.75,
+      6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (0, 0) glazing",
+    "position": [
+      -8.8,
+      1.75,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Entry left pier",
+    "position": [
+      -6.2,
+      1.6,
+      8
+    ],
+    "size": [
+      0.8,
+      3.2,
+      0.42
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Entry right pier",
+    "position": [
+      -2.6,
+      1.6,
+      8
+    ],
+    "size": [
+      0.8,
+      3.2,
+      0.42
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Entry lintel",
+    "position": [
+      -4.4,
+      3.25,
+      8
+    ],
+    "size": [
+      4.4,
+      0.5,
+      0.42
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (0, 2) glazing",
+    "position": [
+      0,
+      1.75,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (0, 3) glazing",
+    "position": [
+      4.4,
+      1.75,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (0, 4) glazing",
+    "position": [
+      8.8,
+      1.75,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (3.5, 0) glazing",
+    "position": [
+      -8.8,
+      5.25,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (3.5, 1) glazing",
+    "position": [
+      -4.4,
+      5.25,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (3.5, 2) glazing",
+    "position": [
+      0.0,
+      5.25,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (3.5, 3) glazing",
+    "position": [
+      4.4,
+      5.25,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Rear window (3.5, 4) glazing",
+    "position": [
+      8.8,
+      5.25,
+      -8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, -1, 0) glazing",
+    "position": [
+      -11,
+      5.25,
+      -6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, -1, 1) glazing",
+    "position": [
+      -11,
+      5.25,
+      -2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, -1, 2) glazing",
+    "position": [
+      -11,
+      5.25,
+      2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, -1, 3) glazing",
+    "position": [
+      -11,
+      5.25,
+      6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, 1, 0) glazing",
+    "position": [
+      11,
+      5.25,
+      -6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, 1, 1) glazing",
+    "position": [
+      11,
+      5.25,
+      -2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, 1, 2) glazing",
+    "position": [
+      11,
+      5.25,
+      2
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side window (3.5, 1, 3) glazing",
+    "position": [
+      11,
+      5.25,
+      6
+    ],
+    "size": [
+      0.15,
+      3.5,
+      4
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (3.5, 0) glazing",
+    "position": [
+      -8.8,
+      5.25,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (3.5, 1) glazing",
+    "position": [
+      -4.4,
+      5.25,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (3.5, 2) glazing",
+    "position": [
+      0,
+      5.25,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (3.5, 3) glazing",
+    "position": [
+      4.4,
+      5.25,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Front window (3.5, 4) glazing",
+    "position": [
+      8.8,
+      5.25,
+      8
+    ],
+    "size": [
+      4.4,
+      3.5,
+      0.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 0",
+    "position": [
+      5.8,
+      0.07954545454545454,
+      4.584090909090909
+    ],
+    "size": [
+      2.65,
+      0.1590909090909091,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 1",
+    "position": [
+      5.8,
+      0.1590909090909091,
+      4.152272727272727
+    ],
+    "size": [
+      2.65,
+      0.3181818181818182,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 2",
+    "position": [
+      5.8,
+      0.23863636363636365,
+      3.7204545454545452
+    ],
+    "size": [
+      2.65,
+      0.4772727272727273,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 3",
+    "position": [
+      5.8,
+      0.3181818181818182,
+      3.288636363636363
+    ],
+    "size": [
+      2.65,
+      0.6363636363636364,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 4",
+    "position": [
+      5.8,
+      0.3977272727272727,
+      2.8568181818181815
+    ],
+    "size": [
+      2.65,
+      0.7954545454545454,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 5",
+    "position": [
+      5.8,
+      0.4772727272727273,
+      2.425
+    ],
+    "size": [
+      2.65,
+      0.9545454545454546,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 6",
+    "position": [
+      5.8,
+      0.5568181818181818,
+      1.9931818181818182
+    ],
+    "size": [
+      2.65,
+      1.1136363636363635,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 7",
+    "position": [
+      5.8,
+      0.6363636363636364,
+      1.561363636363636
+    ],
+    "size": [
+      2.65,
+      1.2727272727272727,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 8",
+    "position": [
+      5.8,
+      0.7159090909090909,
+      1.1295454545454544
+    ],
+    "size": [
+      2.65,
+      1.4318181818181819,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 9",
+    "position": [
+      5.8,
+      0.7954545454545454,
+      0.6977272727272723
+    ],
+    "size": [
+      2.65,
+      1.5909090909090908,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 10",
+    "position": [
+      5.8,
+      0.875,
+      0.26590909090909065
+    ],
+    "size": [
+      2.65,
+      1.75,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 11",
+    "position": [
+      5.8,
+      0.9545454545454546,
+      -0.165909090909091
+    ],
+    "size": [
+      2.65,
+      1.9090909090909092,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 12",
+    "position": [
+      5.8,
+      1.0340909090909092,
+      -0.5977272727272727
+    ],
+    "size": [
+      2.65,
+      2.0681818181818183,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 13",
+    "position": [
+      5.8,
+      1.1136363636363635,
+      -1.0295454545454552
+    ],
+    "size": [
+      2.65,
+      2.227272727272727,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 14",
+    "position": [
+      5.8,
+      1.1931818181818181,
+      -1.4613636363636369
+    ],
+    "size": [
+      2.65,
+      2.3863636363636362,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 15",
+    "position": [
+      5.8,
+      1.2727272727272727,
+      -1.8931818181818185
+    ],
+    "size": [
+      2.65,
+      2.5454545454545454,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 16",
+    "position": [
+      5.8,
+      1.3522727272727273,
+      -2.325
+    ],
+    "size": [
+      2.65,
+      2.7045454545454546,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 17",
+    "position": [
+      5.8,
+      1.4318181818181819,
+      -2.756818181818182
+    ],
+    "size": [
+      2.65,
+      2.8636363636363638,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 18",
+    "position": [
+      5.8,
+      1.5113636363636365,
+      -3.1886363636363635
+    ],
+    "size": [
+      2.65,
+      3.022727272727273,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 19",
+    "position": [
+      5.8,
+      1.5909090909090908,
+      -3.620454545454545
+    ],
+    "size": [
+      2.65,
+      3.1818181818181817,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 20",
+    "position": [
+      5.8,
+      1.6704545454545454,
+      -4.052272727272727
+    ],
+    "size": [
+      2.65,
+      3.340909090909091,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Main stair tread 21",
+    "position": [
+      5.8,
+      1.75,
+      -4.48409090909091
+    ],
+    "size": [
+      2.65,
+      3.5,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "stairRail",
+    "name": "Main stair",
+    "x": 4.375,
+    "z0": 4.9,
+    "z1": -4.8,
+    "rise": 3.5,
+    "width": 0.12,
+    "height": 1.05
+  },
+  {
+    "type": "stairRail",
+    "name": "Main stair",
+    "x": 7.225,
+    "z0": 4.9,
+    "z1": -4.8,
+    "rise": 3.5,
+    "width": 0.12,
+    "height": 1.05
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 0",
+    "position": [
+      -9.9,
+      0.07954545454545454,
+      -3.684090909090909
+    ],
+    "size": [
+      1.7,
+      0.1590909090909091,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 1",
+    "position": [
+      -9.9,
+      0.1590909090909091,
+      -3.2522727272727274
+    ],
+    "size": [
+      1.7,
+      0.3181818181818182,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 2",
+    "position": [
+      -9.9,
+      0.23863636363636365,
+      -2.8204545454545453
+    ],
+    "size": [
+      1.7,
+      0.4772727272727273,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 3",
+    "position": [
+      -9.9,
+      0.3181818181818182,
+      -2.3886363636363632
+    ],
+    "size": [
+      1.7,
+      0.6363636363636364,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 4",
+    "position": [
+      -9.9,
+      0.3977272727272727,
+      -1.9568181818181816
+    ],
+    "size": [
+      1.7,
+      0.7954545454545454,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 5",
+    "position": [
+      -9.9,
+      0.4772727272727273,
+      -1.525
+    ],
+    "size": [
+      1.7,
+      0.9545454545454546,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 6",
+    "position": [
+      -9.9,
+      0.5568181818181818,
+      -1.0931818181818183
+    ],
+    "size": [
+      1.7,
+      1.1136363636363635,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 7",
+    "position": [
+      -9.9,
+      0.6363636363636364,
+      -0.661363636363636
+    ],
+    "size": [
+      1.7,
+      1.2727272727272727,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 8",
+    "position": [
+      -9.9,
+      0.7159090909090909,
+      -0.22954545454545439
+    ],
+    "size": [
+      1.7,
+      1.4318181818181819,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 9",
+    "position": [
+      -9.9,
+      0.7954545454545454,
+      0.20227272727272771
+    ],
+    "size": [
+      1.7,
+      1.5909090909090908,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 10",
+    "position": [
+      -9.9,
+      0.875,
+      0.6340909090909094
+    ],
+    "size": [
+      1.7,
+      1.75,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 11",
+    "position": [
+      -9.9,
+      0.9545454545454546,
+      1.065909090909091
+    ],
+    "size": [
+      1.7,
+      1.9090909090909092,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 12",
+    "position": [
+      -9.9,
+      1.0340909090909092,
+      1.4977272727272726
+    ],
+    "size": [
+      1.7,
+      2.0681818181818183,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 13",
+    "position": [
+      -9.9,
+      1.1136363636363635,
+      1.9295454545454551
+    ],
+    "size": [
+      1.7,
+      2.227272727272727,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 14",
+    "position": [
+      -9.9,
+      1.1931818181818181,
+      2.3613636363636368
+    ],
+    "size": [
+      1.7,
+      2.3863636363636362,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 15",
+    "position": [
+      -9.9,
+      1.2727272727272727,
+      2.7931818181818184
+    ],
+    "size": [
+      1.7,
+      2.5454545454545454,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 16",
+    "position": [
+      -9.9,
+      1.3522727272727273,
+      3.225
+    ],
+    "size": [
+      1.7,
+      2.7045454545454546,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 17",
+    "position": [
+      -9.9,
+      1.4318181818181819,
+      3.6568181818181817
+    ],
+    "size": [
+      1.7,
+      2.8636363636363638,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 18",
+    "position": [
+      -9.9,
+      1.5113636363636365,
+      4.088636363636364
+    ],
+    "size": [
+      1.7,
+      3.022727272727273,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 19",
+    "position": [
+      -9.9,
+      1.5909090909090908,
+      4.5204545454545455
+    ],
+    "size": [
+      1.7,
+      3.1818181818181817,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 20",
+    "position": [
+      -9.9,
+      1.6704545454545454,
+      4.952272727272727
+    ],
+    "size": [
+      1.7,
+      3.340909090909091,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Return stair tread 21",
+    "position": [
+      -9.9,
+      1.75,
+      5.384090909090911
+    ],
+    "size": [
+      1.7,
+      3.5,
+      0.44581818181818184
+    ]
+  },
+  {
+    "type": "stairRail",
+    "name": "Return stair",
+    "x": -10.85,
+    "z0": -4.0,
+    "z1": 5.7,
+    "rise": 3.5,
+    "width": 0.12,
+    "height": 1.05
+  },
+  {
+    "type": "stairRail",
+    "name": "Return stair",
+    "x": -8.950000000000001,
+    "z0": -4.0,
+    "z1": 5.7,
+    "rise": 3.5,
+    "width": 0.12,
+    "height": 1.05
+  },
+  {
+    "type": "box",
+    "name": "Gallery rail",
+    "position": [
+      -1.1750000000000003,
+      4.01,
+      -4.68
+    ],
+    "size": [
+      11.05,
+      1.03,
+      0.12
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side guard",
+    "position": [
+      -6.7,
+      4.01,
+      1.02
+    ],
+    "size": [
+      0.12,
+      1.02,
+      11.45
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Gallery end guard",
+    "position": [
+      -9.25,
+      4.0,
+      6.8
+    ],
+    "size": [
+      3.5,
+      1,
+      0.14
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Side guard",
+    "position": [
+      7.5,
+      4.01,
+      1.02
+    ],
+    "size": [
+      0.12,
+      1.02,
+      11.45
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Gallery end guard",
+    "position": [
+      9.25,
+      4.0,
+      6.8
+    ],
+    "size": [
+      3.5,
+      1,
+      0.14
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Shared table",
+    "position": [
+      -0.65,
+      0.46,
+      0.1
+    ],
+    "size": [
+      4.65,
+      0.92,
+      2.95
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Living library",
+    "position": [
+      -8.7,
+      1.15,
+      -7.35
+    ],
+    "size": [
+      2.5,
+      2.3,
+      0.5
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Window bench base",
+    "position": [
+      -8.7,
+      0.23,
+      -5.75
+    ],
+    "size": [
+      2.7,
+      0.46,
+      0.75
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Living library",
+    "position": [
+      8.7,
+      1.15,
+      -7.35
+    ],
+    "size": [
+      2.5,
+      2.3,
+      0.5
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Window bench base",
+    "position": [
+      8.7,
+      0.23,
+      -5.75
+    ],
+    "size": [
+      2.7,
+      0.46,
+      0.75
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Living library",
+    "position": [
+      -8.7,
+      4.65,
+      -7.35
+    ],
+    "size": [
+      2.5,
+      2.3,
+      0.5
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Living library",
+    "position": [
+      8.7,
+      4.65,
+      -7.35
+    ],
+    "size": [
+      2.5,
+      2.3,
+      0.5
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Tea kitchen cabinet",
+    "position": [
+      -7.0,
+      0.5,
+      -0.2
+    ],
+    "size": [
+      2.3,
+      1,
+      1.15
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Community records console",
+    "position": [
+      0,
+      0.56,
+      -6.9
+    ],
+    "size": [
+      2.25,
+      1.12,
+      0.72
+    ]
+  },
+  {
+    "type": "box",
+    "name": "West outer guard",
+    "position": [
+      -9,
+      4.02,
+      0.4
+    ],
+    "size": [
+      0.12,
+      1.05,
+      10.05
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Roof north",
+    "position": [
+      0,
+      7.45,
+      -5.85
+    ],
+    "size": [
+      22.4,
+      0.3,
+      4.7
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Roof south",
+    "position": [
+      0,
+      7.45,
+      5.85
+    ],
+    "size": [
+      22.4,
+      0.3,
+      4.7
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Roof west",
+    "position": [
+      -7.85,
+      7.45,
+      0
+    ],
+    "size": [
+      6.7,
+      0.3,
+      7
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Roof east",
+    "position": [
+      7.85,
+      7.45,
+      0
+    ],
+    "size": [
+      6.7,
+      0.3,
+      7
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Quiet table",
+    "position": [
+      -8.200000000000001,
+      3.85,
+      1.3
+    ],
+    "size": [
+      1.1,
+      0.7,
+      1.1
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Quiet room library",
+    "position": [
+      9.85,
+      4.65,
+      -0.2
+    ],
+    "size": [
+      0.5,
+      2.3,
+      1.45
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Reading room library",
+    "position": [
+      -5.2,
+      1.15,
+      -7.35
+    ],
+    "size": [
+      1.8,
+      2.3,
+      0.5
+    ]
+  }
+]

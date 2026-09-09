@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>天井生活馆 · 运行验收</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f0e8d9;color:#263e48;font:15px/1.8 system-ui,"PingFang SC",sans-serif}main{max-width:1500px;margin:auto;padding:44px 32px}h1{font-size:34px;margin:5px 0 10px;font-weight:550}h2{font-size:22px;margin:38px 0 12px}p{max-width:940px}.kicker{font-size:12px;letter-spacing:3px;color:#8d6a37}.flag{display:inline-block;background:#273f49;color:#fff2d4;padding:6px 14px;border-radius:30px;font-size:12px}.compare,.grid{display:grid;grid-template-columns:1fr 1fr;gap:18px}figure{margin:0;background:#fbf7ef;border:1px solid #ddd3bf;border-radius:12px;overflow:hidden}img{width:100%;display:block}figcaption{padding:12px 16px;font-size:13px}a{color:#466f6a}video{display:block;width:100%;max-height:78vh;background:#182a35;border-radius:12px}.overlay{position:relative;aspect-ratio:16/9;overflow:hidden;background:#192d37;border-radius:12px}.overlay img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain}.slider{display:flex;align-items:center;gap:18px;margin:12px 0}input{width:240px;accent-color:#608e81}table{border-collapse:collapse;width:100%;font-size:13px}td,th{text-align:left;border-bottom:1px solid #d8cbb6;padding:10px}small{color:#736d62}.foot{border-top:1px solid #d8cbb6;padding-top:24px;margin-top:35px}@media(max-width:800px){main{padding:25px 16px}.compare,.grid{grid-template-columns:1fr}h1{font-size:27px}}
+</style>
+<main>
+<div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
+<span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
+<p>以下全部“运行图”来自实际 Three.js 场景。参考图仅用于对照，未贴在场景里冒充建筑。自由检查镜头与真实键盘回游录像分开呈现；不提供无测量依据的还原度百分比。</p>
+<p><a href="http://127.0.0.1:4194/atrium.html">进入本机试点</a> · <a href="../../docs/ATRIUM_PILOT_HANDOFF.md">交接与未完成项</a> · <a href="assets.json">资产数据与版本指纹</a> · <a href="PERFORMANCE.md">性能报告</a></p>
+<h2>同构图对照</h2><div class="compare">
+<figure><img src="../../design/references/atrium-visual-target.png" alt="用户选定的双层天井概念图"><figcaption>设计参考。单张图未提供真实尺寸或完整背面。</figcaption></figure>
+<figure><img src="gallery-reference.png" alt="实际游戏校准镜头"><figcaption>实际运行。校准镜头 [-3.4, 2.65, 6.8] → [1, 2.8, -2]，垂直 FOV 62°，16:9。</figcaption></figure>
+</div>
+<p>差距主要在建筑曲面节奏、主楼梯侧墙、人物比例与服装质感、植物层次及柔和间接光；保留天井、中央桌、右主梯和回廊，并不等于达成精品 PC 游戏级品质。</p>
+<details><summary>叠图检查（仅按画幅叠放，不伪称几何配准）</summary><div class="slider"><label for="opacity">运行图透明度</label><input id="opacity" type="range" min="0" max="100" value="50"></div><div class="overlay"><img src="../../design/references/atrium-visual-target.png" alt="参考底图"><img id="runtime-overlay" src="gallery-reference.png" style="opacity:.5" alt="运行叠图"></div><small>相机是人工拟合；可见错位即真实差距，没有局部扭曲或图像补绘。</small></details>
+<h2>连续实际游玩</h2><video controls preload="metadata" src="playthrough.mp4" poster="first-floor.png"></video>
+<p>键盘走路、上主楼梯、二层回廊、居民对话、共同决策、回程梯、离开。录制时不传送、不剪接；自动操作读位置仅用于方向控制。录制可能影响帧率，单独性能采样见报告。</p>
+<h2>多角度检查</h2><div class="grid">
+<figure><img src="first-floor.png" alt="一层"><figcaption>一层入口与社交中心</figcaption></figure>
+<figure><img src="upper-floor.png" alt="二层"><figcaption>可到达的二层，俯瞰共享桌</figcaption></figure>
+<figure><img src="quiet-room.png" alt="安静侧区"><figcaption>二层安静角与旧录音物件</figcaption></figure>
+<figure><img src="back-view.png" alt="背向视角"><figcaption>背向入口，检查参考图未给出的补全部分</figcaption></figure>
+<figure><img src="table-close.png" alt="共享桌细节"><figcaption>真实厚度、储物格和分件桌体</figcaption></figure>
+<figure><img src="resident-close.png" alt="居民近景"><figcaption>居民脸部、日常服装和坐姿；保留可见的精修不足</figcaption></figure>
+<figure><img src="plant-room.png" alt="植物区"><figcaption>侧区景深与生活物件</figcaption></figure>
+<figure><img src="care-contact.png" alt="生活动作近景"><figcaption>手持水壶的动作检查；不能以文字完成代替握持/衣服变形精修</figcaption></figure>
+</div>
+<h2>异常与移动证据</h2><p><a href="resilience.json">异常用例原始结果</a> · <a href="walkthrough-trace.json">输入驱动回游记录</a> · <a href="performance-measurement.json">桌面采样</a> · <a href="mobile-measurement.json">移动模拟采样</a></p>
+<p class="foot">真实手机、长时间实际玩家试玩、主游戏身份/关系双向整合、专业环境光照与人物精修仍未完成。本页是可运行试点的证据包，不是完整需求通过声明。</p>
+</main><script>document.querySelector('#opacity').addEventListener('input',e=>{document.querySelector('#runtime-overlay').style.opacity=e.target.value/100;});</script></html>

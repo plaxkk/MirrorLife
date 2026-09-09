@@ -1,0 +1,146 @@
+[
+  {
+    "id": "window-wall",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -8.8,
+      0,
+      -8
+    ],
+    "originMeaning": "base centre",
+    "parts": 4,
+    "source": "models/atrium/kit/window-wall.blend",
+    "glb": "public/assets/atrium/kit/window-wall.glb",
+    "collision": "public/assets/atrium/kit/window-wall-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "entry-portal",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -4.4,
+      0,
+      8
+    ],
+    "originMeaning": "base centre",
+    "parts": 4,
+    "source": "models/atrium/kit/entry-portal.blend",
+    "glb": "public/assets/atrium/kit/entry-portal.glb",
+    "collision": "public/assets/atrium/kit/entry-portal-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "main-stair",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      5.8,
+      0,
+      0
+    ],
+    "originMeaning": "base centre",
+    "parts": 84,
+    "source": "models/atrium/kit/main-stair.blend",
+    "glb": "public/assets/atrium/kit/main-stair.glb",
+    "collision": "public/assets/atrium/kit/main-stair-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "gallery-rail",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      0,
+      3.5,
+      -4.68
+    ],
+    "originMeaning": "base centre",
+    "parts": 15,
+    "source": "models/atrium/kit/gallery-rail.blend",
+    "glb": "public/assets/atrium/kit/gallery-rail.glb",
+    "collision": "public/assets/atrium/kit/gallery-rail-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "bookcase",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -8.7,
+      0,
+      -7.35
+    ],
+    "originMeaning": "base centre",
+    "parts": 100,
+    "source": "models/atrium/kit/bookcase.blend",
+    "glb": "public/assets/atrium/kit/bookcase.glb",
+    "collision": "public/assets/atrium/kit/bookcase-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "chair",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -2.2,
+      0,
+      -1.95
+    ],
+    "originMeaning": "base centre",
+    "parts": 8,
+    "source": "models/atrium/kit/chair.blend",
+    "glb": "public/assets/atrium/kit/chair.glb",
+    "collision": "public/assets/atrium/kit/chair-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "shared-table",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -0.65,
+      0,
+      0.1
+    ],
+    "originMeaning": "base centre",
+    "parts": 66,
+    "source": "models/atrium/kit/shared-table.blend",
+    "glb": "public/assets/atrium/kit/shared-table.glb",
+    "collision": "public/assets/atrium/kit/shared-table-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "pendant",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -2.1,
+      7.2,
+      -0.1
+    ],
+    "originMeaning": "ceiling suspension",
+    "parts": 3,
+    "source": "models/atrium/kit/pendant.blend",
+    "glb": "public/assets/atrium/kit/pendant.glb",
+    "collision": "public/assets/atrium/kit/pendant-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  },
+  {
+    "id": "plant",
+    "units": "metres",
+    "sourceOriginInLevel": [
+      -0.65,
+      0.95,
+      0.1
+    ],
+    "originMeaning": "base centre",
+    "parts": 20,
+    "source": "models/atrium/kit/plant.blend",
+    "glb": "public/assets/atrium/kit/plant.glb",
+    "collision": "public/assets/atrium/kit/plant-collision.json",
+    "placementNote": "Local-space collider definitions must be transformed along with the module when reused.",
+    "license": "Original MirrorLife project-authored geometry"
+  }
+]

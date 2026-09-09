@@ -1,0 +1,45 @@
+{
+  "capturedAt": "2026-09-09T16:30:21.759Z",
+  "runtimeFingerprint": "5c4b6031c19b2edc43620be078c6f069a19f2235403334869791ecdfdd1304d9",
+  "browserMode": "headed",
+  "fixtureNotice": "Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.",
+  "results": [
+    {
+      "case": "out of range E",
+      "pass": true
+    },
+    {
+      "case": "upper seat can be selected beside postcard, sit and stand",
+      "pass": true
+    },
+    {
+      "case": "cancel care before completion does not unlock a discovery",
+      "pass": true
+    },
+    {
+      "case": "completed and repeated care is recorded once",
+      "pass": true
+    },
+    {
+      "case": "repeated E, modal movement lock, focus trap and Escape",
+      "pass": true
+    },
+    {
+      "case": "busy resident waits and becomes interactable again",
+      "pass": true
+    },
+    {
+      "case": "existing IndexedDB archive receives distinct pilot memories",
+      "pass": true,
+      "count": 3
+    },
+    {
+      "case": "WebGL context loss offers recovery without losing progress",
+      "pass": true
+    },
+    {
+      "case": "GLB load failure is visible and retry succeeds",
+      "pass": true
+    }
+  ]
+}

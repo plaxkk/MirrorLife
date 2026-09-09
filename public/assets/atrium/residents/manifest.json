@@ -1,0 +1,72 @@
+[
+  {
+    "id": "you",
+    "baseRole": "player",
+    "hair": "spiky",
+    "bodyScale": 1.0,
+    "source": "models/atrium/residents/you.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  },
+  {
+    "id": "lin",
+    "baseRole": "listener",
+    "hair": "braided_bob",
+    "bodyScale": 0.96,
+    "source": "models/atrium/residents/lin.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  },
+  {
+    "id": "chen",
+    "baseRole": "player",
+    "hair": "spiky",
+    "bodyScale": 1.08,
+    "source": "models/atrium/residents/chen.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  },
+  {
+    "id": "xu",
+    "baseRole": "facilitator",
+    "hair": "coral_ponytail",
+    "bodyScale": 0.99,
+    "source": "models/atrium/residents/xu.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  },
+  {
+    "id": "zhou",
+    "baseRole": "mediator",
+    "hair": "braided_bob",
+    "bodyScale": 1.03,
+    "source": "models/atrium/residents/zhou.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  },
+  {
+    "id": "he",
+    "baseRole": "listener",
+    "hair": "cap",
+    "bodyScale": 1.06,
+    "source": "models/atrium/residents/he.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  },
+  {
+    "id": "tang",
+    "baseRole": "player",
+    "hair": "spiky",
+    "bodyScale": 0.94,
+    "source": "models/atrium/residents/tang.blend",
+    "animationSource": "src/civic-animation-clips.js",
+    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "reviewStatus": "development"
+  }
+]
