@@ -37,6 +37,7 @@ try{
   });
   for(const mode of ['gallery','performance','mobile'])await run(mode,process.execPath,['scripts/verify-atrium-pilot.mjs',mode]);
   await run('garments',process.execPath,['scripts/verify-atrium-garments.mjs']);
+  await run('faces',process.execPath,['scripts/verify-atrium-faces.mjs']);
   await run('contact',process.execPath,['scripts/verify-atrium-contact.mjs']);
   await run('seating',process.execPath,['scripts/verify-atrium-seating.mjs']);
   await run('stairs',process.execPath,['scripts/verify-atrium-stairs.mjs']);

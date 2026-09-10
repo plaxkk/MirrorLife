@@ -1,59 +1,67 @@
 {
-  "capturedAt": "2026-09-10T15:12:10.613Z",
-  "runtimeFingerprint": "a2b8204aa4dbf3e5c75ed90ef59575c92127f6277c01416d36fc87b90bb78499",
+  "capturedAt": "2026-09-10T15:49:34.385Z",
+  "runtimeFingerprint": "5a550677ffd38b9b56d7eb67650f789e5249042bb3135752c65bf613a7f0680e",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 14.987
+      "seconds": 15.774
     },
     {
       "name": "build",
-      "seconds": 2.68
+      "seconds": 3.742
     },
     {
       "name": "assets",
-      "seconds": 0.504
+      "seconds": 0.729
     },
     {
       "name": "gallery",
-      "seconds": 19.811
+      "seconds": 50.993
     },
     {
       "name": "performance",
-      "seconds": 46.765
+      "seconds": 48.015
     },
     {
       "name": "mobile",
-      "seconds": 45.993
+      "seconds": 48.589
     },
     {
       "name": "garments",
-      "seconds": 12.292
+      "seconds": 12.433
+    },
+    {
+      "name": "faces",
+      "seconds": 12.916
     },
     {
       "name": "contact",
-      "seconds": 47.562
+      "seconds": 47.25
     },
     {
       "name": "seating",
-      "seconds": 46.361
+      "seconds": 46.651
     },
     {
       "name": "stairs",
-      "seconds": 46.436
+      "seconds": 47.626
     },
     {
       "name": "resilience",
-      "seconds": 47.169
+      "seconds": 46.494
     },
     {
       "name": "walkthrough",
-      "seconds": 160.268
+      "seconds": 114.295
+    },
+    {
+      "name": "video-decode",
+      "seconds": 1.861
     },
     {
       "name": "assets-after",
-      "seconds": 1.389
+      "seconds": 0.96
     }
   ],
   "reports": {
@@ -65,7 +73,7 @@
       },
       "renderPeaks": {
         "calls": 87,
-        "triangles": 494357,
+        "triangles": 489937,
         "geometries": 76
       },
       "budgetPassed": true,
@@ -76,11 +84,11 @@
       "frameMs": {
         "p50": 16.69999999999709,
         "p95": 17.599999999998545,
-        "p99": 17.700000000000728
+        "p99": 17.69999999999709
       },
       "renderPeaks": {
-        "calls": 70,
-        "triangles": 303221,
+        "calls": 69,
+        "triangles": 301253,
         "geometries": 72
       },
       "budgetPassed": true,
@@ -88,45 +96,5 @@
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates.",
-  "additionalVerification": {
-    "verifiedAt": "2026-09-10T15:15:01.593Z",
-    "runtimeFingerprintsMatched": true,
-    "unitAndPhysicsTests": 17,
-    "seatingChecks": 9,
-    "stairRoutes": 4,
-    "resilienceChecks": 10,
-    "walkthrough": {
-      "waypointsBeforeExit": 33,
-      "discoveries": 7,
-      "residents": 3,
-      "decision": "balanced",
-      "renderPeaks": {
-        "calls": 89,
-        "triangles": 485543,
-        "geometries": 80
-      },
-      "fullCanvas": true,
-      "browserMode": "headless"
-    },
-    "video": {
-      "verifiedAt": "2026-09-10T15:12:53.586Z",
-      "runtimeFingerprint": "a2b8204aa4dbf3e5c75ed90ef59575c92127f6277c01416d36fc87b90bb78499",
-      "sha256": "3547658e1d8c195af14233e79e0d6265941be88a6ea42b954de0ef449bf5e07a",
-      "decodedFrames": 1781,
-      "bytes": 56147496,
-      "durationSeconds": 118.73333333333333,
-      "fullDecodeExitCode": 0,
-      "scope": "Complete ffmpeg decode and frame/byte count agreement. Requires separate visual review for framing, content and continuity.",
-      "method": "New video-decode script executed separately after this suite. It is now included in future release runs.",
-      "frameReview": "Eight evenly spaced frames plus a 116-second end frame inspected. Full canvas; no top-left shrink. Contact sheet is a derivative, original movie is continuous."
-    },
-    "qualityGates": {
-      "completeArt": false,
-      "strictDesktopFrameTarget": false,
-      "realMobileHardware": false,
-      "humanPlaytest": false,
-      "productionDeployment": false
-    }
-  }
+  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
 }

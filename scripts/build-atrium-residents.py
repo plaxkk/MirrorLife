@@ -181,7 +181,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     profile['torso_width']*=body;profile['shoulder_x']*=body
     profile['shoulder_x']*=1.28
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
-    profile['head_scale']=tuple(s*.76 for s in profile['head_scale'])
+    profile['head_scale']=tuple(s*.62 for s in profile['head_scale'])
+    # Retain the authored neck overlap while exposing the jaw above the collar.
     profile['head_z']+=.025
     civic.FACE_PROFILES[role]=copy.deepcopy(base_faces[role])
     civic.FACE_PROFILES[role]['jaw_taper']+=((idx%3)-1)*.014
@@ -197,11 +198,37 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     # Fit facial features to the actual sculpt, not a constant plane in front
     # of an ellipsoid. Constant Y left eyelids, lips and blush visibly floating.
     face=bpy.data.objects['Head']
+    # The nose grows from the facial surface, replacing three detached beads.
+    # Apply the same displacement to every editable facial shape key.
+    def nasal_relief(co):
+        x,y,z=co
+        if y>=0:return 0
+        front=min(1,max(0,(-y-.07)/.08))
+        bridge=.019*math.exp(-(x/.031)**2-((z-.015)/.068)**2)
+        tip=.027*math.exp(-(x/.043)**2-((z+.035)/.034)**2)
+        return (bridge+tip)*front
+    relief=[nasal_relief(v.co) for v in face.data.vertices]
+    for v,depth in zip(face.data.vertices,relief):v.co.y-=depth
+    if face.data.shape_keys:
+        for key in face.data.shape_keys.key_blocks:
+            for v,depth in zip(key.data,relief):v.co.y-=depth
+    face.data.update()
+    for nose_part in ['NoseBridge','NoseTip','NoseWingShadow']:
+        ob=bpy.data.objects.get(nose_part)
+        if ob:bpy.data.objects.remove(ob,do_unlink=True)
     surface=BVHTree.FromPolygons([v.co for v in face.data.vertices],[p.vertices[:] for p in face.data.polygons])
     def face_y(x,z):
         hit=surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))
         return hit[0].y if hit[0] is not None else -.18
+    nose_shade=face.data.materials[0].copy();nose_shade.name='Nasal crease skin'
+    nose_shade.diffuse_color=tuple(c*.58 for c in nose_shade.diffuse_color[:3])+(1,)
+    nose_shade.node_tree.nodes.get('Principled BSDF').inputs['Base Color'].default_value=nose_shade.diffuse_color
     for side in [-1,1]:
+        x=side*.014;z=-.047
+        civic.ellipsoid('Nasal crease '+str(side),(x,face_y(x,z)-.001,z),(.006,.0015,.0024),nose_shade,face.parent,segments=12,rings=6)
+    for side in [-1,1]:
+        eye=bpy.data.objects['EyePivot_'+str(side)];eye.scale=(.82,.4,.72)
+        brow=bpy.data.objects['BrowPivot_'+str(side)];brow.scale.x=.84;brow.location.z=.083
         for prefix,offset in [('EyePivot_',.005),('BrowPivot_',.004)]:
             ob=bpy.data.objects[prefix+str(side)];ob.location.y=face_y(ob.location.x,ob.location.z)-offset
         blush=bpy.data.objects.get('Blush_'+str(side))
@@ -214,6 +241,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     for obj in bpy.context.scene.objects:
         if obj.type=='MESH' and (obj.name=='Head' or obj.name.startswith(('Hair','Fringe','Braid'))):
             for polygon in obj.data.polygons:polygon.use_smooth=True
+    assert name==current_identity, 'Resident export identity changed during modeling'
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     # Bake material base colours into corner vertex colours and merge by rigid controller.
     # Eye and mouth parents remain independently animated; skinning batches stay intact.
