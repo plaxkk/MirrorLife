@@ -21,8 +21,9 @@ for name in ['WateringCan','TeaCup']:
     root=bpy.data.objects.new(name,None);bpy.context.collection.objects.link(root)
     if name=='WateringCan':
         bpy.ops.mesh.primitive_uv_sphere_add(segments=32,ring_count=16,location=(0,0,0));ob=part('Can body',bpy.context.object,root,mint);ob.scale=(.095,.072,.12)
-        curve('Can handle',[(.03,.07,.08),(.12,.07,.1),(.14,.07,-.03),(.05,.07,-.07)],root,cream)
-        curve('Can spout',[(-.06,0,-.02),(-.17,0,.035),(-.21,0,.09)],root,mint,.019)
+        # Overhead bow: fingers curl around the transverse top, away from the body.
+        curve('Can handle',[(-.09,0,.045),(-.11,0,.12),(-.05,0,.17),(.05,0,.17),(.11,0,.12),(.09,0,.045)],root,cream)
+        curve('Can spout',[(0,-.055,-.01),(0,-.18,.035),(0,-.25,.11)],root,mint,.019)
         bpy.ops.mesh.primitive_torus_add(major_segments=32,minor_segments=10,location=(0,0,.105),major_radius=.043,minor_radius=.007);part('Can lip',bpy.context.object,root,cream)
     else:
         # Lathed cup with visible inside and rim; a sealed bottom, not an open cylinder.
@@ -36,5 +37,9 @@ for name in ['WateringCan','TeaCup']:
         m=bpy.data.meshes.new('Cup vessel');m.from_pydata(verts,[],faces);m.update();ob=bpy.data.objects.new('Cup vessel',m);bpy.context.collection.objects.link(ob);part('Cup vessel',ob,root,cream)
         curve('Cup handle',[(.048,0,.033),(.091,0,.027),(.096,0,-.026),(.041,0,-.039)],root,cream,.009)
         bpy.ops.mesh.primitive_cylinder_add(vertices=48,radius=.041,depth=.003,location=(0,0,.018));part('Tea surface',bpy.context.object,root,dark)
+    grip=bpy.data.objects.new(name+'Grip',None);bpy.context.collection.objects.link(grip);grip.parent=root
+    grip.location=(0,0,.174) if name=='WateringCan' else (.094,0,.0)
+    grip['contact_contract']='atrium-prop-grip-v1'
+    grip['handle_radius_m']=.013 if name=='WateringCan' else .009
 bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/'life-props.blend'),compress=True)
-bpy.ops.export_scene.gltf(filepath=str(OUT/'life-props.glb'),export_format='GLB',export_apply=True,export_draco_mesh_compression_enable=True)
+bpy.ops.export_scene.gltf(filepath=str(OUT/'life-props.glb'),export_format='GLB',export_apply=True,export_extras=True,export_draco_mesh_compression_enable=True)

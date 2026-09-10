@@ -7,6 +7,7 @@
 <main>
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
+<p>本轮续作已修墙顶漏缝、椅背/扶手端面、人物握持，并补两层静态地面接触遮蔽。桌面峰值 493,955 三角面回到原预算，P95 34.3ms，稳定 60fps 仍未通过。<a href="../../docs/ATRIUM_CONTINUATION_REVIEW.md">续作审查与剩余问题</a> · <a href="acceptance.json">同构建验收记录</a></p>
 <p>以下全部“运行图”来自实际 Three.js 场景。参考图仅用于对照，未贴在场景里冒充建筑。自由检查镜头与真实键盘回游录像分开呈现；不提供无测量依据的还原度百分比。</p>
 <p><a href="http://127.0.0.1:4194/atrium.html">进入本机试点</a> · <a href="../../docs/ATRIUM_PILOT_HANDOFF.md">交接与未完成项</a> · <a href="assets.json">资产数据与版本指纹</a> · <a href="PERFORMANCE.md">性能报告</a></p>
 <h2>同构图对照</h2><div class="compare">
@@ -26,6 +27,14 @@
 <figure><img src="resident-close.png" alt="居民近景"><figcaption>居民脸部、日常服装和坐姿；保留可见的精修不足</figcaption></figure>
 <figure><img src="plant-room.png" alt="植物区"><figcaption>侧区景深与生活物件</figcaption></figure>
 <figure><img src="care-contact.png" alt="生活动作近景"><figcaption>手持水壶的动作检查；不能以文字完成代替握持/衣服变形精修</figcaption></figure>
+</div>
+<h2>本轮修补前后</h2><div class="compare">
+<figure><img src="before-contact-reference.png" alt="修补前的运行图"><figcaption>修补前：墙顶漏天空，接触层次较弱；不是最终候选。</figcaption></figure>
+<figure><img src="gallery-reference.png" alt="修补后的运行图"><figcaption>修补后：连续实体过梁与地面接触遮蔽，保持原校准镜头及路线。</figcaption></figure>
+</div>
+<h2>人物握持检查</h2><div class="grid">
+<figure><img src="character-contact/plant-side.png" alt="最新水壶握持侧视"><figcaption>实际 E 键照料动作侧视。锚点误差通过，不等于手指表面接触与服装关节已完成。</figcaption></figure>
+<figure><img src="character-contact/tea-side.png" alt="最新茶杯握持"><figcaption>同一人物骨架、真实三维茶杯与原尺寸握持。</figcaption></figure>
 </div>
 <h2>异常与移动证据</h2><p><a href="resilience.json">异常用例原始结果</a> · <a href="walkthrough-trace.json">输入驱动回游记录</a> · <a href="performance-measurement.json">桌面采样</a> · <a href="mobile-measurement.json">移动模拟采样</a></p>
 <p class="foot">真实手机、长时间实际玩家试玩、主游戏身份/关系双向整合、专业环境光照与人物精修仍未完成。本页是可运行试点的证据包，不是完整需求通过声明。</p>

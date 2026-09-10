@@ -3,6 +3,7 @@ import {loadAtriumGLB,disposeAtriumDecoder} from './atrium-assets.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createAtriumPhysics} from './atrium-physics.js';
 import {loadAtriumActor} from './atrium-actors.js';
+import {applyAtriumFloorContact} from './atrium-floor-contact.js';
 import {RESIDENTS,DISCOVERIES,SHARED_TABLE,SEATS,canDecide,applyDecision,residentSpeech,DECISIONS} from './atrium-content.js';
 import {loadAtriumState,saveAtriumState,appendAtriumMemory,flushAtriumMemories} from './atrium-persistence.js';
 
@@ -188,6 +189,12 @@ async function boot(){
   const [model,definitions]=await Promise.all([loadAtriumGLB(`/assets/atrium/atrium-${profile}.glb`),checkedJSON('/assets/atrium/collision.json')]);
   model.scene.traverse(node=>{if(!node.isMesh)return;node.castShadow=true;node.receiveShadow=true;node.material.side=THREE.DoubleSide;if(node.material.map){node.material.map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());} });
   scene.add(model.scene);physics=await createAtriumPhysics(definitions);
+  // Optional baked contact improves static grounding. A failed texture must not
+  // strand the player on the loading screen; live shadows remain available.
+  try{
+    const contact=await new THREE.TextureLoader().loadAsync('/assets/atrium/floor-contact.png');
+    applyAtriumFloorContact(model.scene,contact);
+  }catch(error){errors.push({type:'optional-contact-texture',message:String(error)});}
   camera.position.set(...REFERENCE_CAMERA.position);camera.lookAt(...REFERENCE_CAMERA.target);
   // Static architecture shadow is rendered once from the full model. Moving residents
   // use a separate live shadow pass, so neither stale silhouettes nor repeated static
@@ -221,6 +228,7 @@ async function boot(){
   const edge=new THREE.MeshStandardMaterial({color:'#bf955a',roughness:.8}),front=new THREE.MeshStandardMaterial({map:print,roughness:.92});
   const marker=new THREE.Mesh(new THREE.BoxGeometry(.44,.248,.026),[edge,edge,edge,edge,front,edge]);marker.name='Quiet-corner notice';marker.position.set(-8.2,4.415,1.29);scene.add(marker);
   window.__atrium={
+    getGripDiagnostics:()=>[player,...actors].map(a=>({id:a.id,grips:a.gripDiagnostics()})),
     getState:()=>JSON.parse(JSON.stringify(state)),
     getStats:()=>stats(),
     beginMeasurement:()=>{frameTimes.length=0;cpuTimes.length=0;renderPeaks.calls=renderPeaks.triangles=renderPeaks.geometries=0;},

@@ -1,0 +1,80 @@
+{
+  "capturedAt": "2026-09-10T07:19:13.292Z",
+  "runtimeFingerprint": "04410f9501c36505e5bf601dfc8e3d3604e317f18adcee8d4bf9d811174e4012",
+  "base": "http://127.0.0.1:4195",
+  "steps": [
+    {
+      "name": "tests",
+      "seconds": 16.737
+    },
+    {
+      "name": "build",
+      "seconds": 4.279
+    },
+    {
+      "name": "assets",
+      "seconds": 1.002
+    },
+    {
+      "name": "gallery",
+      "seconds": 48.801
+    },
+    {
+      "name": "performance",
+      "seconds": 45.756
+    },
+    {
+      "name": "mobile",
+      "seconds": 47.829
+    },
+    {
+      "name": "contact",
+      "seconds": 47.342
+    },
+    {
+      "name": "resilience",
+      "seconds": 48.124
+    },
+    {
+      "name": "walkthrough",
+      "seconds": 103.314
+    },
+    {
+      "name": "assets-after",
+      "seconds": 0.778
+    }
+  ],
+  "reports": {
+    "performance": {
+      "frameMs": {
+        "p50": 32.70000000000073,
+        "p95": 34.29999999999927,
+        "p99": 50.5
+      },
+      "renderPeaks": {
+        "calls": 87,
+        "triangles": 493955,
+        "geometries": 76
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": false,
+      "note": "Local visible Chrome production preview"
+    },
+    "mobile": {
+      "frameMs": {
+        "p50": 16.69999999999891,
+        "p95": 17.600000000000364,
+        "p99": 33.599999999998545
+      },
+      "renderPeaks": {
+        "calls": 70,
+        "triangles": 299323,
+        "geometries": 72
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": true,
+      "note": "Desktop GPU emulation; not phone certification"
+    }
+  },
+  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
+}

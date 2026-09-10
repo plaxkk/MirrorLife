@@ -7,12 +7,19 @@ bpy.ops.wm.open_mainfile(filepath=str(SOURCE/'residents/you.blend'))
 bpy.context.preferences.filepaths.save_version=0
 motion=json.loads((SOURCE/'animations/motion.json').read_text())
 names={'visual':'VisualRoot','headGroup':'HeadPivot','leftArm':'LeftArmPivot','rightArm':'RightArmPivot','leftElbow':'LeftElbowPivot','rightElbow':'RightElbowPivot','leftHand':'Hand_-1','rightHand':'Hand_1','leftLeg':'LeftLegPivot','rightLeg':'RightLegPivot','leftKnee':'LeftKneePivot','rightKnee':'RightKneePivot'}
+names.update(leftFoot='ShoeUpper_-1Pivot',rightFoot='ShoeUpper_1Pivot',leftSleeveCompression='SleeveCompressionPivot_-1',rightSleeveCompression='SleeveCompressionPivot_1',leftTrouserCompression='TrouserCompressionPivot_-1',rightTrouserCompression='TrouserCompressionPivot_1')
 controls={k:bpy.data.objects.get(v) for k,v in names.items()};rest={k:o.matrix_basis.copy() for k,o in controls.items() if o}
 rig=bpy.data.objects['CivicSkinRig'];bpy.context.view_layer.update()
 bindings=[]
 for key,bone in [('leftArm','SkinLeftArm'),('rightArm','SkinRightArm'),('leftElbow','SkinLeftElbow'),('rightElbow','SkinRightElbow'),('leftLeg','SkinLeftLeg'),('rightLeg','SkinRightLeg'),('leftKnee','SkinLeftKnee'),('rightKnee','SkinRightKnee'),('leftElbow','SkinLeftElbowRigid'),('rightElbow','SkinRightElbowRigid'),('leftKnee','SkinLeftKneeRigid'),('rightKnee','SkinRightKneeRigid'),('leftHand','SkinLeftHand'),('rightHand','SkinRightHand')]:
     pb=rig.pose.bones.get(bone);ob=controls[key]
     if pb:bindings.append((ob,pb,ob.matrix_world.inverted()@rig.matrix_world@pb.matrix))
+# Shoes/correctives use root-parented rigid bones. Omitting them leaves shoes
+# at their bind location in portable clips even though the runtime drives them.
+for key,bone in [('leftFoot','SkinLeftFoot'),('rightFoot','SkinRightFoot'),('leftSleeveCompression','SkinLeftSleeveCorrective'),('rightSleeveCompression','SkinRightSleeveCorrective'),('leftTrouserCompression','SkinLeftTrouserCorrective'),('rightTrouserCompression','SkinRightTrouserCorrective')]:
+    pb=rig.pose.bones.get(bone);ob=controls[key]
+    if pb:bindings.append((ob,pb,ob.matrix_world.inverted()@rig.matrix_world@pb.matrix))
+assert len(bindings)==20,'Portable motion must drive the same 20 articulation bindings as runtime'
 bpy.context.scene.render.fps=30
 for clip in motion['clips']:
     for ob in [*controls.values(),rig]:

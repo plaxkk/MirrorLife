@@ -118,7 +118,7 @@ def tube(name, points, radius, mat, cyclic=False, resolution=3):
     for b,co in zip(s.bezier_points,points):
         b.co=p(co);b.handle_left_type='AUTO';b.handle_right_type='AUTO'
     s.use_cyclic_u=cyclic
-    c.bevel_depth=radius;c.bevel_resolution=2
+    c.bevel_depth=radius;c.bevel_resolution=2;c.use_fill_caps=True
     o=bpy.data.objects.new(name,c);bpy.context.collection.objects.link(o);setup(o,name,mat)
     return o
 
@@ -432,10 +432,19 @@ bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/'atrium-master.blend'))
 # Export evaluated authored mesh. Merge per material keeps calls bounded without deleting detail.
 bpy.ops.object.select_all(action='DESELECT')
 for o in list(bpy.context.scene.objects):
+    if o.type=='MESH' and o.data.materials and o.data.materials[0].name=='Soil':
+        # Soil sits below a ceramic rim. Its millimetre bevel created thousands
+        # of invisible triangles across the hanging plants; keep the source
+        # untouched and export the same closed earth disk without bevel bands.
+        for modifier in list(o.modifiers):
+            if modifier.type in {'BEVEL','WEIGHTED_NORMAL'}:o.modifiers.remove(modifier)
     if o.type=='CURVE' and any(token in o.name.lower() for token in [' stem','vine']):
         # Sub-centimetre stems do not need the source's hero-curve tessellation.
         # Leaf blades, window reveals, stair and table silhouettes stay untouched.
         o.data.resolution_u=2;o.data.bevel_resolution=1
+        if o.name.startswith(('Hanging garden cascade','Oculus hanging garden')):
+            # Millimetre-scale distant stems do not need an eight-sided section.
+            o.data.bevel_resolution=0
     if o.type in {'MESH','CURVE'}:o.select_set(True);bpy.context.view_layer.objects.active=o
 bpy.ops.object.convert(target='MESH')
 buckets={}
@@ -465,7 +474,7 @@ triangles=sum(len(o.data.polygons) for o in bpy.context.scene.objects if o.type=
 for o in bpy.context.scene.objects:
     if o.type=='MESH':
         material_name=o.data.materials[0].name
-        d=o.modifiers.new('Desktop silhouette LOD','DECIMATE');d.ratio={'Soil':.1,'Ceramic':.3,'CityWindow':.08}.get(material_name,.5);d.use_collapse_triangulate=True
+        d=o.modifiers.new('Desktop silhouette LOD','DECIMATE');d.ratio={'Soil':.02,'Ceramic':.22,'CityWindow':.06}.get(material_name,.5);d.use_collapse_triangulate=True
         bpy.context.view_layer.objects.active=o;bpy.ops.object.modifier_apply(modifier=d.name)
         o.data.validate(verbose=False)
 export(OUT/'atrium-desktop.glb')

@@ -40,7 +40,7 @@
       0
     ],
     "originMeaning": "base centre",
-    "parts": 84,
+    "parts": 88,
     "source": "models/atrium/kit/main-stair.blend",
     "glb": "public/assets/atrium/kit/main-stair.glb",
     "collision": "public/assets/atrium/kit/main-stair-collision.json",

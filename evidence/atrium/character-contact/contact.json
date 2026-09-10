@@ -1,0 +1,3146 @@
+{
+  "capturedAt": "2026-09-10T07:16:19.887Z",
+  "runtimeFingerprint": "04410f9501c36505e5bf601dfc8e3d3604e317f18adcee8d4bf9d811174e4012",
+  "method": "Actual runtime E-key care actions, positioned review fixtures and multi-view cameras. NOT traversal or finger-surface contact proof. Grip-frame distance only; source topology and visual checks are separate.",
+  "maxGripFrameErrorMetres": 2.4095215959738984e-11,
+  "sampleCount": 18,
+  "samples": [
+    {
+      "action": "plant",
+      "view": "side",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 5.665760817862193e-14,
+              "scale": [
+                0.9999999999683539,
+                0.9999999999999968,
+                0.999999999968357
+              ],
+              "hand": [
+                9.248676928586882,
+                0.9655393162019141,
+                4.012774437520649
+              ],
+              "handle": [
+                9.248676928586924,
+                0.9655393162019131,
+                4.012774437520612
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 3.3749441007686423e-12,
+              "scale": [
+                1.00000000013225,
+                1.0000000000028229,
+                1.000000000130556
+              ],
+              "hand": [
+                8.765059563290496,
+                0.9425986956532699,
+                2.305684371092991
+              ],
+              "handle": [
+                8.765059563293834,
+                0.9425986956535934,
+                2.3056843710933714
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 3.607797795906347e-15,
+              "scale": [
+                1.000000000000574,
+                1.0000000000000024,
+                1.0000000000005753
+              ],
+              "hand": [
+                -6.5515078214205555,
+                0.9484396588934929,
+                1.1575370272566468
+              ],
+              "handle": [
+                -6.551507821420554,
+                0.948439658893496,
+                1.1575370272566472
+              ]
+            }
+          ]
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "plant",
+      "view": "front",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.7690429213875914e-11,
+              "scale": [
+                1.0000000013424442,
+                1.0000000000075002,
+                1.0000000013470947
+              ],
+              "hand": [
+                9.257253534578492,
+                0.9663769577818968,
+                4.021087499452192
+              ],
+              "handle": [
+                9.257253534584116,
+                0.9663769577841248,
+                4.021087499468816
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 2.5175988005288986e-12,
+              "scale": [
+                1.000000000251814,
+                1.0000000000007647,
+                1.0000000002511986
+              ],
+              "hand": [
+                8.764175252491023,
+                0.9415771791726298,
+                2.2942778057441147
+              ],
+              "handle": [
+                8.764175252493235,
+                0.9415771791727381,
+                2.2942778057429165
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 1.8444410139024814e-15,
+              "scale": [
+                1.0000000000015494,
+                1.0000000000000062,
+                1.000000000001543
+              ],
+              "hand": [
+                -6.554684558149973,
+                0.9484398657997269,
+                1.1690802154847602
+              ],
+              "handle": [
+                -6.554684558149972,
+                0.9484398657997285,
+                1.1690802154847597
+              ]
+            }
+          ]
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "plant",
+      "view": "hand",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 6.460976750705678e-12,
+              "scale": [
+                1.0000000007570984,
+                1.0000000000018054,
+                1.000000000758019
+              ],
+              "hand": [
+                9.248727650733077,
+                0.9648928776000228,
+                4.013536122239938
+              ],
+              "handle": [
+                9.248727650735145,
+                0.9648928776005725,
+                4.013536122246035
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "tea",
+      "view": "side",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 2.5871588864172587e-13,
+              "scale": [
+                0.999999999767516,
+                0.9999999999999547,
+                0.9999999997674923
+              ],
+              "hand": [
+                -8.37234563914542,
+                0.9634396769999047,
+                1.4228685107423302
+              ],
+              "handle": [
+                -8.372345639145424,
+                0.963439676999646,
+                1.422868510742328
+              ]
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": []
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 2.4095215959738984e-11,
+              "scale": [
+                1.0000000003643996,
+                1.0000000000519735,
+                1.0000000003734497
+              ],
+              "hand": [
+                8.896893358080687,
+                0.7716004034661046,
+                2.252708197243368
+              ],
+              "handle": [
+                8.896893358087661,
+                0.771600403471791,
+                2.252708197221016
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 2.8393241393052947e-12,
+              "scale": [
+                1.0000000000964997,
+                1.0000000000027822,
+                1.0000000000943556
+              ],
+              "hand": [
+                8.77525686523891,
+                0.9273509916770687,
+                2.309444182955072
+              ],
+              "handle": [
+                8.775256865241731,
+                0.927350991677373,
+                2.309444182954963
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 2.4479939486809408e-12,
+              "scale": [
+                1.0000000000783529,
+                1.0000000000025373,
+                1.0000000000770772
+              ],
+              "hand": [
+                8.76736887978588,
+                0.9416741134589173,
+                2.310261538290255
+              ],
+              "handle": [
+                8.767368879788295,
+                0.9416741134591898,
+                2.3102615382905562
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 2.620078767449522e-12,
+              "scale": [
+                1.0000000000861533,
+                1.0000000000026388,
+                1.0000000000848408
+              ],
+              "hand": [
+                8.766540493748186,
+                0.9427288183136299,
+                2.3096775453944236
+              ],
+              "handle": [
+                8.766540493750767,
+                0.9427288183139159,
+                2.3096775453947718
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 3.033589913326526e-12,
+              "scale": [
+                1.0000000001084857,
+                1.0000000000027944,
+                1.0000000001069687
+              ],
+              "hand": [
+                8.765969132143262,
+                0.9426486702461162,
+                2.308131299771192
+              ],
+              "handle": [
+                8.765969132146255,
+                0.9426486702464273,
+                2.308131299771575
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 3.4272109388587545e-12,
+              "scale": [
+                1.0000000001401588,
+                1.0000000000027411,
+                1.0000000001384495
+              ],
+              "hand": [
+                8.76520909737314,
+                0.9424428866477456,
+                2.305689405079733
+              ],
+              "handle": [
+                8.765209097376532,
+                0.9424428866480631,
+                2.3056894050800985
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 3.564436895027454e-12,
+              "scale": [
+                1.0000000001738518,
+                1.0000000000023637,
+                1.0000000001721046
+              ],
+              "hand": [
+                8.76442551811484,
+                0.9422252971360727,
+                2.302690492346154
+              ],
+              "handle": [
+                8.764425518118385,
+                0.9422252971363594,
+                2.3026904923463816
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 3.3815311397358024e-12,
+              "scale": [
+                1.0000000002025364,
+                1.0000000000018,
+                1.0000000002009581
+              ],
+              "hand": [
+                8.76378902512258,
+                0.9420407797228131,
+                2.2995184402157727
+              ],
+              "handle": [
+                8.763789025125954,
+                0.942040779723042,
+                2.2995184402157163
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 3.029982686014416e-12,
+              "scale": [
+                1.0000000002237008,
+                1.0000000000012872,
+                1.000000000222433
+              ],
+              "hand": [
+                8.763415428578579,
+                0.94190857573079,
+                2.2966063342001233
+              ],
+              "handle": [
+                8.763415428581572,
+                0.9419085757309611,
+                2.2966063341996845
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": []
+        },
+        {
+          "id": "lin",
+          "grips": []
+        },
+        {
+          "id": "chen",
+          "grips": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 2.7298764529263873e-12,
+              "scale": [
+                1.0000000002403224,
+                1.000000000000956,
+                1.000000000239392
+              ],
+              "hand": [
+                8.763348717738959,
+                0.9418162681043802,
+                2.2943551770695607
+              ],
+              "handle": [
+                8.76334871774155,
+                0.9418162681045119,
+                2.2943551770687134
+              ]
+            }
+          ]
+        },
+        {
+          "id": "zhou",
+          "grips": []
+        },
+        {
+          "id": "he",
+          "grips": []
+        },
+        {
+          "id": "tang",
+          "grips": []
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

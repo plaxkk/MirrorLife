@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-09T16:30:21.759Z",
-  "runtimeFingerprint": "5c4b6031c19b2edc43620be078c6f069a19f2235403334869791ecdfdd1304d9",
+  "capturedAt": "2026-09-10T07:16:44.668Z",
+  "runtimeFingerprint": "04410f9501c36505e5bf601dfc8e3d3604e317f18adcee8d4bf9d811174e4012",
   "browserMode": "headed",
   "fixtureNotice": "Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.",
   "results": [
@@ -39,6 +39,10 @@
     },
     {
       "case": "GLB load failure is visible and retry succeeds",
+      "pass": true
+    },
+    {
+      "case": "optional contact texture failure retains an active walkable scene and diagnostic",
       "pass": true
     }
   ]

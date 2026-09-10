@@ -69,6 +69,15 @@ try{
   assert.match(await broken.$eval('#loading-text',e=>e.textContent),/未能打开/);await broken.screenshot({path:'evidence/atrium/resource-failure.png'});
   block=false;await broken.click('#retry');await broken.waitForSelector('#enter:not([hidden])',{timeout:90000});
   results.push({case:'GLB load failure is visible and retry succeeds',pass:true});
+  await broken.close();
+  const contactFailure=await browser.newPage();await contactFailure.setRequestInterception(true);
+  contactFailure.on('request',request=>request.url().includes('/floor-contact.png')?request.abort('failed'):request.continue());
+  await boot(contactFailure);
+  assert.equal(await contactFailure.evaluate(()=>window.__atrium.getStats().active),true);
+  assert.ok(await contactFailure.evaluate(()=>window.__atrium.getStats().errors.some(e=>e.type==='optional-contact-texture')));
+  await contactFailure.keyboard.down('KeyW');await wait(600);await contactFailure.keyboard.up('KeyW');
+  assert.ok(await contactFailure.evaluate(()=>window.__atrium.getStats().distanceWalked>.5));
+  results.push({case:'optional contact texture failure retains an active walkable scene and diagnostic',pass:true});
   await fs.writeFile('evidence/atrium/resilience.json',JSON.stringify({...metadata,fixtureNotice:'Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.',results},null,2));
   console.log(JSON.stringify(results,null,2));
 }catch(error){

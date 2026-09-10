@@ -17,6 +17,7 @@
     "test": "npm run check && npm run test:interior-entry-plan && npm run test:atrium",
     "test:atrium": "node --check src/atrium-main.js && node --check src/atrium-actors.js && node --test test/atrium-pilot.test.mjs test/atrium-circulation.regression-1.test.mjs",
     "verify:atrium": "node scripts/verify-atrium-pilot.mjs walkthrough",
+    "verify:atrium:release": "node scripts/verify-atrium-release.mjs",
     "report:atrium:assets": "node scripts/report-atrium-assets.mjs",
     "test:interior-entry-plan": "node --test scripts/interior-entry-plan.test.mjs",
     "test:evolution": "node scripts/verify-evolution.mjs",

@@ -5,6 +5,16 @@ import { CIVIC_ARTICULATION_BINDING_SPECS,createCivicArticulationBinding,syncCiv
 
 const JOINTS={headGroup:'HeadPivot',leftArm:'LeftArmPivot',rightArm:'RightArmPivot',leftElbow:'LeftElbowPivot',rightElbow:'RightElbowPivot',leftHand:'Hand_-1',rightHand:'Hand_1',leftLeg:'LeftLegPivot',rightLeg:'RightLegPivot',leftKnee:'LeftKneePivot',rightKnee:'RightKneePivot',leftFoot:'ShoeUpper_-1Pivot',rightFoot:'ShoeUpper_1Pivot',leftSleeveCompression:'SleeveCompressionPivot_-1',rightSleeveCompression:'SleeveCompressionPivot_1',leftTrouserCompression:'TrouserCompressionPivot_-1',rightTrouserCompression:'TrouserCompressionPivot_1'};
 const euler=new THREE.Euler(),q=new THREE.Quaternion();
+// Match authored grip frames in the actor's parent space. Cancel inherited hand
+// scale so the same metre-sized cup does not grow/shrink between residents.
+export function alignAtriumProp(prop,grip,handGrip,parent){
+  parent.updateWorldMatrix(true,false);handGrip.updateWorldMatrix(true,false);
+  const target=new THREE.Matrix4().copy(handGrip.matrixWorld);
+  const p=new THREE.Vector3(),r=new THREE.Quaternion(),s=new THREE.Vector3();
+  target.decompose(p,r,s);target.compose(p,r,s.set(1,1,1));
+  const transform=new THREE.Matrix4().copy(parent.matrixWorld).invert().multiply(target).multiply(grip.matrix.clone().invert());
+  transform.decompose(prop.position,prop.quaternion,prop.scale);prop.updateMatrixWorld(true);
+}
 export async function loadAtriumActor(id,definition,mobile=false) {
   const gltf=await loadAtriumGLB(`/assets/atrium/residents/${id}${mobile?'-mobile':''}.glb`);
   const group=new THREE.Group();group.name=`resident-${id}`;group.add(gltf.scene);
@@ -30,12 +40,25 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     }
   }});
   const position=definition.position||[-4.3,0,6.3];group.position.set(...position);group.rotation.y=definition.yaw||0;
-  let walkPhase=0,seatBlend=0,lifeProp=null;
+  let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[];
+  const handGrip=visual.getObjectByName('HandGripAnchor_1');
   const poseVectors={};
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
     attachLifeProp(model){
-      lifeProp=model;joints.rightHand?.node.add(model);model.position.set(-.06,-.13,.015);model.rotation.z=.25;model.visible=false;
+      if(!handGrip)throw new Error(`${id} 缺少手掌握持点`);
+      lifeProp=model;group.add(model);model.position.set(0,0,0);model.rotation.set(0,0,0);model.scale.set(1,1,1);
+      propGrips=['WateringCan','TeaCup'].map(name=>{
+        const prop=model.getObjectByName(name),grip=prop?.getObjectByName(`${name}Grip`);
+        if(!grip)throw new Error(`${name} 缺少握持点`);
+        grip.updateMatrix();return {prop,grip};
+      });model.visible=false;
+    },
+    gripDiagnostics(){
+      return propGrips.filter(({prop})=>lifeProp.visible&&prop.visible).map(({prop,grip})=>({name:prop.name,
+        errorMetres:grip.getWorldPosition(new THREE.Vector3()).distanceTo(handGrip.getWorldPosition(new THREE.Vector3())),
+        scale:prop.getWorldScale(new THREE.Vector3()).toArray(),hand:handGrip.getWorldPosition(new THREE.Vector3()).toArray(),
+        handle:grip.getWorldPosition(new THREE.Vector3()).toArray()}));
     },
     update(time,dt,{moving=0,talking=false,lookingAt=null,seated=false,stepping=false,care=false,listening=false,seatHeight=.53}={}) {
       walkPhase+=moving*dt/1.25;
@@ -70,7 +93,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       eyes.forEach((eye,i)=>{eye.scale.copy(eyeScales[i]);eye.scale.y*=blink;});
       if(open)open.visible=talking&&Math.sin(time*9)>.25;
       if(closed)closed.visible=!open?.visible;
-      if(lifeProp)lifeProp.visible=care;
+      if(lifeProp){
+        lifeProp.visible=care;
+        if(care)for(const {prop,grip}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handGrip,lifeProp);
+      }
     },
   };
 }

@@ -4,6 +4,65 @@ import fs from 'node:fs/promises';
 import {freshState,normalizeState,applyDecision,canDecide,RESIDENTS,residentSpeech} from '../src/atrium-content.js';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {loadAtriumState,saveAtriumState} from '../src/atrium-persistence.js';
+import * as THREE from 'three';
+import {alignAtriumProp} from '../src/atrium-actors.js';
+import {applyAtriumFloorContact} from '../src/atrium-floor-contact.js';
+
+test('floor contact atlas follows transformed floor levels and excludes vertical furniture',()=>{
+  const root=new THREE.Group(),geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,0,3.5,0,0,1,0,1,0,1],3));
+  geometry.setAttribute('normal',new THREE.Float32BufferAttribute([0,1,0,0,1,0,0,1,0,1,0,0],3));
+  const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());root.add(mesh);root.position.x=2;
+  const texture=new THREE.Texture();assert.equal(applyAtriumFloorContact(root,texture),2);
+  const uv=geometry.getAttribute('uv1');
+  assert.ok(Math.abs(uv.getX(0)-13.2/22.4)<1e-6);
+  assert.equal(uv.getY(0),.25);assert.equal(uv.getY(1),.75);
+  assert.ok(uv.getX(2)<.002&&uv.getY(3)<.002);
+  assert.equal(texture.channel,1);assert.equal(mesh.material.aoMap,texture);
+});
+
+async function glbJson(path){
+  const bytes=await fs.readFile(new URL(path,import.meta.url));
+  return JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
+}
+test('both resident LODs keep full digits and one continuous long-sleeve surface',async()=>{
+  for(const id of ['you','lin','chen','xu','zhou','he','tang'])for(const lod of ['','-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
+    const core=glb.nodes.find(n=>n.name==='SkinnedArticulationCore');
+    const parts=core.extras.rigid_source_parts.split(',');
+    assert.ok(!parts.some(n=>n.startsWith('TravelerForearmSkin')),`${id}${lod}: bare skin intersects long sleeve`);
+    for(const side of [-1,1]){
+      for(let digit=1;digit<=4;digit++)assert.ok(parts.includes(`EssentialFinger_${side}_${digit}`),`${id}${lod}: missing digit ${side}/${digit}`);
+      assert.ok(parts.includes(`EssentialThumb_${side}`),`${id}${lod}: missing thumb`);
+    }
+    assert.ok(glb.nodes.some(n=>n.name==='HandGripAnchor_1'),`${id}: authored palm grip`);
+  }
+});
+test('each life prop contains an authored grip frame',async()=>{
+  const glb=await glbJson('../public/assets/atrium/life-props.glb');
+  for(const name of ['WateringCan','TeaCup']){
+    const root=glb.nodes.find(n=>n.name===name);
+    assert.ok(root.children.some(i=>glb.nodes[i].name===`${name}Grip`),`${name}: missing handle grip`);
+  }
+});
+test('portable motion clips include feet and all corrective bindings',async()=>{
+  const glb=await glbJson('../public/assets/atrium/animations/you-motion.glb');
+  for(const clip of glb.animations){
+    const names=new Set(clip.channels.map(c=>glb.nodes[c.target.node].name));
+    for(const side of ['Left','Right'])for(const part of ['Foot','SleeveCorrective','TrouserCorrective'])assert.ok(names.has(`Skin${side}${part}`),`${clip.name}: Skin${side}${part} binding missing`);
+  }
+});
+test('prop grip follows a moving, scaled hand without scaling the metre-sized vessel',()=>{
+  const actor=new THREE.Group(),arm=new THREE.Group(),hand=new THREE.Group(),palm=new THREE.Object3D(),props=new THREE.Group();
+  actor.add(arm,props);arm.add(hand);hand.add(palm);hand.scale.setScalar(.82);hand.position.set(.31,.95,0);palm.position.set(0,-.038,.045);
+  const vessel=new THREE.Group(),grip=new THREE.Object3D();props.add(vessel);vessel.add(grip);grip.position.set(0,.174,0);grip.updateMatrix();
+  for(let i=0;i<40;i++){
+    actor.position.set(i*.2,3.5,2);actor.rotation.y=i*.37;arm.rotation.x=-i*.03;hand.rotation.z=Math.sin(i)*.24;
+    alignAtriumProp(vessel,grip,palm,props);
+    assert.ok(grip.getWorldPosition(new THREE.Vector3()).distanceTo(palm.getWorldPosition(new THREE.Vector3()))<1e-8);
+    assert.ok(vessel.getWorldScale(new THREE.Vector3()).distanceTo(new THREE.Vector3(1,1,1))<1e-8);
+  }
+});
 
 test('decision requires discoveries and residents, changes memories once',()=>{
   const s=freshState();assert.equal(applyDecision(s,'balanced'),false);
@@ -26,8 +85,11 @@ test('wall camera probes contract while residents remain physical but do not obs
   try{
     const distance=p.cameraDistance({x:10.4,y:1.3,z:2},{x:1,y:0,z:0},3.3);
     assert.ok(distance<.6&&distance>=.2,String(distance));
-    p.addResident('test',{x:4,y:0,z:2.5});p.teleport([4,0,4]);
-    assert.equal(p.cameraDistance({x:4,y:1.3,z:4},{x:0,y:0,z:-1},2),2);
+    // The new visible flared stair shell occupies the old x=4 probe corridor.
+    // It must obstruct the camera, while an NPC alone in the clear aisle must not.
+    assert.ok(p.cameraDistance({x:4,y:1.3,z:4},{x:0,y:0,z:-1},2)<1,'visible curved stair wall contracts the camera');
+    p.addResident('test',{x:3.1,y:0,z:2.5});p.teleport([3.1,0,4]);
+    assert.equal(p.cameraDistance({x:3.1,y:1.3,z:4},{x:0,y:0,z:-1},2),2);
     for(let i=0;i<100;i++)p.move(0,-.0375);
     assert.ok(p.feet().z>3,'resident capsule stops the player');
   }finally{p.dispose();}

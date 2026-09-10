@@ -3,6 +3,8 @@ No third-party character assets. Preserve bind matrices and authored facial volu
 """
 import bpy, sys, json, copy, importlib.util, math
 from pathlib import Path
+from mathutils import Vector
+from mathutils.bvhtree import BVHTree
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('civic',ROOT/'scripts/blender-build-civic-characters.py')
 civic=importlib.util.module_from_spec(spec);spec.loader.exec_module(civic)
@@ -26,8 +28,25 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     """Soft everyday garments for this pilot, not the earlier mechanical costume kit."""
     who=config['atrium_id']
     for obj in list(bpy.context.scene.objects):
-        if obj.name.startswith(('ShoulderMantle','ShoulderLoadFold','TorsoTensionFold')):
+        if obj.name.startswith(('ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem')):
             bpy.data.objects.remove(obj,do_unlink=True)
+    # The shared traveler is short-sleeved; this pilot uses long everyday jackets.
+    # Its rigid bare forearm overlay intersected the continuously weighted sleeve.
+    # Keep only that continuous cloth mesh and add a cuff where it meets the wrist.
+    for side,elbow in [(-1,left_elbow),(1,right_elbow)]:
+        if config['costume']!='listener':
+            civic.contoured_elliptical_shell('EverydayCuff_'+str(side),[
+                (-.301,.047,.043,0,0),(-.29,.056,.051,0,0),
+                (-.266,.058,.053,0,0),(-.255,.053,.048,0,0)],mats['outer'],elbow,segments=24)
+        hand=bpy.data.objects.get('Hand_'+str(side))
+        grip=civic.empty('HandGripAnchor_'+str(side),hand,(0,-.045,-.038),(1.2,0,0))
+        grip['contact_contract']='atrium-palm-grip-v1'
+    # Fingers are anatomy, not removable detail. Renaming before the shared
+    # batcher routes them into the full skinned core, including the mobile LOD.
+    for obj in list(bpy.context.scene.objects):
+        if obj.name.startswith(('FingerVolume_','ThumbVolume_')):
+            obj.name=obj.name.replace('FingerVolume_','EssentialFinger_').replace('ThumbVolume_','EssentialThumb_')
+            decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.6
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
     civic.curve_tube('Soft neckline',[(-.145,-.09,1.255),(0,-.155,1.23),(.145,-.09,1.255)],.016,mats['outer'],visual)
@@ -74,8 +93,47 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     civic.ellipsoid('Embroidered sun',(-.12,-.205,1.15),(.026,.003,.026),mats['accent'],visual,segments=24,rings=12)
 
 civic.build_costume=everyday_costume
+
+def everyday_hair(head,mats,style):
+    """A continuous scalp and broad softened locks, not floating hard spikes."""
+    who=current_identity
+    long_bob=who=='lin';rx,ry,rz=.241,.205,.278
+    rings=14;sides=48;vertices=[(0,0,.298)];faces=[]
+    for row in range(1,rings+1):
+        for i in range(sides):
+            a=i*math.tau/sides
+            extent=1.05+(.96 if not long_bob else 1.4)*(1-math.cos(a))*.5+.26*math.sin(a)**2
+            theta=row/rings*extent
+            radius=1+.018*math.sin(a*5+theta*2)*math.sin(theta)
+            vertices.append((rx*math.sin(theta)*math.sin(a)*radius,-ry*math.sin(theta)*math.cos(a)*radius,.02+rz*math.cos(theta)))
+    for i in range(sides):faces.append((0,1+i,1+(i+1)%sides))
+    for row in range(rings-1):
+        for i in range(sides):
+            a=1+row*sides+i;b=1+row*sides+(i+1)%sides;faces.append((a,a+sides,b+sides,b))
+    mesh=bpy.data.meshes.new('Continuous scalp mesh');mesh.from_pydata(vertices,[],faces);mesh.update()
+    cap=bpy.data.objects.new('Hair continuous scalp',mesh);bpy.context.collection.objects.link(cap);cap.parent=head;mesh.materials.append(mats['hair'])
+    for p in mesh.polygons:p.use_smooth=True
+    solid=cap.modifiers.new('Hairline thickness','SOLIDIFY');solid.thickness=.009
+    def lock(name,points,radii):
+        ob=civic.tapered_lock(name,points,radii,mats['hair'],head,sides=10,oval_ratio=.52)
+        sub=ob.modifiers.new('Soft groomed clump','SUBSURF');sub.levels=1;sub.render_levels=1
+        return ob
+    for i,x in enumerate([-.175,-.108,-.04,.03,.1,.17]):
+        shift=.065 if who in ('you','chen','zhou') else (-.03 if i<3 else .035)
+        tip_z=(.10 if who in ('lin','xu') else .125)+abs(x)*.18
+        lift=.04 if who=='chen' else (.02 if who=='tang' else 0)
+        lock('Hair swept fringe '+str(i),[(x*.75,-.10,.268+lift),(x,-.172,.24+lift),(x+shift*.7,-.196,.185),(x+shift,-.181,tip_z)], [.027,.046,.032,.004])
+    for side in [-1,1]:
+        lock('Hair temple '+str(side),[(side*.20,-.05,.19),(side*.237,-.042,.08),(side*.231,-.025,-.045),(side*.2,-.035,-.18 if long_bob else -.065)],[.035,.044,.037,.008])
+    if who=='xu':
+        civic.ellipsoid('Hair ponytail tie',(0,.183,.14),(.05,.05,.045),mats['accent'],head)
+        for i in [-1,0,1]:lock('Hair ponytail '+str(i),[(i*.025,.19,.15),(i*.04,.285,.08),(i*.035,.30,-.055),(i*.02,.22,-.21)],[.037,.055,.039,.007])
+    if who=='zhou':civic.ellipsoid('Hair low bun',(0,.198,-.055),(.09,.072,.09),mats['hair'],head,segments=28,rings=16)
+
+civic.build_hair=everyday_hair
 reports=[]
 for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
+    current_identity=name
     cfg=copy.deepcopy(civic.ROLE_CONFIGS[role]);cfg.update(hair='#272e3a',hair_highlight='#414653',hair_style=hair,top=top,outer=outer,lower=lower,accent='#e4b149',shoe='#2f4354',sole='#e6d7bb')
     cfg['atrium_id']=name
     cfg['top']={'you':'#eddfc5','lin':'#8db0a0','chen':'#344b60','xu':'#dfa47f','zhou':'#d8cbb5','he':'#8fb5ab','tang':'#c78370'}[name]
@@ -84,13 +142,29 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     profile=civic.BODY_PROFILES[role]
     profile['torso_width']*=body;profile['shoulder_x']*=body
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
-    profile['head_scale']=tuple(s*.88 for s in profile['head_scale'])
+    profile['head_scale']=tuple(s*.76 for s in profile['head_scale'])
+    profile['head_z']+=.025
     civic.FACE_PROFILES[role]=copy.deepcopy(base_faces[role])
     civic.FACE_PROFILES[role]['jaw_taper']+=((idx%3)-1)*.014
     civic.FACE_PROFILES[role]['mouth_corner']=.004+(idx%3)*.002
     civic.FACE_PROFILES[role]['eye_height']*=.82
     root=civic.build_character(role,cfg)
     root['atrium_identity']=name
+    # Fit facial features to the actual sculpt, not a constant plane in front
+    # of an ellipsoid. Constant Y left eyelids, lips and blush visibly floating.
+    face=bpy.data.objects['Head']
+    surface=BVHTree.FromPolygons([v.co for v in face.data.vertices],[p.vertices[:] for p in face.data.polygons])
+    def face_y(x,z):
+        hit=surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))
+        return hit[0].y if hit[0] is not None else -.18
+    for side in [-1,1]:
+        for prefix,offset in [('EyePivot_',.005),('BrowPivot_',.004)]:
+            ob=bpy.data.objects[prefix+str(side)];ob.location.y=face_y(ob.location.x,ob.location.z)-offset
+        blush=bpy.data.objects.get('Blush_'+str(side))
+        if blush:bpy.data.objects.remove(blush,do_unlink=True)
+    mouth=bpy.data.objects['MouthPivot'];mouth.location.y=face_y(0,mouth.location.z)-.004
+    philtrum=bpy.data.objects.get('Philtrum')
+    if philtrum:bpy.data.objects.remove(philtrum,do_unlink=True)
     # The shared source deliberately used a flat-shaded cranium. This pilot's
     # approachable 3D direction needs continuous facial normals, not polygonal cheeks.
     for obj in bpy.context.scene.objects:
@@ -111,7 +185,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             mat=obj.data.materials[poly.material_index] if obj.data.materials else None
             color=mat.diffuse_color if mat else (1,1,1,1)
             for loop in poly.loop_indices:colors.data[loop].color=color
-        boundary_names={'VisualRoot','HeadPivot','EyePivot_-1','EyePivot_1','MouthClosedPivot','MouthOpenPivot','LeftArmPivot','RightArmPivot','LeftElbowPivot','RightElbowPivot','LeftLegPivot','RightLegPivot','LeftKneePivot','RightKneePivot'}
+        boundary_names={'VisualRoot','HeadPivot','EyePivot_-1','EyePivot_1','MouthClosedPivot','MouthOpenPivot','LeftArmPivot','RightArmPivot','LeftElbowPivot','RightElbowPivot','LeftLegPivot','RightLegPivot','LeftKneePivot','RightKneePivot','Hand_-1','Hand_1','SleeveCompressionPivot_-1','SleeveCompressionPivot_1','TrouserCompressionPivot_-1','TrouserCompressionPivot_1','ShoeUpper_-1Pivot','ShoeUpper_1Pivot'}
         parent=obj.parent
         while parent and parent.name not in boundary_names:parent=parent.parent
         transform=obj.matrix_world.copy();obj.parent=parent;obj.matrix_world=transform
