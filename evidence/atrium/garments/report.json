@@ -1,0 +1,413 @@
+{
+  "capturedAt": "2026-09-10T14:51:41.333Z",
+  "runtimeFingerprint": "1011bd1ddb6def071a6e35d8dd6a580e541d81aeb076e2fd0ef21247511f3441",
+  "method": "Local Chrome headless, 1200x1000 DPR1; real runtime actors in their room positions, diagnostic cameras. Animation is not frozen. Screenshots require visual review; no automatic art pass.",
+  "views": [
+    {
+      "id": "you",
+      "angle": "front",
+      "file": "you-front.png",
+      "camera": [
+        -4.3,
+        1.27,
+        2.85
+      ],
+      "look": [
+        -4.3,
+        1.15,
+        4
+      ],
+      "actor": {
+        "position": [
+          -4.3,
+          0,
+          4
+        ],
+        "yaw": 3.141592653589793
+      }
+    },
+    {
+      "id": "you",
+      "angle": "side",
+      "file": "you-side.png",
+      "camera": [
+        -5.449999999999999,
+        1.27,
+        4
+      ],
+      "look": [
+        -4.3,
+        1.15,
+        4
+      ],
+      "actor": {
+        "position": [
+          -4.3,
+          0,
+          4
+        ],
+        "yaw": 3.141592653589793
+      }
+    },
+    {
+      "id": "you",
+      "angle": "back",
+      "file": "you-back.png",
+      "camera": [
+        -4.3,
+        1.27,
+        5.15
+      ],
+      "look": [
+        -4.3,
+        1.15,
+        4
+      ],
+      "actor": {
+        "position": [
+          -4.3,
+          0,
+          4
+        ],
+        "yaw": 3.141592653589793
+      }
+    },
+    {
+      "id": "lin",
+      "angle": "front",
+      "file": "lin-front.png",
+      "camera": [
+        -2.2,
+        1.12,
+        -0.8
+      ],
+      "look": [
+        -2.2,
+        1,
+        -1.95
+      ],
+      "actor": {
+        "id": "lin",
+        "busy": false,
+        "position": [
+          -2.2,
+          0,
+          -1.95
+        ],
+        "yaw": 0,
+        "seatBlend": 0.9999993617654577,
+        "seatMotion": {
+          "seated": true,
+          "moving": 0,
+          "blocked": false,
+          "clearOfChair": false
+        }
+      }
+    },
+    {
+      "id": "lin",
+      "angle": "side",
+      "file": "lin-side.png",
+      "camera": [
+        -1.0500000000000003,
+        1.12,
+        -1.95
+      ],
+      "look": [
+        -2.2,
+        1,
+        -1.95
+      ],
+      "actor": {
+        "id": "lin",
+        "busy": false,
+        "position": [
+          -2.2,
+          0,
+          -1.95
+        ],
+        "yaw": 0,
+        "seatBlend": 0.9999999825610566,
+        "seatMotion": {
+          "seated": true,
+          "moving": 0,
+          "blocked": false,
+          "clearOfChair": false
+        }
+      }
+    },
+    {
+      "id": "chen",
+      "angle": "front",
+      "file": "chen-front.png",
+      "camera": [
+        0.928146147655361,
+        1.12,
+        -0.8129132603735514
+      ],
+      "look": [
+        1.1,
+        1,
+        -1.95
+      ],
+      "actor": {
+        "id": "chen",
+        "busy": false,
+        "position": [
+          1.1,
+          0,
+          -1.95
+        ],
+        "yaw": -0.15,
+        "seatBlend": 0.9999999999869803,
+        "seatMotion": {
+          "seated": true,
+          "moving": 0,
+          "blocked": false,
+          "clearOfChair": false
+        }
+      }
+    },
+    {
+      "id": "chen",
+      "angle": "side",
+      "file": "chen-side.png",
+      "camera": [
+        -0.037086739626448484,
+        1.12,
+        -2.121853852344639
+      ],
+      "look": [
+        1.1,
+        1,
+        -1.95
+      ],
+      "actor": {
+        "id": "chen",
+        "busy": false,
+        "position": [
+          1.1,
+          0,
+          -1.95
+        ],
+        "yaw": -0.15,
+        "seatBlend": 0.9999999999999579,
+        "seatMotion": {
+          "seated": true,
+          "moving": 0,
+          "blocked": false,
+          "clearOfChair": false
+        }
+      }
+    },
+    {
+      "id": "xu",
+      "angle": "front",
+      "file": "xu-front.png",
+      "camera": [
+        8.075111535929349,
+        1.27,
+        2.521635539639414
+      ],
+      "look": [
+        9.1,
+        1.15,
+        2
+      ],
+      "actor": {
+        "id": "xu",
+        "busy": false,
+        "position": [
+          9.1,
+          0,
+          2
+        ],
+        "yaw": -1.1,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "xu",
+      "angle": "side",
+      "file": "xu-side.png",
+      "camera": [
+        8.578364460360586,
+        1.27,
+        0.9751115359293494
+      ],
+      "look": [
+        9.1,
+        1.15,
+        2
+      ],
+      "actor": {
+        "id": "xu",
+        "busy": false,
+        "position": [
+          9.1,
+          0,
+          2
+        ],
+        "yaw": -1.1,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "zhou",
+      "angle": "front",
+      "file": "zhou-front.png",
+      "camera": [
+        -7.9,
+        4.7700000000000005,
+        1.5499999999999998
+      ],
+      "look": [
+        -7.9,
+        4.65,
+        0.4
+      ],
+      "actor": {
+        "id": "zhou",
+        "busy": false,
+        "position": [
+          -7.9,
+          3.5,
+          0.4
+        ],
+        "yaw": 0,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "zhou",
+      "angle": "side",
+      "file": "zhou-side.png",
+      "camera": [
+        -6.75,
+        4.7700000000000005,
+        0.4000000000000001
+      ],
+      "look": [
+        -7.9,
+        4.65,
+        0.4
+      ],
+      "actor": {
+        "id": "zhou",
+        "busy": false,
+        "position": [
+          -7.9,
+          3.5,
+          0.4
+        ],
+        "yaw": 0,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "he",
+      "angle": "front",
+      "file": "he-front.png",
+      "camera": [
+        -6.037566390581728,
+        1.27,
+        0.6205386846976885
+      ],
+      "look": [
+        -7,
+        1.15,
+        1.25
+      ],
+      "actor": {
+        "id": "he",
+        "busy": false,
+        "position": [
+          -7,
+          0,
+          1.25
+        ],
+        "yaw": 1.5,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "he",
+      "angle": "side",
+      "file": "he-side.png",
+      "camera": [
+        -6.9186522180821415,
+        1.27,
+        0.10288076540533742
+      ],
+      "look": [
+        -7,
+        1.15,
+        1.25
+      ],
+      "actor": {
+        "id": "he",
+        "busy": false,
+        "position": [
+          -7,
+          0,
+          1.25
+        ],
+        "yaw": 1.5,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "tang",
+      "angle": "front",
+      "file": "tang-front.png",
+      "camera": [
+        -1.72380920000001,
+        4.7700000000000005,
+        -5.699999999999998
+      ],
+      "look": [
+        -0.5738092000000101,
+        4.65,
+        -5.699999999999999
+      ],
+      "actor": {
+        "id": "tang",
+        "busy": false,
+        "position": [
+          -0.5738092000000101,
+          3.5,
+          -5.699999999999999
+        ],
+        "yaw": -1.570796326794896,
+        "seatBlend": 0
+      }
+    },
+    {
+      "id": "tang",
+      "angle": "side",
+      "file": "tang-side.png",
+      "camera": [
+        -0.7718452000000121,
+        4.7700000000000005,
+        -4.549999999999999
+      ],
+      "look": [
+        -0.7718452000000129,
+        4.65,
+        -5.699999999999999
+      ],
+      "actor": {
+        "id": "tang",
+        "busy": false,
+        "position": [
+          -0.7718452000000129,
+          3.5,
+          -5.699999999999999
+        ],
+        "yaw": -1.570796326794896,
+        "seatBlend": 0
+      }
+    }
+  ],
+  "errors": []
+}

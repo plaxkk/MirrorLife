@@ -1,13 +1,15 @@
 """Derive seven original residents from MirrorLife's editable shared-pivot rig.
 No third-party character assets. Preserve bind matrices and authored facial volumes.
 """
-import bpy, sys, json, copy, importlib.util, math
+import bpy, sys, json, copy, importlib.util, math, os
 from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 ROOT=Path(__file__).resolve().parents[1]
 spec=importlib.util.spec_from_file_location('civic',ROOT/'scripts/blender-build-civic-characters.py')
 civic=importlib.util.module_from_spec(spec);spec.loader.exec_module(civic)
+garment_spec=importlib.util.spec_from_file_location('atrium_garment',ROOT/'scripts/atrium-garment.py')
+garment_tools=importlib.util.module_from_spec(garment_spec);garment_spec.loader.exec_module(garment_tools)
 OUT=ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
@@ -23,10 +25,44 @@ PEOPLE=[
 ]
 base_bodies=copy.deepcopy(civic.BODY_PROFILES)
 base_faces=copy.deepcopy(civic.FACE_PROFILES)
+shared_limb_builder=civic.build_skinned_limb_pair
+def everyday_limbs(name,centres,rings,*args,**kwargs):
+    if name=='SkinnedArmVolume':
+        rings=list(rings)
+        # A sloping shoulder ends above the pivot, not in a broad horizontal lid.
+        for i,(height,scale) in enumerate([(1.29,.4),(1.275,.83),(1.252,.9)]):
+            z,rx,ry,*rest=rings[i];rings[i]=(height,rx*scale,ry*scale,*rest)
+    return shared_limb_builder(name,centres,rings,*args,**kwargs)
+civic.build_skinned_limb_pair=everyday_limbs
 
 def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right_elbow,left_leg,right_leg):
     """Soft everyday garments for this pilot, not the earlier mechanical costume kit."""
     who=config['atrium_id']
+    garment=garment_tools.continuous_garment(civic,mats['top'])
+    cloth_surface=BVHTree.FromPolygons([v.co for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
+    def cloth_y(x,z):
+        point=cloth_surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
+        if point is None:raise RuntimeError('Missing front cloth surface at '+str((x,z)))
+        return point.y
+    def cloth_patch(name,x,z,width,height,material):
+        # Sample the whole curved chest, not only a floating box's centre.
+        verts=[];faces=[];steps=8;radius=min(width,height)*.18
+        for j in range(steps+1):
+            for i in range(steps+1):
+                u=(i/steps-.5)*width;v=(j/steps-.5)*height
+                cu=max(abs(u)-(width/2-radius),0);cv=max(abs(v)-(height/2-radius),0)
+                if cu and cv and math.hypot(cu,cv)>radius:
+                    scale=radius/math.hypot(cu,cv)
+                    u=math.copysign(width/2-radius+cu*scale,u);v=math.copysign(height/2-radius+cv*scale,v)
+                verts.append((x+u,cloth_y(x+u,z+v)-.003,z+v))
+        for j in range(steps):
+            for i in range(steps):
+                a=j*(steps+1)+i;faces.append((a,a+1,a+steps+2,a+steps+1))
+        mesh=bpy.data.meshes.new(name);mesh.from_pydata(verts,[],faces);mesh.update()
+        ob=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(ob);ob.parent=visual;mesh.materials.append(material)
+        for polygon in mesh.polygons:polygon.use_smooth=True
+        solid=ob.modifiers.new('Patch cloth thickness','SOLIDIFY');solid.thickness=.002
+    bpy.data.objects['WaistBand'].data.materials.clear();bpy.data.objects['WaistBand'].data.materials.append(mats['lower'])
     for obj in list(bpy.context.scene.objects):
         if obj.name.startswith(('ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem')):
             bpy.data.objects.remove(obj,do_unlink=True)
@@ -37,7 +73,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         if config['costume']!='listener':
             civic.contoured_elliptical_shell('EverydayCuff_'+str(side),[
                 (-.301,.047,.043,0,0),(-.29,.056,.051,0,0),
-                (-.266,.058,.053,0,0),(-.255,.053,.048,0,0)],mats['outer'],elbow,segments=24)
+                (-.266,.058,.053,0,0),(-.255,.053,.048,0,0)],mats['top'],elbow,segments=24)
         hand=bpy.data.objects.get('Hand_'+str(side))
         grip=civic.empty('HandGripAnchor_'+str(side),hand,(0,-.045,-.038),(1.2,0,0))
         grip['contact_contract']='atrium-palm-grip-v1'
@@ -49,9 +85,9 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.6
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
-    civic.curve_tube('Soft neckline',[(-.145,-.09,1.255),(0,-.155,1.23),(.145,-.09,1.255)],.016,mats['outer'],visual)
-    if who in ('you','tang','he'):
-        civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.175,.115,.085),mats['outer'],visual,segments=32,rings=16)
+    civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.145,1.255),(0,1.23),(.145,1.255)]],.006,mats['top'],visual)
+    if who=='tang':
+        civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
         civic.curve_tube('Ribbed lower hem',[(-.2,-.07,.83),(0,-.177,.8),(.2,-.07,.83)],.014,mats['outer'],visual)
     if who in ('lin','zhou'):
         # One continuous curved garment around the body, open at the front.
@@ -79,18 +115,18 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         civic.tailored_panel('Cotton plant apron',.24,.3,.37,.43,.027,(0,-.177,1.005),mats['lower'],visual,radius=.025)
         civic.rounded_box('Apron soft patch pocket',(.23,.034,.105),(0,-.201,.93),mats['outer'],visual,radius=.025)
     elif who=='chen':
-        civic.curve_tube('Jacket zipper',[(0,-.192,.85),(0,-.195,1.2)],.004,mats['outer'],visual)
+        civic.curve_tube('Jacket zipper',[(0,cloth_y(0,z)-.002,z) for z in [.85,.96,1.08,1.2]],.004,mats['outer'],visual)
         for side in (-1,1):
-            civic.rounded_box('Jacket welt pocket_'+str(side),(.11,.022,.09),(side*.115,-.18,1.055),mats['outer'],visual,radius=.025)
+            cloth_patch('Jacket welt pocket_'+str(side),side*.115,1.055,.11,.09,mats['outer'])
     elif who=='tang':
         civic.ellipsoid('Kangaroo fabric pocket',(0,-.18,.95),(.155,.023,.082),mats['outer'],visual,segments=32,rings=16)
         for side in (-1,1):civic.curve_tube('Short cotton drawcord_'+str(side),[(side*.055,-.155,1.235),(side*.057,-.187,1.17)],.0035,mats['paper'],visual)
     else:
         for side in (-1,1):
-            civic.rounded_box('Rounded patch pocket_'+str(side),(.12,.029,.12),(side*.115,-.183,.99),mats['outer'],visual,radius=.027)
-        civic.curve_tube('Work jacket seam',[(0,-.18,.83),(0,-.196,1.22)],.0035,mats['outer'],visual)
+            cloth_patch('Rounded patch pocket_'+str(side),side*.115,.99,.12,.12,mats['top'])
+        civic.curve_tube('Work jacket seam',[(0,cloth_y(0,z)-.002,z) for z in [.83,.96,1.1,1.22]],.002,mats['outer'],visual)
     # A restrained embroidered sun ties the garments to the home's curved motifs.
-    civic.ellipsoid('Embroidered sun',(-.12,-.205,1.15),(.026,.003,.026),mats['accent'],visual,segments=24,rings=12)
+    civic.ellipsoid('Embroidered sun',(-.12,cloth_y(-.12,1.15)-.001,1.15),(.012,.002,.012),mats['accent'],visual,segments=16,rings=8)
 
 civic.build_costume=everyday_costume
 
@@ -132,7 +168,9 @@ def everyday_hair(head,mats,style):
 
 civic.build_hair=everyday_hair
 reports=[]
+selected=set(filter(None,os.environ.get('ATRIUM_RESIDENT_IDS','').split(',')))
 for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
+    if selected and name not in selected:continue
     current_identity=name
     cfg=copy.deepcopy(civic.ROLE_CONFIGS[role]);cfg.update(hair='#272e3a',hair_highlight='#414653',hair_style=hair,top=top,outer=outer,lower=lower,accent='#e4b149',shoe='#2f4354',sole='#e6d7bb')
     cfg['atrium_id']=name
@@ -141,6 +179,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     civic.BODY_PROFILES[role]=copy.deepcopy(base_bodies[role])
     profile=civic.BODY_PROFILES[role]
     profile['torso_width']*=body;profile['shoulder_x']*=body
+    profile['shoulder_x']*=1.28
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
     profile['head_scale']=tuple(s*.76 for s in profile['head_scale'])
     profile['head_z']+=.025
@@ -150,6 +189,11 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     civic.FACE_PROFILES[role]['eye_height']*=.82
     root=civic.build_character(role,cfg)
     root['atrium_identity']=name
+    # Consolidating the shared articulation mesh drops source UV layers.
+    # Restore an editable atlas on the delivered skinned core before saving.
+    core=bpy.data.objects['SkinnedArticulationCore']
+    bpy.ops.object.select_all(action='DESELECT');core.select_set(True);bpy.context.view_layer.objects.active=core
+    bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.008);bpy.ops.object.mode_set(mode='OBJECT')
     # Fit facial features to the actual sculpt, not a constant plane in front
     # of an ellipsoid. Constant Y left eyelids, lips and blush visibly floating.
     face=bpy.data.objects['Head']
@@ -224,6 +268,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'-mobile.glb'))
-    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'Original project-authored derivative of MirrorLife civic rig','reviewStatus':'development'})
+    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'Original project-authored derivative of MirrorLife civic rig','reviewStatus':'development','garment':dict(root['atrium_garment'])})
     print('RESIDENT_READY',name,flush=True)
+if selected and (OUT/'manifest.json').exists():
+    previous=json.loads((OUT/'manifest.json').read_text());updates={r['id']:r for r in reports};reports=[updates.get(r['id'],r) for r in previous]
 (OUT/'manifest.json').write_text(json.dumps(reports,ensure_ascii=False,indent=2))

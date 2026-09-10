@@ -7,6 +7,7 @@
 <main>
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
+<p>最新人物续作：七人基础衣身和袖子合并为连续表面，重做肩部权重与服装贴合细节。<a href="../../docs/ATRIUM_GARMENT_REVIEW.md">制作与反方审查</a> · <a href="garments/report.json">七人镜头记录</a>。这是局部改进，手指、开衫外层和布料质感仍待精修。</p>
 <p>最新续作：两座楼梯加入实际碰撞面探测与腿部高度解算；上行、下行、中途停步通过输入专测。<a href="../../docs/ATRIUM_STAIRS_REVIEW.md">楼梯审查</a> · <a href="stairs/report.json">逐帧接触指标</a>。指标为骨骼估算，未证明鞋底网格无穿透或步态无脚滑。</p>
 <p>上一轮：居民离座后再面向玩家，结束后回位；坐姿按骨架与椅高修正，膝盖越过坐垫、鞋底落地。<a href="../../docs/ATRIUM_SEATING_REVIEW.md">动作续作审查</a> · <a href="seating/report.json">坐姿原始测量</a>。下方“本轮修补前后”保留建筑修补阶段的对照；最新性能以报告为准。</p>
 <p>上一轮建筑续作已修墙顶漏缝、椅背/扶手端面、人物握持，并补两层静态地面接触遮蔽。该轮桌面峰值 493,955 三角面，P95 34.3ms；这是历史值，最新结果见性能报告。<a href="../../docs/ATRIUM_CONTINUATION_REVIEW.md">续作审查与剩余问题</a> · <a href="acceptance.json">同构建验收记录</a></p>
@@ -33,6 +34,16 @@
 <h2>本轮修补前后</h2><div class="compare">
 <figure><img src="before-contact-reference.png" alt="修补前的运行图"><figcaption>修补前：墙顶漏天空，接触层次较弱；不是最终候选。</figcaption></figure>
 <figure><img src="gallery-reference.png" alt="修补后的运行图"><figcaption>修补后：连续实体过梁与地面接触遮蔽，保持原校准镜头及路线。</figcaption></figure>
+</div>
+<h2>肩袖修改前后</h2><div class="compare">
+<figure><img src="garments/before-east.png" alt="修改前的玩家肩袖侧视"><figcaption>修改前资产，在当前运行场景使用相同位置和相机重放；待机相位未冻结。</figcaption></figure>
+<figure><img src="garments/after-east.png" alt="修改后的玩家肩袖侧视"><figcaption>修改后：连续肩袖，缩小饰件，缝线和口袋贴合衣身。未做图像补绘。</figcaption></figure>
+</div>
+<h2>居民服装近景</h2><div class="grid">
+<figure><img src="garments/lin-front.png" alt="林晓开衫与肩部"><figcaption>林晓：基础上衣连续，开衫仍为独立外层。</figcaption></figure>
+<figure><img src="garments/chen-side.png" alt="陈屿肩袖侧视"><figcaption>陈屿：坐姿中的衣袖，保留真实可见问题。</figcaption></figure>
+<figure><img src="garments/he-front.png" alt="何川衣服正视"><figcaption>何川：贴合胸前的口袋和小型刺绣。</figcaption></figure>
+<figure><img src="garments/you-back.png" alt="玩家服装背视"><figcaption>玩家背面：移除块状后领装饰。</figcaption></figure>
 </div>
 <h2>人物握持检查</h2><div class="grid">
 <figure><img src="character-contact/plant-side.png" alt="最新水壶握持侧视"><figcaption>实际 E 键照料动作侧视。锚点误差通过，不等于手指表面接触与服装关节已完成。</figcaption></figure>

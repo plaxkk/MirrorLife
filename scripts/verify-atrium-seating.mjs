@@ -10,6 +10,7 @@ try{
   await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4194')+'/atrium.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#enter:not([hidden])',{timeout:90000});await page.click('#enter');await pause(1700);
   async function feet(id,label){
+    await page.waitForFunction(id=>window.__atrium.getFootDiagnostics().find(a=>a.id===id)?.seatBlend>.99,{timeout:12000},id);
     const value=await page.evaluate(id=>window.__atrium.getFootDiagnostics().find(a=>a.id===id),id);
     assert.ok(value.seatBlend>.99,`${label}: settled seated pose`);
     for(const foot of value.feet){

@@ -1,73 +1,72 @@
 {
-  "capturedAt": "2026-09-10T14:09:06.862Z",
-  "runtimeFingerprint": "33f28e9c215fd9ad13f1f52db2b57bba131bcf6a6e4f9f59e5cf91399e2d5b92",
+  "capturedAt": "2026-09-10T14:40:46.454Z",
+  "runtimeFingerprint": "1011bd1ddb6def071a6e35d8dd6a580e541d81aeb076e2fd0ef21247511f3441",
   "base": "http://127.0.0.1:4195",
-  "completionMethod": "The sequential release command passed tests/build/gallery/performance/mobile/contact/seating/stairs/resilience, then stopped on walkthrough. Only the verification steering/input harness changed afterward. Final dedicated headless local-Chrome walkthrough retried against the same unchanged production build at 4194; tests re-run. Source/assets fingerprints checked again. This is not a claim that the initial release command exited successfully.",
   "steps": [
     {
       "name": "tests",
-      "status": "pass"
+      "seconds": 13.335
     },
     {
       "name": "build",
-      "status": "pass"
+      "seconds": 2.792
     },
     {
       "name": "assets",
-      "status": "pass"
+      "seconds": 0.591
     },
     {
       "name": "gallery",
-      "status": "pass"
+      "seconds": 46.48
     },
     {
       "name": "performance",
-      "status": "pass"
+      "seconds": 48.633
     },
     {
       "name": "mobile",
-      "status": "pass"
+      "seconds": 47.596
+    },
+    {
+      "name": "garments",
+      "seconds": 10.496
     },
     {
       "name": "contact",
-      "status": "pass"
+      "seconds": 45.372
     },
     {
       "name": "seating",
-      "status": "pass"
+      "seconds": 46.98
     },
     {
       "name": "stairs",
-      "status": "pass"
+      "seconds": 46.532
     },
     {
       "name": "resilience",
-      "status": "pass"
+      "seconds": 46.573
     },
     {
-      "name": "walkthrough-final",
-      "status": "pass"
+      "name": "walkthrough",
+      "seconds": 110.196
     },
     {
       "name": "assets-after",
-      "status": "pass"
-    },
-    {
-      "name": "video-decode",
-      "status": "pass"
+      "seconds": 0.858
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 32.600000000000364,
-        "p95": 49.30000000000291,
-        "p99": 50.400000000001455
+        "p50": 33.19999999999891,
+        "p95": 100.39999999999782,
+        "p99": 133.59999999999854
       },
       "renderPeaks": {
         "calls": 87,
-        "triangles": 493955,
-        "geometries": 76
+        "triangles": 494357,
+        "geometries": 72
       },
       "budgetPassed": true,
       "frameTargetPassed": false,
@@ -75,13 +74,13 @@
     },
     "mobile": {
       "frameMs": {
-        "p50": 16.600000000002183,
-        "p95": 32.900000000000546,
-        "p99": 67.10000000000218
+        "p50": 16.69999999999891,
+        "p95": 17.600000000002183,
+        "p99": 33.900000000001455
       },
       "renderPeaks": {
-        "calls": 70,
-        "triangles": 299323,
+        "calls": 69,
+        "triangles": 303053,
         "geometries": 72
       },
       "budgetPassed": true,
@@ -89,40 +88,48 @@
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "walkthrough": {
-    "traceWaypoints": 33,
-    "decision": "balanced",
-    "discovered": [
-      "records",
-      "plant",
-      "journal",
-      "lookout",
-      "record",
-      "shortcut",
-      "tea"
-    ],
-    "talked": [
-      "lin",
-      "chen",
-      "zhou"
-    ],
-    "recording": true,
-    "renderPeaks": {
-      "calls": 89,
-      "triangles": 484569,
-      "geometries": 80
+  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates.",
+  "additionalVerification": {
+    "verifiedAt": "2026-09-10T14:54:02.572Z",
+    "runtimeFingerprintsMatched": true,
+    "unitAndPhysicsTests": 17,
+    "seatingChecks": 9,
+    "stairRoutes": 4,
+    "resilienceChecks": 10,
+    "garmentViews": 15,
+    "garmentCameraRecheck": "Same production build on port 4194 after the suite. Adjusted He front camera to a three-quarter angle because the kitchen post obscured the original view; post remains at the left edge. No actors or geometry hidden.",
+    "walkthrough": {
+      "waypointsBeforeExit": 33,
+      "discoveries": 7,
+      "residents": 3,
+      "decision": "balanced",
+      "renderPeaks": {
+        "calls": 89,
+        "triangles": 485543,
+        "geometries": 80
+      },
+      "fullCanvas": true,
+      "browserMode": "headless"
     },
-    "frameMs": {
-      "p50": 33.29999999999927,
-      "p95": 33.40000000000873,
-      "p99": 50
+    "video": {
+      "method": "Continuous CDP JPEG browser capture, constant 15fps output aligned to source timestamps; repeated frames preserve real elapsed time. No cuts, teleportation or playback acceleration.",
+      "frames": 1428,
+      "receivedFrames": 1339,
+      "durationSeconds": 95.2,
+      "bytes": 50869567,
+      "width": 1280,
+      "height": 720,
+      "fps": 15,
+      "fullDecodeExitCode": 0,
+      "sha256": "09f8d2ebdd2138f3be6c54f38142ed05a810c179fa17290f18802da4e55c5cc7",
+      "frameReview": "Eight evenly spaced frames visually inspected: full scene occupies canvas; no top-left shrink. Contact sheet is an inspection derivative, original movie is continuous."
     },
-    "note": "Recording introduces overhead; do not substitute these samples for the separate performance run."
-  },
-  "verificationScriptSha256": {
-    "scripts/verify-atrium-pilot.mjs": "55beebad3f51328c0c7f6f25741d850d40563811c6cc0c662e1103ca9c6d10ee",
-    "scripts/verify-atrium-stairs.mjs": "c1b74f376094dc60a8c983af7b09e5dcf10a6c118254f72f80246ee89a01cf88",
-    "scripts/lib/atrium-navigation.mjs": "c7a42b3c8027562e5c480b0edb39f3649a95e5ac6f6b3a0500d3fdf571feb7bb"
-  },
-  "scope": "Automated same-candidate verification with an explicit harness-only walkthrough retry. Art quality, real phone hardware, human playability and production release remain separate gates."
+    "qualityGates": {
+      "completeArt": false,
+      "desktop60fps": false,
+      "realMobileHardware": false,
+      "humanPlaytest": false,
+      "productionDeployment": false
+    }
+  }
 }
