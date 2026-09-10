@@ -1,6 +1,6 @@
 {
-  "generatedAt": "2026-09-10T14:40:46.422Z",
-  "runtimeFingerprint": "1011bd1ddb6def071a6e35d8dd6a580e541d81aeb076e2fd0ef21247511f3441",
+  "generatedAt": "2026-09-10T15:12:10.568Z",
+  "runtimeFingerprint": "a2b8204aa4dbf3e5c75ed90ef59575c92127f6277c01416d36fc87b90bb78499",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
   "totalSourceBytes": 97156045,
   "totalPublicBytes": 10883491,

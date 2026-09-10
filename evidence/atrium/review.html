@@ -7,6 +7,7 @@
 <main>
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
+<p>界面性能续作：移除五处实时背景模糊，保留暖色半透明面板、完整场景与交互。<a href="../../docs/ATRIUM_COMPOSITOR_REVIEW.md">诊断与五视角审查</a> · <a href="compositor/fixed-camera-ab.json">固定镜头交替样本</a>。未用降低 3D 画质或隐藏居民换取帧率。</p>
 <p>最新人物续作：七人基础衣身和袖子合并为连续表面，重做肩部权重与服装贴合细节。<a href="../../docs/ATRIUM_GARMENT_REVIEW.md">制作与反方审查</a> · <a href="garments/report.json">七人镜头记录</a>。这是局部改进，手指、开衫外层和布料质感仍待精修。</p>
 <p>最新续作：两座楼梯加入实际碰撞面探测与腿部高度解算；上行、下行、中途停步通过输入专测。<a href="../../docs/ATRIUM_STAIRS_REVIEW.md">楼梯审查</a> · <a href="stairs/report.json">逐帧接触指标</a>。指标为骨骼估算，未证明鞋底网格无穿透或步态无脚滑。</p>
 <p>上一轮：居民离座后再面向玩家，结束后回位；坐姿按骨架与椅高修正，膝盖越过坐垫、鞋底落地。<a href="../../docs/ATRIUM_SEATING_REVIEW.md">动作续作审查</a> · <a href="seating/report.json">坐姿原始测量</a>。下方“本轮修补前后”保留建筑修补阶段的对照；最新性能以报告为准。</p>
@@ -17,6 +18,7 @@
 <figure><img src="../../design/references/atrium-visual-target.png" alt="用户选定的双层天井概念图"><figcaption>设计参考。单张图未提供真实尺寸或完整背面。</figcaption></figure>
 <figure><img src="gallery-reference.png" alt="实际游戏校准镜头"><figcaption>实际运行。校准镜头 [-3.4, 2.65, 6.8] → [1, 2.8, -2]，垂直 FOV 62°，16:9。</figcaption></figure>
 </div>
+<details><summary>界面背景模糊开关对照</summary><div class="compare"><figure><img src="compositor/blur-hud.png" alt="原界面背景模糊"><figcaption>诊断：恢复原五处模糊，完整动态场景。</figcaption></figure><figure><img src="compositor/flat-hud.png" alt="取消模糊后相同界面"><figcaption>诊断：面板颜色、透明度、位置不变，取消模糊。人物活动未冻结。</figcaption></figure></div></details>
 <p>差距主要在建筑曲面节奏、主楼梯侧墙、人物比例与服装质感、植物层次及柔和间接光；保留天井、中央桌、右主梯和回廊，并不等于达成精品 PC 游戏级品质。</p>
 <details><summary>叠图检查（仅按画幅叠放，不伪称几何配准）</summary><div class="slider"><label for="opacity">运行图透明度</label><input id="opacity" type="range" min="0" max="100" value="50"></div><div class="overlay"><img src="../../design/references/atrium-visual-target.png" alt="参考底图"><img id="runtime-overlay" src="gallery-reference.png" style="opacity:.5" alt="运行叠图"></div><small>相机是人工拟合；可见错位即真实差距，没有局部扭曲或图像补绘。</small></details>
 <h2>连续实际游玩</h2><video controls preload="metadata" src="playthrough.mp4" poster="first-floor.png"></video>

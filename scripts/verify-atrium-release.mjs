@@ -42,6 +42,7 @@ try{
   await run('stairs',process.execPath,['scripts/verify-atrium-stairs.mjs']);
   await run('resilience',process.execPath,['scripts/verify-atrium-resilience.mjs']);
   await run('walkthrough',process.execPath,['scripts/verify-atrium-pilot.mjs','walkthrough'],{ATRIUM_RECORD:'1'});
+  await run('video-decode',process.execPath,['scripts/verify-atrium-video.mjs']);
   await run('assets-after',process.execPath,['scripts/report-atrium-assets.mjs']);
   const final=JSON.parse(await fs.readFile(`${out}/assets.json`,'utf8'));
   assert.equal(final.runtimeFingerprint,candidate.runtimeFingerprint,'Assets/source changed during acceptance');

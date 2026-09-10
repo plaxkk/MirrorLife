@@ -1,0 +1,10 @@
+{
+  "verifiedAt": "2026-09-10T15:12:53.586Z",
+  "runtimeFingerprint": "a2b8204aa4dbf3e5c75ed90ef59575c92127f6277c01416d36fc87b90bb78499",
+  "sha256": "3547658e1d8c195af14233e79e0d6265941be88a6ea42b954de0ef449bf5e07a",
+  "decodedFrames": 1781,
+  "bytes": 56147496,
+  "durationSeconds": 118.73333333333333,
+  "fullDecodeExitCode": 0,
+  "scope": "Complete ffmpeg decode and frame/byte count agreement. Requires separate visual review for framing, content and continuity."
+}

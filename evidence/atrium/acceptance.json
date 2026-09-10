@@ -1,72 +1,72 @@
 {
-  "capturedAt": "2026-09-10T14:40:46.454Z",
-  "runtimeFingerprint": "1011bd1ddb6def071a6e35d8dd6a580e541d81aeb076e2fd0ef21247511f3441",
+  "capturedAt": "2026-09-10T15:12:10.613Z",
+  "runtimeFingerprint": "a2b8204aa4dbf3e5c75ed90ef59575c92127f6277c01416d36fc87b90bb78499",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 13.335
+      "seconds": 14.987
     },
     {
       "name": "build",
-      "seconds": 2.792
+      "seconds": 2.68
     },
     {
       "name": "assets",
-      "seconds": 0.591
+      "seconds": 0.504
     },
     {
       "name": "gallery",
-      "seconds": 46.48
+      "seconds": 19.811
     },
     {
       "name": "performance",
-      "seconds": 48.633
+      "seconds": 46.765
     },
     {
       "name": "mobile",
-      "seconds": 47.596
+      "seconds": 45.993
     },
     {
       "name": "garments",
-      "seconds": 10.496
+      "seconds": 12.292
     },
     {
       "name": "contact",
-      "seconds": 45.372
+      "seconds": 47.562
     },
     {
       "name": "seating",
-      "seconds": 46.98
+      "seconds": 46.361
     },
     {
       "name": "stairs",
-      "seconds": 46.532
+      "seconds": 46.436
     },
     {
       "name": "resilience",
-      "seconds": 46.573
+      "seconds": 47.169
     },
     {
       "name": "walkthrough",
-      "seconds": 110.196
+      "seconds": 160.268
     },
     {
       "name": "assets-after",
-      "seconds": 0.858
+      "seconds": 1.389
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 33.19999999999891,
-        "p95": 100.39999999999782,
-        "p99": 133.59999999999854
+        "p50": 16.69999999999709,
+        "p95": 17.599999999998545,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
         "calls": 87,
         "triangles": 494357,
-        "geometries": 72
+        "geometries": 76
       },
       "budgetPassed": true,
       "frameTargetPassed": false,
@@ -74,13 +74,13 @@
     },
     "mobile": {
       "frameMs": {
-        "p50": 16.69999999999891,
-        "p95": 17.600000000002183,
-        "p99": 33.900000000001455
+        "p50": 16.69999999999709,
+        "p95": 17.599999999998545,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
-        "calls": 69,
-        "triangles": 303053,
+        "calls": 70,
+        "triangles": 303221,
         "geometries": 72
       },
       "budgetPassed": true,
@@ -90,14 +90,12 @@
   },
   "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates.",
   "additionalVerification": {
-    "verifiedAt": "2026-09-10T14:54:02.572Z",
+    "verifiedAt": "2026-09-10T15:15:01.593Z",
     "runtimeFingerprintsMatched": true,
     "unitAndPhysicsTests": 17,
     "seatingChecks": 9,
     "stairRoutes": 4,
     "resilienceChecks": 10,
-    "garmentViews": 15,
-    "garmentCameraRecheck": "Same production build on port 4194 after the suite. Adjusted He front camera to a three-quarter angle because the kitchen post obscured the original view; post remains at the left edge. No actors or geometry hidden.",
     "walkthrough": {
       "waypointsBeforeExit": 33,
       "discoveries": 7,
@@ -112,21 +110,20 @@
       "browserMode": "headless"
     },
     "video": {
-      "method": "Continuous CDP JPEG browser capture, constant 15fps output aligned to source timestamps; repeated frames preserve real elapsed time. No cuts, teleportation or playback acceleration.",
-      "frames": 1428,
-      "receivedFrames": 1339,
-      "durationSeconds": 95.2,
-      "bytes": 50869567,
-      "width": 1280,
-      "height": 720,
-      "fps": 15,
+      "verifiedAt": "2026-09-10T15:12:53.586Z",
+      "runtimeFingerprint": "a2b8204aa4dbf3e5c75ed90ef59575c92127f6277c01416d36fc87b90bb78499",
+      "sha256": "3547658e1d8c195af14233e79e0d6265941be88a6ea42b954de0ef449bf5e07a",
+      "decodedFrames": 1781,
+      "bytes": 56147496,
+      "durationSeconds": 118.73333333333333,
       "fullDecodeExitCode": 0,
-      "sha256": "09f8d2ebdd2138f3be6c54f38142ed05a810c179fa17290f18802da4e55c5cc7",
-      "frameReview": "Eight evenly spaced frames visually inspected: full scene occupies canvas; no top-left shrink. Contact sheet is an inspection derivative, original movie is continuous."
+      "scope": "Complete ffmpeg decode and frame/byte count agreement. Requires separate visual review for framing, content and continuity.",
+      "method": "New video-decode script executed separately after this suite. It is now included in future release runs.",
+      "frameReview": "Eight evenly spaced frames plus a 116-second end frame inspected. Full canvas; no top-left shrink. Contact sheet is a derivative, original movie is continuous."
     },
     "qualityGates": {
       "completeArt": false,
-      "desktop60fps": false,
+      "strictDesktopFrameTarget": false,
       "realMobileHardware": false,
       "humanPlaytest": false,
       "productionDeployment": false
