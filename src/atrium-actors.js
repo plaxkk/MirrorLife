@@ -5,6 +5,13 @@ import { CIVIC_ARTICULATION_BINDING_SPECS,createCivicArticulationBinding,syncCiv
 
 const JOINTS={headGroup:'HeadPivot',leftArm:'LeftArmPivot',rightArm:'RightArmPivot',leftElbow:'LeftElbowPivot',rightElbow:'RightElbowPivot',leftHand:'Hand_-1',rightHand:'Hand_1',leftLeg:'LeftLegPivot',rightLeg:'RightLegPivot',leftKnee:'LeftKneePivot',rightKnee:'RightKneePivot',leftFoot:'ShoeUpper_-1Pivot',rightFoot:'ShoeUpper_1Pivot',leftSleeveCompression:'SleeveCompressionPivot_-1',rightSleeveCompression:'SleeveCompressionPivot_1',leftTrouserCompression:'TrouserCompressionPivot_-1',rightTrouserCompression:'TrouserCompressionPivot_1'};
 const euler=new THREE.Euler(),q=new THREE.Quaternion();
+// A seated thigh slopes towards a floor-supported shin. A fixed 90-degree
+// knee left these short shins dangling above the floor on a 53cm chair.
+export function seatedAtriumLeg(seatHeight,upper,lower,soleOffset,hipRest){
+  const hip=seatHeight+.08;
+  const angle=Math.acos(THREE.MathUtils.clamp((hip-lower-soleOffset)/upper,-.95,.95));
+  return {hipOffset:hip-hipRest,hipAngle:-angle,kneeAngle:angle};
+}
 // Match authored grip frames in the actor's parent space. Cancel inherited hand
 // scale so the same metre-sized cup does not grow/shrink between residents.
 export function alignAtriumProp(prop,grip,handGrip,parent){
@@ -24,6 +31,12 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     const node=visual.getObjectByName(name);return [key,node?{node,rest:node.quaternion.clone()}:null];
   }));
   group.updateMatrixWorld(true);
+  const legDimensions=Object.fromEntries(['left','right'].map(side=>{
+    const hip=joints[`${side}Leg`].node,knee=joints[`${side}Knee`].node,foot=joints[`${side}Foot`].node;
+    return [side,{upper:knee.position.length(),lower:foot.position.length(),
+      soleOffset:foot.getWorldPosition(new THREE.Vector3()).y-group.position.y,
+      hipRest:hip.getWorldPosition(new THREE.Vector3()).y-group.position.y}];
+  }));
   const bindings=CIVIC_ARTICULATION_BINDING_SPECS.map(s=>createCivicArticulationBinding({...s,controller:joints[s.controlKey]?.node,bone:visual.getObjectByName(s.boneName)})).filter(Boolean);
   const eyes=[-1,1].map(i=>visual.getObjectByName(`EyePivot_${i}`)).filter(Boolean);
   const eyeScales=eyes.map(x=>x.scale.clone());
@@ -40,11 +53,16 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     }
   }});
   const position=definition.position||[-4.3,0,6.3];group.position.set(...position);group.rotation.y=definition.yaw||0;
-  let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[];
+  let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[],sitting,lastSeatHeight;
   const handGrip=visual.getObjectByName('HandGripAnchor_1');
   const poseVectors={};
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
+    footDiagnostics(){return ['left','right'].map(side=>{
+      const knee=joints[`${side}Knee`].node.getWorldPosition(new THREE.Vector3()).sub(group.position);
+      return {side,soleY:joints[`${side}Foot`].node.getWorldPosition(new THREE.Vector3()).y-legDimensions[side].soleOffset,
+        floorY:group.position.y,kneeForward:knee.x*Math.sin(group.rotation.y)+knee.z*Math.cos(group.rotation.y)};
+    });},
     attachLifeProp(model){
       if(!handGrip)throw new Error(`${id} 缺少手掌握持点`);
       lifeProp=model;group.add(model);model.position.set(0,0,0);model.rotation.set(0,0,0);model.scale.set(1,1,1);
@@ -65,6 +83,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       const state=moving>.08?'walk':talking||care?'gesture':listening||definition.activity==='think'?'listen':definition.activity==='talk'?'gesture':'idle';
       const pose=sampleCivicAnimationPose(state,state==='walk'?walkPhase:time/(state==='idle'?3.2:4.4),definition.role||'player');
       seatBlend=THREE.MathUtils.damp(seatBlend,seated?1:0,8,dt);
+      if(lastSeatHeight!==seatHeight){
+        sitting=Object.fromEntries(Object.entries(legDimensions).map(([side,d])=>[side,seatedAtriumLeg(seatHeight,d.upper,d.lower,d.soleOffset,d.hipRest)]));
+        lastSeatHeight=seatHeight;
+      }
       for(const [key,entry]of Object.entries(joints)){
         if(!entry)continue;
         const v=pose[key]||[0,0,0];
@@ -72,8 +94,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         if(care&&key==='rightArm'){x=-.5;y=0;z=-.12;}
         if(care&&key==='rightElbow'){x=-.7;y=0;z=0;}
         if(care&&key==='rightHand')z=.24*Math.sin(time*1.8);
-        if(key==='leftLeg'||key==='rightLeg')x=THREE.MathUtils.lerp(x,-Math.PI/2,seatBlend);
-        if(key==='leftKnee'||key==='rightKnee')x=THREE.MathUtils.lerp(x,Math.PI/2,seatBlend)+(stepping&&moving>.1?.13:0);
+        if(key==='leftLeg'||key==='rightLeg')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].hipAngle,seatBlend);
+        if(key==='leftKnee'||key==='rightKnee')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].kneeAngle,seatBlend)+(stepping&&moving>.1?.13:0);
+        if(['leftLeg','rightLeg','leftKnee','rightKnee'].includes(key)){y*=1-seatBlend;z*=1-seatBlend;}
+        if(key==='leftFoot'||key==='rightFoot'){x*=1-seatBlend;y*=1-seatBlend;z*=1-seatBlend;}
         if(!talking&&!care&&(key==='leftArm'||key==='rightArm'))x=THREE.MathUtils.lerp(x,-.35,seatBlend);
         if(!talking&&!care&&(key==='leftElbow'||key==='rightElbow'))x=THREE.MathUtils.lerp(x,-.7,seatBlend);
         if(key==='headGroup'&&lookingAt){
@@ -85,8 +109,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         q.setFromEuler(euler.set(smooth.x,smooth.y,smooth.z));entry.node.quaternion.copy(entry.rest).multiply(q);
       }
       // Hip height follows the actual seat surface; transitions use the same articulated rig.
-      visual.position.y=(seatHeight-.78)*seatBlend+(moving>.08?(pose.rootY||0)*.25:0);
-      visual.rotation.z=(pose.visual?.[2]||0)*.4;
+      visual.position.y=sitting.left.hipOffset*seatBlend+(moving>.08?(pose.rootY||0)*.25:0);
+      // Bring knees beyond the 70cm cushion before the shins drop to the floor.
+      visual.position.z=.2*seatBlend;
+      visual.rotation.z=(pose.visual?.[2]||0)*.4*(1-seatBlend);
       visual.updateMatrixWorld(true);for(const b of bindings)syncCivicArticulationBinding(b);
       const phase=(time+(id.length*1.13))%4.7;
       const blink=phase<.15?Math.max(.03,Math.abs(phase-.075)/.075):1;

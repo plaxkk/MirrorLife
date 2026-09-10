@@ -4,6 +4,8 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createAtriumPhysics} from './atrium-physics.js';
 import {loadAtriumActor} from './atrium-actors.js';
 import {applyAtriumFloorContact} from './atrium-floor-contact.js';
+import {updateAtriumSeatMotion} from './atrium-seat-motion.js';
+import {createAtriumGpuTiming} from './atrium-gpu-timing.js';
 import {RESIDENTS,DISCOVERIES,SHARED_TABLE,SEATS,canDecide,applyDecision,residentSpeech,DECISIONS} from './atrium-content.js';
 import {loadAtriumState,saveAtriumState,appendAtriumMemory,flushAtriumMemories} from './atrium-persistence.js';
 
@@ -13,7 +15,7 @@ const mobile=params.get('quality')==='mobile'||(!params.has('quality')&&innerWid
 const profile=mobile?'mobile':'desktop';
 const loaded=loadAtriumState();const state=loaded.state;
 const startedAt=performance.now();let readyAt=null,enteredAt=null,firstActiveFrameAt=null;
-let renderer,scene,camera,composer,physics,player,environment,animationId,resizeTimer;
+let renderer,scene,camera,composer,physics,player,environment,animationId,resizeTimer,gpuTiming;
 let active=false,disposed=false,dialogTarget=null,nearest=null,seated=null,careUntil=0,careItem=null,lifeProps=null;
 let orbitYaw=.0,orbitPitch=.21,orbitDistance=3.35,referenceView=false;
 let last=0,accumulator=0,elapsed=0,stepDistance=0,lastSave=0,lastHud=0,toastTimer;
@@ -173,6 +175,7 @@ function loadProgress(value,text){$('loading-progress').value=value;$('loading-t
 async function boot(){
   document.body.dataset.ready='false';
   renderer=new THREE.WebGLRenderer({canvas:$('world'),antialias:true,powerPreference:'high-performance'});
+  gpuTiming=createAtriumGpuTiming(renderer.getContext());
   renderer.setPixelRatio(mobile?Math.min(devicePixelRatio,1.25):Math.min(devicePixelRatio,1.5));
   renderer.setSize(innerWidth,innerHeight);renderer.outputColorSpace=THREE.SRGBColorSpace;
   renderer.toneMapping=THREE.NeutralToneMapping;renderer.toneMappingExposure=.85;
@@ -229,11 +232,12 @@ async function boot(){
   const marker=new THREE.Mesh(new THREE.BoxGeometry(.44,.248,.026),[edge,edge,edge,edge,front,edge]);marker.name='Quiet-corner notice';marker.position.set(-8.2,4.415,1.29);scene.add(marker);
   window.__atrium={
     getGripDiagnostics:()=>[player,...actors].map(a=>({id:a.id,grips:a.gripDiagnostics()})),
+    getFootDiagnostics:()=>[player,...actors].map(a=>({id:a.id,seatBlend:a.seatBlend,feet:a.footDiagnostics()})),
     getState:()=>JSON.parse(JSON.stringify(state)),
     getStats:()=>stats(),
-    beginMeasurement:()=>{frameTimes.length=0;cpuTimes.length=0;renderPeaks.calls=renderPeaks.triangles=renderPeaks.geometries=0;},
+    beginMeasurement:()=>{frameTimes.length=0;cpuTimes.length=0;gpuTiming.reset();renderPeaks.calls=renderPeaks.triangles=renderPeaks.geometries=0;},
     getPosition:()=>physics.feet(),
-    getInteractionState:()=>({seated:seated?.item.id||null,care:careItem?.id||null,dialogue:dialogTarget?.id||null,residents:actors.map(a=>({id:a.id,busy:!!a.busy,position:a.group.position.toArray()}))}),
+    getInteractionState:()=>({seated:seated?.item.id||null,care:careItem?.id||null,dialogue:dialogTarget?.id||null,residents:actors.map(a=>({id:a.id,busy:!!a.busy,position:a.group.position.toArray(),yaw:a.group.rotation.y,seatBlend:a.seatBlend,seatMotion:a.seatMotion}))}),
     calibration:REFERENCE_CAMERA,
     // Review helpers are separate from the input-driven playthrough used for acceptance.
     setReviewCamera:(pos,look)=>{referenceView={position:pos,target:look};},
@@ -286,8 +290,11 @@ async function boot(){
       const facing=actor.facingYaw??actor.definition.yaw??0;
       const turnDelta=Math.atan2(Math.sin(facing-actor.group.rotation.y),Math.cos(facing-actor.group.rotation.y));
       // Stand before turning toward someone behind a chair; turn back before sitting.
-      const shouldSit=!!actor.definition.seated&&!talking&&Math.abs(turnDelta)<.08;
-      if(actor.seatBlend<.15)actor.group.rotation.y+=turnDelta*(1-Math.exp(-8*dt));
+      let shouldSit=!!actor.definition.seated&&!talking&&Math.abs(turnDelta)<.08;
+      if(actor.definition.standPosition){
+        actor.seatMotion=updateAtriumSeatMotion(actor,talking,player.group.position,dt);
+        shouldSit=actor.seatMotion.seated;walking=actor.seatMotion.moving;
+      }else if(actor.seatBlend<.15)actor.group.rotation.y+=turnDelta*(1-Math.exp(-8*dt));
       actor.busy=!talking&&((actor.id==='xu'&&elapsed%18<3)||(actor.id==='he'&&elapsed%23<2.5));
       actor.update(elapsed,dt,{moving:walking,talking,seated:shouldSit,care:actor.busy,lookingAt:talking?player.group.position:null});
       physics.updateResident(actor.id,actor.group.position);
@@ -297,7 +304,7 @@ async function boot(){
     if(elapsed-lastHud>.13){updateNearby();updateHud();lastHud=elapsed;}
     updateLabels();
     if(active&&elapsed-lastSave>8){persist();lastSave=elapsed;visitedPositions.push({...physics.feet(),t:elapsed});}
-    const renderStarted=performance.now();renderer.info.reset();if(composer)composer.render();else renderer.render(scene,camera);
+    const renderStarted=performance.now();renderer.info.reset();gpuTiming.begin();if(composer)composer.render();else renderer.render(scene,camera);gpuTiming.end();
     if(active){cpuTimes.push({script:renderStarted-cpuStarted,render:performance.now()-renderStarted});if(cpuTimes.length>18000)cpuTimes.shift();}
     if(active){renderPeaks.calls=Math.max(renderPeaks.calls,renderer.info.render.calls);renderPeaks.triangles=Math.max(renderPeaks.triangles,renderer.info.render.triangles);renderPeaks.geometries=Math.max(renderPeaks.geometries,renderer.info.memory.geometries);}
   };
@@ -341,11 +348,11 @@ function stats(){
   return {ready:!!readyAt,active,profile,
     device:{userAgent:navigator.userAgent,gpu:ext?gl.getParameter(ext.UNMASKED_RENDERER_WEBGL):gl?.getParameter(gl.RENDERER),viewport:[innerWidth,innerHeight],dpr:devicePixelRatio,renderPixelRatio:renderer?.getPixelRatio()},
     loadingMs:readyAt?readyAt-startedAt:null,navigationToReadyMs:readyAt,enterToActiveMs:firstActiveFrameAt!==null?Math.max(0,firstActiveFrameAt-enteredAt):null,sessionMs:enteredAt?performance.now()-enteredAt:null,
-    frames:frameTimes.length,frameMs:{p50:pct(.5),p95:pct(.95),p99:pct(.99)},cpuMs:cpu,render:{...renderer?.info.render},renderPeaks:{...renderPeaks},
+    frames:frameTimes.length,frameMs:{p50:pct(.5),p95:pct(.95),p99:pct(.99)},cpuMs:cpu,gpuMs:gpuTiming?.stats(),render:{...renderer?.info.render},renderPeaks:{...renderPeaks},
     memory:{...renderer?.info.memory,jsHeapBytes:performance.memory?.usedJSHeapSize??null},
     resources:resources.map(r=>({url:new URL(r.name).pathname,transferBytes:r.transferSize,decodedBytes:r.decodedBodySize,durationMs:r.duration})),
     actors:actors.length+1,bindings:actors.map(a=>({id:a.id,count:a.bindings.length})),position:physics?.feet(),camera:camera?.position.toArray(),distanceWalked:stepDistance,visitedPositions,errors};
 }
-function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(animationId);clearTimeout(resizeTimer);clearTimeout(toastTimer);physics?.dispose();disposeAtriumDecoder();const geometries=new Set(),materials=new Set(),textures=new Set();scene?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.skeleton?.boneTexture)textures.add(o.skeleton.boneTexture);o.shadow?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){materials.add(m);for(const v of Object.values(m))if(v?.isTexture)textures.add(v);}});geometries.forEach(x=>x.dispose());materials.forEach(x=>x.dispose());textures.forEach(x=>x.dispose());environment?.dispose();composer?.dispose();renderer?.dispose();sound?.close().catch(()=>{});}
+function dispose(){if(disposed)return;disposed=true;cancelAnimationFrame(animationId);gpuTiming?.dispose();clearTimeout(resizeTimer);clearTimeout(toastTimer);physics?.dispose();disposeAtriumDecoder();const geometries=new Set(),materials=new Set(),textures=new Set();scene?.traverse(o=>{if(o.geometry)geometries.add(o.geometry);if(o.skeleton?.boneTexture)textures.add(o.skeleton.boneTexture);o.shadow?.dispose();for(const m of Array.isArray(o.material)?o.material:o.material?[o.material]:[]){materials.add(m);for(const v of Object.values(m))if(v?.isTexture)textures.add(v);}});geometries.forEach(x=>x.dispose());materials.forEach(x=>x.dispose());textures.forEach(x=>x.dispose());environment?.dispose();composer?.dispose();renderer?.dispose();sound?.close().catch(()=>{});}
 $('retry').onclick=()=>location.reload();
 boot().catch(error=>{console.error(error);errors.push({type:'boot',message:String(error)});$('loading-text').textContent=`生活馆暂时未能打开：${error.message}。可重新尝试或返回城市。`;$('retry').hidden=false;$('enter').hidden=true;});

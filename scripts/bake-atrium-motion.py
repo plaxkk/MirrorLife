@@ -31,7 +31,9 @@ for clip in motion['clips']:
             if not ob:continue
             v=frame['pose'].get(key,[0,0,0]);qt=Euler(v,'XYZ').to_quaternion();qb=Quaternion((qt.w,qt.x,-qt.z,qt.y))
             ob.matrix_basis=rest[key];ob.rotation_mode='QUATERNION';ob.rotation_quaternion=rest[key].to_quaternion()@qb
-            if key=='visual':ob.location.z=rest[key].translation.z+frame['pose'].get('rootY',0)
+            if key=='visual':
+                ob.location.z=rest[key].translation.z+frame['pose'].get('rootY',0)
+                ob.location.y=rest[key].translation.y-frame['pose'].get('rootZ',0)
             ob.keyframe_insert('rotation_quaternion',frame=f);ob.keyframe_insert('location',frame=f)
         bpy.context.view_layer.update()
         for ob,pb,offset in bindings:

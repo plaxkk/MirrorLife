@@ -5,8 +5,52 @@ import {freshState,normalizeState,applyDecision,canDecide,RESIDENTS,residentSpee
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {loadAtriumState,saveAtriumState} from '../src/atrium-persistence.js';
 import * as THREE from 'three';
-import {alignAtriumProp} from '../src/atrium-actors.js';
+import {alignAtriumProp,seatedAtriumLeg} from '../src/atrium-actors.js';
+import {updateAtriumSeatMotion} from '../src/atrium-seat-motion.js';
+import {createAtriumGpuTiming} from '../src/atrium-gpu-timing.js';
 import {applyAtriumFloorContact} from '../src/atrium-floor-contact.js';
+
+test('GPU timing distinguishes unavailable hardware and discards disjoint results',()=>{
+  const unavailable=createAtriumGpuTiming({getExtension:()=>null});unavailable.reset();unavailable.begin();unavailable.end();
+  assert.equal(unavailable.stats().supported,false);assert.equal(unavailable.stats().p50,null);
+  let disjoint=false,deleted=0;
+  const gl={QUERY_RESULT_AVAILABLE:1,QUERY_RESULT:2,getExtension:()=>({GPU_DISJOINT_EXT:3,TIME_ELAPSED_EXT:4}),
+    getParameter:()=>disjoint,createQuery:()=>({}),beginQuery(){},endQuery(){},deleteQuery(){deleted++;},
+    getQueryParameter:(q,key)=>key===1?true:4200000};
+  const timing=createAtriumGpuTiming(gl);timing.reset();for(let i=0;i<10;i++){timing.begin();timing.end();}
+  disjoint=true;timing.begin();assert.equal(timing.stats().samples,0);assert.equal(timing.stats().discarded,1);assert.equal(deleted,1);
+  disjoint=false;for(let i=0;i<11;i++){timing.begin();timing.end();}
+  assert.equal(timing.stats().p50,4.2);timing.dispose();
+});
+
+test('seated hips clear cushion and the lower legs reach the floor across chair heights',()=>{
+  for(const height of [.46,.5,.53,.56]){
+    const pose=seatedAtriumLeg(height,.32,.395,.065,.78);
+    const hip=.78+pose.hipOffset;
+    const sole=hip-.32*Math.cos(pose.hipAngle)-.395*Math.cos(pose.hipAngle+pose.kneeAngle)-.065;
+    assert.ok(Math.abs(sole)<1e-8);assert.ok(hip-height>=.079);
+  }
+});
+test('residents leave the chair before turning, cancel safely, and wait for a blocked exit',()=>{
+  for(const definition of RESIDENTS.filter(r=>r.standPosition)){
+    const group=new THREE.Group();group.position.set(...definition.position);group.rotation.y=definition.yaw;
+    const actor={definition,group,seatBlend:1};
+    const visitor=new THREE.Vector3(definition.position[0],0,-3.1);
+    function step(talking){const before=group.position.clone();const state=updateAtriumSeatMotion(actor,talking,visitor,1/60);actor.seatBlend=THREE.MathUtils.damp(actor.seatBlend,state.seated?1:0,8,1/60);assert.ok(before.distanceTo(group.position)<.02);return state;}
+    for(let i=0;i<120;i++){
+      const state=step(true);
+      if(!state.clearOfChair)assert.equal(group.rotation.y,definition.yaw);
+    }
+    assert.ok(group.position.distanceTo(new THREE.Vector3(...definition.standPosition))<.01);
+    for(let i=0;i<240;i++)step(false);
+    assert.ok(group.position.distanceTo(new THREE.Vector3(...definition.position))<.025);assert.ok(actor.seatBlend>.99);
+    // A person occupying the exit must not be pushed through by the animation.
+    visitor.set(definition.position[0]+Math.sign(definition.standPosition[0]-definition.position[0])*.62,0,definition.position[2]);
+    const blocked=step(true);assert.ok(blocked.blocked);assert.ok(blocked.seated);
+    visitor.set(0,0,-4);for(let i=0;i<10;i++)step(true);for(let i=0;i<180;i++)step(false);
+    assert.ok(actor.seatBlend>.99);assert.ok(group.position.distanceTo(new THREE.Vector3(...definition.position))<.025);
+  }
+});
 
 test('floor contact atlas follows transformed floor levels and excludes vertical furniture',()=>{
   const root=new THREE.Group(),geometry=new THREE.BufferGeometry();

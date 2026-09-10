@@ -1,0 +1,177 @@
+{
+  "capturedAt": "2026-09-10T12:00:04.516Z",
+  "runtimeFingerprint": "f8da85d60b905ad7a1bad929428573c8dd9045941fa6e21ce5b8f40c1804aca4",
+  "method": "Actual E and Escape actions after review positioning. Sole estimate uses authored neutral foot offset; not full shoe-mesh penetration or stair IK proof.",
+  "samples": [
+    {
+      "label": "rest-lin",
+      "id": "lin",
+      "seatBlend": 0.9999996253823759,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": -1.6892641618859727e-7,
+          "floorY": 0,
+          "kneeForward": 0.482665662575803
+        },
+        {
+          "side": "right",
+          "soleY": -1.6819161130499083e-7,
+          "floorY": 0,
+          "kneeForward": 0.48266566312683734
+        }
+      ]
+    },
+    {
+      "label": "standing-lin",
+      "id": "lin",
+      "busy": false,
+      "position": [
+        -3.05,
+        0,
+        -1.95
+      ],
+      "yaw": 2.654419200937353,
+      "seatBlend": 0.000001236531825742111,
+      "seatMotion": {
+        "seated": false,
+        "moving": 0,
+        "blocked": false,
+        "clearOfChair": true
+      }
+    },
+    {
+      "label": "returned-lin",
+      "id": "lin",
+      "seatBlend": 0.9999953040024634,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": -0.0000023618134725178486,
+          "floorY": 0,
+          "kneeForward": 0.4826632444331622
+        },
+        {
+          "side": "right",
+          "soleY": -0.0000023362885448463544,
+          "floorY": 0,
+          "kneeForward": 0.48266325877922894
+        }
+      ]
+    },
+    {
+      "label": "quick-cancel-lin",
+      "id": "lin",
+      "seatBlend": 0.9999999967955359,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": -1.6210401909688699e-9,
+          "floorY": 0,
+          "kneeForward": 0.4826658592269429
+        },
+        {
+          "side": "right",
+          "soleY": -1.5873787839737474e-9,
+          "floorY": 0,
+          "kneeForward": 0.4826658592465693
+        }
+      ]
+    },
+    {
+      "label": "rest-chen",
+      "id": "chen",
+      "seatBlend": 0.9999999999999997,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": 0,
+          "floorY": 0,
+          "kneeForward": 0.4826658610180247
+        },
+        {
+          "side": "right",
+          "soleY": 0,
+          "floorY": 0,
+          "kneeForward": 0.48266586101802467
+        }
+      ]
+    },
+    {
+      "label": "standing-chen",
+      "id": "chen",
+      "busy": false,
+      "position": [
+        1.95,
+        0,
+        -1.95
+      ],
+      "yaw": -2.6096139363228574,
+      "seatBlend": 0.000001236531840266305,
+      "seatMotion": {
+        "seated": false,
+        "moving": 0,
+        "blocked": false,
+        "clearOfChair": true
+      }
+    },
+    {
+      "label": "returned-chen",
+      "id": "chen",
+      "seatBlend": 0.9999972392274279,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": -0.0000013822952990016901,
+          "floorY": 0,
+          "kneeForward": 0.4826643281518218
+        },
+        {
+          "side": "right",
+          "soleY": -0.0000013752018711565839,
+          "floorY": 0,
+          "kneeForward": 0.4826643281483459
+        }
+      ]
+    },
+    {
+      "label": "quick-cancel-chen",
+      "id": "chen",
+      "seatBlend": 0.9999999820650416,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": -8.550386398908927e-9,
+          "floorY": 0,
+          "kneeForward": 0.4826658512873899
+        },
+        {
+          "side": "right",
+          "soleY": -8.506377158212786e-9,
+          "floorY": 0,
+          "kneeForward": 0.48266585128738426
+        }
+      ]
+    },
+    {
+      "label": "upper-player",
+      "id": "you",
+      "seatBlend": 0.9999998701388455,
+      "feet": [
+        {
+          "side": "left",
+          "soleY": 3.4999999381121145,
+          "floorY": 3.5,
+          "kneeForward": 0.48266579060454085
+        },
+        {
+          "side": "right",
+          "soleY": 3.4999999408178324,
+          "floorY": 3.5,
+          "kneeForward": 0.48266579180953784
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

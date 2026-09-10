@@ -1,5 +1,6 @@
 import fs from 'node:fs/promises';
 import {sampleCivicAnimationPose} from '../src/civic-animation-clips.js';
+import {seatedAtriumLeg} from '../src/atrium-actors.js';
 const clips=[];
 for(const [name,state,duration]of [['idle','idle',3.2],['walk','walk',.72],['listen','listen',3.2],['talk','gesture',4.4],['stairs','walk',1],['turn','idle',.8],['sit','idle',1.1],['stand','idle',1.1],['water','gesture',3]]){
   const frames=[];
@@ -7,11 +8,15 @@ for(const [name,state,duration]of [['idle','idle',3.2],['walk','walk',.72],['lis
     const t=i/24,p=sampleCivicAnimationPose(state,t,'player');
     if(name==='sit'||name==='stand'){
       const u=name==='sit'?t:1-t,blend=u*u*(3-2*u);
-      for(const key of ['leftLeg','rightLeg'])p[key]=[-Math.PI/2*blend,0,0];
-      for(const key of ['leftKnee','rightKnee'])p[key]=[Math.PI/2*blend,0,0];
+      const seated=seatedAtriumLeg(.53,.32,.395,.065,.78);
+      for(const key of ['leftLeg','rightLeg'])p[key]=[seated.hipAngle*blend,0,0];
+      for(const key of ['leftKnee','rightKnee'])p[key]=[seated.kneeAngle*blend,0,0];
+      for(const key of ['leftFoot','rightFoot'])p[key]=[0,0,0];
       for(const key of ['leftArm','rightArm'])p[key]=[-.35*blend,0,0];
       for(const key of ['leftElbow','rightElbow'])p[key]=[-.7*blend,0,0];
-      p.rootY=(.53-.78)*blend;
+      p.rootY=seated.hipOffset*blend;
+      p.rootZ=.2*blend;
+      if(p.visual)p.visual[2]*=1-blend;
     }
     if(name==='stairs'){p.leftKnee[0]+=.13;p.rightKnee[0]+=.13;}
     if(name==='turn')p.visual=[0,Math.PI/2*t,0];

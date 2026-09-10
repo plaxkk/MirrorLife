@@ -1,8 +1,8 @@
 {
-  "generatedAt": "2026-09-10T07:19:13.203Z",
-  "runtimeFingerprint": "04410f9501c36505e5bf601dfc8e3d3604e317f18adcee8d4bf9d811174e4012",
+  "generatedAt": "2026-09-10T12:02:57.566Z",
+  "runtimeFingerprint": "f8da85d60b905ad7a1bad929428573c8dd9045941fa6e21ce5b8f40c1804aca4",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 93052377,
+  "totalSourceBytes": 93050805,
   "totalPublicBytes": 10261911,
   "assets": [
     {
@@ -23,7 +23,7 @@
     {
       "file": "public/assets/atrium/animations/you-motion.glb",
       "bytes": 870012,
-      "sha256": "b279b7d89bf0643998c0011a087e8fd2d6753f12327cf4c6e6f412d773101f5c",
+      "sha256": "d1e9a3660a534b201d2d78cf39c579efef9f225a3666d83ef7ebfb9f8d75d856",
       "meshes": 59,
       "materials": 15,
       "skins": 1,
@@ -434,13 +434,13 @@
     },
     {
       "file": "models/atrium/animations/motion.json",
-      "bytes": 335396,
-      "sha256": "f6cb5a5b419582aa7386655c9c4386c0a90f40a0ea2533faf090928617fc78a4"
+      "bytes": 346708,
+      "sha256": "116ea87953ae320ba7de097768724d525a667a9a59f63dd7eb68987eb0f1e064"
     },
     {
       "file": "models/atrium/animations/you-motion.blend",
-      "bytes": 1219115,
-      "sha256": "ace6186ef09fcc0126584f4faf634fb57d218bbd6bfaca9723015437985a58d6"
+      "bytes": 1206231,
+      "sha256": "725260319fccb7a083550899282033767f43d7f518a56a606b7095595e1279cb"
     },
     {
       "file": "models/atrium/atrium-master.blend",

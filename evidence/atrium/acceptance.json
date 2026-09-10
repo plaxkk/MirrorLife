@@ -1,55 +1,59 @@
 {
-  "capturedAt": "2026-09-10T07:19:13.292Z",
-  "runtimeFingerprint": "04410f9501c36505e5bf601dfc8e3d3604e317f18adcee8d4bf9d811174e4012",
+  "capturedAt": "2026-09-10T12:02:57.586Z",
+  "runtimeFingerprint": "f8da85d60b905ad7a1bad929428573c8dd9045941fa6e21ce5b8f40c1804aca4",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 16.737
+      "seconds": 15.04
     },
     {
       "name": "build",
-      "seconds": 4.279
+      "seconds": 2.822
     },
     {
       "name": "assets",
-      "seconds": 1.002
+      "seconds": 0.589
     },
     {
       "name": "gallery",
-      "seconds": 48.801
+      "seconds": 35.003
     },
     {
       "name": "performance",
-      "seconds": 45.756
+      "seconds": 47.24
     },
     {
       "name": "mobile",
-      "seconds": 47.829
+      "seconds": 48.939
     },
     {
       "name": "contact",
-      "seconds": 47.342
+      "seconds": 47.404
+    },
+    {
+      "name": "seating",
+      "seconds": 47.06
     },
     {
       "name": "resilience",
-      "seconds": 48.124
+      "seconds": 46.79
     },
     {
       "name": "walkthrough",
-      "seconds": 103.314
+      "seconds": 105.54
     },
     {
       "name": "assets-after",
-      "seconds": 0.778
+      "seconds": 0.966
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 32.70000000000073,
-        "p95": 34.29999999999927,
-        "p99": 50.5
+        "p50": 33.20000000000073,
+        "p95": 50,
+        "p99": 50.600000000000364
       },
       "renderPeaks": {
         "calls": 87,
@@ -62,13 +66,13 @@
     },
     "mobile": {
       "frameMs": {
-        "p50": 16.69999999999891,
-        "p95": 17.600000000000364,
-        "p99": 33.599999999998545
+        "p50": 16.700000000000728,
+        "p95": 33.29999999999927,
+        "p99": 33.899999999999636
       },
       "renderPeaks": {
-        "calls": 70,
-        "triangles": 299323,
+        "calls": 69,
+        "triangles": 299155,
         "geometries": 72
       },
       "budgetPassed": true,

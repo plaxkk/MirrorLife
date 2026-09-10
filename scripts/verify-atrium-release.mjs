@@ -37,6 +37,7 @@ try{
   });
   for(const mode of ['gallery','performance','mobile'])await run(mode,process.execPath,['scripts/verify-atrium-pilot.mjs',mode]);
   await run('contact',process.execPath,['scripts/verify-atrium-contact.mjs']);
+  await run('seating',process.execPath,['scripts/verify-atrium-seating.mjs']);
   await run('resilience',process.execPath,['scripts/verify-atrium-resilience.mjs']);
   await run('walkthrough',process.execPath,['scripts/verify-atrium-pilot.mjs','walkthrough'],{ATRIUM_RECORD:'1'});
   await run('assets-after',process.execPath,['scripts/report-atrium-assets.mjs']);

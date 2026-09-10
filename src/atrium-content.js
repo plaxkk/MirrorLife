@@ -1,6 +1,6 @@
 export const RESIDENTS = [
-  { id: 'lin', name: '林晓', mbti: 'INFP', role: 'listener', position: [-2.2, 0, -1.95], yaw: 0, seated:true, activity: 'listen', hint: '今晚想给大家留一个安静的位置。', need: 'quiet' },
-  { id: 'chen', name: '陈屿', mbti: 'ENTJ', role: 'player', position: [1.1, 0, -1.95], yaw: -.15, seated:true, activity: 'talk', hint: '桌边的计划，想听听你的意见。', need: 'gather' },
+  { id: 'lin', name: '林晓', mbti: 'INFP', role: 'listener', position: [-2.2, 0, -1.95], standPosition:[-3.05,0,-1.95], yaw: 0, seated:true, activity: 'listen', hint: '今晚想给大家留一个安静的位置。', need: 'quiet' },
+  { id: 'chen', name: '陈屿', mbti: 'ENTJ', role: 'player', position: [1.1, 0, -1.95], standPosition:[1.95,0,-1.95], yaw: -.15, seated:true, activity: 'talk', hint: '桌边的计划，想听听你的意见。', need: 'gather' },
   { id: 'xu', name: '许禾', mbti: 'ISFJ', role: 'facilitator', position: [9.1, 0, 2], yaw: -1.1, activity: 'idle', hint: '这盆薄荷，有点缺水了。', need: 'care' },
   { id: 'zhou', name: '周宁', mbti: 'INTJ', role: 'mediator', position: [-7.9, 3.5, .4], yaw: 0, activity: 'think', hint: '楼上的声音，和楼下不太一样。', need: 'quiet' },
   { id: 'he', name: '何川', mbti: 'ESFJ', role: 'listener', position: [-7, 0, 1.25], yaw: 1.5, activity: 'idle', hint: '刚煮的茶，一起喝吗？', need: 'gather' },
