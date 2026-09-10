@@ -338,6 +338,58 @@ const INTERIOR_ZONE_ENVIRONMENT_STYLES = {
   "resource-kitchen": { motif: "bowl", accent: "#e63946", secondary: "#2ecc71", panel: "#fff5df" }
 };
 
+// T10: in-scene room signage. Each room's display name is rendered onto a
+// CanvasTexture and mounted as a 3D sign on the back wall (opposite the exit
+// door), so the player can identify the room from inside the world without
+// relying on the DOM card. Mirrors the CITY_ZONE_FALLBACK_META names in
+// game.js; kept in sync so the 3D sign and the map pin agree.
+const ROOM_DISPLAY_NAMES = Object.freeze({
+  "public-plaza": "邻里广场",
+  "maternity-hospital": "妇幼医院",
+  residential: "生活巷",
+  kindergarten: "童年园",
+  "primary-school": "初学堂",
+  "middle-school": "少年学堂",
+  university: "开放书院",
+  "office-district": "共事楼",
+  factory: "匠造坊",
+  "legal-court": "公议庭",
+  "creative-studio": "创作工坊",
+  "commercial-zone": "街市",
+  farm: "社区农圃",
+  park: "邻里公园",
+  zoo: "动物照护园",
+  "botanical-garden": "草木园",
+  "night-market": "灯火夜市",
+  "quiet-nook": "静心角",
+  "repair-station": "和解小站",
+  cemetery: "记忆花园",
+  "empathy-lab": "谈心和解屋",
+  "story-archive": "街坊故事馆",
+  "commons-workshop": "共议工坊",
+  "rest-courtyard": "慢歇院",
+  "mentor-hall": "师友学堂",
+  "resource-kitchen": "邻里食堂"
+});
+
+// T10: per-archetype sign styling. Each archetype reads as a different kind
+// of place-sign so 26 rooms don't share one "generic wooden board": learning
+// is a chalkboard, care a ceramic plaque, nature a trail sign, justice a
+// brass-engraved plate, etc. `glow` flags lantern-lit signs (night-market)
+// that get a warm emissive backing so the name reads after dark.
+const ROOM_SIGNAGE_STYLES = Object.freeze({
+  learning: { board: "#2a4a36", text: "#f4f0dc", trim: "#1c2a22", font: "Georgia, serif", glow: false },
+  work: { board: "#6d4a2c", text: "#f5e6c4", trim: "#3a2818", font: "'Helvetica Neue', sans-serif", glow: false },
+  home: { board: "#f4e9d9", text: "#5a4632", trim: "#8c5b3d", font: "Georgia, serif", glow: false },
+  care: { board: "#fff5f7", text: "#9a4a6a", trim: "#d8a3b0", font: "'Helvetica Neue', sans-serif", glow: false },
+  nature: { board: "#9a7a48", text: "#2a3a1a", trim: "#5a3a1a", font: "Georgia, serif", glow: false },
+  public: { board: "#b0403a", text: "#fff0c0", trim: "#7a1a1a", font: "Georgia, serif", glow: false },
+  justice: { board: "#3a3028", text: "#d4af37", trim: "#1a1410", font: "Georgia, serif", glow: false },
+  commerce: { board: "#c08030", text: "#fff8e0", trim: "#6a3a10", font: "'Helvetica Neue', sans-serif", glow: false },
+  creative: { board: "#3a4a8a", text: "#f0e8a0", trim: "#1a1a3a", font: "'Helvetica Neue', sans-serif", glow: false },
+  memory: { board: "#8a8a82", text: "#e8e0d0", trim: "#4a4a42", font: "Georgia, serif", glow: false }
+});
+
 const MODEL_RENDER_PROFILES = {
   bed: { scale: 1.35, rotationY: -0.45 },
   counter: { scale: 0.98, rotationY: -0.2 },
@@ -403,6 +455,11 @@ const civicActorAssets = new Map();
 const civicActorLoading = new Map();
 const civicActorFailures = new Set();
 const projectedItems = new Map();
+// T10: CanvasTextures created for room signage are unique per room rebuild
+// and not cached, so they must be disposed when the room is torn down.
+// disposeOwnedGroup only disposes geometries and materials, so we track the
+// signage textures here and free them at the start of the next rebuild.
+const ownedSignageTextures = new Set();
 
 let THREE;
 let GLTFLoader;
@@ -7482,6 +7539,126 @@ function addExitPortal(theme, colors) {
   group.add(threshold);
 }
 
+// T10: render a room's display name onto a canvas so it can be mapped onto a
+// 3D sign board. The canvas is wide enough for 2-5 CJK glyphs at bold weight;
+// longer names shrink to fit. A double border (outer trim, inner ghost line)
+// reads as a framed sign at any orbit distance without needing a separate
+// frame mesh to be visible — though addRoomSignage adds one anyway for close
+// reads. The board colour fills the canvas so the lit MeshStandardMaterial
+// (color white × map) shows the authored palette, not a white slab.
+function createSignageCanvasTexture(text, style) {
+  const canvas = document.createElement("canvas");
+  const width = 512;
+  const height = 160;
+  canvas.width = width;
+  canvas.height = height;
+  const ctx = canvas.getContext("2d");
+  ctx.fillStyle = style.board;
+  ctx.fillRect(0, 0, width, height);
+  // Faint horizontal grain so the board reads as a material, not flat CG.
+  ctx.globalAlpha = 0.06;
+  ctx.fillStyle = style.text;
+  for (let y = 0; y < height; y += 3) {
+    ctx.fillRect(0, y, width, 1);
+  }
+  ctx.globalAlpha = 1;
+  // Outer trim border.
+  ctx.strokeStyle = style.trim;
+  ctx.lineWidth = 9;
+  ctx.strokeRect(5, 5, width - 10, height - 10);
+  // Inner ghost border in the text colour for a framed-plaque read.
+  ctx.globalAlpha = 0.22;
+  ctx.strokeStyle = style.text;
+  ctx.lineWidth = 2;
+  ctx.strokeRect(20, 20, width - 40, height - 40);
+  ctx.globalAlpha = 1;
+  // Room name. Shorter names (≤3 glyphs) get a larger size so a 2-char sign
+  // like 街市 doesn't look lost on the board.
+  const glyphCount = [...text].length;
+  const fontSize = glyphCount <= 3 ? 82 : glyphCount <= 4 ? 70 : 58;
+  ctx.fillStyle = style.text;
+  ctx.font = `bold ${fontSize}px ${style.font}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(text, width / 2, height / 2 + 4);
+  const texture = new THREE.CanvasTexture(canvas);
+  texture.colorSpace = THREE.SRGBColorSpace;
+  texture.anisotropy = 4;
+  return texture;
+}
+
+// T10: mount the room's display name as a 3D sign on the back wall (opposite
+// the exit door), high enough to clear T6 wall features (y≈2.0) and below the
+// T7 ceiling triad (y≈3.6). The sign is the room's identity inside the world:
+// the player reads "灯火夜市" on a lantern-lit board, not from a DOM card.
+// public-plaza is skipped (it owns civic dressing); V2+ cutaways are skipped
+// (they have their own identity props).
+function addRoomSignage(theme, colors, mobileLod = false) {
+  if (theme.zoneId === "public-plaza") return;
+  if (Number(theme.layoutProfile?.version || 0) >= 2) return;
+  const displayName = ROOM_DISPLAY_NAMES[theme.zoneId];
+  if (!displayName) return;
+  const archetype = theme.archetype || "home";
+  const style = ROOM_SIGNAGE_STYLES[archetype] || ROOM_SIGNAGE_STYLES.home;
+  const night = !!colors.night;
+  // Place opposite the exit door. The door is at `doorAngle`; the back wall
+  // at `doorAngle + π` is what the player faces on entry, so the sign is the
+  // first thing read when looking into the room.
+  const doorAngle = Number(theme.layoutProfile?.shell?.door?.angle || 0);
+  const signAngle = doorAngle + Math.PI;
+  const signY = 2.78;
+  const signWidth = mobileLod ? 1.12 : 1.38;
+  const signHeight = mobileLod ? 0.42 : 0.5;
+  const [x, y, z] = wallPosition(signAngle, ROOM_RADIUS - 0.1, signY);
+  const group = new THREE.Group();
+  group.position.set(x, y, z);
+  group.rotation.y = -signAngle;
+  roomRoot.add(group);
+
+  // Night-market and other night rooms get a warm emissive backing so the
+  // sign reads as lantern-lit, not swallowed by the dusk grade.
+  const glow = night || style.glow;
+  if (glow) {
+    const halo = new THREE.Mesh(
+      new THREE.PlaneGeometry(signWidth + 0.22, signHeight + 0.22),
+      createToonMaterial("#ffb066", { emissive: 0.5, roughness: 0.5 })
+    );
+    halo.position.z = -0.01;
+    group.add(halo);
+  }
+
+  // Wooden frame — reads as a mounted board, not a floating decal.
+  const frame = new THREE.Mesh(
+    new RoundedBoxGeometry(signWidth + 0.09, signHeight + 0.09, 0.06, 3, 0.022),
+    createToonMaterial(style.trim, { roughness: 0.6, surface: "wood", bumpScale: 0.006 })
+  );
+  frame.position.z = 0.02;
+  frame.castShadow = false;
+  group.add(frame);
+
+  // Sign face. color white × map so the canvas's authored board colour shows
+  // at full saturation instead of being tinted by the material colour.
+  const texture = createSignageCanvasTexture(displayName, style);
+  ownedSignageTextures.add(texture);
+  const board = new THREE.Mesh(
+    new THREE.PlaneGeometry(signWidth, signHeight),
+    createToonMaterial("#ffffff", { map: texture, roughness: 0.74 })
+  );
+  board.position.z = 0.07;
+  group.add(board);
+
+  // Hanging brackets on desktop — anchor the sign to the wall visually.
+  if (!mobileLod) {
+    const bracketGeo = new THREE.BoxGeometry(0.028, 0.13, 0.028);
+    const bracketMat = createToonMaterial(style.trim);
+    [-signWidth / 2 + 0.07, signWidth / 2 - 0.07].forEach((bx) => {
+      const bracket = new THREE.Mesh(bracketGeo, bracketMat);
+      bracket.position.set(bx, signHeight / 2 + 0.08, 0.04);
+      group.add(bracket);
+    });
+  }
+}
+
 // Any orbit angle that slips past an open wall used to hit the renderer's
 // flat clear colour, reading as a hollow void around the diorama. A soft
 // vertical-gradient dome plus matching distance fog turns that spill into
@@ -7532,6 +7709,12 @@ function rebuildRoom(theme = {}) {
   // shell cannot flash as an opaque white slab before the normal 180 ms orbit
   // transition takes over.
   cameraOcclusionWarmupFrames = 4;
+  // T10: free the previous room's signage CanvasTextures before disposing the
+  // group. disposeOwnedGroup drops geometries and materials but not their
+  // .map textures, so without this each room rebuild would leak one 512×160
+  // canvas-backed texture.
+  ownedSignageTextures.forEach((texture) => texture.dispose());
+  ownedSignageTextures.clear();
   disposeOwnedGroup(roomRoot);
 
   if (keyLight) {
@@ -7833,6 +8016,11 @@ function rebuildRoom(theme = {}) {
   // traverses isMesh nodes and would flatten InstancedMesh base geometry
   // into a static batch, destroying the per-instance transforms.
   addMiniProps(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
+  // T10 in-scene signage added post-merge: the CanvasTexture-backed sign face
+  // must keep its own material (merge would share it across unrelated meshes).
+  // Cost is 1-3 draw calls per room (frame + face + optional halo), inside
+  // the DoD-6 budget.
+  addRoomSignage(theme, { accent, secondary, trim, wallColor, floorColor, night }, lastWidth <= 720);
   return true;
 }
 
