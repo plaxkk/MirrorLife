@@ -3,13 +3,18 @@ import fs from 'node:fs/promises';
 import path from 'node:path';
 import assert from 'node:assert/strict';
 import {startAtriumRecording} from './lib/atrium-recorder.mjs';
+import {atriumWalkKeys} from './lib/atrium-navigation.mjs';
 
 const base=process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4194';
 const mode=process.argv[2]||'smoke';
 const output=path.resolve('evidence/atrium');await fs.mkdir(output,{recursive:true});
 const buildEvidence=JSON.parse(await fs.readFile(path.join(output,'assets.json'),'utf8'));
-const evidenceMeta={capturedAt:new Date().toISOString(),runtimeFingerprint:buildEvidence.runtimeFingerprint,browserMode:process.env.ATRIUM_HEADED==='1'?'headed':'headless'};
-const browser=await puppeteer.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:process.env.ATRIUM_HEADED!=='1',args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows','--disable-background-networking']});
+// Native-window resize/focus changes can shrink the CDP recording surface.
+// Record the same real WebGL scene without an OS window; performance/gallery
+// continue to use visible Chrome. Report the distinction explicitly.
+const headed=process.env.ATRIUM_HEADED==='1'&&process.env.ATRIUM_RECORD!=='1';
+const evidenceMeta={capturedAt:new Date().toISOString(),runtimeFingerprint:buildEvidence.runtimeFingerprint,browserMode:headed?'headed':'headless'};
+const browser=await puppeteer.launch({executablePath:process.env.CHROME_BIN||'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:!headed,args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding','--disable-backgrounding-occluded-windows','--disable-background-networking']});
 const pause=ms=>new Promise(r=>setTimeout(r,ms));
 const problems=[];
 let recorder;
@@ -32,13 +37,17 @@ try{
   if(mode==='walkthrough'&&process.env.ATRIUM_RECORD==='1')recorder=await startAtriumRecording(page,path.join(output,'playthrough.mp4'));
   await page.click('#enter');await pause(1800);
   if(mode==='walkthrough'){
-    const trace=[];
-    // Read position only to steer: locomotion and all interactions below use real keys.
+    const trace=[],inputTrace=[];
+    await page.evaluate(()=>{const sample=()=>{const c=document.querySelector('canvas').getBoundingClientRect();return {width:innerWidth,height:innerHeight,canvasWidth:c.width,canvasHeight:c.height};};window.__qaViewportSamples=[sample()];window.addEventListener('resize',()=>window.__qaViewportSamples.push(sample()));});
+    await page.evaluate(()=>{window.__qaFocusEvents=[];window.__qaPointerEvents=[];for(const type of ['blur','focus','visibilitychange'])window.addEventListener(type,()=>window.__qaFocusEvents.push({type,time:performance.now(),hidden:document.hidden}));
+      for(const type of ['pointerdown','pointerup','pointercancel','lostpointercapture','pointermove'])window.addEventListener(type,e=>{window.__qaPointerEvents.push({type,buttons:e.buttons,x:e.clientX,y:e.clientY,time:performance.now()});if(window.__qaPointerEvents.length>150)window.__qaPointerEvents.shift();});});
+    // Read position and camera yaw to steer; all movement uses real keys.
     async function walk(x,z,label){
+      await page.bringToFront();
       let held=new Set();let previous=null,stuck=0;
       try{
         for(let i=0;i<150;i++){
-          const p=await page.evaluate(()=>window.__atrium.getPosition());
+          const {p,yaw}=await page.evaluate(()=>({p:window.__atrium.getPosition(),yaw:window.__atrium.getHeading()}));
           const dx=x-p.x,dz=z-p.z;
           if(Math.hypot(dx,dz)<.16){
             for(const k of held)await page.keyboard.up(k);held.clear();
@@ -46,14 +55,18 @@ try{
             const stopped=await page.evaluate(()=>window.__atrium.getPosition());
             // CDP input release can queue behind capture work. Do not declare
             // arrival using the position sampled while the key was still held.
-            if(Math.hypot(x-stopped.x,z-stopped.z)<.2){trace.push({label,position:stopped});console.log('REACHED',label,stopped);return;}
+            if(Math.hypot(x-stopped.x,z-stopped.z)<.2){trace.push({label,position:stopped,heading:yaw});console.log('REACHED',label,stopped);return;}
             previous=null;stuck=0;continue;
           }
-          const next=new Set();
-          if(Math.abs(dx)>.09)next.add(dx>0?'KeyD':'KeyA');
-          if(Math.abs(dz)>.09)next.add(dz>0?'KeyS':'KeyW');
+          // Mouse events need not add up to exactly one revolution. Translate
+          // world-space goals into the same camera-relative axes as the player.
+          const next=atriumWalkKeys(dx,dz,yaw);
+          inputTrace.push({label,p,yaw,keys:[...next]});if(inputTrace.length>120)inputTrace.shift();
           for(const k of held)if(!next.has(k))await page.keyboard.up(k);
-          for(const k of next)if(!held.has(k))await page.keyboard.down(k);
+          // Real keyboards repeat held keys. Renew through CDP too: the app
+          // correctly clears input on blur, while the harness's held set would
+          // otherwise retain a key that the application no longer considers down.
+          for(const k of next)await page.keyboard.down(k);
           held=next;await pause(110);
           if(previous&&Math.hypot(p.x-previous.x,p.z-previous.z)<.012)stuck++;else stuck=0;
           if(stuck>18)throw new Error(`Blocked walking to ${label}: ${JSON.stringify(p)}`);
@@ -107,13 +120,15 @@ try{
       await walk(-8.65,4.9,'tea return');await walk(-4.3,4.9,'entry return');
       await page.click('#journal-button');if(!recorder)await page.screenshot({path:path.join(output,'journal.png')});await close();
       const before=await page.evaluate(()=>window.__atrium.getState());
-      await fs.writeFile(path.join(output,'walkthrough-trace.json'),JSON.stringify({...evidenceMeta,trace,state:before,stats:await page.evaluate(()=>window.__atrium.getStats())},null,2));
+      const viewportSamples=await page.evaluate(()=>window.__qaViewportSamples);
+      assert.ok(viewportSamples.every(s=>s.width===1920&&s.height===1080&&s.canvasWidth===1920&&s.canvasHeight===1080),'Recording layout must retain the full viewport');
+      await fs.writeFile(path.join(output,'walkthrough-trace.json'),JSON.stringify({...evidenceMeta,trace,viewportSamples,focusEvents:await page.evaluate(()=>window.__qaFocusEvents),state:before,stats:await page.evaluate(()=>window.__atrium.getStats())},null,2));
       await walk(-4.3,6.9,'exit');await interact('返回城市');await page.waitForFunction(()=>location.pathname==='/game.html',{timeout:10000});
       await stopRecording();
       await page.goto(base+'/atrium.html',{waitUntil:'domcontentloaded'});await page.waitForSelector('#enter:not([hidden])',{timeout:90000});await page.click('#enter');await pause(500);
       const after=await page.evaluate(()=>window.__atrium.getState());assert.equal(after.decision,before.decision);assert.deepEqual(after.discovered,before.discovered);assert.deepEqual(after.talked,before.talked);
       console.log('WALKTHROUGH_PASS',JSON.stringify({discovered:after.discovered,talked:after.talked,decision:after.decision,waypoints:trace.length}));
-    }catch(error){await page.screenshot({path:path.join(output,'walkthrough-failure.png')});await fs.writeFile(path.join(output,'walkthrough-failure.json'),JSON.stringify({...evidenceMeta,error:String(error),trace,state:await page.evaluate(()=>window.__atrium?.getState()),stats:await page.evaluate(()=>window.__atrium?.getStats())},null,2));throw error;}
+    }catch(error){await page.screenshot({path:path.join(output,'walkthrough-failure.png')});await fs.writeFile(path.join(output,'walkthrough-failure.json'),JSON.stringify({...evidenceMeta,error:String(error),trace,inputTrace,inputEvents:await page.evaluate(()=>({focus:window.__qaFocusEvents,pointer:window.__qaPointerEvents})),state:await page.evaluate(()=>window.__atrium?.getState()),stats:await page.evaluate(()=>window.__atrium?.getStats())},null,2));throw error;}
     finally{await stopRecording();}
   }
   if(mode==='performance'||mode==='mobile'){

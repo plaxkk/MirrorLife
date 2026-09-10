@@ -4,6 +4,22 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
+import {atriumWalkKeys} from '../scripts/lib/atrium-navigation.mjs';
+test('recording navigation stays in the table aisle at oblique camera angles',async()=>{
+  const p=await createAtriumPhysics(JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8')));
+  try{
+    for(const yaw of [1.236064453125,-.6279998779296876,Math.PI/4,-Math.PI/2]){
+      p.teleport([3.1656,0,-3.3146]);let arrived=false;
+      for(let i=0;i<100;i++){
+        const a=p.feet(),dx=3.1-a.x,dz=5.65-a.z;
+        if(Math.hypot(dx,dz)<.2){arrived=true;break;}
+        const keys=atriumWalkKeys(dx,dz,yaw),x=Number(keys.has('KeyD'))-Number(keys.has('KeyA')),z=Number(keys.has('KeyS'))-Number(keys.has('KeyW')),n=Math.max(1,Math.hypot(x,z));
+        for(let frame=0;frame<7;frame++)p.move((x*Math.cos(yaw)+z*Math.sin(yaw))/n*.0375,(-x*Math.sin(yaw)+z*Math.cos(yaw))/n*.0375);
+      }
+      assert.ok(arrived,JSON.stringify({yaw,position:p.feet()}));
+    }
+  }finally{p.dispose();}
+});
 test('complete architectural circuit including both galleries and west kitchen clearance',async()=>{
   const p=await createAtriumPhysics(JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8')));
   try{

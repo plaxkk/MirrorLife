@@ -9,6 +9,33 @@ import {alignAtriumProp,seatedAtriumLeg} from '../src/atrium-actors.js';
 import {updateAtriumSeatMotion} from '../src/atrium-seat-motion.js';
 import {createAtriumGpuTiming} from '../src/atrium-gpu-timing.js';
 import {applyAtriumFloorContact} from '../src/atrium-floor-contact.js';
+import {solveAtriumLeg} from '../src/atrium-stair-pose.js';
+
+test('stair legs reach forward and rearward floor targets without reversing the knee',()=>{
+  for(const down of [.35,.5,.64])for(const forward of [-.23,0,.23]){
+    const p=solveAtriumLeg(.32,.395,down,forward);
+    assert.ok(p.knee>=0&&p.unreachable<.00001);
+    assert.ok(Math.abs(.32*Math.cos(p.hip)+.395*Math.cos(p.hip+p.knee)-down)<1e-6);
+    assert.ok(Math.abs(-.32*Math.sin(p.hip)-.395*Math.sin(p.hip+p.knee)-forward)<1e-6);
+    assert.ok(Math.abs(p.hip+p.knee+p.foot)<1e-6);
+  }
+  assert.ok(solveAtriumLeg(.32,.395,1,0).unreachable>.28);
+});
+
+test('foot probes hit tread tops, reject walls and ignore resident capsules',async()=>{
+  const p=await createAtriumPhysics([
+    {type:'box',name:'Ground',position:[0,-.1,0],size:[4,.2,4]},
+    {type:'box',name:'Main stair tread 0',position:[0,.08,0],size:[1,.16,1]},
+    {type:'box',name:'Wall',position:[1.5,1,0],size:[.3,2,2]},
+  ]);
+  try{
+    p.addResident('probe',{x:0,y:.16,z:0});p.world.step();
+    const hit=p.floorAt(0,0,.19);assert.equal(hit.stair,true);assert.ok(Math.abs(hit.height-.16)<1e-6);
+    assert.equal(p.floorAt(1.5,0,.1),null);
+    assert.equal(p.floorAt(5,5,0),null);
+    assert.ok(Math.abs(p.floorAt(-1,0,.02).height)<1e-6);
+  }finally{p.dispose();}
+});
 
 test('GPU timing distinguishes unavailable hardware and discards disjoint results',()=>{
   const unavailable=createAtriumGpuTiming({getExtension:()=>null});unavailable.reset();unavailable.begin();unavailable.end();

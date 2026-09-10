@@ -1,6 +1,7 @@
 import * as THREE from 'three';
 import { loadAtriumGLB } from './atrium-assets.js';
 import { sampleCivicAnimationPose } from './civic-animation-clips.js';
+import {solveAtriumLeg} from './atrium-stair-pose.js';
 import { CIVIC_ARTICULATION_BINDING_SPECS,createCivicArticulationBinding,syncCivicArticulationBinding } from './reference-fidelity-runtime-contract.js';
 
 const JOINTS={headGroup:'HeadPivot',leftArm:'LeftArmPivot',rightArm:'RightArmPivot',leftElbow:'LeftElbowPivot',rightElbow:'RightElbowPivot',leftHand:'Hand_-1',rightHand:'Hand_1',leftLeg:'LeftLegPivot',rightLeg:'RightLegPivot',leftKnee:'LeftKneePivot',rightKnee:'RightKneePivot',leftFoot:'ShoeUpper_-1Pivot',rightFoot:'ShoeUpper_1Pivot',leftSleeveCompression:'SleeveCompressionPivot_-1',rightSleeveCompression:'SleeveCompressionPivot_1',leftTrouserCompression:'TrouserCompressionPivot_-1',rightTrouserCompression:'TrouserCompressionPivot_1'};
@@ -53,7 +54,8 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     }
   }});
   const position=definition.position||[-4.3,0,6.3];group.position.set(...position);group.rotation.y=definition.yaw||0;
-  let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[],sitting,lastSeatHeight;
+  let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[],sitting,lastSeatHeight,stairBlend=0,stairPelvis=0;
+  let stairFeet=[];
   const handGrip=visual.getObjectByName('HandGripAnchor_1');
   const poseVectors={};
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
@@ -61,7 +63,8 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     footDiagnostics(){return ['left','right'].map(side=>{
       const knee=joints[`${side}Knee`].node.getWorldPosition(new THREE.Vector3()).sub(group.position);
       return {side,soleY:joints[`${side}Foot`].node.getWorldPosition(new THREE.Vector3()).y-legDimensions[side].soleOffset,
-        floorY:group.position.y,kneeForward:knee.x*Math.sin(group.rotation.y)+knee.z*Math.cos(group.rotation.y)};
+        floorY:group.position.y,kneeForward:knee.x*Math.sin(group.rotation.y)+knee.z*Math.cos(group.rotation.y),
+        stair:stairFeet.find(f=>f.side===side)||null,stairBlend};
     });},
     attachLifeProp(model){
       if(!handGrip)throw new Error(`${id} 缺少手掌握持点`);
@@ -78,7 +81,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         scale:prop.getWorldScale(new THREE.Vector3()).toArray(),hand:handGrip.getWorldPosition(new THREE.Vector3()).toArray(),
         handle:grip.getWorldPosition(new THREE.Vector3()).toArray()}));
     },
-    update(time,dt,{moving=0,talking=false,lookingAt=null,seated=false,stepping=false,care=false,listening=false,seatHeight=.53}={}) {
+    update(time,dt,{moving=0,talking=false,lookingAt=null,seated=false,floorAt=null,care=false,listening=false,seatHeight=.53}={}) {
       walkPhase+=moving*dt/1.25;
       const state=moving>.08?'walk':talking||care?'gesture':listening||definition.activity==='think'?'listen':definition.activity==='talk'?'gesture':'idle';
       const pose=sampleCivicAnimationPose(state,state==='walk'?walkPhase:time/(state==='idle'?3.2:4.4),definition.role||'player');
@@ -95,7 +98,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         if(care&&key==='rightElbow'){x=-.7;y=0;z=0;}
         if(care&&key==='rightHand')z=.24*Math.sin(time*1.8);
         if(key==='leftLeg'||key==='rightLeg')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].hipAngle,seatBlend);
-        if(key==='leftKnee'||key==='rightKnee')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].kneeAngle,seatBlend)+(stepping&&moving>.1?.13:0);
+        if(key==='leftKnee'||key==='rightKnee')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].kneeAngle,seatBlend);
         if(['leftLeg','rightLeg','leftKnee','rightKnee'].includes(key)){y*=1-seatBlend;z*=1-seatBlend;}
         if(key==='leftFoot'||key==='rightFoot'){x*=1-seatBlend;y*=1-seatBlend;z*=1-seatBlend;}
         if(!talking&&!care&&(key==='leftArm'||key==='rightArm'))x=THREE.MathUtils.lerp(x,-.35,seatBlend);
@@ -113,6 +116,46 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       // Bring knees beyond the 70cm cushion before the shins drop to the floor.
       visual.position.z=.2*seatBlend;
       visual.rotation.z=(pose.visual?.[2]||0)*.4*(1-seatBlend);
+      // Probe actual tread colliders, including the shoe's toe and heel. Keep a
+      // swing arc; only the support half of each gait cycle targets the floor.
+      stairFeet=[];
+      if(floorAt&&!seated&&seatBlend<.01){
+        const sin=Math.sin(group.rotation.y),cos=Math.cos(group.rotation.y);
+        for(const [index,side]of ['left','right'].entries()){
+          const d=legDimensions[side],hip=joints[`${side}Leg`].node;
+          const a=poseVectors[`${side}Leg`].x,b=poseVectors[`${side}Knee`].x;
+          const forward=THREE.MathUtils.clamp((-d.upper*Math.sin(a)-d.lower*Math.sin(a+b))*.6,-.23,.23);
+          const x=group.position.x+hip.position.x*cos+forward*sin,z=group.position.z-hip.position.x*sin+forward*cos;
+          const hits=[-.07,0,.1].map(offset=>floorAt(x+offset*sin,z+offset*cos,group.position.y)).filter(Boolean);
+          if(!hits.length)continue;
+          const ground=hits.reduce((a,b)=>a.height>b.height?a:b);
+          const phase=(walkPhase+index*.5)%1;
+          const lift=moving>.08&&phase<.5?.14*Math.sin(phase*2*Math.PI):0;
+          stairFeet.push({side,ground:ground.height,surface:ground.name,onStair:hits.some(h=>h.stair),forward,lift});
+        }
+      }
+      const stairActive=stairFeet.length===2&&stairFeet.some(f=>f.onStair);
+      stairBlend=THREE.MathUtils.damp(stairBlend,stairActive?1:0,18,dt);
+      if(stairFeet.length===2&&stairBlend>.001){
+        let pelvis=0;
+        for(const f of stairFeet){const d=legDimensions[f.side];pelvis=Math.min(pelvis,f.ground+d.soleOffset+f.lift+Math.sqrt((d.upper+d.lower-.005)**2-f.forward**2)-group.position.y-d.hipRest);}
+        pelvis=Math.max(-.28,pelvis);
+        // Lower immediately for reach; ease the return as the trailing foot rises.
+        stairPelvis=pelvis<stairPelvis?pelvis:THREE.MathUtils.damp(stairPelvis,pelvis,12,dt);
+        visual.position.y=THREE.MathUtils.lerp(visual.position.y,stairPelvis,stairBlend);
+        visual.rotation.z*=stairActive?0:1-stairBlend;
+        for(const f of stairFeet){
+          const d=legDimensions[f.side];
+          const solved=solveAtriumLeg(d.upper,d.lower,group.position.y+d.hipRest+visual.position.y-f.ground-d.soleOffset-f.lift,f.forward);
+          f.unreachable=solved.unreachable;
+          for(const [part,angle]of [['Leg',solved.hip],['Knee',solved.knee],['Foot',solved.foot]]){
+            // A detected tread is a hard contact constraint. Blending its leg
+            // back toward the unconstrained clip can put the shoe inside the
+            // first riser; keep pelvis/flat-ground transitions eased instead.
+            const entry=joints[f.side+part];q.setFromEuler(euler.set(angle,0,0));q.premultiply(entry.rest);entry.node.quaternion.slerp(q,f.onStair?1:stairBlend);
+          }
+        }
+      }else stairPelvis=0;
       visual.updateMatrixWorld(true);for(const b of bindings)syncCivicArticulationBinding(b);
       const phase=(time+(id.length*1.13))%4.7;
       const blink=phase<.15?Math.max(.03,Math.abs(phase-.075)/.075):1;

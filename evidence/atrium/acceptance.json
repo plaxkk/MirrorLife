@@ -1,59 +1,68 @@
 {
-  "capturedAt": "2026-09-10T12:02:57.586Z",
-  "runtimeFingerprint": "f8da85d60b905ad7a1bad929428573c8dd9045941fa6e21ce5b8f40c1804aca4",
+  "capturedAt": "2026-09-10T14:09:06.862Z",
+  "runtimeFingerprint": "33f28e9c215fd9ad13f1f52db2b57bba131bcf6a6e4f9f59e5cf91399e2d5b92",
   "base": "http://127.0.0.1:4195",
+  "completionMethod": "The sequential release command passed tests/build/gallery/performance/mobile/contact/seating/stairs/resilience, then stopped on walkthrough. Only the verification steering/input harness changed afterward. Final dedicated headless local-Chrome walkthrough retried against the same unchanged production build at 4194; tests re-run. Source/assets fingerprints checked again. This is not a claim that the initial release command exited successfully.",
   "steps": [
     {
       "name": "tests",
-      "seconds": 15.04
+      "status": "pass"
     },
     {
       "name": "build",
-      "seconds": 2.822
+      "status": "pass"
     },
     {
       "name": "assets",
-      "seconds": 0.589
+      "status": "pass"
     },
     {
       "name": "gallery",
-      "seconds": 35.003
+      "status": "pass"
     },
     {
       "name": "performance",
-      "seconds": 47.24
+      "status": "pass"
     },
     {
       "name": "mobile",
-      "seconds": 48.939
+      "status": "pass"
     },
     {
       "name": "contact",
-      "seconds": 47.404
+      "status": "pass"
     },
     {
       "name": "seating",
-      "seconds": 47.06
+      "status": "pass"
+    },
+    {
+      "name": "stairs",
+      "status": "pass"
     },
     {
       "name": "resilience",
-      "seconds": 46.79
+      "status": "pass"
     },
     {
-      "name": "walkthrough",
-      "seconds": 105.54
+      "name": "walkthrough-final",
+      "status": "pass"
     },
     {
       "name": "assets-after",
-      "seconds": 0.966
+      "status": "pass"
+    },
+    {
+      "name": "video-decode",
+      "status": "pass"
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 33.20000000000073,
-        "p95": 50,
-        "p99": 50.600000000000364
+        "p50": 32.600000000000364,
+        "p95": 49.30000000000291,
+        "p99": 50.400000000001455
       },
       "renderPeaks": {
         "calls": 87,
@@ -66,13 +75,13 @@
     },
     "mobile": {
       "frameMs": {
-        "p50": 16.700000000000728,
-        "p95": 33.29999999999927,
-        "p99": 33.899999999999636
+        "p50": 16.600000000002183,
+        "p95": 32.900000000000546,
+        "p99": 67.10000000000218
       },
       "renderPeaks": {
-        "calls": 69,
-        "triangles": 299155,
+        "calls": 70,
+        "triangles": 299323,
         "geometries": 72
       },
       "budgetPassed": true,
@@ -80,5 +89,40 @@
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
+  "walkthrough": {
+    "traceWaypoints": 33,
+    "decision": "balanced",
+    "discovered": [
+      "records",
+      "plant",
+      "journal",
+      "lookout",
+      "record",
+      "shortcut",
+      "tea"
+    ],
+    "talked": [
+      "lin",
+      "chen",
+      "zhou"
+    ],
+    "recording": true,
+    "renderPeaks": {
+      "calls": 89,
+      "triangles": 484569,
+      "geometries": 80
+    },
+    "frameMs": {
+      "p50": 33.29999999999927,
+      "p95": 33.40000000000873,
+      "p99": 50
+    },
+    "note": "Recording introduces overhead; do not substitute these samples for the separate performance run."
+  },
+  "verificationScriptSha256": {
+    "scripts/verify-atrium-pilot.mjs": "55beebad3f51328c0c7f6f25741d850d40563811c6cc0c662e1103ca9c6d10ee",
+    "scripts/verify-atrium-stairs.mjs": "c1b74f376094dc60a8c983af7b09e5dcf10a6c118254f72f80246ee89a01cf88",
+    "scripts/lib/atrium-navigation.mjs": "c7a42b3c8027562e5c480b0edb39f3649a95e5ac6f6b3a0500d3fdf571feb7bb"
+  },
+  "scope": "Automated same-candidate verification with an explicit harness-only walkthrough retry. Art quality, real phone hardware, human playability and production release remain separate gates."
 }

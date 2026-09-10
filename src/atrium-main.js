@@ -19,7 +19,7 @@ let renderer,scene,camera,composer,physics,player,environment,animationId,resize
 let active=false,disposed=false,dialogTarget=null,nearest=null,seated=null,careUntil=0,careItem=null,lifeProps=null;
 let orbitYaw=.0,orbitPitch=.21,orbitDistance=3.35,referenceView=false;
 let last=0,accumulator=0,elapsed=0,stepDistance=0,lastSave=0,lastHud=0,toastTimer;
-let moving=0,lastY=0,gestureX=0,gestureY=0,pointer=null,stickPointer=null;
+let moving=0,gestureX=0,gestureY=0,pointer=null,stickPointer=null;
 let sound=null,soundEnabled=false;
 const keys=new Set(),actors=[],labels=[],frameTimes=[],errors=[];
 const cpuTimes=[];
@@ -239,6 +239,7 @@ async function boot(){
     getPosition:()=>physics.feet(),
     getInteractionState:()=>({seated:seated?.item.id||null,care:careItem?.id||null,dialogue:dialogTarget?.id||null,residents:actors.map(a=>({id:a.id,busy:!!a.busy,position:a.group.position.toArray(),yaw:a.group.rotation.y,seatBlend:a.seatBlend,seatMotion:a.seatMotion}))}),
     calibration:REFERENCE_CAMERA,
+    getHeading:()=>orbitYaw,
     // Review helpers are separate from the input-driven playthrough used for acceptance.
     setReviewCamera:(pos,look)=>{referenceView={position:pos,target:look};},
     followCamera:()=>{referenceView=false;},
@@ -277,7 +278,7 @@ async function boot(){
       if(moving>.08){const heading=Math.atan2(dx,dz);player.group.rotation.y+=Math.atan2(Math.sin(heading-player.group.rotation.y),Math.cos(heading-player.group.rotation.y))*(1-Math.exp(-14*dt));stepDistance+=moving*dt;}
       if(pos.y<-.6||Math.abs(pos.x)>11.1||Math.abs(pos.z)>8.4){physics.teleport([-4.3,0,6.3]);toast('已回到入口，探索记录仍然保留。');}
     }else accumulator=0;
-    player.update(elapsed,dt,{moving,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',stepping:Math.abs(physics.feet().y-lastY)>.002,care:!!careItem});lastY=physics.feet().y;
+    player.update(elapsed,dt,{moving,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',floorAt:physics.floorAt,care:!!careItem});
     for(const actor of actors){
       let walking=0;const talking=dialogTarget?.id===actor.id;
       if(actor.definition.route&&!talking){

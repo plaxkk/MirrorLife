@@ -7,7 +7,8 @@
 <main>
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
-<p>最新续作：居民离座后再面向玩家，结束后回位；坐姿按骨架与椅高修正，膝盖越过坐垫、鞋底落地。<a href="../../docs/ATRIUM_SEATING_REVIEW.md">动作续作审查</a> · <a href="seating/report.json">坐姿原始测量</a>。下方“本轮修补前后”保留建筑修补阶段的对照；最新性能以报告为准。</p>
+<p>最新续作：两座楼梯加入实际碰撞面探测与腿部高度解算；上行、下行、中途停步通过输入专测。<a href="../../docs/ATRIUM_STAIRS_REVIEW.md">楼梯审查</a> · <a href="stairs/report.json">逐帧接触指标</a>。指标为骨骼估算，未证明鞋底网格无穿透或步态无脚滑。</p>
+<p>上一轮：居民离座后再面向玩家，结束后回位；坐姿按骨架与椅高修正，膝盖越过坐垫、鞋底落地。<a href="../../docs/ATRIUM_SEATING_REVIEW.md">动作续作审查</a> · <a href="seating/report.json">坐姿原始测量</a>。下方“本轮修补前后”保留建筑修补阶段的对照；最新性能以报告为准。</p>
 <p>上一轮建筑续作已修墙顶漏缝、椅背/扶手端面、人物握持，并补两层静态地面接触遮蔽。该轮桌面峰值 493,955 三角面，P95 34.3ms；这是历史值，最新结果见性能报告。<a href="../../docs/ATRIUM_CONTINUATION_REVIEW.md">续作审查与剩余问题</a> · <a href="acceptance.json">同构建验收记录</a></p>
 <p>以下全部“运行图”来自实际 Three.js 场景。参考图仅用于对照，未贴在场景里冒充建筑。自由检查镜头与真实键盘回游录像分开呈现；不提供无测量依据的还原度百分比。</p>
 <p><a href="http://127.0.0.1:4194/atrium.html">进入本机试点</a> · <a href="../../docs/ATRIUM_PILOT_HANDOFF.md">交接与未完成项</a> · <a href="assets.json">资产数据与版本指纹</a> · <a href="PERFORMANCE.md">性能报告</a></p>
@@ -18,7 +19,7 @@
 <p>差距主要在建筑曲面节奏、主楼梯侧墙、人物比例与服装质感、植物层次及柔和间接光；保留天井、中央桌、右主梯和回廊，并不等于达成精品 PC 游戏级品质。</p>
 <details><summary>叠图检查（仅按画幅叠放，不伪称几何配准）</summary><div class="slider"><label for="opacity">运行图透明度</label><input id="opacity" type="range" min="0" max="100" value="50"></div><div class="overlay"><img src="../../design/references/atrium-visual-target.png" alt="参考底图"><img id="runtime-overlay" src="gallery-reference.png" style="opacity:.5" alt="运行叠图"></div><small>相机是人工拟合；可见错位即真实差距，没有局部扭曲或图像补绘。</small></details>
 <h2>连续实际游玩</h2><video controls preload="metadata" src="playthrough.mp4" poster="first-floor.png"></video>
-<p>键盘走路、上主楼梯、二层回廊、居民对话、共同决策、回程梯、离开。录制时不传送、不剪接；自动操作读位置仅用于方向控制。录制可能影响帧率，单独性能采样见报告。</p>
+<p>键盘走路、上主楼梯、二层回廊、居民对话、共同决策、回程梯、离开。录制时不传送、不剪接；自动操作读取位置和镜头朝向仅用于方向控制。最终录制使用本机 Chrome 无窗口模式运行真实 WebGL 页面，以保持完整画幅；美术截图和性能测试仍使用可见 Chrome。录制可能影响帧率，单独性能采样见报告。</p>
 <h2>多角度检查</h2><div class="grid">
 <figure><img src="first-floor.png" alt="一层"><figcaption>一层入口与社交中心</figcaption></figure>
 <figure><img src="upper-floor.png" alt="二层"><figcaption>可到达的二层，俯瞰共享桌</figcaption></figure>
@@ -38,7 +39,11 @@
 <figure><img src="character-contact/tea-side.png" alt="最新茶杯握持"><figcaption>同一人物骨架、真实三维茶杯与原尺寸握持。</figcaption></figure>
 </div>
 <h2>异常与移动证据</h2><p><a href="resilience.json">异常用例原始结果</a> · <a href="walkthrough-trace.json">输入驱动回游记录</a> · <a href="performance-measurement.json">桌面采样</a> · <a href="mobile-measurement.json">移动模拟采样</a></p>
-<h2>最新坐姿与离座交流</h2><div class="grid">
+<h2>楼梯中途停步</h2><div class="grid">
+<figure><img src="stairs/main-up.png" alt="主楼梯上行停步"><figcaption>主楼梯半途停步，实际鞋底与台阶近景。</figcaption></figure>
+<figure><img src="stairs/return-down.png" alt="回程楼梯下行停步"><figcaption>回程楼梯下行。专测在梯口设置起点，楼梯内以真实按键移动。</figcaption></figure>
+</div>
+<h2>坐姿与离座交流</h2><div class="grid">
 <figure><img src="seating/player-upper.png" alt="二层玩家坐姿"><figcaption>坐姿前移后，膝盖越过坐垫前缘，鞋底回到地面。仍需继续精修上身和手部动作。</figcaption></figure>
 <figure><img src="seating/lin-conversation.png" alt="居民离开椅子面向玩家交流"><figcaption>林晓移到椅旁后再转身，结束交流后返回原座位。</figcaption></figure>
 </div>

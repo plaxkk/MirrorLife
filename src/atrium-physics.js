@@ -3,7 +3,7 @@ import RAPIER from '@dimforge/rapier3d-compat';
 export async function createAtriumPhysics(definitions) {
   await RAPIER.init();
   const world=new RAPIER.World({x:0,y:-18,z:0});
-  const residents=new Map(),residentHandles=new Set();
+  const residents=new Map(),residentHandles=new Set(),surfaces=new Map();
   for(const d of definitions) {
     let desc;
     if(d.type==='box')desc=RAPIER.ColliderDesc.cuboid(...d.size.map(v=>v/2)).setTranslation(...d.position);
@@ -13,7 +13,7 @@ export async function createAtriumPhysics(definitions) {
         .setTranslation(d.x,d.rise/2+d.height/2,(d.z0+d.z1)/2)
         .setRotation({x:Math.sin(angle/2),y:0,z:0,w:Math.cos(angle/2)});
     }
-    if(desc)world.createCollider(desc.setFriction(.65));
+    if(desc){const c=world.createCollider(desc.setFriction(.65));surfaces.set(c.handle,d.name||d.type);}
   }
   const body=world.createRigidBody(RAPIER.RigidBodyDesc.kinematicPositionBased().setTranslation(-4.3,.87,6.3));
   const collider=world.createCollider(RAPIER.ColliderDesc.capsule(.59,.25),body);
@@ -35,6 +35,13 @@ export async function createAtriumPhysics(definitions) {
       world.timestep=dt;world.step();return api.feet();
     },
     feet(){const p=body.translation();return {x:p.x,y:p.y-.84,z:p.z};},
+    floorAt(x,z,feetY){
+      const origin={x,y:feetY+.45,z};
+      const hit=world.castRayAndGetNormal(new RAPIER.Ray(origin,{x:0,y:-1,z:0}),1.05,true,undefined,undefined,collider,undefined,c=>!residentHandles.has(c.handle));
+      if(!hit||hit.normal.y<.7)return null;
+      const name=surfaces.get(hit.collider.handle);
+      return {height:origin.y-hit.timeOfImpact,name,stair:/stair tread/i.test(name)};
+    },
     teleport(p){body.setTranslation({x:p[0],y:p[1]+.87,z:p[2]},true);body.setNextKinematicTranslation({x:p[0],y:p[1]+.87,z:p[2]});vy=0;world.step();},
     cameraDistance(origin,direction,distance) {
       let result=distance;
