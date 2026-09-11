@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-11T09:19:35.205Z",
-  "runtimeFingerprint": "236b8815a45cd1a9e04d4f690168c6726f6c67cc1ec781aed443f2d383394824",
+  "capturedAt": "2026-09-11T13:25:10.038Z",
+  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
   "method": "Local Chrome headless, 1200x1000 DPR1; real runtime actors in their room positions, diagnostic cameras. Animation is not frozen. Screenshots require visual review; no automatic art pass.",
   "views": [
     {
@@ -95,7 +95,7 @@
           -1.95
         ],
         "yaw": 0,
-        "seatBlend": 0.9999796119171127,
+        "seatBlend": 0.9999990493881433,
         "seatMotion": {
           "seated": true,
           "moving": 0,
@@ -127,7 +127,7 @@
           -1.95
         ],
         "yaw": 0,
-        "seatBlend": 0.999999272287657,
+        "seatBlend": 0.9999999897804164,
         "seatMotion": {
           "seated": true,
           "moving": 0,
@@ -159,7 +159,7 @@
           -1.95
         ],
         "yaw": -0.15,
-        "seatBlend": 0.9999999612819523,
+        "seatBlend": 0.9999999997556843,
         "seatMotion": {
           "seated": true,
           "moving": 0,
@@ -191,7 +191,7 @@
           -1.95
         ],
         "yaw": -0.15,
-        "seatBlend": 0.9999999986180358,
+        "seatBlend": 0.9999999999955252,
         "seatMotion": {
           "seated": true,
           "moving": 0,
@@ -361,12 +361,12 @@
       "angle": "front",
       "file": "tang-front.png",
       "camera": [
-        -0.9919652000000019,
+        -1.429905200000007,
         4.7700000000000005,
-        -5.699999999999998
+        -5.699999999999999
       ],
       "look": [
-        0.15803479999999803,
+        -0.27990520000000707,
         4.65,
         -5.699999999999999
       ],
@@ -374,11 +374,11 @@
         "id": "tang",
         "busy": false,
         "position": [
-          0.15803479999999803,
+          -0.27990520000000707,
           3.5,
           -5.699999999999999
         ],
-        "yaw": -1.570796326794896,
+        "yaw": -1.5707963267948963,
         "seatBlend": 0
       }
     },
@@ -387,12 +387,12 @@
       "angle": "side",
       "file": "tang-side.png",
       "camera": [
-        -0.039929200000003676,
+        -0.4959052000000083,
         4.7700000000000005,
         -4.549999999999999
       ],
       "look": [
-        -0.03992920000000444,
+        -0.4959052000000086,
         4.65,
         -5.699999999999999
       ],
@@ -400,11 +400,11 @@
         "id": "tang",
         "busy": false,
         "position": [
-          -0.03992920000000444,
+          -0.4959052000000086,
           3.5,
           -5.699999999999999
         ],
-        "yaw": -1.570796326794896,
+        "yaw": -1.5707963267948963,
         "seatBlend": 0
       }
     }

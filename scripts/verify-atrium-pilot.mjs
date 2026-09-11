@@ -42,14 +42,14 @@ try{
     await page.evaluate(()=>{window.__qaFocusEvents=[];window.__qaPointerEvents=[];for(const type of ['blur','focus','visibilitychange'])window.addEventListener(type,()=>window.__qaFocusEvents.push({type,time:performance.now(),hidden:document.hidden}));
       for(const type of ['pointerdown','pointerup','pointercancel','lostpointercapture','pointermove'])window.addEventListener(type,e=>{window.__qaPointerEvents.push({type,buttons:e.buttons,x:e.clientX,y:e.clientY,time:performance.now()});if(window.__qaPointerEvents.length>150)window.__qaPointerEvents.shift();});});
     // Read position and camera yaw to steer; all movement uses real keys.
-    async function walk(x,z,label){
+    async function walk(x,z,label,expectedPrompt=null){
       await page.bringToFront();
       let held=new Set();let previous=null,stuck=0;
       try{
         for(let i=0;i<150;i++){
-          const {p,yaw}=await page.evaluate(()=>({p:window.__atrium.getPosition(),yaw:window.__atrium.getHeading()}));
+          const {p,yaw,prompt}=await page.evaluate(()=>({p:window.__atrium.getPosition(),yaw:window.__atrium.getHeading(),prompt:document.querySelector('#interaction').hidden?'':document.querySelector('#interaction-text').textContent}));
           const dx=x-p.x,dz=z-p.z;
-          if(Math.hypot(dx,dz)<.16){
+          if(Math.hypot(dx,dz)<.16&&(!expectedPrompt||prompt.includes(expectedPrompt))){
             for(const k of held)await page.keyboard.up(k);held.clear();
             await pause(100);
             const stopped=await page.evaluate(()=>window.__atrium.getPosition());
@@ -110,7 +110,9 @@ try{
       await walk(8.55,-5.65,'east gallery');await walk(8.55,3.65,'upper side room');await walk(9.1,3.65,'postcard');
       await interact('明信片','discovery-postcard');await close();
       await walk(8.55,3.65,'observation chair bypass');await walk(8.55,5.85,'observation aisle');await walk(9.35,5.85,'lookout');await interact('从楼上','upper-lookout');await close();
-      await walk(9.5,5.35,'upper seat');await interact('落座','seated');await page.keyboard.press('KeyE');await pause(650);
+      // Use visible seat feedback at this close pair of hotspots. Coordinate
+      // tolerance alone can stop on the lookout side; the chair remains solid.
+      await walk(9.5,5.3,'upper seat','落座');await interact('落座','seated');await page.keyboard.press('KeyE');await pause(650);
       await walk(8.55,5.35,'leave observation seat');await walk(8.55,3.65,'east corridor return');await walk(8.55,-5.65,'east corridor back');await walk(-7.15,-5.65,'west gallery');
       await walk(-7.15,.4,'quiet conversation');await interact('周宁','dialogue-quiet');await close();
       await walk(-7.15,2.15,'record player');await interact('旧录音','discovery-record');await close();

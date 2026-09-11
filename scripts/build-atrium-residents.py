@@ -13,6 +13,42 @@ garment_tools=importlib.util.module_from_spec(garment_spec);garment_spec.loader.
 OUT=ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
+# Carry source roughness through the shared batcher's RGBA colour channel.
+# Decode it into a standard glTF texture below, then restore fully opaque colour.
+shared_material_builder=civic.build_materials
+def surface_materials(*args,**kwargs):
+    mats=shared_material_builder(*args,**kwargs)
+    for mat in mats.values():
+        roughness=mat.node_tree.nodes.get('Principled BSDF').inputs['Roughness'].default_value
+        mat.diffuse_color=(*mat.diffuse_color[:3],roughness)
+    return mats
+civic.build_materials=surface_materials
+
+def restore_skinned_surfaces():
+    ramp=bpy.data.images.new('Resident roughness lookup',width=256,height=1,alpha=False)
+    ramp.colorspace_settings.name='Non-Color'
+    ramp.pixels=[channel for i in range(256) for channel in (1,i/255,0,1)]
+    ramp.pack()
+    for obj in bpy.context.scene.objects:
+        if obj.type!='MESH' or not any(m.type=='ARMATURE' for m in obj.modifiers):continue
+        colors=obj.data.color_attributes.get('Color')
+        if not colors:continue
+        uv=obj.data.uv_layers.new(name='SurfaceRoughness')
+        for loop in obj.data.loops:
+            roughness=colors.data[loop.vertex_index].color[3]
+            uv.data[loop.index].uv=((roughness*255+.5)/256,.5)
+        for color in colors.data:color.color=(*color.color[:3],1)
+        for mat in obj.data.materials:
+            nodes=mat.node_tree.nodes;links=mat.node_tree.links
+            texture=nodes.new('ShaderNodeTexImage');texture.image=ramp;texture.interpolation='Closest'
+            coordinates=nodes.new('ShaderNodeUVMap');coordinates.uv_map=uv.name
+            separate=nodes.new('ShaderNodeSeparateColor')
+            links.new(coordinates.outputs['UV'],texture.inputs['Vector'])
+            links.new(texture.outputs['Color'],separate.inputs['Color'])
+            links.new(separate.outputs['Green'],nodes.get('Principled BSDF').inputs['Roughness'])
+            mat['atrium_surface_contract']='source-roughness-lookup-v1'
+        obj.data.uv_layers.active_index=0
+    for mat in bpy.data.materials:mat.diffuse_color=(*mat.diffuse_color[:3],1)
 # Each resident has an independently authored body profile and head/wardrobe silhouette.
 PEOPLE=[
  ('you','player','spiky',1.0,'#eddfc5','#e9b34c','#283b4a'),
@@ -243,6 +279,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     core=bpy.data.objects['SkinnedArticulationCore']
     bpy.ops.object.select_all(action='DESELECT');core.select_set(True);bpy.context.view_layer.objects.active=core
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.008);bpy.ops.object.mode_set(mode='OBJECT')
+    restore_skinned_surfaces()
     # Fit facial features to the actual sculpt, not a constant plane in front
     # of an ellipsoid. Constant Y left eyelids, lips and blush visibly floating.
     face=bpy.data.objects['Head']

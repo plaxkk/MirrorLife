@@ -1,6 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
+import {PNG} from 'pngjs';
 import {freshState,normalizeState,applyDecision,canDecide,RESIDENTS,residentSpeech} from '../src/atrium-content.js';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {loadAtriumState,saveAtriumState} from '../src/atrium-persistence.js';
@@ -192,5 +193,32 @@ test('both resident LODs preserve used skin, hair, eye and fabric material respo
     const response=Object.fromEntries([...used].map(i=>gltf.materials[i]).filter(m=>m.extras?.atrium_surface_family).map(m=>[m.extras.atrium_surface_family,m.pbrMetallicRoughness.roughnessFactor]));
     assert.ok(response.eye<response.hair&&response.hair<response.skin&&response.skin<response.fabric,`${id}${suffix}: ${JSON.stringify(response)}`);
     assert.ok(gltf.skins.length>0,`${id}${suffix}: retain animated body`);
+  }
+});
+
+test('resident skin batches retain authored roughness without extra primitives or translucent colours',async()=>{
+  for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile', '-master']){
+    const file=suffix==='-master'?`../models/atrium/residents/${id}${suffix}.glb`:`../public/assets/atrium/residents/${id}${suffix}.glb`;
+    const b=await fs.readFile(new URL(file,import.meta.url)),length=b.readUInt32LE(12);
+    const gltf=JSON.parse(b.subarray(20,20+length)),binary=b.subarray(length+28);
+    const core=gltf.nodes.find(n=>n.name==='SkinnedArticulationCore'),primitives=gltf.meshes[core.mesh].primitives;
+    assert.equal(primitives.length,1,`${id}${suffix}: keep one body draw`);
+    const p=primitives[0],mat=gltf.materials[p.material],texture=mat.pbrMetallicRoughness.metallicRoughnessTexture;
+    assert.equal(texture.texCoord,1);assert.equal(mat.alphaMode??'OPAQUE','OPAQUE');
+    const uv=gltf.accessors[p.attributes.TEXCOORD_1];
+    assert.equal(uv.type,'VEC2');assert.equal(uv.count,gltf.accessors[p.attributes.POSITION].count);
+    const view=gltf.bufferViews[gltf.images[gltf.textures[texture.index].source].bufferView];
+    const png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
+    assert.equal(png.width,256);assert.equal(png.height,1);
+    for(let i=0;i<256;i++)assert.equal(png.data[i*4+1],i,'linear roughness lookup, no sRGB conversion');
+    if(suffix==='-master'){
+      const accessor=gltf.accessors[p.attributes.COLOR_0],buffer=gltf.bufferViews[accessor.bufferView];
+      assert.equal(accessor.componentType,5126);
+      assert.ok(['VEC3','VEC4'].includes(accessor.type));
+      if(accessor.type==='VEC4')for(let i=0;i<accessor.count;i++)assert.equal(binary.readFloatLE((buffer.byteOffset||0)+(accessor.byteOffset||0)+i*(buffer.byteStride||16)+12),1,'roughness metadata must not leak into opacity');
+      const uvView=gltf.bufferViews[uv.bufferView],values=new Set();
+      for(let i=0;i<uv.count;i++)values.add(Math.round(binary.readFloatLE((uvView.byteOffset||0)+(uv.byteOffset||0)+i*(uvView.byteStride||8))*256-.5));
+      for(const roughness of [.68,.74,.91])assert.ok(values.has(Math.round(roughness*255)),`${id}: missing shoe, skin or cloth response ${roughness}`);
+    }
   }
 });

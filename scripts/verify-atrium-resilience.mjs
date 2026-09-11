@@ -45,12 +45,21 @@ try{
   await page.keyboard.press('Escape');assert.equal(await page.$eval('#dialogue',e=>e.hidden),true);
   results.push({case:'repeated E, modal movement lock, focus trap and Escape',pass:true});
   await fixture(page,[8.4,0,2]);
+  // Observe a fresh busy interval, not the last frame of one already in progress.
+  // A CDP keypress after an arbitrary busy=true observation may arrive after it ends.
+  await page.waitForFunction(()=>!window.__atrium.getInteractionState().residents.find(x=>x.id==='xu').busy,{timeout:10000});
   await page.waitForFunction(()=>window.__atrium.getInteractionState().residents.find(x=>x.id==='xu').busy,{timeout:25000});
-  await page.keyboard.press('KeyE');assert.equal(await page.$eval('#dialogue',e=>e.hidden),true);
+  await page.evaluate(()=>window.addEventListener('keydown',()=>{
+    window.__qaBusyPress={resident:window.__atrium.getInteractionState().residents.find(x=>x.id==='xu'),prompt:document.querySelector('#interaction-text').textContent};
+  },{capture:true,once:true}));
+  await page.keyboard.press('KeyE');
+  const busyPress=await page.evaluate(()=>window.__qaBusyPress);
+  assert.equal(busyPress.resident.busy,true,'The real keydown must occur while the resident is busy');
+  assert.equal(await page.$eval('#dialogue',e=>e.hidden),true);
   assert.match(await page.$eval('#toast',e=>e.textContent),/稍等/);
   await page.waitForFunction(()=>!window.__atrium.getInteractionState().residents.find(x=>x.id==='xu').busy,{timeout:10000});
   await page.keyboard.press('KeyE');assert.match(await page.$eval('#dialogue-title',e=>e.textContent),/许禾/);await page.keyboard.press('Escape');
-  results.push({case:'busy resident waits and becomes interactable again',pass:true});
+  results.push({case:'busy resident waits and becomes interactable again',pass:true,busyPress});
   const memories=await page.evaluate(async()=>{
     const db=await new Promise((resolve,reject)=>{const r=indexedDB.open('mirrorlife');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});
     return new Promise((resolve,reject)=>{const r=db.transaction('memories').objectStore('memories').getAll();r.onsuccess=()=>{db.close();resolve(r.result.filter(x=>x.source==='atrium-pilot'));};r.onerror=()=>reject(r.error);});

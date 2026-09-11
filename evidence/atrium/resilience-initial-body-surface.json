@@ -1,0 +1,28 @@
+{
+  "capturedAt": "2026-09-11T13:29:36.274Z",
+  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
+  "browserMode": "headed",
+  "results": [
+    {
+      "case": "out of range E",
+      "pass": true
+    },
+    {
+      "case": "upper seat can be selected beside postcard, sit and stand",
+      "pass": true
+    },
+    {
+      "case": "cancel care before completion does not unlock a discovery",
+      "pass": true
+    },
+    {
+      "case": "completed and repeated care is recorded once",
+      "pass": true
+    },
+    {
+      "case": "repeated E, modal movement lock, focus trap and Escape",
+      "pass": true
+    }
+  ],
+  "failure": "AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:\n\nfalse !== true\n"
+}

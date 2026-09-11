@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-11T09:23:54.720Z",
-  "runtimeFingerprint": "236b8815a45cd1a9e04d4f690168c6726f6c67cc1ec781aed443f2d383394824",
+  "capturedAt": "2026-09-11T13:31:10.316Z",
+  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
   "browserMode": "headed",
   "fixtureNotice": "Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.",
   "results": [
@@ -26,7 +26,21 @@
     },
     {
       "case": "busy resident waits and becomes interactable again",
-      "pass": true
+      "pass": true,
+      "busyPress": {
+        "resident": {
+          "id": "xu",
+          "busy": true,
+          "position": [
+            9.1,
+            0,
+            2
+          ],
+          "yaw": -1.1,
+          "seatBlend": 0
+        },
+        "prompt": "和许禾聊聊"
+      }
     },
     {
       "case": "existing IndexedDB archive receives distinct pilot memories",

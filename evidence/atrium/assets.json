@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-11T09:31:12.294Z",
-  "runtimeFingerprint": "236b8815a45cd1a9e04d4f690168c6726f6c67cc1ec781aed443f2d383394824",
+  "generatedAt": "2026-09-11T13:40:37.585Z",
+  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 100918188,
-  "totalPublicBytes": 14173636,
+  "totalSourceBytes": 104256208,
+  "totalPublicBytes": 14184760,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -22,8 +22,8 @@
     },
     {
       "file": "public/assets/atrium/animations/you-motion.glb",
-      "bytes": 911344,
-      "sha256": "95203e5a9fda04ecaa3453f01704e6900e60b5c01a3de4850c0692e3e8f34587",
+      "bytes": 912068,
+      "sha256": "5f4c54d601d43b5ba964de6cd4ac88a84154552c737152bf715b013b451d7abe",
       "meshes": 55,
       "materials": 16,
       "skins": 1,
@@ -284,8 +284,8 @@
     },
     {
       "file": "public/assets/atrium/residents/chen-mobile.glb",
-      "bytes": 165864,
-      "sha256": "2990faa79b2857f7d9126bac55f4103910f800a683985fdabb67edac10871dab",
+      "bytes": 166640,
+      "sha256": "30f6edbde0b3c5bbaa5356f016c13681f8a5d1f6b3da01dad08bd08d9d984270",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -294,8 +294,8 @@
     },
     {
       "file": "public/assets/atrium/residents/chen.glb",
-      "bytes": 208324,
-      "sha256": "01d916e77647581e268866814256609d69f3b8aa77bb6d93982e56d90e7757b1",
+      "bytes": 209056,
+      "sha256": "268cbe8502df85c2e61cde1dd046496d4f82fa250f9d48c2a578f1fd2ae43aab",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -304,8 +304,8 @@
     },
     {
       "file": "public/assets/atrium/residents/he-mobile.glb",
-      "bytes": 165144,
-      "sha256": "74793eeabf231278fcdcfdd1eb7bf001862de16749d6de3c06d642a7bc7554ae",
+      "bytes": 166000,
+      "sha256": "80bb9a97c2eac5292a73d6481b1bac746936bd80443c56da99428a1fd484c16b",
       "meshes": 11,
       "materials": 5,
       "skins": 1,
@@ -314,8 +314,8 @@
     },
     {
       "file": "public/assets/atrium/residents/he.glb",
-      "bytes": 209380,
-      "sha256": "76fb9f28e2850e092e3cb71e93acd2c15a8be7cd7eeb31fe2d4034d93f32ef52",
+      "bytes": 210148,
+      "sha256": "93ebebf57315621d0aa6a9208033d0ea4e4a6b0902a4248c08cdba54b12f0e28",
       "meshes": 11,
       "materials": 5,
       "skins": 1,
@@ -324,18 +324,18 @@
     },
     {
       "file": "public/assets/atrium/residents/lin-mobile.glb",
-      "bytes": 168232,
-      "sha256": "b67918f2539f75092c9b67e323e6ba2db7c5faa642d23258b74930adeb76a0cc",
+      "bytes": 168980,
+      "sha256": "625f62feb8f185abb76504af38402c58f3cba06334cf691f67a12252738d9918",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
-      "triangles": 18073,
+      "triangles": 18074,
       "animations": []
     },
     {
       "file": "public/assets/atrium/residents/lin.glb",
-      "bytes": 215336,
-      "sha256": "9450d07a29de22e6d50ec451b54ff67584b6d86e10087a879f3113c6c278b31e",
+      "bytes": 216008,
+      "sha256": "f0fd398b3eb2bab708b0dd944ba870f8c45fa28b9afc861d05ae0f0603476331",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -349,8 +349,8 @@
     },
     {
       "file": "public/assets/atrium/residents/tang-mobile.glb",
-      "bytes": 170412,
-      "sha256": "b9d6cf51b316e06fce92b4fdaa553bc4dbde0216a42ef5bfea21bd50e6808d18",
+      "bytes": 171224,
+      "sha256": "bbf3f5ee1ba59855ec8c067cfe27a732bc556b11b9f4d18a461fe3a84ee1f64a",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -359,8 +359,8 @@
     },
     {
       "file": "public/assets/atrium/residents/tang.glb",
-      "bytes": 217144,
-      "sha256": "68adcb3a169ef5f823ed9d422b73c73ffab61d77cf00d01e47ec106b5e72eae4",
+      "bytes": 217872,
+      "sha256": "5a2e273556526c31fd78b01aa4d0314862e619d8f75d804b0fd4aae2f4b29ce3",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -369,8 +369,8 @@
     },
     {
       "file": "public/assets/atrium/residents/xu-mobile.glb",
-      "bytes": 177624,
-      "sha256": "608ac9fb1726de67c4f22292c0c48eeee8ee75a883bc15d2f09a245f781f6540",
+      "bytes": 178304,
+      "sha256": "aaae16ab0dc08c7a16e5eb79551050ea38ec991ff06bfb7c16740c08f0018d08",
       "meshes": 11,
       "materials": 5,
       "skins": 1,
@@ -379,8 +379,8 @@
     },
     {
       "file": "public/assets/atrium/residents/xu.glb",
-      "bytes": 225884,
-      "sha256": "c130ea39306a490adb02e090185e59a5aa0789f1f1293405589755adf928ccfe",
+      "bytes": 226824,
+      "sha256": "549e0f2f243bfce2ce2b48ee4f937f2bf01dc6f119ed8e62227311d1b57626f1",
       "meshes": 11,
       "materials": 5,
       "skins": 1,
@@ -389,8 +389,8 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 171724,
-      "sha256": "79a0c0685abb967d81ba25bf2dc1c259118f0cfb775f38d8c857636f6fa663d0",
+      "bytes": 172404,
+      "sha256": "bbfe8f56b3fd68cc8ea768fd512fc855a2d6a66c6e1fce55f363cc7bb44dc773",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -399,8 +399,8 @@
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 218956,
-      "sha256": "475bf0239be6431160a30e5d82ba37bb7edb9aac6a1b973dc56570765730ba20",
+      "bytes": 219636,
+      "sha256": "e09bf1397d5be925a5b98ed9e7a8452e02ee0ef75d59e07018a638e592aa60b2",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -409,8 +409,8 @@
     },
     {
       "file": "public/assets/atrium/residents/zhou-mobile.glb",
-      "bytes": 177380,
-      "sha256": "8910d5085a26fa288433ab1179846b25394ad09f256e41516c591b5599293376",
+      "bytes": 178152,
+      "sha256": "ee2c242acf7e1c9be452da13ce6d9ef3013e50465cdacd647a767080e3f7ef36",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -419,8 +419,8 @@
     },
     {
       "file": "public/assets/atrium/residents/zhou.glb",
-      "bytes": 225620,
-      "sha256": "bdf3a4697b58070e06cb25768f1de9c90e099b8ac94398e1695845aaea71179d",
+      "bytes": 226176,
+      "sha256": "4b6868270b6a3aa7876b180703b996941db727e78e7b8f5ee5311819af96ad97",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -439,8 +439,8 @@
     },
     {
       "file": "models/atrium/animations/you-motion.blend",
-      "bytes": 1381798,
-      "sha256": "ee077e0b889ab7ebfb2030793f66ed84cf6d6254593ad5765d88900ee6823109"
+      "bytes": 1363992,
+      "sha256": "ba5e4f6e86d04a12f32207eecde42882af5cf3eb26e1261bef4317e9f0575e87"
     },
     {
       "file": "models/atrium/atrium-master.blend",
@@ -509,8 +509,8 @@
     },
     {
       "file": "models/atrium/residents/chen-master.glb",
-      "bytes": 1837432,
-      "sha256": "b613eb43ec5932a1c8fd0dfffd44693907d25804613095cf859078d0a571beaf",
+      "bytes": 1929468,
+      "sha256": "2a611ea1738d79d24fd966593dd9dda1ee2b0a9b70974d66744e4199b252ffc8",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -519,13 +519,13 @@
     },
     {
       "file": "models/atrium/residents/chen.blend",
-      "bytes": 3447048,
-      "sha256": "00faba1d14f3d53753836634c3274d62aea90df367fc88c4399835d125aaaa9f"
+      "bytes": 3829158,
+      "sha256": "c4e93911c122236046dece5ccfc4a11fc8dc6192272ad3fbec8683a6d3055dda"
     },
     {
       "file": "models/atrium/residents/he-master.glb",
-      "bytes": 1856076,
-      "sha256": "88335a8d041dead60c2a4294d2f12846f797630b63ef5a1db1e54c3bbcf67a9d",
+      "bytes": 1945216,
+      "sha256": "80538844c15e319426d628b66f1350354d7bcd94827e35c944fdb5412e6fca40",
       "meshes": 11,
       "materials": 5,
       "skins": 1,
@@ -534,13 +534,13 @@
     },
     {
       "file": "models/atrium/residents/he.blend",
-      "bytes": 3411420,
-      "sha256": "59ba630c6395f4b761e8a5fafb8cdeece407fa0441fe5c894b15d987f1917a17"
+      "bytes": 3782778,
+      "sha256": "a728939e0ee87d98fe7a88f43f6596c6ee98032c17704b6930a587fe9aa9a063"
     },
     {
       "file": "models/atrium/residents/lin-master.glb",
-      "bytes": 1945724,
-      "sha256": "e6ca4a4fc2db168506a0e153adb0ac53005ca239617fbbe40d5621b8af5cb06c",
+      "bytes": 2035712,
+      "sha256": "033d82c5683ab6e67e9121430fdb26565f81bac6f21d5ade94924ec0d6f75634",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -549,13 +549,13 @@
     },
     {
       "file": "models/atrium/residents/lin.blend",
-      "bytes": 3451656,
-      "sha256": "1230b07a02a5ebba11ca704958420eaac164236b06b183dad1ee38b6a3597ecb"
+      "bytes": 3823014,
+      "sha256": "f624900a44427f4a188dc976391c9dda6e2888dba06f8d6a35d22f50cfcde7f0"
     },
     {
       "file": "models/atrium/residents/tang-master.glb",
-      "bytes": 1925348,
-      "sha256": "246b06b501f7d185ef06d2edb099e3e8f48c0a9ad2ea60a53046fb3aa6ce4622",
+      "bytes": 2017284,
+      "sha256": "ccf69fab0b8e3faaccfd297766fcb5cc41b1aa64470623ff0c8eddc575e999b0",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -564,13 +564,13 @@
     },
     {
       "file": "models/atrium/residents/tang.blend",
-      "bytes": 3520076,
-      "sha256": "7bd8ee47103797659396bd20a6571d5d510fcd1be570b09e5b9fe4bf68843e9d"
+      "bytes": 3902186,
+      "sha256": "13212a6b74915cdfe5b2ae55120d0a3dc9c943a3dd29d66bcdb538c0d2a9b9b7"
     },
     {
       "file": "models/atrium/residents/xu-master.glb",
-      "bytes": 2030504,
-      "sha256": "407e61356bca482703358ccea8266d793eec6703af2efc5fab73dc3f3c2d0b10",
+      "bytes": 2130100,
+      "sha256": "80be93890db6a27b39dc3aaaf23c0886c5824f0f32312d8a799a58af1043ecfb",
       "meshes": 11,
       "materials": 5,
       "skins": 1,
@@ -579,13 +579,13 @@
     },
     {
       "file": "models/atrium/residents/xu.blend",
-      "bytes": 3638476,
-      "sha256": "3cdb36c70d288606fdd51e2b5f0bef64491af91b597fed5e53d76403bcc683a8"
+      "bytes": 4044586,
+      "sha256": "75ff85fd29133c9a9169d0bede11bcc41d4ce19e6222b031f7cfb3d4d1003ff6"
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 1938384,
-      "sha256": "93fb38c6369fd5041f62b6d116b849c973b9efda5a85044954b361d598a751ff",
+      "bytes": 2030772,
+      "sha256": "799125c30c695ecb00746625b542c058e28958e06db1e17bccc52bbcafe13dd7",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -594,13 +594,13 @@
     },
     {
       "file": "models/atrium/residents/you.blend",
-      "bytes": 3504804,
-      "sha256": "6bec06e2fb5600e89d5b896595bea949dce0e324659d26611821c13a4ca98aba"
+      "bytes": 3886914,
+      "sha256": "904d1681a71747b57fe4094320dacb306b77a27fbbd9329ec2b2213a9084db97"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",
-      "bytes": 2062552,
-      "sha256": "26a403d0e513963016c1abd8b53b7698ace342a3d57973cfde6d0dad644529f6",
+      "bytes": 2162028,
+      "sha256": "6a34563c245997a0c826daa7d51fb50b5295a23a057d6caea35bf2ef6a7429f8",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
@@ -609,8 +609,8 @@
     },
     {
       "file": "models/atrium/residents/zhou.blend",
-      "bytes": 3662288,
-      "sha256": "657e4c25726ac160114b744c54c168f18ec1408fcd38864f8ab81527aafc3d8b"
+      "bytes": 4068398,
+      "sha256": "34296e18b30449f1a2cb5e68396a698473d6f5b4ef0716294f82b3359f0c3759"
     }
   ]
 }

@@ -1,97 +1,97 @@
 {
-  "capturedAt": "2026-09-11T09:31:12.425Z",
-  "runtimeFingerprint": "236b8815a45cd1a9e04d4f690168c6726f6c67cc1ec781aed443f2d383394824",
+  "capturedAt": "2026-09-11T13:40:37.771Z",
+  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "build",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "assets",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "gallery",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "performance",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "mobile",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "garments",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "faces",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "controls",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "window-contact",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "contact",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "seating",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
     },
     {
       "name": "stairs",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+    },
+    {
+      "name": "resume-assets",
+      "seconds": 0.974
     },
     {
       "name": "resilience",
       "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
-    },
-    {
-      "name": "resume-assets",
-      "seconds": 0.641
+      "evidence": "Passed first resume with captured busy=true at real keydown; duration unavailable."
     },
     {
       "name": "walkthrough",
-      "seconds": 111.4
+      "seconds": 139.13
     },
     {
       "name": "video-decode",
-      "seconds": 60.229
+      "seconds": 80.644
     },
     {
       "name": "assets-after",
-      "seconds": 0.692
+      "seconds": 0.734
     },
     {
       "name": "performance-report",
-      "seconds": 0.111
+      "seconds": 0.153
     }
   ],
   "reports": {
@@ -99,7 +99,7 @@
       "frameMs": {
         "p50": 16.69999999999709,
         "p95": 17.5,
-        "p99": 17.700000000000728
+        "p99": 17.69999999999709
       },
       "renderPeaks": {
         "calls": 116,
@@ -118,7 +118,7 @@
       },
       "renderPeaks": {
         "calls": 94,
-        "triangles": 311549,
+        "triangles": 311550,
         "geometries": 88
       },
       "budgetPassed": true,
@@ -126,5 +126,14 @@
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "scope": "Initial same-candidate run completed through resilience; recorder post-processing timed out. Relevant walkthrough/video stages rerun after moving compression after browser closure, with unchanged runtime fingerprint and dist asset hashes. Initial step durations unavailable. Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
+  "scope": "Initial same-candidate run completed through stairs. Busy-state resilience assertion failed; first resume passed resilience with fresh busy-edge synchronization and captured keydown state. Two walkthrough attempts failed at the chair/lookout boundary and then the solid chair. Final input-driven approach requires the existing distance tolerance plus visible seat prompt. Complete walkthrough/video then passed with unchanged runtime fingerprint and all dist asset hashes. Earlier step durations unavailable; null is intentional. Automated verification is not final art, human playability or phone certification.",
+  "retainedFailures": [
+    "resilience-initial-body-surface.json",
+    "walkthrough-initial-body-surface.json",
+    "walkthrough-seat-approach-body-surface.json"
+  ],
+  "visualReview": {
+    "method": "Agent inspected eight evenly spaced contact-sheet frames and the 116-second frame after full decode. Not full human or frame-by-frame review.",
+    "findings": "Route remains rendered in 3D; UI readable in inspected final frame. Character shape and environmental fidelity remain below target."
+  }
 }
