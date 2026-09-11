@@ -4,6 +4,8 @@ import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 import {execFileSync} from 'node:child_process';
 import assert from 'node:assert/strict';
+// This experiment belongs to the historical automatic-pitch candidate.
+assert.ok((await fs.readFile('src/atrium-main.js','utf8')).includes("import {clearancePitch}"),'Historical experiment: run against d8eda79 in a separate checkout; current camera no longer uses automatic pitch.');
 const base='http://127.0.0.1:4193';
 const prior=execFileSync('git',['show','18821a4:src/atrium-camera-clearance.js'],{encoding:'utf8'});
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:false,args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding']});

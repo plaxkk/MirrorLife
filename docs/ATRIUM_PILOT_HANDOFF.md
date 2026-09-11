@@ -2,7 +2,9 @@
 
 状态：可玩闭环已建立；精品 PC 游戏级美术与稳定性验收尚未通过。不得把本文件或一次构建成功解读为全部需求完成。
 
-表面细节续作：将悬空裤侧薄片收回连续裤体，窄梯有顶部空间时恢复完整不透明人物，并修正玻璃作为实墙遮光的问题。见 `docs/ATRIUM_SURFACE_REVIEW.md`；整体光照变化有限，仍未达到参考图品质。
+最新试玩修正：取消步行时自动改变俯角，加入物理帧显示插值，补齐实际窗墙/窗套碰撞并调整七人比例及玩家服装。见 `docs/ATRIUM_FOLLOW_CONTACT_REVIEW.md`。下述历史的“自动抬高视角”方案已被本轮替代；整体美术与硬件性能仍需验收。
+
+历史表面细节续作：将悬空裤侧薄片收回连续裤体，窄梯有顶部空间时恢复完整不透明人物，并修正玻璃作为实墙遮光的问题。见 `docs/ATRIUM_SURFACE_REVIEW.md`；整体光照变化有限，仍未达到参考图品质。
 
 近墙视野与肩袖续作：受限时提高镜头俯角，保留玩家 yaw；七人压低肩峰并清理旧袖部叠层、提高指部网格保留率。详见 `docs/ATRIUM_CLEARANCE_REVIEW.md`。同候选指标以验收 JSON 为准，不沿用上一轮的帧时间。
 
@@ -52,6 +54,8 @@
 | 生活手持道具 | `models/atrium/life-props.blend`、`public/assets/atrium/life-props.glb` | 水壶与茶杯 |
 | 动画源与动作 GLB | `models/atrium/animations/`、`public/assets/atrium/animations/you-motion.glb` | 9 段动作参考；运行时使用同源关键姿势采样，不是加载这个高细节参考文件 |
 | 纹理、许可 | `public/assets/atrium/` | 四张小型程序纹理、原始许可声明和 CREDITS |
+
+窗墙碰撞增量重建：在完成下列建筑造型流程后，Blender 运行 `scripts/build-atrium-architecture-collision.py`，写回源场景和独立运行时碰撞清单。
 
 资产重建顺序：`build-atrium-assets.py` → `refine-atrium-source.py` → `polish-atrium-circulation.py` → `refine-atrium-library.py`；随后 `build-atrium-residents.py`、`build-atrium-life-props.py`、`export-atrium-kit.py`；最后 `node scripts/export-atrium-motion.mjs` 与 `bake-atrium-motion.py`。Python 脚本用 Blender 的 `--background --python` 运行，不是系统 Python。
 

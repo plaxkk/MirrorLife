@@ -39,6 +39,7 @@ try{
   await run('garments',process.execPath,['scripts/verify-atrium-garments.mjs']);
   await run('faces',process.execPath,['scripts/verify-atrium-faces.mjs']);
   await run('controls',process.execPath,['scripts/verify-atrium-controls.mjs']);
+  await run('window-contact',process.execPath,['scripts/verify-atrium-window-contact.mjs']);
   await run('contact',process.execPath,['scripts/verify-atrium-contact.mjs']);
   await run('seating',process.execPath,['scripts/verify-atrium-seating.mjs']);
   await run('stairs',process.execPath,['scripts/verify-atrium-stairs.mjs']);

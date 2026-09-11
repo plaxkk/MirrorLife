@@ -34,8 +34,7 @@ try{
     if(name==='planter')assert.ok(state.position.z>3.7,JSON.stringify(state.position));
     const controls=await page.evaluate(()=>window.__atrium.getCameraDiagnostics());
     if(name==='return-window'){
-      assert.ok(controls.clearancePitch>.65,'cramped stair camera reveals steps with a higher pitch');
-      assert.ok(controls.fade>.99,'open overhead space restores opaque avatar after camera settles');
+      assert.ok(Math.abs(controls.clearancePitch-controls.pitch)<1e-6,'walking does not choose an automatic camera pitch');
     }
     report.push({name,position:state.position,camera:state.camera,controls});
   }

@@ -3,7 +3,6 @@ import {loadAtriumGLB,disposeAtriumDecoder} from './atrium-assets.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createAtriumPhysics} from './atrium-physics.js';
 import {addAtriumCameraGeometry} from './atrium-camera-geometry.js';
-import {clearancePitch} from './atrium-camera-clearance.js';
 import {cameraRelativeInput,updateMoveVelocity,wrapAngle} from './atrium-locomotion.js';
 import {loadAtriumActor} from './atrium-actors.js';
 import {applyAtriumFloorContact} from './atrium-floor-contact.js';
@@ -28,6 +27,9 @@ let cameraGeometry=null;
 const playerMaterials=[];
 const moveVelocity={x:0,z:0};
 const followTarget=new THREE.Vector3();
+const physicsPrevious=new THREE.Vector3(),physicsCurrent=new THREE.Vector3();
+const physicalMotion=new THREE.Vector2();
+let renderPositionReady=false;
 let last=0,accumulator=0,elapsed=0,stepDistance=0,lastSave=0,lastHud=0,toastTimer;
 let moving=0,gestureX=0,gestureY=0,pointer=null,stickPointer=null;
 let sound=null,soundEnabled=false;
@@ -253,10 +255,11 @@ async function boot(){
     getStats:()=>stats(),
     beginMeasurement:()=>{frameTimes.length=0;cpuTimes.length=0;gpuTiming.reset();renderPeaks.calls=renderPeaks.triangles=renderPeaks.geometries=0;},
     getPosition:()=>physics.feet(),
+    isPositionClear:()=>{const p=physics.feet();return physics.canStandAt([p.x,p.y,p.z]);},
     getInteractionState:()=>({seated:seated?.item.id||null,care:careItem?.id||null,dialogue:dialogTarget?.id||null,residents:actors.map(a=>({id:a.id,busy:!!a.busy,position:a.group.position.toArray(),yaw:a.group.rotation.y,seatBlend:a.seatBlend,seatMotion:a.seatMotion}))}),
     calibration:REFERENCE_CAMERA,
     getHeading:()=>orbitYaw,
-    getCameraDiagnostics:()=>({heading:orbitYaw,requestedHeading:requestedYaw,pitch:orbitPitch,clearancePitch:clearanceAngle,boom:cameraBoom,fade:playerFade,playerYaw:player.group.rotation.y,velocity:{...moveVelocity}}),
+    getCameraDiagnostics:()=>({heading:orbitYaw,requestedHeading:requestedYaw,pitch:orbitPitch,clearancePitch:clearanceAngle,lookPitch:-Math.asin(camera.getWorldDirection(new THREE.Vector3()).y),boom:cameraBoom,fade:playerFade,playerYaw:player.group.rotation.y,velocity:{...moveVelocity}}),
     // Review helpers are separate from the input-driven playthrough used for acceptance.
     setReviewCamera:(pos,look)=>{referenceView={position:pos,target:look};},
     followCamera:()=>{referenceView=false;},
@@ -292,10 +295,15 @@ async function boot(){
     const velocity=updateMoveVelocity(moveVelocity,input,speed,dt,paused||!!seated);
     const dx=velocity.x,dz=velocity.z;
     const before=physics.feet();accumulator+=Math.min(raw/1000,.1);
-    if(!seated){while(accumulator>=1/60){physics.move(dx/60,dz/60);accumulator-=1/60;}const pos=physics.feet();player.group.position.set(pos.x,pos.y,pos.z);moving=Math.hypot(pos.x-before.x,pos.z-before.z)/Math.max(.001,dt);
-      if(moving>.08){const heading=Math.atan2(pos.x-before.x,pos.z-before.z);player.group.rotation.y+=wrapAngle(heading-player.group.rotation.y)*(1-Math.exp(-16*dt));stepDistance+=moving*dt;}
+    if(!seated){
+      if(!renderPositionReady||Math.hypot(before.x-physicsCurrent.x,before.y-physicsCurrent.y,before.z-physicsCurrent.z)>.1){physicsCurrent.set(before.x,before.y,before.z);physicsPrevious.copy(physicsCurrent);physicalMotion.set(0,0);renderPositionReady=true;}
+      while(accumulator>=1/60){physicsPrevious.copy(physicsCurrent);const step=physics.move(dx/60,dz/60);physicalMotion.set(step.x-physicsCurrent.x,step.z-physicsCurrent.z);physicsCurrent.set(step.x,step.y,step.z);accumulator-=1/60;}
+      const pos=physics.feet();player.group.position.lerpVectors(physicsPrevious,physicsCurrent,accumulator*60);moving=paused?0:physicalMotion.length()*60;
+      // Render frames without a physics step retain the last physical heading;
+      // otherwise high-refresh displays alternate walk/idle and turn toward 0.
+      if(moving>.08){const heading=Math.atan2(physicalMotion.x,physicalMotion.y);player.group.rotation.y+=wrapAngle(heading-player.group.rotation.y)*(1-Math.exp(-16*dt));stepDistance+=moving*dt;}
       if(pos.y<-.6||Math.abs(pos.x)>11.1||Math.abs(pos.z)>8.4){physics.teleport([-4.3,0,6.3]);toast('已回到入口，探索记录仍然保留。');}
-    }else accumulator=0;
+    }else {accumulator=0;renderPositionReady=false;}
     player.update(elapsed,dt,{moving,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',floorAt:physics.floorAt,care:!!careItem});
     for(const actor of actors){
       let walking=0;const talking=dialogTarget?.id===actor.id;
@@ -337,11 +345,9 @@ function updateCamera(dt){
   target.copy(player.group.position);target.y+=seated ? 1.1 : 1.35;
   if(!cameraInitialized||followTarget.distanceTo(target)>2){followTarget.copy(target);cameraInitialized=true;}
   else{followTarget.x=THREE.MathUtils.damp(followTarget.x,target.x,22,dt);followTarget.z=THREE.MathUtils.damp(followTarget.z,target.z,22,dt);followTarget.y=THREE.MathUtils.damp(followTarget.y,target.y,12,dt);}
-  const raisedPitch=clearancePitch(orbitPitch,orbitDistance,pitch=>{
-    direction.set(Math.sin(orbitYaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(orbitYaw)*Math.cos(pitch));
-    return physics.cameraDistance(followTarget,direction,orbitDistance);
-  });
-  clearanceAngle=THREE.MathUtils.damp(clearanceAngle,raisedPitch,raisedPitch>clearanceAngle?12:4,dt);
+  // The player's pitch is authoritative. Per-frame automatic pitch selection
+  // caused mode-like view changes while walking past window reveals.
+  clearanceAngle=orbitPitch;
   direction.set(Math.sin(orbitYaw)*Math.cos(clearanceAngle),Math.sin(clearanceAngle),Math.cos(orbitYaw)*Math.cos(clearanceAngle)).normalize();
   const safe=physics.cameraDistance(followTarget,direction,orbitDistance);
   cameraBoom=safe<cameraBoom?safe:THREE.MathUtils.damp(cameraBoom,safe,5,dt);
@@ -349,7 +355,9 @@ function updateCamera(dt){
   // Also validate the interpolated ray while rounding a corner, not only the final orbit ray.
   direction.copy(camera.position).sub(target);const actualDistance=direction.length();
   if(actualDistance>.01){direction.divideScalar(actualDistance);const sweptSafe=physics.cameraDistance(target,direction,actualDistance);if(sweptSafe<actualDistance)camera.position.copy(target).addScaledVector(direction,sweptSafe);}
-  camera.lookAt(target.x,target.y+.05,target.z);
+  // Position and look target use the same smoothed anchor; a raw stair step in
+  // the look target otherwise produces a visible angular kick every tread.
+  camera.lookAt(followTarget);
   // When a wall forces the camera into the avatar, reveal the navigable scene
   // through the avatar instead of filling the screen with its head/back.
   const fade=THREE.MathUtils.smoothstep(camera.position.distanceTo(target),.85,1.25);

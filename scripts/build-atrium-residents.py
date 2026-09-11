@@ -108,8 +108,8 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
     civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
-    if who=='tang':
-        civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
+    if who in ('you','tang'):
+        civic.ellipsoid('Folded fabric hood',(0,.07,1.325) if who=='you' else (0,.08,1.265),(.105,.07,.04) if who=='you' else (.15,.08,.05),mats['top'],visual,segments=32,rings=16)
         civic.curve_tube('Ribbed lower hem',[(-.2,-.07,.83),(0,-.177,.8),(.2,-.07,.83)],.014,mats['outer'],visual)
     if who in ('lin','zhou'):
         # One continuous curved garment around the body, open at the front.
@@ -136,7 +136,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     elif who=='xu':
         civic.tailored_panel('Cotton plant apron',.24,.3,.37,.43,.027,(0,-.177,1.005),mats['lower'],visual,radius=.025)
         civic.rounded_box('Apron soft patch pocket',(.23,.034,.105),(0,-.201,.93),mats['outer'],visual,radius=.025)
-    elif who=='chen':
+    elif who in ('you','chen'):
         civic.curve_tube('Jacket zipper',[(0,cloth_y(0,z)-.002,z) for z in [.85,.96,1.08,1.2]],.004,mats['outer'],visual)
         for side in (-1,1):
             cloth_patch('Jacket welt pocket_'+str(side),side*.115,1.055,.11,.09,mats['outer'])
@@ -219,18 +219,21 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     current_identity=name
     cfg=copy.deepcopy(civic.ROLE_CONFIGS[role]);cfg.update(hair='#272e3a',hair_highlight='#414653',hair_style=hair,top=top,outer=outer,lower=lower,accent='#e4b149',shoe='#2f4354',sole='#e6d7bb')
     cfg['atrium_id']=name
-    cfg['top']={'you':'#eddfc5','lin':'#8db0a0','chen':'#344b60','xu':'#dfa47f','zhou':'#d8cbb5','he':'#8fb5ab','tang':'#c78370'}[name]
+    cfg['top']={'you':'#344b60','lin':'#8db0a0','chen':'#344b60','xu':'#dfa47f','zhou':'#d8cbb5','he':'#8fb5ab','tang':'#c78370'}[name]
+    if name=='you':cfg['outer']='#40586b'
     if name=='zhou':cfg['hair']='#42362e'
     civic.BODY_PROFILES[role]=copy.deepcopy(base_bodies[role])
     profile=civic.BODY_PROFILES[role]
     profile['torso_width']*=body;profile['shoulder_x']*=body
     profile['shoulder_x']*=1.28
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
-    profile['head_scale']=tuple(s*.62 for s in profile['head_scale'])
+    profile['head_scale']=tuple(s*.54 for s in profile['head_scale'])
     # Retain the authored neck overlap while exposing the jaw above the collar.
-    profile['head_z']+=.025
+    profile['head_z']-=.005
     civic.FACE_PROFILES[role]=copy.deepcopy(base_faces[role])
     civic.FACE_PROFILES[role]['jaw_taper']+=((idx%3)-1)*.014
+    civic.FACE_PROFILES[role]['jaw_taper']-=.025
+    civic.FACE_PROFILES[role]['cheek_spread']*=.95
     civic.FACE_PROFILES[role]['mouth_corner']=.004+(idx%3)*.002
     civic.FACE_PROFILES[role]['eye_height']*=.82
     root=civic.build_character(role,cfg)

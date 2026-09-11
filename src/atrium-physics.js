@@ -7,6 +7,7 @@ export async function createAtriumPhysics(definitions) {
   for(const d of definitions) {
     let desc;
     if(d.type==='box')desc=RAPIER.ColliderDesc.cuboid(...d.size.map(v=>v/2)).setTranslation(...d.position);
+    if(d.type==='trimesh')desc=RAPIER.ColliderDesc.trimesh(new Float32Array(d.vertices),new Uint32Array(d.indices));
     if(d.type==='ellipse'){
       const vertices=[];
       for(const y of [-d.size[1]/2,d.size[1]/2])for(let i=0;i<40;i++){

@@ -6,15 +6,18 @@ import fs from 'node:fs/promises';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {atriumWalkKeys} from '../scripts/lib/atrium-navigation.mjs';
 import {cameraRelativeInput,updateMoveVelocity} from '../src/atrium-locomotion.js';
-import {clearancePitch} from '../src/atrium-camera-clearance.js';
-test('cramped camera raises its pitch only when the swept clearance improves',()=>{
-  assert.equal(clearancePitch(.21,3.35,()=>3.35),.21);
-  assert.equal(clearancePitch(.21,3.35,()=>.5),.21);
-  const raised=clearancePitch(.21,3.35,p=>.65/Math.cos(p));
-  assert.ok(raised>.8&&raised<=1.4);
-  assert.ok(.65/Math.cos(raised)>=1.5,'make room for an opaque avatar when overhead space permits');
-  const ceiling=clearancePitch(.21,3.35,p=>p>.6?.2:.65/Math.cos(p));
-  assert.ok(ceiling<=.6,'avoid raising into overhead obstruction');
+test('evaluated window reveals stop the body before the old glazing-only boundary',async()=>{
+  const definitions=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8'));
+  const exact=await createAtriumPhysics(definitions),old=await createAtriumPhysics(definitions.filter(d=>d.sourcePass!=='architecture-contact'));
+  try{
+    for(const floor of [0,3.5])for(const side of [-1,1]){
+      const start=[side*9.8,floor,-7.4];
+      exact.teleport(start);old.teleport(start);
+      for(let i=0;i<70;i++){exact.move(side*.0375,0);old.move(side*.0375,0);}
+      assert.ok(Math.abs(old.feet().x)-Math.abs(exact.feet().x)>.1,JSON.stringify({floor,side,exact:exact.feet(),old:old.feet()}));
+      assert.ok(Math.abs(exact.feet().y-floor)<.1,'do not climb the reveal '+JSON.stringify(exact.feet()));
+    }
+  }finally{exact.dispose();old.dispose();}
 });
 test('screen-relative input preserves cardinal directions, diagonal speed and immediate pause',()=>{
   for(const yaw of [0,Math.PI/2,Math.PI,-Math.PI/2]){
