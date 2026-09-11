@@ -8,7 +8,8 @@
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
 <p>本轮：清理悬空裤侧薄片，窄梯稳定后恢复不透明人物，并让透明玻璃透过日光。<a href="../../docs/ATRIUM_SURFACE_REVIEW.md">制作、五视角反对意见与边界</a>。整体光照仍偏平，不能把局部修正视为最终还原完成。</p>
-<p>最新试玩修正：跟随镜头保持玩家俯角，物理帧之间连续插值；窗墙和窗套补入实际网格碰撞，人物比例及玩家服装同步调整。<a href="../../docs/ATRIUM_FOLLOW_CONTACT_REVIEW.md">修正与反方审查</a> · <a href="window-contact/report.json">窗边真实输入检查</a>。下面历史自动抬高镜头方案已停用。</p>
+<p>本轮人物材质续作：皮肤、头发、眼睛和刚性服装不再统一成同一种粗糙度，增强连续脸部的鼻梁、鼻尖体积。<a href="faces/review.html">同镜头对照</a> · <a href="../../docs/ATRIUM_MATERIAL_REVIEW.md">制作与反方审查</a>。蒙皮衣身材质、面部设计与慢帧仍未完成。</p>
+<p>此前试玩修正：跟随镜头保持玩家俯角，物理帧之间连续插值；窗墙和窗套补入实际网格碰撞，人物比例及玩家服装同步调整。<a href="../../docs/ATRIUM_FOLLOW_CONTACT_REVIEW.md">修正与反方审查</a> · <a href="window-contact/report.json">窗边真实输入检查</a>。下面历史自动抬高镜头方案已停用。</p>
 <p>历史近墙视野续作：受限时自动提高俯角，让楼梯踏步进入画面，保留玩家左右朝向；七人压低肩峰、清理旧袖部叠层并保留更多手指曲面。<a href="../../docs/ATRIUM_CLEARANCE_REVIEW.md">修改与反方审查</a>。手部接触、面部与整体美术仍未验收通过。</p>
 <p>试玩反馈修正：补齐椅子、花盆和桌沿碰撞，加入可见几何镜头扫掠、近距离人物淡出与起停跟随；人物调整发束、帽子、领口和前袋。<a href="../../docs/ATRIUM_CONTROLS_REVIEW.md">原因与验收边界</a> · <a href="controls/report.json">四向操作、碰撞与双指记录</a>。</p>
 <p>人物面部续作：七名人物调整头身比例、眉眼位置和眼部厚度，鼻部进入脸部网格。<a href="faces/review.html">同镜头正侧面对照</a> · <a href="../../docs/ATRIUM_FACE_REVIEW.md">制作与五视角审查</a>。面部、发束与服装仍需精修。</p>
@@ -47,9 +48,9 @@
 <figure><img src="before-contact-reference.png" alt="修补前的运行图"><figcaption>修补前：墙顶漏天空，接触层次较弱；不是最终候选。</figcaption></figure>
 <figure><img src="gallery-reference.png" alt="修补后的运行图"><figcaption>修补后：连续实体过梁与地面接触遮蔽，保持原校准镜头及路线。</figcaption></figure>
 </div>
-<h2>肩袖修改前后</h2><div class="compare">
+<h2>衣身合并阶段对照（历史）</h2><div class="compare">
 <figure><img src="garments/before-east.png" alt="修改前的玩家肩袖侧视"><figcaption>修改前资产，在当前运行场景使用相同位置和相机重放；待机相位未冻结。</figcaption></figure>
-<figure><img src="garments/after-east.png" alt="修改后的玩家肩袖侧视"><figcaption>修改后：连续肩袖，缩小饰件，缝线和口袋贴合衣身。未做图像补绘。</figcaption></figure>
+<figure><img src="garments/after-east.png" alt="修改后的玩家肩袖侧视"><figcaption>衣身合并阶段：连续肩袖，缩小饰件，缝线和口袋贴合衣身。当前材质请看上方人物对照。</figcaption></figure>
 </div>
 <h2>居民服装近景</h2><div class="grid">
 <figure><img src="garments/lin-front.png" alt="林晓开衫与肩部"><figcaption>林晓：基础上衣连续，开衫仍为独立外层。</figcaption></figure>

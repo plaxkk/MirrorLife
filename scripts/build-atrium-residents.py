@@ -252,8 +252,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         x,y,z=co
         if y>=0:return 0
         front=min(1,max(0,(-y-.07)/.08))
-        bridge=.019*math.exp(-(x/.031)**2-((z-.015)/.068)**2)
-        tip=.027*math.exp(-(x/.043)**2-((z+.035)/.034)**2)
+        bridge=.033*math.exp(-(x/.031)**2-((z-.015)/.068)**2)
+        tip=.052*math.exp(-(x/.043)**2-((z+.035)/.034)**2)
         return (bridge+tip)*front
     relief=[nasal_relief(v.co) for v in face.data.vertices]
     for v,depth in zip(face.data.vertices,relief):v.co.y-=depth
@@ -309,18 +309,27 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         parent=obj.parent
         while parent and parent.name not in boundary_names:parent=parent.parent
         transform=obj.matrix_world.copy();obj.parent=parent;obj.matrix_world=transform
-        groups.setdefault(parent,[]).append(obj)
-    vertex=bpy.data.materials.new('Resident unified surface');vertex.use_nodes=True
-    nodes=vertex.node_tree.nodes;bs=nodes.get('Principled BSDF');bs.inputs['Roughness'].default_value=.78
-    vc=nodes.new('ShaderNodeVertexColor');vc.layer_name='Color';vertex.node_tree.links.new(vc.outputs['Color'],bs.inputs['Base Color'])
-    for parent,objects in groups.items():
+        # Keep broad physical surface families after batching. Combining skin,
+        # hair and fabric into one .78 roughness material erased their response.
+        material_names=' '.join(m.name.lower() for m in obj.data.materials)
+        family=('eye' if parent and parent.name.startswith('EyePivot') else
+                'hair' if 'hair' in material_names or 'ink' in material_names else
+                'skin' if any(t in material_names for t in ['skin','lip','blush','crease']) else 'fabric')
+        groups.setdefault((parent,family),[]).append(obj)
+    surfaces={}
+    for family,roughness in [('skin',.74),('hair',.63),('eye',.43),('fabric',.91)]:
+        vertex=bpy.data.materials.new('Resident '+family+' surface');vertex.use_nodes=True
+        nodes=vertex.node_tree.nodes;bs=nodes.get('Principled BSDF');bs.inputs['Roughness'].default_value=roughness
+        vc=nodes.new('ShaderNodeVertexColor');vc.layer_name='Color';vertex.node_tree.links.new(vc.outputs['Color'],bs.inputs['Base Color'])
+        vertex['atrium_surface_family']=family;surfaces[family]=vertex
+    for (parent,family),objects in groups.items():
         bpy.ops.object.select_all(action='DESELECT')
         for obj in objects:obj.select_set(True)
         bpy.context.view_layer.objects.active=objects[0]
         if len(objects)>1:bpy.ops.object.join()
-        merged=objects[0];merged.name=(parent.name if parent else name)+'_Surface'
+        merged=objects[0];merged.name=(parent.name if parent else name)+'_Surface_'+family
         for f in merged.data.polygons:f.material_index=0
-        merged.data.materials.clear();merged.data.materials.append(vertex)
+        merged.data.materials.clear();merged.data.materials.append(surfaces[family])
         merged.data.validate(verbose=False)
     # Fine hand creases are source detail; the desktop game LOD keeps the complete core hands.
     detail=bpy.data.objects.get('SkinnedArticulationDetail')
@@ -333,7 +342,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     export(SOURCE/(name+'-master.glb'))
     for ob in bpy.context.scene.objects:
         if ob.type=='MESH' and not any(m.type=='ARMATURE' for m in ob.modifiers):
-            d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=.55 if ob.name=='HeadPivot_Surface' else .4;d.use_collapse_triangulate=True
+            d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=.55 if ob.name.startswith('HeadPivot_Surface') else .4;d.use_collapse_triangulate=True
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)

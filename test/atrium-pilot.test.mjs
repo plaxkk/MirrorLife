@@ -183,3 +183,14 @@ test('both physical stair flights are traversable and land on the upper floor',a
     p.teleport([9,3.5,5.5]);pos=go(-2.25/60,0,150);assert.ok(pos.x>7.75,'upper guard stops a fall');
   }finally{p.dispose();}
 });
+
+test('both resident LODs preserve used skin, hair, eye and fabric material responses',async()=>{
+  for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile']){
+    const file=new URL(`../public/assets/atrium/residents/${id}${suffix}.glb`,import.meta.url);
+    const b=await fs.readFile(file),gltf=JSON.parse(b.subarray(20,20+b.readUInt32LE(12)).toString());
+    const used=new Set(gltf.meshes.flatMap(m=>m.primitives.map(p=>p.material)));
+    const response=Object.fromEntries([...used].map(i=>gltf.materials[i]).filter(m=>m.extras?.atrium_surface_family).map(m=>[m.extras.atrium_surface_family,m.pbrMetallicRoughness.roughnessFactor]));
+    assert.ok(response.eye<response.hair&&response.hair<response.skin&&response.skin<response.fabric,`${id}${suffix}: ${JSON.stringify(response)}`);
+    assert.ok(gltf.skins.length>0,`${id}${suffix}: retain animated body`);
+  }
+});

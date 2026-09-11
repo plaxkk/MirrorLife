@@ -1,92 +1,110 @@
 {
-  "capturedAt": "2026-09-11T08:51:17.031Z",
-  "runtimeFingerprint": "843fd879493ba6647e7fa5cabadc0ee374cabad71d6bbb819a09fc294fcb0cef",
+  "capturedAt": "2026-09-11T09:31:12.425Z",
+  "runtimeFingerprint": "236b8815a45cd1a9e04d4f690168c6726f6c67cc1ec781aed443f2d383394824",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 14.206
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "build",
-      "seconds": 3.164
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "assets",
-      "seconds": 0.666
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "gallery",
-      "seconds": 50.03
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "performance",
-      "seconds": 56.84
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "mobile",
-      "seconds": 60.912
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "garments",
-      "seconds": 21.963
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "faces",
-      "seconds": 21.46
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "controls",
-      "seconds": 55.227
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "window-contact",
-      "seconds": 55.877
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "contact",
-      "seconds": 46.696
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "seating",
-      "seconds": 47.573
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "stairs",
-      "seconds": 47.609
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
     },
     {
       "name": "resilience",
-      "seconds": 47.076
+      "seconds": null,
+      "evidence": "Completed in the initial same-candidate runner before recording finalization failed; duration not recovered."
+    },
+    {
+      "name": "resume-assets",
+      "seconds": 0.641
     },
     {
       "name": "walkthrough",
-      "seconds": 111.318
+      "seconds": 111.4
     },
     {
       "name": "video-decode",
-      "seconds": 1.966
+      "seconds": 60.229
     },
     {
       "name": "assets-after",
-      "seconds": 0.975
+      "seconds": 0.692
     },
     {
       "name": "performance-report",
-      "seconds": 0.164
+      "seconds": 0.111
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 16.799999999999272,
-        "p95": 49.80000000000291,
-        "p99": 82.90000000000146
+        "p50": 16.69999999999709,
+        "p95": 17.5,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
-        "calls": 87,
-        "triangles": 496110,
-        "geometries": 76
+        "calls": 116,
+        "triangles": 495996,
+        "geometries": 92
       },
       "budgetPassed": true,
       "frameTargetPassed": false,
@@ -96,17 +114,17 @@
       "frameMs": {
         "p50": 16.69999999999709,
         "p95": 17.5,
-        "p99": 33.399999999999636
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
-        "calls": 69,
-        "triangles": 311405,
-        "geometries": 72
+        "calls": 94,
+        "triangles": 311549,
+        "geometries": 88
       },
       "budgetPassed": true,
       "frameTargetPassed": true,
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
+  "scope": "Initial same-candidate run completed through resilience; recorder post-processing timed out. Relevant walkthrough/video stages rerun after moving compression after browser closure, with unchanged runtime fingerprint and dist asset hashes. Initial step durations unavailable. Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
 }
