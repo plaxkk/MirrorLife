@@ -1,87 +1,87 @@
 {
-  "capturedAt": "2026-09-11T07:14:45.173Z",
-  "runtimeFingerprint": "268f8508cc6936bc2bc4fb95810dde864252311685ec2f5f788c8911fb1241a8",
+  "capturedAt": "2026-09-11T08:07:30.567Z",
+  "runtimeFingerprint": "9e7f70b736cc894e0c25346e3fefc8955b2f0bd7a6abe4830739cac1cc8b3c47",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 14.129
+      "seconds": 22.091
     },
     {
       "name": "build",
-      "seconds": 2.878
+      "seconds": 3.985
     },
     {
       "name": "assets",
-      "seconds": 0.659
+      "seconds": 1.177
     },
     {
       "name": "gallery",
-      "seconds": 47.067
+      "seconds": 44.311
     },
     {
       "name": "performance",
-      "seconds": 47.206
+      "seconds": 55.951
     },
     {
       "name": "mobile",
-      "seconds": 47.675
+      "seconds": 53.866
     },
     {
       "name": "garments",
-      "seconds": 9.753
+      "seconds": 34.106
     },
     {
       "name": "faces",
-      "seconds": 10.5
+      "seconds": 17.358
     },
     {
       "name": "controls",
-      "seconds": 46.617
+      "seconds": 46.443
     },
     {
       "name": "contact",
-      "seconds": 46.067
+      "seconds": 45.78
     },
     {
       "name": "seating",
-      "seconds": 46.263
+      "seconds": 48.774
     },
     {
       "name": "stairs",
-      "seconds": 47.144
+      "seconds": 48.044
     },
     {
       "name": "resilience",
-      "seconds": 48.986
+      "seconds": 65.324
     },
     {
       "name": "walkthrough",
-      "seconds": 115.388
+      "seconds": 147.166
     },
     {
       "name": "video-decode",
-      "seconds": 2.463
+      "seconds": 2.885
     },
     {
       "name": "assets-after",
-      "seconds": 1.072
+      "seconds": 1.541
     },
     {
       "name": "performance-report",
-      "seconds": 0.253
+      "seconds": 0.239
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 16.69999999999891,
-        "p95": 18,
-        "p99": 18.5
+        "p50": 16.700000000000728,
+        "p95": 33.5,
+        "p99": 82.5
       },
       "renderPeaks": {
-        "calls": 87,
-        "triangles": 495520,
+        "calls": 86,
+        "triangles": 495235,
         "geometries": 76
       },
       "budgetPassed": true,
@@ -91,12 +91,12 @@
     "mobile": {
       "frameMs": {
         "p50": 16.69999999999709,
-        "p95": 18.399999999997817,
-        "p99": 18.700000000000728
+        "p95": 17.400000000001455,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
-        "calls": 69,
-        "triangles": 311066,
+        "calls": 70,
+        "triangles": 311115,
         "geometries": 72
       },
       "budgetPassed": true,

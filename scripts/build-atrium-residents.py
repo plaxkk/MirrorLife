@@ -71,8 +71,20 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         for polygon in mesh.polygons:polygon.use_smooth=True
         solid=ob.modifiers.new('Patch cloth thickness','SOLIDIFY');solid.thickness=.002
     bpy.data.objects['WaistBand'].data.materials.clear();bpy.data.objects['WaistBand'].data.materials.append(mats['lower'])
+    # The old free-standing hip ribbons missed this pilot's narrower trouser
+    # surface. Put the shallow fold into the continuous seat itself instead.
+    seat=bpy.data.objects.get('TrouserSeat') or bpy.data.objects.get('SkirtHipFoundation')
+    if seat:
+        for vertex in seat.data.vertices:
+            p=vertex.co
+            if p.y<0:
+                line=.10+(.83-p.z)*.35
+                fold=math.exp(-((abs(p.x)-line)/.022)**2)
+                end=max(0,1-((p.z-.77)/.075)**2)
+                p.y+=.0025*fold*end
+        seat['fold_contract']='integrated-seat-fold-v1'
     for obj in list(bpy.context.scene.objects):
-        if obj.name.startswith(('ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem','ArmInnerElbowFold','ArmOuterTensionPlane','SleeveCompression_')):
+        if obj.name.startswith(('HipLoadFold','ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem','ArmInnerElbowFold','ArmOuterTensionPlane','SleeveCompression_')):
             bpy.data.objects.remove(obj,do_unlink=True)
     # The shared traveler is short-sleeved; this pilot uses long everyday jackets.
     # Its rigid bare forearm overlay intersected the continuously weighted sleeve.

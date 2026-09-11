@@ -201,7 +201,7 @@ async function boot(){
   const bounce=new THREE.PointLight('#ffe3a7',12,22,2);bounce.position.set(0,4.8,0);scene.add(bounce);
   loadProgress(8,'正在打开建筑与楼梯…');
   const [model,definitions]=await Promise.all([loadAtriumGLB(`/assets/atrium/atrium-${profile}.glb`),checkedJSON('/assets/atrium/collision.json')]);
-  model.scene.traverse(node=>{if(!node.isMesh)return;node.castShadow=true;node.receiveShadow=true;node.material.side=THREE.DoubleSide;if(node.material.map){node.material.map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());} });
+  model.scene.traverse(node=>{if(!node.isMesh)return;node.castShadow=node.material.name!=='Window glass';node.receiveShadow=true;node.material.side=THREE.DoubleSide;if(node.material.map){node.material.map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());} });
   scene.add(model.scene);physics=await createAtriumPhysics(definitions);
   const cameraGeometryStarted=performance.now();
   const cameraTriangles=addAtriumCameraGeometry(model.scene,physics);

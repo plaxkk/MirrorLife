@@ -24,12 +24,19 @@ try{
   for(const [name,position,yaw] of [['chair',[-5,0,.15],-Math.PI/2],['planter',[-7.7,0,4.4],0],['return-window',[-9.9,1.6,.3],Math.PI/2],['upper-window',[9.5,3.5,5.7],-Math.PI/2]]){
     await page.evaluate(({position,yaw})=>{window.__atrium.setReviewPosition(position);window.__atrium.setHeading(yaw);},{position,yaw});await wait(250);
     if(name==='chair'||name==='planter'){await page.keyboard.down('KeyW');await wait(1500);await page.keyboard.up('KeyW');await wait(300);}
+    if(name==='return-window'){
+      await page.screenshot({path:`${out}/return-window-transition.png`});
+      await wait(1200);
+    }
     await page.screenshot({path:`${out}/${name}.png`});
     const state=await page.evaluate(()=>window.__atrium.getStats());
     if(name==='chair')assert.ok(state.position.x<-4.2,JSON.stringify(state.position));
     if(name==='planter')assert.ok(state.position.z>3.7,JSON.stringify(state.position));
     const controls=await page.evaluate(()=>window.__atrium.getCameraDiagnostics());
-    if(name==='return-window')assert.ok(controls.clearancePitch>.65,'cramped stair camera reveals steps with a higher pitch');
+    if(name==='return-window'){
+      assert.ok(controls.clearancePitch>.65,'cramped stair camera reveals steps with a higher pitch');
+      assert.ok(controls.fade>.99,'open overhead space restores opaque avatar after camera settles');
+    }
     report.push({name,position:state.position,camera:state.camera,controls});
   }
   await page.setViewport({width:390,height:844,deviceScaleFactor:3,isMobile:true,hasTouch:true});

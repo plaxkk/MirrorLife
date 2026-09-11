@@ -11,7 +11,8 @@ test('cramped camera raises its pitch only when the swept clearance improves',()
   assert.equal(clearancePitch(.21,3.35,()=>3.35),.21);
   assert.equal(clearancePitch(.21,3.35,()=>.5),.21);
   const raised=clearancePitch(.21,3.35,p=>.65/Math.cos(p));
-  assert.ok(raised>.8&&raised<=1.15);
+  assert.ok(raised>.8&&raised<=1.4);
+  assert.ok(.65/Math.cos(raised)>=1.5,'make room for an opaque avatar when overhead space permits');
   const ceiling=clearancePitch(.21,3.35,p=>p>.6?.2:.65/Math.cos(p));
   assert.ok(ceiling<=.6,'avoid raising into overhead obstruction');
 });

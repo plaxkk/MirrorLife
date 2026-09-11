@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-11T07:06:56.299Z",
-  "runtimeFingerprint": "268f8508cc6936bc2bc4fb95810dde864252311685ec2f5f788c8911fb1241a8",
+  "capturedAt": "2026-09-11T07:58:03.872Z",
+  "runtimeFingerprint": "9e7f70b736cc894e0c25346e3fefc8955b2f0bd7a6abe4830739cac1cc8b3c47",
   "browserMode": "headed",
   "stats": {
     "ready": true,
@@ -16,201 +16,201 @@
       "dpr": 1,
       "renderPixelRatio": 1
     },
-    "loadingMs": 3486.3999999910593,
-    "navigationToReadyMs": 3909.7999999970198,
-    "enterToActiveMs": 8.299999997019768,
-    "sessionMs": 36605,
-    "frames": 2027,
+    "loadingMs": 4568,
+    "navigationToReadyMs": 5331.100000008941,
+    "enterToActiveMs": 94,
+    "sessionMs": 40405.40000000596,
+    "frames": 1762,
     "frameMs": {
-      "p50": 16.69999999999891,
-      "p95": 18,
-      "p99": 18.5
+      "p50": 16.700000000000728,
+      "p95": 33.700000000004366,
+      "p99": 100.5
     },
     "cpuMs": {
       "script": {
-        "p50": 1.800000011920929,
-        "p95": 3.1000000089406967
+        "p50": 2.7000000029802322,
+        "p95": 6.699999988079071
       },
       "render": {
-        "p50": 2,
-        "p95": 3.5999999940395355
+        "p50": 3,
+        "p95": 8.5
       }
     },
     "gpuMs": {
       "supported": true,
-      "samples": 202,
+      "samples": 175,
       "discarded": 0,
-      "p50": 9.80064,
-      "p95": 17.714,
+      "p50": 12.268639,
+      "p95": 23.04712,
       "method": "Every tenth rendered frame, asynchronous WebGL2 elapsed-time query; GPU render only, excludes presentation/input. Unsupported and disjoint samples are not zero milliseconds."
     },
     "render": {
-      "frame": 2194,
-      "calls": 75,
-      "triangles": 438522,
+      "frame": 1934,
+      "calls": 71,
+      "triangles": 435016,
       "points": 0,
       "lines": 0
     },
     "renderPeaks": {
-      "calls": 87,
-      "triangles": 495520,
+      "calls": 86,
+      "triangles": 495235,
       "geometries": 76
     },
     "memory": {
       "geometries": 76,
       "textures": 18,
-      "jsHeapBytes": 58552958
+      "jsHeapBytes": 61604808
     },
     "resources": [
       {
-        "url": "/assets/atrium-CRRPoiew.js",
-        "transferBytes": 22608,
-        "decodedBytes": 52832,
-        "durationMs": 44.70000000298023
+        "url": "/assets/atrium-k4-LZvnc.js",
+        "transferBytes": 22623,
+        "decodedBytes": 52861,
+        "durationMs": 44.19999998807907
       },
       {
         "url": "/assets/modulepreload-polyfill-Dezn_h7o.js",
         "transferBytes": 998,
         "decodedBytes": 698,
-        "durationMs": 30.099999994039536
+        "durationMs": 24.5
       },
       {
         "url": "/assets/rolldown-runtime-DK3Fl9T5.js",
         "transferBytes": 458,
         "decodedBytes": 158,
-        "durationMs": 33.099999994039536
+        "durationMs": 29
       },
       {
         "url": "/assets/three.module-CZC7t-hJ.js",
         "transferBytes": 183989,
         "decodedBytes": 725424,
-        "durationMs": 141.79999999701977
+        "durationMs": 224.79999999701977
       },
       {
         "url": "/assets/BufferGeometryUtils-CnheMMBR.js",
         "transferBytes": 4612,
         "decodedBytes": 13131,
-        "durationMs": 60.69999998807907
+        "durationMs": 49.6000000089407
       },
       {
         "url": "/assets/SkeletonUtils-BCv72L_j.js",
         "transferBytes": 1893,
         "decodedBytes": 4079,
-        "durationMs": 74.29999999701977
+        "durationMs": 52
       },
       {
         "url": "/assets/GLTFLoader-D4aawYtZ.js",
         "transferBytes": 13006,
         "decodedBytes": 43047,
-        "durationMs": 74.79999999701977
+        "durationMs": 53.79999999701977
       },
       {
         "url": "/assets/RoomEnvironment-_HcG5_fd.js",
         "transferBytes": 1232,
         "decodedBytes": 2129,
-        "durationMs": 87.1000000089407
+        "durationMs": 71.70000000298023
       },
       {
         "url": "/assets/rapier-CMw4H3UB.js",
         "transferBytes": 830513,
         "decodedBytes": 2236835,
-        "durationMs": 297.40000000596046
-      },
-      {
-        "url": "/assets/atrium-Co8-Av0f.css",
-        "transferBytes": 2770,
-        "decodedBytes": 7675,
-        "durationMs": 50
+        "durationMs": 537.5999999940395
       },
       {
         "url": "/assets/reference-fidelity-runtime-contract-jYf20sii.js",
         "transferBytes": 5659,
         "decodedBytes": 18787,
-        "durationMs": 92.29999999701977
+        "durationMs": 71.79999999701977
+      },
+      {
+        "url": "/assets/atrium-Co8-Av0f.css",
+        "transferBytes": 2770,
+        "decodedBytes": 7675,
+        "durationMs": 48.1000000089407
       },
       {
         "url": "/storage.js",
         "transferBytes": 3355,
         "decodedBytes": 8902,
-        "durationMs": 95.20000000298023
+        "durationMs": 70.5
       },
       {
         "url": "/assets/atrium/atrium-desktop.glb",
         "transferBytes": 2856032,
         "decodedBytes": 2855732,
-        "durationMs": 130.3999999910593
+        "durationMs": 123.79999999701977
       },
       {
         "url": "/assets/atrium/collision.json",
         "transferBytes": 4809,
         "decodedBytes": 48113,
-        "durationMs": 49.79999999701977
+        "durationMs": 89.3999999910593
       },
       {
         "url": "/assets/atrium/draco/draco_wasm_wrapper.js",
         "transferBytes": 12048,
         "decodedBytes": 58456,
-        "durationMs": 28.5
+        "durationMs": 19.200000002980232
       },
       {
         "url": "/assets/atrium/draco/draco_decoder.wasm",
         "transferBytes": 192720,
         "decodedBytes": 192420,
-        "durationMs": 25.299999997019768
+        "durationMs": 19.599999994039536
       },
       {
         "url": "/assets/atrium/floor-contact.png",
         "transferBytes": 115580,
         "decodedBytes": 115280,
-        "durationMs": 8.399999991059303
+        "durationMs": 37.19999998807907
       },
       {
         "url": "/assets/atrium/residents/you.glb",
-        "transferBytes": 203872,
-        "decodedBytes": 203572,
-        "durationMs": 13.799999997019768
+        "transferBytes": 203892,
+        "decodedBytes": 203592,
+        "durationMs": 17.600000008940697
       },
       {
         "url": "/assets/atrium/life-props.glb",
         "transferBytes": 25504,
         "decodedBytes": 25204,
-        "durationMs": 9.400000005960464
+        "durationMs": 32.5
       },
       {
         "url": "/assets/atrium/residents/lin.glb",
-        "transferBytes": 210108,
-        "decodedBytes": 209808,
-        "durationMs": 21.599999994039536
+        "transferBytes": 210332,
+        "decodedBytes": 210032,
+        "durationMs": 18.599999994039536
       },
       {
         "url": "/assets/atrium/residents/chen.glb",
-        "transferBytes": 203116,
-        "decodedBytes": 202816,
-        "durationMs": 21.900000005960464
+        "transferBytes": 203156,
+        "decodedBytes": 202856,
+        "durationMs": 18.899999991059303
       },
       {
         "url": "/assets/atrium/residents/xu.glb",
-        "transferBytes": 218320,
-        "decodedBytes": 218020,
-        "durationMs": 16.799999997019768
+        "transferBytes": 218536,
+        "decodedBytes": 218236,
+        "durationMs": 30
       },
       {
         "url": "/assets/atrium/residents/zhou.glb",
-        "transferBytes": 220668,
-        "decodedBytes": 220368,
-        "durationMs": 17.69999998807907
+        "transferBytes": 220544,
+        "decodedBytes": 220244,
+        "durationMs": 33
       },
       {
         "url": "/assets/atrium/residents/he.glb",
-        "transferBytes": 204108,
-        "decodedBytes": 203808,
-        "durationMs": 28.299999997019768
+        "transferBytes": 203956,
+        "decodedBytes": 203656,
+        "durationMs": 25.200000002980232
       },
       {
         "url": "/assets/atrium/residents/tang.glb",
-        "transferBytes": 211964,
-        "decodedBytes": 211664,
-        "durationMs": 28.799999997019768
+        "transferBytes": 211236,
+        "decodedBytes": 210936,
+        "durationMs": 29.299999997019768
       }
     ],
     "actors": 7,
@@ -242,7 +242,7 @@
     ],
     "position": {
       "x": -4.299999713897705,
-      "y": 0.01984015464782718,
+      "y": 0.019840214252471955,
       "z": 6.300000190734863
     },
     "camera": [
@@ -252,7 +252,7 @@
     ],
     "cameraGeometry": {
       "triangles": 174809,
-      "buildMs": 248
+      "buildMs": 626.7999999970198
     },
     "distanceWalked": 0,
     "visitedPositions": [
@@ -260,25 +260,31 @@
         "x": -4.299999713897705,
         "y": 0.01984015464782718,
         "z": 6.300000190734863,
-        "t": 8.001170000000005
+        "t": 8.000470000000012
       },
       {
         "x": -4.299999713897705,
         "y": 0.019840214252471955,
         "z": 6.300000190734863,
-        "t": 16.017370000000007
+        "t": 16.01677000000002
       },
       {
         "x": -4.299999713897705,
         "y": 0.01984015464782718,
         "z": 6.300000190734863,
-        "t": 24.033769999999866
+        "t": 24.033469999999863
       },
       {
         "x": -4.299999713897705,
-        "y": 0.01984015464782718,
+        "y": 0.019840214252471955,
         "z": 6.300000190734863,
-        "t": 32.03516999999974
+        "t": 32.05116999999976
+      },
+      {
+        "x": -4.299999713897705,
+        "y": 0.019840214252471955,
+        "z": 6.300000190734863,
+        "t": 40.667069999999725
       }
     ],
     "errors": []
