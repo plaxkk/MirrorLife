@@ -38,6 +38,10 @@ civic.build_skinned_limb_pair=everyday_limbs
 def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right_elbow,left_leg,right_leg):
     """Soft everyday garments for this pilot, not the earlier mechanical costume kit."""
     who=config['atrium_id']
+    # Lower the cloth neckline so the authored skin neck is visible above it.
+    # This changes the continuous shell, not a decorative line across the chest.
+    for v in bpy.data.objects['Torso'].data.vertices:
+        if v.co.z>1.22:v.co.z=1.22+(v.co.z-1.22)*.75
     garment=garment_tools.continuous_garment(civic,mats['top'])
     cloth_surface=BVHTree.FromPolygons([v.co for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
     def cloth_y(x,z):
@@ -85,7 +89,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.6
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
-    civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.145,1.255),(0,1.23),(.145,1.255)]],.006,mats['top'],visual)
+    civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
     if who=='tang':
         civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
         civic.curve_tube('Ribbed lower hem',[(-.2,-.07,.83),(0,-.177,.8),(.2,-.07,.83)],.014,mats['outer'],visual)
@@ -119,7 +123,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         for side in (-1,1):
             cloth_patch('Jacket welt pocket_'+str(side),side*.115,1.055,.11,.09,mats['outer'])
     elif who=='tang':
-        civic.ellipsoid('Kangaroo fabric pocket',(0,-.18,.95),(.155,.023,.082),mats['outer'],visual,segments=32,rings=16)
+        cloth_patch('Kangaroo fabric pocket',0,.95,.3,.14,mats['top'])
         for side in (-1,1):civic.curve_tube('Short cotton drawcord_'+str(side),[(side*.055,-.155,1.235),(side*.057,-.187,1.17)],.0035,mats['paper'],visual)
     else:
         for side in (-1,1):
@@ -154,11 +158,16 @@ def everyday_hair(head,mats,style):
         ob=civic.tapered_lock(name,points,radii,mats['hair'],head,sides=10,oval_ratio=.52)
         sub=ob.modifiers.new('Soft groomed clump','SUBSURF');sub.levels=1;sub.render_levels=1
         return ob
-    for i,x in enumerate([-.175,-.108,-.04,.03,.1,.17]):
-        shift=.065 if who in ('you','chen','zhou') else (-.03 if i<3 else .035)
-        tip_z=(.10 if who in ('lin','xu') else .125)+abs(x)*.18
-        lift=.04 if who=='chen' else (.02 if who=='tang' else 0)
-        lock('Hair swept fringe '+str(i),[(x*.75,-.10,.268+lift),(x,-.172,.24+lift),(x+shift*.7,-.196,.185),(x+shift,-.181,tip_z)], [.027,.046,.032,.004])
+    # Place each groom path on the scalp ellipsoid; the previous independent
+    # coordinates left the middle of each thick lock floating above the skull.
+    if who!='he':
+        for i,a in enumerate([-.85,-.52,-.18,.18,.52,.85]):
+            sweep=.32 if who in ('you','chen','zhou') else (-.18 if i<3 else .18)
+            points=[]
+            for t,theta in enumerate([.48,.75,1.02,1.28 if who in ('lin','xu') else 1.18]):
+                phi=a+sweep*t/3
+                points.append((rx*math.sin(theta)*math.sin(phi),-(ry+.005)*math.sin(theta)*math.cos(phi),.024+rz*math.cos(theta)))
+            lock('Hair swept fringe '+str(i),points,[.026,.029,.021,.0025])
     for side in [-1,1]:
         lock('Hair temple '+str(side),[(side*.20,-.05,.19),(side*.237,-.042,.08),(side*.231,-.025,-.045),(side*.2,-.035,-.18 if long_bob else -.065)],[.035,.044,.037,.008])
     if who=='xu':
@@ -167,6 +176,24 @@ def everyday_hair(head,mats,style):
     if who=='zhou':civic.ellipsoid('Hair low bun',(0,.198,-.055),(.09,.072,.09),mats['hair'],head,segments=28,rings=16)
 
 civic.build_hair=everyday_hair
+def everyday_cap(head,mats):
+    verts=[(0,0,.317)];faces=[];sides=40;rings=12
+    for j in range(1,rings+1):
+        theta=j/rings*math.pi/2
+        for i in range(sides):
+            a=i/sides*math.tau
+            verts.append((.247*math.sin(theta)*math.cos(a),.216*math.sin(theta)*math.sin(a),.18+.137*math.cos(theta)))
+    for i in range(sides):faces.append((0,1+i,1+(i+1)%sides))
+    for j in range(rings-1):
+        for i in range(sides):
+            a=1+j*sides+i;b=1+j*sides+(i+1)%sides;faces.append((a,a+sides,b+sides,b))
+    mesh=bpy.data.meshes.new('Soft cap crown mesh');mesh.from_pydata(verts,[],faces);mesh.update()
+    ob=bpy.data.objects.new('CapCrown',mesh);bpy.context.collection.objects.link(ob);ob.parent=head;mesh.materials.append(mats['top'])
+    for p in mesh.polygons:p.use_smooth=True
+    solid=ob.modifiers.new('Cotton cap thickness','SOLIDIFY');solid.thickness=.006
+    civic.rounded_box('CapBrim',(.30,.17,.018),(0,-.223,.182),mats['top'],head,radius=.008)
+    civic.ellipsoid('CapBadge',(0,-.208,.235),(.026,.004,.018),mats['accent'],head,segments=16,rings=8)
+civic.build_cap=everyday_cap
 reports=[]
 selected=set(filter(None,os.environ.get('ATRIUM_RESIDENT_IDS','').split(',')))
 for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):

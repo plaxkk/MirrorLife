@@ -38,6 +38,7 @@ try{
   for(const mode of ['gallery','performance','mobile'])await run(mode,process.execPath,['scripts/verify-atrium-pilot.mjs',mode]);
   await run('garments',process.execPath,['scripts/verify-atrium-garments.mjs']);
   await run('faces',process.execPath,['scripts/verify-atrium-faces.mjs']);
+  await run('controls',process.execPath,['scripts/verify-atrium-controls.mjs']);
   await run('contact',process.execPath,['scripts/verify-atrium-contact.mjs']);
   await run('seating',process.execPath,['scripts/verify-atrium-seating.mjs']);
   await run('stairs',process.execPath,['scripts/verify-atrium-stairs.mjs']);
@@ -57,6 +58,7 @@ try{
       frameTargetPassed:report.measured.frameMs.p95<=(mode==='mobile'?1000/30:1000/60),
       note:mode==='mobile'?'Desktop GPU emulation; not phone certification':'Local visible Chrome production preview'};
   }
+  await run('performance-report',process.execPath,['scripts/report-atrium-performance.mjs']);
   await fs.writeFile(`${out}/acceptance.json`,JSON.stringify({capturedAt:new Date().toISOString(),runtimeFingerprint:candidate.runtimeFingerprint,base,steps,reports,
     scope:'Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates.'},null,2));
   console.log('CANDIDATE_EVIDENCE_READY',JSON.stringify(reports));

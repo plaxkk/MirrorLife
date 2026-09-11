@@ -118,7 +118,7 @@
     ]
   ],
   "sourceFaces": 251355,
-  "collisionCount": 189,
+  "collisionCount": 220,
   "license": "Original project-authored geometry; existing MirrorLife authored character pipeline separately credited.",
   "reference": "design/references/atrium-visual-target.png",
   "inferred": [

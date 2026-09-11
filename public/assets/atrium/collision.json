@@ -1833,20 +1833,6 @@
   },
   {
     "type": "box",
-    "name": "Shared table",
-    "position": [
-      -0.65,
-      0.46,
-      0.1
-    ],
-    "size": [
-      4.65,
-      0.92,
-      2.95
-    ]
-  },
-  {
-    "type": "box",
     "name": "Living library",
     "position": [
       -8.7,
@@ -2628,5 +2614,517 @@
       0.36,
       16
     ]
+  },
+  {
+    "name": "Shared table",
+    "position": [
+      -0.65,
+      0.475,
+      0.1
+    ],
+    "size": [
+      4.9,
+      0.95,
+      3.332
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Shared table edge",
+    "type": "ellipse"
+  },
+  {
+    "name": "Communal chair cushion",
+    "position": [
+      -2.2,
+      0.28,
+      -1.95
+    ],
+    "size": [
+      0.76,
+      0.56,
+      0.7
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair cushion",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair back",
+    "position": [
+      -2.2,
+      0.93,
+      -2.20285
+    ],
+    "size": [
+      0.96896,
+      0.2,
+      0.4143
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair back",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair cushion.001",
+    "position": [
+      -0.55,
+      0.28,
+      -1.95
+    ],
+    "size": [
+      0.76,
+      0.56,
+      0.7
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair cushion.001",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair back.001",
+    "position": [
+      -0.55,
+      0.93,
+      -2.20285
+    ],
+    "size": [
+      0.96896,
+      0.2,
+      0.4143
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair back.001",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair cushion.002",
+    "position": [
+      1.1,
+      0.28,
+      -1.95
+    ],
+    "size": [
+      0.76,
+      0.56,
+      0.7
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair cushion.002",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair back.002",
+    "position": [
+      1.1,
+      0.93,
+      -2.20285
+    ],
+    "size": [
+      0.96896,
+      0.2,
+      0.4143
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair back.002",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair cushion.003",
+    "position": [
+      -3.65,
+      0.28,
+      0.15
+    ],
+    "size": [
+      0.7,
+      0.56,
+      0.76
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair cushion.003",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair back.003",
+    "position": [
+      -3.90285,
+      0.93,
+      0.15
+    ],
+    "size": [
+      0.4143,
+      0.2,
+      0.96896
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair back.003",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair cushion.004",
+    "position": [
+      2.4,
+      0.28,
+      0.15
+    ],
+    "size": [
+      0.7,
+      0.56,
+      0.76
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair cushion.004",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair back.004",
+    "position": [
+      2.65285,
+      0.93,
+      0.15
+    ],
+    "size": [
+      0.4143,
+      0.2,
+      0.96896
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair back.004",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair cushion.005",
+    "position": [
+      -1.1,
+      0.28,
+      2.3
+    ],
+    "size": [
+      0.76,
+      0.56,
+      0.7
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair cushion.005",
+    "type": "box"
+  },
+  {
+    "name": "Communal chair back.005",
+    "position": [
+      -1.1,
+      0.93,
+      2.55285
+    ],
+    "size": [
+      0.96896,
+      0.2,
+      0.4143
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Communal chair back.005",
+    "type": "box"
+  },
+  {
+    "name": "Corner plant pot",
+    "position": [
+      -7.3,
+      0.161,
+      -7.05
+    ],
+    "size": [
+      0.46998,
+      0.322,
+      0.46998
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Corner plant pot",
+    "type": "ellipse"
+  },
+  {
+    "name": "Corner plant pot.001",
+    "position": [
+      7.3,
+      0.161,
+      -7.05
+    ],
+    "size": [
+      0.46998,
+      0.322,
+      0.46998
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Corner plant pot.001",
+    "type": "ellipse"
+  },
+  {
+    "name": "Corner plant pot.002",
+    "position": [
+      -7.3,
+      3.661,
+      -7.05
+    ],
+    "size": [
+      0.46998,
+      0.322,
+      0.46998
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Corner plant pot.002",
+    "type": "ellipse"
+  },
+  {
+    "name": "Corner plant pot.003",
+    "position": [
+      7.3,
+      3.661,
+      -7.05
+    ],
+    "size": [
+      0.46998,
+      0.322,
+      0.46998
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Corner plant pot.003",
+    "type": "ellipse"
+  },
+  {
+    "name": "Living greenery pot",
+    "position": [
+      -7.7,
+      0.345,
+      3.0
+    ],
+    "size": [
+      1.01398,
+      0.69,
+      1.01398
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Living greenery pot",
+    "type": "ellipse"
+  },
+  {
+    "name": "Living greenery pot.001",
+    "position": [
+      9.7,
+      0.253,
+      3.0
+    ],
+    "size": [
+      0.74198,
+      0.506,
+      0.74198
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Living greenery pot.001",
+    "type": "ellipse"
+  },
+  {
+    "name": "Living greenery pot.002",
+    "position": [
+      -3.6,
+      0.322,
+      -4.1
+    ],
+    "size": [
+      0.94598,
+      0.644,
+      0.94598
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Living greenery pot.002",
+    "type": "ellipse"
+  },
+  {
+    "name": "Living greenery pot.003",
+    "position": [
+      3.9,
+      0.207,
+      -6.7
+    ],
+    "size": [
+      0.60598,
+      0.414,
+      0.60598
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Living greenery pot.003",
+    "type": "ellipse"
+  },
+  {
+    "name": "Living greenery pot.004",
+    "position": [
+      -7.8,
+      0.184,
+      6.2
+    ],
+    "size": [
+      0.53798,
+      0.368,
+      0.53798
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Living greenery pot.004",
+    "type": "ellipse"
+  },
+  {
+    "name": "Living greenery pot.005",
+    "position": [
+      10.0,
+      0.184,
+      6.0
+    ],
+    "size": [
+      0.53798,
+      0.368,
+      0.53798
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Living greenery pot.005",
+    "type": "ellipse"
+  },
+  {
+    "name": "Gallery garden pot",
+    "position": [
+      -8.0,
+      3.684,
+      3.9
+    ],
+    "size": [
+      0.53798,
+      0.368,
+      0.53798
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Gallery garden pot",
+    "type": "ellipse"
+  },
+  {
+    "name": "Gallery garden pot.001",
+    "position": [
+      9.7,
+      3.684,
+      1.5
+    ],
+    "size": [
+      0.53798,
+      0.368,
+      0.53798
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Gallery garden pot.001",
+    "type": "ellipse"
+  },
+  {
+    "name": "Gallery garden pot.002",
+    "position": [
+      -2.5,
+      3.684,
+      -6.85
+    ],
+    "size": [
+      0.53798,
+      0.368,
+      0.53798
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Gallery garden pot.002",
+    "type": "ellipse"
+  },
+  {
+    "name": "Gallery garden pot.003",
+    "position": [
+      3.0,
+      3.684,
+      -6.85
+    ],
+    "size": [
+      0.53798,
+      0.368,
+      0.53798
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Gallery garden pot.003",
+    "type": "ellipse"
+  },
+  {
+    "name": "Quiet chair cushion",
+    "position": [
+      -7.9,
+      3.78,
+      2.4
+    ],
+    "size": [
+      0.76,
+      0.56,
+      0.7
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Quiet chair cushion",
+    "type": "box"
+  },
+  {
+    "name": "Quiet chair back",
+    "position": [
+      -7.9,
+      4.43,
+      2.65285
+    ],
+    "size": [
+      0.96896,
+      0.2,
+      0.4143
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Quiet chair back",
+    "type": "box"
+  },
+  {
+    "name": "Observation seat cushion",
+    "position": [
+      9.4,
+      3.78,
+      4.6
+    ],
+    "size": [
+      0.7,
+      0.56,
+      0.76
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Observation seat cushion",
+    "type": "box"
+  },
+  {
+    "name": "Observation seat back",
+    "position": [
+      9.65285,
+      4.43,
+      4.6
+    ],
+    "size": [
+      0.4143,
+      0.2,
+      0.96896
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Observation seat back",
+    "type": "box"
+  },
+  {
+    "name": "Reading ficus pot",
+    "position": [
+      -4.15,
+      0.322,
+      -3.2
+    ],
+    "size": [
+      0.94598,
+      0.644,
+      0.94598
+    ],
+    "sourcePass": "furniture-contact",
+    "sourceObject": "Reading ficus pot",
+    "type": "ellipse"
   }
 ]

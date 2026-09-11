@@ -91,11 +91,12 @@ try{
       await walk(-4.3,3.6,'entry');
       // A full input-driven orbit (approximately 360 degrees), not a review-camera cut.
       await page.mouse.move(400,500);await page.mouse.down();await page.mouse.move(1656,500,{steps:60});await page.mouse.up();
-      await walk(-4.3,-2.6,'west of table');await walk(-2.6,-2.6,'Lin');
+      await walk(-4.8,3.6,'west chair bypass');await walk(-4.8,-2.15,'west of table');
+      await walk(-3.3,-2.15,'reading planter bypass');await walk(-3.3,-2.95,'behind reading planter');await walk(-2.6,-2.95,'Lin');
       await interact('林晓','dialogue-lin');await close();
-      await walk(.8,-2.7,'Chen');await interact('陈屿','dialogue-chen');await close();
+      await walk(.8,-2.95,'Chen');await interact('陈屿','dialogue-chen');await close();
       await walk(0,-5.65,'records');await interact('轮值手记','discovery-records');await close();
-      await walk(3.1,-3.3,'back of shared table');await walk(3.1,5.65,'front circulation');
+      await walk(3.45,-3.3,'back of shared table');await walk(3.45,5.65,'front circulation');
       await walk(9.1,5.65,'plant room approach');await walk(9.1,4.45,'plant room');
       await interact('照料薄荷','life-action');await page.waitForFunction(()=>window.__atrium.getState().discovered.includes('plant'),{timeout:15000});await close();
       await walk(9.1,5.65,'plant room return');await walk(3.1,5.65,'social centre return');await walk(.1,2.6,'decision table');
@@ -108,9 +109,9 @@ try{
       if(!recorder)await page.screenshot({path:path.join(output,'upper-landing.png')});
       await walk(8.55,-5.65,'east gallery');await walk(8.55,3.65,'upper side room');await walk(9.1,3.65,'postcard');
       await interact('明信片','discovery-postcard');await close();
-      await walk(9.35,5.85,'lookout');await interact('从楼上','upper-lookout');await close();
-      await walk(9.5,4.95,'upper seat');await interact('落座','seated');await page.keyboard.press('KeyE');await pause(650);
-      await walk(8.55,3.65,'east corridor return');await walk(8.55,-5.65,'east corridor back');await walk(-7.15,-5.65,'west gallery');
+      await walk(8.55,3.65,'observation chair bypass');await walk(8.55,5.85,'observation aisle');await walk(9.35,5.85,'lookout');await interact('从楼上','upper-lookout');await close();
+      await walk(9.5,5.35,'upper seat');await interact('落座','seated');await page.keyboard.press('KeyE');await pause(650);
+      await walk(8.55,5.35,'leave observation seat');await walk(8.55,3.65,'east corridor return');await walk(8.55,-5.65,'east corridor back');await walk(-7.15,-5.65,'west gallery');
       await walk(-7.15,.4,'quiet conversation');await interact('周宁','dialogue-quiet');await close();
       await walk(-7.15,2.15,'record player');await interact('旧录音','discovery-record');await close();
       await walk(-7.15,6.2,'west front landing');await walk(-9.8,6.2,'shortcut');await interact('返回楼梯','shortcut');await close();

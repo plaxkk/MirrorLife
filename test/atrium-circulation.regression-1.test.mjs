@@ -5,6 +5,34 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {atriumWalkKeys} from '../scripts/lib/atrium-navigation.mjs';
+import {cameraRelativeInput,updateMoveVelocity} from '../src/atrium-locomotion.js';
+test('screen-relative input preserves cardinal directions, diagonal speed and immediate pause',()=>{
+  for(const yaw of [0,Math.PI/2,Math.PI,-Math.PI/2]){
+    const forward=cameraRelativeInput(0,-1,yaw),right=cameraRelativeInput(1,0,yaw);
+    assert.ok(Math.abs(forward.x+Math.sin(yaw))<1e-6);
+    assert.ok(Math.abs(forward.z+Math.cos(yaw))<1e-6);
+    assert.ok(Math.abs(right.x-Math.cos(yaw))<1e-6);
+    assert.ok(Math.abs(Math.hypot(...Object.values(cameraRelativeInput(1,1,yaw)))-1)<1e-6);
+  }
+  const velocity={x:0,z:0};updateMoveVelocity(velocity,{x:1,z:0},2.25,1/60);
+  assert.ok(velocity.x>0&&velocity.x<2.25);updateMoveVelocity(velocity,{x:1,z:0},2.25,1/60,true);assert.equal(velocity.x,0);
+});
+test('missing furniture blocks walking and camera geometry never blocks locomotion',async()=>{
+  const p=await createAtriumPhysics(JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8')));
+  try{
+    p.teleport([-5,0,.15]);for(let i=0;i<70;i++)p.move(.0375,0);
+    assert.ok(p.feet().x<-4.2,JSON.stringify(p.feet()));
+    assert.equal(p.canStandAt([-3.65,0,.15]),false,'old saves inside a chair must be rejected');
+    p.teleport([-7.7,0,4.4]);for(let i=0;i<50;i++)p.move(0,-.0375);
+    assert.ok(p.feet().z>3.7,'large planter is solid');
+    p.addCameraMesh(new Float32Array([-5,0,5,-3,0,5,-3,3,5,-5,3,5]),new Uint32Array([0,1,2,0,2,3]));
+    p.world.step();
+    const safe=p.cameraDistance({x:-4,y:1.35,z:4},{x:0,y:0,z:1},2);
+    assert.ok(safe>.6&&safe<.8,`visible wall sphere sweep: ${safe}`);
+    p.teleport([-4,0,4]);for(let i=0;i<45;i++)p.move(0,.0375);
+    assert.ok(p.feet().z>5.5,'camera-only mesh must not become an invisible gameplay barrier');
+  }finally{p.dispose();}
+});
 test('recording navigation stays in the table aisle at oblique camera angles',async()=>{
   const p=await createAtriumPhysics(JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8')));
   try{

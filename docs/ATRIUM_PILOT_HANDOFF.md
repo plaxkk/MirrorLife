@@ -2,6 +2,8 @@
 
 状态：可玩闭环已建立；精品 PC 游戏级美术与稳定性验收尚未通过。不得把本文件或一次构建成功解读为全部需求完成。
 
+试玩反馈续作：补齐共享椅/座椅/花盆与桌沿碰撞；镜头对实际可见几何做体积避让，加入近距离人物淡出；优化镜头相对移动、起停转向和双指触摸。人物重做贴头皮发束、帽子、领口与前袋。原因、复现与五视角审查见 `docs/ATRIUM_CONTROLS_REVIEW.md`，当前实测以 `evidence/atrium/acceptance.json` 为准，整体美术仍未通过。
+
 人物面部续作：七名人物调整头身比例、眼部厚度和眉眼位置，将鼻部做入脸部网格；源文件、两档 GLB 与九段动作同步。正侧面对照见 `evidence/atrium/faces/review.html`，制作与五视角审查见 `docs/ATRIUM_FACE_REVIEW.md`。面部体积、发束和服装仍未通过最终美术验收。
 
 界面性能续作：定位到五处浮层背景模糊会显著增加本机帧时间；保留面板与全部玩法，移除这些实时模糊。两轮环绕和两轮固定镜头交替对照见 `docs/ATRIUM_COMPOSITOR_REVIEW.md`。最终构建指标以 `PERFORMANCE.md` 为准，不把诊断样本等同于稳定 60fps 或手机达标。
@@ -54,6 +56,8 @@
 最新建筑步骤需在 `refine-atrium-library.py` 后执行 `polish-atrium-forms.py`，其后执行 `bake-atrium-contact.py`，最后同步 `export-atrium-kit.py`。接触遮蔽图为 `public/assets/atrium/floor-contact.png`，烘焙参数在同名 JSON，纹理也打包进建筑 `.blend`。它是短距离静态可见性烘焙，不是完整 GI；移动家具后需要重新烘焙。运行时投影见 `src/atrium-floor-contact.js`，不依赖固定验收镜头。
 
 执行 `npm run verify:atrium:release` 可自动构建并启动本机 4195 端口临时预览，顺序运行可见 Chrome 截图、桌面/移动模拟性能、握持、异常和带录像的完整回游；结束后关闭临时预览。此命令生成证据与预算判定，不代表自动通过美术或真实手机门禁。
+
+本轮新增的 `repair-atrium-furniture-collision.py` 应在建筑布置完成后运行，再执行 `bake-atrium-contact.py` 和 `export-atrium-assets.py`，保证安静区椅子的位置、碰撞与接触阴影一致。镜头复用运行时 GLB 建索引，无额外模型文件；CPU 查询三角面与渲染三角面分开报告。完整验收现包含四向/双指操作专测和从原始数据自动生成性能报告。
 
 ## 已验证与证据
 

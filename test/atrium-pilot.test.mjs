@@ -179,7 +179,7 @@ test('both physical stair flights are traversable and land on the upper floor',a
     pos=go(0,2.25/60,390);assert.ok(pos.y<.1,JSON.stringify({mainDown:pos}));
     p.teleport([-9.9,0,-4.35]);pos=go(0,2.25/60,390);assert.ok(pos.y>3.45,JSON.stringify({returnUp:pos}));
     pos=go(0,-2.25/60,390);assert.ok(pos.y<.1,JSON.stringify({returnDown:pos}));
-    p.teleport([0,0,3]);pos=go(0,-2.25/60,200);assert.ok(pos.z>1.75,'table is a real obstacle');
+    p.teleport([-.65,0,3]);pos=go(0,-2.25/60,200);assert.ok(pos.z>1.75,'table blocks a push through its centre; curved edges may slide');
     p.teleport([9,3.5,5.5]);pos=go(-2.25/60,0,150);assert.ok(pos.x>7.75,'upper guard stops a fall');
   }finally{p.dispose();}
 });
