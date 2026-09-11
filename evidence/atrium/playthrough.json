@@ -1,7 +1,7 @@
 {
   "method": "Continuous CDP JPEG browser capture, constant 15fps output aligned to source timestamps; repeated frames preserve real elapsed time. No cuts, teleportation or playback acceleration.",
-  "frames": 1465,
-  "receivedFrames": 1560,
-  "durationSeconds": 97.66666666666667,
-  "bytes": 53634116
+  "frames": 1478,
+  "receivedFrames": 1488,
+  "durationSeconds": 98.53333333333333,
+  "bytes": 53455057
 }

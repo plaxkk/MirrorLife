@@ -6,6 +6,15 @@ import fs from 'node:fs/promises';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {atriumWalkKeys} from '../scripts/lib/atrium-navigation.mjs';
 import {cameraRelativeInput,updateMoveVelocity} from '../src/atrium-locomotion.js';
+import {clearancePitch} from '../src/atrium-camera-clearance.js';
+test('cramped camera raises its pitch only when the swept clearance improves',()=>{
+  assert.equal(clearancePitch(.21,3.35,()=>3.35),.21);
+  assert.equal(clearancePitch(.21,3.35,()=>.5),.21);
+  const raised=clearancePitch(.21,3.35,p=>.65/Math.cos(p));
+  assert.ok(raised>.8&&raised<=1.15);
+  const ceiling=clearancePitch(.21,3.35,p=>p>.6?.2:.65/Math.cos(p));
+  assert.ok(ceiling<=.6,'avoid raising into overhead obstruction');
+});
 test('screen-relative input preserves cardinal directions, diagonal speed and immediate pause',()=>{
   for(const yaw of [0,Math.PI/2,Math.PI,-Math.PI/2]){
     const forward=cameraRelativeInput(0,-1,yaw),right=cameraRelativeInput(1,0,yaw);

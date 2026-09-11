@@ -30,7 +30,7 @@ def everyday_limbs(name,centres,rings,*args,**kwargs):
     if name=='SkinnedArmVolume':
         rings=list(rings)
         # A sloping shoulder ends above the pivot, not in a broad horizontal lid.
-        for i,(height,scale) in enumerate([(1.29,.4),(1.275,.83),(1.252,.9)]):
+        for i,(height,scale) in enumerate([(1.26,.35),(1.24,.65),(1.22,.8)]):
             z,rx,ry,*rest=rings[i];rings[i]=(height,rx*scale,ry*scale,*rest)
     return shared_limb_builder(name,centres,rings,*args,**kwargs)
 civic.build_skinned_limb_pair=everyday_limbs
@@ -42,6 +42,10 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     # This changes the continuous shell, not a decorative line across the chest.
     for v in bpy.data.objects['Torso'].data.vertices:
         if v.co.z>1.22:v.co.z=1.22+(v.co.z-1.22)*.75
+        # Sloping clavicle: remove the outer horizontal torso shelf before union.
+        outer=max(0,min(1,(abs(v.co.x)-.12)/.14))
+        upper=max(0,min(1,(v.co.z-1.15)/.12))
+        v.co.z-=.045*outer*upper
     garment=garment_tools.continuous_garment(civic,mats['top'])
     cloth_surface=BVHTree.FromPolygons([v.co for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
     def cloth_y(x,z):
@@ -68,7 +72,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         solid=ob.modifiers.new('Patch cloth thickness','SOLIDIFY');solid.thickness=.002
     bpy.data.objects['WaistBand'].data.materials.clear();bpy.data.objects['WaistBand'].data.materials.append(mats['lower'])
     for obj in list(bpy.context.scene.objects):
-        if obj.name.startswith(('ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem')):
+        if obj.name.startswith(('ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem','ArmInnerElbowFold','ArmOuterTensionPlane','SleeveCompression_')):
             bpy.data.objects.remove(obj,do_unlink=True)
     # The shared traveler is short-sleeved; this pilot uses long everyday jackets.
     # Its rigid bare forearm overlay intersected the continuously weighted sleeve.
@@ -86,7 +90,9 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     for obj in list(bpy.context.scene.objects):
         if obj.name.startswith(('FingerVolume_','ThumbVolume_')):
             obj.name=obj.name.replace('FingerVolume_','EssentialFinger_').replace('ThumbVolume_','EssentialThumb_')
-            decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.6
+            # Keep rounded digits at close dialogue distance; these meshes join
+            # the skinned batch, so the later rigid-mesh LOD does not restore them.
+            decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.8
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
     civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)

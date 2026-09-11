@@ -7,6 +7,7 @@
 <main>
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
+<p>近墙视野续作：受限时自动提高俯角，让楼梯踏步进入画面，保留玩家左右朝向；七人压低肩峰、清理旧袖部叠层并保留更多手指曲面。<a href="../../docs/ATRIUM_CLEARANCE_REVIEW.md">修改与反方审查</a>。手部接触、面部与整体美术仍未验收通过。</p>
 <p>试玩反馈修正：补齐椅子、花盆和桌沿碰撞，加入可见几何镜头扫掠、近距离人物淡出与起停跟随；人物调整发束、帽子、领口和前袋。<a href="../../docs/ATRIUM_CONTROLS_REVIEW.md">原因与验收边界</a> · <a href="controls/report.json">四向操作、碰撞与双指记录</a>。</p>
 <p>人物面部续作：七名人物调整头身比例、眉眼位置和眼部厚度，鼻部进入脸部网格。<a href="faces/review.html">同镜头正侧面对照</a> · <a href="../../docs/ATRIUM_FACE_REVIEW.md">制作与五视角审查</a>。面部、发束与服装仍需精修。</p>
 <p>界面性能续作：移除五处实时背景模糊，保留暖色半透明面板、完整场景与交互。<a href="../../docs/ATRIUM_COMPOSITOR_REVIEW.md">诊断与五视角审查</a> · <a href="compositor/fixed-camera-ab.json">固定镜头交替样本</a>。未用降低 3D 画质或隐藏居民换取帧率。</p>
@@ -16,6 +17,7 @@
 <p>上一轮建筑续作已修墙顶漏缝、椅背/扶手端面、人物握持，并补两层静态地面接触遮蔽。该轮桌面峰值 493,955 三角面，P95 34.3ms；这是历史值，最新结果见性能报告。<a href="../../docs/ATRIUM_CONTINUATION_REVIEW.md">续作审查与剩余问题</a> · <a href="acceptance.json">同构建验收记录</a></p>
 <p>以下全部“运行图”来自实际 Three.js 场景。参考图仅用于对照，未贴在场景里冒充建筑。自由检查镜头与真实键盘回游录像分开呈现；不提供无测量依据的还原度百分比。</p>
 <p><a href="../../atrium.html">进入本机试点</a> · <a href="../../docs/ATRIUM_PILOT_HANDOFF.md">交接与未完成项</a> · <a href="assets.json">资产数据与版本指纹</a> · <a href="PERFORMANCE.md">性能报告</a></p>
+<h2>楼梯近墙视野对照</h2><div class="compare"><figure><img src="controls/before-raised-camera.png"><figcaption>上一版：收近后主要看到墙面。</figcaption></figure><figure><img src="controls/return-window.png"><figcaption>当前：受限时提高俯角，踏步进入画面；近距离渐隐仍有颗粒。</figcaption></figure></div>
 <h2>同构图对照</h2><div class="compare">
 <figure><img src="../../design/references/atrium-visual-target.png" alt="用户选定的双层天井概念图"><figcaption>设计参考。单张图未提供真实尺寸或完整背面。</figcaption></figure>
 <figure><img src="gallery-reference.png" alt="实际游戏校准镜头"><figcaption>实际运行。校准镜头 [-3.4, 2.65, 6.8] → [1, 2.8, -2]，垂直 FOV 62°，16:9。</figcaption></figure>

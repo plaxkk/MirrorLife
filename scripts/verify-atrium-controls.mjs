@@ -28,7 +28,9 @@ try{
     const state=await page.evaluate(()=>window.__atrium.getStats());
     if(name==='chair')assert.ok(state.position.x<-4.2,JSON.stringify(state.position));
     if(name==='planter')assert.ok(state.position.z>3.7,JSON.stringify(state.position));
-    report.push({name,position:state.position,camera:state.camera,controls:await page.evaluate(()=>window.__atrium.getCameraDiagnostics())});
+    const controls=await page.evaluate(()=>window.__atrium.getCameraDiagnostics());
+    if(name==='return-window')assert.ok(controls.clearancePitch>.65,'cramped stair camera reveals steps with a higher pitch');
+    report.push({name,position:state.position,camera:state.camera,controls});
   }
   await page.setViewport({width:390,height:844,deviceScaleFactor:3,isMobile:true,hasTouch:true});
   await page.goto(`${process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4193'}/atrium.html?quality=mobile`);
@@ -39,7 +41,9 @@ try{
   const initial=await page.evaluate(()=>window.__atrium.getPosition());
   await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[stick]});await wait(250);
   const moving=await page.evaluate(()=>window.__atrium.getPosition());
-  assert.ok(initial.z-moving.z>.2,'off-centre touch-down starts movement without requiring touchMove');
+  const touchStart={initial,moving,elapsedMs:250,stats:await page.evaluate(()=>window.__atrium.getStats())};
+  await fs.writeFile(`${out}/touch-start.json`,JSON.stringify(touchStart,null,2));
+  assert.ok(initial.z-moving.z>.2,'off-centre touch-down starts movement without requiring touchMove: '+JSON.stringify({initial,moving}));
   await client.send('Input.dispatchTouchEvent',{type:'touchStart',touchPoints:[stick,{x:335,y:350,id:2}]});
   await client.send('Input.dispatchTouchEvent',{type:'touchMove',touchPoints:[stick,{x:245,y:350,id:2}]});await wait(400);
   const turned=await page.evaluate(()=>window.__atrium.getCameraDiagnostics());assert.ok(turned.heading>.35,'second finger rotates camera while first finger moves');

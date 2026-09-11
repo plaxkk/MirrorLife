@@ -3,6 +3,7 @@ import {loadAtriumGLB,disposeAtriumDecoder} from './atrium-assets.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createAtriumPhysics} from './atrium-physics.js';
 import {addAtriumCameraGeometry} from './atrium-camera-geometry.js';
+import {clearancePitch} from './atrium-camera-clearance.js';
 import {cameraRelativeInput,updateMoveVelocity,wrapAngle} from './atrium-locomotion.js';
 import {loadAtriumActor} from './atrium-actors.js';
 import {applyAtriumFloorContact} from './atrium-floor-contact.js';
@@ -22,6 +23,7 @@ let active=false,disposed=false,dialogTarget=null,nearest=null,seated=null,careU
 let orbitYaw=.0,orbitPitch=.21,orbitDistance=3.35,referenceView=false;
 let requestedYaw=0,requestedPitch=.21,cameraBoom=3.35,cameraInitialized=false;
 let playerFade=1;
+let clearanceAngle=.21;
 let cameraGeometry=null;
 const playerMaterials=[];
 const moveVelocity={x:0,z:0};
@@ -254,7 +256,7 @@ async function boot(){
     getInteractionState:()=>({seated:seated?.item.id||null,care:careItem?.id||null,dialogue:dialogTarget?.id||null,residents:actors.map(a=>({id:a.id,busy:!!a.busy,position:a.group.position.toArray(),yaw:a.group.rotation.y,seatBlend:a.seatBlend,seatMotion:a.seatMotion}))}),
     calibration:REFERENCE_CAMERA,
     getHeading:()=>orbitYaw,
-    getCameraDiagnostics:()=>({heading:orbitYaw,requestedHeading:requestedYaw,pitch:orbitPitch,boom:cameraBoom,fade:playerFade,playerYaw:player.group.rotation.y,velocity:{...moveVelocity}}),
+    getCameraDiagnostics:()=>({heading:orbitYaw,requestedHeading:requestedYaw,pitch:orbitPitch,clearancePitch:clearanceAngle,boom:cameraBoom,fade:playerFade,playerYaw:player.group.rotation.y,velocity:{...moveVelocity}}),
     // Review helpers are separate from the input-driven playthrough used for acceptance.
     setReviewCamera:(pos,look)=>{referenceView={position:pos,target:look};},
     followCamera:()=>{referenceView=false;},
@@ -335,7 +337,12 @@ function updateCamera(dt){
   target.copy(player.group.position);target.y+=seated ? 1.1 : 1.35;
   if(!cameraInitialized||followTarget.distanceTo(target)>2){followTarget.copy(target);cameraInitialized=true;}
   else{followTarget.x=THREE.MathUtils.damp(followTarget.x,target.x,22,dt);followTarget.z=THREE.MathUtils.damp(followTarget.z,target.z,22,dt);followTarget.y=THREE.MathUtils.damp(followTarget.y,target.y,12,dt);}
-  direction.set(Math.sin(orbitYaw)*Math.cos(orbitPitch),Math.sin(orbitPitch),Math.cos(orbitYaw)*Math.cos(orbitPitch)).normalize();
+  const raisedPitch=clearancePitch(orbitPitch,orbitDistance,pitch=>{
+    direction.set(Math.sin(orbitYaw)*Math.cos(pitch),Math.sin(pitch),Math.cos(orbitYaw)*Math.cos(pitch));
+    return physics.cameraDistance(followTarget,direction,orbitDistance);
+  });
+  clearanceAngle=THREE.MathUtils.damp(clearanceAngle,raisedPitch,raisedPitch>clearanceAngle?12:4,dt);
+  direction.set(Math.sin(orbitYaw)*Math.cos(clearanceAngle),Math.sin(clearanceAngle),Math.cos(orbitYaw)*Math.cos(clearanceAngle)).normalize();
   const safe=physics.cameraDistance(followTarget,direction,orbitDistance);
   cameraBoom=safe<cameraBoom?safe:THREE.MathUtils.damp(cameraBoom,safe,5,dt);
   desired.copy(followTarget).addScaledVector(direction,cameraBoom);camera.position.copy(desired);
