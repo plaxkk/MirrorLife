@@ -97,6 +97,13 @@ async function glbJson(path){
   const bytes=await fs.readFile(new URL(path,import.meta.url));
   return JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
 }
+test('visual architecture LODs do not duplicate the separately loaded collision arrays',async()=>{
+  for(const profile of ['desktop','mobile']){
+    const glb=await glbJson(`../public/assets/atrium/atrium-${profile}.glb`);
+    for(const scene of glb.scenes)assert.equal(scene.extras?.collision_manifest,undefined);
+    assert.ok(glb.meshes.length>0,'retain real visual geometry');
+  }
+});
 test('both resident LODs keep full digits and one continuous long-sleeve surface',async()=>{
   for(const id of ['you','lin','chen','xu','zhou','he','tang'])for(const lod of ['','-mobile']){
     const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
@@ -182,6 +189,26 @@ test('both physical stair flights are traversable and land on the upper floor',a
     pos=go(0,-2.25/60,390);assert.ok(pos.y<.1,JSON.stringify({returnDown:pos}));
     p.teleport([-.65,0,3]);pos=go(0,-2.25/60,200);assert.ok(pos.z>1.75,'table blocks a push through its centre; curved edges may slide');
     p.teleport([9,3.5,5.5]);pos=go(-2.25/60,0,150);assert.ok(pos.x>7.75,'upper guard stops a fall');
+  }finally{p.dispose();}
+});
+
+test('structural stair flight admits the high underside and blocks low head clearance',async()=>{
+  const definitions=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8'));
+  const p=await createAtriumPhysics(definitions);
+  try{
+    const kit=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/kit/main-stair-collision.json',import.meta.url),'utf8'));
+    const local=kit.find(d=>d.name==='Main stair structural soffit');
+    const world=definitions.find(d=>d.name===local.name);
+    assert.deepEqual(local.indices,world.indices);
+    local.vertices.forEach((v,i)=>assert.ok(Math.abs(v+(i%3===0?5.8:0)-world.vertices[i])<1e-9,'kit hull follows module origin'));
+    p.teleport([3.6,0,-3]);for(let i=0;i<100;i++)p.move(.0375,0);
+    assert.ok(p.feet().x>7&&p.feet().y<.1,'high underside is actual walkable space');
+    p.teleport([5.8,0,-3]);for(let i=0;i<160;i++)p.move(0,.0375);
+    assert.ok(p.feet().z<.5&&p.feet().y<.1,'closed soffit blocks insufficient capsule headroom');
+    for(let i=0;i<22;i++){
+      const d=definitions.find(d=>d.name===`Main stair tread ${i}`);
+      assert.ok(Math.abs(d.position[1]+d.size[1]/2-3.5*(i+1)/22)<1e-8,'tread top preserved');
+    }
   }finally{p.dispose();}
 });
 

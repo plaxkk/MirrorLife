@@ -196,11 +196,14 @@ async function boot(){
   scene=new THREE.Scene();scene.background=new THREE.Color('#c6dce3');scene.fog=new THREE.Fog('#dce4df',38,100);
   camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.075,130);
   const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();environment=pmrem.fromScene(room,.04).texture;scene.environment=environment;scene.environmentIntensity=.35;room.dispose();pmrem.dispose();
-  scene.add(new THREE.HemisphereLight('#e9f3f1','#b6a28b',.55));
+  scene.add(new THREE.HemisphereLight('#e9f3f1','#b6a28b',.42));
   const sun=new THREE.DirectionalLight('#fff0d4',2.3);sun.position.set(-7,16,6);sun.target.position.set(0,0,-1);sun.castShadow=true;
   sun.shadow.mapSize.set(mobile?1024:2048,mobile?1024:2048);sun.shadow.camera.left=-16;sun.shadow.camera.right=16;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=50;sun.shadow.bias=-.0002;sun.shadow.normalBias=.025;sun.shadow.radius=3;scene.add(sun,sun.target);
-  const fill=new THREE.DirectionalLight('#dcece9',.22);fill.position.set(3,4,-12);scene.add(fill);
+  const fill=new THREE.DirectionalLight('#dcece9',.16);fill.position.set(3,4,-12);scene.add(fill);
   const bounce=new THREE.PointLight('#ffe3a7',12,22,2);bounce.position.set(0,4.8,0);scene.add(bounce);
+  // Broad warm return from the west window/cream reveal. This is an authored
+  // indirect-light approximation; the skylight remains the shadow-casting key.
+  const windowBounce=new THREE.PointLight('#ffe4ba',8,14,2);windowBounce.position.set(-6,3.2,3);scene.add(windowBounce);
   loadProgress(8,'正在打开建筑与楼梯…');
   const [model,definitions]=await Promise.all([loadAtriumGLB(`/assets/atrium/atrium-${profile}.glb`),checkedJSON('/assets/atrium/collision.json')]);
   model.scene.traverse(node=>{if(!node.isMesh)return;node.castShadow=node.material.name!=='Window glass';node.receiveShadow=true;node.material.side=THREE.DoubleSide;if(node.material.map){node.material.map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());} });

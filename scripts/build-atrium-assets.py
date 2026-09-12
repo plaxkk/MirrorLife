@@ -467,7 +467,14 @@ for mat,objects in buckets.items():
     objects[0].data.materials.clear();objects[0].data.materials.append(mats[0])
 
 def export(path):
-    bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',export_apply=True,export_extras=True,export_cameras=False,export_lights=False,export_animations=False,export_draco_mesh_compression_enable=path.parent==OUT)
+    # Physics loads the separate collision file. Do not duplicate its evaluated
+    # triangle arrays as a multi-megabyte JSON string in both visual LODs.
+    collision_metadata=bpy.context.scene.get('collision_manifest')
+    if collision_metadata is not None:del bpy.context.scene['collision_manifest']
+    try:
+        bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',export_apply=True,export_extras=True,export_cameras=False,export_lights=False,export_animations=False,export_draco_mesh_compression_enable=path.parent==OUT)
+    finally:
+        if collision_metadata is not None:bpy.context.scene['collision_manifest']=collision_metadata
 
 export(SOURCE/'atrium-master.glb')
 triangles=sum(len(o.data.polygons) for o in bpy.context.scene.objects if o.type=='MESH')
@@ -484,6 +491,6 @@ for o in bpy.context.scene.objects:
         bpy.context.view_layer.objects.active=o;bpy.ops.object.modifier_apply(modifier=d.name)
         o.data.validate(verbose=False)
 export(OUT/'atrium-mobile.glb')
-(OUT/'collision.json').write_text(json.dumps(COLLIDERS,ensure_ascii=False,indent=2))
+(OUT/'collision.json').write_text(json.dumps(COLLIDERS,ensure_ascii=False,separators=(',',':')))
 (OUT/'manifest.json').write_text(json.dumps({'version':1,'units':'metres','levelHeight':3.5,'floorAreaApproxM2':470,'source':'models/atrium/atrium-master.blend','master':'models/atrium/atrium-master.glb','desktop':'atrium-desktop.glb','mobile':'atrium-mobile.glb','materials':list(buckets),'sourceFaces':triangles,'collisionCount':len(COLLIDERS),'license':'Original project-authored geometry; existing MirrorLife authored character pipeline separately credited.','reference':'design/references/atrium-visual-target.png','inferred':['rear and front façades','left return stair','upstairs side rooms','precise dimensions'],'reviewStatus':'development: runtime and visual verification required'},ensure_ascii=False,indent=2))
 print('ATRIUM_ASSETS_READY',len(COLLIDERS),triangles,flush=True)

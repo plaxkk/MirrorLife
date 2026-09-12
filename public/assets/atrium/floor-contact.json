@@ -18,7 +18,7 @@
   "radiusMetres": 1.15,
   "samples": 24,
   "triangulatedBy": "Blender BVHTree",
-  "seconds": 39.91,
+  "seconds": 116.32,
   "scope": "static horizontal floor surfaces only; no baked residents; not indirect diffuse GI",
-  "textureSha256": "544b6c6f4c58bc2834d3d7303eed28a61b9c69d6357b4ce94ec42917fe854211"
+  "textureSha256": "a421b008fe7f1da6edc838c100d089abc4a99bacf02ae9efaf57029205b8838b"
 }

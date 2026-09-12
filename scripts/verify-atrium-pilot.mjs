@@ -96,7 +96,10 @@ try{
       await interact('林晓','dialogue-lin');await close();
       await walk(.8,-2.95,'Chen');await interact('陈屿','dialogue-chen');await close();
       await walk(0,-5.65,'records');await interact('轮值手记','discovery-records');await close();
-      await walk(3.45,-3.3,'back of shared table');await walk(3.45,5.65,'front circulation');
+      await walk(3.45,-3.3,'back of shared table');
+      await walk(5.8,-3.3,'high stair underside');await walk(7.3,-3.3,'stair underside east edge');
+      await walk(5.8,-3.3,'stair underside return');await walk(3.45,-3.3,'back of shared table return');
+      await walk(3.45,5.65,'front circulation');
       await walk(9.1,5.65,'plant room approach');await walk(9.1,4.45,'plant room');
       await interact('照料薄荷','life-action');await page.waitForFunction(()=>window.__atrium.getState().discovered.includes('plant'),{timeout:15000});await close();
       await walk(9.1,5.65,'plant room return');await walk(3.1,5.65,'social centre return');await walk(.1,2.6,'decision table');
@@ -165,6 +168,7 @@ try{
       ['back-view',[3.5,2.35,-6.7],[-2,1.6,5.5]],
       ['plant-room',[8,1.6,5.8],[9.35,1,2.9]],
       ['table-close',[-3.5,1.5,2.5],[-.65,.65,.1]],
+      ['stair-underside',[3.5,1.35,-3.7],[6.2,1.75,-2.5]],
       ['resident-close',[-3.7,1.5,-.1],[-2.2,1.05,-1.95]],
     ];
     const shots=[];

@@ -49,6 +49,7 @@ for name,origin,prefixes,region in specs:
         d=dict(d)
         if d['type']=='box':d['position']=[v-origin[i] for i,v in enumerate(d['position'])]
         elif d['type']=='stairRail':d['x']-=origin[0];d['z0']-=origin[2];d['z1']-=origin[2]
+        elif d['type']=='trimesh':d['vertices']=[v-origin[i%3] for i,v in enumerate(d['vertices'])]
         local_colliders.append(d)
     if name=='chair':local_colliders=[{'type':'box','name':'chair core','position':[0,.53,0],'size':[.76,1.06,.7]}]
     if name=='plant':local_colliders=[{'type':'box','name':'plant pot','position':[0,.115,0],'size':[.34,.23,.34]}]

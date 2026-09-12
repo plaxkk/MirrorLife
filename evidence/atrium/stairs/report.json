@@ -1,28 +1,28 @@
 {
-  "capturedAt": "2026-09-11T13:29:26.854Z",
-  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
+  "capturedAt": "2026-09-12T06:03:17.566Z",
+  "runtimeFingerprint": "fcaebfdb2a5b9c7cf6806058e08604f1d66b7589e2e36eebd0b0703c499f37f7",
   "method": "Review fixtures at flight entrances; actual W/S input along both flights, pause halfway. Sole height estimates use rig offset, not decoded shoe-mesh collision. No claim of planted world-space feet or complete foot-slip elimination.",
   "cases": [
     {
       "name": "main-up",
       "stopped": {
         "p": {
-          "x": 5.800327301025391,
-          "y": 1.5292491054534914,
-          "z": 1.1342898607254028
+          "x": 5.799889087677002,
+          "y": 1.5303849315643312,
+          "z": 1.1328911781311035
         },
         "feet": [
           {
             "side": "left",
-            "soleY": 1.431818034362793,
-            "floorY": 1.529248728466034,
-            "kneeForward": 0.019184844223275134,
+            "soleY": 1.4318182579040528,
+            "floorY": 1.5305767646789552,
+            "kneeForward": 0.019938621744004296,
             "stair": {
               "side": "left",
-              "ground": 1.431818034362793,
+              "ground": 1.4318182579040528,
               "surface": "Main stair tread 8",
               "onStair": true,
-              "forward": -0.05225961511172476,
+              "forward": -0.05045098995657628,
               "lift": 0,
               "unreachable": 0
             },
@@ -30,15 +30,15 @@
           },
           {
             "side": "right",
-            "soleY": 1.431818034362793,
-            "floorY": 1.529248728466034,
-            "kneeForward": 0.05242179372098078,
+            "soleY": 1.4318182579040528,
+            "floorY": 1.5305767646789552,
+            "kneeForward": 0.05154976171889991,
             "stair": {
               "side": "right",
-              "ground": 1.431818034362793,
+              "ground": 1.4318182579040528,
               "surface": "Main stair tread 8",
               "onStair": true,
-              "forward": 0.005745886935458402,
+              "forward": 0.004897165586059229,
               "lift": 0,
               "unreachable": 0
             },
@@ -47,100 +47,100 @@
         ]
       },
       "end": {
-        "x": 5.800569534301758,
-        "y": 3.5188361740112306,
-        "z": -5.382372856140137
+        "x": 5.799449920654297,
+        "y": 3.5199786758422853,
+        "z": -5.383100986480713
       },
-      "frames": 458,
-      "supportSamples": 471,
+      "frames": 484,
+      "supportSamples": 484,
       "minSoleError": -8.881784197001252e-16,
-      "maxSoleError": 0.0010341405742995136,
+      "maxSoleError": 0.001476379551041962,
       "p95AbsoluteSoleError": 4.440892098500626e-16,
       "transition": {
         "samples": 13,
         "min": -2.220446049250313e-16,
-        "max": 2.220446049250313e-16
+        "max": 1.6653345369377348e-16
       }
     },
     {
       "name": "main-down",
       "stopped": {
         "p": {
-          "x": 5.799529075622559,
+          "x": 5.800236225128174,
           "y": 1.9291910266876222,
-          "z": -0.08971437811851501
+          "z": -0.09661994129419327
         },
         "feet": [
           {
             "side": "left",
-            "soleY": 1.9090910410881048,
+            "soleY": 1.909091070890427,
             "floorY": 1.9291910266876222,
-            "kneeForward": 0.020603299005641857,
+            "kneeForward": 0.01764095219158819,
             "stair": {
               "side": "left",
-              "ground": 1.9090910410881046,
+              "ground": 1.909091070890427,
               "surface": "Main stair tread 11",
               "onStair": true,
-              "forward": -0.04761640376946776,
+              "forward": -0.05417373308032713,
               "lift": 0,
               "unreachable": 0
             },
-            "stairBlend": 0.9999999999999999
+            "stairBlend": 1
           },
           {
             "side": "right",
-            "soleY": 1.9090910410881046,
+            "soleY": 1.909091070890427,
             "floorY": 1.9291910266876222,
-            "kneeForward": 0.04974900420715306,
+            "kneeForward": 0.05278126869666104,
             "stair": {
               "side": "right",
-              "ground": 1.9090910410881046,
+              "ground": 1.909091070890427,
               "surface": "Main stair tread 11",
               "onStair": true,
-              "forward": 0.0035685535834526832,
+              "forward": 0.00678789846470988,
               "lift": 0,
               "unreachable": 0
             },
-            "stairBlend": 0.9999999999999999
+            "stairBlend": 1
           }
         ]
       },
       "end": {
-        "x": 5.797910213470459,
-        "y": 0.019566092491149933,
-        "z": 5.628784656524658
+        "x": 5.8021159172058105,
+        "y": 0.01943800210952762,
+        "z": 5.621304988861084
       },
-      "frames": 375,
-      "supportSamples": 381,
+      "frames": 403,
+      "supportSamples": 395,
       "minSoleError": -8.881784197001252e-16,
-      "maxSoleError": 0.0019488769774187453,
+      "maxSoleError": 0.001359114960099439,
       "p95AbsoluteSoleError": 6.661338147750939e-16,
       "transition": {
         "samples": 15,
-        "min": -8.881784197001252e-16,
-        "max": 0.014245590705951106
+        "min": 0,
+        "max": 0.01962472423583872
       }
     },
     {
       "name": "return-up",
       "stopped": {
         "p": {
-          "x": -9.899179458618164,
-          "y": 1.5390993690490724,
-          "z": -0.2226496785879135
+          "x": -9.899916648864746,
+          "y": 1.5410400962829591,
+          "z": -0.22011418640613556
         },
         "feet": [
           {
             "side": "left",
-            "soleY": 1.4318181404590602,
-            "floorY": 1.53926169962883,
-            "kneeForward": 0.019637177819049095,
+            "soleY": 1.4318180311203,
+            "floorY": 1.541299830722809,
+            "kneeForward": 0.020958991113477286,
             "stair": {
               "side": "left",
-              "ground": 1.4318181404590606,
+              "ground": 1.4318180311203004,
               "surface": "Return stair tread 8",
               "onStair": true,
-              "forward": -0.051111917345084884,
+              "forward": -0.04816933657088798,
               "lift": 0,
               "unreachable": 0
             },
@@ -148,15 +148,15 @@
           },
           {
             "side": "right",
-            "soleY": 1.4318181404590602,
-            "floorY": 1.53926169962883,
-            "kneeForward": 0.0519796015329177,
+            "soleY": 1.4318180311202997,
+            "floorY": 1.541299830722809,
+            "kneeForward": 0.05052239208859429,
             "stair": {
               "side": "right",
-              "ground": 1.4318181404590606,
+              "ground": 1.4318180311203004,
               "surface": "Return stair tread 8",
               "onStair": true,
-              "forward": 0.005528073460126631,
+              "forward": 0.0038277021290687207,
               "lift": 0,
               "unreachable": 0
             },
@@ -165,78 +165,78 @@
         ]
       },
       "end": {
-        "x": -9.899615287780762,
+        "x": -9.900238037109375,
         "y": 3.520099792480469,
-        "z": 6.199784278869629
+        "z": 6.197494029998779
       },
-      "frames": 478,
-      "supportSamples": 474,
+      "frames": 473,
+      "supportSamples": 466,
       "minSoleError": -8.881784197001252e-16,
-      "maxSoleError": 0.0014928502218976014,
-      "p95AbsoluteSoleError": 6.661338147750939e-16,
+      "maxSoleError": 0.0019472271629144,
+      "p95AbsoluteSoleError": 4.440892098500626e-16,
       "transition": {
-        "samples": 12,
-        "min": -4.440892098500626e-16,
-        "max": 0.0029867933608650477
+        "samples": 15,
+        "min": -1.6653345369377348e-16,
+        "max": 1.6653345369377348e-16
       }
     },
     {
       "name": "return-down",
       "stopped": {
         "p": {
-          "x": -9.899683952331543,
+          "x": -9.899843215942383,
           "y": 1.9291910266876222,
-          "z": 0.9932718873023987
+          "z": 0.9913461208343506
         },
         "feet": [
           {
             "side": "left",
-            "soleY": 1.9090910410881046,
+            "soleY": 1.9090910410881048,
             "floorY": 1.9291910266876222,
-            "kneeForward": 0.018300676546615,
+            "kneeForward": 0.018971263466119184,
             "stair": {
               "side": "left",
               "ground": 1.9090910410881046,
               "surface": "Return stair tread 11",
               "onStair": true,
-              "forward": -0.05271348050842198,
+              "forward": -0.05122541855540338,
               "lift": 0,
               "unreachable": 0
             },
-            "stairBlend": 1
+            "stairBlend": 0.9999999999999999
           },
           {
             "side": "right",
             "soleY": 1.9090910410881046,
             "floorY": 1.9291910266876222,
-            "kneeForward": 0.05205282734810514,
+            "kneeForward": 0.051500298918578186,
             "stair": {
               "side": "right",
               "ground": 1.9090910410881046,
               "surface": "Return stair tread 11",
               "onStair": true,
-              "forward": 0.005966531964892085,
+              "forward": 0.0055743212255513624,
               "lift": 0,
               "unreachable": 0
             },
-            "stairBlend": 1
+            "stairBlend": 0.9999999999999999
           }
         ]
       },
       "end": {
-        "x": -9.899755477905273,
-        "y": 0.020083997249603303,
-        "z": -4.88270902633667
+        "x": -9.90042495727539,
+        "y": 0.020053420066833527,
+        "z": -4.87763786315918
       },
-      "frames": 381,
-      "supportSamples": 377,
+      "frames": 402,
+      "supportSamples": 385,
       "minSoleError": -8.881784197001252e-16,
-      "maxSoleError": 0.0011349238695377295,
+      "maxSoleError": 8.881784197001252e-16,
       "p95AbsoluteSoleError": 4.440892098500626e-16,
       "transition": {
-        "samples": 11,
+        "samples": 14,
         "min": -8.881784197001252e-16,
-        "max": 0.009552519864093778
+        "max": 0.003820947350514192
       }
     }
   ],

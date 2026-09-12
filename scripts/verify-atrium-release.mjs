@@ -18,8 +18,13 @@ async function run(name,command,args,extra={}){
       const child=spawn(command,args,{env:{...env,...extra},stdio:['ignore',handle.fd,handle.fd]});
       child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(new Error(`${name} exited ${code}; see validation/${name}.log`)));
     });
+  }catch(error){
+    await fs.writeFile(`${out}/validation/progress.json`,JSON.stringify({updatedAt:new Date().toISOString(),base,steps,failedStep:name,error:String(error)},null,2));
+    throw error;
   }finally{await handle.close();}
-  steps.push({name,seconds:(Date.now()-started)/1000});console.log('PASS',name);
+  steps.push({name,seconds:(Date.now()-started)/1000});
+  await fs.writeFile(`${out}/validation/progress.json`,JSON.stringify({updatedAt:new Date().toISOString(),base,steps},null,2));
+  console.log('PASS',name);
 }
 let server;
 try{

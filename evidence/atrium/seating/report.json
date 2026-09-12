@@ -1,26 +1,26 @@
 {
-  "capturedAt": "2026-09-11T13:28:29.435Z",
-  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
+  "capturedAt": "2026-09-12T06:02:19.813Z",
+  "runtimeFingerprint": "fcaebfdb2a5b9c7cf6806058e08604f1d66b7589e2e36eebd0b0703c499f37f7",
   "method": "Actual E and Escape actions after review positioning. Sole estimate uses authored neutral foot offset; not full shoe-mesh penetration or stair IK proof.",
   "samples": [
     {
       "label": "rest-lin",
       "id": "lin",
-      "seatBlend": 0.9999761508027624,
+      "seatBlend": 0.9999997496885765,
       "feet": [
         {
           "side": "left",
-          "soleY": -0.000011337222219576226,
+          "soleY": -1.2564699697348303e-7,
           "floorY": 0,
-          "kneeForward": 0.48265291675182476,
+          "kneeForward": 0.48266572160806676,
           "stair": null,
           "stairBlend": 0
         },
         {
           "side": "right",
-          "soleY": -0.000011280118268341965,
+          "soleY": -1.2478669780824347e-7,
           "floorY": 0,
-          "kneeForward": 0.48265295937731767,
+          "kneeForward": 0.48266572224520066,
           "stair": null,
           "stairBlend": 0
         }
@@ -35,8 +35,8 @@
         0,
         -1.95
       ],
-      "yaw": 2.6544512623300167,
-      "seatBlend": 0.0000010853579223644159,
+      "yaw": 2.6544139480145628,
+      "seatBlend": 0.0000012395030525764917,
       "seatMotion": {
         "seated": false,
         "moving": 0,
@@ -47,21 +47,21 @@
     {
       "label": "returned-lin",
       "id": "lin",
-      "seatBlend": 0.9999952927185339,
+      "seatBlend": 0.9999952889512022,
       "feet": [
         {
           "side": "left",
-          "soleY": -0.000002365618386679369,
+          "soleY": -0.0000023806547398419475,
           "floorY": 0,
-          "kneeForward": 0.48266323920484816,
+          "kneeForward": 0.48266322953461527,
           "stair": null,
           "stairBlend": 0
         },
         {
           "side": "right",
-          "soleY": -0.0000023437165533879423,
+          "soleY": -0.0000023351426718942747,
           "floorY": 0,
-          "kneeForward": 0.4826632514969711,
+          "kneeForward": 0.4826632555510239,
           "stair": null,
           "stairBlend": 0
         }
@@ -70,21 +70,21 @@
     {
       "label": "quick-cancel-lin",
       "id": "lin",
-      "seatBlend": 0.9999999977455488,
+      "seatBlend": 0.9999999977372407,
       "feet": [
         {
           "side": "left",
-          "soleY": -1.1406671163172177e-9,
+          "soleY": -1.1411307454523012e-9,
           "floorY": 0,
-          "kneeForward": 0.48266585975784,
+          "kneeForward": 0.4826658597550622,
           "stair": null,
           "stairBlend": 0
         },
         {
           "side": "right",
-          "soleY": -1.1164690838505464e-9,
+          "soleY": -1.123092896460065e-9,
           "floorY": 0,
-          "kneeForward": 0.4826658597718931,
+          "kneeForward": 0.48266585976608783,
           "stair": null,
           "stairBlend": 0
         }
@@ -122,8 +122,8 @@
         0,
         -1.95
       ],
-      "yaw": -2.609641665917831,
-      "seatBlend": 0.0000010870966927603304,
+      "yaw": -2.6096101586124063,
+      "seatBlend": 0.0000012404950799567113,
       "seatMotion": {
         "seated": false,
         "moving": 0,
@@ -134,21 +134,21 @@
     {
       "label": "returned-chen",
       "id": "chen",
-      "seatBlend": 0.9999958814112925,
+      "seatBlend": 0.9999958978527425,
       "feet": [
         {
           "side": "left",
-          "soleY": -0.0000020603975692257137,
+          "soleY": -0.0000020551323166584368,
           "floorY": 0,
-          "kneeForward": 0.4826635742238432,
+          "kneeForward": 0.48266358353023714,
           "stair": null,
           "stairBlend": 0
         },
         {
           "side": "right",
-          "soleY": -0.0000020533866821326185,
+          "soleY": -0.0000020415604462531434,
           "floorY": 0,
-          "kneeForward": 0.48266357421689654,
+          "kneeForward": 0.48266358352360766,
           "stair": null,
           "stairBlend": 0
         }
@@ -157,21 +157,21 @@
     {
       "label": "quick-cancel-chen",
       "id": "chen",
-      "seatBlend": 0.9999999977276569,
+      "seatBlend": 0.9999999967910231,
       "feet": [
         {
           "side": "left",
-          "soleY": -1.138079075424514e-9,
+          "soleY": -1.6047250195327933e-9,
           "floorY": 0,
-          "kneeForward": 0.4826658597563416,
+          "kneeForward": 0.48266585923632566,
           "stair": null,
           "stairBlend": 0
         },
         {
           "side": "right",
-          "soleY": -1.1316167447539272e-9,
+          "soleY": -1.6003817160381573e-9,
           "floorY": 0,
-          "kneeForward": 0.48266585975634146,
+          "kneeForward": 0.48266585923632505,
           "stair": null,
           "stairBlend": 0
         }
@@ -180,21 +180,21 @@
     {
       "label": "upper-player",
       "id": "you",
-      "seatBlend": 0.9993535404956517,
+      "seatBlend": 0.9999998866516481,
       "feet": [
         {
           "side": "left",
-          "soleY": 3.4996952250266404,
+          "soleY": 3.4999999413976592,
           "floorY": 3.5,
-          "kneeForward": 0.48231652050543694,
+          "kneeForward": 0.48266579710548463,
           "stair": null,
           "stairBlend": 0
         },
         {
           "side": "right",
-          "soleY": 3.4997081354847857,
+          "soleY": 3.4999999446151175,
           "floorY": 3.5,
-          "kneeForward": 0.4823225826537243,
+          "kneeForward": 0.4826657986516345,
           "stair": null,
           "stairBlend": 0
         }

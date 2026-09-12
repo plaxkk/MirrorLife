@@ -1,97 +1,79 @@
 {
-  "capturedAt": "2026-09-11T13:40:37.771Z",
-  "runtimeFingerprint": "dae18bfc96db4ed8e3a7e4efc63c5ba3ff06bb03132d4ed37b4f9206f591343a",
+  "capturedAt": "2026-09-12T06:07:09.968Z",
+  "runtimeFingerprint": "fcaebfdb2a5b9c7cf6806058e08604f1d66b7589e2e36eebd0b0703c499f37f7",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 36.602
     },
     {
       "name": "build",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 6.929
     },
     {
       "name": "assets",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 1.411
     },
     {
       "name": "gallery",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 341.44
     },
     {
       "name": "performance",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 47.308
     },
     {
       "name": "mobile",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 46.265
     },
     {
       "name": "garments",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 14.288
     },
     {
       "name": "faces",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 12.999
     },
     {
       "name": "controls",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 45.184
     },
     {
       "name": "window-contact",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 45.944
     },
     {
       "name": "contact",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 47.327
     },
     {
       "name": "seating",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
+      "seconds": 48.099
     },
     {
       "name": "stairs",
-      "seconds": null,
-      "evidence": "Completed in the initial same-candidate runner before the busy-state resilience assertion failed; duration not recovered."
-    },
-    {
-      "name": "resume-assets",
-      "seconds": 0.974
+      "seconds": 47.205
     },
     {
       "name": "resilience",
-      "seconds": null,
-      "evidence": "Passed first resume with captured busy=true at real keydown; duration unavailable."
+      "seconds": 47.537
     },
     {
       "name": "walkthrough",
-      "seconds": 139.13
+      "seconds": 113.356
     },
     {
       "name": "video-decode",
-      "seconds": 80.644
+      "seconds": 61.727
     },
     {
       "name": "assets-after",
-      "seconds": 0.734
+      "seconds": 0.721
     },
     {
       "name": "performance-report",
-      "seconds": 0.153
+      "seconds": 0.119
     }
   ],
   "reports": {
@@ -99,11 +81,11 @@
       "frameMs": {
         "p50": 16.69999999999709,
         "p95": 17.5,
-        "p99": 17.69999999999709
+        "p99": 17.69999999999891
       },
       "renderPeaks": {
         "calls": 116,
-        "triangles": 495996,
+        "triangles": 497198,
         "geometries": 92
       },
       "budgetPassed": true,
@@ -112,13 +94,13 @@
     },
     "mobile": {
       "frameMs": {
-        "p50": 16.69999999999709,
+        "p50": 16.69999999999891,
         "p95": 17.5,
-        "p99": 17.700000000000728
+        "p99": 17.600000000002183
       },
       "renderPeaks": {
         "calls": 94,
-        "triangles": 311550,
+        "triangles": 311976,
         "geometries": 88
       },
       "budgetPassed": true,
@@ -126,14 +108,5 @@
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "scope": "Initial same-candidate run completed through stairs. Busy-state resilience assertion failed; first resume passed resilience with fresh busy-edge synchronization and captured keydown state. Two walkthrough attempts failed at the chair/lookout boundary and then the solid chair. Final input-driven approach requires the existing distance tolerance plus visible seat prompt. Complete walkthrough/video then passed with unchanged runtime fingerprint and all dist asset hashes. Earlier step durations unavailable; null is intentional. Automated verification is not final art, human playability or phone certification.",
-  "retainedFailures": [
-    "resilience-initial-body-surface.json",
-    "walkthrough-initial-body-surface.json",
-    "walkthrough-seat-approach-body-surface.json"
-  ],
-  "visualReview": {
-    "method": "Agent inspected eight evenly spaced contact-sheet frames and the 116-second frame after full decode. Not full human or frame-by-frame review.",
-    "findings": "Route remains rendered in 3D; UI readable in inspected final frame. Character shape and environmental fidelity remain below target."
-  }
+  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
 }

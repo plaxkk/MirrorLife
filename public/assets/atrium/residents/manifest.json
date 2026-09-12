@@ -29,8 +29,8 @@
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 1700,
-      "weightError": 6.746617145836353e-06
+      "triangles": 1698,
+      "weightError": 1.6391277313232422e-07
     }
   },
   {
@@ -47,7 +47,7 @@
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 1.1920928955078125e-07
+      "weightError": 9.059906005859375e-06
     }
   },
   {
@@ -64,7 +64,7 @@
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 5.364418029785156e-07
+      "weightError": 2.051703631877899e-06
     }
   },
   {
@@ -81,7 +81,7 @@
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 3.725290298461914e-08
+      "weightError": 4.0978193283081055e-08
     }
   },
   {
@@ -97,8 +97,8 @@
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 1700,
-      "weightError": 9.5367431640625e-07
+      "triangles": 1698,
+      "weightError": 4.0978193283081055e-08
     }
   },
   {
@@ -115,7 +115,7 @@
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 6.556510925292969e-07
+      "weightError": 7.033348083496094e-06
     }
   }
 ]

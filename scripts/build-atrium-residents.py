@@ -74,6 +74,12 @@ civic.build_skinned_limb_pair=everyday_limbs
 def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right_elbow,left_leg,right_leg):
     """Soft everyday garments for this pilot, not the earlier mechanical costume kit."""
     who=config['atrium_id']
+    # The reduced adult head needs a corresponding neck, not the broad neck
+    # inherited from the shared large-headed cast. Keep its top inside the jaw.
+    neck=bpy.data.objects['Neck']
+    for v in neck.data.vertices:
+        v.co.x*=.76;v.co.y*=.84
+    for polygon in neck.data.polygons:polygon.use_smooth=True
     # Lower the cloth neckline so the authored skin neck is visible above it.
     # This changes the continuous shell, not a decorative line across the chest.
     for v in bpy.data.objects['Torso'].data.vertices:
@@ -260,8 +266,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     if name=='zhou':cfg['hair']='#42362e'
     civic.BODY_PROFILES[role]=copy.deepcopy(base_bodies[role])
     profile=civic.BODY_PROFILES[role]
-    profile['torso_width']*=body;profile['shoulder_x']*=body
-    profile['shoulder_x']*=1.28
+    profile['torso_width']*=body*.88;profile['shoulder_x']*=body
+    profile['shoulder_x']*=1.08
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
     profile['head_scale']=tuple(s*.54 for s in profile['head_scale'])
     # Retain the authored neck overlap while exposing the jaw above the collar.
@@ -318,6 +324,31 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             ob=bpy.data.objects[prefix+str(side)];ob.location.y=face_y(ob.location.x,ob.location.z)-offset
         blush=bpy.data.objects.get('Blush_'+str(side))
         if blush:bpy.data.objects.remove(blush,do_unlink=True)
+    # A tessellated lid eases from the cornea into the curved face. Moving only
+    # the old strip's edge left a flat polygon spanning the recessed socket.
+    bpy.context.view_layer.update()
+    for side in [-1,1]:
+        for prefix in ['UpperLidSkin_','LowerLidSkin_']:
+            lid=bpy.data.objects[prefix+str(side)]
+            to_face=face.matrix_world.inverted()@lid.matrix_world
+            to_lid=to_face.inverted();width=max(abs(v.co.x) for v in lid.data.vertices)
+            inner,inner_arch,outer,outer_arch=(.015,.012,.029,.014) if prefix.startswith('Upper') else (-.014,-.006,-.026,-.004)
+            vertices=[];polygons=[];columns=12;rows=3
+            for i in range(columns+1):
+                u=2*i/columns-1;arch=max(0,1-u*u)
+                for j in range(rows+1):
+                    t=j/rows
+                    point=to_face@Vector((u*width,-.016+.009*t,(inner+inner_arch*arch)*(1-t)+(outer+outer_arch*arch)*t))
+                    weight=max(t*t*(3-2*t),abs(u)**12)
+                    point.y=point.y*(1-weight)+(face_y(point.x,point.z)+.002)*weight
+                    vertices.append(tuple(to_lid@point))
+            for i in range(columns):
+                for j in range(rows):
+                    a=i*(rows+1)+j;quad=(a,a+rows+1,a+rows+2,a+1)
+                    polygons.append(quad if prefix.startswith('Upper') else tuple(reversed(quad)))
+            material=lid.data.materials[0];data=bpy.data.meshes.new(prefix+'curved mesh')
+            data.from_pydata(vertices,[],polygons);data.update();data.materials.append(material);lid.data=data
+            for polygon in data.polygons:polygon.use_smooth=True
     mouth=bpy.data.objects['MouthPivot'];mouth.location.y=face_y(0,mouth.location.z)-.004
     philtrum=bpy.data.objects.get('Philtrum')
     if philtrum:bpy.data.objects.remove(philtrum,do_unlink=True)
