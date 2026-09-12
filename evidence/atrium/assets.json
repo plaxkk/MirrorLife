@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-12T06:07:09.797Z",
-  "runtimeFingerprint": "fcaebfdb2a5b9c7cf6806058e08604f1d66b7589e2e36eebd0b0703c499f37f7",
+  "generatedAt": "2026-09-12T12:01:59.375Z",
+  "runtimeFingerprint": "83987926a380036b53d4f875b73255283b5b96803615b597437d6ad88aaeb6de",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 104873381,
-  "totalPublicBytes": 14115033,
+  "totalSourceBytes": 104438437,
+  "totalPublicBytes": 14444502,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -69,28 +69,28 @@
     },
     {
       "file": "public/assets/atrium/atrium-desktop.glb",
-      "bytes": 2822236,
-      "sha256": "098a8118d98e16a2777bdff3131c44ac2f41477d3ce86ca27f86475db880d64c",
+      "bytes": 2778184,
+      "sha256": "fdc787c94412389cac68ad016e494ffd58e0c752fe77da1880324f91e3380a67",
       "meshes": 27,
       "materials": 18,
       "skins": 0,
-      "triangles": 201415,
+      "triangles": 196655,
       "animations": []
     },
     {
       "file": "public/assets/atrium/atrium-mobile.glb",
-      "bytes": 1999500,
-      "sha256": "97eae5272ba4c297a650410af59ad840d6aa57dbf26476569f662bf3e05e648a",
+      "bytes": 1959972,
+      "sha256": "244e7fb0ea88bc80b52303e83165a91cae5d8382801acfc11b4d0cf3c89f6ec9",
       "meshes": 27,
       "materials": 18,
       "skins": 0,
-      "triangles": 121209,
+      "triangles": 118377,
       "animations": []
     },
     {
       "file": "public/assets/atrium/collision.json",
-      "bytes": 3165875,
-      "sha256": "b6565a64e6c63623add672e0ea2730d54c565c82ae3810afcf57d8ff714ea354"
+      "bytes": 3275751,
+      "sha256": "2553d924e773cc0ee12e71d48d0c2e448209f795f4b08dea7fbbdc91e92e6eed"
     },
     {
       "file": "public/assets/atrium/draco/draco_decoder.wasm",
@@ -109,13 +109,13 @@
     },
     {
       "file": "public/assets/atrium/floor-contact.json",
-      "bytes": 598,
-      "sha256": "911aa85ad4f3149a7405b714a84e52e135544464b6f21f8615953346b49d99db"
+      "bytes": 597,
+      "sha256": "ef8cc116b59eb14b5618ddbad005d0bb2d0aa82d4973d174320461bd3579d43e"
     },
     {
       "file": "public/assets/atrium/floor-contact.png",
-      "bytes": 112384,
-      "sha256": "a421b008fe7f1da6edc838c100d089abc4a99bacf02ae9efaf57029205b8838b"
+      "bytes": 112046,
+      "sha256": "9f9a136b65808426d37c7d5ee5457b94d0084226a4808c0e0da133ca9bbcce77"
     },
     {
       "file": "public/assets/atrium/ivory-basecolor.png",
@@ -129,8 +129,8 @@
     },
     {
       "file": "public/assets/atrium/kit/bookcase.glb",
-      "bytes": 465692,
-      "sha256": "9da0618f1befaa68add7e8a0c29b2d05b376bd4d1e4c47bca3c92726d019a3b8",
+      "bytes": 465716,
+      "sha256": "4d54147fec17a9687997f5d298e36e940ee92f86956d3cfd467cacc292c97519",
       "meshes": 100,
       "materials": 10,
       "skins": 0,
@@ -144,8 +144,8 @@
     },
     {
       "file": "public/assets/atrium/kit/chair.glb",
-      "bytes": 129272,
-      "sha256": "d9cb76fd5e8978baf7d2392786b121d7c7bdacda02e56ff863a2eb00e03a78f1",
+      "bytes": 129292,
+      "sha256": "4b9afcf3978262a0cb1ca22926e2bb5a8dc8ad129d8f52ca2302f012a0b5663c",
       "meshes": 8,
       "materials": 3,
       "skins": 0,
@@ -159,8 +159,8 @@
     },
     {
       "file": "public/assets/atrium/kit/entry-portal.glb",
-      "bytes": 109300,
-      "sha256": "7c14111dd88dd892b7f43d25d8deaf0055c553bc0f097989cfe848b7287f41c4",
+      "bytes": 109320,
+      "sha256": "6f34bf9c3551574400ca5fa9c050586bb7aeda914b1747eeda599d9724d8cfb7",
       "meshes": 4,
       "materials": 3,
       "skins": 0,
@@ -174,8 +174,8 @@
     },
     {
       "file": "public/assets/atrium/kit/gallery-rail.glb",
-      "bytes": 42776,
-      "sha256": "4e38f2d9fc55c88d90091b02f17999c859b603ecd99b68b59fe7eb29e62eaca0",
+      "bytes": 42800,
+      "sha256": "16d5116184914d3e4c76b5a008b0fcbe4f9ab60351cc80bbf06a55856aebcda6",
       "meshes": 15,
       "materials": 2,
       "skins": 0,
@@ -184,23 +184,23 @@
     },
     {
       "file": "public/assets/atrium/kit/main-stair-collision.json",
-      "bytes": 15672,
-      "sha256": "008c73f1318ed6e6d3c132fb5b394325ec0513987bb171378c3cd58f64423752"
+      "bytes": 221424,
+      "sha256": "472d88749e5f179f8d0303096388416d4f56d061061021ca97e3da8e7fb47540"
     },
     {
       "file": "public/assets/atrium/kit/main-stair.glb",
-      "bytes": 367568,
-      "sha256": "642149693dcf8dec07335ab00ea6ab1c70a07819a861f31cb4645b2642d95002",
-      "meshes": 89,
+      "bytes": 465144,
+      "sha256": "4d1d042ada7b1c9b119b109bb602573833d4bad5815b1800faaa5ec2e5bdd25c",
+      "meshes": 85,
       "materials": 5,
       "skins": 0,
-      "triangles": 27516,
+      "triangles": 17996,
       "animations": []
     },
     {
       "file": "public/assets/atrium/kit/manifest.json",
       "bytes": 4733,
-      "sha256": "c6fb350a7dd36d8d5bde18cca8f2bddeda51b0c8c02c4d4864ec3f7877f22a50"
+      "sha256": "f308b0d1b4c167e156a7f31f06c26949cff0e118b6de0e4da06c9b6baf784597"
     },
     {
       "file": "public/assets/atrium/kit/pendant-collision.json",
@@ -209,8 +209,8 @@
     },
     {
       "file": "public/assets/atrium/kit/pendant.glb",
-      "bytes": 14472,
-      "sha256": "2a746bffc295d14f9f37724790b62a7f3bc06a43abaa124ea25e807a7cdace37",
+      "bytes": 14496,
+      "sha256": "4b32677443c2babbeb860d948342044fd97106c9889d72984b6dd4ba669ec70d",
       "meshes": 3,
       "materials": 3,
       "skins": 0,
@@ -224,8 +224,8 @@
     },
     {
       "file": "public/assets/atrium/kit/plant.glb",
-      "bytes": 42972,
-      "sha256": "b0c9a4707671a95767e356c83a6e32b74a27e14559202b9cdf326f4f4ccbdd89",
+      "bytes": 42996,
+      "sha256": "c54100e2676ccd02e75366f711bd53d0c24b98d284daf42fe20df410e2f805b7",
       "meshes": 20,
       "materials": 4,
       "skins": 0,
@@ -239,8 +239,8 @@
     },
     {
       "file": "public/assets/atrium/kit/shared-table.glb",
-      "bytes": 382312,
-      "sha256": "bb963edc0d2d25dd2378f2badfa42293ce6753f9d06fcc008dd8660c92683241",
+      "bytes": 382336,
+      "sha256": "fad8c9a5485956db18701601b5b2d53b4da2c037196f08b0725270efb82530e5",
       "meshes": 66,
       "materials": 11,
       "skins": 0,
@@ -254,8 +254,8 @@
     },
     {
       "file": "public/assets/atrium/kit/window-wall.glb",
-      "bytes": 139444,
-      "sha256": "b3d393dfad4b13ef3552fab6d74af47199f99134318c7b32b7f7b73dd5c479ec",
+      "bytes": 139468,
+      "sha256": "e3f7367c3bca830d3b896f97183a5bfd6ef8f63dfd77963d3f1d38dc9dc212da",
       "meshes": 4,
       "materials": 4,
       "skins": 0,
@@ -275,7 +275,7 @@
     {
       "file": "public/assets/atrium/manifest.json",
       "bytes": 1936,
-      "sha256": "ba328cd11400bda55b9b982a6c75373ec7a28169afb3108e572d5d2f2eaa1360"
+      "sha256": "9fd60586ef28f563e413b2180c6cdddd779b6816e2edc420e0c08ace506fb2f1"
     },
     {
       "file": "public/assets/atrium/oak-basecolor.png",
@@ -444,63 +444,63 @@
     },
     {
       "file": "models/atrium/atrium-master.blend",
-      "bytes": 25073392,
-      "sha256": "78c445d34765d99acc8bfe544b4db7ec72ac69d931526eb94f67311bc24a04c5"
+      "bytes": 24969040,
+      "sha256": "cf1da8c25cef88081a49c2fa2bd7136f1857148bf3297e1a7dc8263fcabcab60"
     },
     {
       "file": "models/atrium/atrium-master.glb",
-      "bytes": 31743868,
-      "sha256": "7a0d3a46322a60296b9939ec05cb39881854635c9f664990a0b3ac85cfa46f4c",
+      "bytes": 31447876,
+      "sha256": "6d322a1bb5b463d1ba7d9eb889bf1f732efc169ec80c264d40d94e40198ab1ef",
       "meshes": 27,
       "materials": 18,
       "skins": 0,
-      "triangles": 502958,
+      "triangles": 493438,
       "animations": []
     },
     {
       "file": "models/atrium/kit/bookcase.blend",
-      "bytes": 508251,
-      "sha256": "dc51cbcd0f9075dc635e08526b7794a7d7ca5cdba54069ca297f95cec99c3065"
+      "bytes": 509672,
+      "sha256": "a7a4dcc0b3e733c1c030926de1726161229bd347091ca5165e6a3e8cac202efc"
     },
     {
       "file": "models/atrium/kit/chair.blend",
-      "bytes": 481673,
-      "sha256": "f200634d5f88dc5f99dda6a020d1034925e3c022ee67bd42828e1e61ef2174dd"
+      "bytes": 480472,
+      "sha256": "5c197f904299d2480c9e908ded7f7f053b67532d3c48cd7a99c4390a34cbdcff"
     },
     {
       "file": "models/atrium/kit/entry-portal.blend",
-      "bytes": 477532,
-      "sha256": "592658614d3d63e9db6bfba78bf41ecd87f802dbe694a033d2af799025cc7ddb"
+      "bytes": 476088,
+      "sha256": "f1985be8c874ad989422b280f6046ba6f03dca137c41dc304011fb975f86947c"
     },
     {
       "file": "models/atrium/kit/gallery-rail.blend",
-      "bytes": 480755,
-      "sha256": "07eee4b9912b124b5a5f30fb797813cab303fcb2725996fb1afbf35567d32200"
+      "bytes": 479119,
+      "sha256": "22c51320c28d4fc8d8f57acaecfcb62a6e336c41d5032907ff001e96a8bccb32"
     },
     {
       "file": "models/atrium/kit/main-stair.blend",
-      "bytes": 583525,
-      "sha256": "a1b64093d3b2e16a95c1ccb012e917804de1d8a6b13317be501ac93f2963f7d6"
+      "bytes": 551731,
+      "sha256": "cf9a6d48ee5d1eeff04973713f099a6c6b888cedcd4c943f9c610985af2ff164"
     },
     {
       "file": "models/atrium/kit/pendant.blend",
-      "bytes": 483355,
-      "sha256": "123a13c14fbe36bd987a38a55356af33232270380070a52f7dc9d65cb7826d47"
+      "bytes": 484842,
+      "sha256": "f3ef6b69ac7a5b0bd0fb6181adc6d889dd58b8ae3a7a7dea1b8eee9e4c89b356"
     },
     {
       "file": "models/atrium/kit/plant.blend",
-      "bytes": 486872,
-      "sha256": "0c1c155d91b99784dd57759988571c123f9869d569e2e0f23c32b83f01b19d20"
+      "bytes": 485255,
+      "sha256": "cd24d17ea8de37172706bdeb4ab03db24036fcb4c56215054d2fe9b36f90198d"
     },
     {
       "file": "models/atrium/kit/shared-table.blend",
-      "bytes": 502858,
-      "sha256": "fc5f24a582432a071af48836200908282c819e2c86fd419c0632e63c3f68f70f"
+      "bytes": 503527,
+      "sha256": "11282d43b40d73bf581bbb00f991d9af2ec4940dec8add3ccfb7b59616f8237c"
     },
     {
       "file": "models/atrium/kit/window-wall.blend",
-      "bytes": 485577,
-      "sha256": "1cfa08996847b3b2ebe87c0356cbb3c5404b58538dc4a47476b52b76c2de597a"
+      "bytes": 485092,
+      "sha256": "c15887dc0fdb4b2ce0ea8658da7e18e6dc7ebe9f6ae8ee1c79c993187f7160af"
     },
     {
       "file": "models/atrium/life-props.blend",

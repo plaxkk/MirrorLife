@@ -77,3 +77,39 @@ test('complete architectural circuit including both galleries and west kitchen c
     assert.ok(p.feet().y<.1);
   }finally{p.dispose();}
 });
+
+test('flared stair cheeks are closed outward hulls and stop lateral body contact',async()=>{
+  const definitions=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8'));
+  const cheeks=definitions.filter(d=>d.name.startsWith('Main stair curved side '));
+  assert.equal(cheeks.length,2);
+  const kit=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/kit/main-stair-collision.json',import.meta.url),'utf8'));
+  for(const hull of cheeks){
+    const local=kit.find(d=>d.name===hull.name);assert.ok(local,'kit includes physical cheek');
+    assert.deepEqual(local.indices,hull.indices);
+    assert.ok(local.vertices.every((v,i)=>Math.abs(v+[5.8,0,0][i%3]-hull.vertices[i])<1e-8),'portable kit origin matches rendered level');
+    const edges=new Map();let volume=0;const v=i=>hull.vertices.slice(i*3,i*3+3);
+    for(let i=0;i<hull.indices.length;i+=3){
+      const ids=hull.indices.slice(i,i+3),[a,b,c]=ids.map(v);
+      volume+=(a[0]*(b[1]*c[2]-b[2]*c[1])+a[1]*(b[2]*c[0]-b[0]*c[2])+a[2]*(b[0]*c[1]-b[1]*c[0]))/6;
+      for(let j=0;j<3;j++){const x=ids[j],y=ids[(j+1)%3],key=[x,y].sort((a,b)=>a-b).join(':');const e=edges.get(key)||{count:0,winding:0};e.count++;e.winding+=x<y?1:-1;edges.set(key,e);}
+    }
+    assert.ok(volume>1,`${hull.name} outward signed volume ${volume}`);
+    assert.ok([...edges.values()].every(e=>e.count===2&&e.winding===0),'watertight consistently oriented hull');
+  }
+  const p=await createAtriumPhysics(definitions);
+  try{for(const side of [-1,1]){
+    p.teleport([5.8+side*2.6,0,4.5]);for(let i=0;i<70;i++)p.move(-side*.0375,0);
+    assert.ok(side*(p.feet().x-5.8)>1.9,JSON.stringify(p.feet()));
+    assert.ok(p.feet().y<.1,'cannot step onto the cheek');
+  }}finally{p.dispose();}
+});
+
+test('batched stair plaster retains both authored enamel material regions in runtime LODs',async()=>{
+  for(const tier of ['desktop','mobile']){
+    const b=await fs.readFile(new URL(`../public/assets/atrium/atrium-${tier}.glb`,import.meta.url));
+    const gltf=JSON.parse(b.subarray(20,20+b.readUInt32LE(12)).toString());
+    const node=gltf.nodes.find(n=>n.name==='Atrium_Ivory_interior');assert.ok(node);
+    const names=gltf.meshes[node.mesh].primitives.map(p=>gltf.materials[p.material].name);
+    for(const material of ['Ivory','Saffron','Mint'])assert.ok(names.includes(material),`${tier}: merged plaster lost ${material}`);
+  }
+});

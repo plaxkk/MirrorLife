@@ -462,9 +462,15 @@ for mat,objects in buckets.items():
     if len(objects)>1:bpy.ops.object.join()
     objects[0].name='Atrium_'+mat[0]+'_'+mat[1]
     # Join leaves duplicate material slots; consolidate them by identity.
-    mats=list(objects[0].data.materials)
-    for poly in objects[0].data.polygons:poly.material_index=0
-    objects[0].data.materials.clear();objects[0].data.materials.append(mats[0])
+    mats=list(objects[0].data.materials);unique=[];remap=[]
+    for material in mats:
+        if material not in unique:unique.append(material)
+        remap.append(unique.index(material))
+    face_materials=[remap[poly.material_index] for poly in objects[0].data.polygons]
+    objects[0].data.materials.clear()
+    for material in unique:objects[0].data.materials.append(material)
+    # Clearing slots resets face indices in Blender; restore only afterwards.
+    for poly,index in zip(objects[0].data.polygons,face_materials):poly.material_index=index
 
 def export(path):
     # Physics loads the separate collision file. Do not duplicate its evaluated

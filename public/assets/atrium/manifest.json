@@ -117,8 +117,8 @@
       "interior"
     ]
   ],
-  "sourceFaces": 251436,
-  "collisionCount": 222,
+  "sourceFaces": 246752,
+  "collisionCount": 188,
   "license": "Original project-authored geometry; existing MirrorLife authored character pipeline separately credited.",
   "reference": "design/references/atrium-visual-target.png",
   "inferred": [

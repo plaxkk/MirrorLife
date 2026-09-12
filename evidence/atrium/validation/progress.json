@@ -1,78 +1,78 @@
 {
-  "updatedAt": "2026-09-12T06:07:09.967Z",
+  "updatedAt": "2026-09-12T12:01:59.633Z",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 36.602
+      "seconds": 17.623
     },
     {
       "name": "build",
-      "seconds": 6.929
+      "seconds": 3.393
     },
     {
       "name": "assets",
-      "seconds": 1.411
+      "seconds": 0.785
     },
     {
       "name": "gallery",
-      "seconds": 341.44
+      "seconds": 49.339
     },
     {
       "name": "performance",
-      "seconds": 47.308
+      "seconds": 47.767
     },
     {
       "name": "mobile",
-      "seconds": 46.265
+      "seconds": 47.462
     },
     {
       "name": "garments",
-      "seconds": 14.288
+      "seconds": 10.988
     },
     {
       "name": "faces",
-      "seconds": 12.999
+      "seconds": 11.91
     },
     {
       "name": "controls",
-      "seconds": 45.184
+      "seconds": 46.615
     },
     {
       "name": "window-contact",
-      "seconds": 45.944
+      "seconds": 47.787
     },
     {
       "name": "contact",
-      "seconds": 47.327
+      "seconds": 48.312
     },
     {
       "name": "seating",
-      "seconds": 48.099
+      "seconds": 47.691
     },
     {
       "name": "stairs",
-      "seconds": 47.205
+      "seconds": 47.592
     },
     {
       "name": "resilience",
-      "seconds": 47.537
+      "seconds": 42.386
     },
     {
       "name": "walkthrough",
-      "seconds": 113.356
+      "seconds": 120.014
     },
     {
       "name": "video-decode",
-      "seconds": 61.727
+      "seconds": 74.845
     },
     {
       "name": "assets-after",
-      "seconds": 0.721
+      "seconds": 0.869
     },
     {
       "name": "performance-report",
-      "seconds": 0.119
+      "seconds": 0.235
     }
   ]
 }
