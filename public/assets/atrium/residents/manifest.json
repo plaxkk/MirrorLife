@@ -6,14 +6,14 @@
     "bodyScale": 1.0,
     "source": "models/atrium/residents/you.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 2368,
-      "weightError": 8.940696716308594e-08
+      "triangles": 2308,
+      "weightError": 7.554888725280762e-06
     }
   },
   {

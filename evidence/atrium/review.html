@@ -7,9 +7,10 @@
 <main>
 <div class="kicker">MIRRORLIFE / 实时 3D / 2026.09</div><h1>双层天井共享生活馆</h1>
 <span class="flag">可玩闭环已建立 · 成品美术验收未通过</span>
-<p>最新人物续作：玩家重做偏分发束、浅色插肩袖、立领、拉链带和斜袋口；衣片接缝切入真实蒙皮网格。<a href="faces/review.html">同镜头人物对照</a> · <a href="../../docs/ATRIUM_HERO_REVIEW.md">制作、局部预算及验收边界</a>。本轮仅更新玩家，面部、体态与居民整体美术仍未完成。</p>
-<p>最新复核：可玩闭环已建立，但建筑比例、人物、光照和材质距离参考仍明显。本轮将主梯两侧重做为封闭圆角曲面，并同步扶手与实体碰撞。<a href="../../docs/ATRIUM_CURVE_REVIEW.md">完整差距清单与验收</a>。原校准镜头保留，避免镜头变动掩盖模型差距。</p>
-<h2>本轮楼梯曲面：相同校准镜头</h2><div class="compare"><figure><img src="curves/before-reference.png" alt="637c10b 楼梯轮廓"><figcaption>637c10b：细长曲面侧墙，旧冠条与底座独立拼接。</figcaption></figure><figure><img src="gallery-reference.png" alt="新曲面侧墙"><figcaption>当前：加厚圆角侧墙与外舒梯脚。人物与照明本轮未修改。</figcaption></figure></div>
+<p>本轮人物结构重制：玩家统一头脸与颈部，适配头发，新增真实眼睑和嘴部形变，调整肩部及夹克轮廓。<a href="faces/review.html">目标图及新旧运行对比</a> · <a href="../../docs/ATRIUM_CHARACTER_STRUCTURE_REVIEW.md">来源、结构和验收记录</a>。人物整体精细度仍未达到原图，居民尚未批量重制。</p>
+<p>此前衣装续作：玩家重做偏分发束、浅色插肩袖、立领、拉链带和斜袋口；衣片接缝切入真实蒙皮网格。<a href="faces/review.html">同镜头人物对照</a> · <a href="../../docs/ATRIUM_HERO_REVIEW.md">制作、局部预算及验收边界</a>。本轮仅更新玩家，面部、体态与居民整体美术仍未完成。</p>
+<p>此前楼梯复核：可玩闭环已建立，但建筑比例、人物、光照和材质距离参考仍明显。本轮将主梯两侧重做为封闭圆角曲面，并同步扶手与实体碰撞。<a href="../../docs/ATRIUM_CURVE_REVIEW.md">完整差距清单与验收</a>。原校准镜头保留，避免镜头变动掩盖模型差距。</p>
+<h2>本轮楼梯曲面：相同校准镜头</h2><div class="compare"><figure><img src="curves/before-reference.png" alt="637c10b 楼梯轮廓"><figcaption>637c10b：细长曲面侧墙，旧冠条与底座独立拼接。</figcaption></figure><figure><img src="gallery-reference.png" alt="新曲面侧墙"><figcaption>当前：加厚圆角侧墙与外舒梯脚。该次楼梯修改未调整人物与照明；当前截图包含后续人物修改。</figcaption></figure></div>
 <div class="grid"><figure><img src="stair-return.png" alt="楼梯曲面近景"><figcaption>梯脚实际曲面与扶手连接。</figcaption></figure><figure><img src="front-composition.png" alt="正向空间检查"><figcaption>辅助正向视角；不是重新定义原校准相机，也不是模型还原证据的替代。</figcaption></figure></div>
 <p>此前：清理悬空裤侧薄片，窄梯稳定后恢复不透明人物，并让透明玻璃透过日光。<a href="../../docs/ATRIUM_SURFACE_REVIEW.md">制作、五视角反对意见与边界</a>。整体光照仍偏平，不能把局部修正视为最终还原完成。</p>
 <p>此前造型与空间续作：收窄人物肩颈和衣身，重做眼睑过渡；主楼梯改为有厚度的倾斜实体梯体，踏步不变，高净高处可真实穿行。同步调整窗侧反弹光与地面接触阴影。<a href="faces/review.html">人物同镜头对照</a> · <a href="../../docs/ATRIUM_SILHOUETTE_REVIEW.md">制作、反方意见与限制</a>。人物整体美术仍未验收通过。</p>
@@ -20,7 +21,7 @@
 <p>试玩反馈修正：补齐椅子、花盆和桌沿碰撞，加入可见几何镜头扫掠、近距离人物淡出与起停跟随；人物调整发束、帽子、领口和前袋。<a href="../../docs/ATRIUM_CONTROLS_REVIEW.md">原因与验收边界</a> · <a href="controls/report.json">四向操作、碰撞与双指记录</a>。</p>
 <p>人物面部续作：七名人物调整头身比例、眉眼位置和眼部厚度，鼻部进入脸部网格。<a href="faces/review.html">同镜头正侧面对照</a> · <a href="../../docs/ATRIUM_FACE_REVIEW.md">制作与五视角审查</a>。面部、发束与服装仍需精修。</p>
 <p>界面性能续作：移除五处实时背景模糊，保留暖色半透明面板、完整场景与交互。<a href="../../docs/ATRIUM_COMPOSITOR_REVIEW.md">诊断与五视角审查</a> · <a href="compositor/fixed-camera-ab.json">固定镜头交替样本</a>。未用降低 3D 画质或隐藏居民换取帧率。</p>
-<p>最新人物续作：七人基础衣身和袖子合并为连续表面，重做肩部权重与服装贴合细节。<a href="../../docs/ATRIUM_GARMENT_REVIEW.md">制作与反方审查</a> · <a href="garments/report.json">七人镜头记录</a>。这是局部改进，手指、开衫外层和布料质感仍待精修。</p>
+<p>此前衣装续作：七人基础衣身和袖子合并为连续表面，重做肩部权重与服装贴合细节。<a href="../../docs/ATRIUM_GARMENT_REVIEW.md">制作与反方审查</a> · <a href="garments/report.json">七人镜头记录</a>。这是局部改进，手指、开衫外层和布料质感仍待精修。</p>
 <p>最新续作：两座楼梯加入实际碰撞面探测与腿部高度解算；上行、下行、中途停步通过输入专测。<a href="../../docs/ATRIUM_STAIRS_REVIEW.md">楼梯审查</a> · <a href="stairs/report.json">逐帧接触指标</a>。指标为骨骼估算，未证明鞋底网格无穿透或步态无脚滑。</p>
 <p>上一轮：居民离座后再面向玩家，结束后回位；坐姿按骨架与椅高修正，膝盖越过坐垫、鞋底落地。<a href="../../docs/ATRIUM_SEATING_REVIEW.md">动作续作审查</a> · <a href="seating/report.json">坐姿原始测量</a>。下方“本轮修补前后”保留建筑修补阶段的对照；最新性能以报告为准。</p>
 <p>上一轮建筑续作已修墙顶漏缝、椅背/扶手端面、人物握持，并补两层静态地面接触遮蔽。该轮桌面峰值 493,955 三角面，P95 34.3ms；这是历史值，最新结果见性能报告。<a href="../../docs/ATRIUM_CONTINUATION_REVIEW.md">续作审查与剩余问题</a> · <a href="acceptance.json">同构建验收记录</a></p>

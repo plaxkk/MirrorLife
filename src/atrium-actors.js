@@ -42,6 +42,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   const eyes=[-1,1].map(i=>visual.getObjectByName(`EyePivot_${i}`)).filter(Boolean);
   const eyeScales=eyes.map(x=>x.scale.clone());
   const open=visual.getObjectByName('MouthOpenPivot'),closed=visual.getObjectByName('MouthClosedPivot');
+  const facialMeshes=[];visual.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.Blink!==undefined)facialMeshes.push(node);});
   if(open)open.visible=false;
   group.traverse(node=>{if(node.isMesh){
     // Tiny eye/mouth surfaces lie inside the head's shadow silhouette.
@@ -57,9 +58,11 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[],sitting,lastSeatHeight,stairBlend=0,stairPelvis=0;
   let stairFeet=[];
   const handGrip=visual.getObjectByName('HandGripAnchor_1');
-  const poseVectors={};
+  const poseVectors={};let reviewFace=null;
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
+    setReviewFace(value){reviewFace=value;},
+    faceDiagnostics(){return facialMeshes.map(mesh=>({name:mesh.name,eyeScales:eyes.map(eye=>eye.scale.toArray()),blink:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink],talk:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Talk]}));},
     footDiagnostics(){return ['left','right'].map(side=>{
       const knee=joints[`${side}Knee`].node.getWorldPosition(new THREE.Vector3()).sub(group.position);
       return {side,soleY:joints[`${side}Foot`].node.getWorldPosition(new THREE.Vector3()).y-legDimensions[side].soleOffset,
@@ -158,10 +161,16 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       }else stairPelvis=0;
       visual.updateMatrixWorld(true);for(const b of bindings)syncCivicArticulationBinding(b);
       const phase=(time+(id.length*1.13))%4.7;
-      const blink=phase<.15?Math.max(.03,Math.abs(phase-.075)/.075):1;
-      eyes.forEach((eye,i)=>{eye.scale.copy(eyeScales[i]);eye.scale.y*=blink;});
+      // A short closed hold keeps blinks legible at both 30 and 60 Hz.
+      const blink=reviewFace?1-reviewFace.blink:phase<.075?1-phase/.075:phase<.12?0:phase<.23?(phase-.12)/.11:1;
+      eyes.forEach((eye,i)=>{eye.scale.copy(eyeScales[i]);if(!facialMeshes.length)eye.scale.y*=blink;});
       if(open)open.visible=talking&&Math.sin(time*9)>.25;
       if(closed)closed.visible=!open?.visible;
+      for(const mesh of facialMeshes){
+        mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink]=1-blink;
+        const talkIndex=mesh.morphTargetDictionary.Talk;
+        if(talkIndex!==undefined)mesh.morphTargetInfluences[talkIndex]=reviewFace?reviewFace.talk:talking?Math.max(0,Math.sin(time*9))*.85:0;
+      }
       if(lifeProp){
         lifeProp.visible=care;
         if(care)for(const {prop,grip}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handGrip,lifeProp);

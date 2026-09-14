@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-14T11:32:03.851Z",
+  "capturedAt": "2026-09-14T12:54:08.077Z",
   "base": "http://127.0.0.1:4195",
   "viewport": [
     1200,
@@ -60,8 +60,8 @@
     ]
   ],
   "assets": {
-    "before": "1d6fcf475be0132a4ef07e793c918c12a3abc463f3bc8f294d2533989c16fb97",
-    "after": "5fa20618f056ea8d78ea0d3131a57aeb5b8a540f1fd0516d1eb607cbc6c9d707"
+    "before": "5fa20618f056ea8d78ea0d3131a57aeb5b8a540f1fd0516d1eb607cbc6c9d707",
+    "after": "bad61782f05c6cbcdfb4770b2e0adb6a439c9a3beb315942fd47c20fec1f05f5"
   },
   "scope": "Player diagnostic cameras in the live scene. Idle and blinking remain active; phases are not matched. Not reference calibration or route evidence."
 }

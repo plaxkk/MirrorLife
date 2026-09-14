@@ -249,3 +249,21 @@ test('resident skin batches retain authored roughness without extra primitives o
     }
   }
 });
+
+test('player face LODs retain non-empty eyelid and mouth morphs and portable weight animation',async()=>{
+  for(const suffix of ['', '-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/you${suffix}.glb`);
+    const node=glb.nodes.find(n=>n.extras?.atrium_facial_morphs),mesh=glb.meshes[node?.mesh];
+    assert.ok(mesh,'Facial deformation mesh was lost during batching');
+    for(const name of ['Blink','Talk']){
+      const index=mesh.extras.targetNames.indexOf(name);assert.ok(index>=0);
+      for(const primitive of mesh.primitives){
+        const accessor=glb.accessors[primitive.targets[index].POSITION];
+        assert.equal(accessor.count,glb.accessors[primitive.attributes.POSITION].count);
+        assert.ok([...accessor.min,...accessor.max].some(x=>Math.abs(x)>.001),`${suffix} ${name}: empty morph`);
+      }
+    }
+  }
+  const animation=await glbJson('../public/assets/atrium/animations/you-motion.glb');
+  for(const clip of animation.animations)assert.ok(clip.channels.some(c=>c.target.path==='weights'),`${clip.name}: no portable facial animation`);
+});

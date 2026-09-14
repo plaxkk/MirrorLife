@@ -18,6 +18,7 @@ const profile=mobile?'mobile':'desktop';
 const loaded=loadAtriumState();const state=loaded.state;
 const startedAt=performance.now();let readyAt=null,enteredAt=null,firstActiveFrameAt=null;
 let renderer,scene,camera,composer,physics,player,environment,animationId,resizeTimer,gpuTiming;
+let playerSpeakingUntil=0;
 let active=false,disposed=false,dialogTarget=null,nearest=null,seated=null,careUntil=0,careItem=null,lifeProps=null;
 let orbitYaw=.0,orbitPitch=.21,orbitDistance=3.35,referenceView=false;
 let requestedYaw=0,requestedPitch=.21,cameraBoom=3.35,cameraInitialized=false;
@@ -67,6 +68,7 @@ function updateHud(){
   $('location').textContent=`天井生活馆 · ${height>2.8?'二层回廊':height>.3?'楼梯':'一层'}`;
 }
 function closeDialogue(){
+  playerSpeakingUntil=0;
   if(careItem){careItem=null;careUntil=0;toast('动作已取消，没有改变探索记录。');}
   if(dialogTarget?.kind==='person'){
     const a=actors.find(x=>x.id===dialogTarget.id);if(a)a.facingYaw=a.definition.yaw||0;
@@ -103,7 +105,7 @@ function startInteraction(item=nearest){
       remember(`meet-${item.id}`,`和${item.name}交流：${item.hint}`,item.id);chime();
     }
     showDialogue(item.name,`${item.mbti} · 住在这里的人`,residentSpeech(item,state),[
-      {label:'你希望今晚是什么样？',action:()=>{$('dialogue-text').textContent=item.need==='quiet'?'“可以参与，也可以安静地待一会儿。如果大家都能找到舒服的位置，就很好。”':item.need==='care'?'“有人照顾植物，也有人照顾人的心情。一起把屋子打理好，就是很好的开始。”':'“想听听每个人最近发生的小事。认识久了，也总有新的发现。”';}},
+      {label:'你希望今晚是什么样？',action:()=>{playerSpeakingUntil=elapsed+1.1;$('dialogue-text').textContent=item.need==='quiet'?'“可以参与，也可以安静地待一会儿。如果大家都能找到舒服的位置，就很好。”':item.need==='care'?'“有人照顾植物，也有人照顾人的心情。一起把屋子打理好，就是很好的开始。”':'“想听听每个人最近发生的小事。认识久了，也总有新的发现。”';}},
       {label:'我再去走走',action:closeDialogue}
     ],item);return;
   }
@@ -255,6 +257,7 @@ async function boot(){
   const marker=new THREE.Mesh(new THREE.BoxGeometry(.44,.248,.026),[edge,edge,edge,edge,front,edge]);marker.name='Quiet-corner notice';marker.position.set(-8.2,4.415,1.29);scene.add(marker);
   window.__atrium={
     getGripDiagnostics:()=>[player,...actors].map(a=>({id:a.id,grips:a.gripDiagnostics()})),
+    getFaceDiagnostics:()=>player.faceDiagnostics(),
     getFootDiagnostics:()=>[player,...actors].map(a=>({id:a.id,seatBlend:a.seatBlend,feet:a.footDiagnostics()})),
     getState:()=>JSON.parse(JSON.stringify(state)),
     getStats:()=>stats(),
@@ -266,6 +269,7 @@ async function boot(){
     getHeading:()=>orbitYaw,
     getCameraDiagnostics:()=>({heading:orbitYaw,requestedHeading:requestedYaw,pitch:orbitPitch,clearancePitch:clearanceAngle,lookPitch:-Math.asin(camera.getWorldDirection(new THREE.Vector3()).y),boom:cameraBoom,fade:playerFade,playerYaw:player.group.rotation.y,velocity:{...moveVelocity}}),
     // Review helpers are separate from the input-driven playthrough used for acceptance.
+    setReviewFace:value=>player.setReviewFace(value),
     setReviewCamera:(pos,look)=>{referenceView={position:pos,target:look};},
     followCamera:()=>{referenceView=false;},
     setReviewPosition:pos=>{stand();closeDialogue();physics.teleport(pos);player.group.position.set(...pos);},
@@ -309,7 +313,7 @@ async function boot(){
       if(moving>.08){const heading=Math.atan2(physicalMotion.x,physicalMotion.y);player.group.rotation.y+=wrapAngle(heading-player.group.rotation.y)*(1-Math.exp(-16*dt));stepDistance+=moving*dt;}
       if(pos.y<-.6||Math.abs(pos.x)>11.1||Math.abs(pos.z)>8.4){physics.teleport([-4.3,0,6.3]);toast('已回到入口，探索记录仍然保留。');}
     }else {accumulator=0;renderPositionReady=false;}
-    player.update(elapsed,dt,{moving,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',floorAt:physics.floorAt,care:!!careItem});
+    player.update(elapsed,dt,{moving,talking:elapsed<playerSpeakingUntil,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',floorAt:physics.floorAt,care:!!careItem});
     for(const actor of actors){
       let walking=0;const talking=dialogTarget?.id===actor.id;
       if(actor.definition.route&&!talking){
@@ -328,7 +332,7 @@ async function boot(){
         shouldSit=actor.seatMotion.seated;walking=actor.seatMotion.moving;
       }else if(actor.seatBlend<.15)actor.group.rotation.y+=turnDelta*(1-Math.exp(-8*dt));
       actor.busy=!talking&&((actor.id==='xu'&&elapsed%18<3)||(actor.id==='he'&&elapsed%23<2.5));
-      actor.update(elapsed,dt,{moving:walking,talking,seated:shouldSit,care:actor.busy,lookingAt:talking?player.group.position:null});
+      actor.update(elapsed,dt,{moving:walking,talking:talking&&elapsed>=playerSpeakingUntil,listening:talking&&elapsed<playerSpeakingUntil,seated:shouldSit,care:actor.busy,lookingAt:talking?player.group.position:null});
       physics.updateResident(actor.id,actor.group.position);
     }
     marker.visible=state.decision==='balanced'||state.decision==='quiet';

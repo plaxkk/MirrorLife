@@ -1,5 +1,5 @@
-"""Derive seven original residents from MirrorLife's editable shared-pivot rig.
-No third-party character assets. Preserve bind matrices and authored facial volumes.
+"""Build seven residents with MirrorLife's editable shared-pivot rig.
+Player head uses a licensed CC0 base; preserve bind matrices and authored facial volumes.
 """
 import bpy, bmesh, sys, json, copy, importlib.util, math, os
 from pathlib import Path
@@ -10,6 +10,8 @@ spec=importlib.util.spec_from_file_location('civic',ROOT/'scripts/blender-build-
 civic=importlib.util.module_from_spec(spec);spec.loader.exec_module(civic)
 garment_spec=importlib.util.spec_from_file_location('atrium_garment',ROOT/'scripts/atrium-garment.py')
 garment_tools=importlib.util.module_from_spec(garment_spec);garment_spec.loader.exec_module(garment_tools)
+head_spec=importlib.util.spec_from_file_location('atrium_head',ROOT/'scripts/atrium-human-head.py')
+head_tools=importlib.util.module_from_spec(head_spec);head_spec.loader.exec_module(head_tools)
 OUT=ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
@@ -90,6 +92,17 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         v.co.z-=.045*outer*upper
     garment=garment_tools.continuous_garment(civic,mats['top'])
     if who=='you':
+        # Jacket ease belongs to the same weighted surface: a softer waist and
+        # restrained compression folds, without detached decorative shells.
+        for vertex in garment.data.vertices:
+            p=vertex.co
+            torso=max(0,min(1,(.235-abs(p.x))/.05))
+            ease=math.exp(-((p.z-.94)/.14)**2)*torso
+            p.x*=1+.10*ease;p.y*=1+.08*ease
+            if p.y<-.04:
+                fold=.003*math.sin((p.z-.86)*65+abs(p.x)*17)*math.exp(-((p.z-.90)/.055)**2)*torso
+                p.y-=fold
+        garment.data.update()
         # Material seams belong to the continuous skinned shell. The cream
         # raglan sleeves follow shoulder weights rather than rigid overlays.
         # Cut the seam into the actual topology: centroid-only colour assignment
@@ -314,7 +327,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     civic.BODY_PROFILES[role]=copy.deepcopy(base_bodies[role])
     profile=civic.BODY_PROFILES[role]
     profile['torso_width']*=body*.88;profile['shoulder_x']*=body
-    profile['shoulder_x']*=1.08
+    profile['shoulder_x']*=1.0 if name=='you' else 1.08
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
     profile['head_scale']=tuple(s*.54 for s in profile['head_scale'])
     # Retain the authored neck overlap while exposing the jaw above the collar.
@@ -404,13 +417,14 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     for obj in bpy.context.scene.objects:
         if obj.type=='MESH' and (obj.name=='Head' or obj.name.startswith(('Hair','Fringe','Braid'))):
             for polygon in obj.data.polygons:polygon.use_smooth=True
+    if name=='you':head_tools.build_player_head(ROOT)
     assert name==current_identity, 'Resident export identity changed during modeling'
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     # Bake material base colours into corner vertex colours and merge by rigid controller.
     # Eye and mouth parents remain independently animated; skinning batches stay intact.
     groups={}
     for obj in list(bpy.context.scene.objects):
-        if obj.type not in {'MESH','CURVE'} or any(m.type=='ARMATURE' for m in obj.modifiers):continue
+        if obj.get('atrium_facial_morphs') or obj.type not in {'MESH','CURVE'} or any(m.type=='ARMATURE' for m in obj.modifiers):continue
         if obj.type=='MESH' and obj.data.shape_keys:
             obj.shape_key_clear()
         bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
@@ -456,19 +470,19 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',use_selection=True,export_apply=False,export_extras=True,export_animations=False,export_yup=True,export_draco_mesh_compression_enable=path.parent==OUT)
     export(SOURCE/(name+'-master.glb'))
     for ob in bpy.context.scene.objects:
-        if ob.type=='MESH' and not any(m.type=='ARMATURE' for m in ob.modifiers):
+        if ob.type=='MESH' and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=.55 if ob.name.startswith('HeadPivot_Surface') else .4;d.use_collapse_triangulate=True
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'.glb'))
     for ob in bpy.context.scene.objects:
-        if ob.type=='MESH' and not any(m.type=='ARMATURE' for m in ob.modifiers):
+        if ob.type=='MESH' and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Mobile LOD','DECIMATE');d.ratio=.52
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'-mobile.glb'))
-    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'Original project-authored derivative of MirrorLife civic rig','reviewStatus':'development','garment':dict(root['atrium_garment'])})
+    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':('MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head' if name=='you' else 'Original project-authored derivative of MirrorLife civic rig'),'reviewStatus':'development','garment':dict(root['atrium_garment'])})
     print('RESIDENT_READY',name,flush=True)
 if selected and (OUT/'manifest.json').exists():
     previous=json.loads((OUT/'manifest.json').read_text());updates={r['id']:r for r in reports};reports=[updates.get(r['id'],r) for r in previous]

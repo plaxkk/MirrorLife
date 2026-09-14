@@ -1,8 +1,8 @@
 <!doctype html><html lang="zh-CN"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>人物比例与面部 · 运行对照</title>
 <style>body{margin:32px;background:#eee9dc;color:#233343;font:16px/1.6 system-ui}main{max-width:1400px;margin:auto}.pair{display:grid;grid-template-columns:1fr 1fr;gap:16px}img{width:100%;display:block}figure{margin:0}h2{margin-top:40px}@media(max-width:650px){.pair{grid-template-columns:1fr}}</style>
-<main><h1>人物比例与面部 · 运行对照</h1><p>左：提交 43cf103 的玩家 GLB。右：本轮偏分发型、插肩袖、立领、拉链与斜袋口调整后的玩家 GLB。同一运行场景、镜头与画幅，保留真实待机和眨眼，动作相位不一致。此处检查人物造型与服装结构，不是参考图校准，也不代表美术验收通过。</p>
-<h2>正常距离</h2><div class="pair"><figure><img src="before-body.png"><figcaption>修改前</figcaption></figure><figure><img src="after-body.png"><figcaption>修改后</figcaption></figure></div>
+<main><h1>人物比例与面部 · 运行对照</h1><p>左：提交 c400168 的玩家 GLB。右：本轮统一头脸/颈部、头发贴合、肩部与夹克松量调整后的玩家 GLB。同一运行场景、镜头与画幅，保留真实待机和眨眼，动作相位不一致。此处检查人物造型与服装结构，不是参考图校准，也不代表美术验收通过。</p>
+<h2>目标参考</h2><img src="../../../design/references/atrium-visual-target.png" alt="用户指定原始参考图"><p>参考人物为轻度卡通化成年青年；原图未给脸部特写，细部是设计补全。下面为相同运行镜头的新旧模型，不是还原度百分比。</p><h2>正常距离</h2><div class="pair"><figure><img src="before-body.png"><figcaption>修改前</figcaption></figure><figure><img src="after-body.png"><figcaption>修改后</figcaption></figure></div>
 <h2>正面</h2><div class="pair"><img src="before-front.png"><img src="after-front.png"></div>
 <h2>侧面</h2><div class="pair"><img src="before-side.png"><img src="after-side.png"></div>
 <h2>四分之三角度</h2><div class="pair"><img src="before-quarter.png"><img src="after-quarter.png"></div>
-<p>仍需处理：鼻部正面体积偏弱、眼睑近景边缘、发束形态、颈部与衣领造型，以及完整表情和衣物变形。相机参数与资产 SHA-256 见 <a href="cameras.json">cameras.json</a>。</p></main>
+<p>仍需处理：眉眼与嘴唇的亲近感、发壳厚重、颈部轮廓、手脚分段感，以及更自然的衣物褶皱。头部结构已换用 CC0 基础网格适配，六位居民未同步重制。相机参数与资产 SHA-256 见 <a href="cameras.json">cameras.json</a>。</p><h2>固定表情诊断</h2><p>以下是运行时主动设置形变权重的诊断截图，不能替代自动眨眼或连续游玩。</p><div class="pair"><img src="../facial-motion/neutral-front.png"><img src="../facial-motion/closed-front.png"></div><p><a href="../facial-motion/report.json">自动眨眼观测与固定表情参数</a> · <a href="../../../docs/ATRIUM_CHARACTER_STRUCTURE_REVIEW.md">制作与验收边界</a></p></main>

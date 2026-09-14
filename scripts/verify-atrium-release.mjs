@@ -43,6 +43,7 @@ try{
   for(const mode of ['gallery','performance','mobile'])await run(mode,process.execPath,['scripts/verify-atrium-pilot.mjs',mode]);
   await run('garments',process.execPath,['scripts/verify-atrium-garments.mjs']);
   await run('faces',process.execPath,['scripts/verify-atrium-faces.mjs']);
+  await run('facial-motion',process.execPath,['scripts/verify-atrium-facial-motion.mjs']);
   await run('controls',process.execPath,['scripts/verify-atrium-controls.mjs']);
   await run('window-contact',process.execPath,['scripts/verify-atrium-window-contact.mjs']);
   await run('contact',process.execPath,['scripts/verify-atrium-contact.mjs']);

@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-14T11:40:02.027Z",
-  "runtimeFingerprint": "0ba2b62028502a428e93ddbc60da3cc4d75c40f9716d07e708bade49e374b164",
+  "generatedAt": "2026-09-14T13:23:37.050Z",
+  "runtimeFingerprint": "6b0086ea008e4379feac2416942f7c68e3590af1458ccc401bed2b5a541195d2",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 104605420,
-  "totalPublicBytes": 14459038,
+  "totalSourceBytes": 104979223,
+  "totalPublicBytes": 14556886,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -11,9 +11,14 @@
       "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
     },
     {
+      "file": "public/assets/atrium/CC0-1.0.txt",
+      "bytes": 6962,
+      "sha256": "f6089cba01cb570a24712b41ab8a586ccd3cc5ef53dc266ca50b95c288956d2c"
+    },
+    {
       "file": "public/assets/atrium/CREDITS.md",
-      "bytes": 2183,
-      "sha256": "48c51d9962181ea24ab55ce1fc404c9e52e6a3db1224caeb03aef361db6b9069"
+      "bytes": 2694,
+      "sha256": "58bf0f5556d3f31d58852834614090f1c5c1a9aa3408e201597fbd1ac6923c49"
     },
     {
       "file": "public/assets/atrium/THREE-LICENSE.txt",
@@ -22,48 +27,48 @@
     },
     {
       "file": "public/assets/atrium/animations/you-motion.glb",
-      "bytes": 915132,
-      "sha256": "d09110a39207ea487d9ebb3e3079ed7d16fc7c25c38eb2617d9fbec7fa1c27d3",
-      "meshes": 60,
-      "materials": 16,
+      "bytes": 838516,
+      "sha256": "583d929ab9ec778459cb8ab208b9e83587a5cbcc6742b49879ea3e59c7e8f276",
+      "meshes": 38,
+      "materials": 12,
       "skins": 1,
-      "triangles": 30140,
+      "triangles": 28471,
       "animations": [
         {
           "name": "idle",
-          "channels": 73
+          "channels": 74
         },
         {
           "name": "walk",
-          "channels": 74
+          "channels": 75
         },
         {
           "name": "listen",
-          "channels": 73
+          "channels": 74
         },
         {
           "name": "talk",
-          "channels": 72
-        },
-        {
-          "name": "stairs",
-          "channels": 74
-        },
-        {
-          "name": "turn",
           "channels": 73
         },
         {
-          "name": "sit",
+          "name": "stairs",
+          "channels": 75
+        },
+        {
+          "name": "turn",
           "channels": 74
+        },
+        {
+          "name": "sit",
+          "channels": 75
         },
         {
           "name": "stand",
-          "channels": 74
+          "channels": 75
         },
         {
           "name": "water",
-          "channels": 71
+          "channels": 72
         }
       ]
     },
@@ -344,8 +349,8 @@
     },
     {
       "file": "public/assets/atrium/residents/manifest.json",
-      "bytes": 3606,
-      "sha256": "887d050c87d8b68a11e216478e261e4849194f79b4bd17d76118f640f1aa1b9d"
+      "bytes": 3625,
+      "sha256": "36ba56e1d822f194fae3f402ee31b60cd579da56163149d5699bfc68df3172cc"
     },
     {
       "file": "public/assets/atrium/residents/tang-mobile.glb",
@@ -389,22 +394,22 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 177280,
-      "sha256": "552c53d501e085f177521000554e2952e860da1656bb1faa14f004917877f38d",
-      "meshes": 10,
+      "bytes": 266416,
+      "sha256": "e5bc967d31529feea77fb49bc763a305a6930bdff689092b2a7d03b3587f17ac",
+      "meshes": 6,
       "materials": 5,
       "skins": 1,
-      "triangles": 19213,
+      "triangles": 21225,
       "animations": []
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 222524,
-      "sha256": "5fa20618f056ea8d78ea0d3131a57aeb5b8a540f1fd0516d1eb607cbc6c9d707",
-      "meshes": 10,
+      "bytes": 300360,
+      "sha256": "bad61782f05c6cbcdfb4770b2e0adb6a439c9a3beb315942fd47c20fec1f05f5",
+      "meshes": 6,
       "materials": 5,
       "skins": 1,
-      "triangles": 24190,
+      "triangles": 24633,
       "animations": []
     },
     {
@@ -439,8 +444,8 @@
     },
     {
       "file": "models/atrium/animations/you-motion.blend",
-      "bytes": 1393108,
-      "sha256": "d46367d43d2f62ad499f9ce44d78bef74b76afc063243b7afdfc414df6cbc1af"
+      "bytes": 1424031,
+      "sha256": "e9b1255573cae48763a9a13329dc860fdd8f1a05a2fe734f586be83d9cba38f2"
     },
     {
       "file": "models/atrium/atrium-master.blend",
@@ -584,18 +589,18 @@
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 2073504,
-      "sha256": "091f1a78aac38c0c1d6ac4fec3efa9150da48e322a9d434e03fd87a4145a3707",
-      "meshes": 10,
+      "bytes": 1947724,
+      "sha256": "1be6c6b137747693b6cb5978537aa1fef4b54911628af2ab4d216da33893f822",
+      "meshes": 6,
       "materials": 5,
       "skins": 1,
-      "triangles": 35460,
+      "triangles": 32543,
       "animations": []
     },
     {
       "file": "models/atrium/residents/you.blend",
-      "bytes": 4003318,
-      "sha256": "8207e0509a1aeea739a1d9b3d59e6d897cb39938aa6ed7063cc982b650e29574"
+      "bytes": 4101146,
+      "sha256": "e398095a5a0c33282bf39391f487cb0d6400f56677afa21d5bc46166fba78065"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",
@@ -611,6 +616,26 @@
       "file": "models/atrium/residents/zhou.blend",
       "bytes": 4075326,
       "sha256": "f113f40aee29a601bdab897de723b37e7c1db005f1dfbf1ec3af4c1b7f21ee76"
+    },
+    {
+      "file": "models/atrium/source/CC0-1.0.txt",
+      "bytes": 6962,
+      "sha256": "f6089cba01cb570a24712b41ab8a586ccd3cc5ef53dc266ca50b95c288956d2c"
+    },
+    {
+      "file": "models/atrium/source/MAKEHUMAN-LICENSE.md",
+      "bytes": 3583,
+      "sha256": "9e714b52ed6724965c7b655c63fb4c08e86e6d6deaf3a6055a56cb0bda251382"
+    },
+    {
+      "file": "models/atrium/source/README.md",
+      "bytes": 1180,
+      "sha256": "58d3c28d1d5bf182a8615af5c83e733da66c651074a7c24c852089d8eafbadbd"
+    },
+    {
+      "file": "models/atrium/source/makehuman-head.obj",
+      "bytes": 359107,
+      "sha256": "1e6f01dcbf6ace3968cdf422cd9d7d6874685c312942042e4149d6197cdef107"
     }
   ]
 }
