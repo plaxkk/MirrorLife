@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-14T13:15:29.216Z",
-  "runtimeFingerprint": "6b0086ea008e4379feac2416942f7c68e3590af1458ccc401bed2b5a541195d2",
+  "capturedAt": "2026-09-14T15:15:14.647Z",
+  "runtimeFingerprint": "5d9ae58b1641a4d44f26bde3d28978ece1b1f801d7cb92dadae761cbdb83fea7",
   "browserMode": "headless",
   "stats": {
     "ready": true,
@@ -16,24 +16,24 @@
       "dpr": 1,
       "renderPixelRatio": 1
     },
-    "loadingMs": 3099,
-    "navigationToReadyMs": 3294,
-    "enterToActiveMs": 4.799999952316284,
-    "sessionMs": 3780.399999976158,
-    "frames": 204,
+    "loadingMs": 3321.100000023842,
+    "navigationToReadyMs": 3575.899999976158,
+    "enterToActiveMs": 4,
+    "sessionMs": 3532,
+    "frames": 212,
     "frameMs": {
       "p50": 16.699999999999818,
-      "p95": 16.800000000000182,
-      "p99": 66.59999999999991
+      "p95": 16.700000000000728,
+      "p99": 16.800000000000182
     },
     "cpuMs": {
       "script": {
-        "p50": 2.100000023841858,
-        "p95": 4.299999952316284
+        "p50": 1.800000011920929,
+        "p95": 2.900000035762787
       },
       "render": {
-        "p50": 3.199999988079071,
-        "p95": 7.600000023841858
+        "p50": 2.599999964237213,
+        "p95": 4.300000011920929
       }
     },
     "gpuMs": {
@@ -45,172 +45,172 @@
       "method": "Every tenth rendered frame, asynchronous WebGL2 elapsed-time query; GPU render only, excludes presentation/input. Unsupported and disjoint samples are not zero milliseconds."
     },
     "render": {
-      "frame": 250,
+      "frame": 253,
       "calls": 97,
-      "triangles": 434169,
+      "triangles": 434150,
       "points": 0,
       "lines": 0
     },
     "renderPeaks": {
       "calls": 121,
-      "triangles": 482917,
+      "triangles": 482879,
       "geometries": 93
     },
     "memory": {
       "geometries": 93,
       "textures": 27,
-      "jsHeapBytes": 107505566
+      "jsHeapBytes": 112416907
     },
     "resources": [
       {
         "url": "/assets/atrium-DOKNzae3.js",
         "transferBytes": 300,
         "decodedBytes": 53747,
-        "durationMs": 10.599999964237213
+        "durationMs": 7.199999988079071
       },
       {
         "url": "/assets/modulepreload-polyfill-Dezn_h7o.js",
         "transferBytes": 300,
         "decodedBytes": 698,
-        "durationMs": 6.899999976158142
+        "durationMs": 23.900000035762787
       },
       {
         "url": "/assets/rolldown-runtime-DK3Fl9T5.js",
         "transferBytes": 300,
         "decodedBytes": 158,
-        "durationMs": 29
-      },
-      {
-        "url": "/assets/BufferGeometryUtils-CnheMMBR.js",
-        "transferBytes": 300,
-        "decodedBytes": 13131,
-        "durationMs": 51.89999997615814
-      },
-      {
-        "url": "/assets/SkeletonUtils-BCv72L_j.js",
-        "transferBytes": 300,
-        "decodedBytes": 4079,
-        "durationMs": 60.89999997615814
+        "durationMs": 32.5
       },
       {
         "url": "/assets/three.module-CZC7t-hJ.js",
         "transferBytes": 300,
         "decodedBytes": 725424,
-        "durationMs": 47
+        "durationMs": 41.60000002384186
+      },
+      {
+        "url": "/assets/BufferGeometryUtils-CnheMMBR.js",
+        "transferBytes": 300,
+        "decodedBytes": 13131,
+        "durationMs": 50.10000002384186
+      },
+      {
+        "url": "/assets/SkeletonUtils-BCv72L_j.js",
+        "transferBytes": 300,
+        "decodedBytes": 4079,
+        "durationMs": 55.5
       },
       {
         "url": "/assets/GLTFLoader-D4aawYtZ.js",
         "transferBytes": 300,
         "decodedBytes": 43047,
-        "durationMs": 15.399999976158142
+        "durationMs": 77
       },
       {
         "url": "/assets/RoomEnvironment-_HcG5_fd.js",
         "transferBytes": 300,
         "decodedBytes": 2129,
-        "durationMs": 66
-      },
-      {
-        "url": "/assets/reference-fidelity-runtime-contract-jYf20sii.js",
-        "transferBytes": 300,
-        "decodedBytes": 18787,
-        "durationMs": 86.5
+        "durationMs": 67.80000001192093
       },
       {
         "url": "/assets/rapier-CMw4H3UB.js",
         "transferBytes": 300,
         "decodedBytes": 2236835,
-        "durationMs": 101.69999998807907
+        "durationMs": 97.59999996423721
+      },
+      {
+        "url": "/assets/reference-fidelity-runtime-contract-jYf20sii.js",
+        "transferBytes": 300,
+        "decodedBytes": 18787,
+        "durationMs": 83.30000001192093
       },
       {
         "url": "/assets/atrium-Co8-Av0f.css",
         "transferBytes": 300,
         "decodedBytes": 7675,
-        "durationMs": 103.60000002384186
+        "durationMs": 58.89999997615814
       },
       {
         "url": "/storage.js",
         "transferBytes": 300,
         "decodedBytes": 8902,
-        "durationMs": 97
+        "durationMs": 69.5
       },
       {
         "url": "/assets/atrium/atrium-desktop.glb",
         "transferBytes": 300,
         "decodedBytes": 2778184,
-        "durationMs": 54.59999996423721
+        "durationMs": 65.19999998807907
       },
       {
         "url": "/assets/atrium/collision.json",
         "transferBytes": 300,
         "decodedBytes": 3275751,
-        "durationMs": 74.29999995231628
+        "durationMs": 63.90000003576279
       },
       {
         "url": "/assets/atrium/draco/draco_wasm_wrapper.js",
         "transferBytes": 300,
         "decodedBytes": 58456,
-        "durationMs": 14.699999988079071
+        "durationMs": 6.899999976158142
       },
       {
         "url": "/assets/atrium/draco/draco_decoder.wasm",
         "transferBytes": 300,
         "decodedBytes": 192420,
-        "durationMs": 9.800000011920929
+        "durationMs": 9.5
       },
       {
         "url": "/assets/atrium/floor-contact.png",
         "transferBytes": 300,
         "decodedBytes": 112046,
-        "durationMs": 5.399999976158142
+        "durationMs": 6.5
       },
       {
         "url": "/assets/atrium/residents/you.glb",
         "transferBytes": 300,
-        "decodedBytes": 300360,
-        "durationMs": 14.300000011920929
+        "decodedBytes": 300968,
+        "durationMs": 26.099999964237213
       },
       {
         "url": "/assets/atrium/life-props.glb",
         "transferBytes": 300,
         "decodedBytes": 25204,
-        "durationMs": 5.300000011920929
+        "durationMs": 23.099999964237213
       },
       {
         "url": "/assets/atrium/residents/lin.glb",
         "transferBytes": 300,
         "decodedBytes": 215816,
-        "durationMs": 6.599999964237213
+        "durationMs": 25.099999964237213
       },
       {
         "url": "/assets/atrium/residents/chen.glb",
         "transferBytes": 300,
         "decodedBytes": 208940,
-        "durationMs": 9.300000011920929
+        "durationMs": 32.700000047683716
       },
       {
         "url": "/assets/atrium/residents/xu.glb",
         "transferBytes": 300,
         "decodedBytes": 226920,
-        "durationMs": 7.699999988079071
+        "durationMs": 6.300000011920929
       },
       {
         "url": "/assets/atrium/residents/zhou.glb",
         "transferBytes": 300,
         "decodedBytes": 226764,
-        "durationMs": 29.100000023841858
+        "durationMs": 9.800000011920929
       },
       {
         "url": "/assets/atrium/residents/he.glb",
         "transferBytes": 300,
         "decodedBytes": 210756,
-        "durationMs": 7
+        "durationMs": 9.199999988079071
       },
       {
         "url": "/assets/atrium/residents/tang.glb",
         "transferBytes": 300,
         "decodedBytes": 217456,
-        "durationMs": 13.100000023841858
+        "durationMs": 11.900000035762787
       }
     ],
     "actors": 7,
@@ -241,9 +241,9 @@
       }
     ],
     "position": {
-      "x": -4.379663944244385,
-      "y": 0.019885990619659455,
-      "z": 6.92335844039917
+      "x": -4.3541364669799805,
+      "y": 0.01983860492706302,
+      "z": 6.917123317718506
     },
     "camera": [
       -3.4,
@@ -252,7 +252,7 @@
     ],
     "cameraGeometry": {
       "triangles": 170127,
-      "buildMs": 310.0999999642372
+      "buildMs": 238.69999998807907
     },
     "distanceWalked": 0,
     "visitedPositions": [],

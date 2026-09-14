@@ -31,6 +31,8 @@ def build_player_head(root_path):
         poly.use_smooth=True
         for loop,i in zip(poly.loop_indices,indices):uv.data[loop].uv=tex[i]
     old.data=mesh
+    # Reduce the exposed straight neck while keeping its cut inside the collar.
+    old.parent.location.z-=.018
     # Continue the native neck to a ring inside the collar; remove the second
     # neck shell. This eliminates the two independently visible cut edges.
     edges={}
@@ -63,23 +65,67 @@ def build_player_head(root_path):
     for side in [-1,1]:
         eye=bpy.data.objects['EyePivot_'+str(side)];eye.location=(side*.0785,-.181,.0344);eye.scale=(.52,.65,.48)
         brow=bpy.data.objects['BrowPivot_'+str(side)];brow.location=(side*.079,front(side*.079,.08)-.003,.08);brow.scale.x=.68
-    # Refit every hair vertex to the same head surface. A direction-dependent
-    # offset preserves clump relief while eliminating the old ellipsoid gap.
+    # Groom directly on the fitted skull. Broad, overlapping flattened clumps
+    # have independent lift; projecting all old vertices erased their volume.
+    hair_objects=[ob for ob in bpy.context.scene.objects if ob.type=='MESH' and ob.name.startswith('Hair')]
+    hair_material=hair_objects[0].data.materials[0]
+    for ob in hair_objects:bpy.data.objects.remove(ob,do_unlink=True)
     centre=Vector((0,0,.04))
-    for ob in list(bpy.context.scene.objects):
-        if ob.type!='MESH' or not ob.name.startswith('Hair'):continue
-        for vertex in ob.data.vertices:
-            point=ob.matrix_local@vertex.co;direction=(point-centre).normalized()
-            hit=surface.ray_cast(centre+direction*2,-direction)[0]
-            if hit is None:continue
-            ellipsoid=1/math.sqrt((direction.x/.241)**2+(direction.y/.205)**2+(direction.z/.278)**2)
-            relief=max(-.004,min(.04,(point-centre).length-ellipsoid))
-            fitted=hit+direction*(.011+relief*.7)
-            if ob.name=='Hair continuous scalp':
-                ear_region=max(0,1-abs(fitted.y)/.14)*max(0,min(1,(abs(fitted.x)-.14)/.035))
-                fitted.z=max(fitted.z,.065*ear_region-.08*(1-ear_region))
-            vertex.co=ob.matrix_local.inverted()@fitted
-        ob.data.update()
+    def scalp(theta,azimuth,lift=0):
+        direction=Vector((math.sin(theta)*math.sin(azimuth),-math.sin(theta)*math.cos(azimuth),math.cos(theta)))
+        hit=surface.ray_cast(centre+direction*2,-direction)[0]
+        if hit is None:hit=centre+direction*.21
+        return hit+direction*(.007+lift),direction
+    def hair_mesh(name,points,faces):
+        mesh=bpy.data.meshes.new(name);mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(hair_material)
+        ob=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(ob);ob.parent=old.parent
+        for poly in mesh.polygons:poly.use_smooth=True
+        return ob
+    sides=48;rings=14;points=[tuple(scalp(0,0,.014)[0])];faces=[]
+    for row in range(1,rings+1):
+        for i in range(sides):
+            az=i*math.tau/sides
+            extent=1.06+.69*(1-math.cos(az))*.5+.12*math.sin(az)**2
+            # Break the hairline without exposing disconnected scalp islands.
+            extent+=.025*math.sin(az*7)+.012*math.sin(az*11)
+            extent-=.11*math.sin(az)**4
+            theta=row/rings*extent
+            point,_=scalp(theta,az,.022*max(0,math.cos(theta)))
+            points.append(tuple(point))
+    for i in range(sides):faces.append((0,1+i,1+(i+1)%sides))
+    for row in range(rings-1):
+        for i in range(sides):
+            a=1+row*sides+i;b=1+row*sides+(i+1)%sides;faces.append((a,a+sides,b+sides,b))
+    cap=hair_mesh('Hair fitted short undercut',points,faces)
+    solid=cap.modifiers.new('Closed hairline','SOLIDIFY');solid.thickness=.004
+    def groom(name,start,end,az,sweep,width,lift):
+        steps=12;cross=8;centres=[];normals=[]
+        for i in range(steps+1):
+            t=i/steps;theta=start+(end-start)*t
+            point,normal=scalp(theta,az+sweep*t,lift*math.sin(math.pi*t)**.8)
+            centres.append(point);normals.append(normal)
+        points=[];faces=[]
+        for i,(point,normal) in enumerate(zip(centres,normals)):
+            t=i/steps
+            tangent=(centres[min(i+1,steps)]-centres[max(0,i-1)]).normalized()
+            across=tangent.cross(normal).normalized()
+            # Wide soft middle, buried root and tapered end; no round cables.
+            w=width*(.35+.8*math.sin(math.pi*t))*(1-t**5)+.0004
+            for j in range(cross):
+                angle=j*math.tau/cross
+                points.append(tuple(point+across*(w*math.cos(angle))+normal*(w*.33*math.sin(angle))))
+        for i in range(steps):
+            for j in range(cross):
+                a=i*cross+j;b=i*cross+(j+1)%cross;faces.append((a,b,b+cross,a+cross))
+        faces.extend([tuple(reversed(range(cross))),tuple(steps*cross+j for j in range(cross))])
+        hair_mesh(name,points,faces)
+    for i in range(8):
+        groom('Hair swept top %02d'%i,.16+.035*(i%3),1.10+.13*(i%3)/2,-1.25+i*.30,.48,.033,.028+.012*math.sin(i))
+    for side in [-1,1]:
+        for i in range(5):
+            groom('Hair short side %s %s'%(side,i),.55,1.38+.12*i/4,side*(1.1+i*.36),side*.30,.025,.012)
+    for i in range(3):
+        groom('Hair broken crown %s'%i,.10,.95,2.3+i*.4,.22,.031,.038)
     # Authored curved eyelid bands replace socket compression. Outer rings
     # follow the native face; inner arcs meet at the actual eye seam on closure.
     points=[tuple(v.co) for v in old.data.vertices];polys=[tuple(p.vertices) for p in old.data.polygons]
