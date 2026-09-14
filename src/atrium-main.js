@@ -43,6 +43,8 @@ const visitedPositions=[];
 
 function toast(text){$('toast').textContent=text;$('toast').classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').classList.remove('show'),4800);}
 function persist(){
+  // pagehide disposes Rapier before a later visibilitychange can request a save.
+  if(disposed)return;
   if(physics&&!seated){const p=physics.feet();state.position=[p.x,p.y,p.z];}
   const error=saveAtriumState(state);if(error)toast('当前进度暂时无法写入，保持页面打开可继续探索。');
 }

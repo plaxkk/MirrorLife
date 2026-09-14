@@ -1,9 +1,14 @@
 {
-  "capturedAt": "2026-09-12T11:58:04.656Z",
-  "runtimeFingerprint": "83987926a380036b53d4f875b73255283b5b96803615b597437d6ad88aaeb6de",
+  "capturedAt": "2026-09-14T11:36:08.567Z",
+  "runtimeFingerprint": "0ba2b62028502a428e93ddbc60da3cc4d75c40f9716d07e708bade49e374b164",
   "browserMode": "headed",
   "fixtureNotice": "Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.",
   "results": [
+    {
+      "case": "real page close after entering has no uncaught disposed-physics error",
+      "pass": true,
+      "errors": []
+    },
     {
       "case": "out of range E",
       "pass": true

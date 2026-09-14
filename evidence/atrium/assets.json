@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-12T12:01:59.375Z",
-  "runtimeFingerprint": "83987926a380036b53d4f875b73255283b5b96803615b597437d6ad88aaeb6de",
+  "generatedAt": "2026-09-14T11:40:02.027Z",
+  "runtimeFingerprint": "0ba2b62028502a428e93ddbc60da3cc4d75c40f9716d07e708bade49e374b164",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 104438437,
-  "totalPublicBytes": 14444502,
+  "totalSourceBytes": 104605420,
+  "totalPublicBytes": 14459038,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -22,12 +22,12 @@
     },
     {
       "file": "public/assets/atrium/animations/you-motion.glb",
-      "bytes": 910776,
-      "sha256": "63e464fb6ce687d13d52806e9f0672231177c38e1ee2f45dbae50f70959bf937",
-      "meshes": 55,
+      "bytes": 915132,
+      "sha256": "d09110a39207ea487d9ebb3e3079ed7d16fc7c25c38eb2617d9fbec7fa1c27d3",
+      "meshes": 60,
       "materials": 16,
       "skins": 1,
-      "triangles": 29712,
+      "triangles": 30140,
       "animations": [
         {
           "name": "idle",
@@ -345,7 +345,7 @@
     {
       "file": "public/assets/atrium/residents/manifest.json",
       "bytes": 3606,
-      "sha256": "ba434b6b7c5095abca31ed0aca2198b6057ab69c9c305a68a5e95eb0de1f2502"
+      "sha256": "887d050c87d8b68a11e216478e261e4849194f79b4bd17d76118f640f1aa1b9d"
     },
     {
       "file": "public/assets/atrium/residents/tang-mobile.glb",
@@ -389,22 +389,22 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 171072,
-      "sha256": "f321cc8166f0f38cba9719646f7eef73d02893e2df90babb93af404bf40bf321",
+      "bytes": 177280,
+      "sha256": "552c53d501e085f177521000554e2952e860da1656bb1faa14f004917877f38d",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
-      "triangles": 18196,
+      "triangles": 19213,
       "animations": []
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 218552,
-      "sha256": "1d6fcf475be0132a4ef07e793c918c12a3abc463f3bc8f294d2533989c16fb97",
+      "bytes": 222524,
+      "sha256": "5fa20618f056ea8d78ea0d3131a57aeb5b8a540f1fd0516d1eb607cbc6c9d707",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
-      "triangles": 22852,
+      "triangles": 24190,
       "animations": []
     },
     {
@@ -439,8 +439,8 @@
     },
     {
       "file": "models/atrium/animations/you-motion.blend",
-      "bytes": 1368849,
-      "sha256": "28396471950e31ed1b9ba1bc34826ec688a64a55896b558a5f5cd6469c65b9b8"
+      "bytes": 1393108,
+      "sha256": "d46367d43d2f62ad499f9ce44d78bef74b76afc063243b7afdfc414df6cbc1af"
     },
     {
       "file": "models/atrium/atrium-master.blend",
@@ -584,18 +584,18 @@
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 2040392,
-      "sha256": "c1168114276c04558adcc8d6868837eaaccf8890144567b27acbdbbf58cbb51f",
+      "bytes": 2073504,
+      "sha256": "091f1a78aac38c0c1d6ac4fec3efa9150da48e322a9d434e03fd87a4145a3707",
       "meshes": 10,
       "materials": 5,
       "skins": 1,
-      "triangles": 33656,
+      "triangles": 35460,
       "animations": []
     },
     {
       "file": "models/atrium/residents/you.blend",
-      "bytes": 3893706,
-      "sha256": "4d9b5b4e9ceb531382a7378d34061a12a2cbd36884be1231bd57dae049c7ea5d"
+      "bytes": 4003318,
+      "sha256": "8207e0509a1aeea739a1d9b3d59e6d897cb39938aa6ed7063cc982b650e29574"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",

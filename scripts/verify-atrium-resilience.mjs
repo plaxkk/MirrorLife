@@ -17,6 +17,11 @@ async function fixture(page,position){
   await page.evaluate(p=>window.__atrium.setReviewPosition(p),position);await wait(300);
 }
 try{
+  const closeProbe=await browser.newPage();const closeErrors=[];
+  closeProbe.on('pageerror',error=>closeErrors.push(String(error)));
+  await boot(closeProbe);await closeProbe.close();await wait(250);
+  assert.deepEqual(closeErrors,[],'Closing an active scene must not access disposed Rapier objects');
+  results.push({case:'real page close after entering has no uncaught disposed-physics error',pass:true,errors:closeErrors});
   const page=await browser.newPage();await page.setViewport({width:1280,height:800});await boot(page);
   await fixture(page,[3.2,0,5.5]);await page.keyboard.press('KeyE');assert.equal(await page.$eval('#dialogue',e=>e.hidden),true);
   results.push({case:'out of range E',pass:true});

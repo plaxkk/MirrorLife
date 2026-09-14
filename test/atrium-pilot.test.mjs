@@ -111,7 +111,7 @@ test('both resident LODs keep full digits and one continuous long-sleeve surface
     const garment=glb.nodes.find(n=>n.extras?.atrium_garment)?.extras.atrium_garment;
     assert.equal(garment?.contract,'atrium-continuous-shoulder-v1',`${id}${lod}: missing Blender garment audit`);
     assert.equal(garment.components,1);assert.equal(garment.nonManifoldEdges,0);
-    assert.ok(garment.triangles<=1700&&garment.weightError<.0001);
+    assert.ok(garment.triangles<=(id==='you'?2400:1700)&&garment.weightError<.0001);
     for(const primitive of glb.meshes[core.mesh].primitives)
       assert.ok(Number.isInteger(primitive.attributes.TEXCOORD_0),`${id}${lod}: exported cloth UV missing`);
     const parts=core.extras.rigid_source_parts.split(',');

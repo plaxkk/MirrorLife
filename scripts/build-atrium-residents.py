@@ -1,7 +1,7 @@
 """Derive seven original residents from MirrorLife's editable shared-pivot rig.
 No third-party character assets. Preserve bind matrices and authored facial volumes.
 """
-import bpy, sys, json, copy, importlib.util, math, os
+import bpy, bmesh, sys, json, copy, importlib.util, math, os
 from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
@@ -89,6 +89,31 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         upper=max(0,min(1,(v.co.z-1.15)/.12))
         v.co.z-=.045*outer*upper
     garment=garment_tools.continuous_garment(civic,mats['top'])
+    if who=='you':
+        # Material seams belong to the continuous skinned shell. The cream
+        # raglan sleeves follow shoulder weights rather than rigid overlays.
+        # Cut the seam into the actual topology: centroid-only colour assignment
+        # on a decimated shell produces saw-toothed shoulders in close views.
+        bm=bmesh.new();bm.from_mesh(garment.data)
+        for side in [-1,1]:
+            for normal in [(side,0,0),(side,0,-.08/.23)]:
+                bmesh.ops.bisect_plane(bm,geom=list(bm.verts)+list(bm.edges)+list(bm.faces),dist=.000001,plane_co=Vector((side*.18,0,1.05)),plane_no=Vector(normal),clear_inner=False,clear_outer=False)
+        bm.to_mesh(garment.data);bm.free();garment.data.update()
+        garment.data.materials.append(mats['paper'])
+        for polygon in garment.data.polygons:
+            centre=sum((garment.data.vertices[i].co for i in polygon.vertices),Vector())/len(polygon.vertices)
+            if abs(centre.x)>.18+.08*max(0,(centre.z-1.05)/.23):
+                polygon.material_index=1
+        garment.data.calc_loop_triangles()
+        weights=max(abs(sum(g.weight for g in v.groups)-1) for v in garment.data.vertices)
+        assert weights<.0001, 'Raglan seam lost skin weights'
+        audit=bmesh.new();audit.from_mesh(garment.data)
+        non_manifold=sum(not e.is_manifold for e in audit.edges);audit.free()
+        assert non_manifold==0, 'Raglan seam opened the garment'
+        report=dict(garment.parent.parent['atrium_garment']);report['nonManifoldEdges']=non_manifold;report['triangles']=len(garment.data.loop_triangles);report['weightError']=weights
+        garment.parent.parent['atrium_garment']=report
+        garment['triangle_budget']=2400
+        assert report['triangles']<=2400, 'Hero seam topology exceeded its explicit local allocation'
     cloth_surface=BVHTree.FromPolygons([v.co for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
     def cloth_y(x,z):
         point=cloth_surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
@@ -150,8 +175,10 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
     civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
-    if who in ('you','tang'):
-        civic.ellipsoid('Folded fabric hood',(0,.07,1.325) if who=='you' else (0,.08,1.265),(.105,.07,.04) if who=='you' else (.15,.08,.05),mats['top'],visual,segments=32,rings=16)
+    if who=='you':
+        civic.contoured_elliptical_shell('Rib knit standing collar',[(1.295,.103,.078,0,0),(1.308,.105,.08,0,0),(1.336,.09,.07,0,0)],mats['outer'],visual,segments=32)
+    if who=='tang':
+        civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
         civic.curve_tube('Ribbed lower hem',[(-.2,-.07,.83),(0,-.177,.8),(.2,-.07,.83)],.014,mats['outer'],visual)
     if who in ('lin','zhou'):
         # One continuous curved garment around the body, open at the front.
@@ -178,7 +205,14 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     elif who=='xu':
         civic.tailored_panel('Cotton plant apron',.24,.3,.37,.43,.027,(0,-.177,1.005),mats['lower'],visual,radius=.025)
         civic.rounded_box('Apron soft patch pocket',(.23,.034,.105),(0,-.201,.93),mats['outer'],visual,radius=.025)
-    elif who in ('you','chen'):
+    elif who=='you':
+        # Raised zipper tapes and slanted welt openings replace pillow-like patches.
+        for side in (-1,1):
+            civic.curve_tube('Jacket zipper tape '+str(side),[(side*.014,cloth_y(side*.014,z)-.003,z) for z in [.835,.96,1.1,1.24,1.3]],.004,mats['outer'],visual)
+            points=[(side*x,cloth_y(side*x,z)-.004,z) for x,z in [(.105,.88),(.14,.925),(.165,.97)]]
+            civic.curve_tube('Recessed diagonal welt '+str(side),points,.005,mats['lower'],visual)
+        civic.rounded_box('Metal zipper pull',(.013,.008,.027),(0,cloth_y(0,1.23)-.009,1.23),mats['accent'],visual,radius=.004)
+    elif who=='chen':
         civic.curve_tube('Jacket zipper',[(0,cloth_y(0,z)-.002,z) for z in [.85,.96,1.08,1.2]],.004,mats['outer'],visual)
         for side in (-1,1):
             cloth_patch('Jacket welt pocket_'+str(side),side*.115,1.055,.11,.09,mats['outer'])
@@ -203,6 +237,7 @@ def everyday_hair(head,mats,style):
         for i in range(sides):
             a=i*math.tau/sides
             extent=1.05+(.96 if not long_bob else 1.4)*(1-math.cos(a))*.5+.26*math.sin(a)**2
+            if who=='you':extent-=.16*(1-math.cos(a))*.5
             theta=row/rings*extent
             radius=1+.018*math.sin(a*5+theta*2)*math.sin(theta)
             vertices.append((rx*math.sin(theta)*math.sin(a)*radius,-ry*math.sin(theta)*math.cos(a)*radius,.02+rz*math.cos(theta)))
@@ -220,7 +255,19 @@ def everyday_hair(head,mats,style):
         return ob
     # Place each groom path on the scalp ellipsoid; the previous independent
     # coordinates left the middle of each thick lock floating above the skull.
-    if who!='he':
+    if who=='you':
+        # Unequal, swept locks establish a side part and broken crown silhouette.
+        # Roots overlap the scalp; tapered ends remain volumetric from the side.
+        for i in range(7):
+            a=-1.1+i*.30;points=[]
+            for t,theta in enumerate([.25,.53,.85,1.17+(i%3)*.055]):
+                phi=a+.55*t/3
+                lift=.028*math.sin(math.pi*t/3)*(1-i*.055)
+                points.append(((rx+lift)*math.sin(theta)*math.sin(phi),-(ry+lift*.6)*math.sin(theta)*math.cos(phi),.023+(rz+lift)*math.cos(theta)))
+            lock('Hair asymmetric sweep '+str(i),points,[.029,.039-i*.0015,.025,.0015])
+        for i in range(3):
+            lock('Hair crown flick '+str(i),[(-.12+i*.075,.025,.24),(-.09+i*.075,-.035,.302),(-.04+i*.075,-.07,.307),(.025+i*.06,-.105,.267)],[.032,.036,.022,.001])
+    elif who!='he':
         for i,a in enumerate([-.85,-.52,-.18,.18,.52,.85]):
             sweep=.32 if who in ('you','chen','zhou') else (-.18 if i<3 else .18)
             points=[]
@@ -229,7 +276,7 @@ def everyday_hair(head,mats,style):
                 points.append((rx*math.sin(theta)*math.sin(phi),-(ry+.005)*math.sin(theta)*math.cos(phi),.024+rz*math.cos(theta)))
             lock('Hair swept fringe '+str(i),points,[.026,.029,.021,.0025])
     for side in [-1,1]:
-        lock('Hair temple '+str(side),[(side*.20,-.05,.19),(side*.237,-.042,.08),(side*.231,-.025,-.045),(side*.2,-.035,-.18 if long_bob else -.065)],[.035,.044,.037,.008])
+        lock('Hair temple '+str(side),[(side*.20,-.05,.19),(side*.237,-.042,.08),(side*.231,-.025,-.045),(side*.2,-.035,-.18 if long_bob else -.065)],[.018,.028,.023,.005] if who=='you' else [.035,.044,.037,.008])
     if who=='xu':
         civic.ellipsoid('Hair ponytail tie',(0,.183,.14),(.05,.05,.045),mats['accent'],head)
         for i in [-1,0,1]:lock('Hair ponytail '+str(i),[(i*.025,.19,.15),(i*.04,.285,.08),(i*.035,.30,-.055),(i*.02,.22,-.21)],[.037,.055,.039,.007])
