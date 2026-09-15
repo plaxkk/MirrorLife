@@ -1,96 +1,104 @@
 {
-  "capturedAt": "2026-09-14T15:18:32.950Z",
-  "runtimeFingerprint": "5d9ae58b1641a4d44f26bde3d28978ece1b1f801d7cb92dadae761cbdb83fea7",
+  "capturedAt": "2026-09-15T08:08:59.875Z",
+  "runtimeFingerprint": "eb5f03261ca4345d4510d3e77e0c1fed4587c41a117b00bda1506230952fbdc9",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 40.562
+      "seconds": 27.462
     },
     {
       "name": "build",
-      "seconds": 7.573
+      "seconds": 8.53
     },
     {
       "name": "assets",
-      "seconds": 1.438
+      "seconds": 1.865
+    },
+    {
+      "name": "head-surface",
+      "seconds": 8.522
+    },
+    {
+      "name": "garment-deformation",
+      "seconds": 6.105
     },
     {
       "name": "gallery",
-      "seconds": 62.717
+      "seconds": 62.527
     },
     {
       "name": "performance",
-      "seconds": 68.657
+      "seconds": 58.8
     },
     {
       "name": "mobile",
-      "seconds": 367.346
+      "seconds": 60.341
     },
     {
       "name": "garments",
-      "seconds": 13.569
+      "seconds": 35.611
     },
     {
       "name": "faces",
-      "seconds": 16.403
+      "seconds": 36.47
     },
     {
       "name": "facial-motion",
-      "seconds": 47.774
+      "seconds": 39.438
     },
     {
       "name": "controls",
-      "seconds": 47.457
+      "seconds": 57.533
     },
     {
       "name": "window-contact",
-      "seconds": 46.953
+      "seconds": 32.644
     },
     {
       "name": "contact",
-      "seconds": 45.839
+      "seconds": 47.678
     },
     {
       "name": "seating",
-      "seconds": 46.529
+      "seconds": 48.568
     },
     {
       "name": "stairs",
-      "seconds": 47.403
+      "seconds": 52.959
     },
     {
       "name": "resilience",
-      "seconds": 48.378
+      "seconds": 67.26
     },
     {
       "name": "walkthrough",
-      "seconds": 140.331
+      "seconds": 159.822
     },
     {
       "name": "video-decode",
-      "seconds": 57.639
+      "seconds": 111.64
     },
     {
       "name": "assets-after",
-      "seconds": 0.692
+      "seconds": 2.016
     },
     {
       "name": "performance-report",
-      "seconds": 0.1
+      "seconds": 0.228
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 16.700000000000728,
-        "p95": 34.19999999999709,
-        "p99": 83.5
+        "p50": 16.799999999999272,
+        "p95": 50.19999999999709,
+        "p99": 100.80000000000291
       },
       "renderPeaks": {
-        "calls": 115,
-        "triangles": 497164,
-        "geometries": 92
+        "calls": 99,
+        "triangles": 479064,
+        "geometries": 80
       },
       "budgetPassed": true,
       "frameTargetPassed": false,
@@ -99,13 +107,13 @@
     "mobile": {
       "frameMs": {
         "p50": 16.69999999999709,
-        "p95": 17.400000000001455,
-        "p99": 17.600000000000364
+        "p95": 17.5,
+        "p99": 17.60000000000582
       },
       "renderPeaks": {
-        "calls": 92,
-        "triangles": 315633,
-        "geometries": 88
+        "calls": 80,
+        "triangles": 313462,
+        "geometries": 76
       },
       "budgetPassed": true,
       "frameTargetPassed": true,

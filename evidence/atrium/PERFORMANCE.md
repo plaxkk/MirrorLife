@@ -1,6 +1,6 @@
 # 天井试点 · 当前候选性能与运行记录
 
-构建指纹：`5d9ae58b1641a4d44f26bde3d28978ece1b1f801d7cb92dadae761cbdb83fea7`。本文件从同候选原始 JSON 生成，不以构建成功代替玩家体验或美术验收。
+构建指纹：`eb5f03261ca4345d4510d3e77e0c1fed4587c41a117b00bda1506230952fbdc9`。本文件从同候选原始 JSON 生成，不以构建成功代替玩家体验或美术验收。
 
 ## 实测条件
 
@@ -8,33 +8,33 @@
 - GPU：ANGLE (AMD, ANGLE Metal Renderer: AMD Radeon Pro 5300M, Unspecified Version)
 - 桌面：1920×1080，页面 DPR 1，渲染 DPR 1；移动模拟：390×844，页面 DPR 3，渲染 DPR 1.25。
 - 本机设备登记沿用 MacBookPro16,1 / i7-9750H / 16GiB。移动档由同一桌面 GPU 模拟触屏、视口和 DPR，不是真实手机。
-- 桌面采样时间：2026-09-14T15:01:58.576Z；移动采样时间：2026-09-14T15:03:07.884Z。本机 production preview，可见 Chrome，进入后预热，再实际拖动环绕 30 多秒。采样与 Blender、录像顺序执行。
+- 桌面采样时间：2026-09-15T07:55:29.883Z；移动采样时间：2026-09-15T07:56:28.789Z。本机 production preview，可见 Chrome，进入后预热，再实际拖动环绕 30 多秒。采样与 Blender、录像顺序执行。
 - 未清空系统文件缓存，未测公网弱网、热降频、功耗或长时稳定性。
 
 ## 数据
 
 | 指标 | 桌面 | 移动模拟 |
 |---|---:|---:|
-| 帧样本数 | 1617 | 1949 |
-| P50 ms | 16.7 | 16.7 |
-| P95 ms | 34.2 | 17.4 |
-| P99 ms | 83.5 | 17.6 |
-| CPU 脚本 P95 ms | 8.5 | 4 |
-| CPU 渲染提交 P95 ms | 11.9 | 4.2 |
-| GPU 样本数 | 161 | 194 |
-| GPU P50 ms | 9.61 | 5.82 |
-| GPU P95 ms | 22.76 | 7.37 |
-| 峰值 draw calls | 115 | 92 |
-| 峰值 triangles | 497164 | 315633 |
-| 峰值 geometries | 92 | 88 |
-| JS heap bytes | 70423838 | 53885036 |
-| 导航至就绪 ms | 6504.9 | 4601.4 |
-| 模块启动至就绪 ms | 5793.3 | 4022.3 |
-| 点击至活动帧 ms | 183.6 | 145.4 |
+| 帧样本数 | 1467 | 1945 |
+| P50 ms | 16.8 | 16.7 |
+| P95 ms | 50.2 | 17.5 |
+| P99 ms | 100.8 | 17.6 |
+| CPU 脚本 P95 ms | 12.9 | 3.8 |
+| CPU 渲染提交 P95 ms | 16.2 | 4.8 |
+| GPU 样本数 | 146 | 194 |
+| GPU P50 ms | 13.34 | 5.9 |
+| GPU P95 ms | 38.32 | 7.3 |
+| 峰值 draw calls | 99 | 80 |
+| 峰值 triangles | 479064 | 313462 |
+| 峰值 geometries | 80 | 76 |
+| JS heap bytes | 61575164 | 52207381 |
+| 导航至就绪 ms | 4827.6 | 7183.8 |
+| 模块启动至就绪 ms | 4124.3 | 6252.1 |
+| 点击至活动帧 ms | 107.9 | 7.5 |
 | 镜头查询索引 triangles | 170127 | 102944 |
-| 镜头索引构建 ms | 561.9 | 246.8 |
-| 资源 transferBytes | 6516499 | 5384463 |
-| 资源 decodedBytes | 11164293 | 10032257 |
+| 镜头索引构建 ms | 251.3 | 345.5 |
+| 资源 transferBytes | 6783713 | 5717957 |
+| 资源 decodedBytes | 11431748 | 10365992 |
 
 整处双层合计预算仍为 180 draw calls / 500,000 triangles / 220 geometries。桌面预算通过，移动模拟预算通过。严格桌面 P95 ≤ 16.67ms 未通过；移动模拟 P95 ≤ 33.33ms 通过。短时样本不能证明稳定 60fps 或手机达标。
 
@@ -42,12 +42,12 @@ renderer.info 包含主画面与动态人物阴影，三角面含通道重复，
 
 GPU 每十帧异步计时，仅覆盖 WebGL 渲染，不包括浏览器完整合成、显示呈现或输入；不能用相减分位数计算其他阶段。JS heap 不是进程、WASM 或显存总量，这些数据未获取。进入点击到活动帧不是所有交互的输入延迟分布。
 
-资产清单 84 项，public 14575322 bytes，source/master 105132191 bytes。Resource Timing 合计不含导航文档，不等于整个发布体积。镜头索引复用已解码 GLB，不额外下载模型；其 CPU 和 native 内存成本仍需考虑。
+资产清单 84 项，public 15152036 bytes，source/master 100776242 bytes。Resource Timing 合计不含导航文档，不等于整个发布体积。镜头索引复用已解码 GLB，不额外下载模型；其 CPU 和 native 内存成本仍需考虑。
 
 ## 连续流程与边界
 
-录像 102 秒 / 1530 帧 / 37945684 bytes，全片解码 exit 0。SHA-256：`f1595910281baf575f6792799969210f2e4cb3a1f5dddd0a78cb3b8b94c20d45`。录像使用本机 Chrome headless 实际 WebGL，按真实时间编码 15fps，不用于替代独立性能采样，也不代表人类 3–5 分钟阅读决策时间。
+录像 129.87 秒 / 1948 帧 / 42359447 bytes，全片解码 exit 0。SHA-256：`0936d3cadd444b2de294e178713152b2c0738f939f1c4a398ef74fa86a6b4cde`。录像使用本机 Chrome headless 实际 WebGL，按真实时间编码 15fps，不用于替代独立性能采样，也不代表人类 3–5 分钟阅读决策时间。
 
-回游峰值 121 calls / 482879 triangles / 93 geometries。步骤、异常和前后指纹见 acceptance.json，各用例日志在 validation/。方向、家具和触摸专项见 controls/report.json。视频画幅、内容与自然度仍需要独立视觉检查。
+回游峰值 105 calls / 466880 triangles / 77 geometries。步骤、异常和前后指纹见 acceptance.json，各用例日志在 validation/。方向、家具和触摸专项见 controls/report.json。视频画幅、内容与自然度仍需要独立视觉检查。
 
 改动前数据保留于 PERFORMANCE-before-controls.md；这不是控制所有变量的严格 A/B。具体用户反馈、五视角审查和残余问题见 ../../docs/ATRIUM_CONTROLS_REVIEW.md；近墙与肩部见 ../../docs/ATRIUM_CLEARANCE_REVIEW.md；表面修正及额外性能对照见 ../../docs/ATRIUM_SURFACE_REVIEW.md。人物材质与计时开关对照见 ../../docs/ATRIUM_MATERIAL_REVIEW.md。蒙皮材质保留见 ../../docs/ATRIUM_BODY_SURFACE_REVIEW.md。人物轮廓与梯体续作见 ../../docs/ATRIUM_SILHOUETTE_REVIEW.md。本轮曲面、材质导出修正及还原差距见 ../../docs/ATRIUM_CURVE_REVIEW.md。玩家服装与发型续作见 ../../docs/ATRIUM_CHARACTER_STRUCTURE_REVIEW.md。额外诊断不替换本报告主样本。最终美术、真实手机、长期稳定性及主世界完整集成仍未通过。

@@ -104,7 +104,7 @@ test('visual architecture LODs do not duplicate the separately loaded collision 
     assert.ok(glb.meshes.length>0,'retain real visual geometry');
   }
 });
-test('both resident LODs keep full digits and one continuous long-sleeve surface',async()=>{
+test('both resident LODs retain audited continuous hands and long-sleeve surfaces',async()=>{
   for(const id of ['you','lin','chen','xu','zhou','he','tang'])for(const lod of ['','-mobile']){
     const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
     const core=glb.nodes.find(n=>n.name==='SkinnedArticulationCore');
@@ -117,8 +117,13 @@ test('both resident LODs keep full digits and one continuous long-sleeve surface
     const parts=core.extras.rigid_source_parts.split(',');
     assert.ok(!parts.some(n=>n.startsWith('TravelerForearmSkin')),`${id}${lod}: bare skin intersects long sleeve`);
     for(const side of [-1,1]){
-      for(let digit=1;digit<=4;digit++)assert.ok(parts.includes(`EssentialFinger_${side}_${digit}`),`${id}${lod}: missing digit ${side}/${digit}`);
-      assert.ok(parts.includes(`EssentialThumb_${side}`),`${id}${lod}: missing thumb`);
+      assert.ok(parts.includes(`ContinuousHand_${side}`),`${id}${lod}: fused hand missing from skin batch`);
+      const hand=glb.nodes.find(n=>n.name===`Hand_${side}`)?.extras;
+      assert.equal(hand?.hand_continuity_contract,'atrium-fused-palm-v1');
+      assert.equal(hand.hand_surface_audit.components,1);
+      assert.equal(hand.hand_surface_audit.nonManifoldEdges,0);
+      assert.ok(hand.hand_surface_audit.triangles>0&&hand.hand_surface_audit.triangles<=900);
+      assert.ok(glb.nodes.some(n=>n.name===`HandGripAnchor_${side}`));
     }
     assert.ok(glb.nodes.some(n=>n.name==='HandGripAnchor_1'),`${id}: authored palm grip`);
   }
@@ -250,9 +255,9 @@ test('resident skin batches retain authored roughness without extra primitives o
   }
 });
 
-test('player face LODs retain non-empty eyelid and mouth morphs and portable weight animation',async()=>{
-  for(const suffix of ['', '-mobile']){
-    const glb=await glbJson(`../public/assets/atrium/residents/you${suffix}.glb`);
+test('all resident face LODs retain non-empty eyelid and mouth morphs and portable weight animation',async()=>{
+  for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/${id}${suffix}.glb`);
     const node=glb.nodes.find(n=>n.extras?.atrium_facial_morphs),mesh=glb.meshes[node?.mesh];
     assert.ok(mesh,'Facial deformation mesh was lost during batching');
     for(const name of ['Blink','Talk']){

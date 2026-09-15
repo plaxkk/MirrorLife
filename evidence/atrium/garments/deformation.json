@@ -1,0 +1,264 @@
+{
+  "scope": "Source rig five shoulder/elbow poses, edges longer than 5mm. Stretch regression guard, not a cloth simulation or visual approval.",
+  "residents": [
+    {
+      "identity": "you",
+      "sourceSha256": "4b06de65e66b01fa67363ab08b2be22c57c6434ea7434792f3036e4f9a7ec7aa",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0000007124293173,
+          "p99EdgeStretch": 1.0000001341354423
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.8079440027098135,
+          "p99EdgeStretch": 1.1224968799566015
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 2.2992763702793977,
+          "p99EdgeStretch": 1.154707362250359
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 3.38505787256918,
+          "p99EdgeStretch": 1.2484156462415705
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 2.1530481856925476,
+          "p99EdgeStretch": 1.0900908887140959
+        }
+      ],
+      "passed": true
+    },
+    {
+      "identity": "lin",
+      "sourceSha256": "27a3fa1e896943bb7b8a1ac4dba84d6f9adde0b168fc813657ab82e197a44c39",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0,
+          "p99EdgeStretch": 1.0
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.7078604211354873,
+          "p99EdgeStretch": 1.1098065715189922
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 2.1294147318527585,
+          "p99EdgeStretch": 1.1343743569620188
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 3.023339996460602,
+          "p99EdgeStretch": 1.204155985898274
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 2.0271652484482257,
+          "p99EdgeStretch": 1.0446491407213654
+        }
+      ],
+      "passed": true
+    },
+    {
+      "identity": "chen",
+      "sourceSha256": "a7236bbf452331fc42829755e8e36d416f3d6a822491d1b9dfc29aa82bd7cac6",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0000007124519368,
+          "p99EdgeStretch": 1.0000001561207008
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.470956581272745,
+          "p99EdgeStretch": 1.0963102565390355
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.774556172833788,
+          "p99EdgeStretch": 1.1102362204224796
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 2.5746348171966846,
+          "p99EdgeStretch": 1.1748595891743743
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 1.5709188027499885,
+          "p99EdgeStretch": 1.0420122356250974
+        }
+      ],
+      "passed": true
+    },
+    {
+      "identity": "xu",
+      "sourceSha256": "df569b3aa6db85eced145e4e1a6986aa232affc618b258b72ea75aab2a9d1acd",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0,
+          "p99EdgeStretch": 1.0
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.5159398592973536,
+          "p99EdgeStretch": 1.0838115574722025
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.739144413546814,
+          "p99EdgeStretch": 1.0941341589831608
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 2.2257666842874215,
+          "p99EdgeStretch": 1.1588278723056935
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 1.8549105515138262,
+          "p99EdgeStretch": 1.0370048904498912
+        }
+      ],
+      "passed": true
+    },
+    {
+      "identity": "zhou",
+      "sourceSha256": "cc7c4763a409e845c685e2c48957bc2dcd25331601b6994d4615eefbc06f843e",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0,
+          "p99EdgeStretch": 1.0
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.463491864045022,
+          "p99EdgeStretch": 1.0974836649635675
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.707390564688534,
+          "p99EdgeStretch": 1.1128194088344356
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 2.400270288272746,
+          "p99EdgeStretch": 1.1765818591373751
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 1.54025066710823,
+          "p99EdgeStretch": 1.0390974445391992
+        }
+      ],
+      "passed": true
+    },
+    {
+      "identity": "he",
+      "sourceSha256": "b653d1f72bcacab318826019653afc98eecae0f7c95d7594b28677514a787667",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0000006238142276,
+          "p99EdgeStretch": 1.0000000582738258
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.76818032274559,
+          "p99EdgeStretch": 1.1031323548645013
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 2.2201825921683533,
+          "p99EdgeStretch": 1.1214269337986384
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 3.149927858417978,
+          "p99EdgeStretch": 1.2024221838750326
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 1.6760682001758394,
+          "p99EdgeStretch": 1.0481240094519788
+        }
+      ],
+      "passed": true
+    },
+    {
+      "identity": "tang",
+      "sourceSha256": "8a5ab5244557e5979730da443117eb27b425923ca4e4f3d4029aa755d89e2ef3",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "maxEdgeStretch": 1.0000007700177358,
+          "p99EdgeStretch": 1.0000001290882568
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "maxEdgeStretch": 1.6404086644002795,
+          "p99EdgeStretch": 1.1014837167851224
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "maxEdgeStretch": 2.0261793939256543,
+          "p99EdgeStretch": 1.1163779241618073
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "maxEdgeStretch": 3.03035314859269,
+          "p99EdgeStretch": 1.1841651779124642
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "maxEdgeStretch": 1.7711477833914349,
+          "p99EdgeStretch": 1.0450539077520373
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

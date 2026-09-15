@@ -1,0 +1,46 @@
+node:internal/child_process:1143
+    result.error = new ErrnoException(result.error, 'spawnSync ' + options.file);
+                   ^
+
+<ref *1> Error: spawnSync /Users/kk/.local/bin/ffmpeg ETIMEDOUT
+    at Object.spawnSync (node:internal/child_process:1143:20)
+    at spawnSync (node:child_process:911:24)
+    at execFileSync (node:child_process:954:15)
+    at file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-video.mjs:16:3 {
+  errno: -60,
+  code: 'ETIMEDOUT',
+  syscall: 'spawnSync /Users/kk/.local/bin/ffmpeg',
+  path: '/Users/kk/.local/bin/ffmpeg',
+  spawnargs: [
+    '-v',
+    'error',
+    '-i',
+    'evidence/atrium/playthrough.mp4',
+    '-map',
+    '0:v:0',
+    '-an',
+    '-c:v',
+    'libx264',
+    '-preset',
+    'medium',
+    '-crf',
+    '22',
+    '-threads',
+    '2',
+    '-fps_mode',
+    'passthrough',
+    '-movflags',
+    '+faststart',
+    '-y',
+    'evidence/atrium/playthrough.delivery.mp4'
+  ],
+  error: [Circular *1],
+  status: 255,
+  signal: null,
+  output: [ null, Buffer(0) [Uint8Array] [], Buffer(0) [Uint8Array] [] ],
+  pid: 17987,
+  stdout: Buffer(0) [Uint8Array] [],
+  stderr: Buffer(0) [Uint8Array] []
+}
+
+Node.js v24.16.0

@@ -1,3 +1,4 @@
+import {relaxAtriumPose} from './atrium-pose.js';
 import * as THREE from 'three';
 import { loadAtriumGLB } from './atrium-assets.js';
 import { sampleCivicAnimationPose } from './civic-animation-clips.js';
@@ -59,6 +60,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   let stairFeet=[];
   const handGrip=visual.getObjectByName('HandGripAnchor_1');
   const poseVectors={};let reviewFace=null;
+  const blinkOffset=id==='you'?3*1.13:[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)*.037;
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
     setReviewFace(value){reviewFace=value;},
@@ -87,8 +89,9 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     update(time,dt,{moving=0,talking=false,lookingAt=null,seated=false,floorAt=null,care=false,listening=false,seatHeight=.53}={}) {
       walkPhase+=moving*dt/1.25;
       const state=moving>.08?'walk':talking||care?'gesture':listening||definition.activity==='think'?'listen':definition.activity==='talk'?'gesture':'idle';
-      const pose=sampleCivicAnimationPose(state,state==='walk'?walkPhase:time/(state==='idle'?3.2:4.4),definition.role||'player');
       seatBlend=THREE.MathUtils.damp(seatBlend,seated?1:0,8,dt);
+      const authored=sampleCivicAnimationPose(state,state==='walk'?walkPhase:time/(state==='idle'?3.2:4.4),definition.role||'player');
+      const pose=id==='you'?relaxAtriumPose(authored,state,1-seatBlend):authored;
       if(lastSeatHeight!==seatHeight){
         sitting=Object.fromEntries(Object.entries(legDimensions).map(([side,d])=>[side,seatedAtriumLeg(seatHeight,d.upper,d.lower,d.soleOffset,d.hipRest)]));
         lastSeatHeight=seatHeight;
@@ -160,7 +163,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         }
       }else stairPelvis=0;
       visual.updateMatrixWorld(true);for(const b of bindings)syncCivicArticulationBinding(b);
-      const phase=(time+(id.length*1.13))%4.7;
+      const phase=(time+blinkOffset)%4.7;
       // A short closed hold keeps blinks legible at both 30 and 60 Hz.
       const blink=reviewFace?1-reviewFace.blink:phase<.075?1-phase/.075:phase<.12?0:phase<.23?(phase-.12)/.11:1;
       eyes.forEach((eye,i)=>{eye.scale.copy(eyeScales[i]);if(!facialMeshes.length)eye.scale.y*=blink;});

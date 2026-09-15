@@ -1,5 +1,5 @@
 """Build seven residents with MirrorLife's editable shared-pivot rig.
-Player head uses a licensed CC0 base; preserve bind matrices and authored facial volumes.
+Resident heads use a licensed CC0 base; preserve control bindings and authored facial volumes.
 """
 import bpy, bmesh, sys, json, copy, importlib.util, math, os
 from pathlib import Path
@@ -12,6 +12,8 @@ garment_spec=importlib.util.spec_from_file_location('atrium_garment',ROOT/'scrip
 garment_tools=importlib.util.module_from_spec(garment_spec);garment_spec.loader.exec_module(garment_tools)
 head_spec=importlib.util.spec_from_file_location('atrium_head',ROOT/'scripts/atrium-human-head.py')
 head_tools=importlib.util.module_from_spec(head_spec);head_spec.loader.exec_module(head_tools)
+extremities_spec=importlib.util.spec_from_file_location('atrium_extremities',ROOT/'scripts/atrium-extremities.py')
+extremities=importlib.util.module_from_spec(extremities_spec);extremities_spec.loader.exec_module(extremities)
 OUT=ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
@@ -68,8 +70,8 @@ def everyday_limbs(name,centres,rings,*args,**kwargs):
     if name=='SkinnedArmVolume':
         rings=list(rings)
         # A sloping shoulder ends above the pivot, not in a broad horizontal lid.
-        for i,(height,scale) in enumerate([(1.26,.35),(1.24,.65),(1.22,.8)]):
-            z,rx,ry,*rest=rings[i];rings[i]=(height,rx*scale,ry*scale,*rest)
+        for i,(height,scale,inset) in enumerate([(1.26,.35,.085),(1.24,.65,.058),(1.22,.8,.04)]):
+            z,rx,ry,centre_y,*rest=rings[i];rings[i]=(height,rx*scale,ry*scale,centre_y,inset)
     return shared_limb_builder(name,centres,rings,*args,**kwargs)
 civic.build_skinned_limb_pair=everyday_limbs
 
@@ -98,7 +100,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             p=vertex.co
             torso=max(0,min(1,(.235-abs(p.x))/.05))
             ease=math.exp(-((p.z-.94)/.14)**2)*torso
-            p.x*=1+.10*ease;p.y*=1+.08*ease
+            p.x*=1+.18*ease;p.y*=1+.15*ease
             if p.y<-.04:
                 fold=.003*math.sin((p.z-.86)*65+abs(p.x)*17)*math.exp(-((p.z-.90)/.055)**2)*torso
                 p.y-=fold
@@ -177,6 +179,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         hand=bpy.data.objects.get('Hand_'+str(side))
         grip=civic.empty('HandGripAnchor_'+str(side),hand,(0,-.045,-.038),(1.2,0,0))
         grip['contact_contract']='atrium-palm-grip-v1'
+    extremities.hands();extremities.shoes(civic,mats)
     # Fingers are anatomy, not removable detail. Renaming before the shared
     # batcher routes them into the full skinned core, including the mobile LOD.
     for obj in list(bpy.context.scene.objects):
@@ -328,6 +331,10 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     profile=civic.BODY_PROFILES[role]
     profile['torso_width']*=body*.88;profile['shoulder_x']*=body
     profile['shoulder_x']*=1.0 if name=='you' else 1.08
+    # Keep the hanging sleeve separate from the waist before voxel union.
+    # The old bind pose fused forearms into the torso, stretching short edges
+    # by over 16x when the elbow moved. Preserve every rig/contact binding.
+    profile['shoulder_x']+=.09
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
     profile['head_scale']=tuple(s*.54 for s in profile['head_scale'])
     # Retain the authored neck overlap while exposing the jaw above the collar.
@@ -417,7 +424,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     for obj in bpy.context.scene.objects:
         if obj.type=='MESH' and (obj.name=='Head' or obj.name.startswith(('Hair','Fringe','Braid'))):
             for polygon in obj.data.polygons:polygon.use_smooth=True
-    if name=='you':head_tools.build_player_head(ROOT)
+    head_tools.build_player_head(ROOT,name)
     assert name==current_identity, 'Resident export identity changed during modeling'
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     # Bake material base colours into corner vertex colours and merge by rigid controller.
@@ -482,7 +489,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'-mobile.glb'))
-    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':('MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head' if name=='you' else 'Original project-authored derivative of MirrorLife civic rig'),'reviewStatus':'development','garment':dict(root['atrium_garment'])})
+    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head','reviewStatus':'development','garment':dict(root['atrium_garment'])})
     print('RESIDENT_READY',name,flush=True)
 if selected and (OUT/'manifest.json').exists():
     previous=json.loads((OUT/'manifest.json').read_text());updates={r['id']:r for r in reports};reports=[updates.get(r['id'],r) for r in previous]

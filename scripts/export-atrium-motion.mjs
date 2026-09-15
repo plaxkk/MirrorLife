@@ -1,3 +1,4 @@
+import {relaxAtriumPose} from '../src/atrium-pose.js';
 import fs from 'node:fs/promises';
 import {sampleCivicAnimationPose} from '../src/civic-animation-clips.js';
 import {seatedAtriumLeg} from '../src/atrium-actors.js';
@@ -5,7 +6,8 @@ const clips=[];
 for(const [name,state,duration]of [['idle','idle',3.2],['walk','walk',.72],['listen','listen',3.2],['talk','gesture',4.4],['stairs','walk',1],['turn','idle',.8],['sit','idle',1.1],['stand','idle',1.1],['water','gesture',3]]){
   const frames=[];
   for(let i=0;i<=24;i++){
-    const t=i/24,p=sampleCivicAnimationPose(state,t,'player');
+    const t=i/24,u=name==='sit'?t:name==='stand'?1-t:0;
+    const p=relaxAtriumPose(sampleCivicAnimationPose(state,t,'player'),state,1-u*u*(3-2*u));
     if(name==='sit'||name==='stand'){
       const u=name==='sit'?t:1-t,blend=u*u*(3-2*u);
       const seated=seatedAtriumLeg(.53,.32,.395,.065,.78);

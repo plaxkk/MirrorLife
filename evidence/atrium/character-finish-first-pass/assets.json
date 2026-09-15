@@ -1,0 +1,641 @@
+{
+  "generatedAt": "2026-09-15T07:04:51.527Z",
+  "runtimeFingerprint": "9c0b4b4bcb36c2d2f2d3feaad126e81652603833b49e508049bb18cc3f2c1391",
+  "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
+  "totalSourceBytes": 100761358,
+  "totalPublicBytes": 15144451,
+  "assets": [
+    {
+      "file": "public/assets/atrium/APACHE-2.0.txt",
+      "bytes": 11357,
+      "sha256": "c71d239df91726fc519c6eb72d318ec65820627232b2f796219e87dcf35d0ab4"
+    },
+    {
+      "file": "public/assets/atrium/CC0-1.0.txt",
+      "bytes": 6962,
+      "sha256": "f6089cba01cb570a24712b41ab8a586ccd3cc5ef53dc266ca50b95c288956d2c"
+    },
+    {
+      "file": "public/assets/atrium/CREDITS.md",
+      "bytes": 2937,
+      "sha256": "80709cb26f43fb1107ed1bbb91fa95394ae65e997fb03b18415a4cf38b610273"
+    },
+    {
+      "file": "public/assets/atrium/THREE-LICENSE.txt",
+      "bytes": 1081,
+      "sha256": "8b378ebe60e2fe500158cb0ac71cb5e8b7d92953c2abcc63a0eb90499653b5bc"
+    },
+    {
+      "file": "public/assets/atrium/animations/you-motion.glb",
+      "bytes": 832052,
+      "sha256": "04f9c2095803a7696e05fed9b27a7a5aa8da3b40229bfac17dc068e3c5ddeca5",
+      "meshes": 47,
+      "materials": 12,
+      "skins": 1,
+      "triangles": 28676,
+      "animations": [
+        {
+          "name": "idle",
+          "channels": 74
+        },
+        {
+          "name": "walk",
+          "channels": 75
+        },
+        {
+          "name": "listen",
+          "channels": 74
+        },
+        {
+          "name": "talk",
+          "channels": 73
+        },
+        {
+          "name": "stairs",
+          "channels": 75
+        },
+        {
+          "name": "turn",
+          "channels": 74
+        },
+        {
+          "name": "sit",
+          "channels": 77
+        },
+        {
+          "name": "stand",
+          "channels": 77
+        },
+        {
+          "name": "water",
+          "channels": 72
+        }
+      ]
+    },
+    {
+      "file": "public/assets/atrium/atrium-desktop.glb",
+      "bytes": 2778184,
+      "sha256": "fdc787c94412389cac68ad016e494ffd58e0c752fe77da1880324f91e3380a67",
+      "meshes": 27,
+      "materials": 18,
+      "skins": 0,
+      "triangles": 196655,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/atrium-mobile.glb",
+      "bytes": 1959972,
+      "sha256": "244e7fb0ea88bc80b52303e83165a91cae5d8382801acfc11b4d0cf3c89f6ec9",
+      "meshes": 27,
+      "materials": 18,
+      "skins": 0,
+      "triangles": 118377,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/collision.json",
+      "bytes": 3275751,
+      "sha256": "2553d924e773cc0ee12e71d48d0c2e448209f795f4b08dea7fbbdc91e92e6eed"
+    },
+    {
+      "file": "public/assets/atrium/draco/draco_decoder.wasm",
+      "bytes": 192420,
+      "sha256": "a680d927bed9cb864ddbd63521868891af2bfbe755092761b4837487618df8ac"
+    },
+    {
+      "file": "public/assets/atrium/draco/draco_wasm_wrapper.js",
+      "bytes": 58456,
+      "sha256": "8bb2952d2ba7d67e1414f8df819410cb0434a666be53f671fff75f68843d76f6"
+    },
+    {
+      "file": "public/assets/atrium/fabric-basecolor.png",
+      "bytes": 91883,
+      "sha256": "0454bb7280eb3e2949d75ec5411dd2c2e90feacda6e1d1c203fb1e48cbf38f2c"
+    },
+    {
+      "file": "public/assets/atrium/floor-contact.json",
+      "bytes": 597,
+      "sha256": "ef8cc116b59eb14b5618ddbad005d0bb2d0aa82d4973d174320461bd3579d43e"
+    },
+    {
+      "file": "public/assets/atrium/floor-contact.png",
+      "bytes": 112046,
+      "sha256": "9f9a136b65808426d37c7d5ee5457b94d0084226a4808c0e0da133ca9bbcce77"
+    },
+    {
+      "file": "public/assets/atrium/ivory-basecolor.png",
+      "bytes": 95151,
+      "sha256": "33db53acf42fbe6442595022d801c0568a9b0c8d4c580bfabdc8904daa794665"
+    },
+    {
+      "file": "public/assets/atrium/kit/bookcase-collision.json",
+      "bytes": 170,
+      "sha256": "9bad900dbe8dc74df4a4e5f3d7498c1190e78c9f06dcbd73e45d1e391e7f8fe4"
+    },
+    {
+      "file": "public/assets/atrium/kit/bookcase.glb",
+      "bytes": 465716,
+      "sha256": "4d54147fec17a9687997f5d298e36e940ee92f86956d3cfd467cacc292c97519",
+      "meshes": 100,
+      "materials": 10,
+      "skins": 0,
+      "triangles": 17732,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/chair-collision.json",
+      "bytes": 164,
+      "sha256": "a6f943dc96f2748775fec38bc3e99be8612db8d2af60fe697b28ec49c70fea42"
+    },
+    {
+      "file": "public/assets/atrium/kit/chair.glb",
+      "bytes": 129292,
+      "sha256": "4b9afcf3978262a0cb1ca22926e2bb5a8dc8ad129d8f52ca2302f012a0b5663c",
+      "meshes": 8,
+      "materials": 3,
+      "skins": 0,
+      "triangles": 2800,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/entry-portal-collision.json",
+      "bytes": 533,
+      "sha256": "a795a66073c0ae3a637e3621de3afa42efcfc80d115d0c3ed26d314401dc7868"
+    },
+    {
+      "file": "public/assets/atrium/kit/entry-portal.glb",
+      "bytes": 109320,
+      "sha256": "6f34bf9c3551574400ca5fa9c050586bb7aeda914b1747eeda599d9724d8cfb7",
+      "meshes": 4,
+      "materials": 3,
+      "skins": 0,
+      "triangles": 752,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/gallery-rail-collision.json",
+      "bytes": 202,
+      "sha256": "c465777727201004dc2cafcf25f2e28fc35cd530b4f6c21d75bcd991f74f6941"
+    },
+    {
+      "file": "public/assets/atrium/kit/gallery-rail.glb",
+      "bytes": 42800,
+      "sha256": "16d5116184914d3e4c76b5a008b0fcbe4f9ab60351cc80bbf06a55856aebcda6",
+      "meshes": 15,
+      "materials": 2,
+      "skins": 0,
+      "triangles": 2916,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/main-stair-collision.json",
+      "bytes": 221424,
+      "sha256": "472d88749e5f179f8d0303096388416d4f56d061061021ca97e3da8e7fb47540"
+    },
+    {
+      "file": "public/assets/atrium/kit/main-stair.glb",
+      "bytes": 465144,
+      "sha256": "4d1d042ada7b1c9b119b109bb602573833d4bad5815b1800faaa5ec2e5bdd25c",
+      "meshes": 85,
+      "materials": 5,
+      "skins": 0,
+      "triangles": 17996,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/manifest.json",
+      "bytes": 4733,
+      "sha256": "f308b0d1b4c167e156a7f31f06c26949cff0e118b6de0e4da06c9b6baf784597"
+    },
+    {
+      "file": "public/assets/atrium/kit/pendant-collision.json",
+      "bytes": 2,
+      "sha256": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945"
+    },
+    {
+      "file": "public/assets/atrium/kit/pendant.glb",
+      "bytes": 14496,
+      "sha256": "4b32677443c2babbeb860d948342044fd97106c9889d72984b6dd4ba669ec70d",
+      "meshes": 3,
+      "materials": 3,
+      "skins": 0,
+      "triangles": 936,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/plant-collision.json",
+      "bytes": 165,
+      "sha256": "b915393a23537f0c8079f8086f9811ef0510793edd4ae03863236358962b0d81"
+    },
+    {
+      "file": "public/assets/atrium/kit/plant.glb",
+      "bytes": 42996,
+      "sha256": "c54100e2676ccd02e75366f711bd53d0c24b98d284daf42fe20df410e2f805b7",
+      "meshes": 20,
+      "materials": 4,
+      "skins": 0,
+      "triangles": 2692,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/shared-table-collision.json",
+      "bytes": 258,
+      "sha256": "e10876b47cc20a40aeedacffd5a690237b84073f21cc04dea66d25b6ce39a22e"
+    },
+    {
+      "file": "public/assets/atrium/kit/shared-table.glb",
+      "bytes": 382336,
+      "sha256": "fad8c9a5485956db18701601b5b2d53b4da2c037196f08b0725270efb82530e5",
+      "meshes": 66,
+      "materials": 11,
+      "skins": 0,
+      "triangles": 13146,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/kit/window-wall-collision.json",
+      "bytes": 181,
+      "sha256": "d53324e671fcbb3648c080cb2cf984f1a2dcd74627412782112450066a4807d1"
+    },
+    {
+      "file": "public/assets/atrium/kit/window-wall.glb",
+      "bytes": 139468,
+      "sha256": "e3f7367c3bca830d3b896f97183a5bfd6ef8f63dfd77963d3f1d38dc9dc212da",
+      "meshes": 4,
+      "materials": 4,
+      "skins": 0,
+      "triangles": 3072,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/life-props.glb",
+      "bytes": 25204,
+      "sha256": "2ef0d3ec457fd71eef7bff08b84015abf9b976e29cc4379d91bc29713adb1e90",
+      "meshes": 7,
+      "materials": 3,
+      "skins": 0,
+      "triangles": 4764,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/manifest.json",
+      "bytes": 1936,
+      "sha256": "9fd60586ef28f563e413b2180c6cdddd779b6816e2edc420e0c08ace506fb2f1"
+    },
+    {
+      "file": "public/assets/atrium/oak-basecolor.png",
+      "bytes": 87156,
+      "sha256": "e5b74d08a654f7cf57d2f406933bc08e6f0daa8df94933f7811dfcdd7132b80e"
+    },
+    {
+      "file": "public/assets/atrium/residents/chen-mobile.glb",
+      "bytes": 225172,
+      "sha256": "d40a1cec5470464158bde75b874ddb09b5fd0d9e9cd1150d1f95d2294e2be534",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 17875,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/chen.glb",
+      "bytes": 257068,
+      "sha256": "09c9ec8acbed7ad92a4a9648c3db19d640be5a0a3eaa3c8ab4c080f13673005d",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 20751,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/he-mobile.glb",
+      "bytes": 226732,
+      "sha256": "7e2024dcceef02f8a7bb8bf35f4c0ab93539a4fc47e2ee488ab501b90bc438d7",
+      "meshes": 7,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 17503,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/he.glb",
+      "bytes": 260152,
+      "sha256": "ead8f2f367104b53da29ae1dd021ab5950395ca357e73c24c3f2aa7469e08cc9",
+      "meshes": 7,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 20455,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/lin-mobile.glb",
+      "bytes": 228032,
+      "sha256": "8366c9b050fee86bd99f3182ab067f0bf496f29e1f980f765060477cf7257c88",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 18046,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/lin.glb",
+      "bytes": 264312,
+      "sha256": "8d1f651d3e247c9df04c5b159ef96e49039999809a232eb1408633549a74ab5d",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 21518,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/manifest.json",
+      "bytes": 3739,
+      "sha256": "e52422c29cfc9cf60b3c72bb6cd31fec4dab40447a357c4a4279c39eb8fab8f7"
+    },
+    {
+      "file": "public/assets/atrium/residents/tang-mobile.glb",
+      "bytes": 229704,
+      "sha256": "ff7d26fc8e39cb02843c3b71edb23c426b4eff1501237b222e583fceef2d8c10",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 18006,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/tang.glb",
+      "bytes": 265372,
+      "sha256": "f077d18a907c201155a5e36169dd98400de59dcb08a97fd6d3c74e902b65739e",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 21023,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/xu-mobile.glb",
+      "bytes": 237176,
+      "sha256": "7ee7743dd363bda71a649beefae7d11db18f5668b6786df6177594baae55af2b",
+      "meshes": 7,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 19491,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/xu.glb",
+      "bytes": 273940,
+      "sha256": "9c685d145b6067ed5c72b7db7b2dfd35eaa8a6f17ab35cc9f6ac32dcec4762a2",
+      "meshes": 7,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 22959,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/you-mobile.glb",
+      "bytes": 239792,
+      "sha256": "ecb66cedad88d7095f86a936fef21c43762eb926d6f82f69cee74a87a8ac9a7e",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 19038,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/you.glb",
+      "bytes": 275968,
+      "sha256": "7e790912e264e6c01624762067926ce59f2d645bd9c7b19c7fd39373bb1ee8ce",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 22438,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/zhou-mobile.glb",
+      "bytes": 236824,
+      "sha256": "bf6e981862d4c4128792f10eb8f95e64c116e52f7d7b339964ed7ec65f3841f7",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 19780,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/residents/zhou.glb",
+      "bytes": 274008,
+      "sha256": "dc608ae31f832f04cc276696322bfefb345925353b1e9102cd864eaad4d691d7",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 23499,
+      "animations": []
+    },
+    {
+      "file": "public/assets/atrium/terrazzo-basecolor.png",
+      "bytes": 93915,
+      "sha256": "3dc13535390f8347f1ec4ef1b4fafe2ae42671ab2af392141426fbe136283ac4"
+    },
+    {
+      "file": "models/atrium/animations/motion.json",
+      "bytes": 345831,
+      "sha256": "4505785fbc63f500815090104819582af4ccd9adc27468e6813259baec4d4500"
+    },
+    {
+      "file": "models/atrium/animations/you-motion.blend",
+      "bytes": 1378742,
+      "sha256": "df5d8dbaf90364e2fcdfe2ef020fa67a6c423606dc73d9853aca5d964dcdc3b6"
+    },
+    {
+      "file": "models/atrium/atrium-master.blend",
+      "bytes": 24969040,
+      "sha256": "cf1da8c25cef88081a49c2fa2bd7136f1857148bf3297e1a7dc8263fcabcab60"
+    },
+    {
+      "file": "models/atrium/atrium-master.glb",
+      "bytes": 31447876,
+      "sha256": "6d322a1bb5b463d1ba7d9eb889bf1f732efc169ec80c264d40d94e40198ab1ef",
+      "meshes": 27,
+      "materials": 18,
+      "skins": 0,
+      "triangles": 493438,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/kit/bookcase.blend",
+      "bytes": 509672,
+      "sha256": "a7a4dcc0b3e733c1c030926de1726161229bd347091ca5165e6a3e8cac202efc"
+    },
+    {
+      "file": "models/atrium/kit/chair.blend",
+      "bytes": 480472,
+      "sha256": "5c197f904299d2480c9e908ded7f7f053b67532d3c48cd7a99c4390a34cbdcff"
+    },
+    {
+      "file": "models/atrium/kit/entry-portal.blend",
+      "bytes": 476088,
+      "sha256": "f1985be8c874ad989422b280f6046ba6f03dca137c41dc304011fb975f86947c"
+    },
+    {
+      "file": "models/atrium/kit/gallery-rail.blend",
+      "bytes": 479119,
+      "sha256": "22c51320c28d4fc8d8f57acaecfcb62a6e336c41d5032907ff001e96a8bccb32"
+    },
+    {
+      "file": "models/atrium/kit/main-stair.blend",
+      "bytes": 551731,
+      "sha256": "cf9a6d48ee5d1eeff04973713f099a6c6b888cedcd4c943f9c610985af2ff164"
+    },
+    {
+      "file": "models/atrium/kit/pendant.blend",
+      "bytes": 484842,
+      "sha256": "f3ef6b69ac7a5b0bd0fb6181adc6d889dd58b8ae3a7a7dea1b8eee9e4c89b356"
+    },
+    {
+      "file": "models/atrium/kit/plant.blend",
+      "bytes": 485255,
+      "sha256": "cd24d17ea8de37172706bdeb4ab03db24036fcb4c56215054d2fe9b36f90198d"
+    },
+    {
+      "file": "models/atrium/kit/shared-table.blend",
+      "bytes": 503527,
+      "sha256": "11282d43b40d73bf581bbb00f991d9af2ec4940dec8add3ccfb7b59616f8237c"
+    },
+    {
+      "file": "models/atrium/kit/window-wall.blend",
+      "bytes": 485092,
+      "sha256": "c15887dc0fdb4b2ce0ea8658da7e18e6dc7ebe9f6ae8ee1c79c993187f7160af"
+    },
+    {
+      "file": "models/atrium/life-props.blend",
+      "bytes": 128704,
+      "sha256": "5d88541f6e93ea09fc39ff175f2cc3564b98bbdb3c3e439367d413347b3c7c7a"
+    },
+    {
+      "file": "models/atrium/residents/chen-master.glb",
+      "bytes": 1596264,
+      "sha256": "74d9bf067a44f115ce2457e11a5632c28a9c64768373518381969d41b329550e",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 27537,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/chen.blend",
+      "bytes": 3545674,
+      "sha256": "48dbacf9029f7e3a7f8465c1b26d0b120c21eda7e353442175e8a3ed4ca4578f"
+    },
+    {
+      "file": "models/atrium/residents/he-master.glb",
+      "bytes": 1621980,
+      "sha256": "9d80d3ff876a855932ea772ddb18a013e5ad1cdbe2871ec2976ca595109fcc16",
+      "meshes": 7,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 27369,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/he.blend",
+      "bytes": 3498638,
+      "sha256": "74578a2a4783d82d30aac420869489b53b042bcb3b52cfb50215c31d2c8fbde3"
+    },
+    {
+      "file": "models/atrium/residents/lin-master.glb",
+      "bytes": 1702416,
+      "sha256": "f8573f1b71183d79f991b16f166ee8b0de3ba7e40262089478a32af3295b426c",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 30164,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/lin.blend",
+      "bytes": 3536106,
+      "sha256": "c22a343320f2418df3cf94aa8e234a259d8de26ed01b13dac34982d138404903"
+    },
+    {
+      "file": "models/atrium/residents/tang-master.glb",
+      "bytes": 1691640,
+      "sha256": "2a62db2fabff6166ccf0e99ee22fd6e604a6ef4eebf3e4930e5d4ae3bf1b9542",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 28248,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/tang.blend",
+      "bytes": 3615514,
+      "sha256": "e51e9a4b3b954491133a82da8b10055a25a590f6cda5741e607b5cb191cf3a52"
+    },
+    {
+      "file": "models/atrium/residents/xu-master.glb",
+      "bytes": 1793340,
+      "sha256": "2fdd181015af3208f5e81d468181fda0d1f489691c0fffcaa2a2204b002a23c8",
+      "meshes": 7,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 30835,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/xu.blend",
+      "bytes": 3757962,
+      "sha256": "077e81426bd12e824f8c16c97018543dd007ca248243cf137dbe9aed397f9a78"
+    },
+    {
+      "file": "models/atrium/residents/you-master.glb",
+      "bytes": 1765100,
+      "sha256": "06abf5fedbb96c010b2b24d7b6ac8dba7f1c9fc1b00d1f8a35b1afb8bfc3ea71",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 30332,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/you.blend",
+      "bytes": 3929950,
+      "sha256": "32770d4ea776407c7e9289ef65d600a1ee7d25b77c9f894bd0e9ebd1dc58710a"
+    },
+    {
+      "file": "models/atrium/residents/zhou-master.glb",
+      "bytes": 1826192,
+      "sha256": "08ada4c5c641094bd2f15e31356e92b17ee840e09f7059d64da5ad3a6822543e",
+      "meshes": 6,
+      "materials": 5,
+      "skins": 1,
+      "triangles": 32605,
+      "animations": []
+    },
+    {
+      "file": "models/atrium/residents/zhou.blend",
+      "bytes": 3783754,
+      "sha256": "bb6a6dd8c3991b4789fa834b797abff6e9e79cdebc8bc4a5006c17581f96a43d"
+    },
+    {
+      "file": "models/atrium/source/CC0-1.0.txt",
+      "bytes": 6962,
+      "sha256": "f6089cba01cb570a24712b41ab8a586ccd3cc5ef53dc266ca50b95c288956d2c"
+    },
+    {
+      "file": "models/atrium/source/MAKEHUMAN-LICENSE.md",
+      "bytes": 3583,
+      "sha256": "9e714b52ed6724965c7b655c63fb4c08e86e6d6deaf3a6055a56cb0bda251382"
+    },
+    {
+      "file": "models/atrium/source/README.md",
+      "bytes": 1185,
+      "sha256": "9c651cf305576aa843bbe6b7b7bdc2e741cadb9946f2cec280ab7f21c9f4e331"
+    },
+    {
+      "file": "models/atrium/source/makehuman-head.obj",
+      "bytes": 359107,
+      "sha256": "1e6f01dcbf6ace3968cdf422cd9d7d6874685c312942042e4149d6197cdef107"
+    }
+  ]
+}

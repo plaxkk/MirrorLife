@@ -31,6 +31,8 @@ try{
   await run('tests','npm',['test']);
   await run('build','npm',['run','build']);
   await run('assets',process.execPath,['scripts/report-atrium-assets.mjs']);
+  await run('head-surface',process.env.BLENDER_BIN||'/Applications/Blender.app/Contents/MacOS/Blender',['--background','--python-exit-code','1','--python','scripts/verify-atrium-head-surface.py']);
+  await run('garment-deformation',process.env.BLENDER_BIN||'/Applications/Blender.app/Contents/MacOS/Blender',['--background','--python-exit-code','1','--python','scripts/verify-atrium-garment-deformation.py']);
   const candidate=JSON.parse(await fs.readFile(`${out}/assets.json`,'utf8'));
   server=spawn(process.execPath,['node_modules/vite/bin/vite.js','preview','--host','127.0.0.1','--port',port,'--strictPort'],{env,stdio:['ignore','pipe','pipe']});
   await new Promise((resolve,reject)=>{

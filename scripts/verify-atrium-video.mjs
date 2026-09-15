@@ -14,10 +14,10 @@ if(!recording.deliveryEncoding){
   const delivery=`${dir}/playthrough.delivery.mp4`;
   const captureBytes=(await fs.stat(file)).size;
   execFileSync(process.env.FFMPEG_BINARY||'/Users/kk/.local/bin/ffmpeg',[
-    '-v','error','-i',file,'-map','0:v:0','-an','-c:v','libx264','-preset','medium','-crf','22','-threads','2','-fps_mode','passthrough','-movflags','+faststart','-y',delivery,
-  ],{timeout:120000});
+    '-v','error','-i',file,'-map','0:v:0','-an','-c:v','libx264','-preset','fast','-crf','22','-threads','2','-fps_mode','passthrough','-movflags','+faststart','-y',delivery,
+  ],{timeout:300000});
   await fs.rename(delivery,file);
-  Object.assign(recording,{captureBytes,bytes:(await fs.stat(file)).size,deliveryEncoding:'Post-capture H.264 medium CRF22; same frame timestamps and dimensions.'});
+  Object.assign(recording,{captureBytes,bytes:(await fs.stat(file)).size,deliveryEncoding:'Post-capture H.264 fast CRF22; same frame timestamps and dimensions.'});
   await fs.writeFile(`${dir}/playthrough.json`,JSON.stringify(recording,null,2));
 }
 const bytes=await fs.readFile(file);

@@ -1,82 +1,90 @@
 {
-  "updatedAt": "2026-09-14T15:18:32.949Z",
+  "updatedAt": "2026-09-15T08:08:59.873Z",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 40.562
+      "seconds": 27.462
     },
     {
       "name": "build",
-      "seconds": 7.573
+      "seconds": 8.53
     },
     {
       "name": "assets",
-      "seconds": 1.438
+      "seconds": 1.865
+    },
+    {
+      "name": "head-surface",
+      "seconds": 8.522
+    },
+    {
+      "name": "garment-deformation",
+      "seconds": 6.105
     },
     {
       "name": "gallery",
-      "seconds": 62.717
+      "seconds": 62.527
     },
     {
       "name": "performance",
-      "seconds": 68.657
+      "seconds": 58.8
     },
     {
       "name": "mobile",
-      "seconds": 367.346
+      "seconds": 60.341
     },
     {
       "name": "garments",
-      "seconds": 13.569
+      "seconds": 35.611
     },
     {
       "name": "faces",
-      "seconds": 16.403
+      "seconds": 36.47
     },
     {
       "name": "facial-motion",
-      "seconds": 47.774
+      "seconds": 39.438
     },
     {
       "name": "controls",
-      "seconds": 47.457
+      "seconds": 57.533
     },
     {
       "name": "window-contact",
-      "seconds": 46.953
+      "seconds": 32.644
     },
     {
       "name": "contact",
-      "seconds": 45.839
+      "seconds": 47.678
     },
     {
       "name": "seating",
-      "seconds": 46.529
+      "seconds": 48.568
     },
     {
       "name": "stairs",
-      "seconds": 47.403
+      "seconds": 52.959
     },
     {
       "name": "resilience",
-      "seconds": 48.378
+      "seconds": 67.26
     },
     {
       "name": "walkthrough",
-      "seconds": 140.331
+      "seconds": 159.822
     },
     {
       "name": "video-decode",
-      "seconds": 57.639
+      "seconds": 111.64
     },
     {
       "name": "assets-after",
-      "seconds": 0.692
+      "seconds": 2.016
     },
     {
       "name": "performance-report",
-      "seconds": 0.1
+      "seconds": 0.228
     }
   ]
 }

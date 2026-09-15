@@ -12,8 +12,8 @@
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 2308,
-      "weightError": 7.554888725280762e-06
+      "triangles": 2256,
+      "weightError": 8.940696716308594e-08
     }
   },
   {
@@ -23,14 +23,14 @@
     "bodyScale": 0.96,
     "source": "models/atrium/residents/lin.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 1698,
-      "weightError": 1.6391277313232422e-07
+      "triangles": 1700,
+      "weightError": 4.400499165058136e-08
     }
   },
   {
@@ -40,14 +40,14 @@
     "bodyScale": 1.08,
     "source": "models/atrium/residents/chen.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 9.059906005859375e-06
+      "weightError": 4.190951585769653e-08
     }
   },
   {
@@ -57,14 +57,14 @@
     "bodyScale": 0.99,
     "source": "models/atrium/residents/xu.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 2.051703631877899e-06
+      "weightError": 4.228786565363407e-08
     }
   },
   {
@@ -74,14 +74,14 @@
     "bodyScale": 1.03,
     "source": "models/atrium/residents/zhou.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 4.0978193283081055e-08
+      "weightError": 3.888271749019623e-08
     }
   },
   {
@@ -91,14 +91,14 @@
     "bodyScale": 1.06,
     "source": "models/atrium/residents/he.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 1698,
-      "weightError": 4.0978193283081055e-08
+      "triangles": 1700,
+      "weightError": 4.470348358154297e-08
     }
   },
   {
@@ -108,14 +108,14 @@
     "bodyScale": 0.94,
     "source": "models/atrium/residents/tang.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "Original project-authored derivative of MirrorLife civic rig",
+    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
     "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
       "triangles": 1700,
-      "weightError": 7.033348083496094e-06
+      "weightError": 4.821049515157938e-08
     }
   }
 ]

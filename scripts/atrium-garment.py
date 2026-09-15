@@ -29,10 +29,31 @@ def continuous_garment(civic, material):
         v=max(0,min(1,v));return v*v*(3-2*v)
     for vertex in garment.data.vertices:
         p=vertex.co;dt=surfaces[0].find_nearest(p)[3];da=surfaces[1].find_nearest(p)[3]
-        arm=ease(.5+(dt-da)/.055);lower=ease((1.1-p.z)/.21)
+        # Blend torso/arm only near the sewn shoulder. Below the armpit,
+        # nearby but disconnected fabric must not inherit the other bone.
+        shoulder=ease((p.z-1.105)/.1)
+        arm=ease(.5+(dt-da)/(.012+.043*shoulder));lower=ease((1.1-p.z)/.21)
         side='Left' if p.x<0 else 'Right'
         for bone,weight in [('SkinRoot',1-arm),('Skin'+side+'Arm',arm*(1-lower)),('Skin'+side+'Elbow',arm*lower)]:
             if weight>.00001:groups[bone].add([vertex.index],weight,'REPLACE')
+    # Relax shoulder weights over the connected cloth surface, keeping the
+    # independent waist and forearm regions fixed below the armpit.
+    adjacent=[set() for _ in garment.data.vertices]
+    for edge in garment.data.edges:
+        a,b=edge.vertices;adjacent[a].add(b);adjacent[b].add(a)
+    names=list(groups);weights=[[0.0]*len(names) for _ in garment.data.vertices]
+    for vertex in garment.data.vertices:
+        for group in vertex.groups:weights[vertex.index][group.group]=group.weight
+    for _ in range(4):
+        updated=[row[:] for row in weights]
+        for vertex in garment.data.vertices:
+            i=vertex.index
+            if vertex.co.z<1.08 or not adjacent[i]:continue
+            for j in range(len(names)):
+                updated[i][j]=.5*weights[i][j]+.5*sum(weights[n][j] for n in adjacent[i])/len(adjacent[i])
+        weights=updated
+    for vertex,row in zip(garment.data.vertices,weights):
+        for name,weight in zip(names,row):groups[name].add([vertex.index],weight,'REPLACE')
     modifier=garment.modifiers.new('Continuous jacket skin','ARMATURE');modifier.object=rig
     # UVs remain editable even though this vertex-colour garment has no bitmap dependency.
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.015);bpy.ops.object.mode_set(mode='OBJECT')
