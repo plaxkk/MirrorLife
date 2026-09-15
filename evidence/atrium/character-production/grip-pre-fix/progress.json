@@ -1,0 +1,60 @@
+{
+  "updatedAt": "2026-09-15T14:20:35.846Z",
+  "base": "http://127.0.0.1:4195",
+  "steps": [
+    {
+      "name": "tests",
+      "seconds": 17.762
+    },
+    {
+      "name": "build",
+      "seconds": 6.834
+    },
+    {
+      "name": "assets",
+      "seconds": 1.089
+    },
+    {
+      "name": "head-surface",
+      "seconds": 10.71
+    },
+    {
+      "name": "garment-deformation",
+      "seconds": 7.653
+    },
+    {
+      "name": "gallery",
+      "seconds": 43.265
+    },
+    {
+      "name": "performance",
+      "seconds": 60.127
+    },
+    {
+      "name": "mobile",
+      "seconds": 51.979
+    },
+    {
+      "name": "garments",
+      "seconds": 20.781
+    },
+    {
+      "name": "faces",
+      "seconds": 48.441
+    },
+    {
+      "name": "facial-motion",
+      "seconds": 25.802
+    },
+    {
+      "name": "controls",
+      "seconds": 51.255
+    },
+    {
+      "name": "window-contact",
+      "seconds": 48.329
+    }
+  ],
+  "failedStep": "contact",
+  "error": "Error: contact exited 1; see validation/contact.log"
+}

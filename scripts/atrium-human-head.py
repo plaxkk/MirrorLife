@@ -22,6 +22,13 @@ def build_player_head(root_path, identity="you"):
         jaw_scale={'you':1,'lin':.88,'chen':1.09,'xu':.94,'zhou':.98,'he':1.10,'tang':.93}[identity]
         jaw_weight=max(0,min(1,(-z-.025)/.13))
         x*=1+(jaw_scale-1)*jaw_weight
+        # Soften the adult base below the orbital rim, retaining lid topology.
+        front=max(0,min(1,(-y-.10)/.07))
+        nose=math.exp(-(x/.050)**4-((z+.032)/.055)**4)*front
+        mouth=math.exp(-(x/.090)**4-((z+.113)/.050)**4)*front
+        y+=.016*nose+.020*mouth
+        x*=1-.075*math.exp(-((z+.155)/.045)**2)*front
+        z+=.007*math.exp(-((abs(x)-.052)/.027)**2-((z+.112)/.023)**2)*front
         # Preserve jaw volume but blend the neck cut inside the existing collar.
         t=max(0,min(1,(-z-.13)/.10));t=t*t*(3-2*t)
         angle=math.atan2(x,y-.015)
@@ -50,6 +57,20 @@ def build_player_head(root_path, identity="you"):
     neck=bpy.data.objects.get('Neck')
     if neck:bpy.data.objects.remove(neck,do_unlink=True)
     bpy.ops.object.select_all(action='DESELECT');old.select_set(True);bpy.context.view_layer.objects.active=old
+    # Relax cheek planes locally, retaining the original orbital boundary.
+    # Global subdivision followed by collapse changed the socket boundary and
+    # made visible eye-corner spikes, despite passing the closed-eye ray guard.
+    adjacency=[set() for _ in old.data.vertices]
+    for edge in old.data.edges:
+        a,b=edge.vertices;adjacency[a].add(b);adjacency[b].add(a)
+    for _ in range(2):
+        positions=[v.co.copy() for v in old.data.vertices]
+        for vertex in old.data.vertices:
+            x,y,z=positions[vertex.index];neighbours=adjacency[vertex.index]
+            weight=.35*math.exp(-((abs(x)-.12)/.06)**2-((z+.06)/.055)**2)*max(0,min(1,(-y-.09)/.07))
+            if neighbours and z<-.015:
+                average=sum((positions[i] for i in neighbours),Vector())/len(neighbours)
+                vertex.co=positions[vertex.index].lerp(average,weight)
     dec=old.modifiers.new('Facial topology allocation','DECIMATE');dec.ratio=4000/8440;dec.use_collapse_triangulate=True;bpy.ops.object.modifier_apply(modifier=dec.name)
     old['atrium_facial_morphs']=True
     old['source_license']='CC0-1.0; MakeHuman head subset with MirrorLife fitting'
@@ -159,8 +180,13 @@ def build_player_head(root_path, identity="you"):
                     a=i*cross+j;b=i*cross+(j+1)%cross;faces.append((a,b,b+cross,a+cross))
             faces.extend([tuple(reversed(range(cross))),tuple(steps*cross+j for j in range(cross))])
             hair_mesh(name,points,faces)
-        for i in range(8):
-            groom('Hair swept top %02d'%i,.16+.035*(i%3),1.10+.13*(i%3)/2,-1.25+i*.30,.48,.033,.028+.012*math.sin(i))
+        # Unequal groups follow a side part, with lifted crown and staggered tips.
+        for i,(az,end,width,lift,sweep) in enumerate([
+            (-1.18,1.18,.037,.040,.32),(-.91,1.04,.043,.057,.48),
+            (-.61,1.13,.045,.064,.57),(-.29,1.00,.041,.060,.65),
+            (.05,1.16,.032,.045,.55),(.43,1.08,.026,.033,-.10),
+            (.73,1.19,.030,.031,-.16),(.99,1.10,.024,.024,-.12)]):
+            groom('Hair swept top %02d'%i,.13+.041*(i%3),end,az,sweep,width,lift)
         for side in [-1,1]:
             for i in range(5):
                 groom('Hair short side %s %s'%(side,i),.55,1.38+.12*i/4,side*(1.1+i*.36),side*.30,.025,.012)
@@ -261,9 +287,11 @@ def build_player_head(root_path, identity="you"):
     base=tuple(skin.diffuse_color[:3])
     for loop in old.data.loops:
         x,y,z=old.data.vertices[loop.vertex_index].co
-        lip=math.exp(-(x/.067)**4-((z+.112)/.023)**6)*max(0,min(1,(-y-.191)/.025))
+        lip=math.exp(-(x/.067)**4-((z+.109)/.020)**6)*max(0,min(1,(-y-.167)/.023))
         tint=(base[0]*.86,base[1]*.61,base[2]*.63)
-        colors.data[loop.index].color=tuple((base[i]*(1-lip*.62)+tint[i]*lip*.62)*(1-lid_shade.get(loop.vertex_index,0)) for i in range(3))+(1,)
+        cheek=math.exp(-((abs(x)-.109)/.057)**2-((z+.033)/.054)**2)*max(0,min(1,(-y-.105)/.055))
+        warm=(1.035,.92,.91)
+        colors.data[loop.index].color=tuple((base[i]*(1-lip*.48)+tint[i]*lip*.48)*(1+cheek*(warm[i]-1))*(1-lid_shade.get(loop.vertex_index,0)) for i in range(3))+(1,)
     nodes=skin.node_tree.nodes;bs=nodes.get('Principled BSDF');bs.inputs['Roughness'].default_value=.74
     vc=nodes.new('ShaderNodeVertexColor');vc.layer_name='Color';skin.node_tree.links.new(vc.outputs['Color'],bs.inputs['Base Color']);skin['atrium_surface_family']='skin'
     old.shape_key_add(name='Basis');blink=old.shape_key_add(name='Blink');talk=old.shape_key_add(name='Talk')

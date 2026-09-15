@@ -79,3 +79,41 @@ def continuous_garment(civic, material):
     assert report['weightError']<.0001,report
     rig.parent['atrium_garment']=report
     return garment
+
+def continuous_trousers():
+    """Join the trouser seat to both legs; retain the original deform rig."""
+    seat=bpy.data.objects.get('TrouserSeat') or bpy.data.objects.get('SkirtHipFoundation')
+    legs=bpy.data.objects['SkinnedLegVolume'];rig=legs.parent
+    if not seat:return
+    bpy.context.view_layer.update();inv=rig.matrix_world.inverted();deps=bpy.context.evaluated_depsgraph_get()
+    vertices=[];faces=[];mat=legs.data.materials[0]
+    for source in [seat,legs]:
+        evaluated=source.evaluated_get(deps);mesh=evaluated.to_mesh();matrix=inv@source.matrix_world;offset=len(vertices)
+        vertices.extend(matrix@v.co for v in mesh.vertices)
+        faces.extend(tuple(offset+i for i in p.vertices) for p in mesh.polygons);evaluated.to_mesh_clear()
+    mesh=bpy.data.meshes.new('Continuous trouser seat and legs');mesh.from_pydata(vertices,[],faces);mesh.update();mesh.materials.append(mat)
+    ob=bpy.data.objects.new('Continuous trousers',mesh);bpy.context.collection.objects.link(ob);ob.parent=rig
+    bpy.ops.object.select_all(action='DESELECT');ob.select_set(True);bpy.context.view_layer.objects.active=ob
+    remesh=ob.modifiers.new('Sewn crotch continuity','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.007;remesh.use_smooth_shade=True;bpy.ops.object.modifier_apply(modifier=remesh.name)
+    smooth=ob.modifiers.new('Relax trouser panels','SMOOTH');smooth.factor=.7;smooth.iterations=4;bpy.ops.object.modifier_apply(modifier=smooth.name)
+    ob.data.calc_loop_triangles();dec=ob.modifiers.new('Trouser topology allocation','DECIMATE');dec.ratio=min(1,1500/len(ob.data.loop_triangles));bpy.ops.object.modifier_apply(modifier=dec.name)
+    groups={name:ob.vertex_groups.new(name=name) for name in ['SkinRoot','SkinLeftLeg','SkinLeftKnee','SkinRightLeg','SkinRightKnee']}
+    def ease(x):
+        x=max(0,min(1,x));return x*x*(3-2*x)
+    for vertex in ob.data.vertices:
+        x,y,z=vertex.co;root=ease((z-.735)/.105);right=ease((x+.045)/.09);knee=ease((.55-z)/.18)
+        values={'SkinRoot':root,'SkinLeftLeg':(1-root)*(1-right)*(1-knee),'SkinLeftKnee':(1-root)*(1-right)*knee,'SkinRightLeg':(1-root)*right*(1-knee),'SkinRightKnee':(1-root)*right*knee}
+        for name,w in values.items():
+            if w>0:groups[name].add([vertex.index],w,'REPLACE')
+    modifier=ob.modifiers.new('Continuous trouser skin','ARMATURE');modifier.object=rig
+    for p in ob.data.polygons:p.use_smooth=True
+    bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.015);bpy.ops.object.mode_set(mode='OBJECT')
+    for source in [seat,legs]:bpy.data.objects.remove(source,do_unlink=True)
+    ob.name='SkinnedLegVolume';ob['construction']='Continuous voxel-sewn trousers; blended hip and knee weights'
+    edges={}
+    for p in ob.data.polygons:
+        ids=list(p.vertices)
+        for a,b in zip(ids,ids[1:]+ids[:1]):
+            key=tuple(sorted((a,b)));edges[key]=edges.get(key,0)+1
+    assert all(count==2 for count in edges.values()),'Open trouser seam'
+    ob['trouser_surface_audit']={'nonManifoldEdges':sum(n!=2 for n in edges.values()),'triangleBudget':1500}

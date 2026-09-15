@@ -1,11 +1,11 @@
 {
   "residents": [
     {
-      "sourceSha256": "4b06de65e66b01fa67363ab08b2be22c57c6434ea7434792f3036e4f9a7ec7aa",
+      "sourceSha256": "47111b6bde89531436d46ba39f0b39ee3ebc38e9ec38699dcc9e1e0137f21cd7",
       "eyeSamples": 4252,
       "covered": 4252,
       "exposed": 0,
-      "minimumClearance": 0.0014300942420959473,
+      "minimumClearance": 0.0013161897659301758,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "you",
@@ -26,11 +26,11 @@
       ]
     },
     {
-      "sourceSha256": "27a3fa1e896943bb7b8a1ac4dba84d6f9adde0b168fc813657ab82e197a44c39",
+      "sourceSha256": "4b10ff7aa06c6218f246a7523fb9c8f1ec6b2b7d2b9355173fed57759dc7af06",
       "eyeSamples": 4158,
       "covered": 4158,
       "exposed": 0,
-      "minimumClearance": 0.0015750527381896973,
+      "minimumClearance": 0.0012747645378112793,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "lin",
@@ -51,11 +51,11 @@
       ]
     },
     {
-      "sourceSha256": "a7236bbf452331fc42829755e8e36d416f3d6a822491d1b9dfc29aa82bd7cac6",
+      "sourceSha256": "13f8f1666ed9c5bbe3b06911d6abcf8aa2690eaabbdb8ceefa611181f873df1b",
       "eyeSamples": 4252,
       "covered": 4252,
       "exposed": 0,
-      "minimumClearance": 0.0014300346374511719,
+      "minimumClearance": 0.001316368579864502,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "chen",
@@ -76,11 +76,11 @@
       ]
     },
     {
-      "sourceSha256": "df569b3aa6db85eced145e4e1a6986aa232affc618b258b72ea75aab2a9d1acd",
+      "sourceSha256": "a950f2de90e483751956330a1f0a0f49d3b6507b0260ab8d4d4fa31325d74bfd",
       "eyeSamples": 4558,
       "covered": 4558,
       "exposed": 0,
-      "minimumClearance": 0.0014074444770812988,
+      "minimumClearance": 0.0014124512672424316,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "xu",
@@ -101,11 +101,11 @@
       ]
     },
     {
-      "sourceSha256": "cc7c4763a409e845c685e2c48957bc2dcd25331601b6994d4615eefbc06f843e",
+      "sourceSha256": "73ad64efb0acfdad133ad0926bea92fbcdaa02a158891cc4445420510a64a4ce",
       "eyeSamples": 4458,
       "covered": 4458,
       "exposed": 0,
-      "minimumClearance": 0.0016595125198364258,
+      "minimumClearance": 0.0013741850852966309,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "zhou",
@@ -126,11 +126,11 @@
       ]
     },
     {
-      "sourceSha256": "b653d1f72bcacab318826019653afc98eecae0f7c95d7594b28677514a787667",
+      "sourceSha256": "f3f6475cbdd2239f29ccc7dc17abd95fcb55ddf05f4b843c9cbe4fad188b465c",
       "eyeSamples": 4158,
       "covered": 4158,
       "exposed": 0,
-      "minimumClearance": 0.0013906359672546387,
+      "minimumClearance": 0.0012742877006530762,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "he",
@@ -151,11 +151,11 @@
       ]
     },
     {
-      "sourceSha256": "8a5ab5244557e5979730da443117eb27b425923ca4e4f3d4029aa755d89e2ef3",
+      "sourceSha256": "6c044e288ec3945f60780df49f83ebea4bf5aaf6257311d67bd114cd5920a8dc",
       "eyeSamples": 4252,
       "covered": 4252,
       "exposed": 0,
-      "minimumClearance": 0.0014232993125915527,
+      "minimumClearance": 0.0013163089752197266,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "tang",

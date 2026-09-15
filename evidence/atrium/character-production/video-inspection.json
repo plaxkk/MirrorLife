@@ -1,0 +1,16 @@
+{
+  "inspectedAt": "2026-09-15T15:12:50.461308+00:00",
+  "sourceVideoSha256": "664b216d682256be2278d123130a34520d2783f501bd77c2ecb9135cb68a9734",
+  "frameIndices": [
+    0,
+    231,
+    462,
+    693,
+    923,
+    1154,
+    1385,
+    1616
+  ],
+  "contactSheet": "../playthrough-contact-sheet.jpg",
+  "scope": "Codex inspected these eight decoded frames: entry, ground-floor exploration, stair ascent, upper gallery and return. Full ffmpeg decode is separately recorded; this is not human frame-by-frame animation approval."
+}

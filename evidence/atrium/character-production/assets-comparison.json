@@ -1,0 +1,84 @@
+{
+  "baseline": "e61abd6",
+  "runtimeFingerprint": "14a1400c550547f41974e2c6f2bc8ddc1abab0ab7bb25cd5851e2fcd2e61655c",
+  "scope": "Desktop GLB geometry counts, not whole-frame rendering or FPS.",
+  "residents": [
+    {
+      "id": "you",
+      "before": {
+        "bytes": 274808,
+        "triangles": 22384
+      },
+      "after": {
+        "bytes": 279668,
+        "triangles": 22917
+      }
+    },
+    {
+      "id": "lin",
+      "before": {
+        "bytes": 264296,
+        "triangles": 21520
+      },
+      "after": {
+        "bytes": 271312,
+        "triangles": 22555
+      }
+    },
+    {
+      "id": "chen",
+      "before": {
+        "bytes": 258348,
+        "triangles": 20751
+      },
+      "after": {
+        "bytes": 262348,
+        "triangles": 21317
+      }
+    },
+    {
+      "id": "xu",
+      "before": {
+        "bytes": 275400,
+        "triangles": 22959
+      },
+      "after": {
+        "bytes": 280128,
+        "triangles": 23547
+      }
+    },
+    {
+      "id": "zhou",
+      "before": {
+        "bytes": 274592,
+        "triangles": 23499
+      },
+      "after": {
+        "bytes": 278764,
+        "triangles": 24083
+      }
+    },
+    {
+      "id": "he",
+      "before": {
+        "bytes": 260280,
+        "triangles": 20457
+      },
+      "after": {
+        "bytes": 266480,
+        "triangles": 21470
+      }
+    },
+    {
+      "id": "tang",
+      "before": {
+        "bytes": 266916,
+        "triangles": 21023
+      },
+      "after": {
+        "bytes": 271820,
+        "triangles": 21558
+      }
+    }
+  ]
+}

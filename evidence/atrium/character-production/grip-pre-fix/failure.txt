@@ -1,0 +1,15 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: {"name":"WateringCan","errorMetres":0.0000022090207835057202,"scale":[0.9996464090617155,0.9999995470655197,0.9996462030944089],"hand":[9.20469311252137,0.9679317374491269,3.9809157443724925],"handle":[9.204692430787581,0.967931598578002,3.980913647773658],"id":"you"}
+    at file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-contact.mjs:32:82 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.16.0

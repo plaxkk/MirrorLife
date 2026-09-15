@@ -1,261 +1,555 @@
 {
-  "scope": "Source rig five shoulder/elbow poses, edges longer than 5mm. Stretch regression guard, not a cloth simulation or visual approval.",
+  "scope": "Source rig five shoulder/elbow and three hip/knee poses, edges longer than 5mm. Stretch regression guard, not a cloth simulation or visual approval.",
   "residents": [
     {
       "identity": "you",
-      "sourceSha256": "4b06de65e66b01fa67363ab08b2be22c57c6434ea7434792f3036e4f9a7ec7aa",
+      "sourceSha256": "47111b6bde89531436d46ba39f0b39ee3ebc38e9ec38699dcc9e1e0137f21cd7",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
-          "maxEdgeStretch": 1.0000007124293173,
-          "p99EdgeStretch": 1.0000001341354423
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.0000006198582148,
+          "p99EdgeStretch": 1.0000001391815059
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.8079440027098135,
-          "p99EdgeStretch": 1.1224968799566015
+          "p99EdgeStretch": 1.1176522976051422
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.2992763702793977,
-          "p99EdgeStretch": 1.154707362250359
+          "p99EdgeStretch": 1.1458684104316865
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 3.38505787256918,
-          "p99EdgeStretch": 1.2484156462415705
+          "p99EdgeStretch": 1.2338003395193389
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.1530481856925476,
-          "p99EdgeStretch": 1.0900908887140959
+          "p99EdgeStretch": 1.0849005827452582
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.0969515303308492,
+          "p99EdgeStretch": 1.1538545253935404
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0380102482672595,
+          "p99EdgeStretch": 1.2496723444528839
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.663920113794688,
+          "p99EdgeStretch": 1.3053893629463145
         }
       ],
       "passed": true
     },
     {
       "identity": "lin",
-      "sourceSha256": "27a3fa1e896943bb7b8a1ac4dba84d6f9adde0b168fc813657ab82e197a44c39",
+      "sourceSha256": "4b10ff7aa06c6218f246a7523fb9c8f1ec6b2b7d2b9355173fed57759dc7af06",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.0,
           "p99EdgeStretch": 1.0
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.7078604211354873,
-          "p99EdgeStretch": 1.1098065715189922
+          "p99EdgeStretch": 1.1020084957153327
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.1294147318527585,
-          "p99EdgeStretch": 1.1343743569620188
+          "p99EdgeStretch": 1.1213460474292138
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 3.023339996460602,
-          "p99EdgeStretch": 1.204155985898274
+          "p99EdgeStretch": 1.1974358281364688
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.0271652484482257,
-          "p99EdgeStretch": 1.0446491407213654
+          "p99EdgeStretch": 1.0408486978777314
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.088425355952514,
+          "p99EdgeStretch": 1.1571279431031154
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0221730133717877,
+          "p99EdgeStretch": 1.2549958926889881
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.642897537540344,
+          "p99EdgeStretch": 1.3125244236378777
         }
       ],
       "passed": true
     },
     {
       "identity": "chen",
-      "sourceSha256": "a7236bbf452331fc42829755e8e36d416f3d6a822491d1b9dfc29aa82bd7cac6",
+      "sourceSha256": "13f8f1666ed9c5bbe3b06911d6abcf8aa2690eaabbdb8ceefa611181f873df1b",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
-          "maxEdgeStretch": 1.0000007124519368,
-          "p99EdgeStretch": 1.0000001561207008
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.0000006416616996,
+          "p99EdgeStretch": 1.000000141554516
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.470956581272745,
-          "p99EdgeStretch": 1.0963102565390355
+          "p99EdgeStretch": 1.0891347081869802
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.774556172833788,
-          "p99EdgeStretch": 1.1102362204224796
+          "p99EdgeStretch": 1.1026017940087989
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.5746348171966846,
-          "p99EdgeStretch": 1.1748595891743743
+          "p99EdgeStretch": 1.1640726205210157
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.5709188027499885,
-          "p99EdgeStretch": 1.0420122356250974
+          "p99EdgeStretch": 1.0381910931494776
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.0969515303308492,
+          "p99EdgeStretch": 1.1641880088219443
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0380102482672595,
+          "p99EdgeStretch": 1.2593198868220505
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.663920113794688,
+          "p99EdgeStretch": 1.3286283552166203
         }
       ],
       "passed": true
     },
     {
       "identity": "xu",
-      "sourceSha256": "df569b3aa6db85eced145e4e1a6986aa232affc618b258b72ea75aab2a9d1acd",
+      "sourceSha256": "a950f2de90e483751956330a1f0a0f49d3b6507b0260ab8d4d4fa31325d74bfd",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.0,
           "p99EdgeStretch": 1.0
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.5159398592973536,
-          "p99EdgeStretch": 1.0838115574722025
+          "p99EdgeStretch": 1.0751747989100398
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.739144413546814,
-          "p99EdgeStretch": 1.0941341589831608
+          "p99EdgeStretch": 1.088848687237458
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.2257666842874215,
-          "p99EdgeStretch": 1.1588278723056935
+          "p99EdgeStretch": 1.1511384452924287
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.8549105515138262,
-          "p99EdgeStretch": 1.0370048904498912
+          "p99EdgeStretch": 1.0349333824081866
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.034643279429503,
+          "p99EdgeStretch": 1.1386346413796764
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 2.9217086286832297,
+          "p99EdgeStretch": 1.2301234012802365
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.50911323512723,
+          "p99EdgeStretch": 1.2943867939983305
         }
       ],
       "passed": true
     },
     {
       "identity": "zhou",
-      "sourceSha256": "cc7c4763a409e845c685e2c48957bc2dcd25331601b6994d4615eefbc06f843e",
+      "sourceSha256": "73ad64efb0acfdad133ad0926bea92fbcdaa02a158891cc4445420510a64a4ce",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.0,
           "p99EdgeStretch": 1.0
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.463491864045022,
-          "p99EdgeStretch": 1.0974836649635675
+          "p99EdgeStretch": 1.0893182613538779
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.707390564688534,
-          "p99EdgeStretch": 1.1128194088344356
+          "p99EdgeStretch": 1.1079314460411318
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.400270288272746,
-          "p99EdgeStretch": 1.1765818591373751
+          "p99EdgeStretch": 1.1697719590190758
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.54025066710823,
-          "p99EdgeStretch": 1.0390974445391992
+          "p99EdgeStretch": 1.0355610684419092
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.0781006001719438,
+          "p99EdgeStretch": 1.1457696116230034
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0000465105369782,
+          "p99EdgeStretch": 1.236535095554704
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.611475891735233,
+          "p99EdgeStretch": 1.2965755863938417
         }
       ],
       "passed": true
     },
     {
       "identity": "he",
-      "sourceSha256": "b653d1f72bcacab318826019653afc98eecae0f7c95d7594b28677514a787667",
+      "sourceSha256": "f3f6475cbdd2239f29ccc7dc17abd95fcb55ddf05f4b843c9cbe4fad188b465c",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
-          "maxEdgeStretch": 1.0000006238142276,
-          "p99EdgeStretch": 1.0000000582738258
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.0000005987504432,
+          "p99EdgeStretch": 1.0000000456536529
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.76818032274559,
-          "p99EdgeStretch": 1.1031323548645013
+          "p99EdgeStretch": 1.092376930402632
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.2201825921683533,
-          "p99EdgeStretch": 1.1214269337986384
+          "p99EdgeStretch": 1.1093189521309588
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 3.149927858417978,
-          "p99EdgeStretch": 1.2024221838750326
+          "p99EdgeStretch": 1.1856563459033431
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
-          "maxEdgeStretch": 1.6760682001758394,
-          "p99EdgeStretch": 1.0481240094519788
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.676067579435004,
+          "p99EdgeStretch": 1.0432935830874892
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.088425355952514,
+          "p99EdgeStretch": 1.1571279431031154
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0221730133717877,
+          "p99EdgeStretch": 1.2549958926889881
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.642897537540344,
+          "p99EdgeStretch": 1.3125244236378777
         }
       ],
       "passed": true
     },
     {
       "identity": "tang",
-      "sourceSha256": "8a5ab5244557e5979730da443117eb27b425923ca4e4f3d4029aa755d89e2ef3",
+      "sourceSha256": "6c044e288ec3945f60780df49f83ebea4bf5aaf6257311d67bd114cd5920a8dc",
       "poses": [
         {
           "arm": 0,
           "elbow": 0,
-          "maxEdgeStretch": 1.0000007700177358,
-          "p99EdgeStretch": 1.0000001290882568
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.0000006416627703,
+          "p99EdgeStretch": 1.0000001247009933
         },
         {
           "arm": -0.35,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.6404086644002795,
-          "p99EdgeStretch": 1.1014837167851224
+          "p99EdgeStretch": 1.0910099204958814
         },
         {
           "arm": -0.5,
           "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 2.0261793939256543,
-          "p99EdgeStretch": 1.1163779241618073
+          "p99EdgeStretch": 1.1093308288700157
         },
         {
           "arm": -0.8,
           "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 3.03035314859269,
-          "p99EdgeStretch": 1.1841651779124642
+          "p99EdgeStretch": 1.175986864553435
         },
         {
           "arm": 0.35,
           "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
           "maxEdgeStretch": 1.7711477833914349,
-          "p99EdgeStretch": 1.0450539077520373
+          "p99EdgeStretch": 1.0421066797458383
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.0969515303308492,
+          "p99EdgeStretch": 1.1641880088219443
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0380102482672595,
+          "p99EdgeStretch": 1.2593198868220505
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.663920113794688,
+          "p99EdgeStretch": 1.3286283552166203
         }
       ],
       "passed": true

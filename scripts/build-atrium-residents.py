@@ -152,19 +152,23 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         ob=bpy.data.objects.new(name,mesh);bpy.context.collection.objects.link(ob);ob.parent=visual;mesh.materials.append(material)
         for polygon in mesh.polygons:polygon.use_smooth=True
         solid=ob.modifiers.new('Patch cloth thickness','SOLIDIFY');solid.thickness=.002
-    bpy.data.objects['WaistBand'].data.materials.clear();bpy.data.objects['WaistBand'].data.materials.append(mats['lower'])
+    # The old rectangular waistband corners protruded through the new oval
+    # pelvis as two hard knobs. The continuous trousers now own this surface.
+    bpy.data.objects.remove(bpy.data.objects['WaistBand'],do_unlink=True)
     # The old free-standing hip ribbons missed this pilot's narrower trouser
     # surface. Put the shallow fold into the continuous seat itself instead.
     seat=bpy.data.objects.get('TrouserSeat') or bpy.data.objects.get('SkirtHipFoundation')
     if seat:
         for vertex in seat.data.vertices:
             p=vertex.co
+            p.x*=.88;p.y*=.94
             if p.y<0:
                 line=.10+(.83-p.z)*.35
                 fold=math.exp(-((abs(p.x)-line)/.022)**2)
                 end=max(0,1-((p.z-.77)/.075)**2)
                 p.y+=.0025*fold*end
         seat['fold_contract']='integrated-seat-fold-v1'
+    garment_tools.continuous_trousers()
     for obj in list(bpy.context.scene.objects):
         if obj.name.startswith(('HipLoadFold','ShoulderMantle','ShoulderLoadFold','TorsoTensionFold','TravelerForearmSkin','TravelerShortSleeveHem','ArmInnerElbowFold','ArmOuterTensionPlane','SleeveCompression_')):
             bpy.data.objects.remove(obj,do_unlink=True)
@@ -172,13 +176,17 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     # Its rigid bare forearm overlay intersected the continuously weighted sleeve.
     # Keep only that continuous cloth mesh and add a cuff where it meets the wrist.
     for side,elbow in [(-1,left_elbow),(1,right_elbow)]:
-        if config['costume']!='listener':
-            civic.contoured_elliptical_shell('EverydayCuff_'+str(side),[
-                (-.301,.047,.043,0,0),(-.29,.056,.051,0,0),
-                (-.266,.058,.053,0,0),(-.255,.053,.048,0,0)],mats['top'],elbow,segments=24)
+        original_cuff=bpy.data.objects.get('ListenerCuff_'+str(side))
+        if original_cuff:bpy.data.objects.remove(original_cuff,do_unlink=True)
+        civic.contoured_elliptical_shell('EverydayCuff_'+str(side),[
+            (-.301,.047,.043,0,0),(-.29,.056,.051,0,0),
+            (-.253,.061,.057,0,0),(-.226,.058,.054,0,0)],mats['top'],elbow,segments=32)
         hand=bpy.data.objects.get('Hand_'+str(side))
         grip=civic.empty('HandGripAnchor_'+str(side),hand,(0,-.045,-.038),(1.2,0,0))
         grip['contact_contract']='atrium-palm-grip-v1'
+    for side in (-1,1):
+        cuff=bpy.data.objects.get('TrouserCuff_'+str(side))
+        if cuff:cuff.data.materials.clear();cuff.data.materials.append(mats['lower'])
     extremities.hands();extremities.shoes(civic,mats)
     # Fingers are anatomy, not removable detail. Renaming before the shared
     # batcher routes them into the full skinned core, including the mobile LOD.
@@ -190,12 +198,11 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.8
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
-    civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
+    if who!='you':civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
     if who=='you':
         civic.contoured_elliptical_shell('Rib knit standing collar',[(1.295,.103,.078,0,0),(1.308,.105,.08,0,0),(1.336,.09,.07,0,0)],mats['outer'],visual,segments=32)
     if who=='tang':
         civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
-        civic.curve_tube('Ribbed lower hem',[(-.2,-.07,.83),(0,-.177,.8),(.2,-.07,.83)],.014,mats['outer'],visual)
     if who in ('lin','zhou'):
         # One continuous curved garment around the body, open at the front.
         # Separate rectangular chest panels read as plates even with rounded edges.
@@ -239,6 +246,25 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         for side in (-1,1):
             cloth_patch('Rounded patch pocket_'+str(side),side*.115,.99,.12,.12,mats['top'])
         civic.curve_tube('Work jacket seam',[(0,cloth_y(0,z)-.002,z) for z in [.83,.96,1.1,1.22]],.002,mats['outer'],visual)
+    # Fit a sewn lower band to the actual cloth cross-section. The old constant
+    # Y tubes floated in front of the hoodie and exposed the remeshed hem edge.
+    points=[];faces=[];segments=48
+    for z,scale in [(.805,.965),(.815,1.005),(.846,1.012),(.865,1.005)]:
+        for i in range(segments):
+            angle=i*math.tau/segments;direction=Vector((math.cos(angle),math.sin(angle),0))
+            hit=cloth_surface.ray_cast(Vector((0,0,max(.845,z))),direction)[0]
+            assert hit is not None and math.hypot(hit.x,hit.y)<.27,'Waist section missed torso'
+            points.append((hit.x*scale,hit.y*scale,z))
+    for row in range(3):
+        for i in range(segments):
+            a=row*segments+i;b=row*segments+(i+1)%segments;faces.append((a,b,b+segments,a+segments))
+    faces += [tuple(reversed(range(segments))),tuple(3*segments+i for i in range(segments))]
+    mesh=bpy.data.meshes.new('Surface fitted knit hem');mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(mats['top'])
+    ob=bpy.data.objects.new('Surface fitted knit hem',mesh);bpy.context.collection.objects.link(ob);ob.parent=visual
+    for polygon in mesh.polygons:polygon.use_smooth=len(polygon.vertices)==4
+    uv=mesh.uv_layers.new(name='UVMap')
+    for loop in mesh.loops:
+        index=loop.vertex_index;uv.data[loop.index].uv=(index%segments/segments,index//segments/3)
     # A restrained embroidered sun ties the garments to the home's curved motifs.
     civic.ellipsoid('Embroidered sun',(-.12,cloth_y(-.12,1.15)-.001,1.15),(.012,.002,.012),mats['accent'],visual,segments=16,rings=8)
 
@@ -326,6 +352,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     cfg['atrium_id']=name
     cfg['top']={'you':'#344b60','lin':'#8db0a0','chen':'#344b60','xu':'#dfa47f','zhou':'#d8cbb5','he':'#8fb5ab','tang':'#c78370'}[name]
     if name=='you':cfg['outer']='#40586b'
+    cfg['skin']={'you':'#ecc0a2','lin':'#edc2a7','chen':'#d9ab8b','xu':'#efc6aa','zhou':'#e3b799','he':'#d8ad8c','tang':'#e9bb9d'}[name]
     if name=='zhou':cfg['hair']='#42362e'
     civic.BODY_PROFILES[role]=copy.deepcopy(base_bodies[role])
     profile=civic.BODY_PROFILES[role]
@@ -425,6 +452,15 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         if obj.type=='MESH' and (obj.name=='Head' or obj.name.startswith(('Hair','Fringe','Braid'))):
             for polygon in obj.data.polygons:polygon.use_smooth=True
     head_tools.build_player_head(ROOT,name)
+    # Narrow the complete rig hierarchy rather than moving arm roots within
+    # the bind pose. This preserves the proven cloth clearance and weights.
+    visual=bpy.data.objects['VisualRoot'];visual.scale.x*=.88
+    # Cancel the body's width before head rotation, not after it. Scaling the
+    # rotating head itself cancels only the neutral pose and shears a turned face.
+    compensation=civic.empty('HeadWidthCompensator',visual);compensation.scale.x=1/.88
+    bpy.data.objects['HeadPivot'].parent=compensation
+    bpy.context.view_layer.update()
+
     assert name==current_identity, 'Resident export identity changed during modeling'
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     # Bake material base colours into corner vertex colours and merge by rigid controller.

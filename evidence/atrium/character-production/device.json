@@ -1,0 +1,8 @@
+{
+  "recordedAt": "2026-09-15T14:59:27.608Z",
+  "model": "MacBookPro16,1",
+  "physicalMemoryBytes": 17179869184,
+  "source": "sysctl -n hw.model hw.memsize; no unique hardware identifiers collected",
+  "gpuAndBrowser": "See final performance-measurement.json; same local Mac",
+  "phoneHardwareVerified": false
+}

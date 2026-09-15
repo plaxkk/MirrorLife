@@ -23,7 +23,7 @@ def hands():
         ob=bpy.data.objects.new('ContinuousHand_'+str(side),mesh);bpy.context.collection.objects.link(ob);ob.parent=root
         bpy.ops.object.select_all(action='DESELECT');ob.select_set(True);bpy.context.view_layer.objects.active=ob
         remesh=ob.modifiers.new('Fuse palm and finger roots','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.0025;remesh.use_smooth_shade=True;bpy.ops.object.modifier_apply(modifier=remesh.name)
-        smooth=ob.modifiers.new('Relax knuckle transitions','SMOOTH');smooth.factor=.45;smooth.iterations=2;bpy.ops.object.modifier_apply(modifier=smooth.name)
+        smooth=ob.modifiers.new('Relax knuckle transitions','SMOOTH');smooth.factor=.55;smooth.iterations=4;bpy.ops.object.modifier_apply(modifier=smooth.name)
         ob.data.calc_loop_triangles();dec=ob.modifiers.new('Hand topology allocation','DECIMATE');dec.ratio=min(1,900/len(ob.data.loop_triangles));bpy.ops.object.modifier_apply(modifier=dec.name)
         for poly in ob.data.polygons:poly.use_smooth=True
         bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.012);bpy.ops.object.mode_set(mode='OBJECT')
@@ -76,4 +76,7 @@ def shoes(civic,mats):
         bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.012);bpy.ops.object.mode_set(mode='OBJECT')
         # A narrow welt visually separates textile upper from the rubber sole.
         civic.curve_tube(prefix+'FlexibleWelt',[(points[3*sides+i%sides][0],points[3*sides+i%sides][1],-.030) for i in range(49)],.002,mats['sole'],root,resolution=1)
+        # Shorten and narrow the complete shoe in its own local frame, keeping
+        # ankle pivots and minimum Z unchanged for existing planted-foot IK.
+        root.scale.x*=.88;root.scale.y*=.88
         root['sole_contract']='atrium-shaped-last-v1; unchanged minimum Z'

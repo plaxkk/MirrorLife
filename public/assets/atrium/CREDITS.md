@@ -4,6 +4,7 @@
 - 七名人物的身体、服装、头发及骨架：派生自本项目 `scripts/blender-build-civic-characters.py` 的原创角色与骨架。角色配置、面部法线与 LOD 在 `scripts/build-atrium-residents.py`。不是从第三方角色商店下载，也不是图生 3D 服务输出。
 - 七名人物头部：基于 MakeHuman 官方 CC0 1.0 图形基础网格的头部子集，项目自行适配、减面、头发贴合与形变制作；未使用 MakeHuman 程序代码。原作者 Data Collection AB、Joel Palmius、Jonas Hauquier / MakeHuman community。源数据及提取说明在 `models/atrium/source/`；官方许可 https://github.com/makehumancommunity/makehuman/blob/master/LICENSE.md 。运行分发附 `CC0-1.0.txt`。各自保留发型、体型和衣装，头部按身份适配。
 - 连续肩袖：`scripts/atrium-garment.py` 在 Blender 中合并衣身与袖子体积，平滑、减面并按原表面距离重新赋权；为程序构造与自动拓扑处理，未经人工四边面重拓扑。上衣与合并后的动作网格保存可编辑 UV；目前使用顶点色，没有新增布料位图或布料模拟。
+- 连续裤身：`scripts/atrium-garment.py` 将原有臀部与双腿连接并赋予髋膝蒙皮权重；仍为项目原创程序建模与自动拓扑，不宣称人工重拓扑或布料模拟。
 - 连续手部与鞋底：`scripts/atrium-extremities.py` 合并原始五指及掌部，保持腕部骨骼与接触锚点；鞋底按鞋楦重塑，保留落地高度。
 - 九段动作：本项目 `src/civic-animation-clips.js` 的关键姿势与本试点的楼梯、坐立、生活动作扩展。主角放松站姿由 `src/atrium-pose.js` 同步用于运行与导出；另交付可编辑 Blender 动作和 GLB 动作参考。
 - 参考图：用户在本任务中选定的 AI 概念图，保存在 `design/references/atrium-visual-target.png`。仅作设计及对照依据，不作为运行时背景或人物贴片；不在此另行授予参考图许可。

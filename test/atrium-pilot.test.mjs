@@ -146,7 +146,8 @@ test('prop grip follows a moving, scaled hand without scaling the metre-sized ve
   const actor=new THREE.Group(),arm=new THREE.Group(),hand=new THREE.Group(),palm=new THREE.Object3D(),props=new THREE.Group();
   actor.add(arm,props);arm.add(hand);hand.add(palm);hand.scale.setScalar(.82);hand.position.set(.31,.95,0);palm.position.set(0,-.038,.045);
   const vessel=new THREE.Group(),grip=new THREE.Object3D();props.add(vessel);vessel.add(grip);grip.position.set(0,.174,0);grip.updateMatrix();
-  for(let i=0;i<40;i++){
+  for(const width of [1,.88,.7])for(let i=0;i<40;i++){
+    arm.scale.set(width,1,1);palm.rotation.set(1.2,.2,0);
     actor.position.set(i*.2,3.5,2);actor.rotation.y=i*.37;arm.rotation.x=-i*.03;hand.rotation.z=Math.sin(i)*.24;
     alignAtriumProp(vessel,grip,palm,props);
     assert.ok(grip.getWorldPosition(new THREE.Vector3()).distanceTo(palm.getWorldPosition(new THREE.Vector3()))<1e-8);
@@ -271,4 +272,28 @@ test('all resident face LODs retain non-empty eyelid and mouth morphs and portab
   }
   const animation=await glbJson('../public/assets/atrium/animations/you-motion.glb');
   for(const clip of animation.animations)assert.ok(clip.channels.some(c=>c.target.path==='weights'),`${clip.name}: no portable facial animation`);
+});
+
+
+test('resident heads retain their shape while looking around under body proportions',async()=>{
+  for(const id of ['you','lin','chen','xu','zhou','he','tang'])for(const lod of ['','-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
+    const nodes=glb.nodes.map(n=>{
+      const object=new THREE.Object3D();object.name=n.name||'';
+      if(n.matrix)new THREE.Matrix4().fromArray(n.matrix).decompose(object.position,object.quaternion,object.scale);
+      else {if(n.translation)object.position.fromArray(n.translation);if(n.rotation)object.quaternion.fromArray(n.rotation);if(n.scale)object.scale.fromArray(n.scale);}
+      return object;
+    });
+    glb.nodes.forEach((n,i)=>(n.children||[]).forEach(child=>nodes[i].add(nodes[child])));
+    const scene=new THREE.Group();for(const root of glb.scenes[glb.scene||0].nodes)scene.add(nodes[root]);
+    const pivot=nodes.find(n=>n.name==='HeadPivot'),head=nodes.find(n=>n.name==='Head');
+    assert.ok(pivot&&head);scene.updateMatrixWorld(true);
+    const rest=pivot.quaternion.clone(),scale=head.getWorldScale(new THREE.Vector3());
+    for(const yaw of [-.7,0,.7]){
+      pivot.quaternion.copy(rest).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(.2,yaw,.1)));scene.updateMatrixWorld(true);
+      const axes=[0,1,2].map(i=>new THREE.Vector3().setFromMatrixColumn(head.matrixWorld,i).normalize());
+      assert.ok(Math.abs(axes[0].dot(axes[1]))<1e-6&&Math.abs(axes[0].dot(axes[2]))<1e-6&&Math.abs(axes[1].dot(axes[2]))<1e-6,`${id}: turning head must not shear`);
+      assert.ok(head.getWorldScale(new THREE.Vector3()).distanceTo(scale)<1e-6,`${id}: turning head must preserve facial proportions`);
+    }
+  }
 });

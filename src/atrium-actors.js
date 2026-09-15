@@ -20,7 +20,11 @@ export function alignAtriumProp(prop,grip,handGrip,parent){
   parent.updateWorldMatrix(true,false);handGrip.updateWorldMatrix(true,false);
   const target=new THREE.Matrix4().copy(handGrip.matrixWorld);
   const p=new THREE.Vector3(),r=new THREE.Quaternion(),s=new THREE.Vector3();
-  target.decompose(p,r,s);target.compose(p,r,s.set(1,1,1));
+  target.decompose(p,r,s);
+  // Rotated joints below a nonuniform body scale introduce shear. Decomposition
+  // can then produce a non-unit quaternion; composing it would shrink the prop
+  // even after replacing the scale vector. Keep a rigid grip frame instead.
+  r.normalize();target.compose(p,r,s.set(1,1,1));
   const transform=new THREE.Matrix4().copy(parent.matrixWorld).invert().multiply(target).multiply(grip.matrix.clone().invert());
   transform.decompose(prop.position,prop.quaternion,prop.scale);prop.updateMatrixWorld(true);
 }
