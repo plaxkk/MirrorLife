@@ -1,94 +1,90 @@
 {
-  "updatedAt": "2026-09-16T01:55:25.034Z",
+  "updatedAt": "2026-09-16T15:32:11.353Z",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 18.168
+      "seconds": 17.751
     },
     {
       "name": "build",
-      "seconds": 3.637
+      "seconds": 3.028
     },
     {
       "name": "assets",
-      "seconds": 0.808
+      "seconds": 0.855
     },
     {
       "name": "head-surface",
-      "seconds": 5.292
+      "seconds": 5.352
     },
     {
       "name": "garment-deformation",
-      "seconds": 5.284
+      "seconds": 4.997
     },
     {
       "name": "gallery",
-      "seconds": 48.667
+      "seconds": 46.118
     },
     {
       "name": "performance",
-      "seconds": 48.124
+      "seconds": 46.264
     },
     {
       "name": "mobile",
-      "seconds": 54.665
+      "seconds": 48.01
     },
     {
       "name": "garments",
-      "seconds": 13.765
+      "seconds": 11.12
     },
     {
       "name": "faces",
-      "seconds": 19.379
-    },
-    {
-      "name": "resume-assets",
-      "seconds": 0.824
+      "seconds": 8.732
     },
     {
       "name": "facial-motion",
-      "seconds": 48.25
+      "seconds": 19.369
     },
     {
       "name": "controls",
-      "seconds": 47.254
+      "seconds": 46.78
     },
     {
       "name": "window-contact",
-      "seconds": 45.549
+      "seconds": 46.374
     },
     {
       "name": "contact",
-      "seconds": 48.023
+      "seconds": 47.591
     },
     {
       "name": "seating",
-      "seconds": 45.292
+      "seconds": 46.832
     },
     {
       "name": "stairs",
-      "seconds": 48.83
+      "seconds": 47.225
     },
     {
       "name": "resilience",
-      "seconds": 47.007
+      "seconds": 47.328
     },
     {
       "name": "walkthrough",
-      "seconds": 113.36
+      "seconds": 111.726
     },
     {
       "name": "video-decode",
-      "seconds": 51.974
+      "seconds": 42.139
     },
     {
       "name": "assets-after",
-      "seconds": 0.658
+      "seconds": 0.676
     },
     {
       "name": "performance-report",
-      "seconds": 0.12
+      "seconds": 0.097
     }
   ]
 }

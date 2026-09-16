@@ -14,6 +14,10 @@ head_spec=importlib.util.spec_from_file_location('atrium_head',ROOT/'scripts/atr
 head_tools=importlib.util.module_from_spec(head_spec);head_spec.loader.exec_module(head_tools)
 extremities_spec=importlib.util.spec_from_file_location('atrium_extremities',ROOT/'scripts/atrium-extremities.py')
 extremities=importlib.util.module_from_spec(extremities_spec);extremities_spec.loader.exec_module(extremities)
+wardrobe_spec=importlib.util.spec_from_file_location('atrium_wardrobe',ROOT/'scripts/atrium-hero-wardrobe.py')
+wardrobe=importlib.util.module_from_spec(wardrobe_spec);wardrobe_spec.loader.exec_module(wardrobe)
+textile_spec=importlib.util.spec_from_file_location('atrium_textile',ROOT/'scripts/atrium-textile-bake.py')
+textile=importlib.util.module_from_spec(textile_spec);textile_spec.loader.exec_module(textile)
 OUT=ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
 SOURCE=ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
@@ -94,6 +98,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         v.co.z-=.045*outer*upper
     garment=garment_tools.continuous_garment(civic,mats['top'])
     if who=='you':
+        wardrobe.sculpt_cloth(garment)
         # Relax the hard shoulder ridge on the continuous surface, keeping
         # sleeve/waist clearance and the existing bind weights intact.
         neighbours=[set() for _ in garment.data.vertices]
@@ -147,6 +152,9 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         point=cloth_surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
         if point is None:raise RuntimeError('Missing front cloth surface at '+str((x,z)))
         return point.y
+    def cloth_back_y(x,z):
+        point=cloth_surface.ray_cast(Vector((x,1,z)),Vector((0,-1,0)))[0]
+        return point.y if point is not None else None
     def cloth_patch(name,x,z,width,height,material):
         # Sample the whole curved chest, not only a floating box's centre.
         verts=[];faces=[];steps=8;radius=min(width,height)*.18
@@ -213,7 +221,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
     if who!='you':civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
     if who=='you':
-        civic.contoured_elliptical_shell('Rib knit standing collar',[(1.295,.103,.078,0,0),(1.308,.105,.08,0,0),(1.336,.09,.07,0,0)],mats['outer'],visual,segments=32)
+        wardrobe.hood_and_details(civic,mats,visual,cloth_y,cloth_back_y)
     if who=='tang':
         civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
     if who in ('lin','zhou'):
@@ -475,7 +483,14 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     bpy.context.view_layer.update()
 
     assert name==current_identity, 'Resident export identity changed during modeling'
+    if name=='you':
+        textile.cloth_shader(textile.bind_surface_material(core),mixed_surface=True)
+        for mat in list(bpy.data.materials):
+            if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
+    baked_images=[]
+    if name=='you':
+        baked_images.extend(textile.bake_object(core,1024).values())
     # Bake material base colours into corner vertex colours and merge by rigid controller.
     # Eye and mouth parents remain independently animated; skinning batches stay intact.
     groups={}
@@ -516,6 +531,11 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for f in merged.data.polygons:f.material_index=0
         merged.data.materials.clear();merged.data.materials.append(surfaces[family])
         merged.data.validate(verbose=False)
+    if name=='you':
+        for obj in list(bpy.context.scene.objects):
+            if obj.type=='MESH' and obj.name.endswith('_Surface_fabric'):
+                textile.cloth_shader(obj.data.materials[0])
+                baked_images.extend(textile.bake_object(obj,512).values())
     # Fine hand creases are source detail; the desktop game LOD keeps the complete core hands.
     detail=bpy.data.objects.get('SkinnedArticulationDetail')
     if detail: detail.hide_render=True
@@ -532,6 +552,9 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'.glb'))
+    if name=='you':
+        for image in baked_images:
+            image.scale(max(128,image.size[0]//2),max(128,image.size[1]//2));image.pack()
     for ob in bpy.context.scene.objects:
         if ob.type=='MESH' and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Mobile LOD','DECIMATE');d.ratio=.52

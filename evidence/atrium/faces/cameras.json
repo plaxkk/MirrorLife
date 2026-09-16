@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-16T01:44:30.316Z",
+  "capturedAt": "2026-09-16T15:24:34.605Z",
   "base": "http://127.0.0.1:4195",
   "viewport": [
     1200,
@@ -86,8 +86,7 @@
     ]
   ],
   "assets": {
-    "before": "18c1d0b57443e8459e585f8d7d17c7727f535e1055efd69919ae42e0b332efcf",
-    "after": "6529dfba38bdd644c75e50c4135409110a0eb3f8e85210f2b1a91bf1f22086c2"
+    "after": "57f06f090fa5bae8b48540797a625dc0a19437204b43860f3997d11bb07b676c"
   },
   "facialFixture": {
     "blink": 0,

@@ -1,107 +1,103 @@
 {
-  "capturedAt": "2026-09-16T01:55:25.035Z",
-  "runtimeFingerprint": "4dd2f56b171994d2294831095c7bf5167009e1bc7bd356fef517ffa5d64046ce",
+  "capturedAt": "2026-09-16T15:32:11.354Z",
+  "runtimeFingerprint": "23c9540e34acd245e31612e9bad15d66b2f57dd89e794f9b5baace79b79a7325",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 18.168
+      "seconds": 17.751
     },
     {
       "name": "build",
-      "seconds": 3.637
+      "seconds": 3.028
     },
     {
       "name": "assets",
-      "seconds": 0.808
+      "seconds": 0.855
     },
     {
       "name": "head-surface",
-      "seconds": 5.292
+      "seconds": 5.352
     },
     {
       "name": "garment-deformation",
-      "seconds": 5.284
+      "seconds": 4.997
     },
     {
       "name": "gallery",
-      "seconds": 48.667
+      "seconds": 46.118
     },
     {
       "name": "performance",
-      "seconds": 48.124
+      "seconds": 46.264
     },
     {
       "name": "mobile",
-      "seconds": 54.665
+      "seconds": 48.01
     },
     {
       "name": "garments",
-      "seconds": 13.765
+      "seconds": 11.12
     },
     {
       "name": "faces",
-      "seconds": 19.379
-    },
-    {
-      "name": "resume-assets",
-      "seconds": 0.824
+      "seconds": 8.732
     },
     {
       "name": "facial-motion",
-      "seconds": 48.25
+      "seconds": 19.369
     },
     {
       "name": "controls",
-      "seconds": 47.254
+      "seconds": 46.78
     },
     {
       "name": "window-contact",
-      "seconds": 45.549
+      "seconds": 46.374
     },
     {
       "name": "contact",
-      "seconds": 48.023
+      "seconds": 47.591
     },
     {
       "name": "seating",
-      "seconds": 45.292
+      "seconds": 46.832
     },
     {
       "name": "stairs",
-      "seconds": 48.83
+      "seconds": 47.225
     },
     {
       "name": "resilience",
-      "seconds": 47.007
+      "seconds": 47.328
     },
     {
       "name": "walkthrough",
-      "seconds": 113.36
+      "seconds": 111.726
     },
     {
       "name": "video-decode",
-      "seconds": 51.974
+      "seconds": 42.139
     },
     {
       "name": "assets-after",
-      "seconds": 0.658
+      "seconds": 0.676
     },
     {
       "name": "performance-report",
-      "seconds": 0.12
+      "seconds": 0.097
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
-        "p50": 16.700000000000728,
-        "p95": 33.30000000000291,
-        "p99": 133.1999999999989
+        "p50": 16.599999999998545,
+        "p95": 17.399999999999636,
+        "p99": 17.599999999998545
       },
       "renderPeaks": {
         "calls": 99,
-        "triangles": 488720,
+        "triangles": 493126,
         "geometries": 80
       },
       "budgetPassed": true,
@@ -110,19 +106,19 @@
     },
     "mobile": {
       "frameMs": {
-        "p50": 16.700000000000728,
-        "p95": 66.89999999999964,
-        "p99": 183.29999999999927
+        "p50": 16.600000000002183,
+        "p95": 17.5,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
         "calls": 81,
-        "triangles": 322560,
+        "triangles": 324854,
         "geometries": 76
       },
       "budgetPassed": true,
-      "frameTargetPassed": false,
+      "frameTargetPassed": true,
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "scope": "Same-candidate resume after initial dialogue-input timeout. First ten stages and original performance samples retained; only test input synchronization changed. Runtime fingerprint and dist asset hashes checked before resume. Visual quality, real phone hardware and human playability are separate gates."
+  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
 }

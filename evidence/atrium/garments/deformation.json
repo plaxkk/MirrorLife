@@ -3,7 +3,7 @@
   "residents": [
     {
       "identity": "you",
-      "sourceSha256": "16e6c6d4d6d34125d67506d8aa69d2a1b9eb35f07d1b139ca70592d7c39ff231",
+      "sourceSha256": "766b52b8e111567e9db00fad6013eb9669df3bfba818e90fb9429b8ec28032ad",
       "poses": [
         {
           "arm": 0,
@@ -20,8 +20,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 1.7441292401907051,
-          "p99EdgeStretch": 1.1207279851288152
+          "maxEdgeStretch": 1.771745761940792,
+          "p99EdgeStretch": 1.116419541076756
         },
         {
           "arm": -0.5,
@@ -29,8 +29,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 2.253727802489334,
-          "p99EdgeStretch": 1.146837571123018
+          "maxEdgeStretch": 2.2963653872461243,
+          "p99EdgeStretch": 1.144661281340192
         },
         {
           "arm": -0.8,
@@ -38,8 +38,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 3.643526195010906,
-          "p99EdgeStretch": 1.2326184456262017
+          "maxEdgeStretch": 3.730318247882222,
+          "p99EdgeStretch": 1.2301603994158758
         },
         {
           "arm": 0.35,
@@ -47,8 +47,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 2.455824846819339,
-          "p99EdgeStretch": 1.0816503029993902
+          "maxEdgeStretch": 2.5300606100110725,
+          "p99EdgeStretch": 1.0826374435105732
         },
         {
           "arm": 0,

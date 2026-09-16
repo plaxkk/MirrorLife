@@ -1,0 +1,21 @@
+{
+  "runtimeFingerprint": "23c9540e34acd245e31612e9bad15d66b2f57dd89e794f9b5baace79b79a7325",
+  "videoSha256": "6f4b6f301693dfaaf157876cfdd680afcb4688a58b002290b5b0771ab97e403a",
+  "indices": [
+    0,
+    215,
+    430,
+    645,
+    861,
+    1076,
+    1291,
+    1506
+  ],
+  "scope": "Eight evenly spaced decoded frames, including endpoints. Visual observations recorded after inspecting the generated sheet; not an exhaustive frame-by-frame review.",
+  "observations": [
+    "Loading feedback and enter screen are present.",
+    "First-floor exploration, ascending stairs, upstairs interaction and walking, descending stairs are visible.",
+    "Last sampled frame shows return to the main application, matching the exit/reload verification path.",
+    "No blank frame in the eight inspected samples; not a complete frame-by-frame review."
+  ]
+}

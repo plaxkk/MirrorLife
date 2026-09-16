@@ -223,7 +223,17 @@ test('both resident LODs preserve used skin, hair, eye and fabric material respo
     const file=new URL(`../public/assets/atrium/residents/${id}${suffix}.glb`,import.meta.url);
     const b=await fs.readFile(file),gltf=JSON.parse(b.subarray(20,20+b.readUInt32LE(12)).toString());
     const used=new Set(gltf.meshes.flatMap(m=>m.primitives.map(p=>p.material)));
-    const response=Object.fromEntries([...used].map(i=>gltf.materials[i]).filter(m=>m.extras?.atrium_surface_family).map(m=>[m.extras.atrium_surface_family,m.pbrMetallicRoughness.roughnessFactor]));
+    const response=Object.fromEntries([...used].map(i=>gltf.materials[i]).filter(m=>m.extras?.atrium_surface_family).map(m=>{
+      const pbr=m.pbrMetallicRoughness;let roughness=pbr.roughnessFactor??1;
+      if(pbr.metallicRoughnessTexture){
+        const image=gltf.images[gltf.textures[pbr.metallicRoughnessTexture.index].source],view=gltf.bufferViews[image.bufferView];
+        const binary=b.subarray(b.readUInt32LE(12)+28),png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
+        const values=[];for(let i=1;i<png.data.length;i+=4)if(png.data[i]>0)values.push(png.data[i]);
+        assert.ok(values.length>png.width*png.height*.1,'reject empty roughness atlas');
+        values.sort((a,b)=>a-b);roughness*=values[Math.floor(values.length/2)]/255;
+      }
+      return [m.extras.atrium_surface_family,roughness];
+    }));
     assert.ok(response.eye<response.hair&&response.hair<response.skin&&response.skin<response.fabric,`${id}${suffix}: ${JSON.stringify(response)}`);
     assert.ok(gltf.skins.length>0,`${id}${suffix}: retain animated body`);
   }
@@ -237,7 +247,30 @@ test('resident skin batches retain authored roughness without extra primitives o
     const core=gltf.nodes.find(n=>n.name==='SkinnedArticulationCore'),primitives=gltf.meshes[core.mesh].primitives;
     assert.equal(primitives.length,1,`${id}${suffix}: keep one body draw`);
     const p=primitives[0],mat=gltf.materials[p.material],texture=mat.pbrMetallicRoughness.metallicRoughnessTexture;
-    assert.equal(texture.texCoord,1);assert.equal(mat.alphaMode??'OPAQUE','OPAQUE');
+    assert.equal(mat.alphaMode??'OPAQUE','OPAQUE');
+    if(id==='you'){
+      assert.equal(p.attributes.COLOR_0,undefined,'albedo must not multiply vertex colour twice');
+      const maps=[mat.pbrMetallicRoughness.baseColorTexture,texture,mat.normalTexture];
+      for(const [index,map] of maps.entries()){
+        assert.ok(map,'body requires albedo, roughness and tangent normal');
+        const uv=gltf.accessors[p.attributes[`TEXCOORD_${map.texCoord||0}`]];
+        assert.equal(uv.type,'VEC2');assert.equal(uv.count,gltf.accessors[p.attributes.POSITION].count);
+        const view=gltf.bufferViews[gltf.images[gltf.textures[map.index].source].bufferView];
+        const png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
+        assert.equal(png.width,suffix==='-mobile'?512:1024);assert.equal(png.height,png.width);
+        let occupied=0;const values=new Set();
+        for(let i=0;i<png.data.length;i+=4){
+          const value=png.data[i+(index===1?1:index===2?2:0)];
+          if(value>20)occupied++;values.add(value);
+        }
+        assert.ok(occupied>png.width*png.height*.1,'reject blank or nearly blank bake');
+        if(index===1){
+          for(const response of [.68,.74,.91])assert.ok([...values].some(v=>Math.abs(v-response*255)<12),'retain shoe, skin and fabric roughness');
+        }
+      }
+      continue;
+    }
+    assert.equal(texture.texCoord,1);
     const uv=gltf.accessors[p.attributes.TEXCOORD_1];
     assert.equal(uv.type,'VEC2');assert.equal(uv.count,gltf.accessors[p.attributes.POSITION].count);
     const view=gltf.bufferViews[gltf.images[gltf.textures[texture.index].source].bufferView];
