@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-15T15:00:34.957Z",
+  "capturedAt": "2026-09-16T01:44:30.316Z",
   "base": "http://127.0.0.1:4195",
   "viewport": [
     1200,
@@ -86,8 +86,12 @@
     ]
   ],
   "assets": {
-    "before": "ab91b214fd3a971846c0c2667dab3833fbd869a050109df0cb0dfddc5686248c",
-    "after": "18c1d0b57443e8459e585f8d7d17c7727f535e1055efd69919ae42e0b332efcf"
+    "before": "18c1d0b57443e8459e585f8d7d17c7727f535e1055efd69919ae42e0b332efcf",
+    "after": "6529dfba38bdd644c75e50c4135409110a0eb3f8e85210f2b1a91bf1f22086c2"
   },
-  "scope": "Player diagnostic cameras in the live scene. Idle and blinking remain active; phases are not matched. Not reference calibration or route evidence."
+  "facialFixture": {
+    "blink": 0,
+    "talk": 0
+  },
+  "scope": "Player diagnostic cameras in the live scene, neutral facial weights forced for both variants. Body idle phases are not matched. Automatic blink is tested separately; not reference calibration or route evidence."
 }

@@ -12,8 +12,8 @@
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 2256,
-      "weightError": 8.940696716308594e-08
+      "triangles": 2232,
+      "weightError": 9.423820301890373e-08
     }
   },
   {

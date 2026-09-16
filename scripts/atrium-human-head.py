@@ -90,6 +90,18 @@ def build_player_head(root_path, identity="you"):
     for side in [-1,1]:
         eye=bpy.data.objects['EyePivot_'+str(side)];eye.location=(side*.0785,-.177,.0344);eye.scale=(.52,.4,.48);eye.rotation_euler=(0,0,side*.32)
         brow=bpy.data.objects['BrowPivot_'+str(side)];brow.location=(side*.079,front(side*.079,.08)-.003,.08);brow.scale.x=.68
+        if identity=='you':
+            # Relax the raised-brow expression and give the gaze a readable iris.
+            # Keep the eyeball and lid anchors fixed so blink coverage can be
+            # derived from the actual adjusted eye stack below.
+            brow.location.z=.066
+            brow.location.y=front(side*.079,.066)-.0025
+            brow.scale.z=.72
+            for prefix in ['Iris_', 'IrisCore_', 'Pupil_']:
+                part=bpy.data.objects[prefix+str(side)]
+                part.scale.x*=1.22;part.scale.z*=1.12
+            glint=bpy.data.objects['EyeGlint_'+str(side)]
+            glint.scale*=.72
     bpy.context.view_layer.update()
     # Fit a continuous convex front envelope to each complete eye stack.
     # Point rays have discontinuous hit/no-hit boundaries at the sclera edge;
@@ -174,7 +186,7 @@ def build_player_head(root_path, identity="you"):
                 w=width*(.35+.8*math.sin(math.pi*t))*(1-t**5)+.0004
                 for j in range(cross):
                     angle=j*math.tau/cross
-                    points.append(tuple(point+across*(w*math.cos(angle))+normal*(w*.33*math.sin(angle))))
+                    points.append(tuple(point+across*(w*math.cos(angle))+normal*(w*.22*math.sin(angle))))
             for i in range(steps):
                 for j in range(cross):
                     a=i*cross+j;b=i*cross+(j+1)%cross;faces.append((a,b,b+cross,a+cross))
@@ -182,16 +194,16 @@ def build_player_head(root_path, identity="you"):
             hair_mesh(name,points,faces)
         # Unequal groups follow a side part, with lifted crown and staggered tips.
         for i,(az,end,width,lift,sweep) in enumerate([
-            (-1.18,1.18,.037,.040,.32),(-.91,1.04,.043,.057,.48),
-            (-.61,1.13,.045,.064,.57),(-.29,1.00,.041,.060,.65),
-            (.05,1.16,.032,.045,.55),(.43,1.08,.026,.033,-.10),
-            (.73,1.19,.030,.031,-.16),(.99,1.10,.024,.024,-.12)]):
+            (-1.18,1.18,.032,.027,.32),(-.91,1.04,.037,.037,.48),
+            (-.61,1.13,.039,.043,.57),(-.29,1.00,.036,.040,.65),
+            (.05,1.16,.028,.030,.55),(.43,1.08,.024,.022,-.10),
+            (.73,1.19,.027,.021,-.16),(.99,1.10,.022,.017,-.12)]):
             groom('Hair swept top %02d'%i,.13+.041*(i%3),end,az,sweep,width,lift)
         for side in [-1,1]:
             for i in range(5):
                 groom('Hair short side %s %s'%(side,i),.55,1.38+.12*i/4,side*(1.1+i*.36),side*.30,.025,.012)
         for i in range(3):
-            groom('Hair broken crown %s'%i,.10,.95,2.3+i*.4,.22,.031,.038)
+            groom('Hair broken crown %s'%i,.10,.95,2.3+i*.4,.22,.028,.025)
     else:
         # Keep each resident's bob, fringe, ponytail, bun or cap silhouette.
         # Fit only scalp-adjacent pieces; hanging hair is not projected flat.

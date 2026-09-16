@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-15T15:01:00.824Z",
-  "runtimeFingerprint": "14a1400c550547f41974e2c6f2bc8ddc1abab0ab7bb25cd5851e2fcd2e61655c",
+  "capturedAt": "2026-09-16T01:47:31.797Z",
+  "runtimeFingerprint": "4dd2f56b171994d2294831095c7bf5167009e1bc7bd356fef517ffa5d64046ce",
   "base": "http://127.0.0.1:4195",
   "browserMode": "headed",
   "viewport": [
@@ -25,9 +25,9 @@
       4
     ]
   },
-  "playerQuestionTalkPeak": 0.8498719539271266,
+  "playerQuestionTalkPeak": 0.8496027936628616,
   "automaticBlink": {
-    "samples": 567,
+    "samples": 578,
     "min": 0,
     "max": 1
   },

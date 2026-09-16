@@ -27,7 +27,7 @@ try{
     }
     await page.goto(`${base}/atrium.html`);
     await page.waitForSelector('#enter:not([hidden])',{timeout:90000});await page.click('#enter');
-    await page.evaluate(()=>{window.__atrium.setReviewPosition([-4.3,0,4]);window.__atrium.setCapture(true);});
+    await page.evaluate(()=>{window.__atrium.setReviewPosition([-4.3,0,4]);window.__atrium.setCapture(true);window.__atrium.setReviewFace({blink:0,talk:0});});
     for(const [name,pos,target] of cameras){
       await page.evaluate(({pos,target})=>window.__atrium.setReviewCamera(pos,target),{pos,target});
       await new Promise(r=>setTimeout(r,300));await page.screenshot({path:`${out}/${variant}-${name}.png`});
@@ -36,5 +36,5 @@ try{
   }
   assets.after=createHash('sha256').update(await fs.readFile('public/assets/atrium/residents/you.glb')).digest('hex');
   await fs.writeFile(`${out}/cameras.json`,JSON.stringify({capturedAt:new Date().toISOString(),base,viewport:[1200,1000],cameras,assets,
-    scope:'Player diagnostic cameras in the live scene. Idle and blinking remain active; phases are not matched. Not reference calibration or route evidence.'},null,2));
+    facialFixture:{blink:0,talk:0},scope:'Player diagnostic cameras in the live scene, neutral facial weights forced for both variants. Body idle phases are not matched. Automatic blink is tested separately; not reference calibration or route evidence.'},null,2));
 }finally{await browser.close();}

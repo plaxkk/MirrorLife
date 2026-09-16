@@ -1,0 +1,19 @@
+file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js:211
+                const waitForSelectorError = new (error instanceof TimeoutError ? TimeoutError : Error)(`Waiting for selector \`${selector}\` failed`);
+                                             ^
+
+TimeoutError: Waiting for selector `#dialogue:not([hidden])` failed
+    at CSSQueryHandler.waitFor (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js:211:46)
+    at async CdpFrame.waitForSelector (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js:541:21)
+    at async CdpPage.waitForSelector (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Page.js:1387:20)
+    at async file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-facial-motion.mjs:27:2 {
+  cause: TimeoutError: Waiting failed: 30000ms exceeded
+      at new WaitTask (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js:46:34)
+      at IsolatedWorld.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js:49:26)
+      at CSSQueryHandler.waitFor (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/QueryHandler.js:176:95)
+      at async CdpFrame.waitForSelector (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js:541:21)
+      at async CdpPage.waitForSelector (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Page.js:1387:20)
+      at async file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-facial-motion.mjs:27:2
+}
+
+Node.js v24.16.0

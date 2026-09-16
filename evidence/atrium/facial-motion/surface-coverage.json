@@ -1,11 +1,11 @@
 {
   "residents": [
     {
-      "sourceSha256": "47111b6bde89531436d46ba39f0b39ee3ebc38e9ec38699dcc9e1e0137f21cd7",
-      "eyeSamples": 4252,
-      "covered": 4252,
+      "sourceSha256": "16e6c6d4d6d34125d67506d8aa69d2a1b9eb35f07d1b139ca70592d7c39ff231",
+      "eyeSamples": 4328,
+      "covered": 4328,
       "exposed": 0,
-      "minimumClearance": 0.0013161897659301758,
+      "minimumClearance": 0.0016974806785583496,
       "examples": [],
       "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
       "identity": "you",

@@ -94,6 +94,19 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         v.co.z-=.045*outer*upper
     garment=garment_tools.continuous_garment(civic,mats['top'])
     if who=='you':
+        # Relax the hard shoulder ridge on the continuous surface, keeping
+        # sleeve/waist clearance and the existing bind weights intact.
+        neighbours=[set() for _ in garment.data.vertices]
+        for edge in garment.data.edges:
+            a,b=edge.vertices;neighbours[a].add(b);neighbours[b].add(a)
+        for _ in range(3):
+            positions=[v.co.copy() for v in garment.data.vertices]
+            for vertex in garment.data.vertices:
+                p=positions[vertex.index];adjacent=neighbours[vertex.index]
+                weight=.48*math.exp(-((abs(p.x)-.28)/.10)**2-((p.z-1.22)/.065)**2)
+                if adjacent:
+                    average=sum((positions[i] for i in adjacent),Vector())/len(adjacent)
+                    vertex.co=p.lerp(average,weight)
         # Jacket ease belongs to the same weighted surface: a softer waist and
         # restrained compression folds, without detached decorative shells.
         for vertex in garment.data.vertices:

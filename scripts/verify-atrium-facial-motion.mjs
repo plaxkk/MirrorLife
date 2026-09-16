@@ -23,7 +23,11 @@ try{
   const actual=await page.evaluate(()=>window.__atrium.getFaceDiagnostics());assert.equal(actual[0].blink,blink);assert.equal(actual[0].talk,talk);if(poses.length)assert.deepEqual(actual[0].eyeScales,poses[0].actual[0].eyeScales,'Native eyelids must close without shrinking the eyeballs');poses.push({name,actual});
  }
  await page.evaluate(()=>window.__atrium.setReviewFace(null));
- await page.evaluate(()=>{window.__atrium.setCapture(false);window.__atrium.setReviewPosition([-2.6,0,-2.6]);});await new Promise(r=>setTimeout(r,400));await page.keyboard.press('KeyE');
+ await page.evaluate(()=>{window.__atrium.setCapture(false);window.__atrium.setReviewPosition([-2.6,0,-2.6]);});
+ await page.bringToFront();
+ await page.waitForFunction(()=>!document.querySelector('#interaction').hidden&&document.querySelector('#interaction-text').textContent.includes('聊聊'));
+ await fs.writeFile(`${out}/dialogue-input.json`,JSON.stringify(await page.evaluate(()=>({prompt:document.querySelector('#interaction-text').textContent,position:window.__atrium.getPosition(),state:window.__atrium.getInteractionState()})),null,2));
+ await page.keyboard.press('KeyE');
  await page.waitForSelector('#dialogue:not([hidden])');await page.click('#dialogue-choices button:first-child');
  responsePeak=await page.evaluate(()=>new Promise(resolve=>{let peak=0;const start=performance.now();function tick(){peak=Math.max(peak,...window.__atrium.getFaceDiagnostics().map(x=>x.talk));if(performance.now()-start>1300)resolve(peak);else requestAnimationFrame(tick);}tick();}));
  assert.ok(responsePeak>.4,'Choosing a spoken player question must animate the mouth');await page.keyboard.press('Escape');
