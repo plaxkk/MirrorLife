@@ -1,0 +1,160 @@
+[
+  {
+    "suffix": ".glb",
+    "meshes": [
+      {
+        "name": "SkinnedArticulationCore",
+        "same": true,
+        "vertices": 9438,
+        "triangles": 12452,
+        "attributeMaxSortedDelta": {
+          "normal": 0,
+          "position": 0,
+          "skinIndex": 0,
+          "skinWeight": 0,
+          "uv": 0,
+          "uv1": 0
+        }
+      },
+      {
+        "name": "EyePivot_-1_Surface_eye",
+        "same": false,
+        "vertices": 2760,
+        "triangles": 942,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0.014896228909492493
+        }
+      },
+      {
+        "name": "EyePivot_1_Surface_eye",
+        "same": false,
+        "vertices": 2764,
+        "triangles": 942,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0.014407813549041748
+        }
+      },
+      {
+        "name": "Head",
+        "same": true,
+        "vertices": 2013,
+        "triangles": 3681,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0
+        }
+      },
+      {
+        "name": "HeadPivot_Surface_hair",
+        "same": true,
+        "vertices": 2133,
+        "triangles": 3984,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0,
+          "uv1": 0
+        }
+      },
+      {
+        "name": "VisualRoot_Surface_fabric",
+        "same": false,
+        "vertices": 3099,
+        "triangles": 3095,
+        "attributeMaxSortedDelta": {
+          "normal": 0,
+          "position": 0,
+          "uv": 0.007948160171508789
+        }
+      }
+    ]
+  },
+  {
+    "suffix": "-mobile.glb",
+    "meshes": [
+      {
+        "name": "SkinnedArticulationCore",
+        "same": true,
+        "vertices": 9438,
+        "triangles": 12452,
+        "attributeMaxSortedDelta": {
+          "normal": 0,
+          "position": 0,
+          "skinIndex": 0,
+          "skinWeight": 0,
+          "uv": 0,
+          "uv1": 0
+        }
+      },
+      {
+        "name": "EyePivot_-1_Surface_eye",
+        "same": false,
+        "vertices": 1464,
+        "triangles": 488,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0.011233210563659668
+        }
+      },
+      {
+        "name": "EyePivot_1_Surface_eye",
+        "same": false,
+        "vertices": 1464,
+        "triangles": 488,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0.00952380895614624
+        }
+      },
+      {
+        "name": "Head",
+        "same": true,
+        "vertices": 2013,
+        "triangles": 3681,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0
+        }
+      },
+      {
+        "name": "HeadPivot_Surface_hair",
+        "same": true,
+        "vertices": 1156,
+        "triangles": 2070,
+        "attributeMaxSortedDelta": {
+          "color": 0,
+          "normal": 0,
+          "position": 0,
+          "uv": 0,
+          "uv1": 0
+        }
+      },
+      {
+        "name": "VisualRoot_Surface_fabric",
+        "same": false,
+        "vertices": 1853,
+        "triangles": 1609,
+        "attributeMaxSortedDelta": {
+          "normal": 0,
+          "position": 0,
+          "uv": 0.010356724262237549
+        }
+      }
+    ]
+  }
+]

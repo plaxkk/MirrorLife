@@ -1,0 +1,282 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Fra:1 Mem:36.78M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:36.78M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_-1
+Fra:1 Mem:36.83M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Iris_-1
+Fra:1 Mem:36.94M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Pupil_-1
+Fra:1 Mem:36.97M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_-1
+Fra:1 Mem:37.11M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_-1
+Fra:1 Mem:37.45M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_1
+Fra:1 Mem:37.46M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_1
+Fra:1 Mem:37.51M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_1
+Fra:1 Mem:37.80M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair continuous scalp
+Fra:1 Mem:37.84M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 0
+Fra:1 Mem:37.94M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 1
+Fra:1 Mem:38.00M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 3
+Fra:1 Mem:37.86M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 5
+Fra:1 Mem:37.90M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Soft neckline
+Fra:1 Mem:37.94M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple 1
+Fra:1 Mem:38.08M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket zipper
+Fra:1 Mem:38.09M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_-1
+Fra:1 Mem:38.10M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Embroidered sun
+Fra:1 Mem:38.12M (Peak 58.78M) | Time:497114:16:47.15 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:39.65M (Peak 58.78M) | Time:497114:16:47.16 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:39.65M (Peak 58.78M) | Time:497114:16:47.16 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore DIFFUSE
+Fra:1 Mem:39.65M (Peak 58.78M) | Time:497114:16:47.16 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Resident roughness lookup
+SOCKET_BOUNDARY -1 19 [(-0.1342717856168747, -0.022211523726582527), (-0.20750463008880615, -0.16029393672943115), (-0.010800841264426708, 0.07164492458105087)]
+SOCKET_BOUNDARY 1 19 [(0.025477135553956032, 0.13108330965042114), (-0.20643089711666107, -0.16351720690727234), (-0.009137500077486038, 0.07192238420248032)]
+Info: Saved "chen.blend"
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE SkinnedArticulationCore DIFFUSE 0.0 0.8941177129745483 coverage 0.7914466857910156
+Fra:1 Mem:38.90M (Peak 76.01M) | Time:497114:16:48.30 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_-1
+Fra:1 Mem:38.90M (Peak 76.01M) | Time:497114:16:48.30 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_-1
+Fra:1 Mem:38.98M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_1
+Fra:1 Mem:38.99M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_1
+Fra:1 Mem:39.10M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 0
+Fra:1 Mem:39.15M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 2
+Fra:1 Mem:39.33M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple -1
+Fra:1 Mem:39.36M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Soft neckline
+Fra:1 Mem:39.72M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket zipper
+Fra:1 Mem:39.94M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_-1
+Fra:1 Mem:39.95M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Embroidered sun
+Fra:1 Mem:40.19M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:40.99M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:40.99M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Fra:1 Mem:41.99M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Resident roughness lookup
+Fra:1 Mem:42.99M (Peak 76.01M) | Time:497114:16:48.31 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore DIFFUSE
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE SkinnedArticulationCore ROUGHNESS 0.0 0.9294118285179138 coverage 0.7918510437011719
+Fra:1 Mem:40.23M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:40.39M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_-1
+Fra:1 Mem:40.56M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_1
+Fra:1 Mem:40.57M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_1
+Fra:1 Mem:40.64M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Iris_1
+Fra:1 Mem:40.83M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Soft neckline
+Fra:1 Mem:41.00M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | IrisCore_1
+Fra:1 Mem:41.02M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Pupil_1
+Fra:1 Mem:41.03M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 0
+Fra:1 Mem:40.87M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 4
+Fra:1 Mem:40.87M (Peak 76.01M) | Time:497114:16:48.69 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple 1
+Fra:1 Mem:41.31M (Peak 76.01M) | Time:497114:16:48.74 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:42.15M (Peak 76.01M) | Time:497114:16:48.74 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationDetail
+Fra:1 Mem:42.25M (Peak 76.01M) | Time:497114:16:48.74 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Embroidered sun
+Fra:1 Mem:42.26M (Peak 76.01M) | Time:497114:16:48.74 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Surface fitted knit hem
+Fra:1 Mem:42.28M (Peak 76.01M) | Time:497114:16:48.74 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_1
+Fra:1 Mem:42.30M (Peak 76.01M) | Time:497114:16:48.75 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_-1
+Fra:1 Mem:42.33M (Peak 76.01M) | Time:497114:16:48.75 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:42.32M (Peak 76.01M) | Time:497114:16:48.75 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:43.34M (Peak 76.01M) | Time:497114:16:48.75 | Mem:1.00M, Peak:1.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Fra:1 Mem:44.34M (Peak 76.01M) | Time:497114:16:48.75 | Mem:1.00M, Peak:1.00M | Scene | Updating Images | Loading Resident roughness lookup
+Fra:1 Mem:45.34M (Peak 76.01M) | Time:497114:16:48.75 | Mem:1.00M, Peak:1.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore DIFFUSE
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE SkinnedArticulationCore NORMAL 0.0 1.0 coverage 1.0
+Fra:1 Mem:41.87M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:41.92M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_-1
+Fra:1 Mem:42.06M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | IrisCore_-1
+Fra:1 Mem:42.13M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_-1
+Fra:1 Mem:42.23M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_1
+Fra:1 Mem:42.26M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | IrisCore_1
+Fra:1 Mem:42.30M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_1
+Fra:1 Mem:42.35M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair continuous scalp
+Fra:1 Mem:42.38M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 1
+Fra:1 Mem:42.53M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Soft neckline
+Fra:1 Mem:42.57M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 3
+Fra:1 Mem:42.64M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket zipper
+Fra:1 Mem:42.86M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 4
+Fra:1 Mem:42.86M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 5
+Fra:1 Mem:42.89M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple -1
+Fra:1 Mem:43.05M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple 1
+Fra:1 Mem:43.07M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_-1
+Fra:1 Mem:43.29M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_1
+Fra:1 Mem:43.40M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Embroidered sun
+Fra:1 Mem:43.70M (Peak 78.68M) | Time:497114:16:49.09 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationDetail
+Fra:1 Mem:44.95M (Peak 78.68M) | Time:497114:16:49.10 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:44.95M (Peak 78.68M) | Time:497114:16:49.10 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:44.95M (Peak 78.68M) | Time:497114:16:49.10 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore DIFFUSE
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE Head DIFFUSE 0.0 0.8549020290374756 coverage 0.84735107421875
+Fra:1 Mem:43.03M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:43.03M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_-1
+Fra:1 Mem:43.35M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_1
+Fra:1 Mem:43.35M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Pupil_1
+Fra:1 Mem:43.40M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_1
+Fra:1 Mem:43.66M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair continuous scalp
+Fra:1 Mem:43.69M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 3
+Fra:1 Mem:43.75M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 5
+Fra:1 Mem:43.98M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Soft neckline
+Fra:1 Mem:44.04M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple 1
+Fra:1 Mem:44.09M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket zipper
+Fra:1 Mem:44.11M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_-1
+Fra:1 Mem:44.11M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_1
+Fra:1 Mem:44.13M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationDetail
+Fra:1 Mem:44.16M (Peak 84.75M) | Time:497114:16:49.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:46.06M (Peak 84.75M) | Time:497114:16:49.51 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:46.05M (Peak 84.75M) | Time:497114:16:49.51 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:46.05M (Peak 84.75M) | Time:497114:16:49.51 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head DIFFUSE
+Fra:1 Mem:47.05M (Peak 84.75M) | Time:497114:16:49.51 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head ROUGHNESS
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE Head ROUGHNESS 0.0 0.7490196228027344 coverage 0.8473167419433594
+Fra:1 Mem:44.22M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:44.26M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeGlint_-1
+Fra:1 Mem:44.52M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyeWhite_1
+Fra:1 Mem:44.57M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | IrisCore_1
+Fra:1 Mem:44.60M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Brow_1
+Fra:1 Mem:44.67M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair continuous scalp
+Fra:1 Mem:44.87M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 2
+Fra:1 Mem:44.94M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair swept fringe 4
+Fra:1 Mem:45.06M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Soft neckline
+Fra:1 Mem:45.08M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple -1
+Fra:1 Mem:45.11M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Hair temple 1
+Fra:1 Mem:45.14M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket zipper
+Fra:1 Mem:45.46M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_-1
+Fra:1 Mem:45.49M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Jacket welt pocket_1
+Fra:1 Mem:45.32M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Embroidered sun
+Fra:1 Mem:45.34M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:47.24M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:47.24M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:47.24M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head ROUGHNESS
+Fra:1 Mem:47.24M (Peak 84.75M) | Time:497114:16:49.88 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head NORMAL
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE Head NORMAL 0.0 1.0 coverage 1.0
+Fra:1 Mem:33.22M (Peak 87.05M) | Time:497114:16:50.96 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:33.23M (Peak 87.05M) | Time:497114:16:50.96 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | VisualRoot_Surface_fabric
+Fra:1 Mem:33.45M (Peak 87.05M) | Time:497114:16:50.96 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:37.10M (Peak 87.05M) | Time:497114:16:50.97 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:37.10M (Peak 87.05M) | Time:497114:16:50.97 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:37.10M (Peak 87.05M) | Time:497114:16:50.97 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE HeadPivot_Surface_hair DIFFUSE 0.0 0.2352941334247589 coverage 0.8892364501953125
+Fra:1 Mem:34.01M (Peak 87.05M) | Time:497114:16:51.07 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:34.05M (Peak 87.05M) | Time:497114:16:51.07 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:34.19M (Peak 87.05M) | Time:497114:16:51.07 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationDetail
+Fra:1 Mem:37.46M (Peak 87.05M) | Time:497114:16:51.08 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:37.46M (Peak 87.05M) | Time:497114:16:51.08 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head DIFFUSE
+Fra:1 Mem:37.46M (Peak 87.05M) | Time:497114:16:51.08 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero HeadPivot_Surface_hair ROUGHNESS
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE HeadPivot_Surface_hair ROUGHNESS 0.0 0.6509804129600525 coverage 0.8892364501953125
+Fra:1 Mem:34.36M (Peak 87.05M) | Time:497114:16:51.17 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:34.36M (Peak 87.05M) | Time:497114:16:51.17 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | HeadPivot_Surface_hair
+Fra:1 Mem:34.70M (Peak 87.05M) | Time:497114:16:51.17 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:35.74M (Peak 87.05M) | Time:497114:16:51.17 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | EyePivot_1_Surface_eye
+Fra:1 Mem:36.29M (Peak 87.05M) | Time:497114:16:51.17 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | VisualRoot_Surface_fabric
+Fra:1 Mem:36.47M (Peak 87.05M) | Time:497114:16:51.17 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationDetail
+Fra:1 Mem:37.82M (Peak 87.05M) | Time:497114:16:51.19 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:37.81M (Peak 87.05M) | Time:497114:16:51.19 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:38.81M (Peak 87.05M) | Time:497114:16:51.19 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head DIFFUSE
+Fra:1 Mem:41.81M (Peak 87.05M) | Time:497114:16:51.19 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE HeadPivot_Surface_hair NORMAL 0.0 1.0 coverage 1.0
+Fra:1 Mem:36.90M (Peak 87.05M) | Time:497114:16:51.29 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:36.90M (Peak 87.05M) | Time:497114:16:51.29 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | VisualRoot_Surface_fabric
+Fra:1 Mem:37.12M (Peak 87.05M) | Time:497114:16:51.29 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:40.60M (Peak 87.05M) | Time:497114:16:51.30 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:40.60M (Peak 87.05M) | Time:497114:16:51.30 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:40.60M (Peak 87.05M) | Time:497114:16:51.30 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head DIFFUSE
+Fra:1 Mem:41.60M (Peak 87.05M) | Time:497114:16:51.30 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Fra:1 Mem:44.60M (Peak 87.05M) | Time:497114:16:51.30 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore DIFFUSE
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE VisualRoot_Surface_fabric DIFFUSE 0.0 0.8901961445808411 coverage 0.7259521484375
+Fra:1 Mem:37.27M (Peak 87.05M) | Time:497114:16:51.40 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:37.27M (Peak 87.05M) | Time:497114:16:51.40 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:37.60M (Peak 87.05M) | Time:497114:16:51.40 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationDetail
+Fra:1 Mem:40.92M (Peak 87.05M) | Time:497114:16:51.41 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:40.92M (Peak 87.05M) | Time:497114:16:51.41 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:42.92M (Peak 87.05M) | Time:497114:16:51.41 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero Head NORMAL
+Fra:1 Mem:42.92M (Peak 87.05M) | Time:497114:16:51.41 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Resident roughness lookup
+Fra:1 Mem:43.92M (Peak 87.05M) | Time:497114:16:51.41 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE VisualRoot_Surface_fabric ROUGHNESS 0.0 0.9294118285179138 coverage 0.72607421875
+Fra:1 Mem:37.62M (Peak 87.05M) | Time:497114:16:51.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | Head
+Fra:1 Mem:37.62M (Peak 87.05M) | Time:497114:16:51.50 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | VisualRoot_Surface_fabric
+Fra:1 Mem:37.96M (Peak 87.05M) | Time:497114:16:51.51 | Mem:0.00M, Peak:0.00M | Scene | Synchronizing object | SkinnedArticulationCore
+Fra:1 Mem:41.28M (Peak 87.05M) | Time:497114:16:51.51 | Mem:0.00M, Peak:0.00M | Scene | Initializing
+Fra:1 Mem:41.28M (Peak 87.05M) | Time:497114:16:51.51 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore NORMAL
+Fra:1 Mem:41.28M (Peak 87.05M) | Time:497114:16:51.51 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Resident roughness lookup
+Fra:1 Mem:43.28M (Peak 87.05M) | Time:497114:16:51.51 | Mem:0.00M, Peak:0.00M | Scene | Updating Images | Loading Hero SkinnedArticulationCore DIFFUSE
+Fra:1 Mem:50.79M (Peak 87.05M) | Time:497114:16:51.51 | Mem:0.25M, Peak:0.25M | Scene | Updating Images | Loading Hero SkinnedArticulationCore ROUGHNESS
+Info: Baking map saved to internal image, save it externally or pack it
+BAKE_RANGE VisualRoot_Surface_fabric NORMAL 0.125490203499794 1.0 coverage 1.0
+INFO Draco mesh compression is available, use library at /Applications/Blender.app/Contents/Resources/4.3/python/lib/python3.11/site-packages/libextern_draco.dylib
+10:16:52 | INFO: Starting glTF 2.0 export
+10:16:52 | INFO: Extracting primitive: SkinnedArticulationCoreMesh
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Sphere.001
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Sphere.008
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Player head and curved eyelids
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Brow_-1
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Soft neckline
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Finished glTF 2.0 export in 0.3226509094238281 s
+
+10:16:52 | INFO: Starting glTF 2.0 export
+10:16:52 | INFO: Extracting primitive: SkinnedArticulationCoreMesh
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Sphere.001
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Sphere.008
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Player head and curved eyelids
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Brow_-1
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Extracting primitive: Soft neckline
+10:16:52 | INFO: Primitives created: 1
+10:16:52 | INFO: Draco encoder: Encoding mesh SkinnedArticulationCore.
+10:16:53 | INFO: Draco encoder: Encoding mesh EyePivot_-1_Surface_eye.
+10:16:53 | INFO: Draco encoder: Encoding mesh EyePivot_1_Surface_eye.
+10:16:53 | INFO: Draco encoder: Encoding mesh Head.
+10:16:53 | INFO: Draco encoder: Encoding mesh HeadPivot_Surface_hair.
+10:16:53 | INFO: Draco encoder: Encoding mesh VisualRoot_Surface_fabric.
+10:16:53 | INFO: Finished glTF 2.0 export in 0.5816681385040283 s
+
+10:16:53 | INFO: Starting glTF 2.0 export
+10:16:53 | INFO: Extracting primitive: SkinnedArticulationCoreMesh
+10:16:53 | INFO: Primitives created: 1
+10:16:53 | INFO: Extracting primitive: Sphere.001
+10:16:53 | INFO: Primitives created: 1
+10:16:53 | INFO: Extracting primitive: Sphere.008
+10:16:53 | INFO: Primitives created: 1
+10:16:53 | INFO: Extracting primitive: Player head and curved eyelids
+10:16:53 | INFO: Primitives created: 1
+10:16:53 | INFO: Extracting primitive: Brow_-1
+10:16:53 | INFO: Primitives created: 1
+10:16:53 | INFO: Extracting primitive: Soft neckline
+10:16:53 | INFO: Primitives created: 1
+10:16:53 | INFO: Draco encoder: Encoding mesh SkinnedArticulationCore.
+10:16:53 | INFO: Draco encoder: Encoding mesh EyePivot_-1_Surface_eye.
+10:16:53 | INFO: Draco encoder: Encoding mesh EyePivot_1_Surface_eye.
+10:16:53 | INFO: Draco encoder: Encoding mesh Head.
+10:16:53 | INFO: Draco encoder: Encoding mesh HeadPivot_Surface_hair.
+10:16:53 | INFO: Draco encoder: Encoding mesh VisualRoot_Surface_fabric.
+10:16:53 | INFO: Finished glTF 2.0 export in 0.3647620677947998 s
+
+RESIDENT_READY chen
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 8953 vertices, 35760 indices, raw size: 608100, encoded size: 74036, compression ratio: 8.21
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 2780 vertices, 2826 indices, raw size: 127972, encoded size: 24518, compression ratio: 5.22
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 2770 vertices, 2826 indices, raw size: 127532, encoded size: 24477, compression ratio: 5.21
+DracoEncoder | Preserve triangle order: yes
+DracoEncoder | Encoded 2857 vertices, 11016 indices, raw size: 113456, encoded size: 44754, compression ratio: 2.54
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 2447 vertices, 9636 indices, raw size: 97416, encoded size: 20636, compression ratio: 4.72
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 774 vertices, 1887 indices, raw size: 28478, encoded size: 6684, compression ratio: 4.26
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 8953 vertices, 35760 indices, raw size: 608100, encoded size: 74036, compression ratio: 8.21
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 1464 vertices, 1464 indices, raw size: 67344, encoded size: 13279, compression ratio: 5.07
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 1464 vertices, 1464 indices, raw size: 67344, encoded size: 13336, compression ratio: 5.05
+DracoEncoder | Preserve triangle order: yes
+DracoEncoder | Encoded 2857 vertices, 11016 indices, raw size: 113456, encoded size: 44754, compression ratio: 2.54
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 1433 vertices, 5010 indices, raw size: 55684, encoded size: 13156, compression ratio: 4.23
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 458 vertices, 981 indices, raw size: 16490, encoded size: 4224, compression ratio: 3.90
+
+Blender quit

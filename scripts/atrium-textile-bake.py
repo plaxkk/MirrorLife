@@ -54,7 +54,7 @@ def cloth_shader(material, mixed_surface=False):
     material['atrium_textile_authoring']='Position-space dyed yarn, submillimetre normal relief, roughness mask protecting skin'
 
 
-def bake_object(obj, size=1024):
+def bake_object(obj, size=1024, family=None, min_luminance=.05):
     # Bake the authored bind surface, independent of the current pose. Restore
     # modifiers even on failure; the runtime keeps its original skinning.
     states=[(m,m.show_render,m.show_viewport) for m in obj.modifiers]
@@ -62,14 +62,14 @@ def bake_object(obj, size=1024):
         for modifier,_,_ in states:
             modifier.show_render=False;modifier.show_viewport=False
         bpy.context.view_layer.update()
-        return _bake_bind_surface(obj,size)
+        return _bake_bind_surface(obj,size,family,min_luminance)
     finally:
         for modifier,render,viewport in states:
             modifier.show_render=render;modifier.show_viewport=viewport
         bpy.context.view_layer.update()
 
 
-def _bake_bind_surface(obj, size):
+def _bake_bind_surface(obj, size, family, min_luminance):
     assert len(obj.data.materials)==1, 'Bake only a consolidated, single-material UV surface'
     bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
     # One non-overlapping UV atlas for the exported batch. Source .blend keeps
@@ -92,7 +92,7 @@ def _bake_bind_surface(obj, size):
         import numpy as np
         pixels=np.empty(size*size*4,dtype=np.float32);image.pixels.foreach_get(pixels)
         rgb=pixels.reshape(-1,4)[:,:3]
-        coverage=float(np.mean(np.max(rgb,axis=1)>.05))
+        coverage=float(np.mean(np.max(rgb,axis=1)>min_luminance))
         print('BAKE_RANGE',obj.name,kind,float(rgb.min()),float(rgb.max()),'coverage',coverage,flush=True)
         assert coverage>.1, 'Bake produced an empty or nearly empty texture: '+obj.name+' '+kind
         image.pack();images[kind]=image
@@ -107,6 +107,6 @@ def _bake_bind_surface(obj, size):
     # Colour has been baked once into the albedo; glTF must not multiply it twice.
     for attribute in list(obj.data.color_attributes):obj.data.color_attributes.remove(attribute)
     obj.data.materials.clear();obj.data.materials.append(baked)
-    baked['atrium_surface_family']='textured-cloth-and-skin' if any(m.type=='ARMATURE' for m in obj.modifiers) else 'fabric'
+    baked['atrium_surface_family']=family or ('textured-cloth-and-skin' if any(m.type=='ARMATURE' for m in obj.modifiers) else 'fabric')
     obj['pbr_texture_contract']='Baked colour, roughness and tangent normal; atlas UVMap; no duplicate vertex tint'
     return images

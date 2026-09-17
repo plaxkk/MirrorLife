@@ -81,3 +81,19 @@ def hood_and_details(civic,mats,visual,cloth_y,cloth_back_y):
             civic.curve_tube('Pocket topstitch %s %s'%(side,offset),line,.0011,mats['outer'],visual,resolution=1)
     ob['construction']='Open lined hood, continuous sewn surface; reference-led navy/ochre everyday outerwear'
     return ob
+
+
+def relax_shoulders(garment, strength=.48, width=.10, iterations=3):
+    # Relax the hard shoulder ridge on the continuous surface, keeping
+    # sleeve/waist clearance and the existing bind weights intact.
+    neighbours=[set() for _ in garment.data.vertices]
+    for edge in garment.data.edges:
+        a,b=edge.vertices;neighbours[a].add(b);neighbours[b].add(a)
+    for _ in range(iterations):
+        positions=[v.co.copy() for v in garment.data.vertices]
+        for vertex in garment.data.vertices:
+            p=positions[vertex.index];adjacent=neighbours[vertex.index]
+            weight=strength*math.exp(-((abs(p.x)-.28)/width)**2-((p.z-1.22)/.065)**2)
+            if adjacent:
+                average=sum((positions[i] for i in adjacent),Vector())/len(adjacent)
+                vertex.co=p.lerp(average,weight)

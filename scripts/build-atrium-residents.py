@@ -18,8 +18,16 @@ wardrobe_spec=importlib.util.spec_from_file_location('atrium_wardrobe',ROOT/'scr
 wardrobe=importlib.util.module_from_spec(wardrobe_spec);wardrobe_spec.loader.exec_module(wardrobe)
 textile_spec=importlib.util.spec_from_file_location('atrium_textile',ROOT/'scripts/atrium-textile-bake.py')
 textile=importlib.util.module_from_spec(textile_spec);textile_spec.loader.exec_module(textile)
-OUT=ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
-SOURCE=ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
+BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
+SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
+assert SHAPE_PROTOTYPE in (0,1,2), 'Unknown isolated shape prototype'
+if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE:
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Unreviewed surface prototypes must remain under tmp/'
+    surface_spec=importlib.util.spec_from_file_location('atrium_surfaces',ROOT/'scripts/atrium-surface-authoring.py')
+    surface_tools=importlib.util.module_from_spec(surface_spec);surface_spec.loader.exec_module(surface_tools)
+OUT=BUILD_ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
+SOURCE=BUILD_ROOT/'models/atrium/residents';SOURCE.mkdir(parents=True,exist_ok=True)
 bpy.context.preferences.filepaths.save_version=0
 # Carry source roughness through the shared batcher's RGBA colour channel.
 # Decode it into a standard glTF texture below, then restore fully opaque colour.
@@ -96,22 +104,17 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         outer=max(0,min(1,(abs(v.co.x)-.12)/.14))
         upper=max(0,min(1,(v.co.z-1.15)/.12))
         v.co.z-=.045*outer*upper
+        if SHAPE_PROTOTYPE>=2 and who=='chen':
+            # Fill the clavicle-to-sleeve valley before union. Keep the lower
+            # armpit open so flexed elbows cannot drag fused waist vertices.
+            v.co.x*=1+.24*math.exp(-((v.co.z-1.255)/.065)**2)
+            v.co.x*=1+.10*math.exp(-((v.co.z-.94)/.13)**2)
     garment=garment_tools.continuous_garment(civic,mats['top'])
     if who=='you':
         wardrobe.sculpt_cloth(garment)
-        # Relax the hard shoulder ridge on the continuous surface, keeping
-        # sleeve/waist clearance and the existing bind weights intact.
-        neighbours=[set() for _ in garment.data.vertices]
-        for edge in garment.data.edges:
-            a,b=edge.vertices;neighbours[a].add(b);neighbours[b].add(a)
-        for _ in range(3):
-            positions=[v.co.copy() for v in garment.data.vertices]
-            for vertex in garment.data.vertices:
-                p=positions[vertex.index];adjacent=neighbours[vertex.index]
-                weight=.48*math.exp(-((abs(p.x)-.28)/.10)**2-((p.z-1.22)/.065)**2)
-                if adjacent:
-                    average=sum((positions[i] for i in adjacent),Vector())/len(adjacent)
-                    vertex.co=p.lerp(average,weight)
+    if who=='you' or SHAPE_PROTOTYPE:
+        wardrobe.relax_shoulders(garment,**({'strength':.6,'width':.14,'iterations':5} if SHAPE_PROTOTYPE and who!='you' else {}))
+    if who=='you':
         # Jacket ease belongs to the same weighted surface: a softer waist and
         # restrained compression folds, without detached decorative shells.
         for vertex in garment.data.vertices:
@@ -301,6 +304,9 @@ def everyday_hair(head,mats,style):
             a=i*math.tau/sides
             extent=1.05+(.96 if not long_bob else 1.4)*(1-math.cos(a))*.5+.26*math.sin(a)**2
             if who=='you':extent-=.16*(1-math.cos(a))*.5
+            if SHAPE_PROTOTYPE and who in ('chen','tang','xu','zhou'):
+                extent-=.30*math.sin(a)**4
+                extent+=.018*math.sin(a*7)
             theta=row/rings*extent
             radius=1+.018*math.sin(a*5+theta*2)*math.sin(theta)
             vertices.append((rx*math.sin(theta)*math.sin(a)*radius,-ry*math.sin(theta)*math.cos(a)*radius,.02+rz*math.cos(theta)))
@@ -331,14 +337,18 @@ def everyday_hair(head,mats,style):
         for i in range(3):
             lock('Hair crown flick '+str(i),[(-.12+i*.075,.025,.24),(-.09+i*.075,-.035,.302),(-.04+i*.075,-.07,.307),(.025+i*.06,-.105,.267)],[.032,.036,.022,.001])
     elif who!='he':
-        for i,a in enumerate([-.85,-.52,-.18,.18,.52,.85]):
+        groom_angles=[-1.0+i*.215 for i in range(10)] if SHAPE_PROTOTYPE and who=='chen' else [-.85,-.52,-.18,.18,.52,.85]
+        for i,a in enumerate(groom_angles):
             sweep=.32 if who in ('you','chen','zhou') else (-.18 if i<3 else .18)
             points=[]
             for t,theta in enumerate([.48,.75,1.02,1.28 if who in ('lin','xu') else 1.18]):
                 phi=a+sweep*t/3
                 points.append((rx*math.sin(theta)*math.sin(phi),-(ry+.005)*math.sin(theta)*math.cos(phi),.024+rz*math.cos(theta)))
-            lock('Hair swept fringe '+str(i),points,[.026,.029,.021,.0025])
+            lock('Hair swept fringe '+str(i),points,[.017,.021,.014,.0018] if SHAPE_PROTOTYPE and who=='chen' else [.026,.029,.021,.0025])
     for side in [-1,1]:
+        if SHAPE_PROTOTYPE and who=='chen':
+            lock('Hair short temple '+str(side),[(side*.20,-.05,.19),(side*.228,-.045,.10),(side*.231,-.025,.045),(side*.218,-.018,.012)],[.016,.022,.015,.0025])
+            continue
         lock('Hair temple '+str(side),[(side*.20,-.05,.19),(side*.237,-.042,.08),(side*.231,-.025,-.045),(side*.2,-.035,-.18 if long_bob else -.065)],[.018,.028,.023,.005] if who=='you' else [.035,.044,.037,.008])
     if who=='xu':
         civic.ellipsoid('Hair ponytail tie',(0,.183,.14),(.05,.05,.045),mats['accent'],head)
@@ -483,14 +493,20 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     bpy.context.view_layer.update()
 
     assert name==current_identity, 'Resident export identity changed during modeling'
-    if name=='you':
+    if name=='you' or SURFACE_PROTOTYPE:
         textile.cloth_shader(textile.bind_surface_material(core),mixed_surface=True)
         for mat in list(bpy.data.materials):
             if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
+    if SURFACE_PROTOTYPE:
+        surface_tools.skin_shader(bpy.data.objects['Head'])
+        for mat in list(bpy.data.materials):
+            if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     baked_images=[]
-    if name=='you':
-        baked_images.extend(textile.bake_object(core,1024).values())
+    if name=='you' or SURFACE_PROTOTYPE:
+        baked_images.extend(textile.bake_object(core,1024 if name=='you' else 512).values())
+    if SURFACE_PROTOTYPE:
+        baked_images.extend(textile.bake_object(bpy.data.objects['Head'],512,family='skin').values())
     # Bake material base colours into corner vertex colours and merge by rigid controller.
     # Eye and mouth parents remain independently animated; skinning batches stay intact.
     groups={}
@@ -531,11 +547,14 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for f in merged.data.polygons:f.material_index=0
         merged.data.materials.clear();merged.data.materials.append(surfaces[family])
         merged.data.validate(verbose=False)
-    if name=='you':
+    if name=='you' or SURFACE_PROTOTYPE:
         for obj in list(bpy.context.scene.objects):
             if obj.type=='MESH' and obj.name.endswith('_Surface_fabric'):
                 textile.cloth_shader(obj.data.materials[0])
-                baked_images.extend(textile.bake_object(obj,512).values())
+                baked_images.extend(textile.bake_object(obj,512 if name=='you' else 256).values())
+            elif SURFACE_PROTOTYPE and obj.type=='MESH' and obj.name.endswith('_Surface_hair'):
+                surface_tools.hair_shader(obj.data.materials[0],bpy.data.objects['HeadPivot'])
+                baked_images.extend(textile.bake_object(obj,256,family='hair',min_luminance=.001).values())
     # Fine hand creases are source detail; the desktop game LOD keeps the complete core hands.
     detail=bpy.data.objects.get('SkinnedArticulationDetail')
     if detail: detail.hide_render=True
@@ -552,7 +571,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'.glb'))
-    if name=='you':
+    if name=='you' or SURFACE_PROTOTYPE:
         for image in baked_images:
             image.scale(max(128,image.size[0]//2),max(128,image.size[1]//2));image.pack()
     for ob in bpy.context.scene.objects:

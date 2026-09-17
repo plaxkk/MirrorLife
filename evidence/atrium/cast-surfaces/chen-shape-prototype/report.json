@@ -1,0 +1,229 @@
+{
+  "capturedAt": "2026-09-17T02:31:39.027Z",
+  "base": "http://127.0.0.1:4193",
+  "cameras": [
+    [
+      "body",
+      [
+        -4.3,
+        1.12,
+        1.6
+      ],
+      [
+        -4.3,
+        1,
+        4
+      ]
+    ],
+    [
+      "front",
+      [
+        -4.3,
+        1.57,
+        3.4
+      ],
+      [
+        -4.3,
+        1.55,
+        4
+      ]
+    ],
+    [
+      "side",
+      [
+        -3.62,
+        1.57,
+        4
+      ],
+      [
+        -4.3,
+        1.55,
+        4
+      ]
+    ],
+    [
+      "back",
+      [
+        -4.3,
+        1.57,
+        4.7
+      ],
+      [
+        -4.3,
+        1.55,
+        4
+      ]
+    ],
+    [
+      "quarter",
+      [
+        -3.85,
+        1.57,
+        3.48
+      ],
+      [
+        -4.3,
+        1.55,
+        4
+      ]
+    ]
+  ],
+  "viewport": [
+    1200,
+    1000
+  ],
+  "scope": "Before/after Chen isolated visual prototype in the player review slot, same rig and cameras; forced neutral/closed/talk weights. This does not validate Chen in his native interaction role or the complete gameplay path.",
+  "results": [
+    {
+      "variant": "before",
+      "file": "public/assets/atrium/residents/chen.glb",
+      "sha256": "6a610b663ef63ceebe3df4c449c7ffc7927dbd0d6c0ebbf2a1229e900a480cb1",
+      "bytes": 262348,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "after",
+      "file": "tmp/cast-surfaces/chen-shape/public/assets/atrium/residents/chen.glb",
+      "sha256": "f7088504fcb46642a2366efbfb9b701c003caf17e1c9f472ad323d405e9e6914",
+      "bytes": 263980,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.47999998927116394,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ],
+  "reviewStatus": "development-only-not-release-approved"
+}

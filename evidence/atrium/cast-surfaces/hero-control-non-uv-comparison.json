@@ -1,0 +1,84 @@
+[
+  {
+    "suffix": ".glb",
+    "meshes": [
+      {
+        "name": "SkinnedArticulationCore",
+        "same": true,
+        "vertices": 9438,
+        "triangles": 12452
+      },
+      {
+        "name": "EyePivot_-1_Surface_eye",
+        "same": true,
+        "vertices": 2760,
+        "triangles": 942
+      },
+      {
+        "name": "EyePivot_1_Surface_eye",
+        "same": true,
+        "vertices": 2764,
+        "triangles": 942
+      },
+      {
+        "name": "Head",
+        "same": true,
+        "vertices": 2013,
+        "triangles": 3681
+      },
+      {
+        "name": "HeadPivot_Surface_hair",
+        "same": true,
+        "vertices": 2133,
+        "triangles": 3984
+      },
+      {
+        "name": "VisualRoot_Surface_fabric",
+        "same": true,
+        "vertices": 3099,
+        "triangles": 3095
+      }
+    ]
+  },
+  {
+    "suffix": "-mobile.glb",
+    "meshes": [
+      {
+        "name": "SkinnedArticulationCore",
+        "same": true,
+        "vertices": 9438,
+        "triangles": 12452
+      },
+      {
+        "name": "EyePivot_-1_Surface_eye",
+        "same": true,
+        "vertices": 1464,
+        "triangles": 488
+      },
+      {
+        "name": "EyePivot_1_Surface_eye",
+        "same": true,
+        "vertices": 1464,
+        "triangles": 488
+      },
+      {
+        "name": "Head",
+        "same": true,
+        "vertices": 2013,
+        "triangles": 3681
+      },
+      {
+        "name": "HeadPivot_Surface_hair",
+        "same": true,
+        "vertices": 1156,
+        "triangles": 2070
+      },
+      {
+        "name": "VisualRoot_Surface_fabric",
+        "same": true,
+        "vertices": 1853,
+        "triangles": 1609
+      }
+    ]
+  }
+]
