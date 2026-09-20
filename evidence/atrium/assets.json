@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-16T15:32:11.237Z",
-  "runtimeFingerprint": "23c9540e34acd245e31612e9bad15d66b2f57dd89e794f9b5baace79b79a7325",
+  "generatedAt": "2026-09-20T13:04:17.604Z",
+  "runtimeFingerprint": "7c7d433bb21ab726148bf85c105a291beebd47e477c3adbf642b28c98beca3c3",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 104154044,
-  "totalPublicBytes": 17878892,
+  "totalSourceBytes": 104241752,
+  "totalPublicBytes": 17738448,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -350,7 +350,7 @@
     {
       "file": "public/assets/atrium/residents/manifest.json",
       "bytes": 3736,
-      "sha256": "d3a10206ad292586af2e820aef4d65f00040bb7001b8f15a52b54cd882a952ae"
+      "sha256": "1b9850ae51de5ea4cd4dcc5aba2fb5ee0eebdad783be593b6cc80e7819d53f56"
     },
     {
       "file": "public/assets/atrium/residents/tang-mobile.glb",
@@ -394,22 +394,22 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 856656,
-      "sha256": "c47003bb17ea32053271dd9a0905fdd86f698e1894d3b07bec2a7649eca64547",
+      "bytes": 839736,
+      "sha256": "274a3af607b9c7e33783a0db8e07dfda324714e15e49987ee80ab414d6a18594",
       "meshes": 6,
       "materials": 5,
       "skins": 1,
-      "triangles": 20788,
+      "triangles": 21433,
       "animations": []
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 2304904,
-      "sha256": "57f06f090fa5bae8b48540797a625dc0a19437204b43860f3997d11bb07b676c",
+      "bytes": 2181380,
+      "sha256": "cda352331523020649c559ff71ba0a722e5c95b44927e38d0a0cf39c2e308c1b",
       "meshes": 6,
       "materials": 5,
       "skins": 1,
-      "triangles": 25096,
+      "triangles": 26190,
       "animations": []
     },
     {
@@ -589,18 +589,18 @@
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 3805196,
-      "sha256": "702cb6d23f4bed1064da7047234373cd4d2a883b3ad32d7e18a556e7b80c0dfc",
+      "bytes": 3739736,
+      "sha256": "068f3eafd15b0d9bea5291747cf2efe051c24dde3f5e5a3acbb373cc5c3d4a88",
       "meshes": 6,
       "materials": 5,
       "skins": 1,
-      "triangles": 35829,
+      "triangles": 37691,
       "animations": []
     },
     {
       "file": "models/atrium/residents/you.blend",
-      "bytes": 4410597,
-      "sha256": "766b52b8e111567e9db00fad6013eb9669df3bfba818e90fb9429b8ec28032ad"
+      "bytes": 4563765,
+      "sha256": "9b73694dcb24068212a910d168bb2346e202f3f1e23786a3f8bbb888feb469df"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",

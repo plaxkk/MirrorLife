@@ -6,7 +6,7 @@ from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
-def build_player_head(root_path, identity="you"):
+def build_player_head(root_path, identity="you", fitted_crop=False):
     old=bpy.data.objects['Head'];skin=old.data.materials[0].copy();skin.name=identity+' anatomical skin'
     vertices=[];tex=[];faces=[];uv_faces=[]
     for line in (Path(root_path)/'models/atrium/source/makehuman-head.obj').read_text().splitlines():
@@ -129,7 +129,7 @@ def build_player_head(root_path, identity="you"):
                 front_y=plane+slope*(point.x-cx)-depth*math.sqrt(1-r)
                 point.y=min(point.y,front_y-.002)
         return point
-    if identity=='you':
+    if identity=='you' or fitted_crop:
         # Groom directly on the fitted skull. Broad, overlapping flattened clumps
         # have independent lift; projecting all old vertices erased their volume.
         hair_objects=[ob for ob in bpy.context.scene.objects if ob.type=='MESH' and ob.name.startswith('Hair')]
@@ -154,7 +154,9 @@ def build_player_head(root_path, identity="you"):
                 crossing=max(u for u,v in coords)-min(u for u,v in coords)>.5
                 for loop,(u,v) in zip(poly.loop_indices,coords):uv.data[loop].uv=(u+1 if crossing and u<.5 else u,v)
             return ob
-        sides=48;rings=14;points=[tuple(scalp(0,0,.014)[0])];faces=[]
+        sides=96 if fitted_crop>=5 else 48
+        rings=32 if fitted_crop>=5 else 14
+        points=[tuple(scalp(0,0,.014)[0])];faces=[]
         for row in range(1,rings+1):
             for i in range(sides):
                 az=i*math.tau/sides
@@ -162,8 +164,17 @@ def build_player_head(root_path, identity="you"):
                 # Break the hairline without exposing disconnected scalp islands.
                 extent+=.025*math.sin(az*7)+.012*math.sin(az*11)
                 extent-=.11*math.sin(az)**4
+                if fitted_crop:
+                    extent-=.08*(1-math.cos(az))*.5
+                    extent+=.035*math.sin(az+1.1)
+                if fitted_crop>=5:extent+=.035*math.sin(az*9+.3)
                 theta=row/rings*extent
-                point,_=scalp(theta,az,.022*max(0,math.cos(theta)))
+                lift=.022*max(0,math.cos(theta))
+                if fitted_crop>=5:
+                    flow=az+theta*.28+.09*math.sin(theta*2)
+                    lift=.020*max(0,math.cos(theta))+.008
+                    lift+=math.sin(theta)**.8*(.008*math.cos(flow*9)+.003*math.cos(flow*17+.6))
+                point,_=scalp(theta,az,lift)
                 points.append(tuple(point))
         for i in range(sides):faces.append((0,1+i,1+(i+1)%sides))
         for row in range(rings-1):
@@ -172,6 +183,7 @@ def build_player_head(root_path, identity="you"):
         cap=hair_mesh('Hair fitted short undercut',points,faces)
         solid=cap.modifiers.new('Closed hairline','SOLIDIFY');solid.thickness=.004
         def groom(name,start,end,az,sweep,width,lift):
+            if fitted_crop>=5:return  # Directional relief is part of the continuous cap.
             steps=12;cross=8;centres=[];normals=[]
             for i in range(steps+1):
                 t=i/steps;theta=start+(end-start)*t
@@ -186,18 +198,36 @@ def build_player_head(root_path, identity="you"):
                 w=width*(.35+.8*math.sin(math.pi*t))*(1-t**5)+.0004
                 for j in range(cross):
                     angle=j*math.tau/cross
-                    points.append(tuple(point+across*(w*math.cos(angle))+normal*(w*.22*math.sin(angle))))
+                    vertex=point+across*(w*math.cos(angle))+normal*(w*.22*math.sin(angle))
+                    if fitted_crop>=4:
+                        direction=(vertex-centre).normalized()
+                        theta=math.acos(max(-1,min(1,direction.z)))
+                        azimuth=math.atan2(direction.x,-direction.y)
+                        # Clump edges/root are embedded in the underlying cap;
+                        # only the upper arch rises out of its continuous volume.
+                        envelope=.022*max(0,math.cos(theta))
+                        ridge=.010*math.sin(math.pi*t)**.8*max(0,math.sin(angle))
+                        vertex=scalp(theta,azimuth,envelope-.002+ridge)[0]
+                    points.append(tuple(vertex))
             for i in range(steps):
                 for j in range(cross):
                     a=i*cross+j;b=i*cross+(j+1)%cross;faces.append((a,b,b+cross,a+cross))
             faces.extend([tuple(reversed(range(cross))),tuple(steps*cross+j for j in range(cross))])
             hair_mesh(name,points,faces)
         # Unequal groups follow a side part, with lifted crown and staggered tips.
-        for i,(az,end,width,lift,sweep) in enumerate([
+        top_locks=[
             (-1.18,1.18,.032,.027,.32),(-.91,1.04,.037,.037,.48),
             (-.61,1.13,.039,.043,.57),(-.29,1.00,.036,.040,.65),
             (.05,1.16,.028,.030,.55),(.43,1.08,.024,.022,-.10),
-            (.73,1.19,.027,.021,-.16),(.99,1.10,.022,.017,-.12)]):
+            (.73,1.19,.027,.021,-.16),(.99,1.10,.022,.017,-.12)]
+        if fitted_crop:
+            # Chen's compact swept crop has its own part and irregular tips;
+            # fit real clumps to the skull instead of flattening old tubes.
+            top_locks=[(-1.12,1.12,.027,.025,.19),(-.80,1.04,.033,.035,.29),
+                       (-.48,1.16,.033,.032,.34),(-.13,1.10,.030,.028,.37),
+                       (.24,1.18,.025,.027,.30),(.61,1.06,.026,.020,-.13),
+                       (.94,1.12,.023,.017,-.18)]
+        for i,(az,end,width,lift,sweep) in enumerate(top_locks):
             groom('Hair swept top %02d'%i,.13+.041*(i%3),end,az,sweep,width,lift)
         for side in [-1,1]:
             for i in range(5):

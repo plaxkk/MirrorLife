@@ -2,7 +2,7 @@
 import bpy, math
 from mathutils.bvhtree import BVHTree
 
-def continuous_garment(civic, material):
+def continuous_garment(civic, material, triangle_budget=1700):
     torso=bpy.data.objects['Torso'];arms=bpy.data.objects['SkinnedArmVolume'];rig=arms.parent
     bpy.context.view_layer.update()
     inv=rig.matrix_world.inverted();deps=bpy.context.evaluated_depsgraph_get()
@@ -21,7 +21,7 @@ def continuous_garment(civic, material):
     bpy.ops.object.modifier_apply(modifier=union.name)
     smooth=garment.modifiers.new('Relax shoulder fabric','SMOOTH');smooth.factor=.8;smooth.iterations=4;bpy.ops.object.modifier_apply(modifier=smooth.name)
     garment.data.calc_loop_triangles()
-    lod=garment.modifiers.new('Garment topology budget','DECIMATE');lod.ratio=min(1,1700/len(garment.data.loop_triangles));bpy.ops.object.modifier_apply(modifier=lod.name)
+    lod=garment.modifiers.new('Garment topology budget','DECIMATE');lod.ratio=min(1,triangle_budget/len(garment.data.loop_triangles));bpy.ops.object.modifier_apply(modifier=lod.name)
     for polygon in garment.data.polygons:polygon.use_smooth=True
     garment.data.materials.append(material)
     groups={name:garment.vertex_groups.new(name=name) for name in ['SkinRoot','SkinLeftArm','SkinLeftElbow','SkinRightArm','SkinRightElbow']}
@@ -61,7 +61,7 @@ def continuous_garment(civic, material):
     garment.name='SkinnedArmVolume'
     garment['garment_contract']='atrium-continuous-shoulder-v1'
     garment['construction']='voxel union, relaxation, triangle decimation; torso/arm distance-field weights'
-    garment['triangle_budget']=1700
+    garment['triangle_budget']=triangle_budget
     edges={};adj=[set() for _ in garment.data.vertices]
     for polygon in garment.data.polygons:
         ids=list(polygon.vertices)

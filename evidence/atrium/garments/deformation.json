@@ -3,7 +3,7 @@
   "residents": [
     {
       "identity": "you",
-      "sourceSha256": "766b52b8e111567e9db00fad6013eb9669df3bfba818e90fb9429b8ec28032ad",
+      "sourceSha256": "9b73694dcb24068212a910d168bb2346e202f3f1e23786a3f8bbb888feb469df",
       "poses": [
         {
           "arm": 0,
@@ -12,7 +12,7 @@
           "knee": 0,
           "name": "upper",
           "maxEdgeStretch": 1.0000006198582148,
-          "p99EdgeStretch": 1.0000001391815059
+          "p99EdgeStretch": 1.0000001379064882
         },
         {
           "arm": -0.35,
@@ -20,8 +20,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 1.771745761940792,
-          "p99EdgeStretch": 1.116419541076756
+          "maxEdgeStretch": 1.4772081270882111,
+          "p99EdgeStretch": 1.1151823065862458
         },
         {
           "arm": -0.5,
@@ -29,8 +29,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 2.2963653872461243,
-          "p99EdgeStretch": 1.144661281340192
+          "maxEdgeStretch": 2.002378904637184,
+          "p99EdgeStretch": 1.1436454880259983
         },
         {
           "arm": -0.8,
@@ -38,8 +38,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 3.730318247882222,
-          "p99EdgeStretch": 1.2301603994158758
+          "maxEdgeStretch": 3.318415980624707,
+          "p99EdgeStretch": 1.2268109898867317
         },
         {
           "arm": 0.35,
@@ -47,8 +47,8 @@
           "leg": 0,
           "knee": 0,
           "name": "upper",
-          "maxEdgeStretch": 2.5300606100110725,
-          "p99EdgeStretch": 1.0826374435105732
+          "maxEdgeStretch": 2.2593636897876777,
+          "p99EdgeStretch": 1.086475758473271
         },
         {
           "arm": 0,
@@ -57,7 +57,7 @@
           "knee": 0.8,
           "name": "stride",
           "maxEdgeStretch": 2.0969515303308492,
-          "p99EdgeStretch": 1.1538545253935404
+          "p99EdgeStretch": 1.1490355782976391
         },
         {
           "arm": 0,
@@ -66,7 +66,7 @@
           "knee": 1.4,
           "name": "stair",
           "maxEdgeStretch": 3.0380102482672595,
-          "p99EdgeStretch": 1.2496723444528839
+          "p99EdgeStretch": 1.2446837964911897
         },
         {
           "arm": 0,
@@ -75,7 +75,7 @@
           "knee": 1.57,
           "name": "sit",
           "maxEdgeStretch": 3.663920113794688,
-          "p99EdgeStretch": 1.3053893629463145
+          "p99EdgeStretch": 1.2994383810204964
         }
       ],
       "passed": true

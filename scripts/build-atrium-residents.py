@@ -18,10 +18,17 @@ wardrobe_spec=importlib.util.spec_from_file_location('atrium_wardrobe',ROOT/'scr
 wardrobe=importlib.util.module_from_spec(wardrobe_spec);wardrobe_spec.loader.exec_module(wardrobe)
 textile_spec=importlib.util.spec_from_file_location('atrium_textile',ROOT/'scripts/atrium-textile-bake.py')
 textile=importlib.util.module_from_spec(textile_spec);textile_spec.loader.exec_module(textile)
+# Reviewed hero tailoring/groom is the default; legacy mode supports comparisons.
+HERO_ART_ENABLED=os.environ.get('ATRIUM_HERO_ART','1')=='1'
+if HERO_ART_ENABLED:
+    hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
+    hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+if os.environ.get('ATRIUM_HERO_ART_STUDY')=='1':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
-assert SHAPE_PROTOTYPE in (0,1,2), 'Unknown isolated shape prototype'
+assert SHAPE_PROTOTYPE in (0,1,2,3,4,5), 'Unknown isolated shape prototype'
 if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE:
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Unreviewed surface prototypes must remain under tmp/'
     surface_spec=importlib.util.spec_from_file_location('atrium_surfaces',ROOT/'scripts/atrium-surface-authoring.py')
@@ -109,7 +116,8 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             # armpit open so flexed elbows cannot drag fused waist vertices.
             v.co.x*=1+.24*math.exp(-((v.co.z-1.255)/.065)**2)
             v.co.x*=1+.10*math.exp(-((v.co.z-.94)/.13)**2)
-    garment=garment_tools.continuous_garment(civic,mats['top'])
+    if HERO_ART_ENABLED and who=='you':hero_art.prepare_body()
+    garment=garment_tools.continuous_garment(civic,mats['top'],triangle_budget=1600 if HERO_ART_ENABLED and who=='you' else 1700)
     if who=='you':
         wardrobe.sculpt_cloth(garment)
     if who=='you' or SHAPE_PROTOTYPE:
@@ -150,6 +158,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         garment.parent.parent['atrium_garment']=report
         garment['triangle_budget']=2400
         assert report['triangles']<=2400, 'Hero seam topology exceeded its explicit local allocation'
+    if HERO_ART_ENABLED and who=='you':hero_art.finish_garment(garment,mats)
     cloth_surface=BVHTree.FromPolygons([v.co for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
     def cloth_y(x,z):
         point=cloth_surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
@@ -482,7 +491,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     for obj in bpy.context.scene.objects:
         if obj.type=='MESH' and (obj.name=='Head' or obj.name.startswith(('Hair','Fringe','Braid'))):
             for polygon in obj.data.polygons:polygon.use_smooth=True
-    head_tools.build_player_head(ROOT,name)
+    head_tools.build_player_head(ROOT,name,fitted_crop=SHAPE_PROTOTYPE if SHAPE_PROTOTYPE>=3 and name=='chen' else 0)
+    if HERO_ART_ENABLED and name=='you':hero_art.finish_head(bpy.data.objects['Head'])
     # Narrow the complete rig hierarchy rather than moving arm roots within
     # the bind pose. This preserves the proven cloth clearance and weights.
     visual=bpy.data.objects['VisualRoot'];visual.scale.x*=.88

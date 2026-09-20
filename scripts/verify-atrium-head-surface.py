@@ -1,12 +1,12 @@
 """Check authored closed-lid coverage against the actual eye stack, in 3D."""
-import bpy, json, hashlib
+import bpy, json, hashlib, os
 from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 ROOT=Path(__file__).resolve().parents[1]
 reports=[]
-for identity in ['you','lin','chen','xu','zhou','he','tang']:
-    source=ROOT/('models/atrium/residents/'+identity+'.blend')
+for identity in os.environ.get('ATRIUM_RESIDENT_IDS','you,lin,chen,xu,zhou,he,tang').split(','):
+    source=ROOT/os.environ.get('ATRIUM_SOURCE_DIR','models/atrium/residents')/(identity+'.blend')
     bpy.ops.wm.open_mainfile(filepath=str(source));bpy.context.view_layer.update()
     head=bpy.data.objects['Head'];closed=head.data.shape_keys.key_blocks['Blink']
     lids=BVHTree.FromPolygons([v.co for v in closed.data],[tuple(p.vertices) for p in head.data.polygons])
@@ -39,4 +39,4 @@ for identity in ['you','lin','chen','xu','zhou','he','tang']:
     assert all(h['components']==1 and h['nonManifoldEdges']==0 for h in report['hands'])
     reports.append(report)
     print('EYELID_COVERAGE',json.dumps(report));assert not exposed,'Closed eyelid exposes eye stack'
-(ROOT/'evidence/atrium/facial-motion/surface-coverage.json').write_text(json.dumps({'residents':reports},indent=2))
+(ROOT/os.environ.get('ATRIUM_HEAD_REPORT','evidence/atrium/facial-motion/surface-coverage.json')).write_text(json.dumps({'residents':reports},indent=2))
