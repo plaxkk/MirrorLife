@@ -58,6 +58,7 @@ def authored_brows(head, front):
         ob['atrium_brow_study']='Tapered forehead-fitted volume with directional strands'
 
 def build_player_head(root_path, identity="you", fitted_crop=False):
+    portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
     lid_edge_study=identity=='you' and os.environ.get('ATRIUM_LID_EDGE_STUDY')=='1'
     portrait_eyes=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1'
     assert not lid_edge_study or portrait_eyes, 'Lid edge study requires the portrait eye proportions'
@@ -84,6 +85,14 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         nose=math.exp(-(x/.050)**4-((z+.032)/.055)**4)*front
         mouth=math.exp(-(x/.090)**4-((z+.113)/.050)**4)*front
         y+=.016*nose+.020*mouth
+        if portrait_form:
+            # Coordinate the central face and jaw, keeping the orbital anchors.
+            nasal=math.exp(-(x/.078)**2-((z+.023)/.070)**2)*front
+            x*=1-.14*nasal
+            bridge=math.exp(-(x/.020)**2-((z-.004)/.046)**2)*front
+            y-=.002*bridge
+            lower=math.exp(-((z+.11)/.074)**4)*front
+            x*=1-.045*lower
         x*=1-.075*math.exp(-((z+.155)/.045)**2)*front
         z+=(.003 if lid_study>=3 else .007)*math.exp(-((abs(x)-.052)/.027)**2-((z+.112)/.023)**2)*front
         # Preserve jaw volume but blend the neck cut inside the existing collar.
@@ -178,6 +187,12 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 part.scale.x*=1.10 if portrait_eyes else 1.22;part.scale.z*=1.0 if portrait_eyes else 1.12
             glint=bpy.data.objects['EyeGlint_'+str(side)]
             glint.scale*=.72
+            if portrait_form:
+                # The old nested spheres protruded progressively like beads.
+                # Keep separate iris/pupil surfaces but compress their depth.
+                for prefix,depth in [('Iris_',-.0096),('IrisCore_',-.01065),('Pupil_',-.0112),('EyeGlint_',-.01185)]:
+                    part=bpy.data.objects[prefix+str(side)]
+                    part.location.y=depth;part.scale.y*=.25
     bpy.context.view_layer.update()
     if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY')=='1':
         authored_brows(old,front)
