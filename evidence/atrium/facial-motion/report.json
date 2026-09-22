@@ -1,12 +1,15 @@
 {
-  "capturedAt": "2026-09-20T12:42:59.184Z",
-  "runtimeFingerprint": "7c7d433bb21ab726148bf85c105a291beebd47e477c3adbf642b28c98beca3c3",
+  "capturedAt": "2026-09-22T08:31:56.329Z",
+  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "installedBaselineFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "candidate": null,
   "base": "http://127.0.0.1:4195",
   "browserMode": "headed",
-  "viewport": [
-    1200,
-    1000
-  ],
+  "viewport": {
+    "width": 1200,
+    "height": 1000
+  },
+  "profile": "desktop",
   "portraitPlayerYaw": 3.141592653589793,
   "portraitCameras": {
     "front": [
@@ -25,9 +28,9 @@
       4
     ]
   },
-  "playerQuestionTalkPeak": 0.8485614639113279,
+  "playerQuestionTalkPeak": 0.848934015217892,
   "automaticBlink": {
-    "samples": 578,
+    "samples": 574,
     "min": 0,
     "max": 1
   },

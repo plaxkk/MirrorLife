@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-20T13:04:17.604Z",
-  "runtimeFingerprint": "7c7d433bb21ab726148bf85c105a291beebd47e477c3adbf642b28c98beca3c3",
+  "generatedAt": "2026-09-22T08:39:53.816Z",
+  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 104241752,
-  "totalPublicBytes": 17738448,
+  "totalSourceBytes": 104243972,
+  "totalPublicBytes": 17742940,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -394,8 +394,8 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 839736,
-      "sha256": "274a3af607b9c7e33783a0db8e07dfda324714e15e49987ee80ab414d6a18594",
+      "bytes": 842028,
+      "sha256": "112fa8d0b5eaf85e0f4b6c01248a524983e8142017e44dd5524c52520b75369e",
       "meshes": 6,
       "materials": 5,
       "skins": 1,
@@ -404,8 +404,8 @@
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 2181380,
-      "sha256": "cda352331523020649c559ff71ba0a722e5c95b44927e38d0a0cf39c2e308c1b",
+      "bytes": 2183580,
+      "sha256": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1",
       "meshes": 6,
       "materials": 5,
       "skins": 1,
@@ -589,8 +589,8 @@
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 3739736,
-      "sha256": "068f3eafd15b0d9bea5291747cf2efe051c24dde3f5e5a3acbb373cc5c3d4a88",
+      "bytes": 3741956,
+      "sha256": "ffc5f0b562db761253c3b9586cf01e9d6d1be23b10d5036aab47f60470b52d73",
       "meshes": 6,
       "materials": 5,
       "skins": 1,
@@ -600,7 +600,7 @@
     {
       "file": "models/atrium/residents/you.blend",
       "bytes": 4563765,
-      "sha256": "9b73694dcb24068212a910d168bb2346e202f3f1e23786a3f8bbb888feb469df"
+      "sha256": "acc52cd725ae10324617aeee4c487e0e60a3142b66aeb64add894e9b6ce8f7a6"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",

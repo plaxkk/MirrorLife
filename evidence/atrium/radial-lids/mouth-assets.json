@@ -1,0 +1,44 @@
+[
+  {
+    "version": "v2",
+    "file": "tmp/radial-lids/v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2184192,
+    "sha256": "1242b8b42f4247a7f9fbb7f1d7d2a56bc183d08cf780a8f82f91a112567b4e7f",
+    "triangles": 26190
+  },
+  {
+    "version": "v2",
+    "file": "tmp/radial-lids/v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 842352,
+    "sha256": "d3b0705d7bbb4e8f2c3ed7b91b499ea59fb1bcd40f49aae8a0aed0e9a0f73bb4",
+    "triangles": 21433
+  },
+  {
+    "version": "v3",
+    "file": "tmp/radial-lids/v3/public/assets/atrium/residents/you.glb",
+    "bytes": 2183708,
+    "sha256": "d379c4ba5fb4b007bd10820f2f9a695afc0665b8bd5448c9909e4e2ee1e03c0a",
+    "triangles": 26188
+  },
+  {
+    "version": "v3",
+    "file": "tmp/radial-lids/v3/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 842048,
+    "sha256": "9002c20a04a14d483b5ce9b2f10eec8780caa9dc74aa3656cb1afe6a8943c5fc",
+    "triangles": 21431
+  },
+  {
+    "version": "v4",
+    "file": "tmp/radial-lids/v4/public/assets/atrium/residents/you.glb",
+    "bytes": 2183580,
+    "sha256": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1",
+    "triangles": 26190
+  },
+  {
+    "version": "v4",
+    "file": "tmp/radial-lids/v4/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 842028,
+    "sha256": "112fa8d0b5eaf85e0f4b6c01248a524983e8142017e44dd5524c52520b75369e",
+    "triangles": 21433
+  }
+]

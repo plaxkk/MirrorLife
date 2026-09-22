@@ -1,0 +1,110 @@
+{
+  "capturedAt": "2026-09-22T08:40:32.183Z",
+  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "installedBaselineFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "candidate": null,
+  "base": "http://127.0.0.1:4193",
+  "browserMode": "headless",
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true
+  },
+  "profile": "mobile-emulation",
+  "portraitPlayerYaw": 3.141592653589793,
+  "portraitCameras": {
+    "front": [
+      -4.3,
+      1.49,
+      3.45
+    ],
+    "side": [
+      -3.6,
+      1.48,
+      4
+    ],
+    "target": [
+      -4.3,
+      1.46,
+      4
+    ]
+  },
+  "playerQuestionTalkPeak": 0.8497798950130154,
+  "automaticBlink": {
+    "samples": 578,
+    "min": 0,
+    "max": 1
+  },
+  "poses": [
+    {
+      "name": "neutral",
+      "actual": [
+        {
+          "name": "Head",
+          "eyeScales": [
+            [
+              0.5200000405311584,
+              0.47999998927116394,
+              0.40000006556510925
+            ],
+            [
+              0.5200000405311584,
+              0.47999998927116394,
+              0.40000006556510925
+            ]
+          ],
+          "blink": 0,
+          "talk": 0
+        }
+      ]
+    },
+    {
+      "name": "closed",
+      "actual": [
+        {
+          "name": "Head",
+          "eyeScales": [
+            [
+              0.5200000405311584,
+              0.47999998927116394,
+              0.40000006556510925
+            ],
+            [
+              0.5200000405311584,
+              0.47999998927116394,
+              0.40000006556510925
+            ]
+          ],
+          "blink": 1,
+          "talk": 0
+        }
+      ]
+    },
+    {
+      "name": "talk",
+      "actual": [
+        {
+          "name": "Head",
+          "eyeScales": [
+            [
+              0.5200000405311584,
+              0.47999998927116394,
+              0.40000006556510925
+            ],
+            [
+              0.5200000405311584,
+              0.47999998927116394,
+              0.40000006556510925
+            ]
+          ],
+          "blink": 0,
+          "talk": 1
+        }
+      ]
+    }
+  ],
+  "errors": [],
+  "scope": "Automatic blink sampled in live runtime. Still images force named facial weights for inspection only; they do not replace gameplay or prove lip sync, eyelid contact or human visual approval."
+}

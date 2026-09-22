@@ -1,0 +1,6 @@
+{
+  "status": "failed",
+  "stage": "dialogue first choice click",
+  "error": "Node is either not clickable or not an Element",
+  "context": "Initial mobile recording run; recorded after terminal output. Follow-up retry preserves failure.png and final restored run passes with explicit viewport restoration."
+}

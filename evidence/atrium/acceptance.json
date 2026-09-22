@@ -1,99 +1,99 @@
 {
-  "capturedAt": "2026-09-20T13:04:17.800Z",
-  "runtimeFingerprint": "7c7d433bb21ab726148bf85c105a291beebd47e477c3adbf642b28c98beca3c3",
+  "capturedAt": "2026-09-22T08:39:53.960Z",
+  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
   "base": "http://127.0.0.1:4195",
   "steps": [
     {
       "name": "tests",
-      "seconds": 15.168
+      "seconds": 17.056
     },
     {
       "name": "build",
-      "seconds": 3.63
+      "seconds": 3.64
     },
     {
       "name": "assets",
-      "seconds": 0.714
+      "seconds": 1.007
     },
     {
       "name": "head-surface",
-      "seconds": 4.331
+      "seconds": 7.521
     },
     {
       "name": "garment-deformation",
-      "seconds": 4.831
+      "seconds": 6.744
     },
     {
       "name": "gallery",
-      "seconds": 49.165
+      "seconds": 46.738
     },
     {
       "name": "performance",
-      "seconds": 52.556
+      "seconds": 48.394
     },
     {
       "name": "mobile",
-      "seconds": 48.036
+      "seconds": 46.791
     },
     {
       "name": "garments",
-      "seconds": 16.606
+      "seconds": 13.491
     },
     {
       "name": "faces",
-      "seconds": 11.902
+      "seconds": 11.598
     },
     {
       "name": "facial-motion",
-      "seconds": 47.897
+      "seconds": 47.683
     },
     {
       "name": "controls",
-      "seconds": 45.407
+      "seconds": 48
     },
     {
       "name": "window-contact",
-      "seconds": 46.647
+      "seconds": 47.763
     },
     {
       "name": "contact",
-      "seconds": 44.792
+      "seconds": 47.965
     },
     {
       "name": "seating",
-      "seconds": 48.239
+      "seconds": 46.348
     },
     {
-      "name": "stairs-retry",
-      "seconds": 45.799
+      "name": "stairs",
+      "seconds": 45.884
     },
     {
       "name": "resilience",
-      "seconds": 60.937
+      "seconds": 46.772
     },
     {
       "name": "walkthrough",
-      "seconds": 126.478
+      "seconds": 117.164
     },
     {
       "name": "video-decode",
-      "seconds": 72.662
+      "seconds": 50.975
     },
     {
       "name": "assets-after",
-      "seconds": 0.972
+      "seconds": 0.676
     },
     {
       "name": "performance-report",
-      "seconds": 0.167
+      "seconds": 0.11
     }
   ],
   "reports": {
     "performance": {
       "frameMs": {
         "p50": 16.69999999999709,
-        "p95": 17.400000000001455,
-        "p99": 33.30000000000291
+        "p95": 17.599999999998545,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
         "calls": 99,
@@ -107,8 +107,8 @@
     "mobile": {
       "frameMs": {
         "p50": 16.69999999999709,
-        "p95": 17.5,
-        "p99": 17.600000000002183
+        "p95": 17.599999999998545,
+        "p99": 17.700000000000728
       },
       "renderPeaks": {
         "calls": 81,
@@ -120,12 +120,5 @@
       "note": "Desktop GPU emulation; not phone certification"
     }
   },
-  "failedAttempts": [
-    {
-      "step": "stairs",
-      "error": "Error: stairs exited 1; see validation/stairs.log",
-      "log": "validation/stairs-first-failure.txt"
-    }
-  ],
   "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
 }

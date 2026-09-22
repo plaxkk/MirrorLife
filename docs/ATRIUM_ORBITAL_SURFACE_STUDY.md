@@ -8,9 +8,9 @@
 
 五视角反对意见：玩家可能看不到收益；游戏设计需连续眨眼而非一张中性图；美术可能把眼窝折痕移成眼角尖刺；工程不得增加面数掩盖拓扑问题；QA 不能用闭眼射线采样替代视检。以同镜头正侧背/全身、固定三表情和源闭眼覆盖逐项审查，实际运行与性能需在候选可用后再验。
 
-## 隔离候选
+## 初始隔离候选（v1/v2）
 
-`ATRIUM_RADIAL_LID_STUDY` 默认 0，不改变已交付模型；非零时构建强制输出项目 tmp。候选通过请求替换装入主角诊断位置，不能称为产品路径验收。构建文件与双档 GLB 在 `tmp/radial-lids/v1`、`v2`，截图报告记录实际 SHA。
+`ATRIUM_RADIAL_LID_STUDY` 初始默认 0；本轮后默认 4（仅主角），显式指定非零实验版本时仍强制输出项目 tmp。显式 0 可重建旧版。候选通过请求替换装入主角诊断位置，不能称为产品路径验收。构建文件与双档 GLB 在 `tmp/radial-lids/v1`、`v2`，截图报告记录实际 SHA。
 
 - v1：把周长配对改为眼眶方向配对。4,328 个眼球采样闭眼全部覆盖，最小头部局部深度余量约 0.00192；正面及闭眼图却出现新的内眼角亮折，否决，不推广。证据 `evidence/atrium/radial-lids/v1/`。
 - v2：保留原环序与眼缘，在相同邻接关系下松弛中性/闭眼表面，并继续投影到眼球覆盖包络。4,328 个闭眼深度采样全部覆盖，最小局部余量约 0.00210。桌面正面/闭眼图的眼窝折面减轻；移动模拟的 0.25、0.5、0.75 眨眼权重和说话侧面已实际视检，未看到 v1 的内眼角尖折。仍是隔离候选，未完成连续自动眨眼、真实输入路径与整体验收，不预签生产通过。
@@ -29,3 +29,19 @@ Python AST、JavaScript 语法、diff whitespace 检查通过。未改变交付�
 ATRIUM_RESIDENT_IDS=you ATRIUM_RADIAL_LID_STUDY=2 ATRIUM_BUILD_ROOT="$PWD/tmp/radial-lids/v2" /Applications/Blender.app/Contents/MacOS/Blender --background --python-exit-code 1 --python scripts/build-atrium-residents.py
 ATRIUM_REVIEW_PROFILE=mobile ATRIUM_REVIEW_PARTIAL_BLINK=1 ATRIUM_REVIEW_BASELINE=public/assets/atrium/residents/you-mobile.glb ATRIUM_REVIEW_CANDIDATE=tmp/radial-lids/v2/public/assets/atrium/residents/you-mobile.glb ATRIUM_REVIEW_OUTPUT=tmp/radial-lids/mobile-review node scripts/review-atrium-hero-art.mjs
 ```
+
+
+## 连续表情与唇部接入（同日续作）
+
+上一轮是 progress：已提交眼窝候选及对照。此次目标仍是首次玩家在接近、交流、继续探索时看到可信的人物；原 180 calls / 500k triangles / 220 geometries 预算、3D 环绕与玩法不变。七人完整目标保持 active。
+
+- v2 连续动画：桌面 454 个实时采样、9.6 秒连续录像记录自然眨眼；真实 E 键交互与对话选择触发 Talk。移动复验 546 个采样，并以触控打开对话与选择问题。移动依旧是桌面 GPU 模拟。
+- 移动失败保留：最初两次在录像停止后的输入阶段出现不可点击。恢复 Puppeteer 视口后成功；复验记录实际 390×844、DPR 3、visualViewport scale 1。是验收录制会话状态问题，不能把先前的失败覆盖掉或当成通过。静态图片只证明指定表情，视频和采样才证明自然眨眼；对话有真实输入，但角色位置使用诊断接口，并非完整走路到对话。
+- v3 唇部：压薄唇部并降低嘴角抬升，但下唇附近出现尖锐折痕，否决；闭眼采样通过不能推翻视觉否决。
+- v4 唇部：更宽的形体衰减并松弛局部唇周，正面中性与说话、侧面说话已视检，v3 尖折消除。4,328 个源闭眼覆盖采样全部通过。双档 26,190 / 21,433 triangles 与原版相同；桌面 2,183,580 B、移动 842,028 B。源和主模型、桌面及移动运行 GLB 已接入本地，尚非生产发布。
+
+交叉复核：玩家视角承认近景改善但远景收益有限；设计要求对话和眨眼继续工作；美术仍反对把唇部收敛称为自然人像，发束与眼缘依旧生硬；工程面数不增但性能需完整测量；QA 要求保留失败和恢复视口证据。无独立人工美术签收。
+
+本地接入后 `node scripts/verify-atrium-release.mjs` 的 21 阶段已完成，含构建、全七人源覆盖、服装、连续表情、控制、碰撞、接触、座椅、楼梯、异常恢复、完整游玩录像及解码。前后指纹一致：`bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9`。桌面 99 calls / 495,314 triangles / 80 geometries；移动模拟 81 / 326,144 / 76。两档 P95 均 17.6ms，桌面严格 16.67ms 门槛仍失败，移动模拟 33.33ms 门槛通过。自动阶段完成不能覆盖该性能失败或宣告生产美术完成。版本绑定见 `mouth-assets.json`；v2 连续录像见各 `v2-motion*` 目录；v3/v4 静态对照与覆盖报告保留。最终发布、真实手机、用户反馈和其他六人美术仍未完成。
+
+接入后移动补验：`v4-motion-mobile/report.json` 与当前资产指纹一致，578 个自然眨眼采样；触控打开对话、选择问题、关闭对话通过，连续录像已保存。仍是桌面 GPU 移动模拟，不是真机结论。

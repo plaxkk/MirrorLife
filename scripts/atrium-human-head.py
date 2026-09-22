@@ -7,8 +7,8 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 def build_player_head(root_path, identity="you", fitted_crop=False):
-    lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')) if identity=='you' else 0
-    assert lid_study in (0,1,2)
+    lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','4')) if identity=='you' else 0
+    assert lid_study in (0,1,2,3,4)
     radial_lids=lid_study==1
     old=bpy.data.objects['Head'];skin=old.data.materials[0].copy();skin.name=identity+' anatomical skin'
     vertices=[];tex=[];faces=[];uv_faces=[]
@@ -31,13 +31,19 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         mouth=math.exp(-(x/.090)**4-((z+.113)/.050)**4)*front
         y+=.016*nose+.020*mouth
         x*=1-.075*math.exp(-((z+.155)/.045)**2)*front
-        z+=.007*math.exp(-((abs(x)-.052)/.027)**2-((z+.112)/.023)**2)*front
+        z+=(.003 if lid_study>=3 else .007)*math.exp(-((abs(x)-.052)/.027)**2-((z+.112)/.023)**2)*front
         # Preserve jaw volume but blend the neck cut inside the existing collar.
         t=max(0,min(1,(-z-.13)/.10));t=t*t*(3-2*t)
         angle=math.atan2(x,y-.015)
         x=x*(1-t)+.125*math.sin(angle)*t
         y=y*(1-t)+(.105*math.cos(angle)+.005)*t
-        z+=.004*math.exp(-((abs(x)-.052)/.025)**2-((z+.112)/.025)**2)*max(0,min(1,(-y-.17)/.03))
+        z+=(.002 if lid_study>=3 else .004)*math.exp(-((abs(x)-.052)/.025)**2-((z+.112)/.025)**2)*max(0,min(1,(-y-.17)/.03))
+        if lid_study>=3:
+            # Reduce the exaggerated lip mound without adding a separate shell.
+            # Broad falloff preserves a continuous philtrum and chin transition.
+            lip_weight=math.exp(-(x/.080)**4-((z+.109)/(.045 if lid_study==4 else .032))**(2 if lid_study==4 else 4))*front
+            z=-.109+(z+.109)*(1-.22*lip_weight)
+            y+=.009*lip_weight
         return x,y,z
     mesh=bpy.data.meshes.new('Player anatomical head mesh');mesh.from_pydata([fit(v) for v in vertices],[],faces);mesh.update();mesh.materials.append(skin)
     uv=mesh.uv_layers.new(name='UVMap')
@@ -75,6 +81,18 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 average=sum((positions[i] for i in neighbours),Vector())/len(neighbours)
                 vertex.co=positions[vertex.index].lerp(average,weight)
     dec=old.modifiers.new('Facial topology allocation','DECIMATE');dec.ratio=4000/8440;dec.use_collapse_triangulate=True;bpy.ops.object.modifier_apply(modifier=dec.name)
+    if lid_study==4:
+        neighbours=[set() for _ in old.data.vertices]
+        for edge in old.data.edges:
+            a,b=edge.vertices;neighbours[a].add(b);neighbours[b].add(a)
+        for _ in range(4):
+            positions=[v.co.copy() for v in old.data.vertices]
+            for vertex in old.data.vertices:
+                x,y,z=positions[vertex.index]
+                weight=.32*math.exp(-(x/.09)**4-((z+.11)/.045)**4)*max(0,min(1,(-y-.10)/.07))
+                if neighbours[vertex.index]:
+                    average=sum((positions[i] for i in neighbours[vertex.index]),Vector())/len(neighbours[vertex.index])
+                    vertex.co=positions[vertex.index].lerp(average,weight)
     old['atrium_facial_morphs']=True
     old['source_license']='CC0-1.0; MakeHuman head subset with MirrorLife fitting'
     # Native nose, ears and lips replace the detached facial pieces.
@@ -329,7 +347,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
     lid_targets={mapping[i]:point for i,point in lid_targets.items() if i in mapping}
     lid_shade={mapping[i]:value for i,value in lid_shade.items() if i in mapping}
     lid_rims={mapping[i] for i in lid_rims}
-    if lid_study==2:
+    if lid_study>=2:
         # Relax the socket transition without rearranging an irregular loop.
         # Preserve the aperture and use the same neighbourhood for both poses.
         adjacency=[set() for _ in points]

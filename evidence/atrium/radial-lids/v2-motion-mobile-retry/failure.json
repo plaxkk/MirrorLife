@@ -1,0 +1,6 @@
+{
+  "error": "Error: Node is either not clickable or not an Element",
+  "candidate": "tmp/radial-lids/v2/public/assets/atrium/residents/you-mobile.glb",
+  "requests": 1,
+  "profile": "mobile-emulation"
+}
