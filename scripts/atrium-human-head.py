@@ -58,7 +58,9 @@ def authored_brows(head, front):
         ob['atrium_brow_study']='Tapered forehead-fitted volume with directional strands'
 
 def build_player_head(root_path, identity="you", fitted_crop=False):
+    lid_edge_study=identity=='you' and os.environ.get('ATRIUM_LID_EDGE_STUDY')=='1'
     portrait_eyes=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1'
+    assert not lid_edge_study or portrait_eyes, 'Lid edge study requires the portrait eye proportions'
     lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','4')) if identity=='you' else 0
     assert lid_study in (0,1,2,3,4)
     radial_lids=lid_study==1
@@ -369,7 +371,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         # Increasing polar angle is outward-facing for the front (-Y) surface.
         area=sum((points[a][0]-cx)*(points[b][2]-cz)-(points[b][0]-cx)*(points[a][2]-cz) for a,b in zip(loop,loop[1:]+loop[:1]))
         if area<0:loop.reverse()
-        rows=7;rings=[loop]
+        rows=10 if lid_edge_study else 7;rings=[loop]
         lengths=[math.hypot(points[b][0]-points[a][0],points[b][2]-points[a][2]) for a,b in zip(loop,loop[1:]+loop[:1])]
         total=sum(lengths);distance=0;angles=[];start_angle=math.atan2(points[loop[0]][2]-cz,points[loop[0]][0]-cx)
         for length in lengths:
@@ -384,7 +386,9 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             for boundary_id,theta in zip(loop,angles):
                 outer=Vector(points[boundary_id]);upper=math.sin(theta)>=0
                 upper_height,lower_height=(.016,.009) if portrait_eyes else (.012,.008)
-                inner=Vector((cx+.032*math.cos(theta),-.183+side*.32*.032*math.cos(theta),cz+(upper_height if upper else lower_height)*math.sin(theta)))
+                aperture=math.sin(theta)
+                if lid_edge_study:aperture=math.copysign(abs(aperture)**1.45,aperture)
+                inner=Vector((cx+.032*math.cos(theta),-.183+side*.32*.032*math.cos(theta),cz+(upper_height if upper else lower_height)*aperture))
                 point=outer.lerp(inner,t);point.y=outer.y*(1-blend)+inner.y*blend;point=cover_eye(point)
                 shut=inner.copy();shut.z=cz+(-.0002 if upper else .0002)
                 target=outer.lerp(shut,t);target.y=outer.y*(1-blend)+shut.y*blend;target=cover_eye(target)
@@ -424,6 +428,23 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                     pose[i]=cover_eye(previous[i].lerp(average,weight))
         points=[tuple(p) for p in neutral]
         lid_targets={i:closed[i] for i in range(len(points)) if weights[i] or i in lid_targets}
+    if lid_edge_study:
+        # Model a shallow rolled lid edge in the existing continuous mesh.
+        # Apply after socket relaxation so it cannot erase this small volume.
+        for i,p in enumerate(points):
+            point=Vector(p)
+            if i not in lid_targets:continue
+            side=-1 if point.x<0 else 1
+            u=(point.x-side*.0785)/.032
+            if abs(u)>=1:continue
+            upper=point.z>=.0344
+            edge=.0344+(.016 if upper else -.009)*max(0,1-u*u)**.725
+            distance=abs(point.z-edge)
+            rolled=(.0018 if upper else .0012)*math.exp(-((distance-.002)/.0025)**2)*max(0,1-u*u)
+            crease=.0012*math.exp(-((distance-.008)/.0025)**2)*max(0,1-u*u) if upper else 0
+            point.y+=crease;point=cover_eye(point);point.y-=rolled;points[i]=tuple(point)
+            target=lid_targets[i];target.y+=crease;target=cover_eye(target);target.y-=rolled;lid_targets[i]=target
+            if upper:lid_shade[i]=max(lid_shade.get(i,0),.10*math.exp(-((distance-.008)/.003)**2)*max(0,1-u*u))
     rebuilt=bpy.data.meshes.new('Player head and curved eyelids');rebuilt.from_pydata(points,[],polys);rebuilt.update();rebuilt.materials.append(skin)
     uv=rebuilt.uv_layers.new(name='UVMap')
     for loop,value in zip(uv.data,old_uv+lid_uv):loop.uv=value
