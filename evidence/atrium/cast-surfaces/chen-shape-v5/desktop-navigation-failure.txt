@@ -1,0 +1,1 @@
+2026-09-22: first desktop recheck failed at page.goto: Navigation timeout of 30000 ms exceeded. No seating assertion executed; mobile check ran concurrently. Cause unconfirmed; do not classify as gameplay failure or omit it from rerun results.

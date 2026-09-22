@@ -1,14 +1,30 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const out='evidence/atrium/seating';await fs.mkdir(out,{recursive:true});
+import {createHash} from 'node:crypto';
+const out=process.env.ATRIUM_SEATING_OUTPUT||'evidence/atrium/seating';await fs.mkdir(out,{recursive:true});
+const mobile=process.env.ATRIUM_SEATING_PROFILE==='mobile';
+const candidatePath=process.env.ATRIUM_CHEN_CANDIDATE;
+assert.ok(['desktop','mobile'].includes(process.env.ATRIUM_SEATING_PROFILE||'desktop'),'Unknown seating profile');
+assert.ok(!candidatePath||process.env.ATRIUM_SEATING_OUTPUT,'Candidate checks need an isolated evidence output');
+const candidate=candidatePath?await fs.readFile(candidatePath):null;
+let candidateRequests=0;
 const asset=JSON.parse(await fs.readFile('evidence/atrium/assets.json','utf8'));
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:process.env.ATRIUM_HEADED!=='1',args:['--no-sandbox','--disable-backgrounding-occluded-windows','--disable-renderer-backgrounding']});
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),samples=[],errors=[];
 try{
-  const page=await browser.newPage();await page.setViewport({width:1600,height:1000});page.on('pageerror',e=>errors.push(String(e)));
-  await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4194')+'/atrium.html',{waitUntil:'domcontentloaded'});
+  const page=await browser.newPage();await page.setViewport(mobile?{width:390,height:844,deviceScaleFactor:3,isMobile:true,hasTouch:true}:{width:1600,height:1000});page.on('pageerror',e=>errors.push(String(e)));
+  if(candidate){
+    await page.setCacheEnabled(false);await page.setRequestInterception(true);
+    page.on('request',r=>{
+      if(new URL(r.url()).pathname.endsWith(mobile?'/residents/chen-mobile.glb':'/residents/chen.glb')){candidateRequests++;return r.respond({status:200,contentType:'model/gltf-binary',body:candidate});}
+      return r.continue();
+    });
+  }
+  await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4194')+'/atrium.html?quality='+(mobile?'mobile':'desktop'),{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#enter:not([hidden])',{timeout:90000});await page.click('#enter');await pause(1700);
+  const interact=()=>mobile?page.tap('#mobile-interact'):page.keyboard.press('KeyE');
+  const cancel=()=>mobile?page.tap('#dialogue-close'):page.keyboard.press('Escape');
   async function feet(id,label){
     await page.waitForFunction(id=>window.__atrium.getFootDiagnostics().find(a=>a.id===id)?.seatBlend>.99,{timeout:12000},id);
     const value=await page.evaluate(id=>window.__atrium.getFootDiagnostics().find(a=>a.id===id),id);
@@ -27,7 +43,7 @@ try{
     await page.evaluate(({position,camera,home})=>{window.__atrium.setReviewPosition(position);window.__atrium.setReviewCamera(camera,[home[0],.65,home[2]]);window.__atrium.setCapture(true);},{position,camera,home});
     await page.screenshot({path:`${out}/${id}-seated.png`});
     await page.waitForFunction(id=>document.querySelector('#interaction-text').textContent.includes(id==='lin'?'林晓':'陈屿'),{},id);
-    await page.keyboard.press('KeyE');await pause(1700);
+    await page.evaluate(()=>window.__atrium.setCapture(false));await interact();await pause(1700);
     const standing=await page.evaluate(id=>window.__atrium.getInteractionState().residents.find(a=>a.id===id),id);
     assert.ok(Math.hypot(standing.position[0]-home[0],standing.position[2]-home[2])>.75);
     assert.ok(standing.seatBlend<.01);
@@ -36,16 +52,18 @@ try{
     samples.push({label:'standing-'+id,...standing});
     await page.evaluate(({id,p})=>window.__atrium.setReviewCamera([id==='lin'?-1.1:3.2,1.45,-3.8],[p[0],.85,p[2]]),{id,p:standing.position});await pause(150);
     await page.screenshot({path:`${out}/${id}-conversation.png`});
-    await page.keyboard.press('Escape');await pause(2700);await feet(id,'returned-'+id);
+    await cancel();await pause(2700);await feet(id,'returned-'+id);
     const returned=await page.evaluate(id=>window.__atrium.getInteractionState().residents.find(a=>a.id===id),id);
     assert.ok(Math.hypot(returned.position[0]-home[0],returned.position[2]-home[2])<.025);
-    await page.keyboard.press('KeyE');await pause(100);await page.keyboard.press('Escape');await pause(2500);await feet(id,'quick-cancel-'+id);
+    await page.evaluate(()=>window.__atrium.setCapture(false));await interact();await pause(100);await cancel();await pause(2500);await feet(id,'quick-cancel-'+id);
   }
   await page.evaluate(()=>{window.__atrium.setCapture(false);window.__atrium.setReviewPosition([9.5,3.5,4.95]);});
-  await page.waitForFunction(()=>/落座/.test(document.querySelector('#interaction-text').textContent));await page.keyboard.press('KeyE');await pause(2000);await feet('you','upper-player');
+  await page.waitForFunction(()=>/落座/.test(document.querySelector('#interaction-text').textContent));await page.evaluate(()=>window.__atrium.setCapture(false));await interact();await pause(2000);await feet('you','upper-player');
   await page.evaluate(()=>{window.__atrium.setCapture(true);window.__atrium.setReviewCamera([7.5,4.3,6.4],[9.4,4.05,4.6]);});await page.screenshot({path:`${out}/player-upper.png`});
   assert.equal(errors.length,0);
-  await fs.writeFile(`${out}/report.json`,JSON.stringify({capturedAt:new Date().toISOString(),runtimeFingerprint:asset.runtimeFingerprint,
-    method:'Actual E and Escape actions after review positioning. Sole estimate uses authored neutral foot offset; not full shoe-mesh penetration or stair IK proof.',samples,errors},null,2));
+  if(candidate)assert.ok(candidateRequests>0,'Candidate asset was never requested');
+  await fs.writeFile(`${out}/report.json`,JSON.stringify({capturedAt:new Date().toISOString(),profile:mobile?'mobile-emulation':'desktop',runtimeFingerprint:asset.runtimeFingerprint,
+    candidateOverride:candidate?{path:candidatePath,sha256:createHash('sha256').update(candidate).digest('hex'),requests:candidateRequests,scope:'Chen selected-tier asset overridden in his native runtime role; runtimeFingerprint identifies the shipped baseline, not this candidate.'}:null,
+    method:(mobile?'Actual touch interaction/close buttons':'Actual E and Escape actions')+' after review positioning. Sole estimate uses authored neutral foot offset; not full shoe-mesh penetration or stair IK proof.',samples,errors},null,2));
   console.log('SEATING_PASS',samples.length);
 }catch(error){console.error(error);throw error;}finally{await browser.close();}
