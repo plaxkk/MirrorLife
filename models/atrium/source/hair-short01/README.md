@@ -15,9 +15,16 @@ same CC0 `base.obj` already used for the resident head, SHA-256
 The keys are original zero-based vertex indices. Binding weights plus scaled
 offsets adapt the authored hairstyle to that base before the resident affine fit.
 
-Opt-in only: `ATRIUM_AUTHORED_HAIR_STUDY=short01`, `ATRIUM_RESIDENT_IDS=you`,
-and `ATRIUM_BUILD_ROOT` beneath repository `tmp/`. Normal builds are unaffected.
-The study retains hair-card topology and UVs at both LODs, exports a 512px texture
-with glTF MASK cutoff 0.4, and follows HeadPivot. It is not approved production art.
-Keeping the card topology avoids decimation changing cutout silhouettes; mobile
-cost and alpha-edge aliasing still require acceptance.
+This is now the default hero hair when hero art is enabled. The first rollout
+includes a smooth front-perimeter adjustment toward the brow (maximum 0.038m
+before inherited rig scaling). It is an incremental art improvement, not full
+production-art approval. Set `ATRIUM_AUTHORED_HAIR=0` for the legacy procedural groom.
+
+For isolated studies use `ATRIUM_AUTHORED_HAIR_STUDY=short01`,
+`ATRIUM_RESIDENT_IDS=you`, and `ATRIUM_BUILD_ROOT` beneath repository `tmp/`.
+Set `ATRIUM_HAIR_FRINGE_STUDY=0` to reproduce the initial unsculpted binding fit.
+The groom retains hair-card topology and UVs at both LODs, exports 512px desktop
+and 256px mobile maps with glTF MASK cutoff 0.4, and follows HeadPivot.
+The runtime treats texture cutout and camera fade independently. Do not enable
+alpha-to-coverage: the diagnosis reproduced bright fragments under that setting.
+Top-card shape, hairline finesse and real-phone aliasing remain art/QA work.

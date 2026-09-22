@@ -1,5 +1,5 @@
 {
-  "capturedAt": "2026-09-22T08:31:33.977Z",
+  "capturedAt": "2026-09-22T10:15:16.279Z",
   "base": "http://127.0.0.1:4195",
   "viewport": [
     1200,
@@ -86,7 +86,7 @@
     ]
   ],
   "assets": {
-    "after": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1"
+    "after": "4dded36b736a42d48fbaaf153d8049e9415d5eeea259cef0787b1af4e91cd4c6"
   },
   "facialFixture": {
     "blink": 0,

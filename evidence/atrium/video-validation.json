@@ -1,11 +1,11 @@
 {
-  "verifiedAt": "2026-09-22T08:39:53.027Z",
-  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
-  "sha256": "68cce0f79935a4748afb8af3726879c94202fceb3858bbf6d46b90bd0399db2c",
-  "decodedFrames": 1538,
-  "bytes": 38971486,
-  "durationSeconds": 102.53333333333333,
-  "decodedDurationSeconds": 102.533333,
+  "verifiedAt": "2026-09-22T10:24:01.129Z",
+  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
+  "sha256": "d076f831a6290e7dbeb5b4c409421073de360f6f1546f611d0ef735f38f92b8c",
+  "decodedFrames": 1568,
+  "bytes": 36961921,
+  "durationSeconds": 104.53333333333333,
+  "decodedDurationSeconds": 104.533333,
   "fullDecodeExitCode": 0,
   "scope": "Complete ffmpeg decode and frame/byte count agreement. Requires separate visual review for framing, content and continuity."
 }

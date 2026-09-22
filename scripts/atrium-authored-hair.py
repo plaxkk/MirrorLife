@@ -1,10 +1,10 @@
 """Isolated CC0 MakeHuman hair study; preserve authored UVs and cutout edges."""
-import bpy, json
+import bpy, json, math, os
 from pathlib import Path
 
 
 def build(root, head, style):
-    assert style == 'short01'
+    assert style in ('short01', 'short02')
     source = Path(root) / 'models/atrium/source' / ('hair-' + style)
     anchors = json.loads((source / 'head-anchors.json').read_text())
     binding = (source / (style + '.mhclo')).read_text().splitlines()
@@ -28,7 +28,15 @@ def build(root, head, style):
             continue
         if fields[0] == 'v':
             x, y, z = fitted[len(vertices)]
-            vertices.append((x * .255, -(z - .55) * .22, (y - 7.124) * .215))
+            x, y, z = x * .255, -(z - .55) * .22, (y - 7.124) * .215
+            if style=='short01' and os.environ.get('ATRIUM_HAIR_FRINGE_STUDY','1')=='1':
+                # Lower the front perimeter gradually while retaining crown
+                # volume, temple coverage and the authored UV/strand flow.
+                front=max(0.,min(1.,(-y-.04)/.12))
+                weight=front*math.exp(-((z-.155)/.10)**2)
+                z-=.038*weight
+                y-=.006*weight
+            vertices.append((x,y,z))
         elif fields[0] == 'vt':
             texcoords.append(tuple(map(float, fields[1:3])))
         elif fields[0] == 'f':

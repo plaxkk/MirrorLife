@@ -1,0 +1,150 @@
+{
+  "candidate": "tmp/groom-study/authored-short01-fitted/public/assets/atrium/residents/you.glb",
+  "sha256": "b8ada54ddb9eba5387c930900514008e40729fd8e07449b648f43eb21293f130",
+  "assets": 1,
+  "injections": 1,
+  "results": [
+    {
+      "variant": "hash",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": true,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "mask",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": false,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "coverage",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": false,
+          "alphaToCoverage": true,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "no-receive-shadow",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": false,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": false
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "opaque",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": false,
+          "alphaToCoverage": false,
+          "alphaTest": 0,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "unlit",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": false,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "separated-full",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": true,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "separated-half",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 0.5,
+          "alphaHash": true,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "separated-zero",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 0,
+          "alphaHash": true,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    },
+    {
+      "variant": "separated-restored",
+      "items": [
+        {
+          "name": "HairAuthored_short01",
+          "opacity": 1,
+          "alphaHash": true,
+          "alphaToCoverage": false,
+          "alphaTest": 0.4,
+          "receiveShadow": true
+        }
+      ],
+      "antialias": true
+    }
+  ],
+  "errors": [],
+  "scope": "Isolated material ablations, not production behavior or gameplay acceptance."
+}

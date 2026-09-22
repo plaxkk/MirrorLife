@@ -2,12 +2,12 @@
   {
     "id": "you",
     "baseRole": "player",
-    "hair": "spiky",
+    "hair": "cc0-short01-fringe",
     "bodyScale": 1.0,
     "source": "models/atrium/residents/you.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
-    "reviewStatus": "development",
+    "license": "MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and short01 hair",
+    "reviewStatus": "development: incremental textured hair; full production art pending",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,

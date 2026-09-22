@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-22T08:39:53.816Z",
-  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "generatedAt": "2026-09-22T10:24:02.246Z",
+  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 104243972,
-  "totalPublicBytes": 17742940,
+  "totalSourceBytes": 111047491,
+  "totalPublicBytes": 18156722,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -349,8 +349,8 @@
     },
     {
       "file": "public/assets/atrium/residents/manifest.json",
-      "bytes": 3736,
-      "sha256": "1b9850ae51de5ea4cd4dcc5aba2fb5ee0eebdad783be593b6cc80e7819d53f56"
+      "bytes": 3818,
+      "sha256": "a352f41b5b435ec37e9d981811d7bb1224da07c7a381aacab5c59181ce13ff00"
     },
     {
       "file": "public/assets/atrium/residents/tang-mobile.glb",
@@ -394,22 +394,22 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 842028,
-      "sha256": "112fa8d0b5eaf85e0f4b6c01248a524983e8142017e44dd5524c52520b75369e",
-      "meshes": 6,
-      "materials": 5,
+      "bytes": 946316,
+      "sha256": "76c0ff37d43314d788cbce89653edd3007ef87319143bd47b85bd0b72d0baa09",
+      "meshes": 7,
+      "materials": 6,
       "skins": 1,
-      "triangles": 21433,
+      "triangles": 22629,
       "animations": []
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 2183580,
-      "sha256": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1",
-      "meshes": 6,
-      "materials": 5,
+      "bytes": 2492992,
+      "sha256": "4dded36b736a42d48fbaaf153d8049e9415d5eeea259cef0787b1af4e91cd4c6",
+      "meshes": 7,
+      "materials": 6,
       "skins": 1,
-      "triangles": 26190,
+      "triangles": 25096,
       "animations": []
     },
     {
@@ -589,18 +589,18 @@
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 3741956,
-      "sha256": "ffc5f0b562db761253c3b9586cf01e9d6d1be23b10d5036aab47f60470b52d73",
-      "meshes": 6,
-      "materials": 5,
+      "bytes": 3885420,
+      "sha256": "73ee4477d928601a36d676c0196118f870ebf73f54eaec0e55dc2667a6bec2e7",
+      "meshes": 7,
+      "materials": 6,
       "skins": 1,
-      "triangles": 37691,
+      "triangles": 32693,
       "animations": []
     },
     {
       "file": "models/atrium/residents/you.blend",
-      "bytes": 4563765,
-      "sha256": "acc52cd725ae10324617aeee4c487e0e60a3142b66aeb64add894e9b6ce8f7a6"
+      "bytes": 4615929,
+      "sha256": "5e87cefe00dffbeda01540f975186edffa257e45ca02c287672fa7b4a67a4348"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",
@@ -631,6 +631,76 @@
       "file": "models/atrium/source/README.md",
       "bytes": 1185,
       "sha256": "9c651cf305576aa843bbe6b7b7bdc2e741cadb9946f2cec280ab7f21c9f4e331"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/README.md",
+      "bytes": 1888,
+      "sha256": "067e89db8d93d25559ff27106080dbee0c53d02eb12ccf08809a91d7481af876"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/head-anchors.json",
+      "bytes": 15347,
+      "sha256": "5ac098bb265ef50da30368a826f80791eac70be44b7776f33b74be548533d0bb"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/provenance.json",
+      "bytes": 1113,
+      "sha256": "ebfc077f7b78120687beefd44144675d7c2b25ff72e09503a3b59bafcbdd45f5"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/short01.mhclo",
+      "bytes": 201588,
+      "sha256": "ae1ffaa98da5753b803b3a173bede4895d2215e6bb94763f3765a71f0e984f35"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/short01.mhmat",
+      "bytes": 1314,
+      "sha256": "01e2e12ce3f3d3c859225456660acadcdd27d4f4b4d888bcbd6f11998cadd975"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/short01.obj",
+      "bytes": 194450,
+      "sha256": "d998d8416f9b5d5591f1d756f4d292288d000a6951bc0f4d2e8e72727bbc44fa"
+    },
+    {
+      "file": "models/atrium/source/hair-short01/short01_diffuse.png",
+      "bytes": 2354146,
+      "sha256": "f34a0957184e3d1e911ed59245f874f8d4843f61ee44ff49f43edb4be0196949"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/README.md",
+      "bytes": 1668,
+      "sha256": "df892964aad0c1456e13d4b676f87313aa8877e9f36fcef3f6215a4560d66717"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/head-anchors.json",
+      "bytes": 21416,
+      "sha256": "de64edf10a49326f27f6b6e2114095ded248242b82fb6d54a4f63eab193a112b"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/provenance.json",
+      "bytes": 1113,
+      "sha256": "d71eb26eb01102a32d2b8077d41f68d38ba64c2d1ed8c6d06e06ce2fea143916"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/short02.mhclo",
+      "bytes": 119240,
+      "sha256": "625736cdb73e6d094df6e5a2df18f371781f1d2cd37b0ae15795c5d7051c3ec2"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/short02.mhmat",
+      "bytes": 1323,
+      "sha256": "2ed04c8aad9c1a35d858ca72091525d32b1da3b61b5a031634dd528fd8530f6d"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/short02.obj",
+      "bytes": 139742,
+      "sha256": "48f979114adfa712165a69cc55c45a70831af1fb3cba8e2a89120f0c87407b64"
+    },
+    {
+      "file": "models/atrium/source/hair-short02/short02_diffuse.png",
+      "bytes": 3553543,
+      "sha256": "47fe33831a3929567c733356dd66243116e05df2ace1f884ddca0080b728229f"
     },
     {
       "file": "models/atrium/source/makehuman-head.obj",

@@ -1,7 +1,7 @@
 {
-  "capturedAt": "2026-09-22T08:31:56.329Z",
-  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
-  "installedBaselineFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "capturedAt": "2026-09-22T10:15:38.532Z",
+  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
+  "installedBaselineFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
   "candidate": null,
   "base": "http://127.0.0.1:4195",
   "browserMode": "headed",
@@ -28,9 +28,9 @@
       4
     ]
   },
-  "playerQuestionTalkPeak": 0.848934015217892,
+  "playerQuestionTalkPeak": 0.8499635750208333,
   "automaticBlink": {
-    "samples": 574,
+    "samples": 572,
     "min": 0,
     "max": 1
   },

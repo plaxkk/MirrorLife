@@ -493,10 +493,10 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             for polygon in obj.data.polygons:polygon.use_smooth=True
     head_tools.build_player_head(ROOT,name,fitted_crop=SHAPE_PROTOTYPE if SHAPE_PROTOTYPE>=3 and name=='chen' else 0)
     if HERO_ART_ENABLED and name=='you':hero_art.finish_head(bpy.data.objects['Head'])
-    if name=='you' and os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY'):
+    if name=='you' and (os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or (HERO_ART_ENABLED and os.environ.get('ATRIUM_AUTHORED_HAIR','1')=='1' and os.environ.get('ATRIUM_GROOM_STUDY','0')=='0')):
         spec=importlib.util.spec_from_file_location('atrium_authored_hair',ROOT/'scripts/atrium-authored-hair.py')
         authored=importlib.util.module_from_spec(spec);spec.loader.exec_module(authored)
-        authored.build(ROOT,bpy.data.objects['Head'],os.environ['ATRIUM_AUTHORED_HAIR_STUDY'])
+        authored.build(ROOT,bpy.data.objects['Head'],os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY','short01'))
     # Narrow the complete rig hierarchy rather than moving arm roots within
     # the bind pose. This preserves the proven cloth clearance and weights.
     visual=bpy.data.objects['VisualRoot'];visual.scale.x*=.88
@@ -517,6 +517,12 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     baked_images=[]
+    # Preserve the authored desktop map; apply the existing half-size mobile
+    # texture policy to cutout hair too, rather than shipping 512px in both LODs.
+    for obj in bpy.context.scene.objects:
+        if obj.get('atrium_authored_hair'):
+            for material in obj.data.materials:
+                baked_images.extend(node.image for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image)
     if name=='you' or SURFACE_PROTOTYPE:
         baked_images.extend(textile.bake_object(core,1024 if name=='you' else 512).values())
     if SURFACE_PROTOTYPE:
@@ -594,7 +600,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'-mobile.glb'))
-    reports.append({'id':name,'baseRole':role,'hair':hair,'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head','reviewStatus':'development','garment':dict(root['atrium_garment'])})
+    reports.append({'id':name,'baseRole':role,'hair':('cc0-short01-fringe' if name=='you' and bpy.data.objects.get('HairAuthored_short01') else hair),'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair','reviewStatus':'development','garment':dict(root['atrium_garment'])})
     print('RESIDENT_READY',name,flush=True)
 if selected and (OUT/'manifest.json').exists():
     previous=json.loads((OUT/'manifest.json').read_text());updates={r['id']:r for r in reports};reports=[updates.get(r['id'],r) for r in previous]

@@ -1,6 +1,6 @@
 {
-  "capturedAt": "2026-09-22T08:36:20.167Z",
-  "runtimeFingerprint": "bbf21799b5fab561ac70d4ae1ed6b52d9a0666612ec2240241a12368c3a3b5f9",
+  "capturedAt": "2026-09-22T10:20:10.035Z",
+  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
   "browserMode": "headed",
   "fixtureNotice": "Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.",
   "results": [

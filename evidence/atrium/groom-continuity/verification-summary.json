@@ -1,0 +1,246 @@
+{
+  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
+  "steps": [
+    {
+      "name": "tests",
+      "seconds": 19.196
+    },
+    {
+      "name": "build",
+      "seconds": 3.798
+    },
+    {
+      "name": "assets",
+      "seconds": 0.972
+    },
+    {
+      "name": "head-surface",
+      "seconds": 6.057
+    },
+    {
+      "name": "garment-deformation",
+      "seconds": 8.479
+    },
+    {
+      "name": "gallery",
+      "seconds": 31.697
+    },
+    {
+      "name": "performance",
+      "seconds": 51.117
+    },
+    {
+      "name": "mobile",
+      "seconds": 47.724
+    },
+    {
+      "name": "garments",
+      "seconds": 15.471
+    },
+    {
+      "name": "faces",
+      "seconds": 11.871
+    },
+    {
+      "name": "facial-motion",
+      "seconds": 48.4
+    },
+    {
+      "name": "controls",
+      "seconds": 49.63
+    },
+    {
+      "name": "window-contact",
+      "seconds": 47.047
+    },
+    {
+      "name": "contact",
+      "seconds": 47.486
+    },
+    {
+      "name": "seating",
+      "seconds": 49.539
+    },
+    {
+      "name": "stairs",
+      "seconds": 48.913
+    },
+    {
+      "name": "resilience",
+      "seconds": 46.968
+    },
+    {
+      "name": "walkthrough",
+      "seconds": 118.606
+    },
+    {
+      "name": "video-decode",
+      "seconds": 67.928
+    },
+    {
+      "name": "assets-after",
+      "seconds": 0.987
+    },
+    {
+      "name": "performance-report",
+      "seconds": 0.172
+    }
+  ],
+  "reports": {
+    "performance": {
+      "frameMs": {
+        "p50": 16.700000000000728,
+        "p95": 34,
+        "p99": 134.6999999999971
+      },
+      "renderPeaks": {
+        "calls": 101,
+        "triangles": 493126,
+        "geometries": 81
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": false,
+      "note": "Local visible Chrome production preview"
+    },
+    "mobile": {
+      "frameMs": {
+        "p50": 16.69999999999891,
+        "p95": 17.700000000000728,
+        "p99": 18.5
+      },
+      "renderPeaks": {
+        "calls": 83,
+        "triangles": 328536,
+        "geometries": 77
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": true,
+      "note": "Desktop GPU emulation; not phone certification"
+    }
+  },
+  "artStatus": "Incremental hero hair integrated locally; full seven-character production art remains unfinished",
+  "remoteStatus": "Not pushed; prior auto-review requires explicit destination authorization",
+  "alternatingAssetComparison": [
+    {
+      "profile": "desktop",
+      "variant": "old",
+      "sha256": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1",
+      "frameMs": {
+        "p50": 16.69999999999891,
+        "p95": 18.399999999997817,
+        "p99": 18.600000000000364
+      },
+      "renderPeaks": {
+        "calls": 99,
+        "triangles": 482534,
+        "geometries": 76
+      }
+    },
+    {
+      "profile": "desktop",
+      "variant": "new",
+      "sha256": "4dded36b736a42d48fbaaf153d8049e9415d5eeea259cef0787b1af4e91cd4c6",
+      "frameMs": {
+        "p50": 16.699999999999818,
+        "p95": 18.200000000000728,
+        "p99": 18.599999999998545
+      },
+      "renderPeaks": {
+        "calls": 101,
+        "triangles": 480346,
+        "geometries": 77
+      }
+    },
+    {
+      "profile": "desktop",
+      "variant": "new",
+      "sha256": "4dded36b736a42d48fbaaf153d8049e9415d5eeea259cef0787b1af4e91cd4c6",
+      "frameMs": {
+        "p50": 16.699999999999818,
+        "p95": 18.299999999999272,
+        "p99": 18.69999999999709
+      },
+      "renderPeaks": {
+        "calls": 101,
+        "triangles": 480346,
+        "geometries": 77
+      }
+    },
+    {
+      "profile": "desktop",
+      "variant": "old",
+      "sha256": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1",
+      "frameMs": {
+        "p50": 16.69999999999891,
+        "p95": 18.200000000000728,
+        "p99": 18.600000000000364
+      },
+      "renderPeaks": {
+        "calls": 99,
+        "triangles": 482534,
+        "geometries": 76
+      }
+    },
+    {
+      "profile": "mobile",
+      "variant": "old",
+      "sha256": "112fa8d0b5eaf85e0f4b6c01248a524983e8142017e44dd5524c52520b75369e",
+      "frameMs": {
+        "p50": 16.699999999999818,
+        "p95": 18.399999999999636,
+        "p99": 18.69999999999709
+      },
+      "renderPeaks": {
+        "calls": 80,
+        "triangles": 338769,
+        "geometries": 74
+      }
+    },
+    {
+      "profile": "mobile",
+      "variant": "new",
+      "sha256": "76c0ff37d43314d788cbce89653edd3007ef87319143bd47b85bd0b72d0baa09",
+      "frameMs": {
+        "p50": 16.69999999999891,
+        "p95": 18.5,
+        "p99": 18.600000000002183
+      },
+      "renderPeaks": {
+        "calls": 82,
+        "triangles": 341161,
+        "geometries": 75
+      }
+    },
+    {
+      "profile": "mobile",
+      "variant": "new",
+      "sha256": "76c0ff37d43314d788cbce89653edd3007ef87319143bd47b85bd0b72d0baa09",
+      "frameMs": {
+        "p50": 16.69999999999891,
+        "p95": 18.399999999999636,
+        "p99": 18.600000000002183
+      },
+      "renderPeaks": {
+        "calls": 82,
+        "triangles": 341161,
+        "geometries": 75
+      }
+    },
+    {
+      "profile": "mobile",
+      "variant": "old",
+      "sha256": "112fa8d0b5eaf85e0f4b6c01248a524983e8142017e44dd5524c52520b75369e",
+      "frameMs": {
+        "p50": 16.600000000002183,
+        "p95": 18.300000000000182,
+        "p99": 18.600000000000364
+      },
+      "renderPeaks": {
+        "calls": 80,
+        "triangles": 338769,
+        "geometries": 74
+      }
+    }
+  ],
+  "performanceConclusion": "No repeatable large old/new regression in these eight diagnostic runs; strict desktop target and first-run 34ms P95 remain unresolved."
+}

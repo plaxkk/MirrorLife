@@ -5,6 +5,7 @@ import {createAtriumPhysics} from './atrium-physics.js';
 import {addAtriumCameraGeometry} from './atrium-camera-geometry.js';
 import {cameraRelativeInput,updateMoveVelocity,wrapAngle} from './atrium-locomotion.js';
 import {loadAtriumActor} from './atrium-actors.js';
+import {configureAtriumPlayerFade} from './atrium-player-fade.js';
 import {applyAtriumFloorContact} from './atrium-floor-contact.js';
 import {updateAtriumSeatMotion} from './atrium-seat-motion.js';
 import {createAtriumGpuTiming} from './atrium-gpu-timing.js';
@@ -232,7 +233,7 @@ async function boot(){
   loadProgress(38,'正在准备你的分身…');
   player=await loadAtriumActor('you',{role:'player',position:[-4.3,0,6.3],yaw:Math.PI},mobile);scene.add(player.group);
   const uniquePlayerMaterials=new Set();player.group.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])uniquePlayerMaterials.add(material);});
-  for(const material of uniquePlayerMaterials){material.alphaHash=true;playerMaterials.push({material,opacity:material.opacity});}
+  for(const material of uniquePlayerMaterials){configureAtriumPlayerFade(material);playerMaterials.push({material,opacity:material.opacity});}
   const handAssets=await loadAtriumGLB('/assets/atrium/life-props.glb');lifeProps=handAssets.scene;player.attachLifeProp(lifeProps);
   const oldPosition=state.position;
   if(oldPosition&&Math.abs(oldPosition[0])<10.5&&Math.abs(oldPosition[2])<7.6&&oldPosition[1]>=-.1&&oldPosition[1]<4&&physics.canStandAt(oldPosition))physics.teleport(oldPosition);
