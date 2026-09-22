@@ -1,5 +1,5 @@
 """Reference-led cloth volumes; all parts are real, orbitable rig geometry."""
-import bpy, math
+import bpy, bmesh, math, os
 from mathutils import Vector
 
 
@@ -68,7 +68,9 @@ def hood_and_details(civic,mats,visual,cloth_y,cloth_back_y):
     for side in [-1,1]:
         # Front opening and short cotton cords follow the chest's true surface.
         cord=[]
-        for x,z in [(side*.065,1.31),(side*.070,1.255),(side*.058,1.20),(side*.061,1.174)]:
+        profile=[(.095,1.29),(.10,1.255),(.092,1.20),(.095,1.174)] if os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1' else [(.065,1.31),(.070,1.255),(.058,1.20),(.061,1.174)]
+        for offset,z in profile:
+            x=side*offset
             cord.append((x,cloth_y(x,z)-.007,z))
         civic.curve_tube('Hood cotton drawcord '+str(side),cord,.0022,mats['paper'],visual,resolution=1)
         civic.ellipsoid('Drawcord bound end '+str(side),cord[-1],(.003,.003,.010),mats['accent'],visual,segments=10,rings=6)
@@ -97,3 +99,38 @@ def relax_shoulders(garment, strength=.48, width=.10, iterations=3):
             if adjacent:
                 average=sum((positions[i] for i in adjacent),Vector())/len(adjacent)
                 vertex.co=p.lerp(average,weight)
+
+
+def open_neckline(garment,mats):
+    """Recessed shirt inset bounded by actual edges in the weighted cloth.
+
+    The hidden shirt/jacket join stays closed: no floating triangular decal,
+    removed skin weights or camera-dependent cutout.
+    """
+    bm=bmesh.new();bm.from_mesh(garment.data)
+    for side in [0,-1,1]:
+        faces=[f for f in bm.faces if all(v.co.y<-.015 for v in f.verts) and max(v.co.z for v in f.verts)>1.16]
+        if side==0:faces=[f for f in faces if min(v.co.x for v in f.verts)<.04 and max(v.co.x for v in f.verts)>-.04]
+        edges={e for f in faces for e in f.edges};verts={v for f in faces for v in f.verts}
+        bmesh.ops.bisect_plane(bm,geom=list(verts)+list(edges)+faces,dist=.000001,
+            plane_co=Vector((side*.014,0,1.17)),plane_no=Vector((side,0,-.42)) if side else Vector((0,0,1)),clear_inner=False,clear_outer=False)
+    bm.to_mesh(garment.data);bm.free()
+    shirt_index=len(garment.data.materials);garment.data.materials.append(mats['paper'])
+    for v in garment.data.vertices:
+        p=v.co
+        if p.y<-.015 and p.z>1.17:
+            width=.014+.42*(p.z-1.17)
+            inset=max(0,min(1,(width-abs(p.x))/.025))
+            p.y+=.008*inset*inset*(3-2*inset)
+    for f in garment.data.polygons:
+        c=sum((garment.data.vertices[i].co for i in f.vertices),Vector())/len(f.vertices)
+        if c.y<-.015 and c.z>1.17 and abs(c.x)<.014+.42*(c.z-1.17):f.material_index=shirt_index
+    garment.data.update();garment.data.calc_loop_triangles()
+    audit=bmesh.new();audit.from_mesh(garment.data)
+    nonmanifold=sum(not e.is_manifold for e in audit.edges);audit.free()
+    weights=max(abs(sum(g.weight for g in v.groups)-1) for v in garment.data.vertices)
+    assert not nonmanifold and weights<.0001,'Neckline lost closed topology or skin weights'
+    assert len(garment.data.loop_triangles)<=2400,'Neckline exceeds garment allocation'
+    report=dict(garment.parent.parent['atrium_garment']);report.update(triangles=len(garment.data.loop_triangles),nonManifoldEdges=nonmanifold,weightError=weights)
+    garment.parent.parent['atrium_garment']=report
+    garment['neckline_study']='Recessed cream inner shirt, V zipper opening; continuous weighted seam'

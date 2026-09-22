@@ -26,7 +26,7 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
-if os.environ.get('ATRIUM_SHOULDER_STUDY') or os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY') or os.environ.get('ATRIUM_LID_EDGE_STUDY') or os.environ.get('ATRIUM_BROW_STUDY') or os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY') or os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
+if os.environ.get('ATRIUM_OPEN_NECK_STUDY') or os.environ.get('ATRIUM_SHOULDER_STUDY') or os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY') or os.environ.get('ATRIUM_LID_EDGE_STUDY') or os.environ.get('ATRIUM_BROW_STUDY') or os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY') or os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
@@ -124,7 +124,8 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             v.co.x*=1+.24*math.exp(-((v.co.z-1.255)/.065)**2)
             v.co.x*=1+.10*math.exp(-((v.co.z-.94)/.13)**2)
     if HERO_ART_ENABLED and who=='you':hero_art.prepare_body()
-    garment=garment_tools.continuous_garment(civic,mats['top'],triangle_budget=1600 if HERO_ART_ENABLED and who=='you' else 1700)
+    open_neck=who=='you' and os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1'
+    garment=garment_tools.continuous_garment(civic,mats['top'],triangle_budget=(1450 if open_neck else 1600) if HERO_ART_ENABLED and who=='you' else 1700)
     if who=='you':
         wardrobe.sculpt_cloth(garment)
     if who=='you' or SHAPE_PROTOTYPE:
@@ -166,6 +167,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         garment['triangle_budget']=2400
         assert report['triangles']<=2400, 'Hero seam topology exceeded its explicit local allocation'
     if HERO_ART_ENABLED and who=='you':hero_art.finish_garment(garment,mats)
+    if open_neck:wardrobe.open_neckline(garment,mats)
     cloth_surface=BVHTree.FromPolygons([v.co for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
     def cloth_y(x,z):
         point=cloth_surface.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
@@ -271,10 +273,15 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     elif who=='you':
         # Raised zipper tapes and slanted welt openings replace pillow-like patches.
         for side in (-1,1):
-            civic.curve_tube('Jacket zipper tape '+str(side),[(side*.014,cloth_y(side*.014,z)-.003,z) for z in [.835,.96,1.1,1.24,1.3]],.004,mats['outer'],visual)
+            tape=[]
+            for z in ([.835,.96,1.1,1.17,1.24,1.3,1.31] if open_neck else [.835,.96,1.1,1.24,1.3]):
+                x=side*(.014+(.42*max(0,z-1.17) if open_neck else 0))
+                tape.append((x,cloth_y(x,z)-.003,z))
+            civic.curve_tube('Jacket zipper tape '+str(side),tape,.004,mats['outer'],visual)
             points=[(side*x,cloth_y(side*x,z)-.004,z) for x,z in [(.105,.88),(.14,.925),(.165,.97)]]
             civic.curve_tube('Recessed diagonal welt '+str(side),points,.005,mats['lower'],visual)
-        civic.rounded_box('Metal zipper pull',(.013,.008,.027),(0,cloth_y(0,1.23)-.009,1.23),mats['accent'],visual,radius=.004)
+        pull_z=1.17 if open_neck else 1.23
+        civic.rounded_box('Metal zipper pull',(.013,.008,.027),(0,cloth_y(0,pull_z)-.009,pull_z),mats['accent'],visual,radius=.004)
     elif who=='chen':
         civic.curve_tube('Jacket zipper',[(0,cloth_y(0,z)-.002,z) for z in [.85,.96,1.08,1.2]],.004,mats['outer'],visual)
         for side in (-1,1):

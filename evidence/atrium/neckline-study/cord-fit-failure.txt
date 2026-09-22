@@ -1,0 +1,20 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/build-atrium-residents.py", line 429, in <module>
+    root=civic.build_character(role,cfg)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kk/repos/MirrorLife/scripts/blender-build-civic-characters.py", line 3699, in build_character
+    build_costume(
+  File "/Users/kk/repos/MirrorLife/scripts/build-atrium-residents.py", line 245, in everyday_costume
+    wardrobe.hood_and_details(civic,mats,visual,cloth_y,cloth_back_y)
+  File "/Users/kk/repos/MirrorLife/scripts/atrium-hero-wardrobe.py", line 74, in hood_and_details
+    cord.append((x,cloth_y(x,z)-.007,z))
+                   ^^^^^^^^^^^^
+  File "/Users/kk/repos/MirrorLife/scripts/build-atrium-residents.py", line 174, in cloth_y
+    if point is None:raise RuntimeError('Missing front cloth surface at '+str((x,z)))
+                     ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Missing front cloth surface at (-0.13, 1.31)
+
+Error: script failed, file: 'scripts/build-atrium-residents.py', exiting.
+
+Blender quit

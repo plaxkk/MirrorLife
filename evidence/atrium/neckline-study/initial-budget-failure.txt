@@ -1,0 +1,18 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/build-atrium-residents.py", line 425, in <module>
+    root=civic.build_character(role,cfg)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kk/repos/MirrorLife/scripts/blender-build-civic-characters.py", line 3699, in build_character
+    build_costume(
+  File "/Users/kk/repos/MirrorLife/scripts/build-atrium-residents.py", line 170, in everyday_costume
+    if open_neck:wardrobe.open_neckline(garment,mats)
+                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kk/repos/MirrorLife/scripts/atrium-hero-wardrobe.py", line 132, in open_neckline
+    assert len(garment.data.loop_triangles)<=2400,'Neckline exceeds garment allocation'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Neckline exceeds garment allocation
+
+Error: script failed, file: 'scripts/build-atrium-residents.py', exiting.
+
+Blender quit
