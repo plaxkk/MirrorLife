@@ -12,6 +12,7 @@ const partialBlink=process.env.ATRIUM_REVIEW_PARTIAL_BLINK==='1';
 const viewport=mobile?{width:390,height:844,deviceScaleFactor:3,isMobile:true,hasTouch:true}:{width:1200,height:1000};
 assert.ok(files.before&&files.after,'Set ATRIUM_REVIEW_BASELINE and ATRIUM_REVIEW_CANDIDATE to immutable comparison assets');
 const cameras=[['body',[-4.3,1.12,1.6],[-4.3,1,4]],['front',[-4.3,1.49,3.40],[-4.3,1.46,4]],['side',[-3.62,1.49,4],[-4.3,1.46,4]],['back',[-4.3,1.49,4.70],[-4.3,1.46,4]],['quarter',[-3.85,1.49,3.48],[-4.3,1.46,4]]];
+if(process.env.ATRIUM_REVIEW_GROOM==='1')cameras.push(['left',[-4.98,1.49,4],[-4.3,1.46,4]],['crown',[-4.3,2.25,3.8],[-4.3,1.52,4]]);
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
 const results=[];
 try{

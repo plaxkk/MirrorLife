@@ -1,0 +1,86 @@
+[
+  {
+    "version": "baseline",
+    "file": "public/assets/atrium/residents/you.glb",
+    "sha256": "d5ea494a38ccff86678478f993281fe1bed186daa480d610db248f01a8dd70e1",
+    "bytes": 2183580,
+    "triangles": 26190
+  },
+  {
+    "version": "baseline",
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "112fa8d0b5eaf85e0f4b6c01248a524983e8142017e44dd5524c52520b75369e",
+    "bytes": 842028,
+    "triangles": 21433
+  },
+  {
+    "version": "v1",
+    "file": "tmp/groom-study/v1/public/assets/atrium/residents/you.glb",
+    "sha256": "3e584649626fa9ef476fa4e52064edf8660f10c6ac0045f8620bbb8ca8cd8b0e",
+    "bytes": 2181680,
+    "triangles": 25848
+  },
+  {
+    "version": "v1",
+    "file": "tmp/groom-study/v1/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "64c81bf312475bca7b2de812017860c0e8a4f751d548b586c26049ea93ba9c52",
+    "bytes": 840536,
+    "triangles": 21255
+  },
+  {
+    "version": "v2",
+    "file": "tmp/groom-study/v2/public/assets/atrium/residents/you.glb",
+    "sha256": "954f3175059dc7778eb03152de4963e559d5ba515ffaed31d69821778103c6e7",
+    "bytes": 2183720,
+    "triangles": 26190
+  },
+  {
+    "version": "v2",
+    "file": "tmp/groom-study/v2/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "8de9dc91aeae47bc94d2d089dc2c7dc31c2e1ef04c9753fc311ef1cace0380ec",
+    "bytes": 842040,
+    "triangles": 21433
+  },
+  {
+    "version": "v3",
+    "file": "tmp/groom-study/v3/public/assets/atrium/residents/you.glb",
+    "sha256": "788c75ff7e67e95e4408da51836b9b31ed1753984d4992c30d6b5926dea7f611",
+    "bytes": 2176972,
+    "triangles": 26190
+  },
+  {
+    "version": "v3",
+    "file": "tmp/groom-study/v3/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "840d2bc581385f4b759b82f3d8e33b143a51a220b6471b45c6b4418a20513b8b",
+    "bytes": 837788,
+    "triangles": 21433
+  },
+  {
+    "version": "v4",
+    "file": "tmp/groom-study/v4/public/assets/atrium/residents/you.glb",
+    "sha256": "de7feaee4a8bad049c2724a1f1b2c115c2cc4eba23e71e63e28c772fc6812091",
+    "bytes": 2184132,
+    "triangles": 26190
+  },
+  {
+    "version": "v4",
+    "file": "tmp/groom-study/v4/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "2509ac0e410511d6ece2fb18462d6799da7a4cf29ca8bf3faf65b1f39631665f",
+    "bytes": 842300,
+    "triangles": 21433
+  },
+  {
+    "version": "v5",
+    "file": "tmp/groom-study/v5/public/assets/atrium/residents/you.glb",
+    "sha256": "c381882e4c0039b7624ff9eab4f4824aab3ee81a1e1c4bbefd19b3e61302025c",
+    "bytes": 2184848,
+    "triangles": 26190
+  },
+  {
+    "version": "v5",
+    "file": "tmp/groom-study/v5/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "5516c2afc78b442c51dcc87dffeb5ed7e2595c254c2d4496112a39ca3848431b",
+    "bytes": 842908,
+    "triangles": 21433
+  }
+]

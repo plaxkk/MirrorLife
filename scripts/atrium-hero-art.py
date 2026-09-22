@@ -2,7 +2,7 @@
 
 Authoring only. All surfaces export through the resident's existing rig/LOD path.
 """
-import bpy, bmesh, math
+import bpy, bmesh, math, os
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
@@ -88,6 +88,8 @@ def finish_head(head):
     for v, p, offset in zip(head.data.vertices, basis, offsets): v.co = p+offset
     head.data.update()
 
+    groom_study=int(os.environ.get('ATRIUM_GROOM_STUDY','0'))
+    assert groom_study in (0,1,2,3,4,5)
     old_hair = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.name.startswith('Hair')]
     material = old_hair[0].data.materials[0]
     for ob in old_hair: bpy.data.objects.remove(ob, do_unlink=True)
@@ -116,14 +118,25 @@ def finish_head(head):
         return ob
 
     # A shallow underlayer is mostly covered by locks; it is not the outer shape.
-    sides, rows = 48, 12
+    sides, rows = (80,20) if groom_study==1 else (48,12)
     points = [tuple(scalp(0,0,.004)[0])]; faces = []
     for row in range(1, rows+1):
         for i in range(sides):
             az = i*math.tau/sides
             extent = 1.10+.58*(1-math.cos(az))*.5-.07*math.sin(az)**4
             extent += .025*math.sin(az*7+.4)
-            points.append(tuple(scalp(row/rows*extent, az, .004)[0]))
+            if groom_study>=2:extent-=(.04 if groom_study>=4 else .085)*(1-math.cos(az))*.5
+            if groom_study==1:
+                extent += .027*math.sin(az*19+.7)+.010*math.sin(az*31)
+                theta=row/rows*extent
+                # Connected side/back hair mass. Narrow directional ridges grow
+                # from the crown and taper at the perimeter rather than ending
+                # as disconnected leaf-shaped clumps on a smooth cap.
+                flow=az*18+theta*3.2+.5*math.sin(az*3)
+                crest=(.5+.5*math.cos(flow))**2
+                lift=.003+.010*crest*math.sin(theta)**.8*math.sin(math.pi*row/rows)**.4
+                points.append(tuple(scalp(theta,az,lift)[0]))
+            else:points.append(tuple(scalp(row/rows*extent, az, .001 if groom_study>=4 else .004)[0]))
     for i in range(sides): faces.append((0,1+i,1+(i+1)%sides))
     for row in range(rows-1):
         for i in range(sides):
@@ -176,11 +189,54 @@ def finish_head(head):
         (-.64,.16,1.16,.040,.034,.64),(-.26,.18,1.11,.036,.032,.68),
         (.12,.25,1.15,.032,.025,.64),(.53,.35,1.21,.028,.018,.27),
         (.89,.48,1.25,.027,.015,.20)]):
-        lock('swept primary %02d'%i,start,end,az,sweep,width,lift)
-    for side in [-1,1]:
-        for i in range(7):
-            lock('temple layer %s %s'%(side,i),.63+.06*(i%2),1.32+.13*(i/6),
-                 side*(1.1+i*.29),side*.23,.022,.012+.003*(i%2))
-    for i in range(6):
-        lock('crown layer %s'%i,.10+.03*(i%3),1.38+.09*(i%2),1.65+i*.35,.35,.026,.031-.002*i)
+        lock('swept primary %02d'%i,start,end,az,sweep,width,lift*(.78 if groom_study else 1))
+    if groom_study>=4:
+        # Cover the full posterior hemisphere and cross the crown. The earlier
+        # six guides occupied only azimuth 1.65..3.40, leaving a broad region
+        # visible between the low-starting temple groups and frontal sweep.
+        for side in [-1,1]:
+            for i in range(5):
+                lock('temple layer %s %s'%(side,i),.48+.04*(i%2),1.34+.22*(i/4),
+                     side*(1.05+i*.44),side*.18,.027,.011+.002*(i%2))
+        for i in range(10):
+            az=1.12+i*.405;sweep=.25+.1*math.sin(i)
+            end=1.54+.09*math.sin(i*1.7)**2
+            if groom_study==5:
+                tip=az+sweep
+                end=1.10+.54*(1-math.cos(tip))*.5-.07*math.sin(tip)**4+.025*math.sin(tip*7+.4)+.025
+            lock('crown layer %s'%i,-.12+.045*(i%4),end,az,sweep,
+                 .030 if groom_study==5 else .034,(.017 if groom_study==5 else .024)+.004*math.sin(i*2.1))
+    else:
+        for side in ([] if groom_study==1 else [-1,1]):
+            for i in range(7):
+                end=1.32+.13*(i/6)
+                if groom_study>=2:end+=.04+.19*(i/6)
+                lock('temple layer %s %s'%(side,i),.63+.06*(i%2),end,
+                     side*(1.1+i*.29),side*.23,.028 if groom_study>=2 else .022,
+                     (.008 if groom_study>=2 else .012)+.003*(i%2))
+        for i in range(0 if groom_study==1 else 6):
+            lock('crown layer %s'%i,.10+.03*(i%3),(1.64 if groom_study>=2 else 1.38)+.09*(i%2),1.65+i*.35,.35,.031 if groom_study>=2 else .026,(.017 if groom_study>=2 else .031)-.002*i)
+    if groom_study==3:
+        # Resolve root/cap intersections in the authoring mesh, not with a
+        # camera-dependent mask. Retain a bounded real 3D surface for all LODs.
+        hair=[o for o in bpy.context.scene.objects if o.type=='MESH' and o.name.startswith('Hair')]
+        budget=0
+        for ob in hair:
+            bpy.ops.object.select_all(action='DESELECT');ob.select_set(True);bpy.context.view_layer.objects.active=ob
+            for modifier in list(ob.modifiers):bpy.ops.object.modifier_apply(modifier=modifier.name)
+            ob.data.calc_loop_triangles();budget+=len(ob.data.loop_triangles)
+        bpy.ops.object.select_all(action='DESELECT')
+        for ob in hair:ob.select_set(True)
+        bpy.context.view_layer.objects.active=hair[0];bpy.ops.object.join();groom=hair[0]
+        groom.name='Hair integrated groom'
+        remesh=groom.modifiers.new('Fused roots','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.003
+        remesh.use_smooth_shade=True
+        bpy.ops.object.modifier_apply(modifier=remesh.name)
+        relax=groom.modifiers.new('Blend root intersections','SMOOTH');relax.factor=.75;relax.iterations=4
+        bpy.ops.object.modifier_apply(modifier=relax.name)
+        groom.data.calc_loop_triangles()
+        reduce=groom.modifiers.new('Preserve hair allocation','DECIMATE');reduce.ratio=min(1,budget/len(groom.data.loop_triangles));reduce.use_collapse_triangulate=True
+        bpy.ops.object.modifier_apply(modifier=reduce.name)
+        for face in groom.data.polygons:face.use_smooth=True
+        groom['groom_triangle_budget']=budget
     head['hero_art_direction']='soft youth face; rooted swept short groom; reference study 2026-09-19'
