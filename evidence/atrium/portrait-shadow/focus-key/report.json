@@ -1,0 +1,241 @@
+{
+  "capturedAt": "2026-09-22T15:29:22.999Z",
+  "base": "http://127.0.0.1:4194",
+  "cameras": [
+    [
+      "body",
+      [
+        -4.3,
+        1.12,
+        1.6
+      ],
+      [
+        -4.3,
+        1,
+        4
+      ]
+    ],
+    [
+      "front",
+      [
+        -4.3,
+        1.49,
+        3.4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "side",
+      [
+        -3.62,
+        1.49,
+        4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "back",
+      [
+        -4.3,
+        1.49,
+        4.7
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "quarter",
+      [
+        -3.85,
+        1.49,
+        3.48
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ]
+  ],
+  "viewport": {
+    "width": 1200,
+    "height": 1000
+  },
+  "profile": "desktop",
+  "partialBlink": false,
+  "shadowAudit": {
+    "mode": "focus-key",
+    "originalSha256": "8a6716c9885c8176cf270ca258f89a5af28449bab167ccfba1e8e88af5259d71",
+    "injectedSha256": "fe1e65ba46b47d12db40a17b6d4453a8150493e76ad94f383b45be90ad898598",
+    "diagnostic": "\n // Injected only in this browser comparison, never in the game source.\n actorLight.position.set(-11.3,17.4,11);actorLight.target.position.set(-4.3,1.4,4);\n Object.assign(actorLight.shadow.camera,{left:-1.5,right:1.5,top:1.5,bottom:-1.5});\n actorLight.shadow.mapSize.set(2048,2048);actorLight.shadow.normalBias=.0005;actorLight.shadow.bias=-.00002;\n sun.intensity=.55;actorLight.intensity=2.3;\n ",
+    "scope": "Fixed portrait shadow frustum diagnostic only. Not a production shadow solution or performance result."
+  },
+  "scope": "Before/after hero isolated visual prototype in the player review slot, same rig and cameras; forced named facial weights. Mobile is desktop GPU viewport emulation. This does not validate the complete gameplay path or performance.",
+  "results": [
+    {
+      "variant": "before",
+      "file": "tmp/portrait-study/lid-edge-v2/public/assets/atrium/residents/you.glb",
+      "sha256": "8ed018f9fe71b69e87fffaa5887ca8de354bf3c5db76624dedc056399d2d126f",
+      "bytes": 2633424,
+      "requests": 1,
+      "shadowRequests": 0,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "after",
+      "file": "tmp/portrait-study/lid-edge-v2/public/assets/atrium/residents/you.glb",
+      "sha256": "8ed018f9fe71b69e87fffaa5887ca8de354bf3c5db76624dedc056399d2d126f",
+      "bytes": 2633424,
+      "requests": 1,
+      "shadowRequests": 1,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

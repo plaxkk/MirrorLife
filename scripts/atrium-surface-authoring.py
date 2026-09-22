@@ -18,7 +18,7 @@ def colour_material(obj, family, roughness):
     return material
 
 
-def skin_shader(obj, portrait=False):
+def skin_shader(obj, portrait=False, occlusion=False):
     material=colour_material(obj,'skin',.74)
     nodes=material.node_tree.nodes;links=material.node_tree.links;bs=nodes.get('Principled BSDF')
     coordinate=nodes.new('ShaderNodeTexCoord');coordinate.object=obj
@@ -53,6 +53,10 @@ def skin_shader(obj, portrait=False):
         bs.inputs['Specular IOR Level'].default_value=.35
         bump.inputs['Strength'].default_value=.065
         material['atrium_portrait_authoring']='Anatomical lip/cheek/ear tint and independent forehead/nose/lip roughness, no baked lighting'
+        if occlusion:
+            ao=nodes.new('ShaderNodeAmbientOcclusion');ao.name='Portrait local ambient occlusion'
+            ao.only_local=True;ao.samples=32;ao.inputs['Distance'].default_value=.05
+            material['atrium_portrait_occlusion']='Self-only ambient visibility, 0.05 world-unit range; independent from albedo'
     material['atrium_surface_authoring']='Native lip/cheek/lid colour; restrained skin microrelief, independent of cloth'
     return material
 

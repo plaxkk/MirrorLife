@@ -1,0 +1,15 @@
+{
+  "texturedPrimitives": 1,
+  "morphKeysUnchanged": [
+    "Basis",
+    "Blink",
+    "Talk"
+  ],
+  "retainedUVLoops": 10497,
+  "removedColourLayers": true,
+  "maps": [
+    "DIFFUSE",
+    "ROUGHNESS",
+    "NORMAL"
+  ]
+}

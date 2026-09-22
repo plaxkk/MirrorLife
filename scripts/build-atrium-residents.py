@@ -30,6 +30,8 @@ if os.environ.get('ATRIUM_LID_EDGE_STUDY') or os.environ.get('ATRIUM_BROW_STUDY'
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
+SKIN_AO_STUDY=os.environ.get('ATRIUM_SKIN_AO_STUDY')=='1'
+assert not SKIN_AO_STUDY or FACE_PAINT_STUDY, 'Skin AO study requires isolated face paint study'
 SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
 assert SHAPE_PROTOTYPE in (0,1,2,3,4,5), 'Unknown isolated shape prototype'
 if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE or FACE_PAINT_STUDY:
@@ -515,7 +517,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for mat in list(bpy.data.materials):
             if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
     if SURFACE_PROTOTYPE or (FACE_PAINT_STUDY and name=='you'):
-        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=FACE_PAINT_STUDY and name=='you')
+        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=FACE_PAINT_STUDY and name=='you',occlusion=SKIN_AO_STUDY and name=='you')
     if SURFACE_PROTOTYPE:
         for mat in list(bpy.data.materials):
             if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])

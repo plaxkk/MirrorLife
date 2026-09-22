@@ -1,0 +1,39 @@
+{
+  "you.glb": {
+    "beforeSha256": "8ed018f9fe71b69e87fffaa5887ca8de354bf3c5db76624dedc056399d2d126f",
+    "afterSha256": "eef38bc17e1429a0eb65fd7c49643763d975dd29f270a17c9b07911095d79cfb",
+    "mapSize": [
+      512,
+      512
+    ],
+    "aoRange": [
+      3,
+      255
+    ],
+    "unchanged": [
+      "albedo",
+      "normal",
+      "roughness"
+    ],
+    "sharedOrmTexture": true
+  },
+  "you-mobile.glb": {
+    "beforeSha256": "49befc778ddea9cbb22495521180096cad3517ee672f3606965f9cff0c5c70ec",
+    "afterSha256": "14a2fd55df0a2929c1344b7cee5f10ec2be3c38bc5be384a615e979c5ea58694",
+    "mapSize": [
+      256,
+      256
+    ],
+    "aoRange": [
+      49,
+      255
+    ],
+    "unchanged": [
+      "albedo",
+      "normal",
+      "roughness"
+    ],
+    "sharedOrmTexture": true
+  },
+  "masterHeadGeometryAndMorphsUnchanged": true
+}

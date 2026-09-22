@@ -1,0 +1,38 @@
+[
+  {
+    "version": "lid-edge-v2",
+    "file": "tmp/portrait-study/lid-edge-v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1020852,
+    "sha256": "49befc778ddea9cbb22495521180096cad3517ee672f3606965f9cff0c5c70ec",
+    "triangles": 23202,
+    "images": 10,
+    "primitives": 7
+  },
+  {
+    "version": "lid-edge-v2",
+    "file": "tmp/portrait-study/lid-edge-v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2633424,
+    "sha256": "8ed018f9fe71b69e87fffaa5887ca8de354bf3c5db76624dedc056399d2d126f",
+    "triangles": 26004,
+    "images": 10,
+    "primitives": 7
+  },
+  {
+    "version": "skin-ao-v1",
+    "file": "tmp/portrait-study/skin-ao-v1/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1062428,
+    "sha256": "14a2fd55df0a2929c1344b7cee5f10ec2be3c38bc5be384a615e979c5ea58694",
+    "triangles": 23202,
+    "images": 10,
+    "primitives": 7
+  },
+  {
+    "version": "skin-ao-v1",
+    "file": "tmp/portrait-study/skin-ao-v1/public/assets/atrium/residents/you.glb",
+    "bytes": 2770648,
+    "sha256": "eef38bc17e1429a0eb65fd7c49643763d975dd29f270a17c9b07911095d79cfb",
+    "triangles": 26004,
+    "images": 10,
+    "primitives": 7
+  }
+]

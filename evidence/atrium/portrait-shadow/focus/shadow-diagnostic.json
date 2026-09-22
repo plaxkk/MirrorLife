@@ -1,0 +1,7 @@
+{
+  "mode": "focus",
+  "originalSha256": "8a6716c9885c8176cf270ca258f89a5af28449bab167ccfba1e8e88af5259d71",
+  "injectedSha256": "dff5e56097379d47c535537706bfd951a1a88320275126d6c2979be6ee41b88a",
+  "diagnostic": "\n // Injected only in this browser comparison, never in the game source.\n actorLight.position.set(-11.3,17.4,11);actorLight.target.position.set(-4.3,1.4,4);\n Object.assign(actorLight.shadow.camera,{left:-1.5,right:1.5,top:1.5,bottom:-1.5});\n actorLight.shadow.mapSize.set(2048,2048);actorLight.shadow.normalBias=.0005;actorLight.shadow.bias=-.00002;\n \n ",
+  "scope": "Fixed portrait shadow frustum diagnostic only. Not a production shadow solution or performance result."
+}

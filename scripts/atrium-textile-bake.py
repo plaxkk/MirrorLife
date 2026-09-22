@@ -102,11 +102,24 @@ def _bake_bind_surface(obj, size, family, min_luminance):
     scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU';scene.cycles.samples=1
     scene.render.bake.margin=16 if family=='skin' else 6;scene.render.bake.use_selected_to_active=False
     images={};skin_coverage=None
-    for kind in ['DIFFUSE','ROUGHNESS','NORMAL']:
+    kinds=['DIFFUSE','ROUGHNESS','NORMAL']
+    if family=='skin' and material.get('atrium_portrait_occlusion'):kinds.append('AO')
+    for kind in kinds:
         image=bpy.data.images.new('Hero '+obj.name+' '+kind,width=size,height=size,alpha=False)
         if kind!='DIFFUSE':image.colorspace_settings.name='Non-Color'
         target=nodes.new('ShaderNodeTexImage');target.image=image;nodes.active=target
-        bpy.ops.object.bake(type=kind,uv_layer='UVMap',**({'pass_filter':{'COLOR'}} if kind=='DIFFUSE' else {}))
+        if kind=='AO':
+            output=nodes.get('Material Output');surface=output.inputs['Surface']
+            prior=surface.links[0].from_socket
+            emission=nodes.new('ShaderNodeEmission')
+            material.node_tree.links.new(nodes['Portrait local ambient occlusion'].outputs['AO'],emission.inputs['Color'])
+            material.node_tree.links.new(emission.outputs[0],surface)
+            samples=scene.cycles.samples;scene.cycles.samples=32
+            try:bpy.ops.object.bake(type='EMIT',uv_layer='UVMap')
+            finally:
+                material.node_tree.links.new(prior,surface);nodes.remove(emission);scene.cycles.samples=samples
+        else:
+            bpy.ops.object.bake(type=kind,uv_layer='UVMap',**({'pass_filter':{'COLOR'}} if kind=='DIFFUSE' else {}))
         import numpy as np
         pixels=np.empty(size*size*4,dtype=np.float32);image.pixels.foreach_get(pixels)
         rgb=pixels.reshape(-1,4)[:,:3]
@@ -145,6 +158,13 @@ def _bake_bind_surface(obj, size, family, min_luminance):
         if kind=='NORMAL':
             normal=nodes.new('ShaderNodeNormalMap');normal.uv_map='UVMap';links.new(texture.outputs['Color'],normal.inputs['Color']);links.new(normal.outputs[0],bs.inputs[socket])
         else:links.new(texture.outputs['Color'],bs.inputs[socket])
+    if 'AO' in images:
+        group=bpy.data.node_groups.new('glTF Material Output','ShaderNodeTree')
+        group.interface.new_socket(name='Occlusion',in_out='INPUT',socket_type='NodeSocketFloat')
+        gltf=nodes.new('ShaderNodeGroup');gltf.node_tree=group
+        texture=nodes.new('ShaderNodeTexImage');texture.image=images['AO']
+        links.new(uv.outputs['UV'],texture.inputs['Vector']);links.new(texture.outputs['Color'],gltf.inputs['Occlusion'])
+        baked['atrium_portrait_occlusion']=material['atrium_portrait_occlusion']
     # Colour has been baked once into the albedo; glTF must not multiply it twice.
     # Removing a Blender attribute invalidates references to later attributes.
     # Re-resolve by name: with two colours, cached references deleted UVMap and
@@ -157,4 +177,5 @@ def _bake_bind_surface(obj, size, family, min_luminance):
     bpy.context.view_layer.update()
     baked['atrium_surface_family']=family or ('textured-cloth-and-skin' if any(m.type=='ARMATURE' for m in obj.modifiers) else 'fabric')
     obj['pbr_texture_contract']='Baked colour, roughness and tangent normal; atlas UVMap; no duplicate vertex tint'
+    if 'AO' in images:obj['pbr_texture_contract']+='; self-only occlusion in standard glTF ORM'
     return images
