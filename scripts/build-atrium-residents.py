@@ -31,6 +31,8 @@ if os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY') or os.environ.get('ATRIUM_LID_ED
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
 SKIN_AO_STUDY=os.environ.get('ATRIUM_SKIN_AO_STUDY')=='1'
+SOURCE_SKIN_STUDY=os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
+assert not SOURCE_SKIN_STUDY or FACE_PAINT_STUDY, 'Source skin requires isolated face paint study'
 assert not SKIN_AO_STUDY or FACE_PAINT_STUDY, 'Skin AO study requires isolated face paint study'
 SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
 assert SHAPE_PROTOTYPE in (0,1,2,3,4,5), 'Unknown isolated shape prototype'
@@ -517,7 +519,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for mat in list(bpy.data.materials):
             if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
     if SURFACE_PROTOTYPE or (FACE_PAINT_STUDY and name=='you'):
-        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=FACE_PAINT_STUDY and name=='you',occlusion=SKIN_AO_STUDY and name=='you')
+        source_texture=ROOT/'models/atrium/source/skin-young-asian-male/young_lightskinned_male_diffuse3.png' if SOURCE_SKIN_STUDY and name=='you' else None
+        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=FACE_PAINT_STUDY and name=='you',occlusion=SKIN_AO_STUDY and name=='you',source_texture=source_texture)
     if SURFACE_PROTOTYPE:
         for mat in list(bpy.data.materials):
             if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])

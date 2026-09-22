@@ -1,0 +1,10 @@
+{
+  "beforeSha256": "fa34c4ddefa74b9472120aa1fd0e2fb05614f9a4e2b094dc5cc4aad4634a3325",
+  "afterSha256": "927871c02d671ed7bb76e285ac1df2f3cd9c1a973976b9fe5f7890ce7f53c99b",
+  "positionsNormalsIndicesAndMorphsUnchanged": true,
+  "attributes": [
+    "POSITION",
+    "NORMAL",
+    "TEXCOORD_0"
+  ]
+}

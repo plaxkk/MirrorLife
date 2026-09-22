@@ -18,7 +18,7 @@ def colour_material(obj, family, roughness):
     return material
 
 
-def skin_shader(obj, portrait=False, occlusion=False):
+def skin_shader(obj, portrait=False, occlusion=False, source_texture=None):
     material=colour_material(obj,'skin',.74)
     nodes=material.node_tree.nodes;links=material.node_tree.links;bs=nodes.get('Principled BSDF')
     coordinate=nodes.new('ShaderNodeTexCoord');coordinate.object=obj
@@ -31,8 +31,9 @@ def skin_shader(obj, portrait=False, occlusion=False):
     links.new(noise.outputs['Fac'],bump.inputs['Height']);links.new(bump.outputs[0],bs.inputs['Normal'])
     if portrait:
         base=tuple(material.diffuse_color[:3])
-        colors=obj.data.color_attributes['Color']
         response=obj.data.color_attributes.new(name='FaceResponse',type='FLOAT_COLOR',domain='CORNER')
+        # Adding another mesh attribute can invalidate an earlier RNA handle.
+        colors=obj.data.color_attributes['Color']
         for loop in obj.data.loops:
             x,y,z=obj.data.vertices[loop.vertex_index].co
             front=max(0.,min(1.,(-y-.11)/.065))
@@ -58,6 +59,17 @@ def skin_shader(obj, portrait=False, occlusion=False):
             ao.only_local=True;ao.samples=32;ao.inputs['Distance'].default_value=.05
             material['atrium_portrait_occlusion']='Self-only ambient visibility, 0.05 world-unit range; independent from albedo'
     material['atrium_surface_authoring']='Native lip/cheek/lid colour; restrained skin microrelief, independent of cloth'
+    if source_texture:
+        assert portrait and obj.data.uv_layers.get('SourceUV')
+        image=bpy.data.images.load(str(source_texture),check_existing=True);image.pack()
+        texture=nodes.new('ShaderNodeTexImage');texture.image=image
+        uv=nodes.new('ShaderNodeUVMap');uv.uv_map='SourceUV';links.new(uv.outputs['UV'],texture.inputs['Vector'])
+        authored=bs.inputs['Base Color'].links[0].from_socket
+        tone=nodes.new('ShaderNodeHueSaturation');tone.inputs['Saturation'].default_value=.85;tone.inputs['Value'].default_value=1.35
+        links.new(texture.outputs['Color'],tone.inputs['Color'])
+        blend=nodes.new('ShaderNodeMixRGB');blend.inputs[0].default_value=.60
+        links.new(authored,blend.inputs[1]);links.new(tone.outputs['Color'],blend.inputs[2]);links.new(blend.outputs[0],bs.inputs['Base Color'])
+        material['atrium_source_skin']='CC0 source UV skin, 60 percent blend; saturation .85 and value 1.35 before mixing'
     return material
 
 

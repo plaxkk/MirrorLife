@@ -1,0 +1,19 @@
+{
+  "archive": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+  "archiveBytes": 280737770,
+  "licensePage": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+  "retrieved": "2026-09-23",
+  "declaredLicense": "CC0-1.0; explicit September 2020 release in original material header",
+  "files": [
+    {
+      "file": "young_asian_male.mhmat",
+      "bytes": 1452,
+      "sha256": "9fdfc9863cd15d1359311435f2da7de3906f81d6eea549fba6bf14cd82ceb6a0"
+    },
+    {
+      "file": "young_lightskinned_male_diffuse3.png",
+      "bytes": 3593099,
+      "sha256": "f50016a5507fc687dc8df06599c8ea48de950cd185de33a71cafc1319ddab4d5"
+    }
+  ]
+}

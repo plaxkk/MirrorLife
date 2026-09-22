@@ -1,0 +1,74 @@
+{
+  "models/atrium/residents/you-master.glb": {
+    "sha256": "e2e04fda57b22c44fc87f1c28b5711ecd5f2c17f175d46ac41295be2aca0ca71",
+    "bytes": 4429980,
+    "triangles": 34197,
+    "headMapSizes": {
+      "albedo": [
+        512,
+        512
+      ],
+      "normal": [
+        512,
+        512
+      ],
+      "orm": [
+        512,
+        512
+      ]
+    },
+    "images": 10,
+    "texturedUvChecks": 4,
+    "headGeometryNormalsIndicesAndMorphsUnchanged": true,
+    "noSecondaryHeadUV": true,
+    "noOriginal2048Texture": true
+  },
+  "public/assets/atrium/residents/you.glb": {
+    "sha256": "6ed086773d6f502a13285f01c0ef6f93bb9c30c2a96bbfbf7d66309c1e4241cf",
+    "bytes": 3006508,
+    "triangles": 26050,
+    "headMapSizes": {
+      "albedo": [
+        512,
+        512
+      ],
+      "normal": [
+        512,
+        512
+      ],
+      "orm": [
+        512,
+        512
+      ]
+    },
+    "images": 10,
+    "texturedUvChecks": 4,
+    "headGeometryNormalsIndicesAndMorphsUnchanged": true,
+    "noSecondaryHeadUV": true,
+    "noOriginal2048Texture": true
+  },
+  "public/assets/atrium/residents/you-mobile.glb": {
+    "sha256": "9ff272f0f6e5c8ca3f1a23bf206a285b4022d96b200ae55efcbc2138601b5bb0",
+    "bytes": 1116164,
+    "triangles": 23246,
+    "headMapSizes": {
+      "albedo": [
+        256,
+        256
+      ],
+      "normal": [
+        256,
+        256
+      ],
+      "orm": [
+        256,
+        256
+      ]
+    },
+    "images": 10,
+    "texturedUvChecks": 4,
+    "headGeometryNormalsIndicesAndMorphsUnchanged": true,
+    "noSecondaryHeadUV": true,
+    "noOriginal2048Texture": true
+  }
+}

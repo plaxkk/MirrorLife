@@ -1,0 +1,15 @@
+{
+  "texturedUvChecks": 1,
+  "sourceUvRemoved": true,
+  "colourAttributesRemoved": true,
+  "morphsUnchanged": [
+    "Basis",
+    "Blink",
+    "Talk"
+  ],
+  "maps": [
+    "DIFFUSE",
+    "ROUGHNESS",
+    "NORMAL"
+  ]
+}

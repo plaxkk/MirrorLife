@@ -58,6 +58,7 @@ def authored_brows(head, front):
         ob['atrium_brow_study']='Tapered forehead-fitted volume with directional strands'
 
 def build_player_head(root_path, identity="you", fitted_crop=False):
+    source_skin=identity=='you' and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
     portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
     lid_edge_study=identity=='you' and os.environ.get('ATRIUM_LID_EDGE_STUDY')=='1'
     portrait_eyes=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1'
@@ -347,6 +348,11 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
     # over it. Reuse its exact boundary indices so normals and topology join.
     points=[tuple(v.co) for v in old.data.vertices];polys=[];old_uv=[];lid_targets={};lid_uv=[];lid_shade={};lid_rims=set()
     uv_source=old.data.uv_layers.active.data
+    if source_skin:
+        import numpy as np
+        vertex_uv={}
+        for loop in old.data.loops:vertex_uv.setdefault(loop.vertex_index,[]).append(tuple(uv_source[loop.index].uv))
+        vertex_uv={i:np.mean(values,axis=0) for i,values in vertex_uv.items()}
     def in_socket(point,side):
         x,y,z=point
         return y<-.08 and ((x-side*.0785)/.055)**2+((z-.0344)/.037)**2<1
@@ -396,8 +402,16 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             # perimeter travel rotates correspondence on the irregular socket,
             # dragging cheek vertices across an eye corner into a diagonal ridge.
             angles=[math.atan2((points[i][2]-cz)/.037,(points[i][0]-cx)/.055) for i in loop]
+        if source_skin:
+            positions=np.array([[points[i][0],points[i][2],1] for i in loop])
+            boundary_uv=np.array([vertex_uv[i] for i in loop])
+            uv_fit,_,rank,_=np.linalg.lstsq(positions,boundary_uv,rcond=None)
+            assert rank==3 and np.isfinite(uv_fit).all()
+            native_rings=[boundary_uv]
+            print('SOURCE_LID_UV_FIT',side,float(np.max(np.abs(positions@uv_fit-boundary_uv))),flush=True)
         for row in range(1,rows+1):
             t=row/rows;blend=t*t*(3-2*t);ring=[]
+            if source_skin:uv_ring=[]
             for boundary_id,theta in zip(loop,angles):
                 outer=Vector(points[boundary_id]);upper=math.sin(theta)>=0
                 upper_height,lower_height=(.016,.009) if portrait_eyes else (.012,.008)
@@ -408,14 +422,17 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 shut=inner.copy();shut.z=cz+(-.0002 if upper else .0002)
                 target=outer.lerp(shut,t);target.y=outer.y*(1-blend)+shut.y*blend;target=cover_eye(target)
                 index=len(points);points.append(tuple(point));lid_targets[index]=target;ring.append(index)
+                if source_skin:uv_ring.append(vertex_uv[boundary_id]*(1-t)+(np.array([inner.x,inner.z,1])@uv_fit)*t)
                 lid_shade[index]=(.25 if upper else .08)*max(0,(t-.82)/.18)
             rings.append(ring)
+            if source_skin:native_rings.append(uv_ring)
         lid_rims.update(rings[-1])
         for row in range(rows):
             for i in range(len(loop)):
                 j=(i+1)%len(loop)
                 polys.append((rings[row][i],rings[row][j],rings[row+1][j],rings[row+1][i]))
-                lid_uv.extend([(i/len(loop),row/rows),(j/len(loop),row/rows),(j/len(loop),(row+1)/rows),(i/len(loop),(row+1)/rows)])
+                if source_skin:lid_uv.extend([native_rings[row][i],native_rings[row][j],native_rings[row+1][j],native_rings[row+1][i]])
+                else:lid_uv.extend([(i/len(loop),row/rows),(j/len(loop),row/rows),(j/len(loop),(row+1)/rows),(i/len(loop),(row+1)/rows)])
     # Discard removed cavity vertices, preserving index correspondence of keys.
     used=sorted({i for poly in polys for i in poly});mapping={old:i for i,old in enumerate(used)}
     points=[points[i] for i in used];polys=[tuple(mapping[i] for i in poly) for poly in polys]
@@ -463,6 +480,9 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
     rebuilt=bpy.data.meshes.new('Player head and curved eyelids');rebuilt.from_pydata(points,[],polys);rebuilt.update();rebuilt.materials.append(skin)
     uv=rebuilt.uv_layers.new(name='UVMap')
     for loop,value in zip(uv.data,old_uv+lid_uv):loop.uv=value
+    if source_skin:
+        source_uv=rebuilt.uv_layers.new(name='SourceUV')
+        for a,b in zip(source_uv.data,rebuilt.uv_layers['UVMap'].data):a.uv=b.uv
     for polygon in rebuilt.polygons:polygon.use_smooth=True
     old.data=rebuilt
     # Vertex tint follows native lip volume, rather than a second mouth shell.

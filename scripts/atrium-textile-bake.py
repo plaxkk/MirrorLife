@@ -103,16 +103,18 @@ def _bake_bind_surface(obj, size, family, min_luminance):
     scene.render.bake.margin=16 if family=='skin' else 6;scene.render.bake.use_selected_to_active=False
     images={};skin_coverage=None
     kinds=['DIFFUSE','ROUGHNESS','NORMAL']
+    if family=='skin' and material.get('atrium_source_skin'):kinds.insert(0,'COVERAGE')
     if family=='skin' and material.get('atrium_portrait_occlusion'):kinds.append('AO')
     for kind in kinds:
         image=bpy.data.images.new('Hero '+obj.name+' '+kind,width=size,height=size,alpha=False)
         if kind!='DIFFUSE':image.colorspace_settings.name='Non-Color'
         target=nodes.new('ShaderNodeTexImage');target.image=image;nodes.active=target
-        if kind=='AO':
+        if kind in {'AO','COVERAGE'}:
             output=nodes.get('Material Output');surface=output.inputs['Surface']
             prior=surface.links[0].from_socket
             emission=nodes.new('ShaderNodeEmission')
-            material.node_tree.links.new(nodes['Portrait local ambient occlusion'].outputs['AO'],emission.inputs['Color'])
+            if kind=='AO':material.node_tree.links.new(nodes['Portrait local ambient occlusion'].outputs['AO'],emission.inputs['Color'])
+            else:emission.inputs['Color'].default_value=(1,1,1,1)
             material.node_tree.links.new(emission.outputs[0],surface)
             samples=scene.cycles.samples;scene.cycles.samples=32
             try:bpy.ops.object.bake(type='EMIT',uv_layer='UVMap')
@@ -126,8 +128,13 @@ def _bake_bind_surface(obj, size, family, min_luminance):
         coverage=float(np.mean(np.max(rgb,axis=1)>min_luminance))
         print('BAKE_RANGE',obj.name,kind,float(rgb.min()),float(rgb.max()),'coverage',coverage,flush=True)
         assert coverage>.1, 'Bake produced an empty or nearly empty texture: '+obj.name+' '+kind
+        if kind=='COVERAGE':
+            skin_coverage=np.min(rgb,axis=1)>.99
+            assert np.mean(skin_coverage)>.1
+            print('SKIN_GEOMETRIC_COVERAGE',float(np.mean(skin_coverage)),flush=True)
+            nodes.remove(target);bpy.data.images.remove(image);continue
         if family=='skin' and material.get('atrium_portrait_authoring'):
-            if kind=='DIFFUSE':
+            if kind=='DIFFUSE' and skin_coverage is None:
                 # This skin-only material has no deliberately black features;
                 # eyelashes/eyes/hair are separate geometry and materials.
                 palette=[tuple(c.color[:3]) for c in obj.data.color_attributes['Color'].data]
@@ -173,6 +180,8 @@ def _bake_bind_surface(obj, size, family, min_luminance):
         obj.data.color_attributes.remove(obj.data.color_attributes[name])
     assert not obj.data.color_attributes and obj.data.uv_layers.get('UVMap'), 'Bake must retain atlas UVs and remove duplicate colour layers'
     obj.data.materials.clear();obj.data.materials.append(baked)
+    if material.get('atrium_source_skin'):
+        obj.data.uv_layers.remove(obj.data.uv_layers['SourceUV'])
     obj.data.update()
     bpy.context.view_layer.update()
     baked['atrium_surface_family']=family or ('textured-cloth-and-skin' if any(m.type=='ARMATURE' for m in obj.modifiers) else 'fabric')
