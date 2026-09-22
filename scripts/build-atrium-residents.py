@@ -24,7 +24,7 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
-if os.environ.get('ATRIUM_HERO_ART_STUDY')=='1':
+if os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))

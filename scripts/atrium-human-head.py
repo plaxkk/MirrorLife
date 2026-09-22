@@ -1,12 +1,15 @@
 """Fit a CC0 MakeHuman head subset to the existing player rig in Blender.
 Mesh provenance: models/atrium/source/README.md. No MakeHuman program code.
 """
-import bpy, math
+import bpy, math, os
 from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 def build_player_head(root_path, identity="you", fitted_crop=False):
+    lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')) if identity=='you' else 0
+    assert lid_study in (0,1,2)
+    radial_lids=lid_study==1
     old=bpy.data.objects['Head'];skin=old.data.materials[0].copy();skin.name=identity+' anatomical skin'
     vertices=[];tex=[];faces=[];uv_faces=[]
     for line in (Path(root_path)/'models/atrium/source/makehuman-head.obj').read_text().splitlines():
@@ -252,7 +255,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             ob.data.update()
     # Replace the native socket patch, rather than layering a second eyelid
     # over it. Reuse its exact boundary indices so normals and topology join.
-    points=[tuple(v.co) for v in old.data.vertices];polys=[];old_uv=[];lid_targets={};lid_uv=[];lid_shade={}
+    points=[tuple(v.co) for v in old.data.vertices];polys=[];old_uv=[];lid_targets={};lid_uv=[];lid_shade={};lid_rims=set()
     uv_source=old.data.uv_layers.active.data
     def in_socket(point,side):
         x,y,z=point
@@ -298,6 +301,11 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         total=sum(lengths);distance=0;angles=[];start_angle=math.atan2(points[loop[0]][2]-cz,points[loop[0]][0]-cx)
         for length in lengths:
             angles.append(start_angle+math.tau*distance/total);distance+=length
+        if radial_lids:
+            # Match each outer vertex to its own orbital direction. Uniform
+            # perimeter travel rotates correspondence on the irregular socket,
+            # dragging cheek vertices across an eye corner into a diagonal ridge.
+            angles=[math.atan2((points[i][2]-cz)/.037,(points[i][0]-cx)/.055) for i in loop]
         for row in range(1,rows+1):
             t=row/rows;blend=t*t*(3-2*t);ring=[]
             for boundary_id,theta in zip(loop,angles):
@@ -309,6 +317,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 index=len(points);points.append(tuple(point));lid_targets[index]=target;ring.append(index)
                 lid_shade[index]=(.25 if upper else .08)*max(0,(t-.82)/.18)
             rings.append(ring)
+        lid_rims.update(rings[-1])
         for row in range(rows):
             for i in range(len(loop)):
                 j=(i+1)%len(loop)
@@ -319,6 +328,28 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
     points=[points[i] for i in used];polys=[tuple(mapping[i] for i in poly) for poly in polys]
     lid_targets={mapping[i]:point for i,point in lid_targets.items() if i in mapping}
     lid_shade={mapping[i]:value for i,value in lid_shade.items() if i in mapping}
+    lid_rims={mapping[i] for i in lid_rims}
+    if lid_study==2:
+        # Relax the socket transition without rearranging an irregular loop.
+        # Preserve the aperture and use the same neighbourhood for both poses.
+        adjacency=[set() for _ in points]
+        for poly in polys:
+            for a,b in zip(poly,poly[1:]+poly[:1]):adjacency[a].add(b);adjacency[b].add(a)
+        neutral=[Vector(p) for p in points]
+        closed=[lid_targets.get(i,p).copy() for i,p in enumerate(neutral)]
+        weights=[]
+        for i,p in enumerate(neutral):
+            orbit=min(((p.x-side*.0785)/.060)**2+((p.z-.0344)/.042)**2 for side in [-1,1])
+            weights.append(.46*math.exp(-orbit**2) if p.y<-.08 and i not in lid_rims else 0)
+        for _ in range(6):
+            for pose in [neutral,closed]:
+                previous=[p.copy() for p in pose]
+                for i,weight in enumerate(weights):
+                    if not weight or not adjacency[i]:continue
+                    average=sum((previous[n] for n in adjacency[i]),Vector())/len(adjacency[i])
+                    pose[i]=cover_eye(previous[i].lerp(average,weight))
+        points=[tuple(p) for p in neutral]
+        lid_targets={i:closed[i] for i in range(len(points)) if weights[i] or i in lid_targets}
     rebuilt=bpy.data.meshes.new('Player head and curved eyelids');rebuilt.from_pydata(points,[],polys);rebuilt.update();rebuilt.materials.append(skin)
     uv=rebuilt.uv_layers.new(name='UVMap')
     for loop,value in zip(uv.data,old_uv+lid_uv):loop.uv=value

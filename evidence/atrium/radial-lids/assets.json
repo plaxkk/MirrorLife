@@ -1,0 +1,44 @@
+[
+  {
+    "variant": "baseline",
+    "tier": "you",
+    "bytes": 2181380,
+    "sha256": "cda352331523020649c559ff71ba0a722e5c95b44927e38d0a0cf39c2e308c1b",
+    "triangles": 26190
+  },
+  {
+    "variant": "baseline",
+    "tier": "you-mobile",
+    "bytes": 839736,
+    "sha256": "274a3af607b9c7e33783a0db8e07dfda324714e15e49987ee80ab414d6a18594",
+    "triangles": 21433
+  },
+  {
+    "variant": "v1",
+    "tier": "you",
+    "bytes": 2181228,
+    "sha256": "887b039a7b76e8c0a192ce6a6de0a4f9af9dcbb954a73fd10e6850eede142c51",
+    "triangles": 26190
+  },
+  {
+    "variant": "v1",
+    "tier": "you-mobile",
+    "bytes": 839804,
+    "sha256": "09922306152eada9cdb6ae8e047c2d16ba7b936afa9ba2d1a15bc09c9ad05cbf",
+    "triangles": 21433
+  },
+  {
+    "variant": "v2",
+    "tier": "you",
+    "bytes": 2184192,
+    "sha256": "1242b8b42f4247a7f9fbb7f1d7d2a56bc183d08cf780a8f82f91a112567b4e7f",
+    "triangles": 26190
+  },
+  {
+    "variant": "v2",
+    "tier": "you-mobile",
+    "bytes": 842352,
+    "sha256": "d3b0705d7bbb4e8f2c3ed7b91b499ea59fb1bcd40f49aae8a0aed0e9a0f73bb4",
+    "triangles": 21433
+  }
+]
