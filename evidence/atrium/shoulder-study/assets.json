@@ -1,0 +1,56 @@
+{
+  "source-skin-v2": [
+    {
+      "file": "you.glb",
+      "sha256": "6ed086773d6f502a13285f01c0ef6f93bb9c30c2a96bbfbf7d66309c1e4241cf",
+      "bytes": 3006508,
+      "triangles": 26050,
+      "images": 10,
+      "uvChecks": 4
+    },
+    {
+      "file": "you-mobile.glb",
+      "sha256": "9ff272f0f6e5c8ca3f1a23bf206a285b4022d96b200ae55efcbc2138601b5bb0",
+      "bytes": 1116164,
+      "triangles": 23246,
+      "images": 10,
+      "uvChecks": 4
+    }
+  ],
+  "shoulder-v1": [
+    {
+      "file": "you.glb",
+      "sha256": "6a1d39880ea9761bbe1c4c827f527401900e72e0ac98dda1953fb1cc142b2ba2",
+      "bytes": 3000444,
+      "triangles": 26033,
+      "images": 10,
+      "uvChecks": 4
+    },
+    {
+      "file": "you-mobile.glb",
+      "sha256": "c3d3d545cf73d65e1262c075327dae7edd1414a9d5c4d8810f1076b33d89ba4d",
+      "bytes": 1118108,
+      "triangles": 23229,
+      "images": 10,
+      "uvChecks": 4
+    }
+  ],
+  "shoulder-v2": [
+    {
+      "file": "you.glb",
+      "sha256": "c6d514b88184988efd688c9d7309bc7ffd891ad0bb45b3f9d6627efcd61307aa",
+      "bytes": 3005880,
+      "triangles": 26041,
+      "images": 10,
+      "uvChecks": 4
+    },
+    {
+      "file": "you-mobile.glb",
+      "sha256": "b1b37d6376830d30be685dbc8ac6c747eaeb264813e0e31e561dff64eea584fd",
+      "bytes": 1118756,
+      "triangles": 23237,
+      "images": 10,
+      "uvChecks": 4
+    }
+  ]
+}

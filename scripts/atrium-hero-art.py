@@ -10,10 +10,18 @@ from mathutils.bvhtree import BVHTree
 def prepare_body():
     """Shape the cloth BEFORE its shoulder union, rather than smoothing a notch."""
     torso = bpy.data.objects['Torso']
+    shoulder_study=int(os.environ.get('ATRIUM_SHOULDER_STUDY','0'))
+    assert shoulder_study in (0,1,2)
     for v in torso.data.vertices:
         p = v.co
         # More upper chest width and a gently falling shoulder, less conical body.
-        p.x *= 1 + .20 * math.exp(-((p.z - 1.25) / .075) ** 2)
+        p.x *= 1 + (.06 if shoulder_study==1 else .20) * math.exp(-((p.z - 1.25) / .075) ** 2)
+        if shoulder_study:
+            # Reduce the inflated upper chest before union. A broad continuous
+            # falloff is tested in isolation; v1 narrowing worsened the join.
+            p.y *= 1-.14*math.exp(-((p.z-1.29)/.085)**2)
+            outer=max(0,min(1,(abs(p.x)-.09)/.15))
+            if shoulder_study==1:p.z -= .014*outer*outer*(3-2*outer)*math.exp(-((p.z-1.25)/.07)**2)
 
 
 def finish_garment(garment, mats):

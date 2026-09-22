@@ -1,0 +1,274 @@
+{
+  "capturedAt": "2026-09-22T16:58:24.940Z",
+  "base": "http://127.0.0.1:4194",
+  "cameras": [
+    [
+      "body",
+      [
+        -4.3,
+        1.12,
+        1.6
+      ],
+      [
+        -4.3,
+        1,
+        4
+      ]
+    ],
+    [
+      "front",
+      [
+        -4.3,
+        1.49,
+        3.4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "side",
+      [
+        -3.62,
+        1.49,
+        4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "back",
+      [
+        -4.3,
+        1.49,
+        4.7
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "quarter",
+      [
+        -3.85,
+        1.49,
+        3.48
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "cloth-front",
+      [
+        -4.3,
+        1.2,
+        2.65
+      ],
+      [
+        -4.3,
+        1.13,
+        4
+      ]
+    ],
+    [
+      "cloth-side",
+      [
+        -2.95,
+        1.2,
+        4
+      ],
+      [
+        -4.3,
+        1.13,
+        4
+      ]
+    ],
+    [
+      "cloth-back",
+      [
+        -4.3,
+        1.2,
+        5.35
+      ],
+      [
+        -4.3,
+        1.13,
+        4
+      ]
+    ]
+  ],
+  "viewport": {
+    "width": 1200,
+    "height": 1000
+  },
+  "profile": "desktop",
+  "partialBlink": false,
+  "shadowAudit": null,
+  "scope": "Before/after hero isolated visual prototype in the player review slot, same rig and cameras; forced named facial weights. Mobile is desktop GPU viewport emulation. This does not validate the complete gameplay path or performance.",
+  "results": [
+    {
+      "variant": "before",
+      "file": "tmp/portrait-study/source-skin-v2/public/assets/atrium/residents/you.glb",
+      "sha256": "6ed086773d6f502a13285f01c0ef6f93bb9c30c2a96bbfbf7d66309c1e4241cf",
+      "bytes": 3006508,
+      "requests": 1,
+      "shadowRequests": 0,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "after",
+      "file": "tmp/portrait-study/shoulder-v1/public/assets/atrium/residents/you.glb",
+      "sha256": "6a1d39880ea9761bbe1c4c827f527401900e72e0ac98dda1953fb1cc142b2ba2",
+      "bytes": 3000444,
+      "requests": 1,
+      "shadowRequests": 0,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ]
+}

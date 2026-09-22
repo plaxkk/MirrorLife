@@ -32,6 +32,7 @@ if(shadowStudy){
 const viewport=mobile?{width:390,height:844,deviceScaleFactor:3,isMobile:true,hasTouch:true}:{width:1200,height:1000};
 assert.ok(files.before&&files.after,'Set ATRIUM_REVIEW_BASELINE and ATRIUM_REVIEW_CANDIDATE to immutable comparison assets');
 const cameras=[['body',[-4.3,1.12,1.6],[-4.3,1,4]],['front',[-4.3,1.49,3.40],[-4.3,1.46,4]],['side',[-3.62,1.49,4],[-4.3,1.46,4]],['back',[-4.3,1.49,4.70],[-4.3,1.46,4]],['quarter',[-3.85,1.49,3.48],[-4.3,1.46,4]]];
+if(process.env.ATRIUM_REVIEW_WARDROBE==='1')cameras.push(['cloth-front',[-4.3,1.20,2.65],[-4.3,1.13,4]],['cloth-side',[-2.95,1.20,4],[-4.3,1.13,4]],['cloth-back',[-4.3,1.20,5.35],[-4.3,1.13,4]]);
 if(process.env.ATRIUM_REVIEW_GROOM==='1')cameras.push(['left',[-4.98,1.49,4],[-4.3,1.46,4]],['crown',[-4.3,2.25,3.8],[-4.3,1.52,4]]);
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
 const results=[];
@@ -57,9 +58,22 @@ try{
    }
    const actual=await page.evaluate(()=>window.__atrium.getFaceDiagnostics());assert.equal(actual[0].blink,blink);assert.equal(actual[0].talk,talk);poses.push({pose,actual});
   }
+  const movement=[];
+  if(process.env.ATRIUM_REVIEW_WARDROBE==='1'){
+   await page.evaluate(()=>{window.__atrium.setReviewFace({blink:0,talk:0});window.__atrium.setReviewPosition([-4.3,0,4]);window.__atrium.setReviewCamera([-4.3,1.3,1.3],[-4.3,1.05,4]);window.__atrium.setCapture(false);});
+   await page.keyboard.down('KeyW');
+   try{
+    for(let frame=0;frame<3;frame++){
+     await new Promise(r=>setTimeout(r,150));
+     await page.screenshot({path:`${out}/${variant}-walking-${frame}.png`});
+     movement.push(await page.evaluate(()=>({position:window.__atrium.getPosition(),heading:window.__atrium.getHeading()})));
+    }
+   }finally{await page.keyboard.up('KeyW');}
+   assert.ok(Math.hypot(...['x','y','z'].map(axis=>movement[2].position[axis]-movement[0].position[axis]))>.01,'Walking fixture did not move');
+  }
   assert.ok(requests>0,'Comparison asset was never requested');
   if(variant==='after'&&shadowModule)assert.equal(shadowRequests,1,'Shadow diagnostic was not loaded exactly once');
-  assert.deepEqual(errors,[]);results.push({variant,file:files[variant],sha256:createHash('sha256').update(body).digest('hex'),bytes:body.length,requests,shadowRequests,poses,errors});await page.close();
+  assert.deepEqual(errors,[]);results.push({variant,file:files[variant],sha256:createHash('sha256').update(body).digest('hex'),bytes:body.length,requests,shadowRequests,poses,movement,errors});await page.close();
  }
  await fs.writeFile(`${out}/report.json`,JSON.stringify({capturedAt:new Date().toISOString(),base,cameras,viewport,profile:mobile?'mobile-emulation':'desktop',partialBlink,shadowAudit,scope:'Before/after hero isolated visual prototype in the player review slot, same rig and cameras; forced named facial weights. Mobile is desktop GPU viewport emulation. This does not validate the complete gameplay path or performance.',results},null,2));
  console.log('SURFACE_PROTOTYPE_CAPTURES_READY');
