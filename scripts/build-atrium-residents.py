@@ -31,6 +31,8 @@ if os.environ.get('ATRIUM_OPEN_NECK_STUDY') or os.environ.get('ATRIUM_SHOULDER_S
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
 SKIN_AO_STUDY=os.environ.get('ATRIUM_SKIN_AO_STUDY')=='1'
+CREW_NECK_STUDY=os.environ.get('ATRIUM_CREW_NECK_STUDY')=='1'
+assert not CREW_NECK_STUDY or os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1', 'Crew neck requires isolated open neckline'
 SOURCE_SKIN_STUDY=os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
 assert not SOURCE_SKIN_STUDY or FACE_PAINT_STUDY, 'Source skin requires isolated face paint study'
 assert not SKIN_AO_STUDY or FACE_PAINT_STUDY, 'Skin AO study requires isolated face paint study'
@@ -109,6 +111,10 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     neck=bpy.data.objects['Neck']
     for v in neck.data.vertices:
         v.co.x*=.76;v.co.y*=.84
+        if CREW_NECK_STUDY and who=='you':
+            blend=max(0,min(1,(1.37-v.co.z)/.035))
+            v.co.z-=.035*blend
+            v.co.x*=1+.24*blend;v.co.y*=1+.20*blend
     for polygon in neck.data.polygons:polygon.use_smooth=True
     # Lower the cloth neckline so the authored skin neck is visible above it.
     # This changes the continuous shell, not a decorative line across the chest.
@@ -272,9 +278,12 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         civic.rounded_box('Apron soft patch pocket',(.23,.034,.105),(0,-.201,.93),mats['outer'],visual,radius=.025)
     elif who=='you':
         # Raised zipper tapes and slanted welt openings replace pillow-like patches.
+        zipper_heights=[.835,.96,1.1,1.24,1.3]
+        if open_neck:zipper_heights=[.835,.96,1.1,1.17,1.24,1.3,1.31]
+        if CREW_NECK_STUDY:zipper_heights=[.835,.96,1.1,1.17,1.24,1.28,1.295]
         for side in (-1,1):
             tape=[]
-            for z in ([.835,.96,1.1,1.17,1.24,1.3,1.31] if open_neck else [.835,.96,1.1,1.24,1.3]):
+            for z in zipper_heights:
                 x=side*(.014+(.42*max(0,z-1.17) if open_neck else 0))
                 tape.append((x,cloth_y(x,z)-.003,z))
             civic.curve_tube('Jacket zipper tape '+str(side),tape,.004,mats['outer'],visual)

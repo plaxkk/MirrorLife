@@ -61,7 +61,7 @@ def hood_and_details(civic,mats,visual,cloth_y,cloth_back_y):
             index=mesh.loops[loop].vertex_index
             uv.data[loop].uv=(index%(segments+1)/segments,index//(segments+1)/rows)
     solid=ob.modifiers.new('Sewn hood lining thickness','SOLIDIFY');solid.thickness=.005;solid.offset=0;solid.material_offset=1
-    civic.contoured_elliptical_shell('Hood rib neck facing',[(1.297,.102,.077,0,0),(1.308,.105,.080,0,0),(1.318,.103,.079,0,0)],mats['outer'],visual,segments=32)
+    if os.environ.get('ATRIUM_CREW_NECK_STUDY')!='1':civic.contoured_elliptical_shell('Hood rib neck facing',[(1.297,.102,.077,0,0),(1.308,.105,.080,0,0),(1.318,.103,.079,0,0)],mats['outer'],visual,segments=32)
     # The visible bound edge has a separate narrow folded tape, not a fat tube.
     for row in [0,rows]:
         civic.curve_tube('Hood bound edge '+str(row),points[row*(segments+1):(row+1)*(segments+1)],.0028,mats['outer'],visual,resolution=1)
@@ -125,6 +125,12 @@ def open_neckline(garment,mats):
     for f in garment.data.polygons:
         c=sum((garment.data.vertices[i].co for i in f.vertices),Vector())/len(f.vertices)
         if c.y<-.015 and c.z>1.17 and abs(c.x)<.014+.42*(c.z-1.17):f.material_index=shirt_index
+    if os.environ.get('ATRIUM_CREW_NECK_STUDY')=='1':
+        for v in garment.data.vertices:
+            p=v.co
+            front=max(0,min(1,(-p.y-.015)/.04))
+            upper=max(0,min(1,(p.z-1.285)/.055))
+            p.z-=.030*front*upper*upper*(3-2*upper)*math.exp(-(p.x/.09)**4)
     garment.data.update();garment.data.calc_loop_triangles()
     audit=bmesh.new();audit.from_mesh(garment.data)
     nonmanifold=sum(not e.is_manifold for e in audit.edges);audit.free()

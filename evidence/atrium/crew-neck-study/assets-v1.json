@@ -1,0 +1,18 @@
+[
+  {
+    "file": "you.glb",
+    "sha256": "7968ed15c1763cba5a299f759920bd61500235087ec0a9de1b19cf151acb1ff3",
+    "bytes": 2976056,
+    "triangles": 25876,
+    "images": 10,
+    "uvChecks": 4
+  },
+  {
+    "file": "you-mobile.glb",
+    "sha256": "0dd3651397196fccc698662446001dcb22db105d6f22e55e25f632ce2c5dd04c",
+    "bytes": 1111832,
+    "triangles": 23112,
+    "images": 10,
+    "uvChecks": 4
+  }
+]
