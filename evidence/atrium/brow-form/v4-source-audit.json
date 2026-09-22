@@ -1,0 +1,22 @@
+{
+  "sourceSha256": "6e05c9ae6088f407249772367003d083b8fa9b3013b59f2099d97b44f5e6084c",
+  "brows": [
+    {
+      "side": -1,
+      "nonManifoldEdges": 0,
+      "signedVolume": 3.218085371769906e-07,
+      "vertices": 420
+    },
+    {
+      "side": 1,
+      "nonManifoldEdges": 0,
+      "signedVolume": 3.2036571481019974e-07,
+      "vertices": 420
+    }
+  ],
+  "facialShapesUnchanged": [
+    "Basis",
+    "Blink",
+    "Talk"
+  ]
+}

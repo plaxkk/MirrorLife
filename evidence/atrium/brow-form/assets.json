@@ -1,0 +1,90 @@
+[
+  {
+    "version": "v7",
+    "file": "tmp/portrait-study/v7/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "ce0cec14d2884775aad8d8fe0956b28856bbce1007452da0e0ba51b79f8fb8ca",
+    "bytes": 1011848,
+    "triangles": 22629,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "v7",
+    "file": "tmp/portrait-study/v7/public/assets/atrium/residents/you.glb",
+    "sha256": "cefe8d8d4079b76f2efc014f5d6025da8dd4076bb1d32999d15700588084f80e",
+    "bytes": 2623228,
+    "triangles": 25096,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v1",
+    "file": "tmp/portrait-study/brow-v1/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "5cddd9fca048863ee26d630a375a10aae23470e15e06c32c8c97058f53a6ad80",
+    "bytes": 1013140,
+    "triangles": 22967,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v1",
+    "file": "tmp/portrait-study/brow-v1/public/assets/atrium/residents/you.glb",
+    "sha256": "a0d46c291719a1fd3fb32f5ff74aa940a3e179bbfcbd28f634978fe33951f905",
+    "bytes": 2625416,
+    "triangles": 25770,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v2",
+    "file": "tmp/portrait-study/brow-v2/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "d30cba2e7727f4c5456027b2371622eb8017682400b43ad5b8b50e5a2e30069b",
+    "bytes": 1013140,
+    "triangles": 22967,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v2",
+    "file": "tmp/portrait-study/brow-v2/public/assets/atrium/residents/you.glb",
+    "sha256": "08c5b25ee6d2647e46e53b4a9e89075a965f7f5c6f59897426137f4c5e1eb669",
+    "bytes": 2625444,
+    "triangles": 25770,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v3",
+    "file": "tmp/portrait-study/brow-v3/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "85452d2b41051f1c8d4fbf8c5e27b77cdfc470c0f7a0fb5290bc60515949b6a4",
+    "bytes": 1013224,
+    "triangles": 22968,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v3",
+    "file": "tmp/portrait-study/brow-v3/public/assets/atrium/residents/you.glb",
+    "sha256": "0b9371d904fae4002b16cc413076d2db1509649b3c162fd4af7571e68479430b",
+    "bytes": 2625476,
+    "triangles": 25770,
+    "primitives": 7,
+    "texturedUvChecks": 4
+  },
+  {
+    "version": "brow-v4",
+    "file": "tmp/portrait-study/brow-v4/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "fbe1b1f803625d1f13692423b7e48209789e4fe2f8c1967dbd1a2141bdfdf506",
+    "bytes": 1013704,
+    "triangles": 22968,
+    "primitives": 7
+  },
+  {
+    "version": "brow-v4",
+    "file": "tmp/portrait-study/brow-v4/public/assets/atrium/residents/you.glb",
+    "sha256": "bce75f3187e611cb288c4595dfe2c642a04ea425e27584f156904e606b299f12",
+    "bytes": 2626088,
+    "triangles": 25770,
+    "primitives": 7
+  }
+]

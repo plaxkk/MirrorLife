@@ -6,6 +6,57 @@ from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
+def authored_brows(head, front):
+    """Small opaque volumes fitted to the forehead, retaining expression pivots."""
+    import bmesh
+    material=bpy.data.materials.new('Hero brow hair dark umber');material.use_nodes=True
+    material.diffuse_color=(.040,.025,.016,1)
+    bs=material.node_tree.nodes.get('Principled BSDF')
+    bs.inputs['Base Color'].default_value=material.diffuse_color
+    bs.inputs['Roughness'].default_value=.88
+    for side in [-1,1]:
+        pivot=bpy.data.objects['BrowPivot_'+str(side)]
+        for ob in list(pivot.children_recursive):
+            if ob.type in {'MESH','CURVE'}:bpy.data.objects.remove(ob,do_unlink=True)
+        transform=pivot.matrix_world.inverted()@head.matrix_world
+        vertices=[];faces=[]
+        def centre(t):
+            return side*(.043+.074*t),.068+.005*math.sin(math.pi*t)-.006*t
+        def volume(samples):
+            start=len(vertices)
+            for x,z,width,depth in samples:
+                for dz,dy in [(-width,0),(0,-depth),(width,0),(0,depth*.3)]:
+                    p=Vector((x,front(x,z+dz)-.0013+dy,z+dz))
+                    vertices.append(tuple(transform@p))
+            for row in range(len(samples)-1):
+                for k in range(4):
+                    a=start+row*4+k;b=start+row*4+(k+1)%4
+                    faces.append((a,b,b+4,a+4))
+            faces.extend([(start+3,start+2,start+1,start),tuple(start+(len(samples)-1)*4+k for k in range(4))])
+        samples=[]
+        for i in range(17):
+            t=i/16;x,z=centre(t)
+            entry=min(1,t/.16)
+            width=.00006+.0042*max(0,math.sin(math.pi*(.12+.88*t)))**.65*(1-.45*t)*entry**.65
+            samples.append((x,z,width,.00065))
+        volume(samples)
+        for i in range(22):
+            t=.015+i/23*.94;x,z=centre(t);samples=[]
+            for j in range(4):
+                u=j/3
+                # Inner hairs rise, then lean towards the temple along the brow.
+                xx=x+side*(.001+.003*t)*u
+                zz=z-.003+.007*(1-.45*t)*u
+                samples.append((xx,zz,.00018*(1-.8*u),.00022))
+            volume(samples)
+        mesh=bpy.data.meshes.new('Forehead fitted brow');mesh.from_pydata(vertices,[],faces);mesh.update()
+        bm=bmesh.new();bm.from_mesh(mesh)
+        bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces));bm.to_mesh(mesh);bm.free()
+        ob=bpy.data.objects.new('Brow_'+str(side),mesh);bpy.context.collection.objects.link(ob)
+        ob.parent=pivot;mesh.materials.append(material)
+        for poly in mesh.polygons:poly.use_smooth=True
+        ob['atrium_brow_study']='Tapered forehead-fitted volume with directional strands'
+
 def build_player_head(root_path, identity="you", fitted_crop=False):
     portrait_eyes=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1'
     lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','4')) if identity=='you' else 0
@@ -126,6 +177,8 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             glint=bpy.data.objects['EyeGlint_'+str(side)]
             glint.scale*=.72
     bpy.context.view_layer.update()
+    if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY')=='1':
+        authored_brows(old,front)
     # Fit a continuous convex front envelope to each complete eye stack.
     # Point rays have discontinuous hit/no-hit boundaries at the sclera edge;
     # projecting only vertices there left small holes between lid triangles.

@@ -1,0 +1,235 @@
+{
+  "capturedAt": "2026-09-22T14:15:11.148Z",
+  "base": "http://127.0.0.1:4194",
+  "cameras": [
+    [
+      "body",
+      [
+        -4.3,
+        1.12,
+        1.6
+      ],
+      [
+        -4.3,
+        1,
+        4
+      ]
+    ],
+    [
+      "front",
+      [
+        -4.3,
+        1.49,
+        3.4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "side",
+      [
+        -3.62,
+        1.49,
+        4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "back",
+      [
+        -4.3,
+        1.49,
+        4.7
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "quarter",
+      [
+        -3.85,
+        1.49,
+        3.48
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ]
+  ],
+  "viewport": {
+    "width": 390,
+    "height": 844,
+    "deviceScaleFactor": 3,
+    "isMobile": true,
+    "hasTouch": true
+  },
+  "profile": "mobile-emulation",
+  "partialBlink": false,
+  "scope": "Before/after hero isolated visual prototype in the player review slot, same rig and cameras; forced named facial weights. Mobile is desktop GPU viewport emulation. This does not validate the complete gameplay path or performance.",
+  "results": [
+    {
+      "variant": "before",
+      "file": "tmp/portrait-study/v7/public/assets/atrium/residents/you-mobile.glb",
+      "sha256": "ce0cec14d2884775aad8d8fe0956b28856bbce1007452da0e0ba51b79f8fb8ca",
+      "bytes": 1011848,
+      "requests": 1,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    },
+    {
+      "variant": "after",
+      "file": "tmp/portrait-study/brow-v4/public/assets/atrium/residents/you-mobile.glb",
+      "sha256": "fbe1b1f803625d1f13692423b7e48209789e4fe2f8c1967dbd1a2141bdfdf506",
+      "bytes": 1013704,
+      "requests": 1,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "errors": []
+    }
+  ]
+}
