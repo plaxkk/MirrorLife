@@ -1,0 +1,29 @@
+{
+  "asset": "tmp/portrait-study/crew-neck-v1/public/assets/atrium/residents/you.glb",
+  "headAttributes": [
+    [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0"
+    ]
+  ],
+  "headAncestorChain": [
+    {
+      "name": "Head",
+      "skin": null
+    },
+    {
+      "name": "HeadPivot",
+      "skin": null
+    },
+    {
+      "name": "HeadWidthCompensator",
+      "skin": null
+    },
+    {
+      "name": "VisualRoot",
+      "skin": null
+    }
+  ],
+  "finding": "Head including native neck has no skin binding; entire neck follows rigid HeadPivot. Separate Neck shell is deleted by head authoring."
+}

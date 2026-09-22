@@ -111,10 +111,6 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     neck=bpy.data.objects['Neck']
     for v in neck.data.vertices:
         v.co.x*=.76;v.co.y*=.84
-        if CREW_NECK_STUDY and who=='you':
-            blend=max(0,min(1,(1.37-v.co.z)/.035))
-            v.co.z-=.035*blend
-            v.co.x*=1+.24*blend;v.co.y*=1+.20*blend
     for polygon in neck.data.polygons:polygon.use_smooth=True
     # Lower the cloth neckline so the authored skin neck is visible above it.
     # This changes the continuous shell, not a decorative line across the chest.
