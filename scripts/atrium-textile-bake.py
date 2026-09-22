@@ -6,6 +6,24 @@ Runtime exports use colour/roughness/tangent normal textures, without custom GLS
 import bpy, math
 
 
+def extend_skin_background(pixels, covered, size):
+    """Extend sampled skin into unused atlas texels for bilinear/mip filtering."""
+    import numpy as np
+    rgb=pixels.reshape(size,size,4)[:,:,:3]
+    valid=covered.reshape(size,size).copy()
+    assert valid.any(), 'Cannot extend an empty skin bake'
+    while not valid.all():
+        total=np.zeros_like(rgb);count=np.zeros((size,size),dtype=np.float32)
+        for dst,src in [((slice(1,None),slice(None)),(slice(None,-1),slice(None))),
+                        ((slice(None,-1),slice(None)),(slice(1,None),slice(None))),
+                        ((slice(None),slice(1,None)),(slice(None),slice(None,-1))),
+                        ((slice(None),slice(None,-1)),(slice(None),slice(1,None)))]:
+            total[dst]+=rgb[src]*valid[src][...,None];count[dst]+=valid[src]
+        fill=(~valid)&(count>0)
+        assert fill.any(), 'Skin atlas extension stalled'
+        rgb[fill]=total[fill]/count[fill,None];valid[fill]=True
+
+
 def bind_surface_material(obj):
     """Build an explicit colour/roughness shader for the consolidated body."""
     material=bpy.data.materials.new('Hero authored body surface');material.use_nodes=True
@@ -78,12 +96,12 @@ def _bake_bind_surface(obj, size, family, min_luminance):
     obj.data.uv_layers.active_index=obj.data.uv_layers.find('UVMap')
     obj.data.uv_layers['UVMap'].active_render=True
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
-    bpy.ops.uv.smart_project(angle_limit=math.radians(70),island_margin=.012)
+    bpy.ops.uv.smart_project(angle_limit=math.radians(70),island_margin=.03 if family=='skin' else .012)
     bpy.ops.object.mode_set(mode='OBJECT')
     material=obj.data.materials[0];nodes=material.node_tree.nodes
     scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU';scene.cycles.samples=1
-    scene.render.bake.margin=6;scene.render.bake.use_selected_to_active=False
-    images={}
+    scene.render.bake.margin=16 if family=='skin' else 6;scene.render.bake.use_selected_to_active=False
+    images={};skin_coverage=None
     for kind in ['DIFFUSE','ROUGHNESS','NORMAL']:
         image=bpy.data.images.new('Hero '+obj.name+' '+kind,width=size,height=size,alpha=False)
         if kind!='DIFFUSE':image.colorspace_settings.name='Non-Color'
@@ -95,9 +113,32 @@ def _bake_bind_surface(obj, size, family, min_luminance):
         coverage=float(np.mean(np.max(rgb,axis=1)>min_luminance))
         print('BAKE_RANGE',obj.name,kind,float(rgb.min()),float(rgb.max()),'coverage',coverage,flush=True)
         assert coverage>.1, 'Bake produced an empty or nearly empty texture: '+obj.name+' '+kind
+        if family=='skin' and material.get('atrium_portrait_authoring'):
+            if kind=='DIFFUSE':
+                # This skin-only material has no deliberately black features;
+                # eyelashes/eyes/hair are separate geometry and materials.
+                palette=[tuple(c.color[:3]) for c in obj.data.color_attributes['Color'].data]
+                # A shared dominant channel makes the lower bound valid under
+                # interpolation. Reject a different palette rather than erasing it.
+                assert all(r>=g and r>=b for r,g,b in palette), 'Skin extension requires a red-dominant palette'
+                darkest_source=min(r for r,g,b in palette)
+                assert darkest_source>.05
+                # Partially rasterized island-edge texels are dark too, not
+                # necessarily exactly zero. A colour-only bake cannot contain
+                # legitimate skin below its authored palette floor.
+                skin_coverage=np.max(rgb,axis=1)>=darkest_source*.95
+                print('SKIN_ATLAS_COVERAGE',float(np.mean(skin_coverage)),darkest_source,flush=True)
+            preserved=rgb[skin_coverage].copy()
+            extend_skin_background(pixels,skin_coverage,size)
+            assert np.array_equal(rgb[skin_coverage],preserved), 'Extension changed authored texels'
+            image.pixels.foreach_set(pixels);image.update()
         image.pack();images[kind]=image
     baked=bpy.data.materials.new(material.name+' baked PBR');baked.use_nodes=True
     nodes=baked.node_tree.nodes;links=baked.node_tree.links;bs=nodes.get('Principled BSDF')
+    if family=='skin':
+        source_bs=material.node_tree.nodes.get('Principled BSDF')
+        for socket in ['Specular IOR Level','Coat Weight','Coat Roughness']:
+            bs.inputs[socket].default_value=source_bs.inputs[socket].default_value
     uv=nodes.new('ShaderNodeUVMap');uv.uv_map='UVMap'
     for kind,socket in [('DIFFUSE','Base Color'),('ROUGHNESS','Roughness'),('NORMAL','Normal')]:
         texture=nodes.new('ShaderNodeTexImage');texture.image=images[kind];links.new(uv.outputs['UV'],texture.inputs['Vector'])
@@ -105,8 +146,15 @@ def _bake_bind_surface(obj, size, family, min_luminance):
             normal=nodes.new('ShaderNodeNormalMap');normal.uv_map='UVMap';links.new(texture.outputs['Color'],normal.inputs['Color']);links.new(normal.outputs[0],bs.inputs[socket])
         else:links.new(texture.outputs['Color'],bs.inputs[socket])
     # Colour has been baked once into the albedo; glTF must not multiply it twice.
-    for attribute in list(obj.data.color_attributes):obj.data.color_attributes.remove(attribute)
+    # Removing a Blender attribute invalidates references to later attributes.
+    # Re-resolve by name: with two colours, cached references deleted UVMap and
+    # left the second colour behind instead of removing the intended layer.
+    for name in list(obj.data.color_attributes.keys()):
+        obj.data.color_attributes.remove(obj.data.color_attributes[name])
+    assert not obj.data.color_attributes and obj.data.uv_layers.get('UVMap'), 'Bake must retain atlas UVs and remove duplicate colour layers'
     obj.data.materials.clear();obj.data.materials.append(baked)
+    obj.data.update()
+    bpy.context.view_layer.update()
     baked['atrium_surface_family']=family or ('textured-cloth-and-skin' if any(m.type=='ARMATURE' for m in obj.modifiers) else 'fabric')
     obj['pbr_texture_contract']='Baked colour, roughness and tangent normal; atlas UVMap; no duplicate vertex tint'
     return images

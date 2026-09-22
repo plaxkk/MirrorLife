@@ -7,6 +7,7 @@ from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
 def build_player_head(root_path, identity="you", fitted_crop=False):
+    portrait_eyes=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1'
     lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','4')) if identity=='you' else 0
     assert lid_study in (0,1,2,3,4)
     radial_lids=lid_study==1
@@ -110,6 +111,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         return point.y if point else -.18
     for side in [-1,1]:
         eye=bpy.data.objects['EyePivot_'+str(side)];eye.location=(side*.0785,-.177,.0344);eye.scale=(.52,.4,.48);eye.rotation_euler=(0,0,side*.32)
+        if portrait_eyes:eye.scale.z=.56
         brow=bpy.data.objects['BrowPivot_'+str(side)];brow.location=(side*.079,front(side*.079,.08)-.003,.08);brow.scale.x=.68
         if identity=='you':
             # Relax the raised-brow expression and give the gaze a readable iris.
@@ -120,7 +122,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             brow.scale.z=.72
             for prefix in ['Iris_', 'IrisCore_', 'Pupil_']:
                 part=bpy.data.objects[prefix+str(side)]
-                part.scale.x*=1.22;part.scale.z*=1.12
+                part.scale.x*=1.10 if portrait_eyes else 1.22;part.scale.z*=1.0 if portrait_eyes else 1.12
             glint=bpy.data.objects['EyeGlint_'+str(side)]
             glint.scale*=.72
     bpy.context.view_layer.update()
@@ -328,7 +330,8 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             t=row/rows;blend=t*t*(3-2*t);ring=[]
             for boundary_id,theta in zip(loop,angles):
                 outer=Vector(points[boundary_id]);upper=math.sin(theta)>=0
-                inner=Vector((cx+.032*math.cos(theta),-.183+side*.32*.032*math.cos(theta),cz+(.012 if upper else .008)*math.sin(theta)))
+                upper_height,lower_height=(.016,.009) if portrait_eyes else (.012,.008)
+                inner=Vector((cx+.032*math.cos(theta),-.183+side*.32*.032*math.cos(theta),cz+(upper_height if upper else lower_height)*math.sin(theta)))
                 point=outer.lerp(inner,t);point.y=outer.y*(1-blend)+inner.y*blend;point=cover_eye(point)
                 shut=inner.copy();shut.z=cz+(-.0002 if upper else .0002)
                 target=outer.lerp(shut,t);target.y=outer.y*(1-blend)+shut.y*blend;target=cover_eye(target)

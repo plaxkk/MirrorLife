@@ -1,0 +1,62 @@
+{
+  "existingAssets": [
+    {
+      "file": "public/assets/atrium/residents/chen-mobile.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/chen.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/he-mobile.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/he.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/lin-mobile.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/lin.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/tang-mobile.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/tang.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/xu-mobile.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/xu.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/you-mobile.glb",
+      "texturedPrimitives": 3
+    },
+    {
+      "file": "public/assets/atrium/residents/you.glb",
+      "texturedPrimitives": 3
+    },
+    {
+      "file": "public/assets/atrium/residents/zhou-mobile.glb",
+      "texturedPrimitives": 1
+    },
+    {
+      "file": "public/assets/atrium/residents/zhou.glb",
+      "texturedPrimitives": 1
+    }
+  ],
+  "expectedBrokenFixtureFailure": "tmp/portrait-study/v1/public/assets/atrium/residents/you.glb: Player head and curved eyelids / Resident authored skin baked PBR missing TEXCOORD_0",
+  "fixedIsolatedHeadTexturedPrimitives": 1
+}

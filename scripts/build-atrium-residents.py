@@ -20,16 +20,19 @@ textile_spec=importlib.util.spec_from_file_location('atrium_textile',ROOT/'scrip
 textile=importlib.util.module_from_spec(textile_spec);textile_spec.loader.exec_module(textile)
 # Reviewed hero tailoring/groom is the default; legacy mode supports comparisons.
 HERO_ART_ENABLED=os.environ.get('ATRIUM_HERO_ART','1')=='1'
+uv_spec=importlib.util.spec_from_file_location('atrium_textured_uv',ROOT/'scripts/verify-atrium-textured-uv.py')
+uv_check=importlib.util.module_from_spec(uv_spec);uv_spec.loader.exec_module(uv_check)
 if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
-if os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
+if os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY') or os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
+FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
 SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
 assert SHAPE_PROTOTYPE in (0,1,2,3,4,5), 'Unknown isolated shape prototype'
-if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE:
+if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE or FACE_PAINT_STUDY:
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Unreviewed surface prototypes must remain under tmp/'
     surface_spec=importlib.util.spec_from_file_location('atrium_surfaces',ROOT/'scripts/atrium-surface-authoring.py')
     surface_tools=importlib.util.module_from_spec(surface_spec);surface_spec.loader.exec_module(surface_tools)
@@ -511,8 +514,9 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         textile.cloth_shader(textile.bind_surface_material(core),mixed_surface=True)
         for mat in list(bpy.data.materials):
             if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
+    if SURFACE_PROTOTYPE or (FACE_PAINT_STUDY and name=='you'):
+        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=FACE_PAINT_STUDY and name=='you')
     if SURFACE_PROTOTYPE:
-        surface_tools.skin_shader(bpy.data.objects['Head'])
         for mat in list(bpy.data.materials):
             if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
@@ -525,7 +529,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
                 baked_images.extend(node.image for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image)
     if name=='you' or SURFACE_PROTOTYPE:
         baked_images.extend(textile.bake_object(core,1024 if name=='you' else 512).values())
-    if SURFACE_PROTOTYPE:
+    if SURFACE_PROTOTYPE or (FACE_PAINT_STUDY and name=='you'):
         baked_images.extend(textile.bake_object(bpy.data.objects['Head'],512,family='skin').values())
     # Bake material base colours into corner vertex colours and merge by rigid controller.
     # Eye and mouth parents remain independently animated; skinning batches stay intact.
@@ -583,6 +587,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for ob in bpy.context.scene.objects:
             if ob != detail:ob.select_set(True)
         bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',use_selection=True,export_apply=False,export_extras=True,export_animations=False,export_yup=True,export_draco_mesh_compression_enable=path.parent==OUT)
+        uv_check.verify(path)
     export(SOURCE/(name+'-master.glb'))
     for ob in bpy.context.scene.objects:
         if ob.type=='MESH' and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):

@@ -1,0 +1,100 @@
+[
+  {
+    "version": "v1",
+    "file": "tmp/portrait-study/v1/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 987796,
+    "sha256": "84d759a29bc98ea1f62ec2daaedbea9c80da64ace101cb33c80083af879c74d2",
+    "triangles": 22629
+  },
+  {
+    "version": "v1",
+    "file": "tmp/portrait-study/v1/public/assets/atrium/residents/you.glb",
+    "bytes": 2591368,
+    "sha256": "5c0ca20b92e7427d4379d1cfd5732f2be744858c4ec8f87a8830bfced8f69d58",
+    "triangles": 25096
+  },
+  {
+    "version": "v2",
+    "file": "tmp/portrait-study/v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 987352,
+    "sha256": "ce41a0aa5c885241568b5abb5ee27cca545b986b739a1e0fab37df474bea8463",
+    "triangles": 22629
+  },
+  {
+    "version": "v2",
+    "file": "tmp/portrait-study/v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2590780,
+    "sha256": "ff7cc57584954877c2eea88b934a363747ae1ab31620f0a0e28263179b12f291",
+    "triangles": 25096
+  },
+  {
+    "version": "v3",
+    "file": "tmp/portrait-study/v3/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1013456,
+    "sha256": "05f25e76f80d84aad18eda34c5c172e1d5053eb89e60f539dc040c000b882fdf",
+    "triangles": 22629
+  },
+  {
+    "version": "v3",
+    "file": "tmp/portrait-study/v3/public/assets/atrium/residents/you.glb",
+    "bytes": 2616924,
+    "sha256": "c87b12cf64968e681e88f8abe7c9ff481947e63a25a30dd407ec32c3b964b00b",
+    "triangles": 25096
+  },
+  {
+    "version": "v4",
+    "file": "tmp/portrait-study/v4/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1015400,
+    "sha256": "7761a0cfe0b24c7889b65063e886ba4bab40c95c50d15a463dccc7bf710a7857",
+    "triangles": 22629
+  },
+  {
+    "version": "v4",
+    "file": "tmp/portrait-study/v4/public/assets/atrium/residents/you.glb",
+    "bytes": 2619208,
+    "sha256": "a77bed6886f289f5bacf442108b28403aecc1c6c9183c7810816eabcb1ec9211",
+    "triangles": 25096
+  },
+  {
+    "version": "v5",
+    "file": "tmp/portrait-study/v5/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1011084,
+    "sha256": "850c8cc6f3df104ff8db04cb3e29375125d5c15ab3a43ab8859fcd6cc446be8d",
+    "triangles": 22629
+  },
+  {
+    "version": "v5",
+    "file": "tmp/portrait-study/v5/public/assets/atrium/residents/you.glb",
+    "bytes": 2616984,
+    "sha256": "059ccdb4c119e0b2f217c144a0600a701a72a762000a90998d8b9047f0f3556a",
+    "triangles": 25096
+  },
+  {
+    "version": "v6",
+    "file": "tmp/portrait-study/v6/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1019804,
+    "sha256": "11be139d346e023f0247e1284c0e9ee1fa188aa2c0575aac2ce26620969080de",
+    "triangles": 22629
+  },
+  {
+    "version": "v6",
+    "file": "tmp/portrait-study/v6/public/assets/atrium/residents/you.glb",
+    "bytes": 2644528,
+    "sha256": "16061f1ff89e3c8f527b70037ccc02ee1ac2263d55a74383b5d1ecdce31f9ca7",
+    "triangles": 25096
+  },
+  {
+    "version": "v7",
+    "file": "tmp/portrait-study/v7/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1011848,
+    "sha256": "ce0cec14d2884775aad8d8fe0956b28856bbce1007452da0e0ba51b79f8fb8ca",
+    "triangles": 22629
+  },
+  {
+    "version": "v7",
+    "file": "tmp/portrait-study/v7/public/assets/atrium/residents/you.glb",
+    "bytes": 2623228,
+    "sha256": "cefe8d8d4079b76f2efc014f5d6025da8dd4076bb1d32999d15700588084f80e",
+    "triangles": 25096
+  }
+]
