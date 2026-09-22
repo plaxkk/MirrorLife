@@ -24,7 +24,7 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
-if os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
+if os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
@@ -493,6 +493,10 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             for polygon in obj.data.polygons:polygon.use_smooth=True
     head_tools.build_player_head(ROOT,name,fitted_crop=SHAPE_PROTOTYPE if SHAPE_PROTOTYPE>=3 and name=='chen' else 0)
     if HERO_ART_ENABLED and name=='you':hero_art.finish_head(bpy.data.objects['Head'])
+    if name=='you' and os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY'):
+        spec=importlib.util.spec_from_file_location('atrium_authored_hair',ROOT/'scripts/atrium-authored-hair.py')
+        authored=importlib.util.module_from_spec(spec);spec.loader.exec_module(authored)
+        authored.build(ROOT,bpy.data.objects['Head'],os.environ['ATRIUM_AUTHORED_HAIR_STUDY'])
     # Narrow the complete rig hierarchy rather than moving arm roots within
     # the bind pose. This preserves the proven cloth clearance and weights.
     visual=bpy.data.objects['VisualRoot'];visual.scale.x*=.88
@@ -521,7 +525,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     # Eye and mouth parents remain independently animated; skinning batches stay intact.
     groups={}
     for obj in list(bpy.context.scene.objects):
-        if obj.get('atrium_facial_morphs') or obj.type not in {'MESH','CURVE'} or any(m.type=='ARMATURE' for m in obj.modifiers):continue
+        if obj.get('atrium_authored_hair') or obj.get('atrium_facial_morphs') or obj.type not in {'MESH','CURVE'} or any(m.type=='ARMATURE' for m in obj.modifiers):continue
         if obj.type=='MESH' and obj.data.shape_keys:
             obj.shape_key_clear()
         bpy.ops.object.select_all(action='DESELECT');obj.select_set(True);bpy.context.view_layer.objects.active=obj
@@ -575,7 +579,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         bpy.ops.export_scene.gltf(filepath=str(path),export_format='GLB',use_selection=True,export_apply=False,export_extras=True,export_animations=False,export_yup=True,export_draco_mesh_compression_enable=path.parent==OUT)
     export(SOURCE/(name+'-master.glb'))
     for ob in bpy.context.scene.objects:
-        if ob.type=='MESH' and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
+        if ob.type=='MESH' and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=.55 if ob.name.startswith('HeadPivot_Surface') else .4;d.use_collapse_triangulate=True
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.modifier_apply(modifier=d.name)
@@ -585,7 +589,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for image in baked_images:
             image.scale(max(128,image.size[0]//2),max(128,image.size[1]//2));image.pack()
     for ob in bpy.context.scene.objects:
-        if ob.type=='MESH' and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
+        if ob.type=='MESH' and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Mobile LOD','DECIMATE');d.ratio=.52
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)

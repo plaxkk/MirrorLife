@@ -1,0 +1,32 @@
+{
+  "archive": "https://files2.makehumancommunity.org/asset_packs/makehuman_system_assets/makehuman_system_assets_cc0.zip",
+  "licensePage": "https://static.makehumancommunity.org/assets/assetpacks/makehuman_system_assets.html",
+  "declaredLicense": "CC0",
+  "files": [
+    {
+      "file": "short01.mhclo",
+      "bytes": 201588,
+      "sha256": "ae1ffaa98da5753b803b3a173bede4895d2215e6bb94763f3765a71f0e984f35"
+    },
+    {
+      "file": "short01.mhmat",
+      "bytes": 1314,
+      "sha256": "01e2e12ce3f3d3c859225456660acadcdd27d4f4b4d888bcbd6f11998cadd975"
+    },
+    {
+      "file": "short01.obj",
+      "bytes": 194450,
+      "sha256": "d998d8416f9b5d5591f1d756f4d292288d000a6951bc0f4d2e8e72727bbc44fa"
+    },
+    {
+      "file": "short01_diffuse.png",
+      "bytes": 2354146,
+      "sha256": "f34a0957184e3d1e911ed59245f874f8d4843f61ee44ff49f43edb4be0196949"
+    }
+  ],
+  "derivedHeadAnchors": {
+    "file": "head-anchors.json",
+    "sha256": "5ac098bb265ef50da30368a826f80791eac70be44b7776f33b74be548533d0bb",
+    "baseMeshSha256": "8e761e6624b8f54536409135d1636da63b32486a90d4897f84e121d144f6fb4c"
+  }
+}

@@ -82,5 +82,61 @@
     "sha256": "5516c2afc78b442c51dcc87dffeb5ed7e2595c254c2d4496112a39ca3848431b",
     "bytes": 842908,
     "triangles": 21433
+  },
+  {
+    "version": "v6",
+    "file": "tmp/groom-study/v6/public/assets/atrium/residents/you.glb",
+    "sha256": "a31b910df2f19b75514ab509e86991265daa9002e9fb222d9de5678f4cea2ce5",
+    "bytes": 2185016,
+    "triangles": 26204
+  },
+  {
+    "version": "v6",
+    "file": "tmp/groom-study/v6/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "af4b222bbc9368bfba945c367e212de26015147103c5beca57cf51ba108448f2",
+    "bytes": 843204,
+    "triangles": 21439
+  },
+  {
+    "version": "v7",
+    "file": "tmp/groom-study/v7/public/assets/atrium/residents/you.glb",
+    "sha256": "fac0ea59ddb0872f981723c75aca4d1fc8aecfef1443a9656714eb5c16e70a2a",
+    "bytes": 2183896,
+    "triangles": 26204
+  },
+  {
+    "version": "v7",
+    "file": "tmp/groom-study/v7/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "a5832c417e0ceaecda625b59b36c8e3cc865914936cb717212021e7c30c019f8",
+    "bytes": 842900,
+    "triangles": 21439
+  },
+  {
+    "version": "authored-short01",
+    "file": "tmp/groom-study/authored-short01/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "8b8c5bc816b5353736e1f7e25347dfd66e9167fc4f533e5b170f19306d23f3d2",
+    "bytes": 1161604,
+    "triangles": 22629
+  },
+  {
+    "version": "authored-short01",
+    "file": "tmp/groom-study/authored-short01/public/assets/atrium/residents/you.glb",
+    "sha256": "7f50cdf8bcccb2aa41efd822c5157548bc6d2959495b21482f5dca2cc79aa177",
+    "bytes": 2492944,
+    "triangles": 25096
+  },
+  {
+    "version": "authored-short01-fitted",
+    "file": "tmp/groom-study/authored-short01-fitted/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "afc7780a5a6aa5a0276c4a5eded64619d8d05109be140a9905425d2d221f4e23",
+    "bytes": 1162148,
+    "triangles": 22629
+  },
+  {
+    "version": "authored-short01-fitted",
+    "file": "tmp/groom-study/authored-short01-fitted/public/assets/atrium/residents/you.glb",
+    "sha256": "b8ada54ddb9eba5387c930900514008e40729fd8e07449b648f43eb21293f130",
+    "bytes": 2493708,
+    "triangles": 25096
   }
 ]

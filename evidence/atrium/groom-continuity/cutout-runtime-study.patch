@@ -1,0 +1,35 @@
+diff --git a/src/atrium-main.js b/src/atrium-main.js
+index e0525b7..805d426 100644
+--- a/src/atrium-main.js
++++ b/src/atrium-main.js
+@@ -232,7 +232,12 @@ async function boot(){
+   loadProgress(38,'正在准备你的分身…');
+   player=await loadAtriumActor('you',{role:'player',position:[-4.3,0,6.3],yaw:Math.PI},mobile);scene.add(player.group);
+   const uniquePlayerMaterials=new Set();player.group.traverse(node=>{if(node.isMesh)for(const material of Array.isArray(node.material)?node.material:[node.material])uniquePlayerMaterials.add(material);});
+-  for(const material of uniquePlayerMaterials){material.alphaHash=true;playerMaterials.push({material,opacity:material.opacity});}
++  for(const material of uniquePlayerMaterials){
++    const cutout=material.alphaTest>0;
++    material.alphaHash=!cutout;
++    material.alphaToCoverage=cutout;
++    playerMaterials.push({material,opacity:material.opacity,cutout});
++  }
+   const handAssets=await loadAtriumGLB('/assets/atrium/life-props.glb');lifeProps=handAssets.scene;player.attachLifeProp(lifeProps);
+   const oldPosition=state.position;
+   if(oldPosition&&Math.abs(oldPosition[0])<10.5&&Math.abs(oldPosition[2])<7.6&&oldPosition[1]>=-.1&&oldPosition[1]<4&&physics.canStandAt(oldPosition))physics.teleport(oldPosition);
+@@ -377,6 +382,16 @@ function applyPlayerFade(alpha){
+   player.group.visible=true;
+   for(const entry of playerMaterials){
+     entry.material.opacity=entry.opacity*alpha;
++    // At full visibility, preserve authored cutout edges instead of hashing
++    // their texture alpha into speckle. Close-camera fades still reveal the room.
++    if(entry.cutout){
++      const fading=alpha<.999;
++      if(entry.material.alphaHash!==fading){
++        entry.material.alphaHash=fading;
++        entry.material.alphaToCoverage=!fading;
++        entry.material.needsUpdate=true;
++      }
++    }
+   }
+ }
+ function updateNearby(){

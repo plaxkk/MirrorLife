@@ -1,0 +1,6 @@
+{
+  "runtimeSourceSha256": "cf97e84b2d723343dd5011c71eac30d5b141b14d60dcbda1c6b2f44c7277f136",
+  "runtimePatch": "../cutout-runtime-study.patch",
+  "status": "Rejected visual study; runtime patch reverted after capture",
+  "candidate": "tmp/groom-study/authored-short01-fitted/public/assets/atrium/residents/you.glb"
+}

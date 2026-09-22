@@ -89,7 +89,7 @@ def finish_head(head):
     head.data.update()
 
     groom_study=int(os.environ.get('ATRIUM_GROOM_STUDY','0'))
-    assert groom_study in (0,1,2,3,4,5)
+    assert groom_study in (0,1,2,3,4,5,6,7)
     old_hair = [o for o in bpy.context.scene.objects if o.type == 'MESH' and o.name.startswith('Hair')]
     material = old_hair[0].data.materials[0]
     for ob in old_hair: bpy.data.objects.remove(ob, do_unlink=True)
@@ -146,7 +146,11 @@ def finish_head(head):
     solid = cap.modifiers.new('Hairline thickness', 'SOLIDIFY'); solid.thickness=.003
 
     def lock(name, start, end, az, sweep, width, lift):
-        steps, cross = 14, 8
+        if groom_study==7:
+            tip=az+sweep
+            edge=1.10+.54*(1-math.cos(tip))*.5-.07*math.sin(tip)**4+.025*math.sin(tip*7+.4)
+            end=min(end,edge+.022)
+        steps, cross = (9 if groom_study>=6 else 14), 8
         centres=[]; normals=[]
         for i in range(steps+1):
             t=i/steps
@@ -163,7 +167,11 @@ def finish_head(head):
             # Keep a broad overlapping mass until the final quarter. A long
             # linear taper makes every lock read as an isolated pointed blade.
             taper=1-max(0,(t-.72)/.28)**1.4
-            w=width*(.72+.32*math.sin(math.pi*t))*taper+.0005
+            if groom_study>=6:
+                tip=max(0,min(1,(t-.55)/.45));taper=1-tip*tip*(3-2*tip)
+                root=min(1,t/.22);root=.32+.68*root*root*(3-2*root)
+                w=width*(.76+.24*math.sin(math.pi*t))*taper*root+.0004
+            else:w=width*(.72+.32*math.sin(math.pi*t))*taper+.0005
             for j in range(cross):
                 angle=math.tau*j/cross
                 # Flattened wedge, curved crest and buried underside; avoid
@@ -174,6 +182,8 @@ def finish_head(head):
                 azimuth=math.atan2(direction.x,-direction.y)
                 crest=max(0,math.sin(angle))
                 height=.002+lift*math.sin(math.pi*t)**.9*crest+.002*t**6
+                if groom_study>=6:
+                    height=.0005+lift*math.sin(math.pi*t)**1.2*crest**.6+.001*t**6
                 if math.sin(angle)<0:height=-.002
                 vertices.append(tuple(scalp(theta,azimuth,height)[0]))
         for i in range(steps):
@@ -189,8 +199,25 @@ def finish_head(head):
         (-.64,.16,1.16,.040,.034,.64),(-.26,.18,1.11,.036,.032,.68),
         (.12,.25,1.15,.032,.025,.64),(.53,.35,1.21,.028,.018,.27),
         (.89,.48,1.25,.027,.015,.20)]):
-        lock('swept primary %02d'%i,start,end,az,sweep,width,lift*(.78 if groom_study else 1))
-    if groom_study>=4:
+        lock('swept primary %02d'%i,start,end,az,sweep,width*(.76 if groom_study>=6 else 1),lift*(.55 if groom_study>=6 else .78 if groom_study else 1))
+    if groom_study>=6:
+        # Smaller secondary groups complete the silhouette without duplicating
+        # the heavy primary profile; redistribute longitudinal samples to keep
+        # the overall hair triangle allocation near the original 27 groups.
+        for i in range(3):
+            lock('front secondary %s'%i,.20+.09*i,1.12+.035*i,-1.1+.48*i,.54,.015,.010)
+        def hairline(az):
+            return 1.10+.54*(1-math.cos(az))*.5-.07*math.sin(az)**4+.025*math.sin(az*7+.4)
+        for side in [-1,1]:
+            for i in range(7):
+                az=side*(1.0+i*.29);sweep=side*(.14+.04*math.sin(i))
+                lock('temple layer %s %s'%(side,i),.42+.07*(i%3),hairline(az+sweep)+.018,
+                     az,sweep,.017+.002*math.sin(i*2.1),.007+.002*math.sin(i*1.7))
+        for i in range(17):
+            az=1.05+i*.235;sweep=.20+.09*math.sin(i*1.7)
+            lock('crown layer %s'%i,-.10+.035*(i%5),hairline(az+sweep)+.018,
+                 az,sweep,.021+.0025*math.sin(i*2.3),.011+.003*math.sin(i*1.8))
+    elif groom_study>=4:
         # Cover the full posterior hemisphere and cross the crown. The earlier
         # six guides occupied only azimuth 1.65..3.40, leaving a broad region
         # visible between the low-starting temple groups and frontal sweep.

@@ -1,11 +1,18 @@
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
-const out='evidence/atrium/window-contact';await fs.mkdir(out,{recursive:true});
+import {createHash} from 'node:crypto';
+const out=process.env.ATRIUM_WINDOW_OUTPUT||'evidence/atrium/window-contact';await fs.mkdir(out,{recursive:true});
+const candidate=process.env.ATRIUM_REVIEW_CANDIDATE;
+const body=candidate?await fs.readFile(candidate):null;let requests=0;
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
 const wait=ms=>new Promise(r=>setTimeout(r,ms)),results=[],errors=[];
 try{
   const page=await browser.newPage();await page.setViewport({width:1280,height:720});page.on('pageerror',e=>errors.push(String(e)));
+  if(body){await page.setCacheEnabled(false);await page.setRequestInterception(true);page.on('request',r=>{
+    if(new URL(r.url()).pathname==='/assets/atrium/residents/you.glb'){requests++;return r.respond({status:200,contentType:'model/gltf-binary',body});}
+    return r.continue();
+  });}
   await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4193')+'/atrium.html');await page.waitForSelector('#enter:not([hidden])',{timeout:90000});await page.click('#enter');
   for(const floor of [0,3.5])for(const side of [-1,1]){
     const id=`window-${floor}-${side}`;
@@ -27,6 +34,7 @@ try{
   const pitches=samples.map(s=>s.lookPitch),range=Math.max(...pitches)-Math.min(...pitches);
   assert.ok(range<.025,`flat walking camera pitch variation ${range}`);
   assert.ok(samples.every(s=>Math.abs(s.clearancePitch-s.pitch)<1e-6),'automatic pitch mode returned');
-  assert.deepEqual(errors,[]);await fs.writeFile(`${out}/report.json`,JSON.stringify({capturedAt:new Date().toISOString(),scope:'Four input-driven window pushes from reachable rear-corner fixtures, physical capsule clearance, flat-walk camera angles. Does not certify every animated hand or garment vertex.',results,camera:{pitchRange:range,samples},errors},null,2));
+  if(body){assert.ok(requests>0);assert.ok(results.some(r=>r.camera.fade<.5),'Corner must exercise close-camera fade');assert.ok(samples.at(-1).fade>.999,'Walking away must restore full visibility');}
+  assert.deepEqual(errors,[]);await fs.writeFile(`${out}/report.json`,JSON.stringify({capturedAt:new Date().toISOString(),candidate:body?{file:candidate,sha256:createHash('sha256').update(body).digest('hex'),requests}:null,scope:'Four input-driven window pushes from reachable rear-corner fixtures, physical capsule clearance, flat-walk camera angles. Does not certify every animated hand or garment vertex.',results,camera:{pitchRange:range,samples},errors},null,2));
   console.log('WINDOW_CONTACT_READY',results.length,'PITCH_RANGE',range);
 }finally{await browser.close();}
