@@ -1,0 +1,28 @@
+[
+  {
+    "file": "you.glb",
+    "sha256": "b78822a6301e047583486b637a8d33e04e9c103728939a611b395575a181be26",
+    "bytes": 2978592,
+    "triangles": 25876,
+    "images": 10,
+    "uvChecks": 4,
+    "headSkinBones": [
+      "SkinNeckAnchor",
+      "SkinNeckHead"
+    ],
+    "hasJointsWeightsAndTwoMorphs": true
+  },
+  {
+    "file": "you-mobile.glb",
+    "sha256": "f16848b5aaf0dab7a41c067e029736f1102aa1e9a2cc4a5a403fa4fe6799f947",
+    "bytes": 1114404,
+    "triangles": 23112,
+    "images": 10,
+    "uvChecks": 4,
+    "headSkinBones": [
+      "SkinNeckAnchor",
+      "SkinNeckHead"
+    ],
+    "hasJointsWeightsAndTwoMorphs": true
+  }
+]

@@ -1,0 +1,72 @@
+{
+  "sourceSha256": "924922d19d9acc11676315daa463d2719c0c6eb348f0de8b5218a235005586b7",
+  "zones": {
+    "anchor": 36,
+    "blend": 257,
+    "head": 1725
+  },
+  "samples": [
+    {
+      "blenderAngles": [
+        0,
+        0,
+        0
+      ],
+      "anchorError": 0.0,
+      "upperHeadError": 1.666000468656264e-08,
+      "blendError": 1.193256480846328e-07
+    },
+    {
+      "blenderAngles": [
+        0,
+        0,
+        0.45
+      ],
+      "anchorError": 0.0,
+      "upperHeadError": 3.725290298461914e-08,
+      "blendError": 1.1967404487884797e-07
+    },
+    {
+      "blenderAngles": [
+        0,
+        0,
+        -0.45
+      ],
+      "anchorError": 0.0,
+      "upperHeadError": 3.725290298461914e-08,
+      "blendError": 1.1967404487884797e-07
+    },
+    {
+      "blenderAngles": [
+        0.25,
+        0,
+        0
+      ],
+      "anchorError": 0.0,
+      "upperHeadError": 1.240583196680748e-07,
+      "blendError": 2.3889104820542146e-07
+    },
+    {
+      "blenderAngles": [
+        -0.25,
+        0,
+        0
+      ],
+      "anchorError": 0.0,
+      "upperHeadError": 1.3013212736478872e-07,
+      "blendError": 2.403028819392642e-07
+    },
+    {
+      "blenderAngles": [
+        0.2,
+        0,
+        0.45
+      ],
+      "anchorError": 0.0,
+      "upperHeadError": 2.414264045062609e-07,
+      "blendError": 2.3957990394254814e-07
+    }
+  ],
+  "morphDataUnchanged": true,
+  "scope": "Blender evaluated source deformation at six poses. Checks weighted transforms, not skin/clothing collision, full motion range or art approval."
+}

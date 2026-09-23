@@ -43,7 +43,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       soleOffset:foot.getWorldPosition(new THREE.Vector3()).y-group.position.y,
       hipRest:hip.getWorldPosition(new THREE.Vector3()).y-group.position.y}];
   }));
-  const bindings=CIVIC_ARTICULATION_BINDING_SPECS.map(s=>createCivicArticulationBinding({...s,controller:joints[s.controlKey]?.node,bone:visual.getObjectByName(s.boneName)})).filter(Boolean);
+  const bindings=[...CIVIC_ARTICULATION_BINDING_SPECS,{controlKey:'headGroup',boneKey:'neckHead',boneName:'SkinNeckHead'}].map(s=>createCivicArticulationBinding({...s,controller:joints[s.controlKey]?.node,bone:visual.getObjectByName(s.boneName)})).filter(Boolean);
   const eyes=[-1,1].map(i=>visual.getObjectByName(`EyePivot_${i}`)).filter(Boolean);
   const eyeScales=eyes.map(x=>x.scale.clone());
   const open=visual.getObjectByName('MouthOpenPivot'),closed=visual.getObjectByName('MouthClosedPivot');
