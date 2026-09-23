@@ -1,0 +1,28 @@
+{
+  "passed": true,
+  "sourceSha256": "a91c7a9b47b26f0798362e7aa460808f0afe7f5cce2b94a3fbfba2be74c90c62",
+  "baselineSha256": "194d15b8a1ffafd4483e3d67d67bb45849eee8bc9bb4684268b731a89fdc16cb",
+  "unchanged": [
+    "faces",
+    "uv",
+    "transform",
+    "parent",
+    "roughness",
+    "cutoff",
+    "shapes",
+    "imageSize"
+  ],
+  "beforeSize": [
+    512,
+    512
+  ],
+  "afterSize": [
+    512,
+    512
+  ],
+  "card": {
+    "changedVertices": 848,
+    "baseVerticesUnchanged": 1138,
+    "maxDisplacement": 0.01107180112592433
+  }
+}

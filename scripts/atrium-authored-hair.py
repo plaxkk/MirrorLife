@@ -43,6 +43,28 @@ def build(root, head, style):
             faces.append([int(v.split('/')[0]) - 1 for v in fields[1:]])
             uv_faces.append([int(v.split('/')[1]) - 1 for v in fields[1:]])
     assert len(vertices) == len(fitted), 'Hair binding must cover every source vertex'
+    if os.environ.get('ATRIUM_HAIR_CARD_STUDY')=='1':
+        from mathutils import Vector
+        from mathutils.bvhtree import BVHTree
+        # Keep the connected underlayer intact. Tuck only raised loose cards
+        # towards it, retaining a small stand-off instead of flattening to skin.
+        parent=list(range(len(vertices)))
+        def find(i):
+            while parent[i]!=i:
+                parent[i]=parent[parent[i]];i=parent[i]
+            return i
+        for face in faces:
+            for i in face[1:]:parent[find(i)]=find(face[0])
+        groups={}
+        for i in range(len(vertices)):groups.setdefault(find(i),[]).append(i)
+        base=max(groups,key=lambda k:len(groups[k]))
+        surface=BVHTree.FromPolygons([Vector(v) for v in vertices],[f for f in faces if find(f[0])==base])
+        for i,position in enumerate(vertices):
+            if find(i)==base:continue
+            point=Vector(position);hit,normal,_,distance=surface.find_nearest(point)
+            if hit is not None and distance>.004 and (point-hit).dot(normal)>0:
+                amount=min(.012,(distance-.004)*.65)
+                vertices[i]=tuple(point+(hit-point).normalized()*amount)
     for obj in list(bpy.context.scene.objects):
         if obj.type == 'MESH' and obj.name.startswith('Hair'):
             bpy.data.objects.remove(obj, do_unlink=True)
@@ -67,7 +89,9 @@ def build(root, head, style):
     bsdf.inputs['Roughness'].default_value = .72
     texture = nodes.new('ShaderNodeTexImage')
     texture.image = bpy.data.images.load(str(source / (style + '_diffuse.png')))
-    texture.image.scale(512, 512)
+    texture_size=int(os.environ.get('ATRIUM_HAIR_TEXTURE_STUDY','512'))
+    assert texture_size in (512,1024,2048), 'Unsupported hair texture study size'
+    texture.image.scale(texture_size,texture_size)
     texture.image.pack()
     links.new(texture.outputs['Color'], bsdf.inputs['Base Color'])
     cutoff = nodes.new('ShaderNodeMath')

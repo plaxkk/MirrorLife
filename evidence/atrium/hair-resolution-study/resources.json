@@ -1,0 +1,50 @@
+[
+  {
+    "file": "public/assets/atrium/residents/you.glb",
+    "bytes": 2428124,
+    "hairImageBytes": 308569,
+    "hairImageSize": [
+      512,
+      512
+    ],
+    "alphaMode": "MASK",
+    "alphaCutoff": 0.4000000059604645,
+    "triangles": 26532
+  },
+  {
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 952472,
+    "hairImageBytes": 93287,
+    "hairImageSize": [
+      256,
+      256
+    ],
+    "alphaMode": "MASK",
+    "alphaCutoff": 0.4000000059604645,
+    "triangles": 24469
+  },
+  {
+    "file": "tmp/portrait-study/hair-resolution-v1/public/assets/atrium/residents/you.glb",
+    "bytes": 3118284,
+    "hairImageBytes": 998699,
+    "hairImageSize": [
+      1024,
+      1024
+    ],
+    "alphaMode": "MASK",
+    "alphaCutoff": 0.4000000059604645,
+    "triangles": 26532
+  },
+  {
+    "file": "tmp/portrait-study/hair-resolution-v1/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1168596,
+    "hairImageBytes": 309389,
+    "hairImageSize": [
+      512,
+      512
+    ],
+    "alphaMode": "MASK",
+    "alphaCutoff": 0.4000000059604645,
+    "triangles": 24469
+  }
+]
