@@ -16,6 +16,13 @@ let injected=original.replace(anchor,`        if(id==='you'&&window.__cuffPose?.
 const after='q.setFromEuler(euler.set(smooth.x,smooth.y,smooth.z));entry.node.quaternion.copy(entry.rest).multiply(q);';
 assert.equal(injected.split(after).length,2);
 injected=injected.replace(after,after+`\n        if(id==='you'&&window.__cuffPose?.[key]){window.__cuffActual??={};window.__cuffActual[key]=smooth.toArray();window.__cuffPoints??={};window.__cuffPoints[key]=entry.node.getWorldPosition(new THREE.Vector3()).toArray();}`);
+const surfaceDiagnostic=process.env.ATRIUM_REVIEW_HAND_SURFACE||null;
+if(surfaceDiagnostic){
+ assert.ok(['no-normal','no-shadow','flat-color'].includes(surfaceDiagnostic));
+ const probe='  const poseVectors={};let reviewFace=null;';assert.equal(injected.split(probe).length,2);
+ const edit=surfaceDiagnostic==='flat-color'?"for(const m of (Array.isArray(o.material)?o.material:[o.material])){m.map=null;m.normalMap=null;m.roughnessMap=null;m.color.set(0xc89a76);m.roughness=.7;m.needsUpdate=true;}":surfaceDiagnostic==='no-normal'?"for(const m of (Array.isArray(o.material)?o.material:[o.material])){m.normalMap=null;m.needsUpdate=true;}":"o.receiveShadow=false;";
+ injected=injected.replace(probe,probe+`\n  if(id==='you')visual.traverse(o=>{if(o.isMesh&&o.name==='SkinnedArticulationCore'){${edit}}});`);
+}
 const cases=[['rest',0,0,0],['conversation',-.35,-.7,.15],['raised',-.8,-1.1,-.25],['wrist-flex',-.5,-.7,.45]];
 const cameras=[['front',[-4.3,1.05,2.1],[-4.3,1,4]],['side',[-2.4,1.05,4],[-4.3,1,4]],['quarter',[-3.1,1.05,2.65],[-4.3,1,4]]];
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
@@ -45,6 +52,6 @@ try{
   samples.push({name,wristCamera,requested:pose,actual:await page.evaluate(()=>window.__cuffActual)});
  }
  assert.equal(modules,1);assert.ok(models>0);assert.deepEqual(errors,[]);
- await fs.writeFile(`${out}/report.json`,JSON.stringify({file,sha256:createHash('sha256').update(body).digest('hex'),moduleSha256:createHash('sha256').update(original).digest('hex'),injectedSha256:createHash('sha256').update(injected).digest('hex'),profile:mobile?'mobile-emulation':'desktop',models,modules,cameras,samples,errors,scope:'Four static diagnostic arm/elbow/wrist poses in the actual exported runtime rig. Local request injection only. Not natural animation, cloth collision proof, full motion range or real-device performance.'},null,2));
+ await fs.writeFile(`${out}/report.json`,JSON.stringify({file,sha256:createHash('sha256').update(body).digest('hex'),moduleSha256:createHash('sha256').update(original).digest('hex'),injectedSha256:createHash('sha256').update(injected).digest('hex'),surfaceDiagnostic,profile:mobile?'mobile-emulation':'desktop',models,modules,cameras,samples,errors,scope:'Four static diagnostic arm/elbow/wrist poses in the actual exported runtime rig. Local request injection only. Not natural animation, cloth collision proof, full motion range or real-device performance.'},null,2));
  console.log('CUFF_POSE_CAPTURES_READY',samples.length);
 }finally{await browser.close();}

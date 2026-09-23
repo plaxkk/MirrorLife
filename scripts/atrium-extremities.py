@@ -5,7 +5,7 @@ from mathutils import Vector
 def descendants(root):
     return [ob for ob in root.children_recursive if ob.type in {'MESH','CURVE'}]
 
-def hands():
+def hands(separate_digits=False):
     for side in [-1,1]:
         root=bpy.data.objects['Hand_'+str(side)]
         bpy.context.view_layer.update();inv=root.matrix_world.inverted();deps=bpy.context.evaluated_depsgraph_get()
@@ -16,7 +16,13 @@ def hands():
             evaluated=ob.evaluated_get(deps);mesh=evaluated.to_mesh();matrix=inv@ob.matrix_world
             offset=len(points)
             for vertex in mesh.vertices:
-                point=matrix@vertex.co;point.y*=.82;points.append(tuple(point))
+                local=vertex.co.copy()
+                if separate_digits and ob.name.startswith('FingerVolume_'):
+                    # Existing radii overlap adjacent 22 mm-spaced digits all
+                    # the way to their tips; voxel fusion cannot recover a gap.
+                    # Keep the authored digit lengths, curl and contact controls.
+                    local.x*=.58
+                point=matrix@local;point.y*=.82;points.append(tuple(point))
             faces.extend(tuple(offset+i for i in poly.vertices) for poly in mesh.polygons)
             evaluated.to_mesh_clear()
         mesh=bpy.data.meshes.new('Continuous palm and five digits');mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(material)

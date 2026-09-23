@@ -3,7 +3,7 @@
 Source .blend retains the editable procedural materials and vertex colours.
 Runtime exports use colour/roughness/tangent normal textures, without custom GLSL.
 """
-import bpy, math
+import bpy, math, os
 
 
 def extend_skin_background(pixels, covered, size):
@@ -102,8 +102,9 @@ def _bake_bind_surface(obj, size, family, min_luminance):
     scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU';scene.cycles.samples=1
     scene.render.bake.margin=16 if family=='skin' else 6;scene.render.bake.use_selected_to_active=False
     images={};skin_coverage=None
+    body_extension=obj.name=='SkinnedArticulationCore' and os.environ.get('ATRIUM_BODY_ATLAS_STUDY','0')=='1'
     kinds=['DIFFUSE','ROUGHNESS','NORMAL']
-    if family=='skin' and material.get('atrium_source_skin'):kinds.insert(0,'COVERAGE')
+    if body_extension or (family=='skin' and material.get('atrium_source_skin')):kinds.insert(0,'COVERAGE')
     if family=='skin' and material.get('atrium_portrait_occlusion'):kinds.append('AO')
     for kind in kinds:
         image=bpy.data.images.new('Hero '+obj.name+' '+kind,width=size,height=size,alpha=False)
@@ -133,7 +134,7 @@ def _bake_bind_surface(obj, size, family, min_luminance):
             assert np.mean(skin_coverage)>.1
             print('SKIN_GEOMETRIC_COVERAGE',float(np.mean(skin_coverage)),flush=True)
             nodes.remove(target);bpy.data.images.remove(image);continue
-        if family=='skin' and material.get('atrium_portrait_authoring'):
+        if body_extension or (family=='skin' and material.get('atrium_portrait_authoring')):
             if kind=='DIFFUSE' and skin_coverage is None:
                 # This skin-only material has no deliberately black features;
                 # eyelashes/eyes/hair are separate geometry and materials.

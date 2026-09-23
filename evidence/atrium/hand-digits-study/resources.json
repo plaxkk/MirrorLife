@@ -1,0 +1,22 @@
+{
+  "v1": {
+    "you.glb": {
+      "bytes": 2418080,
+      "triangles": 26404
+    },
+    "you-mobile.glb": {
+      "bytes": 959660,
+      "triangles": 24341
+    }
+  },
+  "v2": {
+    "you.glb": {
+      "bytes": 2299704,
+      "triangles": 26404
+    },
+    "you-mobile.glb": {
+      "bytes": 889384,
+      "triangles": 24341
+    }
+  }
+}

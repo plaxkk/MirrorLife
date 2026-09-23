@@ -1,0 +1,41 @@
+{
+  "baselineSha256": "c0c1f4b4c4765c41d5bb36adb3cb9712315ea1910acc714f8ba5410c824cae46",
+  "sourceSha256": "9d3354f88986cfda390d7a990300a0272cc81a98d21c44d2d6729165af4b50d5",
+  "changes": {
+    "EyeWhite_-1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "Embroidered sun": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "EyeGlint_1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "EyeGlint_-1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "Drawcord bound end 1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "Drawcord bound end -1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "EyeWhite_1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    }
+  }
+}

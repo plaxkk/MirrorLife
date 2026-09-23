@@ -26,6 +26,10 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+if os.environ.get('ATRIUM_BODY_ATLAS_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Body atlas study output must remain isolated'
+if os.environ.get('ATRIUM_HAND_DIGITS_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hand digit study output must remain isolated'
 if os.environ.get('ATRIUM_CUFF_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Cuff study output must remain isolated'
 if os.environ.get('ATRIUM_LIP_FINISH_STUDY','0')!='0':
@@ -269,7 +273,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     for side in (-1,1):
         cuff=bpy.data.objects.get('TrouserCuff_'+str(side))
         if cuff:cuff.data.materials.clear();cuff.data.materials.append(mats['lower'])
-    extremities.hands();extremities.shoes(civic,mats)
+    extremities.hands(separate_digits=who=='you' and os.environ.get('ATRIUM_HAND_DIGITS_STUDY','0')=='1');extremities.shoes(civic,mats)
     # Fingers are anatomy, not removable detail. Renaming before the shared
     # batcher routes them into the full skinned core, including the mobile LOD.
     for obj in list(bpy.context.scene.objects):
