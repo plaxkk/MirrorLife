@@ -1,0 +1,14 @@
+{
+  "you.glb": {
+    "bytes": 2279676,
+    "triangles": 26404,
+    "materials": 6,
+    "primitives": 7
+  },
+  "you-mobile.glb": {
+    "bytes": 903628,
+    "triangles": 24341,
+    "materials": 6,
+    "primitives": 7
+  }
+}
