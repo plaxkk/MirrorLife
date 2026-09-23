@@ -1,0 +1,18 @@
+{
+  "passed": true,
+  "sourceSha256": "0d9b4473b3d9404875a75e2ea320b77877351f09dbe628b30ca6b4397027f9fc",
+  "baselineSha256": "af4166920e4f8c65fe55a9784b872d6976918c83c504cb39273e14d8a6772b47",
+  "changedVertices": 505,
+  "maxDisplacement": 0.014469519343105306,
+  "protectedVertices": 894,
+  "maxMorphDeltaError": 1.4901161193847656e-08,
+  "unchanged": [
+    "polygon topology",
+    "UVMap",
+    "skin weights",
+    "parent",
+    "transform",
+    "orbital and lower-neck coordinates"
+  ],
+  "scope": "Compares source geometry and facial offset vectors. Does not prove continuous surface contact, shape quality, lip sync or all animation poses."
+}

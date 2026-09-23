@@ -30,6 +30,8 @@ if os.environ.get('ATRIUM_HAIR_TEXTURE_STUDY'):
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair texture study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_CARD_STUDY')=='1':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair card study output must remain isolated'
+if os.environ.get('ATRIUM_FACE_BALANCE_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Face balance study output must remain isolated'
 if os.environ.get('ATRIUM_JAW_TRANSITION_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Jaw transition study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_MASS_STUDY','0')!='0':
@@ -538,6 +540,9 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             for polygon in obj.data.polygons:polygon.use_smooth=True
     head_tools.build_player_head(ROOT,name,fitted_crop=SHAPE_PROTOTYPE if SHAPE_PROTOTYPE>=3 and name=='chen' else 0)
     if HERO_ART_ENABLED and name=='you':hero_art.finish_head(bpy.data.objects['Head'])
+    if name=='you' and os.environ.get('ATRIUM_FACE_BALANCE_STUDY','0')!='0':
+        import runpy
+        runpy.run_path(str(ROOT/'scripts/atrium-face-balance.py'))['apply'](bpy.data.objects['Head'],int(os.environ['ATRIUM_FACE_BALANCE_STUDY']))
     if name=='you' and (os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or (HERO_ART_ENABLED and os.environ.get('ATRIUM_AUTHORED_HAIR','1')=='1' and os.environ.get('ATRIUM_GROOM_STUDY','0')=='0')):
         spec=importlib.util.spec_from_file_location('atrium_authored_hair',ROOT/'scripts/atrium-authored-hair.py')
         authored=importlib.util.module_from_spec(spec);spec.loader.exec_module(authored)
