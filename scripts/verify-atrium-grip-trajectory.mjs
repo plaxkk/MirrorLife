@@ -6,13 +6,14 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const [candidate,output]=process.argv.slice(2);assert.ok(candidate&&output);
 const capture=process.env.ATRIUM_GRIP_CAPTURE==='1';
+const sampleStride=Number(process.env.ATRIUM_GRIP_SAMPLE_STRIDE||6);assert.ok(Number.isInteger(sampleStride)&&sampleStride>=1&&sampleStride<=6);
 const body=await fs.readFile(candidate);let requests=0;
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
 try{
  const page=await browser.newPage();await page.setRequestInterception(true);
  page.on('request',r=>{if(new URL(r.url()).pathname==='/assets/atrium/residents/you.glb'){requests++;return r.respond({status:200,contentType:'model/gltf-binary',body});}return r.continue();});
  await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4203')+'/');
- const report=await page.evaluate(async capture=>{
+ const report=await page.evaluate(async ({capture,sampleStride})=>{
   const T=await import('/node_modules/three/build/three.module.js');
   const {loadAtriumActor}=await import('/src/atrium-actors.js');
   const {loadAtriumGLB}=await import('/src/atrium-assets.js');
@@ -38,10 +39,13 @@ try{
   for(let frame=1;frame<=216;frame++){
    const time=frame/60,care=frame<=180;actor.update(time,1/60,{care});actor.group.updateMatrixWorld(true);core.skeleton.update();
    if(renderer&&[1,6,12,30,180,216].includes(frame)){
-    const target=hand.getWorldPosition(new T.Vector3());camera.position.copy(target).add(new T.Vector3(-.32,.25,.38));camera.lookAt(target);
+    const target=hand.getWorldPosition(new T.Vector3()),cupPosition=cup.getWorldPosition(new T.Vector3());
+    const distance=care?target.distanceTo(cupPosition):0;
+    if(care)target.lerp(cupPosition,.5);
+    camera.position.copy(target).add(new T.Vector3(-.32,.25,.38).multiplyScalar(Math.max(1,distance/.18)));camera.lookAt(target);
     renderer.render(scene,camera);captures.push({frame,time,image:renderer.domElement.toDataURL('image/png')});
    }
-   if(frame!==1&&frame%6!==0)continue;
+   if(frame!==1&&frame%sampleStride!==0)continue;
    const poses=actor.handPoseDiagnostics()[0];
    const row={frame,time,care,poses,cupUp:care?actor.gripDiagnostics().find(g=>g.name==='TeaCup').cupUp:null};
    if(care){
@@ -59,8 +63,8 @@ try{
    }
    samples.push(row);
   }
-  return {samples,captures,idleWarmupFrames:60,scope:'60Hz actual actor updates after idle warmup, 37 sampled instants at first frame then 100ms spacing. Fully weighted right-hand vertices versus handle nearest-triangle normal within 15mm; not watertight containment, triangle intersection, self-collision or continuous-time proof. Captures use actual actor materials in an isolated lit review scene, not the game environment.'};
- },capture);
+  return {samples,captures,idleWarmupFrames:60,sampleStride,scope:'60Hz actual actor updates after idle warmup; first frame and then each sampleStride frames. Fully weighted right-hand vertices versus handle nearest-triangle normal within 15mm; not watertight containment, triangle intersection, self-collision or continuous-time proof. Captures use actual actor materials in an isolated lit review scene, not the game environment.'};
+ },{capture,sampleStride});
  assert.ok(requests>0);assert.ok(report.samples.every(s=>s.poses.grip>=0&&s.poses.grip<=1.000001));
  assert.ok(report.samples.at(-1).poses.grip<.01&&report.samples.at(-1).poses.teaBlend<.01);
  const active=report.samples.filter(s=>s.care);

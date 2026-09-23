@@ -1,5 +1,5 @@
 """Editable tea-only pad correction against the authored cup-handle surface."""
-import bpy
+import bpy,os
 from pathlib import Path
 from mathutils import Matrix,Vector
 from mathutils.bvhtree import BVHTree
@@ -51,4 +51,18 @@ def author(core,hand,anchor):
     for i,p in enumerate(points):tea.data[i].co=inverse@(p+deltas[i]) if i in deltas else base.data[i].co
     tea.value=0
     core['atrium_tea_fit']={'initialVertices':initial,'affectedVertices':len(affected),'maxDisplacement':maximum,'clearance':.0008,'scope':'nearest-normal source pad fit; not complete collision approval'}
+    if os.environ.get('ATRIUM_TEA_ARC_STUDY','0')=='1':
+        basis=core.data.shape_keys.key_blocks['Basis']
+        middle=[local@((a.co+b.co)*.5) for a,b in zip(basis.data,tea.data)]
+        offsets={i:correction(middle[i]) for i in ids}
+        offsets={i:d for i,d in offsets.items() if d.length>1e-7}
+        arc_ids=set(offsets)|{j for i in offsets for j in adjacent[i] if j in ids}
+        for _ in range(2):
+            smooth={i:offsets.get(i,Vector())*.6+sum((offsets.get(j,Vector()) for j in adjacent[i]),Vector())*(.4/max(1,len(adjacent[i]))) for i in arc_ids}
+            offsets={i:d+correction(middle[i]+d) for i,d in smooth.items()}
+        arc=core.shape_key_add(name='GripTeaArc')
+        for i,v in enumerate(basis.data):
+            arc.data[i].co=v.co+inverse.to_3x3()@offsets[i] if i in offsets else v.co
+        arc.value=0
+        core['atrium_tea_arc']={'vertices':len(offsets),'maxDisplacement':max(d.length for d in offsets.values()),'weight':'4 * teaWeight * (1 - teaWeight)','scope':'additive halfway pad correction; trajectory needs runtime verification'}
     for ob in loaded:bpy.data.objects.remove(ob,do_unlink=True)

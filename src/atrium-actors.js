@@ -16,9 +16,9 @@ export function seatedAtriumLeg(seatHeight,upper,lower,soleOffset,hipRest){
 }
 // Match authored grip frames in the actor's parent space. Cancel inherited hand
 // scale so the same metre-sized cup does not grow/shrink between residents.
-export function alignAtriumProp(prop,grip,handGrip,parent){
+export function alignAtriumProp(prop,grip,handGrip,parent,targetOverride=null){
   parent.updateWorldMatrix(true,false);handGrip.updateWorldMatrix(true,false);
-  const target=new THREE.Matrix4().copy(handGrip.matrixWorld);
+  const target=new THREE.Matrix4().copy(targetOverride||handGrip.matrixWorld);
   const p=new THREE.Vector3(),r=new THREE.Quaternion(),s=new THREE.Vector3();
   target.decompose(p,r,s);
   // Rotated joints below a nonuniform body scale introduce shear. Decomposition
@@ -118,7 +118,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         let x=v[0],y=v[1],z=v[2];
         if(care&&key==='rightArm'){x=-.5;y=0;z=-.12;}
         if(care&&key==='rightElbow'){x=-.7;y=0;z=0;}
-        if(care&&key==='rightHand')z=.24*Math.sin(time*1.8);
+        if(care&&key==='rightHand'){
+          z=.24*Math.sin(time*1.8);
+          if(teaActive&&teaWrist){x=0;y=0;z=0;}
+        }
         if(key==='leftLeg'||key==='rightLeg')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].hipAngle,seatBlend);
         if(key==='leftKnee'||key==='rightKnee')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].kneeAngle,seatBlend);
         if(['leftLeg','rightLeg','leftKnee','rightKnee'].includes(key)){y*=1-seatBlend;z*=1-seatBlend;}
@@ -197,14 +200,38 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       }
       if(lifeProp){
         lifeProp.visible=care;
-        if(care)for(const {prop,grip,handAnchor}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handAnchor,lifeProp);
+        let reachTarget=null;
+        if(teaActive&&teaWrist&&teaGrip&&teaBlend<.999){
+          // Keep the cup at the reachable hold position while the hand arrives.
+          // Attaching it to the open, moving palm caused early handle penetration
+          // and tipped the cup with the idle wrist. No mesh is hidden or frozen.
+          const controls=['rightArm','rightElbow','rightHand'].map(key=>joints[key]);
+          const saved=controls.map(entry=>entry.node.quaternion.clone());
+          const savedPosition=teaGrip.position.clone(),savedRotation=teaGrip.quaternion.clone();
+          const angles=[[-.5,0,-.12],[-.7,0,0],[0,0,0]];
+          controls.forEach((entry,i)=>entry.node.quaternion.copy(entry.rest).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(...angles[i]))));
+          controls[2].node.quaternion.multiply(teaWrist);
+          teaGrip.position.copy(teaGripPosition);teaGrip.quaternion.copy(teaGripRotation);teaGrip.updateWorldMatrix(true,false);
+          reachTarget=teaGrip.matrixWorld.clone();
+          controls.forEach((entry,i)=>entry.node.quaternion.copy(saved[i]));
+          teaGrip.position.copy(savedPosition);teaGrip.quaternion.copy(savedRotation);teaGrip.updateWorldMatrix(true,false);
+          const amount=THREE.MathUtils.smoothstep(teaBlend,.97,.999);
+          const p=new THREE.Vector3(),r=new THREE.Quaternion(),s=new THREE.Vector3();
+          const hp=new THREE.Vector3(),hr=new THREE.Quaternion(),hs=new THREE.Vector3();
+          reachTarget.decompose(p,r,s);teaGrip.matrixWorld.decompose(hp,hr,hs);
+          reachTarget.compose(p.lerp(hp,amount),r.normalize().slerp(hr.normalize(),amount),s.lerp(hs,amount));
+        }
+        if(care)for(const {prop,grip,handAnchor}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handAnchor,lifeProp,prop.name==='TeaCup'?reachTarget:null);
       }
       for(const mesh of gripMeshes){
         const index=mesh.morphTargetDictionary.GripRight;
         const teaIndex=mesh.morphTargetDictionary.GripTea;
-        const amount=THREE.MathUtils.damp(mesh.morphTargetInfluences[index]+(mesh.morphTargetInfluences[teaIndex]||0),care?1:0,18,dt);
+        const target=care?(teaActive&&teaWrist?THREE.MathUtils.smoothstep(teaBlend,.995,.9999):1):0;
+        const amount=THREE.MathUtils.damp(mesh.morphTargetInfluences[index]+(mesh.morphTargetInfluences[teaIndex]||0),target,18,dt);
         mesh.morphTargetInfluences[index]=amount*(teaIndex===undefined?1:1-teaBlend);
         if(teaIndex!==undefined)mesh.morphTargetInfluences[teaIndex]=amount*teaBlend;
+        const arcIndex=mesh.morphTargetDictionary.GripTeaArc;
+        if(arcIndex!==undefined){const tea=amount*teaBlend;mesh.morphTargetInfluences[arcIndex]=4*tea*(1-tea);}
       }
     },
   };

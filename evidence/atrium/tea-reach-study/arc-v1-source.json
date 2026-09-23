@@ -1,0 +1,14 @@
+{
+  "sourceSha256": "dc0f1589951ac3e6d3dde0d2c74eaca9afa535dca7d31d3bf499ffdb469b8e9f",
+  "existingEndpointsExact": true,
+  "changedVertices": 33,
+  "outsideHand": [],
+  "maxDisplacement": 0.0070883837668071215,
+  "arc": {
+    "vertices": 33,
+    "maxDisplacement": 0.008644367384165016,
+    "weight": "4 * teaWeight * (1 - teaWeight)",
+    "scope": "additive halfway pad correction; trajectory needs runtime verification"
+  },
+  "scope": "Source vertex and shape-key scope; not runtime collision, deformation quality or performance proof."
+}

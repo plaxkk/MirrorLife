@@ -31,10 +31,13 @@ try{
     ['tea',[-8.65,0,1.8],[['side',[-7.25,1.4,2.7],[-8.6,1.05,1.7]],['hand-reverse',[-8.95,1.16,1.10],[-8.4,1.0,1.38]],['hand-top',[-8.45,1.65,1.4],[-8.4,1.0,1.38]]]],
   ])for(const [name,camera,target]of views){
     await page.evaluate(position=>{window.__atrium.setCapture(false);window.__atrium.setReviewPosition(position);},position);
-    await page.waitForFunction(expected=>!document.querySelector('#interaction').hidden&&document.querySelector('#interaction-text').textContent.includes(expected),{},id==='plant'?'照料薄荷':'泡一杯');await page.keyboard.press('KeyE');
+    await page.waitForFunction(expected=>!document.querySelector('#interaction').hidden&&document.querySelector('#interaction-text').textContent.includes(expected),{},id==='plant'?'照料薄荷':'泡一杯');const triggerTime=Date.now();await page.keyboard.press('KeyE');
     await page.waitForFunction(id=>window.__atrium.getInteractionState().care===id,{},id);
     await page.evaluate(({camera,target})=>{window.__atrium.setCapture(true);window.__atrium.setReviewCamera(camera,target);},{camera,target});
-    await pause(450);
+    if(process.env.ATRIUM_REQUIRE_REACH_TIMING==='1')await page.waitForFunction(()=>window.__atrium.getGripDiagnostics().find(a=>a.id==='you').handPoses.some(p=>p.grip>.95),{timeout:900});
+    else await pause(450);
+    const settledAfterMs=Date.now()-triggerTime;
+    if(process.env.ATRIUM_REQUIRE_REACH_TIMING==='1')assert.ok(settledAfterMs<1000,'Reach took over one second');
     const activeGrips=await page.evaluate(()=>window.__atrium.getGripDiagnostics());
     assert.ok(activeGrips.find(a=>a.id==='you').grips.length,`${id}/${name}: capture during the action, not after it ends`);
     if(process.env.ATRIUM_REQUIRE_GRIP_MORPH==='1'){
@@ -45,7 +48,7 @@ try{
       const poses=activeGrips.find(a=>a.id==='you').handPoses;
       assert.ok(poses.length&&poses.every(p=>id==='tea'?p.tea>.95&&p.generic<.01:p.generic>.95&&p.tea<.01),'Wrong prop-specific grip');
     }
-    samples.push({action:id,view:name,actors:activeGrips});
+    samples.push({action:id,view:name,settledAfterMs,actors:activeGrips});
     await page.screenshot({path:path.join(out,`${id}-${name}.png`)});
     if(id==='tea'&&name==='hand-top'){
       await page.waitForFunction(()=>!window.__atrium.getInteractionState().care,{timeout:10000});

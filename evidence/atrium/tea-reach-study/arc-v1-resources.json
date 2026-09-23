@@ -1,0 +1,18 @@
+[
+  {
+    "file": "tmp/portrait-study/tea-arc-v1/public/assets/atrium/residents/you.glb",
+    "bytes": 2699816,
+    "sha256": "f336819c9a22c47ede8c814c9ae165239b962b117e3b23930c29131d18e1552d",
+    "triangles": 26404,
+    "materials": 6,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/tea-arc-v1/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1315664,
+    "sha256": "801e8d8a373e965778c7511a78539fde44eb36e6e5ff332aa229da5b3422ccba",
+    "triangles": 24341,
+    "materials": 6,
+    "primitives": 7
+  }
+]
