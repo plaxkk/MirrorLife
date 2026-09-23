@@ -1,0 +1,93 @@
+{
+  "prompt": "和林晓聊聊",
+  "position": {
+    "x": -2.5999600887298584,
+    "y": 0.019562814235687287,
+    "z": -2.6004509925842285
+  },
+  "state": {
+    "seated": null,
+    "care": null,
+    "dialogue": null,
+    "residents": [
+      {
+        "id": "lin",
+        "busy": false,
+        "position": [
+          -2.2,
+          0,
+          -1.95
+        ],
+        "yaw": 0,
+        "seatBlend": 0.9999999999999999,
+        "seatMotion": {
+          "seated": true,
+          "moving": 0,
+          "blocked": false,
+          "clearOfChair": false
+        }
+      },
+      {
+        "id": "chen",
+        "busy": false,
+        "position": [
+          1.1,
+          0,
+          -1.95
+        ],
+        "yaw": -0.15,
+        "seatBlend": 0.9999999999999999,
+        "seatMotion": {
+          "seated": true,
+          "moving": 0,
+          "blocked": false,
+          "clearOfChair": false
+        }
+      },
+      {
+        "id": "xu",
+        "busy": false,
+        "position": [
+          9.1,
+          0,
+          2
+        ],
+        "yaw": -1.1,
+        "seatBlend": 0
+      },
+      {
+        "id": "zhou",
+        "busy": false,
+        "position": [
+          -7.9,
+          3.5,
+          0.4
+        ],
+        "yaw": 0,
+        "seatBlend": 0
+      },
+      {
+        "id": "he",
+        "busy": false,
+        "position": [
+          -7,
+          0,
+          1.25
+        ],
+        "yaw": 1.5,
+        "seatBlend": 0
+      },
+      {
+        "id": "tang",
+        "busy": false,
+        "position": [
+          -1.6981188000000023,
+          3.5,
+          -5.699999999999999
+        ],
+        "yaw": 1.5677348874949748,
+        "seatBlend": 0
+      }
+    ]
+  }
+}

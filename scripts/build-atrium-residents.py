@@ -30,6 +30,8 @@ if os.environ.get('ATRIUM_HAIR_TEXTURE_STUDY'):
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair texture study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_CARD_STUDY')=='1':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair card study output must remain isolated'
+if os.environ.get('ATRIUM_HAIR_CLUMP_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair clump study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_SWEEP_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair sweep study output must remain isolated'
 if os.environ.get('ATRIUM_GAZE_STUDY','0')!='0':

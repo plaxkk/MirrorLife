@@ -1,0 +1,14 @@
+[
+  {
+    "lod": "you",
+    "bytes": 2444276,
+    "sha256": "74987066512db73388b6657ac828313d1a397a111c8aa42ea79c988ef3664746",
+    "triangles": 26532
+  },
+  {
+    "lod": "you-mobile",
+    "bytes": 968624,
+    "sha256": "61f2f2d2910d8ceed0442d2849b1041e954eff825f4ecd02a47d0c7a184ddefb",
+    "triangles": 24469
+  }
+]

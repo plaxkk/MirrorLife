@@ -86,6 +86,10 @@ def build(root, head, style):
             if hit is not None and distance>.004 and (point-hit).dot(normal)>0:
                 amount=min(.012,(distance-.004)*.65)
                 vertices[i]=tuple(point+(hit-point).normalized()*amount)
+    clump_audit = None
+    if style=='short01' and os.environ.get('ATRIUM_HAIR_CLUMP_STUDY')=='1':
+        import runpy
+        clump_audit = runpy.run_path(str(Path(__file__).with_name('atrium-hair-clumps.py')))['taper'](vertices, faces)
     for obj in list(bpy.context.scene.objects):
         if obj.type == 'MESH' and obj.name.startswith('Hair'):
             bpy.data.objects.remove(obj, do_unlink=True)
@@ -101,6 +105,8 @@ def build(root, head, style):
     bpy.context.collection.objects.link(obj)
     obj.parent = head.parent
     obj['atrium_authored_hair'] = True
+    if clump_audit is not None:
+        obj['clump_study_audit'] = json.dumps(clump_audit)
     obj['source_license'] = 'MakeHuman system assets CC0, September 2020'
     mat = bpy.data.materials.new('Authored cutout hair')
     mat.use_nodes = True
