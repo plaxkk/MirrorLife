@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "source": "/Users/kk/repos/MirrorLife/tmp/portrait-study/wardrobe-current-v1/models/atrium/residents/you.blend",
+  "sourceSha256": "7f815d1f72f3110c9916b0308de01bd6c5a5613398bf9aa02f94be9a054bc081",
+  "baselineSha256": "19ff9ba2582ac3d87b6a592d730955bb769a5c42056a2d283088c3df02744b28",
+  "brows": [
+    {
+      "side": -1,
+      "vertices": 580,
+      "nonManifoldEdges": 0,
+      "signedVolume": 2.1115041416126793e-07
+    },
+    {
+      "side": 1,
+      "vertices": 580,
+      "nonManifoldEdges": 0,
+      "signedVolume": 2.127282686601411e-07
+    }
+  ],
+  "facialShapesUnchanged": [
+    "Basis",
+    "Blink",
+    "Talk"
+  ]
+}

@@ -2,6 +2,14 @@
 import bpy, bmesh, math, os
 from mathutils import Vector
 
+def layered_neck_enabled():
+    enabled=os.environ.get('ATRIUM_LAYERED_WARDROBE','1')=='1'
+    return os.environ.get('ATRIUM_OPEN_NECK_STUDY','1' if enabled else '0')=='1'
+
+def lower_front_neck_enabled():
+    enabled=os.environ.get('ATRIUM_LAYERED_WARDROBE','1')=='1' and layered_neck_enabled()
+    return os.environ.get('ATRIUM_CREW_NECK_STUDY','1' if enabled else '0')=='1'
+
 
 def sculpt_cloth(garment):
     """Tailoring ease and restrained compression, on the existing skinned shell."""
@@ -61,18 +69,27 @@ def hood_and_details(civic,mats,visual,cloth_y,cloth_back_y):
             index=mesh.loops[loop].vertex_index
             uv.data[loop].uv=(index%(segments+1)/segments,index//(segments+1)/rows)
     solid=ob.modifiers.new('Sewn hood lining thickness','SOLIDIFY');solid.thickness=.005;solid.offset=0;solid.material_offset=1
-    if os.environ.get('ATRIUM_CREW_NECK_STUDY')!='1':civic.contoured_elliptical_shell('Hood rib neck facing',[(1.297,.102,.077,0,0),(1.308,.105,.080,0,0),(1.318,.103,.079,0,0)],mats['outer'],visual,segments=32)
+    if not lower_front_neck_enabled():civic.contoured_elliptical_shell('Hood rib neck facing',[(1.297,.102,.077,0,0),(1.308,.105,.080,0,0),(1.318,.103,.079,0,0)],mats['outer'],visual,segments=32)
     # The visible bound edge has a separate narrow folded tape, not a fat tube.
     for row in [0,rows]:
         civic.curve_tube('Hood bound edge '+str(row),points[row*(segments+1):(row+1)*(segments+1)],.0028,mats['outer'],visual,resolution=1)
     for side in [-1,1]:
         # Front opening and short cotton cords follow the chest's true surface.
         cord=[]
-        profile=[(.095,1.29),(.10,1.255),(.092,1.20),(.095,1.174)] if os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1' else [(.065,1.31),(.070,1.255),(.058,1.20),(.061,1.174)]
+        profile=[(.095,1.29),(.10,1.255),(.092,1.20),(.095,1.174)] if layered_neck_enabled() else [(.065,1.31),(.070,1.255),(.058,1.20),(.061,1.174)]
+        if layered_neck_enabled():
+            # Long chords between four anchors passed through the curved chest.
+            # Resample the actual cloth, with fewer radial sides per tiny cord.
+            sampled=[]
+            for (x0,z0),(x1,z1) in zip(profile,profile[1:]):
+                steps=max(1,math.ceil(abs(z1-z0)/.006))
+                for j in range(steps):
+                    t=j/steps;sampled.append((x0+(x1-x0)*t,z0+(z1-z0)*t))
+            profile=sampled+[profile[-1]]
         for offset,z in profile:
             x=side*offset
             cord.append((x,cloth_y(x,z)-.007,z))
-        civic.curve_tube('Hood cotton drawcord '+str(side),cord,.0022,mats['paper'],visual,resolution=1)
+        civic.curve_tube('Hood cotton drawcord '+str(side),cord,.0022,mats['paper'],visual,resolution=1,bevel_resolution=1 if layered_neck_enabled() else 3)
         civic.ellipsoid('Drawcord bound end '+str(side),cord[-1],(.003,.003,.010),mats['accent'],visual,segments=10,rings=6)
         # Twin welt stitching sits on the fabric instead of floating in space.
         for offset in [-.006,.006]:
@@ -125,7 +142,7 @@ def open_neckline(garment,mats):
     for f in garment.data.polygons:
         c=sum((garment.data.vertices[i].co for i in f.vertices),Vector())/len(f.vertices)
         if c.y<-.015 and c.z>1.17 and abs(c.x)<.014+.42*(c.z-1.17):f.material_index=shirt_index
-    if os.environ.get('ATRIUM_CREW_NECK_STUDY')=='1':
+    if lower_front_neck_enabled():
         for v in garment.data.vertices:
             p=v.co
             front=max(0,min(1,(-p.y-.015)/.04))

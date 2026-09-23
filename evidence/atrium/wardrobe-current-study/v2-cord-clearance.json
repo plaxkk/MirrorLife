@@ -1,0 +1,46 @@
+{
+  "clothGeometryWeightsUnchanged": false,
+  "scope": "Source neutral pose, actual evaluated cord triangle surfaces against the skinned garment mesh. Does not prove exported LOD or animated clearance; if cloth equality is false, rerun deformation on the candidate.",
+  "reports": [
+    {
+      "source": "tmp/portrait-study/wardrobe-current-v1/models/atrium/residents/you.blend",
+      "sha256": "7f815d1f72f3110c9916b0308de01bd6c5a5613398bf9aa02f94be9a054bc081",
+      "cords": [
+        {
+          "side": -1,
+          "samples": 516,
+          "missing": 0,
+          "minClearance": -0.005125746130943298,
+          "penetrating": 56
+        },
+        {
+          "side": 1,
+          "samples": 516,
+          "missing": 0,
+          "minClearance": -0.006367482244968414,
+          "penetrating": 69
+        }
+      ]
+    },
+    {
+      "source": "models/atrium/residents/you.blend",
+      "sha256": "194d15b8a1ffafd4483e3d67d67bb45849eee8bc9bb4684268b731a89fdc16cb",
+      "cords": [
+        {
+          "side": -1,
+          "samples": 1704,
+          "missing": 0,
+          "minClearance": 0.0017493441700935364,
+          "penetrating": 0
+        },
+        {
+          "side": 1,
+          "samples": 1704,
+          "missing": 0,
+          "minClearance": 0.0015230551362037659,
+          "penetrating": 0
+        }
+      ]
+    }
+  ]
+}

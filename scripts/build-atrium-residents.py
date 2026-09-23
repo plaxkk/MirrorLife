@@ -43,8 +43,9 @@ VERTEX_SKIN_ENABLED=VERTEX_SKIN_STUDY or SKIN_RESPONSE_ENABLED
 PORTRAIT_SKIN_ENABLED=FACE_PAINT_STUDY or SKIN_RESPONSE_ENABLED
 SKIN_AO_STUDY=os.environ.get('ATRIUM_SKIN_AO_STUDY')=='1'
 NECK_RIG_ENABLED=os.environ.get('ATRIUM_NECK_RIG','1')=='1'
-CREW_NECK_STUDY=os.environ.get('ATRIUM_CREW_NECK_STUDY')=='1'
-assert not CREW_NECK_STUDY or os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1', 'Crew neck requires isolated open neckline'
+OPEN_NECK_ENABLED=wardrobe.layered_neck_enabled()
+CREW_NECK_STUDY=wardrobe.lower_front_neck_enabled()
+assert not CREW_NECK_STUDY or OPEN_NECK_ENABLED, 'Lower front neck requires open neckline'
 SOURCE_SKIN_STUDY=os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
 assert not SOURCE_SKIN_STUDY or FACE_PAINT_STUDY, 'Source skin requires isolated face paint study'
 assert not SKIN_AO_STUDY or FACE_PAINT_STUDY, 'Skin AO study requires isolated face paint study'
@@ -139,7 +140,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             v.co.x*=1+.24*math.exp(-((v.co.z-1.255)/.065)**2)
             v.co.x*=1+.10*math.exp(-((v.co.z-.94)/.13)**2)
     if HERO_ART_ENABLED and who=='you':hero_art.prepare_body()
-    open_neck=who=='you' and os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1'
+    open_neck=who=='you' and OPEN_NECK_ENABLED
     garment=garment_tools.continuous_garment(civic,mats['top'],triangle_budget=(1450 if open_neck else 1600) if HERO_ART_ENABLED and who=='you' else 1700)
     if who=='you':
         wardrobe.sculpt_cloth(garment)

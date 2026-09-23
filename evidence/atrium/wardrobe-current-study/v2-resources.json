@@ -1,0 +1,14 @@
+[
+  {
+    "file": "tmp/portrait-study/wardrobe-current-v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2428124,
+    "triangles": 26532,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/wardrobe-current-v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 952472,
+    "triangles": 24469,
+    "primitives": 7
+  }
+]

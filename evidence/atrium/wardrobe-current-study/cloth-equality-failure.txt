@@ -1,0 +1,12 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/wardrobe-current-v1/models/atrium/residents/you.blend"
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/wardrobe-current-v2/models/atrium/residents/you.blend"
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/verify-atrium-drawcord-clearance.py", line 16, in <module>
+    else:assert cloth_state==cloth_baseline, 'Cord-only repair changed garment geometry or weights'
+                ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Cord-only repair changed garment geometry or weights
+
+Error: script failed, file: 'scripts/verify-atrium-drawcord-clearance.py', exiting.
+
+Blender quit
