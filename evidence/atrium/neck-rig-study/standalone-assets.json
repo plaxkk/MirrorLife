@@ -1,0 +1,33 @@
+[
+  {
+    "file": "public/assets/atrium/residents/you.glb",
+    "sha256": "59bd6175f9fdbcbdf9ca1fde46cb3f0f0aa192791a1d70f39466be0b87239836",
+    "bytes": 2495524,
+    "triangles": 25096,
+    "animations": []
+  },
+  {
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "304476e19b1f5c886c71cb8ed5ef936bec771d2caeab6fbe602074834c6d1799",
+    "bytes": 948972,
+    "triangles": 22629,
+    "animations": []
+  },
+  {
+    "file": "public/assets/atrium/animations/you-motion.glb",
+    "sha256": "888e54e71c228b406002e06c22e0a15cc42f79f9f1a55dab6e40618095091ba5",
+    "bytes": 1294596,
+    "triangles": 31905,
+    "animations": [
+      "idle",
+      "walk",
+      "listen",
+      "talk",
+      "stairs",
+      "turn",
+      "sit",
+      "stand",
+      "water"
+    ]
+  }
+]

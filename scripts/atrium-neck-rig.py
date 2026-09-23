@@ -1,6 +1,6 @@
 """Two-bone cervical transition, with the native face and morphs unchanged."""
 import bpy
-from mathutils import Vector
+from mathutils import Vector, Matrix
 
 
 def author_neck_rig():
@@ -8,14 +8,17 @@ def author_neck_rig():
     bpy.context.view_layer.update();world=head.matrix_world.copy()
     data=bpy.data.armatures.new('Cervical transition bones')
     rig=bpy.data.objects.new('CervicalRig',data);bpy.context.collection.objects.link(rig)
-    rig.parent=controller.parent;rig.matrix_world=controller.matrix_world.copy()
+    rig.parent=controller.parent
+    position,rotation,_=controller.matrix_world.decompose()
+    rig.matrix_world=Matrix.LocRotScale(position,rotation,Vector((1,1,1)))
     bpy.ops.object.select_all(action='DESELECT');rig.select_set(True);bpy.context.view_layer.objects.active=rig
     bpy.ops.object.mode_set(mode='EDIT')
     for name in ['SkinNeckAnchor','SkinNeckHead']:
         bone=data.edit_bones.new(name);bone.head=(0,0,0);bone.tail=(0,.1,0)
     bpy.ops.object.mode_set(mode='OBJECT')
-    constraint=rig.pose.bones['SkinNeckHead'].constraints.new('COPY_TRANSFORMS')
-    constraint.target=controller;constraint.owner_space='WORLD';constraint.target_space='WORLD'
+    for kind in ['COPY_LOCATION','COPY_ROTATION']:
+        constraint=rig.pose.bones['SkinNeckHead'].constraints.new(kind)
+        constraint.target=controller;constraint.owner_space='WORLD';constraint.target_space='WORLD'
     head.parent=rig;head.matrix_world=world
     anchor=head.vertex_groups.new(name='SkinNeckAnchor');moving=head.vertex_groups.new(name='SkinNeckHead')
     counts={'anchor':0,'blend':0,'head':0}
