@@ -36,6 +36,14 @@ def build(root, head, style):
                 weight=front*math.exp(-((z-.155)/.10)**2)
                 z-=.038*weight
                 y-=.006*weight
+            if style=='short01' and os.environ.get('ATRIUM_HAIR_SWEEP_STUDY') in {'1','2'}:
+                # Shape a side-swept fringe rather than a level cap perimeter.
+                front=max(0.,min(1.,(-y-.055)/.10))
+                fringe=front*math.exp(-((z-.145)/.075)**2)
+                z+=fringe*(-.026*math.exp(-((x+.075)/.075)**2)+.014*math.exp(-((x-.105)/.055)**2))
+                y-=.004*fringe
+                crown=front*math.exp(-((z-.23)/.08)**2-((x-.035)/.12)**2)
+                x+=.014*crown;z+=.012*crown
             vertices.append((x,y,z))
         elif fields[0] == 'vt':
             texcoords.append(tuple(map(float, fields[1:3])))
@@ -43,6 +51,19 @@ def build(root, head, style):
             faces.append([int(v.split('/')[0]) - 1 for v in fields[1:]])
             uv_faces.append([int(v.split('/')[1]) - 1 for v in fields[1:]])
     assert len(vertices) == len(fitted), 'Hair binding must cover every source vertex'
+    if style=='short01' and os.environ.get('ATRIUM_HAIR_SWEEP_STUDY')=='2':
+        from mathutils import Vector
+        from mathutils.bvhtree import BVHTree
+        bpy.context.view_layer.update()
+        to_head=head.matrix_world.inverted()@head.parent.matrix_world
+        to_hair=to_head.inverted()
+        skin=BVHTree.FromPolygons([v.co for v in head.data.vertices],[tuple(p.vertices) for p in head.data.polygons])
+        for i,v in enumerate(vertices):
+            p=to_head@Vector(v)
+            if not (p.y<-.07 and .07<p.z<.25):continue
+            hit=skin.ray_cast(Vector((p.x,-1,p.z)),Vector((0,1,0)))[0]
+            if hit is not None and p.y>hit.y-.006:
+                p.y=hit.y-.006;vertices[i]=tuple(to_hair@p)
     if os.environ.get('ATRIUM_HAIR_CARD_STUDY')=='1':
         from mathutils import Vector
         from mathutils.bvhtree import BVHTree

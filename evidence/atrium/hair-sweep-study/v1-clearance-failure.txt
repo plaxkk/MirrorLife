@@ -1,0 +1,12 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/hair-sweep-v1/models/atrium/residents/you.blend"
+Read blend: "/Users/kk/repos/MirrorLife/models/atrium/residents/you.blend"
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/verify-atrium-hair-sweep.py", line 43, in <module>
+    assert not (set(a['clearance']['penetrationIds'])-set(b['clearance']['penetrationIds'])), 'New frontal scalp penetration sample'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: New frontal scalp penetration sample
+
+Error: script failed, file: 'scripts/verify-atrium-hair-sweep.py', exiting.
+
+Blender quit
