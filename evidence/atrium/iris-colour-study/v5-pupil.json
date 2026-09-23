@@ -1,0 +1,52 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "file": "tmp/portrait-study/eye-depth-v5/public/assets/atrium/residents/you.glb",
+      "eyes": [
+        {
+          "side": -1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "pupilMismatches": 0,
+          "triangles": 1744
+        },
+        {
+          "side": 1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "pupilMismatches": 0,
+          "triangles": 1744
+        }
+      ]
+    },
+    {
+      "file": "tmp/portrait-study/eye-depth-v5/public/assets/atrium/residents/you-mobile.glb",
+      "eyes": [
+        {
+          "side": -1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "pupilMismatches": 0,
+          "triangles": 1744
+        },
+        {
+          "side": 1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "pupilMismatches": 0,
+          "triangles": 1744
+        }
+      ]
+    }
+  ],
+  "scope": "Actual GLTFLoader decoding, neutral pose central iris ray grid, excluding the authored catchlight. Checks depth order and a circular pupil outside a 0.03-radius boundary tolerance; not a complete visual or blink acceptance."
+}

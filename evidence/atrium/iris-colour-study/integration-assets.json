@@ -1,0 +1,32 @@
+[
+  {
+    "file": "public/assets/atrium/residents/you.glb",
+    "beforeSha256": "59bd6175f9fdbcbdf9ca1fde46cb3f0f0aa192791a1d70f39466be0b87239836",
+    "afterSha256": "5e7634321dee0119c38bcb77596b04215019e8a75ba1b97d8ac8c24672343182"
+  },
+  {
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "beforeSha256": "304476e19b1f5c886c71cb8ed5ef936bec771d2caeab6fbe602074834c6d1799",
+    "afterSha256": "db66680335525b6aab3be7f0fdaf0985f519385044a65009d64758054c39c33a"
+  },
+  {
+    "file": "models/atrium/residents/you.blend",
+    "beforeSha256": "26e4a1d03aa4167673d76d2bfc3de4c3cd68b970f809ce3e2ebff63b9450faaf",
+    "afterSha256": "89d9da9dbdb1878541ef7bb42e33b14904261684f170f7b1b58e2a0fa8529337"
+  },
+  {
+    "file": "models/atrium/residents/you-master.glb",
+    "beforeSha256": "9c43effd42f11794e4d136a4f814ddc33388159d531cba4f67464c0aae7a9dde",
+    "afterSha256": "8810d0da49297af48d3ecacefde14fe20a8170a60d5e7cc49ada99ee4b8a8680"
+  },
+  {
+    "file": "models/atrium/animations/you-motion.blend",
+    "beforeSha256": "5d7073e8139d61f1e9d139f7ec151b44c759fed7b5aa0713b497770674aae803",
+    "afterSha256": "c836518d8de4c7045c7a464732c5585085659e18537f8ed237ec300a9cd59aba"
+  },
+  {
+    "file": "public/assets/atrium/animations/you-motion.glb",
+    "beforeSha256": "888e54e71c228b406002e06c22e0a15cc42f79f9f1a55dab6e40618095091ba5",
+    "afterSha256": "20520be4ae2c9aa20eff58ecab67d12063aef2b3661382580c1439a89b5aa04d"
+  }
+]

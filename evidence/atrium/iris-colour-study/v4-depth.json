@@ -1,0 +1,69 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "file": "tmp/portrait-study/eye-depth-v4/models/atrium/residents/you-master.glb",
+      "eyes": [
+        {
+          "side": -1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "triangles": 1744
+        },
+        {
+          "side": 1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "triangles": 1744
+        }
+      ]
+    },
+    {
+      "file": "tmp/portrait-study/eye-depth-v4/public/assets/atrium/residents/you.glb",
+      "eyes": [
+        {
+          "side": -1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "triangles": 696
+        },
+        {
+          "side": 1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "triangles": 696
+        }
+      ]
+    },
+    {
+      "file": "tmp/portrait-study/eye-depth-v4/public/assets/atrium/residents/you-mobile.glb",
+      "eyes": [
+        {
+          "side": -1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "triangles": 359
+        },
+        {
+          "side": 1,
+          "samples": 421,
+          "whiteOcclusions": 0,
+          "missingIris": 0,
+          "maxOcclusion": 0,
+          "triangles": 359
+        }
+      ]
+    }
+  ],
+  "scope": "Actual GLTFLoader decoding, neutral pose central iris ray grid, excluding the authored catchlight. Detects sclera depth-order corruption; not a complete visual or blink acceptance."
+}

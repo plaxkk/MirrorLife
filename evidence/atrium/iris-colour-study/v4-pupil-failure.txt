@@ -1,0 +1,16 @@
+[{"file":"tmp/portrait-study/eye-depth-v4/models/atrium/residents/you-master.glb","eyes":[{"side":-1,"samples":421,"whiteOcclusions":0,"missingIris":0,"maxOcclusion":0,"pupilMismatches":0,"triangles":1744},{"side":1,"samples":421,"whiteOcclusions":0,"missingIris":0,"maxOcclusion":0,"pupilMismatches":0,"triangles":1744}]},{"file":"tmp/portrait-study/eye-depth-v4/public/assets/atrium/residents/you.glb","eyes":[{"side":-1,"samples":421,"whiteOcclusions":0,"missingIris":0,"maxOcclusion":0,"pupilMismatches":6,"triangles":696},{"side":1,"samples":421,"whiteOcclusions":0,"missingIris":0,"maxOcclusion":0,"pupilMismatches":6,"triangles":696}]},{"file":"tmp/portrait-study/eye-depth-v4/public/assets/atrium/residents/you-mobile.glb","eyes":[{"side":-1,"samples":421,"whiteOcclusions":0,"missingIris":0,"maxOcclusion":0,"pupilMismatches":21,"triangles":359},{"side":1,"samples":421,"whiteOcclusions":0,"missingIris":0,"maxOcclusion":0,"pupilMismatches":22,"triangles":359}]}]
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: Eye surface depth order or pupil boundary is corrupted
+    at file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-iris-runtime.mjs:48:43 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: '==',
+  diff: 'simple'
+}
+
+Node.js v24.16.0

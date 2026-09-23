@@ -592,6 +592,12 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         bpy.context.view_layer.objects.active=objects[0]
         if len(objects)>1:bpy.ops.object.join()
         merged=objects[0];merged.name=(parent.name if parent else name)+'_Surface_'+family
+        eye_default='3' if os.environ.get('ATRIUM_CURVED_IRIS','1')=='1' else '0'
+        if name=='you' and family=='eye' and os.environ.get('ATRIUM_EYE_DEPTH_STUDY',eye_default)=='3':
+            # The iris is only fractions of a millimetre above the sclera.
+            # Independent collapse can change depth order and has been measured
+            # to destroy the pupil boundary even when vertex colours survive.
+            merged['atrium_preserve_eye_surface']=True
         for f in merged.data.polygons:f.material_index=0
         merged.data.materials.clear();merged.data.materials.append(surfaces[family])
         merged.data.validate(verbose=False)
@@ -614,7 +620,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         uv_check.verify(path)
     export(SOURCE/(name+'-master.glb'))
     for ob in bpy.context.scene.objects:
-        if ob.type=='MESH' and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
+        if ob.type=='MESH' and not ob.get('atrium_preserve_eye_surface') and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=.55 if ob.name.startswith('HeadPivot_Surface') else .4;d.use_collapse_triangulate=True
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.modifier_apply(modifier=d.name)
@@ -624,7 +630,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for image in baked_images:
             image.scale(max(128,image.size[0]//2),max(128,image.size[1]//2));image.pack()
     for ob in bpy.context.scene.objects:
-        if ob.type=='MESH' and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
+        if ob.type=='MESH' and not ob.get('atrium_preserve_eye_surface') and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
             d=ob.modifiers.new('Mobile LOD','DECIMATE');d.ratio=.52
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)

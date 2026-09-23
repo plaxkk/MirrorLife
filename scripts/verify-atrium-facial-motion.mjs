@@ -11,7 +11,7 @@ const candidate=process.env.ATRIUM_REVIEW_CANDIDATE;
 const body=candidate?await fs.readFile(candidate):null;
 let requests=0,recorder=null,page;
 await fs.mkdir(out,{recursive:true});
-const asset=JSON.parse(await fs.readFile('evidence/atrium/assets.json','utf8'));
+const asset=JSON.parse(await fs.readFile(process.env.ATRIUM_ASSET_REPORT||'evidence/atrium/assets.json','utf8'));
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:process.env.ATRIUM_HEADED!=='1',args:['--no-sandbox']});
 const errors=[],poses=[];let samples=[],responsePeak=0;
 try{

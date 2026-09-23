@@ -19,8 +19,13 @@ def authored_iris(side):
         bs.inputs['Base Color'].default_value=mat.diffuse_color;bs.inputs['Roughness'].default_value=.4
         materials.append(mat)
     rx,rz=.0374,.031
-    bpy.context.view_layer.update()
     white=bpy.data.objects['EyeWhite_'+str(side)]
+    # Simplify the smooth globe before fitting the iris. Reducing the combined
+    # eye afterwards collapses the small pupil and catchlight boundaries.
+    bpy.ops.object.select_all(action='DESELECT');white.select_set(True);bpy.context.view_layer.objects.active=white
+    globe_lod=white.modifiers.new('Ocular globe source budget','DECIMATE');globe_lod.ratio=.45
+    globe_lod.use_collapse_triangulate=True;bpy.ops.object.modifier_apply(modifier=globe_lod.name)
+    bpy.context.view_layer.update()
     matrix=eye.matrix_world.inverted()@white.matrix_world
     sclera=BVHTree.FromPolygons([matrix@v.co for v in white.data.vertices],[tuple(p.vertices) for p in white.data.polygons])
     def surface(x,z):
@@ -110,7 +115,8 @@ def authored_brows(head, front):
 def build_player_head(root_path, identity="you", fitted_crop=False):
     source_skin=identity=='you' and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
     portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
-    eye_depth=int(os.environ.get('ATRIUM_EYE_DEPTH_STUDY','0')) if identity=='you' else 0
+    eye_default='3' if os.environ.get('ATRIUM_CURVED_IRIS','1')=='1' else '0'
+    eye_depth=int(os.environ.get('ATRIUM_EYE_DEPTH_STUDY',eye_default)) if identity=='you' else 0
     assert eye_depth in (0,1,2,3), 'Unknown eye depth study'
     lid_edge_study=identity=='you' and os.environ.get('ATRIUM_LID_EDGE_STUDY')=='1'
     portrait_eyes=identity=='you' and (os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1' or eye_depth>=2)

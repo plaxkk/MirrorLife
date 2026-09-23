@@ -1,0 +1,29 @@
+{
+  "residents": [
+    {
+      "sourceSha256": "89d9da9dbdb1878541ef7bb42e33b14904261684f170f7b1b58e2a0fa8529337",
+      "eyeSamples": 4961,
+      "covered": 4961,
+      "exposed": 0,
+      "minimumClearance": 0.0018684864044189453,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "you",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    }
+  ]
+}
