@@ -1,0 +1,68 @@
+{
+  "candidate": "tmp/portrait-study/hand-grip-v2/public/assets/atrium/residents/you.glb",
+  "handBounds": [
+    [
+      -0.07548432797193527,
+      -0.0652051717042923,
+      -0.0705491453409195
+    ],
+    [
+      0.055052801966667175,
+      0.03053266368806362,
+      0.06001579016447067
+    ]
+  ],
+  "parts": [
+    {
+      "name": "Cup_handle",
+      "bounds": [
+        [
+          -0.0761820524930954,
+          -0.09458441287279129,
+          -0.06576751917600632
+        ],
+        [
+          0.025241995230317116,
+          0.00938347540795803,
+          -0.012484039179980755
+        ]
+      ]
+    },
+    {
+      "name": "Cup_vessel",
+      "bounds": [
+        [
+          -0.20912301540374756,
+          -0.13174863159656525,
+          -0.1122443675994873
+        ],
+        [
+          -0.05122743546962738,
+          0.04057750105857849,
+          0.04756390303373337
+        ]
+      ]
+    },
+    {
+      "name": "Tea_surface",
+      "bounds": [
+        [
+          -0.18697163462638855,
+          -0.0865182876586914,
+          -0.07733479142189026
+        ],
+        [
+          -0.07339997589588165,
+          -0.046846795827150345,
+          0.01723104529082775
+        ]
+      ]
+    }
+  ],
+  "gripInHand": [
+    0,
+    -0.04500000551342965,
+    -0.03799998015165307
+  ],
+  "scope": "Decoded full-weight right-hand triangles at GripRight=1 and actual prop alignment in Blender hand-local coordinates; diagnostic opaque hand/translucent vessel materials, not game rendering or collision proof."
+}

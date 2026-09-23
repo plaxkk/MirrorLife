@@ -1,0 +1,19 @@
+{
+  "baseline": {
+    "sourceSha256": "58f4021ddc12fd334e356e02cfaaf0970620c7ace6b7e67c7beafbe82229c981",
+    "edges": 202,
+    "maxStretch": 2.1869103999187103,
+    "p95Stretch": 1.6112218208526163,
+    "above2": 2,
+    "above3": 0
+  },
+  "candidate": {
+    "sourceSha256": "c54b8788bde0821417f3113eed0a70345788eadc9c43574405c427b718280cfe",
+    "edges": 202,
+    "maxStretch": 1.9891352287195252,
+    "p95Stretch": 1.6100213052473338,
+    "above2": 0,
+    "above3": 0
+  },
+  "scope": "Right-hand thumb-web edges over 2mm, local x (-65,-25)mm and z below -27mm. Closed/neutral length ratio, not self-intersection or contact proof."
+}

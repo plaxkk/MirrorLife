@@ -1,0 +1,14 @@
+[
+  {
+    "file": "tmp/portrait-study/hand-grip-v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2476644,
+    "sha256": "bc88448afc866a10e3d083b523da3834cdd22cb46f67d944d51f60407a130516",
+    "triangles": 26404
+  },
+  {
+    "file": "tmp/portrait-study/hand-grip-v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1092500,
+    "sha256": "c468435d40f493c9591c9173a925cc89d61120ac76c3af9f789f30e1ede50d2a",
+    "triangles": 24341
+  }
+]
