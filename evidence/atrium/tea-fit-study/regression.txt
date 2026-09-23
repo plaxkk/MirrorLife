@@ -1,0 +1,42 @@
+
+> mirror-life@0.4.0 test:atrium
+> node --check src/atrium-main.js && node --check src/atrium-actors.js && node --test test/atrium-pilot.test.mjs test/atrium-circulation.regression-1.test.mjs
+
+using deprecated parameters for the initialization function; pass a single object instead
+✔ evaluated window reveals stop the body before the old glazing-only boundary (855.60235ms)
+✔ screen-relative input preserves cardinal directions, diagonal speed and immediate pause (0.671619ms)
+✔ missing furniture blocks walking and camera geometry never blocks locomotion (219.453746ms)
+✔ recording navigation stays in the table aisle at oblique camera angles (329.849147ms)
+✔ complete architectural circuit including both galleries and west kitchen clearance (824.496656ms)
+✔ flared stair cheeks are closed outward hulls and stop lateral body contact (365.135681ms)
+✔ batched stair plaster retains both authored enamel material regions in runtime LODs (9.418051ms)
+using deprecated parameters for the initialization function; pass a single object instead
+✔ stair legs reach forward and rearward floor targets without reversing the knee (3.305163ms)
+✔ foot probes hit tread tops, reject walls and ignore resident capsules (102.352434ms)
+✔ GPU timing distinguishes unavailable hardware and discards disjoint results (0.864434ms)
+✔ seated hips clear cushion and the lower legs reach the floor across chair heights (0.352832ms)
+✔ residents leave the chair before turning, cancel safely, and wait for a blocked exit (6.39311ms)
+✔ floor contact atlas follows transformed floor levels and excludes vertical furniture (3.874898ms)
+✔ visual architecture LODs do not duplicate the separately loaded collision arrays (20.973759ms)
+✔ both resident LODs retain audited continuous hands and long-sleeve surfaces (27.757477ms)
+✔ each life prop contains an authored grip frame (3.212806ms)
+✔ portable motion clips include feet and all corrective bindings (7.627119ms)
+✔ prop grip follows a moving, scaled hand without scaling the metre-sized vessel (18.993745ms)
+✔ decision requires discoveries and residents, changes memories once (1.271773ms)
+✔ corrupt and unknown state cannot unlock decisions or destroy the main save (3.034147ms)
+✔ discoveries alter local dialogue (0.169847ms)
+✔ wall camera probes contract while residents remain physical but do not obstruct the orbit ray (279.086492ms)
+✔ both physical stair flights are traversable and land on the upper floor (518.191703ms)
+✔ structural stair flight admits the high underside and blocks low head clearance (301.833852ms)
+✔ both resident LODs preserve used skin, hair, eye and fabric material responses (954.184824ms)
+✔ resident skin batches retain authored roughness without extra primitives or translucent colours (1126.033414ms)
+✔ all resident face LODs retain non-empty eyelid and mouth morphs and portable weight animation (36.980291ms)
+✔ resident heads retain their shape while looking around under body proportions (62.614653ms)
+ℹ tests 28
+ℹ suites 0
+ℹ pass 28
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3815.465072

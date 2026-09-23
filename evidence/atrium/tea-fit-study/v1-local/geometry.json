@@ -1,0 +1,104 @@
+{
+  "candidate": "tmp/portrait-study/tea-fit-v1/public/assets/atrium/residents/you.glb",
+  "anchorOverride": null,
+  "gripName": "GripTea",
+  "handBounds": [
+    [
+      -0.07548432797193527,
+      -0.0652051717042923,
+      -0.07054907828569412
+    ],
+    [
+      0.055052801966667175,
+      0.030532661825418472,
+      0.06001579016447067
+    ]
+  ],
+  "parts": [
+    {
+      "name": "Cup_handle",
+      "bounds": [
+        [
+          -0.06559455394744873,
+          -0.10946641862392426,
+          -0.06372319161891937
+        ],
+        [
+          0.05864034965634346,
+          -0.022076575085520744,
+          -0.01596984826028347
+        ]
+      ]
+    },
+    {
+      "name": "Cup_vessel",
+      "bounds": [
+        [
+          -0.08372031152248383,
+          -0.22021815180778503,
+          -0.07812855392694473
+        ],
+        [
+          0.07693788409233093,
+          -0.08121376484632492,
+          0.06084822118282318
+        ]
+      ]
+    },
+    {
+      "name": "Tea_surface",
+      "bounds": [
+        [
+          0.022247660905122757,
+          -0.20109449326992035,
+          -0.05862231180071831
+        ],
+        [
+          0.02760566957294941,
+          -0.10107506811618805,
+          0.041338834911584854
+        ]
+      ]
+    }
+  ],
+  "distal": [
+    {
+      "digit": 1,
+      "samples": 26,
+      "minMetres": 0.000747585147964141,
+      "within3mm": 9,
+      "nearestNormalInsideOver1mm": 0,
+      "minNearestNormalSignedMetres": 0.000747585147964141
+    },
+    {
+      "digit": 2,
+      "samples": 37,
+      "minMetres": 0.0007665542963820927,
+      "within3mm": 5,
+      "nearestNormalInsideOver1mm": 0,
+      "minNearestNormalSignedMetres": 0.0007665542963820927
+    },
+    {
+      "digit": 3,
+      "samples": 28,
+      "minMetres": 0.0008302134517792898,
+      "within3mm": 2,
+      "nearestNormalInsideOver1mm": 0,
+      "minNearestNormalSignedMetres": 0.0008302134517792898
+    },
+    {
+      "digit": 4,
+      "samples": 16,
+      "minMetres": 0.0007555143886592103,
+      "within3mm": 15,
+      "nearestNormalInsideOver1mm": 0,
+      "minNearestNormalSignedMetres": 0.0007555143886592103
+    }
+  ],
+  "gripInHand": [
+    -1.6653345369377348e-16,
+    -0.044000007212162004,
+    -0.049000002443790325
+  ],
+  "scope": "Decoded full-weight right-hand triangles at the reported grip target=1 and actual prop alignment in Blender hand-local coordinates. Distal vertices selected by neutral z<-70mm and x bins; unsigned nearest-triangle distance is not contact proof. Nearest-normal signs flag possible penetration but are not watertight containment or complete triangle collision tests. Diagnostic opaque flat-normal hand/translucent vessel materials, not game rendering."
+}

@@ -1,0 +1,5327 @@
+{
+  "runtimeModules": {
+    "src/atrium-actors.js": "8137cce7e5d521750f3c004a10cd4966f3f675788a0b96db6481456b0fb1e8b1",
+    "src/atrium-main.js": "6c8de19a224d0396bc16ec596e8a8419a049f1dc4d9c7957ec8d21b2060baf6a"
+  },
+  "profile": "desktop",
+  "capturedAt": "2026-09-23T09:27:39.862Z",
+  "runtimeFingerprint": null,
+  "installedBaselineFingerprint": "81b31bc1aec2d56b18478f4874db947f3a06fb0da3a72b357b4f28ac79e241f4",
+  "candidate": {
+    "file": "tmp/portrait-study/tea-fit-v2/public/assets/atrium/residents/you.glb",
+    "sha256": "25372cd5744ca7771e8ed03bd471dbaa93b9d2a6b029a4e28cf1716f5d146508",
+    "requests": 1
+  },
+  "method": "Actual runtime E-key care actions, positioned review fixtures and multi-view cameras. NOT traversal or finger-surface contact proof. Grip-frame distance only; source topology and visual checks are separate.",
+  "maxGripFrameErrorMetres": 1.9891280697202825e-15,
+  "sampleCount": 38,
+  "samples": [
+    {
+      "action": "plant",
+      "view": "side",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.9891280697202825e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1.0000000000000002,
+                0.9999999999999998,
+                1
+              ],
+              "hand": [
+                9.2069711366866,
+                0.9680740821551118,
+                3.984149488810752
+              ],
+              "handle": [
+                9.206971136686597,
+                0.9680740821551117,
+                3.984149488810751
+              ]
+            }
+          ],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.9997752675557476,
+              "generic": 0.9997752675557476,
+              "tea": 0,
+              "teaBlend": 0
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999999,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                8.799965138822344,
+                0.9415441071850639,
+                2.364986513321042
+              ],
+              "handle": [
+                8.799965138822344,
+                0.9415441071850639,
+                2.3649865133210426
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.9975288836023192,
+              "teaBlend": 0.9999999999840993,
+              "scale": [
+                0.9999999999999999,
+                1,
+                1
+              ],
+              "hand": [
+                -6.549119377009405,
+                0.9507860558883757,
+                1.0923157511571266
+              ],
+              "handle": [
+                -6.549119377009404,
+                0.9507860558883757,
+                1.0923157511571266
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "cancelled",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.573878397708222e-7,
+              "generic": 5.573878397708222e-7,
+              "tea": 0,
+              "teaBlend": 0
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "plant",
+      "view": "front",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.9860273225978185e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999999,
+                0.9999999999999999,
+                1
+              ],
+              "hand": [
+                9.18627967460003,
+                0.9637116825655705,
+                3.967140943391438
+              ],
+              "handle": [
+                9.186279674600028,
+                0.9637116825655705,
+                3.967140943391439
+              ]
+            }
+          ],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.9997748627985518,
+              "generic": 0.9997748627985518,
+              "tea": 0,
+              "teaBlend": 0
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "cancelled",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.2620585267595225e-7,
+              "generic": 2.2620585267595225e-7,
+              "tea": 0,
+              "teaBlend": 0
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "plant",
+      "view": "hand",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1,
+                0.9999999999999998,
+                0.9999999999999998
+              ],
+              "hand": [
+                9.203372311735501,
+                0.9672182794605706,
+                3.980669922846684
+              ],
+              "handle": [
+                9.203372311735501,
+                0.9672182794605706,
+                3.9806699228466846
+              ]
+            }
+          ],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.9997756717610434,
+              "generic": 0.9997756717610434,
+              "tea": 0,
+              "teaBlend": 0
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "cancelled",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.593972473174822e-7,
+              "generic": 5.593972473174822e-7,
+              "tea": 0,
+              "teaBlend": 0
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "tea",
+      "view": "side",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": 0.9996728329972886,
+              "teaBlend": 0.9997050781051793,
+              "scale": [
+                1,
+                1,
+                0.9999999999999998
+              ],
+              "hand": [
+                -8.380423558092339,
+                0.9431284572160196,
+                1.3972850269436812
+              ],
+              "handle": [
+                -8.380423558092339,
+                0.9431284572160196,
+                1.3972850269436816
+              ]
+            }
+          ],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.9997050781201546,
+              "generic": 0.000294834915901093,
+              "tea": 0.9994102432042535,
+              "teaBlend": 0.9997050781051793
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "cancelled",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.0607749855679756e-7,
+              "generic": 3.0607740487336244e-7,
+              "tea": 9.368343512265563e-14,
+              "teaBlend": 3.060774985563703e-7
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "tea",
+      "view": "hand-reverse",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 1.831026719408895e-15,
+              "cupUp": 0.9955385255157504,
+              "teaBlend": 0.9997752676066747,
+              "scale": [
+                1,
+                0.9999999999999998,
+                1
+              ],
+              "hand": [
+                -8.387548337276769,
+                0.9418163187740852,
+                1.3921534275728316
+              ],
+              "handle": [
+                -8.387548337276767,
+                0.9418163187740852,
+                1.392153427572832
+              ]
+            }
+          ],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.9997752676066747,
+              "generic": 0.00022468188867671228,
+              "tea": 0.9995505857179979,
+              "teaBlend": 0.9997752676066747
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "cancelled",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.262070935180603e-7,
+              "generic": 2.2620704234841115e-7,
+              "tea": 5.1169649157888464e-14,
+              "teaBlend": 2.2620709351806023e-7
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "tea",
+      "view": "hand-top",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 1.831026719408895e-15,
+              "cupUp": 0.9983508539694848,
+              "teaBlend": 0.9997748627239906,
+              "scale": [
+                1,
+                1,
+                1
+              ],
+              "hand": [
+                -8.376874596595677,
+                0.9451495277346453,
+                1.4058831579454754
+              ],
+              "handle": [
+                -8.376874596595675,
+                0.9451495277346453,
+                1.4058831579454758
+              ]
+            }
+          ],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.9997748627239906,
+              "generic": 0.00022508658921631947,
+              "tea": 0.9995497761347744,
+              "teaBlend": 0.9997748627239906
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "natural-completion",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 0.7417077361490938,
+              "generic": 0.19157737028568006,
+              "tea": 0.5501303658634138,
+              "teaBlend": 0.7417077361490938
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "released",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.2444524711289133e-7,
+              "generic": 1.244452316262718e-7,
+              "tea": 1.548661952898857e-14,
+              "teaBlend": 1.244452471128912e-7
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.6949460813958065e-10,
+              "generic": 1.6949460811085223e-10,
+              "tea": 2.872842218838995e-20,
+              "teaBlend": 1.6949460813958034e-10
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 6.2440007072914946e-12,
+              "generic": 6.244000707252507e-12,
+              "tea": 3.898754483265662e-23,
+              "teaBlend": 6.244000707291484e-12
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.3043674391652676e-13,
+              "generic": 2.3043674391647365e-13,
+              "tea": 5.310109294685083e-26,
+              "teaBlend": 2.304367439165263e-13
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 8.473777498614734e-15,
+              "generic": 8.473777498614662e-15,
+              "tea": 7.180490509602918e-29,
+              "teaBlend": 8.473777498614712e-15
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.1385518143299203e-16,
+              "generic": 3.1385518143299193e-16,
+              "tea": 9.850507491233608e-32,
+              "teaBlend": 3.138551814329912e-16
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.1562090360072021e-17,
+              "generic": 1.1562090360072021e-17,
+              "tea": 1.3368193349447002e-34,
+              "teaBlend": 1.1562090360071992e-17
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.2747121504209883e-19,
+              "generic": 4.2747121504209883e-19,
+              "tea": 1.827316396895678e-37,
+              "teaBlend": 4.2747121504209767e-19
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.5747583940083576e-20,
+              "generic": 1.5747583940083576e-20,
+              "tea": 2.479863999499775e-40,
+              "teaBlend": 1.5747583940083534e-20
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.79080923385051e-22,
+              "generic": 5.79080923385051e-22,
+              "tea": 3.3533471582848243e-43,
+              "teaBlend": 5.790809233850495e-22
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.133272400156748e-23,
+              "generic": 2.133272400156748e-23,
+              "tea": 4.550851133270521e-46,
+              "teaBlend": 2.1332724001567425e-23
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 7.858748146404083e-25,
+              "generic": 7.858748146404083e-25,
+              "tea": 6.175992242860946e-49,
+              "teaBlend": 7.858748146404064e-25
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.9159988443858624e-26,
+              "generic": 2.9159988443858624e-26,
+              "tea": 8.503049260459664e-52,
+              "teaBlend": 2.9159988443858555e-26
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.076158236465208e-27,
+              "generic": 1.076158236465208e-27,
+              "tea": 1.1581165499119038e-54,
+              "teaBlend": 1.0761582364652054e-27
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.9644522403407185e-29,
+              "generic": 3.9644522403407185e-29,
+              "tea": 1.57168815659425e-57,
+              "teaBlend": 3.9644522403407084e-29
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.4604619500537263e-30,
+              "generic": 1.4604619500537263e-30,
+              "tea": 2.132949107554728e-60,
+              "teaBlend": 1.4604619500537228e-30
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.39958973567761e-32,
+              "generic": 5.39958973567761e-32,
+              "tea": 2.915556931363495e-63,
+              "teaBlend": 5.399589735677599e-32
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.9891513068598725e-33,
+              "generic": 1.9891513068598725e-33,
+              "tea": 3.956722921582333e-66,
+              "teaBlend": 1.9891513068598698e-33
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 7.341023356624904e-35,
+              "generic": 7.341023356624904e-35,
+              "tea": 5.389062392251231e-69,
+              "teaBlend": 7.341023356624895e-35
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.699491299820952e-36,
+              "generic": 2.699491299820952e-36,
+              "tea": 7.287253277809006e-72,
+              "teaBlend": 2.6994912998209496e-36
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 9.998484522642346e-38,
+              "generic": 9.998484522642346e-38,
+              "tea": 9.996969274951845e-75,
+              "teaBlend": 9.998484522642337e-38
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.670098961787962e-39,
+              "generic": 3.670098961787962e-39,
+              "tea": 1.3469626389317067e-77,
+              "teaBlend": 3.6700989617879594e-39
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1.0000000000000002,
+                1,
+                1.0000000000000002
+              ],
+              "hand": [
+                8.829043355850555,
+                0.8935130203205904,
+                2.371508826345155
+              ],
+              "handle": [
+                8.829043355850555,
+                0.8935130203205904,
+                2.3715088263451554
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.3544611768192758e-40,
+              "generic": 1.3544611768192758e-40,
+              "tea": 1.8345650795106565e-80,
+              "teaBlend": 1.3544611768192752e-40
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 0,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999998,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                8.804401715953087,
+                0.9384350118138322,
+                2.38007647542241
+              ],
+              "handle": [
+                8.804401715953087,
+                0.9384350118138322,
+                2.38007647542241
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.01670781967169e-42,
+              "generic": 5.01670781967169e-42,
+              "tea": 2.5167357347955072e-83,
+              "teaBlend": 5.016707819671688e-42
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.831026719408895e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1,
+                1,
+                1
+              ],
+              "hand": [
+                8.802117870997671,
+                0.9422048242779565,
+                2.3794709207607103
+              ],
+              "handle": [
+                8.80211787099767,
+                0.9422048242779565,
+                2.37947092076071
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.8447780990542676e-43,
+              "generic": 1.8447780990542676e-43,
+              "tea": 3.4032062347502746e-86,
+              "teaBlend": 1.8447780990542664e-43
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1.0000000000000002,
+                1,
+                1
+              ],
+              "hand": [
+                8.801668894867595,
+                0.942368078214573,
+                2.378538098180353
+              ],
+              "handle": [
+                8.801668894867595,
+                0.942368078214573,
+                2.3785380981803534
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 6.722964376565735e-45,
+              "generic": 6.722964376565735e-45,
+              "tea": 4.519825000857187e-89,
+              "teaBlend": 6.72296437656573e-45
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.7763568394002505e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999998,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                8.801054824928071,
+                0.9422527795285892,
+                2.376605189141141
+              ],
+              "handle": [
+                8.80105482492807,
+                0.9422527795285892,
+                2.376605189141141
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.5080718676579193e-46,
+              "generic": 2.5080718676579193e-46,
+              "tea": 6.29042449333708e-92,
+              "teaBlend": 2.5080718676579178e-46
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1.0000000000000002,
+                0.9999999999999998,
+                0.9999999999999999
+              ],
+              "hand": [
+                8.800364537534238,
+                0.9421124230583953,
+                2.374025421861344
+              ],
+              "handle": [
+                8.800364537534238,
+                0.9421124230583953,
+                2.3740254218613446
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 9.239469436512951e-48,
+              "generic": 9.239469436512951e-48,
+              "tea": 8.536779546825689e-95,
+              "teaBlend": 9.239469436512945e-48
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1,
+                0.9999999999999999,
+                1
+              ],
+              "hand": [
+                8.799759645559396,
+                0.9419916769409256,
+                2.37111088984458
+              ],
+              "handle": [
+                8.799759645559396,
+                0.9419916769409256,
+                2.3711108898445805
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.4159975431520362e-49,
+              "generic": 3.4159975431520362e-49,
+              "tea": 1.166903921482074e-97,
+              "teaBlend": 3.415997543152034e-49
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.831026719408895e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999999,
+                1,
+                1
+              ],
+              "hand": [
+                8.79937267779451,
+                0.9419073478567369,
+                2.368256472816663
+              ],
+              "handle": [
+                8.799372677794508,
+                0.9419073478567369,
+                2.3682564728166624
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.2606842759507237e-50,
+              "generic": 1.2606842759507237e-50,
+              "tea": 1.5893248436293996e-100,
+              "teaBlend": 1.260684275950723e-50
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999993,
+                1,
+                0.9999999999999996
+              ],
+              "hand": [
+                8.799266037598013,
+                0.9418462305296682,
+                2.3658546304272874
+              ],
+              "handle": [
+                8.799266037598013,
+                0.9418462305296682,
+                2.365854630427288
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.644226502016901e-52,
+              "generic": 4.644226502016901e-52,
+              "tea": 2.1568839802036133e-103,
+              "teaBlend": 4.644226502016899e-52
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.7763568394002505e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999999,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                8.79946961859395,
+                0.9417560442717362,
+                2.364330613264379
+              ],
+              "handle": [
+                8.799469618593948,
+                0.9417560442717362,
+                2.364330613264379
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.7170538232461231e-53,
+              "generic": 1.7170538232461231e-53,
+              "tea": 2.9482738319241276e-106,
+              "teaBlend": 1.7170538232461224e-53
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.577566798522237e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999994,
+                1,
+                0.9999999999999994
+              ],
+              "hand": [
+                8.80009688440308,
+                0.9415186828761787,
+                2.364272021772488
+              ],
+              "handle": [
+                8.80009688440308,
+                0.9415186828761786,
+                2.3642720217724875
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 6.3254432719047124e-55,
+              "generic": 6.3254432719047124e-55,
+              "tea": 4.0011232586084576e-109,
+              "teaBlend": 6.3254432719047096e-55
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999997,
+                1,
+                1
+              ],
+              "hand": [
+                8.80093097893131,
+                0.9411672111122135,
+                2.3655070937787306
+              ],
+              "handle": [
+                8.80093097893131,
+                0.9411672111122135,
+                2.365507093778731
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.3344240651739176e-56,
+              "generic": 2.3344240651739176e-56,
+              "tea": 5.449535716063115e-112,
+              "teaBlend": 2.334424065173916e-56
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 4.440892098500626e-16,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1.0000000000000002,
+                0.9999999999999998,
+                1
+              ],
+              "hand": [
+                8.801729602558787,
+                0.9407833009103644,
+                2.3676433063112157
+              ],
+              "handle": [
+                8.801729602558787,
+                0.9407833009103644,
+                2.367643306311216
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 8.584303778767614e-58,
+              "generic": 8.584303778767614e-58,
+              "tea": 7.369027136616394e-115,
+              "teaBlend": 8.584303778767614e-58
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.9860273225978185e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                0.9999999999999996,
+                1,
+                0.9999999999999996
+              ],
+              "hand": [
+                8.802316387585288,
+                0.9404723168945804,
+                2.3702207380960707
+              ],
+              "handle": [
+                8.802316387585286,
+                0.9404723168945804,
+                2.3702207380960716
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.168063400857007e-59,
+              "generic": 3.168063400857007e-59,
+              "tea": 1.0036625711849665e-117,
+              "teaBlend": 3.168063400857007e-59
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 1.7763568394002505e-15,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1.0000000000000002,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                8.80256126519707,
+                0.940361068390781,
+                2.3726986100474985
+              ],
+              "handle": [
+                8.802561265197072,
+                0.940361068390781,
+                2.3726986100474985
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.1712898525438553e-60,
+              "generic": 1.1712898525438553e-60,
+              "tea": 1.3719199186722064e-120,
+              "teaBlend": 1.1712898525438553e-60
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [
+            {
+              "name": "WateringCan",
+              "errorMetres": 0,
+              "cupUp": null,
+              "teaBlend": 0,
+              "scale": [
+                1,
+                1,
+                1
+              ],
+              "hand": [
+                8.802631216391768,
+                0.9404466581680445,
+                2.3750348864377306
+              ],
+              "handle": [
+                8.802631216391768,
+                0.9404466581680445,
+                2.3750348864377306
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.31490697432976e-62,
+              "generic": 4.31490697432976e-62,
+              "tea": 1.8618422197119604e-123,
+              "teaBlend": 4.31490697432976e-62
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.5924295336899588e-63,
+              "generic": 1.5924295336899588e-63,
+              "tea": 2.5358318197680198e-126,
+              "teaBlend": 1.5924295336899588e-63
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.866340672314686e-65,
+              "generic": 5.866340672314686e-65,
+              "tea": 3.441395288365352e-129,
+              "teaBlend": 5.866340672314686e-65
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.1688913483198383e-66,
+              "generic": 2.1688913483198383e-66,
+              "tea": 4.704089680816646e-132,
+              "teaBlend": 2.1688913483198383e-66
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 7.989964554975716e-68,
+              "generic": 7.989964554975716e-68,
+              "tea": 6.383953358976828e-135,
+              "teaBlend": 7.989964554975716e-68
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.948720703870206e-69,
+              "generic": 2.948720703870206e-69,
+              "tea": 8.694953789432803e-138,
+              "teaBlend": 2.948720703870206e-69
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.086277278237047e-70,
+              "generic": 1.086277278237047e-70,
+              "tea": 1.1799983252140867e-140,
+              "teaBlend": 1.086277278237047e-70
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.008939311860167e-72,
+              "generic": 4.008939311860167e-72,
+              "tea": 1.607159440617787e-143,
+              "teaBlend": 4.008939311860167e-72
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.4768505130340917e-73,
+              "generic": 1.4768505130340917e-73,
+              "tea": 2.18108743784906e-146,
+              "teaBlend": 1.4768505130340917e-73
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.421009076253511e-75,
+              "generic": 5.421009076253511e-75,
+              "tea": 2.9387339404822947e-149,
+              "teaBlend": 5.421009076253511e-75
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.0078551595857872e-76,
+              "generic": 2.0078551595857872e-76,
+              "tea": 4.031482341875267e-152,
+              "teaBlend": 2.0078551595857872e-76
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 7.410050493598492e-78,
+              "generic": 7.410050493598492e-78,
+              "tea": 5.490884831767925e-155,
+              "teaBlend": 7.410050493598492e-78
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 9.155133597044475e-16,
+              "cupUp": 0.9595995969639498,
+              "teaBlend": 0.8344033058346664,
+              "scale": [
+                0.9999999999999998,
+                1,
+                0.9999999999999998
+              ],
+              "hand": [
+                -6.607599814144313,
+                0.8577399494404166,
+                1.0793427712772818
+              ],
+              "handle": [
+                -6.607599814144312,
+                0.8577399494404166,
+                1.079342771277282
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.739628552775053e-79,
+              "generic": 2.739628552775053e-79,
+              "tea": 7.505564607180332e-158,
+              "teaBlend": 2.739628552775053e-79
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.9964742871128083,
+              "teaBlend": 0.9938775932502426,
+              "scale": [
+                1.0000000000000002,
+                1,
+                1.0000000000000002
+              ],
+              "hand": [
+                -6.552607386072495,
+                0.9428017058560917,
+                1.0891061749658522
+              ],
+              "handle": [
+                -6.552607386072494,
+                0.9428017058560917,
+                1.0891061749658522
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.0074349424706789e-80,
+              "generic": 1.0074349424706789e-80,
+              "tea": 1.0149251633109e-160,
+              "teaBlend": 1.0074349424706789e-80
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.9967750533918043,
+              "teaBlend": 0.9997748626730629,
+              "scale": [
+                1.0000000000000002,
+                1,
+                1.0000000000000002
+              ],
+              "hand": [
+                -6.549642910837388,
+                0.9499772072066206,
+                1.091477451832986
+              ],
+              "handle": [
+                -6.549642910837387,
+                0.9499772072066206,
+                1.091477451832986
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.711282950167273e-82,
+              "generic": 3.711282950167273e-82,
+              "tea": 1.3773621136202296e-163,
+              "teaBlend": 3.711282950167273e-82
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 9.155133597044475e-16,
+              "cupUp": 0.9965976502162845,
+              "teaBlend": 0.9999917061808392,
+              "scale": [
+                0.9999999999999999,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                -6.549611016847108,
+                0.9507340320526017,
+                1.092804445684616
+              ],
+              "handle": [
+                -6.549611016847107,
+                0.9507340320526017,
+                1.0928044456846162
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.3622840212900122e-83,
+              "generic": 1.3622840212900122e-83,
+              "tea": 1.8558177546620862e-166,
+              "teaBlend": 1.3622840212900122e-83
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 9.155133597044475e-16,
+              "cupUp": 0.9970118435149926,
+              "teaBlend": 0.9999996955624924,
+              "scale": [
+                1,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                -6.549458695676626,
+                0.9509170840497332,
+                1.0933338657243734
+              ],
+              "handle": [
+                -6.549458695676625,
+                0.9509170840497332,
+                1.0933338657243732
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.027550586100978e-85,
+              "generic": 5.027550586100978e-85,
+              "tea": 2.5276264895804284e-169,
+              "teaBlend": 5.027550586100978e-85
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.9978773695082991,
+              "teaBlend": 0.9999999887646412,
+              "scale": [
+                1,
+                1,
+                1
+              ],
+              "hand": [
+                -6.548995827746706,
+                0.9509605137624525,
+                1.0929439543693702
+              ],
+              "handle": [
+                -6.5489958277467055,
+                0.9509605137624525,
+                1.0929439543693702
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.868840149424286e-86,
+              "generic": 1.868840149424286e-86,
+              "tea": 3.4925635041001876e-172,
+              "teaBlend": 1.868840149424286e-86
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 2.220446049250313e-16,
+              "cupUp": 0.9987540597373731,
+              "teaBlend": 0.9999999995823595,
+              "scale": [
+                1,
+                0.9999999999999999,
+                1
+              ],
+              "hand": [
+                -6.548308264080174,
+                0.9508913896167425,
+                1.091487170145027
+              ],
+              "handle": [
+                -6.548308264080174,
+                0.9508913896167425,
+                1.0914871701450273
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 6.884607919333439e-88,
+              "generic": 6.884607919333439e-88,
+              "tea": 4.7397826202948707e-175,
+              "teaBlend": 6.884607919333439e-88
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 9.155133597044475e-16,
+              "cupUp": 0.9991667743845345,
+              "teaBlend": 0.9999999999846145,
+              "scale": [
+                0.9999999999999998,
+                1,
+                1
+              ],
+              "hand": [
+                -6.547508542805679,
+                0.9506564160157098,
+                1.0886169654371667
+              ],
+              "handle": [
+                -6.547508542805678,
+                0.9506564160157098,
+                1.088616965437167
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.5362161775873096e-89,
+              "generic": 2.5362161775873096e-89,
+              "tea": 6.432392499455584e-178,
+              "teaBlend": 2.5362161775873096e-89
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.998819068625393,
+              "teaBlend": 0.9999999999994332,
+              "scale": [
+                1,
+                1,
+                1
+              ],
+              "hand": [
+                -6.546757931414636,
+                0.950338740509589,
+                1.0848370968477907
+              ],
+              "handle": [
+                -6.546757931414635,
+                0.950338740509589,
+                1.0848370968477907
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 9.359982889642475e-91,
+              "generic": 9.359982889642475e-91,
+              "tea": 8.760927969439991e-181,
+              "teaBlend": 9.359982889642475e-91
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 9.155133597044475e-16,
+              "cupUp": 0.9977112342615129,
+              "teaBlend": 0.9999999999999791,
+              "scale": [
+                1,
+                1,
+                1.0000000000000002
+              ],
+              "hand": [
+                -6.546172882631979,
+                0.9500316632292187,
+                1.0808571585528315
+              ],
+              "handle": [
+                -6.5461728826319785,
+                0.9500316632292187,
+                1.0808571585528313
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.460553527955476e-92,
+              "generic": 3.460553527955476e-92,
+              "tea": 1.1975430719845092e-183,
+              "teaBlend": 3.460553527955476e-92
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.9961534181435433,
+              "teaBlend": 0.9999999999999992,
+              "scale": [
+                1.0000000000000004,
+                1,
+                1.0000000000000002
+              ],
+              "hand": [
+                -6.545797300075005,
+                0.9498068374051826,
+                1.077388134935174
+              ],
+              "handle": [
+                -6.545797300075004,
+                0.9498068374051826,
+                1.077388134935174
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.2725384033617145e-93,
+              "generic": 1.2725384033617145e-93,
+              "tea": 1.6193539880303817e-186,
+              "teaBlend": 1.2725384033617145e-93
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 9.155133597044475e-16,
+              "cupUp": 0.994637745410784,
+              "teaBlend": 0.9999999999999999,
+              "scale": [
+                0.9999999999999998,
+                1,
+                0.9999999999999999
+              ],
+              "hand": [
+                -6.545617381328964,
+                0.9497246499932567,
+                1.0751036234637026
+              ],
+              "handle": [
+                -6.545617381328963,
+                0.9497246499932567,
+                1.0751036234637028
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.696341655390521e-95,
+              "generic": 4.696341655390521e-95,
+              "tea": 2.205562494415618e-189,
+              "teaBlend": 4.696341655390521e-95
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 8.881784197001252e-16,
+              "cupUp": 0.993720392783369,
+              "teaBlend": 0.9999999999999999,
+              "scale": [
+                0.9999999999999999,
+                0.9999999999999998,
+                0.9999999999999998
+              ],
+              "hand": [
+                -6.545555774946694,
+                0.9497108438061544,
+                1.074004475198523
+              ],
+              "handle": [
+                -6.545555774946693,
+                0.9497108438061544,
+                1.074004475198523
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.7331991620756563e-96,
+              "generic": 1.7331991620756563e-96,
+              "tea": 3.0039793354197572e-192,
+              "teaBlend": 1.7331991620756563e-96
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [
+            {
+              "name": "TeaCup",
+              "errorMetres": 2.220446049250313e-16,
+              "cupUp": 0.993942967448086,
+              "teaBlend": 0.9999999999999999,
+              "scale": [
+                0.9999999999999999,
+                1,
+                0.9999999999999998
+              ],
+              "hand": [
+                -6.545437241779143,
+                0.9493386303904423,
+                1.072342613505861
+              ],
+              "handle": [
+                -6.545437241779143,
+                0.9493386303904423,
+                1.0723426135058607
+              ]
+            }
+          ],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 6.3849209792947e-98,
+              "generic": 6.3849209792947e-98,
+              "tea": 4.0767215911837594e-195,
+              "teaBlend": 6.3849209792947e-98
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.356374493863914e-99,
+              "generic": 2.356374493863914e-99,
+              "tea": 5.552500755332416e-198,
+              "teaBlend": 2.356374493863914e-99
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 8.69627168971755e-101,
+              "generic": 8.69627168971755e-101,
+              "tea": 7.562514130138293e-201,
+              "teaBlend": 8.69627168971755e-101
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 3.1978524827994597e-102,
+              "generic": 3.1978524827994597e-102,
+              "tea": 1.0226260501746669e-203,
+              "teaBlend": 3.1978524827994597e-102
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.1823034103490282e-103,
+              "generic": 1.1823034103490282e-103,
+              "tea": 1.3978413541229424e-206,
+              "teaBlend": 1.1823034103490282e-103
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.3554797473988524e-105,
+              "generic": 4.3554797473988524e-105,
+              "tea": 1.897020383000157e-209,
+              "teaBlend": 4.3554797473988524e-105
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.6045123158701374e-106,
+              "generic": 1.6045123158701374e-106,
+              "tea": 2.574459771778952e-212,
+              "teaBlend": 1.6045123158701374e-106
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.932169770819426e-108,
+              "generic": 5.932169770819426e-108,
+              "tea": 3.51906381898238e-215,
+              "teaBlend": 5.932169770819426e-108
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.1892852842751296e-109,
+              "generic": 2.1892852842751296e-109,
+              "tea": 4.792970055943635e-218,
+              "teaBlend": 2.1892852842751296e-109
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 8.06509364133841e-111,
+              "generic": 8.06509364133841e-111,
+              "tea": 6.504573544355724e-221,
+              "teaBlend": 8.06509364133841e-111
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.9818097514589564e-112,
+              "generic": 2.9818097514589564e-112,
+              "tea": 8.891189393895723e-224,
+              "teaBlend": 2.9818097514589564e-112
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.0925511961204684e-113,
+              "generic": 1.0925511961204684e-113,
+              "tea": 1.1936681161442663e-226,
+              "teaBlend": 1.0925511961204684e-113
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 4.0539255947239335e-115,
+              "generic": 4.0539255947239335e-115,
+              "tea": 1.6434312727557798e-229,
+              "teaBlend": 4.0539255947239335e-115
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.4934229801528373e-116,
+              "generic": 1.4934229801528373e-116,
+              "tea": 2.230312197648582e-232,
+              "teaBlend": 1.4934229801528373e-116
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 5.501611081740433e-118,
+              "generic": 5.501611081740433e-118,
+              "tea": 3.0267724494729142e-235,
+              "teaBlend": 5.501611081740433e-118
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.0267348833505635e-119,
+              "generic": 2.0267348833505635e-119,
+              "tea": 4.107654287390022e-238,
+              "teaBlend": 2.0267348833505635e-119
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 7.493202320455444e-121,
+              "generic": 7.493202320455444e-121,
+              "tea": 5.614808101527885e-241,
+              "teaBlend": 7.493202320455444e-121
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 2.765389091351532e-122,
+              "generic": 2.765389091351532e-122,
+              "tea": 7.647376826566053e-244,
+              "teaBlend": 2.765389091351532e-122
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    },
+    {
+      "action": "resident-activity",
+      "actors": [
+        {
+          "id": "you",
+          "grips": [],
+          "handPoses": [
+            {
+              "name": "SkinnedArticulationCore",
+              "grip": 1.0205752493415572e-123,
+              "generic": 1.0205752493415572e-123,
+              "tea": 1.0415738395685818e-246,
+              "teaBlend": 1.0205752493415572e-123
+            }
+          ]
+        },
+        {
+          "id": "lin",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "chen",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "xu",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "zhou",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "he",
+          "grips": [],
+          "handPoses": []
+        },
+        {
+          "id": "tang",
+          "grips": [],
+          "handPoses": []
+        }
+      ]
+    }
+  ],
+  "errors": []
+}

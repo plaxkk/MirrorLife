@@ -1,0 +1,18 @@
+[
+  {
+    "file": "tmp/portrait-study/tea-fit-v3/public/assets/atrium/residents/you.glb",
+    "bytes": 2594452,
+    "sha256": "6784c3bd4ffc20b7f2bbd629ecc7b37946e2cbfe3e2ceb14e3463365b0022bb3",
+    "triangles": 26404,
+    "materials": 6,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/tea-fit-v3/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1210312,
+    "sha256": "b2eff9aec09f0e9a7a1f1c8a882735783bdd140d5b7c6a42fbbfad7229fa6b78",
+    "triangles": 24341,
+    "materials": 6,
+    "primitives": 7
+  }
+]

@@ -1,0 +1,15 @@
+{
+  "sourceSha256": "4ca490e525be3922effe0b78b8882ae1acd1b90dc443870e0fed0d8d7c31f7b9",
+  "existingKeysEqual": true,
+  "changedVertices": 108,
+  "outsideHand": [],
+  "maxDisplacement": 0.007198948909081564,
+  "sourceFit": {
+    "initialVertices": 39,
+    "affectedVertices": 108,
+    "maxDisplacement": 0.008779176561589943,
+    "clearance": 0.0008,
+    "scope": "nearest-normal source pad fit; not complete collision approval"
+  },
+  "scope": "Exact existing core Basis/GripRight preservation and new corrective target restricted to right hand; not self-collision or prop collision proof."
+}

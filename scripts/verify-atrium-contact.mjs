@@ -41,8 +41,24 @@ try{
       const poses=activeGrips.find(a=>a.id==='you').handPoses;
       assert.ok(poses.length&&poses.every(p=>p.grip>.95),'Grip morph did not close');
     }
+    if(process.env.ATRIUM_REQUIRE_TEA_FIT==='1'){
+      const poses=activeGrips.find(a=>a.id==='you').handPoses;
+      assert.ok(poses.length&&poses.every(p=>id==='tea'?p.tea>.95&&p.generic<.01:p.generic>.95&&p.tea<.01),'Wrong prop-specific grip');
+    }
     samples.push({action:id,view:name,actors:activeGrips});
-    await page.screenshot({path:path.join(out,`${id}-${name}.png`)});await page.keyboard.press('Escape');await pause(150);
+    await page.screenshot({path:path.join(out,`${id}-${name}.png`)});
+    if(id==='tea'&&name==='hand-top'){
+      await page.waitForFunction(()=>!window.__atrium.getInteractionState().care,{timeout:10000});
+      samples.push({action:'natural-completion',actors:await page.evaluate(()=>window.__atrium.getGripDiagnostics())});
+    }
+    await page.keyboard.press('Escape');await pause(150);
+    if(process.env.ATRIUM_REQUIRE_TEA_FIT==='1'&&!(id==='tea'&&name==='hand-top')){
+      assert.equal(await page.evaluate(()=>window.__atrium.getInteractionState().care),null);
+      await pause(650);
+      const cancelled=await page.evaluate(()=>window.__atrium.getGripDiagnostics());
+      assert.ok(cancelled.find(a=>a.id==='you').handPoses.every(p=>p.grip<.01&&p.teaBlend<.01),'Grip or wrist remained after cancellation');
+      samples.push({action:'cancelled',actors:cancelled});
+    }
   }
   if(process.env.ATRIUM_REQUIRE_GRIP_MORPH==='1'){
     await page.waitForFunction(()=>!window.__atrium.getInteractionState().care);

@@ -55,3 +55,7 @@ def author(core):
         anchor.rotation_mode='QUATERNION'
         anchor.rotation_quaternion=turn.inverted()@original.rotation_euler.to_quaternion()
         anchor['contract']='tea-side-grip-study-v1; compensate wrist roll'
+        if os.environ.get('ATRIUM_TEA_FINGER_FIT','0')=='1':
+            import runpy
+            from pathlib import Path
+            runpy.run_path(str(Path(__file__).with_name('atrium-tea-finger-fit.py')))['author'](core,hand,anchor)

@@ -75,7 +75,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   const blinkOffset=id==='you'?3*1.13:[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)*.037;
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
-    handPoseDiagnostics(){return gripMeshes.map(mesh=>({name:mesh.name,grip:mesh.morphTargetInfluences[mesh.morphTargetDictionary.GripRight]}));},
+    handPoseDiagnostics(){return gripMeshes.map(mesh=>{const generic=mesh.morphTargetInfluences[mesh.morphTargetDictionary.GripRight],tea=mesh.morphTargetInfluences[mesh.morphTargetDictionary.GripTea]||0;return {name:mesh.name,grip:generic+tea,generic,tea,teaBlend};});},
     setReviewFace(value){reviewFace=value;},
     faceDiagnostics(){return facialMeshes.map(mesh=>({name:mesh.name,eyeScales:eyes.map(eye=>eye.scale.toArray()),blink:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink],talk:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Talk]}));},
     footDiagnostics(){return ['left','right'].map(side=>{
@@ -201,7 +201,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       }
       for(const mesh of gripMeshes){
         const index=mesh.morphTargetDictionary.GripRight;
-        mesh.morphTargetInfluences[index]=THREE.MathUtils.damp(mesh.morphTargetInfluences[index],care?1:0,18,dt);
+        const teaIndex=mesh.morphTargetDictionary.GripTea;
+        const amount=THREE.MathUtils.damp(mesh.morphTargetInfluences[index]+(mesh.morphTargetInfluences[teaIndex]||0),care?1:0,18,dt);
+        mesh.morphTargetInfluences[index]=amount*(teaIndex===undefined?1:1-teaBlend);
+        if(teaIndex!==undefined)mesh.morphTargetInfluences[teaIndex]=amount*teaBlend;
       }
     },
   };
