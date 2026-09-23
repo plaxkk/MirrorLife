@@ -1,0 +1,14 @@
+[
+  {
+    "file": "tmp/portrait-study/gaze-v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2492476,
+    "triangles": 26558,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/gaze-v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 966608,
+    "triangles": 24525,
+    "primitives": 7
+  }
+]

@@ -77,7 +77,9 @@ def authored_brows(head, front):
         transform=pivot.matrix_world.inverted()@head.matrix_world
         vertices=[];faces=[]
         def centre(t):
-            return side*(.043+.074*t),.068+.005*math.sin(math.pi*t)-.006*t
+            gaze=os.environ.get('ATRIUM_GAZE_STUDY','0')
+            relaxed=(-.0025 if gaze=='1' else -.0015)*(1-t) if gaze in {'1','2'} else 0
+            return side*(.043+.074*t),.068+.005*math.sin(math.pi*t)-.006*t+relaxed
         def volume(samples):
             start=len(vertices)
             for x,z,width,depth in samples:
@@ -121,6 +123,8 @@ def authored_brows(head, front):
 def build_player_head(root_path, identity="you", fitted_crop=False):
     source_skin=identity=='you' and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
     portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
+    gaze_study=int(os.environ.get('ATRIUM_GAZE_STUDY','0')) if identity=='you' else 0
+    assert gaze_study in (0,1,2)
     eye_default='3' if os.environ.get('ATRIUM_CURVED_IRIS','1')=='1' else '0'
     eye_depth=int(os.environ.get('ATRIUM_EYE_DEPTH_STUDY',eye_default)) if identity=='you' else 0
     assert eye_depth in (0,1,2,3), 'Unknown eye depth study'
@@ -480,11 +484,15 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             for boundary_id,theta in zip(loop,angles):
                 outer=Vector(points[boundary_id]);upper=math.sin(theta)>=0
                 upper_height,lower_height=(.016,.009) if portrait_eyes else (.012,.008)
+                if gaze_study:upper_height,lower_height=(.0125,.0075) if gaze_study==1 else (.0145,.008)
                 aperture=math.sin(theta)
                 if lid_edge_study:aperture=math.copysign(abs(aperture)**1.45,aperture)
+                if gaze_study:aperture=math.copysign(abs(aperture)**(1.2 if gaze_study==1 else 1.1),aperture)
                 inner=Vector((cx+.032*math.cos(theta),-.183+side*.32*.032*math.cos(theta),cz+(upper_height if upper else lower_height)*aperture))
+                tilt=side*(.0015 if gaze_study==1 else .0008)*math.cos(theta) if gaze_study else 0
+                inner.z+=tilt
                 point=outer.lerp(inner,t);point.y=outer.y*(1-blend)+inner.y*blend;point=cover_eye(point)
-                shut=inner.copy();shut.z=cz+(-.0002 if upper else .0002)
+                shut=inner.copy();shut.z=cz+tilt+(-.0002 if upper else .0002)
                 target=outer.lerp(shut,t);target.y=outer.y*(1-blend)+shut.y*blend;target=cover_eye(target)
                 index=len(points);points.append(tuple(point));lid_targets[index]=target;ring.append(index)
                 if source_skin:uv_ring.append(vertex_uv[boundary_id]*(1-t)+(np.array([inner.x,inner.z,1])@uv_fit)*t)

@@ -1,0 +1,24 @@
+{
+  "passed": true,
+  "sourceSha256": "fed64c82ffbb056e7e133b3fe24a09603d328dee6a465fe9b87bb3b7fc0c065e",
+  "baselineSha256": "4696e189948c12e00e8c794755aa39df8ecbeaa3460901a837c3879d419c87a8",
+  "topologyUnchanged": true,
+  "talkDeltaMaxError": 0.0,
+  "shapes": [
+    {
+      "shape": "Basis",
+      "changedVertices": 335,
+      "maxDisplacement": 0.004141945345855179
+    },
+    {
+      "shape": "Blink",
+      "changedVertices": 337,
+      "maxDisplacement": 0.0014999844136953317
+    },
+    {
+      "shape": "Talk",
+      "changedVertices": 335,
+      "maxDisplacement": 0.004141945345855179
+    }
+  ]
+}
