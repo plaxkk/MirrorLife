@@ -26,6 +26,8 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+if os.environ.get('ATRIUM_CUFF_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Cuff study output must remain isolated'
 if os.environ.get('ATRIUM_LIP_FINISH_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Lip finish study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_TEXTURE_STUDY'):
@@ -252,9 +254,15 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     for side,elbow in [(-1,left_elbow),(1,right_elbow)]:
         original_cuff=bpy.data.objects.get('ListenerCuff_'+str(side))
         if original_cuff:bpy.data.objects.remove(original_cuff,do_unlink=True)
-        civic.contoured_elliptical_shell('EverydayCuff_'+str(side),[
+        cuff_rings=[
             (-.301,.047,.043,0,0),(-.29,.056,.051,0,0),
-            (-.253,.061,.057,0,0),(-.226,.058,.054,0,0)],mats['top'],elbow,segments=32)
+            (-.253,.061,.057,0,0),(-.226,.058,.054,0,0)]
+        if who=='you' and os.environ.get('ATRIUM_CUFF_STUDY','0')=='1':
+            # Short fitted wrist rib, with its upper edge buried in the sleeve.
+            # Preserve the wrist endpoint and the elbow/hand control transforms.
+            cuff_rings=[(-.301,.047,.043,0,0),(-.294,.050,.046,0,0),
+                        (-.265,.055,.051,0,0),(-.253,.058,.054,0,0)]
+        civic.contoured_elliptical_shell('EverydayCuff_'+str(side),cuff_rings,mats['top'],elbow,segments=32)
         hand=bpy.data.objects.get('Hand_'+str(side))
         grip=civic.empty('HandGripAnchor_'+str(side),hand,(0,-.045,-.038),(1.2,0,0))
         grip['contact_contract']='atrium-palm-grip-v1'

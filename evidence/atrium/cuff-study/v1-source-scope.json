@@ -1,0 +1,12 @@
+{
+  "passed": true,
+  "changedMeshes": [
+    "SkinnedArticulationCore"
+  ],
+  "changedVertexOccurrences": 964,
+  "controllersPreserved": 40,
+  "shapeKeysPreserved": true,
+  "baselineSha256": "b315ab799e3eef4c7a98c1c8f0fd37286d928ff1502c46390ff47a78ad08fa57",
+  "sourceSha256": "d0cba3d41200d8be65d8ae36c4ac111ba31d00d49b111075a9b09603b9b01dc8",
+  "scope": "Canonical world-space vertices and oriented faces; changed positions confined to wrist regions. Does not prove surface contact or unchanged UV/material/weights."
+}
