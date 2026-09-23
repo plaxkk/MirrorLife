@@ -28,6 +28,8 @@ if HERO_ART_ENABLED:
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
 if os.environ.get('ATRIUM_GAZE_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Gaze study output must remain isolated'
+if os.environ.get('ATRIUM_LID_MARGIN_STUDY')=='1':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Lid margin study output must remain isolated'
 if os.environ.get('ATRIUM_EYE_DEPTH_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Eye depth study output must remain isolated'
 if os.environ.get('ATRIUM_NECK_RIG_STUDY') or os.environ.get('ATRIUM_OPEN_NECK_STUDY') or os.environ.get('ATRIUM_SHOULDER_STUDY') or os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY') or os.environ.get('ATRIUM_LID_EDGE_STUDY') or os.environ.get('ATRIUM_BROW_STUDY') or os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY') or os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':

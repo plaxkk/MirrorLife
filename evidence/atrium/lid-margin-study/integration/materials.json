@@ -1,0 +1,65 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "file": "public/assets/atrium/residents/you.glb",
+      "sha256": "9720312a85fd82e9e06acfb3d54c377d41df9f9cfc1ab1ec0b78689b4855b382",
+      "bytes": 2492000,
+      "lookupBytes": 187,
+      "lookupSize": [
+        256,
+        1
+      ],
+      "maxGreenError": 0,
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0",
+        "TEXCOORD_1",
+        "COLOR_0",
+        "JOINTS_0",
+        "WEIGHTS_0"
+      ]
+    },
+    {
+      "file": "public/assets/atrium/residents/you-mobile.glb",
+      "sha256": "7ca63591cfcda7ebad88b24fb099978ca5b9c0df8acb3f3e4b5e54cab435971d",
+      "bytes": 966152,
+      "lookupBytes": 187,
+      "lookupSize": [
+        256,
+        1
+      ],
+      "maxGreenError": 0,
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0",
+        "TEXCOORD_1",
+        "COLOR_0",
+        "JOINTS_0",
+        "WEIGHTS_0"
+      ]
+    },
+    {
+      "file": "public/assets/atrium/animations/you-motion.glb",
+      "sha256": "52e2184ba11566553f898dad685dcaf8790117f0fd129ddfb2ce377fe75acaca",
+      "bytes": 1288152,
+      "lookupBytes": 187,
+      "lookupSize": [
+        256,
+        1
+      ],
+      "maxGreenError": 0,
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0",
+        "TEXCOORD_1",
+        "COLOR_0",
+        "JOINTS_0",
+        "WEIGHTS_0"
+      ]
+    }
+  ]
+}

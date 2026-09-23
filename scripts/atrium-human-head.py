@@ -64,7 +64,8 @@ def authored_iris(side):
 def authored_brows(head, front):
     """Small opaque volumes fitted to the forehead, retaining expression pivots."""
     import bmesh
-    feathered=os.environ.get('ATRIUM_BROW_STUDY')=='2'
+    refined=os.environ.get('ATRIUM_REFINED_GAZE','1')=='1'
+    feathered=os.environ.get('ATRIUM_BROW_STUDY','2' if refined else '0')=='2'
     material=bpy.data.materials.new('Hero brow hair dark umber');material.use_nodes=True
     material.diffuse_color=(.040,.025,.016,1)
     bs=material.node_tree.nodes.get('Principled BSDF')
@@ -77,7 +78,7 @@ def authored_brows(head, front):
         transform=pivot.matrix_world.inverted()@head.matrix_world
         vertices=[];faces=[]
         def centre(t):
-            gaze=os.environ.get('ATRIUM_GAZE_STUDY','0')
+            gaze=os.environ.get('ATRIUM_GAZE_STUDY','2' if refined else '0')
             relaxed=(-.0025 if gaze=='1' else -.0015)*(1-t) if gaze in {'1','2'} else 0
             return side*(.043+.074*t),.068+.005*math.sin(math.pi*t)-.006*t+relaxed
         def volume(samples):
@@ -123,8 +124,10 @@ def authored_brows(head, front):
 def build_player_head(root_path, identity="you", fitted_crop=False):
     source_skin=identity=='you' and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
     portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
-    gaze_study=int(os.environ.get('ATRIUM_GAZE_STUDY','0')) if identity=='you' else 0
+    refined=os.environ.get('ATRIUM_REFINED_GAZE','1')=='1'
+    gaze_study=int(os.environ.get('ATRIUM_GAZE_STUDY','2' if refined else '0')) if identity=='you' else 0
     assert gaze_study in (0,1,2)
+    lid_margin_study=identity=='you' and os.environ.get('ATRIUM_LID_MARGIN_STUDY','1' if refined else '0')=='1'
     eye_default='3' if os.environ.get('ATRIUM_CURVED_IRIS','1')=='1' else '0'
     eye_depth=int(os.environ.get('ATRIUM_EYE_DEPTH_STUDY',eye_default)) if identity=='you' else 0
     assert eye_depth in (0,1,2,3), 'Unknown eye depth study'
@@ -264,7 +267,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                     part.location.y=depth;part.scale.y*=.25
             if eye_depth==3:authored_iris(side)
     bpy.context.view_layer.update()
-    if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY') in {'1','2'}:
+    if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY','2' if refined else '0') in {'1','2'}:
         authored_brows(old,front)
     # Fit a continuous convex front envelope to each complete eye stack.
     # Point rays have discontinuous hit/no-hit boundaries at the sclera edge;
@@ -497,6 +500,11 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 index=len(points);points.append(tuple(point));lid_targets[index]=target;ring.append(index)
                 if source_skin:uv_ring.append(vertex_uv[boundary_id]*(1-t)+(np.array([inner.x,inner.z,1])@uv_fit)*t)
                 lid_shade[index]=(.25 if upper else .08)*max(0,(t-.82)/.18)
+                if lid_margin_study:
+                    # Pigmented lash roots belong to the moving eyelid surface;
+                    # fade towards the corners and avoid a separate black tube.
+                    corner=max(0,abs(math.sin(theta)))**.45
+                    lid_shade[index]=(.64 if upper else .14)*max(0,(t-.86)/.14)*corner
             rings.append(ring)
             if source_skin:native_rings.append(uv_ring)
         lid_rims.update(rings[-1])

@@ -1,0 +1,14 @@
+[
+  {
+    "file": "tmp/portrait-study/lid-margin-v1/public/assets/atrium/residents/you.glb",
+    "bytes": 2492000,
+    "triangles": 26558,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/lid-margin-v1/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 966152,
+    "triangles": 24525,
+    "primitives": 7
+  }
+]

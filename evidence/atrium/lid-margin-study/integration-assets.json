@@ -1,0 +1,32 @@
+[
+  {
+    "file": "models/atrium/residents/you.blend",
+    "before": "4696e189948c12e00e8c794755aa39df8ecbeaa3460901a837c3879d419c87a8",
+    "after": "19ff9ba2582ac3d87b6a592d730955bb769a5c42056a2d283088c3df02744b28"
+  },
+  {
+    "file": "models/atrium/residents/you-master.glb",
+    "before": "c0e2a15161f5b3377a876b06ab97117f1142da6af5ea5944cb536b7dfff00aab",
+    "after": "9eaca953c92753d48e60cda9988a944c0278a6b762d2706da9f48d05dcd0a33b"
+  },
+  {
+    "file": "models/atrium/animations/you-motion.blend",
+    "before": "5f4346a66bf37a0ff8c23bba7de66c091241061b7216c3cb19768c0a41225c57",
+    "after": "ffe9cb134e3f57cafc6abb8fbdc931a4091684d667449044544c64b26b3b3657"
+  },
+  {
+    "file": "public/assets/atrium/residents/you.glb",
+    "before": "b25a7b49868b5340f3c19a85d103d9e8e66b81ced2a6a3a34d0a4de980400dc2",
+    "after": "9720312a85fd82e9e06acfb3d54c377d41df9f9cfc1ab1ec0b78689b4855b382"
+  },
+  {
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "before": "8f6f0533d375db612c4f640900ce5c0854e3ccc1b3da7e09b4638538423e2bef",
+    "after": "7ca63591cfcda7ebad88b24fb099978ca5b9c0df8acb3f3e4b5e54cab435971d"
+  },
+  {
+    "file": "public/assets/atrium/animations/you-motion.glb",
+    "before": "b070abfa3746a14426c1ebd7f1ddd7d3a9c57fb3a4b4c6a1b146afd0358d46e5",
+    "after": "52e2184ba11566553f898dad685dcaf8790117f0fd129ddfb2ce377fe75acaca"
+  }
+]

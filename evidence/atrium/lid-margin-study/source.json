@@ -1,0 +1,13 @@
+{
+  "passed": true,
+  "sourceSha256": "19ff9ba2582ac3d87b6a592d730955bb769a5c42056a2d283088c3df02744b28",
+  "baselineSha256": "5f2e8037994f34f6418e4f88b22d408a3d0d22b8b6707fe3a75f4540dba2f063",
+  "unchanged": [
+    "facial geometry and morphs",
+    "topology",
+    "UVs",
+    "skin roughness"
+  ],
+  "changedCorners": 234,
+  "maxColourDelta": 0.31824448704719543
+}
