@@ -1,0 +1,14 @@
+[
+  {
+    "file": "tmp/portrait-study/brow-feather-v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2491608,
+    "triangles": 26558,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/brow-feather-v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 966264,
+    "triangles": 24526,
+    "primitives": 7
+  }
+]

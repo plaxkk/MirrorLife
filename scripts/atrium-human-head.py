@@ -64,6 +64,7 @@ def authored_iris(side):
 def authored_brows(head, front):
     """Small opaque volumes fitted to the forehead, retaining expression pivots."""
     import bmesh
+    feathered=os.environ.get('ATRIUM_BROW_STUDY')=='2'
     material=bpy.data.materials.new('Hero brow hair dark umber');material.use_nodes=True
     material.diffuse_color=(.040,.025,.016,1)
     bs=material.node_tree.nodes.get('Principled BSDF')
@@ -93,16 +94,21 @@ def authored_brows(head, front):
             t=i/16;x,z=centre(t)
             entry=min(1,t/.16)
             width=.00006+.0042*max(0,math.sin(math.pi*(.12+.88*t)))**.65*(1-.45*t)*entry**.65
-            samples.append((x,z,width,.00065))
+            samples.append((x,z,width*(1.15 if feathered else 1),.00035 if feathered else .00065))
         volume(samples)
-        for i in range(22):
-            t=.015+i/23*.94;x,z=centre(t);samples=[]
+        for i in range(32 if feathered else 22):
+            t=.015+i/(33 if feathered else 23)*.94;x,z=centre(t);samples=[]
             for j in range(4):
                 u=j/3
                 # Inner hairs rise, then lean towards the temple along the brow.
                 xx=x+side*(.001+.003*t)*u
                 zz=z-.003+.007*(1-.45*t)*u
-                samples.append((xx,zz,.00018*(1-.8*u),.00022))
+                if feathered:
+                    # Stagger roots and tips to avoid the stamped bar silhouette.
+                    envelope=max(0,math.sin(math.pi*t))**.55
+                    zz=z+(-.004+.009*u)*envelope+math.sin(i*2.399)*.00045
+                    xx=x+side*(.0012+.004*t)*u
+                samples.append((xx,zz,(.00032 if feathered else .00018)*(1-.85*u),.00018 if feathered else .00022))
             volume(samples)
         mesh=bpy.data.meshes.new('Forehead fitted brow');mesh.from_pydata(vertices,[],faces);mesh.update()
         bm=bmesh.new();bm.from_mesh(mesh)
@@ -254,7 +260,7 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                     part.location.y=depth;part.scale.y*=.25
             if eye_depth==3:authored_iris(side)
     bpy.context.view_layer.update()
-    if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY')=='1':
+    if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY') in {'1','2'}:
         authored_brows(old,front)
     # Fit a continuous convex front envelope to each complete eye stack.
     # Point rays have discontinuous hit/no-hit boundaries at the sclera edge;

@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "source": "/Users/kk/repos/MirrorLife/tmp/portrait-study/brow-feather-v1/models/atrium/residents/you.blend",
+  "sourceSha256": "f946ebdcdaf11f95d134fd5c4e594a9cf994faf9094ebc7f5cbd4e41e169c3fa",
+  "baselineSha256": "4696e189948c12e00e8c794755aa39df8ecbeaa3460901a837c3879d419c87a8",
+  "brows": [
+    {
+      "side": -1,
+      "vertices": 836,
+      "nonManifoldEdges": 0,
+      "signedVolume": 9.234725598557504e-08
+    },
+    {
+      "side": 1,
+      "vertices": 836,
+      "nonManifoldEdges": 0,
+      "signedVolume": 9.19138294936831e-08
+    }
+  ],
+  "facialShapesUnchanged": [
+    "Basis",
+    "Blink",
+    "Talk"
+  ]
+}

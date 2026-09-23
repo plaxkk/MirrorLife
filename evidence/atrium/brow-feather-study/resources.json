@@ -1,0 +1,26 @@
+[
+  {
+    "file": "public/assets/atrium/residents/you.glb",
+    "bytes": 2488360,
+    "triangles": 25576,
+    "primitives": 7
+  },
+  {
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 963860,
+    "triangles": 24017,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/brow-feather-v1/public/assets/atrium/residents/you.glb",
+    "bytes": 2493676,
+    "triangles": 27050,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/brow-feather-v1/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 967412,
+    "triangles": 24783,
+    "primitives": 7
+  }
+]
