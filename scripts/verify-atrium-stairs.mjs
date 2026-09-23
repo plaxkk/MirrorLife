@@ -34,6 +34,10 @@ try{
       assert.ok(errorsMetres[0]>-.025&&errorsMetres.at(-1)<.04,name+' moving sole tolerance');
       assert.ok(transition.every(error=>error>-.015&&error<.04),name+' entry/exit contact tolerance');
       assert.ok(name.endsWith('up')?result.end.y>3.45:result.end.y<.08,name+' landing');
+    }catch(error){
+      const diagnostic=await page.evaluate(()=>({position:window.__atrium.getPosition(),heading:window.__atrium.getHeading(),samples:window.__stairSamples}));
+      await fs.writeFile(`${out}/${name}-failure.json`,JSON.stringify({error:String(error),diagnostic},null,2));
+      throw error;
     }finally{await page.keyboard.up(key);await page.evaluate(()=>{window.__collectStairs=false;});}
   }
   assert.equal(errors.length,0);

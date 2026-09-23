@@ -1,0 +1,32 @@
+START gallery
+PASS gallery
+START performance
+PASS performance
+START mobile
+PASS mobile
+START garments
+PASS garments
+START faces
+PASS faces
+START facial-motion
+PASS facial-motion
+START controls
+PASS controls
+START window-contact
+PASS window-contact
+START contact
+PASS contact
+START seating
+PASS seating
+START stairs
+file:///Users/kk/repos/MirrorLife/tmp/resume-neck-release.mjs:19
+      child.once('error',reject);child.once('exit',code=>code===0?resolve():reject(new Error(`${name} exited ${code}; see validation/${name}.log`)));
+                                                                                   ^
+
+Error: stairs exited 1; see validation/stairs.log
+    at ChildProcess.<anonymous> (file:///Users/kk/repos/MirrorLife/tmp/resume-neck-release.mjs:19:84)
+    at Object.onceWrapper (node:events:631:26)
+    at ChildProcess.emit (node:events:509:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:295:12)
+
+Node.js v24.16.0

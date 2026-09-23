@@ -1,86 +1,86 @@
 {
-  "updatedAt": "2026-09-22T10:24:02.463Z",
-  "base": "http://127.0.0.1:4195",
+  "updatedAt": "2026-09-23T02:49:43.091Z",
+  "base": "http://127.0.0.1:4201",
   "steps": [
     {
       "name": "tests",
-      "seconds": 19.196
+      "seconds": 15.853
     },
     {
       "name": "build",
-      "seconds": 3.798
+      "seconds": 3.031
     },
     {
       "name": "assets",
-      "seconds": 0.972
+      "seconds": 0.696
     },
     {
       "name": "head-surface",
-      "seconds": 6.057
+      "seconds": 4.759
     },
     {
       "name": "garment-deformation",
-      "seconds": 8.479
+      "seconds": 4.684
     },
     {
       "name": "gallery",
-      "seconds": 31.697
+      "seconds": 47.552
     },
     {
       "name": "performance",
-      "seconds": 51.117
+      "seconds": 49.001
     },
     {
       "name": "mobile",
-      "seconds": 47.724
+      "seconds": 46.236
     },
     {
       "name": "garments",
-      "seconds": 15.471
+      "seconds": 16.017
     },
     {
       "name": "faces",
-      "seconds": 11.871
+      "seconds": 12.945
     },
     {
       "name": "facial-motion",
-      "seconds": 48.4
+      "seconds": 26.116
     },
     {
       "name": "controls",
-      "seconds": 49.63
+      "seconds": 48.686
     },
     {
       "name": "window-contact",
-      "seconds": 47.047
+      "seconds": 47.484
     },
     {
       "name": "contact",
-      "seconds": 47.486
+      "seconds": 47.483
     },
     {
       "name": "seating",
-      "seconds": 49.539
+      "seconds": 48.536
     },
     {
       "name": "stairs",
-      "seconds": 48.913
+      "seconds": 48.761
     },
     {
       "name": "resilience",
-      "seconds": 46.968
+      "seconds": 57.515
     },
     {
       "name": "walkthrough",
-      "seconds": 118.606
+      "seconds": 140.76
     },
     {
       "name": "video-decode",
-      "seconds": 67.928
+      "seconds": 87.877
     },
     {
       "name": "assets-after",
-      "seconds": 0.987
+      "seconds": 1.212
     },
     {
       "name": "performance-report",

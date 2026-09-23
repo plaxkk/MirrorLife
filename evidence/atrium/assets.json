@@ -1,9 +1,9 @@
 {
-  "generatedAt": "2026-09-22T10:24:02.246Z",
-  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
+  "generatedAt": "2026-09-23T02:49:42.873Z",
+  "runtimeFingerprint": "5acddcba3c185b2b5e880113e8c8da2c420ad4671f2a32637d17c8e12542bbec",
   "validation": "GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.",
-  "totalSourceBytes": 111047491,
-  "totalPublicBytes": 18156722,
+  "totalSourceBytes": 115232858,
+  "totalPublicBytes": 18619455,
   "assets": [
     {
       "file": "public/assets/atrium/APACHE-2.0.txt",
@@ -27,48 +27,48 @@
     },
     {
       "file": "public/assets/atrium/animations/you-motion.glb",
-      "bytes": 837004,
-      "sha256": "e36d0af3d9c49d35a523e3e810a65209dad7344635dc8bccde5ba76dbe1f443b",
-      "meshes": 45,
-      "materials": 12,
-      "skins": 1,
-      "triangles": 29313,
+      "bytes": 1294596,
+      "sha256": "888e54e71c228b406002e06c22e0a15cc42f79f9f1a55dab6e40618095091ba5",
+      "meshes": 35,
+      "materials": 14,
+      "skins": 2,
+      "triangles": 31905,
       "animations": [
         {
           "name": "idle",
-          "channels": 74
+          "channels": 130
         },
         {
           "name": "walk",
-          "channels": 75
+          "channels": 130
         },
         {
           "name": "listen",
-          "channels": 74
+          "channels": 130
         },
         {
           "name": "talk",
-          "channels": 73
+          "channels": 130
         },
         {
           "name": "stairs",
-          "channels": 75
+          "channels": 130
         },
         {
           "name": "turn",
-          "channels": 74
+          "channels": 130
         },
         {
           "name": "sit",
-          "channels": 77
+          "channels": 130
         },
         {
           "name": "stand",
-          "channels": 77
+          "channels": 130
         },
         {
           "name": "water",
-          "channels": 72
+          "channels": 130
         }
       ]
     },
@@ -349,8 +349,8 @@
     },
     {
       "file": "public/assets/atrium/residents/manifest.json",
-      "bytes": 3818,
-      "sha256": "a352f41b5b435ec37e9d981811d7bb1224da07c7a381aacab5c59181ce13ff00"
+      "bytes": 3771,
+      "sha256": "ca7962aea2569993e612af13736be8fd9c8e9d57c084ad80f8a5c3bfdfb1659c"
     },
     {
       "file": "public/assets/atrium/residents/tang-mobile.glb",
@@ -394,21 +394,21 @@
     },
     {
       "file": "public/assets/atrium/residents/you-mobile.glb",
-      "bytes": 946316,
-      "sha256": "76c0ff37d43314d788cbce89653edd3007ef87319143bd47b85bd0b72d0baa09",
+      "bytes": 948972,
+      "sha256": "304476e19b1f5c886c71cb8ed5ef936bec771d2caeab6fbe602074834c6d1799",
       "meshes": 7,
       "materials": 6,
-      "skins": 1,
+      "skins": 2,
       "triangles": 22629,
       "animations": []
     },
     {
       "file": "public/assets/atrium/residents/you.glb",
-      "bytes": 2492992,
-      "sha256": "4dded36b736a42d48fbaaf153d8049e9415d5eeea259cef0787b1af4e91cd4c6",
+      "bytes": 2495524,
+      "sha256": "59bd6175f9fdbcbdf9ca1fde46cb3f0f0aa192791a1d70f39466be0b87239836",
       "meshes": 7,
       "materials": 6,
-      "skins": 1,
+      "skins": 2,
       "triangles": 25096,
       "animations": []
     },
@@ -444,8 +444,8 @@
     },
     {
       "file": "models/atrium/animations/you-motion.blend",
-      "bytes": 1426785,
-      "sha256": "780e0f2837a7bd3cf14c561f057c7e6325f023e1d1cd56eb4f96748da08d9e2a"
+      "bytes": 1862251,
+      "sha256": "5d7073e8139d61f1e9d139f7ec151b44c759fed7b5aa0713b497770674aae803"
     },
     {
       "file": "models/atrium/atrium-master.blend",
@@ -589,18 +589,18 @@
     },
     {
       "file": "models/atrium/residents/you-master.glb",
-      "bytes": 3885420,
-      "sha256": "73ee4477d928601a36d676c0196118f870ebf73f54eaec0e55dc2667a6bec2e7",
+      "bytes": 3926280,
+      "sha256": "9c43effd42f11794e4d136a4f814ddc33388159d531cba4f67464c0aae7a9dde",
       "meshes": 7,
       "materials": 6,
-      "skins": 1,
+      "skins": 2,
       "triangles": 32693,
       "animations": []
     },
     {
       "file": "models/atrium/residents/you.blend",
-      "bytes": 4615929,
-      "sha256": "5e87cefe00dffbeda01540f975186edffa257e45ca02c287672fa7b4a67a4348"
+      "bytes": 4728545,
+      "sha256": "26e4a1d03aa4167673d76d2bfc3de4c3cd68b970f809ce3e2ebff63b9450faaf"
     },
     {
       "file": "models/atrium/residents/zhou-master.glb",
@@ -706,6 +706,26 @@
       "file": "models/atrium/source/makehuman-head.obj",
       "bytes": 359107,
       "sha256": "1e6f01dcbf6ace3968cdf422cd9d7d6874685c312942042e4149d6197cdef107"
+    },
+    {
+      "file": "models/atrium/source/skin-young-asian-male/README.md",
+      "bytes": 1145,
+      "sha256": "c6a7c96063d2dbc7a0d3ee74c8f1da8e943b56eb7642f8d4d8bf68639f713a2e"
+    },
+    {
+      "file": "models/atrium/source/skin-young-asian-male/provenance.json",
+      "bytes": 729,
+      "sha256": "39e9e31c39aebf48ae6e52f24ac3b9a5d4600b90b31a559d66c13deb0f6d2a15"
+    },
+    {
+      "file": "models/atrium/source/skin-young-asian-male/young_asian_male.mhmat",
+      "bytes": 1452,
+      "sha256": "9fdfc9863cd15d1359311435f2da7de3906f81d6eea549fba6bf14cd82ceb6a0"
+    },
+    {
+      "file": "models/atrium/source/skin-young-asian-male/young_lightskinned_male_diffuse3.png",
+      "bytes": 3593099,
+      "sha256": "f50016a5507fc687dc8df06599c8ea48de950cd185de33a71cafc1319ddab4d5"
     }
   ]
 }

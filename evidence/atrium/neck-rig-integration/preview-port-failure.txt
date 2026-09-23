@@ -1,0 +1,27 @@
+START tests
+PASS tests
+START build
+PASS build
+START assets
+PASS assets
+START head-surface
+PASS head-surface
+START garment-deformation
+PASS garment-deformation
+error when starting preview server:
+Error: Port 4196 is already in use
+    at httpServerStart (file:///Users/kk/repos/MirrorLife/node_modules/vite/dist/node/chunks/node.js:11408:10)
+    at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+    at async preview (file:///Users/kk/repos/MirrorLife/node_modules/vite/dist/node/chunks/node.js:35033:2)
+    at async CAC.<anonymous> (file:///Users/kk/repos/MirrorLife/node_modules/vite/dist/node/cli.js:807:18)
+file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-release.mjs:41
+    server.once('exit',code=>{clearTimeout(timer);reject(new Error(`Preview exited ${code}`));});
+                                                         ^
+
+Error: Preview exited 1
+    at ChildProcess.<anonymous> (file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-release.mjs:41:58)
+    at Object.onceWrapper (node:events:631:26)
+    at ChildProcess.emit (node:events:509:28)
+    at ChildProcess._handle.onexit (node:internal/child_process:295:12)
+
+Node.js v24.16.0

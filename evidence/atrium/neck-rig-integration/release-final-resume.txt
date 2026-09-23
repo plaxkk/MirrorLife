@@ -1,0 +1,13 @@
+START stairs
+PASS stairs
+START resilience
+PASS resilience
+START walkthrough
+PASS walkthrough
+START video-decode
+PASS video-decode
+START assets-after
+PASS assets-after
+START performance-report
+PASS performance-report
+CANDIDATE_EVIDENCE_READY {"performance":{"frameMs":{"p50":16.69999999999891,"p95":18,"p99":18.599999999998545},"renderPeaks":{"calls":101,"triangles":493126,"geometries":81},"budgetPassed":true,"frameTargetPassed":false,"note":"Local visible Chrome production preview"},"mobile":{"frameMs":{"p50":16.69999999999891,"p95":18.100000000000364,"p99":18.599999999998545},"renderPeaks":{"calls":83,"triangles":328536,"geometries":77},"budgetPassed":true,"frameTargetPassed":true,"note":"Desktop GPU emulation; not phone certification"}}

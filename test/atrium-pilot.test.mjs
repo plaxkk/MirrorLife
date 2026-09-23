@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {PNG} from 'pngjs';
+import {createCivicArticulationBinding,syncCivicArticulationBinding} from '../src/reference-fidelity-runtime-contract.js';
 import {freshState,normalizeState,applyDecision,canDecide,RESIDENTS,residentSpeech} from '../src/atrium-content.js';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
 import {loadAtriumState,saveAtriumState} from '../src/atrium-persistence.js';
@@ -138,6 +139,8 @@ test('each life prop contains an authored grip frame',async()=>{
 test('portable motion clips include feet and all corrective bindings',async()=>{
   const glb=await glbJson('../public/assets/atrium/animations/you-motion.glb');
   for(const clip of glb.animations){
+    assert.ok(clip.channels.some(c=>glb.nodes[c.target.node].name==='SkinNeckHead'),`${clip.name}: missing neck motion`);
+    assert.ok(clip.channels.some(c=>glb.nodes[c.target.node].name==='HeadPivot'&&c.target.path==='translation'),`${clip.name}: missing fixed head position`);
     const names=new Set(clip.channels.map(c=>glb.nodes[c.target.node].name));
     for(const side of ['Left','Right'])for(const part of ['Foot','SleeveCorrective','TrouserCorrective'])assert.ok(names.has(`Skin${side}${part}`),`${clip.name}: Skin${side}${part} binding missing`);
   }
@@ -321,12 +324,16 @@ test('resident heads retain their shape while looking around under body proporti
     const scene=new THREE.Group();for(const root of glb.scenes[glb.scene||0].nodes)scene.add(nodes[root]);
     const pivot=nodes.find(n=>n.name==='HeadPivot'),head=nodes.find(n=>n.name==='Head');
     assert.ok(pivot&&head);scene.updateMatrixWorld(true);
-    const rest=pivot.quaternion.clone(),scale=head.getWorldScale(new THREE.Vector3());
+    const neckBone=nodes.find(n=>n.name==='SkinNeckHead');
+    const binding=neckBone?createCivicArticulationBinding({controlKey:'headGroup',boneKey:'neckHead',controller:pivot,bone:neckBone}):null;
+    const driven=neckBone||head;
+    const rest=pivot.quaternion.clone(),scale=driven.getWorldScale(new THREE.Vector3());
     for(const yaw of [-.7,0,.7]){
       pivot.quaternion.copy(rest).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(.2,yaw,.1)));scene.updateMatrixWorld(true);
-      const axes=[0,1,2].map(i=>new THREE.Vector3().setFromMatrixColumn(head.matrixWorld,i).normalize());
+      if(binding)syncCivicArticulationBinding(binding);
+      const axes=[0,1,2].map(i=>new THREE.Vector3().setFromMatrixColumn(driven.matrixWorld,i).normalize());
       assert.ok(Math.abs(axes[0].dot(axes[1]))<1e-6&&Math.abs(axes[0].dot(axes[2]))<1e-6&&Math.abs(axes[1].dot(axes[2]))<1e-6,`${id}: turning head must not shear`);
-      assert.ok(head.getWorldScale(new THREE.Vector3()).distanceTo(scale)<1e-6,`${id}: turning head must preserve facial proportions`);
+      assert.ok(driven.getWorldScale(new THREE.Vector3()).distanceTo(scale)<1e-6,`${id}: turning head must preserve facial proportions`);
     }
   }
 });

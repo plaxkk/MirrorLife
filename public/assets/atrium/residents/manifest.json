@@ -6,8 +6,8 @@
     "bodyScale": 1.0,
     "source": "models/atrium/residents/you.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and short01 hair",
-    "reviewStatus": "development: incremental textured hair; full production art pending",
+    "license": "MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair",
+    "reviewStatus": "development",
     "garment": {
       "contract": "atrium-continuous-shoulder-v1",
       "components": 1,

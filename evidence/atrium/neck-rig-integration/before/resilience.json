@@ -1,0 +1,68 @@
+{
+  "capturedAt": "2026-09-22T10:20:10.035Z",
+  "runtimeFingerprint": "07f85e70a0b04dde2cd8e493e9e5144ad610faeb00ec75857f90407156a19668",
+  "browserMode": "headed",
+  "fixtureNotice": "Review position fixture changes test-player position only to isolate exceptional states, not evidence of route accessibility.",
+  "results": [
+    {
+      "case": "real page close after entering has no uncaught disposed-physics error",
+      "pass": true,
+      "errors": []
+    },
+    {
+      "case": "out of range E",
+      "pass": true
+    },
+    {
+      "case": "upper seat can be selected beside postcard, sit and stand",
+      "pass": true
+    },
+    {
+      "case": "cancel care before completion does not unlock a discovery",
+      "pass": true
+    },
+    {
+      "case": "completed and repeated care is recorded once",
+      "pass": true
+    },
+    {
+      "case": "repeated E, modal movement lock, focus trap and Escape",
+      "pass": true
+    },
+    {
+      "case": "busy resident waits and becomes interactable again",
+      "pass": true,
+      "busyPress": {
+        "resident": {
+          "id": "xu",
+          "busy": true,
+          "position": [
+            9.1,
+            0,
+            2
+          ],
+          "yaw": -1.1,
+          "seatBlend": 0
+        },
+        "prompt": "和许禾聊聊"
+      }
+    },
+    {
+      "case": "existing IndexedDB archive receives distinct pilot memories",
+      "pass": true,
+      "count": 3
+    },
+    {
+      "case": "WebGL context loss offers recovery without losing progress",
+      "pass": true
+    },
+    {
+      "case": "GLB load failure is visible and retry succeeds",
+      "pass": true
+    },
+    {
+      "case": "optional contact texture failure retains an active walkable scene and diagnostic",
+      "pass": true
+    }
+  ]
+}

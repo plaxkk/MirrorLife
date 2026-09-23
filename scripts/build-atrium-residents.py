@@ -31,7 +31,7 @@ if os.environ.get('ATRIUM_NECK_RIG_STUDY') or os.environ.get('ATRIUM_OPEN_NECK_S
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
 SKIN_AO_STUDY=os.environ.get('ATRIUM_SKIN_AO_STUDY')=='1'
-NECK_RIG_STUDY=os.environ.get('ATRIUM_NECK_RIG_STUDY')=='1'
+NECK_RIG_ENABLED=os.environ.get('ATRIUM_NECK_RIG','1')=='1'
 CREW_NECK_STUDY=os.environ.get('ATRIUM_CREW_NECK_STUDY')=='1'
 assert not CREW_NECK_STUDY or os.environ.get('ATRIUM_OPEN_NECK_STUDY')=='1', 'Crew neck requires isolated open neckline'
 SOURCE_SKIN_STUDY=os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
@@ -537,7 +537,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     if SURFACE_PROTOTYPE:
         for mat in list(bpy.data.materials):
             if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])
-    if NECK_RIG_STUDY and name=='you':
+    if NECK_RIG_ENABLED and name=='you':
         rig_spec=importlib.util.spec_from_file_location('atrium_neck_rig',ROOT/'scripts/atrium-neck-rig.py')
         neck_rig=importlib.util.module_from_spec(rig_spec);rig_spec.loader.exec_module(neck_rig)
         neck_rig.author_neck_rig()
