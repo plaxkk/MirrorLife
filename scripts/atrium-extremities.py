@@ -5,7 +5,7 @@ from mathutils import Vector
 def descendants(root):
     return [ob for ob in root.children_recursive if ob.type in {'MESH','CURVE'}]
 
-def hands(separate_digits=False):
+def hands(separate_digits=False, refined_palm=False):
     for side in [-1,1]:
         root=bpy.data.objects['Hand_'+str(side)]
         bpy.context.view_layer.update();inv=root.matrix_world.inverted();deps=bpy.context.evaluated_depsgraph_get()
@@ -22,7 +22,15 @@ def hands(separate_digits=False):
                     # the way to their tips; voxel fusion cannot recover a gap.
                     # Keep the authored digit lengths, curl and contact controls.
                     local.x*=.58
-                point=matrix@local;point.y*=.82;points.append(tuple(point))
+                point=matrix@local
+                if refined_palm and (ob.name==root.name+'Palm' or ob.name.startswith('HandWebSurface_')):
+                    # The inherited palm/web covers roughly half the fingers.
+                    # Retract its distal edge without editing digit primitives
+                    # or controls. Remeshing may still change final digit tips.
+                    if point.z<0:point.z*=.72
+                    blend=max(0,min(1,(.04-point.z)/.055))
+                    point.y*=1-.10*blend
+                point.y*=.82;points.append(tuple(point))
             faces.extend(tuple(offset+i for i in poly.vertices) for poly in mesh.polygons)
             evaluated.to_mesh_clear()
         mesh=bpy.data.meshes.new('Continuous palm and five digits');mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(material)

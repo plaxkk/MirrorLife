@@ -3,18 +3,30 @@ import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 import assert from 'node:assert/strict';
 import path from 'node:path';
-const out=path.resolve('evidence/atrium/character-contact');await fs.mkdir(out,{recursive:true});
-const meta=JSON.parse(await fs.readFile('evidence/atrium/assets.json','utf8'));
+import {createHash} from 'node:crypto';
+const out=path.resolve(process.env.ATRIUM_CONTACT_OUTPUT||'evidence/atrium/character-contact');await fs.mkdir(out,{recursive:true});
+const meta=JSON.parse(await fs.readFile(process.env.ATRIUM_ASSET_REPORT||'evidence/atrium/assets.json','utf8'));
+const candidate=process.env.ATRIUM_REVIEW_CANDIDATE;
+const candidateBody=candidate?await fs.readFile(candidate):null;let candidateRequests=0;
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:false,args:['--no-sandbox','--disable-backgrounding-occluded-windows','--disable-renderer-backgrounding']});
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),samples=[],errors=[];
 try{
   const page=await browser.newPage();await page.setViewport({width:1600,height:1000,deviceScaleFactor:1});
+  if(candidateBody){
+    await page.setCacheEnabled(false);await page.setRequestInterception(true);
+    page.on('request',r=>{
+      if(new URL(r.url()).pathname==='/assets/atrium/residents/you.glb'){
+        candidateRequests++;return r.respond({status:200,contentType:'model/gltf-binary',body:candidateBody});
+      }
+      return r.continue();
+    });
+  }
   page.on('pageerror',e=>errors.push(String(e)));
   await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4193')+'/atrium.html',{waitUntil:'domcontentloaded'});
   await page.waitForSelector('#enter:not([hidden])',{timeout:90000});await page.click('#enter');await pause(700);
   for(const [id,position,views]of [
     ['plant',[9.1,0,4.45],[['side',[7.9,1.45,3.6],[9.25,1.05,4.1]],['front',[8.45,1.6,3.25],[9.2,1.12,4.35]],['hand',[8.4,1.25,3.8],[9.26,1.01,4.1]]]],
-    ['tea',[-8.65,0,1.8],[['side',[-7.25,1.4,2.7],[-8.6,1.05,1.7]]]],
+    ['tea',[-8.65,0,1.8],[['side',[-7.25,1.4,2.7],[-8.6,1.05,1.7]],['hand-reverse',[-8.95,1.16,1.10],[-8.4,1.0,1.38]],['hand-top',[-8.45,1.65,1.4],[-8.4,1.0,1.38]]]],
   ])for(const [name,camera,target]of views){
     await page.evaluate(position=>{window.__atrium.setCapture(false);window.__atrium.setReviewPosition(position);},position);
     await page.waitForFunction(expected=>!document.querySelector('#interaction').hidden&&document.querySelector('#interaction-text').textContent.includes(expected),{},id==='plant'?'照料薄荷':'泡一杯');await page.keyboard.press('KeyE');
@@ -31,6 +43,7 @@ try{
   for(const id of ['you','xu','he'])assert.ok(grips.some(g=>g.id===id),`${id} has a sampled active prop`);
   for(const g of grips){assert.ok(g.errorMetres<.00001,JSON.stringify(g));assert.ok(g.scale.every(s=>Math.abs(s-1)<.00001),JSON.stringify(g));}
   assert.equal(errors.length,0);
-  const report={capturedAt:new Date().toISOString(),runtimeFingerprint:meta.runtimeFingerprint,method:'Actual runtime E-key care actions, positioned review fixtures and multi-view cameras. NOT traversal or finger-surface contact proof. Grip-frame distance only; source topology and visual checks are separate.',maxGripFrameErrorMetres:Math.max(...grips.map(g=>g.errorMetres)),sampleCount:grips.length,samples,errors};
+  if(candidateBody)assert.ok(candidateRequests>0,'Candidate was not loaded');
+  const report={capturedAt:new Date().toISOString(),runtimeFingerprint:candidateBody?null:meta.runtimeFingerprint,installedBaselineFingerprint:meta.runtimeFingerprint,candidate:candidateBody?{file:candidate,sha256:createHash('sha256').update(candidateBody).digest('hex'),requests:candidateRequests}:null,method:'Actual runtime E-key care actions, positioned review fixtures and multi-view cameras. NOT traversal or finger-surface contact proof. Grip-frame distance only; source topology and visual checks are separate.',maxGripFrameErrorMetres:Math.max(...grips.map(g=>g.errorMetres)),sampleCount:grips.length,samples,errors};
   await fs.writeFile(path.join(out,'contact.json'),JSON.stringify(report,null,2));console.log('CONTACT_PASS',report.sampleCount,report.maxGripFrameErrorMetres);
 }finally{await browser.close();}

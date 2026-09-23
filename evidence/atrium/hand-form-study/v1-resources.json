@@ -1,0 +1,18 @@
+[
+  {
+    "file": "tmp/portrait-study/hand-form-v1/public/assets/atrium/residents/you.glb",
+    "sha256": "abba8cc5757d5dc1860cb815f285f57b3c6dea0e68e5213760cb1c0a0045a2ce",
+    "bytes": 2285396,
+    "triangles": 26404,
+    "materials": 6,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/hand-form-v1/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "32db3a8729a6673270c121e00462ab8b4777d2f727399365144e05fb84b7c97f",
+    "bytes": 901256,
+    "triangles": 24341,
+    "materials": 6,
+    "primitives": 7
+  }
+]

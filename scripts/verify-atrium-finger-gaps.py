@@ -32,10 +32,14 @@ def inspect(path):
     return dict(sha256=hashlib.sha256(path.read_bytes()).hexdigest(),hands=results)
 base=Path(os.environ['ATRIUM_HAND_BASELINE']);source=Path(os.environ['ATRIUM_HAND_SOURCE'])
 a=inspect(base);b=inspect(source)
-report=dict(baseline=a,candidate=b,scope='Hand-bone-filtered source triangles; orthographic Y rays at four local Z slices. Connected projected spans wider than 2.5mm, not anatomical quality, complete gap topology or runtime collision proof.')
+require_gain=os.environ.get('ATRIUM_HAND_REQUIRE_GAP_GAIN','1')=='1'
+report=dict(comparison='increase' if require_gain else 'retain',baseline=a,candidate=b,scope='Hand-bone-filtered source triangles; orthographic Y rays at four local Z slices. Connected projected spans wider than 2.5mm, not anatomical quality, complete gap topology or runtime collision proof.')
 out=Path(os.environ['ATRIUM_HAND_REPORT']);out.parent.mkdir(parents=True,exist_ok=True);out.write_text(json.dumps(report,indent=2))
 for old,new in zip(a['hands'],b['hands']):
     assert new['sourceHandAudit']['components']==1 and new['sourceHandAudit']['nonManifoldEdges']==0
     assert max(s['count'] for s in new['slices'])>=4,'Four distal digits not distinguishable'
-    assert any(n['count']>o['count'] for n,o in zip(new['slices'],old['slices'])),'No improved projected separation'
+    if require_gain:
+        assert any(n['count']>o['count'] for n,o in zip(new['slices'],old['slices'])),'No improved projected separation'
+    else:
+        assert all(n['count']>=o['count'] for n,o in zip(new['slices'],old['slices'])),'Lost projected separation'
 print('FINGER_GAPS_PASS')
