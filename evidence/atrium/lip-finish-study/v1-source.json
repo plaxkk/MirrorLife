@@ -1,0 +1,19 @@
+{
+  "passed": true,
+  "unchanged": [
+    "vertices",
+    "faces",
+    "keys",
+    "weights",
+    "uv",
+    "parent",
+    "transform"
+  ],
+  "baselineSha256": "0d9b4473b3d9404875a75e2ea320b77877351f09dbe628b30ca6b4397027f9fc",
+  "sourceSha256": "d4dbca9ffedfaa1822bea252085e7f9420e31e8cf8a85348e56d53ad7ff5b6ef",
+  "changedColorCorners": 1361,
+  "maxColorDelta": 0.07188650965690613,
+  "minRoughnessDelta": 0.0,
+  "maxRoughnessDelta": 0.06999790668487549,
+  "scope": "Source head only; proves geometric and morph identity, not appearance quality or all other objects."
+}

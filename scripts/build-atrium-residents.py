@@ -26,6 +26,8 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+if os.environ.get('ATRIUM_LIP_FINISH_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Lip finish study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_TEXTURE_STUDY'):
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair texture study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_CARD_STUDY')=='1':

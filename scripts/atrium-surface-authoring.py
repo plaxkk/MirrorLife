@@ -2,7 +2,7 @@
 
 Shaders are baked to standard glTF PBR maps; no runtime custom shader is required.
 """
-import bpy, math
+import bpy, math, os
 
 
 def colour_material(obj, family, roughness):
@@ -58,6 +58,7 @@ def skin_shader(obj, portrait=False, occlusion=False, source_texture=None, sourc
     bump=nodes.new('ShaderNodeBump');bump.inputs['Strength'].default_value=.12;bump.inputs['Distance'].default_value=.00025
     links.new(noise.outputs['Fac'],bump.inputs['Height']);links.new(bump.outputs[0],bs.inputs['Normal'])
     if portrait:
+        lip_finish=os.environ.get('ATRIUM_LIP_FINISH_STUDY','0')=='1'
         base=tuple(material.diffuse_color[:3])
         response=obj.data.color_attributes.new(name='FaceResponse',type='FLOAT_COLOR',domain='CORNER')
         # Adding another mesh attribute can invalidate an earlier RNA handle.
@@ -68,14 +69,15 @@ def skin_shader(obj, portrait=False, occlusion=False, source_texture=None, sourc
             lip=math.exp(-(x/.062)**4-((z+.106)/.016)**4)*front
             cheek=math.exp(-((abs(x)-.119)/.045)**2-((z+.025)/.060)**2)*front
             ear=math.exp(-((abs(x)-.205)/.035)**2-((z+.015)/.095)**2)
-            tint=(base[0]*.96,base[1]*.59,base[2]*.64)
+            tint=(base[0]*.96,base[1]*(.72 if lip_finish else .59),base[2]*(.72 if lip_finish else .64))
             prior=colors.data[loop.index].color
             warmth=(.018,-.035,-.035)
-            colors.data[loop.index].color=tuple((prior[i]*(1-lip*.65)+tint[i]*lip*.65)
+            lip_mix=.38 if lip_finish else .65
+            colors.data[loop.index].color=tuple((prior[i]*(1-lip*lip_mix)+tint[i]*lip*lip_mix)
                 *(1+(cheek*.6+ear*.8)*warmth[i]) for i in range(3))+(1.,)
             forehead=math.exp(-(x/.115)**4-((z-.125)/.10)**4)*front
             nose=math.exp(-(x/.037)**4-((z+.015)/.065)**4)*front
-            rough=.68-.105*forehead-.105*nose-.14*lip
+            rough=.68-.105*forehead-.105*nose-(.07 if lip_finish else .14)*lip
             response.data[loop.index].color=(rough,rough,rough,1.)
         rough_attr=nodes.new('ShaderNodeVertexColor');rough_attr.layer_name='FaceResponse'
         links.new(rough_attr.outputs['Color'],bs.inputs['Roughness'])
