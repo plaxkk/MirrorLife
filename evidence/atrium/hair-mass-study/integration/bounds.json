@@ -1,0 +1,474 @@
+{
+  "results": [
+    {
+      "id": "you",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.052879424003133606,
+              "y": 0.6501118583464343,
+              "z": 0.00259405143262735
+            },
+            "radius": 1.3521645093007773
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000013709068298339844,
+              "y": 0.6707504391670227,
+              "z": 0.011539086699485779
+            },
+            "radius": 1.3528314019078227
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 47675
+        },
+        {
+          "name": "Head",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": -0.03891256574124077,
+              "y": -0.019443585829376248,
+              "z": 0.03819952240220793
+            },
+            "radius": 0.8495708331256655
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000007838010787963867,
+              "y": 1.457763671875,
+              "z": 0.004137683659791946
+            },
+            "radius": 0.8220945508201527
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0.8103735813320176,
+          "samples": 10050
+        }
+      ]
+    },
+    {
+      "id": "lin",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.08525968051388864,
+              "y": 0.6621866082058924,
+              "z": 0.024323687538656425
+            },
+            "radius": 1.3665426789832553
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000008761882781982422,
+              "y": 0.6713612712919712,
+              "z": 0.022385582327842712
+            },
+            "radius": 1.3489627121756027
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 44950
+        }
+      ]
+    },
+    {
+      "id": "chen",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.0991106641186023,
+              "y": 0.6710699796413963,
+              "z": -0.012109305329994824
+            },
+            "radius": 1.3899087196599633
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.00012633204460144043,
+              "y": 0.6707677841186523,
+              "z": 0.02279581129550934
+            },
+            "radius": 1.3501464650240038
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 44830
+        }
+      ]
+    },
+    {
+      "id": "xu",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.07967129590385248,
+              "y": 0.6586811565649482,
+              "z": -0.004276249988872853
+            },
+            "radius": 1.358383739161737
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000014662742614746094,
+              "y": 0.6731944903731346,
+              "z": 0.01873306930065155
+            },
+            "radius": 1.3437653212488458
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 49590
+        }
+      ]
+    },
+    {
+      "id": "zhou",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.024694217229987065,
+              "y": 0.6560547675048444,
+              "z": -0.003615912886585959
+            },
+            "radius": 1.341285046623077
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": -0.000005662441253662109,
+              "y": 0.673210583627224,
+              "z": 0.017969951033592224
+            },
+            "radius": 1.3442319151307518
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 49075
+        }
+      ]
+    },
+    {
+      "id": "he",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.043683020599609566,
+              "y": 0.655590800096436,
+              "z": -0.01024794632615216
+            },
+            "radius": 1.356428826575785
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.00005099177360534668,
+              "y": 0.6713795699179173,
+              "z": 0.02242054045200348
+            },
+            "radius": 1.3489818421569388
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 44685
+        }
+      ]
+    },
+    {
+      "id": "tang",
+      "profile": "desktop",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.04305428947847165,
+              "y": 0.6500461035291651,
+              "z": -0.003617029645669268
+            },
+            "radius": 1.3511045015064542
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": -0.00003254413604736328,
+              "y": 0.6707720756530762,
+              "z": 0.022817254066467285
+            },
+            "radius": 1.350136211210982
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 45445
+        }
+      ]
+    },
+    {
+      "id": "you",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.052879424003133606,
+              "y": 0.6501118583464343,
+              "z": 0.00259405143262735
+            },
+            "radius": 1.3521645093007773
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000013709068298339844,
+              "y": 0.6707504391670227,
+              "z": 0.011539086699485779
+            },
+            "radius": 1.3528314019078227
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 47675
+        },
+        {
+          "name": "Head",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": -0.03891256574124077,
+              "y": -0.019443585829376248,
+              "z": 0.03819952240220793
+            },
+            "radius": 0.8495708331256655
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000007838010787963867,
+              "y": 1.457763671875,
+              "z": 0.004137683659791946
+            },
+            "radius": 0.8220945508201527
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0.8103735813320176,
+          "samples": 10050
+        }
+      ]
+    },
+    {
+      "id": "lin",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.08525968051388864,
+              "y": 0.6621866082058924,
+              "z": 0.024323687538656425
+            },
+            "radius": 1.3665426789832553
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000008761882781982422,
+              "y": 0.6713612712919712,
+              "z": 0.022385582327842712
+            },
+            "radius": 1.3489627121756027
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 44950
+        }
+      ]
+    },
+    {
+      "id": "chen",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.0991106641186023,
+              "y": 0.6710699796413963,
+              "z": -0.012109305329994824
+            },
+            "radius": 1.3899087196599633
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.00012633204460144043,
+              "y": 0.6707677841186523,
+              "z": 0.02279581129550934
+            },
+            "radius": 1.3501464650240038
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 44830
+        }
+      ]
+    },
+    {
+      "id": "xu",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.07967129590385248,
+              "y": 0.6586811565649482,
+              "z": -0.004276249988872853
+            },
+            "radius": 1.358383739161737
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.000014662742614746094,
+              "y": 0.6731944903731346,
+              "z": 0.01873306930065155
+            },
+            "radius": 1.3437653212488458
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 49590
+        }
+      ]
+    },
+    {
+      "id": "zhou",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.024694217229987065,
+              "y": 0.6560547675048444,
+              "z": -0.003615912886585959
+            },
+            "radius": 1.341285046623077
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": -0.000005662441253662109,
+              "y": 0.673210583627224,
+              "z": 0.017969951033592224
+            },
+            "radius": 1.3442319151307518
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 49075
+        }
+      ]
+    },
+    {
+      "id": "he",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.043683020599609566,
+              "y": 0.655590800096436,
+              "z": -0.01024794632615216
+            },
+            "radius": 1.356428826575785
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.00005099177360534668,
+              "y": 0.6713795699179173,
+              "z": 0.02242054045200348
+            },
+            "radius": 1.3489818421569388
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 44685
+        }
+      ]
+    },
+    {
+      "id": "tang",
+      "profile": "mobile",
+      "meshes": [
+        {
+          "name": "SkinnedArticulationCore",
+          "bounds": {
+            "isSphere": true,
+            "center": {
+              "x": 0.04305428947847165,
+              "y": 0.6500461035291651,
+              "z": -0.003617029645669268
+            },
+            "radius": 1.3511045015064542
+          },
+          "oldRawBounds": {
+            "isSphere": true,
+            "center": {
+              "x": -0.00003254413604736328,
+              "y": 0.6707720756530762,
+              "z": 0.022817254066467285
+            },
+            "radius": 1.350136211210982
+          },
+          "maxOutside": 0,
+          "maxOutsideOldRawBounds": 0,
+          "samples": 45445
+        }
+      ]
+    }
+  ],
+  "scope": "All exported skin vertices inside runtime local bounds in idle, walk, talk, sitting and looking poses. This checks culling bounds, not visual quality or real-device performance.",
+  "passed": true
+}

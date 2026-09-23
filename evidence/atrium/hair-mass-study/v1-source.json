@@ -1,0 +1,62 @@
+{
+  "sourceSha256": "360b765739f11541d14e7fcbc08c154d9d85fc531f8ee2442ff8ad91bc848b09",
+  "baselineSha256": "936cb0ec76afa8ce55d21511242b490ca1cf875b2a5b6cdeb4bfb06b5f437aef",
+  "changedVertices": 2732,
+  "maxDisplacement": 0.030989879452322587,
+  "changedTriangles": [
+    3582,
+    3583
+  ],
+  "baseline": {
+    "samples": 24048,
+    "minGap": -0.002717442810535431,
+    "penetrations": {
+      "4146": -0.0015203903894871473,
+      "4152": -0.0015203903894871473,
+      "14760": -0.0011039008386433125,
+      "14766": -0.0011039008386433125,
+      "14785": -0.0015203903894871473,
+      "14859": -0.002717442810535431
+    }
+  },
+  "candidate": {
+    "samples": 24048,
+    "minGap": -0.002717442810535431,
+    "penetrations": {
+      "4146": -0.0015203903894871473,
+      "4152": -0.0015203903894871473,
+      "14785": -0.0015203903894871473,
+      "14859": -0.002717442810535431
+    }
+  },
+  "newOnUnchangedTriangles": [],
+  "boundsBefore": [
+    [
+      -0.2096378058195114,
+      0.20620515942573547
+    ],
+    [
+      -0.21591345965862274,
+      0.23226484656333923
+    ],
+    [
+      -0.11914177238941193,
+      0.32856422662734985
+    ]
+  ],
+  "boundsAfter": [
+    [
+      -0.20011594891548157,
+      0.19542844593524933
+    ],
+    [
+      -0.21591345965862274,
+      0.22931978106498718
+    ],
+    [
+      -0.11914177238941193,
+      0.34435784816741943
+    ]
+  ],
+  "scope": "Neutral source, actual triangulated opaque vertex/edge/centroid samples against head. IDs compared only on unchanged triangles; changed triangles need independent inspection. Not continuous collision or animation proof."
+}

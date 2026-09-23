@@ -1,0 +1,7 @@
+{
+  "passed": true,
+  "vertices": 2984,
+  "maxCoordinateError": 0.0,
+  "parent": "HeadPivot",
+  "scope": "Default hair authoring on old installed source reproduces new installed hair coordinates and UVs exactly; no other objects exported."
+}

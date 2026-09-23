@@ -1,10 +1,14 @@
-"""Isolated CC0 MakeHuman hair study; preserve authored UVs and cutout edges."""
+"""Editable CC0 MakeHuman hair with swept volume and preserved UV/cutout edges."""
 import bpy, json, math, os
 from pathlib import Path
 
 
 def build(root, head, style):
     assert style in ('short01', 'short02')
+    hair_parent = bpy.data.objects['HeadPivot']
+    refined = os.environ.get('ATRIUM_REFINED_HAIR','1') == '1'
+    sweep_mode = os.environ.get('ATRIUM_HAIR_SWEEP_STUDY','2' if refined else '0')
+    mass_mode = os.environ.get('ATRIUM_HAIR_MASS_STUDY','2' if refined else '0')
     source = Path(root) / 'models/atrium/source' / ('hair-' + style)
     anchors = json.loads((source / 'head-anchors.json').read_text())
     binding = (source / (style + '.mhclo')).read_text().splitlines()
@@ -36,7 +40,7 @@ def build(root, head, style):
                 weight=front*math.exp(-((z-.155)/.10)**2)
                 z-=.038*weight
                 y-=.006*weight
-            if style=='short01' and os.environ.get('ATRIUM_HAIR_SWEEP_STUDY') in {'1','2'}:
+            if style=='short01' and sweep_mode in {'1','2'}:
                 # Shape a side-swept fringe rather than a level cap perimeter.
                 front=max(0.,min(1.,(-y-.055)/.10))
                 fringe=front*math.exp(-((z-.145)/.075)**2)
@@ -51,11 +55,11 @@ def build(root, head, style):
             faces.append([int(v.split('/')[0]) - 1 for v in fields[1:]])
             uv_faces.append([int(v.split('/')[1]) - 1 for v in fields[1:]])
     assert len(vertices) == len(fitted), 'Hair binding must cover every source vertex'
-    if style=='short01' and os.environ.get('ATRIUM_HAIR_SWEEP_STUDY')=='2':
+    if style=='short01' and sweep_mode=='2':
         from mathutils import Vector
         from mathutils.bvhtree import BVHTree
         bpy.context.view_layer.update()
-        to_head=head.matrix_world.inverted()@head.parent.matrix_world
+        to_head=head.matrix_world.inverted()@hair_parent.matrix_world
         to_hair=to_head.inverted()
         skin=BVHTree.FromPolygons([v.co for v in head.data.vertices],[tuple(p.vertices) for p in head.data.polygons])
         for i,v in enumerate(vertices):
@@ -86,6 +90,9 @@ def build(root, head, style):
             if hit is not None and distance>.004 and (point-hit).dot(normal)>0:
                 amount=min(.012,(distance-.004)*.65)
                 vertices[i]=tuple(point+(hit-point).normalized()*amount)
+    if style=='short01' and mass_mode in {'1','2'}:
+        import runpy
+        runpy.run_path(str(Path(__file__).with_name('atrium-hair-mass.py')))['shape'](vertices, head, hair_parent, int(mass_mode))
     clump_audit = None
     if style=='short01' and os.environ.get('ATRIUM_HAIR_CLUMP_STUDY')=='1':
         import runpy
@@ -103,7 +110,7 @@ def build(root, head, style):
             uv.data[loop].uv = texcoords[index]
     obj = bpy.data.objects.new('HairAuthored_' + style, mesh)
     bpy.context.collection.objects.link(obj)
-    obj.parent = head.parent
+    obj.parent = hair_parent
     obj['atrium_authored_hair'] = True
     if clump_audit is not None:
         obj['clump_study_audit'] = json.dumps(clump_audit)

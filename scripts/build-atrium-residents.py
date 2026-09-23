@@ -30,6 +30,8 @@ if os.environ.get('ATRIUM_HAIR_TEXTURE_STUDY'):
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair texture study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_CARD_STUDY')=='1':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair card study output must remain isolated'
+if os.environ.get('ATRIUM_HAIR_MASS_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair mass study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_CLUMP_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Hair clump study output must remain isolated'
 if os.environ.get('ATRIUM_HAIR_SWEEP_STUDY','0')!='0':
@@ -661,7 +663,9 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
             bpy.context.view_layer.objects.active=ob;bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'-mobile.glb'))
-    reports.append({'id':name,'baseRole':role,'hair':('cc0-short01-fringe' if name=='you' and bpy.data.objects.get('HairAuthored_short01') else hair),'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair','reviewStatus':'development','garment':dict(root['atrium_garment'])})
+    refined_default='2' if os.environ.get('ATRIUM_REFINED_HAIR','1')=='1' else '0'
+    authored_hair_label='cc0-short01-swept-mass' if os.environ.get('ATRIUM_HAIR_SWEEP_STUDY',refined_default)=='2' and os.environ.get('ATRIUM_HAIR_MASS_STUDY',refined_default)=='2' else 'cc0-short01-fringe'
+    reports.append({'id':name,'baseRole':role,'hair':(authored_hair_label if name=='you' and bpy.data.objects.get('HairAuthored_short01') else hair),'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair','reviewStatus':'development','garment':dict(root['atrium_garment'])})
     print('RESIDENT_READY',name,flush=True)
 if selected and (OUT/'manifest.json').exists():
     previous=json.loads((OUT/'manifest.json').read_text());updates={r['id']:r for r in reports};reports=[updates.get(r['id'],r) for r in previous]

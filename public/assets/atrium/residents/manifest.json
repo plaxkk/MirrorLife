@@ -2,7 +2,7 @@
   {
     "id": "you",
     "baseRole": "player",
-    "hair": "cc0-short01-fringe",
+    "hair": "cc0-short01-swept-mass",
     "bodyScale": 1.0,
     "source": "models/atrium/residents/you.blend",
     "animationSource": "src/civic-animation-clips.js",

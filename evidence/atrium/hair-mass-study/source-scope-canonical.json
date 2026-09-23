@@ -1,0 +1,32 @@
+{
+  "EyeGlint_-1": {
+    "vertexMultisetEqual": true,
+    "orientedFaceMultisetEqual": true,
+    "maxCandidateToBaselineVertexDistance": 0.0
+  },
+  "Embroidered sun": {
+    "vertexMultisetEqual": true,
+    "orientedFaceMultisetEqual": true,
+    "maxCandidateToBaselineVertexDistance": 0.0
+  },
+  "EyeWhite_1": {
+    "vertexMultisetEqual": true,
+    "orientedFaceMultisetEqual": true,
+    "maxCandidateToBaselineVertexDistance": 0.0
+  },
+  "HairAuthored_short01": {
+    "vertexMultisetEqual": false,
+    "orientedFaceMultisetEqual": false,
+    "maxCandidateToBaselineVertexDistance": 0.03271285444498062
+  },
+  "Drawcord bound end -1": {
+    "vertexMultisetEqual": true,
+    "orientedFaceMultisetEqual": true,
+    "maxCandidateToBaselineVertexDistance": 0.0
+  },
+  "Drawcord bound end 1": {
+    "vertexMultisetEqual": true,
+    "orientedFaceMultisetEqual": true,
+    "maxCandidateToBaselineVertexDistance": 0.0
+  }
+}

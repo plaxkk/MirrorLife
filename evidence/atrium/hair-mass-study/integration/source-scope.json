@@ -1,0 +1,36 @@
+{
+  "baselineSha256": "194d15b8a1ffafd4483e3d67d67bb45849eee8bc9bb4684268b731a89fdc16cb",
+  "sourceSha256": "b315ab799e3eef4c7a98c1c8f0fd37286d928ff1502c46390ff47a78ad08fa57",
+  "changes": {
+    "Drawcord bound end 1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "EyeGlint_-1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "EyeWhite_1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "HairAuthored_short01": {
+      "vertexMultisetEqual": false,
+      "orientedFaceMultisetEqual": false,
+      "maxCandidateToBaselineVertexDistance": 0.03271285444498062
+    },
+    "Drawcord bound end -1": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    },
+    "Embroidered sun": {
+      "vertexMultisetEqual": true,
+      "orientedFaceMultisetEqual": true,
+      "maxCandidateToBaselineVertexDistance": 0.0
+    }
+  }
+}

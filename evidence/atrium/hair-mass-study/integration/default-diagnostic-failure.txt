@@ -1,0 +1,14 @@
+HAIR_MASS_APPLIED 2594 skin_clearance_fixes 0
+DEFAULT_DIAGNOSTIC 2984 2984 0.01871273838765167 2828
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Read blend: "/Users/kk/repos/MirrorLife/models/atrium/residents/you.blend"
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/hair-mass-installed-baseline.blend"
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/verify-atrium-hair-defaults.py", line 17, in <module>
+    assert actual==expected, 'Default build hair differs from installed source'
+           ^^^^^^^^^^^^^^^^
+AssertionError: Default build hair differs from installed source
+
+Error: script failed, file: 'scripts/verify-atrium-hair-defaults.py', exiting.
+
+Blender quit
