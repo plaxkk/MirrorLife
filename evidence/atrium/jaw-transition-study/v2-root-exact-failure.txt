@@ -1,0 +1,12 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/jaw-transition-v2/models/atrium/residents/you.blend"
+Read blend: "/Users/kk/repos/MirrorLife/models/atrium/residents/you.blend"
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/verify-atrium-jaw-profile.py", line 32, in <module>
+    assert len(a['collarRoot'])>10 and root_equal,'Collar cut ring changed'
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: Collar cut ring changed
+
+Error: script failed, file: 'scripts/verify-atrium-jaw-profile.py', exiting.
+
+Blender quit

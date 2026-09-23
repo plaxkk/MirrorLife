@@ -1,0 +1,237 @@
+{
+  "capturedAt": "2026-09-23T06:29:43.354Z",
+  "base": "http://127.0.0.1:4203",
+  "cameras": [
+    [
+      "body",
+      [
+        -4.3,
+        1.12,
+        1.6
+      ],
+      [
+        -4.3,
+        1,
+        4
+      ]
+    ],
+    [
+      "front",
+      [
+        -4.3,
+        1.49,
+        3.4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "side",
+      [
+        -3.62,
+        1.49,
+        4
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "back",
+      [
+        -4.3,
+        1.49,
+        4.7
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ],
+    [
+      "quarter",
+      [
+        -3.85,
+        1.49,
+        3.48
+      ],
+      [
+        -4.3,
+        1.46,
+        4
+      ]
+    ]
+  ],
+  "viewport": {
+    "width": 1200,
+    "height": 1000
+  },
+  "profile": "desktop",
+  "partialBlink": false,
+  "shadowAudit": null,
+  "scope": "Before/after hero isolated visual prototype in the player review slot, same rig and cameras; forced named facial weights. Mobile is desktop GPU viewport emulation. This does not validate the complete gameplay path or performance.",
+  "results": [
+    {
+      "variant": "before",
+      "file": "public/assets/atrium/residents/you.glb",
+      "sha256": "662f54daf9d05ac101750701c8085947806c544b15a22fd10e248338c4ab798c",
+      "bytes": 2428124,
+      "requests": 1,
+      "shadowRequests": 0,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "movement": [],
+      "errors": []
+    },
+    {
+      "variant": "after",
+      "file": "tmp/portrait-study/jaw-transition-v1/public/assets/atrium/residents/you.glb",
+      "sha256": "42186f2a48827b939bbd5b6d4ffcbcbe520435db51f6413c0b436002c2e58f00",
+      "bytes": 2428084,
+      "requests": 1,
+      "shadowRequests": 0,
+      "poses": [
+        {
+          "pose": "neutral",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "closed",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 1,
+              "talk": 0
+            }
+          ]
+        },
+        {
+          "pose": "talk",
+          "actual": [
+            {
+              "name": "Head",
+              "eyeScales": [
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ],
+                [
+                  0.5200000405311584,
+                  0.5600000023841858,
+                  0.40000006556510925
+                ]
+              ],
+              "blink": 0,
+              "talk": 1
+            }
+          ]
+        }
+      ],
+      "movement": [],
+      "errors": []
+    }
+  ]
+}

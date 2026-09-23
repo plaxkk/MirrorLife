@@ -124,6 +124,8 @@ def authored_brows(head, front):
 def build_player_head(root_path, identity="you", fitted_crop=False):
     source_skin=identity=='you' and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
     portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
+    jaw_transition=int(os.environ.get('ATRIUM_JAW_TRANSITION_STUDY','0')) if identity=='you' else 0
+    assert jaw_transition in (0,1,2,3)
     refined=os.environ.get('ATRIUM_REFINED_GAZE','1')=='1'
     gaze_study=int(os.environ.get('ATRIUM_GAZE_STUDY','2' if refined else '0')) if identity=='you' else 0
     assert gaze_study in (0,1,2)
@@ -147,7 +149,8 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         elif p[0]=='f':
             faces.append([int(x.split('/')[0])-1 for x in p[1:]])
             uv_faces.append([int(x.split('/')[1])-1 for x in p[1:]])
-    def fit(p):
+    def fit(p, jaw_mode=None):
+        if jaw_mode is None:jaw_mode=0 if jaw_transition==3 else jaw_transition
         x,y,z=p[0]*.255,-(p[2]-.55)*.22,(p[1]-7.124)*.215
         jaw_scale={'you':1,'lin':.88,'chen':1.09,'xu':.94,'zhou':.98,'he':1.10,'tang':.93}[identity]
         jaw_weight=max(0,min(1,(-z-.025)/.13))
@@ -168,7 +171,12 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
         x*=1-.075*math.exp(-((z+.155)/.045)**2)*front
         z+=(.003 if lid_study>=3 else .007)*math.exp(-((abs(x)-.052)/.027)**2-((z+.112)/.023)**2)*front
         # Preserve jaw volume but blend the neck cut inside the existing collar.
-        t=max(0,min(1,(-z-.13)/.10));t=t*t*(3-2*t)
+        neck_start=.18 if jaw_mode==1 else .13
+        t=max(0,min(1,(-z-neck_start)/.10));t=t*t*(3-2*t)
+        if jaw_mode==2:
+            # Restore some native jaw volume, with zero influence below -.205.
+            jaw_t=max(0,min(1,(z+.205)/.040))
+            t*=1-.55*jaw_t*jaw_t*(3-2*jaw_t)
         angle=math.atan2(x,y-.015)
         x=x*(1-t)+.125*math.sin(angle)*t
         y=y*(1-t)+(.105*math.cos(angle)+.005)*t
@@ -181,6 +189,15 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
             y+=.009*lip_weight
         return x,y,z
     mesh=bpy.data.meshes.new('Player anatomical head mesh');mesh.from_pydata([fit(v) for v in vertices],[],faces);mesh.update();mesh.materials.append(skin)
+    if jaw_transition==3:
+        # Sample a displacement field after the unchanged default decimation.
+        # This keeps the collar topology out of the jaw edit's optimization.
+        from mathutils.geometry import barycentric_transform
+        mesh.calc_loop_triangles()
+        jaw_base=[v.co.copy() for v in mesh.vertices]
+        jaw_target=[Vector(fit(v,2)) for v in vertices]
+        jaw_triangles=[tuple(t.vertices) for t in mesh.loop_triangles]
+        jaw_field=BVHTree.FromPolygons(jaw_base,jaw_triangles,all_triangles=True)
     uv=mesh.uv_layers.new(name='UVMap')
     for poly,indices in zip(mesh.polygons,uv_faces):
         poly.use_smooth=True
@@ -216,6 +233,13 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 average=sum((positions[i] for i in neighbours),Vector())/len(neighbours)
                 vertex.co=positions[vertex.index].lerp(average,weight)
     dec=old.modifiers.new('Facial topology allocation','DECIMATE');dec.ratio=4000/8440;dec.use_collapse_triangulate=True;bpy.ops.object.modifier_apply(modifier=dec.name)
+    if jaw_transition==3:
+        for vertex in old.data.vertices:
+            if not (-.205<vertex.co.z<-.12):continue
+            hit,_,triangle,_=jaw_field.find_nearest(vertex.co)
+            ids=jaw_triangles[triangle]
+            mapped=barycentric_transform(hit,*(jaw_base[i] for i in ids),*(jaw_target[i] for i in ids))
+            vertex.co+=mapped-hit
     if lid_study==4:
         neighbours=[set() for _ in old.data.vertices]
         for edge in old.data.edges:

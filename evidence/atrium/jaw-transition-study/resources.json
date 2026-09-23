@@ -1,0 +1,44 @@
+[
+  {
+    "version": "v1",
+    "lod": "you",
+    "bytes": 2428084,
+    "sha256": "42186f2a48827b939bbd5b6d4ffcbcbe520435db51f6413c0b436002c2e58f00",
+    "triangles": 26531
+  },
+  {
+    "version": "v1",
+    "lod": "you-mobile",
+    "bytes": 952436,
+    "sha256": "f4000fbf224c0228da8c15f1203ba60e7b08bf4451481f2158a51f59708ac006",
+    "triangles": 24468
+  },
+  {
+    "version": "v2",
+    "lod": "you",
+    "bytes": 2427724,
+    "sha256": "1c327890a9ffdbf6190fd0e3467b3fb51a940f5be9ac66bbdc1e5bac7b9f8ed2",
+    "triangles": 26518
+  },
+  {
+    "version": "v2",
+    "lod": "you-mobile",
+    "bytes": 952072,
+    "sha256": "57c9653551e3db05164df3d76be5958c22c4cec16351269e2143175d4fd2ceff",
+    "triangles": 24455
+  },
+  {
+    "version": "v3",
+    "lod": "you",
+    "bytes": 2428048,
+    "sha256": "d8d20a0336429981a7c2cb1e23a9069ce272fa62a909e9060629d25badf28bb5",
+    "triangles": 26532
+  },
+  {
+    "version": "v3",
+    "lod": "you-mobile",
+    "bytes": 952384,
+    "sha256": "980fb562c6f39e83255dfc86195b00657c1393b4d7794dc8dcf05372aa0429c4",
+    "triangles": 24469
+  }
+]

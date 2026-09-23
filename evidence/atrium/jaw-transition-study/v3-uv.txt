@@ -1,0 +1,2 @@
+tmp/portrait-study/jaw-transition-v3/public/assets/atrium/residents/you.glb TEXTURED_UV_OK 4
+tmp/portrait-study/jaw-transition-v3/public/assets/atrium/residents/you-mobile.glb TEXTURED_UV_OK 4
