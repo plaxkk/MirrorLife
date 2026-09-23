@@ -1,0 +1,11 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/eye-depth-v3/models/atrium/residents/you.blend"
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/verify-atrium-iris-surface.py", line 33, in <module>
+    assert report['passed'],report
+           ~~~~~~^^^^^^^^^^
+AssertionError: {'source': 'tmp/portrait-study/eye-depth-v3/models/atrium/residents/you.blend', 'sha256': '9ad4fc367e0f9e3ae75829a05ecf9131f59cc5f35caad2c71d22faf8b8c16113', 'space': 'EyePivot local coordinates, before parent scale', 'eyes': [{'side': -1, 'vertices': 337, 'missingScleraSamples': 0, 'minimumClearance': 0.000666317529976368, 'maximumClearance': 0.0042695351876318455, 'forwardFaces': 336, 'faces': 336, 'usedColourBands': 8}, {'side': 1, 'vertices': 337, 'missingScleraSamples': 0, 'minimumClearance': 0.0006663771346211433, 'maximumClearance': 0.00426947558298707, 'forwardFaces': 336, 'faces': 336, 'usedColourBands': 8}], 'scope': 'Curved iris vertices lie in front of the actual polygonal sclera; front-facing normals and material bands. Visual/morph/runtime acceptance is separate.', 'passed': False}
+
+Error: script failed, file: 'scripts/verify-atrium-iris-surface.py', exiting.
+
+Blender quit

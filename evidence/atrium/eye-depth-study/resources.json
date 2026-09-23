@@ -1,0 +1,78 @@
+[
+  {
+    "variant": "installed",
+    "file": "public/assets/atrium/residents/you.glb",
+    "sha256": "59bd6175f9fdbcbdf9ca1fde46cb3f0f0aa192791a1d70f39466be0b87239836",
+    "bytes": 2495524,
+    "triangles": 25096
+  },
+  {
+    "variant": "installed",
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "304476e19b1f5c886c71cb8ed5ef936bec771d2caeab6fbe602074834c6d1799",
+    "bytes": 948972,
+    "triangles": 22629
+  },
+  {
+    "variant": "v1",
+    "file": "tmp/portrait-study/eye-depth-v1/public/assets/atrium/residents/you.glb",
+    "sha256": "47389d8d11c57188dda9aef3b46a4ab749899c2ebc863ec00418afa6a8cc375f",
+    "bytes": 2494052,
+    "triangles": 25096
+  },
+  {
+    "variant": "v1",
+    "file": "tmp/portrait-study/eye-depth-v1/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "8e9adbcbbc8e7f06fd80cd255d38d0c36fe4f768eb802c82172b94d7c9aa3d4d",
+    "bytes": 948504,
+    "triangles": 22627
+  },
+  {
+    "variant": "v2",
+    "file": "tmp/portrait-study/eye-depth-v2/public/assets/atrium/residents/you.glb",
+    "sha256": "c5cc0426264c9dbb8aa9af6f722df285eca623490a9b7da551ea5047c460ddde",
+    "bytes": 2494012,
+    "primitives": 7,
+    "triangles": 25096
+  },
+  {
+    "variant": "v2",
+    "file": "tmp/portrait-study/eye-depth-v2/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "8d0b4d0973921ea4b31f8398ee38e612d478e769637d46f8afa9b389f2638eee",
+    "bytes": 948612,
+    "primitives": 7,
+    "triangles": 22627
+  },
+  {
+    "variant": "v3",
+    "file": "tmp/portrait-study/eye-depth-v3/public/assets/atrium/residents/you.glb",
+    "sha256": "cb73ac7c4221f2fdf1e8572262d48b0194795f95728d1c412e872b7513c2060f",
+    "bytes": 2476548,
+    "primitives": 7,
+    "triangles": 24604
+  },
+  {
+    "variant": "v3",
+    "file": "tmp/portrait-study/eye-depth-v3/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "13e2f231e16d3814257809086f43d0255f1e5db4c05f9b5f4ac5a2a283808d23",
+    "bytes": 940552,
+    "primitives": 7,
+    "triangles": 22371
+  },
+  {
+    "variant": "v4",
+    "file": "tmp/portrait-study/eye-depth-v4/public/assets/atrium/residents/you.glb",
+    "sha256": "38de6c700a1939d59fe3d8eae1cff927db2e8bf8ae3064fd8d958e4c612e75e7",
+    "bytes": 2477364,
+    "primitives": 7,
+    "triangles": 24604
+  },
+  {
+    "variant": "v4",
+    "file": "tmp/portrait-study/eye-depth-v4/public/assets/atrium/residents/you-mobile.glb",
+    "sha256": "f33ca08b9350a44f24238f81557bca2a8f8963c08574853b9d136217a911f5d0",
+    "bytes": 940444,
+    "primitives": 7,
+    "triangles": 22371
+  }
+]

@@ -1,0 +1,5 @@
+IRIS_SURFACE_PASS [{"side": -1, "vertices": 337, "missingScleraSamples": 0, "minimumClearance": 0.0006498079746961594, "maximumClearance": 0.0006502261385321617, "forwardFaces": 336, "faces": 336, "usedColourBands": 8}, {"side": 1, "vertices": 337, "missingScleraSamples": 0, "minimumClearance": 0.0006498079746961594, "maximumClearance": 0.0006502270698547363, "forwardFaces": 336, "faces": 336, "usedColourBands": 8}]
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Read blend: "/Users/kk/repos/MirrorLife/tmp/portrait-study/eye-depth-v4/models/atrium/residents/you.blend"
+
+Blender quit

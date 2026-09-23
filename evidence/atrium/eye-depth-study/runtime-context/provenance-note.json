@@ -1,0 +1,5 @@
+{
+  "currentRuntimeFingerprint": "11eaeda8c5bad42aafa66a0a5aa7a194f63162aea88df989fa14f9e83448467b",
+  "legacyFingerprintInMobileReport": "5acddcba3c185b2b5e880113e8c8da2c420ad4671f2a32637d17c8e12542bbec",
+  "note": "The facial-motion script reads historical root assets.json. Its installedBaselineFingerprint is stale; candidate SHA remains accurate. This supplemental current asset report identifies the current runtime sources, not a full candidate release fingerprint."
+}

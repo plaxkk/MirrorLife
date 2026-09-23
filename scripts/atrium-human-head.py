@@ -6,6 +6,56 @@ from pathlib import Path
 from mathutils import Vector
 from mathutils.bvhtree import BVHTree
 
+def authored_iris(side):
+    """A curved iris surface following the sclera, with a narrow limbal rim."""
+    eye=bpy.data.objects['EyePivot_'+str(side)]
+    for prefix in ['Iris_','IrisCore_','Pupil_']:
+        bpy.data.objects.remove(bpy.data.objects[prefix+str(side)],do_unlink=True)
+    materials=[]
+    for i in range(9):
+        colour=(.010,.008,.006) if i==0 else tuple(c*(.70+.075*i) for c in (.055,.032,.018))
+        mat=bpy.data.materials.new('Iris radial umber '+str(i));mat.use_nodes=True
+        mat.diffuse_color=(*colour,1);bs=mat.node_tree.nodes.get('Principled BSDF')
+        bs.inputs['Base Color'].default_value=mat.diffuse_color;bs.inputs['Roughness'].default_value=.4
+        materials.append(mat)
+    rx,rz=.0374,.031
+    bpy.context.view_layer.update()
+    white=bpy.data.objects['EyeWhite_'+str(side)]
+    matrix=eye.matrix_world.inverted()@white.matrix_world
+    sclera=BVHTree.FromPolygons([matrix@v.co for v in white.data.vertices],[tuple(p.vertices) for p in white.data.polygons])
+    def surface(x,z):
+        hit=sclera.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
+        assert hit is not None, 'Iris extends beyond the authored sclera'
+        return hit.y-.00065
+    cx,cz=-side*.001,-.001
+    points=[(cx,surface(cx,cz),cz)];faces=[];shades=[];segments=48
+    radii=[.32,.37,.48,.64,.79,.91,1.0]
+    for radius in radii:
+        for i in range(segments):
+            angle=math.tau*i/segments;x=cx+rx*radius*math.cos(angle);z=cz+rz*radius*math.sin(angle)
+            points.append((x,surface(x,z),z))
+    for i in range(segments):
+        faces.append((0,1+i,1+(i+1)%segments));shades.append(0)
+    for row in range(len(radii)-1):
+        for i in range(segments):
+            a=1+row*segments+i;b=1+row*segments+(i+1)%segments
+            faces.append((a,a+segments,b+segments,b))
+            angle=math.tau*(i+.5)/segments
+            variation=math.sin(angle*17+.6)+.6*math.sin(angle*29)+.45*math.sin(angle*7+row*.7)
+            shades.append(0 if row==len(radii)-2 else max(1,min(8,round(4+variation*1.4-math.sin(angle)))))
+    mesh=bpy.data.meshes.new('Sclera conforming iris');mesh.from_pydata(points,[],faces);mesh.update()
+    # Recalculate normals to face the viewer (-Y); the iris is a curved ocular
+    # surface, not a camera-facing plane. It follows the eye pivot in all views.
+    import bmesh
+    bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+    if sum(f.normal.y for f in bm.faces)>0:bmesh.ops.reverse_faces(bm,faces=list(bm.faces))
+    bm.to_mesh(mesh);bm.free()
+    for material in materials:mesh.materials.append(material)
+    for poly,shade in zip(mesh.polygons,shades):poly.material_index=shade;poly.use_smooth=True
+    ob=bpy.data.objects.new('Iris_'+str(side),mesh);bpy.context.collection.objects.link(ob);ob.parent=eye
+    glint=bpy.data.objects['EyeGlint_'+str(side)]
+    glint.location.y=surface(glint.location.x,glint.location.z)-.0002;glint.scale.y*=.25
+
 def authored_brows(head, front):
     """Small opaque volumes fitted to the forehead, retaining expression pivots."""
     import bmesh
@@ -60,8 +110,10 @@ def authored_brows(head, front):
 def build_player_head(root_path, identity="you", fitted_crop=False):
     source_skin=identity=='you' and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')=='1'
     portrait_form=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY')=='1'
+    eye_depth=int(os.environ.get('ATRIUM_EYE_DEPTH_STUDY','0')) if identity=='you' else 0
+    assert eye_depth in (0,1,2,3), 'Unknown eye depth study'
     lid_edge_study=identity=='you' and os.environ.get('ATRIUM_LID_EDGE_STUDY')=='1'
-    portrait_eyes=identity=='you' and os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1'
+    portrait_eyes=identity=='you' and (os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY')=='1' or eye_depth>=2)
     assert not lid_edge_study or portrait_eyes, 'Lid edge study requires the portrait eye proportions'
     lid_study=int(os.environ.get('ATRIUM_RADIAL_LID_STUDY','4')) if identity=='you' else 0
     assert lid_study in (0,1,2,3,4)
@@ -188,12 +240,13 @@ def build_player_head(root_path, identity="you", fitted_crop=False):
                 part.scale.x*=1.10 if portrait_eyes else 1.22;part.scale.z*=1.0 if portrait_eyes else 1.12
             glint=bpy.data.objects['EyeGlint_'+str(side)]
             glint.scale*=.72
-            if portrait_form:
+            if portrait_form or eye_depth:
                 # The old nested spheres protruded progressively like beads.
                 # Keep separate iris/pupil surfaces but compress their depth.
                 for prefix,depth in [('Iris_',-.0096),('IrisCore_',-.01065),('Pupil_',-.0112),('EyeGlint_',-.01185)]:
                     part=bpy.data.objects[prefix+str(side)]
                     part.location.y=depth;part.scale.y*=.25
+            if eye_depth==3:authored_iris(side)
     bpy.context.view_layer.update()
     if identity=='you' and os.environ.get('ATRIUM_BROW_STUDY')=='1':
         authored_brows(old,front)

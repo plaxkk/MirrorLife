@@ -1,0 +1,29 @@
+{
+  "source": "tmp/portrait-study/eye-depth-v4/models/atrium/residents/you.blend",
+  "sha256": "19be33f1b35b55adc67f466df9524516dd3c64a365386b16e40fc3369dfeee56",
+  "space": "EyePivot local coordinates, before parent scale",
+  "eyes": [
+    {
+      "side": -1,
+      "vertices": 337,
+      "missingScleraSamples": 0,
+      "minimumClearance": 0.0006498079746961594,
+      "maximumClearance": 0.0006502261385321617,
+      "forwardFaces": 336,
+      "faces": 336,
+      "usedColourBands": 8
+    },
+    {
+      "side": 1,
+      "vertices": 337,
+      "missingScleraSamples": 0,
+      "minimumClearance": 0.0006498079746961594,
+      "maximumClearance": 0.0006502270698547363,
+      "forwardFaces": 336,
+      "faces": 336,
+      "usedColourBands": 8
+    }
+  ],
+  "scope": "Curved iris vertices lie in front of the actual polygonal sclera; front-facing normals and material bands. Visual/morph/runtime acceptance is separate.",
+  "passed": true
+}

@@ -1,0 +1,92 @@
+{
+  "space": "EyePivot local coordinates, not world millimetres",
+  "rows": [
+    {
+      "variant": "installed",
+      "source": "models/atrium/residents/you.blend",
+      "sha256": "26e4a1d03aa4167673d76d2bfc3de4c3cd68b970f809ce3e2ebff63b9450faaf",
+      "eyes": [
+        {
+          "side": -1,
+          "frontDepths": {
+            "EyeWhite_": -0.010199983604252338,
+            "Iris_": -0.014699965715408325,
+            "IrisCore_": -0.016799982637166977,
+            "Pupil_": -0.017999976873397827,
+            "EyeGlint_": -0.018747970461845398
+          },
+          "pupilProtrusion": 0.007799993269145489
+        },
+        {
+          "side": 1,
+          "frontDepths": {
+            "EyeWhite_": -0.010199983604252338,
+            "Iris_": -0.014699965715408325,
+            "IrisCore_": -0.016799982637166977,
+            "Pupil_": -0.017999976873397827,
+            "EyeGlint_": -0.018747970461845398
+          },
+          "pupilProtrusion": 0.007799993269145489
+        }
+      ]
+    },
+    {
+      "variant": "v1",
+      "source": "tmp/portrait-study/eye-depth-v1/models/atrium/residents/you.blend",
+      "sha256": "46b7d9a3c6f806d94ead26e91c55dfa14205a2e45d2939b04118b85d30341fde",
+      "eyes": [
+        {
+          "side": -1,
+          "frontDepths": {
+            "EyeWhite_": -0.010199983604252338,
+            "Iris_": -0.010899953544139862,
+            "IrisCore_": -0.011349990032613277,
+            "Pupil_": -0.011649969965219498,
+            "EyeGlint_": -0.012011954560875893
+          },
+          "pupilProtrusion": 0.0014499863609671593
+        },
+        {
+          "side": 1,
+          "frontDepths": {
+            "EyeWhite_": -0.010199983604252338,
+            "Iris_": -0.010899953544139862,
+            "IrisCore_": -0.011349990032613277,
+            "Pupil_": -0.011649969965219498,
+            "EyeGlint_": -0.012011954560875893
+          },
+          "pupilProtrusion": 0.0014499863609671593
+        }
+      ]
+    },
+    {
+      "variant": "v2",
+      "source": "tmp/portrait-study/eye-depth-v2/models/atrium/residents/you.blend",
+      "sha256": "c68c8a5808f9cc3ef7c6a546ffade71765246dc215fd6f30f4316021b272e2af",
+      "eyes": [
+        {
+          "side": -1,
+          "frontDepths": {
+            "EyeWhite_": -0.010199991054832935,
+            "Iris_": -0.010899960994720459,
+            "IrisCore_": -0.011349997483193874,
+            "Pupil_": -0.011649973690509796,
+            "EyeGlint_": -0.01201196201145649
+          },
+          "pupilProtrusion": 0.0014499826356768608
+        },
+        {
+          "side": 1,
+          "frontDepths": {
+            "EyeWhite_": -0.010199991054832935,
+            "Iris_": -0.010899960994720459,
+            "IrisCore_": -0.011349997483193874,
+            "Pupil_": -0.011649973690509796,
+            "EyeGlint_": -0.01201196201145649
+          },
+          "pupilProtrusion": 0.0014499826356768608
+        }
+      ]
+    }
+  ]
+}
