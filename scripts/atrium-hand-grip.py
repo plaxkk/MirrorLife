@@ -1,6 +1,7 @@
 """Editable grip target on the fused core; opt-in art candidate only."""
-import math
+import math,os
 import bpy
+from mathutils import Vector
 
 def author(core):
     assert not core.data.shape_keys, 'Do not replace existing body expressions'
@@ -38,3 +39,19 @@ def author(core):
     assert changed>100, 'Grip target missing right-hand vertices'
     core['atrium_grip_study']={'target':'GripRight','changedVertices':changed,'status':'candidate; requires multi-view contact review'}
     key.value=0
+    if os.environ.get('ATRIUM_TEA_GRIP_STUDY','0')=='1':
+        # The cup's vertical handle segment must span the finger bank, unlike
+        # the watering can's transverse handle. Rotate the palm, compensating
+        # the prop frame so the cup keeps its existing upright orientation.
+        original=bpy.data.objects['HandGripAnchor_1']
+        handle_axis=original.rotation_euler.to_quaternion()@Vector((0,0,1))
+        turn=Vector((1,0,0)).rotation_difference(handle_axis)
+        wrist=bpy.data.objects.new('TeaWristOffset_1',None)
+        bpy.context.collection.objects.link(wrist);wrist.parent=hand
+        wrist.rotation_mode='QUATERNION';wrist.rotation_quaternion=turn
+        anchor=bpy.data.objects.new('TeaGripAnchor_1',None)
+        bpy.context.collection.objects.link(anchor);anchor.parent=hand
+        anchor.location=(0,-.044,-.049)
+        anchor.rotation_mode='QUATERNION'
+        anchor.rotation_quaternion=turn.inverted()@original.rotation_euler.to_quaternion()
+        anchor['contract']='tea-side-grip-study-v1; compensate wrist roll'

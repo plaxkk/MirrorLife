@@ -1,0 +1,20 @@
+{
+  "sourceSha256": "36bfa05416412a4a9546c857d3942ec0b6cdb62a634082d15713a8a185a9da7a",
+  "coreShapeKeysEqual": true,
+  "keys": [
+    "Basis",
+    "GripRight"
+  ],
+  "rotationCompensationErrorRadians": 0.0,
+  "handleAxis": [
+    1.0,
+    2.9802322387695312e-08,
+    1.4901161193847656e-08
+  ],
+  "anchor": [
+    0.0,
+    -0.04399999976158142,
+    -0.04899999871850014
+  ],
+  "scope": "Exact source core shape-key coordinates and local rotation composition. Does not validate skin deformation, scaled-world orientation, contact or animation transitions."
+}

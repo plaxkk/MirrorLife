@@ -3,20 +3,22 @@ import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 const candidate=process.argv[2],out=process.argv[3];
+const anchorOverride=process.env.ATRIUM_TEA_GRIP_POSITION?JSON.parse(process.env.ATRIUM_TEA_GRIP_POSITION):null;
 if(!candidate||!out)throw new Error('candidate GLB and output directory required');
 await fs.mkdir(out,{recursive:true});
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
 try{
  const page=await browser.newPage();await page.setViewport({width:1000,height:800});
  await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4203')+'/');
- const report=await page.evaluate(async candidate=>{
+ const report=await page.evaluate(async ({candidate,anchorOverride})=>{
   const T=await import('/node_modules/three/build/three.module.js');
   const {loadAtriumGLB}=await import('/src/atrium-assets.js');
   const {alignAtriumProp}=await import('/src/atrium-actors.js');
   const actor=(await loadAtriumGLB('/'+candidate)).scene;
   const props=(await loadAtriumGLB('/assets/atrium/life-props.glb')).scene;
   const root=new T.Group();root.add(actor,props);root.updateMatrixWorld(true);
-  const hand=actor.getObjectByName('Hand_1'),anchor=actor.getObjectByName('HandGripAnchor_1');
+  const hand=actor.getObjectByName('Hand_1'),anchor=actor.getObjectByName('TeaGripAnchor_1')||actor.getObjectByName('HandGripAnchor_1');
+  if(anchorOverride)anchor.position.set(anchorOverride[0],anchorOverride[2],-anchorOverride[1]);
   const core=actor.getObjectByName('SkinnedArticulationCore');
   const cup=props.getObjectByName('TeaCup'),grip=cup.getObjectByName('TeaCupGrip');grip.updateMatrix();
   alignAtriumProp(cup,grip,anchor,props);root.updateMatrixWorld(true);
@@ -42,23 +44,23 @@ try{
    }
   });
   if(!handleTriangles.length)throw new Error('No decoded cup-handle triangles');
-  const distalDistances=[[],[],[],[]],closest=new T.Vector3();
+  const distalDistances=[[],[],[],[]],signedDistances=[[],[],[],[]],closest=new T.Vector3(),normal=new T.Vector3();
   for(const id of selected){
    const neutral=new T.Vector3();core.morphTargetInfluences[core.morphTargetDictionary.GripRight]=0;core.getVertexPosition(id,neutral);neutral.applyMatrix4(core.matrixWorld).applyMatrix4(inv);
    if(neutral.z>-.070||neutral.x<-.047||neutral.x>.048)continue;
    const digit=Math.max(0,Math.min(3,Math.round((neutral.x+.033)/.022)));
    const closed=new T.Vector3();core.morphTargetInfluences[core.morphTargetDictionary.GripRight]=1;core.getVertexPosition(id,closed);closed.applyMatrix4(core.matrixWorld).applyMatrix4(inv);
-   let distance=Infinity;for(const triangle of handleTriangles){triangle.closestPointToPoint(closed,closest);distance=Math.min(distance,closed.distanceTo(closest));}
-   distalDistances[digit].push(distance);
+   let distance=Infinity,signed=Infinity;for(const triangle of handleTriangles){triangle.closestPointToPoint(closed,closest);const d=closed.distanceTo(closest);if(d<distance){distance=d;triangle.getNormal(normal);signed=Math.sign(closed.clone().sub(closest).dot(normal))*d;}}
+   distalDistances[digit].push(distance);signedDistances[digit].push(signed);
   }
-  const distal=distalDistances.map((values,digit)=>({digit:digit+1,samples:values.length,minMetres:values.length?Math.min(...values):null,within3mm:values.filter(x=>x<.003).length}));
+  const distal=distalDistances.map((values,digit)=>({digit:digit+1,samples:values.length,minMetres:values.length?Math.min(...values):null,within3mm:values.filter(x=>x<.003).length,nearestNormalInsideOver1mm:signedDistances[digit].filter(x=>x<-.001).length,minNearestNormalSignedMetres:signedDistances[digit].length?Math.min(...signedDistances[digit]):null}));
   const renderer=new T.WebGLRenderer({antialias:true});renderer.setSize(1000,800);document.body.replaceChildren(renderer.domElement);document.body.style.margin='0';
   const camera=new T.PerspectiveCamera(32,1.25,.001,10);
   window.drawGrip=(position)=>{camera.position.set(...position);camera.lookAt(0,-.035,-.035);renderer.render(scene,camera);};
   window.drawGrip([.2,-.28,.15]);
   geometry.computeBoundingBox();
-  return {candidate,handBounds:[geometry.boundingBox.min.toArray(),geometry.boundingBox.max.toArray()],parts,distal,gripInHand:grip.getWorldPosition(new T.Vector3()).applyMatrix4(inv).toArray(),scope:'Decoded full-weight right-hand triangles at GripRight=1 and actual prop alignment in Blender hand-local coordinates. Distal vertices selected by neutral z<-70mm and x bins; unsigned nearest-triangle distance is not penetration/contact proof. Diagnostic opaque flat-normal hand/translucent vessel materials, not game rendering.'};
- },candidate);
+  return {candidate,anchorOverride,handBounds:[geometry.boundingBox.min.toArray(),geometry.boundingBox.max.toArray()],parts,distal,gripInHand:grip.getWorldPosition(new T.Vector3()).applyMatrix4(inv).toArray(),scope:'Decoded full-weight right-hand triangles at GripRight=1 and actual prop alignment in Blender hand-local coordinates. Distal vertices selected by neutral z<-70mm and x bins; unsigned nearest-triangle distance is not contact proof. Nearest-normal signs flag possible penetration but are not watertight containment or complete triangle collision tests. Diagnostic opaque flat-normal hand/translucent vessel materials, not game rendering.'};
+ },{candidate,anchorOverride});
  for(const [name,position]of [['oblique',[.2,-.28,.15]],['palm',[0,-.35,-.035]],['side',[.35,-.035,-.035]]]){await page.evaluate(p=>window.drawGrip(p),position);await page.screenshot({path:path.join(out,name+'.png')});}
  await fs.writeFile(path.join(out,'geometry.json'),JSON.stringify(report,null,2));console.log(JSON.stringify(report));
 }finally{await browser.close();}

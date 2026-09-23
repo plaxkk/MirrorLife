@@ -1,0 +1,16 @@
+[
+  {
+    "profile": "v2-contact",
+    "minCupUp": 0.9903714722276648,
+    "minTeaBlend": 0.9996881536626591,
+    "sampleCount": 3,
+    "scope": "Three stable capture instants only; not full transition trajectory."
+  },
+  {
+    "profile": "v2-mobile",
+    "minCupUp": 0.9950426477568292,
+    "minTeaBlend": 0.9997018756867833,
+    "sampleCount": 3,
+    "scope": "Three stable capture instants only; not full transition trajectory."
+  }
+]

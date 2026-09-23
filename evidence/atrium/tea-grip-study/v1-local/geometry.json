@@ -1,0 +1,94 @@
+{
+  "candidate": "tmp/portrait-study/tea-grip-v1/public/assets/atrium/residents/you.glb",
+  "handBounds": [
+    [
+      -0.07548432797193527,
+      -0.0652051717042923,
+      -0.0705491453409195
+    ],
+    [
+      0.055052801966667175,
+      0.03053266368806362,
+      0.06001579016447067
+    ]
+  ],
+  "parts": [
+    {
+      "name": "Cup_handle",
+      "bounds": [
+        [
+          -0.06559455394744873,
+          -0.09946642071008682,
+          -0.04172315075993538
+        ],
+        [
+          0.05864034965634346,
+          -0.012076576240360737,
+          0.006030192598700523
+        ]
+      ]
+    },
+    {
+      "name": "Cup_vessel",
+      "bounds": [
+        [
+          -0.08372031152248383,
+          -0.2102181613445282,
+          -0.05612850934267044
+        ],
+        [
+          0.07693788409233093,
+          -0.07121376693248749,
+          0.08284825831651688
+        ]
+      ]
+    },
+    {
+      "name": "Tea_surface",
+      "bounds": [
+        [
+          0.022247660905122757,
+          -0.1910945028066635,
+          -0.036622270941734314
+        ],
+        [
+          0.02760566957294941,
+          -0.09107507020235062,
+          0.06333887577056885
+        ]
+      ]
+    }
+  ],
+  "distal": [
+    {
+      "digit": 1,
+      "samples": 26,
+      "minMetres": 0.019422641038745428,
+      "within3mm": 0
+    },
+    {
+      "digit": 2,
+      "samples": 37,
+      "minMetres": 0.014874089203194309,
+      "within3mm": 0
+    },
+    {
+      "digit": 3,
+      "samples": 28,
+      "minMetres": 0.01861911684619031,
+      "within3mm": 0
+    },
+    {
+      "digit": 4,
+      "samples": 16,
+      "minMetres": 0.01604234397821963,
+      "within3mm": 0
+    }
+  ],
+  "gripInHand": [
+    -1.1102230246251565e-16,
+    -0.03400000929832458,
+    -0.026999961584806442
+  ],
+  "scope": "Decoded full-weight right-hand triangles at GripRight=1 and actual prop alignment in Blender hand-local coordinates. Distal vertices selected by neutral z<-70mm and x bins; unsigned nearest-triangle distance is not penetration/contact proof. Diagnostic opaque flat-normal hand/translucent vessel materials, not game rendering."
+}

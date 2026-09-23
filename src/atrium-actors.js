@@ -67,6 +67,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[],sitting,lastSeatHeight,stairBlend=0,stairPelvis=0;
   let stairFeet=[];
   const handGrip=visual.getObjectByName('HandGripAnchor_1');
+  const teaGrip=visual.getObjectByName('TeaGripAnchor_1');
+  const teaWrist=visual.getObjectByName('TeaWristOffset_1')?.quaternion.clone();
+  const teaGripRotation=teaGrip?.quaternion.clone(),teaGripPosition=teaGrip?.position.clone();
+  const teaRotation=new THREE.Quaternion();let teaBlend=0;
   const poseVectors={};let reviewFace=null;
   const blinkOffset=id==='you'?3*1.13:[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)*.037;
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
@@ -86,16 +90,19 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       propGrips=['WateringCan','TeaCup'].map(name=>{
         const prop=model.getObjectByName(name),grip=prop?.getObjectByName(`${name}Grip`);
         if(!grip)throw new Error(`${name} 缺少握持点`);
-        grip.updateMatrix();return {prop,grip};
+        grip.updateMatrix();return {prop,grip,handAnchor:name==='TeaCup'&&teaGrip?teaGrip:handGrip};
       });model.visible=false;
     },
     gripDiagnostics(){
-      return propGrips.filter(({prop})=>lifeProp.visible&&prop.visible).map(({prop,grip})=>({name:prop.name,
-        errorMetres:grip.getWorldPosition(new THREE.Vector3()).distanceTo(handGrip.getWorldPosition(new THREE.Vector3())),
-        scale:prop.getWorldScale(new THREE.Vector3()).toArray(),hand:handGrip.getWorldPosition(new THREE.Vector3()).toArray(),
+      return propGrips.filter(({prop})=>lifeProp.visible&&prop.visible).map(({prop,grip,handAnchor})=>({name:prop.name,
+        errorMetres:grip.getWorldPosition(new THREE.Vector3()).distanceTo(handAnchor.getWorldPosition(new THREE.Vector3())),
+        cupUp:prop.name==='TeaCup'?new THREE.Vector3(0,1,0).applyQuaternion(prop.getWorldQuaternion(new THREE.Quaternion())).y:null,
+        teaBlend,scale:prop.getWorldScale(new THREE.Vector3()).toArray(),hand:handAnchor.getWorldPosition(new THREE.Vector3()).toArray(),
         handle:grip.getWorldPosition(new THREE.Vector3()).toArray()}));
     },
     update(time,dt,{moving=0,talking=false,lookingAt=null,seated=false,floorAt=null,care=false,listening=false,seatHeight=.53}={}) {
+      const teaActive=care&&propGrips.some(({prop})=>prop.name==='TeaCup'&&prop.visible);
+      teaBlend=THREE.MathUtils.damp(teaBlend,teaActive?1:0,18,dt);
       walkPhase+=moving*dt/1.25;
       const state=moving>.08?'walk':talking||care?'gesture':listening||definition.activity==='think'?'listen':definition.activity==='talk'?'gesture':'idle';
       seatBlend=THREE.MathUtils.damp(seatBlend,seated?1:0,8,dt);
@@ -125,6 +132,11 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         const smooth=poseVectors[key]||(poseVectors[key]=new THREE.Vector3(x,y,z));
         smooth.x=THREE.MathUtils.damp(smooth.x,x,14,dt);smooth.y=THREE.MathUtils.damp(smooth.y,y,14,dt);smooth.z=THREE.MathUtils.damp(smooth.z,z,14,dt);
         q.setFromEuler(euler.set(smooth.x,smooth.y,smooth.z));entry.node.quaternion.copy(entry.rest).multiply(q);
+        if(key==='rightHand'&&teaWrist)entry.node.quaternion.multiply(teaRotation.identity().slerp(teaWrist,teaBlend));
+      }
+      if(teaGrip&&teaWrist){
+        teaGrip.quaternion.copy(handGrip.quaternion).slerp(teaGripRotation,teaBlend);
+        teaGrip.position.copy(handGrip.position).lerp(teaGripPosition,teaBlend);
       }
       // Hip height follows the actual seat surface; transitions use the same articulated rig.
       visual.position.y=sitting.left.hipOffset*seatBlend+(moving>.08?(pose.rootY||0)*.25:0);
@@ -185,7 +197,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       }
       if(lifeProp){
         lifeProp.visible=care;
-        if(care)for(const {prop,grip}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handGrip,lifeProp);
+        if(care)for(const {prop,grip,handAnchor}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handAnchor,lifeProp);
       }
       for(const mesh of gripMeshes){
         const index=mesh.morphTargetDictionary.GripRight;

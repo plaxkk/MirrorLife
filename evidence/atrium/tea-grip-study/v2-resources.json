@@ -1,0 +1,18 @@
+[
+  {
+    "file": "tmp/portrait-study/tea-grip-v2/public/assets/atrium/residents/you.glb",
+    "bytes": 2477020,
+    "sha256": "c5cb7fdd068645548fe78ba750dc2b8420f74792252038b4ca92961e8a347627",
+    "triangles": 26404,
+    "materials": 6,
+    "primitives": 7
+  },
+  {
+    "file": "tmp/portrait-study/tea-grip-v2/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1092872,
+    "sha256": "8d9dc655b7a56b59b4d90237a3233e7c3e0627ec7b19356cfd8a0b5a9a945238",
+    "triangles": 24341,
+    "materials": 6,
+    "primitives": 7
+  }
+]
