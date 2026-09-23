@@ -7,7 +7,7 @@ import {atriumWalkKeys} from './lib/atrium-navigation.mjs';
 
 const base=process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4194';
 const mode=process.argv[2]||'smoke';
-const output=path.resolve('evidence/atrium');await fs.mkdir(output,{recursive:true});
+const output=path.resolve(process.env.ATRIUM_VERIFY_OUTPUT||'evidence/atrium');await fs.mkdir(output,{recursive:true});
 const buildEvidence=JSON.parse(await fs.readFile(path.join(output,'assets.json'),'utf8'));
 // Native-window resize/focus changes can shrink the CDP recording surface.
 // Record the same real WebGL scene without an OS window; performance/gallery

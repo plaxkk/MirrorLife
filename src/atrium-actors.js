@@ -56,7 +56,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
     if(node.isSkinnedMesh){
       // A conservative bound contains authored walking, sitting and hand gestures.
       // This avoids keeping every off-screen resident in the main render pass.
-      node.geometry.computeBoundingSphere();node.boundingSphere=node.geometry.boundingSphere.clone();node.boundingSphere.radius+=.65;node.frustumCulled=true;
+      // glTF skin vertices can be stored in bind space, offset from the mesh's
+      // local origin. Bounds must include the inverse bind transform; copying
+      // raw geometry bounds displaced the cervical head sphere above its face.
+      node.computeBoundingSphere();node.boundingSphere.radius+=.65;node.frustumCulled=true;
     }
   }});
   const position=definition.position||[-4.3,0,6.3];group.position.set(...position);group.rotation.y=definition.yaw||0;
