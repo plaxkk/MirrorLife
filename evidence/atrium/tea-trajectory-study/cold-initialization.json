@@ -1,0 +1,636 @@
+{
+  "samples": [
+    {
+      "frame": 1,
+      "time": 0.016666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.2591817793182821,
+        "generic": 0.19200658458769143,
+        "tea": 0.06717519473059069,
+        "teaBlend": 0.2591817793182821
+      },
+      "cupUp": 0.9972394871430763,
+      "vertices": 847,
+      "nearSurfaceVertices": 332,
+      "insideOver1mm": 35,
+      "minNearSignedMetres": -0.008179066937608706
+    },
+    {
+      "frame": 6,
+      "time": 0.1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.8347011117784134,
+        "generic": 0.137975165774294,
+        "tea": 0.6967259460041194,
+        "teaBlend": 0.8347011117784134
+      },
+      "cupUp": 0.9977145913209691,
+      "vertices": 847,
+      "nearSurfaceVertices": 335,
+      "insideOver1mm": 19,
+      "minNearSignedMetres": -0.006024456588626131
+    },
+    {
+      "frame": 12,
+      "time": 0.2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9726762775527075,
+        "generic": 0.026577136638915852,
+        "tea": 0.9460991409137917,
+        "teaBlend": 0.9726762775527075
+      },
+      "cupUp": 0.9985791999028324,
+      "vertices": 847,
+      "nearSurfaceVertices": 303,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.0003823705768445985
+    },
+    {
+      "frame": 18,
+      "time": 0.3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9954834190573874,
+        "generic": 0.004496181439201475,
+        "tea": 0.9909872376181859,
+        "teaBlend": 0.9954834190573874
+      },
+      "cupUp": 0.9992804755528164,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005794384936662849
+    },
+    {
+      "frame": 24,
+      "time": 0.4,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9992534141916233,
+        "generic": 0.0007460284180074512,
+        "tea": 0.9985073857736159,
+        "teaBlend": 0.9992534141916233
+      },
+      "cupUp": 0.9996911855916873,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0006414887612934247
+    },
+    {
+      "frame": 30,
+      "time": 0.5,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9998765901959132,
+        "generic": 0.00012339457410701565,
+        "tea": 0.9997531956218062,
+        "teaBlend": 0.9998765901959132
+      },
+      "cupUp": 0.9998253357104481,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005645486760168639
+    },
+    {
+      "frame": 36,
+      "time": 0.6,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999796004965888,
+        "generic": 0.000020399087271410956,
+        "tea": 0.9999592014093175,
+        "teaBlend": 0.9999796004965888
+      },
+      "cupUp": 0.9997566615058816,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005075340834756531
+    },
+    {
+      "frame": 42,
+      "time": 0.7,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999996627984766,
+        "generic": 0.000003372003863551001,
+        "tea": 0.9999932559809024,
+        "teaBlend": 0.999996627984766
+      },
+      "cupUp": 0.9995856859545521,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004663393559280511
+    },
+    {
+      "frame": 48,
+      "time": 0.8,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999994426096307,
+        "generic": 5.573900586205541e-7,
+        "tea": 0.999998885219572,
+        "teaBlend": 0.9999994426096307
+      },
+      "cupUp": 0.9994156173849735,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00043997633623542163
+    },
+    {
+      "frame": 54,
+      "time": 0.9,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999078639916,
+        "generic": 9.213599988927444e-8,
+        "tea": 0.9999998157279917,
+        "teaBlend": 0.9999999078639916
+      },
+      "cupUp": 0.9993292799785977,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004279270488936793
+    },
+    {
+      "frame": 60,
+      "time": 1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999847700203,
+        "generic": 1.522997948985689e-8,
+        "tea": 0.9999999695400408,
+        "teaBlend": 0.9999999847700203
+      },
+      "cupUp": 0.9993385091909115,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00042993384395944315
+    },
+    {
+      "frame": 66,
+      "time": 1.1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999974825013,
+        "generic": 2.51749864764885e-9,
+        "tea": 0.9999999949650027,
+        "teaBlend": 0.9999999974825013
+      },
+      "cupUp": 0.9994282399728259,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004460413915781973
+    },
+    {
+      "frame": 72,
+      "time": 1.2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999995838603,
+        "generic": 4.1613967809885946e-10,
+        "tea": 0.9999999991677206,
+        "teaBlend": 0.9999999995838603
+      },
+      "cupUp": 0.9995724349809809,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004765570731593733
+    },
+    {
+      "frame": 78,
+      "time": 1.3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999312126,
+        "generic": 6.878742019959867e-11,
+        "tea": 0.9999999998624252,
+        "teaBlend": 0.9999999999312126
+      },
+      "cupUp": 0.9997241555000114,
+      "vertices": 847,
+      "nearSurfaceVertices": 292,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000521876075280465
+    },
+    {
+      "frame": 84,
+      "time": 1.4,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999886295,
+        "generic": 1.1370460128871716e-11,
+        "tea": 0.9999999999772591,
+        "teaBlend": 0.9999999999886295
+      },
+      "cupUp": 0.9998220779039264,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005821897464721542
+    },
+    {
+      "frame": 90,
+      "time": 1.5,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999981205,
+        "generic": 1.879496558384395e-12,
+        "tea": 0.999999999996241,
+        "teaBlend": 0.9999999999981205
+      },
+      "cupUp": 0.9997995578349558,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0006232890586367706
+    },
+    {
+      "frame": 96,
+      "time": 1.6,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999996894,
+        "generic": 3.106404022900223e-13,
+        "tea": 0.9999999999993787,
+        "teaBlend": 0.9999999999996894
+      },
+      "cupUp": 0.9995951030763728,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005711723732776311
+    },
+    {
+      "frame": 102,
+      "time": 1.7,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999486,
+        "generic": 5.1403326040142104e-14,
+        "tea": 0.9999999999998972,
+        "teaBlend": 0.9999999999999486
+      },
+      "cupUp": 0.9991627395306538,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00051510964877547
+    },
+    {
+      "frame": 108,
+      "time": 1.8,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999916,
+        "generic": 8.437694987151119e-15,
+        "tea": 0.9999999999999831,
+        "teaBlend": 0.9999999999999916
+      },
+      "cupUp": 0.9984805800006752,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004593333806165158
+    },
+    {
+      "frame": 114,
+      "time": 1.9,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999987,
+        "generic": 1.332267629550186e-15,
+        "tea": 0.9999999999999973,
+        "teaBlend": 0.9999999999999987
+      },
+      "cupUp": 0.997556076748347,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0003608314176813421
+    },
+    {
+      "frame": 120,
+      "time": 2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999998,
+        "generic": 2.2204460492503126e-16,
+        "tea": 0.9999999999999996,
+        "teaBlend": 0.9999999999999998
+      },
+      "cupUp": 0.9964269977155347,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0002563789390755943
+    },
+    {
+      "frame": 126,
+      "time": 2.1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9951579919415597,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00016290020404126267
+    },
+    {
+      "frame": 132,
+      "time": 2.2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9938249044155756,
+      "vertices": 847,
+      "nearSurfaceVertices": 290,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00008300781675175577
+    },
+    {
+      "frame": 138,
+      "time": 2.3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9925128291854662,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000018205536155469684
+    },
+    {
+      "frame": 144,
+      "time": 2.4,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9913269013390346,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00003099921782846878
+    },
+    {
+      "frame": 150,
+      "time": 2.5,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9903672391936629,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00006476859145566189
+    },
+    {
+      "frame": 156,
+      "time": 2.6,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9897182365802495,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00008356044932318084
+    },
+    {
+      "frame": 162,
+      "time": 2.7,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9894400063617883,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00008778649574713486
+    },
+    {
+      "frame": 168,
+      "time": 2.8,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9895623587488196,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00007758540423787973
+    },
+    {
+      "frame": 174,
+      "time": 2.9,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9900815914761778,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.000052762552230142386
+    },
+    {
+      "frame": 180,
+      "time": 3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999
+      },
+      "cupUp": 0.9909602177499903,
+      "vertices": 847,
+      "nearSurfaceVertices": 291,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.000012908919251581806
+    },
+    {
+      "frame": 186,
+      "time": 3.1,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.16529888822158656,
+        "generic": 0.137975165774294,
+        "tea": 0.027323722447292562,
+        "teaBlend": 0.16529888822158653
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 192,
+      "time": 3.2,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.027323722447292573,
+        "generic": 0.026577136638915894,
+        "tea": 0.0007465858083766796,
+        "teaBlend": 0.02732372244729256
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 198,
+      "time": 3.3,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00451658094261267,
+        "generic": 0.004496181439201498,
+        "tea": 0.00002039950341117195,
+        "teaBlend": 0.0045165809426126685
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 204,
+      "time": 3.4,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0007465858083766796,
+        "generic": 0.0007460284180074102,
+        "tea": 5.573903692694601e-7,
+        "teaBlend": 0.0007465858083766794
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 210,
+      "time": 3.5,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00012340980408667964,
+        "generic": 0.00012339457410693493,
+        "tea": 1.5229979744712646e-8,
+        "teaBlend": 0.0001234098040866796
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 216,
+      "time": 3.6,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.000020399503411171953,
+        "generic": 0.00002039908727143253,
+        "tea": 4.1613973942241597e-10,
+        "teaBlend": 0.000020399503411171946
+      },
+      "cupUp": null
+    }
+  ],
+  "scope": "60Hz actual actor updates, 37 sampled instants at first frame then 100ms spacing. Fully weighted right-hand vertices versus handle nearest-triangle normal within 15mm; not watertight containment, triangle intersection, self-collision or continuous-time proof.",
+  "worst": {
+    "frame": 1,
+    "time": 0.016666666666666666,
+    "care": true,
+    "poses": {
+      "name": "SkinnedArticulationCore",
+      "grip": 0.2591817793182821,
+      "generic": 0.19200658458769143,
+      "tea": 0.06717519473059069,
+      "teaBlend": 0.2591817793182821
+    },
+    "cupUp": 0.9972394871430763,
+    "vertices": 847,
+    "nearSurfaceVertices": 332,
+    "insideOver1mm": 35,
+    "minNearSignedMetres": -0.008179066937608706
+  },
+  "candidate": {
+    "file": "tmp/portrait-study/tea-fit-v3/public/assets/atrium/residents/you.glb",
+    "sha256": "6784c3bd4ffc20b7f2bbd629ecc7b37946e2cbfe3e2ceb14e3463365b0022bb3",
+    "requests": 1
+  },
+  "runtimeModules": {
+    "src/atrium-actors.js": "8137cce7e5d521750f3c004a10cd4966f3f675788a0b96db6481456b0fb1e8b1",
+    "src/atrium-main.js": "6c8de19a224d0396bc16ec596e8a8419a049f1dc4d9c7957ec8d21b2060baf6a"
+  }
+}

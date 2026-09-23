@@ -1,0 +1,73 @@
+{
+  "restoredRuntimeAndSamplesEqual": true,
+  "results": {
+    "baseline": {
+      "flaggedInstants": 2,
+      "minimumSignedMetres": -0.013404711006924844,
+      "minimumCupUp": 0.5391128005435656,
+      "firstTwoInstants": [
+        {
+          "time": 0.016666666666666666,
+          "flaggedVertices": 64,
+          "minimumSignedMetres": -0.013404711006924844
+        },
+        {
+          "time": 0.1,
+          "flaggedVertices": 27,
+          "minimumSignedMetres": -0.006071733253427945
+        }
+      ]
+    },
+    "approach-v1": {
+      "flaggedInstants": 2,
+      "minimumSignedMetres": -0.00566394758947634,
+      "minimumCupUp": 0.5391128005435656,
+      "firstTwoInstants": [
+        {
+          "time": 0.016666666666666666,
+          "flaggedVertices": 9,
+          "minimumSignedMetres": -0.005161573367874334
+        },
+        {
+          "time": 0.1,
+          "flaggedVertices": 21,
+          "minimumSignedMetres": -0.00566394758947634
+        }
+      ]
+    },
+    "approach-v2": {
+      "flaggedInstants": 2,
+      "minimumSignedMetres": -0.01003916528336035,
+      "minimumCupUp": 0.5391128005435656,
+      "firstTwoInstants": [
+        {
+          "time": 0.016666666666666666,
+          "flaggedVertices": 0,
+          "minimumSignedMetres": null
+        },
+        {
+          "time": 0.1,
+          "flaggedVertices": 66,
+          "minimumSignedMetres": -0.01003916528336035
+        }
+      ]
+    },
+    "restored-baseline": {
+      "flaggedInstants": 2,
+      "minimumSignedMetres": -0.013404711006924844,
+      "minimumCupUp": 0.5391128005435656,
+      "firstTwoInstants": [
+        {
+          "time": 0.016666666666666666,
+          "flaggedVertices": 64,
+          "minimumSignedMetres": -0.013404711006924844
+        },
+        {
+          "time": 0.1,
+          "flaggedVertices": 27,
+          "minimumSignedMetres": -0.006071733253427945
+        }
+      ]
+    }
+  }
+}
