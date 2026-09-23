@@ -1,0 +1,8 @@
+{
+  "sourceSha256": "58f4021ddc12fd334e356e02cfaaf0970620c7ace6b7e67c7beafbe82229c981",
+  "changedVertices": 324,
+  "outsideHand": [],
+  "maxDelta": 0.0523910598973957,
+  "neutralValue": 0,
+  "scope": "Morph displacement limited to fully weighted right hand; does not establish collision-free flexion or realistic grip."
+}

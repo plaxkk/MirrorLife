@@ -6,16 +6,18 @@ import path from 'node:path';
 import {createHash} from 'node:crypto';
 const out=path.resolve(process.env.ATRIUM_CONTACT_OUTPUT||'evidence/atrium/character-contact');await fs.mkdir(out,{recursive:true});
 const meta=JSON.parse(await fs.readFile(process.env.ATRIUM_ASSET_REPORT||'evidence/atrium/assets.json','utf8'));
+const runtimeModules=Object.fromEntries(await Promise.all(['src/atrium-actors.js','src/atrium-main.js'].map(async file=>[file,createHash('sha256').update(await fs.readFile(file)).digest('hex')])));
 const candidate=process.env.ATRIUM_REVIEW_CANDIDATE;
+const mobile=process.env.ATRIUM_REVIEW_PROFILE==='mobile';
 const candidateBody=candidate?await fs.readFile(candidate):null;let candidateRequests=0;
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:false,args:['--no-sandbox','--disable-backgrounding-occluded-windows','--disable-renderer-backgrounding']});
 const pause=ms=>new Promise(r=>setTimeout(r,ms)),samples=[],errors=[];
 try{
-  const page=await browser.newPage();await page.setViewport({width:1600,height:1000,deviceScaleFactor:1});
+  const page=await browser.newPage();await page.setViewport(mobile?{width:430,height:932,deviceScaleFactor:1,isMobile:true,hasTouch:true}:{width:1600,height:1000,deviceScaleFactor:1});
   if(candidateBody){
     await page.setCacheEnabled(false);await page.setRequestInterception(true);
     page.on('request',r=>{
-      if(new URL(r.url()).pathname==='/assets/atrium/residents/you.glb'){
+      if(new URL(r.url()).pathname===`/assets/atrium/residents/you${mobile?'-mobile':''}.glb`){
         candidateRequests++;return r.respond({status:200,contentType:'model/gltf-binary',body:candidateBody});
       }
       return r.continue();
@@ -35,8 +37,21 @@ try{
     await pause(450);
     const activeGrips=await page.evaluate(()=>window.__atrium.getGripDiagnostics());
     assert.ok(activeGrips.find(a=>a.id==='you').grips.length,`${id}/${name}: capture during the action, not after it ends`);
+    if(process.env.ATRIUM_REQUIRE_GRIP_MORPH==='1'){
+      const poses=activeGrips.find(a=>a.id==='you').handPoses;
+      assert.ok(poses.length&&poses.every(p=>p.grip>.95),'Grip morph did not close');
+    }
     samples.push({action:id,view:name,actors:activeGrips});
     await page.screenshot({path:path.join(out,`${id}-${name}.png`)});await page.keyboard.press('Escape');await pause(150);
+  }
+  if(process.env.ATRIUM_REQUIRE_GRIP_MORPH==='1'){
+    await page.waitForFunction(()=>!window.__atrium.getInteractionState().care);
+    await pause(700);
+    const released=await page.evaluate(()=>window.__atrium.getGripDiagnostics());
+    const poses=released.find(a=>a.id==='you').handPoses;
+    assert.ok(poses.length&&poses.every(p=>p.grip<.01),'Grip morph did not release');
+    samples.push({action:'released',actors:released});
+    await page.screenshot({path:path.join(out,'tea-released.png')});
   }
   for(let i=0;i<80;i++){await pause(180);samples.push({action:'resident-activity',actors:await page.evaluate(()=>window.__atrium.getGripDiagnostics())});}
   const grips=samples.flatMap(s=>s.actors.flatMap(a=>a.grips.map(g=>({...g,id:a.id}))));
@@ -44,6 +59,6 @@ try{
   for(const g of grips){assert.ok(g.errorMetres<.00001,JSON.stringify(g));assert.ok(g.scale.every(s=>Math.abs(s-1)<.00001),JSON.stringify(g));}
   assert.equal(errors.length,0);
   if(candidateBody)assert.ok(candidateRequests>0,'Candidate was not loaded');
-  const report={capturedAt:new Date().toISOString(),runtimeFingerprint:candidateBody?null:meta.runtimeFingerprint,installedBaselineFingerprint:meta.runtimeFingerprint,candidate:candidateBody?{file:candidate,sha256:createHash('sha256').update(candidateBody).digest('hex'),requests:candidateRequests}:null,method:'Actual runtime E-key care actions, positioned review fixtures and multi-view cameras. NOT traversal or finger-surface contact proof. Grip-frame distance only; source topology and visual checks are separate.',maxGripFrameErrorMetres:Math.max(...grips.map(g=>g.errorMetres)),sampleCount:grips.length,samples,errors};
+  const report={runtimeModules,profile:mobile?'mobile-emulation':'desktop',capturedAt:new Date().toISOString(),runtimeFingerprint:candidateBody?null:meta.runtimeFingerprint,installedBaselineFingerprint:meta.runtimeFingerprint,candidate:candidateBody?{file:candidate,sha256:createHash('sha256').update(candidateBody).digest('hex'),requests:candidateRequests}:null,method:'Actual runtime E-key care actions, positioned review fixtures and multi-view cameras. NOT traversal or finger-surface contact proof. Grip-frame distance only; source topology and visual checks are separate.',maxGripFrameErrorMetres:Math.max(...grips.map(g=>g.errorMetres)),sampleCount:grips.length,samples,errors};
   await fs.writeFile(path.join(out,'contact.json'),JSON.stringify(report,null,2));console.log('CONTACT_PASS',report.sampleCount,report.maxGripFrameErrorMetres);
 }finally{await browser.close();}

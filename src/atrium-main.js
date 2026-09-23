@@ -257,7 +257,7 @@ async function boot(){
   const edge=new THREE.MeshStandardMaterial({color:'#bf955a',roughness:.8}),front=new THREE.MeshStandardMaterial({map:print,roughness:.92});
   const marker=new THREE.Mesh(new THREE.BoxGeometry(.44,.248,.026),[edge,edge,edge,edge,front,edge]);marker.name='Quiet-corner notice';marker.position.set(-8.2,4.415,1.29);scene.add(marker);
   window.__atrium={
-    getGripDiagnostics:()=>[player,...actors].map(a=>({id:a.id,grips:a.gripDiagnostics()})),
+    getGripDiagnostics:()=>[player,...actors].map(a=>({id:a.id,grips:a.gripDiagnostics(),handPoses:a.handPoseDiagnostics()})),
     getFaceDiagnostics:()=>player.faceDiagnostics(),
     getFootDiagnostics:()=>[player,...actors].map(a=>({id:a.id,seatBlend:a.seatBlend,feet:a.footDiagnostics()})),
     getState:()=>JSON.parse(JSON.stringify(state)),

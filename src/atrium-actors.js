@@ -48,6 +48,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   const eyeScales=eyes.map(x=>x.scale.clone());
   const open=visual.getObjectByName('MouthOpenPivot'),closed=visual.getObjectByName('MouthClosedPivot');
   const facialMeshes=[];visual.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.Blink!==undefined)facialMeshes.push(node);});
+  const gripMeshes=[];visual.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.GripRight!==undefined)gripMeshes.push(node);});
   if(open)open.visible=false;
   group.traverse(node=>{if(node.isMesh){
     // Tiny eye/mouth surfaces lie inside the head's shadow silhouette.
@@ -70,6 +71,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   const blinkOffset=id==='you'?3*1.13:[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)*.037;
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
+    handPoseDiagnostics(){return gripMeshes.map(mesh=>({name:mesh.name,grip:mesh.morphTargetInfluences[mesh.morphTargetDictionary.GripRight]}));},
     setReviewFace(value){reviewFace=value;},
     faceDiagnostics(){return facialMeshes.map(mesh=>({name:mesh.name,eyeScales:eyes.map(eye=>eye.scale.toArray()),blink:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink],talk:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Talk]}));},
     footDiagnostics(){return ['left','right'].map(side=>{
@@ -184,6 +186,10 @@ export async function loadAtriumActor(id,definition,mobile=false) {
       if(lifeProp){
         lifeProp.visible=care;
         if(care)for(const {prop,grip}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handGrip,lifeProp);
+      }
+      for(const mesh of gripMeshes){
+        const index=mesh.morphTargetDictionary.GripRight;
+        mesh.morphTargetInfluences[index]=THREE.MathUtils.damp(mesh.morphTargetInfluences[index],care?1:0,18,dt);
       }
     },
   };
