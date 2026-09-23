@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {PNG} from 'pngjs';
+import {loadDracoDecoder,decodeDracoAttribute} from '../scripts/lib/draco-attribute.mjs';
 import {createCivicArticulationBinding,syncCivicArticulationBinding} from '../src/reference-fidelity-runtime-contract.js';
 import {freshState,normalizeState,applyDecision,canDecide,RESIDENTS,residentSpeech} from '../src/atrium-content.js';
 import {createAtriumPhysics} from '../src/atrium-physics.js';
@@ -222,10 +223,12 @@ test('structural stair flight admits the high underside and blocks low head clea
 });
 
 test('both resident LODs preserve used skin, hair, eye and fabric material responses',async()=>{
+  const draco=await loadDracoDecoder();
   for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile']){
     const file=new URL(`../public/assets/atrium/residents/${id}${suffix}.glb`,import.meta.url);
     const b=await fs.readFile(file),gltf=JSON.parse(b.subarray(20,20+b.readUInt32LE(12)).toString());
     const used=new Set(gltf.meshes.flatMap(m=>m.primitives.map(p=>p.material)));
+    let anatomicalSkin=false;
     const response=Object.fromEntries([...used].map(i=>gltf.materials[i]).filter(m=>m.extras?.atrium_surface_family).map(m=>{
       const pbr=m.pbrMetallicRoughness;let roughness=pbr.roughnessFactor??1;
       if(pbr.metallicRoughnessTexture){
@@ -233,11 +236,30 @@ test('both resident LODs preserve used skin, hair, eye and fabric material respo
         const binary=b.subarray(b.readUInt32LE(12)+28),png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
         const values=[];for(let i=1;i<png.data.length;i+=4)if(png.data[i]>0)values.push(png.data[i]);
         assert.ok(values.length>png.width*png.height*.1,'reject empty roughness atlas');
-        values.sort((a,b)=>a-b);roughness*=values[Math.floor(values.length/2)]/255;
+        if(m.extras.atrium_vertex_skin_response){
+          // A lookup image contains every roughness, not the distribution used
+          // by this face. Check the encoded UV interval instead of its median.
+          assert.equal(png.width,256);assert.equal(png.height,1);
+          for(let i=0;i<256;i++)assert.equal(png.data[i*4+1],i);
+          const materialIndex=gltf.materials.indexOf(m);
+          const primitives=gltf.meshes.flatMap(mesh=>mesh.primitives).filter(p=>p.material===materialIndex);
+          const channel=`TEXCOORD_${pbr.metallicRoughnessTexture.texCoord||0}`;
+          const coordinates=primitives.flatMap(p=>{
+            const attribute=decodeDracoAttribute(draco,gltf,binary,p,channel);assert.equal(attribute.components,2);
+            return Array.from(attribute.values).filter((_,i)=>i%2===0);
+          });
+          const low=(Math.min(...coordinates)*256-.5)/255;
+          const high=(Math.max(...coordinates)*256-.5)/255;
+          assert.ok(low>.5&&low<.56&&high>.67&&high<.7&&high-low>.1,'retain distinct lip/T-zone and cheek response');
+          roughness*=(low+high)/2;anatomicalSkin=true;
+        }else{
+          values.sort((a,b)=>a-b);roughness*=values[Math.floor(values.length/2)]/255;
+        }
       }
       return [m.extras.atrium_surface_family,roughness];
     }));
-    assert.ok(response.eye<response.hair&&response.hair<response.skin&&response.skin<response.fabric,`${id}${suffix}: ${JSON.stringify(response)}`);
+    assert.ok(response.eye<response.hair&&response.eye<response.skin&&response.skin<response.fabric,`${id}${suffix}: ${JSON.stringify(response)}`);
+    if(!anatomicalSkin)assert.ok(response.hair<response.skin,`${id}${suffix}: preserve uniform skin response`);
     assert.ok(gltf.skins.length>0,`${id}${suffix}: retain animated body`);
   }
 });

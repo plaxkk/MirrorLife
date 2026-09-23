@@ -1,0 +1,294 @@
+[
+  {
+    "variant": "installed",
+    "file": "public/assets/atrium/residents/you.glb",
+    "bytes": 2484932,
+    "triangles": 25576,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 0.006000000052154064,
+          "clearcoatRoughnessFactor": 0.18000000715255737
+        },
+        "KHR_materials_specular": {
+          "specularFactor": 0.47999998927116394
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin"
+      },
+      "name": "you anatomical skin",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 0.7400000095367432
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "COLOR_0",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "installed",
+    "file": "public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 960260,
+    "triangles": 24017,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_clearcoat": {
+          "clearcoatFactor": 0.006000000052154064,
+          "clearcoatRoughnessFactor": 0.18000000715255737
+        },
+        "KHR_materials_specular": {
+          "specularFactor": 0.47999998927116394
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin"
+      },
+      "name": "you anatomical skin",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "roughnessFactor": 0.7400000095367432
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "COLOR_0",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "paint",
+    "file": "tmp/portrait-study/skin-response-current/public/assets/atrium/residents/you.glb",
+    "bytes": 2614272,
+    "triangles": 25576,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularFactor": 0.699999988079071
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin"
+      },
+      "name": "Resident authored skin baked PBR",
+      "normalTexture": {
+        "index": 3
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 4
+        },
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 5
+        }
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "paint",
+    "file": "tmp/portrait-study/skin-response-current/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1025672,
+    "triangles": 24017,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularFactor": 0.699999988079071
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin"
+      },
+      "name": "Resident authored skin baked PBR",
+      "normalTexture": {
+        "index": 3
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 4
+        },
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 5
+        }
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "source28",
+    "file": "tmp/portrait-study/skin-response-source28/public/assets/atrium/residents/you.glb",
+    "bytes": 2778812,
+    "triangles": 25576,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularFactor": 0.699999988079071
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin"
+      },
+      "name": "Resident authored skin baked PBR",
+      "normalTexture": {
+        "index": 3
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 4
+        },
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 5
+        }
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "source28",
+    "file": "tmp/portrait-study/skin-response-source28/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 1062320,
+    "triangles": 24017,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularFactor": 0.699999988079071
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin"
+      },
+      "name": "Resident authored skin baked PBR",
+      "normalTexture": {
+        "index": 3
+      },
+      "pbrMetallicRoughness": {
+        "baseColorTexture": {
+          "index": 4
+        },
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 5
+        }
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "vertex",
+    "file": "tmp/portrait-study/skin-response-vertex/public/assets/atrium/residents/you.glb",
+    "bytes": 2495116,
+    "triangles": 25576,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularFactor": 0.699999988079071
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin",
+        "atrium_portrait_authoring": "Anatomical lip/cheek/ear tint and independent forehead/nose/lip roughness, no baked lighting",
+        "atrium_surface_authoring": "Native lip/cheek/lid colour; restrained skin microrelief, independent of cloth",
+        "atrium_vertex_skin_response": "Anatomical vertex colour; 256x1 linear roughness lookup; no baked lighting"
+      },
+      "name": "Resident authored skin",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 3,
+          "texCoord": 1
+        }
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "TEXCOORD_1",
+      "COLOR_0",
+      "COLOR_1",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  },
+  {
+    "variant": "vertex",
+    "file": "tmp/portrait-study/skin-response-vertex/public/assets/atrium/residents/you-mobile.glb",
+    "bytes": 970444,
+    "triangles": 24017,
+    "material": {
+      "doubleSided": true,
+      "extensions": {
+        "KHR_materials_specular": {
+          "specularFactor": 0.699999988079071
+        }
+      },
+      "extras": {
+        "atrium_surface_family": "skin",
+        "atrium_portrait_authoring": "Anatomical lip/cheek/ear tint and independent forehead/nose/lip roughness, no baked lighting",
+        "atrium_surface_authoring": "Native lip/cheek/lid colour; restrained skin microrelief, independent of cloth",
+        "atrium_vertex_skin_response": "Anatomical vertex colour; 256x1 linear roughness lookup; no baked lighting"
+      },
+      "name": "Resident authored skin",
+      "pbrMetallicRoughness": {
+        "metallicFactor": 0,
+        "metallicRoughnessTexture": {
+          "index": 3,
+          "texCoord": 1
+        }
+      }
+    },
+    "attributes": [
+      "POSITION",
+      "NORMAL",
+      "TEXCOORD_0",
+      "TEXCOORD_1",
+      "COLOR_0",
+      "COLOR_1",
+      "JOINTS_0",
+      "WEIGHTS_0"
+    ]
+  }
+]

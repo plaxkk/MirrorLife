@@ -70,6 +70,9 @@ for clip in motion['clips']:
         for pb in owner.pose.bones:pb.matrix_basis.identity()
 bpy.context.scene.frame_set(0)
 bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/'animations/you-motion.blend'),compress=True)
+head=bpy.data.objects.get('Head')
+if head and head.data.materials[0].get('atrium_vertex_skin_response') and head.data.color_attributes.get('FaceResponse'):
+    head.data.color_attributes.remove(head.data.color_attributes['FaceResponse'])
 for ob in animated:
     if ob and ob.animation_data:
         for track in ob.animation_data.nla_tracks:track.mute=False

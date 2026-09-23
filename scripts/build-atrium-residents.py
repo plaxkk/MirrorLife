@@ -32,6 +32,11 @@ if os.environ.get('ATRIUM_NECK_RIG_STUDY') or os.environ.get('ATRIUM_OPEN_NECK_S
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
+VERTEX_SKIN_STUDY=os.environ.get('ATRIUM_VERTEX_SKIN_STUDY')=='1'
+assert not VERTEX_SKIN_STUDY or (FACE_PAINT_STUDY and os.environ.get('ATRIUM_SOURCE_SKIN_STUDY')!='1' and os.environ.get('ATRIUM_SKIN_AO_STUDY')!='1'), 'Vertex skin study requires isolated paint without source texture or baked AO'
+SKIN_RESPONSE_ENABLED=os.environ.get('ATRIUM_SKIN_RESPONSE','1')=='1' and not SURFACE_PROTOTYPE and not FACE_PAINT_STUDY
+VERTEX_SKIN_ENABLED=VERTEX_SKIN_STUDY or SKIN_RESPONSE_ENABLED
+PORTRAIT_SKIN_ENABLED=FACE_PAINT_STUDY or SKIN_RESPONSE_ENABLED
 SKIN_AO_STUDY=os.environ.get('ATRIUM_SKIN_AO_STUDY')=='1'
 NECK_RIG_ENABLED=os.environ.get('ATRIUM_NECK_RIG','1')=='1'
 CREW_NECK_STUDY=os.environ.get('ATRIUM_CREW_NECK_STUDY')=='1'
@@ -43,6 +48,7 @@ SHAPE_PROTOTYPE=int(os.environ.get('ATRIUM_SHAPE_PROTOTYPE','0'))
 assert SHAPE_PROTOTYPE in (0,1,2,3,4,5), 'Unknown isolated shape prototype'
 if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE or FACE_PAINT_STUDY:
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Unreviewed surface prototypes must remain under tmp/'
+if SURFACE_PROTOTYPE or SHAPE_PROTOTYPE or FACE_PAINT_STUDY or SKIN_RESPONSE_ENABLED:
     surface_spec=importlib.util.spec_from_file_location('atrium_surfaces',ROOT/'scripts/atrium-surface-authoring.py')
     surface_tools=importlib.util.module_from_spec(surface_spec);surface_spec.loader.exec_module(surface_tools)
 OUT=BUILD_ROOT/'public/assets/atrium/residents';OUT.mkdir(parents=True,exist_ok=True)
@@ -533,9 +539,10 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         textile.cloth_shader(textile.bind_surface_material(core),mixed_surface=True)
         for mat in list(bpy.data.materials):
             if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
-    if SURFACE_PROTOTYPE or (FACE_PAINT_STUDY and name=='you'):
+    if SURFACE_PROTOTYPE or (PORTRAIT_SKIN_ENABLED and name=='you'):
         source_texture=ROOT/'models/atrium/source/skin-young-asian-male/young_lightskinned_male_diffuse3.png' if SOURCE_SKIN_STUDY and name=='you' else None
-        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=FACE_PAINT_STUDY and name=='you',occlusion=SKIN_AO_STUDY and name=='you',source_texture=source_texture)
+        surface_tools.skin_shader(bpy.data.objects['Head'],portrait=PORTRAIT_SKIN_ENABLED and name=='you',occlusion=SKIN_AO_STUDY and name=='you',source_texture=source_texture,source_blend=float(os.environ.get('ATRIUM_SOURCE_SKIN_BLEND','.60')))
+        if VERTEX_SKIN_ENABLED and name=='you':surface_tools.portable_skin_response(bpy.data.objects['Head'])
     if SURFACE_PROTOTYPE:
         for mat in list(bpy.data.materials):
             if 'hair' in mat.name.lower():surface_tools.hair_shader(mat,bpy.data.objects['HeadPivot'])
@@ -545,6 +552,12 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         neck_rig.author_neck_rig()
     bpy.ops.wm.save_as_mainfile(filepath=str(SOURCE/(name+'.blend')))
     baked_images=[]
+    if VERTEX_SKIN_ENABLED and name=='you':
+        head=bpy.data.objects['Head']
+        # Keep the editable response attribute in the saved .blend, but omit
+        # its unused second vertex colour stream from both runtime profiles.
+        head.data.color_attributes.remove(head.data.color_attributes['FaceResponse'])
+        assert head.data.uv_layers.get('FaceRoughness') and head.data.color_attributes.get('Color')
     # Preserve the authored desktop map; apply the existing half-size mobile
     # texture policy to cutout hair too, rather than shipping 512px in both LODs.
     for obj in bpy.context.scene.objects:
@@ -553,7 +566,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
                 baked_images.extend(node.image for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image)
     if name=='you' or SURFACE_PROTOTYPE:
         baked_images.extend(textile.bake_object(core,1024 if name=='you' else 512).values())
-    if SURFACE_PROTOTYPE or (FACE_PAINT_STUDY and name=='you'):
+    if (SURFACE_PROTOTYPE or (PORTRAIT_SKIN_ENABLED and name=='you')) and not (VERTEX_SKIN_ENABLED and name=='you'):
         baked_images.extend(textile.bake_object(bpy.data.objects['Head'],512,family='skin').values())
     # Bake material base colours into corner vertex colours and merge by rigid controller.
     # Eye and mouth parents remain independently animated; skinning batches stay intact.

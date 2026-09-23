@@ -1,0 +1,30 @@
+using deprecated parameters for the initialization function; pass a single object instead
+✔ stair legs reach forward and rearward floor targets without reversing the knee (2.41359ms)
+✔ foot probes hit tread tops, reject walls and ignore resident capsules (117.942896ms)
+✔ GPU timing distinguishes unavailable hardware and discards disjoint results (0.939084ms)
+✔ seated hips clear cushion and the lower legs reach the floor across chair heights (0.344674ms)
+✔ residents leave the chair before turning, cancel safely, and wait for a blocked exit (5.983045ms)
+✔ floor contact atlas follows transformed floor levels and excludes vertical furniture (2.378719ms)
+✔ visual architecture LODs do not duplicate the separately loaded collision arrays (14.529589ms)
+✔ both resident LODs retain audited continuous hands and long-sleeve surfaces (21.533923ms)
+✔ each life prop contains an authored grip frame (1.131663ms)
+✔ portable motion clips include feet and all corrective bindings (6.411578ms)
+✔ prop grip follows a moving, scaled hand without scaling the metre-sized vessel (20.025081ms)
+✔ decision requires discoveries and residents, changes memories once (0.555233ms)
+✔ corrupt and unknown state cannot unlock decisions or destroy the main save (1.35886ms)
+✔ discoveries alter local dialogue (0.146496ms)
+✔ wall camera probes contract while residents remain physical but do not obstruct the orbit ray (401.236854ms)
+✔ both physical stair flights are traversable and land on the upper floor (602.57349ms)
+✔ structural stair flight admits the high underside and blocks low head clearance (315.910138ms)
+✔ both resident LODs preserve used skin, hair, eye and fabric material responses (671.789966ms)
+✔ resident skin batches retain authored roughness without extra primitives or translucent colours (867.522751ms)
+✔ all resident face LODs retain non-empty eyelid and mouth morphs and portable weight animation (27.914096ms)
+✔ resident heads retain their shape while looking around under body proportions (29.466606ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 21
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3474.976367

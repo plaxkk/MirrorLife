@@ -1,0 +1,15 @@
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+Traceback (most recent call last):
+  File "/Users/kk/repos/MirrorLife/scripts/build-atrium-residents.py", line 541, in <module>
+    if VERTEX_SKIN_STUDY and name=='you':surface_tools.portable_skin_response(bpy.data.objects['Head'])
+                                         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/Users/kk/repos/MirrorLife/scripts/atrium-surface-authoring.py", line 27, in portable_skin_response
+    rough=response.data[loop.index].color[0]
+          ~~~~~~~~~~~~~^^^^^^^^^^^^
+IndexError: bpy_prop_collection[index]: index 0 out of range, size 0
+
+Error: script failed, file: 'scripts/build-atrium-residents.py', exiting.
+SOCKET_BOUNDARY -1 20 [(-0.13427172601222992, -0.022211410105228424), (-0.20750465989112854, -0.16029399633407593), (-0.010809017345309258, 0.07164492458105087)]
+SOCKET_BOUNDARY 1 19 [(0.02547711879014969, 0.13108330965042114), (-0.20643092691898346, -0.16351714730262756), (-0.00918652955442667, 0.07192236930131912)]
+
+Blender quit

@@ -1,0 +1,43 @@
+using deprecated parameters for the initialization function; pass a single object instead
+✔ stair legs reach forward and rearward floor targets without reversing the knee (3.773596ms)
+✔ foot probes hit tread tops, reject walls and ignore resident capsules (110.026065ms)
+✔ GPU timing distinguishes unavailable hardware and discards disjoint results (1.58716ms)
+✔ seated hips clear cushion and the lower legs reach the floor across chair heights (0.965559ms)
+✔ residents leave the chair before turning, cancel safely, and wait for a blocked exit (8.791063ms)
+✔ floor contact atlas follows transformed floor levels and excludes vertical furniture (4.068841ms)
+✔ visual architecture LODs do not duplicate the separately loaded collision arrays (18.832773ms)
+✔ both resident LODs retain audited continuous hands and long-sleeve surfaces (32.227348ms)
+✔ each life prop contains an authored grip frame (2.320815ms)
+✔ portable motion clips include feet and all corrective bindings (11.08342ms)
+✔ prop grip follows a moving, scaled hand without scaling the metre-sized vessel (9.548456ms)
+✔ decision requires discoveries and residents, changes memories once (0.569116ms)
+✔ corrupt and unknown state cannot unlock decisions or destroy the main save (2.376354ms)
+✔ discoveries alter local dialogue (0.17715ms)
+✔ wall camera probes contract while residents remain physical but do not obstruct the orbit ray (307.690417ms)
+✔ both physical stair flights are traversable and land on the upper floor (711.207213ms)
+✔ structural stair flight admits the high underside and blocks low head clearance (337.068915ms)
+✖ both resident LODs preserve used skin, hair, eye and fabric material responses (368.815397ms)
+✔ resident skin batches retain authored roughness without extra primitives or translucent colours (894.269894ms)
+✔ all resident face LODs retain non-empty eyelid and mouth morphs and portable weight animation (36.254404ms)
+✔ resident heads retain their shape while looking around under body proportions (62.248757ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 20
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3331.479276
+
+✖ failing tests:
+
+test at test/atrium-pilot.test.mjs:224:1
+✖ both resident LODs preserve used skin, hair, eye and fabric material responses (368.815397ms)
+  TypeError: Cannot read properties of undefined (reading '0')
+      at file:///Users/kk/repos/MirrorLife/test/atrium-pilot.test.mjs:246:53
+      at Array.map (<anonymous>)
+      at file:///Users/kk/repos/MirrorLife/test/atrium-pilot.test.mjs:246:41
+      at Array.map (<anonymous>)
+      at TestContext.<anonymous> (file:///Users/kk/repos/MirrorLife/test/atrium-pilot.test.mjs:230:118)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7)

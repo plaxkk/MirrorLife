@@ -1,0 +1,46 @@
+using deprecated parameters for the initialization function; pass a single object instead
+✔ stair legs reach forward and rearward floor targets without reversing the knee (2.684015ms)
+✔ foot probes hit tread tops, reject walls and ignore resident capsules (104.639079ms)
+✔ GPU timing distinguishes unavailable hardware and discards disjoint results (0.812782ms)
+✔ seated hips clear cushion and the lower legs reach the floor across chair heights (0.299173ms)
+✔ residents leave the chair before turning, cancel safely, and wait for a blocked exit (4.835917ms)
+✔ floor contact atlas follows transformed floor levels and excludes vertical furniture (4.015764ms)
+✔ visual architecture LODs do not duplicate the separately loaded collision arrays (19.122131ms)
+✔ both resident LODs retain audited continuous hands and long-sleeve surfaces (24.299628ms)
+✔ each life prop contains an authored grip frame (1.90553ms)
+✔ portable motion clips include feet and all corrective bindings (7.456758ms)
+✔ prop grip follows a moving, scaled hand without scaling the metre-sized vessel (8.62087ms)
+✔ decision requires discoveries and residents, changes memories once (0.690815ms)
+✔ corrupt and unknown state cannot unlock decisions or destroy the main save (1.48799ms)
+✔ discoveries alter local dialogue (0.148296ms)
+✔ wall camera probes contract while residents remain physical but do not obstruct the orbit ray (286.317046ms)
+✔ both physical stair flights are traversable and land on the upper floor (487.072546ms)
+✔ structural stair flight admits the high underside and blocks low head clearance (242.52671ms)
+✖ both resident LODs preserve used skin, hair, eye and fabric material responses (308.990794ms)
+✔ resident skin batches retain authored roughness without extra primitives or translucent colours (638.272569ms)
+✔ all resident face LODs retain non-empty eyelid and mouth morphs and portable weight animation (17.86944ms)
+✔ resident heads retain their shape while looking around under body proportions (28.997123ms)
+ℹ tests 21
+ℹ suites 0
+ℹ pass 20
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 2517.298829
+
+✖ failing tests:
+
+test at test/atrium-pilot.test.mjs:224:1
+✖ both resident LODs preserve used skin, hair, eye and fabric material responses (308.990794ms)
+  AssertionError [ERR_ASSERTION]: you: {"textured-cloth-and-skin":0.8784313725490196,"skin":0.5019607843137255,"eye":0.4300000071525574,"hair":0.6299999952316284,"fabric":0.9098039215686274}
+      at TestContext.<anonymous> (file:///Users/kk/repos/MirrorLife/test/atrium-pilot.test.mjs:240:12)
+      at async Test.run (node:internal/test_runner/test:1313:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:897:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: false,
+    expected: true,
+    operator: '==',
+    diff: 'simple'
+  }

@@ -1,0 +1,44 @@
+[
+  {
+    "variant": "installed",
+    "sourceSha256": "89d9da9dbdb1878541ef7bb42e33b14904261684f170f7b1b58e2a0fa8529337",
+    "headShapesAndTopologyEqual": true,
+    "vertices": 1877,
+    "loops": 10497,
+    "uvLayers": [
+      "UVMap"
+    ],
+    "colourLayers": [
+      "Color"
+    ]
+  },
+  {
+    "variant": "paint",
+    "sourceSha256": "ff5046793e7bbc2a9a2d4cd9cf690459214fc42206d97dd50e368238e44c33b1",
+    "headShapesAndTopologyEqual": true,
+    "vertices": 1877,
+    "loops": 10497,
+    "uvLayers": [
+      "UVMap"
+    ],
+    "colourLayers": [
+      "Color",
+      "FaceResponse"
+    ]
+  },
+  {
+    "variant": "source28",
+    "sourceSha256": "40e2377937a4ef14eef20659ce1bd5a2d386ad2ec1545bc6879dc6d140ba9008",
+    "headShapesAndTopologyEqual": true,
+    "vertices": 1877,
+    "loops": 10497,
+    "uvLayers": [
+      "UVMap",
+      "SourceUV"
+    ],
+    "colourLayers": [
+      "Color",
+      "FaceResponse"
+    ]
+  }
+]

@@ -1,0 +1,287 @@
+{
+  "capturedAt": "2026-09-23T04:23:05.876Z",
+  "runtimeFingerprint": "779ac57f3ddb4f89876eb5409c1d1b96f66af7cc57f31d0bcb29decf6c0eb0d3",
+  "browserMode": "headed",
+  "stats": {
+    "ready": true,
+    "active": true,
+    "profile": "mobile",
+    "device": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/153.0.0.0 Safari/537.36",
+      "gpu": "ANGLE (AMD, ANGLE Metal Renderer: AMD Radeon Pro 5300M, Unspecified Version)",
+      "viewport": [
+        390,
+        844
+      ],
+      "dpr": 3,
+      "renderPixelRatio": 1.25
+    },
+    "loadingMs": 2920.5,
+    "navigationToReadyMs": 3423.5,
+    "enterToActiveMs": 1.5,
+    "sessionMs": 37994.39999997616,
+    "frames": 2037,
+    "frameMs": {
+      "p50": 16.69999999999891,
+      "p95": 18.100000000000364,
+      "p99": 18.600000000002183
+    },
+    "cpuMs": {
+      "script": {
+        "p50": 1.9000000059604645,
+        "p95": 3.199999988079071
+      },
+      "render": {
+        "p50": 2.5,
+        "p95": 4.199999988079071
+      }
+    },
+    "gpuMs": {
+      "supported": true,
+      "samples": 203,
+      "discarded": 0,
+      "p50": 5.46148,
+      "p95": 7.91168,
+      "method": "Every tenth rendered frame, asynchronous WebGL2 elapsed-time query; GPU render only, excludes presentation/input. Unsupported and disjoint samples are not zero milliseconds."
+    },
+    "render": {
+      "frame": 2250,
+      "calls": 70,
+      "triangles": 298450,
+      "points": 0,
+      "lines": 0
+    },
+    "renderPeaks": {
+      "calls": 83,
+      "triangles": 329924,
+      "geometries": 77
+    },
+    "memory": {
+      "geometries": 77,
+      "textures": 40,
+      "jsHeapBytes": 51750499
+    },
+    "resources": [
+      {
+        "url": "/assets/atrium-DQPhkQgr.js",
+        "transferBytes": 23420,
+        "decodedBytes": 54849,
+        "durationMs": 70.90000000596046
+      },
+      {
+        "url": "/assets/modulepreload-polyfill-Dezn_h7o.js",
+        "transferBytes": 998,
+        "decodedBytes": 698,
+        "durationMs": 34.400000005960464
+      },
+      {
+        "url": "/assets/rolldown-runtime-DK3Fl9T5.js",
+        "transferBytes": 458,
+        "decodedBytes": 158,
+        "durationMs": 39.599999994039536
+      },
+      {
+        "url": "/assets/three.module-CZC7t-hJ.js",
+        "transferBytes": 183989,
+        "decodedBytes": 725424,
+        "durationMs": 216.59999999403954
+      },
+      {
+        "url": "/assets/BufferGeometryUtils-CnheMMBR.js",
+        "transferBytes": 4612,
+        "decodedBytes": 13131,
+        "durationMs": 98.30000001192093
+      },
+      {
+        "url": "/assets/SkeletonUtils-BCv72L_j.js",
+        "transferBytes": 1893,
+        "decodedBytes": 4079,
+        "durationMs": 103
+      },
+      {
+        "url": "/assets/GLTFLoader-D4aawYtZ.js",
+        "transferBytes": 13006,
+        "decodedBytes": 43047,
+        "durationMs": 105
+      },
+      {
+        "url": "/assets/RoomEnvironment-_HcG5_fd.js",
+        "transferBytes": 1232,
+        "decodedBytes": 2129,
+        "durationMs": 120.39999997615814
+      },
+      {
+        "url": "/assets/rapier-CMw4H3UB.js",
+        "transferBytes": 830513,
+        "decodedBytes": 2236835,
+        "durationMs": 378.59999999403954
+      },
+      {
+        "url": "/assets/reference-fidelity-runtime-contract-jYf20sii.js",
+        "transferBytes": 5659,
+        "decodedBytes": 18787,
+        "durationMs": 127.40000000596046
+      },
+      {
+        "url": "/assets/atrium-Co8-Av0f.css",
+        "transferBytes": 2770,
+        "decodedBytes": 7675,
+        "durationMs": 93
+      },
+      {
+        "url": "/storage.js",
+        "transferBytes": 3355,
+        "decodedBytes": 8902,
+        "durationMs": 130.09999999403954
+      },
+      {
+        "url": "/assets/atrium/atrium-mobile.glb",
+        "transferBytes": 1960272,
+        "decodedBytes": 1959972,
+        "durationMs": 132.59999999403954
+      },
+      {
+        "url": "/assets/atrium/collision.json",
+        "transferBytes": 714220,
+        "decodedBytes": 3275751,
+        "durationMs": 494.90000000596046
+      },
+      {
+        "url": "/assets/atrium/draco/draco_wasm_wrapper.js",
+        "transferBytes": 12048,
+        "decodedBytes": 58456,
+        "durationMs": 16.099999994039536
+      },
+      {
+        "url": "/assets/atrium/draco/draco_decoder.wasm",
+        "transferBytes": 192720,
+        "decodedBytes": 192420,
+        "durationMs": 16
+      },
+      {
+        "url": "/assets/atrium/floor-contact.png",
+        "transferBytes": 112346,
+        "decodedBytes": 112046,
+        "durationMs": 7.5
+      },
+      {
+        "url": "/assets/atrium/residents/you-mobile.glb",
+        "transferBytes": 964160,
+        "decodedBytes": 963860,
+        "durationMs": 34.5
+      },
+      {
+        "url": "/assets/atrium/life-props.glb",
+        "transferBytes": 25504,
+        "decodedBytes": 25204,
+        "durationMs": 20.099999994039536
+      },
+      {
+        "url": "/assets/atrium/residents/lin-mobile.glb",
+        "transferBytes": 237200,
+        "decodedBytes": 236900,
+        "durationMs": 20.400000005960464
+      },
+      {
+        "url": "/assets/atrium/residents/chen-mobile.glb",
+        "transferBytes": 232860,
+        "decodedBytes": 232560,
+        "durationMs": 18.30000001192093
+      },
+      {
+        "url": "/assets/atrium/residents/xu-mobile.glb",
+        "transferBytes": 245292,
+        "decodedBytes": 244992,
+        "durationMs": 15.099999994039536
+      },
+      {
+        "url": "/assets/atrium/residents/zhou-mobile.glb",
+        "transferBytes": 243984,
+        "decodedBytes": 243684,
+        "durationMs": 16.700000017881393
+      },
+      {
+        "url": "/assets/atrium/residents/he-mobile.glb",
+        "transferBytes": 235176,
+        "decodedBytes": 234876,
+        "durationMs": 20.69999998807907
+      },
+      {
+        "url": "/assets/atrium/residents/tang-mobile.glb",
+        "transferBytes": 238424,
+        "decodedBytes": 238124,
+        "durationMs": 19.899999976158142
+      }
+    ],
+    "actors": 7,
+    "bindings": [
+      {
+        "id": "lin",
+        "count": 20
+      },
+      {
+        "id": "chen",
+        "count": 20
+      },
+      {
+        "id": "xu",
+        "count": 20
+      },
+      {
+        "id": "zhou",
+        "count": 20
+      },
+      {
+        "id": "he",
+        "count": 20
+      },
+      {
+        "id": "tang",
+        "count": 20
+      }
+    ],
+    "position": {
+      "x": -4.301156044006348,
+      "y": 0.020099971294403107,
+      "z": 4.384294509887695
+    },
+    "camera": [
+      -3.4,
+      2.65,
+      6.8
+    ],
+    "cameraGeometry": {
+      "triangles": 102944,
+      "buildMs": 140.09999999403954
+    },
+    "distanceWalked": 1.9129734792526862,
+    "visitedPositions": [
+      {
+        "x": -4.301156044006348,
+        "y": 0.020099971294403107,
+        "z": 4.384294509887695,
+        "t": 8.000270000000011
+      },
+      {
+        "x": -4.301156044006348,
+        "y": 0.020099971294403107,
+        "z": 4.384294509887695,
+        "t": 16.002070000000042
+      },
+      {
+        "x": -4.301156044006348,
+        "y": 0.020099971294403107,
+        "z": 4.384294509887695,
+        "t": 24.018769999999897
+      },
+      {
+        "x": -4.301156044006348,
+        "y": 0.020099971294403107,
+        "z": 4.384294509887695,
+        "t": 32.01896999999979
+      }
+    ],
+    "errors": []
+  },
+  "problems": []
+}

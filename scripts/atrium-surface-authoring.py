@@ -18,7 +18,35 @@ def colour_material(obj, family, roughness):
     return material
 
 
-def skin_shader(obj, portrait=False, occlusion=False, source_texture=None):
+def portable_skin_response(obj):
+    """Keep smooth authored colour on vertices; carry roughness in one tiny map."""
+    material=obj.data.materials[0];nodes=material.node_tree.nodes;links=material.node_tree.links
+    bs=nodes.get('Principled BSDF')
+    uv=obj.data.uv_layers.new(name='FaceRoughness')
+    response=obj.data.color_attributes['FaceResponse']
+    for loop in obj.data.loops:
+        rough=response.data[loop.index].color[0]
+        uv.data[loop.index].uv=((rough*255+.5)/256,.5)
+    ramp=bpy.data.images.new('Portrait roughness lookup',width=256,height=1,alpha=False)
+    ramp.colorspace_settings.name='Non-Color'
+    ramp.pixels=[v for i in range(256) for v in (1,i/255,0,1)];ramp.pack()
+    texture=nodes.new('ShaderNodeTexImage');texture.image=ramp
+    coordinate=nodes.new('ShaderNodeUVMap');coordinate.uv_map='FaceRoughness'
+    split=nodes.new('ShaderNodeSeparateColor')
+    links.new(coordinate.outputs['UV'],texture.inputs['Vector']);links.new(texture.outputs['Color'],split.inputs['Color'])
+    links.new(split.outputs['Green'],bs.inputs['Roughness'])
+    # The previous pore relief was not perceptible at gameplay scale. Preserve
+    # the smooth style and avoid three large baked maps for this colour change.
+    for link in list(bs.inputs['Normal'].links):links.remove(link)
+    obj.data.uv_layers.active_index=obj.data.uv_layers.find('UVMap')
+    obj.data.color_attributes.active_color=obj.data.color_attributes['Color']
+    material['atrium_vertex_skin_response']='Anatomical vertex colour; 256x1 linear roughness lookup; no baked lighting'
+    material['atrium_surface_authoring']='Native lip/cheek/ear colour; smooth skin without pore relief'
+    return material
+
+
+def skin_shader(obj, portrait=False, occlusion=False, source_texture=None, source_blend=.60):
+    assert 0<=source_blend<=1, 'Skin source blend must be in [0, 1]'
     material=colour_material(obj,'skin',.74)
     nodes=material.node_tree.nodes;links=material.node_tree.links;bs=nodes.get('Principled BSDF')
     coordinate=nodes.new('ShaderNodeTexCoord');coordinate.object=obj
@@ -67,9 +95,9 @@ def skin_shader(obj, portrait=False, occlusion=False, source_texture=None):
         authored=bs.inputs['Base Color'].links[0].from_socket
         tone=nodes.new('ShaderNodeHueSaturation');tone.inputs['Saturation'].default_value=.85;tone.inputs['Value'].default_value=1.35
         links.new(texture.outputs['Color'],tone.inputs['Color'])
-        blend=nodes.new('ShaderNodeMixRGB');blend.inputs[0].default_value=.60
+        blend=nodes.new('ShaderNodeMixRGB');blend.inputs[0].default_value=source_blend
         links.new(authored,blend.inputs[1]);links.new(tone.outputs['Color'],blend.inputs[2]);links.new(blend.outputs[0],bs.inputs['Base Color'])
-        material['atrium_source_skin']='CC0 source UV skin, 60 percent blend; saturation .85 and value 1.35 before mixing'
+        material['atrium_source_skin']=f'CC0 source UV skin, {source_blend*100:g} percent blend; saturation .85 and value 1.35 before mixing'
     return material
 
 

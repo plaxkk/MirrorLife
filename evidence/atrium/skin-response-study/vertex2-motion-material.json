@@ -1,0 +1,25 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "file": "tmp/portrait-study/skin-response-vertex2/public/assets/atrium/animations/you-motion.glb",
+      "sha256": "b070abfa3746a14426c1ebd7f1ddd7d3a9c57fb3a4b4c6a1b146afd0358d46e5",
+      "bytes": 1283412,
+      "lookupBytes": 187,
+      "lookupSize": [
+        256,
+        1
+      ],
+      "maxGreenError": 0,
+      "attributes": [
+        "POSITION",
+        "NORMAL",
+        "TEXCOORD_0",
+        "TEXCOORD_1",
+        "COLOR_0",
+        "JOINTS_0",
+        "WEIGHTS_0"
+      ]
+    }
+  ]
+}
