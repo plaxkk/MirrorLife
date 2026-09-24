@@ -37,9 +37,18 @@ def author(core):
             q=p.lerp(q,weight)
         # Bring the thumb pad inward; independent from the four curled digits.
         if p.x<-.042:
-            weight=min(1,max(0,(-p.x-.042)/.025))
-            weight=weight*weight*(3-2*weight)
-            q.x+=.022*weight;q.y-=.012*weight
+            if os.environ.get('ATRIUM_THUMB_FLOW_STUDY','0')=='1':
+                # The one-shot offset has dx'/dx as low as -0.32, reversing
+                # the web. Re-evaluate the same velocity field in small steps:
+                # each x map has derivative >= 1-1.32/32 > 0.
+                for _ in range(32):
+                    weight=min(1,max(0,(-q.x-.042)/.025))
+                    weight=weight*weight*(3-2*weight)
+                    q.x+=.022*weight/32;q.y-=.012*weight/32
+            else:
+                weight=min(1,max(0,(-p.x-.042)/.025))
+                weight=weight*weight*(3-2*weight)
+                q.x+=.022*weight;q.y-=.012*weight
         key.data[v.index].co=inverse@q
         changed+=(q-p).length>1e-7
     assert changed>100, 'Grip target missing right-hand vertices'

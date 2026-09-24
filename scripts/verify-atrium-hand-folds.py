@@ -28,8 +28,8 @@ for name in ['Basis','GripRight','GripTeaOpen','GripTeaQuarter','GripTeaHalf','G
  for e,adj in edges.items():
   if len(adj)!=2:continue
   i,j=adj;angle=math.degrees(n[i].angle(n[j],0));original=math.degrees(bn[i].angle(bn[j],0))
-  if angle>90 and angle-original>30:fold.append(dict(edge=e,angle=angle,basisAngle=original,midpoint=list((p[e[0]]+p[e[1]])*.5)))
- out[name]=dict(triangles=len(tris),foldCount=len(fold),folds=sorted(fold,key=lambda x:-x['angle'])[:12],minAreaRatio=min(x/y for x,y in zip(a,ba) if y>1e-12))
+  if angle>90 and angle-original>30:fold.append(dict(edge=e,angle=angle,basisAngle=original,midpoint=list((p[e[0]]+p[e[1]])*.5),thumbRegion=(bp[e[0]].x+bp[e[1]].x)*.5<-.042))
+ out[name]=dict(triangles=len(tris),foldCount=len(fold),thumbRegionFoldCount=sum(f['thumbRegion'] for f in fold),folds=sorted(fold,key=lambda x:-x['angle'])[:12],minAreaRatio=min(x/y for x,y in zip(a,ba) if y>1e-12))
 out['sourceSha256']=hashlib.sha256(Path(os.environ['ATRIUM_GRIP_SOURCE']).read_bytes()).hexdigest()
 out['baselineScopeVerified']=bool(baseline)
 out['scope']='Source local dihedral screening, not intersection or anatomy proof. Fold means >90 degrees and >30 degrees increase over Basis.'
