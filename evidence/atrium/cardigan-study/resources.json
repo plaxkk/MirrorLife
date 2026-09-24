@@ -1,0 +1,44 @@
+[
+  {
+    "variant": "baseline",
+    "file": "public/assets/atrium/residents/lin.glb",
+    "bytes": 271312,
+    "triangles": 22555,
+    "sha256": "b60cc3a50e6244c9027de23e7ddaba30035ff05632a7575f670f9497c1b50ad4"
+  },
+  {
+    "variant": "baseline",
+    "file": "public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 236900,
+    "triangles": 19207,
+    "sha256": "5d5769a79b00eb96cbd86188b9e85c83246502633257f8e4f48a217f9d7281e8"
+  },
+  {
+    "variant": "cardigan-v1",
+    "file": "tmp/portrait-study/cardigan-v1/public/assets/atrium/residents/lin.glb",
+    "bytes": 287748,
+    "triangles": 23953,
+    "sha256": "5da00419b69e7337e6491abf0fdd62ef05d733c3cbbea2b24e6ed3c32899372c"
+  },
+  {
+    "variant": "cardigan-v1",
+    "file": "tmp/portrait-study/cardigan-v1/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 257236,
+    "triangles": 21245,
+    "sha256": "dbef1d9516a4e9b9f7156aee0ce58bf191030c0bd879310edab539cf48f19c3c"
+  },
+  {
+    "variant": "cardigan-v2",
+    "file": "tmp/portrait-study/cardigan-v2/public/assets/atrium/residents/lin.glb",
+    "bytes": 284832,
+    "triangles": 23317,
+    "sha256": "861cf7a99e94f009d7cba1aac9f03621ac4192219bb6081d506276c165897c10"
+  },
+  {
+    "variant": "cardigan-v2",
+    "file": "tmp/portrait-study/cardigan-v2/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 254036,
+    "triangles": 20709,
+    "sha256": "674ab03fedeef60d5a5b693f859ebab9d851c5cc0303d3ce7d453db87a5bcdd0"
+  }
+]

@@ -26,6 +26,10 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+assert os.environ.get('ATRIUM_CARDIGAN_STUDY','0') in ('0','1','2'), 'Unknown cardigan study'
+if os.environ.get('ATRIUM_CARDIGAN_STUDY') in ('1','2'):
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Cardigan study output must remain isolated'
+    assert os.environ.get('ATRIUM_SLEEVE_CAP_STUDY')=='2', 'Connected cardigan requires reviewed sleeve cap and weight candidate'
 assert os.environ.get('ATRIUM_SLEEVE_CAP_STUDY','0') in ('0','1','2'), 'Unknown sleeve cap study'
 if os.environ.get('ATRIUM_SLEEVE_CAP_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Sleeve cap study output must remain isolated'
@@ -306,12 +310,16 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
             decimate=obj.modifiers.new('Digit silhouette LOD','DECIMATE');decimate.ratio=.8
     # These parts sit on the continuous body/skin mesh. No rigid breastplates,
     # dangling diagonal rods, oversized buckles or shell-like decorative lapels.
-    if who!='you':civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
+    if who!='you' and not (who=='lin' and os.environ.get('ATRIUM_CARDIGAN_STUDY')=='2'):civic.curve_tube('Soft neckline',[(x,cloth_y(x,z)-.002,z) for x,z in [(-.075,1.324),(0,1.318),(.075,1.324)]],.004,mats['top'],visual)
     if who=='you':
         wardrobe.hood_and_details(civic,mats,visual,cloth_y,cloth_back_y)
     if who=='tang':
         civic.ellipsoid('Folded fabric hood',(0,.08,1.265),(.15,.08,.05),mats['top'],visual,segments=32,rings=16)
-    if who in ('lin','zhou'):
+    if who=='lin' and os.environ.get('ATRIUM_CARDIGAN_STUDY') in ('1','2'):
+        spec=importlib.util.spec_from_file_location('atrium_cardigan',ROOT/'scripts/atrium-cardigan.py')
+        cardigan=importlib.util.module_from_spec(spec);spec.loader.exec_module(cardigan)
+        cardigan.author(garment,mats,visual,civic)
+    elif who in ('lin','zhou'):
         # One continuous curved garment around the body, open at the front.
         # Separate rectangular chest panels read as plates even with rounded edges.
         profile=[(.79,.174,.14),(.86,.2,.157),(1.04,.244,.18),(1.2,.281,.185),(1.29,.23,.163),(1.33,.135,.112)]
@@ -364,23 +372,24 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         civic.curve_tube('Work jacket seam',[(0,cloth_y(0,z)-.002,z) for z in [.83,.96,1.1,1.22]],.002,mats['outer'],visual)
     # Fit a sewn lower band to the actual cloth cross-section. The old constant
     # Y tubes floated in front of the hoodie and exposed the remeshed hem edge.
-    points=[];faces=[];segments=48
-    for z,scale in [(.805,.965),(.815,1.005),(.846,1.012),(.865,1.005)]:
-        for i in range(segments):
-            angle=i*math.tau/segments;direction=Vector((math.cos(angle),math.sin(angle),0))
-            hit=cloth_surface.ray_cast(Vector((0,0,max(.845,z))),direction)[0]
-            assert hit is not None and math.hypot(hit.x,hit.y)<.27,'Waist section missed torso'
-            points.append((hit.x*scale,hit.y*scale,z))
-    for row in range(3):
-        for i in range(segments):
-            a=row*segments+i;b=row*segments+(i+1)%segments;faces.append((a,b,b+segments,a+segments))
-    faces += [tuple(reversed(range(segments))),tuple(3*segments+i for i in range(segments))]
-    mesh=bpy.data.meshes.new('Surface fitted knit hem');mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(mats['top'])
-    ob=bpy.data.objects.new('Surface fitted knit hem',mesh);bpy.context.collection.objects.link(ob);ob.parent=visual
-    for polygon in mesh.polygons:polygon.use_smooth=len(polygon.vertices)==4
-    uv=mesh.uv_layers.new(name='UVMap')
-    for loop in mesh.loops:
-        index=loop.vertex_index;uv.data[loop.index].uv=(index%segments/segments,index//segments/3)
+    if not (who=='lin' and os.environ.get('ATRIUM_CARDIGAN_STUDY')=='2'):
+        points=[];faces=[];segments=48
+        for z,scale in [(.805,.965),(.815,1.005),(.846,1.012),(.865,1.005)]:
+            for i in range(segments):
+                angle=i*math.tau/segments;direction=Vector((math.cos(angle),math.sin(angle),0))
+                hit=cloth_surface.ray_cast(Vector((0,0,max(.845,z))),direction)[0]
+                assert hit is not None and math.hypot(hit.x,hit.y)<.27,'Waist section missed torso'
+                points.append((hit.x*scale,hit.y*scale,z))
+        for row in range(3):
+            for i in range(segments):
+                a=row*segments+i;b=row*segments+(i+1)%segments;faces.append((a,b,b+segments,a+segments))
+        faces += [tuple(reversed(range(segments))),tuple(3*segments+i for i in range(segments))]
+        mesh=bpy.data.meshes.new('Surface fitted knit hem');mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(mats['top'])
+        ob=bpy.data.objects.new('Surface fitted knit hem',mesh);bpy.context.collection.objects.link(ob);ob.parent=visual
+        for polygon in mesh.polygons:polygon.use_smooth=len(polygon.vertices)==4
+        uv=mesh.uv_layers.new(name='UVMap')
+        for loop in mesh.loops:
+            index=loop.vertex_index;uv.data[loop.index].uv=(index%segments/segments,index//segments/3)
     # A restrained embroidered sun ties the garments to the home's curved motifs.
     civic.ellipsoid('Embroidered sun',(-.12,cloth_y(-.12,1.15)-.001,1.15),(.012,.002,.012),mats['accent'],visual,segments=16,rings=8)
 
