@@ -1,0 +1,84 @@
+{
+  "scope": "Exact protected hand/foot/leg/knee core positions and weights, bind bones and named pivot local transforms. Garment source union audit. Does not prove all other source fields unchanged, deformation quality, collision or game performance.",
+  "baselineSHA": "4b10ff7aa06c6218f246a7523fb9c8f1ec6b2b7d2b9355173fed57759dc7af06",
+  "candidateSHA": "e2fcdf2b1c4823ed8aba1849a4b4041b43258ec128a330c7c612145258b665c2",
+  "protectedVertices": 4425,
+  "protectedExact": true,
+  "bindBonesExact": true,
+  "pivotTransformsExact": true,
+  "candidatePanelInput": {
+    "file": "/Users/kk/repos/MirrorLife/tmp/portrait-study/panel-edit-input/lin-raised-armscye.blend",
+    "sha256": "aeeccf98a2fcd4847b34011edd96dd6c734ad190b8a6505f9142f953dbb3a609",
+    "vertices": 706,
+    "faces": 668,
+    "coordinatesExactOnImport": true,
+    "facesExactOnImport": true,
+    "bindSkeletonExact": true,
+    "weightsExactOnImport": true
+  },
+  "candidateCardigan": {
+    "version": 2,
+    "components": 1,
+    "construction": "Connected sleeve and body with 72 mm front opening, 4 mm inward solid thickness and overlapping inner shirt",
+    "shirtSupportFloor": 0.815,
+    "shirtSupportWidths": [
+      [
+        0.79,
+        0.13
+      ],
+      [
+        0.8,
+        0.13
+      ],
+      [
+        0.86,
+        0.13
+      ],
+      [
+        0.95,
+        0.13
+      ],
+      [
+        1.05,
+        0.13
+      ],
+      [
+        1.16,
+        0.13
+      ],
+      [
+        1.24,
+        0.13
+      ],
+      [
+        1.3,
+        0.13
+      ],
+      [
+        1.32,
+        0.10599999999999998
+      ]
+    ],
+    "vNeck": true,
+    "integratedHem": true,
+    "triangles": 4452,
+    "nonManifoldEdges": 0,
+    "weightError": 1.1920928955078125e-07
+  },
+  "baselineGarment": {
+    "contract": "atrium-continuous-shoulder-v1",
+    "components": 1,
+    "nonManifoldEdges": 0,
+    "triangles": 1700,
+    "weightError": 4.400499165058136e-08
+  },
+  "candidateGarment": {
+    "contract": "authored-quad-panels-v2",
+    "components": 1,
+    "nonManifoldEdges": 0,
+    "triangles": 2000,
+    "quads": 664,
+    "weightError": 1.1920928955078125e-07,
+    "sourceCageQuads": 664
+  }
+}

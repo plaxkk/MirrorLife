@@ -7,6 +7,7 @@ import assert from 'node:assert/strict';
 const out=process.argv[2];assert.ok(out);
 const manifest=JSON.parse(await fs.readFile('public/assets/atrium/residents/manifest.json','utf8'));
 const focus=process.env.ATRIUM_CAST_FOCUS;
+const rest=process.env.ATRIUM_CAST_REST==='1';
 const mobile=process.env.ATRIUM_CAST_LOD==='mobile';
 const suffix=mobile?'-mobile':'';
 const candidate=process.env.ATRIUM_CAST_CANDIDATE;
@@ -25,7 +26,7 @@ try{
  }
  await page.setViewport({width:focus?1200:2100,height:1050,deviceScaleFactor:1});
  await page.goto(process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4203');
- await page.evaluate(async ({ids,focus,mobile})=>{
+ await page.evaluate(async ({ids,focus,mobile,rest})=>{
   const T=await import('/node_modules/three/build/three.module.js');
   const {loadAtriumActor}=await import('/src/atrium-actors.js');
   const scene=new T.Scene();scene.background=new T.Color('#414950');
@@ -34,7 +35,7 @@ try{
   const actors=[];
   for(const [i,id] of ids.entries()){
    const actor=await loadAtriumActor(id,{position:[(3-i)*.75,0,0],yaw:0},mobile);
-   for(let f=0;f<60;f++)actor.update(f/60,1/60,{care:false});
+   for(let f=0;f<(rest?0:60);f++)actor.update(f/60,1/60,{care:false});
    actor.group.position.set((3-i)*.75,0,0);scene.add(actor.group);actors.push(actor);
   }
   const renderer=new T.WebGLRenderer({antialias:true,preserveDrawingBuffer:true});renderer.setSize(focus?1200:2100,1000);
@@ -48,11 +49,11 @@ try{
   document.body.append(renderer.domElement);
   const labels=document.createElement('div');labels.style.cssText='display:flex;justify-content:space-around;padding:8px 110px';
   for(const id of (focus?[focus]:ids)){const label=document.createElement('span');label.textContent=id;labels.append(label);}document.body.append(labels);
-  let castFrame=60;
+  let castFrame=rest?0:60;
   window.advanceCast=(moving,frames)=>{for(let f=0;f<frames;f++,castFrame++)for(const actor of actors)actor.update(castFrame/60,1/60,{care:false,moving});};
   window.renderCast=angle=>{for(const actor of actors)actor.group.rotation.y=angle;scene.updateMatrixWorld(true);renderer.render(scene,camera);};
   window.renderCast(0);
- },{ids,focus,mobile});
+ },{ids,focus,mobile,rest});
  await fs.mkdir(out,{recursive:true});
  for(const [name,angle] of [['front',Math.PI],['side',Math.PI/2],['back',0]]){
   await page.evaluate(angle=>window.renderCast(angle),angle);await page.screenshot({path:`${out}/${name}.png`});
@@ -63,6 +64,6 @@ try{
  }
  assert.deepEqual(errors,[]);for(const id of ids)assert.ok(requests.includes(`/assets/atrium/residents/${id}${suffix}.glb`));
  const assets=await Promise.all(ids.map(async id=>{const file=id===candidateId?candidate:`public/assets/atrium/residents/${id}${suffix}.glb`,body=await fs.readFile(file);return {id,file,bytes:body.length,sha256:createHash('sha256').update(body).digest('hex')};}));
- await fs.writeFile(`${out}/report.json`,JSON.stringify({ids,lod:mobile?'mobile':'desktop',focus:focus||null,assets,requests,errors,candidate:candidate?{id:candidateId,file:path.resolve(candidate)}:null,scope:'Selected LOD GLBs in shared isolated lighting; viewport remains a desktop art fixture, not mobile-device verification; idle plus three simulated walking pose samples using the real actor update. Optional candidate substituted only by request interception. No real player input, native activity acceptance, game environment, mobile, gameplay or performance verification.'},null,2));
+ await fs.writeFile(`${out}/report.json`,JSON.stringify({ids,initialPose:rest?'loaded without actor updates':'60-frame idle',lod:mobile?'mobile':'desktop',focus:focus||null,assets,requests,errors,candidate:candidate?{id:candidateId,file:path.resolve(candidate)}:null,scope:'Selected LOD GLBs in shared isolated lighting; viewport remains a desktop art fixture, not mobile-device verification; initialPose records whether actor updates preceded standing captures; three simulated walking pose samples use the real actor update. Optional candidate substituted only by request interception. No real player input, native activity acceptance, game environment, mobile, gameplay or performance verification.'},null,2));
  console.log('CAST_LINEUP_CAPTURED',ids);
 }finally{await browser.close();}

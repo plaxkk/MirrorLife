@@ -18,7 +18,8 @@ def capture(path):
     controls={o.name:[list(row) for row in o.matrix_basis] for o in bpy.data.objects if o.type=='EMPTY' and (o.name.endswith('Pivot') or o.name in ('Hand_-1','Hand_1','VisualRoot'))}
     garment=next(o['atrium_garment'].to_dict() for o in bpy.data.objects if 'atrium_garment' in o)
     cardigan=next((o['cardigan_study'].to_dict() for o in bpy.data.objects if 'cardigan_study' in o),None)
-    return {'cardigan':cardigan,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'vertices':sorted(vertices),'bones':bones,'controls':controls,'garment':garment}
+    panel_input=next((o['atrium_panel_input'].to_dict() for o in bpy.data.objects if 'atrium_panel_input' in o),None)
+    return {'panelInput':panel_input,'cardigan':cardigan,'sha256':hashlib.sha256(path.read_bytes()).hexdigest(),'vertices':sorted(vertices),'bones':bones,'controls':controls,'garment':garment}
 
 baseline=capture(Path(os.environ['ATRIUM_SLEEVE_BASELINE']))
 candidate=capture(Path(os.environ['ATRIUM_SLEEVE_SOURCE']))
@@ -26,8 +27,10 @@ report={'scope':'Exact protected hand/foot/leg/knee core positions and weights, 
  'baselineSHA':baseline['sha256'],'candidateSHA':candidate['sha256'],
  'protectedVertices':len(candidate['vertices']), 'protectedExact':baseline['vertices']==candidate['vertices'],
  'bindBonesExact':baseline['bones']==candidate['bones'],'pivotTransformsExact':baseline['controls']==candidate['controls'],
- 'candidateCardigan':candidate['cardigan'],'baselineGarment':baseline['garment'],'candidateGarment':candidate['garment']}
+ 'candidatePanelInput':candidate['panelInput'],'candidateCardigan':candidate['cardigan'],'baselineGarment':baseline['garment'],'candidateGarment':candidate['garment']}
 Path(os.environ['ATRIUM_SLEEVE_REPORT']).write_text(json.dumps(report,indent=2))
+if os.environ.get('ATRIUM_PANEL_EXPECTED_INPUT_SHA'):
+    assert candidate['panelInput'] and candidate['panelInput']['sha256']==os.environ['ATRIUM_PANEL_EXPECTED_INPUT_SHA']
 assert report['protectedExact'] and report['bindBonesExact'] and report['pivotTransformsExact'],report
 assert candidate['garment']['components']==1 and candidate['garment']['nonManifoldEdges']==0
 assert candidate['garment']['weightError']<.0001

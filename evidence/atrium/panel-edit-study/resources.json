@@ -1,0 +1,44 @@
+[
+  {
+    "variant": "garment-panels-v2",
+    "file": "tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin.glb",
+    "bytes": 283556,
+    "triangles": 23769,
+    "sha256": "6feea2169ba9a4aa056a847e982b11219e37cf1c4dc9cf2fbcca79988a31cf92"
+  },
+  {
+    "variant": "garment-panels-v2",
+    "file": "tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 252896,
+    "triangles": 21161,
+    "sha256": "d2c28d89bd134caa0d4c028d958252ab57804267c656184fbacd90551cc38619"
+  },
+  {
+    "variant": "panel-roundtrip",
+    "file": "tmp/portrait-study/panel-roundtrip/public/assets/atrium/residents/lin.glb",
+    "bytes": 283804,
+    "triangles": 23769,
+    "sha256": "78ecd36501664cf84b409b8e32a12f68aab83b67d107727850e407c11c17adf7"
+  },
+  {
+    "variant": "panel-roundtrip",
+    "file": "tmp/portrait-study/panel-roundtrip/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 253236,
+    "triangles": 21161,
+    "sha256": "fbbaf91dfddd9f70444795dcfbc3a4702cefbc897c4cb8b7631eb57280d4a4d9"
+  },
+  {
+    "variant": "panel-armscye-v1",
+    "file": "tmp/portrait-study/panel-armscye-v1/public/assets/atrium/residents/lin.glb",
+    "bytes": 282396,
+    "triangles": 23765,
+    "sha256": "171dd2201cbcb9f234cd89b5b0bf64362a94449314cad9cd0dcbbfd2e758cfb2"
+  },
+  {
+    "variant": "panel-armscye-v1",
+    "file": "tmp/portrait-study/panel-armscye-v1/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 251660,
+    "triangles": 21157,
+    "sha256": "40600a1b3467b6bf1d31e06e86e4b957ead8794a8a9e39d94d935df0bb081505"
+  }
+]

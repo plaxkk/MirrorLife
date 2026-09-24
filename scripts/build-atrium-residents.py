@@ -27,6 +27,8 @@ if HERO_ART_ENABLED:
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
 assert os.environ.get('ATRIUM_GARMENT_PANELS','0') in ('0','1','2'), 'Unknown garment panel study'
+if os.environ.get('ATRIUM_PANEL_CAGE_INPUT'):
+    assert os.environ.get('ATRIUM_GARMENT_PANELS') in ('1','2'), 'Edited cage input requires the panel garment builder'
 if os.environ.get('ATRIUM_GARMENT_PANELS') in ('1','2'):
     assert os.environ.get('ATRIUM_RESIDENT_IDS')=='lin', 'Panel garment is authored for lin only'
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp') and os.environ.get('ATRIUM_CARDIGAN_STUDY')=='2', 'Panel cage requires isolated cardigan candidate'

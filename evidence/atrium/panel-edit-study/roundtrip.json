@@ -1,0 +1,19 @@
+{
+  "baselineSHA": "528310755c7a94e96fabd8676612209bcf71e49a2a88f0c4fc0f1a2eceabda85",
+  "resultSHA": "5397e018833241c382ffd31b6a25275797d69d549edd5c885dd4d5c1d34db643",
+  "vertices": 7697,
+  "faces": 14674,
+  "coreVerticesWeightsColorsExact": true,
+  "coreOrientedFacesExact": true,
+  "input": {
+    "file": "/Users/kk/repos/MirrorLife/tmp/portrait-study/garment-panels-v2/models/atrium/residents/lin-garment-cage.blend",
+    "sha256": "6a91228aad72cab464c0ebb649de61f75b346cf6d032466f0f66e4bdb8ee45dd",
+    "vertices": 706,
+    "faces": 668,
+    "coordinatesExactOnImport": true,
+    "facesExactOnImport": true,
+    "bindSkeletonExact": true,
+    "weightsExactOnImport": true
+  },
+  "scope": "Source core only; does not claim binary GLB equivalence or identity of unused eye UVs and other mesh fields."
+}
