@@ -1,0 +1,58 @@
+[
+  {
+    "variant": "baseline",
+    "file": "public/assets/atrium/residents/lin.glb",
+    "bytes": 271312,
+    "triangles": 22555,
+    "sha256": "b60cc3a50e6244c9027de23e7ddaba30035ff05632a7575f670f9497c1b50ad4"
+  },
+  {
+    "variant": "baseline",
+    "file": "public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 236900,
+    "triangles": 19207,
+    "sha256": "5d5769a79b00eb96cbd86188b9e85c83246502633257f8e4f48a217f9d7281e8"
+  },
+  {
+    "variant": "cardigan-v2",
+    "file": "tmp/portrait-study/cardigan-v2/public/assets/atrium/residents/lin.glb",
+    "bytes": 284832,
+    "triangles": 23317,
+    "sha256": "861cf7a99e94f009d7cba1aac9f03621ac4192219bb6081d506276c165897c10"
+  },
+  {
+    "variant": "cardigan-v2",
+    "file": "tmp/portrait-study/cardigan-v2/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 254036,
+    "triangles": 20709,
+    "sha256": "674ab03fedeef60d5a5b693f859ebab9d851c5cc0303d3ce7d453db87a5bcdd0"
+  },
+  {
+    "variant": "garment-panels-v1",
+    "file": "tmp/portrait-study/garment-panels-v1/public/assets/atrium/residents/lin.glb",
+    "bytes": 267552,
+    "triangles": 22238,
+    "sha256": "489943585983af486dc1159d8455be216dd332041655a8a50b785fc9203bf744"
+  },
+  {
+    "variant": "garment-panels-v1",
+    "file": "tmp/portrait-study/garment-panels-v1/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 236752,
+    "triangles": 19629,
+    "sha256": "80eeca3d1759f7ff3cd81fe41cc9331c1ee643c89b226a3754dfe0293cd93ce8"
+  },
+  {
+    "variant": "garment-panels-v2",
+    "file": "tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin.glb",
+    "bytes": 283556,
+    "triangles": 23769,
+    "sha256": "6feea2169ba9a4aa056a847e982b11219e37cf1c4dc9cf2fbcca79988a31cf92"
+  },
+  {
+    "variant": "garment-panels-v2",
+    "file": "tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 252896,
+    "triangles": 21161,
+    "sha256": "d2c28d89bd134caa0d4c028d958252ab57804267c656184fbacd90551cc38619"
+  }
+]

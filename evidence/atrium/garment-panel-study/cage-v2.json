@@ -1,0 +1,13 @@
+{
+  "sha256": "6a91228aad72cab464c0ebb649de61f75b346cf6d032466f0f66e4bdb8ee45dd",
+  "scene": "Garment cage editing",
+  "vertices": 706,
+  "polygons": 668,
+  "quads": 664,
+  "components": 1,
+  "nonManifoldEdges": 0,
+  "zeroAreaFaces": 0,
+  "signedVolume": 0.056817817584371336,
+  "weightError": 2.9802322387695312e-08,
+  "scope": "Saved visible editing scene and source cage topology/binding. Does not validate cloth self-contact, pose aesthetics or runtime performance."
+}

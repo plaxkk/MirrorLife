@@ -1,0 +1,72 @@
+{
+  "ids": [
+    "you",
+    "lin",
+    "chen",
+    "xu",
+    "zhou",
+    "he",
+    "tang"
+  ],
+  "lod": "mobile",
+  "focus": "lin",
+  "assets": [
+    {
+      "id": "you",
+      "file": "public/assets/atrium/residents/you-mobile.glb",
+      "bytes": 952460,
+      "sha256": "0a2f6625da2e16e01bfe2bc4859e6fa786185e19568771cba001010b108b654f"
+    },
+    {
+      "id": "lin",
+      "file": "tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin-mobile.glb",
+      "bytes": 252896,
+      "sha256": "d2c28d89bd134caa0d4c028d958252ab57804267c656184fbacd90551cc38619"
+    },
+    {
+      "id": "chen",
+      "file": "public/assets/atrium/residents/chen-mobile.glb",
+      "bytes": 232560,
+      "sha256": "e4f07098b0dd6691e5137633b6373d281f7876c1d5e20a3df0bdded780dccd8d"
+    },
+    {
+      "id": "xu",
+      "file": "public/assets/atrium/residents/xu-mobile.glb",
+      "bytes": 244992,
+      "sha256": "767bdeaa5b2b728c303de030b9ada2070688fa0c79b9fecb9a2856c752c246db"
+    },
+    {
+      "id": "zhou",
+      "file": "public/assets/atrium/residents/zhou-mobile.glb",
+      "bytes": 243684,
+      "sha256": "c619156d581cfd458603811a691e6fb2222d3dbc065c5318a7313b911f9bf60f"
+    },
+    {
+      "id": "he",
+      "file": "public/assets/atrium/residents/he-mobile.glb",
+      "bytes": 234876,
+      "sha256": "5fb20343431634a941f244927f0dc0a10eed864ba31871f8f7968ad3bf505f64"
+    },
+    {
+      "id": "tang",
+      "file": "public/assets/atrium/residents/tang-mobile.glb",
+      "bytes": 238124,
+      "sha256": "c51243354bb579cb4bf4cb0d7ef7714003236a9c66fe0702a9f882a35c7aed65"
+    }
+  ],
+  "requests": [
+    "/assets/atrium/residents/you-mobile.glb",
+    "/assets/atrium/residents/lin-mobile.glb",
+    "/assets/atrium/residents/chen-mobile.glb",
+    "/assets/atrium/residents/xu-mobile.glb",
+    "/assets/atrium/residents/zhou-mobile.glb",
+    "/assets/atrium/residents/he-mobile.glb",
+    "/assets/atrium/residents/tang-mobile.glb"
+  ],
+  "errors": [],
+  "candidate": {
+    "id": "lin",
+    "file": "/Users/kk/repos/MirrorLife/tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin-mobile.glb"
+  },
+  "scope": "Selected LOD GLBs in shared isolated lighting; viewport remains a desktop art fixture, not mobile-device verification; idle plus three simulated walking pose samples using the real actor update. Optional candidate substituted only by request interception. No real player input, native activity acceptance, game environment, mobile, gameplay or performance verification."
+}

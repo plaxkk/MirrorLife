@@ -6,8 +6,11 @@ from mathutils.bvhtree import BVHTree
 def author(garment, mats, visual, civic):
     tailored=os.environ.get('ATRIUM_CARDIGAN_STUDY')=='2'
     original=BVHTree.FromPolygons([v.co.copy() for v in garment.data.vertices],[tuple(p.vertices) for p in garment.data.polygons])
+    support_floor=.815 if os.environ.get('ATRIUM_GARMENT_PANELS')=='2' else 0
     def front(x,z):
-        hit=original.ray_cast(Vector((x,-1,z)),Vector((0,1,0)))[0]
+        # Rounded cloth hems recede above their cap. Extend the tucked shirt
+        # using a supported section, rather than sampling below the shell.
+        hit=original.ray_cast(Vector((x,-1,max(z,support_floor))),Vector((0,1,0)))[0]
         assert hit is not None, ('Missing shirt support',x,z)
         return hit.y
     # Bisect retains interpolated deform weights at the front opening edges.
@@ -48,7 +51,7 @@ def author(garment, mats, visual, civic):
     support_widths=[]
     for z in rows:
         width=.13 if tailored else .09
-        while original.ray_cast(Vector((width,-1,z)),Vector((0,1,0)))[0] is None:
+        while original.ray_cast(Vector((width,-1,max(z,support_floor))),Vector((0,1,0)))[0] is None:
             width-=.002
             assert width>.06, ('Shirt row has insufficient support',z,width)
         support_widths.append([z,width])
@@ -77,7 +80,7 @@ def author(garment, mats, visual, civic):
             for other in adj[todo.pop()]:
                 if other in remaining:remaining.remove(other);todo.append(other)
     report={'version':2 if tailored else 1,'components':components,'construction':'Connected sleeve and body with 72 mm front opening, 4 mm inward solid thickness and overlapping inner shirt',
-            'shirtSupportWidths':support_widths,'vNeck':tailored,'integratedHem':tailored,'triangles':len(garment.data.loop_triangles),'nonManifoldEdges':non_manifold,
+            'shirtSupportFloor':support_floor,'shirtSupportWidths':support_widths,'vNeck':tailored,'integratedHem':tailored,'triangles':len(garment.data.loop_triangles),'nonManifoldEdges':non_manifold,
             'weightError':max(abs(sum(g.weight for g in v.groups)-1) for v in garment.data.vertices)}
     assert non_manifold==0 and components==1,report
     assert report['weightError']<.0001,report
