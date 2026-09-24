@@ -1,0 +1,47 @@
+{
+  "sourceSha256": "9f4b136d099604a22e489ce8b7e220a6beaf3dc27e04baf28cf27ef1438b3571",
+  "outsideHandCoordinatesExact": true,
+  "hands": [
+    {
+      "side": -1,
+      "vertices": 656,
+      "faces": 1308,
+      "components": 1,
+      "nonManifoldEdges": 0,
+      "minFaceArea": 2.012249979088665e-06,
+      "construction": "Explicit quad palm and five branch loops; no remesh or decimation"
+    },
+    {
+      "side": 1,
+      "vertices": 656,
+      "faces": 1308,
+      "components": 1,
+      "nonManifoldEdges": 0,
+      "minFaceArea": 2.012249979088665e-06,
+      "construction": "Explicit quad palm and five branch loops; no remesh or decimation"
+    }
+  ],
+  "digitGroups": [
+    {
+      "digit": 0,
+      "vertices": 65
+    },
+    {
+      "digit": 1,
+      "vertices": 73
+    },
+    {
+      "digit": 2,
+      "vertices": 73
+    },
+    {
+      "digit": 3,
+      "vertices": 73
+    },
+    {
+      "digit": 4,
+      "vertices": 73
+    }
+  ],
+  "scope": "Merged source topology and non-hand coordinate scope; no anatomy, intersections, runtime contact or performance approval."
+}

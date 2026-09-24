@@ -1,5 +1,5 @@
 """Editable continuous hands and shaped sneaker soles for the atrium cast."""
-import bpy, bmesh, math
+import bpy, bmesh, math, os
 from mathutils import Vector
 
 def descendants(root):
@@ -33,12 +33,25 @@ def hands(separate_digits=False, refined_palm=False):
                 point.y*=.82;points.append(tuple(point))
             faces.extend(tuple(offset+i for i in poly.vertices) for poly in mesh.polygons)
             evaluated.to_mesh_clear()
+        structured=separate_digits and os.environ.get('ATRIUM_HAND_TOPOLOGY_STUDY','0')=='1'
+        if structured:
+            import runpy
+            from pathlib import Path
+            points,faces,digit_ids=runpy.run_path(str(Path(__file__).with_name('atrium-hand-topology.py')))['build'](side)
         mesh=bpy.data.meshes.new('Continuous palm and five digits');mesh.from_pydata(points,[],faces);mesh.update();mesh.materials.append(material)
         ob=bpy.data.objects.new('ContinuousHand_'+str(side),mesh);bpy.context.collection.objects.link(ob);ob.parent=root
         bpy.ops.object.select_all(action='DESELECT');ob.select_set(True);bpy.context.view_layer.objects.active=ob
-        remesh=ob.modifiers.new('Fuse palm and finger roots','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.0025;remesh.use_smooth_shade=True;bpy.ops.object.modifier_apply(modifier=remesh.name)
-        smooth=ob.modifiers.new('Relax knuckle transitions','SMOOTH');smooth.factor=.55;smooth.iterations=4;bpy.ops.object.modifier_apply(modifier=smooth.name)
-        ob.data.calc_loop_triangles();dec=ob.modifiers.new('Hand topology allocation','DECIMATE');dec.ratio=min(1,900/len(ob.data.loop_triangles));bpy.ops.object.modifier_apply(modifier=dec.name)
+        if structured:
+            bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
+            if bm.calc_volume(signed=True)<0:bmesh.ops.reverse_faces(bm,faces=list(bm.faces))
+            bm.to_mesh(mesh);bm.free()
+            for digit,indices in digit_ids.items():ob.vertex_groups.new(name=f'SourceDigit_{side}_{digit}').add(indices,1,'REPLACE')
+            root['source_digit_frames']=[{'digit':digit,'origin':list(sum((Vector(points[i]) for i in digit_ids[digit][:8]),Vector())/8),'length':(length-.015)*math.sqrt(1+.28**2),'tilt':-math.atan(.28)} for digit,length in enumerate([.057,.068,.064,.052],1)]
+            root['source_digit_vertices']=[{'digit':digit,'positions':[value for i in indices for value in points[i]]} for digit,indices in digit_ids.items()]
+        else:
+            remesh=ob.modifiers.new('Fuse palm and finger roots','REMESH');remesh.mode='VOXEL';remesh.voxel_size=.0025;remesh.use_smooth_shade=True;bpy.ops.object.modifier_apply(modifier=remesh.name)
+            smooth=ob.modifiers.new('Relax knuckle transitions','SMOOTH');smooth.factor=.55;smooth.iterations=4;bpy.ops.object.modifier_apply(modifier=smooth.name)
+            ob.data.calc_loop_triangles();dec=ob.modifiers.new('Hand topology allocation','DECIMATE');dec.ratio=min(1,900/len(ob.data.loop_triangles));bpy.ops.object.modifier_apply(modifier=dec.name)
         for poly in ob.data.polygons:poly.use_smooth=True
         bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT');bpy.ops.uv.smart_project(angle_limit=math.radians(66),island_margin=.012);bpy.ops.object.mode_set(mode='OBJECT')
         for source in sources:bpy.data.objects.remove(source,do_unlink=True)
@@ -60,8 +73,8 @@ def hands(separate_digits=False, refined_palm=False):
         ob.data.calc_loop_triangles()
         root['hand_surface_audit']={'components':components,'nonManifoldEdges':nonmanifold,'triangles':len(ob.data.loop_triangles),'removedSubmillimetreSliverVertices':removed}
         assert components==1 and nonmanifold==0,dict(root['hand_surface_audit'])
-        root['hand_continuity_contract']='atrium-fused-palm-v1'
-        root['construction']='Five original digits fused at roots; wrist rig and contact anchors retained'
+        root['hand_continuity_contract']='atrium-quad-palm-study-v1' if structured else 'atrium-fused-palm-v1'
+        root['construction']='Explicit quad palm and five branch loops; no remesh or decimation' if structured else 'Five original digits fused at roots; wrist rig and contact anchors retained'
 
 def shoes(civic,mats):
     for side in [-1,1]:

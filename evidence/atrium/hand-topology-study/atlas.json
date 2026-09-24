@@ -1,0 +1,84 @@
+{
+  "passed": true,
+  "rows": [
+    {
+      "file": "tmp/portrait-study/hand-topology-v2/public/assets/atrium/residents/you.glb",
+      "hands": [
+        {
+          "side": "Left",
+          "vertices": 1029,
+          "checkedTexels": 12348,
+          "maxError": 0.0019607843137254832,
+          "uvViolations": 0,
+          "failures": []
+        },
+        {
+          "side": "Right",
+          "vertices": 1032,
+          "checkedTexels": 12384,
+          "maxError": 0.0019607843137254832,
+          "uvViolations": 0,
+          "failures": []
+        }
+      ],
+      "bodyUvViolations": 0,
+      "textures": [
+        {
+          "kind": "color",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "kind": "roughness",
+          "width": 1024,
+          "height": 1024
+        },
+        {
+          "kind": "normal",
+          "width": 1024,
+          "height": 1024
+        }
+      ]
+    },
+    {
+      "file": "tmp/portrait-study/hand-topology-v2/public/assets/atrium/residents/you-mobile.glb",
+      "hands": [
+        {
+          "side": "Left",
+          "vertices": 1029,
+          "checkedTexels": 12348,
+          "maxError": 0.0019607843137254832,
+          "uvViolations": 0,
+          "failures": []
+        },
+        {
+          "side": "Right",
+          "vertices": 1032,
+          "checkedTexels": 12384,
+          "maxError": 0.0019607843137254832,
+          "uvViolations": 0,
+          "failures": []
+        }
+      ],
+      "bodyUvViolations": 0,
+      "textures": [
+        {
+          "kind": "color",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "kind": "roughness",
+          "width": 512,
+          "height": 512
+        },
+        {
+          "kind": "normal",
+          "width": 512,
+          "height": 512
+        }
+      ]
+    }
+  ],
+  "scope": "Actual GLTFLoader decoded hand vertices and 2x2 base-level texture footprints; source palette/color-space, roughness green and neutral normal. Does not prove distant mipmaps, anatomy, gameplay or performance."
+}

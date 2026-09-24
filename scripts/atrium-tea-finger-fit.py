@@ -29,7 +29,7 @@ def author(core,hand,anchor):
     joint_pose=None
     if os.environ.get('ATRIUM_FINGER_JOINT_STUDY','0')=='1':
         import runpy
-        joint_pose=runpy.run_path(str(Path(__file__).with_name('atrium-finger-joints.py')))['prepare'](hand)
+        joint_pose=runpy.run_path(str(Path(__file__).with_name('atrium-finger-joints.py')))['prepare'](hand,core)
     base=core.data.shape_keys.key_blocks['GripRight']
     tea=core.shape_key_add(name='GripTea');group=core.vertex_groups['SkinRightHand'].index
     points=[local@v.co for v in base.data];deltas={};adjacent={i:set() for i in range(len(points))}
@@ -84,7 +84,7 @@ def author(core,hand,anchor):
             phases=[]
             for name,weight in [('GripTeaOpen',0),('GripTeaQuarter',.25),('GripTeaHalf',.5),('GripTeaLate',.75)]:
                 if joint_pose:
-                    coordinates=[inverse@joint_pose(local@v.co,weight) if i in ids else v.co.copy() for i,v in enumerate(basis.data)]
+                    coordinates=[inverse@joint_pose(local@v.co,weight,index=i) if i in ids else v.co.copy() for i,v in enumerate(basis.data)]
                 else:
                     coordinates=[a.co.lerp(b.co,weight) for a,b in zip(basis.data,tea.data)]
                     for i,d in offsets.items():coordinates[i]+=inverse.to_3x3()@d*(4*weight*(1-weight))
