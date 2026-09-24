@@ -32,6 +32,8 @@ for name in ['Basis','GripRight','GripTeaOpen','GripTeaQuarter','GripTeaHalf','G
  out[name]=dict(triangles=len(tris),foldCount=len(fold),thumbRegionFoldCount=sum(f['thumbRegion'] for f in fold),folds=sorted(fold,key=lambda x:-x['angle'])[:12],minAreaRatio=min(x/y for x,y in zip(a,ba) if y>1e-12))
 out['sourceSha256']=hashlib.sha256(Path(os.environ['ATRIUM_GRIP_SOURCE']).read_bytes()).hexdigest()
 out['baselineScopeVerified']=bool(baseline)
+if 'atrium_contact_surface_fit' in m:
+ out['contactSurfaceFit']=[{**dict(row),'acceptedStepScales':list(row['acceptedStepScales'])} for row in m['atrium_contact_surface_fit']]
 out['scope']='Source local dihedral screening, not intersection or anatomy proof. Fold means >90 degrees and >30 degrees increase over Basis.'
 path=Path(os.environ['ATRIUM_GRIP_REPORT']);path.parent.mkdir(parents=True,exist_ok=True);path.write_text(json.dumps(out,indent=2))
 print({k:(v['foldCount'],v['minAreaRatio']) for k,v in out.items() if isinstance(v,dict)})

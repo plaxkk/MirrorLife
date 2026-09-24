@@ -32,6 +32,15 @@ def author(core,hand,anchor):
     for edge in core.data.edges:
         a,b=edge.vertices;adjacent[a].add(b);adjacent[b].add(a)
     ids={v.index for v in core.data.vertices if any(g.group==group and g.weight>.999 for g in v.groups)}
+    constrained=os.environ.get('ATRIUM_CONTACT_SURFACE_STUDY','0')=='1'
+    fit_reports=[]
+    if constrained:
+        import runpy
+        surface_fit=runpy.run_path(str(Path(__file__).with_name('atrium-contact-surface.py')))['fit']
+    def fit_surface(samples,label):
+        offsets,report=surface_fit(core.data,samples,ids,adjacent,correction)
+        report['pose']=label;fit_reports.append(report)
+        return offsets
     def correction(point):
         nearest,normal,face,distance=tree.find_nearest(point)
         signed=(point-nearest).dot(normal)
@@ -46,6 +55,7 @@ def author(core,hand,anchor):
     for _ in range(2):
         smooth={i:deltas.get(i,Vector())*.6+sum((deltas.get(j,Vector()) for j in adjacent[i]),Vector())*(.4/max(1,len(adjacent[i]))) for i in affected}
         deltas={i:d+correction(points[i]+d) for i,d in smooth.items()}
+    if constrained:deltas=fit_surface(points,'GripTea');affected=set(deltas)
     maximum=max((d.length for d in deltas.values()),default=0)
     assert initial>0 and maximum<.018, 'Unexpected tea-pad correction extent'
     for i,p in enumerate(points):tea.data[i].co=inverse@(p+deltas[i]) if i in deltas else base.data[i].co
@@ -60,6 +70,7 @@ def author(core,hand,anchor):
         for _ in range(2):
             smooth={i:offsets.get(i,Vector())*.6+sum((offsets.get(j,Vector()) for j in adjacent[i]),Vector())*(.4/max(1,len(adjacent[i]))) for i in arc_ids}
             offsets={i:d+correction(middle[i]+d) for i,d in smooth.items()}
+        if constrained:offsets=fit_surface(middle,'GripTeaArc')
         arc=core.shape_key_add(name='GripTeaArc')
         for i,v in enumerate(basis.data):
             arc.data[i].co=v.co+inverse.to_3x3()@offsets[i] if i in offsets else v.co
@@ -77,9 +88,11 @@ def author(core,hand,anchor):
                 for _ in range(2):
                     smooth={i:pad.get(i,Vector())*.6+sum((pad.get(j,Vector()) for j in adjacent[i]),Vector())*(.4/max(1,len(adjacent[i]))) for i in affected}
                     pad={i:d+correction(samples[i]+d) for i,d in smooth.items()}
+                if constrained:pad=fit_surface(samples,name)
                 pose=core.shape_key_add(name=name)
                 for i,v in enumerate(basis.data):pose.data[i].co=coordinates[i]+inverse.to_3x3()@pad.get(i,Vector()) if i in ids else v.co
                 pose.value=0;phases.append({'name':name,'closure':weight,'padVertices':len(pad)})
             core.shape_key_remove(arc)
             core['atrium_tea_phases']={'poses':phases,'interpolation':'adjacent authored poses; runtime trajectory verification required'}
+    if constrained:core['atrium_contact_surface_fit']=fit_reports
     for ob in loaded:bpy.data.objects.remove(ob,do_unlink=True)
