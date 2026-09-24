@@ -1,0 +1,44 @@
+[
+  {
+    "variant": "baseline",
+    "file": "public/assets/atrium/residents/lin.glb",
+    "bytes": 271312,
+    "triangles": 22555,
+    "sha256": "b60cc3a50e6244c9027de23e7ddaba30035ff05632a7575f670f9497c1b50ad4"
+  },
+  {
+    "variant": "baseline",
+    "file": "public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 236900,
+    "triangles": 19207,
+    "sha256": "5d5769a79b00eb96cbd86188b9e85c83246502633257f8e4f48a217f9d7281e8"
+  },
+  {
+    "variant": "v1",
+    "file": "tmp/portrait-study/sleeve-cap-v1/public/assets/atrium/residents/lin.glb",
+    "bytes": 271968,
+    "triangles": 22555,
+    "sha256": "42e79cdf562d999b6eefc2cf162656a5362a82db3c2e7cb3a229dd479db9c4fa"
+  },
+  {
+    "variant": "v1",
+    "file": "tmp/portrait-study/sleeve-cap-v1/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 237588,
+    "triangles": 19207,
+    "sha256": "a3cb0fbf2836a54b85f9c5154c233da2646ec6b5f9447610ead089dd4621f071"
+  },
+  {
+    "variant": "v2",
+    "file": "tmp/portrait-study/sleeve-cap-v2/public/assets/atrium/residents/lin.glb",
+    "bytes": 272156,
+    "triangles": 22555,
+    "sha256": "8fb69e05edc058229d3ebf957189e254514d3c1ca9f1d6194902392f465ab486"
+  },
+  {
+    "variant": "v2",
+    "file": "tmp/portrait-study/sleeve-cap-v2/public/assets/atrium/residents/lin-mobile.glb",
+    "bytes": 237732,
+    "triangles": 19207,
+    "sha256": "e235cdbd009a76bd53790f2d7b0c6b9c43e8da2aa2106958b13b7a1db0cada6f"
+  }
+]

@@ -1,0 +1,23 @@
+{
+  "scope": "Exact protected hand/foot/leg/knee core positions and weights, bind bones and named pivot local transforms. Garment source union audit. Does not prove all other source fields unchanged, deformation quality, collision or game performance.",
+  "baselineSHA": "4b10ff7aa06c6218f246a7523fb9c8f1ec6b2b7d2b9355173fed57759dc7af06",
+  "candidateSHA": "fbe9a72613f064019c85fd0d313bbfd31d8339fa44595ee34baa734429ab47aa",
+  "protectedVertices": 4425,
+  "protectedExact": true,
+  "bindBonesExact": true,
+  "pivotTransformsExact": true,
+  "baselineGarment": {
+    "contract": "atrium-continuous-shoulder-v1",
+    "components": 1,
+    "nonManifoldEdges": 0,
+    "triangles": 1700,
+    "weightError": 4.400499165058136e-08
+  },
+  "candidateGarment": {
+    "contract": "atrium-continuous-shoulder-v1",
+    "components": 1,
+    "nonManifoldEdges": 0,
+    "triangles": 1700,
+    "weightError": 6.556510925292969e-07
+  }
+}

@@ -1,0 +1,67 @@
+{
+  "ids": [
+    "you",
+    "lin",
+    "chen",
+    "xu",
+    "zhou",
+    "he",
+    "tang"
+  ],
+  "assets": [
+    {
+      "id": "you",
+      "file": "public/assets/atrium/residents/you.glb",
+      "bytes": 2428124,
+      "sha256": "662f54daf9d05ac101750701c8085947806c544b15a22fd10e248338c4ab798c"
+    },
+    {
+      "id": "lin",
+      "file": "public/assets/atrium/residents/lin.glb",
+      "bytes": 271312,
+      "sha256": "b60cc3a50e6244c9027de23e7ddaba30035ff05632a7575f670f9497c1b50ad4"
+    },
+    {
+      "id": "chen",
+      "file": "public/assets/atrium/residents/chen.glb",
+      "bytes": 262348,
+      "sha256": "6a610b663ef63ceebe3df4c449c7ffc7927dbd0d6c0ebbf2a1229e900a480cb1"
+    },
+    {
+      "id": "xu",
+      "file": "public/assets/atrium/residents/xu.glb",
+      "bytes": 280128,
+      "sha256": "c9401e4b0fb5c82d5b107e85291b284032f2cca4d09e9095daace943c8901370"
+    },
+    {
+      "id": "zhou",
+      "file": "public/assets/atrium/residents/zhou.glb",
+      "bytes": 278764,
+      "sha256": "d5bc64c2b6ee0210b44fa22e39d58a66bc0fa7294fa0fa1d55c23f013d4e535c"
+    },
+    {
+      "id": "he",
+      "file": "public/assets/atrium/residents/he.glb",
+      "bytes": 266480,
+      "sha256": "12f25ca0bf38a8d0978b56749c7e590ad60e2a162693f228192021abc1eedb1a"
+    },
+    {
+      "id": "tang",
+      "file": "public/assets/atrium/residents/tang.glb",
+      "bytes": 271820,
+      "sha256": "22c78fa542857b99e8fa618922736aebf8efaacb0b9f6c73398f097c93ec6884"
+    }
+  ],
+  "requests": [
+    "/assets/atrium/residents/you.glb",
+    "/assets/atrium/residents/lin.glb",
+    "/assets/atrium/residents/chen.glb",
+    "/assets/atrium/residents/xu.glb",
+    "/assets/atrium/residents/zhou.glb",
+    "/assets/atrium/residents/he.glb",
+    "/assets/atrium/residents/tang.glb"
+  ],
+  "errors": [],
+  "candidate": null,
+  "scope": "Desktop GLBs in shared isolated lighting; idle plus three simulated walking pose samples using the real actor update. Optional candidate substituted only by request interception. No real player input, native activity acceptance, game environment, mobile, gameplay or performance verification."
+}

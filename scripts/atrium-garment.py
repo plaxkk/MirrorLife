@@ -1,5 +1,5 @@
 """Continuous shoulder garment authored in Blender; no runtime replacement rig."""
-import bpy, math
+import bpy, math, os
 from mathutils.bvhtree import BVHTree
 
 def continuous_garment(civic, material, triangle_budget=1700):
@@ -33,6 +33,13 @@ def continuous_garment(civic, material, triangle_budget=1700):
         # nearby but disconnected fabric must not inherit the other bone.
         shoulder=ease((p.z-1.105)/.1)
         arm=ease(.5+(dt-da)/(.012+.043*shoulder));lower=ease((1.1-p.z)/.21)
+        if os.environ.get('ATRIUM_SLEEVE_CAP_STUDY')=='2':
+            # Nearest-surface ownership changes abruptly at the joined axilla.
+            # Author the shoulder field in physical space, preserving distance
+            # ownership below the join where the sleeve must clear the waist.
+            cap_blend=ease((p.z-1.08)/.05)
+            cap_arm=ease((abs(p.x)-.16)/.13)
+            arm=arm*(1-cap_blend)+cap_arm*cap_blend
         side='Left' if p.x<0 else 'Right'
         for bone,weight in [('SkinRoot',1-arm),('Skin'+side+'Arm',arm*(1-lower)),('Skin'+side+'Elbow',arm*lower)]:
             if weight>.00001:groups[bone].add([vertex.index],weight,'REPLACE')

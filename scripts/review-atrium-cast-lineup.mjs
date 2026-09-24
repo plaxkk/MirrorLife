@@ -1,16 +1,25 @@
 // Current installed cast, shared camera and neutral standing pose.
 import puppeteer from 'puppeteer-core';
 import fs from 'node:fs/promises';
+import path from 'node:path';
 import {createHash} from 'node:crypto';
 import assert from 'node:assert/strict';
 const out=process.argv[2];assert.ok(out);
 const manifest=JSON.parse(await fs.readFile('public/assets/atrium/residents/manifest.json','utf8'));
+const candidate=process.env.ATRIUM_CAST_CANDIDATE;
+const candidateId=process.env.ATRIUM_CAST_CANDIDATE_ID;
+assert.equal(Boolean(candidate),Boolean(candidateId),'Set candidate path and identity together');
 const ids=manifest.map(row=>row.id);assert.equal(ids.length,7);
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
 try{
  const page=await browser.newPage(),errors=[],requests=[];
  page.on('pageerror',e=>errors.push(String(e)));
  page.on('request',r=>{if(/\/residents\/[^/]+\.glb$/.test(new URL(r.url()).pathname))requests.push(new URL(r.url()).pathname);});
+ if(candidate){
+  assert.ok(ids.includes(candidateId));
+  const body=await fs.readFile(candidate);await page.setRequestInterception(true);
+  page.on('request',r=>new URL(r.url()).pathname===`/assets/atrium/residents/${candidateId}.glb`?r.respond({status:200,contentType:'model/gltf-binary',body}):r.continue());
+ }
  await page.setViewport({width:2100,height:1050,deviceScaleFactor:1});
  await page.goto(process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4203');
  await page.evaluate(async ids=>{
@@ -31,6 +40,8 @@ try{
   document.body.append(renderer.domElement);
   const labels=document.createElement('div');labels.style.cssText='display:flex;justify-content:space-around;padding:8px 110px';
   for(const id of ids){const label=document.createElement('span');label.textContent=id;labels.append(label);}document.body.append(labels);
+  let castFrame=60;
+  window.advanceCast=(moving,frames)=>{for(let f=0;f<frames;f++,castFrame++)for(const actor of actors)actor.update(castFrame/60,1/60,{care:false,moving});};
   window.renderCast=angle=>{for(const actor of actors)actor.group.rotation.y=angle;scene.updateMatrixWorld(true);renderer.render(scene,camera);};
   window.renderCast(0);
  },ids);
@@ -38,8 +49,12 @@ try{
  for(const [name,angle] of [['front',Math.PI],['side',Math.PI/2],['back',0]]){
   await page.evaluate(angle=>window.renderCast(angle),angle);await page.screenshot({path:`${out}/${name}.png`});
  }
+ for(let step=0;step<3;step++){
+  await page.evaluate(()=>{window.advanceCast(1.25,15);window.renderCast(Math.PI/4);});
+  await page.screenshot({path:`${out}/walk-${step}.png`});
+ }
  assert.deepEqual(errors,[]);for(const id of ids)assert.ok(requests.includes(`/assets/atrium/residents/${id}.glb`));
- const assets=await Promise.all(ids.map(async id=>{const file=`public/assets/atrium/residents/${id}.glb`,body=await fs.readFile(file);return {id,file,bytes:body.length,sha256:createHash('sha256').update(body).digest('hex')};}));
- await fs.writeFile(`${out}/report.json`,JSON.stringify({ids,assets,requests,errors,scope:'Installed desktop GLBs in neutral standing fixture and shared isolated lighting. Native activities, game environment, mobile, gameplay and performance not verified.'},null,2));
+ const assets=await Promise.all(ids.map(async id=>{const file=id===candidateId?candidate:`public/assets/atrium/residents/${id}.glb`,body=await fs.readFile(file);return {id,file,bytes:body.length,sha256:createHash('sha256').update(body).digest('hex')};}));
+ await fs.writeFile(`${out}/report.json`,JSON.stringify({ids,assets,requests,errors,candidate:candidate?{id:candidateId,file:path.resolve(candidate)}:null,scope:'Desktop GLBs in shared isolated lighting; idle plus three simulated walking pose samples using the real actor update. Optional candidate substituted only by request interception. No real player input, native activity acceptance, game environment, mobile, gameplay or performance verification.'},null,2));
  console.log('CAST_LINEUP_CAPTURED',ids);
 }finally{await browser.close();}

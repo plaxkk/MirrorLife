@@ -26,6 +26,9 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+assert os.environ.get('ATRIUM_SLEEVE_CAP_STUDY','0') in ('0','1','2'), 'Unknown sleeve cap study'
+if os.environ.get('ATRIUM_SLEEVE_CAP_STUDY','0')!='0':
+    assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Sleeve cap study output must remain isolated'
 if os.environ.get('ATRIUM_SHOE_FORM_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Shoe form study output must remain isolated'
 if os.environ.get('ATRIUM_HAND_GRIP_STUDY','0')!='0':
@@ -144,6 +147,17 @@ def everyday_limbs(name,centres,rings,*args,**kwargs):
         # A sloping shoulder ends above the pivot, not in a broad horizontal lid.
         for i,(height,scale,inset) in enumerate([(1.26,.35,.085),(1.24,.65,.058),(1.22,.8,.04)]):
             z,rx,ry,centre_y,*rest=rings[i];rings[i]=(height,rx*scale,ry*scale,centre_y,inset)
+        if os.environ.get('ATRIUM_SLEEVE_CAP_STUDY') in ('1','2'):
+            # Re-author the cap as a gradual clavicle-to-bicep section series.
+            # Preserve the existing forearm and rig; avoid smoothing a narrow
+            # three-ring wedge after the shoulder has already been voxel joined.
+            width=rings[3][1]/.101;depth=rings[3][2]/.092
+            cap=[(1.275,.025,.042,.001,.115),
+                 (1.255,.045,.060,.001,.100),
+                 (1.230,.063,.074,0,.073),
+                 (1.200,.080,.083,-.002,.048),
+                 (1.170,.088,.085,-.004,.025)]
+            rings=[(z,rx*width,ry*depth,y,inset) for z,rx,ry,y,inset in cap]+rings[4:]
     return shared_limb_builder(name,centres,rings,*args,**kwargs)
 civic.build_skinned_limb_pair=everyday_limbs
 

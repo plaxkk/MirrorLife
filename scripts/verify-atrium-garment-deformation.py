@@ -27,7 +27,9 @@ for identity in os.environ.get('ATRIUM_RESIDENT_IDS','you,lin,chen,xu,zhou,he,ta
         evaluated=mesh.evaluated_get(bpy.context.evaluated_depsgraph_get());posed=evaluated.to_mesh()
         assert len(posed.vertices)==len(mesh.data.vertices)
         ratios=sorted((posed.vertices[a].co-posed.vertices[b].co).length/length for a,b,length in lengths if length>.005)
-        samples.append({**case,'maxEdgeStretch':ratios[-1],'p99EdgeStretch':ratios[int(len(ratios)*.99)]})
+        worst=sorted(((posed.vertices[a].co-posed.vertices[b].co).length/length,a,b,length) for a,b,length in lengths if length>.005)[-5:]
+        detail=[{'ratio':ratio,'restLength':length,'vertices':[{'index':i,'rest':list(mesh.data.vertices[i].co),'weights':{mesh.vertex_groups[g.group].name:g.weight for g in mesh.data.vertices[i].groups if g.weight>.00001}} for i in (a,b)]} for ratio,a,b,length in reversed(worst)]
+        samples.append({**case,'maxEdgeStretch':ratios[-1],'p99EdgeStretch':ratios[int(len(ratios)*.99)],'worstEdges':detail})
         evaluated.to_mesh_clear()
     report={'identity':identity,'sourceSha256':hashlib.sha256(source.read_bytes()).hexdigest(),'poses':samples}
     reports.append(report);print('CLOTH_DEFORMATION',json.dumps(report),flush=True)
