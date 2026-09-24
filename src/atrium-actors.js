@@ -49,6 +49,7 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   const open=visual.getObjectByName('MouthOpenPivot'),closed=visual.getObjectByName('MouthClosedPivot');
   const facialMeshes=[];visual.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.Blink!==undefined)facialMeshes.push(node);});
   const gripMeshes=[];visual.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.GripRight!==undefined)gripMeshes.push(node);});
+  const handClosures=new WeakMap();
   if(open)open.visible=false;
   group.traverse(node=>{if(node.isMesh){
     // Tiny eye/mouth surfaces lie inside the head's shadow silhouette.
@@ -75,7 +76,11 @@ export async function loadAtriumActor(id,definition,mobile=false) {
   const blinkOffset=id==='you'?3*1.13:[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)*.037;
   return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
     get seatBlend(){return seatBlend;},
-    handPoseDiagnostics(){return gripMeshes.map(mesh=>{const generic=mesh.morphTargetInfluences[mesh.morphTargetDictionary.GripRight],tea=mesh.morphTargetInfluences[mesh.morphTargetDictionary.GripTea]||0;return {name:mesh.name,grip:generic+tea,generic,tea,teaBlend};});},
+    handPoseDiagnostics(){return gripMeshes.map(mesh=>{
+      const weights=Object.fromEntries(Object.entries(mesh.morphTargetDictionary).filter(([name])=>name.startsWith('Grip')).map(([name,index])=>[name,mesh.morphTargetInfluences[index]]));
+      const grip=handClosures.get(mesh)??0;
+      return {name:mesh.name,grip,generic:grip*(1-teaBlend),tea:grip*teaBlend,teaBlend,weights};
+    });},
     setReviewFace(value){reviewFace=value;},
     faceDiagnostics(){return facialMeshes.map(mesh=>({name:mesh.name,eyeScales:eyes.map(eye=>eye.scale.toArray()),blink:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink],talk:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Talk]}));},
     footDiagnostics(){return ['left','right'].map(side=>{
@@ -227,9 +232,15 @@ export async function loadAtriumActor(id,definition,mobile=false) {
         const index=mesh.morphTargetDictionary.GripRight;
         const teaIndex=mesh.morphTargetDictionary.GripTea;
         const target=care?(teaActive&&teaWrist?THREE.MathUtils.smoothstep(teaBlend,.995,.9999):1):0;
-        const amount=THREE.MathUtils.damp(mesh.morphTargetInfluences[index]+(mesh.morphTargetInfluences[teaIndex]||0),target,18,dt);
+        const amount=THREE.MathUtils.damp(handClosures.get(mesh)??0,target,18,dt);handClosures.set(mesh,amount);
         mesh.morphTargetInfluences[index]=amount*(teaIndex===undefined?1:1-teaBlend);
-        if(teaIndex!==undefined)mesh.morphTargetInfluences[teaIndex]=amount*teaBlend;
+        const phases=['GripTeaOpen','GripTeaQuarter','GripTeaHalf','GripTeaLate','GripTea'];
+        if(phases.every(name=>mesh.morphTargetDictionary[name]!==undefined)){
+          phases.forEach(name=>{mesh.morphTargetInfluences[mesh.morphTargetDictionary[name]]=0;});
+          const phase=amount*4,lo=Math.min(3,Math.floor(phase)),mix=phase-lo;
+          mesh.morphTargetInfluences[mesh.morphTargetDictionary[phases[lo]]]=teaBlend*(1-mix);
+          mesh.morphTargetInfluences[mesh.morphTargetDictionary[phases[lo+1]]]=teaBlend*mix;
+        }else if(teaIndex!==undefined)mesh.morphTargetInfluences[teaIndex]=amount*teaBlend;
         const arcIndex=mesh.morphTargetDictionary.GripTeaArc;
         if(arcIndex!==undefined){const tea=amount*teaBlend;mesh.morphTargetInfluences[arcIndex]=4*tea*(1-tea);}
       }

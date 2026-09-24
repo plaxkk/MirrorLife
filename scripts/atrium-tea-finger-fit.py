@@ -65,4 +65,21 @@ def author(core,hand,anchor):
             arc.data[i].co=v.co+inverse.to_3x3()@offsets[i] if i in offsets else v.co
         arc.value=0
         core['atrium_tea_arc']={'vertices':len(offsets),'maxDisplacement':max(d.length for d in offsets.values()),'weight':'4 * teaWeight * (1 - teaWeight)','scope':'additive halfway pad correction; trajectory needs runtime verification'}
+        if os.environ.get('ATRIUM_TEA_PHASE_STUDY','0')=='1':
+            phases=[]
+            for name,weight in [('GripTeaOpen',0),('GripTeaQuarter',.25),('GripTeaHalf',.5),('GripTeaLate',.75)]:
+                coordinates=[a.co.lerp(b.co,weight) for a,b in zip(basis.data,tea.data)]
+                for i,d in offsets.items():coordinates[i]+=inverse.to_3x3()@d*(4*weight*(1-weight))
+                samples=[local@p for p in coordinates]
+                pad={i:correction(samples[i]) for i in ids}
+                pad={i:d for i,d in pad.items() if d.length>1e-7}
+                affected=set(pad)|{j for i in pad for j in adjacent[i] if j in ids}
+                for _ in range(2):
+                    smooth={i:pad.get(i,Vector())*.6+sum((pad.get(j,Vector()) for j in adjacent[i]),Vector())*(.4/max(1,len(adjacent[i]))) for i in affected}
+                    pad={i:d+correction(samples[i]+d) for i,d in smooth.items()}
+                pose=core.shape_key_add(name=name)
+                for i,v in enumerate(basis.data):pose.data[i].co=coordinates[i]+inverse.to_3x3()@pad.get(i,Vector()) if i in ids else v.co
+                pose.value=0;phases.append({'name':name,'closure':weight,'padVertices':len(pad)})
+            core.shape_key_remove(arc)
+            core['atrium_tea_phases']={'poses':phases,'interpolation':'adjacent authored poses; runtime trajectory verification required'}
     for ob in loaded:bpy.data.objects.remove(ob,do_unlink=True)

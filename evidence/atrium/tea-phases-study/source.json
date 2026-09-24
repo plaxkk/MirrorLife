@@ -1,0 +1,31 @@
+{
+  "sourceSha256": "297e636cd0df2636b42334cfff220812b558beacd28c6f9d7fa6a43ab64264e5",
+  "existingEndpointsExact": true,
+  "phases": [
+    {
+      "name": "GripTeaOpen",
+      "changedVertices": 12,
+      "outsideHand": [],
+      "maxDisplacementFromBasis": 0.0030619537566252916
+    },
+    {
+      "name": "GripTeaQuarter",
+      "changedVertices": 376,
+      "outsideHand": [],
+      "maxDisplacementFromBasis": 0.013097738309775111
+    },
+    {
+      "name": "GripTeaHalf",
+      "changedVertices": 402,
+      "outsideHand": [],
+      "maxDisplacementFromBasis": 0.026195511894571488
+    },
+    {
+      "name": "GripTeaLate",
+      "changedVertices": 413,
+      "outsideHand": [],
+      "maxDisplacementFromBasis": 0.03929328427610537
+    }
+  ],
+  "scope": "Source scope and endpoint preservation only; not runtime collision or art approval."
+}
