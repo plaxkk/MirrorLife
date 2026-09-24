@@ -121,3 +121,7 @@ def shoes(civic,mats):
         # ankle pivots and minimum Z unchanged for existing planted-foot IK.
         root.scale.x*=.88;root.scale.y*=.88
         root['sole_contract']='atrium-shaped-last-v1; unchanged minimum Z'
+        if os.environ.get('ATRIUM_SHOE_FORM_STUDY','0')=='1':
+            import runpy
+            from pathlib import Path
+            runpy.run_path(str(Path(__file__).with_name('atrium-shoe-form.py')))['author'](root,prefix)

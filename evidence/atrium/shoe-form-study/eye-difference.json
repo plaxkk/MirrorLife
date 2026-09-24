@@ -1,0 +1,22 @@
+{
+  "EyeWhite_-1": {
+    "counts": [
+      231,
+      231
+    ],
+    "matrixMaxDelta": 0.0,
+    "vertexMaxDelta": 0.06176815554499626,
+    "positionsExact": false,
+    "positionMultisetExact": true
+  },
+  "EyeWhite_1": {
+    "counts": [
+      231,
+      231
+    ],
+    "matrixMaxDelta": 0.0,
+    "vertexMaxDelta": 0.06187695078551769,
+    "positionsExact": false,
+    "positionMultisetExact": true
+  }
+}

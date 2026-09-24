@@ -1,0 +1,15 @@
+{
+  "poses": [],
+  "scope": "Actual GLTF shoe and materials in isolated lighting; no walking, foot-ground contact or performance acceptance.",
+  "files": [
+    "evidence/atrium/shoe-form-study/candidate/toe.png",
+    "evidence/atrium/shoe-form-study/candidate/outer.png",
+    "evidence/atrium/shoe-form-study/candidate/top.png"
+  ],
+  "candidate": {
+    "file": "tmp/portrait-study/shoe-form-v1/public/assets/atrium/residents/you.glb",
+    "sha256": "fdceb541295da29f720009a9c2b26f4a6caea1e121d3dd3e121370021c34bcee",
+    "requests": 1
+  },
+  "runtimeSha256": "61e2809a67a67fe01114b81e28513bab2d4f54cdc7b410200f32458403b0ea9c"
+}

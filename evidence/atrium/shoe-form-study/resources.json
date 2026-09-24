@@ -1,0 +1,10 @@
+{
+  "desktop": {
+    "bytes": 2425604,
+    "triangles": 26548
+  },
+  "mobile": {
+    "bytes": 954824,
+    "triangles": 24485
+  }
+}
