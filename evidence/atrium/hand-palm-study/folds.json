@@ -1,0 +1,523 @@
+{
+  "Basis": {
+    "triangles": 1308,
+    "foldCount": 0,
+    "thumbRegionFoldCount": 0,
+    "folds": [],
+    "minAreaRatio": 1.0
+  },
+  "GripRight": {
+    "triangles": 1308,
+    "foldCount": 11,
+    "thumbRegionFoldCount": 10,
+    "folds": [
+      {
+        "edge": [
+          1773,
+          1781
+        ],
+        "angle": 145.38265286122908,
+        "basisAngle": 108.6486455802824,
+        "midpoint": [
+          -0.04665154218673706,
+          0.004332074895501137,
+          -0.010094204917550087
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1781,
+          1789
+        ],
+        "angle": 131.32281773778456,
+        "basisAngle": 75.91879571912067,
+        "midpoint": [
+          -0.047527313232421875,
+          0.0011268872767686844,
+          -0.01502988487482071
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1789,
+          1797
+        ],
+        "angle": 117.0546481842763,
+        "basisAngle": 53.21374427638088,
+        "midpoint": [
+          -0.04874211177229881,
+          -0.002779365051537752,
+          -0.02023841068148613
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1714,
+          1715
+        ],
+        "angle": 114.84543715761401,
+        "basisAngle": 25.955301119675198,
+        "midpoint": [
+          0.0269402377307415,
+          -0.013014106079936028,
+          -0.04620983824133873
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1777,
+          1785
+        ],
+        "angle": 112.61977903543034,
+        "basisAngle": 66.16885094308921,
+        "midpoint": [
+          -0.0467761754989624,
+          -0.015189211815595627,
+          0.011639837175607681
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1797,
+          1805
+        ],
+        "angle": 111.97204487568136,
+        "basisAngle": 51.54753328873461,
+        "midpoint": [
+          -0.05026445910334587,
+          -0.00748327374458313,
+          -0.025975970551371574
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1785,
+          1793
+        ],
+        "angle": 104.55776524860579,
+        "basisAngle": 48.73517899231977,
+        "midpoint": [
+          -0.04913066327571869,
+          -0.018557142466306686,
+          0.0036318583879619837
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1820,
+          1821
+        ],
+        "angle": 101.93605860739893,
+        "basisAngle": 68.80818630254387,
+        "midpoint": [
+          -0.05405247211456299,
+          -0.019618093967437744,
+          -0.036436792463064194
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1819,
+          1820
+        ],
+        "angle": 98.66186399478075,
+        "basisAngle": 68.57964817291524,
+        "midpoint": [
+          -0.05360310152173042,
+          -0.023501627147197723,
+          -0.0359339565038681
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1793,
+          1801
+        ],
+        "angle": 98.32300464967807,
+        "basisAngle": 40.04917278330119,
+        "midpoint": [
+          -0.05080726370215416,
+          -0.021809175610542297,
+          -0.00414077565073967
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1805,
+          1813
+        ],
+        "angle": 96.30606344815165,
+        "basisAngle": 49.14410583302301,
+        "midpoint": [
+          -0.051909685134887695,
+          -0.012278200127184391,
+          -0.03096562996506691
+        ],
+        "thumbRegion": true
+      }
+    ],
+    "minAreaRatio": 0.20534829665630935
+  },
+  "GripTeaOpen": {
+    "triangles": 1308,
+    "foldCount": 0,
+    "thumbRegionFoldCount": 0,
+    "folds": [],
+    "minAreaRatio": 0.9999718306844733
+  },
+  "GripTeaQuarter": {
+    "triangles": 1308,
+    "foldCount": 0,
+    "thumbRegionFoldCount": 0,
+    "folds": [],
+    "minAreaRatio": 0.7161726070382167
+  },
+  "GripTeaHalf": {
+    "triangles": 1308,
+    "foldCount": 0,
+    "thumbRegionFoldCount": 0,
+    "folds": [],
+    "minAreaRatio": 0.5150466781494065
+  },
+  "GripTeaLate": {
+    "triangles": 1308,
+    "foldCount": 5,
+    "thumbRegionFoldCount": 4,
+    "folds": [
+      {
+        "edge": [
+          1781,
+          1789
+        ],
+        "angle": 117.89627775418361,
+        "basisAngle": 75.91879571912067,
+        "midpoint": [
+          -0.048332579433918,
+          0.0015661345096305013,
+          -0.015029875561594963
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1559,
+          1567
+        ],
+        "angle": 106.83972462011788,
+        "basisAngle": 44.68415281445019,
+        "midpoint": [
+          -0.03488659858703613,
+          -0.03170904517173767,
+          -0.05826222896575928
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1777,
+          1785
+        ],
+        "angle": 99.91118072605695,
+        "basisAngle": 66.16885094308921,
+        "midpoint": [
+          -0.047422293573617935,
+          -0.014836789108812809,
+          0.011639862321317196
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1789,
+          1797
+        ],
+        "angle": 99.39666257587989,
+        "basisAngle": 53.21374427638088,
+        "midpoint": [
+          -0.04992331936955452,
+          -0.002135060727596283,
+          -0.020238380879163742
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1797,
+          1805
+        ],
+        "angle": 92.35910886266555,
+        "basisAngle": 51.54753328873461,
+        "midpoint": [
+          -0.051976755261421204,
+          -0.006549283396452665,
+          -0.025975968688726425
+        ],
+        "thumbRegion": true
+      }
+    ],
+    "minAreaRatio": 0.3206249051576155
+  },
+  "GripTea": {
+    "triangles": 1308,
+    "foldCount": 47,
+    "thumbRegionFoldCount": 10,
+    "folds": [
+      {
+        "edge": [
+          1564,
+          1572
+        ],
+        "angle": 176.82608440354312,
+        "basisAngle": 54.28036710773758,
+        "midpoint": [
+          -0.0326518639922142,
+          -0.03195513039827347,
+          -0.06002064049243927
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1689,
+          1697
+        ],
+        "angle": 174.63169488737975,
+        "basisAngle": 41.925207182250254,
+        "midpoint": [
+          0.005369099788367748,
+          -0.045212455093860626,
+          -0.053601160645484924
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1561,
+          1569
+        ],
+        "angle": 164.67739085138152,
+        "basisAngle": 37.59827892795259,
+        "midpoint": [
+          -0.02839081734418869,
+          -0.02923370897769928,
+          -0.04370900243520737
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1565,
+          1573
+        ],
+        "angle": 158.4415784033216,
+        "basisAngle": 41.347103385994956,
+        "midpoint": [
+          -0.03617849946022034,
+          -0.03080064058303833,
+          -0.05549316108226776
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1692,
+          1700
+        ],
+        "angle": 158.14268932524186,
+        "basisAngle": 33.169830156926444,
+        "midpoint": [
+          0.014162207953631878,
+          -0.04095803201198578,
+          -0.061651408672332764
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1567,
+          1574
+        ],
+        "angle": 153.79913980559897,
+        "basisAngle": 33.697113930662255,
+        "midpoint": [
+          -0.03569163382053375,
+          -0.030465327203273773,
+          -0.046674106270074844
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1573,
+          1574
+        ],
+        "angle": 151.89568902732148,
+        "basisAngle": 27.75269784316261,
+        "midpoint": [
+          -0.036650240421295166,
+          -0.030497753992676735,
+          -0.05124276131391525
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1675,
+          1683
+        ],
+        "angle": 146.54009671797945,
+        "basisAngle": 45.230270834822306,
+        "midpoint": [
+          0.016833968460559845,
+          -0.023721082136034966,
+          -0.05709362030029297
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1682,
+          1690
+        ],
+        "angle": 146.36427398836497,
+        "basisAngle": 59.197468102553955,
+        "midpoint": [
+          0.009935271926224232,
+          -0.03001592308282852,
+          -0.04688604176044464
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1773,
+          1781
+        ],
+        "angle": 145.38265286122908,
+        "basisAngle": 108.6486455802824,
+        "midpoint": [
+          -0.04665154218673706,
+          0.004332074895501137,
+          -0.010094204917550087
+        ],
+        "thumbRegion": true
+      },
+      {
+        "edge": [
+          1683,
+          1684
+        ],
+        "angle": 145.15578129775795,
+        "basisAngle": 3.975620889432642,
+        "midpoint": [
+          0.017242897301912308,
+          -0.026864223182201385,
+          -0.060650378465652466
+        ],
+        "thumbRegion": false
+      },
+      {
+        "edge": [
+          1568,
+          1575
+        ],
+        "angle": 140.91661072901118,
+        "basisAngle": 37.01987118827923,
+        "midpoint": [
+          -0.032069068402051926,
+          -0.03107425943017006,
+          -0.042897969484329224
+        ],
+        "thumbRegion": false
+      }
+    ],
+    "minAreaRatio": 0.04145559768260131
+  },
+  "sourceSha256": "569bcfb9e81807fa5d8af053bb6944ea67c24b7b52e056118b52e6631477bea9",
+  "baselineScopeVerified": false,
+  "fingerControls": [
+    {
+      "name": "GripJoint_1_DIP",
+      "flexionRadians": 0.5,
+      "restDistance": 0.032711502564082874,
+      "blendWidth": 0.018
+    },
+    {
+      "name": "GripJoint_1_MCP",
+      "flexionRadians": 0.45,
+      "restDistance": 0,
+      "blendWidth": 0.024
+    },
+    {
+      "name": "GripJoint_1_PIP",
+      "flexionRadians": 0.9,
+      "restDistance": 0.019626901538449724,
+      "blendWidth": 0.022
+    },
+    {
+      "name": "GripJoint_2_DIP",
+      "flexionRadians": 0.5,
+      "restDistance": 0.041278800854676,
+      "blendWidth": 0.018
+    },
+    {
+      "name": "GripJoint_2_MCP",
+      "flexionRadians": 0.45,
+      "restDistance": 0,
+      "blendWidth": 0.024
+    },
+    {
+      "name": "GripJoint_2_PIP",
+      "flexionRadians": 0.9,
+      "restDistance": 0.024767280512805603,
+      "blendWidth": 0.022
+    },
+    {
+      "name": "GripJoint_3_DIP",
+      "flexionRadians": 0.5,
+      "restDistance": 0.038163419658096685,
+      "blendWidth": 0.018
+    },
+    {
+      "name": "GripJoint_3_MCP",
+      "flexionRadians": 0.45,
+      "restDistance": 0,
+      "blendWidth": 0.024
+    },
+    {
+      "name": "GripJoint_3_PIP",
+      "flexionRadians": 0.9,
+      "restDistance": 0.022898051794858012,
+      "blendWidth": 0.022
+    },
+    {
+      "name": "GripJoint_4_DIP",
+      "flexionRadians": 0.5,
+      "restDistance": 0.028817276068358717,
+      "blendWidth": 0.018
+    },
+    {
+      "name": "GripJoint_4_MCP",
+      "flexionRadians": 0.45,
+      "restDistance": 0,
+      "blendWidth": 0.024
+    },
+    {
+      "name": "GripJoint_4_PIP",
+      "flexionRadians": 0.9,
+      "restDistance": 0.01729036564101523,
+      "blendWidth": 0.022
+    }
+  ],
+  "scope": "Source local dihedral screening, not intersection or anatomy proof. Fold means >90 degrees and >30 degrees increase over Basis."
+}

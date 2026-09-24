@@ -10,12 +10,25 @@ def read(path):
     return core,hands,sorted(tuple(v.co) for v in core.data.vertices if v.index not in hands)
 
 baseline=Path(os.environ['ATRIUM_HAND_BASELINE']);source=Path(os.environ['ATRIUM_HAND_SOURCE'])
-_,_,outside=read(baseline)
+def wrists(core):
+    result=[]
+    for side,name in [(-1,'SkinLeftHand'),(1,'SkinRightHand')]:
+        group=core.vertex_groups[name].index
+        local=bpy.data.objects[f'Hand_{side}'].matrix_world.inverted()@core.matrix_world
+        result.append(sorted(tuple(v.co) for v in core.data.vertices if any(g.group==group and g.weight>.999 for g in v.groups) and (local@v.co).z>.04499))
+    return result
+base_core,_,outside=read(baseline);base_wrists=wrists(base_core)
 core,hands,candidate_outside=read(source)
 assert outside==candidate_outside, 'Non-hand source coordinates changed'
 for key in core.data.shape_keys.key_blocks:
     assert all(tuple(v.co)==tuple(core.data.shape_keys.key_blocks['Basis'].data[i].co) for i,v in enumerate(key.data) if i not in hands)
 report=dict(sourceSha256=hashlib.sha256(source.read_bytes()).hexdigest(),outsideHandCoordinatesExact=True,hands=[],digitGroups=[])
+if os.environ.get('ATRIUM_REQUIRE_PINNED_WRIST')=='1':
+    candidate_wrists=wrists(core)
+    assert all(a and len(a)==len(b) for a,b in zip(base_wrists,candidate_wrists))
+    maximum=max(sum((x-y)**2 for x,y in zip(p,q))**.5 for a,b in zip(base_wrists,candidate_wrists) for p,q in zip(a,b))
+    assert maximum<1e-6, 'Wrist cap moved'
+    report['maxWristCoordinateDelta']=maximum
 for side,name in [(-1,'SkinLeftHand'),(1,'SkinRightHand')]:
     group=core.vertex_groups[name].index
     ids={v.index for v in core.data.vertices if any(g.group==group and g.weight>.999 for g in v.groups)}

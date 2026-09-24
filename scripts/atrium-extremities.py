@@ -45,6 +45,20 @@ def hands(separate_digits=False, refined_palm=False):
             bm=bmesh.new();bm.from_mesh(mesh);bmesh.ops.recalc_face_normals(bm,faces=list(bm.faces))
             if bm.calc_volume(signed=True)<0:bmesh.ops.reverse_faces(bm,faces=list(bm.faces))
             bm.to_mesh(mesh);bm.free()
+            if os.environ.get('ATRIUM_PALM_SCULPT_STUDY','0')=='1':
+                weights={i:1.0 for i in range(len(points))}
+                for indices in digit_ids.values():
+                    for n,i in enumerate(indices):weights[i]=1 if n<8 else .5 if n<16 else .15 if n<24 else 0
+                support=ob.vertex_groups.new(name='SourcePalmRelax');support_name=support.name
+                for i,weight in weights.items():
+                    weight*=max(0,min(1,(.045-points[i][2])/.012))
+                    if weight:support.add([i],weight,'REPLACE')
+                relax=ob.modifiers.new('Round palm and digit root transitions','SMOOTH')
+                relax.factor=.35;relax.iterations=3;relax.vertex_group=support.name
+                bpy.ops.object.modifier_apply(modifier=relax.name)
+                support=ob.vertex_groups.get(support_name)
+                if support:ob.vertex_groups.remove(support)
+                mesh=ob.data;points=[tuple(v.co) for v in mesh.vertices]
             for digit,indices in digit_ids.items():ob.vertex_groups.new(name=f'SourceDigit_{side}_{digit}').add(indices,1,'REPLACE')
             root['source_digit_frames']=[{'digit':digit,'origin':list(sum((Vector(points[i]) for i in digit_ids[digit][:8]),Vector())/8),'length':(length-.015)*math.sqrt(1+.28**2),'tilt':-math.atan(.28)} for digit,length in enumerate([.057,.068,.064,.052],1)]
             root['source_digit_vertices']=[{'digit':digit,'positions':[value for i in indices for value in points[i]]} for digit,indices in digit_ids.items()]

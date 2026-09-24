@@ -1,5 +1,5 @@
 """Connected quad palm with explicit finger/ thumb boundary loops (study)."""
-import math
+import math,os
 from mathutils import Vector, Quaternion
 
 def build(side):
@@ -7,12 +7,24 @@ def build(side):
     ys=[-.019,-.013,0,.013,.019]
     sections=[(-.040,.049,.019),(-.028,.052,.021),(-.016,.054,.022),(-.004,.052,.023),(.008,.048,.024),(.020,.044,.024),(.034,.039,.023),(.045,.035,.021)]
     vertices=[];faces=[];lookup={};digits={}
+    sculpt=os.environ.get('ATRIUM_PALM_SCULPT_STUDY','0')=='1'
     nx,ny=len(xs),len(ys)
     def vertex(i,j,k):
         key=(i,j,k)
         if key not in lookup:
             z,w,d=sections[k];u=xs[i]/.049;v=ys[j]/.019
-            lookup[key]=len(vertices);vertices.append(Vector((w*u*(1-.08*v*v),d*v*(1-.10*u*u),z)))
+            point=Vector((w*u*(1-.08*v*v),d*v*(1-.10*u*u),z))
+            if sculpt:
+                s=(z+.040)/.085;blend=math.sin(math.pi*(1-s)/2)
+                # Rounded transverse sections, a shallow metacarpal arch and
+                # asymmetric palm padding; preserve the wrist ring exactly.
+                point.x=(1-blend)*point.x+blend*w*u*math.sqrt(1-.40*v*v)
+                point.y=(1-blend)*point.y+blend*d*v*math.sqrt(1-.75*u*u)
+                point.z+=(-.006+.010*u*u)*(1-s)**2
+                if v<0:
+                    point.y+=math.sin(math.pi*s)*(.0025*(1-u*u)*(-v)-.004*math.exp(-((u+.65)/.30)**2)*v*v)
+                else:point.y+=.002*(1-u*u)*math.sin(math.pi*s)*v
+            lookup[key]=len(vertices);vertices.append(point)
         return lookup[key]
     # End caps are grids with four explicit holes, not intersecting primitives.
     holes=[(1,3),(4,6),(7,9),(10,12)]

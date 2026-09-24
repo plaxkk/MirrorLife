@@ -1,0 +1,31 @@
+{
+  "poses": [
+    {
+      "name": "SkinnedArticulationCore",
+      "grip": 0,
+      "generic": 0,
+      "tea": 0,
+      "teaBlend": 0,
+      "weights": {
+        "GripRight": 0,
+        "GripTea": 0,
+        "GripTeaOpen": 0,
+        "GripTeaQuarter": 0,
+        "GripTeaHalf": 0,
+        "GripTeaLate": 0
+      }
+    }
+  ],
+  "scope": "Neutral actual GLTF actor and materials in isolated lighting; no prop, gameplay, anatomy or performance acceptance.",
+  "files": [
+    "evidence/atrium/hand-palm-study/v2/palm.png",
+    "evidence/atrium/hand-palm-study/v2/back.png",
+    "evidence/atrium/hand-palm-study/v2/side.png"
+  ],
+  "candidate": {
+    "file": "tmp/portrait-study/hand-palm-v2/public/assets/atrium/residents/you.glb",
+    "sha256": "10d46470867d4c2f21492fe7473d5a51b5bcdef61e56df52cc1a52c0dc874381",
+    "requests": 1
+  },
+  "runtimeSha256": "61e2809a67a67fe01114b81e28513bab2d4f54cdc7b410200f32458403b0ea9c"
+}

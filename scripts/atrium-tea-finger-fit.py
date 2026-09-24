@@ -79,7 +79,7 @@ def author(core,hand,anchor):
         for i,v in enumerate(basis.data):
             arc.data[i].co=v.co+inverse.to_3x3()@offsets[i] if i in offsets else v.co
         arc.value=0
-        core['atrium_tea_arc']={'vertices':len(offsets),'maxDisplacement':max(d.length for d in offsets.values()),'weight':'4 * teaWeight * (1 - teaWeight)','scope':'additive halfway pad correction; trajectory needs runtime verification'}
+        core['atrium_tea_arc']={'vertices':len(offsets),'maxDisplacement':max((d.length for d in offsets.values()),default=0),'weight':'4 * teaWeight * (1 - teaWeight)','scope':'additive halfway pad correction; trajectory needs runtime verification'}
         if os.environ.get('ATRIUM_TEA_PHASE_STUDY','0')=='1':
             phases=[]
             for name,weight in [('GripTeaOpen',0),('GripTeaQuarter',.25),('GripTeaHalf',.5),('GripTeaLate',.75)]:
