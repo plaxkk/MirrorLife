@@ -1,0 +1,29 @@
+{
+  "frames": [
+    28,
+    29
+  ],
+  "uniqueBasisPositions": [
+    [
+      0.24831020832061768,
+      0.6268402934074402,
+      0.02591709792613983
+    ],
+    [
+      0.25288504362106323,
+      0.6321503520011902,
+      0.024283230304718018
+    ]
+  ],
+  "exportedVertexIds": [
+    1809,
+    1810,
+    1825,
+    1826
+  ],
+  "handleFaces": [
+    78,
+    81
+  ],
+  "scope": "Duplicate exported positions are counted once here; this does not dismiss their surface penetration."
+}

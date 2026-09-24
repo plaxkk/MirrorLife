@@ -24,6 +24,12 @@ def author(core):
             depth=p.y-(-.009-.32*length)
             q.z=-.027-radius*math.sin(angle)-depth*math.sin(angle)
             q.y=-.009-radius*(1-math.cos(angle))+depth*math.cos(angle)
+            if os.environ.get('ATRIUM_GRIP_TIP_STUDY','0')=='1':
+                # After the angular cap, continue along its tangent. Discarding
+                # this length collapses the distal volume into a cross-section.
+                excess=max(0,length-radius*2.35)
+                q.z-=excess*math.cos(angle)
+                q.y-=excess*math.sin(angle)
             # A hard x cutoff created a crease through connected thumb-web
             # triangles. Blend the displacement across the complete web width.
             weight=min(1,max(0,(p.x+.060)/.025))

@@ -1,0 +1,5683 @@
+{
+  "samples": [
+    {
+      "frame": 1,
+      "time": 0.016666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.2591817793182821,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.2591817793182821,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9970438409871839,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 2,
+      "time": 0.03333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.45118836390597356,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.45118836390597356,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9970479188627004,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 3,
+      "time": 0.05,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.5934303402594009,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.5934303402594009,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.997054579127356,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 4,
+      "time": 0.06666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.6988057880877979,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.6988057880877979,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9970637066073943,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 5,
+      "time": 0.08333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.7768698398515702,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.7768698398515702,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.997075183374041,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 6,
+      "time": 0.1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.8347011117784134,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.8347011117784134,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9970888892122267,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 7,
+      "time": 0.11666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.877543571747018,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.877543571747018,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9971047020688275,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 8,
+      "time": 0.13333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9092820467105874,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9092820467105874,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9971224984804343,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 9,
+      "time": 0.15,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9327944872602502,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9327944872602502,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9971421539806568,
+      "vertices": 847,
+      "nearSurfaceVertices": 0,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": null,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 10,
+      "time": 0.16666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.950212931632136,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.950212931632136,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9971635434869727,
+      "vertices": 847,
+      "nearSurfaceVertices": 3,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.014233729773715911,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 11,
+      "time": 0.18333333333333332,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.96311683259876,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.96311683259876,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9971865416671237,
+      "vertices": 847,
+      "nearSurfaceVertices": 15,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00833529090670259,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 12,
+      "time": 0.2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9726762775527075,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9726762775527075,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9972727925924084,
+      "vertices": 847,
+      "nearSurfaceVertices": 33,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.005755857441331429,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 13,
+      "time": 0.21666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9797580885541957,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9797580885541957,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9976377087339536,
+      "vertices": 847,
+      "nearSurfaceVertices": 80,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0018517168322274517,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 14,
+      "time": 0.23333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9850044231795223,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9850044231795223,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9977534140881477,
+      "vertices": 847,
+      "nearSurfaceVertices": 132,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0009723799388567966,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 15,
+      "time": 0.25,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9888910034617577,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9888910034617577,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9977827106868968,
+      "vertices": 847,
+      "nearSurfaceVertices": 155,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00028907660595238254,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 16,
+      "time": 0.26666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.99177025295098,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.99177025295098,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9978011583483541,
+      "vertices": 847,
+      "nearSurfaceVertices": 167,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00039344079156301056,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 17,
+      "time": 0.2833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0,
+        "generic": 0,
+        "tea": 0,
+        "teaBlend": 0.9939032534344844,
+        "weights": {
+          "GripRight": 0,
+          "GripTea": 0,
+          "GripTeaOpen": 0.9939032534344844,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.997805637930535,
+      "vertices": 847,
+      "nearSurfaceVertices": 169,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005462500357899824,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 18,
+      "time": 0.3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.007070242354791653,
+        "generic": 0.000031933321879304745,
+        "tea": 0.007038309032912348,
+        "teaBlend": 0.9954834190573874,
+        "weights": {
+          "GripRight": 0.000031933321879304745,
+          "GripTea": 0,
+          "GripTeaOpen": 0.967330182925738,
+          "GripTeaQuarter": 0.02815323613164939,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9977943482762749,
+      "vertices": 847,
+      "nearSurfaceVertices": 169,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005291679174116705,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 19,
+      "time": 0.31666666666666665,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.07389759369535136,
+        "generic": 0.0002472587958948897,
+        "tea": 0.07365033489945647,
+        "teaBlend": 0.9966540345425288,
+        "weights": {
+          "GripRight": 0.0002472587958948897,
+          "GripTea": 0,
+          "GripTeaOpen": 0.7020526949447028,
+          "GripTeaQuarter": 0.29460133959782586,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9977736304474836,
+      "vertices": 847,
+      "nearSurfaceVertices": 176,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00014496026886385747,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 20,
+      "time": 0.3333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.18998687927302743,
+        "generic": 0.00047093039053606886,
+        "tea": 0.18951594888249138,
+        "teaBlend": 0.9975212478233336,
+        "weights": {
+          "GripRight": 0.00047093039053606886,
+          "GripTea": 0,
+          "GripTeaOpen": 0.23945745229336818,
+          "GripTeaQuarter": 0.7580637955299655,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.997750951295457,
+      "vertices": 847,
+      "nearSurfaceVertices": 201,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00006912304631401393,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 21,
+      "time": 0.35,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.32536046925525075,
+        "generic": 0.0005974609839497803,
+        "tea": 0.32476300827130095,
+        "teaBlend": 0.9981636952229711,
+        "weights": {
+          "GripRight": 0.0005974609839497803,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0.6972753573607383,
+          "GripTeaHalf": 0.3008883378622328,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9977315095102174,
+      "vertices": 847,
+      "nearSurfaceVertices": 253,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00003451765912674654,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 22,
+      "time": 0.36666666666666664,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.457592919282274,
+        "generic": 0.0006224947815998463,
+        "tea": 0.45697042450067415,
+        "teaBlend": 0.9986396319624521,
+        "weights": {
+          "GripRight": 0.0006224947815998463,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0.16939756592220748,
+          "GripTeaHalf": 0.8292420660402446,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": 0.9977179668211819,
+      "vertices": 847,
+      "nearSurfaceVertices": 299,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0001148457465172936,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 23,
+      "time": 0.38333333333333336,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.5747840035754752,
+        "generic": 0.000579258943653558,
+        "tea": 0.5742047446318217,
+        "teaBlend": 0.9989922145709514,
+        "weights": {
+          "GripRight": 0.000579258943653558,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0.7001576651855678,
+          "GripTeaLate": 0.29883454938538373
+        }
+      },
+      "cupUp": 0.9977111855361934,
+      "vertices": 847,
+      "nearSurfaceVertices": 307,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.00042804026630239867,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 24,
+      "time": 0.4,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.6726442991935493,
+        "generic": 0.0005021866878634088,
+        "tea": 0.6721421125056859,
+        "teaBlend": 0.9992534141916233,
+        "weights": {
+          "GripRight": 0.0005021866878634088,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0.3091917925521263,
+          "GripTeaLate": 0.6900616216394969
+        }
+      },
+      "cupUp": 0.9977110151153967,
+      "vertices": 847,
+      "nearSurfaceVertices": 313,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.000649331869162652,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 25,
+      "time": 0.4166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.7512507321542706,
+        "generic": 0.00041550503801668885,
+        "tea": 0.750835227116254,
+        "teaBlend": 0.9994469156298521,
+        "weights": {
+          "GripRight": 0.00041550503801668885,
+          "GripTea": 0.00500016157545944,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.9944467540543926
+        }
+      },
+      "cupUp": 0.9977167540960219,
+      "vertices": 847,
+      "nearSurfaceVertices": 318,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0005404033039092822,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 26,
+      "time": 0.43333333333333335,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.8127461277817002,
+        "generic": 0.0003330105175825334,
+        "tea": 0.8124131172641177,
+        "teaBlend": 0.9995902650210202,
+        "weights": {
+          "GripRight": 0.0003330105175825334,
+          "GripTea": 0.25088167399341,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.7487085910276102
+        }
+      },
+      "cupUp": 0.9977274907884531,
+      "vertices": 847,
+      "nearSurfaceVertices": 316,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.0008925455402635415,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 27,
+      "time": 0.45,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.8599744525450319,
+        "generic": 0.0002610359040953937,
+        "tea": 0.8597134166409365,
+        "teaBlend": 0.9996964608619211,
+        "weights": {
+          "GripRight": 0.0002610359040953937,
+          "GripTea": 0.4397642839779828,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.5599321768839384
+        }
+      },
+      "cupUp": 0.9977423162297735,
+      "vertices": 847,
+      "nearSurfaceVertices": 317,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.0009759147718691129,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 28,
+      "time": 0.4666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.8957701712177948,
+        "generic": 0.0002014294414810416,
+        "tea": 0.8955687417763137,
+        "teaBlend": 0.9997751326758211,
+        "weights": {
+          "GripRight": 0.0002014294414810416,
+          "GripTea": 0.5829495690777917,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.4168255635980293
+        }
+      },
+      "cupUp": 0.9977603897731241,
+      "vertices": 847,
+      "nearSurfaceVertices": 308,
+      "insideOver1mm": 4,
+      "minNearSignedMetres": -0.001039195934176144,
+      "flaggedVertices": [
+        {
+          "id": 1809,
+          "handLocal": [
+            -0.011119797605085857,
+            -0.05321426352874098,
+            0.04353385285062117
+          ],
+          "basisCore": [
+            0.24831020832061768,
+            0.6268402934074402,
+            0.02591709792613983
+          ],
+          "nearestHandleFace": 78,
+          "nearestHandLocal": [
+            -0.010937032181736637,
+            -0.053525125719502714,
+            0.044470434747456364
+          ],
+          "signedMetres": -0.0010036055754611057
+        },
+        {
+          "id": 1810,
+          "handLocal": [
+            -0.011119797605085857,
+            -0.05321426352874098,
+            0.04353385285062117
+          ],
+          "basisCore": [
+            0.24831020832061768,
+            0.6268402934074402,
+            0.02591709792613983
+          ],
+          "nearestHandleFace": 78,
+          "nearestHandLocal": [
+            -0.010937032181736637,
+            -0.053525125719502714,
+            0.044470434747456364
+          ],
+          "signedMetres": -0.0010036055754611057
+        },
+        {
+          "id": 1825,
+          "handLocal": [
+            -0.0048298407617446415,
+            -0.054685207255148194,
+            0.04223611340311656
+          ],
+          "basisCore": [
+            0.25288504362106323,
+            0.6321503520011902,
+            0.024283230304718018
+          ],
+          "nearestHandleFace": 81,
+          "nearestHandLocal": [
+            -0.004751538772286439,
+            -0.05500443237451279,
+            0.043221959390693614
+          ],
+          "signedMetres": -0.001039195934176144
+        },
+        {
+          "id": 1826,
+          "handLocal": [
+            -0.0048298407617446415,
+            -0.054685207255148194,
+            0.04223611340311656
+          ],
+          "basisCore": [
+            0.25288504362106323,
+            0.6321503520011902,
+            0.024283230304718018
+          ],
+          "nearestHandleFace": 81,
+          "nearestHandLocal": [
+            -0.004751538772286439,
+            -0.05500443237451279,
+            0.043221959390693614
+          ],
+          "signedMetres": -0.001039195934176144
+        }
+      ]
+    },
+    {
+      "frame": 29,
+      "time": 0.48333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9226423634502144,
+        "generic": 0.00015369912636697912,
+        "tea": 0.9224886643238475,
+        "teaBlend": 0.9998334141890123,
+        "weights": {
+          "GripRight": 0.00015369912636697912,
+          "GripTea": 0.690454414728353,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.3093789994606593
+        }
+      },
+      "cupUp": 0.9977809661095332,
+      "vertices": 847,
+      "nearSurfaceVertices": 307,
+      "insideOver1mm": 2,
+      "minNearSignedMetres": -0.00108675758409241,
+      "flaggedVertices": [
+        {
+          "id": 1825,
+          "handLocal": [
+            -0.0048095714014084745,
+            -0.05342644435391097,
+            0.04259260099282766
+          ],
+          "basisCore": [
+            0.25288504362106323,
+            0.6321503520011902,
+            0.024283230304718018
+          ],
+          "nearestHandleFace": 81,
+          "nearestHandLocal": [
+            -0.004727573653063395,
+            -0.053760282180723956,
+            0.043623557209762936
+          ],
+          "signedMetres": -0.00108675758409241
+        },
+        {
+          "id": 1826,
+          "handLocal": [
+            -0.0048095714014084745,
+            -0.05342644435391097,
+            0.04259260099282766
+          ],
+          "basisCore": [
+            0.25288504362106323,
+            0.6321503520011902,
+            0.024283230304718018
+          ],
+          "nearestHandleFace": 81,
+          "nearestHandLocal": [
+            -0.004727573653063395,
+            -0.053760282180723956,
+            0.043623557209762936
+          ],
+          "signedMetres": -0.00108675758409241
+        }
+      ]
+    },
+    {
+      "frame": 30,
+      "time": 0.5,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9426743626894802,
+        "generic": 0.00011633525841712047,
+        "tea": 0.9425580274310631,
+        "teaBlend": 0.9998765901959132,
+        "weights": {
+          "GripRight": 0.00011633525841712047,
+          "GripTea": 0.7706023391365128,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.2292742510594005
+        }
+      },
+      "cupUp": 0.9978034011165563,
+      "vertices": 847,
+      "nearSurfaceVertices": 307,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.0009938193774740587,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 31,
+      "time": 0.5166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9575321233681753,
+        "generic": 0.00008754163849465515,
+        "tea": 0.9574445817296806,
+        "teaBlend": 0.9999085757685218,
+        "weights": {
+          "GripRight": 0.00008754163849465515,
+          "GripTea": 0.8300525996131572,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.16985597615536457
+        }
+      },
+      "cupUp": 0.9978271467898134,
+      "vertices": 847,
+      "nearSurfaceVertices": 307,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.0005495788944060618,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 32,
+      "time": 0.5333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9685390231974809,
+        "generic": 0.00006559792428325463,
+        "tea": 0.9684734252731976,
+        "teaBlend": 0.9999322712635091,
+        "weights": {
+          "GripRight": 0.00006559792428325463,
+          "GripTea": 0.874096887302263,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.12583538396124613
+        }
+      },
+      "cupUp": 0.9978517411875102,
+      "vertices": 847,
+      "nearSurfaceVertices": 303,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": -0.000220485058375238,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 33,
+      "time": 0.55,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9766931351442489,
+        "generic": 0.00004900526752228481,
+        "tea": 0.9766441298767267,
+        "teaBlend": 0.9999498253179439,
+        "weights": {
+          "GripRight": 0.00004900526752228481,
+          "GripTea": 0.9067270435530751,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0932227817648688
+        }
+      },
+      "cupUp": 0.9978767967098096,
+      "vertices": 847,
+      "nearSurfaceVertices": 299,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0000233077743349484,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 34,
+      "time": 0.5666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9827338498478932,
+        "generic": 0.00003652853038050841,
+        "tea": 0.9826973213175128,
+        "teaBlend": 0.9999628296813159,
+        "weights": {
+          "GripRight": 0.00003652853038050841,
+          "GripTea": 0.9309007962261033,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0690620334552126
+        }
+      },
+      "cupUp": 0.9979019884826872,
+      "vertices": 847,
+      "nearSurfaceVertices": 294,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00015320867953602316,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 35,
+      "time": 0.5833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9872089213662929,
+        "generic": 0.000027184228460793428,
+        "tea": 0.9871817371378321,
+        "teaBlend": 0.9999724635506503,
+        "weights": {
+          "GripRight": 0.000027184228460793428,
+          "GripTea": 0.9488095578993776,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.05116290565127269
+        }
+      },
+      "cupUp": 0.9979270437087127,
+      "vertices": 847,
+      "nearSurfaceVertices": 294,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00028764172718565175,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 36,
+      "time": 0.6,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9905241358859772,
+        "generic": 0.000020206200488832773,
+        "tea": 0.9905039296854884,
+        "teaBlend": 0.9999796004965888,
+        "weights": {
+          "GripRight": 0.000020206200488832773,
+          "GripTea": 0.9620769172521869,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.037902683244401894
+        }
+      },
+      "cupUp": 0.9979517323307213,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0003872222839105767,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 37,
+      "time": 0.6166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9929801072076279,
+        "generic": 0.000015006236926729585,
+        "tea": 0.9929651009707011,
+        "teaBlend": 0.9999848876761802,
+        "weights": {
+          "GripRight": 0.000015006236926729585,
+          "GripTea": 0.9719057408542638,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.028079146821916326
+        }
+      },
+      "cupUp": 0.9979758590719134,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004609856897889665,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 38,
+      "time": 0.6333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9947995355121785,
+        "generic": 0.000011137263121171402,
+        "tea": 0.9947883982490573,
+        "teaBlend": 0.9999888045151575,
+        "weights": {
+          "GripRight": 0.000011137263121171402,
+          "GripTea": 0.9791871794507568,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.020801625064400694
+        }
+      },
+      "cupUp": 0.9979992567715271,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004665540106711518,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 39,
+      "time": 0.65,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9961474011514136,
+        "generic": 0.00000826186640252748,
+        "tea": 0.9961391392850111,
+        "teaBlend": 0.9999917061808393,
+        "weights": {
+          "GripRight": 0.00000826186640252748,
+          "GripTea": 0.9845814385975266,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.015410267583312815
+        }
+      },
+      "cupUp": 0.9980217808704883,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00046578078536985075,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 40,
+      "time": 0.6666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9971459245759898,
+        "generic": 0.000006126676307754556,
+        "tea": 0.9971397978996821,
+        "teaBlend": 0.9999938557876468,
+        "weights": {
+          "GripRight": 0.000006126676307754556,
+          "GripTea": 0.988577624235788,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.011416231551858778
+        }
+      },
+      "cupUp": 0.998043304881176,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004651990235206974,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 41,
+      "time": 0.6833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9978856489226934,
+        "generic": 0.000004542120477201552,
+        "tea": 0.9978811068022162,
+        "teaBlend": 0.999995448255537,
+        "weights": {
+          "GripRight": 0.000004542120477201552,
+          "GripTea": 0.9915380824422537,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.008457365813283244
+        }
+      },
+      "cupUp": 0.9980637166787422,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004647601350961128,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 42,
+      "time": 0.7,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9984336501970132,
+        "generic": 0.000003366733478640236,
+        "tea": 0.9984302834635346,
+        "teaBlend": 0.999996627984766,
+        "weights": {
+          "GripRight": 0.000003366733478640236,
+          "GripTea": 0.9937312498998405,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.006265378084925431
+        }
+      },
+      "cupUp": 0.9980829154660883,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004644280272983328,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 43,
+      "time": 0.7166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9988396195259862,
+        "generic": 0.000002495151636995333,
+        "tea": 0.9988371243743492,
+        "teaBlend": 0.9999975019496742,
+        "weights": {
+          "GripRight": 0.000002495151636995333,
+          "GripTea": 0.9953559916483743,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.004641510301299872
+        }
+      },
+      "cupUp": 0.9981008092837058,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000464175891542318,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 44,
+      "time": 0.7333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9991403690019273,
+        "generic": 0.000001849010363351683,
+        "tea": 0.9991385199915639,
+        "teaBlend": 0.9999981493988025,
+        "weights": {
+          "GripRight": 0.000001849010363351683,
+          "GripTea": 0.9965596317698482,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.003438517628954325
+        }
+      },
+      "cupUp": 0.9981173129553491,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00046398381758443766,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 45,
+      "time": 0.75,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9993631696935649,
+        "generic": 0.000001370086018071338,
+        "tea": 0.9993617996075468,
+        "teaBlend": 0.9999986290409136,
+        "weights": {
+          "GripRight": 0.000001370086018071338,
+          "GripTea": 0.9974513113074462,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0025473177334673484
+        }
+      },
+      "cupUp": 0.9981323463790129,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004638370216834817,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 46,
+      "time": 0.7666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9995282245055105,
+        "generic": 0.000001015152320995761,
+        "tea": 0.9995272093531895,
+        "teaBlend": 0.999998984368529,
+        "weights": {
+          "GripRight": 0.000001015152320995761,
+          "GripTea": 0.9981118843071711,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0018871000613578921
+        }
+      },
+      "cupUp": 0.9981458330890964,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004620234412364183,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 47,
+      "time": 0.7833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999650500117611,
+        "generic": 7.52135336102605e-7,
+        "tea": 0.9996497479822749,
+        "teaBlend": 0.9999992476017008,
+        "weights": {
+          "GripRight": 7.52135336102605e-7,
+          "GripTea": 0.9986012491239974,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0013979984777034138
+        }
+      },
+      "cupUp": 0.9981576990296821,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004601774741767097,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 48,
+      "time": 0.8,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9997410841190001,
+        "generic": 5.572460520860485e-7,
+        "tea": 0.999740526872948,
+        "teaBlend": 0.9999994426096307,
+        "weights": {
+          "GripRight": 5.572460520860485e-7,
+          "GripTea": 0.9989637796629,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0010356629467307673
+        }
+      },
+      "cupUp": 0.9981678714906274,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004588082509082192,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 49,
+      "time": 0.8166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9998081903977314,
+        "generic": 4.128457386041575e-7,
+        "tea": 0.9998077775519928,
+        "teaBlend": 0.9999995870750584,
+        "weights": {
+          "GripRight": 4.128457386041575e-7,
+          "GripTea": 0.9992323489827959,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0007672380922625692
+        }
+      },
+      "cupUp": 0.9981762781678586,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004577926701928979,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 50,
+      "time": 0.8333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9998579039517377,
+        "generic": 3.0585885296344463e-7,
+        "tea": 0.9998575980928848,
+        "teaBlend": 0.9999996940976795,
+        "weights": {
+          "GripRight": 3.0585885296344463e-7,
+          "GripTea": 0.9994313100785003,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0005683840191792325
+        }
+      },
+      "cupUp": 0.9981828463171472,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004570395030596439,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 51,
+      "time": 0.85,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9998947326583604,
+        "generic": 2.265941573238869e-7,
+        "tea": 0.999894506064203,
+        "teaBlend": 0.9999997733819872,
+        "weights": {
+          "GripRight": 2.265941573238869e-7,
+          "GripTea": 0.9995787041108506,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0004210692711365988
+        }
+      },
+      "cupUp": 0.9981875019770177,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000456481141221576,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 52,
+      "time": 0.8666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999220160352706,
+        "generic": 1.6786966087000868e-7,
+        "tea": 0.9999218481656098,
+        "teaBlend": 0.999999832117247,
+        "weights": {
+          "GripRight": 1.6786966087000868e-7,
+          "GripTea": 0.9996878963106982,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00031193580654877184
+        }
+      },
+      "cupUp": 0.9981901692415458,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004560674822371772,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 53,
+      "time": 0.8833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999422280580075,
+        "generic": 1.2436341724113314e-7,
+        "tea": 0.9999421036945902,
+        "teaBlend": 0.9999998756293976,
+        "weights": {
+          "GripRight": 1.2436341724113314e-7,
+          "GripTea": 0.9997687878901681,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0002310877392295702
+        }
+      },
+      "cupUp": 0.9981908184048888,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045576137398582565,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 54,
+      "time": 0.9,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999572014927278,
+        "generic": 9.213206509469387e-8,
+        "tea": 0.9999571093606627,
+        "teaBlend": 0.9999999078639916,
+        "weights": {
+          "GripRight": 9.213206509469387e-8,
+          "GripTea": 0.9998287138506761,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00017119401331558255
+        }
+      },
+      "cupUp": 0.998190997144351,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004555345031350708,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 55,
+      "time": 0.9166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999682940859947,
+        "generic": 6.825386970504833e-8,
+        "tea": 0.9999682258321251,
+        "teaBlend": 0.9999999317439662,
+        "weights": {
+          "GripRight": 6.825386970504833e-8,
+          "GripTea": 0.9998731080966017,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00012682364736453367
+        }
+      },
+      "cupUp": 0.9981914695276795,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004553660687202026,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 56,
+      "time": 0.9333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999765116812015,
+        "generic": 5.0564125797698075e-8,
+        "tea": 0.9999764611170757,
+        "teaBlend": 0.9999999494346865,
+        "weights": {
+          "GripRight": 5.0564125797698075e-8,
+          "GripTea": 0.9999059961642432,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00009395327044323738
+        }
+      },
+      "cupUp": 0.9981922261947933,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045524093321222704,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 57,
+      "time": 0.95,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999825994254609,
+        "generic": 3.7459053739284895e-8,
+        "tea": 0.9999825619664071,
+        "teaBlend": 0.9999999625402944,
+        "weights": {
+          "GripRight": 3.7459053739284895e-8,
+          "GripTea": 0.9999303602447451,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00006960229554927535
+        }
+      },
+      "cupUp": 0.9981932579614622,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045514787496827653,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 58,
+      "time": 0.9666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999987109337331,
+        "generic": 2.775047468318143e-8,
+        "tea": 0.9999870815868563,
+        "teaBlend": 0.9999999722491676,
+        "weights": {
+          "GripRight": 2.775047468318143e-8,
+          "GripTea": 0.9999484095999226,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00005156264924494505
+        }
+      },
+      "cupUp": 0.998194555776254,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045507857507975794,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 59,
+      "time": 0.9833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999904503622181,
+        "generic": 2.0558125942241626e-8,
+        "tea": 0.9999904298040921,
+        "teaBlend": 0.9999999794416777,
+        "weights": {
+          "GripRight": 2.0558125942241626e-8,
+          "GripTea": 0.9999617808913355,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.00003819855034222367
+        }
+      },
+      "cupUp": 0.9981961106875241,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004550268664374937,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 60,
+      "time": 1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999929254543303,
+        "generic": 1.5229871976622083e-8,
+        "tea": 0.9999929102244582,
+        "teaBlend": 0.9999999847700203,
+        "weights": {
+          "GripRight": 1.5229871976622083e-8,
+          "GripTea": 0.9999716865877724,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000028298182247928963
+        }
+      },
+      "cupUp": 0.9981979138183575,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045498817713624987,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 61,
+      "time": 1.0166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999947590476648,
+        "generic": 1.1282587351944327e-8,
+        "tea": 0.9999947477650775,
+        "teaBlend": 0.9999999887173535,
+        "weights": {
+          "GripRight": 1.1282587351944327e-8,
+          "GripTea": 0.9999790249082491,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000020963809104385327
+        }
+      },
+      "cupUp": 0.998199956347801,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045495911790717773,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 62,
+      "time": 1.0333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999961174070163,
+        "generic": 8.358357638940954e-9,
+        "tea": 0.9999961090486587,
+        "teaBlend": 0.9999999916416099,
+        "weights": {
+          "GripRight": 8.358357638940954e-9,
+          "GripTea": 0.999984461269805,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000015530371804882182
+        }
+      },
+      "cupUp": 0.9982022294970548,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045493717629512616,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 63,
+      "time": 1.05,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999971237043742,
+        "generic": 6.192029842238426e-9,
+        "tea": 0.9999971175123443,
+        "teaBlend": 0.9999999938079523,
+        "weights": {
+          "GripRight": 6.192029842238426e-9,
+          "GripTea": 0.9999884886255205,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000011505182431905834
+        }
+      },
+      "cupUp": 0.998204724519568,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000454920489956091,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 64,
+      "time": 1.0666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999978691877923,
+        "generic": 4.587171971140522e-9,
+        "tea": 0.9999978646006203,
+        "teaBlend": 0.9999999954128183,
+        "weights": {
+          "GripRight": 4.587171971140522e-9,
+          "GripTea": 0.9999914721640266,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000008523248791618622
+        }
+      },
+      "cupUp": 0.9982074326941949,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549076785986531,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 65,
+      "time": 1.0833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999984214554917,
+        "generic": 3.3982624139703946e-9,
+        "tea": 0.9999984180572292,
+        "teaBlend": 0.9999999966017322,
+        "weights": {
+          "GripRight": 3.3982624139703946e-9,
+          "GripTea": 0.9999936824237203,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000006314178011860306
+        }
+      },
+      "cupUp": 0.9982103453207413,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548977193881962,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 66,
+      "time": 1.1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999988305854661,
+        "generic": 2.5174957099871346e-9,
+        "tea": 0.9999988280679705,
+        "teaBlend": 0.9999999974825013,
+        "weights": {
+          "GripRight": 2.5174957099871346e-9,
+          "GripTea": 0.9999953198243776,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0000046776581237230315
+        }
+      },
+      "cupUp": 0.9982134537173689,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045488985457382115,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 67,
+      "time": 1.1166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999991336764058,
+        "generic": 1.8650073093714513e-9,
+        "tea": 0.9999991318113985,
+        "teaBlend": 0.9999999981349911,
+        "weights": {
+          "GripRight": 1.8650073093714513e-9,
+          "GripTea": 0.9999965328406207,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.000003465294370318198
+        }
+      },
+      "cupUp": 0.9982167492194332,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548835230046715,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 68,
+      "time": 1.1333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999993582116964,
+        "generic": 1.381631699401487e-9,
+        "tea": 0.9999993568300647,
+        "teaBlend": 0.9999999986183674,
+        "weights": {
+          "GripRight": 1.381631699401487e-9,
+          "GripTea": 0.9999974314651565,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0000025671532109031396
+        }
+      },
+      "cupUp": 0.9982202231794165,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045487830934178264,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 69,
+      "time": 1.15,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999995245515308,
+        "generic": 1.0235381005794094e-9,
+        "tea": 0.9999995235279927,
+        "teaBlend": 0.9999999989764614,
+        "weights": {
+          "GripRight": 1.0235381005794094e-9,
+          "GripTea": 0.9999980971825868,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0000019017938746553832
+        }
+      },
+      "cupUp": 0.9982238669676914,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548739064028169,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 70,
+      "time": 1.1666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999996477791111,
+        "generic": 7.582557464596912e-10,
+        "tea": 0.9999996470208553,
+        "teaBlend": 0.999999999241744,
+        "weights": {
+          "GripRight": 7.582557464596912e-10,
+          "GripTea": 0.9999985903581895,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0000014088835545298005
+        }
+      },
+      "cupUp": 0.9982276719738971,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548700872410327,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 71,
+      "time": 1.1833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999997390683478,
+        "generic": 5.617297382561693e-10,
+        "tea": 0.999999738506618,
+        "teaBlend": 0.9999999994382701,
+        "weights": {
+          "GripRight": 5.617297382561693e-10,
+          "GripTea": 0.999998955711662,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0.0000010437266081097126
+        }
+      },
+      "cupUp": 0.9982316296087654,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045486668442997055,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 72,
+      "time": 1.2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999998066970777,
+        "generic": 4.161395978310158e-10,
+        "tea": 0.9999998062809381,
+        "teaBlend": 0.9999999995838603,
+        "weights": {
+          "GripRight": 4.161395978310158e-10,
+          "GripTea": 0.9999992263721713,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 7.732116890204262e-7
+        }
+      },
+      "cupUp": 0.9982357313062566,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045486357470916585,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 73,
+      "time": 1.2166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999856797673,
+        "generic": 3.0828379875108576e-10,
+        "tea": 0.9999998564893892,
+        "teaBlend": 0.9999999996917162,
+        "weights": {
+          "GripRight": 3.0828379875108576e-10,
+          "GripTea": 0.9999994268824084,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 5.728093078093897e-7
+        }
+      },
+      "cupUp": 0.9982399685259021,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045486066758661665,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 74,
+      "time": 1.2333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999893913107,
+        "generic": 2.2838228883273399e-10,
+        "tea": 0.9999998936847246,
+        "teaBlend": 0.9999999997716177,
+        "weights": {
+          "GripRight": 2.2838228883273399e-10,
+          "GripTea": 0.9999995754240456,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.243475720952051e-7
+        }
+      },
+      "cupUp": 0.9982443327552686,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548578968910453,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 75,
+      "time": 1.25,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999214088967,
+        "generic": 1.691897600056807e-10,
+        "tea": 0.9999999212397069,
+        "teaBlend": 0.9999999998308102,
+        "weights": {
+          "GripRight": 1.691897600056807e-10,
+          "GripTea": 0.9999996854663971,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.1436441311437987e-7
+        }
+      },
+      "cupUp": 0.9982488155124751,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548552144989761,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 76,
+      "time": 1.2666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999417782787,
+        "generic": 1.2533884311221836e-10,
+        "tea": 0.9999999416529398,
+        "teaBlend": 0.9999999998746611,
+        "weights": {
+          "GripRight": 1.2533884311221836e-10,
+          "GripTea": 0.9999997669877758,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.328868853026613e-7
+        }
+      },
+      "cupUp": 0.9982534083487133,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045485258568787727,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 77,
+      "time": 1.2833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999956868288,
+        "generic": 9.285327661499909e-11,
+        "tea": 0.9999999567754347,
+        "teaBlend": 0.9999999999071467,
+        "weights": {
+          "GripRight": 9.285327661499909e-11,
+          "GripTea": 0.9999998273802988,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.7252684790311028e-7
+        }
+      },
+      "cupUp": 0.9982581028507236,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548499856789547,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 78,
+      "time": 1.3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999680472419,
+        "generic": 6.878741800638258e-11,
+        "tea": 0.9999999679784545,
+        "teaBlend": 0.9999999999312126,
+        "weights": {
+          "GripRight": 6.878741800638258e-11,
+          "GripTea": 0.9999998721201802,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.278110324155269e-7
+        }
+      },
+      "cupUp": 0.9982628906431988,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548473970800844,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 79,
+      "time": 1.3166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999763288145,
+        "generic": 5.095901357942947e-11,
+        "tea": 0.9999999762778555,
+        "teaBlend": 0.999999999949041,
+        "weights": {
+          "GripRight": 5.095901357942947e-11,
+          "GripTea": 0.9999999052642992,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 9.468474182001028e-8
+        }
+      },
+      "cupUp": 0.9982677633910854,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548448079841291,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 80,
+      "time": 1.3333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999824639545,
+        "generic": 3.7751356933529524e-11,
+        "tea": 0.9999999824262031,
+        "teaBlend": 0.9999999999622486,
+        "weights": {
+          "GripRight": 3.7751356933529524e-11,
+          "GripTea": 0.9999999298180666,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 7.014418201569102e-8
+        }
+      },
+      "cupUp": 0.9982727128017626,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548422105553333,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 81,
+      "time": 1.35,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999987008978,
+        "generic": 2.7966850693897103e-11,
+        "tea": 0.9999999869810111,
+        "teaBlend": 0.9999999999720331,
+        "weights": {
+          "GripRight": 2.7966850693897103e-11,
+          "GripTea": 0.999999948007945,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 5.196408814211019e-8
+        }
+      },
+      "cupUp": 0.9982777306270822,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045483959998532527,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 82,
+      "time": 1.3666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999903760142,
+        "generic": 2.0718315752347118e-11,
+        "tea": 0.9999999903552959,
+        "teaBlend": 0.9999999999792817,
+        "weights": {
+          "GripRight": 2.0718315752347118e-11,
+          "GripTea": 0.9999999614833384,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.849594332115026e-8
+        }
+      },
+      "cupUp": 0.9982828086652575,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000454836973713821,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 83,
+      "time": 1.3833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999928703759,
+        "generic": 1.5348500139106363e-11,
+        "tea": 0.9999999928550274,
+        "teaBlend": 0.9999999999846515,
+        "weights": {
+          "GripRight": 1.5348500139106363e-11,
+          "GripTea": 0.999999971466155,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.8518496452807062e-8
+        }
+      },
+      "cupUp": 0.9982879387625869,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548343308505644,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 84,
+      "time": 1.4,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999947182445,
+        "generic": 1.1370460068945014e-11,
+        "tea": 0.9999999947068741,
+        "teaBlend": 0.9999999999886295,
+        "weights": {
+          "GripRight": 1.1370460068945014e-11,
+          "GripTea": 0.9999999788616076,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.1127021909465722e-8
+        }
+      },
+      "cupUp": 0.9982931128150093,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045483167174731196,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 85,
+      "time": 1.4166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999960871793,
+        "generic": 8.423484099476404e-12,
+        "tea": 0.9999999960787558,
+        "teaBlend": 0.9999999999915765,
+        "weights": {
+          "GripRight": 8.423484099476404e-12,
+          "GripTea": 0.9999999843402936,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.5651282936214594e-8
+        }
+      },
+      "cupUp": 0.9982983227694805,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548289976795036,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 86,
+      "time": 1.4333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999971013112,
+        "generic": 6.240230536422131e-12,
+        "tea": 0.9999999970950709,
+        "teaBlend": 0.9999999999937598,
+        "weights": {
+          "GripRight": 6.240230536422131e-12,
+          "GripTea": 0.9999999883990044,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.1594755377969201e-8
+        }
+      },
+      "cupUp": 0.9983035606251665,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045482631060863546,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 87,
+      "time": 1.45,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999978525985,
+        "generic": 4.622857642309558e-12,
+        "tea": 0.9999999978479757,
+        "teaBlend": 0.9999999999953771,
+        "weights": {
+          "GripRight": 4.622857642309558e-12,
+          "GripTea": 0.9999999914057712,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 8.589605915392522e-9
+        }
+      },
+      "cupUp": 0.9983088184344511,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045482361300628823,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 88,
+      "time": 1.4666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999984091659,
+        "generic": 3.424704958613083e-12,
+        "tea": 0.9999999984057412,
+        "teaBlend": 0.9999999999965753,
+        "weights": {
+          "GripRight": 3.424704958613083e-12,
+          "GripTea": 0.9999999936332388,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 6.36333652435136e-9
+        }
+      },
+      "cupUp": 0.9983140883037525,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045482090772542584,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 89,
+      "time": 1.4833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999998821481,
+        "generic": 2.537081652883409e-12,
+        "tea": 0.999999998818944,
+        "teaBlend": 0.9999999999974629,
+        "weights": {
+          "GripRight": 2.537081652883409e-12,
+          "GripTea": 0.9999999952833871,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.714075796373981e-9
+        }
+      },
+      "cupUp": 0.9983193623941473,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548181979006358,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 90,
+      "time": 1.5,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999991269317,
+        "generic": 1.8794965567469987e-12,
+        "tea": 0.9999999991250522,
+        "teaBlend": 0.9999999999981205,
+        "weights": {
+          "GripRight": 1.8794965567469987e-12,
+          "GripTea": 0.9999999965058474,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.4922731373333437e-9
+        }
+      },
+      "cupUp": 0.9983246329217998,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045481548687706104,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 91,
+      "time": 1.5166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999993532152,
+        "generic": 1.3923306942818705e-12,
+        "tea": 0.9999999993518228,
+        "teaBlend": 0.9999999999986077,
+        "weights": {
+          "GripRight": 1.3923306942818705e-12,
+          "GripTea": 0.9999999974114683,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.587139391604105e-9
+        }
+      },
+      "cupUp": 0.9983298921581955,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045481277815590134,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 92,
+      "time": 1.5333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.99999999952085,
+        "generic": 1.0315082116849857e-12,
+        "tea": 0.9999999995198184,
+        "teaBlend": 0.9999999999989685,
+        "weights": {
+          "GripRight": 1.0315082116849857e-12,
+          "GripTea": 0.9999999980823683,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.9166002118689233e-9
+        }
+      },
+      "cupUp": 0.9983351324301751,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548100753575148,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 93,
+      "time": 1.55,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999996450369,
+        "generic": 7.641665075782443e-13,
+        "tea": 0.9999999996442728,
+        "teaBlend": 0.9999999999992358,
+        "weights": {
+          "GripRight": 7.641665075782443e-13,
+          "GripTea": 0.9999999985793836,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.4198522357833617e-9
+        }
+      },
+      "cupUp": 0.9983403461197723,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045480738218612384,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 94,
+      "time": 1.5666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999997370369,
+        "generic": 5.661027201075032e-13,
+        "tea": 0.9999999997364708,
+        "teaBlend": 0.9999999999994339,
+        "weights": {
+          "GripRight": 5.661027201075032e-13,
+          "GripTea": 0.9999999989475815,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.0518523829710788e-9
+        }
+      },
+      "cupUp": 0.9983455256638499,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045480470241344165,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 95,
+      "time": 1.5833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999998051922,
+        "generic": 4.193312363192326e-13,
+        "tea": 0.9999999998047728,
+        "teaBlend": 0.9999999999995807,
+        "weights": {
+          "GripRight": 4.193312363192326e-13,
+          "GripTea": 0.9999999992203493,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 7.792313461149122e-10
+        }
+      },
+      "cupUp": 0.9983506635535372,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548020398581607,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 96,
+      "time": 1.6,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999998556828,
+        "generic": 3.10640402245288e-13,
+        "tea": 0.9999999998553721,
+        "teaBlend": 0.9999999999996894,
+        "weights": {
+          "GripRight": 3.10640402245288e-13,
+          "GripTea": 0.9999999994224205,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 5.77268899348658e-10
+        }
+      },
+      "cupUp": 0.9983557523334661,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547993983750796,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 97,
+      "time": 1.6166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999998930872,
+        "generic": 2.3014923298018905e-13,
+        "tea": 0.999999999892857,
+        "teaBlend": 0.9999999999997699,
+        "weights": {
+          "GripRight": 2.3014923298018905e-13,
+          "GripTea": 0.9999999995721186,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.276512477473641e-10
+        }
+      },
+      "cupUp": 0.9983607846008061,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045479678184669615,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 98,
+      "time": 1.6333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999999920797,
+        "generic": 1.7053025656891753e-13,
+        "tea": 0.9999999999206265,
+        "teaBlend": 0.9999999999998295,
+        "weights": {
+          "GripRight": 1.7053025656891753e-13,
+          "GripTea": 0.9999999996830176,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.168119100393511e-10
+        }
+      },
+      "cupUp": 0.9983657530040982,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045479419417531055,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 99,
+      "time": 1.65,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999999941325,
+        "generic": 1.2634338019492962e-13,
+        "tea": 0.9999999999411987,
+        "teaBlend": 0.9999999999998737,
+        "weights": {
+          "GripRight": 1.2634338019492962e-13,
+          "GripTea": 0.9999999997651738,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.3469981513809887e-10
+        }
+      },
+      "cupUp": 0.9983706502418871,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547916392772908,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 100,
+      "time": 1.6666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999565325,
+        "generic": 9.35918009718325e-14,
+        "tea": 0.999999999956439,
+        "teaBlend": 0.9999999999999064,
+        "weights": {
+          "GripRight": 9.35918009718325e-14,
+          "GripTea": 0.9999999998260366,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.7386980744048023e-10
+        }
+      },
+      "cupUp": 0.9983754690611513,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547891210819821,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 101,
+      "time": 1.6833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999677985,
+        "generic": 6.938893903683786e-14,
+        "tea": 0.9999999999677291,
+        "teaBlend": 0.9999999999999306,
+        "weights": {
+          "GripRight": 6.938893903683786e-14,
+          "GripTea": 0.9999999998711248,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.2880585487095247e-10
+        }
+      },
+      "cupUp": 0.9983802022555319,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547866435262022,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 102,
+      "time": 1.7,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999761445,
+        "generic": 5.14033260389185e-14,
+        "tea": 0.9999999999760931,
+        "teaBlend": 0.9999999999999486,
+        "weights": {
+          "GripRight": 5.14033260389185e-14,
+          "GripTea": 0.9999999999045267,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 9.542189260968789e-11
+        }
+      },
+      "cupUp": 0.9983848426633584,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045478421055294147,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 103,
+      "time": 1.7166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999823275,
+        "generic": 3.808064974396989e-14,
+        "tea": 0.9999999999822894,
+        "teaBlend": 0.9999999999999619,
+        "weights": {
+          "GripRight": 3.808064974396989e-14,
+          "GripTea": 0.9999999999292718,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 7.069012042393028e-11
+        }
+      },
+      "cupUp": 0.9983893831654727,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045478182610944124,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 104,
+      "time": 1.7333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999869079,
+        "generic": 2.8199664825109783e-14,
+        "tea": 0.9999999999868797,
+        "teaBlend": 0.9999999999999718,
+        "weights": {
+          "GripRight": 2.8199664825109783e-14,
+          "GripTea": 0.9999999999476035,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 5.2368331893147454e-11
+        }
+      },
+      "cupUp": 0.9983938166828514,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045477949414822146,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 105,
+      "time": 1.75,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999903011,
+        "generic": 2.0872192862750505e-14,
+        "tea": 0.9999999999902802,
+        "teaBlend": 0.9999999999999791,
+        "weights": {
+          "GripRight": 2.0872192862750505e-14,
+          "GripTea": 0.9999999999611835,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.879563337250066e-11
+        }
+      },
+      "cupUp": 0.9983981361740243,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547772186232441,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 106,
+      "time": 1.7666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999928149,
+        "generic": 1.5432100042178794e-14,
+        "tea": 0.9999999999927994,
+        "teaBlend": 0.9999999999999846,
+        "weights": {
+          "GripRight": 1.5432100042178794e-14,
+          "GripTea": 0.999999999971244,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.874056548307591e-11
+        }
+      },
+      "cupUp": 0.9984023346322918,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547750034904699,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 107,
+      "time": 1.7833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999946771,
+        "generic": 1.1435297153578244e-14,
+        "tea": 0.9999999999946657,
+        "teaBlend": 0.9999999999999886,
+        "weights": {
+          "GripRight": 1.1435297153578244e-14,
+          "GripTea": 0.9999999999786972,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.129141307705116e-11
+        }
+      },
+      "cupUp": 0.9984064050827397,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045477285270719705,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 108,
+      "time": 1.8,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999960567,
+        "generic": 8.437694987117917e-15,
+        "tea": 0.9999999999960483,
+        "teaBlend": 0.9999999999999916,
+        "weights": {
+          "GripRight": 8.437694987117917e-15,
+          "GripTea": 0.9999999999842184,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.577316055545439e-11
+        }
+      },
+      "cupUp": 0.9984103405790506,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.000454770770233033,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 109,
+      "time": 1.8166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999970788,
+        "generic": 6.217248937882715e-15,
+        "tea": 0.9999999999970726,
+        "teaBlend": 0.9999999999999938,
+        "weights": {
+          "GripRight": 6.217248937882715e-15,
+          "GripTea": 0.9999999999883089,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.1684875289574775e-11
+        }
+      },
+      "cupUp": 0.9984141342001138,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547687600263955,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 110,
+      "time": 1.8333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999999997836,
+        "generic": 4.551914400953291e-15,
+        "tea": 0.9999999999978314,
+        "teaBlend": 0.9999999999999954,
+        "weights": {
+          "GripRight": 4.551914400953291e-15,
+          "GripTea": 0.9999999999913393,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 8.656186878397382e-12
+        }
+      },
+      "cupUp": 0.9984177790464319,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547668260490636,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 111,
+      "time": 1.85,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999983968,
+        "generic": 3.33066907387013e-15,
+        "tea": 0.9999999999983935,
+        "teaBlend": 0.9999999999999967,
+        "weights": {
+          "GripRight": 3.33066907387013e-15,
+          "GripTea": 0.999999999993584,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 6.412648190234883e-12
+        }
+      },
+      "cupUp": 0.9984212682363257,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045476497226107614,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 112,
+      "time": 1.8666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999988124,
+        "generic": 2.4424906541724437e-15,
+        "tea": 0.99999999999881,
+        "teaBlend": 0.9999999999999976,
+        "weights": {
+          "GripRight": 2.4424906541724437e-15,
+          "GripTea": 0.9999999999952471,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.7504222777661085e-12
+        }
+      },
+      "cupUp": 0.9984245949019358,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045476320262378603,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 113,
+      "time": 1.8833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999991201,
+        "generic": 1.7763568393986875e-15,
+        "tea": 0.9999999999991184,
+        "teaBlend": 0.9999999999999982,
+        "weights": {
+          "GripRight": 1.7763568393986875e-15,
+          "GripTea": 0.9999999999964788,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.51940698806174e-12
+        }
+      },
+      "cupUp": 0.9984277521850217,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045476152109790406,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 114,
+      "time": 1.9,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999993482,
+        "generic": 1.3322676295493195e-15,
+        "tea": 0.9999999999993469,
+        "teaBlend": 0.9999999999999987,
+        "weights": {
+          "GripRight": 1.3322676295493195e-15,
+          "GripTea": 0.9999999999973914,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.607247751029714e-12
+        }
+      },
+      "cupUp": 0.9984307332325592,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547599316454265,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 115,
+      "time": 1.9166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999995172,
+        "generic": 9.992007221621585e-16,
+        "tea": 0.9999999999995162,
+        "teaBlend": 0.999999999999999,
+        "weights": {
+          "GripRight": 9.992007221621585e-16,
+          "GripTea": 0.9999999999980677,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.9313439736379203e-12
+        }
+      },
+      "cupUp": 0.9984335311921336,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475843822870217,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 116,
+      "time": 1.9333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999996423,
+        "generic": 7.771561172373316e-16,
+        "tea": 0.9999999999996415,
+        "teaBlend": 0.9999999999999992,
+        "weights": {
+          "GripRight": 7.771561172373316e-16,
+          "GripTea": 0.9999999999985684,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.4308554341369005e-12
+        }
+      },
+      "cupUp": 0.9984361392071325,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475704480881077,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 117,
+      "time": 1.95,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999999999735,
+        "generic": 5.551115123124311e-16,
+        "tea": 0.9999999999997344,
+        "teaBlend": 0.9999999999999994,
+        "weights": {
+          "GripRight": 5.551115123124311e-16,
+          "GripTea": 0.9999999999989394,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.0600409439120989e-12
+        }
+      },
+      "cupUp": 0.9984385504117336,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475575534836474,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 118,
+      "time": 1.9666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999998037,
+        "generic": 4.4408920984997545e-16,
+        "tea": 0.9999999999998033,
+        "teaBlend": 0.9999999999999996,
+        "weights": {
+          "GripRight": 4.4408920984997545e-16,
+          "GripTea": 0.9999999999992144,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 7.851497230149104e-13
+        }
+      },
+      "cupUp": 0.9984407579256921,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547545738087789,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 119,
+      "time": 1.9833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999998546,
+        "generic": 3.3306690738749855e-16,
+        "tea": 0.9999999999998542,
+        "teaBlend": 0.9999999999999997,
+        "weights": {
+          "GripRight": 3.3306690738749855e-16,
+          "GripTea": 0.9999999999994179,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 5.817568649035818e-13
+        }
+      },
+      "cupUp": 0.9984427548489242,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547535041532329,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 120,
+      "time": 2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999998923,
+        "generic": 2.220446049250074e-16,
+        "tea": 0.9999999999998921,
+        "teaBlend": 0.9999999999999998,
+        "weights": {
+          "GripRight": 2.220446049250074e-16,
+          "GripTea": 0.999999999999569,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.3076653355456064e-13
+        }
+      },
+      "cupUp": 0.9984445342558884,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547525503426632,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 121,
+      "time": 2.0166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999202,
+        "generic": 1.1102230246250679e-16,
+        "tea": 0.9999999999999201,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246250679e-16,
+          "GripTea": 0.9999999999996806,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.1930014188219497e-13
+        }
+      },
+      "cupUp": 0.9984460891897645,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547517163399966,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 122,
+      "time": 2.033333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999408,
+        "generic": 1.1102230246250908e-16,
+        "tea": 0.9999999999999407,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246250908e-16,
+          "GripTea": 0.9999999999997632,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.366995488500833e-13
+        }
+      },
+      "cupUp": 0.9984474126564298,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547510061068671,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 123,
+      "time": 2.05,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999561,
+        "generic": 1.1102230246251079e-16,
+        "tea": 0.999999999999956,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251079e-16,
+          "GripTea": 0.9999999999998245,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.754152378907747e-13
+        }
+      },
+      "cupUp": 0.9984484976182328,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475042360499274,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 124,
+      "time": 2.066666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999675,
+        "generic": 1.1102230246251204e-16,
+        "tea": 0.9999999999999674,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251204e-16,
+          "GripTea": 0.9999999999998698,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.3011813848606832e-13
+        }
+      },
+      "cupUp": 0.9984493369875643,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547499727967961,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 125,
+      "time": 2.0833333333333335,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999759,
+        "generic": 1.1102230246251298e-16,
+        "tea": 0.9999999999999758,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251298e-16,
+          "GripTea": 0.9999999999999035,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 9.636735853746358e-14
+        }
+      },
+      "cupUp": 0.9984499236202266,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547496576454119,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 126,
+      "time": 2.1,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999821,
+        "generic": 1.1102230246251367e-16,
+        "tea": 0.999999999999982,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251367e-16,
+          "GripTea": 0.9999999999999284,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 7.149836278586007e-14
+        }
+      },
+      "cupUp": 0.9984502503085986,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547494821107303,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 127,
+      "time": 2.1166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999868,
+        "generic": 1.1102230246251419e-16,
+        "tea": 0.9999999999999867,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251419e-16,
+          "GripTea": 0.999999999999947,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 5.2846615972157445e-14
+        }
+      },
+      "cupUp": 0.9984502963223999,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547494573850365,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 128,
+      "time": 2.1333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999902,
+        "generic": 1.1102230246251457e-16,
+        "tea": 0.9999999999999901,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251457e-16,
+          "GripTea": 0.9999999999999608,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.9079850466805504e-14
+        }
+      },
+      "cupUp": 0.99844982084544,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547497128622535,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 129,
+      "time": 2.15,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999928,
+        "generic": 1.1102230246251485e-16,
+        "tea": 0.9999999999999927,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251485e-16,
+          "GripTea": 0.999999999999971,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.8865798640254064e-14
+        }
+      },
+      "cupUp": 0.9984487518012389,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475028710202696,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 130,
+      "time": 2.1666666666666665,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999947,
+        "generic": 1.1102230246251506e-16,
+        "tea": 0.9999999999999946,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251506e-16,
+          "GripTea": 0.9999999999999786,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.1316282072803002e-14
+        }
+      },
+      "cupUp": 0.9984471080178828,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475116961829894,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 131,
+      "time": 2.183333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999999999996,
+        "generic": 1.1102230246251521e-16,
+        "tea": 0.9999999999999959,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251521e-16,
+          "GripTea": 0.9999999999999839,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.598721155460225e-14
+        }
+      },
+      "cupUp": 0.9984449079948688,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475234992453417,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 132,
+      "time": 2.2,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.999999999999997,
+        "generic": 1.1102230246251532e-16,
+        "tea": 0.9999999999999969,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251532e-16,
+          "GripTea": 0.9999999999999879,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.1990408665951689e-14
+        }
+      },
+      "cupUp": 0.9984421699441075,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475381753449156,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 133,
+      "time": 2.216666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999978,
+        "generic": 1.1102230246251541e-16,
+        "tea": 0.9999999999999977,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251541e-16,
+          "GripTea": 0.999999999999991,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 8.88178419700125e-15
+        }
+      },
+      "cupUp": 0.9984389118295053,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045475556196163087,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 134,
+      "time": 2.2333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999983,
+        "generic": 1.1102230246251547e-16,
+        "tea": 0.9999999999999982,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251547e-16,
+          "GripTea": 0.9999999999999932,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 6.6613381477509385e-15
+        }
+      },
+      "cupUp": 0.9984351514051307,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547575727189048,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 135,
+      "time": 2.25,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999988,
+        "generic": 1.1102230246251552e-16,
+        "tea": 0.9999999999999987,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251552e-16,
+          "GripTea": 0.999999999999995,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.884981308350688e-15
+        }
+      },
+      "cupUp": 0.9984309062519606,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547598393190706,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 136,
+      "time": 2.2666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999991,
+        "generic": 1.1102230246251556e-16,
+        "tea": 0.999999999999999,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251556e-16,
+          "GripTea": 0.9999999999999963,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 3.5527136788005005e-15
+        }
+      },
+      "cupUp": 0.9984261938132085,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547623512754748,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 137,
+      "time": 2.283333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999993,
+        "generic": 1.1102230246251558e-16,
+        "tea": 0.9999999999999992,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251558e-16,
+          "GripTea": 0.9999999999999972,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 2.6645352591003753e-15
+        }
+      },
+      "cupUp": 0.9984210314282329,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547650981011758,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 138,
+      "time": 2.3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999996,
+        "generic": 1.110223024625156e-16,
+        "tea": 0.9999999999999994,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.110223024625156e-16,
+          "GripTea": 0.9999999999999981,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.7763568394002503e-15
+        }
+      },
+      "cupUp": 0.9984154363650287,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547680693088365,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 139,
+      "time": 2.316666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999997,
+        "generic": 1.1102230246251562e-16,
+        "tea": 0.9999999999999996,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251562e-16,
+          "GripTea": 0.9999999999999986,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 1.3322676295501877e-15
+        }
+      },
+      "cupUp": 0.9984094258512974,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045477125441118713,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 140,
+      "time": 2.3333333333333335,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999998,
+        "generic": 1.1102230246251563e-16,
+        "tea": 0.9999999999999997,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251563e-16,
+          "GripTea": 0.999999999999999,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 8.881784197001251e-16
+        }
+      },
+      "cupUp": 0.9984030171040996,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547746429212932,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 141,
+      "time": 2.35,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983962273580875,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045477822435181976,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 142,
+      "time": 2.3666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983890738923181,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045478198821552473,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 143,
+      "time": 2.3833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.998381574055648,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045478592402600125,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 144,
+      "time": 2.4,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983737452907073,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045479002129507475,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 145,
+      "time": 2.4166666666666665,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983656051564558,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547942695371102,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 146,
+      "time": 2.433333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983571713493181,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004547986582644534,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 147,
+      "time": 2.45,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983484617229009,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045480317699127086,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 148,
+      "time": 2.466666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983394943062893,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548078152307337,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 149,
+      "time": 2.4833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983302873209258,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548125624964344,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 150,
+      "time": 2.5,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983208591960674,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548174083003393,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 151,
+      "time": 2.5166666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983112285828256,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548223421592238,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 152,
+      "time": 2.533333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9983014143667868,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045482735358574704,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 153,
+      "time": 2.55,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982914356792121,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045483243209436,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 154,
+      "time": 2.566666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982813119068198,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045483756719964043,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 155,
+      "time": 2.5833333333333335,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982710627001478,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548427484149302,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 156,
+      "time": 2.6,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982607079804975,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045484796525722954,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 157,
+      "time": 2.6166666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982502679454595,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045485320723907395,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 158,
+      "time": 2.6333333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.998239763073018,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548584638777084,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 159,
+      "time": 2.65,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982292141242405,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548637246869981,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 160,
+      "time": 2.6666666666666665,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982186421445457,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045486897918332365,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 161,
+      "time": 2.683333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9982080684635541,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548742168813284,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 162,
+      "time": 2.7,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981975146935209,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548794272978704,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 163,
+      "time": 2.716666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981870027263492,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045488459994843877,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 164,
+      "time": 2.7333333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981765547291866,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045488972434948555,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 165,
+      "time": 2.75,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981661931386033,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548947900168217,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 166,
+      "time": 2.7666666666666666,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981559406533511,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004548997864677348,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 167,
+      "time": 2.783333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981458202257065,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045490470321830255,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 168,
+      "time": 2.8,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981358550513949,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549095297855656,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 169,
+      "time": 2.816666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981260685580973,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549142556867673,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 170,
+      "time": 2.8333333333333335,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981164843925399,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549188704385806,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 171,
+      "time": 2.85,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9981071264061656,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045492336355738,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 172,
+      "time": 2.8666666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980980186393889,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045492772456219273,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 173,
+      "time": 2.8833333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980891853044329,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045493194296907907,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 174,
+      "time": 2.9,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980806507667488,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045493600829627244,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 175,
+      "time": 2.9166666666666665,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980724395250193,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549399100603999,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 176,
+      "time": 2.933333333333333,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980645761897436,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045494363778020395,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 177,
+      "time": 2.95,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980570854604058,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045494718097210414,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 178,
+      "time": 2.966666666666667,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980499921012259,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.00045495052915411205,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 179,
+      "time": 2.9833333333333334,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980433209154942,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549536718450159,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 180,
+      "time": 3,
+      "care": true,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.9999999999999999,
+        "generic": 1.1102230246251564e-16,
+        "tea": 0.9999999999999998,
+        "teaBlend": 0.9999999999999999,
+        "weights": {
+          "GripRight": 1.1102230246251564e-16,
+          "GripTea": 0.9999999999999994,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 4.4408920985006257e-16
+        }
+      },
+      "cupUp": 0.9980370967184872,
+      "vertices": 847,
+      "nearSurfaceVertices": 293,
+      "insideOver1mm": 0,
+      "minNearSignedMetres": 0.0004549565985613384,
+      "flaggedVertices": []
+    },
+    {
+      "frame": 181,
+      "time": 3.0166666666666666,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.7408182206817178,
+        "generic": 0.1920065845876915,
+        "tea": 0.5488116360940263,
+        "teaBlend": 0.7408182206817178,
+        "weights": {
+          "GripRight": 0.1920065845876915,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0.027208117669048165,
+          "GripTeaLate": 0.7136101030126696
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 182,
+      "time": 3.033333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.5488116360940264,
+        "generic": 0.24761742418182434,
+        "tea": 0.301194211912202,
+        "teaBlend": 0.5488116360940264,
+        "weights": {
+          "GripRight": 0.24761742418182434,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0,
+          "GripTeaHalf": 0.44165806063327095,
+          "GripTeaLate": 0.10715357546075542
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 183,
+      "time": 3.05,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.4065696597405991,
+        "generic": 0.24127077151901258,
+        "tea": 0.16529888822158653,
+        "teaBlend": 0.4065696597405991,
+        "weights": {
+          "GripRight": 0.24127077151901258,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0.15194376659485206,
+          "GripTeaHalf": 0.254625893145747,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 184,
+      "time": 3.066666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.3011942119122021,
+        "generic": 0.2104762586227896,
+        "tea": 0.0907179532894125,
+        "teaBlend": 0.3011942119122021,
+        "weights": {
+          "GripRight": 0.2104762586227896,
+          "GripTea": 0,
+          "GripTeaOpen": 0,
+          "GripTeaQuarter": 0.2395166106667542,
+          "GripTeaHalf": 0.0616776012454479,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 185,
+      "time": 3.0833333333333335,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.22313016014842982,
+        "generic": 0.1733430917805659,
+        "tea": 0.04978706836786394,
+        "teaBlend": 0.22313016014842982,
+        "weights": {
+          "GripRight": 0.1733430917805659,
+          "GripTea": 0,
+          "GripTeaOpen": 0.023981886676974064,
+          "GripTeaQuarter": 0.19914827347145575,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 186,
+      "time": 3.1,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.16529888822158653,
+        "generic": 0.13797516577429397,
+        "tea": 0.02732372244729256,
+        "teaBlend": 0.16529888822158653,
+        "weights": {
+          "GripRight": 0.13797516577429397,
+          "GripTea": 0,
+          "GripTeaOpen": 0.056003998432416296,
+          "GripTeaQuarter": 0.10929488978917024,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 187,
+      "time": 3.1166666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.1224564282529819,
+        "generic": 0.10746085143250421,
+        "tea": 0.014995576820477705,
+        "teaBlend": 0.1224564282529819,
+        "weights": {
+          "GripRight": 0.10746085143250421,
+          "GripTea": 0,
+          "GripTeaOpen": 0.06247412097107108,
+          "GripTeaQuarter": 0.05998230728191082,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 188,
+      "time": 3.1333333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0907179532894125,
+        "generic": 0.08248820624039248,
+        "tea": 0.008229747049020028,
+        "teaBlend": 0.0907179532894125,
+        "weights": {
+          "GripRight": 0.08248820624039248,
+          "GripTea": 0,
+          "GripTeaOpen": 0.057798965093332384,
+          "GripTeaQuarter": 0.032918988196080114,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 189,
+      "time": 3.15,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.06720551273974976,
+        "generic": 0.0626889317971371,
+        "tea": 0.004516580942612667,
+        "teaBlend": 0.06720551273974976,
+        "weights": {
+          "GripRight": 0.0626889317971371,
+          "GripTea": 0,
+          "GripTeaOpen": 0.049139188969299086,
+          "GripTeaQuarter": 0.018066323770450667,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 190,
+      "time": 3.1666666666666665,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.04978706836786394,
+        "generic": 0.04730831619119758,
+        "tea": 0.002478752176666358,
+        "teaBlend": 0.04978706836786394,
+        "weights": {
+          "GripRight": 0.04730831619119758,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0398720596611985,
+          "GripTeaQuarter": 0.009915008706665432,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 191,
+      "time": 3.183333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.03688316740124,
+        "generic": 0.03552279936369211,
+        "tea": 0.001360368037547893,
+        "teaBlend": 0.03688316740124,
+        "weights": {
+          "GripRight": 0.03552279936369211,
+          "GripTea": 0,
+          "GripTeaOpen": 0.03144169525104843,
+          "GripTeaQuarter": 0.005441472150191572,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 192,
+      "time": 3.2,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.02732372244729256,
+        "generic": 0.02657713663891588,
+        "tea": 0.0007465858083766793,
+        "teaBlend": 0.02732372244729256,
+        "weights": {
+          "GripRight": 0.02657713663891588,
+          "GripTea": 0,
+          "GripTeaOpen": 0.024337379213785842,
+          "GripTeaQuarter": 0.0029863432335067172,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 193,
+      "time": 3.216666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.020241911445804388,
+        "generic": 0.019832176466824603,
+        "tea": 0.0004097349789797867,
+        "teaBlend": 0.020241911445804388,
+        "weights": {
+          "GripRight": 0.019832176466824603,
+          "GripTea": 0,
+          "GripTeaOpen": 0.01860297152988524,
+          "GripTeaQuarter": 0.0016389399159191468,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 194,
+      "time": 3.2333333333333334,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.014995576820477707,
+        "generic": 0.014770709496298858,
+        "tea": 0.00022486732417884828,
+        "teaBlend": 0.014995576820477707,
+        "weights": {
+          "GripRight": 0.014770709496298858,
+          "GripTea": 0,
+          "GripTeaOpen": 0.014096107523762315,
+          "GripTeaQuarter": 0.0008994692967153931,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 195,
+      "time": 3.25,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.011108996538242308,
+        "generic": 0.010985586734155629,
+        "tea": 0.0001234098040866796,
+        "teaBlend": 0.011108996538242308,
+        "weights": {
+          "GripRight": 0.010985586734155629,
+          "GripTea": 0,
+          "GripTeaOpen": 0.010615357321895589,
+          "GripTeaQuarter": 0.0004936392163467184,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 196,
+      "time": 3.2666666666666666,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00822974704902003,
+        "generic": 0.008162018312529176,
+        "tea": 0.0000677287364908539,
+        "teaBlend": 0.00822974704902003,
+        "weights": {
+          "GripRight": 0.008162018312529176,
+          "GripTea": 0,
+          "GripTeaOpen": 0.007958832103056614,
+          "GripTeaQuarter": 0.0002709149459634156,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 197,
+      "time": 3.283333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.006096746565515637,
+        "generic": 0.006059576246831511,
+        "tea": 0.000037170318684126714,
+        "teaBlend": 0.006096746565515637,
+        "weights": {
+          "GripRight": 0.006059576246831511,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00594806529077913,
+          "GripTeaQuarter": 0.00014868127473650685,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 198,
+      "time": 3.3,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0045165809426126685,
+        "generic": 0.0044961814392014965,
+        "tea": 0.000020399503411171942,
+        "teaBlend": 0.0045165809426126685,
+        "weights": {
+          "GripRight": 0.0044961814392014965,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00443498292896798,
+          "GripTeaQuarter": 0.00008159801364468777,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 199,
+      "time": 3.316666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0033459654574712733,
+        "generic": 0.0033347699726286825,
+        "tea": 0.000011195484842590947,
+        "teaBlend": 0.0033459654574712733,
+        "weights": {
+          "GripRight": 0.0033347699726286825,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00330118351810091,
+          "GripTeaQuarter": 0.000044781939370363786,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 200,
+      "time": 3.3333333333333335,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.002478752176666359,
+        "generic": 0.002472607964313031,
+        "tea": 0.000006144212353328212,
+        "teaBlend": 0.002478752176666359,
+        "weights": {
+          "GripRight": 0.002472607964313031,
+          "GripTea": 0,
+          "GripTeaOpen": 0.002454175327253046,
+          "GripTeaQuarter": 0.00002457684941331285,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 201,
+      "time": 3.35,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0018363047770289071,
+        "generic": 0.001832932761794768,
+        "tea": 0.000003372015234139184,
+        "teaBlend": 0.0018363047770289071,
+        "weights": {
+          "GripRight": 0.001832932761794768,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0018228167160923505,
+          "GripTeaQuarter": 0.000013488060936556736,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 202,
+      "time": 3.3666666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0013603680375478937,
+        "generic": 0.0013585174363503116,
+        "tea": 0.0000018506011975819073,
+        "teaBlend": 0.0013603680375478937,
+        "weights": {
+          "GripRight": 0.0013585174363503116,
+          "GripTea": 0,
+          "GripTeaOpen": 0.001352965632757566,
+          "GripTeaQuarter": 0.000007402404790327629,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 203,
+      "time": 3.3833333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0010077854290485109,
+        "generic": 0.0010067697975775084,
+        "tea": 0.0000010156314710024911,
+        "teaBlend": 0.0010077854290485109,
+        "weights": {
+          "GripRight": 0.0010067697975775084,
+          "GripTea": 0,
+          "GripTeaOpen": 0.001003722903164501,
+          "GripTeaQuarter": 0.0000040625258840099644,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 204,
+      "time": 3.4,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0007465858083766794,
+        "generic": 0.00074602841800741,
+        "tea": 5.573903692694599e-7,
+        "teaBlend": 0.0007465858083766794,
+        "weights": {
+          "GripRight": 0.00074602841800741,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0007443562468996015,
+          "GripTeaQuarter": 0.0000022295614770778395,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 205,
+      "time": 3.4166666666666665,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0005530843701478336,
+        "generic": 0.0005527784678273319,
+        "tea": 3.0590232050182584e-7,
+        "teaBlend": 0.0005530843701478336,
+        "weights": {
+          "GripRight": 0.0005527784678273319,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0005518607608658263,
+          "GripTeaQuarter": 0.0000012236092820073034,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 206,
+      "time": 3.433333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00040973497897978675,
+        "generic": 0.0004095670962267872,
+        "tea": 1.678827529995663e-7,
+        "teaBlend": 0.00040973497897978675,
+        "weights": {
+          "GripRight": 0.0004095670962267872,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0004090634479677885,
+          "GripTeaQuarter": 6.715310119982652e-7,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 207,
+      "time": 3.45,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0003035391380788667,
+        "generic": 0.00030344700207052104,
+        "tea": 9.213600834566132e-8,
+        "teaBlend": 0.0003035391380788667,
+        "weights": {
+          "GripRight": 0.00030344700207052104,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0003031705940454841,
+          "GripTeaQuarter": 3.685440333826453e-7,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 208,
+      "time": 3.466666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00022486732417884833,
+        "generic": 0.000224816758865365,
+        "tea": 5.056531348335527e-8,
+        "teaBlend": 0.00022486732417884833,
+        "weights": {
+          "GripRight": 0.000224816758865365,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0002246650629249149,
+          "GripTeaQuarter": 2.0226125393342107e-7,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 209,
+      "time": 3.4833333333333334,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00016658581098763346,
+        "generic": 0.00016655806015521105,
+        "tea": 2.775083242240754e-8,
+        "teaBlend": 0.00016658581098763346,
+        "weights": {
+          "GripRight": 0.00016655806015521105,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00016647480765794384,
+          "GripTeaQuarter": 1.1100332968963016e-7,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 210,
+      "time": 3.5,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0001234098040866796,
+        "generic": 0.00012339457410693488,
+        "tea": 1.522997974471264e-8,
+        "teaBlend": 0.0001234098040866796,
+        "weights": {
+          "GripRight": 0.00012339457410693488,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00012334888416770074,
+          "GripTeaQuarter": 6.091991897885056e-8,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 211,
+      "time": 3.5166666666666666,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00009142423147817336,
+        "generic": 0.00009141587308807199,
+        "tea": 8.358390101374625e-9,
+        "teaBlend": 0.00009142423147817336,
+        "weights": {
+          "GripRight": 0.00009141587308807199,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00009139079791776786,
+          "GripTeaQuarter": 3.34335604054985e-8,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 212,
+      "time": 3.533333333333333,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.0000677287364908539,
+        "generic": 0.00006772414930910725,
+        "tea": 4.587181746647525e-9,
+        "teaBlend": 0.0000677287364908539,
+        "weights": {
+          "GripRight": 0.00006772414930910725,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00006771038776386731,
+          "GripTeaQuarter": 1.83487269865901e-8,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 213,
+      "time": 3.55,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00005017468205617532,
+        "generic": 0.000050172164557455885,
+        "tea": 2.517498719438282e-9,
+        "teaBlend": 0.00005017468205617532,
+        "weights": {
+          "GripRight": 0.000050172164557455885,
+          "GripTea": 0,
+          "GripTeaOpen": 0.00005016461206129757,
+          "GripTeaQuarter": 1.0069994877753128e-8,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 214,
+      "time": 3.566666666666667,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00003717031868412672,
+        "generic": 0.00003716893705153564,
+        "tea": 1.38163259107954e-9,
+        "teaBlend": 0.00003717031868412672,
+        "weights": {
+          "GripRight": 0.00003716893705153564,
+          "GripTea": 0,
+          "GripTeaOpen": 0.0000371647921537624,
+          "GripTeaQuarter": 5.52653036431816e-9,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 215,
+      "time": 3.5833333333333335,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.00002753644934974717,
+        "generic": 0.000027535691093704382,
+        "tea": 7.582560427911914e-10,
+        "teaBlend": 0.00002753644934974717,
+        "weights": {
+          "GripRight": 0.000027535691093704382,
+          "GripTea": 0,
+          "GripTeaOpen": 0.000027533416325576006,
+          "GripTeaQuarter": 3.0330241711647655e-9,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    },
+    {
+      "frame": 216,
+      "time": 3.6,
+      "care": false,
+      "poses": {
+        "name": "SkinnedArticulationCore",
+        "grip": 0.000020399503411171946,
+        "generic": 0.000020399087271432525,
+        "tea": 4.1613973942241587e-10,
+        "teaBlend": 0.000020399503411171946,
+        "weights": {
+          "GripRight": 0.000020399087271432525,
+          "GripTea": 0,
+          "GripTeaOpen": 0.000020397838852214255,
+          "GripTeaQuarter": 1.6645589576896635e-9,
+          "GripTeaHalf": 0,
+          "GripTeaLate": 0
+        }
+      },
+      "cupUp": null
+    }
+  ],
+  "idleWarmupFrames": 60,
+  "sampleStride": 1,
+  "scope": "60Hz actual actor updates after idle warmup; first frame and then each sampleStride frames. Fully weighted right-hand vertices versus handle nearest-triangle normal within 15mm; not watertight containment, triangle intersection, self-collision or continuous-time proof. Captures use actual actor materials in an isolated lit review scene, not the game environment.",
+  "worst": {
+    "frame": 29,
+    "time": 0.48333333333333334,
+    "care": true,
+    "poses": {
+      "name": "SkinnedArticulationCore",
+      "grip": 0.9226423634502144,
+      "generic": 0.00015369912636697912,
+      "tea": 0.9224886643238475,
+      "teaBlend": 0.9998334141890123,
+      "weights": {
+        "GripRight": 0.00015369912636697912,
+        "GripTea": 0.690454414728353,
+        "GripTeaOpen": 0,
+        "GripTeaQuarter": 0,
+        "GripTeaHalf": 0,
+        "GripTeaLate": 0.3093789994606593
+      }
+    },
+    "cupUp": 0.9977809661095332,
+    "vertices": 847,
+    "nearSurfaceVertices": 307,
+    "insideOver1mm": 2,
+    "minNearSignedMetres": -0.00108675758409241,
+    "flaggedVertices": [
+      {
+        "id": 1825,
+        "handLocal": [
+          -0.0048095714014084745,
+          -0.05342644435391097,
+          0.04259260099282766
+        ],
+        "basisCore": [
+          0.25288504362106323,
+          0.6321503520011902,
+          0.024283230304718018
+        ],
+        "nearestHandleFace": 81,
+        "nearestHandLocal": [
+          -0.004727573653063395,
+          -0.053760282180723956,
+          0.043623557209762936
+        ],
+        "signedMetres": -0.00108675758409241
+      },
+      {
+        "id": 1826,
+        "handLocal": [
+          -0.0048095714014084745,
+          -0.05342644435391097,
+          0.04259260099282766
+        ],
+        "basisCore": [
+          0.25288504362106323,
+          0.6321503520011902,
+          0.024283230304718018
+        ],
+        "nearestHandleFace": 81,
+        "nearestHandLocal": [
+          -0.004727573653063395,
+          -0.053760282180723956,
+          0.043623557209762936
+        ],
+        "signedMetres": -0.00108675758409241
+      }
+    ]
+  },
+  "candidate": {
+    "file": "tmp/portrait-study/tea-phases-v1/public/assets/atrium/residents/you.glb",
+    "sha256": "f98671f468fb37479746dfc089cf498e9886529b87f00e66cbe29d21815c4b29",
+    "requests": 1
+  },
+  "runtimeModules": {
+    "src/atrium-actors.js": "61e2809a67a67fe01114b81e28513bab2d4f54cdc7b410200f32458403b0ea9c",
+    "src/atrium-main.js": "6c8de19a224d0396bc16ec596e8a8419a049f1dc4d9c7957ec8d21b2060baf6a"
+  },
+  "captureFiles": [
+    {
+      "frame": 1,
+      "time": 0.016666666666666666,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-001.png"
+    },
+    {
+      "frame": 6,
+      "time": 0.1,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-006.png"
+    },
+    {
+      "frame": 12,
+      "time": 0.2,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-012.png"
+    },
+    {
+      "frame": 28,
+      "time": 0.4666666666666667,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-028.png"
+    },
+    {
+      "frame": 29,
+      "time": 0.48333333333333334,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-029.png"
+    },
+    {
+      "frame": 30,
+      "time": 0.5,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-030.png"
+    },
+    {
+      "frame": 180,
+      "time": 3,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-180.png"
+    },
+    {
+      "frame": 216,
+      "time": 3.6,
+      "file": "evidence/atrium/tea-phases-study/detail/trajectory-frame-216.png"
+    }
+  ]
+}

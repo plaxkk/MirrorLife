@@ -6,6 +6,7 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 const [candidate,output]=process.argv.slice(2);assert.ok(candidate&&output);
 const capture=process.env.ATRIUM_GRIP_CAPTURE==='1';
+const detail=process.env.ATRIUM_GRIP_DETAIL==='1';
 const sampleStride=Number(process.env.ATRIUM_GRIP_SAMPLE_STRIDE||6);assert.ok(Number.isInteger(sampleStride)&&sampleStride>=1&&sampleStride<=6);
 const body=await fs.readFile(candidate);let requests=0;
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox']});
@@ -13,7 +14,7 @@ try{
  const page=await browser.newPage();await page.setRequestInterception(true);
  page.on('request',r=>{if(new URL(r.url()).pathname==='/assets/atrium/residents/you.glb'){requests++;return r.respond({status:200,contentType:'model/gltf-binary',body});}return r.continue();});
  await page.goto((process.env.MIRRORLIFE_BASE_URL||'http://127.0.0.1:4203')+'/');
- const report=await page.evaluate(async ({capture,sampleStride})=>{
+ const report=await page.evaluate(async ({capture,sampleStride,detail})=>{
   const T=await import('/node_modules/three/build/three.module.js');
   const {loadAtriumActor}=await import('/src/atrium-actors.js');
   const {loadAtriumGLB}=await import('/src/atrium-assets.js');
@@ -38,7 +39,7 @@ try{
   // action and 600ms release. World scale/morph/skin are the actual actor code.
   for(let frame=1;frame<=216;frame++){
    const time=frame/60,care=frame<=180;actor.update(time,1/60,{care});actor.group.updateMatrixWorld(true);core.skeleton.update();
-   if(renderer&&[1,6,12,30,180,216].includes(frame)){
+   if(renderer&&[1,6,12,28,29,30,180,216].includes(frame)){
     const target=hand.getWorldPosition(new T.Vector3()),cupPosition=cup.getWorldPosition(new T.Vector3());
     const distance=care?target.distanceTo(cupPosition):0;
     if(care)target.lerp(cupPosition,.5);
@@ -52,19 +53,20 @@ try{
     const inverse=hand.matrixWorld.clone().invert();
     const transform=inverse.clone().multiply(handle.matrixWorld),hg=handle.geometry,hi=hg.index,hp=hg.attributes.position,triangles=[];
     for(let i=0;i<(hi?.count||hp.count);i+=3)triangles.push(new T.Triangle(...[0,1,2].map(j=>new T.Vector3().fromBufferAttribute(hp,hi?hi.getX(i+j):i+j).applyMatrix4(transform))));
-    let inside=0,minSigned=Infinity,near=0;
+    let inside=0,minSigned=Infinity,near=0;const flagged=[];
     for(const id of ids){
      core.getVertexPosition(id,point);point.applyMatrix4(core.matrixWorld).applyMatrix4(inverse);
-     let best=Infinity,signed=Infinity;
-     for(const triangle of triangles){triangle.closestPointToPoint(point,nearest);const distance=point.distanceTo(nearest);if(distance<best){best=distance;triangle.getNormal(normal);signed=Math.sign(delta.copy(point).sub(nearest).dot(normal))*distance;}}
-     if(best<.015){near++;minSigned=Math.min(minSigned,signed);if(signed<-.001)inside++;}
+     let best=Infinity,signed=Infinity,face=-1;const closest=new T.Vector3();
+     for(let faceIndex=0;faceIndex<triangles.length;faceIndex++){const triangle=triangles[faceIndex];triangle.closestPointToPoint(point,nearest);const distance=point.distanceTo(nearest);if(distance<best){best=distance;triangle.getNormal(normal);signed=Math.sign(delta.copy(point).sub(nearest).dot(normal))*distance;face=faceIndex;closest.copy(nearest);}}
+     if(best<.015){near++;minSigned=Math.min(minSigned,signed);if(signed<-.001){inside++;if(detail)flagged.push({id,handLocal:point.toArray(),basisCore:new T.Vector3().fromBufferAttribute(g.attributes.position,id).toArray(),nearestHandleFace:face,nearestHandLocal:closest.toArray(),signedMetres:signed});}}
     }
     Object.assign(row,{vertices:ids.length,nearSurfaceVertices:near,insideOver1mm:inside,minNearSignedMetres:Number.isFinite(minSigned)?minSigned:null});
+    if(detail)row.flaggedVertices=flagged;
    }
    samples.push(row);
   }
   return {samples,captures,idleWarmupFrames:60,sampleStride,scope:'60Hz actual actor updates after idle warmup; first frame and then each sampleStride frames. Fully weighted right-hand vertices versus handle nearest-triangle normal within 15mm; not watertight containment, triangle intersection, self-collision or continuous-time proof. Captures use actual actor materials in an isolated lit review scene, not the game environment.'};
- },{capture,sampleStride});
+ },{capture,sampleStride,detail});
  assert.ok(requests>0);assert.ok(report.samples.every(s=>s.poses.grip>=0&&s.poses.grip<=1.000001));
  assert.ok(report.samples.at(-1).poses.grip<.01&&report.samples.at(-1).poses.teaBlend<.01);
  const active=report.samples.filter(s=>s.care);
