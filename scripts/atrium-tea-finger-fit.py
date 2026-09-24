@@ -26,6 +26,10 @@ def author(core,hand,anchor):
     tree=BVHTree.FromPolygons([transform@v.co for v in mesh.vertices],[tuple(p.vertices) for p in mesh.polygons])
     evaluated.to_mesh_clear()
     local=hand.matrix_world.inverted()@core.matrix_world;inverse=local.inverted()
+    joint_pose=None
+    if os.environ.get('ATRIUM_FINGER_JOINT_STUDY','0')=='1':
+        import runpy
+        joint_pose=runpy.run_path(str(Path(__file__).with_name('atrium-finger-joints.py')))['prepare'](hand)
     base=core.data.shape_keys.key_blocks['GripRight']
     tea=core.shape_key_add(name='GripTea');group=core.vertex_groups['SkinRightHand'].index
     points=[local@v.co for v in base.data];deltas={};adjacent={i:set() for i in range(len(points))}
@@ -79,8 +83,11 @@ def author(core,hand,anchor):
         if os.environ.get('ATRIUM_TEA_PHASE_STUDY','0')=='1':
             phases=[]
             for name,weight in [('GripTeaOpen',0),('GripTeaQuarter',.25),('GripTeaHalf',.5),('GripTeaLate',.75)]:
-                coordinates=[a.co.lerp(b.co,weight) for a,b in zip(basis.data,tea.data)]
-                for i,d in offsets.items():coordinates[i]+=inverse.to_3x3()@d*(4*weight*(1-weight))
+                if joint_pose:
+                    coordinates=[inverse@joint_pose(local@v.co,weight) if i in ids else v.co.copy() for i,v in enumerate(basis.data)]
+                else:
+                    coordinates=[a.co.lerp(b.co,weight) for a,b in zip(basis.data,tea.data)]
+                    for i,d in offsets.items():coordinates[i]+=inverse.to_3x3()@d*(4*weight*(1-weight))
                 samples=[local@p for p in coordinates]
                 pad={i:correction(samples[i]) for i in ids}
                 pad={i:d for i,d in pad.items() if d.length>1e-7}

@@ -32,6 +32,10 @@ for name in ['Basis','GripRight','GripTeaOpen','GripTeaQuarter','GripTeaHalf','G
  out[name]=dict(triangles=len(tris),foldCount=len(fold),thumbRegionFoldCount=sum(f['thumbRegion'] for f in fold),folds=sorted(fold,key=lambda x:-x['angle'])[:12],minAreaRatio=min(x/y for x,y in zip(a,ba) if y>1e-12))
 out['sourceSha256']=hashlib.sha256(Path(os.environ['ATRIUM_GRIP_SOURCE']).read_bytes()).hexdigest()
 out['baselineScopeVerified']=bool(baseline)
+controls=[o for o in bpy.data.objects if o.name.startswith('GripJoint_')]
+if controls:
+ assert len(controls)==12
+ out['fingerControls']=[dict(name=o.name,flexionRadians=o['flexionRadians'],restDistance=o['restDistance'],blendWidth=o['blendWidth']) for o in sorted(controls,key=lambda o:o.name)]
 if 'atrium_contact_surface_fit' in m:
  out['contactSurfaceFit']=[{**dict(row),'acceptedStepScales':list(row['acceptedStepScales'])} for row in m['atrium_contact_surface_fit']]
 out['scope']='Source local dihedral screening, not intersection or anatomy proof. Fold means >90 degrees and >30 degrees increase over Basis.'

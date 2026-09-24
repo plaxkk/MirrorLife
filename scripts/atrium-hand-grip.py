@@ -12,6 +12,11 @@ def author(core):
     local=hand.matrix_world.inverted()@core.matrix_world
     inverse=local.inverted()
     group=core.vertex_groups['SkinRightHand'].index
+    joint_pose=None
+    if os.environ.get('ATRIUM_FINGER_JOINT_STUDY','0')=='1':
+        import runpy
+        from pathlib import Path
+        joint_pose=runpy.run_path(str(Path(__file__).with_name('atrium-finger-joints.py')))['prepare'](hand)
     changed=0
     for v in core.data.vertices:
         if not any(g.group==group and g.weight>.999 for g in v.groups):continue
@@ -36,7 +41,8 @@ def author(core):
             weight=weight*weight*(3-2*weight)
             q=p.lerp(q,weight)
         # Bring the thumb pad inward; independent from the four curled digits.
-        if p.x<-.042:
+        if joint_pose:q=joint_pose(p)
+        if not joint_pose and p.x<-.042:
             if os.environ.get('ATRIUM_THUMB_FLOW_STUDY','0')=='1':
                 # The one-shot offset has dx'/dx as low as -0.32, reversing
                 # the web. Re-evaluate the same velocity field in small steps:
