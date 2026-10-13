@@ -1,0 +1,11 @@
+{
+  "assessedAt": "2026-10-13T07:10:26.572101+00:00",
+  "commit": "0b9d92deddac0598a9624e3be3dc8f94650925be",
+  "scope": "Local Vite production preview. No public deployment verification. Candidate GLB request interception is isolated.",
+  "sha256": {
+    "src/atrium-main.js": "6c8de19a224d0396bc16ec596e8a8419a049f1dc4d9c7957ec8d21b2060baf6a",
+    "src/atrium-actors.js": "61e2809a67a67fe01114b81e28513bab2d4f54cdc7b410200f32458403b0ea9c",
+    "src/atrium-content.js": "b5547b042a3b6249595dee88aef15cea7e730991e21e3de96efbd1749a019610",
+    "public/assets/atrium/residents/lin.glb": "b60cc3a50e6244c9027de23e7ddaba30035ff05632a7575f670f9497c1b50ad4"
+  }
+}

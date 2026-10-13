@@ -1,0 +1,2100 @@
+{
+  "name": "edited",
+  "file": "tmp/portrait-study/panel-armscye-v1/public/assets/atrium/residents/lin.glb",
+  "assetSHA": "171dd2201cbcb9f234cd89b5b0bf64362a94449314cad9cd0dcbbfd2e758cfb2",
+  "requests": 1,
+  "trace": [
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299979209899902,
+        "y": 0.019299421310424836,
+        "z": 3.6448490619659424
+      }
+    },
+    {
+      "label": "west chair bypass",
+      "position": {
+        "x": -4.819241523742676,
+        "y": 0.020054194927215607,
+        "z": 3.639885902404785
+      }
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.829066276550293,
+        "y": 0.019569668769836457,
+        "z": -2.135720729827881
+      }
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -3.309271812438965,
+        "y": 0.020079944133758576,
+        "z": -2.1412808895111084
+      }
+    },
+    {
+      "label": "behind planter",
+      "position": {
+        "x": -3.3002171516418457,
+        "y": 0.020029816627502472,
+        "z": -2.8899357318878174
+      }
+    },
+    {
+      "label": "Lin approach",
+      "position": {
+        "x": -2.476046323776245,
+        "y": 0.019922468662261994,
+        "z": -2.8972411155700684
+      }
+    },
+    {
+      "label": "leave conversation",
+      "position": {
+        "x": -3.22031831741333,
+        "y": 0.01989576578140262,
+        "z": -2.8944594860076904
+      }
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -4.853537082672119,
+        "y": 0.01887432098388675,
+        "z": -2.116257667541504
+      }
+    }
+  ],
+  "inputs": [
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299999713897705,
+        "y": 0.019840214252471955,
+        "z": 6.300000190734863
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299844264984131,
+        "y": 0.020099971294403107,
+        "z": 6.095779895782471
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.300291061401367,
+        "y": 0.020152125358581574,
+        "z": 5.8418474197387695
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.300441265106201,
+        "y": 0.019933793544769318,
+        "z": 5.542858123779297
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.300259113311768,
+        "y": 0.019935283660888703,
+        "z": 5.280277252197266
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.300013542175293,
+        "y": 0.020099971294403107,
+        "z": 4.980476379394531
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299919128417969,
+        "y": 0.020038220882415803,
+        "z": 4.755373954772949
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299926280975342,
+        "y": 0.019939873218536408,
+        "z": 4.492901802062988
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299926280975342,
+        "y": 0.020100030899047883,
+        "z": 4.2302937507629395
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "entry aisle",
+      "position": {
+        "x": -4.299954891204834,
+        "y": 0.020042214393615754,
+        "z": 3.967787027359009
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west chair bypass",
+      "position": {
+        "x": -4.299979209899902,
+        "y": 0.019299421310424836,
+        "z": 3.6448490619659424
+      },
+      "heading": 0,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "west chair bypass",
+      "position": {
+        "x": -4.4706010818481445,
+        "y": 0.01999906063079837,
+        "z": 3.640427827835083
+      },
+      "heading": 0,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.821943759918213,
+        "y": 0.01994386672973636,
+        "z": 3.6398844718933105
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827369213104248,
+        "y": 0.019898269176483185,
+        "z": 3.4626221656799316
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827770233154297,
+        "y": 0.01996854305267337,
+        "z": 3.3216617107391357
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827775955200195,
+        "y": 0.019948098659515412,
+        "z": 2.9132046699523926
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.828044891357422,
+        "y": 0.020764384269714387,
+        "z": 2.6881215572357178
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.828219890594482,
+        "y": 0.020056281089782746,
+        "z": 2.3875670433044434
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.829255104064941,
+        "y": 0.027317259311676056,
+        "z": 2.1266467571258545
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.82858419418335,
+        "y": 0.020060572624206574,
+        "z": 1.8638113737106323
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.828419208526611,
+        "y": 0.019977424144744904,
+        "z": 1.6388248205184937
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.82828950881958,
+        "y": 0.02020261049270633,
+        "z": 1.3761194944381714
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827768802642822,
+        "y": 0.020787034034729035,
+        "z": 1.1143434047698975
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827700614929199,
+        "y": 0.02005944013595584,
+        "z": 0.8525151014328003
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827700614929199,
+        "y": 0.020100030899047883,
+        "z": 0.5902727842330933
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827845096588135,
+        "y": 0.02083817481994632,
+        "z": 0.2902882993221283
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827966690063477,
+        "y": 0.019965026378631623,
+        "z": 0.027725733816623688
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827969551086426,
+        "y": 0.019966516494751008,
+        "z": -0.23456908762454987
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.82805061340332,
+        "y": 0.020099971294403107,
+        "z": -0.49753642082214355
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827620029449463,
+        "y": 0.02508154869079593,
+        "z": -0.7593433856964111
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827737808227539,
+        "y": 0.020091745853424103,
+        "z": -0.9843431711196899
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.827755928039551,
+        "y": 0.019973132610321076,
+        "z": -1.2843024730682373
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.828433990478516,
+        "y": 0.020050439834594758,
+        "z": -1.5467934608459473
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "west table",
+      "position": {
+        "x": -4.829090595245361,
+        "y": 0.020083699226379426,
+        "z": -1.8089231252670288
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -4.829066276550293,
+        "y": 0.019569668769836457,
+        "z": -2.135720729827881
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -4.660400390625,
+        "y": 0.019772324562072785,
+        "z": -2.1411080360412598
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -4.412883281707764,
+        "y": 0.024968299865722687,
+        "z": -2.1420600414276123
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -4.1521525382995605,
+        "y": 0.020345065593719514,
+        "z": -2.142195463180542
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -3.891693115234375,
+        "y": 0.020000014305114777,
+        "z": -2.140933036804199
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "planter bypass",
+      "position": {
+        "x": -3.6303093433380127,
+        "y": 0.020066652297973664,
+        "z": -2.1408274173736572
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "behind planter",
+      "position": {
+        "x": -3.309271812438965,
+        "y": 0.020079944133758576,
+        "z": -2.1412808895111084
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "behind planter",
+      "position": {
+        "x": -3.302943229675293,
+        "y": 0.020424041748046906,
+        "z": -2.3145110607147217
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "behind planter",
+      "position": {
+        "x": -3.302216053009033,
+        "y": 0.020099971294403107,
+        "z": -2.5654497146606445
+      },
+      "heading": 0,
+      "keys": [
+        "KeyW"
+      ]
+    },
+    {
+      "label": "Lin approach",
+      "position": {
+        "x": -3.3002169132232666,
+        "y": 0.020100030899047883,
+        "z": -2.8917412757873535
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "Lin approach",
+      "position": {
+        "x": -3.090104579925537,
+        "y": 0.02079108715057376,
+        "z": -2.8965160846710205
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "label": "Lin approach",
+      "position": {
+        "x": -2.8729732036590576,
+        "y": 0.019796404838562043,
+        "z": -2.8969061374664307
+      },
+      "heading": 0,
+      "keys": [
+        "KeyD"
+      ]
+    },
+    {
+      "type": "mouse-orbit",
+      "before": 0,
+      "after": -1.5699999964899145,
+      "deltaPixels": 314
+    },
+    {
+      "type": "mouse-orbit",
+      "before": -1.57,
+      "after": -3.1399999922730117,
+      "deltaPixels": 314
+    },
+    {
+      "type": "mouse-orbit",
+      "before": -3.14,
+      "after": -4.709999997961257,
+      "deltaPixels": 314
+    },
+    {
+      "type": "mouse-orbit",
+      "before": -4.709999999999997,
+      "after": -6.2799999970298135,
+      "deltaPixels": 314
+    },
+    {
+      "label": "leave conversation",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "leave conversation",
+      "position": {
+        "x": -2.5601820945739746,
+        "y": 0.019823763370513947,
+        "z": -2.8967556953430176
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "leave conversation",
+      "position": {
+        "x": -2.8972620964050293,
+        "y": 0.020262393951416047,
+        "z": -2.895991563796997
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -3.22031831741333,
+        "y": 0.01989576578140262,
+        "z": -2.8944594860076904
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA",
+        "KeyS"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -3.3725554943084717,
+        "y": 0.02024904251098636,
+        "z": -2.7487640380859375
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA",
+        "KeyS"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -3.525998830795288,
+        "y": 0.019963953495025666,
+        "z": -2.594892740249634
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA",
+        "KeyS"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -3.7358005046844482,
+        "y": 0.019872817993164094,
+        "z": -2.38281512260437
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA",
+        "KeyS"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -3.919964551925659,
+        "y": 0.020006511211395295,
+        "z": -2.1958532333374023
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -4.155966758728027,
+        "y": 0.020030949115753205,
+        "z": -2.131970167160034
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA"
+      ]
+    },
+    {
+      "label": "leave reading area",
+      "position": {
+        "x": -4.4518327713012695,
+        "y": 0.01999208688735965,
+        "z": -2.121488571166992
+      },
+      "heading": -6.2799999999999905,
+      "keys": [
+        "KeyA"
+      ]
+    }
+  ],
+  "captures": [
+    {
+      "label": "entry",
+      "kind": "player-camera",
+      "position": {
+        "x": -4.299999713897705,
+        "y": 0.019840214252471955,
+        "z": 6.300000190734863
+      },
+      "camera": {
+        "heading": 0,
+        "requestedHeading": 0,
+        "pitch": 0.20999999999999996,
+        "clearancePitch": 0.20999999999999996,
+        "lookPitch": 0.20999999999999994,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": 3.141592653589793,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.9996644568514047,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9996644568514047,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": true,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": true,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              1.6400108000000002,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": -1.5701350395901639,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": []
+    },
+    {
+      "label": "approach",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.476046323776245,
+        "y": 0.019922468662261994,
+        "z": -2.8972411155700684
+      },
+      "camera": {
+        "heading": 0,
+        "requestedHeading": 0,
+        "pitch": 0.20999999999999996,
+        "clearancePitch": 0.20999999999999996,
+        "lookPitch": 0.20999999999999994,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": 1.571888669594931,
+        "velocity": {
+          "x": 0.16694703400348712,
+          "z": -0.000008114122725215812
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              -1.0418452000000067,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": -1.5707963267948963,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": []
+    },
+    {
+      "label": "orbit-0",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -1.5699999976433516,
+        "requestedHeading": -1.57,
+        "pitch": 0.20999999999999996,
+        "clearancePitch": 0.20999999999999996,
+        "lookPitch": 0.2099999999999999,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": 1.571664648336586,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              -1.8457971999999971,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": -1.5707963267948963,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": []
+    },
+    {
+      "label": "orbit-1",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -3.1399999922730117,
+        "requestedHeading": -3.14,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.2100000000000002,
+        "boom": 1.3116540670394898,
+        "fade": 1,
+        "playerYaw": 1.571664648336586,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              -1.3141788000000139,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": 1.570795638377233,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": []
+    },
+    {
+      "label": "orbit-2",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -4.709999997961257,
+        "requestedHeading": -4.709999999999997,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.21000000000000008,
+        "boom": 3.3310318714628724,
+        "fade": 1,
+        "playerYaw": 1.571664648336586,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              -0.5162028000000243,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": 1.570796326794883,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": []
+    },
+    {
+      "label": "orbit-3",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -6.2799999970298135,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.21000000000000002,
+        "boom": 3.3499997911177535,
+        "fade": 1,
+        "playerYaw": 1.571664648336586,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": true,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              0.3057851999999688,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": 1.5707963267948963,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": []
+    },
+    {
+      "label": "dialogue-standing",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -6.2799999999999905,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.20999999999999994,
+        "boom": 3.349999999929928,
+        "fade": 1,
+        "playerYaw": 0.2794419138050247,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": "lin",
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.6409100000000025,
+              0,
+              -1.95
+            ],
+            "yaw": 0,
+            "seatBlend": 0.04655131623191708,
+            "seatMotion": {
+              "seated": false,
+              "moving": 1.15,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": true,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              0.8817851999999524,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": 1.5707963267948963,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": [
+        "lin"
+      ]
+    },
+    {
+      "label": "dialogue-reply",
+      "kind": "player-camera",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -6.2799999999999905,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.20999999999999994,
+        "boom": 3.349999999999999,
+        "fade": 1,
+        "playerYaw": 0.2794419138050247,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": "lin",
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -3.05,
+              0,
+              -1.95
+            ],
+            "yaw": 2.5934548047426516,
+            "seatBlend": 5.8440328552946516e-12,
+            "seatMotion": {
+              "seated": false,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": true
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              1.9077131999999493,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": 1.5707963267948963,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": [
+        "lin"
+      ]
+    },
+    {
+      "label": "cloth-front",
+      "kind": "review-camera / live dialogue state",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -6.2799999999999905,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.05549850524571676,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": 0.2794419138050247,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": "lin",
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -3.05,
+              0,
+              -1.95
+            ],
+            "yaw": 2.593454806037703,
+            "seatBlend": 6.991859759684613e-17,
+            "seatMotion": {
+              "seated": false,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": true
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": true,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              1.5822748000000644,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": -1.5705185992874877,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": [
+        "lin"
+      ]
+    },
+    {
+      "label": "cloth-side",
+      "kind": "review-camera / live dialogue state",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -6.2799999999999905,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.05549850524571676,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": 0.2794419138050247,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": "lin",
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -3.05,
+              0,
+              -1.95
+            ],
+            "yaw": 2.593454806037718,
+            "seatBlend": 1.4263046701812632e-21,
+            "seatMotion": {
+              "seated": false,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": true
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              1.0962748000000673,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": -1.5707963211293934,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": [
+        "lin"
+      ]
+    },
+    {
+      "label": "cloth-back",
+      "kind": "review-camera / live dialogue state",
+      "position": {
+        "x": -2.47176456451416,
+        "y": 0.020099971294403107,
+        "z": -2.8970792293548584
+      },
+      "camera": {
+        "heading": -6.2799999999999905,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.05549850524571676,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": 0.2794419138050247,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": "lin",
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -3.05,
+              0,
+              -1.95
+            ],
+            "yaw": 2.593454806037718,
+            "seatBlend": 7.673689355204745e-27,
+            "seatMotion": {
+              "seated": false,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": true
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              0.5502988000000801,
+              3.5,
+              -5.699999999999999
+            ],
+            "yaw": -1.570796326794866,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": [
+        "lin"
+      ]
+    },
+    {
+      "label": "seated-again",
+      "kind": "player-camera",
+      "position": {
+        "x": -4.858086109161377,
+        "y": 0.01987442731857303,
+        "z": -2.116236925125122
+      },
+      "camera": {
+        "heading": -6.2799999999999905,
+        "requestedHeading": -6.2799999999999905,
+        "pitch": 0.21000000000000002,
+        "clearancePitch": 0.21000000000000002,
+        "lookPitch": 0.21000000000000005,
+        "boom": 3.3499999999999996,
+        "fade": 1,
+        "playerYaw": -1.564341499877573,
+        "velocity": {
+          "x": 0,
+          "z": 0
+        }
+      },
+      "interaction": {
+        "seated": null,
+        "care": null,
+        "dialogue": null,
+        "residents": [
+          {
+            "id": "lin",
+            "busy": false,
+            "position": [
+              -2.2,
+              0,
+              -1.95
+            ],
+            "yaw": 0.00017579199451622752,
+            "seatBlend": 0.9534114278147008,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "chen",
+            "busy": false,
+            "position": [
+              1.1,
+              0,
+              -1.95
+            ],
+            "yaw": -0.15,
+            "seatBlend": 0.9999999999999999,
+            "seatMotion": {
+              "seated": true,
+              "moving": 0,
+              "blocked": false,
+              "clearOfChair": false
+            }
+          },
+          {
+            "id": "xu",
+            "busy": false,
+            "position": [
+              9.1,
+              0,
+              2
+            ],
+            "yaw": -1.1,
+            "seatBlend": 0
+          },
+          {
+            "id": "zhou",
+            "busy": false,
+            "position": [
+              -7.9,
+              3.5,
+              0.4
+            ],
+            "yaw": 0,
+            "seatBlend": 0
+          },
+          {
+            "id": "he",
+            "busy": false,
+            "position": [
+              -7,
+              0,
+              1.25
+            ],
+            "yaw": 1.5,
+            "seatBlend": 0
+          },
+          {
+            "id": "tang",
+            "busy": false,
+            "position": [
+              -0.5296291999998939,
+              3.5,
+              -5.7
+            ],
+            "yaw": -1.5707963267948963,
+            "seatBlend": 0
+          }
+        ]
+      },
+      "talked": [
+        "lin"
+      ]
+    }
+  ],
+  "errors": [],
+  "failedAssets": [],
+  "passed": true,
+  "scope": "Fresh browser storage per variant. Actual entry, WASD traversal, four mouse-drag camera turns, E dialogue, UI reply, Escape and departure/reseating. Labelled close review cameras do not teleport actors or replace animation. Desktop only; no full-game/performance/mobile/contact-surface certification. Poses and elapsed lighting are not frame matched."
+}
