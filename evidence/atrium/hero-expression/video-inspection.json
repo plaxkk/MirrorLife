@@ -1,0 +1,16 @@
+{
+  "inspectedAt": "2026-09-16T02:02:40.653117+00:00",
+  "sourceVideoSha256": "102f906e0aa07ffff6546138fc308e2b910388713b35feee0950eaa2259cc6df",
+  "frameIndices": [
+    0,
+    217,
+    434,
+    651,
+    867,
+    1084,
+    1301,
+    1518
+  ],
+  "contactSheet": "../playthrough-contact-sheet.jpg",
+  "scope": "Inspected eight evenly spaced decoded frames: entry, dialogue, ground-floor exploration, stairs, upper gallery and exit. Not complete human frame-by-frame animation review."
+}

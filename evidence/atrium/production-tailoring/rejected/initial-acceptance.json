@@ -1,0 +1,124 @@
+{
+  "capturedAt": "2026-09-16T15:14:42.831Z",
+  "runtimeFingerprint": "f929f733dc888d391099f0bf5fe847aaf707520d01641f70fc4896e330734eb2",
+  "base": "http://127.0.0.1:4195",
+  "steps": [
+    {
+      "name": "tests",
+      "seconds": 15.806
+    },
+    {
+      "name": "build",
+      "seconds": 3.49
+    },
+    {
+      "name": "assets",
+      "seconds": 0.839
+    },
+    {
+      "name": "head-surface",
+      "seconds": 5.595
+    },
+    {
+      "name": "garment-deformation",
+      "seconds": 4.833
+    },
+    {
+      "name": "gallery",
+      "seconds": 47.787
+    },
+    {
+      "name": "performance",
+      "seconds": 50.069
+    },
+    {
+      "name": "mobile",
+      "seconds": 47.275
+    },
+    {
+      "name": "garments",
+      "seconds": 17.556
+    },
+    {
+      "name": "faces",
+      "seconds": 15.807
+    },
+    {
+      "name": "facial-motion",
+      "seconds": 47.547
+    },
+    {
+      "name": "controls",
+      "seconds": 49.307
+    },
+    {
+      "name": "window-contact",
+      "seconds": 47.786
+    },
+    {
+      "name": "contact",
+      "seconds": 47.435
+    },
+    {
+      "name": "seating",
+      "seconds": 47.178
+    },
+    {
+      "name": "stairs",
+      "seconds": 48.055
+    },
+    {
+      "name": "resilience",
+      "seconds": 50.062
+    },
+    {
+      "name": "walkthrough",
+      "seconds": 120.831
+    },
+    {
+      "name": "video-decode",
+      "seconds": 51.026
+    },
+    {
+      "name": "assets-after",
+      "seconds": 0.709
+    },
+    {
+      "name": "performance-report",
+      "seconds": 0.088
+    }
+  ],
+  "reports": {
+    "performance": {
+      "frameMs": {
+        "p50": 16.700000000000728,
+        "p95": 67.20000000000073,
+        "p99": 100.10000000000218
+      },
+      "renderPeaks": {
+        "calls": 99,
+        "triangles": 493128,
+        "geometries": 80
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": false,
+      "note": "Local visible Chrome production preview"
+    },
+    "mobile": {
+      "frameMs": {
+        "p50": 16.69999999999709,
+        "p95": 17.30000000000291,
+        "p99": 17.700000000000728
+      },
+      "renderPeaks": {
+        "calls": 80,
+        "triangles": 324686,
+        "geometries": 76
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": true,
+      "note": "Desktop GPU emulation; not phone certification"
+    }
+  },
+  "scope": "Automated candidate verification. Visual quality, real phone hardware and human playability are separate gates."
+}

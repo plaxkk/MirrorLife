@@ -1,0 +1,820 @@
+{
+  "capturedAt": "2026-09-20T13:00:58.088Z",
+  "runtimeFingerprint": "7c7d433bb21ab726148bf85c105a291beebd47e477c3adbf642b28c98beca3c3",
+  "browserMode": "headless",
+  "trace": [
+    {
+      "label": "entry",
+      "position": {
+        "x": -4.300297737121582,
+        "y": 0.020100030899047883,
+        "z": 3.5935332775115967
+      },
+      "heading": 0
+    },
+    {
+      "label": "west chair bypass",
+      "position": {
+        "x": -4.936204433441162,
+        "y": 0.019871268272399933,
+        "z": 3.584873676300049
+      },
+      "heading": -6.279737471264377
+    },
+    {
+      "label": "west of table",
+      "position": {
+        "x": -4.833095073699951,
+        "y": 0.018925879001617463,
+        "z": -2.2398295402526855
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "reading planter bypass",
+      "position": {
+        "x": -3.376896381378174,
+        "y": 0.020100090503692658,
+        "z": -2.2131693363189697
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "behind reading planter",
+      "position": {
+        "x": -3.3668417930603027,
+        "y": 0.020100269317626984,
+        "z": -2.9480268955230713
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "Lin",
+      "position": {
+        "x": -2.477569580078125,
+        "y": 0.01998654365539554,
+        "z": -2.9646711349487305
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "Chen",
+      "position": {
+        "x": 0.9319602251052856,
+        "y": 0.020090315341949494,
+        "z": -2.9747509956359863
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "records",
+      "position": {
+        "x": -0.00255777221173048,
+        "y": 0.020212266445159943,
+        "z": -5.532059669494629
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "back of shared table",
+      "position": {
+        "x": 3.585301637649536,
+        "y": 0.02009293794631961,
+        "z": -3.255254030227661
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "high stair underside",
+      "position": {
+        "x": 5.738391399383545,
+        "y": 0.020155045986175568,
+        "z": -3.261788845062256
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "stair underside east edge",
+      "position": {
+        "x": 7.487347602844238,
+        "y": 0.020073983669281037,
+        "z": -3.2659246921539307
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "stair underside return",
+      "position": {
+        "x": 5.880498886108398,
+        "y": 0.020100030899047883,
+        "z": -3.2605156898498535
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "back of shared table return",
+      "position": {
+        "x": 3.3447680473327637,
+        "y": 0.019960198402404816,
+        "z": -3.252481698989868
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "front circulation",
+      "position": {
+        "x": 3.525909185409546,
+        "y": 0.020100030899047883,
+        "z": 5.609391689300537
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "plant room approach",
+      "position": {
+        "x": 9.147932052612305,
+        "y": 0.01936325788497928,
+        "z": 5.604493141174316
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "plant room",
+      "position": {
+        "x": 9.15657901763916,
+        "y": 0.019999954700470002,
+        "z": 4.4918365478515625
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "plant room return",
+      "position": {
+        "x": 9.160600662231445,
+        "y": 0.01869818925857547,
+        "z": 5.6615447998046875
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "social centre return",
+      "position": {
+        "x": 3.1966514587402344,
+        "y": 0.02003190279006961,
+        "z": 5.68666934967041
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "decision table",
+      "position": {
+        "x": -0.022133013233542442,
+        "y": 0.019961926937103303,
+        "z": 2.4932870864868164
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "stair approach",
+      "position": {
+        "x": 3.1105551719665527,
+        "y": 0.02000049114227298,
+        "z": 5.605816841125488
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "main stair foot",
+      "position": {
+        "x": 5.7369842529296875,
+        "y": 0.01964322090148929,
+        "z": 5.602694034576416
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "main stair upper landing",
+      "position": {
+        "x": 5.7923359870910645,
+        "y": 3.5197464561462404,
+        "z": -5.556977272033691
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "east gallery",
+      "position": {
+        "x": 8.654731750488281,
+        "y": 3.51955286026001,
+        "z": -5.732101917266846
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "upper side room",
+      "position": {
+        "x": 8.509689331054688,
+        "y": 3.5196925735473634,
+        "z": 3.752063274383545
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "postcard",
+      "position": {
+        "x": 9.129049301147461,
+        "y": 3.519860420227051,
+        "z": 3.741668462753296
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "observation chair bypass",
+      "position": {
+        "x": 8.487221717834473,
+        "y": 3.5195523834228517,
+        "z": 3.7218105792999268
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "observation aisle",
+      "position": {
+        "x": 8.489372253417969,
+        "y": 3.51947847366333,
+        "z": 5.783994197845459
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "lookout",
+      "position": {
+        "x": 9.272238731384277,
+        "y": 3.5195938682556154,
+        "z": 5.788992881774902
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "upper seat",
+      "position": {
+        "x": 9.614527702331543,
+        "y": 3.519792232513428,
+        "z": 5.404603004455566
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "leave observation seat",
+      "position": {
+        "x": 8.395330429077148,
+        "y": 3.519825134277344,
+        "z": 5.40890645980835
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "east corridor return",
+      "position": {
+        "x": 8.572347640991211,
+        "y": 3.5197884178161623,
+        "z": 3.658726453781128
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "east corridor back",
+      "position": {
+        "x": 8.545560836791992,
+        "y": 3.519926223754883,
+        "z": -5.591259956359863
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "west gallery",
+      "position": {
+        "x": -7.16365909576416,
+        "y": 3.5198313331604005,
+        "z": -5.696802616119385
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "quiet conversation",
+      "position": {
+        "x": -7.1497673988342285,
+        "y": 3.519386444091797,
+        "z": 0.4766748547554016
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "record player",
+      "position": {
+        "x": -7.144224643707275,
+        "y": 3.5198241806030275,
+        "z": 2.1603994369506836
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "west front landing",
+      "position": {
+        "x": -7.081931114196777,
+        "y": 3.5189949607849123,
+        "z": 6.33760929107666
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "shortcut",
+      "position": {
+        "x": -9.957165718078613,
+        "y": 3.520099792480469,
+        "z": 6.142897605895996
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "return stair top",
+      "position": {
+        "x": -9.959529876708984,
+        "y": 3.520099792480469,
+        "z": 5.432161331176758
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "return stair ground",
+      "position": {
+        "x": -9.834661483764648,
+        "y": 0.020000073909759553,
+        "z": -4.7431488037109375
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "west lower passage",
+      "position": {
+        "x": -8.641840934753418,
+        "y": 0.020099971294403107,
+        "z": -4.55797004699707
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "tea corner",
+      "position": {
+        "x": -8.561699867248535,
+        "y": 0.020000073909759553,
+        "z": 1.7294102907180786
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "tea return",
+      "position": {
+        "x": -8.723233222961426,
+        "y": 0.01990637540817264,
+        "z": 4.907964706420898
+      },
+      "heading": -6.280000000000003
+    },
+    {
+      "label": "entry return",
+      "position": {
+        "x": -4.11539363861084,
+        "y": 0.020090672969818146,
+        "z": 4.896299839019775
+      },
+      "heading": -6.280000000000003
+    }
+  ],
+  "viewportSamples": [
+    {
+      "width": 1920,
+      "height": 1080,
+      "canvasWidth": 1920,
+      "canvasHeight": 1080
+    }
+  ],
+  "focusEvents": [],
+  "state": {
+    "version": 1,
+    "discovered": [
+      "records",
+      "plant",
+      "journal",
+      "lookout",
+      "record",
+      "shortcut",
+      "tea"
+    ],
+    "talked": [
+      "lin",
+      "chen",
+      "zhou"
+    ],
+    "relations": {
+      "lin": 3,
+      "chen": 3,
+      "xu": 3,
+      "zhou": 3,
+      "he": 2,
+      "tang": 2
+    },
+    "decision": "balanced",
+    "journal": [
+      {
+        "id": "meet-lin",
+        "text": "和林晓交流：今晚想给大家留一个安静的位置。",
+        "ts": 1789909281528
+      },
+      {
+        "id": "meet-chen",
+        "text": "和陈屿交流：桌边的计划，想听听你的意见。",
+        "ts": 1789909283978
+      },
+      {
+        "id": "records",
+        "text": "手记上写着：上次分享会很热闹，林晓却提前回了房间。她留下了一张没有读完的诗。",
+        "ts": 1789909286514
+      },
+      {
+        "id": "plant",
+        "text": "给薄荷浇过水，叶子在日光里轻轻晃动。许禾记住了你的帮忙。",
+        "ts": 1789909304128
+      },
+      {
+        "id": "decision",
+        "text": "楼下分享，楼上保留安静区。大家一起把两个空间安排好。林晓知道自己可以随时退出，陈屿也有了开场的伙伴。窗边多了一张“安静角”的手写卡。",
+        "ts": 1789909310506
+      },
+      {
+        "id": "journal",
+        "text": "明信片画着这扇窗。背面写着：“有一天，希望能叫这里自己的家。”没有署名。",
+        "ts": 1789909327517
+      },
+      {
+        "id": "lookout",
+        "text": "城市在窗外展开。从这里，你也能看见楼下的共享桌。那些刚才陌生的身影，现在都有了名字。",
+        "ts": 1789909330214
+      },
+      {
+        "id": "meet-zhou",
+        "text": "和周宁交流：楼上的声音，和楼下不太一样。",
+        "ts": 1789909349025
+      },
+      {
+        "id": "record",
+        "text": "旧唱片里，是大家第一次搬来那天的笑声。周宁说：“我喜欢参与，也需要能暂时退出来的地方。”",
+        "ts": 1789909350694
+      },
+      {
+        "id": "shortcut",
+        "text": "这条楼梯通向茶饮角。原来二层的安静角落和大家的餐桌，只隔着一小段路。",
+        "ts": 1789909354825
+      },
+      {
+        "id": "tea",
+        "text": "茶叶慢慢舒展开。何川把第二只杯子推了过来：“留下来坐一会儿吧。”",
+        "ts": 1789909367400
+      }
+    ],
+    "position": [
+      -8.561698913574219,
+      0.020100030899047883,
+      1.729407548904419
+    ]
+  },
+  "stats": {
+    "ready": true,
+    "active": true,
+    "profile": "desktop",
+    "device": {
+      "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/153.0.0.0 Safari/537.36",
+      "gpu": "ANGLE (AMD, ANGLE Metal Renderer: AMD Radeon Pro 5300M, Unspecified Version)",
+      "viewport": [
+        1920,
+        1080
+      ],
+      "dpr": 1,
+      "renderPixelRatio": 1
+    },
+    "loadingMs": 6453.5999999996275,
+    "navigationToReadyMs": 6848.799999999814,
+    "enterToActiveMs": 2.800000000745058,
+    "sessionMs": 103921.5,
+    "frames": 2629,
+    "frameMs": {
+      "p50": 33.30000000000291,
+      "p95": 83.39999999999964,
+      "p99": 116.70000000000073
+    },
+    "cpuMs": {
+      "script": {
+        "p50": 2.7000000001862645,
+        "p95": 4.2000000001862645
+      },
+      "render": {
+        "p50": 3.5,
+        "p95": 4.7999999998137355
+      }
+    },
+    "gpuMs": {
+      "supported": true,
+      "samples": 0,
+      "discarded": 0,
+      "p50": null,
+      "p95": null,
+      "method": "Every tenth rendered frame, asynchronous WebGL2 elapsed-time query; GPU render only, excludes presentation/input. Unsupported and disjoint samples are not zero milliseconds."
+    },
+    "render": {
+      "frame": 2677,
+      "calls": 97,
+      "triangles": 474896,
+      "points": 0,
+      "lines": 0
+    },
+    "renderPeaks": {
+      "calls": 101,
+      "triangles": 493152,
+      "geometries": 81
+    },
+    "memory": {
+      "geometries": 81,
+      "textures": 38,
+      "jsHeapBytes": 60189445
+    },
+    "resources": [
+      {
+        "url": "/assets/atrium-Cey_XYmf.js",
+        "transferBytes": 23170,
+        "decodedBytes": 54196,
+        "durationMs": 67.79999999981374
+      },
+      {
+        "url": "/assets/modulepreload-polyfill-Dezn_h7o.js",
+        "transferBytes": 998,
+        "decodedBytes": 698,
+        "durationMs": 37.90000000037253
+      },
+      {
+        "url": "/assets/rolldown-runtime-DK3Fl9T5.js",
+        "transferBytes": 458,
+        "decodedBytes": 158,
+        "durationMs": 38.200000000186265
+      },
+      {
+        "url": "/assets/three.module-CZC7t-hJ.js",
+        "transferBytes": 183989,
+        "decodedBytes": 725424,
+        "durationMs": 171.40000000037253
+      },
+      {
+        "url": "/assets/BufferGeometryUtils-CnheMMBR.js",
+        "transferBytes": 4612,
+        "decodedBytes": 13131,
+        "durationMs": 74.8999999994412
+      },
+      {
+        "url": "/assets/SkeletonUtils-BCv72L_j.js",
+        "transferBytes": 1893,
+        "decodedBytes": 4079,
+        "durationMs": 77.69999999925494
+      },
+      {
+        "url": "/assets/GLTFLoader-D4aawYtZ.js",
+        "transferBytes": 13006,
+        "decodedBytes": 43047,
+        "durationMs": 82.5
+      },
+      {
+        "url": "/assets/RoomEnvironment-_HcG5_fd.js",
+        "transferBytes": 1232,
+        "decodedBytes": 2129,
+        "durationMs": 94.40000000037253
+      },
+      {
+        "url": "/assets/rapier-CMw4H3UB.js",
+        "transferBytes": 830513,
+        "decodedBytes": 2236835,
+        "durationMs": 332.79999999981374
+      },
+      {
+        "url": "/assets/reference-fidelity-runtime-contract-jYf20sii.js",
+        "transferBytes": 5659,
+        "decodedBytes": 18787,
+        "durationMs": 106.5
+      },
+      {
+        "url": "/assets/atrium-Co8-Av0f.css",
+        "transferBytes": 2770,
+        "decodedBytes": 7675,
+        "durationMs": 74.79999999981374
+      },
+      {
+        "url": "/storage.js",
+        "transferBytes": 3355,
+        "decodedBytes": 8902,
+        "durationMs": 102.90000000037253
+      },
+      {
+        "url": "/assets/atrium/atrium-desktop.glb",
+        "transferBytes": 2778484,
+        "decodedBytes": 2778184,
+        "durationMs": 191.20000000018626
+      },
+      {
+        "url": "/assets/atrium/collision.json",
+        "transferBytes": 714220,
+        "decodedBytes": 3275751,
+        "durationMs": 528.7000000001863
+      },
+      {
+        "url": "/assets/atrium/draco/draco_wasm_wrapper.js",
+        "transferBytes": 12048,
+        "decodedBytes": 58456,
+        "durationMs": 17.59999999962747
+      },
+      {
+        "url": "/assets/atrium/draco/draco_decoder.wasm",
+        "transferBytes": 192720,
+        "decodedBytes": 192420,
+        "durationMs": 16.5
+      },
+      {
+        "url": "/assets/atrium/floor-contact.png",
+        "transferBytes": 112346,
+        "decodedBytes": 112046,
+        "durationMs": 8.200000000186265
+      },
+      {
+        "url": "/assets/atrium/residents/you.glb",
+        "transferBytes": 2181680,
+        "decodedBytes": 2181380,
+        "durationMs": 38.69999999925494
+      },
+      {
+        "url": "/assets/atrium/life-props.glb",
+        "transferBytes": 25504,
+        "decodedBytes": 25204,
+        "durationMs": 7.099999999627471
+      },
+      {
+        "url": "/assets/atrium/residents/lin.glb",
+        "transferBytes": 271612,
+        "decodedBytes": 271312,
+        "durationMs": 19.799999999813735
+      },
+      {
+        "url": "/assets/atrium/residents/chen.glb",
+        "transferBytes": 262648,
+        "decodedBytes": 262348,
+        "durationMs": 18
+      },
+      {
+        "url": "/assets/atrium/residents/xu.glb",
+        "transferBytes": 280428,
+        "decodedBytes": 280128,
+        "durationMs": 11.200000000186265
+      },
+      {
+        "url": "/assets/atrium/residents/zhou.glb",
+        "transferBytes": 279064,
+        "decodedBytes": 278764,
+        "durationMs": 11.400000000372529
+      },
+      {
+        "url": "/assets/atrium/residents/he.glb",
+        "transferBytes": 266780,
+        "decodedBytes": 266480,
+        "durationMs": 11.699999999254942
+      },
+      {
+        "url": "/assets/atrium/residents/tang.glb",
+        "transferBytes": 272120,
+        "decodedBytes": 271820,
+        "durationMs": 12
+      }
+    ],
+    "actors": 7,
+    "bindings": [
+      {
+        "id": "lin",
+        "count": 20
+      },
+      {
+        "id": "chen",
+        "count": 20
+      },
+      {
+        "id": "xu",
+        "count": 20
+      },
+      {
+        "id": "zhou",
+        "count": 20
+      },
+      {
+        "id": "he",
+        "count": 20
+      },
+      {
+        "id": "tang",
+        "count": 20
+      }
+    ],
+    "position": {
+      "x": -4.113875865936279,
+      "y": 0.019966158866882355,
+      "z": 4.8962931632995605
+    },
+    "camera": [
+      -4.103858517251435,
+      2.066659757828183,
+      8.165147988581094
+    ],
+    "cameraGeometry": {
+      "triangles": 170127,
+      "buildMs": 279.19999999925494
+    },
+    "distanceWalked": 150.61359723596036,
+    "visitedPositions": [
+      {
+        "x": -4.300299167633057,
+        "y": 0.019953343868255646,
+        "z": 3.5730247497558594,
+        "t": 8.032970000000004
+      },
+      {
+        "x": -0.13895505666732788,
+        "y": 0.019922587871551545,
+        "z": -2.9715487957000732,
+        "t": 16.06597000000001
+      },
+      {
+        "x": 7.466231346130371,
+        "y": 0.020000014305114777,
+        "z": -3.266044855117798,
+        "t": 24.099070000000005
+      },
+      {
+        "x": 6.980131149291992,
+        "y": 0.020100030899047883,
+        "z": 5.613190650939941,
+        "t": 32.11536999999999
+      },
+      {
+        "x": 3.7339916229248047,
+        "y": 0.019658360481262238,
+        "z": 5.684637069702148,
+        "t": 40.148369999999986
+      },
+      {
+        "x": 5.7386980056762695,
+        "y": 0.37850383281707767,
+        "z": 4.192327499389648,
+        "t": 48.16477000000008
+      },
+      {
+        "x": 8.485479354858398,
+        "y": 3.5200101470947267,
+        "z": -4.171967029571533,
+        "t": 56.181070000000126
+      },
+      {
+        "x": 9.614527702331543,
+        "y": 3.519792232513428,
+        "z": 5.404603004455566,
+        "t": 64.19737000000015
+      },
+      {
+        "x": 7.439757823944092,
+        "y": 3.519914779663086,
+        "z": -5.583650588989258,
+        "t": 72.23036999999995
+      },
+      {
+        "x": -7.159297943115234,
+        "y": 3.520146999359131,
+        "z": -2.641101837158203,
+        "t": 80.26336999999984
+      },
+      {
+        "x": -9.957164764404297,
+        "y": 3.520099792480469,
+        "z": 6.142899990081787,
+        "t": 88.29636999999953
+      },
+      {
+        "x": -8.566780090332031,
+        "y": 0.02026597023010257,
+        "z": 0.14944344758987427,
+        "t": 96.31276999999946
+      }
+    ],
+    "errors": []
+  }
+}

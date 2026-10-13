@@ -1,0 +1,48 @@
+{
+  "updatedAt": "2026-09-16T01:45:22.047Z",
+  "base": "http://127.0.0.1:4195",
+  "steps": [
+    {
+      "name": "tests",
+      "seconds": 18.168
+    },
+    {
+      "name": "build",
+      "seconds": 3.637
+    },
+    {
+      "name": "assets",
+      "seconds": 0.808
+    },
+    {
+      "name": "head-surface",
+      "seconds": 5.292
+    },
+    {
+      "name": "garment-deformation",
+      "seconds": 5.284
+    },
+    {
+      "name": "gallery",
+      "seconds": 48.667
+    },
+    {
+      "name": "performance",
+      "seconds": 48.124
+    },
+    {
+      "name": "mobile",
+      "seconds": 54.665
+    },
+    {
+      "name": "garments",
+      "seconds": 13.765
+    },
+    {
+      "name": "faces",
+      "seconds": 19.379
+    }
+  ],
+  "failedStep": "facial-motion",
+  "error": "Error: facial-motion exited 1; see validation/facial-motion.log"
+}

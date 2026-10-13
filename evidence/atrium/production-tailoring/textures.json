@@ -1,0 +1,227 @@
+{
+  "runtimeFingerprint": "23c9540e34acd245e31612e9bad15d66b2f57dd89e794f9b5baace79b79a7325",
+  "baselineFingerprint": "4dd2f56b171994d2294831095c7bf5167009e1bc7bd356fef517ffa5d64046ce",
+  "baselineCommit": "21d5c9b",
+  "scope": "Embedded PNG dimensions/coverage and declared GLB costs; source and runtime tests additionally verify rig, UV, no duplicate vertex tint, and roughness families.",
+  "rows": [
+    {
+      "file": "public/assets/atrium/residents/you.glb",
+      "before": {
+        "file": "public/assets/atrium/residents/you.glb",
+        "bytes": 278272,
+        "sha256": "6529dfba38bdd644c75e50c4135409110a0eb3f8e85210f2b1a91bf1f22086c2",
+        "meshes": 6,
+        "materials": 5,
+        "skins": 1,
+        "triangles": 22893,
+        "animations": []
+      },
+      "after": {
+        "file": "public/assets/atrium/residents/you.glb",
+        "bytes": 2304904,
+        "sha256": "57f06f090fa5bae8b48540797a625dc0a19437204b43860f3997d11bb07b676c",
+        "meshes": 6,
+        "materials": 5,
+        "skins": 1,
+        "triangles": 25096,
+        "animations": []
+      },
+      "images": [
+        {
+          "name": "Hero SkinnedArticulationCore NORMAL",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 525448,
+          "nonBlackFraction": 1,
+          "sha256": "df8281d6d3857a325091e2e368c58f915c6425ed873e64625016dd2080e29257"
+        },
+        {
+          "name": "Hero SkinnedArticulationCore DIFFUSE",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 457116,
+          "nonBlackFraction": 0.5668916702270508,
+          "sha256": "939af2f0482f4e82ed4f56824b6c5676af4ce933ef4fb88b77315185670e76e9"
+        },
+        {
+          "name": "Hero SkinnedArticulationCore ROUGHNESS",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 475498,
+          "nonBlackFraction": 1,
+          "sha256": "b65468202a6434d6144806156f2473de0c359824768bf77f613b301ee745324b"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric NORMAL",
+          "width": 512,
+          "height": 512,
+          "bytes": 220401,
+          "nonBlackFraction": 1,
+          "sha256": "39ea47821670741ab488408e007195c52f3678c088021d06f569c6e9c8c4fce7"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric DIFFUSE",
+          "width": 512,
+          "height": 512,
+          "bytes": 163278,
+          "nonBlackFraction": 0.7473831176757812,
+          "sha256": "bbcae9bddd948a2da23ad6dbabac2918da1f4213820ff7078c53bdeb4102384b"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric ROUGHNESS",
+          "width": 512,
+          "height": 512,
+          "bytes": 167010,
+          "nonBlackFraction": 1,
+          "sha256": "141ff44211d833ebf0243097eea56007f5e9de3b2321f5da054ba73ebb26c769"
+        }
+      ]
+    },
+    {
+      "file": "public/assets/atrium/residents/you-mobile.glb",
+      "before": {
+        "file": "public/assets/atrium/residents/you-mobile.glb",
+        "bytes": 244416,
+        "sha256": "cc9f3e1284627072296714f36f9ddd55f3600d2822f61a62a59c79b5f4b6121f",
+        "meshes": 6,
+        "materials": 5,
+        "skins": 1,
+        "triangles": 19641,
+        "animations": []
+      },
+      "after": {
+        "file": "public/assets/atrium/residents/you-mobile.glb",
+        "bytes": 856656,
+        "sha256": "c47003bb17ea32053271dd9a0905fdd86f698e1894d3b07bec2a7649eca64547",
+        "meshes": 6,
+        "materials": 5,
+        "skins": 1,
+        "triangles": 20788,
+        "animations": []
+      },
+      "images": [
+        {
+          "name": "Hero SkinnedArticulationCore NORMAL",
+          "width": 512,
+          "height": 512,
+          "bytes": 117885,
+          "nonBlackFraction": 1,
+          "sha256": "4d7a1cc445f0c31e90a86aed37c2c4c48742431633f98a584ca8e3c0542f41f1"
+        },
+        {
+          "name": "Hero SkinnedArticulationCore DIFFUSE",
+          "width": 512,
+          "height": 512,
+          "bytes": 175366,
+          "nonBlackFraction": 0.5855140686035156,
+          "sha256": "89042e733cd57a6e3f3c5497270954924d359b6d8288ef156a06fdd869d7f10e"
+        },
+        {
+          "name": "Hero SkinnedArticulationCore ROUGHNESS",
+          "width": 512,
+          "height": 512,
+          "bytes": 149234,
+          "nonBlackFraction": 1,
+          "sha256": "baa2bfb9926c2b155641379c74b012de80c333faa6f418d20eb3c1e800897ebc"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric NORMAL",
+          "width": 256,
+          "height": 256,
+          "bytes": 50479,
+          "nonBlackFraction": 1,
+          "sha256": "9f68061c4022b6f43d63d5b6fa9e9a313ee70a102f088a3d71cc16a82f87d502"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric DIFFUSE",
+          "width": 256,
+          "height": 256,
+          "bytes": 59017,
+          "nonBlackFraction": 0.7608489990234375,
+          "sha256": "a4bd3492b8cb9e2baea785d939d5e9460c81b045d7490f7dce7310b56f15bcb8"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric ROUGHNESS",
+          "width": 256,
+          "height": 256,
+          "bytes": 47994,
+          "nonBlackFraction": 1,
+          "sha256": "142fd1dc0de61bd63f0d4f942ecf56b45002ffe166be1e9d8e0d09995e212884"
+        }
+      ]
+    },
+    {
+      "file": "models/atrium/residents/you-master.glb",
+      "before": {
+        "file": "models/atrium/residents/you-master.glb",
+        "bytes": 1749656,
+        "sha256": "66a184bca28bd750030ff0aadea3733bd9e6b07b5e62bc661406922811e1977e",
+        "meshes": 6,
+        "materials": 5,
+        "skins": 1,
+        "triangles": 30321,
+        "animations": []
+      },
+      "after": {
+        "file": "models/atrium/residents/you-master.glb",
+        "bytes": 3805196,
+        "sha256": "702cb6d23f4bed1064da7047234373cd4d2a883b3ad32d7e18a556e7b80c0dfc",
+        "meshes": 6,
+        "materials": 5,
+        "skins": 1,
+        "triangles": 35829,
+        "animations": []
+      },
+      "images": [
+        {
+          "name": "Hero SkinnedArticulationCore NORMAL",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 525448,
+          "nonBlackFraction": 1,
+          "sha256": "df8281d6d3857a325091e2e368c58f915c6425ed873e64625016dd2080e29257"
+        },
+        {
+          "name": "Hero SkinnedArticulationCore DIFFUSE",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 457116,
+          "nonBlackFraction": 0.5668916702270508,
+          "sha256": "939af2f0482f4e82ed4f56824b6c5676af4ce933ef4fb88b77315185670e76e9"
+        },
+        {
+          "name": "Hero SkinnedArticulationCore ROUGHNESS",
+          "width": 1024,
+          "height": 1024,
+          "bytes": 475498,
+          "nonBlackFraction": 1,
+          "sha256": "b65468202a6434d6144806156f2473de0c359824768bf77f613b301ee745324b"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric NORMAL",
+          "width": 512,
+          "height": 512,
+          "bytes": 220401,
+          "nonBlackFraction": 1,
+          "sha256": "39ea47821670741ab488408e007195c52f3678c088021d06f569c6e9c8c4fce7"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric DIFFUSE",
+          "width": 512,
+          "height": 512,
+          "bytes": 163278,
+          "nonBlackFraction": 0.7473831176757812,
+          "sha256": "bbcae9bddd948a2da23ad6dbabac2918da1f4213820ff7078c53bdeb4102384b"
+        },
+        {
+          "name": "Hero VisualRoot_Surface_fabric ROUGHNESS",
+          "width": 512,
+          "height": 512,
+          "bytes": 167010,
+          "nonBlackFraction": 1,
+          "sha256": "141ff44211d833ebf0243097eea56007f5e9de3b2321f5da054ba73ebb26c769"
+        }
+      ]
+    }
+  ]
+}

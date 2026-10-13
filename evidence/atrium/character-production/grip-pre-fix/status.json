@@ -1,0 +1,5 @@
+{
+  "status": "failed",
+  "reason": "Nonuniform body scale introduced shear; prop transform recomposition used a non-unit quaternion. Original strict grip/scale assertions rejected it.",
+  "completedStages": 13
+}

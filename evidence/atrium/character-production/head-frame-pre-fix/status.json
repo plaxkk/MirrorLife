@@ -1,0 +1,5 @@
+{
+  "status": "superseded",
+  "reason": "Prop normalization passed real contact checks. New head-rotation regression exposed facial shear from scale compensation on the rotating head; move inverse width to an independent parent. Deliberately stopped own stairs child.",
+  "completedStages": 15
+}

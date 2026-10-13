@@ -1,0 +1,332 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import fs from 'node:fs/promises';
+import {PNG} from 'pngjs';
+import {freshState,normalizeState,applyDecision,canDecide,RESIDENTS,residentSpeech} from '../src/atrium-content.js';
+import {createAtriumPhysics} from '../src/atrium-physics.js';
+import {loadAtriumState,saveAtriumState} from '../src/atrium-persistence.js';
+import * as THREE from 'three';
+import {alignAtriumProp,seatedAtriumLeg} from '../src/atrium-actors.js';
+import {updateAtriumSeatMotion} from '../src/atrium-seat-motion.js';
+import {createAtriumGpuTiming} from '../src/atrium-gpu-timing.js';
+import {applyAtriumFloorContact} from '../src/atrium-floor-contact.js';
+import {solveAtriumLeg} from '../src/atrium-stair-pose.js';
+
+test('stair legs reach forward and rearward floor targets without reversing the knee',()=>{
+  for(const down of [.35,.5,.64])for(const forward of [-.23,0,.23]){
+    const p=solveAtriumLeg(.32,.395,down,forward);
+    assert.ok(p.knee>=0&&p.unreachable<.00001);
+    assert.ok(Math.abs(.32*Math.cos(p.hip)+.395*Math.cos(p.hip+p.knee)-down)<1e-6);
+    assert.ok(Math.abs(-.32*Math.sin(p.hip)-.395*Math.sin(p.hip+p.knee)-forward)<1e-6);
+    assert.ok(Math.abs(p.hip+p.knee+p.foot)<1e-6);
+  }
+  assert.ok(solveAtriumLeg(.32,.395,1,0).unreachable>.28);
+});
+
+test('foot probes hit tread tops, reject walls and ignore resident capsules',async()=>{
+  const p=await createAtriumPhysics([
+    {type:'box',name:'Ground',position:[0,-.1,0],size:[4,.2,4]},
+    {type:'box',name:'Main stair tread 0',position:[0,.08,0],size:[1,.16,1]},
+    {type:'box',name:'Wall',position:[1.5,1,0],size:[.3,2,2]},
+  ]);
+  try{
+    p.addResident('probe',{x:0,y:.16,z:0});p.world.step();
+    const hit=p.floorAt(0,0,.19);assert.equal(hit.stair,true);assert.ok(Math.abs(hit.height-.16)<1e-6);
+    assert.equal(p.floorAt(1.5,0,.1),null);
+    assert.equal(p.floorAt(5,5,0),null);
+    assert.ok(Math.abs(p.floorAt(-1,0,.02).height)<1e-6);
+  }finally{p.dispose();}
+});
+
+test('GPU timing distinguishes unavailable hardware and discards disjoint results',()=>{
+  const unavailable=createAtriumGpuTiming({getExtension:()=>null});unavailable.reset();unavailable.begin();unavailable.end();
+  assert.equal(unavailable.stats().supported,false);assert.equal(unavailable.stats().p50,null);
+  let disjoint=false,deleted=0;
+  const gl={QUERY_RESULT_AVAILABLE:1,QUERY_RESULT:2,getExtension:()=>({GPU_DISJOINT_EXT:3,TIME_ELAPSED_EXT:4}),
+    getParameter:()=>disjoint,createQuery:()=>({}),beginQuery(){},endQuery(){},deleteQuery(){deleted++;},
+    getQueryParameter:(q,key)=>key===1?true:4200000};
+  const timing=createAtriumGpuTiming(gl);timing.reset();for(let i=0;i<10;i++){timing.begin();timing.end();}
+  disjoint=true;timing.begin();assert.equal(timing.stats().samples,0);assert.equal(timing.stats().discarded,1);assert.equal(deleted,1);
+  disjoint=false;for(let i=0;i<11;i++){timing.begin();timing.end();}
+  assert.equal(timing.stats().p50,4.2);timing.dispose();
+});
+
+test('seated hips clear cushion and the lower legs reach the floor across chair heights',()=>{
+  for(const height of [.46,.5,.53,.56]){
+    const pose=seatedAtriumLeg(height,.32,.395,.065,.78);
+    const hip=.78+pose.hipOffset;
+    const sole=hip-.32*Math.cos(pose.hipAngle)-.395*Math.cos(pose.hipAngle+pose.kneeAngle)-.065;
+    assert.ok(Math.abs(sole)<1e-8);assert.ok(hip-height>=.079);
+  }
+});
+test('residents leave the chair before turning, cancel safely, and wait for a blocked exit',()=>{
+  for(const definition of RESIDENTS.filter(r=>r.standPosition)){
+    const group=new THREE.Group();group.position.set(...definition.position);group.rotation.y=definition.yaw;
+    const actor={definition,group,seatBlend:1};
+    const visitor=new THREE.Vector3(definition.position[0],0,-3.1);
+    function step(talking){const before=group.position.clone();const state=updateAtriumSeatMotion(actor,talking,visitor,1/60);actor.seatBlend=THREE.MathUtils.damp(actor.seatBlend,state.seated?1:0,8,1/60);assert.ok(before.distanceTo(group.position)<.02);return state;}
+    for(let i=0;i<120;i++){
+      const state=step(true);
+      if(!state.clearOfChair)assert.equal(group.rotation.y,definition.yaw);
+    }
+    assert.ok(group.position.distanceTo(new THREE.Vector3(...definition.standPosition))<.01);
+    for(let i=0;i<240;i++)step(false);
+    assert.ok(group.position.distanceTo(new THREE.Vector3(...definition.position))<.025);assert.ok(actor.seatBlend>.99);
+    // A person occupying the exit must not be pushed through by the animation.
+    visitor.set(definition.position[0]+Math.sign(definition.standPosition[0]-definition.position[0])*.62,0,definition.position[2]);
+    const blocked=step(true);assert.ok(blocked.blocked);assert.ok(blocked.seated);
+    visitor.set(0,0,-4);for(let i=0;i<10;i++)step(true);for(let i=0;i<180;i++)step(false);
+    assert.ok(actor.seatBlend>.99);assert.ok(group.position.distanceTo(new THREE.Vector3(...definition.position))<.025);
+  }
+});
+
+test('floor contact atlas follows transformed floor levels and excludes vertical furniture',()=>{
+  const root=new THREE.Group(),geometry=new THREE.BufferGeometry();
+  geometry.setAttribute('position',new THREE.Float32BufferAttribute([0,0,0,0,3.5,0,0,1,0,1,0,1],3));
+  geometry.setAttribute('normal',new THREE.Float32BufferAttribute([0,1,0,0,1,0,0,1,0,1,0,0],3));
+  const mesh=new THREE.Mesh(geometry,new THREE.MeshStandardMaterial());root.add(mesh);root.position.x=2;
+  const texture=new THREE.Texture();assert.equal(applyAtriumFloorContact(root,texture),2);
+  const uv=geometry.getAttribute('uv1');
+  assert.ok(Math.abs(uv.getX(0)-13.2/22.4)<1e-6);
+  assert.equal(uv.getY(0),.25);assert.equal(uv.getY(1),.75);
+  assert.ok(uv.getX(2)<.002&&uv.getY(3)<.002);
+  assert.equal(texture.channel,1);assert.equal(mesh.material.aoMap,texture);
+});
+
+async function glbJson(path){
+  const bytes=await fs.readFile(new URL(path,import.meta.url));
+  return JSON.parse(bytes.subarray(20,20+bytes.readUInt32LE(12)).toString());
+}
+test('visual architecture LODs do not duplicate the separately loaded collision arrays',async()=>{
+  for(const profile of ['desktop','mobile']){
+    const glb=await glbJson(`../public/assets/atrium/atrium-${profile}.glb`);
+    for(const scene of glb.scenes)assert.equal(scene.extras?.collision_manifest,undefined);
+    assert.ok(glb.meshes.length>0,'retain real visual geometry');
+  }
+});
+test('both resident LODs retain audited continuous hands and long-sleeve surfaces',async()=>{
+  for(const id of ['you','lin','chen','xu','zhou','he','tang'])for(const lod of ['','-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
+    const core=glb.nodes.find(n=>n.name==='SkinnedArticulationCore');
+    const garment=glb.nodes.find(n=>n.extras?.atrium_garment)?.extras.atrium_garment;
+    assert.equal(garment?.contract,'atrium-continuous-shoulder-v1',`${id}${lod}: missing Blender garment audit`);
+    assert.equal(garment.components,1);assert.equal(garment.nonManifoldEdges,0);
+    assert.ok(garment.triangles<=(id==='you'?2400:1700)&&garment.weightError<.0001);
+    for(const primitive of glb.meshes[core.mesh].primitives)
+      assert.ok(Number.isInteger(primitive.attributes.TEXCOORD_0),`${id}${lod}: exported cloth UV missing`);
+    const parts=core.extras.rigid_source_parts.split(',');
+    assert.ok(!parts.some(n=>n.startsWith('TravelerForearmSkin')),`${id}${lod}: bare skin intersects long sleeve`);
+    for(const side of [-1,1]){
+      assert.ok(parts.includes(`ContinuousHand_${side}`),`${id}${lod}: fused hand missing from skin batch`);
+      const hand=glb.nodes.find(n=>n.name===`Hand_${side}`)?.extras;
+      assert.equal(hand?.hand_continuity_contract,'atrium-fused-palm-v1');
+      assert.equal(hand.hand_surface_audit.components,1);
+      assert.equal(hand.hand_surface_audit.nonManifoldEdges,0);
+      assert.ok(hand.hand_surface_audit.triangles>0&&hand.hand_surface_audit.triangles<=900);
+      assert.ok(glb.nodes.some(n=>n.name===`HandGripAnchor_${side}`));
+    }
+    assert.ok(glb.nodes.some(n=>n.name==='HandGripAnchor_1'),`${id}: authored palm grip`);
+  }
+});
+test('each life prop contains an authored grip frame',async()=>{
+  const glb=await glbJson('../public/assets/atrium/life-props.glb');
+  for(const name of ['WateringCan','TeaCup']){
+    const root=glb.nodes.find(n=>n.name===name);
+    assert.ok(root.children.some(i=>glb.nodes[i].name===`${name}Grip`),`${name}: missing handle grip`);
+  }
+});
+test('portable motion clips include feet and all corrective bindings',async()=>{
+  const glb=await glbJson('../public/assets/atrium/animations/you-motion.glb');
+  for(const clip of glb.animations){
+    const names=new Set(clip.channels.map(c=>glb.nodes[c.target.node].name));
+    for(const side of ['Left','Right'])for(const part of ['Foot','SleeveCorrective','TrouserCorrective'])assert.ok(names.has(`Skin${side}${part}`),`${clip.name}: Skin${side}${part} binding missing`);
+  }
+});
+test('prop grip follows a moving, scaled hand without scaling the metre-sized vessel',()=>{
+  const actor=new THREE.Group(),arm=new THREE.Group(),hand=new THREE.Group(),palm=new THREE.Object3D(),props=new THREE.Group();
+  actor.add(arm,props);arm.add(hand);hand.add(palm);hand.scale.setScalar(.82);hand.position.set(.31,.95,0);palm.position.set(0,-.038,.045);
+  const vessel=new THREE.Group(),grip=new THREE.Object3D();props.add(vessel);vessel.add(grip);grip.position.set(0,.174,0);grip.updateMatrix();
+  for(const width of [1,.88,.7])for(let i=0;i<40;i++){
+    arm.scale.set(width,1,1);palm.rotation.set(1.2,.2,0);
+    actor.position.set(i*.2,3.5,2);actor.rotation.y=i*.37;arm.rotation.x=-i*.03;hand.rotation.z=Math.sin(i)*.24;
+    alignAtriumProp(vessel,grip,palm,props);
+    assert.ok(grip.getWorldPosition(new THREE.Vector3()).distanceTo(palm.getWorldPosition(new THREE.Vector3()))<1e-8);
+    assert.ok(vessel.getWorldScale(new THREE.Vector3()).distanceTo(new THREE.Vector3(1,1,1))<1e-8);
+  }
+});
+
+test('decision requires discoveries and residents, changes memories once',()=>{
+  const s=freshState();assert.equal(applyDecision(s,'balanced'),false);
+  s.talked=['lin','chen'];s.discovered=['records','tea'];assert.ok(canDecide(s));
+  assert.ok(applyDecision(s,'balanced',100));assert.equal(s.relations.lin,2);
+  assert.equal(applyDecision(s,'together',200),false);assert.equal(s.journal.length,1);
+  assert.match(residentSpeech(RESIDENTS[0],s),/谢谢/);
+});
+test('corrupt and unknown state cannot unlock decisions or destroy the main save',()=>{
+  const s=normalizeState({version:1,talked:['unknown','lin','lin'],discovered:['tea','tea'],relations:{lin:99},decision:'__proto__',position:[0,Infinity,0]});
+  assert.deepEqual(s.talked,['lin']);assert.deepEqual(s.discovered,['tea']);assert.equal(s.decision,null);assert.equal(s.position,null);assert.equal(s.relations.lin,10);
+  const store={getItem(){return '{'},setItem(){throw new Error('quota');}};
+  assert.equal(loadAtriumState(store).state.version,1);assert.match(saveAtriumState(s,store),/quota/);
+});
+test('discoveries alter local dialogue',()=>{
+  const s=freshState();const before=residentSpeech(RESIDENTS[0],s);s.discovered.push('records');assert.notEqual(residentSpeech(RESIDENTS[0],s),before);
+});
+test('wall camera probes contract while residents remain physical but do not obstruct the orbit ray',async()=>{
+  const p=await createAtriumPhysics(JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8')));
+  try{
+    const distance=p.cameraDistance({x:10.4,y:1.3,z:2},{x:1,y:0,z:0},3.3);
+    assert.ok(distance<.6&&distance>=.2,String(distance));
+    // The new visible flared stair shell occupies the old x=4 probe corridor.
+    // It must obstruct the camera, while an NPC alone in the clear aisle must not.
+    assert.ok(p.cameraDistance({x:4,y:1.3,z:4},{x:0,y:0,z:-1},2)<1,'visible curved stair wall contracts the camera');
+    p.addResident('test',{x:3.1,y:0,z:2.5});p.teleport([3.1,0,4]);
+    assert.equal(p.cameraDistance({x:3.1,y:1.3,z:4},{x:0,y:0,z:-1},2),2);
+    for(let i=0;i<100;i++)p.move(0,-.0375);
+    assert.ok(p.feet().z>3,'resident capsule stops the player');
+  }finally{p.dispose();}
+});
+test('both physical stair flights are traversable and land on the upper floor',async()=>{
+  const p=await createAtriumPhysics(JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8')));
+  const go=(x,z,steps)=>{for(let i=0;i<steps;i++)p.move(x,z);return p.feet();};
+  try{
+    p.teleport([5.8,0,5.5]);let pos=go(0,-2.25/60,390);assert.ok(pos.y>3.45,JSON.stringify({main:pos}));assert.ok(pos.z< -5.2);
+    pos=go(0,2.25/60,390);assert.ok(pos.y<.1,JSON.stringify({mainDown:pos}));
+    p.teleport([-9.9,0,-4.35]);pos=go(0,2.25/60,390);assert.ok(pos.y>3.45,JSON.stringify({returnUp:pos}));
+    pos=go(0,-2.25/60,390);assert.ok(pos.y<.1,JSON.stringify({returnDown:pos}));
+    p.teleport([-.65,0,3]);pos=go(0,-2.25/60,200);assert.ok(pos.z>1.75,'table blocks a push through its centre; curved edges may slide');
+    p.teleport([9,3.5,5.5]);pos=go(-2.25/60,0,150);assert.ok(pos.x>7.75,'upper guard stops a fall');
+  }finally{p.dispose();}
+});
+
+test('structural stair flight admits the high underside and blocks low head clearance',async()=>{
+  const definitions=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/collision.json',import.meta.url),'utf8'));
+  const p=await createAtriumPhysics(definitions);
+  try{
+    const kit=JSON.parse(await fs.readFile(new URL('../public/assets/atrium/kit/main-stair-collision.json',import.meta.url),'utf8'));
+    const local=kit.find(d=>d.name==='Main stair structural soffit');
+    const world=definitions.find(d=>d.name===local.name);
+    assert.deepEqual(local.indices,world.indices);
+    local.vertices.forEach((v,i)=>assert.ok(Math.abs(v+(i%3===0?5.8:0)-world.vertices[i])<1e-9,'kit hull follows module origin'));
+    p.teleport([3.6,0,-3]);for(let i=0;i<100;i++)p.move(.0375,0);
+    assert.ok(p.feet().x>7&&p.feet().y<.1,'high underside is actual walkable space');
+    p.teleport([5.8,0,-3]);for(let i=0;i<160;i++)p.move(0,.0375);
+    assert.ok(p.feet().z<.5&&p.feet().y<.1,'closed soffit blocks insufficient capsule headroom');
+    for(let i=0;i<22;i++){
+      const d=definitions.find(d=>d.name===`Main stair tread ${i}`);
+      assert.ok(Math.abs(d.position[1]+d.size[1]/2-3.5*(i+1)/22)<1e-8,'tread top preserved');
+    }
+  }finally{p.dispose();}
+});
+
+test('both resident LODs preserve used skin, hair, eye and fabric material responses',async()=>{
+  for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile']){
+    const file=new URL(`../public/assets/atrium/residents/${id}${suffix}.glb`,import.meta.url);
+    const b=await fs.readFile(file),gltf=JSON.parse(b.subarray(20,20+b.readUInt32LE(12)).toString());
+    const used=new Set(gltf.meshes.flatMap(m=>m.primitives.map(p=>p.material)));
+    const response=Object.fromEntries([...used].map(i=>gltf.materials[i]).filter(m=>m.extras?.atrium_surface_family).map(m=>{
+      const pbr=m.pbrMetallicRoughness;let roughness=pbr.roughnessFactor??1;
+      if(pbr.metallicRoughnessTexture){
+        const image=gltf.images[gltf.textures[pbr.metallicRoughnessTexture.index].source],view=gltf.bufferViews[image.bufferView];
+        const binary=b.subarray(b.readUInt32LE(12)+28),png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
+        const values=[];for(let i=1;i<png.data.length;i+=4)if(png.data[i]>0)values.push(png.data[i]);
+        assert.ok(values.length>png.width*png.height*.1,'reject empty roughness atlas');
+        values.sort((a,b)=>a-b);roughness*=values[Math.floor(values.length/2)]/255;
+      }
+      return [m.extras.atrium_surface_family,roughness];
+    }));
+    assert.ok(response.eye<response.hair&&response.hair<response.skin&&response.skin<response.fabric,`${id}${suffix}: ${JSON.stringify(response)}`);
+    assert.ok(gltf.skins.length>0,`${id}${suffix}: retain animated body`);
+  }
+});
+
+test('resident skin batches retain authored roughness without extra primitives or translucent colours',async()=>{
+  for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile', '-master']){
+    const file=suffix==='-master'?`../models/atrium/residents/${id}${suffix}.glb`:`../public/assets/atrium/residents/${id}${suffix}.glb`;
+    const b=await fs.readFile(new URL(file,import.meta.url)),length=b.readUInt32LE(12);
+    const gltf=JSON.parse(b.subarray(20,20+length)),binary=b.subarray(length+28);
+    const core=gltf.nodes.find(n=>n.name==='SkinnedArticulationCore'),primitives=gltf.meshes[core.mesh].primitives;
+    assert.equal(primitives.length,1,`${id}${suffix}: keep one body draw`);
+    const p=primitives[0],mat=gltf.materials[p.material],texture=mat.pbrMetallicRoughness.metallicRoughnessTexture;
+    assert.equal(mat.alphaMode??'OPAQUE','OPAQUE');
+    if(id==='you'){
+      assert.equal(p.attributes.COLOR_0,undefined,'albedo must not multiply vertex colour twice');
+      const maps=[mat.pbrMetallicRoughness.baseColorTexture,texture,mat.normalTexture];
+      for(const [index,map] of maps.entries()){
+        assert.ok(map,'body requires albedo, roughness and tangent normal');
+        const uv=gltf.accessors[p.attributes[`TEXCOORD_${map.texCoord||0}`]];
+        assert.equal(uv.type,'VEC2');assert.equal(uv.count,gltf.accessors[p.attributes.POSITION].count);
+        const view=gltf.bufferViews[gltf.images[gltf.textures[map.index].source].bufferView];
+        const png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
+        assert.equal(png.width,suffix==='-mobile'?512:1024);assert.equal(png.height,png.width);
+        let occupied=0;const values=new Set();
+        for(let i=0;i<png.data.length;i+=4){
+          const value=png.data[i+(index===1?1:index===2?2:0)];
+          if(value>20)occupied++;values.add(value);
+        }
+        assert.ok(occupied>png.width*png.height*.1,'reject blank or nearly blank bake');
+        if(index===1){
+          for(const response of [.68,.74,.91])assert.ok([...values].some(v=>Math.abs(v-response*255)<12),'retain shoe, skin and fabric roughness');
+        }
+      }
+      continue;
+    }
+    assert.equal(texture.texCoord,1);
+    const uv=gltf.accessors[p.attributes.TEXCOORD_1];
+    assert.equal(uv.type,'VEC2');assert.equal(uv.count,gltf.accessors[p.attributes.POSITION].count);
+    const view=gltf.bufferViews[gltf.images[gltf.textures[texture.index].source].bufferView];
+    const png=PNG.sync.read(binary.subarray(view.byteOffset,view.byteOffset+view.byteLength));
+    assert.equal(png.width,256);assert.equal(png.height,1);
+    for(let i=0;i<256;i++)assert.equal(png.data[i*4+1],i,'linear roughness lookup, no sRGB conversion');
+    if(suffix==='-master'){
+      const accessor=gltf.accessors[p.attributes.COLOR_0],buffer=gltf.bufferViews[accessor.bufferView];
+      assert.equal(accessor.componentType,5126);
+      assert.ok(['VEC3','VEC4'].includes(accessor.type));
+      if(accessor.type==='VEC4')for(let i=0;i<accessor.count;i++)assert.equal(binary.readFloatLE((buffer.byteOffset||0)+(accessor.byteOffset||0)+i*(buffer.byteStride||16)+12),1,'roughness metadata must not leak into opacity');
+      const uvView=gltf.bufferViews[uv.bufferView],values=new Set();
+      for(let i=0;i<uv.count;i++)values.add(Math.round(binary.readFloatLE((uvView.byteOffset||0)+(uv.byteOffset||0)+i*(uvView.byteStride||8))*256-.5));
+      for(const roughness of [.68,.74,.91])assert.ok(values.has(Math.round(roughness*255)),`${id}: missing shoe, skin or cloth response ${roughness}`);
+    }
+  }
+});
+
+test('all resident face LODs retain non-empty eyelid and mouth morphs and portable weight animation',async()=>{
+  for(const id of ['you',...RESIDENTS.map(r=>r.id)])for(const suffix of ['', '-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/${id}${suffix}.glb`);
+    const node=glb.nodes.find(n=>n.extras?.atrium_facial_morphs),mesh=glb.meshes[node?.mesh];
+    assert.ok(mesh,'Facial deformation mesh was lost during batching');
+    for(const name of ['Blink','Talk']){
+      const index=mesh.extras.targetNames.indexOf(name);assert.ok(index>=0);
+      for(const primitive of mesh.primitives){
+        const accessor=glb.accessors[primitive.targets[index].POSITION];
+        assert.equal(accessor.count,glb.accessors[primitive.attributes.POSITION].count);
+        assert.ok([...accessor.min,...accessor.max].some(x=>Math.abs(x)>.001),`${suffix} ${name}: empty morph`);
+      }
+    }
+  }
+  const animation=await glbJson('../public/assets/atrium/animations/you-motion.glb');
+  for(const clip of animation.animations)assert.ok(clip.channels.some(c=>c.target.path==='weights'),`${clip.name}: no portable facial animation`);
+});
+
+
+test('resident heads retain their shape while looking around under body proportions',async()=>{
+  for(const id of ['you','lin','chen','xu','zhou','he','tang'])for(const lod of ['','-mobile']){
+    const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
+    const nodes=glb.nodes.map(n=>{
+      const object=new THREE.Object3D();object.name=n.name||'';
+      if(n.matrix)new THREE.Matrix4().fromArray(n.matrix).decompose(object.position,object.quaternion,object.scale);
+      else {if(n.translation)object.position.fromArray(n.translation);if(n.rotation)object.quaternion.fromArray(n.rotation);if(n.scale)object.scale.fromArray(n.scale);}
+      return object;
+    });
+    glb.nodes.forEach((n,i)=>(n.children||[]).forEach(child=>nodes[i].add(nodes[child])));
+    const scene=new THREE.Group();for(const root of glb.scenes[glb.scene||0].nodes)scene.add(nodes[root]);
+    const pivot=nodes.find(n=>n.name==='HeadPivot'),head=nodes.find(n=>n.name==='Head');
+    assert.ok(pivot&&head);scene.updateMatrixWorld(true);
+    const rest=pivot.quaternion.clone(),scale=head.getWorldScale(new THREE.Vector3());
+    for(const yaw of [-.7,0,.7]){
+      pivot.quaternion.copy(rest).multiply(new THREE.Quaternion().setFromEuler(new THREE.Euler(.2,yaw,.1)));scene.updateMatrixWorld(true);
+      const axes=[0,1,2].map(i=>new THREE.Vector3().setFromMatrixColumn(head.matrixWorld,i).normalize());
+      assert.ok(Math.abs(axes[0].dot(axes[1]))<1e-6&&Math.abs(axes[0].dot(axes[2]))<1e-6&&Math.abs(axes[1].dot(axes[2]))<1e-6,`${id}: turning head must not shear`);
+      assert.ok(head.getWorldScale(new THREE.Vector3()).distanceTo(scale)<1e-6,`${id}: turning head must preserve facial proportions`);
+    }
+  }
+});

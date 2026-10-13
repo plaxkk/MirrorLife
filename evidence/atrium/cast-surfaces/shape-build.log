@@ -1,0 +1,89 @@
+SOCKET_BOUNDARY -1 19 [(-0.1342717856168747, -0.022211523726582527), (-0.20750463008880615, -0.16029393672943115), (-0.010800841264426708, 0.07164492458105087)]
+SOCKET_BOUNDARY 1 19 [(0.025477135553956032, 0.13108330965042114), (-0.20643089711666107, -0.16351720690727234), (-0.009137500077486038, 0.07192238420248032)]
+Info: Saved "chen.blend"
+INFO Draco mesh compression is available, use library at /Applications/Blender.app/Contents/Resources/4.3/python/lib/python3.11/site-packages/libextern_draco.dylib
+10:30:21 | INFO: Starting glTF 2.0 export
+10:30:21 | INFO: Extracting primitive: SkinnedArticulationCoreMesh
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Sphere.001
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Sphere.008
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Player head and curved eyelids
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Brow_-1
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Soft neckline
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Finished glTF 2.0 export in 0.18199396133422852 s
+
+10:30:21 | INFO: Starting glTF 2.0 export
+10:30:21 | INFO: Extracting primitive: SkinnedArticulationCoreMesh
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Sphere.001
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Sphere.008
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Player head and curved eyelids
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Brow_-1
+10:30:21 | INFO: Primitives created: 1
+10:30:21 | INFO: Extracting primitive: Soft neckline
+10:30:21 | INFO: Primitives created: 1
+10:30:22 | INFO: Draco encoder: Encoding mesh SkinnedArticulationCore.
+10:30:22 | INFO: Draco encoder: Encoding mesh EyePivot_-1_Surface_eye.
+10:30:22 | INFO: Draco encoder: Encoding mesh EyePivot_1_Surface_eye.
+10:30:22 | INFO: Draco encoder: Encoding mesh Head.
+10:30:22 | INFO: Draco encoder: Encoding mesh HeadPivot_Surface_hair.
+10:30:22 | INFO: Draco encoder: Encoding mesh VisualRoot_Surface_fabric.
+10:30:22 | INFO: Finished glTF 2.0 export in 0.2267918586730957 s
+
+10:30:22 | INFO: Starting glTF 2.0 export
+10:30:22 | INFO: Extracting primitive: SkinnedArticulationCoreMesh
+10:30:22 | INFO: Primitives created: 1
+10:30:22 | INFO: Extracting primitive: Sphere.001
+10:30:22 | INFO: Primitives created: 1
+10:30:22 | INFO: Extracting primitive: Sphere.008
+10:30:22 | INFO: Primitives created: 1
+10:30:22 | INFO: Extracting primitive: Player head and curved eyelids
+10:30:22 | INFO: Primitives created: 1
+10:30:22 | INFO: Extracting primitive: Brow_-1
+10:30:22 | INFO: Primitives created: 1
+10:30:22 | INFO: Extracting primitive: Soft neckline
+10:30:22 | INFO: Primitives created: 1
+10:30:22 | INFO: Draco encoder: Encoding mesh SkinnedArticulationCore.
+10:30:22 | INFO: Draco encoder: Encoding mesh EyePivot_-1_Surface_eye.
+10:30:22 | INFO: Draco encoder: Encoding mesh EyePivot_1_Surface_eye.
+10:30:22 | INFO: Draco encoder: Encoding mesh Head.
+10:30:22 | INFO: Draco encoder: Encoding mesh HeadPivot_Surface_hair.
+10:30:22 | INFO: Draco encoder: Encoding mesh VisualRoot_Surface_fabric.
+10:30:22 | INFO: Finished glTF 2.0 export in 0.3655400276184082 s
+
+RESIDENT_READY chen
+Blender 4.3.2 (hash 32f5fdce0a0a built 2024-12-17 02:17:19)
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 8923 vertices, 35760 indices, raw size: 713184, encoded size: 73984, compression ratio: 9.64
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 2772 vertices, 2826 indices, raw size: 127620, encoded size: 24454, compression ratio: 5.22
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 2774 vertices, 2826 indices, raw size: 127708, encoded size: 24502, compression ratio: 5.21
+DracoEncoder | Preserve triangle order: yes
+DracoEncoder | Encoded 2010 vertices, 11016 indices, raw size: 110472, encoded size: 43044, compression ratio: 2.57
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 2082 vertices, 12012 indices, raw size: 115632, encoded size: 15025, compression ratio: 7.70
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 644 vertices, 1887 indices, raw size: 32022, encoded size: 5650, compression ratio: 5.67
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 8923 vertices, 35760 indices, raw size: 713184, encoded size: 73984, compression ratio: 9.64
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 1464 vertices, 1464 indices, raw size: 67344, encoded size: 13305, compression ratio: 5.06
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 1464 vertices, 1464 indices, raw size: 67344, encoded size: 13341, compression ratio: 5.05
+DracoEncoder | Preserve triangle order: yes
+DracoEncoder | Encoded 2010 vertices, 11016 indices, raw size: 110472, encoded size: 43044, compression ratio: 2.57
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 1108 vertices, 6246 indices, raw size: 61244, encoded size: 9210, compression ratio: 6.65
+DracoEncoder | Preserve triangle order: no
+DracoEncoder | Encoded 358 vertices, 981 indices, raw size: 17582, encoded size: 3386, compression ratio: 5.19
+
+Blender quit

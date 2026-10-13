@@ -1,0 +1,187 @@
+import {relaxAtriumPose} from './atrium-pose.js';
+import * as THREE from 'three';
+import { loadAtriumGLB } from './atrium-assets.js';
+import { sampleCivicAnimationPose } from './civic-animation-clips.js';
+import {solveAtriumLeg} from './atrium-stair-pose.js';
+import { CIVIC_ARTICULATION_BINDING_SPECS,createCivicArticulationBinding,syncCivicArticulationBinding } from './reference-fidelity-runtime-contract.js';
+
+const JOINTS={headGroup:'HeadPivot',leftArm:'LeftArmPivot',rightArm:'RightArmPivot',leftElbow:'LeftElbowPivot',rightElbow:'RightElbowPivot',leftHand:'Hand_-1',rightHand:'Hand_1',leftLeg:'LeftLegPivot',rightLeg:'RightLegPivot',leftKnee:'LeftKneePivot',rightKnee:'RightKneePivot',leftFoot:'ShoeUpper_-1Pivot',rightFoot:'ShoeUpper_1Pivot',leftSleeveCompression:'SleeveCompressionPivot_-1',rightSleeveCompression:'SleeveCompressionPivot_1',leftTrouserCompression:'TrouserCompressionPivot_-1',rightTrouserCompression:'TrouserCompressionPivot_1'};
+const euler=new THREE.Euler(),q=new THREE.Quaternion();
+// A seated thigh slopes towards a floor-supported shin. A fixed 90-degree
+// knee left these short shins dangling above the floor on a 53cm chair.
+export function seatedAtriumLeg(seatHeight,upper,lower,soleOffset,hipRest){
+  const hip=seatHeight+.08;
+  const angle=Math.acos(THREE.MathUtils.clamp((hip-lower-soleOffset)/upper,-.95,.95));
+  return {hipOffset:hip-hipRest,hipAngle:-angle,kneeAngle:angle};
+}
+// Match authored grip frames in the actor's parent space. Cancel inherited hand
+// scale so the same metre-sized cup does not grow/shrink between residents.
+export function alignAtriumProp(prop,grip,handGrip,parent){
+  parent.updateWorldMatrix(true,false);handGrip.updateWorldMatrix(true,false);
+  const target=new THREE.Matrix4().copy(handGrip.matrixWorld);
+  const p=new THREE.Vector3(),r=new THREE.Quaternion(),s=new THREE.Vector3();
+  target.decompose(p,r,s);
+  // Rotated joints below a nonuniform body scale introduce shear. Decomposition
+  // can then produce a non-unit quaternion; composing it would shrink the prop
+  // even after replacing the scale vector. Keep a rigid grip frame instead.
+  r.normalize();target.compose(p,r,s.set(1,1,1));
+  const transform=new THREE.Matrix4().copy(parent.matrixWorld).invert().multiply(target).multiply(grip.matrix.clone().invert());
+  transform.decompose(prop.position,prop.quaternion,prop.scale);prop.updateMatrixWorld(true);
+}
+export async function loadAtriumActor(id,definition,mobile=false) {
+  const gltf=await loadAtriumGLB(`/assets/atrium/residents/${id}${mobile?'-mobile':''}.glb`);
+  const group=new THREE.Group();group.name=`resident-${id}`;group.add(gltf.scene);
+  const visual=gltf.scene.getObjectByName('VisualRoot');
+  if(!visual)throw new Error(`${id} 缺少角色根节点`);
+  const joints=Object.fromEntries(Object.entries(JOINTS).map(([key,name])=>{
+    const node=visual.getObjectByName(name);return [key,node?{node,rest:node.quaternion.clone()}:null];
+  }));
+  group.updateMatrixWorld(true);
+  const legDimensions=Object.fromEntries(['left','right'].map(side=>{
+    const hip=joints[`${side}Leg`].node,knee=joints[`${side}Knee`].node,foot=joints[`${side}Foot`].node;
+    return [side,{upper:knee.position.length(),lower:foot.position.length(),
+      soleOffset:foot.getWorldPosition(new THREE.Vector3()).y-group.position.y,
+      hipRest:hip.getWorldPosition(new THREE.Vector3()).y-group.position.y}];
+  }));
+  const bindings=CIVIC_ARTICULATION_BINDING_SPECS.map(s=>createCivicArticulationBinding({...s,controller:joints[s.controlKey]?.node,bone:visual.getObjectByName(s.boneName)})).filter(Boolean);
+  const eyes=[-1,1].map(i=>visual.getObjectByName(`EyePivot_${i}`)).filter(Boolean);
+  const eyeScales=eyes.map(x=>x.scale.clone());
+  const open=visual.getObjectByName('MouthOpenPivot'),closed=visual.getObjectByName('MouthClosedPivot');
+  const facialMeshes=[];visual.traverse(node=>{if(node.isMesh&&node.morphTargetDictionary?.Blink!==undefined)facialMeshes.push(node);});
+  if(open)open.visible=false;
+  group.traverse(node=>{if(node.isMesh){
+    // Tiny eye/mouth surfaces lie inside the head's shadow silhouette.
+    // Keep the complete head, clothing and articulated body in live shadows.
+    node.castShadow=!/^(EyePivot|MouthClosedPivot|MouthOpenPivot)/.test(node.name);node.receiveShadow=true;
+    if(node.isSkinnedMesh){
+      // A conservative bound contains authored walking, sitting and hand gestures.
+      // This avoids keeping every off-screen resident in the main render pass.
+      node.geometry.computeBoundingSphere();node.boundingSphere=node.geometry.boundingSphere.clone();node.boundingSphere.radius+=.65;node.frustumCulled=true;
+    }
+  }});
+  const position=definition.position||[-4.3,0,6.3];group.position.set(...position);group.rotation.y=definition.yaw||0;
+  let walkPhase=0,seatBlend=0,lifeProp=null,propGrips=[],sitting,lastSeatHeight,stairBlend=0,stairPelvis=0;
+  let stairFeet=[];
+  const handGrip=visual.getObjectByName('HandGripAnchor_1');
+  const poseVectors={};let reviewFace=null;
+  const blinkOffset=id==='you'?3*1.13:[...id].reduce((sum,c)=>sum+c.charCodeAt(0),0)*.037;
+  return {id,group,visual,definition,bindings,velocity:0,action:definition.activity||'idle',
+    get seatBlend(){return seatBlend;},
+    setReviewFace(value){reviewFace=value;},
+    faceDiagnostics(){return facialMeshes.map(mesh=>({name:mesh.name,eyeScales:eyes.map(eye=>eye.scale.toArray()),blink:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink],talk:mesh.morphTargetInfluences[mesh.morphTargetDictionary.Talk]}));},
+    footDiagnostics(){return ['left','right'].map(side=>{
+      const knee=joints[`${side}Knee`].node.getWorldPosition(new THREE.Vector3()).sub(group.position);
+      return {side,soleY:joints[`${side}Foot`].node.getWorldPosition(new THREE.Vector3()).y-legDimensions[side].soleOffset,
+        floorY:group.position.y,kneeForward:knee.x*Math.sin(group.rotation.y)+knee.z*Math.cos(group.rotation.y),
+        stair:stairFeet.find(f=>f.side===side)||null,stairBlend};
+    });},
+    attachLifeProp(model){
+      if(!handGrip)throw new Error(`${id} 缺少手掌握持点`);
+      lifeProp=model;group.add(model);model.position.set(0,0,0);model.rotation.set(0,0,0);model.scale.set(1,1,1);
+      propGrips=['WateringCan','TeaCup'].map(name=>{
+        const prop=model.getObjectByName(name),grip=prop?.getObjectByName(`${name}Grip`);
+        if(!grip)throw new Error(`${name} 缺少握持点`);
+        grip.updateMatrix();return {prop,grip};
+      });model.visible=false;
+    },
+    gripDiagnostics(){
+      return propGrips.filter(({prop})=>lifeProp.visible&&prop.visible).map(({prop,grip})=>({name:prop.name,
+        errorMetres:grip.getWorldPosition(new THREE.Vector3()).distanceTo(handGrip.getWorldPosition(new THREE.Vector3())),
+        scale:prop.getWorldScale(new THREE.Vector3()).toArray(),hand:handGrip.getWorldPosition(new THREE.Vector3()).toArray(),
+        handle:grip.getWorldPosition(new THREE.Vector3()).toArray()}));
+    },
+    update(time,dt,{moving=0,talking=false,lookingAt=null,seated=false,floorAt=null,care=false,listening=false,seatHeight=.53}={}) {
+      walkPhase+=moving*dt/1.25;
+      const state=moving>.08?'walk':talking||care?'gesture':listening||definition.activity==='think'?'listen':definition.activity==='talk'?'gesture':'idle';
+      seatBlend=THREE.MathUtils.damp(seatBlend,seated?1:0,8,dt);
+      const authored=sampleCivicAnimationPose(state,state==='walk'?walkPhase:time/(state==='idle'?3.2:4.4),definition.role||'player');
+      const pose=id==='you'?relaxAtriumPose(authored,state,1-seatBlend):authored;
+      if(lastSeatHeight!==seatHeight){
+        sitting=Object.fromEntries(Object.entries(legDimensions).map(([side,d])=>[side,seatedAtriumLeg(seatHeight,d.upper,d.lower,d.soleOffset,d.hipRest)]));
+        lastSeatHeight=seatHeight;
+      }
+      for(const [key,entry]of Object.entries(joints)){
+        if(!entry)continue;
+        const v=pose[key]||[0,0,0];
+        let x=v[0],y=v[1],z=v[2];
+        if(care&&key==='rightArm'){x=-.5;y=0;z=-.12;}
+        if(care&&key==='rightElbow'){x=-.7;y=0;z=0;}
+        if(care&&key==='rightHand')z=.24*Math.sin(time*1.8);
+        if(key==='leftLeg'||key==='rightLeg')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].hipAngle,seatBlend);
+        if(key==='leftKnee'||key==='rightKnee')x=THREE.MathUtils.lerp(x,sitting[key.startsWith('left')?'left':'right'].kneeAngle,seatBlend);
+        if(['leftLeg','rightLeg','leftKnee','rightKnee'].includes(key)){y*=1-seatBlend;z*=1-seatBlend;}
+        if(key==='leftFoot'||key==='rightFoot'){x*=1-seatBlend;y*=1-seatBlend;z*=1-seatBlend;}
+        if(!talking&&!care&&(key==='leftArm'||key==='rightArm'))x=THREE.MathUtils.lerp(x,-.35,seatBlend);
+        if(!talking&&!care&&(key==='leftElbow'||key==='rightElbow'))x=THREE.MathUtils.lerp(x,-.7,seatBlend);
+        if(key==='headGroup'&&lookingAt){
+          const toward=Math.atan2(lookingAt.x-group.position.x,lookingAt.z-group.position.z)-group.rotation.y;
+          y+=THREE.MathUtils.clamp(Math.atan2(Math.sin(toward),Math.cos(toward)),-.45,.45);
+        }
+        const smooth=poseVectors[key]||(poseVectors[key]=new THREE.Vector3(x,y,z));
+        smooth.x=THREE.MathUtils.damp(smooth.x,x,14,dt);smooth.y=THREE.MathUtils.damp(smooth.y,y,14,dt);smooth.z=THREE.MathUtils.damp(smooth.z,z,14,dt);
+        q.setFromEuler(euler.set(smooth.x,smooth.y,smooth.z));entry.node.quaternion.copy(entry.rest).multiply(q);
+      }
+      // Hip height follows the actual seat surface; transitions use the same articulated rig.
+      visual.position.y=sitting.left.hipOffset*seatBlend+(moving>.08?(pose.rootY||0)*.25:0);
+      // Bring knees beyond the 70cm cushion before the shins drop to the floor.
+      visual.position.z=.2*seatBlend;
+      visual.rotation.z=(pose.visual?.[2]||0)*.4*(1-seatBlend);
+      // Probe actual tread colliders, including the shoe's toe and heel. Keep a
+      // swing arc; only the support half of each gait cycle targets the floor.
+      stairFeet=[];
+      if(floorAt&&!seated&&seatBlend<.01){
+        const sin=Math.sin(group.rotation.y),cos=Math.cos(group.rotation.y);
+        for(const [index,side]of ['left','right'].entries()){
+          const d=legDimensions[side],hip=joints[`${side}Leg`].node;
+          const a=poseVectors[`${side}Leg`].x,b=poseVectors[`${side}Knee`].x;
+          const forward=THREE.MathUtils.clamp((-d.upper*Math.sin(a)-d.lower*Math.sin(a+b))*.6,-.23,.23);
+          const x=group.position.x+hip.position.x*cos+forward*sin,z=group.position.z-hip.position.x*sin+forward*cos;
+          const hits=[-.07,0,.1].map(offset=>floorAt(x+offset*sin,z+offset*cos,group.position.y)).filter(Boolean);
+          if(!hits.length)continue;
+          const ground=hits.reduce((a,b)=>a.height>b.height?a:b);
+          const phase=(walkPhase+index*.5)%1;
+          const lift=moving>.08&&phase<.5?.14*Math.sin(phase*2*Math.PI):0;
+          stairFeet.push({side,ground:ground.height,surface:ground.name,onStair:hits.some(h=>h.stair),forward,lift});
+        }
+      }
+      const stairActive=stairFeet.length===2&&stairFeet.some(f=>f.onStair);
+      stairBlend=THREE.MathUtils.damp(stairBlend,stairActive?1:0,18,dt);
+      if(stairFeet.length===2&&stairBlend>.001){
+        let pelvis=0;
+        for(const f of stairFeet){const d=legDimensions[f.side];pelvis=Math.min(pelvis,f.ground+d.soleOffset+f.lift+Math.sqrt((d.upper+d.lower-.005)**2-f.forward**2)-group.position.y-d.hipRest);}
+        pelvis=Math.max(-.28,pelvis);
+        // Lower immediately for reach; ease the return as the trailing foot rises.
+        stairPelvis=pelvis<stairPelvis?pelvis:THREE.MathUtils.damp(stairPelvis,pelvis,12,dt);
+        visual.position.y=THREE.MathUtils.lerp(visual.position.y,stairPelvis,stairBlend);
+        visual.rotation.z*=stairActive?0:1-stairBlend;
+        for(const f of stairFeet){
+          const d=legDimensions[f.side];
+          const solved=solveAtriumLeg(d.upper,d.lower,group.position.y+d.hipRest+visual.position.y-f.ground-d.soleOffset-f.lift,f.forward);
+          f.unreachable=solved.unreachable;
+          for(const [part,angle]of [['Leg',solved.hip],['Knee',solved.knee],['Foot',solved.foot]]){
+            // A detected tread is a hard contact constraint. Blending its leg
+            // back toward the unconstrained clip can put the shoe inside the
+            // first riser; keep pelvis/flat-ground transitions eased instead.
+            const entry=joints[f.side+part];q.setFromEuler(euler.set(angle,0,0));q.premultiply(entry.rest);entry.node.quaternion.slerp(q,f.onStair?1:stairBlend);
+          }
+        }
+      }else stairPelvis=0;
+      visual.updateMatrixWorld(true);for(const b of bindings)syncCivicArticulationBinding(b);
+      const phase=(time+blinkOffset)%4.7;
+      // A short closed hold keeps blinks legible at both 30 and 60 Hz.
+      const blink=reviewFace?1-reviewFace.blink:phase<.075?1-phase/.075:phase<.12?0:phase<.23?(phase-.12)/.11:1;
+      eyes.forEach((eye,i)=>{eye.scale.copy(eyeScales[i]);if(!facialMeshes.length)eye.scale.y*=blink;});
+      if(open)open.visible=talking&&Math.sin(time*9)>.25;
+      if(closed)closed.visible=!open?.visible;
+      for(const mesh of facialMeshes){
+        mesh.morphTargetInfluences[mesh.morphTargetDictionary.Blink]=1-blink;
+        const talkIndex=mesh.morphTargetDictionary.Talk;
+        if(talkIndex!==undefined)mesh.morphTargetInfluences[talkIndex]=reviewFace?reviewFace.talk:talking?Math.max(0,Math.sin(time*9))*.85:0;
+      }
+      if(lifeProp){
+        lifeProp.visible=care;
+        if(care)for(const {prop,grip}of propGrips)if(prop.visible)alignAtriumProp(prop,grip,handGrip,lifeProp);
+      }
+    },
+  };
+}

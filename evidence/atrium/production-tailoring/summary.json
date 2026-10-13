@@ -1,0 +1,54 @@
+{
+  "runtimeFingerprint": "23c9540e34acd245e31612e9bad15d66b2f57dd89e794f9b5baace79b79a7325",
+  "automatedStages": 21,
+  "performance": {
+    "performance": {
+      "frameMs": {
+        "p50": 16.599999999998545,
+        "p95": 17.399999999999636,
+        "p99": 17.599999999998545
+      },
+      "renderPeaks": {
+        "calls": 99,
+        "triangles": 493126,
+        "geometries": 80
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": false,
+      "note": "Local visible Chrome production preview"
+    },
+    "mobile": {
+      "frameMs": {
+        "p50": 16.600000000002183,
+        "p95": 17.5,
+        "p99": 17.700000000000728
+      },
+      "renderPeaks": {
+        "calls": 81,
+        "triangles": 324854,
+        "geometries": 76
+      },
+      "budgetPassed": true,
+      "frameTargetPassed": true,
+      "note": "Desktop GPU emulation; not phone certification"
+    }
+  },
+  "control": {
+    "baseline": {
+      "p50": 16.69999999999709,
+      "p95": 18.399999999999636,
+      "p99": 18.60000000000582
+    },
+    "candidate": {
+      "p50": 16.700000000000728,
+      "p95": 33,
+      "p99": 49.599999999998545
+    }
+  },
+  "video": {
+    "seconds": 100.46666666666667,
+    "decodedFrames": 1507,
+    "sha256": "6f4b6f301693dfaaf157876cfdd680afcb4688a58b002290b5b0771ab97e403a"
+  },
+  "status": "Production art remains incomplete; local candidate evidence, no production deployment or phone certification."
+}

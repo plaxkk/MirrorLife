@@ -1,0 +1,84 @@
+{
+  "scope": "Source rig five shoulder/elbow and three hip/knee poses, edges longer than 5mm. Stretch regression guard, not a cloth simulation or visual approval.",
+  "residents": [
+    {
+      "identity": "chen",
+      "sourceSha256": "a59163cf8052a552972fd8b258b90e6ed65960299307e058940acb090b023a37",
+      "poses": [
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.0000006416616996,
+          "p99EdgeStretch": 1.000000141554516
+        },
+        {
+          "arm": -0.35,
+          "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.4901698363019,
+          "p99EdgeStretch": 1.082792560452016
+        },
+        {
+          "arm": -0.5,
+          "elbow": -0.7,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.7120924559466608,
+          "p99EdgeStretch": 1.1026495944240633
+        },
+        {
+          "arm": -0.8,
+          "elbow": -1.1,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 2.1969116566609475,
+          "p99EdgeStretch": 1.164780281358686
+        },
+        {
+          "arm": 0.35,
+          "elbow": -0.15,
+          "leg": 0,
+          "knee": 0,
+          "name": "upper",
+          "maxEdgeStretch": 1.666012451192417,
+          "p99EdgeStretch": 1.0371620278321174
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -0.55,
+          "knee": 0.8,
+          "name": "stride",
+          "maxEdgeStretch": 2.0969515303308492,
+          "p99EdgeStretch": 1.1641880088219443
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.1,
+          "knee": 1.4,
+          "name": "stair",
+          "maxEdgeStretch": 3.0380102482672595,
+          "p99EdgeStretch": 1.2593198868220505
+        },
+        {
+          "arm": 0,
+          "elbow": 0,
+          "leg": -1.57,
+          "knee": 1.57,
+          "name": "sit",
+          "maxEdgeStretch": 3.663920113794688,
+          "p99EdgeStretch": 1.3286283552166203
+        }
+      ],
+      "passed": true
+    }
+  ]
+}

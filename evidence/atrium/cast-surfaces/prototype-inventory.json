@@ -1,0 +1,50 @@
+[
+  {
+    "variant": "chen",
+    "tier": ".glb",
+    "bytes": 1320596,
+    "triangles": 21317,
+    "meshes": 6,
+    "materials": 5
+  },
+  {
+    "variant": "chen",
+    "tier": "-mobile.glb",
+    "bytes": 577120,
+    "triangles": 18565,
+    "meshes": 6,
+    "materials": 5
+  },
+  {
+    "variant": "chen-shape",
+    "tier": ".glb",
+    "bytes": 263980,
+    "triangles": 22109,
+    "meshes": 6,
+    "materials": 5
+  },
+  {
+    "variant": "chen-shape",
+    "tier": "-mobile.glb",
+    "bytes": 233588,
+    "triangles": 18977,
+    "meshes": 6,
+    "materials": 5
+  },
+  {
+    "variant": "chen-shape-v2",
+    "tier": ".glb",
+    "bytes": 264840,
+    "triangles": 22110,
+    "meshes": 6,
+    "materials": 5
+  },
+  {
+    "variant": "chen-shape-v2",
+    "tier": "-mobile.glb",
+    "bytes": 234888,
+    "triangles": 18976,
+    "meshes": 6,
+    "materials": 5
+  }
+]

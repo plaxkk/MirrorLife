@@ -1,0 +1,24 @@
+{
+  "method": "24 cosine-weighted hemisphere rays from evaluated static scene; short-range visibility with distance falloff",
+  "source": "models/atrium/atrium-master.blend",
+  "size": [
+    384,
+    576
+  ],
+  "heightMetres": [
+    0.03,
+    3.53
+  ],
+  "boundsXZ": [
+    -11.2,
+    11.2,
+    -8.2,
+    8.2
+  ],
+  "radiusMetres": 1.15,
+  "samples": 24,
+  "triangulatedBy": "Blender BVHTree",
+  "seconds": 44.62,
+  "scope": "static horizontal floor surfaces only; no baked residents; not indirect diffuse GI",
+  "textureSha256": "9f9a136b65808426d37c7d5ee5457b94d0084226a4808c0e0da133ca9bbcce77"
+}

@@ -1,0 +1,75 @@
+REACHED entry { x: -4.301284313201904, y: 0.02004483699798587, z: 3.625908374786377 }
+REACHED west chair bypass {
+  x: -4.739507675170898,
+  y: 0.020093832015991242,
+  z: 3.625553846359253
+}
+REACHED west of table {
+  x: -4.767218589782715,
+  y: 0.020080182552337678,
+  z: -2.2809877395629883
+}
+REACHED reading planter bypass {
+  x: -3.257065534591675,
+  y: 0.0195150709152222,
+  z: -2.1298933029174805
+}
+REACHED behind reading planter {
+  x: -3.2573959827423096,
+  y: 0.020086917877197297,
+  z: -3.051447629928589
+}
+REACHED Lin {
+  x: -2.6509392261505127,
+  y: 0.020087811946868928,
+  z: -2.9649593830108643
+}
+REACHED Chen {
+  x: 0.8672153949737549,
+  y: 0.02128687858581546,
+  z: -2.9734833240509033
+}
+REACHED records {
+  x: -0.08452122658491135,
+  y: 0.021940979957580597,
+  z: -5.535714149475098
+}
+REACHED back of shared table {
+  x: 3.3767099380493164,
+  y: 0.020071063041687043,
+  z: -3.257366180419922
+}
+REACHED front circulation { x: 3.42106032371521, y: 0.02018502712249759, z: 5.6179280281066895 }
+REACHED plant room approach { x: 9.08177375793457, y: 0.019996914863586457, z: 5.628248691558838 }
+REACHED plant room { x: 9.085895538330078, y: 0.020092461109161408, z: 4.280455589294434 }
+REACHED plant room return { x: 9.090794563293457, y: 0.019738290309906037, z: 5.739958763122559 }
+REACHED social centre return { x: 3.0742557048797607, y: 0.02011415719985965, z: 5.645744323730469 }
+REACHED decision table {
+  x: 0.08842606097459793,
+  y: 0.019983980655670197,
+  z: 2.686964988708496
+}
+REACHED stair approach { x: 3.1354422569274902, y: 0.01994994640350345, z: 5.645730972290039 }
+REACHED main stair foot { x: 5.953552722930908, y: 0.02004072427749637, z: 5.638487339019775 }
+REACHED main stair upper landing { x: 5.751411437988281, y: 3.517987403869629, z: -5.569700241088867 }
+REACHED east gallery { x: 8.525330543518066, y: 3.519024524688721, z: -5.582761287689209 }
+REACHED upper side room { x: 8.552314758300781, y: 3.5197111701965333, z: 3.604003429412842 }
+REACHED postcard { x: 9.063461303710938, y: 3.5199677085876466, z: 3.6052279472351074 }
+REACHED observation chair bypass { x: 8.581262588500977, y: 3.5198947525024415, z: 3.606738805770874 }
+REACHED observation aisle { x: 8.585556030273438, y: 3.519714984893799, z: 5.941462993621826 }
+REACHED lookout { x: 9.481596946716309, y: 3.519952449798584, z: 5.936645030975342 }
+REACHED upper seat { x: 9.47993278503418, y: 3.519869480133057, z: 5.456019401550293 }
+file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js:46
+            this.#timeoutError = new TimeoutError(`Waiting failed: ${options.timeout}ms exceeded`);
+                                 ^
+
+TimeoutError: Waiting failed: 4000ms exceeded
+    at new WaitTask (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js:46:34)
+    at IsolatedWorld.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js:49:26)
+    at CdpFrame.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js:580:43)
+    at CdpFrame.<anonymous> (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js:101:27)
+    at CdpPage.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Page.js:1447:37)
+    at interact (file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-pilot.mjs:81:18)
+    at file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-pilot.mjs:113:47
+
+Node.js v24.16.0

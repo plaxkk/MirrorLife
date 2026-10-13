@@ -1,0 +1,44 @@
+[
+  {
+    "type": "box",
+    "name": "Entry left pier",
+    "position": [
+      -1.7999999999999998,
+      1.6,
+      0
+    ],
+    "size": [
+      0.8,
+      3.2,
+      0.42
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Entry right pier",
+    "position": [
+      1.8000000000000003,
+      1.6,
+      0
+    ],
+    "size": [
+      0.8,
+      3.2,
+      0.42
+    ]
+  },
+  {
+    "type": "box",
+    "name": "Entry lintel",
+    "position": [
+      0.0,
+      3.25,
+      0
+    ],
+    "size": [
+      4.4,
+      0.5,
+      0.42
+    ]
+  }
+]

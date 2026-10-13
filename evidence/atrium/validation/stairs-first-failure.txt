@@ -1,0 +1,13 @@
+file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js:46
+            this.#timeoutError = new TimeoutError(`Waiting failed: ${options.timeout}ms exceeded`);
+                                 ^
+
+TimeoutError: Waiting failed: 12000ms exceeded
+    at new WaitTask (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/common/WaitTask.js:46:34)
+    at IsolatedWorld.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Realm.js:49:26)
+    at CdpFrame.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Frame.js:580:43)
+    at CdpFrame.<anonymous> (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/util/decorators.js:101:27)
+    at CdpPage.waitForFunction (file:///Users/kk/repos/MirrorLife/node_modules/puppeteer-core/lib/puppeteer/api/Page.js:1447:37)
+    at file:///Users/kk/repos/MirrorLife/scripts/verify-atrium-stairs.mjs:18:18
+
+Node.js v24.16.0

@@ -1,0 +1,6 @@
+{
+  "runtimeFingerprint": "6b0086ea008e4379feac2416942f7c68e3590af1458ccc401bed2b5a541195d2",
+  "failedStep": "facial-motion",
+  "error": "Error: facial-motion exited 1; see validation/facial-motion.log",
+  "cause": "Test left capture CSS active while trying to click hidden dialogue controls. Fixed by restoring UI for the real dialogue input, then returning to capture mode."
+}

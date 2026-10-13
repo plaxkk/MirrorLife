@@ -1,0 +1,179 @@
+{
+  "residents": [
+    {
+      "sourceSha256": "9b73694dcb24068212a910d168bb2346e202f3f1e23786a3f8bbb888feb469df",
+      "eyeSamples": 4328,
+      "covered": 4328,
+      "exposed": 0,
+      "minimumClearance": 0.0016974806785583496,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "you",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    },
+    {
+      "sourceSha256": "4b10ff7aa06c6218f246a7523fb9c8f1ec6b2b7d2b9355173fed57759dc7af06",
+      "eyeSamples": 4158,
+      "covered": 4158,
+      "exposed": 0,
+      "minimumClearance": 0.0012747645378112793,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "lin",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 898,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    },
+    {
+      "sourceSha256": "13f8f1666ed9c5bbe3b06911d6abcf8aa2690eaabbdb8ceefa611181f873df1b",
+      "eyeSamples": 4252,
+      "covered": 4252,
+      "exposed": 0,
+      "minimumClearance": 0.001316368579864502,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "chen",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    },
+    {
+      "sourceSha256": "a950f2de90e483751956330a1f0a0f49d3b6507b0260ab8d4d4fa31325d74bfd",
+      "eyeSamples": 4558,
+      "covered": 4558,
+      "exposed": 0,
+      "minimumClearance": 0.0014124512672424316,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "xu",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 898,
+          "removedSubmillimetreSliverVertices": 3
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    },
+    {
+      "sourceSha256": "73ad64efb0acfdad133ad0926bea92fbcdaa02a158891cc4445420510a64a4ce",
+      "eyeSamples": 4458,
+      "covered": 4458,
+      "exposed": 0,
+      "minimumClearance": 0.0013741850852966309,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "zhou",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    },
+    {
+      "sourceSha256": "f3f6475cbdd2239f29ccc7dc17abd95fcb55ddf05f4b843c9cbe4fad188b465c",
+      "eyeSamples": 4158,
+      "covered": 4158,
+      "exposed": 0,
+      "minimumClearance": 0.0012742877006530762,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "he",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 898,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    },
+    {
+      "sourceSha256": "6c044e288ec3945f60780df49f83ebea4bf5aaf6257311d67bd114cd5920a8dc",
+      "eyeSamples": 4252,
+      "covered": 4252,
+      "exposed": 0,
+      "minimumClearance": 0.0013163089752197266,
+      "examples": [],
+      "scope": "Blender source, neutral gaze, Blink=1. Tests actual eye stack depth coverage; runtime deformation, partial blinks and visual quality checked separately.",
+      "identity": "tang",
+      "coordinateSpace": "head local; runtime head scale applies",
+      "hands": [
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        },
+        {
+          "components": 1,
+          "nonManifoldEdges": 0,
+          "triangles": 900,
+          "removedSubmillimetreSliverVertices": 0
+        }
+      ]
+    }
+  ]
+}

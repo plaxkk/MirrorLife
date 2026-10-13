@@ -1,0 +1,45 @@
+{
+  "baseline": "09ef669",
+  "runtimeFingerprint": "4dd2f56b171994d2294831095c7bf5167009e1bc7bd356fef517ffa5d64046ce",
+  "assets": [
+    {
+      "file": "public/assets/atrium/animations/you-motion.glb",
+      "before": {
+        "bytes": 837932,
+        "triangles": 29337,
+        "sha256": "07bc50646cfa8caf94cd5567e281278c68a12439db2cdf2cef08df4a4e2d3967"
+      },
+      "after": {
+        "bytes": 837004,
+        "triangles": 29313,
+        "sha256": "e36d0af3d9c49d35a523e3e810a65209dad7344635dc8bccde5ba76dbe1f443b"
+      }
+    },
+    {
+      "file": "public/assets/atrium/residents/you-mobile.glb",
+      "before": {
+        "bytes": 245484,
+        "triangles": 19665,
+        "sha256": "6c73ccb8cdebe2bb77a17a530d90e9db1fc573b4b6330ef38a4f3f9a2f63d7f3"
+      },
+      "after": {
+        "bytes": 244416,
+        "triangles": 19641,
+        "sha256": "cc9f3e1284627072296714f36f9ddd55f3600d2822f61a62a59c79b5f4b6121f"
+      }
+    },
+    {
+      "file": "public/assets/atrium/residents/you.glb",
+      "before": {
+        "bytes": 279668,
+        "triangles": 22917,
+        "sha256": "18c1d0b57443e8459e585f8d7d17c7727f535e1055efd69919ae42e0b332efcf"
+      },
+      "after": {
+        "bytes": 278272,
+        "triangles": 22893,
+        "sha256": "6529dfba38bdd644c75e50c4135409110a0eb3f8e85210f2b1a91bf1f22086c2"
+      }
+    }
+  ]
+}

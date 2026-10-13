@@ -12,3 +12,5 @@ __pycache__/
 docs/private/
 tmp/
 .review-tools/
+# Raw browser recording remains local; the complete compressed MP4 is delivered.
+evidence/atrium/*.webm
