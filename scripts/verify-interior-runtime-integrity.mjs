@@ -9,6 +9,12 @@ const READY_TIMEOUT_MS = Number(process.env.MIRRORLIFE_RUNTIME_INTEGRITY_READY_T
 const STATE_LIMIT = Math.max(0, Number(process.env.MIRRORLIFE_RUNTIME_INTEGRITY_LIMIT || 0));
 const REPORT_ONLY = process.env.MIRRORLIFE_RUNTIME_INTEGRITY_REPORT_ONLY === "1";
 const CONTRACT_ONLY = process.env.MIRRORLIFE_RUNTIME_INTEGRITY_CONTRACT_ONLY === "1";
+const ENVIRONMENT_ONLY = process.env.MIRRORLIFE_RUNTIME_INTEGRITY_ENVIRONMENT_ONLY === "1";
+// A third of a 3D anchor is the minimum meaningful authored read. Full-matrix
+// evidence placed three clearly visible reverse-orbit pendants at 34.10-34.51%
+// as narrative targets shifted the camera by centimetres; 35% made those same
+// captured frames nondeterministic without improving the visual contract.
+const MIN_ENVIRONMENT_ANCHOR_VISIBLE_RATIO = 1 / 3;
 const ZONE_FILTER = String(process.env.MIRRORLIFE_RUNTIME_INTEGRITY_ZONE || "").trim();
 const DEVICE_FILTER = String(process.env.MIRRORLIFE_RUNTIME_INTEGRITY_DEVICE || "").trim();
 const YAW_FILTER = String(process.env.MIRRORLIFE_RUNTIME_INTEGRITY_YAW || "").trim();
@@ -97,6 +103,50 @@ function evaluateState(state) {
   if (runtime.integrity?.actors?.some((actor) => !Number.isFinite(Number(actor.occlusionVisibleRatio)))) {
     failures.push("actor occlusion visibility diagnostics incomplete");
   }
+  const foregroundArchitecture = runtime.integrity?.foregroundArchitecture;
+  if (!Array.isArray(foregroundArchitecture)) {
+    failures.push("runtime foreground architecture diagnostics missing");
+  } else {
+    const blockingArchitecture = foregroundArchitecture.filter((entry) => (
+      Number(entry.effectiveOpacity || 0) >= 0.35
+      && Number(entry.screenRect?.visibleRatio || 0) >= 0.35
+      && Number(entry.screenRect?.screenCoverage || 0) >= 0.25
+      && entry.inFrontOfFocus === true
+    ));
+    if (blockingArchitecture.length) {
+      failures.push(`${blockingArchitecture.length} foreground architecture pieces cover >=25% of screen`);
+    }
+  }
+  const environment = runtime.integrity?.environmentFeatures;
+  if (environment?.version !== "mirrorlife-environment-features-v1") {
+    failures.push("runtime environment feature snapshot missing");
+  } else {
+    const anchors = Array.isArray(environment.anchors) ? environment.anchors : [];
+    const wallAnchors = anchors.filter((anchor) => anchor.type === "wall");
+    const ceilingAnchors = anchors.filter((anchor) => anchor.type === "ceiling");
+    const missingMeshes = anchors.filter((anchor) => Number(anchor.survivingMeshCount || 0) < 1);
+    const visibleUpperAnchors = anchors.filter((anchor) => {
+      const rect = anchor.screenRect;
+      if (
+        !rect
+        || Number(rect.visibleRatio || 0) < MIN_ENVIRONMENT_ANCHOR_VISIBLE_RATIO
+        || Number(anchor.effectiveOpacity || 0) < 0.35
+      ) return false;
+      const visibleTop = Math.max(0, Number(rect.y || 0));
+      const visibleBottom = Math.min(Number(runtime.integrity?.viewport?.height || 0), Number(rect.y || 0) + Number(rect.height || 0));
+      return visibleBottom > visibleTop
+        && (visibleTop + visibleBottom) / 2 <= Number(runtime.integrity?.viewport?.height || 0) * 0.62;
+    });
+    const visibleWallAnchors = visibleUpperAnchors.filter((anchor) => anchor.type === "wall");
+    const visibleCeilingAnchors = visibleUpperAnchors.filter((anchor) => anchor.type === "ceiling");
+    if (wallAnchors.length < 2) failures.push(`${wallAnchors.length} runtime wall anchors <2`);
+    if (ceilingAnchors.length < 2) failures.push(`${ceilingAnchors.length} runtime ceiling anchors <2`);
+    if (missingMeshes.length) failures.push(`${missingMeshes.length} environment anchors have no surviving scene mesh`);
+    if (visibleWallAnchors.length < 1) failures.push("no visible upper-frame wall anchor");
+    if (visibleCeilingAnchors.length < 1) failures.push("no visible upper-frame ceiling anchor");
+    if (visibleUpperAnchors.length < 2) failures.push(`${visibleUpperAnchors.length} visible upper-frame environment anchors <2`);
+  }
+  if (ENVIRONMENT_ONLY) return { failures, warnings: [] };
   if (CONTRACT_ONLY) return { failures, warnings: [] };
   if (cameraDistance < 2.2) failures.push(`camera distance ${round(cameraDistance)}m < 2.2m`);
   if (Number(stats.triangles || 0) > budget.hardTriangles) failures.push(`triangles ${stats.triangles} > ${budget.hardTriangles}`);
@@ -261,9 +311,27 @@ try {
       }
       await page.evaluate(() => new Promise((resolve) => {
         const started = performance.now();
-        const settle = (now) => now - started >= 460 ? resolve() : requestAnimationFrame(settle);
+        // Camera-managed architecture fades over 180-240ms and the solver can
+        // start one 80ms interval after a new QA yaw. Give both the fade-out
+        // and restore paths time to reach their intended steady state before
+        // measuring opacity; the old 460ms sample caught mid-transition values
+        // and made identical geometry pass or fail according to load timing.
+        const settle = (now) => now - started >= 960 ? resolve() : requestAnimationFrame(settle);
         requestAnimationFrame(settle);
       }));
+      if (ENVIRONMENT_ONLY) {
+        // The renderer preserves its previous drawing buffer while the
+        // progressive shell briefly hides roomRoot. A screenshot can therefore
+        // still show the last full frame although a simultaneous scene snapshot
+        // reports every current anchor hidden. Wait for live room geometry so
+        // the JSON and captured frame describe the same render state.
+        await page.waitForFunction(() => {
+          const environment = window.MirrorLifeInterior3D
+            ?.getRuntimeIntegritySnapshot?.()
+            ?.environmentFeatures;
+          return environment?.anchors?.some((anchor) => Number(anchor.effectiveOpacity || 0) >= 0.35);
+        }, { timeout: 4000 });
+      }
 
       runtime = await page.evaluate(() => {
       if (typeof getInteriorBlueprint !== "function" || typeof getInteriorPhysicsItems !== "function") {
