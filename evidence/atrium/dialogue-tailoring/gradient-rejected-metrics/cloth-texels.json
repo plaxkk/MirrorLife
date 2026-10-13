@@ -1,0 +1,17 @@
+{
+  "scope": "Catch the observed black sliver regression in decoded Lin runtime assets.\n\nSamples the upper-body atlas at triangle centroids after Draco decoding.\nThis is a narrow regression guard, not a complete raster/visual certification.\n",
+  "assets": [
+    {
+      "file": "public/assets/atrium/residents/lin.glb",
+      "sha256": "f5bad4033bd96e0f646eb01476de264f40875f3b2d761f360fd05c891801af1e",
+      "checkedTriangles": 2475,
+      "blackCentroids": []
+    },
+    {
+      "file": "public/assets/atrium/residents/lin-mobile.glb",
+      "sha256": "910e2d57858daeba472eec9782546a9cc78154150d8849a3a2121d740593c6cb",
+      "checkedTriangles": 2475,
+      "blackCentroids": []
+    }
+  ]
+}

@@ -518,7 +518,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     # Keep the hanging sleeve separate from the waist before voxel union.
     # The old bind pose fused forearms into the torso, stretching short edges
     # by over 16x when the elbow moved. Preserve every rig/contact binding.
-    profile['shoulder_x']+=.09
+    profile['shoulder_x']+=.07 if dialogue_finish and name=='lin' else .09
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
     profile['head_scale']=tuple(s*.54 for s in profile['head_scale'])
     # Retain the authored neck overlap while exposing the jaw above the collar.

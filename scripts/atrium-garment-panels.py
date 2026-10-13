@@ -42,8 +42,8 @@ def build(civic, material, profile):
         assert len(loop)==20 and len(set(loop))==20
         phases=[math.atan2((vertices[i][2]-1.18)/.09,vertices[i][1]/.10) for i in loop]
         # x centre, z, section radii, y centre, section-plane tilt, arm ownership.
-        sleeve=[(shoulder-.005,1.165,.075,.082,0,math.pi/4,.82),
-                (shoulder+.010,1.105,.086,.080,-.004,0,1),
+        sleeve=[(shoulder-.005,1.195,.068,.078,0,math.pi/4,.82),
+                (shoulder+.005,1.115,.080,.076,-.004,0,1),
                 (shoulder+.003,1.035,.079,.073,-.008,0,1),
                 (shoulder,1.005,.073,.068,-.006,0,1),
                 (shoulder,.982,.069,.065,-.004,0,1),

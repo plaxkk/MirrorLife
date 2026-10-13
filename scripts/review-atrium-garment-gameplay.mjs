@@ -79,6 +79,9 @@ try{
     const angle=lin.yaw+offset,position=[lin.position[0]+(view==='front'?.78:1.8)*Math.sin(angle),lin.position[1]+1.15,lin.position[2]+(view==='front'?.78:1.8)*Math.cos(angle)],target=[lin.position[0],lin.position[1]+1.05,lin.position[2]];
     await page.evaluate(({position,target})=>{window.__atrium.setCapture(true);window.__atrium.setReviewCamera(position,target);},{position,target});
     await pause(250);await snapshot('cloth-'+view,'review-camera / live dialogue state');
+    if(view==='front')for(let frame=1;frame<=3;frame++){
+     await pause(650);await snapshot('cloth-front-motion-'+frame,'review-camera / continuous live dialogue motion');
+    }
    }
    await page.evaluate(()=>{window.__atrium.setCapture(false);window.__atrium.followCamera();});
    await page.keyboard.press('Escape');await page.waitForFunction(()=>window.__atrium.getInteractionState().dialogue===null);

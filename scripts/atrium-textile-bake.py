@@ -98,13 +98,14 @@ def _bake_bind_surface(obj, size, family, min_luminance):
     bpy.ops.object.mode_set(mode='EDIT');bpy.ops.mesh.select_all(action='SELECT')
     bpy.ops.uv.smart_project(angle_limit=math.radians(70),island_margin=.03 if family=='skin' else .012)
     bpy.ops.object.mode_set(mode='OBJECT')
-    hand_tiles=None
+    hand_tiles=None;cloth_sliver_tiles=None
     if obj.name=='SkinnedArticulationCore' and os.environ.get('ATRIUM_HAND_ATLAS_STUDY','0')=='1':
         assert os.environ.get('ATRIUM_BODY_ATLAS_STUDY','0')!='1', 'Do not combine guarded hand tiles with rejected cross-material extension'
         import runpy
         from pathlib import Path
         hand_atlas=runpy.run_path(str(Path(__file__).with_name('atrium-hand-atlas.py')))
         hand_tiles=hand_atlas['prepare'](obj)
+        cloth_sliver_tiles=hand_atlas['prepare_cloth_slivers'](obj,size)
     material=obj.data.materials[0];nodes=material.node_tree.nodes
     scene=bpy.context.scene;scene.render.engine='CYCLES';scene.cycles.device='CPU';scene.cycles.samples=1
     scene.render.bake.margin=16 if family=='skin' else 6;scene.render.bake.use_selected_to_active=False
@@ -162,6 +163,7 @@ def _bake_bind_surface(obj, size, family, min_luminance):
             image.pixels.foreach_set(pixels);image.update()
         if hand_tiles:
             hand_atlas['fill'](pixels,size,kind,hand_tiles)
+            hand_atlas['fill'](pixels,size,kind,cloth_sliver_tiles)
             image.pixels.foreach_set(pixels);image.update()
         image.pack();images[kind]=image
     baked=bpy.data.materials.new(material.name+' baked PBR');baked.use_nodes=True
