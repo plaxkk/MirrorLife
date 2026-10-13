@@ -57,7 +57,8 @@ def author(garment, mats, visual, civic):
         support_widths.append([z,width])
         for source_x in xs:
             x=source_x*width/.09
-            vertices.append((x,front(x,z)+.008,z))
+            neck_z=z-(.018*(1-(x/width)**2) if z==rows[-1] else 0)
+            vertices.append((x,front(x,neck_z)+.008,neck_z))
     for j in range(len(rows)-1):
         for i in range(len(xs)-1):
             a=j*len(xs)+i;faces.append((a,a+1,a+1+len(xs),a+len(xs)))

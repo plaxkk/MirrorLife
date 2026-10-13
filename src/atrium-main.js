@@ -1,4 +1,5 @@
 import * as THREE from 'three';
+import {applyAtriumArtDirection} from './atrium-art-direction.js';
 import {loadAtriumGLB,disposeAtriumDecoder} from './atrium-assets.js';
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {createAtriumPhysics} from './atrium-physics.js';
@@ -22,7 +23,7 @@ let renderer,scene,camera,composer,physics,player,environment,animationId,resize
 let playerSpeakingUntil=0;
 let active=false,disposed=false,dialogTarget=null,nearest=null,seated=null,careUntil=0,careItem=null,lifeProps=null;
 let orbitYaw=.0,orbitPitch=.21,orbitDistance=3.35,referenceView=false;
-let requestedYaw=0,requestedPitch=.21,cameraBoom=3.35,cameraInitialized=false;
+let requestedYaw=0,requestedPitch=.21,cameraBoom=3.35,cameraInitialized=false,conversationBlend=0,lastConversationActor=null;
 let playerFade=1;
 let clearanceAngle=.21;
 let cameraGeometry=null;
@@ -200,11 +201,11 @@ async function boot(){
   renderer.shadowMap.enabled=true;renderer.shadowMap.type=THREE.PCFSoftShadowMap;renderer.info.autoReset=false;
   scene=new THREE.Scene();scene.background=new THREE.Color('#c6dce3');scene.fog=new THREE.Fog('#dce4df',38,100);
   camera=new THREE.PerspectiveCamera(62,innerWidth/innerHeight,.075,130);
-  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();environment=pmrem.fromScene(room,.04).texture;scene.environment=environment;scene.environmentIntensity=.35;room.dispose();pmrem.dispose();
-  scene.add(new THREE.HemisphereLight('#e9f3f1','#b6a28b',.42));
-  const sun=new THREE.DirectionalLight('#fff0d4',2.3);sun.position.set(-7,16,6);sun.target.position.set(0,0,-1);sun.castShadow=true;
+  const pmrem=new THREE.PMREMGenerator(renderer),room=new RoomEnvironment();environment=pmrem.fromScene(room,.04).texture;scene.environment=environment;scene.environmentIntensity=.48;room.dispose();pmrem.dispose();
+  scene.add(new THREE.HemisphereLight('#e9f3f1','#b6a28b',.48));
+  const sun=new THREE.DirectionalLight('#fff0d4',1.95);sun.position.set(-7,16,6);sun.target.position.set(0,0,-1);sun.castShadow=true;
   sun.shadow.mapSize.set(mobile?1024:2048,mobile?1024:2048);sun.shadow.camera.left=-16;sun.shadow.camera.right=16;sun.shadow.camera.top=14;sun.shadow.camera.bottom=-14;sun.shadow.camera.near=.5;sun.shadow.camera.far=50;sun.shadow.bias=-.0002;sun.shadow.normalBias=.025;sun.shadow.radius=3;scene.add(sun,sun.target);
-  const fill=new THREE.DirectionalLight('#dcece9',.16);fill.position.set(3,4,-12);scene.add(fill);
+  const fill=new THREE.DirectionalLight('#dcece9',.24);fill.position.set(3,4,-12);scene.add(fill);
   const bounce=new THREE.PointLight('#ffe3a7',12,22,2);bounce.position.set(0,4.8,0);scene.add(bounce);
   // Broad warm return from the west window/cream reveal. This is an authored
   // indirect-light approximation; the skylight remains the shadow-casting key.
@@ -212,6 +213,7 @@ async function boot(){
   loadProgress(8,'正在打开建筑与楼梯…');
   const [model,definitions]=await Promise.all([loadAtriumGLB(`/assets/atrium/atrium-${profile}.glb`),checkedJSON('/assets/atrium/collision.json')]);
   model.scene.traverse(node=>{if(!node.isMesh)return;node.castShadow=node.material.name!=='Window glass';node.receiveShadow=true;node.material.side=THREE.DoubleSide;if(node.material.map){node.material.map.anisotropy=Math.min(8,renderer.capabilities.getMaxAnisotropy());} });
+  applyAtriumArtDirection(model.scene);
   scene.add(model.scene);physics=await createAtriumPhysics(definitions);
   const cameraGeometryStarted=performance.now();
   const cameraTriangles=addAtriumCameraGeometry(model.scene,physics);
@@ -228,7 +230,7 @@ async function boot(){
   // geometry are charged every frame. Both maps light the same playable scene.
   renderer.render(scene,camera);sun.shadow.autoUpdate=false;
   model.scene.traverse(node=>{if(node.isMesh)node.castShadow=false;});
-  const actorLight=new THREE.DirectionalLight('#fff2dd',.55);actorLight.position.copy(sun.position);actorLight.target.position.copy(sun.target.position);actorLight.castShadow=true;
+  const actorLight=new THREE.DirectionalLight('#fff2dd',.45);actorLight.position.copy(sun.position);actorLight.target.position.copy(sun.target.position);actorLight.castShadow=true;
   Object.assign(actorLight.shadow.camera,{left:-13,right:13,top:11,bottom:-11,near:.5,far:50});actorLight.shadow.mapSize.set(1024,1024);actorLight.shadow.normalBias=.025;actorLight.shadow.bias=-.0001;scene.add(actorLight,actorLight.target);
   loadProgress(38,'正在准备你的分身…');
   player=await loadAtriumActor('you',{role:'player',position:[-4.3,0,6.3],yaw:Math.PI},mobile);scene.add(player.group);
@@ -314,7 +316,13 @@ async function boot(){
       if(moving>.08){const heading=Math.atan2(physicalMotion.x,physicalMotion.y);player.group.rotation.y+=wrapAngle(heading-player.group.rotation.y)*(1-Math.exp(-16*dt));stepDistance+=moving*dt;}
       if(pos.y<-.6||Math.abs(pos.x)>11.1||Math.abs(pos.z)>8.4){physics.teleport([-4.3,0,6.3]);toast('已回到入口，探索记录仍然保留。');}
     }else {accumulator=0;renderPositionReady=false;}
-    player.update(elapsed,dt,{moving,talking:elapsed<playerSpeakingUntil,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',floorAt:physics.floorAt,care:!!careItem});
+    const dialogueActor=dialogTarget?.kind==='person'?actors.find(a=>a.id===dialogTarget.id):null;
+    if(dialogueActor){
+      const p=dialogueActor.group.position;
+      const facing=Math.atan2(p.x-player.group.position.x,p.z-player.group.position.z);
+      player.group.rotation.y+=wrapAngle(facing-player.group.rotation.y)*(1-Math.exp(-7*dt));
+    }
+    player.update(elapsed,dt,{moving,lookingAt:dialogueActor?.group.position,talking:elapsed<playerSpeakingUntil,seated:!!seated,seatHeight:seated?seated.item.seatedPosition[1]-seated.item.position[1]:.53,listening:dialogTarget?.kind==='person',floorAt:physics.floorAt,care:!!careItem});
     for(const actor of actors){
       let walking=0;const talking=dialogTarget?.id===actor.id;
       if(actor.definition.route&&!talking){
@@ -352,14 +360,31 @@ function updateCamera(dt){
   if(referenceView){const v=referenceView===true?REFERENCE_CAMERA:referenceView;camera.position.set(...v.position);camera.lookAt(...v.target);cameraInitialized=false;applyPlayerFade(1);return;}
   orbitYaw+=wrapAngle(requestedYaw-orbitYaw)*(1-Math.exp(-24*dt));
   orbitPitch=THREE.MathUtils.damp(orbitPitch,requestedPitch,24,dt);
+  const speakingActor=dialogTarget?.kind==='person'?actors.find(a=>a.id===dialogTarget.id):null;
+  // Let a seated resident clear the furniture before reframing around them.
+  const activeConversation=speakingActor&&(!speakingActor.definition.standPosition||speakingActor.seatMotion?.clearOfChair)?speakingActor:null;
+  if(activeConversation)lastConversationActor=activeConversation;
+  conversationBlend=THREE.MathUtils.damp(conversationBlend,activeConversation?1:0,5,dt);
+  const conversation=conversationBlend>.001?lastConversationActor:null;
   target.copy(player.group.position);target.y+=seated ? 1.1 : 1.35;
+  let framingYaw=orbitYaw,framingPitch=orbitPitch,framingDistance=orbitDistance;
+  if(conversation){
+    const p=conversation.group.position;
+    target.x=THREE.MathUtils.lerp(target.x,p.x,conversationBlend*.78);
+    target.z=THREE.MathUtils.lerp(target.z,p.z,conversationBlend*.78);
+    target.y=THREE.MathUtils.lerp(target.y,p.y+1.30,conversationBlend);
+    const sideYaw=Math.atan2(player.group.position.x-p.x,player.group.position.z-p.z)-.65;
+    framingYaw+=wrapAngle(sideYaw-orbitYaw)*conversationBlend;
+    framingPitch=THREE.MathUtils.lerp(orbitPitch,.10,conversationBlend);
+    framingDistance=THREE.MathUtils.lerp(orbitDistance,2.45,conversationBlend);
+  }
   if(!cameraInitialized||followTarget.distanceTo(target)>2){followTarget.copy(target);cameraInitialized=true;}
   else{followTarget.x=THREE.MathUtils.damp(followTarget.x,target.x,22,dt);followTarget.z=THREE.MathUtils.damp(followTarget.z,target.z,22,dt);followTarget.y=THREE.MathUtils.damp(followTarget.y,target.y,12,dt);}
   // The player's pitch is authoritative. Per-frame automatic pitch selection
   // caused mode-like view changes while walking past window reveals.
-  clearanceAngle=orbitPitch;
-  direction.set(Math.sin(orbitYaw)*Math.cos(clearanceAngle),Math.sin(clearanceAngle),Math.cos(orbitYaw)*Math.cos(clearanceAngle)).normalize();
-  const safe=physics.cameraDistance(followTarget,direction,orbitDistance);
+  clearanceAngle=framingPitch;
+  direction.set(Math.sin(framingYaw)*Math.cos(clearanceAngle),Math.sin(clearanceAngle),Math.cos(framingYaw)*Math.cos(clearanceAngle)).normalize();
+  const safe=physics.cameraDistance(followTarget,direction,framingDistance);
   cameraBoom=safe<cameraBoom?safe:THREE.MathUtils.damp(cameraBoom,safe,5,dt);
   desired.copy(followTarget).addScaledVector(direction,cameraBoom);camera.position.copy(desired);
   // Also validate the interpolated ray while rounding a corner, not only the final orbit ray.
@@ -370,7 +395,7 @@ function updateCamera(dt){
   camera.lookAt(followTarget);
   // When a wall forces the camera into the avatar, reveal the navigable scene
   // through the avatar instead of filling the screen with its head/back.
-  const fade=THREE.MathUtils.smoothstep(camera.position.distanceTo(target),.85,1.25);
+  const fade=THREE.MathUtils.smoothstep(Math.hypot(camera.position.x-player.group.position.x,camera.position.y-player.group.position.y-1.35,camera.position.z-player.group.position.z),.85,1.25);
   playerFade=fade<playerFade?fade:THREE.MathUtils.damp(playerFade,fade,12,dt);
   applyPlayerFade(playerFade);
 }

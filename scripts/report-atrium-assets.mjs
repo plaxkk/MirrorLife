@@ -18,10 +18,10 @@ for(const file of files){
   }
   assets.push(row);
 }
-assert.equal(assets.filter(x=>/residents\/[^/]+\.blend$/.test(x.file)).length,7);
+assert.equal(assets.filter(x=>/residents\/(you|lin|chen|xu|zhou|he|tang)\.blend$/.test(x.file)).length,7);
 assert.equal(assets.find(x=>x.file==='public/assets/atrium/animations/you-motion.glb').animations.length,9);
 assert.equal(assets.filter(x=>/^public\/assets\/atrium\/kit\/.*\.glb$/.test(x.file)).length,9);
-const sourceFiles=['atrium.html','src/atrium-main.js','src/atrium-actors.js','src/atrium-floor-contact.js','src/atrium-seat-motion.js','src/atrium-stair-pose.js','src/atrium-gpu-timing.js','src/atrium-assets.js','src/atrium-content.js','src/atrium-physics.js','src/atrium-persistence.js','src/atrium.css','src/civic-animation-clips.js','src/reference-fidelity-runtime-contract.js','public/storage.js'];
+const sourceFiles=['atrium.html','src/atrium-main.js','src/atrium-art-direction.js','src/atrium-actors.js','src/atrium-floor-contact.js','src/atrium-seat-motion.js','src/atrium-stair-pose.js','src/atrium-gpu-timing.js','src/atrium-assets.js','src/atrium-content.js','src/atrium-physics.js','src/atrium-persistence.js','src/atrium.css','src/civic-animation-clips.js','src/reference-fidelity-runtime-contract.js','public/storage.js'];
 sourceFiles.push('src/atrium-pose.js','src/atrium-camera-geometry.js','src/atrium-camera-clearance.js','src/atrium-locomotion.js','src/atrium-player-fade.js');
 const fingerprint=crypto.createHash('sha256');for(const file of sourceFiles)fingerprint.update(file).update(await fs.readFile(file));for(const asset of assets.filter(a=>a.file.startsWith('public/')))fingerprint.update(asset.file).update(asset.sha256);
 const result={generatedAt:new Date().toISOString(),runtimeFingerprint:fingerprint.digest('hex'),validation:'GLB header, accessor bounds, declared topology counts, required rig/action/module inventories. Does not substitute for decoded topology, visual or animation-contact review.',totalSourceBytes:assets.filter(x=>x.file.startsWith('models/')).reduce((s,x)=>s+x.bytes,0),totalPublicBytes:assets.filter(x=>x.file.startsWith('public/')).reduce((s,x)=>s+x.bytes,0),assets};

@@ -7,8 +7,8 @@ def build(civic, material, profile):
     vertices=[];faces=[];weights=[];sides=24
     # Height, half-width, half-depth: quiet chest volume and a falling shoulder.
     sections=[(.79,.174,.125),(.805,.177,.128),(.84,.185,.136),(.90,.188,.143),
-              (.98,.195,.150),(1.045,.202,.151),(1.09,.211,.149),
-              (1.135,.216,.145),(1.18,.217,.138),(1.225,.213,.130),
+              (.98,.195,.150),(1.045,.202,.151),(1.125,.211,.149),
+              (1.16125,.216,.145),(1.1975,.217,.138),(1.23375,.213,.130),
               (1.27,.205,.119),(1.30,.150,.096),(1.325,.095,.073),(1.335,.084,.068)]
     def ease(t):
         t=max(0,min(1,t));return t*t*(3-2*t)
@@ -140,6 +140,9 @@ def build(civic, material, profile):
         # source remains separately saved, never reconstructed from triangles.
         smooth=ob.modifiers.new('Quad panel surface preview','SUBSURF');smooth.levels=1
         bpy.ops.object.modifier_move_up(modifier=smooth.name);bpy.ops.object.modifier_apply(modifier=smooth.name)
+        if os.environ.get('ATRIUM_DIALOGUE_FINISH','1')=='1':
+            import runpy
+            runpy.run_path(str(Path(__file__).with_name('atrium-dialogue-finish.py')))['cloth'](ob)
         ob.data.calc_loop_triangles()
         lod=ob.modifiers.new('Panel runtime allocation','DECIMATE');lod.ratio=min(1,2000/len(ob.data.loop_triangles))
         bpy.ops.object.modifier_move_up(modifier=lod.name);bpy.ops.object.modifier_apply(modifier=lod.name)

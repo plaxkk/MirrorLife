@@ -6,20 +6,22 @@ import assert from 'node:assert/strict';
 import {createHash} from 'node:crypto';
 import {atriumWalkKeys} from './lib/atrium-navigation.mjs';
 const out=process.argv[2];assert.ok(out);
+const live=process.env.ATRIUM_REVIEW_LIVE==='1';
 const variants=[['installed','public/assets/atrium/residents/lin.glb'],
  ['panels','tmp/portrait-study/garment-panels-v2/public/assets/atrium/residents/lin.glb'],
- ['edited','tmp/portrait-study/panel-armscye-v1/public/assets/atrium/residents/lin.glb']];
+ ['edited','tmp/portrait-study/panel-armscye-v1/public/assets/atrium/residents/lin.glb']].filter(([name])=>!live||name==='installed');
 const pause=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 const browser=await puppeteer.launch({executablePath:'/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',headless:true,args:['--no-sandbox','--disable-background-timer-throttling','--disable-renderer-backgrounding']});
 try{
  for(const [name,file] of variants){
   const folder=path.join(out,name);await fs.mkdir(folder,{recursive:true});
   const context=await browser.createBrowserContext(),page=await context.newPage();
-  const body=await fs.readFile(file),errors=[],failedAssets=[],trace=[],inputs=[],captures=[];let requests=0;
+  const body=await fs.readFile(file),errors=[],failedAssets=[],trace=[],inputs=[],captures=[];let requests=0;const deliveredAssets=[];
+  page.on('response',response=>{if(new URL(response.url()).pathname==='/assets/atrium/residents/lin.glb')deliveredAssets.push(response.buffer().then(bytes=>createHash('sha256').update(bytes).digest('hex')));});
   page.on('pageerror',e=>errors.push(String(e)));
   page.on('requestfailed',r=>{if(new URL(r.url()).pathname.endsWith('.glb'))failedAssets.push(r.url());});
   await page.setRequestInterception(true);
-  page.on('request',r=>{if(new URL(r.url()).pathname==='/assets/atrium/residents/lin.glb'){requests++;r.respond({status:200,contentType:'model/gltf-binary',body});}else r.continue();});
+  page.on('request',r=>{if(new URL(r.url()).pathname==='/assets/atrium/residents/lin.glb'){requests++;if(live){r.continue();return;}r.respond({status:200,contentType:'model/gltf-binary',body});}else r.continue();});
   await page.setViewport({width:1600,height:1000,deviceScaleFactor:1});
   async function snapshot(label,kind='player-camera'){
    const state=await page.evaluate(()=>({position:window.__atrium.getPosition(),camera:window.__atrium.getCameraDiagnostics(),interaction:window.__atrium.getInteractionState(),talked:window.__atrium.getState().talked}));
@@ -66,10 +68,15 @@ try{
    await page.waitForFunction(()=>window.__atrium.getInteractionState().residents.find(r=>r.id==='lin').seatBlend<.05,{timeout:10000});
    await snapshot('dialogue-standing');
    await page.click('#dialogue-choices button');await pause(1500);await snapshot('dialogue-reply');
+   const reply=captures.at(-1),speaker=reply.interaction.residents.find(r=>r.id==='lin');
+   const facing=Math.atan2(speaker.position[0]-reply.position.x,speaker.position[2]-reply.position.z);
+   const facingError=Math.abs(Math.atan2(Math.sin(reply.camera.playerYaw-facing),Math.cos(reply.camera.playerYaw-facing)));
+   assert.ok(facingError<.08,`Player must face the resident's actual standing position: ${facingError}`);
+   assert.ok(reply.camera.boom>.75,'Conversation camera collapsed into furniture');
    // Actual standing/talking state and game lighting; only these cameras are fixtures.
    const lin=await page.evaluate(()=>window.__atrium.getInteractionState().residents.find(r=>r.id==='lin'));
    for(const [view,offset] of [['front',0],['side',Math.PI/2],['back',Math.PI]]){
-    const angle=lin.yaw+offset,position=[lin.position[0]+1.8*Math.sin(angle),lin.position[1]+1.15,lin.position[2]+1.8*Math.cos(angle)],target=[lin.position[0],lin.position[1]+1.05,lin.position[2]];
+    const angle=lin.yaw+offset,position=[lin.position[0]+(view==='front'?.78:1.8)*Math.sin(angle),lin.position[1]+1.15,lin.position[2]+(view==='front'?.78:1.8)*Math.cos(angle)],target=[lin.position[0],lin.position[1]+1.05,lin.position[2]];
     await page.evaluate(({position,target})=>{window.__atrium.setCapture(true);window.__atrium.setReviewCamera(position,target);},{position,target});
     await pause(250);await snapshot('cloth-'+view,'review-camera / live dialogue state');
    }
@@ -78,9 +85,12 @@ try{
    await walk(-3.3,-2.95,'leave conversation');await walk(-4.8,-2.15,'leave reading area');
    await page.waitForFunction(()=>window.__atrium.getInteractionState().residents.find(r=>r.id==='lin').seatBlend>.95,{timeout:10000});
    await snapshot('seated-again');
-   assert.equal(requests,1);assert.deepEqual(errors,[]);assert.deepEqual(failedAssets,[]);
+   assert.equal(requests,1);
+   const servedSHA=await Promise.all(deliveredAssets);
+   assert.deepEqual(servedSHA,[createHash('sha256').update(body).digest('hex')],'Website must serve the audited asset bytes');
+   assert.deepEqual(errors,[]);assert.deepEqual(failedAssets,[]);
    assert.ok(captures.find(c=>c.label==='dialogue-standing').talked.includes('lin'));
-   await fs.writeFile(path.join(folder,'report.json'),JSON.stringify({name,file,assetSHA:createHash('sha256').update(body).digest('hex'),requests,trace,inputs,captures,errors,failedAssets,passed:true,scope:'Fresh browser storage per variant. Actual entry, WASD traversal, four mouse-drag camera turns, E dialogue, UI reply, Escape and departure/reseating. Labelled close review cameras do not teleport actors or replace animation. Desktop only; no full-game/performance/mobile/contact-surface certification. Poses and elapsed lighting are not frame matched.'},null,2));
+   await fs.writeFile(path.join(folder,'report.json'),JSON.stringify({capturedAt:new Date().toISOString(),liveUnintercepted:live,name,file,servedSHA,assetSHA:createHash('sha256').update(body).digest('hex'),requests,trace,inputs,captures,errors,failedAssets,passed:true,scope:'Fresh browser storage per variant. Actual entry, WASD traversal, four mouse-drag camera turns, E dialogue, UI reply, Escape and departure/reseating. Labelled close review cameras do not teleport actors or replace animation. Desktop only; no full-game/performance/mobile/contact-surface certification. Poses and elapsed lighting are not frame matched.'},null,2));
    console.log('GARMENT_GAMEPLAY_PASS',name);
   }catch(error){
    await page.screenshot({path:path.join(folder,'failure.png')}).catch(()=>{});

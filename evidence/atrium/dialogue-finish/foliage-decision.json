@@ -1,0 +1,22 @@
+{
+  "decision": "rejected and restored",
+  "reason": "Runtime LOD introduced visible folding; preserve the original reading foliage",
+  "restoredObjects": [
+    "Living greenery leaf.018",
+    "Living greenery leaf.019",
+    "Living greenery leaf.021",
+    "Living greenery leaf.022",
+    "Living greenery leaf.024",
+    "Living greenery leaf.026",
+    "Reading ficus leaf",
+    "Reading ficus leaf.001",
+    "Reading ficus leaf.002",
+    "Reading ficus leaf.003",
+    "Reading ficus leaf.004",
+    "Reading ficus leaf.005",
+    "Reading ficus leaf.006",
+    "Reading ficus leaf.007",
+    "Reading ficus leaf.008"
+  ],
+  "scope": "Only the 15 meshes marked by this turn; all other current scene objects, materials and collision retained"
+}

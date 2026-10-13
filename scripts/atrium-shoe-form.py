@@ -22,6 +22,9 @@ def author(root,prefix):
         faces.extend(tuple(start+i for i in p.vertices) for p in mesh.polygons)
         evaluated.to_mesh_clear()
     tree=BVHTree.FromPolygons(points,faces);samples=[]
+    original_laces=[ob for ob in root.children_recursive if ob.name.startswith(prefix+'Lace_')]
+    for lace in original_laces:
+        other=lace.copy();other.data=lace.data.copy();bpy.context.collection.objects.link(other);other.parent=lace.parent;other.name=lace.name+'Cross'
     for lace in [ob for ob in root.children_recursive if ob.name.startswith(prefix+'Lace_')]:
         assert lace.type=='CURVE'
         transform=inverse@lace.matrix_world;back=transform.inverted()
@@ -29,6 +32,7 @@ def author(root,prefix):
         for spline in lace.data.splines:
             for point in spline.bezier_points if spline.type=='BEZIER' else spline.points:
                 p=transform@Vector(point.co[:3]);original=p.copy()
+                p.y+=(1 if lace.name.endswith('Cross') else -1)*.011*p.x/.038
                 hit,normal,face,distance=tree.ray_cast(Vector((p.x,p.y,.3)),Vector((0,0,-1)),.5)
                 assert hit is not None, 'Lace missed upper surface'
                 p=hit+Vector((0,0,.0022));q=back@p
@@ -36,5 +40,5 @@ def author(root,prefix):
                     delta=q-point.co;point.co=q;point.handle_left+=delta;point.handle_right+=delta
                 else:point.co=(*q,point.co.w)
                 samples.append({'before':list(original),'after':list(p),'surfaceZ':hit.z})
-    assert len(samples)==9
+    assert len(samples)==18
     root['shoe_form_study']={'upperVerticesChanged':changed,'laceSamples':samples,'laceRadius':.0018,'status':'candidate; curve spans and runtime foot contact need review'}

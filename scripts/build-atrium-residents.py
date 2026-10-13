@@ -26,6 +26,7 @@ if HERO_ART_ENABLED:
     hero_spec=importlib.util.spec_from_file_location('atrium_hero_art',ROOT/'scripts/atrium-hero-art.py')
     hero_art=importlib.util.module_from_spec(hero_spec);hero_spec.loader.exec_module(hero_art)
 BUILD_ROOT=Path(os.environ.get('ATRIUM_BUILD_ROOT',str(ROOT))).resolve()
+os.environ.setdefault('ATRIUM_BUILD_ROOT',str(BUILD_ROOT))
 assert os.environ.get('ATRIUM_GARMENT_PANELS','0') in ('0','1','2'), 'Unknown garment panel study'
 if os.environ.get('ATRIUM_PANEL_CAGE_INPUT'):
     assert os.environ.get('ATRIUM_GARMENT_PANELS') in ('1','2'), 'Edited cage input requires the panel garment builder'
@@ -298,7 +299,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
         cuff_rings=[
             (-.301,.047,.043,0,0),(-.29,.056,.051,0,0),
             (-.253,.061,.057,0,0),(-.226,.058,.054,0,0)]
-        if who=='you' and os.environ.get('ATRIUM_CUFF_STUDY','0')=='1':
+        if (dialogue_finish and who in ('you','lin')) or (who=='you' and os.environ.get('ATRIUM_CUFF_STUDY','0')=='1'):
             # Short fitted wrist rib, with its upper edge buried in the sleeve.
             # Preserve the wrist endpoint and the elbow/hand control transforms.
             cuff_rings=[(-.301,.047,.043,0,0),(-.294,.050,.046,0,0),
@@ -310,7 +311,7 @@ def everyday_costume(role,config,mats,visual,left_arm,right_arm,left_elbow,right
     for side in (-1,1):
         cuff=bpy.data.objects.get('TrouserCuff_'+str(side))
         if cuff:cuff.data.materials.clear();cuff.data.materials.append(mats['lower'])
-    extremities.hands(separate_digits=who=='you' and os.environ.get('ATRIUM_HAND_DIGITS_STUDY','0')=='1',refined_palm=who=='you' and os.environ.get('ATRIUM_HAND_FORM_STUDY','0')=='1');extremities.shoes(civic,mats)
+    extremities.hands(separate_digits=(dialogue_finish and who in ('you','lin')) or (who=='you' and os.environ.get('ATRIUM_HAND_DIGITS_STUDY','0')=='1'),refined_palm=(dialogue_finish and who in ('you','lin')) or (who=='you' and os.environ.get('ATRIUM_HAND_FORM_STUDY','0')=='1'));extremities.shoes(civic,mats)
     # Fingers are anatomy, not removable detail. Renaming before the shared
     # batcher routes them into the full skinned core, including the mobile LOD.
     for obj in list(bpy.context.scene.objects):
@@ -487,14 +488,27 @@ def everyday_cap(head,mats):
     civic.ellipsoid('CapBadge',(0,-.208,.235),(.026,.004,.018),mats['accent'],head,segments=16,rings=8)
 civic.build_cap=everyday_cap
 reports=[]
+# Shipping recipe is selected per resident, and restored between identities.
+dialogue_finish=os.environ.get('ATRIUM_DIALOGUE_FINISH','1')=='1'
+recipe_keys=['ATRIUM_GARMENT_PANELS','ATRIUM_CARDIGAN_STUDY','ATRIUM_SLEEVE_CAP_STUDY','ATRIUM_HAND_ATLAS_STUDY','ATRIUM_SHOE_FORM_STUDY']
+original_recipe={k:os.environ.get(k) for k in recipe_keys}
 selected=set(filter(None,os.environ.get('ATRIUM_RESIDENT_IDS','').split(',')))
 for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     if selected and name not in selected:continue
     current_identity=name
+    for key,value in original_recipe.items():
+        if value is None:os.environ.pop(key,None)
+        else:os.environ[key]=value
+    if dialogue_finish and name=='lin':
+        for key in recipe_keys[:3]:os.environ[key]='2'
+    if dialogue_finish and name in ('you','lin'):
+        os.environ['ATRIUM_HAND_ATLAS_STUDY']='1'
+        os.environ['ATRIUM_SHOE_FORM_STUDY']='1'
     cfg=copy.deepcopy(civic.ROLE_CONFIGS[role]);cfg.update(hair='#272e3a',hair_highlight='#414653',hair_style=hair,top=top,outer=outer,lower=lower,accent='#e4b149',shoe='#2f4354',sole='#e6d7bb')
     cfg['atrium_id']=name
     cfg['top']={'you':'#344b60','lin':'#8db0a0','chen':'#344b60','xu':'#dfa47f','zhou':'#d8cbb5','he':'#8fb5ab','tang':'#c78370'}[name]
     if name=='you':cfg['outer']='#40586b'
+    if dialogue_finish and name=='lin':cfg.update(top='#e9dfc9',outer='#719b8a',hair='#44322d')
     cfg['skin']={'you':'#ecc0a2','lin':'#edc2a7','chen':'#d9ab8b','xu':'#efc6aa','zhou':'#e3b799','he':'#d8ad8c','tang':'#e9bb9d'}[name]
     if name=='zhou':cfg['hair']='#42362e'
     civic.BODY_PROFILES[role]=copy.deepcopy(base_bodies[role])
@@ -515,6 +529,9 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     civic.FACE_PROFILES[role]['cheek_spread']*=.95
     civic.FACE_PROFILES[role]['mouth_corner']=.004+(idx%3)*.002
     civic.FACE_PROFILES[role]['eye_height']*=.82
+    # Hidden/unselectable export objects must not survive into the next actor.
+    # Operator-only deletion can leave an old Head and silently suffix the new one.
+    for previous_object in list(bpy.data.objects):bpy.data.objects.remove(previous_object,do_unlink=True)
     root=civic.build_character(role,cfg)
     root['atrium_identity']=name
     # Consolidating the shared articulation mesh drops source UV layers.
@@ -603,6 +620,9 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         spec=importlib.util.spec_from_file_location('atrium_authored_hair',ROOT/'scripts/atrium-authored-hair.py')
         authored=importlib.util.module_from_spec(spec);spec.loader.exec_module(authored)
         authored.build(ROOT,bpy.data.objects['Head'],os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY','short01'))
+    if dialogue_finish and name=='lin':
+        import runpy
+        runpy.run_path(str(ROOT/'scripts/atrium-dialogue-finish.py'))['bob'](bpy.data.objects['Head'])
     # Narrow the complete rig hierarchy rather than moving arm roots within
     # the bind pose. This preserves the proven cloth clearance and weights.
     visual=bpy.data.objects['VisualRoot'];visual.scale.x*=.88
@@ -613,7 +633,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     bpy.context.view_layer.update()
 
     assert name==current_identity, 'Resident export identity changed during modeling'
-    if name=='you' or SURFACE_PROTOTYPE:
+    if name=='you' or (dialogue_finish and name=='lin') or SURFACE_PROTOTYPE:
         textile.cloth_shader(textile.bind_surface_material(core),mixed_surface=True)
         for mat in list(bpy.data.materials):
             if any(word in mat.name.lower() for word in ['fabric','paper']):textile.cloth_shader(mat)
@@ -645,8 +665,8 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         if obj.get('atrium_authored_hair'):
             for material in obj.data.materials:
                 baked_images.extend(node.image for node in material.node_tree.nodes if node.type=='TEX_IMAGE' and node.image)
-    if name=='you' or SURFACE_PROTOTYPE:
-        baked_images.extend(textile.bake_object(core,1024 if name=='you' else 512).values())
+    if name=='you' or (dialogue_finish and name=='lin') or SURFACE_PROTOTYPE:
+        baked_images.extend(textile.bake_object(core,1024 if name in ('you','lin') else 512).values())
     if (SURFACE_PROTOTYPE or (PORTRAIT_SKIN_ENABLED and name=='you')) and not (VERTEX_SKIN_ENABLED and name=='you'):
         baked_images.extend(textile.bake_object(bpy.data.objects['Head'],512,family='skin').values())
     # Bake material base colours into corner vertex colours and merge by rigid controller.
@@ -695,7 +715,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
         for f in merged.data.polygons:f.material_index=0
         merged.data.materials.clear();merged.data.materials.append(surfaces[family])
         merged.data.validate(verbose=False)
-    if name=='you' or SURFACE_PROTOTYPE:
+    if name=='you' or (dialogue_finish and name=='lin') or SURFACE_PROTOTYPE:
         for obj in list(bpy.context.scene.objects):
             if obj.type=='MESH' and obj.name.endswith('_Surface_fabric'):
                 textile.cloth_shader(obj.data.materials[0])
@@ -715,12 +735,12 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     export(SOURCE/(name+'-master.glb'))
     for ob in bpy.context.scene.objects:
         if ob.type=='MESH' and not ob.get('atrium_preserve_eye_surface') and not ob.get('atrium_authored_hair') and not ob.get('atrium_facial_morphs') and not any(m.type=='ARMATURE' for m in ob.modifiers):
-            d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=.55 if ob.name.startswith('HeadPivot_Surface') else .4;d.use_collapse_triangulate=True
+            d=ob.modifiers.new('Desktop LOD','DECIMATE');d.ratio=(.45 if name=='lin' and ob.name.endswith('_Surface_hair') else .55) if ob.name.startswith('HeadPivot_Surface') else .4;d.use_collapse_triangulate=True
             bpy.context.view_layer.objects.active=ob
             bpy.ops.object.modifier_apply(modifier=d.name)
             ob.data.validate(verbose=False)
     export(OUT/(name+'.glb'))
-    if name=='you' or SURFACE_PROTOTYPE:
+    if name=='you' or (dialogue_finish and name=='lin') or SURFACE_PROTOTYPE:
         for image in baked_images:
             image.scale(max(128,image.size[0]//2),max(128,image.size[1]//2));image.pack()
     for ob in bpy.context.scene.objects:
@@ -731,7 +751,7 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     export(OUT/(name+'-mobile.glb'))
     refined_default='2' if os.environ.get('ATRIUM_REFINED_HAIR','1')=='1' else '0'
     authored_hair_label='cc0-short01-swept-mass' if os.environ.get('ATRIUM_HAIR_SWEEP_STUDY',refined_default)=='2' and os.environ.get('ATRIUM_HAIR_MASS_STUDY',refined_default)=='2' else 'cc0-short01-fringe'
-    reports.append({'id':name,'baseRole':role,'hair':(authored_hair_label if name=='you' and bpy.data.objects.get('HairAuthored_short01') else hair),'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair','reviewStatus':'development','garment':dict(root['atrium_garment'])})
+    reports.append({'id':name,'baseRole':role,'hair':(authored_hair_label if name=='you' and bpy.data.objects.get('HairAuthored_short01') else ('authored-side-part-bob' if dialogue_finish and name=='lin' else hair)),'bodyScale':body,'source':str((SOURCE/(name+'.blend')).relative_to(ROOT)),'animationSource':'src/civic-animation-clips.js','license':'MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair','reviewStatus':'development','garment':dict(root['atrium_garment'])})
     print('RESIDENT_READY',name,flush=True)
 if selected and (OUT/'manifest.json').exists():
     previous=json.loads((OUT/'manifest.json').read_text());updates={r['id']:r for r in reports};reports=[updates.get(r['id'],r) for r in previous]

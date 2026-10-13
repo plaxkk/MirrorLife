@@ -111,9 +111,9 @@ test('both resident LODs retain audited continuous hands and long-sleeve surface
     const glb=await glbJson(`../public/assets/atrium/residents/${id}${lod}.glb`);
     const core=glb.nodes.find(n=>n.name==='SkinnedArticulationCore');
     const garment=glb.nodes.find(n=>n.extras?.atrium_garment)?.extras.atrium_garment;
-    assert.equal(garment?.contract,'atrium-continuous-shoulder-v1',`${id}${lod}: missing Blender garment audit`);
+    assert.equal(garment?.contract,id==='lin'?'authored-quad-panels-v2':'atrium-continuous-shoulder-v1',`${id}${lod}: missing Blender garment audit`);
     assert.equal(garment.components,1);assert.equal(garment.nonManifoldEdges,0);
-    assert.ok(garment.triangles<=(id==='you'?2400:1700)&&garment.weightError<.0001);
+    assert.ok(garment.triangles<=(id==='you'?2400:id==='lin'?2000:1700)&&garment.weightError<.0001);
     for(const primitive of glb.meshes[core.mesh].primitives)
       assert.ok(Number.isInteger(primitive.attributes.TEXCOORD_0),`${id}${lod}: exported cloth UV missing`);
     const parts=core.extras.rigid_source_parts.split(',');
@@ -273,7 +273,10 @@ test('resident skin batches retain authored roughness without extra primitives o
     assert.equal(primitives.length,1,`${id}${suffix}: keep one body draw`);
     const p=primitives[0],mat=gltf.materials[p.material],texture=mat.pbrMetallicRoughness.metallicRoughnessTexture;
     assert.equal(mat.alphaMode??'OPAQUE','OPAQUE');
-    if(id==='you'){
+    if(id==='you'||id==='lin'){
+      const atlas=JSON.parse(core.extras.atrium_hand_atlas);
+      assert.equal(atlas.tiles.length,2,'shipping hands require guarded source-colour tiles');
+      assert.ok(atlas.tiles.every(t=>t.loopCount>0&&t.roughness<.82));
       assert.equal(p.attributes.COLOR_0,undefined,'albedo must not multiply vertex colour twice');
       const maps=[mat.pbrMetallicRoughness.baseColorTexture,texture,mat.normalTexture];
       for(const [index,map] of maps.entries()){

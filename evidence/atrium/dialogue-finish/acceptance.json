@@ -1,0 +1,102 @@
+{
+  "runtimeFingerprint": "fd5ee40c5c0e0b6043acca9316660d95d010b37d1262de15bf85efc9cd9d8241",
+  "functionalTests": {
+    "passed": 28,
+    "total": 28
+  },
+  "build": "passed",
+  "walkthrough": {
+    "waypoints": 43,
+    "state": {
+      "version": 1,
+      "discovered": [
+        "records",
+        "plant",
+        "journal",
+        "lookout",
+        "record",
+        "shortcut",
+        "tea"
+      ],
+      "talked": [
+        "lin",
+        "chen",
+        "zhou"
+      ],
+      "relations": {
+        "lin": 3,
+        "chen": 3,
+        "xu": 3,
+        "zhou": 3,
+        "he": 2,
+        "tang": 2
+      },
+      "decision": "balanced",
+      "journal": [
+        {
+          "id": "meet-lin",
+          "text": "和林晓交流：今晚想给大家留一个安静的位置。",
+          "ts": 1791877797743
+        },
+        {
+          "id": "meet-chen",
+          "text": "和陈屿交流：桌边的计划，想听听你的意见。",
+          "ts": 1791877801892
+        },
+        {
+          "id": "records",
+          "text": "手记上写着：上次分享会很热闹，林晓却提前回了房间。她留下了一张没有读完的诗。",
+          "ts": 1791877808871
+        },
+        {
+          "id": "plant",
+          "text": "给薄荷浇过水，叶子在日光里轻轻晃动。许禾记住了你的帮忙。",
+          "ts": 1791877829498
+        },
+        {
+          "id": "decision",
+          "text": "楼下分享，楼上保留安静区。大家一起把两个空间安排好。林晓知道自己可以随时退出，陈屿也有了开场的伙伴。窗边多了一张“安静角”的手写卡。",
+          "ts": 1791877837609
+        },
+        {
+          "id": "journal",
+          "text": "明信片画着这扇窗。背面写着：“有一天，希望能叫这里自己的家。”没有署名。",
+          "ts": 1791877862906
+        },
+        {
+          "id": "lookout",
+          "text": "城市在窗外展开。从这里，你也能看见楼下的共享桌。那些刚才陌生的身影，现在都有了名字。",
+          "ts": 1791877869157
+        },
+        {
+          "id": "meet-zhou",
+          "text": "和周宁交流：楼上的声音，和楼下不太一样。",
+          "ts": 1791877895481
+        },
+        {
+          "id": "record",
+          "text": "旧唱片里，是大家第一次搬来那天的笑声。周宁说：“我喜欢参与，也需要能暂时退出来的地方。”",
+          "ts": 1791877900101
+        },
+        {
+          "id": "shortcut",
+          "text": "这条楼梯通向茶饮角。原来二层的安静角落和大家的餐桌，只隔着一小段路。",
+          "ts": 1791877907748
+        },
+        {
+          "id": "tea",
+          "text": "茶叶慢慢舒展开。何川把第二只杯子推了过来：“留下来坐一会儿吧。”",
+          "ts": 1791877922524
+        }
+      ],
+      "position": [
+        -8.729817390441895,
+        0.020000014305114777,
+        3.42637038230896
+      ]
+    }
+  },
+  "visualAcceptance": "not production art quality; see docs/ATRIUM_DIALOGUE_FINISH.md",
+  "releaseAcceptance": "not approved: strict desktop frame budget and real-phone verification incomplete",
+  "websiteScope": "Local production build, actual public assets, no candidate GLB substitution"
+}

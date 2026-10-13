@@ -19,18 +19,20 @@
   {
     "id": "lin",
     "baseRole": "listener",
-    "hair": "braided_bob",
+    "hair": "authored-side-part-bob",
     "bodyScale": 0.96,
     "source": "models/atrium/residents/lin.blend",
     "animationSource": "src/civic-animation-clips.js",
-    "license": "MirrorLife civic rig and authored clothing/hair; adapted MakeHuman CC0-1.0 head",
+    "license": "MirrorLife civic rig and authored clothing; adapted MakeHuman CC0-1.0 head and optional authored hair",
     "reviewStatus": "development",
     "garment": {
-      "contract": "atrium-continuous-shoulder-v1",
+      "contract": "authored-quad-panels-v2",
       "components": 1,
       "nonManifoldEdges": 0,
-      "triangles": 1700,
-      "weightError": 4.400499165058136e-08
+      "triangles": 2000,
+      "quads": 664,
+      "weightError": 1.1920928955078125e-07,
+      "sourceCageQuads": 664
     }
   },
   {

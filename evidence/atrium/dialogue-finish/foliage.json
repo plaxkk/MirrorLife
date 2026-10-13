@@ -1,0 +1,38 @@
+{
+  "objects": [
+    "Living greenery leaf.018",
+    "Living greenery leaf.019",
+    "Living greenery leaf.021",
+    "Living greenery leaf.022",
+    "Living greenery leaf.024",
+    "Living greenery leaf.026",
+    "Reading ficus leaf",
+    "Reading ficus leaf.001",
+    "Reading ficus leaf.002",
+    "Reading ficus leaf.003",
+    "Reading ficus leaf.004",
+    "Reading ficus leaf.005",
+    "Reading ficus leaf.006",
+    "Reading ficus leaf.007",
+    "Reading ficus leaf.008"
+  ],
+  "newlyChanged": [
+    "Living greenery leaf.018",
+    "Living greenery leaf.019",
+    "Living greenery leaf.021",
+    "Living greenery leaf.022",
+    "Living greenery leaf.024",
+    "Living greenery leaf.026",
+    "Reading ficus leaf",
+    "Reading ficus leaf.001",
+    "Reading ficus leaf.002",
+    "Reading ficus leaf.003",
+    "Reading ficus leaf.004",
+    "Reading ficus leaf.005",
+    "Reading ficus leaf.006",
+    "Reading ficus leaf.007",
+    "Reading ficus leaf.008"
+  ],
+  "collisionBytesPreserved": true,
+  "scope": "Reading area blades only; actual source and two runtime LODs"
+}

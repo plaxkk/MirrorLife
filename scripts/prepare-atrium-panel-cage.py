@@ -3,7 +3,8 @@ import bpy,os,math
 from pathlib import Path
 from mathutils import Quaternion,Vector
 source=Path(os.environ['ATRIUM_PANEL_CAGE']).resolve()
-assert source.is_relative_to(Path(__file__).resolve().parents[1]/'tmp')
+root=Path(__file__).resolve().parents[1]
+assert source.is_relative_to(root/'tmp') or source==root/'models/atrium/residents/lin-garment-cage.blend'
 bpy.ops.wm.open_mainfile(filepath=str(source))
 scene=bpy.data.scenes['Garment cage editing'];bpy.context.window.scene=scene
 for other in list(bpy.data.scenes):
