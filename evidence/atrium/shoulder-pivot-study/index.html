@@ -1,0 +1,25 @@
+<!doctype html><html lang="zh"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>林晓肩点内移对照</title><style>body{background:#18272e;color:#eee;font:16px system-ui;margin:24px}div{display:flex;gap:12px}figure{margin:0;flex:1;min-width:0}img{width:100%}@media(max-width:700px){div{display:block}}</style>
+<h1>林晓肩点内移：两版候选均未安装</h1>
+<p>基线 = 当前 HEAD 正式林晓。cap-only 只改袖山截面，pivot-in25mm 同时把肩点内移 25mm。两版都在 <code>tmp/</code> 隔离目录生成，未进入公开资产。结论：单改袖山是把已知缺陷换成新缺陷；内移肩点是正确方向，但会带出内搭穿透，必须先解决内搭与袖管的间隙。与 <a href="../shoulder-study/index.html">肩胸轮廓对照</a> 及 <code>docs/ATRIUM_SHOULDER_STUDY.md</code>、<code>docs/ATRIUM_SLEEVE_CAP_STUDY.md</code> 的既有判决一致。</p>
+<h2>front</h2><div>
+<figure><img loading="lazy" src="baseline/front.png"><figcaption>基线</figcaption></figure>
+<figure><img loading="lazy" src="cap-only/front.png"><figcaption>cap-only：袖山鼓起</figcaption></figure>
+<figure><img loading="lazy" src="pivot-in25mm/front.png"><figcaption>内移25mm：轮廓改善，肘部带出内搭</figcaption></figure>
+</div>
+<h2>side</h2><div>
+<figure><img loading="lazy" src="baseline/side.png"><figcaption>基线</figcaption></figure>
+<figure><img loading="lazy" src="cap-only/side.png"><figcaption>cap-only：侧视可见袖山脊线</figcaption></figure>
+<figure><img loading="lazy" src="pivot-in25mm/side.png"><figcaption>内移25mm：球状外扩减弱</figcaption></figure>
+</div>
+<h2>back</h2><div>
+<figure><img loading="lazy" src="baseline/back.png"><figcaption>基线</figcaption></figure>
+<figure><img loading="lazy" src="cap-only/back.png"><figcaption>cap-only：肩线断裂</figcaption></figure>
+<figure><img loading="lazy" src="pivot-in25mm/back.png"><figcaption>内移25mm：背面轮廓更连续</figcaption></figure>
+</div>
+<h2>outer-arm 4× 放大</h2><div>
+<figure><img loading="lazy" src="baseline/outer-arm-4x.png"><figcaption>基线：上臂外侧无浅色楔形</figcaption></figure>
+<figure><img loading="lazy" src="pivot-in25mm/outer-arm-penetration-4x.png"><figcaption>内移25mm：肘部出现奶白色内搭穿透</figcaption></figure>
+</div>
+<h2>复现</h2>
+<p><code>ATRIUM_RESIDENT_IDS=lin ATRIUM_BUILD_ROOT=tmp/&lt;study&gt; ATRIUM_LIN_SHOULDER_STUDY=1|2</code> + Blender <code>--python scripts/build-atrium-residents.py</code>，再用 <code>ATRIUM_CAST_CANDIDATE</code> 做单模型替换拍摄。逐张记录见各目录 <code>report.json</code>。</p>
+</html>

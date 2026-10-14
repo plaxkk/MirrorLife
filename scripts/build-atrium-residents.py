@@ -76,7 +76,7 @@ if os.environ.get('ATRIUM_LID_MARGIN_STUDY')=='1':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Lid margin study output must remain isolated'
 if os.environ.get('ATRIUM_EYE_DEPTH_STUDY','0')!='0':
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Eye depth study output must remain isolated'
-if os.environ.get('ATRIUM_NECK_RIG_STUDY') or os.environ.get('ATRIUM_OPEN_NECK_STUDY') or os.environ.get('ATRIUM_SHOULDER_STUDY') or os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY') or os.environ.get('ATRIUM_LID_EDGE_STUDY') or os.environ.get('ATRIUM_BROW_STUDY') or os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY') or os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0':
+if os.environ.get('ATRIUM_NECK_RIG_STUDY') or os.environ.get('ATRIUM_OPEN_NECK_STUDY') or os.environ.get('ATRIUM_SHOULDER_STUDY') or os.environ.get('ATRIUM_PORTRAIT_FORM_STUDY') or os.environ.get('ATRIUM_LID_EDGE_STUDY') or os.environ.get('ATRIUM_BROW_STUDY') or os.environ.get('ATRIUM_PORTRAIT_EYES_STUDY') or os.environ.get('ATRIUM_AUTHORED_HAIR_STUDY') or os.environ.get('ATRIUM_GROOM_STUDY','0')!='0' or os.environ.get('ATRIUM_HERO_ART_STUDY')=='1' or os.environ.get('ATRIUM_RADIAL_LID_STUDY','0')!='0' or os.environ.get('ATRIUM_LIN_SHOULDER_STUDY'):
     assert BUILD_ROOT.is_relative_to(ROOT/'tmp'), 'Study output must remain isolated'
 SURFACE_PROTOTYPE=os.environ.get('ATRIUM_SURFACE_PROTOTYPE')=='1'
 FACE_PAINT_STUDY=os.environ.get('ATRIUM_FACE_PAINT_STUDY')=='1'
@@ -518,7 +518,12 @@ for idx,(name,role,hair,body,top,outer,lower) in enumerate(PEOPLE):
     # Keep the hanging sleeve separate from the waist before voxel union.
     # The old bind pose fused forearms into the torso, stretching short edges
     # by over 16x when the elbow moved. Preserve every rig/contact binding.
-    profile['shoulder_x']+=.07 if dialogue_finish and name=='lin' else .09
+    # Study 2 moves the pivot itself as well: a cap-only change cannot bring the
+    # arm inboard, because the first sleeve ring has to clear the armhole rim.
+    if dialogue_finish and name=='lin':
+        profile['shoulder_x']+={'2':.045}.get(os.environ.get('ATRIUM_LIN_SHOULDER_STUDY'),.07)
+    else:
+        profile['shoulder_x']+=.09
     # Slightly less doll-like cranium, wider range of face/jaw shapes.
     profile['head_scale']=tuple(s*.54 for s in profile['head_scale'])
     # Retain the authored neck overlap while exposing the jaw above the collar.

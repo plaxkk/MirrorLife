@@ -53,6 +53,16 @@ def build(civic, material, profile):
                 (shoulder,.76,.061,.057,.004,0,1),
                 (shoulder,.705,.053,.049,.002,0,1)]
         label='Right' if side>0 else 'Left'
+        if os.environ.get('ATRIUM_LIN_SHOULDER_STUDY') in ('1','2'):
+            # The shipped cap starts at the arm pivot, ~58mm outboard of the
+            # torso's widest shoulder row, and tilts 45 deg: the bridge fans
+            # sideways as a shelf and the cap reads as a sphere pinned to the
+            # side. Fall the first rings from the armhole rim instead, so the
+            # deltoid is a single slope and the outer edge never exceeds the
+            # bicep. The rig bone is untouched; only the cap surface leans in.
+            sleeve=[(shoulder-.040,1.205,.034,.056,.008,math.pi/9,.78),
+                    (shoulder-.018,1.150,.056,.068,.002,math.pi/26,.93),
+                    (shoulder+.001,1.088,.072,.074,-.006,0,1)]+sleeve[3:]
         for cx,z,rx,ry,cy,tilt,arm in sleeve:
             next_loop=[];elbow=ease((1.1-z)/.21)
             for phase in phases:
